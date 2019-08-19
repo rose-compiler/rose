@@ -1,5 +1,5 @@
-#ifndef _IO_UTILITY_H
-#define _IO_UTILITY_H 1
+#ifndef ROSE_BinaryAnalysis_Concolic_io_utility_H
+#define ROSE_BinaryAnalysis_Concolic_io_utility_H
 
 //! Utility functions to access binary and text files.
 
@@ -12,6 +12,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
 
+// FIXME[Robb Matzke 2019-08-15]: public functions must be documented
 template <class Container>
 Container
 loadFile(const std::string& filename, std::ios_base::openmode mode = std::ios_base::in)
@@ -31,6 +32,8 @@ loadFile(const std::string& filename, std::ios_base::openmode mode = std::ios_ba
 }
 
 
+// FIXME[Robb Matzke 2019-08-15]: public types must be documented with doxygen as well as all their public/protected members
+// FIXME[Robb Matzke 2019-08-15]: wrong naming style for public symbol ostreambin_iterator
 // https://stackoverflow.com/questions/31131907/writing-into-binary-file-with-the-stdostream-iterator
 template <class T, class CharT = char, class Traits = std::char_traits<CharT> >
 struct ostreambin_iterator : std::iterator<std::output_iterator_tag, void, void, void, void>
@@ -55,6 +58,7 @@ struct ostreambin_iterator : std::iterator<std::output_iterator_tag, void, void,
   ostream_type& stream;
 };
 
+// FIXME[Robb Matzke 2019-08-15]: public types must be documented with doxygen as well as all their public/protected members
 template <class T>
 struct FileSink
 {
@@ -76,6 +80,7 @@ struct FileSink
   }
 };
 
+// FIXME[Robb Matzke 2019-08-15]: public functions must be documented with doxygen
 template <class Container>
 void
 storeFile(const Container& data, const std::string& filename, std::ios_base::openmode mode = std::ios_base::out)
@@ -145,4 +150,4 @@ namespace
 } // namespace BinaryAnalysis
 } // namespace Rose
 
-#endif /* _IOUTILITY_H */
+#endif

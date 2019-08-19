@@ -487,63 +487,15 @@ public:
 // Concolic (concrete + symbolic) executors
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Concolic executor.
- *
- *  Executes a test case both concretely and symbolically and generates new test cases. */
-class ConcolicExecutor: public Sawyer::SharedObject {
-public:
-    /** Reference counting pointer to @ref ConcolicExecutor. */
-    typedef Sawyer::SharedPointer<ConcolicExecutor> Ptr;
+} // namespace
+} // namespace
+} // namespace
 
-    /** Settings to control various aspects of an executor. */
-    struct Settings {
-        Partitioner2::EngineSettings partitionerEngine;
-        Partitioner2::LoaderSettings loader;
-        Partitioner2::DisassemblerSettings disassembler;
-        Partitioner2::PartitionerSettings partitioner;
-    };
+#include <Concolic/ConcolicExecutor.h>
 
-private:
-    Settings settings_;
-
-protected:
-    ConcolicExecutor() {}
-
-public:
-    /** Allcoating constructor. */
-    static Ptr instance();
-
-    /** Property: Configuration settings.
-     *
-     *  These settings control the finer aspects of this @ref ConcolicExecutor. They should generally be set immediately
-     *  after construction this executor and before any operations are invoked that might use the settings.
-     *
-     *  Thread safety: Not thread safe.
-     *
-     * @{ */
-    const Settings& settings() const { return settings_; }
-    Settings& settings() { return settings_; }
-    /** @} */
-
-    /** Execute the test case.
-     *
-     *  Executes the test case to produce new test cases. */
-    std::vector<TestCase::Ptr> execute(const DatabasePtr&, const TestCase::Ptr&);
-
-#if 0 // FIXME[Robb Matzke 2019-06-06]: public for testing, but will eventually be private
-private:
-#endif
-    // Disassemble the specimen and cache the result in the database. If the specimen has previously been disassembled
-    // then reconstitute the analysis results from the database.
-    Partitioner2::Partitioner partition(const DatabasePtr&, const Specimen::Ptr&);
-
-    // Run the execution
-    void run(const Partitioner2::Partitioner&);
-    void run(const Partitioner2::Partitioner&, rose_addr_t startVa);
-
-    // TODO: Lots of properties to control the finer aspects of executing a test case!
-};
-
+namespace Rose {
+namespace BinaryAnalysis {
+namespace Concolic {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Test suites
@@ -556,7 +508,11 @@ private:
  *  concrete executor and measure the same user-defined execution properties. For example, the database might contain one test
  *  suite based on "/bin/grep" and another test suite running "/bin/cat".  Or it might have two test suites both running
  *  "/bin/grep" but one always using "--extended-regexp" and the other always using "--basic-regexp".  Or it might have two
- *  test suites both running "/bin/cat" but one measures exit status and the other measures code coverage. */
+ *  test suites both running "/bin/cat" but one measures exit status and the other measures code coverage.
+ *
+ *  A @ref Database has a "current test suite" set/queried by its @ref Database::testSuite "testSuite" method. Inserting
+ *  new objects will insert them into the current test suite, and queries will return objects that belong to the current
+ *  test suite. */
 class TestSuite: public Sawyer::SharedObject, public Sawyer::SharedFromThis<TestSuite> {
 public:
     /** Reference counting pointer to @ref TestSuite. */

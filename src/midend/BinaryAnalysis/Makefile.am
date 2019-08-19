@@ -141,6 +141,9 @@ pkginclude_HEADERS =					\
     instructionSemantics/TraceSemantics2.h		\
     Concolic/io-utility.h
 
+nobase_pkginclude_HEADERS =			\
+    Concolic/ConcolicExecutor.h
+
 if ROSE_USE_SQLITE_DATABASE
 pkginclude_HEADERS +=					\
     libraryIdentification/FunctionIdDatabaseInterface.h \
