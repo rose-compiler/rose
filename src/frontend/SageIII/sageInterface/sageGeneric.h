@@ -806,7 +806,9 @@ namespace sg
     // Types
     GEN_VISIT(SgTypeUnknown)
     GEN_VISIT(SgTypeChar)
+    GEN_VISIT(SgTypeChar16)
     GEN_VISIT(SgTypeSignedChar)
+    GEN_VISIT(SgTypeChar32)
     GEN_VISIT(SgTypeUnsignedChar)
     GEN_VISIT(SgTypeShort)
     GEN_VISIT(SgTypeSignedShort)
@@ -833,6 +835,7 @@ namespace sg
     GEN_VISIT(SgTypeDefault)
     GEN_VISIT(SgPointerMemberType)
     GEN_VISIT(SgReferenceType)
+    GEN_VISIT(SgRvalueReferenceType)
     GEN_VISIT(SgTypeCAFTeam)
     GEN_VISIT(SgClassType)
     GEN_VISIT(SgTemplateType)
