@@ -958,9 +958,18 @@ void SgTemplateArgument::outputTemplateArgument(bool & skip_unparsing, bool & st
   if (this->get_argumentType() == SgTemplateArgument::type_argument) {
     SgClassType * xtype = isSgClassType(this->get_type());
     if (xtype != NULL) {
+#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
+      printf ("   - xtype = %p (%s) = %s \n", xtype, xtype->class_name().c_str(), xtype->unparseToString().c_str());
+#endif
       SgDeclarationStatement * xdecl = xtype->get_declaration();
       ROSE_ASSERT(xdecl != NULL);
+#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
+      printf ("   - xdecl = %p (%s)\n", xdecl, xdecl->class_name().c_str());
+#endif
       SgNode * pnode = xdecl->get_parent();
+#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
+      printf ("   - pnode = %p (%s)\n", pnode, pnode ? pnode->class_name().c_str() : "");
+#endif
       SgLambdaExp * lambda_exp = isSgLambdaExp(pnode);
       if (lambda_exp != NULL) {
         isAssociatedWithLambdaExp = true;
@@ -1061,10 +1070,19 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
           SgTemplateArgument * tplarg = *copy_iter;
           ROSE_ASSERT(tplarg != NULL);
 
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+          printf (" - tplarg = %s\n", tplarg->unparseToString().c_str());
+#endif
+
        // DQ (2/11/2019): Use simpler version of code now that logic has been refactored.
           bool skipTemplateArgument = false;
           bool stopTemplateArgument = false;
           tplarg->outputTemplateArgument(skipTemplateArgument, stopTemplateArgument);
+
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+          printf (" - skipTemplateArgument = %d\n", skipTemplateArgument);
+          printf (" - stopTemplateArgument = %d\n", stopTemplateArgument);
+#endif
 
           if (stopTemplateArgument) {
             break;
