@@ -448,20 +448,40 @@ public:
     // top-level: parseCommandLine
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Command-line switches related to the loader. */
+    /** Command-line switches related to the loader.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup loaderSwitches();
+    static Sawyer::CommandLine::SwitchGroup loaderSwitches(LoaderSettings&);
+    /** @} */
 
-    /** Command-line switches related to the disassembler. */
+    /** Command-line switches related to the disassembler.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup disassemblerSwitches();
+    static Sawyer::CommandLine::SwitchGroup disassemblerSwitches(DisassemblerSettings&);
+    /** @} */
 
-    /** Command-line switches related to the partitioner. */
+    /** Command-line switches related to the partitioner.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup partitionerSwitches();
+    static Sawyer::CommandLine::SwitchGroup partitionerSwitches(PartitionerSettings&);
+    /** @} */
 
-    /** Command-line switches related to engine behavior. */
+    /** Command-line switches related to engine behavior.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup engineSwitches();
+    static Sawyer::CommandLine::SwitchGroup engineSwitches(EngineSettings&);
+    /** @} */
 
-    /** Command-line switches related to AST construction. */
+    /** Command-line switches related to AST construction.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup astConstructionSwitches();
+    static Sawyer::CommandLine::SwitchGroup astConstructionSwitches(AstConstructionSettings&);
+    /** @} */
 
     /** Documentation for specimen names. */
     static std::string specimenNameDocumentation();
