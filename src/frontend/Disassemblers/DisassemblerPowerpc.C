@@ -121,6 +121,7 @@ DisassemblerPowerpc::fld() const {
     return (insn >> (31 - Last)) & (IntegerOps::GenMask<uint32_t, Last - First + 1>::value);
 }
 
+// FIXME[Robb Matzke 2019-08-20]: Replace with proper C++ since nested macros make debugging hard
 #define MAKE_INSN0(Mne) (makeInstructionWithoutOperands(ip, #Mne, powerpc_##Mne, insn))
 #define MAKE_INSN0_RC(Mne) (Rc() ? MAKE_INSN0(Mne##_record) : MAKE_INSN0(Mne))
 #define MAKE_INSN0_O_RC(Mne) (OE() ? MAKE_INSN0_RC(Mne##o) : MAKE_INSN0_RC(Mne))
@@ -149,9 +150,75 @@ DisassemblerPowerpc::makeBranchTarget(uint64_t targetAddr) const {
     ASSERT_not_reachable("invalid word size");
 }
 
+bool
+DisassemblerPowerpc::is64bitInsn(PowerpcInstructionKind kind) {
+    switch (kind) {
+        case powerpc_cntlzd:
+        case powerpc_cntlzd_record:
+        case powerpc_divd:
+        case powerpc_divd_record:
+        case powerpc_divdo:
+        case powerpc_divdo_record:
+        case powerpc_divdu:
+        case powerpc_divdu_record:
+        case powerpc_divduo:
+        case powerpc_divduo_record:
+        case powerpc_extsw:
+        case powerpc_extsw_record:
+        case powerpc_ld:
+        case powerpc_ldu:
+        case powerpc_ldux:
+        case powerpc_ldx:
+        case powerpc_mulhd:
+        case powerpc_mulhd_record:
+        case powerpc_mulhdu:
+        case powerpc_mulhdu_record:
+        case powerpc_mulld:
+        case powerpc_mulld_record:
+        case powerpc_mulldo:
+        case powerpc_mulldo_record:
+        case powerpc_rldcl:
+        case powerpc_rldcl_record:
+        case powerpc_rldcr:
+        case powerpc_rldcr_record:
+        case powerpc_rldic:
+        case powerpc_rldic_record:
+        case powerpc_rldicl:
+        case powerpc_rldicl_record:
+        case powerpc_rldicr:
+        case powerpc_rldicr_record:
+        case powerpc_rldimi:
+        case powerpc_rldimi_record:
+        case powerpc_sld:
+        case powerpc_sld_record:
+        case powerpc_srad:
+        case powerpc_srad_record:
+        case powerpc_sradi:
+        case powerpc_sradi_record:
+        case powerpc_srd:
+        case powerpc_srd_record:
+        case powerpc_std:
+        case powerpc_stdu:
+        case powerpc_stdux:
+        case powerpc_stdx:
+        case powerpc_td:
+        case powerpc_tdi:
+
+            return true;
+        default:
+            return false;
+    }
+}
+
 SgAsmPowerpcInstruction*
 DisassemblerPowerpc::makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic, PowerpcInstructionKind kind,
                                                     uint32_t insn) {
+
+    if (powerpc_32 == wordSize_ && is64bitInsn(kind)) {
+        ASSERT_forbid(powerpc_unknown_instruction == kind);
+        return makeInstructionWithoutOperands(address, "unknown", powerpc_unknown_instruction, insn);
+    }
+
     // Constructor: SgAsmPowerpcInstruction(rose_addr_t address = 0, std::string mnemonic = "", PowerpcInstructionKind kind =
     // powerpc_unknown_instruction);
     SgAsmPowerpcInstruction* instruction = new SgAsmPowerpcInstruction(address, mnemonic, kind);
@@ -402,6 +469,8 @@ DisassemblerPowerpc::disassemble() {
         case 0x39: throw ExceptionPowerpc("invalid primary opcode (0x39)", this, 26);
         case 0x3A: {
             switch (unsigned xo = insn & 0x3) {
+                case 0: return MAKE_INSN2(ld, RT(), memrefds(T_U64));
+                case 1: return MAKE_INSN2(ldu, RT(), memrefds(T_U64));
                 case 2: return MAKE_INSN2(lwa, RT(), memrefds(T_U32));
                 default:
                     throw ExceptionPowerpc("decoding error for pimary opcode 0x3a, XO=" + StringUtility::numberToString(xo),
@@ -513,7 +582,14 @@ DisassemblerPowerpc::decode_SC_formInstruction() {
 
 SgAsmPowerpcInstruction*
 DisassemblerPowerpc::decode_DS_formInstruction() {
-    throw ExceptionPowerpc("DS-Form instructions not implemented yet, I have no examples so far!", this);
+    uint8_t primaryOpcode = (insn >> 26) & 0x3f;
+    ASSERT_always_require(primaryOpcode == 0x3e);
+
+    switch (insn & 0x03) {
+        case 0: return MAKE_INSN2(std, RS(), memrefds(T_U64));
+        case 1: return MAKE_INSN2(stdu, RS(), memrefds(T_U64));
+        default: throw ExceptionPowerpc("invalid DS-form instruction", this);
+    }
 }
 
 SgAsmPowerpcInstruction*
@@ -541,6 +617,7 @@ DisassemblerPowerpc::decode_X_formInstruction_1F() {
         case 0x028: return MAKE_INSN3_RC(subf, RT(), RA(), RB());
         case 0x035: return MAKE_INSN2(ldux, RT(), memrefux(T_U64));
         case 0x037: return MAKE_INSN2(lwzux, RT(), memrefux(T_U32));
+        case 0x03a: return MAKE_INSN2_RC(cntlzd, RA(), RS());
         case 0x03C: return MAKE_INSN3_RC(andc, RA(), RS(), RB());
         case 0x044: return MAKE_INSN3(td, TO(), RA(), RB());
         case 0x049: return MAKE_INSN3_RC(mulhd, RT(), RA(), RB());
@@ -868,12 +945,11 @@ DisassemblerPowerpc::decode_A_formInstruction_3F() {
 SgAsmPowerpcInstruction*
 DisassemblerPowerpc::decode_MD_formInstruction() {
     switch (fld<27, 29>()) {
-        case 0: return MAKE_INSN4(rldicl, RA(), RS(), SH_64bit(), MB_64bit());
-        case 1: return MAKE_INSN4(rldicr, RA(), RS(), SH_64bit(), ME_64bit());
-        case 2: return MAKE_INSN4(rldic, RA(), RS(), SH_64bit(), MB_64bit());
-        case 3: return MAKE_INSN4(rldimi, RA(), RS(), SH_64bit(), MB_64bit());
-        case 8: return MAKE_INSN4(rldcl, RA(), RS(), RB(), MB_64bit());
-        case 9: return MAKE_INSN4(rldcr, RA(), RS(), RB(), ME_64bit());
+        case 0: return MAKE_INSN4_RC(rldicl, RA(), RS(), SH_64bit(), MB_64bit());
+        case 1: return MAKE_INSN4_RC(rldicr, RA(), RS(), SH_64bit(), ME_64bit());
+        case 2: return MAKE_INSN4_RC(rldic, RA(), RS(), SH_64bit(), MB_64bit());
+        case 3: return MAKE_INSN4_RC(rldimi, RA(), RS(), SH_64bit(), MB_64bit());
+        case 4: return decode_MDS_formInstruction();
         default:
             throw ExceptionPowerpc("invalid MD-Form extended opcode: " + StringUtility::addrToString(int(fld<27, 29>())), this);
     }
@@ -882,7 +958,13 @@ DisassemblerPowerpc::decode_MD_formInstruction() {
 
 SgAsmPowerpcInstruction*
 DisassemblerPowerpc::decode_MDS_formInstruction() {
-    throw ExceptionPowerpc("MDS-Form instructions not implemented yet", this);
+    switch (fld<27, 30>()) {
+        case 8: return MAKE_INSN4_RC(rldcl, RA(), RS(), RB(), MB_64bit());
+        case 9: return MAKE_INSN4_RC(rldcr, RA(), RS(), RB(), ME_64bit());
+        default:
+            throw ExceptionPowerpc("invalid MDS-Form extended opcode: " + StringUtility::addrToString(int(fld<27, 30>())), this);
+    }
+    ASSERT_not_reachable("opcode not handled");
 }
 
 } // namespace
