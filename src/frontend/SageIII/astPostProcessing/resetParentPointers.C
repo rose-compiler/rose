@@ -1147,11 +1147,11 @@ ResetParentPointers::evaluateInheritedAttribute (
                                    classDeclaration,classDeclaration->class_name().c_str(),
                                    classDeclaration->get_parent(),classDeclaration->get_parent() != NULL ? classDeclaration->get_parent()->class_name().c_str() : "null",
                                    inheritedAttribute.parentNode,inheritedAttribute.parentNode->class_name().c_str());
-#endif
                               SgNode* parentBeforeReset = classDeclaration->get_parent();
+#endif
                               resetParentPointers (classDeclaration,inheritedAttribute.parentNode);
-                              SgNode* parentAfterReset = classDeclaration->get_parent();
 #if 0
+                              SgNode* parentAfterReset = classDeclaration->get_parent();
                               printf ("DONE: Calling resetParentPointers(): classDeclaration = %p = %s inheritedAttribute.parentNode = %p = %s \n",
                                    classDeclaration,classDeclaration->class_name().c_str(),inheritedAttribute.parentNode,inheritedAttribute.parentNode->class_name().c_str());
 #endif
