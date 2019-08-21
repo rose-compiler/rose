@@ -417,7 +417,7 @@ namespace BinaryAnalysis {
     SqlQuery<>
     QY_MK_SPECIMENS       = "CREATE TABLE \"Specimens\" ("
                             "  \"id\" int PRIMARY KEY,"
-                            "  \"name\" varchar(256) UNIQUE NOT NULL,"
+                            "  \"name\" varchar(256) NOT NULL,"
                             "  \"binary\" Blob NOT NULL"
                             ");";
 
@@ -430,8 +430,8 @@ namespace BinaryAnalysis {
                             "  \"executor\" varchar(128) CHECK(executor = \"linux\"),"
                             "  \"concrete_result\" float,"
                             "  \"concolic_result\" int,"
-                            " CONSTRAINT \"fk_specimen_testcase\" FOREIGN KEY (\"specimen_id\") REFERENCES \"Specimens\" (\"id\"),"
-                            " CONSTRAINT \"uq_specimen_name\" UNIQUE (\"specimen_id\", \"name\")"
+                            //~ " CONSTRAINT \"uq_specimen_name\" UNIQUE (\"specimen_id\", \"name\"),"
+                            " CONSTRAINT \"fk_specimen_testcase\" FOREIGN KEY (\"specimen_id\") REFERENCES \"Specimens\" (\"id\")"
                             ");";
 
     static const
@@ -525,9 +525,10 @@ namespace BinaryAnalysis {
 
     static const
     SqlQuery<bt::tuple<int>::inherited >
-    QY_SPECIMENS_IN_SUITE = "SELECT DISTINCT specimen_id"
-                            "  FROM TestCases"
-                            " WHERE testsuite_id = " + SqlInt() + ";";
+    QY_SPECIMENS_IN_SUITE = "SELECT DISTINCT tc.specimen_id"
+                            "  FROM TestCases tc, TestSuiteTestCases tt"
+                            " WHERE tc.rowid = tt.testcase_id"
+                            "   AND tt.testsuite_id = " + SqlInt() + ";";
 
     static const
     SqlQuery<bt::tuple<int>::inherited>
@@ -538,6 +539,16 @@ namespace BinaryAnalysis {
     SqlQuery<bt::tuple<std::string>::inherited>
     QY_SPECIMEN_BY_NAME   = "SELECT rowid FROM Specimens "
                             " WHERE name = " + SqlString() + ";";
+
+    static const
+    SqlQuery<bt::tuple<int, std::string>::inherited>
+    QY_SPECIMEN_IN_SUITE_BY_NAME
+                          = "SELECT sp.rowid"
+                            "  FROM Specimens sp, TestCases tc, TestSuiteTestCases tt"
+                            " WHERE sp.rowid = tc.specimen_id"
+                            "   AND tc.rowid = tt.testcase_id"
+                            "   AND tt.testsuite_id = " + SqlInt() +
+                            "   AND sp.name = " + SqlString() + ";";
 
     static const
     SqlQuery<>
@@ -760,41 +771,21 @@ namespace BinaryAnalysis {
 
     // @}
 
-
-    // prepares and binds a query for a given object type (@ref id)
-    template <class IdTag>
-    SqlStatementPtr
-    prepareObjQuery( const SqlDatabase::TransactionPtr& tx,
-                     const Concolic::ObjectId<IdTag>& id
-                   )
-    {
-      if (!id)
-          throw Exception("ID not set");
-
-      return sqlPrepare(tx, objQueryString(id), id.get());
-    }
-
     // executes a bound query and sets the obj's data
     // @{
-    void executeObjQuery(SqlStatementPtr& stmt, Concolic::TestSuite& obj)
+    void populateObjFromQuery(SqlIterator& it, Concolic::TestSuite& obj)
     {
-      obj.name(stmt->execute_string());
+      obj.name(it.get_str(0));
     }
 
-    void executeObjQuery(SqlStatementPtr& stmt, Concolic::Specimen& obj)
+    void populateObjFromQuery(SqlIterator& it, Concolic::Specimen& obj)
     {
-      SqlIterator it = stmt->begin();
-
       obj.name(it.get_str(0));
       obj.content(it.get_blob(1));
-
-      ROSE_ASSERT((++it).at_eof());
     }
 
-    void executeObjQuery(SqlStatementPtr& stmt, Concolic::TestCase& obj)
+    void populateObjFromQuery(SqlIterator& it, Concolic::TestCase& obj)
     {
-      SqlIterator              it = stmt->begin();
-
       obj.name(it.get_str(0));
       // obj.executor(it.get_str(1)));
       /* std::string exec = */ it.get_str(1);
@@ -807,8 +798,6 @@ namespace BinaryAnalysis {
                                                   );
       obj.concreteRank(concreteTest_opt);
       obj.concolicTest(it.get_i32(3));
-
-      ROSE_ASSERT((++it).at_eof());
     }
     // @}
 
@@ -1114,12 +1103,19 @@ Database::specimens()
 }
 
 
-SpecimenId
-Database::specimen(const std::string& name)
+std::vector<SpecimenId>
+Database::findSpecimensByName(const std::string& name)
 {
-  return queryIdByName<SpecimenId>(dbconn_, QY_SPECIMEN_BY_NAME, name);
+  if (!testSuiteId_)
+    return queryIds<Specimen>(dbconn_, QY_SPECIMEN_BY_NAME, bt::make_tuple(name));
+
+  return queryIds<Specimen>(dbconn_, QY_SPECIMEN_IN_SUITE_BY_NAME, bt::make_tuple(testSuiteId_.get(), name));
 }
 
+
+//~ std::vector<Rose::BinaryAnalysis::Concolic::ObjectId<Rose::BinaryAnalysis::Concolic::ObjectId<Rose::BinaryAnalysis::Concolic::Specimen> >, std::allocator<Rose::BinaryAnalysis::Concolic::ObjectId<Rose::BinaryAnalysis::Concolic::ObjectId<Rose::BinaryAnalysis::Concolic::Specimen> > > >
+//~ ' to '
+//~ std::vector<Rose::BinaryAnalysis::Concolic::ObjectId<Rose::BinaryAnalysis::Concolic::Specimen> >'
 
 //
 // test cases
@@ -1190,13 +1186,21 @@ queryDBObject( Concolic::Database& db,
   typedef typename BiMap::Forward::Value Ptr;
   typedef typename Ptr::Pointee          ObjType;
 
-  Ptr             obj = ObjType::instance();
-  SqlStatementPtr stmt = prepareObjQuery(tx, id);
+  Ptr             obj;
 
-  executeObjQuery(stmt, *obj);
+  if (!id) return obj;
+
+  SqlStatementPtr stmt = sqlPrepare(tx, objQueryString(id), id.get());
+  SqlIterator     it   = stmt->begin();
+
+  if (it.at_eof()) return obj;
+
+  obj  = ObjType::instance();
+
+  populateObjFromQuery(it, *obj);
   dependentObjQuery(db, tx, id, *obj);
-
   objmap.insert(id, obj);
+
   return obj;
 }
 
@@ -1937,45 +1941,46 @@ void writeDBSchema(std::ostream& os)
 
 void writeSqlStmts(std::ostream& os)
 {
-  os << QY_DB_INITIALIZED         << "\n\n"
-     << QY_ALL_TESTSUITES         << "\n\n"
-     << QY_TESTSUITE              << "\n\n"
-     << QY_TESTSUITE_BY_NAME      << "\n\n"
-     << QY_ALL_SPECIMENS          << "\n\n"
-     << QY_SPECIMENS_IN_SUITE     << "\n\n"
-     << QY_SPECIMEN               << "\n\n"
-     << QY_SPECIMEN_BY_NAME       << "\n\n"
-     << QY_ALL_TESTCASES          << "\n\n"
-     << QY_TESTCASES_IN_SUITE     << "\n\n"
-     << QY_NEED_CONCOLIC          << "\n\n"
-     << QY_ALL_NEED_CONCOLIC      << "\n\n"
-     << QY_NEED_CONCRETE          << "\n\n"
-     << QY_ALL_NEED_CONCRETE      << "\n\n"
-     << QY_TESTCASE               << "\n\n"
-     << QY_TESTCASE_ARGS          << "\n\n"
-     << QY_TESTCASE_ENV           << "\n\n"
-     << QY_TESTCASE_SPECIMEN      << "\n\n"
-     << QY_NEW_TESTSUITE          << "\n\n"
-     << QY_UPD_TESTSUITE          << "\n\n"
-     << QY_NEW_SPECIMEN           << "\n\n"
-     << QY_UPD_SPECIMEN           << "\n\n"
-     << QY_NEW_TESTCASE           << "\n\n"
-     << QY_UPD_TESTCASE           << "\n\n"
-     << QY_RM_TESTCASE_EVAR       << "\n\n"
-     << QY_NEW_TESTCASE_EVAR      << "\n\n"
-     << QY_ENVVAR_ID              << "\n\n"
-     << QY_NEW_ENVVAR             << "\n\n"
-     << QY_RM_TESTCASE_CARG       << "\n\n"
-     << QY_NEW_TESTCASE_CARG      << "\n\n"
-     << QY_NEW_TESTSUITE_TESTCASE << "\n\n"
-     << QY_CMDLINEARG_ID          << "\n\n"
-     << QY_NEW_CMDLINEARG         << "\n\n"
-     << QY_NUM_RBAFILES           << "\n\n"
-     << QY_NEW_RBAFILE            << "\n\n"
-     << QY_RBAFILE                << "\n\n"
-     << QY_RM_RBAFILE             << "\n\n"
-     << QY_NEW_CONCRETE_RES       << "\n\n"
-     << QY_LAST_ROW_SQLITE3       ;
+  os << QY_DB_INITIALIZED             << "\n\n"
+     << QY_ALL_TESTSUITES             << "\n\n"
+     << QY_TESTSUITE                  << "\n\n"
+     << QY_TESTSUITE_BY_NAME          << "\n\n"
+     << QY_ALL_SPECIMENS              << "\n\n"
+     << QY_SPECIMENS_IN_SUITE         << "\n\n"
+     << QY_SPECIMEN                   << "\n\n"
+     << QY_SPECIMEN_BY_NAME           << "\n\n"
+     << QY_SPECIMEN_IN_SUITE_BY_NAME  << "\n\n"
+     << QY_ALL_TESTCASES              << "\n\n"
+     << QY_TESTCASES_IN_SUITE         << "\n\n"
+     << QY_NEED_CONCOLIC              << "\n\n"
+     << QY_ALL_NEED_CONCOLIC          << "\n\n"
+     << QY_NEED_CONCRETE              << "\n\n"
+     << QY_ALL_NEED_CONCRETE          << "\n\n"
+     << QY_TESTCASE                   << "\n\n"
+     << QY_TESTCASE_ARGS              << "\n\n"
+     << QY_TESTCASE_ENV               << "\n\n"
+     << QY_TESTCASE_SPECIMEN          << "\n\n"
+     << QY_NEW_TESTSUITE              << "\n\n"
+     << QY_UPD_TESTSUITE              << "\n\n"
+     << QY_NEW_SPECIMEN               << "\n\n"
+     << QY_UPD_SPECIMEN               << "\n\n"
+     << QY_NEW_TESTCASE               << "\n\n"
+     << QY_UPD_TESTCASE               << "\n\n"
+     << QY_RM_TESTCASE_EVAR           << "\n\n"
+     << QY_NEW_TESTCASE_EVAR          << "\n\n"
+     << QY_ENVVAR_ID                  << "\n\n"
+     << QY_NEW_ENVVAR                 << "\n\n"
+     << QY_RM_TESTCASE_CARG           << "\n\n"
+     << QY_NEW_TESTCASE_CARG          << "\n\n"
+     << QY_NEW_TESTSUITE_TESTCASE     << "\n\n"
+     << QY_CMDLINEARG_ID              << "\n\n"
+     << QY_NEW_CMDLINEARG             << "\n\n"
+     << QY_NUM_RBAFILES               << "\n\n"
+     << QY_NEW_RBAFILE                << "\n\n"
+     << QY_RBAFILE                    << "\n\n"
+     << QY_RM_RBAFILE                 << "\n\n"
+     << QY_NEW_CONCRETE_RES           << "\n\n"
+     << QY_LAST_ROW_SQLITE3           ;
 }
 
 
