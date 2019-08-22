@@ -54,11 +54,12 @@ namespace Rose { namespace BinaryAnalysis { namespace Concolic {
 
 struct InvocationDesc
 {
-  std::string specimen;
-  Arguments   arguments;
+  Crsh::specimenreuse reusenote;
+  std::string         specimen;
+  Arguments           arguments;
 
-  InvocationDesc(const std::string& sp, const Arguments& args)
-  : specimen(sp), arguments(args)
+  InvocationDesc(Crsh::specimenreuse reuse, const std::string& sp, const Arguments& args)
+  : reusenote(reuse), specimen(sp), arguments(args)
   {}
 };
 
@@ -106,30 +107,12 @@ rtrim(const std::string& str, const std::string& chars = "\t\n\v\f\r ")
 static inline
 std::string conv(const char* str)
 {
+  ASSERT_not_null(str);
+
   std::string res(str);
 
   free(const_cast<char*>(str));
   return res;
-}
-
-template <class T>
-static
-typename T::Ptr
-byName( Crsh::Database::Ptr& db,
-        const std::string& s,
-        Rose::BinaryAnalysis::Concolic::ObjectId<T> id,
-        bool createMissingEntry = true
-      )
-{
-  if (id) return db->object(id);
-
-  if (!createMissingEntry) return typename T::Ptr();
-
-  // if not in the database already, create it from a file
-  typename T::Ptr obj = T::instance(s);
-
-  db->id(obj);
-  return obj;
 }
 
 //
@@ -240,14 +223,44 @@ currentEnvironment()
 //
 // Crsh implementation
 
+Crsh::expectation
+expectationNote(const char* expect)
+{
+  if (expect == nullptr) return Crsh::none;
+
+  std::string note = conv(expect);
+
+  if ("success" == note) return Crsh::success;
+  if ("failure" == note) return Crsh::failure;
+
+  std::cerr << "unexpected expectation note: " << note << std::endl;
+  exit(1);
+}
+
+Crsh::specimenreuse
+reuseNote(const char* reusenote)
+{
+  if (reusenote == nullptr) return Crsh::defaultreuse;
+
+  std::string note = conv(reusenote);
+
+  if ("unique"    == note) return Crsh::unique;
+  if ("duplicate" == note) return Crsh::duplicate;
+
+  std::cerr << "unexpected reuse note: " << note << std::endl;
+  exit(1);
+}
+
+
 void Crsh::closedb()
 {
   db = Sawyer::Nothing();
 }
 
-void Crsh::connectdb(const char* dburl, expectation exp)
+void Crsh::connectdb(const char* dburl, const char* expect)
 {
   std::string url   = conv(dburl);
+  expectation exp   = expectationNote(expect);
   expectation state = success;
 
   try
@@ -331,18 +344,6 @@ void Crsh::echo_var(const char* id)
 }
 */
 
-Crsh::expectation
-Crsh::annotate(const char* expect)
-{
-  std::string note = conv(expect);
-
-  if ("success" == note) return success;
-  if ("failure" == note) return failure;
-
-  std::cerr << "unexpected note: " << note << std::endl;
-  exit(1);
-}
-
 char* Crsh::unquoteString(const char* str)
 {
   size_t len   = strlen(str)-1;
@@ -369,13 +370,14 @@ Crsh::args(Arguments* arglst, const std::string* argument) const
 }
 
 InvocationDesc*
-Crsh::invoke(const char* specimen, Arguments* args) const
+Crsh::invoke(const char* note, const char* specimen, Arguments* args) const
 {
+  Crsh::specimenreuse      reuse        = reuseNote(note);
   std::string              specimenname = conv(specimen);
   std::auto_ptr<Arguments> arguments(args);
 
   specimenname = findExecutable(bstfs::path(specimenname)).native();
-  return new InvocationDesc(specimenname, *args);
+  return new InvocationDesc(reuse, specimenname, *args);
 }
 
 template <class T>
@@ -387,19 +389,20 @@ std::vector<T> mkVector(const std::list<T>& lst)
 
 
 void
-Crsh::test(const char* ts, const char* tst, expectation exp, Environment* env, InvocationDesc* inv)
+Crsh::test(const char* ts, const char* tst, const char* expct, Environment* env, InvocationDesc* inv)
 {
   std::string                   suitename = conv(ts);
   std::string                   testname  = conv(tst);
+  expectation                   exp       = expectationNote(expct);
   std::auto_ptr<Environment>    envguard(env);
   std::auto_ptr<InvocationDesc> invguard(inv);
-  expectation                   state = success;
+  expectation                   state     = success;
   std::string                   failureMessage;
 
   try
   {
     // get the object for the specimen's name
-    Specimen::Ptr               specobj = specimen(inv->specimen);
+    Specimen::Ptr               specobj = specimen(inv->specimen, inv->reusenote);
     TestCase::Ptr               test    = TestCase::instance(specobj);
 
     test->name(testname);
@@ -409,7 +412,7 @@ Crsh::test(const char* ts, const char* tst, expectation exp, Environment* env, I
     TestCaseId                  id        = db->id(test);
     TestSuite::Ptr              suite_obj = testSuite(suitename);
     if (!suite_obj) {
-        // I'm not sure if this is correct, but if the test suite doesn't exist then create it. [Robb Matzke 2019-08-14]
+        // if the test suite doesn't exist then create it. [Robb Matzke 2019-08-14]
         suite_obj = TestSuite::instance(suitename);
     }
     ASSERT_not_null(suite_obj);
@@ -442,24 +445,54 @@ Crsh::test(const char* ts, const char* tst, expectation exp, Environment* env, I
 }
 
 
+template <class T>
+static
+typename T::Ptr
+byName( Crsh::Database::Ptr& db,
+        const std::string& s,
+        Rose::BinaryAnalysis::Concolic::ObjectId<T> id,
+        bool createMissingEntry = true
+      )
+{
+  if (id) return db->object(id);
+
+  if (!createMissingEntry) return typename T::Ptr();
+
+  // if not in the database already, create it from a file
+  typename T::Ptr obj = T::instance(s);
+
+  db->id(obj);
+  return obj;
+}
+
+
 
 Crsh::Specimen::Ptr
-Crsh::specimen(const std::string& specimen_name)
+Crsh::specimen(const std::string& specimen_name, specimenreuse reuse)
 {
-    // The original implementation of this function used Database::specimen(const std::string&), which returned either an empty
-    // SpecimenId or a single (first?) matching SpecimenId.  Database::specimen was replaced by Database::findSpecimensByName
-    // (ROSE-2176) which returns a vector of matching specimens within the database's current test suite (or all matching
-    // specimens if no current test suite). Since Crsh is used only for testing and none of the test cases currently handle
-    // multiple specimens having the same name, I'm just asserting that only zero or one specimen is found. I'm also not sure
-    // that calling "byName" with an empty specimen ID is the right thing to do when no matching specimen is found, but that
-    // was the original behavior. [Robb Matzke 2019-08-14]
-    std::vector<SpecimenId> found = db->findSpecimensByName(specimen_name);
-    if (found.empty()) {
-        return byName(db, specimen_name, SpecimenId());
-    } else {
-        ASSERT_always_require(found.size() == 1);
-        return byName(db, specimen_name, found[0]);
+    if (duplicate == reuse)
+    {
+      Specimen::Ptr specimen = Specimen::instance(specimen_name);
+
+      db->id(specimen);
+      return specimen;
     }
+
+    ROSE_ASSERT(unique == reuse);
+    std::vector<SpecimenId> found = db->findSpecimensByName(specimen_name);
+
+    if (found.empty())
+    {
+      Specimen::Ptr specimen = Specimen::instance(specimen_name);
+
+      db->id(specimen);
+      return specimen;
+    }
+
+    if (found.size() > 1)
+      throw std::runtime_error("specimen name is not unique");
+
+    return db->object(found.at(0));
 }
 
 
@@ -555,9 +588,10 @@ struct TestCaseStarter
 };
 
 
-void Crsh::runTest(const char* testsuite, int num, expectation expct)
+void Crsh::runTest(const char* testsuite, int num, const char* expect)
 {
   TestSuite::Ptr suite;
+  expectation    expct = expectationNote(expect);
 
   if (num < 0) num = 1;
 

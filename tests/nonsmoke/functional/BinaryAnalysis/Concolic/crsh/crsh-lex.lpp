@@ -27,7 +27,7 @@ extern "C" int yywrap(void) { return 1; }
                                }
 "{"                            return LBLK;
 "}"                            return RBLK;
-"@"                            return EXPECT;
+"@"                            return NOTE;
 "$"                            return VAR;
 "="                            return EQUAL;
 [0-9]+                         {

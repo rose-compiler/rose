@@ -1418,9 +1418,10 @@ insertDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj)
   static const std::string exec = "linux";
 
   const int       specimenId  = db.id_ns(tx, obj->specimen()).get();
-  SqlStatementPtr stmt = sqlPrepare(tx, QY_NEW_TESTCASE, specimenId, obj->name(), exec);
 
-  stmt->execute();
+  sqlPrepare(tx, QY_NEW_TESTCASE, specimenId, obj->name(), exec)
+    ->execute();
+
   const int       testcaseId  = sqlLastRowId(tx);
 
   dependentObjInsert(tx, testcaseId, obj);
@@ -1430,17 +1431,15 @@ insertDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj)
 void
 updateDBObject(Concolic::Database& db, SqlTransactionPtr& tx, TestSuite::Ptr obj, TestSuiteId id)
 {
-  SqlStatementPtr stmt = sqlPrepare(tx, QY_UPD_TESTSUITE, obj->name(), id.get());
-
-  stmt->execute();
+  sqlPrepare(tx, QY_UPD_TESTSUITE, obj->name(), id.get())
+    ->execute();
 }
 
 void
 updateDBObject(Concolic::Database& db, SqlTransactionPtr& tx, Specimen::Ptr obj, SpecimenId id)
 {
-  SqlStatementPtr stmt = sqlPrepare(tx, QY_UPD_SPECIMEN, obj->name(), obj->content(), id.get());
-
-  stmt->execute();
+  sqlPrepare(tx, QY_UPD_SPECIMEN, obj->name(), obj->content(), id.get())
+    ->execute();
 }
 
 void

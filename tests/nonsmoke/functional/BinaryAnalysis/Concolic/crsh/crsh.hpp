@@ -27,8 +27,10 @@ struct Crsh
 
     enum expectation { none, success, failure };
 
+    enum specimenreuse { duplicate, unique, defaultreuse = unique };
+
     // database
-    void connectdb(const char* db, expectation);
+    void connectdb(const char* db, const char* expect);
     void createdb(const char* db);
     void createdb(const char* db, const char* testsuite);
     void closedb();
@@ -46,7 +48,7 @@ struct Crsh
     Arguments* args(Arguments* arglst, const std::string* val) const;
 
     // invocation description
-    InvocationDesc* invoke(const char*, Arguments* args) const;
+    InvocationDesc* invoke(const char* note, const char* specimen, Arguments* args) const;
 
     // removes quotes from the string
     char* unquoteString(const char* str);
@@ -54,19 +56,16 @@ struct Crsh
     // test definition
     void test( const char*     suite,
                const char*     test,
-               expectation     expct,
+               const char*     expct,
                Environment*    envp,
                InvocationDesc* invocation
              );
 
     void runTestcase(TestCaseId testcaseId, expectation expct);
-    void runTest(const char* testsuitename, int cnt, expectation expct);
+    void runTest(const char* testsuitename, int cnt, const char* expect);
 
     // immediately invokes the described program
     void execute(InvocationDesc* invocation);
-
-    // converts a string into an annotation
-    expectation annotate(const char*);
 
     void parse();
 
@@ -74,7 +73,18 @@ struct Crsh
     std::ostream& err() const { return std::cerr; }
 
   private:
-    Specimen::Ptr  specimen (const std::string& s);
+    //! Returns  a specimen for the given name.
+    //! \param   s the name of the specimen
+    //! \param   reuse controls if a specimen in the database may be reused
+    //! \throws  an std::runtime_error if reuse == unique and multiple specimens
+    //!          with the same name already exist in the DB.
+    //! \details If reuse is set to @ref unique (the default), crsh reuses a specimen
+    //!          entry if the name occurs a single time (unique) in the DB.
+    //!          If multiple specimen with the same name are present an exception
+    //!          is thrown.
+    //!          If no specimen with the given name exists or reuse is set to
+    //!          @ref duplicate a new entry in the DB is created.
+    Specimen::Ptr  specimen (const std::string& s, specimenreuse reuse);
     TestSuite::Ptr testSuite(const std::string& s, bool createMissingEntry = true);
 
   private:
