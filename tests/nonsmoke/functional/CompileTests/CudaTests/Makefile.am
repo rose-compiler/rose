@@ -13,12 +13,13 @@ LDADD = $(ROSE_LIBS)
 
 CUDA_NO_BUILTIN_CODES = \
 test_2011_01.cu \
-test_2011_02.cu
+test_2011_02.cu \
+rose-2123.cu
 
 CUDA_NO_BUILTIN_CODES_Objects = ${CUDA_NO_BUILTIN_CODES:.cu=.o}
 
 $(CUDA_NO_BUILTIN_CODES_Objects): ../../testTranslator
-	../../testTranslator -rose:skipfinalCompileStep -c $(srcdir)/$(@:.o=.cu)
+	../../testTranslator -DSKIP_ROSE_BUILTIN_DECLARATIONS -rose:skipfinalCompileStep -c $(srcdir)/$(@:.o=.cu)
 
 CUDA_CODES = \
 test_2011_11.cu \

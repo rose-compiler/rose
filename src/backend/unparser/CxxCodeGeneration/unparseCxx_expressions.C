@@ -385,24 +385,6 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
         }
      curprint("] ");
 
-  // DQ (1/24/2016): Before the function is output, we want to support an experimental "__device__" keyword.
-  // Find the associated function where this SgLambdaExp is a function argument.  Note that it might be 
-  // better to support this as a transformation instead of directly in the unparser.  But then I would have
-  // to explicitly mark the lambdaExp.
-#if 1
-     bool lambaFunctionMarkedAsDevice = lambdaExp->get_is_device();
-     if (lambaFunctionMarkedAsDevice == true)
-        {
-#if 0
-          printf ("Use the __device__ keyword in the unparsed code \n");
-#endif
-          curprint(" __device__ ");
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
-#endif
-        }
-#endif
      SgFunctionDeclaration* lambdaFunction =  lambdaExp->get_lambda_function();
      ROSE_ASSERT(lambdaFunction != NULL);
      ROSE_ASSERT(lambdaFunction->get_firstNondefiningDeclaration() != NULL);
@@ -413,6 +395,16 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      printf ("lambdaFunction->get_firstNondefiningDeclaration() = %p = %s \n",lambdaFunction->get_firstNondefiningDeclaration(),lambdaFunction->get_firstNondefiningDeclaration()->class_name().c_str());
      printf ("lambdaFunction->get_definingDeclaration()         = %p = %s \n",lambdaFunction->get_definingDeclaration(),lambdaFunction->get_definingDeclaration()->class_name().c_str());
 #endif
+
+     if (lambdaFunction->get_functionModifier().isCudaHost()) {
+       curprint("__host__ ");
+     }
+     if (lambdaFunction->get_functionModifier().isCudaKernel()) {
+       curprint("__global__ ");
+     }
+     if (lambdaFunction->get_functionModifier().isCudaDevice()) {
+       curprint("__device__ ");
+     }
 
      if (lambdaExp->get_has_parameter_decl() == true)
         {
@@ -446,7 +438,7 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
 
      if (lambdaExp->get_explicit_return_type() == true)
         {
-#if 0
+#if 1
           curprint(" -> ");
 #else
        // DQ (7/5/2018): Debugging test2018_120.C.

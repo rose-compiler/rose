@@ -6233,7 +6233,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                commandLine.push_back(header_path + "/cuda_HEADERS/preinclude-cuda.h");
 
 #ifdef CUDA_INC_DIR
-               printf("Add --sys_include %s\n", CUDA_INC_DIR);
                commandLine.push_back(std::string("--sys_include"));
                commandLine.push_back(std::string(CUDA_INC_DIR));
 #endif
