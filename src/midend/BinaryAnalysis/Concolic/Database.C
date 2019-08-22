@@ -426,6 +426,7 @@ namespace BinaryAnalysis {
     QY_MK_TESTCASES       = "CREATE TABLE \"TestCases\" ("
                             "  \"id\" int PRIMARY KEY,"
                             "  \"specimen_id\" int NOT NULL,"
+                            "  \"testsuite_id\" int,"
                             "  \"name\" varchar(128),"
                             "  \"executor\" varchar(128) CHECK(executor = \"linux\"),"
                             "  \"concrete_result\" float,"
@@ -480,6 +481,7 @@ namespace BinaryAnalysis {
                             " CONSTRAINT \"pk_testcasevar\" PRIMARY KEY (\"testcase_id\", \"envvar_id\")"
                             ");";
 
+/*
     static const
     SqlQuery<> QY_MK_TESTSUITE_TESTCASE =
                             "CREATE TABLE \"TestSuiteTestCases\" ("
@@ -489,6 +491,7 @@ namespace BinaryAnalysis {
                             " CONSTRAINT \"fk_testsuite_children\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\"),"
                             " CONSTRAINT \"pk_testsuite_members\" PRIMARY KEY (\"testsuite_id\", \"testcase_id\")"
                             ");";
+*/
 
     static const
     SqlQuery<>
@@ -525,10 +528,9 @@ namespace BinaryAnalysis {
 
     static const
     SqlQuery<bt::tuple<int>::inherited >
-    QY_SPECIMENS_IN_SUITE = "SELECT DISTINCT tc.specimen_id"
-                            "  FROM TestCases tc, TestSuiteTestCases tt"
-                            " WHERE tc.rowid = tt.testcase_id"
-                            "   AND tt.testsuite_id = " + SqlInt() + ";";
+    QY_SPECIMENS_IN_SUITE = "SELECT DISTINCT specimen_id"
+                            "  FROM TestCases"
+                            " WHERE testsuite_id = " + SqlInt() + ";";
 
     static const
     SqlQuery<bt::tuple<int>::inherited>
@@ -544,10 +546,9 @@ namespace BinaryAnalysis {
     SqlQuery<bt::tuple<int, std::string>::inherited>
     QY_SPECIMEN_IN_SUITE_BY_NAME
                           = "SELECT sp.rowid"
-                            "  FROM Specimens sp, TestCases tc, TestSuiteTestCases tt"
+                            "  FROM Specimens sp, TestCases tc"
                             " WHERE sp.rowid = tc.specimen_id"
-                            "   AND tc.rowid = tt.testcase_id"
-                            "   AND tt.testsuite_id = " + SqlInt() +
+                            "   AND tc.testsuite_id = " + SqlInt() +
                             "   AND sp.name = " + SqlString() + ";";
 
     static const
@@ -556,18 +557,16 @@ namespace BinaryAnalysis {
 
     static const
     SqlQuery<bt::tuple<int>::inherited>
-    QY_TESTCASES_IN_SUITE = "SELECT tc.rowid"
-                             "  FROM TestCases tc, TestSuiteTestCases tt"
-                             " WHERE tc.rowid = tt.testcase_id"
-                             "   AND tt.testsuite_id = " + SqlInt() + ";";
+    QY_TESTCASES_IN_SUITE = "SELECT rowid"
+                             "  FROM TestCases"
+                             " WHERE testsuite_id = " + SqlInt() + ";";
 
     static const
     SqlQuery<bt::tuple<int, int>::inherited>
-    QY_NEED_CONCOLIC      = "SELECT tc.rowid"
-                            "  FROM TestCases tc, TestSuiteTestCases tt"
-                            " WHERE tc.concolic_result = 0"
-                            "   AND tc.rowid = tt.testcase_id"
-                            "   AND tt.testsuite_id = " + SqlInt() +
+    QY_NEED_CONCOLIC      = "SELECT rowid"
+                            "  FROM TestCases"
+                            " WHERE concolic_result = 0"
+                            "   AND testsuite_id = " + SqlInt() +
                             " LIMIT " + SqlInt() + ";";
 
     static const
@@ -587,11 +586,10 @@ namespace BinaryAnalysis {
     static const
     SqlQuery<bt::tuple<int, int>::inherited>
     QY_NEED_CONCRETE      = "SELECT tc.rowid"
-                            "  FROM TestCases tc, TestSuiteTestCases tt"
-                            " WHERE tc.rowid = tt.testcase_id"
-                            "   AND tt.testsuite_id = " + SqlInt() +
+                            "  FROM TestCases tc"
+                            " WHERE tc.testsuite_id = " + SqlInt() +
                             "   AND NOT" + HAS_CONCRETE_RESULTS +
-                            " ORDER BY tc.concrete_result ASC"
+                            " ORDER BY concrete_result ASC"
                             " LIMIT " + SqlInt() + ";";
 
     static const
@@ -705,9 +703,9 @@ namespace BinaryAnalysis {
 
     static const
     SqlQuery<bt::tuple<int, int>::inherited>
-    QY_NEW_TESTSUITE_TESTCASE = "INSERT INTO TestSuiteTestCases"
-                                "  (testsuite_id, testcase_id)"
-                                "  VALUES(" + SqlInt() + "," + SqlInt() + ");";
+    QY_NEW_TESTSUITE_TESTCASE = "UPDATE TestCases"
+                                "   SET testsuite_id = " + SqlInt() +
+                                " WHERE rowid = " + SqlInt() + ";";
 
     static const
     SqlQuery<bt::tuple<std::string>::inherited>
@@ -1164,7 +1162,7 @@ void initializeDB(SqlTransactionPtr tx)
   sqlPrepare(tx, QY_MK_ENVVARS)->execute();
   sqlPrepare(tx, QY_MK_TESTCASE_ARGS)->execute();
   sqlPrepare(tx, QY_MK_TESTCASE_EVAR)->execute();
-  sqlPrepare(tx, QY_MK_TESTSUITE_TESTCASE)->execute();
+  //~ sqlPrepare(tx, QY_MK_TESTSUITE_TESTCASE)->execute();
   sqlPrepare(tx, QY_MK_RBA_FILES)->execute();
   sqlPrepare(tx, QY_MK_CONCRETE_RES)->execute();
 }
@@ -1934,7 +1932,7 @@ void writeDBSchema(std::ostream& os)
      << QY_MK_ENVVARS            << "\n\n"
      << QY_MK_TESTCASE_ARGS      << "\n\n"
      << QY_MK_TESTCASE_EVAR      << "\n\n"
-     << QY_MK_TESTSUITE_TESTCASE << "\n\n"
+     //~ << QY_MK_TESTSUITE_TESTCASE << "\n\n"
      << QY_MK_RBA_FILES          << "\n\n"
      << QY_MK_CONCRETE_RES       ;
 }
