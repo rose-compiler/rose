@@ -96,7 +96,7 @@ arguments_opt    : /* empty */                  { $$ = crsh().args();       }
 specimen         : string                       { $$ = $1; }
                  ;
 
-annotation_opt   : /* empty */                  { $$ = nullptr; }
+annotation_opt   : /* empty */                  { $$ = NULL; }
                  | NOTE string                  { $$ = $2;      }
                  ;
 
