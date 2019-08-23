@@ -6,11 +6,15 @@ struct remove_reference
 
 template<typename _Tp>
 constexpr _Tp&&
-forward(typename remove_reference<_Tp>::type& __t) {}
+forward(typename remove_reference<_Tp>::type& __t) {
+  return static_cast<_Tp&&>(__t);
+}
 
 template<typename _Tp>
 constexpr typename remove_reference<_Tp>::type&&
-move(_Tp&& __t) {}
+move(_Tp&& __t) {
+  return static_cast<typename remove_reference<_Tp>::type &&>(__t);
+}
 
 template <typename T>
 struct return_type
