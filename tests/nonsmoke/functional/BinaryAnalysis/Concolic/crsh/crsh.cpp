@@ -226,7 +226,7 @@ currentEnvironment()
 Crsh::expectation
 expectationNote(const char* expect)
 {
-  if (expect == nullptr) return Crsh::none;
+  if (!expect) return Crsh::none;
 
   std::string note = conv(expect);
 
@@ -240,7 +240,7 @@ expectationNote(const char* expect)
 Crsh::specimenreuse
 reuseNote(const char* reusenote)
 {
-  if (reusenote == nullptr) return Crsh::defaultreuse;
+  if (!reusenote) return Crsh::defaultreuse;
 
   std::string note = conv(reusenote);
 
