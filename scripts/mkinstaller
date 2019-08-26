@@ -22,11 +22,11 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "5";
-$mkinstaller_ver_build = "7";
+$mkinstaller_ver_build = "8";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.5.7";
-$mkinstaller_ver_time  = "31Jul2019,06:31:59z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.7 - 31Jul2019,06:31:59z";
+$mkinstaller_ver_name  = "2.5.8";
+$mkinstaller_ver_time  = "23Aug2019,15:52:53z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.8 - 23Aug2019,15:52:53z";
 
 #{------------------------------------------------------------------------------
 #
@@ -2795,7 +2795,18 @@ if ($valueOfDebugVar ne "") {
       print STDERR "mkinstaller: version ".$mkinstaller_ver_name." rev. ".$mkinstaller_ver_time."\n";
       print STDERR "mkinstaller: ...running at \"".$FancyStart."\"\n";
       if ($OSname ne "") {
-         print STDERR "mkinstaller: ...running on \"".$OSname."\"\n";
+         if ($OSclass ne "") {
+            print STDERR "mkinstaller: ...running on \"".$OSname."\" (is \"".$OSclass."\")\n";
+         }
+         else {
+            print STDERR "mkinstaller: ...running on \"".$OSname."\"\n";
+         }
+      }
+      elsif ($OSclass ne "") {
+         print STDERR "mkinstaller: ...running on \"".$OSclass."\" host\n";
+      }
+      else {
+         print STDERR "mkinstaller: ...running on an unknown type of system\n";
       }
       print STDERR "mkinstaller: ...running from \"".$here."\"\n";
       if ($ProjectName ne "") {
@@ -12487,15 +12498,11 @@ EOF67
                $cmd = "cat \"$TmpFile\" > \"$scriptName\"";
             }
             print DBGOUT "mkinstaller:    run [$cmd]\n" if $debugging;
-            $status = system "( $cmd ) 2>$TmpFileE";
+            $status = system "( $cmd )";
             if ($status != 0) {
                print DBGOUT "mkinstaller:    ...failed\n" if $debugging;
                print STDERR "mkinstaller: error: can't form \"$scriptName\"\n";
                print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
-               if (( -f $TmpFileE) && ( -s $TmpFileE)) {
-                  dumpTextfileToSTDERR($TmpFileE,"mkinstaller:    ");
-               }
-               unlink($TmpFileE);
                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                close DBGOUT if $dbgOutToPathname ne "";
                exit 1;
@@ -12506,10 +12513,6 @@ EOF67
                print STDERR "mkinstaller: error: didn't form \"$scriptName\"\n";
                print STDERR "mkinstaller: ...[$cmd] failed\n";
                print STDERR "mkinstaller: ...can't find \"$scriptName\"\n";
-               if (( -f $TmpFileE) && ( -s $TmpFileE)) {
-                  dumpTextfileToSTDERR($TmpFileE,"mkinstaller:    ");
-               }
-               unlink($TmpFileE);
                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                close DBGOUT if $dbgOutToPathname ne "";
                exit 1;
@@ -12517,7 +12520,6 @@ EOF67
             else {
                print DBGOUT "mkinstaller:       generated \"$scriptName\"\n" if $debugging;
             }
-            unlink($TmpFileE);
             if ($debugging) {
                print DBGOUT "mkinstaller: ...the generated script\n" if $debugging;
                system "pwd";
@@ -13109,6 +13111,7 @@ EOF67
          print DBGOUT "mkinstaller.cleanupTemps: ...not keeping\n" if $debugging;
          print STDERR "mkinstaller: ...cleanup\n" if (1 <= $verbosityLevel);
          if ( -d "$myTmpDirT") {
+            my $first = 1;
             my $count = 8;
             while ( -d "$myTmpDirT") {
                print DBGOUT "mkinstaller.cleanupTemps:    have \"$myTmpDirT\" directory\n" if $debugging;
@@ -13118,6 +13121,10 @@ EOF67
                   last;
                }
                else {
+                  if ($first) {
+                     $first = 0;
+                     print STDERR "mkinstaller:    \"".nativePathname($myTmpDirT)."\"\n" if (1 <= $verbosityLevel);
+                  }
                   shouldDeletePathname("mkinstaller: ",$myTmpDirT);
                }
             }
@@ -17051,7 +17058,10 @@ sub convertTimeToDateTime {
 #
 #  see: totebag/src/perl-lib/deletePathnames.psub
 #
-#  Uses: This function appears to be a lot more complex than neccessary. It
+#  Uses: basename()
+#        getOSclass()
+#        getWorkingDirectory()
+#        joinpath()
 #
 #  Note: This function appears to be a lot more complex than neccessary. It
 #        not only requests that given pathnames (and recursive contents) be
@@ -17061,7 +17071,7 @@ sub convertTimeToDateTime {
 #        a what should be empty directory from being removed (it doesn't look
 #        empty).
 #
-#  Dated: 20Oct2018
+#  Dated: 23Aug2019
 #
 #-------------------------------------------------------------------------------
 
@@ -18087,7 +18097,7 @@ sub fixpath {
 #
 #  This function is used to determine the OS class of of the host system.
 #
-#  Returns: Any of:
+#  Returns: One of:
 #
 #              "UNIX-like"
 #              "Windows-like"
@@ -18095,7 +18105,7 @@ sub fixpath {
 #
 #  see: totebag/src/perl-lib/getOSclass.psub
 #
-#  Dated: 11May2017
+#  Dated: 23Aug2019
 #
 #-------------------------------------------------------------------------------
 
@@ -18106,7 +18116,7 @@ sub getOSclass {
    #  First try to use a (fast) direct
    #  method...
    #
-   my $theOSname = $^O;
+   my $theOSname = $^O; # 23Aug2019
    if ($theOSname =~ /^linux$/) {
       $result = "UNIX-like";
    }
@@ -18133,6 +18143,15 @@ sub getOSclass {
    }
    elsif ($theOSname =~ /^irix$/) {
       $result = "UNIX-like";
+   }
+   elsif ($theOSname =~ /^msys$/) {
+      $result = "Windows-like";
+   }
+   elsif ($theOSname =~ /^dos$/) {
+      $result = "Windows-like";
+   }
+   elsif ($theOSname =~ /^os2$/) {
+      $result = "Windows-like";
    }
    else {
       #---------------------------------------
@@ -18875,8 +18894,6 @@ sub lookForExecutable {
 #                      makePathWindowslike()
 #
 #  see: totebag/src/perl-lib/makePathNative.psub
-#
-#  Dated: 04May2016
 #
 #-------------------------------------------------------------------------------
 
