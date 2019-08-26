@@ -16,6 +16,9 @@
 #ifndef DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__base
 #define DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__base DEBUG__Typeforge__OperandData
 #endif
+#ifndef DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__member_access
+#  define DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__member_access DEBUG__Typeforge__OperandData
+#endif
 #ifndef DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__base__build_qualname_for_non_named_scopes
 #  define DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__base__build_qualname_for_non_named_scopes 0
 #endif
@@ -33,24 +36,27 @@ OperandData<OperandKind::base>::OperandData(SgLocatedNode * const __lnode, Opera
   column_start(lnode->get_startOfConstruct()->get_raw_col()),
   line_end(lnode->get_endOfConstruct()->get_raw_line()),
   column_end(lnode->get_endOfConstruct()->get_raw_col()),
-  predeccessors(),
-  successors(),
   can_be_changed(true),
   from_system_files(false),
-  casts()
+  casts(),
+  edge_labels()
 {
 #if DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__base
   std::cout << "Typeforge::OperandData<OperandKind::base>::OperandData" << std::endl;
-  std::cout << "  opkind = " << opkind << std::endl;
-  std::cout << "  lnode  = " << lnode  << " (" << ( lnode ? lnode->class_name() : "") << ")" << std::endl;
+  std::cout << "  lnode = " << lnode  << " (" << ( lnode ? lnode->class_name() : "") << ")" << std::endl;
+  std::cout << "    parent = " << lnode->get_parent()  << " (" << ( lnode->get_parent() ? lnode->get_parent()->class_name() : "") << ")" << std::endl;
 #endif
 
-  if (filename.find("rose_edg_required_macros_and_functions.h") != std::string::npos) {
-    from_system_files = true;
-  }
-
-  if (from_system_files) {
-    can_be_changed = false;
+  if (filename == "compilerGenerated" || filename == "NULL_FILE") {
+    SgDeclarationStatement * declstmt = isSgDeclarationStatement(lnode);
+    declstmt = declstmt ? declstmt->get_definingDeclaration() : nullptr;
+    if (declstmt != nullptr) {
+      filename = declstmt->get_endOfConstruct()->get_filenameString();
+      line_start = declstmt->get_startOfConstruct()->get_raw_line();
+      column_start = declstmt->get_startOfConstruct()->get_raw_col();
+      line_end = declstmt->get_endOfConstruct()->get_raw_line();
+      column_end = declstmt->get_endOfConstruct()->get_raw_col();
+    }
   }
 
   // TODO get paths through:
@@ -151,20 +157,37 @@ OperandData<OperandKind::base>::OperandData(SgLocatedNode * const __lnode, Opera
   std::cout << "  scope         = " << scope         << " (" << ( scope         ? scope->class_name()          : "") << ")" << std::endl;
 #endif
 
-  SgScopeStatement * ascope = isSgScopeStatement(scope);
+  SgStatement * ascope = isSgScopeStatement(scope);
   assert(scope == nullptr || ascope != nullptr);
 
   while ( ascope && !isSgFunctionDefinition(ascope) && !isSgClassDefinition(ascope) && !isSgNamespaceDefinitionStatement(ascope) && !isSgGlobal(ascope) ) {
 
 #if DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__base
-    std::cout << "  -> ascope  = " << ascope << " (" << ascope->class_name() << ")" << std::endl;
+    std::cout << "  WHILE" << std::endl;
+    std::cout << "  -> ascope = " << ascope << " (" << ascope->class_name() << ")" << std::endl;
+    std::cout << "       parent = " << ascope->get_parent() << " (" << ascope->get_parent()->class_name() << ")" << std::endl;
+    std::cout << "         parent = " << ascope->get_parent()->get_parent() << " (" << ascope->get_parent()->get_parent()->class_name() << ")" << std::endl;
+    std::cout << "           parent = " << ascope->get_parent()->get_parent()->get_parent() << " (" << ascope->get_parent()->get_parent()->get_parent()->class_name() << ")" << std::endl;
 #endif
 
-    SgScopeStatement * pscope = ascope->get_scope();
+    SgStatement * pscope = ascope->get_scope();
 
 #if DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__base
     std::cout << "  -> pscope  = " << pscope << " (" << ( pscope ? pscope->class_name() : "" ) << ")" << std::endl;
+    std::cout << "       parent = " << pscope->get_parent() << " (" << pscope->get_parent()->class_name() << ")" << std::endl;
 #endif
+
+    if (SgCatchOptionStmt * catch_stmt = isSgCatchOptionStmt(ascope)) {
+      pscope = isSgCatchStatementSeq(catch_stmt->get_parent());
+      assert(pscope != nullptr);
+#if DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__base
+      std::cout << "  -> pscope  = " << pscope << " (" << ( pscope ? pscope->class_name() : "" ) << ")" << std::endl;
+#endif
+    }
+
+    if (SgTryStmt * try_stmt = isSgTryStmt(ascope->get_parent())) {
+      pscope = try_stmt;
+    }
 
 #if DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__base__build_qualname_for_non_named_scopes
     SgFunctionDefinition * pfdefn = isSgFunctionDefinition(pscope);
@@ -172,14 +195,27 @@ OperandData<OperandKind::base>::OperandData(SgLocatedNode * const __lnode, Opera
     SgNamespaceDefinitionStatement * pndefn = isSgNamespaceDefinitionStatement(pscope);
     SgGlobal * pglob = isSgGlobal(pscope);
 #endif
-    SgBasicBlock * pbb = isSgBasicBlock(pscope);
     std::ostringstream oss;
-    if (pbb != nullptr) {
+    if (SgBasicBlock * pbb = isSgBasicBlock(pscope)) {
       auto stmts = pbb->getStatementList();
       auto it = std::find(stmts.begin(), stmts.end(), ascope);
       assert(it != stmts.end());
       auto pos = it - stmts.begin();
       oss << pos << "::";
+
+    } else if (isSgTryStmt(pscope)) {
+      oss << "try_body::";
+
+    } else if (SgCatchStatementSeq * catch_stmts_seq = isSgCatchStatementSeq(pscope)) {
+      auto stmts = catch_stmts_seq->get_catch_statement_seq();
+      auto it = std::find(stmts.begin(), stmts.end(), ascope);
+      assert(it != stmts.end());
+      auto pos = it - stmts.begin();
+      oss << "catch_" << pos << "::";
+
+      pscope = isSgTryStmt(catch_stmts_seq->get_parent());
+      assert(pscope != nullptr);
+
 #if DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__base__build_qualname_for_non_named_scopes
     } else if (pfdefn != nullptr) {
       oss << "{}::";
@@ -222,6 +258,12 @@ OperandData<OperandKind::base>::OperandData(SgLocatedNode * const __lnode, Opera
     handle = oss.str();
   }
 
+  bool builtin_decl = handle.find("::__builtin_") == 0 ||
+                      handle.find("::__sync_")    == 0 ||
+                      handle.find("::__noop")     == 0 ||
+                      handle.find("::__atomic")   == 0;
+
+
   if (isSgExpression(lnode)) {
     handle = "EXPR[" + handle + "]";
   } else if (isSgNamespaceDeclarationStatement(lnode)) {
@@ -244,7 +286,26 @@ OperandData<OperandKind::base>::OperandData(SgLocatedNode * const __lnode, Opera
 
   delete uinfo;
 
-  // TODO `can_be_changed`
+  if (
+    builtin_decl || filename == "NULL_FILE" ||
+    filename.find("rose_edg_required_macros_and_functions.h") != std::string::npos
+  ) {
+    from_system_files = true;
+  }
+
+  if (filename == "compilerGenerated" || from_system_files) {
+    can_be_changed = false;
+  }
+}
+
+static SgExpression * skipCastOperator(SgExpression * e) {
+  assert(e != nullptr);
+  while (SgCastExp * ce = isSgCastExp(e)) {
+    e = ce->get_operand_i();
+    assert(e != nullptr);
+  }
+  assert(e != nullptr);
+  return e;
 }
 
 OperandData<OperandKind::variable>::OperandData(SgVariableDeclaration * const vdecl) :
@@ -265,52 +326,162 @@ OperandData<OperandKind::parameter>::OperandData(SgInitializedName * const iname
   // TODO
 }
 
-OperandData<OperandKind::varref>::OperandData(SgVarRefExp * const vexp) :
-  OperandData<OperandKind::base>::OperandData((SgLocatedNode*)vexp, OperandKind::varref)
+OperandData<OperandKind::varref>::OperandData(SgVarRefExp * const vref) :
+  OperandData<OperandKind::base>::OperandData((SgLocatedNode*)vref, OperandKind::varref)
 {
-  // TODO
+  SgVariableSymbol * vsym = vref->get_symbol();
+  assert(vsym != nullptr);
+
+  SgInitializedName * iname = vsym->get_declaration();
+  assert(iname != nullptr);
+
+  SgVariableDeclaration * vdecl = isSgVariableDeclaration(iname->get_parent());
+  if (vdecl != nullptr) {
+    edge_labels.insert(std::pair<std::string, SgLocatedNode *>("decl", vdecl));
+  } else {
+    edge_labels.insert(std::pair<std::string, SgLocatedNode *>("decl", iname));
+  }
 }
 
-OperandData<OperandKind::fref>::OperandData(SgFunctionRefExp * const vexp) :
-  OperandData<OperandKind::base>::OperandData((SgLocatedNode*)vexp, OperandKind::fref)
+OperandData<OperandKind::fref>::OperandData(SgFunctionRefExp * const fref) :
+  OperandData<OperandKind::base>::OperandData((SgLocatedNode*)fref, OperandKind::fref)
 {
-  // TODO
+  SgFunctionSymbol * fsym = fref->get_symbol_i();
+  assert(fsym != nullptr);
+
+  SgDeclarationStatement * declstmt = fsym->get_declaration();
+  assert(declstmt != nullptr);
+
+  declstmt = declstmt->get_firstNondefiningDeclaration();
+  assert(declstmt != nullptr);
+
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("decl", declstmt));
+}
+
+OperandData<OperandKind::thisref>::OperandData(SgThisExp * const thisexp) :
+  OperandData<OperandKind::base>::OperandData((SgLocatedNode*)thisexp, OperandKind::thisref)
+{
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("decl", nullptr));
+}
+
+OperandData<OperandKind::fref>::OperandData(SgMemberFunctionRefExp * const mfref) :
+  OperandData<OperandKind::base>::OperandData((SgLocatedNode*)mfref, OperandKind::fref)
+{
+  SgFunctionSymbol * fsym = mfref->get_symbol_i();
+  assert(fsym != nullptr);
+
+  SgDeclarationStatement * declstmt = fsym->get_declaration();
+  assert(declstmt != nullptr);
+
+  declstmt = declstmt->get_firstNondefiningDeclaration();
+  assert(declstmt != nullptr);
+
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("decl", declstmt));
 }
 
 OperandData<OperandKind::value>::OperandData(SgValueExp * const vexp) :
   OperandData<OperandKind::base>::OperandData((SgLocatedNode*)vexp, OperandKind::value)
+{}
+
+OperandData<OperandKind::assign>::OperandData(SgBinaryOp * const bop) :
+  OperandData<OperandKind::base>::OperandData(bop, OperandKind::assign)
 {
-  // TODO
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("ref", skipCastOperator(bop->get_lhs_operand_i())));
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("val", skipCastOperator(bop->get_rhs_operand_i())));
 }
 
-OperandData<OperandKind::arithmetic>::OperandData(SgExpression * const expr) :
-  OperandData<OperandKind::base>::OperandData((SgLocatedNode*)expr, OperandKind::arithmetic)
+OperandData<OperandKind::assign>::OperandData(SgAssignInitializer * const assinit) :
+  OperandData<OperandKind::base>::OperandData(assinit, OperandKind::assign)
 {
-  // TODO
+  SgInitializedName * iname = isSgInitializedName(assinit->get_parent());
+  assert(iname != nullptr);
+  SgVariableDeclaration * vdecl = isSgVariableDeclaration(iname->get_parent());
+  if (vdecl != nullptr) {
+    edge_labels.insert(std::pair<std::string, SgLocatedNode *>("ref", vdecl));
+  } else {
+    edge_labels.insert(std::pair<std::string, SgLocatedNode *>("ref", iname));
+  }
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("val", skipCastOperator(assinit->get_operand_i())));
+}
+
+OperandData<OperandKind::unary_arithmetic>::OperandData(SgUnaryOp * const uop) :
+  OperandData<OperandKind::base>::OperandData((SgLocatedNode*)uop, OperandKind::unary_arithmetic)
+{
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("op", skipCastOperator(uop->get_operand_i())));
+}
+
+OperandData<OperandKind::binary_arithmetic>::OperandData(SgBinaryOp * const binop) :
+  OperandData<OperandKind::base>::OperandData((SgLocatedNode*)binop, OperandKind::binary_arithmetic)
+{
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("lhs", skipCastOperator(binop->get_lhs_operand_i())));
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("rhs", skipCastOperator(binop->get_rhs_operand_i())));
 }
 
 OperandData<OperandKind::call>::OperandData(SgFunctionCallExp * const fcall) :
   OperandData<OperandKind::base>::OperandData((SgLocatedNode*)fcall, OperandKind::call)
 {
-  // TODO
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("fnc", skipCastOperator(fcall->get_function())));
+  auto const & args = fcall->get_args()->get_expressions();
+  for (size_t i = 0; i < args.size(); ++i) {
+    std::ostringstream oss;
+    oss << "args[" << i << "]";
+    edge_labels.insert(std::pair<std::string, SgLocatedNode *>(oss.str(), skipCastOperator(args[i])));
+  }
 }
 
 OperandData<OperandKind::array_access>::OperandData(SgPntrArrRefExp * const arrref) :
   OperandData<OperandKind::base>::OperandData((SgLocatedNode*)arrref, OperandKind::array_access)
 {
-  // TODO
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("arr", skipCastOperator(arrref->get_lhs_operand_i())));
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("idx", skipCastOperator(arrref->get_rhs_operand_i())));
 }
 
 OperandData<OperandKind::address_of>::OperandData(SgAddressOfOp * const addof) :
   OperandData<OperandKind::base>::OperandData((SgLocatedNode*)addof, OperandKind::address_of)
 {
-  // TODO
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("obj", skipCastOperator(addof->get_operand_i())));
 }
 
 OperandData<OperandKind::dereference>::OperandData(SgPointerDerefExp * const ptrref) :
   OperandData<OperandKind::base>::OperandData((SgLocatedNode*)ptrref, OperandKind::dereference)
 {
-  // TODO
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("ref", skipCastOperator(ptrref->get_operand_i())));
+}
+
+OperandData<OperandKind::member_access>::OperandData(SgBinaryOp * const bop) :
+  OperandData<OperandKind::base>::OperandData((SgBinaryOp*)bop, OperandKind::member_access)
+{
+  assert(isSgBinaryOp(bop));
+
+#if DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__member_access
+  std::cout << "OperandData<OperandKind::member_access>::OperandData" << std::endl;
+  std::cout << "  bop = " << bop << " (" << ( bop ? bop->class_name() : "") << ")" << std::endl;
+#endif
+
+  SgExpression * lhs = bop->get_lhs_operand_i();
+#if DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__member_access
+  std::cout << " lhs = " << lhs << " (" << ( lhs ? lhs->class_name() : "") << ")" << std::endl;
+#endif
+  lhs = skipCastOperator(lhs);
+#if DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__member_access
+  std::cout << " lhs = " << lhs << " (" << ( lhs ? lhs->class_name() : "") << ")" << std::endl;
+#endif
+  
+  SgExpression * rhs = bop->get_rhs_operand_i();
+#if DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__member_access
+  std::cout << " rhs = " << rhs << " (" << ( rhs ? rhs->class_name() : "") << ")" << std::endl;
+#endif
+  rhs = skipCastOperator(rhs);
+#if DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__member_access
+  std::cout << " rhs = " << rhs << " (" << ( rhs ? rhs->class_name() : "") << ")" << std::endl;
+#endif
+
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("obj", lhs));
+  edge_labels.insert(std::pair<std::string, SgLocatedNode *>("fld", rhs));
+
+#if DEBUG__Typeforge__OperandData__CTOR__for__OperandKind__member_access
+  std::cout << " # edge_labels = " << edge_labels.size() << std::endl;
+#endif
 }
 
 OperandData<OperandKind::unknown>::OperandData(SgLocatedNode * const lnode) :
@@ -322,21 +493,29 @@ OperandData<OperandKind::base> * OperandData<OperandKind::base>::build(SgLocated
     case V_SgVariableDeclaration: {
       return new OperandData<OperandKind::variable>((SgVariableDeclaration*)node);
     }
+
     case V_SgFunctionDeclaration:
     case V_SgTemplateInstantiationFunctionDecl:
     case V_SgMemberFunctionDeclaration:
     case V_SgTemplateInstantiationMemberFunctionDecl: {  
       return new OperandData<OperandKind::function>((SgFunctionDeclaration*)node);
     }
+
     case V_SgInitializedName: {
       return new OperandData<OperandKind::parameter>((SgInitializedName*)node);
     }
+
     case V_SgVarRefExp: {
       return new OperandData<OperandKind::varref>((SgVarRefExp*)node);
     }
+
     case V_SgFunctionRefExp: {
       return new OperandData<OperandKind::fref>((SgFunctionRefExp*)node);
     }
+    case V_SgMemberFunctionRefExp: {
+      return new OperandData<OperandKind::fref>((SgMemberFunctionRefExp*)node);
+    }
+
     case V_SgBoolValExp:
     case V_SgChar16Val:
     case V_SgChar32Val:
@@ -362,21 +541,68 @@ OperandData<OperandKind::base> * OperandData<OperandKind::base>::build(SgLocated
     case V_SgWcharVal: {
       return new OperandData<OperandKind::value>((SgValueExp*)node);
     }
-    case V_SgExpression: { // TODO list handled expression variants
-      return new OperandData<OperandKind::arithmetic>((SgExpression*)node);
+
+    case V_SgAssignOp:
+    case V_SgPlusAssignOp:
+    case V_SgMinusAssignOp:
+    case V_SgMultAssignOp:
+    case V_SgDivAssignOp:
+    case V_SgModAssignOp:
+    case V_SgLshiftAssignOp:
+    case V_SgRshiftAssignOp:
+    case V_SgAndAssignOp:
+    case V_SgIorAssignOp:
+    case V_SgXorAssignOp: {
+      return new OperandData<OperandKind::assign>((SgBinaryOp*)node);
     }
+
+    case V_SgAssignInitializer: {
+      return new OperandData<OperandKind::assign>((SgAssignInitializer*)node);
+    }
+
+    case V_SgAggregateInitializer:
+    case V_SgBracedInitializer:
+    case V_SgCompoundInitializer:
+    case V_SgConstructorInitializer:
+    case V_SgDesignatedInitializer: {
+      std::cerr << "[buildOperandData] Unsupported SgInitializer: " << node << " ( " << node->class_name() << " )" << std::endl;
+      return new OperandData<OperandKind::unknown>(node);
+    }
+
+    case V_SgPlusPlusOp: {
+      return new OperandData<OperandKind::unary_arithmetic>((SgUnaryOp*)node);
+    }
+
+    case V_SgAddOp:
+    case V_SgLessThanOp: {
+      return new OperandData<OperandKind::binary_arithmetic>((SgBinaryOp*)node);
+    }
+
     case V_SgFunctionCallExp: {
       return new OperandData<OperandKind::call>((SgFunctionCallExp*)node);
     }
+
     case V_SgPntrArrRefExp: {
       return new OperandData<OperandKind::array_access>((SgPntrArrRefExp*)node);
     }
+
     case V_SgAddressOfOp: {
       return new OperandData<OperandKind::address_of>((SgAddressOfOp*)node);
     }
+
     case V_SgPointerDerefExp: {
       return new OperandData<OperandKind::dereference>((SgPointerDerefExp*)node);
     }
+
+    case V_SgArrowExp:
+    case V_SgDotExp: {
+      return new OperandData<OperandKind::member_access>((SgBinaryOp*)node);
+    }
+
+    case V_SgThisExp: {
+      return new OperandData<OperandKind::thisref>((SgThisExp*)node);
+    }
+
     default: {
       std::cerr << "[buildOperandData] Unknown node variant: " << node << " ( " << node->class_name() << " )" << std::endl;
       return new OperandData<OperandKind::unknown>(node);

@@ -78,56 +78,6 @@ namespace Typeforge {
 
 using namespace std;
 
-//Returns the base type of the given type or nullptr if it is the base type
-static SgType * getBaseType(SgType* type){
-  if(SgArrayType* arrayType = isSgArrayType(type)) return arrayType->get_base_type();
-  if(SgPointerType* ptrType = isSgPointerType(type)) return ptrType->get_base_type();
-  if(SgTypedefType* typeDef = isSgTypedefType(type)) return typeDef->get_base_type();
-  if(SgReferenceType* refType = isSgReferenceType(type)) return refType->get_base_type();
-  if(SgModifierType* modType = isSgModifierType(type)) return modType->get_base_type();
-  return nullptr;
-}
-
-//returns true if the type contains a pointer or array
-static bool isArrayPointerType(SgType* type) {
-  if(type == nullptr) return false;
-
-#if DEBUG__statics__isArrayPointerType
-  std::cout << "isArrayPointerType(" << type->class_name() << " * type = " << type << ")" << std::endl;
-#endif
-
-  if (SgClassType * xtype = isSgClassType(type)) {
-    SgDeclarationStatement * decl_stmt = xtype->get_declaration();
-    assert(decl_stmt != nullptr);
-
-#if DEBUG__statics__isArrayPointerType
-  std::cout << "  decl_stmt = " << decl_stmt << " (" << decl_stmt->class_name() << ")" << std::endl;
-#endif
-
-    SgTemplateInstantiationDecl * ti_decl = isSgTemplateInstantiationDecl(decl_stmt);
-    if (ti_decl == nullptr) return false;
-
-#if DEBUG__statics__isArrayPointerType
-  std::cout << "  ti_decl   = " << ti_decl << " (" << ti_decl->class_name() << ")" << std::endl;
-#endif
- 
-    SgTemplateClassDeclaration * td_decl = ti_decl->get_templateDeclaration();
-    assert(td_decl != nullptr);
-
-#if DEBUG__statics__isArrayPointerType
-  std::cout << "  td_decl   = " << td_decl << " (" << td_decl->class_name() << ")" << std::endl;
-  std::cout << "      ->get_qualified_name() = " << td_decl->get_qualified_name() << std::endl;
-#endif
-
-    return td_decl->get_qualified_name() == "::std::vector";
-  }
-
-  if(isSgArrayType(type)) return true;
-  if(isSgPointerType(type)) return true;
-
-  return isArrayPointerType(getBaseType(type));
-}
-
 SgType * stripType(SgType * type, bool strip_std_vector) {
   assert(type != NULL);
 

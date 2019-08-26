@@ -38,6 +38,7 @@
 #include "TFTransformation.h"
 
 #include "OperandNetwork.h"
+#include "OperandData.h" // needed to instantiate ::Typeforge::OperandNetwork::collapse
 
 using namespace std;
 using namespace Typeforge;
@@ -57,8 +58,37 @@ int main (int argc, char* argv[]) {
   // [ALTERNATIVE] "--opnet"
 
   if (args.isUserProvided("opnet")) {
-    ::Typeforge::opnet.initialize();
-    ::Typeforge::opnet.toDot("operand-network.dot");
+    ::Typeforge::opnet.initialize(frontend(rose_args));
+    ::Typeforge::opnet.toDot("opnet-0.dot");
+
+    ::Typeforge::opnet.collapse<::Typeforge::CollapseRules::AssignOperator>();
+    ::Typeforge::opnet.toDot("opnet-1.dot");
+
+    ::Typeforge::opnet.collapse<::Typeforge::CollapseRules::MemberAccess>();
+    ::Typeforge::opnet.toDot("opnet-2.dot");
+
+    ::Typeforge::opnet.collapse<::Typeforge::CollapseRules::ArrayAccess>();
+    ::Typeforge::opnet.toDot("opnet-3.dot");
+
+    ::Typeforge::opnet.collapse<::Typeforge::CollapseRules::Dereference>();
+    ::Typeforge::opnet.toDot("opnet-4.dot");
+
+    ::Typeforge::opnet.collapse<::Typeforge::CollapseRules::AddressOf>();
+    ::Typeforge::opnet.toDot("opnet-5.dot");
+
+    ::Typeforge::opnet.collapse<::Typeforge::CollapseRules::VarRef>();
+    ::Typeforge::opnet.toDot("opnet-6.dot");
+
+    ::Typeforge::opnet.collapse<::Typeforge::CollapseRules::FRef>();
+    ::Typeforge::opnet.toDot("opnet-7.dot");
+
+    ::Typeforge::opnet.collapse<::Typeforge::CollapseRules::ThisRef>();
+    ::Typeforge::opnet.toDot("opnet-8.dot");
+
+    ::Typeforge::opnet.collapse<::Typeforge::CollapseRules::Call>();
+    ::Typeforge::opnet.toDot("opnet-9.dot");
+
+    return 0;
   }
 
   // [ALTERNATIVE] "--cast-stats":

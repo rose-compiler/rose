@@ -45,13 +45,12 @@ struct OperandData<OperandKind::base> {
   size_t line_end;
   size_t column_end;
 
-  std::set<SgLocatedNode *> predeccessors;
-  std::set<SgLocatedNode *> successors;
-
   bool can_be_changed;
   bool from_system_files;
 
   std::vector<SgType *> casts;
+
+  std::map<std::string, SgLocatedNode *> edge_labels;
 
   OperandData<OperandKind::base>(SgLocatedNode * const __lnode, OperandKind const & __opkind);
 
@@ -60,8 +59,6 @@ struct OperandData<OperandKind::base> {
 
 template <>
 struct OperandData<OperandKind::variable> : OperandData<OperandKind::base> {
-  // TODO fields
-
   OperandData<OperandKind::variable>(SgVariableDeclaration * const vdecl);
 };
 
@@ -88,71 +85,73 @@ struct OperandData<OperandKind::function> : OperandData<OperandKind::base> {
 
 template <>
 struct OperandData<OperandKind::parameter> : OperandData<OperandKind::base> {
-  // TODO fields
-
   OperandData<OperandKind::parameter>(SgInitializedName * const iname);
 };
 
 template <>
 struct OperandData<OperandKind::varref> : OperandData<OperandKind::base> {
-  // TODO fields
-
   OperandData<OperandKind::varref>(SgVarRefExp * const vexp);
 };
 
 template <>
 struct OperandData<OperandKind::fref> : OperandData<OperandKind::base> {
-  // TODO fields
+  OperandData<OperandKind::fref>(SgFunctionRefExp * const fref);
+  OperandData<OperandKind::fref>(SgMemberFunctionRefExp * const mfref);
+};
 
-  OperandData<OperandKind::fref>(SgFunctionRefExp * const vexp); // FIXME Ctor for methods too
+template <>
+struct OperandData<OperandKind::thisref> : OperandData<OperandKind::base> {
+  OperandData<OperandKind::thisref>(SgThisExp * const thisexp);
 };
 
 template <>
 struct OperandData<OperandKind::value> : OperandData<OperandKind::base> {
-  // TODO fields
-
   OperandData<OperandKind::value>(SgValueExp * const vexp);
 };
 
 template <>
-struct OperandData<OperandKind::arithmetic> : OperandData<OperandKind::base> {
-  // TODO fields
+struct OperandData<OperandKind::assign> : OperandData<OperandKind::base> {
+  OperandData<OperandKind::assign>(SgBinaryOp * const bop);
+  OperandData<OperandKind::assign>(SgAssignInitializer * const assinit);
+};
 
-  OperandData<OperandKind::arithmetic>(SgExpression * const expr); // FIXME Ctor for each *valid* AST node kind?
+template <>
+struct OperandData<OperandKind::member_access> : OperandData<OperandKind::base> {
+  OperandData<OperandKind::member_access>(SgBinaryOp * const bop); // FIXME Ctor for each *valid* AST node kind?
+};
+
+template <>
+struct OperandData<OperandKind::unary_arithmetic> : OperandData<OperandKind::base> {
+  OperandData<OperandKind::unary_arithmetic>(SgUnaryOp * const uop);
+};
+
+template <>
+struct OperandData<OperandKind::binary_arithmetic> : OperandData<OperandKind::base> {
+  OperandData<OperandKind::binary_arithmetic>(SgBinaryOp * const binop);
 };
 
 template <>
 struct OperandData<OperandKind::call> : OperandData<OperandKind::base> {
-  // TODO fields
-
   OperandData<OperandKind::call>(SgFunctionCallExp * const fcall);
 };
 
 template <>
 struct OperandData<OperandKind::array_access> : OperandData<OperandKind::base> {
-  // TODO fields
-
   OperandData<OperandKind::array_access>(SgPntrArrRefExp * const arrref);
 };
 
 template <>
 struct OperandData<OperandKind::address_of> : OperandData<OperandKind::base> {
-  // TODO fields
-
   OperandData<OperandKind::address_of>(SgAddressOfOp * const addof);
 };
 
 template <>
 struct OperandData<OperandKind::dereference> : OperandData<OperandKind::base> {
-  // TODO fields
-
   OperandData<OperandKind::dereference>(SgPointerDerefExp * const ptrref);
 };
 
 template <>
 struct OperandData<OperandKind::unknown> : OperandData<OperandKind::base> {
-  // TODO fields
-
   OperandData<OperandKind::unknown>(SgLocatedNode * const lnode);
 };
 
