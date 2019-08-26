@@ -127,10 +127,6 @@ ifeq (@(ENABLE_PYTHON_ANALYSIS),yes)
     error Python is not supported by the tup ROSE build system yet
 endif
 
-ifeq (@(ENABLE_X10_ANALYSIS),yes)
-    error X10 is not supported by the tup ROSE build system yet
-endif
-
 ########################################################################################################################
 # Minimal input code, depending on what language is supported. This is for testing since the test will fail if given
 # an input file for a language that's not supported.
