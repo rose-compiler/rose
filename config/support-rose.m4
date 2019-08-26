@@ -2426,7 +2426,6 @@ tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/generalDataFlowAnalysisTests/Makefile
-tests/nonsmoke/functional/roseTests/programAnalysisTests/sideEffectAnalysisTests/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/ssa_UnfilteredCfg_Test/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/staticSingleAssignmentTests/Makefile
