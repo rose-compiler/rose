@@ -28,8 +28,18 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, BinaryAnalysis::Unp
     tool.name("tool");
     Rose::CommandLine::insertBooleanSwitch(tool, "semantics", runSemantics, "Run instruction semantics.");
 
-    Parser p = engine.commandLineParser("testing", "Tests disassembler and semantics in various ways.");
-    ParserResult cmdline = p.with(output).with(tool).parse(argc, argv).apply();
+    // The ony switch we want is --isa=ISA.
+    SwitchGroup disassembler = P2::Engine::disassemblerSwitches(engine.settings().disassembler);
+    Switch isa = disassembler.getByName("isa");
+    while (disassembler.nSwitches() > 0)
+        disassembler.removeByIndex(0);
+    disassembler.insert(isa);
+
+    Parser p = Rose::CommandLine::createEmptyParser("testing", "Tests disassembler and semantics in various ways.");
+    p.doc("Synopsis", "@prop{programName} [@v{switches}] @v{test_input}");
+    p.with(Rose::CommandLine::genericSwitches());
+
+    ParserResult cmdline = p.with(disassembler).with(output).with(tool).parse(argc, argv).apply();
     ASSERT_always_require(cmdline.unreachedArgs().size() == 1);
     return cmdline.unreachedArgs()[0];
 }

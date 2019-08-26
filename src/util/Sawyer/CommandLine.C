@@ -20,10 +20,12 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/config.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/regex.hpp>
 #include <cerrno>
 #include <cstdio>
+#include <cstring>
 #include <ctime>
 #include <iostream>
 #include <Sawyer/Assert.h>
@@ -1208,6 +1210,36 @@ SwitchGroup::removeByPointer(const void *swptr) {
         }
     }
     return false;
+}
+
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::removeByIndex(size_t idx) {
+    if (idx >= switches_.size())
+        throw std::runtime_error("switch index " + boost::lexical_cast<std::string>(idx) + " not found\n");
+    switches_.erase(switches_.begin() + idx);
+    return *this;
+}
+
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::removeByName(const std::string &s) {
+    for (size_t i=0; i<switches_.size(); ++i) {
+        for (size_t j=0; j<switches_[i].longNames().size(); ++j) {
+            if (switches_[i].longNames()[j] == s)
+                return removeByIndex(i);
+        }
+        if (s.size() == 1 && strchr(switches_[i].shortNames().c_str(), s[0]) != NULL)
+            return removeByIndex(i);
+    }
+    return *this;
+}
+
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::removeByKey(const std::string &s) {
+    for (size_t i=0; i<switches_.size(); ++i) {
+        if (switches_[i].key() == s)
+            return removeByIndex(i);
+    }
+    return *this;
 }
 
 /*******************************************************************************************************************************

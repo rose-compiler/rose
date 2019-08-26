@@ -5169,41 +5169,41 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
 void
 markDoLoopAsUsingEndDo()
    {
+  // Fixed (as well as some refactoring) to also work with an SgForAllStatement
+  // This may be needed as SgForAllStatement also represents DO CONCURRENT [Rasmussen 2019.08.23].
+
+  // Look for the last statement (it should be a SgFortranDo, SgWhileStmt or SgForAllStatement)
+     SgScopeStatement* currentScope = astScopeStack.front();
+     ROSE_ASSERT(currentScope != NULL);
+
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("In markDoLoopAsUsingEndDo()");
+     printf ("In markDoLoopAsUsingEndDo: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 #endif
 
-  // Look for the last statement (should be a SgFortranDo)
-     SgScopeStatement* currentScope = astScopeStack.front();
-
-  // printf ("In markDoLoopAsUsingEndDo: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
-
      SgFortranDo* doStatement = isSgFortranDo(currentScope);
+     SgWhileStmt* whileStatement = isSgWhileStmt(currentScope);
+     SgForAllStatement* forallStatement = isSgForAllStatement(currentScope);
+
      if (doStatement != NULL)
         {
-       // Mark the do-loop to use the "end do" new style syntax.
-       // printf ("In markDoLoopAsUsingEndDo: Marking the doStatement as new style syntax \n");
-
        // DQ (12/26/2007): This field is depricated in favor of the has_end_statement boolean field used uniformally in several IR nodes).
        // doStatement->set_old_style(false);
           doStatement->set_has_end_statement(true);
         }
-       else
+     else if (whileStatement != NULL)
         {
-          SgWhileStmt* whileStatement = isSgWhileStmt(currentScope);
-          if (whileStatement != NULL)
-             {
-            // Mark the do-loop to use the "end do" new style syntax.
-            // printf ("I don't think we have to make the while statement as new sytle! \n");
-            // doStatement->set_old_style(false);
-               whileStatement->set_has_end_statement(true);
-             }
-            else
-             {
-               printf ("Error: do-loop or while-loop should be at the top of the astScopeStack! currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
-               ROSE_ASSERT(false);
-             }
+           whileStatement->set_has_end_statement(true);
+        }
+     else if (forallStatement != NULL)
+        {
+           forallStatement->set_has_end_statement(true);
+        }
+     else
+        {
+           printf ("Error: do-loop, while-loop, or forall-loop should be at the top of the astScopeStack! currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+           ROSE_ASSERT(false);
         }
    }
 
