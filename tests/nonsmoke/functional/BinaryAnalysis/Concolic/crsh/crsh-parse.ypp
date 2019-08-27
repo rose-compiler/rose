@@ -28,7 +28,6 @@ int yylex();
   std::string*        m_arg;
   Arguments*          m_arguments;
   InvocationDesc*     m_invoke;
-  Crsh::expectation   m_success;
 }
 
 %token DBCONNECT
@@ -36,9 +35,9 @@ int yylex();
 %token DBCLOSE
 %token EQUAL
 %token EXIT
-%token EXPECT
 %token EXPORT
 %token LBLK
+%token NOTE
 %token RBLK
 %token RUN
 %token QUAL
@@ -52,13 +51,12 @@ int yylex();
 
 %type <m_num>         num num_opt
 %type <m_str>         filename ident string specimen testsuite_opt
-%type <m_str>         simple_string quoted_string
+%type <m_str>         simple_string quoted_string annotation_opt
 %type <m_env>         export
 %type <m_environment> environ_opt
 %type <m_arg>         argument
 %type <m_arguments>   arguments_opt
 %type <m_invoke>      test_invoke
-%type <m_success>     fail_opt fail_note
 
 %start crush
 
@@ -98,17 +96,16 @@ arguments_opt    : /* empty */                  { $$ = crsh().args();       }
 specimen         : string                       { $$ = $1; }
                  ;
 
-fail_note        : EXPECT string                { $$ = crsh().annotate($2); }
-
-fail_opt         : /* empty */                  { $$ = Crsh::none;    }
-                 | fail_note                    { $$ = $1; }
+annotation_opt   : /* empty */                  { $$ = NULL; }
+                 | NOTE string                  { $$ = $2;      }
                  ;
 
-test_invoke      : specimen arguments_opt       { $$ = crsh().invoke($1, $2); }
+test_invoke      : annotation_opt
+                   specimen arguments_opt       { $$ = crsh().invoke($1, $2, $3); }
                  ;
 
 test_cmd         : ident QUAL ident
-                   fail_opt
+                   annotation_opt
                    LBLK
                      environ_opt
                      test_invoke
@@ -124,12 +121,13 @@ num_opt          : /* empty */                  { $$ = -1; }
                  ;
 
 exectest_cmd     : testsuite_opt
-                   RUN num_opt fail_opt         { crsh().runTest($1, $3, $4); }
+                   RUN num_opt annotation_opt   { crsh().runTest($1, $3, $4); }
                  ;
 
 shell_cmd        : SHELL test_invoke            { crsh().execute($2); }
 
-dbconnect_cmd    : DBCONNECT filename fail_opt  { crsh().connectdb($2, $3); }
+dbconnect_cmd    : DBCONNECT
+                     filename annotation_opt    { crsh().connectdb($2, $3); }
                  ;
 
 dbcreate_cmd     : DBCREATE filename            { crsh().createdb($2); }
