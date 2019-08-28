@@ -15,17 +15,17 @@ AC_DEFUN([ROSE_SUPPORT_LIBPQXX],[
 
     ROSE_HAVE_LIBPQXX=
 
+    # Save some variables to be restored later
+    old_LIBS="$LIBS"
+    old_CPPFLAGS="$CPPFLAGS"
+
     # Does the user tell us where to find libpqxx?
-    if test "$pqxx" = yes -o "$pqxx" = default; then
+    if test "$pqxx" = yes; then
         ROSE_LIBPQXX_PREFIX=
-        old_LIBS="$LIBS"
         LIBS="$LIBS -lpqxx -lpq"
-        old_CPPFLAGS="$CPPFLAGS"
     elif test -n "$pqxx" -a "$pqxx" != no; then
         ROSE_LIBPQXX_PREFIX="$pqxx"
-        old_LIBS="$LIBS"
         LIBS="$LIBS -L$ROSE_LIBPQXX_PREFIX/lib -lpqxx -lpq"
-        old_CPPFLAGS="$CPPFLAGS"
         CPPFLAGS="-I$ROSE_LIBPQXX_PREFIX/include"
     fi
 
@@ -62,6 +62,10 @@ AC_DEFUN([ROSE_SUPPORT_LIBPQXX],[
     if test "$pqxx" != no -a "$pqxx" != default -a -z "$ROSE_HAVE_LIBPQXX"; then
         AC_MSG_ERROR([did not find pqxx library but --with-pqxx was specified])
     fi
+
+    # Restore variables
+    LIBS="$old_LIBS"
+    CPPFLAGS="$old_CPPFLAGS"
 
     dnl Results
     dnl   ROSE_LIBPQXX_PREFIX -- name of the directory where pqxx is installed
