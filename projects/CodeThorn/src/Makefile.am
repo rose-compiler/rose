@@ -49,6 +49,7 @@ libcodethorndf_la_SOURCES=\
  IntervalPropertyStateFactory.h \
  IntervalTransferFunctions.h \
  FunctionIdMapping.h \
+ FunctionCallTarget.h \
  LVAnalysis.h \
  LVAstAttribute.h \
  LVAstAttributeInterface.h \
@@ -80,6 +81,7 @@ libcodethorndf_la_SOURCES=\
  DFTransferFunctions.C \
  DotGraphCfgFrontend.C \
  Flow.C \
+ FunctionCallTarget.C \
  IntervalAnalysis.C \
  IntervalAstAttribute.C \
  IntervalPropertyStateFactory.C \

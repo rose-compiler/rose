@@ -119,6 +119,7 @@ void CodeThorn::initDiagnostics() {
   RewriteSystem::initDiagnostics();
   Specialization::initDiagnostics();
   Normalization::initDiagnostics();
+  FunctionIdMapping::initDiagnostics();
 }
 
 bool isExprRoot(SgNode* node) {

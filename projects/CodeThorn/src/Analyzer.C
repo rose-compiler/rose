@@ -1420,10 +1420,11 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   SAWYER_MESG(logger[TRACE])<< "INIT: Creating CFAnalysis."<<endl;
   cfanalyzer=new CFAnalysis(labeler,true);
 
-  FunctionIdMapping* funIdMapping=new FunctionIdMapping();
-  ROSE_ASSERT(isSgProject(root));
-  funIdMapping->computeFunctionSymbolMapping(isSgProject(root));
-  cfanalyzer->setFunctionIdMapping(funIdMapping);
+  //FunctionIdMapping* funIdMapping=new FunctionIdMapping();
+  //ROSE_ASSERT(isSgProject(root));
+  //funIdMapping->computeFunctionSymbolMapping(isSgProject(root));
+  //cfanalyzer->setFunctionIdMapping(funIdMapping);
+  cfanalyzer->setFunctionIdMapping(getFunctionIdMapping());
 
   getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
   getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);

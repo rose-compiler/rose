@@ -43,6 +43,8 @@ class CFAnalysis {
   Flow flow(SgNode* s1, SgNode* s2);
   CodeThorn::Labeler* getLabeler();
 
+  // determine mapping between function calls and function definitions (also resolves function pointers)
+  void computeFunctionCallMapping(SgProject* project);
   // computes from existing intra-procedural flow graph(s) the inter-procedural call information
   InterFlow interFlow(Flow& flow); 
   void intraInterFlow(Flow&, InterFlow&);
@@ -95,6 +97,7 @@ class CFAnalysis {
   bool _createLocalEdge;
   SgNode* correspondingLoopConstruct(SgNode* node);
   FunctionIdMapping* _functionIdMapping=nullptr;
+
 };    
 
 } // end of namespace CodeThorn
