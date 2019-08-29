@@ -794,6 +794,19 @@ TESTCODE_CURRENTLY_FAILING = \
 # NOTE: test2012_10.C works on with GNU 5.1, but not GNU 6.1 (something different in the header files, not handled by EDG 4.12).
 # Priority to fix: test2014_85.C, test2015_11.C, test2016_41.C, test2017_17.C
 
+if USING_INTEL_COMPILER
+  TESTCODE_CURRENTLY_FAILING += \
+    rose-2037.C
+else
+if ROSE_USING_GCC_VERSION_LATER_6_1
+  TESTCODES_REQUIRED_TO_PASS += \
+    rose-2037.C
+else
+  TESTCODE_CURRENTLY_FAILING += \
+    rose-2037.C
+endif
+endif
+
 if ROSE_USE_EDG_VERSION_4_9
 if ROSE_USING_GCC_VERSION_LATER_4_9
   TESTCODES_REQUIRED_TO_PASS += \
