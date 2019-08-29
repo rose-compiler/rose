@@ -25,7 +25,7 @@ namespace BinaryAnalysis {
 
 /** Align address downward to boundary.
  *
- *  Returns the largest multiple of @p alignment which is less than or equal to @p address. The alignment is cast to the same
+ *  Returns the smallest multiple of @p alignment which is greater than or equal to @p address. The alignment is cast to the same
  *  type as the address before any calculations are performed. Both arguments must be integral types. An alignment less than
  *  one has undefined behavior. */
 template<typename T, typename U>
@@ -38,7 +38,7 @@ alignUp(T address, U alignment) {
 
 /** Align address upward to boundary.
  *
- *  Returns the smallest multiple of @p alignment which is greater than or equal to @p address. The alignment is cast to the
+ *  Returns the largest multiple of @p alignment which is less than or equal to @p address. The alignment is cast to the
  *  same type as the address before any calculations are performed. Both arguments must be integral types. An alignment less
  *  than one has undefined behavior. Returns zero if no such value can be returned due to overflow. */
 template<typename T, typename U>

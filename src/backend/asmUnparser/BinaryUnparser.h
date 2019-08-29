@@ -76,6 +76,7 @@ struct Settings {
         struct {
             std::string separator;                      /**< How to separate one operand from another. */
             size_t fieldWidth;                          /**< Min characters to use for the operand list. */
+            bool showingWidth;                          /**< Show width of all expression terms in square brackets. */
         } operands;                                     /**< Settings for the operand list. */
 
         struct {

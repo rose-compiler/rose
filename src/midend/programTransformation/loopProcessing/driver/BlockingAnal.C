@@ -240,7 +240,7 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
   const CompSliceNest* pslices = nestInfo.GetNest();
   assert(pslices != 0);
   const CompSliceNest& slices = *pslices;
-  AstInterface& fa = LoopTransformInterface::getAstInterface();
+  //AstInterface& fa = LoopTransformInterface::getAstInterface();
   int size = slices.NumberOfEntries();
   assert (size > 0);
 
@@ -265,7 +265,7 @@ ApplyBlocking( const CompSliceDepGraphNode::FullNestInfo& nestInfo,
   /*QY: this is for triangular non-perfect nests where a single loop is shared by multiple slices; loops cannot be distributed in spite of non-perfectness */
   std::vector<FuseLoopInfo> non_perfects;
   if (size > 1) {
-    for (unsigned i = 1; i < size; ++i) {
+    for (unsigned i = 1; i < static_cast<unsigned>(size); ++i) {
        const CompSlice* slice_inner=slices[i];
        const CompSlice* slice_pivot = slices[i-1];
        CompSlice::ConstLoopIterator p_pivot=slice_pivot->GetConstLoopIterator();

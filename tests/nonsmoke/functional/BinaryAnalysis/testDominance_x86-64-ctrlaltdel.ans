@@ -1,8 +1,8 @@
 CFG dominators for function 0x004005d8:
   function 0x004005d8 dominator of 0x004005d8<0> is none
   function 0x004005d8 dominator of 0x004005e1<1> is 0x004005d8<0>
-  function 0x004005d8 dominator of 0x004005eb<2> is 0x004005e6<3>
-  function 0x004005d8 dominator of 0x004005e6<3> is 0x004005e1<1>
+  function 0x004005d8 dominator of 0x004005e6<2> is 0x004005e1<1>
+  function 0x004005d8 dominator of 0x004005eb<3> is 0x004005e6<2>
 CFG dominators for function 0x004005f0 "DYNAMIC_LINKER_TRAMPOLINE":
   function 0x004005f0 dominator of 0x004005f0<0> is none
 CFG dominators for function 0x00400600 "geteuid@plt":
@@ -35,13 +35,13 @@ CFG dominators for function 0x004006cc:
 CFG dominators for function 0x004006f0:
   function 0x004006f0 dominator of 0x004006f0<0> is none
 CFG dominators for function 0x004006f7:
-  function 0x004006f7 dominator of 0x00400700<0> is 0x0040070d<2>
+  function 0x004006f7 dominator of 0x0040070d<0> is 0x004006f7<3>
   function 0x004006f7 dominator of 0x004006ff<1> is none
-  function 0x004006f7 dominator of 0x0040070d<2> is 0x004006f7<4>
-  function 0x004006f7 dominator of 0x004006fd<3> is 0x004006f7<4>
-  function 0x004006f7 dominator of 0x004006f7<4> is none
-  function 0x004006f7 dominator of 0x00400723<5> is 0x004006f7<4>
-  function 0x004006f7 dominator of 0x0040071c<6> is 0x0040070d<2>
+  function 0x004006f7 dominator of 0x004006fd<2> is 0x004006f7<3>
+  function 0x004006f7 dominator of 0x004006f7<3> is none
+  function 0x004006f7 dominator of 0x00400723<4> is 0x004006f7<3>
+  function 0x004006f7 dominator of 0x0040071c<5> is 0x0040070d<0>
+  function 0x004006f7 dominator of 0x00400700<6> is 0x0040070d<0>
 CFG dominators for function 0x00400730:
   function 0x00400730 dominator of 0x00400748<0> is 0x0040073e<2>
   function 0x00400730 dominator of 0x00400730<1> is none
@@ -50,18 +50,16 @@ CFG dominators for function 0x00400730:
 CFG dominators for function 0x00400830:
   function 0x00400830 dominator of 0x00400830<0> is none
 CFG dominators for function 0x00400840 "main":
-  function 0x00400840 dominator of 0x00400883<0> is 0x00400861<4>
-  function 0x00400840 dominator of 0x00400874<1> is 0x00400861<4>
-  function 0x00400840 dominator of 0x0040087b<2> is 0x00400877<5>
+  function 0x00400840 dominator of 0x00400874<0> is 0x00400861<2>
+  function 0x00400840 dominator of 0x0040087b<1> is 0x00400877<4>
+  function 0x00400840 dominator of 0x00400861<2> is 0x00400840<3>
   function 0x00400840 dominator of 0x00400840<3> is none
-  function 0x00400840 dominator of 0x00400861<4> is 0x00400840<3>
-  function 0x00400840 dominator of 0x00400877<5> is 0x00400874<1>
+  function 0x00400840 dominator of 0x00400877<4> is 0x00400874<0>
+  function 0x00400840 dominator of 0x00400883<5> is 0x00400861<2>
 CFG dominators for function 0x004008e0:
   function 0x004008e0 dominator of 0x004008f9<0> is none
-  function 0x004008e0 dominator of 0x004008e0<1> is none
-  function 0x004008e0 dominator of 0x00400909<2> is 0x004008e0<1>
-  function 0x004008e0 dominator of 0x00400906<3> is 0x00400900<5>
-  function 0x004008e0 dominator of 0x0040090f<4> is 0x00400909<2>
-  function 0x004008e0 dominator of 0x00400900<5> is 0x00400909<2>
-CFG dominators for function 0x00400df4:
-  function 0x00400df4 dominator of 0x00400df4<0> is none
+  function 0x004008e0 dominator of 0x00400909<1> is 0x004008e0<5>
+  function 0x004008e0 dominator of 0x00400906<2> is 0x00400900<4>
+  function 0x004008e0 dominator of 0x0040090f<3> is 0x00400909<1>
+  function 0x004008e0 dominator of 0x00400900<4> is 0x00400909<1>
+  function 0x004008e0 dominator of 0x004008e0<5> is none

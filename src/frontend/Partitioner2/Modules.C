@@ -66,7 +66,7 @@ demangleFunctionNames(const Partitioner &p) {
 bool
 AddGhostSuccessors::operator()(bool chain, const Args &args) {
     if (chain) {
-        size_t nBits = args.partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+        size_t nBits = args.partitioner.instructionProvider().instructionPointerRegister().nBits();
         BOOST_FOREACH (rose_addr_t successorVa, args.partitioner.basicBlockGhostSuccessors(args.bblock))
             args.bblock->insertSuccessor(successorVa, nBits);
     }
@@ -450,22 +450,32 @@ MatchThunk::match(const Partitioner &partitioner, rose_addr_t anchor) {
         return false;
 
     functions_.clear();
-    size_t thunkSize = predicates_->isThunk(partitioner, insns);
-    if (0 == thunkSize)
+    ThunkDetection found = predicates_->isThunk(partitioner, insns);
+    if (!found)
         return false;
 
     // This is a thunk
-    functions_.push_back(Function::instance(anchor, SgAsmFunction::FUNC_THUNK));
+    Function::Ptr thunk = Function::instance(anchor, SgAsmFunction::FUNC_THUNK);
+    if (!found.name.empty())
+        thunk->reasonComment("matched " + found.name);
+    functions_.push_back(thunk);
 
     // Do we know the successors?  They would be the function(s) to which the thunk branches.
     BasicBlock::Ptr bb = BasicBlock::instance(anchor, partitioner);
-    for (size_t i=0; i<thunkSize; ++i)
+    for (size_t i=0; i<found.nInsns; ++i)
         bb->append(partitioner, insns[i]);
     BOOST_FOREACH (const BasicBlock::Successor &successor, partitioner.basicBlockSuccessors(bb)) {
         if (successor.expr()->is_number()) {
             rose_addr_t targetVa = successor.expr()->get_number();
-            if (!partitioner.functionExists(targetVa))
-                insertUnique(functions_, Function::instance(targetVa, SgAsmFunction::FUNC_GRAPH), sortFunctionsByAddress);
+            if (Function::Ptr thunkTarget = partitioner.functionExists(targetVa)) {
+                thunkTarget->insertReasons(SgAsmFunction::FUNC_THUNK_TARGET);
+                if (thunkTarget->reasonComment().empty())
+                    thunkTarget->reasonComment("target of thunk " + thunk->printableName());
+            } else {
+                thunkTarget = Function::instance(targetVa, SgAsmFunction::FUNC_THUNK_TARGET);
+                thunkTarget->reasonComment("target of thunk " + thunk->printableName());
+                insertUnique(functions_, thunkTarget, sortFunctionsByAddress);
+            }
         }
     }
 

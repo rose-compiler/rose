@@ -327,7 +327,7 @@ Partitioner2::Partitioner
 SerialInput::loadPartitioner() {
     Partitioner2::Partitioner partitioner;
     loadObject(PARTITIONER, partitioner);
-    return partitioner;
+    return boost::move(partitioner);
 }
 
 SgNode*

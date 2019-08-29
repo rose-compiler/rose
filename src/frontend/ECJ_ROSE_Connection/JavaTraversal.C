@@ -5,11 +5,13 @@
 
 #include <jni.h>
 #include <stdio.h>
-#include "JavaTraversal.h"
+//#include "JavaTraversal.h"
 #include <iostream>
 #include <fstream> 
 
-// #error "This JavaTraversal.C file is no longer used."
+//#error "This JavaTraversal.C file is no longer used."
+
+#if 0
 
 // DQ (8/15/2011): We can't build this file every time we run a ROSE translator...(also causes make distcheck to fail).
 // std::ofstream myfile ("astC.dot");
@@ -30,3 +32,4 @@ JNIEXPORT void JNICALL Java_JavaTraversal_invokeEDGE(JNIEnv *env, jobject obj, j
     // Do Nothing !
 }
 
+#endif

@@ -49,7 +49,7 @@ public:
         regIp_ = partitioner.instructionProvider().instructionPointerRegister();
         regSp_ = partitioner.instructionProvider().stackPointerRegister();
         regSs_ = partitioner.instructionProvider().stackSegmentRegister();
-        wordSize_ = regIp_.get_nbits();
+        wordSize_ = regIp_.nBits();
     }
 
     void reset(const MemoryMap::Ptr &map) {

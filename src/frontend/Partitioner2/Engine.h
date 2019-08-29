@@ -448,20 +448,40 @@ public:
     // top-level: parseCommandLine
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Command-line switches related to the loader. */
+    /** Command-line switches related to the loader.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup loaderSwitches();
+    static Sawyer::CommandLine::SwitchGroup loaderSwitches(LoaderSettings&);
+    /** @} */
 
-    /** Command-line switches related to the disassembler. */
+    /** Command-line switches related to the disassembler.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup disassemblerSwitches();
+    static Sawyer::CommandLine::SwitchGroup disassemblerSwitches(DisassemblerSettings&);
+    /** @} */
 
-    /** Command-line switches related to the partitioner. */
+    /** Command-line switches related to the partitioner.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup partitionerSwitches();
+    static Sawyer::CommandLine::SwitchGroup partitionerSwitches(PartitionerSettings&);
+    /** @} */
 
-    /** Command-line switches related to engine behavior. */
+    /** Command-line switches related to engine behavior.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup engineSwitches();
+    static Sawyer::CommandLine::SwitchGroup engineSwitches(EngineSettings&);
+    /** @} */
 
-    /** Command-line switches related to AST construction. */
+    /** Command-line switches related to AST construction.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup astConstructionSwitches();
+    static Sawyer::CommandLine::SwitchGroup astConstructionSwitches(AstConstructionSettings&);
+    /** @} */
 
     /** Documentation for specimen names. */
     static std::string specimenNameDocumentation();
@@ -1218,8 +1238,8 @@ public:
 
     /** Property: Predicate for finding functions that are thunks.
      *
-     *  This collective predicate is used when searching for function prologues in order to create new functions. It's purpose
-     *  is to try to match sequences of instructions that look like thunks and the create a function at that address. A suitable
+     *  This collective predicate is used when searching for function prologues in order to create new functions. Its purpose
+     *  is to try to match sequences of instructions that look like thunks and then create a function at that address. A suitable
      *  default list of predicates is created when the engine is initialized, and can either be replaced by a new list, an empty
      *  list, or the list itself can be adjusted.  The list is consulted only when @ref findingThunks is set.
      *

@@ -432,27 +432,27 @@ RiscOperators::interrupt(int majr, int minr) {
 
 BaseSemantics::SValuePtr
 RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
-    BaseSemantics::SValuePtr regExpr = makeSValue(reg.get_nbits(), new SgAsmDirectRegisterExpression(reg));
-    return makeSValue(reg.get_nbits(), SgAsmRiscOperation::OP_readRegister, regExpr);
+    BaseSemantics::SValuePtr regExpr = makeSValue(reg.nBits(), new SgAsmDirectRegisterExpression(reg));
+    return makeSValue(reg.nBits(), SgAsmRiscOperation::OP_readRegister, regExpr);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
-    BaseSemantics::SValuePtr regExpr = makeSValue(reg.get_nbits(), new SgAsmDirectRegisterExpression(reg));
-    return makeSValue(reg.get_nbits(), SgAsmRiscOperation::OP_peekRegister, regExpr);
+    BaseSemantics::SValuePtr regExpr = makeSValue(reg.nBits(), new SgAsmDirectRegisterExpression(reg));
+    return makeSValue(reg.nBits(), SgAsmRiscOperation::OP_peekRegister, regExpr);
 }
 
 void
 RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a) {
-    BaseSemantics::SValuePtr regExpr = makeSValue(reg.get_nbits(), new SgAsmDirectRegisterExpression(reg));
+    BaseSemantics::SValuePtr regExpr = makeSValue(reg.nBits(), new SgAsmDirectRegisterExpression(reg));
     saveSemanticEffect(makeSValue(1 /*arbitrary*/, SgAsmRiscOperation::OP_writeRegister, regExpr, a)); 
 }
         
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
-    if (segreg.is_valid()) {
-        BaseSemantics::SValuePtr segRegExpr = makeSValue(segreg.get_nbits(), new SgAsmDirectRegisterExpression(segreg));
+    if (!segreg.isEmpty()) {
+        BaseSemantics::SValuePtr segRegExpr = makeSValue(segreg.nBits(), new SgAsmDirectRegisterExpression(segreg));
         return makeSValue(dflt->get_width(), SgAsmRiscOperation::OP_readMemory, segRegExpr, address, dflt, cond);
     } else {
         return makeSValue(dflt->get_width(), SgAsmRiscOperation::OP_readMemory,             address, dflt, cond);
@@ -462,8 +462,8 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
 BaseSemantics::SValuePtr
 RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &dflt) {
-    if (segreg.is_valid()) {
-        BaseSemantics::SValuePtr segRegExpr = makeSValue(segreg.get_nbits(), new SgAsmDirectRegisterExpression(segreg));
+    if (!segreg.isEmpty()) {
+        BaseSemantics::SValuePtr segRegExpr = makeSValue(segreg.nBits(), new SgAsmDirectRegisterExpression(segreg));
         return makeSValue(dflt->get_width(), SgAsmRiscOperation::OP_peekMemory, segRegExpr, address, dflt);
     } else {
         return makeSValue(dflt->get_width(), SgAsmRiscOperation::OP_peekMemory,             address, dflt);
@@ -473,8 +473,8 @@ RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
 void
 RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) {
-    if (segreg.is_valid()) {
-        BaseSemantics::SValuePtr segRegExpr = makeSValue(segreg.get_nbits(), new SgAsmDirectRegisterExpression(segreg));
+    if (!segreg.isEmpty()) {
+        BaseSemantics::SValuePtr segRegExpr = makeSValue(segreg.nBits(), new SgAsmDirectRegisterExpression(segreg));
         saveSemanticEffect(makeSValue(1 /*arbitrary*/, SgAsmRiscOperation::OP_writeMemory, segRegExpr, address, value, cond));
     } else {
         saveSemanticEffect(makeSValue(1 /*arbitrary*/, SgAsmRiscOperation::OP_writeMemory,             address, value, cond));

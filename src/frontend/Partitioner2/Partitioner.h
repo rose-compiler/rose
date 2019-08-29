@@ -26,6 +26,7 @@
 #include <Progress.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/split_member.hpp>
 
@@ -41,6 +42,28 @@
 #include <DispatcherPowerpc.h>
 #include <DispatcherX86.h>
 
+// Define ROSE_PARTITIONER_MOVE if boost::move works. Mainly this is to work around a GCC bug that reports this error:
+//
+//   prototype for
+//   'Rose::BinaryAnalysis::Partitioner2::Partitioner::Partitioner(boost::rv<Rose::BinaryAnalysis::Partitioner2::Partitioner>&)'
+//   does not match any in class 'Rose::BinaryAnalysis::Partitioner2::Partitioner'
+//
+// followed by saying that the exact same signature is one of the candidates:
+//
+//   candidates are:
+//   Rose::BinaryAnalysis::Partitioner2::Partitioner::Partitioner(boost::rv<Rose::BinaryAnalysis::Partitioner2::Partitioner>&)
+//
+// This is apparently GCC issue 49377 [https://gcc.gnu.org/bugzilla/show_bug.cgi?id=49377] fixed in GCC-6.1.0.
+#if __cplusplus >= 201103L
+    #define ROSE_PARTITIONER_MOVE
+#elif defined(__GNUC__)
+    #if __GNUC__ > 5
+       #define ROSE_PARTITIONER_MOVE
+    #elif BOOST_VERSION >= 106900 // 1.68.0 might be okay too, but ROSE blacklists it for other reasons
+       #define ROSE_PARTITIONER_MOVE
+    #endif
+#endif
+
 namespace Rose {
 namespace BinaryAnalysis {
 
@@ -51,7 +74,7 @@ namespace BinaryAnalysis {
  *  @li @ref Partitioner2::Partitioner "Partitioner": The partitioner is responsible for organizing instructions into basic
  *      blocks and basic blocks into functions. It has methods to discover new parts of the executable, and methods to control
  *      how those parts are organized into larger parts.  It queries a memory map and an instruction provider and updates a
- *      global control flow graph (CFG) and address usage map (AUM). It's operations are quite low-level and its behavior is
+ *      global control flow graph (CFG) and address usage map (AUM). Its operations are quite low-level and its behavior is
  *      customized primarily by callbacks.
  *
  *  @li @ref Partitioner2::Engine "Engine": The engine contains the higher-level functionality that drives the partitioner.
@@ -286,11 +309,15 @@ namespace Partitioner2 {
  * Q. Why is this class final?
  *
  * A. This class represents the low-level operations for partitioning instructions and is responsible for ensuring that certain
- *    data structures such as the CFG and AUM are always consistent.  The class is final to guarantee these invariants. It's
+ *    data structures such as the CFG and AUM are always consistent.  The class is final to guarantee these invariants. Its
  *    behavior can only be modified by registering callbacks.  High-level behavior is implemented above this class such as in
  *    module functions (various Module*.h files) or engines derived from the @ref Engine class.  Additional data can be
  *    attached to a partitioner via attributes (see @ref Attribute). */
 class ROSE_DLL_API Partitioner: public Sawyer::Attribute::Storage<> {     // final
+#ifdef ROSE_PARTITIONER_MOVE
+    BOOST_MOVABLE_BUT_NOT_COPYABLE(Partitioner)
+#endif
+
 public:
     typedef Sawyer::Callbacks<CfgAdjustmentCallback::Ptr> CfgAdjustmentCallbacks; /**< See @ref cfgAdjustmentCallbacks. */
     typedef Sawyer::Callbacks<BasicBlockCallback::Ptr> BasicBlockCallbacks; /**< See @ref basicBlockCallbacks. */
@@ -432,14 +459,17 @@ public:
      *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
     Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map);
 
-    // FIXME[Robb P. Matzke 2014-11-08]: This is not ready for use yet.  The problem is that because of the shallow copy, both
-    // partitioners are pointing to the same basic blocks, data blocks, and functions.  This is okay by itself since these
-    // things are reference counted, but the paradigm of locked/unlocked blocks and functions breaks down somewhat -- does
-    // unlocking a basic block from one partitioner make it modifiable even though it's still locked in the other partitioner?
-    // FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
-    // after a while.
-    Partitioner(const Partitioner &other);
-    Partitioner& operator=(const Partitioner &other);
+#ifdef ROSE_PARTITIONER_MOVE
+    /** Move constructor. */
+    Partitioner(BOOST_RV_REF(Partitioner));
+
+    /** Move assignment. */
+    Partitioner& operator=(BOOST_RV_REF(Partitioner));
+#else
+    // These are unsafe
+    Partitioner(const Partitioner&);
+    Partitioner& operator=(const Partitioner&);
+#endif
 
     ~Partitioner();
 
@@ -738,17 +768,17 @@ public:
     /** Determines whether an instruction is attached to the CFG/AUM.
      *
      *  If the CFG/AUM represents an instruction that starts at the specified address, then this method returns the
-     *  instruction/block pair, otherwise it returns nothing. The initial instruction for a basic block does not exist if the
-     *  basic block is only represented by a placeholder in the CFG; such a basic block is said to be "undiscovered".
+     *  instruction/block pair, otherwise it returns an empty pair. The initial instruction for a basic block does not exist if
+     *  the basic block is only represented by a placeholder in the CFG; such a basic block is said to be "undiscovered".
      *
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    Sawyer::Optional<AddressUser> instructionExists(rose_addr_t startVa) const /*final*/ {
-        return aum_.instructionExists(startVa);
+    AddressUser instructionExists(rose_addr_t startVa) const /*final*/ {
+        return aum_.findInstruction(startVa);
     }
-    Sawyer::Optional<AddressUser> instructionExists(SgAsmInstruction *insn) const /*final*/ {
-        return insn==NULL ? Sawyer::Nothing() : instructionExists(insn->get_address());
+    AddressUser instructionExists(SgAsmInstruction *insn) const /*final*/ {
+        return aum_.findInstruction(insn);
     }
     /** @} */
 
@@ -1375,7 +1405,7 @@ public:
      *  @li If the block is owned by a function and the function's name is present on a whitelist or blacklist
      *      then the block's may-return is positive if whitelisted or negative if blacklisted.
      *
-     *  @li If the block is a non-existing placeholder (i.e. it's address is not mapped with execute permission) then
+     *  @li If the block is a non-existing placeholder (i.e. its address is not mapped with execute permission) then
      *      its may-return is positive or negative depending on the value of this partitioner's @ref assumeFunctionsReturn
      *      property.
      *
@@ -1505,7 +1535,7 @@ public:
      *  to attempt to detach a data block which is owned by attached basic blocks or attached functions.
      *
      *  Thread safety: Not thread safe. */
-    DataBlock::Ptr detachDataBlock(const DataBlock::Ptr&) /*final*/;
+    void detachDataBlock(const DataBlock::Ptr&) /*final*/;
 
     /** Attach a data block to an attached or detached function.
      *
@@ -2495,13 +2525,6 @@ private:
 
     // Rebuild the vertexIndex_ and other cache-like data members from the control flow graph
     void rebuildVertexIndices();
-
-    // Attach a data block with ownership information to the AUM. This is private because it doesn't check that the owners
-    // specified in the argument are actually already attached to the AUM. Returns an updated OwnedDataBlock record containing
-    // the specified owners plus any owners that were already present in the AUM for an equivalent data block. The data block
-    // pointed to by the return value is the one that's in the AUM, which might be other than the one that was specified in the
-    // argument.
-    OwnedDataBlock attachDataBlock(const OwnedDataBlock&);
 };
 
 } // namespace

@@ -48,7 +48,7 @@ endif
 AM_YFLAGS = -d -t
 
 noinst_PROGRAMS += crsh
-crsh_SOURCES = crsh-parse.ypp crsh-lex.lpp crsh.cpp crsh.hpp
+crsh_SOURCES = crsh-parse.ypp crsh-lex.lpp crsh.cpp crsh.hpp ../configDB.h
 crsh_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS +=  # testConcolicDB.passed

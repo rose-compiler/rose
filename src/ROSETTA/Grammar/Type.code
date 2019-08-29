@@ -435,6 +435,11 @@ HEADER_JAVA_PARAMETER_TYPE_START
 HEADER_JAVA_PARAMETER_TYPE_END
 
 
+HEADER_JOVIAL_TABLE_TYPE_START
+          SgJovialTableType ( const SgJovialTableType & X );
+HEADER_JOVIAL_TABLE_TYPE_END
+
+
 HEADER_ENUM_TYPE_START
           SgEnumType ( const SgEnumType & X );
 HEADER_ENUM_TYPE_END
@@ -2300,8 +2305,6 @@ SgType::handledUsingLocalTable(SgType* t)
 // Liao 10/29/2010
 // My understanding of this code (may not be accurate):
 //  This function was designed to work with C/C++ and Fortran frontends to generate AST.
-//  For C/C++: a global variable curr_sg_scope is used 
-//  For Fortran: a stack is used 
 //  So code has to be conditionized with proper #ifdef ..#endf around the use of the variable or stack.
 //  
 //  Now we allow users to build types during AST transformation. This function will be called and scope can be NULL
@@ -2327,36 +2330,19 @@ SgType::getCurrentScope()
 
   // Liao 8/3/2010, pass fortran only test
 // #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-#ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-# ifdef ROSE_USE_NEW_EDG_INTERFACE
-  // DQ (3/15/2012): Adding support for specification of scope for new C++ support (new EDG 4.x support).
-  // extern SgScopeStatement* SageBuilder::topScopeStack();
-
-  // This is what is used to test when we can use the AST Builder function (above).
-  // extern bool SageBuilder::emptyScopeStack();
-# else
-#  ifndef ROSE_USE_CLANG_FRONTEND
-  // DQ (7/23/2010): This is defined in the EDG/Sage connection.
-     extern SgScopeStatement* curr_sg_scope;
-#  endif
-# endif
-#endif
 
 // Liao 8/4/2010, support enable-only-c
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-// #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT || ROSE_USE_NEW_EDG_INTERFACE
   // This is what is used in the Open Fortran Parser connection.
      extern SgScopeStatement* getTopOfScopeStack();
 
-  // This is what is used to test when we can use the fortran specific function (above).
+  // These functions are used to test if we can use the fortran specific function above.
      extern bool emptyFortranStateStack();
+     extern bool emptyFortranScopeStack();
 #endif
 
-  // If we are processing a C++ code then curr_sg_scope is a valid pointer, else we are processing a fortran code.
-  // SgScopeStatement* currentScope = (curr_sg_scope != NULL) ? curr_sg_scope : getTopOfScopeStack();
      SgScopeStatement* currentScope = NULL;
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
      if (SageBuilder::emptyScopeStack() == false)
         {
        // C/C++ AST being generated (using new connection to EDG 4.x).
@@ -2364,24 +2350,19 @@ SgType::getCurrentScope()
           ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
         }
        else
-#else
-#ifdef ROSE_USE_CLANG_FRONTEND
-  // TV (03/01/2012): Clang Frontend use the scope stack from SageBuilder...
-     SgScopeStatement * curr_sg_scope = SageBuilder::topScopeStack();
-#endif
-     if (curr_sg_scope != NULL)
-        {
-       // C/C++ AST being generated
-          currentScope = curr_sg_scope;
-          ROSE_ASSERT(isSgScopeStatement(currentScope) != NULL);
-        }
-       else
-#endif
 #endif
         {
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 8/4/2010, support enable-only-c
        // DQ (7/31/2010): If Fortran is not enabled then these functions will not be available.
-          if (emptyFortranStateStack() == false)
+
+       // Changed check for emptyFortranStateStack to emptyFortranScopeStack. An error can occur
+       // when the state stack is not empty but the scope stack is. This error was found when
+       // running tests in the experimental_frontend_tests directory. Perhaps junk was left in the
+       // Fortran state stack from tests run earlier in the parent Fortran test directory.
+       // WARNING, the following relies on short circuiting and emptyFortranStateStack() == false
+       // must be checked before emptyFortranScopeStack() == false.
+       // Apparently Java is also examining the Fortran stack! [Rasmussen 2019-7-18].
+          if (SageInterface::is_Fortran_language() && emptyFortranStateStack() == false && emptyFortranScopeStack() == false)
              {
             // Fortran AST being generated
                currentScope = getTopOfScopeStack();
@@ -4280,6 +4261,49 @@ $CLASSNAME::get_mangled(void) const
      return mangled_name;
    }
 SOURCE_JAVA_PARAMETER_TYPE_END
+
+
+SOURCE_JOVIAL_TABLE_TYPE_START
+SgJovialTableType::SgJovialTableType ( const SgJovialTableType & X )
+   : SgClassType(X)
+   {
+   }
+
+SgName
+SgJovialTableType::get_name() const
+   {
+     if(get_declaration())
+          return isSgClassDeclaration(get_declaration())->get_name();
+       else
+          return SgName((char *)0L);
+   }
+
+SgName
+SgJovialTableType::get_qualified_name() const
+   {
+       return this -> get_name();
+   }
+
+// DQ (8/18/2011): This function is copied from the version from SgClassType.
+SgName
+$CLASSNAME::get_mangled(void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+  // DQ (2/10/2014): We want to iterate over the list of types and output a name from the concatination of the type names.
+     SgClassDeclaration *class_declaration = isSgClassDeclaration(get_declaration() -> get_definingDeclaration());
+     ROSE_ASSERT(class_declaration);
+     SgName mangled_name = class_declaration -> get_mangled_name();
+     SgBaseClassPtrList &bases = class_declaration -> get_definition() -> get_inheritances();
+     for (size_t i = 0; i < bases.size(); i++) {
+         mangled_name += "_";
+         SgClassDeclaration *super_type = isSgBaseClass(bases[i]) -> get_base_class();
+         mangled_name += super_type -> get_mangled_name();
+     }
+
+     return mangled_name;
+   }
+SOURCE_JOVIAL_TABLE_TYPE_END
 
 
 SOURCE_TEMPLATE_TYPE_START
@@ -7688,6 +7712,27 @@ SgJavaParameterType::createType(SgClassDeclaration * cd, SgExpression* optional_
    }
 
 SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETER_TYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_JOVIAL_TABLE_TYPE_START
+
+// SgClassType* SgClassType::createType(SgClassDeclaration * cd)
+// Rasmussen - why is optional_fortran_type_kind a parameter?
+SgJovialTableType*
+SgJovialTableType::createType(SgClassDeclaration * cd, SgExpression* optional_fortran_type_kind)
+   {
+     ROSE_ASSERT(cd != NULL);
+
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     if (! cd -> get_type()) {
+         $CLASSNAME *newType = new $CLASSNAME(cd);
+         cd -> set_type(newType);
+     }
+     return ($CLASSNAME *) cd -> get_type();
+   }
+
+SOURCE_CREATE_TYPE_FOR_JOVIAL_TABLE_TYPE_END
 
 
 SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE_START

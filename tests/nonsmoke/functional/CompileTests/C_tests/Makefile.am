@@ -564,7 +564,23 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2018_64.c \
      test2018_67.c \
      rose-1391-a.c \
-     rose-1391-b.c
+     rose-1391-b.c \
+     test2019_01.c \
+     test2019_02.c \
+     test2019_03.c \
+     test2019_04.c \
+     test2019_05.c \
+     test2019_06.c \
+     test2019_07.c \
+     test2019_08.c \
+     test2019_09.c \
+     test2019_10.c \
+     test2019_11.c \
+     test2019_12.c \
+     test2019_13.c \
+     test2019_14.c \
+     test2019_15.c 
+
 
 TESTCODE_CURRENTLY_FAILING = \
      test2004_126.c \
@@ -929,15 +945,10 @@ TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 
-# DQ (4/18/2015): Uncommented this so that it can be properyl tested after being fixed!
-# if !ROSE_USE_EDG_VERSION_4_4
-# if !ROSE_USE_EDG_VERSION_4_7
 # any programs needed by your tests that does not need to be built by make all.
 check_PROGRAMS = $(PASSING_TEST_Executables)
 # a list of programs or scripts to run in order to do the testing 
 TESTS= $(check_PROGRAMS) caller.out 
-# endif
-# endif
 
 # DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
 # this, this implementation needs review).  It might be better to prepend the information to the 
@@ -1070,6 +1081,11 @@ caller.out: $(srcdir)/callee.c $(srcdir)/caller.c
 	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $^ -o caller.out
 # DQ (4/18/2015): Add the execution of the generated executable.
 	./caller.out
+
+# DQ (8/3/2019): Adding multi-file test, test in both orders (one was previously a failing case).
+multiple_file_test_01: $(srcdir)/test2019_16a.c $(srcdir)/test2019_16b.c
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $(srcdir)/test2019_16a.c $(srcdir)/test2019_16b.c
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $(srcdir)/test2019_16b.c $(srcdir)/test2019_16a.c
 
 
 # Customized test that modifies testTranslator to remove empty elses to test dangling else unparsing
@@ -1209,6 +1225,7 @@ check-local: check-pthread.passed
 	@$(MAKE) test_mregparm_m32_use
 	@$(MAKE) test_compile_and_link_with_NDEBUG
 	@$(MAKE) test_compile_and_link_without_NDEBUG
+	@$(MAKE) multiple_file_test_01
 #	@$(MAKE) test_m32_use
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C_tests: make check rule complete (terminated normally) ******"

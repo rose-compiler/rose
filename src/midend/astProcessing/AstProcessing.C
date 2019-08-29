@@ -17,8 +17,9 @@ SgTreeTraversal_inFileToTraverse(SgNode* node, bool traversalConstraint, SgFile*
    {
 #if 0
   // DQ (8/20/2018): Added debugging for support unparsing of header files.
-     printf ("In SgTreeTraversal_inFileToTraverse(): traversalConstraint = %s fileToVisit = %p filename = %s \n",
-             traversalConstraint ? "true" : "false",fileToVisit,(traversalConstraint == true) ? fileToVisit->getFileName().c_str() : "null");
+     printf ("In SgTreeTraversal_inFileToTraverse(): traversalConstraint = %s fileToVisit = %p filename = %s node = %p = %s \n",
+             traversalConstraint ? "true" : "false",fileToVisit,(traversalConstraint == true) ? fileToVisit->getFileName().c_str() : "null",
+             node,node != NULL ? node->class_name().c_str() : "null");
 #endif
 
   // If traversing without constraint, just continue.

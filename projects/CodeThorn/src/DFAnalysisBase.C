@@ -30,13 +30,13 @@ void DFAnalysisBase::initializeSolver() {
   ROSE_ASSERT(getInitialElementFactory());
   ROSE_ASSERT(&_analyzerDataPreInfo);
   ROSE_ASSERT(&_analyzerDataPostInfo);
-  ROSE_ASSERT(&_flow);
+  ROSE_ASSERT(getFlow());
   ROSE_ASSERT(&_transferFunctions);
   _solver=new CodeThorn::PASolver1(_workList,
                       _analyzerDataPreInfo,
                       _analyzerDataPostInfo,
                       *getInitialElementFactory(),
-                      _flow,
+                      *getFlow(),
                       *_transferFunctions);
 }
 
@@ -123,7 +123,6 @@ void DFAnalysisBase::initializeExtremalValue(Lattice* element) {
 }
 
 Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
-  ROSE_ASSERT(root);
   ROSE_ASSERT(_transferFunctions);
   Lattice* elem=_transferFunctions->initializeGlobalVariables(root);
   _globalVariablesState=elem;
@@ -131,7 +130,7 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
 }
 
 void
-DFAnalysisBase::initialize(SgProject* root, bool createCFG, ProgramAbstractionLayer* programAbstractionLayer, bool variableIdForEachArrayElement) {
+DFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer, bool variableIdForEachArrayElement) {
   cout << "INIT: establishing program abstraction layer." << endl;
   if(programAbstractionLayer) {
     ROSE_ASSERT(_programAbstractionLayer==nullptr);
@@ -147,29 +146,10 @@ DFAnalysisBase::initialize(SgProject* root, bool createCFG, ProgramAbstractionLa
   _pointerAnalysisEmptyImplementation->initialize();
   _pointerAnalysisEmptyImplementation->run();
   cout << "INIT: Creating CFAnalysis."<<endl;
-  if(createCFG) {
-    _cfanalyzer=new CFAnalysis(getLabeler());
-    //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
-    cout << "INIT: Building CFG for each function."<<endl;
-    _flow=_cfanalyzer->flow(root);
-    cout << "STATUS: Building CFGs finished."<<endl;
-    cout << "INIT: Intra-Flow OK. (size: " << _flow.size() << " edges)"<<endl;
-    InterFlow interFlow=_cfanalyzer->interFlow(_flow);
-    cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
-    _cfanalyzer->intraInterFlow(_flow,interFlow);
-    cout << "INIT: IntraInter-CFG OK. (size: " << _flow.size() << " edges)"<<endl;
-  } else {
-    cout<<"INIT: not building CFG (as requested)."<<endl;
-  }
-#if 0
-  cout << "INIT: Optimizing CFGs for label-out-info solver 1."<<endl;
-  {
-    size_t numDeletedEdges=_cfanalyzer->deleteFunctionCallLocalEdges(_flow);
-    cout<<"INIT: deleted "<<numDeletedEdges<<" local edges."<<endl;
-    int numReducedNodes=0; //_cfanalyzer->reduceBlockBeginNodes(_flow);
-    cout << "INIT: Optimization finished (reduced nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
-  }
-#endif
+
+  // PP (07/15/19) moved flow generation to ProgramAbstractionLayer
+  cout << "INIT: Requesting CFG."<<endl;
+  _flow = _programAbstractionLayer->getFlow(isBackwardAnalysis());
 
   ROSE_ASSERT(getInitialElementFactory());
   for(long l=0;l<getLabeler()->numberOfLabels();++l) {
@@ -181,11 +161,6 @@ DFAnalysisBase::initialize(SgProject* root, bool createCFG, ProgramAbstractionLa
   cout << "STATUS: initialized monotone data flow analyzer for "<<_analyzerDataPreInfo.size()<< " labels."<<endl;
 
   cout << "INIT: initialized pre/post property states."<<endl;
-  if(isBackwardAnalysis()) {
-    _flow=_flow.reverseFlow();
-    cout << "INIT: established reverse flow for backward analysis."<<endl;
-  }
-
   initializeSolver();
   cout << "STATUS: initialized solver."<<endl;
 }
@@ -212,13 +187,15 @@ CodeThorn::PointerAnalysisInterface* DFAnalysisBase::getPointerAnalysis() {
 void
 DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot,bool onlySingleStartLabel) {
   if(startFunRoot) {
+    CFAnalysis* cfanalyzer = getCFAnalyzer();
+
     if(isForwardAnalysis()) {
-      Label startLabel=_cfanalyzer->getLabel(startFunRoot);
+      Label startLabel=cfanalyzer->getLabel(startFunRoot);
       _extremalLabels.insert(startLabel);
     } else if(isBackwardAnalysis()) {
       if(isSgFunctionDefinition(startFunRoot)) {
-        Label startLabel=_cfanalyzer->getLabel(startFunRoot);
-        Label endLabel=_cfanalyzer->correspondingFunctionExitLabel(startLabel);
+        Label startLabel=cfanalyzer->getLabel(startFunRoot);
+        Label endLabel=cfanalyzer->correspondingFunctionExitLabel(startLabel);
         _extremalLabels.insert(endLabel);
       } else {
         cerr<<"Error: backward analysis only supported for start at function exit label."<<endl;
@@ -272,9 +249,12 @@ DFAstAttribute* DFAnalysisBase::createDFAstAttribute(Lattice* elem) {
 
 void
 DFAnalysisBase::run() {
+  ROSE_ASSERT(_globalVariablesState);
   // initialize work list with extremal labels
+  cerr << "INFO: " << &_extremalLabels << " " << _extremalLabels.size() << std::endl;
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
     ROSE_ASSERT(_analyzerDataPreInfo[(*i).getId()]!=0);
+    cerr << "INFO: extremal-label-id = " << i->getId() << std::endl;
     initializeExtremalValue(_analyzerDataPreInfo[(*i).getId()]);
     // combine extremal value with global variables initialization state (computed by initializeGlobalVariables)
     _analyzerDataPreInfo[(*i).getId()]->combine(*_globalVariablesState);
@@ -284,7 +264,7 @@ DFAnalysisBase::run() {
     // schroder3 (2016-08-16): Topological sorted CFG as worklist initialization is currently
     //  not supported for backward analyses. Add the extremal label's outgoing edges instead.
     if(_no_topological_sort || !isForwardAnalysis()) {
-      Flow outEdges=_flow.outEdges(*i);
+      Flow outEdges=_flow->outEdges(*i);
       for(Flow::iterator j=outEdges.begin();j!=outEdges.end();++j) {
         _workList.add(*j);
       }
@@ -303,7 +283,7 @@ DFAnalysisBase::run() {
   if(!_no_topological_sort && isForwardAnalysis()) {
     if(_extremalLabels.size() == 1) {
       Label startLabel = *(_extremalLabels.begin());
-      std::list<Edge> topologicalEdgeList = _flow.getTopologicalSortedEdgeList(startLabel);
+      std::list<Edge> topologicalEdgeList = _flow->getTopologicalSortedEdgeList(startLabel);
       cout << "INFO: Using topologically sorted CFG as work list initialization." << endl;
       for(std::list<Edge>::const_iterator i = topologicalEdgeList.begin(); i != topologicalEdgeList.end(); ++i) {
         //cout << (*i).toString() << endl;
@@ -312,7 +292,7 @@ DFAnalysisBase::run() {
     } else {
       cout << "INFO: Using non-topologically sorted CFG with multiple function entries as work list initialization." << endl;
       for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
-        Flow outEdges=_flow.outEdges(*i);
+        Flow outEdges=_flow->outEdges(*i);
         for(Flow::iterator i=outEdges.begin();i!=outEdges.end();++i) {
           _workList.add(*i);
         }
@@ -340,7 +320,9 @@ using std::string;
 #include <sstream>
 
 CFAnalysis* DFAnalysisBase::getCFAnalyzer() {
-  return _cfanalyzer;
+  ROSE_ASSERT(_programAbstractionLayer);
+
+  return _programAbstractionLayer->getCFAnalyzer();
 }
 
 
@@ -386,7 +368,7 @@ size_t DFAnalysisBase::size() {
 void DFAnalysisBase::attachInfoToAst(string attributeName,bool inInfo) {
   computeAllPreInfo();
   computeAllPostInfo();
-  LabelSet labelSet=_flow.nodeLabels();
+  LabelSet labelSet=_flow->nodeLabels();
   for(LabelSet::iterator i=labelSet.begin();
       i!=labelSet.end();
       ++i) {

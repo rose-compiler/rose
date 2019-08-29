@@ -427,9 +427,11 @@ void VariableRenaming::insertDefsForExternalVariables(SgFunctionDeclaration* fun
                 } else if (SgFunctionParameterList *params = isSgFunctionParameterList(rootName[0]->get_parent())) {
                     // x can also have global scope when it appears as a formal parameter in an extern function declaration,
                     // as in:  void f() { void g(int x); ... }
+#ifndef NDEBUG
                     SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(params->get_parent());
                     assert(fdecl!=NULL);
                     assert(fdecl!=function);
+#endif
                     continue;
                 }
             }
