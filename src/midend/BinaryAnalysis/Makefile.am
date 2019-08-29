@@ -4,11 +4,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES) -I$(srcdir)/graph -I$(srcdir)/libraryIdentification
 
-bin_PROGRAMS = execmon
-
-execmon_SOURCES = \
-	Concolic/ExecutionMonitor.C
-
 noinst_LTLIBRARIES = libbinaryMidend.la
 libbinaryMidend_la_DEPENDENCIES =
 
