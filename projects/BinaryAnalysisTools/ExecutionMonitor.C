@@ -1,32 +1,11 @@
 
-static const char *purpose = "Estimate the number of distinct instructions that are executed";
-static const char *description =
-    "Runs the specimen in a debugger and tracks instructions addresses.";
+static const char* purpose = "Monitors the execution of some program and computes some coverage number.";
 
-
-// NAME
-//   execmon - monitors the execution of some program and
-//             computes some coverage number.
-//
-// SYNOPSIS
-//   execmon [arguments] -- program [program-arguments]
-//
-// DESCRIPTION
-//   Monitors the execution of a program and produces some coverage number.
-//   The coverage number is an estimate how many unique instructions were
-//   executed.
-//   To this end, execmon traces the execution and records code
-//   intervals. Code intervals are non-overlapping, and in some runs
-//   contiguously executed code segments.
-//
-//   Coverage number := sum_{i=0}^{#segments}(instrEstimate(segment_i))
-//
-//   As opposed to some RISC architectures, other systems (e.g., x86
-//   and derivatives) use a variable instruction length. To compute the
-//   instrEstimate, execmon assumes an average length (maybe just
-//   bytecount would suffice).
-//
-//   --perf=intel  uses perf on intel systems /* TODO */
+static const char* description =
+    "Monitors the execution of a program and produces some coverage number. "
+    "The coverage number is an estimate how many unique instructions were executed. "
+    "To this end, execmon traces the execution and records code "
+    "intervals. Code intervals are non-overlapping, contiguous code segments.\n";
 
 #include <algorithm>
 
@@ -41,24 +20,23 @@ static const char *description =
 
 
 
-// Architecture specific defines:
-//   https://sourceforge.net/p/predef/wiki/Architectures/
+// Architecture specific defines
 
 #if (  defined(_ARCH_PPC) || defined(_ARCH_PPC64) /* XLC + GNU */ \
     || defined(__mips__) || defined(__mips)       /* GNU */       \
     )
 
-  #define INSTRUCTION_LENGTH 4 /* bytes */
+  static constexpr size_t INSTRUCTION_LENGTH = 4; /* bytes */
 
   /*
    * - PowerPC: All PowerPCs (including 64-bit implementations) use fixed-length 32-bit instructions.
    *            https://www.ibm.com/developerworks/library/l-ppc/index.html
-   * - MPIS:    All instructions are 32 bit
+   * - MIPS:    All instructions are 32 bit
    *            http://people.cs.pitt.edu/~xujie/cs447/MIPS_Instruction.htm
    */
 
 #else
-  #define INSTRUCTION_LENGTH 0 /* variable-length encoding */
+  static constexpr size_t INSTRUCTION_LENGTH = 0; /* variable-length encoding */
 
   /* variable-length instruction encoding requires disassembler
    *
@@ -82,10 +60,12 @@ using namespace Sawyer::Message::Common;
 
 Sawyer::Message::Facility mlog;
 
+
+//
+// anonymous namespace for auxiliary functions and functors
+
 namespace
 {
-  // anonymous namespace for auxiliary functions and functors
-
   struct IsSeparator
   {
     bool operator()(const char* str)
@@ -117,14 +97,15 @@ namespace
   }
 }
 
-
+//
+// core functionality
 
 namespace Rose {
 namespace BinaryAnalysis {
 
   struct ExecutionMonitor : BinaryDebugger
   {
-      /* this is preliminary and does not hold on x86 */
+      /* this is an imprecise estimate. */
       static constexpr size_t INSTR_LENGTH_ESTIMATE = 4;
       static constexpr size_t INSTR_LENGTH_MARGIN   = 1;
 
@@ -166,8 +147,8 @@ namespace BinaryAnalysis {
         return instrlen;
       }
 
-      /** Tests whether pc() is adjacent to the interval @ref ival. */
-      bool adjacentInstruction(const AddressInterval& curr, addr_t instrAddr)
+      /** Tests whether @ref instrAddr is right-adjacent to the interval @ref curr. */
+      bool adjacentInstruction(const AddressInterval& curr, addr_t instrAddr) const
       {
         // if instrAddr is before curr, we start a new interval
         // if instrAddr is inside curr, we start a new interval (could continue in current one)
@@ -192,9 +173,10 @@ namespace BinaryAnalysis {
       }
 
     private:
-      Disassembler*      disassembler;
-      AddressInterval    currIval;  //< current interval
-      AddressIntervalSet intervals;
+      Disassembler* const disassembler; ///< disassembler for architectures
+                                        ///<   using variable-length instruction encoding.
+      AddressInterval     currIval;     ///< current code interval
+      AddressIntervalSet  intervals;    ///< all code intervals
 
       //
       // ExecutionMonitor() = delete;
@@ -233,6 +215,9 @@ namespace BinaryAnalysis {
 }
 
 
+//
+// command line and option handling
+
 struct Settings
 {
   Settings()
@@ -252,22 +237,28 @@ parseCommandLine(int argc, char** argv, P2::Engine& engine, Settings& settings)
 
   SwitchGroup out("Output switches");
 
-  out.insert(Switch("output", 'o')
-             .argument("file", anyParser(settings.outputFileName))
-             .doc("Write the result to the specified file."));
+  out.insert( Switch("output", 'o')
+              .argument("file", anyParser(settings.outputFileName))
+              .doc("Write the result to the specified file.")
+            );
 
   SwitchGroup decoding("Decoding switches");
 
-  decoding.insert(Switch("no-disassembler")
-                  .intrinsicValue("false", booleanParser(settings.disassembler))
-                  .doc("disable disassembler on architectures using variable-length instructions."));
-
+  decoding.insert( Switch("no-disassembler")
+                   .intrinsicValue("false", booleanParser(settings.disassembler))
+                   .doc( "Use some instruction length estimate on systems "
+                         "with variable-length instruction encoding, instead "
+                         "of a more precise but computed instruction length. "
+                         "Trades precision for speed.\n"
+                         "Ignored on systems with fixed-length instructions (e.g., PowerPC).\n"
+                       )
+                  );
   Parser parser;
   parser
       .purpose(purpose)
       .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
       .chapter(1, "ROSE Command-line Tools")
-      .doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen} [@v{args}...]")
+      .doc("Synopsis", "@prop{programName} [@v{switches}] -- @v{specimen} [@v{args}...]")
       .doc("Description", description)
       .with(engine.engineSwitches())
       .with(out)
@@ -286,8 +277,12 @@ int main(int argc, char** argv)
   ROSE_INITIALIZE;
   Rose::Diagnostics::initAndRegister(&::mlog, "tool");
 
-  char**                   sep = std::find_if(argv, argv+argc, IsSeparator());
-  std::vector<std::string> specimen(sep + 1, argv+argc);
+  char** const            sep = std::find_if(argv, argv+argc, IsSeparator());
+  char**                  specpos = sep;
+  if (specpos != argv+argc) ++specpos;
+
+  std::vector<std::string> specimen(specpos, argv+argc);
+
   Disassembler*            disassembler = NULL;
 
   // Parse command-line
@@ -297,7 +292,7 @@ int main(int argc, char** argv)
 
   for (size_t i = 0; i < unused.size(); ++i)
   {
-    ::mlog[FATAL] << "argument ignored: " << unused.at(i) << std::endl;
+    ::mlog[WARN] << "unknown argument: " << unused.at(i) << std::endl;
   }
 
   // Trace output goes to either std::cout or some file.
@@ -327,6 +322,12 @@ int main(int argc, char** argv)
       ::mlog[FATAL] << "no disassembler for this architecture\n";
       exit(1);
     }
+  }
+
+  if (specimen.size() == 0)
+  {
+    ::mlog[FATAL] << "No specimen given (use --help)\n";
+    exit(1);
   }
 
   ExecutionMonitor execmon(specimen, disassembler);
