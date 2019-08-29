@@ -179,8 +179,8 @@ rose-installer-rmc2: install-rose-library
 	$(top_srcdir)/scripts/mkinstaller --version
 	TMPDIR=$@.tmp $(top_srcdir)/scripts/mkinstaller									\
 		--create="$@"												\
-		--CC="$(CC) \
-		--CXX="$(CXX) \
+		--CC="$(CC)"												\
+		--CXX="$(CXX)"												\
 		--contact="http://rosecompiler.org"									\
 		--prjnam=ROSE												\
 		--prjver=$(PACKAGE_VERSION)										\
@@ -315,7 +315,6 @@ install-exec-local:
 install-data-local: uninstall-local
 	-mkdir -p $(DESTDIR)$(includedir)
 #	DQ (11/1/2011): The EDG 4.x support does not require a separate include-staging directory.
-#	if !ROSE_USE_NEW_EDG_INTERFACE
 	mkdir -p "$(DESTDIR)$(includedir)/edg"
 	cp -R $(top_builddir)/include-staging/* "$(DESTDIR)$(includedir)/edg"
 #	endif

@@ -37,10 +37,12 @@ ClassHierarchyWrapper::ClassHierarchyWrapper(SgNode *node)
        // ROSE_ASSERT(templateClassDefinition == NULL);
         }
 
+#if 0
      size_t vectorSizeBeforeRemovingTemplates = allCls.size();
+#endif
   // printf ("In ClassHierarchyWrapper(): Size before removing SgTemplateClassDefinition = %" PRIuPTR " \n",vectorSizeBeforeRemovingTemplates);
      allCls.erase(std::remove(allCls.begin(), allCls.end(), (SgNode*)NULL), allCls.end());
-     size_t vectorSizeAfterRemovingTemplates = allCls.size();
+  // size_t vectorSizeAfterRemovingTemplates = allCls.size();
   // printf ("In ClassHierarchyWrapper(): Size after removing SgTemplateClassDefinition = %" PRIuPTR " \n",vectorSizeAfterRemovingTemplates);
 #if 0
      printf ("In ClassHierarchyWrapper(): Modified size of vector of class definitions before = %" PRIuPTR " after = %" PRIuPTR " \n",vectorSizeBeforeRemovingTemplates,vectorSizeAfterRemovingTemplates);

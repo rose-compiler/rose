@@ -83,8 +83,11 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( JavaWildcardType, "JavaWildcardType", "T_JAVA_WILD" );
 
   // DQ (2/10/2014): Added SgNamedType IR nodes for Philippe.
-     NEW_TERMINAL_MACRO ( JavaUnionType    , "JavaUnionType", "T_JAVA_UNION" );
+     NEW_TERMINAL_MACRO ( JavaUnionType     , "JavaUnionType", "T_JAVA_UNION" );
      NEW_TERMINAL_MACRO ( JavaParameterType , "JavaParameterType", "T_JAVA_PARAMETER" );
+
+  // Rasmussen (5/10/2019): Added a Table type for Jovial (tables are structs with array dimensions)
+     NEW_TERMINAL_MACRO ( JovialTableType , "JovialTableType", "T_JOVIAL_TABLE" );
 
      //
      // [DT] 5/11/2000 -- Added TemplateType.  Should it be called TemplateInstantiationType
@@ -164,8 +167,9 @@ Grammar::setUpTypes ()
                             "NamedType","T_NAME", false);
 #else
   // DQ (2/10/2014): Added SgNamedType IR nodes for Philippe.
+  // Rasmussen (5/10/2019): Added a Table type for Jovial (tables are structs with array dimensions)
      NEW_NONTERMINAL_MACRO (ClassType,
-                            JavaParameterType,
+                            JavaParameterType | JovialTableType,
                             "ClassType","T_CLASS", true);
      NEW_NONTERMINAL_MACRO (NamedType,
                             ClassType | EnumType | TypedefType | NonrealType |
@@ -591,6 +595,10 @@ Grammar::setUpTypes ()
             "SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETER_TYPE",
             "SgClassDeclaration* decl = NULL");
 
+     CUSTOM_CREATE_TYPE_MACRO(JovialTableType,
+            "SOURCE_CREATE_TYPE_FOR_JOVIAL_TABLE_TYPE",
+            "SgClassDeclaration* decl = NULL");
+
    // DQ (11/28/2011): Make this more like the NamedType internal support.
   // CUSTOM_CREATE_TYPE_MACRO(TemplateType,"SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE","SgTemplateInstantiationDecl* decl = NULL");
      CUSTOM_CREATE_TYPE_MACRO(TemplateType,"SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE","SgTemplateDeclaration* decl = NULL");
@@ -813,6 +821,17 @@ Grammar::setUpTypes ()
      JavaParameterType.setFunctionPrototype ("HEADER_JAVA_PARAMETER_TYPE", "../Grammar/Type.code" );
      JavaParameterType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
      JavaParameterType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+
+     JovialTableType.setFunctionPrototype   ("HEADER_JOVIAL_TABLE_TYPE", "../Grammar/Type.code" );
+     JovialTableType.setFunctionPrototype   ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
+     JovialTableType.setFunctionPrototype   ("HEADER_GET_NAME", "../Grammar/Type.code" );
+
+     JovialTableType.setDataPrototype ("SgType*"       , "base_type", "= NULL",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL,  NO_DELETE);
+     JovialTableType.setDataPrototype ("SgExprListExp*", "dim_info" , "= NULL",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+     JovialTableType.setDataPrototype ("int", "rank" , "= 0",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL,  NO_DELETE);
 
    // TemplateInstantiationType.setFunctionPrototype ("HEADER_TEMPLATE_INSTANTIATION_TYPE", "../Grammar/Type.code" );
      TemplateType.setFunctionPrototype ("HEADER_TEMPLATE_TYPE", "../Grammar/Type.code" );
@@ -1115,6 +1134,8 @@ Grammar::setUpTypes ()
      JavaUnionType.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      JavaParameterType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
+     JovialTableType.excludeFunctionSource   ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+
   // TemplateInstantiationType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      EnumType.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
@@ -1213,6 +1234,8 @@ Grammar::setUpTypes ()
 
      JavaUnionType.setFunctionSource     ( "SOURCE_JAVA_UNION_TYPE", "../Grammar/Type.code");
      JavaParameterType.setFunctionSource ( "SOURCE_JAVA_PARAMETER_TYPE", "../Grammar/Type.code");
+
+     JovialTableType.setFunctionSource   ( "SOURCE_JOVIAL_TABLE_TYPE", "../Grammar/Type.code");
 
      TemplateType.setFunctionSource        ( "SOURCE_TEMPLATE_TYPE", "../Grammar/Type.code");
 

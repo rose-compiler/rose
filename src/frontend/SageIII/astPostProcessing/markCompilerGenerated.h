@@ -37,11 +37,7 @@ class MarkAsCompilerGenerated : public SgSimpleProcessing
           void visit (SgNode* node);
 
       //! static function used in both AST fixup and in AST consistancy tests
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
           static bool templateDeclarationCanBeMarkedAsCompilerGenerated(SgDeclarationStatement* templateDeclaration);
-#else
-          static bool templateDeclarationCanBeMarkedAsCompilerGenerated(SgTemplateDeclaration* templateDeclaration);
-#endif
    };
 
 // endif for MARK_COMPILER_GENERATED_H

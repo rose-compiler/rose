@@ -40,7 +40,6 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
     echo "    OpenCL                           ${support_opencl_frontend:-no}"
     echo "    PHP                              ${support_php_frontend:-no}"
     echo "    Python                           ${support_python_frontend:-no}"
-    echo "    X10                              ${support_x10_frontend:-no}"
 
     #--------------------------------------------------------------------------------
     ROSE_SUMMARY_HEADING([Boost library])

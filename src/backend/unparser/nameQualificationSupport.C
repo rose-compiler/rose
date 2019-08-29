@@ -291,6 +291,15 @@ NameQualificationTraversal::NameQualificationTraversal(
      explictlySpecifiedCurrentScope     = NULL;
      explictlySpecifiedCurrentStatement = NULL;
 
+#if 0
+  // DQ (8/3/2019): Output a message so that I can verify this is called one per file.
+     printf ("Inside NameQualificationTraversal() constructor \n");
+#endif
+
+  // DQ (8/3/2019): Reset the static data member that holds the aliasSymbolCausalNodeSet.
+     SgSymbolTable::get_aliasSymbolCausalNodeSet().clear();
+     ROSE_ASSERT(SgSymbolTable::get_aliasSymbolCausalNodeSet().empty() == true);
+
      declarationSet = NULL;
    }
 
@@ -437,6 +446,9 @@ NameQualificationTraversal::associatedDeclaration(SgScopeStatement* scope)
 
        // DQ (7/19/2017): Adding support for new SgDeclarationScope, though it might be that we want the parent defining or non-defining declaration.
           case V_SgDeclarationScope:
+
+       // DQ (6/26/2019): Added rage-based for loop (see test2019_483.C).
+          case V_SgRangeBasedForStatement:
 
        // Some scopes don't have an associated declaration (return NULL in these cases).
        // Also missing some of the Fortran specific scopes.
@@ -3355,9 +3367,19 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                 // if (associatedFunctionDeclarationFromSymbol->get_name() == functionDeclarationFromSymbol->get_name())
                                    if (associatedFunctionDeclarationFromSymbol_mangled_name == functionDeclarationFromSymbol_mangled_name)
                                       {
-                                        printf ("Error: we have two mangled names from two symbols in the same scope using the same mangled name (investigate this) \n");
+                                        printf ("Note: we have two mangled names from two symbols in the same scope using the same mangled name (investigate this) \n");
                                         printf ("   --- functionDeclarationFromSymbol_mangled_name           = %s \n",functionDeclarationFromSymbol_mangled_name.str());
                                         printf ("   --- associatedFunctionDeclarationFromSymbol_mangled_name = %s \n",associatedFunctionDeclarationFromSymbol_mangled_name.str());
+                                        printf ("   --- functionDeclarationFromSymbol           = %p = %s \n",functionDeclarationFromSymbol,functionDeclarationFromSymbol->class_name().c_str());
+                                        printf ("   --- associatedFunctionDeclarationFromSymbol = %p = %s \n",associatedFunctionDeclarationFromSymbol,associatedFunctionDeclarationFromSymbol->class_name().c_str());
+                                        printf ("   --- functionDeclarationFromSymbol->get_name()           = %s \n",functionDeclarationFromSymbol->get_name().str());
+                                        printf ("   --- associatedFunctionDeclarationFromSymbol->get_name() = %s \n",associatedFunctionDeclarationFromSymbol->get_name().str());
+
+                                        printf ("   --- functionDeclarationFromSymbol           = %p first non-defining = %p defining = %p \n",functionDeclarationFromSymbol,
+                                             functionDeclarationFromSymbol->get_firstNondefiningDeclaration(),functionDeclarationFromSymbol->get_definingDeclaration());
+                                        printf ("   --- associatedFunctionDeclarationFromSymbol = %p first non-defining = %p defining = %p \n",associatedFunctionDeclarationFromSymbol,
+                                             associatedFunctionDeclarationFromSymbol->get_firstNondefiningDeclaration(),associatedFunctionDeclarationFromSymbol->get_definingDeclaration());
+
 #if 0
                                         printf ("functionDeclarationFromSymbol->get_name() = %s \n",functionDeclarationFromSymbol->get_name().str());
                                         SgNode* parent_functionDeclarationFromSymbol = functionDeclarationFromSymbol->get_parent();
@@ -5058,7 +5080,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_TRAVERSE_TYPE
        // DQ (5/18/2019): Adding debugging info.
-          unparseInfoPointer->display("In NameQualificationTraversal::traverseType(): unparseInfoPointer \n");
+       // unparseInfoPointer->display("In NameQualificationTraversal::traverseType(): unparseInfoPointer \n");
 #endif
 
           string typeNameString = globalUnparseToString(type,unparseInfoPointer);
@@ -7595,6 +7617,15 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          ROSE_ASSERT(associatedDeclaration != NULL);
                        }
                   }
+
+            // DQ (6/27/2019): Added more debugging support.
+               if (associatedDeclaration == NULL)
+                  {
+                    printf ("Note: unexpected IR node: originallyDeclaredInitializedName->get_parent() = %p = %s \n",
+                         originallyDeclaredInitializedName->get_parent(),originallyDeclaredInitializedName->get_parent()->class_name().c_str());
+                    printf (" --- originallyDeclaredInitializedName->get_name() = %s \n",originallyDeclaredInitializedName->get_name().str());
+                    originallyDeclaredInitializedName->get_file_info()->display("unexpected IR node");
+                  }
                ROSE_ASSERT(associatedDeclaration != NULL);
 
             // Reuse the previously computed currentScope.
@@ -8584,10 +8615,28 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                SgDeclarationStatement* declaration = getDeclarationAssociatedWithType(returnType);
                if (declaration != NULL)
                   {
+
+#if 0
+                    printf ("$$$$$$$$$$ Calling nameQualificationDepth for return type: $$$$$$$$$$$ \n");
+                    printf (" --- declaration               = %p = %s \n",declaration,declaration->class_name().c_str());
+                    printf (" --- currentScope              = %p = %s \n",currentScope,currentScope->class_name().c_str());
+                    printf (" --- memberFunctionDeclaration = %p = %s \n",memberFunctionDeclaration,memberFunctionDeclaration->class_name().c_str());
+#endif
                     int amountOfNameQualificationRequiredForReturnType = nameQualificationDepth(declaration,currentScope,memberFunctionDeclaration);
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("SgMemberFunctionDeclaration's return type: amountOfNameQualificationRequiredForType = %d \n",amountOfNameQualificationRequiredForReturnType);
                     printf ("Putting the name qualification for the type into the return type of SgMemberFunctionDeclaration = %p = %s \n",memberFunctionDeclaration,memberFunctionDeclaration->get_name().str());
+#endif
+#if 0
+                 // DQ (8/3/2019): Output the aliasSymbolCausalNodeSet.  To support multiple files, or the stame file read twice, 
+                 // we need to clear this set before starting the name qualification process.
+                    SgSymbolTable::display_aliasSymbolCausalNodeSet();
+#endif
+#if 0
+                 // DQ (8/3/2019): Trying to understand why we generate two levels of name qualification before the using directive.
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
 #endif
                     setNameQualificationReturnType(memberFunctionDeclaration,declaration,amountOfNameQualificationRequiredForReturnType);
                   }
@@ -9372,7 +9421,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                   }
                  else
                   {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("Note: Name qualification: parent statement could not be identified (may be hidden in array type index) for functionRefExp = %p = %s \n",functionRefExp,functionRefExp->class_name().c_str());
+#endif
                   }
              }
         }
@@ -10703,16 +10754,29 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
           SgEnumDeclaration* enumDeclaration = enumVal->get_declaration();
           ROSE_ASSERT(enumDeclaration != NULL);
+#if 0
+          SgName tmp_enumVal_name = enumVal->get_name();
+          printf ("tmp_enumVal_name = %s \n",tmp_enumVal_name.str());
+#endif
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+
+#if 1
+       // DQ (7/9/2019): Original code which addresses requirements for name qualification based on visability, but not ambiguity.
 
           SgStatement* currentStatement = TransformationSupport::getStatement(enumVal);
        // ROSE_ASSERT(currentStatement != NULL);
-#if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("case of SgEnumVal: currentStatement = %p \n",currentStatement);
 #endif
+
+
           if (currentStatement != NULL)
              {
                currentScope = isSgScopeStatement(currentStatement);
-#if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("case of SgEnumVal: currentStatement = %p = %s currentScope = %p = %s \n",
                     currentStatement,currentStatement->class_name().c_str(),currentScope,currentScope != NULL ? currentScope->class_name().c_str() : "NULL");
 #endif
@@ -10725,12 +10789,14 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     currentScope = inheritedAttribute.get_currentScope();
                   }
                ROSE_ASSERT(currentScope != NULL);
-#if 0
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("case of SgEnumVal (after setting currentScope): currentStatement = %p = %s currentScope = %p = %s \n",
                     currentStatement,currentStatement->class_name().c_str(),currentScope,currentScope != NULL ? currentScope->class_name().c_str() : "NULL");
 #endif
                ROSE_ASSERT(inheritedAttribute.get_currentScope() != NULL);
-#if 0
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("case of SgEnumVal : inheritedAttribute.get_currentScope() = %p = %s \n",
                        inheritedAttribute.get_currentScope(),inheritedAttribute.get_currentScope()->class_name().c_str());
 #endif
@@ -10743,13 +10809,55 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
             // DQ (9/17/2011); Added escape for where the currentScope == NULL (fails for STL code when the original expression trees are used to eliminate the constant folded values).
             // ROSE_ASSERT(currentScope != NULL);
-#if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
             // DQ (4/19/2019): Now that we (optionally) also pass in the explictlySpecifiedCurrentStatement, we might want to use it directly.
                printf ("case of SgEnumVal: Using explictlySpecifiedCurrentScope for the value of currentStatement: need to check this! \n");
 #endif
             // Use the currentScope as the currentStatement
                currentStatement = currentScope;
              }
+#else
+       // DQ (7/8/2019): Compute this from the perspective where they are referenced.
+          SgStatement* currentStatement = TransformationSupport::getStatement(enumVal);
+          if (currentStatement == NULL)
+             {
+            // This is the case of an enum in a array index expression or a template argument.
+            // Either one might require name qualification of the enum field value.  Unclear 
+            // how to handle these cases (defer for now).
+
+               printf ("Found case of enumVal with no associated statement \n");
+               enumVal->get_file_info()->display("Found case of enumVal with no associated statement");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+            else
+             {
+               currentScope = currentStatement->get_scope();
+               ROSE_ASSERT(currentScope != NULL);
+             }
+       // ROSE_ASSERT(currentStatement != NULL);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("enumVal = %p = %s \n",enumVal,SageInterface::get_name(enumVal).c_str());
+#endif
+#endif
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("currentStatement = %p \n",currentStatement);
+          if (currentStatement != NULL)
+             {
+               printf ("currentStatement = %p = %s = %s \n",currentStatement,currentStatement->class_name().c_str(),SageInterface::get_name(currentStatement).c_str());
+             }
+
+
+          printf ("currentScope = %p \n",currentScope);
+          if (currentScope != NULL)
+             {
+               printf ("currentScope = %p = %s = %s \n",currentScope,currentScope->class_name().c_str(),SageInterface::get_name(currentScope).c_str());
+             }
+#endif
 
        // DQ (9/17/2011); Added escape for where the currentScope == NULL (fails for STL code when the original expression trees are used to eliminate the constant folded values).
        // ROSE_ASSERT(currentScope != NULL);
@@ -10757,7 +10865,116 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              {
             // DQ (9/17/2011): this is the original case we waant to restore later...
                ROSE_ASSERT(currentScope != NULL);
+
+            // We need to look up the qualification for the enum name and not the enum declaration (which may have a different name (or no name).
+
+            // DQ (7/8/2019): Ideally this would form an iteration over the scopes from the current scope through the scopes connect via the base class.
+
+            // DQ (7/8/2019): Added varialbe to store the contribution to name qualification from ambiguity, as uposed to visability.
+               int additionalNameQualificationToResolveAmbiguity = 0;
+
+#if 1
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("######################################################## \n");
+               printf ("Testing the EnumVal name instead of the Enum declaration \n");
+               printf ("######################################################## \n");
+#endif
+               SgName enumVal_name = enumVal->get_name();
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("enumVal_name = %s \n",enumVal_name.str());
+#endif
+
+#if 0
+               SgSymbol* symbol = currentScope->lookup_enum_field_symbol(enumVal_name);
+               if (symbol != NULL)
+                  {
+                    SgEnumFieldSymbol* enumFieldSymbol = isSgEnumFieldSymbol(symbol);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("enumFieldSymbol = %p \n",enumFieldSymbol);
+#endif
+                    if (enumFieldSymbol != NULL)
+                       {
+                         SgInitializedName* initializedName = enumFieldSymbol->get_declaration();
+                         ROSE_ASSERT(initializedName != NULL);
+
+                         int amountOfNameQualificationRequiredByName = nameQualificationDepth(initializedName,currentScope,currentStatement);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("amountOfNameQualificationRequiredByName = %d \n",amountOfNameQualificationRequiredByName);
+#endif
+                       }
+                      else
+                       {
+                      // There is not another SgEnumFieldSymbol is this scope.
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("There is not another SgEnumFieldSymbol is this scope \n");
+#endif
+                       }
+                  }
+                 else
+#endif
+                  {
+                 // If there was no symbol, then there was no ambiguity to force the name qualification.
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("If there was no symbol, then there was no ambiguity to force the name qualification in the current scope directly \n");
+#endif
+                 // DQ (8/16/2013): Build the template parameters and template arguments as appropriate (will be NULL pointers for some types of declarations).
+                    SgTemplateParameterPtrList* templateParameterList = NULL; // SageBuilder::getTemplateParameterList(declaration);
+                    SgTemplateArgumentPtrList*  templateArgumentList  = NULL; // SageBuilder::getTemplateArgumentList(declaration);
+
+                    SgEnumDeclaration* enumDeclaration = enumVal->get_declaration();
+                    ROSE_ASSERT(enumDeclaration != NULL);
+                    SgScopeStatement* enumDeclarationScope = enumDeclaration->get_scope();
+                    ROSE_ASSERT(enumDeclarationScope != NULL);
+
+                    SgSymbol* symbolFromEnumDeclarationScope = enumDeclarationScope->lookup_enum_field_symbol(enumVal_name);
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    if (symbolFromEnumDeclarationScope == NULL)
+                       {
+                         printf ("name qualification: case of SgEnumVal: Found case of enumVal_name = %s not in scope of enumDeclaration = %p = %s \n",
+                                 enumVal_name.str(),enumDeclaration,enumDeclaration->class_name().c_str());
+                         printf (" --- symbolFromEnumDeclarationScope == NULL \n");
+                       }
+#endif
+                 // ROSE_ASSERT(symbolFromEnumDeclarationScope != NULL);
+
+                    SgSymbol* symbolFromParents = SageInterface::lookupSymbolInParentScopes(enumVal_name,currentScope,templateParameterList,templateArgumentList);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("symbolFromParents = %p \n",symbolFromParents);
+#endif
+                    if (symbolFromParents != NULL && symbolFromEnumDeclarationScope != NULL && symbolFromParents != symbolFromEnumDeclarationScope)
+                       {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         printf ("Found a reason for adding name qualification \n");
+#endif
+                         additionalNameQualificationToResolveAmbiguity++;
+                       }
+                  }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("############################################################## \n");
+               printf ("DONE: Testing the EnumVal name instead of the Enum declaration \n");
+               printf ("############################################################## \n");
+#endif
+#endif
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+
                int amountOfNameQualificationRequired = nameQualificationDepth(enumDeclaration,currentScope,currentStatement);
+
+               if (amountOfNameQualificationRequired == 0)
+                  {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("Specify name qualification to resolve ambiguity: additionalNameQualificationToResolveAmbiguity = %d \n",additionalNameQualificationToResolveAmbiguity);
+#endif
+                    amountOfNameQualificationRequired = additionalNameQualificationToResolveAmbiguity;
+                  }
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                printf ("SgEnumVal: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
@@ -10775,6 +10992,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           ROSE_ASSERT(false);
 #endif
         }
+
 
   // DQ (6/2/2011): Handle the range of expressions that can reference types that might require name qualification...
      SgNewExp*   newExp   = isSgNewExp(n);
@@ -11541,6 +11759,16 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
           SgSymbolTable::get_aliasSymbolCausalNodeSet().insert(n);
 
+#if 0
+       // DQ (8/3/2019): Output the aliasSymbolCausalNodeSet.  To support multiple files, or the stame file read twice, 
+       // we need to clear this set before starting the name qualification process.
+          SgSymbolTable::display_aliasSymbolCausalNodeSet();
+#endif
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("In NameQualificationTraversal::evaluateInheritedAttribute(): Added SgAliasSymbols causal node = %p = %s to SgSymbolTable::p_aliasSymbolCausalNodeSet size = %" PRIuPTR " \n",
                n,n->class_name().c_str(),SgSymbolTable::get_aliasSymbolCausalNodeSet().size());
@@ -11560,6 +11788,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
      printf ("****************************************************** \n");
      printf ("Leaving NameQualificationTraversal::evaluateInheritedAttribute(): node = %p = %s \n",n,n->class_name().c_str());
      printf ("******************************************************\n\n\n");
+#endif
+#if 0
      SgLocatedNode* locatedNode = isSgLocatedNode(n);
      if (locatedNode != NULL)
         {
@@ -12972,7 +13202,9 @@ NameQualificationTraversal::setNameQualificationReturnType ( SgFunctionDeclarati
              {
                i->second = qualifier;
 
-#if 1
+            // DQ (8/3/2019): Output a message about how we are debugging this.
+               printf ("Commented out reset of name qualification: replacing previousQualifier = %s with new qualifier = %s \n",i->second.c_str(),qualifier.c_str());
+#if 0
                printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
                ROSE_ASSERT(false);
 #endif

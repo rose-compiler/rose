@@ -241,7 +241,7 @@ bool LoopTransformation( const AstNodePtr& head, AstNodePtr& result)
 std::cerr << "LoopTransformation1\n";
 #endif
  
- CmdOptions *opt = CmdOptions::GetInstance();
+ /*CmdOptions *opt =*/ CmdOptions::GetInstance();
  bool reportPhaseTiming = ReportTiming();
  bool debugloop = DebugLoop(), debugdep = DebugDep(), outputdep=OutputDep();
 

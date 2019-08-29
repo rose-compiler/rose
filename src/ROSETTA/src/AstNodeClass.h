@@ -399,7 +399,8 @@ class AstNodeClass
   std::string outputClassesAndFields();
   
   // DQ (10/4/2014): Support for ATerms.
-  std::string buildAtermSupport();
+  // Rasmussen (04/17/2019): Support for ATerms has been deprecated.
+  // std::string buildAtermSupport();
   
   // MS (5/27/2015)
   std::string outputFields();

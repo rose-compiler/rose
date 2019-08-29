@@ -263,6 +263,7 @@ SgClassDefinition* GetClassDefinition( SgNamedType *classtype)
          return GetClassDefinition(isSgNamedType(isSgTypedefType(classtype)->get_base_type()));
     }
     SgDeclarationStatement *decl = classtype->get_declaration();
+    // FIXME[Robb Matzke 2019-07-10]: The following line is buggy. The condition is always true.
     if (decl->variantT() == V_SgClassDeclaration || V_SgTemplateClassDeclaration) 
         return GetClassDefn(isSgClassDeclaration(decl));
     else {
@@ -1846,8 +1847,10 @@ NewVar( const AstNodeType& _type, const string& name, bool makeunique,
   SgExpression* e = 0;
   if (_init != AST_NULL) e = ToExpression( *impl, (SgNode*)_init.get_ptr());
   SgVariableSymbol *sb = impl->NewVar( isSgType(type), name, makeunique, delayInsert, e, scope);
+#ifndef NDEBUG
   SgInitializedName* def = sb->get_declaration();
   assert(def != 0 && !HasNullParent(def));
+#endif
 
   if (DebugNewVar()) std::cerr << "Finish creating NewVar:" << name << "\n";
   SgName n =  sb->get_name();
@@ -2502,8 +2505,8 @@ AstInterface::IsArrayType(const AstNodeType& __type, int* __dim,
   if (__dim)
     (*__dim) = t->get_rank();
   if (annotation != 0) {
-    SgDeclarationStatement *d = t->getAssociatedDeclaration ();
 /*
+    SgDeclarationStatement *d = t->getAssociatedDeclaration ();
     if (p != NULL) {
       *annotation = p->getString();
 std::cerr << "ANNOTATION:" << *annotation << "\n";

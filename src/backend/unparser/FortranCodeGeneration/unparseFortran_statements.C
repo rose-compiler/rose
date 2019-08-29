@@ -2436,26 +2436,36 @@ FortranCodeGeneration_locatedNode::unparseDoConcurrentStatement(SgStatement* stm
      SgExprListExp* forAllHeader = forAllStatement->get_forall_header();
      ROSE_ASSERT(forAllHeader != NULL);
 
-     SgExpressionPtrList header = forAllHeader->get_expressions();
+#if 0
+  // This was redesigned for SDF parser using ATerms.  This was implemented incorrectly,
+  // it should use SgAssignOp expressions instead.  If this is ever resurrected it must
+  // be fixed [Rasmussen 2019.08.23].
 
   // The expressions in the forall header are in pairs (var, SgSubscriptExpression)
      ROSE_ASSERT( ( forAllHeader->get_expressions().size() % 2 ) == 0);
      int num_vars = forAllHeader->get_expressions().size() / 2;
+     for (int i = 0; i <= num_vars; i += 2)
+#endif
+
+     SgExpressionPtrList header = forAllHeader->get_expressions();
+     int num_vars = header.size();
 
      curprint("DO CONCURRENT (");
 
-     for (int i = 0; i <= num_vars; i += 2)
+     for (int i = 0; i < num_vars; i++)
         {
            if (i != 0) curprint(", ");
 
-        // variable
-           unparseExpression(header[i],  info);
+           SgAssignOp* assignOp = isSgAssignOp(header[i]);
+           ROSE_ASSERT(assignOp);
+
+           unparseExpression(assignOp->get_lhs_operand_i(), info);
            curprint("=");
-        // subscripts
-           unparseExpression(header[i+1],info);
+           unparseExpression(assignOp->get_rhs_operand_i(), info);
         }
 
      curprint(")");
+     unp->cur.insert_newline(1);
 
   // Unparse the body
      SgStatement* statement = NULL;
@@ -3832,15 +3842,30 @@ FortranCodeGeneration_locatedNode::unparseAssociateStatement(SgStatement* stmt, 
 
      curprint("ASSOCIATE (");
 
-     SgVariableDeclaration* variableDeclaration = associateStatement->get_variable_declaration();
-     ROSE_ASSERT(variableDeclaration != NULL);
-     SgInitializedName* variable = *(variableDeclaration->get_variables().begin());
-     ROSE_ASSERT(variable != NULL);
+     // Pei-Hung (07/24/2019) unparse SgDeclarationStatementPtrList for multiple associates
+     SgDeclarationStatementPtrList::iterator pp = associateStatement->get_associates().begin();
+     while ( pp != associateStatement->get_associates().end() )
+        {
+          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(*pp);
+          ROSE_ASSERT(variableDeclaration != NULL);
 
-     curprint(variable->get_name());
-     curprint(" => ");
-     unparseExpression(variable->get_initializer(),info);
-     curprint(") ");
+          SgInitializedName* variable = *(variableDeclaration->get_variables().begin());
+          ROSE_ASSERT(variable != NULL);
+
+          curprint(variable->get_name());
+          curprint(" => ");
+          unparseExpression(variable->get_initializer(),info);
+          pp++;
+          if(pp != associateStatement->get_associates().end())
+            curprint(", ");
+          
+        }
+        curprint(") ");
+
+
+
+
+
   // unp->cur.insert_newline(1);
 
      ROSE_ASSERT(associateStatement->get_body() != NULL);
