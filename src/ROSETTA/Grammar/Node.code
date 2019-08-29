@@ -2610,7 +2610,12 @@ SgNode::set_parent ( SgNode* parent )
      ROSE_ASSERT(this != NULL);
      ROSE_ASSERT(this != parent);
 
-  // printf ("In SgNode::set_parent(): Setting parent of %p = %s to %p = %s \n",this,class_name().c_str(),parent,parent->class_name().c_str());
+#if 0
+     printf ("In SgNode::set_parent():\n");
+     printf (" - this     = %p (%s)\n", this,     class_name().c_str());
+     printf (" - parent   = %p (%s)\n", parent,   parent ? parent->class_name().c_str() : "" );
+     printf (" - p_parent = %p (%s)\n", p_parent, p_parent ? p_parent->class_name().c_str() : "" );
+#endif
 
      p_parent = parent;
 
