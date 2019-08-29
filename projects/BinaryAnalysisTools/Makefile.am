@@ -132,6 +132,16 @@ rose_trace_LDFLAGS = $(ROSE_RPATHS)
 rose_trace_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Monitor execution and estimate number of unique instructions
+
+bin_PROGRAMS += rose-execution-monitor
+
+rose_execution_monitor_SOURCES = ExecutionMonitor.C
+rose_execution_monitor_CPPFLAGS = $(ROSE_INCLUDES)
+rose_execution_monitor_LDFLAGS = $(ROSE_RPATHS)
+rose_execution_monitor_LDADD = $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Not distributed; not part of the Git repo
 
 detectConstants: detectConstants.C
