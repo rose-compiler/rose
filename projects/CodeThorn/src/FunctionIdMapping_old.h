@@ -1,5 +1,5 @@
-#ifndef FUNCTIONIDMAPPING2_H
-#define FUNCTIONIDMAPPING2_H
+#ifndef FUNCTIONIDMAPPING_H
+#define FUNCTIONIDMAPPING_H
 
 #include <string>
 #include <map>
@@ -12,7 +12,6 @@
 #include "FunctionIdMapping.h"
 #include "Flow.h"
 #include "Labeler.h"
-#include "FunctionCallTarget.h"
 
 namespace CodeThorn {
 
@@ -75,6 +74,7 @@ public:
   // the computation of the ROSE-based function-symbol mapping
   // creates a mapping of functionNames and its computed UniqueFunctionSymbol
   void computeFunctionSymbolMapping(SgProject* project);
+  void computeFunctionSymbolMapping(/*const*/ Flow& ICFG, /*const*/ Labeler& labeler);
 
   SgFunctionDeclaration* getFunctionDeclaration(FunctionId funcFunctionId) const;
 
@@ -82,6 +82,14 @@ public:
 
   FunctionIdSet getFunctionIdsOfFunctionDeclarations(std::set<SgFunctionDeclaration*> varDecls);
   FunctionIdSet getFunctionIdsOfAstSubTree(SgNode* node);
+
+  // Looks up the given id in the mapping and returns the corresponding symbol
+  //  Returns 0 if no mapping for the given id exists (e.g. if the id is invalid).
+  SgSymbol* getSymbolFromFunctionId(FunctionId) const;
+
+  // Looks up the given symbol in the mapping and returns the corresponding id.
+  //  Returns an invalid id if no mapping for the given symbol exists.
+  FunctionId getFunctionIdFromSymbol(SgSymbol*) const;
 
   // Looks up the symbol of the given declaration in the mapping and returns the corresponding id
   //  Returns an invalid id if no such mapping exists.
@@ -95,13 +103,8 @@ public:
   FunctionId getFunctionIdFromFunctionRef(SgTemplateMemberFunctionRefExp* functionRef) const;
   FunctionId getFunctionIdFromFunctionDef(SgFunctionDefinition* funDef);
   SgFunctionDefinition* getFunctionDefFromFunctionId(FunctionId funId);
-  SgFunctionDefinition* resolveFunctionRef(SgFunctionRefExp* funRef);
 
-  SgSymbol* getSymbolFromFunctionId(FunctionId id) const;
-  FunctionId getFunctionIdFromSymbol(SgSymbol* symbol) const;
-
-  // Looks up the given id in the mapping and returns the type associated with the corresponding function
-  // this is the type of the function definition, or if this one does not exist of a declaration
+  // Looks up the given id in the mapping and returns the type associated with the corresponding symbol
   SgFunctionType* getTypeFromFunctionId(FunctionId) const;
 
   bool isTemporaryFunctionId(FunctionId id) const;
@@ -159,15 +162,7 @@ public:
 
   }
 
-  // logger support
-  static void initDiagnostics();
-
  protected:
-  // logger support
-  static Sawyer::Message::Facility logger;
-
-  void computeFunctionCallMapping(SgProject* project);
-
   static void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node, FunctionId id);
   static std::string generateDotSgSymbol(SgSymbol* sym);
 
@@ -183,10 +178,6 @@ public:
   // Mapping of function definitions
   std::unordered_map<SgFunctionDefinition*,FunctionId> mappingFunctionDefToFunctionId;
   std::unordered_map<FunctionId,SgFunctionDefinition*,FunctionIdHashFunction> mappingFunctionIdToFunctionDef;
-
-  // mapping supporint multiple targets (to also address function pointers)
-  // TODO: adapt to only use labels
-  std::unordered_map<SgFunctionRefExp*,std::vector<FunctionCallTarget> > functionCallMapping;
 
 }; // end of class FunctionIdMapping
 

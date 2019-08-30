@@ -59,6 +59,9 @@ namespace CodeThorn {
     bool operator==(const CallString& other) const;
     bool operator!=(const CallString& other) const;
 
+    // hash value for this callstring
+    size_t hash() const;
+
   private:
     static size_t _maxLength;
     typedef std::vector<CodeThorn::Label> CallStringType;
@@ -66,5 +69,18 @@ namespace CodeThorn {
   };
 
 }
+
+// custom specialization of std::hash injected in namespace std
+namespace std
+{
+  template<> struct hash<CodeThorn::CallString> {
+    typedef CodeThorn::CallString argument_type;
+    typedef std::size_t result_type;
+    result_type operator()(argument_type const& cs) const noexcept {
+      return cs.hash();
+    }
+  };
+}
+
 
 #endif

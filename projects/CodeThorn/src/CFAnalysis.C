@@ -19,6 +19,7 @@ using namespace std;
 using namespace Sawyer::Message;
 
 CFAnalysis::FunctionResolutionMode CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;
+//CFAnalysis::FunctionResolutionMode CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;
 
 Sawyer::Message::Facility CFAnalysis::logger;
 void CFAnalysis::initDiagnostics() {
@@ -144,6 +145,7 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
   int externalFunCalls=0;
   int externalFunCallsWithoutDecl=0;
   int functionsFound=0;
+ 
   for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
     //cout<<"INFO: resolving function call "<<callLabNr<<" of "<<callLabs.size()<<endl;
     SgNode* callNode=getNode(*i);
@@ -152,13 +154,27 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
     SgFunctionCallExp *funCall=SgNodeHelper::Pattern::matchFunctionCall(callNode);
     if(!funCall) 
       throw CodeThorn::Exception("interFlow: unknown call exp (not a SgFunctionCallExp)");
+#if 0
+    //SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration();
+    //SgFunctionSymbol* funSym=funCall->getAssociatedFunctionSymbol();
+    //SgType* funCallType=funCall->get_type(); // return type
+    SgExpression* funExp=funDecl->get_function();
+    ROSE_ASSERT(funExp);
+    SgType* funExpType=funExp->get_type();
+    ROSE_ASSERT(funExpType);
+    SgFunctionType* funType=isSgFunctionType(funExpType);
+    if(funType) {
+      SgFunctionParameterTypeList* funParamTypeList=funType->get_argument_list();
+    }
+#endif
+    SAWYER_MESG(logger[TRACE])<<"Resolving function call: "<<funCall<<": "<<funCall->unparseToString()<<": ";
     SgFunctionDefinition* funDef=nullptr;
     switch(functionResolutionMode) {
     case FRM_TRANSLATION_UNIT: funDef=SgNodeHelper::determineFunctionDefinition(funCall);break;
     case FRM_WHOLE_AST_LOOKUP: funDef=determineFunctionDefinition2(funCall);break;
     case FRM_FUNCTION_ID_MAPPING: funDef=determineFunctionDefinition3(funCall);break;
     default:
-      logger[ERROR]<<"Unsupported function resolution mode."<<endl;
+      logger[ERROR]<<endl<<"Unsupported function resolution mode."<<endl;
       exit(1);
     }
     
@@ -454,7 +470,6 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     set<SgNode*> breakNodes=SgNodeHelper::loopRelevantBreakStmtNodes(node);
     LabelSet lset=labeler->getLabelSet(breakNodes);
     finalSet+=lset;
-    //cout << finalSet.toString  () << endl;
     return finalSet;
   }
   case V_SgBasicBlock: {
@@ -482,7 +497,6 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     set<SgNode*> breakNodes=SgNodeHelper::loopRelevantBreakStmtNodes(node);
     LabelSet lset=labeler->getLabelSet(breakNodes);
     finalSet+=lset;
-    //cout << finalSet.toString() << endl;
     // very last case in switch (not necessarily default), if it does not contain a break has still a final label.
     // if it is a break it will still be the last label. If it is a goto it will not have a final label (which is correct).
     SgSwitchStatement* switchStmt=isSgSwitchStatement(node);
@@ -1314,6 +1328,7 @@ Flow CFAnalysis::flow(SgNode* node) {
   }
 }
 
+#if 0
 // slow lookup
 SgFunctionDefinition* CFAnalysis::determineFunctionDefinition2(SgFunctionCallExp* funCall) {
   if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration()) {
@@ -1355,11 +1370,113 @@ SgFunctionDefinition* CFAnalysis::determineFunctionDefinition2(SgFunctionCallExp
   }
   return 0;
 }
+#endif
 
 SgFunctionDefinition* CFAnalysis::determineFunctionDefinition3(SgFunctionCallExp* funCall) {
+  //cout<<"DEBUG: CFAnalysis::determineFunctionDefinition3:"<<funCall->unparseToString()<<endl;
   SgFunctionDefinition* funDef=nullptr;
   // TODO (use function id mapping)
-  logger[ERROR]<<"CFAnalysis::determineFunctionDefinition3 not implemented."<<endl;
-  exit(1);
+  ROSE_ASSERT(getFunctionIdMapping());
+  SgExpression* node=funCall->get_function();
+  if(node) {
+    if(SgFunctionRefExp* funRef=isSgFunctionRefExp(node)) {
+      funDef=getFunctionIdMapping()->resolveFunctionRef(funRef);
+      if(funDef) logger[TRACE]<<"Resolved to "<<funDef;
+      else logger[TRACE]<<"NOT resolved.";
+    }
+  }
+#if 0
+  if(node) {
+    if(SgFunctionRefExp* funRef=isSgFunctionRefExp(node)) {
+      FunctionId funId=_functionIdMapping->getFunctionIdFromFunctionRef(funRef);
+      // TODO: get function definition from funId
+      cout<<"DEBUG: funRef:"<<funRef->unparseToString()<<endl;
+      cout<<"DEBUG: FunctionId "<<funId.toString()<<" for funCall: "<<funCall->unparseToString()<<": definition: ";
+      if(funId.isValid()) {
+#if 1
+        funDef=getFunctionIdMapping()->getFunctionDefFromFunctionId(funId);
+#else
+        SgSymbol* sym=_functionIdMapping->getSymbolFromFunctionId(funId);
+        SgFunctionSymbol* funSym=isSgFunctionSymbol(sym);
+        cout<<"funSym:"<<funSym<<" ";
+        if(funSym) {
+          SgFunctionDeclaration* funDecl=isSgFunctionDeclaration(funSym->get_declaration());
+          cout<<"funDecl:"<<funDecl<<" ";
+          if(funDecl) {
+            auto defDecl=funDecl->get_definingDeclaration();
+            cout<<"definingDecl:"<<defDecl<<" ";
+            if(SgFunctionDeclaration* funDecl=isSgFunctionDeclaration(defDecl)) {
+              funDef=funDecl->get_definition();
+            }
+          }
+        }
+#endif
+      }
+    }
+  }
+#endif
+  logger[TRACE]<<" FunDef: "<<funDef<<endl;
   return funDef;
+}
+
+SgFunctionDefinition* CFAnalysis::determineFunctionDefinition2(SgFunctionCallExp* funCall) {
+
+  SgExpression* funExp=funCall->get_function();
+  ROSE_ASSERT(funExp);
+  SgType* funExpType=funExp->get_type();
+  ROSE_ASSERT(funExpType);
+  SgFunctionType* callFunType=isSgFunctionType(funExpType);
+  SAWYER_MESG(logger[TRACE])<<"FD2: funExp: "<<funExp->unparseToString()<<" callFunType: "<<callFunType->unparseToString()<<endl;
+
+  SgFunctionSymbol* funCallFunctionSymbol=0;
+  SgName funCallName;
+  if(SgFunctionRefExp* funRef=isSgFunctionRefExp(funExp)) {
+    funCallFunctionSymbol=funRef->get_symbol();
+    funCallName=funCallFunctionSymbol->get_name();
+  }
+  SAWYER_MESG(logger[TRACE])<<"FD2: funCallFunctionSymbol: "<<funCallFunctionSymbol<<endl;
+
+  if(callFunType) {
+    SgNode* rootNode=funCall;
+    while(!isSgProject(rootNode)) {
+      rootNode=rootNode->get_parent();
+    }
+    //SgFunctionParameterTypeList* funParamTypeList=funType->get_argument_list();
+    // search for this function type in the AST.
+    RoseAst ast(rootNode);
+    for(auto node : ast) {
+      // check every function definition
+      if(SgFunctionDefinition* funDef=isSgFunctionDefinition(node)) {
+        SgFunctionDeclaration* funDecl=funDef->get_declaration();
+        // SgName funDecl->get_mangled_name()
+        //const SgInitializedNamePtrList & 	get_args () const 
+
+        SgName funName=funDecl->get_name();
+        if(funName.get_length()>0 && funName==funCallName) {
+          SAWYER_MESG(logger[TRACE])<<"Names match: "<<funName<<endl;
+        } else {
+          SAWYER_MESG(logger[TRACE])<<"Names do NOT match: "<<funCallName<<" : "<<funName<<endl;
+        }
+
+        SgFunctionType* funType=funDecl->get_type();
+        if(callFunType==funType) {
+          SAWYER_MESG(logger[TRACE])<<"Found function type: "<<funType->unparseToString()<<endl;
+          SgName qualifiedFunName=funDecl->get_qualified_name();
+          SAWYER_MESG(logger[TRACE])<<"Found (qual) function name: "<<qualifiedFunName<<endl;
+          SgName FunName=funDecl->get_name();
+          SAWYER_MESG(logger[TRACE])<<"Found (bare) function name: "<<qualifiedFunName<<endl;
+          return funDef;
+        }
+      }
+    }
+  }
+  return 0;
+}
+
+void CFAnalysis::setFunctionIdMapping(FunctionIdMapping* fim) {
+  _functionIdMapping=fim;
+}
+
+FunctionIdMapping* CFAnalysis::getFunctionIdMapping() {
+  return _functionIdMapping;
 }
