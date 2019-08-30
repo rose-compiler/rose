@@ -132,6 +132,27 @@ rose_trace_LDFLAGS = $(ROSE_RPATHS)
 rose_trace_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Monitor execution and estimate number of unique instructions
+
+bin_PROGRAMS += rose-execution-monitor
+
+rose_execution_monitor_SOURCES = ExecutionMonitor.C
+rose_execution_monitor_CPPFLAGS = $(ROSE_INCLUDES)
+rose_execution_monitor_LDFLAGS = $(ROSE_RPATHS)
+rose_execution_monitor_LDADD = $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
+# Test for rose-execution-monitor
+#   specimen can be invoked: testExecutionMonitor [mode] [N]
+#                            mode = 0 .. invoke identity N times.
+#                            mode = 1 .. alternate identity, sum, fibonacci over N runs.
+#                            default mode = 0, default N = 10
+
+bin_PROGRAMS += testExecutionMonitor
+
+testExecutionMonitor_SOURCES = specimens/test-execution-monitor.C
+
+#------------------------------------------------------------------------------------------------------------------------
 # Not distributed; not part of the Git repo
 
 detectConstants: detectConstants.C
