@@ -186,19 +186,16 @@ namespace BinaryAnalysis {
   {
     const addr_t addr = pc();
 
-    if (adjacentInstruction(currIval, addr))
+    // test whether the PC is right-adjacent to the current code segment
+    if (!adjacentInstruction(currIval, addr))
     {
-      // expand current interval
-      currIval = currIval.hull(addr + instructionLength(addr));
-    }
-    else
-    {
-      // record previous execution range;
+      // record previous execution range, and start a new one
       intervals.insert(currIval);
-
-      // start new execution range
       currIval = AddressInterval(addr);
     }
+
+    // extend address interval
+    currIval = currIval.hull(addr + instructionLength(addr));
 
     // make a move
     singleStep();
@@ -210,6 +207,8 @@ namespace BinaryAnalysis {
 
     while (!isTerminated())
       step();
+
+    intervals.insert(currIval);
   }
 }
 }
