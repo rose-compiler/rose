@@ -30,7 +30,7 @@ public:
     InterproceduralPredicate &interproceduralPredicate;      // returns true when a call should be inlined
 
     // maps CFG vertex ID to dataflow vertex
-    typedef Sawyer::Container::Map<ControlFlowGraph::ConstVertexIterator, DfCfg::VertexIterator> VertexMap;
+    typedef Sawyer::Container::GraphIteratorMap<ControlFlowGraph::ConstVertexIterator, DfCfg::VertexIterator> VertexMap;
 
     // Info about one function call
     struct CallFrame {
@@ -62,7 +62,7 @@ public:
     DfCfg::VertexIterator findVertex(const ControlFlowGraph::ConstVertexIterator cfgVertex) {
         ASSERT_require(!callStack.empty());
         CallFrame &callFrame = callStack.back();
-        return callFrame.vmap.getOrElse(cfgVertex, dfCfg.vertices().end());
+        return callFrame.vmap.find(cfgVertex).orElse(dfCfg.vertices().end());
     }
 
     // Insert the specified dfVertex into the data-flow graph and associate it with the specified cfgVertex. The mapping is
@@ -105,7 +105,7 @@ public:
         ASSERT_require(cfgVertex != cfg.vertices().end());
         ASSERT_require(cfgVertex->value().type() == V_BASIC_BLOCK);
         DfCfg::VertexIterator retval = dfCfg.vertices().end();
-        if (!callFrame.vmap.getOptional(cfgVertex).assignTo(retval)) {
+        if (!callFrame.vmap.find(cfgVertex).assignTo(retval)) {
             BasicBlock::Ptr bblock = cfgVertex->value().bblock();
             ASSERT_not_null(bblock);
             retval = insertVertex(DfCfgVertex(bblock, parentFunction, inliningId), cfgVertex);

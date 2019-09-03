@@ -2173,15 +2173,17 @@ Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function) const {
     while (!worklist.isEmpty()) {
         const ControlFlowGraph::Vertex &vertex = *cfg_.findVertex(worklist.pop());
 
-        // Find vertex neighbors that could be in the same function.
-        Sawyer::Container::Set<ControlFlowGraph::ConstVertexIterator> neighbors;
+        // Find vertex neighbors that could be in the same function.  The neighbors are sorted by ID instead of vertex iterator
+        // because sorting by ID is reproducible across runs, but vertex comparisons are based on addresses, which are not
+        // reproducible.
+        Sawyer::Container::Map<size_t, ControlFlowGraph::ConstVertexIterator> neighbors;
         BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.outEdges()) {
             if (edge.value().type() != E_FUNCTION_CALL &&
                 edge.value().type() != E_FUNCTION_XFER &&
                 edge.value().type() != E_FUNCTION_RETURN && !edge.isSelfEdge() &&
                 !edge.target()->value().isEntryBlock()) {
                 SAWYER_MESG(debug) <<"  following edge " <<edgeName(edge) <<"\n";
-                neighbors.insert(edge.target());
+                neighbors.insert(edge.target()->id(), edge.target());
             }
         }
         BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.inEdges()) {
@@ -2190,7 +2192,7 @@ Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function) const {
                 edge.value().type() != E_FUNCTION_RETURN && !edge.isSelfEdge() &&
                 !edge.source()->value().isEntryBlock()) {
                 SAWYER_MESG(debug) <<"  following edge " <<edgeName(edge) <<"\n";
-                neighbors.insert(edge.target());
+                neighbors.insert(edge.target()->id(), edge.target());
             }
         }
 
