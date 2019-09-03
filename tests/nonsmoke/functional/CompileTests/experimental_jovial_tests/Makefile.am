@@ -133,9 +133,7 @@ PASSING_COMPOOL_TEST_Objects = $(TEST_COMPOOL_Objects)
 testParser: ../../testParser
 
 $(TEST_JOVIAL_Objects): ../../testParser
-if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
 	../../testParser $(ROSE_FLAGS) -rose:jovial $(srcdir)/$(@:.aterm=.jov)
-endif
 
 check-compool:
 	@echo $(TEST_COMPOOL_Objects)
@@ -151,13 +149,7 @@ clean-local:
 
 check-local:
 	@echo "Tests for experimental Jovial frontend."
-if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
 	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "***********************************************************************************************************************************"
-	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/experimental_jovial_tests: make check rule complete (terminated normally) ******"
-	@echo "***********************************************************************************************************************************"
-else
-	@echo "******************************************************************************************"
-	@echo "***** Skipping tests of experimental Jovial frontend (must be configured explicitly) *****"
-	@echo "******************************************************************************************"
-endif
+	@echo "***********************************************************************************************************************"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/experimental_jovial_tests: make check terminated successfully ******"
+	@echo "***********************************************************************************************************************"
