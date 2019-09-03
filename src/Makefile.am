@@ -38,6 +38,15 @@ else
    libroseOpenFortranParserlibraries =
 endif
 
+# Added support for Fortran front-end development using the flang (F18) compiler [Rasmussen 8/12/2019]
+if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
+   libroseExperimentalFlangParserlibraries = \
+        frontend/Experimental_Flang_ROSE_Connection/libexperimentalRoseFlang.la \
+        3rdPartyLibraries/flang-parser/libFlangParser.la
+else
+   libroseExperimentalFlangParserlibraries =
+endif
+
 # Rasmussen (01/21/2018): Adding general support for experimental languages
 # Rasmussen (05/29/2018): Moved parse tables for installation in $(prefix)/share/rose
 if ROSE_BUILD_ATERM_SUPPORT
@@ -194,6 +203,7 @@ libroseLibraries = \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseCxxlibraries) \
    $(libroseOpenFortranParserlibraries) \
+   $(libroseExperimentalFlangParserlibraries) \
    $(libroseExperimentalGeneralLanguagelibraries) \
    $(libroseExperimentalOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
