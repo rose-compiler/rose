@@ -22,11 +22,11 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "5";
-$mkinstaller_ver_build = "8";
+$mkinstaller_ver_build = "9";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.5.8";
-$mkinstaller_ver_time  = "23Aug2019,15:52:53z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.8 - 23Aug2019,15:52:53z";
+$mkinstaller_ver_name  = "2.5.9";
+$mkinstaller_ver_time  = " 1Sep2019,15:59:18z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.9 -  1Sep2019,15:59:18z";
 
 #{------------------------------------------------------------------------------
 #
@@ -5978,42 +5978,88 @@ EOF09
          |#  Passing 1 or more gives a more specific name. The value should be in the
          |#  range 0..3 The default is 1
          |#
-         |#  The second parameter is a name such as returned by \$^O that is to be used.
-         |#  This parameter is almost never supplied. Default is to use the value of
-         |#  the special varable \$^O (this default is almost always what is wanted).
+         |#  The second parameter is a name such as returned by Perl's special \$^O
+         |#  variable that is to be used. The default is to simply use the value of
+         |#  Perl's special varable \$^O (this default is almost always what is wanted).
          |#
-         |#  see: totebag/src/perl-lib/getOSname.psub
+         |#  see: totebag/src/sh-lib/getOSname.shfrag
+         |#
+         |#  Dated: 01Sep2019
          |#
          |#  NOTE: This code has only been tested on FreeBSD, Linux, MacOS, and Solaris
-         |#
-         |#  Dated: 17Apr2019
+         |#        Other other implementations has been known to work but haven't been
+         |#        tested for years.
          |#
          |#-------------------------------------------------------------------------------
          |
          |getOSname () {
          |   levelOfDetail="\$1"
          |   given="\$2"
+         |   if [ "X\${debugging}" != "X0" ]
+         |   then
+         |      echo "getOSname[ levelOfDetail=\\"\${levelOfDetail}\\", given=\\"\${given}\\"..." | "\${use_sendStdinTo}" \${debugOpt}
+         |   fi
+         |   gosnExitCode=0
          |   if [ "X\${levelOfDetail}" = "X" ]
          |   then
          |      levelOfDetail=1
+         |      if [ "X\${debugging}" != "X0" ]
+         |      then
+         |         echo "getOSname: ...assume levelOfDetail=\\"\${levelOfDetail}\\"..." | "\${use_sendStdinTo}" \${debugOpt}
+         |      fi
          |   fi
          |   if [ "X\${given}" = "X" ]
          |   then
-         |      given=`perl -e 'print \$^O."\\n"'`
+         |      if [ "X\${Overide_caret_oh_with}" != "X" ]
+         |      then
+         |         given="\${Overide_caret_oh_with}"
+         |         if [ "X\${debugging}" != "X0" ]
+         |         then
+         |            echo "getOSname: ...used overide" | "\${use_sendStdinTo}" \${debugOpt}
+         |         fi
+         |      else
+         |         given=`perl -e 'print \$^O."\\n"'`
+         |      fi
+         |      if [ "X\${debugging}" != "X0" ]
+         |      then
+         |         echo "getOSname: ...assume given=\\"\${given}\\"..." | "\${use_sendStdinTo}" \${debugOpt}
+         |      fi
          |   fi
          |   given=`echo \${given} | tr '[:upper:]' '[:lower:]'`
+         |   if [ "X\${debugging}" != "X0" ]
+         |   then
+         |      echo "getOSname: ...using given=\\"\${given}\\"..." | "\${use_sendStdinTo}" \${debugOpt}
+         |   fi
          |   if [ "X\${given}" = "Xaix" ]
          |   then
+         |      if [ "X\${debugging}" != "X0" ]
+         |      then
+         |         echo "getOSname: ...looks like IBM AIX" | "\${use_sendStdinTo}" \${debugOpt}
+         |      fi
          |      #
          |      #  NOTE: AIX detection hasn't been tested
          |      #
          |      if [ 2 -le \${levelOfDetail} ]
          |      then
-         |         gives=`uname -r 2>/dev/null`
+         |         if [ "X\${Overide_uname_r_with}" != "X" ]
+         |         then
+         |            gives="\${Overide_uname_r_with}"
+         |         else
+         |            gives=`uname -r 2>/dev/null`
+         |         fi
          |         if [ "X\${gives}" != "X" ]
          |         then
-         |            major=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
-         |            minor=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    version \\"\${gives}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
+         |            major=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
+         |            minor=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    major is \\"\${major}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |               echo "getOSname:    minor is \\"\${minor}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
          |            if [ "X\${major}" != "X" ] && [ "X\${major}" != "X\${gives}" ]
          |            then
          |               if [ 3 -le \${levelOfDetail} ] && [ "X\${minor}" != "X" ] && [ "X\${minor}" != "X\${gives}" ]
@@ -6034,15 +6080,34 @@ EOF09
          |      else
          |         echo "UNIX-like"
          |      fi
+         |      gosnExitCode=0
          |   elif [ "X\${given}" = "Xdarwin" ]
          |   then
+         |      if [ "X\${debugging}" != "X0" ]
+         |      then
+         |         echo "getOSname: ...looks like MacOS" | "\${use_sendStdinTo}" \${debugOpt}
+         |      fi
          |      if [ 2 -le \${levelOfDetail} ]
          |      then
-         |         gives=`uname -r 2>/dev/null`
+         |         if [ "X\${Overide_uname_r_with}" != "X" ]
+         |         then
+         |            gives="\${Overide_uname_r_with}"
+         |         else
+         |            gives=`uname -r 2>/dev/null`
+         |         fi
          |         if [ "X\${gives}" != "X" ]
          |         then
-         |            major=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
-         |            minor=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    version \\"\${gives}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
+         |            major=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
+         |            minor=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    major is \\"\${major}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |               echo "getOSname:    minor is \\"\${minor}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
          |            if   [ "X\${major}" = "X18" ]
          |            then
          |               echo "MacOS X Mojave"
@@ -6103,18 +6168,37 @@ EOF09
          |      else
          |         echo "UNIX-like"
          |      fi
+         |      gosnExitCode=0
          |   elif [ "X\${given}" = "Xdec_osf" ]
          |   then
+         |      if [ "X\${debugging}" != "X0" ]
+         |      then
+         |         echo "getOSname: ...looks like Tru64" | "\${use_sendStdinTo}" \${debugOpt}
+         |      fi
          |      #
          |      #  NOTE: Tru64/OSF detection hasn't been tested
          |      #
          |      if [ 1 -le \${levelOfDetail} ]
          |      then
-         |         gives=`uname -r 2>/dev/null`
+         |         if [ "X\${Overide_uname_r_with}" != "X" ]
+         |         then
+         |            gives="\${Overide_uname_r_with}"
+         |         else
+         |            gives=`uname -r 2>/dev/null`
+         |         fi
          |         if [ "X\${gives}" != "X" ]
          |         then
-         |            major=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
-         |            minor=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    version \\"\${gives}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
+         |            major=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
+         |            minor=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    major is \\"\${major}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |               echo "getOSname:    minor is \\"\${minor}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
          |            if [ "X\${major}" != "X" ] && [ "X\${major}" != "X\${gives}" ]
          |            then
          |               if [ \${major} -le 3 ]
@@ -6151,15 +6235,34 @@ EOF09
          |      else
          |         echo "Unix-like"
          |      fi
+         |      gosnExitCode=0
          |   elif [ "X\${given}" = "Xfreebsd" ]
          |   then
+         |      if [ "X\${debugging}" != "X0" ]
+         |      then
+         |         echo "getOSname: ...looks like FreeBSD" | "\${use_sendStdinTo}" \${debugOpt}
+         |      fi
          |      if [ 2 -le \${levelOfDetail} ]
          |      then
-         |         gives=`uname -r 2>/dev/null`
+         |         if [ "X\${Overide_uname_r_with}" != "X" ]
+         |         then
+         |            gives="\${Overide_uname_r_with}"
+         |         else
+         |            gives=`uname -r 2>/dev/null`
+         |         fi
          |         if [ "X\${gives}" != "X" ]
          |         then
-         |            major=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
-         |            minor=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    version \\"\${gives}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
+         |            major=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
+         |            minor=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    major is \\"\${major}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |               echo "getOSname:    minor is \\"\${minor}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
          |            if [ "X\${major}" != "X" ] && [ "X\${major}" != "X\${gives}" ]
          |            then
          |               if [ 3 -le \${levelOfDetail} ] && { [ "X\${minor}" != "X" ] && [ "X\${minor}" != "X\${gives}" ] ; }
@@ -6180,18 +6283,37 @@ EOF09
          |      else
          |         echo "UNIX-like"
          |      fi
+         |      gosnExitCode=0
          |   elif [ "X\${given}" = "Xhaiku" ]
          |   then
+         |      if [ "X\${debugging}" != "X0" ]
+         |      then
+         |         echo "getOSname: ...looks like Haiku" | "\${use_sendStdinTo}" \${debugOpt}
+         |      fi
          |      #
          |      #  NOTE: Haiku detection hasn't been tested
          |      #
          |      if [ 2 -le \${levelOfDetail} ]
          |      then
-         |         gives=`uname -r 2>/dev/null`
+         |         if [ "X\${Overide_uname_r_with}" != "X" ]
+         |         then
+         |            gives="\${Overide_uname_r_with}"
+         |         else
+         |            gives=`uname -r 2>/dev/null`
+         |         fi
          |         if [ "X\${gives}" != "X" ]
          |         then
-         |            major=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
-         |            minor=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    version \\"\${gives}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
+         |            major=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
+         |            minor=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    major is \\"\${major}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |               echo "getOSname:    minor is \\"\${minor}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
          |            if [ "X\${major}" != "X" ] && [ "X\${major}" != "X\${gives}" ]
          |            then
          |               if [ 3 -le \${levelOfDetail} ] && { [ "X\${minor}" != "X" ] && [ "X\${minor}" != "X\${gives}" ] ; }
@@ -6212,18 +6334,37 @@ EOF09
          |      else
          |         echo "UNIX-like"
          |      fi
+         |      gosnExitCode=0
          |   elif [ "X\${given}" = "Xhpux" ]
          |   then
+         |      if [ "X\${debugging}" != "X0" ]
+         |      then
+         |         echo "getOSname: ...looks like HPUX" | "\${use_sendStdinTo}" \${debugOpt}
+         |      fi
          |      #
          |      #  NOTE: HPUX detection hasn't been tested
          |      #
          |      if [ 2 -le \${levelOfDetail} ]
          |      then
-         |         gives=`uname -r 2>/dev/null`
+         |         if [ "X\${Overide_uname_r_with}" != "X" ]
+         |         then
+         |            gives="\${Overide_uname_r_with}"
+         |         else
+         |            gives=`uname -r 2>/dev/null`
+         |         fi
          |         if [ "X\${gives}" != "X" ]
          |         then
-         |            major=`echo \${gives} | \${Use_sed} -e 's/[ ]*[AB]\\.\\([0-9][0-9]*\\)\\(\\.\\([0-9][0-9]*\\)\\)?.*/\\1/'`
-         |            minor=`echo \${gives} | \${Use_sed} -e 's/[ ]*[AB]\\.\\([0-9][0-9]*\\)\\(\\.\\([0-9][0-9]*\\)\\)?.*/\\3/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    version \\"\${gives}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
+         |            major=`echo \${gives} | sed -e 's/[ ]*[AB]\\.\\([0-9][0-9]*\\)\\(\\.\\([0-9][0-9]*\\)\\)?.*/\\1/'`
+         |            minor=`echo \${gives} | sed -e 's/[ ]*[AB]\\.\\([0-9][0-9]*\\)\\(\\.\\([0-9][0-9]*\\)\\)?.*/\\3/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    major is \\"\${major}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |               echo "getOSname:    minor is \\"\${minor}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
          |            if [ "X\${major}" != "X" ] && [ "X\${major}" != "X\${gives}" ]
          |            then
          |               echo "HP/UX-\${major}"
@@ -6239,18 +6380,37 @@ EOF09
          |      else
          |         echo "UNIX-like"
          |      fi
+         |      gosnExitCode=0
          |   elif [ "X\${given}" = "Xirix" ] || [ "X\${given}" = "Xirix64" ]
          |   then
+         |      if [ "X\${debugging}" != "X0" ]
+         |      then
+         |         echo "getOSname: ...looks like SGI Irix" | "\${use_sendStdinTo}" \${debugOpt}
+         |      fi
          |      #
          |      #  NOTE: IRIX detection hasn't been tested
          |      #
          |      if [ 2 -le \${levelOfDetail} ]
          |      then
-         |         gives=`uname -r 2>/dev/null`
+         |         if [ "X\${Overide_uname_r_with}" != "X" ]
+         |         then
+         |            gives="\${Overide_uname_r_with}"
+         |         else
+         |            gives=`uname -r 2>/dev/null`
+         |         fi
          |         if [ "X\${gives}" != "X" ]
          |         then
-         |            major=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
-         |            minor=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    version \\"\${gives}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
+         |            major=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
+         |            minor=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    major is \\"\${major}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |               echo "getOSname:    minor is \\"\${minor}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
          |            if [ "X\${major}" != "X" ] && [ "X\${major}" != "X\${gives}" ]
          |            then
          |               if [ 3 -le \${levelOfDetail} ] && { [ "X\${minor}" != "X" ] && [ "X\${minor}" != "X\${gives}" ] ; }
@@ -6271,15 +6431,34 @@ EOF09
          |      else
          |         echo "UNIX-like"
          |      fi
+         |      gosnExitCode=0
          |   elif [ "X\${given}" = "Xlinux" ]
          |   then
+         |      if [ "X\${debugging}" != "X0" ]
+         |      then
+         |         echo "getOSname: ...looks like Linux" | "\${use_sendStdinTo}" \${debugOpt}
+         |      fi
          |      if [ 2 -le \${levelOfDetail} ]
          |      then
-         |         gives=`uname -r 2>/dev/null`
+         |         if [ "X\${Overide_uname_r_with}" != "X" ]
+         |         then
+         |            gives="\${Overide_uname_r_with}"
+         |         else
+         |            gives=`uname -r 2>/dev/null`
+         |         fi
          |         if [ "X\${gives}" != "X" ]
          |         then
-         |            major=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
-         |            minor=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    version \\"\${gives}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
+         |            major=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
+         |            minor=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    major is \\"\${major}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |               echo "getOSname:    minor is \\"\${minor}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
          |            if [ "X\${major}" != "X" ] && [ "X\${major}" != "X\${gives}" ]
          |            then
          |               if [ 3 -le \${levelOfDetail} ] && [ "X\${minor}" != "X" ] && [ "X\${minor}" != "X\${gives}" ]
@@ -6300,18 +6479,34 @@ EOF09
          |      else
          |         echo "UNIX-like"
          |      fi
-         |   elif [ "X\${given}" = "Xmswin32" ]
-         |   then
-         |      echo "Windows-like"
+         |      gosnExitCode=0
          |   elif [ "X\${given}" = "Xsolaris" ] || [ "X\${given}" = "Xsunos" ]
          |   then
+         |      if [ "X\${debugging}" != "X0" ]
+         |      then
+         |         echo "getOSname: ...looks like Solaris or SunOS" | "\${use_sendStdinTo}" \${debugOpt}
+         |      fi
          |      if [ 2 -le \${levelOfDetail} ]
          |      then
-         |         gives=`uname -r 2>/dev/null`
+         |         if [ "X\${Overide_uname_r_with}" != "X" ]
+         |         then
+         |            gives="\${Overide_uname_r_with}"
+         |         else
+         |            gives=`uname -r 2>/dev/null`
+         |         fi
          |         if [ "X\${gives}" != "X" ]
          |         then
-         |            major=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
-         |            minor=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    version \\"\${gives}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
+         |            major=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
+         |            minor=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    major is \\"\${major}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |               echo "getOSname:    minor is \\"\${minor}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
          |            if [ "X\${major}" != "X" ] && [ "X\${major}" != "X\${gives}" ]
          |            then
          |               if [ "\${major}" -le 4 ]
@@ -6338,11 +6533,25 @@ EOF09
          |         fi
          |      elif [ 1 -le \${levelOfDetail} ]
          |      then
-         |         gives=`uname -r 2>/dev/null`
+         |         if [ "X\${Overide_uname_r_with}" != "X" ]
+         |         then
+         |            gives="\${Overide_uname_r_with}"
+         |         else
+         |            gives=`uname -r 2>/dev/null`
+         |         fi
          |         if [ "X\${gives}" != "X" ]
          |         then
-         |            major=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
-         |            minor=`echo \${gives} | \${Use_sed} -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    version \\"\${gives}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
+         |            major=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\1/'`
+         |            minor=`echo \${gives} | sed -e 's/[ ]*\\([0-9][0-9]*\\)\\.\\([0-9][0-9]*\\).*/\\2/'`
+         |            if [ "X\${debugging}" != "X0" ]
+         |            then
+         |               echo "getOSname:    major is \\"\${major}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |               echo "getOSname:    minor is \\"\${minor}\\" " | "\${use_sendStdinTo}" \${debugOpt}
+         |            fi
          |            if [ "X\${major}" != "X" ] && [ "X\${major}" != "X\${gives}" ]
          |            then
          |               if [ "\${major}" -le 4 ]
@@ -6365,10 +6574,27 @@ EOF09
          |      else
          |         echo "UNIX-like"
          |      fi
+         |      gosnExitCode=0
+         |   elif [ "X\${given}" = "Xmswin32" ]
+         |   then
+         |      if [ "X\${debugging}" != "X0" ]
+         |      then
+         |         echo "getOSname: ...looks like Windows (what?)" | "\${use_sendStdinTo}" \${debugOpt}
+         |      fi
+         |      gosnExitCode=0
          |   else
-         |      exit 1
+         |      if [ "X\${debugging}" != "X0" ]
+         |      then
+         |         echo "getOSname: ...don't know what it looks like" | "\${use_sendStdinTo}" \${debugOpt}
+         |      fi
+         |      echo
+         |      gosnExitCode=1
          |   fi
-         |   exit 0
+         |   if [ "X\${debugging}" != "X0" ]
+         |   then
+         |      echo "getOSname] ...done" | "\${use_sendStdinTo}" \${debugOpt}
+         |   fi
+         |   exit \${gosnExitCode}
          |}
          |
          |# MyUniqueFileId: b2a416c2-f30a-4413-f644-622628d205f4
@@ -18894,6 +19120,8 @@ sub lookForExecutable {
 #                      makePathWindowslike()
 #
 #  see: totebag/src/perl-lib/makePathNative.psub
+#
+#  Dated: 04May2016
 #
 #-------------------------------------------------------------------------------
 
