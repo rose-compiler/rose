@@ -2875,7 +2875,7 @@ int openFortranParser_main(int argc, char **argv );
 // Added support for usage of Flang front end. Both ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION and
 // ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION should not be configured at the same time.  If so, the best
 // case scenario is that a multiple symbol error will be reported at link time [Rasmussen 2019.08.30].
-   int experimental_fortran_main(int argc, char* const argv[], SgSourceFile* sg_source_file);
+   int experimental_fortran_main(int argc, char* argv[], SgSourceFile* sg_source_file);
 #endif
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT

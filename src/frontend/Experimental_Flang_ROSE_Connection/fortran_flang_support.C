@@ -19,7 +19,7 @@ using std::endl;
 #endif
 
 int
-experimental_fortran_main(int argc, char* const argv[], SgSourceFile* sg_source_file)
+experimental_fortran_main(int argc, char* argv[], SgSourceFile* sg_source_file)
    {
       // Perhaps do the following:
       //   1. Run f18 from the command line
