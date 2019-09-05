@@ -291,11 +291,11 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 
      if (!func_ref_exp)
         {
-           if (Inliner::verbose)	
-	   {
+           if (Inliner::verbose)        
+           {
               std::cout << "Inline returns false: not a call to a named function for SgFunctionCallExp*"<< funcall << std::endl;
-	      funcall->get_file_info()->display();
-	   }
+              funcall->get_file_info()->display();
+           }
           return false; // Probably a call through a fun ptr
         }
 
@@ -304,19 +304,19 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
        funsym = isSgFunctionRefExp(func_ref_exp)->get_symbol();
      else
        if (isSgMemberFunctionRefExp(func_ref_exp))
-	 funsym = isSgMemberFunctionRefExp(func_ref_exp)->get_symbol();
+         funsym = isSgMemberFunctionRefExp(func_ref_exp)->get_symbol();
        else // template member function is not supported yet
        {
-	 cerr<<"doInline() unhandled function reference type:"<< func_ref_exp->class_name() <<endl;
-	 //assert (false);
-	 return false;
+         cerr<<"doInline() unhandled function reference type:"<< func_ref_exp->class_name() <<endl;
+         //assert (false);
+         return false;
        }
 
      assert (funsym);
      if (isSgMemberFunctionSymbol(funsym) &&
          isSgMemberFunctionSymbol(funsym)->get_declaration()->get_functionModifier().isVirtual())
         {
-           if (Inliner::verbose)	
+           if (Inliner::verbose)        
               std::cout << "Inline returns false: cannot inline virtual member functions" << std::endl;
           return false;
         }
@@ -327,7 +327,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      SgFunctionDefinition* fundef = fundecl ? fundecl->get_definition() : NULL;
      if (!fundef)
         {
-           if (Inliner::verbose)	
+           if (Inliner::verbose)        
              std::cout << "Inline returns false: no function definition is visible" << std::endl;
           return false; // No definition of the function is visible
         }
@@ -350,7 +350,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
           assert (isSgFunctionDefinition(my_fundef));
           if (isSgFunctionDefinition(my_fundef) == fundef)
              {
-               if (Inliner::verbose)	
+               if (Inliner::verbose)    
                   std::cout << "Inline failed: trying to inline a procedure into itself" << std::endl;
                return false;
              }
@@ -369,14 +369,14 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
        assert (thisptr != NULL);
        SgType* thisptrtype = thisptr->get_type();
        const SgSpecialFunctionModifier& specialMod = 
-	 funsym->get_declaration()->get_specialFunctionModifier();
+         funsym->get_declaration()->get_specialFunctionModifier();
        if (specialMod.isConstructor()) {
-	 SgFunctionType* ft = funsym->get_declaration()->get_type();
-	 ROSE_ASSERT (ft);
-	 SgMemberFunctionType* mft = isSgMemberFunctionType(ft);
-	 ROSE_ASSERT (mft);
-	 SgType* ct = mft->get_class_type();
-	 thisptrtype = new SgPointerType(ct);
+         SgFunctionType* ft = funsym->get_declaration()->get_type();
+         ROSE_ASSERT (ft);
+         SgMemberFunctionType* mft = isSgMemberFunctionType(ft);
+         ROSE_ASSERT (mft);
+         SgType* ct = mft->get_class_type();
+         thisptrtype = new SgPointerType(ct);
        }
        SgConstVolatileModifier& thiscv = fundecl->get_declarationModifier().get_typeModifier().get_constVolatileModifier();
        // if (thiscv.isConst() || thiscv.isVolatile()) { FIXME
