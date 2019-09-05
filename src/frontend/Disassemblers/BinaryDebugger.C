@@ -1,6 +1,7 @@
-#include "sage3basic.h"
-#include "BinaryDebugger.h"
-#include "integerOps.h"
+#include <sage3basic.h>
+#include <BinaryDebugger.h>
+#include <integerOps.h>
+#include <Registers.h>
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/filesystem.hpp>
@@ -156,6 +157,19 @@ setInstructionPointer(user_regs_struct &regs, rose_addr_t va) {
 }
 #endif
 
+const RegisterDictionary*
+BinaryDebugger::registerDictionary() const {
+#if defined(__linux) && defined(__x86_64) && __WORDSIZE==64
+    return RegisterDictionary::dictionary_amd64();
+#elif defined(__linux) && defined(__x86) && __WORDSIZE==32
+    return RegisterDictionary::dictionary_pentium4();
+#elif defined(_MSC_VER)
+    #pragma message("BinaryDebugger not supported on this platform")
+#else
+    #warning("BinaryDebugger not supported on this platform")
+#endif
+}
+    
 void
 BinaryDebugger::init() {
 
@@ -362,9 +376,8 @@ BinaryDebugger::attach(int child, unsigned flags) {
 }
 
 void
-BinaryDebugger::attach(const std::string &exeName, unsigned flags) {
-    std::vector<std::string> exeNameAndArgs(1, exeName);
-    attach(exeNameAndArgs, flags);
+BinaryDebugger::attach(const boost::filesystem::path &exeName, unsigned flags) {
+    attach(exeName, std::vector<std::string>() /*args*/, flags);
 }
 
 // Must be async signal safe!
@@ -380,16 +393,17 @@ BinaryDebugger::devNullTo(int targetFd, int openFlags) {
 }
 
 void
-BinaryDebugger::attach(const std::vector<std::string> &exeNameAndArgs, unsigned flags) {
-    ASSERT_forbid(exeNameAndArgs.empty());
+BinaryDebugger::attach(const boost::filesystem::path &exeName, const std::vector<std::string> &args, unsigned flags) {
+    ASSERT_forbid(exeName.empty());
     detach();
     flags_ = flags;
 
     // Create the child exec arguments before the fork because heap allocation is not async-signal-safe.
-    char **argv = new char*[exeNameAndArgs.size()+1];
-    for (size_t i=0; i<exeNameAndArgs.size(); ++i)
-        argv[i] = strdup(exeNameAndArgs[i].c_str());
-    argv[exeNameAndArgs.size()] = NULL;
+    char **argv = new char*[1 /*name*/ + args.size() + 1 /*null*/];
+    argv[0] = strdup(exeName.native().c_str());
+    for (size_t i = 0; i < args.size(); ++i)
+        argv[i+1] = strdup(args[i].c_str());
+    argv[1 + args.size()] = NULL;
 
 #ifndef BOOST_WINDOWS
     // Prepare to close files when forking.  This is a race because some other thread might open a file without the O_CLOEXEC
