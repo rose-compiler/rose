@@ -6,6 +6,7 @@
 #include "Flow.h"
 #include "PointerAnalysisInterface.h"
 #include "ProgramAbstractionLayer.h"
+#include "PropertyState.h"
 
 namespace CodeThorn {
 
@@ -16,7 +17,7 @@ public:
   VariableIdMapping* getVariableIdMapping() { return _programAbstractionLayer->getVariableIdMapping(); }
   virtual void setProgramAbstractionLayer(CodeThorn::ProgramAbstractionLayer* pal) {_programAbstractionLayer=pal; }
   // allow for some pointer analysis to be used directly
-  void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pointerAnalysisInterface) { _pointerAnalysisInterface=pointerAnalysisInterface; }
+  virtual void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pointerAnalysisInterface) { _pointerAnalysisInterface=pointerAnalysisInterface; }
   CodeThorn::PointerAnalysisInterface* getPointerAnalysisInterface() { return _pointerAnalysisInterface; }
 
   virtual void transfer(CodeThorn::Edge edge, Lattice& element);
@@ -45,9 +46,14 @@ public:
   CodeThorn::PointerAnalysisInterface* _pointerAnalysisInterface;
   virtual void setSkipSelectedFunctionCalls(bool flag);
   virtual bool getSkipSelectedFunctionCalls();
+  virtual void initializeExtremalValue(Lattice& element);
+  virtual Lattice* initializeGlobalVariables(SgProject* root);
+  void setInitialElementFactory(PropertyStateFactory*);
+  PropertyStateFactory* getInitialElementFactory();
+
  protected:
   bool _skipSelectedFunctionCalls=false;
-
+  PropertyStateFactory* _initialElementFactory=nullptr;
  private:
   CodeThorn::ProgramAbstractionLayer* _programAbstractionLayer;
   VariableId parameter0VariableId;

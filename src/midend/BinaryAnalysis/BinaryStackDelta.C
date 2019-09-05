@@ -36,7 +36,7 @@ Analysis::init(Disassembler *disassembler) {
     if (disassembler) {
         const RegisterDictionary *regdict = disassembler->registerDictionary();
         ASSERT_not_null(regdict);
-        size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
+        size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
@@ -95,9 +95,9 @@ public:
         const RegisterDescriptor SP = cpu()->stackPointerRegister();
         rose_addr_t initialSp = 0;
         if (analysis_->initialConcreteStackPointer().assignTo(initialSp)) {
-            newState->writeRegister(SP, ops->number_(SP.get_nbits(), initialSp), ops.get());
+            newState->writeRegister(SP, ops->number_(SP.nBits(), initialSp), ops.get());
         } else {
-            newState->writeRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+            newState->writeRegister(SP, ops->undefined_(SP.nBits()), ops.get());
         }
         return newState;
     }
@@ -113,10 +113,10 @@ public:
             ops->currentState(retval);
             ASSERT_not_null(vertex->value().bblock());
             RegisterDescriptor SP = cpu()->stackPointerRegister();
-            BaseSemantics::SValuePtr oldSp = retval->peekRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+            BaseSemantics::SValuePtr oldSp = retval->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
             BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock()->instructions()) {
                 cpu()->processInstruction(insn);
-                BaseSemantics::SValuePtr newSp = retval->peekRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+                BaseSemantics::SValuePtr newSp = retval->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
                 BaseSemantics::SValuePtr delta = ops->subtract(newSp, oldSp);
                 analysis_->adjustInstruction(insn, oldSp, newSp, delta);
                 oldSp = newSp;
@@ -226,9 +226,9 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
             BaseSemantics::SValuePtr sp0, sp1;
             RegisterDescriptor SP = cpu_->stackPointerRegister();
             if (BaseSemantics::StatePtr state = dfEngine.getInitialState(vertex.id()))
-                sp0 = state->peekRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+                sp0 = state->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
             if (BaseSemantics::StatePtr state = dfEngine.getFinalState(vertex.id()))
-                sp1 = state->peekRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+                sp1 = state->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
             bblockStackPtrs_.insert(bblock->address(), SValuePair(sp0, sp1));
 
             if (sp0 && sp1) {
@@ -241,9 +241,9 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // Functon stack delta is final stack pointer minus initial stack pointer.  This includes popping the return address from
     // the stack (if the function did that) and popping arguments (if the function did that).
     const RegisterDescriptor REG_SP = cpu_->stackPointerRegister();
-    functionStackPtrs_.first = initialRegState->peekRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+    functionStackPtrs_.first = initialRegState->peekRegister(REG_SP, ops->undefined_(REG_SP.nBits()), ops.get());
     if (finalRegState) {
-        functionStackPtrs_.second = finalRegState->peekRegister(REG_SP, ops->undefined_(REG_SP.get_nbits()), ops.get());
+        functionStackPtrs_.second = finalRegState->peekRegister(REG_SP, ops->undefined_(REG_SP.nBits()), ops.get());
         functionDelta_ = ops->subtract(functionStackPtrs_.second, functionStackPtrs_.first);
     }
 

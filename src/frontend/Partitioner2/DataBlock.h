@@ -16,7 +16,15 @@ namespace Partitioner2 {
 
 /** Data block information.
  *
- *  A data block represents data with a type. */
+ *  A data block represents static data with a type.  Data blocks are identified by a key consisting of their starting address
+ *  and total size. Data blocks can be either attached to the partitioner or in a detached state. A block that is attached will
+ *  be present in the Address Usage Map (AUM), but the AUM will store only one @ref DataBlock object per distinct key.
+ *
+ *  A data block can be owned by multiple basic blocks and/or functions. If an owning basic block or function is attached to
+ *  the partitioner then the data block will also be attached. However, data blocks can be attached when some or all of their
+ *  owners are in the detached state.  When attaching a basic block or function that owns a data block, if the AUM already has
+ *  a different but equivaent (by keys) data block then the owning basic block or function will be adjusted to point to the
+ *  equivalent data block. */
 class DataBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage<> {
 public:
     /** Shared pointer to a data block. See @ref heap_object_shared_ownership. */
@@ -26,8 +34,10 @@ private:
     bool isFrozen_;                                     // true if object is read-only because it's in the CFG
     rose_addr_t startVa_;                               // starting address
     SgAsmType *type_;                                   // type of data stored in this block
-    size_t nAttachedOwners_;                            // number of attached basic blocks and functions that own this data
-    std::string comment_;
+    std::string comment_;                               // arbitrary comment, shown by printableName.
+    std::vector<BasicBlockPtr> attachedBasicBlockOwners_; // attached basic blocks that own this data block, sorted and unique
+    std::vector<FunctionPtr> attachedFunctionOwners_;   // attached functions that own this data block, sorted and unique
+    
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -46,17 +56,22 @@ private:
             s & boost::serialization::make_nvp("size_", nBytes);
             type_ = SageBuilderAsm::buildTypeVector(nBytes, SageBuilderAsm::buildTypeU8());
         }
-        s & BOOST_SERIALIZATION_NVP(nAttachedOwners_);
+        if (version < 2) {
+            ASSERT_not_reachable("Rose::BinaryAnalysis::Partitioner2::DataBlock version 2 is no longer supported");
+        } else {
+            s & BOOST_SERIALIZATION_NVP(attachedBasicBlockOwners_);
+            s & BOOST_SERIALIZATION_NVP(attachedFunctionOwners_);
+        }
     }
 #endif
     
 protected:
     // needed for serialization
-    DataBlock()
-        : isFrozen_(false), startVa_(0), type_(NULL), nAttachedOwners_(0) {}
+    DataBlock();
+    DataBlock(rose_addr_t startVa, SgAsmType *type);
 
-    DataBlock(rose_addr_t startVa, SgAsmType *type)
-        : isFrozen_(false), startVa_(startVa), type_(type), nAttachedOwners_(0) {}
+public:
+    ~DataBlock();
 
 public:
     /** Static allocating constructor. */
@@ -92,15 +107,24 @@ public:
     /** Property: Comment.
      *
      * @{ */
-    const std::string& comment() const { return comment_; }
-    void comment(const std::string& s) { comment_ = s; }
+    const std::string& comment() const;
+    void comment(const std::string& s);
     /** @} */
 
     /** Number of attached basic block and function owners.
      *
-     *  Returns the number of data blocks and functions that are attached to the CFG/AUM and that own this data block. */
-    size_t nAttachedOwners() const { return nAttachedOwners_; }
+     *  Returns the number of basic blocks and functions that are attached to the CFG/AUM and that own this data block. */
+    size_t nAttachedOwners() const;
 
+    /** Functions that are attached to the partitioner and own this data block.
+     *
+     *  The returned vector is sorted and has unique elements. */
+    const std::vector<FunctionPtr>& attachedFunctionOwners() const;
+
+    /** Basic blocks that are attached to the partitioner and own this data block.
+     *
+     *  The returned vector is sorted and has unique elements. */
+    const std::vector<BasicBlockPtr>& attachedBasicBlockOwners() const;    
     /** Addresses represented. */
     AddressInterval extent() const;
 
@@ -117,11 +141,16 @@ public:
 
 private:
     friend class Partitioner;
-    void freeze() { isFrozen_ = true; }
-    void thaw() { isFrozen_ = false; }
-    size_t incrementOwnerCount();
-    size_t decrementOwnerCount();
-    void nAttachedOwners(size_t);
+    void freeze();
+    void thaw();
+
+    // Insert the specified owner into this data block.
+    void insertOwner(const BasicBlockPtr&);
+    void insertOwner(const FunctionPtr&);
+
+    // Erase the specified owner of this data block.
+    void eraseOwner(const BasicBlockPtr&);
+    void eraseOwner(const FunctionPtr&);
 };
 
 
@@ -130,6 +159,6 @@ private:
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::DataBlock, 1);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::DataBlock, 2);
 
 #endif

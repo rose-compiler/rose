@@ -115,8 +115,11 @@ public:
      * minor number indicates the register number: 0-15 for general purpose, 0 or 1 for status. */
     static const RegisterDictionary *dictionary_arm7();
 
-    /** PowerPC registers. */
-    static const RegisterDictionary *dictionary_powerpc();
+    /** PowerPC-32 registers. */
+    static const RegisterDictionary *dictionary_powerpc32();
+
+    /** PowerPC-64 registers. */
+    static const RegisterDictionary *dictionary_powerpc64();
 
     /** MIPS32 Release 1.
      *
@@ -279,8 +282,8 @@ public:
         explicit SortBySize(Direction d=DESCENDING): direction(d) {}
         bool operator()(RegisterDescriptor a, RegisterDescriptor b) const {
             return ASCENDING==direction ?
-                a.get_nbits() < b.get_nbits() :
-                a.get_nbits() > b.get_nbits();
+                a.nBits() < b.nBits() :
+                a.nBits() > b.nBits();
         }
     protected:
         Direction direction;
@@ -393,8 +396,8 @@ RegisterDictionary::filter_nonoverlapping(RegisterDescriptors desc, Compare orde
     while (!heap.empty()) {
         const RegisterDescriptor cur_desc = heap.top();
         heap.pop();
-        const std::pair<int, int> cur_majmin(cur_desc.get_major(), cur_desc.get_minor());
-        const Extent cur_extent(cur_desc.get_offset(), cur_desc.get_nbits());
+        const std::pair<int, int> cur_majmin(cur_desc.majorNumber(), cur_desc.minorNumber());
+        const Extent cur_extent(cur_desc.offset(), cur_desc.nBits());
         ExtentMap &have_extents = have_bits[cur_majmin];
         if (have_extents.distinct(cur_extent)) {
             // We're not returning any of these bits yet, so add the whole descriptor
@@ -408,7 +411,7 @@ RegisterDictionary::filter_nonoverlapping(RegisterDescriptors desc, Compare orde
             parts.erase_ranges(have_extents);
             for (ExtentMap::iterator pi=parts.begin(); pi!=parts.end(); ++pi) {
                 const Extent &part = pi->first;
-                RegisterDescriptor part_desc(cur_desc.get_major(), cur_desc.get_minor(), part.first(), part.size());
+                RegisterDescriptor part_desc(cur_desc.majorNumber(), cur_desc.minorNumber(), part.first(), part.size());
                 heap.push(part_desc);
             }
         }

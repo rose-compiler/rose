@@ -44,10 +44,11 @@ namespace CodeThorn {
     EState(Label label, const CodeThorn::PState* pstate):_label(label),_pstate(pstate),_constraints(0){}
     EState(Label label, const CodeThorn::PState* pstate, const CodeThorn::ConstraintSet* cset):_label(label),_pstate(pstate),_constraints(cset){}
     EState(Label label, const CodeThorn::PState* pstate, const CodeThorn::ConstraintSet* cset, CodeThorn::InputOutput io):_label(label),_pstate(pstate),_constraints(cset),io(io){}
-    
+  EState(Label label, CallString cs, const CodeThorn::PState* pstate, const CodeThorn::ConstraintSet* cset, CodeThorn::InputOutput io):_label(label),_pstate(pstate),_constraints(cset),io(io),callString(cs) {}
     std::string toString() const;
     std::string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
     std::string toHTML() const; /// multi-line version for dot output
+    std::string labelString() const;
     long memorySize() const;
     
     void setLabel(Label lab) { _label=lab; }
@@ -67,6 +68,8 @@ namespace CodeThorn {
     bool isRersTopified(CodeThorn::VariableIdMapping* vid) const;
     std::string predicateToString(CodeThorn::VariableIdMapping* vid) const;
     std::string programPosToString(Labeler* labeler) const;
+    // uses isApproximatedBy of PState
+    bool isApproximatedBy(const CodeThorn::EState* other) const;
   private:
     Label _label;
     const CodeThorn::PState* _pstate;

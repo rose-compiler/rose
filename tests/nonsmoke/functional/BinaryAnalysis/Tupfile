@@ -190,7 +190,8 @@ run $(test) testReadPastEOF --answer=testReadPastEOF.ans \
 ###############################################################################################################################
 ifneq (@(WITH_SQLITE),no)
 run $(tool_compile_linkexe) testLibraryDb.C
-run $(test) testLibraryDb
+run $(test) testLibraryDb -x test.db \
+    ./testLibraryDb
 endif
 
 ###############################################################################################################################
@@ -479,7 +480,7 @@ run $(test) testLazyInitialStates \
 # Test disassembling random input data for various architectures.
 #############################################################################################
 run $(tool_compile_linkexe) testRandomInput.C
-testRandomInput_ISA = amd64 arm coldfire i386 m68040 mips-be mips-le ppc
+testRandomInput_ISA = amd64 arm coldfire i386 m68040 mips-be mips-le ppc32
 
 run for isa in $(testRandomInput_ISA); do \
         $(test) testRandomInput -o ${isa} ./testRandomInput --size=50000 --isa=${isa}; \
@@ -531,5 +532,20 @@ run $(test) testPeekRegister
 
 run $(tool_compile_linkexe) testDataBlockOwnership.C
 run $(test) testDataBlockOwnership ./testDataBlockOwnership $(ROSE)/tests/nonsmoke/specimens/binary/x86-64-nologin
+
+########################################################################################################################
+# Test S-Records
+########################################################################################################################
+
+run $(tool_compile_linkexe) testSRecords.C
+run $(test) testSRecords
+
+########################################################################################################################
+# Disassembler
+########################################################################################################################
+
+run $(tool_compile_linkexe) testDisassembler.C
+run $(test) testDisassembler -o ppc32 --answer=testDisassembler-ppc32.ans \
+    ./testDisassembler --isa=ppc32 ./testDisassembler-ppc32.txt
 
 endif

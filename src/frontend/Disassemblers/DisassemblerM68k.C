@@ -563,7 +563,7 @@ DisassemblerM68k::makeColdFireControlRegister(unsigned regnum) {
                                           StringUtility::toHex2(regnum, 12, false, false));
     }
     SgAsmRegisterReferenceExpression *expr = new SgAsmDirectRegisterExpression(rd);
-    ASSERT_require(rd.get_nbits()==32);
+    ASSERT_require(rd.nBits() == 32);
     expr->set_type(makeType(m68k_fmt_i32));
     return expr;
 }
@@ -782,7 +782,7 @@ DisassemblerM68k::makeAddress(SgAsmExpression *expr)
         SgAsmDirectRegisterExpression *lhs = isSgAsmDirectRegisterExpression(sum->get_lhs());
         SgAsmIntegerValueExpression *rhs = isSgAsmIntegerValueExpression(sum->get_rhs());
         if (lhs && rhs &&
-            lhs->get_descriptor().get_major()==m68k_regclass_spr && lhs->get_descriptor().get_minor()==m68k_spr_pc) {
+            lhs->get_descriptor().majorNumber()==m68k_regclass_spr && lhs->get_descriptor().minorNumber()==m68k_spr_pc) {
             retval = SageBuilderAsm::buildValueInteger(get_insn_va() + 2 + rhs->get_absoluteValue(), makeType(m68k_fmt_i32));
         }
     }

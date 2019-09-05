@@ -1218,8 +1218,8 @@ public:
 
     /** Property: Predicate for finding functions that are thunks.
      *
-     *  This collective predicate is used when searching for function prologues in order to create new functions. It's purpose
-     *  is to try to match sequences of instructions that look like thunks and the create a function at that address. A suitable
+     *  This collective predicate is used when searching for function prologues in order to create new functions. Its purpose
+     *  is to try to match sequences of instructions that look like thunks and then create a function at that address. A suitable
      *  default list of predicates is created when the engine is initialized, and can either be replaced by a new list, an empty
      *  list, or the list itself can be adjusted.  The list is consulted only when @ref findingThunks is set.
      *

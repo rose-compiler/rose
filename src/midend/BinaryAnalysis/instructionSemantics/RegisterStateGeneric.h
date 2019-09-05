@@ -75,7 +75,7 @@ public:
         RegStore()                                      // for serialization
             : majr(0), minr(0) {}
         RegStore(RegisterDescriptor d) // implicit
-            : majr(d.get_major()), minr(d.get_minor()) {}
+            : majr(d.majorNumber()), minr(d.minorNumber()) {}
         bool operator<(const RegStore &other) const {
             return majr<other.majr || (majr==other.majr && minr<other.minr);
         }
@@ -107,7 +107,7 @@ public:
 
     public:
         RegPair(RegisterDescriptor desc, const SValuePtr &value): desc(desc), value(value) {}
-        BitRange location() const { return BitRange::baseSize(desc.get_offset(), desc.get_nbits()); }
+        BitRange location() const { return BitRange::baseSize(desc.offset(), desc.nBits()); }
     };
 
     /** Vector of register/value pairs. */

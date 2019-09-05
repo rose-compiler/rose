@@ -7,7 +7,46 @@
  *************************************************************/
 
 #include <set>
+#include <list>
+#include <vector>
 #include <string>
+
+class SgNode;
+class SgProject;
+class SgLocatedNode;
+
+class SgStatement;
+
+class SgScopeStatement;
+class SgGlobal;
+class SgFunctionDefinition;
+
+class SgDeclarationStatement;
+class SgVariableDeclaration;
+class SgFunctionDeclaration;
+class SgInitializedName;
+class SgClassDeclaration;
+
+class SgExpression;
+class SgVarRefExp;
+class SgFunctionRefExp;
+class SgFunctionCallExp;
+
+class SgSymbol;
+class SgVariableSymbol;
+class SgFunctionSymbol;
+
+class SgType;
+class SgPointerType;
+class SgReferenceType;
+class SgRvalueReferenceType;
+class SgFunctionType;
+
+class SgContinueStmt;
+class SgCaseOptionStmt;
+class SgDefaultOptionStmt;
+
+class SgPragmaDeclaration;
 
 namespace SgNodeHelper {
 
@@ -71,9 +110,10 @@ namespace SgNodeHelper {
 
 
   //! returns the initializer-list of For.
-  SgStatementPtrList& getForInitList(SgNode* node);
+  std::vector<SgStatement *> & getForInitList(SgNode* node);
+
   //! returns the incr/derc-expr of For.
-  SgExpression* getForIncExpr(SgNode* node);
+  SgExpression * getForIncExpr(SgNode* node);
 
   //! determines whether a node is the root node of an AST representing the inc-expr
   //! in a SgForStatement. This function is helpful to deal with this special case
@@ -163,7 +203,7 @@ namespace SgNodeHelper {
 
   //! returns true for Expr-- and Expr--, otherwise false;
   bool isPostfixIncDecOp(SgNode* node);
-  
+
   //! returns the SgSymbol* of the variable in a variable declaration
   SgSymbol* getSymbolOfVariableDeclaration(SgVariableDeclaration* decl);
 
@@ -221,7 +261,7 @@ namespace SgNodeHelper {
   SgNode* getFirstChild(SgNode* node);
 
   //! return a function-call's argument list
-  SgExpressionPtrList& getFunctionCallActualParameterList(SgNode* node);
+  std::vector<SgExpression *> & getFunctionCallActualParameterList(SgNode* node);
 
   // schroder3 (2016-07-27): Returns the callee of the given call expression
   SgExpression* getCalleeOfCall(/*const*/ SgFunctionCallExp* call);
@@ -230,7 +270,7 @@ namespace SgNodeHelper {
   SgFunctionType* getCalleeFunctionType(/*const*/SgFunctionCallExp* call);
 
   //! return a function-definition's list of formal paramters
-  SgInitializedNamePtrList& getFunctionDefinitionFormalParameterList(SgNode* node);
+  std::vector<SgInitializedName *> & getFunctionDefinitionFormalParameterList(SgNode* node);
 
   //! return a function-definition's return type
   SgType* getFunctionReturnType(SgNode* node);
@@ -296,13 +336,21 @@ namespace SgNodeHelper {
      Note: static/external can be resolved by further processing those objects
    */
   std::list<SgVariableDeclaration*> listOfGlobalVars(SgProject* project);
+#if __cplusplus > 199711L
+  std::list<SgVariableDeclaration*> listOfGlobalFields(SgProject* project);
+#endif
   /*! identifies the list of global variables
      Note: static/external can be resolved by further processing those objects
    */
   std::list<SgVariableDeclaration*> listOfGlobalVars(SgGlobal* global);
+#if __cplusplus > 199711L
+  std::list<SgVariableDeclaration*> listOfGlobalFields(SgGlobal* global);
+#endif
 
-  std::list<SgFunctionDefinition*> listOfFunctionDefinitions(SgProject* project);
-  std::list<SgFunctionDeclaration*> listOfFunctionDeclarations(SgProject* project);
+  std::list<SgFunctionDefinition*> listOfFunctionDefinitions(SgNode* node);
+#if __cplusplus > 199711L
+  std::list<SgFunctionDeclaration*> listOfFunctionDeclarations(SgNode* node);
+#endif
   std::list<SgVarRefExp*> listOfUsedVarsInFunctions(SgProject* SgProject);
 
   /*! identifies the list of SgFunctionDefinitions in global scope
@@ -373,7 +421,7 @@ namespace SgNodeHelper {
   bool isAggregateDeclaration(SgVariableDeclaration* decl);
 
   // returns the list of initializers of an array or struct (e.g. for int a[]={1,2,3} it return the list 1,2,3)
-  SgExpressionPtrList& getInitializerListOfAggregateDeclaration(SgVariableDeclaration* decl);
+  std::vector<SgExpression *> & getInitializerListOfAggregateDeclaration(SgVariableDeclaration* decl);
 
   /*! replaces expression e1 by expression e2. Currently it uses the
      SageInterface::rewriteExpression function but wraps around some
@@ -454,7 +502,12 @@ namespace SgNodeHelper {
 
  
   } // end of namespace Pattern
-  
+
+#if __cplusplus > 199711L
+  // Can a given node be changed? (aka transformed)
+  bool nodeCanBeChanged(SgLocatedNode * lnode);
+#endif
+
 } // end of namespace SgNodeHelper
 
 #endif

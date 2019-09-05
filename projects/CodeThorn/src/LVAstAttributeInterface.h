@@ -1,7 +1,7 @@
 // Author: Markus Schordan, 2013.
 
-#ifndef CPASTATTRIBUTEINTERFACE_H
-#define CPASTATTRIBUTEINTERFACE_H
+#ifndef LVASTATTRIBUTEINTERFACE_H
+#define LVASTATTRIBUTEINTERFACE_H
 
 #include "Labeler.h"
 #include "VariableIdMapping.h"

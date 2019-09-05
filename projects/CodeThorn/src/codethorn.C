@@ -309,7 +309,6 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("max-transitions-forced-top5",po::value< int >(),"Performs approximation after <arg> transitions (exact for input,output,df and vars with 0 to 2 assigned values)).")
     ("solver",po::value< int >()->default_value(5),"Set solver <arg> to use (one of 1,2,3,...).")
     ("relop-constraints", po::value< bool >()->default_value(false)->implicit_value(true),"Flag for the expression analyzer .")
-    ("omp-ast", po::value< bool >()->default_value(false)->implicit_value(true),"Flag for using the OpenMP AST - useful when visualizing the ICFG.")
     ;
 
   passOnToRose.add_options()
@@ -337,12 +336,14 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("tg1-estate-id", po::value< bool >()->default_value(true)->implicit_value(true), "Transition graph 1: Visualize estate-id.")
     ("tg1-estate-properties", po::value< bool >()->default_value(true)->implicit_value(true), "Transition graph 1: Visualize all estate-properties.")
     ("tg1-estate-predicate", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 1: Show estate as predicate.")
+    ("tg1-estate-memory-subgraphs", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 1: Show estate as memory graphs.")
     ("tg2-estate-address", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 2: Visualize address.")
     ("tg2-estate-id", po::value< bool >()->default_value(true)->implicit_value(true), "Transition graph 2: Visualize estate-id.")
     ("tg2-estate-properties", po::value< bool >()->default_value(false)->implicit_value(true),"Transition graph 2: Visualize all estate-properties.")
     ("tg2-estate-predicate", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 2: Show estate as predicate.")
     ("visualize-read-write-sets", po::value< bool >()->default_value(false)->implicit_value(true), "Generate a read/write-set graph that illustrates the read and write accesses of the involved threads.")
     ("viz", po::value< bool >()->default_value(false)->implicit_value(true),"Generate visualizations (.dot) outputs.")
+    ("viz-tg2", po::value< bool >()->default_value(false)->implicit_value(true),"Generate transition graph 2 (.dot).")
     ;
 
   parallelProgramOptions.add_options()
@@ -375,8 +376,9 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ;
 
   experimentalOptions.add_options()
-    ("normalize-all", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize function calls before analysis (does not apply to conditions).")
-    ("normalize-fcalls", po::value< bool >()->default_value(false)->implicit_value(true),"Lower AST before analysis (includes normalization).")
+    ("omp-ast", po::value< bool >()->default_value(false)->implicit_value(true),"Flag for using the OpenMP AST - useful when visualizing the ICFG.")
+    ("normalize-all", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize all expressions before analysis.")
+    ("normalize-fcalls", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize only expressions with function calls.")
     ("inline", po::value< bool >()->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("inlinedepth",po::value< int >()->default_value(10),"Default value is 10. A higher value inlines more levels of function calls.")
     ("eliminate-compound-assignments", po::value< bool >()->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")
@@ -397,9 +399,15 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("std-functions",po::value< bool >()->default_value(true)->implicit_value(true),"model std function semantics (malloc, memcpy, etc). Must be turned off explicitly.")
     ("ignore-unknown-functions",po::value< bool >()->default_value(true)->implicit_value(true), "Unknown functions are assumed to be side-effect free.")
     ("ignore-undefined-dereference",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore pointer dereference of uninitalized value (assume data exists).")
+    ("ignore-function-pointers",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore function pointers (functions are not called).")
     ("function-resolution-mode",po::value< int >(),"1:Translation unit only, 2:slow lookup, 3: fast (not implemented yet)")
     ("context-sensitive",po::value< bool >()->default_value(false)->implicit_value(true),"Perform context sensitive analysis. Uses call strings with arbitrary length, recursion is not supported yet.")
+    ("abstraction-mode",po::value< int >()->default_value(0),"Select abstraction mode (0: equality merge (explicit model checking), 1: approximating merge (abstract model checking).")
+    ("interpretation-mode",po::value< int >()->default_value(0),"Select interpretation mode. 0: default, 1: execute stdout functions.")
      //    ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
+    ("print-warnings",po::value< bool >()->default_value(false)->implicit_value(true),"Print warnings on stdout during analysis (this can slow down the analysis significantly)")
+    ("print-violations",po::value< bool >()->default_value(false)->implicit_value(true),"Print detected violations on stdout during analysis (this can slow down the analysis significantly)")
+    ("testing-options-set",po::value< int >()->default_value(0)->implicit_value(0),"Use an alternative set of default options (for testing only: 0..1).")
     ;
 
   rersOptions.add_options()
@@ -471,6 +479,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("help-vis", "Show options for visualization output files.")
     ("help-data-race", "Show options for data race detection.")
     ("help-info", "Show options for program info.")
+    ("start-function", po::value< string >(), "Name of function to start the analysis from.")
     ("list-unknown-functions","show all functions in provided input-program for which the semantics are unknown (external functions).")
     ("status", po::value< bool >()->default_value(false)->implicit_value(true), "Show status messages.")
     ("reduce-cfg", po::value< bool >()->default_value(true)->implicit_value(true), "Reduce CFG nodes that are irrelevant for the analysis.")
@@ -579,7 +588,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.10.5\n";
+    cout << "CodeThorn version 1.10.8\n";
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
@@ -867,6 +876,9 @@ void generateAutomata() {
 }
 
 void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
+  analyzer->setOptionOutputWarnings(args.getBool("print-warnings"));
+  analyzer->setPrintDetectedViolations(args.getBool("print-violations"));
+
   if(args.getBool("explicit-arrays")==false) {
     analyzer->setSkipArrayAccesses(true);
   }
@@ -954,6 +966,10 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
       cout << "Error: \"max-iterations[-forced-top]\" modes currently require \"--exploration-mode=loop-aware[-sync]\"." << endl;
       exit(1);
     }
+  }
+
+  if(args.count("abstraction-mode")) {
+    analyzer->setAbstractionMode(args.getInt("abstraction-mode"));
   }
 
   if(args.count("max-transitions")) {
@@ -1151,11 +1167,31 @@ int main( int argc, char * argv[] ) {
         return 0;
     }
 
+    if(args.getInt("testing-options-set")==1) {
+      args.setOption("explicit-arrays",true);
+      args.setOption("in-state-string-literals",true);
+      args.setOption("ignore-unknown-functions",true);
+      args.setOption("ignore-function-pointers",true);
+      args.setOption("std-functions",true);
+      args.setOption("context-sensitive",true);
+      args.setOption("normalize-all",true);
+      args.setOption("abstraction-mode",1);
+    }
+
     analyzer->optionStringLiteralsInState=args.getBool("in-state-string-literals");
     analyzer->setSkipSelectedFunctionCalls(args.getBool("ignore-unknown-functions"));
+    analyzer->setIgnoreFunctionPointers(args.getBool("ignore-function-pointers"));
     analyzer->setStdFunctionSemantics(args.getBool("std-functions"));
+
     analyzerSetup(analyzer, logger);
-   
+
+    switch(int mode=args.getInt("interpretation-mode")) {
+    case 0: analyzer->setInterpretationMode(IM_ABSTRACT); break;
+    case 1: analyzer->setInterpretationMode(IM_CONCRETE); break;
+    default:
+      cerr<<"Unknown interpretation mode "<<mode<<" provided on command line (supported: 0..1)."<<endl;
+      exit(1);
+    }
     // analyzer->setFunctionResolutionMode(args.getInt("function-resolution-mode")); xxx
     // needs to set CFAnalysis functionResolutionMode
 
@@ -1175,6 +1211,9 @@ int main( int argc, char * argv[] ) {
     vector<int> option_specialize_fun_const_list;
     vector<string> option_specialize_fun_varinit_list;
     vector<int> option_specialize_fun_varinit_const_list;
+    if(args.count("start-function")) {
+      option_specialize_fun_name = args["start-function"].as<string>();
+    }
     if(args.count("specialize-fun-name")) {
       option_specialize_fun_name = args["specialize-fun-name"].as<string>();
       // logger[DEBUG] << "option_specialize_fun_name: "<< option_specialize_fun_name<<endl;
@@ -1278,7 +1317,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
     }
 
-    if(args.getBool("normalize-all")) {
+    if(args.getBool("normalize-all")||args.getInt("testing-options-set")==1) {
       lowering.normalizeAst(sageProject,2);
       SAWYER_MESG(logger[TRACE])<<"STATUS: normalize all expressions."<<endl;
     }
@@ -1643,6 +1682,9 @@ int main( int argc, char * argv[] ) {
       } else {
         analyzer->reduceStgToInOutStates();
       }
+      if(args.getBool("inf-paths-only")) {
+        analyzer->pruneLeaves();
+      }
       stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
     }
 
@@ -1988,6 +2030,7 @@ int main( int argc, char * argv[] ) {
     Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
     if(args.getBool("viz")) {
       cout << "generating graphviz files:"<<endl;
+      visualizer.setOptionMemorySubGraphs(args.getBool("tg1-estate-memory-subgraphs"));
       string dotFile="digraph G {\n";
       dotFile+=visualizer.transitionGraphToDot();
       dotFile+="}\n";
@@ -2015,6 +2058,11 @@ int main( int argc, char * argv[] ) {
       write_file("cfg.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
       cout << "generated cfg.dot."<<endl;
       cout << "=============================================================="<<endl;
+    }
+    if(args.getBool("viz-tg2")) {
+      string dotFile3=visualizer.foldedTransitionGraphToDot();
+      write_file("transitiongraph2.dot", dotFile3);
+      cout << "generated transitiongraph2.dot."<<endl;
     }
 
     if (args.count("dot-io-stg")) {

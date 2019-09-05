@@ -1,0 +1,22 @@
+create sqlite3://./testConnect.db
+
+ls-family :: l01
+  @success
+{
+  ls
+}
+
+close
+
+connect sqlite3://./testConnect.db
+  @success
+
+ls-family :: run 1 @success
+
+close
+
+! rm ./testConnect.db
+
+! echo ok.
+
+

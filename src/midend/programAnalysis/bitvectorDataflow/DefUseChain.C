@@ -283,7 +283,9 @@ void PropagateDefUseChainUpdate( DefUseChain<Node> *graph,
         if (use->is_definition())
            continue;
         GraphNodePredecessorIterator<DefUseChain<Node> > defp(graph,use);
+#ifndef NDEBUG
         Node *tmp = *defp;
+#endif
         ++defp;
         if (defp.ReachEnd()) {
           assert( tmp == cur);

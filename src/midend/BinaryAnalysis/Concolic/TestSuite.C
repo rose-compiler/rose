@@ -27,6 +27,18 @@ TestSuite::name(const std::string& tsname) {
   name_ = tsname;
 }
 
+std::string
+TestSuite::printableName(const Database::Ptr &db) {
+    std::string retval = "test suite";
+    if (db) {
+        if (TestSuiteId id = db->id(sharedFromThis(), Update::NO))
+            retval += " " + boost::lexical_cast<std::string>(*id);
+    }
+    if (!name().empty())
+        retval += " \"" + StringUtility::cEscape(name()) + "\"";
+    return retval;
+}
+
 } // namespace
 } // namespace
 } // namespace

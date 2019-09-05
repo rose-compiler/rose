@@ -1409,7 +1409,7 @@ noinst_PROGRAMS += testRandomInput
 testRandomInput_SOURCES = testRandomInput.C
 testRandomInput_LDADD = $(ROSE_SEPARATE_LIBS)
 
-testRandomInput_ISAs = amd64 arm coldfire i386 m68040 mips-be mips-le ppc
+testRandomInput_ISAs = amd64 arm coldfire i386 m68040 mips-be mips-le ppc32
 testRandomInput_Targets = $(addprefix tri_, $(addsuffix .passed, $(testRandomInput_ISAs)))
 TEST_TARGETS += $(testRandomInput_Targets)
 
@@ -1556,6 +1556,42 @@ testDataBlockOwnership.passed: $(top_srcdir)/scripts/test_exit_status testDataBl
 		DISABLED="$$(./conditionalDisable)"					\
 		USE_SUBDIR=yes								\
 		CMD="$$(pwd)/testDataBlockOwnership $(testDataBlockOwnership_specimen)"	\
+		$< $@
+
+########################################################################################################################
+# Test S-Records
+########################################################################################################################
+
+noinst_PROGRAMS += testSRecords
+testSRecords_SOURCES = testSRecords.C
+testSRecords_LDADD = $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += testSRecords.passed
+testSRecords.passed: $(top_srcdir)/scripts/test_exit_status testSRecords
+	@$(RTH_RUN)						\
+		TITLE="test S-Record parsing/unparsing [$@]"	\
+		DISABLED="$$(./conditionalDisable)"		\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testSRecords"			\
+		$< $@
+
+########################################################################################################################
+# Test disassembler
+########################################################################################################################
+
+noinst_PROGRAMS += testDisassembler
+testDisassembler_SOURCES = testDisassembler.C
+testDisassembler_LDADD = $(ROSE_SEPARATE_LIBS)
+testDisassembler_ppc32 = $(srcdir)/testDisassembler-ppc32
+
+TEST_TARGETS += testDisassembler-ppc32.passed
+testDisassembler-ppc32.passed: $(top_srcdir)/scripts/test_with_answer testDisassembler $(testDisassembler_ppc32).txt
+	@$(RTH_RUN)										\
+		TITLE="test disassembler PowerPC-32 [$@]"					\
+		DISABLED="$$(./conditionalDisable)"						\
+		USE_SUBDIR=no									\
+		CMD="$$(pwd)/testDisassembler --isa=ppc32 $(testDisassembler_ppc32).txt"	\
+		ANS="$(testDisassembler_ppc32).ans"						\
 		$< $@
 
 ###############################################################################################################################
