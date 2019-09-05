@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_BinaryDebugger_H
-#define ROSE_BinaryAnalysis_BinaryDebugger_H
+#ifndef ROSE_BinaryAnalysis_Debugger_H
+#define ROSE_BinaryAnalysis_Debugger_H
 
 #include <boost/noncopyable.hpp>
 #include <boost/filesystem.hpp>
@@ -8,16 +8,16 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
-/** Shared-ownership pointer to @ref BinaryDebugger. See @ref heap_object_shared_ownership. */
-typedef Sawyer::SharedPointer<class BinaryDebugger> BinaryDebuggerPtr;
+/** Shared-ownership pointer to @ref Debugger. See @ref heap_object_shared_ownership. */
+typedef Sawyer::SharedPointer<class Debugger> DebuggerPtr;
 
 /** Simple debugger.
  *
  *  This class implements a very simple debugger. */
-class BinaryDebugger: private boost::noncopyable, public Sawyer::SharedObject {
+class Debugger: private boost::noncopyable, public Sawyer::SharedObject {
 public:
-    /** Shared-ownership pointer to @ref BinaryDebugger. See @ref heap_object_shared_ownership. */
-    typedef Sawyer::SharedPointer<BinaryDebugger> Ptr;
+    /** Shared-ownership pointer to @ref Debugger. See @ref heap_object_shared_ownership. */
+    typedef Sawyer::SharedPointer<Debugger> Ptr;
 
     /** How to detach from a process when this object is destroyed. */
     enum DetachMode {
@@ -58,27 +58,27 @@ private:
     // Real constructors
     //----------------------------------------
 protected:
-    BinaryDebugger()
+    Debugger()
         : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
           flags_(DEFAULT_FLAGS), regdict_(NULL) {
         init();
     }
 
-    BinaryDebugger(int pid, unsigned flags)
+    Debugger(int pid, unsigned flags)
         : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
           flags_(flags), regdict_(NULL) {
         init();
         attach(pid, flags);
     }
 
-    BinaryDebugger(const boost::filesystem::path &exeName, unsigned flags)
+    Debugger(const boost::filesystem::path &exeName, unsigned flags)
         : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
           flags_(flags), regdict_(NULL) {
         init();
         attach(exeName, flags);
     }
 
-    BinaryDebugger(const boost::filesystem::path &exeName, const std::vector<std::string> &args, unsigned flags)
+    Debugger(const boost::filesystem::path &exeName, const std::vector<std::string> &args, unsigned flags)
         : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
           flags_(flags), regdict_(NULL) {
         init();
@@ -86,7 +86,7 @@ protected:
     }
 
 public:
-    ~BinaryDebugger() {
+    ~Debugger() {
         detach();
     }
 
@@ -96,23 +96,23 @@ public:
 public:
     /** Create a debugger object that isn't attached to any subordinate process. */
     static Ptr instance() {
-        return Ptr(new BinaryDebugger);
+        return Ptr(new Debugger);
     }
 
     /** Create a debugger attached to an already running subordinate process. */
     static Ptr instance(int pid, unsigned flags = DEFAULT_FLAGS) {
-        return Ptr(new BinaryDebugger(pid, flags));
+        return Ptr(new Debugger(pid, flags));
     }
 
     /** Create a new debugger by starting the specified program with no arguments. */
     static Ptr instance(const boost::filesystem::path &exeName, unsigned flags = DEFAULT_FLAGS) {
-        return Ptr(new BinaryDebugger(exeName, flags));
+        return Ptr(new Debugger(exeName, flags));
     }
 
     /** Create a new debugger by starting the specified program with arguments. */
     static Ptr instance(const boost::filesystem::path &exeName, const std::vector<std::string> &args,
                         unsigned flags = DEFAULT_FLAGS) {
-        return Ptr(new BinaryDebugger(exeName, args, flags));
+        return Ptr(new Debugger(exeName, args, flags));
     }
     
     //----------------------------------------

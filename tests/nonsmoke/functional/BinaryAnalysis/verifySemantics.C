@@ -96,14 +96,14 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 // A concrete semantics that reads registers and memory from a subordinate process.
 class RiscOperators: public ConcreteSemantics::RiscOperators {
-    BinaryDebugger::Ptr subordinate_;
+    Debugger::Ptr subordinate_;
 protected:
-    RiscOperators(const BaseSemantics::StatePtr &state, const BinaryDebugger::Ptr &subordinate)
+    RiscOperators(const BaseSemantics::StatePtr &state, const Debugger::Ptr &subordinate)
         : ConcreteSemantics::RiscOperators(state, SmtSolverPtr()), subordinate_(subordinate) {
         name("Verification");
     }
 public:
-    static RiscOperatorsPtr instance(const BinaryDebugger::Ptr &subordinate, const RegisterDictionary *regdict) {
+    static RiscOperatorsPtr instance(const Debugger::Ptr &subordinate, const RegisterDictionary *regdict) {
         BaseSemantics::SValuePtr protoval = ConcreteSemantics::SValue::instance();
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
@@ -283,7 +283,7 @@ main(int argc, char *argv[]) {
     // Build instruction semantics framework
     boost::filesystem::path specimen_exe = specimen[0];
     std::vector<std::string> specimen_args(specimen.begin()+1, specimen.end());
-    BinaryDebugger::Ptr debugger = BinaryDebugger::instance(specimen_exe, specimen_args);
+    Debugger::Ptr debugger = Debugger::instance(specimen_exe, specimen_args);
     RiscOperatorsPtr checkOps = RiscOperators::instance(debugger, registerDictionary);
     BaseSemantics::DispatcherPtr cpu;
     std::ostringstream trace;

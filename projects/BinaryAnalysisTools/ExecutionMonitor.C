@@ -103,7 +103,7 @@ namespace
 namespace Rose {
 namespace BinaryAnalysis {
 
-  struct ExecutionMonitor : BinaryDebugger
+  struct ExecutionMonitor : Debugger
   {
       /* this is an imprecise estimate. */
       static constexpr size_t INSTR_LENGTH_ESTIMATE = 4;
@@ -114,7 +114,7 @@ namespace BinaryAnalysis {
       typedef Sawyer::Container::IntervalSet<AddressInterval> AddressIntervalSet;
 
       ExecutionMonitor(const std::vector<std::string>& exeNameAndArgs, Disassembler* disasm)
-      : BinaryDebugger(exeNameAndArgs, BinaryDebugger::CLOSE_FILES),
+      : Debugger(exeNameAndArgs, Debugger::CLOSE_FILES),
         disassembler(disasm), currIval(), intervals()
       {}
 

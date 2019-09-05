@@ -148,7 +148,7 @@ isGoodAddr(const std::set<rose_addr_t> &goodVas, const MemoryMap::Ptr &map, rose
 
 // returns number of good and bad addresses executed
 static std::pair<size_t, size_t>
-execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, const BinaryDebugger::Ptr &debugger,
+execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, const Debugger::Ptr &debugger,
         const MemoryMap::Ptr &map, AddressCounts &executed /*in,out*/) {
     Sawyer::ProgressBar<size_t> progress(mlog[MARCH], "instructions");
     std::ofstream trace;
@@ -195,7 +195,7 @@ main(int argc, char *argv[]) {
     // Load specimen natively and attach debugger
     boost::filesystem::path specimen_exe = args[1];
     std::vector<std::string> specimen_args(args.begin()+2, args.end());
-    BinaryDebugger::Ptr debugger = BinaryDebugger::instance(specimen_exe, specimen_args, BinaryDebugger::CLOSE_FILES);
+    Debugger::Ptr debugger = Debugger::instance(specimen_exe, specimen_args, Debugger::CLOSE_FILES);
     debugger->setBreakpoint(AddressInterval::whole());
     ASSERT_always_require(debugger->isAttached());
     ASSERT_always_forbid(debugger->isTerminated());

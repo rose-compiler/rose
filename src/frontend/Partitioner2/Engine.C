@@ -1,16 +1,16 @@
-#include "sage3basic.h"
-#include "rosePublicConfig.h"
+#include <sage3basic.h>
+#include <rosePublicConfig.h>
 
-#include "AsmUnparser_compat.h"
-#include "BinaryDebugger.h"
-#include "BinaryLoader.h"
-#include "BinarySerialIo.h"
-#include "CommandLine.h"
-#include "Diagnostics.h"
-#include "DisassemblerM68k.h"
-#include "DisassemblerPowerpc.h"
-#include "DisassemblerX86.h"
-#include "SRecord.h"
+#include <AsmUnparser_compat.h>
+#include <BinaryDebugger.h>
+#include <BinaryLoader.h>
+#include <BinarySerialIo.h>
+#include <CommandLine.h>
+#include <Diagnostics.h>
+#include <DisassemblerM68k.h>
+#include <DisassemblerPowerpc.h>
+#include <DisassemblerX86.h>
+#include <SRecord.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <Partitioner2/Engine.h>
@@ -1203,11 +1203,11 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
                 }
             }
 
-            unsigned flags = BinaryDebugger::CLOSE_FILES |
-                             BinaryDebugger::REDIRECT_INPUT |
-                             BinaryDebugger::REDIRECT_OUTPUT |
-                             BinaryDebugger::REDIRECT_ERROR;
-            BinaryDebugger::Ptr debugger = BinaryDebugger::instance(exeName, flags);
+            unsigned flags = Debugger::CLOSE_FILES |
+                             Debugger::REDIRECT_INPUT |
+                             Debugger::REDIRECT_OUTPUT |
+                             Debugger::REDIRECT_ERROR;
+            Debugger::Ptr debugger = Debugger::instance(exeName, flags);
 
             // Set breakpoints for all executable addresses in the memory map created by the Linux kernel. Since we're doing
             // this before the first instruction executes, no shared libraries have been loaded yet. However, the dynamic

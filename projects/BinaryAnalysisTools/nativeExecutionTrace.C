@@ -99,7 +99,7 @@ main(int argc, char *argv[]) {
 
     // Single-step the specimen natively in a debugger and show each instruction.
     size_t nSteps = 0;                                  // number of instructions executed
-    BinaryDebugger::Ptr debugger = BinaryDebugger::instance(specimen_name, specimen_args, BinaryDebugger::CLOSE_FILES);
+    Debugger::Ptr debugger = Debugger::instance(specimen_name, specimen_args, Debugger::CLOSE_FILES);
     while (!debugger->isTerminated()) {
         ++nSteps;
         uint64_t ip = debugger->readRegister(REG_IP).toInteger();
