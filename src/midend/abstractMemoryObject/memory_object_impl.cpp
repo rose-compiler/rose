@@ -167,9 +167,11 @@ namespace AbstractMemoryObject {
   ConstIndexSet* ConstIndexSet::get_inst(SgValueExp * v_exp){
     size_t v; 
     assert (v_exp != NULL);
+#ifndef NDEBUG
     SgType* t = v_exp->get_type();
     assert (t!= NULL);
     assert (SageInterface::isStrictIntegerType (t) == true);
+#endif
     switch (v_exp->variantT())
     { 
       //Take advantage of the fact that the value expression is always SgUnsignedLongVal in AST
@@ -1229,8 +1231,7 @@ namespace AbstractMemoryObject {
 
     assert (isSgVariableSymbol (s) != NULL);
     assert (s->get_type() == t);
-    SgArrayType * a_t = isSgArrayType(t);
-    assert (a_t != NULL);
+    assert (isSgArrayType(t) != NULL);
   }
 
   std::set<SgType*> ArrayNamedObj::getType()
@@ -1840,10 +1841,10 @@ namespace AbstractMemoryObject {
     assert (r!=NULL);
     SgVariableSymbol * s = r->get_symbol();
     assert (s != NULL);
-    SgType * t = s->get_type();
-    assert (t != NULL);
+    assert (s->get_type() != NULL);
     //TODO think again about if we want to break the chain here   
 #if 0  
+    SgType * t = s->get_type();
     if (isSgPointerType(t)) // pointer type is taken care already by iterating through SgType from memory pools
     {
       //we don't track pointer aliasing, so we create AliasedObj for it
@@ -1855,9 +1856,7 @@ namespace AbstractMemoryObject {
       //I think a reference to a data memory can only happen through . or -> operator
       SgExpression* parent = isSgExpression(r->get_parent());
       assert (parent != NULL);
-      SgDotExp * d_e = isSgDotExp (parent);
-      SgArrowExp * a_e = isSgArrowExp (parent);
-      assert (d_e != NULL || a_e != NULL);
+      assert (isSgDotExp (parent) != NULL || isSgArrowExp (parent) != NULL);
       SgBinaryOp* b_e = isSgBinaryOp (parent);
       assert (b_e != NULL);
       assert (b_e->get_rhs_operand_i() == r);
@@ -1872,9 +1871,7 @@ namespace AbstractMemoryObject {
       }
       else if (isSgBinaryOp (lhs)) // another SgDotExp or SgArrowExp
       { // find its rhs's NamedObj as parent
-        SgDotExp * d_e2 = isSgDotExp (lhs);
-        SgArrowExp * a_e2 = isSgArrowExp (lhs);
-        assert (d_e2 != NULL || a_e2 != NULL);
+        assert (isSgDotExp (lhs) != NULL || isSgArrowExp (lhs) != NULL);
         SgExpression* rhs = isSgBinaryOp (lhs) -> get_rhs_operand_i();
         assert (isSgVarRefExp (rhs) != NULL); // there might be some more cases!!
         p_obj = createNamedOrAliasedObjSet (isSgVarRefExp(rhs));
@@ -1932,9 +1929,11 @@ namespace AbstractMemoryObject {
       {
         s = isSgVariableSymbol(array_name->get_symbol_from_symbol_table());
         assert (s != NULL);
+#ifndef NDEBUG
         SgType * t = s->get_type();
         // both array type and pointer type can have subscripts like p[10]
         assert (isSgArrayType(t) != NULL || isSgPointerType(t) != NULL);
+#endif
         whole_array_obj = ObjSetFactory::createObjSet(s);
         if (whole_array_obj == NULL)
         {

@@ -22,6 +22,11 @@ endif
 
 BUILT_SOURCES = $(CXX_PREPROC_CODES)
 
+# Rasmussen (04/17/2019): Support for ATerms has been deprecated as it is no longer needed
+# and likely never fully implemented nor tested.  Files remain in the src tree but are no
+# longer built. Files buildAtermSupport.C and grammarAtermConstructorDefinitionMacros.macro
+# has been removed.
+
 # The generation of the ROSE Grammars depend upon source code from these files
 GRAMMAR_SOURCE_FILES = \
      ../Grammar/Statement.code \
@@ -30,7 +35,6 @@ GRAMMAR_SOURCE_FILES = \
      ../Grammar/Common.code \
      ../Grammar/Support.code \
      ../Grammar/grammarConstructorDefinitionMacros.macro \
-     ../Grammar/grammarAtermConstructorDefinitionMacros.macro \
      ../Grammar/node.macro \
      ../Grammar/Cxx_GlobalDeclarations.macro \
      ../Grammar/Symbol.code \
@@ -120,7 +124,6 @@ CxxGrammarMetaProgram_SOURCES = \
    buildStorageClasses.C \
    buildConstructorsWithoutSourcePositionInformation.C \
    outputClassesAndFields.C \
-   buildAtermSupport.C \
    java/terminals.cpp
 
 # buildConstructorsWithoutSourcePositionInformation.o: buildConstructorsWithoutSourcePositionInformation.C

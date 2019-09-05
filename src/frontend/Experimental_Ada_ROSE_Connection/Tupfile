@@ -1,0 +1,7 @@
+include_rules
+
+ifeq (@(ENABLE_ADA_ANALYSIS),yes)
+    run $(librose_compile) ada_support.C Ada_to_ROSE_translation.C
+    run $(public_headers) ada_support.h Ada_to_ROSE_translation.h
+endif
+

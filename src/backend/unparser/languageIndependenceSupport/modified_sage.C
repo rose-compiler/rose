@@ -1377,10 +1377,23 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
 
 #if 0
      printf ("In Unparse_MOD_SAGE::printSpecifier1: decl_stmt = %p = %s info.CheckAccess() = %s \n",decl_stmt,decl_stmt->class_name().c_str(),info.CheckAccess() ? "true" : "false");
+     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl_stmt);
+     if (variableDeclaration != NULL)
+        {
+       // DQ (6/15/2019): This is horrible API for this function.
+          SgInitializedName & initalizedName = SageInterface::getFirstVariable(*variableDeclaration);
+       // ROSE_ASSERT(initalizedName != NULL);
+          printf (" --- initalizedName name = %s \n",initalizedName.get_name().str());
+        }
+
      printf ("info.isPrivateAccess()   = %s \n",info.isPrivateAccess()   ? "true" : "false");
      printf ("info.isProtectedAccess() = %s \n",info.isProtectedAccess() ? "true" : "false");
      printf ("info.isPublicAccess()    = %s \n",info.isPublicAccess()    ? "true" : "false");
   // printf ("info.isDefaultAccess()   = %s \n",info.isDefaultAccess()   ? "true" : "false");
+
+     printf ("decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()   = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()   ? "true" : "false");
+     printf ("decl_stmt->get_declarationModifier().get_accessModifier().isProtected() = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
+     printf ("decl_stmt->get_declarationModifier().get_accessModifier().isPublic()    = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isPublic()    ? "true" : "false");
 #endif
 
      if (info.CheckAccess())

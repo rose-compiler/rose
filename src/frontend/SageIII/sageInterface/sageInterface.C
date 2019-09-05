@@ -571,10 +571,12 @@ SageInterface::whereAmI(SgNode* node)
   // Don't traverse past the SgFile level.
      while (parent != NULL && isSgFileList(parent) == NULL)
         {
-//          printf ("--- parent = %p = %s \n",parent,parent->class_name().c_str());
+       // DQ (7/14/2019): These were commented out, but they are intended for debugging, so
+       // if someone does not need thi output then the function should not have been called.
+          printf ("--- parent = %p = %s \n",parent,parent->class_name().c_str());
 
           ROSE_ASSERT(parent->get_file_info() != NULL);
-//          parent->get_file_info()->display("In SageInterface::whereAmI() diagnostics support");
+          parent->get_file_info()->display("In SageInterface::whereAmI() diagnostics support");
 
           parent = parent->get_parent();
         }
@@ -1128,7 +1130,9 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
         }
        else
         {
+#if 0
           printf ("In SageInterface::set_name(): This statement can be transformed! parent_declaration = %p = %s \n",parent_declaration,get_name(parent_declaration).c_str());
+#endif
 
 #if 0
        // DQ (11/12/2018): Initial test problem should not permit a transformation! 
@@ -1200,7 +1204,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 
                     if (varRefExp->get_symbol() == variableSymbol)
                        {
-#if 1
+#if 0
                          printf ("In SageInterface::set_name(): Found associated SgVarRefExp varRefExp = %p to symbol associated_symbol = %p \n",varRefExp,variableSymbol);
 #endif
 #if 0
@@ -1373,7 +1377,18 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
 
           case V_SgClassDeclaration:
           case V_SgDerivedTypeStatement:
+          case V_SgJovialTableStatement:
                name = isSgClassDeclaration(declaration)->get_name().str();
+               break;
+
+       // Rasmussen (8/2/2019): Added SgJovialDefineDeclaration and SgJovialDirectiveStatement
+       // I'm not sure class_name() is correct. Probably get_name() should be fixed.
+          case V_SgJovialDefineDeclaration:
+               name = isSgJovialDefineDeclaration(declaration)->class_name();
+               break;
+
+          case V_SgJovialDirectiveStatement:
+               name = isSgJovialDirectiveStatement(declaration)->class_name();
                break;
 
           case V_SgEnumDeclaration:
@@ -3618,6 +3633,8 @@ supportForVariableDeclarations ( SgScopeStatement* scope, SgSymbolTable* symbolT
           SgInitializedName* variable = *i;
           ROSE_ASSERT(variable != NULL);
 
+#error "DEAD CODE"
+
        // DQ (10/20/2007): static data members declared outside the class scope don't generate symbols.
        // if (variable->get_prev_decl_item() != NULL)
           if (variable->get_scope() == scope)
@@ -3635,6 +3652,8 @@ supportForVariableDeclarations ( SgScopeStatement* scope, SgSymbolTable* symbolT
             // I think there is nothing to do in this case
             // printf ("In SageInterface::rebuildSymbolTable() This variable has a scope inconsistant with the symbol table: variable->get_scope() = %p scope = %p \n",variable->get_scope(),scope);
              }
+
+#error "DEAD CODE"
 
           i++;
         }
@@ -8460,20 +8479,23 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
           printf (" --- *i = %p = %s name = %s \n",*i,(*i)->class_name().c_str(),(*i)->get_name().str());
           printf (" --- --- referenceSymbol = %p = %s \n",referenceSymbol,referenceSymbol->class_name().c_str());
 #endif
+          bool ambiguityDetected = false;
+
           SgDeclarationStatement* declarationStatement = (*i)->get_declaration();
           ROSE_ASSERT(declarationStatement != NULL);
           SgDeclarationStatement* definingDeclarationStatement = declarationStatement->get_definingDeclaration();
-          ROSE_ASSERT(definingDeclarationStatement != NULL);
-          SgClassDeclaration* classDeclaration = isSgClassDeclaration(definingDeclarationStatement);
-          ROSE_ASSERT(classDeclaration != NULL);
-          SgClassDefinition* classDefinition =  classDeclaration->get_definition();
+          if (definingDeclarationStatement != NULL) {
+            SgClassDeclaration* classDeclaration = isSgClassDeclaration(definingDeclarationStatement);
+            ROSE_ASSERT(classDeclaration != NULL);
+            SgClassDefinition* classDefinition =  classDeclaration->get_definition();
 
-       // This works for any SgName and SgSymbol, so it need not be specific to variables.
-          bool ambiguityDetected = classDefinition->hasAmbiguity(symbolName,referenceSymbol);
+         // This works for any SgName and SgSymbol, so it need not be specific to variables.
+            ambiguityDetected = classDefinition->hasAmbiguity(symbolName,referenceSymbol);
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
-          printf ("ambiguityDetected = %s \n",ambiguityDetected ? "true" : "false");
+            printf ("ambiguityDetected = %s \n",ambiguityDetected ? "true" : "false");
 #endif
+          }
 
           if (ambiguityDetected == true)
              {
@@ -13894,7 +13916,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
         }
    }
 
-int SageInterface::fixVariableReferences(SgNode* root)
+int SageInterface::fixVariableReferences(SgNode* root, bool cleanUnusedSymbols/*=true*/)
 {
   ROSE_ASSERT(root);
   int counter=0;
@@ -14043,7 +14065,8 @@ int SageInterface::fixVariableReferences(SgNode* root)
     }
   } // end for
   // Liao 2/1/2013: delete unused initname and symbol, considering possible use by the current subtree from root node
-  clearUnusedVariableSymbols(root); 
+  if (cleanUnusedSymbols)
+    clearUnusedVariableSymbols(root); 
   return counter;
 }
 
@@ -19466,16 +19489,29 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                       // Reset the scopes on any SgInitializedName objects.
                          SgVariableDeclaration* varDecl = isSgVariableDeclaration(declaration);
                          SgInitializedNamePtrList & l = varDecl->get_variables();
-                         for (SgInitializedNamePtrList::iterator i = l.begin(); i != l.end(); i++)
-                            {
+                         for (SgInitializedNamePtrList::iterator ii = l.begin(); ii != l.end(); ii++)
+                         {
                            // reset the scope, but make sure it was set to sourceBlock to make sure.
                            // This might be an issue for extern variable declaration that have a scope
                            // in a separate namespace of a static class member defined external to
                            // its class, etc. I don't want to worry about those cases right now.
-                              ROSE_ASSERT((*i)->get_scope() == sourceBlock);
 
-                              (*i)->set_scope(targetBlock);
-                            }
+                           SgInitializedName * init_name = (*ii);
+//                         ROSE_ASSERT(init_name ->get_scope() == sourceBlock);
+                           
+                           // Must also move the symbol into the new scope, Liao 2019/8/14
+                           SgVariableSymbol* var_sym = isSgVariableSymbol(init_name -> search_for_symbol_from_symbol_table ()) ;
+                           ROSE_ASSERT (var_sym);
+                           SgScopeStatement * old_scope = var_sym -> get_scope();
+                           if (old_scope != targetBlock)
+                           {
+                             old_scope->remove_symbol (var_sym);
+                             targetBlock ->insert_symbol(init_name->get_name(), var_sym);
+                           }
+
+                           init_name->set_scope(targetBlock);
+
+                         }
                          break;
                        }
                      case V_SgFunctionDeclaration: // Liao 1/15/2009, I don't think there is any extra things to do here
@@ -21376,6 +21412,7 @@ bool SageInterface::getForLoopInformations(
   SgExpression * rhs_exp = bin_test->get_rhs_operand_i();
   while (isSgCastExp(rhs_exp)) rhs_exp = ((SgCastExp *)rhs_exp)->get_operand_i();
   SgVarRefExp * rhs_var_ref = isSgVarRefExp(rhs_exp);
+#ifndef NDEBUG
   bool rhs_it = (rhs_var_ref != NULL) && (rhs_var_ref->get_symbol() == iterator);
 
 // DQ (4/21/2016): Replacing use of bitwise xor with something more approriate for logical types.
@@ -21385,6 +21422,7 @@ bool SageInterface::getForLoopInformations(
 // value.  Since these are boolean typed values we can use "a != b", directly.
 // assert(lhs_it xor rhs_it);
   assert(lhs_it != rhs_it);
+#endif
 
   upper_bound = lhs_it ? bin_test->get_rhs_operand_i() : bin_test->get_lhs_operand_i();
 
@@ -21427,24 +21465,30 @@ bool SageInterface::getForLoopInformations(
     case V_SgPlusAssignOp:
     {
       SgBinaryOp * bin_op = (SgBinaryOp *)increment;
+#ifndef NDEBUG
       SgVarRefExp * var_ref_lhs = isSgVarRefExp(bin_op->get_lhs_operand_i());
       assert(var_ref_lhs != NULL && var_ref_lhs->get_symbol() == iterator);
+#endif
       stride = bin_op->get_rhs_operand_i();
       break;
     }
     case V_SgMinusAssignOp:
     {
       SgBinaryOp * bin_op = (SgBinaryOp *)increment;
+#ifndef NDEBUG
       SgVarRefExp * var_ref_lhs = isSgVarRefExp(bin_op->get_lhs_operand_i());
       assert(var_ref_lhs != NULL && var_ref_lhs->get_symbol() == iterator);
+#endif
       stride = bin_op->get_rhs_operand_i();
       break;
     }
     case V_SgAssignOp:
     {
       SgAssignOp * assign_op = (SgAssignOp *)increment;
+#ifndef NDEBUG
       SgVarRefExp * inc_assign_lhs = isSgVarRefExp(assign_op->get_lhs_operand_i());
       assert(inc_assign_lhs != NULL && inc_assign_lhs->get_symbol() == iterator);
+#endif
       SgBinaryOp * inc_assign_rhs = isSgBinaryOp(assign_op->get_rhs_operand_i());
       assert(inc_assign_rhs != NULL);
       SgVarRefExp * inc_assign_rhs_lhs = isSgVarRefExp(inc_assign_rhs->get_lhs_operand_i());
@@ -22764,11 +22808,13 @@ bool SageInterface::insideSystemHeader (SgLocatedNode* node)
     string buildtree_str2 = string("include-staging/g++_HEADERS");
     string installtree_str1 = string("include/edg/gcc_HEADERS"); 
     string installtree_str2 = string("include/edg/g++_HEADERS"); 
+    string system_headers = string("/usr/include"); 
     // if the file name has a sys header path of either source or build tree
     if ((fname.find (buildtree_str1, 0) != string::npos) ||
         (fname.find (buildtree_str2, 0) != string::npos) ||
         (fname.find (installtree_str1, 0) != string::npos) ||
-        (fname.find (installtree_str2, 0) != string::npos)
+        (fname.find (installtree_str2, 0) != string::npos) ||
+        (fname.find (system_headers, 0) != string::npos)
        )
       rtval = true;
   }

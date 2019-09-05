@@ -22,11 +22,11 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "5";
-$mkinstaller_ver_build = "1";
+$mkinstaller_ver_build = "7";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.5.1";
-$mkinstaller_ver_time  = " 4Jun2019,18:21:12z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.1 -  4Jun2019,18:21:12z";
+$mkinstaller_ver_name  = "2.5.7";
+$mkinstaller_ver_time  = "31Jul2019,06:31:59z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.7 - 31Jul2019,06:31:59z";
 
 #{------------------------------------------------------------------------------
 #
@@ -263,6 +263,7 @@ if ($valueOfDebugVar ne "") {
    my $TmpDirT                         = "";
    my $TmpDirW                         = "";
    my $TmpFile                         = "";
+   my $TmpFileE                        = "";
    my %toldSharedDirBasename           = ( );
    my $use_cp                          = "";
    my $use_gzcat                       = "";
@@ -2155,6 +2156,10 @@ if ($valueOfDebugVar ne "") {
    #                      with the collective payload to form the installer
    #                      script.
    #
+   #  ...and...
+   #
+   #           TmpFileE -- A temporary file used to capture errors.
+   #
    #----------------------------------------------------------------------------
 
    print DBGOUT "mkinstaller: identify temp directory...\n" if $debugging;
@@ -2179,19 +2184,21 @@ if ($valueOfDebugVar ne "") {
       }
    }
    print DBGOUT "mkinstaller: ...done\n" if $debugging;
-   $TmpDir  = absname($TmpDir);
+   $TmpDir   = absname($TmpDir);
    print DBGOUT "mkinstaller:    use: \"".nativePathname($TmpDir).$slash."\"\n" if $debugging;
-   $TmpDirT = "$TmpDir/mki.$$";
+   $TmpDirT  = "$TmpDir/mki.$$";
    print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirT).$slash."\"\n" if $debugging;
-   $TmpDirA = "$TmpDirT/accumulator";
-   $TmpDirF = "$TmpDirT/files";
+   $TmpDirA  = "$TmpDirT/accumulator";
+   $TmpDirF  = "$TmpDirT/files";
    print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirA).$slash."\"\n" if $debugging;
-   $TmpDirI = "$TmpDirT/initial";
+   $TmpDirI  = "$TmpDirT/initial";
    print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirI).$slash."\"\n" if $debugging;
-   $TmpDirW = "$TmpDirT/wrapper";
+   $TmpDirW  = "$TmpDirT/wrapper";
    print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirW).$slash."\"\n" if $debugging;
-   $TmpFile = "$TmpDirT/script.tmp";
+   $TmpFile  = "$TmpDirT/script.tmp";
    print DBGOUT "mkinstaller:         \"".nativePathname($TmpFile)."\"\n" if $debugging;
+   $TmpFileE = "$TmpDir/mki.$$.err";
+   print DBGOUT "mkinstaller:    and: \"".nativePathname($TmpFileE)."\"\n" if $debugging;
 
    #---------------------------------------
    #
@@ -4120,12 +4127,16 @@ if ($valueOfDebugVar ne "") {
                            $cmd    = "\"$use_tar\" -cf - \"$bn\" | \"$use_gzip\" > \"$TmpDirI/$bn.tar.gz\"";
                         }
                         print DBGOUT "mkinstaller:    ...run [$cmd]\n" if $debugging;
-                        my $status = system "( $cmd ) >$devNull 2>&1";
+                        my $status = system "( $cmd ) >$devNull 2>$TmpFileE";
                         if ($status != 0) {
                            print DBGOUT "mkinstaller:       failed, exit code $status\n" if $debugging;
                            print STDERR "mkinstaller: error: can't tarup \"$bn\"\n";
                            print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
                            print STDERR "mkinstaller:    was done from in \"$dn\"\n";
+                           if (( -f $TmpFileE) && ( -s $TmpFileE)) {
+                              dumpTextfileToSTDERR($TmpFileE,"mkinstaller:    ");
+                           }
+                           unlink($TmpFileE);
                            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                            close DBGOUT if $dbgOutToPathname ne "";
                            exit 1;
@@ -4136,10 +4147,15 @@ if ($valueOfDebugVar ne "") {
                            print STDERR "mkinstaller: ...[$cmd] failed\n";
                            print STDERR "mkinstaller:    was done from in \"$dn\"\n";
                            print STDERR "mkinstaller: ...can't find \"$TmpDirI/$bn.tar.gz\"\n";
+                           if (( -f $TmpFileE) && ( -s $TmpFileE)) {
+                              dumpTextfileToSTDERR($TmpFileE,"mkinstaller:    ");
+                           }
+                           unlink($TmpFileE);
                            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                            close DBGOUT if $dbgOutToPathname ne "";
                            exit 1;
                         }
+                        unlink($TmpFileE);
                         if ($debugging) {
                            #
                            #  Show what the "initial" directory
@@ -4192,12 +4208,16 @@ if ($valueOfDebugVar ne "") {
                            $cmd    = "\"$use_gzcat\" \"$TmpDirI/$bn.tar.gz\" | \"$use_tar\" xf -";
                         }
                         print DBGOUT "mkinstaller:    run [$cmd]\n" if $debugging;
-                        my $status = system "( $cmd ) >$devNull 2>&1";
+                        my $status = system "( $cmd ) >$devNull 2>$TmpFileE";
                         if ($status != 0) {
                            print DBGOUT "mkinstaller:    ...failed, exit code $status\n" if $debugging;
                            print STDERR "mkinstaller: error: can't tarup \"$bn\"\n";
                            print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
                            print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
+                           if (( -f $TmpFileE) && ( -s $TmpFileE)) {
+                              dumpTextfileToSTDERR($TmpFileE,"mkinstaller:    ");
+                           }
+                           unlink($TmpFileE);
                            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                            close DBGOUT if $dbgOutToPathname ne "";
                            exit 1;
@@ -4208,10 +4228,15 @@ if ($valueOfDebugVar ne "") {
                            print STDERR "mkinstaller: ...[$cmd] failed\n";
                            print STDERR "mkinstaller: ...can't find \"$TmpDirA/$bn\"\n";
                            print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
+                           if (( -f $TmpFileE) && ( -s $TmpFileE)) {
+                              dumpTextfileToSTDERR($TmpFileE,"mkinstaller:    ");
+                           }
+                           unlink($TmpFileE);
                            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                            close DBGOUT if $dbgOutToPathname ne "";
                            exit 1;
                         }
+                        unlink($TmpFileE);
                         if ( -f "$TmpDirI/$bn.tar.gz") {
                            if ( ! unlink("$TmpDirI/$bn.tar.gz")) {
                               print STDERR "mkinstaller: error: can't delete \"$TmpDirI/$bn.tar.gz\"\n";
@@ -4407,12 +4432,16 @@ if ($valueOfDebugVar ne "") {
                      $cmd    = "\"$use_tar\" -cf - \"$bn\" | \"$use_gzip\" > \"$TmpDirW/$bn.tar.gz\"";
                   }
                   print DBGOUT "mkinstaller:    ...run [$cmd]\n" if $debugging;
-                  my $status = system "( $cmd ) >$devNull 2>&1";
+                  my $status = system "( $cmd ) >$devNull 2>$TmpFileE";
                   if ($status != 0) {
                      print DBGOUT "mkinstaller:       failed, exit code $status\n" if $debugging;
                      print STDERR "mkinstaller: error: can't tarup \"$bn\"\n";
                      print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
                      print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
+                     if (( -f $TmpFileE) && ( -s $TmpFileE)) {
+                        dumpTextfileToSTDERR($TmpFileE,"mkinstaller:    ");
+                     }
+                     unlink($TmpFileE);
                      cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                      close DBGOUT if $dbgOutToPathname ne "";
                      exit 1;
@@ -4423,10 +4452,15 @@ if ($valueOfDebugVar ne "") {
                      print STDERR "mkinstaller: ...[$cmd] failed\n";
                      print STDERR "mkinstaller: ...can't find \"$TmpDirW/$bn.tar.gz\"\n";
                      print STDERR "mkinstaller:    was done from in \"$TmpDirA\"\n";
+                     if (( -f $TmpFileE) && ( -s $TmpFileE)) {
+                        dumpTextfileToSTDERR($TmpFileE,"mkinstaller:    ");
+                     }
+                     unlink($TmpFileE);
                      cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                      close DBGOUT if $dbgOutToPathname ne "";
                      exit 1;
                   }
+                  unlink($TmpFileE);
                   if ($debugging) {
                      #
                      #  Show what the "wrapper" directory
@@ -4692,12 +4726,16 @@ if ($valueOfDebugVar ne "") {
                my $Tstart = time();
                my $cmd    = "\"$use_tar\" -cf \"$wrapper.tar\" \"$wrapper\"";
                print DBGOUT "mkinstaller: ...run [$cmd]\n" if $debugging;
-               my $status = system "( $cmd ) >$devNull 2>&1";
+               my $status = system "( $cmd ) >$devNull 2>$TmpFileE";
                if ($status != 0) {
                   print DBGOUT "mkinstaller:    failed, exit code $status\n" if $debugging;
                   print STDERR "mkinstaller: error: can't tarup \"$under/$wrapper\"\n";
                   print STDERR "mkinstaller: ...[$cmd], failed returning exit code $status\n";
                   print STDERR "mkinstaller:    was done from in \"$under\"\n";
+                  if (( -f $TmpFileE) && ( -s $TmpFileE)) {
+                     dumpTextfileToSTDERR($TmpFileE,"mkinstaller:    ");
+                  }
+                  unlink($TmpFileE);
                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                   close DBGOUT if $dbgOutToPathname ne "";
                   exit 1;
@@ -4708,10 +4746,15 @@ if ($valueOfDebugVar ne "") {
                   print STDERR "mkinstaller: ...[$cmd], failed\n";
                   print STDERR "mkinstaller:    was done from in \"$under\"\n";
                   print STDERR "mkinstaller: ...can't find \"$under/$wrapper.tar\"\n";
+                  if (( -f $TmpFileE) && ( -s $TmpFileE)) {
+                     dumpTextfileToSTDERR($TmpFileE,"mkinstaller:    ");
+                  }
+                  unlink($TmpFileE);
                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                   close DBGOUT if $dbgOutToPathname ne "";
                   exit 1;
                }
+               unlink($TmpFileE);
                if ($debugging) {
                   print DBGOUT "mkinstaller: ...the tarball\n" if $debugging;
                   system "pwd";
@@ -12444,11 +12487,15 @@ EOF67
                $cmd = "cat \"$TmpFile\" > \"$scriptName\"";
             }
             print DBGOUT "mkinstaller:    run [$cmd]\n" if $debugging;
-            $status = system "( $cmd ) 2>/dev/null";
+            $status = system "( $cmd ) 2>$TmpFileE";
             if ($status != 0) {
                print DBGOUT "mkinstaller:    ...failed\n" if $debugging;
                print STDERR "mkinstaller: error: can't form \"$scriptName\"\n";
                print STDERR "mkinstaller: ...[$cmd] failed, returning exit code $status\n";
+               if (( -f $TmpFileE) && ( -s $TmpFileE)) {
+                  dumpTextfileToSTDERR($TmpFileE,"mkinstaller:    ");
+               }
+               unlink($TmpFileE);
                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                close DBGOUT if $dbgOutToPathname ne "";
                exit 1;
@@ -12459,6 +12506,10 @@ EOF67
                print STDERR "mkinstaller: error: didn't form \"$scriptName\"\n";
                print STDERR "mkinstaller: ...[$cmd] failed\n";
                print STDERR "mkinstaller: ...can't find \"$scriptName\"\n";
+               if (( -f $TmpFileE) && ( -s $TmpFileE)) {
+                  dumpTextfileToSTDERR($TmpFileE,"mkinstaller:    ");
+               }
+               unlink($TmpFileE);
                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                close DBGOUT if $dbgOutToPathname ne "";
                exit 1;
@@ -12466,6 +12517,7 @@ EOF67
             else {
                print DBGOUT "mkinstaller:       generated \"$scriptName\"\n" if $debugging;
             }
+            unlink($TmpFileE);
             if ($debugging) {
                print DBGOUT "mkinstaller: ...the generated script\n" if $debugging;
                system "pwd";
@@ -12855,13 +12907,16 @@ EOF67
          if ($ProjectName ne "") {
             if ($ProjectVer ne "") {
          print OSCRIPT "InstallDir            \$DESKTOP\\$ProjectName-$ProjectVer\n";
+         print OSCRIPT "DirText               \"The ".$ProjectName." ".$ProjectVer." installer. Choose an installation prefix directory\"\n";
             }
             else {
          print OSCRIPT "InstallDir            \$DESKTOP\\$ProjectName\n";
+         print OSCRIPT "DirText               \"The ".$ProjectName." installer. Choose an installation prefix directory\"\n";
             }
          }
          else {
          print OSCRIPT "InstallDir            \$DESKTOP\\$scriptName\n";
+         print OSCRIPT "DirText               \"Choose an installation prefix directory\"\n";
          }
          print OSCRIPT "RequestExecutionLevel user\n";
          print OSCRIPT "SetCompressor         /SOLID /FINAL lzma\n";
@@ -17350,6 +17405,60 @@ sub dirname {
    return $result;
 }
 
+# MyUniqueFileId: 6bb0cd9e-b6df-45f6-f4be-5a02b981125c
+#-------------------------------------------------------------------------------
+#
+#  Dumping a textfile to some open file handle (such as STDERR).
+#
+#  This function expects 3 parameters: A file handle, a pathname (the file
+#  whose contents are to be "dumped" to the handle), and a string which is
+#  to prefix each line from the file when sent to the file handle.
+#
+#  see: totebag/src/perl-lib/dumpTextfileToHandle.psub
+#
+#  Dated: 03Nov2015
+#
+#-------------------------------------------------------------------------------
+
+sub dumpTextfileToHandle {
+   local (*FH,$pathname,$prefix) = @_;
+   my $result;
+   if ( -f $pathname) {
+      if (open(TEXTFILE,"< $pathname")) {
+         while (<TEXTFILE>) {
+            chomp;
+            print FH $prefix.$_."\n";
+         }
+         close TEXTFILE;
+         $result = 1;
+      }
+      else {
+         $result = 0;
+      }
+   }
+   else {
+      $result = 0;
+   }
+   return $result;
+}
+
+# MyUniqueFileId: 4c7957a2-61c8-4577-fb4f-1bc45e17d6c3
+#-------------------------------------------------------------------------------
+#
+#  Dumping a textfile to <stderr>
+#
+#  see: totebag/src/perl-lib/dumpTextfileToSTDERR.psub
+#
+#  Dated: 21Jan2017
+#
+#-------------------------------------------------------------------------------
+
+sub dumpTextfileToSTDERR {
+   my $pathname  = shift;
+   my $prefix    = shift;
+   return dumpTextfileToHandle(*STDERR,$pathname,$prefix);
+}
+
 # MyUniqueFileId: 069ff9f8-9601-463c-ccd1-a1486a5cce42
 #-------------------------------------------------------------------------------
 #
@@ -18848,7 +18957,7 @@ sub makePathWindowslike {
 #           dirname()
 #           mkDirectory() -- it is recursive
 #
-#  Dated: 29Jul2016
+#  Dated: 21Jun2019
 #
 #-------------------------------------------------------------------------------
 
@@ -18887,7 +18996,7 @@ sub mkDirectory {
          $result = mkdir($pathname,0777);
       }
    }
-   return result;
+   return $result;
 }
 
 # MyUniqueFileId: 6af5ed70-509a-46e3-c366-c864743c9ac3
@@ -19361,10 +19470,11 @@ sub help {
    |
    |           ./banana-installer -v --prefix=/opt/banana
    |
-   |       Note that the --prefix=<pathname> option isn't really optional,
-   |       it is required. Also note that use of the -v option (verbose mode)
-   |       is recommended as the generated installer normally produces no
-   |       output other than warnings and/or error messages.
+   |       Note that on UNIX-like hosts the --prefix=<pathname> option isn't
+   |       really optional, it is required. Also note that use of the -v
+   |       option (verbose mode) is recommended as the generated installer
+   |       normally produces no output other than remarks, warnings, and/or
+   |       error messages.
    |
    |    Windows-like host
    |
@@ -19377,15 +19487,25 @@ sub help {
    |           https://sourceforge.net/projects/nsis
    |
    |       The installation process on a Windows-like target system is done by
-   |       simply running the generated installer binary executable. Unlike the
+   |       simply running the generated installer binary executable. Unlike an
    |       installer produced for UNIX-like hosts, an installer for Windows-like
    |       hosts may perform the installation to a default location; the user's
    |       desktop:
    |
    |          banana-installer.exe
    |
-   |       To specify an installation prefix the /D=<pathname> option may be
-   |       used:
+   |       The installer executable puts-up a dialog box resembling:
+   |
+   |                       [ see installer-dialog.gif ]
+   |
+   |                      Typical installation dialog box
+   |
+   |       The installation dialog box allows the user to specify the installation
+   |       "prefix" directory by replacing the default pathname with the desired
+   |       pathname or using the browser button to locate and select a pathname.
+   |
+   |       To specify an installation prefix on the command line the /D=<pathname>
+   |       option may be used: 
    |
    |          banana-installer.exe /D=E:\\opt\\banana
    |
@@ -20201,6 +20321,7 @@ EOF1
    |
    |    Be sure to provide as much information as possible.
    |
+   |    This man page was generated by mkinstaller $mkinstaller_ver_name using the --help option. Revised $mkinstaller_ver_time
 EOF2
    exit 0;
 }
@@ -20366,10 +20487,11 @@ sub html {
    |            <blockquote>
    |                <b><big><code>./banana-installer -v --prefix=/opt/banana</code></big></b>
    |            </blockquote>
-   |            Note that the <b><big><code>--prefix=</code></big></b><i>pathname</i> option isn't really optional,
-   |            it is required. Also note that use of the <b><big><code>-v</code></big></b> option (verbose mode)
-   |            is recommended as the generated installer normally produces no
-   |            output other than warnings and/or error messages.
+   |            Note that on UNIX-like hosts the <b><big><code>--prefix=</code></big></b><i>pathname</i> option isn't
+   |            really optional, it is required. Also note that use of the <b><big><code>-v</code></big></b>
+   |            option (verbose mode) is recommended as the generated installer
+   |            normally produces no output other than remarks, warnings, and/or
+   |            error messages.
    |         </blockquote>
    |         <b>Windows-like Host</b>
    |         <blockquote>
@@ -20384,14 +20506,28 @@ sub html {
    |         </blockquote>
    |         <blockquote>
    |            The installation process on a Windows-like target system is done by
-   |            simply running the generated installer binary executable. Unlike the
+   |            simply running the generated installer binary executable. Unlike an
    |            installer produced for UNIX-like hosts, an installer for Windows-like
    |            hosts may perform the installation to a default location; the user's
    |            desktop:
    |            <blockquote>
    |              <b><big><code>banana-installer.exe</code></big></b>
    |            </blockquote>
-   |            To specify an installation prefix the <b><big><code>/D=</code></big></b><i>pathname</i> option may be used:
+   |            When run the installer executable puts-up a dialog box resembling:
+   |            <blockquote>
+   |               <center>
+   |                  <img src="../../images/mkinstaller/installer-dialog.png">
+   |                  <p>
+   |                     Typical installation dialog box
+   |               </center>
+   |            </blockquote>
+   |            The installation dialog box allows the user to specify the installation
+   |            "prefix" directory by replacing the default pathname with the desired
+   |            pathname or using the browser button to locate and select a pathname.
+   |         </blockquote>
+   |         <blockquote>
+   |            To specify an installation prefix on the command line the <b><big><code>/D=</code></big></b><i>pathname</i>
+   |            option may be used:
    |            <blockquote>
    |              <b><big><code>banana-installer.exe /D=E:\\opt\\banana</code></big></b>
    |            </blockquote>
