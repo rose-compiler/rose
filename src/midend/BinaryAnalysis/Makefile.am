@@ -16,6 +16,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryCodeInserter.C					\
     BinaryControlFlow.C						\
     BinaryDataFlow.C						\
+    BinaryDebugger.C						\
     BinaryDemangler.C						\
     BinaryDominance.C						\
     BinaryFeasiblePath.C					\
@@ -91,6 +92,7 @@ pkginclude_HEADERS =					\
     BinaryConcolic.h					\
     BinaryControlFlow.h					\
     BinaryDataFlow.h					\
+    BinaryDebugger.h					\
     BinaryDemangler.h					\
     BinaryDominance.h					\
     BinaryFeasiblePath.h				\
