@@ -124,6 +124,7 @@ C_TESTCODES_REQUIRED_TO_RUN = \
 	parallelsections.c \
 	parallelfor.c \
 	parallelfor2.c \
+	pi.c \
 	prettyfunc.c \
 	private.c \
 	privatej.c \
