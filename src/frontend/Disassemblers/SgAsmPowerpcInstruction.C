@@ -7,6 +7,16 @@
 using namespace Rose;                                   // temporary until this lives in "rose"
 using namespace Rose::BinaryAnalysis;
 
+// class method
+const RegisterDictionary*
+SgAsmPowerpcInstruction::registersForWidth(size_t nBits) {
+    switch (nBits) {
+        case 32: return RegisterDictionary::dictionary_powerpc32();
+        case 64: return RegisterDictionary::dictionary_powerpc64();
+        default: ASSERT_not_reachable("invalid PowerPC instruction size");
+    }
+}
+
 unsigned
 SgAsmPowerpcInstruction::get_anyKind() const {
     return p_kind;
@@ -562,6 +572,7 @@ SgAsmPowerpcInstruction::description() const {
         case powerpc_orc_record:       return "OR with complement";
         case powerpc_ori:              return "OR immediate";
         case powerpc_oris:             return "OR immediate shifted";
+        case powerpc_popcntb:          return "population count bytes";
         case powerpc_rfi:              return "return from interrupt";
         case powerpc_rfid:             return "return from interrupt";
         case powerpc_rldcl:            return "rotate left doubleword then clear left";

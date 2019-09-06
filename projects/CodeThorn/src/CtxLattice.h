@@ -93,12 +93,14 @@ namespace
   }
 
 
-  //! clones a lattice @ref orig.
+  /// clones a lattice @ref orig.
+  template <class CodeThornFactory, class CodeThornLattice>
   inline
-  Lattice*
-  cloneLattice(PropertyStateFactory& factory, Lattice& orig)
+  CodeThornLattice*
+  cloneLattice(CodeThornFactory& factory, const CodeThornLattice& elem)
   {
-    Lattice& clone = sg::deref(factory.create());
+    CodeThornLattice& orig  = const_cast<CodeThornLattice&>(elem);
+    CodeThornLattice& clone = sg::deref(factory.create());
 
     clone.combine(orig);
 
@@ -243,7 +245,7 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*>
 
     explicit
     CtxLattice(PropertyStateFactory& compfac)
-    : base(), context_map(), /*compAnalysis(compdfa),*/ compPropertyFactory(compfac)
+    : base(), context_map(), compPropertyFactory(compfac)
     {}
 
     ~CtxLattice()
@@ -256,7 +258,14 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*>
       context_map::swap(that);
     }
 
-    bool isBot() ROSE_OVERRIDE { return context_map::size() == 0; }
+    bool isBot() const { return context_map::size() == 0; }
+
+    bool isBot() ROSE_OVERRIDE
+    {
+      const CtxLattice<context_t>& self = *this;
+
+      return self.isBot();
+    }
 
     bool approximatedBy(Lattice& other) ROSE_OVERRIDE
     {

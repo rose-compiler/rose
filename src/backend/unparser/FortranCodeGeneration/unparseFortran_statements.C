@@ -3832,15 +3832,30 @@ FortranCodeGeneration_locatedNode::unparseAssociateStatement(SgStatement* stmt, 
 
      curprint("ASSOCIATE (");
 
-     SgVariableDeclaration* variableDeclaration = associateStatement->get_variable_declaration();
-     ROSE_ASSERT(variableDeclaration != NULL);
-     SgInitializedName* variable = *(variableDeclaration->get_variables().begin());
-     ROSE_ASSERT(variable != NULL);
+     // Pei-Hung (07/24/2019) unparse SgDeclarationStatementPtrList for multiple associates
+     SgDeclarationStatementPtrList::iterator pp = associateStatement->get_associates().begin();
+     while ( pp != associateStatement->get_associates().end() )
+        {
+          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(*pp);
+          ROSE_ASSERT(variableDeclaration != NULL);
 
-     curprint(variable->get_name());
-     curprint(" => ");
-     unparseExpression(variable->get_initializer(),info);
-     curprint(") ");
+          SgInitializedName* variable = *(variableDeclaration->get_variables().begin());
+          ROSE_ASSERT(variable != NULL);
+
+          curprint(variable->get_name());
+          curprint(" => ");
+          unparseExpression(variable->get_initializer(),info);
+          pp++;
+          if(pp != associateStatement->get_associates().end())
+            curprint(", ");
+          
+        }
+        curprint(") ");
+
+
+
+
+
   // unp->cur.insert_newline(1);
 
      ROSE_ASSERT(associateStatement->get_body() != NULL);

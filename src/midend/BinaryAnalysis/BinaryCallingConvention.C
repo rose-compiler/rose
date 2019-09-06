@@ -58,10 +58,17 @@ dictionaryMips() {
 }
 
 const Dictionary&
-dictionaryPowerpc() {
+dictionaryPowerpc32() {
     static Dictionary dict;
     if (dict.empty())
         dict.push_back(Definition::ppc_32bit_ibm());
+    return dict;
+}
+
+const Dictionary&
+dictionaryPowerpc64() {
+    static Dictionary dict;
+    // FIXME[Robb Matzke 2019-08-07]: none defined yet
     return dict;
 }
 
@@ -220,7 +227,7 @@ Definition::Ptr
 Definition::ppc_32bit_ibm() {
     static Ptr cc;
     if (!cc)
-        cc = ppc_ibm(RegisterDictionary::dictionary_powerpc());
+        cc = ppc_ibm(RegisterDictionary::dictionary_powerpc32());
     return cc;
 }
 

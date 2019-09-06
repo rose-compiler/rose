@@ -7,6 +7,7 @@
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/regex.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #ifndef _MSC_VER
@@ -129,46 +130,25 @@ sqlite3_url_documentation() {
 //    sqlite3://FILENAME[?PARAM1[=VALUE1]&...]
 // The only parameter that's currently understood is "debug", which turns on the debug property for the connection.
 static std::string
-sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/)
-{
-    std::string dbname;
-    size_t at1 = 0;
-    if (0!=src.substr(at1, 10).compare("sqlite3://"))
+sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/) {
+    Connection::ParsedUrl parsed = Connection::parseUrl(src);
+    if (parsed.driver != SqlDatabase::SQLITE3)
         throw Exception("malformed SQLite3 connection URL: missing \"sqlite3://\"");
-    at1 = 10;
+    if (!parsed.error.empty())
+        throw Exception(parsed.error);
 
-    // Database name is everything up to the next '?' or end of string
-    size_t at2 = src.find_first_of('?', at1);
-    if (at2==std::string::npos) {
-        dbname = src.substr(at1);
-        at1 = src.size();
-    } else {
-        dbname = src.substr(at1, at2-at1);
-        at1 = at2;
-    }
+    std::string fileName = parsed.dbName;
 
-    // Parameters
-    if (at1<src.size() && '?'==src[at1]) {
-        ++at1;
-        while (at1<src.size()) {
-            at2 = src.find_first_of('&');
-            std::string param;
-            if (at2==std::string::npos) {
-                param = src.substr(at1);
-                at1 = src.size();
-            } else {
-                param = src.substr(at1, at2-at1);
-                at1 = at2 + 1;
-            }
-            if (0==param.compare("debug")) {
-                if (has_debug!=NULL)
-                    *has_debug = true;
-            } else {
-                throw Exception("invalid SQLite3 parameter: "+param);
-            }
+    BOOST_FOREACH (const Connection::Parameter &param, parsed.params) {
+        if ("debug" == param.first) {
+            if (has_debug)
+                *has_debug = true;
+        } else {
+            throw Exception("invalid SQLite3 parameter \"" + StringUtility::cEscape(param.first) + "\"");
         }
     }
-    return dbname;
+
+    return fileName;
 }
 
  // Added ifdef to remove unused function warning [Rasmussen, 2019.01.28]
@@ -192,82 +172,52 @@ postgres_url_documentation() {
 //    postgresql://[USER[:PASSWORD]@][NETLOC][:PORT][/DBNAME][?PARAM1[=VALUE1]&...]
 // The has_debug argument is set if a "debug" parameter is found.
 static std::string
-postgres_parse_url(const std::string &src, bool *has_debug/*in,out*/)
-{
-    std::string user, password, netloc, port, dbname;
+postgres_parse_url(const std::string &url, bool *has_debug/*in,out*/) {
+    Connection::ParsedUrl parsed = Connection::parseUrl(url);
 
-    size_t at1 = 0;
-    if (0!=src.substr(at1, 13).compare("postgresql://"))
+    if (parsed.driver != SqlDatabase::POSTGRESQL)
         throw Exception("malformed PostgreSQL connection URL: missing \"postgresql://\"");
-    at1 = 13;
+    if (!parsed.error.empty())
+        throw Exception(parsed.error);
+    std::string src = parsed.dbName;
 
     // The username and password, everything up to the next '@' character if there is one.
-    size_t atsign = src.find_first_of('@', at1);
-    if (atsign!=std::string::npos) {
-        size_t colon = src.find_first_of(':', at1);
-        if (colon!=std::string::npos && colon<atsign) {
-            user = src.substr(at1, colon-at1);
-            password = src.substr(colon+1, atsign-colon-1);
-        } else {
-            user = src.substr(at1, atsign-at1);
-        }
-        at1 = atsign + 1;
-    }
-
-    // The optional netloc, everything up to the next '/', '?', ':', or end of string
-    size_t at2 = src.find_first_of("/?:", at1);
-    if (at2==std::string::npos) {
-        netloc = src.substr(at1);
-        at1 = src.size();
-    } else {
-        netloc = src.substr(at1, at2-at1);
-        at1 = at2;
-    }
-
-    // Optional port number is present if next character is a ':' and extends to next '/', '?', or end of string
-    if (at1<src.size() && ':'==src[at1]) {
-        at2 = src.find_first_of("/?", at1);
-        if (at2==std::string::npos) {
-            port = src.substr(at1+1);
-            at1 = src.size();
-        } else {
-            port = src.substr(at1+1, at2-(at1+1));
-            at1 = at2 + 1;
+    std::string user, password;
+    {
+        size_t atsign = src.find('@');
+        if (atsign != std::string::npos) {
+            std::vector<std::string> parts = StringUtility::split(":", src.substr(0, atsign), 2);
+            user = parts[0];
+            if (parts.size() == 2)
+                password = parts[1];
+            src = src.substr(atsign+1);
         }
     }
 
-    // Optional database name is present if next character is a '/' and extends up to the next '?' or end of string
-    if (at1<src.size() && '/'==src[at1]) {
-        at2 = src.find_first_of('?', at1);
-        if (at2==std::string::npos) {
-            dbname = src.substr(at1+1);
-            at1 = src.size();
-        } else {
-            dbname = src.substr(at1+1, at2-(at1+1));
-            at1 = at2;
+    // Host name and port, everything up to the next '/' character if there is one
+    std::string netloc, port;
+    {
+        size_t slash = src.find('/');
+        if (slash != std::string::npos) {
+            std::vector<std::string> parts = StringUtility::split(":", src.substr(0, slash), 2);
+            netloc = parts[0];
+            if (parts.size() == 2)
+                port = parts[1];
+            src = src.substr(slash+1);
         }
     }
 
+    // Optional database name is everything left over.
+    std::string dbname = src;
+    
     // Parameters
     std::vector<std::string> url_params;
-    if (at1<src.size() && '?'==src[at1]) {
-        ++at1;
-        while (at1<src.size()) {
-            at2 = src.find_first_of('&');
-            std::string param;
-            if (at2==std::string::npos) {
-                param = src.substr(at1);
-                at1 = src.size();
-            } else {
-                param = src.substr(at1, at2-at1);
-                at1 = at2 + 1;
-            }
-            if (0==param.compare("debug")) {
-                if (has_debug!=NULL)
-                    *has_debug = true;
-            } else {
-                url_params.push_back(param);
-            }
+    BOOST_FOREACH (const Connection::Parameter &param, parsed.params) {
+        if ("debug" == param.first) {
+            if (has_debug != NULL)
+                *has_debug = true;
+        } else {
+            url_params.push_back(param.first + "=" + param.second);
         }
     }
 
@@ -428,6 +378,50 @@ Connection::finish()
     delete impl;
 }
 
+// class method
+Connection::ParsedUrl
+Connection::parseUrl(std::string url) {
+    ParsedUrl retval;
+
+    // Optional driver (stuff before first "://")
+    size_t next = url.find("://");
+    if (next != std::string::npos) {
+        std::string driverName = url.substr(0, next);
+        if ("sqlite3" == driverName) {
+            retval.driver = SQLITE3;
+        } else if ("postgresql" == driverName) {
+            retval.driver = POSTGRESQL;
+        } else {
+            retval.error = "invalid driver name \"" + StringUtility::cEscape(driverName) + "\"";
+            return retval;
+        }
+        url = url.substr(next + 3);                     // everything after "://"
+    } else {
+        retval.driver = guess_driver(url);
+    }
+
+    // Datatabase is everything up to the last "?", but see below.
+    next = url.rfind("?");
+    if (next == std::string::npos) {
+        retval.dbName = url;
+        return retval;                                  // no parameters
+    } else {
+        retval.dbName = url.substr(0, next);
+        url = url.substr(next+1);                       // everything after the "?"
+    }
+
+    // Parameters, each "name[=value]" and separated from one another by "&"
+    std::vector<std::string> params = StringUtility::split("&", url);
+    BOOST_FOREACH (const std::string &s, params) {
+        std::vector<std::string> nameValue = StringUtility::split("=", s, 2);
+        if (nameValue.size() == 1)
+            nameValue.push_back("");
+        retval.params.push_back(std::make_pair(nameValue[0], nameValue[1]));
+    }
+
+    return retval;
+}
+
 Driver
 Connection::guess_driver(const std::string &open_spec)
 {
@@ -446,7 +440,7 @@ Connection::guess_driver(const std::string &open_spec)
     bool is_filename = true;
     for (size_t i=0; is_filename && i<open_spec.size(); ++i)
         is_filename = isgraph(open_spec[i]);
-    if (is_filename && open_spec.size()>=4 && 0==open_spec.substr(open_spec.size()-3).compare(".db"))
+    if (is_filename && open_spec.size()>=4 && boost::ends_with(open_spec, ".db"))
         return SQLITE3;
 
     return NO_DRIVER;

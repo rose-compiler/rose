@@ -1112,6 +1112,7 @@ void c_action_label(Token_t * lbl)
 
         ROSE_ASSERT(!astExpressionStack.empty());
         SgValueExp * realValue = isSgValueExp(astExpressionStack.front());
+        ROSE_ASSERT(realValue != NULL);
         astExpressionStack.pop_front();
 
         SgValueExp * complexValue = new SgComplexVal(realValue, imaginaryValue, realValue->get_type(), "");
@@ -1503,6 +1504,11 @@ void c_action_label(Token_t * lbl)
         currentScope->append_statement(derivedTypeStatement);
         ROSE_ASSERT(derivedTypeStatement->get_definition());
         astScopeStack.push_front(derivedTypeStatement->get_definition());
+        // Pei-Hung (07/17/2019) Derived type can only be PUBLIC in the specification part of a module 
+        // SgAccessModifier has default as public and will cause issue in test2019_accessibility_attribute.f90
+        // Changed the access attribute to unknown to avoid unparser generating "PUBLIC" attribute
+        derivedTypeStatement->get_declarationModifier().get_accessModifier().setUndefined();
+        
         DeclAttributes.setDeclaration(derivedTypeStatement);
         DeclAttributes.setDeclAttrSpecs();
         DeclAttributes.reset();
@@ -2199,10 +2205,7 @@ void c_action_label(Token_t * lbl)
      * @param count  Number of procedure binding statements.
      * @param hasBindingPrivateStmt True if has a keyword "private".
      */
-// void c_action_type_bound_procedure_part(int count, ofp_bool hasBindingPrivateStmt)
-// void c_action_type_bound_procedure_part(Token_t * containsKeyword, Token_t * eos, int count, ofp_bool hasBindingPrivateStmt) 
-    void c_action_type_bound_procedure_part(int count,
-            ofp_bool hasBindingPrivateStmt)
+    void c_action_type_bound_procedure_part(int count, ofp_bool hasBindingPrivateStmt)
     {
         // printf ("In c_action_type_bound_procedure_part(): containsKeyword = %p = %s hasBindingPrivateStmt = %s \n",containsKeyword,containsKeyword != NULL ? containsKeyword->text : "NULL",hasBindingPrivateStmt ? "true" : "false");
 
@@ -3018,7 +3021,6 @@ void c_action_label(Token_t * lbl)
      * @param type The type of declaration-type-spec {INTRINSIC,TYPE,
      * CLASS,POLYMORPHIC}.
      */
-// void c_action_declaration_type_spec(int type)
     void c_action_declaration_type_spec(Token_t * udtKeyword, int type)
     {
         // The type value makes it clear what the type will be for the variable declaration being defined in the next setof rules.
@@ -3090,10 +3092,15 @@ void c_action_label(Token_t * lbl)
 
             case DeclarationTypeSpec_CLASS:
             {
-                // What is this?
+                // Rasmussen (4/11/2019):
+                // This is a CLASS declaration-type-spec. It is effectively the same as TYPE.
+                // TODO: It would be helpful to mark the derived type as a class declaration rather
+                //       than a struct but I don't think one can get the variable declaration here.
+                //       This is not super critical as it can be handled by token-based unparsing.
+                if (SgProject::get_verbose() > DEBUG_COMMENT_LEVEL)
                 printf(
-                        "Sorry, not implemented: c_action_declaration_type_spec(DeclarationTypeSpec_CLASS) \n");
-                ROSE_ASSERT(false);
+                        "In c_action_declaration_type_spec(type = %d = DeclarationTypeSpec_CLASS) \n",
+                        type);
                 break;
             }
 
@@ -3124,13 +3131,11 @@ void c_action_label(Token_t * lbl)
         outputState("Before transfer to astBaseTypeStack in R502 c_action_declaration_type_spec()");
 #endif
 
-        // DQ (12/8/2007): Some types are build directly on the astBaseTypeStack.
+        // DQ (12/8/2007): Some types are built directly on the astBaseTypeStack.
         // When this happens we have nothing to transfer between stacks.
 
-        // ROSE_ASSERT(astTypeStack.empty() == false);
         if (astTypeStack.empty() == false)
         {
-
             // DQ (12/8/2007): Now take the type and put it onto the astBaseTypeStack.
             // ROSE_ASSERT(astBaseTypeStack.empty() == true);
             astBaseTypeStack.push_front(astTypeStack.front());
@@ -3608,29 +3613,69 @@ void c_action_label(Token_t * lbl)
         if (variableSymbol != NULL)
         {
             ROSE_ASSERT(entityType != NULL);
+
+            // Pei-Hung (07/19/2019) a variable inside a derived type can have the same name as other varible
+            // in other scope.  If the case happens, we should build the initialized name for the variable
+            // inside the derived type
             initializedName = variableSymbol->get_declaration();
             ROSE_ASSERT(initializedName != NULL);
-            ROSE_ASSERT(initializedName->get_scope() != NULL);
-            SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(initializedName->get_scope());
-            if (functionDefinition != NULL)
+
+            SgType* variableType = initializedName->get_type();
+
+            if(isSgDerivedTypeStatement(currentScope->get_parent()) != NULL && currentScope != initializedName->get_scope())
             {
-                SgProcedureHeaderStatement* functionDeclaration = isSgProcedureHeaderStatement(functionDefinition->get_parent());
-                ROSE_ASSERT(functionDeclaration != NULL);
-                if (functionDeclaration->get_result_name() == initializedName)
-                {
-                    SgFunctionType* functionType = isSgFunctionType(functionDeclaration->get_type());
-                    ROSE_ASSERT(functionType != NULL);
-                    functionType->set_return_type(entityType);
-                    functionType->set_orig_return_type(entityType);
-                }
-                initializedName->set_type(entityType);
+              initializedName = buildInitializedNameAndPutOntoStack(name, entityType, initializer);            
             }
             else
             {
-                if (currentScope != initializedName->get_scope())
-                initializedName = buildInitializedNameAndPutOntoStack(name, entityType, initializer);
-                else
-                initializedName->set_type(entityType);
+              initializedName = variableSymbol->get_declaration();
+              ROSE_ASSERT(initializedName != NULL);
+              ROSE_ASSERT(initializedName->get_scope() != NULL);
+              SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(initializedName->get_scope());
+              if (functionDefinition != NULL)
+              {
+                  SgProcedureHeaderStatement* functionDeclaration = isSgProcedureHeaderStatement(functionDefinition->get_parent());
+                  ROSE_ASSERT(functionDeclaration != NULL);
+                  if (functionDeclaration->get_result_name() == initializedName)
+                  {
+                      SgFunctionType* functionType = isSgFunctionType(functionDeclaration->get_type());
+                      ROSE_ASSERT(functionType != NULL);
+                      functionType->set_return_type(entityType);
+                      functionType->set_orig_return_type(entityType);
+                  }
+                  // Pei-Hung (07/19/2019) In test2019_common_block_name.f90,
+                  // array dimension info can be specified in common block before the type specification
+                  if(isSgArrayType(variableType) != NULL)
+                  {
+                    SgArrayType* arrayType = isSgArrayType(variableType);
+                    ROSE_ASSERT(arrayType != NULL);
+                    SgExprListExp* dimInfo = arrayType->get_dim_info();
+                    entityAttr.setDimExp(dimInfo);
+                    entityAttr.setHasDimension(true);
+                    entityType = entityAttr.computeEntityType();
+                  }
+                  initializedName->set_type(entityType);
+              }
+              else
+              {
+                  if (currentScope != initializedName->get_scope())
+                  initializedName = buildInitializedNameAndPutOntoStack(name, entityType, initializer);
+                  else
+                  {
+                    // Pei-Hung (07/19/2019) In test2019_common_block_name.f90,
+                    // array dimension info can be specified in common block before the type specification
+                    if(isSgArrayType(variableType) != NULL)
+                    {
+                      SgArrayType* arrayType = isSgArrayType(variableType);
+                      ROSE_ASSERT(arrayType != NULL);
+                      SgExprListExp* dimInfo = arrayType->get_dim_info();
+                      entityAttr.setDimExp(dimInfo);
+                      entityAttr.setHasDimension(true);
+                      entityType = entityAttr.computeEntityType();
+                    }
+                    initializedName->set_type(entityType);
+                  }
+              }
             }
             ROSE_ASSERT(initializedName != NULL);
         }
@@ -4664,7 +4709,8 @@ void c_action_label(Token_t * lbl)
             outputState("At MIDDLE #2 of R526 list c_action_data_stmt_object_list()");
 #endif
             ROSE_ASSERT(dataObject->get_variableReference_list() != NULL);
-            dataObject->get_variableReference_list()->append_expression(
+            // Pei-Hung (07/16/2019) prepend variables in stack to keep the order in a data block 
+            dataObject->get_variableReference_list()->prepend_expression(
                     variableReference);
 
             // printf ("Set parent of variableReference to dataObject \n");
@@ -5089,7 +5135,6 @@ void c_action_label(Token_t * lbl)
      * @param eos End of statement token.
      * @param count The number of dimension declarations.
      */
-// void c_action_dimension_stmt(Token_t * label, int count)
     void c_action_dimension_stmt(Token_t * label, Token_t * keyword, Token_t * eos,
             int count)
     {
@@ -6543,6 +6588,29 @@ void c_action_label(Token_t * lbl)
             // Now verify that it is present.
             variableSymbol = trace_back_through_parent_scopes_lookup_variable_symbol(variableName,astScopeStack.front());
             ROSE_ASSERT(variableSymbol != NULL);
+            // Pei-Hung (07/19/2019) implicit variable can also have array specification
+            // See example in test2019_common_block_name.f90.
+            if (hasShapeSpecList == true)
+            {
+             // There must be a scalar variable declaration for this symbol because we found a symbol and
+             // there is a shape-spec-list (the array specification can't be in two places).  Thus the
+             // common-block-object acts like a dimension statement and the variable type should be
+             // converted into an array type (see c_action_dimension_decl) [Rasmussen, 2019.06.19].
+
+             // We need to get the declaration of the variable
+                SgInitializedName* arrayVariable = variableSymbol->get_declaration();
+                ROSE_ASSERT(arrayVariable != NULL);
+
+                SgType* arrayVariableBaseType = arrayVariable->get_type();
+                ROSE_ASSERT(arrayVariableBaseType != NULL);
+
+                DeclAttributes.setBaseType(arrayVariableBaseType);
+                SgExprListExp* dimInfo = DeclAttributes.buildDimensionInfo();
+                ROSE_ASSERT(dimInfo);
+                SgArrayType* arrayVariableType = DeclAttributes.buildArrayType(dimInfo);
+                arrayVariable->set_type(arrayVariableType);
+                DeclAttributes.reset();
+            }
 
             constructedReference = new SgVarRefExp(variableSymbol);
             setSourcePosition(constructedReference, id);
@@ -6594,7 +6662,7 @@ void c_action_label(Token_t * lbl)
         printf("In c_action_designator() hasSubstringRange = %s \n",
                 hasSubstringRange ? "true" : "false");
 
-#if 1 
+#if 0
             // Output debugging information about saved state (stack) information.
             outputState("At TOP in R603 c_action_designator()");
 #endif
@@ -6656,7 +6724,7 @@ void c_action_label(Token_t * lbl)
 
             astExpressionStack.push_front(arrayOfStringsArrayRef);
         }
-#if 1
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At Bottom of R603 c_action_designator()");
 #endif
@@ -7611,10 +7679,12 @@ void c_action_label(Token_t * lbl)
                         SgFunctionType* functionType = isSgFunctionType(
                                 functionSymbol->get_declaration()->get_type());
                         ROSE_ASSERT(functionType != NULL);
-                        SgExpression* functionReference = new SgFunctionRefExp(functionSymbol, functionType);
-                        ROSE_ASSERT(functionReference != NULL);
-
-                        setSourcePosition(functionReference, nameToken);
+                        // Pei-Hung (06/28/19) The following code only generates an unused AST node
+                        // comment them out to clean up the AST.
+                        // SgExpression* functionReference = new SgFunctionRefExp(functionSymbol, functionType);
+                        // ROSE_ASSERT(functionReference != NULL);
+                        // setSourcePosition(functionReference, nameToken);
+                        
                         // DQ (12/28/2010): This branch is required for test2007_57.f90 to work.
                         // Take the function call expression from the astExpressionStack
                         variable = astExpressionStack.front();
@@ -7825,7 +7895,7 @@ void c_action_label(Token_t * lbl)
      *
      * @param id The identifier (variable name in most cases (all?))
      * @param hasSelectionSubscriptList True if a selection-subscript-list is present
-     * @param hasImageSelector Ture if an image-selector is present
+     * @param hasImageSelector True if an image-selector is present
      */
     void c_action_part_ref(Token_t * id, ofp_bool hasSelectionSubscriptList, ofp_bool hasImageSelector)
     {
@@ -11263,8 +11333,11 @@ void c_action_label(Token_t * lbl)
         if (id != NULL)
         {
             setStatementStringLabel(switchStatement, id);
-            printf("Set the named label: %s (in switchStatement = %p) \n",
-                    id->text, switchStatement);
+            if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+            {
+               printf("Set the named label: %s (in switchStatement = %p) \n",
+                       id->text, switchStatement);
+            }
             // ROSE_ASSERT(false);
         }
 
@@ -11540,11 +11613,42 @@ void c_action_label(Token_t * lbl)
                 scopeParent);
         ROSE_ASSERT(associateStatement != NULL);
 
-        SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(
-                astNodeStack.front());
-        ROSE_ASSERT(variableDeclaration != NULL);
-        associateStatement->set_variable_declaration(variableDeclaration);
-        variableDeclaration->set_parent(associateStatement);
+        // Pei-Hung (07/24/2019) Change to support multiple associates
+
+        // SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(
+        //         astNodeStack.front());
+        // ROSE_ASSERT(variableDeclaration != NULL);
+        // associateStatement->set_variable_declaration(variableDeclaration);
+
+        do {
+          SgScopeStatement* currentScope = getTopOfScopeStack();
+          SgInitializedName* initializedName = isSgInitializedName(astNodeStack.front());
+          ROSE_ASSERT(initializedName != NULL);
+          SgName variableName = initializedName->get_name();
+
+          SgVariableDeclaration* variableDeclaration = new SgVariableDeclaration();
+          ROSE_ASSERT(variableDeclaration != NULL);
+          setSourcePosition(variableDeclaration);
+          variableDeclaration->set_parent(currentScope);
+          variableDeclaration->set_definingDeclaration(variableDeclaration);
+          variableDeclaration->set_variableDeclarationContainsBaseTypeDefiningDeclaration(false);
+
+          variableDeclaration->prepend_variable(initializedName,initializedName->get_initializer());
+
+          initializedName->set_declptr(variableDeclaration);
+
+          initializedName->set_scope(astScopeStack.front());
+          SgVariableSymbol* variableSymbol = new SgVariableSymbol(initializedName);
+          astScopeStack.front()->insert_symbol(initializedName->get_name(),variableSymbol);
+          ROSE_ASSERT (initializedName->get_symbol_from_symbol_table () != NULL);
+
+          associateStatement->prepend_associate(variableDeclaration);
+
+          ROSE_ASSERT(astNodeStack.empty() == false);
+          astNodeStack.pop_front();
+        } 
+        while(astNodeStack.empty() == false);
+
 
 #if 0
         // Output debugging information about saved state (stack) information.
@@ -11599,7 +11703,9 @@ void c_action_label(Token_t * lbl)
 
         // DQ (11/30/2007): The current implementation only handles the case of a single associate variable.
         // Later we need to extend this to handle a list of variable declarations.
-        ROSE_ASSERT(count == 1);
+
+        // Pei-Hung (07/24/2019) Change implementation to handle multiple associate variables
+        // ROSE_ASSERT(count == 1);
 
 #if 0
         // Output debugging information about saved state (stack) information.
@@ -11672,26 +11778,28 @@ void c_action_label(Token_t * lbl)
         setSourcePosition(associateVariable, id);
 
         // printf ("Calling buildVariableDeclaration in c_action_association() \n");
-        bool buildingImplicitVariable = false;
-        SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(NULL,
-                buildingImplicitVariable);
-        // printf ("DONE: Calling buildVariableDeclaration in c_action_association() \n");
-        ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == false);
-
-        ROSE_ASSERT(associateVariable->get_scope() != NULL);
-        ROSE_ASSERT(associateVariable->get_scope() == currentScope);
-
-        astNodeStack.push_front(variableDeclaration);
+         
+        // Pei-Hung (07/24/2019) changed for supporting multiple associates
+        // bool buildingImplicitVariable = false;
+        // SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(NULL,
+        //         buildingImplicitVariable);
+        // // printf ("DONE: Calling buildVariableDeclaration in c_action_association() \n");
+        // ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == false);
+        //
+        // ROSE_ASSERT(associateVariable->get_scope() != NULL);
+        // ROSE_ASSERT(associateVariable->get_scope() == currentScope);
+        //
+        // astNodeStack.push_front(variableDeclaration);
 
         // Clean up the stacks
-        // astTypeStack.pop_front();
+         astTypeStack.pop_front();
         // astInitializerStack.pop_front();
 
         // This takes a name off of the name stack and puts a variable reference onto the astExpressionStack
         // (building a declaration if required) types are computed using implicit type rules.
         // c_action_data_ref(0);
 
-#if 0
+#if 1
         // Output debugging information about saved state (stack) information.
         outputState("At BOTTOM of R818 c_action_association()");
 #endif
@@ -12292,7 +12400,9 @@ void c_action_label(Token_t * lbl)
         ROSE_ASSERT(endKeyword != NULL);
         resetEndingSourcePosition(astScopeStack.front(), endKeyword);
 
-        ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+        // Pei-Hung (06/25/2019) test2019_doconstruct.f90 shows that a do constrcut can be in a single line.
+        // Therefore the following assert is unnecessary.
+        //ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
 
         setStatementNumericLabel(astScopeStack.front(), label);
 
@@ -13340,7 +13450,6 @@ void c_action_label(Token_t * lbl)
             expression->set_parent(openStatement);
         }
 
-        openStatement->set_unit(expression);
         expression->set_parent(openStatement);
 
         astScopeStack.front()->append_statement(openStatement);
@@ -15086,7 +15195,6 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
      * @param label The label.
      * @param hasPositionSpecList True if there is a position spec list. False is there is a file unit number.
      */
-// void c_action_rewind_stmt(Token_t * label, ofp_bool hasPositionSpecList)
     void c_action_rewind_stmt(Token_t *label, Token_t *rewindKeyword, Token_t *eos,
             ofp_bool hasPositionSpecList)
     {
@@ -15700,8 +15808,9 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         // DQ (12/2/2010): I think this is the case of an inner list as an entry in the outer list (see test2010_115.f90).
         if (descOrDigit == NULL && hasFormatItemList == false)
         {
-            printf(
-                    "Exiting from In c_action_format_item(): already processed list! \n");
+            if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+                printf(
+                        "Exiting from In c_action_format_item(): already processed list! \n");
             return;
         }
 
@@ -17932,7 +18041,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         printf("In c_action_proc_decl(): id = %p = %s hasNullInit = %s \n", id,
                 id != NULL ? id->text : "NULL", hasNullInit ? "true" : "false");
 
-#if 1
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At TOP of R1214 c_action_proc_decl()");
 #endif
@@ -18092,7 +18201,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf("In c_action_proc_decl_list(): count = %d \n", count);
 
-#if 1
+#if 0
         // Output debugging information about saved state (stack) information.
         outputState("At TOP of R1214 c_action_proc_decl_list()");
 #endif

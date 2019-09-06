@@ -77,6 +77,7 @@ class TFTransformation {
     int arrayOfStructsTransformations=0;
     int adIntermediateTransformations=0;
     bool trace=false;
+
     void transformRhs(SgType* accessType, SgNode* rhsRoot);
     void checkAndTransformVarAssignments(SgType* accessType,SgNode* root);
     void checkAndTransformNonAssignments(SgType* accessType,SgNode* root);
@@ -91,12 +92,15 @@ class TFTransformation {
     void addReadWriteTransformation(SgFunctionDefinition* funDef, SgType* accessType);
     void addPragmaTransformation(std::string from, std::string to);
     void addIncludeTransformation(std::string includeFile, bool systemHeader, SgSourceFile* source);
-    void transformationAnalyze(SgProject* project);
     void insertInclude(std::string includeFile, bool systemHeader, SgSourceFile* source);
     void prependNode(SgNode* node, std::string newCode);
     void replaceNode(SgNode* node, std::string newCode);
     void appendNode(SgNode* node, std::string newCode);
+
+  public:
+    void transformationAnalyze();
     void transformationExecution();
+
   private:
     std::list<TransformationSpec*> _transformationList;
     std::list<std::tuple<std::string,bool,SgSourceFile*>> _newHeaders;

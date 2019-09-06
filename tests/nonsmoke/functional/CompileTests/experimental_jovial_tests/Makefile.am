@@ -30,14 +30,19 @@ JOVIAL_TESTCODES = \
  5_1_1_integer-primary.jov              \
  5_1_1_integer-term.jov                 \
  5_2_1_relational_expressions_a.jov     \
+ 9_0_directives.jov                     \
  rose-issue-1507.jov                    \
  rose-issue-1516.jov
 
 COMPOOL_TESTCODES = \
  1_2_1_compool_a.cpl                    \
  define_dollar.cpl                      \
+ status_type.cpl                        \
+ table_type.cpl                         \
  rose-issue-1518.cpl                    \
- rose-issue-1520.cpl
+ rose-issue-1520.cpl                    \
+ rose-issue-2143.cpl                    \
+ rose-issue-2144.cpl
 
 # should finish formulas next
 #
@@ -65,9 +70,19 @@ JOVIAL_TESTCODES_PASS_TRAVERSE = \
 
 
 JOVIAL_TESTCODES_WORKING_ON = \
- rose-issue-2104.cpl                    \
+ rose-issue-2100.jov                    \
+ rose-issue-2101.jov                    \
+ rose-issue-2102.jov                    \
+ rose-issue-2104.jov                    \
  rose-issue-2105.jov                    \
  rose-issue-2106.jov                    \
+ rose-issue-2107.jov                    \
+ rose-issue-2145.jov                    \
+ rose-issue-2146.jov                    \
+ rose-issue-2147.jov                    \
+ rose-issue-2148.jov                    \
+ rose-issue-2149.jov                    \
+ rose-issue-2150.jov                    \
  tiny.jov                               \
  1_2_2_non-nested-subroutine_a.jov      \
  1_2_2_non-nested-subroutine_b.jov      \

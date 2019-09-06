@@ -180,7 +180,8 @@ public:
          *  return address from the stack for a function that was called but whose implementation is not present (such as when
          *  the inter-procedural depth was too great, the function is a non-linked import, etc.) */
         virtual void nullDeref(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
-                               IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr, SgAsmInstruction*) {}
+                               const SmtSolverPtr &solver, IoMode ioMode,
+                               const InstructionSemantics2::BaseSemantics::SValuePtr &addr, SgAsmInstruction *insn) {}
 
         /** Function invoked every time a memory reference occurs.
          *

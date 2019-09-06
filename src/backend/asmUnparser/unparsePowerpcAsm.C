@@ -17,7 +17,7 @@ using namespace Rose::BinaryAnalysis;
 static std::string unparsePowerpcRegister(SgAsmInstruction *insn, RegisterDescriptor rdesc, const RegisterDictionary *registers)
 {
     if (!registers)
-        registers = RegisterDictionary::dictionary_powerpc();
+        registers = RegisterDictionary::dictionary_powerpc32();
     std::string name = registers->lookup(rdesc);
     if (name.empty())
         name = AsmUnparser::invalid_register(insn, rdesc, registers);

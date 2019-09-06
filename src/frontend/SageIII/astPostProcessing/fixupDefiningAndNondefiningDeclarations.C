@@ -424,6 +424,11 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                               printf ("##### WARNING: in FixupAstDefiningAndNondefiningDeclarations::visit() statement = %p = %s not in child list of scope = %p = %s \n",
                                    firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),
                                    firstNondefiningDeclarationScope,firstNondefiningDeclarationScope->class_name().c_str());
+                              SgClassDeclaration* classDeclaration = isSgClassDeclaration(firstNondefiningDeclaration);
+                              if (classDeclaration != NULL)
+                                 {
+                                   printf (" --- classDeclaration = %p name = %s \n",classDeclaration,classDeclaration->get_name().str());
+                                 }
 #if 0
                               firstNondefiningDeclaration->get_startOfConstruct()->display("declaration: firstNondefiningDeclaration: debug");
                               firstNondefiningDeclarationScope->get_startOfConstruct()->display("scope: firstNondefiningDeclarationScope: debug");

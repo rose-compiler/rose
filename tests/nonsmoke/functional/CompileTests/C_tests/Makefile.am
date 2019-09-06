@@ -1082,6 +1082,11 @@ caller.out: $(srcdir)/callee.c $(srcdir)/caller.c
 # DQ (4/18/2015): Add the execution of the generated executable.
 	./caller.out
 
+# DQ (8/3/2019): Adding multi-file test, test in both orders (one was previously a failing case).
+multiple_file_test_01: $(srcdir)/test2019_16a.c $(srcdir)/test2019_16b.c
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $(srcdir)/test2019_16a.c $(srcdir)/test2019_16b.c
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $(srcdir)/test2019_16b.c $(srcdir)/test2019_16a.c
+
 
 # Customized test that modifies testTranslator to remove empty elses to test dangling else unparsing
 # test2008_02.o: $(srcdir)/test2008_02.c
@@ -1220,6 +1225,7 @@ check-local: check-pthread.passed
 	@$(MAKE) test_mregparm_m32_use
 	@$(MAKE) test_compile_and_link_with_NDEBUG
 	@$(MAKE) test_compile_and_link_without_NDEBUG
+	@$(MAKE) multiple_file_test_01
 #	@$(MAKE) test_m32_use
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C_tests: make check rule complete (terminated normally) ******"

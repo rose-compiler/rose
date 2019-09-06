@@ -255,8 +255,8 @@ Engine::disassemblerSwitches() {
     sg.insert(Switch("isa")
               .argument("architecture", anyParser(settings_.disassembler.isaName))
               .doc("Name of instruction set architecture.  If no name is specified then the architecture is obtained from "
-                   "the binary container (ELF, PE). A list of valid architecture names can be obtained by specifying "
-                   "\"list\" as the name."));
+                   "the binary container (ELF, PE). The following ISA names are supported: " +
+                   StringUtility::joinEnglish(Disassembler::isaNames()) + "."));
 
     return sg;
 }
@@ -1801,6 +1801,7 @@ Engine::makeEntryFunctions(Partitioner &partitioner, SgAsmInterpretation *interp
                 rose_addr_t va = rva.get_rva() + fileHeader->get_base_va();
                 Function::Ptr function = Function::instance(va, "_start", SgAsmFunction::FUNC_ENTRY_POINT);
                 insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
+                ASSERT_require2(function->address() == va, function->printableName());
             }
         }
     }
@@ -1823,8 +1824,11 @@ Engine::makeImportFunctions(Partitioner &partitioner, SgAsmInterpretation *inter
     if (interp) {
         // Windows PE imports
         ModulesPe::rebaseImportAddressTables(partitioner, ModulesPe::getImportIndex(partitioner, interp));
-        BOOST_FOREACH (const Function::Ptr &function, ModulesPe::findImportFunctions(partitioner, interp))
+        BOOST_FOREACH (const Function::Ptr &function, ModulesPe::findImportFunctions(partitioner, interp)) {
+            rose_addr_t va = function->address();
             insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
+            ASSERT_always_require2(function->address() == va, function->printableName());
+        }
 
         // ELF imports
         BOOST_FOREACH (const Function::Ptr &function, ModulesElf::findPltFunctions(partitioner, interp))

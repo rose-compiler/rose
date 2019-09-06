@@ -361,6 +361,8 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
        // DQ (1/21/2018): Added support for C++11 language type.
           case V_SgRvalueReferenceType:
 
+          case V_SgJovialTableType:
+
        // These are primative types
           case V_SgJavaWildcardType:
           case V_SgTypeBool:
@@ -1280,6 +1282,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgJavaPackageDeclaration:
           case V_SgClassDeclaration:
           case V_SgDerivedTypeStatement:
+          case V_SgJovialTableStatement:
        // DQ (2/10/2007): Added case for SgTemplateInstantiationDecl
           case V_SgTemplateInstantiationDecl:
              {
@@ -2162,8 +2165,10 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DXN (09/14/2011):
           case V_SgNullifyStatement:
 
-       // Rasmussen (11/12/2018): Added support for Jovial COMPOOL module
+       // Rasmussen (08/02/2019): Added support for Jovial
           case V_SgJovialCompoolStatement:
+          case V_SgJovialDirectiveStatement:
+          case V_SgJovialDefineDeclaration:
 
        // Rasmussen (10/23/2018): Added support for Jovial for statement with then construct
           case V_SgJovialForThenStatement:
@@ -2411,6 +2416,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // type resolution has been done.
           case V_SgUntypedProgramHeaderDeclaration:
           case V_SgUntypedExprListExpression:
+          case V_SgUntypedNullExpression:
+          case V_SgUntypedSubscriptExpression:
+          case V_SgUntypedValueExpression:
              {
                break;
              }

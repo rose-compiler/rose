@@ -427,7 +427,9 @@ public:
         if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr)) {
             ASSERT_not_null(fpAnalyzer_);
             ASSERT_not_null(path_);
-            pathProcessor_->nullDeref(*fpAnalyzer_, *path_, FeasiblePath::READ, addr, currentInstruction());
+            SmtSolver::Ptr s = solver();
+            SmtSolver::Transaction tx(s);
+            pathProcessor_->nullDeref(*fpAnalyzer_, *path_, s, FeasiblePath::READ, addr, currentInstruction());
         }
 
         // If we know the address and that memory exists, then read the memory to obtain the default value.
@@ -494,7 +496,9 @@ public:
         if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr)) {
             ASSERT_not_null(fpAnalyzer_);
             ASSERT_not_null(path_);
-            pathProcessor_->nullDeref(*fpAnalyzer_, *path_, FeasiblePath::WRITE, addr, currentInstruction());
+            SmtSolver::Ptr s = solver();
+            SmtSolver::Transaction tx(s);
+            pathProcessor_->nullDeref(*fpAnalyzer_, *path_, s, FeasiblePath::WRITE, addr, currentInstruction());
         }
 
         // Save a description of the variable
