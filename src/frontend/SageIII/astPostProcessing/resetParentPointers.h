@@ -49,7 +49,10 @@ class ResetParentPointersInheritedAttribute
       //! Default constructor
           ResetParentPointersInheritedAttribute(): parentNode(NULL) {}
 
-      //! Store previous node for reference and internal teting and output of debugging information
+       // DQ (8/1/2019): Copy constructor.
+          ResetParentPointersInheritedAttribute(const ResetParentPointersInheritedAttribute & X ) { parentNode = X.parentNode; }
+
+      //! Store previous node for reference and internal testing and output of debugging information
           SgNode* parentNode;
    };
 

@@ -1306,7 +1306,9 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                   {
                     listOfNodesWithoutValidFileInfo.sort();
                     listOfNodesWithoutValidFileInfo.unique();
+#if 0
                     list<SgNode*>::iterator i = listOfNodesWithoutValidFileInfo.begin();
+#endif
                     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
                          printf ("\n     List of %ld IR nodes in the AST with default information in their file info objects: \n",(long)listOfNodesWithoutValidFileInfo.size());
 
@@ -3957,6 +3959,7 @@ TestExpressionTypes::visit ( SgNode* node )
                     case V_SgClassDeclaration:
                     case V_SgDerivedTypeStatement:
                     case V_SgTemplateInstantiationDecl:
+                    case V_SgJovialTableStatement:
                        {
                          SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(definingDeclaration);
                          ROSE_ASSERT(definingClassDeclaration->get_definition() != NULL);

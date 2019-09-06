@@ -1055,7 +1055,6 @@ HEADER_LIST_DECLARATIONS
        // DQ (10/6/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
-
 HEADER_BASIC_BLOCK_END
 
 
@@ -1437,12 +1436,13 @@ HEADER_JOVIAL_FOR_THEN_STATEMENT_END
 
 HEADER_JOVIAL_COMPOOL_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-
       virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
-
 #endif
 HEADER_JOVIAL_COMPOOL_STATEMENT_END
 
+HEADER_JOVIAL_TABLE_STATEMENT_START
+      virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
+HEADER_JOVIAL_TABLE_STATEMENT_END
 
 HEADER_MATLAB_FOR_STATEMENT_START
 /*#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -1627,7 +1627,8 @@ HEADER_LIST_DECLARATIONS
           SgName get_qualified_name_prefix_for_return_type() const;
 
        // DQ (10/11/2014): Adding support for aterm translation to ROSE AST.
-          static SgFunctionDeclaration* build_node_from_nonlist_children(SgType* return_type, SgFunctionParameterList* parameterList, SgScopeStatement* scope, Sg_File_Info* startOfConstruct, SgName name, SgFunctionType* type, SgFunctionDefinition* definition); 
+       // Rasmussen (04/17/2019): Support for ATerms has been deprecated.
+       // static SgFunctionDeclaration* build_node_from_nonlist_children(SgType* return_type, SgFunctionParameterList* parameterList, SgScopeStatement* scope, Sg_File_Info* startOfConstruct, SgName name, SgFunctionType* type, SgFunctionDefinition* definition);
 
        // DQ (12/22/2014): Adding support for EDG normalized template member and non-member functions.
           bool isNormalizedTemplateFunction() const;
@@ -2084,9 +2085,7 @@ HEADER_VARIABLE_DEFINITION_STATEMENT_END
 
 HEADER_CLASS_DECLARATION_STATEMENT_START
 
-       // enum class_types { e_class, e_struct, e_union };
-
-      /*! A declaration can be of either class, struct, or union */
+      /*! A declaration can be of either class, struct, union, or ... */
           enum class_types
              {
                e_class,              /*!< class declaration (default) */
@@ -2095,7 +2094,8 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
                e_template_parameter, /*!< type parameter in a template declaration */
                e_java_interface,     /*!< A Java interface type declaration */
                e_java_enum,          /*!< A Java enum type declaration */
-               e_java_parameter      /*!< A Java parameter type declaration */
+               e_java_parameter,     /*!< A Java parameter type declaration */
+               e_jovial_table        /*!< A Jovial table type declaration */
              };
 
           virtual SgName get_qualified_name() const;
@@ -3006,6 +3006,7 @@ HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_START
           void set_definition( SgTemplateInstantiationDefn* definition );
 
        // DQ (10/10/2014): Implemented to support Aterm constructor functions.
+       // Rasmussen (04/17/2019): Support for ATerms has been deprecated. But this may be used elsewhere.
           void set_definition( SgClassDefinition* definition );
 
        // DQ (2/11/2007): Add this to the derived class so that the SgSymbolTable::find() function will work properly
@@ -3923,6 +3924,7 @@ HEADER_IMPORT_STATEMENT_END
 
 
 HEADER_ASSOCIATE_STATEMENT_START
+HEADER_LIST_DECLARATIONS
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
@@ -4002,6 +4004,52 @@ HEADER_LIST_DECLARATIONS
           virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 HEADER_UPC_FORALL_STATEMENT_END
+
+
+HEADER_JOVIAL_DEFINE_DECLARATION_START
+
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
+
+HEADER_JOVIAL_DEFINE_DECLARATION_END
+
+
+HEADER_JOVIAL_DIRECTIVE_STATEMENT_START
+
+      /*! A Jovial directive can be types */
+          enum directive_types
+             {
+               e_compool,              /*!< 9.1 COMPOOL DIRECTIVE (default) */
+                                       /*!< 9.2 TEXT DIRECTIVES */
+               e_copy,                 /*!< 9.2.1 COPY DIRECTIVE */
+               e_skip,                 /*!< 9.2.2 SKIP DIRECTIVE */
+               e_begin,                /*!<       BEGIN DIRECTIVE */
+               e_end,                  /*!<       END DIRECTIVE */
+               e_linkage,              /*!< 9.3 LINKAGES DIRECTIVES */
+               e_trace,                /*!< 9.4 TRACE DIRECTIVES */
+               e_interference,         /*!< 9.5 INTERFERENCE DIRECTIVES */
+               e_reducible,            /*!< 9.6 REDUCIBLE DIRECTIVES */
+                                       /*!< 9.7 LISTING DIRECTIVES */
+                                       /*!< 9.7.1 SOURCE-LISTING DIRECTIVES */
+               e_nolist,               /*!<       NOLIST DIRECTIVE */
+               e_list,                 /*!<       LIST DIRECTIVE */
+               e_eject,                /*!<       EJECT DIRECTIVE */
+                                       /*!< 9.7.1 DEFINE-LISTING DIRECTIVES */
+               e_listinv,              /*!<       LISTINV DIRECTIVE */
+               e_listexp,              /*!<       LISTEXP DIRECTIVE */
+                                       /*!< 9.8 REGISTER DIRECTIVES */
+               e_base,                 /*!<     BASE DIRECTIVE */
+               e_isbase,               /*!<     ISBASE DIRECTIVE */
+               e_drop,                 /*!<     DROP DIRECTIVE */
+                                       /*!< 9.9 EXPRESSION EVALUATION ORDER DIRECTIVES */
+               e_left_right,           /*!<     LEFTRIGHT DIRECTIVE */
+               e_rearrange,            /*!<     REARRANGE DIRECTIVE */
+               e_initialize,           /*!< 9.10 INITIALIZATION DIRECTIVES */
+               e_order                 /*!< 9.11 ALLOCATION ORDER DIRECTIVES */
+             };
+
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
+
+HEADER_JOVIAL_DIRECTIVE_STATEMENT_END
 
 HEADER_PREPROCESSOR_DIRECTIVE_STATEMENT_START
 
@@ -11133,6 +11181,21 @@ SgJovialForThenStatement::post_construction_initialization()
    {
    }
 SOURCE_JOVIAL_FOR_THEN_STATEMENT_END
+
+SOURCE_JOVIAL_TABLE_STATEMENT_START
+void
+SgJovialTableStatement::post_construction_initialization()
+   {
+     // Nothing to setup here.
+   }
+
+SgName
+SgJovialTableStatement::get_mangled_name(void) const
+   {
+   // Don't believe name mangling required for Jovial
+      return get_name();
+   }
+SOURCE_JOVIAL_TABLE_STATEMENT_END
 
 
 SOURCE_MATLAB_FOR_STATEMENT_START
@@ -19854,7 +19917,6 @@ SgDerivedTypeStatement::get_mangled_name() const
    }
 SOURCE_DERIVED_TYPE_STATEMENT_END
 
-
 SOURCE_ATTRIBUTE_SPECIFICATION_STATEMENT_START
 void
 SgAttributeSpecificationStatement::post_construction_initialization()
@@ -20081,6 +20143,7 @@ SgImportStatement::get_import_list()
 SOURCE_IMPORT_STATEMENT_END
 
 SOURCE_ASSOCIATE_STATEMENT_START
+
 void
 SgAssociateStatement::post_construction_initialization()
    {}
@@ -20091,6 +20154,21 @@ SgAssociateStatement::get_mangled_name(void) const
      return SgName ("__associate__");
    }
 
+void
+SgAssociateStatement::prepend_associate(SgDeclarationStatement *what)
+   {
+     get_associates().insert(get_associates().begin(), what);
+     what->set_parent(this);
+     ROSE_ASSERT(what->get_parent() != NULL);
+   }
+
+void
+SgAssociateStatement::append_associate(SgDeclarationStatement *what)
+   {
+     get_associates().push_back(what);
+     what->set_parent(this);
+     ROSE_ASSERT(what->get_parent() != NULL);
+   }
 SOURCE_ASSOCIATE_STATEMENT_END
 
 
@@ -20144,7 +20222,37 @@ SgFortranIncludeLine::get_mangled_name(void) const
 SOURCE_FORTRAN_INCLUDE_LINE_END
 
 
+SOURCE_JOVIAL_DEFINE_DECLARATION_START
+
+void
+SgJovialDefineDeclaration::post_construction_initialization()
+   {
+   }
+
+SgName SgJovialDefineDeclaration::get_mangled_name() const
+   {
+     return "__jovial_language_directive__";
+   }
+
+SOURCE_JOVIAL_DEFINE_DECLARATION_END
+
+SOURCE_JOVIAL_DIRECTIVE_STATEMENT_START
+
+void
+SgJovialDirectiveStatement::post_construction_initialization()
+   {
+   }
+
+SgName SgJovialDirectiveStatement::get_mangled_name() const
+   {
+     return "__jovial_language_directive__";
+   }
+
+SOURCE_JOVIAL_DIRECTIVE_STATEMENT_END
+
+
 SOURCE_PREPROCESSOR_DIRECTIVE_STATEMENT_START
+
 void
 SgC_PreprocessorDirectiveStatement::post_construction_initialization()
    {
