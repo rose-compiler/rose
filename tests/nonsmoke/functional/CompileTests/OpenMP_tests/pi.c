@@ -24,12 +24,12 @@ double diff_ratio (double val, double ref, int significant_digits)
 }
 
 
-static long num_steps = 10000;
+int num_steps = 10000;
 int main()
 {
   double x=0;
   double sum = 0.0, pi;
-  unsigned i;
+  int i;
   double  step = 1.0/(double) num_steps;
 #pragma omp parallel for private(i,x) reduction(+:sum) schedule(static)
   for (i=0; i<num_steps; i=i+1)
