@@ -18,7 +18,7 @@ namespace P2 = Partitioner2;
 
 static Sawyer::Message::Facility mlog;
 
-typedef Sawyer::Container::DistinctList<P2::ControlFlowGraph::ConstVertexIterator> VertexWorkList;
+typedef Sawyer::Container::GraphIteratorSet<P2::ControlFlowGraph::ConstVertexIterator> VertexWorkList;
 typedef Sawyer::Container::DistinctList<P2::Function::Ptr> FunctionWorkList;
 
 // Convenient struct to hold settings specific to this tool. Settings related to disassembling are in the engine.
@@ -249,7 +249,7 @@ reachableVertices(const AddressIntervalSet &reachable, const P2::Partitioner &pa
     VertexWorkList retval;
     BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &vertex, partitioner.cfg().vertices()) {
         if (isReachable(reachable, partitioner, vertex))
-            retval.pushBack(partitioner.cfg().findVertex(vertex.id()));
+            retval.insert(partitioner.cfg().findVertex(vertex.id()));
     }
     return retval;
 }
@@ -381,7 +381,7 @@ insertReachableByImmediates(AddressIntervalSet &reachable /*in,out*/, const P2::
                 AddressIntervalSet targetVas = targetVertex->value().addresses();
                 if (!reachable.contains(targetVas)) {
                     reachable |= targetVas;
-                    vertices.pushBack(targetVertex);
+                    vertices.insert(targetVertex);
                 }
             }
         }

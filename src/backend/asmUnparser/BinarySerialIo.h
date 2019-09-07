@@ -19,6 +19,8 @@
 #elif !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
     // Lacks Boost's serialization library, which is how we convert objects to bytes and vice versa
     #undef ROSE_SUPPORTS_SERIAL_IO
+#elif defined(__clang__)
+    #define ROSE_SUPPORTS_SERIAL_IO /*supported*/
 #elif defined(__GNUC__)
     #if __GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNU_C_PATCHLEVEL__ <= 40204
         // GCC <= 4.2.4 gets segfaults compiling this file

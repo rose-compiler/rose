@@ -47,6 +47,7 @@ main (int argc, char* argv[]) {
     cout<<"The optional options include: "<<endl;
     cout<<" -skip-postprocessing: Skip postprocessing which cleanups code"<<endl;
     cout<<" -process-headers:     Process calls within header files"<<endl;
+    cout<<" -verbose:            Printout debugging information"<<endl;
     cout<<"----------------------Generic Help for ROSE tools--------------------------"<<endl;
   }
 
@@ -68,6 +69,13 @@ main (int argc, char* argv[]) {
   else 
     Inliner::skipHeaders = true;
 
+  if (CommandlineProcessing::isOption (argvList,"-verbose","",false))
+  {
+    Inliner::verbose= true;
+    cout<<"Turning on verbose mode ...."<<endl;
+  }
+  else 
+    Inliner::verbose= false;
 
   SgProject* sageProject = frontend(argvList);
 

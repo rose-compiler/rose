@@ -1,6 +1,6 @@
 include_rules
 
-ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+ifeq (@(ENABLE_BINARY_ANALYSIS) @(WITH_SQLITE),yes yes)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Database tests

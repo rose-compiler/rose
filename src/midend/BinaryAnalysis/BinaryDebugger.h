@@ -1,18 +1,31 @@
-#ifndef ROSE_BinaryAnalysis_BinaryDebugger_H
-#define ROSE_BinaryAnalysis_BinaryDebugger_H
+#ifndef ROSE_BinaryAnalysis_Debugger_H
+#define ROSE_BinaryAnalysis_Debugger_H
 
 #include <boost/noncopyable.hpp>
+#include <boost/filesystem.hpp>
 #include <Sawyer/BitVector.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 
+/** Shared-ownership pointer to @ref Debugger. See @ref heap_object_shared_ownership. */
+typedef Sawyer::SharedPointer<class Debugger> DebuggerPtr;
+
 /** Simple debugger.
  *
  *  This class implements a very simple debugger. */
-class BinaryDebugger: private boost::noncopyable {
+class Debugger: private boost::noncopyable, public Sawyer::SharedObject {
 public:
-    enum DetachMode { KILL, DETACH, CONTINUE, NOTHING };
+    /** Shared-ownership pointer to @ref Debugger. See @ref heap_object_shared_ownership. */
+    typedef Sawyer::SharedPointer<Debugger> Ptr;
+
+    /** How to detach from a process when this object is destroyed. */
+    enum DetachMode {
+        KILL,                                           /**< Kill the process. */
+        DETACH,                                         /**< Simply detach leaving process in current state. */
+        CONTINUE,                                       /**< Detach from process and cause it to continue running. */
+        NOTHING                                         /**< Do nothing. */
+    };
 
     /** Flags controlling operation. */
     enum Flag {
@@ -39,39 +52,72 @@ private:
     uint8_t regsPage_[512];                             // latest register information read from subordinate
     RegPageStatus regsPageStatus_;                      // what are the contents of regPage_?
     unsigned flags_;                                    // operational flags; Flag bit vector
+    const RegisterDictionary *regdict_;                 // supported registers
 
-public:
-    BinaryDebugger()
+    //----------------------------------------
+    // Real constructors
+    //----------------------------------------
+protected:
+    Debugger()
         : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
-          flags_(DEFAULT_FLAGS) {
+          flags_(DEFAULT_FLAGS), regdict_(NULL) {
         init();
     }
 
-    BinaryDebugger(int pid, unsigned flags = DEFAULT_FLAGS)
+    Debugger(int pid, unsigned flags)
         : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
-          flags_(flags) {
+          flags_(flags), regdict_(NULL) {
         init();
         attach(pid, flags);
     }
 
-    BinaryDebugger(const std::string &exeName, unsigned flags = DEFAULT_FLAGS)
+    Debugger(const boost::filesystem::path &exeName, unsigned flags)
         : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
-          flags_(flags) {
+          flags_(flags), regdict_(NULL) {
         init();
         attach(exeName, flags);
     }
 
-    BinaryDebugger(const std::vector<std::string> &exeNameAndArgs, unsigned flags = DEFAULT_FLAGS)
+    Debugger(const boost::filesystem::path &exeName, const std::vector<std::string> &args, unsigned flags)
         : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
-          flags_(flags) {
+          flags_(flags), regdict_(NULL) {
         init();
-        attach(exeNameAndArgs, flags);
+        attach(exeName, args, flags);
     }
 
-    ~BinaryDebugger() {
+public:
+    ~Debugger() {
         detach();
     }
 
+    //----------------------------------------
+    // Static allocating constructors
+    //----------------------------------------
+public:
+    /** Create a debugger object that isn't attached to any subordinate process. */
+    static Ptr instance() {
+        return Ptr(new Debugger);
+    }
+
+    /** Create a debugger attached to an already running subordinate process. */
+    static Ptr instance(int pid, unsigned flags = DEFAULT_FLAGS) {
+        return Ptr(new Debugger(pid, flags));
+    }
+
+    /** Create a new debugger by starting the specified program with no arguments. */
+    static Ptr instance(const boost::filesystem::path &exeName, unsigned flags = DEFAULT_FLAGS) {
+        return Ptr(new Debugger(exeName, flags));
+    }
+
+    /** Create a new debugger by starting the specified program with arguments. */
+    static Ptr instance(const boost::filesystem::path &exeName, const std::vector<std::string> &args,
+                        unsigned flags = DEFAULT_FLAGS) {
+        return Ptr(new Debugger(exeName, args, flags));
+    }
+    
+    //----------------------------------------
+    // Attaching to subordinate
+    //----------------------------------------
 public:
     /** Attach to an existing process.
      *
@@ -85,8 +131,8 @@ public:
      *  The program can be specified as a single name or as a name and arguments.
      *
      * @{ */
-    void attach(const std::string &fileName, unsigned flags = DEFAULT_FLAGS);
-    void attach(const std::vector<std::string> &fileNameAndArgs, unsigned flags = DEFAULT_FLAGS);
+    void attach(const boost::filesystem::path &fileName, unsigned flags = DEFAULT_FLAGS);
+    void attach(const boost::filesystem::path &fileName, const std::vector<std::string> &args, unsigned flags = DEFAULT_FLAGS);
     /** @} */
 
     /** Returns true if attached to a subordinate.  Return value is the subordinate process ID. */
@@ -98,6 +144,10 @@ public:
     /** Terminate the subordinate. */
     void terminate();
 
+    //----------------------------------------
+    // Operations on a subordinate
+    //----------------------------------------
+public:
     /** Set execution address. */
     void executionAddress(rose_addr_t va);
 
@@ -150,6 +200,9 @@ public:
     /** String describing how the subordinate process terminated. */
     std::string howTerminated();
 
+    /** Available registers. */
+    const RegisterDictionary* registerDictionary() const;
+
 private:
     // Initialize tables during construction
     void init();
@@ -160,7 +213,6 @@ private:
     // Open /dev/null with the specified flags as the indicated file descriptor, closing what was previously on that
     // descriptor. If an error occurs, the targetFd is closed anyway.
     void devNullTo(int targetFd, int openFlags);
-
 };
 
 } // namespace

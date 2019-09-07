@@ -1,6 +1,7 @@
-#include "sage3basic.h"
-#include "BinaryDebugger.h"
-#include "integerOps.h"
+#include <sage3basic.h>
+#include <BinaryDebugger.h>
+#include <integerOps.h>
+#include <Registers.h>
 
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/filesystem.hpp>
@@ -123,7 +124,8 @@ sendCommand(__ptrace_request request, int child, void *addr=0, void *data=0) {
     errno = 0;
     long result = ptrace(request, child, addr, data);
     if (result == -1 && errno != 0)
-        throw std::runtime_error("BinaryDebugger::sendCommand failed: " + boost::to_lower_copy(std::string(strerror(errno))));
+        throw std::runtime_error("Rose::BinaryAnalysis::Debugger::sendCommand failed: " +
+                                 boost::to_lower_copy(std::string(strerror(errno))));
     return result;
 }
 
@@ -156,8 +158,21 @@ setInstructionPointer(user_regs_struct &regs, rose_addr_t va) {
 }
 #endif
 
+const RegisterDictionary*
+Debugger::registerDictionary() const {
+#if defined(__linux) && defined(__x86_64) && __WORDSIZE==64
+    return RegisterDictionary::dictionary_amd64();
+#elif defined(__linux) && defined(__x86) && __WORDSIZE==32
+    return RegisterDictionary::dictionary_pentium4();
+#elif defined(_MSC_VER)
+    #pragma message("Rose::BinaryAnalysis::Debugger not supported on this platform")
+#else
+    #warning("Rose::BinaryAnalysis::Debugger not supported on this platform")
+#endif
+}
+    
 void
-BinaryDebugger::init() {
+Debugger::init() {
 
     // Initialize register information.  This is very architecture and OS-dependent. See <sys/user.h> for details, but be
     // warned that even <sys/user.h> is only a guideline!  The header defines two versions of user_regs_struct, one for 32-bit
@@ -287,21 +302,22 @@ BinaryDebugger::init() {
 }
 
 bool
-BinaryDebugger::isTerminated() {
+Debugger::isTerminated() {
     return WIFEXITED(wstat_) || WIFSIGNALED(wstat_);
 }
 
 void
-BinaryDebugger::waitForChild() {
+Debugger::waitForChild() {
     ASSERT_require2(child_, "must be attached to a subordinate process");
     if (-1 == waitpid(child_, &wstat_, 0))
-        throw std::runtime_error("BinaryDebugger::waitForChild failed: " + boost::to_lower_copy(std::string(strerror(errno))));
+        throw std::runtime_error("Rose::BinaryAnalysis::Debugger::waitForChild failed: "
+                                 + boost::to_lower_copy(std::string(strerror(errno))));
     sendSignal_ = WIFSTOPPED(wstat_) && WSTOPSIG(wstat_)!=SIGTRAP ? WSTOPSIG(wstat_) : 0;
     regsPageStatus_ = REGPAGE_NONE;
 }
 
 std::string
-BinaryDebugger::howTerminated() {
+Debugger::howTerminated() {
     if (WIFEXITED(wstat_)) {
         return "exited with status " + StringUtility::numberToString(WEXITSTATUS(wstat_));
     } else if (WIFSIGNALED(wstat_)) {
@@ -312,7 +328,7 @@ BinaryDebugger::howTerminated() {
 }
 
 void
-BinaryDebugger::detach() {
+Debugger::detach() {
     if (child_ && !isTerminated()) {
         switch (howDetach_) {
             case NOTHING:
@@ -334,13 +350,13 @@ BinaryDebugger::detach() {
 }
 
 void
-BinaryDebugger::terminate() {
+Debugger::terminate() {
     howDetach_ = KILL;
     detach();
 }
 
 void
-BinaryDebugger::attach(int child, unsigned flags) {
+Debugger::attach(int child, unsigned flags) {
     if (-1 == child) {
         detach();
     } else if (child == child_) {
@@ -362,14 +378,13 @@ BinaryDebugger::attach(int child, unsigned flags) {
 }
 
 void
-BinaryDebugger::attach(const std::string &exeName, unsigned flags) {
-    std::vector<std::string> exeNameAndArgs(1, exeName);
-    attach(exeNameAndArgs, flags);
+Debugger::attach(const boost::filesystem::path &exeName, unsigned flags) {
+    attach(exeName, std::vector<std::string>() /*args*/, flags);
 }
 
 // Must be async signal safe!
 void
-BinaryDebugger::devNullTo(int targetFd, int openFlags) {
+Debugger::devNullTo(int targetFd, int openFlags) {
     int fd = open("/dev/null", openFlags, 0666);
     if (-1 == fd) {
         close(targetFd);
@@ -380,16 +395,17 @@ BinaryDebugger::devNullTo(int targetFd, int openFlags) {
 }
 
 void
-BinaryDebugger::attach(const std::vector<std::string> &exeNameAndArgs, unsigned flags) {
-    ASSERT_forbid(exeNameAndArgs.empty());
+Debugger::attach(const boost::filesystem::path &exeName, const std::vector<std::string> &args, unsigned flags) {
+    ASSERT_forbid(exeName.empty());
     detach();
     flags_ = flags;
 
     // Create the child exec arguments before the fork because heap allocation is not async-signal-safe.
-    char **argv = new char*[exeNameAndArgs.size()+1];
-    for (size_t i=0; i<exeNameAndArgs.size(); ++i)
-        argv[i] = strdup(exeNameAndArgs[i].c_str());
-    argv[exeNameAndArgs.size()] = NULL;
+    char **argv = new char*[1 /*name*/ + args.size() + 1 /*null*/];
+    argv[0] = strdup(exeName.native().c_str());
+    for (size_t i = 0; i < args.size(); ++i)
+        argv[i+1] = strdup(args[i].c_str());
+    argv[1 + args.size()] = NULL;
 
 #ifndef BOOST_WINDOWS
     // Prepare to close files when forking.  This is a race because some other thread might open a file without the O_CLOEXEC
@@ -427,7 +443,7 @@ BinaryDebugger::attach(const std::vector<std::string> &exeNameAndArgs, unsigned 
         // the C library is adjusting errno, which is not async-signal-safe.
         if (-1 == ptrace(PTRACE_TRACEME, 0, 0, 0)) {
             // errno is set, but no way to access it in an async-signal-safe way
-            const char *mesg= "Rose::BinaryDebugger::attach: ptrace_traceme failed\n";
+            const char *mesg= "Rose::BinaryAnalysis::Debugger::attach: ptrace_traceme failed\n";
             if (write(2, mesg, strlen(mesg)) == -1)
                 abort();
             _Exit(1);                                   // avoid calling C++ destructors from child
@@ -436,7 +452,7 @@ BinaryDebugger::attach(const std::vector<std::string> &exeNameAndArgs, unsigned 
         execv(argv[0], argv);
 
         // If failure, we must still call only async signal-safe functions.
-        const char *mesg = "Rose::BinaryDebugger::attach: exec failed: ";
+        const char *mesg = "Rose::BinaryAnalysis::Debugger::attach: exec failed: ";
         if (write(2, mesg, strlen(mesg)) == -1)
             abort();
         mesg = strerror(errno);
@@ -454,11 +470,12 @@ BinaryDebugger::attach(const std::vector<std::string> &exeNameAndArgs, unsigned 
     howDetach_ = DETACH;
     waitForChild();
     if (isTerminated())
-        throw std::runtime_error("BinaryDebugger::attach: subordinate " + howTerminated() + " before we gained control");
+        throw std::runtime_error("Rose::BinaryAnalysis::Debugger::attach: subordinate " +
+                                 howTerminated() + " before we gained control");
 }
 
 void
-BinaryDebugger::executionAddress(rose_addr_t va) {
+Debugger::executionAddress(rose_addr_t va) {
     user_regs_struct regs;
     sendCommand(PTRACE_GETREGS, child_, 0, &regs);
     setInstructionPointer(regs, va);
@@ -466,28 +483,28 @@ BinaryDebugger::executionAddress(rose_addr_t va) {
 }
 
 rose_addr_t
-BinaryDebugger::executionAddress() {
+Debugger::executionAddress() {
     return readRegister(RegisterDescriptor(x86_regclass_ip, 0, 0, kernelWordSize())).toInteger();
 }
 
 void
-BinaryDebugger::setBreakpoint(const AddressInterval &va) {
+Debugger::setBreakpoint(const AddressInterval &va) {
     breakpoints_.insert(va);
 }
 
 void
-BinaryDebugger::clearBreakpoint(const AddressInterval &va) {
+Debugger::clearBreakpoint(const AddressInterval &va) {
     breakpoints_.erase(va);
 }
 
 void
-BinaryDebugger::singleStep() {
+Debugger::singleStep() {
     sendCommandInt(PTRACE_SINGLESTEP, child_, 0, sendSignal_);
     waitForChild();
 }
 
 size_t
-BinaryDebugger::kernelWordSize() {
+Debugger::kernelWordSize() {
     if (kernelWordSize_ == 0) {
         static const uint8_t magic = 0xb7;              // arbitrary
         uint8_t userRegs[4096];                         // arbitrary size, but plenty large for any user_regs_struct
@@ -512,7 +529,7 @@ BinaryDebugger::kernelWordSize() {
 }
 
 Sawyer::Container::BitVector
-BinaryDebugger::readRegister(RegisterDescriptor desc) {
+Debugger::readRegister(RegisterDescriptor desc) {
     using namespace Sawyer::Container;
 
     // Lookup register according to kernel word size rather than the actual size of the register.
@@ -546,7 +563,7 @@ BinaryDebugger::readRegister(RegisterDescriptor desc) {
 }
 
 size_t
-BinaryDebugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
+Debugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
 #ifdef __linux__
     struct T {
         int fd;
@@ -594,7 +611,7 @@ BinaryDebugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
 }
 
 void
-BinaryDebugger::runToBreakpoint() {
+Debugger::runToBreakpoint() {
     if (breakpoints_.isEmpty()) {
         sendCommandInt(PTRACE_CONT, child_, 0, sendSignal_);
         waitForChild();
@@ -612,7 +629,7 @@ BinaryDebugger::runToBreakpoint() {
 }
 
 void
-BinaryDebugger::runToSyscall() {
+Debugger::runToSyscall() {
     sendCommandInt(PTRACE_SYSCALL, child_, 0, sendSignal_);
     waitForChild();
 }
