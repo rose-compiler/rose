@@ -6,6 +6,7 @@ if(enable-binary-analysis)
     BinaryCodeInserter.C
     BinaryControlFlow.C
     BinaryDataFlow.C
+    BinaryDebugger.C
     BinaryDemangler.C
     BinaryDominance.C
     BinaryFeasiblePath.C
@@ -76,6 +77,7 @@ install(
     BinaryConcolic.h
     BinaryControlFlow.h
     BinaryDataFlow.h
+    BinaryDebugger.h
     BinaryDemangler.h
     BinaryDominance.h
     BinaryFeasiblePath.h
