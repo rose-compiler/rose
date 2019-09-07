@@ -1524,6 +1524,12 @@ public:
     if (!std::get<std::optional<Statement<ProgramStmt>>>(x.t)) {
       Indent();
     }
+    // Goals:
+    // 1. Make as few changes as possible
+    //    a. don't make this a class
+    // 2. Make a file scope variable for the builder
+    // 3. Use builder to build (and store?) Sage nodes
+    // builder->buildMainProgram(x);
   }
   void Before(const ProgramStmt &) {  // R1402
     Word("F-PROGRAM "), Indent();
