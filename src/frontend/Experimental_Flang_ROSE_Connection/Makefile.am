@@ -17,6 +17,7 @@ noinst_LTLIBRARIES = libexperimentalRoseFlang.la
 if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
   libexperimentalRoseFlang_la_SOURCES = \
       fortran_flang_support.C           \
+      sage-build.C                      \
       external-build.C                  \
       external-build-with-symbols.C
 endif
@@ -24,5 +25,6 @@ endif
 pkginclude_HEADERS = fortran_flang_support.h
 
 noinst_HEADERS =   \
+  sage-build.h \
   external-build.h \
   external-build-with-symbols.h

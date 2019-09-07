@@ -14,6 +14,8 @@
 
 // Fortran front end driver main program for ROSE scaffolding.
 
+#include "../../frontend/Experimental_Flang_ROSE_Connection/sage-build.h"
+
 #include "../../lib/common/default-kinds.h"
 #include "../../lib/evaluate/expression.h"
 #include "../../lib/parser/characters.h"
@@ -261,25 +263,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
       return {};
     }
     else if (driver.externalBuilder) {
-// Rasmussen (2019.09.03): The following really needs to be sorted out
-#if 0
-      std::cout << "--> will call builder::BuildWithSymbols \n";
-      Fortran::semantics::BuildWithSymbols(std::cout, parseTree, driver.encoding);
-#else
-      std::cout << "--> will call semantics::UnparseWithSymbols \n";
-      Fortran::semantics::UnparseWithSymbols(
-          std::cout, parseTree, driver.encoding);
-#endif
-
-#if 0
-   // Fortran::builder::Build(std::cout, parseTree, &unparseExpression);
-      Fortran::builder::Build(std::cout, parseTree);
-#endif
-#if 0
-      Unparse(std::cout, parseTree, driver.encoding, true /*capitalize*/,
-          options.features.IsEnabled(Fortran::parser::LanguageFeature::BackslashEscapes),
-        nullptr /* action before each statement */, &unparseExpression);
-#endif
+      Rose::builder::Build(parseTree, nullptr);
       return {};
     }
   }
