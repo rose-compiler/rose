@@ -13,24 +13,20 @@ namespace Rose {
 
 namespace Rose::builder {
 
-using namespace Rose;
-using namespace Fortran;
-
-
 // Converts parsed program to ROSE Sage nodes
-void Build(const parser::Program &x, SgScopeStatement* scope);
+void Build(const Fortran::parser::Program &x, Rose::SgScopeStatement* scope);
 
-template<typename T> void Build(const parser::ProgramUnit &x, T* scope);
-template<typename T> void Build(const parser::MainProgram &x, T* scope);
+template<typename T> void Build(const Fortran::parser::ProgramUnit &x, T* scope);
+template<typename T> void Build(const Fortran::parser::MainProgram &x, T* scope);
 
-template<typename T> void Build(const parser::     SpecificationPart &x, T* scope);
-template<typename T> void Build(const parser::         ExecutionPart &x, T* scope);
-template<typename T> void Build(const parser::InternalSubprogramPart &x, T* scope);
+template<typename T> void Build(const Fortran::parser::     SpecificationPart &x, T* scope);
+template<typename T> void Build(const Fortran::parser::         ExecutionPart &x, T* scope);
+template<typename T> void Build(const Fortran::parser::InternalSubprogramPart &x, T* scope);
 
 // Traversal of needed STL template classes (optional, list, tuple, variant)                                                                
 //
 
-template<typename T> void Build(const std::list<T> &x, SgScopeStatement* scope)
+template<typename T> void Build(const std::list<T> &x, Rose::SgScopeStatement* scope)
 {
    std::cout << "Rose::builder::Build(std::list) \n";
 
@@ -40,7 +36,7 @@ template<typename T> void Build(const std::list<T> &x, SgScopeStatement* scope)
 }
 
 template<typename... A>
-void Build(const std::variant<A...> &x, SgScopeStatement* scope) {
+void Build(const std::variant<A...> &x, Rose::SgScopeStatement* scope) {
    try {
       auto & indirection = std::get<Fortran::common::Indirection<Fortran::parser::MainProgram, false>>(x);
       std::cout << "Rose::builder::Build(const std::variant<A...>): MainProgram \n";
