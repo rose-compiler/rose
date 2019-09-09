@@ -52,6 +52,7 @@ if(enable-binary-analysis)
     instructionSemantics/MemoryCellMap.C
     instructionSemantics/MemoryCellState.C
     instructionSemantics/MultiSemantics2.C
+    instructionSemantics/NativeSemantics.C
     instructionSemantics/NullSemantics2.C
     instructionSemantics/PartialSymbolicSemantics2.C
     instructionSemantics/RegisterStateGeneric.C
@@ -116,6 +117,7 @@ install(
     instructionSemantics/MemoryCellMap.h
     instructionSemantics/MemoryCellState.h
     instructionSemantics/MultiSemantics2.h
+    instructionSemantics/NativeSemantics.h
     instructionSemantics/NullSemantics2.h
     instructionSemantics/PartialSymbolicSemantics2.h
     instructionSemantics/RegisterStateGeneric.h
