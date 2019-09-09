@@ -62,6 +62,7 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/MemoryCellMap.C			\
     instructionSemantics/MemoryCellState.C			\
     instructionSemantics/MultiSemantics2.C			\
+    instructionSemantics/NativeSemantics.C			\
     instructionSemantics/NullSemantics2.C			\
     instructionSemantics/PartialSymbolicSemantics2.C		\
     instructionSemantics/RegisterStateGeneric.C			\
@@ -132,6 +133,7 @@ pkginclude_HEADERS =					\
     instructionSemantics/MemoryCellMap.h		\
     instructionSemantics/MemoryCellState.h		\
     instructionSemantics/MultiSemantics2.h		\
+    instructionSemantics/NativeSemantics.h		\
     instructionSemantics/NullSemantics2.h		\
     instructionSemantics/PartialSymbolicSemantics2.h	\
     instructionSemantics/RegisterStateGeneric.h		\
