@@ -1203,11 +1203,13 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
                 }
             }
 
-            unsigned flags = Debugger::CLOSE_FILES |
-                             Debugger::REDIRECT_INPUT |
-                             Debugger::REDIRECT_OUTPUT |
-                             Debugger::REDIRECT_ERROR;
-            Debugger::Ptr debugger = Debugger::instance(exeName, flags);
+            Debugger::Specimen subordinate(exeName);
+            subordinate.flags()
+                .set(Debugger::CLOSE_FILES)
+                .set(Debugger::REDIRECT_INPUT)
+                .set(Debugger::REDIRECT_OUTPUT)
+                .set(Debugger::REDIRECT_ERROR);
+            Debugger::Ptr debugger = Debugger::instance(subordinate);
 
             // Set breakpoints for all executable addresses in the memory map created by the Linux kernel. Since we're doing
             // this before the first instruction executes, no shared libraries have been loaded yet. However, the dynamic

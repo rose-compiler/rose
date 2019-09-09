@@ -90,16 +90,17 @@ main(int argc, char *argv[]) {
     // and to adjust this tool's synopsis in the documentation.  Examples of all of these can be found in other demos.
     P2::Engine engine;
     engine.doingPostAnalysis(false);                    // no need for any post-analysis phases (user can override on cmdline)
-    boost::filesystem::path command_name;
-    std::vector<std::string> command_args;
+    BinaryAnalysis::Debugger::Specimen specimen;
     try {
         std::vector<std::string> tmp = engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
         if (tmp.empty()) {
             mlog[FATAL] <<"no executable specified\n";
             exit(1);
         }
-        command_name = tmp[0];
-        command_args.insert(command_args.begin(), tmp.begin()+1, tmp.end());
+        specimen.program(tmp[0]);
+        tmp.erase(tmp.begin());
+        specimen.arguments(tmp);
+        specimen.flags().set(BinaryAnalysis::Debugger::CLOSE_FILES);
     } catch (const std::runtime_error &e) {
         mlog[FATAL] <<"invalid command-line: " <<e.what() <<"\n";
         exit(1);
@@ -108,8 +109,7 @@ main(int argc, char *argv[]) {
     // Since we'll be tracing this program's execution, we might as well disassemble the process's memory directly. That way we
     // don't have to worry about ROSE mapping the specimen to the same virtual address as the kernel (which might be using
     // address randomization). We can stop short of generating the AST because we won't need it.
-    BinaryAnalysis::Debugger::Ptr debugger =
-        BinaryAnalysis::Debugger::instance(command_name, command_args, BinaryAnalysis::Debugger::CLOSE_FILES);
+    BinaryAnalysis::Debugger::Ptr debugger = BinaryAnalysis::Debugger::instance(specimen);
     std::string specimenResourceName = "proc:noattach:" + StringUtility::numberToString(debugger->isAttached());
     P2::Partitioner partitioner = engine.partition(specimenResourceName);
     partitioner.memoryMap()->dump(std::cerr);           // show the memory map as a debugging aid
@@ -149,7 +149,7 @@ main(int argc, char *argv[]) {
     
     // Run the executable to obtain a trace.  We use the instruction pointer to look up a SgAsmInstruction in the insnCfg and
     // thus map the trace onto the instruction CFG.
-    mlog[INFO] <<"running subordinate to obtain trace: " <<command_name <<" " <<boost::join(command_args, " ") <<"\n";
+    mlog[INFO] <<"running subordinate to obtain trace: " <<specimen <<"\n";
     std::set<rose_addr_t> missingAddresses;
     Trace trace;
     while (!debugger->isTerminated()) {

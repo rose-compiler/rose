@@ -266,12 +266,12 @@ main(int argc, char *argv[]) {
     // Parse command-line
     P2::Engine engine;
     Settings settings;
-    std::vector<std::string> specimen = parseCommandLine(argc, argv, engine, settings);
-    if (specimen.empty())
+    std::vector<std::string> args = parseCommandLine(argc, argv, engine, settings);
+    if (args.empty())
         throw std::runtime_error("no specimen name specified; see --help");
 
     // Obtain info about the specimen, including a disassembler.
-    engine.parseContainers(specimen.front());
+    engine.parseContainers(args.front());
     Disassembler *disassembler = engine.obtainDisassembler();
     if (!disassembler)
         throw std::runtime_error("architecture is not supported by this tool");
@@ -281,9 +281,7 @@ main(int argc, char *argv[]) {
     InstructionMap insns;
 
     // Build instruction semantics framework
-    boost::filesystem::path specimen_exe = specimen[0];
-    std::vector<std::string> specimen_args(specimen.begin()+1, specimen.end());
-    Debugger::Ptr debugger = Debugger::instance(specimen_exe, specimen_args);
+    Debugger::Ptr debugger = Debugger::instance(args);
     RiscOperatorsPtr checkOps = RiscOperators::instance(debugger, registerDictionary);
     BaseSemantics::DispatcherPtr cpu;
     std::ostringstream trace;

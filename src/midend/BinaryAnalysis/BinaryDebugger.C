@@ -1,5 +1,6 @@
 #include <sage3basic.h>
 #include <BinaryDebugger.h>
+#include <DisassemblerX86.h>
 #include <integerOps.h>
 #include <Registers.h>
 
@@ -158,17 +159,29 @@ setInstructionPointer(user_regs_struct &regs, rose_addr_t va) {
 }
 #endif
 
+void
+Debugger::Specimen::print(std::ostream &out) const {
+    if (!program_.empty()) {
+        out <<program_;
+        BOOST_FOREACH (const std::string &arg, arguments_)
+            out <<" \"" <<StringUtility::cEscape(arg);
+    } else if (-1 != pid_) {
+        out <<"pid " <<pid_;
+    } else {
+        out <<"empty";
+    }
+}
+
+std::ostream&
+operator<<(std::ostream &out, const Debugger::Specimen &specimen) {
+    specimen.print(out);
+    return out;
+}
+
 const RegisterDictionary*
 Debugger::registerDictionary() const {
-#if defined(__linux) && defined(__x86_64) && __WORDSIZE==64
-    return RegisterDictionary::dictionary_amd64();
-#elif defined(__linux) && defined(__x86) && __WORDSIZE==32
-    return RegisterDictionary::dictionary_pentium4();
-#elif defined(_MSC_VER)
-    #pragma message("Rose::BinaryAnalysis::Debugger not supported on this platform")
-#else
-    #warning("Rose::BinaryAnalysis::Debugger not supported on this platform")
-#endif
+    ASSERT_not_null(disassembler_);
+    return disassembler_->registerDictionary();
 }
     
 void
@@ -184,6 +197,8 @@ Debugger::init() {
     // descriptors in this table have sizes that correspond to the data member in the user_regs_struct, not necessarily the
     // natural size of the register (e.g., The 16-bit segment registers are listed as 32 or 64 bits).
 #if defined(__linux) && defined(__x86_64) && __WORDSIZE==64
+    disassembler_ = new DisassemblerX86(8 /*bytes*/);
+
     //------------------------------------                                                 struct  struct
     // Entries for 64-bit user_regs_struct                                                 offset  size
     //------------------------------------                                                 (byte)  (bytes)
@@ -253,6 +268,8 @@ Debugger::init() {
     //                                                                                       0x01a0
 
 #elif defined(__linux) && defined(__x86) && __WORDSIZE==32
+    disassembler_ = new DisassemblerX86(4 /*bytes*/);
+
     //------------------------------------                                                 struct  struct
     // Entries for 32-bit user_regs_struct                                                 offset  size
     //------------------------------------                                                 (byte)  (bytes)
@@ -356,30 +373,105 @@ Debugger::terminate() {
 }
 
 void
-Debugger::attach(int child, unsigned flags) {
-    if (-1 == child) {
+Debugger::attach(const Specimen &specimen) {
+    if (!specimen.program().empty()) {
+        // Attach to an executable program by running it.
         detach();
-    } else if (child == child_) {
-        // do nothing
-    } else if ((flags & ATTACH) != 0) {
-        flags_ = flags;
-        child_ = child;
-        howDetach_ = NOTHING;
-        sendCommand(PTRACE_ATTACH, child_);
+        specimen_ = specimen;
+
+        // Create the child exec arguments before the fork because heap allocation is not async-signal-safe.
+        char **argv = new char*[1 /*name*/ + specimen.arguments().size() + 1 /*null*/];
+        argv[0] = strdup(specimen.program().native().c_str());
+        for (size_t i = 0; i < specimen.arguments().size(); ++i)
+            argv[i+1] = strdup(specimen.arguments()[i].c_str());
+        argv[1 + specimen.arguments().size()] = NULL;
+
+#ifndef BOOST_WINDOWS
+        // Prepare to close files when forking.  This is a race because some other thread might open a file without the
+        // O_CLOEXEC flag after we've checked but before we reach the fork. And we can't fix that entirely within ROSE since we
+        // have no control over the user program or other libraries. Furthermore, we must do it here in the parent rather than
+        // after the fork because opendir, readdir, and strtol are not async-signal-safe and Linux does't have a closefrom
+        // syscall.
+        if (specimen.flags().isSet(CLOSE_FILES)) {
+            static const int minFd = 3;
+            if (DIR *dir = opendir("/proc/self/fd")) {
+                while (const struct dirent *entry = readdir(dir)) {
+                    char *rest = NULL;
+                    errno = 0;
+                    int fd = strtol(entry->d_name, &rest, 10);
+                    if (0 == errno && '\0' == *rest && rest != entry->d_name && fd >= minFd)
+                        fcntl(fd, F_SETFD, FD_CLOEXEC);
+                }
+                closedir(dir);
+            }
+        }
+#endif
+
+        child_ = fork();
+        if (0==child_) {
+            // Since the parent process may have been multi-threaded, we are now in an async-signal-safe context.
+            if (specimen.flags().isSet(REDIRECT_INPUT))
+                devNullTo(0, O_RDONLY);                 // async-signal-safe
+
+            if (specimen.flags().isSet(REDIRECT_OUTPUT))
+                devNullTo(1, O_WRONLY);                 // async-signal-safe
+
+            if (specimen.flags().isSet(REDIRECT_ERROR))
+                devNullTo(2, O_WRONLY);                 // async-signal-safe
+
+            // FIXME[Robb Matzke 2017-08-04]: We should be using a direct system call here instead of the C library wrapper because
+            // the C library is adjusting errno, which is not async-signal-safe.
+            if (-1 == ptrace(PTRACE_TRACEME, 0, 0, 0)) {
+                // errno is set, but no way to access it in an async-signal-safe way
+                const char *mesg= "Rose::BinaryAnalysis::Debugger::attach: ptrace_traceme failed\n";
+                if (write(2, mesg, strlen(mesg)) == -1)
+                    abort();
+                _Exit(1);                                   // avoid calling C++ destructors from child
+            }
+
+            execv(argv[0], argv);
+
+            // If failure, we must still call only async signal-safe functions.
+            const char *mesg = "Rose::BinaryAnalysis::Debugger::attach: exec failed: ";
+            if (write(2, mesg, strlen(mesg)) == -1)
+                abort();
+            mesg = strerror(errno);
+            if (write(2, mesg, strlen(mesg)) == -1)
+                abort();
+            if (write(2, "\n", 1) == -1)
+                abort();
+            _Exit(1);
+        }
+
+        for (size_t i=0; argv[i]; ++i)
+            free(argv[i]);
+        delete[] argv;
+
         howDetach_ = DETACH;
         waitForChild();
-        if (SIGSTOP==sendSignal_)
-            sendSignal_ = 0;
+        if (isTerminated())
+            throw std::runtime_error("Rose::BinaryAnalysis::Debugger::attach: subordinate " +
+                                     howTerminated() + " before we gained control");
     } else {
-        flags_ = flags;
-        child_ = child;
-        howDetach_ = NOTHING;
+        // Attach to an existing process.
+        if (-1 == specimen.process()) {
+            detach();
+        } else if (specimen.process() == child_) {
+            // do nothing
+        } else if (specimen.flags().isSet(ATTACH)) {
+            child_ = specimen.process();
+            howDetach_ = NOTHING;
+            sendCommand(PTRACE_ATTACH, child_);
+            howDetach_ = DETACH;
+            waitForChild();
+            if (SIGSTOP==sendSignal_)
+                sendSignal_ = 0;
+        } else {
+            child_ = specimen.process();
+            howDetach_ = NOTHING;
+        }
+        specimen_ = specimen;
     }
-}
-
-void
-Debugger::attach(const boost::filesystem::path &exeName, unsigned flags) {
-    attach(exeName, std::vector<std::string>() /*args*/, flags);
 }
 
 // Must be async signal safe!
@@ -392,86 +484,6 @@ Debugger::devNullTo(int targetFd, int openFlags) {
         dup2(fd, targetFd);
         close(fd);
     }
-}
-
-void
-Debugger::attach(const boost::filesystem::path &exeName, const std::vector<std::string> &args, unsigned flags) {
-    ASSERT_forbid(exeName.empty());
-    detach();
-    flags_ = flags;
-
-    // Create the child exec arguments before the fork because heap allocation is not async-signal-safe.
-    char **argv = new char*[1 /*name*/ + args.size() + 1 /*null*/];
-    argv[0] = strdup(exeName.native().c_str());
-    for (size_t i = 0; i < args.size(); ++i)
-        argv[i+1] = strdup(args[i].c_str());
-    argv[1 + args.size()] = NULL;
-
-#ifndef BOOST_WINDOWS
-    // Prepare to close files when forking.  This is a race because some other thread might open a file without the O_CLOEXEC
-    // flag after we've checked but before we reach the fork. And we can't fix that entirely within ROSE since we have no
-    // control over the user program or other libraries. Furthermore, we must do it here in the parent rather than after the
-    // fork because opendir, readdir, and strtol are not async-signal-safe and Linux does't have a closefrom syscall.
-    if ((flags & CLOSE_FILES) != 0) {
-        static const int minFd = 3;
-        if (DIR *dir = opendir("/proc/self/fd")) {
-            while (const struct dirent *entry = readdir(dir)) {
-                char *rest = NULL;
-                errno = 0;
-                int fd = strtol(entry->d_name, &rest, 10);
-                if (0 == errno && '\0' == *rest && rest != entry->d_name && fd >= minFd)
-                    fcntl(fd, F_SETFD, FD_CLOEXEC);
-            }
-            closedir(dir);
-        }
-    }
-#endif
-
-    child_ = fork();
-    if (0==child_) {
-        // Since the parent process may have been multi-threaded, we are now in an async-signal-safe context.
-        if ((flags & REDIRECT_INPUT) != 0)
-            devNullTo(0, O_RDONLY);                     // async-signal-safe
-
-        if ((flags & REDIRECT_OUTPUT) != 0)
-            devNullTo(1, O_WRONLY);                     // async-signal-safe
-
-        if ((flags & REDIRECT_ERROR) != 0)
-            devNullTo(2, O_WRONLY);                     // async-signal-safe
-
-        // FIXME[Robb Matzke 2017-08-04]: We should be using a direct system call here instead of the C library wrapper because
-        // the C library is adjusting errno, which is not async-signal-safe.
-        if (-1 == ptrace(PTRACE_TRACEME, 0, 0, 0)) {
-            // errno is set, but no way to access it in an async-signal-safe way
-            const char *mesg= "Rose::BinaryAnalysis::Debugger::attach: ptrace_traceme failed\n";
-            if (write(2, mesg, strlen(mesg)) == -1)
-                abort();
-            _Exit(1);                                   // avoid calling C++ destructors from child
-        }
-
-        execv(argv[0], argv);
-
-        // If failure, we must still call only async signal-safe functions.
-        const char *mesg = "Rose::BinaryAnalysis::Debugger::attach: exec failed: ";
-        if (write(2, mesg, strlen(mesg)) == -1)
-            abort();
-        mesg = strerror(errno);
-        if (write(2, mesg, strlen(mesg)) == -1)
-            abort();
-        if (write(2, "\n", 1) == -1)
-            abort();
-        _Exit(1);
-    }
-
-    for (size_t i=0; argv[i]; ++i)
-        free(argv[i]);
-    delete[] argv;
-
-    howDetach_ = DETACH;
-    waitForChild();
-    if (isTerminated())
-        throw std::runtime_error("Rose::BinaryAnalysis::Debugger::attach: subordinate " +
-                                 howTerminated() + " before we gained control");
 }
 
 void

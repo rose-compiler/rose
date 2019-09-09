@@ -193,9 +193,9 @@ main(int argc, char *argv[]) {
     mlog[INFO] <<"parsed " <<plural(knownVas.size(), "unique addresses") <<"\n";
 
     // Load specimen natively and attach debugger
-    boost::filesystem::path specimen_exe = args[1];
-    std::vector<std::string> specimen_args(args.begin()+2, args.end());
-    Debugger::Ptr debugger = Debugger::instance(specimen_exe, specimen_args, Debugger::CLOSE_FILES);
+    Debugger::Specimen specimen(args);
+    specimen.flags().set(Debugger::CLOSE_FILES);
+    Debugger::Ptr debugger = Debugger::instance(specimen);
     debugger->setBreakpoint(AddressInterval::whole());
     ASSERT_always_require(debugger->isAttached());
     ASSERT_always_forbid(debugger->isTerminated());
@@ -205,7 +205,7 @@ main(int argc, char *argv[]) {
     // Get memory map.
     MemoryMap::Ptr map;
     if (MAP_ROSE==settings.mapSource) {
-        map = engine.loadSpecimens(specimen_exe.native());
+        map = engine.loadSpecimens(specimen.program().native());
     } else {
         map = MemoryMap::instance();
         map->insertProcess(pid, MemoryMap::Attach::NO);

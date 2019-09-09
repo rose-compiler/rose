@@ -190,10 +190,7 @@ RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembl
     if (existingPid != -1) {
         debugger->attach(existingPid);
     } else {
-        std::vector<std::string> args = exeArgs();
-        boost::filesystem::path exe = args[0];
-        args.erase(args.begin());
-        debugger->attach(exe, args);
+        debugger->attach(exeArgs());
     }
 
     process->get_memory()->insertProcess(debugger->isAttached(), MemoryMap::Attach::NO);

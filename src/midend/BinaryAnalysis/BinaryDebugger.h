@@ -1,8 +1,10 @@
 #ifndef ROSE_BinaryAnalysis_Debugger_H
 #define ROSE_BinaryAnalysis_Debugger_H
 
+#include <BitFlags.h>
 #include <boost/noncopyable.hpp>
 #include <boost/filesystem.hpp>
+#include <Disassembler.h>
 #include <Sawyer/BitVector.h>
 
 namespace Rose {
@@ -37,10 +39,124 @@ public:
         DEFAULT_FLAGS   = 0x00000013                    /**< Default flags. */
     };
 
+    /** Describes the specimen to be debugged.
+     *
+     *  A specimen can be either an executable program or a running process. */
+    class Specimen {
+        BitFlags<Flag> flags_;                          // operational flags
+
+        // Members for running a program
+        boost::filesystem::path program_;               // ;full path of executable program
+        std::vector<std::string> arguments_;            // command-line arguments of executable program
+        boost::filesystem::path workingDirectory_;      // name or working directory, or use CWD if empty
+
+        // Members for attaching to a process
+        int pid_;                                       // process ID (int instead of pid_t for portability)
+
+    public:
+        /** Default construct an empty specimen descriptor. */
+        Specimen()
+            : pid_(-1) {}
+        
+        /** Construct a specimen description for a process. */
+        Specimen(int pid) /*implicit*/
+            : flags_(DEFAULT_FLAGS), pid_(pid) {}
+
+        /** Construct a specimen description for a program with no arguments. */
+        Specimen(const boost::filesystem::path &name) /*implicit*/
+            : flags_(DEFAULT_FLAGS), program_(name), pid_(-1) {}
+
+        /** Construct a specimen description for a program with arguments. */
+        Specimen(const boost::filesystem::path &name, const std::vector<std::string> &args)
+            : flags_(DEFAULT_FLAGS), program_(name), arguments_(args), pid_(-1) {}
+
+        /** Construct a specimen description from combined program and arguments. */
+        Specimen(const std::vector<std::string> &args) /*implicit*/
+            : flags_(DEFAULT_FLAGS), program_(args.front()), arguments_(args.begin()+1, args.end()), pid_(-1) {
+        }
+        
+    public:
+        /** Property: Name of executable program to run.
+         *
+         *  A specimen description can be either a program or a process, but not both. Setting this property will
+         *  clear the @ref process property.
+         *
+         * @{ */
+        boost::filesystem::path program() const {
+            return program_;
+        }
+        void program(const boost::filesystem::path &name) {
+            program_ = name;
+            pid_ = -1;
+        }
+        /** @} */
+
+        /** Property: Program command-line arguments.
+         *
+         *  This property is the list of command-line arguments supplied to a program when starting it. This property is
+         *  not used when attaching to an existing process.
+         *
+         * @{ */
+        const std::vector<std::string>& arguments() const {
+            return arguments_;
+        }
+        void arguments(const std::vector<std::string> &args) {
+            arguments_ = args;
+        }
+        /** @} */
+
+        /** Property: Current working directory for running a program.
+         *
+         *  This property is only used for starting a new program, not for attaching to a process (which already has
+         *  a current working directory). If no working directory is specified then the program's working directory will
+         *  be this process's current working directory.
+         *
+         * @{ */
+        boost::filesystem::path workingDirectory() const {
+            return workingDirectory_;
+        }
+        void workingDirectory(const boost::filesystem::path &name) {
+            workingDirectory_ = name;
+        }
+        /** @} */
+
+        /** Property: Operational flags.
+         *
+         *  These flags control some finer aspects of the operations.
+         *
+         * @{ */
+        const BitFlags<Flag>& flags() const {
+            return flags_;
+        }
+        BitFlags<Flag>& flags() {
+            return flags_;
+        }
+        /** @} */
+
+        /** Property: Process ID.
+         *
+         *  This is the identification number for a specimen process to which the debugger should be attached. Setting
+         *  this property will clear the @ref program property.
+         *
+         * @{ */
+        int process() const {
+            return pid_;
+        }
+        void process(int pid) {
+            pid_ = pid;
+            program_.clear();
+        }
+        /** @} */
+
+        /** Print some basic info about the specimen. */
+        void print(std::ostream &out) const;
+    };
+
 private:
     typedef Sawyer::Container::Map<RegisterDescriptor, size_t> UserRegDefs;
     enum RegPageStatus { REGPAGE_NONE, REGPAGE_REGS, REGPAGE_FPREGS };
 
+    Specimen specimen_;                                 // description of specimen being debugged
     int child_;                                         // process being debugged (int, not pid_t, for Windows portability)
     DetachMode howDetach_;                              // how to detach from the subordinate
     int wstat_;                                         // last status from waitpid
@@ -51,8 +167,7 @@ private:
     size_t kernelWordSize_;                             // cached width in bits of kernel's words
     uint8_t regsPage_[512];                             // latest register information read from subordinate
     RegPageStatus regsPageStatus_;                      // what are the contents of regPage_?
-    unsigned flags_;                                    // operational flags; Flag bit vector
-    const RegisterDictionary *regdict_;                 // supported registers
+    Disassembler *disassembler_;                        // how to disassemble instructions
 
     //----------------------------------------
     // Real constructors
@@ -60,29 +175,16 @@ private:
 protected:
     Debugger()
         : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
-          flags_(DEFAULT_FLAGS), regdict_(NULL) {
+          disassembler_(NULL) {
         init();
     }
 
-    Debugger(int pid, unsigned flags)
+    /** Construct a debugger attached to a specimen. */
+    explicit Debugger(const Specimen &specimen)
         : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
-          flags_(flags), regdict_(NULL) {
+          disassembler_(NULL) {
         init();
-        attach(pid, flags);
-    }
-
-    Debugger(const boost::filesystem::path &exeName, unsigned flags)
-        : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
-          flags_(flags), regdict_(NULL) {
-        init();
-        attach(exeName, flags);
-    }
-
-    Debugger(const boost::filesystem::path &exeName, const std::vector<std::string> &args, unsigned flags)
-        : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
-          flags_(flags), regdict_(NULL) {
-        init();
-        attach(exeName, args, flags);
+        attach(specimen);
     }
 
 public:
@@ -99,41 +201,17 @@ public:
         return Ptr(new Debugger);
     }
 
-    /** Create a debugger attached to an already running subordinate process. */
-    static Ptr instance(int pid, unsigned flags = DEFAULT_FLAGS) {
-        return Ptr(new Debugger(pid, flags));
-    }
-
-    /** Create a new debugger by starting the specified program with no arguments. */
-    static Ptr instance(const boost::filesystem::path &exeName, unsigned flags = DEFAULT_FLAGS) {
-        return Ptr(new Debugger(exeName, flags));
-    }
-
-    /** Create a new debugger by starting the specified program with arguments. */
-    static Ptr instance(const boost::filesystem::path &exeName, const std::vector<std::string> &args,
-                        unsigned flags = DEFAULT_FLAGS) {
-        return Ptr(new Debugger(exeName, args, flags));
+    /** Create a debugger and start debugging a specimen. */
+    static Ptr instance(const Specimen &specimen) {
+        return Ptr(new Debugger(specimen));
     }
     
     //----------------------------------------
     // Attaching to subordinate
     //----------------------------------------
 public:
-    /** Attach to an existing process.
-     *
-     *  Arranges for an existing process to be debugged.  If the @p ATTACH @ref Flag "flag" is set (the default) then the
-     *  debugger attempts to attach to that process and gain control, otherwise it assumes that the calling process has already
-     *  done that. */
-    void attach(int pid, unsigned flags = DEFAULT_FLAGS);
-
-    /** Program to debug.
-     *
-     *  The program can be specified as a single name or as a name and arguments.
-     *
-     * @{ */
-    void attach(const boost::filesystem::path &fileName, unsigned flags = DEFAULT_FLAGS);
-    void attach(const boost::filesystem::path &fileName, const std::vector<std::string> &args, unsigned flags = DEFAULT_FLAGS);
-    /** @} */
+    /** Attach to a specimen. */
+    void attach(const Specimen&);
 
     /** Returns true if attached to a subordinate.  Return value is the subordinate process ID. */
     int isAttached() { return child_; }
@@ -203,6 +281,11 @@ public:
     /** Available registers. */
     const RegisterDictionary* registerDictionary() const;
 
+    /** Disassembler. */
+    Disassembler* disassembler() const {
+        return disassembler_;
+    }
+    
 private:
     // Initialize tables during construction
     void init();
@@ -214,6 +297,8 @@ private:
     // descriptor. If an error occurs, the targetFd is closed anyway.
     void devNullTo(int targetFd, int openFlags);
 };
+
+std::ostream& operator<<(std::ostream&, const Debugger::Specimen&);
 
 } // namespace
 } // namespace
