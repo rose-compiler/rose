@@ -71,8 +71,9 @@ public:
             : flags_(DEFAULT_FLAGS), program_(name), arguments_(args), pid_(-1) {}
 
         /** Construct a specimen description from combined program and arguments. */
-        Specimen(const std::vector<std::string> &args) /*implicit*/
-            : flags_(DEFAULT_FLAGS), program_(args.front()), arguments_(args.begin()+1, args.end()), pid_(-1) {
+        Specimen(const std::vector<std::string> &nameAndArgs) /*implicit*/
+            : flags_(DEFAULT_FLAGS), program_(nameAndArgs.front()),
+              arguments_(nameAndArgs.begin()+1, nameAndArgs.end()), pid_(-1) {
         }
         
     public:

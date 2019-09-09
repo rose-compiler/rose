@@ -25,6 +25,7 @@ run $(tool_compile_linkexe) --install -o rose-x86-call-targets x86-call-targets.
 run $(tool_compile_linkexe) --install -o rose-rxml rxml.C
 run $(tool_compile_linkexe) --install -o rose-dwarf-lines dwarf-lines.C
 run $(tool_compile_linkexe) --install -o rose-xml2json xml2json.C
+run $(tool_compile_linkexe) --install -o rose-execution-monitor ExecutionMonitor.C
 run $(public_script) rose-missing-semantics
 
 findPath_SOURCES = PathFinder/PathFinder.C PathFinder/semantics.C PathFinder/findPath.C

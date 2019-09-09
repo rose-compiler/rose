@@ -114,9 +114,12 @@ namespace BinaryAnalysis {
       typedef Sawyer::Container::IntervalSet<AddressInterval> AddressIntervalSet;
 
       ExecutionMonitor(const std::vector<std::string>& exeNameAndArgs, Disassembler* disasm)
-      : Debugger(exeNameAndArgs, Debugger::CLOSE_FILES),
-        disassembler(disasm), currIval(), intervals()
-      {}
+          : disassembler(disasm), currIval(), intervals()
+      {
+          Debugger::Specimen specimen(exeNameAndArgs);
+          specimen.flags().set(Debugger::CLOSE_FILES);
+          attach(specimen);
+      }
 
       /** Returns the current program counter (PC). */
       addr_t pc()
