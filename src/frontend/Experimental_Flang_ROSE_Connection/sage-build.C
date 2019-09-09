@@ -3,8 +3,7 @@
 
 namespace Rose::builder {
 
-using namespace Fortran::parser;
-   using namespace Fortran::semantics;
+using namespace Fortran;
 
 // Converts parsed program to ROSE Sage nodes
 void Build(const parser::Program &x, SgScopeStatement* scope)
