@@ -7976,7 +7976,8 @@ namespace std
 
 namespace __gnu_debug
 {
-  using namespace std::__debug;
+// Removing because of namespace violation [Rasmussen]
+// using namespace std::__debug;
 }
 # 70 "/usr/local/Cellar/gcc@8/8.3.0/include/c++/8.3.0/bits/stl_algobase.h" 2 3
 
@@ -46812,7 +46813,8 @@ namespace __variant
 # 51 "../common/idioms.h"
 
 # 51 "../common/idioms.h"
-using namespace std::literals::string_literals;
+// Removing because of namespace violation [Rasmussen]
+// using namespace std::literals::string_literals;
 
 namespace Fortran::common {
 # 63 "../common/idioms.h"
