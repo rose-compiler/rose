@@ -334,7 +334,8 @@ matrix-reclaim-disk() {
 		# Get the name of the package
 		local package_name="$(sed -n "/^package/ s/package:[ \t]*'\(.*\)'.*/\1/p" <"$installed.yaml")"
 		if [ "$package_name" = "" ]; then
-		    package_name="$(sed -n '/^package/ s/package:[ \t]*\([-_a-zA-Z0-9]*\)[ \t]*$/\1/p' <"$installed.yaml")"
+		    package_name="$(sed -n "/^package/ s/package:[ \t]*\([-_a-zA-Z0-9]*\)[ \t]*\$/\1/p" <"$installed.yaml")"
+		    package_name="$(echo "$package_name" |tr -d "'")"
 		fi
 
 		# Avoid removing compilers and other important things
