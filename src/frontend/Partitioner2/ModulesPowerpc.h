@@ -20,8 +20,12 @@ public:
     virtual bool match(const Partitioner&, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
-/** Matches a PowerPC ELF dynamic function stub. */
-bool matchElfDynamicStub(const Partitioner&, const Function::Ptr&, const AddressIntervalSet &pltAddresses);
+/** Matches a PowerPC ELF dynamic function stub.
+ *
+ *  If the function's instructions make it look like an ELF dynamic linking stub and it references an entry in the Procedure
+ *  Loookup Table (defined by the PLT location in memory), then return the PLT entry address, otherwise return nothing. */
+Sawyer::Optional<rose_addr_t>
+matchElfDynamicStub(const Partitioner&, const Function::Ptr&, const AddressIntervalSet &pltAddresses);
 
 /** Give names to thunks for dynamically linked functions. */
 void nameImportThunks(const Partitioner&, SgAsmInterpretation*);
