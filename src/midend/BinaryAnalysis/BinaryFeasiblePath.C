@@ -870,7 +870,6 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
                 debug <<"          sp = " <<*sp <<"\n";
             }
         } catch (const BaseSemantics::Exception &e) {
-            insn->incrementSemanticFailure();
             if (settings_.ignoreSemanticFailure) {
                 SAWYER_MESG(mlog[WARN]) <<"semantics failed (instruction ignored): " <<e <<"\n";
             } else {

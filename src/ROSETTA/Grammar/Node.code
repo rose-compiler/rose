@@ -14,6 +14,7 @@ HEADER_NODE_PREDECLARATION_START
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/set.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/version.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 #include <Sawyer/CommandLine.h>
@@ -1553,6 +1554,9 @@ std::ostream & operator<< ( std::ostream & os, const std::set<SgSymbol*> & l );
 //#include "virtualCFG.h"
 // tps (8/13/2007): working on binary cfg mechanism.
 //#include "virtualBinCFG.h"
+
+// Version numbers for SgAsm* nodes. Used for backward compatibility. */
+BOOST_CLASS_VERSION(SgAsmInstruction, 1);
 
 HEADER_NODE_PREDECLARATION_END
 
