@@ -428,7 +428,7 @@ struct IP_bcctr: P {
         BaseSemantics::SValuePtr cr_bi = ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
         BaseSemantics::SValuePtr iar = ops->readRegister(d->REG_IAR);
-        BaseSemantics::SValuePtr mask = ops->number_(d->addressWidth(), IntegerOps::genMask<uint64_t>(4, d->addressWidth()-1));
+        BaseSemantics::SValuePtr mask = ops->number_(d->addressWidth(), IntegerOps::genMask<uint64_t>(2, d->addressWidth()-1));
         ops->writeRegister(d->REG_IAR, ops->ite(cond_ok, ops->and_(ops->readRegister(d->REG_CTR), mask), iar));
     }
 };
@@ -465,7 +465,7 @@ struct IP_bclr: P {
         ASSERT_require(bi && bi->get_descriptor().majorNumber() == powerpc_regclass_cr && bi->get_descriptor().nBits() == 1);
         BaseSemantics::SValuePtr cr_bi = bo_0 && bo_2 ? ops->boolean_(true) : ops->readRegister(bi->get_descriptor());
         BaseSemantics::SValuePtr cond_ok = bo_0 ? ops->boolean_(true) : bo_1 ? cr_bi : ops->invert(cr_bi);
-        BaseSemantics::SValuePtr mask = ops->number_(d->addressWidth(), IntegerOps::genMask<uint64_t>(4, d->addressWidth()-1));
+        BaseSemantics::SValuePtr mask = ops->number_(d->addressWidth(), IntegerOps::genMask<uint64_t>(2, d->addressWidth()-1));
         BaseSemantics::SValuePtr target = ops->and_(ops->readRegister(d->REG_LR), mask);
         BaseSemantics::SValuePtr iar = ops->readRegister(d->REG_IAR);
         ops->writeRegister(d->REG_IAR, ops->ite(ops->and_(ctr_ok, cond_ok), target, iar));
