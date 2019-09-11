@@ -307,7 +307,7 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
           $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
           $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) \
           $(OPT_SQLITE3_LDFLAGS) \
-          $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS) \
+          $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS) $(ROSE_FLANG_LIBS) \
           $(ROSE_COBOL_PT_LIBS_WITH_PATH)
 
 # DQ (6/9/2017): Removed because it failes for "make install" rule on my machine.
@@ -433,6 +433,7 @@ rose_config_installed_ldflags =			\
 	$(ROSE_ETHER_LIBS)			\
 	$(ROSE_INTEL_COMPILER_MATH_LIBS)	\
 	$(ROSE_ATERM_LIBS)			\
+	$(ROSE_FLANG_LIBS)			\
 	$(ROSE_COBOL_PT_LIBS_WITH_PATH)         \
 	$(ROSE_YAML_LIBS_WITH_PATH)		\
 	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\
