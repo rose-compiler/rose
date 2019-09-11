@@ -2685,12 +2685,12 @@ DispatcherPowerpc::memory_init() {
         if (BaseSemantics::MemoryStatePtr memory = state->memoryState()) {
             switch (memory->get_byteOrder()) {
                 case ByteOrder::ORDER_LSB:
+                    mlog[WARN] <<"PowerPC memory state is using little-endian byte order\n";
                     break;
                 case ByteOrder::ORDER_MSB:
-                    mlog[WARN] <<"x86 memory state is using big-endian byte order\n";
                     break;
                 case ByteOrder::ORDER_UNSPECIFIED:
-                    memory->set_byteOrder(ByteOrder::ORDER_LSB);
+                    memory->set_byteOrder(ByteOrder::ORDER_MSB);
                     break;
             }
         }
