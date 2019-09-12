@@ -496,10 +496,14 @@ findPaths(const ControlFlowGraph &cfg, ControlFlowGraph &paths /*out*/, CfgVerte
     std::vector<bool> goodEdges = findPathEdges(cfg, beginVertices, endVertices, avoidVertices, avoidEdges, avoidCallsAndReturns);
     BOOST_FOREACH (const ControlFlowGraph::Edge &edge, cfg.edges()) {
         if (goodEdges[edge.id()]) {
-            if (!vmap.forward().exists(edge.source()))
-                vmap.insert(edge.source(), paths.insertVertex(edge.source()->value()));
-            if (!vmap.forward().exists(edge.target()))
-                vmap.insert(edge.target(), paths.insertVertex(edge.target()->value()));
+            if (!vmap.forward().exists(edge.source())) {
+                ControlFlowGraph::VertexIterator newPathTarget = paths.insertVertex(edge.source()->value());
+                vmap.insert(edge.source(), newPathTarget);
+            }
+            if (!vmap.forward().exists(edge.target())) {
+                ControlFlowGraph::VertexIterator newPathTarget = paths.insertVertex(edge.target()->value());
+                vmap.insert(edge.target(), newPathTarget);
+            }
             paths.insertEdge(vmap.forward()[edge.source()], vmap.forward()[edge.target()], edge.value());
         }
     }
@@ -510,7 +514,8 @@ findPaths(const ControlFlowGraph &cfg, ControlFlowGraph &paths /*out*/, CfgVerte
         if (!vmap.forward().exists(beginVertex) &&                      // not inserted above
             endVertices.exists(beginVertex) &&                          // can be a singleton path
             !avoidVertices.exists(beginVertex)) {                       // not an avoided vertex
-            vmap.insert(beginVertex, paths.insertVertex(beginVertex->value()));
+            ControlFlowGraph::VertexIterator newPathTarget = paths.insertVertex(beginVertex->value());
+            vmap.insert(beginVertex, newPathTarget);
         }
     }
 }
