@@ -506,6 +506,7 @@ Dispatcher::processInstruction(SgAsmInstruction *insn)
         // If the exception was thrown by something that didn't have an instruction available, then add the instruction
         if (!e.insn)
             e.insn = insn;
+        e.insn->incrementSemanticFailure();
         throw e;
     }
     operators->finishInstruction(insn);

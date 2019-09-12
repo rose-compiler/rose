@@ -395,7 +395,7 @@ public:
     }
 
     /** Return the value associated with an existing key. */
-    const Value& operator[](const Key &item) const {
+    Value operator[](const Key &item) const {
         update();
         return *find(item);
     }
