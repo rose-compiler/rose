@@ -3,6 +3,9 @@
 #include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/ModulesPowerpc.h>
 #include <Partitioner2/Partitioner.h>
+#include <Sawyer/Message.h>
+
+using namespace Sawyer::Message::Common;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -181,6 +184,40 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
         if (function->name().empty())
             function->name("F" + StringUtility::addrToString(function->address()).substr(2) + "@plt");
     }
+}
+
+boost::logic::tribool
+isFunctionReturn(const Partitioner &partitioner, const BasicBlock::Ptr &bb) {
+    ASSERT_not_null(bb);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    BasicBlockSemantics sem = bb->semantics();
+    BaseSemantics::StatePtr state = sem.finalState();
+    if (!state)
+        return boost::logic::indeterminate;
+
+    ASSERT_not_null(sem.dispatcher);
+    ASSERT_not_null(sem.operators);
+    SAWYER_MESG(debug) <<"  block has semantic information\n";
+    const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
+    const RegisterDescriptor REG_LR = partitioner.instructionProvider().callReturnRegister();
+    ASSERT_forbid(REG_IP.isEmpty());
+    ASSERT_forbid(REG_LR.isEmpty());
+
+    BaseSemantics::SValuePtr mask = sem.operators->number_(REG_IP.nBits(), 0xfffffffc);
+    BaseSemantics::SValuePtr retAddr = sem.operators->and_(sem.operators->peekRegister(REG_LR), mask);
+    BaseSemantics::SValuePtr ip = sem.operators->and_(sem.operators->peekRegister(REG_IP), mask);
+    BaseSemantics::SValuePtr isEqual = sem.operators->isEqual(retAddr, ip);
+    bool isReturn = isEqual->is_number() ? (isEqual->get_number() != 0) : false;
+
+    if (debug) {
+        debug <<"    retAddr      = " <<*retAddr <<"\n";
+        debug <<"    ip           = " <<*ip <<"\n";
+        debug <<"    retAddr==ip? = " <<*isEqual <<"\n";
+        debug <<"    returning " <<(isReturn ? "true" : "false") <<"\n";
+        //debug <<"    state:" <<*state; // produces lots of output!
+    }
+
+    return isReturn;
 }
 
 } // namespace

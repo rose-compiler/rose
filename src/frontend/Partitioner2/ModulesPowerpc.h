@@ -3,6 +3,8 @@
 
 #include <Partitioner2/Modules.h>
 
+#include <boost/logic/tribool.hpp>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -30,6 +32,11 @@ matchElfDynamicStub(const Partitioner&, const Function::Ptr&, const AddressInter
 /** Give names to thunks for dynamically linked functions. */
 void nameImportThunks(const Partitioner&, SgAsmInterpretation*);
 
+/** Determines whether basic block is a function return.
+ *
+ *  Returns true if the basic block appears to be a function return, semantically. Indeterminate if semantics are disabled. */
+boost::logic::tribool isFunctionReturn(const Partitioner&, const BasicBlock::Ptr&);
+    
 } // namespace
 } // namespace
 } // namespace
