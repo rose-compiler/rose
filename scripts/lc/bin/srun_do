@@ -19,8 +19,9 @@
 # "$*"   - all args quoted in one string
 # "$@"   - all args quoted individually
 
+export SRUN_DO_SCRIPT_DIR="`dirname $0`"
 # Sets strict mode, defines log_ functions:
-source `which utility_functions.sh`
+source ${SRUN_DO_SCRIPT_DIR}/utility_functions.sh
 
 log_start
 # Too wordy:

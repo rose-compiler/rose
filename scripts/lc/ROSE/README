@@ -154,7 +154,7 @@ module load gcc/4.9.3
 # or
 # ROSE_INTEL_COMPILER_MATH_LIBS = -L/usr/tce/packages/intel/intel-18.0.1/lib/intel64 -limf -lirng -lintlc -lsvml
 gedit "${ROSE_REPO_PATH_VERSIONED}/config/Makefile.for.ROSE.includes.and.libs"
-
+#sed -i "/.*ROSE_INTEL_COMPILER_MATH_LIBS =.*/s/.*/ROSE_INTEL_COMPILER_MATH_LIBS = -L\/usr\/tce\/packages\/intel\/intel-${INTEL_VERSION}\/lib\/intel64 -limf -lirng -lintlc -lsvml/" config/Makefile.for.ROSE.includes.and.libs
 # Create a file named do_configure with the following in it:
 cat > do_configure << EOF
 #!/bin/bash
@@ -392,6 +392,10 @@ ${HOME}/code/spack/opt/spack/linux-rhel7-x86_64/clang-4.0.0/boost-1.66.0-ei4ntkv
 
 #======================
 # To get latest remote version number:
+export ROSE_REMOTE_PROJECT="rose-dev@rosecompiler1.llnl.gov:rose/scratch"
+export ROSE_REPO_NAME="rose"
+# e.g. "rose-dev@rosecompiler1.llnl.gov:rose/scratch/rose":
+export ROSE_REMOTE_REPO="${ROSE_REMOTE_PROJECT}/${ROSE_REPO_NAME}"
 export LATEST_ROSE_VERSION=`\
 git ls-remote --tags ${ROSE_REMOTE_REPO} | \
 sed 's/^[[:alnum:]]*\trefs\/tags\/v//' | \
@@ -400,5 +404,8 @@ sort -t. -k 1,1n -k 2,2n -k 3,3n -k 4,4n | \
 tail -n1`
 echo ${LATEST_ROSE_VERSION}
 #======================
+
+# Jenkins page for merge and new version info
+# https://hudson-rose-44.llnl.gov:9443/jenkins/job/development-merger/
 
 

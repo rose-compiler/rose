@@ -3,14 +3,11 @@
 #
 # USAGE: 
 # run_and_log test_this_build.sh <first unit number> <last unit number>
-# e.g. run_and_log test_this_build.sh 0001 0400
+# e.g. run_and_log test_thiis_build.sh 0001 0400
 # 
 # DEPENDENCIES:
 #   ./set_ROSE_HOME
 #   ${BUILD_HOME}/TOSS3/build/compile_commands.json
-#   ${BUILD_HOME}/ares (a softlink to the ARES repo dir, two directories up, e.g.:
-#     ./ares -> /g/g17/charles/code/ARES/ares-develop-2019-03-14 or:
-#     ./ares -> ../../ares-develop-2019-03-14
 
 # Exit if error or undef variable:
 set -eu
@@ -21,7 +18,7 @@ then
   export  LAST_UNIT=$2
 else
   export FIRST_UNIT="0001"
-  export  LAST_UNIT="1704"
+  export  LAST_UNIT="0429"
 fi
 
 # Set ROSE version.  Sets:
@@ -32,21 +29,25 @@ fi
 source set_ROSE_HOME
 # Defines log_then_run:
 source ${AUTOMATION_HOME}/bin/utility_functions.sh
-
-export SOURCE_HOME="${CODE_BASE}/ARES/ares-develop-2019-03-14-build/ares"
-export BUILD_HOME="${CODE_BASE}/ARES/ares-develop-2019-03-14-build/TOSS3/build"
+export SOURCE_HOME="${CODE_BASE}/ARDRA/ardra/transport3d"
+export BUILD_HOME="${CODE_BASE}/ARDRA/ardra/ardra-toss_3_x86_64_ib"
 
 export REPORT_FILE_NAME_ROOT="report_${FIRST_UNIT}_${LAST_UNIT}"
 export JSON_REPORT_FILE_NAME="${REPORT_FILE_NAME_ROOT}.json"
 export TEXT_REPORT_FILE_NAME="${REPORT_FILE_NAME_ROOT}.txt"
 
+export COMP_DB_MAP="${AUTOMATION_HOME}/compdb/comp_db_map.py"
+export RENDER_TEXT="${AUTOMATION_HOME}/compdb/render_text.py"
+export ROSE_TOOL="${ROSE_HOME}/bin/identityTranslator"
+export COMPILATION_DATABASE_PATH="${BUILD_HOME}/compile_commands_no_fortran.json"
+
 # Run ROSE on units (Expensive!  Use srun!):
 srun_do -c36 \
-${AUTOMATION_HOME}/compdb/comp_db_map.py \
+${COMP_DB_MAP} \
 ${SOURCE_HOME} \
 ${BUILD_HOME} \
-${ROSE_HOME}/bin/identityTranslator \
---database=${BUILD_HOME}/compile_commands.json \
+${ROSE_TOOL} \
+--database=${COMPILATION_DATABASE_PATH} \
 --report=${JSON_REPORT_FILE_NAME} \
 --start_at=${FIRST_UNIT} \
 --end_at=${LAST_UNIT} \
@@ -55,9 +56,9 @@ ${ROSE_HOME}/bin/identityTranslator \
 -rose:no_optimize_flag_for_frontend \
 -rose:skipAstConsistancyTests \
 
-# Make text report:
+# Make text report (Cheap. srun not needed):
 log_then_run \
-${AUTOMATION_HOME}/compdb/render_text.py \
+${RENDER_TEXT} \
 --in_file=${JSON_REPORT_FILE_NAME} \
 --out_file=${TEXT_REPORT_FILE_NAME} \
 --debug \

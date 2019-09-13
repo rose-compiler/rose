@@ -1,23 +1,50 @@
 # Below are the steps to build and test the JOVIAL Stratego parser with gcc 4.9.3:
 
-# The LLNL ROSE git project and repo:
-export ROSE_REPO_NAME="rose"
-export ROSE_BRANCH_NAME="master"
+# Need three tar files:
+#  aterm-3.0.tar
+#  sdf2-bundle-2.4.1.tar
+#  strategoxt-0.17.1.tar
 export ROSE_PROJECT_BASE="/g/g17/charles/code/sandbox/ROSE"
 
+# The LLNL ROSE git project and repo:
+export ROSE_REMOTE_PROJECT="rose-dev@rosecompiler1.llnl.gov:rose/scratch"
+export ROSE_REPO_NAME="rose"
+#export ROSE_BRANCH_NAME="rasmussen17/jovial-directives"
+export ROSE_BRANCH_NAME="master"
+
+# e.g. "rose-dev@rosecompiler1.llnl.gov:rose/scratch/rose":
+export ROSE_REMOTE_REPO="${ROSE_REMOTE_PROJECT}/${ROSE_REPO_NAME}"
 # e.g. "/g/g17/charles/code/ROSE/rose":
 export ROSE_REPO_PATH_CLONED=${ROSE_PROJECT_BASE}/${ROSE_REPO_NAME}
 # Take out any slashes:
 # e.g. "dquinlan/dq-development-dev" -> "rose-dquinlan-dq-development-dev"
 export ROSE_BRANCH_PATH_PART=$(echo ${ROSE_BRANCH_NAME} | tr '/' '-')
 
+export MPI_KIND="mvapich2"
+export MPI_VERSION="2.2"
 export BOOST_VERSION="1.66.0"
 export CFLAGS="-DAT_64BIT"
 
+#===============
+# FOR NEW CLONE:
+#===============
+cd ${ROSE_PROJECT_BASE}
+# Clone rose from the Lab repo:
+git clone ${ROSE_REMOTE_REPO}
+cd ${ROSE_REPO_PATH_CLONED}
+# Check out the desired branch if needed:
+git checkout ${ROSE_BRANCH_NAME}
+#git submodule init
+#git submodule update
+export ROSE_VERSION=`cat ROSE_VERSION`
+export ROSE_BRANCH_VERSION="${ROSE_BRANCH_PATH_PART}-${ROSE_VERSION}"
+export ROSE_REPO_PATH_VERSIONED="${ROSE_REPO_PATH_CLONED}-${ROSE_BRANCH_VERSION}"
+mv ${ROSE_REPO_PATH_CLONED} ${ROSE_REPO_PATH_VERSIONED}
+#srun_do run_and_log build
 #=========================
 # FOR EXISTING ROSE CLONE:
 #=========================
-export ROSE_VERSION="0.9.10.186"
+export ROSE_VERSION="0.9.11.15"
 export ROSE_BRANCH_VERSION="${ROSE_BRANCH_PATH_PART}-${ROSE_VERSION}"
 export ROSE_REPO_PATH_VERSIONED="${ROSE_REPO_PATH_CLONED}-${ROSE_BRANCH_VERSION}"
 #========================
@@ -48,12 +75,9 @@ mkdir ${ROSE_BUILD_PATH}
 # SELECT BOOST:
 export BOOST_HOME="/usr/tce/packages/boost/boost-${BOOST_VERSION}-${MPI_KIND}-${MPI_VERSION}-${ROSE_COMPILER_VERSIONED}"
 
-cd ${ROSE_BUILD_PATH}
-
 #======================================
 # FOR GCC 4.9.3 non-MPI (used by Kull):
 #======================================
-cd ${ROSE_BUILD_PATH}
 module load ${ROSE_COMPILER}/${ROSE_COMPILER_VERSION}
 
 #########
@@ -108,25 +132,24 @@ tar -xvf "${ATERM_TAR_NAME_VERSIONED}.tar"
 mv ${ATERM_TAR_PATH_UNTARRED} ${ATERM_REPO_PATH_VERSIONED}
 #==========================
 
-# No compiler version in BUILD_PATH:
-export ATERM_BUILD_PATH="${ATERM_REPO_PATH_VERSIONED}-build"
-#export ATERM_BUILD_PATH="${ATERM_REPO_PATH_VERSIONED}-${ROSE_COMPILER_VERSIONED}"
+export ATERM_HOME="${ATERM_REPO_PATH_VERSIONED}-${ROSE_COMPILER_VERSIONED}"
 
 # Note extra "aterm" subdir:
 cd ${ATERM_REPO_PATH_VERSIONED}/aterm
 srun_do run_and_log ./configure \
---prefix=${ATERM_BUILD_PATH}
+--prefix=${ATERM_HOME}
 # Make is done in the repo dir, not in the build dir:
 srun_do run_and_log make
 # The "stress" test fails, but we don't care:
-srun_do run_and_log --use_first_parm make check
+#srun_do run_and_log --use_first_parm make check
 srun_do run_and_log --use_first_parm make install
 
+STOP:
 gedit aterm.pc
 # add -DAT_64BIT to the Cflags line:
 #            Cflags: -I${prefix}/include -DAT_64BIT
-mkdir ${ATERM_BUILD_PATH}/lib/pkgconfig
-cp aterm.pc ${ATERM_BUILD_PATH}/lib/pkgconfig/.
+mkdir ${ATERM_HOME}/lib/pkgconfig
+cp aterm.pc ${ATERM_HOME}/lib/pkgconfig/.
 
 #########
 # SDF:
@@ -150,19 +173,19 @@ export SDF2_REPO_PATH_VERSIONED="${ROSE_PROJECT_BASE}/${SDF2_REPO_NAME_VERSIONED
 #==================
 cd ${ROSE_PROJECT_BASE}
 # Get /nfs/casc/overture/ROSE/opt/rhel7/x86_64/stratego/sdf2-bundle-2.4.1.tar.gz, then:
-gunzip ${SDF2_REPO_NAME_VERSIONED}.tar.gz
-tar -xvf ${SDF2_REPO_NAME_VERSIONED}.tar
-# TAR_PATH_UNTARRED would be the same as REPO_PATH_VERSIONED, so no mv is needed
+export SDF2_TAR_NAME_VERSIONED=${SDF2_REPO_NAME_VERSIONED}
+export SDF2_TAR_PATH_VERSIONED=${SDF2_REPO_PATH_VERSIONED}
+gunzip ${SDF2_TAR_NAME_VERSIONED}.tar.gz
+tar -xvf ${SDF2_TAR_NAME_VERSIONED}.tar
+# TAR_PATH_UNTARRED is the same as REPO_PATH_VERSIONED, so no mv is needed
 #===================
 
-# No compiler version in BUILD_PATH:
-export SDF2_BUILD_PATH="${SDF2_REPO_PATH_VERSIONED}-build"
-#export SDF2_BUILD_PATH="${SDF2_REPO_PATH_VERSIONED}-${ROSE_COMPILER_VERSIONED}"
+export SDF2_HOME="${SDF2_REPO_PATH_VERSIONED}-${ROSE_COMPILER_VERSIONED}"
 
 cd ${SDF2_REPO_PATH_VERSIONED}
 srun_do run_and_log ./configure \
---prefix=${SDF2_BUILD_PATH} \
---with-aterm=${ATERM_BUILD_PATH} 
+--prefix=${SDF2_HOME} \
+--with-aterm=${ATERM_HOME} 
 srun_do run_and_log make
 srun_do run_and_log --use_first_parm make install
 
@@ -189,13 +212,14 @@ export STRATEGO_REPO_PATH_VERSIONED="${ROSE_PROJECT_BASE}/${STRATEGO_REPO_NAME_V
 #==================
 cd ${ROSE_PROJECT_BASE}
 # Get /nfs/casc/overture/ROSE/opt/rhel7/x86_64/stratego/strategoxt-0.17.1.tar.gz, then:
-gunzip ${STRATEGO_REPO_NAME_VERSIONED}.tar.gz
-tar -xvf ${STRATEGO_REPO_NAME_VERSIONED}.tar
+export STRATEGO_TAR_NAME_VERSIONED=${STRATEGO_REPO_NAME_VERSIONED}
+export STRATEGO_TAR_PATH_VERSIONED=${STRATEGO_REPO_PATH_VERSIONED}
+gunzip ${STRATEGO_TAR_NAME_VERSIONED}.tar.gz
+tar -xvf ${STRATEGO_TAR_NAME_VERSIONED}.tar
 # TAR_PATH_UNTARRED would be the same as REPO_PATH_VERSIONED, so no mv is needed
 #==================
 
-export STRATEGO_BUILD_PATH="${STRATEGO_REPO_PATH_VERSIONED}-build"
-# export STRATEGO_BUILD_PATH="${STRATEGO_REPO_PATH_VERSIONED}-${ROSE_COMPILER_VERSIONED}"
+export STRATEGO_HOME="${STRATEGO_REPO_PATH_VERSIONED}-${ROSE_COMPILER_VERSIONED}"
 
 cd ${STRATEGO_REPO_PATH_VERSIONED}
 
@@ -204,16 +228,20 @@ cd ${STRATEGO_REPO_PATH_VERSIONED}
 #CFLAGS="-DAT_64BIT=1" \
 
 srun_do run_and_log ./configure \
---prefix=${STRATEGO_BUILD_PATH} \
---with-aterm=${ATERM_BUILD_PATH} \
---with-sdf=${SDF2_BUILD_PATH} 
+--prefix=${STRATEGO_HOME} \
+--with-aterm=${ATERM_HOME} \
+--with-sdf=${SDF2_HOME} 
+# Had errors with parallel make, so just doing serial:
 srun_do run_and_log make
 # Takes 27 min on one core:
 srun_do run_and_log --use_first_parm make install
 # Optional - takes a long time:
 srun_do run_and_log --use_first_parm make check
 
-srun_do run_and_log ${STRATEGO_BUILD_PATH}/bin/sglri -p ${ROSE_REPO_PATH_VERSIONED}/src/3rdPartyLibraries/experimental-jovial-parser/share/rose/Jovial.tbl -i jovial_file.jov
+# Do a test parse:
+srun_do run_and_log ${STRATEGO_HOME}/bin/sglri -p ${ROSE_REPO_PATH_VERSIONED}/src/3rdPartyLibraries/experimental-jovial-parser/share/rose/Jovial.tbl -i jovial_file.jov
+#srun_do run_and_log ${STRATEGO_HOME}/bin/sglri -p /g/g17/charles/code/ROSE/rose-master-0.9.11.15/src/3rdPartyLibraries/experimental-jovial-parser/share/rose/Jovial.tbl -i jovial_file.jov
+srun_do run_and_log ${STRATEGO_HOME}/bin/sglri -p /g/g17/charles/code/ROSE/rose-master-0.9.11.15/src/3rdPartyLibraries/experimental-jovial-parser/share/rose/Jovial.tbl -i /g/g17/charles/code/JOVIAL/examples/original/COMPOOL1.cpl
 
 ##########
 
@@ -227,8 +255,8 @@ ${ROSE_REPO_PATH_VERSIONED}/configure \
 --disable-boost-version-check \
 --enable-edg_version=5.0 \
 --enable-experimental_jovial_frontend \
---with-aterm=${ATERM_BUILD_PATH} \
---with-stratego=${STRATEGO_BUILD_PATH} \
+--with-aterm=${ATERM_HOME} \
+--with-stratego=${STRATEGO_HOME} \
 
 #----------------------
 #======================================

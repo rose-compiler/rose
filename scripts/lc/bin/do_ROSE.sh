@@ -49,7 +49,7 @@ show_sources () {
   log_separator_1
   log "Sources:"
   log_separator_1
-  for source in ${source_path} ${source_path_no_suffix}-*
+  for source in ${source_path} ${source_path_no_suffix}-*.[ch]*
   do
     if [ -f ${source} ]
     then
@@ -90,6 +90,7 @@ run_tool () {
 #  log "MPICH_CXX=${MPICH_CXX}"
   run_it \
   log_then_run \
+  timeout 1m \
   ${ROSE_CXX} \
   ${ROSE_ARGS} \
   -c \
