@@ -41,7 +41,7 @@ namespace Concolic {
 
 namespace
 {
-  char* c_str_ptr(std::string& s)
+  char* c_str_ptr(const std::string& s)
   {
     return const_cast<char*>(s.c_str());
   }
@@ -53,10 +53,9 @@ namespace
 }
 
 
-LinuxExecutor::Result::Result(int exitStatus)
-    : ConcreteExecutor::Result(0.0), exitStatus_(exitStatus) {
-    // FIXME[Robb Matzke 2019-04-15]: probably want a better ranking that 0.0, such as a ranking that depends on the exit status.
-}
+LinuxExecutor::Result::Result(double rank, int exitStatus)
+: ConcreteExecutor::Result(rank), exitStatus_(exitStatus)
+{}
 
 std::vector<std::string>
 convToStringVector(std::vector<EnvValue> env)
@@ -70,6 +69,7 @@ convToStringVector(std::vector<EnvValue> env)
 }
 
 #if 0 /* after boost 1.65 and C++11 */
+// \todo update interface (see below)
 int executeBinary( const boost::filesystem::path& binary,
                     const boost::filesystem::path& logout,
                     const boost::filesystem::path& logerr,
@@ -101,7 +101,9 @@ void setPersonality(LinuxExecutor::Persona persona)
 }
 
 // Returns the exit status as documented by waitpid[2], which is not the same as the argument to the child's exit[3] call.
-int executeBinary( const std::string& binary,
+int executeBinary( const std::string& execmon,
+                   const std::vector<std::string>& execmonargs,
+                   const std::string& binary,
                    const std::string& logout,
                    const std::string& logerr,
                    LinuxExecutor::Persona persona,
@@ -129,9 +131,16 @@ int executeBinary( const std::string& binary,
 
   std::vector<char*>       args;  // points to arguments
   std::vector<char*>       envv;        // points to environment strings
+  const bool               withExecMonitor = execmon.size() > 0;
+
+  args.reserve(2 /* program name + delimiter */ + arguments.size() + execmonargs.size());
+
+  if (withExecMonitor)
+  {
+    std::transform(execmonargs.begin(), execmonargs.end(), std::back_inserter(args), c_str_ptr);
+  }
 
   // set up arguments
-  args.reserve(2 /* program name + delimiter */ + arguments.size());
   args.push_back(const_cast<char*>(binary.c_str()));
   std::transform(arguments.begin(), arguments.end(), std::back_inserter(args), c_str_ptr);
   args.push_back(NULL);
@@ -150,14 +159,18 @@ int executeBinary( const std::string& binary,
 }
 
 
-int executeBinary( const boost::filesystem::path& binary,
+int executeBinary( const boost::filesystem::path&  execmon,
+                   const std::vector<std::string>& execmonargs,
+                   const boost::filesystem::path&  binary,
                    const boost::filesystem::path& logout,
                    const boost::filesystem::path& logerr,
                    LinuxExecutor::Persona persona,
                    TestCase::Ptr tc
                  )
 {
-  return executeBinary( binary.native(),
+  return executeBinary( execmon.native(),
+                        execmonargs,
+                        binary.native(),
                         logout.native(),
                         logerr.native(),
                         persona,
@@ -228,11 +241,10 @@ void LinuxExecutor::Result::exitStatus(int x)
 }
 
 LinuxExecutor::Result*
-createLinuxResult(int errcode, std::string outstr, std::string errstr)
+createLinuxResult(int errcode, std::string outstr, std::string errstr, double rank)
 {
-  LinuxExecutor::Result* res = new LinuxExecutor::Result(errcode);
+  LinuxExecutor::Result* res = new LinuxExecutor::Result(rank, errcode);
 
-  res->exitStatus(errcode);
   res->out(outstr);
   res->err(errstr);
   return res;
@@ -243,6 +255,7 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
 {
   namespace bstfs = boost::filesystem;
 
+  const bool               withExecMonitor = executionMonitor().size();
   int         uniqNum  = versioning.fetch_add(1);
   int         procNum  = getpid();
   std::string basename = "./out_";
@@ -255,25 +268,56 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
   bstfs::path binary(basename + ".bin");
   bstfs::path logout(basename + "_out.log");
   bstfs::path logerr(basename + "_err.log");
+  bstfs::path              qualScore(basename + ".qs");
 
   storeBinaryFile(specimen->content(), binary);
-
   bstfs::permissions(binary, bstfs::add_perms | bstfs::owner_read | bstfs::owner_exe);
 
   Persona persona;
+  std::vector<std::string> execmonArgs;
 
   if (!useAddressRandomization_) persona = Persona(ADDR_NO_RANDOMIZE);
 
-  const int   errcode = executeBinary(binary, logout, logerr, persona, tc);
-  std::string outstr  = loadTextFile(logout);
-  std::string errstr  = loadTextFile(logerr);
+  if (withExecMonitor)
+  {
+    // execution monitor was set
+    execmonArgs.reserve(5);
+
+    execmonArgs.push_back(executionMonitor().native());
+    execmonArgs.push_back("-o");
+    execmonArgs.push_back(qualScore.native());
+    // execmonArgs.push_back("--no-disassembler");
+    execmonArgs.push_back("--");
+  }
+
+  int                      errcode = executeBinary( executionMonitor(),
+                                                    execmonArgs,
+                                                    binary,
+                                                    logout,
+                                                    logerr,
+                                                    persona,
+                                                    tc
+                                                  );
+
+  const std::string        outstr  = loadTextFile(logout);
+  const std::string        errstr  = loadTextFile(logerr);
+  double                   rank    = errcode;
+
+  if (withExecMonitor)
+  {
+    std::stringstream results(loadTextFile(qualScore));
+
+    results >> errcode >> rank;
+    bstfs::remove(qualScore);
+  }
 
   // cleanup
   bstfs::remove(logerr);
   bstfs::remove(logout);
   bstfs::remove(binary);
 
-  return createLinuxResult(errcode, outstr, errstr);
+  tc->concreteRank(rank);
+  return createLinuxResult(errcode, outstr, errstr, rank);
 }
 
 #else // !defined (__linux__)

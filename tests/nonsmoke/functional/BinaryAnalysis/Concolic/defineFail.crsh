@@ -1,13 +1,13 @@
 create sqlite3://./defineFail.db
 
+@ success
 ls-family :: t01
-  @ success
 {
   ls -la
 }
 
+@ failure
 ls-family :: t02
-  @ failure
 {
   ./ls --author
 }

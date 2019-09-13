@@ -27,7 +27,7 @@ size_t fib(size_t n)
 
 size_t execute(const size_t mode, size_t count)
 {
-  static constexpr size_t NUM_FUNCS = 3;
+  static const size_t NUM_FUNCS = 3;
 
   size_t op  = 0;
   size_t res = 0;

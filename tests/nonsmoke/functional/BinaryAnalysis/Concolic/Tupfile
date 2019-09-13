@@ -5,10 +5,16 @@ ifeq (@(ENABLE_BINARY_ANALYSIS) @(WITH_SQLITE),yes yes)
 #------------------------------------------------------------------------------------------------------------------------
 # Database tests
 
-# a) sample program to load and store in DB
+# a.1) sample program to load and store in DB
 run $(support_compile_linkexe) sampleExecutable.C
 
-# a) test compiled programs
+# a.2) sample program to test the execution monitor
+run $(support_compile_linkexe) test-execution-monitor.C
+
+# a.3) execution monitor to produce quality score
+run $(tool_compile_linkexe) ExecutionMonitor.C
+
+# a.4) test compiled programs
 run $(tool_compile_linkexe) testConcolicDB.C
 run $(test) testConcolicDB
 
@@ -41,6 +47,14 @@ run $(test) ./crsh/crsh -o testExport \
     --input=sampleExecutable \
     --extra=testExport.db \
     ./crsh/crsh testExport.crsh
+
+run $(test) ./crsh/crsh -o testAddressRandomization \
+    --input=sampleExecutable \
+    ./crsh/crsh testAddressRandomization.crsh
+    
+run $(test) ./crsh/crsh -o testExecutionMonitor \
+    --input=ExecutionMonitor test-execution-monitor \
+    ./crsh/crsh testExecutionMonitor.crsh
 
 run $(test) ./crsh/crsh -o testConnectNonExisting \
     ./crsh/crsh testConnectNonExisting.crsh
