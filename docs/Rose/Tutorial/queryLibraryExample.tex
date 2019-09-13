@@ -58,6 +58,8 @@ mechanism is particularly simple to use.
 \label{Tutorial:exampleInputCode_QueryLibrary}
 \end{figure}
 
+% (09/10/2019) Pei-Hung remove the following figure because it cannot be generated into PDF
+\commentout{
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
@@ -80,6 +82,7 @@ mechanism is particularly simple to use.
 \caption{Output of input file to the AST query processor (queryLibraryExample.C).}
 \label{Tutorial:exampleOutput_QueryLibrary}
 \end{figure}
+}
 
 The program in figure~\ref{Tutorial:exampleQueryLibrary} calls 
 an internal ROSE Query Library.  Queries of the AST using the query library are
@@ -87,10 +90,12 @@ particularly simple and often are useful as nested queries within more complex a
 More information of the ROSE AST Query Library is available within ROSE User Manual.
 % chapter~\ref{QueryLibrary:QueryLibrary}.
 
+% (09/10/2019) Pei-Hung remove the following because example output cannot be generated
+\commentout{
    Using the input program in figure~\ref{Tutorial:exampleInputCode_QueryLibrary}
 the translator processes the code and generates the output in 
 figure~\ref{Tutorial:exampleOutput_QueryLibrary}.
-
+}
 \fixme{Put an example of composition of AST queries into the example input code.}
 
 \section{Nested Query}
