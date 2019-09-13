@@ -925,19 +925,31 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
         retval = SymbolicSemantics::SValue::promote(ops->undefined_(REG_RETURN_.nBits()));
         ops->writeRegister(REG_RETURN_, retval);
 
-        // Cause the function to return to the address stored at the top of the stack.
-        RegisterDescriptor SP = cpu->stackPointerRegister();
-        BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.nBits()));
-        BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
-                                                                ops->undefined_(stackPointer->get_width()), ops->boolean_(true));
-        ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
+        // Simulate function returning to caller
+        if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherPowerpc>(cpu)) {
+            // PowerPC calling convention stores the return address in the link register (LR)
+            const RegisterDescriptor LR = cpu->callReturnRegister();
+            ASSERT_forbid(LR.isEmpty());
+            BaseSemantics::SValuePtr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
+            ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 
-        // Pop some things from the stack.
-        int64_t sd = summary.stackDelta != SgAsmInstruction::INVALID_STACK_DELTA ?
-                     summary.stackDelta :
-                     returnTarget->get_width() / 8;
-        stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
-        ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
+        } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherX86>(cpu)) {
+            // x86 and amd64 store the return address at the top of the stack
+            const RegisterDescriptor SP = cpu->stackPointerRegister();
+            ASSERT_forbid(SP.isEmpty());
+            BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.nBits()));
+            BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
+                                                                    ops->undefined_(stackPointer->get_width()),
+                                                                    ops->boolean_(true));
+            ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
+
+            // Pop some things from the stack.
+            int64_t sd = summary.stackDelta != SgAsmInstruction::INVALID_STACK_DELTA ?
+                         summary.stackDelta :
+                         returnTarget->get_width() / 8;
+            stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
+            ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
+        }
     }
 
     if (retval) {
