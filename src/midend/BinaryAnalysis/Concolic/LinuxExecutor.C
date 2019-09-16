@@ -255,25 +255,25 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
 {
   namespace bstfs = boost::filesystem;
 
-  const bool               withExecMonitor = executionMonitor().size();
-  int         uniqNum  = versioning.fetch_add(1);
-  int         procNum  = getpid();
-  std::string basename = "./out_";
-  SpecimenPtr specimen = tc->specimen();
+  const bool               withExecMonitor = executionMonitor().string().size();
+  int                      uniqNum  = versioning.fetch_add(1);
+  int                      procNum  = getpid();
+  std::string              basename = "./out_";
+  SpecimenPtr              specimen = tc->specimen();
 
   basename.append(boost::lexical_cast<std::string>(procNum));
   basename.append("_");
   basename.append(boost::lexical_cast<std::string>(uniqNum));
 
-  bstfs::path binary(basename + ".bin");
-  bstfs::path logout(basename + "_out.log");
-  bstfs::path logerr(basename + "_err.log");
+  bstfs::path              binary(basename + ".bin");
+  bstfs::path              logout(basename + "_out.log");
+  bstfs::path              logerr(basename + "_err.log");
   bstfs::path              qualScore(basename + ".qs");
 
   storeBinaryFile(specimen->content(), binary);
   bstfs::permissions(binary, bstfs::add_perms | bstfs::owner_read | bstfs::owner_exe);
 
-  Persona persona;
+  Persona                  persona;
   std::vector<std::string> execmonArgs;
 
   if (!useAddressRandomization_) persona = Persona(ADDR_NO_RANDOMIZE);
@@ -322,8 +322,8 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
 
 #else // !defined (__linux__)
 
-LinuxExecutor::Result::Result(int exitStatus)
-    : ConcreteExecutor::Result(0.0), exitStatus_(exitStatus) {
+LinuxExecutor::Result::Result(double rank, int exitStatus)
+    : ConcreteExecutor::Result(rank), exitStatus_(exitStatus) {
     ROSE_ASSERT(!"NOT_LINUX");
 }
 
