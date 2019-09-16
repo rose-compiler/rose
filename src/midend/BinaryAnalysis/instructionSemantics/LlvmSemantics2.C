@@ -1109,6 +1109,8 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
         ExpressionPtr operator_result;
         TreeNodes operands = inode->children();
         switch (inode->getOperator()) {
+            case SymbolicExpr::OP_NONE:
+                ASSERT_not_reachable("cannot happen for an interior node");
             case SymbolicExpr::OP_ADD:
                 operator_result = emit_left_associative(o, "add", operands);
                 break;

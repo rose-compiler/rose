@@ -501,6 +501,8 @@ YicesSolver::out_expr(const SymbolicExpr::Ptr &tn) {
     } else {
         ASSERT_not_null(in);
         switch (in->getOperator()) {
+            case SymbolicExpr::OP_NONE:
+                ASSERT_not_reachable("not possible for an interior node");
             case SymbolicExpr::OP_ADD:
                 return out_la("bv-add", in, BIT_VECTOR);
             case SymbolicExpr::OP_AND: {
