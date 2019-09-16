@@ -408,7 +408,7 @@ build directory for "make". \$ROSE_SRC is the absolute
 path of your ROSE source tree.
 
 Full installation instructions can be found here:
-http://rosecompiler.org/ROSE_HTML_Reference/installation.html
+https://github.com/rose-compiler/rose/wiki/How-to-Set-Up-ROSE
 
 Thank you for using ROSE.
 
