@@ -8,15 +8,11 @@ test-exec :: t01
   ./test-execution-monitor 0 0 
 }
 
-! echo 1
-
 @ success
 test-exec :: t02
 {
   ./test-execution-monitor 1 5
 }
-
-! echo 2
 
 @ success
 test-exit :: t03
@@ -24,27 +20,21 @@ test-exit :: t03
   ./sampleExecutable --exit=17
 }
 
-! echo 3
-
 @ success
 test-exit :: t04
 {
   ./sampleExecutable --seg-fault
 }
 
-! echo 4
-
 @ success
 test-exec :: run 2
-
-! echo 5
 
 @ failure
 test-exit :: run 2
 
 close
 
-# ! rm ./testPerfExecutionMonitor.db
+! rm ./testPerfExecutionMonitor.db
 
 ! echo ok.
 

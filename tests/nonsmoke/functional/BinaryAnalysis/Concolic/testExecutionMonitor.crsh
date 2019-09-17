@@ -34,7 +34,7 @@ test-exit :: run 2
 
 close
 
-# ! rm ./testExecutionMonitor.db
+! rm ./testExecutionMonitor.db
 
 ! echo ok.
 
