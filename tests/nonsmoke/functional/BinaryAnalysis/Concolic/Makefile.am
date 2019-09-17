@@ -46,6 +46,22 @@ noinst_PROGRAMS += testConcolicDB
 testConcolicDB_SOURCES = testConcolicDB.C configDB.h
 testConcolicDB_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
+AM_YFLAGS = -d -t
+
+noinst_PROGRAMS += rose-perf-analyzer
+rose_perf_analyzer_SOURCES = PerfOutputAnalyzer/parser.ypp PerfOutputAnalyzer/lexer.lpp \
+                             PerfOutputAnalyzer/analyzer.cpp 
+rose_perf_analyzer_CPPFLAGS = $(ROSE_INCLUDES)
+rose_perf_analyzer_LDFLAGS = $(ROSE_RPATHS)
+rose_perf_analyzer_LDADD = $(ROSE_LIBS)
+
+
+noinst_SCRIPTS = rose-execmon-linux-perf-intel-x86-64.sh
+
+rose-execmon-linux-perf-intel-x86-64.sh: $(srcdir)/rose-execution-monitor-linux-perf-intel-x86_64.sh rose-perf-analyzer
+	cp $< $@
+	chmod u+x $@	
+
 TEST_TARGETS += testConcolicDB.passed
 
 testConcolicDB.passed: $(srcdir)/concolicDB.conf testConcolicDB
@@ -141,10 +157,19 @@ testAddressRandomization.passed: $(srcdir)/defaultcrsh.conf crsh/crsh sampleExec
 
 TEST_TARGETS += testExecutionMonitor.passed
 
-testExecutionMonitor.passed: $(srcdir)/defaultcrsh.conf crsh/crsh ExecutionMonitor test-execution-monitor
+testExecutionMonitor.passed: $(srcdir)/defaultcrsh.conf crsh/crsh ExecutionMonitor sampleExecutable test-execution-monitor
 	@$(RTH_RUN) \
 		TITLE="concolic database testExecutionMonitor [$@]" \
 		CMD="./crsh/crsh $(srcdir)/testExecutionMonitor.crsh" \
+		ANS="no" \
+		$< $@
+
+TEST_TARGETS += testPerfExecutionMonitor.passed
+
+testPerfExecutionMonitor.passed: $(srcdir)/defaultcrsh.conf crsh/crsh rose-execmon-linux-perf-intel-x86-64.sh sampleExecutable test-execution-monitor
+	@$(RTH_RUN) \
+		TITLE="concolic database testPerfExecutionMonitor [$@]" \
+		CMD="./crsh/crsh $(srcdir)/testPerfExecutionMonitor.crsh" \
 		ANS="no" \
 		$< $@
 

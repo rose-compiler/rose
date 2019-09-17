@@ -16,8 +16,10 @@ static const bool onLinux = false;
 
 typedef std::pair<std::string, std::string> KeyValue;
 
-static const std::string check_env = "--env=";
-static const std::string check_rndaddr = "--address-randomization=";
+static const std::string check_env      = "--env=";
+static const std::string check_rndaddr  = "--address-randomization=";
+static const std::string check_segfault = "--seg-fault";
+static const std::string check_exitcode = "--exit=";
 
 void fail() { std::exit(1); }
 
@@ -28,8 +30,19 @@ KeyValue keyValue(const std::string& arg)
 
   if (val == std::string::npos)
     fail();
-
+    
   return std::make_pair(arg.substr(0, val), arg.substr(val+1));
+}
+
+int intValue(const std::string& arg)
+{
+  std::stringstream buf;
+  int               res;
+  
+  buf << arg;
+  buf >> res;
+  
+  return res;    
 }
 
 bool trueFalseValue(const std::string& arg)
@@ -46,13 +59,20 @@ bool addressRandomization()
 #endif /* __linux__ */
 }
 
+void segFault()
+{
+  void (*fun)() = NULL;
+  
+  fun(); 
+}
+
 void check(std::string arg)
 {
   if (arg.find(check_env) == 0)
   {
     KeyValue    dsc = keyValue(arg.substr(check_env.size()));
     const char* val = std::getenv(dsc.first.c_str());
-
+  
     if (!val || dsc.second != val)
       fail();
 
@@ -68,6 +88,18 @@ void check(std::string arg)
       fail();
 
     return;
+  }
+  
+  if (arg.find(check_exitcode) == 0)
+  {
+    const int exitcode = intValue(arg.substr(check_exitcode.size()));
+    
+    exit(exitcode);
+  }
+  
+  if (arg.find(check_segfault) == 0)
+  {
+    segFault();
   }
 }
 

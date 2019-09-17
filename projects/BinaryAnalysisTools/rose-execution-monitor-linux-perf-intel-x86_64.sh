@@ -19,7 +19,7 @@ helpmsg() {
   echo "                          to specimen."     
 }
 
-echo "Your command line contains $# arguments: $@"
+# echo "Your command line contains $# arguments: $@"
 
 while [[ $# -gt 0 ]] && [[ "$1" != "--" ]]; do
   case "$1" in
@@ -57,14 +57,11 @@ shift
 
 #set -o xtrace
 
-# perf record -e intel_pt//u rose-execution-wrapper.sh $outfile $specimen "$@"
 perf record -e intel_pt//u $specimen "$@"
 
 echo "$?" > "$outfile"
 
 # Not working alternative: should filter startup code
 # perf record -e intel_pt//u --filter 'start main @ $specimen' "$specimen $@"
-
-
-perf script --itrace=igb -F brstack,ip,addr,dso,flags | rose-perf-analyzer >> "$outfile" 
+perf script --itrace=igb -F brstack,ip,addr,dso,flags | ./rose-perf-analyzer >> "$outfile" 
 
