@@ -518,6 +518,14 @@ string Flow::toDot(Labeler* labeler) {
         ss<<":";
       } else if(isSgDefaultOptionStmt(node)) {
         ss<<"default:";
+      } else if(labeler->isJoinLabel(*i)) {
+        ss<<"Join: "<<labeler->forkLabel(labeler->getNode(*i));
+      } else if(labeler->isForkLabel(*i)) {
+        ss<<"Fork:";
+      } else if(labeler->isWorkshareLabel(*i)) {
+        ss<<"Workshare:";
+      } else if(labeler->isBarrierLabel(*i)) {
+        ss<<"Barrier: "<<labeler->workshareLabel(labeler->getNode(*i));
       } else if(isSgOmpBodyStatement(node)) {
         ss<<node->class_name();
       } else {
@@ -527,17 +535,17 @@ string Flow::toDot(Labeler* labeler) {
     if(_dotOptionDisplayLabel||_dotOptionDisplayStmt) {
       ss << "\"";
       if (labeler) {
-	SgNode* node=labeler->getNode(*i);
-	if(SgNodeHelper::isCond(node)) {
-	  ss << " shape=oval style=filled ";
-	  ss<<"color=yellow "; 
-	} else {
-	  ss << " shape=box ";
-	}
+        SgNode* node=labeler->getNode(*i);
+        if(SgNodeHelper::isCond(node)) {
+          ss << " shape=oval style=filled ";
+          ss<<"color=yellow ";
+        } else {
+          ss << " shape=box ";
+        }
       } else {
-	if (_fixedNodeColor != "white") {
-	  ss << " fillcolor=\""<<_fixedNodeColor<<"\" style=filled";
-	}
+        if (_fixedNodeColor != "white") {
+          ss << " fillcolor=\""<<_fixedNodeColor<<"\" style=filled";
+        }
       }
       ss << "];\n";
     }

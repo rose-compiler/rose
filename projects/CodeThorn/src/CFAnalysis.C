@@ -325,10 +325,14 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   }
 
     // all omp statements
+  case V_SgOmpParallelStatement: {
+    return labeler->forkLabel(node);
+  }
+  case V_SgOmpForStatement: {
+    return labeler->workshareLabel(node);
+  }
   case V_SgOmpTargetStatement:
-  case V_SgOmpParallelStatement:
   case V_SgOmpSimdStatement:
-  case V_SgOmpForStatement:
   case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
@@ -526,16 +530,17 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
 
-  case V_SgOmpTargetStatement:
-  case V_SgOmpParallelStatement:
-  case V_SgOmpSimdStatement:
-  case V_SgOmpForStatement: {
-    // the final label is the final label of the child node's construct
-    SgNode* nextNestedStmt=node->get_traversalSuccessorByIndex(0);
-    LabelSet finalLabelSet=finalLabels(nextNestedStmt);
-    finalSet+=finalLabelSet;
+  case V_SgOmpParallelStatement: {
+    finalSet.insert(labeler->joinLabel(node));
     return finalSet;
   }
+  case V_SgOmpForStatement: {
+    finalSet.insert(labeler->barrierLabel(node));
+    return finalSet;
+  }
+  
+  case V_SgOmpTargetStatement:
+  case V_SgOmpSimdStatement:
     
     // all omp statements
   case V_SgOmpAtomicStatement:
@@ -1083,22 +1088,48 @@ Flow CFAnalysis::flow(SgNode* node) {
     return edgeSet;
 
     // parallel nested omp constructs
-  case V_SgOmpTargetStatement:
-  case V_SgOmpParallelStatement:
-  case V_SgOmpSimdStatement:
-  case V_SgOmpForStatement: {
-    SgNode* nextNestedStmt=node->get_traversalSuccessorByIndex(0);
-    // need to compute flow of next stmt because it is nested (and not at basic-block level)
-    Flow nextNestedStmtFlow=flow(nextNestedStmt);
-    edgeSet+=nextNestedStmtFlow;
+  case V_SgOmpParallelStatement: {
+    SgNode *nextNestedStmt = node->get_traversalSuccessorByIndex(0);
+    auto nextFlow = flow(nextNestedStmt);
+    edgeSet += nextFlow;
 
-    // the label is the final label (but function finalLabels cannot be used here because it gives the final labels of the entire nested construct)
-    Label lab=getLabel(node);
-    Edge edge1=Edge(lab,EDGE_FORWARD,initialLabel(nextNestedStmt));
-    edgeSet.insert(edge1);
+    // Forward edge to connect nested body
+    auto lab = labeler->forkLabel(node);
+    auto e = Edge(lab, EDGE_FORWARD, initialLabel(nextNestedStmt));
+    edgeSet.insert(e);
+
+    // Edges connecting inner final labels with join node for proper indication of synchonization
+    auto finals = finalLabels(nextNestedStmt);
+    auto join = labeler->joinLabel(node);
+    for (auto l : finals) {
+      auto e = Edge(l, EDGE_FORWARD, join);
+      edgeSet.insert(e);
+    }
     return edgeSet;
   }
-    // these omp statements do not generate edges in addition to the ingoing and outgoing edge
+  case V_SgOmpForStatement: {
+    SgNode *nextNestedStmt = node->get_traversalSuccessorByIndex(0);
+    auto nextFlow = flow(nextNestedStmt);
+    edgeSet += nextFlow;
+
+    // Forward edge to connect nested body
+    auto lab = labeler->workshareLabel(node);
+    auto e = Edge(lab, EDGE_FORWARD, initialLabel(nextNestedStmt));
+    edgeSet.insert(e);
+
+    // Edges connecting inner final labels with barrier node for proper indication of synchonization
+    auto finals = finalLabels(nextNestedStmt);
+    auto barrier = labeler->barrierLabel(node);
+    for (auto l : finals) {
+      auto e = Edge(l, EDGE_FORWARD, barrier);
+      edgeSet.insert(e);
+    }
+    return edgeSet;
+  }
+  
+  // these omp statements do not generate edges in addition to the ingoing and outgoing edge
+  case V_SgOmpTargetStatement:
+  case V_SgOmpSimdStatement:
   case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
