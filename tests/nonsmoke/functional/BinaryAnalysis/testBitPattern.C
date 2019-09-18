@@ -11,6 +11,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <sstream>
 #include <iostream>
 
+using namespace Rose;
+
 template<typename T>
 void
 require(const std::string &testname, const BitPattern<T> &bp, const std::string &answer)

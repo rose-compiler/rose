@@ -2100,6 +2100,8 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
      this->p_package = NULL;
      this->p_import_list = NULL;
      this->p_class_list = NULL;
+     this->p_associated_include_file = NULL;
+     this->p_headerFileReport = NULL;
 
      set_globalScope(NULL);
 
@@ -2537,7 +2539,7 @@ SgProject::parse()
 #endif
 
   // DQ (12/6/2014): This code has been moved from the unparser to here so that it is run after
-  // AST Postprocessing and before any transformations are done. The token steam mapping only
+  // AST Postprocessing and before any transformations are done. The token stream mapping only
   // really makes since at this position in the time-line since otherwise removed statements would
   // be included as whitespace between remaining statements.
 
@@ -2555,6 +2557,14 @@ SgProject::parse()
                          ( (file->get_unparse_tokens() == true)     || (file->get_use_token_stream_to_improve_source_position_info() == true) ) )
                        {
                       // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
+                         if (file->get_translateCommentsAndDirectivesIntoAST() == true)
+                            {
+                              printf ("translateCommentsAndDirectivesIntoAST option not yet supported! \n");
+                              ROSE_ASSERT(false);
+
+                           // DQ (3/29/2019): This still needs to be debugged.
+                              SageInterface::translateToUseCppDeclarations(sourceFile);
+                            }
 #if 0
                          printf ("In SgProject::parse(): Building token stream mapping map! \n");
 #endif
@@ -2861,10 +2871,11 @@ SgFile::generate_C_preprocessor_intermediate_filename( string sourceFilename )
 int openFortranParser_main(int argc, char **argv );
 #endif
 
-#ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-// This is defined separately configured only for the EXPERIMENTAL_OFP_ROSE_CONNECTION.
-// Rasmussen (3/12/2018): Modified call to include the source file.
-   int experimental_fortran_main(int argc, char **argv, SgSourceFile* sg_source_file);
+#if defined(ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION) || defined(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION)
+// Added support for usage of Flang front end. Both ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION and
+// ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION should not be configured at the same time.  If so, the best
+// case scenario is that a multiple symbol error will be reported at link time [Rasmussen 2019.08.30].
+   int experimental_fortran_main(int argc, char* argv[], SgSourceFile* sg_source_file);
 #endif
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
@@ -4325,16 +4336,22 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      ROSE_ASSERT(astIncludeStack.size() == 0);
 
   // DQ (6/7/2013): Added support for call the experimental frontran frontend (if the associated option is specified on the command line).
-  // frontendErrorLevel = openFortranParser_main (numberOfCommandLineArguments, inputCommandLine);
-  // int frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
      int frontendErrorLevel = 0;
-     if (get_experimental_fortran_frontend() == true)
+     if (get_experimental_fortran_frontend() == true || get_experimental_flang_frontend() == true)
         {
           vector<string> experimentalFrontEndCommandLine;
 
        // Push an initial argument onto the command line stack so that the command line can be interpreted
        // as coming from an command shell command line (where the calling program is always argument zero).
-          experimentalFrontEndCommandLine.push_back("dummyArg_0");
+          if (get_experimental_fortran_frontend() == true)
+             {
+                experimentalFrontEndCommandLine.push_back("dummyArg_0");
+             }
+          else
+             {
+                experimentalFrontEndCommandLine.push_back("f18");
+                experimentalFrontEndCommandLine.push_back("-fexternal-builder");
+             }
 
        // Rasmussen (11/13/2017): Removed usage of --parseTable command-line option.
        // This information is better known by the individual language support files.
@@ -4342,9 +4359,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
           experimentalFrontEndCommandLine.push_back(get_sourceFileNameWithPath());
 
-          int experimental_openFortranParser_argc    = 0;
-          char** experimental_openFortranParser_argv = NULL;
-          CommandlineProcessing::generateArgcArgvFromList(experimentalFrontEndCommandLine,experimental_openFortranParser_argc,experimental_openFortranParser_argv);
+          int experimental_FortranParser_argc    = 0;
+          char** experimental_FortranParser_argv = NULL;
+          CommandlineProcessing::generateArgcArgvFromList(experimentalFrontEndCommandLine,experimental_FortranParser_argc,experimental_FortranParser_argv);
 
           if ( SgProject::get_verbose() > 1 )
              {
@@ -4352,23 +4369,25 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                 printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
              }
 
-#ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+// Added ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION. Note that they both use the same entrance to the parser.
+// The two experimental Fortran versions should not be used at the same time [Rasmussen 2019.08.30]
+#if defined(ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION) || defined(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION)
        // Rasmussen (3/12/2018): Modified call to include the source file.
           SgSourceFile* fortranSourceFile = const_cast<SgSourceFile*>(this);
-          frontendErrorLevel = experimental_fortran_main (experimental_openFortranParser_argc,
-                                                          experimental_openFortranParser_argv,
+          frontendErrorLevel = experimental_fortran_main (experimental_FortranParser_argc,
+                                                          experimental_FortranParser_argv,
                                                           fortranSourceFile);
 #else
-          printf ("ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION is not defined \n");
+          printf ("Neither ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION nor ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION is defined \n");
 #endif
 
           if (frontendErrorLevel == 0)
              {
-                if ( SgProject::get_verbose() > 1 ) printf ("SUCCESS with call to experimental_openFortranParser_main() \n");
+                if ( SgProject::get_verbose() > 1 ) printf ("SUCCESS with call to experimental_FortranParser_main() \n");
              }
             else
              {
-               printf ("Error returned from call to experimental_openFortranParser_main(): FAILED! (frontendErrorLevel = %d) \n",frontendErrorLevel);
+               printf ("Error returned from call to experimental_FortranParser_main(): FAILED! (frontendErrorLevel = %d) \n",frontendErrorLevel);
                exit(1);
              }
         }
@@ -5964,13 +5983,8 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                                                   frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
 
                                                // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
                                                // Any non-zero value indicates an error.
                                                   frontend_failed = (frontendErrorLevel != 0);
-#else
-                                               // non-zero error code can mean warnings were produced, values greater than 3 indicate errors.
-                                                  frontend_failed = (frontendErrorLevel > 3);
-#endif
                                                 }
                                            }
                                       }
@@ -7629,23 +7643,23 @@ SgC_PreprocessorDirectiveStatement::createDirective ( PreprocessingInfo* current
                break;
              }
 
-          case PreprocessingInfo::CpreprocessorIncludeDeclaration:          { cppDirective = new SgIncludeDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorIncludeDeclaration:          { cppDirective = new SgIncludeDirectiveStatement();     break; }
           case PreprocessingInfo::CpreprocessorIncludeNextDeclaration:      { cppDirective = new SgIncludeNextDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorDefineDeclaration:           { cppDirective = new SgDefineDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorUndefDeclaration:            { cppDirective = new SgUndefDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorIfdefDeclaration:            { cppDirective = new SgIfdefDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorIfndefDeclaration:           { cppDirective = new SgIfndefDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorIfDeclaration:               { cppDirective = new SgIfDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorDeadIfDeclaration:           { cppDirective = new SgDeadIfDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorElseDeclaration:             { cppDirective = new SgElseDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorElifDeclaration:             { cppDirective = new SgElseifDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorEndifDeclaration:            { cppDirective = new SgEndifDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorLineDeclaration:             { cppDirective = new SgLineDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorErrorDeclaration:            { cppDirective = new SgErrorDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorWarningDeclaration:          { cppDirective = new SgWarningDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorEmptyDeclaration:            { cppDirective = new SgEmptyDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorIdentDeclaration:            { cppDirective = new SgIdentDirectiveStatement(); break; }
-          case PreprocessingInfo::CpreprocessorCompilerGeneratedLinemarker: { cppDirective = new SgLinemarkerDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorDefineDeclaration:           { cppDirective = new SgDefineDirectiveStatement();      break; }
+          case PreprocessingInfo::CpreprocessorUndefDeclaration:            { cppDirective = new SgUndefDirectiveStatement();       break; }
+          case PreprocessingInfo::CpreprocessorIfdefDeclaration:            { cppDirective = new SgIfdefDirectiveStatement();       break; }
+          case PreprocessingInfo::CpreprocessorIfndefDeclaration:           { cppDirective = new SgIfndefDirectiveStatement();      break; }
+          case PreprocessingInfo::CpreprocessorIfDeclaration:               { cppDirective = new SgIfDirectiveStatement();          break; }
+          case PreprocessingInfo::CpreprocessorDeadIfDeclaration:           { cppDirective = new SgDeadIfDirectiveStatement();      break; }
+          case PreprocessingInfo::CpreprocessorElseDeclaration:             { cppDirective = new SgElseDirectiveStatement();        break; }
+          case PreprocessingInfo::CpreprocessorElifDeclaration:             { cppDirective = new SgElseifDirectiveStatement();      break; }
+          case PreprocessingInfo::CpreprocessorEndifDeclaration:            { cppDirective = new SgEndifDirectiveStatement();       break; }
+          case PreprocessingInfo::CpreprocessorLineDeclaration:             { cppDirective = new SgLineDirectiveStatement();        break; }
+          case PreprocessingInfo::CpreprocessorErrorDeclaration:            { cppDirective = new SgErrorDirectiveStatement();       break; }
+          case PreprocessingInfo::CpreprocessorWarningDeclaration:          { cppDirective = new SgWarningDirectiveStatement();     break; }
+          case PreprocessingInfo::CpreprocessorEmptyDeclaration:            { cppDirective = new SgEmptyDirectiveStatement();       break; }
+          case PreprocessingInfo::CpreprocessorIdentDeclaration:            { cppDirective = new SgIdentDirectiveStatement();       break; }
+          case PreprocessingInfo::CpreprocessorCompilerGeneratedLinemarker: { cppDirective = new SgLinemarkerDirectiveStatement();  break; }
 
           default:
              {
@@ -7656,14 +7670,18 @@ SgC_PreprocessorDirectiveStatement::createDirective ( PreprocessingInfo* current
 
      ROSE_ASSERT(cppDirective != NULL);
 
+     printf ("In SgC_PreprocessorDirectiveStatement::createDirective(): currentPreprocessingInfo->getString() = %s \n",currentPreprocessingInfo->getString().c_str());
+
      cppDirective->set_directiveString(currentPreprocessingInfo->getString());
+
+     printf ("In SgC_PreprocessorDirectiveStatement::createDirective(): cppDirective->get_directiveString() = %s \n",cppDirective->get_directiveString().c_str());
 
   // Set the defining declaration to be a self reference...
      cppDirective->set_definingDeclaration(cppDirective);
 
   // Build source position information...
      cppDirective->set_startOfConstruct(new Sg_File_Info(*(currentPreprocessingInfo->get_file_info())));
-     cppDirective->set_endOfConstruct(new Sg_File_Info(*(currentPreprocessingInfo->get_file_info())));
+     cppDirective->set_endOfConstruct  (new Sg_File_Info(*(currentPreprocessingInfo->get_file_info())));
 
      return cppDirective;
    }

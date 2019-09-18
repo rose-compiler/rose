@@ -4,6 +4,7 @@
 #include <sstream>
 
 using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 using namespace Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 

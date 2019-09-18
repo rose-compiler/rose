@@ -6,32 +6,33 @@ ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
 ########################################################################################################################
 # Plain command-line tools. See the descriptions at the top of each source file for details.
 ########################################################################################################################
-run $(tool_compile_linkexe) --install dumpMemory.C
-run $(tool_compile_linkexe) --install linearDisassemble.C
-run $(tool_compile_linkexe) --install recursiveDisassemble.C
-run $(tool_compile_linkexe) --install nativeExecutionTrace.C
-run $(tool_compile_linkexe) --install checkExecutionAddresses.C
-run $(tool_compile_linkexe) --install magicScanner.C
-run $(tool_compile_linkexe) --install simulate.C
-run $(tool_compile_linkexe) --install stringDecoder.C
-run $(tool_compile_linkexe) --install findDeadCode.C
-run $(tool_compile_linkexe) --install symbolicSimplifier.C
-run $(tool_compile_linkexe) --install binaryToSource.C
-run $(tool_compile_linkexe) --install trace.C
-run $(tool_compile_linkexe) --install generatePaths.C
-run $(tool_compile_linkexe) --install maxBijection.C
-run $(tool_compile_linkexe) --install debugSemantics.C
-run $(tool_compile_linkexe) --install x86-call-targets.C
-run $(tool_compile_linkexe) --install rxml.C
-run $(tool_compile_linkexe) --install dwarf-lines.C
-run $(tool_compile_linkexe) --install xml2json.C
-run $(public_script) missing-semantics
+run $(tool_compile_linkexe) --install -o rose-dump-memory dumpMemory.C
+run $(tool_compile_linkexe) --install -o rose-linear-disassemble linearDisassemble.C
+run $(tool_compile_linkexe) --install -o rose-recursive-disassemble recursiveDisassemble.C
+run $(tool_compile_linkexe) --install -o rose-native-execution-trace nativeExecutionTrace.C
+run $(tool_compile_linkexe) --install -o rose-check-execution-addresses checkExecutionAddresses.C
+run $(tool_compile_linkexe) --install -o rose-magic-scanner magicScanner.C
+run $(tool_compile_linkexe) --install -o rose-simulate simulate.C
+run $(tool_compile_linkexe) --install -o rose-string-decoder stringDecoder.C
+run $(tool_compile_linkexe) --install -o rose-find-dead-code findDeadCode.C
+run $(tool_compile_linkexe) --install -o rose-symbolic-simplifier symbolicSimplifier.C
+run $(tool_compile_linkexe) --install -o rose-binary-to-source binaryToSource.C
+run $(tool_compile_linkexe) --install -o rose-trace trace.C
+run $(tool_compile_linkexe) --install -o rose-generate-paths generatePaths.C
+run $(tool_compile_linkexe) --install -o rose-max-bijection maxBijection.C
+run $(tool_compile_linkexe) --install -o rose-debug-semantics debugSemantics.C
+run $(tool_compile_linkexe) --install -o rose-x86-call-targets x86-call-targets.C
+run $(tool_compile_linkexe) --install -o rose-rxml rxml.C
+run $(tool_compile_linkexe) --install -o rose-dwarf-lines dwarf-lines.C
+run $(tool_compile_linkexe) --install -o rose-xml2json xml2json.C
+run $(tool_compile_linkexe) --install -o rose-execution-monitor ExecutionMonitor.C
+run $(public_script) rose-missing-semantics
 
 findPath_SOURCES = PathFinder/PathFinder.C PathFinder/semantics.C PathFinder/findPath.C
-run $(tool_compile_linkexe) -o findPath --install $(findPath_SOURCES)
+run $(tool_compile_linkexe) -o rose-find-path --install $(findPath_SOURCES)
 
 ifneq (@(WITH_DLIB),no)
-    run $(tool_compile_linkexe) --install findSimilarFunctions.C
+    run $(tool_compile_linkexe) --install -o rose-find-similar-functions findSimilarFunctions.C
 endif
 
 ########################################################################################################################
@@ -69,7 +70,7 @@ bROwSE_SOURCES = \
 	bROwSE/WStrings.C			\
 	bROwSE/WToggleButton.C
 
-run $(tool_compile_linkexe) $(bROwSE_SOURCES) -o bROwSE_server --install
+run $(tool_compile_linkexe) $(bROwSE_SOURCES) -o bROwSE_server --install -lwthttp
 
 endif
 
@@ -78,10 +79,10 @@ endif
 ########################################################################################################################
 
 
-run $(test) debugSemantics -o testAdaptiveRegisters \
+run $(test) rose-debug-semantics -o testAdaptiveRegisters \
     --answer=TestAnswers/testAdaptiveRegisters.ans \
     --filter='perl -p semanticsFilter' \
-    ./debugSemantics --test-adaptive-registers --semantics=symbolic --track-writers=last specimens/x86-64-adaptiveRegs
+    ./rose-debug-semantics --test-adaptive-registers --semantics=symbolic --track-writers=last specimens/x86-64-adaptiveRegs
 
 xml2json_INPUT =				\
 	xml2json-test01.xml			\
@@ -102,8 +103,8 @@ run for iname in $(xml2json_INPUT); do \
         basename=`basename ${iname} .xml`; \
         output=${basename}.json; \
         answer=./TestAnswers/${basename}.xml.ans; \
-        $(test) xml2json -i ${input} -i ${answer} -o "${basename#xml2json-}" -x ${output} --answer=${answer} --filter='jq .' \
-	    "./xml2json ${input} ${output} && cat ${output}"; \
+        $(test) rose-xml2json -i ${input} -i ${answer} -o "${basename#xml2json-}" -x ${output} --answer=${answer} --filter='jq .' \
+	    "./rose-xml2json ${input} ${output} && cat ${output}"; \
     done
 
 endif

@@ -10,6 +10,10 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    SUBDIRS += fortran-parser
 endif
 
+if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
+   SUBDIRS += flang-parser
+endif
+
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
    SUBDIRS += java-parser
 endif

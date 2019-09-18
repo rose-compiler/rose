@@ -4,6 +4,5 @@
 install(FILES
   Makefile
   README
-  binary_specimen
-  disassemble.C
+  test-rose.C
   DESTINATION share/test-project)

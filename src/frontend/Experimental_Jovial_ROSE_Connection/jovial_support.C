@@ -1,8 +1,7 @@
 // C++ code calling an Jovial frontend function.
 
-// DQ (11/13/2017): This is a policy violation, sage3basic.h must be the first file included.
-// #include "rose_config.h"
-
+// sage3basic.h must be the first file included for the ROSE build system to work properly
+//
 #include "sage3basic.h"
 
 #include "rose_config.h"
@@ -17,8 +16,8 @@
 #include "UntypedJovialConverter.h"
 
 #define DEBUG_EXPERIMENTAL_JOVIAL 0
-#define OUTPUT_WHOLE_GRAPH_AST 0
-#define OUTPUT_DOT_FILE_AST 0
+#define OUTPUT_WHOLE_GRAPH_AST 1
+#define OUTPUT_DOT_FILE_AST 1
 
 #if OUTPUT_WHOLE_GRAPH_AST
 #  include "wholeAST_API.h"
@@ -28,6 +27,7 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
    {
      int status;
      std::string parse_table;
+     std::string preprocessor;
 
      assert(sg_source_file != NULL);
 
@@ -36,17 +36,23 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 
   // Step 1 - Parse the input file
   // ------
-     std::string commandString = stratego_bin_path + "/sglri";
+
+  // The filename is obtained from the source-file object
+     std::string filenameWithPath = sg_source_file->getFileName();
+     std::string filenameWithoutPath = Rose::StringUtility::stripPathFromFileName(filenameWithPath);
+
+  // Setup for preprocessing
+     std::string preprocess_path = "src/frontend/Experimental_Jovial_ROSE_Connection";
+     preprocessor = findRoseSupportPathFromBuild(preprocess_path, "bin") + "/jovial_preprocess";
+
+     std::string commandString = preprocessor;
+     commandString += " -i " + filenameWithPath;
+     commandString += " | "  + stratego_bin_path + "/sglri";
 
   // Add path to the parse table (located in the source tree)
      std::string parse_table_path = "src/3rdPartyLibraries/experimental-jovial-parser/share/rose";
      parse_table = findRoseSupportPathFromSource(parse_table_path, "share/rose") + "/Jovial.tbl";
      commandString += " -p " + parse_table;
-
-  // Filename is obtained from the source-file object
-     std::string filenameWithPath = sg_source_file->getFileName();
-     std::string filenameWithoutPath = Rose::StringUtility::stripPathFromFileName(filenameWithPath);
-     commandString += " -i " + filenameWithPath;
 
   // Add source code location information to output
      commandString += " --preserve-locations";

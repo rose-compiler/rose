@@ -601,8 +601,11 @@ const Dictionary& dictionaryM68k();
 /** Common calling conventions for MIPS. */
 const Dictionary& dictionaryMips();
 
-/** Common calling conventions for PowerPC. */
-const Dictionary& dictionaryPowerpc();
+/** Common calling conventions for PowerPC-32. */
+const Dictionary& dictionaryPowerpc32();
+
+/** Common calling conventions for PowerPC-64. */
+const Dictionary& dictionaryPowerpc64();
 
 /** Common calling conventions for 32-bit x86. */
 const Dictionary& dictionaryX86();

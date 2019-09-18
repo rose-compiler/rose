@@ -171,11 +171,9 @@ test_nested_tasks() {
 
 int
 main() {
-#if 0 // [Robb Matzke 2017-07-28]
     test_poll();
     test_callback_scheduled();
     test_callback_signaled();
     test_lambda_signaled();
-#endif
     test_nested_tasks();
 }

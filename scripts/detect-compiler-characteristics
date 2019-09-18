@@ -1,0 +1,412 @@
+#!/bin/bash
+
+########################################################################################################################
+###  This script originally comes from these two files from RMC/Spock
+###     https://github.com/matzke1/rmc-spock/blob/master/scripts/impl/basic-support.sh
+###     https://github.com/matzke1/rmc-spock/blob/master/scripts/impl/detect-compiler-characteristics
+###
+###  --------------------------------------------------------------------------
+###  Please be kind and contribute changes back to RMC/Spock via pull requests.
+###  --------------------------------------------------------------------------
+###
+########################################################################################################################
+
+die() {
+    echo "$arg0:" "error:" "$@" >&2
+    exit 1
+}
+
+# The tempfile command is not always available, so reimplement it here if necessary.
+tempfile() {
+    local real_tempfile="$(which tempfile 2>/dev/null)"
+    if [ -n "$real_tempfile" ]; then
+	"$real_tempfile"
+    else
+	local tmpdir="${TMPDIR:-$TEMPDIR}"
+	mkdir -p "${tmpdir:-/tmp}"
+	echo "${tmpdir:-/tmp}/spock-$RANDOM$RANDOM$RANDOM"
+    fi
+}
+
+
+# Given the name of a compiler, try to figure out some things about it.
+arg0="${0##*/}"
+dir0="${0%/*}"
+
+conftest=$(tempfile)
+
+format=
+compiler_baselang=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--)        shift; break ;;
+	--baselang=*) compiler_baselang="${1#--baselang=}"; shift ;;
+	--baselang)   compiler_baselang="$2"; shift 2 ;;
+	--quad)    format=quad; shift ;;
+	--yaml)    format=yaml;    shift ;;
+	--version) format=version; shift ;;
+	-*)        die "unknown switch: $1" ;;
+	*)         break ;;
+    esac
+done
+
+if [ "$#" -lt 1 ]; then
+    echo "usage: $arg0 [--triplet|--yaml] COMPILER" >&2
+    exit 1
+fi
+
+input_cxx="$(tempfile).C"
+input_c="$(tempfile).c"
+input_f="$(tempfile).f"
+input_cuda="$(tempfile).c"
+
+#------------------------------------------------------------------------------------------------------------------------
+# Compiler and default switches
+#------------------------------------------------------------------------------------------------------------------------
+
+compiler_exe=$(which "$1"); shift
+[ "$compiler_exe" = "" ] && die "not an executable: $1"
+
+compiler_flags="$@"
+
+#------------------------------------------------------------------------------------------------------------------------
+# Language supported by the compiler
+#------------------------------------------------------------------------------------------------------------------------
+
+
+cat >"$input_cxx" <<EOF
+#include <iostream>
+int main() {
+#ifndef __cplusplus
+    this_is_not_a_cxx_compiler // intentional error
+#elif __cplusplus == 199711L
+    // These are based on c++98 as corrected in 2003
+    #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
+        std::cout <<"gnu++03\n";
+    #else
+        std::cout <<"c++03\n";
+    #endif
+#elif __cplusplus == 201103L
+    // These are based on c++11
+    #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
+        std::cout <<"gnu++11\n";
+    #else
+        std::cout <<"c++11\n";
+    #endif
+#elif __cplusplus == 201402L
+    // These are based on c++14
+    #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
+        std::cout <<"gnu++14\n";
+    #else
+        std::cout <<"c++14\n";
+    #endif
+#elif __cplusplus == 201703L
+    // These are based on c++17
+    #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
+        std::cout <<"gnu++17\n";
+    #else
+        std::cout <<"c++17\n";
+    #endif
+#elif __cplusplus == 1
+    std::cout <<"c++98\n";
+#else
+    std::cout <<"c++" <<__cplusplus <<"\n";
+#endif
+}
+EOF
+
+cat >"$input_c" <<EOF
+#include <stdio.h>
+int main() {
+#if !defined(__STDC__)
+    this_is_not_a_c_compiler // intentional error
+#elif !defined(__STDC_VERSION__)
+    /* These are based on c89, c90, ISO/IEC 9899:1990 */
+    #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
+        printf("gnu89\n");
+    #else
+        printf("c89\n");
+    #endif
+#elif __STDC_VERSION__ == 199409L
+    printf("c94\n"); /* c95, ISO/IEC 9899:199409 */
+#elif __STDC_VERSION__ == 199901L
+    /* These are based on c99, c9x, ISO/IEC 9899:1999 */
+    #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
+        printf("gnu99\n");
+    #else
+        printf("c99\n");
+    #endif
+#elif __STDC_VERSION__ == 201112L
+    /* These are based on c11, c1x, IOS/IEC 9899:2011 */
+    #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
+        printf("gnu11\n");
+    #else
+        printf("c11\n");
+    #endif
+#elif __STDC_VERSION__ == 201710L
+    /* Published in Jun 2018, C18 introduces no new language features, only
+     * technical corrections and clarifications of defects in C11. */
+    #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
+        printf("gnu18\n");
+    #else
+        printf("c18\n");
+    #endif
+#else
+    printf("c-%ld\n", __STDC_VERSION__); /*unknown*/
+#endif
+    return 0;
+}
+EOF
+
+cat >"$input_f" <<EOF
+c234567
+      program conftest
+      print *, "fortran"
+      end program conftest
+EOF
+
+cat >"$input_cuda" <<EOF
+#include <stdio.h>
+int main() {
+#if defined(__CUDACC__) || defined(__NVCC__)
+    fputs("cuda\n", stdout);
+    return 0;
+#else
+    return 1;
+#endif
+}
+EOF
+
+# We have to be careful with "gcc" and "gfortran" compilers because either compiler will accept input in either C or Fortran.
+# However, the "gcc" command will fail to link a Fortran program (although gfortran will link a C program).
+
+compiler_lang=
+
+if [ "$compiler_lang" = "" ]; then
+    if [ "$compiler_baselang" = "" -o "$compiler_baselang" = "cuda" ]; then
+	"$compiler_exe" $compiler_flags -o "$conftest" "$input_cuda" </dev/null >/dev/null 2>&1 && compiler_lang=$("$conftest")
+	[ "$compiler_lang" = "" ] || compiler_baselang=cuda
+    fi
+fi
+
+if [ "$compiler_lang" = "" ]; then
+    if [ "$compiler_baselang" = "" -o "$compiler_baselang" = "c++" ]; then
+	"$compiler_exe" $compiler_flags -o "$conftest" "$input_cxx" </dev/null >/dev/null 2>&1 && compiler_lang=$("$conftest")
+	[ "$compiler_lang" = "" ] || compiler_baselang=c++
+    fi
+fi
+
+if [ "$compiler_lang" = "" ]; then
+    if [ "$compiler_baselang" = "" -o "$compiler_baselang" = "fortran" ]; then
+	"$compiler_exe" $compiler_flags -o "$conftest" "$input_f" </dev/null >/dev/null 2>&1 && compiler_lang=$("$conftest")
+	compiler_lang="${compiler_lang# *}"
+	[ "$compiler_lang" = "" ] || compiler_baselang=fortran
+    fi
+fi
+  
+if [ "$compiler_lang" = "" ]; then
+    if [ "$compiler_baselang" = "" -o "$compiler_baselang" = "c" ]; then
+	"$compiler_exe" $compiler_flags -o "$conftest" "$input_c" </dev/null >/dev/null 2>&1 && compiler_lang=$("$conftest")
+	[ "$compiler_lang" = "" ] || compiler_baselang=c
+    fi
+fi
+
+[ "$compiler_lang" = "" ] && die "cannot determine compiler input language for $compiler_exe $compiler_flags"
+
+
+#------------------------------------------------------------------------------------------------------------------------
+# Compiler vendor
+#------------------------------------------------------------------------------------------------------------------------
+
+cat >"$input_c" <<EOF
+#include <stdio.h>
+int main() {
+#if defined(__CUDACC__) || defined(__NVCC__)
+    printf("nvidia\n");
+#elif defined(__ICC) || defined(__ECC) || defined(__INTEL_COMPILER)
+    printf("intel\n");
+#elif defined(__xlc__) || defined(__xlC__) || defined(__IBMC__) || defined(__IBMCPP__)
+    printf("ibm\n");
+#elif defined(__clang__)
+    printf("llvm\n");
+#elif defined(USE_ROSE)
+    printf("rose\n");
+#elif defined(__GNUC__)
+    printf("gnu");
+#else
+    printf("unknown");
+#endif
+    return 0;
+}
+EOF
+
+cp "$input_c" "$input_cxx"
+
+compiler_vendor=
+case "$compiler_baselang" in
+    c++)
+	"$compiler_exe" $compiler_flags -o "$conftest" "$input_cxx" || exit 1
+	compiler_vendor=$("$conftest")
+	;;
+    c|cuda)
+	"$compiler_exe" $compiler_flags -o "$conftest" "$input_c" || exit 1
+	compiler_vendor=$("$conftest")
+	;;
+    fortran)
+	# With GNU the "gfortran" frontend will happily parse a C source file to give us version info.
+	if "$compiler_exe" $compiler_flags -o "$conftest" "$input_c" 2>/dev/null; then
+	    compiler_vendor=$("$conftest")
+	else
+	    # Since Intel "ifort" is the only other fortran compiler we support, assume this is intel.
+	    compiler_vendor=intel
+	fi
+	;;
+esac
+
+[ "$compiler_vendor" = "" ] && die "no vendor information detectable for $compiler_lang compiler $compiler_exe $compiler_flags"
+
+
+#------------------------------------------------------------------------------------------------------------------------
+# Compiler version
+#------------------------------------------------------------------------------------------------------------------------
+
+compiler_version=
+case "$compiler_vendor:$compiler_baselang" in
+    gnu:c|gnu:c++)
+	cat >"$input_c" <<EOF
+            #include <stdio.h>
+            int main() {
+                printf("%d.%d.%d\n", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+                return 0;
+            }
+EOF
+	"$compiler_exe" $compiler_flags -o "$conftest" "$input_c" && compiler_version=$("$conftest")
+	;;
+
+    gnu:fortran)
+	compiler_version=$("$compiler_exe" $compiler_flags -cpp -dM -E "$input_f" |sed -n '/^#define __VERSION__ / s/^[^0-9]*\([.0-9]\+\).*/\1/p')
+	;;
+
+    llvm:c++)
+	cat >"$input_cxx" <<EOF
+	    #include <iostream>
+	    int main() {
+                std::cout <<__clang_major__ <<"." <<__clang_minor__ <<"." <<__clang_patchlevel__ <<"\n";
+	    }
+EOF
+	"$compiler_exe" $compiler_flags -o "$conftest" "$input_cxx" && compiler_version=$("$conftest")
+	;;
+
+    llvm:c)
+	cat >"$input_c" <<EOF
+	    #include <stdio.h>
+	    int main() {
+		printf("%d.%d.%d\n", __clang_major__, __clang_minor__, __clang_patchlevel__);
+		return 0;
+	    }
+EOF
+	"$compiler_exe" $compiler_flags -o "$conftest" "$input_c" && compiler_version=$("$conftest")
+	;;
+
+    intel:c)
+	cat >"$input_c" <<EOF
+            #include <stdio.h>
+            int main() {
+                printf("%d.%d.%d\n", __INTEL_COMPILER/100, __INTEL_COMPILER%100, __INTEL_COMPILER_UPDATE);
+                return 0;
+            }
+EOF
+        "$compiler_exe" $compiler_flags -o "$conftest" "$input_c" && compiler_version=$("$conftest")
+        ;;
+
+    intel:c++)
+	cat >"$input_cxx" <<EOF
+            #include <iostream>
+            int main() {
+                std::cout <<(__INTEL_COMPILER / 100) <<"."
+                          <<(__INTEL_COMPILER % 100) <<"."
+                          <<__INTEL_COMPILER_UPDATE  <<"\n";
+            }
+EOF
+        "$compiler_exe" $compiler_flags -o "$conftest" "$input_cxx" && compiler_version=$("$conftest")
+        ;;
+
+    intel:fortran)
+	# Seems the only way to get version is by asking the compiler and parsing its output.
+	compiler_version=$("$compiler_exe" $compiler_flags --version |sed -n '1 s/^.*) *\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')
+	;;
+
+    *:cuda)
+	cat >"$input_c" <<EOF
+	    #include <stdio.h>
+	    int main() {
+	        printf("%d.%d.%d\n", __CUDACC_VER_MAJOR__, __CUDACC_VER_MINOR__, __CUDACC_VER_BUILD__);
+		return 0;
+	    }
+EOF
+	"$compiler_exe" $compiler_flags -o "$conftest" "$input_c" && compiler_version=$("$conftest")
+	;;
+esac
+    
+[ "$compiler_version" = "" ] && die "cannot determine version number for $compiler_exe $compiler_flags"
+
+
+#------------------------------------------------------------------------------------------------------------------------
+# Compiler version check information
+#------------------------------------------------------------------------------------------------------------------------
+
+version_output=$(tempfile)
+(
+    case "$compiler_vendor:$compiler_baselang" in
+	gnu:*|intel*|llvm:*|nvidia:*)
+	    "$compiler_exe" $compiler_flags --version
+	    ;;
+	*)
+	    echo "cannot capture version output for $compiler_exe $compiler_flags" >&2
+	    exit 1
+	    ;;
+    esac
+) >"$version_output"
+
+
+#------------------------------------------------------------------------------------------------------------------------
+# Output
+#------------------------------------------------------------------------------------------------------------------------
+
+case "$format" in
+    ""|yaml)
+	echo -e "executable:\t\"$compiler_exe\""
+	if [ "$#" -eq 0 ]; then
+	    echo -e "flags:\t\t[]"
+	else
+	    echo "flags:";
+	    for flag in "$@"; do
+		echo "  - \"$flag\""
+	    done
+	fi
+	echo -e "language:\t\"$compiler_lang\""
+
+	echo -e "vendor:\t\t\"$compiler_vendor\""
+
+	echo -e "version:\t\"$compiler_version\""
+
+
+	echo "version-output: |"
+	sed 's/^/    /' <"$version_output"
+	;;
+
+    version)
+	cat "$version_output"
+	;;
+
+    quad)
+	echo "$compiler_vendor:$compiler_baselang:$compiler_lang:$compiler_version"
+	;;
+
+    *)
+	die "invalid output format: $format"
+	;;
+esac
+
+rm -f "$version_output"
+exit 0

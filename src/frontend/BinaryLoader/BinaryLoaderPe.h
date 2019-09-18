@@ -28,7 +28,7 @@ public:
         return Ptr(new BinaryLoaderPe);
     }
 
-    virtual BinaryLoaderPtr clone() const {
+    virtual BinaryLoaderPtr clone() const ROSE_OVERRIDE {
         return BinaryLoaderPtr(new BinaryLoaderPe(*this));
     }
 

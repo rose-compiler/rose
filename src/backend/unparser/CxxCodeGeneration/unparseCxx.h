@@ -437,6 +437,11 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 
           virtual void unparsePragmaDeclStmt   (SgStatement* stmt, SgUnparse_Info& info);
 
+       // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit 
+       // token-based unparsing to work with greater precision. For example, used to add an include directive with 
+       // greater precision to the global scope and permit the unparsing via the token stream to be used as well.
+          virtual void unparseEmptyDeclaration (SgStatement* stmt, SgUnparse_Info& info);
+
 #if 0
        // DQ (8/13/2007): This should go into the base class
           bool isTransformed(SgStatement* stmt);

@@ -58,11 +58,11 @@ class AbstractValue {
   AbstractValue(float x);
   AbstractValue(double x);
   AbstractValue(long double x);
-  AbstractValue(SPRAY::VariableId varId); // allows implicit type conversion
-  void initInteger(SPRAY::BuiltInType btype, long long int ival);
-  void initFloat(SPRAY::BuiltInType btype, long double fval);
-  static AbstractValue createIntegerValue(SPRAY::BuiltInType btype, long long int ival);
-  TypeSize calculateTypeSize(SPRAY::BuiltInType btype);
+  AbstractValue(CodeThorn::VariableId varId); // allows implicit type conversion
+  void initInteger(CodeThorn::BuiltInType btype, long long int ival);
+  void initFloat(CodeThorn::BuiltInType btype, long double fval);
+  static AbstractValue createIntegerValue(CodeThorn::BuiltInType btype, long long int ival);
+  TypeSize calculateTypeSize(CodeThorn::BuiltInType btype);
   // currently this maps to isTop() - in preparation to handle
   // uninitilized explicitly. A declaration (without initializer)
   // should use this function to model the semantics of an undefined value.
@@ -73,6 +73,8 @@ class AbstractValue {
   bool isBot() const;
   // determines whether the value is known and constant. Otherwise it can be bot or top.
   bool isConstInt() const;
+  // currently identical to isPtr() but already used where one unique value is required
+  bool isConstPtr() const;
   bool isPtr() const;
   bool isNullPtr() const;
   AbstractValue operatorNot();
@@ -100,10 +102,11 @@ class AbstractValue {
   static AbstractValue operatorDiv(AbstractValue& a,AbstractValue& b);
   static AbstractValue operatorMod(AbstractValue& a,AbstractValue& b);
 
-  static AbstractValue createAddressOfVariable(SPRAY::VariableId varId);
-  static AbstractValue createAddressOfArray(SPRAY::VariableId arrayVariableId);
-  static AbstractValue createAddressOfArrayElement(SPRAY::VariableId arrayVariableId, AbstractValue Index);
+  static AbstractValue createAddressOfVariable(CodeThorn::VariableId varId);
+  static AbstractValue createAddressOfArray(CodeThorn::VariableId arrayVariableId);
+  static AbstractValue createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, AbstractValue Index);
   static AbstractValue createNullPtr();
+  static AbstractValue createTop();
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
   //  bool operator==(AbstractValue other) const;
@@ -113,10 +116,10 @@ class AbstractValue {
   bool operator<(AbstractValue other) const;
 
   string toString() const;
-  string toString(SPRAY::VariableIdMapping* vim) const;
-  string toLhsString(SPRAY::VariableIdMapping* vim) const;
-  string toRhsString(SPRAY::VariableIdMapping* vim) const;
-  string arrayVariableNameToString(SPRAY::VariableIdMapping* vim) const;
+  string toString(CodeThorn::VariableIdMapping* vim) const;
+  string toLhsString(CodeThorn::VariableIdMapping* vim) const;
+  string toRhsString(CodeThorn::VariableIdMapping* vim) const;
+  string arrayVariableNameToString(CodeThorn::VariableIdMapping* vim) const;
   
   friend ostream& operator<<(ostream& os, const AbstractValue& value);
   friend istream& operator>>(istream& os, AbstractValue& value);
@@ -125,8 +128,12 @@ class AbstractValue {
   ValueType getValueType() const;
   int getIntValue() const;
   std::string getFloatValueString() const;
+
+  // returns index value if it is an integer
   int getIndexIntValue() const;
-  SPRAY::VariableId getVariableId() const;
+  // returns index value (can be top)
+  AbstractValue getIndexValue() const;
+  CodeThorn::VariableId getVariableId() const;
   // sets value according to type size (truncates if necessary)
   void setValue(long long int ival);
   void setValue(long double fval);
@@ -137,18 +144,19 @@ class AbstractValue {
   TypeSize getValueSize() const; 
   TypeSize getTypeSize() const;
   void setTypeSize(TypeSize valueSize);
-  static void setTypeSizeMapping(SPRAY::SgTypeSizeMapping* typeSizeMapping);
-  static SPRAY::SgTypeSizeMapping* getTypeSizeMapping();
+  static void setTypeSizeMapping(CodeThorn::SgTypeSizeMapping* typeSizeMapping);
+  static CodeThorn::SgTypeSizeMapping* getTypeSizeMapping();
+  static bool approximatedBy(AbstractValue val1, AbstractValue val2);
+  static AbstractValue combine(AbstractValue val1, AbstractValue val2);
  private:
   ValueType valueType;
-  SPRAY::VariableId variableId;
+  CodeThorn::VariableId variableId;
   // union required
   long long int intValue=0;
-  double floatValue=0.0;
+  long double floatValue=0.0;
 
   TypeSize typeSize=0;
-  static SPRAY::SgTypeSizeMapping* _typeSizeMapping;
-
+  static CodeThorn::SgTypeSizeMapping* _typeSizeMapping;
 };
 
 // arithmetic operators

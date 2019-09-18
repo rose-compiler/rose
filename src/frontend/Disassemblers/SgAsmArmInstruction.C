@@ -5,6 +5,7 @@
 #include "Disassembler.h"
 
 using namespace Rose;                                   // temporary until this lives in "rose"
+using namespace Rose::BinaryAnalysis;                   // temporary
 
 unsigned
 SgAsmArmInstruction::get_anyKind() const {
@@ -50,7 +51,7 @@ static bool modifies_ip(SgAsmArmInstruction *insn)
             for (size_t i=0; i<elist->get_expressions().size(); i++) {
                 SgAsmRegisterReferenceExpression *reg = isSgAsmRegisterReferenceExpression(elist->get_expressions()[i]);
                 ROSE_ASSERT(reg);
-                if (reg->get_descriptor().get_major()==arm_regclass_gpr && reg->get_descriptor().get_minor()==15) {
+                if (reg->get_descriptor().majorNumber()==arm_regclass_gpr && reg->get_descriptor().minorNumber()==15) {
                     return true;
                 }
             }
@@ -69,7 +70,7 @@ static bool modifies_ip(SgAsmArmInstruction *insn)
             if (exprs.size()>=1) {
                 SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(exprs[0]);
                 if (rre &&
-                    rre->get_descriptor().get_major()==arm_regclass_gpr && rre->get_descriptor().get_minor()==15) {
+                    rre->get_descriptor().majorNumber()==arm_regclass_gpr && rre->get_descriptor().minorNumber()==15) {
                     return true;
                 }
             }
@@ -114,7 +115,7 @@ SgAsmArmInstruction::getSuccessors(bool *complete) {
             ROSE_ASSERT(exprs.size()==1);
             SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(exprs[0]);
             ROSE_ASSERT(rre);
-            if (rre->get_descriptor().get_major()==arm_regclass_gpr && rre->get_descriptor().get_minor()==15) {
+            if (rre->get_descriptor().majorNumber()==arm_regclass_gpr && rre->get_descriptor().minorNumber()==15) {
                 retval.insert(get_address()+4);
             } else {
                 *complete = false;

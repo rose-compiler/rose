@@ -403,7 +403,7 @@ public:
         /** @} */
 
         // internal
-        virtual SymbolicExpr::Ptr immediateExpansion(const Token &name, const SymbolicExpr::Nodes &operands);
+        virtual SymbolicExpr::Ptr immediateExpansion(const Token &name, const SymbolicExpr::Nodes &operands) ROSE_OVERRIDE;
         virtual SymbolicExpr::Ptr delayedExpansion(const SymbolicExpr::Ptr&, const SymbolicExprParser*) ROSE_OVERRIDE;
     };
 

@@ -4,8 +4,9 @@
 #include "BinaryCallingConvention.h"
 #include "BinaryUnparser.h"
 #include "Diagnostics.h"                                // Rose::Diagnostics
-#include "Registers.h"
 #include "MemoryMap.h"
+#include "Registers.h"
+#include "RoseException.h"
 #include "integerOps.h"
 #include "Map.h"
 #include "BaseSemantics2.h"
@@ -13,6 +14,11 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/version.hpp>
+
+// REG_PP possibly defined on __sun
+// REG_LINK possibly defined on Windows
+#undef REG_SP
+#undef REG_LINK
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -42,26 +48,26 @@ namespace BinaryAnalysis {
 class Disassembler {
 public:
     /** Exception thrown by the disassemblers. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         /** A bare exception not bound to any particular instruction. */
         Exception(const std::string &reason)
-            : std::runtime_error(reason), ip(0), bit(0), insn(NULL)
+            : Rose::Exception(reason), ip(0), bit(0), insn(NULL)
             {}
 
         /** An exception bound to a virtual address but no raw data or instruction. */
         Exception(const std::string &reason, rose_addr_t ip)
-            : std::runtime_error(reason), ip(ip), bit(0), insn(NULL)
+            : Rose::Exception(reason), ip(ip), bit(0), insn(NULL)
             {}
 
         /** An exception bound to a particular instruction being disassembled. */
         Exception(const std::string &reason, rose_addr_t ip, const SgUnsignedCharList &raw_data, size_t bit)
-            : std::runtime_error(reason), ip(ip), bytes(raw_data), bit(bit), insn(NULL)
+            : Rose::Exception(reason), ip(ip), bytes(raw_data), bit(bit), insn(NULL)
             {}
 
         /** An exception bound to a particular instruction being assembled. */
         Exception(const std::string &reason, SgAsmInstruction *insn)
-            : std::runtime_error(reason), ip(insn->get_address()), bit(0), insn(insn)
+            : Rose::Exception(reason), ip(insn->get_address()), bit(0), insn(insn)
             {}
 
         ~Exception() throw() {}
@@ -94,7 +100,7 @@ private:
 
 protected:
     const RegisterDictionary *p_registers;              /**< Description of registers available for this platform. */
-    RegisterDescriptor REG_IP, REG_SP, REG_SS, REG_SF;  /**< Register descriptors initialized during construction. */
+    RegisterDescriptor REG_IP, REG_SP, REG_SS, REG_SF, REG_LINK; /**< Register descriptors initialized during construction. */
     static std::vector<Disassembler*> disassemblers;    /**< List of disassembler subclasses. */
     ByteOrder::Endianness p_byteOrder;                  /**< Byte order of instructions in memory. */
     size_t p_wordSizeBytes;                             /**< Basic word size in bytes. */
@@ -253,13 +259,13 @@ public:
 
     /** Returns the register that points to instructions. */
     virtual RegisterDescriptor instructionPointerRegister() const {
-        ASSERT_require(REG_IP.is_valid());
+        ASSERT_forbid(REG_IP.isEmpty());
         return REG_IP;
     }
 
     /** Returns the register that points to the stack. */
     virtual RegisterDescriptor stackPointerRegister() const {
-        ASSERT_require(REG_SP.is_valid());
+        ASSERT_forbid(REG_SP.isEmpty());
         return REG_SP;
     }
 
@@ -274,6 +280,13 @@ public:
         return REG_SS;                                  // need not be valid
     }
 
+    /** Returns the register that holds the return address for a function.
+     *
+     *  If the architecture doesn't have such a register then a default constructed descriptor is returned. */
+    virtual RegisterDescriptor callReturnRegister() const {
+        return REG_LINK;                                // need not be valid
+    }
+    
     /** Return an instruction semantics dispatcher if possible.
      *
      *  If instruction semantics are implemented for this architecure then return a pointer to a dispatcher. The dispatcher

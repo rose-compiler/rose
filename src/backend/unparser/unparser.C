@@ -2840,7 +2840,10 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                     default:
                        {
                          printf ("Error: default reached in node derived from SgSupport astNode = %s \n",astNode->class_name().c_str());
-                         ROSE_ABORT();
+
+                      // DQ (4/12/2019): Calling ROSE_ASSERT() is more useful in debugging than calling ROSE_ABORT().
+                      // ROSE_ABORT();
+                         ROSE_ASSERT(false);
                        }
                   }
              }
@@ -4283,7 +4286,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
 
                               adjusted_header_file_directory = unparseRootPath + "/" + directoryPathPrefix;
-#if 1
+#if 0
                               printf ("adjusted_header_file_directory = %s \n",adjusted_header_file_directory.c_str());
 #endif
                            // DQ (1/1/2019): Append the filename as a suffix to the userSpecifiedUnparseRootFolder so that we can avoid header file 
@@ -4619,7 +4622,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
              }
 
-#if 1
+#if 0
        // DQ (11/15/2018): Generate the dot file as a test!
           string tmp_dotgraph_filename = "include_file_graph_from_base_of_unparseIncludedFiles";
           generateGraphOfIncludeFiles(project,tmp_dotgraph_filename);

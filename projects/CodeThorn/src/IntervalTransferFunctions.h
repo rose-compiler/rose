@@ -5,32 +5,34 @@
 #include "IntervalPropertyState.h"
 #include "CppExprEvaluator.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 class IntervalTransferFunctions : public DFTransferFunctions {
 public:
   IntervalTransferFunctions();
   ~IntervalTransferFunctions();
-  //  IntervalTransferFunctions(NumberIntervalLattice* domain, PropertyState* p, SPRAY::Labeler* l, VariableIdMapping* vid);
-  NumberIntervalLattice evalExpression(SPRAY::Label label, SgExpression* expr, Lattice& element);
-  void transferCondition(SPRAY::Edge edge, Lattice& element);
-  void transferExpression(SPRAY::Label label, SgExpression* expr, Lattice& element);
-  void transferDeclaration(SPRAY::Label label, SgVariableDeclaration* decl, Lattice& element);
-  void transferSwitchCase(SPRAY::Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate);
-  void transferReturnStmtExpr(SPRAY::Label label, SgExpression* expr, Lattice& element);
-  void transferFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
-  void transferFunctionCallReturn(SPRAY::Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element);
-  void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element);
-  void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
+  //  IntervalTransferFunctions(NumberIntervalLattice* domain, PropertyState* p, CodeThorn::Labeler* l, VariableIdMapping* vid);
+  NumberIntervalLattice evalExpression(CodeThorn::Label label, SgExpression* expr, Lattice& element);
+  void transferCondition(CodeThorn::Edge edge, Lattice& element);
+  void transferExpression(CodeThorn::Label label, SgExpression* expr, Lattice& element);
+  void transferDeclaration(CodeThorn::Label label, SgVariableDeclaration* decl, Lattice& element);
+  void transferSwitchCase(CodeThorn::Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate);
+  void transferReturnStmtExpr(CodeThorn::Label label, SgExpression* expr, Lattice& element);
+  void transferFunctionCall(CodeThorn::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
+  void transferFunctionCallReturn(CodeThorn::Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element);
+  void transferFunctionEntry(CodeThorn::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element);
+  void transferFunctionExit(CodeThorn::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
   void setPropertyState(PropertyState* p) { _cppExprEvaluator->setPropertyState(p); }
   //private:
   CppExprEvaluator* getCppExprEvaluator();
-  void setCppExprEvaluator(SPRAY::CppExprEvaluator* expEval);
+  void setCppExprEvaluator(CodeThorn::CppExprEvaluator* expEval);
   void setSkipSelectedFunctionCalls(bool);
+  void initializeExtremalValue(Lattice& element);
+
 private:
-  SPRAY::CppExprEvaluator* _cppExprEvaluator;
+  CodeThorn::CppExprEvaluator* _cppExprEvaluator;
   NumberIntervalLattice* _domain;
 };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 #endif

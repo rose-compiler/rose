@@ -72,7 +72,8 @@ rose_getline(FILE *stream) {
             : buffer(NULL), bufsz(0) {}
 
         ~Resources() {
-            delete[] buffer;
+            if (buffer)
+                free(buffer);
         }
     } r;
 
@@ -90,7 +91,8 @@ rose_getline(std::istream &stream) {
             : buffer(NULL), bufsz(0) {}
 
         ~Resources() {
-            delete[] buffer;
+            if (buffer)
+                free(buffer);
         }
     } r;
 

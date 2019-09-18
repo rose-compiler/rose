@@ -4,7 +4,7 @@
 #include "DisassemblerM68k.h"
 #include "integerOps.h"
 #include "stringify.h"
-#include "sageBuilderAsm.h"
+#include "SageBuilderAsm.h"
 #include "DispatcherM68k.h"
 #include "BinaryUnparserM68k.h"
 
@@ -299,7 +299,7 @@ formatLetter(M68kDataFormat fmt)
         case m68k_fmt_i8:  return "b";
         case m68k_fmt_unknown: ASSERT_not_reachable("m68k_fmt_unknown is not a valid data format");
     }
-    ASSERT_not_reachable("invalid m68k data format: " + stringifyM68kDataFormat(fmt));
+    ASSERT_not_reachable("invalid m68k data format: " + stringifyBinaryAnalysisM68kDataFormat(fmt));
 }
 
 static size_t
@@ -315,7 +315,7 @@ formatNBits(M68kDataFormat fmt)
         case m68k_fmt_i8:  return 8;
         case m68k_fmt_unknown: ASSERT_not_reachable("m68k_fmt_unknown is not a valid data format");
     }
-    ASSERT_not_reachable("invalid m68k data format: " + stringifyM68kDataFormat(fmt));
+    ASSERT_not_reachable("invalid m68k data format: " + stringifyBinaryAnalysisM68kDataFormat(fmt));
 }
 
 // see base class
@@ -344,7 +344,7 @@ DisassemblerM68k::makeType(M68kDataFormat fmt)
         case m68k_fmt_i8:  return SageBuilderAsm::buildTypeU8();
         case m68k_fmt_unknown: ASSERT_not_reachable("m68k_fmt_unknown is not a valid data format");
     }
-    ASSERT_not_reachable("invalid m68k data format: " + stringifyM68kDataFormat(fmt));
+    ASSERT_not_reachable("invalid m68k data format: " + stringifyBinaryAnalysisM68kDataFormat(fmt));
 }
 
 SgAsmRegisterReferenceExpression *
@@ -563,7 +563,7 @@ DisassemblerM68k::makeColdFireControlRegister(unsigned regnum) {
                                           StringUtility::toHex2(regnum, 12, false, false));
     }
     SgAsmRegisterReferenceExpression *expr = new SgAsmDirectRegisterExpression(rd);
-    ASSERT_require(rd.get_nbits()==32);
+    ASSERT_require(rd.nBits() == 32);
     expr->set_type(makeType(m68k_fmt_i32));
     return expr;
 }
@@ -609,7 +609,7 @@ DisassemblerM68k::makeFPRegister(unsigned regnum)
             registerNBits = 80;                         // 16-bits for X format are always zero
             break;
         default:
-            ASSERT_not_reachable("invalid default floating-point format: " + stringifyM68kDataFormat(fmt));
+            ASSERT_not_reachable("invalid default floating-point format: " + stringifyBinaryAnalysisM68kDataFormat(fmt));
     }
     RegisterDescriptor desc(m68k_regclass_fpr, regnum, 0, registerNBits);
     SgAsmRegisterReferenceExpression *expr = new SgAsmDirectRegisterExpression(desc);
@@ -782,7 +782,7 @@ DisassemblerM68k::makeAddress(SgAsmExpression *expr)
         SgAsmDirectRegisterExpression *lhs = isSgAsmDirectRegisterExpression(sum->get_lhs());
         SgAsmIntegerValueExpression *rhs = isSgAsmIntegerValueExpression(sum->get_rhs());
         if (lhs && rhs &&
-            lhs->get_descriptor().get_major()==m68k_regclass_spr && lhs->get_descriptor().get_minor()==m68k_spr_pc) {
+            lhs->get_descriptor().majorNumber()==m68k_regclass_spr && lhs->get_descriptor().minorNumber()==m68k_spr_pc) {
             retval = SageBuilderAsm::buildValueInteger(get_insn_va() + 2 + rhs->get_absoluteValue(), makeType(m68k_fmt_i32));
         }
     }
@@ -1362,7 +1362,7 @@ struct M68k_branch: M68k {
             case 14: kind = m68k_bgt; break;
             case 15: kind = m68k_ble; break;
         }
-        std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_");
+        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_");
         rose_addr_t base = d->get_insn_va() + 2;
         int32_t offset = signExtend<8, 32>(extract<0, 7>(w0));
         if (0==offset) {
@@ -1933,7 +1933,7 @@ struct M68k_cpush: M68k {
             default: ASSERT_not_reachable("pattern should not have matched");
         }
         SgAsmExpression *ax = d->makeAddressRegister(extract<0, 2>(w0), m68k_fmt_i32);
-        std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_");
+        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_");
         return d->makeInstruction(kind, mnemonic, cache, ax);
     }
 };
@@ -1980,7 +1980,7 @@ struct M68k_dbcc: M68k {
             case 14: kind = m68k_dbgt; break;
             case 15: kind = m68k_dble; break;
         }
-        std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_");
+        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_");
         SgAsmExpression *src = d->makeDataRegister(extract<0, 2>(w0), m68k_fmt_i32);
         rose_addr_t target_va = d->get_insn_va() + 2 + signExtend<16, 32>((rose_addr_t)d->instructionWord(1));
         target_va &= GenMask<rose_addr_t, 32>::value;
@@ -2028,17 +2028,17 @@ struct M68k_divide: M68k {
             // first form, 32-bit dividend, storing only the quotient
             ASSERT_require((0==extract<10, 10>(d->instructionWord(1))));
             M68kInstructionKind kind = extract<11, 11>(d->instructionWord(1)) ? m68k_divs : m68k_divu;
-            return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", ea, dq);
+            return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+".l", ea, dq);
         } else if (extract<10, 10>(d->instructionWord(1))) {
             // second form, 64-bit dividend, storing both quotient and remainder
             SgAsmExpression *dr = d->makeDataRegister(extract<0, 2>(d->instructionWord(1)), m68k_fmt_i32);
             M68kInstructionKind kind = extract<11, 11>(d->instructionWord(1)) ? m68k_divs : m68k_divu;
-            return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", ea, dr, dq);
+            return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+".l", ea, dr, dq);
         } else {
             // third form, 32-bit dividend, storing both quotient and remainder
             SgAsmExpression *dr = d->makeDataRegister(extract<0, 2>(d->instructionWord(1)), m68k_fmt_i32);
             M68kInstructionKind kind = extract<11, 11>(d->instructionWord(1)) ? m68k_divsl : m68k_divul;
-            return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", ea, dr, dq);
+            return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+".l", ea, dr, dq);
         }
     }
 };
@@ -2171,7 +2171,8 @@ struct M68k_fabs_from_drd: M68k {
             case 0x58: kind = m68k_fsabs; break;
             case 0x5c: kind = m68k_fdabs; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -2213,7 +2214,8 @@ struct M68k_fabs_mr: M68k {
             case 0x58: kind = m68k_fsabs; break;
             case 0x5c: kind = m68k_fdabs; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -2237,7 +2239,8 @@ struct M68k_fabs_rr: M68k {
             case 0x58: kind = m68k_fsabs; break;
             case 0x5c: kind = m68k_fdabs; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -2271,7 +2274,8 @@ struct M68k_fadd_from_drd: M68k {
             case 0x62: kind = m68k_fsadd; break;
             case 0x66: kind = m68k_fdadd; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -2313,7 +2317,8 @@ struct M68k_fadd_mr: M68k {
             case 0x62: kind = m68k_fsadd; break;
             case 0x66: kind = m68k_fdadd; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -2337,7 +2342,8 @@ struct M68k_fadd_rr: M68k {
             case 0x62: kind = m68k_fsadd; break;
             case 0x66: kind = m68k_fdadd; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -2458,7 +2464,8 @@ struct M68k_fb: M68k {
         rose_addr_t base = d->get_insn_va() + 2;
         rose_addr_t target_va = (base + offset) & GenMask<rose_addr_t, 32>::value;
         SgAsmIntegerValueExpression *target = d->makeImmediateValue(m68k_fmt_i32, target_va);
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), target);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), target);
     }
 };
 
@@ -2554,7 +2561,8 @@ struct M68k_fdiv_from_drd: M68k {
             case 0x60: kind = m68k_fsdiv; break;
             case 0x64: kind = m68k_fddiv; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -2596,7 +2604,8 @@ struct M68k_fdiv_mr: M68k {
             case 0x60: kind = m68k_fsdiv; break;
             case 0x64: kind = m68k_fddiv; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -2620,7 +2629,8 @@ struct M68k_fdiv_rr: M68k {
             case 0x60: kind = m68k_fsdiv; break;
             case 0x64: kind = m68k_fddiv; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -2766,7 +2776,8 @@ struct M68k_fmove_from_drd: M68k {
             case 0x40: kind = m68k_fsmove; break;
             case 0x44: kind = m68k_fdmove; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -2805,7 +2816,8 @@ struct M68k_fmove_mr: M68k {
             case 0x40: kind = m68k_fsmove; break;
             case 0x44: kind = m68k_fdmove; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -2851,7 +2863,8 @@ struct M68k_fmove_rr: M68k {
             case 0x40: kind = m68k_fsmove; break;
             case 0x44: kind = m68k_fdmove; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -2961,7 +2974,8 @@ struct M68k_fmul_from_drd: M68k {
             case 0x63: kind = m68k_fsmul; break;
             case 0x67: kind = m68k_fdmul; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -3003,7 +3017,8 @@ struct M68k_fmul_mr: M68k {
             case 0x63: kind = m68k_fsmul; break;
             case 0x67: kind = m68k_fdmul; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -3027,7 +3042,8 @@ struct M68k_fmul_rr: M68k {
             case 0x63: kind = m68k_fsmul; break;
             case 0x67: kind = m68k_fdmul; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -3061,7 +3077,8 @@ struct M68k_fneg_from_drd: M68k {
             case 0x5a: kind = m68k_fsneg; break;
             case 0x5e: kind = m68k_fdneg; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -3103,7 +3120,8 @@ struct M68k_fneg_mr: M68k {
             case 0x5a: kind = m68k_fsneg; break;
             case 0x5e: kind = m68k_fdneg; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -3127,7 +3145,8 @@ struct M68k_fneg_rr: M68k {
             case 0x5a: kind = m68k_fsneg; break;
             case 0x5e: kind = m68k_fdneg; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -3172,7 +3191,8 @@ struct M68k_fsqrt_from_drd: M68k {
             case 0x41: kind = m68k_fssqrt; break;
             case 0x45: kind = m68k_fdsqrt; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -3214,7 +3234,8 @@ struct M68k_fsqrt_mr: M68k {
             case 0x41: kind = m68k_fssqrt; break;
             case 0x45: kind = m68k_fdsqrt; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -3238,7 +3259,8 @@ struct M68k_fsqrt_rr: M68k {
             case 0x41: kind = m68k_fssqrt; break;
             case 0x45: kind = m68k_fdsqrt; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -3272,7 +3294,8 @@ struct M68k_fsub_from_drd: M68k {
             case 0x68: kind = m68k_fssub; break;
             case 0x6c: kind = m68k_fdsub; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -3314,7 +3337,8 @@ struct M68k_fsub_mr: M68k {
             case 0x68: kind = m68k_fssub; break;
             case 0x6c: kind = m68k_fdsub; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -3338,7 +3362,8 @@ struct M68k_fsub_rr: M68k {
             case 0x68: kind = m68k_fssub; break;
             case 0x6c: kind = m68k_fdsub; break;
         }
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+"."+formatLetter(fmt), src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+
+                                  "."+formatLetter(fmt), src, dst);
     }
 };
 
@@ -3479,7 +3504,7 @@ struct M68k_lshift_rr: M68k {
         SgAsmExpression *dy = d->makeDataRegister(extract<9, 11>(w0), m68k_fmt_i32, 0);
         SgAsmExpression *dx = d->makeDataRegister(extract<0, 2>(w0), fmt, 0);
         M68kInstructionKind kind = extract<8, 8>(w0) ? m68k_lsl : m68k_lsr;
-        std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_") + "." + formatLetter(fmt);
+        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + "." + formatLetter(fmt);
         return d->makeInstruction(kind, mnemonic, dy, dx);
     }
 };
@@ -3500,7 +3525,7 @@ struct M68k_lshift_ir: M68k {
         SgAsmExpression *sa = d->makeImmediateValue(m68k_fmt_i8, 0==n ? 8 : n);
         SgAsmExpression *dx = d->makeDataRegister(extract<0, 2>(w0), fmt, 0);
         M68kInstructionKind kind = extract<8, 8>(w0) ? m68k_lsl : m68k_lsr;
-        std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_") + "." + formatLetter(fmt);
+        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + "." + formatLetter(fmt);
         return d->makeInstruction(kind, mnemonic, sa, dx);
     }
 };
@@ -3515,7 +3540,7 @@ struct M68k_lshift_mem: M68k {
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *ea = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i16, 0);
         M68kInstructionKind kind = extract<8, 8>(w0) ? m68k_lsl : m68k_lsr;
-        std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_") + ".w";
+        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + ".w";
         return d->makeInstruction(kind, mnemonic, ea);
     }
 };
@@ -4020,7 +4045,7 @@ struct M68k_multiply_l: M68k {
         M68kInstructionKind kind = extract<11, 11>(d->instructionWord(1)) ? m68k_muls : m68k_mulu;
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
         SgAsmExpression *dst = d->makeDataRegister(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
-        return d->makeInstruction(kind, stringifyM68kInstructionKind(kind, "m68k_")+".l", src, dst);
+        return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+".l", src, dst);
     }
 };
 
@@ -4035,7 +4060,7 @@ struct M68k_multiply_64: M68k {
         SgAsmExpression *src = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i32, 1);
         SgAsmExpression *dh = d->makeDataRegister(extract<0, 2>(d->instructionWord(1)), m68k_fmt_i32);
         SgAsmExpression *dl = d->makeDataRegister(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
-        return d->makeInstruction(m68k_muls, stringifyM68kInstructionKind(kind, "m68k_")+".l", src, dl, dh);
+        return d->makeInstruction(m68k_muls, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+".l", src, dl, dh);
     }
 };
 
@@ -4252,7 +4277,7 @@ struct M68k_rotate_reg: M68k {
         }
         SgAsmExpression *dy = d->makeDataRegister(extract<0, 2>(w0), fmt, 0);
         M68kInstructionKind kind = extract<8, 8>(w0) ? m68k_rol : m68k_ror; // "dr"
-        std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_") + "." + formatLetter(fmt);
+        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + "." + formatLetter(fmt);
         return d->makeInstruction(kind, mnemonic, sa, dy);
     }
 };
@@ -4266,7 +4291,7 @@ struct M68k_rotate_mem: M68k {
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *eay = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i16, 0);
         M68kInstructionKind kind = extract<8, 8>(w0) ? m68k_rol : m68k_ror; // "dr"
-        std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_") + ".w";
+        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + ".w";
         return d->makeInstruction(kind, mnemonic, eay);
     }
 };
@@ -4297,7 +4322,7 @@ struct M68k_rotate_extend_reg: M68k {
         }
         SgAsmExpression *dy = d->makeDataRegister(extract<0, 2>(w0), fmt, 0);
         M68kInstructionKind kind = extract<8, 8>(w0) ? m68k_roxl : m68k_roxr; // "dr"
-        std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_") + "." + formatLetter(fmt);
+        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + "." + formatLetter(fmt);
         return d->makeInstruction(kind, mnemonic, sa, dy);
     }
 };
@@ -4311,7 +4336,7 @@ struct M68k_rotate_extend_mem: M68k {
     SgAsmM68kInstruction *operator()(D *d, unsigned w0) {
         SgAsmExpression *eay = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i16, 0);
         M68kInstructionKind kind = extract<8, 8>(w0) ? m68k_roxl : m68k_roxr; // "dr"
-        std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_") + ".w";
+        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + ".w";
         return d->makeInstruction(kind, mnemonic, eay);
     }
 };
@@ -4415,7 +4440,7 @@ struct M68k_scc: M68k {
             case 0xe: kind = m68k_sgt; break;
             case 0xf: kind = m68k_sle; break;
         }
-        std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_") + ".b";
+        std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + ".b";
         SgAsmExpression *ea = d->makeEffectiveAddress(extract<0, 5>(w0), m68k_fmt_i8, 0);
         return d->makeInstruction(kind, mnemonic, ea);
     }
@@ -4615,11 +4640,11 @@ struct M68k_trapcc: M68k {
             case 0xf: kind = m68k_traple; break;
         }
         if (m68k_fmt_unknown==fmt) {
-            std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_");
+            std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_");
             return d->makeInstruction(kind, mnemonic);
         } else {
             SgAsmExpression *data = d->makeImmediateExtension(fmt, 0);
-            std::string mnemonic = stringifyM68kInstructionKind(kind, "m68k_") + "." + formatLetter(fmt);
+            std::string mnemonic = stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_") + "." + formatLetter(fmt);
             return d->makeInstruction(kind, mnemonic, data);
         }
     }

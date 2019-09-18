@@ -6,7 +6,7 @@
 #include "CPAstAttributeInterface.h"
 #include "AbstractValue.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 
 class VariableConstInfo;
 

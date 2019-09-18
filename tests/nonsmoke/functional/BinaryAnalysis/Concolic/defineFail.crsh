@@ -1,0 +1,15 @@
+create sqlite3://./defineFail.db
+
+ls-family :: t01
+  @ success
+{
+  ls -la
+}
+
+ls-family :: t02
+  @ failure
+{
+  ./ls --author
+}
+
+! echo ok.

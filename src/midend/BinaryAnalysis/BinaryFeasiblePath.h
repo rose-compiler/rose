@@ -46,6 +46,9 @@ public:
     /** Types of comparisons. */
     enum MayOrMust { MAY, MUST };
 
+    /** Set of basic block addresses. */
+    typedef std::set<rose_addr_t> AddressSet;
+
     /** Expression to be evaluated.
      *
      *  If the expression is a string, then the string is parsed to create a symbolic expression, substituting registers
@@ -83,6 +86,7 @@ public:
         bool ignoreSemanticFailure;                     /**< Whether to ignore instructions with no semantic info. */
         double kCycleCoefficient;                       /**< Coefficient for adjusting maxPathLengh during CFG cycles. */
         EdgeVisitOrder edgeVisitOrder;                  /**< Order in which to visit edges. */
+        bool trackingCodeCoverage;                      /**< If set, track which block addresses are reached. */
 
         // Null dereferences
         struct NullDeref {
@@ -101,7 +105,7 @@ public:
             : searchMode(SEARCH_SINGLE_DFS), maxVertexVisit((size_t)-1), maxPathLength(200), maxCallDepth((size_t)-1),
               maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true), solverName("best"),
               memoryParadigm(LIST_BASED_MEMORY), processFinalVertex(false), ignoreSemanticFailure(false),
-              kCycleCoefficient(0.0), edgeVisitOrder(VISIT_NATURAL) {}
+              kCycleCoefficient(0.0), edgeVisitOrder(VISIT_NATURAL), trackingCodeCoverage(true) {}
     };
 
     /** Diagnostic output. */
@@ -176,7 +180,8 @@ public:
          *  return address from the stack for a function that was called but whose implementation is not present (such as when
          *  the inter-procedural depth was too great, the function is a non-linked import, etc.) */
         virtual void nullDeref(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
-                               IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr, SgAsmInstruction*) {}
+                               const SmtSolverPtr &solver, IoMode ioMode,
+                               const InstructionSemantics2::BaseSemantics::SValuePtr &addr, SgAsmInstruction *insn) {}
 
         /** Function invoked every time a memory reference occurs.
          *
@@ -253,6 +258,7 @@ private:
     Partitioner2::CfgConstEdgeSet cfgAvoidEdges_;       // CFG edges to avoid
     Partitioner2::CfgConstVertexSet cfgEndAvoidVertices_;// CFG end-of-path and other avoidance vertices
     FunctionSummarizer::Ptr functionSummarizer_;        // user-defined function for handling function summaries
+    AddressSet reachedBlockVas_;                        // basic block addresses reached during analysis
     static Sawyer::Attribute::Id POST_STATE;            // stores semantic state after executing the insns for a vertex
     static Sawyer::Attribute::Id POST_INSN_LENGTH;      // path length in instructions at end of vertex
     static Sawyer::Attribute::Id EFFECTIVE_K;           // (double) effective maximimum path length
@@ -280,6 +286,7 @@ public:
         pathsEndVertices_.clear();
         cfgAvoidEdges_.clear();
         cfgEndAvoidVertices_.clear();
+        reachedBlockVas_.clear();
     }
 
     /** Initialize diagnostic output. This is called automatically when ROSE is initialized. */
@@ -503,6 +510,16 @@ public:
     static size_t pathLength(const Partitioner2::CfgPath&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Functions for code coverage
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Property: Addresses reached during analysis.
+     *
+     *  This read-only property holds the set of basic block addresses that were reached during the analysis. It is reset
+     *  each time @ref depthFirstSearch is called. */
+    const AddressSet& reachedBlockVas() const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Private supporting functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
@@ -545,6 +562,9 @@ private:
     SmtSolver::Satisfiable
     solvePathConstraints(SmtSolver::Ptr&, const Partitioner2::CfgPath&, const SymbolicExpr::Ptr &edgeAssertion,
                          const std::vector<Expression> &userAssertions, bool atEndOfPath, SymbolicExprParser&);
+
+    // Mark vertex as being reached
+    void markAsReached(const Partitioner2::ControlFlowGraph::ConstVertexIterator&);
 };
 
 } // namespace

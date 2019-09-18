@@ -417,9 +417,11 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep( DepInfoAnal& anal,
   MakeUniqueVarGetBound boundop(varmap, anal);
 
   AstInterface::AstNodeList sub1, sub2;
+#ifndef NDEBUG
   bool succ1 =  LoopTransformInterface::IsArrayAccess(ref.r1.ref, 0, &sub1);
   bool succ2 = LoopTransformInterface::IsArrayAccess(ref.r2.ref, 0, &sub2);
   assert(succ1 && succ2);
+#endif
 
   AstInterface::AstNodeList::const_iterator iter1 = sub1.begin();
   AstInterface::AstNodeList::const_iterator iter2 = sub2.begin();

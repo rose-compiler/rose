@@ -1,7 +1,6 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
-// DQ (12/29//2011): Since this file used the TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS macro we need to include rose_config.h.
 #include "rose_config.h"
 
 #include "fixupDefiningAndNondefiningDeclarations.h"
@@ -425,6 +424,11 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                               printf ("##### WARNING: in FixupAstDefiningAndNondefiningDeclarations::visit() statement = %p = %s not in child list of scope = %p = %s \n",
                                    firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),
                                    firstNondefiningDeclarationScope,firstNondefiningDeclarationScope->class_name().c_str());
+                              SgClassDeclaration* classDeclaration = isSgClassDeclaration(firstNondefiningDeclaration);
+                              if (classDeclaration != NULL)
+                                 {
+                                   printf (" --- classDeclaration = %p name = %s \n",classDeclaration,classDeclaration->get_name().str());
+                                 }
 #if 0
                               firstNondefiningDeclaration->get_startOfConstruct()->display("declaration: firstNondefiningDeclaration: debug");
                               firstNondefiningDeclarationScope->get_startOfConstruct()->display("scope: firstNondefiningDeclarationScope: debug");
@@ -698,11 +702,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                if (templateMemberFunction != NULL)
                   {
                  // Look for the SgTempleteDeclaration (some of them can been hidden and are not traversed)
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                     SgDeclarationStatement* templateDeclaration = templateMemberFunction->get_templateDeclaration();
-#else
-                    SgTemplateDeclaration* templateDeclaration = templateMemberFunction->get_templateDeclaration();
-#endif
 
                  // DQ (5/3/2012): We don't always have a template declaration, so I would like to weaken this test in ROSE.  We might be able to fix it later.
                  // ROSE_ASSERT(templateDeclaration != NULL);

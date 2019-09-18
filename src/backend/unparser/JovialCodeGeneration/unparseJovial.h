@@ -57,7 +57,8 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
        // Types
           virtual void unparseType        (SgType* type,  SgUnparse_Info& info);
           virtual void unparseTypeSize    (SgType* expr,  SgUnparse_Info& info);
-          virtual void unparseArrayType   (SgArrayType* type, SgUnparse_Info& info);
+          virtual void unparseArrayType   (SgType* type,  SgUnparse_Info& info);
+          virtual void unparseTableType   (SgType* type,  SgUnparse_Info& info);
 
 #if 0
           virtual void unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info);
@@ -91,6 +92,9 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
 
        // Initializers
           virtual void unparseAssnInit       (SgExpression* expr, SgUnparse_Info& info);
+
+       // Table dimension list
+          void unparseDimInfo (SgExprListExp* dim_info, SgUnparse_Info& info);
 
 #if 0
           void unparseOneElemConInit(SgConstructorInitializer* con_init, SgUnparse_Info& info);

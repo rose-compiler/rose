@@ -1,0 +1,62 @@
+include_rules
+
+ifeq (@(ENABLE_BINARY_ANALYSIS) @(WITH_SQLITE),yes yes)
+
+#------------------------------------------------------------------------------------------------------------------------
+# Database tests
+
+# a) sample program to load and store in DB
+run $(support_compile_linkexe) sampleExecutable.C
+
+# a) test compiled programs
+run $(tool_compile_linkexe) testConcolicDB.C
+run $(test) testConcolicDB
+
+# b) test various executions
+run $(test) ./crsh/crsh -o testOpenDB \
+    --extra=openDB.db \
+    ./crsh/crsh openDB.crsh
+
+run $(test) ./crsh/crsh -o testDefineTests \
+    --extra=defineTests.db \
+    ./crsh/crsh defineTests.crsh
+
+run $(test) ./crsh/crsh -o testRun1 \
+    --extra=run1.db \
+    ./crsh/crsh run1.crsh
+
+run $(test) ./crsh/crsh -o testRun10 \
+    --extra=run10.db \
+    ./crsh/crsh run10.crsh
+
+run $(test) ./crsh/crsh -o testDefineFail \
+    --extra=defineFail.db \
+    ./crsh/crsh defineFail.crsh
+
+run $(test) ./crsh/crsh -o testCombined \
+    --extra=combined.db \
+    ./crsh/crsh combined.crsh
+
+run $(test) ./crsh/crsh -o testExport \
+    --input=sampleExecutable \
+    --extra=testExport.db \
+    ./crsh/crsh testExport.crsh
+
+run $(test) ./crsh/crsh -o testConnectNonExisting \
+    ./crsh/crsh testConnectNonExisting.crsh
+
+run $(test) ./crsh/crsh -o testCreateOverwrites \
+    ./crsh/crsh testCreateOverwrites.crsh
+
+run $(test) ./crsh/crsh -o testConnect \
+    ./crsh/crsh testConnect.crsh
+
+#------------------------------------------------------------------------------------------------------------------------
+# Concolic executor tests
+
+run $(tool_compile_linkexe) testConcolicExecutor.C
+run $(test) testConcolicExecutor \
+    ./testConcolicExecutor --log 'Rose::BinaryAnalysis::Concolic\(debug\)' \
+    $(ROSE)/tests/nonsmoke/specimens/binary/concolic-specimen-01
+
+endif

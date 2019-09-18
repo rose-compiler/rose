@@ -1,0 +1,96 @@
+The "phases" subdirectories define the actions that occur as part
+of a test. Each phase is executed in a single Docker container and
+consists of one or more steps. The phases are executed in order of
+their directory names, each of which must begin with one ore more
+digits followed by a hyphen.
+
+The steps to be executed within a phase are represented by executable
+shell scripts within a phase directory.  The steps are executed in
+order of their names, which must begin with one or more digits
+followed by a hythen. Files that don't follow this naming convention
+or that are not executable are skipped. The part of the script name
+after the hyphen is the step name that's sent to the database as the
+name of the last step that was attempted, therefore that part of the
+script name should be unique among all the "phases" subdirectories.
+
+* Phase configuration files
+  Each phase directory may have a file named "config" that contains
+  lines of the form KEY=VALUE (with optional spaces around the
+  parts). Blank lines and lines whose first non-space character is "#"
+  are ignored.  The following KEY=VALUE pairs are understood:
+
+*** mount-spock=(yes|no)
+    Whether to mount the $HOME/.spock directory.  The default is
+    "yes".
+
+*** mount-project=(yes|no)
+    Whether to mount the "project-source-ro" directory. The default is
+    "yes".
+
+* Step environment
+  All step scripts are run with the following environment:
+
+  1. The current working directory is $HOME
+
+  2. The $HOME/.spock directory is mounted from the host system and
+     contains all software managed by RMC/Spock.
+
+  3. The $HOME/project-source-ro the project source code mounted
+     read-only from the host.
+
+  4. The $HOME/run directory is mounted from the host system and is used
+     to communicate between the host and target operating systems. See
+     further description below.
+
+* Special step scripts
+  Two steps are special:
+
+*** setup
+    Any step named "setup" will cause the test total elapsed time to
+    be reset to zero. Also, depending on the rose-matrix-run arguments,
+    failures during setup steps might not be reported to the database.
+
+*** end
+    Any step named "end" will erase the accumulated test output and
+    replace it with the output from just this step. If there was no
+    "end" step then the output is cleared if all steps pass.
+
+* Host-target communication
+  The host (machine running all tests) and the target (environment for
+  each individual test) communicate through a shared filesystem. This
+  filesystem is named $HOME/run in the target Docker containers, and
+  has the following files:
+
+*** artifacts
+    This directory holds artifacts that need to be shared between
+    scripts that execute in different Docker containers.
+
+*** dribble
+    Written by both the host and target to contain short, high-level
+    information about what commands are being run. This is intended to
+    be summary information.
+
+*** interactive
+    If this file is present, then the target machine enters an
+    interactive shell.
+
+*** output.step
+    Standard output and standard error from the currently running
+    script is directed to this file. The script should not write to
+    this file explicitly. Reading from the file is undefined due to
+    buffering.
+
+*** output
+    Combined output from all scripts. The script should not write to
+    this file explicitly but may read from it in order to analyzing
+    output of prior steps. For instance, a common technique is for an
+    "end" step to read the "output" file to count the number of
+    compiler warnings.
+
+*** result
+    The key=value pairs that are sent back to the central database.
+
+*** rmc-config
+    Contains configuration information for building the software. The
+    target machine should read this file but not write to it.
+

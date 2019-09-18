@@ -783,7 +783,10 @@ WMemoryMap::prepareDownload() {
             tmp->erase(AddressInterval::hull(0, leastVa-1));
         if (greatestVa < tmp->hull().greatest())
             tmp->erase(AddressInterval::hull(greatestVa+1, tmp->hull().greatest()));
-        Rose::BinaryAnalysis::SRecord::dump(tmp, output);
+        static const Rose::BinaryAnalysis::SRecord::Syntax syntax = Rose::BinaryAnalysis::SRecord::SREC_MOTOROLA;
+        std::vector<Rose::BinaryAnalysis::SRecord> srecs = Rose::BinaryAnalysis::SRecord::create(tmp, syntax);
+        BOOST_FOREACH (const Rose::BinaryAnalysis::SRecord &srec, srecs)
+            output <<srec <<"\n";
     }
 
     wDownloadMessage_->setText(" for " + StringUtility::addrToString(leastVa) + "-" +

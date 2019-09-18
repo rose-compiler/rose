@@ -30,7 +30,7 @@ public:
     InterproceduralPredicate &interproceduralPredicate;      // returns true when a call should be inlined
 
     // maps CFG vertex ID to dataflow vertex
-    typedef Sawyer::Container::Map<ControlFlowGraph::ConstVertexIterator, DfCfg::VertexIterator> VertexMap;
+    typedef Sawyer::Container::GraphIteratorMap<ControlFlowGraph::ConstVertexIterator, DfCfg::VertexIterator> VertexMap;
 
     // Info about one function call
     struct CallFrame {
@@ -62,7 +62,7 @@ public:
     DfCfg::VertexIterator findVertex(const ControlFlowGraph::ConstVertexIterator cfgVertex) {
         ASSERT_require(!callStack.empty());
         CallFrame &callFrame = callStack.back();
-        return callFrame.vmap.getOrElse(cfgVertex, dfCfg.vertices().end());
+        return callFrame.vmap.find(cfgVertex).orElse(dfCfg.vertices().end());
     }
 
     // Insert the specified dfVertex into the data-flow graph and associate it with the specified cfgVertex. The mapping is
@@ -105,7 +105,7 @@ public:
         ASSERT_require(cfgVertex != cfg.vertices().end());
         ASSERT_require(cfgVertex->value().type() == V_BASIC_BLOCK);
         DfCfg::VertexIterator retval = dfCfg.vertices().end();
-        if (!callFrame.vmap.getOptional(cfgVertex).assignTo(retval)) {
+        if (!callFrame.vmap.find(cfgVertex).assignTo(retval)) {
             BasicBlock::Ptr bblock = cfgVertex->value().bblock();
             ASSERT_not_null(bblock);
             retval = insertVertex(DfCfgVertex(bblock, parentFunction, inliningId), cfgVertex);
@@ -527,7 +527,7 @@ TransferFunction::initialState() const {
 #if 0 // [Robb Matzke 2015-01-14]
     regState->initialize_large();
 #else
-    regState->writeRegister(STACK_POINTER_REG, ops->undefined_(STACK_POINTER_REG.get_nbits()), ops.get());
+    regState->writeRegister(STACK_POINTER_REG, ops->undefined_(STACK_POINTER_REG.nBits()), ops.get());
 #endif
     return newState;
 }
@@ -558,26 +558,26 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
             // A previous calling convention analysis knows what registers are clobbered by the call.
             const CallingConvention::Analysis &ccAnalysis = callee->callingConventionAnalysis();
             BOOST_FOREACH (RegisterDescriptor reg, ccAnalysis.outputRegisters().listAll(regDict)) {
-                ops->writeRegister(reg, ops->undefined_(reg.get_nbits()));
+                ops->writeRegister(reg, ops->undefined_(reg.nBits()));
                 if (genericRegState)
                     genericRegState->insertProperties(reg, BaseSemantics::IO_WRITE);
             }
             if (ccAnalysis.stackDelta())
-                stackDelta = ops->number_(STACK_POINTER_REG.get_nbits(), *ccAnalysis.stackDelta());
+                stackDelta = ops->number_(STACK_POINTER_REG.nBits(), *ccAnalysis.stackDelta());
 
         } else if (defaultCallingConvention_) {
             // Use a default calling convention definition to decide what registers should be clobbered. Don't clobber the
             // stack pointer because we might be able to adjust it more intelligently below.
             BOOST_FOREACH (const CallingConvention::ParameterLocation &loc, defaultCallingConvention_->outputParameters()) {
                 if (loc.type() == CallingConvention::ParameterLocation::REGISTER && loc.reg() != STACK_POINTER_REG) {
-                    ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().get_nbits()));
+                    ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().nBits()));
                     if (genericRegState)
                         genericRegState->updateWriteProperties(loc.reg(), BaseSemantics::IO_WRITE);
                 }
             }
             BOOST_FOREACH (RegisterDescriptor reg, defaultCallingConvention_->scratchRegisters()) {
                 if (reg != STACK_POINTER_REG) {
-                    ops->writeRegister(reg, ops->undefined_(reg.get_nbits()));
+                    ops->writeRegister(reg, ops->undefined_(reg.nBits()));
                     if (genericRegState)
                         genericRegState->updateWriteProperties(reg, BaseSemantics::IO_WRITE);
                 }
@@ -604,7 +604,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
             newStack = ops->add(origStackPtr, stackDelta);
         } else {
             // We don't know the callee's delta, therefore we don't know how to adjust the delta for the callee's effect.
-            newStack = ops->undefined_(STACK_POINTER_REG.get_nbits());
+            newStack = ops->undefined_(STACK_POINTER_REG.nBits());
         }
         ASSERT_not_null(newStack);
         ops->writeRegister(STACK_POINTER_REG, newStack);
