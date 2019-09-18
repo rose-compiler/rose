@@ -143,8 +143,10 @@ set_array_dimension( const AstNodePtr& arrayexp, int dim)
 {
   std::map <AstNodePtr, int>::const_iterator p = dimmap.find(arrayexp);
   if (p != dimmap.end()) {
+#ifndef NDEBUG
      int olddim = (*p).second;
      assert(olddim == dim);
+#endif
   }
   else
      dimmap[arrayexp] = dim;

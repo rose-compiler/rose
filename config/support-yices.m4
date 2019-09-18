@@ -2,21 +2,24 @@
 AC_DEFUN([ROSE_SUPPORT_YICES],[
 
     dnl Parse configure command-line switches for Yices and/or obtain the value from the cache.
-    AC_ARG_WITH([yices],
-                [AC_HELP_STRING([[[[--with-yices[=PREFIX]]]]], dnl yes, we really need 4 quotes (autoconf 2.6.1)!
-                                [Use the Yices Satisfiability Modulo Theories (SMT) solver. The PREFIX, if specified,
-                                 should be the prefix used to install Yices, such as "/usr/local". ROSE searches for
-                                 an executable named "/bin/yices" under the specified prefix.  The default is the empty
-                                 prefix.])],
-                [ac_cv_use_yices=$withval],
-                [ac_cv_use_yices=no])
+    AC_ARG_WITH(
+        [yices],
+        AS_HELP_STRING(
+            [--with-yices=PREFIX],
+            [Use the Yices SMT solver available as a non-free download from https://yices.csl.sri.com (consider
+             using the Z3 solver instead, which is free and better supported). The PREFIX, if specified,
+             should be the prefix used to install Yices, such as "/usr/local". The default is the empty prefix,
+             in which case the headers and library must be installed in a place where they will be found. Saying
+             "no" for the prefix is the same as saying "--without-yices".]),
+            [ac_cv_use_yices=$withval],
+            [ac_cv_use_yices=no])
     AC_CACHE_CHECK([whether to use yices], [ac_cv_use_yices], [ac_cv_use_yices=no])
 
 
     dnl Find the yices executable and/or library.
     HAVE_LIBYICES=
     if test $ac_cv_use_yices = yes; then
-	ROSE_YICES_PREFIX=
+        ROSE_YICES_PREFIX=
         AC_PATH_PROG(ROSE_YICES, yices)
         AC_CHECK_LIB(yices, yicesl_version,
                      [AC_DEFINE(ROSE_HAVE_LIBYICES, [], [Defined when the Yices SMT-Solver library is present and should be used.])

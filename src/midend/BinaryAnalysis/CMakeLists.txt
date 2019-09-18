@@ -6,6 +6,7 @@ if(enable-binary-analysis)
     BinaryCodeInserter.C
     BinaryControlFlow.C
     BinaryDataFlow.C
+    BinaryDebugger.C
     BinaryDemangler.C
     BinaryDominance.C
     BinaryFeasiblePath.C
@@ -28,6 +29,15 @@ if(enable-binary-analysis)
     BinaryToSource.C
     BinaryYicesSolver.C
     BinaryZ3Solver.C
+    Concolic/ConcolicExecutor.C
+    Concolic/Database.C
+    Concolic/ExecutionManager.C
+    Concolic/LinuxExecutor.C
+    Concolic/LinuxExitStatus.C
+    Concolic/Specimen.C
+    Concolic/TestCase.C
+    Concolic/TestSuite.C
+    Concolic/Utility.C
     DwarfLineMapper.C
     instructionSemantics/BaseSemantics2.C
     instructionSemantics/ConcreteSemantics2.C
@@ -42,6 +52,7 @@ if(enable-binary-analysis)
     instructionSemantics/MemoryCellMap.C
     instructionSemantics/MemoryCellState.C
     instructionSemantics/MultiSemantics2.C
+    instructionSemantics/NativeSemantics.C
     instructionSemantics/NullSemantics2.C
     instructionSemantics/PartialSymbolicSemantics2.C
     instructionSemantics/RegisterStateGeneric.C
@@ -64,8 +75,10 @@ install(
     BinaryBestMapAddress.h
     BinaryCallingConvention.h
     BinaryCodeInserter.h
+    BinaryConcolic.h
     BinaryControlFlow.h
     BinaryDataFlow.h
+    BinaryDebugger.h
     BinaryDemangler.h
     BinaryDominance.h
     BinaryFeasiblePath.h
@@ -104,6 +117,7 @@ install(
     instructionSemantics/MemoryCellMap.h
     instructionSemantics/MemoryCellState.h
     instructionSemantics/MultiSemantics2.h
+    instructionSemantics/NativeSemantics.h
     instructionSemantics/NullSemantics2.h
     instructionSemantics/PartialSymbolicSemantics2.h
     instructionSemantics/RegisterStateGeneric.h

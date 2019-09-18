@@ -133,6 +133,10 @@ namespace General_Language_Translation
 
           e_star_expression,
 
+       // Expressions for initialization (preset in Jovial)
+          e_initializer,
+          e_struct_initializer,
+
        // Statements
        // ----------
 

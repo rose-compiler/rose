@@ -54,8 +54,11 @@ TokenStream::consume(size_t n) {
 
 std::string
 TokenStream::lexeme(const Token &t) const {
-    const char *s = content_.characters(t.begin_);
-    return std::string(s, t.end_-t.begin_);
+    if (const char *s = content_.characters(t.begin_)) {
+        return std::string(s, t.end_-t.begin_);
+    } else {
+        return "";
+    }
 }
 
 std::string
@@ -68,9 +71,12 @@ TokenStream::line(const Token &t) const {
     if (t.type() == TOK_EOF)
         return "";
     size_t lineIdx = content_.lineIndex(t.begin_);
-    const char *s = content_.lineChars(lineIdx);
-    size_t n = content_.nCharacters(lineIdx);
-    return std::string(s, n);
+    if (const char *s = content_.lineChars(lineIdx)) {
+        size_t n = content_.nCharacters(lineIdx);
+        return std::string(s, n);
+    } else {
+        return "";
+    }
 }
 
 bool

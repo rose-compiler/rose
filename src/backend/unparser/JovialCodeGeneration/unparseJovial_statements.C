@@ -63,15 +63,15 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
        // case V_SgGlobal:                     cout << "Got it !!!" << endl; /* unparseGlobalStmt (stmt, info); */ break;
 
        // module support
-          case V_SgJovialCompoolStatement:     unparseCompoolStmt (stmt, info);      break;
-          case V_SgProgramHeaderStatement:     unparseProgHdrStmt (stmt, info);      break;
+          case V_SgJovialCompoolStatement:     unparseCompoolStmt (stmt, info);     break;
+          case V_SgProgramHeaderStatement:     unparseProgHdrStmt (stmt, info);     break;
           case V_SgFunctionDeclaration:        unparseFuncDeclStmt(stmt, info);     break;
           case V_SgFunctionDefinition:         unparseFuncDefnStmt(stmt, info);     break;
 
        // directives, define
 
-          case V_SgJovialDirectiveStatement:   unparseDirectiveStmt (stmt, info);    break;
-          case V_SgJovialDefineDeclaration:    unparseDefineDeclStmt(stmt, info);    break;
+          case V_SgJovialDirectiveStatement:   unparseDirectiveStmt (stmt, info);   break;
+          case V_SgJovialDefineDeclaration:    unparseDefineDeclStmt(stmt, info);   break;
 
        // declarations
 
@@ -140,15 +140,32 @@ Unparse_Jovial::unparseDirectiveStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgJovialDirectiveStatement* directive = isSgJovialDirectiveStatement(stmt);
      ROSE_ASSERT(directive);
 
-     int directive_type  = directive->get_directive_type();
      std::string content = directive->get_content_string();
 
-  // TODO - implement other directives
-     ROSE_ASSERT(directive_type == SgJovialDirectiveStatement::e_compool);
-
-     curprint("!COMPOOL ");
-     curprint(content);
-     curprint(";\n");
+     switch (directive->get_directive_type())
+        {
+        case SgJovialDirectiveStatement::e_compool:
+           {
+              curprint("!COMPOOL (");
+              curprint(content);
+              curprint(");\n");
+              break;
+           }
+        case SgJovialDirectiveStatement::e_reducible:
+           {
+              curprint("!REDUCIBLE;\n");
+              break;
+           }
+        case SgJovialDirectiveStatement::e_order:
+           {
+              curprint("!ORDER;\n");
+              break;
+           }
+        default:
+           {
+              cout << "Warning: SgJovialDirectiveStmt directive type not handled is " << directive->get_directive_type() << endl;
+           }
+        }
    }
 
 void
@@ -661,36 +678,90 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgJovialTableStatement* table_decl = isSgJovialTableStatement(stmt);
      ROSE_ASSERT(table_decl != NULL);
 
-     SgClassDefinition* table_def = table_decl->get_definition();
+     cout << "--> unparse TableDeclStmt: table_decl is " << table_decl << ": " << table_decl->class_name() << endl;
+
+     SgJovialTableStatement* defining_decl = isSgJovialTableStatement(table_decl->get_definingDeclaration());
+     cout << "--> unparse TableDeclStmt: defining_decl is " << defining_decl << ": " << defining_decl->class_name() << endl;
+     ROSE_ASSERT(isSgJovialTableStatement(defining_decl));
+
+     SgClassDefinition* table_def = defining_decl->get_definition();
      ROSE_ASSERT(table_def);
+
+     cout << "--> unparse TableDeclStmt: table_def is " << table_def << ": " << table_def->class_name() << endl;
 
      SgName table_name = table_decl->get_name();
 
-     curprint("TYPE ");
-     curprint(table_name.str());
-     curprint(" TABLE");
+      SgType* type = table_decl->get_type();
+      ROSE_ASSERT(type);
+
+      SgJovialTableType* table_type = isSgJovialTableType(type);
+      ROSE_ASSERT(table_type);
+
+      curprint("TYPE ");
+      curprint(table_name);
+      curprint(" TABLE ");
+
+   // Table DimensionList
+      SgExprListExp* dim_info = table_type->get_dim_info();
+     if (dim_info != NULL)
+        {
+           unparseDimInfo(dim_info, info);
+        }
 
   // WordsPerEntry
      if (table_decl->get_has_table_entry_size())
         {
-           curprint(" W ");
-           unparseExpression(table_decl->get_table_entry_size(), info);
+        // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
+           if (table_decl->get_table_entry_size() != NULL)
+              {
+                 curprint("W ");
+                 unparseExpression(table_decl->get_table_entry_size(), info);
+              }
+           else curprint("V");
+        }
+
+  // Unparse base type or base class name if present
+  //
+     SgType* table_base_type = table_type->get_base_type();
+     bool has_base_type  = (table_base_type != NULL);
+
+     SgBaseClassPtrList base_class_list = table_def->get_inheritances();
+     bool has_base_class = (base_class_list.size() > 0);
+
+     if (has_base_type)
+        {
+           unparseType(table_base_type, info);
+        }
+     else if (has_base_class)
+        {
+           ROSE_ASSERT (base_class_list.size() == 1);
+           SgBaseClass* base_class = base_class_list[0];
+           ROSE_ASSERT(base_class != NULL);
+           SgClassDeclaration* base_class_decl = base_class->get_base_class();
+           ROSE_ASSERT(base_class_decl != NULL);
+
+           curprint(base_class_decl->get_name());
         }
 
      curprint(";");
      unp->cur.insert_newline(1);
 
-     curprint("BEGIN");
-     unp->cur.insert_newline(1);
-
-     BOOST_FOREACH(SgDeclarationStatement* item_decl, table_def->get_members())
+  // Unparse body if present
+     if (table_def->get_members().size() > 0)
+ //  if (has_base_type == false && has_base_class == false)
         {
-           unparseVarDeclStmt(item_decl, info);
-        }
+           curprint("BEGIN");
+           unp->cur.insert_newline(1);
 
-     unp->cur.insert_newline(1);
-     curprint("END");
-     unp->cur.insert_newline(1);
+           BOOST_FOREACH(SgDeclarationStatement* item_decl, table_def->get_members())
+              {
+                 unparseVarDeclStmt(item_decl, info);
+              }
+
+           unp->cur.insert_newline(1);
+           curprint("END");
+           unp->cur.insert_newline(1);
+        }
    }
 
 void
@@ -729,9 +800,10 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
 
      switch (type->variantT())
         {
-          case V_SgArrayType:
+          case V_SgJovialTableType:
              curprint("TABLE ");
              curprint(name.str());
+             curprint(" ");
              break;
           default:
              curprint("ITEM ");

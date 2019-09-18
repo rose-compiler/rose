@@ -3,11 +3,14 @@
 
 #include <rosePublicConfig.h>
 
+#include <boost/shared_ptr.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <istream>
 #include <list>
 #include <ostream>
+#include <RoseException.h>
 #include <rose_override.h>
 #include <Sawyer/Assert.h>
 #include <Sawyer/Synchronization.h>
@@ -146,10 +149,10 @@ public:
     typedef std::vector<uint8_t> Digest;
 
     /** Exceptions for hashing. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         /** Constructor. */
-        Exception(const std::string &mesg): std::runtime_error(mesg) {}
+        Exception(const std::string &mesg): Rose::Exception(mesg) {}
         ~Exception() throw () {}
     };
     
@@ -207,6 +210,9 @@ public:
      *  This is a wrapper that calls the @ref digest function to finalize the hash, converts the digest to a hexadecimal
      *  string, and sends it to the stream. */
     void print(std::ostream&);
+
+    static boost::shared_ptr<Hasher> createHasher(const std::string& inType);    
+
 };
 
 /** Hasher for any libgcrypt hash algorithm.
@@ -305,6 +311,8 @@ typedef HasherGcrypt<0> HasherSha384;                   /**< SHA-384 hasher. Thr
 typedef HasherGcrypt<0> HasherSha512;                   /**< SHA-512 hasher. Throws exception if libgcrypt is not configured. */
 typedef HasherGcrypt<0> HasherCrc32;                    /**< ISO 3309 hasher. Throws exception if libgcrypt is not configured. */
 #endif
+
+
 
 /** Fowler-Noll-Vo hashing using the Hasher interface. */
 class ROSE_DLL_API HasherFnv: public Hasher {
