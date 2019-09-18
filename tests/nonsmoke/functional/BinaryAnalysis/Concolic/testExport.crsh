@@ -1,15 +1,15 @@
 create sqlite3://./testExport.db
 
+@success
 exp :: e01
-  @success
 {
   export E0 = Hello
 
   ./sampleExecutable --env=E0=Hello
 }
 
+@success
 exp :: e02
-  @success
 {
   export E0 = Hello
   export A1 = Test
@@ -17,8 +17,8 @@ exp :: e02
   ./sampleExecutable --env=E0=Hello
 }
 
+@success
 exp :: e03
-  @success
 {
   export E0 = Howdy
   export A1 = Test
@@ -26,8 +26,8 @@ exp :: e03
   ./sampleExecutable --env=A1=Test --env=E0=Howdy
 }
 
+@success
 exp :: e04
-  @success
 {
   export E0 = Howdy
   export A1 = Test
@@ -35,24 +35,26 @@ exp :: e04
   ./sampleExecutable --env=E0=Howdy --env=A1=Test
 }
 
+@success
 exp2 :: f01
-  @success
 {
   export E0 = Hello
 
   ./sampleExecutable --env=E0=Howdy
 }
 
+@success
 exp2 :: f02
-  @success
 {
   ./sampleExecutable --env=E0=Howdy
 }
 
 
-exp2 :: run 10 @failure
+@failure
+exp2 :: run 10 
 
-exp :: run 10 @success
+@success
+exp :: run 10 
 
 ! echo ok.
 

@@ -142,6 +142,19 @@ rose_execution_monitor_LDFLAGS = $(ROSE_RPATHS)
 rose_execution_monitor_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Analyze perf output for estimating the number of unique instructions
+
+AM_YFLAGS = -d -t
+
+bin_PROGRAMS += rose-perf-analyzer
+rose_perf_analyzer_SOURCES = PerfOutputAnalyzer/parser.ypp PerfOutputAnalyzer/lexer.lpp \
+                             PerfOutputAnalyzer/analyzer.cpp 
+rose_perf_analyzer_CPPFLAGS = $(ROSE_INCLUDES)
+rose_perf_analyzer_LDFLAGS = $(ROSE_RPATHS)
+rose_perf_analyzer_LDADD = $(ROSE_LIBS)
+
+
+#------------------------------------------------------------------------------------------------------------------------
 # Test for rose-execution-monitor
 #   specimen can be invoked: testExecutionMonitor [mode] [N]
 #                            mode = 0 .. invoke identity N times.

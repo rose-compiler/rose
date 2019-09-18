@@ -1,13 +1,13 @@
 create sqlite3://./defineTests.db
 
+@ success
 ls-family :: t01
-  @ success
 {
   ls -la
 }
 
+@ success
 ls-family :: t02
-  @ success
 {
   export DESC = ThisIsASimpleTest
 
