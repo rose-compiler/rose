@@ -121,7 +121,7 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
         if (CallingConvention::Definition::Ptr ccDefn = function->callingConventionDefinition()) {
             reason = "calling convention";
             retval = ops->number_(bitsPerWord, ccDefn->nonParameterStackSize());
-            if (ccDefn->stackDirection() == CallingConvention::StackDirection::GROWS_UP)
+            if (ccDefn->stackDirection() == CallingConvention::/*StackDirection::*/GROWS_UP)
                 retval = ops->invert(retval);
 
         } else if (!instructionProvider().callReturnRegister().isEmpty()) {

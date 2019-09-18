@@ -187,7 +187,8 @@ public:
          *
          *  The @p ioMode indicates whether the memory location was read or written, and the @p value is the value read or
          *  written. */
-        virtual void memoryIo(const FeasiblePath &analyzer, IoMode ioMode,
+        virtual void memoryIo(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
+                              const SmtSolverPtr &solver, IoMode ioMode,
                               const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                               const InstructionSemantics2::BaseSemantics::SValuePtr &value,
                               const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops) {}
