@@ -18,15 +18,8 @@ emit_cpp_warning() {
 
 # Download the latest version of the source code
 SAWYER_ROOT="sawyer-$(date +%Y%m%d)"
-if [ -d "$SAWYER_ROOT" ]; then
-    (
-        cd "$SAWYER_ROOT"
-        git fetch "$SAWYER_REPO" master
-        git merge FETCH_HEAD
-    )
-else
-    git clone "$SAWYER_REPO" "$SAWYER_ROOT"
-fi
+rm -rf "$SAWYER_ROOT"
+git clone "$SAWYER_REPO" "$SAWYER_ROOT"
 
 cp "$SAWYER_ROOT/LICENSE" LICENSE
         
@@ -91,3 +84,5 @@ done
 
 # Add a comment to the Message.h file
 sed --in-place -e '1i// See also Rose::Diagnostics in $ROSE/src/roseSupport/Diagnostics.h' Message.h
+
+rm -rf "$SAWYER_ROOT"
