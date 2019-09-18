@@ -22,11 +22,11 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "5";
-$mkinstaller_ver_build = "10";
+$mkinstaller_ver_build = "11";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.5.10";
-$mkinstaller_ver_time  = " 5Sep2019,16:26:18z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.10 -  5Sep2019,16:26:18z";
+$mkinstaller_ver_name  = "2.5.11";
+$mkinstaller_ver_time  = "12Sep2019,16:01:20z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.11 - 12Sep2019,16:01:20z";
 
 #{------------------------------------------------------------------------------
 #
@@ -18345,7 +18345,10 @@ sub fixpath {
 #
 #  Get the OS class.
 #
-#  This function is used to determine the OS class of of the host system.
+#  This function is used to determine the OS class of of the host system. A
+#  single optional parameter string may be specified: the caret-O value (the
+#  default is to use the actual special $^O Perl special variable). Such a
+#  parameter is almost never supplied.
 #
 #  Returns: One of:
 #
@@ -18355,52 +18358,57 @@ sub fixpath {
 #
 #  see: totebag/src/perl-lib/getOSclass.psub
 #
-#  Dated: 23Aug2019
+#  Dated: 11Sep2019
 #
 #-------------------------------------------------------------------------------
 
 sub getOSclass {
+   my $theOSname = shift;
+   print DBGOUT "getOSclass[ theOSname=\"".$theOSname."\"...\n" if $debugging;
    my $result;
+   if ($theOSname eq "") {
+      $theOSname = $^O;
+      print DBGOUT "getOSclass: ...assume theOSname=\"".$theOSname."\"\n" if $debugging;
+   }
    #---------------------------------------
    #
    #  First try to use a (fast) direct
    #  method...
    #
-   my $theOSname = $^O; # 23Aug2019
-   if ($theOSname =~ /^linux$/) {
+   if ($theOSname =~ /^linux$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^MSWin32$/) {
+   elsif ($theOSname =~ /^MSWin32$/i) {
       $result = "Windows-like";
    }
-   elsif ($theOSname =~ /^darwin$/) {
+   elsif ($theOSname =~ /^darwin$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^freebsd$/) {
+   elsif ($theOSname =~ /^freebsd$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^solaris$/) {
+   elsif ($theOSname =~ /^solaris$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^aix$/) {
+   elsif ($theOSname =~ /^aix$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^dec_osf$/) {
+   elsif ($theOSname =~ /^dec_osf$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^hpux$/) {
+   elsif ($theOSname =~ /^hpux$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^irix$/) {
+   elsif ($theOSname =~ /^irix$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^msys$/) {
+   elsif ($theOSname =~ /^msys$/i) {
       $result = "Windows-like";
    }
-   elsif ($theOSname =~ /^dos$/) {
+   elsif ($theOSname =~ /^dos$/i) {
       $result = "Windows-like";
    }
-   elsif ($theOSname =~ /^os2$/) {
+   elsif ($theOSname =~ /^os2$/i) {
       $result = "Windows-like";
    }
    else {
@@ -18435,6 +18443,7 @@ sub getOSclass {
          $result = "unknown";
       }
    }
+   print DBGOUT "getOSclass] ...done(=\"".$result."\")\n" if $debugging;
    return $result;
 }
 
@@ -18457,19 +18466,41 @@ sub getOSclass {
 #  This parameter is almost never supplied. Default is to use the value of
 #  the special varable $^O (this default is almost always what is wanted).
 #
+#  The third parameter is a string (possibly multi-line) such as returned by
+#  the:
+#
+#     uname -r    UNIX-like hosts
+#
+#  or the:
+#
+#     ver         Windows-like hosts
+#
+#  As with the second parameter this parameter is almost never supplied.
+#  The default is to use the output of appropriate command.
+#
+#  The fourth parameter is a string (possibly multi-line) such as returned by
+#  by the: systeminfo command (on Windows-like hosts). As with the second and
+#  third parameters this parameter is almost never supplied and is only
+#  appropriate for Windows-like hosts. Default is to use the output of the
+#  systeminfo command.
+#
 #  see: totebag/src/perl-lib/getOSname.psub
 #
-#  Dated: 05Sep2019
+#  Dated: 12Sep2019
 #
 #  NOTE: This code has only been tested on FreeBSD, Linux, MacOS, and Solaris
-#        Other other implementations has been known to work but haven't been
-#        tested for years.
+#        and a number of Windows desktop and server versions. Other other
+#        implementations has been known to work but haven't been tested for
+#        years.
 #
 #-------------------------------------------------------------------------------
 
 sub getOSname {
-   my $levelOfDetail = shift;
-   my $given         = shift;
+   my $levelOfDetail   = shift;
+   my $givenCaretOh    = shift;
+   my $givenCmd1Output = shift;
+   my $givenCmd2Output = shift;
+   print DBGOUT "getOSname[ levelOfDetail=\"".$levelOfDetail."\", givenCaretOh=[".$givenCaretOh."], givenCmd1Output=[".$givenCmd1Output."], givenCmd2Output=[".$givenCmd2Output."]...\n" if $debugging;
    my $result;
    #---------------------------------------
    #
@@ -18477,29 +18508,58 @@ sub getOSname {
    #
    if ( ! ($levelOfDetail =~ /^\d+$/)) {
       $levelOfDetail = 1;
+      print DBGOUT "getOSname: ...assume levelOfDetail=1\n" if $debugging;
    }
-   if ($given eq "") {
-      $given = $^O;
+   if ($givenCaretOh eq "") {
+      $givenCaretOh  = $^O;
+      print DBGOUT "getOSname: ...assume givenCaretOh=[".$givenCaretOh."]\n" if $debugging;
    }
-   $given    = lc $given;
+   $givenCaretOh     = lc $givenCaretOh;
    #---------------------------------------
    #
    #  Go to work...
    #
-   if ($given =~ /^aix$/) {
-      if (2 <= $levelOfDetail) {
-         my $cmd   = "uname -r";
-         my $gives = `$cmd`;
-         if ($gives ne "") {
-            if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
-               my $major = $2;
-               my $minor = $4;
-               if ($major != "") {
-                  if (3 <= $levelOfDetail && ($minor ne "")) {
-                     $result = "AIX".$major.".".$minor;
+   if ($levelOfDetail <= 0) {
+      print DBGOUT "getOSname: ...lowest fidelity\n" if $debugging;
+      if ($givenCaretOh eq "") {
+         $result = getOSclass();
+      }
+      else {
+         $result = getOSclass($givenCaretOh);
+      }
+   }
+   else {
+      #---------------------------------------
+      #
+      #  AIX
+      #
+      #---------------------------------------
+      if ($givenCaretOh =~ /^aix$/) {
+         print DBGOUT "getOSname: ...is AIX\n" if $debugging;
+         if (2 <= $levelOfDetail) {
+            my $gives;
+            if ($givenCmd1Output eq "") {
+               my $cmd = "uname -r";
+               $gives  = `$cmd`;
+            }
+            else {
+               $gives  = $givenCmd1Output;
+            }
+            chomp $gives;
+            if ($gives ne "") {
+               if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
+                  my $major = $2;
+                  my $minor = $4;
+                  if ($major != "") {
+                     if (3 <= $levelOfDetail && ($minor ne "")) {
+                        $result = "AIX".$major.".".$minor;
+                     }
+                     else {
+                        $result = "AIX".$major;
+                     }
                   }
                   else {
-                     $result = "AIX".$major;
+                     $result = "AIX";
                   }
                }
                else {
@@ -18510,111 +18570,137 @@ sub getOSname {
                $result = "AIX";
             }
          }
-         else {
+         elsif (1 <= $levelOfDetail) {
             $result = "AIX";
          }
+         else {
+            $result = "Unix-like";
+         }
       }
-      elsif (1 <= $levelOfDetail) {
-         $result = "AIX";
-      }
-      else {
-         $result = "Unix-like";
-      }
-   }
-   elsif ($given =~ /^darwin$/) {
-      if (2 <= $levelOfDetail) {
-         my $cmd   = "uname -r";
-         my $gives = `$cmd`;
-         if ($gives ne "") {
-            if ($gives =~ /^\s*18\.\d+/) {
-               $result = "MacOS X Mojave";
-            }
-            elsif ($gives =~ /^\s*17\.\d+/) {
-               $result = "MacOS X High Sierra";
-            }
-            elsif ($gives =~ /^\s*16\.\d+/) {
-               $result = "MacOS X Sierra";
-            }
-            elsif ($gives =~ /^\s*15\.\d+/) {
-               $result = "OS X El Capitan";
-            }
-            elsif ($gives =~ /^\s*14\.\d+/) {
-               $result = "OS X Yosemite";
-            }
-            elsif ($gives =~ /^\s*13\.\d+/) {
-               $result = "OS X Mavericks";
-            }
-            elsif ($gives =~ /^\s*12\.\d+/) {
-               $result = "OS X Mountain Lion";
-            }
-            elsif ($gives =~ /^\s*11\.\d+/) {
-               $result = "OS X Lion";
-            }
-            elsif ($gives =~ /^\s*10\.\d+/) {
-               $result = "OS X Snow Leopard";
-            }
-            elsif ($gives =~ /^\s*9\.\d+/) {
-               $result = "OS X Leopard";
-            }
-            elsif ($gives =~ /^\s*8\.\d+/) {
-               $result = "OS X Tiger";
-            }
-            elsif ($gives =~ /^\s*7\.\d+/) {
-               $result = "OS X Panther";
-            }
-            elsif ($gives =~ /^\s*6\.\d+/) {
-               $result = "OS X Jaguar";
-            }
-            elsif (($gives =~ /^\s*5\.\d+/) || ($gives =~ /^\s*1\.4\.\d+/)) {
-               $result = "OS X Puma";
-            }
-            elsif ($gives =~ /^\s*1\.3\.\d+/) {
-               $result = "OS X Cheetah";
-            }
-            elsif ($gives =~ /^\s*1\.2\.\d+/) {
-               $result = "OS X Kodiak";
+      #---------------------------------------
+      #
+      #  MacOS
+      #
+      #---------------------------------------
+      elsif ($givenCaretOh =~ /^darwin$/) {
+         print DBGOUT "getOSname: ...is MacOS (aka. darwin)\n" if $debugging;
+         if (2 <= $levelOfDetail) {
+            my $gives;
+            if ($givenCmd1Output eq "") {
+               my $cmd = "uname -r";
+               $gives  = `$cmd`;
             }
             else {
-               $result = "OS X";
+               $gives  = $givenCmd1Output;
+            }
+            chomp $gives;
+            if ($gives ne "") {
+               if ($gives =~ /^\s*18\.\d+/) {
+                  $result = "MacOS X Mojave";
+               }
+               elsif ($gives =~ /^\s*17\.\d+/) {
+                  $result = "MacOS X High Sierra";
+               }
+               elsif ($gives =~ /^\s*16\.\d+/) {
+                  $result = "MacOS X Sierra";
+               }
+               elsif ($gives =~ /^\s*15\.\d+/) {
+                  $result = "OS X El Capitan";
+               }
+               elsif ($gives =~ /^\s*14\.\d+/) {
+                  $result = "OS X Yosemite";
+               }
+               elsif ($gives =~ /^\s*13\.\d+/) {
+                  $result = "OS X Mavericks";
+               }
+               elsif ($gives =~ /^\s*12\.\d+/) {
+                  $result = "OS X Mountain Lion";
+               }
+               elsif ($gives =~ /^\s*11\.\d+/) {
+                  $result = "OS X Lion";
+               }
+               elsif ($gives =~ /^\s*10\.\d+/) {
+                  $result = "OS X Snow Leopard";
+               }
+               elsif ($gives =~ /^\s*9\.\d+/) {
+                  $result = "OS X Leopard";
+               }
+               elsif ($gives =~ /^\s*8\.\d+/) {
+                  $result = "OS X Tiger";
+               }
+               elsif ($gives =~ /^\s*7\.\d+/) {
+                  $result = "OS X Panther";
+               }
+               elsif ($gives =~ /^\s*6\.\d+/) {
+                  $result = "OS X Jaguar";
+               }
+               elsif (($gives =~ /^\s*5\.\d+/) || ($gives =~ /^\s*1\.4\.\d+/)) {
+                  $result = "OS X Puma";
+               }
+               elsif ($gives =~ /^\s*1\.3\.\d+/) {
+                  $result = "OS X Cheetah";
+               }
+               elsif ($gives =~ /^\s*1\.2\.\d+/) {
+                  $result = "OS X Kodiak";
+               }
+               else {
+                  $result = "OS X";
+               }
+            }
+            else {
+               $result = "MacOS";
             }
          }
-         else {
+         elsif (1 <= $levelOfDetail) {
             $result = "MacOS";
          }
+         else {
+            $result = "Unix-like";
+         }
       }
-      elsif (1 <= $levelOfDetail) {
-         $result = "MacOS";
-      }
-      else {
-         $result = "Unix-like";
-      }
-   }
-   elsif ($given =~ /^dec_osf$/) {
-      if (1 <= $levelOfDetail) {
-         my $cmd   = "uname -r";
-         my $gives = `$cmd`;
-         if ($gives ne "") {
-            if ($gives =~ /^\s*((\d+)(\.(\d+))?)/) {
-               my $major = $2;
-               my $minor = $4;
-               if ($major ne "") {
-                  if ($major <= 3) {
-                     if ((3 <= $levelOfDetail) && ($minor ne "")) {
-                        $result = "OSF-".$major.".".$minor;
+      #---------------------------------------
+      #
+      #  OSF/1 aka Tru64
+      #
+      #---------------------------------------
+      elsif ($givenCaretOh =~ /^dec_osf$/) {
+         print DBGOUT "getOSname: ...is Tru64 (aka. OSF/1)\n" if $debugging;
+         if (1 <= $levelOfDetail) {
+            my $gives;
+            if ($givenCmd1Output eq "") {
+               my $cmd = "uname -r";
+               $gives  = `$cmd`;
+            }
+            else {
+               $gives  = $givenCmd1Output;
+            }
+            chomp $gives;
+            if ($gives ne "") {
+               if ($gives =~ /^\s*((\d+)(\.(\d+))?)/) {
+                  my $major = $2;
+                  my $minor = $4;
+                  if ($major ne "") {
+                     if ($major <= 3) {
+                        if ((3 <= $levelOfDetail) && ($minor ne "")) {
+                           $result = "OSF-".$major.".".$minor;
+                        }
+                        elsif (2 <= $levelOfDetail) {
+                           $result = "OSF-".$major;
+                        }
+                        else {
+                           $result = "OSF";
+                        }
                      }
-                     elsif (2 <= $levelOfDetail) {
-                        $result = "OSF-".$major;
-                     }
-                     else {
-                        $result = "OSF";
-                     }
-                  }
-                  elsif (4 <= $major) {
-                     if ((3 <= $levelOfDetail) && ($minor ne "")) {
-                        $result = "Tru64-".$major.".".$minor;
-                     }
-                     elsif (2 <= $levelOfDetail) {
-                        $result = "Tru64-".$major;
+                     elsif (4 <= $major) {
+                        if ((3 <= $levelOfDetail) && ($minor ne "")) {
+                           $result = "Tru64-".$major.".".$minor;
+                        }
+                        elsif (2 <= $levelOfDetail) {
+                           $result = "Tru64-".$major;
+                        }
+                        else {
+                           $result = "Tru64";
+                        }
                      }
                      else {
                         $result = "Tru64";
@@ -18633,27 +18719,40 @@ sub getOSname {
             }
          }
          else {
-            $result = "Tru64";
+            $result = "Unix-like";
          }
       }
-      else {
-         $result = "Unix-like";
-      }
-   }
-   elsif ($given =~ /^freebsd$/) {
-      if (2 <= $levelOfDetail) {
-         my $cmd   = "uname -r";
-         my $gives = `$cmd`;
-         if ($gives ne "") {
-            if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
-               my $major = $2;
-               my $minor = $4;
-               if ($major ne "") {
-                  if ((3 <= $levelOfDetail) && ($minor ne "")) {
-                     $result = "FreeBSD".$major.".".$minor;
+      #---------------------------------------
+      #
+      #  FreeBSD
+      #
+      #---------------------------------------
+      elsif ($givenCaretOh =~ /^freebsd$/) {
+         print DBGOUT "getOSname: ...is FreBSD\n" if $debugging;
+         if (2 <= $levelOfDetail) {
+            my $gives;
+            if ($givenCmd1Output eq "") {
+               my $cmd = "uname -r";
+               $gives  = `$cmd`;
+            }
+            else {
+               $gives  = $givenCmd1Output;
+            }
+            chomp $gives;
+            if ($gives ne "") {
+               if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
+                  my $major = $2;
+                  my $minor = $4;
+                  if ($major ne "") {
+                     if ((3 <= $levelOfDetail) && ($minor ne "")) {
+                        $result = "FreeBSD".$major.".".$minor;
+                     }
+                     else {
+                        $result = "FreeBSD".$major;
+                     }
                   }
                   else {
-                     $result = "FreeBSD".$major;
+                     $result = "FreeBSD";
                   }
                }
                else {
@@ -18664,31 +18763,44 @@ sub getOSname {
                $result = "FreeBSD";
             }
          }
-         else {
+         elsif (1 <= $levelOfDetail) {
             $result = "FreeBSD";
          }
+         else {
+            $result = "Unix-like";
+         }
       }
-      elsif (1 <= $levelOfDetail) {
-         $result = "FreeBSD";
-      }
-      else {
-         $result = "Unix-like";
-      }
-   }
-   elsif ($given =~ /^haiku$/) {
-      if (2 <= $levelOfDetail) {
-         my $cmd   = "uname -r";
-         my $gives = `$cmd`;
-         if ($gives ne "") {
-            if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
-               my $major = $2;
-               my $minor = $4;
-               if ($major ne "") {
-                  if ((3 <= $levelOfDetail) && ($minor ne "")) {
-                     $result = "Haiku".$major.".".$minor;
+      #---------------------------------------
+      #
+      #  BeOS aka Haiku
+      #
+      #---------------------------------------
+      elsif ($givenCaretOh =~ /^haiku$/) {
+         print DBGOUT "getOSname: ...is Haiku (aka. BeOS)\n" if $debugging;
+         if (2 <= $levelOfDetail) {
+            my $gives;
+            if ($givenCmd1Output eq "") {
+               my $cmd = "uname -r";
+               $gives  = `$cmd`;
+            }
+            else {
+               $gives  = $givenCmd1Output;
+            }
+            chomp $gives;
+            if ($gives ne "") {
+               if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
+                  my $major = $2;
+                  my $minor = $4;
+                  if ($major ne "") {
+                     if ((3 <= $levelOfDetail) && ($minor ne "")) {
+                        $result = "Haiku".$major.".".$minor;
+                     }
+                     else {
+                        $result = "Haiku".$major;
+                     }
                   }
                   else {
-                     $result = "Haiku".$major;
+                     $result = "Haiku";
                   }
                }
                else {
@@ -18699,54 +18811,80 @@ sub getOSname {
                $result = "Haiku";
             }
          }
-         else {
+         elsif (1 <= $levelOfDetail) {
             $result = "Haiku";
          }
+         else {
+            $result = "Unix-like";
+         }
       }
-      elsif (1 <= $levelOfDetail) {
-         $result = "Haiku";
-      }
-      else {
-         $result = "Unix-like";
-      }
-   }
-   elsif ($given =~ /^hpux$/) {
-      if (2 <= $levelOfDetail) {
-         my $cmd   = "uname -r";
-         my $gives = `$cmd`;
-         if ($gives ne "") {
-            if ($gives =~ /\s*[AB]\.(\d+)(\.(\d+))?/) {
-               $result = "HP/UX-$1";
+      #---------------------------------------
+      #
+      #  HP/UX
+      #
+      #---------------------------------------
+      elsif ($givenCaretOh =~ /^hpux$/) {
+         print DBGOUT "getOSname: ...is HP/UX\n" if $debugging;
+         if (2 <= $levelOfDetail) {
+            my $gives;
+            if ($givenCmd1Output eq "") {
+               my $cmd = "uname -r";
+               $gives  = `$cmd`;
+            }
+            else {
+               $gives  = $givenCmd1Output;
+            }
+            chomp $gives;
+            if ($gives ne "") {
+               if ($gives =~ /\s*[AB]\.(\d+)(\.(\d+))?/) {
+                  $result = "HP/UX-$1";
+               }
+               else {
+                  $result = "HP/UX";
+               }
             }
             else {
                $result = "HP/UX";
             }
          }
-         else {
+         elsif (1 <= $levelOfDetail) {
             $result = "HP/UX";
          }
+         else {
+            $result = "Unix-like";
+         }
       }
-      elsif (1 <= $levelOfDetail) {
-         $result = "HP/UX";
-      }
-      else {
-         $result = "Unix-like";
-      }
-   }
-   elsif (($given =~ /^irix$/) || ($given =~ /^irix64$/)) {
-      if (2 <= $levelOfDetail) {
-         my $cmd   = "uname -r";
-         my $gives = `$cmd`;
-         if ($gives ne "") {
-            if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
-               my $major = $2;
-               my $minor = $4;
-               if ($major ne "") {
-                  if ((3 <= $levelOfDetail) && ($minor ne "")) {
-                     $result = "Irix".$major.".".$minor;
+      #---------------------------------------
+      #
+      #  IRIX
+      #
+      #---------------------------------------
+      elsif (($givenCaretOh =~ /^irix$/) || ($givenCaretOh =~ /^irix64$/)) {
+         print DBGOUT "getOSname: ...is IRIX\n" if $debugging;
+         if (2 <= $levelOfDetail) {
+            my $gives;
+            if ($givenCmd1Output eq "") {
+               my $cmd = "uname -r";
+               $gives  = `$cmd`;
+            }
+            else {
+               $gives  = $givenCmd1Output;
+            }
+            chomp $gives;
+            if ($gives ne "") {
+               if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
+                  my $major = $2;
+                  my $minor = $4;
+                  if ($major ne "") {
+                     if ((3 <= $levelOfDetail) && ($minor ne "")) {
+                        $result = "Irix".$major.".".$minor;
+                     }
+                     else {
+                        $result = "Irix".$major;
+                     }
                   }
                   else {
-                     $result = "Irix".$major;
+                     $result = "Irix";
                   }
                }
                else {
@@ -18757,31 +18895,44 @@ sub getOSname {
                $result = "Irix";
             }
          }
-         else {
+         elsif (1 <= $levelOfDetail) {
             $result = "Irix";
          }
+         else {
+            $result = "Unix-like";
+         }
       }
-      elsif (1 <= $levelOfDetail) {
-         $result = "Irix";
-      }
-      else {
-         $result = "Unix-like";
-      }
-   }
-   elsif ($given =~ /^linux$/i) {
-      if (2 <= $levelOfDetail) {
-         my $cmd   = "uname -r";
-         my $gives = `$cmd`;
-         if ($gives ne "") {
-            if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
-               my $major = $2;
-               my $minor = $4;
-               if ($major ne "") {
-                  if ((3 <= $levelOfDetail) && ($minor ne "")) {
-                     $result = "Linux".$major.".".$minor;
+      #---------------------------------------
+      #
+      #  Linux
+      #
+      #---------------------------------------
+      elsif ($givenCaretOh =~ /^linux$/i) {
+         print DBGOUT "getOSname: ...is LINUX\n" if $debugging;
+         if (2 <= $levelOfDetail) {
+            my $gives;
+            if ($givenCmd1Output eq "") {
+               my $cmd = "uname -r";
+               $gives  = `$cmd`;
+            }
+            else {
+               $gives  = $givenCmd1Output;
+            }
+            chomp $gives;
+            if ($gives ne "") {
+               if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
+                  my $major = $2;
+                  my $minor = $4;
+                  if ($major ne "") {
+                     if ((3 <= $levelOfDetail) && ($minor ne "")) {
+                        $result = "Linux".$major.".".$minor;
+                     }
+                     else {
+                        $result = "Linux".$major;
+                     }
                   }
                   else {
-                     $result = "Linux".$major;
+                     $result = "Linux";
                   }
                }
                else {
@@ -18792,101 +18943,302 @@ sub getOSname {
                $result = "Linux";
             }
          }
-         else {
+         elsif (1 <= $levelOfDetail) {
             $result = "Linux";
          }
+         else {
+            $result = "Unix-like";
+         }
       }
-      elsif (1 <= $levelOfDetail) {
-         $result = "Linux";
-      }
-      else {
-         $result = "Unix-like";
-      }
-   }
-   elsif (($given =~ /^mswin32$/) || ($given =~ /^msys$/)) {
-      if (2 <= $levelOfDetail) {
-         my $cmd   = "ver";
-         my $gives = `$cmd`;
-         if ($gives ne "") {
-            #
-            #  Server...
-            #
-            if ($gives =~ /\s*Microsoft Windows \[Version 6.1.7601\]/) {
-               $result = "Windows Server 2008 R2 SP2";
+      #---------------------------------------
+      #
+      #  Windows
+      #
+      #---------------------------------------
+      elsif (($givenCaretOh =~ /^mswin32$/) || ($givenCaretOh =~ /^msys$/)) {
+         print DBGOUT "getOSname: ...is Windows\n" if $debugging;
+         $result = "";
+         if (2 <= $levelOfDetail) {
+            print DBGOUT "getOSname:    high fidelity\n" if $debugging;
+            my $verOutput;
+            if ($givenCmd1Output eq "") {
+               my $cmd    = "ver";
+               $verOutput = `$cmd`;
             }
-            elsif ($gives =~ /\s*Microsoft Windows \[Version 6.1.7600\]/) {
-               $result = "Windows Server 2008 R2";
+            else {
+               $verOutput = $givenCmd1Output;
+               print DBGOUT "getOSname:    ...assume ver returns [".$verOutput."]\n" if $debugging;
             }
-            elsif ($gives =~ /\s*Microsoft Windows \[Version 6.0.6002\]/) {
-               $result = "Windows Server 2008 SP2";
-            }
-            elsif ($gives =~ /\s*Microsoft Windows \[Version 6.0.6001\]/) {
-               $result = "Windows Server 2008 SP1";
-            }
-            elsif ($gives =~ /\s*Microsoft Windows \[Version 5.2.3790.1180 \]/) {
-               $result = "Windows Server 2003 SP1";
-            }
-            #
-            #  Desktop...
-            #
-            elsif ($gives =~ /\s*Microsoft Windows \[Version 10.0.\d+(.\d+)?\]/) {
-               $result = "Windows 10";
-            }
-            elsif ($gives =~ /\s*Microsoft Windows \[Version 6.3(.\d+(.\d+)?)?\]/) {
-               $result = "Windows 8.1";
-            }
-            elsif ($gives =~ /\s*Microsoft Windows \[Version 6.2(.\d+(.\d+)?)?\]/) {
-               $result = "Windows 8";
-            }
-            elsif ($gives =~ /\s*Microsoft Windows \[Version 6.1(.\d+(.\d+)?)?\]/) {
-               $result = "Windows 7";
-            }
-            elsif ($gives =~ /\s*Microsoft Windows \[Version 6.0(.\d+(.\d+)?)?\]/) {
-               $result = "Windows Vista";
-            }
-            elsif ($gives =~ /\s*Microsoft Windows \[Version 5.2(.\d+(.\d+)?)?\]/) {
-               $result = "Windows XP-64";
-            }
-            elsif ($gives =~ /\s*Microsoft Windows XP \[Version 5.1(.\d+(.\d+)?)?\]/) {
-               $result = "Windows XP";
-            }
-            elsif ($gives =~ /\s*Microsoft Windows 2000 \[Version 5.00?(.\d+(.\d+)?)?\]/) {
-               $result = "Windows 2000";
+            chomp $verOutput;
+            print DBGOUT "getOSname:    ver returns [".$verOutput."]\n" if $debugging;
+            if ($verOutput ne "") {
+               #
+               #  Server...
+               #
+               #  Note how the systeminfo command must be used to distinguish
+               #  the server versions from the desktop versions.
+               #
+               if ($verOutput =~ /Microsoft Windows \[Version 10\.0\.14393\]/) {
+                  print DBGOUT "getOSname:    ...might be server edition?\n" if $debugging;
+                  my $gives;
+                  if ($givenCmd1Output eq "") {
+                     my $cmd = "systeminfo";
+                     $gives  = `$cmd`;
+                  }
+                  else {
+                     $gives  = $givenCmd2Output;
+                  }
+                  chomp $gives;
+                  print DBGOUT "getOSname:    systeminfo gives [".$gives."]\n" if $debugging;
+                  if ($gives =~ /Windows Server/) {
+                     $result = "Windows Server 2016";
+                     print DBGOUT "getOSname:    ...and it is a server edition\n" if $debugging;
+                  }
+                  else {
+                     print DBGOUT "getOSname:    ...but it is a desktop edition\n" if $debugging;
+                  }
+               }
+               elsif ($verOutput =~ /\s*Microsoft Windows \[Version 6\.3\.9200\]/) {
+                  print DBGOUT "getOSname:    ...might be server edition?\n" if $debugging;
+                  my $gives;
+                  if ($givenCmd1Output eq "") {
+                     my $cmd = "systeminfo";
+                     $gives  = `$cmd`;
+                  }
+                  else {
+                     $gives  = $givenCmd2Output;
+                  }
+                  chomp $gives;
+                  print DBGOUT "getOSname:    systeminfo gives [".$gives."]\n" if $debugging;
+                  if ($gives =~ /Windows Server/) {
+                     $result = "Windows Server 2012 R2";
+                     print DBGOUT "getOSname:    ...and it is a server edition\n" if $debugging;
+                  }
+               }
+               elsif ($verOutput =~ /\s*Microsoft Windows \[Version 6\.2\.9200\]/) {
+                  print DBGOUT "getOSname:    ...might be server edition?\n" if $debugging;
+                  my $gives;
+                  if ($givenCmd1Output eq "") {
+                     my $cmd = "systeminfo";
+                     $gives  = `$cmd`;
+                  }
+                  else {
+                     $gives  = $givenCmd2Output;
+                  }
+                  chomp $gives;
+                  print DBGOUT "getOSname:    systeminfo gives [".$gives."]\n" if $debugging;
+                  if ($gives =~ /Windows Server/) {
+                     $result = "Windows Server 2012";
+                     print DBGOUT "getOSname:    ...and it is a server edition\n" if $debugging;
+                  }
+                  else {
+                     print DBGOUT "getOSname:    ...but it is a desktop edition\n" if $debugging;
+                  }
+               }
+               elsif ($verOutput =~ /\s*Microsoft Windows \[Version 6\.1\.7601\]/) {
+                  print DBGOUT "getOSname:    ...might be server edition?\n" if $debugging;
+                  my $gives;
+                  if ($givenCmd1Output eq "") {
+                     my $cmd = "systeminfo";
+                     $gives  = `$cmd`;
+                  }
+                  else {
+                     $gives  = $givenCmd2Output;
+                  }
+                  chomp $gives;
+                  if ($gives =~ /Windows Server/) {
+                     $result = "Windows Server 2008 R2 SP1";
+                     print DBGOUT "getOSname:    ...and it is a server edition\n" if $debugging;
+                  }
+                  else {
+                     $result = "Windows 7 SP1";
+                     print DBGOUT "getOSname:    ...but it is a desktop edition\n" if $debugging;
+                  }
+               }
+               elsif ($verOutput =~ /\s*Microsoft Windows \[Version 6\.1\.7600(\.\d+)?\]/) {
+                  print DBGOUT "getOSname:    ...might be server edition?\n" if $debugging;
+                  my $gives;
+                  if ($givenCmd1Output eq "") {
+                     my $cmd = "systeminfo";
+                     $gives  = `$cmd`;
+                  }
+                  else {
+                     $gives  = $givenCmd2Output;
+                  }
+                  chomp $gives;
+                  if ($gives =~ /Windows Server/) {
+                     $result = "Windows Server 2008 R2";
+                     print DBGOUT "getOSname:    ...and it is a server edition\n" if $debugging;
+                  }
+                  else {
+                     $result = "Windows 7";
+                     print DBGOUT "getOSname:    ...but it is a desktop edition\n" if $debugging;
+                  }
+               }
+               elsif ($verOutput =~ /\s*Microsoft Windows \[Version 6\.0\.6002\]/) {
+                  print DBGOUT "getOSname:    ...might be server edition?\n" if $debugging;
+                  my $gives;
+                  if ($givenCmd1Output eq "") {
+                     my $cmd = "systeminfo";
+                     $gives  = `$cmd`;
+                  }
+                  else {
+                     $gives  = $givenCmd2Output;
+                  }
+                  chomp $gives;
+                  if ($gives =~ /Windows Server/) {
+                     $result = "Windows Server 2008 SP1";
+                     print DBGOUT "getOSname:    ...and it is a server edition\n" if $debugging;
+                  }
+                  else {
+                     $result = "Windows Vista SP2";
+                     print DBGOUT "getOSname:    ...but it is a desktop edition\n" if $debugging;
+                  }
+               }
+               elsif ($verOutput =~ /\s*Microsoft Windows \[Version 6\.0\.6001\]/) {
+                  print DBGOUT "getOSname:    ...might be server edition?\n" if $debugging;
+                  my $gives;
+                  if ($givenCmd1Output eq "") {
+                     my $cmd = "systeminfo";
+                     $gives  = `$cmd`;
+                  }
+                  else {
+                     $gives  = $givenCmd2Output;
+                  }
+                  chomp $gives;
+                  if ($gives =~ /Windows Server/) {
+                     $result = "Windows Server 2008 SP1";
+                     print DBGOUT "getOSname:    ...and it is a server edition\n" if $debugging;
+                  }
+                  else {
+                     $result = "Windows Vista SP1";
+                     print DBGOUT "getOSname:    ...but it is a desktop edition\n" if $debugging;
+                  }
+               }
+               elsif ($verOutput =~ /\s*Microsoft Windows \[Version 5\.2\.3790\]/) {
+                  print DBGOUT "getOSname:    ...might be server edition?\n" if $debugging;
+                  my $gives;
+                  if ($givenCmd1Output eq "") {
+                     my $cmd = "systeminfo";
+                     $gives  = `$cmd`;
+                  }
+                  else {
+                     $gives  = $givenCmd2Output;
+                  }
+                  chomp $gives;
+                  if ($gives =~ /Windows Server/) {
+                     $result = "Windows Server 2003";
+                     print DBGOUT "getOSname:    ...and it is a server edition\n" if $debugging;
+                  }
+                  else {
+                     $result = "Windows XP-64";
+                     print DBGOUT "getOSname:    ...but it is a desktop edition\n" if $debugging;
+                  }
+               }
+               elsif ($verOutput =~ /\s*Microsoft Windows \[Version 5\.2\.3790\.1180\]/) {
+                  print DBGOUT "getOSname:    ...might be server edition?\n" if $debugging;
+                  my $gives;
+                  if ($givenCmd1Output eq "") {
+                     my $cmd = "systeminfo";
+                     $gives  = `$cmd`;
+                  }
+                  else {
+                     $gives  = $givenCmd2Output;
+                  }
+                  chomp $gives;
+                  if ($gives =~ /Windows Server/) {
+                     $result = "Windows Server 2003 SP1";
+                     print DBGOUT "getOSname:    ...and it is a server edition\n" if $debugging;
+                  }
+                  else {
+                     $result = "Windows XP-64";
+                     print DBGOUT "getOSname:    ...but it is a desktop edition\n" if $debugging;
+                  }
+               }
+               if ($result eq "") {
+                  print DBGOUT "getOSname:    ...probably a desktop edition?\n" if $debugging;
+                  print DBGOUT "getOSname:       with ver output [".$verOutput."]\n" if $debugging;
+                  #
+                  #  Desktop...
+                  #
+                  #  We've already decided it is not a server version so it must be a
+                  #  desktop version.
+                  #
+                  if ($verOutput =~ /Microsoft Windows \[Version 10\.0.\d+(.\d+)?\]/) {
+                     $result = "Windows 10";
+                  }
+                  elsif ($verOutput =~ /Microsoft Windows \[Version 6\.3(\.\d+(\.\d+)?)?\]/) {
+                     $result = "Windows 8.1";
+                  }
+                  elsif ($verOutput =~ /Microsoft Windows \[Version 6\.2(\.\d+(\.\d+)?)?\]/) {
+                     $result = "Windows 8";
+                  }
+                  elsif ($verOutput =~ /Microsoft Windows \[Version 6\.1(\.\d+(\.\d+)?)?\]/) {
+                     $result = "Windows 7";
+                  }
+                  elsif ($verOutput =~ /Microsoft Windows \[Version 6\.0(\.\d+(\.\d+)?)?\]/) {
+                     $result = "Windows Vista";
+                  }
+                  elsif ($verOutput =~ /Microsoft Windows \[Version 5\.2(\.\d+(\.\d+)?)?\]/) {
+                     $result = "Windows XP-64";
+                  }
+                  elsif ($verOutput =~ /Microsoft Windows XP \[Version 5\.1(\.\d+(\.\d+)?)?\]/) {
+                     $result = "Windows XP";
+                  }
+                  elsif ($verOutput =~ /Microsoft Windows 2000 \[Version 5\.00?(\.\d+(\.\d+)?)?\]/) {
+                     $result = "Windows 2000";
+                  }
+                  else {
+                     $result = "Windows";
+                  }
+               }
             }
             else {
                $result = "Windows";
             }
          }
-         else {
+         elsif (1 <= $levelOfDetail) {
             $result = "Windows";
          }
+         else {
+            $result = "Windows-like";
+         }
       }
-      elsif (1 <= $levelOfDetail) {
-         $result = "Windows";
-      }
-      else {
-         $result = "Windows-like";
-      }
-   }
-   elsif (($given =~ /^solaris$/) || ($given =~ /^sunos$/)) {
-      if (2 <= $levelOfDetail) {
-         my $cmd   = "uname -r";
-         my $gives = `$cmd`;
-         if ($gives ne "") {
-            if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
-               my $major = $2;
-               my $minor = $4;
-               if ($major ne "") {
-                  if ($major <= 4) {
-                     if ((3 <= $levelOfDetail) && ($minor ne "")) {
-                        $result = "SunOS".$major.".".$minor;
+      #---------------------------------------
+      #
+      #  SunOS aka Solaris
+      #
+      #---------------------------------------
+      elsif (($givenCaretOh =~ /^solaris$/) || ($givenCaretOh =~ /^sunos$/)) {
+         if (2 <= $levelOfDetail) {
+            my $gives;
+            if ($givenCmd1Output eq "") {
+               my $cmd = "uname -r";
+               $gives  = `$cmd`;
+            }
+            else {
+               $gives  = $givenCmd1Output;
+            }
+            chomp $gives;
+            if ($gives ne "") {
+               if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
+                  my $major = $2;
+                  my $minor = $4;
+                  if ($major ne "") {
+                     if ($major <= 4) {
+                        if ((3 <= $levelOfDetail) && ($minor ne "")) {
+                           $result = "SunOS".$major.".".$minor;
+                        }
+                        else {
+                           $result = "SunOS".$major;
+                        }
                      }
                      else {
-                        $result = "SunOS".$major;
+                        $result = "Solaris".$minor;
                      }
                   }
                   else {
-                     $result = "Solaris".$minor;
+                     $result = "Solaris";
                   }
                }
                else {
@@ -18897,20 +19249,18 @@ sub getOSname {
                $result = "Solaris";
             }
          }
-         else {
+         elsif (1 <= $levelOfDetail) {
             $result = "Solaris";
          }
-      }
-      elsif (1 <= $levelOfDetail) {
-         $result = "Solaris";
+         else {
+            $result = "Unix-like";
+         }
       }
       else {
          $result = "Unix-like";
       }
    }
-   else {
-      $result = "Unix-like";
-   }
+   print DBGOUT "getOSname] ...done(=\"".$result."\")\n" if $debugging;
    return $result;
 }
 
