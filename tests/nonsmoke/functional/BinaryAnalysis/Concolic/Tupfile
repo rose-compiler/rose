@@ -35,7 +35,7 @@ run $(support_compile_linkexe) rose-perf-execution-wrapper.c
 |> ^ FLEX %f^ $(ROSE)/config/ylwrap %f lex.yy.c %o -- flex \
 |> lexer.cpp
 
-run $(tool_compile_linkexe) --depend=parser.hpp parser.cpp lexer.cpp PerfOutputAnalyzer/analyzer.cpp > rose-perf-analyzer 
+run $(tool_compile_linkexe) -o rose-perf-analyzer --depend=parser.hpp parser.cpp lexer.cpp PerfOutputAnalyzer/analyzer.cpp 
 
 
 # TODO (1) \PP cp $(srcdir)/rose-execution-monitor-linux-perf-intel-x86_64.sh rose-execmon-linux-perf-intel-x86-64.sh
