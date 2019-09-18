@@ -52,10 +52,28 @@ namespace
   }
 }
 
+std::string nameCompletionStatus(int processDisposition)
+{
+  std::string res = "unknown";
+
+  if (WIFEXITED(processDisposition)) {
+      res = "exit";
+  } else if (WIFSIGNALED(processDisposition)) {
+      res = "signal";
+  } else if (WIFSTOPPED(processDisposition)) {
+      res = "stopped";
+  } else if (WIFCONTINUED(processDisposition)) {
+      res = "resumed";
+  }
+
+  return res;
+}
 
 LinuxExecutor::Result::Result(double rank, int exitStatus)
 : ConcreteExecutor::Result(rank), exitStatus_(exitStatus)
-{}
+{
+  exitKind_ = nameCompletionStatus(exitStatus_);
+}
 
 std::vector<std::string>
 convToStringVector(std::vector<EnvValue> env)
@@ -70,7 +88,7 @@ convToStringVector(std::vector<EnvValue> env)
 
 #if 0 /* after boost 1.65 and C++11 */
 // \todo update interface (see below)
-int executeBinary( const boost::filesystem::path& binary,
+int executeBinary(  const boost::filesystem::path& binary,
                     const boost::filesystem::path& logout,
                     const boost::filesystem::path& logerr,
                     TestCase::Ptr tc
@@ -130,7 +148,7 @@ int executeBinary( const std::string& execmon,
   setPersonality(persona);
 
   std::vector<char*>       args;  // points to arguments
-  std::vector<char*>       envv;        // points to environment strings
+  std::vector<char*>       envv;  // points to environment strings
   const bool               withExecMonitor = execmon.size() > 0;
 
   args.reserve(2 /* program name + delimiter */ + arguments.size() + execmonargs.size());
@@ -162,10 +180,10 @@ int executeBinary( const std::string& execmon,
 int executeBinary( const boost::filesystem::path&  execmon,
                    const std::vector<std::string>& execmonargs,
                    const boost::filesystem::path&  binary,
-                   const boost::filesystem::path& logout,
-                   const boost::filesystem::path& logerr,
-                   LinuxExecutor::Persona persona,
-                   TestCase::Ptr tc
+                   const boost::filesystem::path&  logout,
+                   const boost::filesystem::path&  logerr,
+                   LinuxExecutor::Persona          persona,
+                   TestCase::Ptr                   tc
                  )
 {
   return executeBinary( execmon.native(),
@@ -214,24 +232,6 @@ typedef atomic_counter<int> atomic_counter_t;
 
 //~ static atomic_counter<int> versioning(0);
 static atomic_counter_t versioning(0);
-
-
-std::string nameCompletionStatus(int processDisposition)
-{
-  std::string res = "unknown";
-
-  if (WIFEXITED(processDisposition)) {
-      res = "exit";
-  } else if (WIFSIGNALED(processDisposition)) {
-      res = "signal";
-  } else if (WIFSTOPPED(processDisposition)) {
-      res = "stopped";
-  } else if (WIFCONTINUED(processDisposition)) {
-      res = "resumed";
-  }
-
-  return res;
-}
 
 
 void LinuxExecutor::Result::exitStatus(int x)
@@ -323,8 +323,9 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
 #else // !defined (__linux__)
 
 LinuxExecutor::Result::Result(double rank, int exitStatus)
-    : ConcreteExecutor::Result(rank), exitStatus_(exitStatus) {
-    ROSE_ASSERT(!"NOT_LINUX");
+: ConcreteExecutor::Result(rank), exitStatus_(exitStatus)
+{ 
+  ROSE_ASSERT(!"NOT_LINUX");
 }
 
 ConcreteExecutor::Result*

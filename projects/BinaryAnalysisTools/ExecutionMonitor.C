@@ -293,12 +293,6 @@ int main(int argc, char** argv)
   std::vector<std::string> specimenAndArgs(specpos, argv+argc);
   Disassembler*            disassembler = NULL;
 
-  if (specimenAndArgs.size() == 0)
-  {
-    ::mlog[FATAL] << "No specimen given (use --help)\n";
-    exit(1);
-  }
-
   // Parse command-line
   P2::Engine               engine;
   Settings                 settings;
@@ -307,6 +301,12 @@ int main(int argc, char** argv)
   for (size_t i = 0; i < unused.size(); ++i)
   {
     ::mlog[WARN] << "unknown argument: " << unused.at(i) << std::endl;
+  }
+  
+  if (specimenAndArgs.size() == 0)
+  {
+    ::mlog[FATAL] << "No specimen given (use --help)\n";
+    exit(1);
   }
 
   // Trace output goes to either std::cout or some file.

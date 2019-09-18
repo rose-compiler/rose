@@ -484,9 +484,9 @@ public:
         /** @} */
 
         /** Property: textual representation of how a test exited.
+         *            The property is set together with exitStatus.
          * @{ */
         std::string exitKind() const            { return exitKind_; }
-        void exitKind(const std::string& desc)  { exitKind_ = desc; }
         /* @} */
     };
 
