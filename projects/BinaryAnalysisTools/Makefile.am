@@ -142,6 +142,10 @@ rose_execution_monitor_LDFLAGS = $(ROSE_RPATHS)
 rose_execution_monitor_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+bin_PROGRAMS += rose-perf-execution-wrapper
+rose_perf_execution_wrapper_SOURCES = rose-perf-execution-wrapper.c
+
+#------------------------------------------------------------------------------------------------------------------------
 # Analyze perf output for estimating the number of unique instructions
 
 AM_YFLAGS = -d -t

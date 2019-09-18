@@ -26,6 +26,9 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 #------------------------------------------------------------------------------------------------------------------------
 # Test concolic database operations
 
+#
+# utilities and sample codes
+
 # a.1) sample program to load and store in DB
 noinst_PROGRAMS += sampleExecutable
 sampleExecutable_SOURCES = sampleExecutable.C
@@ -46,6 +49,12 @@ noinst_PROGRAMS += testConcolicDB
 testConcolicDB_SOURCES = testConcolicDB.C configDB.h
 testConcolicDB_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
+# a.5) execution wrapper for perf to intercept signals
+noinst_PROGRAMS += rose-perf-execution-wrapper
+rose_perf_execution_wrapper_SOURCES = rose-perf-execution-wrapper.c
+rose_perf_execution_wrapper_LDADD =
+
+# a.6) reads perf-report output and computes unique instruction count
 AM_YFLAGS = -d -t
 
 noinst_PROGRAMS += rose-perf-analyzer
@@ -55,12 +64,16 @@ rose_perf_analyzer_CPPFLAGS = $(ROSE_INCLUDES)
 rose_perf_analyzer_LDFLAGS = $(ROSE_RPATHS)
 rose_perf_analyzer_LDADD = $(ROSE_LIBS)
 
+# a.7) the script that organizes perf's execution
 
 noinst_SCRIPTS = rose-execmon-linux-perf-intel-x86-64.sh
 
 rose-execmon-linux-perf-intel-x86-64.sh: $(srcdir)/rose-execution-monitor-linux-perf-intel-x86_64.sh rose-perf-analyzer
 	cp $< $@
-	chmod u+x $@	
+	chmod u+x $@
+	
+#	
+# targets	
 
 TEST_TARGETS += testConcolicDB.passed
 

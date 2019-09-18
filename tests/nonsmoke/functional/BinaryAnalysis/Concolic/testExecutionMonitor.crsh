@@ -23,13 +23,14 @@ test-exit :: t03
 @ success
 test-exit :: t04
 {
-  ./sampleExecutable --segfault
+  ./sampleExecutable --seg-fault
 }
 
 
-@success
+@ success
 test-exec :: run 2
 
+@ failure
 test-exit :: run 2
 
 close
