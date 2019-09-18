@@ -57,7 +57,7 @@ shift
 
 #set -o xtrace
 
-perf record -e intel_pt//u $specimen "$@"
+perf record -e intel_pt//u rose-perf-execution-wrapper "$outfile" "$specimen" "$@"
 
 echo "$?" > "$outfile"
 
