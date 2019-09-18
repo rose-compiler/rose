@@ -14,7 +14,7 @@
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 class VariableId;
 typedef std::string VariableName;
@@ -102,8 +102,8 @@ class VariableIdMapping {
   size_t getElementSize(VariableId variableId);
 
   SgSymbol* createAndRegisterNewSymbol(std::string name);
-  SPRAY::VariableId createAndRegisterNewVariableId(std::string name);
-  SPRAY::VariableId createAndRegisterNewMemoryRegion(std::string name, int regionSize);
+  CodeThorn::VariableId createAndRegisterNewVariableId(std::string name);
+  CodeThorn::VariableId createAndRegisterNewMemoryRegion(std::string name, int regionSize);
   void registerNewSymbol(SgSymbol* sym);
   void registerNewArraySymbol(SgSymbol* sym, int arraySize);
   void toStream(std::ostream& os);
@@ -204,5 +204,8 @@ bool operator!=(VariableId id1, VariableId id2);
 VariableIdSet& operator+=(VariableIdSet& s1, VariableIdSet& s2);
 
 }
+
+// backward compatibility
+namespace SPRAY = CodeThorn;
 
 #endif

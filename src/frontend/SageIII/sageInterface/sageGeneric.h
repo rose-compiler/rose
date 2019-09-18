@@ -27,6 +27,10 @@
 // DQ (10/5/2014): We can't include this here.
 // #include "rose.h"
 
+#define SG_UNEXPECTED_NODE(X)       (sg::unexpected_node(X, __FILE__, __LINE__))
+#define SG_DEREF(X)                 (sg::deref(X, __FILE__, __LINE__))
+#define SG_ASSERT_TYPE(SAGENODE, N) (sg::assert_sage_type<SAGENODE>(N, __FILE__, __LINE__))
+#define SG_ERROR_IF(COND, MSG)      (sg::report_error_if(COND, MSG, __FILE__, __LINE__))
 
 namespace sg
 {
@@ -38,14 +42,6 @@ namespace sg
   template <class T>
   static inline
   void unused(const T&) {}
-
-/// \brief  dereferences an object (= checked dereference in debug mode)
-  template <class T>
-  T& deref(T* ptr)
-  {
-    assert(ptr);
-    return *ptr;
-  }
 
 /// \brief projects the constness of T1 on T2
   template <class T1, class T2>
@@ -63,60 +59,59 @@ namespace sg
   //
   // error reporting
 
-#define SG_UNEXPECTED_NODE(X) (sg::unexpected_node(X, __FILE__, __LINE__))
-
-  static inline
-  void report_error(std::string desc)
-  {
-    throw std::logic_error(desc);
-  }
-
-  static inline
-  void report_error_if(bool iserror, std::string desc)
-  {
-    if (!iserror) return;
-
-    report_error(desc);
-  }
-
-#if !defined(NDEBUG)
   /// converts object of type E to T via string conversion
   template <class T, class E>
   static inline
   T conv(const E& el)
   {
-    std::stringstream s;
     T                 res;
+#if !defined(NDEBUG)
+    std::stringstream s;
 
     s << el;
     s >> res;
+#endif /* NDEBUG */
     return res;
   }
-#endif
 
   static inline
-  void unexpected_node(const SgNode& n, const char* file = 0, size_t ln = 0)
+  void report_error(std::string desc, const char* file = 0, size_t ln = 0)
   {
-    sg::unused(n), sg::unused(file), sg::unused(ln);
-
-    std::string msg = "unexpected node-type: ";
-
-#if !defined(NDEBUG)
-    msg = msg + typeid(n).name();
-
     if (file)
     {
       const std::string at(" at ");
       const std::string sep(" : ");
       const std::string num(conv<std::string>(ln));
 
-      msg = msg + at + file + sep + num;
+      desc = desc + at + file + sep + num;
     }
 
-    std::cerr << msg << std::endl;
-#endif
+    std::cerr << desc << std::endl;
+    throw std::logic_error(desc);
+  }
 
-    report_error(msg);
+  static inline
+  void report_error_if(bool iserror, const std::string& desc, const char* file = 0, size_t ln = 0)
+  {
+    if (!iserror) return;
+
+    report_error(desc, file, ln);
+  }
+
+/// \brief  dereferences an object (= checked dereference in debug mode)
+  template <class T>
+  T& deref(T* ptr, const char* file = 0, size_t ln = 0)
+  {
+    report_error_if(!ptr, "null dereference ", file, ln);
+    return *ptr;
+  }
+
+  static inline
+  void unexpected_node(const SgNode& n, const char* file = 0, size_t ln = 0)
+  {
+    static const std::string msg = "unexpected node-type: ";
+
+    report_error(msg + typeid(n).name(), file, ln);
   }
 
   //
@@ -174,6 +169,14 @@ namespace sg
     VisitDispatcher(const RoseVisitor& rosevisitor)
     : rv(rosevisitor)
     {}
+
+#if __cplusplus >= 201103L
+    explicit
+    VisitDispatcher(RoseVisitor&& rosevisitor)
+    : rv(std::move(rosevisitor))
+    {}
+#endif
+
 
     GEN_VISIT(SgNode)
 
@@ -516,6 +519,14 @@ namespace sg
     GEN_VISIT(SgValueExp)
     GEN_VISIT(SgRangeExp)
     GEN_VISIT(SgMatrixTransposeOp)
+    GEN_VISIT(SgNonrealRefExp)
+    GEN_VISIT(SgAlignOfOp)
+    GEN_VISIT(SgNoexceptOp)
+    GEN_VISIT(SgLambdaExp)
+    GEN_VISIT(SgFunctionParameterRefExp)
+    GEN_VISIT(SgCompoundLiteralExp)
+
+    // symbols
     GEN_VISIT(SgVariableSymbol)
     GEN_VISIT(SgFunctionTypeSymbol)
     GEN_VISIT(SgClassSymbol)
@@ -758,7 +769,16 @@ namespace sg
     GEN_VISIT(SgAsmNode)
 #endif /* WITH_BINARY_ANALYSIS */
 
+    // Support nodes
+    GEN_VISIT(SgLocatedNodeSupport)
     GEN_VISIT(SgInitializedName)
+    GEN_VISIT(SgLambdaCapture)
+    GEN_VISIT(SgLambdaCaptureList)
+    GEN_VISIT(SgRenamePair)
+    GEN_VISIT(SgInterfaceBody)
+    GEN_VISIT(SgHeaderFileBody)
+
+    // - OMP Nodes
     GEN_VISIT(SgOmpOrderedClause)
     GEN_VISIT(SgOmpNowaitClause)
     GEN_VISIT(SgOmpUntiedClause)
@@ -781,16 +801,14 @@ namespace sg
     GEN_VISIT(SgOmpScheduleClause)
     GEN_VISIT(SgOmpDependClause)
     GEN_VISIT(SgOmpClause)
-    GEN_VISIT(SgRenamePair)
-    GEN_VISIT(SgInterfaceBody)
-    GEN_VISIT(SgLocatedNodeSupport)
-    GEN_VISIT(SgToken)
 
     //
     // Types
     GEN_VISIT(SgTypeUnknown)
     GEN_VISIT(SgTypeChar)
+    GEN_VISIT(SgTypeChar16)
     GEN_VISIT(SgTypeSignedChar)
+    GEN_VISIT(SgTypeChar32)
     GEN_VISIT(SgTypeUnsignedChar)
     GEN_VISIT(SgTypeShort)
     GEN_VISIT(SgTypeSignedShort)
@@ -817,6 +835,7 @@ namespace sg
     GEN_VISIT(SgTypeDefault)
     GEN_VISIT(SgPointerMemberType)
     GEN_VISIT(SgReferenceType)
+    GEN_VISIT(SgRvalueReferenceType)
     GEN_VISIT(SgTypeCAFTeam)
     GEN_VISIT(SgClassType)
     GEN_VISIT(SgTemplateType)
@@ -836,6 +855,9 @@ namespace sg
    // DQ (4/5/2017): Added this case that shows up using GNU 6.1 and Boost 1.51 (or Boost 1.52).
     GEN_VISIT(SgDeclType)
 
+    // * token
+    GEN_VISIT(SgToken)
+
     RoseVisitor rv;
   };
 
@@ -853,6 +875,22 @@ namespace sg
     n->accept(vis);
     return vis.rv;
   }
+
+#if __cplusplus >= 201103L
+  template <class RoseVisitor>
+  inline
+  RoseVisitor
+  _dispatch(RoseVisitor&& rv, SgNode* n)
+  {
+    ROSE_ASSERT(n);
+
+    VisitDispatcher<RoseVisitor> vis(std::move(rv));
+
+    n->accept(vis);
+    return std::move(vis).rv;
+  }
+#endif
+
 
 /// \brief    uncovers the type of SgNode and passes it to an
 ///           overloaded function handle in RoseVisitor.
@@ -931,6 +969,25 @@ namespace sg
   {
     return _dispatch(rv, const_cast<SgNode*>(n));
   }
+
+#if __cplusplus >= 201103L
+  template <class RoseVisitor>
+  inline
+  RoseVisitor
+  dispatch(RoseVisitor&& rv, SgNode* n)
+  {
+    return _dispatch(std::move(rv), n);
+  }
+
+  template <class RoseVisitor>
+  inline
+  RoseVisitor
+  dispatch(RoseVisitor&& rv, const SgNode* n)
+  {
+    return _dispatch(std::move(rv), const_cast<SgNode*>(n));
+  }
+#endif /* c++11 */
+
 
   template <class SageNode>
   struct DefaultHandler
@@ -1038,26 +1095,31 @@ namespace sg
   {
     typedef typename ConstLike<SageNode, SgNode>::type SgBaseNode;
 
-    SageNode* res;
-
-    TypeRecoveryHandler()
-    : res(NULL), loc(NULL), loc_ln(0)
-    {}
-
-    TypeRecoveryHandler(const char* f, size_t ln)
+    TypeRecoveryHandler(const char* f = 0, size_t ln = 0)
     : res(NULL), loc(f), loc_ln(ln)
     {}
+
+#if __cplusplus >= 201103L
+    TypeRecoveryHandler() = delete;
+    TypeRecoveryHandler(const TypeRecoveryHandler&) = delete;
+    TypeRecoveryHandler& operator=(const TypeRecoveryHandler&) = delete;
+
+    TypeRecoveryHandler(TypeRecoveryHandler&&) = default;
+    TypeRecoveryHandler& operator=(TypeRecoveryHandler&&) = delete;
+
+    operator SageNode* ()&& { return res; }
+#else
+    operator SageNode* () { return res; }
+#endif /* C++ */
 
     void handle(SgBaseNode& n) { unexpected_node(n, loc, loc_ln); }
     void handle(SageNode& n)   { res = &n; }
 
-    operator SageNode* () { return res; }
-
+    SageNode*   res;
     const char* loc;
     size_t      loc_ln;
   };
 
-#define SG_ASSERT_TYPE(SAGENODE, N) (sg::assert_sage_type<SAGENODE>(N, __FILE__, __LINE__))
 
 /// \brief   asserts that n has type SageNode
 /// \details the ROSE assert in the following example holds b/c assert_sage_type
@@ -1078,6 +1140,27 @@ namespace sg
   {
     return sg::dispatch(TypeRecoveryHandler<const SageNode>(f, ln), n);
   }
+
+/// \brief   asserts that n has type SageNode
+/// \details the ROSE assert in the following example holds b/c assert_sage_type
+///          aborts if the input node is not a SgStatement
+/// \code
+///   SgStatement* stmt = assert_sage_type<SgStatement>(expr.get_parent());
+///   ROSE_ASSERT(stmt);
+/// \endcode
+  template <class SageNode>
+  SageNode& assert_sage_type(SgNode& n, const char* f = 0, size_t ln = 0)
+  {
+    return *sg::dispatch(TypeRecoveryHandler<SageNode>(f, ln), &n);
+  }
+
+/// \overload
+  template <class SageNode>
+  const SageNode& assert_sage_type(const SgNode& n, const char* f = 0, size_t ln = 0)
+  {
+    return *sg::dispatch(TypeRecoveryHandler<const SageNode>(f, ln), &n);
+  }
+
 
 /// \brief swaps the parent pointer of two nodes
 /// \note  internal use
@@ -1219,17 +1302,23 @@ namespace sg
   template <class GVisitor>
   struct DispatchHelper
   {
+#if __cplusplus < 201103L
     explicit
     DispatchHelper(GVisitor gv, SgNode* p)
-    //~ : gvisitor(std::move(gv)), parent(p), cnt(0)
     : gvisitor(gv), parent(p), cnt(0)
     {}
+#else
+    explicit
+    DispatchHelper(GVisitor gv, SgNode* p)
+    : gvisitor(std::move(gv)), parent(p), cnt(0)
+    {}
+#endif /* C++11 */
 
     void operator()(SgNode* n)
     {
       ++cnt;
 
-#if !defined(NDEBUG)
+#if 0
       if (n == NULL)
       {
         std::cerr << "succ(" << nodeType(parent) << ", " << cnt << ") is null" << std::endl;
@@ -1237,11 +1326,18 @@ namespace sg
       }
 #endif
 
+#if __cplusplus < 201103L
       if (n != NULL) gvisitor = sg::dispatch(gvisitor, n);
+#else
+      if (n != NULL) gvisitor = sg::dispatch(std::move(gvisitor), n);
+#endif /* C++11 */
     }
 
+#if __cplusplus < 201103L
     operator GVisitor() { return gvisitor; }
-    //~ operator GVisitor() { return std::move(gvisitor); }
+#else
+    operator GVisitor()&& { return std::move(gvisitor); }
+#endif /* C++11 */
 
     GVisitor gvisitor;
     SgNode*  parent;
@@ -1254,8 +1350,11 @@ namespace sg
   DispatchHelper<GVisitor>
   dispatchHelper(GVisitor gv, SgNode* parent = NULL)
   {
+#if __cplusplus < 201103L
     return DispatchHelper<GVisitor>(gv, parent);
-    //~ return DispatchHelper<GVisitor>(std::move(gv), parent);
+#else
+    return DispatchHelper<GVisitor>(std::move(gv), parent);
+#endif /* C++11 */
   }
 
 
@@ -1265,16 +1364,18 @@ namespace sg
   {
     std::vector<SgNode*> successors = n.get_traversalSuccessorContainer();
 
+#if __cplusplus < 201103L
     return std::for_each(successors.begin(), successors.end(), dispatchHelper(gv, &n));
+#else
+    return std::for_each(successors.begin(), successors.end(), dispatchHelper(std::move(gv), &n));
+#endif /* C++11 */
   }
-
 
   template <class GVisitor>
   static inline
   GVisitor traverseChildren(GVisitor gv, SgNode* n)
   {
     return traverseChildren(gv, sg::deref(n));
-    //~ return traverseChildren(sg::deref(n), std::move(gv));
   }
 }
 #endif /* _SAGEGENERIC_H */

@@ -1,32 +1,36 @@
 # DWARF debugging-format library and it's location.
 AC_DEFUN([ROSE_SUPPORT_DWARF],
 [
-    AC_ARG_WITH([dwarf],
-		[AC_HELP_STRING([--with-dwarf],
-				[Specify 'yes', 'no' (or --without-dwarf), or an installation path to enable or disable
-				 the use of libdwarf. If libdwarf is present then ROSE is able to read debugging symbols
-				 stored in DWARF format in ELF files.])],
-		[],
-		[with_dwarf=no])
+    AC_ARG_WITH(
+        [dwarf],
+        AS_HELP_STRING(
+            [--with-dwarf=PREFIX],
+            [Use the libdwarf library, which is necessary in order to parse debugging tables in ELF files.
+             The PREFIX, if specified, should be the prefix used to install libdwarf, such as "/usr/local".
+             The default is the empty prefix, in which case the headers and library must be installed in a
+             place where they will be found. Saying "no" for the prefix is the same as saying
+             "--without-dwarf". See also, --with-elf which is a prerequisite for --with-dwarf.]),
+            [],
+            [with_dwarf=no])
 
     # Find the dwarf library
     ROSE_HAVE_LIBDWARF=
     if test "$with_dwarf" = yes -o "$with_dwarf" = ""; then
-	LIBDWARF_PREFIX=
-	AC_CHECK_LIB(dwarf, dwarf_child,
-		     [AC_DEFINE(ROSE_HAVE_LIBDWARF, [], [Defined when libdwarf is available.])
-		      ROSE_HAVE_LIBDWARF=yes
-		      LIBDWARF_CPPFLAGS=
-		      LIBDWARF_LDFLAGS="-ldwarf"])
+        LIBDWARF_PREFIX=
+        AC_CHECK_LIB(dwarf, dwarf_child,
+                     [AC_DEFINE(ROSE_HAVE_LIBDWARF, [], [Defined when libdwarf is available.])
+                      ROSE_HAVE_LIBDWARF=yes
+                      LIBDWARF_CPPFLAGS=
+                      LIBDWARF_LDFLAGS="-ldwarf"])
     elif test -n "$with_dwarf" -a "$with_dwarf" != no; then
         LIBDWARF_PREFIX="$with_dwarf"
-	# ROSE requires the use of a shared library for libdwarf
-	AC_CHECK_FILE(["$LIBDWARF_PREFIX/lib/libdwarf.so"],
-		      [AC_DEFINE(ROSE_HAVE_LIBDWARF, [], [Defined when libdwarf is available.])
-		       ROSE_HAVE_LIBDWARF=yes
-		       LIBDWARF_CPPFLAGS="-I$LIBDWARF_PREFIX/include"
-		       LIBDWARF_LDFLAGS="-L$LIBDWARF_PREFIX/lib -ldwarf"
-		       ])
+        # ROSE requires the use of a shared library for libdwarf
+        AC_CHECK_FILE(["$LIBDWARF_PREFIX/lib/libdwarf.so"],
+                      [AC_DEFINE(ROSE_HAVE_LIBDWARF, [], [Defined when libdwarf is available.])
+                       ROSE_HAVE_LIBDWARF=yes
+                       LIBDWARF_CPPFLAGS="-I$LIBDWARF_PREFIX/include"
+                       LIBDWARF_LDFLAGS="-L$LIBDWARF_PREFIX/lib -ldwarf"
+                       ])
     fi
 
     # Sanity check: if the user told us to use libdwarf then we must find the library

@@ -7,11 +7,11 @@
 #include "PointerAnalysisInterface.h"
 
 namespace AnalysisAbstractionLayer {
-  SPRAY::VariableIdSet globalVariables(SgProject* project, SPRAY::VariableIdMapping* variableIdMapping);
-  SPRAY::VariableIdSet usedVariablesInGlobalVariableInitializers(SgProject* project, SPRAY::VariableIdMapping* variableIdMapping);  
-  SPRAY::VariableIdSet usedVariablesInsideFunctions(SgProject* project, SPRAY::VariableIdMapping* variableIdMapping);
-  SPRAY::VariableIdSet astSubTreeVariables(SgNode* node, SPRAY::VariableIdMapping& vidm);
-  SPRAY::VariableIdSet useVariables(SgNode* node, SPRAY::VariableIdMapping& vidm, /*const*/ SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface = 0);
-  SPRAY::VariableIdSet defVariables(SgNode* node, SPRAY::VariableIdMapping& vidm, /*const*/ SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface = 0);
+  CodeThorn::VariableIdSet globalVariables(SgProject* project, CodeThorn::VariableIdMapping* variableIdMapping);
+  CodeThorn::VariableIdSet usedVariablesInGlobalVariableInitializers(SgProject* project, CodeThorn::VariableIdMapping* variableIdMapping);  
+  CodeThorn::VariableIdSet usedVariablesInsideFunctions(SgProject* project, CodeThorn::VariableIdMapping* variableIdMapping);
+  CodeThorn::VariableIdSet astSubTreeVariables(SgNode* node, CodeThorn::VariableIdMapping& vidm);
+  CodeThorn::VariableIdSet useVariables(SgNode* node, CodeThorn::VariableIdMapping& vidm, /*const*/ CodeThorn::PointerAnalysisInterface* _pointerAnalysisInterface = 0);
+  CodeThorn::VariableIdSet defVariables(SgNode* node, CodeThorn::VariableIdMapping& vidm, /*const*/ CodeThorn::PointerAnalysisInterface* _pointerAnalysisInterface = 0);
 }
 #endif

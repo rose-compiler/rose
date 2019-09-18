@@ -39,7 +39,7 @@ BaseSemantics::SValuePtr
 RSIM_Thread::pop() {
     RegisterDescriptor SP = get_process()->disassembler()->stackPointerRegister();
     RegisterDescriptor SS = get_process()->disassembler()->stackSegmentRegister();
-    size_t resultWidth = SP.get_nbits();                // number bits to read from memory
+    size_t resultWidth = SP.nBits();                    // number bits to read from memory
     BaseSemantics::SValuePtr oldSp = operators()->readRegister(SP);
     BaseSemantics::SValuePtr dflt = operators()->undefined_(resultWidth);
     BaseSemantics::SValuePtr retval = operators()->readMemory(SS, oldSp, dflt, operators()->boolean_(true));
@@ -224,7 +224,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::SigInfo &_info)
         Sawyer::Message::Stream mesg(tracing(TRACE_SIGNAL));
         SigAction sa;
         int status = get_process()->sys_sigaction(signo, NULL, &sa);
-        assert(status>=0);
+        ASSERT_always_require(status>=0);
 
         if (sa.handlerVa==(rose_addr_t)SIG_IGN) {
             /* The signal action may have changed since the signal was generated, so we need to check this again. */
@@ -391,7 +391,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::SigInfo &_info)
                 operators()->writeRegister(x86->REG_TF, operators()->boolean_(false));
 
                 /* Set up registers for signal handler. */
-                size_t wordWidth = x86->REG_anyIP.get_nbits();
+                size_t wordWidth = x86->REG_anyIP.nBits();
                 ASSERT_require(wordWidth==32 || wordWidth==64);
                 operators()->writeRegister(x86->REG_anyAX, operators()->number_(wordWidth, signo));
                 operators()->writeRegister(x86->REG_anyCX, operators()->number_(wordWidth, 0));
@@ -646,7 +646,7 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
         BP = m68k->REG_A[6];
     }
 
-    size_t wordWidth = IP.get_nbits();
+    size_t wordWidth = IP.nBits();
     rose_addr_t bp = operators()->readRegister(BP)->get_number();
     rose_addr_t ip = operators()->readRegister(IP)->get_number();
 
@@ -724,7 +724,7 @@ void
 RSIM_Thread::syscall_return(uint64_t retval)
 {
     RegisterDescriptor reg = get_process()->get_simulator()->syscallReturnRegister();
-    operators()->writeRegister(reg, operators()->number_(reg.get_nbits(), retval));
+    operators()->writeRegister(reg, operators()->number_(reg.nBits(), retval));
 }
 
 void
@@ -777,12 +777,12 @@ RSIM_Thread::main()
             if (ip == SIGHANDLER_RETURN) {
                 ASSERT_not_null(x86);
                 pop();
-                operators()->writeRegister(x86->REG_anyAX, operators()->number_(x86->REG_anyAX.get_nbits(), 119));
+                operators()->writeRegister(x86->REG_anyAX, operators()->number_(x86->REG_anyAX.nBits(), 119));
                 sys_sigreturn();
                 continue;
                 
             } else if (ip == SIGHANDLER_RT_RETURN) {
-                operators()->writeRegister(x86->REG_anyAX, operators()->number_(x86->REG_anyAX.get_nbits(), 173));
+                operators()->writeRegister(x86->REG_anyAX, operators()->number_(x86->REG_anyAX.nBits(), 173));
                 sys_rt_sigreturn();
                 continue;
             }
@@ -858,7 +858,7 @@ RSIM_Thread::main()
 
             // Advance to next instruction without regard for any branching
             SgAsmInstruction *insn = current_insn();
-            operators()->writeRegister(IP, operators()->number_(IP.get_nbits(), insn->get_address() + insn->get_size()));
+            operators()->writeRegister(IP, operators()->number_(IP.nBits(), insn->get_address() + insn->get_size()));
 #endif
         } catch (const RSIM_Semantics::Halt &e) {
             // Thrown for the HLT instruction

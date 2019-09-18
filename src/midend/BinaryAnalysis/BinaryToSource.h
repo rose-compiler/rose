@@ -1,7 +1,10 @@
 #ifndef ROSE_BinaryAnalysis_BinaryToSource_H
 #define ROSE_BinaryAnalysis_BinaryToSource_H
 
+#include <Diagnostics.h>
 #include <Partitioner2/Partitioner.h>
+#include <RoseException.h>
+#include <Sawyer/CommandLine.h>
 #include <SourceAstSemantics2.h>
 #include <TraceSemantics2.h>
 
@@ -37,19 +40,23 @@ public:
          *  specified size. */
         Sawyer::Optional<rose_addr_t> allocateMemoryArray;
 
+        /** Whether to zero the memory array, or just allocated with malloc. */
+        bool zeroMemoryArray;
+
         /** Constructs the default settings. */
         Settings()
-            : traceRiscOps(false), traceInsnExecution(false), allocateMemoryArray(false) {}
+            : traceRiscOps(false), traceInsnExecution(false), allocateMemoryArray(false), zeroMemoryArray(false) {}
     };
 
     /** Exceptions thrown by this analysis. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
         /** Constructs an exception with the specified message. */
-        Exception(const std::string &mesg): std::runtime_error(mesg) {}
+        Exception(const std::string &mesg): Rose::Exception(mesg) {}
     };
 
 private:
+    static Diagnostics::Facility mlog;
     Settings settings_;
     Disassembler *disassembler_;
     InstructionSemantics2::SourceAstSemantics::RiscOperatorsPtr raisingOps_;
@@ -70,6 +77,14 @@ public:
      *  settings. */
     explicit BinaryToSource(const Settings &settings)
         : settings_(settings), disassembler_(NULL) {}
+
+    /** Command-line switch parsing. */
+    static Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings&);
+
+    /** Initialize diagnostic streams.
+     *
+     *  This is called automatically by @ref Rose::Diagnostics::initialize. */
+    static void initDiagnostics();
 
     /** Property: Configuration settings.
      *
@@ -103,6 +118,9 @@ private:
     // Declare the global register variables
     void declareGlobalRegisters(std::ostream&);
 
+    // Define interrupt handlers
+    void defineInterrupts(std::ostream&);
+
     // Emit accumulated side effects and/or SSA. */
     void emitEffects(std::ostream&);
 
@@ -125,7 +143,7 @@ private:
     void emitMemoryInitialization(const Partitioner2::Partitioner&, std::ostream&);
 
     // Emit the "main" function.
-    void emitMain(std::ostream&);
+    void emitMain(const Partitioner2::Partitioner&, std::ostream&);
 };
 
 } // namespace

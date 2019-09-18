@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "UntypedConverter.h"
 #include "general_language_translation.h"
+#include "Jovial_to_ROSE_translation.h"
 
 #define DEBUG_UNTYPED_CONVERTER 0
 #define DEBUG_SOURCE_POSITION   0
@@ -10,6 +11,8 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+// Should get rid of this and just use SageInterface::setSourcePosition()
+// It is okay to reset it later.
 void
 UntypedConverter::setSourcePositionUnknown(SgLocatedNode* locatedNode)
 {
@@ -49,7 +52,8 @@ UntypedConverter::setSourcePositionFrom ( SgLocatedNode* toNode, SgLocatedNode* 
    Sg_File_Info*   end = fromNode->get_endOfConstruct();
 
    if (start == NULL || end == NULL) {
-      cerr << "UntypedConverter::setSourcePositionFrom:  --- toNode: " << toNode << " from: " << fromNode << endl;
+      cerr << "UntypedConverter::setSourcePositionFrom:  --- toNode: " << toNode << ": " << toNode->class_name()
+           << " from: " << fromNode << ": " << fromNode->class_name() << endl;
       ROSE_ASSERT(start != NULL && end != NULL);
    }
 
@@ -377,30 +381,47 @@ UntypedConverter::setDeclarationModifiers(SgDeclarationStatement* decl, SgUntype
 SgType*
 UntypedConverter::convertUntypedType (SgUntypedType* ut_type, SgScopeStatement* scope)
 {
+   int type_enum;
    SgType* sg_type = NULL;
+   SgUntypedType* ut_base_type = NULL;
+   SgUntypedExprListExpression* dim_info = NULL;
+   SgExprListExp* sg_dim_info = NULL;
+
+   bool is_table_type = false;
+   bool is_array_type = false;
+   bool has_dim_info  = false;
 
 #if 0
-   cout << "--- convertUntypedType: ut_type is " << ut_type << endl;
+   cout << "--- convertUntypedType: ut_type is " << ut_type << " : " << ut_type->class_name() << endl;
+   cout << "--- convertUntypedType: is_intrinsic is " << ut_type->get_is_intrinsic() << endl;
+   cout << "--- convertUntypedType: user_defined is " << ut_type->get_is_user_defined() << endl;
+   cout << "--- convertUntypedType: is_class     is " << ut_type->get_is_class() << endl;
+   cout << "--- convertUntypedType: type enum    is " << ut_type->get_type_enum_id() << endl;
+   if (ut_type->get_is_user_defined())
+      cout << "                                name is " << ut_type->get_type_name() << endl;
 #endif
 
 // Temporary assertions as this conversion is completed
    ROSE_ASSERT(ut_type->get_is_literal() == false);
-   ROSE_ASSERT(ut_type->get_is_class() == false);
    ROSE_ASSERT(ut_type->get_is_constant() == false);
 
-// If a nonintrinsic type we only need the name
-// TODO - Fortran needs type-attr-spec-list
-   if (ut_type->get_is_intrinsic() == false) {
-      ROSE_ASSERT(ut_type->get_is_user_defined() == true);
-  //  TODO: sg_type = SgClassType::createType(ut_type->get_type_name());
-      ROSE_ASSERT(sg_type != NULL);
+   if (ut_type->get_is_user_defined() == true) {
 
-      cout << "convert SgUntypedType NAMED TYPE ..................... " << sg_type->class_name() << endl;
+   // This type should have already been created by a type declaration statement
+   //
+      SgName name = ut_type->get_type_name();
+      SgClassSymbol* class_symbol = SageInterface::lookupClassSymbolInParentScopes(name, scope);
+
+      if (class_symbol != NULL)
+         {
+            sg_type = class_symbol->get_type();
+         }
+      ROSE_ASSERT(sg_type != NULL);
 
       return sg_type;
    }
 
-   ROSE_ASSERT(ut_type->get_is_user_defined() == false);
+// TODO - Fortran needs type-attr-spec-list?
 
    SgExpression* kindExpression = NULL;
 
@@ -416,8 +437,51 @@ UntypedConverter::convertUntypedType (SgUntypedType* ut_type, SgScopeStatement* 
          delete ut_kind;
       }
 
-// TODO - determine if SageBuilder can be used (or perhaps should be updated)
-   switch(ut_type->get_type_enum_id())
+// Jovial tables and Fortran arrays should be handled first and in a similar manner
+// as they both have a base type and dimension information.
+
+// This is the default but may be changed to the enum of the base type
+   type_enum = ut_type->get_type_enum_id();
+
+// Consider Jovial table instance
+   if (type_enum == SgUntypedType::e_table)
+      {
+      // Use the base type to access the underlying type of the table
+         SgUntypedTableType* ut_table_type = isSgUntypedTableType(ut_type);
+         ROSE_ASSERT(ut_table_type != NULL);
+
+         dim_info = ut_table_type->get_dim_info();
+         ROSE_ASSERT(dim_info != NULL);
+
+         ut_base_type = ut_table_type->get_base_type();
+         ROSE_ASSERT(ut_base_type != NULL);
+
+         is_table_type = true;
+         has_dim_info  = true;
+
+         type_enum = ut_base_type->get_type_enum_id();
+      }
+
+// Consider Fortran array instance
+   else if (isSgUntypedArrayType(ut_type) != NULL)
+      {
+         SgUntypedArrayType* ut_array_type = isSgUntypedArrayType(ut_type);
+         ROSE_ASSERT(ut_array_type != NULL);
+
+         dim_info = ut_array_type->get_dim_info();
+         ROSE_ASSERT(dim_info != NULL);
+
+      // The base type is the type (unlike Sage array nodes)
+         ut_base_type = ut_type;
+         ROSE_ASSERT(ut_base_type);
+
+         is_array_type = true;
+         has_dim_info  = true;
+
+         type_enum = ut_base_type->get_type_enum_id();
+      }
+
+   switch(type_enum)
       {
      // Unknown type commonly used for function parameters before actual type is declared
         case SgUntypedType::e_unknown:        sg_type = SgTypeUnknown::createType();               break;
@@ -482,14 +546,55 @@ UntypedConverter::convertUntypedType (SgUntypedType* ut_type, SgScopeStatement* 
          kindExpression->set_parent(sg_type);
       }
 
-   if (isSgUntypedArrayType(ut_type))
+   if (has_dim_info)
       {
+      // Must go south here!!!
+      // sg_dim_info = convertSgUntypedExprListExpression(ut_array_type->get_dim_info(),/*delete*/true);
+         sg_dim_info = convertSgUntypedExprListExpression(dim_info,/*delete*/false);
+         ROSE_ASSERT(sg_dim_info != NULL);
+      }
+
+   if (is_table_type)
+      {
+         SgUntypedTableType* ut_table_type = isSgUntypedTableType(ut_type);
+         ROSE_ASSERT(ut_table_type != NULL);
+
          SgType* sg_base_type = sg_type;
 
-         SgUntypedArrayType* ut_array_type = isSgUntypedArrayType(ut_type);
-         SgExprListExp* sg_dim_info = convertSgUntypedExprListExpression(ut_array_type->get_dim_info(),/*delete*/true);
+         SgJovialTableType* sg_table_type = SageBuilder::buildJovialTableType(ut_table_type->get_type_name(), sg_base_type, sg_dim_info, scope);
+         ROSE_ASSERT(sg_table_type != NULL);
 
-         sg_type = SageBuilder::buildArrayType(sg_base_type, sg_dim_info);
+         sg_type = sg_table_type;
+
+      // TODO: There needs to be a declaration but can't do it here because declaration context is probably calling
+      // this function
+#if 0
+         SgClassType* classType = isSgClassType(sg_type);
+         cout << "-x-   class type is " << classType << ": " << classType->class_name() << endl;
+         if (classType != NULL)
+            {
+               SgDeclarationStatement* declaration = classType->get_declaration();
+               ROSE_ASSERT(declaration != NULL);
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
+               ROSE_ASSERT(classDeclaration != NULL);
+            }
+#endif
+      }
+
+   else if (is_array_type)
+      {
+         SgUntypedArrayType* ut_array_type = isSgUntypedArrayType(ut_type);
+         ROSE_ASSERT(ut_array_type != NULL);
+
+         SgType* sg_base_type = sg_type;
+
+         SgArrayType* sg_array_type = SageBuilder::buildArrayType(sg_base_type, sg_dim_info);
+         ROSE_ASSERT(sg_array_type != NULL);
+
+         sg_type = sg_array_type;
+
+      // TODO: There needs to be a declaration but can't do it here because declaration context is probably calling
+      // this function
       }
 
    ROSE_ASSERT(sg_type != NULL);
@@ -504,7 +609,9 @@ UntypedConverter::convertSgUntypedType (SgUntypedInitializedName* ut_name, SgSco
    SgUntypedType* ut_type = ut_name->get_type();
 
 #if 0
-   cout << "--- convertSgUntypedType: ut_type is " << ut_type << " name is " << ut_name->get_name() << " ut_name is " << ut_name << endl;
+   cout << "--- convertSgUntypedType: ut_type is " << ut_type << " : " << ut_type->class_name() << endl;
+   cout << "--- convertSgUntypedType: name is " << ut_name->get_name() << " ut_name is " << ut_name << endl;
+   cout << "--- convertSgUntypedType:  t_enum is " << ut_type->get_type_enum_id() << endl;
    cout << "--- convertSgUntypedType:  delete is " << delete_ut_type << endl;
 #endif
 
@@ -513,6 +620,7 @@ UntypedConverter::convertSgUntypedType (SgUntypedInitializedName* ut_name, SgSco
       // TODO - create function to determine implicit type, for now pick real
       // Change the type enum to an explicit type based on the variable name
       // WARNING: Temporary HACK ATTACK
+         cout << "--- convertSgUntypedType: Fortran type is implicit, NEED to set type by name " << endl;
          ut_type->set_type_enum_id(SgUntypedType::e_float);
       }
 
@@ -538,27 +646,40 @@ UntypedConverter::convertSgUntypedInitializedName (SgUntypedInitializedName* ut_
 
 #if 0
    cout << "--- convertSgUntypedInitializedName:    name is " << ut_name->get_name() << endl;
-   cout << "--- convertSgUntypedInitializedName:  b_type is " << sg_base_type->class_name() << " " << sg_base_type << endl;
-   cout << "--- convertSgUntypedInitializedName: ut_type is " << ut_name->get_type()->class_name() << " " << ut_name->get_type() << endl;
+   cout << "--- convertSgUntypedInitializedName:  b_type is " << sg_base_type << ": " << sg_base_type->class_name() << endl;
+   cout << "--- convertSgUntypedInitializedName: ut_type is " << ut_name->get_type() << ": "
 #endif
 
 // TODO - This needs to be combined/eliminated with convertSgUntypedType
    if (isSgUntypedArrayType(ut_name->get_type()))
       {
          SgUntypedArrayType* ut_array_type = isSgUntypedArrayType(ut_name->get_type());
-#if 0
-         cout << "--- convertSgUntypedInitializedName:    dim_info is "
-              << ut_array_type->get_dim_info() << " " << ut_array_type->get_dim_info()->class_name() << endl;
-#endif
-         SgExprListExp* sg_dim_info = convertSgUntypedExprListExpression(ut_array_type->get_dim_info(),/*delete*/true);
+         SgUntypedExprListExpression* dim_info = ut_array_type->get_dim_info();
+         ROSE_ASSERT(dim_info != NULL);
+
+         cout << "--- convertSgUntypedInitializedName:dim_info is "
+              << dim_info << ": " << dim_info->class_name() << endl;
+
+//       SgExprListExp* sg_dim_info = convertSgUntypedExprListExpression(dim_info,/*delete*/true);
+         SgExprListExp* sg_dim_info = convertSgUntypedExprListExpression(dim_info,/*delete*/false);
 
          sg_type = SageBuilder::buildArrayType(sg_base_type, sg_dim_info);
       }
 
-   SgInitializedName* sg_name = SageBuilder::buildInitializedName(ut_name->get_name(), sg_type /*, sg_init*/);
+   SgInitializedName* sg_name = SageBuilder::buildInitializedName_nfi(ut_name->get_name(), sg_type, /*init*/NULL);
+   ROSE_ASSERT(sg_name);
    setSourcePositionFrom(sg_name, ut_name);
 
 #if DEBUG_UNTYPED_CONVERTER
+   if (ut_name->get_initializer() != NULL) {
+      cout << "--- ut_init is " << ut_name->get_initializer() << " : " << ut_name->get_initializer()->class_name() << endl;
+      cout << "--- ut_init is " << ut_name->get_initializer() << " : " << ut_name->get_initializer()->class_name() << endl;
+      cout << "--- sg_init is " << sg_name->get_initializer() << " : " << endl;
+   }
+   else {
+      cout << "--- convertSgUntypedInitializedName:  no initializer \n";
+   }
+
    cout << "--- finished converting initialized name " << ut_name->get_name() << endl;
 #endif
 
@@ -569,8 +690,6 @@ SgInitializedNamePtrList*
 UntypedConverter::convertSgUntypedInitializedNameList (SgUntypedInitializedNameList* ut_name_list, SgType* sg_base_type)
 {
    SgUntypedInitializedNamePtrList & ut_names = ut_name_list->get_name_list();
-
-   //cout << "--- convertSgUntypedInitializedNameList: size is " << ut_names.size() << endl;
 
    SgInitializedNamePtrList* sg_names = new SgInitializedNamePtrList();
 
@@ -619,6 +738,57 @@ UntypedConverter::convertUntypedDirectiveDeclaration (SgUntypedDirectiveDeclarat
               define_decl->set_parent(scope);
 
               sg_stmt = define_decl;
+              break;
+           }
+        case Jovial_ROSE_Translation::e_compool_directive_stmt:
+           {
+              std::string compool_string = ut_stmt->get_directive_string();
+
+              SgJovialDirectiveStatement* compool_stmt = new SgJovialDirectiveStatement(compool_string, SgJovialDirectiveStatement::e_compool);
+              ROSE_ASSERT(compool_stmt);
+              setSourcePositionFrom(compool_stmt, ut_stmt);
+
+           // The first nondefining declaration must be set
+              compool_stmt->set_firstNondefiningDeclaration(compool_stmt);
+
+              SageInterface::appendStatement(compool_stmt, scope);
+              compool_stmt->set_parent(scope);
+
+              sg_stmt = compool_stmt;
+              break;
+           }
+        case  Jovial_ROSE_Translation::e_reducible_directive_stmt:
+           {
+              std::string dir_string = ut_stmt->get_directive_string();
+
+              SgJovialDirectiveStatement* reducible_stmt = new SgJovialDirectiveStatement(dir_string, SgJovialDirectiveStatement::e_reducible);
+              ROSE_ASSERT(reducible_stmt);
+              setSourcePositionFrom(reducible_stmt, ut_stmt);
+
+              // The first nondefining declaration must be set
+              reducible_stmt->set_firstNondefiningDeclaration(reducible_stmt);
+
+              SageInterface::appendStatement(reducible_stmt, scope);
+              reducible_stmt->set_parent(scope);
+
+              sg_stmt = reducible_stmt;
+              break;
+           }
+        case  Jovial_ROSE_Translation::e_order_directive_stmt:
+           {
+              std::string dir_string = ut_stmt->get_directive_string();
+
+              SgJovialDirectiveStatement* order_stmt = new SgJovialDirectiveStatement(dir_string, SgJovialDirectiveStatement::e_order);
+              ROSE_ASSERT(order_stmt);
+              setSourcePositionFrom(order_stmt, ut_stmt);
+
+              // The first nondefining declaration must be set
+              order_stmt->set_firstNondefiningDeclaration(order_stmt);
+
+              SageInterface::appendStatement(order_stmt, scope);
+              order_stmt->set_parent(scope);
+
+              sg_stmt = order_stmt;
               break;
            }
         default:
@@ -705,52 +875,18 @@ void
 UntypedConverter::convertUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
    {
    // Only a Fortran specific implementation needed for now
+      cout << "-x- TODO: implement convertUntypedFunctionDeclarationList for Jovial \n";
    }
-
-SgClassDeclaration*
-UntypedConverter::convertUntypedStructureDeclaration (SgUntypedStructureDeclaration* ut_struct, SgScopeStatement* scope)
-   {
-      SgName name = ut_struct->get_name();
 
 #if 0
-      cout << "-x- TODO: convertUntypedStructureDeclaration: decl_list size is ";
-      cout << ut_struct->get_scope()->get_declaration_list()->get_decl_list().size();
-      cout << "..........\n\n";
-      cout << "-x- creating SgClassDeclaration for name " << name << endl;
-      cout << "    size of modifier list is " << ut_struct->get_modifiers()->get_expressions().size()
-           << endl;
-#endif
-
-      SgJovialTableStatement* class_decl = SageBuilder::buildJovialTableStatement(name, scope);
-      ROSE_ASSERT(class_decl);
-      setSourcePositionFrom(class_decl, ut_struct);
-
-      if (ut_struct->get_modifiers()->get_expressions().size() > 0)
-         {
-         // TODO: move to Jovial
-         // ROSE_ASSERT(ut_struct->get_modifiers()->get_expression_enum() == Jovial_ROSE_Translation::e_words_per_entry_w);
-            ROSE_ASSERT(ut_struct->get_modifiers()->get_expressions().size() == 1);
-            SgExprListExp* sg_expr_list = convertSgUntypedExprListExpression(ut_struct->get_modifiers(),/*delete*/true);
-            ROSE_ASSERT(sg_expr_list->get_expressions().size() == 1);
-            // Assume that this is a Jovial_ROSE_Translation::e_words_per_entry_w
-
-            class_decl->set_has_table_entry_size(true);
-            class_decl->set_table_entry_size(sg_expr_list->get_expressions()[0]);
-         }
-
-      SgClassDefinition* class_def = class_decl->get_definition();
-      ROSE_ASSERT(class_def);
-
-      SgScopeStatement* class_scope = class_def->get_scope();
-      ROSE_ASSERT(class_scope);
-
-      SageInterface::appendStatement(class_decl, scope);
-
-      SageBuilder::pushScopeStack(class_def);
-
+SgDeclarationStatement*
+UntypedConverter::convertUntypedStructureDeclaration (SgUntypedStructureDeclaration* ut_struct, SgScopeStatement* scope)
+   {
+   // Implementation in derived classes
+      ROSE_ASSERT(false);
       return NULL;
    }
-
+#endif
 
 SgModuleStatement*
 UntypedConverter::convertUntypedModuleDeclaration (SgUntypedModuleDeclaration* ut_module, SgScopeStatement* scope)
@@ -992,8 +1128,6 @@ UntypedConverter::convertUntypedSubroutineDeclaration (SgUntypedSubroutineDeclar
 
    // TODO - suffix
       printf ("...TODO... convert suffix\n");
-
-printf ("...TODO... convert untyped sub: scope type ... %s\n", scope->class_name().c_str());
 
       buildProcedureSupport(ut_function, subroutineDeclaration, scope);
 
@@ -1491,17 +1625,19 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
    ROSE_ASSERT(scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition
             || scope->variantT() == V_SgGlobal);  // global scope used for Jovial
 
-   SgUntypedType* ut_base_type = ut_decl->get_type();
-   SgType*        sg_base_type = convertUntypedType(ut_base_type, scope);
+   SgUntypedType* ut_type = ut_decl->get_type();
+
+   SgType* sg_type = convertUntypedType(ut_type, scope);
+   ROSE_ASSERT(sg_type != NULL);
 
    SgUntypedInitializedNamePtrList ut_vars = ut_decl->get_variables()->get_name_list();
    SgUntypedInitializedNamePtrList::const_iterator it;
 
 #if 0
-   cout << "--- convertSgUntypedVariableDeclaration:      ut_decl is " << ut_decl << endl;
-   cout << "--- convertSgUntypedVariableDeclaration:       # vars is " << ut_vars.size() << endl;
-   cout << "--- convertSgUntypedVariableDeclaration: ut_base_type is " << ut_base_type->class_name() << endl;
-   cout << "--- convertSgUntypedVariableDeclaration: sg_base_type is " << sg_base_type->class_name() << endl;
+   cout << "--- convertSgUntypedVariableDeclaration:  # vars is " << ut_vars.size() << endl;
+   cout << "--- convertSgUntypedVariableDeclaration: ut_decl is " << ut_decl << ": " << ut_decl->class_name() << endl;
+   cout << "--- convertSgUntypedVariableDeclaration: ut_type is " << ut_type << ": " << ut_type->class_name() << endl;
+   cout << "--- convertSgUntypedVariableDeclaration: sg_type is " << sg_type << ": " << sg_type->class_name() << endl;
 #endif
 
    SgInitializedNamePtrList sg_name_list;
@@ -1530,8 +1666,8 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
          //   3. ArraySpec: buildArrayType
          //   4. CoarraySpec: buildArrayType with coarray attribute
          //   5. Pointers: new SgPointerType(sg_type)
-         //   7. Dan warned me about sharing types but it looks like the base type is shared in inames
-      SgInitializedName* sg_init_name = convertSgUntypedInitializedName(ut_init_name, sg_base_type);
+
+      SgInitializedName* sg_init_name = convertSgUntypedInitializedName(ut_init_name, sg_type);
       SgName var_name = sg_init_name->get_name();
 
 #if 0
@@ -1560,9 +1696,9 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
 
    // Finished with the untyped initialized name and associated types.
    // The untyped initialized name will be deleted after the traversal, delete types now.
-      //      if (ut_init_name->get_type() != ut_base_type) delete ut_init_name->get_type();
+      //      if (ut_init_name->get_type() != ut_type) delete ut_init_name->get_type();
       //      ut_init_name->set_type(NULL);
-      //      delete ut_base_type;
+      //      delete ut_type;
 
       sg_init_name->set_declptr(sg_decl);
       sg_decl->append_variable(sg_init_name, sg_init_name->get_initializer());
@@ -1619,10 +1755,6 @@ UntypedConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableDeclarat
    //        *(DeclAttributes.getDeclaration()->get_startOfConstruct()) = *(firstInitializedNameForSourcePosition->get_startOfConstruct());
    //        *(DeclAttributes.getDeclaration()->get_endOfConstruct()) = *(lastInitializedNameForSourcePosition->get_startOfConstruct());
    //        DeclAttributes.reset();
-
-#if DEBUG_UNTYPED_CONVERTER
-   cout << "--- finished converting type-declaration-stmt " << sg_decl->class_name() << endl;
-#endif
 
    return sg_decl;
 #endif
@@ -1735,9 +1867,16 @@ UntypedConverter::convertSgUntypedInitializedNameListDeclaration (SgUntypedIniti
               SgExprListExp* param_list = sg_decl->get_parameter_list();
               SgUntypedInitializedNamePtrList ut_init_names = ut_decl->get_variables()->get_name_list();
 
+
+              // Why not convert initialized name
+              // SgInitializedNamePtrList* convertSgUntypedInitializedNameList (SgUntypedInitializedNameList* ut_name_list, SgType* sg_base_type);
+
+
               BOOST_FOREACH(SgUntypedInitializedName* ut_init_name, ut_init_names)
                  {
                     SgName name = ut_init_name->get_name();
+
+                    cout << "-x- dimension statement name is " << name << endl;
 
                  // First assume easy case where variable hasn't been declared yet
                     SgVariableSymbol* variableSymbol = SageInterface::lookupVariableSymbolInParentScopes(name, scope);
@@ -1747,18 +1886,19 @@ UntypedConverter::convertSgUntypedInitializedNameListDeclaration (SgUntypedIniti
                     SgType * base_type = SageBuilder::buildFortranImplicitType(name);
                     ROSE_ASSERT(base_type != NULL);
 
+#if 0
+                    SgUntypedType* ut_type = ut_init_name->get_type();
+                    ROSE_ASSERT(ut_type);
+                    cout << "--- DIMENSION:: name is " << name << std::endl;
+                    cout << "--- DIMENSION:: init name " << ut_init_name << endl;
+                    cout << "--- DIMENSION:: found ut_type " << ut_type << " : " << ut_type->class_name() << std::endl;
+                    cout << "--- DIMENSION:: found symbol " << variableSymbol << std::endl;
+#endif
+
                     SgType* sg_type = convertSgUntypedType(ut_init_name, scope, /*delete_ut_type*/true);
 
                  // A Fortran DIMENSION statement must be an array type
                     ROSE_ASSERT(isSgArrayType(sg_type));
-#if 0
-                    SgUntypedType* ut_type = ut_init_name->get_type();
-                    cout << "... DIMENSION:: name is " << name << std::endl;
-                    cout << "... DIMENSION:: init name " << ut_init_name << endl;
-                    cout << "... DIMENSION:: found symbol " << variableSymbol << std::endl;
-                    cout << "... DIMENSION:: found ut_type " << ut_type << std::endl;
-                    cout << "... DIMENSION:: sg_type " << sg_type << " " << sg_type->class_name() << endl;
-#endif
 
                     SgVariableDeclaration* sg_var_decl = SageBuilder::buildVariableDeclaration(name, sg_type, NULL, scope);
                     ROSE_ASSERT(sg_var_decl != NULL);
@@ -2359,6 +2499,7 @@ UntypedConverter::convertUntypedNamedStatement (SgUntypedNamedStatement* ut_stmt
         default:
            {
               cout << "Warning: UntypedNamedStatement stmt_enum not handled is " << ut_stmt->get_statement_enum() << endl;
+              cout << "       : Could be one of the Fortran end statements (for example): ut_stmt is " << ut_stmt << endl;
            }
         }
 
@@ -2828,6 +2969,7 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
 
     // Some lists are converted explicitly (not via a traversal) so they don't belong here
     //
+       case e_array_shape:                  break;
        case e_type_modifier_list:           break;
        case e_function_modifier_list:       break;
 
@@ -2843,7 +2985,7 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
        case e_unknown:
          {
             cerr << "WARNING: convertSgUntypedExprListExpression: has children and enum is unknown: "
-                 << ut_expr_list->get_expression_enum() << endl;
+                 << ut_expr_list->get_expression_enum() << ": list is " << ut_expr_list <<endl;
             ROSE_ASSERT(children.size() == 0);
             ROSE_ASSERT(ut_expr_list->get_expressions().size() == 0);
             break;
@@ -2852,7 +2994,7 @@ UntypedConverter::convertSgUntypedExprListExpression(SgUntypedExprListExpression
        default:
          {
             cerr << "WARNING: convertSgUntypedExprListExpression: unknown enum, is "
-                 << ut_expr_list->get_expression_enum() << endl;
+                 << ut_expr_list->get_expression_enum() << ": list is " << ut_expr_list <<endl;
          }
      }
 
@@ -3275,7 +3417,7 @@ UntypedConverter::buildFunctionRefExp(const SgName& name, SgScopeStatement* scop
 
            SgType* return_type = SageBuilder::buildIntType();
            SgFunctionParameterList *parList = SageBuilder::buildFunctionParameterList();
-           SageInterface::setOneSourcePositionForTransformation(parList);
+           SageInterface::setSourcePosition(parList);
 
            SgGlobal* globalscope = SageInterface::getGlobalScope(scope);
 
@@ -3289,7 +3431,7 @@ UntypedConverter::buildFunctionRefExp(const SgName& name, SgScopeStatement* scop
 
   SgFunctionRefExp* func_ref = SageBuilder::buildFunctionRefExp(symbol);
   ROSE_ASSERT(func_ref);
-  SageInterface::setOneSourcePositionForTransformation(func_ref);
+  SageInterface::setSourcePosition(func_ref);
 
   return func_ref;
 }
@@ -3300,8 +3442,6 @@ void
 UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_function, SgProcedureHeaderStatement* procedureDeclaration, SgScopeStatement* scope)
    {
      ROSE_ASSERT(procedureDeclaration != NULL);
-
-     cout << "-x- buildProcedureSupport: scope is " << scope << ": " << scope->class_name() << endl;
 
    // Convert procedure prefix (e.g., PURE ELEMENTAL ...)
       SgUntypedExprListExpression* modifiers = ut_function->get_modifiers();
@@ -3433,7 +3573,9 @@ UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_functi
         {
            SgName arg_name = ut_name->get_name();
 
+#if 0
            cout << "In buildProcedureSupport(): building function parameter name " << arg_name << endl;
+#endif
 
         // The argument could be an alternate-return dummy argument
            SgInitializedName* initializedName = NULL;

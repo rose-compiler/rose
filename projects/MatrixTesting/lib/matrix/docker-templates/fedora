@@ -1,0 +1,138 @@
+# Docker image creation -*- shell-script -*-
+#
+# This file describes a docker image suitable for doing ROSE building and testing. It contains all prerequisites needed
+# by ROSE except for those managed by RMC/Spock.  It does not contain ROSE source code.
+#
+# I am using lower-case Docker instructions in this file contrary to docker conventions. The Docker documentation says
+# "The instruction is not case-sensitive. However, convention is for them to be UPPERCASE to distinguish them from
+# arguments more easily." This is just plain silly since the instruction is always the first word and arguments follow
+# it. It's also not scalable, and it's hard on fingers. Let's try to put a stop to this upper-case silliness in Docker,
+# CMake, and SQL!
+
+########################################################################################################################
+# Operating system.
+########################################################################################################################
+
+from ${os}
+
+########################################################################################################################
+# Basic prerequisites
+########################################################################################################################
+
+# These are the prerequisites for the ROSE Meta Config (RMC) system. They're cut-n-pasted from the ROSE installation
+# instructions at doxygen.rosecompiler.org except I've added "-y".  Since we'll be using RMC, we don't need to install
+# everything. In particular, we don't install those things that RMC itself installs, which basically boils down to
+# any package whose binary interface (ABI) is used by ROSE and depends directly or indirectly on a C++ compiler.
+
+run yum -y update
+run yum -y group install "Development Tools"
+run yum -y install wget tar cmake java-1.8.0-openjdk-devel python-devel graphviz gcc-c++ flex bison \
+    bzip2 zlib-devel libtool libtool-ltdl-devel byacc libgcrypt-devel xz \
+    fuse fuse-devel passwd fontconfig mesa-libGLU git pcre-devel patch libstdc++-static \
+    libstdc++-devel.i686 ncurses-devel.i686 sudo
+
+########################################################################################################################
+# Create user and groups
+########################################################################################################################
+
+# Create a user so we don't have to run things as the admin.
+run									\
+    groupadd -f sudo &&							\
+    useradd -c "A. User" -d /home/user -m -G sudo -s /bin/bash user &&	\
+    (echo password; echo password) |passwd user &&			\
+    echo "user ALL = NOPASSWD: ALL" >>/etc/sudoers
+
+########################################################################################################################
+# Optional things to make the development environment better.
+########################################################################################################################
+
+# Install Robb's development environment. These are various commands (like "mkcd" short for "mkdir" followed by "cd"),
+# a more informative bash prompt including a bell when a long-running command completes, config files for Emacs, etc.
+run sudo -i -u user bash -c					\
+    'git clone https://github.com/matzke1/DeveloperScripts &&		\
+     cd DeveloperScripts &&						\
+     bash ./install.sh </dev/null'
+
+
+run yum -y install vim hostname
+
+# Commented out because Fedora requires systemd in order to start/stop services, which doesn't
+# work in a docker container since pid 1 is not systemd.  Better to use an OS that doesn't
+# depend on systemd. WARNING: If you log out of the docker "run" environment you will lose all
+# your work.  You can use nsenter instead, but it requires quite a few switches and superuser
+# priviledge to use it.
+#run yum -y install fuse-sshfs openssh-server
+
+#########################################################################################################################
+## Install RMC (when image is run as a container)
+#########################################################################################################################
+
+add --chown=user:user container-scripts /home/user/container-scripts
+cmd sudo -i -u user bash -c 'container-scripts/run-test'
+
+
+
+### # Docker image creation -*- shell-script -*-
+### # See debian-base for better comments
+### 
+### #from fedora:latest
+### from ${os}
+### 
+### # Standard ROSE dependencies
+### run yum -y update
+### run yum -y group install "Development Tools"
+### run yum -y install wget tar
+### run yum -y install cmake
+### run yum -y install java-1.8.0-openjdk-devel
+### run yum -y install python-devel
+### run yum -y install graphviz
+### run yum -y install gcc-c++ flex bison
+### run yum -y install bzip2 zlib-devel
+### run yum -y install libtool libtool-ltdl-devel byacc
+### run yum -y install libpqxx-devel
+### 
+### # Additional dependencies for binary analysis
+### run yum -y install libgcrypt-devel binwalk xz fcgi-devel
+### 
+### # Dependencies for build systems
+### run yum -y install fuse fuse-devel patchelf
+### 
+### 
+### # Create a "rose" user
+### run yum -y install sudo passwd
+### run										\
+###     groupadd -f sudo &&								\
+###     useradd -c "ROSE Developer" -d /home/rose -m -G sudo -s /bin/bash rose &&	\
+###     (echo rose; echo rose) |passwd rose &&					\
+###     echo "rose ALL = NOPASSWD: ALL" >>/etc/sudoers
+### 
+### # Install ROSE Meta Config (removal is optional)
+### add spock-downloads /home/rose/.spock/var/downloads
+### run chown -R rose:rose /home/rose/.spock
+### 
+### run sudo --login -u rose bash -c			\
+###     'export SPOCK_HOSTNAME=container;			\
+###      git clone https://github.com/matzke1/rmc-spock &&	\
+###      cd rmc-spock &&					\
+###     ./scripts/bootstrap.sh'
+### 
+### run sudo --login -u rose bash -c \
+###     "rm -rf rmc-spock"
+### 
+### # Install extra useful tools (all optional)
+### run sudo --login -u rose bash -c					\
+###     'git clone https://github.com/matzke1/DeveloperScripts &&		\
+###      cd DeveloperScripts &&						\
+###      echo "export SPOCK_HOSTNAME=container" >>bash/environment &&	\
+###      bash ./install.sh </dev/null'
+### 
+### run yum -y install vim hostname
+### 
+### # Commented out because Fedora requires systemd in order to start/stop services, which doesn't
+### # work in a docker container since pid 1 is not systemd.  Better to use an OS that doesn't
+### # depend on systemd. WARNING: If you log out of the docker "run" environment you will lose all
+### # your work.  You can use nsenter instead, but it requires quite a few switches and superuser
+### # priviledge to use it.
+### #run yum -y install fuse-sshfs openssh-server
+### 
+### cmd sudo --login -u rose

@@ -65,6 +65,12 @@ ifeq (@(COMPILATION_DATABASE),yes)
     compilation_database_record = $(ROSE)/scripts/tup/compdb-emit-llvm-record
 endif
 
+# Export LD_LIBRARY_PATH since RMC sets this for non-native compilers.
+# Actually, this doesn't work because tup refuses to export this variable, and who knows what others. Instead we work
+# around it by exporting ALL_LIBDIRS and using patchelf to fix the executable.
+export ALL_LIBDIRS
+ALL_LIBDIRS = ${ALL_LIBDIRS}
+
 ########################################################################################################################
 # Supported languages.
 ########################################################################################################################
@@ -121,9 +127,37 @@ ifeq (@(ENABLE_PYTHON_ANALYSIS),yes)
     error Python is not supported by the tup ROSE build system yet
 endif
 
-ifeq (@(ENABLE_X10_ANALYSIS),yes)
-    error X10 is not supported by the tup ROSE build system yet
+########################################################################################################################
+# Minimal input code, depending on what language is supported. This is for testing since the test will fail if given
+# an input file for a language that's not supported.
+########################################################################################################################
+
+# Last setting wins
+
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+    minimal_input_code = $(ROSE)/tests/nonsmoke/functional/input_codes/minimal/minimal.binary
 endif
+
+ifeq (@(ENABLE_PYTHON_ANALYSIS),yes)
+    minimal_input_code = $(ROSE)/tests/nonsmoke/functional/input_codes/minimal/minimal.py
+endif
+
+ifeq (@(ENABLE_PHP_ANALYSIS),yes)
+    minimal_input_code = $(ROSE)/tests/nonsmoke/functional/input_codes/minimal/minimal.php
+endif
+
+ifeq (@(ENABLE_JAVA_ANALYSIS),yes)
+    minimal_input_code = $(ROSE)/tests/nonsmoke/functional/input_codes/minimal/minimal.java
+endif
+
+ifeq (@(ENABLE_FORTRAN_ANALYSIS),yes)
+    minimal_input_code = $(ROSE)/tests/nonsmoke/functional/input_codes/minimal/minimal.f90
+endif
+
+ifeq (@(ENABLE_CXX_ANALYSIS),yes)
+    minimal_input_code = $(ROSE)/tests/nonsmoke/functional/input_codes/minimal/minimal.cpp
+endif
+
 
 ########################################################################################################################
 # Software dependencies.
@@ -375,13 +409,14 @@ ifneq (@(WITH_WT),no)
 	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(WT_ROOT)/lib
 	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(WT_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(WT_ROOT)/lib
     endif
+
+    # The -lwthttp and -lwtfcgi libraries are intentionallly absent because its up to the application
+    # as to which one it should use.
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wt
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wthttp
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wtdbo
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)wtdbopostgres
 
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wt
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wthttp
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wtdbo
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)wtdbopostgres
 endif
@@ -614,7 +649,7 @@ support_GENHDR = \
 #    an executable or a library.
 #      run $(support_compile) foo.C bar.C
 #
-support_compile_linkexe = $(COMPILER_RULES) --phase=support --link=exe --linkage=@(LINKAGE) --begin-deps $(support_GENHDR) --end-deps
+support_compile_linkexe = $(COMPILER_RULES) --phase=support --link=exe --linkage=@(LINKAGE) --begin-deps $(support_GENHDR) --end-deps --rpath="${ALL_LIBDIRS}"
 support_compile_linklib = $(COMPILER_RULES) --phase=support --link=lib --linkage=@(LINKAGE) --begin-deps $(support_GENHDR) --end-deps
 support_compile         = $(COMPILER_RULES) --phase=support --link=none --begin-deps $(support_GENHDR) --end-deps
 
@@ -652,6 +687,7 @@ librose_INCDIRS = \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/BinaryLoader \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/Disassemblers \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/DLX/include \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/Experimental_General_Language_Support \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/PHPFrontend \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/PythonFrontend \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/astFileIO \
@@ -678,6 +714,7 @@ librose_INCDIRS = \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/astUtil/symbolicVal \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/BinaryAnalysis \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/BinaryAnalysis/instructionSemantics \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/BinaryAnalysis/libraryIdentification \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/ \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/bitvectorDataflow \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/programAnalysis/CallGraphAnalysis \
@@ -717,6 +754,7 @@ librose_INCDIRS = \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/ROSETTA/src \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/ROSETTA/src/astFileIO \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/roseExtensions/failSafe \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/roseExtensions/sqlite3x \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/graphs \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/support
 
@@ -765,7 +803,6 @@ CxxGrammarMetaProgram_GENHDR = \
 CxxGrammarMetaProgram_GENSRC = \
  $(ROSE)/src/ROSETTA/src/AST_FILE_IO.C \
  $(ROSE)/src/ROSETTA/src/Cxx_Grammar.C \
- $(ROSE)/src/ROSETTA/src/Cxx_GrammarAtermSupport.C \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.C \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarCopyMemberFunctions.C \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarGetChildIndex.C \
@@ -892,7 +929,7 @@ tool_GENLIB = $(ROSE)/src/librose
 #    an executable or a library.
 #      run $(tool_compile) foo.C bar.C
 #
-tool_compile_linkexe = $(COMPILER_RULES) --phase=tool --link=exe --linkage=@(LINKAGE) --begin-deps $(tool_GENHDR) --end-deps $(ROSE)/src/librose
+tool_compile_linkexe = $(COMPILER_RULES) --phase=tool --link=exe --linkage=@(LINKAGE) --begin-deps $(tool_GENHDR) --end-deps --rpath="${ALL_LIBDIRS}" $(ROSE)/src/librose
 tool_compile_linklib = $(COMPILER_RULES) --phase=tool --link=lib --linkage=@(LINKAGE) --begin-deps $(tool_GENHDR) --end-deps
 tool_compile         = $(COMPILER_RULES) --phase=tool --link=none --begin-deps $(tool_GENHDR) --end-deps
 

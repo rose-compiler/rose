@@ -179,7 +179,7 @@ Reachability::insertReasonSwitch(Sawyer::CommandLine::SwitchGroup &sg, const std
     } else {
         noSwitchDefaults += "\"" + reasonArgument(NOT_REACHABLE) + "\".";
     }
-    
+
     if (dfltArg != NOT_REACHABLE) {
         sg.insert(Sawyer::CommandLine::Switch(switchName)
                   .argument("reasons", reasonParser(storage), reasonArgument(dfltArg))
@@ -435,7 +435,7 @@ size_t
 Reachability::intrinsicallyReachable(size_t vertexId, ReasonFlags how) {
     if (vertexId >= intrinsicReachability_.size())
         intrinsicReachability_.resize(vertexId+1, ReasonFlags());
-    
+
     if (how == intrinsicReachability_[vertexId]) {
         return 0;
     } else {
@@ -663,7 +663,7 @@ Reachability::cacheImplicitFunctionReferents(const P2::Partitioner &partitioner,
     Sawyer::workInParallel(depgraph, nThreads, analyzer);
     debug <<"; took " <<timer <<" seconds\n";
 }
-    
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The reachability propagation data-flow functions
@@ -757,7 +757,7 @@ Reachability::iterationMarking(const P2::Partitioner &partitioner, const std::ve
             }
         }
     }
-    
+
     // Implicit constants in function data-flow
     cacheImplicitFunctionReferents(partitioner, functionsToAnalyze); // done in parallel
     BOOST_FOREACH (const P2::Function::Ptr &function, functionsToAnalyze) {
@@ -775,17 +775,17 @@ Reachability::iterate(const P2::Partitioner &partitioner) {
     // Run the data-flow to find constants in all the functions. We do this up front because we can do it in parallel,
     // although if the reachability set is small, it might be better to calculate this on demand in the loop below.
     if (settings_.precomputeImplicitFunctionReferents &&
-        settings_.markingImplicitFunctionReferents.isAnySet()&&
+        settings_.markingImplicitFunctionReferents.isAnySet() &&
         dfReferents_.isEmpty())
         cacheAllImplicitFunctionReferents(partitioner);
-    
+
     // Before starting, make sure that we've scanned the vertices that are already reachable.
     SAWYER_MESG(debug) <<"iteration[-1] marking intrinsic reachability";
     std::vector<size_t> ids = reachableVertices();
     scannedVertexIds_.removeIfSeen(ids /*in,out*/);
     size_t nMarked = iterationMarking(partitioner, ids);
     SAWYER_MESG(debug) <<" changed " <<StringUtility::plural(nMarked, "vertices") <<"\n";
-    
+
     // Iterative propgate and mark
     for (size_t passNumber = 0; true; ++passNumber) {
         SAWYER_MESG(debug) <<"iteration " <<passNumber <<"\n";

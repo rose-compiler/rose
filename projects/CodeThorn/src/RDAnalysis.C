@@ -14,48 +14,48 @@
 #include "VariableIdMapping.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
-SPRAY::RDPropertyStateFactory::RDPropertyStateFactory() {
+CodeThorn::RDPropertyStateFactory::RDPropertyStateFactory() {
 }
 
-SPRAY::PropertyState* SPRAY::RDPropertyStateFactory::create() {
+CodeThorn::PropertyState* CodeThorn::RDPropertyStateFactory::create() {
   RDLattice* element=new RDLattice();
   return element;
 }
 
-SPRAY::RDPropertyStateFactory::~RDPropertyStateFactory() {
+CodeThorn::RDPropertyStateFactory::~RDPropertyStateFactory() {
 }
 
-SPRAY::RDAnalysis::RDAnalysis() {
+CodeThorn::RDAnalysis::RDAnalysis() {
   _transferFunctions=new RDTransferFunctions();
-  _initialElementFactory=new RDPropertyStateFactory();
+  _transferFunctions->setInitialElementFactory(new RDPropertyStateFactory());
 }
 
-SPRAY::RDAnalysis::~RDAnalysis() {
+CodeThorn::RDAnalysis::~RDAnalysis() {
   delete _transferFunctions;
-  delete _initialElementFactory;
+  delete _transferFunctions->getInitialElementFactory();
 }
-void SPRAY::RDAnalysis::initializeExtremalValue(Lattice* element) {
-  RDLattice* rdElement=dynamic_cast<RDLattice*>(element);
-  rdElement->setEmptySet();
+
+void CodeThorn::RDAnalysis::initializeExtremalValue(Lattice* element) {
+  _transferFunctions->initializeExtremalValue(*element);
   cout<<"INFO: initialized extremal value."<<endl;
 }
 
-SPRAY::DFAstAttribute* SPRAY::RDAnalysis::createDFAstAttribute(Lattice* elem) {
+CodeThorn::DFAstAttribute* CodeThorn::RDAnalysis::createDFAstAttribute(Lattice* elem) {
   RDLattice* rdElem=dynamic_cast<RDLattice*>(elem);
   ROSE_ASSERT(rdElem);
   return new RDAstAttribute(rdElem);
 }
 
-SPRAY::LabelSet SPRAY::RDAnalysis::getPreRDs(Label lab, VariableId varId) {
-  SPRAY::RDLattice* rdInfo=dynamic_cast<RDLattice*>(getPreInfo(lab));
+CodeThorn::LabelSet CodeThorn::RDAnalysis::getPreRDs(Label lab, VariableId varId) {
+  CodeThorn::RDLattice* rdInfo=dynamic_cast<RDLattice*>(getPreInfo(lab));
   ROSE_ASSERT(rdInfo);
   return rdInfo->getRDs(varId);
 }
 
-SPRAY::LabelSet SPRAY::RDAnalysis::getPostRDs(Label lab, VariableId varId) {
-  SPRAY::RDLattice* rdInfo=dynamic_cast<RDLattice*>(getPostInfo(lab));
+CodeThorn::LabelSet CodeThorn::RDAnalysis::getPostRDs(Label lab, VariableId varId) {
+  CodeThorn::RDLattice* rdInfo=dynamic_cast<RDLattice*>(getPostInfo(lab));
   ROSE_ASSERT(rdInfo);
   return rdInfo->getRDs(varId);
 }

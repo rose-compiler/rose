@@ -1,0 +1,74 @@
+# Docker image creation -*- shell-script -*-
+#
+# This file describes a docker image suitable for doing ROSE building and testing. It contains all prerequisites needed
+# by ROSE except for those managed by RMC/Spock.  It does not contain ROSE source code.
+#
+# I am using lower-case Docker instructions in this file contrary to docker conventions. The Docker documentation says
+# "The instruction is not case-sensitive. However, convention is for them to be UPPERCASE to distinguish them from
+# arguments more easily." This is just plain silly since the instruction is always the first word and arguments follow
+# it. It's also not scalable, and it's hard on fingers. Let's try to put a stop to this upper-case silliness in Docker,
+# CMake, and SQL!
+
+########################################################################################################################
+# Operating system.
+########################################################################################################################
+
+# Debian, Ubuntu, and Mint should all work equally well.
+#from debian:jessie
+#from vcatechnology/linux-mint
+#from ubuntu:16.04
+from ${os}
+
+########################################################################################################################
+# Basic prerequisites
+########################################################################################################################
+
+# These are the prerequisites for the ROSE Meta Config (RMC) system. They're cut-n-pasted from the ROSE installation
+# instructions at doxygen.rosecompiler.org except I've added "-y".  Since we'll be using RMC, we don't need to install
+# everything. In particular, we don't install those things that RMC itself installs, which basically boils down to
+# any package whose binary interface (ABI) is used by ROSE and depends directly or indirectly on a C++ compiler.
+
+run apt-get -y update
+run apt-get -y install apt-utils
+run apt-get -y install \
+    git wget build-essential g++ gfortran libtool automake flex bison graphviz-dev cmake \
+    libpqxx-dev ghostscript perl-doc groff libgcrypt20-dev libfcgi-dev libfuse-dev gcc-multilib \
+    g++-multilib gfortran-multilib fuse bsdmainutils locales jq patchelf
+
+run apt-get -y install \
+    qt5-default '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libfontconfig1-dev \
+    libatspi2.0-dev libdbus-1-dev
+
+########################################################################################################################
+# Create user and groups
+########################################################################################################################
+
+# Create a user so we don't have to run things as the admin.
+run apt-get -y install sudo && useradd -c "A. User" -d /home/user -m -G sudo -s /bin/bash user
+run (echo password; echo password) |passwd user
+run echo "user ALL = NOPASSWD: ALL" >>/etc/sudoers
+
+########################################################################################################################
+# Optional things to make the development environment better.
+########################################################################################################################
+
+# Install Robb's development environment. These are various commands (like "mkcd" short for "mkdir" followed by "cd"),
+# a more informative bash prompt including a bell when a long-running command completes, config files for Emacs, etc.
+run sudo -i -u user bash -c					\
+    'git clone https://github.com/matzke1/DeveloperScripts &&	\
+     cd DeveloperScripts &&					\
+     bash ./install.sh </dev/null'
+
+# Additional tools:
+#   A better editor than the toy nano editor (vim, which is still smaller than emacs)
+#   More user-friendly package management system (aptitude)
+#   Ability to SSH-mount files (sshfs)
+#   A way to connect to a running container (openssh-server)
+run apt-get -y install vim aptitude sshfs openssh-server
+
+#########################################################################################################################
+## Install RMC (when image is run as a container)
+#########################################################################################################################
+
+add --chown=user:user container-scripts /home/user/container-scripts
+cmd sudo -i -u user bash -c 'container-scripts/run-test'

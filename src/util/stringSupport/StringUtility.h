@@ -385,16 +385,6 @@ ROSE_UTIL_API std::string untab(const std::string &str, size_t tabstops=8, size_
  *  if it was non-empty and unique. This happened when it was not followed by a line-feed. */
 ROSE_UTIL_API std::string removeRedundantSubstrings(const std::string&);
 
-// [Robb Matzke 2016-01-06]: deprecated due to being misspelled
-ROSE_UTIL_API std::string removeRedundentSubstrings(std::string);
-
-/** Remove redundant lines containing special substrings of form string#. */
-ROSE_UTIL_API std::string removePseudoRedundantSubstrings(const std::string&);
-
-// [Robb Matzke 2016-01-06]: deprecated due to being misspelled
-ROSE_UTIL_API std::string removePseudoRedundentSubstrings(std::string);
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -504,9 +494,14 @@ std::string plural(T n, const std::string &plural_word, const std::string &singu
             retval += singular_word;
         } else if (boost::ends_with(plural_word, "vertices")) {
             retval += boost::replace_tail_copy(plural_word, 8, "vertex");
+        } else if (boost::ends_with(plural_word, "indices")) {
+            retval += boost::replace_tail_copy(plural_word, 7, "index");
         } else if (boost::ends_with(plural_word, "ies") && plural_word.size() > 3) {
             // string ends with "ies", as in "parties", so emit "party" instead
             retval += boost::replace_tail_copy(plural_word, 3, "y");
+        } else if (boost::ends_with(plural_word, "indexes")) {
+            // Sometimes we need to drop an "es" rather than just the "s"
+            retval += boost::erase_tail_copy(plural_word, 2);
         } else if (boost::ends_with(plural_word, "s") && plural_word.size() > 1) {
             // strings ends with "s", as in "runners", so drop the final "s" to get "runner"
             retval += boost::erase_tail_copy(plural_word, 1);

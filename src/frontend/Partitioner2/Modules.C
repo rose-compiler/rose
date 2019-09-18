@@ -3,6 +3,7 @@
 
 #include <BinaryDemangler.h>
 #include <BinaryString.h>
+#include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/FunctionCallGraph.h>
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Partitioner.h>
@@ -66,7 +67,7 @@ demangleFunctionNames(const Partitioner &p) {
 bool
 AddGhostSuccessors::operator()(bool chain, const Args &args) {
     if (chain) {
-        size_t nBits = args.partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+        size_t nBits = args.partitioner.instructionProvider().instructionPointerRegister().nBits();
         BOOST_FOREACH (rose_addr_t successorVa, args.partitioner.basicBlockGhostSuccessors(args.bblock))
             args.bblock->insertSuccessor(successorVa, nBits);
     }
@@ -431,6 +432,57 @@ Debugger::debug(rose_addr_t va, const BasicBlock::Ptr &bblock) {
     debug <<"Debugger triggered: #" <<callNumber <<" for " <<(isBblock?"bblock=":"placeholder=") <<addrToString(va) <<"\n";
 }
 
+bool
+MatchThunk::match(const Partitioner &partitioner, rose_addr_t anchor) {
+    // Disassemble the next few undiscovered instructions
+    static const size_t maxInsns = 2;                   // max length of a thunk
+    std::vector<SgAsmInstruction*> insns;
+    rose_addr_t va = anchor;
+    for (size_t i=0; i<maxInsns; ++i) {
+        if (partitioner.instructionExists(va))
+            break;                                      // look only for undiscovered instructions
+        SgAsmInstruction *insn = partitioner.discoverInstruction(va);
+        if (!insn)
+            break;
+        insns.push_back(insn);
+        va += insn->get_size();
+    }
+    if (insns.empty())
+        return false;
+
+    functions_.clear();
+    ThunkDetection found = predicates_->isThunk(partitioner, insns);
+    if (!found)
+        return false;
+
+    // This is a thunk
+    Function::Ptr thunk = Function::instance(anchor, SgAsmFunction::FUNC_THUNK);
+    if (!found.name.empty())
+        thunk->reasonComment("matched " + found.name);
+    functions_.push_back(thunk);
+
+    // Do we know the successors?  They would be the function(s) to which the thunk branches.
+    BasicBlock::Ptr bb = BasicBlock::instance(anchor, partitioner);
+    for (size_t i=0; i<found.nInsns; ++i)
+        bb->append(partitioner, insns[i]);
+    BOOST_FOREACH (const BasicBlock::Successor &successor, partitioner.basicBlockSuccessors(bb)) {
+        if (successor.expr()->is_number()) {
+            rose_addr_t targetVa = successor.expr()->get_number();
+            if (Function::Ptr thunkTarget = partitioner.functionExists(targetVa)) {
+                thunkTarget->insertReasons(SgAsmFunction::FUNC_THUNK_TARGET);
+                if (thunkTarget->reasonComment().empty())
+                    thunkTarget->reasonComment("target of thunk " + thunk->printableName());
+            } else {
+                thunkTarget = Function::instance(targetVa, SgAsmFunction::FUNC_THUNK_TARGET);
+                thunkTarget->reasonComment("target of thunk " + thunk->printableName());
+                insertUnique(functions_, thunkTarget, sortFunctionsByAddress);
+            }
+        }
+    }
+
+    return true;
+}
+
 AddressIntervalSet
 deExecuteZeros(const MemoryMap::Ptr &map /*in,out*/, size_t threshold, size_t leaveAtFront, size_t leaveAtBack) {
     ASSERT_not_null(map);
@@ -673,6 +725,68 @@ nameConstants(const Partitioner &partitioner) {
     BOOST_FOREACH (SgAsmInstruction *insn, partitioner.instructionsOverlapping(AddressInterval::whole()))
         constantRenamer.traverse(insn, preorder);
 }
+
+boost::logic::tribool
+isStackBasedReturn(const Partitioner &partitioner, const BasicBlock::Ptr &bb) {
+    ASSERT_not_null(bb);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    BasicBlockSemantics sem = bb->semantics();
+    BaseSemantics::StatePtr state = sem.finalState();
+    if (!state)
+        return boost::logic::indeterminate;
+
+    ASSERT_not_null(sem.dispatcher);
+    ASSERT_not_null(sem.operators);
+    SAWYER_MESG(debug) <<"  block has semantic information\n";
+    const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
+    const RegisterDescriptor REG_SP = partitioner.instructionProvider().stackPointerRegister();
+    const RegisterDescriptor REG_SS = partitioner.instructionProvider().stackSegmentRegister();
+
+    // Find the pointer to the return address. Since the return instruction (e.g., x86 RET) has been processed semantically
+    // already, the return address is beyond the end of the stack.  Here we handle architecture-specific instructions that
+    // might pop more than just the return address (e.g., x86 "RET 4").
+    BaseSemantics::SValuePtr stackOffset;           // added to stack ptr to get ptr to return address
+    if (SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(bb->instructions().back())) {
+        if ((x86insn->get_kind() == x86_ret || x86insn->get_kind() == x86_retf) &&
+            x86insn->nOperands() == 1 &&
+            isSgAsmIntegerValueExpression(x86insn->operand(0))) {
+            uint64_t nbytes = isSgAsmIntegerValueExpression(x86insn->operand(0))
+                              ->get_absoluteValue();
+            nbytes += REG_IP.nBits() / 8;       // size of return address
+            stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.nBits(), nbytes));
+        }
+    }
+    if (!stackOffset) {
+        // If no special case above, assume return address is the word beyond the top-of-stack and that the stack grows
+        // downward.
+        stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.nBits(), REG_IP.nBits()/8));
+    }
+    BaseSemantics::SValuePtr sp = sem.operators->peekRegister(REG_SP);
+    BaseSemantics::SValuePtr retAddrPtr = sem.operators->add(sp, stackOffset);
+
+    // Now that we have the ptr to the return address, read it from the stack and compare it with the new instruction
+    // pointer. If equal, then the basic block returns to the caller.
+    BaseSemantics::SValuePtr retAddr = sem.operators->undefined_(REG_IP.nBits());
+    retAddr = sem.operators->peekMemory(REG_SS, retAddrPtr, retAddr);
+    BaseSemantics::SValuePtr ip = sem.operators->peekRegister(REG_IP);
+    BaseSemantics::SValuePtr isEqual =
+        sem.operators->equalToZero(sem.operators->add(retAddr, sem.operators->negate(ip)));
+    bool isReturn = isEqual->is_number() ? (isEqual->get_number() != 0) : false;
+
+    if (debug) {
+        debug <<"    stackOffset  = " <<*stackOffset <<"\n";
+        debug <<"    sp           = " <<*sp <<"\n";
+        debug <<"    retAddrPtr   = " <<*retAddrPtr <<"\n";
+        debug <<"    retAddr      = " <<*retAddr <<"\n";
+        debug <<"    ip           = " <<*ip <<"\n";
+        debug <<"    retAddr==ip? = " <<*isEqual <<"\n";
+        debug <<"    returning " <<(isReturn ? "true" : "false") <<"\n";
+        //debug <<"    state:" <<*state; // produces lots of output!
+    }
+
+    return isReturn;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      AST-building functions

@@ -5,8 +5,8 @@ SOURCES = sageInterface.C sageInterface_type.C generateUniqueName.C sageBuilder.
 HEADERS = sageInterface.h sageBuilder.h sageGeneric.h sageFunctors.h integerOps.h untypedBuilder.h abiStuff.h
 
 ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
-    SOURCES += sageInterfaceAsm.C sageInterface_asm.C sageBuilderAsm.C
-    HEADERS += sageInterfaceAsm.h sageBuilderAsm.h
+    SOURCES += sageInterfaceAsm.C sageInterface_asm.C SageBuilderAsm.C
+    HEADERS += sageInterfaceAsm.h SageBuilderAsm.h
 endif
 
 run $(librose_compile) $(SOURCES)

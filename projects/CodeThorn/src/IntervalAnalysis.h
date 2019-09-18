@@ -19,12 +19,11 @@
   * \date 2013.
  */
 
-namespace SPRAY {
+namespace CodeThorn {
 class IntervalAnalysis : public DFAnalysisBase {
  public:
   IntervalAnalysis();
   ~IntervalAnalysis();
-  void initializeExtremalValue(Lattice* element);
   void initializeTransferFunctions();
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice* elem);

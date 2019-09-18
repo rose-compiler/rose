@@ -192,6 +192,10 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
      bool statementInFile = false;
 
 #if 0
+     printf ("In statementFromFile(): sourceFilename = %s stmt = %p = %s \n",sourceFilename.c_str(),stmt,stmt->class_name().c_str());
+#endif
+
+#if 0
      printf ("\n");
      printf ("In statementFromFile(): sourceFilename = %s stmt = %p = %s \n",sourceFilename.c_str(),stmt,stmt->class_name().c_str());
      printf ("   --- stmt = %s \n",SageInterface::get_name(stmt).c_str());
@@ -503,13 +507,36 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt);
                if (functionDeclaration != NULL && functionDeclaration->isNormalizedTemplateFunction() == true)
                   {
-                    SgSourceFile* sourcefile = info.get_current_source_file();
-                    if (sourcefile == NULL || sourcefile->get_unparse_edg_normalized_method_ROSE_1392() == false) {
+                 // SgSourceFile* sourcefile = info.get_current_source_file();
 #if 0
-                      printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",functionDeclaration
+                    printf ("output of normalized template declaration member and non-member functions: sourcefile = %p \n",sourcefile);
 #endif
-                      statementInFile = false;
-                    }
+
+#if 1
+                 // DQ (5/30/2019): If we are using the token unparsing then we need to supress the unparing of the normalized functions.
+                 // See moveDeclarationTool/inputmoveDeclarationToInnermostScope_test2014_26.C for an example of this.
+                    if ( (sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
+                      {
+#if 0
+                         printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",
+                              functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
+                         statementInFile = false;
+                      }
+#endif
+
+#if 0
+                 // DQ (5/28/2019): I think we should allow this to be unparsed, and so that any attached CPP directives 
+                 // can be ouput, even if within the unparser we don't output the function definition.
+                    if (sourcefile == NULL || sourcefile->get_unparse_edg_normalized_method_ROSE_1392() == false) 
+                       {
+#if 0
+                         printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",
+                              functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
+                         statementInFile = false;
+                       }
+#endif
                   }
 #endif
 #if 0
@@ -6092,7 +6119,9 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
      SgEnumVal* enum_val = isSgEnumVal(expr);
      ROSE_ASSERT(enum_val != NULL);
 
-#if 0
+#define DEBUG_UNPARSE_ENUM_VAL 0
+
+#if DEBUG_UNPARSE_ENUM_VAL
      printf ("In Unparse_ExprStmt::unparseEnumVal:\n");
      printf ("  -- info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
      printf ("  -- enum_val->get_requiresNameQualification() = %s\n", enum_val->get_requiresNameQualification() ? "true" : "false");
@@ -6138,7 +6167,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                  // global qualification even if it is not required with normal qualification.  That is that the specification 
                  // of qualification triggers possible (likely) over qualification.  Overqualification is generally the default
                  // this flag is sometime taken to mean that the "::" is required as well.
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
                     printf ("enum_val->get_requiresNameQualification() = %s \n",enum_val->get_requiresNameQualification() ? "true" : "false");
 #endif
                  // cur << "\n/* funcdecl_stmt->get_requiresNameQualificationOnReturnType() = " << (funcdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false") << " */ \n";
@@ -6152,7 +6181,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                  // DQ (6/9/2011): Newest refactored support for name qualification.
                  // SgName nameQualifier = unp->u_name->generateNameQualifier(enum_val->get_declaration(),info);
                     SgName nameQualifier = enum_val->get_qualified_name_prefix();
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
                     printf ("In Unparse_ExprStmt::unparseEnumVal: nameQualifier = %s \n",nameQualifier.str());
 #endif
                  // DQ (8/31/2012): If we are going to NOT output a name, then we had better not out any name qualification.
@@ -6163,7 +6192,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                          ROSE_ASSERT(nameQualifier.is_null() == true);
                        }
 #endif
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
                     printf ("enum value's nameQualifier = %s \n",(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
 #endif
                  // ROSE_ASSERT (nameQualifier.is_null() == false);
@@ -6180,7 +6209,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                printf ("Warning in Unparser::unparseEnumVal(): no associated enum declaration specificed for enum value = %s \n",enum_val->get_name().str());
              }
 
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
        // printf ("In Unparse_ExprStmt::unparseEnumVal: classdefn = %s pointer \n",classdefn ? "VALID" : "NULL");
           printf ("In Unparse_ExprStmt::unparseEnumVal: enum_val->get_name().is_null() = %s \n",enum_val->get_name().is_null() ? "true" : "false");
 #endif
@@ -6194,7 +6223,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
           SgName enum_value_name = enum_val->get_name();
           SgName substring = enum_value_name.head(strlen("__anonymous_"));
           bool isGeneratedName = (substring == "__anonymous_");
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
           printf ("enum_value_name = %s \n",enum_value_name.str());
           printf ("substring = %s \n",substring.str());
           printf ("isGeneratedName = %s \n",isGeneratedName ? "true" : "false");
@@ -6238,7 +6267,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
              }
         }
 
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
      printf ("Leaving Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
 #endif
 #if 0
@@ -6414,9 +6443,17 @@ UnparseLanguageIndependentConstructs::unparseFloatVal(SgExpression* expr, SgUnpa
 
      if (float_value == std::numeric_limits<float>::infinity())
         {
-       // printf ("Infinite value found as value in unparseFloatVal() \n");
-       // curprint ( "std::numeric_limits<float>::infinity()";
-          curprint( "__builtin_huge_valf()");
+       // Because of Fortran kind (compiler dependent) the string literal may be a double.
+       // Thus it makes more sense to print the original string literal [Rasmussen 4/28/2019].
+          if (SageInterface::is_Fortran_language() && float_val->get_valueString().length() > 0)
+             {
+               curprint(float_val->get_valueString());
+             }
+            else
+             {
+            // curprint ( "std::numeric_limits<float>::infinity()";
+               curprint( "__builtin_huge_valf()");
+             }
         }
        else
         {

@@ -1205,7 +1205,9 @@ void CollectAliasRelations::run() {
     
     recursiveCollect(graphNode, colors);
 
+#ifndef NDEBUG
     SgFunctionDefinition *defn = isSgFunctionDefinition(cfg->getEntry()->get_SgNode());
+#endif
     //repr.toDot(def->get_mangled_name()+"_cr.dot");
     assert(defn != NULL);
     //cfg->cfgToDot(defn, defn->get_mangled_name()+"_cfg.dot");

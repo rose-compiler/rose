@@ -5,8 +5,10 @@
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/Function.h>
+#include <Partitioner2/Thunk.h>
 #include <Partitioner2/Utility.h>
 
+#include <boost/logic/tribool.hpp>
 #include <Sawyer/SharedPointer.h>
 
 namespace Rose {
@@ -335,6 +337,38 @@ public:
     void debug(rose_addr_t, const BasicBlock::Ptr&);
 };
 
+/** Match thunk.
+ *
+ *  Matches any thunk matched by the specified predicates.  This callback is invoked at addresses that are not part of the
+ *  partitioner's CFG and will only match instructions not in the CFG. */
+class MatchThunk: public FunctionPrologueMatcher {
+private:
+    ThunkPredicates::Ptr predicates_;
+protected:
+    std::vector<Function::Ptr> functions_;
+
+protected:
+    // use 'instance' instead
+    MatchThunk(const ThunkPredicates::Ptr &predicates)
+        : predicates_(predicates) {}
+    
+public:
+    /** Allocating constructor. */
+    static Ptr instance(const ThunkPredicates::Ptr &predicates) {
+        return Ptr(new MatchThunk(predicates));
+    }
+
+    /** Property: Predicates used for matching thunks.
+     *
+     * @{ */
+    ThunkPredicates::Ptr predicates() const { return predicates_; }
+    void predicates(const ThunkPredicates::Ptr &p) { predicates_ = p; }
+    /** @} */
+
+    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return functions_; }
+    virtual bool match(const Partitioner&, rose_addr_t anchor) ROSE_OVERRIDE;
+};
+
 /** Remove execute permissions for zeros.
  *
  *  Scans memory to find consecutive zero bytes and removes execute permission from them. Only occurrences of at least @p
@@ -400,6 +434,13 @@ std::vector<Function::Ptr> findNoopFunctions(const Partitioner&);
  *  according to their names. */
 void nameNoopFunctions(const Partitioner&);
 
+/** Determine if basic block is a stack-based function return.
+ *
+ *  Determines whether the specified basic block is a function return by examining the semantics of the basic block. If at
+ *  the end of the basic block, the instruction pointer has the same value as the value stored on-past-the-end of the stack
+ *  it means that the basic block popped the next execution address from the top of the stack.  Returns indeterminate if
+ *  this property could not be determined, such as is the case when semantics are not enabled. */
+boost::logic::tribool isStackBasedReturn(const Partitioner&, const BasicBlock::Ptr&);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                  Partitioner conversion to AST

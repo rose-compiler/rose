@@ -2,19 +2,19 @@
 #include "CTIOLabeler.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace CodeThorn;
 
-CTIOLabeler::CTIOLabeler(SgNode* start, VariableIdMapping* variableIdMapping): SPRAY::IOLabeler(start, variableIdMapping) {
+CTIOLabeler::CTIOLabeler(SgNode* start, VariableIdMapping* variableIdMapping): CodeThorn::IOLabeler(start, variableIdMapping) {
 }
 
 bool CTIOLabeler::isStdIOLabel(Label label) {
   cerr<<"Warning: deprecated function: isStdIOLabel."<<endl;
-  return SPRAY::IOLabeler::isStdIOLabel(label);
+  return CodeThorn::IOLabeler::isStdIOLabel(label);
 }
 
 bool CTIOLabeler::isStdInLabel(Label label, VariableId* id) {
-  if(SPRAY::IOLabeler::isStdInLabel(label,id)) {
+  if(CodeThorn::IOLabeler::isStdInLabel(label,id)) {
     return true;
   } else if(isNonDetIntFunctionCall(label,id)) {
     return true;

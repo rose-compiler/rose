@@ -184,6 +184,7 @@ public:
                 break;
         }
         ASSERT_not_null(memory);
+        memory->set_byteOrder(partitioner->instructionProvider().defaultByteOrder());
         BaseSemantics::StatePtr state = State::instance(registers, memory);
         RiscOperatorsPtr ops = RiscOperatorsPtr(new RiscOperators(partitioner, state, solver));
         ops->fpAnalyzer_ = fpAnalyzer;
@@ -426,7 +427,9 @@ public:
         if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr)) {
             ASSERT_not_null(fpAnalyzer_);
             ASSERT_not_null(path_);
-            pathProcessor_->nullDeref(*fpAnalyzer_, *path_, FeasiblePath::READ, addr, currentInstruction());
+            SmtSolver::Ptr s = solver();
+            SmtSolver::Transaction tx(s);
+            pathProcessor_->nullDeref(*fpAnalyzer_, *path_, s, FeasiblePath::READ, addr, currentInstruction());
         }
 
         // If we know the address and that memory exists, then read the memory to obtain the default value.
@@ -493,7 +496,9 @@ public:
         if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr)) {
             ASSERT_not_null(fpAnalyzer_);
             ASSERT_not_null(path_);
-            pathProcessor_->nullDeref(*fpAnalyzer_, *path_, FeasiblePath::WRITE, addr, currentInstruction());
+            SmtSolver::Ptr s = solver();
+            SmtSolver::Transaction tx(s);
+            pathProcessor_->nullDeref(*fpAnalyzer_, *path_, s, FeasiblePath::WRITE, addr, currentInstruction());
         }
 
         // Save a description of the variable
@@ -763,13 +768,13 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
     if (NULL == registers_) {
         registers_ = new RegisterDictionary("Rose::BinaryAnalysis::FeasiblePath");
         registers_->insert(partitioner.instructionProvider().registerDictionary());
-        ASSERT_forbid(REG_PATH.is_valid());
+        ASSERT_require(REG_PATH.isEmpty());
         REG_PATH = RegisterDescriptor(registers_->firstUnusedMajor(), 0, 0, 1);
         registers_->insert("path", REG_PATH);
 
         // Where are return values stored?  FIXME[Robb Matzke 2015-12-01]: We need to support returning multiple values. We
         // should be using the new calling convention analysis to detect these.
-        ASSERT_forbid(REG_RETURN_.is_valid());
+        ASSERT_require(REG_RETURN_.isEmpty());
         const RegisterDescriptor *r = NULL;
         if ((r = registers_->lookup("rax")) || (r = registers_->lookup("eax")) || (r = registers_->lookup("ax"))) {
             REG_RETURN_ = *r;
@@ -796,7 +801,7 @@ void
 FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
                               const P2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex) {
     ASSERT_not_null(cpu);
-    ASSERT_require(REG_PATH.is_valid());
+    ASSERT_forbid(REG_PATH.isEmpty());
 
     // Create the new state from an existing state and make the new state current.
     BaseSemantics::StatePtr state = cpu->currentState()->clone();
@@ -810,16 +815,16 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
     // Initialize instruction pointer register
     if (pathsBeginVertex->value().type() == P2::V_INDETERMINATE) {
         ops->writeRegister(cpu->instructionPointerRegister(),
-                           ops->undefined_(cpu->instructionPointerRegister().get_nbits()));
+                           ops->undefined_(cpu->instructionPointerRegister().nBits()));
     } else {
         ops->writeRegister(cpu->instructionPointerRegister(),
-                           ops->number_(cpu->instructionPointerRegister().get_nbits(), pathsBeginVertex->value().address()));
+                           ops->number_(cpu->instructionPointerRegister().nBits(), pathsBeginVertex->value().address()));
     }
 
     // Initialize stack pointer register
     if (settings_.initialStackPtr) {
         const RegisterDescriptor REG_SP = cpu->stackPointerRegister();
-        ops->writeRegister(REG_SP, ops->number_(REG_SP.get_nbits(), *settings_.initialStackPtr));
+        ops->writeRegister(REG_SP, ops->number_(REG_SP.nBits(), *settings_.initialStackPtr));
     }
 
     // Direction flag (DF) is always set
@@ -865,7 +870,6 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
                 debug <<"          sp = " <<*sp <<"\n";
             }
         } catch (const BaseSemantics::Exception &e) {
-            insn->incrementSemanticFailure();
             if (settings_.ignoreSemanticFailure) {
                 SAWYER_MESG(mlog[WARN]) <<"semantics failed (instruction ignored): " <<e <<"\n";
             } else {
@@ -918,22 +922,34 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
         retval = functionSummarizer_->returnValue(*this, summary, ops);
     } else {
         // Make the function return an unknown value
-        retval = SymbolicSemantics::SValue::promote(ops->undefined_(REG_RETURN_.get_nbits()));
+        retval = SymbolicSemantics::SValue::promote(ops->undefined_(REG_RETURN_.nBits()));
         ops->writeRegister(REG_RETURN_, retval);
 
-        // Cause the function to return to the address stored at the top of the stack.
-        RegisterDescriptor SP = cpu->stackPointerRegister();
-        BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.get_nbits()));
-        BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
-                                                                ops->undefined_(stackPointer->get_width()), ops->boolean_(true));
-        ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
+        // Simulate function returning to caller
+        if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherPowerpc>(cpu)) {
+            // PowerPC calling convention stores the return address in the link register (LR)
+            const RegisterDescriptor LR = cpu->callReturnRegister();
+            ASSERT_forbid(LR.isEmpty());
+            BaseSemantics::SValuePtr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
+            ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 
-        // Pop some things from the stack.
-        int64_t sd = summary.stackDelta != SgAsmInstruction::INVALID_STACK_DELTA ?
-                     summary.stackDelta :
-                     returnTarget->get_width() / 8;
-        stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
-        ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
+        } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherX86>(cpu)) {
+            // x86 and amd64 store the return address at the top of the stack
+            const RegisterDescriptor SP = cpu->stackPointerRegister();
+            ASSERT_forbid(SP.isEmpty());
+            BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.nBits()));
+            BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
+                                                                    ops->undefined_(stackPointer->get_width()),
+                                                                    ops->boolean_(true));
+            ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
+
+            // Pop some things from the stack.
+            int64_t sd = summary.stackDelta != SgAsmInstruction::INVALID_STACK_DELTA ?
+                         summary.stackDelta :
+                         returnTarget->get_width() / 8;
+            stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
+            ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
+        }
     }
 
     if (retval) {
@@ -949,7 +965,6 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
         debug <<(*ops->currentState() + fmt);
     }
 }
-
 
 void
 FeasiblePath::processVertex(const BaseSemantics::DispatcherPtr &cpu,
@@ -972,7 +987,7 @@ FeasiblePath::processVertex(const BaseSemantics::DispatcherPtr &cpu,
             mlog[ERROR] <<"cannot comput path feasibility; invalid vertex type at "
                         <<P2::Partitioner::vertexName(*pathsVertex) <<"\n";
             cpu->get_operators()->writeRegister(cpu->instructionPointerRegister(),
-                                                cpu->get_operators()->number_(cpu->instructionPointerRegister().get_nbits(),
+                                                cpu->get_operators()->number_(cpu->instructionPointerRegister().nBits(),
                                                                               0x911 /*arbitrary, unlikely to be satisfied*/));
             ++pathInsnIndex;
     }
@@ -1034,7 +1049,7 @@ FeasiblePath::pathEdgeConstraint(const P2::ControlFlowGraph::ConstEdgeIterator &
     static const char *prefix = "      ";
 
     const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
-    BaseSemantics::SValuePtr ip = ops->peekRegister(IP, ops->undefined_(IP.get_nbits()));
+    BaseSemantics::SValuePtr ip = ops->peekRegister(IP, ops->undefined_(IP.nBits()));
     if (!settings_.nonAddressIsFeasible && !hasVirtualAddress(pathEdge->target())) {
         SAWYER_MESG(mlog[DEBUG]) <<prefix <<"unfeasible at edge " <<partitioner().edgeName(pathEdge)
                                  <<" because settings().nonAddressIsFeasible is false\n";
@@ -1092,11 +1107,11 @@ FeasiblePath::pathToCfg(const P2::ControlFlowGraph::ConstVertexIterator &pathVer
 }
 
 P2::CfgConstVertexSet
-FeasiblePath::cfgToPaths(const P2::CfgConstVertexSet &vertices) const {
+FeasiblePath::cfgToPaths(const P2::CfgConstVertexSet &vertexSet) const {
     P2::CfgConstVertexSet retval;
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, vertices) {
-        if (vmap_.forward().exists(vertex))
-            retval.insert(vmap_.forward()[vertex]);
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, vertexSet.values()) {
+        if (Sawyer::Optional<P2::ControlFlowGraph::ConstVertexIterator> found = vmap_.forward().find(vertex))
+            retval.insert(*found);
     }
     return retval;
 }
@@ -1125,7 +1140,7 @@ FeasiblePath::setSearchBoundary(const P2::Partitioner &partitioner,
     // mark the end of paths. We want paths that go all the way from the entry block of the called function to its returning
     // blocks.
     cfgEndAvoidVertices_ = cfgAvoidVertices;
-    cfgEndAvoidVertices_.insert(cfgEndVertices.begin(), cfgEndVertices.end());
+    cfgEndAvoidVertices_.insert(cfgEndVertices);
     cfgAvoidEdges_ = cfgAvoidEdges;
 }
 
@@ -1237,7 +1252,8 @@ FeasiblePath::insertCallSummary(const P2::ControlFlowGraph::ConstVertexIterator 
 
     P2::ControlFlowGraph::VertexIterator summaryVertex = paths_.insertVertex(P2::CfgVertex(P2::V_USER_DEFINED));
     paths_.insertEdge(pathsCallSite, summaryVertex, P2::CfgEdge(P2::E_FUNCTION_CALL));
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &callret, P2::findCallReturnEdges(pathsCallSite))
+    P2::CfgConstEdgeSet callReturnEdges = P2::findCallReturnEdges(pathsCallSite);
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &callret, callReturnEdges.values())
         paths_.insertEdge(summaryVertex, callret->target(), P2::CfgEdge(P2::E_FUNCTION_RETURN));
 
     int64_t stackDelta = function ? function->stackDeltaConcrete() : SgAsmInstruction::INVALID_STACK_DELTA;
@@ -1263,11 +1279,11 @@ FeasiblePath::emitPathGraph(size_t callId, size_t graphId) {
     emitter.showInstructions(true);
     emitter.selectWholeGraph();
 
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsBeginVertices_) {
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsBeginVertices_.values()) {
         emitter.vertexOrganization(v).attributes().insert("style", "filled");
         emitter.vertexOrganization(v).attributes().insert("fillcolor", "#faff7d");
     }
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsEndVertices_) {
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsEndVertices_.values()) {
         emitter.vertexOrganization(v).attributes().insert("style", "filled");
         emitter.vertexOrganization(v).attributes().insert("fillcolor", "#faff7d");
     }
@@ -1284,7 +1300,7 @@ FeasiblePath::isAnyEndpointReachable(const P2::ControlFlowGraph &cfg,
         return false;
     typedef Sawyer::Container::Algorithm::DepthFirstForwardVertexTraversal<const P2::ControlFlowGraph> Traversal;
     for (Traversal t(cfg, beginVertex); t; ++t) {
-        if (endVertices.find(t.vertex()) != endVertices.end())
+        if (endVertices.exists(t.vertex()))
             return true;
     }
     return false;
@@ -1435,11 +1451,22 @@ FeasiblePath::vertexSize(const P2::ControlFlowGraph::ConstVertexIterator &vertex
 }
 
 size_t
-FeasiblePath::pathLength(const Partitioner2::CfgPath &path) {
+FeasiblePath::pathLength(const P2::CfgPath &path) {
     size_t retval = 0;
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, path.vertices())
         retval += vertexSize(vertex);
     return retval;
+}
+
+const FeasiblePath::AddressSet&
+FeasiblePath::reachedBlockVas() const {
+    return reachedBlockVas_;
+}
+
+void
+FeasiblePath::markAsReached(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
+    if (Sawyer::Optional<rose_addr_t> addr = vertex->value().optionalAddress())
+        reachedBlockVas_.insert(*addr);
 }
 
 void
@@ -1447,6 +1474,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     ASSERT_not_null(partitioner_);
     static size_t callId = 0;                           // number of calls to this function
     size_t graphId = 0;                                 // incremented each time the graph is modified
+    reachedBlockVas_.clear();
     {
         static SAWYER_THREAD_TRAITS::Mutex mutex;
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
@@ -1463,9 +1491,9 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     if (debug) {
         debug <<"depthFirstSearch call #" <<callId <<":\n";
         debug <<"  paths graph saved in " <<emitPathGraph(callId, graphId) <<"\n";
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsBeginVertices_)
+        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsBeginVertices_.values())
             debug <<"  begin at vertex " <<partitioner().vertexName(v) <<"\n";
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsEndVertices_)
+        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsEndVertices_.values())
             debug <<"  end   at vertex " <<partitioner().vertexName(v) <<"\n";
     }
 
@@ -1485,7 +1513,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
         assertions.push_back(parseExpression(settings_.assertions[i], settings_.assertionLocations[i], exprParser));
 
     // Analyze each of the starting locations individually
-    BOOST_FOREACH (P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex, pathsBeginVertices_) {
+    BOOST_FOREACH (P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex, pathsBeginVertices_.values()) {
         // Create the SMT solver.  The solver will have one initial state, plus one additional state pushed for each edge of
         // the current path.
         SmtSolverPtr solver = SmtSolver::instance(settings_.solverName);
@@ -1538,9 +1566,11 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             // If backVertex is a function summary, then there is no corresponding cfgBackVertex.
             P2::ControlFlowGraph::ConstVertexIterator backVertex = path.backVertex();
             P2::ControlFlowGraph::ConstVertexIterator cfgBackVertex = pathToCfg(backVertex);
+            if (settings_.trackingCodeCoverage)
+                markAsReached(backVertex);
 
             bool doBacktrack = false;
-            bool atEndOfPath = pathsEndVertices_.find(backVertex) != pathsEndVertices_.end();
+            bool atEndOfPath = pathsEndVertices_.exists(backVertex);
 
             // Process the second-to-last vertex of the path to obtain a new virtual machine state, and make that state
             // the RiscOperators current state.
@@ -1684,7 +1714,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             // insert- and erase-stable graph iterators is a huge help!
             if (!doBacktrack && pathEndsWithFunctionCall(path) && !P2::findCallReturnEdges(backVertex).empty()) {
                 ASSERT_require(partitioner().cfg().isValidVertex(cfgBackVertex));
-                BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, P2::findCallEdges(cfgBackVertex)) {
+                P2::CfgConstEdgeSet callEdges = P2::findCallEdges(cfgBackVertex);
+                BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, callEdges.values()) {
                     if (shouldSummarizeCall(path.backVertex(), partitioner().cfg(), cfgCallEdge->target())) {
                         info <<indent <<"summarizing function for edge " <<partitioner().edgeName(cfgCallEdge) <<"\n";
                         insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);

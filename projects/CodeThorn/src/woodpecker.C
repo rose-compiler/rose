@@ -25,7 +25,7 @@
 #include <list>
 #include <string>
 
-#include "SprayException.h"
+#include "CodeThornException.h"
 #include "CodeThornException.h"
 
 #include "limits.h"
@@ -344,10 +344,6 @@ int main(int argc, char* argv[]) {
   // main function try-catch
   } catch(CodeThorn::Exception& e) {
     cerr << "CodeThorn::Exception raised: " << e.what() << endl;
-    mfacilities.shutdown();
-    return 1;
-  } catch(SPRAY::Exception& e) {
-    cerr << "Spray::Exception raised: " << e.what() << endl;
     mfacilities.shutdown();
     return 1;
   } catch(std::exception& e) {

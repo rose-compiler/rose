@@ -2744,13 +2744,23 @@ public:
     /** Add switch declarations. The specified switch declaration or group of switch declarations is copied into the parser. A
      *  documentation key can be supplied to override the sort order for the group or switch.
      * @{ */
-    Parser& with(const SwitchGroup &sg) { switchGroups_.push_back(sg); return *this; }
+    Parser& with(const SwitchGroup &sg) {
+        switchGroups_.push_back(sg);
+        return *this;
+    }
     Parser& with(const SwitchGroup &sg, const std::string &docKey) {
         switchGroups_.push_back(sg);
         switchGroups_.back().docKey(docKey);
         return *this;
     }
-    Parser& with(const Switch &sw) { switchGroups_.push_back(SwitchGroup().insert(sw)); return *this; }
+    Parser& with(const std::vector<SwitchGroup> &sgs) {
+        switchGroups_.insert(switchGroups_.end(), sgs.begin(), sgs.end());
+        return *this;
+    }
+    Parser& with(const Switch &sw) {
+        switchGroups_.push_back(SwitchGroup().insert(sw));
+        return *this;
+    }
     Parser& with(Switch sw, const std::string &docKey) {
         sw.docKey(docKey);
         switchGroups_.push_back(SwitchGroup().insert(sw));

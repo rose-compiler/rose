@@ -170,16 +170,16 @@ findFunctionReturns(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVe
 
 void
 eraseEdges(ControlFlowGraph &graph, const CfgConstEdgeSet &toErase) {
-    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, toErase) {
+    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, toErase.values()) {
         ASSERT_require(graph.isValidEdge(edge));
         graph.eraseEdge(edge);
     }
 }
 
 CfgConstVertexSet
-findIncidentVertices(const CfgConstEdgeSet &edges) {
+findIncidentVertices(const CfgConstEdgeSet &edgeSet) {
     CfgConstVertexSet retval;
-    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, edges) {
+    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, edgeSet.values()) {
         retval.insert(edge->source());
         retval.insert(edge->target());
     }
@@ -199,7 +199,7 @@ findDetachedVertices(const ControlFlowGraph &graph) {
 CfgConstVertexSet
 findDetachedVertices(const CfgConstVertexSet &vertices) {
     CfgConstVertexSet retval;
-    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vertices) {
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vertices.values()) {
         if (0 == vertex->degree())
             retval.insert(vertex);
     }
@@ -209,7 +209,7 @@ findDetachedVertices(const CfgConstVertexSet &vertices) {
 CfgConstVertexSet
 forwardMapped(const CfgConstVertexSet &vertices, const CfgVertexMap &vmap) {
     CfgConstVertexSet retval;
-    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vertices) {
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vertices.values()) {
         if (vmap.forward().exists(vertex))
             retval.insert(vmap.forward()[vertex]);
     }
@@ -219,7 +219,7 @@ forwardMapped(const CfgConstVertexSet &vertices, const CfgVertexMap &vmap) {
 CfgConstVertexSet
 reverseMapped(const CfgConstVertexSet &vertices, const CfgVertexMap &vmap) {
     CfgConstVertexSet retval;
-    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vertices) {
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vertices.values()) {
         if (vmap.reverse().exists(vertex))
             retval.insert(vmap.reverse()[vertex]);
     }
@@ -249,21 +249,21 @@ findFunctionReturnEdges(const Partitioner &partitioner, const ControlFlowGraph &
 void
 expandFunctionReturnEdges(const Partitioner &partitioner, ControlFlowGraph &cfg/*in,out*/) {
     Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> fre = findFunctionReturnEdges(partitioner, cfg);
-    std::set<ControlFlowGraph::ConstEdgeIterator> edgesToErase; // erased after iterating
+    CfgConstEdgeSet edgesToErase;                       // erased after iterating
 
     CfgConstEdgeSet crEdges = findCallReturnEdges(partitioner, cfg);
-    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &crEdge, crEdges) {
+    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &crEdge, crEdges.values()) {
         ControlFlowGraph::ConstVertexIterator callSite = crEdge->source();
         ControlFlowGraph::ConstVertexIterator returnSite = crEdge->target();
         CfgConstEdgeSet callEdges = findCallEdges(callSite);
-        BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &callEdge, callEdges) {
+        BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &callEdge, callEdges.values()) {
             if (callEdge->target()->value().type() != V_BASIC_BLOCK)
                 continue; // functionCallEdge is not a call to a known function, so ignore it
 
             BasicBlock::Ptr functionBlock = callEdge->target()->value().bblock();
             std::vector<Function::Ptr> functions = partitioner.functionsOwningBasicBlock(functionBlock);
             BOOST_FOREACH (const Function::Ptr &function, functions) {
-                BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &oldReturnEdge, fre.getOrDefault(function)) {
+                BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &oldReturnEdge, fre.getOrDefault(function).values()) {
                     edgesToErase.insert(oldReturnEdge);
                     cfg.insertEdge(oldReturnEdge->source(), returnSite, E_FUNCTION_RETURN);
                 }
@@ -271,7 +271,7 @@ expandFunctionReturnEdges(const Partitioner &partitioner, ControlFlowGraph &cfg/
         }
     }
 
-    BOOST_FOREACH (ControlFlowGraph::ConstEdgeIterator edge, edgesToErase)
+    BOOST_FOREACH (ControlFlowGraph::ConstEdgeIterator edge, edgesToErase.values())
         cfg.eraseEdge(edge);
 }
 
@@ -326,13 +326,15 @@ functionCfgByReachability(const ControlFlowGraph &gcfg, const Function::Ptr &fun
         return fcfg;
 
     // Copy all reachable vertices that belong to the function, plus copy the indeterminate vertex.
-    typedef Sawyer::Container::BiMap<ControlFlowGraph::ConstVertexIterator, ControlFlowGraph::VertexIterator> GlobalToFunction;
+    typedef ControlFlowGraph::ConstVertexIterator ConstVertexIterator;
+    typedef ControlFlowGraph::VertexIterator VertexIterator;
+    typedef Sawyer::Container::GraphIteratorMap<ConstVertexIterator, VertexIterator> GlobalToFunction;
     GlobalToFunction g2f;
     typedef Sawyer::Container::Algorithm::DepthFirstForwardVertexTraversal<const ControlFlowGraph> Traversal;
-    ControlFlowGraph::VertexIterator fcfgIndet = fcfg.vertices().end();
+    VertexIterator fcfgIndet = fcfg.vertices().end();
     for (Traversal t(gcfg, gcfgEntry); t; ++t) {
         if (t->value().type() == V_INDETERMINATE || t->value().isOwningFunction(function)) {
-            ControlFlowGraph::VertexIterator vertex = fcfg.insertVertex(t->value());
+            VertexIterator vertex = fcfg.insertVertex(t->value());
             if (t->value().type() == V_INDETERMINATE)
                 fcfgIndet = vertex;
             g2f.insert(gcfg.findVertex(t->id()), vertex);
@@ -343,11 +345,11 @@ functionCfgByReachability(const ControlFlowGraph &gcfg, const Function::Ptr &fun
     
     // Copy all edges if both endpoint vertices exist in the function CFG. But omit E_FUNCTION_RETURN edges that go
     // to the indeterminate vertex.
-    BOOST_FOREACH (const GlobalToFunction::Forward::Node mapping, g2f.forward().nodes()) {
+    BOOST_FOREACH (const GlobalToFunction::Node &mapping, g2f.nodes()) {
         BOOST_FOREACH (const ControlFlowGraph::Edge &edge, mapping.key()->outEdges()) {
             if ((edge.value().type() != E_FUNCTION_RETURN || edge.target()->value().type() != V_INDETERMINATE) &&
-                g2f.forward().exists(edge.target()))
-                fcfg.insertEdge(mapping.value(), g2f.forward()[edge.target()], edge.value());
+                g2f.exists(edge.target()))
+                fcfg.insertEdge(mapping.value(), g2f[edge.target()], edge.value());
         }
     }
 
@@ -356,6 +358,51 @@ functionCfgByReachability(const ControlFlowGraph &gcfg, const Function::Ptr &fun
         fcfg.eraseVertex(fcfgIndet);
 
     return fcfg;
+}
+
+bool
+sortVerticesByAddress(const ControlFlowGraph::ConstVertexIterator &a,
+                      const ControlFlowGraph::ConstVertexIterator &b) {
+    const CfgVertex &av = a->value();
+    const CfgVertex &bv = b->value();
+    if (av.type() != bv.type() || av.type() != V_BASIC_BLOCK)
+        return av.type() < bv.type();
+    return av.address() < bv.address();
+}
+
+bool sortVerticesById(const ControlFlowGraph::ConstVertexIterator &a,
+                      const ControlFlowGraph::ConstVertexIterator &b) {
+    return a->id() < b->id();
+}
+
+bool
+sortEdgesBySrc(const ControlFlowGraph::ConstEdgeIterator &a,
+               const ControlFlowGraph::ConstEdgeIterator &b) {
+    return sortVerticesByAddress(a->source(), b->source());
+}
+
+bool
+sortEdgesByDst(const ControlFlowGraph::ConstEdgeIterator &a,
+               const ControlFlowGraph::ConstEdgeIterator &b) {
+    return sortVerticesByAddress(a->target(), b->target());
+}
+
+bool
+sortEdgesById(const ControlFlowGraph::ConstEdgeIterator &a,
+              const ControlFlowGraph::ConstEdgeIterator &b) {
+    return a->id() < b->id();
+}
+
+std::ostream&
+operator<<(std::ostream &out, const ControlFlowGraph::Vertex &x) {
+    out <<Partitioner::vertexName(x);
+    return out;
+}
+
+std::ostream&
+operator<<(std::ostream &out, const ControlFlowGraph::Edge &x) {
+    out <<Partitioner::edgeName(x);
+    return out;
 }
 
 } // namespace

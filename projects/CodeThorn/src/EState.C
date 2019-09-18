@@ -302,15 +302,8 @@ bool EState::isConst(VariableIdMapping* vim) const {
     // the following two variables are special variables that are not considered to contribute to const-ness in an EState
     if(varId.toString(vim)=="__PRETTY_FUNCTION__"||varId.toString(vim)=="stderr") {
       continue;
-    }
-
-    if(ps->varIsConst(varId)) {
-      continue;
-    } else {
-      // variable non-const in PState (i.e. top/bot) -> need to investigate constraints
-      if(!cs->varAbstractValue(varId).isConstInt()) {
-        return false;
-      }
+    } else if(!ps->varIsConst(varId)) {
+      return false;
     }
   }
   return true;
@@ -370,4 +363,18 @@ string EStateSet::toString(VariableIdMapping* variableIdMapping) const {
   }
   ss<<"}";
   return ss.str();
+}
+
+bool EState::isApproximatedBy(const EState* other) const {
+  ROSE_ASSERT(label()==other->label()); // ensure same location
+  ROSE_ASSERT(constraints()==other->constraints()); // pointer equality
+  if(callString!=other->callString) {
+    return false;
+  }
+  // it only remains to check the pstate
+  return pstate()->isApproximatedBy(*const_cast<PState*>(other->pstate())) && (io.isBot()||(io==other->io));
+}
+
+std::string EState::labelString() const {
+  return "L"+label().toString();
 }

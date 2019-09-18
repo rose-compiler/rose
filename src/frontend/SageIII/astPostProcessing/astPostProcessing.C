@@ -32,7 +32,9 @@ void AstPostProcessing (SgNode* node)
      ROSE_ASSERT(node != NULL);
 
 #if 0
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++ \n");
      printf ("Inside of AstPostProcessing(node = %p = %s) \n",node,node->class_name().c_str());
+     printf ("+++++++++++++++++++++++++++++++++++++++++++++++ \n");
 #endif
 
   // DQ (1/31/2014): We want to enforce this, but for now issue a warning if it is not followed.
@@ -196,11 +198,6 @@ void postProcessingSupport (SgNode* node)
 #endif
 #endif
 
-  // JJW (12/5/2008): Turn off C and C++ postprocessing steps when the new EDG
-  // interface is being used (it should produce correct, complete ASTs on its
-  // own and do its own fixups)
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-
   // Only do AST post-processing for C/C++
   // Rasmussen (4/8/2018): Added Ada, Cobol, and Jovial. The logic should probably
   // be inverted to only process C and C++ but I don't understand interactions like OpenMP langauges.
@@ -211,7 +208,7 @@ void postProcessingSupport (SgNode* node)
                              (SageInterface::is_PHP_language()     == true) ||
                              (SageInterface::is_Python_language()  == true);
 
-  // If this is C or C++ then we are using the new EDG translation and althrough fewer 
+  // If this is C or C++ then we are using the new EDG translation and using fewer 
   // fixups should be required, some are still required.
      if (noPostprocessing == false)
         {
@@ -276,9 +273,42 @@ void postProcessingSupport (SgNode* node)
                printf ("Calling topLevelResetParentPointer() \n");
              }
 
+
+#if 0
+       // DQ (8/2/2019): Adding output graph before resetParent traversal (because the AST in each appears to be different, debugging this).
+       // Output an optional graph of the AST (just the tree, when active)
+          printf ("In astPostprocessing(): Generating a dot file... (SgFile only) \n");
+          SgProject* projectNode = isSgProject(node);
+          if (projectNode != NULL)
+             {
+               generateDOT ( *projectNode, "_astPostprocessing");
+             }
+       // generateAstGraph(project, 2000);
+          printf ("DONE: In astPostprocessing(): Generating a dot file... (SgFile only) \n");
+#endif
+#if 0
+          printf ("In astPostprocessing(): Generate the dot output for multiple files (ROSE AST) \n");
+       // generateDOT ( *project );
+               generateDOTforMultipleFile ( *projectNode, "_astPostprocessing" );
+             }
+          printf ("DONE: In astPostprocessing(): Generate the dot output of the SAGE III AST \n");
+#endif
+
+
        // Reset and test and parent pointers so that it matches our definition 
        // of the AST (as defined by the AST traversal mechanism).
           topLevelResetParentPointer(node);
+
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("DONE: Calling topLevelResetParentPointer() \n");
+             }
+
+#if 0
+       // DQ (8/2/2019): Testing test2019_501.C for extra non-defining template instantiation in global scope.
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
 
 #if DEBUG_TYPEDEF_CYCLES
           printf ("Calling TestAstForCyclesInTypedefs() \n");
@@ -295,6 +325,17 @@ void postProcessingSupport (SgNode* node)
        // Another 2nd step to make sure that parents of even IR nodes not traversed can be set properly.
        // resetParentPointersInMemoryPool();
           resetParentPointersInMemoryPool(node);
+
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("DONE: Calling resetParentPointersInMemoryPool() \n");
+             }
+
+#if 0
+       // DQ (8/2/2019): Testing test2019_501.C for extra non-defining template instantiation in global scope.
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
 
 #if DEBUG_TYPEDEF_CYCLES
           printf ("Calling TestAstForCyclesInTypedefs() \n");
@@ -363,6 +404,11 @@ void postProcessingSupport (SgNode* node)
              {
                printf ("Calling fixupTemplateInstantiations() \n");
              }
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
 
        // **********************************************************************
        // DQ (4/29/2012): Added some of the template fixup support for EDG 4.3 work.
@@ -548,6 +594,10 @@ void postProcessingSupport (SgNode* node)
        // the AST are done, even just building it, this step should be the final
        // step.
 
+#if 0
+          printf ("In postProcessingSupport(): noPostprocessing == false: calling unsetNodesMarkedAsModified(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
        // DQ (4/16/2015): This is replaced with a better implementation.
        // checkIsModifiedFlag(node);
           unsetNodesMarkedAsModified(node);
@@ -606,7 +656,6 @@ void postProcessingSupport (SgNode* node)
 #endif
           return;
         }
-#endif // ROSE_USE_NEW_EDG_INTERFACE -- do postprocessing unconditionally when the old EDG interface is used
 
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
   // TimingPerformance timer ("AST Fixup: time (sec) = ");
@@ -931,6 +980,10 @@ void postProcessingSupport (SgNode* node)
 
   // Make sure that compiler-generated AST nodes are marked for Sg_File_Info::isCompilerGenerated().
      checkIsCompilerGeneratedFlag(node);
+
+#if 0
+     printf ("In postProcessingSupport(): calling unsetNodesMarkedAsModified(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
 
   // DQ (4/16/2015): This is replaced with a better implementation.
   // DQ (5/22/2005): Nearly all AST fixup should be done before this closing step

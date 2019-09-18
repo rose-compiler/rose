@@ -69,28 +69,6 @@ sortByExpression(const BasicBlock::Successor &a, const BasicBlock::Successor &b)
 }
 
 bool
-sortVerticesByAddress(const ControlFlowGraph::ConstVertexIterator &a,
-                      const ControlFlowGraph::ConstVertexIterator &b) {
-    const CfgVertex &av = a->value();
-    const CfgVertex &bv = b->value();
-    if (av.type() != bv.type() || av.type() != V_BASIC_BLOCK)
-        return av.type() < bv.type();
-    return av.address() < bv.address();
-}
-
-bool
-sortEdgesBySrc(const ControlFlowGraph::ConstEdgeIterator &a,
-               const ControlFlowGraph::ConstEdgeIterator &b) {
-    return sortVerticesByAddress(a->source(), b->source());
-}
-
-bool
-sortEdgesByDst(const ControlFlowGraph::ConstEdgeIterator &a,
-               const ControlFlowGraph::ConstEdgeIterator &b) {
-    return sortVerticesByAddress(a->target(), b->target());
-}
-
-bool
 sortBlocksForAst(SgAsmBlock *a, SgAsmBlock *b) {
     ASSERT_not_null(a);
     ASSERT_not_null(b);
@@ -262,18 +240,6 @@ std::string
 Trigger::docString() {
     Settings settings;
     return Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches();
-}
-
-std::ostream&
-operator<<(std::ostream &out, const ControlFlowGraph::Vertex &x) {
-    out <<Partitioner::vertexName(x);
-    return out;
-}
-
-std::ostream&
-operator<<(std::ostream &out, const ControlFlowGraph::Edge &x) {
-    out <<Partitioner::edgeName(x);
-    return out;
 }
 
 std::ostream&

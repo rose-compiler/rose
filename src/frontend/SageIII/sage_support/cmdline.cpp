@@ -4983,6 +4983,16 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_experimental_fortran_frontend(true);
         }
 
+  // Added support the experimental fortran frontend using the Flang parser [Rasmussen 2019.08.30]
+     if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_flang_frontend",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+             {
+               printf ("also: experimental Flang frontend (explicitly set: ON) \n");
+             }
+          set_experimental_flang_frontend(true);
+        }
+
   // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
      if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_cuda_fortran_frontend",true) == true )
         {
@@ -5006,7 +5016,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   // DQ (1/25/2016): we want to enforce that we only use F08 with the new experimental mode.
-     if (get_experimental_fortran_frontend() == false)
+     if (get_experimental_fortran_frontend() == false && get_experimental_flang_frontend() == false)
         {
        // We only want to allow Fortran 2008 mode to work with the new experimental fortran frontend.
           if (get_F2008_only() == true)
@@ -5512,6 +5522,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (6/8/2013): Added support for experimental fortran frontend.
      optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend)",1);
 
+  // Rasmussen (8/30/2019): Added support for experimental Flang parser for Fortran
+     optionCount = sla(argv, "-rose:", "($)", "(experimental_flang_frontend)",1);
+
   // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
      optionCount = sla(argv, "-rose:", "($)", "(experimental_cuda_fortran_frontend)",1);
 
@@ -5870,11 +5883,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // Communicate to the generated program that we are using ROSE (in case there are specific options that the user wants to to invoke.
      roseSpecificDefs.push_back("-DUSE_ROSE");
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-  // Allow in internal indicator that EDG version 3.10 or 4.0 (or greater) is in use.
-     roseSpecificDefs.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
-#endif
-
      ROSE_ASSERT(configDefs.empty() == false);
      ROSE_ASSERT(Cxx_ConfigIncludeDirs.empty() == false);
      ROSE_ASSERT(C_ConfigIncludeDirs.empty() == false);
@@ -5956,19 +5964,21 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           printf ("In SgFile::build_EDG_CommandLine(): emulate_backend_compiler_version_number = %d \n",emulate_backend_compiler_version_number);
         }
 
+  // DQ (4/26/2019): NOTE: this option appears to be incompatable with use of gnu_version.
+     if (get_strict_language_handling() == false)
+        {
 #ifdef BACKEND_CXX_IS_INTEL_COMPILER
-     commandLine.push_back("--gnu_version");
+          commandLine.push_back("--gnu_version");
 #endif
 
 #ifdef BACKEND_CXX_IS_GNU_COMPILER
-     commandLine.push_back("--gnu_version");
+          commandLine.push_back("--gnu_version");
 #else
    #ifdef USE_CMAKE
-  // DQ (4/20/2016): When using CMAKE the BACKEND_CXX_IS_GNU_COMPILER is not defiled.
-     commandLine.push_back("--gnu_version");
+       // DQ (4/20/2016): When using CMAKE the BACKEND_CXX_IS_GNU_COMPILER is not defiled.
+          commandLine.push_back("--gnu_version");
    #endif
 #endif
-
 
 #ifdef BACKEND_CXX_IS_CLANG_COMPILER
 #if 0
@@ -6001,8 +6011,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (1/16/2017): If this is the Clang backend, then assume we want to use C++11 support (default for later versions of Clang (3.7 and later)).
   // commandLine.push_back("--c++11");
 #endif
-     commandLine.push_back(StringUtility::numberToString(emulate_backend_compiler_version_number));
+          commandLine.push_back(StringUtility::numberToString(emulate_backend_compiler_version_number));
+        }
+
+// #endif for ROSE_USE_MICROSOFT_EXTENSIONS
 #endif
+// #endif for _MSC_VER
 #endif
 
 #ifdef LIE_ABOUT_GNU_VERSION_TO_EDG
@@ -6232,7 +6246,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                commandLine.push_back(header_path + "/cuda_HEADERS/preinclude-cuda.h");
 
 #ifdef CUDA_INC_DIR
-               printf("Add --sys_include %s\n", CUDA_INC_DIR);
                commandLine.push_back(std::string("--sys_include"));
                commandLine.push_back(std::string(CUDA_INC_DIR));
 #endif
@@ -6552,9 +6565,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
   // DQ (11/1/2011): Do we need this for the new EDG 4.3 work?
-  // #ifndef ROSE_USE_NEW_EDG_INTERFACE
      inputCommandLine.insert(inputCommandLine.begin(), "dummy_argv0_for_edg");
-  // #endif
 
      if (get_C_only() == true)
         {
@@ -6564,6 +6575,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      if (get_strict_language_handling() == true)
         {
+       // DQ (4/26/2019): NOTE: this option appears to be incompatable with use of gnu_version.
           inputCommandLine.push_back("--strict");
         }
 
@@ -7032,15 +7044,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         {
           inputCommandLine.push_back("--upc");
           inputCommandLine.push_back("--restrict");
-
-#if 0
-       // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-       // DQ (2/17/2011): Added support for UPC (header are placed into include-staging directory).
-          inputCommandLine.push_back("--sys_include");
-          inputCommandLine.push_back(findRoseSupportPathFromBuild("include-staging", "share"));
-#endif
-#endif
         }
 
   // DQ (9/19/2010): Added support for UPC++. Previously the UPC used the C++ language internally this had to
@@ -7053,15 +7056,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
        // of C_dialect to allow C++ with UPC (which defines initial UPC++ work).
           inputCommandLine.push_back("--upc++");
           inputCommandLine.push_back("--restrict");
-
-#if 0
-       // DQ (11/1/2011): This is not enough to support C++ code (e.g. "limits" header file).
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-       // DQ (2/17/2011): Added support for UPC (header are placed into include-staging directory).
-          inputCommandLine.push_back("--sys_include");
-          inputCommandLine.push_back(findRoseSupportPathFromBuild("include-staging", "share"));
-#endif
-#endif
         }
 
   // Generate --upc_threads n
@@ -7784,15 +7778,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
 #if DEBUG_COMPILER_COMMAND_LINE
      printf ("Selected compilerNameString.size() = %" PRIuPTR " compilerNameString = %s \n",compilerNameString.size(),StringUtility::listToString(compilerNameString).c_str());
-#endif
-
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-     if (get_C_only() || get_Cxx_only())
-        {
-       // DQ (1/12/2009): Allow in internal indicator that EDG version 3.10 or 4.0 (or greater)
-       // is in use to be properly passed on the compilation of the generated code.
-          compilerNameString.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
-        }
 #endif
 
   // Since we need to do this often, support is provided in the utility_functions.C

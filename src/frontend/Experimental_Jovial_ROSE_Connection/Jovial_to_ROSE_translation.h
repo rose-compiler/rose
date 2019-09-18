@@ -80,6 +80,12 @@ namespace Jovial_ROSE_Translation
           e_for_by_while_stmt,
           e_for_then_while_stmt,
 
+       // Directives
+       // -----------
+          e_compool_directive_stmt,
+          e_reducible_directive_stmt,
+          e_order_directive_stmt,
+
           e_last
         };
 

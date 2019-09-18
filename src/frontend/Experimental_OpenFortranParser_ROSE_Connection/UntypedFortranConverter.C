@@ -387,6 +387,52 @@ UntypedFortranConverter::convertSgUntypedVariableDeclaration (SgUntypedVariableD
    return sg_decl;
 }
 
+SgDeclarationStatement*
+UntypedFortranConverter::convertUntypedStructureDeclaration (SgUntypedStructureDeclaration* ut_struct, SgScopeStatement* scope)
+   {
+      //
+      // There is a nice implementation of this all in the OFP parser implementation in fortran_support.C
+      //
+
+      SgName name = ut_struct->get_name();
+
+   // This function builds a class declaration and definition with both the defining and nondefining declarations as required
+      SgDerivedTypeStatement* type_decl = SageBuilder::buildDerivedTypeStatement(name, scope);
+      ROSE_ASSERT(type_decl);
+      setSourcePositionFrom(type_decl, ut_struct);
+
+      if (ut_struct->get_modifiers()->get_expressions().size() > 0)
+         {
+            cout << "-x- TODO: implement type modifiers in UntypedFortranConverter::convertUntypedStructureDeclaration \n";
+
+            SgExprListExp* sg_expr_list = convertSgUntypedExprListExpression(ut_struct->get_modifiers(),/*delete*/true);
+            ROSE_ASSERT(sg_expr_list);
+
+         // TODO: don't have anything to do with this yet, following is for Jovial
+         // ROSE_ASSERT(sg_expr_list->get_expressions().size() == 1);
+
+         // Assume that this is a Jovial_ROSE_Translation::e_words_per_entry_w
+
+         // class_decl->set_has_table_entry_size(true);
+         // class_decl->set_table_entry_size(sg_expr_list->get_expressions()[0]);
+         }
+
+      SgClassDefinition* class_def = type_decl->get_definition();
+      ROSE_ASSERT(class_def);
+
+   // Fortran is insensitive to case
+      class_def->setCaseInsensitive(true);
+
+      SgScopeStatement* class_scope = class_def->get_scope();
+      ROSE_ASSERT(class_scope);
+
+      SageInterface::appendStatement(type_decl, scope);
+
+      SageBuilder::pushScopeStack(class_def);
+
+      return type_decl;
+   }
+
 // R560 implicit-stmt
 //
 SgImplicitStatement*
