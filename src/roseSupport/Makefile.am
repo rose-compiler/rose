@@ -44,6 +44,7 @@ pkginclude_HEADERS =				\
 	CommandLine.h				\
 	Diagnostics.h				\
 	IncludeDirective.h			\
+	RoseException.h				\
 	SqlDatabase.h				\
 	callbacks.h				\
 	initialize.h				\

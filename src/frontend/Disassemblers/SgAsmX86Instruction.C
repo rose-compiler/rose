@@ -119,7 +119,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
         ASSERT_not_null(ops);
         const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.get_nbits());
+        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.nBits());
         SValuePtr orig_esp = SValue::promote(ops->peekRegister(dispatcher->REG_anySP));
         try {
             for (size_t i=0; i<insns.size(); ++i)
@@ -138,7 +138,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         }
 
         // If nothing was pushed onto the stack, then this isn't a function call.
-        const size_t spWidth = dispatcher->REG_anySP.get_nbits();
+        const size_t spWidth = dispatcher->REG_anySP.nBits();
         SValuePtr esp = SValue::promote(ops->peekRegister(dispatcher->REG_anySP));
         SValuePtr stack_delta = SValue::promote(ops->add(esp, ops->negate(orig_esp)));
         SValuePtr stack_delta_sign = SValue::promote(ops->extract(stack_delta, spWidth-1, spWidth));
@@ -147,7 +147,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
 
         // If the top of the stack does not contain a concrete value or the top of the stack does not point to an instruction
         // in this basic block's function, then this is not a function call.
-        const size_t ipWidth = dispatcher->REG_anyIP.get_nbits();
+        const size_t ipWidth = dispatcher->REG_anyIP.nBits();
         SValuePtr top = SValue::promote(ops->peekMemory(dispatcher->REG_SS, esp, esp->undefined_(ipWidth)));
         if (top->is_number()) {
             rose_addr_t va = top->get_number();
@@ -185,7 +185,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         const RegisterDictionary *regdict = registersForInstructionSize(x86insn->get_addressSize());
         const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
-        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.get_nbits());
+        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.nBits());
         try {
             for (size_t i=0; i<insns.size(); ++i)
                 dispatcher->processInstruction(insns[i]);
@@ -194,7 +194,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         }
 
         // Look at the top of the stack
-        const size_t ipWidth = dispatcher->REG_anyIP.get_nbits();
+        const size_t ipWidth = dispatcher->REG_anyIP.nBits();
         SValuePtr top = SValue::promote(ops->peekMemory(dispatcher->REG_SS, ops->peekRegister(SP),
                                                         ops->protoval()->undefined_(ipWidth)));
         if (top->is_number() && top->get_number() == last->get_address()+last->get_size()) {
@@ -416,7 +416,7 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
         const RegisterDescriptor IP = regdict->findLargestRegister(x86_regclass_ip, 0);
         PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
         ops->set_memory_map(initial_memory);
-        BaseSemantics::DispatcherPtr cpu = DispatcherX86::instance(ops, IP.get_nbits(), regdict);
+        BaseSemantics::DispatcherPtr cpu = DispatcherX86::instance(ops, IP.nBits(), regdict);
 
         try {
             BOOST_FOREACH (SgAsmInstruction *insn, insns) {

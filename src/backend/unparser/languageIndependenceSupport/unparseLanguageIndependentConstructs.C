@@ -192,6 +192,10 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
      bool statementInFile = false;
 
 #if 0
+     printf ("In statementFromFile(): sourceFilename = %s stmt = %p = %s \n",sourceFilename.c_str(),stmt,stmt->class_name().c_str());
+#endif
+
+#if 0
      printf ("\n");
      printf ("In statementFromFile(): sourceFilename = %s stmt = %p = %s \n",sourceFilename.c_str(),stmt,stmt->class_name().c_str());
      printf ("   --- stmt = %s \n",SageInterface::get_name(stmt).c_str());
@@ -487,7 +491,9 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                SgIncludeDirectiveStatement* includeDirectiveStatement = isSgIncludeDirectiveStatement(stmt);
                if (includeDirectiveStatement != NULL) 
                   {
-                    if (includeDirectiveStatement->get_headerFileBody()->get_file_info()->get_filenameString() == sourceFilename)
+                 // DQ (3/24/2019): The newest use of this IR nodes does not accomidate the headerFileBody.
+                 // if (includeDirectiveStatement->get_headerFileBody()->get_file_info()->get_filenameString() == sourceFilename)
+                    if (includeDirectiveStatement->get_headerFileBody() != NULL && includeDirectiveStatement->get_headerFileBody()->get_file_info()->get_filenameString() == sourceFilename)
                        {
                          statementInFile = true;
                        }
@@ -501,13 +507,36 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt);
                if (functionDeclaration != NULL && functionDeclaration->isNormalizedTemplateFunction() == true)
                   {
-                    SgSourceFile* sourcefile = info.get_current_source_file();
-                    if (sourcefile == NULL || sourcefile->get_unparse_edg_normalized_method_ROSE_1392() == false) {
+                 // SgSourceFile* sourcefile = info.get_current_source_file();
 #if 0
-                      printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",functionDeclaration
+                    printf ("output of normalized template declaration member and non-member functions: sourcefile = %p \n",sourcefile);
 #endif
-                      statementInFile = false;
-                    }
+
+#if 1
+                 // DQ (5/30/2019): If we are using the token unparsing then we need to supress the unparing of the normalized functions.
+                 // See moveDeclarationTool/inputmoveDeclarationToInnermostScope_test2014_26.C for an example of this.
+                    if ( (sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
+                      {
+#if 0
+                         printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",
+                              functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
+                         statementInFile = false;
+                      }
+#endif
+
+#if 0
+                 // DQ (5/28/2019): I think we should allow this to be unparsed, and so that any attached CPP directives 
+                 // can be ouput, even if within the unparser we don't output the function definition.
+                    if (sourcefile == NULL || sourcefile->get_unparse_edg_normalized_method_ROSE_1392() == false) 
+                       {
+#if 0
+                         printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",
+                              functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
+                         statementInFile = false;
+                       }
+#endif
                   }
 #endif
 #if 0
@@ -582,6 +611,12 @@ UnparseLanguageIndependentConstructs::printOutComments ( SgLocatedNode* locatedN
   // Debugging function to print out comments in the statements (added by DQ)
 
      ROSE_ASSERT(locatedNode != NULL);
+
+  // DQ (3/22/2019): Refactored code to SageInterface. Actually, this version needs to unparse 
+  // the comments to the output file AND to stdout, while the other version in SageInterface 
+  // outputs to stdout and is for debugging.
+  // SageInterface::printOutComments(locatedNode);
+
      AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
 
 #if 0
@@ -6084,7 +6119,9 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
      SgEnumVal* enum_val = isSgEnumVal(expr);
      ROSE_ASSERT(enum_val != NULL);
 
-#if 0
+#define DEBUG_UNPARSE_ENUM_VAL 0
+
+#if DEBUG_UNPARSE_ENUM_VAL
      printf ("In Unparse_ExprStmt::unparseEnumVal:\n");
      printf ("  -- info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
      printf ("  -- enum_val->get_requiresNameQualification() = %s\n", enum_val->get_requiresNameQualification() ? "true" : "false");
@@ -6130,7 +6167,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                  // global qualification even if it is not required with normal qualification.  That is that the specification 
                  // of qualification triggers possible (likely) over qualification.  Overqualification is generally the default
                  // this flag is sometime taken to mean that the "::" is required as well.
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
                     printf ("enum_val->get_requiresNameQualification() = %s \n",enum_val->get_requiresNameQualification() ? "true" : "false");
 #endif
                  // cur << "\n/* funcdecl_stmt->get_requiresNameQualificationOnReturnType() = " << (funcdecl_stmt->get_requiresNameQualificationOnReturnType() ? "true" : "false") << " */ \n";
@@ -6144,7 +6181,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                  // DQ (6/9/2011): Newest refactored support for name qualification.
                  // SgName nameQualifier = unp->u_name->generateNameQualifier(enum_val->get_declaration(),info);
                     SgName nameQualifier = enum_val->get_qualified_name_prefix();
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
                     printf ("In Unparse_ExprStmt::unparseEnumVal: nameQualifier = %s \n",nameQualifier.str());
 #endif
                  // DQ (8/31/2012): If we are going to NOT output a name, then we had better not out any name qualification.
@@ -6155,7 +6192,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                          ROSE_ASSERT(nameQualifier.is_null() == true);
                        }
 #endif
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
                     printf ("enum value's nameQualifier = %s \n",(nameQualifier.is_null() == false) ? nameQualifier.str() : "NULL");
 #endif
                  // ROSE_ASSERT (nameQualifier.is_null() == false);
@@ -6172,7 +6209,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                printf ("Warning in Unparser::unparseEnumVal(): no associated enum declaration specificed for enum value = %s \n",enum_val->get_name().str());
              }
 
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
        // printf ("In Unparse_ExprStmt::unparseEnumVal: classdefn = %s pointer \n",classdefn ? "VALID" : "NULL");
           printf ("In Unparse_ExprStmt::unparseEnumVal: enum_val->get_name().is_null() = %s \n",enum_val->get_name().is_null() ? "true" : "false");
 #endif
@@ -6186,7 +6223,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
           SgName enum_value_name = enum_val->get_name();
           SgName substring = enum_value_name.head(strlen("__anonymous_"));
           bool isGeneratedName = (substring == "__anonymous_");
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
           printf ("enum_value_name = %s \n",enum_value_name.str());
           printf ("substring = %s \n",substring.str());
           printf ("isGeneratedName = %s \n",isGeneratedName ? "true" : "false");
@@ -6230,7 +6267,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
              }
         }
 
-#if 0
+#if DEBUG_UNPARSE_ENUM_VAL
      printf ("Leaving Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
 #endif
 #if 0
@@ -6406,9 +6443,17 @@ UnparseLanguageIndependentConstructs::unparseFloatVal(SgExpression* expr, SgUnpa
 
      if (float_value == std::numeric_limits<float>::infinity())
         {
-       // printf ("Infinite value found as value in unparseFloatVal() \n");
-       // curprint ( "std::numeric_limits<float>::infinity()";
-          curprint( "__builtin_huge_valf()");
+       // Because of Fortran kind (compiler dependent) the string literal may be a double.
+       // Thus it makes more sense to print the original string literal [Rasmussen 4/28/2019].
+          if (SageInterface::is_Fortran_language() && float_val->get_valueString().length() > 0)
+             {
+               curprint(float_val->get_valueString());
+             }
+            else
+             {
+            // curprint ( "std::numeric_limits<float>::infinity()";
+               curprint( "__builtin_huge_valf()");
+             }
         }
        else
         {
@@ -6692,14 +6737,32 @@ UnparseLanguageIndependentConstructs::unparseIncludeDirectiveStatement (SgStatem
        // This is the better choice because then the other comments and any other CPP directives will be unparsed as in the original code.
        // NOTE: If we don't suppores this here, then there will be two include directives unparsed.
           SgHeaderFileBody* headerFileBody = directive -> get_headerFileBody();
-          ROSE_ASSERT(headerFileBody != NULL);
-#if 0
-          printf ("In unparseIncludeDirectiveStatement(): headerFileBody -> get_file_info() -> get_filenameString() = %s \n",headerFileBody -> get_file_info() -> get_filenameString().c_str());
-          printf ("In unparseIncludeDirectiveStatement(): getFileName() = %s \n",getFileName().c_str());
-#endif
-          if (headerFileBody -> get_file_info() -> get_filenameString() == getFileName())
+
+       // DQ (3/24/2019): The newest use of this IR nodes does not accomidate the headerFileBody.
+       // ROSE_ASSERT(headerFileBody != NULL);
+          if (headerFileBody != NULL)
              {
-               unparseAttachedPreprocessingInfo(headerFileBody, info, PreprocessingInfo::after); //Its always "after" if attached to a header file body.
+#if 0
+               printf ("In unparseIncludeDirectiveStatement(): headerFileBody -> get_file_info() -> get_filenameString() = %s \n",headerFileBody -> get_file_info() -> get_filenameString().c_str());
+               printf ("In unparseIncludeDirectiveStatement(): getFileName() = %s \n",getFileName().c_str());
+#endif
+               if (headerFileBody -> get_file_info() -> get_filenameString() == getFileName())
+                  {
+                    unparseAttachedPreprocessingInfo(headerFileBody, info, PreprocessingInfo::after); //Its always "after" if attached to a header file body.
+                  }
+             }
+            else
+             {
+            // DQ (3/24/2019): The newest use of this IR nodes does not accomidate the headerFileBody.
+               ROSE_ASSERT(directive != NULL);
+               curprint("\n ");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
+               curprint(directive->get_directiveString());
+            // unp->u_sage->curprint_newline();
+               unp->cur.insert_newline(1);
              }
         }
 #else
@@ -6712,9 +6775,23 @@ UnparseLanguageIndependentConstructs::unparseDefineDirectiveStatement (SgStateme
    {
      SgDefineDirectiveStatement* directive = isSgDefineDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+
+  // DQ (3/24/2019): We need "\n " instead of "\n" to force a CR before unparsing the CPP directive.
+  // ALSO: we need the "unp->cur.insert_newline(1);" statement as well.
+  // I forget the details of why this is an issue in the curprint() implementation.
+     curprint("\n ");
+  // unp->u_sage->curprint_newline();
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
   // unp->u_sage->curprint_newline();
      unp->cur.insert_newline(1);
+
+#if 0
+     printf ("Unparsing from unparseDefineDirectiveStatement() \n");
+#endif
    }
 
 void 
@@ -6722,6 +6799,11 @@ UnparseLanguageIndependentConstructs::unparseUndefDirectiveStatement (SgStatemen
    {
      SgUndefDirectiveStatement* directive = isSgUndefDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+     curprint("\n ");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
      unp->u_sage->curprint_newline();
    }
@@ -6731,6 +6813,11 @@ UnparseLanguageIndependentConstructs::unparseIfdefDirectiveStatement (SgStatemen
    {
      SgIfdefDirectiveStatement* directive = isSgIfdefDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+     curprint("\n ");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
      unp->u_sage->curprint_newline();
    }
@@ -6740,6 +6827,11 @@ UnparseLanguageIndependentConstructs::unparseIfndefDirectiveStatement (SgStateme
    {
      SgIfndefDirectiveStatement* directive = isSgIfndefDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+     curprint("\n ");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
      unp->u_sage->curprint_newline();
    }
@@ -6749,6 +6841,11 @@ UnparseLanguageIndependentConstructs::unparseDeadIfDirectiveStatement (SgStateme
    {
      SgDeadIfDirectiveStatement* directive = isSgDeadIfDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+     curprint("\n ");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
      unp->u_sage->curprint_newline();
    }
@@ -6758,6 +6855,15 @@ UnparseLanguageIndependentConstructs::unparseIfDirectiveStatement (SgStatement* 
    {
      SgIfDirectiveStatement* directive = isSgIfDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+
+  // curprint("/* CR START */");
+     curprint("\n ");
+  // unp->u_sage->curprint_newline();
+  // curprint("/* CR END */");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
      unp->u_sage->curprint_newline();
    }
@@ -6767,6 +6873,11 @@ UnparseLanguageIndependentConstructs::unparseElseDirectiveStatement (SgStatement
    {
      SgElseDirectiveStatement* directive = isSgElseDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+     curprint("\n ");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
      unp->u_sage->curprint_newline();
    }
@@ -6776,6 +6887,11 @@ UnparseLanguageIndependentConstructs::unparseElseifDirectiveStatement (SgStateme
    {
      SgElseifDirectiveStatement* directive = isSgElseifDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+     curprint("\n ");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
      unp->u_sage->curprint_newline();
    }
@@ -6785,6 +6901,11 @@ UnparseLanguageIndependentConstructs::unparseEndifDirectiveStatement (SgStatemen
    {
      SgEndifDirectiveStatement* directive = isSgEndifDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+     curprint("\n ");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
      unp->u_sage->curprint_newline();
    }
@@ -6794,6 +6915,11 @@ UnparseLanguageIndependentConstructs::unparseLineDirectiveStatement (SgStatement
    {
      SgLineDirectiveStatement* directive = isSgLineDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+     curprint("\n ");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
      unp->u_sage->curprint_newline();
    }
@@ -6803,6 +6929,11 @@ UnparseLanguageIndependentConstructs::unparseWarningDirectiveStatement (SgStatem
    {
      SgWarningDirectiveStatement* directive = isSgWarningDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+     curprint("\n ");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
      unp->u_sage->curprint_newline();
    }
@@ -6812,6 +6943,11 @@ UnparseLanguageIndependentConstructs::unparseErrorDirectiveStatement (SgStatemen
    {
      SgErrorDirectiveStatement* directive = isSgErrorDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+     curprint("\n ");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
      unp->u_sage->curprint_newline();
    }
@@ -6821,6 +6957,11 @@ UnparseLanguageIndependentConstructs::unparseEmptyDirectiveStatement (SgStatemen
    {
      SgEmptyDirectiveStatement* directive = isSgEmptyDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+     curprint("\n ");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
      unp->u_sage->curprint_newline();
    }
@@ -6830,6 +6971,11 @@ UnparseLanguageIndependentConstructs::unparseIdentDirectiveStatement (SgStatemen
    {
      SgIdentDirectiveStatement* directive = isSgIdentDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+     curprint("\n ");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
      unp->u_sage->curprint_newline();
    }
@@ -6839,6 +6985,11 @@ UnparseLanguageIndependentConstructs::unparseIncludeNextDirectiveStatement (SgSt
    {
      SgIncludeNextDirectiveStatement* directive = isSgIncludeNextDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+     curprint("\n ");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
      unp->u_sage->curprint_newline();
    }
@@ -6848,6 +6999,11 @@ UnparseLanguageIndependentConstructs::unparseLinemarkerDirectiveStatement (SgSta
    {
      SgLinemarkerDirectiveStatement* directive = isSgLinemarkerDirectiveStatement(stmt);
      ROSE_ASSERT(directive != NULL);
+     curprint("\n ");
+
+  // DQ (3/24/2019): Adding extra CR.
+     unp->cur.insert_newline(1);
+
      curprint(directive->get_directiveString());
      unp->u_sage->curprint_newline();
    }

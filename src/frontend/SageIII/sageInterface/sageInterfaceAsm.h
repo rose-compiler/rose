@@ -31,7 +31,7 @@ namespace SageInterface
 
      bool isMovInstruction ( SgAsmInstruction* asmInstruction );
 
-     bool isInstructionKind ( SgAsmInstruction* asmInstruction, X86InstructionKind instuctionKind );
+     bool isInstructionKind ( SgAsmInstruction* asmInstruction, Rose::BinaryAnalysis::X86InstructionKind instuctionKind );
 
      typedef bool (*EquivalenceTestFunctionType) (SgNode* x, SgNode* y);
 

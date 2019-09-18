@@ -200,7 +200,7 @@ dnl ROSE_REAL_ARG_WITH
 dnl internal
 AC_DEFUN([ROSE_REAL_ARG_WITH],[
 ifelse([$2],,,[AC_MSG_CHECKING([$2])])
-AC_ARG_WITH($1,AS_HELP_STRING([--with-$1],[$3]),
+AC_ARG_WITH($1,AS_HELP_STRING([--with-$1=PREFIX],[$3]),
 [
   CONFIG_HAS_[]$5=yes
   $5=[$]withval

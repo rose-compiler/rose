@@ -1245,6 +1245,11 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool","collectAllCommentsAndDirectives", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (3/24/2019): Adding an option to support addition of CPP directives to the AST.  Currently only restricted 
+  // to CPP directives, and may be extended to comments later. Default is false to preserve original ROSE AST behavior.
+     File.setDataPrototype( "bool", "translateCommentsAndDirectivesIntoAST", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // negara1 (07/08/2011): Added to permit optional header files unparsing.
      File.setDataPrototype("bool","unparseHeaderFiles", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1398,6 +1403,10 @@ Grammar::setUpSupport ()
 
   // DQ (6/7/2013): Added support for use of experimental fortran front-end.
      File.setDataPrototype("bool", "experimental_fortran_frontend", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (8/30/2010): Added experimental support for using the Flang parser for Fortran
+     File.setDataPrototype("bool", "experimental_flang_frontend", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
@@ -2517,17 +2526,10 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      TemplateParameter.setDataPrototype     ( "SgExpression*", "defaultExpressionParameter", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      TemplateParameter.setDataPrototype     ( "SgDeclarationStatement*", "templateDeclaration", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      TemplateParameter.setDataPrototype     ( "SgDeclarationStatement*", "defaultTemplateDeclarationParameter", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#else
-     TemplateParameter.setDataPrototype     ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
-                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     TemplateParameter.setDataPrototype     ( "SgTemplateDeclaration*", "defaultTemplateDeclarationParameter", "= NULL",
-                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
 
   // DQ (11/21/2011): template parameters can be "int U = 42" in which case "U" needs to be an initialized name (see test2011_157.C).
      TemplateParameter.setDataPrototype     ( "SgInitializedName*", "initializedName", "= NULL",
@@ -2562,8 +2564,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // here (not clear on how to do this)
   // TemplateArgument.setDataPrototype     ( "SgTemplateInstantiationDecl*", "templateInstantiation", "= NULL",
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-#if 1
      TemplateArgument.setDataPrototype     ( "SgDeclarationStatement*", "templateDeclaration", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -2571,26 +2571,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // I think we want to eventually make this a constructor argument, but not at first.
      TemplateArgument.setDataPrototype     ( "SgInitializedName*", "initializedName", "= NULL",
                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#else
-
-#error "DEAD CODE!"
-
-     TemplateArgument.setDataPrototype     ( "SgTemplateClassDeclaration*", "templateClassDeclaration", "= NULL",
-                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     TemplateArgument.setDataPrototype     ( "SgTemplateFunctionDeclaration*", "templateFunctionDeclaration", "= NULL",
-                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     TemplateArgument.setDataPrototype     ( "SgTemplateMemberFunctionDeclaration*", "templateMemberFunctionDeclaration", "= NULL",
-                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     TemplateArgument.setDataPrototype     ( "SgTemplateVariableDeclaration*", "templateVariableDeclaration", "= NULL",
-                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
-#else
-
-#error "DEAD CODE!"
-
-     TemplateArgument.setDataPrototype     ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
-                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
 
   // DQ (2/27/2005): Support for recognition of default template arguments
   // (required to fix bug demonstrated in test2005_12.C)

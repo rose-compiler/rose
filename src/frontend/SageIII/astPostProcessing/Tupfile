@@ -9,7 +9,8 @@ SOURCES = addPrototypesForTemplateInstantiations.C astPostProcessing.C buildStat
     fixupTemplateInstantiations.C fixupTypeReferences.C fixupTypes.C fixupUseAndUsingDeclarations.C \
     initializeExplicitScopeData.C insertFortranContainsStatement.C markBackendCompilerSpecificFunctions.C \
     markCompilerGenerated.C markForOutputInCodeGeneration.C markLhsValues.C markOverloadedTemplateInstantiations.C \
-    markTemplateInstantiationsForOutput.C markTemplateSpecializationsForOutput.C markTransformationsForOutput.C \
+    markSharedDeclarationsForOutputInCodeGeneration.C markTemplateInstantiationsForOutput.C \
+    markTemplateSpecializationsForOutput.C markTransformationsForOutput.C \
     normalizeTypedefSequenceLists.C processTemplateHandlingOptions.C propagateHiddenListData.C resetParentPointers.C \
     resetTemplateNames.C resolveFortranReferences.C
 
@@ -27,6 +28,7 @@ run $(public_header) addPrototypesForTemplateInstantiations.h astPostProcessing.
     fixupTemplateArguments.h fixupTemplateInstantiations.h fixupTypeReferences.h fixupTypes.h fixupUseAndUsingDeclarations.h \
     initializeExplicitScopeData.h insertFortranContainsStatement.h markBackendCompilerSpecificFunctions.h \
     markCompilerGenerated.h markForOutputInCodeGeneration.h markLhsValues.h markOverloadedTemplateInstantiations.h \
-    markTemplateInstantiationsForOutput.h markTemplateSpecializationsForOutput.h markTransformationsForOutput.h \
+    markSharedDeclarationsForOutputInCodeGeneration.h markTemplateInstantiationsForOutput.h \
+    markTemplateSpecializationsForOutput.h markTransformationsForOutput.h \
     normalizeTypedefSequenceLists.h processTemplateHandlingOptions.h propagateHiddenListData.h resetParentPointers.h \
     resetTemplateNames.h resolveFortranReferences.h \

@@ -358,6 +358,7 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
   SgStatement *func_call = NULL;
+  SgVarRefExp* wrapper_exp = NULL; 
   if (use_dlopen) 
     // if dlopen() is used, insert a lib call to find the function pointer from a shared lib file
     // e.g. OUT__2__8072__p = findFunctionUsingDlopen("OUT__2__8072__", "OUT__2__8072__.so");
@@ -385,7 +386,8 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     // Generate a function call using the func pointer
     // e.g. (*OUT__2__8888__p)(__out_argv2__1527__);
     SgExprListExp* exp_list_exp = SageBuilder::buildExprListExp();
-    appendExpression(exp_list_exp, buildVarRefExp(wrapper_name,p_scope));
+    wrapper_exp= buildVarRefExp(wrapper_name,p_scope);
+    appendExpression(exp_list_exp, wrapper_exp);
     func_call = buildFunctionCallStmt(buildPointerDerefExp(buildVarRefExp(func_name_str+"p",p_scope)), exp_list_exp);   
   }
   else  // regular function call for other cases
@@ -414,14 +416,21 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   SageInterface::fixVariableReferences(p_scope);
 
+  //ROSE_ASSERT (wrapper_exp->get_symbol()->get_declaration() != NULL);
   //-----------handle dependent declarations, headers if new file is generated-------------
   if (new_file)
   {
-    SageInterface::fixVariableReferences(new_file);
+    // Liao, 2019/8/14. We disable unused symbol clean up for now. 
+    // Searching for all symbols then check if they are used within a new file. 
+    // This will wrongfully delete symbols used in the original files. 
+    SageInterface::fixVariableReferences(new_file, false);
     // SgProject * project2= new_file->get_project();
     // AstTests::runAllTests(project2);// turn it off for now
     // project2->unparse();
   }
+
+  if (wrapper_exp)
+    ROSE_ASSERT (wrapper_exp->get_symbol()->get_declaration() != NULL);
 
   // Retest this...
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
@@ -794,12 +803,137 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
       new_file = isSgSourceFile(buildSourceFile(input_file_name, new_file_name, project));
       // buildFile() will set filename to be input file name by default. 
       // we have to rename the input file to be output file name. This is used to avoid duplicated creation later on
-      new_file->get_file_info()->set_filenameString(new_file_name);;
+      new_file->get_file_info()->set_filenameString(new_file_name);
+
+#if 0
+   // DQ (3/28/2019): The conversion of functions with definitions to function prrototypes must preserve the 
+   // associated comments and CPP directives (else the #includes will be missing and types will not be defined.
+   // This is an issue with the astOutliner test code jacobi.c.
+   // DQ (3/20/2019): Need to eliminate possible undefined symbols in this file when it will be compiled into 
+   // a dynamic shared library.  Any undefined symbols will cause an error when loading the library using dlopen().
+   // convertFunctionDefinitionsToFunctionPrototypes(new_file);
+      SageInterface::convertFunctionDefinitionsToFunctionPrototypes(new_file);
+#endif
     }
     //new_file = isSgSourceFile(buildFile(new_file_name, new_file_name));
     ROSE_ASSERT(new_file != NULL);
     return new_file;
 }
+
+#if 0
+// DQ (6/6/2019): Move this to the SageInteface namespace.
+void Outliner::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node) 
+   {
+  // DQ (3/20/2019): This function operates on the new file used to support outlined function definitions.
+  // We use a copy of the file where the code will be outlined FROM, so that if there are references to
+  // declarations in the outlined code we can support the outpiled code with those references.  This
+  // approach has the added advantage of also supporting the same include file tree as the original 
+  // file where the outlined code is being taken from.
+
+     class TransformFunctionDefinitionsTraversal : public AstSimpleProcessing
+        {
+          public:
+               std::vector<SgFunctionDeclaration*> functionList;
+               SgSourceFile* sourceFile;
+               int sourceFileId;
+               string filenameWithPath;
+
+          public:
+               TransformFunctionDefinitionsTraversal(): sourceFile(NULL), sourceFileId(-99) {}
+
+               void visit (SgNode* node)
+                  {
+#if 0
+                    printf ("In visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+                    SgSourceFile* temp_sourceFile = isSgSourceFile(node);
+                    if (temp_sourceFile != NULL)
+                       {
+                         sourceFile       = temp_sourceFile;
+                         sourceFileId     = sourceFile->get_file_info()->get_file_id();
+
+                      // The file_id is not sufficnet, not clear why, but the filenames match.
+                         filenameWithPath = sourceFile->get_sourceFileNameWithPath();
+
+                         printf ("Found source file: id = %d name = %s \n",sourceFileId,sourceFile->get_sourceFileNameWithPath().c_str());
+
+                       }
+
+                    SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
+                    if (functionDeclaration != NULL)
+                       {
+                      // This should have been set already.
+                         ROSE_ASSERT(sourceFile != NULL);
+
+                         SgFunctionDeclaration* definingFunctionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_definingDeclaration());
+                         if (functionDeclaration == definingFunctionDeclaration)
+                            {
+#if 0
+                              printf ("Found a defining function declaration: functionDeclaration = %p = %s name = %s \n",
+                                   functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+
+                              printf (" --- recorded source file: id = %d name = %s \n",sourceFileId,sourceFile->get_sourceFileNameWithPath().c_str());
+                              printf (" --- source file: file_info: id = %d name = %s \n",
+                                   functionDeclaration->get_file_info()->get_file_id(),functionDeclaration->get_file_info()->get_filenameString().c_str());
+#endif
+                           // DQ (3/20/2019): The file_id is not sufficent, using the filename with path to do string equality.
+                           // bool isInSourceFile = (sourceFileId == functionDeclaration->get_file_info()->get_file_id());
+                              bool isInSourceFile = (filenameWithPath == functionDeclaration->get_file_info()->get_filenameString());
+#if 0
+                              printf (" --- isInSourceFile = %s \n",isInSourceFile ? "true" : "false");
+#endif
+                           // Remove the defining declaration as a test.
+                              SgScopeStatement* functionDeclarationScope = isSgScopeStatement(functionDeclaration->get_parent());
+                              if (isInSourceFile == true && functionDeclarationScope != NULL)
+                                 {
+#if 0
+                                   printf (" --- Found a defining function declaration: functionDeclarationScope = %p = %s \n",
+                                        functionDeclarationScope,functionDeclarationScope->class_name().c_str());
+#endif
+                                // functionDeclarationScope->removeStatement(functionDeclaration);
+                                // removeStatement(functionDeclaration);
+                                   functionList.push_back(functionDeclaration);
+                                 }
+                            }
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+     TransformFunctionDefinitionsTraversal traversal;
+     traversal.traverse(node, preorder);
+
+     std::vector<SgFunctionDeclaration*> & functionList = traversal.functionList;
+
+#if 0
+     printf ("In convertFunctionDefinitionsToFunctionPrototypes(): functionList.size() = %zu \n",functionList.size());
+#endif
+
+     std::vector<SgFunctionDeclaration*>::iterator i = functionList.begin();
+     while (i != functionList.end())
+        {
+          SgFunctionDeclaration* functionDeclaration = *i;
+          ROSE_ASSERT(functionDeclaration != NULL);
+
+          SgFunctionDeclaration* nondefiningFunctionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_firstNondefiningDeclaration());
+          ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+#if 0
+          printf (" --- Removing function declaration: functionDeclaration = %p = %s name = %s \n",
+               functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
+       // Likely we should build a new nondefining function declaration instead of reusing the existing non-defining declaration.
+       // removeStatement(functionDeclaration);
+          replaceStatement(functionDeclaration,nondefiningFunctionDeclaration);
+
+          i++;
+        }
+
+#if 0
+     printf ("In convertFunctionDefinitionsToFunctionPrototypes(): exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+#endif
 
 
 // eof
