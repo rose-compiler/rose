@@ -328,9 +328,11 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgOmpParallelStatement: {
     return labeler->forkLabel(node);
   }
+  case V_SgOmpSectionsStatement:
   case V_SgOmpForStatement: {
     return labeler->workshareLabel(node);
   }
+  case V_SgOmpSectionStatement:
   case V_SgOmpTargetStatement:
   case V_SgOmpSimdStatement:
   case V_SgOmpAtomicStatement:
@@ -339,8 +341,6 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgOmpFlushStatement:	
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpSectionStatement:
-  case V_SgOmpSectionsStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
   case V_SgOmpTaskStatement:
@@ -534,6 +534,7 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     finalSet.insert(labeler->joinLabel(node));
     return finalSet;
   }
+  case V_SgOmpSectionsStatement:
   case V_SgOmpForStatement: {
     finalSet.insert(labeler->barrierLabel(node));
     return finalSet;
@@ -543,14 +544,18 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   case V_SgOmpSimdStatement:
     
     // all omp statements
+  case V_SgOmpSectionStatement:{
+    auto body = node->get_traversalSuccessorByIndex(0);
+    auto bodyFinals = finalLabels(body);
+    finalSet += bodyFinals;
+    return finalSet;
+  }
   case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpSectionStatement:
-  case V_SgOmpSectionsStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
   case V_SgOmpTaskStatement:
@@ -1087,7 +1092,7 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgEnumDeclaration:
     return edgeSet;
 
-    // parallel nested omp constructs
+  // Code duplication only for easy distinction between OMP parallel and OMP for (could be combined easily)
   case V_SgOmpParallelStatement: {
     SgNode *nextNestedStmt = node->get_traversalSuccessorByIndex(0);
     auto nextFlow = flow(nextNestedStmt);
@@ -1127,6 +1132,40 @@ Flow CFAnalysis::flow(SgNode* node) {
     return edgeSet;
   }
   
+  case V_SgOmpSectionsStatement: {
+    // every statement in the basic block needs to be a SgOmpSectionStatement
+    // don't construct the control flow for the basic block, because OMP semantics is different here
+    auto bb = isSgBasicBlock(node->get_traversalSuccessorByIndex(0));
+
+    auto lab = labeler->workshareLabel(node);
+    for (auto stmt : bb->get_statements()) {
+      if (!isSgOmpSectionStatement(stmt)) {
+        logger[ERROR] << "All sections need to be marked with a *#pragma omp section* for now" << endl;
+      }
+      ROSE_ASSERT(isSgOmpSectionStatement(stmt));
+      auto bodyFlow = flow(stmt);
+      edgeSet += bodyFlow;
+      auto e = Edge(lab, EDGE_FORWARD, initialLabel(stmt));
+      edgeSet.insert(e);
+    }
+    auto barrier = labeler->barrierLabel(node);
+    for (auto stmt : bb->get_statements()) {
+      auto finals = finalLabels(stmt);
+      for (auto l : finals) {
+        auto e = Edge(l, EDGE_FORWARD, barrier);
+        edgeSet.insert(e);
+      }
+    }
+    return edgeSet;
+  }
+  case V_SgOmpSectionStatement: {
+    auto nextStmt = node->get_traversalSuccessorByIndex(0);
+    auto bodyFlow = flow(nextStmt);
+    edgeSet += bodyFlow;
+    auto e = Edge(labeler->getLabel(node), EDGE_FORWARD, initialLabel(nextStmt));
+    edgeSet.insert(e);
+    return edgeSet;
+  }
   // these omp statements do not generate edges in addition to the ingoing and outgoing edge
   case V_SgOmpTargetStatement:
   case V_SgOmpSimdStatement:
@@ -1136,8 +1175,6 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgOmpFlushStatement:	
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpSectionStatement:
-  case V_SgOmpSectionsStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
   case V_SgOmpTaskStatement:
@@ -1510,4 +1547,30 @@ void CFAnalysis::setFunctionIdMapping(FunctionIdMapping* fim) {
 
 FunctionIdMapping* CFAnalysis::getFunctionIdMapping() {
   return _functionIdMapping;
+}
+
+bool CFAnalysis::forkJoinConsistencyChecks(Flow &flow) const {
+  const auto flowLabels = flow.nodeLabels();
+  int forks, joins, workshares, barriers;
+  forks = joins = workshares = barriers = 0;
+  for (const auto l : flowLabels) {
+    if (labeler->isForkLabel(l)) {
+      forks++;
+    }
+    if (labeler->isJoinLabel(l)) {
+      joins++;
+    }
+    if (labeler->isWorkshareLabel(l)) {
+      workshares++;
+    }
+    if (labeler->isBarrierLabel(l)) {
+      barriers++;
+    }
+  }
+  bool forksEqualJoins(forks == joins);
+  bool barriersLessOrEqualWorkshare(workshares >= barriers); // nowait can reduce the number of barriers.
+  assert(forksEqualJoins);
+  assert(barriersLessOrEqualWorkshare); 
+
+  return forksEqualJoins && barriersLessOrEqualWorkshare;
 }

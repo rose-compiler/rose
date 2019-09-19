@@ -460,7 +460,7 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-equivalence check-svcomp-witness
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-equivalence check-svcomp-witness check-fork-join-cfg
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
@@ -531,6 +531,30 @@ check-const-analysis:
 	@diff tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.const.csv
 	@rm tmp.const.csv
 
+
+check-fork-join-cfg:
+	@echo ================================================================
+	@echo RUNNING FORK/JOIN CFG CHECK
+	@echo ================================================================
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-01-SimpleOmpParallelFor.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-02-OnlyOmpParallel.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-03-OmpParallelOmpForLoop.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-04-OmpParLoopTrailStmt.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-05-LoopOmpParallelFor.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-06-OmpParallelNestedForLoops.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-07-ParallelOmpForNestedOmpParallelFor.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-08-ParallelForParallelFor.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-09-ParallelConsecutiveForLoops.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-10-ParallelForContinueStmt.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-11-ParallelForSeqStmtsParallelFor.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-12-SeqForParForNestedParFor.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-13-ParForNestedParForNestedParFor.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-14-NestedFollowingNestedPar.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-20-ParallelForCallFuncParallelFor.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-30-ParSectionsForLoop.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-31-ParSectionsAssignment.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-32-ParSectionsAssignments.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-33-ParSectionsParForLoop.c
 
 
 

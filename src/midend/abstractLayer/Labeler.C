@@ -282,6 +282,7 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
     // represent all parallel omp constructs as nodes
     // omp parallel is modelled as fork/join and for statement as workshare/barrier
   case V_SgOmpForStatement:
+  case V_SgOmpSectionsStatement:
   case V_SgOmpParallelStatement:
     return 2;
   case V_SgOmpCriticalStatement:
@@ -291,7 +292,6 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
   case V_SgOmpSectionStatement:
-  case V_SgOmpSectionsStatement:
   case V_SgOmpSimdStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:      
@@ -341,7 +341,7 @@ void Labeler::createLabels(SgNode* root) {
         assert(num == 2);
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_FORK));
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_JOIN));
-      } else if(isSgOmpForStatement(*i)) {
+      } else if(isSgOmpForStatement(*i) || isSgOmpSectionsStatement(*i)) {
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_WORKSHARE));
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_BARRIER));
       } else {
@@ -499,13 +499,13 @@ Label Labeler::joinLabel(SgNode *node) {
 }
 
 Label Labeler::workshareLabel(SgNode *node) {
-  ROSE_ASSERT(isSgOmpForStatement(node));
+  ROSE_ASSERT(isSgOmpForStatement(node) || isSgOmpSectionsStatement(node));
   Label lab = getLabel(node);
   return lab;
 }
 
 Label Labeler::barrierLabel(SgNode *node) {
-  ROSE_ASSERT(isSgOmpForStatement(node));
+  ROSE_ASSERT(isSgOmpForStatement(node) || isSgOmpSectionsStatement(node));
   Label lab = getLabel(node);
   return lab+1;
 }

@@ -308,9 +308,9 @@ Flow::iterator Flow::find(Edge e) {
     for (SawyerCfg::EdgeIterator i=outEdges.begin(); i!=outEdges.end(); ++i) {
       EdgeData eData = (*i).value();
       if (eData.edgeTypes == e.types() && eData.annotation == e.getAnnotation()) {
-	if ((*((*i).target())).value() == e.target()) {
-	  return Flow::iterator(i);
-	}
+        if ((*((*i).target())).value() == e.target()) {
+          return Flow::iterator(i);
+        }
       }
     }
   }
