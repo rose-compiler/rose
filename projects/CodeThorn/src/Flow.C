@@ -519,13 +519,18 @@ string Flow::toDot(Labeler* labeler) {
       } else if(isSgDefaultOptionStmt(node)) {
         ss<<"default:";
       } else if(labeler->isJoinLabel(*i)) {
-        ss<<"Join: "<<labeler->forkLabel(labeler->getNode(*i));
+        ss<<"Join for fork "<<labeler->forkLabel(node);
       } else if(labeler->isForkLabel(*i)) {
-        ss<<"Fork:";
+        ss<<"Fork: ";
       } else if(labeler->isWorkshareLabel(*i)) {
-        ss<<"Workshare:";
+        ss<<"Workshare: ";
+        if (isSgOmpForStatement(node)) {
+          ss << "OMP for";
+        } else if (isSgOmpSectionsStatement(node)) {
+          ss << "OMP sections";
+        }
       } else if(labeler->isBarrierLabel(*i)) {
-        ss<<"Barrier: "<<labeler->workshareLabel(labeler->getNode(*i));
+        ss<<"Barrier for workshare "<<labeler->workshareLabel(node);
       } else if(isSgOmpBodyStatement(node)) {
         ss<<node->class_name();
       } else {

@@ -46,6 +46,9 @@ class CFAnalysis {
   Label initialLabel(SgNode* node);
   /**
    * \brief Returns the final labels w.r.t. control flow for a node. There can be multiple.
+   *
+   * The final label of a node is the node that is visited last in its control flow. Examples are the last statement in a BasicBlock, or the condition in a for loop.
+   * For parallel nodes the final label is the join (SgOmpParallelStatement) or the barrier (SgOmpForStatement, SgOmpSectionsStatement) node.
    */
   LabelSet finalLabels(SgNode* node);
   LabelSet functionCallLabels(Flow& flow);
@@ -62,12 +65,10 @@ class CFAnalysis {
   LabelSet setOfInitialLabelsOfStmtsInBlock(SgNode* node);
   /** 
    * \brief Computes the control flow for an AST subtree rooted at node.
-   *
    */
   Flow flow(SgNode* node);
   /**
    * \brief Computes the control flow between two AST subtrees rooted at s1 and s2.
-   *
    */
   Flow flow(SgNode* s1, SgNode* s2);
   CodeThorn::Labeler* getLabeler();
@@ -102,6 +103,9 @@ class CFAnalysis {
   /**
    * \brief Checks the parallel CFG for consistency w.r.t. fork/join and barriers.
    *
+   * Basic checks it performs:
+   * 1) There are as many fork labels as join labels in the total set of labels.
+   * 2) There are at least as many workshare labels as there are barrier nodes. Their number can be different, as OpenMP's nowait clause can remove barrier nodes.
    */
   bool forkJoinConsistencyChecks(Flow &flow) const;
 

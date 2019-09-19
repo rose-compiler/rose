@@ -1127,6 +1127,9 @@ Flow CFAnalysis::flow(SgNode* node) {
     auto barrier = labeler->barrierLabel(node);
     for (auto l : finals) {
       auto e = Edge(l, EDGE_FORWARD, barrier);
+      if (SgNodeHelper::isCond(labeler->getNode(l))) {
+        e.addType(EDGE_FALSE);
+      }
       edgeSet.insert(e);
     }
     return edgeSet;
@@ -1550,6 +1553,7 @@ FunctionIdMapping* CFAnalysis::getFunctionIdMapping() {
 }
 
 bool CFAnalysis::forkJoinConsistencyChecks(Flow &flow) const {
+  logger[INFO] << "Running fork/join consistency tests." << endl;
   const auto flowLabels = flow.nodeLabels();
   int forks, joins, workshares, barriers;
   forks = joins = workshares = barriers = 0;
