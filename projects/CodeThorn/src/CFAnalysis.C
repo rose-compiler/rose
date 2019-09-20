@@ -1443,7 +1443,11 @@ FunctionCallTargetSet CFAnalysis::determineFunctionDefinition4(SgFunctionCallExp
   ROSE_ASSERT(getFunctionCallMapping());
   FunctionCallTargetSet res=getFunctionCallMapping()->resolveFunctionCall(funCall);
   if(res.size()>0) {
-    cout << ": RESOLVED."<<endl;
+    if(res.size()==1) {
+      cout << ": RESOLVED to "<<(*res.begin()).getDefinition()<<endl;
+    } else {
+      cout<< ": RESOLVED to ???"<<endl;
+    }
   } else {
     cout << ": NOT RESOLVED."<<endl;
   }
