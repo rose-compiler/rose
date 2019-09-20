@@ -287,6 +287,9 @@ public:
         return disassembler_;
     }
     
+    /** Returns the last status from a call to waitpid. */
+    int waitpidStatus() const { return wstat_; }
+    
 private:
     // Initialize tables during construction
     void init();
