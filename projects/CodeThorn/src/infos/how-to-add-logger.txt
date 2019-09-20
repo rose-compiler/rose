@@ -1,32 +1,50 @@
 -------------------------------------------------
-HEADER FILE:
+How to add a logger to class MyClass:
 -------------------------------------------------
 
-Adding logger to class A:
-class A {
+Code needs to be added to 
+(1) header file
+(2) source file
+(3) the main program (initialization call)
+
+-------------------------------------------------
+(1) HEADER FILE:
+-------------------------------------------------
+
+Add logger to class MyClass
+class MyClass {
   ...
-  protected:
+  public:
     static void initDiagnostics();
+  protected:
     static Sawyer::Message::Facility logger;
   ...
 };
 
 -------------------------------------------------
-SOURCE FILE:
+(2) SOURCE FILE:
 -------------------------------------------------
 
 #include "Diagnostics.h"
 using namespace Sawyer::Message;
 
-Sawyer::Message::Facility A::logger;
+Sawyer::Message::Facility MyClass::logger;
 
 void A::initDiagnostics() {
   static bool initialized = false;
   if (!initialized) {
     initialized = true;
-    logger = Sawyer::Message::Facility("CodeThorn::Analyzer", Rose::Diagnostics::destination);
+    logger = Sawyer::Message::Facility("CodeThorn::MyClass", Rose::Diagnostics::destination);
     Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
   }
+}
+
+-------------------------------------------------
+(3) main file (initialization):
+-------------------------------------------------
+
+MyTool::initDiagnostics() {
+  MyClass::initDiagnostics();
 }
 
 -------------------------------------------------

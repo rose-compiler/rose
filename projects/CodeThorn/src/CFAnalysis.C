@@ -169,50 +169,69 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
 #endif
     SAWYER_MESG(logger[TRACE])<<"Resolving function call: "<<funCall<<": "<<funCall->unparseToString()<<": ";
     SgFunctionDefinition* funDef=nullptr;
+    FunctionCallTargetSet funCallTargetSet;
     switch(functionResolutionMode) {
     case FRM_TRANSLATION_UNIT: funDef=SgNodeHelper::determineFunctionDefinition(funCall);break;
     case FRM_WHOLE_AST_LOOKUP: funDef=determineFunctionDefinition2(funCall);break;
     case FRM_FUNCTION_ID_MAPPING: funDef=determineFunctionDefinition3(funCall);break;
+    case FRM_FUNCTION_CALL_MAPPING: {
+      funCallTargetSet=determineFunctionDefinition4(funCall);
+      Label callLabel,entryLabel,exitLabel,callReturnLabel;
+      for(auto fct : funCallTargetSet) {
+        callLabel=*i;
+        entryLabel=Labeler::NO_LABEL;
+        exitLabel=Labeler::NO_LABEL;
+        SgFunctionDefinition* funDef=fct.getDefinition();
+        if(funDef) {
+          entryLabel=labeler->functionEntryLabel(funDef);
+          exitLabel=labeler->functionExitLabel(funDef);
+        }
+        callReturnLabel=labeler->functionCallReturnLabel(callNode);
+        interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
+      }
+      break;
+    }
     default:
       logger[ERROR]<<endl<<"Unsupported function resolution mode."<<endl;
       exit(1);
     }
     
-    Label callLabel,entryLabel,exitLabel,callReturnLabel;
-    if(funDef==0) {
-      //cout<<" [no definition found]"<<endl;
-      // we were not able to find the funDef in the AST
-      //cout << "STATUS: External function ";
-      SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration();
-      if(funDecl) {
-        //cout << "External function: "<<SgNodeHelper::getFunctionName(funDecl)<<"."<<endl;
-        externalFunCalls++;
+    if(functionResolutionMode!=FRM_FUNCTION_CALL_MAPPING) {
+      Label callLabel,entryLabel,exitLabel,callReturnLabel;
+      if(funDef==0) {
+        //cout<<" [no definition found]"<<endl;
+        // we were not able to find the funDef in the AST
+        //cout << "STATUS: External function ";
+        SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration();
+        if(funDecl) {
+          //cout << "External function: "<<SgNodeHelper::getFunctionName(funDecl)<<"."<<endl;
+          externalFunCalls++;
+        } else {
+          //cout << "No function declaration found (call:"<<funCall->unparseToString()<<endl;
+          externalFunCallsWithoutDecl++;
+        }
+        callLabel=*i;
+        entryLabel=Labeler::NO_LABEL;
+        exitLabel=Labeler::NO_LABEL;
+        callReturnLabel=labeler->functionCallReturnLabel(callNode);
+        //cout <<"No function definition found for call: "<<funCall->unparseToString()<<endl;
       } else {
-        //cout << "No function declaration found (call:"<<funCall->unparseToString()<<endl;
-        externalFunCallsWithoutDecl++;
+        //cout<<"Found function: "<<SgNodeHelper::getFunctionName(funDef)<<endl;
+        callLabel=*i;
+        entryLabel=labeler->functionEntryLabel(funDef);
+        exitLabel=labeler->functionExitLabel(funDef);
+        callReturnLabel=labeler->functionCallReturnLabel(callNode);
+        functionsFound++;
       }
-      callLabel=*i;
-      entryLabel=Labeler::NO_LABEL;
-      exitLabel=Labeler::NO_LABEL;
-      callReturnLabel=labeler->functionCallReturnLabel(callNode);
-      //cout <<"No function definition found for call: "<<funCall->unparseToString()<<endl;
-    } else {
-      //cout<<"Found function: "<<SgNodeHelper::getFunctionName(funDef)<<endl;
-      callLabel=*i;
-      entryLabel=labeler->functionEntryLabel(funDef);
-      exitLabel=labeler->functionExitLabel(funDef);
-      callReturnLabel=labeler->functionCallReturnLabel(callNode);
-      functionsFound++;
+      interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
+      callLabNr++;
+      //cout<<"STATUS: inter-flow established."<<endl;
+      //cout<<"INFO: Call labels: "<<callLabNr<<endl;
+      //cout<<"INFO: externalFunCalls: "<<externalFunCalls<<endl;
+      //cout<<"INFO: externalFunCallWitoutDecl: "<<externalFunCallsWithoutDecl<<endl;
+      //cout<<"INFO: functions found: "<<functionsFound<<endl;
     }
-    interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
-    callLabNr++;
   }
-  //cout<<"STATUS: inter-flow established."<<endl;
-  //cout<<"INFO: Call labels: "<<callLabNr<<endl;
-  //cout<<"INFO: externalFunCalls: "<<externalFunCalls<<endl;
-  //cout<<"INFO: externalFunCallWitoutDecl: "<<externalFunCallsWithoutDecl<<endl;
-  //cout<<"INFO: functions found: "<<functionsFound<<endl;
-
   return interFlow;
 }
 
@@ -1419,6 +1438,17 @@ SgFunctionDefinition* CFAnalysis::determineFunctionDefinition3(SgFunctionCallExp
   return funDef;
 }
 
+FunctionCallTargetSet CFAnalysis::determineFunctionDefinition4(SgFunctionCallExp* funCall) {
+  cout<<"DEBUG: CFAnalysis::determineFunctionDefinition4:"<<funCall->unparseToString();
+  ROSE_ASSERT(getFunctionCallMapping());
+  FunctionCallTargetSet res=getFunctionCallMapping()->resolveFunctionCall(funCall);
+  if(res.size()>0) {
+    cout << ": RESOLVED."<<endl;
+  } else {
+    cout << ": NOT RESOLVED."<<endl;
+  }
+  return res;
+}
 SgFunctionDefinition* CFAnalysis::determineFunctionDefinition2(SgFunctionCallExp* funCall) {
 
   SgExpression* funExp=funCall->get_function();
@@ -1479,4 +1509,12 @@ void CFAnalysis::setFunctionIdMapping(FunctionIdMapping* fim) {
 
 FunctionIdMapping* CFAnalysis::getFunctionIdMapping() {
   return _functionIdMapping;
+}
+
+void CFAnalysis::setFunctionCallMapping(FunctionCallMapping* fcm) {
+  _functionCallMapping=fcm;
+}
+
+FunctionCallMapping* CFAnalysis::getFunctionCallMapping() {
+  return _functionCallMapping;
 }

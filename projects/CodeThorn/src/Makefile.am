@@ -48,7 +48,9 @@ libcodethorndf_la_SOURCES=\
  IntervalPropertyState.h \
  IntervalPropertyStateFactory.h \
  IntervalTransferFunctions.h \
+ FunctionId.h \
  FunctionIdMapping.h \
+ FunctionCallMapping.h \
  FunctionCallTarget.h \
  LVAnalysis.h \
  LVAstAttribute.h \
@@ -88,7 +90,9 @@ libcodethorndf_la_SOURCES=\
  IntervalPropertyState.C \
  IntervalTransferFunctions.C \
  IntervalAstAttributeInterface.C \
+ FunctionId.C \
  FunctionIdMapping.C \
+ FunctionCallMapping.C \
  LanguageRestrictor.C \
  Lattice.C \
  LVAnalysis.C \

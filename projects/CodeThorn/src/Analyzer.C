@@ -1315,6 +1315,7 @@ void CodeThorn::Analyzer::initializeVariableIdMapping(SgProject* project) {
   exprAnalyzer.initializeStructureAccessLookup(project);
   SAWYER_MESG(logger[TRACE])<<"initializeStructureAccessLookup finished."<<endl;
   functionIdMapping.computeFunctionSymbolMapping(project);
+  functionCallMapping.computeFunctionCallMapping(project);
 }
 
 void CodeThorn::Analyzer::initializeCommandLineArgumentsInState(PState& initialPState) {
@@ -1425,6 +1426,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   //funIdMapping->computeFunctionSymbolMapping(isSgProject(root));
   //cfanalyzer->setFunctionIdMapping(funIdMapping);
   cfanalyzer->setFunctionIdMapping(getFunctionIdMapping());
+  cfanalyzer->setFunctionCallMapping(getFunctionCallMapping());
 
   getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
   getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);

@@ -40,6 +40,7 @@
 
 #include "VariableIdMapping.h"
 #include "FunctionIdMapping.h"
+#include "FunctionCallMapping.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
@@ -155,6 +156,7 @@ namespace CodeThorn {
     // access  functions for computed information
     VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
     FunctionIdMapping* getFunctionIdMapping() { return &functionIdMapping; }
+    FunctionCallMapping* getFunctionCallMapping() { return &functionCallMapping; }
     CTIOLabeler* getLabeler() const;
     Flow* getFlow() { return &flow; }
     PStateSet* getPStateSet() { return &pstateSet; }
@@ -380,6 +382,7 @@ namespace CodeThorn {
     ExprAnalyzer exprAnalyzer;
     VariableIdMapping variableIdMapping;
     FunctionIdMapping functionIdMapping;
+    FunctionCallMapping functionCallMapping;
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
     EStateWorkList* estateWorkListCurrent;
     EStateWorkList* estateWorkListNext;

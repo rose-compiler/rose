@@ -12,6 +12,7 @@
 #include "CommandLineOptions.h"
 #include "Flow.h"
 #include "FunctionIdMapping.h"
+#include "FunctionCallMapping.h"
 
 namespace CodeThorn {
 
@@ -51,8 +52,11 @@ class CFAnalysis {
   // Function for setting a pre-computed function-id
   // mapping. Required for function call resolution across multiple
   // files, and function pointers.
+  // deprecated (use FunctionCallMapping instead)
   void setFunctionIdMapping(FunctionIdMapping*);
   FunctionIdMapping* getFunctionIdMapping();
+  void setFunctionCallMapping(FunctionCallMapping* fcm);
+  FunctionCallMapping* getFunctionCallMapping();
 
   Flow controlDependenceGraph(Flow& controlFlow);
   int reduceNode(Flow& flow, Label lab);
@@ -83,11 +87,12 @@ class CFAnalysis {
   void setCreateLocalEdge(bool le);
   bool getCreateLocalEdge();
   static bool isLoopConstructRootNode(SgNode* node);
-  enum FunctionResolutionMode { FRM_TRANSLATION_UNIT, FRM_WHOLE_AST_LOOKUP, FRM_FUNCTION_ID_MAPPING };
+  enum FunctionResolutionMode { FRM_TRANSLATION_UNIT, FRM_WHOLE_AST_LOOKUP, FRM_FUNCTION_ID_MAPPING, FRM_FUNCTION_CALL_MAPPING };
   static FunctionResolutionMode functionResolutionMode;
  protected:
   SgFunctionDefinition* determineFunctionDefinition2(SgFunctionCallExp* funCall);
   SgFunctionDefinition* determineFunctionDefinition3(SgFunctionCallExp* funCall);
+  FunctionCallTargetSet determineFunctionDefinition4(SgFunctionCallExp* funCall);
   static void initDiagnostics();
   static Sawyer::Message::Facility logger;
  private:
@@ -97,6 +102,7 @@ class CFAnalysis {
   bool _createLocalEdge;
   SgNode* correspondingLoopConstruct(SgNode* node);
   FunctionIdMapping* _functionIdMapping=nullptr;
+  FunctionCallMapping* _functionCallMapping=nullptr;
 
 };    
 
