@@ -951,7 +951,7 @@ protected:
     MemoryState()                                       // for serialization
         : byteOrder_(ByteOrder::ORDER_UNSPECIFIED), byteRestricted_(true) {}
 
-    explicit MemoryState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
+    MemoryState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
         : addrProtoval_(addrProtoval), valProtoval_(valProtoval), byteOrder_(ByteOrder::ORDER_UNSPECIFIED),
           byteRestricted_(true) {
         ASSERT_not_null(addrProtoval);

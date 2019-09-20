@@ -29,7 +29,7 @@ using std::endl;
 
 
 int
-experimental_fortran_main(int argc, char **argv, SgSourceFile* sg_source_file)
+experimental_fortran_main(int argc, char* argv[], SgSourceFile* sg_source_file)
    {
   // Make system call to call the parser, then traverse resulting ATerm file to create AST.
 

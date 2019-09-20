@@ -148,15 +148,15 @@ isGoodAddr(const std::set<rose_addr_t> &goodVas, const MemoryMap::Ptr &map, rose
 
 // returns number of good and bad addresses executed
 static std::pair<size_t, size_t>
-execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, BinaryDebugger &debugger, const MemoryMap::Ptr &map,
-        AddressCounts &executed /*in,out*/) {
+execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, const Debugger::Ptr &debugger,
+        const MemoryMap::Ptr &map, AddressCounts &executed /*in,out*/) {
     Sawyer::ProgressBar<size_t> progress(mlog[MARCH], "instructions");
     std::ofstream trace;
     if (settings.trace)
-        trace.open((numberToString(debugger.isAttached()) + ".trace").c_str());
+        trace.open((numberToString(debugger->isAttached()) + ".trace").c_str());
     size_t totalGood=0, totalBad=0;
-    while (!debugger.isTerminated()) {
-        rose_addr_t eip = debugger.executionAddress();
+    while (!debugger->isTerminated()) {
+        rose_addr_t eip = debugger->executionAddress();
         size_t addrSequence = ++executed.insertMaybe(eip, 0);
         bool goodAddr = isGoodAddr(knownVas, map, eip);
 
@@ -169,7 +169,7 @@ execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, BinaryD
         if (settings.trace)
             trace <<addrToString(eip) <<"\t" <<addrSequence <<"\t" <<(goodAddr?'1':'0') <<"\n";
 
-        debugger.singleStep();
+        debugger->singleStep();
         ++progress;
     }
     return std::make_pair(totalGood, totalBad);
@@ -193,18 +193,19 @@ main(int argc, char *argv[]) {
     mlog[INFO] <<"parsed " <<plural(knownVas.size(), "unique addresses") <<"\n";
 
     // Load specimen natively and attach debugger
-    std::vector<std::string> specimen_cmd(args.begin()+1, args.end());
-    BinaryDebugger debugger(specimen_cmd, BinaryDebugger::CLOSE_FILES);
-    debugger.setBreakpoint(AddressInterval::whole());
-    ASSERT_always_require(debugger.isAttached());
-    ASSERT_always_forbid(debugger.isTerminated());
-    pid_t pid = debugger.isAttached();
+    Debugger::Specimen specimen(args);
+    specimen.flags().set(Debugger::CLOSE_FILES);
+    Debugger::Ptr debugger = Debugger::instance(specimen);
+    debugger->setBreakpoint(AddressInterval::whole());
+    ASSERT_always_require(debugger->isAttached());
+    ASSERT_always_forbid(debugger->isTerminated());
+    pid_t pid = debugger->isAttached();
     mlog[INFO] <<"child PID " <<pid <<"\n";
 
     // Get memory map.
     MemoryMap::Ptr map;
     if (MAP_ROSE==settings.mapSource) {
-        map = engine.loadSpecimens(specimen_cmd[0]);
+        map = engine.loadSpecimens(specimen.program().native());
     } else {
         map = MemoryMap::instance();
         map->insertProcess(pid, MemoryMap::Attach::NO);
@@ -230,7 +231,7 @@ main(int argc, char *argv[]) {
     std::pair<size_t, size_t> total = execute(settings, knownVas, debugger, map, executed /*in,out*/);
 
     // Results
-    std::cout <<"child process " <<debugger.howTerminated() <<"\n"
+    std::cout <<"child process " <<debugger->howTerminated() <<"\n"
               <<"executed " <<plural(total.first, "expected and unmapped instructions") <<"\n"
               <<"executed " <<plural(total.second, "unexpected instructions") <<"\n";
 

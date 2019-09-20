@@ -1,16 +1,16 @@
-#include "sage3basic.h"
-#include "rosePublicConfig.h"
+#include <sage3basic.h>
+#include <rosePublicConfig.h>
 
-#include "AsmUnparser_compat.h"
-#include "BinaryDebugger.h"
-#include "BinaryLoader.h"
-#include "BinarySerialIo.h"
-#include "CommandLine.h"
-#include "Diagnostics.h"
-#include "DisassemblerM68k.h"
-#include "DisassemblerPowerpc.h"
-#include "DisassemblerX86.h"
-#include "SRecord.h"
+#include <AsmUnparser_compat.h>
+#include <BinaryDebugger.h>
+#include <BinaryLoader.h>
+#include <BinarySerialIo.h>
+#include <CommandLine.h>
+#include <Diagnostics.h>
+#include <DisassemblerM68k.h>
+#include <DisassemblerPowerpc.h>
+#include <DisassemblerX86.h>
+#include <SRecord.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <Partitioner2/Engine.h>
@@ -1203,11 +1203,13 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
                 }
             }
 
-            unsigned flags = BinaryDebugger::CLOSE_FILES |
-                             BinaryDebugger::REDIRECT_INPUT |
-                             BinaryDebugger::REDIRECT_OUTPUT |
-                             BinaryDebugger::REDIRECT_ERROR;
-            BinaryDebugger debugger(exeName, flags);
+            Debugger::Specimen subordinate(exeName);
+            subordinate.flags()
+                .set(Debugger::CLOSE_FILES)
+                .set(Debugger::REDIRECT_INPUT)
+                .set(Debugger::REDIRECT_OUTPUT)
+                .set(Debugger::REDIRECT_ERROR);
+            Debugger::Ptr debugger = Debugger::instance(subordinate);
 
             // Set breakpoints for all executable addresses in the memory map created by the Linux kernel. Since we're doing
             // this before the first instruction executes, no shared libraries have been loaded yet. However, the dynamic
@@ -1216,23 +1218,23 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             // of the process after shared libraries are loaded. We assume that the kernel has loaded the executable at the
             // lowest address.
             MemoryMap::Ptr procMap = MemoryMap::instance();
-            procMap->insertProcess(debugger.isAttached(), MemoryMap::Attach::NO);
+            procMap->insertProcess(debugger->isAttached(), MemoryMap::Attach::NO);
             procMap->require(MemoryMap::EXECUTABLE).keep();
             if (procMap->isEmpty())
                 throw std::runtime_error(exeName + " has no executable addresses");
             std::string name = procMap->segments().begin()->name(); // lowest segment is always part of the main executable
             BOOST_FOREACH (const MemoryMap::Node &node, procMap->nodes()) {
                 if (node.value().name() == name)        // usually just one match; names are like "proc:123(/bin/ls)"
-                    debugger.setBreakpoint(node.key());
+                    debugger->setBreakpoint(node.key());
             }
 
-            debugger.runToBreakpoint();
-            if (debugger.isTerminated())
-                throw std::runtime_error(exeName + " " + debugger.howTerminated() + " without reaching a breakpoint");
+            debugger->runToBreakpoint();
+            if (debugger->isTerminated())
+                throw std::runtime_error(exeName + " " + debugger->howTerminated() + " without reaching a breakpoint");
             if (doReplace)
                 map_->clear();
-            map_->insertProcess(debugger.isAttached(), MemoryMap::Attach::NO);
-            debugger.terminate();
+            map_->insertProcess(debugger->isAttached(), MemoryMap::Attach::NO);
+            debugger->terminate();
         } else if (boost::starts_with(fileName, "srec:") || boost::ends_with(fileName, ".srec")) {
             std::string resource;                       // name of file to open
             unsigned perms = MemoryMap::READABLE | MemoryMap::WRITABLE | MemoryMap::EXECUTABLE;

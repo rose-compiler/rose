@@ -7,6 +7,7 @@
 
 #include <Sawyer/Graph.h>
 #include <Sawyer/GraphAlgorithm.h>
+#include <Sawyer/GraphIteratorSet.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/Assert.h>
 #include <boost/foreach.hpp>
@@ -61,7 +62,7 @@ void insert_vertex() {
     ASSERT_always_require(v0->id()==0);
     ASSERT_always_require(v0->value()=="banana");
     ASSERT_always_require(v0 == v0);
-    ASSERT_always_forbid(v0 < v0);
+    //ASSERT_always_forbid(v0 < v0);
 
     typename Graph::VertexIterator v1 = graph.insertVertex("orange");
     std::cout <<"  inserted [" <<v1->id() <<"] = " <<v1->value() <<"\n";
@@ -69,7 +70,7 @@ void insert_vertex() {
     ASSERT_always_require(v1->id()==1);
     ASSERT_always_require(v1->value()=="orange");
     ASSERT_always_require(v1 != v0);
-    ASSERT_always_require(v1 < v0 || v0 < v1);
+    //ASSERT_always_require(v1 < v0 || v0 < v1);
 
     typename Graph::VertexIterator v2 = graph.insertVertex("pineapple");
     std::cout <<"  inserted [" <<v2->id() <<"] = " <<v2->value() <<"\n";
@@ -77,7 +78,7 @@ void insert_vertex() {
     ASSERT_always_require(v2->id()==2);
     ASSERT_always_require(v2->value()=="pineapple");
     ASSERT_always_require(v2 != v1);
-    ASSERT_always_require(v2 < v1 || v1 < v2);
+    //ASSERT_always_require(v2 < v1 || v1 < v2);
 
     std::cout <<graph;
 }
@@ -259,31 +260,31 @@ void insert_edge() {
     ASSERT_always_require(e0->target() == v1);
     ASSERT_always_require(e0 == e0);
     ASSERT_always_forbid(e0 != e0);
-    ASSERT_always_forbid(e0 < e0);
+    //ASSERT_always_forbid(e0 < e0);
 
     ASSERT_always_require(e1->value() == "violin-vinegar");
     ASSERT_always_require(e1->source() == v2);
     ASSERT_always_require(e1->target() == v1);
     ASSERT_always_require(e1 != e0);
-    ASSERT_always_require(e1 < e0 || e0 < e1);
+    //ASSERT_always_require(e1 < e0 || e0 < e1);
 
     ASSERT_always_require(e2->value() == "vine-visa");
     ASSERT_always_require(e2->source() == v0);
     ASSERT_always_require(e2->target() == v3);
     ASSERT_always_require(e2 != e1);
-    ASSERT_always_require(e2 < e1 || e1 < e2);
+    //ASSERT_always_require(e2 < e1 || e1 < e2);
 
     ASSERT_always_require(e3->value() == "visa-vine");
     ASSERT_always_require(e3->source() == v3);
     ASSERT_always_require(e3->target() == v0);
     ASSERT_always_require(e3 != e2);
-    ASSERT_always_require(e3 < e2 || e2 < e3);
+    //ASSERT_always_require(e3 < e2 || e2 < e3);
 
     ASSERT_always_require(e4->value() == "visa-visa");
     ASSERT_always_require(e4->source() == v3);
     ASSERT_always_require(e4->target() == v3);
     ASSERT_always_require(e4 != e3);
-    ASSERT_always_require(e4 < e3 || e3 < e4);
+    //ASSERT_always_require(e4 < e3 || e3 < e4);
 
     ASSERT_always_require(v0->nInEdges() == 1);
     ASSERT_always_require(v0->nOutEdges() == 2);
@@ -1475,6 +1476,30 @@ graphDominators03() {
     checkDominators(g, va, answer);
 }
 
+static void
+vertexIteratorSet() {
+    std::cout <<"graph vertex iterator set\n";
+
+    typedef Sawyer::Container::Graph<std::string> Graph;
+    typedef Graph::VertexIterator Vertex;
+
+    // Create a graph with three vertices
+    Graph g;
+    Vertex va = g.insertVertex("A");
+    Vertex vb = g.insertVertex("B");
+    Vertex vc = g.insertVertex("C");
+
+    // Add vertices to a set
+    Sawyer::Container::GraphIteratorSet<Vertex> set;
+    set.insert(va);
+    set.insert(vb);
+    set.insert(vc);
+
+    BOOST_FOREACH (Vertex vertex, set.values()) {
+        std::cout <<"  vertex #" <<vertex->id() <<" \"" <<vertex->value() <<"\"\n";
+    }
+}
+
 int main() {
     Sawyer::initializeLibrary();
     typedef Sawyer::Container::Graph<std::string, std::string> G1;
@@ -1500,4 +1525,6 @@ int main() {
     graphDominators01();
     graphDominators02();
     graphDominators03();
+    vertexIteratorSet();
+
 }

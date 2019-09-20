@@ -556,4 +556,10 @@ run $(test) testDisassembler -o ppc64a --answer=testDisassembler-ppc64a.ans \
 run $(test) testDisassembler -o ppc64b --answer=testDisassembler-ppc64b.ans \
     ./testDisassembler --isa=ppc64 ./testDisassembler-ppc64.txt
 
+########################################################################################################################
+# Native semantics
+########################################################################################################################
+
+run $(tool_compile_linkexe) testNativeSemantics.C
+
 endif

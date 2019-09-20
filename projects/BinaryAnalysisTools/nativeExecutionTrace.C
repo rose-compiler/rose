@@ -70,11 +70,13 @@ main(int argc, char *argv[]) {
     // Parse command-line
     P2::Engine engine;
     Settings settings;
-    std::vector<std::string> specimen = parseCommandLine(argc, argv, engine, settings);
-    if (specimen.empty()) {
+    std::vector<std::string> args = parseCommandLine(argc, argv, engine, settings);
+    if (args.empty()) {
         ::mlog[FATAL] <<"no specimen supplied on command-line; see --help\n";
         exit(1);
     }
+    Debugger::Specimen specimen(args);
+    specimen.flags().set(Debugger::CLOSE_FILES);
 
     // Trace output goes to either std::cout or some file.
     std::filebuf fb;
@@ -83,7 +85,7 @@ main(int argc, char *argv[]) {
     std::ostream traceOutput(outputFileName.empty() ? std::cout.rdbuf() : &fb);
 
     // Load specimen into ROSE's simulated memory
-    if (!engine.parseContainers(specimen.front())) {
+    if (!engine.parseContainers(args.front())) {
         ::mlog[FATAL] <<"cannot parse specimen binary container\n";
         exit(1);
     }
@@ -97,14 +99,14 @@ main(int argc, char *argv[]) {
 
     // Single-step the specimen natively in a debugger and show each instruction.
     size_t nSteps = 0;                                  // number of instructions executed
-    BinaryDebugger debugger(specimen, BinaryDebugger::CLOSE_FILES);
-    while (!debugger.isTerminated()) {
+    Debugger::Ptr debugger = Debugger::instance(specimen);
+    while (!debugger->isTerminated()) {
         ++nSteps;
-        uint64_t ip = debugger.readRegister(REG_IP).toInteger();
+        uint64_t ip = debugger->readRegister(REG_IP).toInteger();
 
         if (settings.listingEachInsn) {
             uint8_t buf[16];                            // 16 should be large enough for any instruction
-            size_t nBytes = debugger.readMemory(ip, sizeof buf, buf);
+            size_t nBytes = debugger->readMemory(ip, sizeof buf, buf);
             if (0 == nBytes) {
                 ::mlog[ERROR] <<"cannot read memory at " <<StringUtility::addrToString(ip) <<"\n";
             } else if (SgAsmInstruction *insn = disassembleOne(disassembler, buf, nBytes, ip)) {
@@ -114,9 +116,9 @@ main(int argc, char *argv[]) {
             }
         }
 
-        debugger.singleStep();
+        debugger->singleStep();
     }
 
-    std::cerr <<debugger.howTerminated() <<"\n";
+    std::cerr <<debugger->howTerminated() <<"\n";
     std::cerr <<StringUtility::plural(nSteps, "instructions") <<" executed\n";
 }
