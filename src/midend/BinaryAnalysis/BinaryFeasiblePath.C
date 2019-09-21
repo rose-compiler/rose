@@ -477,8 +477,13 @@ public:
         }
 
         // Callback for the memory access
-        if (pathProcessor_)
-            pathProcessor_->memoryIo(*fpAnalyzer_, FeasiblePath::READ, addr, retval, shared_from_this());
+        if (pathProcessor_) {
+            ASSERT_not_null(fpAnalyzer_);
+            ASSERT_not_null(path_);
+            SmtSolver::Ptr s = solver();
+            SmtSolver::Transaction tx(s);
+            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, s, FeasiblePath::READ, addr, retval, shared_from_this());
+        }
 
         return retval;
     }
@@ -517,8 +522,13 @@ public:
         }
 
         // Callback for the memory access
-        if (pathProcessor_)
-            pathProcessor_->memoryIo(*fpAnalyzer_, FeasiblePath::WRITE, addr, value, shared_from_this());
+        if (pathProcessor_) {
+            ASSERT_not_null(fpAnalyzer_);
+            ASSERT_not_null(path_);
+            SmtSolver::Ptr s = solver();
+            SmtSolver::Transaction tx(s);
+            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, s, FeasiblePath::WRITE, addr, value, shared_from_this());
+        }
     }
 };
 

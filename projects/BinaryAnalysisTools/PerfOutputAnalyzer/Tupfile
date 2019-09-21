@@ -1,0 +1,20 @@
+include_rules
+
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+
+    # Because ./parser.ypp tries to #include <PerfOutputAnalyzer/analyzer.hpp> instead of just <analyzer.hpp>.
+    tool_CPPFLAGS += -I..
+
+    # Use flex and bison to create rose-perf-analyzer, which reads perf-report output and computes unique instruction count
+    : parser.ypp \
+	|> ^ BISON %f^ $(ROSE)/config/ylwrap %f y.tab.c %o y.tab.h parser.hpp -- bison -y -d -t \
+	|> parser.cpp | parser.hpp
+
+    : lexer.lpp \
+	|> ^ FLEX %f^ $(ROSE)/config/ylwrap %f lex.yy.c %o -- flex \
+	|> lexer.cpp
+
+    run $(tool_compile_linkexe) --install -o rose-perf-analyzer --depend=parser.hpp \
+	parser.cpp lexer.cpp analyzer.cpp  
+
+endif

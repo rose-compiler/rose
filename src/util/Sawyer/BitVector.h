@@ -1133,6 +1133,29 @@ public:
         return BitVectorSupport::toInteger(data(), hull());
     }
 
+    /** Interpret bits as a signed integer.
+     *
+     *  Returns the bits of the specified range by interpreting them as a two's complement signed integer, sign extended to
+     *  the width of the return value.  The range must be valid for this vector. If the range size is one bit then the value
+     *  zero or one is returned; if the range size is less than 64 bits then the bits are sign extended to a width of 64; if
+     *  the range is larger than 64 bits then only the low-order 64 bits are returned. */
+    boost::int64_t toSignedInteger(const BitRange &range) const {
+        checkRange(range);
+        return BitVectorSupport::toInteger(data(), range);
+    }
+
+    /** Interpret bits as a signed integer.
+     *
+     *  Returns the bits of the specified range by interpreting them as a two's complement signed integer, sign extended to
+     *  the width of the return value.  The range must be valid for this vector. If the range size is one bit then the value
+     *  zero or one is returned; if the range size is less than 64 bits then the bits are sign extended to a width of 64; if
+     *  the range is larger than 64 bits then only the low-order 64 bits are returned. */
+    boost::int64_t toSignedInteger() const {
+        if (size() <= 64)
+            return BitVectorSupport::toInteger(data(), size());
+        return BitVectorSupport::toInteger(data(), hull());
+    }
+    
     /** Convert to a hexadecimal string.
      *
      *  Returns a string which is the hexadecimal representation of the bits in the specified range.  The range must be valid

@@ -465,6 +465,8 @@ SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
     } else {
         ASSERT_not_null(inode);
         switch (inode->getOperator()) {
+            case SymbolicExpr::OP_NONE:
+                ASSERT_not_reachable("not possible for an interior node");
             case SymbolicExpr::OP_ADD:
                 retval = outputLeftAssoc("bvadd", inode);
                 break;

@@ -1,0 +1,8 @@
+include_rules
+
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+    # Because PathFinder/*.C try to #include <PathFinder/*.h> instead of just <*.h>.
+    tool_CPPFLAGS += -I..
+
+    run $(tool_compile_linkexe) -o rose-find-path --install PathFinder.C semantics.C findPath.C
+endif

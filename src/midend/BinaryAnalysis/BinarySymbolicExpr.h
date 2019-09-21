@@ -21,6 +21,7 @@
 #include <RoseException.h>
 #include <Sawyer/Attribute.h>
 #include <Sawyer/BitVector.h>
+#include <Sawyer/Optional.h>
 #include <Sawyer/Set.h>
 #include <Sawyer/SharedPointer.h>
 #include <Sawyer/SmallObject.h>
@@ -97,6 +98,8 @@ enum Operator {
     OP_WRITE,               /**< Write (update) memory with a new value. Arguments are memory, address and value. */
     OP_XOR,                 /**< Bitwise exclusive disjunction. One or more operands, all the same width. */
     OP_ZEROP,               /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
+
+    OP_NONE,                /**< No operation. Result of getOperator on a node that doesn't have an operator. */
 
     OP_BV_AND = OP_AND,                                 // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
     OP_BV_OR = OP_OR,                                   // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
@@ -325,10 +328,42 @@ public:
     Ptr renameVariables(ExprExprHashMap &index /*in,out*/, size_t &nextVariableId /*in,out*/,
                         const SmtSolverPtr &solver = SmtSolverPtr());
 
+    /** Operator for interior nodes.
+     *
+     *  Return the operator for interior nodes, or @ref OP_NONE for leaf nodes that have no operator. */
+    virtual Operator getOperator() const = 0;
+
+    /** Number of arguments.
+     *
+     *  Returns the number of children for an interior node, zero for leaf nodes. */
+    virtual size_t nChildren() const = 0;
+
+    /** Argument.
+     *
+     *  Returns the specified argument by index. If the index is out of range, then returns null. A leaf node always returns
+     *  null since it never has children. */
+    virtual Ptr child(size_t idx) const = 0;
+
+    /** Arguments.
+     *
+     *  Returns the arguments of an operation for an interior node, or an empty list for a leaf node. */
+    virtual const Nodes& children() const = 0;
+
+    /** The unsigned integer value of the expression.
+     *
+     *  Returns nothing if the expression is not a concrete integer value or the value is too wide to be represented by the
+     *  return type. */
+    virtual Sawyer::Optional<uint64_t> toUnsigned() const = 0;
+
+    /** The signed integer value of the expression.
+     *
+     *  Returns nothing if the expression is not a concrete integer value or the value doesn't fit in the return type. */
+    virtual Sawyer::Optional<int64_t> toSigned() const = 0;
+
     /** Returns true if the expression is a known numeric value.
      *
      *  The value itself is stored in the @ref number property. */
-    virtual bool isNumber() = 0;
+    virtual bool isNumber() const = 0;
 
     /** Property: integer value of expression node.
      *
@@ -366,7 +401,7 @@ public:
     /** Property: Number of significant bits.
      *
      *  An expression with a known value is guaranteed to have all higher-order bits cleared. */
-    size_t nBits() { return nBits_; }
+    size_t nBits() const { return nBits_; }
 
     /** Property: User-defined bit flags.
      *
@@ -754,26 +789,18 @@ public:
     virtual bool isEquivalentTo(const Ptr &other) ROSE_OVERRIDE;
     virtual int compareStructure(const Ptr& other) ROSE_OVERRIDE;
     virtual Ptr substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
-    virtual bool isNumber() ROSE_OVERRIDE {
+    virtual bool isNumber() const ROSE_OVERRIDE {
         return false; /*if it's known, then it would have been folded to a leaf*/
     }
     virtual uint64_t toInt() ROSE_OVERRIDE { ASSERT_forbid2(true, "not a number"); return 0;}
     virtual VisitAction depthFirstTraversal(Visitor&) ROSE_OVERRIDE;
     virtual uint64_t nNodes() ROSE_OVERRIDE { return nnodes_; }
-
-    /** Returns the number of children. */
-    size_t nChildren() { return children_.size(); }
-
-    /** Returns the specified child. */
-    Ptr child(size_t idx) { ASSERT_require(idx<children_.size()); return children_[idx]; }
-
-    /** Property: Children.
-     *
-     *  The children are the operands for an operator expression. */
-    const Nodes& children() { return children_; }
-
-    /** Returns the operator. */
-    Operator getOperator() { return op_; }
+    virtual const Nodes& children() const ROSE_OVERRIDE { return children_; }
+    virtual Operator getOperator() const ROSE_OVERRIDE { return op_; }
+    virtual size_t nChildren() const ROSE_OVERRIDE { return children_.size(); }
+    virtual Ptr child(size_t idx) const ROSE_OVERRIDE { return idx < children_.size() ? children_[idx] : Ptr(); }
+    virtual Sawyer::Optional<uint64_t> toUnsigned() const { return Sawyer::Nothing(); }
+    virtual Sawyer::Optional<int64_t> toSigned() const { return Sawyer::Nothing(); }
 
     /** Simplifies the specified interior node.
      *
@@ -918,7 +945,11 @@ public:
                                         unsigned flags=0);
 
     // from base class
-    virtual bool isNumber() ROSE_OVERRIDE;
+    virtual size_t nChildren() const ROSE_OVERRIDE { return 0; }
+    virtual Ptr child(size_t idx) const { return Ptr(); }
+    virtual const Nodes& children() const ROSE_OVERRIDE;
+    virtual Operator getOperator() const ROSE_OVERRIDE { return OP_NONE; }
+    virtual bool isNumber() const ROSE_OVERRIDE;
     virtual uint64_t toInt() ROSE_OVERRIDE;
     virtual bool mustEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
     virtual bool mayEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
@@ -927,6 +958,8 @@ public:
     virtual Ptr substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
     virtual VisitAction depthFirstTraversal(Visitor&) ROSE_OVERRIDE;
     virtual uint64_t nNodes() ROSE_OVERRIDE { return 1; }
+    virtual Sawyer::Optional<uint64_t> toUnsigned() const ROSE_OVERRIDE;
+    virtual Sawyer::Optional<int64_t> toSigned() const ROSE_OVERRIDE;
 
     /** Property: Bits stored for numeric values. */
     const Sawyer::Container::BitVector& bits();
