@@ -6,7 +6,7 @@ AC_DEFUN([ROSE_SUPPORT_OFP],
 # Used in ../src/3rdPartyLibraries/fortran-parser/Makefile.am
 # and     ../src/frontend/SageIII/sageSupport.C
 #
-default_ofp_version=20190822
+default_ofp_version=20190922
 
 ofp_major_version_number=0
 ofp_minor_version_number=8
@@ -59,7 +59,7 @@ AC_SUBST(OPEN_FORTRAN_PARSER_PATH)
 
 # DQ (2/2/2010): New code to control use of different versions of OFP within ROSE.
 AC_ARG_ENABLE(ofp-version,
-[  --enable-ofp-version    version number for OFP Java-based parser (e.g. 20190822).],
+[  --enable-ofp-version    version number for OFP Java-based parser (e.g. 20190922).],
 [ AC_MSG_NOTICE([setting up OFP version])
 ])
 
