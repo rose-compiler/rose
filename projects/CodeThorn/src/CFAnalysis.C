@@ -332,10 +332,10 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgOmpForStatement: {
     return labeler->workshareLabel(node);
   }
-  case V_SgOmpSectionStatement:
   case V_SgOmpBarrierStatement: {
     return labeler->barrierLabel(node);
   }
+  case V_SgOmpSectionStatement:
   case V_SgOmpTargetStatement:
   case V_SgOmpSimdStatement:
   case V_SgOmpAtomicStatement:
@@ -1176,6 +1176,7 @@ Flow CFAnalysis::flow(SgNode* node) {
       return edgeSet;
     }
     // Add the edge to the barrier node
+    ROSE_ASSERT(isSgOmpSectionsStatement(node));
     auto barrier = labeler->barrierLabel(node);
     for (auto stmt : bb->get_statements()) {
       auto finals = finalLabels(stmt);
