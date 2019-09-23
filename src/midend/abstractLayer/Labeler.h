@@ -61,7 +61,9 @@ class LabelProperty {
                     LABEL_FUNCTIONCALL=100, LABEL_FUNCTIONCALLRETURN,
                     LABEL_FUNCTIONENTRY, LABEL_FUNCTIONEXIT,
                     LABEL_BLOCKBEGIN, LABEL_BLOCKEND,
-                    LABEL_EMPTY_STMT
+                    LABEL_EMPTY_STMT,
+                    // Labels for OpenMP parallel constructs
+                    LABEL_FORK, LABEL_JOIN, LABEL_WORKSHARE, LABEL_BARRIER
    };
    std::string labelTypeToString(LabelType lt);
 
@@ -79,6 +81,12 @@ class LabelProperty {
    bool isBlockBeginLabel();
    bool isBlockEndLabel();
    bool isEmptyStmtLabel();
+   // OpenMP related query functions
+   bool isForkLabel();
+   bool isJoinLabel();
+   bool isWorkshareLabel();
+   bool isBarrierLabel();
+
  public:
    void initializeIO(VariableIdMapping* variableIdMapping);
 
@@ -165,6 +173,10 @@ class Labeler {
   Label blockEndLabel(SgNode* node);
   Label functionEntryLabel(SgNode* node);
   Label functionExitLabel(SgNode* node);
+  Label joinLabel(SgNode *node);
+  Label forkLabel(SgNode *node);
+  Label workshareLabel(SgNode *node);
+  Label barrierLabel(SgNode *node);
   bool isFunctionEntryLabel(Label lab);
   bool isFunctionExitLabel(Label lab);
   bool isEmptyStmtLabel(Label lab);
@@ -176,6 +188,10 @@ class Labeler {
   bool isSwitchExprLabel(Label lab);
   bool isFirstLabelOfMultiLabeledNode(Label lab);
   bool isSecondLabelOfMultiLabeledNode(Label lab);
+  bool isForkLabel(Label lab);
+  bool isJoinLabel(Label lab);
+  bool isWorkshareLabel(Label lab);
+  bool isBarrierLabel(Label lab);
 
 #if 1
   // by default false for all labels. This must be set by the CF analysis.
