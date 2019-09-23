@@ -530,7 +530,11 @@ string Flow::toDot(Labeler* labeler) {
           ss << "OMP sections";
         }
       } else if(labeler->isBarrierLabel(*i)) {
-        ss<<"Barrier for workshare "<<labeler->workshareLabel(node);
+        if (isSgOmpBarrierStatement(node)) {
+          ss<<"Barrier";
+        } else {
+          ss<<"Barrier for workshare "<<labeler->workshareLabel(node);
+        }
       } else if(isSgOmpBodyStatement(node)) {
         ss<<node->class_name();
       } else {

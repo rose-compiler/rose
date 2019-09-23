@@ -1846,6 +1846,15 @@ bool SgNodeHelper::isLastChildOf(SgNode* elem, SgNode* parent) {
   return elem==children.back();
 }
 
+bool SgNodeHelper::hasNoWait(SgOmpClauseBodyStatement *ompNode) {
+  for (auto c : ompNode->get_clauses()) {
+    if (isSgOmpNowaitClause(c)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 std::string SgNodeHelper::getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl) {
   SgPragma* pragma=pragmaDecl->get_pragma();
   ROSE_ASSERT(pragma);
