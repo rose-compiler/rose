@@ -1440,6 +1440,12 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   else
     flow=cfanalyzer->flow(root);
 
+  // Runs consistency checks on the fork / join and workshare / barrier nodes in the parallel CFG
+  // If the --omp-ast flag is not selected by the user, the parallel nodes are not inserted into the CFG
+  if (args.getBool("omp-ast")) {
+    cfanalyzer->forkJoinConsistencyChecks(flow);
+  }
+
   SAWYER_MESG(logger[TRACE])<< "STATUS: Building CFGs finished."<<endl;
   if(args.getBool("reduce-cfg")) {
     int cnt=cfanalyzer->optimizeFlow(flow);

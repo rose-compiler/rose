@@ -344,18 +344,22 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   }
 
     // all omp statements
+  case V_SgOmpParallelStatement: {
+    return labeler->forkLabel(node);
+  }
+  case V_SgOmpSectionsStatement:
+  case V_SgOmpForStatement: {
+    return labeler->workshareLabel(node);
+  }
+  case V_SgOmpSectionStatement:
   case V_SgOmpTargetStatement:
-  case V_SgOmpParallelStatement:
   case V_SgOmpSimdStatement:
-  case V_SgOmpForStatement:
   case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpSectionStatement:
-  case V_SgOmpSectionsStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
   case V_SgOmpTaskStatement:
@@ -545,26 +549,32 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
 
-  case V_SgOmpTargetStatement:
-  case V_SgOmpParallelStatement:
-  case V_SgOmpSimdStatement:
-  case V_SgOmpForStatement: {
-    // the final label is the final label of the child node's construct
-    SgNode* nextNestedStmt=node->get_traversalSuccessorByIndex(0);
-    LabelSet finalLabelSet=finalLabels(nextNestedStmt);
-    finalSet+=finalLabelSet;
+  case V_SgOmpParallelStatement: {
+    finalSet.insert(labeler->joinLabel(node));
     return finalSet;
   }
+  case V_SgOmpSectionsStatement:
+  case V_SgOmpForStatement: {
+    finalSet.insert(labeler->barrierLabel(node));
+    return finalSet;
+  }
+  
+  case V_SgOmpTargetStatement:
+  case V_SgOmpSimdStatement:
     
     // all omp statements
+  case V_SgOmpSectionStatement:{
+    auto body = node->get_traversalSuccessorByIndex(0);
+    auto bodyFinals = finalLabels(body);
+    finalSet += bodyFinals;
+    return finalSet;
+  }
   case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpSectionStatement:
-  case V_SgOmpSectionsStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
   case V_SgOmpTaskStatement:
@@ -1101,31 +1111,92 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgEnumDeclaration:
     return edgeSet;
 
-    // parallel nested omp constructs
-  case V_SgOmpTargetStatement:
-  case V_SgOmpParallelStatement:
-  case V_SgOmpSimdStatement:
-  case V_SgOmpForStatement: {
-    SgNode* nextNestedStmt=node->get_traversalSuccessorByIndex(0);
-    // need to compute flow of next stmt because it is nested (and not at basic-block level)
-    Flow nextNestedStmtFlow=flow(nextNestedStmt);
-    edgeSet+=nextNestedStmtFlow;
+  // Code duplication only for easy distinction between OMP parallel and OMP for (could be combined easily)
+  case V_SgOmpParallelStatement: {
+    SgNode *nextNestedStmt = node->get_traversalSuccessorByIndex(0);
+    auto nextFlow = flow(nextNestedStmt);
+    edgeSet += nextFlow;
 
-    // the label is the final label (but function finalLabels cannot be used here because it gives the final labels of the entire nested construct)
-    Label lab=getLabel(node);
-    Edge edge1=Edge(lab,EDGE_FORWARD,initialLabel(nextNestedStmt));
-    edgeSet.insert(edge1);
+    // Forward edge to connect nested body
+    auto lab = labeler->forkLabel(node);
+    auto e = Edge(lab, EDGE_FORWARD, initialLabel(nextNestedStmt));
+    edgeSet.insert(e);
+
+    // Edges connecting inner final labels with join node for proper indication of synchonization
+    auto finals = finalLabels(nextNestedStmt);
+    auto join = labeler->joinLabel(node);
+    for (auto l : finals) {
+      auto e = Edge(l, EDGE_FORWARD, join);
+      edgeSet.insert(e);
+    }
     return edgeSet;
   }
-    // these omp statements do not generate edges in addition to the ingoing and outgoing edge
+  case V_SgOmpForStatement: {
+    SgNode *nextNestedStmt = node->get_traversalSuccessorByIndex(0);
+    auto nextFlow = flow(nextNestedStmt);
+    edgeSet += nextFlow;
+
+    // Forward edge to connect nested body
+    auto lab = labeler->workshareLabel(node);
+    auto e = Edge(lab, EDGE_FORWARD, initialLabel(nextNestedStmt));
+    edgeSet.insert(e);
+
+    // Edges connecting inner final labels with barrier node for proper indication of synchonization
+    auto finals = finalLabels(nextNestedStmt);
+    auto barrier = labeler->barrierLabel(node);
+    for (auto l : finals) {
+      auto e = Edge(l, EDGE_FORWARD, barrier);
+      if (SgNodeHelper::isCond(labeler->getNode(l))) {
+        e.addType(EDGE_FALSE);
+      }
+      edgeSet.insert(e);
+    }
+    return edgeSet;
+  }
+  
+  case V_SgOmpSectionsStatement: {
+    // every statement in the basic block needs to be a SgOmpSectionStatement
+    // don't construct the control flow for the basic block, because OMP semantics is different here
+    auto bb = isSgBasicBlock(node->get_traversalSuccessorByIndex(0));
+
+    auto lab = labeler->workshareLabel(node);
+    for (auto stmt : bb->get_statements()) {
+      if (!isSgOmpSectionStatement(stmt)) {
+        logger[ERROR] << "All sections need to be marked with a *#pragma omp section* for now" << endl;
+      }
+      ROSE_ASSERT(isSgOmpSectionStatement(stmt));
+      auto bodyFlow = flow(stmt);
+      edgeSet += bodyFlow;
+      auto e = Edge(lab, EDGE_FORWARD, initialLabel(stmt));
+      edgeSet.insert(e);
+    }
+    auto barrier = labeler->barrierLabel(node);
+    for (auto stmt : bb->get_statements()) {
+      auto finals = finalLabels(stmt);
+      for (auto l : finals) {
+        auto e = Edge(l, EDGE_FORWARD, barrier);
+        edgeSet.insert(e);
+      }
+    }
+    return edgeSet;
+  }
+  case V_SgOmpSectionStatement: {
+    auto nextStmt = node->get_traversalSuccessorByIndex(0);
+    auto bodyFlow = flow(nextStmt);
+    edgeSet += bodyFlow;
+    auto e = Edge(labeler->getLabel(node), EDGE_FORWARD, initialLabel(nextStmt));
+    edgeSet.insert(e);
+    return edgeSet;
+  }
+  // these omp statements do not generate edges in addition to the ingoing and outgoing edge
+  case V_SgOmpTargetStatement:
+  case V_SgOmpSimdStatement:
   case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpSectionStatement:
-  case V_SgOmpSectionsStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
   case V_SgOmpTaskStatement:
@@ -1521,4 +1592,31 @@ void CFAnalysis::setFunctionCallMapping(FunctionCallMapping* fcm) {
 
 FunctionCallMapping* CFAnalysis::getFunctionCallMapping() {
   return _functionCallMapping;
+}
+
+bool CFAnalysis::forkJoinConsistencyChecks(Flow &flow) const {
+  logger[INFO] << "Running fork/join consistency tests." << endl;
+  const auto flowLabels = flow.nodeLabels();
+  int forks, joins, workshares, barriers;
+  forks = joins = workshares = barriers = 0;
+  for (const auto l : flowLabels) {
+    if (labeler->isForkLabel(l)) {
+      forks++;
+    }
+    if (labeler->isJoinLabel(l)) {
+      joins++;
+    }
+    if (labeler->isWorkshareLabel(l)) {
+      workshares++;
+    }
+    if (labeler->isBarrierLabel(l)) {
+      barriers++;
+    }
+  }
+  bool forksEqualJoins(forks == joins);
+  bool barriersLessOrEqualWorkshare(workshares >= barriers); // nowait can reduce the number of barriers.
+  assert(forksEqualJoins);
+  assert(barriersLessOrEqualWorkshare); 
+
+  return forksEqualJoins && barriersLessOrEqualWorkshare;
 }
