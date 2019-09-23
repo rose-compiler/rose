@@ -286,6 +286,7 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgOmpParallelStatement:
     return 2;
   case V_SgOmpCriticalStatement:
+  case V_SgOmpBarrierStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:   
   case V_SgOmpForSimdStatement:
@@ -342,7 +343,11 @@ void Labeler::createLabels(SgNode* root) {
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_FORK));
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_JOIN));
       } else if(isSgOmpForStatement(*i) || isSgOmpSectionsStatement(*i)) {
+        assert(num == 2);
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_WORKSHARE));
+        registerLabel(LabelProperty(*i, LabelProperty::LABEL_BARRIER));
+      } else if(isSgOmpBarrierStatement(*i)) {
+        assert(num == 1);
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_BARRIER));
       } else {
         // all other cases
@@ -505,6 +510,10 @@ Label Labeler::workshareLabel(SgNode *node) {
 }
 
 Label Labeler::barrierLabel(SgNode *node) {
+  if (isSgOmpBarrierStatement(node)) {
+    Label lab = getLabel(node);
+    return lab;
+  }
   ROSE_ASSERT(isSgOmpForStatement(node) || isSgOmpSectionsStatement(node));
   Label lab = getLabel(node);
   return lab+1;

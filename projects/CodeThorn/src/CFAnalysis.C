@@ -333,6 +333,9 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     return labeler->workshareLabel(node);
   }
   case V_SgOmpSectionStatement:
+  case V_SgOmpBarrierStatement: {
+    return labeler->barrierLabel(node);
+  }
   case V_SgOmpTargetStatement:
   case V_SgOmpSimdStatement:
   case V_SgOmpAtomicStatement:
@@ -536,6 +539,12 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   }
   case V_SgOmpSectionsStatement:
   case V_SgOmpForStatement: {
+    // In case the workshare is marked with nowait no barrier
+    if (SgNodeHelper::hasNoWait(isSgOmpClauseBodyStatement(node))) {
+      auto lbls = finalLabels(node->get_traversalSuccessorByIndex(0));
+      finalSet += lbls;
+      return finalSet;
+    }
     finalSet.insert(labeler->barrierLabel(node));
     return finalSet;
   }
@@ -548,6 +557,10 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     auto body = node->get_traversalSuccessorByIndex(0);
     auto bodyFinals = finalLabels(body);
     finalSet += bodyFinals;
+    return finalSet;
+  }
+  case V_SgOmpBarrierStatement: {
+    finalSet.insert(labeler->barrierLabel(node));
     return finalSet;
   }
   case V_SgOmpAtomicStatement:
@@ -1112,6 +1125,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     }
     return edgeSet;
   }
+  
   case V_SgOmpForStatement: {
     SgNode *nextNestedStmt = node->get_traversalSuccessorByIndex(0);
     auto nextFlow = flow(nextNestedStmt);
@@ -1124,7 +1138,12 @@ Flow CFAnalysis::flow(SgNode* node) {
 
     // Edges connecting inner final labels with barrier node for proper indication of synchonization
     auto finals = finalLabels(nextNestedStmt);
-    auto barrier = labeler->barrierLabel(node);
+    // omit edge to barrier node when nowait clause is given
+    if (SgNodeHelper::hasNoWait(isSgOmpClauseBodyStatement(node))) {
+      return edgeSet;
+    }
+    // Introduce the edges to the implicit barrier
+    auto barrier = labeler->barrierLabel(node); 
     for (auto l : finals) {
       auto e = Edge(l, EDGE_FORWARD, barrier);
       if (SgNodeHelper::isCond(labeler->getNode(l))) {
@@ -1144,6 +1163,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     for (auto stmt : bb->get_statements()) {
       if (!isSgOmpSectionStatement(stmt)) {
         logger[ERROR] << "All sections need to be marked with a *#pragma omp section* for now" << endl;
+        logger[INFO] << "Not required by OMP standard." << endl;
       }
       ROSE_ASSERT(isSgOmpSectionStatement(stmt));
       auto bodyFlow = flow(stmt);
@@ -1151,6 +1171,11 @@ Flow CFAnalysis::flow(SgNode* node) {
       auto e = Edge(lab, EDGE_FORWARD, initialLabel(stmt));
       edgeSet.insert(e);
     }
+    // Omit the introduction of additional final->barrier edges when nowait is given
+    if (SgNodeHelper::hasNoWait(isSgOmpClauseBodyStatement(node))) {
+      return edgeSet;
+    }
+    // Add the edge to the barrier node
     auto barrier = labeler->barrierLabel(node);
     for (auto stmt : bb->get_statements()) {
       auto finals = finalLabels(stmt);
@@ -1161,6 +1186,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     }
     return edgeSet;
   }
+
   case V_SgOmpSectionStatement: {
     auto nextStmt = node->get_traversalSuccessorByIndex(0);
     auto bodyFlow = flow(nextStmt);
@@ -1169,16 +1195,19 @@ Flow CFAnalysis::flow(SgNode* node) {
     edgeSet.insert(e);
     return edgeSet;
   }
+
+  // omp statements that introduce some sort of synchronization
+  case V_SgOmpBarrierStatement:
+  case V_SgOmpAtomicStatement:
+  case V_SgOmpCriticalStatement:
+  case V_SgOmpFlushStatement:	
+  case V_SgOmpMasterStatement:
+  case V_SgOmpSingleStatement:
   // these omp statements do not generate edges in addition to the ingoing and outgoing edge
   case V_SgOmpTargetStatement:
   case V_SgOmpSimdStatement:
-  case V_SgOmpAtomicStatement:
-  case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
-  case V_SgOmpFlushStatement:	
-  case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
   case V_SgOmpTaskStatement:
   case V_SgOmpTaskwaitStatement:
@@ -1555,8 +1584,8 @@ FunctionIdMapping* CFAnalysis::getFunctionIdMapping() {
 bool CFAnalysis::forkJoinConsistencyChecks(Flow &flow) const {
   logger[INFO] << "Running fork/join consistency tests." << endl;
   const auto flowLabels = flow.nodeLabels();
-  int forks, joins, workshares, barriers;
-  forks = joins = workshares = barriers = 0;
+  int forks, joins;
+  forks = joins = 0;
   for (const auto l : flowLabels) {
     if (labeler->isForkLabel(l)) {
       forks++;
@@ -1564,17 +1593,10 @@ bool CFAnalysis::forkJoinConsistencyChecks(Flow &flow) const {
     if (labeler->isJoinLabel(l)) {
       joins++;
     }
-    if (labeler->isWorkshareLabel(l)) {
-      workshares++;
-    }
-    if (labeler->isBarrierLabel(l)) {
-      barriers++;
-    }
   }
+  // At that point we cannot really make any more assumptions
   bool forksEqualJoins(forks == joins);
-  bool barriersLessOrEqualWorkshare(workshares >= barriers); // nowait can reduce the number of barriers.
   assert(forksEqualJoins);
-  assert(barriersLessOrEqualWorkshare); 
 
-  return forksEqualJoins && barriersLessOrEqualWorkshare;
+  return forksEqualJoins;
 }

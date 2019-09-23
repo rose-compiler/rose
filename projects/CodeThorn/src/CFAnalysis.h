@@ -31,6 +31,7 @@ namespace CodeThorn {
  *         Exceptions are when creating fork/join and workshare/barrier nodes in the parallel CFG. Here, the final labels of the enclosed for loop need to be connected to the final label, i.e., the barrier, of the enclosing OpenMP for statement. In a similar fashion need the final labels of the enclosed structured block be connected to the final label of the enclosing OpenMP parallel statement.
  *    3.2) Construct the flow between (AST) nodes, e.g., within a basic block (see flow(SgNode *n1, SgNode *n2))
  *
+ *
   * \author Markus Schordan
   * \date 2012.
  */

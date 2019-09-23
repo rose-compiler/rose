@@ -550,6 +550,7 @@ check-fork-join-cfg:
 	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-12-SeqForParForNestedParFor.c
 	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-13-ParForNestedParForNestedParFor.c
 	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-14-NestedFollowingNestedPar.c
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-15-ParConsecutiveNoWaitFor.c
 	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-20-ParallelForCallFuncParallelFor.c
 	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-30-ParSectionsForLoop.c
 	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-31-ParSectionsAssignment.c

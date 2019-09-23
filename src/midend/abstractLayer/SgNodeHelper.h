@@ -47,6 +47,7 @@ class SgCaseOptionStmt;
 class SgDefaultOptionStmt;
 
 class SgPragmaDeclaration;
+class SgOmpClauseBodyStatement;
 
 namespace SgNodeHelper {
 
@@ -461,6 +462,9 @@ namespace SgNodeHelper {
 
     // checks whether 'elem' is the last child (in traversal order) of node 'parent'.
     bool isLastChildOf(SgNode* elem, SgNode* parent);
+
+    // Checks if an OpenMP construct is marked with a nowait clause
+    bool hasNoWait(SgOmpClauseBodyStatement *ompNode);
 
   //! Provides functions which match a certain AST pattern and return a pointer to a node of interest inside that pattern.
   namespace Pattern {
