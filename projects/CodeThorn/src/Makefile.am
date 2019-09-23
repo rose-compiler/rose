@@ -460,7 +460,7 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-equivalence check-svcomp-witness check-fork-join-cfg
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-equivalence check-svcomp-witness check-par-cfg
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
@@ -534,7 +534,7 @@ check-const-analysis:
 
 check-par-cfg:
 	@echo ================================================================
-	@echo RUNNING FORK/JOIN CFG CHECK
+	@echo RUNNING PARALLEL CFG CHECK
 	@echo ================================================================
 	@echo 01
 	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-01-SimpleOmpParallelFor.c
@@ -576,7 +576,8 @@ check-par-cfg:
 	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-32-ParSectionsAssignments.c
 	@echo 33
 	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-33-ParSectionsParForLoop.c
-
+	@echo 34
+	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-34-ParSectionsNoWait.c
 
 
 

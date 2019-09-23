@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
   {
 #pragma omp for
   for (int i = 0; i < 4; ++i) {
-    b[i] = foo(a[i], 4);
+    b[i] = foo(a, 4);
   }
   }
 

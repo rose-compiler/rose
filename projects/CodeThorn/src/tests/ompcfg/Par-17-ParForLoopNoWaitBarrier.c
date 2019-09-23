@@ -5,13 +5,15 @@ int main(int argc, char **argv) {
 
 #pragma omp parallel
   {
-#pragma omp for
+#pragma omp for nowait
   for (int i = 0; i < 4; ++i) {
     a[i] = 3*a[i];
   }
-
 #pragma omp barrier
-
+#pragma omp for nowait
+  for (int i = 0; i < 4; ++i) {
+    a[i] += a[i];
+  }
   }
 
   return 0;

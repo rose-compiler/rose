@@ -537,15 +537,32 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     finalSet.insert(labeler->joinLabel(node));
     return finalSet;
   }
-  case V_SgOmpSectionsStatement:
+  case V_SgOmpSectionsStatement: {
+    ROSE_ASSERT(isSgOmpClauseBodyStatement(node));
+    // If sections are marked nowait, we need to connect all final labels of sections to successive / join node
+    if (SgNodeHelper::hasOmpNoWait(isSgOmpClauseBodyStatement(node))) {
+      auto sections = SgNodeHelper::getOmpSectionList(isSgOmpSectionsStatement(node));
+      for (auto s : sections) {
+        auto finals = finalLabels(s);
+        finalSet += finals;
+      }
+    } else {
+      // normally introduce barrier node and return its label as final label
+      finalSet.insert(labeler->barrierLabel(node));
+    }
+    return finalSet;
+  }
+
   case V_SgOmpForStatement: {
-    // In case the workshare is marked with nowait no barrier
-    if (SgNodeHelper::hasNoWait(isSgOmpClauseBodyStatement(node))) {
+    ROSE_ASSERT(isSgOmpClauseBodyStatement(node));
+    // In case the workshare is marked with nowait ommit barrier
+    if (SgNodeHelper::hasOmpNoWait(isSgOmpClauseBodyStatement(node))) {
       auto lbls = finalLabels(node->get_traversalSuccessorByIndex(0));
       finalSet += lbls;
-      return finalSet;
+    } else {
+      // normally introduce barrier node and return its label as final label
+      finalSet.insert(labeler->barrierLabel(node));
     }
-    finalSet.insert(labeler->barrierLabel(node));
     return finalSet;
   }
   
@@ -1139,7 +1156,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     // Edges connecting inner final labels with barrier node for proper indication of synchonization
     auto finals = finalLabels(nextNestedStmt);
     // omit edge to barrier node when nowait clause is given
-    if (SgNodeHelper::hasNoWait(isSgOmpClauseBodyStatement(node))) {
+    if (SgNodeHelper::hasOmpNoWait(isSgOmpClauseBodyStatement(node))) {
       return edgeSet;
     }
     // Introduce the edges to the implicit barrier
@@ -1157,26 +1174,23 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgOmpSectionsStatement: {
     // every statement in the basic block needs to be a SgOmpSectionStatement
     // don't construct the control flow for the basic block, because OMP semantics is different here
-    auto bb = isSgBasicBlock(node->get_traversalSuccessorByIndex(0));
-
-    auto lab = labeler->workshareLabel(node);
-    for (auto stmt : bb->get_statements()) {
-      if (!isSgOmpSectionStatement(stmt)) {
-        logger[ERROR] << "All sections need to be marked with a *#pragma omp section* for now" << endl;
-        logger[INFO] << "Not required by OMP standard." << endl;
-      }
-      ROSE_ASSERT(isSgOmpSectionStatement(stmt));
-      auto bodyFlow = flow(stmt);
+    auto lab = labeler->workshareLabel(node); 
+    auto sections = SgNodeHelper::getOmpSectionList(isSgOmpSectionsStatement(node));
+    for (auto s : sections) {
+      ROSE_ASSERT(isSgOmpSectionStatement(s));
+      auto bodyFlow = flow(s);
       edgeSet += bodyFlow;
-      auto e = Edge(lab, EDGE_FORWARD, initialLabel(stmt));
+      auto e = Edge(lab, EDGE_FORWARD, initialLabel(s));
       edgeSet.insert(e);
     }
+
     // Omit the introduction of additional final->barrier edges when nowait is given
-    if (SgNodeHelper::hasNoWait(isSgOmpClauseBodyStatement(node))) {
+    if (SgNodeHelper::hasOmpNoWait(isSgOmpClauseBodyStatement(node))) {
       return edgeSet;
     }
     // Add the edge to the barrier node
     ROSE_ASSERT(isSgOmpSectionsStatement(node));
+    auto bb = isSgBasicBlock(node->get_traversalSuccessorByIndex(0));
     auto barrier = labeler->barrierLabel(node);
     for (auto stmt : bb->get_statements()) {
       auto finals = finalLabels(stmt);
