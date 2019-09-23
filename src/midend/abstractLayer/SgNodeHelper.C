@@ -1846,13 +1846,25 @@ bool SgNodeHelper::isLastChildOf(SgNode* elem, SgNode* parent) {
   return elem==children.back();
 }
 
-bool SgNodeHelper::hasNoWait(SgOmpClauseBodyStatement *ompNode) {
+bool SgNodeHelper::hasOmpNoWait(SgOmpClauseBodyStatement *ompNode) {
   for (auto c : ompNode->get_clauses()) {
     if (isSgOmpNowaitClause(c)) {
       return true;
     }
   }
   return false;
+}
+
+
+SgNodeHelper::OmpSectionList SgNodeHelper::getOmpSectionList(SgOmpSectionsStatement *sectionsStmt) {
+  auto bb = isSgBasicBlock(sectionsStmt->get_traversalSuccessorByIndex(0));
+  OmpSectionList l;
+  for (auto stmt : bb->get_statements()) {
+    if (auto s = isSgOmpSectionStatement(stmt)) {
+      l.push_back(s);
+    }
+  }
+  return l;
 }
 
 std::string SgNodeHelper::getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl) {
