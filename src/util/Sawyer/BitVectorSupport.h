@@ -971,7 +971,7 @@ boost::uint64_t toInteger(const Word *words, const BitRange &range) {
 
 /** Convert a small bit vector to an integer.
  *
- *  Faster version of @ref toInteger for instances where the range offset is zero, and the size is not greater than 64 bits. */
+ *  Faster version of @ref toInteger for instances where the range offset is zero and the size is not greater than 64 bits. */
 template<class Word>
 boost::uint64_t toInteger(const Word *words, size_t nbits) {
     boost::uint64_t result = 0;
@@ -982,6 +982,38 @@ boost::uint64_t toInteger(const Word *words, size_t nbits) {
     if (nbits < 64)
         result &= ~((~(boost::uint64_t)0) << nbits);
     return result;
+}
+
+/** Convert a bit vector to a signed integer.
+ *
+ *  Converts the specified range to a signed 64-bit value and returns it. If the size of the range is one then the return value
+ *  is either zero or one; if the size of the range is less than or equal to 64 bits then the bits are sign-extended to 64 bits
+ *  and returned; otherwise when the size of the range is larger than 64 bits the low-order 64 bits are returned. */
+template<class Word>
+boost::int64_t toSignedInteger(const Word *words, const BitRange &range) {
+    boost::uint64_t u = toInteger<Word>(words, range);
+    const size_t nBits = range.size();
+    if (nBits > 1 && nBits < 64) {
+        bool isNegative = (u & (boost::uint64_t(1) << (nBits-1))) != 0;
+        if (isNegative)
+            u |= boost::uint64_t(-1) << nBits;
+    }
+    return boost::int64_t(u);
+}
+
+/** Convert a small bit vector to a signed integer.
+ *
+ *  Faster version of @ref toSignedInteger for instances where the range offset is zero and the size is not greater than 64
+ *  bits. */
+template<class Word>
+boost::int64_t toSignedInteger(const Word *words, size_t nBits) {
+    boost::uint64_t u = toInteger<Word>(words, nBits);
+    if (nBits > 1 && nBits < 64) {
+        bool isNegative = (u & (boost::uint64_t(1) << (nBits-1))) != 0;
+        if (isNegative)
+            u |= boost::uint64_t(-1) << nBits;
+    }
+    return boost::int64_t(u);
 }
 
 template<class Word>

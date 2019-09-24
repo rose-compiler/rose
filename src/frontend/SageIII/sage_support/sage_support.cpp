@@ -2871,10 +2871,11 @@ SgFile::generate_C_preprocessor_intermediate_filename( string sourceFilename )
 int openFortranParser_main(int argc, char **argv );
 #endif
 
-#ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-// This is defined separately configured only for the EXPERIMENTAL_OFP_ROSE_CONNECTION.
-// Rasmussen (3/12/2018): Modified call to include the source file.
-   int experimental_fortran_main(int argc, char **argv, SgSourceFile* sg_source_file);
+#if defined(ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION) || defined(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION)
+// Added support for usage of Flang front end. Both ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION and
+// ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION should not be configured at the same time.  If so, the best
+// case scenario is that a multiple symbol error will be reported at link time [Rasmussen 2019.08.30].
+   int experimental_fortran_main(int argc, char* argv[], SgSourceFile* sg_source_file);
 #endif
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
@@ -4335,16 +4336,22 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      ROSE_ASSERT(astIncludeStack.size() == 0);
 
   // DQ (6/7/2013): Added support for call the experimental frontran frontend (if the associated option is specified on the command line).
-  // frontendErrorLevel = openFortranParser_main (numberOfCommandLineArguments, inputCommandLine);
-  // int frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
      int frontendErrorLevel = 0;
-     if (get_experimental_fortran_frontend() == true)
+     if (get_experimental_fortran_frontend() == true || get_experimental_flang_frontend() == true)
         {
           vector<string> experimentalFrontEndCommandLine;
 
        // Push an initial argument onto the command line stack so that the command line can be interpreted
        // as coming from an command shell command line (where the calling program is always argument zero).
-          experimentalFrontEndCommandLine.push_back("dummyArg_0");
+          if (get_experimental_fortran_frontend() == true)
+             {
+                experimentalFrontEndCommandLine.push_back("dummyArg_0");
+             }
+          else
+             {
+                experimentalFrontEndCommandLine.push_back("f18");
+                experimentalFrontEndCommandLine.push_back("-fexternal-builder");
+             }
 
        // Rasmussen (11/13/2017): Removed usage of --parseTable command-line option.
        // This information is better known by the individual language support files.
@@ -4352,9 +4359,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
           experimentalFrontEndCommandLine.push_back(get_sourceFileNameWithPath());
 
-          int experimental_openFortranParser_argc    = 0;
-          char** experimental_openFortranParser_argv = NULL;
-          CommandlineProcessing::generateArgcArgvFromList(experimentalFrontEndCommandLine,experimental_openFortranParser_argc,experimental_openFortranParser_argv);
+          int experimental_FortranParser_argc    = 0;
+          char** experimental_FortranParser_argv = NULL;
+          CommandlineProcessing::generateArgcArgvFromList(experimentalFrontEndCommandLine,experimental_FortranParser_argc,experimental_FortranParser_argv);
 
           if ( SgProject::get_verbose() > 1 )
              {
@@ -4362,23 +4369,25 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                 printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
              }
 
-#ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+// Added ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION. Note that they both use the same entrance to the parser.
+// The two experimental Fortran versions should not be used at the same time [Rasmussen 2019.08.30]
+#if defined(ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION) || defined(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION)
        // Rasmussen (3/12/2018): Modified call to include the source file.
           SgSourceFile* fortranSourceFile = const_cast<SgSourceFile*>(this);
-          frontendErrorLevel = experimental_fortran_main (experimental_openFortranParser_argc,
-                                                          experimental_openFortranParser_argv,
+          frontendErrorLevel = experimental_fortran_main (experimental_FortranParser_argc,
+                                                          experimental_FortranParser_argv,
                                                           fortranSourceFile);
 #else
-          printf ("ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION is not defined \n");
+          printf ("Neither ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION nor ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION is defined \n");
 #endif
 
           if (frontendErrorLevel == 0)
              {
-                if ( SgProject::get_verbose() > 1 ) printf ("SUCCESS with call to experimental_openFortranParser_main() \n");
+                if ( SgProject::get_verbose() > 1 ) printf ("SUCCESS with call to experimental_FortranParser_main() \n");
              }
             else
              {
-               printf ("Error returned from call to experimental_openFortranParser_main(): FAILED! (frontendErrorLevel = %d) \n",frontendErrorLevel);
+               printf ("Error returned from call to experimental_FortranParser_main(): FAILED! (frontendErrorLevel = %d) \n",frontendErrorLevel);
                exit(1);
              }
         }

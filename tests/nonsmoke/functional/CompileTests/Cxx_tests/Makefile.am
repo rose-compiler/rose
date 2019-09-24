@@ -584,6 +584,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    rose-2007-01.C \
    rose-2007-02.C \
    rose-2008.C \
+   rose-2073.C \
    test2019_01.C \
    test2019_02.C \
    test2019_03.C \

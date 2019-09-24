@@ -2,7 +2,7 @@ include_rules
 
 ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
     SOURCES = AbstractLocation.C BinaryAstHash.C BinaryBestMapAddress.C BinaryCallingConvention.C BinaryCodeInserter.C \
-        BinaryControlFlow.C BinaryDataFlow.C BinaryDemangler.C BinaryDominance.C BinaryFeasiblePath.C \
+        BinaryControlFlow.C BinaryDataFlow.C BinaryDebugger.C BinaryDemangler.C BinaryDominance.C BinaryFeasiblePath.C \
 	BinaryFunctionCall.C BinaryFunctionSimilarity.C BinaryMagic.C BinaryNoOperation.C BinaryPointerDetection.C \
 	BinaryReachability.C BinaryReturnValueUsed.C BinarySmtCommandLine.C BinarySmtSolver.C BinarySmtlibSolver.C \
 	BinaryStackDelta.C BinaryString.C BinarySymbolicExpr.C BinarySymbolicExprParser.C BinarySystemCall.C \
@@ -13,10 +13,10 @@ endif
 
 run $(librose_compile) $(SOURCES)
 
-run $(public_header) AbstractLocation.h BinaryAstHash.h BinaryAnalysisUtils.h BinaryBestMapAddress.h BinaryCallingConvention.h \
-    BinaryCodeInserter.h BinaryConcolic.h BinaryControlFlow.h BinaryDataFlow.h BinaryDemangler.h BinaryDominance.h \
-    BinaryFeasiblePath.h BinaryFunctionCall.h BinaryFunctionSimilarity.h BinaryMagic.h BinaryMatrix.h BinaryNoOperation.h \
-    BinaryPointerDetection.h BinaryReachability.h BinaryReturnValueUsed.h BinarySmtCommandLine.h BinarySmtSolver.h \
-    BinarySmtlibSolver.h BinaryStackDelta.h BinaryStackVariable.h BinaryString.h BinarySymbolicExpr.h \
-    BinarySymbolicExprParser.h BinarySystemCall.h BinaryTaintedFlow.h BinaryToSource.h BinaryYicesSolver.h BinaryZ3Solver.h \
-    DwarfLineMapper.h ether.h
+run $(public_header) AbstractLocation.h BinaryAstHash.h BinaryAnalysisUtils.h BinaryBestMapAddress.h \
+    BinaryCallingConvention.h BinaryCodeInserter.h BinaryConcolic.h BinaryControlFlow.h BinaryDataFlow.h BinaryDebugger.h \
+    BinaryDemangler.h BinaryDominance.h BinaryFeasiblePath.h BinaryFunctionCall.h BinaryFunctionSimilarity.h BinaryMagic.h \
+    BinaryMatrix.h BinaryNoOperation.h BinaryPointerDetection.h BinaryReachability.h BinaryReturnValueUsed.h \
+    BinarySmtCommandLine.h BinarySmtSolver.h BinarySmtlibSolver.h BinaryStackDelta.h BinaryStackVariable.h BinaryString.h \
+    BinarySymbolicExpr.h BinarySymbolicExprParser.h BinarySystemCall.h BinaryTaintedFlow.h BinaryToSource.h \
+    BinaryYicesSolver.h BinaryZ3Solver.h DwarfLineMapper.h ether.h

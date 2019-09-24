@@ -7589,56 +7589,56 @@ namespace Rose {
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/frontend/Disassemblers/BinaryDebugger.h line 15
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace BinaryDebugger {
-    /** Convert Rose::BinaryAnalysis::BinaryDebugger::DetachMode enum constant to a string. */
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Debugger {
+    /** Convert Rose::BinaryAnalysis::Debugger::DetachMode enum constant to a string. */
     const char* DetachMode(int64_t);
 
-    /** Convert Rose::BinaryAnalysis::BinaryDebugger::DetachMode enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::Debugger::DetachMode enum constant to a string. */
     std::string DetachMode(int64_t, const std::string &strip);
 
-    /** Return all Rose::BinaryAnalysis::BinaryDebugger::DetachMode member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::Debugger::DetachMode member values as a vector. */
     const std::vector<int64_t>& DetachMode();
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisBinaryDebuggerDetachMode(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyBinaryAnalysisBinaryDebuggerDetachMode();
+    std::string stringifyBinaryAnalysisDebuggerDetachMode(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisDebuggerDetachMode();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/frontend/Disassemblers/BinaryDebugger.h line 18
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace BinaryDebugger {
-    /** Convert Rose::BinaryAnalysis::BinaryDebugger::Flag enum constant to a string. */
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Debugger {
+    /** Convert Rose::BinaryAnalysis::Debugger::Flag enum constant to a string. */
     const char* Flag(int64_t);
 
-    /** Convert Rose::BinaryAnalysis::BinaryDebugger::Flag enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::Debugger::Flag enum constant to a string. */
     std::string Flag(int64_t, const std::string &strip);
 
-    /** Return all Rose::BinaryAnalysis::BinaryDebugger::Flag member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::Debugger::Flag member values as a vector. */
     const std::vector<int64_t>& Flag();
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisBinaryDebuggerFlag(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyBinaryAnalysisBinaryDebuggerFlag();
+    std::string stringifyBinaryAnalysisDebuggerFlag(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisDebuggerFlag();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/frontend/Disassemblers/BinaryDebugger.h line 29
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace BinaryDebugger {
-    /** Convert Rose::BinaryAnalysis::BinaryDebugger::RegPageStatus enum constant to a string. */
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Debugger {
+    /** Convert Rose::BinaryAnalysis::Debugger::RegPageStatus enum constant to a string. */
     const char* RegPageStatus(int64_t);
 
-    /** Convert Rose::BinaryAnalysis::BinaryDebugger::RegPageStatus enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::Debugger::RegPageStatus enum constant to a string. */
     std::string RegPageStatus(int64_t, const std::string &strip);
 
-    /** Return all Rose::BinaryAnalysis::BinaryDebugger::RegPageStatus member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::Debugger::RegPageStatus member values as a vector. */
     const std::vector<int64_t>& RegPageStatus();
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisBinaryDebuggerRegPageStatus(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyBinaryAnalysisBinaryDebuggerRegPageStatus();
+    std::string stringifyBinaryAnalysisDebuggerRegPageStatus(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisDebuggerRegPageStatus();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -20902,7 +20902,7 @@ namespace stringify {
             namespace AssemblerX86 {
             }
             /** Stringification. */
-            namespace BinaryDebugger {
+            namespace Debugger {
             }
             /** Stringification. */
             namespace DisassemblerX86 {

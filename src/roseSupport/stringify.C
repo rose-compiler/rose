@@ -35591,7 +35591,7 @@ namespace Rose {
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/frontend/Disassemblers/BinaryDebugger.h line 15
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace BinaryDebugger {
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Debugger {
     const char* DetachMode(int64_t i) {
         switch (i) {
             case 0L: return "KILL";
@@ -35605,7 +35605,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Bina
     std::string DetachMode(int64_t i, const std::string &strip) {
         std::string s = DetachMode(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::BinaryDebugger::DetachMode)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::Debugger::DetachMode)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -35625,27 +35625,27 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Bina
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisBinaryDebuggerDetachMode(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::BinaryDebugger::DetachMode(i);
+    std::string stringifyBinaryAnalysisDebuggerDetachMode(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::Debugger::DetachMode(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::BinaryDebugger::DetachMode)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::Debugger::DetachMode)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::BinaryDebugger::DetachMode::" + retval;
+                retval = "Rose::BinaryAnalysis::Debugger::DetachMode::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisBinaryDebuggerDetachMode() {
-        return stringify::Rose::BinaryAnalysis::BinaryDebugger::DetachMode();
+    const std::vector<int64_t>& stringifyBinaryAnalysisDebuggerDetachMode() {
+        return stringify::Rose::BinaryAnalysis::Debugger::DetachMode();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/frontend/Disassemblers/BinaryDebugger.h line 18
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace BinaryDebugger {
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Debugger {
     const char* Flag(int64_t i) {
         switch (i) {
             case 1L: return "ATTACH";
@@ -35661,7 +35661,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Bina
     std::string Flag(int64_t i, const std::string &strip) {
         std::string s = Flag(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::BinaryDebugger::Flag)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::Debugger::Flag)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -35683,27 +35683,27 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Bina
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisBinaryDebuggerFlag(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::BinaryDebugger::Flag(i);
+    std::string stringifyBinaryAnalysisDebuggerFlag(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::Debugger::Flag(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::BinaryDebugger::Flag)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::Debugger::Flag)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::BinaryDebugger::Flag::" + retval;
+                retval = "Rose::BinaryAnalysis::Debugger::Flag::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisBinaryDebuggerFlag() {
-        return stringify::Rose::BinaryAnalysis::BinaryDebugger::Flag();
+    const std::vector<int64_t>& stringifyBinaryAnalysisDebuggerFlag() {
+        return stringify::Rose::BinaryAnalysis::Debugger::Flag();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/frontend/Disassemblers/BinaryDebugger.h line 29
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace BinaryDebugger {
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Debugger {
     const char* RegPageStatus(int64_t i) {
         switch (i) {
             case 0L: return "REGPAGE_NONE";
@@ -35716,7 +35716,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Bina
     std::string RegPageStatus(int64_t i, const std::string &strip) {
         std::string s = RegPageStatus(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::BinaryDebugger::RegPageStatus)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::Debugger::RegPageStatus)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -35735,21 +35735,21 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Bina
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisBinaryDebuggerRegPageStatus(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::BinaryDebugger::RegPageStatus(i);
+    std::string stringifyBinaryAnalysisDebuggerRegPageStatus(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::Debugger::RegPageStatus(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::BinaryDebugger::RegPageStatus)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::Debugger::RegPageStatus)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::BinaryDebugger::RegPageStatus::" + retval;
+                retval = "Rose::BinaryAnalysis::Debugger::RegPageStatus::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisBinaryDebuggerRegPageStatus() {
-        return stringify::Rose::BinaryAnalysis::BinaryDebugger::RegPageStatus();
+    const std::vector<int64_t>& stringifyBinaryAnalysisDebuggerRegPageStatus() {
+        return stringify::Rose::BinaryAnalysis::Debugger::RegPageStatus();
     }
 }
 

@@ -440,12 +440,6 @@ if(enable-python)
   endif()
 endif()
 
-# X10
-option(enable-x10 "Enable X10 analysis" OFF)
-if(enable-x10)
-  set(ROSE_BUILD_X10_LANGUAGE_SUPPORT 1)
-endif()
-
 # Ada
 option(enable-ada "Enable Ada analysis" OFF)
 if(enable-ada)

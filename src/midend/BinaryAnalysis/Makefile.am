@@ -16,6 +16,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryCodeInserter.C					\
     BinaryControlFlow.C						\
     BinaryDataFlow.C						\
+    BinaryDebugger.C						\
     BinaryDemangler.C						\
     BinaryDominance.C						\
     BinaryFeasiblePath.C					\
@@ -61,6 +62,7 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/MemoryCellMap.C			\
     instructionSemantics/MemoryCellState.C			\
     instructionSemantics/MultiSemantics2.C			\
+    instructionSemantics/NativeSemantics.C			\
     instructionSemantics/NullSemantics2.C			\
     instructionSemantics/PartialSymbolicSemantics2.C		\
     instructionSemantics/RegisterStateGeneric.C			\
@@ -91,6 +93,7 @@ pkginclude_HEADERS =					\
     BinaryConcolic.h					\
     BinaryControlFlow.h					\
     BinaryDataFlow.h					\
+    BinaryDebugger.h					\
     BinaryDemangler.h					\
     BinaryDominance.h					\
     BinaryFeasiblePath.h				\
@@ -130,6 +133,7 @@ pkginclude_HEADERS =					\
     instructionSemantics/MemoryCellMap.h		\
     instructionSemantics/MemoryCellState.h		\
     instructionSemantics/MultiSemantics2.h		\
+    instructionSemantics/NativeSemantics.h		\
     instructionSemantics/NullSemantics2.h		\
     instructionSemantics/PartialSymbolicSemantics2.h	\
     instructionSemantics/RegisterStateGeneric.h		\
@@ -140,6 +144,9 @@ pkginclude_HEADERS =					\
     instructionSemantics/TestSemantics2.h		\
     instructionSemantics/TraceSemantics2.h		\
     Concolic/io-utility.h
+
+nobase_pkginclude_HEADERS =			\
+    Concolic/ConcolicExecutor.h
 
 if ROSE_USE_SQLITE_DATABASE
 pkginclude_HEADERS +=					\

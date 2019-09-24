@@ -4,6 +4,7 @@
 #define ROSE_DISASSEMBLER_POWERPC_H
 
 #include "integerOps.h"
+#include "Disassembler.h"
 #include "SageBuilderAsm.h"
 
 namespace Rose {
@@ -56,9 +57,15 @@ private:
                  PowerpcConditionRegisterAccessGranularity reg_grainularity = powerpc_condreggranularity_whole,
                  SgAsmType *type = NULL) const;
 
-    static SgAsmPowerpcInstruction*
-    makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic,
-                                   PowerpcInstructionKind kind, uint32_t insn);
+    /** Test whether instruction is valid for only PowerPC-64.
+     *
+     *  Returns true if the specified instruction kind is valid only for PowerPC-64 architectures and cannot be decoded by
+     *  PowerPC-32 architectures. */
+    bool is64bitInsn(PowerpcInstructionKind);
+
+    /** Creates an instruction AST. */
+    SgAsmPowerpcInstruction* makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic, PowerpcInstructionKind,
+                                                            uint32_t insnBytes);
 
     // Helper function to use field definitions (counted with bits from left and inclusive on both sides) from manual.
     template <size_t First, size_t Last> uint64_t fld() const;

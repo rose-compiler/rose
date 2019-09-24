@@ -45,19 +45,26 @@
 #include "limits.h"
 #include "AstNodeInfo.h"
 #include "SgTypeSizeMapping.h"
+#include "CallString.h"
 
 namespace CodeThorn {
 
-/*!
-  * \author Markus Schordan
-  * \date 2012.
- */
   typedef std::list<const EState*> EStateWorkList;
   typedef std::pair<int, const EState*> FailedAssertion;
   typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
-  /* not used */ enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
+  enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
 
   class SpotConnection;
+
+  struct hash_pair { 
+    template <class T1, class T2> 
+      size_t operator()(const pair<T1, T2>& p) const
+    { 
+      auto hash1 = hash<T1>{}(p.first); 
+      auto hash2 = hash<T2>{}(p.second); 
+      return hash1 ^ hash2; 
+    } 
+  }; 
 
   /*!
    * \author Markus Schordan
@@ -262,8 +269,8 @@ namespace CodeThorn {
     void reduceStg(function<bool(const EState*)> predicate);
 
     void initializeSummaryStates(const PState* initialPStateStored, const ConstraintSet* emptycsetstored);
-    const CodeThorn::EState* getSummaryState(CodeThorn::Label lab);
-    void setSummaryState(CodeThorn::Label lab, CodeThorn::EState const* estate);
+    const CodeThorn::EState* getSummaryState(CodeThorn::Label lab, CallString cs);
+    void setSummaryState(CodeThorn::Label lab, CallString cs, CodeThorn::EState const* estate);
     std::string programPositionInfo(CodeThorn::Label);
 
     bool isApproximatedBy(const EState* es1, const EState* es2);
@@ -434,8 +441,12 @@ namespace CodeThorn {
     // *current* summary state (more than one may be created to allow
     // to represent multiple summary states in the transition system)
     size_t getSummaryStateMapSize();
+    const EState* getBottomSummaryState(Label lab, CallString cs);
   private:
-    boost::unordered_map<int,const EState*> _summaryStateMap;
+    //std::unordered_map<int,const EState*> _summaryStateMap;
+    std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;
+    const CodeThorn::PState* _initialPStateStored=0;
+    const CodeThorn::ConstraintSet* _emptycsetstored=0;
   }; // end of class Analyzer
 } // end of namespace CodeThorn
 

@@ -1,14 +1,22 @@
 START
+
+DEFINE PI "3.14" ;
+
 PROGRAM main ;
 BEGIN
   ITEM ia S ;
   ITEM ib U ;
+  ITEM ff F ;
   ITEM bf B 1 ;
+
   ia = 1 ;
   ia = ib - 2 ;
   ia = ib * 3 ;
   ia = ib / 4 ;
+  ff = 2*PI ;
   bf = ib < 5 ;
+
+% loc(bf) ; %
 
 %  PROC foo ; %
 %     ;       %

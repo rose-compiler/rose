@@ -1405,6 +1405,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "experimental_fortran_frontend", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (8/30/2010): Added experimental support for using the Flang parser for Fortran
+     File.setDataPrototype("bool", "experimental_flang_frontend", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
      File.setDataPrototype("bool", "experimental_cuda_fortran_frontend", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

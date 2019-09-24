@@ -18,6 +18,12 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    SUBDIRS += OpenFortranParser_SAGE_Connection
 endif
 
+# Added support for using flang/F18 for parsing for Fortran [Rasmussen 08/14/2019]
+# Don't build both of these
+if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
+   SUBDIRS += Experimental_Flang_ROSE_Connection
+endif
+
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
    SUBDIRS += Experimental_OpenFortranParser_ROSE_Connection
 endif

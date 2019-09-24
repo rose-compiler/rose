@@ -11,6 +11,7 @@
 #include "Labeler.h"
 #include "CommandLineOptions.h"
 #include "Flow.h"
+#include "FunctionIdMapping.h"
 
 namespace CodeThorn {
 
@@ -41,9 +42,18 @@ class CFAnalysis {
   Flow flow(SgNode* node);
   Flow flow(SgNode* s1, SgNode* s2);
   CodeThorn::Labeler* getLabeler();
+
+  // determine mapping between function calls and function definitions (also resolves function pointers)
+  void computeFunctionCallMapping(SgProject* project);
   // computes from existing intra-procedural flow graph(s) the inter-procedural call information
   InterFlow interFlow(Flow& flow); 
   void intraInterFlow(Flow&, InterFlow&);
+  // Function for setting a pre-computed function-id
+  // mapping. Required for function call resolution across multiple
+  // files, and function pointers.
+  void setFunctionIdMapping(FunctionIdMapping*);
+  FunctionIdMapping* getFunctionIdMapping();
+
   Flow controlDependenceGraph(Flow& controlFlow);
   int reduceNode(Flow& flow, Label lab);
   // eliminates only block begin nodes, but not block end nodes.
@@ -86,6 +96,8 @@ class CFAnalysis {
   CodeThorn::Labeler* labeler;
   bool _createLocalEdge;
   SgNode* correspondingLoopConstruct(SgNode* node);
+  FunctionIdMapping* _functionIdMapping=nullptr;
+
 };    
 
 } // end of namespace CodeThorn

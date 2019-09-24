@@ -809,7 +809,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         }
       } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
         // in case it is a pointer retrieve pointer value
-        SAWYER_MESG(SAWYER_MESG(logger[DEBUG]))<<"pointer-array access."<<endl;
+        SAWYER_MESG(logger[DEBUG])<<"pointer-array access."<<endl;
         if(pstate2.varExists(arrayVarId)) {
           arrayPtrValue=pstate2.readFromMemoryLocation(arrayVarId); // pointer value (without index)
           SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue read from memory, arrayPtrValue:"<<arrayPtrValue.toString(_variableIdMapping)<<endl;

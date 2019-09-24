@@ -896,3 +896,27 @@ int __builtin_bswap32 (int x);
 
 #endif /* ROSE_DEFINE_GNU_BUILTIN_FOR_CUDA */
 
+#ifdef __host__
+#  undef __host__
+#endif
+
+#ifdef __device__
+# undef __device__
+#endif
+
+#ifdef __global__
+#  undef __global__
+#endif
+
+#ifdef __shared__
+# undef __shared__
+#endif
+
+#ifdef __constant__
+# undef __constant__
+#endif
+
+#ifdef __managed__
+# undef __managed__
+#endif
+

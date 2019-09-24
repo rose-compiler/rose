@@ -8,6 +8,7 @@
 #include <Partitioner2/Thunk.h>
 #include <Partitioner2/Utility.h>
 
+#include <boost/logic/tribool.hpp>
 #include <Sawyer/SharedPointer.h>
 
 namespace Rose {
@@ -433,6 +434,13 @@ std::vector<Function::Ptr> findNoopFunctions(const Partitioner&);
  *  according to their names. */
 void nameNoopFunctions(const Partitioner&);
 
+/** Determine if basic block is a stack-based function return.
+ *
+ *  Determines whether the specified basic block is a function return by examining the semantics of the basic block. If at
+ *  the end of the basic block, the instruction pointer has the same value as the value stored on-past-the-end of the stack
+ *  it means that the basic block popped the next execution address from the top of the stack.  Returns indeterminate if
+ *  this property could not be determined, such as is the case when semantics are not enabled. */
+boost::logic::tribool isStackBasedReturn(const Partitioner&, const BasicBlock::Ptr&);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                  Partitioner conversion to AST

@@ -385,6 +385,42 @@ public:
     virtual
     Result*
     execute(const TestCase::Ptr&) = 0;
+
+    /** \brief
+     *  Sets an execution monitor for a test run. The execution monitor
+     *  observes a test and computes a quality score that can be used to
+     *  rank different executions (higher indicates better quality).
+     *
+     *  \details
+     *  The execution monitor (e.g., execmon) needs to understand the
+     *  following command line arguments:
+     *    execmon -o outfile -- specimen test-arguments..
+     *      -o outfile       a file containing two lines:
+     *  or  --output=outfile (1) a human-readable integer value,
+     *                           the exit code of the child process;
+     *                       (2) a human-readable floating point value,
+     *                           the quality score of the execution.
+     *      --               separator between arguments to execmon
+     *                       and test specification.
+     *      specimen         the tested specimen
+     *      test-arguments.. an arbitrary long argument list passed
+     *                       to specimen.
+     *
+     *  @{
+     */
+    void executionMonitor(const boost::filesystem::path& executorName)
+    {
+      execmon = executorName;
+    }
+
+    boost::filesystem::path executionMonitor() const
+    {
+      return execmon;
+    }
+    /** @} */
+
+private:
+    boost::filesystem::path execmon; // the execution monitor
 };
 
 /** Concrete executor for Linux ELF executables. */
@@ -422,8 +458,7 @@ public:
         }
 
     public:
-        explicit
-        Result(int exitStatus);
+        Result(double rank, int exitStatus);
 
         Result() {} // required for boost serialization
 
@@ -449,9 +484,9 @@ public:
         /** @} */
 
         /** Property: textual representation of how a test exited.
+         *            The property is set together with exitStatus.
          * @{ */
         std::string exitKind() const            { return exitKind_; }
-        void exitKind(const std::string& desc)  { exitKind_ = desc; }
         /* @} */
     };
 
@@ -487,63 +522,15 @@ public:
 // Concolic (concrete + symbolic) executors
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Concolic executor.
- *
- *  Executes a test case both concretely and symbolically and generates new test cases. */
-class ConcolicExecutor: public Sawyer::SharedObject {
-public:
-    /** Reference counting pointer to @ref ConcolicExecutor. */
-    typedef Sawyer::SharedPointer<ConcolicExecutor> Ptr;
+} // namespace
+} // namespace
+} // namespace
 
-    /** Settings to control various aspects of an executor. */
-    struct Settings {
-        Partitioner2::EngineSettings partitionerEngine;
-        Partitioner2::LoaderSettings loader;
-        Partitioner2::DisassemblerSettings disassembler;
-        Partitioner2::PartitionerSettings partitioner;
-    };
+#include <Concolic/ConcolicExecutor.h>
 
-private:
-    Settings settings_;
-
-protected:
-    ConcolicExecutor() {}
-
-public:
-    /** Allcoating constructor. */
-    static Ptr instance();
-
-    /** Property: Configuration settings.
-     *
-     *  These settings control the finer aspects of this @ref ConcolicExecutor. They should generally be set immediately
-     *  after construction this executor and before any operations are invoked that might use the settings.
-     *
-     *  Thread safety: Not thread safe.
-     *
-     * @{ */
-    const Settings& settings() const { return settings_; }
-    Settings& settings() { return settings_; }
-    /** @} */
-
-    /** Execute the test case.
-     *
-     *  Executes the test case to produce new test cases. */
-    std::vector<TestCase::Ptr> execute(const DatabasePtr&, const TestCase::Ptr&);
-
-#if 0 // FIXME[Robb Matzke 2019-06-06]: public for testing, but will eventually be private
-private:
-#endif
-    // Disassemble the specimen and cache the result in the database. If the specimen has previously been disassembled
-    // then reconstitute the analysis results from the database.
-    Partitioner2::Partitioner partition(const DatabasePtr&, const Specimen::Ptr&);
-
-    // Run the execution
-    void run(const Partitioner2::Partitioner&);
-    void run(const Partitioner2::Partitioner&, rose_addr_t startVa);
-
-    // TODO: Lots of properties to control the finer aspects of executing a test case!
-};
-
+namespace Rose {
+namespace BinaryAnalysis {
+namespace Concolic {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Test suites
@@ -556,7 +543,11 @@ private:
  *  concrete executor and measure the same user-defined execution properties. For example, the database might contain one test
  *  suite based on "/bin/grep" and another test suite running "/bin/cat".  Or it might have two test suites both running
  *  "/bin/grep" but one always using "--extended-regexp" and the other always using "--basic-regexp".  Or it might have two
- *  test suites both running "/bin/cat" but one measures exit status and the other measures code coverage. */
+ *  test suites both running "/bin/cat" but one measures exit status and the other measures code coverage.
+ *
+ *  A @ref Database has a "current test suite" set/queried by its @ref Database::testSuite "testSuite" method. Inserting
+ *  new objects will insert them into the current test suite, and queries will return objects that belong to the current
+ *  test suite. */
 class TestSuite: public Sawyer::SharedObject, public Sawyer::SharedFromThis<TestSuite> {
 public:
     /** Reference counting pointer to @ref TestSuite. */
@@ -779,7 +770,6 @@ public:
     Specimen::Ptr object(SpecimenId, Update::Flag update = Update::YES);
     /** @} */
 
-
     /** Reconstitute an object from a database ID as part of a subquery.
      *
      *  Thread safety: not thread safe (assumes that it is called from a thread-safe context)
@@ -809,11 +799,19 @@ public:
     TestCaseId id_ns(SqlDatabase::TransactionPtr,  const TestCase::Ptr&, Update::Flag update = Update::YES);
     SpecimenId id_ns(SqlDatabase::TransactionPtr,  const Specimen::Ptr&, Update::Flag update = Update::YES);
 
-    /** Returns an ID number for a specimen with a given key @ref name
-     * @{ */
-    SpecimenId  specimen(const std::string& name);
-    TestSuiteId testSuite(const std::string& name);
-    /** @} */
+    /** Finds a test suite by name or ID.
+     *
+     *  Returns the (unique) @ref TestSuite object has the specified name. If no such test suite exists and the specified name
+     *  can be parsed as an object ID (see constructors for @ref ObjectId) returns the test suite with the specified ID. If no
+     *  matches are found by either mechanism then a null pointer is returned. This method is intended to be used mainly to
+     *  convert command-line arguments to test suites. */
+    TestSuite::Ptr findTestSuite(const std::string &nameOrId);
+
+    /** Finds all specimens having the specified name.
+     *
+     *  If the database is restricted to a test suite (see @ref testSuite) then the returned specimens are only those that
+     *  are part of the current test suite and have the specified name. Specimen names need not be unique or non-empty. */
+    std::vector<SpecimenId> findSpecimensByName(const std::string &name);
 
     //------------------------------------------------------------------------------------------------------------------------
     // Cached info about disassembly. This is large data. Each specimen has zero or one associated RBA data blob.

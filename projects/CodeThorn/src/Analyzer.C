@@ -27,10 +27,6 @@ using namespace Sawyer::Message;
 
 Sawyer::Message::Facility CodeThorn::Analyzer::logger;
 
-size_t CodeThorn::Analyzer::getSummaryStateMapSize() {
-  return _summaryStateMap.size();
-}
-
 std::string CodeThorn::Analyzer::programPositionInfo(CodeThorn::Label lab) {
   SgNode* node=getLabeler()->getNode(lab);
   return SgNodeHelper::lineColumnNodeToString(node);
@@ -74,26 +70,56 @@ EState CodeThorn::Analyzer::combine(const EState* es1, const EState* es2) {
   return createEState(es1->label(),es1->callString,PState::combine(ps1,ps2),*es1->constraints(),io);
 }
 
-const CodeThorn::EState* CodeThorn::Analyzer::getSummaryState(CodeThorn::Label lab) {
-  return _summaryStateMap[lab.getId()];
+size_t CodeThorn::Analyzer::getSummaryStateMapSize() {
+  return _summaryCSStateMap.size();
 }
 
-void CodeThorn::Analyzer::setSummaryState(CodeThorn::Label lab, CodeThorn::EState const* estate) {
+const CodeThorn::EState* CodeThorn::Analyzer::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
+  // cs not used yet
+  //return _summaryStateMap[lab.getId()];
+  pair<int,CallString> p(lab.getId(),cs);
+  auto iter=_summaryCSStateMap.find(p);
+  if(iter==_summaryCSStateMap.end()) {
+    return getBottomSummaryState(lab,cs);
+  } else {
+    return (*iter).second;
+  }
+}
+
+void CodeThorn::Analyzer::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, CodeThorn::EState const* estate) {
   ROSE_ASSERT(lab==estate->label());
-  _summaryStateMap[lab.getId()]=estate;
+  ROSE_ASSERT(cs==estate->callString);
+  ROSE_ASSERT(estate);
+  pair<int,CallString> p(lab.getId(),cs);
+  _summaryCSStateMap[p]=estate;
+}
+
+
+const EState* CodeThorn::Analyzer::getBottomSummaryState(Label lab, CallString cs) {
+  InputOutput io;
+  io.recordBot();
+  ROSE_ASSERT(_initialPStateStored);
+  ROSE_ASSERT(_emptycsetstored);
+  EState estate(lab,cs,_initialPStateStored,_emptycsetstored,io);
+  const EState* bottomElement=processNewOrExisting(estate);
+  return bottomElement;
 }
 
 void CodeThorn::Analyzer::initializeSummaryStates(const CodeThorn::PState* initialPStateStored, 
                                                   const CodeThorn::ConstraintSet* emptycsetstored) {
-  //  return;
+  _initialPStateStored=initialPStateStored;
+  _emptycsetstored=emptycsetstored;
+#if 0
   for(auto label:*getLabeler()) {
     // create bottom elements for each label
     InputOutput io;
     io.recordBot();
-    EState estate(label,initialPStateStored,emptycsetstored,io); // implicitly empty cs
-    const EState* bottomElement=processNewOrExisting(estate);
-    setSummaryState(label,bottomElement);
+    CallString cs; // empty callstring
+    EState estate(label,cs,initialPStateStored,emptycsetstored,io); // implicitly empty cs
+    const EState* bottomElement=processNewOrExisting(getBottomSummaryState());
+    setSummaryState(label,estate.callString,bottomElement);
   }
+#endif
 }
 
 bool CodeThorn::Analyzer::getPrintDetectedViolations() {
@@ -268,6 +294,12 @@ CodeThorn::Analyzer::Analyzer():
  }
 
 CodeThorn::Analyzer::~Analyzer() {
+  if(cfanalyzer) {
+    if(FunctionIdMapping* fim=cfanalyzer->getFunctionIdMapping()) {
+      delete fim;
+    }
+    delete cfanalyzer;
+  }
 }
 
 size_t CodeThorn::Analyzer::getNumberOfErrorLabels() {
@@ -1387,8 +1419,16 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   //exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   SAWYER_MESG(logger[TRACE])<< "INIT: Creating CFAnalysis."<<endl;
   cfanalyzer=new CFAnalysis(labeler,true);
+
+  //FunctionIdMapping* funIdMapping=new FunctionIdMapping();
+  //ROSE_ASSERT(isSgProject(root));
+  //funIdMapping->computeFunctionSymbolMapping(isSgProject(root));
+  //cfanalyzer->setFunctionIdMapping(funIdMapping);
+  cfanalyzer->setFunctionIdMapping(getFunctionIdMapping());
+
   getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
   getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
+
 
   // logger[DEBUG]<< "mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   SAWYER_MESG(logger[TRACE])<< "INIT: Building CFGs."<<endl;

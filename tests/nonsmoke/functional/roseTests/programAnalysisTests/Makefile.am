@@ -7,7 +7,6 @@ SUBDIRS = 					\
 	testCallGraphAnalysis			\
 	defUseAnalysisTests			\
 	variableLivenessTests			\
-	sideEffectAnalysisTests			\
 	variableRenamingTests			\
 	generalDataFlowAnalysisTests		\
 	systemDependenceGraphTests		\

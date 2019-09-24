@@ -54,6 +54,7 @@
 #include "DataRaceDetection.h"
 #include "AstTermRepresentation.h"
 #include "Normalization.h"
+#include "DataDependenceVisualizer.h" // also used for clustered ICFG
 
 // test
 #include "SSAGenerator.h"
@@ -118,6 +119,7 @@ void CodeThorn::initDiagnostics() {
   RewriteSystem::initDiagnostics();
   Specialization::initDiagnostics();
   Normalization::initDiagnostics();
+  FunctionIdMapping::initDiagnostics();
 }
 
 bool isExprRoot(SgNode* node) {
@@ -400,7 +402,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("ignore-unknown-functions",po::value< bool >()->default_value(true)->implicit_value(true), "Unknown functions are assumed to be side-effect free.")
     ("ignore-undefined-dereference",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore pointer dereference of uninitalized value (assume data exists).")
     ("ignore-function-pointers",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore function pointers (functions are not called).")
-    ("function-resolution-mode",po::value< int >(),"1:Translation unit only, 2:slow lookup, 3: fast (not implemented yet)")
+    ("function-resolution-mode",po::value< int >()->default_value(1),"1:Translation unit only, 2:slow lookup, 3: fast (not implemented yet)")
     ("context-sensitive",po::value< bool >()->default_value(false)->implicit_value(true),"Perform context sensitive analysis. Uses call strings with arbitrary length, recursion is not supported yet.")
     ("abstraction-mode",po::value< int >()->default_value(0),"Select abstraction mode (0: equality merge (explicit model checking), 1: approximating merge (abstract model checking).")
     ("interpretation-mode",po::value< int >()->default_value(0),"Select interpretation mode. 0: default, 1: execute stdout functions.")
@@ -506,7 +508,8 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ;
 
   infoOptions.add_options()
-    ("print-varid-mapping", po::value< bool >()->default_value(false)->implicit_value(true), "Print all information stored in var-id mapping after analysis.")
+    ("print-variable-id-mapping",po::value< bool >()->default_value(false)->implicit_value(true),"Print variable-id-mapping on stdout.")
+    ("print-function-id-mapping",po::value< bool >()->default_value(false)->implicit_value(true),"Print function-id-mapping on stdout.")
     ;
 
   po::options_description all("All supported options");
@@ -588,7 +591,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.10.8\n";
+    cout << "CodeThorn version 1.10.9\n";
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
@@ -1192,6 +1195,17 @@ int main( int argc, char * argv[] ) {
       cerr<<"Unknown interpretation mode "<<mode<<" provided on command line (supported: 0..1)."<<endl;
       exit(1);
     }
+
+    {
+      switch(int argVal=args.getInt("function-resolution-mode")) {
+      case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
+      case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
+      case 3: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_ID_MAPPING;break;
+      default: 
+        cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
+        exit(1);
+      }
+    }
     // analyzer->setFunctionResolutionMode(args.getInt("function-resolution-mode")); xxx
     // needs to set CFAnalysis functionResolutionMode
 
@@ -1351,30 +1365,26 @@ int main( int argc, char * argv[] ) {
         programInfo.compute();
         if(showProgramStats) {
           programInfo.printDetailed();
+          ROSE_ASSERT(analyzer);
+          programInfo.writeFunctionCallNodesToFile("functionCalls.csv",0);
         }
         exit(0);
       }
     }
 
-    {
-      bool listUnknownFunctions=args.isUserProvided("list-unknown-functions");
-      bool listKnownFunctions=args.isUserProvided("list-unknown-functions");
-      if(listUnknownFunctions||listKnownFunctions) {
-        //
-      }
-    }
     if(args.getBool("unparse")) {
       sageProject->unparse(0,0);
       exit(0);
     }
 
+    // TODO: introduce ProgramAbstractionLayer
     analyzer->initializeVariableIdMapping(sageProject);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
-    
-    if(args.getBool("print-varid-mapping")) {
+
+    if(args.getBool("print-variable-id-mapping")) {
       analyzer->getVariableIdMapping()->toStream(cout);
     }
-    
+  
     if(args.count("run-rose-tests")) {
       cout << "ROSE tests started."<<endl;
       // Run internal consistency tests on AST
@@ -1528,6 +1538,14 @@ int main( int argc, char * argv[] ) {
       analyzer->initializeSolver(startFunction,root,false);
     }
     analyzer->initLabeledAssertNodes(sageProject);
+
+    // function-id-mapping is initialized in initializeSolver.
+    if(args.getBool("print-function-id-mapping")) {
+      ROSE_ASSERT(analyzer->getCFAnalyzer());
+      ROSE_ASSERT(analyzer->getCFAnalyzer()->getFunctionIdMapping());
+      analyzer->getCFAnalyzer()->getFunctionIdMapping()->toStream(cout);
+    }
+
 
     if(args.isUserProvided("pattern-search-max-depth") || args.isUserProvided("pattern-search-max-suffix")
        || args.isUserProvided("pattern-search-repetitions") || args.isUserProvided("pattern-search-exploration")) {
@@ -2055,8 +2073,10 @@ int main( int argc, char * argv[] ) {
       cout << "generated ast.dot."<<endl;
 
       SAWYER_MESG(logger[TRACE]) << "Option VIZ: generating cfg dot file ..."<<endl;
-      write_file("cfg.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
-      cout << "generated cfg.dot."<<endl;
+      write_file("cfg_non_clustered.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
+      DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
+      ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),"cfg.dot",false);
+      cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
       cout << "=============================================================="<<endl;
     }
     if(args.getBool("viz-tg2")) {

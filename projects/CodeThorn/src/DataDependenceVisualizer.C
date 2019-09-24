@@ -136,34 +136,34 @@ void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnaly
         Label lab=*fl;
         SgNode* node=_labeler->getNode(lab);
         if(existsUDAstAttribute(node,_useDefAttributeName)) {
-        VariableIdSet useVarSet=useVars(node);
-        for(VariableIdSet::iterator i=useVarSet.begin();i!=useVarSet.end();++i) {
-          VariableId useVar=*i;
-          LabelSet defLabSet=defLabels(node,useVar);
-          for(LabelSet::iterator i=defLabSet.begin();i!=defLabSet.end();++i) {
-            Label sourceNode=lab;
-            Label targetNode=*i;
-            string edgeAnnotationString=_variableIdMapping->uniqueVariableName(useVar);
-            stringstream ddedge;
-            switch(_mode) {
-            case DDVMODE_USEDEF: ddedge<<sourceNode<<" -> "<<targetNode; break;
-            case DDVMODE_DEFUSE: ddedge<<targetNode<<" -> "<<sourceNode; break;
-            default: 
-              cerr<<"Error: unknown visualization mode."<<endl;
-              exit(1);
-            }
-            if(_showSourceCode) {
-              ddedge<<"[label=\""<<edgeAnnotationString<<"\" color=darkgoldenrod4];";
-            }
-            ddedge<<endl;
-            if(functionLabelSet.isElement(sourceNode) && functionLabelSet.isElement(targetNode)) {
-              myfile<<ddedge.str();
-            } else {
-              accessToGlobalVariables<<ddedge.str();
-            }
-            //            if(_showSourceCode) {
-            //  myfile<<sourceNode<<" [label=\""<<sourceNode<<":"<<nodeSourceCode(sourceNode)<<"\"];"<<endl;
-            //  myfile<<targetNode<<" [label=\""<<targetNode<<":"<<nodeSourceCode(targetNode)<<"\"];"<<endl;
+          VariableIdSet useVarSet=useVars(node);
+          for(VariableIdSet::iterator i=useVarSet.begin();i!=useVarSet.end();++i) {
+            VariableId useVar=*i;
+            LabelSet defLabSet=defLabels(node,useVar);
+            for(LabelSet::iterator i=defLabSet.begin();i!=defLabSet.end();++i) {
+              Label sourceNode=lab;
+              Label targetNode=*i;
+              string edgeAnnotationString=_variableIdMapping->uniqueVariableName(useVar);
+              stringstream ddedge;
+              switch(_mode) {
+              case DDVMODE_USEDEF: ddedge<<sourceNode<<" -> "<<targetNode; break;
+              case DDVMODE_DEFUSE: ddedge<<targetNode<<" -> "<<sourceNode; break;
+              default: 
+                cerr<<"Error: unknown visualization mode."<<endl;
+                exit(1);
+              }
+              if(_showSourceCode) {
+                ddedge<<"[label=\""<<edgeAnnotationString<<"\" color=darkgoldenrod4];";
+              }
+              ddedge<<endl;
+              if(functionLabelSet.isElement(sourceNode) && functionLabelSet.isElement(targetNode)) {
+                myfile<<ddedge.str();
+              } else {
+                accessToGlobalVariables<<ddedge.str();
+              }
+              //            if(_showSourceCode) {
+              //  myfile<<sourceNode<<" [label=\""<<sourceNode<<":"<<nodeSourceCode(sourceNode)<<"\"];"<<endl;
+              //  myfile<<targetNode<<" [label=\""<<targetNode<<":"<<nodeSourceCode(targetNode)<<"\"];"<<endl;
             }
             
           }
@@ -176,11 +176,13 @@ void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnaly
   for(InterFlow::iterator i=iflow.begin();i!=iflow.end();++i) {
     if(((*i).call != Labeler::NO_LABEL) && ((*i).entry!= Labeler::NO_LABEL))
       myfile<<(*i).call<<" -> "<<(*i).entry<<";\n";
-    if(((*i).exit != Labeler::NO_LABEL) && ((*i).callReturn!= Labeler::NO_LABEL))
+    else if(((*i).exit != Labeler::NO_LABEL) && ((*i).callReturn!= Labeler::NO_LABEL))
       myfile<<(*i).exit<<" -> "<<(*i).callReturn<<";\n";
     // generate optional local edge
-    //if(((*i).entry == Labeler::NO_LABEL) && ((*i).exit== Labeler::NO_LABEL))
-    //  myfile<<(*i).call<<" -> "<<(*i).callReturn<<" [style=dotted];\n";
+    else if(((*i).entry == Labeler::NO_LABEL) && ((*i).exit== Labeler::NO_LABEL))
+      myfile<<(*i).call<<" -> "<<(*i).callReturn<<" [style=dotted];\n";
+    else
+      cerr<<"WARNING: inconsistent inter-procedural cfg edge: "<<(*i).call<<" -> "<<(*i).callReturn<<endl;
   }
   myfile<<"// access to global variables\n";
   myfile<<accessToGlobalVariables.str();
