@@ -22178,7 +22178,7 @@ bool typesAreEqual(SgType *t1, SgType *t2) {
   RoseAst subT2(t2);
 
   for (RoseAst::iterator i = subT1.begin(), j = subT2.begin();
-       i != subT1.end(), j != subT2.end(); ++i, ++j) {
+       i != subT1.end() && j != subT2.end(); ++i, ++j) {
     SgNode *nodeT1 = *i;
     SgNode *nodeT2 = *j;
 
@@ -22276,7 +22276,7 @@ bool typesAreEqual(SgType *t1, SgType *t2) {
 
           for(SgTypePtrList::const_iterator ii = funcTypeA->get_arguments().begin(),
               jj = funcTypeB->get_arguments().begin();
-              ii != funcTypeA->get_arguments().end(),
+              ii != funcTypeA->get_arguments().end() &&
               jj != funcTypeB->get_arguments().end();
               ++ii, ++jj) {
 //            std::cout << (*ii)->class_name() << " " << (*jj)->class_name() << std::endl;
