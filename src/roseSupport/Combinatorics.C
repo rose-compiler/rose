@@ -78,7 +78,7 @@ void Hasher::HasherFactory::registerMaker(const std::string& hashType,
 boost::shared_ptr<Hasher> Hasher::HasherFactory::createHasher(const std::string& hashType) const
 {
     // Look up the maker by nodes name
-    auto hashItr = hashMakers.find(hashType);
+    std::map<std::string, IHasherMaker* >::const_iterator hashItr = hashMakers.find(hashType);
     if (hashItr == hashMakers.end())
     {
         std::ostringstream ss;
