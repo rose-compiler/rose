@@ -75,7 +75,7 @@ void SymbolicExpr:: AddOpd( const SymbolicTerm& v, OPApplicator *op)
 
 void SymbolicExpr:: AddOpd( const SymbolicVal& v, OPApplicator* op)
      {
-       if (v.IsNIL());
+       v.IsNIL();
        AddOpd(Val2Term(v), op);
      }
 
