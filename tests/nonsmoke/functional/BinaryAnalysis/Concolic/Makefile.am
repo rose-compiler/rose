@@ -59,7 +59,7 @@ AM_YFLAGS = -d -t
 
 noinst_PROGRAMS += rose-perf-analyzer
 rose_perf_analyzer_SOURCES = PerfOutputAnalyzer/parser.ypp PerfOutputAnalyzer/lexer.lpp \
-                             PerfOutputAnalyzer/analyzer.cpp 
+                             PerfOutputAnalyzer/analyzer.cpp
 rose_perf_analyzer_CPPFLAGS = $(ROSE_INCLUDES)
 rose_perf_analyzer_LDFLAGS = $(ROSE_RPATHS)
 rose_perf_analyzer_LDADD = $(ROSE_LIBS)
@@ -71,7 +71,7 @@ noinst_SCRIPTS = rose-execmon-linux-perf-intel-x86-64.sh
 rose-execmon-linux-perf-intel-x86-64.sh: $(srcdir)/rose-execution-monitor-linux-perf-intel-x86_64.sh rose-perf-analyzer
 	cp $< $@
 	chmod u+x $@
-	
+
 #	
 # targets	
 
@@ -222,7 +222,8 @@ noinst_PROGRAMS += testConcolicExecutor
 testConcolicExecutor_SOURCES = testConcolicExecutor.C
 testConcolicExecutor_LDADD = $(ROSE_SEPARATE_LIBS)
 testConcolicExecutor_specimen = $(top_srcdir)/tests/nonsmoke/specimens/binary/concolic-specimen-01
-testConcolicExecutor_flags = --log 'Rose::BinaryAnalysis::Concolic(debug)'
+testConcolicExecutor_flags = --log 'Rose::BinaryAnalysis::Concolic(debug)' --database 'testConcolicExecutor-1.db'
+MOSTLYCLEANFILES += testConcolicExecutor-1.db
 
 TEST_TARGETS += testConcolicExecutor.passed
 
