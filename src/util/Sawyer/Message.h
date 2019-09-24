@@ -1488,6 +1488,16 @@ public:
      *  SAWYER_MESG(mlog[DEBUG]) <<"the memory map is: " <<memoryMap <<"\n";
      * @endcode
      *
+     * The SAWYER_MESG_OR macro is similar in that it short circuits, but it prints to either the first stream (if enabled)
+     * or the second stream (if enabled) but not both. For example, these two are equivalent:
+     *
+     * @code
+     *  if (mlog[TRACE] || mlog[DEBUG])
+     *      (mlog[TRACE] ? mlog[TRACE] : mlog[DEBUG]) <<"got here\n";
+     *     
+     *  SAWYER_MESG_OR(mlog[TRACE], mlog[DEBUG]) <<"got here\n";
+     * @code
+     *
      * Thread safety: This method is thread-safe.
      *
      * @{ */
@@ -1510,7 +1520,8 @@ public:
     bool operator!() const { return !enabled(); }
         
     // See Stream::bool()
-    #define SAWYER_MESG(message_stream) message_stream && message_stream
+    #define SAWYER_MESG(message_stream) (message_stream) && (message_stream)
+    #define SAWYER_MESG_OR(s1, s2) ((s1) || (s2)) && ((s1) ? (s1) : (s2))
 
     /** Enable or disable a stream.
      *

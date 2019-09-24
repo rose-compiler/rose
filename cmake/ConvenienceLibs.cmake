@@ -140,8 +140,6 @@ set(alternativeProgramSlicing_STAT_SRCS
 
 # src/midend/programAnalysis/staticInterproceduralSlicing/Makefile.am: StaticSlicing
 
-# src/midend/programAnalysis/sideEffectAnalysis/Makefile.am: sideEffect
-
 # src/midend/programAnalysis/CFG/Makefile.am: CFG
 
 # src/midend/programAnalysis/CallGraphAnalysis/Makefile.am: CallGraph

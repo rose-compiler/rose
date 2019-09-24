@@ -83,7 +83,7 @@ get_version () {
 # of the form X.Y.Z where X, Y, and Z are non-negative integers. Returns not-ok (1) otherwise.
 version_ok () {
     local have="$1" need="$2"
-	
+        
     local have_major=$(echo $have |cut -d. -f1)
     local have_minor=$(echo $have |cut -d. -f2)
     local have_patch=$(echo $have |cut -d. -f3)
@@ -171,27 +171,27 @@ LIBTOOL_VERSION="$VERSION"
 if [[ -z "$LIBTOOL_VERSION" ]]; then
     echo "$0: warning: cannot determine libtool version; skipping libtoolize" 2>&1
 elif version_ok "$LIBTOOL_VERSION" "$LIBTOOL_VERSION_PREREQ"; then
-# Pei-Hung 10/25/2017
-# libltdl copied through libtoolize would require a specific version of aclocal and automake depending on the libtool version.
-# rerun aclocal in libltdl source directory will regenerate aclocal.m4 and eliminate that software dependence.
-# JL 03/16/2018 libtool development package required
+    # Pei-Hung 10/25/2017
+    # libltdl copied through libtoolize would require a specific version of aclocal and automake depending on the libtool version.
+    # rerun aclocal in libltdl source directory will regenerate aclocal.m4 and eliminate that software dependence.
+    # JL 03/16/2018 libtool development package required
     echo "+ $libtoolize_name --force --copy --ltdl --automake"
     $libtoolize_name --force --copy --ltdl --automake
     if [ $? -ne 0 ]; then
-	echo "libtool error: you may need to install libtool development package"; 
-	echo "               build stopped"; 
-	exit 1;
+        echo "libtool error: you may need to install libtool development package"; 
+        echo "               build stopped"; 
+        exit 1;
     else
-	cd libltdl
-	echo "+ autoreconf"
-	autoreconf
-	if [ $? -ne 0 ]; then
-	    echo "autoreconf error: build stopped"; 
-	    exit 1;
-	fi
-	cd ..       # cd back to top directory
+        cd libltdl
+        echo "+ autoreconf"
+        autoreconf
+        if [ $? -ne 0 ]; then
+            echo "autoreconf error: build stopped"; 
+            exit 1;
+        fi
+        cd ..       # cd back to top directory
     fi
-    
+
 else
     echo "$0: error: libtool $LIBTOOL_VERSION is too old (); skipping libtoolize" 2>&1
     exit 1;
@@ -245,18 +245,18 @@ fi
     echo "OPTIONAL_PROJECTS="
     echo "AC_SUBST(OPTIONAL_PROJECTS)"
     for project in projects/*; do
-	if [[ -f "$project/rose.config" ]]; then
-	    echo "+ NOTE: Adding optional $project" >&2
-	    echo
-	    echo
-	    echo "dnl -----------------------------------------------------------------------------------------------------"
-	    echo "dnl -- This part of the file comes from $project/rose.config"
-	    echo "dnl -----------------------------------------------------------------------------------------------------"
-	    echo "AC_MSG_NOTICE([configuring optional $project])"
-	    echo "OPTIONAL_PROJECTS=\"\$OPTIONAL_PROJECTS ${project#projects/}\""
-	    echo
-	    cat "$project/rose.config"
-	fi
+        if [[ -f "$project/rose.config" ]]; then
+            echo "+ NOTE: Adding optional $project" >&2
+            echo
+            echo
+            echo "dnl -----------------------------------------------------------------------------------------------------"
+            echo "dnl -- This part of the file comes from $project/rose.config"
+            echo "dnl -----------------------------------------------------------------------------------------------------"
+            echo "AC_MSG_NOTICE([configuring optional $project])"
+            echo "OPTIONAL_PROJECTS=\"\$OPTIONAL_PROJECTS ${project#projects/}\""
+            echo
+            cat "$project/rose.config"
+        fi
     done
     echo "])"
 ) >config/support-projects.m4
@@ -276,7 +276,7 @@ if [ "$rose_version" = "" ]; then
 fi
 
 sed -i~ -e '/^AC_INIT(/ s/^\(AC_INIT *(\[.*\], *\[\).*\(\] *).*\)/\1'"$rose_version"'\2/' configure.ac
-	
+        
 ###############################################################################################################################
 # Run autoconf tools: aclocal, autoheader, autoconf, and automake
 ###############################################################################################################################
@@ -316,7 +316,7 @@ fi
 # semantics of the original version of this script).  The '-I' switches of aclocal are because some macros may be
 # installed in non-standard locations (e.g., libxml's on NMI build machines).
 header_file_dependence_checking=
-if test "x$do_header_file_dependence_checking" = "xno"; then
+if [ "$do_header_file_dependence_checking" = "no" ]; then
 header_file_dependence_checking=--ignore-deps
 fi
 (set -ex
@@ -343,8 +343,8 @@ fi
 # "--quiet" and "--verbose", it will just have the wrong defaults and treat them as orthogonal concepts. [Robb Matzke,
 # 2019-01-19]
 patch -p0 <<'EOF'
---- configure	2019-01-19 15:23:24.640101972 -0500
-+++ configure.patched	2019-01-19 15:25:23.344418954 -0500
+--- configure   2019-01-19 15:23:24.640101972 -0500
++++ configure.patched   2019-01-19 15:25:23.344418954 -0500
 @@ -1966,7 +1966,7 @@
  program_prefix=NONE
  program_suffix=NONE
@@ -408,7 +408,7 @@ build directory for "make". \$ROSE_SRC is the absolute
 path of your ROSE source tree.
 
 Full installation instructions can be found here:
-http://rosecompiler.org/ROSE_HTML_Reference/installation.html
+https://github.com/rose-compiler/rose/wiki/How-to-Set-Up-ROSE
 
 Thank you for using ROSE.
 

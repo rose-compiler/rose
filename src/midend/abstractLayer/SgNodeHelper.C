@@ -90,10 +90,18 @@ std::string SgNodeHelper::sourceFilenameToString(SgNode* node) {
   * \date 2012.
  */
 std::string SgNodeHelper::sourceLineColumnToString(SgNode* node) {
+  return sourceLineColumnToString(node, ":");
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2019.
+ */
+std::string SgNodeHelper::sourceLineColumnToString(SgNode* node, string separator) {
   std::stringstream ss;
   Sg_File_Info* fi=node->get_file_info();
   ss<<fi->get_line();
-  ss<<":";
+  ss<<separator;
   ss<<fi->get_col();
   return ss.str();
 }
@@ -798,33 +806,7 @@ SgFunctionDefinition* SgNodeHelper::determineFunctionDefinition(SgFunctionCallEx
         if(SgFunctionDefinition* funDef=funDecl2->get_definition()) {
           return funDef;
         } else {
-          //cout<<"INFO: no definition found for call: "<<funCall->unparseToString()<<endl;
           return 0;
-          // the following code is dead code: searching the AST is inefficient. This code will refactored and removed from here.
-          // forward declaration (we have not found the function definition yet)
-          // 1) use parent pointers and search for Root node (likely to be SgProject node)
-          SgNode* root=defFunDecl;
-          SgNode* parent=0;
-          while(!SgNodeHelper::isAstRoot(root)) {
-            parent=SgNodeHelper::getParent(root);
-            root=parent;
-          }
-          ROSE_ASSERT(root);
-          // 2) search in AST for the function's definition now
-          RoseAst ast(root);
-          for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-            if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(*i)) {
-              if(!SgNodeHelper::isForwardFunctionDeclaration(funDecl2)) {
-                SgSymbol* sym2=funDecl2->search_for_symbol_from_symbol_table();
-                SgSymbol* sym1=funDecl->search_for_symbol_from_symbol_table();
-                if(sym1!=0 && sym1==sym2) {
-                  SgFunctionDefinition* fundef2=funDecl2->get_definition();
-                  ROSE_ASSERT(fundef2);
-                  return fundef2;
-                }
-              }
-            }
-          }
         }
       }
     }

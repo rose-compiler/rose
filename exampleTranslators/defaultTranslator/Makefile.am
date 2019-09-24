@@ -17,8 +17,11 @@ EXTRA_DIST = CMakeLists.txt  test_mangeldName.c test_qualifiedName.cpp
 CLEANFILES = 
 
 check-local:mangledNameDumper qualifiedNameDumper
+if ROSE_BUILD_C_LANGUAGE_SUPPORT
 	./mangledNameDumper -c $(srcdir)/test_mangeldName.c
 	./qualifiedNameDumper -c $(srcdir)/test_qualifiedName.cpp
+endif
+
 clean-local:
 	rm -rf Templates.DB ii_files ti_files rose_*.*
 
