@@ -328,6 +328,8 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgOmpParallelStatement: {
     return labeler->forkLabel(node);
   }
+  case V_SgOmpForSimdStatement:
+  case V_SgOmpSimdStatement:
   case V_SgOmpSectionsStatement:
   case V_SgOmpForStatement: {
     return labeler->workshareLabel(node);
@@ -337,7 +339,6 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   }
   case V_SgOmpSectionStatement:
   case V_SgOmpTargetStatement:
-  case V_SgOmpSimdStatement:
   case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
@@ -553,6 +554,8 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
 
+  case V_SgOmpSimdStatement:
+  case V_SgOmpForSimdStatement:
   case V_SgOmpForStatement: {
     ROSE_ASSERT(isSgOmpClauseBodyStatement(node));
     // In case the workshare is marked with nowait ommit barrier
@@ -565,9 +568,6 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     }
     return finalSet;
   }
-  
-  case V_SgOmpTargetStatement:
-  case V_SgOmpSimdStatement:
     
     // all omp statements
   case V_SgOmpSectionStatement:{
@@ -580,7 +580,15 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     finalSet.insert(labeler->barrierLabel(node));
     return finalSet;
   }
-  case V_SgOmpAtomicStatement:
+  
+  case V_SgOmpAtomicStatement: {
+    auto atomicStmt = node->get_traversalSuccessorByIndex(0);
+    auto atomicFinals = finalLabels(atomicStmt);
+    finalSet += atomicFinals;
+    return finalSet;
+  }
+
+  case V_SgOmpTargetStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
@@ -1143,6 +1151,8 @@ Flow CFAnalysis::flow(SgNode* node) {
     return edgeSet;
   }
   
+  case V_SgOmpForSimdStatement:
+  case V_SgOmpSimdStatement:
   case V_SgOmpForStatement: {
     SgNode *nextNestedStmt = node->get_traversalSuccessorByIndex(0);
     auto nextFlow = flow(nextNestedStmt);
@@ -1202,6 +1212,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     return edgeSet;
   }
 
+  case V_SgOmpAtomicStatement:
   case V_SgOmpSectionStatement: {
     auto nextStmt = node->get_traversalSuccessorByIndex(0);
     auto bodyFlow = flow(nextStmt);
@@ -1211,16 +1222,14 @@ Flow CFAnalysis::flow(SgNode* node) {
     return edgeSet;
   }
 
-  // omp statements that introduce some sort of synchronization
+    // omp statements that introduce some sort of synchronization (no all implemented yet?)
   case V_SgOmpBarrierStatement:
-  case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpFlushStatement:	
   case V_SgOmpMasterStatement:
   case V_SgOmpSingleStatement:
   // these omp statements do not generate edges in addition to the ingoing and outgoing edge
   case V_SgOmpTargetStatement:
-  case V_SgOmpSimdStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpOrderedStatement:
   case V_SgOmpTargetDataStatement:	

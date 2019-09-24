@@ -279,21 +279,24 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgTypedefDeclaration:
     return 1;
 
-    // represent all parallel omp constructs as nodes
-    // omp parallel is modelled as fork/join and for statement as workshare/barrier
+  // All OpenMP constructs are in the CFG
+  // omp parallel results in fork/join nodes.
+  // for and sections (and currently also SIMD) results in workshare/barrier nodes
+  case V_SgOmpForSimdStatement:
+  case V_SgOmpSimdStatement:
   case V_SgOmpForStatement:
   case V_SgOmpSectionsStatement:
   case V_SgOmpParallelStatement:
     return 2;
-  case V_SgOmpCriticalStatement:
+  // OpenMP barrier results in an actual barrier node
   case V_SgOmpBarrierStatement:
+  case V_SgOmpCriticalStatement:
+  case V_SgOmpAtomicStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:   
-  case V_SgOmpForSimdStatement:
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
   case V_SgOmpSectionStatement:
-  case V_SgOmpSimdStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:      
   case V_SgOmpTargetStatement:
@@ -342,7 +345,8 @@ void Labeler::createLabels(SgNode* root) {
         assert(num == 2);
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_FORK));
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_JOIN));
-      } else if(isSgOmpForStatement(*i) || isSgOmpSectionsStatement(*i)) {
+      } else if(isSgOmpForStatement(*i) || isSgOmpSectionsStatement(*i) 
+                  || isSgOmpSimdStatement(*i) || isSgOmpForSimdStatement(*i)) {
         assert(num == 2);
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_WORKSHARE));
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_BARRIER));
@@ -504,7 +508,8 @@ Label Labeler::joinLabel(SgNode *node) {
 }
 
 Label Labeler::workshareLabel(SgNode *node) {
-  ROSE_ASSERT(isSgOmpForStatement(node) || isSgOmpSectionsStatement(node));
+  ROSE_ASSERT(isSgOmpForStatement(node) || isSgOmpSectionsStatement(node) 
+                || isSgOmpSimdStatement(node) || isSgOmpForSimdStatement(node));
   Label lab = getLabel(node);
   return lab;
 }
@@ -514,7 +519,8 @@ Label Labeler::barrierLabel(SgNode *node) {
     Label lab = getLabel(node);
     return lab;
   }
-  ROSE_ASSERT(isSgOmpForStatement(node) || isSgOmpSectionsStatement(node));
+  ROSE_ASSERT(isSgOmpForStatement(node) || isSgOmpSectionsStatement(node) 
+                || isSgOmpSimdStatement(node) || isSgOmpForSimdStatement(node));
   Label lab = getLabel(node);
   return lab+1;
 }
