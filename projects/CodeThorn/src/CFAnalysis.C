@@ -1539,18 +1539,20 @@ SgFunctionDefinition* CFAnalysis::determineFunctionDefinition3(SgFunctionCallExp
 }
 
 FunctionCallTargetSet CFAnalysis::determineFunctionDefinition4(SgFunctionCallExp* funCall) {
-  cout<<"DEBUG: CFAnalysis::determineFunctionDefinition4:"<<funCall->unparseToString();
+  cout<<"DEBUG: CFAnalysis::determineFunctionDefinition4(!):"<<funCall->unparseToString();
   ROSE_ASSERT(getFunctionCallMapping());
   FunctionCallTargetSet res=getFunctionCallMapping()->resolveFunctionCall(funCall);
+#if 1
   if(res.size()>0) {
     if(res.size()==1) {
-      cout << ": RESOLVED to "<<(*res.begin()).getDefinition()<<endl;
+      logger[TRACE] << ": RESOLVED to "<<(*res.begin()).getDefinition()<<endl;
     } else {
-      cout<< ": RESOLVED to ???"<<endl;
+      logger[TRACE]<< ": RESOLVED to "<<res.size()<<" targets"<<endl;
     }
   } else {
     cout << ": NOT RESOLVED."<<endl;
   }
+#endif
   return res;
 }
 SgFunctionDefinition* CFAnalysis::determineFunctionDefinition2(SgFunctionCallExp* funCall) {
