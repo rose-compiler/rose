@@ -17,7 +17,7 @@
 namespace CodeThorn {
 
 /*! 
- *  \brief Constructing the (interprocedural) control-flow graph using the algorithm presented in BOOK.
+ *  \brief Constructing the (interprocedural) control-flow graph based on the algorithm presented in [1].
  *
  *  It is fully based on labels for relevant nodes that are determined as the initial step.
  *  The labels are then connected to form the final graph.
@@ -32,9 +32,10 @@ namespace CodeThorn {
  *         Exceptions are when creating fork/join and workshare/barrier nodes in the parallel CFG. Here, the final labels of the enclosed for loop need to be connected to the final label, i.e., the barrier, of the enclosing OpenMP for statement. In a similar fashion need the final labels of the enclosed structured block be connected to the final label of the enclosing OpenMP parallel statement.
  *    3.2) Construct the flow between (AST) nodes, e.g., within a basic block (see flow(SgNode *n1, SgNode *n2))
  *
+ * [1] Nielson, F. and Nielson, H. and Hankin, C.: Principles of Program Analysis. 1999, Springer-Verlag Berlin Heidelberg. ISBN: 978-3-642-08474-4. 
  *
-  * \author Markus Schordan
-  * \date 2012.
+ * \author Markus Schordan, Jan-Patrick Lehr
+ * \date 2012.
  */
 class CFAnalysis {
  public:

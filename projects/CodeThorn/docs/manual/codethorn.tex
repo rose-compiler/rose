@@ -681,6 +681,124 @@ read from stdin, or printed to stdout or stderr. Furthermore it
 determines whether the state produces an output which is caused by a
 failed assert.
 
+
+\subsubsection{Parallel Program State}
+
+The Parallel Program State extends the Program State with an additional thread id (tid) and the corresponding read and write data sets for the respective thread.
+The read and write set holds the accesses to shared memory in order to detect data races in parallel regions.
+For the specific rules on how the parallel state is managed, i.e., the corresponding transfer functions, see Section~\ref{sec:par_transfer_functions}.
+
+
+\subsection{Control-Flow Graph}
+The construction of the call graph is based on the construction presented in the book Principles of Program Analysis by Nielson, Nielson, and Hankin~\cite{NielsonNielson}.
+For every construct in the AST that is relevant for the call graph, first, their respective labels are computed.
+The graph's construction algorithm is purely based on these labels, with minimal interaction with the AST in mind.
+
+We introduce some fundamental functions (\emph{cf.}~\cite{NielsonNielson}) that operate on programs and labels.
+\begin{enumerate}
+\item The function init$(S)$ returns the label corresponding to the beginning of the flow for a statement $S$.
+\item The function final$(S)$ returns the set of labels marking the end of the flow through a statement $S$.
+\end{enumerate}
+
+Further, we consider a function \emph{flow}$(S)$, which constructs the control flow for statements $S$.
+It does so by uniting the flows within statements $S_1$ and $S_2$ by connecting the elements of final$(S_1)$ to the elements of init$(S_2)$ for two consecutive statements $S_1$ and $S_2$.
+
+We want to have here the construction presented in the book.
+
+\subsubsection{Parallel Control-Flow Graph}
+The general scheme outlined in the last section is changed slightly when the OpenMP-parallel control-flow graph is built.
+OpenMP's execution model is based on the fork/join concept, i.e., when a parallel region is encountered the runtime forks a number of parallel threads to, potentially, distribute work across them.
+When the scope bound to the parallel region is left, the runtime joins the threads created for this region again.
+In the parallel CFG the concept is reflected with the \emph{fork} and \emph{join} nodes.
+
+In addition to the fork/join nodes, however, the OpenMP model also introduces the concept of worksharing (with implicit barriers) and additional possibilities for explicit barriers.
+Both constructs are present in the parallel CFG and adopt the respective OpenMP nomenclature.
+Implicit and explicit barriers use the same CFG node.
+
+In the presence of the parallelism-related nodes in the CFG, the construction needs to be extended with rules to account for the nested parallel constructs.
+In particular, we add a rule on how to connect a parallel statement $P$ with a parallel or sequential statement $S$.
+This is most relevant when statements are nested as they are in OpenMP regions, \emph{cf.} Listing~\ref{lst:omp_example}.
+In the example, the closing curly brace of the \texttt{pragma omp for} introduces an implicit barrier that ends the worksharing \texttt{omp for} construct.
+Also, the closing curly brace, ending the structured block in line eight, introduces a join, since it ends the \texttt{omp parallel} section.
+
+In summary, the construction of the Parallel CFG requires these additional nodes in the CFG:
+For the OpenMP parallel statement, a pair of fork/join nodes is introduced.
+For the OpenMP for and sections statements, a pair of workshare/barrier nodes is introduced.
+In the case of an attached \texttt{nowait} clause the acoording barrier statement may be removed.
+For an OpenMP barrier construct, a single barrier node is introduced in the CFG.
+\begin{figure}
+  \begin{lstlisting}[label=lst:omp_example, caption={This is the caption of the listing}]
+    void someFunction(int *a, int n) {
+      #pragma omp parallel
+        {
+          #pragma omp for
+          for (int i = 0; i < n; ++i) {
+            a += 3*a[i];
+          }
+        }
+    }
+  \end{lstlisting}
+\end{figure}
+In the presence of the OpenMP parallel regions, the flow function introduced earlier would connect edges to and from the parallel nodes incorrectly to the rest of the CFG.
+Hence, it is necessary to extend the set of construction rules with Rule~\ref{eq:par_flow}.
+\begin{equation}\label{eq:par_flow}
+\begin{split}
+flow(P_1*P_2) ={} & \{(p_1,p_2), p_1 \in init(P_1), p_2 \in init(P_2)\} \\
+              & \cup flow(P_2) \\ 
+              & \cup \{(p_2, p_1), p_2 \in final(P_2), p_1 \in final(P_2)\}
+\end{split}
+\end{equation}
+The original set of rules connects the final label of a sequence of statements preceding the parallel construct with the parallel constructs init label.
+Our additional rule connects the init label of the parallel construct with the init label of the subsequent, i.e., enclosed, statement.
+In addition, the final label of the enclosed statement is connected with the final label of the parallel construct.
+Thereafter, the original set of rules connect the final label of the most outer parallel construct with its successor statement in the sequential CFG.
+
+\subsubsection{ToDos}
+For the construction of the parallel CFG, some open todos and points for discussion exist.
+\begin{itemize}
+	\item Currently, \texttt{omp simd} is treated as a normal worksharing construct. One could argue that for simd-ization it only needs to have a (known) data-race free length that vectors can have. Or a tool can test whether the (OpenMP specific) simd length given by the user in the \texttt{safelen} clause is actually safe.
+  \item The semantics of the different synchronization directives, e.g., single or master, are not yet modeled or considered.
+	\item The map clause is not handled and we did only briefly discuss it. Where it should be placed in the graph (if at all) is also up for further discussion. The purpose of mapping memory regions from host to device might be more related to the actual semantics implementation in the respective transfer functions.
+  \item In my opinion, we should have additional consistency checks and properties for the CFG.
+\end{itemize}
+
+\subsection{Transfer-Functions for Parallel CFG}\label{sec:par_transfer_functions}
+The transfer functions that operate on the parallel nodes implement the respective OpenMP semantics.
+The OpenMP specification requires additional actions from OpenMP runtime libraries, e.g., thread creation or barrier events, which are not implemented in the transfer functions.
+
+\subsubsection{Fork Nodes}
+To handle a fork node correctly, the following steps must be done.
+\begin{enumerate}
+\item Create private environment for each thread $t_i$
+\item Allocate memory for all private variables in the OpenMP section.
+Note: The loop iteration counter is always privatized.
+\item Initialize variables that were marked as firstprivate with their initial value.
+\end{enumerate}
+
+\subsubsection{Workshare Nodes}
+To handle any worksharing construct correctly, the following steps must be done.
+\begin{enumerate}
+\item Create thread local storage for remaining variables declared as private.
+\item If the workshare is a \texttt{for} loop: Split up the iteration ranges and assign the chunks to the different threads.
+\item If the workshare is a \texttt{sections}: Assign each \texttt{section} block to one thread.
+\end{enumerate}
+
+\subsubsection{Barrier Nodes}
+To handle barrier nodes correctly, the following steps must be done.
+\begin{enumerate}
+\item Intersect the collected read/write sets linearly between all synchronizing threads to detect data races.
+When the intersection is done based on values only, benign data races are not found, whereas, when using addresses for all accesses also benign races are detected.
+\end{enumerate}
+
+\subsubsection{Join Node}
+To handle join nodes correctly, the following steps must be done.
+\begin{enumerate}
+\item Clean up private storage for every thread $t_i$
+\item Write-out the correct value to all variables marked as \texttt{lastprivate}
+\end{enumerate}
+
+
+
 \bibliographystyle{plain}
 \bibliography{codethorn}
 

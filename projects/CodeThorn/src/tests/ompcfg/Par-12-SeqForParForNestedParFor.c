@@ -2,7 +2,7 @@
 
 int main(int argc, char **argv) {
   int a[4] = {1,2,3,4};
-  int b[3] = {1,1,1,1};
+  int b[4] = {1,1,1,1};
 
   for (int i = 0; i < 1; ++i) {
     if (i < 2) {
