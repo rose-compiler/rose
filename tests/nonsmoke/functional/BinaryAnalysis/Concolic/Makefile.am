@@ -39,10 +39,10 @@ noinst_PROGRAMS += test-execution-monitor
 test_execution_monitor_SOURCES = test-execution-monitor.C
 test_execution_monitor_LDADD =
 
-# a.3) execution monitor to produce quality score
-noinst_PROGRAMS += ExecutionMonitor
-ExecutionMonitor_SOURCES = ExecutionMonitor.C
-ExecutionMonitor_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+# a.3) simplest execution monitor to count unique instruction
+noinst_PROGRAMS += rose-execution-monitor-zero
+rose_execution_monitor_zero_SOURCES = rose-execution-monitor-zero.C
+rose_execution_monitor_zero_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
 # a.4) test compiled programs.
 noinst_PROGRAMS += testConcolicDB
@@ -50,27 +50,27 @@ testConcolicDB_SOURCES = testConcolicDB.C configDB.h
 testConcolicDB_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
 # a.5) execution wrapper for perf to intercept signals
-noinst_PROGRAMS += rose-perf-execution-wrapper
-rose_perf_execution_wrapper_SOURCES = rose-perf-execution-wrapper.c
-rose_perf_execution_wrapper_LDADD =
+#~ noinst_PROGRAMS += rose-perf-execution-wrapper
+#~ rose_perf_execution_wrapper_SOURCES = rose-perf-execution-wrapper.c
+#~ rose_perf_execution_wrapper_LDADD =
 
 # a.6) reads perf-report output and computes unique instruction count
-AM_YFLAGS = -d -t
+#~ AM_YFLAGS = -d -t
 
-noinst_PROGRAMS += rose-perf-analyzer
-rose_perf_analyzer_SOURCES = PerfOutputAnalyzer/parser.ypp PerfOutputAnalyzer/lexer.lpp \
-                             PerfOutputAnalyzer/analyzer.cpp 
-rose_perf_analyzer_CPPFLAGS = $(ROSE_INCLUDES)
-rose_perf_analyzer_LDFLAGS = $(ROSE_RPATHS)
-rose_perf_analyzer_LDADD = $(ROSE_LIBS)
+#~ noinst_PROGRAMS += rose-perf-analyzer
+#~ rose_perf_analyzer_SOURCES = PerfOutputAnalyzer/parser.ypp PerfOutputAnalyzer/lexer.lpp \
+#~                              PerfOutputAnalyzer/analyzer.cpp 
+#~ rose_perf_analyzer_CPPFLAGS = $(ROSE_INCLUDES)
+#~ rose_perf_analyzer_LDFLAGS = $(ROSE_RPATHS)
+#~ rose_perf_analyzer_LDADD = $(ROSE_LIBS)
 
 # a.7) the script that organizes perf's execution
 
-noinst_SCRIPTS = rose-execmon-linux-perf-intel-x86-64.sh
+#~ noinst_SCRIPTS = rose-execmon-linux-perf-intel-x86-64.sh
 
-rose-execmon-linux-perf-intel-x86-64.sh: $(srcdir)/rose-execution-monitor-linux-perf-intel-x86_64.sh rose-perf-analyzer
-	cp $< $@
-	chmod u+x $@
+#~ rose-execmon-linux-perf-intel-x86-64.sh: $(srcdir)/rose-execution-monitor-linux-perf-intel-x86_64.sh rose-perf-analyzer
+#~ 	cp $< $@
+#~ 	chmod u+x $@
 	
 #	
 # targets	
@@ -170,21 +170,21 @@ testAddressRandomization.passed: $(srcdir)/defaultcrsh.conf crsh/crsh sampleExec
 
 TEST_TARGETS += testExecutionMonitor.passed
 
-testExecutionMonitor.passed: $(srcdir)/defaultcrsh.conf crsh/crsh ExecutionMonitor sampleExecutable test-execution-monitor
+testExecutionMonitor.passed: $(srcdir)/defaultcrsh.conf crsh/crsh rose-execution-monitor-zero sampleExecutable test-execution-monitor
 	@$(RTH_RUN) \
 		TITLE="concolic database testExecutionMonitor [$@]" \
 		CMD="./crsh/crsh $(srcdir)/testExecutionMonitor.crsh" \
 		ANS="no" \
 		$< $@
 
-TEST_TARGETS += testPerfExecutionMonitor.passed
+#~ TEST_TARGETS += testPerfExecutionMonitor.passed
 
-testPerfExecutionMonitor.passed: $(srcdir)/defaultcrsh.conf crsh/crsh rose-execmon-linux-perf-intel-x86-64.sh sampleExecutable test-execution-monitor
-	@$(RTH_RUN) \
-		TITLE="concolic database testPerfExecutionMonitor [$@]" \
-		CMD="./crsh/crsh $(srcdir)/testPerfExecutionMonitor.crsh" \
-		ANS="no" \
-		$< $@
+#~ testPerfExecutionMonitor.passed: $(srcdir)/defaultcrsh.conf crsh/crsh rose-execmon-linux-perf-intel-x86-64.sh sampleExecutable test-execution-monitor
+#~ 	@$(RTH_RUN) \
+#~ 		TITLE="concolic database testPerfExecutionMonitor [$@]" \
+#~ 		CMD="./crsh/crsh $(srcdir)/testPerfExecutionMonitor.crsh" \
+#~ 		ANS="no" \
+#~ 		$< $@
 
 TEST_TARGETS += testConnectNonExisting.passed
 
@@ -212,8 +212,6 @@ testConnect.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 		CMD="./crsh/crsh $(srcdir)/testConnect.crsh" \
 		ANS="no" \
 		$< $@
-
-
 
 #------------------------------------------------------------------------------------------------------------------------
 # Test concolic executor

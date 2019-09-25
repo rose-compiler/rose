@@ -15,27 +15,27 @@ run $(support_compile_linkexe) sampleExecutable.C
 run $(support_compile_linkexe) test-execution-monitor.C
 
 # a.3) execution monitor to produce quality score
-run $(tool_compile_linkexe) ExecutionMonitor.C
+# run $(tool_compile_linkexe) rose-execution-monitor-zero.C
 
 # a.4) test compiled programs
 run $(tool_compile_linkexe) testConcolicDB.C
 run $(test) testConcolicDB
 
 # a.5) execution wrapper for perf to intercept signals
-run $(support_compile_linkexe) rose-perf-execution-wrapper.c
+# run $(support_compile_linkexe) rose-perf-execution-wrapper.c
 
 # TODO \PP use flex and bison to create rose-perf-analyzer
 # a.6) reads perf-report output and computes unique instruction count
 
-: PerfOutputAnalyzer/parser.ypp \
-|> ^ BISON %f^ $(ROSE)/config/ylwrap %f y.tab.c %o y.tab.h PerfOutputAnalyzer/parser.hpp -- bison -y -d -t \
-|> parser.cpp | parser.hpp
+#: PerfOutputAnalyzer/parser.ypp \
+#|> ^ BISON %f^ $(ROSE)/config/ylwrap %f y.tab.c %o y.tab.h PerfOutputAnalyzer/parser.hpp -- bison -y -d -t \
+#|> parser.cpp | parser.hpp
 
-: PerfOutputAnalyzer/lexer.lpp \
-|> ^ FLEX %f^ $(ROSE)/config/ylwrap %f lex.yy.c %o -- flex \
-|> lexer.cpp
+#: PerfOutputAnalyzer/lexer.lpp \
+#|> ^ FLEX %f^ $(ROSE)/config/ylwrap %f lex.yy.c %o -- flex \
+#|> lexer.cpp
 
-run $(tool_compile_linkexe) -o rose-perf-analyzer --depend=parser.hpp parser.cpp lexer.cpp PerfOutputAnalyzer/analyzer.cpp 
+#run $(tool_compile_linkexe) -o rose-perf-analyzer --depend=parser.hpp parser.cpp lexer.cpp PerfOutputAnalyzer/analyzer.cpp 
 
 
 # TODO (1) \PP cp $(srcdir)/rose-execution-monitor-linux-perf-intel-x86_64.sh rose-execmon-linux-perf-intel-x86-64.sh
@@ -83,12 +83,12 @@ run $(test) ./crsh/crsh -o testAddressRandomization \
     ./crsh/crsh testAddressRandomization.crsh
     
 run $(test) ./crsh/crsh -o testExecutionMonitor \
-    --input=ExecutionMonitor test-execution-monitor sampleExecutable\
+    --input=rose-execution-monitor-zero test-execution-monitor sampleExecutable\
     ./crsh/crsh testExecutionMonitor.crsh
 
-run $(test) ./crsh/crsh -o testPerfExecutionMonitor \
-    --input=rose-execmon-linux-perf-intel-x86-64.sh rose-perf-execution-wrapper test-execution-monitor sampleExecutable\
-    ./crsh/crsh testPerfExecutionMonitor.crsh
+#run $(test) ./crsh/crsh -o testPerfExecutionMonitor \
+#    --input=rose-execmon-linux-perf-intel-x86-64.sh rose-perf-execution-wrapper test-execution-monitor sampleExecutable\
+#    ./crsh/crsh testPerfExecutionMonitor.crsh
 
 run $(test) ./crsh/crsh -o testConnectNonExisting \
     ./crsh/crsh testConnectNonExisting.crsh

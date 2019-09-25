@@ -287,7 +287,6 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
     execmonArgs.push_back("-o");
     execmonArgs.push_back(qualScore.native());
     // execmonArgs.push_back("--no-disassembler");
-    execmonArgs.push_back("--");
   }
 
   int                      errcode = executeBinary( executionMonitor(),

@@ -15,7 +15,7 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/version.hpp>
 
-// REG_PP possibly defined on __sun
+// REG_SP possibly defined on __sun
 // REG_LINK possibly defined on Windows
 #undef REG_SP
 #undef REG_LINK
@@ -184,7 +184,7 @@ public:
      *
      *  Returns the list of names that the @ref lookup method recognizes. */
     static std::vector<std::string> isaNames();
-    
+
     /** Finds a suitable disassembler. Looks through the list of registered disassembler instances (from most recently
      *  registered to earliest registered) and returns the first one whose can_disassemble() predicate returns true. This is
      *  done for each header contained in the interpretation and the disassembler for each header must match the other
@@ -286,7 +286,7 @@ public:
     virtual RegisterDescriptor callReturnRegister() const {
         return REG_LINK;                                // need not be valid
     }
-    
+
     /** Return an instruction semantics dispatcher if possible.
      *
      *  If instruction semantics are implemented for this architecure then return a pointer to a dispatcher. The dispatcher

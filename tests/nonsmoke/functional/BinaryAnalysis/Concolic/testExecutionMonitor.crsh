@@ -1,6 +1,6 @@
 create sqlite3://./testExecutionMonitor.db
 
-MONITOR = ./ExecutionMonitor
+MONITOR = ./rose-execution-monitor-zero
 
 @ success
 test-exec :: t01
