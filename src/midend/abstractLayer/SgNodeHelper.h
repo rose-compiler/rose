@@ -454,17 +454,20 @@ namespace SgNodeHelper {
   */
   std::string getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl);
 
-    // replace in string 'str' each string 'from' with string 'to'.
-    void replaceString(std::string& str, const std::string& from, const std::string& to);
+  // replace in string 'str' each string 'from' with string 'to'.
+  void replaceString(std::string& str, const std::string& from, const std::string& to);
 
-    // checks whether prefix 'prefix' is a prefix in string 's'.
-    bool isPrefix(const std::string& prefix, const std::string& s);
+  // checks whether prefix 'prefix' is a prefix in string 's'.
+  bool isPrefix(const std::string& prefix, const std::string& s);
 
-    // checks whether 'elem' is the last child (in traversal order) of node 'parent'.
-    bool isLastChildOf(SgNode* elem, SgNode* parent);
+  // checks whether 'elem' is the last child (in traversal order) of node 'parent'.
+  bool isLastChildOf(SgNode* elem, SgNode* parent);
 
-    // Checks if an OpenMP construct is marked with a nowait clause
-    bool hasNoWait(SgOmpClauseBodyStatement *ompNode);
+  // Checks if an OpenMP construct is marked with a nowait clause
+  bool hasOmpNoWait(SgOmpClauseBodyStatement *ompNode);
+
+  typedef std::vector<SgOmpSectionStatement *> OmpSectionList;
+  OmpSectionList getOmpSectionList(SgOmpSectionsStatement *sectionsStmt);
 
   //! Provides functions which match a certain AST pattern and return a pointer to a node of interest inside that pattern.
   namespace Pattern {
