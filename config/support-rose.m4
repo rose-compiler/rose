@@ -1038,6 +1038,8 @@ ROSE_SUPPORT_VECTORIZATION
 # Pei-Hung (12/17/2014): Adding support for POCC.
 ROSE_SUPPORT_POCC
 
+ROSE_SUPPORT_LIBHARU
+
 ROSE_SUPPORT_PHP
 
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
@@ -1921,7 +1923,7 @@ AC_MSG_NOTICE([CC = "$CC"])
 AC_MSG_NOTICE([CPPFLAGS = "$CPPFLAGS"])
 
 AC_MSG_NOTICE([subdirs = "$subdirs"])
-AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
+AC_CONFIG_SUBDIRS([libltdl])
 
 # This list should be the same as in build (search for Makefile.in)
 

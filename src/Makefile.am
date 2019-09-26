@@ -198,7 +198,6 @@ libroseLibraries = \
 else
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
-   $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la \
    $(top_builddir)/src/backend/libbackend.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseCxxlibraries) \
@@ -228,6 +227,11 @@ libroseLibraries = \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
+
+if ROSE_WITH_LIBHARU
+libroseLibraries += \
+   $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la 
+endif
 
 # DQ (6/10/2017): Added libhpdf.la library and removed it from LIBADD rule.
 # This is being done to fix the "make install" rule (which failes for me).

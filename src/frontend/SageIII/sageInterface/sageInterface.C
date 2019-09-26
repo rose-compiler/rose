@@ -4,7 +4,11 @@
 #include "markLhsValues.h"
 #include "fixupNames.h"
 #include "FileUtility.h"
+
+#if ROSE_WITH_LIBHARU
 #include "AstPDFGeneration.h"
+#endif
+
 #include "SgNodeHelper.h" //Markus's helper functions
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -22792,8 +22796,12 @@ void SageInterface:: saveToPDF(SgNode* node)
 void SageInterface:: saveToPDF(SgNode* node, std::string filename)
 {
   ROSE_ASSERT(node != NULL); 
+#if ROSE_WITH_LIBHARU
   AstPDFGeneration pdf;
   pdf.generateWithinFile(filename, getEnclosingFileNode(node));
+#else
+     printf ("Warning: libharu support is not enabled\n");
+#endif
 }
 
 bool SageInterface::insideSystemHeader (SgLocatedNode* node)
