@@ -123,7 +123,7 @@
  * @section mainpage_next Next steps
  *
  *  ROSE is an open source project that can be installed from source code. See [Download and
- *  installation](https://github.com/rose-compiler/rose/wiki#basic-info)
+ *  installation](https://github.com/rose-compiler/rose/wiki/How-to-Set-Up-ROSE)
  *
  *  @todo The links to the "ROSE tutorial" (at least the source code part) and the "ROSE user manual" are to versions
  *        served from http://rosecompiler.org, which might not match this release of ROSE. A better approach might be to use
