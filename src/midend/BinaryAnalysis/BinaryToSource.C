@@ -3,8 +3,10 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <AsmUnparser_compat.h>
 #include <BinaryToSource.h>
+#include <CommandLine.h>
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 typedef SourceAstSemantics::SValue SValue;
@@ -21,6 +23,20 @@ typedef SourceAstSemantics::RiscOperatorsPtr RiscOperatorsPtr;
 namespace Rose {
 namespace BinaryAnalysis {
 
+Sawyer::Message::Facility BinaryToSource::mlog;
+
+// class method
+void
+BinaryToSource::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        mlog = Sawyer::Message::Facility("Rose::BinaryAnalysis::BinaryToSource", Diagnostics::destination);
+        mlog.comment("lifting assembly to C");
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
+    }
+}
+
 void
 BinaryToSource::init(const P2::Partitioner &partitioner) {
     disassembler_ = partitioner.instructionProvider().disassembler();
@@ -35,6 +51,67 @@ BinaryToSource::init(const P2::Partitioner &partitioner) {
     } else {
         raisingCpu_ = protoCpu->create(raisingOps_);
     }
+}
+
+// class method
+Sawyer::CommandLine::SwitchGroup
+BinaryToSource::commandLineSwitches(Settings &settings) {
+    using namespace Sawyer::CommandLine;
+
+    SwitchGroup sg("Lifter switches");
+    sg.name("lifter");
+    sg.doc("These switches apply to the BinaryToSource analysis, which produces low-level C source code from machine instructions "
+           "using ROSE's instruction semantics.");
+
+    Rose::CommandLine::insertBooleanSwitch(sg, "trace-generation", settings.traceRiscOps,
+                                           "Cause the source generation phase to emit information about the basic RISC-like steps "
+                                           "performed for each instruction. This can preserve a developer's sanity because the C "
+                                           "expressions often become large, deeply nested, and not always intuitive about from "
+                                           "whence each part came.");
+
+    Rose::CommandLine::insertBooleanSwitch(sg, "trace-instructions", settings.traceInsnExecution,
+                                           "Cause the generated source to contain extra \"printf\" calls to emit each instruction "
+                                           "as it is processed.");
+
+    sg.insert(Switch("ip")
+              .longName("instruction-pointer")
+              .argument("address", nonNegativeIntegerParser(settings.initialInstructionPointer))
+              .doc("Initial value for the instruction pointer. If no initial value is provided and a function with the name "
+                   "\"_start\" is present, then use that function as the starting point. Otherwise the instruction pointer "
+                   "reigster is not given an initial value and the generated C program will probably fail to run (also an "
+                   "error is emitted during the generation of the C program). The default is " +
+                   (settings.initialInstructionPointer ?
+                    StringUtility::addrToString(*settings.initialInstructionPointer) :
+                    std::string("no value")) + "."));
+
+    sg.insert(Switch("sp")
+              .longName("stack-pointer")
+              .argument("address", nonNegativeIntegerParser(settings.initialStackPointer))
+              .doc("Initial value for the stack pointer. If no value is specified then the stack pointer register is not "
+                   "initialized. The default is " +
+                   (settings.initialStackPointer ?
+                    StringUtility::addrToString(*settings.initialStackPointer) :
+                    std::string("no value")) + "."));
+
+
+    sg.insert(Switch("allocate-memory")
+              .argument("size", nonNegativeIntegerParser(settings.allocateMemoryArray))
+              .doc("Causes the global \"mem\" array to be allocated instead of being declared \"extern\". The switch "
+                   "argument is the amount of memory to allocate. If the argument is zero, then the memory array is "
+                   "allocated to be just large enough to hold the value at the maximum initialized address. The default is to " +
+                   (settings.allocateMemoryArray ?
+                    (0 == *settings.allocateMemoryArray ?
+                     "allocate to the maximum initialized address" :
+                     "allocate " + StringUtility::plural(*settings.allocateMemoryArray, "bytes")) :
+                    std::string("not allocate anything")) + "."));
+
+    Rose::CommandLine::insertBooleanSwitch(sg, "zero-memory", settings.zeroMemoryArray,
+                                           "Cause the allocated memory array to be explicitly cleared before it is initialized "
+                                           "with the contents of the executable. If disabled, then the memory array is allocated "
+                                           "with \"malloc\" instead of \"calloc\", which is faster and might be able to handle "
+                                           "much larger memory sizes.");
+
+    return sg;
 }
 
 void
@@ -58,10 +135,8 @@ BinaryToSource::emitFilePrologue(const P2::Partitioner &partitioner, std::ostrea
     out <<"/* Memory */\n";
     if (!settings_.allocateMemoryArray) {
         out <<"extern uint8_t *mem;\n";
-    } else if (0 == *settings_.allocateMemoryArray) {
-        out <<"uint8_t mem[" <<StringUtility::addrToString(partitioner.memoryMap()->greatest()+1) <<"];\n";
     } else {
-        out <<"uint8_t mem[" <<StringUtility::addrToString(*settings_.allocateMemoryArray) <<"];\n";
+        out <<"uint8_t *mem = NULL;\n";
     }
 
     out <<"\n"
@@ -83,11 +158,6 @@ BinaryToSource::emitFilePrologue(const P2::Partitioner &partitioner, std::ostrea
         <<"    int x;\n"
         <<"    return x; /* intentionally uninitialized */\n"
         <<"}\n"
-        <<"\n"
-        <<"void\n"
-        <<"interrupt(int majr, int minr) {\n"
-        <<"    printf(\"interrupt(%d,%d)\\n\", majr, minr);\n"
-        <<"}\n"
         <<"\n";
 }
 
@@ -96,15 +166,35 @@ BinaryToSource::declareGlobalRegisters(std::ostream &out) {
     out <<"\n/* Global register variables */\n";
     RegisterStatePtr regs = RegisterState::promote(raisingOps_->currentState()->registerState());
     BOOST_FOREACH (const RegisterState::RegPair &regpair, regs->get_stored_registers()) {
-        std::string ctext = SValue::unsignedTypeNameForSize(regpair.desc.get_nbits()) + " " +
+        std::string ctext = SValue::unsignedTypeNameForSize(regpair.desc.nBits()) + " " +
                             raisingOps_->registerVariableName(regpair.desc);
-        if (regpair.desc.get_nbits() > 64) {
+        if (regpair.desc.nBits() > 64) {
             out <<"/* " <<ctext <<"; -- not supported yet in ROSE source analysis */\n";
         } else {
             out <<ctext <<";\n";
         }
     }
     out <<"\n";
+}
+
+void
+BinaryToSource::defineInterrupts(std::ostream &out) {
+    out <<"\n"
+        <<"void interrupt(int majr, int minr) {\n";
+
+    if (disassembler_->instructionPointerRegister().nBits() == 32) {
+        out <<"    if (0 == majr && 0x80 == minr && 1 == R_eax) {\n"
+            <<"        fprintf(stderr, \"exited with status %d\", R_ebx);\n"
+            <<"        exit(R_ebx);\n";
+    } else {
+        out <<"    if (0) {\n"
+            <<"        /* no special interrupts for this architecture */\n";
+    }
+
+    out <<"    } else {\n"
+        <<"        printf(\"interrupt(%d, %d)\\n\", majr, minr);\n"
+        <<"    }\n"
+        <<"}\n";
 }
 
 void
@@ -121,11 +211,24 @@ BinaryToSource::emitEffects(std::ostream &out) {
         }
     }
     out <<"                    /* Side effects */\n";
-    BOOST_FOREACH (const RiscOperators::SideEffect &sideEffect, raisingOps_->sideEffects()) {
-        if (sideEffect.location) {
-            std::string location = SValue::promote(sideEffect.location)->ctext();
-            std::string tempName = SValue::promote(sideEffect.temporary)->ctext();
-            out <<"                    " <<location <<" = " <<tempName <<";\n";
+
+    // Show last occurrence of each side effect.
+    const std::vector<RiscOperators::SideEffect> &sideEffects = raisingOps_->sideEffects();
+    for (size_t i = 0; i < sideEffects.size(); ++i) {
+        if (sideEffects[i].location) {
+            std::string location = SValue::promote(sideEffects[i].location)->ctext();
+            bool isLastOccurrence = true;
+            for (size_t j = i+1; isLastOccurrence && j < sideEffects.size(); ++j) {
+                if (sideEffects[j].location) {
+                    std::string laterLocation = SValue::promote(sideEffects[j].location)->ctext();
+                    if (location == laterLocation)
+                        isLastOccurrence = false;
+                }
+            }
+            if (isLastOccurrence) {
+                std::string tempName = SValue::promote(sideEffects[i].temporary)->ctext();
+                out <<"                    " <<location <<" = " <<tempName <<";\n";
+            }
         }
     }
 }
@@ -140,7 +243,11 @@ BinaryToSource::emitInstruction(SgAsmInstruction *insn, std::ostream &out) {
             <<", stderr);\n";
 
     raisingOps_->reset();
-    raisingCpu_->processInstruction(insn);
+    try {
+        raisingCpu_->processInstruction(insn);
+    } catch (const BaseSemantics::Exception &e) {
+        out <<"                fputs(\"semantics exception: " <<StringUtility::cEscape(e.what()) <<"\", stderr);\n";
+    }
     out <<"                {\n";
     emitEffects(out);
     out <<"                }\n";
@@ -156,7 +263,7 @@ BinaryToSource::emitBasicBlock(const P2::Partitioner &partitioner, const P2::Bas
         emitInstruction(insn, out);
         fallThroughVa = insn->get_address() + insn->get_size();
     }
-    
+
     // If this bblock is a binary function call, then call the corresponding source function.  We can't do this
     // directly because the call might be indirect. Therefore all calls go through a function call dispatcher.
     if (partitioner.basicBlockIsFunctionCall(bblock))
@@ -181,9 +288,15 @@ BinaryToSource::emitBasicBlock(const P2::Partitioner &partitioner, const P2::Bas
 
 void
 BinaryToSource::emitFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &function, std::ostream &out) {
+    std::string name = function->name();
+    name = boost::replace_all_copy(name, "*/", "*\\/");
+    out <<"\n";
+    if (!name.empty())
+        out <<"/* " <<name <<" */\n";
+
     const RegisterDescriptor IP = disassembler_->instructionPointerRegister();
-    out <<"\nvoid F_" <<StringUtility::addrToString(function->address()).substr(2) <<"("
-        <<"const " <<SValue::unsignedTypeNameForSize(IP.get_nbits()) <<" ret_va"
+    out <<"void F_" <<StringUtility::addrToString(function->address()).substr(2) <<"("
+        <<"const " <<SValue::unsignedTypeNameForSize(IP.nBits()) <<" ret_va"
         <<") {\n"
         <<"    while (" <<raisingOps_->registerVariableName(IP) <<" != ret_va) {\n"
         <<"        switch (" <<raisingOps_->registerVariableName(IP) <<") {\n";
@@ -218,13 +331,13 @@ BinaryToSource::emitFunctionDispatcher(const P2::Partitioner &partitioner, std::
     const RegisterDescriptor SP = disassembler_->stackPointerRegister();
     const RegisterDescriptor SS = disassembler_->stackSegmentRegister();
     raisingOps_->reset();
-    BaseSemantics::SValuePtr spDflt = raisingOps_->undefined_(SP.get_nbits());
+    BaseSemantics::SValuePtr spDflt = raisingOps_->undefined_(SP.nBits());
     BaseSemantics::SValuePtr returnTarget = raisingOps_->readMemory(SS,
-                                                                    raisingOps_->readRegister(SP, spDflt),
-                                                                    raisingOps_->undefined_(IP.get_nbits()),
+                                                                    raisingOps_->peekRegister(SP, spDflt),
+                                                                    raisingOps_->undefined_(IP.nBits()),
                                                                     raisingOps_->boolean_(true));
     emitEffects(out);
-    out <<"    " <<SValue::unsignedTypeNameForSize(IP.get_nbits()) <<" returnTarget = "
+    out <<"    " <<SValue::unsignedTypeNameForSize(IP.nBits()) <<" returnTarget = "
         <<SValue::promote(returnTarget)->ctext() <<";\n";
 
     // Emit the dispatch table
@@ -236,7 +349,7 @@ BinaryToSource::emitFunctionDispatcher(const P2::Partitioner &partitioner, std::
         std::string fname = function->name();
         if (!fname.empty()) {
             fname = StringUtility::cEscape(fname);
-            boost::replace_all(fname, "*/", "*\\/");
+            fname = boost::replace_all_copy(fname, "*/", "*\\/");
             out <<" /* " <<fname <<" */";
         }
         out <<"\n";
@@ -250,6 +363,25 @@ BinaryToSource::emitMemoryInitialization(const P2::Partitioner &partitioner, std
     out <<"\n"
         <<"void\n"
         <<"initialize_memory(void) {\n";
+
+    // Allocate the memory array
+    if (settings_.allocateMemoryArray) {
+        if (0 == *settings_.allocateMemoryArray) {
+            if (settings_.zeroMemoryArray) {
+                out <<"    mem = calloc(" <<StringUtility::addrToString(partitioner.memoryMap()->greatest()+1) <<"UL, 1);\n";
+            } else {
+                out <<"    mem = malloc(" <<StringUtility::addrToString(partitioner.memoryMap()->greatest()+1) <<"UL);\n";
+            }
+        } else {
+            if (settings_.zeroMemoryArray) {
+                out <<"    mem = calloc(" <<StringUtility::addrToString(*settings_.allocateMemoryArray) <<"UL, 1);\n";
+            } else {
+                out <<"    mem = malloc(" <<StringUtility::addrToString(*settings_.allocateMemoryArray) <<"UL);\n";
+            }
+        }
+    }
+
+    // Initialize the memory array with the contents of the memory map
     rose_addr_t va = 0;
     uint8_t buf[8192];
     while (AddressInterval where = partitioner.memoryMap()->atOrAfter(va).limit(sizeof buf).read(buf)) {
@@ -261,26 +393,40 @@ BinaryToSource::emitMemoryInitialization(const P2::Partitioner &partitioner, std
         if (va <= partitioner.memoryMap()->hull().least())
             break;                                      // overflow of ++va
     }
+
     out <<"}\n";
 }
 
 void
-BinaryToSource::emitMain(std::ostream &out) {
+BinaryToSource::emitMain(const P2::Partitioner &partitioner, std::ostream &out) {
     out <<"\n"
         <<"int\n"
         <<"main() {\n"
         <<"    initialize_memory();\n";
 
     // Initialize regsiters
+    Sawyer::Optional<rose_addr_t> initialIp;
     if (settings_.initialInstructionPointer) {
+        initialIp = *settings_.initialInstructionPointer;
+    } else {
+        BOOST_FOREACH (const P2::Function::Ptr &f, partitioner.functions()) {
+            if (f->name() == "_start") {
+                initialIp = f->address();
+                break;
+            }
+        }
+    }
+    if (!initialIp) {
+        mlog[ERROR] <<"no initial value specified for instruction pointer register, an no \"_start\" function found\n";
+    } else {
         const RegisterDescriptor reg = disassembler_->instructionPointerRegister();
-        SValuePtr val = SValue::promote(raisingOps_->number_(reg.get_nbits(), *settings_.initialInstructionPointer));
+        SValuePtr val = SValue::promote(raisingOps_->number_(reg.nBits(), *initialIp));
         out <<"    " <<raisingOps_->registerVariableName(reg) <<" = " <<val->ctext() <<";\n";
     }
 
     if (settings_.initialStackPointer) {
         const RegisterDescriptor reg = disassembler_->stackPointerRegister();
-        SValuePtr val = SValue::promote(raisingOps_->number_(reg.get_nbits(), *settings_.initialStackPointer));
+        SValuePtr val = SValue::promote(raisingOps_->number_(reg.nBits(), *settings_.initialStackPointer));
         out <<"    " <<raisingOps_->registerVariableName(reg) <<" = " <<val->ctext() <<";\n";
     }
 
@@ -302,13 +448,12 @@ BinaryToSource::generateSource(const P2::Partitioner &partitioner, std::ostream 
     init(partitioner);
     emitFilePrologue(partitioner, out);
     declareGlobalRegisters(out);
+    defineInterrupts(out);
     emitAllFunctions(partitioner, out);
     emitFunctionDispatcher(partitioner, out);
     emitMemoryInitialization(partitioner, out);
-    emitMain(out);
+    emitMain(partitioner, out);
 }
-
-    
 
 } // namespace
 } // namespace

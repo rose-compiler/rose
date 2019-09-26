@@ -274,9 +274,13 @@ ModifyCopyArrayCollect(
             DepCompCopyArrayCollect& collect, DepCompAstRefGraphCreate& refDep)
 {
   CopyArrayUnderSizeLimit::ModifyCopyArrayCollect(collect,refDep);
+#ifndef NDEBUG
   AutoTuningInterface* tuning = LoopTransformInterface::getAutoTuningInterface();
   assert(tuning != 0);
-
+#else
+  LoopTransformInterface::getAutoTuningInterface();     // side effects?
+#endif
+  
       for (DepCompCopyArrayCollect::iterator arrays = collect.begin();
            arrays != collect.end(); ++arrays) {
           DepCompCopyArrayCollect::CopyArrayUnit& unit = *arrays;

@@ -9,7 +9,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include <BinarySymbolicExpr.h>
 #include <Sawyer/Attribute.h>
-#include <sageBuilderAsm.h>
+#include <SageBuilderAsm.h>
 #include <sstream>
 
 using namespace Rose;

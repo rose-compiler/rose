@@ -7,7 +7,7 @@
 #include "Miscellaneous2.h"
 
 using namespace CodeThorn;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace boost;
 using namespace std;
 

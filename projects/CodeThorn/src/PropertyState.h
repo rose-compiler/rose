@@ -6,7 +6,7 @@
 #include "Lattice.h"
 #include "VariableIdMapping.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 typedef Lattice PropertyState;
 

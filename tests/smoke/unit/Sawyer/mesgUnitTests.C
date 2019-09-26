@@ -94,7 +94,8 @@ controlImportanceCase() {
     std::cout <<"testing case insensitive importance names in Facilities::control...\n";
 
     Facilities facilities;
-    Facility f1("f1");
+    Facility f1;
+    f1.initialize("f1");
     facilities.insert(f1);
 
     static const char *impNames[] = {"none", "debug", "trace", "where", "march", "info", "error", "fatal", "all" };
@@ -204,7 +205,8 @@ facilitiesRename() {
     std::cout <<"renaming a facility vs. Facilities::control...\n";
 
     Facilities facilities;
-    Facility f1("f1");
+    Facility f1;
+    f1.initialize("f1");
     facilities.insert(f1);
 
     std::string error = facilities.control("f1(all)");

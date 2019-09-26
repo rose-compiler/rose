@@ -19,10 +19,6 @@
 #
 #     HAVE_ROSE
 #
-# LAST MODIFICATION
-#
-#   2007-11-22
-#
 # COPYLEFT
 #
 #   Copyright (c) 2007 Thomas Porschberg <thomas@randspringer.de>
@@ -95,7 +91,7 @@ AC_DEFUN([AX_ROSE_LIB],
                   done
                 fi
 				if test "x$link" != "xyes"; then
-					AC_MSG_ERROR([Could not link against [$ax_lib] !])
+					AC_MSG_ERROR([could not link against "$ax_lib"])
 				fi
 		fi
 		CPPFLAGS="$CPPFLAGS_SAVED"

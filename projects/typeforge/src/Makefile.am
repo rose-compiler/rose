@@ -1,74 +1,43 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-EXTRA_DIST = 
-
 bin_PROGRAMS = typeforge
-noinst_PROGRAMS = 
 
-CLEANFILES = 
+AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH)
+AM_CPPFLAGS = $(ROSE_INCLUDES)
 
-typeforge_YFLAGS = -p ltl_ # yacc flags for specification parser (not used yet)
-typeforge_CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-typeforge_DEPENDENCIES=
+TF_REL_PATH=projects/typeforge
+TF_INC_PATH=
 
-AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp
-AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/typeforge/src -g -rdynamic
+TF_LIB=$(abs_top_builddir)/$(TF_REL_PATH)/lib/libTypeforge.la
+$(TF_LIB):
+	$(MAKE) -C $(abs_top_builddir)/$(TF_REL_PATH)/lib libTypeforge.la
 
-typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-typeforge_DEPENDENCIES=
-typeforge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-typeforge__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-typeforge_SOURCES = typeforge.C CommandLineOptions.C CastStats.C CastTransformer.C TFTypeTransformer.C CastGraphVis.C CppStdUtilities.C TFTransformation.C TFSpecFrontEnd.C ToolConfig.cpp TFCommandList.C TFAnalysis.C TFHandles.C TFToolConfig.C
+TF_TRANSFORM_LIB=$(abs_top_builddir)/$(TF_REL_PATH)/lib/libTypeforge-transform.la
+$(TF_TRANSFORM_LIB):
+	$(MAKE) -C $(abs_top_builddir)/$(TF_REL_PATH)/lib libTypeforge-transform.la
 
-CHECK_DEFAULT=check-typeforge
+TF_CAST_LIB=$(abs_top_builddir)/$(TF_REL_PATH)/lib/libTypeforge-cast.la
+$(TF_CAST_LIB):
+	$(MAKE) -C $(abs_top_builddir)/$(TF_REL_PATH)/lib libTypeforge-cast.la
 
-check-local: $(CHECK_DEFAULT)
+TF_UTILS_LIB=$(abs_top_builddir)/$(TF_REL_PATH)/lib/libTypeforge-utils.la
+$(TF_UTILS_LIB):
+	$(MAKE) -C $(abs_top_builddir)/$(TF_REL_PATH)/lib libTypeforge-utils.la
 
-check-typeforge: typeforge
-	@echo ================================================================
-	@echo RUNNING TYPEFORGE TESTS
-	@echo ================================================================
-	rm -f typegraph.dot
-	rm -f rose_casttest3.C
-#	./typeforge -DSKIP_ROSE_BUILTIN_DECLARATIONS --dot-type-graph $(srcdir)/tests/casttest1.C 
-#	dot -Tpdf typegraph.dot -o type-graph.pdf
-#	./typeforge --explicit $(srcdir)/tests/casttest1.C
-	./typeforge --explicit --float-var=f1,d1 $(srcdir)/tests/casttest3.C --compile
-	./typeforge --spec-file=$(srcdir)/tests/casttest3.tf --trace $(srcdir)/tests/casttest3.C --compile
-	g++ -Wall rose_casttest3.C
-	./typeforge --spec-file=$(srcdir)/tests/type_replace_test1.tf --trace $(srcdir)/tests/type_replace_test1.C
-	./typeforge --spec-file=$(srcdir)/tests/basetype_replace_test1.tf --trace $(srcdir)/tests/basetype_replace_test1.C
-	./typeforge --spec-file=$(srcdir)/tests/json_replace_test.json --trace $(srcdir)/tests/json_replace_test.C 
-	./typeforge --spec-file=$(srcdir)/tests/json_out_test.json --trace $(srcdir)/tests/json_out_test.C --compile
-	./typeforge --spec-file=craft_initial.json --trace $(srcdir)/tests/json_out_test.C --compile
-	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/casttest1.C
-	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/ad_compound_test.C
-	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/ad_array_test.C
-	./typeforge --spec-file=$(srcdir)/tests/ad_transformation_test.tf $(srcdir)/tests/ad_global_test.C
-	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json $(srcdir)/tests/include_pragma_test1.C
-	./typeforge --spec-file=$(srcdir)/tests/ad_include_pragma.json $(srcdir)/tests/include_pragma_test2.C
-	./typeforge --plugin=$(srcdir)/tests/ad_all.json $(srcdir)/tests/ad_all.C
-	./typeforge --plugin=$(srcdir)/tests/tf_file_test.tf $(srcdir)/tests/tf_file_test.C 
-	./typeforge --plugin=$(srcdir)/tests/set_out_test.json --typeforge-out=set.json $(srcdir)/tests/setTest.C
-	./typeforge --plugin=set.json --trace $(srcdir)/tests/setTest.C
-	./typeforge --plugin=$(srcdir)/tests/var_set_change.json --trace $(srcdir)/tests/setTest.C
-	rm -f a.out *.json
+TF_OPNET_LIB=$(abs_top_builddir)/$(TF_REL_PATH)/lib/OpNet/libTypeforge-opnet.la
+$(TF_OPNET_LIB):
+	$(MAKE) -C $(abs_top_builddir)/$(TF_REL_PATH)/lib/OpNet libTypeforge-opnet.la
 
-#check-typeforge:
-#	@echo ================================================================
-#	@echo RUNNING DEADCODE TESTS
-#	@echo ================================================================
-#	$(srcdir)/scripts/runDeadCodeTests $(srcdir)/tests
+typeforge_CXXFLAGS= \
+  -I$(abs_top_srcdir)/$(TF_REL_PATH)/include \
+  -g -Wall -O3 -march=native -ftree-vectorize \
+  -rdynamic
 
-docs:
-	cd "$(srcdir)" && doxygen
+typeforge_SOURCES=typeforge.cpp
+typeforge_LDADD= \
+  $(TF_LIB) \
+  $(TF_OPNET_LIB) \
+  $(TF_TRANSFORM_LIB) \
+  $(TF_CAST_LIB) \
+  $(TF_UTILS_LIB)
 
-clean-local:
-	rm -f *.dot
-	rm -f *.ps
-	rm -f *.jpg
-
-distclean-local: clean
-	rm -f *.tgz
-	rm -f *~
-	rm -rf ../docs/doxygen

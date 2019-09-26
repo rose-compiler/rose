@@ -1,0 +1,6 @@
+#!/bin/bash
+set -ex
+
+rmc -C ~/rose/_build/projects/BinaryAnalysisTools make check
+rmc -C ~/rose/_build/projects/simulator2 make check
+rmc -C ~/rose/_build/projects/MatrixTesting make check

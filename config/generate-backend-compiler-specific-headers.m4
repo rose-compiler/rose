@@ -13,7 +13,7 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
       dnl AC_MSG_NOTICE([ROSE_CXX_HEADERS_DIR not set ...])
       ROSE_CXX_HEADERS_DIR="${prefix}/include/${compilerName}_HEADERS"
    else
-      AC_MSG_NOTICE([ROSE_CXX_HEADERS_DIR set to: $ROSE_CXX_HEADERS_DIR])
+      AC_MSG_NOTICE([ROSE_CXX_HEADERS_DIR = "$ROSE_CXX_HEADERS_DIR"])
    fi
 
    saveCurrentDirectory="`pwd`"
@@ -22,7 +22,7 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
    cd "$saveCurrentDirectory"
 
  # DQ (9/1/2009): Output the absolute path
-   echo "absolutePath_srcdir = ${absolutePath_srcdir}"
+   AC_MSG_NOTICE([absolutePath_srcdir = "${absolutePath_srcdir}"])
 
  # This is a way to make this a global shaell variable, but it is better to pass it as a parameter to the function.
  # export language="cxx"
@@ -35,17 +35,16 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
 
  # DQ (2/2/2016): Adding additional parameters to this function call.
  # "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}"
-   "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}" "${language}" "$BACKEND_CXX_COMPILER_VENDOR"
+   VERBOSE="$verbose" "${srcdir}/config/create_system_headers" "${BACKEND_CXX_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}" "${language}" "$BACKEND_CXX_COMPILER_VENDOR"
 
    error_code=$?
-   echo "error_code = $error_code"
+   AC_MSG_NOTICE([error_code = "$error_code"])
    if test $error_code != 0; then
-        echo "Error in generate backend CXX compiler specific headers: call to ${srcdir}/config/create_system_headers: nonzero exit code returned to caller error_code = $error_code"
-        exit 1
+        AC_MSG_FAILURE([error in generate backend CXX compiler specific headers: call to ${srcdir}/config/create_system_headers: nonzero exit code returned to caller error_code = "$error_code"])
    fi
 
-   echo "BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
-   echo "BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+   AC_MSG_NOTICE([BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER = "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"])
+   AC_MSG_NOTICE([BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER = "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"])
 
  # DQ (2/2/2016): Debugging new support for detected the compiler vendor.
  # echo "Exiting after call to create_system_headers in GENERATE BACKEND CXX COMPILER SPECIFIC HEADERS"
@@ -55,13 +54,13 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
  # We fixup a specific GNU 4.5 issues use of "return { __mask };"
    if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
       if test x$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER == x5; then
-         echo "Note: we have identified version 4.5 of GNU C/C++ which triggers use of a modified copy of iomanip header file."
+         AC_MSG_NOTICE([we have identified version 4.5 of GNU C/C++ which triggers use of a modified copy of iomanip header file])
          cp ${srcdir}/config/iomanip-gnu-4.5 ./include-staging/iomanip-gnu-4.5
-         echo "remove the links..."
+         AC_MSG_NOTICE([remove the links])
          rm ./include-staging/gcc_HEADERS/hdrs4/c++/4.5.0/iomanip;
          rm ./include-staging/g++_HEADERS/hdrs7/c++/4.5.0/iomanip;
          rm ./include-staging/g++_HEADERS/hdrs3/iomanip;
-         echo "rebuild links to the modified file..."
+         AC_MSG_NOTICE([rebuild links to the modified file])
          ln -s ./include-staging/iomanip-gnu-4.5 ./include-staging/gcc_HEADERS/hdrs4/c++/4.5.0/iomanip
          ln -s ./include-staging/iomanip-gnu-4.5 ./include-staging/g++_HEADERS/hdrs7/c++/4.5.0/iomanip
          ln -s ./include-staging/iomanip-gnu-4.5 ./include-staging/g++_HEADERS/hdrs3/iomanip
@@ -70,7 +69,7 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
 
  # DQ (9/19/2010): Copy the upc.h header file from the config directory to our include-staging/${BACKEND_CXX_COMPILER}_HEADERS directory.
  # It might be that these should be put into a UPC specific subdirectory (so that the C compiler can't accedentally find them), but this should be discussed.
-   echo "Copying UPC++ header files into ./include-staging/${compilerName}_HEADERS directory ..."
+   AC_MSG_NOTICE([copying UPC++ header files into ./include-staging/${compilerName}_HEADERS directory])
    cp ${srcdir}/config/upc.h ./include-staging/${compilerName}_HEADERS
    cp ${srcdir}/config/upc_io.h ./include-staging/${compilerName}_HEADERS
    cp ${srcdir}/config/upc_relaxed.h ./include-staging/${compilerName}_HEADERS
@@ -123,10 +122,9 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
    fi
 
    error_code=$?
-   echo "error_code = $error_code"
+   AC_MSG_NOTICE([error_code = "$error_code"])
    if test $error_code != 0; then
-        echo "Error in copying of upc.h header file: nonzero exit code returned to caller error_code = $error_code"
-        exit 1
+        AC_MSG_FAILURE([error copying upc.h header file: nonzero exit code returned to caller error_code = "$error_code"])
    fi
 
    if test "x$BACKEND_CXX_COMPILER_VENDOR" = "xclang"; then
@@ -141,10 +139,10 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
 #  fi
 
 # DQ (1/15/2017): Debugging info to debug clange on Mac OSX.
-echo "edg_major_version_number = $edg_major_version_number"
-echo "compilerName = ${compilerName}"
-echo "BACKEND_CXX_COMPILER_VENDOR = $BACKEND_CXX_COMPILER_VENDOR"
-echo "build_vendor = $build_vendor"
+AC_MSG_NOTICE([edg_major_version_number = "$edg_major_version_number"])
+AC_MSG_NOTICE([compilerName = "${compilerName}"])
+AC_MSG_NOTICE([BACKEND_CXX_COMPILER_VENDOR = "$BACKEND_CXX_COMPILER_VENDOR"])
+AC_MSG_NOTICE([build_vendor = "$build_vendor"])
 
  # DQ (12/14/2016): We now want this to apply to EDG 4.12 because it does not handle C++11 constexpr 
  # return type of builtin functions properly. Note that this is only an issue when processing file 
@@ -157,7 +155,7 @@ echo "build_vendor = $build_vendor"
 #     if test "$edg_minor_version_number" -le "11"; then
          # DQ (9/12/2016): Added use of new support to specify constexpr specific builtin functions (uses an additional file, support added by Robb).
          # DQ (9/1/2016): Adding generated header file from new support for builtin functions.
-           echo "Now output the builtin generated file into build directory."
+           AC_MSG_NOTICE([now output the builtin generated file into build directory])
 
          # DQ (2/25/2017): We need to support a different version of the buildin function support for EDG 4.9 because later versions 
          # of this generated file cause the tests/roseTests/astFileIOTests makefile rule parallelMerge_short and parallelMerge_medium
@@ -168,13 +166,13 @@ echo "build_vendor = $build_vendor"
          # ${srcdir}/scripts/builtinLlvmFunctions.pl ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
          # ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
            if test "$edg_minor_version_number" -le "9"; then
-              echo "Building EDG 4.9 specific version of rose_generated_builtin_functions.h"
+              AC_MSG_NOTICE([building EDG 4.9 specific version of rose_generated_builtin_functions.h])
               ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins_EDG_49.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
            else
-              echo "Building EDG 4.12 (and later) specific version of rose_generated_builtin_functions.h"
+              AC_MSG_NOTICE([building EDG 4.12 (and later) specific version of rose_generated_builtin_functions.h])
               ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
            fi
-           echo "Now use sed to edit the builtins into the ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h file using the file of builtin functions."
+           AC_MSG_NOTICE([now use sed to edit the builtins into the ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h file using the file of builtin functions])
 
          # DQ (1/17/2017): Make this different for Mac OSX and other (Linux) systems.
          # DQ (1/15/2017): Note that on Mac OSX it is required to use the additional option to specify the backup file name (I think this is the more portable form).
@@ -191,11 +189,11 @@ echo "build_vendor = $build_vendor"
             # is not pratical to focus more time on this issue.
             # sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
               if test "$edg_minor_version_number" -le "9"; then
-                 echo "Building EDG 4.9 specific version of rose_edg_required_macros_and_functions.h"
+                 AC_MSG_NOTICE([building EDG 4.9 specific version of rose_edg_required_macros_and_functions.h])
                  sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions_EDG_49.h"
                  cp ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions_EDG_49.h ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h
               else
-                 echo "Building EDG 4.12 (and later) specific version of rose_edg_required_macros_and_functions.h"
+                 AC_MSG_NOTICE([building EDG 4.12 (and later) specific version of rose_edg_required_macros_and_functions.h])
                  sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
               fi
            fi
@@ -204,7 +202,7 @@ echo "build_vendor = $build_vendor"
          # exit 1
    else
      if test "x$edg_major_version_number" = "x5"; then
-       echo "Building EDG 5.0 (and later) specific version of rose_generated_builtin_functions.h (same as EDG 4.12)"
+       AC_MSG_NOTICE([building EDG 5.0 (and later) specific version of rose_generated_builtin_functions.h (same as EDG 4.12)])
        ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
 
        if test "x$build_vendor" = "xapple"; then
@@ -213,7 +211,7 @@ echo "build_vendor = $build_vendor"
          sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
        fi
      else
-        echo "Future versions of EDG 6.x and later version builtins maybe determined using a new mechanism that is more complete than older versions (so we don't require our ROSE specific built-in mechanism)."
+        AC_MSG_NOTICE([future versions of EDG 6.x and later version builtins maybe determined using a new mechanism that is more complete than older versions (so we don't require our ROSE specific built-in mechanism)])
      fi
    fi
 
@@ -269,15 +267,14 @@ compilerNameCxx="`basename ${BACKEND_CXX_COMPILER}`"
  # DQ (2/2/2016): Adding additional parameters to this function call.
  # if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS[0]})"; then
  # [Matzke 2016-05-18]: Square brackets are quote characters in M4, so use "@<:@" and "@:>@" quadrigraphs instead. Ugly!
-   if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} ${language} ${compilerVendorName} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS@<:@0@:>@})"; then
+   if ! compilerHeaderDirs="$(env VERBOSE="$verbose" ${srcdir}/config/get_compiler_header_dirs ${BACKEND_CXX_COMPILER} ${language} ${compilerVendorName} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS@<:@0@:>@})"; then
       AC_MSG_FAILURE([$compilerHeaderDirs])
    fi
 
  # DQ (2/2/2016): Added error checking (though this already appears to be present).
  # [Matzke 2016-05-18]: Square brackets are quote characters in M4, so use "@<:@" and "@:>@" quadrigraphs instead. Ugly!
    if test "${PIPESTATUS@<:@0@:>@}" -ne 0; then
-       echo "In SETUP BACKEND CXX COMPILER SPECIFIC REFERENCES: get_compiler_header_dirs failed"
-       exit 1
+       AC_MSG_FAILURE([in SETUP BACKEND CXX COMPILER SPECIFIC REFERENCES: get_compiler_header_dirs failed])
    fi
 
  # echo "compilerHeaderDirs = $compilerHeaderDirs"
@@ -295,7 +292,7 @@ compilerNameCxx="`basename ${BACKEND_CXX_COMPILER}`"
    includeString="{\"${compilerNameCxx}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameCxx}_HEADERS"`, $compilerHeaderDirs"
    includeString="$includeString \"/usr/include\"}"
 
-   echo "includeString = $includeString"
+   AC_MSG_NOTICE([includeString = "$includeString"])
    AC_DEFINE_UNQUOTED([CXX_INCLUDE_STRING],$includeString,[Include path for backend C++ compiler.])
 
  # echo "Exiting in setup backend cxx compiler specific references"
@@ -316,7 +313,7 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
       dnl AC_MSG_NOTICE([ROSE_C_HEADERS_DIR not set ...])
       ROSE_C_HEADERS_DIR="${compilerName}_HEADERS"
    else
-      AC_MSG_NOTICE([ROSE_C_HEADERS_DIR set to: $ROSE_C_HEADERS_DIR])
+      AC_MSG_NOTICE([ROSE_C_HEADERS_DIR = "$ROSE_C_HEADERS_DIR"])
    fi
 
    saveCurrentDirectory="`pwd`"
@@ -325,7 +322,7 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
    cd "$saveCurrentDirectory"
 
  # DQ (9/1/2009): Output the absolute path
-   echo "absolutePath_srcdir = ${absolutePath_srcdir}"
+   AC_MSG_NOTICE([absolutePath_srcdir = "${absolutePath_srcdir}"])
 
  # This is a way to make this a global shaell variable, but it is better to pass it as a parameter to the function.
  # export language="c"
@@ -338,10 +335,9 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
    "${srcdir}/config/create_system_headers" "${BACKEND_C_COMPILER}" "./include-staging/${compilerName}_HEADERS" "${absolutePath_srcdir}" "${language}" "$BACKEND_CXX_COMPILER_VENDOR"
 
    error_code=$?
-   echo "error_code = $error_code"
+   AC_MSG_NOTICE([error_code = "$error_code"])
    if test $error_code != 0; then
-        echo "Error in generate backend C compiler specific headers: call to ${srcdir}/config/create_system_headers: nonzero exit code returned to caller error_code = $error_code"
-        exit 1
+        AC_MSG_FAILURE([in generate backend C compiler specific headers: call to ${srcdir}/config/create_system_headers: nonzero exit code returned to caller error_code = "$error_code"])
    fi
 
  # DQ (2/2/2016): Debugging new support for detected the compiler vendor.
@@ -350,7 +346,7 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
 
  # DQ (9/15/2010): Copy the upc.h header file from the config directory to our include-staging/${compilerName}_HEADERS directory.
  # It might be that these should be put into a UPC specific subdirectory (so that the C compiler can't accedentally find them), but this should be discussed.
-   echo "Copying UPC header files into ./include-staging/${compilerName}_HEADERS directory ..."
+   AC_MSG_NOTICE([copying UPC header files into ./include-staging/${compilerName}_HEADERS directory])
    cp ${srcdir}/config/upc.h ./include-staging/${compilerName}_HEADERS
    cp ${srcdir}/config/upc_io.h ./include-staging/${compilerName}_HEADERS
    cp ${srcdir}/config/upc_relaxed.h ./include-staging/${compilerName}_HEADERS
@@ -380,10 +376,9 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
    fi
 
    error_code=$?
-   echo "error_code = $error_code"
+   AC_MSG_NOTICE([error_code = "$error_code"])
    if test $error_code != 0; then
-        echo "Error in copying of upc.h header file: nonzero exit code returned to caller error_code = $error_code"
-        exit 1
+        AC_MSG_FAILURE([in copying of upc.h header file: nonzero exit code returned to caller error_code = "$error_code"])
    fi
 ])
 
@@ -431,15 +426,14 @@ compilerNameC="`basename $BACKEND_C_COMPILER`"
 
  # if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS[0]})"; then
  # [Matzke 2016-05-18]: Square brackets are quote characters in M4, so use "@<:@" and "@:>@" quadrigraphs instead. Ugly!
-   if ! compilerHeaderDirs="$(${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} ${language} ${compilerVendorName} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS@<:@0@:>@})"; then
+   if ! compilerHeaderDirs="$(env VERBOSE="$verbose" ${srcdir}/config/get_compiler_header_dirs ${BACKEND_C_COMPILER} ${language} ${compilerVendorName} | while read dir; do echo $EO \"$dir\",$EC\ ; done; exit ${PIPESTATUS@<:@0@:>@})"; then
       AC_MSG_FAILURE([$compilerHeaderDirs])
    fi
 
  # DQ (2/2/2016): Added error checking (though this already appears to be present).
  # [Matzke 2016-05-18]: Square brackets are quote characters in M4, so use "@<:@" and "@:>@" quadrigraphs instead. Ugly!
    if test "${PIPESTATUS@<:@0@:>@}" -ne 0; then
-       echo "In SETUP BACKEND C COMPILER SPECIFIC REFERENCES: get_compiler_header_dirs failed"
-       exit 1
+       AC_MSG_FAILURE([in SETUP BACKEND C COMPILER SPECIFIC REFERENCES: get_compiler_header_dirs failed])
    fi
 
  # temp_includeString="{\"${compilerNameC}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameC}_HEADERS"`, $compilerHeaderDirs"
@@ -449,7 +443,7 @@ compilerNameC="`basename $BACKEND_C_COMPILER`"
    includeString="{\"${compilerNameC}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameC}_HEADERS"`, $compilerHeaderDirs"
    includeString="$includeString \"/usr/include\"}"
 
-   echo "includeString = $includeString"
+   AC_MSG_NOTICE([includeString = "$includeString"])
    AC_DEFINE_UNQUOTED([C_INCLUDE_STRING],$includeString,[Include path for backend C compiler.])
 
 # DQ (2/21/2017): Need to add required header file to support Intel compiler because we are using 

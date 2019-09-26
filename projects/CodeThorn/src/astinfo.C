@@ -23,7 +23,7 @@ boost::program_options::variables_map args;
 
 using std::cout;
 using std::endl;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 
 namespace po = boost::program_options;

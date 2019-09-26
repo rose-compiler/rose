@@ -13,7 +13,8 @@
 #include <errno.h>
 #include <fcntl.h>
 
-using namespace Rose;
+namespace Rose {
+namespace BinaryAnalysis {
 
 AssemblerX86::InsnDictionary AssemblerX86::defns;
 
@@ -442,48 +443,48 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
 
         case od_AL:
             return (matches(od_r8, expr, insn, disp_p, imm_p) &&
-                    rre->get_descriptor().get_minor()==x86_gpr_ax &&
-                    rre->get_descriptor().get_offset()==0 &&
-                    rre->get_descriptor().get_nbits()==8);
+                    rre->get_descriptor().minorNumber()==x86_gpr_ax &&
+                    rre->get_descriptor().offset()==0 &&
+                    rre->get_descriptor().nBits()==8);
         case od_AX:
-            return matches(od_r16, expr, insn, disp_p, imm_p) && rre->get_descriptor().get_minor()==x86_gpr_ax;
+            return matches(od_r16, expr, insn, disp_p, imm_p) && rre->get_descriptor().minorNumber()==x86_gpr_ax;
         case od_EAX:
-            return matches(od_r32, expr, insn, disp_p, imm_p) && rre->get_descriptor().get_minor()==x86_gpr_ax;
+            return matches(od_r32, expr, insn, disp_p, imm_p) && rre->get_descriptor().minorNumber()==x86_gpr_ax;
         case od_RAX:
-            return matches(od_r64, expr, insn, disp_p, imm_p) && rre->get_descriptor().get_minor()==x86_gpr_ax;
+            return matches(od_r64, expr, insn, disp_p, imm_p) && rre->get_descriptor().minorNumber()==x86_gpr_ax;
 
         case od_CL:
             return (matches(od_r8, expr, insn, disp_p, imm_p) &&
-                    rre->get_descriptor().get_minor()==x86_gpr_cx &&
-                    rre->get_descriptor().get_offset()==0 &&
-                    rre->get_descriptor().get_nbits()==8);
+                    rre->get_descriptor().minorNumber()==x86_gpr_cx &&
+                    rre->get_descriptor().offset()==0 &&
+                    rre->get_descriptor().nBits()==8);
         case od_DX:
-            return matches(od_r16, expr, insn, disp_p, imm_p) && rre->get_descriptor().get_minor()==x86_gpr_dx;
+            return matches(od_r16, expr, insn, disp_p, imm_p) && rre->get_descriptor().minorNumber()==x86_gpr_dx;
 
         case od_CS:
             return (rre &&
-                    rre->get_descriptor().get_major()==x86_regclass_segment &&
-                    rre->get_descriptor().get_minor()==x86_segreg_cs);
+                    rre->get_descriptor().majorNumber()==x86_regclass_segment &&
+                    rre->get_descriptor().minorNumber()==x86_segreg_cs);
         case od_DS:
             return (rre &&
-                    rre->get_descriptor().get_major()==x86_regclass_segment &&
-                    rre->get_descriptor().get_minor()==x86_segreg_ds);
+                    rre->get_descriptor().majorNumber()==x86_regclass_segment &&
+                    rre->get_descriptor().minorNumber()==x86_segreg_ds);
         case od_ES:
             return (rre &&
-                    rre->get_descriptor().get_major()==x86_regclass_segment &&
-                    rre->get_descriptor().get_minor()==x86_segreg_es);
+                    rre->get_descriptor().majorNumber()==x86_regclass_segment &&
+                    rre->get_descriptor().minorNumber()==x86_segreg_es);
         case od_FS:
             return (rre &&
-                    rre->get_descriptor().get_major()==x86_regclass_segment &&
-                    rre->get_descriptor().get_minor()==x86_segreg_fs);
+                    rre->get_descriptor().majorNumber()==x86_regclass_segment &&
+                    rre->get_descriptor().minorNumber()==x86_segreg_fs);
         case od_GS:
             return (rre &&
-                    rre->get_descriptor().get_major()==x86_regclass_segment &&
-                    rre->get_descriptor().get_minor()==x86_segreg_gs);
+                    rre->get_descriptor().majorNumber()==x86_regclass_segment &&
+                    rre->get_descriptor().minorNumber()==x86_segreg_gs);
         case od_SS:
             return (rre &&
-                    rre->get_descriptor().get_major()==x86_regclass_segment &&
-                    rre->get_descriptor().get_minor()==x86_segreg_ss);
+                    rre->get_descriptor().majorNumber()==x86_regclass_segment &&
+                    rre->get_descriptor().minorNumber()==x86_segreg_ss);
 
         case od_CR0:
         case od_CR7:
@@ -534,23 +535,23 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
 
         case od_r8:
             return (rre &&
-                    rre->get_descriptor().get_major()==x86_regclass_gpr &&
-                    rre->get_descriptor().get_nbits()==8 &&
-                    (rre->get_descriptor().get_offset()==0 || rre->get_descriptor().get_offset()==8));
+                    rre->get_descriptor().majorNumber()==x86_regclass_gpr &&
+                    rre->get_descriptor().nBits()==8 &&
+                    (rre->get_descriptor().offset()==0 || rre->get_descriptor().offset()==8));
         case od_r16:
             return (rre &&
-                    rre->get_descriptor().get_major()==x86_regclass_gpr &&
-                    rre->get_descriptor().get_nbits()==16);
+                    rre->get_descriptor().majorNumber()==x86_regclass_gpr &&
+                    rre->get_descriptor().nBits()==16);
         case od_r32:
             return (rre &&
-                    rre->get_descriptor().get_major()==x86_regclass_gpr &&
-                    rre->get_descriptor().get_nbits()==32 &&
-                    rre->get_descriptor().get_offset()==0);
+                    rre->get_descriptor().majorNumber()==x86_regclass_gpr &&
+                    rre->get_descriptor().nBits()==32 &&
+                    rre->get_descriptor().offset()==0);
         case od_r64:
             return (rre &&
-                    rre->get_descriptor().get_major()==x86_regclass_gpr &&
-                    rre->get_descriptor().get_nbits()==64 &&
-                    rre->get_descriptor().get_offset()==0);
+                    rre->get_descriptor().majorNumber()==x86_regclass_gpr &&
+                    rre->get_descriptor().nBits()==64 &&
+                    rre->get_descriptor().offset()==0);
         case od_imm8:
             if (ve) {
                 *imm_p = SageInterface::getAsmSignedConstant(ve);
@@ -676,43 +677,43 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
 
         case od_st0:
             return (rre &&
-                    x86_regclass_st==rre->get_descriptor().get_major() &&
-                    0==rre->get_descriptor().get_minor());
+                    x86_regclass_st==rre->get_descriptor().majorNumber() &&
+                    0==rre->get_descriptor().minorNumber());
         case od_st1:
             return (rre &&
-                    x86_regclass_st==rre->get_descriptor().get_major() &&
-                    1==rre->get_descriptor().get_minor());
+                    x86_regclass_st==rre->get_descriptor().majorNumber() &&
+                    1==rre->get_descriptor().minorNumber());
         case od_st2:
             return (rre &&
-                    x86_regclass_st==rre->get_descriptor().get_major() &&
-                    2==rre->get_descriptor().get_minor());
+                    x86_regclass_st==rre->get_descriptor().majorNumber() &&
+                    2==rre->get_descriptor().minorNumber());
         case od_st3:
             return (rre &&
-                    x86_regclass_st==rre->get_descriptor().get_major() &&
-                    3==rre->get_descriptor().get_minor());
+                    x86_regclass_st==rre->get_descriptor().majorNumber() &&
+                    3==rre->get_descriptor().minorNumber());
         case od_st4:
             return (rre &&
-                    x86_regclass_st==rre->get_descriptor().get_major() &&
-                    4==rre->get_descriptor().get_minor());
+                    x86_regclass_st==rre->get_descriptor().majorNumber() &&
+                    4==rre->get_descriptor().minorNumber());
         case od_st5:
             return (rre &&
-                    x86_regclass_st==rre->get_descriptor().get_major() &&
-                    5==rre->get_descriptor().get_minor());
+                    x86_regclass_st==rre->get_descriptor().majorNumber() &&
+                    5==rre->get_descriptor().minorNumber());
         case od_st6:
             return (rre &&
-                    x86_regclass_st==rre->get_descriptor().get_major() &&
-                    6==rre->get_descriptor().get_minor());
+                    x86_regclass_st==rre->get_descriptor().majorNumber() &&
+                    6==rre->get_descriptor().minorNumber());
         case od_st7:
             return (rre &&
-                    x86_regclass_st==rre->get_descriptor().get_major() &&
-                    7==rre->get_descriptor().get_minor());
+                    x86_regclass_st==rre->get_descriptor().majorNumber() &&
+                    7==rre->get_descriptor().minorNumber());
         case od_sti:
             return (rre &&
-                    x86_regclass_st==rre->get_descriptor().get_major());
+                    x86_regclass_st==rre->get_descriptor().majorNumber());
 
         case od_mm:
             // These are the same registers as ST(n) except directly accessed (i.e., not as a stack)
-            return rre && x86_regclass_st==rre->get_descriptor().get_major();
+            return rre && x86_regclass_st==rre->get_descriptor().majorNumber();
 
         case od_mm_m32:
             return matches(od_mm, expr, insn, disp_p, imm_p) || matches(od_m32, expr, insn, disp_p, imm_p);
@@ -720,7 +721,7 @@ AssemblerX86::matches(OperandDefn od, SgAsmExpression *expr, SgAsmInstruction *i
             return matches(od_mm, expr, insn, disp_p, imm_p) || matches(od_m64, expr, insn, disp_p, imm_p);
 
         case od_xmm:
-            return rre && x86_regclass_xmm==rre->get_descriptor().get_major();
+            return rre && x86_regclass_xmm==rre->get_descriptor().majorNumber();
 
         case od_xmm_m32:
             return matches(od_xmm, expr, insn, disp_p, imm_p) || matches(od_m32, expr, insn, disp_p, imm_p);
@@ -953,18 +954,18 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmX86Instruction *insn, size_
 
     if (rre) {
         mod = 3;
-        if (rre->get_descriptor().get_major()==x86_regclass_gpr) {
-            int offset = rre->get_descriptor().get_offset();
-            int nbits = rre->get_descriptor().get_nbits();
+        if (rre->get_descriptor().majorNumber()==x86_regclass_gpr) {
+            int offset = rre->get_descriptor().offset();
+            int nbits = rre->get_descriptor().nBits();
 
             if (0==offset && 8==nbits) {
-                rm = rre->get_descriptor().get_minor() % 8;
-                if (rre->get_descriptor().get_minor()>=8)
+                rm = rre->get_descriptor().minorNumber() % 8;
+                if (rre->get_descriptor().minorNumber()>=8)
                     *rex |= od_rex_byte(od_rexb);
                 if (rm>4)
                     *rex |= od_rex_byte(od_rex); /*low byte of SP BP SI DI*/
             } else if (8==offset && 8==nbits) {
-                switch (rre->get_descriptor().get_minor()) {
+                switch (rre->get_descriptor().minorNumber()) {
                     case x86_gpr_ax: rm = 4; break;
                     case x86_gpr_cx: rm = 5; break;
                     case x86_gpr_dx: rm = 6; break;
@@ -972,25 +973,25 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmX86Instruction *insn, size_
                     default: ROSE_ASSERT(!"invalid register number for high byte ModR/M");
                 }
             } else if (16==nbits) {
-                rm = rre->get_descriptor().get_minor() % 8;
-                if (rre->get_descriptor().get_minor() >= 8)
+                rm = rre->get_descriptor().minorNumber() % 8;
+                if (rre->get_descriptor().minorNumber() >= 8)
                     *rex |= od_rex_byte(od_rexb);
             } else if (32==nbits) {
-                rm = rre->get_descriptor().get_minor() % 8;
-                if (rre->get_descriptor().get_minor()>=8)
+                rm = rre->get_descriptor().minorNumber() % 8;
+                if (rre->get_descriptor().minorNumber()>=8)
                     *rex |= od_rex_byte(od_rexb);
             } else if (64==nbits) {
-                rm = rre->get_descriptor().get_minor() % 8;
-                if (rre->get_descriptor().get_minor()>=8)
+                rm = rre->get_descriptor().minorNumber() % 8;
+                if (rre->get_descriptor().minorNumber()>=8)
                     *rex |= od_rex_byte(od_rexb);
             } else {
                 ROSE_ASSERT(!"unknown register position");
             }
-        } else if (rre->get_descriptor().get_major()==x86_regclass_st) { // MM and ST(i) are the same physical registers
-            rm = rre->get_descriptor().get_minor() % 8;
-        } else if (rre->get_descriptor().get_major()==x86_regclass_xmm) {
-            rm = rre->get_descriptor().get_minor() % 8;
-            if (rre->get_descriptor().get_minor() >= 8)
+        } else if (rre->get_descriptor().majorNumber()==x86_regclass_st) { // MM and ST(i) are the same physical registers
+            rm = rre->get_descriptor().minorNumber() % 8;
+        } else if (rre->get_descriptor().majorNumber()==x86_regclass_xmm) {
+            rm = rre->get_descriptor().minorNumber() % 8;
+            if (rre->get_descriptor().minorNumber() >= 8)
                 *rex |= od_rex_byte(od_rexb);
         } else {
             ROSE_ASSERT(!"not implemented");
@@ -1040,10 +1041,10 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmX86Instruction *insn, size_
 
             case mrp_base: {
                 ROSE_ASSERT(base_reg && !index_reg && !scale_ve && !disp_ve);
-                ROSE_ASSERT(base_reg->get_descriptor().get_major()==x86_regclass_gpr);
+                ROSE_ASSERT(base_reg->get_descriptor().majorNumber()==x86_regclass_gpr);
                 mod = 0;
-                rm = base_reg->get_descriptor().get_minor() % 8;
-                if (base_reg->get_descriptor().get_minor()>=8)
+                rm = base_reg->get_descriptor().minorNumber() % 8;
+                if (base_reg->get_descriptor().minorNumber()>=8)
                     *rex |= od_rex_byte(od_rexb);
                 if (rm==4) {
                     ss = 0;
@@ -1055,11 +1056,11 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmX86Instruction *insn, size_
 
             case mrp_base_disp: {
                 ROSE_ASSERT(base_reg && !index_reg && !scale_ve && disp_ve);
-                if (base_reg->get_descriptor().get_major()==x86_regclass_ip) {
+                if (base_reg->get_descriptor().majorNumber()==x86_regclass_ip) {
                     /* disp32 */
                     mod = 0;
                     rm = 5;
-                } else if (base_reg->get_descriptor().get_major()==x86_regclass_gpr) {
+                } else if (base_reg->get_descriptor().majorNumber()==x86_regclass_gpr) {
                     /* [register]+disp8  or  [register]+disp32 */
                     if (honor_operand_types) {
                         SgAsmIntegerValueExpression *disp_ive = isSgAsmIntegerValueExpression(disp_ve);
@@ -1067,8 +1068,8 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmX86Instruction *insn, size_
                     } else {
                         mod = (*displacement>=-128 && *displacement<=127) ? 1 : 2;
                     }
-                    rm = base_reg->get_descriptor().get_minor() % 8;
-                    if (base_reg->get_descriptor().get_minor()>=8)
+                    rm = base_reg->get_descriptor().minorNumber() % 8;
+                    if (base_reg->get_descriptor().minorNumber()>=8)
                         *rex |= od_rex_byte(od_rexb);
                     if (rm==4) {
                         ss = 0;
@@ -1085,15 +1086,15 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmX86Instruction *insn, size_
                 ROSE_ASSERT(base_reg && index_reg && !disp_ve);
                 mod = 0;
                 rm = 4; /*implies SIB*/
-                if (base_reg->get_descriptor().get_major()!=x86_regclass_gpr)
+                if (base_reg->get_descriptor().majorNumber()!=x86_regclass_gpr)
                     throw Exception("cannot encode register class for base register", insn);
-                if (index_reg->get_descriptor().get_major()!=x86_regclass_gpr)
+                if (index_reg->get_descriptor().majorNumber()!=x86_regclass_gpr)
                     throw Exception("cannot encode register class for index register", insn);
-                base = base_reg->get_descriptor().get_minor() % 8;
-                if (base_reg->get_descriptor().get_minor()>=8)
+                base = base_reg->get_descriptor().minorNumber() % 8;
+                if (base_reg->get_descriptor().minorNumber()>=8)
                     *rex |= od_rex_byte(od_rexb);
-                index = index_reg->get_descriptor().get_minor() % 8;
-                if (index_reg->get_descriptor().get_minor()>=8)
+                index = index_reg->get_descriptor().minorNumber() % 8;
+                if (index_reg->get_descriptor().minorNumber()>=8)
                     *rex |= od_rex_byte(od_rexx);
                 break;
             }
@@ -1105,8 +1106,8 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmX86Instruction *insn, size_
                 mod = 0;
                 rm = 4; /*implies SIB*/
                 base = 5;
-                index = index_reg->get_descriptor().get_minor() % 8;
-                if (index_reg->get_descriptor().get_minor()>=8)
+                index = index_reg->get_descriptor().minorNumber() % 8;
+                if (index_reg->get_descriptor().minorNumber()>=8)
                     *rex |= od_rex_byte(od_rexx);
                 break;
             }
@@ -1120,15 +1121,15 @@ AssemblerX86::build_modrm(const InsnDefn *defn, SgAsmX86Instruction *insn, size_
                     mod = (*displacement>=-128 && *displacement<=127) ? 1 : 2;
                 }
                 rm = 4; /*implies SIB*/
-                if (base_reg->get_descriptor().get_major()!=x86_regclass_gpr)
+                if (base_reg->get_descriptor().majorNumber()!=x86_regclass_gpr)
                     throw Exception("cannot encode register class for base register", insn);
-                if (index_reg->get_descriptor().get_major()!=x86_regclass_gpr)
+                if (index_reg->get_descriptor().majorNumber()!=x86_regclass_gpr)
                     throw Exception("cannot encode register class for index register", insn);
-                base = base_reg->get_descriptor().get_minor() % 8;
-                if (base_reg->get_descriptor().get_minor()>=8)
+                base = base_reg->get_descriptor().minorNumber() % 8;
+                if (base_reg->get_descriptor().minorNumber()>=8)
                     *rex |= od_rex_byte(od_rexb);
-                index = index_reg->get_descriptor().get_minor() % 8;
-                if (index_reg->get_descriptor().get_minor()>=8)
+                index = index_reg->get_descriptor().minorNumber() % 8;
+                if (index_reg->get_descriptor().minorNumber()>=8)
                     *rex |= od_rex_byte(od_rexx);
                 break;
             }
@@ -1159,9 +1160,9 @@ AssemblerX86::segment_override(SgAsmX86Instruction *insn)
                 T1(): is_found(false) {}
                 void visit(SgNode *node) {
                     SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node);
-                    if (rre && x86_regclass_gpr==rre->get_descriptor().get_major() && !is_found) {
+                    if (rre && x86_regclass_gpr==rre->get_descriptor().majorNumber() && !is_found) {
                         is_found = true;
-                        gpr = rre->get_descriptor().get_minor();
+                        gpr = rre->get_descriptor().minorNumber();
                     }
                 }
             } reg;
@@ -1169,8 +1170,8 @@ AssemblerX86::segment_override(SgAsmX86Instruction *insn)
 
             SgAsmRegisterReferenceExpression *seg_reg = isSgAsmRegisterReferenceExpression(mre->get_segment());
             ROSE_ASSERT(seg_reg!=NULL);
-            ROSE_ASSERT(seg_reg->get_descriptor().get_major()==x86_regclass_segment);
-            switch (seg_reg->get_descriptor().get_minor()) {
+            ROSE_ASSERT(seg_reg->get_descriptor().majorNumber()==x86_regclass_segment);
+            switch (seg_reg->get_descriptor().minorNumber()) {
                 case x86_segreg_es: return 0x26;
                 case x86_segreg_cs: return 0x2e;
                 case x86_segreg_ss: 
@@ -1371,11 +1372,11 @@ AssemblerX86::assemble(SgAsmX86Instruction *insn, const InsnDefn *defn)
         SgAsmExpression *expr = insn->operand(0);
         SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(expr);
         ROSE_ASSERT(rre!=NULL);
-        ROSE_ASSERT(rre->get_descriptor().get_major()==x86_regclass_gpr);
-        if (rre->get_descriptor().get_minor()>=8)
+        ROSE_ASSERT(rre->get_descriptor().majorNumber()==x86_regclass_gpr);
+        if (rre->get_descriptor().minorNumber()>=8)
             rex_byte |= od_rex_byte(od_rexb);
-        opcode += rre->get_descriptor().get_minor() % 8;
-        if (8==rre->get_descriptor().get_offset() && 8==rre->get_descriptor().get_nbits())
+        opcode += rre->get_descriptor().minorNumber() % 8;
+        if (8==rre->get_descriptor().offset() && 8==rre->get_descriptor().nBits())
             opcode += 4;
     }
     if (defn->opcode_modifiers & od_i) {
@@ -1383,8 +1384,8 @@ AssemblerX86::assemble(SgAsmX86Instruction *insn, const InsnDefn *defn)
             if (defn->operands[i]==od_sti) {
                 SgAsmExpression *expr = insn->operand(i);
                 SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(expr);
-                ROSE_ASSERT(rre && x86_regclass_st==rre->get_descriptor().get_major());
-                opcode += rre->get_descriptor().get_minor();
+                ROSE_ASSERT(rre && x86_regclass_st==rre->get_descriptor().majorNumber());
+                opcode += rre->get_descriptor().minorNumber();
                 break;
             }
         }
@@ -1825,3 +1826,6 @@ AssemblerX86::assembleProgram(const std::string &source)
     return SgUnsignedCharList(buf->data(), buf->data() + buf->size());
 #endif
 }
+
+} // namespace
+} // namespace

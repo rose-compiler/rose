@@ -1,11 +1,13 @@
 dnl DQ (1/11/2010): Consider handing configure options as specified at:
 dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 
-dnl The version number in the AC_INIT expression has been placed there automatically by the "build" script. We cannot
-dnl do the replacement here in the configure file because AC_INIT's second argument must be a literal string, not a
+dnl The version number in the AC_INIT([ROSE], [0.9.11.129])
+dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.9.11.129])
 dnl shell variable.
-AC_INIT([ROSE], [0.9.10.110])
+AC_INIT([ROSE], [0.9.11.129])
 AC_PREREQ([2.59])
+
+test "$verbose" = "" && echo "Run configure with --verbose to see more output"
 
 dnl +--------------------------------------------------------------------------+
 dnl | Utilities
@@ -89,9 +91,9 @@ AM_PROG_CC_C_O
 
 # JJW (10/8/2008): Make default CFLAGS, CXXFLAGS, and FFLAGS empty (from
 # <URL:http://osdir.com/ml/sysutils.autoconf.general/2003-11/msg00124.html>)
-true ${CFLAGS:=}
-true ${CXXFLAGS:=}
-true ${FFLAGS:=}
+: ${CFLAGS:=}
+: ${CXXFLAGS:=}
+: ${FFLAGS:=}
 
 dnl Liao 8/17/2010. A work around a undefined SED on NERSC hopper.
 dnl I had to promote it here instead of put it into ROSE_SUPPORT_ROSE_PART_2
@@ -102,15 +104,11 @@ dnl +--------------------------------------------------------------------------+
 dnl | ROSE Support
 dnl +--------------------------------------------------------------------------+
 
-echo "Testing 1 value of FC = $FC"
-
 dnl This macro calls all of the other macros that used to be in the body of
 dnl this configure.in file.  This permits other projects to call this same
 dnl macro and setup the variables and macros that an external project may
 dnl also require.
 ROSE_SUPPORT_ROSE_PART_1
-
-echo "Testing 3 value of FC = $FC"
 
 ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES
 CONFIGURE_POET
@@ -131,7 +129,6 @@ AC_DEFINE_UNQUOTED(ROSE_CONFIG_TOKEN, ["$ROSE_CONFIG_TOKEN"],
     [Encapsulates some important configuration details for Rose::initialize])
 
 dnl Fail gracefully for blacklisted dependencies and other situations
-ROSE_CONFIGURE_SECTION([Checking blacklisted configurations])
 ROSE_SUPPORT_BLACKLIST
 
 dnl Now generate all the output files (specified above)
@@ -146,9 +143,8 @@ ${T_BM}
 | Configure Terminated Normally! |
 +--------------------------------+
 ${T_NM}
-Now type 'make' and then 'make install'.
-
+Now type 'make core -jN' and then 'make install-core -jN' to only build essential libraries and tools (Recommended).
+Type 'make -jN' and 'make install -jN' to build and install everything (takes a very long time).
+N is the number of concurrent processes you wan to use for your build. 
 Thank you for using ROSE.
-
 X
-

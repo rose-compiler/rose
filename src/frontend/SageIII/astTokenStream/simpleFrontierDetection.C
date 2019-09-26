@@ -36,6 +36,29 @@ SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute()
      unparseFromTheAST                   = false;
      containsNodesToBeUnparsedFromTheAST = false;
 
+#if 1
+  // DQ (11/13/2018): I want to use the other constructor that will always at least set the SgSourceFile pointer.
+     printf ("Exitng as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+  // isPartOfTypedefDeclaration   = false;
+  // isPartOfConditionalStatement = false;
+   }
+
+
+SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute::
+SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute(SgSourceFile* input_sourceFile)
+   {
+     sourceFile        = input_sourceFile;
+     processChildNodes = false;
+
+     isFrontier = false;
+
+     unparseUsingTokenStream             = false;
+     unparseFromTheAST                   = false;
+     containsNodesToBeUnparsedFromTheAST = false;
+
   // isPartOfTypedefDeclaration   = false;
   // isPartOfConditionalStatement = false;
    }
@@ -130,12 +153,37 @@ SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute
 SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode* n, SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute inheritedAttribute)
    {
 
-     SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute returnAttribute;
+  // DQ (11/13/2018): We need to make sure that the SgSourceFile pointer is set.
+  // SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute returnAttribute;
+     ROSE_ASSERT(inheritedAttribute.sourceFile != NULL);
+     SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute returnAttribute(inheritedAttribute.sourceFile);
+
+  // DQ (11/13/2018): Enforce that this is set because will need it for the unparing of header files with the token unparsing.
+     ROSE_ASSERT(inheritedAttribute.sourceFile != NULL);
 
 #if 0
-     static int random_counter = 0;
-     printf ("*** In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): random_counter = %d n = %p = %s \n",random_counter,n,n->class_name().c_str());
+  // static int random_counter = 0;
+  // printf ("*** In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): random_counter = %d n = %p = %s \n",random_counter,n,n->class_name().c_str());
+     SgStatement* statement = isSgStatement(n);
+     if (statement != NULL)
+        {
+          Sg_File_Info* fileInfo = statement->get_file_info();
+          ROSE_ASSERT(fileInfo != NULL);
+          printf ("*** In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): n = %p = %s filename = %s \n",n,n->class_name().c_str(),fileInfo->get_filenameString().c_str());
+        }
 #endif
+
+     if (isSgGlobal(n) != NULL)
+        {
+          SgGlobal* globalScope = isSgGlobal(n);
+#if 0
+          printf ("In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): globalScope = %p globalScope->get_parent() = %p \n",globalScope,globalScope->get_parent());
+#endif
+
+       // DQ (8/13/2018): Bot of these should be true.
+          ROSE_ASSERT(globalScope->get_parent() != NULL);
+       // ROSE_ASSERT(globalScope->get_parent() == sourceFile);
+        }
 
      SgLocatedNode* locatedNode = isSgLocatedNode(n);
      if (locatedNode != NULL)
@@ -172,10 +220,29 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode*
 #if 0
                     printf ("Marking statement = %p = %s to be a transformation and output in code generation \n",statement,statement->class_name().c_str());
 #endif
+#if 0
+                    printf ("BEFORE: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): statement->get_file_info()->getFileName() = %s \n",statement->get_file_info()->get_filenameString().c_str());
+#endif
 #if 1
                  // Note that both of these must be set.
                     statement->setTransformation();
                     statement->setOutputInCodeGeneration();
+#endif
+#if 0
+                    printf ("AFTER: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): statement->get_file_info()->getFileName() = %s \n",statement->get_file_info()->get_filenameString().c_str());
+#endif
+#if 0
+                    string physicalFile = statement->get_startOfConstruct()->get_physical_filename();
+                    printf ("AFTER: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): physicalFile = %s \n",physicalFile.c_str());
+                    string raw_filename = statement->get_startOfConstruct()->get_raw_filename();
+                    printf ("AFTER: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): raw_filename = %s \n",raw_filename.c_str());
+                    statement->get_startOfConstruct()->display("startOfConstruct: AFTER: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): debug");
+                    statement->get_endOfConstruct()  ->display("endOfConstruct: AFTER: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): debug");
+                    printf ("statement->get_startOfConstruct()->get_raw_filename() = %s \n",statement->get_startOfConstruct()->get_raw_filename().c_str());
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
 #endif
                   }
                  else
@@ -185,12 +252,6 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode*
 #endif
                   }
              }
-        }
-
-     SgStatement* statement = isSgStatement(n);
-     if (statement != NULL)
-        {
-
         }
 
      return returnAttribute;
@@ -262,8 +323,33 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNo
             // if (statement->isTransformation() == true || statement->get_containsTransformation() == true)
                if ( currentStatement != NULL && currentStatement->isTransformation() == false && (statement->isTransformation() == true || statement->get_containsTransformation() == true) )
                   {
-                    n->set_containsTransformation(true);
 
+                 // DQ (11/13/2018): When header file unparsing is used, then we need to check if this currentStatement that might be a transformation 
+                 // (or the child attribute that is a statement might be or contain a transformation) is from the same file as the current scope. In 
+                 // this case the #include statement would be unparsed and we would not set the current statement as containing a transformation.
+                 // n->set_containsTransformation(true);
+
+                    ROSE_ASSERT(inheritedAttribute.sourceFile != NULL);
+                    ROSE_ASSERT(inheritedAttribute.sourceFile->get_file_info() != NULL);
+
+                    if (inheritedAttribute.sourceFile->get_unparseHeaderFiles() == true)
+                       {
+                      // int sourceFile_file_id = inheritedAttribute.sourceFile->get_file_info()->get_file_id();
+                      // int child_file_id      = statement->get_file_info()->get_file_id();
+                         int sourceFile_file_id = inheritedAttribute.sourceFile->get_file_info()->get_physical_file_id();
+                         int child_file_id      = statement->get_file_info()->get_physical_file_id();
+#if 0
+                         printf ("   --- sourceFile_file_id = %d child_file_id = %d \n",sourceFile_file_id,child_file_id);
+#endif
+                         if (sourceFile_file_id == child_file_id)
+                            {
+                              n->set_containsTransformation(true);
+                            }
+                       }
+                      else
+                       {
+                         n->set_containsTransformation(true);
+                       }
 #if 0
                  // DQ (12/31/2014): This will not work since we would not have an associated token stream.
                     SgBasicBlock* basicBlock = isSgBasicBlock(n);
@@ -335,12 +421,32 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
   // This frontier detection happens before we associate token subsequences to the AST (in a seperate map).
 
-     SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute inheritedAttribute;
+  // DQ (11/13/2018): We need to make sure that the SgSourceFile pointer is set.
+  // SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute inheritedAttribute;
+     ROSE_ASSERT(sourceFile != NULL);
+     SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute inheritedAttribute (sourceFile);
      SimpleFrontierDetectionForTokenStreamMapping fdTraversal(sourceFile);
 
 #if 0
-     printf ("In simpleFrontierDetectionForTokenStreamMapping(): calling traverse() sourceFile = %p \n",sourceFile);
+     printf ("In simpleFrontierDetectionForTokenStreamMapping(): calling traverse() sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
+     printf ("   --- sourceFile->get_globalScope()                = %p \n",sourceFile->get_globalScope());
+     printf ("   --- sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
 #endif
+#if 0
+  // printf ("   --- global scope NOT present in tokenSubsequenceMap \n");
+  // ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) == sourceFile->get_tokenSubsequenceMap().end());
+
+     printf ("   --- global scope IS present in tokenSubsequenceMap \n");
+     ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) != sourceFile->get_tokenSubsequenceMap().end());
+
+  // ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap()[sourceFile->get_globalScope()] != NULL);
+  // TokenStreamSequenceToNodeMapping* tmp_tokenSequence = sourceFile->get_tokenSubsequenceMap()[sourceFile->get_globalScope()];
+  // ROSE_ASSERT(tmp_tokenSequence != NULL);
+  // tmp_tokenSequence->display("token sequence for global scope");
+#endif
+
+  // DQ (12/2/2018): This can be empty for an empty file (see test in: roseTests/astTokenStreamTests).
+  // ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) != sourceFile->get_tokenSubsequenceMap().end());
 
 #if 0
   // Debugging (this set in the constructor).
@@ -401,7 +507,7 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
      SgProject* project = sourceFile->get_project();
      ROSE_ASSERT(project != NULL);
 
-     generateDOTforMultipleFile(*project);
+     generateDOTforMultipleFile(*project,"in_simpleFrontierDetectionForTokenStreamMapping");
 #endif
 #if 0
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
@@ -414,4 +520,7 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
      ROSE_ASSERT(false);
 #endif
 
+#if 0
+     printf ("Leaving simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
+#endif
    }

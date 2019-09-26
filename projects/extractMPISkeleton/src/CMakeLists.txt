@@ -1,4 +1,3 @@
-
 include_directories(
   ${ROSE_SOURCE_DIR}/src/midend/programAnalysis/CallGraphAnalysis
   ${ROSE_SOURCE_DIR}/src/midend/programAnalysis/staticInterproceduralSlicing

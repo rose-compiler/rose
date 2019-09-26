@@ -1,5 +1,9 @@
 // Example from C++11 Wiki web page:
 
+#include<vector>
+
+typedef int MyClass;
+
 // Extern template
 // In C++03, the compiler must instantiate a template whenever a fully specified template 
 // is encountered in a translation unit. If the template is instantiated with the same 

@@ -144,10 +144,11 @@ BaseGraph::BFSIterator::BFSIterator (BaseGraph& g)
 /** Add an edge, checking for duplication and making sure that the edge does not belong to another graph. */
 void
 BaseGraph::add (BaseGraph::Edge* e)
+#if __cplusplus < 201103L
   throw (BaseGraph::DuplicateEdge, BaseGraph::EdgeInUse, BaseGraph::EmptyEdge,
          /* indirect: from BaseGraph::add(BaseGraph::Node) */
          BaseGraph::DuplicateNode, BaseGraph::NodeInUse, BaseGraph::EmptyNode)
-
+#endif
 {
   if (e == 0)
     throw EmptyEdge();
@@ -172,7 +173,9 @@ BaseGraph::add (BaseGraph::Edge* e)
 /** Add a node checking for duplication and making sure the node does not belong to another graph. */
 void
 BaseGraph::add (BaseGraph::Node* n)
+#if __cplusplus < 201103L
   throw (BaseGraph::DuplicateNode, BaseGraph::NodeInUse, BaseGraph::EmptyNode)
+#endif
 {
   if (n == 0)
     throw EmptyNode();
@@ -193,7 +196,9 @@ BaseGraph::add (BaseGraph::Node* n)
 /** Remove an edge, checking for non-existence. */
 void
 BaseGraph::remove (BaseGraph::Edge* e)
+#if __cplusplus < 201103L
   throw (BaseGraph::NonexistentEdge, BaseGraph::EmptyEdge)
+#endif
 {
   if (e == 0)
     throw EmptyEdge();
@@ -210,7 +215,9 @@ BaseGraph::remove (BaseGraph::Edge* e)
     while the graph still has other nodes and edges. */
 void
 BaseGraph::remove (BaseGraph::Node* n)
+#if __cplusplus < 201103L
   throw (BaseGraph::NonexistentNode, BaseGraph::DeletingRootOfNonSingletonGraph, BaseGraph::EmptyNode)
+#endif
 {
   if (n == 0)
     throw EmptyNode();

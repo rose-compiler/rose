@@ -7,9 +7,14 @@
 #include <SymbolicSemantics2.h>
 #include <integerOps.h>
 #include <rose_strtoull.h>
+#include <sstream>
 
+#include <boost/algorithm/string/erase.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
+
+using namespace Sawyer::Message::Common;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -45,6 +50,20 @@ operator<<(std::ostream &out, const SymbolicExprParser::SyntaxError &error) {
     return out;
 }
 
+void
+SymbolicExprParser::SubstitutionError::print(std::ostream &out) const {
+    if (what() && *what()) {
+        out <<what();
+    } else {
+        out <<"substitution error";
+    }
+}
+
+std::ostream&
+operator<<(std::ostream &out, const SymbolicExprParser::SubstitutionError &error) {
+    error.print(out);
+    return out;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Tokens
@@ -369,7 +388,7 @@ SymbolicExprParser::TokenStream::fillTokenList(size_t idx) {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      SymbolicExprParser
+//                                      OperatorExpansion
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SymbolicExprParser::OperatorExpansion::OperatorExpansion(const SmtSolverPtr &solver)
@@ -377,35 +396,9 @@ SymbolicExprParser::OperatorExpansion::OperatorExpansion(const SmtSolverPtr &sol
 
 SymbolicExprParser::OperatorExpansion::~OperatorExpansion() {}
 
-// Throws an exception for functions named "..."
-class AbbreviatedOperator: public SymbolicExprParser::OperatorExpansion {
-protected:
-    explicit AbbreviatedOperator(const SmtSolverPtr &solver)
-        : SymbolicExprParser::OperatorExpansion(solver) {}
-
-public:
-    static Ptr instance(const SmtSolverPtr &solver) {
-        return Ptr(new AbbreviatedOperator(solver));            // undocumented
-    }
-    SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) {
-        if (op.lexeme() == "...")
-            throw op.syntaxError("input is an abbreviated expression; parts are missing");
-        return SymbolicExpr::Ptr();
-    }
-};
-
-// Throws an exception for atoms named "..."
-class AbbreviatedAtom: public SymbolicExprParser::AtomExpansion {
-public:
-    static Ptr instance() {
-        return Ptr(new AbbreviatedAtom);                // undocumented
-    }
-    SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &symbol) {
-        if (symbol.lexeme() == "...")
-            throw symbol.syntaxError("input is an abbreviated expression; parts are missing");
-        return SymbolicExpr::Ptr();
-    }
-};
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      SMT operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Generates symbolic expressions for the SMT operators
 class SmtOperators: public SymbolicExprParser::OperatorExpansion {
@@ -641,12 +634,17 @@ public:
         return Ptr(new SmtOperators(solver));
     }
 
-    virtual SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
+    virtual SymbolicExpr::Ptr
+    immediateExpansion(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
         if (!ops_.exists(op.lexeme()))
             return SymbolicExpr::Ptr();
         return SymbolicExpr::Interior::create(op.width(), ops_[op.lexeme()], args, solver);
     }
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      C-like operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Creates symbolic expressions using more C-like operator names
 class COperators: public SymbolicExprParser::OperatorExpansion {
@@ -773,12 +771,17 @@ public:
         return Ptr(new COperators(solver));
     }
 
-    virtual SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
+    virtual SymbolicExpr::Ptr
+    immediateExpansion(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
         if (!ops_.exists(op.lexeme()))
             return SymbolicExpr::Ptr();
         return SymbolicExpr::Interior::create(op.width(), ops_[op.lexeme()], args, solver);
     }
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Canonical variables
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CanonicalVariable: public SymbolicExprParser::AtomExpansion {
 public:
@@ -794,7 +797,7 @@ public:
                            "width, although this is normally required.");
         return functor;
     }
-    SymbolicExpr::Ptr operator()(const SymbolicExprParser::Token &symbol) {
+    SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &symbol) {
         boost::smatch matches;
         if (!boost::regex_match(symbol.lexeme(), matches, boost::regex("[vm](\\d+)")))
             return SymbolicExpr::Ptr();
@@ -818,6 +821,282 @@ public:
     }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Boolean literals
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class BooleanConstant: public SymbolicExprParser::AtomExpansion {
+public:
+    static Ptr instance() {
+        Ptr functor = Ptr(new BooleanConstant);
+        functor->title("Boolean constants");
+        functor->docString("Boolean constants named \"true\" and \"false\" are equivalent to the more cumbersome numeric "
+                           "constants \"1[1]\" and \"0[1]\".");
+        return functor;
+    }
+    SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &symbol) {
+        if (symbol.lexeme() == "true") {
+            return SymbolicExpr::makeBoolean(true);
+        } else if (symbol.lexeme() == "false") {
+            return SymbolicExpr::makeBoolean(false);
+        } else {
+            return SymbolicExpr::Ptr();
+        }
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Immediate register substitutions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+SymbolicExprParser::defineRegisters(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops) {
+    atomTable_.push_back(RegisterToValue::instance(ops));
+}
+
+SymbolicExprParser::RegisterSubstituter::Ptr
+SymbolicExprParser::defineRegisters(const RegisterDictionary *regdict) {
+    RegisterSubstituter::Ptr retval = RegisterSubstituter::instance(regdict);
+    atomTable_.push_back(retval);
+    return retval;
+}
+
+// class method
+SymbolicExprParser::RegisterToValue::Ptr
+SymbolicExprParser::RegisterToValue::instance(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops) {
+    Ptr functor = Ptr(new RegisterToValue(ops));
+    functor->title("Registers");
+    std::string doc = "Register locations are specified by just mentioning the name of the register. Register names "
+                      "are usually lower case, such as \"eax\", \"rip\", etc.";
+    functor->docString(doc);
+    return functor;
+}
+
+SymbolicExpr::Ptr
+SymbolicExprParser::RegisterToValue::immediateExpansion(const Token &token) {
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+    BaseSemantics::RegisterStatePtr regState = ops_->currentState()->registerState();
+    const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(token.lexeme());
+    if (NULL == regp)
+        return SymbolicExpr::Ptr();
+    if (token.width()!=0 && token.width()!=regp->nBits()) {
+        throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.width()) +
+                                ", actual=" + StringUtility::numberToString(regp->nBits()) + ")");
+    }
+    if (token.width2() != 0)
+        throw token.syntaxError("register width must be scalar");
+    BaseSemantics::SValuePtr regValue = regState->peekRegister(*regp, ops_->undefined_(regp->nBits()), ops_.get());
+    return SymbolicSemantics::SValue::promote(regValue)->get_expression();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Delayed register substitutions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// class method
+SymbolicExprParser::RegisterSubstituter::Ptr
+SymbolicExprParser::RegisterSubstituter::instance(const RegisterDictionary *regdict) {
+    ASSERT_not_null(regdict);
+    Ptr functor = Ptr(new RegisterSubstituter(regdict));
+    functor->title("Registers");
+    std::string doc = "Register locations are specified by just mentioning the name of the register. Register names "
+                      "are usually lower case, such as \"eax\", \"rip\", etc. If the register name is suffixed with "
+                      "\"_0\", then the value is read from the lazy initial state if it exists, or is an error if the "
+                      "initial state doesn't exist.";
+    functor->docString(doc);
+    return functor;
+}
+
+SymbolicExpr::Ptr
+SymbolicExprParser::RegisterSubstituter::immediateExpansion(const Token &token) {
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+    ASSERT_not_null(regdict_);
+
+    // Look up either the full name, or without the "_0" suffix
+    std::string registerName = token.lexeme();
+    const RegisterDescriptor *regp = regdict_->lookup(registerName);
+    if (!regp && boost::ends_with(registerName, "_0"))
+        regp = regdict_->lookup(boost::erase_tail_copy(registerName, 2));
+
+    if (NULL == regp)
+        return SymbolicExpr::Ptr();
+    if (token.width() != 0 && token.width() != regp->nBits()) {
+        throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.width()) +
+                                ", actual=" + StringUtility::numberToString(regp->nBits()) + ")");
+    }
+    if (token.width2() != 0)
+        throw token.syntaxError("register width must be scalar");
+
+    SymbolicExpr::Ptr retval;
+    if (reg2var_.forward().getOptional(*regp).assignTo(retval))
+        return retval;
+
+    retval = SymbolicExpr::makeVariable(regp->nBits(), token.lexeme());
+    reg2var_.insert(*regp, retval);
+    return retval;
+}
+
+SymbolicExpr::Ptr
+SymbolicExprParser::RegisterSubstituter::delayedExpansion(const SymbolicExpr::Ptr &src, const SymbolicExprParser *parser) {
+    ASSERT_not_null(src);
+    ASSERT_not_null(parser);
+    ASSERT_not_null(ops_);
+
+    namespace SS = Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+    namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+    Sawyer::Message::Stream debug(SymbolicExprParser::mlog[DEBUG]);
+
+    RegisterDescriptor reg;
+    if (reg2var_.reverse().getOptional(src).assignTo(reg)) {
+        // Earlier (in immediateExpansion), we set the temporary variable's comment to be the original variable (register)
+        // name including any "_0" suffix. Now, if we're expanding an "_0" register we should read from the original state
+        // rather than the current state.
+        BS::RegisterStatePtr regState;
+        if (boost::ends_with(src->comment(), "_0")) {
+            if (!ops_->initialState()) {
+                std::ostringstream ss;
+                ss <<"no initial state from which to read register"
+                   <<" \"" <<StringUtility::cEscape(src->comment()) <<"\"";
+                throw SubstitutionError(ss.str());
+            }
+            regState = ops_->initialState()->registerState();
+        } else {
+            regState = ops_->currentState()->registerState();
+        }
+
+        // Read the register
+        SS::SValuePtr regval = SS::SValue::promote(regState->readRegister(reg, ops_->undefined_(reg.nBits()), ops_.get()));
+        SAWYER_MESG(debug) <<"register substitution: " <<src->comment() <<" = " <<*regval <<"\n";
+        return regval->get_expression();
+    }
+    return src;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Delayed memory substitutions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SymbolicExprParser::MemorySubstituter::Ptr
+SymbolicExprParser::MemorySubstituter::instance(const SmtSolver::Ptr &solver /*=NULL*/) {
+    Ptr functor = Ptr(new MemorySubstituter(solver));
+    functor->title("Memory");
+    functor->docString("Memory can be read using the \"memory\" function. A size should be specified as part of the operator "
+                       "name, and the argument is the address (possibly symbolic) that should be read. The actual read is "
+                       "delayed until the expression is evaluated, although expressions involving memory undergo simplifications "
+                       "during the parse (e.g., performing an exclusive-or whose operands are both the same memory location "
+                       "will result in zero at parse time without ever reading the memory location).");
+    return functor;
+}
+
+SymbolicExpr::Ptr
+SymbolicExprParser::MemorySubstituter::immediateExpansion(const Token &func, const SymbolicExpr::Nodes &operands) {
+    if (func.lexeme() != "memory") {
+        return SymbolicExpr::Ptr();
+    } else if (operands.size() != 1) {
+        throw func.syntaxError("wrong number of arguments for \"memory\""
+                               "(specified=" + StringUtility::numberToString(operands.size()) + ", required=1)");
+    } else if (func.width() % 8 != 0) {
+        throw func.syntaxError("invalid memory width (specified=" + StringUtility::numberToString(func.width()) +
+                               ", required multiple of 8)");
+    } else {
+        SymbolicExpr::Ptr retval = SymbolicExpr::makeVariable(func.width(), "memory-ref");
+        exprToMem_.insert(retval, operands[0]);
+        return retval;
+    }
+}
+
+SymbolicExpr::Ptr
+SymbolicExprParser::MemorySubstituter::delayedExpansion(const SymbolicExpr::Ptr &src, const SymbolicExprParser *parser) {
+    ASSERT_not_null(src);
+    ASSERT_not_null(parser);
+    ASSERT_not_null(ops_);
+    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+    Sawyer::Message::Stream debug(SymbolicExprParser::mlog[DEBUG]);
+
+    if (SymbolicExpr::Ptr addrExpr = exprToMem_.getOrDefault(src)) {
+        addrExpr = parser->delayedExpansion(addrExpr);
+        SymbolicSemantics::SValuePtr addr = SymbolicSemantics::SValue::promote(ops_->undefined_(addrExpr->nBits()));
+        addr->set_expression(addrExpr);
+        BaseSemantics::SValuePtr dflt = ops_->undefined_(src->nBits());
+         BaseSemantics::SValuePtr mem = ops_->readMemory(RegisterDescriptor(), addr, dflt, ops_->boolean_(true));
+        SAWYER_MESG(debug) <<"memory substitution: (memory[" <<src->nBits() <<"] " <<*addr <<") -> " <<*mem <<"\n";
+        return SymbolicSemantics::SValue::promote(mem)->get_expression();
+    } else {
+        return src;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Named variable substitutions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// class method
+SymbolicExprParser::TermPlaceholders::Ptr
+SymbolicExprParser::TermPlaceholders::instance() {
+    Ptr functor = Ptr(new TermPlaceholders);
+    functor->title("Terms");
+    functor->docString("Any variable.");
+    return functor;
+}
+
+SymbolicExpr::Ptr
+SymbolicExprParser::TermPlaceholders::immediateExpansion(const Token &token) {
+    SymbolicExpr::Ptr retval;
+    if (name2var_.forward().getOptional(token.lexeme()).assignTo(retval))
+        return retval;
+    if (token.width() == 0)
+        throw token.syntaxError("non-zero variable width required");
+    retval = SymbolicExpr::makeVariable(token.width());
+    name2var_.insert(token.lexeme(), retval);
+    return retval;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      SymbolicExprParser
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Sawyer::Message::Facility SymbolicExprParser::mlog;
+
+// class method
+void
+SymbolicExprParser::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::SymbolicExprParser");
+        mlog.comment("parsing symbolic expressions");
+    }
+}
+
+// Throws an exception for functions named "..."
+class AbbreviatedOperator: public SymbolicExprParser::OperatorExpansion {
+protected:
+    explicit AbbreviatedOperator(const SmtSolverPtr &solver)
+        : SymbolicExprParser::OperatorExpansion(solver) {}
+
+public:
+    static Ptr instance(const SmtSolverPtr &solver) {
+        return Ptr(new AbbreviatedOperator(solver));            // undocumented
+    }
+    SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) {
+        if (op.lexeme() == "...")
+            throw op.syntaxError("input is an abbreviated expression; parts are missing");
+        return SymbolicExpr::Ptr();
+    }
+};
+
+// Throws an exception for atoms named "..."
+class AbbreviatedAtom: public SymbolicExprParser::AtomExpansion {
+public:
+    static Ptr instance() {
+        return Ptr(new AbbreviatedAtom);                // undocumented
+    }
+    SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &symbol) {
+        if (symbol.lexeme() == "...")
+            throw symbol.syntaxError("input is an abbreviated expression; parts are missing");
+        return SymbolicExpr::Ptr();
+    }
+};
+
 SymbolicExprParser::SymbolicExprParser() {
     init();
 }
@@ -837,6 +1116,7 @@ SymbolicExprParser::init() {
 
     appendAtomExpansion(AbbreviatedAtom::instance());
     appendAtomExpansion(CanonicalVariable::instance());
+    appendAtomExpansion(BooleanConstant::instance());
 }
 
 std::string
@@ -906,7 +1186,7 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 SymbolicExpr::Ptr expr;
                 try {
                     BOOST_FOREACH (const AtomExpansion::Ptr &functor, atomTable_) {
-                        if ((expr = (*functor)(tokens[0])))
+                        if ((expr = functor->immediateExpansion(tokens[0])))
                             break;
                     }
                 } catch (const SymbolicExpr::Exception &e) {
@@ -936,7 +1216,7 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 SymbolicExpr::Ptr expr;
                 try {
                     BOOST_FOREACH (const OperatorExpansion::Ptr &functor, operatorTable_) {
-                        if ((expr = (*functor)(stack.back().op, stack.back().operands)))
+                        if ((expr = functor->immediateExpansion(stack.back().op, stack.back().operands)))
                             break;
                     }
                 } catch (const SymbolicExpr::Exception &e) {
@@ -974,8 +1254,33 @@ SymbolicExprParser::appendOperatorExpansion(const OperatorExpansion::Ptr &functo
     operatorTable_.push_back(functor);
 }
 
+struct DelayedSubber {
+    const SymbolicExprParser *parser;
+
+    explicit DelayedSubber(const SymbolicExprParser *parser)
+        : parser(parser) {}
+
+    SymbolicExpr::Ptr operator()(SymbolicExpr::Ptr expr, const SmtSolver::Ptr &solver/*=NULL*/) {
+        BOOST_FOREACH (SymbolicExprParser::AtomExpansion::Ptr expander, parser->atomTable()) {
+            expr = expander->delayedExpansion(expr, parser);
+            ASSERT_not_null(expr);
+        }
+        BOOST_FOREACH (SymbolicExprParser::OperatorExpansion::Ptr expander, parser->operatorTable()) {
+            expr = expander->delayedExpansion(expr, parser);
+            ASSERT_not_null(expr);
+        }
+        return expr;
+    }
+};
+
+SymbolicExpr::Ptr
+SymbolicExprParser::delayedExpansion(const SymbolicExpr::Ptr &expr) const {
+    DelayedSubber subber(this);
+    return SymbolicExpr::substitute(expr, subber, solver_);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Command-line parsing
+//                                      Command-line parsing
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // class method
@@ -1018,136 +1323,6 @@ SymbolicExprParser::symbolicExprParser() {
     return SymbolicExprCmdlineParser::instance();
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Register substitutions
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void
-SymbolicExprParser::defineRegisters(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops) {
-    atomTable_.push_back(RegisterToValue::instance(ops));
-}
-
-SymbolicExprParser::RegisterSubstituter::Ptr
-SymbolicExprParser::defineRegisters(const RegisterDictionary *regdict) {
-    RegisterSubstituter::Ptr retval = RegisterSubstituter::instance(regdict);
-    atomTable_.push_back(retval);
-    return retval;
-}
-
-// class method
-SymbolicExprParser::RegisterToValue::Ptr
-SymbolicExprParser::RegisterToValue::instance(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops) {
-    Ptr functor = Ptr(new RegisterToValue(ops));
-    functor->title("Registers");
-    std::string doc = "Register locations are specified by just mentioning the name of the register. Register names "
-                      "are usually lower case, such as \"eax\", \"rip\", etc.";
-    functor->docString(doc);
-    return functor;
-}
-
-SymbolicExpr::Ptr
-SymbolicExprParser::RegisterToValue::operator()(const Token &token) {
-    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
-    BaseSemantics::RegisterStatePtr regState = ops_->currentState()->registerState();
-    const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(token.lexeme());
-    if (NULL == regp)
-        return SymbolicExpr::Ptr();
-    if (token.width()!=0 && token.width()!=regp->get_nbits()) {
-        throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.width()) +
-                                ", actual=" + StringUtility::numberToString(regp->get_nbits()) + ")");
-    }
-    if (token.width2() != 0)
-        throw token.syntaxError("register width must be scalar");
-    BaseSemantics::SValuePtr regValue = regState->peekRegister(*regp, ops_->undefined_(regp->get_nbits()), ops_.get());
-    return SymbolicSemantics::SValue::promote(regValue)->get_expression();
-}
-
-// class method
-SymbolicExprParser::RegisterSubstituter::Ptr
-SymbolicExprParser::RegisterSubstituter::instance(const RegisterDictionary *regdict) {
-    ASSERT_not_null(regdict);
-    Ptr functor = Ptr(new RegisterSubstituter(regdict));
-    functor->title("Registers");
-    std::string doc = "Register locations are specified by just mentioning the name of the register. Register names "
-                      "are usually lower case, such as \"eax\", \"rip\", etc.";
-    functor->docString(doc);
-    return functor;
-}
-
-SymbolicExpr::Ptr
-SymbolicExprParser::RegisterSubstituter::operator()(const Token &token) {
-    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
-    ASSERT_not_null(regdict_);
-    const RegisterDescriptor *regp = regdict_->lookup(token.lexeme());
-    if (NULL == regp)
-        return SymbolicExpr::Ptr();
-    if (token.width() != 0 && token.width() != regp->get_nbits()) {
-        throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.width()) +
-                                ", actual=" + StringUtility::numberToString(regp->nBits()) + ")");
-    }
-    if (token.width2() != 0)
-        throw token.syntaxError("register width must be scalar");
-
-    SymbolicExpr::Ptr retval;
-    if (reg2var_.forward().getOptional(*regp).assignTo(retval))
-        return retval;
-
-    retval = SymbolicExpr::makeVariable(regp->nBits(), token.lexeme());
-    reg2var_.insert(*regp, retval);
-    return retval;
-}
-
-struct RegisterSubstituterSubber {
-    typedef SymbolicExprParser::RegisterSubstituter::RegToVarMap RegToVarMap;
-    const RegToVarMap &reg2var;
-    const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops;
-
-    RegisterSubstituterSubber(const RegToVarMap &reg2var, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops)
-        : reg2var(reg2var), ops(ops) {}
-
-    SymbolicExpr::Ptr operator()(const SymbolicExpr::Ptr &src, const SmtSolver::Ptr &solver /*=NULL*/) {
-        namespace SS = Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
-        namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-        BS::RegisterStatePtr regState = ops->currentState()->registerState();
-        RegisterDescriptor reg;
-        if (reg2var.reverse().getOptional(src).assignTo(reg)) {
-            SS::SValuePtr regval = SS::SValue::promote(regState->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get()));
-            return regval->get_expression();
-        }
-        return src;
-    }
-};
-
-SymbolicExpr::Ptr
-SymbolicExprParser::RegisterSubstituter::substitute(const SymbolicExpr::Ptr &src,
-                                                    const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops) const {
-    ASSERT_not_null(src);
-    ASSERT_not_null(ops);
-
-    RegisterSubstituterSubber subber(reg2var_, ops);
-    return SymbolicExpr::substitute(src, subber, ops->solver());
-}
-
-// class method
-SymbolicExprParser::TermPlaceholders::Ptr
-SymbolicExprParser::TermPlaceholders::instance() {
-    Ptr functor = Ptr(new TermPlaceholders);
-    functor->title("Terms");
-    functor->docString("Any variable.");
-    return functor;
-}
-
-SymbolicExpr::Ptr
-SymbolicExprParser::TermPlaceholders::operator()(const Token &token) {
-    SymbolicExpr::Ptr retval;
-    if (name2var_.forward().getOptional(token.lexeme()).assignTo(retval))
-        return retval;
-    if (token.width() == 0)
-        throw token.syntaxError("non-zero variable width required");
-    retval = SymbolicExpr::makeVariable(token.width());
-    name2var_.insert(token.lexeme(), retval);
-    return retval;
-}
 
 } // namespace
 } // namespace

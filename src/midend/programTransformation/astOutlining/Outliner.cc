@@ -30,6 +30,7 @@ namespace Outliner {
   bool useStructureWrapper=false;  // use a structure wrapper for parameters of the outlined function
   bool preproc_only_=false;  // preprocessing only
   bool useNewFile=false; // generate the outlined function into a new source file
+  bool copy_origFile=false; // when generating the new file to store outlined function, copy entire original file to it.
   bool temp_variable=false; // use temporary variables to reduce pointer dereferencing
   bool enable_liveness =false;
   bool enable_debug=false; // 
@@ -37,6 +38,9 @@ namespace Outliner {
   bool use_dlopen=false; // Outlining the target to a separated file and calling it using a dlopen() scheme. It turns on useNewFile.
   std::string output_path=""; // default output path is the original file's directory
   std::vector<std::string> handles; //  abstract handles of outlining targets, given by command line option -rose:outline:abstract_handle for each
+
+// DQ (3/19/2019): Suppress the output of the #include "autotuning_lib.h" since some tools will want to define there own supporting libraries and header files.
+  bool suppress_autotuning_header = false; // when generating the new file to store outlined function, suppress output of #include "autotuning_lib.h".
 };
 
 // =====================================================================
@@ -310,6 +314,14 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
   }
   //  else
   //    useNewFile= false;
+  
+    if (CommandlineProcessing::isOption (argvList,"-rose:outline:","copy_orig_file",true))
+  {
+    if (enable_debug)
+      cout<<"Enabling copying the original input file into the new source file for storing outlined functions..."<<endl;
+    copy_origFile= true;
+  }
+  
   if (CommandlineProcessing::isOption (argvList,"-rose:outline:","exclude_headers",true))
   {
     if (enable_debug)
@@ -390,6 +402,7 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
     cout<<"\t-rose:outline:output_path                      the path to store newly generated files for outlined functions, if requested by new_file. The original source file's path is used by default."<<endl;
     cout<<"\t-rose:outline:exclude_headers                  do not include any headers in the new file for outlined functions"<<endl;
     cout<<"\t-rose:outline:use_dlopen                       use dlopen() to find the outlined functions saved in new files.It will turn on new_file and parameter_wrapper flags internally"<<endl;
+    cout<<"\t-rose:outline:copy_orig_file                   used with dlopen(): single lib source file copied from the entire original input file. All generated outlined functions are appended to the lib source file"<<endl;
     cout<<"\t-rose:outline:enable_debug                     run outliner in a debugging mode"<<endl;
     cout <<"---------------------------------------------------------------"<<endl;
   }

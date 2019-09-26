@@ -135,7 +135,8 @@ bool
 SValue::may_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const 
 {
     SValuePtr other = SValue::promote(other_);
-    ASSERT_require(get_width()==other->get_width());
+    if (get_width() != other->get_width())
+        return false;
     if (isBottom() || other->isBottom())
         return true;
     return get_expression()->mayEqual(other->get_expression(), solver);
@@ -145,7 +146,8 @@ bool
 SValue::must_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
 {
     SValuePtr other = SValue::promote(other_);
-    ASSERT_require(get_width()==other->get_width());
+    if (get_width() != other->get_width())
+        return false;
     if (isBottom() || other->isBottom())
         return false;
     return get_expression()->mustEqual(other->get_expression(), solver);
@@ -1062,7 +1064,7 @@ BaseSemantics::SValuePtr
 RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
     PartialDisableUsedef du(this);
     BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::peekRegister(reg, dflt);
-    ASSERT_require(result!=NULL && result->get_width() == reg.get_nbits());
+    ASSERT_require(result!=NULL && result->get_width() == reg.nBits());
     return filterResult(result);
 }
 

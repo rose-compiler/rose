@@ -37,8 +37,8 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                 cut -d\( -f1)
 
           # DQ (12/3/2016): These variables were previously set in the ROSE configuration.
-            echo "Get CXX Version info: OS_vendor = $OS_vendor"
-            echo "Get CXX Version info: OS_release = $OS_release"
+            #echo "Get CXX Version info: OS_vendor = $OS_vendor"
+            #echo "Get CXX Version info: OS_release = $OS_release"
 
           # DQ (12/3/2016): If we are on a Linux OS then we have the version number of Clang 
           # directly, but if this is on a MAC (OSX) system then this is the version of 
@@ -87,8 +87,7 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                             CXX_VERSION_MINOR=8
                             ;;
                         *)
-                            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
-                            exit 1;
+                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR)])
                             ;;
                     esac
                 elif test $XCODE_VERSION_MAJOR -eq 8; then
@@ -99,27 +98,43 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                             CXX_VERSION_MINOR=8
                             ;;
                         *)
-                            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
-                            exit 1;
+                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR)])
                             ;;
                     esac
                 elif test $XCODE_VERSION_MAJOR -eq 9; then
-                    CXX_VERSION_MAJOR=3
                   # Rasmussen (10/27//2017): Added results for clang --version 9.0.0
                   # Rasmussen (04/04//2018): Added results for clang --version 9.0.1
                   # See https://opensource.apple.com/source/clang/clang-800.0.42.1/src/CMakeLists.txt
+                  # Pei-Hung (01/16/2019): Revised based on https://en.wikipedia.org/wiki/Xcode#Latest_versions
                     case "$XCODE_VERSION_MINOR" in
                         0|1)
-                            CXX_VERSION_MINOR=9
+                            CXX_VERSION_MAJOR=4
+                            CXX_VERSION_MINOR=0
+                            ;;
+                        3|4)
+                            CXX_VERSION_MAJOR=5
+                            CXX_VERSION_MINOR=0
                             ;;
                         *)
-                            echo "Unknown or unsupported version of XCode: XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR.";
-                            exit 1;
+                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR)])
+                            ;;
+                    esac
+                elif test $XCODE_VERSION_MAJOR -eq 10; then
+                    CXX_VERSION_MAJOR=6
+                  # Rasmussen (11/21/2018): Added results for clang --version 10.0.0
+                  # see https://gist.github.com/yamaya/2924292
+                  # see also https://github.com/apple/swift-llvm/blob/swift-4.2-branch/CMakeLists.txt
+                  # NOTE that this is very tentative and don't know if it will work
+                    case "$XCODE_VERSION_MINOR" in
+                        0|1)
+                            BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+                            ;;
+                        *)
+                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR)])
                             ;;
                     esac
                 else
-                    echo "Unknown or unsupported version of XCode: XCODE_VERSION_MAJOR = $XCODE_VERSION_MAJOR."
-                    exit 1
+                    AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MAJOR = $XCODE_VERSION_MAJOR)])
                 fi
 
 #              # Note "build_os" is a variable determined by autoconf.
@@ -148,24 +163,26 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
 #                esac
 
               # DQ (12/3/2016): Added debugging for LLVM on MACOSX.
-                echo "compilerVendorName = $compilerVendorName"
-                echo "CXX_VERSION_MAJOR = $CXX_VERSION_MAJOR"
-                echo "CXX_VERSION_MINOR = $CXX_VERSION_MINOR"
-                echo "CXX_VERSION_PATCH = $CXX_VERSION_PATCH"
+                #echo "compilerVendorName = $compilerVendorName"
+                #echo "CXX_VERSION_MAJOR = $CXX_VERSION_MAJOR"
+                #echo "CXX_VERSION_MINOR = $CXX_VERSION_MINOR"
+                #echo "CXX_VERSION_PATCH = $CXX_VERSION_PATCH"
             fi
             ;;
 
         gnu)
-            # Note that "--version" spits out X.Y.Z but is harder to parse than "-dumpversion" which shows only X.Y
-            CXX_VERSION_MAJOR=$($CXX_COMPILER_COMMAND -dumpversion |cut -d. -f1)
-            CXX_VERSION_MINOR=$($CXX_COMPILER_COMMAND -dumpversion |cut -d. -f2)
-            CXX_VERSION_PATCH=$($CXX_COMPILER_COMMAND -dumpversion |cut -d. -f3)
+            # Trying out various way of getting GCC version number: after version 7 "-dumpversion" was replaced by "-dumpfullversion"
+            #     CXX_VERSION_TRIPLET=$($CXX_COMPILER_COMMAND --dumpversion | grep "^gcc" | sed 's/^.*[^0-9]\([0-9]*\.[0-9]*\.[0-9]*\).*$/\1/')
+            CXX_VERSION_TRIPLET=$($CXX_COMPILER_COMMAND -dumpfullversion -dumpversion 2> /dev/null)
+            CXX_VERSION_MAJOR=$(echo $CXX_VERSION_TRIPLET |cut -d. -f1)
+            CXX_VERSION_MINOR=$(echo $CXX_VERSION_TRIPLET |cut -s -d. -f2)
+            CXX_VERSION_PATCH=$(echo $CXX_VERSION_TRIPLET |cut -s -d. -f3)
             ;;
 
         intel)
             CXX_VERSION_MAJOR=$($CXX_COMPILER_COMMAND -dumpversion |cut -d. -f1)
-            CXX_VERSION_MINOR=$($CXX_COMPILER_COMMAND -dumpversion |cut -d. -f2)
-            CXX_VERSION_PATCH=$($CXX_COMPILER_COMMAND -dumpversion |cut -d. -f3)
+            CXX_VERSION_MINOR=$($CXX_COMPILER_COMMAND -dumpversion |cut -s -d. -f2)
+            CXX_VERSION_PATCH=$($CXX_COMPILER_COMMAND -dumpversion |cut -s -d. -f3)
             ;;
 
          rose)
@@ -176,6 +193,10 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
             AC_MSG_ERROR([unknown vendor ($CXX_COMPILER_VENDOR) for backend compiler ($CXX_COMPILER_COMMAND)])
             ;;
     esac
+
+    if test "$CXX_VERSION_MINOR" = ""; then
+        AC_MSG_ERROR([cannot extract the version minor level for $CXX_COMPILER_COMMAND])
+    fi
 
     if test "$CXX_VERSION_PATCH" = ""; then
         AC_MSG_WARN([cannot extract the version patch level for $CXX_COMPILER_COMMAND (assuming 0)])
@@ -354,7 +375,7 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     dnl --- Characteristics of the frontend compiler ---
     dnl ------------------------------------------------
 
-    ROSE_CONFIGURE_SECTION([Frontend compiler version])
+    ROSE_CONFIGURE_SECTION([Checking frontend compiler])
     GET_CXX_VERSION_INFO([$CXX], [$FRONTEND_CXX_COMPILER_VENDOR])
     GET_CXX_VERSION_MACROS
     SAVE_CXX_VERSION_INFO(FRONTEND)
@@ -363,7 +384,7 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     dnl --- Characteristics of the backend compiler  ---
     dnl ------------------------------------------------
 
-    ROSE_CONFIGURE_SECTION([Backend compiler version])
+    ROSE_CONFIGURE_SECTION([Checking backend compiler])
 
     backendCompilerBaseName=$(basename "$BACKEND_CXX_COMPILER")
     GET_CXX_VERSION_INFO([$BACKEND_CXX_COMPILER], [$BACKEND_CXX_COMPILER_VENDOR])
@@ -383,7 +404,19 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     AC_SUBST(FRONTEND_CXX_VENDOR_AND_VERSION3)
 
     # Frontend C++ compiler vendor and version major.minor
-    FRONTEND_CXX_VENDOR_AND_VERSION2="$FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR.$FRONTEND_CXX_VERSION_MINOR"
+    #echo FRONTEND_CXX_COMPILER_VENDOR=$FRONTEND_CXX_COMPILER_VENDOR
+    #echo FRONTEND_CXX_VERSION_MAJOR=$FRONTEND_CXX_VERSION_MAJOR
+    #echo FRONTEND_CXX_VERSION_MINOR=$FRONTEND_CXX_VERSION_MINOR
+    if test $FRONTEND_CXX_COMPILER_VENDOR == "gnu" && test $FRONTEND_CXX_VERSION_MAJOR -ge 5; then
+      FRONTEND_CXX_VENDOR_AND_VERSION2="$FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR"
+    elif test $FRONTEND_CXX_COMPILER_VENDOR == "clang" && test $FRONTEND_CXX_VERSION_MAJOR -ge 4; then
+      FRONTEND_CXX_VENDOR_AND_VERSION2="$FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR"
+    elif test $FRONTEND_CXX_COMPILER_VENDOR == "intel"; then
+      FRONTEND_CXX_VENDOR_AND_VERSION2="$FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR"
+    else
+      FRONTEND_CXX_VENDOR_AND_VERSION2="$FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CXX_VERSION_MAJOR.$FRONTEND_CXX_VERSION_MINOR"
+    fi
+    #echo FRONTEND_CXX_VENDOR_AND_VERSION2=$FRONTEND_CXX_VENDOR_AND_VERSION2
     AC_SUBST(FRONTEND_CXX_VENDOR_AND_VERSION2)
 
     # Backend C++ compiler vendor and version triplet
@@ -459,14 +492,14 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     AM_CONDITIONAL(ROSE_USING_ROSE_AST_FILE_IO, [test "$ROSE_USING_ROSE_AST_FILE_IO" != ""])
 
     if test "$backendCompilerBaseName" = roseAnalysis -o "$backendCompilerBaseName" = testAnalysis; then
-        AC_MSG_NOTICE([Found the ROSE analysis tool being used as compiler for ROSE source code.])
+        AC_MSG_NOTICE([found the ROSE analysis tool being used as compiler for ROSE source code])
         AC_DEFINE(CXX_IS_ROSE_ANALYSIS, 1,
             [Is this the ROSE Analizer (part of tests to compile ROSE for analysis only using ROSE)])
     fi
 
     dnl DQ (2/20/2010): Support for testing AST File I/O.
     if test "$backendCompilerBaseName" = roseAstFileIO -o "$backendCompilerBaseName" = testAstFileIO; then
-        AC_MSG_NOTICE([Found the ROSE analysis tool being used as compiler for ROSE source code.])
+        AC_MSG_NOTICE([found the ROSE analysis tool being used as compiler for ROSE source code])
         AC_DEFINE(CXX_IS_ROSE_AST_FILE_IO, 1,
             [Is this the ROSE AST File IO (part of tests to compile ROSE for AST File IO only using ROSE)])
         AC_DEFINE(CXX_IS_ROSE_CODE_GENERATION, 1,
@@ -476,7 +509,7 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     fi
 
     if test "$backendCompilerBaseName" = roseCodeGeneration -o "$backendCompilerBaseName" = testCodeGeneration; then
-        AC_MSG_NOTICE([Found the ROSE code generation tool being used as compiler for ROSE source code.])
+        AC_MSG_NOTICE([found the ROSE code generation tool being used as compiler for ROSE source code])
         AC_DEFINE(CXX_IS_ROSE_CODE_GENERATION, 1,
             [Is this the ROSE Code Generator (part of tests to compile ROSE and generate code using ROSE)])
         AC_DEFINE(CXX_IS_ROSE_ANALYSIS, 1,
@@ -484,7 +517,7 @@ AC_DEFUN([GET_COMPILER_SPECIFIC_DEFINES],[
     fi
 
     if test "$backendCompilerBaseName" = roseTranslator -o "$backendCompilerBaseName" = testTranslator; then
-        AC_MSG_NOTICE([Found the ROSE translator tool being used as compiler for ROSE source code.])
+        AC_MSG_NOTICE([found the ROSE translator tool being used as compiler for ROSE source code])
         AC_DEFINE(CXX_IS_ROSE_TRANSLATOR, 1,
             [Is this the ROSE translator (part of tests to compile ROSE using ROSE)])
         AC_DEFINE(CXX_IS_ROSE_CODE_GENERATION, 1,

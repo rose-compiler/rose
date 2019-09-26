@@ -20,7 +20,7 @@
 #include "HSetMaintainer.h"
 #include "AbstractValue.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 
 namespace CodeThorn {
 

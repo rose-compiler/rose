@@ -1,3 +1,6 @@
-
-add_subdirectory(HeaderFilesGraphGenerator)
-add_subdirectory(HeaderFilesNotIncludedList)
+if(NOT ROSE_USING_ROSE_ANALYSIS)
+  if(HAVE_REALPATH)
+    add_subdirectory(HeaderFilesGraphGenerator)
+    add_subdirectory(HeaderFilesNotIncludedList)
+  endif()
+endif()

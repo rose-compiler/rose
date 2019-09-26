@@ -4,7 +4,7 @@
 
 #include "sage3basic.h"
 
-// SPRAY includes
+// CodeThorn includes
 #include "Flow.h"
 #include "ParProEState.h"
 #include "ParallelAutomataGenerator.h"
@@ -22,7 +22,7 @@
 
 using namespace CodeThorn;
 
-namespace SPRAY {
+namespace CodeThorn {
   /*! 
    * \author Marc Jasper
    * \date 2016.
@@ -75,6 +75,6 @@ namespace SPRAY {
     bool _completeStg;
   };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 
 #endif

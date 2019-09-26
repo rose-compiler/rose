@@ -208,6 +208,7 @@ void Default<InheritedAttr_, SynthesizedAttr_>::edit(
       case V_SgCommaOpExp:       oss << ",";    break;
 
       case V_SgConditionalExp:   oss << "c ? t : f"; break;
+      default: break;
     }
     desc.label = oss.str();
   }
@@ -261,6 +262,7 @@ void Default<InheritedAttr_, SynthesizedAttr_>::edit(
           case V_SgFortranNonblockedDo: desc.label = "do\\n(non-blocked)"; break;
 
           case V_SgCatchOptionStmt: desc.label = "catch"; break;
+          default: break;
         }
       }
     }
@@ -291,6 +293,7 @@ void Default<InheritedAttr_, SynthesizedAttr_>::edit(
         case V_SgUsingDirectiveStatement:
           desc.shape = "hexagon";
           break;
+        default: break;
       }
 
       std::ostringstream oss;
@@ -335,6 +338,7 @@ void Default<InheritedAttr_, SynthesizedAttr_>::edit(
 
         case V_SgUsingDeclarationStatement: oss << "using\\ndeclaration"; break;
         case V_SgUsingDirectiveStatement:   oss << "using\\ndirective"; break;
+        default: break;
       }
       desc.label = oss.str();
     }

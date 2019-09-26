@@ -1,7 +1,7 @@
 #include "RoseRDAnalysis.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 // obsolete function
 void Experimental::RoseRDAnalysis::generateRoseRDDotFile(VariableRenaming* varRen,string filename) {

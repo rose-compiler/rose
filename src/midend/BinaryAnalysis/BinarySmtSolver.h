@@ -105,11 +105,18 @@ public:
     /** RAII guard for solver stack.
      *
      *  This object implements a rudimentary form of SMT transactions. The constructor starts a new transaction by pushing
-     *  a new level onto the specified solver (if the solver is non-null). The destructor pops one level from the solver
-     *  unless this object is in the @ref isCommitted state (see @ref commit).  This guard object makes no attempt to ensure
-     *  that the level popped is the same as the one that was initially pushed by the constructor. */
+     *  a new level onto the specified solver (if the solver is non-null). The destructor pops transactions until it gets
+     *  back to the same number of levels as originally. It is undefined behavior if the solver has fewer transactions than
+     *  originally when the destructor is called. If @ref commit has been called on this object then the destructor does
+     *  nothing.
+     *
+     *  This guard object makes no attempt to ensure that after popping levels we end up at the same level we started at.
+     *  In other words, although the number of levels is back to where we started, it might have been possible that between
+     *  the constructor and destructor we popped past this transaction and then pushed new transactions to replace it with
+     *  a different transaction. */
     class Transaction {
         SmtSolver::Ptr solver_;
+        size_t nLevels_;
         bool committed_;
     public:
         /** Constructor pushes level if solver is non-null.
@@ -117,17 +124,24 @@ public:
          *  It is safe to call this with a null solver. */
         explicit Transaction(const SmtSolver::Ptr &solver)
             : solver_(solver), committed_(false) {
-            if (solver)
+            if (solver) {
+                nLevels_ = solver->nLevels();
                 solver->push();
+            } else {
+                nLevels_ = 0;
+            }
         }
 
         /** Destructor pops level unless canceled. */
         ~Transaction() {
             if (solver_ && !committed_) {
-                if (solver_->nLevels() > 1) {
-                    solver_->pop();
-                } else {
-                    solver_->reset();
+                ASSERT_require2(solver_->nLevels() > nLevels_, "something popped this transaction already");
+                while (solver_->nLevels() > nLevels_) {
+                    if (solver_->nLevels() > 1) {
+                        solver_->pop();
+                    } else {
+                        solver_->reset();
+                    }
                 }
             }
         }
@@ -555,7 +569,7 @@ protected:
     virtual std::string getErrorMessage(int exitStatus);
 
     /** Return all variables that need declarations. */
-    virtual VariableSet findVariables(const SymbolicExpr::Ptr&) { return VariableSet(); }
+    virtual void findVariables(const SymbolicExpr::Ptr&, VariableSet&) {}
 
     /** Print an S-Expr for debugging.
      *

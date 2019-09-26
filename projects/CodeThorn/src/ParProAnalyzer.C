@@ -2,7 +2,7 @@
 
 #include "ParProAnalyzer.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace CodeThorn;
 using namespace std;
 

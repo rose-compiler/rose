@@ -1,0 +1,7 @@
+include_rules
+
+run $(public_script) -o lib/matrix/container-scripts	\
+    post-install-script					\
+    run-test						\
+    scan-config						\
+    scan-environment

@@ -55,6 +55,48 @@ string PState::toString(VariableIdMapping* variableIdMapping) const {
   return ss.str();
 }
 
+std::set<std::string> PState::getDotNodeIdStrings(std::string prefix) const {
+  std::set<std::string> nodeIds;
+  for(PState::const_iterator j=begin();j!=end();++j) {
+    nodeIds.insert(dotNodeIdString(prefix,(*j).first));
+    if((*j).first.isPtr()) {
+      // need to insert also target if pointer value. Using set ensures no duplicates for shared targets.
+      if((*j).second.isPtr())
+        nodeIds.insert(dotNodeIdString(prefix,(*j).second)); 
+    }
+  }
+  return nodeIds;
+}
+
+std::string PState::dotNodeIdString(std::string prefix, AbstractValue av) const {
+  stringstream ss;
+  ss<<prefix<<string("n")<<this<<av.toString();
+  return ss.str();
+}
+
+string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapping) const {
+  stringstream ss;
+  for(PState::const_iterator j=begin();j!=end();++j) {
+    //    AbstractValue v1=(*j).first;
+    AbstractValue v2=(*j).second;
+    // this pointer is used to get unique names for all elements of a PState
+    if(v2.isPtr()) {
+      // nodes
+      ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<"\"];"<<endl;
+      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\""<< " [label=\""<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
+      //endl; // target label intentionally not generated
+      // edge
+      ss <<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"";
+      ss<<"->";
+      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\" [weight=\"0.0\"]";
+      ss<<";"<<endl;
+    } else {
+      ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<":"<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
+    }
+  }  
+  return ss.str();
+}
+
 long PState::memorySize() const {
   long mem=0;
   for(PState::const_iterator i=begin();i!=end();++i) {
@@ -97,10 +139,10 @@ bool PState::varIsConst(AbstractValue varId) const {
   PState::const_iterator i=find(varId);
   if(i!=end()) {
     AbstractValue val=(*i).second;
-    return val.isConstInt();
+    return val.isConstInt()||val.isConstPtr();
   } else {
-    // TODO: this allows variables (intentionally) not to be in PState but still to analyze
-    // however, this check will have to be reinstated once this mode is fully supported
+    // assume that a variable not in state is non-const (has any value)
+    // this is currently used in some modes to reduce state size
     return false; // throw CodeThorn::Exception("Error: PState::varIsConst : variable does not exist.";
   }
 }
@@ -141,6 +183,17 @@ AbstractValue PState::varValue(AbstractValue varId) const {
 void PState::writeTopToAllMemoryLocations() {
   CodeThorn::AbstractValue val=CodeThorn::Top();
   writeValueToAllMemoryLocations(val);
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2019.
+ */
+void PState::combineValueAtAllMemoryLocations(AbstractValue val) {
+  for(PState::iterator i=begin();i!=end();++i) {
+    AbstractValue memLoc=(*i).first;
+    combineAtMemoryLocation(memLoc,val);
+  }
 }
 
 /*! 
@@ -282,6 +335,13 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
   operator[](abstractMemLoc)=abstractValue;
 }
 
+void PState::combineAtMemoryLocation(AbstractValue abstractMemLoc,
+                                   AbstractValue abstractValue) {
+  AbstractValue currentValue=operator[](abstractMemLoc);
+  AbstractValue newValue=AbstractValue::combine(currentValue,abstractValue);
+  operator[](abstractMemLoc)=newValue;
+}
+
 size_t PState::stateSize() const {
   return this->size();
 }
@@ -300,4 +360,67 @@ PState::const_iterator PState::begin() const {
 
 PState::const_iterator PState::end() const {
   return map<AbstractValue,CodeThorn::AbstractValue>::end();
+}
+
+// Lattice functions
+bool PState::isApproximatedBy(CodeThorn::PState& other) const {
+  // check if all values of 'this' are approximated by 'other'
+  for(auto elem:*this) {
+    auto iter=other.find(elem.first);
+    if(iter!=other.end()) {
+      if(!AbstractValue::approximatedBy(elem.second,(*iter).second)) {
+        return false;
+      }
+    } else {
+      // a variable of 'this' is not in state of 'other'
+      return false;
+    }
+  }
+  // all values stored in memory locations of 'this' are approximated
+  // by values of the corresponding memory location in
+  // 'other'. TODO: if the memory location itself is a summary.
+  return true;
+}
+
+CodeThorn::PState PState::combine(CodeThorn::PState& p1, CodeThorn::PState& p2) {
+  CodeThorn::PState res;
+  size_t numMatched=0;
+  for(auto elem1:p1) {
+    auto iter=p2.find(elem1.first);
+    if(iter!=p2.end()) {
+      // same memory location in both states: elem.first==(*iter).first
+      // combine values elem.second and (*iter).second
+
+      res.writeToMemoryLocation(elem1.first,AbstractValue::combine(elem1.second,(*iter).second));
+      numMatched++;
+    } else {
+      // a variable of 'p1' is not in state of 'p2', add to result state
+      res.writeToMemoryLocation(elem1.first,elem1.second);
+    }
+  }
+  // add elements that are only in p2 to res - this can only be the
+  // case if the number of matched elements above is different to p2.size()
+  if(numMatched!=p2.size()) {
+    for(auto elem2:p2) {
+      if(p1.find(elem2.first)==p1.end()) {
+        res.writeToMemoryLocation(elem2.first,elem2.second);
+      }
+    }
+  }
+#if 1
+  // consistency check: all elements of p1 and p2 must be represented in res
+  for(auto elem1:p1) {
+    if(res.find(elem1.first)==res.end()) {
+      cerr<<"Error: Element of PState1 "<<elem1.first.toString()<<" not in combined state."<<endl;
+      exit(1);
+    }
+  }
+  for(auto elem2:p2) {
+    if(res.find(elem2.first)==res.end()) {
+      cerr<<"Error: Element of PState2 "<<elem2.first.toString()<<" not in combined state."<<endl;
+      exit(1);
+    }
+  }
+#endif
+  return res;
 }

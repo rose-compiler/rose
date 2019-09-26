@@ -20,10 +20,6 @@
 #
 #     HAVE_BOOST_FILESYSTEM
 #
-# LAST MODIFICATION
-#
-#   2008-04-12
-#
 # COPYLEFT
 #
 #   Copyright (c) 2008 Thomas Porschberg <thomas@randspringer.de>
@@ -105,7 +101,7 @@ AC_DEFUN([AX_BOOST_FILESYSTEM],
 
             fi
 			if test "x$link_filesystem" != "xyes"; then
-				AC_MSG_ERROR(Could not link against $ax_lib !)
+				AC_MSG_ERROR([could not link against "$ax_lib"])
 			fi
 		fi
 

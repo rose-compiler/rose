@@ -1,0 +1,92 @@
+# -*- shell-script -*-
+
+# Supporting functions for scripts run during rose-matrix-run
+
+# Causes the script to exit with an error message
+reject-configuration() {
+    echo "  rejected configuration:" "$@" >&2
+    exit 1
+}
+
+# Compare two strings as either strings or integers. Echos "-1", "0", or "1"
+# depending on whether $a is less than, equal to, or greater than $b.
+compare-integer-or-string() {
+    local a="$1" b="$2"
+
+    # If both $a and $b are integers, so compare them like integers
+    if [ "$a" -eq "$a" ] 2>/dev/null; then
+	if [ "$b" -eq "$b" ] 2>/dev/null; then
+	    if [ "$a" -lt "$b" ]; then
+		echo -1
+		return 0
+	    elif [ "$a" -gt "$b" ]; then
+		echo 1
+		return 0
+	    else
+		echo 0
+		return 0
+	    fi
+	fi
+    fi
+    
+    # Otherwise compare them like strings
+    if [ "$a" \> "$b" ]; then
+	echo 1
+    elif [ "$a" = "$b" ]; then
+	echo 0
+    else
+	echo -1
+    fi
+}
+    
+# Compare version numbers
+#  Returns 0 if a is equal to b
+#  Returns 1 if a is less than b
+#  Returns 2 if a is greater than b
+version-compare() {
+    local a="$1" b="$2"
+    if [ "$a" = "$b" ]; then
+	echo 0
+	return 0
+    else
+	local a_parts=($(echo "$a" |tr . ' '))
+	local b_parts=($(echo "$b" |tr . ' '))
+
+	local i=0
+	while [ -n "${a_parts[$i]}" -o -n "${b_parts[$i]}" ]; do
+	    local cmp=$(compare-integer-or-string "${a_parts[$i]}" "${b_parts[$i]}")
+	    if [ $cmp != 0 ]; then
+		echo $cmp
+		return 0
+	    fi
+	    i=$[i + 1]
+	done
+
+	echo 0
+    fi
+}
+
+
+version-lt() {
+    [ $(version-compare "$1" "$2") -lt 0 ]
+}
+
+version-le() {
+    [ $(version-compare "$1" "$2") -le 0 ]
+}
+
+version-eq() {
+    [ $(version-compare "$1" "$2") -eq 0 ]
+}
+
+version-ne() {
+    [ $(version-compare "$1" "$2") -ne 0 ]
+}
+
+version-gt() {
+    [ $(version-compare "$1" "$2") -gt 0 ]
+}
+
+version-ge() {
+    [ $(version-compare "$1" "$2") -ge 0 ]
+}

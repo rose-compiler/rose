@@ -7,6 +7,7 @@
 #include <cassert>
 
 using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 using namespace Rose::Diagnostics;
 
 const int RSIM_SignalHandling::SIG_WAKEUP = 49; /* arbitrarily SIGRT_17 */

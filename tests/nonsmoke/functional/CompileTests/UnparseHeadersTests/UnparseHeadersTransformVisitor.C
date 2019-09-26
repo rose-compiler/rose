@@ -27,4 +27,15 @@ void UnparseHeadersTransformVisitor::visit(SgNode* node)
                   }
              }
         }
+
+  // DQ (9/20/2018): If we are using the token based unparsing, then any change to the SgInitializedName 
+  // must also touch the associated variable reference expressions.  I don't think there is a good way to 
+  // automate this except to put this support into the SageInterface::set_name() function (which we could 
+  // do later).
+
+     SgVarRefExp* varRefExp = isSgVarRefExp(node);
+     if (varRefExp != NULL)
+        {
+        }
+
    }

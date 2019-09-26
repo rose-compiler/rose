@@ -14,7 +14,7 @@
 
 using namespace CodeThorn;
 using namespace AnalysisAbstractionLayer;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 class TestDefUseVarsInfoTraversal : public AstSimpleProcessing
 {

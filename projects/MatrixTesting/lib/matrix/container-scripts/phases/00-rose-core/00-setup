@@ -1,0 +1,42 @@
+#!/bin/bash
+set -e
+
+# Save some info about the ROSE version. Do this early so subsequent failures report something meaningful to the
+# database.  We can do all this in the read-only source directory.
+rose_version=$(cd project-source-ro && git rev-parse HEAD)
+if (cd project-source-ro && git status --short |grep -q '^.M'); then
+    rose_version="${rose_version}+local"
+fi
+
+rose_date="$(cd project-source-ro && git log -n1 --pretty=format:'%ct')"
+
+(
+    echo "rose=$rose_version"
+    echo "rose_date=$rose_date"
+    echo "#PROVISIONAL -- the following items are only approximate"
+    "$HOME/container-scripts/scan-environment" "$HOME/run/rmc-config"
+) >>$HOME/run/result
+
+# Before copying the ROSE source tree, which takes quite a few seconds and makes the containers larger, we set
+# up a temporary build tree that's used to install software dependencies. This is more likely to fail than copying
+# the ROSE source tree, so we should do it early.
+mkdir ~/_build-installations
+cp ~/run/rmc-config ~/_build-installations/.rmc-main.cfg
+echo "Installing ROSE prerequisites using RMC/Spock"
+rmc -C _build-installations --install=yes true
+rm -rf _build-installations
+
+# The project source code is mounted read-only. ROSE can't handle that too well, so the first thing we do is copy it
+# into the container's read/write storage.
+echo "Copying read-only source directory since ROSE's 'build' script modifies it"
+cp -dr --preserve=mode,timestamps,links ~/project-source-ro ~/rose
+rm -rf ~/rose/.tup
+
+# Create the ROSE build tree as a subdirectory of the source tree.
+mkdir ~/rose/_build
+sed 's%^[ \t]*rmc_rosesrc[ \t].*%rmc_rosesrc /home/user/rose%' <~/run/rmc-config >~/rose/_build/.rmc-main.cfg
+(echo "Software in use:"; rmc -C rose/_build spock-using |sed 's/^/    /') >>$HOME/run/dribble
+
+# Undo the provisional results created above, and replace them with info about software that's actually installed.
+sed -i~ '/#PROVISIONAL/,$ d' "$HOME/run/result"
+rmc -C rose/_build $HOME/container-scripts/scan-environment >>$HOME/run/result

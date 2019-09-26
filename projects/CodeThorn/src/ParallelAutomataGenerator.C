@@ -3,7 +3,7 @@
 #include "ParallelAutomataGenerator.h"
 #include "Miscellaneous2.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 
 NumberGenerator::NumberGenerator(int start) : _current(start) {}

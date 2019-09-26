@@ -75,7 +75,7 @@ public:
         RegStore()                                      // for serialization
             : majr(0), minr(0) {}
         RegStore(RegisterDescriptor d) // implicit
-            : majr(d.get_major()), minr(d.get_minor()) {}
+            : majr(d.majorNumber()), minr(d.minorNumber()) {}
         bool operator<(const RegStore &other) const {
             return majr<other.majr || (majr==other.majr && minr<other.minr);
         }
@@ -107,7 +107,7 @@ public:
 
     public:
         RegPair(RegisterDescriptor desc, const SValuePtr &value): desc(desc), value(value) {}
-        BitRange location() const { return BitRange::baseSize(desc.get_offset(), desc.get_nbits()); }
+        BitRange location() const { return BitRange::baseSize(desc.offset(), desc.nBits()); }
     };
 
     /** Vector of register/value pairs. */
@@ -319,25 +319,6 @@ public:
             rstate_->accessCreatesLocations(savedValue_);
         }
     };
-
-    // [Robb P. Matzke 2015-09-23]: deprecated
-    bool coalesceOnRead() const /*final*/ ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
-        return accessModifiesExistingLocations();
-    }
-
-    // [Robb P. Matzke 2015-09-23]: deprecated
-    virtual void coalesceOnRead(bool b) ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
-        accessModifiesExistingLocations(b);
-    }
-
-    // [Robb P. Matzke 2015-09-23]: deprecated
-    class NoCoalesceOnRead                              // ROSE_DEPRECATED("use AccessModifiesExistingLocationsGuard isntead")
-        : public AccessModifiesExistingLocationsGuard {
-    public:
-        explicit NoCoalesceOnRead(RegisterStateGeneric *rstate)
-            : AccessModifiesExistingLocationsGuard(rstate, false) {}
-    };
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Inherited non-constructors
@@ -612,40 +593,24 @@ public:
     virtual void updateReadProperties(RegisterDescriptor);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Deprecated APIs
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-
-    // Deprecated [Robb P. Matzke 2015-08-12]
-    virtual void set_latest_writer(RegisterDescriptor, rose_addr_t writer_va) ROSE_DEPRECATED("use setWriters instead");
-    virtual void clear_latest_writer(RegisterDescriptor) ROSE_DEPRECATED("use eraseWriters instead");
-    virtual void clear_latest_writers() ROSE_DEPRECATED("use eraseWriters instead");
-    virtual std::set<rose_addr_t> get_latest_writers(RegisterDescriptor) const
-        ROSE_DEPRECATED("use getWritersUnion instead");
-
-    virtual bool get_coalesceOnRead() ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
-        return accessModifiesExistingLocations();
-    }
-    virtual bool set_coalesceOnRead(bool b=true) ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
-        bool retval=accessModifiesExistingLocations();
-        accessModifiesExistingLocations(b);
-        return retval;
-    }
-    virtual bool clear_coalescOnRead() ROSE_DEPRECATED("use accessModifiesExistingLocations instead") {
-        bool retval = accessModifiesExistingLocations();
-        accessModifiesExistingLocations(false);
-        return retval;
-    }
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Non-public APIs
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
     void deep_copy_values();
 
-    RegPairs& scanAccessedLocations(RegisterDescriptor reg, RiscOperators *ops, bool markOverlapping,
-                                    RegPairs &accessedParts /*out*/, RegPairs &preservedParts /*out*/);
+    // Given a register descriptor return information about what's stored in the state. The two return values are:
+    //
+    //     accessedParts represent the parts of the reigster (matching major and minor numbers) that are present in the
+    //     state and overlap with the specified register.
+    //
+    //     preservedParts represent the parts of the register that are present in the state but don't overlap with the
+    //     specified register.
+    void scanAccessedLocations(RegisterDescriptor reg, RiscOperators *ops,
+                               RegPairs &accessedParts /*out*/, RegPairs &preservedParts /*out*/) const;
+
+    // Given a register descriptor, zero out all the stored parts of the same register (by matching major and minor numbers)
+    // if the stored part overlaps with the specified register.
+    void clearOverlappingLocations(RegisterDescriptor);
 
     void assertStorageConditions(const std::string &where, RegisterDescriptor what) const;
 };

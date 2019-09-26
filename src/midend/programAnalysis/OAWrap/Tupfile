@@ -1,0 +1,6 @@
+include_rules
+
+run $(librose_compile) OAWrap.C SAGE2OA.C
+
+run $(public_header) OAWrap.h SAGE2OA.h OAConfig.h
+

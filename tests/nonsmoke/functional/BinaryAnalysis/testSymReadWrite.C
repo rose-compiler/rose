@@ -37,6 +37,9 @@ struct Analysis: public AstSimpleProcessing {
 
 #include "SymbolicSemantics2.h"
 #include "DispatcherX86.h"
+
+using namespace Rose::BinaryAnalysis;
+
 struct Analysis: public AstSimpleProcessing {
     void visit(SgNode *node) {
         SgAsmBlock *block = isSgAsmBlock(node);

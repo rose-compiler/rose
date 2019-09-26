@@ -26,25 +26,12 @@ else
       GIT_HEAD_DATE=$(head -n1 "$VERSION_FILE" | cut -d' ' -f2)
   else
       AC_MSG_NOTICE([])
-      AC_MSG_NOTICE([You are using a non-Git version of ROSE that lacks a VERSION file. This may be])
-      AC_MSG_NOTICE([due to you having downloaded a ZIP archive of the ROSE repository from github.])
+      AC_MSG_WARN([You are using a non-Git version of ROSE that lacks a VERSION file. This may be])
+      AC_MSG_WARN([due to you having downloaded a ZIP archive of the ROSE repository from github.])
 
       dnl The new instructions, as of 2016-05-18
-      AC_MSG_NOTICE([ROSE no longer supports being installed from a github ZIP archive; your ROSE])
-      AC_MSG_NOTICE([source tree must contain Git version information, i.e., a ".git" directory.])
-
-      dnl The old instructions that were a maintenance nightmare
-      # AC_MSG_NOTICE([In any case, you need to manually create the VERSION file at the top of the])
-      # AC_MSG_NOTICE([ROSE source tree before continuing. This file must be a single line containing])
-      # AC_MSG_NOTICE([two pieces of information separated by a single space (ASCII 040) character:])
-      # AC_MSG_NOTICE([the full-length SHA1 of the commit that is represented by this source tree,])
-      # AC_MSG_NOTICE([and the timestamp of that commit in seconds since the Unix epoch. You can get])
-      # AC_MSG_NOTICE([the SHA1 from same place you downloaded this source code (e.g., github), but])
-      # AC_MSG_NOTICE([obtaining the timestamp will be more difficult.  If the Git repository is])
-      # AC_MSG_NOTICE([available, use 'git log -1 --format=%at SHA1' where SHA1 is the commit number])
-      # AC_MSG_NOTICE([mentioned previously.  If the repository is not available, you may be able])
-      # AC_MSG_NOTICE([to use a web service such as http://www.unixtimestamp.com/index.php. On second])
-      # AC_MSG_NOTICE([thought, you're better off just using Git from the gitgo.])
+      AC_MSG_WARN([ROSE no longer supports being installed from a github ZIP archive; your ROSE])
+      AC_MSG_WARN([source tree must contain Git version information, i.e., a ".git" directory.])
 
       AC_MSG_NOTICE([])
       AC_MSG_FAILURE([$VERSION_FILE file does not exist])

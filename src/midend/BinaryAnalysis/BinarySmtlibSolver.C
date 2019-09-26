@@ -44,7 +44,8 @@ SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr>
     // Find all variables
     VariableSet vars;
     BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs) {
-        VariableSet tmp = findVariables(expr);
+        VariableSet tmp;
+        findVariables(expr, tmp);
         BOOST_FOREACH (const SymbolicExpr::LeafPtr &var, tmp.values())
             vars.insert(var);
     }
@@ -167,14 +168,14 @@ SmtlibSolver::varForSet(const SymbolicExpr::InteriorPtr &set) {
 }
 
 // A side effect is that the varsForSets_ map is updated.
-SmtlibSolver::VariableSet
-SmtlibSolver::findVariables(const SymbolicExpr::Ptr &expr) {
+void
+SmtlibSolver::findVariables(const SymbolicExpr::Ptr &expr, VariableSet &variables) {
     struct T1: SymbolicExpr::Visitor {
         SmtlibSolver *self;
-        VariableSet variables;
+        VariableSet &variables;
         std::set<const SymbolicExpr::Node*> seen;
 
-        explicit T1(SmtlibSolver *self): self(self) {}
+        T1(SmtlibSolver *self, VariableSet &variables): self(self), variables(variables) {}
 
         SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) {
             if (!seen.insert(getRawPointer(node)).second)
@@ -196,10 +197,8 @@ SmtlibSolver::findVariables(const SymbolicExpr::Ptr &expr) {
         SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr&) {
             return SymbolicExpr::CONTINUE;
         }
-    } t1(this);
-
+    } t1(this, variables);
     expr->depthFirstTraversal(t1);
-    return t1.variables;
 }
 
 void
@@ -387,7 +386,7 @@ SmtlibSolver::outputCommonSubexpressions(std::ostream &o, const std::vector<Symb
           <<", actual size = " <<StringUtility::plural(cse->nNodesUnique(), "nodes") <<"\n";
         std::string termName = "cse_" + StringUtility::numberToString(++cseId);
 
-        SExprTypePair et = outputExpression(cse);
+        SExprTypePair et = outputCast(outputExpression(cse), BIT_VECTOR);
         ASSERT_not_null(et.first);
 
         o <<"(define-fun " <<termName <<" " <<typeName(cse) <<" " <<*et.first <<")\n";
@@ -466,6 +465,8 @@ SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
     } else {
         ASSERT_not_null(inode);
         switch (inode->getOperator()) {
+            case SymbolicExpr::OP_NONE:
+                ASSERT_not_reachable("not possible for an interior node");
             case SymbolicExpr::OP_ADD:
                 retval = outputLeftAssoc("bvadd", inode);
                 break;

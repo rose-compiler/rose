@@ -1,0 +1,565 @@
+include_rules
+
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+
+###############################################################################################################################
+# Check parsing of symbolic expressions via Rose::BinaryAnalysis::SymbolicExprParser
+###############################################################################################################################
+run $(tool_compile_linkexe) testSymbolicExprParser.C
+run $(test) testSymbolicExprParser --answer=testSymbolicExprParser.ans
+
+###############################################################################################################################
+# Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
+# the AST (*.new). The *.new file is typically identical to the original executable. This is essentially the same as
+# tutorial/identityTranslator and is used by some of the other binary tests in this directory.
+###############################################################################################################################
+run $(tool_compile_linkexe) execFormatsTest.C
+
+###############################################################################################################################
+# Tests for BinaryAnalysis::ControlFlow class.
+###############################################################################################################################
+run $(tool_compile_linkexe) testControlFlow.C
+testControlFlow_INPUT = $(ROSE)/tests/nonsmoke/specimens/binary/buffer2.bin
+run $(test) testControlFlow -oA --answer=testControlFlow-A.ans ./testControlFlow A $(testControlFlow_INPUT)
+run $(test) testControlFlow -oB --answer=testControlFlow-B.ans ./testControlFlow B $(testControlFlow_INPUT)
+run $(test) testControlFlow -oC --answer=testControlFlow-C.ans ./testControlFlow C $(testControlFlow_INPUT)
+run $(test) testControlFlow -oD --answer=testControlFlow-D.ans ./testControlFlow D $(testControlFlow_INPUT)
+run $(test) testControlFlow -oE --answer=testControlFlow-E.ans ./testControlFlow E $(testControlFlow_INPUT)
+
+###############################################################################################################################
+# Test the binary CFG that points to instructions rather than basic blocks. No test is necessary since this
+# is tested by testControlFlow already.  The cfg2.C file serves mostly as a clear example of how to generate an
+# instruction-based CFG and write it to a GraphViz file along with some extra info on each vertex.
+###############################################################################################################################
+# FIXME ROSE-475 [Robb P. Matzke 2016-08-31]: This is an example, not a test. Move it to the documentation instead.
+run $(tool_compile_linkexe) cfg2.C
+
+###############################################################################################################################
+# Tests for the BinaryAnalysis::FunctionCall class.
+###############################################################################################################################
+run $(tool_compile_linkexe) testFunctionCall.C
+testFunctionCall_INPUT = $(ROSE)/tests/nonsmoke/specimens/binary/buffer2.bin
+run $(test) testFunctionCall -oA --answer=testFunctionCall-A.ans ./testFunctionCall A $(testFunctionCall_INPUT)
+run $(test) testFunctionCall -oB --answer=testFunctionCall-B.ans ./testFunctionCall B $(testFunctionCall_INPUT)
+
+###############################################################################################################################
+# Tests ELF string table reallocation functions by changing some strings.  At first glance this would appear to be something
+# quite easy to do, but it turns out to involve lots of details.
+###############################################################################################################################
+run $(tool_compile_linkexe) testElfStrtab.C
+run $(test) testElfStrtab -x arm-poweroff.dump -x arm-poweroff.new -x rose_arm-poweroff.s \
+    ./testElfStrtab $(ROSE)/tests/nonsmoke/specimens/binary/arm-poweroff
+
+###############################################################################################################################
+# Reads in an ELF executable and changes the byte order from little-endian to big-endian or vice versa and writes out a new
+# file. Note that the byte order change affects the ELF file format but not the executable described by that format.
+###############################################################################################################################
+
+# FIXME: This test produces way too many output files that aren't needed and just clutter things up.
+run $(tool_compile_linkexe) testElfByteOrder.C
+run $(test) testElfByteOrder -i execFormatsTest -i $(ROSE)/tests/nonsmoke/specimens/binary/arm-poweroff \
+    -x testElfByteOrder-1 -x testElfByteOrder-1.dump -x testElfByteOrder-1.new -x testElfByteOrder-2 \
+    -x testElfByteOrder-2.dump -x testElfByteOrder-2.new \
+    SPECIMEN_DIR=$(ROSE)/tests/nonsmoke/specimens/binary INPUT=arm-poweroff ./testElfByteOrderScript
+
+###############################################################################################################################
+# Reads in an ELF executable and changes the word size from eight to four bytes or vice versa and writes out a new file. Note
+# that the word size change affects the ELF file format but not the executable described by that format.
+###############################################################################################################################
+run $(tool_compile_linkexe) testElfWordSize.C
+
+#FIXME: need to write testElfWordSizeScript
+#run $(test) testElfWordSize ./testElfWordSizeScript $(ROSE)/tests/nonsmoke/specimens/binary/arm-poweroff
+
+###############################################################################################################################
+# Demonstrates how to change names of dynamically-linked functions. This example reads an ELF executable dynamically linked to
+# the MPI library and changes all calls to PMPI_* functions with calls to XMPI_* functions. See the top of the source file
+# for more details.
+###############################################################################################################################
+run $(tool_compile_linkexe) testElfSchulz.C
+
+run $(test) testElfSchulz -i execFormatsTest -o1 \
+    -x schulz-sample1-p.so.new -x schulz-sample1-p.so.dump -x rose_schulz-sample1.so.new.s -x schulz-sample1.so.new.new \
+    -x schulz-sample1.so.new.dump -x rose_schulz-sample1.so.s -x schulz-sample1.so.new -x schulz-sample1.so.dump \
+    -x rose_schulz-sample1-p.so.s \
+    SPECIMEN_DIR=$(ROSE)/tests/nonsmoke/specimens/binary N=1 ./testElfSchulzScript
+
+run $(test) testElfSchulz -i execFormatsTest -o2 \
+    -x schulz-sample2-p.so.new -x schulz-sample2-p.so.dump -x rose_schulz-sample2.so.new.s -x schulz-sample2.so.new.new \
+    -x schulz-sample2.so.new.dump -x rose_schulz-sample2.so.s -x schulz-sample2.so.new -x schulz-sample2.so.dump \
+    -x rose_schulz-sample2-p.so.s \
+    SPECIMEN_DIR=$(ROSE)/tests/nonsmoke/specimens/binary N=2 ./testElfSchulzScript
+
+###############################################################################################################################
+# Demonstrates how to build an ELF executable from scratch. Lots of comments in the source code. The resulting file is executable
+# on an x86 Linux using syscall 1 to exit with a particular value.
+###############################################################################################################################
+run $(tool_compile_linkexe) testElfConstruct.C
+run $(test) testElfConstruct -x testElfConstruct-a.out ./testElfConstruct testElfConstruct-a.out
+
+###############################################################################################################################
+# Demonstrates how to build a PE executable from scratch. This demo is not as complete at the ELF version, but does show how to
+# create a file that contains multiple format headers (a DOS header and a PE header).
+###############################################################################################################################
+run $(tool_compile_linkexe) testPeConstruct.C
+run $(test) testPeConstruct -x testPeConstruct-a.out ./testPeConstruct testPeConstruct-a.out
+
+###############################################################################################################################
+# Changes the size and/or location of a section in an executable file.
+###############################################################################################################################
+run $(tool_compile_linkexe) shiftResizeSection.C
+
+run $(test) shiftResizeSection -i execFormatsTest \
+    -x arm-ctrlaltdel.dump-1 -x arm-ctrlaltdel.new -x rose_arm-ctrlaltdel.s -x arm-ctrlaltdel.dump-2 \
+    -x arm-ctrlaltdel.new.new -x rose_arm-ctrlaltdel.new.s -x arm-ctrlaltdel.dump-3 \
+    --answer=shiftResizeSection.ans \
+    ./testShiftResizeSection.sh $(ROSE)/tests/nonsmoke/specimens/binary/arm-ctrlaltdel \
+    				\$($(ROSE)/scripts/tup/fix-tup-builddir-name \$(pwd))
+
+###############################################################################################################################
+# Test ROSE + XEN Ether interface
+###############################################################################################################################
+run $(tool_compile_linkexe) testEtherInsns.C
+run $(test) testEtherInsns --disabled "cannot be run automatically -- requires human interaction"
+
+###############################################################################################################################
+# Program to show function boundary information for a binary executable
+###############################################################################################################################
+run $(tool_compile_linkexe) functionBoundaries.C
+functionBoundaries_1_INPUT = $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O0.bin
+functionBoundaries_2_INPUT = $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O3.bin
+functionBoundaries_3_INPUT = $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O3-stripped.bin
+run $(test) functionBoundaries -o1 --answer=functionBoundaries_1.ans ./functionBoundaries $(functionBoundaries_1_INPUT)
+run $(test) functionBoundaries -o2 --answer=functionBoundaries_2.ans ./functionBoundaries $(functionBoundaries_2_INPUT)
+run $(test) functionBoundaries -o3 --answer=functionBoundaries_3.ans ./functionBoundaries $(functionBoundaries_3_INPUT)
+
+###############################################################################################################################
+# Program to add read-only data to ELF core dumps.
+###############################################################################################################################
+run $(tool_compile_linkexe) expandCoreDump.C
+run $(test) expandCoreDump --disabled "not currently tested"
+
+###############################################################################################################################
+# Program that encodes/decodes data similar to ROT-13 but acceping binary data
+###############################################################################################################################
+run $(tool_compile_linkexe) rot13.C
+run $(test) rot13 ./rot13Script $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O0.bin
+
+###############################################################################################################################
+# Program to test the assembler
+###############################################################################################################################
+run $(tool_compile_linkexe) testAssembler.C
+testAssembler_INPUT = $(ROSE)/tests/nonsmoke/specimens/binary/buffer2.bin
+run $(test) testAssembler \
+    -x rose_buffer2.bin.s -x buffer2.bin.new -x buffer2.bin.dump \
+    --answer=testAssembler.ans \
+    ./testAssembler $(testAssembler_INPUT)
+
+###############################################################################################################################
+# Program to test that we can write and then read an AST for a binary executable
+###############################################################################################################################
+run $(tool_compile_linkexe) testAstIO.C
+testAstIO_INPUT = $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O0.bin
+run $(test) testAstIO \
+    -x i686-test1.O0.bin-2.dump -x i686-test1.O0.bin.ast -x i686-test1.O0.bin-1.dump \
+    ./testAstIO $(testAstIO_INPUT)
+
+###############################################################################################################################
+# Program to test that SgAsmGenericFile::neuter works across AST-IO.
+###############################################################################################################################
+run $(tool_compile_linkexe) testAstNeuter.C
+run $(test) testAstNeuter \
+    -x rose_i686-test1.O0.bin.s -x i686-test1.O0.bin.new -x i686-test1.O0.bin.dump -x testAstNeuter.ast \
+    SPECIMEN_DIR=$(ROSE)/tests/nonsmoke/specimens/binary INPUT=i686-test1.O0.bin ./testAstNeuterScript
+
+###############################################################################################################################
+# Program to test the RegisterDescriptor and RegisterDictionary classes.
+###############################################################################################################################
+run $(tool_compile_linkexe) testRegisters.C
+run $(test) testRegisters
+
+###############################################################################################################################
+# Tests reading past the end-of-file
+###############################################################################################################################
+run $(tool_compile_linkexe) testReadPastEOF.C
+run $(test) testReadPastEOF --answer=testReadPastEOF.ans \
+    SPECIMEN_DIR=$(ROSE)/tests/nonsmoke/specimens/binary ./testReadPastEOFScript
+
+###############################################################################################################################
+# Not sure what this does.
+###############################################################################################################################
+ifneq (@(WITH_SQLITE),no)
+run $(tool_compile_linkexe) testLibraryDb.C
+run $(test) testLibraryDb -x test.db \
+    ./testLibraryDb
+endif
+
+###############################################################################################################################
+# Tests reading import sections from PE files
+###############################################################################################################################
+run $(tool_compile_linkexe) testPeImports.C
+testPeImports_INPUT = $(ROSE)/tests/nonsmoke/specimens/binary/proxycfg.exe
+run $(test) testPeImports --answer=testPeImports.ans \
+    ./testPeImports -rose:read_executable_file_format_only $(testPeImports_INPUT)
+
+###############################################################################################################################
+# Binary CFG test from Cory Cohen that doesn't compile.  This is only a linking test--do not run it.
+###############################################################################################################################
+run $(tool_compile_linkexe) cory002.C
+
+###############################################################################################################################
+# Test certain RegisterStateGeneric stuff
+###############################################################################################################################
+run $(tool_compile_linkexe) cory003.C
+run $(test) cory003
+
+###############################################################################################################################
+# Test register clearing in subclass constructor
+###############################################################################################################################
+run $(tool_compile_linkexe) cory004.C
+run $(test) cory004
+
+###############################################################################################################################
+# Test disassembling between functions
+###############################################################################################################################
+run $(tool_compile_linkexe) cory006.C
+run $(test) cory006 ./cory006 $(ROSE)/tests/nonsmoke/specimens/binary/i386-cory006
+
+###############################################################################################################################
+# Test and demonstrate binary attributes
+###############################################################################################################################
+run $(tool_compile_linkexe) cory007.C
+run $(test) cory007
+
+###############################################################################################################################
+# Test base objects in SgAsmIntegerValueExpression
+###############################################################################################################################
+run $(tool_compile_linkexe) cory008.C
+run $(test) cory008 --answer=cory008.ans ./cory008 $(ROSE)/tests/nonsmoke/specimens/binary/i386-nologin
+
+###############################################################################################################################
+# Test symbolic semantics memory read-after-write
+###############################################################################################################################
+run $(tool_compile_linkexe) testSymReadWrite.C
+run $(test) testSymReadWrite ./testSymReadWrite $(ROSE)/tests/nonsmoke/specimens/binary/memreadwrite
+
+###############################################################################################################################
+# Test the WorkList class
+###############################################################################################################################
+run $(tool_compile_linkexe) testWorkList.C
+run $(test) testWorkList
+
+###############################################################################################################################
+# Test ROSE's Map<T> class
+###############################################################################################################################
+run $(tool_compile_linkexe) testMap.C
+run $(test) testMap --disabled="by Dan 2017-11-17 due to Intel 16 internal compiler error"
+
+###############################################################################################################################
+# Test pointer detection
+###############################################################################################################################
+run $(tool_compile_linkexe) testPointerDetection.C
+testPointerDetection_INPUT = $(ROSE)/tests/nonsmoke/specimens/binary/i386-pointers
+testPointerDetection_SWITCHES += --function=simple01
+testPointerDetection_SWITCHES += --function=simple02
+testPointerDetection_SWITCHES += --function=simple03
+testPointerDetection_SWITCHES += --function=simple04
+testPointerDetection_SWITCHES += --function=simple05
+testPointerDetection_SWITCHES += --function=simple06
+testPointerDetection_SWITCHES += --function=simple07
+testPointerDetection_SWITCHES += --function=simple08
+testPointerDetection_SWITCHES += --function=simple09
+testPointerDetection_SWITCHES += --function=simple10
+testPointerDetection_SWITCHES += --function=simple11
+testPointerDetection_SWITCHES += --function=simple12
+testPointerDetection_SWITCHES += --function=simple13
+testPointerDetection_SWITCHES += --function=simple14
+testPointerDetection_SWITCHES += --function=simple15
+testPointerDetection_SWITCHES += --function=simple16
+testPointerDetection_SWITCHES += --function=simple17
+testPointerDetection_SWITCHES += --function=simple18
+testPointerDetection_SWITCHES += --function=simple19
+testPointerDetection_SWITCHES += --function=simple20
+testPointerDetection_SWITCHES += --function=simple21
+testPointerDetection_SWITCHES += --function=simple22
+testPointerDetection_SWITCHES += --function=simple23
+testPointerDetection_SWITCHES += --function=simple24
+testPointerDetection_SWITCHES += --function=simple25
+testPointerDetection_SWITCHES += --function=flow01
+testPointerDetection_SWITCHES += --function=flow02
+testPointerDetection_SWITCHES += --function=flow03
+testPointerDetection_SWITCHES += --function=flow04
+testPointerDetection_SWITCHES += --function=flow05
+testPointerDetection_SWITCHES += --function=flow06
+#testPointerDetection_SWITCHES += --function=flow07   # Not currently working: finds local, but not L-values
+run $(test) testPointerDetection --answer=testPointerDetection.ans \
+    ./testPointerDetection $(testPointerDetection_SWITCHES) $(testPointerDetection_INPUT)
+
+###############################################################################################################################
+# Test function call detection
+###############################################################################################################################
+run $(tool_compile_linkexe) testCallDetection.C
+run $(test) testCallDetection --answer=testCallDetection.ans \
+    -x rose_i386-fcalls.s -x i386-fcalls.new -x i386-fcalls.dump \
+    ./testCallDetection $(ROSE)/tests/nonsmoke/specimens/binary/i386-fcalls
+
+###############################################################################################################################
+# Test BitPattern<> class template
+###############################################################################################################################
+run $(tool_compile_linkexe) testBitPattern.C
+run $(test) testBitPattern
+
+###############################################################################################################################
+# Random number generator tests
+###############################################################################################################################
+run $(tool_compile_linkexe) testRNG.C
+run $(test) testRNG
+
+###############################################################################################################################
+# Symbolic expression simplifications
+###############################################################################################################################
+run $(tool_compile_linkexe) testSymbolicSimplification.C
+run $(test) testSymbolicSimplification --answer=testSymbolicSimplification.ans
+
+###############################################################################################################################
+# Symbolic expression user-defined flags
+###############################################################################################################################
+run $(tool_compile_linkexe) testSymbolicFlags.C
+run $(test) testSymbolicFlags --answer=testSymbolicFlags.ans
+
+###############################################################################################################################
+# Instruction semantics verification.
+###############################################################################################################################
+run $(tool_compile_linkexe) verifySemantics.C
+run $(test) verifySemantics --disabled="not portable enough to run automatically"
+
+###############################################################################################################################
+# Disassembly tests using Rose::BinaryAnalysis::Partitioner2
+###############################################################################################################################
+testPartitioner2 = $(ROSE)/tests/smoke/functional/BinaryAnalysis/testPartitioner2
+testPartitioner2_ANSWERS = testPartitioner2_*.ans
+
+run for ans in $(testPartitioner2_ANSWERS); do \
+        inputfile=`basename "${ans##*testPartitioner2_}" .ans`; \
+	switches= ; \
+	[ "$inputfile" = "exefmt.exe" ] && switches=--no-inter-function-calls; \
+        $(test) $(testPartitioner2) -o "${inputfile}" --answer=${ans} \
+	    $(testPartitioner2) ${switches} $(ROSE)/tests/nonsmoke/specimens/binary/${inputfile}; \
+	switches="${switches} --semantic-memory=map --use-semantics"; \
+	$(test) $(testPartitioner2) -o "${inputfile}-map" --answer="testP2map_${ans#testPartitioner2_}" \
+	    $(testPartitioner2) ${switches} $(ROSE)/tests/nonsmoke/specimens/binary/${inputfile}; \
+    done
+
+###############################################################################################################################
+# CFG dominance tests
+###############################################################################################################################
+run $(tool_compile_linkexe) testDominance.C -I$(ROSE)
+
+testDominance_ANSWERS = testDominance_*.ans
+
+run for ans in $(testDominance_ANSWERS); do \
+        inputfile=`basename "${ans##*testDominance_}" .ans`; \
+        $(test) testDominance -o "${inputfile}" --answer=${ans} \
+	    ./testDominance $(ROSE)/tests/nonsmoke/specimens/binary/${inputfile}; \
+    done
+
+###############################################################################################################################
+# Instruction semantics tests.
+#
+# Binary instruction semantics are a plug-n-play architecture, so we try to test a number of different combinations, usually
+# all compiled from a single source file.  Files with "1" in their name use the older, template-based API while files with
+# "2" in their name use the newer run-time plug-n-play API.
+###############################################################################################################################
+run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=NULL_DOMAIN     -DSMT_SOLVER=NO_SOLVER -o nullSemantics2
+run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN  -DSMT_SOLVER=NO_SOLVER -o partialSymbolicSemantics2
+run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN -DSMT_SOLVER=NO_SOLVER -o intervalSemantics2
+run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=NO_SOLVER -o symbolicSemantics2
+run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=YICES_EXE -o yicesSemanticsExe2
+run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=YICES_LIB -o yicesSemanticsLib2
+run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=Z3_EXE    -o z3SemanticsExe2
+run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=Z3_LIB    -o z3SemanticsLib2
+
+run $(test) nullSemantics2 --answer=nullSemantics2-x86.ans --filter='perl -p semanticsFilter' \
+    ./nullSemantics2 $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O3.bin
+
+run $(test) partialSymbolicSemantics2 --answer=partialSymbolicSemantics2-x86.ans --filter='perl -p semanticsFilter' \
+    ./partialSymbolicSemantics2 $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O3.bin
+
+run $(test) intervalSemantics2 --answer=intervalSemantics2-x86.ans --filter='perl -p semanticsFilter' \
+    ./intervalSemantics2 $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O3.bin
+
+run $(test) symbolicSemantics2 --answer=symbolicSemantics2-x86.ans --filter='perl -p semanticsFilter' \
+    ./symbolicSemantics2 $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O3.bin
+
+run $(test) symbolicSemantics2 -o trace --answer=traceSymbolicSemantics2-x86.ans --filter='perl -p semanticsFilter' \
+    ./symbolicSemantics2 --trace --no-usedef $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O3.bin
+
+ifneq (@(WITH_YICES),no)
+    run $(test) yicesSemanticsExe2 --answer=yicesSemanticsExe2-x86.ans --filter='perl -p semanticsFilter' \
+	./yicesSemanticsExe2 $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O3.bin
+
+    run $(test) yicesSemanticsLib2 --answer=yicesSemanticsLib2-x86.ans --filter='perl -p semanticsFilter' \
+	./yicesSemanticsLib2 $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O3.bin
+endif
+
+ifneq (@(WITH_Z3),no)
+    run $(test) z3SemanticsExe2 --answer=z3SemanticsExe2-x86.ans --filter='perl -p semanticsFilter' \
+	./z3SemanticsExe2 $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O3.bin
+
+    run $(test) z3SemanticsLib2 --answer=z3SemanticsLib2-x86.ans --filter='perl -p semanticsFilter' \
+	./z3SemanticsLib2 $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O3.bin
+endif
+
+###############################################################################################################################
+# Unit tests for use-def (executed created below)
+###############################################################################################################################
+# Uses "symbolicSemantics2" executable compiled in another test.
+
+run $(test) symbolicSemantics2 -o testUseDef --answer=usedef.ans --filter='perl -p semanticsFilter' \
+    ./symbolicSemantics2 --trace --usedef $(ROSE)/tests/nonsmoke/specimens/binary/usedef
+
+###############################################################################################################################
+# Demo how to subclass something from SymbolicSemantics
+###############################################################################################################################
+run $(tool_compile_linkexe) semanticsSubclassing.C
+run $(test) semanticsSubclassing
+
+###############################################################################################################################
+# Instruction semantics speed tests.  These aren't actually run automatically, we just compile them to make sure they
+# compile.  To run them, just run the executable with one argument: the name of a binary file.  The test just starts
+# executing instructions at the entry address until it reaches a branch whose condition is not known, at which time the
+# test repeats.  It does this for one minute and then prints out the execution rate.
+###############################################################################################################################
+run $(tool_compile_linkexe) semanticsSpeed.C -DSEMANTIC_DOMAIN=NULL_DOMAIN     -o nullSemanticsSpeed2
+run $(tool_compile_linkexe) semanticsSpeed.C -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN  -o partialSymbolicSemanticsSpeed2
+run $(tool_compile_linkexe) semanticsSpeed.C -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -o symbolicSemanticsSpeed2
+run $(tool_compile_linkexe) semanticsSpeed.C -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN -o intervalSemanticsSpeed2
+run $(tool_compile_linkexe) semanticsSpeed.C -DSEMANTIC_DOMAIN=MULTI_DOMAIN    -o multiSemanticsSpeed2
+
+###############################################################################################################################
+# LLVM tests
+###############################################################################################################################
+run $(tool_compile_linkexe) llvmTranscoder.C
+
+# Basic test to make sure the transcoder runs
+run $(test) llvmTranscoder -x llvmTranscoder-buffer2.bin.ll \
+    ./llvmTranscoderScript $(ROSE)/tests/nonsmoke/specimens/binary/buffer2.bin
+
+# FIXME: Analysis commands in original makefile likely dosn't work since LLVM tools are hard coded. [Matzke 2017-12-30]
+
+###############################################################################################################################
+# Binary tainted flow analysis
+###############################################################################################################################
+run $(tool_compile_linkexe) taintedFlow.C
+run $(test) taintedFlow --answer=taint_i386-taintflow1.ans --filter='perl -p semanticsFilter' \
+    ./taintedFlow --approx=under --blocks --names='^f[0-9]' $(ROSE)/tests/nonsmoke/specimens/binary/i386-taintflow1
+
+###############################################################################################################################
+# No-op analysis tests
+###############################################################################################################################
+run $(tool_compile_linkexe) testNoop.C
+run $(test) testNoop --answer=noop_i386-noop.ans \
+    ./testNoop --stack=0xdddd0001 --use-semantics --no-find-dead-code --no-intra-function-code \
+        $(ROSE)/tests/nonsmoke/specimens/binary/i386-noop
+
+###############################################################################################################################
+# Static semantics tests
+###############################################################################################################################
+run $(tool_compile_linkexe) testStaticSemantics.C
+run $(test) testStaticSemantics -x buffer2.bin.dot \
+    ./testStaticSemantics $(ROSE)/tests/nonsmoke/specimens/binary/buffer2.bin
+
+###############################################################################################################################
+# Data-flow tests
+###############################################################################################################################
+run $(tool_compile_linkexe) testLazyInitialStates.C
+run $(test) testLazyInitialStates \
+    ./testLazyInitialStates --isa=i386 --start=0 map:0=rx::$(ROSE)/tests/nonsmoke/specimens/binary/i386-initialState
+
+#############################################################################################
+# Test disassembling random input data for various architectures.
+#############################################################################################
+run $(tool_compile_linkexe) testRandomInput.C
+testRandomInput_ISA = amd64 arm coldfire i386 m68040 mips-be mips-le ppc32
+
+run for isa in $(testRandomInput_ISA); do \
+        $(test) testRandomInput -o ${isa} ./testRandomInput --size=50000 --isa=${isa}; \
+    done
+
+#############################################################################################
+# Serialization of IR nodes related to binary analysis
+#############################################################################################
+run $(tool_compile_linkexe) testSageSerialization.C
+run $(test) testSageSerialization
+
+#############################################################################################
+# PDF File Generation for Binaries
+#############################################################################################
+testPDFGeneration = ../testPDFGeneration
+run $(test) $(testPDFGeneration) -o small -x i386-pop.pdf \
+    $(testPDFGeneration) -rose:verbose 0 $(ROSE)/tests/nonsmoke/specimens/binary/i386-pop
+run $(test) $(testPDFGeneration) -o large --disabled "takes too long" \
+    $(testPDFGeneration) -rose:verbose 0 $(ROSE)/tests/nonsmoke/specimens/binary/pocketputty.exe
+
+###############################################################################################################################
+# Symbolic substitution in huge expressions with many common subexpressions
+###############################################################################################################################
+
+run $(tool_compile_linkexe) testSymbolicSubstitution.C
+run $(test) testSymbolicSubstitution
+
+###############################################################################################################################
+# Wide constants in SMT solvers
+###############################################################################################################################
+
+run $(tool_compile_linkexe) testSmtWideConstant.C
+
+ifneq (@(WITH_Z3),no)
+    run $(test) testSmtWideConstant -o z3exe ./testSmtWideConstant z3-exe
+    run $(test) testSmtWideConstant -o z3lib ./testSmtWideConstant z3-lib
+endif
+
+########################################################################################################################
+# Test RegisterStateGeneric's peekRegister method
+########################################################################################################################
+
+run $(tool_compile_linkexe) testPeekRegister.C
+run $(test) testPeekRegister
+
+########################################################################################################################
+# Test data block ownership rules in Partitioner2
+########################################################################################################################
+
+run $(tool_compile_linkexe) testDataBlockOwnership.C
+run $(test) testDataBlockOwnership ./testDataBlockOwnership $(ROSE)/tests/nonsmoke/specimens/binary/x86-64-nologin
+
+########################################################################################################################
+# Test S-Records
+########################################################################################################################
+
+run $(tool_compile_linkexe) testSRecords.C
+run $(test) testSRecords
+
+########################################################################################################################
+# Disassembler
+########################################################################################################################
+
+run $(tool_compile_linkexe) testDisassembler.C
+
+# PowerPC-32
+run $(test) testDisassembler -o ppc32 --answer=testDisassembler-ppc32.ans \
+    ./testDisassembler --isa=ppc32 ./testDisassembler-ppc32.txt
+
+# PowerPC-64
+run $(test) testDisassembler -o ppc64a --answer=testDisassembler-ppc64a.ans \
+    ./testDisassembler --isa=ppc64 ./testDisassembler-ppc32.txt
+run $(test) testDisassembler -o ppc64b --answer=testDisassembler-ppc64b.ans \
+    ./testDisassembler --isa=ppc64 ./testDisassembler-ppc64.txt
+
+########################################################################################################################
+# Native semantics
+########################################################################################################################
+
+run $(tool_compile_linkexe) testNativeSemantics.C
+
+endif

@@ -12,8 +12,8 @@
 #include "RDAstAttribute.h"
 #include "AnalysisAbstractionLayer.h"
 
-namespace SPRAY {
-typedef std::pair<VariableId,SPRAY::LabelSet> VariableIdLabelSetPair;
+namespace CodeThorn {
+typedef std::pair<VariableId,CodeThorn::LabelSet> VariableIdLabelSetPair;
 typedef std::set<VariableIdLabelSetPair> UseDefInfo;
 
 /*! 
@@ -24,13 +24,13 @@ class UDAstAttribute : public AstSgNodeAttribute {
  public:
   UDAstAttribute(RDAstAttribute* rdAttr, SgNode* nodeForUseVarQuery);
   VariableIdSet useVariables(VariableIdMapping& vidm);
-  SPRAY::LabelSet definitionsOfVariable(VariableId var);
+  CodeThorn::LabelSet definitionsOfVariable(VariableId var);
   void toStream(std::ostream& os, VariableIdMapping* vim);
  private:
   RDAstAttribute* _rdAttr;
   SgNode* _node;
 };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 
 #endif

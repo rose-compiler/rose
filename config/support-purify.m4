@@ -43,7 +43,7 @@ AC_ARG_WITH(purify,
 , test "$purify_PREFIX" && with_purify="$purify_PREFIX")
 test "$with_purify" && test ! "$with_purify" = no && purify_PREFIX="$with_purify"
 AC_MSG_RESULT($purify_PREFIX)
-echo "purify_PREFIX is $purify_PREFIX" >&5
+AC_MSG_NOTICE([purify_PREFIX = "$purify_PREFIX"])
 if test "$purify_PREFIX" ; then
   purify_INCLUDES="-I$purify_PREFIX"
   purify_LIBS="$purify_PREFIX/purify_stubs.a"
@@ -53,9 +53,9 @@ AC_SUBST(purify_PREFIX)
 AC_SUBST(purify_INCLUDES)
 AC_SUBST(purify_LIBS)
 AC_SUBST(purify_BIN)
-echo "purify_INCLUDES is $purify_INCLUDES" >&5
-echo "purify_LIBS is $purify_LIBS" >&5
-echo "purify_BIN is $purify_BIN" >&5
+AC_MSG_NOTICE([purify_INCLUDES = "$purify_INCLUDES"])
+AC_MSG_NOTICE([purify_LIBS     = "$purify_LIBS"])
+AC_MSG_NOTICE([purify_BIN      = "$purify_BIN"])
 
 
 
@@ -128,10 +128,10 @@ else
 fi
 
 AC_SUBST(AUX_LINKER)
-echo "In macro ROSE SUPPORT INSURE: CC    = $CC"
-echo "In macro ROSE SUPPORT PURIFY: CCLD = $CCLD"
-echo "In macro ROSE SUPPORT INSURE: CXX   = $CXX"
-echo "In macro ROSE SUPPORT PURIFY: CXXLD = $CXXLD"
+AC_MSG_NOTICE([in macro ROSE SUPPORT INSURE: CC    = "$CC"])
+AC_MSG_NOTICE([in macro ROSE SUPPORT PURIFY: CCLD  = "$CCLD"])
+AC_MSG_NOTICE([in macro ROSE SUPPORT INSURE: CXX   = "$CXX"])
+AC_MSG_NOTICE([in macro ROSE SUPPORT PURIFY: CXXLD = "$CXXLD"])
 
 AC_SUBST(CCLD)
 AC_SUBST(CXXLD)

@@ -562,8 +562,25 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2018_62.c \
      test2018_63.c \
      test2018_64.c \
+     test2018_67.c \
      rose-1391-a.c \
-     rose-1391-b.c
+     rose-1391-b.c \
+     test2019_01.c \
+     test2019_02.c \
+     test2019_03.c \
+     test2019_04.c \
+     test2019_05.c \
+     test2019_06.c \
+     test2019_07.c \
+     test2019_08.c \
+     test2019_09.c \
+     test2019_10.c \
+     test2019_11.c \
+     test2019_12.c \
+     test2019_13.c \
+     test2019_14.c \
+     test2019_15.c 
+
 
 TESTCODE_CURRENTLY_FAILING = \
      test2004_126.c \
@@ -928,15 +945,10 @@ TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 
-# DQ (4/18/2015): Uncommented this so that it can be properyl tested after being fixed!
-# if !ROSE_USE_EDG_VERSION_4_4
-# if !ROSE_USE_EDG_VERSION_4_7
 # any programs needed by your tests that does not need to be built by make all.
 check_PROGRAMS = $(PASSING_TEST_Executables)
 # a list of programs or scripts to run in order to do the testing 
 TESTS= $(check_PROGRAMS) caller.out 
-# endif
-# endif
 
 # DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
 # this, this implementation needs review).  It might be better to prepend the information to the 
@@ -962,13 +974,15 @@ TEST_Source_passed = ${ALL_TESTCODES:.c=.c.passed}
 ../../testBackend:
 	cd ../..; $(MAKE) testBackend
 
-../../testCompiler:
-	ln -s `which $(CC)` ../../testCompiler
+testCompiler:
+	ln -s `which @BACKEND_C_COMPILER@` testCompiler
 
 TEST_TRANSLATOR=../../testTranslator
 
 #########
 # ROSE_FLAGS
+
+LANG_FLAGS =
 
 ROSE_FLAGS = -std=c
 if !ROSE_USE_CLANG_FRONTEND
@@ -982,31 +996,31 @@ ROSE_FLAGS += -w -rose:verbose 0
 $(TEST_Source_passed): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 if !ROSE_USE_INSURE
 	@$(RTH_RUN) \
-		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.c.passed=.c)" \
+		CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.c.passed=.c)" \
 		TITLE="TEST: $(TEST_TRANSLATOR) $(@:.c.passed=.c)" \
 		$(top_srcdir)/scripts/test_exit_status $@
 else
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.c.passed=.c)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.c.passed=.c)
 endif
 
 test2005_168.c.passed: $(srcdir)/test2005_168.c $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 if !ROSE_USE_INSURE
 	@$(RTH_RUN) \
-		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -I$(top_srcdir)/src/util/commandlineProcessing -I$(top_srcdir)/src/frontend/SageIII -c $(srcdir)/test2005_168.c" \
+		CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) -I$(top_srcdir)/src/util/commandlineProcessing -I$(top_srcdir)/src/frontend/SageIII -c $(srcdir)/test2005_168.c" \
 		TITLE="TEST: $(TEST_TRANSLATOR) test2005_168.c" \
 		$(top_srcdir)/scripts/test_exit_status $@
 else
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -I$(top_srcdir)/src/util/commandlineProcessing -I$(top_srcdir)/src/frontend/SageIII -c $(srcdir)/test2005_168.c
+	$(VALGRIND) $(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) -I$(top_srcdir)/src/util/commandlineProcessing -I$(top_srcdir)/src/frontend/SageIII -c $(srcdir)/test2005_168.c
 endif
 
 test2012_145.c.passed: $(srcdir)/test2012_145.c $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 if !ROSE_USE_INSURE
 	@$(RTH_RUN) \
-		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -DSTRING_MACRO=\\\"some_text\\\" -c $(srcdir)/test2012_145.c" \
+		CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) -DSTRING_MACRO=\\\"some_text\\\" -c $(srcdir)/test2012_145.c" \
 		TITLE="TEST: $(TEST_TRANSLATOR) test2012_145.c" \
 		$(top_srcdir)/scripts/test_exit_status $@
 else
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -DSTRING_MACRO=\\\"some_text\\\" -c $(srcdir)/test2012_145.c
+	$(VALGRIND) $(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir) -DSTRING_MACRO=\\\"some_text\\\" -c $(srcdir)/test2012_145.c
 endif
 
 #
@@ -1014,7 +1028,7 @@ endif
 
 
 $(TEST_Exe_Objects): %.o: $(srcdir)/%.c $(TEST_TRANSLATOR)
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $<
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $<
 
 test_build_generated_file_in_same_directory_as_input_file.passed: %.passed: $(TEST_TRANSLATOR)
 	@mkdir -p test_directory
@@ -1061,22 +1075,27 @@ test_link_using_asm_symbol_injection: $(TEST_TRANSLATOR)
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
 # simplest case: generate .o with -c
 caller.o: $(srcdir)/callee.c $(srcdir)/caller.c
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $^
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $^
 # default case: generate executable a.out from any number of input files	
 caller.out: $(srcdir)/callee.c $(srcdir)/caller.c
-	$(TEST_TRANSLATOR) $(ROSE_FLAGS) $^ -o caller.out
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $^ -o caller.out
 # DQ (4/18/2015): Add the execution of the generated executable.
 	./caller.out
+
+# DQ (8/3/2019): Adding multi-file test, test in both orders (one was previously a failing case).
+multiple_file_test_01: $(srcdir)/test2019_16a.c $(srcdir)/test2019_16b.c
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $(srcdir)/test2019_16a.c $(srcdir)/test2019_16b.c
+	$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $(srcdir)/test2019_16b.c $(srcdir)/test2019_16a.c
 
 
 # Customized test that modifies testTranslator to remove empty elses to test dangling else unparsing
 # test2008_02.o: $(srcdir)/test2008_02.c
-#	env ROSE_TEST_ELSE_DISAMBIGUATION=x $(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2008_02.c
+#	env ROSE_TEST_ELSE_DISAMBIGUATION=x $(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c $(srcdir)/test2008_02.c
 
 # test2008_02.o: $(srcdir)/test2008_02.c
 test_else_case_disambiguation.passed: $(srcdir)/test2008_02.c
 	@cp $(srcdir)/test2008_02.c else_case_disambiguation_test.c
-	@$(RTH_RUN) CMD="env ROSE_TEST_ELSE_DISAMBIGUATION=x $(TEST_TRANSLATOR) $(ROSE_FLAGS) -c else_case_disambiguation_test.c" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="env ROSE_TEST_ELSE_DISAMBIGUATION=x $(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -c else_case_disambiguation_test.c" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (4/8/2015): This causes an error due to a bug which outputs a redundant "-o <file>" option
 test_using_explicit_output_file_option:
@@ -1206,6 +1225,7 @@ check-local: check-pthread.passed
 	@$(MAKE) test_mregparm_m32_use
 	@$(MAKE) test_compile_and_link_with_NDEBUG
 	@$(MAKE) test_compile_and_link_without_NDEBUG
+	@$(MAKE) multiple_file_test_01
 #	@$(MAKE) test_m32_use
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/C_tests: make check rule complete (terminated normally) ******"

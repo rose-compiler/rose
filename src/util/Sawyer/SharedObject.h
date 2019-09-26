@@ -15,8 +15,50 @@ namespace Sawyer {
 
 /** Base class for reference counted objects.
  *
- *  Any reference counted object should inherit from this class, which provides a default constructor, virtual destructor, and
- *  a private reference count data member.
+ *  The @ref SharedObject class is used in conjunction with @ref SharedPointer to declare that objects of this type are
+ *  allocated on the heap (only), are reference counted, and invoke "delete" on themselves when the reference count decreases to
+ *  zero.  Any object that is intended to be referenced by a @ref SharedPointer must inherit directly or indirectly from
+ *  @ref SharedObject.
+ *
+ *  Here's an example that demonstrates some of the best practices:
+ *
+ *  @li Provide a declaration for the pointer by appending "Ptr" to the class name.
+ *
+ *  @li Inherit from @ref SharedObject just once in the entire class hierarchy, normally in the base class.
+ *
+ *  @li Provide a public "Ptr" member type that's equivalent to the forward-declared pointer type.
+ *
+ *  @li Make all constructors "protected" so that users are less likely to construct objects without allocating them in the
+ *  heap.
+ *
+ *  @li Provide static member functions named "instance", one per constructor, that allocate the object on the heap and return
+ *  its first reference-counting pointer.
+ *
+ * @code
+ *  // Forward declarations if necessary
+ *  class MyBaseClass;
+ *  typedef Sawyer::SharedPointer<MyBaseClass> MyBaseClassPtr;
+ *
+ *  // Class definition
+ *  class MyBaseClass: public SharedObject {
+ *  public:
+ *      typedef Sawyer::SharedPointer<MyBaseClass> Ptr;
+ *
+ *  protected:
+ *      // Hide the constructors so users don't accidentally create objects on the stack
+ *      MyBaseClass();
+ *      MyBaseClass(const MyBaseClass&);
+ *
+ *  public:
+ *      // Provide allocating wrappers around the constructors
+ *      static Ptr instance() {
+ *          return Ptr(new MyBaseClass);
+ *      }
+ *      static Ptr instance(const MyBaseClass &other) {
+ *          return Ptr(new MyBaseClass(other));
+ *      }
+ *  };
+ * @endcode
  *
  *  @sa SharedPointer, @ref SharedFromThis */
 class SAWYER_EXPORT SharedObject {

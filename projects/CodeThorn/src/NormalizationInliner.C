@@ -1,7 +1,7 @@
 #include "NormalizationInliner.h"
 #include "inliner.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
   InlinerBase::~InlinerBase() {
   }
@@ -57,4 +57,4 @@ namespace SPRAY {
     }
   }
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn

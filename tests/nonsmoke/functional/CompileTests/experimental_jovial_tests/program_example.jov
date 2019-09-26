@@ -1,0 +1,48 @@
+START
+
+PROGRAM main ;
+BEGIN
+  ITEM ia S ;
+
+% An example of a bit type with the bit size specified
+%
+  ITEM bf B 1 ;
+
+% An example of an unsigned integer with a preset initialization value
+%
+  ITEM ib U = 3;
+
+% This name is invalid in C (note the variable reference)
+%
+  ITEM JOVIAL'STANDARD U ;
+  JOVIAL'STANDARD = 73 ;
+
+  ia = 1 ;
+  ia = ib - 2 ;
+  ia = ib * 3 ;
+  ia = ib / 4 ;
+  bf = ib < 5 ;
+
+% An example of a loop/while statement
+%
+  WHILE (ib < 5) ;
+    BEGIN
+      ia = 13 ;
+      ib = 33 ;
+    END
+
+% An example of an if statement with an else clause
+%
+  IF (ib > 5) ;
+    STOP JOVIAL'STANDARD ;
+  ELSE  
+    BEGIN
+      bf = FALSE ;
+      GOTO label1 ;
+    END
+
+label1: ABORT ;
+
+END
+
+TERM

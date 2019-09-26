@@ -4,6 +4,8 @@
 
 #include <boost/lexical_cast.hpp>
 
+using namespace Rose::BinaryAnalysis;
+
 int
 main() {
     // Check default constructor

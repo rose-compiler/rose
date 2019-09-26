@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_String_H
 
 #include <MemoryMap.h>
+#include <RoseException.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Optional.h>
 
@@ -173,9 +174,9 @@ typedef unsigned CodePoint;                             /**< One character in a 
 typedef std::vector<CodePoint> CodePoints;              /**< A sequence of code points, i.e., a string. */
 
 /** Errors for string analysis. */
-class Exception: public std::runtime_error {
+class Exception: public Rose::Exception {
 public:
-    Exception(const std::string &s): std::runtime_error(s) {}
+    Exception(const std::string &s): Rose::Exception(s) {}
 };
 
 /** Decoder state. Negative values are reserved.

@@ -55,7 +55,7 @@ BaseSemantics::SValuePtr
 Partitioner::functionStackDelta(const Function::Ptr &function) const {
     ASSERT_not_null(function);
     BaseSemantics::SValuePtr retval;
-    size_t bitsPerWord = instructionProvider().stackPointerRegister().get_nbits();
+    size_t bitsPerWord = instructionProvider().stackPointerRegister().nBits();
 
     // If a stack delta is defined for this function then use it
     BaseSemantics::RiscOperatorsPtr ops = newOperators();
@@ -110,19 +110,35 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     // thunk points to a nonexisting address, then assume that the (not yet linked) destination function pops the return
     // value. FIXME[Robb Matzke 2015-11-18]: This isn't correct in callee-cleanup situations (but it's what the previous
     // implementation did, so I don't want to change it just yet)!
-#if 1 // [Robb Matzke 2015-11-18]
     if (retval==NULL &&                                                         // analysis failed.
         function->nBasicBlocks() == 1 &&                                        // thunks have a single basic block...
         functionVertex->nOutEdges() == 1 &&                                     // ...with a single outgoing edge which ...
         (functionVertex->outEdges().begin()->target() == nonexistingVertex_ ||  // ...branches to non-existing memory or...
          functionVertex->outEdges().begin()->target() == indeterminateVertex_) && // ...an unknown location.
         sdAnalysis.basicBlockStackDeltaConcrete(function->address()) == 0) {    // thunks don't push/pop
-        SAWYER_MESG(mlog[DEBUG]) <<"  assuming " <<function->printableName()
-                                 <<" (thunk) stack delta is " <<(bitsPerWord/8) <<"\n";
-        retval = ops->number_(bitsPerWord, bitsPerWord/8);                      // size of return address on stack
+
+        std::string reason;
+        if (CallingConvention::Definition::Ptr ccDefn = function->callingConventionDefinition()) {
+            reason = "calling convention";
+            retval = ops->number_(bitsPerWord, ccDefn->nonParameterStackSize());
+            if (ccDefn->stackDirection() == CallingConvention::/*StackDirection::*/GROWS_UP)
+                retval = ops->invert(retval);
+
+        } else if (!instructionProvider().callReturnRegister().isEmpty()) {
+            reason = "typical of register-based function calls";
+            retval = ops->number_(bitsPerWord, 0);
+
+        } else {
+            // FIXME[Robb Matzke 2019-09-18]: assumes stack grows down
+            reason = "typical of stack-based function calls";
+            retval = ops->number_(bitsPerWord, bitsPerWord/8); // size of return address on stack
+
+        }
+        ASSERT_not_null(retval);
         function->stackDeltaOverride(retval);
+        SAWYER_MESG(mlog[DEBUG]) <<"  assuming " <<function->printableName()
+                                 <<" (thunk) stack delta is " <<*retval <<" (" <<reason <<")\n";
     }
-#endif
 
     return retval;
 }
@@ -159,7 +175,7 @@ struct StackDeltaWorker {
 void
 Partitioner::allFunctionStackDelta() const {
     size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
-    FunctionCallGraph::Graph cg = functionCallGraph().graph();
+    FunctionCallGraph::Graph cg = functionCallGraph(AllowParallelEdges::NO).graph();
     Sawyer::Container::Algorithm::graphBreakCycles(cg);
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "stack-delta analysis");
     progress.suffix(" functions");

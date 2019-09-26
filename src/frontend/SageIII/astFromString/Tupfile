@@ -1,0 +1,8 @@
+include_rules
+
+run $(librose_compile) AstFromString.cpp ParserBuilder.cpp
+
+run $(public_header) AstFromString.h ParserBuilder.hpp
+
+# Strange name for a C++ header file
+run $(public_header) ParserBuilder.tpp

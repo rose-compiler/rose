@@ -98,7 +98,11 @@ int main(int argc, char **argv) {
                          << "End Tranistive signatures" << std::endl;
     if( sig_fname != "" ){
       std::ofstream out(std::string(sig_fname).c_str());
+#if __cplusplus < 201103L
       std::auto_ptr<SExpr> sx(toSExpr(transitive_sigs));
+#else
+      std::unique_ptr<SExpr> sx(toSExpr(transitive_sigs));
+#endif
       out << *sx << std::endl;
     }
     return 0;

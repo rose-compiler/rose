@@ -1,0 +1,14 @@
+
+==Description==
+
+A tool to translate Amrex Fortran libraries to C++. This is a small prototype
+to explore the trade-offs in design and feasibility as a whole.
+
+==Use==
+  (1) configure ROSE with the Fortran frontend enabled
+      --enable-experimental_matlab_frontend --with-octave-parser=/XYZ/octavebits.tar.gz
+
+  (2) make + make check to compile and test the frontend
+
+==Contact==
+  Peter Pirkelbauer -- pirkelbauer2@llnl.gov

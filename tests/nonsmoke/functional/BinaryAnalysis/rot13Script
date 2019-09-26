@@ -1,0 +1,23 @@
+#!/bin/bash
+set -e
+
+########################################################################################################################
+# Create a temporary file
+tempfile() {
+    local real_tempfile="$(which tempfile 2>/dev/null)"
+    if [ -n "$real_tempfile" ]; then
+	"$real_tempfile"
+    else
+	local tmpdir="${TMPDIR:-$TEMPDIR}"
+	mkdir -p "${tmpdir:-/tmp}"
+	echo "${tmpdir:-/tmp}/spock-$RANDOM$RANDOM$RANDOM"
+    fi
+}
+
+########################################################################################################################
+file1="$(tempfile)"
+file2="$(tempfile)"
+
+hexdump -Cv "$1" > "$file1"
+./rot13 --encode < "$1" | ./rot13 --decode |hexdump -Cv > "$file2"
+diff "$file1" "$file2"

@@ -198,6 +198,11 @@ void insertSelfTest() {
     selfTests.push_back(typename SelfTest::Ptr(new SelfTest));
 }
 
+/** Text of the ROSE software license.
+ *
+ *  This text comes directly from the LicenseInformation/ROSE_BSD_License.txt file in the source code. */
+extern const char *licenseText;
+
 } // namespace
 } // namespace
 

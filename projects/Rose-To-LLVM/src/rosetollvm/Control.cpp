@@ -1,6 +1,8 @@
 #include "rosetollvm/Control.h"
 #include "rosetollvm/ConstantValue.h"
 #include "rosetollvm/LLVMAstAttributes.h"
+#include "rosetollvm/CodeAttributesVisitor.h"
+#include "rosetollvm/CodeGeneratorVisitor.h"
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
@@ -8,6 +10,8 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/raw_ostream.h"
+
+#include "llvm/Target/TargetMachine.h"
 
 void __rose2llvm_fail (const char *__assertion, const char *__file, unsigned int __line) {
     std::cerr << "*** Bad assertion in file " << __file << " at line " << __line << ": " << __assertion << std::endl;
@@ -37,14 +41,15 @@ const char *Control::LLVM_AST_ATTRIBUTES = "LLVM",
            *Control::LLVM_FOR_LABELS = "o",
            *Control::LLVM_DIMENSIONS = "p",
            *Control::LLVM_DEFAULT_VALUE = "q",
-           *Control::LLVM_EXPRESSION_RESULT_NAME = "r",
+           *Control::LLVM_CLASS_MEMBER = "r",
            *Control::LLVM_BUFFERED_OUTPUT = "s",
            *Control::LLVM_TRIVIAL_CAST = "t",
            *Control::LLVM_AGGREGATE = "u",
            *Control::LLVM_NEGATION_NAME = "v",
            *Control::LLVM_IS_BOOLEAN = "w",
            *Control::LLVM_EXTEND_BOOLEAN = "x",
-           *Control::LLVM_CLASS_MEMBER = "y",
+           *Control::LLVM_EXPRESSION_RESULT_NAME = "y",
+           *Control::LLVM_IMAGINARY_RESULT_NAME = "z",
 
            *Control::LLVM_SELECT_CONDITIONAL = "A",
            *Control::LLVM_CONDITIONAL_LABELS = "B",
@@ -64,7 +69,7 @@ const char *Control::LLVM_AST_ATTRIBUTES = "LLVM",
            *Control::LLVM_STRING_INITIALIZATION = "P",
            *Control::LLVM_POINTER_TO_INT_CONVERSION = "Q",
            *Control::LLVM_ARRAY_TO_POINTER_CONVERSION = "R",
-           // "S"
+           *Control::LLVM_ARRAY_NAME_REFERENCE = "S",
            *Control::LLVM_INTEGRAL_PROMOTION = "T",
            *Control::LLVM_INTEGRAL_DEMOTION = "U",
            *Control::LLVM_NULL_VALUE = "V", 
@@ -84,6 +89,8 @@ const char *Control::LLVM_AST_ATTRIBUTES = "LLVM",
            *Control::LLVM_OP_AND_ASSIGN_INT_TO_FP_DEMOTION = "LLVM_OP_AND_ASSIGN_INT_TO_FP_DEMOTION",
            *Control::LLVM_OP_AND_ASSIGN_FP_PROMOTION = "LLVM_OP_AND_ASSIGN_FP_PROMOTION",
            *Control::LLVM_OP_AND_ASSIGN_FP_DEMOTION = "LLVM_OP_AND_ASSIGN_FP_DEMOTION",
+           *Control::LLVM_REAL = "7",
+           *Control::LLVM_IMAGINARY = "8",
            *Control::LLVM_ARRAY_BIT_CAST = "9",
            *Control::LLVM_CONSTANT_VALUE = "~",
            *Control::LLVM_FUNCTION_VISITED = "`",
@@ -97,6 +104,27 @@ const char *Control::LLVM_AST_ATTRIBUTES = "LLVM",
            *Control::LLVM_BOOLEAN_CAST = "*",
            *Control::LLVM_DECLARATION_TYPE = "(",
            *Control::LLVM_GLOBAL_CONSTANT_NAME = ")",
+           *Control::LLVM_NEEDS_STACK  = "_",
+         //  = "-",
+         //  = "+",
+         //  = "=",
+         //  = "{",
+         //  = "}",
+         //  = "[",
+         //  = "]",
+         //  = "|",
+         //  = "\\",
+         //  = ":",
+         //  = ";",
+         //  = "\"",
+         //  = "\'",
+         //  = "<",
+         //  = ">",
+         //  = ",",
+         //  = ".",
+         //  = "?",
+         //  = "/",
+
            *Control::LLVM_FIELD_OFFSET = "LLVM_FIELD_OFFSET"
            ;
 
@@ -142,6 +170,24 @@ ROSE2LLVM_ASSERT(owner -> numberOfAttributes() == starting_number_of_attributes)
 /**
  *
  */
+CodeAttributesVisitor *Control::getAdHocAttributesVisitor(LLVMAstAttributes *attributes) {
+    assert(ad_hoc_attributes_visitor);
+    ad_hoc_attributes_visitor -> setupAdHocVisitor(attributes);
+    return ad_hoc_attributes_visitor;
+}
+
+/**
+ *
+ */
+CodeGeneratorVisitor *Control::getAdHocGeneratorVisitor(LLVMAstAttributes *attributes) {
+    assert(ad_hoc_generator_visitor);
+    ad_hoc_generator_visitor -> setupAdHocVisitor(attributes);
+    return ad_hoc_generator_visitor;
+}
+
+/**
+ *
+ */
 void Control::SetAttribute(SgNode *n, const char *code) {
     SetAttribute(n, code, new RootAstAttribute());
 }
@@ -152,9 +198,6 @@ void Control::SetAttribute(SgNode *n, const char *code) {
 void Control::SetAttribute(SgNode *n, const char *code, RootAstAttribute *attribute) {
     ManagerAstAttribute *manager = (ManagerAstAttribute *) n -> getAttribute(Control::LLVM_MANAGER_ATTRIBUTE);
     if (! manager) {
-//cout << "*** Allocating a manager on encountering node " << n -> class_name()
-//  << endl;
-//cout.flush();
         manager = new ManagerAstAttribute(n, Control::LLVM_MANAGER_ATTRIBUTE);
         n -> addNewAttribute(Control::LLVM_MANAGER_ATTRIBUTE, manager);
         manager_attributes.push_back(manager);
@@ -214,6 +257,21 @@ std::vector<llvm::Module*> Control::generateOutput() {
     /**
      * 
      */
+/*
+void setModuleIdentifier (StringRef ID)
+     Set the module identifier. More...
+ 
+void setSourceFileName (StringRef Name)
+     Set the module's original source file name. More...
+ 
+void setDataLayout (StringRef Desc)
+     Set the data layout. More...
+ 
+void setDataLayout (const DataLayout &Other)
+ 
+void setTargetTriple (StringRef T)
+     Set the target triple. More...
+*/
     for (int i = 0; i < llvm_file_prefixes.size(); i++ ) {
         string file_prefix = llvm_file_prefixes[i];
 
@@ -233,6 +291,19 @@ std::vector<llvm::Module*> Control::generateOutput() {
             abort();
         }
         module -> setModuleIdentifier(file_prefix + ".c");
+        module -> setSourceFileName(file_prefix + ".c");
+
+// TODO: Remove this !
+/*  
+cout
+  << "Data Layout String = "
+  << module -> getDataLayoutStr()
+  << endl
+  << "Target Triple = "
+  << module -> getTargetTriple()
+  << endl;
+cout.flush();
+*/
         verifyModule(*module);
 
         /**
@@ -304,6 +375,24 @@ cout.flush();
     return res;
 }
 
+
+/**
+ * Unpack a CREAL macro call and return its expression argument.
+ */
+SgExpression *Control::isComplexMacro(SgFunctionCallExp *n, string macro_name) {
+    SgFunctionRefExp *function = isSgFunctionRefExp(n -> get_function());
+    if (function) {
+        if (function -> get_symbol() && function -> get_symbol() -> get_name() == macro_name) {
+            vector<SgExpression *> args = n -> get_args() -> get_expressions();
+            if (args.size() == 1 && (args[0] -> get_type())) {
+                return args[0];
+            }
+        }
+    }
+    return NULL;
+}
+
+
 /**
  * Convert a long to its string representation.
  */
@@ -317,7 +406,7 @@ string Control::IntToString(long long l) {
  * Convert a float to its string representation.
  */
 string Control::FloatToString(float x) {
-    APFloat f(APFloat::IEEEsingle(), x);
+    APFloat f(x);
     string s = APFloatToString(f);
     return s;
 }
@@ -326,13 +415,17 @@ string Control::FloatToString(float x) {
  * Convert a double to its string representation.
  */
 string Control::DoubleToString(double x) {
-    APFloat f(APFloat::IEEEdouble(), x);
+    APFloat f(x);
     string s = APFloatToString(f);
     return s;
 }
 
 /**
- * Convert a double to its string representation.
+ * Convert a long double to its string representation.
+ * 
+ * TODO: figure out how to properly convert a "long double" literal.
+ *       Currently, APFloat will truncate this value and only process
+ *       its integer part. Thus 3.1416 will produce  "3"
  */
 string Control::LongDoubleToString(long double x) {
     APFloat f(APFloat::x87DoubleExtended(), x);
@@ -763,7 +856,24 @@ std::string Control::primitiveCast(ConstantValue &x, SgType *type) {
     else if (x.hasLongDoubleValue()) {
         return LongDoubleToString(x.long_double_value);
     }
+    else if (x.string_literal) {
+        return x.string_literal -> get_value();
+    }
     else {
+cout << "I don't yet know how to convert from type "
+     << (x.hasFloatComplexValue()
+             ? "Float Complex"
+             : x.hasDoubleComplexValue()
+                   ? "Double Complex"
+                   : x.hasLongDoubleComplexValue() 
+                       ? "Long Double Complex"
+                       : x.string_literal
+                             ? ("string: " + x.string_literal -> get_value())
+                             : "Unknown")
+     << " to type "
+     << type -> class_name()
+     << endl;
+cout.flush();
         ROSE2LLVM_ASSERT(false);
     }
 }

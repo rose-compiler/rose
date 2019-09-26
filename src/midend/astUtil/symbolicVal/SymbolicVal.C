@@ -388,7 +388,6 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
         }
         return new SymbolicFunction( AstInterface::OP_NONE, name, args);
      }
-     assert(0);
   } 
   return new SymbolicAstWrap(exp);
 }

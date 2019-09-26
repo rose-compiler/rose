@@ -12,15 +12,16 @@ class SgVariableDeclaration;
 
 class StructureAccessLookup {
  public:
-  void initializeOffsets(SPRAY::VariableIdMapping* variableIdMapping, SgProject* root);
+
+  void initializeOffsets(CodeThorn::VariableIdMapping* variableIdMapping, SgProject* root);
   std::list<SgVariableDeclaration*> getDataMembers(SgClassDefinition* classDef);
-  int getOffset(SPRAY::VariableId varId);
+  int getOffset(CodeThorn::VariableId varId);
   // returns true if the variable is a member of a struct/class/union.
-  bool isStructMember(SPRAY::VariableId varId);
+  bool isStructMember(CodeThorn::VariableId varId);
   size_t numOfStoredMembers();
  private:
   bool isUnionDeclaration(SgNode* node);
-  std::map<SPRAY::VariableId,int> varIdTypeSizeMap;
+  std::map<CodeThorn::VariableId,int> varIdTypeSizeMap;
 };
 
 

@@ -190,8 +190,8 @@ public:
      *  Constructs a new transfer function using the specified @p cpu. */
     explicit TransferFunction(const BaseSemantics::DispatcherPtr &cpu)
         : cpu_(cpu), STACK_POINTER_REG(cpu->stackPointerRegister()), INSN_POINTER_REG(cpu->instructionPointerRegister()) {
-        size_t adjustment = STACK_POINTER_REG.get_nbits() / 8; // sizeof return address on top of stack
-        callRetAdjustment_ = cpu->number_(STACK_POINTER_REG.get_nbits(), adjustment);
+        size_t adjustment = STACK_POINTER_REG.nBits() / 8; // sizeof return address on top of stack
+        callRetAdjustment_ = cpu->number_(STACK_POINTER_REG.nBits(), adjustment);
     }
 
     /** Construct an initial state. */

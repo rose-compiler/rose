@@ -7,9 +7,9 @@
 #include <unordered_set>
 class DeadCodeAnalysis {
  public:
-  void writeUnreachableCodeResultFile(SPRAY::IntervalAnalysis* intervalAnalysis,
+  void writeUnreachableCodeResultFile(CodeThorn::IntervalAnalysis* intervalAnalysis,
                                       std::string csvDeadCodeUnreachableFileName);
-  void writeDeadAssignmentResultFile(SPRAY::LVAnalysis* lvAnalysis,
+  void writeDeadAssignmentResultFile(CodeThorn::LVAnalysis* lvAnalysis,
                                      std::string deadCodeCsvFileName);
   void setOptionTrace(bool flag);
   void setOptionSourceCode(bool flag);

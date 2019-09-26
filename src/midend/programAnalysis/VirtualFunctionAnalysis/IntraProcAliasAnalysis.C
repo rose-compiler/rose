@@ -313,23 +313,23 @@ std::vector <std::pair<AliasRelationNode, AliasRelationNode> > AliasInfoGenerato
 
 
 void IntraProcAliasAnalysis::buildCFG() {
-        
+#if 0        
         printf ("In IntraProcAliasAnalysis::buildCFG(): \n");
-
+#endif
         SgFunctionDefinition *defn = isSgFunctionDefinition(isSgFunctionDeclaration(isSgFunctionDeclaration(head)->get_definingDeclaration())->get_definition());
-        
+
         ROSE_ASSERT(defn != NULL);
-                
+#if 0
         printf ("In IntraProcAliasAnalysis::buildCFG(): StaticCFG::CustomFilteredCFG constructor \n");
-
+#endif
         cfg = new StaticCFG::CustomFilteredCFG<AliasCfgFilter>(defn);
-        
+#if 0
         printf ("In IntraProcAliasAnalysis::buildCFG(): calling buildFilteredCFG() \n");
-
+#endif
         cfg->buildFilteredCFG();
-        
+#if 0
         printf ("In IntraProcAliasAnalysis::buildCFG(): done calling buildFilteredCFG() \n");
-
+#endif
         // run a bfs and list the nodes
         cfgNodes.clear();
         std::queue<SgGraphNode *> workQ;
@@ -337,9 +337,9 @@ void IntraProcAliasAnalysis::buildCFG() {
         vector<SgGraphNode *>visited;
         workQ.push(cfg->getEntry());
         visited.push_back(cfg->getEntry());
-        
+#if 0
         printf ("In IntraProcAliasAnalysis::buildCFG(): call while loop \n");
-
+#endif
         while(!workQ.empty()) {
             SgGraphNode *node = workQ.front();
             workQ.pop();
@@ -347,9 +347,9 @@ void IntraProcAliasAnalysis::buildCFG() {
             
 
             std::vector<SgDirectedGraphEdge*>outs = StaticCFG::outEdges(node);
-            
+#if 0
              printf ("In IntraProcAliasAnalysis::buildCFG(): call for loop \n");
-
+#endif
             for(unsigned int i=0; i< outs.size(); i++) 
                 if(find(visited.begin(), visited.end(), outs[i]->get_to()) == visited.end() ) {
                        workQ.push(outs[i]->get_to());
@@ -357,7 +357,9 @@ void IntraProcAliasAnalysis::buildCFG() {
                 }
         }
 
+#if 0
      printf ("Leaving IntraProcAliasAnalysis::buildCFG() \n");
+#endif
 }
 
 
@@ -368,31 +370,42 @@ IntraProcAliasAnalysis::IntraProcAliasAnalysis(SgNode *head, ClassHierarchyWrapp
 
         ROSE_ASSERT(isSgFunctionDeclaration(head));    
 
+#if 0
         printf ("In IntraProcAliasAnalysis constructor: calling buildCFG() \n");
-  
+#endif
         buildCFG();
-        
+#if 0
         printf ("In IntraProcAliasAnalysis constructor: done calling buildCFG() \n");
-
+#endif
         checkPointHash = 0;
         gen = new AliasInfoGenerator;
-
+#if 0
         printf ("In IntraProcAliasAnalysis constructor: done calling CollectAliasRelations constructor \n");
-
+#endif
         CollectAliasRelations *car = new CollectAliasRelations(cfg, gen);
-
+#if 0
         printf ("In IntraProcAliasAnalysis constructor: done calling buildCFG() \n");
-
+#endif
         car->run();
-
+#if 0
         printf ("Leaving IntraProcAliasAnalysis constructor \n");
+#endif
 };  
 
 void IntraProcAliasAnalysis:: run() {
     
     std::cout<< "IntraProcedural Analysis for : " << std::endl;
+
+ // DQ (12/12/2018): This might be an issue for my latest testing.
+    ROSE_ASSERT(head != NULL);
+
+ // printf ("Calling unparseToCompleteString() for head = %p = %s = %s \n",head,head->class_name().c_str(),SageInterface::get_name(head).c_str());
+ // head->get_file_info()->display("Calling unparseToCompleteString(): debug");
+
     std::cout<< head->unparseToCompleteString() << std::endl;
-    
+
+ // printf ("DONE: Calling unparseToCompleteString() for head = %p = %s \n",head,head->class_name().c_str());
+
     if(gen->getEntryData(cfg->getEntry()).get()  == NULL) {
         entry = CompReprPtr(new CompactRepresentation);
         gen->setEntryData(cfg->getEntry(), entry);
@@ -1192,7 +1205,9 @@ void CollectAliasRelations::run() {
     
     recursiveCollect(graphNode, colors);
 
+#ifndef NDEBUG
     SgFunctionDefinition *defn = isSgFunctionDefinition(cfg->getEntry()->get_SgNode());
+#endif
     //repr.toDot(def->get_mangled_name()+"_cr.dot");
     assert(defn != NULL);
     //cfg->cfgToDot(defn, defn->get_mangled_name()+"_cfg.dot");

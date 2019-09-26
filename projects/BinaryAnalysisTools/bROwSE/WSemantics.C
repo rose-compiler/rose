@@ -111,7 +111,7 @@ public:
 
                     // Stack pointer at the very start of this function.
                     const RegisterDescriptor SP = ctx_.partitioner.instructionProvider().stackPointerRegister();
-                    SValuePtr stackPtr = dfInfo.initialStates[0]->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+                    SValuePtr stackPtr = dfInfo.initialStates[0]->readRegister(SP, ops->undefined_(SP.nBits()), ops.get());
                     const RegisterDescriptor SS = ctx_.partitioner.instructionProvider().stackSegmentRegister();
 
                     // Function arguments
@@ -137,8 +137,8 @@ public:
                     }
 
                     // Global variables
-                    ASSERT_require(SP.get_nbits() % 8 == 0);
-                    const size_t wordNBytes = SP.get_nbits() / 8;
+                    ASSERT_require(SP.nBits() % 8 == 0);
+                    const size_t wordNBytes = SP.nBits() / 8;
                     BOOST_FOREACH (const AbstractLocation &var, P2::DataFlow::findGlobalVariables(ops, wordNBytes)) {
                         if (var.isAddress() && var.nBytes()>0 &&
                             var.getAddress()->is_number() && var.getAddress()->get_width()<=64) {
@@ -288,7 +288,7 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
         RegisterDescriptor SP = ctx_.partitioner.instructionProvider().stackPointerRegister();
         BaseSemantics::RiscOperatorsPtr ops = ctx_.partitioner.newOperators();
         BaseSemantics::SValuePtr initialStackPointer =
-            df.initialStates[0]->readRegister(SP, ops->undefined_(SP.get_nbits()), ops.get());
+            df.initialStates[0]->readRegister(SP, ops->undefined_(SP.nBits()), ops.get());
 
         BOOST_FOREACH (const P2::DataFlow::DfCfg::Vertex &vertex, df.dfCfg.vertices()) {
             if (vertex.value().type() == P2::DataFlow::DfCfgVertex::BBLOCK && vertex.value().bblock() == bblock) {

@@ -18,7 +18,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace CodeThorn;
 
 typedef vector< pair< VariableId, IterVarType> > IterationVariables;

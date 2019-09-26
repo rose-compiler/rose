@@ -40,7 +40,7 @@ test_multiple_files_1: $(CXX_FILE_DIR)/test2012_246a.C $(CXX_FILE_DIR)/test2012_
 
 # DQ (7/24/2018): Test for output spew from multiple files on the same command line.
 test_multiple_files_2: $(CXX_FILE_DIR)/test2018_01.C $(CXX_FILE_DIR)/test2018_02.C
-	@rm -f outputFile; \
+	rm -f outputFile; \
 	$(TEST_TRANSLATOR) $(AM_CPPFLAGS) -c $(CXX_FILE_DIR)/test2018_01.C $(CXX_FILE_DIR)/test2018_02.C >& outputFile; \
 	outputLines=`wc -l < outputFile`; \
 	echo "Spurious lines of output = $$outputLines"; \

@@ -219,16 +219,27 @@ std::ostream& operator<<(std::ostream&, const Gradient&);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Predefined colors
 
-extern const HSV clear;                                 // my favorite color ;-)
-extern const HSV black;
-extern const HSV white;
-extern const HSV red;
-extern const HSV green;
-extern const HSV blue;
-extern const HSV cyan;
-extern const HSV magenta;
-extern const HSV yellow;
-extern const HSV gray;
+extern const HSV HSV_CLEAR;                             // my favorite color ;-)
+extern const HSV HSV_BLACK;
+extern const HSV HSV_WHITE;
+extern const HSV HSV_RED;
+extern const HSV HSV_GREEN;
+extern const HSV HSV_BLUE;
+extern const HSV HSV_CYAN;
+extern const HSV HSV_MAGENTA;
+extern const HSV HSV_YELLOW;
+extern const HSV HSV_GRAY;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** ANSI color names for terminal output. */
+enum AnsiColor { ANSI_CLEAR, ANSI_RED, ANSI_GREEN, ANSI_YELLOW, ANSI_BLUE, ANSI_MAGENTA, ANSI_CYAN, ANSI_GRAY };
+
+/** Convert a color enum to a string. */
+std::string colorName(AnsiColor);
+
+/** ANSI color escape for terminal output. Indexed by ColorName. */
+std::string ansiColorEscape(AnsiColor);
 
 } // namespace
 } // namespace

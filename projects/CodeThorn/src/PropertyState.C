@@ -1,8 +1,8 @@
 #include "PropertyState.h"
 
-SPRAY::PropertyStateFactory::PropertyStateFactory() {
+CodeThorn::PropertyStateFactory::PropertyStateFactory() {
 }
 
-SPRAY::PropertyStateFactory::~PropertyStateFactory() {
+CodeThorn::PropertyStateFactory::~PropertyStateFactory() {
 }
 

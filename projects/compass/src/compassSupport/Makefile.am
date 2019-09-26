@@ -17,7 +17,7 @@ include_HEADERS = compass.h
 libCompass_la_SOURCES = compass.C
 
 AM_LDFLAGS = $(ROSE_RPATHS)
-LDADD = libCompass.la $(ROSE_LIBS_WITH_PATH)
+LDADD = libCompass.la $(ROSE_LIBS)
 
 if ROSE_USE_GCC_OMP
  LDADD += -lgomp
@@ -26,7 +26,8 @@ endif
 
 
 compassEmptyMain_SOURCES = compassEmptyMain.C
-compassEmptyMain_LDADD = libCompass.la $(ROSE_LIBS_WITH_PATH)
+#compassEmptyMain_LDADD = libCompass.la $(ROSE_LIBS_WITH_PATH)
+compassEmptyMain_LDADD = $(ROSE_LIBS) libCompass.la
 
 BUILT_SOURCES = prerequisites.h instantiate_prerequisites.h 
 
@@ -41,7 +42,7 @@ endif
 
 prerequisites.h: $(compass_prereqs_dir)
 	find $(compass_prereqs_dir) -name "*.h" | awk -F/ '{print "#include \"" $$NF "\""}' > $@
-
+# this is a bad solution: binary analysis may not be turned on
 instantiate_prerequisites.h: $(compass_prereqs_dir)
 	cat $(compass_prereqs_dir)/*.h | grep "^extern" | sed -e 's@extern[\t\ ]*@Compass::@g' | awk '{print $$1 " Compass::" $$2}' > $@
 

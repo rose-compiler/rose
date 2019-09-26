@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+# Run the test, which reads the input and produces a *.new file and a *.dump file
+./testElfWordSize -rose:read_executable_file_format_only ${SPECIMEN_DIR}/${INPUT}
+
+# Make sure we can parse the new file.
+./execFormatsTest -rose:read_executable_file_format_only ${INPUT}.new
+
+# Make sure that the files before and after parsing are identical
+diff ./${INPUT}.new ./${INPUT}.new.new

@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_UnparserBase_H
 
 #include <BinaryEdgeArrows.h>
+#include <BinaryReachability.h>
 #include <BinaryUnparser.h>
 #include <BitFlags.h>
 #include <Partitioner2/BasicTypes.h>
@@ -96,8 +97,8 @@ private:
     AddrString basicBlockLabels_;
     RegisterNames registerNames_;
     const Base &frontUnparser_;
-    std::vector<unsigned> cfgVertexReachability_;
-    Sawyer::Container::Map<unsigned, std::string> reachabilityNames_; // map reachability value to name
+    std::vector<Reachability::ReasonFlags> cfgVertexReachability_;
+    Sawyer::Container::Map<Reachability::ReasonFlags::Vector, std::string> reachabilityNames_; // map reachability value to name
     ArrowMargin intraFunctionCfgArrows_;                              // arrows for the intra-function control flow graphs
     ArrowMargin intraFunctionBlockArrows_;                            // user-defined intra-function arrows to/from blocks
     ArrowMargin globalBlockArrows_;                                   // user-defined global arrows to/from blocks
@@ -111,9 +112,21 @@ public:
 
     const Partitioner2::FunctionCallGraph& cg() const;
 
-    const std::vector<unsigned> cfgVertexReachability() const;
-    void cfgVertexReachability(const std::vector<unsigned>&);
-    unsigned isCfgVertexReachable(size_t vertexId) const;
+    /** Property: Reachability analysis results.
+     *
+     *  This property stores a vector indexed by CFG vertex IDs that holds information about whether the vertex is reachable
+     *  and why.
+     *
+     * @{ */
+    const std::vector<Reachability::ReasonFlags> cfgVertexReachability() const;
+    void cfgVertexReachability(const std::vector<Reachability::ReasonFlags>&);
+    /** @} */
+
+    /** Returns reachability based on the @ref cfgVertexReachability property.
+     *
+     *  If the property has more elements than vertices in the CFG, then the extras are ignored; if the CFG is larger then the
+     *  missing reachability values are assumed to be zero. */
+    Reachability::ReasonFlags isCfgVertexReachable(size_t vertexId) const;
 
     /** Control flow graph arrows within a function.
      *
@@ -202,8 +215,8 @@ public:
      *  the name is the hexadecimal string for the bit.
      *
      * @{ */
-    void reachabilityName(unsigned value, const std::string &name);
-    std::string reachabilityName(unsigned value) const;
+    void reachabilityName(Reachability::Reason value, const std::string &name);
+    std::string reachabilityName(Reachability::ReasonFlags value) const;
     /** @} */
 
     Partitioner2::FunctionPtr currentFunction() const;
@@ -243,7 +256,37 @@ public:
  *  Mid-level "emit" functions use a combination of C++ virtual functions and unparser object chaining as described in the
  *  documentation for those functions. This permits two ways to override or augment behavior: behavior modification based on
  *  architecture (virtual functions) and behavior modification based on a filtering concept to support things like tables and
- *  HTML (chaining). */
+ *  HTML (chaining).
+ *
+ *  The following code is a starting point for creating your own unparser:
+ *
+ * @code
+ *  class MyUnparser: public BinaryAnalysis::Unparser::Base {
+ *  protected:
+ *      explicit MyUnparser(const BinaryAnalysis::Unparser::Base::Ptr &next)
+ *          : BinaryAnalysis::Unparser::Base(next) {
+ *          ASSERT_not_null(next);
+ *      }
+ *  
+ *  public:
+ *      typedef Sawyer::SharedPointer<MyUnparser> Ptr;
+ *  
+ *      static Ptr instance(const BinaryAnalysis::Unparser::Base::Ptr &next) { return Ptr(new MyUnparser(next)); }
+ *      virtual BinaryAnalysis::Unparser::Base::Ptr copy() const ROSE_OVERRIDE { return Ptr(new MyUnparser(nextUnparser()->copy())); }
+ *      virtual const BinaryAnalysis::Unparser::Settings& settings() const ROSE_OVERRIDE { return nextUnparser()->settings(); }
+ *      virtual BinaryAnalysis::Unparser::Settings& settings() ROSE_OVERRIDE { return nextUnparser()->settings(); }
+ *
+ *      // specialized output functions here...
+ *  };
+ * @endcode
+ *
+ *  To instantiate this parser from a @p Partitioner2::Partitioner object named @c partitioner, do this:
+ *
+ * @code
+ *  BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner.unparser();
+ *  unparser->settings() = settings.unparser; // See Rose::BinaryAnalysis::Unparser::Settings for starters
+ *  unparser = MyUnparser::instance(unparser);
+ * @endcode */
 class Base: public Sawyer::SharedObject {
 public:
     typedef Sawyer::SharedPointer<Base> Ptr;
@@ -268,6 +311,9 @@ public:
      * @{ */
     virtual const Settings& settings() const = 0;
     virtual Settings& settings() = 0;
+    void settings(const Settings &s) {
+        settings() = s;
+    }
     /** @} */
 
     /** Property: Next parser in chain.

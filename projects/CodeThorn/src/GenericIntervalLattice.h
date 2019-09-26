@@ -7,7 +7,7 @@
 #include <sstream>
 #include <cassert>
 #include "AbstractValue.h"
-#include "SprayException.h"
+#include "CodeThornException.h"
 
 // log2
 #include <cmath> 
@@ -25,7 +25,7 @@ typedef CodeThorn::Top BoolLatticeTop;
 typedef CodeThorn::Bot BoolLatticeBot;
 
 
-namespace SPRAY {
+namespace CodeThorn {
 
   enum JoinMode {
       JM_Exact,
@@ -60,7 +60,7 @@ class GenericIntervalLattice {
     return gil;
    }
    else {
-     throw SPRAY::Exception("createFromBoolLattice: internal error.");
+     throw CodeThorn::Exception("createFromBoolLattice: internal error.");
    }
  }
 
@@ -385,7 +385,7 @@ class GenericIntervalLattice {
         }
       }
       else {
-        throw SPRAY::Exception("Invalid join mode.");
+        throw CodeThorn::Exception("Invalid join mode.");
       }
     }
     if(isHighInf()||other.isHighInf()) {
@@ -410,7 +410,7 @@ class GenericIntervalLattice {
         }
       }
       else {
-        throw SPRAY::Exception("Invalid join mode.");
+        throw CodeThorn::Exception("Invalid join mode.");
       }
     }
   }

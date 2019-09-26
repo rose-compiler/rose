@@ -2,15 +2,19 @@
 #define ROSE_Partitioner2_Engine_H
 
 #include <BinaryLoader.h>
+#include <BinarySerialIo.h>
 #include <boost/noncopyable.hpp>
 #include <Disassembler.h>
 #include <FileSystem.h>
 #include <Partitioner2/Function.h>
 #include <Partitioner2/ModulesLinux.h>
 #include <Partitioner2/Partitioner.h>
+#include <Partitioner2/Thunk.h>
 #include <Partitioner2/Utility.h>
 #include <Progress.h>
+#include <RoseException.h>
 #include <Sawyer/DistinctList.h>
+#include <stdexcept>
 
 #ifdef ROSE_ENABLE_PYTHON_API
 #undef slots                                            // stupid Qt pollution
@@ -125,6 +129,14 @@ public:
         }
     };
 
+    /** Errors from the engine. */
+    class Exception: public Rose::Exception {
+    public:
+        Exception(const std::string &mesg)
+            : Rose::Exception(mesg) {}
+        ~Exception() throw () {}
+    };
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Internal data structures
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -142,7 +154,7 @@ private:
         void fixFunctionCallEdges(const Args&);
         void addPossibleIndeterminateEdge(const Args&);
     };
-    
+
     // Basic blocks that need to be worked on next. These lists are adjusted whenever a new basic block (or placeholder) is
     // inserted or erased from the CFG.
     class BasicBlockWorkList: public CfgAdjustmentCallback {
@@ -220,13 +232,15 @@ private:
 private:
     Settings settings_;                                 // Settings for the partitioner.
     SgAsmInterpretation *interp_;                       // interpretation set by loadSpecimen
-    BinaryLoader *binaryLoader_;                        // how to remap, link, and fixup
+    BinaryLoader::Ptr binaryLoader_;                    // how to remap, link, and fixup
     Disassembler *disassembler_;                        // not ref-counted yet, but don't destroy it since user owns it
     MemoryMap::Ptr map_;                                // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
     CodeConstants::Ptr codeFunctionPointers_;           // generates constants that are found in instruction ASTs
     Progress::Ptr progress_;                            // optional progress reporting
     ModulesLinux::LibcStartMain::Ptr libcStartMain_;    // looking for "main" by analyzing libc_start_main?
+    ThunkPredicates::Ptr functionMatcherThunks_;        // predicates to find thunks when looking for functions
+    ThunkPredicates::Ptr functionSplittingThunks_;      // predicates for splitting thunks from front of functions
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
@@ -234,7 +248,7 @@ private:
 public:
     /** Default constructor. */
     Engine()
-        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL),
+        : interp_(NULL), disassembler_(NULL),
         basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
         progress_(Progress::instance()) {
         init();
@@ -242,12 +256,12 @@ public:
 
     /** Construct engine with settings. */
     explicit Engine(const Settings &settings)
-        : settings_(settings), interp_(NULL), binaryLoader_(NULL), disassembler_(NULL),
+        : settings_(settings), interp_(NULL), disassembler_(NULL),
         basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
         progress_(Progress::instance()) {
         init();
     }
-    
+
     virtual ~Engine() {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -415,26 +429,59 @@ public:
     SgAsmBlock* buildAst(const std::string &fileName) /*final*/;
     /** @} */
 
+    /** Save a partitioner and AST to a file.
+     *
+     *  The specified partitioner and the binary analysis components of the AST are saved into the specified file, which is
+     *  created if it doesn't exist and truncated if it does exist. The name should end with a ".rba" extension. The file can
+     *  be loaded by passing its name to the @ref partition function or by calling @ref loadPartitioner. */
+    virtual void savePartitioner(const Partitioner&, const boost::filesystem::path&, SerialIo::Format fmt = SerialIo::BINARY);
+
+    /** Load a partitioner and an AST from a file.
+     *
+     *  The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
+     *  partition function also understands how to open RBA files. */
+    virtual Partitioner loadPartitioner(const boost::filesystem::path&, SerialIo::Format fmt = SerialIo::BINARY);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Command-line parsing
     //
     // top-level: parseCommandLine
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Command-line switches related to the loader. */
+    /** Command-line switches related to the loader.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup loaderSwitches();
+    static Sawyer::CommandLine::SwitchGroup loaderSwitches(LoaderSettings&);
+    /** @} */
 
-    /** Command-line switches related to the disassembler. */
+    /** Command-line switches related to the disassembler.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup disassemblerSwitches();
+    static Sawyer::CommandLine::SwitchGroup disassemblerSwitches(DisassemblerSettings&);
+    /** @} */
 
-    /** Command-line switches related to the partitioner. */
+    /** Command-line switches related to the partitioner.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup partitionerSwitches();
+    static Sawyer::CommandLine::SwitchGroup partitionerSwitches(PartitionerSettings&);
+    /** @} */
 
-    /** Command-line switches related to engine behavior. */
+    /** Command-line switches related to engine behavior.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup engineSwitches();
+    static Sawyer::CommandLine::SwitchGroup engineSwitches(EngineSettings&);
+    /** @} */
 
-    /** Command-line switches related to AST construction. */
+    /** Command-line switches related to AST construction.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup astConstructionSwitches();
+    static Sawyer::CommandLine::SwitchGroup astConstructionSwitches(AstConstructionSettings&);
+    /** @} */
 
     /** Documentation for specimen names. */
     static std::string specimenNameDocumentation();
@@ -466,6 +513,12 @@ public:
     // top-level: parseContainers
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Determine whether a specimen is an RBA file.
+     *
+     *  Returns true if the name looks like a ROSE Binary Analysis file. Such files are not intended to be passed to ROSE's
+     *  @c frontend function. */
+    virtual bool isRbaFile(const std::string&);
+
     /** Determine whether a specimen name is a non-container.
      *
      *  Certain strings are recognized as special instructions for how to adjust a memory map and are not intended to be passed
@@ -505,7 +558,7 @@ public:
      *  @li Fail by throwing an <code>std::runtime_error</code>.
      *
      *  In any case, the @ref binaryLoader property is set to this method's return value. */
-    virtual BinaryLoader *obtainLoader(BinaryLoader *hint=NULL);
+    virtual BinaryLoader::Ptr obtainLoader(const BinaryLoader::Ptr &hint = BinaryLoader::Ptr());
 
     /** Loads memory from binary containers.
      *
@@ -619,7 +672,7 @@ public:
      *  This does anything necessary after the main part of partitioning is finished. For instance, it might give names to some
      *  functions that don't have names yet. */
     virtual void runPartitionerFinal(Partitioner&);
-    
+
     /** Partitions instructions into basic blocks and functions.
      *
      *  This method is a wrapper around a number of lower-level partitioning steps that uses the specified interpretation to
@@ -846,7 +899,7 @@ public:
      *
      *  Returns the sum from all the calls to @ref attachSurroundedCodeToFunctions. */
     virtual size_t attachAllSurroundedCodeToFunctions(Partitioner&);
-    
+
     /** Attach intra-function basic blocks to functions.
      *
      *  This method scans the unused address intervals (those addresses that are not represented by the CFG/AUM). For each
@@ -992,8 +1045,8 @@ public:
      *  and relocation fixups.  If none is specified then the engine will choose one based on the container.
      *
      * @{ */
-    BinaryLoader* binaryLoader() const /*final*/ { return binaryLoader_; }
-    virtual void binaryLoader(BinaryLoader *loader) { binaryLoader_ = loader; }
+    BinaryLoader::Ptr binaryLoader() const /*final*/ { return binaryLoader_; }
+    virtual void binaryLoader(const BinaryLoader::Ptr &loader) { binaryLoader_ = loader; }
     /** @} */
 
     /** Property: when to remove execute permission from zero bytes.
@@ -1183,6 +1236,18 @@ public:
     virtual void findingThunks(bool b) { settings_.partitioner.findingThunks = b; }
     /** @} */
 
+    /** Property: Predicate for finding functions that are thunks.
+     *
+     *  This collective predicate is used when searching for function prologues in order to create new functions. Its purpose
+     *  is to try to match sequences of instructions that look like thunks and then create a function at that address. A suitable
+     *  default list of predicates is created when the engine is initialized, and can either be replaced by a new list, an empty
+     *  list, or the list itself can be adjusted.  The list is consulted only when @ref findingThunks is set.
+     *
+     * @{ */
+    ThunkPredicates::Ptr functionMatcherThunks() const /*final*/ { return functionMatcherThunks_; }
+    virtual void functionMatcherThunks(const ThunkPredicates::Ptr &p) { functionMatcherThunks_ = p; }
+    /** @} */
+
     /** Property: Whether to split thunk instructions into mini functions.
      *
      *  If set, then functions whose entry instructions match a thunk pattern are split so that those thunk instructions are in
@@ -1191,6 +1256,18 @@ public:
      * @{ */
     bool splittingThunks() const /*final*/ { return settings_.partitioner.splittingThunks; }
     virtual void splittingThunks(bool b) { settings_.partitioner.splittingThunks = b; }
+    /** @} */
+
+    /** Property: Predicate for finding thunks at the start of functions.
+     *
+     *  This collective predicate is used when searching for thunks at the beginnings of existing functions in order to split
+     *  those thunk instructions into their own separate function.  A suitable default list of predicates is created when the
+     *  engine is initialized, and can either be replaced by a new list, an empty list, or the list itself can be adjusted.
+     *  The list is consulted only when @ref splittingThunks is set.
+     *
+     * @{ */
+    ThunkPredicates::Ptr functionSplittingThunks() const /*final*/ { return functionSplittingThunks_; }
+    virtual void functionSplittingThunks(const ThunkPredicates::Ptr &p) { functionSplittingThunks_ = p; }
     /** @} */
 
     /** Property: Whether to find dead code.
@@ -1325,6 +1402,65 @@ public:
      * @{ */
     bool findingInterFunctionCalls() const /*final*/ { return settings_.partitioner.findingInterFunctionCalls; }
     virtual void findingInterFunctionCalls(bool b) { settings_.partitioner.findingInterFunctionCalls = b; }
+    /** @} */
+
+    /** Property: Whether to turn function call targets into functions.
+     *
+     *  If set, then sequences of instructions that behave like a function call (including plain old function call
+     *  instructions) will cause a function to be created at the call's target address under most circumstances.
+     *
+     * @{ */
+    bool findingFunctionCallFunctions() const /*final*/ { return settings_.partitioner.findingFunctionCallFunctions; }
+    virtual void findingFunctionCallFunctions(bool b) { settings_.partitioner.findingFunctionCallFunctions = b; }
+    /** @} */
+
+    /** Property: Whether to make functions at program entry points.
+     *
+     *  If set, then all program entry points are assumed to be the start of a function.
+     *
+     * @{ */
+    bool findingEntryFunctions() const /*final*/ { return settings_.partitioner.findingEntryFunctions; }
+    virtual void findingEntryFunctions(bool b) { settings_.partitioner.findingEntryFunctions = b; }
+    /** @} */
+
+    /** Property: Whether to make error handling functions.
+     *
+     *  If set and information is available about error handling and exceptions, then that information is used to create entry
+     *  points for functions.
+     *
+     * @{ */
+    bool findingErrorFunctions() const /*final*/ { return settings_.partitioner.findingErrorFunctions; }
+    virtual void findingErrorFunctions(bool b) { settings_.partitioner.findingErrorFunctions = b; }
+    /** @} */
+
+    /** Property: Whether to make functions at import addresses.
+     *
+     *  If set and the file contains a table describing the addresses of imported functions, then each of those addresses is
+     *  assumed to be the entry point of a function.
+     *
+     * @{ */
+    bool findingImportFunctions() const /*final*/ { return settings_.partitioner.findingImportFunctions; }
+    virtual void findingImportFunctions(bool b) { settings_.partitioner.findingImportFunctions = b; }
+    /** @} */
+
+    /** Property: Whether to make functions at export addresses.
+     *
+     *  If set and the file contains a table describing the addresses of exported functions, then each of those addresses is
+     *  assumed to be the entry point of a function.
+     *
+     * @{ */
+    bool findingExportFunctions() const /*final*/ { return settings_.partitioner.findingExportFunctions; }
+    virtual void findingExportFunctions(bool b) { settings_.partitioner.findingExportFunctions = b; }
+    /** @} */
+
+    /** Property: Whether to make functions according to symbol tables.
+     *
+     *  If set and the file contains symbol tables, then symbols that define function addresses cause functions to be created
+     *  at those addresses.
+     *
+     * @{ */
+    bool findingSymbolFunctions() const /*final*/ { return settings_.partitioner.findingSymbolFunctions; }
+    virtual void findingSymbolFunctions(bool b) { settings_.partitioner.findingSymbolFunctions = b; }
     /** @} */
 
     /** Property: Whether to search static data for function pointers.
@@ -1484,7 +1620,7 @@ public:
     // Similar to frontend, but returns a partitioner rather than an AST since the Python API doesn't yet support ASTs.
     Partitioner pythonParseVector(boost::python::list &pyArgs, const std::string &purpose, const std::string &description);
     Partitioner pythonParseSingle(const std::string &specimen, const std::string &purpose, const std::string &description);
-        
+
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1492,6 +1628,9 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     void init();
+
+    // Similar to ::frontend but a lot less complicated.
+    SgProject* roseFrontendReplacement(const std::vector<boost::filesystem::path> &fileNames);
 };
 
 } // namespace

@@ -14,7 +14,7 @@
 #include "DFAstAttribute.h"
 #include "RDTransferFunctions.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 class RDPropertyStateFactory : public PropertyStateFactory {
  public:
@@ -23,7 +23,7 @@ class RDPropertyStateFactory : public PropertyStateFactory {
   virtual ~RDPropertyStateFactory();
 };
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -31,14 +31,22 @@ class RDAnalysis : public DFAnalysisBase {
  public:
   RDAnalysis();
   ~RDAnalysis();
-  SPRAY::LabelSet getPreRDs(Label lab, VariableId);
-  SPRAY::LabelSet getPostRDs(Label lab, VariableId);
+  CodeThorn::LabelSet getPreRDs(Label lab, VariableId);
+  CodeThorn::LabelSet getPostRDs(Label lab, VariableId);
   virtual void initializeExtremalValue(Lattice* element);
-  void initialize(SgProject* root) { DFAnalysisBase::initialize(root, true); }
+
+  void initialize(SgProject* root)
+  {
+    DFAnalysisBase::initialize( root,
+                                nullptr /* no existing abstraction layer */,
+                                true /* id mapping for array elements */
+                              );
+  }
+
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice* elem);
 };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 
 #endif

@@ -78,3 +78,12 @@ end
 function t = toc(x)
   t = x;
 end
+
+function x = disp(msg)
+  x = 0;
+end
+
+function x = num2str(n)
+  x = 'hello';
+end
+

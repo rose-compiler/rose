@@ -1,3 +1,5 @@
-add_library( phpFrontend OBJECT PHPFrontend.C)
-add_dependencies(phpFrontend rosetta_generated)
-install(FILES  PHPFrontend.h DESTINATION include)
+if(enable-php)
+  add_library( phpFrontend OBJECT PHPFrontend.C)
+  add_dependencies(phpFrontend rosetta_generated)
+  install(FILES  PHPFrontend.h DESTINATION ${INCLUDE_INSTALL_DIR})
+endif()

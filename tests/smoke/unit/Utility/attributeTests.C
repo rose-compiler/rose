@@ -369,6 +369,7 @@ public:
         ASSERT_always_require(nCopies_ > 0);
         ASSERT_always_forbid(other.isDeleted_);
         ASSERT_always_require(other.nCopies_ > 0);
+        return *this;
     }
 
 public:

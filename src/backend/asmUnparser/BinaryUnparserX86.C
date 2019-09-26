@@ -3,7 +3,7 @@
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include <sageBuilderAsm.h>
+#include <SageBuilderAsm.h>
 #include <stringify.h>
 
 namespace Rose {
@@ -22,7 +22,8 @@ X86::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_, State&)
         case x86_branch_prediction_taken: out <<",pt"; break;
         case x86_branch_prediction_not_taken: out <<",pn"; break;
         default:
-            ASSERT_not_reachable("bad x86 branch prediction: " + stringifyX86BranchPrediction(insn->get_branchPrediction()));
+            ASSERT_not_reachable("bad x86 branch prediction: " +
+                                 stringifyBinaryAnalysisX86BranchPrediction(insn->get_branchPrediction()));
     }
 }
 

@@ -7,14 +7,16 @@
 namespace CodeThorn {
   class ProgramLocationsReport {
   public:
-    void writeResultFile(std::string fileName, SPRAY::Labeler* labeler);
-    SPRAY::LabelSet definitiveLocations;
-    SPRAY::LabelSet potentialLocations;
-    void recordDefinitiveLocation(SPRAY::Label lab);
-    void recordPotentialLocation(SPRAY::Label lab);
+    void writeResultFile(std::string fileName, CodeThorn::Labeler* labeler);
+    CodeThorn::LabelSet definitiveLocations;
+    CodeThorn::LabelSet potentialLocations;
+    void recordDefinitiveLocation(CodeThorn::Label lab);
+    void recordPotentialLocation(CodeThorn::Label lab);
+    size_t numDefinitiveLocations();
+    size_t numPotentialLocations();
   private:
-    std::string programLocation(SPRAY::Labeler* labeler, SPRAY::Label lab);
-    std::string sourceCodeAtProgramLocation(SPRAY::Labeler* labeler, SPRAY::Label lab);
+    std::string programLocation(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
+    std::string sourceCodeAtProgramLocation(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
   };
 }
 #endif

@@ -1,7 +1,6 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
-// DQ (12/29//2011): Since this file used the TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS macro we need to include rose_config.h.
 #include "rose_config.h"
 
 #include "markCompilerGenerated.h"
@@ -18,7 +17,6 @@ markAsCompilerGenerated( SgNode* node )
      astFixupTraversal.traverse(node,preorder);
    }
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 // DQ (12/23/2011): Template declarations are now derived from there associated non-template 
 // declarations (e.g. SgTemplateClassDeclaration is derived from SgClassDeclaration). It was
 // previously the case that SgTemplateClassDeclaration was derived from SgTemplateDeclaration
@@ -28,10 +26,6 @@ markAsCompilerGenerated( SgNode* node )
 // and variable template declrations.
 bool
 MarkAsCompilerGenerated::templateDeclarationCanBeMarkedAsCompilerGenerated(SgDeclarationStatement* templateDeclaration)
-#else
-bool
-MarkAsCompilerGenerated::templateDeclarationCanBeMarkedAsCompilerGenerated(SgTemplateDeclaration* templateDeclaration)
-#endif
    {
   // Note that this function uses and requires parent pointers to be previously set.
 
@@ -44,10 +38,20 @@ MarkAsCompilerGenerated::templateDeclarationCanBeMarkedAsCompilerGenerated(SgTem
   // SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(node);
      if (templateDeclaration != NULL)
         {
+#if 0
+          printf ("In MarkAsCompilerGenerated::templateDeclarationCanBeMarkedAsCompilerGenerated():\n");
+          printf ("  --- templateDeclaration = %p (%s)\n", templateDeclaration, templateDeclaration ? templateDeclaration->class_name().c_str() : "");
+          if (isSgTemplateClassDeclaration(templateDeclaration)) {
+            printf ("  --- templateDeclaration->get_specialization() = %d\n", isSgTemplateClassDeclaration(templateDeclaration)->get_specialization());
+          }
+#endif
        // Get the structural representation from the parent since in the case of a 
        // global function marked as friend we want to ignore the scope.
 
           SgScopeStatement* parentScope = isSgScopeStatement(templateDeclaration->get_parent());
+#if 0
+          printf ("  --- parentScope = %p (%s)\n", parentScope, parentScope ? parentScope->class_name().c_str() : "");
+#endif
           SgGlobal* globalScope = isSgGlobal(parentScope);
           SgNamespaceDefinitionStatement* namespaceScope = isSgNamespaceDefinitionStatement(parentScope);
           if (globalScope != NULL || namespaceScope != NULL)

@@ -1,0 +1,25 @@
+#!/usr/bin/perl
+use Cwd;
+use strict;
+
+my($command, $file);
+for my $arg (@ARGV) {
+    if ($arg =~ /^command=(.*)/) {
+	$command = $1;
+    } elsif ($arg =~ /^file=(.*)/) {
+	$file = $1;
+    } else {
+	die "incorrect usage";
+    }
+}
+
+sub json_escape {
+    $_[0] =~ s/(["\\])/\\$1/g;
+    return $_[0];
+}
+
+print("{",
+      "\"directory\":\"", json_escape(Cwd::cwd()), "\",",
+      "\"command\":\"", json_escape($command), "\",",
+      "\"file:\":\"", json_escape($file), "\"",
+      "}");

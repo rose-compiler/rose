@@ -16,7 +16,7 @@ function mcmc_test()
   disp(['Time' num2str(time) 'ms']);
 end
 
-function p_ret =  mcmc(x,N)
+function p_ret = mcmc(x,N)
   p = fx(x);
 
   for n=1:N

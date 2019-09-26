@@ -426,8 +426,19 @@ std::list<std::string>* SpotConnection::loadFormulae(istream& input) {
       ltlResults->addProperty(nextFormula->ltlString, nextFormula->propertyNumber);
       explicitPropertyNumber = false;
       nextFormula = new LtlProperty();
+    } else if (line.size()==0) {
+      // empty line found (no spaces, only '\n')
+    } else if (line.size()>0 && line.at(0) == '#' && line.at(1)=='i') {
+      // found inputs line (must match inputs array content)
+      cout<<"LTL PARSER: detected inputs line: "<<line<<endl;
+    } else if (line.size()>0 && line.at(0) == '#' && line.at(1)=='o') {
+      // found inputs line
+      cout<<"LTL PARSER: detected outputs line: "<<line<<endl;
+    } else {
+      // other lines that neither contain a property number nor a formula nor inputs nor outputs
+      cerr<<"Error: LTL Property parsing failed. Unknown input: "<<line<<endl;
+      exit(1);
     }
-    //ignore any other lines that neither contain a property number nor a formula
   }
   delete nextFormula;
   nextFormula = NULL;
@@ -689,6 +700,7 @@ void SpotConnection::init(std::list<std::string> ltl_formulae) {
 
 PropertyValueTable* SpotConnection::getLtlResults() {
   reportUndefinedFunction();
+  return nullptr;
 }
 
 void SpotConnection::resetLtlResults() { 
@@ -709,6 +721,8 @@ void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg,
 
 PropertyValue SpotConnection::checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, set<string> annotationsOfModeledTransitions) {
   reportUndefinedFunction();
+  PropertyValue v=PROPERTY_VALUE_UNKNOWN;
+  return v;
 }
 
 void SpotConnection::checkLtlProperties(TransitionGraph& stg,
@@ -718,6 +732,7 @@ void SpotConnection::checkLtlProperties(TransitionGraph& stg,
 
 ParProSpotTgba* SpotConnection::toTgba(ParProTransitionGraph& stg) {
   reportUndefinedFunction();
+  return nullptr;
 }
 
 void SpotConnection::checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<string> annotationsOfModeledTransitions) {
@@ -742,10 +757,14 @@ std::string SpotConnection::int2PropName(int ioVal, int maxInputVal)  {
 
 std::string SpotConnection::spinSyntax(std::string ltlFormula) {
   reportUndefinedFunction();
+  string s;
+  return s;
 }
 
 set<string> SpotConnection::atomicPropositions(string ltlFormula) {
   reportUndefinedFunction();
+  set<string> s;
+  return s;
 }
 
 void SpotConnection::reportUndefinedFunction() {

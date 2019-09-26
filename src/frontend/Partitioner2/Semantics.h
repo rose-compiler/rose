@@ -172,6 +172,23 @@ public:
                 const InstructionSemantics2::BaseSemantics::SValuePtr &value,
                 InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
                 InstructionSemantics2::BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    peekMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+               const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
+               InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
+               InstructionSemantics2::BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+
+private:
+    InstructionSemantics2::BaseSemantics::SValuePtr
+    readOrPeekMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+                     const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
+                     InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
+                     InstructionSemantics2::BaseSemantics::RiscOperators *valOps,
+                     bool withSideEffects);
+
+public:
+    void print(std::ostream&, InstructionSemantics2::BaseSemantics::Formatter&) const ROSE_OVERRIDE;
 };
 
 /** Memory state using a chronological list of cells. */
@@ -313,6 +330,25 @@ MemoryState<Super>::readMemory(const InstructionSemantics2::BaseSemantics::SValu
                                const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
                                InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
                                InstructionSemantics2::BaseSemantics::RiscOperators *valOps) {
+    return readOrPeekMemory(addr, dflt, addrOps, valOps, true/*with side effects*/);
+}
+
+template<class Super>
+InstructionSemantics2::BaseSemantics::SValuePtr
+MemoryState<Super>::peekMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+                               const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
+                               InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
+                               InstructionSemantics2::BaseSemantics::RiscOperators *valOps) {
+    return readOrPeekMemory(addr, dflt, addrOps, valOps, false/*no side effects*/);
+}
+
+template<class Super>
+InstructionSemantics2::BaseSemantics::SValuePtr
+MemoryState<Super>::readOrPeekMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+                                     const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
+                                     InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
+                                     InstructionSemantics2::BaseSemantics::RiscOperators *valOps,
+                                     bool withSideEffects) {
     using namespace InstructionSemantics2;
 
     if (!enabled_)
@@ -338,7 +374,12 @@ MemoryState<Super>::readMemory(const InstructionSemantics2::BaseSemantics::SValu
             }
         }
     }
-    return Super::readMemory(addr, dflt, addrOps, valOps);
+
+    if (withSideEffects) {
+        return Super::readMemory(addr, dflt, addrOps, valOps);
+    } else {
+        return Super::peekMemory(addr, dflt, addrOps, valOps);
+    }
 }
 
 template<class Super>
@@ -350,6 +391,18 @@ MemoryState<Super>::writeMemory(const InstructionSemantics2::BaseSemantics::SVal
     if (!enabled_)
         return;
     Super::writeMemory(addr, value, addrOps, valOps);
+}
+
+template<class Super>
+void
+MemoryState<Super>::print(std::ostream &out, InstructionSemantics2::BaseSemantics::Formatter &fmt) const {
+    if (map_) {
+        map_->dump(out, fmt.get_line_prefix());
+    } else {
+        out <<fmt.get_line_prefix() <<"no memory map\n";
+    }
+
+    Super::print(out, fmt);
 }
 
 } // namespace

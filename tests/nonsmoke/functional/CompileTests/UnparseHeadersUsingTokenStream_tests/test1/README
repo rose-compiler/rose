@@ -1,0 +1,4 @@
+The simplest test that requires unparsing of a header file. A single
+source file includes a single header file. The header file declares a
+class, whose field is renamed, therefore, the header file needs to be
+unparsed.

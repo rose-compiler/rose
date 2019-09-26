@@ -1,0 +1,12 @@
+include_rules
+
+SOURCES = virtualCFG.C cfgToDot.C memberFunctions.C staticCFG.C customFilteredCFG.C interproceduralCFG.C
+
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+    SOURCES += virtualBinCFG.C
+endif
+    
+run $(librose_compile) $(SOURCES)
+
+run $(public_header) virtualCFG.h virtualBinCFG.h cfgToDot.h filteredCFG.h customFilteredCFG.h filteredCFGImpl.h \
+    staticCFG.h interproceduralCFG.h

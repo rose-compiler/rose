@@ -3,7 +3,7 @@
 #include "UDAstAttribute.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 UDAstAttribute::UDAstAttribute(RDAstAttribute* rdAttr, SgNode* nodeForUseVarQuery)
   :_rdAttr(rdAttr),

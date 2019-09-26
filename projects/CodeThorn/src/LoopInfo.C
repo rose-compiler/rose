@@ -8,7 +8,7 @@
 #include <string>
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace CodeThorn;
 
 LoopInfo::LoopInfo():

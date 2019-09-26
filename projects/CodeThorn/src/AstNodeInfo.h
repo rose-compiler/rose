@@ -13,14 +13,14 @@ namespace CodeThorn {
     virtual AstNodeInfo* copy();
     AstNodeInfo::OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE;
     std::string toString();
-    void setLabel(SPRAY::Label l);
-    void setInitialLabel(SPRAY::Label l);
-    void setFinalLabels(SPRAY::LabelSet lset);
+    void setLabel(CodeThorn::Label l);
+    void setInitialLabel(CodeThorn::Label l);
+    void setFinalLabels(CodeThorn::LabelSet lset);
 
   private:
-    SPRAY::Label label;
-    SPRAY::Label initialLabel;
-    SPRAY::LabelSet finalLabelsSet;
+    CodeThorn::Label label;
+    CodeThorn::Label initialLabel;
+    CodeThorn::LabelSet finalLabelsSet;
   };
 
 } // end of namespace CodeThorn

@@ -1,0 +1,7 @@
+include_rules
+
+run $(librose_compile) astGraph.C AstAttributeDOT.C wholeAST.C copyGraph.C walrus.C intermediateRepresentationNodeGraphs.C \
+    includeGraph.C
+
+run $(public_header) AstAttributeDOT.h astGraph.h astGraphTemplateImpl.h wholeAST.h wholeAST_API.h copyGraph.h \
+    walrus.h intermediateRepresentationNodeGraphs.h includeGraph.h

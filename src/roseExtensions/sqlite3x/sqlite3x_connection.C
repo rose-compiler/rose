@@ -41,6 +41,11 @@ sqlite3_connection::~sqlite3_connection() { if(this->db) sqlite3_close(this->db)
 /** Load required ROSE extensions. */
 void sqlite3_connection::post_open()
 {
+#if 0 // [Robb Matzke 2019-03-02]: disabling brittle code
+    // 1. This only works when ROSE is configured with Automake, not any other build system
+    // 2. This only works when ROSE is compiled with libtool, not direct compilation
+    // 3. The ROSE prefix is hard coded, which makes it impossible to move ROSE after it's installed
+    // 4. Using SQLite3 extensions is not portable since the queries cannot be run outside ROSE
     try {
         std::string plug1 = ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/roseExtensions/sqlite3x/.libs/libsqlitefunctions.so";
         std::string plug2 = ROSE_AUTOMAKE_LIBDIR + "/libsqlitefunctions.so";
@@ -52,6 +57,10 @@ void sqlite3_connection::post_open()
     } catch (const database_error &e) {
         std::cerr <<"sqlite3_connection::post_open: unable to load ROSE extensions; continuing without them\n";
     }
+#else
+    // It doesn't seem to matter that the extensions are disabled, so I'm commenting out this warning. [Robb Matzke 2019-08-12]
+    //std::cerr <<"sqlite3_connection::post_open: unable to load ROSE extensions; continuing without them\n";
+#endif
 }
 
 void sqlite3_connection::open(const char *db) {

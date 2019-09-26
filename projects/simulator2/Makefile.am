@@ -3,6 +3,8 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 # Forward declarations for "+="
 MOSTLYCLEANFILES=
 EXTRA_DIST=
@@ -76,25 +78,25 @@ $(libRSIM_la_SOURCES:.C=.lo): %.lo: %.h
 EXTRA_DIST += RSIM_Private.h
 
 # The simulator, which uses ROSE interfaces where possible.
-bin_PROGRAMS += x86sim
-x86sim_SOURCES = x86sim.C
-x86sim_CPPFLAGS = $(ROSE_INCLUDES)
-x86sim_LDFLAGS = $(ROSE_RPATHS)
-x86sim_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(ROSE_LIBS)
+bin_PROGRAMS += rsim-x86sim
+rsim_x86sim_SOURCES = x86sim.C
+rsim_x86sim_CPPFLAGS = $(ROSE_INCLUDES)
+rsim_x86sim_LDFLAGS = $(ROSE_RPATHS)
+rsim_x86sim_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(ROSE_LIBS)
 
 # help debug the initial stack
-noinst_PROGRAMS += show-initial-stack
-show_initial_stack_SOURCES = show-initial-stack.C
-show_initial_stack_CPPFLAGS = $(ROSE_INCLUDES)
-show_initial_stack_LDFLAGS = $(ROSE_RPATHS)
-show_initial_stack_LDADD = $(ROSE_LIBS)
+noinst_PROGRAMS += rsim-show-initial-stack
+rsim_show_initial_stack_SOURCES = show-initial-stack.C
+rsim_show_initial_stack_CPPFLAGS = $(ROSE_INCLUDES)
+rsim_show_initial_stack_LDFLAGS = $(ROSE_RPATHS)
+rsim_show_initial_stack_LDADD = $(ROSE_LIBS)
 
 # demo to show how to monitor some file-related system calls
-noinst_PROGRAMS += ports_opened
-ports_opened_SOURCES = demos/ports_opened.C
-ports_opened_CPPFLAGS = $(ROSE_INCLUDES)
-ports_opened_LDFLAGS = $(ROSE_RPATHS)
-ports_opened_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(ROSE_LIBS)
+noinst_PROGRAMS += rsim-ports-opened
+rsim_ports_opened_SOURCES = demos/ports_opened.C
+rsim_ports_opened_CPPFLAGS = $(ROSE_INCLUDES)
+rsim_ports_opened_LDFLAGS = $(ROSE_RPATHS)
+rsim_ports_opened_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(ROSE_LIBS)
 
 ###############################################################################################################################
 #  INTERNAL SIMULATOR TESTS
@@ -151,11 +153,11 @@ TEST_TARGETS += $(SyscallTests_Standalone_Tests)
 $(SyscallTests_Standalone_Exes): %: $(srcdir)/syscall_tests/%.c
 	$(CC) -Wall -g -o $@ $^
 
-$(SyscallTests_Standalone_Tests): %.passed: % x86sim
-	@$(RTH_RUN)									\
-		TITLE="x86sim $< [$@]"							\
-		USE_SUBDIR=yes								\
-		CMD="x86_64 -R $(abspath .)/x86sim $(SimulatorFlags) $(abspath $<)"	\
+$(SyscallTests_Standalone_Tests): %.passed: % rsim-x86sim
+	@$(RTH_RUN)										\
+		TITLE="rsim-x86sim $< [$@]"							\
+		USE_SUBDIR=yes									\
+		CMD="x86_64 -R $(abspath .)/rsim-x86sim $(SimulatorFlags) $(abspath $<)"	\
 		$(top_srcdir)/scripts/test_exit_status $@
 
 .PHONY: check-syscalltests-standalone
@@ -425,11 +427,11 @@ TEST_TARGETS += $(SyscallTests_WithTestLib_Tests)
 $(SyscallTests_WithTestLib_Exes): %: $(srcdir)/syscall_tests/%.c $(SyscallTests_LibTest_Src)
 	$(CC) -Wall -g -I $(srcdir)/syscall_tests -o $@ $^
 
-$(SyscallTests_WithTestLib_Tests): %.passed: % x86sim
-	@$(RTH_RUN)									\
-		TITLE="x86sim $< [$@]"							\
-		USE_SUBDIR=yes								\
-		CMD="x86_64 -R $(abspath .)/x86sim $(SimulatorFlags) $(abspath $<)"	\
+$(SyscallTests_WithTestLib_Tests): %.passed: % rsim-x86sim
+	@$(RTH_RUN)										\
+		TITLE="rsim-x86sim $< [$@]"							\
+		USE_SUBDIR=yes									\
+		CMD="x86_64 -R $(abspath .)/rsim-x86sim $(SimulatorFlags) $(abspath $<)"	\
 		$(top_srcdir)/scripts/test_exit_status $@
 
 .PHONY: check-syscalltests-withtestlib
@@ -694,7 +696,7 @@ MOSTLYCLEANFILES += libipc.a
 # Test targets must be 32-bit x86; if we don't have that capability then the tests are not run.
 if ENABLE_I386
 SYS_TEST_TARGETS = $(addsuffix .passed, $(SYS_TEST_INPUTS))
-$(SYS_TEST_TARGETS): %.passed: % $(srcdir)/syscall_tests.conf x86sim
+$(SYS_TEST_TARGETS): %.passed: % $(srcdir)/syscall_tests.conf rsim-x86sim
 	@$(RTH_RUN) INPUT=./$< $(srcdir)/syscall_tests.conf $@
 else
 SYS_TEST_TARGETS = warn_no_tests
@@ -1227,7 +1229,7 @@ pthread_test_inputs: $(PTHREAD_TEST_INPUTS)
 # Without this, the order of this statement and the following if-ENABLE_I386 may be rearranged on MAC
 if ENABLE_I386
 PTHREAD_TEST_TARGETS = $(addsuffix .passed, $(PTHREAD_TEST_INPUTS))
-$(PTHREAD_TEST_TARGETS): %.passed: % $(srcdir)/pthread_tests.conf x86sim
+$(PTHREAD_TEST_TARGETS): %.passed: % $(srcdir)/pthread_tests.conf rsim-x86sim
 	@$(RTH_RUN) INPUT=./$< $(srcdir)/pthread_tests.conf $@
 else
 # warn_no_tests was already defined in the "SYSTEM CALL TESTS" section of this makefile
@@ -1255,8 +1257,12 @@ check-pthread:  $(PTHREAD_TEST_TARGETS)
 test-inputs: $(SYS_TEST_INPUTS) $(PTHREAD_TEST_INPUTS)
 
 .PHONY: run-tests
-run-tests: check-syscalls check-pthread
+run-tests: check-syscalls
 	@$(RTH_STATS)
+
+# check-pthread commented out because the simulator is not designed to work with multi-threaded specimens.
+#run-tests: check-syscalls check-pthread
+#	@$(RTH_STATS)
 
 check-local: run-tests
 #check-local:  #run-tests
@@ -1303,3 +1309,5 @@ old_stuff_to_remove =				\
 	x86futex.C				\
 	x86robb.C				\
 	x86win.C
+
+endif

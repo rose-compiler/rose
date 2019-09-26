@@ -22,6 +22,9 @@
 // User-defined literals processing the raw form of the literal are defined as follows:
 
 // OutputType operator "" _suffix(const char *literal_string);
+
+#if 0
+typedef char* OutputType;
  
 OutputType some_variable = 1234_suffix;
 
@@ -66,4 +69,78 @@ OutputType some_variable = u"1234"_suffix;     //Calls the const char16_t * vers
 OutputType some_variable = U"1234"_suffix;     //Calls the const char32_t * version
 
 // There is no alternative template form. Character literals are defined similarly.
+#endif
 
+
+#include <iostream>
+ 
+// used as conversion
+constexpr long double operator"" _deg ( long double deg )
+{
+    return deg*3.141592/180;
+}
+ 
+// used with custom type
+struct mytype
+{
+    mytype ( unsigned long long m):m(m){}
+    unsigned long long m;
+};
+mytype operator"" _mytype ( unsigned long long n )
+{
+    return mytype(n);
+}
+ 
+// used for side-effects
+void operator"" _print ( const char* str )
+{
+    std::cout << str;
+}
+ 
+int main(){
+    double x = 90.0_deg;
+    std::cout << std::fixed << x << '\n';
+    mytype y = 123_mytype;
+    std::cout << y.m << '\n';
+    0x123ABC_print;
+}
+
+// and
+
+void operator "" _km(long double); // OK, will be called for 1.0_km
+std::string operator "" _i18n(const char*, std::size_t); // OK
+template <char...> double operator "" _n(); // OK
+float operator ""_e(const char*); // OK
+ 
+// float operator ""Z(const char*); // error: suffix must begin with underscore
+double operator"" _Z(long double); // error: all names that begin with underscore
+                                   // followed by uppercase letter are reserved
+double operator""_Z(long double); // OK: even though _Z is reserved ""_Z is allowed
+
+
+void foobar()
+   {
+     long double operator""_E(long double);
+     long double operator""_a(long double);
+     int operator""_p(unsigned long long);
+ 
+  // auto x = 1.0_E+2.0;   // error
+     auto y = 1.0_a+2.0;   // OK
+     auto z = 1.0_E +2.0;  // OK
+     auto q = (1.0_E)+2.0; // OK
+
+  // This is supported in GNU g++ version 6.1, but not in EDG (it should be an error).
+  // auto w = 1_p+2;       // error
+
+     auto u = 1_p +2;      // OK
+   }
+
+
+#if 0
+#include <chrono>
+// GNU g++ version 6.1 reports that there is no such namespace.
+using namespace std::literals;
+auto a = 4s.count();   // Error
+auto b = 4s .count();  // OK
+auto c = (4s).count(); // OK
+#endif

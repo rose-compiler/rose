@@ -1,6 +1,6 @@
 AC_DEFUN([ROSE_SUPPORT_PYTHON],
 [
-    ROSE_CONFIGURE_SECTION([Python])
+    ROSE_CONFIGURE_SECTION([Checking Python])
 
     # Determine settings for the python development environment.
     # Provides:

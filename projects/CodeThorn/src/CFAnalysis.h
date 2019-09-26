@@ -11,8 +11,9 @@
 #include "Labeler.h"
 #include "CommandLineOptions.h"
 #include "Flow.h"
+#include "FunctionIdMapping.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 /*! 
   * \author Markus Schordan
@@ -20,8 +21,8 @@ namespace SPRAY {
  */
 class CFAnalysis {
  public:
-  CFAnalysis(SPRAY::Labeler* l);
-  CFAnalysis(SPRAY::Labeler* l, bool createLocalEdge);
+  CFAnalysis(CodeThorn::Labeler* l);
+  CFAnalysis(CodeThorn::Labeler* l, bool createLocalEdge);
   Label getLabel(SgNode* node);
   SgNode* getNode(Label label);
   Label initialLabel(SgNode* node);
@@ -40,10 +41,19 @@ class CFAnalysis {
   LabelSet setOfInitialLabelsOfStmtsInBlock(SgNode* node);
   Flow flow(SgNode* node);
   Flow flow(SgNode* s1, SgNode* s2);
-  SPRAY::Labeler* getLabeler();
+  CodeThorn::Labeler* getLabeler();
+
+  // determine mapping between function calls and function definitions (also resolves function pointers)
+  void computeFunctionCallMapping(SgProject* project);
   // computes from existing intra-procedural flow graph(s) the inter-procedural call information
   InterFlow interFlow(Flow& flow); 
   void intraInterFlow(Flow&, InterFlow&);
+  // Function for setting a pre-computed function-id
+  // mapping. Required for function call resolution across multiple
+  // files, and function pointers.
+  void setFunctionIdMapping(FunctionIdMapping*);
+  FunctionIdMapping* getFunctionIdMapping();
+
   Flow controlDependenceGraph(Flow& controlFlow);
   int reduceNode(Flow& flow, Label lab);
   // eliminates only block begin nodes, but not block end nodes.
@@ -73,15 +83,21 @@ class CFAnalysis {
   void setCreateLocalEdge(bool le);
   bool getCreateLocalEdge();
   static bool isLoopConstructRootNode(SgNode* node);
+  enum FunctionResolutionMode { FRM_TRANSLATION_UNIT, FRM_WHOLE_AST_LOOKUP, FRM_FUNCTION_ID_MAPPING };
+  static FunctionResolutionMode functionResolutionMode;
  protected:
+  SgFunctionDefinition* determineFunctionDefinition2(SgFunctionCallExp* funCall);
+  SgFunctionDefinition* determineFunctionDefinition3(SgFunctionCallExp* funCall);
   static void initDiagnostics();
   static Sawyer::Message::Facility logger;
  private:
   SgStatement* getCaseOrDefaultBodyStmt(SgNode* node);
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
-  SPRAY::Labeler* labeler;
+  CodeThorn::Labeler* labeler;
   bool _createLocalEdge;
   SgNode* correspondingLoopConstruct(SgNode* node);
+  FunctionIdMapping* _functionIdMapping=nullptr;
+
 };    
 
 } // end of namespace CodeThorn

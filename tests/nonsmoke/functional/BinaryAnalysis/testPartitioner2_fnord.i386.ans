@@ -3555,13 +3555,15 @@
 0x0804a311: Successor blocks: 0x0804a313
 
 0x0804a313: Basic block reasons: 
-0x0804a313: 89 c3                   |..      |          mov    ebx, eax
-0x0804a315: e8 96 fe ff ff          |.....   |          call   0x0804a1b0<<Func>>
+0x0804a313: 89 c3                   |..      |<sp-16>   mov    ebx, eax
+0x0804a315: e8 96 fe ff ff          |.....   |<sp-16>   call   0x0804a1b0<<Func>>
+0x0804a315: Outgoing stack delta: -20
 0x0804a315: Successor blocks: 0x0804a1b0<<Func>>, 0x0804a31a
 
 0x0804a31a: Basic block reasons: 
-0x0804a31a: 89 18                   |..      |          mov    dword ds:[eax], ebx
-0x0804a31c: 83 c8 ff                |...     |          or     eax, 0xff<-1>
+0x0804a31a: 89 18                   |..      |<sp-16>   mov    dword ds:[eax], ebx
+0x0804a31c: 83 c8 ff                |...     |<sp-16>   or     eax, 0xff<-1>
+0x0804a31c: Outgoing stack delta: -16
 0x0804a31c: Successor blocks: 0x0804a31f
 
 0x0804a31f: Basic block reasons: 

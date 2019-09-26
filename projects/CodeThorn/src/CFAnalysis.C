@@ -12,11 +12,14 @@
 #include "Labeler.h"
 #include "AstTerm.h"
 #include <boost/foreach.hpp>
-#include "SprayException.h"
+#include "CodeThornException.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 using namespace Sawyer::Message;
+
+CFAnalysis::FunctionResolutionMode CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;
+//CFAnalysis::FunctionResolutionMode CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;
 
 Sawyer::Message::Facility CFAnalysis::logger;
 void CFAnalysis::initDiagnostics() {
@@ -133,15 +136,16 @@ LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
 InterFlow CFAnalysis::interFlow(Flow& flow) {
   // 1) for each call use AST information to find its corresponding called function
   // 2) create a set of <call,entry,exit,callreturn> edges
-  cout<<"STATUS: establishing inter-flow ..."<<endl;
+  logger[INFO]<<"establishing inter-flow ..."<<endl;
   InterFlow interFlow;
   LabelSet callLabs=functionCallLabels(flow);
   int callLabsNum=callLabs.size();
-  cout << "INFO: number of function call labels: "<<callLabsNum<<endl;
+  logger[INFO]<<"number of function call labels: "<<callLabsNum<<endl;
   int callLabNr=0;
   int externalFunCalls=0;
   int externalFunCallsWithoutDecl=0;
   int functionsFound=0;
+ 
   for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
     //cout<<"INFO: resolving function call "<<callLabNr<<" of "<<callLabs.size()<<endl;
     SgNode* callNode=getNode(*i);
@@ -149,8 +153,31 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
     //info: callNode->get_args()
     SgFunctionCallExp *funCall=SgNodeHelper::Pattern::matchFunctionCall(callNode);
     if(!funCall) 
-      throw SPRAY::Exception("interFlow: unknown call exp (not a SgFunctionCallExp)");
-    SgFunctionDefinition* funDef=SgNodeHelper::determineFunctionDefinition(funCall);
+      throw CodeThorn::Exception("interFlow: unknown call exp (not a SgFunctionCallExp)");
+#if 0
+    //SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration();
+    //SgFunctionSymbol* funSym=funCall->getAssociatedFunctionSymbol();
+    //SgType* funCallType=funCall->get_type(); // return type
+    SgExpression* funExp=funDecl->get_function();
+    ROSE_ASSERT(funExp);
+    SgType* funExpType=funExp->get_type();
+    ROSE_ASSERT(funExpType);
+    SgFunctionType* funType=isSgFunctionType(funExpType);
+    if(funType) {
+      SgFunctionParameterTypeList* funParamTypeList=funType->get_argument_list();
+    }
+#endif
+    SAWYER_MESG(logger[TRACE])<<"Resolving function call: "<<funCall<<": "<<funCall->unparseToString()<<": ";
+    SgFunctionDefinition* funDef=nullptr;
+    switch(functionResolutionMode) {
+    case FRM_TRANSLATION_UNIT: funDef=SgNodeHelper::determineFunctionDefinition(funCall);break;
+    case FRM_WHOLE_AST_LOOKUP: funDef=determineFunctionDefinition2(funCall);break;
+    case FRM_FUNCTION_ID_MAPPING: funDef=determineFunctionDefinition3(funCall);break;
+    default:
+      logger[ERROR]<<endl<<"Unsupported function resolution mode."<<endl;
+      exit(1);
+    }
+    
     Label callLabel,entryLabel,exitLabel,callReturnLabel;
     if(funDef==0) {
       //cout<<" [no definition found]"<<endl;
@@ -180,22 +207,22 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
     interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
     callLabNr++;
   }
-  cout<<"STATUS: inter-flow established."<<endl;
-  cout<<"INFO: Call labels: "<<callLabNr<<endl;
-  cout<<"INFO: externalFunCalls: "<<externalFunCalls<<endl;
-  cout<<"INFO: externalFunCallWitoutDecl: "<<externalFunCallsWithoutDecl<<endl;
-  cout<<"INFO: functions found: "<<functionsFound<<endl;
+  //cout<<"STATUS: inter-flow established."<<endl;
+  //cout<<"INFO: Call labels: "<<callLabNr<<endl;
+  //cout<<"INFO: externalFunCalls: "<<externalFunCalls<<endl;
+  //cout<<"INFO: externalFunCallWitoutDecl: "<<externalFunCallsWithoutDecl<<endl;
+  //cout<<"INFO: functions found: "<<functionsFound<<endl;
 
   return interFlow;
 }
 
 Label CFAnalysis::getLabel(SgNode* node) {
-  assert(labeler);
+  ROSE_ASSERT(labeler);
   return labeler->getLabel(node);
 }
 
 SgNode* CFAnalysis::getNode(Label label) {
-  assert(labeler);
+  ROSE_ASSERT(labeler);
   return labeler->getNode(label);
 }
 
@@ -282,9 +309,9 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     SgStatementPtrList& stmtPtrList=SgNodeHelper::getForInitList(node);
     if(stmtPtrList.size()==0) {
       // empty initializer list (hence, an initialization stmt cannot be initial stmt of for)
-      throw SPRAY::Exception("Error: for-stmt: initializer-list is empty. Not supported.");
+      throw CodeThorn::Exception("Error: for-stmt: initializer-list is empty. Not supported.");
     }
-    assert(stmtPtrList.size()>0);
+    ROSE_ASSERT(stmtPtrList.size()>0);
     node=*stmtPtrList.begin();
     return labeler->getLabel(node);
   }
@@ -322,8 +349,12 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgTypedefDeclaration:
     return labeler->getLabel(node);
 
+  case V_SgFunctionCallExp:
+    // the first label of a function call is the CALL label.
+    return labeler->getLabel(node);
+
   default:
-    cerr << "Error: Unknown node in CodeThorn::CFAnalysis::initialLabel: "<<node->sage_class_name()<<endl;
+    cerr << "Error: Unknown xnode in CodeThorn::CFAnalysis::initialLabel: "<<node->sage_class_name()<<endl;
     exit(1);
   }
 }
@@ -439,7 +470,6 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     set<SgNode*> breakNodes=SgNodeHelper::loopRelevantBreakStmtNodes(node);
     LabelSet lset=labeler->getLabelSet(breakNodes);
     finalSet+=lset;
-    //cout << finalSet.toString  () << endl;
     return finalSet;
   }
   case V_SgBasicBlock: {
@@ -467,7 +497,6 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     set<SgNode*> breakNodes=SgNodeHelper::loopRelevantBreakStmtNodes(node);
     LabelSet lset=labeler->getLabelSet(breakNodes);
     finalSet+=lset;
-    //cout << finalSet.toString() << endl;
     // very last case in switch (not necessarily default), if it does not contain a break has still a final label.
     // if it is a break it will still be the last label. If it is a goto it will not have a final label (which is correct).
     SgSwitchStatement* switchStmt=isSgSwitchStatement(node);
@@ -537,8 +566,8 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
 
 
 Flow CFAnalysis::flow(SgNode* s1, SgNode* s2) {
-  assert(s1);
-  assert(s2);
+  ROSE_ASSERT(s1);
+  ROSE_ASSERT(s2);
   Flow flow12;
   Flow flow1=flow(s1);
   Flow flow2=flow(s2);
@@ -862,12 +891,12 @@ Flow CFAnalysis::WhileAndDoWhileLoopFlow(SgNode* node,
                                          EdgeType edgeTypeParam1,
                                          EdgeType edgeTypeParam2) {
   if(!(isSgWhileStmt(node) || isSgDoWhileStmt(node))) {
-    throw SPRAY::Exception("Error: WhileAndDoWhileLoopFlow: unsupported loop construct.");
+    throw CodeThorn::Exception("Error: WhileAndDoWhileLoopFlow: unsupported loop construct.");
   }
   SgNode* condNode=SgNodeHelper::getCond(node);
   Label condLabel=getLabel(condNode);
   SgNode* bodyNode=SgNodeHelper::getLoopBody(node);
-  assert(bodyNode);
+  ROSE_ASSERT(bodyNode);
   Edge edge=Edge(condLabel,EDGE_TRUE,initialLabel(bodyNode));
   edge.addType(edgeTypeParam1);
   Flow flowB=flow(bodyNode);
@@ -916,7 +945,7 @@ LabelSet Flow::reachableNodesButNotBeyondTargetNode(Label start, Label target) {
 }
 
 Flow CFAnalysis::flow(SgNode* node) {
-  assert(node);
+  ROSE_ASSERT(node);
 
   Flow edgeSet;
   if(node==0)
@@ -1024,7 +1053,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     SgNode* funcDef=SgNodeHelper::correspondingSgFunctionDefinition(node);
     if(!funcDef)
       cerr << "Error: No corresponding function for ReturnStmt found."<<endl;
-    assert(isSgFunctionDefinition(funcDef));
+    ROSE_ASSERT(isSgFunctionDefinition(funcDef));
     Edge edge=Edge(getLabel(node),EDGE_FORWARD,labeler->functionExitLabel(funcDef));
     edgeSet.insert(edge);
     return edgeSet;
@@ -1108,13 +1137,13 @@ Flow CFAnalysis::flow(SgNode* node) {
       // target is increment expr
       SgExpression* incExp=SgNodeHelper::getForIncExpr(loopStmt);
       if(!incExp)
-        throw SPRAY::Exception("CFAnalysis: for-loop: empty incExpr not supported.");
+        throw CodeThorn::Exception("CFAnalysis: for-loop: empty incExpr not supported.");
       SgNode* targetNode=incExp;
       ROSE_ASSERT(targetNode);
       Edge edge=Edge(getLabel(node),EDGE_FORWARD,getLabel(targetNode));
       edgeSet.insert(edge);
     } else {
-      throw SPRAY::Exception("CFAnalysis: continue in unknown loop construct (not while,do-while, or for).");
+      throw CodeThorn::Exception("CFAnalysis: continue in unknown loop construct (not while,do-while, or for).");
     }
     return edgeSet;
   }
@@ -1232,7 +1261,7 @@ Flow CFAnalysis::flow(SgNode* node) {
       cerr << "Error: empty for-stmt initializer (should be an empty statement node)."<<endl;
       exit(1);
     }
-    assert(len>0);
+    ROSE_ASSERT(len>0);
     SgNode* lastNode=0;
     if(len==1) {
       SgNode* onlyStmt=*stmtPtrList.begin();
@@ -1240,7 +1269,7 @@ Flow CFAnalysis::flow(SgNode* node) {
       edgeSet+=onlyFlow;
       lastNode=onlyStmt;
     } else {
-      assert(stmtPtrList.size()>=2);
+      ROSE_ASSERT(stmtPtrList.size()>=2);
       for(SgStatementPtrList::iterator i=stmtPtrList.begin();
           i!=stmtPtrList.end();
           ++i) {
@@ -1259,12 +1288,12 @@ Flow CFAnalysis::flow(SgNode* node) {
     }
     SgNode* condNode=SgNodeHelper::getCond(node);
     if(!condNode)
-      throw SPRAY::Exception("Error: for-loop: empty condition not supported. Normalization required.");
+      throw CodeThorn::Exception("Error: for-loop: empty condition not supported. Normalization required.");
     Flow flowInitToCond=flow(lastNode,condNode);
     edgeSet+=flowInitToCond;
     Label condLabel=getLabel(condNode);
     SgNode* bodyNode=SgNodeHelper::getLoopBody(node);
-    assert(bodyNode);
+    ROSE_ASSERT(bodyNode);
     Edge edge=Edge(condLabel,EDGE_TRUE,initialLabel(bodyNode));
     edge.addType(EDGE_FORWARD);
     Flow flowB=flow(bodyNode);
@@ -1274,7 +1303,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     // Increment Expression:
     SgExpression* incExp=SgNodeHelper::getForIncExpr(node);
     if(!incExp)
-      throw SPRAY::Exception("Error: for-loop: empty incExpr not supported. Normalization required.");
+      throw CodeThorn::Exception("Error: for-loop: empty incExpr not supported. Normalization required.");
     ROSE_ASSERT(incExp);
     Label incExpLabel=getLabel(incExp);
     ROSE_ASSERT(incExpLabel!=Labeler::NO_LABEL);
@@ -1295,6 +1324,159 @@ Flow CFAnalysis::flow(SgNode* node) {
     return edgeSet;
   }
   default:
-    throw SPRAY::Exception("Unknown node in CFAnalysis::flow: Problemnode "+node->class_name()+" Input file: "+SgNodeHelper::sourceLineColumnToString(node)+": "+node->unparseToString());
+    throw CodeThorn::Exception("Unknown node in CFAnalysis::flow: Problemnode "+node->class_name()+" Input file: "+SgNodeHelper::sourceLineColumnToString(node)+": "+node->unparseToString());
   }
+}
+
+#if 0
+// slow lookup
+SgFunctionDefinition* CFAnalysis::determineFunctionDefinition2(SgFunctionCallExp* funCall) {
+  if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration()) {
+    if(SgDeclarationStatement* defFunDecl=funDecl->get_definingDeclaration()) {
+      if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(defFunDecl)) {
+        if(SgFunctionDefinition* funDef=funDecl2->get_definition()) {
+          return funDef;
+        } else {
+          //cout<<"INFO: no definition found for call: "<<funCall->unparseToString()<<endl;
+          //return 0;
+          // the following code is dead code: searching the AST is inefficient. This code will refactored and removed from here.
+          // forward declaration (we have not found the function definition yet)
+          // 1) use parent pointers and search for Root node (likely to be SgProject node)
+          SgNode* root=defFunDecl;
+          SgNode* parent=0;
+          while(!SgNodeHelper::isAstRoot(root)) {
+            parent=SgNodeHelper::getParent(root);
+            root=parent;
+          }
+          ROSE_ASSERT(root);
+          // 2) search in AST for the function's definition now
+          RoseAst ast(root);
+          for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+            if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(*i)) {
+              if(!SgNodeHelper::isForwardFunctionDeclaration(funDecl2)) {
+                SgSymbol* sym2=funDecl2->search_for_symbol_from_symbol_table();
+                SgSymbol* sym1=funDecl->search_for_symbol_from_symbol_table();
+                if(sym1!=0 && sym1==sym2) {
+                  SgFunctionDefinition* fundef2=funDecl2->get_definition();
+                  ROSE_ASSERT(fundef2);
+                  return fundef2;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return 0;
+}
+#endif
+
+SgFunctionDefinition* CFAnalysis::determineFunctionDefinition3(SgFunctionCallExp* funCall) {
+  //cout<<"DEBUG: CFAnalysis::determineFunctionDefinition3:"<<funCall->unparseToString()<<endl;
+  SgFunctionDefinition* funDef=nullptr;
+  // TODO (use function id mapping)
+  ROSE_ASSERT(getFunctionIdMapping());
+  SgExpression* node=funCall->get_function();
+  if(node) {
+    if(SgFunctionRefExp* funRef=isSgFunctionRefExp(node)) {
+      funDef=getFunctionIdMapping()->resolveFunctionRef(funRef);
+      if(funDef) logger[TRACE]<<"Resolved to "<<funDef;
+      else logger[TRACE]<<"NOT resolved.";
+    }
+  }
+#if 0
+  if(node) {
+    if(SgFunctionRefExp* funRef=isSgFunctionRefExp(node)) {
+      FunctionId funId=_functionIdMapping->getFunctionIdFromFunctionRef(funRef);
+      // TODO: get function definition from funId
+      cout<<"DEBUG: funRef:"<<funRef->unparseToString()<<endl;
+      cout<<"DEBUG: FunctionId "<<funId.toString()<<" for funCall: "<<funCall->unparseToString()<<": definition: ";
+      if(funId.isValid()) {
+#if 1
+        funDef=getFunctionIdMapping()->getFunctionDefFromFunctionId(funId);
+#else
+        SgSymbol* sym=_functionIdMapping->getSymbolFromFunctionId(funId);
+        SgFunctionSymbol* funSym=isSgFunctionSymbol(sym);
+        cout<<"funSym:"<<funSym<<" ";
+        if(funSym) {
+          SgFunctionDeclaration* funDecl=isSgFunctionDeclaration(funSym->get_declaration());
+          cout<<"funDecl:"<<funDecl<<" ";
+          if(funDecl) {
+            auto defDecl=funDecl->get_definingDeclaration();
+            cout<<"definingDecl:"<<defDecl<<" ";
+            if(SgFunctionDeclaration* funDecl=isSgFunctionDeclaration(defDecl)) {
+              funDef=funDecl->get_definition();
+            }
+          }
+        }
+#endif
+      }
+    }
+  }
+#endif
+  logger[TRACE]<<" FunDef: "<<funDef<<endl;
+  return funDef;
+}
+
+SgFunctionDefinition* CFAnalysis::determineFunctionDefinition2(SgFunctionCallExp* funCall) {
+
+  SgExpression* funExp=funCall->get_function();
+  ROSE_ASSERT(funExp);
+  SgType* funExpType=funExp->get_type();
+  ROSE_ASSERT(funExpType);
+  SgFunctionType* callFunType=isSgFunctionType(funExpType);
+  SAWYER_MESG(logger[TRACE])<<"FD2: funExp: "<<funExp->unparseToString()<<" callFunType: "<<callFunType->unparseToString()<<endl;
+
+  SgFunctionSymbol* funCallFunctionSymbol=0;
+  SgName funCallName;
+  if(SgFunctionRefExp* funRef=isSgFunctionRefExp(funExp)) {
+    funCallFunctionSymbol=funRef->get_symbol();
+    funCallName=funCallFunctionSymbol->get_name();
+  }
+  SAWYER_MESG(logger[TRACE])<<"FD2: funCallFunctionSymbol: "<<funCallFunctionSymbol<<endl;
+
+  if(callFunType) {
+    SgNode* rootNode=funCall;
+    while(!isSgProject(rootNode)) {
+      rootNode=rootNode->get_parent();
+    }
+    //SgFunctionParameterTypeList* funParamTypeList=funType->get_argument_list();
+    // search for this function type in the AST.
+    RoseAst ast(rootNode);
+    for(auto node : ast) {
+      // check every function definition
+      if(SgFunctionDefinition* funDef=isSgFunctionDefinition(node)) {
+        SgFunctionDeclaration* funDecl=funDef->get_declaration();
+        // SgName funDecl->get_mangled_name()
+        //const SgInitializedNamePtrList & 	get_args () const 
+
+        SgName funName=funDecl->get_name();
+        if(funName.get_length()>0 && funName==funCallName) {
+          SAWYER_MESG(logger[TRACE])<<"Names match: "<<funName<<endl;
+        } else {
+          SAWYER_MESG(logger[TRACE])<<"Names do NOT match: "<<funCallName<<" : "<<funName<<endl;
+        }
+
+        SgFunctionType* funType=funDecl->get_type();
+        if(callFunType==funType) {
+          SAWYER_MESG(logger[TRACE])<<"Found function type: "<<funType->unparseToString()<<endl;
+          SgName qualifiedFunName=funDecl->get_qualified_name();
+          SAWYER_MESG(logger[TRACE])<<"Found (qual) function name: "<<qualifiedFunName<<endl;
+          SgName FunName=funDecl->get_name();
+          SAWYER_MESG(logger[TRACE])<<"Found (bare) function name: "<<qualifiedFunName<<endl;
+          return funDef;
+        }
+      }
+    }
+  }
+  return 0;
+}
+
+void CFAnalysis::setFunctionIdMapping(FunctionIdMapping* fim) {
+  _functionIdMapping=fim;
+}
+
+FunctionIdMapping* CFAnalysis::getFunctionIdMapping() {
+  return _functionIdMapping;
 }

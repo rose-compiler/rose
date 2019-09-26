@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) abstract_handle.cpp roseAdapter.cpp
+
+run $(public_header) abstract_handle.h roseAdapter.h

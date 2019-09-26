@@ -16,6 +16,9 @@ else
   libexperimentalRoseJovial_la_SOURCES = dummy_jovial_main.C
 endif
 
+bin_PROGRAMS = jovial_preprocess
+jovial_preprocess_SOURCES = jovial_preprocess.C
+
 pkginclude_HEADERS = jovial_support.h
 
 noinst_HEADERS = \

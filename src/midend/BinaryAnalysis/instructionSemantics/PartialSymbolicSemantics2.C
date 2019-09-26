@@ -590,6 +590,8 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
         size_t nread = map->require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE)
                        .at(address->get_number()).limit(nbytes).read(buf).size();
         if (nread == nbytes) {
+            if (nbytes > 1 && map->byteOrder() == ByteOrder::ORDER_UNSPECIFIED)
+                throw BaseSemantics::Exception("multi-byte read with memory having unspecified byte order", currentInstruction());
             ByteOrder::convert(buf, nbytes, map->byteOrder(), ByteOrder::ORDER_LSB);
             uint64_t dflt_val = 0;
             for (size_t i=0; i<nbytes; ++i)

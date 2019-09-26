@@ -19,6 +19,10 @@ include(TestBigEndian)
 
 test_big_endian(WORDS_BIGENDIAN)
 
+if(CMAKE_REQUIRED_QUIET)
+  message(STATUS "Checking for common configuration values by inspecing headers...")
+endif()
+
 check_include_file(argz.h HAVE_ARGZ_H)
 check_function_exists(argz_append HAVE_ARGZ_APPEND)
 check_function_exists(argz_create_sep HAVE_ARGZ_CREATE_SEP )
@@ -43,7 +47,7 @@ check_include_file(dl.h HAVE_DL_H)
 check_function_exists(vprintf HAVE_VPRINTF )
 
 if(!HAVE_VPRINTF)
-check_function_exists(_doprnt HAVE_DOPRNT)
+  check_function_exists(_doprnt HAVE_DOPRNT)
 endif()
 
 check_function_exists(_dyld_func_lookup HAVE_DYLD)
@@ -195,9 +199,12 @@ check_type_size("long long" SIZEOF_LONG_LONG)
 check_type_size("void*" SIZEOF_VOID_P)
 CHECK_TYPE_SIZE(short          SIZEOF_SHORT)
 CHECK_TYPE_SIZE(int            SIZEOF_INT)
-CHECK_TYPE_SIZE(long           SIZEOF_LONG) 
+CHECK_TYPE_SIZE(long           SIZEOF_LONG)
 
-message(STATUS "Checking whether system has ANSI C header files")
+if(NOT CMAKE_REQUIRED_QUIET)
+  message(STATUS "Checking whether system has ANSI C header files")
+endif()
+
 check_include_files("stdlib.h;stdarg.h;string.h;float.h" StandardHeadersExist)
 if(StandardHeadersExist)
   check_prototype_exists(memchr string.h memchrExists)

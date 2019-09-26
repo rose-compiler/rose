@@ -2,6 +2,7 @@
 #include "AsmUnparser_compat.h"
 #include "Diagnostics.h"
 
+#include <boost/format.hpp>
 #include <Partitioner2/ModulesX86.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
@@ -16,7 +17,7 @@ namespace ModulesX86 {
 bool
 MatchStandardPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
     // Look for PUSH EBP
-    SgAsmX86Instruction *insn = NULL; 
+    SgAsmX86Instruction *insn = NULL;
     rose_addr_t pushVa = anchor;
     if (partitioner.instructionExists(pushVa))
         return false;                                   // already in the CFG/AUM
@@ -90,278 +91,6 @@ MatchEnterPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
         return false;
     function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
     function_->reasonComment("matched ENTER <x>, 0");
-    return true;
-}
-
-    
-
-size_t
-isJmpMemThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
-    if (insns.empty())
-        return 0;
-    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[0]);
-    if (!matchJmpMem(partitioner, jmp))
-        return 0;
-    return 1;
-}
-
-size_t
-isLeaJmpThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
-    if (insns.size() < 2)
-        return 0;
-    
-    // LEA ECX, [EBP + constant]
-    SgAsmX86Instruction *lea = isSgAsmX86Instruction(insns[0]);
-    if (!matchLeaCxMemBpConst(partitioner, lea))
-        return 0;
-
-    // JMP address
-    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[1]);
-    if (!matchJmpConst(partitioner, jmp))
-        return 0;
-
-    return 2;
-}
-
-size_t
-isMovJmpThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
-    if (insns.size() < 2)
-        return 0;
-
-    // MOV reg1 [address]
-    SgAsmX86Instruction *mov = isSgAsmX86Instruction(insns[0]);
-    if (!mov || mov->get_kind() != x86_mov)
-        return 0;
-    const SgAsmExpressionPtrList &movArgs = mov->get_operandList()->get_operands();
-    if (movArgs.size() != 2)
-        return 0;
-    SgAsmDirectRegisterExpression *movArg0 = isSgAsmDirectRegisterExpression(movArgs[0]);
-    SgAsmMemoryReferenceExpression *movArg1 = isSgAsmMemoryReferenceExpression(movArgs[1]);
-    if (!movArg0 || !movArg1)
-        return 0;
-    
-    // JMP reg1
-    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[1]);
-    if (!jmp || jmp->get_kind() != x86_jmp)
-        return 0;
-    const SgAsmExpressionPtrList &jmpArgs = jmp->get_operandList()->get_operands();
-    if (jmpArgs.size() != 1)
-        return 0;
-    SgAsmDirectRegisterExpression *jmpArg0 = isSgAsmDirectRegisterExpression(jmpArgs[0]);
-    if (!jmpArg0)
-        return 0;
-    if (jmpArg0->get_descriptor() != movArg0->get_descriptor())
-        return 0;
-
-    return 2;
-}
-
-size_t
-isJmpImmThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
-    if (insns.empty())
-        return 0;
-    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[0]);
-    if (!jmp || jmp->get_kind() != x86_jmp)
-        return 0;
-    const SgAsmExpressionPtrList &jmpArgs = jmp->get_operandList()->get_operands();
-    if (jmpArgs.size() != 1)
-        return 0;
-    SgAsmIntegerValueExpression *jmpArg0 = isSgAsmIntegerValueExpression(jmpArgs[0]);
-    if (!jmpArg0)
-        return 0;
-    rose_addr_t targetVa = jmpArg0->get_absoluteValue();
-    if (!partitioner.memoryMap()->require(MemoryMap::EXECUTABLE).at(targetVa).exists())
-        return 0;                                       // target must be an executable address
-    if (!partitioner.instructionExists(targetVa) && !partitioner.instructionsOverlapping(targetVa).empty())
-        return 0;                                       // points to middle of some instruction
-    return 1;
-}
-
-size_t
-isThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
-    // Longer patterns must be before shorter patterns if they could both match
-    if (size_t n = isLeaJmpThunk(partitioner, insns))
-        return n;
-    if (size_t n = isMovJmpThunk(partitioner, insns))
-        return n;
-    if (size_t n = isJmpMemThunk(partitioner, insns))
-        return n;
-#if 0 // [Robb P. Matzke 2015-06-23]: disabled for now, but see splitThunkFunctions
-    // This matcher is causing too many false positives. The problem is that when the partitioner fails to find some code of a
-    // function and then starts searching for function prologues it's likely to find a "JMP imm" that just happens to be part
-    // of the control flow in the missed code. It then tries to turn that JMP into its own function right in the middle of some
-    // other function and the CG gets all messed up.
-    if (size_t n = isJmpImmThunk(partitioner, insns))
-        return n;
-#endif
-    return 0;
-}
-
-void
-splitThunkFunctions(Partitioner &partitioner) {
-    Sawyer::Message::Stream debug(mlog[DEBUG]);
-    debug <<"splitThunkFunctions\n";
-    std::vector<Function::Ptr> workList = partitioner.functions();
-    while (!workList.empty()) {
-        Function::Ptr candidate = workList.back();
-        workList.pop_back();
-        SAWYER_MESG(debug) <<"  considering " <<candidate->printableName() <<"\n";
-
-        // Get the entry vertex in the CFG and the entry basic block.
-        ControlFlowGraph::ConstVertexIterator entryVertex = partitioner.findPlaceholder(candidate->address());
-        ASSERT_require(partitioner.cfg().isValidVertex(entryVertex));
-        if (entryVertex->value().type() != V_BASIC_BLOCK)
-            continue;
-        BasicBlock::Ptr entryBlock = entryVertex->value().bblock();
-        if (entryBlock == NULL)
-            continue;                                   // can't split a block if we haven't discovered it yet
-
-        // All incoming edges must be function calls, function transfers, etc. We cannot split the thunk from the beginning of
-        // the entry block if the entry block is a successor of some other non-call block in the same function (e.g., the top
-        // of a loop).  Recursive calls (other than optimized tail recursion) should be fine.
-        bool hasIntraFunctionEdge = false;
-        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, entryVertex->inEdges()) {
-            if (edge.value().type() == E_NORMAL) {
-                hasIntraFunctionEdge = true;
-                break;
-            }
-        }
-        if (hasIntraFunctionEdge)
-            continue;
-
-        // Does the function appear to start with a thunk pattern of instructions?
-        size_t thunkSize = isThunk(partitioner, entryBlock->instructions());
-#if 1 // [Robb P. Matzke 2015-06-26]: this case is commented out in isThunk(), so handle it here
-        if (0 == thunkSize)
-            thunkSize = isJmpImmThunk(partitioner, entryBlock->instructions());
-#endif
-        if (0 == thunkSize)
-            continue;
-
-        // Is the thunk pattern a proper subsequence of the entry block?
-        bool thunkIsPrefix = thunkSize < entryBlock->nInstructions();
-        if (!thunkIsPrefix && candidate->basicBlockAddresses().size()==1) {
-            // Function is only a thunk already, so make sure the FUNC_THUNK bit is set.
-            candidate->insertReasons(SgAsmFunction::FUNC_THUNK);
-            continue;                                   // function is only a thunk already
-        }
-        if (!thunkIsPrefix && entryVertex->nOutEdges() != 1)
-            continue;                                   // thunks have only one outgoing edge
-
-        // FIXME[Robb P. Matzke 2015-07-09]: The basic-block splitting part could be its own function
-        // FIXME[Robb P. Matzke 2015-07-09]: The function splitting part could be its own function
-
-        // By now we've determined that there is indeed a thunk that must be split off from the big candidate function. We
-        // can't just remove the thunk's basic block from the candidate function because the thunk is the candidate function's
-        // entry block. Therefore detach the big function from the CFG to make room for new thunk and target functions.
-        SAWYER_MESG(debug) <<"    " <<candidate->printableName() <<" starts with a thunk\n";
-        partitioner.detachFunction(candidate);
-
-        // If the thunk is a proper prefix of the candidate function's entry block then split the entry block in two.
-        BasicBlock::Ptr origEntryBlock = entryBlock;
-        ControlFlowGraph::ConstVertexIterator targetVertex = partitioner.cfg().vertices().end();
-        if (thunkIsPrefix) {
-            SAWYER_MESG(debug) <<"    splitting entry " <<origEntryBlock->printableName() <<"\n";
-            targetVertex = partitioner.truncateBasicBlock(entryVertex, entryBlock->instructions()[thunkSize]);
-            entryBlock = entryVertex->value().bblock();
-            SAWYER_MESG(debug) <<"    new entry is " <<entryBlock->printableName() <<"\n";
-            ASSERT_require(entryBlock != origEntryBlock); // we need the original block for its analysis results below
-            ASSERT_require(entryBlock->nInstructions() < origEntryBlock->nInstructions());
-        } else {
-            targetVertex = entryVertex->outEdges().begin()->target();
-            SAWYER_MESG(debug) <<"    eliding entry block; new entry is " <<partitioner.vertexName(targetVertex) <<"\n";
-        }
-        ASSERT_require(partitioner.cfg().isValidVertex(targetVertex));
-
-        // Create the new thunk function.
-        Function::Ptr thunkFunction = Function::instance(candidate->address(), SgAsmFunction::FUNC_THUNK);
-        SAWYER_MESG(debug) <<"    created thunk " <<thunkFunction->printableName() <<"\n";
-        partitioner.attachFunction(thunkFunction);
-
-        // Create the new target function, which has basically the same features as the original candidate function except a
-        // different entry address.  The target might be indeterminate (e.g., "jmp [address]" where address is not mapped or
-        // non-const), in which case we shouldn't create a function there (in fact, we can't since indeterminate has no
-        // concrete address and functions need entry addresses). Since the partitioner supports shared basic blocks (basic
-        // block owned by multiple functions), the target vertex might already be a function, in which case we shouldn't try to
-        // create it.
-        if (targetVertex->value().type() == V_BASIC_BLOCK && !partitioner.functionExists(targetVertex->value().address())) {
-            unsigned newReasons = (candidate->reasons() & ~SgAsmFunction::FUNC_THUNK) | SgAsmFunction::FUNC_GRAPH;
-            Function::Ptr newFunc = Function::instance(targetVertex->value().address(), candidate->name(), newReasons);
-            newFunc->comment(candidate->comment());
-            BOOST_FOREACH (rose_addr_t va, candidate->basicBlockAddresses()) {
-                if (va != thunkFunction->address())
-                    newFunc->insertBasicBlock(va);
-            }
-            BOOST_FOREACH (const DataBlock::Ptr &db, candidate->dataBlocks())
-                newFunc->insertDataBlock(db);
-            partitioner.attachFunction(newFunc);
-            workList.push_back(newFunc);                // new function might have more thunks to split off yet.
-
-            if (origEntryBlock != entryBlock) {         // original entry block was split
-                // Discover the new function's entry block. This new block is much like the original block since conceptually
-                // the thunk and this new block are really a single basic block.  However, discover thunk might not have been
-                // able to resolve things like opaque predicates and the new block might therefore be shorter.  Consider:
-                //     mov eax, global      ; part of thunk
-                //     jmp [eax]            ; part of thunk
-                //
-                //     cmp eax, global
-                //     jne foo              ; opaque predicate when thunk was attached to this block
-                //     nop                  ; originally part of this block, but now will start a new block
-                BasicBlock::Ptr targetBlock = partitioner.discoverBasicBlock(newFunc->address());
-                if (targetBlock->nInstructions() + entryBlock->nInstructions() == origEntryBlock->nInstructions()) {
-                    BOOST_FOREACH (const DataBlock::Ptr &db, origEntryBlock->dataBlocks())
-                        targetBlock->insertDataBlock(db);
-                    targetBlock->copyCache(origEntryBlock);
-                }
-
-                partitioner.attachBasicBlock(targetBlock);
-            }
-        }
-
-        // Fix edge types between the thunk and the target function
-        for (ControlFlowGraph::ConstEdgeIterator ei=entryVertex->outEdges().begin(); ei!=entryVertex->outEdges().end(); ++ei)
-            partitioner.fixInterFunctionEdge(ei);
-    }
-}
-
-bool
-MatchThunk::match(const Partitioner &partitioner, rose_addr_t anchor) {
-    // Disassemble the next few undiscovered instructions
-    static const size_t maxInsns = 2;                   // max length of a thunk
-    std::vector<SgAsmInstruction*> insns;
-    rose_addr_t va = anchor;
-    for (size_t i=0; i<maxInsns; ++i) {
-        if (partitioner.instructionExists(va))
-            break;                                      // look only for undiscovered instructions
-        SgAsmInstruction *insn = partitioner.discoverInstruction(va);
-        if (!insn)
-            break;
-        insns.push_back(insn);
-        va += insn->get_size();
-    }
-    if (insns.empty())
-        return false;
-
-    functions_.clear();
-    size_t thunkSize = isThunk(partitioner, insns);
-    if (0 == thunkSize)
-        return false;
-
-    // This is a thunk
-    functions_.push_back(Function::instance(anchor, SgAsmFunction::FUNC_THUNK));
-
-    // Do we know the successors?  They would be the function(s) to which the thunk branches.
-    BasicBlock::Ptr bb = BasicBlock::instance(anchor, &partitioner);
-    for (size_t i=0; i<thunkSize; ++i)
-        bb->append(insns[i]);
-    BOOST_FOREACH (const BasicBlock::Successor &successor, partitioner.basicBlockSuccessors(bb)) {
-        if (successor.expr()->is_number()) {
-            rose_addr_t targetVa = successor.expr()->get_number();
-            if (!partitioner.functionExists(targetVa))
-                insertUnique(functions_, Function::instance(targetVa, SgAsmFunction::FUNC_GRAPH), sortFunctionsByAddress);
-        }
-    }
-
     return true;
 }
 
@@ -504,7 +233,7 @@ matchLeaCxMemBpConst(const Partitioner &partitioner, SgAsmX86Instruction *lea) {
         return false;
 
     const RegisterDescriptor CX(x86_regclass_gpr, x86_gpr_cx, 0,
-                                partitioner.instructionProvider().instructionPointerRegister().get_nbits());
+                                partitioner.instructionProvider().instructionPointerRegister().nBits());
     SgAsmDirectRegisterExpression *cxReg = isSgAsmDirectRegisterExpression(leaArgs[0]);
     if (!cxReg || cxReg->get_descriptor()!=CX)
         return false;
@@ -518,7 +247,7 @@ matchLeaCxMemBpConst(const Partitioner &partitioner, SgAsmX86Instruction *lea) {
         return false;
 
     const RegisterDescriptor BP(x86_regclass_gpr, x86_gpr_bp, 0,
-                                partitioner.instructionProvider().stackPointerRegister().get_nbits());
+                                partitioner.instructionProvider().stackPointerRegister().nBits());
     SgAsmDirectRegisterExpression *bpReg = isSgAsmDirectRegisterExpression(sum->get_lhs());
     if (!bpReg || bpReg->get_descriptor()!=BP)
         return false;
@@ -542,7 +271,7 @@ matchMovBpSp(const Partitioner &partitioner, SgAsmX86Instruction *mov) {
         return false;                                   // crazy operands!
 
     const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
-    const RegisterDescriptor BP(x86_regclass_gpr, x86_gpr_bp, 0, SP.get_nbits());
+    const RegisterDescriptor BP(x86_regclass_gpr, x86_gpr_bp, 0, SP.nBits());
     SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(opands[0]);
     if (!rre || rre->get_descriptor()!=BP)
         return false;
@@ -564,7 +293,7 @@ matchMovDiDi(const Partitioner &partitioner, SgAsmX86Instruction *mov) {
         return false;
 
     const RegisterDescriptor DI(x86_regclass_gpr, x86_gpr_di, 0,
-                                partitioner.instructionProvider().instructionPointerRegister().get_nbits());
+                                partitioner.instructionProvider().instructionPointerRegister().nBits());
     SgAsmDirectRegisterExpression *dst = isSgAsmDirectRegisterExpression(opands[0]);
     if (!dst || dst->get_descriptor()!=DI)
         return false;
@@ -586,7 +315,7 @@ matchPushBp(const Partitioner &partitioner, SgAsmX86Instruction *push) {
         return false;                                   // crazy operands!
 
     const RegisterDescriptor BP(x86_regclass_gpr, x86_gpr_bp, 0,
-                                partitioner.instructionProvider().stackPointerRegister().get_nbits());
+                                partitioner.instructionProvider().stackPointerRegister().nBits());
     SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(opands[0]);
     if (!rre || rre->get_descriptor()!=BP)
         return false;
@@ -604,7 +333,7 @@ matchPushSi(const Partitioner &partitioner, SgAsmX86Instruction *push) {
         return false;                                   // crazy operands!
 
     const RegisterDescriptor SI(x86_regclass_gpr, x86_gpr_si, 0,
-                                partitioner.instructionProvider().instructionPointerRegister().get_nbits());
+                                partitioner.instructionProvider().instructionPointerRegister().nBits());
     SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
     if (!rre || rre->get_descriptor()!=SI)
         return false;
@@ -614,38 +343,106 @@ matchPushSi(const Partitioner &partitioner, SgAsmX86Instruction *push) {
 
 std::vector<rose_addr_t>
 scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimits /*in,out*/,
-                     const AddressInterval &targetLimits, size_t tableEntrySize) {
-    ASSERT_require(tableEntrySize>0 && tableEntrySize<=sizeof(rose_addr_t));
+                     const AddressInterval &targetLimits, size_t tableEntrySize,
+                     Sawyer::Optional<rose_addr_t> probableStartVa, size_t nSkippable) {
+    ASSERT_require(tableEntrySize > 0 && tableEntrySize <= sizeof(rose_addr_t));
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"scanCodeAddressTable: tableLimits = " <<StringUtility::addrToString(tableLimits)
+                       <<", targetLimits = " <<StringUtility::addrToString(targetLimits)
+                       <<", tableEntrySize = " <<StringUtility::plural(tableEntrySize, "bytes")
+                       <<(probableStartVa ? ", probable start = " + StringUtility::addrToString(*probableStartVa) : "")
+                       <<", nSkippable = " <<nSkippable <<"\n";
 
-    std::vector<rose_addr_t> successors;
+    std::vector<rose_addr_t> tableEntries;              // decoded entries in the table
+
     if (tableLimits.isEmpty() || targetLimits.isEmpty())
-        return successors;
-
+        return tableEntries;
     MemoryMap::Ptr map = partitioner.memoryMap();
+
+    // Look forward from the probable start address, but possibly allow the table to start with some addresses that are out of
+    // range (which are skipped and not officially part of the table).
+    rose_addr_t actualStartVa = probableStartVa.orElse(tableLimits.least()); // adjusted later if entries are skipped
+    size_t nSkippedEntries = 0;
     while (1) {
         // Read table entry to get target address
         uint8_t bytes[sizeof(rose_addr_t)];
-        rose_addr_t tableEntryVa = tableLimits.least() + successors.size() * tableEntrySize;
-        if (!tableLimits.isContaining(AddressInterval::baseSize(tableEntryVa, tableEntrySize)))
-            break;                                      // table entry is outside of table boundary
+        rose_addr_t tableEntryVa = actualStartVa + tableEntries.size() * tableEntrySize;
+        if (!tableLimits.isContaining(AddressInterval::baseSize(tableEntryVa, tableEntrySize))) {
+            SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" falls outside table boundary\n";
+            break;
+        }
         if (tableEntrySize != (map->at(tableEntryVa).limit(tableEntrySize)
-                               .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(bytes).size()))
-            break;                                      // table entry must be readable but not writable
+                               .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(bytes).size())) {
+            SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" is not read-only\n";
+            break;
+        }
         rose_addr_t target = 0;
         for (size_t i=0; i<tableEntrySize; ++i)
-            target |= bytes[i] << (8*i);
+            target |= bytes[i] << (8*i);                // x86 is little endian
 
-        // Check target validity
-        if (!targetLimits.isContaining(target))
-            break;                                      // target is outside allowed interval
-        if (!map->at(target).require(MemoryMap::EXECUTABLE).exists())
-            break;                                      // target address is not executable
-
-        successors.push_back(target);
+        // Save or skip the table entry
+        if (targetLimits.isContaining(target) && map->at(target).require(MemoryMap::EXECUTABLE).exists()) {
+            tableEntries.push_back(target);
+        } else if (tableEntries.empty() && nSkippedEntries < nSkippable) {
+            ++nSkippedEntries;
+            actualStartVa += tableEntrySize;
+            SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" is skipped"
+                               <<": value is " <<StringUtility::addrToString(target) <<"\n";
+        } else {
+            SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" is invalid"
+                               <<": value is " <<StringUtility::addrToString(target) <<"\n";
+            break;
+        }
     }
-    if (successors.empty()) {
-        tableLimits = AddressInterval();
-        return successors;
+
+    // Look backward from the start address to see if there are valid table entries at negative indexes, even if we didn't find
+    // any by looking forward from the probable start address. Be careful of over/under flows.
+    size_t nBackwardEntries = 0;
+    if (0 == nSkippedEntries) {
+        while (actualStartVa >= tableEntrySize &&
+               tableLimits.isContaining(AddressInterval::baseSize(actualStartVa-tableEntrySize, tableEntrySize))) {
+            uint8_t bytes[sizeof(rose_addr_t)];
+            rose_addr_t tableEntryVa = actualStartVa - tableEntrySize;
+            if (tableEntrySize != (map->at(tableEntryVa).limit(tableEntrySize)
+                                   .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(bytes).size()))
+                break;
+            rose_addr_t target = 0;
+            for (size_t i=0; i<tableEntrySize; ++i)
+                target |= bytes[i] << (8*i);            // x86 is little endian
+
+            // Save entry if valid, otherwise we've reached the beginning of the table
+            if (targetLimits.isContaining(target) && map->at(target).require(MemoryMap::EXECUTABLE).exists()) {
+                tableEntries.insert(tableEntries.begin(), target);
+                actualStartVa -= tableEntrySize;
+                ++nBackwardEntries;
+                SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" found by backward search\n";
+            } else {
+                break;
+            }
+        }
+    }
+
+    if (debug) {
+        if (tableEntries.empty()) {
+            debug <<"  no valid table entries found\n";
+        } else {
+            if (nSkippedEntries > 0)
+                debug <<"  skipped " <<StringUtility::plural(nSkippedEntries, "leading table entries") <<"\n";
+            if (tableEntries.size() > nBackwardEntries) {
+                debug <<"  found " <<StringUtility::plural(tableEntries.size() - nBackwardEntries, "entries")
+                      <<" by scanning forward\n";
+            }
+            if (nBackwardEntries > 0)
+                debug <<"  found " <<StringUtility::plural(nBackwardEntries, "entries") <<" by scanning backward\n";
+            debug <<"  total entries found: " <<tableEntries.size() <<"\n";
+            int idx = -nBackwardEntries;
+            BOOST_FOREACH (rose_addr_t target, tableEntries) {
+                debug <<"    entry[" <<boost::format("%4d") % idx <<"]"
+                      <<" at " <<StringUtility::addrToString(actualStartVa + idx * tableEntrySize)
+                      <<" = " <<StringUtility::addrToString(target) <<"\n";
+                ++idx;
+            }
+        }
     }
 
     // Sometimes the jump table is followed by 1-byte offsets into the jump table, and we should read those offsets as part of
@@ -661,24 +458,35 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
     //     [0x0040165c,0x0040166f]: uint32_t addresses[5] = { <target addresses> };
     //
     //     [0x00401670,0x00401712]: uint8_t index[0xa3] = { <values 0..4> };
-    rose_addr_t indexArrayStartVa = tableLimits.least() + successors.size()*tableEntrySize;
-    rose_addr_t indexArrayCurrentVa = indexArrayStartVa;
-    if (successors.size() <= 16 /*arbitrarily small tables*/) {
-        while (indexArrayCurrentVa <= tableLimits.greatest()) {
-            uint8_t byte;
-            if (!map->at(indexArrayCurrentVa).limit(1).require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(&byte))
-                break;
-            if (byte >= successors.size())
-                break;
-            if (indexArrayCurrentVa == tableLimits.greatest())
-                break;                                  // avoid overflow
-            ++indexArrayCurrentVa;
+    //
+    // Let's hope that the compiler doesn't combine the offset table technique with negative offsets.
+    size_t nIndexes = 0;
+    if (!tableEntries.empty() && 0 == nBackwardEntries) {
+        rose_addr_t indexArrayStartVa = actualStartVa + tableEntries.size() * tableEntrySize;
+        rose_addr_t indexArrayCurrentVa = indexArrayStartVa;
+        if (tableEntries.size() <= 16 /*arbitrarily small tables*/) {
+            while (indexArrayCurrentVa <= tableLimits.greatest()) {
+                uint8_t byte;
+                if (!map->at(indexArrayCurrentVa).limit(1).require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(&byte))
+                    break;
+                if (byte >= tableEntries.size())
+                    break;
+                if (indexArrayCurrentVa == tableLimits.greatest())
+                    break;                                  // avoid overflow
+                ++indexArrayCurrentVa;
+                ++nIndexes;
+            }
         }
+        if (nIndexes > 0)
+            SAWYER_MESG(debug) <<"  found " <<StringUtility::plural(nIndexes, "post table indexes") <<"\n";
     }
-    
+
     // Return values
-    tableLimits = AddressInterval::hull(tableLimits.least(), indexArrayCurrentVa-1);
-    return successors;
+    AddressInterval actualTableLocation = AddressInterval::baseSize(actualStartVa, tableEntries.size() * tableEntrySize + nIndexes);
+    ASSERT_require(tableLimits.isContaining(actualTableLocation));
+    tableLimits = actualTableLocation;
+    SAWYER_MESG(debug) <<"  actual table location = " <<StringUtility::addrToString(actualTableLocation) <<"\n";
+    return tableEntries;
 }
 
 Sawyer::Optional<rose_addr_t>
@@ -781,14 +589,21 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
 
     // Set some limits on the location of the target address table, besides those restrictions that will be imposed during the
     // table-reading loop (like table is mapped read-only).
-    size_t wordSize = args.partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
-    AddressInterval whole = AddressInterval::hull(0, IntegerOps::genMask<rose_addr_t>(8*wordSize));
-    AddressInterval tableLimits = AddressInterval::hull(tableVa, whole.greatest());
+    size_t wordSizeBytes = args.partitioner.instructionProvider().instructionPointerRegister().nBits() / 8;
+    AddressInterval whole = AddressInterval::hull(0, IntegerOps::genMask<rose_addr_t>(8*wordSizeBytes));
+    AddressInterval tableLimits;
+    if (tableVa > jmp->get_address()) {
+        // table is after the jmp instruction
+        tableLimits = AddressInterval::hull(std::min(jmp->get_address() + jmp->get_size(), tableVa), whole.greatest());
+    } else {
+        // table is before the jmp instruction
+        tableLimits = AddressInterval::hull(0, jmp->get_address());
+    }
 
     // Set some limits on allowable target addresses contained in the table, besides those restrictions that will be imposed
     // during the table-reading loop (like targets must be mapped with execute permission).
     AddressInterval targetLimits = AddressInterval::hull(args.bblock->fallthroughVa(), whole.greatest());
-    
+
     // If there's a function that follows us then the switch targets are almost certainly not after the beginning of that
     // function.
     {
@@ -805,8 +620,9 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     }
 
     // Read the table
+    static const size_t maxSkippable = 1;               // max number of invalid table entries to skip; arbitrary
     std::vector<rose_addr_t> tableEntries = scanCodeAddressTable(args.partitioner, tableLimits /*in,out*/,
-                                                                 targetLimits, wordSize);
+                                                                 targetLimits, wordSizeBytes, tableVa, maxSkippable);
     if (tableEntries.empty())
         return chain;
 
@@ -814,10 +630,14 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     std::set<rose_addr_t> successors(tableEntries.begin(), tableEntries.end());
     args.bblock->successors().clear();
     BOOST_FOREACH (rose_addr_t va, successors)
-        args.bblock->insertSuccessor(va, wordSize*8);
+        args.bblock->insertSuccessor(va, wordSizeBytes*8);
 
     // Create a data block for the offset table and attach it to the basic block
-    DataBlock::Ptr addressTable = DataBlock::instance(tableLimits.least(), tableLimits.size());
+    size_t nTableEntries = tableLimits.size() / wordSizeBytes;
+    SgAsmType *tableEntryType = SageBuilderAsm::buildTypeU(8*wordSizeBytes);
+    SgAsmType *tableType = SageBuilderAsm::buildTypeVector(nTableEntries, tableEntryType);
+    DataBlock::Ptr addressTable = DataBlock::instance(tableLimits.least(), tableType);
+    addressTable->comment("x86 'switch' statement's 'case' address table");
     args.bblock->insertDataBlock(addressTable);
 
     // Debugging
@@ -839,7 +659,6 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     return chain;
 }
 
-    
 } // namespace
 } // namespace
 } // namespace

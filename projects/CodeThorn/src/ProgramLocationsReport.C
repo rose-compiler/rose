@@ -7,7 +7,7 @@
 
 using namespace std;
 using namespace CodeThorn;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 string CodeThorn::ProgramLocationsReport::programLocation(Labeler* labeler, Label lab) {
   SgNode* node=labeler->getNode(lab);
@@ -21,7 +21,7 @@ string CodeThorn::ProgramLocationsReport::sourceCodeAtProgramLocation(Labeler* l
   return SgNodeHelper::doubleQuotedEscapedString(node->unparseToString());
 }
 
-void CodeThorn::ProgramLocationsReport::writeResultFile(string fileName, SPRAY::Labeler* labeler) {
+void CodeThorn::ProgramLocationsReport::writeResultFile(string fileName, CodeThorn::Labeler* labeler) {
   std::ofstream myfile;
   myfile.open(fileName.c_str(),std::ios::out);
   if(myfile.good()) {
@@ -41,11 +41,16 @@ void CodeThorn::ProgramLocationsReport::writeResultFile(string fileName, SPRAY::
   }
 }
 
-void ProgramLocationsReport::recordDefinitiveLocation(SPRAY::Label lab) {
+void ProgramLocationsReport::recordDefinitiveLocation(CodeThorn::Label lab) {
   definitiveLocations.insert(lab);
 }
-void ProgramLocationsReport::recordPotentialLocation(SPRAY::Label lab) {
+void ProgramLocationsReport::recordPotentialLocation(CodeThorn::Label lab) {
   potentialLocations.insert(lab);
-
 }
 
+size_t ProgramLocationsReport::numDefinitiveLocations() {
+  return definitiveLocations.size();
+}
+size_t ProgramLocationsReport::numPotentialLocations() {
+  return potentialLocations.size();
+}

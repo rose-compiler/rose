@@ -357,9 +357,9 @@ bool ReadWriteAnalyzer::updateAndCheckForDataRaces(ReadWriteHistory& history, co
     // most recently entered unordered execution block.
     // Note: Order of operands of '*' (a.k.a. intersection) matters for performance reasons
     // TODO: Maybe move namespace of operator '*'? 
-    if (!SPRAY::operator*(stack->top().currentWrites, stack->top().previousWrites).empty() ||
-	!SPRAY::operator*(stack->top().currentWrites, stack->top().previousReads).empty() ||
-	!SPRAY::operator*(stack->top().currentReads, stack->top().previousWrites).empty()) {
+    if (!CodeThorn::operator*(stack->top().currentWrites, stack->top().previousWrites).empty() ||
+	!CodeThorn::operator*(stack->top().currentWrites, stack->top().previousReads).empty() ||
+	!CodeThorn::operator*(stack->top().currentReads, stack->top().previousWrites).empty()) {
       return true; // data race found
     }
     // Accumulate reads and writes from just finished ordered execution block

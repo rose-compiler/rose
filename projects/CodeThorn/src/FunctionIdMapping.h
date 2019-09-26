@@ -1,21 +1,65 @@
-#ifndef FUNCTIONIDMAPPING_H
-#define FUNCTIONIDMAPPING_H
+#ifndef FUNCTIONIDMAPPING2_H
+#define FUNCTIONIDMAPPING2_H
 
 #include <string>
 #include <map>
 #include <vector>
 #include <set>
+#include <unordered_map>
 
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 #include "FunctionIdMapping.h"
 #include "Flow.h"
 #include "Labeler.h"
+#include "FunctionCallTarget.h"
 
+namespace CodeThorn {
 
-namespace SPRAY {
+  class FunctionId;
+  class FunctionIdHashFunction;
+  class FunctionIdMapping;
 
-class FunctionId;
+/*!
+  * \author Simon Schroder (based on Markus Schordan's VariableId)
+  * \date 2012.
+ */
+class FunctionId {
+  friend class FunctionIdMapping;
+  friend class ConstraintSetHashFun;
+  friend bool operator==(FunctionId id1, FunctionId id2);
+  friend bool operator!=(FunctionId id1, FunctionId id2);
+  friend bool operator<(FunctionId id1, FunctionId id2);
+ public:
+  FunctionId();
+  static const char * const idKindIndicator;
+  // Returns the id code as a string with the given prefix
+  std::string toString(const char* prefix = idKindIndicator) const;
+  // Uses the given mapping to return a more detailed string representation
+  std::string toString(const FunctionIdMapping& vid) const;
+  // Returns the id code
+  int getIdCode() const { return _id; }
+  // we intentionally do not provide a constructor for int because this would clash
+  // with overloaded functions that are using AbstractValue (which has an implicit
+  // type conversion for int)
+  void setIdCode(int id);
+  // Returns whether this id is valid
+  bool isValid() const { return _id >= 0; }
+
+ private:
+  // The id code
+  int _id;
+};
+
+ bool operator==(FunctionId id1,FunctionId id2);
+ bool operator!=(FunctionId id1,FunctionId id2);
+ bool operator<(FunctionId id1, FunctionId id2);
+
+  
+ class FunctionIdHashFunction {
+ public:
+   size_t operator()(const FunctionId& p) const;
+ };
 
 /*! 
   * \author Simon Schroder (based on Markus Schordan's VariableIdMapping)
@@ -31,25 +75,13 @@ public:
   // the computation of the ROSE-based function-symbol mapping
   // creates a mapping of functionNames and its computed UniqueFunctionSymbol
   void computeFunctionSymbolMapping(SgProject* project);
-  void computeFunctionSymbolMapping(/*const*/ Flow& ICFG, /*const*/ Labeler& labeler);
 
   SgFunctionDeclaration* getFunctionDeclaration(FunctionId funcFunctionId) const;
-
-
-
 
   void generateDot(std::string filename,SgNode* astRoot);
 
   FunctionIdSet getFunctionIdsOfFunctionDeclarations(std::set<SgFunctionDeclaration*> varDecls);
   FunctionIdSet getFunctionIdsOfAstSubTree(SgNode* node);
-
-  // Looks up the given id in the mapping and returns the corresponding symbol
-  //  Returns 0 if no mapping for the given id exists (e.g. if the id is invalid).
-  SgSymbol* getSymbolFromFunctionId(FunctionId) const;
-
-  // Looks up the given symbol in the mapping and returns the corresponding id.
-  //  Returns an invalid id if no mapping for the given symbol exists.
-  FunctionId getFunctionIdFromSymbol(SgSymbol*) const;
 
   // Looks up the symbol of the given declaration in the mapping and returns the corresponding id
   //  Returns an invalid id if no such mapping exists.
@@ -61,8 +93,15 @@ public:
   FunctionId getFunctionIdFromFunctionRef(SgTemplateFunctionRefExp* functionRef) const;
   FunctionId getFunctionIdFromFunctionRef(SgMemberFunctionRefExp* functionRef) const;
   FunctionId getFunctionIdFromFunctionRef(SgTemplateMemberFunctionRefExp* functionRef) const;
+  FunctionId getFunctionIdFromFunctionDef(SgFunctionDefinition* funDef);
+  SgFunctionDefinition* getFunctionDefFromFunctionId(FunctionId funId);
+  SgFunctionDefinition* resolveFunctionRef(SgFunctionRefExp* funRef);
 
-  // Looks up the given id in the mapping and returns the type associated with the corresponding symbol
+  SgSymbol* getSymbolFromFunctionId(FunctionId id) const;
+  FunctionId getFunctionIdFromSymbol(SgSymbol* symbol) const;
+
+  // Looks up the given id in the mapping and returns the type associated with the corresponding function
+  // this is the type of the function definition, or if this one does not exist of a declaration
   SgFunctionType* getTypeFromFunctionId(FunctionId) const;
 
   bool isTemporaryFunctionId(FunctionId id) const;
@@ -120,7 +159,15 @@ public:
 
   }
 
+  // logger support
+  static void initDiagnostics();
+
  protected:
+  // logger support
+  static Sawyer::Message::Facility logger;
+
+  void computeFunctionCallMapping(SgProject* project);
+
   static void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node, FunctionId id);
   static std::string generateDotSgSymbol(SgSymbol* sym);
 
@@ -131,50 +178,23 @@ public:
   TemporaryFunctionIdMapping temporaryFunctionIdMapping;
 
   // The actual mapping (two data structures for fast mapping in both directions)
-  // TODO: change SgSymbol* to const SgSymbol* because the mapping does not change
-  //  symbols?
   std::vector<SgSymbol*> mappingFunctionIdToSymbol;
   std::map<SgSymbol*,size_t> mappingSymbolToFunctionId;
+  // Mapping of function definitions
+  std::unordered_map<SgFunctionDefinition*,FunctionId> mappingFunctionDefToFunctionId;
+  std::unordered_map<FunctionId,SgFunctionDefinition*,FunctionIdHashFunction> mappingFunctionIdToFunctionDef;
+
+  // mapping supporint multiple targets (to also address function pointers)
+  // TODO: adapt to only use labels
+  std::unordered_map<SgFunctionRefExp*,std::vector<FunctionCallTarget> > functionCallMapping;
 
 }; // end of class FunctionIdMapping
 
+
 typedef FunctionIdMapping::FunctionIdSet FunctionIdSet;
 
-/*!
-  * \author Simon Schroder (based on Markus Schordan's VariableId)
-  * \date 2012.
- */
-class FunctionId {
-  friend class FunctionIdMapping;
-  friend bool operator<(FunctionId id1, FunctionId id2);
-  friend bool operator==(FunctionId id1, FunctionId id2);
-  friend class ConstraintSetHashFun;
- public:
-  FunctionId();
-  static const char * const idKindIndicator;
-  // Returns the id code as a string with the given prefix
-  std::string toString(const char* prefix = idKindIndicator) const;
-  // Uses the given mapping to return a more detailed string representation
-  std::string toString(const FunctionIdMapping& vid) const;
-  // Returns the id code
-  int getIdCode() const { return _id; }
-  // we intentionally do not provide a constructor for int because this would clash
-  // with overloaded functions that are using AbstractValue (which has an implicit
-  // type conversion for int)
-  void setIdCode(int id);
-  // Returns whether this id is valid
-  bool isValid() const { return _id >= 0; }
+//size_t hash_value(const FunctionId& id);
 
- private:
-  // The id code
-  int _id;
-};
-
-size_t hash_value(const FunctionId& id);
-
-bool operator<(FunctionId id1, FunctionId id2);
-bool operator==(FunctionId id1, FunctionId id2);
-bool operator!=(FunctionId id1, FunctionId id2);
 FunctionIdSet& operator+=(FunctionIdSet& s1, const FunctionIdSet& s2);
 
 }

@@ -4,6 +4,7 @@
 #include <BinaryMatrix.h>
 #include <Partitioner2/Function.h>
 #include <Progress.h>
+#include <RoseException.h>
 #include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
 
@@ -60,9 +61,9 @@ class FunctionSimilarity {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /* Exceptions thrown by this analysis. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
-        Exception(const std::string &what): std::runtime_error(what) {}
+        Exception(const std::string &what): Rose::Exception(what) {}
         ~Exception() throw () {}
     };
 
@@ -106,9 +107,10 @@ private:
         CValKind kind;                                  // kind of characteristic values stored here
         double weight;                                  // weight when combining category distances
         size_t dimensionality;                          // dimensionality of Cartesian points; 0 => unknown
+        double dflt;                                    // default value when one of the functions is null
 
         explicit Category(const std::string &name, CValKind kind, double weight = 1.0)
-            : name(name), kind(kind), weight(weight), dimensionality(0) {}
+            : name(name), kind(kind), weight(weight), dimensionality(0), dflt(1.0) {}
     };
 
     std::vector<Category> categories_;

@@ -1,0 +1,43 @@
+#!/bin/bash
+set -ex
+
+########################################################################################################################
+# Create a temporary file
+tempfile() {
+    local real_tempfile="$(which tempfile 2>/dev/null)"
+    if [ -n "$real_tempfile" ]; then
+	"$real_tempfile"
+    else
+	local tmpdir="${TMPDIR:-$TEMPDIR}"
+	mkdir -p "${tmpdir:-/tmp}"
+	echo "${tmpdir:-/tmp}/spock-$RANDOM$RANDOM$RANDOM"
+    fi
+}
+
+########################################################################################################################
+TEMP_FILE_0=$(tempfile)
+TEMP_FILE_1=$(tempfile)
+TEMP_FILE_2=$(tempfile)
+TEMP_FILE_3=$(tempfile)
+
+trap "rm -f ${TEMP_FILE_0} ${TEMP_FILE_1} ${TEMP_FILE_2} ${TEMP_FILE_3} ${TEMP_FILE_4} ${TEMP_FILE_5}" EXIT ERR
+
+# Produce a dump file from the original executable; exclude hexdump-like portions
+./execFormatsTest -o testElfByteOrder-1 -rose:read_executable_file_format_only ${SPECIMEN_DIR}/${INPUT}
+grep -v "data at 0x" testElfByteOrder-1.dump >${TEMP_FILE_0}
+
+# Run the test, which reads the input and produces a file and a dump file
+./testElfByteOrder -o testElfByteOrder-2 ${SPECIMEN_DIR}/${INPUT}
+
+# Parse the above generated *.new file to create a *.new.dump file
+./execFormatsTest -o testElfByteOrder-2 -rose:read_executable_file_format_only testElfByteOrder-2.new
+grep -v "data at 0x" testElfByteOrder-2.dump >${TEMP_FILE_1}
+
+# The two files should differ only in the line of the ELF file header that
+# indicates the byte order. In other words, the diff should fail.
+if diff -u ${TEMP_FILE_0} ${TEMP_FILE_1}; then false; fi
+
+# Remove the byte order lines; files should be the same
+grep -v "ElfFileHeader.Header.Format.sex" ${TEMP_FILE_0} >${TEMP_FILE_2}
+grep -v "ElfFileHeader.Header.Format.sex" ${TEMP_FILE_1} >${TEMP_FILE_3}
+diff -u ${TEMP_FILE_2} ${TEMP_FILE_3}

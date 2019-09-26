@@ -26,110 +26,148 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #------------------------------------------------------------------------------------------------------------------------
 # dump specimen memory to files
 
-bin_PROGRAMS += dumpMemory
-dumpMemory_SOURCES = dumpMemory.C
-dumpMemory_CPPFLAGS = $(ROSE_INCLUDES)
-dumpMemory_LDFLAGS = $(ROSE_RPATHS)
-dumpMemory_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-dump-memory
+rose_dump_memory_SOURCES = dumpMemory.C
+rose_dump_memory_CPPFLAGS = $(ROSE_INCLUDES)
+rose_dump_memory_LDFLAGS = $(ROSE_RPATHS)
+rose_dump_memory_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # linear disassembly at specified addresses
 
-bin_PROGRAMS += linearDisassemble
-linearDisassemble_SOURCES = linearDisassemble.C
-linearDisassemble_CPPFLAGS = $(ROSE_INCLUDES)
-linearDisassemble_LDFLAGS = $(ROSE_RPATHS)
-linearDisassemble_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-linear-disassemble
+rose_linear_disassemble_SOURCES = linearDisassemble.C
+rose_linear_disassemble_CPPFLAGS = $(ROSE_INCLUDES)
+rose_linear_disassemble_LDFLAGS = $(ROSE_RPATHS)
+rose_linear_disassemble_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # disassembler using the new partitioner
 
-bin_PROGRAMS += recursiveDisassemble
-recursiveDisassemble_SOURCES = recursiveDisassemble.C
-recursiveDisassemble_CPPFLAGS = $(ROSE_INCLUDES)
-recursiveDisassemble_LDFLAGS = $(ROSE_RPATHS)
-recursiveDisassemble_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-recursive-disassemble
+rose_recursive_disassemble_SOURCES = recursiveDisassemble.C
+rose_recursive_disassemble_CPPFLAGS = $(ROSE_INCLUDES)
+rose_recursive_disassemble_LDFLAGS = $(ROSE_RPATHS)
+rose_recursive_disassemble_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Run specimen natively by single stepping
 
-bin_PROGRAMS += nativeExecutionTrace
-nativeExecutionTrace_SOURCES = nativeExecutionTrace.C
-nativeExecutionTrace_CPPFLAGS = $(ROSE_INCLUDES)
-nativeExecutionTrace_LDFLAGS = $(ROSE_RPATHS)
-nativeExecutionTrace_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-native-execution-trace
+rose_native_execution_trace_SOURCES = nativeExecutionTrace.C
+rose_native_execution_trace_CPPFLAGS = $(ROSE_INCLUDES)
+rose_native_execution_trace_LDFLAGS = $(ROSE_RPATHS)
+rose_native_execution_trace_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Single-step a process and compare execution addresses with a list of addresses
 
-bin_PROGRAMS += checkExecutionAddresses
-checkExecutionAddresses_SOURCES = checkExecutionAddresses.C
-checkExecutionAddresses_CPPFLAGS = $(ROSE_INCLUDES)
-checkExecutionAddresses_LDFLAGS = $(ROSE_RPATHS)
-checkExecutionAddresses_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-check-execution-addresses
+rose_check_execution_addresses_SOURCES = checkExecutionAddresses.C
+rose_check_execution_addresses_CPPFLAGS = $(ROSE_INCLUDES)
+rose_check_execution_addresses_LDFLAGS = $(ROSE_RPATHS)
+rose_check_execution_addresses_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Scans memory for magic numbers
 
-bin_PROGRAMS += magicScanner
-magicScanner_SOURCES = magicScanner.C
-magicScanner_CPPFLAGS = $(ROSE_INCLUDES)
-magicScanner_LDFLAGS = $(ROSE_RPATHS)
-magicScanner_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-magic-scanner
+rose_magic_scanner_SOURCES = magicScanner.C
+rose_magic_scanner_CPPFLAGS = $(ROSE_INCLUDES)
+rose_magic_scanner_LDFLAGS = $(ROSE_RPATHS)
+rose_magic_scanner_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Execute instructions
 
-bin_PROGRAMS += simulate
-simulate_SOURCES = simulate.C
-simulate_CPPFLAGS = $(ROSE_INCLUDES)
-simulate_LDFLAGS = $(ROSE_RPATHS)
-simulate_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-simulate
+rose_simulate_SOURCES = simulate.C
+rose_simulate_CPPFLAGS = $(ROSE_INCLUDES)
+rose_simulate_LDFLAGS = $(ROSE_RPATHS)
+rose_simulate_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Decode encoded strings
 
-bin_PROGRAMS += stringDecoder
-stringDecoder_SOURCES = stringDecoder.C
-stringDecoder_CPPFLAGS = $(ROSE_INCLUDES)
-stringDecoder_LDFLAGS = $(ROSE_RPATHS)
-stringDecoder_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-string-decoder
+rose_string_decoder_SOURCES = stringDecoder.C
+rose_string_decoder_CPPFLAGS = $(ROSE_INCLUDES)
+rose_string_decoder_LDFLAGS = $(ROSE_RPATHS)
+rose_string_decoder_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Find code that cannot be reached according to static analysis
 
-bin_PROGRAMS += findDeadCode
-findDeadCode_SOURCES = findDeadCode.C
-findDeadCode_CPPFLAGS = $(ROSE_INCLUDES)
-findDeadCode_LDFLAGS = $(ROSE_RPATHS)
-findDeadCode_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-find-dead-code
+rose_find_dead_code_SOURCES = findDeadCode.C
+rose_find_dead_code_CPPFLAGS = $(ROSE_INCLUDES)
+rose_find_dead_code_LDFLAGS = $(ROSE_RPATHS)
+rose_find_dead_code_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Parse and simplify symbolic expressions
 
-bin_PROGRAMS += symbolicSimplifier
-symbolicSimplifier_SOURCES = symbolicSimplifier.C
-symbolicSimplifier_CPPFLAGS = $(ROSE_INCLUDES)
-symbolicSimplifier_LDFLAGS = $(ROSE_RPATHS)
-symbolicSimplifier_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-symbolic-simplifier
+rose_symbolic_simplifier_SOURCES = symbolicSimplifier.C
+rose_symbolic_simplifier_CPPFLAGS = $(ROSE_INCLUDES)
+rose_symbolic_simplifier_LDFLAGS = $(ROSE_RPATHS)
+rose_symbolic_simplifier_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Generate source code from a binary specimen
 
-bin_PROGRAMS += binaryToSource
-binaryToSource_SOURCES = binaryToSource.C
-binaryToSource_CPPFLAGS = $(ROSE_INCLUDES)
-binaryToSource_LDFLAGS = $(ROSE_RPATHS)
-binaryToSource_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-binary-to-source
+rose_binary_to_source_SOURCES = binaryToSource.C
+rose_binary_to_source_CPPFLAGS = $(ROSE_INCLUDES)
+rose_binary_to_source_LDFLAGS = $(ROSE_RPATHS)
+rose_binary_to_source_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Generate a program trace and show some properties of it
 
-bin_PROGRAMS += trace
-trace_SOURCES = trace.C
-trace_CPPFLAGS = $(ROSE_INCLUDES)
-trace_LDFLAGS = $(ROSE_RPATHS)
-trace_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-trace
+rose_trace_SOURCES = trace.C
+rose_trace_CPPFLAGS = $(ROSE_INCLUDES)
+rose_trace_LDFLAGS = $(ROSE_RPATHS)
+rose_trace_LDADD = $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
+# Monitor execution and estimate number of unique instructions
+
+bin_PROGRAMS += rose-execution-monitor
+
+rose_execution_monitor_SOURCES = ExecutionMonitor.C
+rose_execution_monitor_CPPFLAGS = $(ROSE_INCLUDES)
+rose_execution_monitor_LDFLAGS = $(ROSE_RPATHS)
+rose_execution_monitor_LDADD = $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
+bin_PROGRAMS += rose-perf-execution-wrapper
+rose_perf_execution_wrapper_SOURCES = rose-perf-execution-wrapper.c
+
+#------------------------------------------------------------------------------------------------------------------------
+# Analyze perf output for estimating the number of unique instructions
+
+AM_YFLAGS = -d -t
+
+bin_PROGRAMS += rose-perf-analyzer
+rose_perf_analyzer_SOURCES = PerfOutputAnalyzer/parser.ypp PerfOutputAnalyzer/lexer.lpp \
+                             PerfOutputAnalyzer/analyzer.cpp 
+rose_perf_analyzer_CPPFLAGS = $(ROSE_INCLUDES)
+rose_perf_analyzer_LDFLAGS = $(ROSE_RPATHS)
+rose_perf_analyzer_LDADD = $(ROSE_LIBS)
+
+
+#------------------------------------------------------------------------------------------------------------------------
+# Test for rose-execution-monitor
+#   specimen can be invoked: testExecutionMonitor [mode] [N]
+#                            mode = 0 .. invoke identity N times.
+#                            mode = 1 .. alternate identity, sum, fibonacci over N runs.
+#                            default mode = 0, default N = 10
+
+bin_PROGRAMS += testExecutionMonitor
+
+testExecutionMonitor_SOURCES = specimens/test-execution-monitor.C
 
 #------------------------------------------------------------------------------------------------------------------------
 # Not distributed; not part of the Git repo
@@ -226,23 +264,23 @@ endif
 #------------------------------------------------------------------------------------------------------------------------
 # Generate programs having specific structures (for path testing)
 
-bin_PROGRAMS += generatePaths
-generatePaths_SOURCES = generatePaths.C
-generatePaths_CPPFLAGS = $(ROSE_INCLUDES)
-generatePaths_LDFLAGS = $(ROSE_RPATHS)
-generatePaths_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-generate-paths
+rose_generate_paths_SOURCES = generatePaths.C
+rose_generate_paths_CPPFLAGS = $(ROSE_INCLUDES)
+rose_generate_paths_LDFLAGS = $(ROSE_RPATHS)
+rose_generate_paths_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Find paths in the CFG
 
-bin_PROGRAMS += findPath
-findPath_SOURCES =				\
+bin_PROGRAMS += rose-find-path
+rose_find_path_SOURCES =			\
 	PathFinder/PathFinder.C			\
 	PathFinder/semantics.C			\
 	PathFinder/findPath.C
-findPath_CPPFLAGS = $(ROSE_INCLUDES)
-findPath_LDFLAGS = $(ROSE_RPATHS)
-findPath_LDADD = $(ROSE_LIBS)
+rose_find_path_CPPFLAGS = $(ROSE_INCLUDES)
+rose_find_path_LDFLAGS = $(ROSE_RPATHS)
+rose_find_path_LDADD = $(ROSE_LIBS)
 
 pkginclude_HEADERS +=				\
 	PathFinder/PathFinder.h			\
@@ -253,72 +291,72 @@ pkginclude_HEADERS +=				\
 
 if ROSE_HAVE_DLIB
 
-bin_PROGRAMS += findSimilarFunctions
-findSimilarFunctions_SOURCES = findSimilarFunctions.C
-findSimilarFunctions_CPPFLAGS = $(ROSE_INCLUDES)
-findSimilarFunctions_LDFLAGS = $(ROSE_RPATHS)
-findSimilarFunctions_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-find-similar-functions
+rose_find_similar_functions_SOURCES = findSimilarFunctions.C
+rose_find_similar_functions_CPPFLAGS = $(ROSE_INCLUDES)
+rose_find_similar_functions_LDFLAGS = $(ROSE_RPATHS)
+rose_find_similar_functions_LDADD = $(ROSE_LIBS)
 
 endif
 
 #------------------------------------------------------------------------------------------------------------------------
 # maximize bijection of two sets
 
-bin_PROGRAMS += maxBijection
-maxBijection_SOURCES = maxBijection.C
-maxBijection_CPPFLAGS = $(ROSE_INCLUDES)
-maxBijection_LDFLAGS = $(ROSE_RPATHS)
-maxBijection_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-max-bijection
+rose_max_bijection_SOURCES = maxBijection.C
+rose_max_bijection_CPPFLAGS = $(ROSE_INCLUDES)
+rose_max_bijection_LDFLAGS = $(ROSE_RPATHS)
+rose_max_bijection_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # debug instruction semantics
 
-bin_PROGRAMS += debugSemantics
-debugSemantics_SOURCES = debugSemantics.C
-debugSemantics_CPPFLAGS = $(ROSE_INCLUDES)
-debugSemantics_LDFLAGS = $(ROSE_RPATHS)
-debugSemantics_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-debug-semantics
+rose_debug_semantics_SOURCES = debugSemantics.C
+rose_debug_semantics_CPPFLAGS = $(ROSE_INCLUDES)
+rose_debug_semantics_LDFLAGS = $(ROSE_RPATHS)
+rose_debug_semantics_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # x86-call-targets
 
-bin_PROGRAMS += x86-call-targets
-x86_call_targets_SOURCES = x86-call-targets.C
-x86_call_targets_CPPFLAGS = $(ROSE_INCLUDES)
-x86_call_targets_LDFLAGS = $(ROSE_RPATHS)
-x86_call_targets_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-x86-call-targets
+rose_x86_call_targets_SOURCES = x86-call-targets.C
+rose_x86_call_targets_CPPFLAGS = $(ROSE_INCLUDES)
+rose_x86_call_targets_LDFLAGS = $(ROSE_RPATHS)
+rose_x86_call_targets_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # generate XML from ROSE internals
 
-bin_PROGRAMS += rxml
-rxml_SOURCES = rxml.C
-rxml_CPPFLAGS = $(ROSE_INCLUDES)
-rxml_LDFLAGS = $(ROSE_RPATHS)
-rxml_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-rxml
+rose_rxml_SOURCES = rxml.C
+rose_rxml_CPPFLAGS = $(ROSE_INCLUDES)
+rose_rxml_LDFLAGS = $(ROSE_RPATHS)
+rose_rxml_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # DWARF line numbers
 
-bin_PROGRAMS += dwarf-lines
-dwarf_lines_SOURCES = dwarf-lines.C
-dwarf_lines_CPPFLAGS = $(ROSE_INCLUDES)
-dwarf_lines_LDFLAGS = $(ROSE_RPATHS)
-dwarf_lines_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-dwarf-lines
+rose_dwarf_lines_SOURCES = dwarf-lines.C
+rose_dwarf_lines_CPPFLAGS = $(ROSE_INCLUDES)
+rose_dwarf_lines_LDFLAGS = $(ROSE_RPATHS)
+rose_dwarf_lines_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Very fast XML to JSON converter
 
-bin_PROGRAMS += xml2json
-xml2json_SOURCES = xml2json.C
-xml2json_CPPFLAGS = $(ROSE_INCLUDES)
-xml2json_LDFLAGS = $(ROSE_RPATHS)
-xml2json_LDADD = $(ROSE_LIBS)
+bin_PROGRAMS += rose-xml2json
+rose_xml2json_SOURCES = xml2json.C
+rose_xml2json_CPPFLAGS = $(ROSE_INCLUDES)
+rose_xml2json_LDFLAGS = $(ROSE_RPATHS)
+rose_xml2json_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Script to print historgram of instructions with missing semantics
 
-bin_SCRIPTS += missing-semantics
+bin_SCRIPTS += rose-missing-semantics
 
 ########################################################################################################################
 ########################################################################################################################
@@ -340,11 +378,11 @@ bin_SCRIPTS += missing-semantics
 TEST_TARGETS += testAdaptiveRegisters.passed
 testAdaptiveRegisters.passed: $(srcdir)/specimens/x86-64-adaptiveRegs		\
 			      $(srcdir)/TestAnswers/testAdaptiveRegisters.ans		\
-			      debugSemantics
-	@$(RTH_RUN)												\
-		TITLE="RegisterStateGeneric [$@]"								\
-		CMD="./debugSemantics --test-adaptive-registers --semantics=symbolic --track-writers=last $<"	\
-		ANS=$(srcdir)/TestAnswers/testAdaptiveRegisters.ans						\
+			      rose-debug-semantics
+	@$(RTH_RUN)													\
+		TITLE="RegisterStateGeneric [$@]"									\
+		CMD="./rose-debug-semantics --test-adaptive-registers --semantics=symbolic --track-writers=last $<"	\
+		ANS=$(srcdir)/TestAnswers/testAdaptiveRegisters.ans							\
 		$(top_srcdir)/scripts/test_with_answer $@
 
 # Tests that the xml2json tool works correctly
@@ -367,13 +405,13 @@ xml2json_tests = $(addsuffix .passed, $(xml2json_inputs))
 TEST_TARGETS += $(xml2json_tests)
 check-xml2json: $(xml2json_tests)
 
-$(xml2json_tests): %.passed: $(abspath $(srcdir))/specimens/% xml2json
-	@$(RTH_RUN)									\
-		TITLE="convert $(notdir $<) to JSON [$@]"				\
-		USE_SUBDIR=yes								\
-		CMD="$$(pwd)/xml2json $< $(notdir $<).json && cat $(notdir $<).json"	\
-		ANS="$(srcdir)/TestAnswers/$*.ans"					\
-		FILTER="$(srcdir)/semanticsFilter"					\
+$(xml2json_tests): %.passed: $(abspath $(srcdir))/specimens/% rose-xml2json
+	@$(RTH_RUN)										\
+		TITLE="convert $(notdir $<) to JSON [$@]"					\
+		USE_SUBDIR=yes									\
+		CMD="$$(pwd)/rose-xml2json $< $(notdir $<).json && cat $(notdir $<).json"	\
+		ANS="$(srcdir)/TestAnswers/$*.ans"						\
+		FILTER="$(srcdir)/semanticsFilter"						\
 		$(top_srcdir)/scripts/test_with_answer $@
 
 endif

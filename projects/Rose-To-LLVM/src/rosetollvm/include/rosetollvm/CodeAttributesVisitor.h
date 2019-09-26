@@ -12,6 +12,10 @@ public:
 
     void processRemainingComponents();
 
+    void setupAdHocVisitor(LLVMAstAttributes *attributes) {
+        setAttributes(attributes);
+    }
+      
 protected:
 
     /**
@@ -29,8 +33,6 @@ protected:
 
     std::vector<SgSourceFile *> sourceFiles;
 
-    bool isTrivialCast(SgType *type1, SgType *type2);
-    
     void oldprocessVariableDeclaration(SgInitializedName *);
     void preprocessVariableDeclaration(SgInitializedName *);
     void postprocessVariableDeclaration(SgInitializedName *);

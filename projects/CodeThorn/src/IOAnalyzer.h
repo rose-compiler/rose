@@ -1,5 +1,5 @@
-#ifndef I_O_ANALYZER_H
-#define I_O_ANALYZER_H
+#ifndef IO_ANALYZER_H
+#define IO_ANALYZER_H
 
 #include "Analyzer.h"
 

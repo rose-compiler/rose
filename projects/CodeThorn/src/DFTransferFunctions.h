@@ -6,46 +6,56 @@
 #include "Flow.h"
 #include "PointerAnalysisInterface.h"
 #include "ProgramAbstractionLayer.h"
+#include "PropertyState.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 class DFTransferFunctions {
 public:
   DFTransferFunctions();
-  SPRAY::Labeler* getLabeler() { return _programAbstractionLayer->getLabeler(); }
+  CodeThorn::Labeler* getLabeler() { return _programAbstractionLayer->getLabeler(); }
   VariableIdMapping* getVariableIdMapping() { return _programAbstractionLayer->getVariableIdMapping(); }
-  void setProgramAbstractionLayer(SPRAY::ProgramAbstractionLayer* pal) {_programAbstractionLayer=pal; }
+  virtual void setProgramAbstractionLayer(CodeThorn::ProgramAbstractionLayer* pal) {_programAbstractionLayer=pal; }
   // allow for some pointer analysis to be used directly
-  void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pointerAnalysisInterface) { _pointerAnalysisInterface=pointerAnalysisInterface; }
-  SPRAY::PointerAnalysisInterface* getPointerAnalysisInterface() { return _pointerAnalysisInterface; }
+  virtual void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pointerAnalysisInterface) { _pointerAnalysisInterface=pointerAnalysisInterface; }
+  CodeThorn::PointerAnalysisInterface* getPointerAnalysisInterface() { return _pointerAnalysisInterface; }
 
-  virtual void transfer(SPRAY::Edge edge, Lattice& element);
+  virtual void transfer(CodeThorn::Edge edge, Lattice& element);
   virtual void transferCondition(Edge edge, Lattice& element);
 
-  virtual void transfer(SPRAY::Label lab, Lattice& element);
-  virtual void transferExpression(SPRAY::Label label, SgExpression* expr, Lattice& element);
-  virtual void transferEmptyStmt(SPRAY::Label label, SgStatement* stmt, Lattice& element);
-  virtual void transferDeclaration(SPRAY::Label label, SgVariableDeclaration* decl, Lattice& element);
-  virtual void transferReturnStmtExpr(SPRAY::Label label, SgExpression* expr, Lattice& element);
-  virtual void transferSwitchCase(SPRAY::Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate);
-  virtual void transferSwitchDefault(SPRAY::Label lab,SgStatement* condStmt, SgDefaultOptionStmt* defaultStmt,Lattice& pstate);
-  virtual void transferFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
-  virtual void transferExternalFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
-  virtual void transferFunctionCallReturn(SPRAY::Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element);
-  virtual void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element);
-  virtual void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
+  virtual void transfer(CodeThorn::Label lab, Lattice& element);
+  virtual void transferExpression(CodeThorn::Label label, SgExpression* expr, Lattice& element);
+  virtual void transferEmptyStmt(CodeThorn::Label label, SgStatement* stmt, Lattice& element);
+  virtual void transferDeclaration(CodeThorn::Label label, SgVariableDeclaration* decl, Lattice& element);
+  virtual void transferReturnStmtExpr(CodeThorn::Label label, SgExpression* expr, Lattice& element);
+  virtual void transferSwitchCase(CodeThorn::Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate);
+  virtual void transferSwitchDefault(CodeThorn::Label lab,SgStatement* condStmt, SgDefaultOptionStmt* defaultStmt,Lattice& pstate);
+  virtual void transferFunctionCall(CodeThorn::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
+  virtual void transferExternalFunctionCall(CodeThorn::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
+  virtual void transferFunctionCallReturn(CodeThorn::Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element);
+  virtual void transferFunctionCallReturn(CodeThorn::Label lab, CodeThorn::VariableId varId, SgFunctionCallExp* callExp, Lattice& element);
+  virtual void transferFunctionEntry(CodeThorn::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element);
+  virtual void transferFunctionExit(CodeThorn::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
   virtual ~DFTransferFunctions() {}
-  virtual void setSkipSelectedFunctionCalls(bool flag);
   virtual void addParameterPassingVariables();
   VariableId getParameterVariableId(int paramNr);
   VariableId getResultVariableId();
   bool isExternalFunctionCall(Label l);
   //protected:
  public:
-  SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
+  CodeThorn::PointerAnalysisInterface* _pointerAnalysisInterface;
+  virtual void setSkipSelectedFunctionCalls(bool flag);
+  virtual bool getSkipSelectedFunctionCalls();
+  virtual void initializeExtremalValue(Lattice& element);
+  virtual Lattice* initializeGlobalVariables(SgProject* root);
+  void setInitialElementFactory(PropertyStateFactory*);
+  PropertyStateFactory* getInitialElementFactory();
 
+ protected:
+  bool _skipSelectedFunctionCalls=false;
+  PropertyStateFactory* _initialElementFactory=nullptr;
  private:
-  SPRAY::ProgramAbstractionLayer* _programAbstractionLayer;
+  CodeThorn::ProgramAbstractionLayer* _programAbstractionLayer;
   VariableId parameter0VariableId;
   VariableId resultVariableId;
 };

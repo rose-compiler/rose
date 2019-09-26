@@ -1,0 +1,78 @@
+%{
+#include <stdio.h>
+#include <string.h>
+
+#include "PerfOutputAnalyzer/analyzer.hpp"
+
+void yyerror(const char *str)
+{
+  fprintf(stderr,"error: %s\n",str);
+}
+
+int yywrap()
+{
+  return 1;
+}
+
+int yylex();
+
+%}
+
+%error-verbose
+
+%union {
+  char*             m_str;
+  location_t        m_loc;
+  ctrl_transfer_t   m_transfer;
+  execution_range_t m_range;
+}
+
+
+%token <m_str> ADDR
+%token ARROW
+%token <m_str> BINARY
+%token <m_str> INSTR
+%token NL
+
+%type <m_str>         address binary instruction instructions_opt 
+%type <m_loc>         binary_loc 
+%type <m_transfer>    perf_line
+%type <m_range>       perf_lines_opt
+
+%start perf_profile
+
+%%
+
+address          : ADDR                              { $$ = $1; }    
+                 ;
+                 
+binary           : BINARY                            { $$ = $1; }
+                 ;                 
+
+binary_loc       : address binary                    { $$ = { $2, $1 }; }
+                 | /* error production */
+                   address                           { $$ = errorLocation(); } 
+                 ;
+                 
+instruction      : INSTR                             { $$ = NULL; }
+                 ;
+                 
+instructions_opt : /* empty */                       { $$ = NULL; }
+                 | instructions_opt instruction      { $$ = $1; }
+                 ;
+                 
+perf_line        : instructions_opt
+                   binary_loc ARROW binary_loc NL    { $$ = { $2, $4 };   }
+                 | /* error production */
+                   instructions_opt
+                   binary_loc NL                     { $$ = errorTransfer(); }
+                 | /* error production */
+                   NL                                { $$ = errorTransfer(); }
+                 ;  
+
+perf_lines_opt   : /* empty */                       { $$ = range(); }
+                 | perf_lines_opt perf_line          { $$ = range($1, $2); }
+                 ; 
+
+perf_profile     : perf_lines_opt                    { report($1); }  
+                 ;

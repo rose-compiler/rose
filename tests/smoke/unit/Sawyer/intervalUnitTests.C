@@ -10,6 +10,7 @@
 #include <Sawyer/Optional.h>
 #include <Sawyer/Stopwatch.h>
 #include <boost/foreach.hpp>
+#include <boost/range/distance.hpp>
 #include <iostream>
 
 // Use std::pair as a value.  Works since it satisfies the minimal API: copy constructor, assignment operator, and equality.
@@ -109,16 +110,16 @@ static void imap_tests(const Value &v1, const Value &v2) {
     ASSERT_always_require(imap.findPrior(120)==imap.nodes().begin());
 
     // Test findAll against one node
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(99, 99)))==0);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(99, 100)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(99, 119)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(99, 120)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(100, 100)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(100, 119)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(100, 120)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(119, 119)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(119, 120)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(120, 120)))==0);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(99, 99)))==0);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(99, 100)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(99, 119)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(99, 120)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(100, 100)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(100, 119)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(100, 120)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(119, 119)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(119, 120)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(120, 120)))==0);
 
     // Test least() against one node
     ASSERT_always_require(imap.least()==100);
@@ -223,42 +224,42 @@ static void imap_tests(const Value &v1, const Value &v2) {
     ASSERT_always_require(imap.find(120)==imap.nodes().end());
 
     // Test findAll against multiple nodes
-    ASSERT_always_require(distance(imap.findAll(Interval::hull( 99,  99)))==0);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull( 99, 100)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull( 99, 104)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull( 99, 105)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull( 99, 114)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull( 99, 115)))==2);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull( 99, 119)))==2);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull( 99, 120)))==2);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(100, 100)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(100, 104)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(100, 105)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(100, 114)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(100, 115)))==2);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(100, 119)))==2);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(100, 120)))==2);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(104, 104)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(104, 105)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(104, 114)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(104, 115)))==2);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(104, 119)))==2);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(104, 120)))==2);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(105, 105)))==0);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(105, 114)))==0);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(105, 115)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(105, 119)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(105, 120)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(114, 114)))==0);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(114, 115)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(114, 119)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(114, 120)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(115, 115)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(115, 119)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(115, 120)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(119, 119)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(119, 120)))==1);
-    ASSERT_always_require(distance(imap.findAll(Interval::hull(120, 120)))==0);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull( 99,  99)))==0);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull( 99, 100)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull( 99, 104)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull( 99, 105)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull( 99, 114)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull( 99, 115)))==2);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull( 99, 119)))==2);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull( 99, 120)))==2);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(100, 100)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(100, 104)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(100, 105)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(100, 114)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(100, 115)))==2);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(100, 119)))==2);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(100, 120)))==2);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(104, 104)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(104, 105)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(104, 114)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(104, 115)))==2);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(104, 119)))==2);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(104, 120)))==2);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(105, 105)))==0);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(105, 114)))==0);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(105, 115)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(105, 119)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(105, 120)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(114, 114)))==0);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(114, 115)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(114, 119)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(114, 120)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(115, 115)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(115, 119)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(115, 120)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(119, 119)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(119, 120)))==1);
+    ASSERT_always_require(boost::distance(imap.findAll(Interval::hull(120, 120)))==0);
     
     // Overwrite the right end with a different value
     std::cerr <<"insert(119, v2)\n";
@@ -935,9 +936,24 @@ static void set_intersection_tests() {
     ASSERT_always_require(*ai==Interval::hull(15, 18));
 }
 
+template<class T>
+struct CheckOverflow {
+    void operator()(T x) {
+        ASSERT_always_require2(T(x+T(2)) > x, "overflow");
+    }
+};
+
+template<>
+struct CheckOverflow<int> {
+    void operator()(int) {
+        // signed integer overflow is undefined behavior and results in
+        // warnings from good compilers.
+    }
+};
+
 template<class Interval>
 static void iterator_tests(typename Interval::Value low) {
-    ASSERT_always_require2(low+2 > low, "overflow");
+    CheckOverflow<typename Interval::Value>()(low);
     std::cerr <<"  empty interval iterators\n";
 
     Interval empty;

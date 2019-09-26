@@ -2,5 +2,5 @@
 #include "EquivalenceChecking.h"
 #include "AstTerm.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 

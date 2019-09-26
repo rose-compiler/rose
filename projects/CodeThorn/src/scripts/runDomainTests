@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# test 1-9: normalization: YES
+# test 10:  normalization: NO
+
+TESTDIR=$1
+echo "------------------------------------------------"
+echo "running DOMAIN TESTS"
+echo "------------------------------------------------"
+
+BENCH_PASS=0
+BENCH_FAIL=0
+
+function DomainTests {
+testNumbers=`echo {001..009}`
+testNumbers="$testNumbers 011 013 014 015 016"
+failNumbers="010 012"
+echo "Scheduled tests: $testNumbers"
+echo "Skipping tests: $failNumbers"
+for testNumber in $testNumbers; do
+    benchmarkprefix=$TESTDIR/DOM${testNumber};
+    for benchmark in ${benchmarkprefix}*.[Cc]; do
+        benchmarkname=$(basename $benchmark)
+        echo -n "Testing $benchmarkname : "
+        ./codethorn $benchmark --normalize-all=yes > /dev/null
+        if [ ! $? -eq 0 ]
+        then
+	    echo "FAIL"
+            exit 1
+        else
+            echo "PASS"
+        fi
+    done
+done
+}
+
+DomainTests
+
+rm -f rose_normalization*.C
+rm -f a.out
+

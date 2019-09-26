@@ -1,5 +1,7 @@
 #!/bin/bash
 # Regenerate the ROSE source files that contain functions that turn enum constants into names.
+#
+# Usage: restringify $ROSE_SRCDIR $ROSE_BLDDIR
 
 set -e
 

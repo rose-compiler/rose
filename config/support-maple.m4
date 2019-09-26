@@ -13,14 +13,14 @@ if test ! "$with_maple" ; then
 fi
 )
 
-echo "In ROSE SUPPORT MACRO: with_maple $with_maple"
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: with_maple = "$with_maple"])
 
 if test "$with_maple" = no; then
    # If maple is not specified, then don't use it.
-   echo "Skipping use of Maple!"
+   AC_MSG_NOTICE([skipping use of Maple])
 else
    maple_path=$with_maple
-   echo "Setup Maple support in ROSE! path = $maple_path"
+   AC_MSG_NOTICE([setup Maple support in ROSE. path = "$maple_path"])
 
    MAPLE_SYSTEM_TYPE="`$maple_path/bin/maple.system.type`"
    MAPLE_LIBDIR="$maple_path/$MAPLE_SYSTEM_TYPE"

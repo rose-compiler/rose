@@ -1,0 +1,815 @@
+#!/bin/bash
+set -e
+arg0="${0##*/}"
+dir0="${0%/*}"
+[ "$dir0" = "${dir0#/}" ] && dir0="$(pwd)/$dir0"
+
+LIBDIR="$dir0/../lib/matrix"
+VARDIR="$dir0/../var/matrix"
+ETCDIR="$dir0/../etc/matrix"
+
+DATABASE="$ROSE_MATRIX_DATABASE"
+DRY_RUN=
+IGNORE_SETUP_FAILURES=
+INTERACTIVE=
+KEEP_CONTAINERS=
+LIMIT_TESTS=
+LIMIT_TIME=
+MAX_SAVED_LINES=500
+ONLY_SUPPORTED=
+PROJECT_NAME="mx"
+REBUILD_IMAGES=
+RMC_CONFIG=
+RMC_CONSTRAINTS=
+RUN_FOREVER=
+SOURCE_CODE=
+TARGET_OS=
+TEST_NUMBER=1
+UPLOAD_ARTIFACTS=
+VERBOSITY=0
+
+########################################################################################################################
+help() {
+    echo "usage: $arg0 [SWITCHES] SOURCE_CODE_DIRECTORY"
+    echo
+    echo "  Switches"
+    echo "    --database=URL"
+    echo "        Database to use when running tests. It should have the format"
+    echo "        \"postgresql://rose:PASSWORD@HOST/rose\" where the first \"rose\" is"
+    echo "        the user name and the last one is the database name, and where"
+    echo "        \"PASSWORD\" and \"HOST\" are the database password and the database"
+    echo "        server name."
+    echo
+    echo "    --dry-run"
+    echo "        Don't update the database with any results, but still perform all the"
+    echo "        other actions."
+    echo
+    echo "    --forever"
+    echo "        Loop endlessly, running tests forever, regardless of what other limits"
+    echo "        might be set.  For instance, --forever overrides --max-count=1 and"
+    echo "        --max-time=2h."
+    echo
+    echo "    --ignore-setup-failures"
+    echo "        Do not report to the database those builds that failed during a \"setup\""
+    echo "        step."
+    echo
+    echo "    --interactive"
+    echo "        Start an interactive shell in the target machine before any steps are"
+    echo "        run."
+    echo
+    echo "    --keep-containers=(all|fail|pass|STATUS)"
+    echo "        Defines which Docker containers (build trees) should be kept. Normally"
+    echo "        each container is removed at the end of the test."
+    echo
+    echo "    --max-count=N; -nN"
+    echo "        Run at most N tests (N builds) of the candidate software. The"
+    echo "        default is ${LIMIT_TESTS}."
+    echo
+    echo "    --max-time=N; -tN"
+    echo "        Don't start a new test if more than N amount of time has elapsed since"
+    echo "        testing started. N should be an integer followed by an optional \"d\","
+    echo "        \"h\", \"m\", or \"s\" (the default) to indicate days, hours, minutes,"
+    echo "        or seconds."
+    echo
+    echo "    --only-supported"
+    echo "        If querying configurations from a database, ask the database to supply"
+    echo "        only configurations that are officially supported by the project."
+    echo
+    echo "    --os=NAME"
+    echo "        Run tests on the specified operating system name instead of randomly"
+    echo "        selecting an operating system from the etc/matrix/target-os file."
+    echo
+    echo "    --rebuild-images"
+    echo "        Specifying this switch will cause the Docker images for all operating"
+    echo "        system containers to be removed so that they're recreated. You can use"
+    echo "        this to force upgrade to the latest software in the container."
+    echo
+    echo "    --rmc-config=FILE"
+    echo "        Instead of getting an RMC configuration file from the database server"
+    echo "        use the one specified for this command-line switch. Regardless of"
+    echo "        where the configuration file comes from, it's still subject to the"
+    echo "        adjustments for the source directory location and the values of the"
+    echo "        --rmc-constraints switch."
+    echo
+    echo "    --rmc-constraints=FILE"
+    echo "        Overrides values in an RMC configuration file (either the one specified"
+    echo "        with --rmc-config or the one obtained from the database, with values"
+    echo "        from this constraints file.  The constraints file has a syntax similar"
+    echo "        to an RMC configuration file except (1) it's not a shell script, and"
+    echo "        (2) each rmc_\* command is followed by a space-separated list of allowed"
+    echo "        values, one of which will be chosen at random to replace the"
+    echo "        corresponding line in the RMC configuration file."
+    echo
+    echo "    --upload=URL"
+    echo "        For every successful test (tests that reached their final \"end\" state)"
+    echo "        copy the test artifacts (files in the \"artifacts\" run directory) to the"
+    echo "        specified URL."
+    echo
+    echo "    --var=DIRECTORY"
+    echo "        Name of directory that contains run-time information for testing."
+    echo "        The directory need not exist; it will be created. The default is to"
+    echo "        use \$PREFIX/var/matrix where \$PREFIX is the installation root"
+    echo "        directory for the matrix testing tools."
+    echo
+    echo "    --verbose"
+    echo "        Be more verbose than normal. Giving this command twice increases the"
+    echo "        verbosity to a debug level of output."
+}
+
+########################################################################################################################
+# Die with an error message
+die() {
+    echo "$arg0:" "error:" "$@" >&2
+    exit 1
+}
+
+########################################################################################################################
+# Show a heading when starting a new test
+test-heading() {
+    if [ $LIMIT_TESTS != 1 -o $TEST_NUMBER != 1 ]; then
+	echo
+	echo
+	echo "================================================================================"
+	echo
+	(figlet "Test $TEST_NUMBER" || banner "Test $TEST_NUMBER" || echo "Test $TEST_NUMBER") 2>/dev/null
+	echo "================================================================================"
+	echo
+    fi
+}    
+
+########################################################################################################################
+# Run a command after echoing the command-line
+run() {
+    [ "$VERBOSITY" -lt 2 ] && echo "+" "$@" >&2
+    "$@"
+}
+
+########################################################################################################################
+# Called when the script exits or dies
+TEMP_DIRECTORIES=()
+script-death() {
+    echo "cleaning up..."
+    for dir in "${TEMP_DIRECTORIES[@]}"; do
+	(set -e; rm -rf -- "$dir")
+    done
+}
+trap script-death EXIT
+
+########################################################################################################################
+# Generate a random name for a temporary file or directory
+generate-temporary-name() {
+    local basename=$(printf "%s-%04x-%04x-%04x-%04x" "$arg0" $RANDOM $RANDOM $RANDOM $RANDOM)
+    echo "${TMPDIR:-/tmp}/$basename"
+}
+
+########################################################################################################################
+# Create temporary directory that will be removed when this script exits
+create-temporary-directory() {
+    local dirname="$1"
+    mkdir "$dirname"
+    TEMP_DIRECTORIES=("${TEMP_DIRECTORIES[@]}" "$dirname")
+}
+
+########################################################################################################################
+# Initialize limits for how many tests are run, but don't clobber values that might have been on the command-line.
+initialize-limits() {
+    case "$LIMIT_TIME" in
+	?*d)
+	    LIMIT_TIME="${LIMIT_TIME%d}"
+	    LIMIT_TIME=$[ LIMIT_TIME * 86400 ]
+	    ;;
+	?*h)
+	    LIMIT_TIME="${LIMIT_TIME%h}"
+	    LIMIT_TIME=$[ LIMIT_TIME * 3600 ]
+	    ;;
+	?*m)
+	    LIMIT_TIME="${LIMIT_TIME%m}"
+	    LIMIT_TIME=$[ LIMIT_TIME * 60 ]
+	    ;;
+	?*s)
+	    LIMIT_TIME="${LIMIT_TIME%s}"
+	    ;;
+    esac
+
+    if [ "$LIMIT_TIME" != "" -a "$LIMIT_TESTS" = "" ]; then
+	LIMIT_TESTS=1000000
+    elif [ "$LIMIT_TIME" = "" -a "$LIMIT_TESTS" != "" ]; then
+	LIMIT_TIME=$[7 * 86400]
+    elif [ "$LIMIT_TIME" = "" -a "$LIMIT_TESTS" = "" ]; then
+	LIMIT_TIME=1
+	LIMIT_TESTS=1
+    fi
+
+    if [ "$SOURCE_CODE" = "" ]; then
+	RUN_FOREVER=
+	LIMIT_TESTS=0
+	LIMIT_TIME=0
+    fi
+
+    [ "$LIMIT_TESTS" -ge 0 ]
+    [ "$LIMIT_TIME" -ge 0 ]
+}
+
+########################################################################################################################
+# Select the operating system specified on the command-line (--os) or a random operating system name from a
+# configuration file.
+select-os() {
+    if [ -n "$TARGET_OS" ]; then
+	echo "$TARGET_OS"
+    else
+	local os="$(rose-matrix-slave-config --database="$DATABASE" --value-only --plain TEST_OS |tr ' ' '\n' |shuf -n1)"
+	[ -n "$os" ] || die "no operating systems configured (TEST_OS slave setting)"
+	echo "$os"
+    fi
+}
+
+########################################################################################################################
+# Simplify a Docker operating system name by removing certain characters that cause problems in hostnames.
+simplified-os-name() {
+    local os="$1"
+    echo "$os" |tr -dc '[a-z0-9]-_'
+}
+
+########################################################################################################################
+# Find the best docker template for the specified operating system
+select-docker-template() {
+    local os="$1"
+
+    # First look for the exact OS name (but remove special characters). E.g., look for "ubuntu1804"
+    local template="${LIBDIR}/docker-templates/$(simplified-os-name "$os")"
+    if [ -r "$template" ]; then
+	echo "$template"
+	return 0
+    fi
+
+    # Then remove the OS tag and look just for the base name. E.g., look for "ubuntu".
+    local base_os="${os%:*}"
+    template="${LIBDIR}/docker-templates/${base_os}"
+    if [ -r "$template" ]; then
+	echo "$template"
+	return 0
+    fi
+
+    # Look for the OS from which the specified OS is derived. E.g., if os is "ubuntu" look for "debian"
+    local derived_from=
+    case "$os" in
+	ubuntu*)
+	    derived_from=debian
+	    ;;
+    esac
+    template="${LIBDIR}/docker-templates/${derived_from}"
+    if [ -n "$derived_from" -a -r "$template" ]; then
+	echo "$template"
+	return 0
+    fi
+
+    # Give up
+    die "unrecognized operating system: $os"
+}
+
+########################################################################################################################
+# Given a list of arguments, return one of them randomly
+select-random-argument() {
+    local n="$#"
+    local i=$[ RAMDOM % n + 1]
+    eval "echo \"\$$i\""
+}
+
+########################################################################################################################
+# Generate a docker image for the specified operating system.
+generate-docker-image() {
+    local os="$1" image_tag="$2"
+    local tempdir=$(generate-temporary-name)
+    create-temporary-directory "$tempdir"
+
+    local template="$(select-docker-template "$os")"
+    sed "s%\\\${os}%$os%g" <"$template" >"${tempdir}/Dockerfile"
+    if [ "$VERBOSITY" -gt 0 ]; then
+	echo "Docker file:"
+	cat -n "${tempdir}/Dockerfile"
+    fi
+
+    rsync -a --exclude='*~' "${LIBDIR}/container-scripts/" "${tempdir}/container-scripts"
+    (cd "$tempdir" && run docker build -t "$image_tag" .)
+}
+
+########################################################################################################################
+# Adjust (or add) an entry in an RMC configuration file
+adjust-rmc-config-file() {
+    local config_file="$1" key="$2" value="$3" comment="$4"
+    [ -n "$comment" ] && comment=" # $comment"
+    sed -i~ "s%^[ \\t]*${key}[ \\t].*%$key $value$comment%" "$config_file"
+    grep -q "^[ \t]*$key[ \t]" "$config_file" || echo "$key $value$comment" >>"$config_file"
+}
+
+########################################################################################################################
+# Adjust the RMC configuration file according to any RMC constraints.
+constrain-rmc-config-file() {
+    local config_file="$1"
+    [ -n "$RMC_CONSTRAINTS" ] || return 0
+
+    cat "$RMC_CONSTRAINTS" |while read; do
+	local line="$(echo "$REPLY" |sed -e 's/#.*//' -e 's/^[ \t]*//' -e 's/[ \t]*$//')"
+	[ -n "$line" ] || continue
+	local key="${line%% *}"
+	local values="${line#$key}"
+	local value="$(select-random-argument $values)"
+	adjust-rmc-config-file "$config_file" $key $value constraint
+    done
+}
+
+########################################################################################################################
+# Generate the RMC configuration file for the next test
+generate-rmc-config-file() {
+    local rundir="$1"
+
+    if [ -n "$RMC_CONFIG" ]; then
+	cp "$RMC_CONFIG" "${rundir}/rmc-config"
+    else
+	rose-matrix-next-test --format=rmc --database="$DATABASE" $ONLY_SUPPORTED >"${rundir}/rmc-config"
+    fi
+    constrain-rmc-config-file "${rundir}/rmc-config"
+    adjust-rmc-config-file "${rundir}/rmc-config" rmc_rosesrc /home/user/project-source-ro
+}
+
+########################################################################################################################
+# Check whether the RMC configuration file is suitable for the specified OS.
+check-rmc-suitability() {
+    local os="$1" rundir="$2"
+
+    local reject_script="$ETCDIR/$(simplified-os-name "$os")-reject.sh"
+    (
+	echo "#!/bin/bash"
+	echo "os='$os'"
+	echo "SOURCE_CODE='$SOURCE_CODE'"
+	echo
+	sed -n "s/^\([^ \t]\+\)[ \t]\+\(.*\)/\1='\2'/p" <"$rundir/rmc-config"
+	echo
+	cat "$LIBDIR/run-support"
+	echo
+	[ -f "$ETCDIR/general-reject.sh" ] && cat "$ETCDIR/general-reject.sh"
+	echo
+	[ -f "$reject_script" ] && cat "$reject_script"
+    ) >"$rundir/rejected"
+    bash "$rundir/rejected" || return 1
+    rm -f "$rundir/rejected"
+    return 0
+}
+	    
+########################################################################################################################
+# Given an operating system name, return the Docker image name.
+generate-image-name() {
+    local os="$1"
+    local os_simple=$(simplified-os-name "$os")
+    echo "${PROJECT_NAME:-mx}-${os_simple}"
+}
+
+########################################################################################################################
+# Given the name of an operating system, generate a name for a new container.  Although we once added the date and time
+# as part of the container name, it turns out that Docker has problems when names start to get too long -- it reports
+# strange errors like "docker: invalid reference format: repository name must be lowercase" even though the long name
+# is actually all lower-case.
+generate-container-name() {
+    local os="$1"
+    printf "%s-%04x%04x" "${image_name}" $RANDOM $RANDOM
+}
+
+########################################################################################################################
+# Removes images for all the operating system containers (or if --os was specified, for just that operating system).
+remove-os-images() {
+    if [ -n "$TARGET_OS" ]; then
+	docker image rm "$(generate-image-name "$TARGET_OS")" || true
+    else
+	local os=
+	for os in $(rose-matrix-slave-config --value-only --plain TEST_OS); do
+	    docker image rm "$(generate-image-name "$os")" || true
+	done
+    fi
+}
+
+########################################################################################################################
+remove-ansi-escapes() {
+    sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mKG]//g'
+}
+
+########################################################################################################################
+# Get result value.
+get-result() {
+    local rundir="$1" key="$2" dflt="$3"
+    local val=
+    if [ -r "${rundir}/result" ]; then
+	val="$(sed -n "s/^[ \\t]*${key}[ \\t]*=[ \\t]*\\(.*\\)/\\1/p" "$rundir/result" |\
+               sed -e 's/[ \t]*$//' -e "s/'\\(.*\\)'/\\1/")"
+    fi
+
+    if [ -n "$val" ]; then
+	echo "$val"
+    else
+	echo "$dflt"
+    fi
+}
+
+########################################################################################################################
+# Delete the specified key from the result file
+delete-result() {
+    local rundir="$1" key="$2"
+    if [ -f "${rundir}/result" ]; then
+	sed -i~ "/^[ \\t]*${key}[ \\t]*=/d" "${rundir}/result"
+    fi
+}
+
+########################################################################################################################
+# Set a result value
+set-result() {
+    local rundir="$1" key="$2" value="$3"
+    delete-result "$rundir" "$key"
+    echo "${key} = ${value}" >>"${rundir}/result"
+}
+
+
+########################################################################################################################
+# Report results back to the database.
+report-results() {
+    local rundir="$1"
+    if [ -n "$IGNORE_SETUP_FAILURES" ]; then
+	if [ "$(get-result "$rundir" status)" = setup ]; then
+	    echo "$arg0: test failed during \"setup\" step; not reporting to database"
+	    return 0
+	fi
+    fi
+    
+    local testid=$(rose-matrix-test-result $DRY_RUN --database="$DATABASE" --log='tool(>=trace)' "${rundir}/result")
+    rose-matrix-slave-health test "$testid"
+    if [ "$testid" = "" -a -z "$DRY_RUN" ]; then
+	echo "$arg0: error: failed to send test results to database ********"
+    elif  [ "$DRY_RUN" = "" ]; then
+	rose-matrix-attachments --database="$DATABASE" --attach --title="Commands" $testid "${rundir}/dribble"
+	tail -n $MAX_SAVED_LINES "${rundir}/output" |\
+	    iconv -c -f UTF8 -t ASCII |\
+	    remove-ansi-escapes >"${rundir}/output.short"
+	rose-matrix-attachments --database="$DATABASE" --attach --title="Final output" $testid "${rundir}/output.short"
+	rm "${rundir}/output.short"
+	rose-matrix-errors --database="$DATABASE" update $testid
+
+	if [ "$(get-result "$rundir" status)" != end ]; then
+	    rose-matrix-query --database="$DATABASE" status first_error id=$testid
+	fi
+    fi
+}
+
+########################################################################################################################
+# Return the value of a phase configuration key.  If the config file doesn't exist or doesn't contain the specified
+# key then return the default.
+get-phase-config() {
+    local phasedir="$1" key="$2" dflt="$3"
+    local val=
+    if [ -r "$phasedir/config" ]; then
+	val="$(sed -n "s/^[ \\t]*${key}[ \\t]*=[ \\t]*\\(.*\\)/\\1/p" "$phasedir/config" |sed 's/[ \t]*$//')"
+    fi
+
+    if [ -n "$val" ]; then
+	echo "$val"
+    else
+	echo "$dflt"
+    fi
+}
+	
+
+########################################################################################################################
+# Decide whether to keep the Docker container. If not, then remove it.
+remove-or-keep-container() {
+    local rundir="$1" image_name="$2" container_name="$3"
+
+    local keep=
+    case "$KEEP_CONTAINERS" in
+	all)
+	    keep=yes
+	    ;;
+	pass)
+	    [ "$(get-result "$rundir" status)" = end ] && keep=yes
+	    ;;
+	fail)
+	    [ "$(get-result "$rundir" status)" != end ] && keep=yes
+	    ;;
+	*)
+	    [ "$(get-result "$rundir" status)" = "$KEEP_CONTAINERS" ] && keep=yes
+	    ;;
+    esac
+
+    if [ "$keep" = "" ]; then
+	run docker container rm "$container_name"
+	run docker image prune -f
+    else
+	# Since we're keeping the container, lets make a script that will allow the user to easily
+	# restart it.
+	(
+	    local restart_image_name="${container_name}-debug"
+	    local restart_container_name="$(printf "%s-%04x" "$restart_image_name" $RANDOM)"
+	    echo "#/bin/bash"
+	    echo "set -x"
+	    echo "docker commit $container_name $restart_image_name"
+	    echo "docker run -it --hostname $image_name --privileged" \
+		 "--mount type=bind,src=${VARDIR}/spock,dst=/home/user/.spock" \
+		 "--mount type=bind,src=${SOURCE_CODE},dst=/home/user/project-source-ro" \
+		 "--mount type=bind,src=${rundir},dst=/home/user/run" \
+		 "--name $restart_container_name" \
+		 "$restart_image_name" \
+		 "sudo --login -u user"
+	    echo "docker container rm $restart_container_name"
+	    echo "docker image rm $restart_image_name"
+	) >"${rundir}/debug-container"
+	chmod +x "${rundir}/debug-container"
+	echo "run \"${rundir}/debug-container\" to debug this container"
+    fi
+}
+
+########################################################################################################################
+# Decide whether to keep the run directory. If not, then remove it.
+remove-or-keep-rundir() {
+    local rundir="$1"
+
+    local keep=
+    if [ "$(get-result "$rundir" status)" = end ]; then
+	if [ "$KEEP_CONTAINERS" = all -o "$KEEP_CONTAINERS" = pass ]; then
+	    keep=yes
+	fi
+    else
+	if [ "$KEEP_CONTAINERS" = all -o "$KEEP_CONTAINERS" = fail ]; then
+	    keep=yes
+	fi
+    fi
+
+    if [ "$keep" = "" ]; then
+	rm -rf "$rundir"
+    fi
+}
+
+########################################################################################################################
+# Conditionally upload artifacts to a server.
+upload-artifacts() {
+    local rundir="$1" container_name="$2"
+
+    if [ -n "$UPLOAD_ARTIFACTS" ]; then
+	if [ "$(get-result "$rundir" status)" = end ]; then
+	    if [ -d "$rundir/artifacts" ]; then
+		echo "uploading test artifacts to $UPLOAD_ARTIFACTS..."
+		case "$UPLOAD_ARTIFACTS" in
+		    s3://*)
+			(
+			    cd "$rundir"
+			    ln -s artifacts "$container_name"
+			    tar cvf - "$container_name/." |gzip -9 >"$container_name.tar.gz"
+			    rm "$container_name"
+			    aws s3 cp "$container_name.tar.gz" "$UPLOAD_ARTIFACTS/$container_name.tar.gz"
+			)
+			;;
+		    *)
+			(
+			    cd "$rundir"
+			    ln -s artifacts "$container_name"
+			    tar cvf - "$container_name/." |gzip -9 >"$container_name.tar.gz"
+			    rm "$container_name"
+			    scp "$container_name.tar.gz" "$UPLOAD_ARTIFACTS/$container_name.tar.gz"
+			)
+			;;
+		esac
+	    fi
+	fi
+    fi
+}
+
+########################################################################################################################
+# Run one test in a Docker container
+run-test() {
+    # Generate the Docker image for the selected target operating system.
+    local os=$(select-os)
+    [ -n "$os" ] || die "unable to select a target operating system"
+    local image_name="$(generate-image-name "$os")"
+    generate-docker-image "$os" "$image_name"
+
+    # All testing containers share a single RMC/Spock installation directory and RMC/Spock will create appropriate
+    # host-specific subdirs. These subdirs are based on the operating system name.
+    if [ -d "$HOME/.spock/var/downloads" -a ! -d "$VARDIR/spock/var/downloads" ]; then
+	mkdir -p "$VARDIR/spock/var"
+	rsync -a --progress "$HOME/.spock/var/downloads/" "$VARDIR/spock/var/downloads"
+    fi
+
+    # Create the directory that will hold this test. Each test has its own directory that's initialized with all
+    # the configuration info needed by the test and will eventually contain the test results.
+    local container_name="$(generate-container-name "$os")"
+    local rundir="${VARDIR}/running/${container_name}"
+    mkdir -p "$rundir/artifacts"
+
+    # Create configuration files
+    echo "Obtaining test configuration for $os..."
+    while true; do
+	generate-rmc-config-file "$rundir"
+	check-rmc-suitability "$os" "$rundir" && break
+    done
+    echo "RMC configuration:"
+    cat -n "${rundir}/rmc-config"
+
+    # Create initial contents for some output files
+    set-result "$rundir" os "$os"
+    set-result "$rundir" tester "$(whoami)@$(hostname) using $arg0"
+    (
+	echo "Time that test started: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+	echo "Host machine: $(whoami)@$(hostname -f) $(uname -srv)"
+	echo "Target machine: Docker container $container_name using image $image_name"
+	echo "Number of hardware threads: $(grep -cP '^processor\t:' /proc/cpuinfo)"
+	[ -n "$KEEP_CONTAINERS" ] && echo "Restart command (if saved): ${rundir}/debug-container"
+	echo
+    ) >"${rundir}/dribble"
+
+    >"${rundir}/output"
+    [ -n "$INTERACTIVE" ] && touch "${rundir}/interactive"
+
+    # Run the test
+    echo
+    echo "Test is starting; run directory is ${rundir}"
+    for phasedir in "${LIBDIR}/container-scripts/phases"/*; do
+	[ -d "$phasedir" ] || continue
+	local phase_basename="${phasedir##*/}"
+	local phase_name="$(echo "$phase_basename" |sed 's/^[0-9]\+-//')"
+	[ "$phase_basename" = "$phase_name" ] && continue # didn't start with a number
+	echo "$phase_basename" > "${rundir}/phase"
+	delete-result "$rundir" status
+
+	local mount_spock_switches=
+	if [ "$(get-phase-config "$phasedir" mount-spock yes)" = yes ]; then
+	    mount_spock_switches="--mount type=bind,src=${VARDIR}/spock,dst=/home/user/.spock"
+	fi
+
+	local mount_project_switches=
+	if [ "$(get-phase-config "$phasedir" mount-project yes)" = yes ]; then
+	    mount_project_switches="--mount type=bind,src=$SOURCE_CODE,dst=/home/user/project-source-ro,readonly"
+	fi
+
+	if (run docker run \
+		$INTERACTIVE \
+		--privileged \
+		--hostname "$image_name" \
+		$mount_spock_switches \
+		$mount_project_switches \
+		--mount type=bind,src="${rundir}",dst="/home/user/run" \
+		--name "$container_name" "$image_name"); then
+	    # Test finishted, so report results
+	    echo "docker container $container_name completed: $(get-result "$rundir" status)"
+	    remove-or-keep-container "$rundir" "$image_name" "$container_name"
+	    [ "$(get-result "$rundir" status)" = end ] || break
+	else
+	    echo "docker container $container_name terminated abnormally"
+	    remove-or-keep-container "$rundir" "$image_name" "$container_name"
+	    exit 1
+	fi
+    done
+    report-results "$rundir"
+    upload-artifacts "$rundir" "$container_name"
+    remove-or-keep-rundir "$rundir"
+}
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
+# Parse command-line
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--)
+	    shift
+	    break
+	    ;;
+
+	--database=*)
+	    DATABASE="${1#--database=}"
+	    shift
+	    ;;
+
+	--dry-run)
+	    DRY_RUN=--dry-run
+	    shift
+	    ;;
+
+	--forever)
+	    RUN_FOREVER=yes
+	    shift
+	    ;;
+
+	--help|-h)
+	    help
+	    exit 0
+	    ;;
+
+	--ignore-setup-failures)
+	    IGNORE_SETUP_FAILURES=yes
+	    shift
+	    ;;
+
+	--interactive)
+	    INTERACTIVE="--interactive --tty"
+	    shift
+	    ;;
+
+	--max-count=*)
+	    LIMIT_TESTS="${1#--max-count=}"
+	    shift
+	    ;;
+	-n?*)
+	    LIMIT_TESTS="${1#-n}"
+	    shift
+	    ;;
+
+	--max-time=*)
+	    LIMIT_TIME="${1#--max-time=}"
+	    shift
+	    ;;
+	-t?*)
+	    LIMIT_TIME="${1#-t}"
+	    shift
+	    ;;
+
+	--only-supported)
+	    ONLY_SUPPORTED=--only-supported
+	    shift
+	    ;;
+
+	--os=*)
+	    TARGET_OS="${1#--os=}"
+	    shift
+	    ;;
+
+	--keep-containers=*)
+	    KEEP_CONTAINERS="${1#--keep-containers=}"
+	    shift
+	    ;;
+
+	--rebuild-images)
+	    REBUILD_IMAGES=yes
+	    shift
+	    ;;
+
+	--rmc-config=*)
+	    RMC_CONFIG="${1#--rmc-config=}"
+	    shift
+	    ;;
+
+	--rmc-constraints=*)
+	    RMC_CONSTRAINTS="${1#--rmc-constraints=}"
+	    shift
+	    ;;
+
+	--upload=*)
+	    UPLOAD_ARTIFACTS="${1#--upload=}"
+	    shift
+	    ;;
+
+	--var=*)
+	    VARDIR="${1#--var=}"
+	    shift
+	    ;;
+
+	--verbose|-v)
+	    VERBOSITY=$[VERBOSITY + 1]
+	    shift
+	    ;;
+
+	-*)
+	    die "unrecognized command-line switch \"$1\"; see --help"
+	    ;;
+
+	*)
+	    break
+	    ;;
+    esac
+done
+
+SOURCE_CODE="$1"
+[ "$VERBOSITY" -ge 2 ] && set -x
+[ -n "$REBUILD_IMAGES" ] && remove-os-images
+
+initialize-limits
+
+if [ "$SOURCE_CODE" = "" ]; then
+    echo "Nothing to test"
+    exit 0
+fi
+while [ -n "$SOURCE_CODE" ]; do
+    if [ "$RUN_FOREVER" = "" ]; then
+	[ "$LIMIT_TESTS" -le 0 ] && break
+	[ "$LIMIT_TIME"  -le 0 ] && break
+    fi
+    [ ! -d "$SOURCE_CODE/." ] && die "test directory missing: $SOURCE_CODE"
+
+    [ -n "$DATABASE" ] || die "no database URL specified"
+    test-heading
+    start_time=$SECONDS
+    run-test
+    end_time=$SECONDS
+    elapsed_time=$[ end_time - start_time ]
+
+    LIMIT_TIME=$[ LIMIT_TIME - elapsed_time ]
+    LIMIT_TESTS=$[ LIMIT_TESTS - 1 ]
+    TEST_NUMBER=$[ TEST_NUMBER + 1 ]
+done
+
+exit 0

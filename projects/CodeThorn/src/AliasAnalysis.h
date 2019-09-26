@@ -3,7 +3,7 @@
 
 class SgExpression;
 
-namespace SPRAY {
+namespace CodeThorn {
 
   class AliasAnalysis {
   public:
@@ -22,6 +22,6 @@ namespace SPRAY {
     virtual ~AliasAnalysis();
   };
   
-} // end namespace SPRAY
+} // end namespace CodeThorn
 
 #endif

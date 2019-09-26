@@ -154,3 +154,18 @@ V1.8 2017-04-27 Markus Schordan, Marc Jasper, Joshua Asplund, Adrian Prantl
   * added visualization of read and write sets (data race check).
   * added a PROMELA code generator for parallel automata.
   * CFG dot graph frontend: multiple subgraphs can now be parsed as inidividual CFGs.
+
+------------------------------------------------------------------------------------------------------------
+V1.9 2018-12-12 Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl
+------------------------------------------------------------------------------------------------------------
+
+  * added support for context-sensitive analysis using call strings.
+  * extended handling of pointer semantics
+  * added initial support for structs
+  * added null pointer dereference detection and representation of error states in state transition systems
+  * Refined program normalization (required for inter-procedural analysis).
+  * removed constraint system
+  * added new handling of parameter passing (substituting the use of the removed constraints)
+  * improved support of array initializers
+  * added support for pointers to C-strings (char literals)
+  * added mapping for built-in type sizes (used in analysis and configurable)

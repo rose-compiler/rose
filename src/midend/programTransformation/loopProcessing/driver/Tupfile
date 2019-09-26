@@ -1,0 +1,7 @@
+include_rules
+
+run $(librose_compile) ArrayInterface.C BlockingAnal.C FusionAnal.C CopyArrayAnal.C LoopTransformOptions.C TransformComputation.C \
+    InterchangeAnal.C TypedFusionImpl.C ParallelizeLoop.C LoopTransformInterface.C NormalizeCPP.C AutoTuningInterface.C
+
+run $(public_header) ArrayInterface.h BlockingAnal.h InterchangeAnal.h CopyArrayAnal.h LoopTransformOptions.h LoopTransformInterface.h \
+    FusionAnal.h ParallelizeLoop.h AutoTuningInterface.h

@@ -11,7 +11,7 @@ using namespace Rose;
 using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis;
 
-/** Indicates concrete stack delta is not known or not calculated. */
+// Indicates concrete stack delta is not known or not calculated.
 const int64_t SgAsmInstruction::INVALID_STACK_DELTA = (uint64_t)1 << 63; // fairly arbitrary, but far from zero
 
 size_t
@@ -213,4 +213,42 @@ SgAsmInstruction::toString() const {
         }
     }
     return retval;
+}
+
+std::set<rose_addr_t>
+SgAsmInstruction::explicitConstants() const {
+    struct T1: AstSimpleProcessing {
+        std::set<rose_addr_t> values;
+        void visit(SgNode *node) {
+            if (SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(node))
+                values.insert(ive->get_absoluteValue());
+        }
+    } t1;
+#if 0 // [Robb Matzke 2019-02-06]: ROSE API deficiency: cannot traverse a const AST
+    t1.traverse(this, preorder);
+#else
+    t1.traverse(const_cast<SgAsmInstruction*>(this), preorder);
+#endif
+    return t1.values;
+}
+
+
+static SAWYER_THREAD_TRAITS::Mutex semanticFailureMutex;
+
+size_t
+SgAsmInstruction::semanticFailure() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(semanticFailureMutex);
+    return semanticFailure_.n;
+}
+
+void
+SgAsmInstruction::semanticFailure(size_t n) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(semanticFailureMutex);
+    semanticFailure_.n = n;
+}
+
+void
+SgAsmInstruction::incrementSemanticFailure() {
+    SAWYER_THREAD_TRAITS::LockGuard lock(semanticFailureMutex);
+    ++semanticFailure_.n;
 }

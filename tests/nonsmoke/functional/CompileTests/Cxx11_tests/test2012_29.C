@@ -9,11 +9,16 @@
 // The new utility introduces a new way to test assertions at compile-time, using the new keyword 
 // static_assert. The declaration assumes the following form:
 
-static_assert (constant-expression, error-message);
+// static_assert (constant-expression, error-message);
+
+#include<type_traits>
 
 // Here are some examples of how static_assert can be used:
 
-static_assert((GREEKPI > 3.14) && (GREEKPI < 3.15), "GREEKPI is inaccurate!");
+const int GREEKPI = 4;
+
+// static_assert((GREEKPI > 3.14) && (GREEKPI < 3.15), "GREEKPI is inaccurate!");
+static_assert((GREEKPI > 2) && (GREEKPI < 5), "GREEKPI is inaccurate!");
 
 template<class T>
 struct Check  {

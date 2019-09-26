@@ -2,7 +2,7 @@
 #include <rose_isnan.h>
 #include "ConcreteSemantics2.h"
 #include "integerOps.h"
-#include "sageBuilderAsm.h"
+#include "SageBuilderAsm.h"
 #include <Sawyer/BitVectorSupport.h>
 
 using namespace Sawyer::Container;
@@ -168,18 +168,20 @@ MemoryState::merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::Ri
 }
 
 void
-MemoryState::print(std::ostream &out, Formatter&) const {
+MemoryState::print(std::ostream &out, Formatter &fmt) const {
     if (!map_) {
-        out <<"no memory map\n";
+        out <<fmt.get_line_prefix() <<"no memory map\n";
     } else {
-        map_->dump(out);
+        map_->dump(out, fmt.get_line_prefix());
         rose_addr_t pageVa = 0;
         uint8_t* page = new uint8_t[pageSize_];
         while (map_->atOrAfter(pageVa).next().assignTo(pageVa)) {
             size_t nread = map_->at(pageVa).limit(pageSize_).read(page).size();
             ASSERT_always_require(nread == pageSize_);
-            HexdumpFormat fmt;
-            SgAsmExecutableFileFormat::hexdump(out, pageVa, (const unsigned char*)page, pageSize_, fmt);
+            HexdumpFormat hdFmt;
+            hdFmt.prefix = fmt.get_line_prefix();
+            out <<fmt.get_line_prefix();
+            SgAsmExecutableFileFormat::hexdump(out, pageVa, (const unsigned char*)page, pageSize_, hdFmt);
             out <<"\n";
             if (pageVa + (pageSize_-1) == map_->hull().greatest())
                 break;

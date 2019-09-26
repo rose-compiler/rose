@@ -10,7 +10,7 @@
 class ConstantExpressionEvaluator: public AstBottomUpProcessing <ConstantValue> {
 protected:
     LLVMAstAttributes *attributes;
-
+    
 public:
     ConstantExpressionEvaluator(LLVMAstAttributes *attributes_) : attributes(attributes_)
     {}

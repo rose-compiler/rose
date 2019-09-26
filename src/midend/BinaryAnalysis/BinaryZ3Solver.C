@@ -81,14 +81,15 @@ Z3Solver::z3Update() {
                 SymbolicExpr::Ptr expr = exprs[i];
 
                 // Create the Z3 expression for this ROSE expression
-                VariableSet vars = findVariables(expr);
+                VariableSet vars;
+                findVariables(expr, vars /*out*/);
                 ctxVariableDeclarations(vars);
                 ctxCommonSubexpressions(expr);
                 z3::expr z3expr = ctxCast(ctxExpression(expr), BOOLEAN).first;
                 solver_->add(z3expr);
                 z3Stack_.back().push_back(z3expr);
             }
-            
+
             // Push another level onto the z3 stack
             if (z3Stack_.size() < nLevels()) {
                 solver_->push();
@@ -110,14 +111,14 @@ Z3Solver::z3Update() {
 SmtSolver::Satisfiable
 Z3Solver::checkLib() {
     requireLinkage(LM_LIBRARY);
-    
+
 #ifdef ROSE_HAVE_Z3
     z3Update();
 
     Sawyer::Stopwatch timer;
     z3::check_result result = solver_->check();
     stats.solveTime += timer.stop();
-    
+
     switch (result) {
         case z3::unsat:
             return SAT_NO;
@@ -155,6 +156,8 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
     } else {
         ASSERT_not_null(inode);
         switch (inode->getOperator()) {
+            case SymbolicExpr::OP_NONE:
+                ASSERT_not_reachable("not possible for an interior node");
             case SymbolicExpr::OP_ADD:
                 retval = outputList("bvadd", inode);
                 break;
@@ -352,6 +355,8 @@ Z3Solver::z3Assertions() const {
 
 static z3::expr
 portable_z3_bv_val(z3::context *ctx, uint64_t value, size_t nBits) {
+    // Z3 prior to 4.8 didn't have a way to check the version at compile time, however a workaround for ROSE users was to
+    // define the Z3_*_VERSION constants themselves for these older Z3 versions.
 #if defined(Z3_MAJOR_VERSION) && defined(Z3_MINOR_VERSION) && defined(Z3_BUILD_NUMBER)
     #if Z3_MAJOR_VERSION < 4
         // z3 < 4.0.0
@@ -364,18 +369,17 @@ portable_z3_bv_val(z3::context *ctx, uint64_t value, size_t nBits) {
         return ctx->bv_val((uint64_t)value, (unsigned)nBits);
     #endif
 #else
-    // If you get a compile error here, you're probably using Z3 >= 4.7.0 but a version before compile-time versions were
-    // added. As of 2018-09-18, Z3 has no C preprocessor macros for version portability.  Issue #1833 has been submitted to the
-    // Z3 team. You can view it here: https://github.com/Z3Prover/z3/issues/1833
+    // Not all ROSE users manually defined the Z3_*_VERSION constants. Therefore, if the compiler is compiling this part of the
+    // code the only thing we know is that it's a version before 4.8.0 where the version numbers were first defined in the Z3
+    // source code. See [https://github.com/Z3Prover/z3/issues/1833].
     //
-    // As a temporary workaround, after you build and install Z3, copy the contents of the src/util/version.h file from the Z3
-    // source tree into the installed $Z3_ROOT/include/z3.h file.
+    // The Z3 API for z3::context::bv_val changed in version 4.7 that makes it incompatible with earlier versions, but since we
+    // have no Z3_*_VERSION constants we can't tell whether this is z3 4.7 or an earlier version. We assume that it's an earlier
+    // version since that's more likely.
     //
-    // An alternative workaround if you didn't compile Z3 from source code or if you don't want to (or can't) modify z3.h, is
-    // to add the following to the ROSE C++ compile commands: -DZ3_MAJOR_VERSION=4 -DZ3_MINOR_VERSION=7 -DZ3_BUILD_NUMBER=1
-    // (adjusting for your actual Z3 version of course). If you're using the Tup build system, edit "tup.config" at the top of
-    // the ROSE build tree (after configuring) and change the CONFIG_CPPFLAGS line and (re)run "tup".
-    return ctx->bv_val((unsigned long long)value, (unsigned)nBits);
+    // If you get an error here it's probably because we assumed wrong and you're actually using Z3 4.7. Instead of
+    // changing the ROSE source code, define the Z3_*_VERSION values in your compiler command-line.
+    return ctx->bv_val((unsigned long long)value, (unsigned)nBits); // DO NOT CHANGE; this assumes z3 < 4.7.
 #endif
 }
 
@@ -430,7 +434,7 @@ Z3Solver::mostType(const std::vector<Z3ExprTypePair> &ets) {
     }
     return bestType;
 }
-    
+
 Z3Solver::Z3ExprTypePair
 Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
     ASSERT_not_null(expr);
@@ -448,6 +452,8 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
     } else {
         ASSERT_not_null(inode);
         switch (inode->getOperator()) {
+            case SymbolicExpr::OP_NONE:
+                ASSERT_not_reachable("not possible for an interior node");
             case SymbolicExpr::OP_ADD: {
                 Etv children = ctxCast(ctxExpressions(inode->children()), BIT_VECTOR);
                 ASSERT_forbid(children.empty());
@@ -764,10 +770,8 @@ Z3Solver::ctxArithmeticShiftRight(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr sa = inode->child(0);
     SymbolicExpr::Ptr expr = inode->child(1);
     sa = SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, expr->nBits()), sa);
-
     z3::expr e = z3::ashr(ctxCast(ctxExpression(expr), BIT_VECTOR).first,
-                          ctxCast(ctxExpression(expr), BIT_VECTOR).first);
-
+                          ctxCast(ctxExpression(sa), BIT_VECTOR).first);
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
@@ -893,9 +897,9 @@ Z3Solver::ctxShiftRight(const SymbolicExpr::InteriorPtr &inode) {
     SymbolicExpr::Ptr zerosOrOnes = SymbolicExpr::makeConstant(Sawyer::Container::BitVector(expr->nBits(), newBits));
 
     z3::expr e =
-        z3::shl(z3::concat(ctxCast(ctxExpression(zerosOrOnes), BIT_VECTOR).first,
-                           ctxCast(ctxExpression(expr), BIT_VECTOR).first),
-                ctxCast(ctxExpression(sa), BIT_VECTOR).first)
+        z3::lshr(z3::concat(ctxCast(ctxExpression(zerosOrOnes), BIT_VECTOR).first,
+                            ctxCast(ctxExpression(expr), BIT_VECTOR).first),
+                 ctxCast(ctxExpression(sa), BIT_VECTOR).first)
         .extract(expr->nBits()-1, 0);
 
     return Z3ExprTypePair(e, BIT_VECTOR);
@@ -1064,20 +1068,28 @@ Z3Solver::parseEvidence() {
     if (!hasAssertions)
         return;
 
+    // Get all the variables in all the assertions regardless of transaction level. This is somewhat expensive but is needed
+    // below because the Z3 interface lacks a way to get type information from the variables returned as part of the evidence.
+    VariableSet allVariables;
+    std::vector<SymbolicExpr::Ptr> allAssertions = assertions();
+    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, allAssertions)
+        findVariables(expr, allVariables /*in,out*/);
+
     // Parse the evidence
     ASSERT_not_null(solver_);
     z3::model model = solver_->get_model();
     for (size_t i=0; i<model.size(); ++i) {
         z3::func_decl fdecl = model[i];
+
         if (fdecl.arity() != 0)
             continue;
 
         // There's got to be a better way to get information about a z3::expr, but I haven't found it yet.  For bit vectors, we
-        // need to know the number of bits and the value, even if the value is wider than 64 bits.
-
-        // Get the number of bits for the variable by searching the assertions. This is not a fast way to do it!
+        // need to know the number of bits and the value, even if the value is wider than 64 bits. Threfore, we obtain the list
+        // of all variables from above (regardless of transaction level) and try to match of the z3 variable name with the ROSE
+        // variable name and obtain the type information from the ROSE variable.
         SymbolicExpr::LeafPtr var;
-        BOOST_FOREACH (const SymbolicExpr::LeafPtr &v, ctxVarDecls_.keys()) {
+        BOOST_FOREACH (const SymbolicExpr::LeafPtr &v, allVariables.values()) {
             if (v->toString() == fdecl.name().str()) {
                 var = v;
                 break;
@@ -1087,7 +1099,7 @@ Z3Solver::parseEvidence() {
             mlog[WARN] <<"cannot find evidence variable " <<fdecl.name() <<"\n";
             continue;
         }
-        
+
         // Get the value
         SymbolicExpr::Ptr val;
         z3::expr interp = model.get_const_interp(fdecl);
@@ -1183,7 +1195,7 @@ Z3Solver::selfTest() {
         ASSERT_always_not_null(expr);
         mlog[DEBUG] <<"  " <<name <<" = " <<*expr <<"\n";
     }
-    
+
     ASSERT_always_require(enames.size() == 1);
     ASSERT_always_require(enames[0] == a->isLeafNode()->toString());
     Expr aEvidence = evidenceForName(a->isLeafNode()->toString());

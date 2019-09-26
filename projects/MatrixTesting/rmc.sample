@@ -1,0 +1,7 @@
+# Sample constraints file
+rmc_languages           binaries
+rmc_build		tup
+rmc_java                none
+rmc_python              none
+rmc_qt                  none
+rmc_yices               none

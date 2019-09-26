@@ -325,7 +325,9 @@ SerialInput::advanceObjectType() {
 
 Partitioner2::Partitioner
 SerialInput::loadPartitioner() {
-    return loadObject<Partitioner2::Partitioner>(PARTITIONER);
+    Partitioner2::Partitioner partitioner;
+    loadObject(PARTITIONER, partitioner);
+    return boost::move(partitioner);
 }
 
 SgNode*

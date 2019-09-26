@@ -17,4 +17,4 @@ namespace MatlabToCpp
 }
 
 
-#endif
+#endif /* MATLAB_TO_CPP */

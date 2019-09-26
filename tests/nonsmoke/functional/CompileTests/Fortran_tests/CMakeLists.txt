@@ -119,7 +119,16 @@ set(F90_TESTCODES
   #EXPECTED FAILURE: test2011_Rice_A-cant-assert-keyword-nonnull.f90
   #EXPECTED FAILURE: test2011_Rice_B-cant-assert-keyword-nonnull.f90
   #EXPECTED FAILURE: test2011_Rice_C-cant-assert-keyword-nonnull.f90
-  #EXPECTED TO FAILURE: test2011_Rice_lost-func-return-type.f90 
+  #EXPECTED TO FAILURE: test2011_Rice_lost-func-return-type.f90
+  test2019_derived_type.f90
+  test2019_write_io_control_spec.f90
+  test2019_recursive_function.f90
+  test2019_derived_type_name_conflict.f90
+  test2019_rewind.f90
+  test2019_renameList.f90
+  test2019_designator.f90
+  test2019_contiguous_attr.f90
+  test2019_doconstruct.f90 
   canonicalExample.f90)
 
 if("${gfortran_version}" VERSION_LESS "4.5")

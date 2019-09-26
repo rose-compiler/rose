@@ -93,7 +93,7 @@ RiscOperators::resetState() {
     RegisterState::RegPairs regpairs = registers->get_stored_registers();
     BOOST_FOREACH (RegisterState::RegPair &regpair, regpairs) {
         std::string varName = registerVariableName(regpair.desc);
-        BaseSemantics::SValuePtr value = makeSValue(regpair.desc.get_nbits(), NULL, varName);
+        BaseSemantics::SValuePtr value = makeSValue(regpair.desc.nBits(), NULL, varName);
         registers->writeRegister(regpair.desc, value, this);
     }
     registers->eraseWriters();
@@ -136,10 +136,10 @@ RiscOperators::registerVariableName(RegisterDescriptor reg) {
     const RegisterDictionary *registers = currentState()->registerState()->get_register_dictionary();
     std::string name = registers->lookup(reg);
     if (name.empty()) {
-        return ("R_" + numberToString(reg.get_major()) +
-                "_" + numberToString(reg.get_minor()) +
-                "_" + numberToString(reg.get_offset()) +
-                "_" + numberToString(reg.get_nbits()));
+        return ("R_" + numberToString(reg.majorNumber()) +
+                "_" + numberToString(reg.minorNumber()) +
+                "_" + numberToString(reg.offset()) +
+                "_" + numberToString(reg.nBits()));
     }
     return "R_" + name;
 }
@@ -164,7 +164,9 @@ RiscOperators::makeMask(size_t nBits, size_t nSet, size_t sa) {
 
 BaseSemantics::SValuePtr
 RiscOperators::unspecified_(size_t nbits) {
-    return makeSValue(nbits, NULL, "unspecified()");
+    ASSERT_require(nbits <= 32);
+    uint32_t mask = IntegerOps::genMask<uint32_t>(nbits);
+    return makeSValue(nbits, NULL, "(unspecified() & " + StringUtility::intToHex(mask) + ")");
 }
 
 void
@@ -438,7 +440,18 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a, const BaseSemanti
 
 BaseSemantics::SValuePtr
 RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    TODO("[Robb P. Matzke 2015-09-23]: generate signed binary '*' expression");
+    size_t operandsSize = std::max(a->get_width(), b->get_width());
+    std::string aSignedType = SValue::signedTypeNameForSize(a->get_width());
+    std::string bSignedType = SValue::signedTypeNameForSize(b->get_width());
+    std::string operandsSignedType = SValue::signedTypeNameForSize(operandsSize);
+    size_t productSize = a->get_width() + b->get_width();
+    std::string productUnsignedType = SValue::unsignedTypeNameForSize(productSize);
+
+    // ctext = ((productUnsigned)((operandsSigned)(aSigned)a * (operandsSigned)(bSigned)b))
+    std::string ctext = "((" + productUnsignedType + ")("
+                        "(" + operandsSignedType + ")(" + aSignedType + ")" + SValue::promote(a)->ctext() + " * " +
+                        "(" + operandsSignedType + ")(" + bSignedType + ")" + SValue::promote(b)->ctext() + "))";
+    return makeSValue(productSize, NULL, ctext);
 }
 
 BaseSemantics::SValuePtr
@@ -481,7 +494,7 @@ RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValueP
 void
 RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value) {
    RegisterStatePtr registers = RegisterState::promote(currentState()->registerState());
-   RegisterState::BitRange wantLocation = RegisterState::BitRange::baseSize(reg.get_offset(), reg.get_nbits());
+   RegisterState::BitRange wantLocation = RegisterState::BitRange::baseSize(reg.offset(), reg.nBits());
    RegisterState::RegPairs regpairs = registers->overlappingRegisters(reg);
    BOOST_FOREACH (RegisterState::RegPair &regpair, regpairs) {
        RegisterState::BitRange storageLocation = regpair.location();
@@ -511,7 +524,7 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
 
    // Substitute, and write substitution back to register state.
    BOOST_FOREACH (const RegisterState::RegPair &regpair, regpairs) {
-       BaseSemantics::SValuePtr regVar = makeSValue(regpair.desc.get_nbits(), NULL, registerVariableName(regpair.desc));
+       BaseSemantics::SValuePtr regVar = makeSValue(regpair.desc.nBits(), NULL, registerVariableName(regpair.desc));
        BaseSemantics::SValuePtr temp = saveSideEffect(regpair.value, regVar);
        registers->writeRegister(regpair.desc, temp, this);
    }

@@ -28,10 +28,6 @@
 #   The general documentation of those macros, as well as the sample
 #   configure.in, is included in the AC_PROG_JAVA macro.
 #
-# LAST MODIFICATION
-#
-#   2008-04-12
-#
 # COPYLEFT
 #
 #   Copyright (c) 2008 Egon Willighagen <e.willighagen@science.ru.nl>

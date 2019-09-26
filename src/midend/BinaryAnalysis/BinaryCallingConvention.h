@@ -579,165 +579,6 @@ public:
      *  If a register dictionary is supplied then that dictionary is used instead of any dictionary already attached to this
      *  definition. This feature is mostly for backward compatibility. */
     void print(std::ostream&, const RegisterDictionary *regDict = NULL) const;
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Deprecated API
-    //
-    // This is mostly here for backward compatibility with the original API design, which was then implemented in SEI's pharos
-    // library.  Unless otherwise noted, these were all deprecated as of 2015-08-14 in favor of CamelCase and dropping the
-    // "get" and "set" from properties that have names that are nouns.
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    size_t get_word_size() const ROSE_DEPRECATED("use wordWidth property instead") {
-        return wordWidth();
-    }
-    void set_word_size(size_t w) ROSE_DEPRECATED("use wordWidth property instead") {
-        wordWidth(w);
-    }
-
-    const std::string& get_name() const ROSE_DEPRECATED("use \"name\" property instead") {
-        return name();
-    }
-    void set_name(const std::string &n) ROSE_DEPRECATED("use \"name\" property instead") {
-        name(n);
-    }
-
-    // The comment property stores a full name without any particular format. It may or may not include the compiler name
-    // depending on whether the compiler name is significant.  If it includes a compiler name, it may or may not include a
-    // compiler version.
-    const std::string &get_compiler() const ROSE_DEPRECATED("use \"comment\" property instead") {
-        return comment();
-    }
-    void set_compiler(const std::string &c) ROSE_DEPRECATED("use \"comment\" property instead") {
-        comment(c);
-    }
-
-    const std::string &get_comment() const ROSE_DEPRECATED("use \"comment\" property instead") {
-        return comment();
-    }
-    void set_comment(const std::string &c) ROSE_DEPRECATED("use \"comment\" property instead") {
-        comment(c);
-    }
-
-    enum ParameterOrder {/*NO_STRINGIFY*/
-        ORDER_LTR       = LEFT_TO_RIGHT,
-        ORDER_RTL       = RIGHT_TO_LEFT,
-        ORDER_UNKNOWN   = ORDER_UNSPECIFIED,
-    };
-
-    ParameterOrder get_param_order() const ROSE_DEPRECATED("use stackParameterOrder property instead") {
-        return (ParameterOrder)stackParameterOrder();
-    }
-    void set_param_order(ParameterOrder order) ROSE_DEPRECATED("use stackParameterOrder property instead") {
-        stackParameterOrder((StackParameterOrder)order);
-    }
-
-    enum ThisPointerLocation {/*NO_STRINGIFY*/
-        THIS_FIRST_PARAM,
-        THIS_REGISTER,
-        THIS_NOT_APPLICABLE,
-        THIS_UNKNOWN,
-    };
-
-    ThisPointerLocation get_this_location() const ROSE_DEPRECATED("use thisParameter property instead") {
-        const ParameterLocation &loc = thisParameter();
-        switch (loc.type()) {
-            case ParameterLocation::NO_LOCATION: return THIS_NOT_APPLICABLE; // or maybe THIS_UNKNOWN
-            case ParameterLocation::REGISTER: return THIS_REGISTER;
-            case ParameterLocation::STACK: return THIS_FIRST_PARAM; // assume its the first parameter
-            case ParameterLocation::ABSOLUTE: return THIS_UNKNOWN; // not supported in old API
-        }
-        ASSERT_not_reachable("invalid location type");
-    }
-    // We can't set the location type independent of the location.
-    //void set_this_location(ThisPointerLocation loc) ROSE_DEPRECATED("use thisParameter property instead") {
-
-    void set_this_register(const RegisterDescriptor *reg) ROSE_DEPRECATED("use thisParameter property instead") {
-        if (NULL == reg) {
-            thisParameter(ParameterLocation());         // no location
-        } else {
-            thisParameter(*reg);
-        }
-    }
-
-    enum ReturnValueLocation {/*NO_STRINGIFY*/
-        RETVAL_STACK,
-        RETVAL_REGISTER,
-        RETVAL_NOT_APPLICABLE,
-        RETVAL_UNKNOWN,
-    };
-
-    ReturnValueLocation get_retval_location() const ROSE_DEPRECATED("use outputParameters property instead") {
-        if (outputParameters().empty())
-            return RETVAL_NOT_APPLICABLE;
-        const ParameterLocation &loc = outputParameters().front();
-        switch (loc.type()) {
-            case ParameterLocation::NO_LOCATION: return RETVAL_UNKNOWN;
-            case ParameterLocation::REGISTER: return RETVAL_REGISTER;
-            case ParameterLocation::STACK: return RETVAL_STACK;
-            case ParameterLocation::ABSOLUTE: return RETVAL_UNKNOWN; // not supported in old API
-        }
-        ASSERT_not_reachable("invalid return value location");
-    }
-    // We can't set the return value location type independent of the location.
-    // void set_retval_location(ReturnValueLocation loc) ROSE_DEPRECATED("use appendOutputParameter instead");
-
-    void set_retval_register(const RegisterDescriptor *reg) ROSE_DEPRECATED("use appendOutputParameter instead") {
-        clearOutputParameters();
-        if (NULL != reg)
-            appendOutputParameter(*reg);
-    }
-
-    StackCleanup get_stack_cleanup() const ROSE_DEPRECATED("use stackCleanup property instead") {
-        return stackCleanup();
-    }
-    void set_stack_cleanup(StackCleanup cleanup) ROSE_DEPRECATED("use stackCleanup property instead") {
-        stackCleanup(cleanup);
-    }
-
-    // These aren't needed for disassembly, only for compilers.
-    //size_t get_stack_alignment() const { return stack_alignment; }
-    //void set_stack_alignment(size_t alignment) { stack_alignment = alignment; }
-
-    typedef std::vector<RegisterDescriptor> RegisterVector;
-
-    // We can't return a reference like the original API because this object doesn't keep a vector of just the register
-    // parameters.
-    RegisterVector get_reg_params() const ROSE_DEPRECATED("use inputParameters property instead") {
-        RegisterVector retval;
-        BOOST_FOREACH (const ParameterLocation &loc, inputParameters_) {
-            if (loc.type() == ParameterLocation::REGISTER)
-                retval.push_back(loc.reg());
-        }
-        return retval;
-    }
-    void add_reg_param(const RegisterDescriptor *reg) ROSE_DEPRECATED("use appendInputParameter instead") {
-        appendInputParameter(reg ? *reg : RegisterDescriptor());
-    }
-
-    typedef std::set<RegisterDescriptor> RegisterSet;
-
-    const RegisterSet& get_nonvolatile() const ROSE_DEPRECATED("use calleeSavedRegisters property instead") {
-        return calleeSavedRegisters();
-    }
-    void add_nonvolatile(const RegisterDictionary *dict, const std::string &name)
-        ROSE_DEPRECATED("use calleeSavedRegisters property instead") {
-        const RegisterDescriptor *rd = dict->lookup(name);
-        ASSERT_not_null2(rd, "unable to find register \"" + StringUtility::cEscape(name) + "\"");
-        calleeSavedRegisters().insert(*rd);
-    }
-    void add_nonvolatile(const RegisterDescriptor *rd) ROSE_DEPRECATED("use calleeSavedRegisters property instead") {
-        ASSERT_require2(rd && rd->is_valid(), "invalid nonvolatile register");
-        calleeSavedRegisters().insert(*rd);
-    }
-    void add_nonvolatile(const RegisterSet &regs) ROSE_DEPRECATED("use calleeSavedRegisters property instead") {
-        calleeSavedRegisters().insert(regs.begin(), regs.end());
-    }
-
-    // Write information about this calling convention to the debug log stream.
-    void report(const RegisterDictionary *regdict) const ROSE_DEPRECATED("use \"print\" instead") {
-        print(std::cout, regdict);
-    };
 };
 
 
@@ -760,8 +601,11 @@ const Dictionary& dictionaryM68k();
 /** Common calling conventions for MIPS. */
 const Dictionary& dictionaryMips();
 
-/** Common calling conventions for PowerPC. */
-const Dictionary& dictionaryPowerpc();
+/** Common calling conventions for PowerPC-32. */
+const Dictionary& dictionaryPowerpc32();
+
+/** Common calling conventions for PowerPC-64. */
+const Dictionary& dictionaryPowerpc64();
 
 /** Common calling conventions for 32-bit x86. */
 const Dictionary& dictionaryX86();

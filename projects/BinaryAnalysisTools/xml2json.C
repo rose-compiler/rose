@@ -411,8 +411,9 @@ public:
     ~JsonOutput() {
         if (fd_ != -1) {
             file_.close();
-            if (ftruncate(fd_, highwater_) == -1 || close(fd_) == -1)
-                throw std::runtime_error(strerror(errno) + (": " + fileName_));
+            if (-1 == ftruncate(fd_, highwater_))
+                mlog[ERROR] <<"ftruncate failed\n";
+            close(fd_);
         }
     }
 

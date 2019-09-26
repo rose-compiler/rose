@@ -3,6 +3,7 @@
 
 #include "DataFlowSemantics2.h"
 #include "Diagnostics.h"
+#include "RoseException.h"
 #include "SymbolicSemantics2.h"
 
 #include <boost/foreach.hpp>
@@ -92,9 +93,9 @@ public:
 
 public:
     /** Data-flow exception base class. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
-        explicit Exception(const std::string &s): std::runtime_error(s) {}
+        explicit Exception(const std::string &s): Rose::Exception(s) {}
     };
 
     /** Exceptions when a fixed point is not reached. */

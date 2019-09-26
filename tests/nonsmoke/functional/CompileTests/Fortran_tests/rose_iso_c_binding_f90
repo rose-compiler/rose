@@ -1,0 +1,15 @@
+module iso_c_binding
+
+   integer, parameter :: c_int = 4
+   integer, parameter :: c_long = 8
+   integer, parameter :: c_float = 4
+   integer, parameter :: c_size_t = 8
+   integer, parameter :: c_intptr_t = 8
+
+   type, bind(c) :: c_ptr
+      integer(c_int) :: cval
+   end type
+
+   type(c_ptr), bind(C) :: c_null_ptr
+
+end module iso_c_binding

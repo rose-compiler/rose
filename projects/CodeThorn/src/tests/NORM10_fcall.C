@@ -14,7 +14,7 @@ int main() {
   x=1;
   int y=1;
   x=x+y+2;
-  int a[2];
+  int a[3];
   a[0]=x+1;
   a[y]=x;
   a[y+1]=x;

@@ -3,7 +3,7 @@
 #include "Analyzer.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 namespace CodeThorn {
 

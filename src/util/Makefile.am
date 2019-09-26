@@ -126,6 +126,9 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/Graph.h				\
 	Sawyer/GraphAlgorithm.h			\
 	Sawyer/GraphBoost.h			\
+	Sawyer/GraphIteratorBiMap.h		\
+	Sawyer/GraphIteratorMap.h		\
+	Sawyer/GraphIteratorSet.h		\
 	Sawyer/GraphTraversal.h			\
 	Sawyer/HashMap.h			\
 	Sawyer/IndexedList.h			\
@@ -154,6 +157,8 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/Synchronization.h		\
 	Sawyer/ThreadWorkers.h			\
 	Sawyer/Trace.h				\
+	Sawyer/Tracker.h			\
+	Sawyer/Tree.h				\
 	Sawyer/Type.h				\
 	Sawyer/WarningsOff.h			\
 	Sawyer/WarningsRestore.h

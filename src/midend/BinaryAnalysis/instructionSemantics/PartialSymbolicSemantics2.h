@@ -436,8 +436,8 @@ public:
                              const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
 protected:
-    virtual BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
-                                                      const BaseSemantics::SValuePtr &dflt_, bool allowSideEffects);
+    BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
+                                              const BaseSemantics::SValuePtr &dflt_, bool allowSideEffects);
 };
 
 } // namespace

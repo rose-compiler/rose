@@ -354,8 +354,9 @@ void AsmUnparser::init()
 {}
 
 bool
-AsmUnparser::BasicBlockPredecessors::operator()(bool enabled, const BasicBlockArgs &args)
-{}
+AsmUnparser::BasicBlockPredecessors::operator()(bool enabled, const BasicBlockArgs &args) {
+    return false;
+}
 
 bool
 AsmUnparser::is_unparsable_node(SgNode *node)
@@ -375,15 +376,15 @@ AsmUnparser::find_unparsable_node(SgNode *ast)
 }
 
 std::vector<SgNode*>
-AsmUnparser::find_unparsable_nodes(SgNode *ast)
-{
-
+AsmUnparser::find_unparsable_nodes(SgNode *ast) {
+    return std::vector<SgNode*>();
 }
 
 } // namespace
 } // namespace
 
-std::string unparseExpression(SgAsmExpression*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*, const RegisterDictionary*) {
+std::string unparseExpression(SgAsmExpression*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*,
+                              const Rose::BinaryAnalysis::RegisterDictionary*) {
     abort();
 }
 

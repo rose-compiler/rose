@@ -1,1 +1,0 @@
-./parallel_compass -save CXX_Grammar.ast ~/development/ROSE-64bit/build-gcc4-svn/src/frontend/SageIII/Cxx_Grammar.C -I/home/panas2/development/ROSE-64bit/install-gcc4-svn/include

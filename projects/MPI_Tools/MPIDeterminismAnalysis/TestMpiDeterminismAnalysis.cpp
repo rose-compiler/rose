@@ -19,6 +19,7 @@
 
 #include "MpiDeterminismAnalysis.h"
 #include <iostream>
+#include <Sawyer/Assert.h>
 
 using std::cerr;
 using std::cout;
@@ -69,6 +70,7 @@ const char* strFromDet(DeterminismState d)
   case QUESTIONABLE: return "unclear";
   case NONDETERMINISTIC: return "NONdeterminisitic";
   }
+  ASSERT_not_reachable("unhandled DeterminismState");
 }
 
 void report(DeterminismState actual, DeterminismState expected, const char *kind, int &incorrect, int &imprecise)

@@ -74,7 +74,7 @@ ROSE_DLL_API bool checkConfigToken(const char *configTokenToken);
  *  For example, if the library version number is "1.2.3", this function returns true when @p need is "", "1", "1.0", "1.1",
  *  "1.2.0", "1.2.1", "1.2.2", "1.2.3", "1.2.3.0", "1.2.3.1", etc., and it returns false when @p need is "2", "1.3", "1.2.4",
  *  "1.2.4.0", etc. */
-bool checkVersionNumber(const std::string &need);
+ROSE_DLL_API bool checkVersionNumber(const std::string &need);
 
 } // namespace
 

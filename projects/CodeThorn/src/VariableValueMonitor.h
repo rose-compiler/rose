@@ -24,7 +24,7 @@ namespace CodeThorn {
     VariableMode getVariableMode(CodeThorn::AbstractValue);
     void update(Analyzer* analyzer, EState* estate);
     bool isHotVariable(Analyzer* analyzer, CodeThorn::AbstractValue varId);
-    std::string toString(SPRAY::VariableIdMapping* variableIdMapping);
+    std::string toString(CodeThorn::VariableIdMapping* variableIdMapping);
   private:
     std::map<CodeThorn::AbstractValue,std::set<int>* > _variablesMap;
     std::map<CodeThorn::AbstractValue,VariableMode> _variablesModeMap;

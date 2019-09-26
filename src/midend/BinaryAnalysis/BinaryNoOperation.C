@@ -41,7 +41,7 @@ NoOperation::StateNormalizer::initialState(const BaseSemantics::DispatcherPtr &c
         rstate->initialize_large();
 
     RegisterDescriptor IP = cpu->instructionPointerRegister();
-    state->writeRegister(IP, cpu->number_(IP.get_nbits(), insn->get_address()), cpu->get_operators().get());
+    state->writeRegister(IP, cpu->number_(IP.nBits(), insn->get_address()), cpu->get_operators().get());
 
     return state;
 }
@@ -87,7 +87,7 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
     const RegisterDescriptor regIp = cpu->instructionPointerRegister();
     BaseSemantics::RegisterStateGenericPtr rstate = BaseSemantics::RegisterStateGeneric::promote(state->registerState());
     if (rstate && rstate->is_partly_stored(regIp)) {
-        BaseSemantics::SValuePtr ip = ops->readRegister(cpu->instructionPointerRegister());
+        BaseSemantics::SValuePtr ip = ops->peekRegister(cpu->instructionPointerRegister());
         if (ip->is_number()) {
             state = state->clone();
             isCloned = true;
@@ -107,7 +107,7 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
 
     // Erase memory that has never been written (i.e., cells that sprang into existence by reading an address) of which appears
     // to have been recently popped from the stack.
-    CellErasurePredicate predicate(ops, ops->readRegister(cpu->stackPointerRegister()), ignorePoppedMemory_);
+    CellErasurePredicate predicate(ops, ops->peekRegister(cpu->stackPointerRegister()), ignorePoppedMemory_);
     if (mem)
         mem->eraseMatchingCells(predicate);
 
@@ -130,7 +130,7 @@ NoOperation::NoOperation(Disassembler *disassembler) {
     if (disassembler) {
         const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
-        size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
+        size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
@@ -164,14 +164,14 @@ NoOperation::initialState(SgAsmInstruction *insn) const {
         state = cpu_->currentState()->clone();
         state->clear();
         RegisterDescriptor IP = cpu_->instructionPointerRegister();
-        state->writeRegister(IP, cpu_->number_(IP.get_nbits(), insn->get_address()), cpu_->get_operators().get());
+        state->writeRegister(IP, cpu_->number_(IP.nBits(), insn->get_address()), cpu_->get_operators().get());
     }
 
     // Set the stack pointer to a concrete value
     if (initialSp_) {
         const RegisterDescriptor regSp = cpu_->stackPointerRegister();
         BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
-        state->writeRegister(regSp, ops->number_(regSp.get_nbits(), *initialSp_), ops.get());
+        state->writeRegister(regSp, ops->number_(regSp.nBits(), *initialSp_), ops.get());
     }
 
     return state;
@@ -234,7 +234,7 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
     const RegisterDescriptor regIP = cpu_->instructionPointerRegister();
     try {
         BOOST_FOREACH (SgAsmInstruction *insn, insns) {
-            cpu_->get_operators()->writeRegister(regIP, cpu_->get_operators()->number_(regIP.get_nbits(), insn->get_address()));
+            cpu_->get_operators()->writeRegister(regIP, cpu_->get_operators()->number_(regIP.nBits(), insn->get_address()));
             states.push_back(normalizeState(cpu_->currentState()));
             if (debug) {
                 debug <<"  normalized state #" <<states.size()-1 <<":\n" <<StringUtility::prefixLines(states.back(), "    ");

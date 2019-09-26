@@ -30,7 +30,7 @@ AC_DEFUN([ROSE_SUPPORT_COBOL],
 [
   AC_BEFORE([$0], [ROSE_SUPPORT_COBOL_FRONTEND])
 
-  ROSE_CONFIGURE_SECTION([GnuCOBOL parse-tree library])
+  ROSE_CONFIGURE_SECTION([Checking GnuCOBOL parse-tree library])
 
   #============================================================================
   # --with-cobpt=/path/to/cobpt-install/
@@ -50,8 +50,8 @@ AC_DEFUN([ROSE_SUPPORT_COBOL],
     COBPT_LIBRARY_PATH=
   fi
 
-echo "COBPT_INSTALL_PATH = "$COBPT_INSTALL_PATH
-echo "COBPT_LIBRARY_PATH = "$COBPT_LIBRARY_PATH
+  AC_MSG_NOTICE([COBPT_INSTALL_PATH = "$COBPT_INSTALL_PATH"])
+  AC_MSG_NOTICE([COBPT_LIBRARY_PATH = "$COBPT_LIBRARY_PATH"])
 
   #============================================================================
   # Validate installation (if provided)

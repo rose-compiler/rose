@@ -94,7 +94,6 @@ class TokenStreamSequenceToNodeMapping
           void display(std::string label) const;
    };
 
-#endif
 
 #include "frontierDetection.h"
 
@@ -111,3 +110,4 @@ class TokenStreamSequenceToNodeMapping
 #include "detectMacroOrIncludeFileExpansions.h"
 #include "detectMacroExpansionsToBeUnparsedAsAstTransformations.h"
 
+#endif

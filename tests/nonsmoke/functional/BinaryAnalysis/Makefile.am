@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/tests/nonsmoke/specimens/binary/SpecimenSets.inc
 
-SUBDIRS = libraryIdentification_tests Dwarf_tests Pin_tests
+SUBDIRS = libraryIdentification_tests Dwarf_tests Pin_tests Concolic
 
 EXTRA_DIST = \
 	runExecFormatsTest testShiftResizeSection.sh \
@@ -213,7 +213,6 @@ testElfSchulz-1.passed: testElfSchulz.conf testElfSchulz execFormatsTest conditi
 	@$(RTH_RUN)							\
 		TITLE="rename dynamically linked functions #1 [$@]"	\
 		DISABLED="$$(./conditionalDisable)"			\
-		FLAGS='-rose:partitioner_search -leftovers'		\
 		N=1							\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"				\
 		$< $@
@@ -221,7 +220,6 @@ testElfSchulz-2.passed: testElfSchulz.conf testElfSchulz execFormatsTest conditi
 	@$(RTH_RUN)							\
 		TITLE="rename dynamically linked functions #2 [$@]"	\
 		DISABLED="$$(./conditionalDisable)"			\
-		FLAGS='-rose:partitioner_search -leftovers'		\
 		N=2							\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"				\
 		$< $@
@@ -382,12 +380,12 @@ TEST_TARGETS += testAssembler.passed
 EXTRA_DIST += testAssembler.ans
 
 testAssembler.passed: $(TEST_WITH_ANSWER) testAssembler testAssembler.ans conditionalDisable
-	@$(RTH_RUN)												\
-		TITLE="x86 assembler [$@]"									\
-		DISABLED="$$(./conditionalDisable)"								\
-		CMD="$$(pwd)/testAssembler -rose:partitioner_search -leftovers $(SPECIMEN_DIR)/buffer2.bin"	\
-		USE_SUBDIR=yes											\
-		ANS="$(srcdir)/testAssembler.ans"								\
+	@$(RTH_RUN)							\
+		TITLE="x86 assembler [$@]"				\
+		DISABLED="$$(./conditionalDisable)"			\
+		CMD="$$(pwd)/testAssembler $(SPECIMEN_DIR)/buffer2.bin"	\
+		USE_SUBDIR=yes						\
+		ANS="$(srcdir)/testAssembler.ans"			\
 		$< $@
 
 
@@ -1411,7 +1409,7 @@ noinst_PROGRAMS += testRandomInput
 testRandomInput_SOURCES = testRandomInput.C
 testRandomInput_LDADD = $(ROSE_SEPARATE_LIBS)
 
-testRandomInput_ISAs = amd64 arm coldfire i386 m68040 mips-be mips-le ppc
+testRandomInput_ISAs = amd64 arm coldfire i386 m68040 mips-be mips-le ppc32
 testRandomInput_Targets = $(addprefix tri_, $(addsuffix .passed, $(testRandomInput_ISAs)))
 TEST_TARGETS += $(testRandomInput_Targets)
 
@@ -1524,6 +1522,109 @@ testSmtWideConstant-z3lib.passed: $(top_srcdir)/scripts/test_exit_status testSmt
 		CMD="$$(pwd)/testSmtWideConstant z3-lib"	\
 		$< $@
 endif
+
+########################################################################################################################
+# Test RegisterStateGeneric's peekRegister method
+########################################################################################################################
+
+noinst_PROGRAMS += testPeekRegister
+testPeekRegister_SOURCES = testPeekRegister.C
+testPeekRegister_LDADD = $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += testPeekRegister.passed
+testPeekRegister.passed: $(top_srcdir)/scripts/test_exit_status testPeekRegister conditionalDisable
+	@$(RTH_RUN)						\
+		TITLE="RegisterStateGeneric::peekRegister [$@]"	\
+		DISABLED="$$(./conditionalDisable)"		\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testPeekRegister"			\
+		$< $@
+
+########################################################################################################################
+# Test P2 data blocks
+########################################################################################################################
+
+noinst_PROGRAMS += testDataBlockOwnership
+testDataBlockOwnership_SOURCES = testDataBlockOwnership.C
+testDataBlockOwnership_LDADD = $(ROSE_SEPARATE_LIBS)
+testDataBlockOwnership_specimen = $(top_srcdir)/tests/nonsmoke/specimens/binary/x86-64-nologin
+
+TEST_TARGETS += testDataBlockOwnership.passed
+testDataBlockOwnership.passed: $(top_srcdir)/scripts/test_exit_status testDataBlockOwnership $(testDataBlockOwnership_specimen)
+	@$(RTH_RUN)									\
+		TITLE="test data block ownership [$@]"					\
+		DISABLED="$$(./conditionalDisable)"					\
+		USE_SUBDIR=yes								\
+		CMD="$$(pwd)/testDataBlockOwnership $(testDataBlockOwnership_specimen)"	\
+		$< $@
+
+########################################################################################################################
+# Test S-Records
+########################################################################################################################
+
+noinst_PROGRAMS += testSRecords
+testSRecords_SOURCES = testSRecords.C
+testSRecords_LDADD = $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += testSRecords.passed
+testSRecords.passed: $(top_srcdir)/scripts/test_exit_status testSRecords
+	@$(RTH_RUN)						\
+		TITLE="test S-Record parsing/unparsing [$@]"	\
+		DISABLED="$$(./conditionalDisable)"		\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testSRecords"			\
+		$< $@
+
+########################################################################################################################
+# Test disassembler
+########################################################################################################################
+
+noinst_PROGRAMS += testDisassembler
+testDisassembler_SOURCES = testDisassembler.C
+testDisassembler_LDADD = $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS +=					\
+	testDisassembler-ppc32.passed		\
+	testDisassembler-ppc64a.passed		\
+	testDisassembler-ppc64b.passed
+
+# PowerPC-32 decoding PowerPC-32 instructions
+testDisassembler_ppc32_input = $(srcdir)/testDisassembler-ppc32.txt
+testDisassembler_ppc32_answer = $(srcdir)/testDisassembler-ppc32.ans
+testDisassembler-ppc32.passed: $(top_srcdir)/scripts/test_with_answer testDisassembler $(testDisassembler_ppc32_input)
+	@$(RTH_RUN)										\
+		TITLE="test disassembler PowerPC-32 [$@]"					\
+		DISABLED="$$(./conditionalDisable)"						\
+		USE_SUBDIR=no									\
+		CMD="$$(pwd)/testDisassembler --isa=ppc32 $(testDisassembler_ppc32_input)"	\
+		ANS="$(testDisassembler_ppc32_answer)"						\
+		$< $@
+
+# PowerPC-64 decoding PowerPC-32 instructions
+testDisassembler_ppc64a_input = $(srcdir)/testDisassembler-ppc32.txt
+testDisassembler_ppc64a_answer = $(srcdir)/testDisassembler-ppc64a.ans
+testDisassembler-ppc64a.passed: $(top_srcdir)/scripts/test_with_answer testDisassembler $(testDisassembler_ppc64a_input)
+	@$(RTH_RUN)										\
+		TITLE="test disassembler PowerPC-64 [$@]"					\
+		DISABLED="$$(./conditionalDisable)"						\
+		USE_SUBDIR=no									\
+		CMD="$$(pwd)/testDisassembler --isa=ppc64 $(testDisassembler_ppc64a_input)"	\
+		ANS="$(testDisassembler_ppc64a_answer)"						\
+		$< $@
+
+# PowerPC-64 decoding PowerPC-64 instructions
+testDisassembler_ppc64b_input = $(srcdir)/testDisassembler-ppc64.txt
+testDisassembler_ppc64b_answer = $(srcdir)/testDisassembler-ppc64b.ans
+testDisassembler-ppc64b.passed: $(top_srcdir)/scripts/test_with_answer testDisassembler $(testDisassembler_ppc64b_input)
+	@$(RTH_RUN)										\
+		TITLE="test disassembler PowerPC-64 [$@]"					\
+		DISABLED="$$(./conditionalDisable)"						\
+		USE_SUBDIR=no									\
+		CMD="$$(pwd)/testDisassembler --isa=ppc64 $(testDisassembler_ppc64b_input)"	\
+		ANS="$(testDisassembler_ppc64b_answer)"						\
+		$< $@
+
+
 
 ###############################################################################################################################
 # Standard boilerplate

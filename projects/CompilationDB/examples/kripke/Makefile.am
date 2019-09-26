@@ -109,4 +109,3 @@ clean-local:
 	rm -rf $(abs_builddir)/kripke-sequential/genInstFlowGraph.json
 	rm -rf $(abs_builddir)/kripke-sequential/genInstFlowGraph.html
 
-

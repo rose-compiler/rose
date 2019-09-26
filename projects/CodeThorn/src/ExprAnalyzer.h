@@ -55,6 +55,10 @@ namespace CodeThorn {
     bool isBot() {return result.isBot();}
   };
   
+  enum InterpretationMode { IM_ABSTRACT, IM_CONCRETE };
+  // ACCESS_ERROR is null pointer dereference is detected. ACCESS_NON_EXISTING if pointer is lattice bottom element.
+  enum MemoryAccessBounds {ACCESS_ERROR,ACCESS_DEFINITELY_NP, ACCESS_DEFINITELY_INSIDE_BOUNDS, ACCESS_POTENTIALLY_OUTSIDE_BOUNDS, ACCESS_DEFINITELY_OUTSIDE_BOUNDS, ACCESS_NON_EXISTING};
+
   /*! 
    * \author Markus Schordan
    * \date 2012.
@@ -80,14 +84,22 @@ namespace CodeThorn {
     bool getSkipArrayAccesses();
     void setIgnoreUndefinedDereference(bool skip);
     bool getIgnoreUndefinedDereference();
+    void setIgnoreFunctionPointers(bool skip);
+    bool getIgnoreFunctionPointers();
     void setSVCompFunctionSemantics(bool flag);
     bool getSVCompFunctionSemantics();
     // deprecated
     bool stdFunctionSemantics();
     bool getStdFunctionSemantics();
     void setStdFunctionSemantics(bool flag);
+
+    bool getPrintDetectedViolations();
+    void setPrintDetectedViolations(bool flag);
     
-    bool checkArrayBounds(VariableId arrayVarId,int accessIndex);
+    // deprecated (superseded by checkMemoryAccessBounds
+    bool accessIsWithinArrayBounds(VariableId arrayVarId,int accessIndex);
+    // supersedes accessIsWithinArrayBounds
+    enum MemoryAccessBounds checkMemoryAccessBounds(AbstractValue address);
     
     // deprecated
     //VariableId resolveToAbsoluteVariableId(AbstractValue abstrValue) const;
@@ -100,6 +112,11 @@ namespace CodeThorn {
     void recordDefinitiveOutOfBoundsAccessLocation(Label lab);
     void recordPotentialOutOfBoundsAccessLocation(Label lab);
     ProgramLocationsReport getOutOfBoundsAccessLocations();
+    bool definitiveErrorDetected();
+    bool potentialErrorDetected();
+
+    void setOptionOutputWarnings(bool flag);
+    bool getOptionOutputWarnings();
 
     //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
     static bool variable(SgNode* node,VariableName& varName);
@@ -110,10 +127,14 @@ namespace CodeThorn {
     bool isLValueOp(SgNode* node);
     void initializeStructureAccessLookup(SgProject* node);
     // requires StructureAccessLookup to be initialized.
-    bool isStructMember(SPRAY::VariableId varId);
+    bool isStructMember(CodeThorn::VariableId varId);
     // checks if value is a null pointer. If it is 0 it records a null pointer violation at provided label.
     // returns true if execution may continue, false if execution definitely does not continue.
     bool checkAndRecordNullPointer(AbstractValue value, Label label);
+
+    enum InterpretationMode getInterpretationMode();
+    void setInterpretationMode(enum InterpretationMode);
+
   protected:
     static void initDiagnostics();
     static Sawyer::Message::Facility logger;
@@ -278,8 +299,12 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate);
     list<SingleEvalResultConstInt> evalFunctionCallStrLen(SgFunctionCallExp* funCall, EState estate);
 
+    // supported functions to be executed (interpreter mode)
+    list<SingleEvalResultConstInt> execFunctionCallPrintf(SgFunctionCallExp* funCall, EState estate);
+
     // utilify functions
-    int getMemoryRegionSize(CodeThorn::AbstractValue ptrToRegion);
+    int getMemoryRegionNumElements(CodeThorn::AbstractValue ptrToRegion);
+    int getMemoryRegionElementSize(CodeThorn::AbstractValue);
 
   private:
     VariableIdMapping* _variableIdMapping=nullptr;
@@ -292,7 +317,11 @@ namespace CodeThorn {
     bool _stdFunctionSemantics=true;
     bool _svCompFunctionSemantics=false;
     bool _ignoreUndefinedDereference=false;
+    bool _ignoreFunctionPointers=false;
     Analyzer* _analyzer;
+    bool _printDetectedViolations=false;
+    enum InterpretationMode _interpretationMode=IM_ABSTRACT;
+    bool _optionOutputWarnings=false;
   public:
     StructureAccessLookup structureAccessLookup;
   };

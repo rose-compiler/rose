@@ -13,7 +13,7 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 	SgAsmInstruction.C SgAsmArmInstruction.C SgAsmPowerpcInstruction.C SgAsmX86Instruction.C SgAsmMipsInstruction.C	\
 	SgAsmM68kInstruction.C SgAsmExecutableFileFormat.C x86InstructionProperties.C					\
 	SgAsmInterpretation.C SgAsmIntegerValueExpression.C SgAsmFloatValueExpression.C SgAsmExpression.C SgAsmType.C	\
-	BinaryDebugger.C Registers.C RegisterDescriptor.C								\
+	Registers.C RegisterDescriptor.C										\
         Disassembler.C DisassemblerArm.C DisassemblerMips.C DisassemblerM68k.C DisassemblerPowerpc.C DisassemblerX86.C	\
 	Assembler.C AssemblerX86.C AssemblerX86Init.C RegisterParts.C							\
 	AssemblerX86Init1.C AssemblerX86Init2.C AssemblerX86Init3.C AssemblerX86Init4.C AssemblerX86Init5.C		\
@@ -23,10 +23,10 @@ else
 endif
 
 pkginclude_HEADERS =													\
-	BinaryDebugger.h Registers.h RegisterDescriptor.h BitPattern.h							\
+	Registers.h RegisterDescriptor.h BitPattern.h									\
 	Disassembler.h DisassemblerArm.h DisassemblerMips.h DisassemblerM68k.h DisassemblerPowerpc.h DisassemblerX86.h	\
 	Assembler.h AssemblerX86.h AssemblerX86Init.h									\
 	InstructionEnumsX86.h InstructionEnumsMips.h InstructionEnumsM68k.h x86InstructionProperties.h			\
-	armInstructionEnum.h powerpcInstructionEnum.h RegisterParts.h
+	InstructionEnumsArm.h InstructionEnumsPowerpc.h RegisterParts.h
 
 EXTRA_DIST = CMakeLists.txt dummyDisassembler.C

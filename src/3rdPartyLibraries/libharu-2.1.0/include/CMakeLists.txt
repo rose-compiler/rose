@@ -8,4 +8,4 @@ install(FILES
     hpdf_encrypt.h hpdf_font.h hpdf_info.h hpdf_outline.h hpdf_types.h
     hpdf_doc.h hpdf_error.h hpdf_gstate.h hpdf_list.h hpdf_page_label.h
     hpdf_u3d.h ../win32/include/hpdf_config.h hpdf_version.h
-  DESTINATION include)
+  DESTINATION ${INCLUDE_INSTALL_DIR})

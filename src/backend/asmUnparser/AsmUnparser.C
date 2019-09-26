@@ -47,7 +47,7 @@ build_noop_index(const std::vector <std::pair <size_t, size_t> > &noops)
     /* Process in order from largest to smallest */
     for (std::map<size_t, std::vector<size_t> >::reverse_iterator szi=sorted.rbegin(); szi!=sorted.rend(); ++szi) {
         size_t sz = (*szi).first;
-        for (std::vector<size_t>::const_iterator idxi=(*szi).second.begin(); idxi<(*szi).second.end(); ++idxi) {
+        for (std::vector<size_t>::const_iterator idxi=(*szi).second.begin(); idxi!=(*szi).second.end(); ++idxi) {
             size_t idx = *idxi;
             
             /* Are any instructions in this range already marked as no-ops?  If so, then skip this one. */
@@ -300,8 +300,8 @@ AsmUnparser::invalid_register(SgAsmInstruction *insn, RegisterDescriptor reg, co
     using namespace StringUtility;
     Stream warn(mlog[WARN]);
 
-    std::string regstr = numberToString(reg.get_major()) + "." + numberToString(reg.get_minor()) + "." +
-                         numberToString(reg.get_offset()) + "." + numberToString(reg.get_nbits());
+    std::string regstr = numberToString(reg.majorNumber()) + "." + numberToString(reg.minorNumber()) + "." +
+                         numberToString(reg.offset()) + "." + numberToString(reg.nBits());
     if (insn) {
         warn <<"invalid register reference " <<regstr <<" at va " <<addrToString(insn->get_address()) <<"\n";
     } else {
@@ -560,7 +560,7 @@ AsmUnparser::InsnRawBytes::operator()(bool enabled, const InsnArgs &args)
 {
     if (enabled) {
         HexdumpFormat tmp_fmt = fmt;
-        tmp_fmt.addr_fmt = args.unparser->get_prefix_format().c_str();
+        tmp_fmt.addr_fmt = args.unparser->get_prefix_format();
         SgAsmExecutableFileFormat::hexdump(args.output, args.insn->get_address(), &(args.insn->get_raw_bytes()[0]),
                                            args.insn->get_size(), tmp_fmt);
     }
@@ -944,12 +944,12 @@ AsmUnparser::StaticDataRawBytes::operator()(bool enabled, const StaticDataArgs &
                 tmp_fmt.prefix = "";
             }
         } else {
-            tmp_fmt.prefix = NULL;
+            tmp_fmt.prefix = "";
             addr_fmt = strdup("");
         }
 
-        tmp_fmt.addr_fmt = addr_fmt;
-        if (!tmp_fmt.multiline && tmp_fmt.prefix)
+        tmp_fmt.addr_fmt = addr_fmt ? addr_fmt : "";
+        if (!tmp_fmt.multiline)
             args.output <<tmp_fmt.prefix;
 
         SgAsmExecutableFileFormat::hexdump(args.output, start_address, &(args.data->get_raw_bytes()[0]),

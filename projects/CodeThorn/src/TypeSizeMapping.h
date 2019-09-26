@@ -3,7 +3,7 @@
 
 #include <vector>
 
-namespace SPRAY {
+namespace CodeThorn {
 
   // typesize in bytes
   typedef unsigned int TypeSize;
@@ -25,15 +25,15 @@ namespace SPRAY {
   class TypeSizeMapping {
   public:
     // sets sizes of all types (same as reported by sizeof on respective architecture)
-    void setMapping(std::vector<SPRAY::TypeSize> mapping);
+    void setMapping(std::vector<CodeThorn::TypeSize> mapping);
     // sets size of one type (same as reported by sizeof on respective architecture)
-    void setTypeSize(BuiltInType bitype, SPRAY::TypeSize size);
-    SPRAY::TypeSize getTypeSize(SPRAY::BuiltInType bitype);
+    void setTypeSize(BuiltInType bitype, CodeThorn::TypeSize size);
+    CodeThorn::TypeSize getTypeSize(CodeThorn::BuiltInType bitype);
     std::size_t sizeOfOp(BuiltInType bitype);
     bool isCpp11StandardCompliant();
   protected:
     // default setting LP64 data model
-    std::vector<SPRAY::TypeSize> _mapping={1,
+    std::vector<CodeThorn::TypeSize> _mapping={1,
                                            1,1,2,2,4,4,
                                            2,2,4,4,4,4,8,8,
                                            4,8,16,

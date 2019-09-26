@@ -6,6 +6,7 @@
 
 #include "BinaryLoader.h"
 #include "BinaryLoaderElf.h"
+#include "BinaryLoaderElfObj.h"
 #include "BinaryLoaderPe.h"
 #include "Diagnostics.h"
 #include "Disassembler.h"
@@ -17,28 +18,25 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 Sawyer::Message::Facility BinaryLoader::mlog;
-std::vector<BinaryLoader*> BinaryLoader::loaders;
+std::vector<BinaryLoader::Ptr> BinaryLoader::loaders_;
 
 std::ostream&
-operator<<(std::ostream &o, const BinaryLoader::Exception &e)
-{
+operator<<(std::ostream &o, const BinaryLoader::Exception &e) {
     e.print(o);
     return o;
 }
 
 void
-BinaryLoader::Exception::print(std::ostream &o) const
-{
+BinaryLoader::Exception::print(std::ostream &o) const {
     o <<what();
 }
 
 /* We put some initializations here in a *.C file so we don't need to recompile so much if we need to change how a
  * BinaryLoader is constructed and we're just making the change for debugging purposes. */
 void
-BinaryLoader::init()
-{
-    //set_perform_dynamic_linking(true);
-    //add_directory("/lib32");
+BinaryLoader::init() {
+    //performingDynamicLinking(true);
+    //appendDirectory("/lib32");
 }
 
 // class method
@@ -53,36 +51,34 @@ void BinaryLoader::initDiagnostics() {
 
 /* class method */
 void
-BinaryLoader::initclass()
-{
+BinaryLoader::initclass() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
         initDiagnostics();
         /* Registered in order from most generic to most specific */
-        register_subclass(new BinaryLoader);            /* generically handles all formats, albeit with limited functionality */
-        register_subclass(new BinaryLoaderElf);         /* POSIX Executable and Linkable Format (ELF) */
-        register_subclass(new BinaryLoaderPe);          /* Windows Portable Executable (PE) */
+        registerSubclass(BinaryLoader::instance());       // generically handles all formats, albeit with limited functionality
+        registerSubclass(BinaryLoaderElf::instance());    // POSIX Executable and Linkable Format (ELF)
+        registerSubclass(BinaryLoaderElfObj::instance()); // ELF loader for object files
+        registerSubclass(BinaryLoaderPe::instance());     // Windows Portable Executable (PE)
     }
 }
 
 /* class method */
 void
-BinaryLoader::register_subclass(BinaryLoader *loader)
-{
+BinaryLoader::registerSubclass(const Ptr &loader) {
     initclass();
     ASSERT_not_null(loader);
-    loaders.push_back(loader);
+    loaders_.push_back(loader);
 }
 
 /* class method */
-BinaryLoader *
-BinaryLoader::lookup(SgAsmInterpretation *interp)
-{
-    BinaryLoader *retval = NULL;
+BinaryLoader::Ptr
+BinaryLoader::lookup(SgAsmInterpretation *interp) {
+    Ptr retval;
     const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
     for (size_t i=0; i<headers.size(); i++) {
-        BinaryLoader *candidate = lookup(headers[i]);
+        Ptr candidate = lookup(headers[i]);
         if (retval && retval!=candidate)
             throw Exception("interpretation has multiple loaders");
         retval = candidate;
@@ -93,70 +89,60 @@ BinaryLoader::lookup(SgAsmInterpretation *interp)
 }
 
 /* class method */
-BinaryLoader *
-BinaryLoader::lookup(SgAsmGenericHeader *header)
-{
+BinaryLoader::Ptr
+BinaryLoader::lookup(SgAsmGenericHeader *header) {
     initclass();
-    for (size_t i=loaders.size(); i>0; --i) {
-        ASSERT_not_null(loaders[i-1]);
-        if (loaders[i-1]->can_load(header))
-            return loaders[i-1];
+    for (size_t i=loaders_.size(); i>0; --i) {
+        ASSERT_not_null(loaders_[i-1]);
+        if (loaders_[i-1]->canLoad(header))
+            return loaders_[i-1];
     }
     throw Exception("no loader for architecture");
 }
 
 /* class method */
 void
-BinaryLoader::load(SgBinaryComposite *composite, bool read_executable_file_format_only)
-{
+BinaryLoader::load(SgBinaryComposite *composite, bool read_executable_file_format_only) {
     /* Parse the initial binary file to create an AST and the initial SgAsmInterpretation(s). */
     ASSERT_require(composite->get_genericFileList()->get_files().empty());
     SgAsmGenericFile *file = createAsmAST(composite, composite->get_sourceFileNameWithPath());
     ASSERT_always_not_null(file);
-    
+
     /* Find an appropriate loader for each interpretation and parse, map, link, and/or relocate each interpretation as
      * specified by the loader properties. */
     const SgAsmInterpretationPtrList &interps = composite->get_interpretations()->get_interpretations();
     for (size_t i=0; i<interps.size(); i++) {
-        BinaryLoader *loader = lookup(interps[i])->clone(); /* clone so we can change properties locally */
+        Ptr loader = lookup(interps[i])->clone(); /* clone so we can change properties locally */
         if (read_executable_file_format_only) {
-            loader->set_perform_dynamic_linking(false);
-            loader->set_perform_remap(false);
-            loader->set_perform_relocations(false);
+            loader->performingDynamicLinking(false);
+            loader->performingRemap(false);
+            loader->performingRelocations(false);
         } else {
-            loader->set_perform_dynamic_linking(false);
-            loader->set_perform_remap(true);
-            loader->set_perform_relocations(false);
+            loader->performingDynamicLinking(false);
+            loader->performingRemap(true);
+            loader->performingRelocations(false);
         }
 
-        try {
-            loader->load(interps[i]);
-            delete loader;
-        } catch (...) {
-            delete loader;
-            throw;
-        }
+        loader->load(interps[i]);
     }
 }
 
 void
-BinaryLoader::load(SgAsmInterpretation *interp)
-{
-    if (get_perform_dynamic_linking())
+BinaryLoader::load(SgAsmInterpretation *interp) {
+    if (performingDynamicLinking())
         link(interp);
-    if (get_perform_remap())
+    if (performingRemap())
         remap(interp);
-    if (get_perform_relocations())
+    if (performingRelocations())
         fixup(interp);
 }
 
 std::string
-BinaryLoader::find_so_file(const std::string &libname) const
-{
+BinaryLoader::findSoFile(const std::string &libname) const {
     mlog[TRACE] <<"find library=" <<libname <<"\n";
     if (!libname.empty() && '/'==libname[0])
         return libname;
-    for (std::vector<std::string>::const_iterator di=directories.begin(); di!=directories.end(); ++di) {
+    for (std::vector<std::string>::const_iterator di=directories_.begin(); di!=directories_.end(); ++di) {
         mlog[TRACE] <<"  looking in " <<*di <<"\n";
         std::string libpath = *di + "/" + libname;
         struct stat sb;
@@ -168,7 +154,7 @@ BinaryLoader::find_so_file(const std::string &libname) const
 #endif
     }
     if (mlog[TRACE]) {
-        if (directories.empty())
+        if (directories_.empty())
             mlog[TRACE] <<"no search directories\n";
         mlog[TRACE] <<"  not found; throwing exception.\n";
     }
@@ -176,8 +162,7 @@ BinaryLoader::find_so_file(const std::string &libname) const
 }
 
 bool
-BinaryLoader::is_linked(SgBinaryComposite *composite, const std::string &filename)
-{
+BinaryLoader::isLinked(SgBinaryComposite *composite, const std::string &filename) {
     const SgAsmGenericFilePtrList &files = composite->get_genericFileList()->get_files();
     for (SgAsmGenericFilePtrList::const_iterator fi=files.begin(); fi!=files.end(); ++fi) {
         if ((*fi)->get_name()==filename)
@@ -187,8 +172,7 @@ BinaryLoader::is_linked(SgBinaryComposite *composite, const std::string &filenam
 }
 
 bool
-BinaryLoader::is_linked(SgAsmInterpretation *interp, const std::string &filename)
-{
+BinaryLoader::isLinked(SgAsmInterpretation *interp, const std::string &filename) {
     const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
     for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
         SgAsmGenericFile *file = (*hi)->get_file();
@@ -202,17 +186,16 @@ BinaryLoader::is_linked(SgAsmInterpretation *interp, const std::string &filename
 
 /* once called loadInterpLibraries */
 void
-BinaryLoader::link(SgAsmInterpretation* interp)
-{
+BinaryLoader::link(SgAsmInterpretation* interp) {
     ASSERT_not_null(interp);
     SgBinaryComposite *composite = SageInterface::getEnclosingNode<SgBinaryComposite>(interp);
     ASSERT_not_null(composite);
 
     /* Make sure the pre-load objects are parsed and linked into the AST. */
-    for (std::vector<std::string>::const_iterator pi=preloads.begin(); pi!=preloads.end(); ++pi) {
+    for (std::vector<std::string>::const_iterator pi=preloads_.begin(); pi!=preloads_.end(); ++pi) {
         mlog[TRACE] <<"preload object " <<*pi <<"\n";
-        std::string filename = find_so_file(*pi);
-        if (is_linked(composite, filename)) {
+        std::string filename = findSoFile(*pi);
+        if (isLinked(composite, filename)) {
             mlog[TRACE] <<filename <<" is already parsed.\n";
         } else {
             Stream m1(mlog[TRACE] <<"parsing " <<filename);
@@ -235,8 +218,8 @@ BinaryLoader::link(SgAsmInterpretation* interp)
         std::vector<std::string> deps = dependencies(header);
         for (std::vector<std::string>::iterator di=deps.begin(); di!=deps.end(); ++di) {
             mlog[TRACE] <<"library " <<*di <<" needed by " <<header_name <<"\n";
-            std::string filename = find_so_file(*di);
-            if (is_linked(composite, filename)) {
+            std::string filename = findSoFile(*di);
+            if (isLinked(composite, filename)) {
                 mlog[TRACE] <<filename <<" is already parsed.\n";
             } else {
                 Stream m1(mlog[TRACE] <<"parsing " <<filename);
@@ -252,8 +235,7 @@ BinaryLoader::link(SgAsmInterpretation* interp)
 
 /* class method */
 SgAsmGenericHeaderPtrList
-BinaryLoader::findSimilarHeaders(SgAsmGenericHeader *match, SgAsmGenericHeaderPtrList &candidates)
-{
+BinaryLoader::findSimilarHeaders(SgAsmGenericHeader *match, SgAsmGenericHeaderPtrList &candidates) {
     SgAsmGenericHeaderPtrList retval;
     Disassembler *d1 = Disassembler::lookup(match);
 
@@ -271,8 +253,7 @@ BinaryLoader::findSimilarHeaders(SgAsmGenericHeader *match, SgAsmGenericHeaderPt
 
 /* class method */
 bool
-BinaryLoader::isHeaderSimilar(SgAsmGenericHeader *h1, SgAsmGenericHeader *h2)
-{
+BinaryLoader::isHeaderSimilar(SgAsmGenericHeader *h1, SgAsmGenericHeader *h2) {
     /* This is implemented in terms of findSimilarHeaders() rather than vice versa so that findSimilarHeaders() does not need
      * to call Disassembler::lookup() so often. */
     SgAsmGenericHeaderPtrList h2list;
@@ -282,14 +263,13 @@ BinaryLoader::isHeaderSimilar(SgAsmGenericHeader *h1, SgAsmGenericHeader *h2)
 
 
 /* class method */
-SgAsmGenericFile* 
-BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath)
-{
+SgAsmGenericFile*
+BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath) {
     ASSERT_forbid(filePath.empty());
-  
+
     SgAsmGenericFile* file = SgAsmExecutableFileFormat::parseBinaryFormat(filePath.c_str());
     ASSERT_not_null(file);
-  
+
     // TODO do I need to attach here - or can I do after return
     binaryFile->get_genericFileList()->get_files().push_back(file);
     file->set_parent(binaryFile->get_genericFileList());
@@ -321,16 +301,15 @@ BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath)
 
 #ifdef  ROSE_HAVE_LIBDWARF
     /* Parse Dwarf info and add it to the SgAsmGenericFile. */
-    readDwarf(file); 
+    readDwarf(file);
 #endif
-  
+
   return file;
 }
 
 /* Used to be called layoutInterpLibraries */
 void
-BinaryLoader::remap(SgAsmInterpretation* interp)
-{
+BinaryLoader::remap(SgAsmInterpretation* interp) {
     /* Make sure we have a valid memory map. It is permissible for the caller to have reserved some space already. */
     MemoryMap::Ptr map = interp->get_map();
     if (!map)
@@ -345,15 +324,14 @@ BinaryLoader::remap(SgAsmInterpretation* interp)
 
 /* Maps the sections of a single header. */
 void
-BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header)
-{
+BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
     SgAsmGenericFile *file = header->get_file();
     ASSERT_not_null(file);
 
     Stream trace(mlog[TRACE]);
 
     trace <<"remapping sections of " <<header->get_file()->get_name() <<"\n";
-    SgAsmGenericSectionPtrList sections = get_remap_sections(header);
+    SgAsmGenericSectionPtrList sections = getRemapSections(header);
 
     rose_addr_t old_base_va = header->get_base_va();
     rose_addr_t new_base_va = rebase(map, header, sections);
@@ -367,6 +345,7 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header)
         for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
             SgAsmGenericSection *section = *si;
             section->set_mapped_actual_va(0); /*reset in case previously mapped*/
+            unsigned mapperms = mappingPermissions(section);
 
             if (trace) {
                 trace <<"  mapping section [" <<section->get_id() <<"] \"" <<section->get_name()->get_string(true) <<"\"";
@@ -405,12 +384,12 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header)
             rose_addr_t va_offset=0;
             bool anon_lo=true, anon_hi=true, map_private=false;
             ConflictResolution resolve = RESOLVE_THROW;
-            MappingContribution contrib = align_values(section, map,                      /* inputs */
-                                                       &malign_lo, &malign_hi,            /* alignment outputs */
-                                                       &va, &mem_size,                    /* memory location outputs */
-                                                       &offset, &file_size, &map_private, /* file location outputs */
-                                                       &va_offset, &anon_lo, &anon_hi,    /* internal location outputs */
-                                                       &resolve);                         /* conflict resolution output */
+            MappingContribution contrib = alignValues(section, map,                      /* inputs */
+                                                      &malign_lo, &malign_hi,            /* alignment outputs */
+                                                      &va, &mem_size,                    /* memory location outputs */
+                                                      &offset, &file_size, &map_private, /* file location outputs */
+                                                      &va_offset, &anon_lo, &anon_hi,    /* internal location outputs */
+                                                      &resolve);                         /* conflict resolution output */
             rose_addr_t falign_lo = std::max(section->get_file_alignment(), (rose_addr_t)1);
             rose_addr_t falign_hi = falign_lo;
 
@@ -444,9 +423,12 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header)
                               <<StringUtility::addrToString(offset+file_size)
                               <<(section->get_offset()==offset && section->get_size()==file_size ? " (no change)\n" : "\n");
                         trace <<"    Permissions:         "
-                              <<(section->get_mapped_rperm()?'r':'-')
-                              <<(section->get_mapped_wperm()?'w':'-')
-                              <<(section->get_mapped_xperm()?'x':'-') <<"\n";
+                              <<((mapperms & MemoryMap::READABLE)   ? "r" : "-")
+                              <<((mapperms & MemoryMap::WRITABLE)   ? "w" : "-")
+                              <<((mapperms & MemoryMap::EXECUTABLE) ? "x" : "-");
+                        if ((mapperms & ~MemoryMap::READ_WRITE_EXECUTE) != 0)
+                            mfprintf(trace)("0x%x", (mapperms & ~MemoryMap::READ_WRITE_EXECUTE));
+                        trace <<"\n";
                         trace <<"    Internal offset:     " <<StringUtility::addrToString(va_offset)
                               <<" (va " <<StringUtility::addrToString(va+va_offset) <<")\n";
                     }
@@ -503,15 +485,6 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header)
             /* Save the virtual address where this section is (will be) mapped.  When a section is mapped more than once
              * (perfectly legal to do so) only the last mapping is saved. */
             section->set_mapped_actual_va(va + va_offset);
-
-            /* Permissions */
-            unsigned mapperms=0;
-            if (section->get_mapped_rperm())
-                mapperms |= MemoryMap::READABLE;
-            if (section->get_mapped_wperm())
-                mapperms |= MemoryMap::WRITABLE;
-            if (section->get_mapped_xperm())
-                mapperms |= MemoryMap::EXECUTABLE;
 
             /* Segment name for debugging. This is the file base name and section name concatenated. */
             std::string::size_type file_basename_pos = file->get_name().find_last_of("/");
@@ -602,19 +575,15 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header)
     }
 }
 
-    
-
 void
-BinaryLoader::addSectionsForRemap(SgAsmGenericHeader* header, SgAsmGenericSectionPtrList &allSections)
-{
+BinaryLoader::addSectionsForRemap(SgAsmGenericHeader* header, SgAsmGenericSectionPtrList &allSections) {
     allSections.insert(allSections.end(),
                        header->get_sections()->get_sections().begin(),
                        header->get_sections()->get_sections().end());
 }
 
 std::vector<std::string>
-BinaryLoader::dependencies(SgAsmGenericHeader *header)
-{
+BinaryLoader::dependencies(SgAsmGenericHeader *header) {
     ASSERT_not_null(header);
     std::vector<std::string> retval;
     const SgAsmGenericDLLPtrList &dlls = header->get_dlls();
@@ -625,8 +594,7 @@ BinaryLoader::dependencies(SgAsmGenericHeader *header)
 
 /* class method */
 int64_t
-BinaryLoader::gcd(int64_t a, int64_t b, int64_t *xout/*=NULL*/, int64_t *yout/*=NULL*/)
-{
+BinaryLoader::gcd(int64_t a, int64_t b, int64_t *xout/*=NULL*/, int64_t *yout/*=NULL*/) {
     uint64_t x=0, xprev=1, y=1, yprev=0;
     bool swapped = false;
     if (b>a) {
@@ -637,11 +605,11 @@ BinaryLoader::gcd(int64_t a, int64_t b, int64_t *xout/*=NULL*/, int64_t *yout/*=
     while (b!=0) {
         uint64_t quotient = a / b;
         uint64_t temp;
-        
+
         temp = b;
         b = a % b;
         a = temp;
-        
+
         if (xout) {
             temp = x;
             x = xprev - quotient * x;
@@ -657,15 +625,14 @@ BinaryLoader::gcd(int64_t a, int64_t b, int64_t *xout/*=NULL*/, int64_t *yout/*=
 
     if (swapped)
         std::swap(xprev, yprev);
-    
+
     if (xout) *xout = xprev;
     if (yout) *yout = yprev;
     return a;
 }
 
 rose_addr_t
-BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, rose_addr_t align2)
-{
+BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, rose_addr_t align2) {
     using namespace StringUtility;
 
     if (0==val1 % align1 && 0==val2 % align2)
@@ -732,7 +699,7 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
      */
     ASSERT_require(c % g == 0);
     int64_t m = c/g;
-        
+
     /* Calculate adjustment */
     int64_t Aa = m * t * a + Ma;
     int64_t Ab = m * u * b + Mb;
@@ -743,13 +710,12 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
 }
 
 BinaryLoader::MappingContribution
-BinaryLoader::align_values(SgAsmGenericSection *section, const MemoryMap::Ptr &map,
-                           rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
-                           rose_addr_t *va_p, rose_addr_t *mem_size_p,
-                           rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
-                           rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p, 
-                           ConflictResolution *resolve_p)
-{
+BinaryLoader::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr &map,
+                          rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
+                          rose_addr_t *va_p, rose_addr_t *mem_size_p,
+                          rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
+                          rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
+                          ConflictResolution *resolve_p) {
     ASSERT_not_null(section);
     ASSERT_require2(section->is_mapped(), "section must be mapped to virtual memory");
     ASSERT_not_null(malign_lo_p);
@@ -765,7 +731,7 @@ BinaryLoader::align_values(SgAsmGenericSection *section, const MemoryMap::Ptr &m
     SgAsmGenericHeader *header = isSgAsmGenericHeader(section);
     if (!header) header = section->get_header();
     ASSERT_not_null(header);
-    
+
     /* Initial guesses */
     rose_addr_t malign_lo = *malign_lo_p;
     rose_addr_t malign_hi = *malign_hi_p;
@@ -810,15 +776,26 @@ BinaryLoader::align_values(SgAsmGenericSection *section, const MemoryMap::Ptr &m
     return CONTRIBUTE_ADD;
 }
 
+unsigned
+BinaryLoader::mappingPermissions(SgAsmGenericSection *section) const {
+    unsigned mapperms=0;
+    if (section->get_mapped_rperm())
+        mapperms |= MemoryMap::READABLE;
+    if (section->get_mapped_wperm())
+        mapperms |= MemoryMap::WRITABLE;
+    if (section->get_mapped_xperm())
+        mapperms |= MemoryMap::EXECUTABLE;
+    return mapperms;
+}
+
 /* Used to be called relocateAllLibraries */
 void
-BinaryLoader::fixup(SgAsmInterpretation *interp, FixupErrors *errors)
-{
+BinaryLoader::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
     // 1. Get section map (name -> list<section*>)
     // 2. Create Symbol map from relevant sections (.dynsym)
     // 3. Create Extent sorted list of sections
     // 4. Collect Relocation Entries.
-    // 5.  for each relocation entry, perform relocation
+    // 5. For each relocation entry, perform relocation
 }
 
 } // namespace

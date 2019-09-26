@@ -52,7 +52,7 @@ basicReadTest(const P2::Partitioner &partitioner) {
     BaseSemantics::SValuePtr addr1 = ops->number_(32, 0);
     BaseSemantics::SValuePtr dflt1m = ops->number_(32, 0x11223344);
     BaseSemantics::SValuePtr read1m = ops->readMemory(RegisterDescriptor(), addr1, dflt1m, ops->boolean_(true));
-    BaseSemantics::SValuePtr dflt1r = ops->undefined_(REG.get_nbits());
+    BaseSemantics::SValuePtr dflt1r = ops->undefined_(REG.nBits());
     BaseSemantics::SValuePtr read1r = ops->readRegister(REG, dflt1r);
 
     std::cout <<"Initial state after reading " <<*read1m <<" from address " <<*addr1 <<"\n"
@@ -67,7 +67,7 @@ basicReadTest(const P2::Partitioner &partitioner) {
     ops->currentState(curState);
     BaseSemantics::SValuePtr dflt2m = ops->number_(32, 0x55667788);
     BaseSemantics::SValuePtr read2m = ops->readMemory(RegisterDescriptor(), addr1, dflt2m, ops->boolean_(true));
-    BaseSemantics::SValuePtr dflt2r = ops->undefined_(REG.get_nbits());
+    BaseSemantics::SValuePtr dflt2r = ops->undefined_(REG.nBits());
     BaseSemantics::SValuePtr read2r = ops->readRegister(REG, dflt2r);
 
     std::cout <<"Initial state after reading " <<*read2m <<" from address " <<*addr1 <<"\n"
@@ -81,7 +81,7 @@ basicReadTest(const P2::Partitioner &partitioner) {
     ops->initialState(BaseSemantics::StatePtr());
     BaseSemantics::SValuePtr dflt3m = ops->number_(32, 0x99aabbcc);
     BaseSemantics::SValuePtr read3m = ops->readMemory(RegisterDescriptor(), addr1, dflt3m, ops->boolean_(true));
-    BaseSemantics::SValuePtr dflt3r = ops->undefined_(REG.get_nbits());
+    BaseSemantics::SValuePtr dflt3r = ops->undefined_(REG.nBits());
     BaseSemantics::SValuePtr read3r = ops->readRegister(REG, dflt3r);
     ASSERT_always_require(read1m->must_equal(read3m));
     ASSERT_always_require(read1r->must_equal(read3r));
@@ -188,7 +188,7 @@ advancedReadTest(const P2::Partitioner &partitioner) {
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
     const RegisterDescriptor REG = partitioner.instructionProvider().stackPointerRegister();
     const std::string REG_NAME = RegisterNames(regdict)(REG);
-    const RegisterDescriptor REG2(15, 1023, 0, REG.get_nbits());
+    const RegisterDescriptor REG2(15, 1023, 0, REG.nBits());
     BaseSemantics::RiscOperatorsPtr ops;
     {
         BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
@@ -209,7 +209,7 @@ advancedReadTest(const P2::Partitioner &partitioner) {
     BaseSemantics::SValuePtr addr1 = ops->number_(32, 0);
     BaseSemantics::SValuePtr dflt1m = ops->number_(32, 0x11223344);
     BaseSemantics::SValuePtr read1m = ops->readMemory(RegisterDescriptor(), addr1, dflt1m, ops->boolean_(true));
-    BaseSemantics::SValuePtr dflt1r = ops->undefined_(REG.get_nbits());
+    BaseSemantics::SValuePtr dflt1r = ops->undefined_(REG.nBits());
     BaseSemantics::SValuePtr read1r = ops->readRegister(REG, dflt1r);
 
     std::cout <<"Initial state after reading " <<*read1m <<" from address " <<*addr1 <<"\n"
@@ -224,7 +224,7 @@ advancedReadTest(const P2::Partitioner &partitioner) {
     ops->currentState(curState);
     BaseSemantics::SValuePtr dflt2m = ops->number_(32, 0x55667788);
     BaseSemantics::SValuePtr read2m = ops->readMemory(RegisterDescriptor(), addr1, dflt2m, ops->boolean_(true));
-    BaseSemantics::SValuePtr dflt2r = ops->undefined_(REG.get_nbits());
+    BaseSemantics::SValuePtr dflt2r = ops->undefined_(REG.nBits());
     BaseSemantics::SValuePtr read2r = ops->readRegister(REG, dflt2r);
 
     std::cout <<"Initial state after reading " <<*read2m <<" from address " <<*addr1 <<"\n"
@@ -241,7 +241,7 @@ advancedReadTest(const P2::Partitioner &partitioner) {
     BaseSemantics::SValuePtr addr3 = ops->number_(32, 4);
     BaseSemantics::SValuePtr dflt3m = ops->number_(32, 0x99aabbcc);
     BaseSemantics::SValuePtr read3m = ops->readMemory(RegisterDescriptor(), addr3, dflt3m, ops->boolean_(true));
-    BaseSemantics::SValuePtr dflt3r = ops->undefined_(REG2.get_nbits());
+    BaseSemantics::SValuePtr dflt3r = ops->undefined_(REG2.nBits());
     BaseSemantics::SValuePtr read3r = ops->readRegister(REG2, dflt3r);
 
     ASSERT_always_forbid(read1m->must_equal(read3m));

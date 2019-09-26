@@ -7,7 +7,7 @@ using std::string;
 
 #include "VariableIdMapping.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 /*! 
   * \author Markus Schordan
@@ -22,5 +22,8 @@ class DFAstAttribute : public AstAttribute {
 };
 
 }
+
+// backward compatibility
+namespace SPRAY = CodeThorn;
 
 #endif

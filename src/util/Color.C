@@ -9,17 +9,17 @@ namespace Rose {
 namespace Color {
 
 // Predefined colors names
-const HSV clear  (0.0, 0.0, 0.0, 0.0);
-const HSV black  (0.0, 0.0, 0.0);
-const HSV white  (0.0, 0.0, 1.0);
-const HSV gray   (0.0, 0.0, 0.5);
+const HSV HSV_CLEAR  (0.0, 0.0, 0.0, 0.0);
+const HSV HSV_BLACK  (0.0, 0.0, 0.0);
+const HSV HSV_WHITE  (0.0, 0.0, 1.0);
+const HSV HSV_GRAY   (0.0, 0.0, 0.5);
 
-const HSV red    (0.0,   1.0, 0.5);
-const HSV yellow (1/6.0, 1.0, 0.5);
-const HSV green  (2/6.0, 1.0, 0.5);
-const HSV cyan   (3/6.0, 1.0, 0.5);
-const HSV blue   (4/6.0, 1.0, 0.5);
-const HSV magenta(5/6.0, 1.0, 0.5);
+const HSV HSV_RED    (0.0,   1.0, 0.5);
+const HSV HSV_YELLOW (1/6.0, 1.0, 0.5);
+const HSV HSV_GREEN  (2/6.0, 1.0, 0.5);
+const HSV HSV_CYAN   (3/6.0, 1.0, 0.5);
+const HSV HSV_BLUE   (4/6.0, 1.0, 0.5);
+const HSV HSV_MAGENTA(5/6.0, 1.0, 0.5);
 
 // Internal function used when converting HSV to RGB.  Borrowed with permission from Robb's Beenav navigation software [Robb
 // P. Matzke 2014-12-02]
@@ -161,6 +161,39 @@ operator<<(std::ostream &out, const Gradient &gradient) {
         out <<(1==++n?"":", ") <<node.key() <<"=>" <<node.value();
     out <<")";
     return out;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Ansi
+
+std::string
+colorName(AnsiColor c) {
+    switch (c) {
+        case ANSI_CLEAR:   return "clear";
+        case ANSI_RED:     return "red";
+        case ANSI_GREEN:   return "green";
+        case ANSI_YELLOW:  return "yellow";
+        case ANSI_BLUE:    return "blue";
+        case ANSI_MAGENTA: return "magenta";
+        case ANSI_CYAN:    return "cyan";
+        case ANSI_GRAY:    return "gray";
+    }
+    ASSERT_not_reachable("invalid ANSI color");
+}
+
+std::string
+ansiColorEscape(AnsiColor c) {
+    switch (c) {
+        case ANSI_CLEAR:   return "";
+        case ANSI_RED:     return "\033[31m";
+        case ANSI_GREEN:   return "\033[32m";
+        case ANSI_YELLOW:  return "\033[33m";
+        case ANSI_BLUE:    return "\033[34m";
+        case ANSI_MAGENTA: return "\033[35m";
+        case ANSI_CYAN:    return "\033[36m";
+        case ANSI_GRAY:    return "\033[38;5;244m";
+    }
+    return "";
 }
 
 } // namespace

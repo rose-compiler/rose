@@ -41,6 +41,12 @@ void RoseToLLVM::astVisit(SgProject *project) {
     bool translateExternal = project -> attributeExists(kTranslateExternals);
 
     /**
+     * First, construct an attributes visitor to be used for attributing snippets of code.
+     */
+    CodeAttributesVisitor ad_hoc_attribute_visitor(*options, *control);
+    control -> setAdHocAttributesVisitor(&ad_hoc_attribute_visitor);
+
+    /**
      * Visit Ast to add required code generation attributes.
      */
     CodeAttributesVisitor attribute_visitor(*options, *control);
@@ -51,6 +57,12 @@ void RoseToLLVM::astVisit(SgProject *project) {
         attribute_visitor.traverseInputFiles(project);
     }
     attribute_visitor.processRemainingComponents();
+
+    /**
+     * Next, construct an generator visitor to be used for generating code for snippets.
+     */
+    CodeGeneratorVisitor ad_hoc_generator_visitor(*options, *control);
+    control -> setAdHocGeneratorVisitor(&ad_hoc_generator_visitor);
 
     /**
      * Revisit Ast to generate code after attribute visit.

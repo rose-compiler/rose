@@ -16,18 +16,24 @@ namespace CodeThorn {
     /** Adds a label to the call string if it is not longer than getLength().
         Returns true if the label is added, otherwise false.
     */
-    bool addLabel(SPRAY::Label lab);
+    bool isEmpty();
+    bool addLabel(CodeThorn::Label lab);
 
     /** Removes the last label of the call string if it matches with the argument 'lab'.
         In case of success this function returns true, otherwise false.
         On a call string of length 0 it always returns false and no operation is performed.
     */
-    bool removeIfLastLabel(SPRAY::Label lab);
+    bool removeIfLastLabel(CodeThorn::Label lab);
+
+    /** true if the provided label is the last label in the call
+        string. Always false for the empty call string.
+     */
+    bool isLastLabel(CodeThorn::Label lab);
 
     /** removes last label. 
         If call string is of length 0 no operation is performed.
     */
-    void removeLabel();
+    void removeLastLabel();
 
 
     /** returns the length of the call string.
@@ -53,12 +59,28 @@ namespace CodeThorn {
     bool operator==(const CallString& other) const;
     bool operator!=(const CallString& other) const;
 
+    // hash value for this callstring
+    size_t hash() const;
+
   private:
     static size_t _maxLength;
-    typedef std::vector<SPRAY::Label> CallStringType;
+    typedef std::vector<CodeThorn::Label> CallStringType;
     CallStringType _callString;
   };
 
 }
+
+// custom specialization of std::hash injected in namespace std
+namespace std
+{
+  template<> struct hash<CodeThorn::CallString> {
+    typedef CodeThorn::CallString argument_type;
+    typedef std::size_t result_type;
+    result_type operator()(argument_type const& cs) const noexcept {
+      return cs.hash();
+    }
+  };
+}
+
 
 #endif

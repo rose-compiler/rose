@@ -208,7 +208,7 @@ Annotations::Annotations(string & filename, str_list * cpp_flags)
 #ifdef CBZ
   CBZ::set_file(filename.c_str(), 1, true);
 #endif
-  int parse_ok = annparse();
+  /*int parse_ok =*/ annparse();
 
   Current = 0;
 
@@ -481,7 +481,7 @@ annVariable * Annotations::lookup_global(const string & name)
 
       bool is_external = true;
       bool is_io = false;
-      annVariable * g = new_global(name, is_external, is_io);
+      /*annVariable * g =*/ new_global(name, is_external, is_io);
     }
     else
       return 0;

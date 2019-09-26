@@ -1,7 +1,0 @@
-#!/bin/bash
-
-# your translator goes here!!!
-# gcc $@ -std=iso9899:1999
-/home/dquinlan2/ROSE/LINUX-3.3.2/developersScratchSpace/Dan/preprocessor -rose:verbose 2 -rose:C_only --edg:restrict --edg:no_warnings $@
-
-#/home/yuan5/bin/identityTranslator --edg:no_warnings $@

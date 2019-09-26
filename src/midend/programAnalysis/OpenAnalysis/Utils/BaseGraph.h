@@ -320,11 +320,18 @@ protected:
   std::set<Edge*> edge_set;                                  // the set of all the graph edges
   Node* root_node;                                           // the root node
   bool DFS_needed, BFS_needed;                               // has a DFS / BFS been done on this graph?
+#if __cplusplus < 201103L
   void add (Edge* e) throw (DuplicateEdge, EdgeInUse, EmptyEdge,
                             DuplicateNode, NodeInUse, EmptyNode);
   void add (Node* n) throw (DuplicateNode, NodeInUse, EmptyNode);
   void remove (Edge* e) throw (NonexistentEdge, EmptyEdge);
   void remove (Node* n) throw (NonexistentNode, DeletingRootOfNonSingletonGraph, EmptyNode);
+#else
+  void add (Edge* e);
+  void add (Node* n);
+  void remove (Edge* e);
+  void remove (Node* n);
+#endif
   virtual Node* create_DFS_links (Node* start_node) = 0;
   virtual Node* create_BFS_links (Node* start_node) = 0;
 };

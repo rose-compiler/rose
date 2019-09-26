@@ -1,5 +1,8 @@
 #include <sage3basic.h>
 
+namespace Rose {
+namespace BinaryAnalysis {
+
 void
 RegisterDescriptor::majorNumber(unsigned majr) {
     ASSERT_require(majr < 16);
@@ -51,3 +54,6 @@ operator<<(std::ostream &o, RegisterDescriptor reg) {
     reg.print(o);
     return o;
 }
+
+} // namespace
+} // namespace

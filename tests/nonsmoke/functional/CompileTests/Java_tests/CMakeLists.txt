@@ -3,7 +3,7 @@ set(TESTCODES_REQUIRED_TO_PASS
   test2011_05.java test2011_06.java test2011_07.java test2011_08.java
   test2011_09.java test2011_10.java test2011_11.java test2011_12.java
   test2011_13.java test2011_14.java test2011_15.java test2011_16.java
-  test2011_17.java test2011_18.java test2011_19.java test2011_20.java
+  test2011_17.java test2011_19.java 
   test2011_21.java test2011_22.java test2011_23.java test2011_24.java
   test2011_25.java test2011_26.java test2011_27.java test2011_29.java
   test2011_30.java test2011_31.java test2011_32.java test2011_33.java
@@ -43,12 +43,20 @@ set(TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE
 # This is where the Java generics tests are put (currently not required to pass
 # all phases).
 set(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6
-  test2011_43.java test2011_44.java test2011_45.java test2011_46.java
-  test2011_48.java test2011_49.java pgc_test2011_09.java cave3_assert0.java
+  test2011_44.java test2011_45.java cave3_assert0.java
   cave3_assert1.java cave3_import2.java cave3_import3.java cave3_foreach0.java
-  cave3_foreach1.java cave3_foreach2.java cave3_foreach3.java
-  cave3_foreach4.java cave3_foreach5.java cave3_foreach6.java
-  cave3_foreach7.java cave3_labelBreak4.java)
+  cave3_foreach1.java cave3_foreach3.java)
+
+
+if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9)
+list(APPEND TESTCODES_REQUIRED_TO_PASS 
+    test2011_18.java test2011_20.java )
+list(APPEND TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 
+  test2011_43.java test2011_46.java test2011_48.java test2011_49.java
+  pgc_test2011_09.java 
+  cave3_foreach2.java cave3_foreach4.java cave3_foreach5.java
+  cave3_foreach6.java cave3_foreach7.java cave3_labelBreak4.java)
+endif()
 
 set(baseline_flags -rose:java:d javac-output-classes -rose:verbose 0)
 set(ROSE_FLAGS_SKIP_FINAL_COMPILATION

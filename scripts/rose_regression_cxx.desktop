@@ -1,4 +1,0 @@
-#!/bin/bash
-
-# g++ $@
-/home/dquinlan2/ROSE/LINUX-3.3.2/developersScratchSpace/Dan/preprocessor --edg:no_warnings $@

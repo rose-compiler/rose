@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) inliner.C inlinerSupport.C isPotentiallyModified.C replaceExpressionWithStatement.C
+
+run $(public_header) inliner.h inlinerSupport.h replaceExpressionWithStatement.h

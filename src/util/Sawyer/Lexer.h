@@ -180,7 +180,11 @@ public:
      *
      *  @{ */
     std::string lexeme(const Token &t) {
-        return std::string(content_.characters(t.begin()), t.end() - t.begin());
+        if (const char *s = content_.characters(t.begin())) {
+            return std::string(s, t.end() - t.begin());
+        } else {
+            return "";
+        }
     }
     std::string lexeme() {
         return lexeme(current());

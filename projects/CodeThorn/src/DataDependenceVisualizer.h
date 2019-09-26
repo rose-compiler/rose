@@ -14,7 +14,7 @@
 #include "CFAnalysis.h"
 #include "UDAstAttribute.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 /*! 
   * \author Markus Schordan
   * \date 2013.

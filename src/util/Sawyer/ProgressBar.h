@@ -5,13 +5,6 @@
 
 
 
-// WARNING: Changes to this file must be contributed back to Sawyer or else they will
-//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
-//          https://github.com/matzke1/sawyer.
-
-
-
-
 #ifndef Sawyer_ProgressBar_H
 #define Sawyer_ProgressBar_H
 
@@ -97,7 +90,7 @@ namespace ProgressBarSettings {
  * @code
  *  void f() {
  *      int total = 200;
- *      ProgressBar<int> progress(total, mlog[INFO], "test");
+ *      ProgressBar<int> progress(total, mlog[MARCH], "test");
  *      for (int i=0; i<total; ++i, ++progress)
  *          do_some_work();
  *  }
@@ -106,6 +99,9 @@ namespace ProgressBarSettings {
  *  The progress bar is created with a name and capacity. As the progress bar is incremented the bar will increase.  Messages
  *  printed while the progress bar is active do not interfere with the progress bar. When the progress bar object is destroyed
  *  the progress bar disappears.
+ *
+ *  Progress bars should be output to the @c MARCH stream rather than @c INFO. If all progress bars follow this policy then
+ *  it's easy to enable or disable them without affecting other diagnostic output.
  *
  *  The entire progress bar public interface is synchronized--it can be called from multiple threads all accessing the same
  *  object and their operations will be serialized. */

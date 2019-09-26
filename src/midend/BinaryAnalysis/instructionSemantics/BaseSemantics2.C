@@ -1,4 +1,4 @@
-#include "sage3basic.h" 
+#include "sage3basic.h"
 #include "BaseSemantics2.h"
 #include "AsmUnparser_compat.h"
 #include "Diagnostics.h"
@@ -123,7 +123,7 @@ State::clear_memory() {
 
 SValuePtr
 State::readRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops) {
-    ASSERT_require(desc.is_valid());
+    ASSERT_forbid(desc.isEmpty());
     ASSERT_not_null(dflt);
     ASSERT_not_null(ops);
     return registers_->readRegister(desc, dflt, ops);
@@ -131,7 +131,7 @@ State::readRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperator
 
 SValuePtr
 State::peekRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops) {
-    ASSERT_require(desc.is_valid());
+    ASSERT_forbid(desc.isEmpty());
     ASSERT_not_null(dflt);
     ASSERT_not_null(ops);
     return registers_->peekRegister(desc, dflt, ops);
@@ -139,7 +139,7 @@ State::peekRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperator
 
 void
 State::writeRegister(RegisterDescriptor desc, const SValuePtr &value, RiscOperators *ops) {
-    ASSERT_require(desc.is_valid());
+    ASSERT_forbid(desc.isEmpty());
     ASSERT_not_null(value);
     ASSERT_not_null(ops);
     registers_->writeRegister(desc, value, ops);
@@ -162,7 +162,7 @@ State::peekMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators
     ASSERT_not_null(valOps);
     return memory_->peekMemory(address, dflt, addrOps, valOps);
 }
-    
+
 void
 State::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps) {
     ASSERT_not_null(addr);
@@ -178,7 +178,7 @@ State::printRegisters(std::ostream &stream, const std::string &prefix) {
     fmt.set_line_prefix(prefix);
     printRegisters(stream, fmt);
 }
-    
+
 void
 State::printRegisters(std::ostream &stream, Formatter &fmt) const {
     registers_->print(stream, fmt);
@@ -230,14 +230,38 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
     ++nInsns_;
 };
 
+std::pair<SValuePtr /*low*/, SValuePtr /*high*/>
+RiscOperators::split(const SValuePtr &a, size_t splitPoint) {
+    return std::make_pair(extract(a, 0, splitPoint), extract(a, splitPoint, a->get_width()));
+}
+
+SValuePtr
+RiscOperators::addCarry(const SValuePtr &a, const SValuePtr &b, SValuePtr &carryOut /*out*/) {
+    ASSERT_not_null(a);
+    ASSERT_not_null(b);
+    ASSERT_require(a->get_width() == b->get_width());
+    size_t nBits = a->get_width();
+    SValuePtr result = add(a, b);
+
+    // We compute the carry-out bit by repeating the operation with wider addend. The alternative, to perform the addition once
+    // on wider addends and then extracting the carry out and the main sum, results in more complicated expressions.  If we had
+    // a simplifiers (e.g., in the symbolic domain) that recognized and simplified these more complicated expressions we might
+    // be able to get by with performing the addition only once.
+    SValuePtr aWide = signExtend(a, nBits+1);
+    SValuePtr bWide = signExtend(b, nBits+1);
+    carryOut = extract(add(aWide, bWide), nBits, nBits+1);
+
+    return result;
+}
+
 SValuePtr
 RiscOperators::subtract(const SValuePtr &minuend, const SValuePtr &subtrahend) {
     return add(minuend, negate(subtrahend));
 }
 
 SValuePtr
-RiscOperators::equal(const SValuePtr &a, const SValuePtr &b) {
-    return isEqual(a, b);
+RiscOperators::subtractCarry(const SValuePtr &minuend, const SValuePtr &subtrahend, SValuePtr &carryOut /*out*/) {
+    return addCarry(minuend, negate(subtrahend), carryOut);
 }
 
 SValuePtr
@@ -276,15 +300,9 @@ RiscOperators::isUnsignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr 
 SValuePtr
 RiscOperators::isSignedLessThan(const SValuePtr &a, const SValuePtr &b) {
     ASSERT_require(a->get_width() == b->get_width());
-    size_t nbits = a->get_width();
-    SValuePtr aIsNeg = extract(a, nbits-1, nbits);
-    SValuePtr bIsNeg = extract(b, nbits-1, nbits);
-    SValuePtr diff = subtract(signExtend(a, nbits+1), signExtend(b, nbits+1));
-    SValuePtr diffIsNeg = extract(diff, nbits, nbits+1); // sign bit
-    SValuePtr negPos = and_(aIsNeg, invert(bIsNeg));     // A is negative and B is non-negative?
-    SValuePtr sameSigns = invert(xor_(aIsNeg, bIsNeg));  // A and B are both negative or both non-negative?
-    SValuePtr result = or_(negPos, and_(sameSigns, diffIsNeg));
-    return result;
+    SValuePtr carryOut;
+    (void) subtractCarry(a, b, carryOut);
+    return carryOut; // a < b implies a - b is negative
 }
 
 SValuePtr
@@ -455,7 +473,7 @@ RiscOperators::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt_) {
 void
 Dispatcher::advanceInstructionPointer(SgAsmInstruction *insn) {
     RegisterDescriptor ipReg = instructionPointerRegister();
-    size_t nBits = ipReg.get_nbits();
+    size_t nBits = ipReg.nBits();
     BaseSemantics::SValuePtr ipValue;
     if (!autoResetInstructionPointer_ && operators->currentState() && operators->currentState()->registerState()) {
         BaseSemantics::RegisterStateGenericPtr grState =
@@ -488,6 +506,7 @@ Dispatcher::processInstruction(SgAsmInstruction *insn)
         // If the exception was thrown by something that didn't have an instruction available, then add the instruction
         if (!e.insn)
             e.insn = insn;
+        e.insn->incrementSemanticFailure();
         throw e;
     }
     operators->finishInstruction(insn);
@@ -515,7 +534,7 @@ Dispatcher::iproc_set(int key, InsnProcessor *iproc)
         iproc_table.resize(key+1, NULL);
     iproc_table[key] = iproc;
 }
-    
+
 InsnProcessor *
 Dispatcher::iproc_get(int key)
 {
@@ -542,10 +561,10 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool al
         throw Exception(ss.str(), currentInstruction());
     }
 
-    if (nbits>0 && reg->get_nbits()!=nbits) {
+    if (nbits>0 && reg->nBits()!=nbits) {
         std::ostringstream ss;
         ss <<"Invalid " <<nbits <<"-bit register: \"" <<regname <<"\" is "
-           <<reg->get_nbits() <<" " <<(1==reg->get_nbits()?"byte":"bytes");
+           <<reg->nBits() <<" " <<(1==reg->nBits()?"byte":"bytes");
         throw Exception(ss.str(), currentInstruction());
     }
     return *reg;
@@ -562,10 +581,10 @@ Dispatcher::decrementRegisters(SgAsmExpression *e)
                 RegisterDescriptor reg = rre->get_descriptor();
                 if (rre->get_adjustment() < 0) {
                     SValuePtr adj = ops->number_(64, (int64_t)rre->get_adjustment());
-                    if (reg.get_nbits() <= 64) {
-                        adj = ops->unsignedExtend(adj, reg.get_nbits());  // truncate
+                    if (reg.nBits() <= 64) {
+                        adj = ops->unsignedExtend(adj, reg.nBits());  // truncate
                     } else {
-                        adj = ops->signExtend(adj, reg.get_nbits());      // extend
+                        adj = ops->signExtend(adj, reg.nBits());      // extend
                     }
                     ops->writeRegister(reg, ops->add(ops->readRegister(reg), adj));
                 }
@@ -585,7 +604,7 @@ Dispatcher::incrementRegisters(SgAsmExpression *e)
             if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
                 RegisterDescriptor reg = rre->get_descriptor();
                 if (rre->get_adjustment() > 0) {
-                    SValuePtr adj = ops->unsignedExtend(ops->number_(64, (int64_t)rre->get_adjustment()), reg.get_nbits());
+                    SValuePtr adj = ops->unsignedExtend(ops->number_(64, (int64_t)rre->get_adjustment()), reg.nBits());
                     ops->writeRegister(reg, ops->add(ops->readRegister(reg), adj));
                 }
             }
@@ -657,10 +676,10 @@ Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/
         }
         size_t idx = (offset->get_number() + re->get_index()) % re->get_modulus();
         RegisterDescriptor reg = re->get_descriptor();
-        reg.set_major(reg.get_major() + re->get_stride().get_major() * idx);
-        reg.set_minor(reg.get_minor() + re->get_stride().get_minor() * idx);
-        reg.set_offset(reg.get_offset() + re->get_stride().get_offset() * idx);
-        reg.set_nbits(reg.get_nbits() + re->get_stride().get_nbits() * idx);
+        reg.majorNumber(reg.majorNumber() + re->get_stride().majorNumber() * idx);
+        reg.minorNumber(reg.minorNumber() + re->get_stride().minorNumber() * idx);
+        reg.offset(reg.offset() + re->get_stride().offset() * idx);
+        reg.nBits(reg.nBits() + re->get_stride().nBits() * idx);
         operators->writeRegister(reg, value);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         SValuePtr addr = effectiveAddress(mre, addr_nbits);
@@ -694,10 +713,10 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits
         }
         size_t idx = (offset->get_number() + re->get_index()) % re->get_modulus();
         RegisterDescriptor reg = re->get_descriptor();
-        reg.set_major(reg.get_major() + re->get_stride().get_major() * idx);
-        reg.set_minor(reg.get_minor() + re->get_stride().get_minor() * idx);
-        reg.set_offset(reg.get_offset() + re->get_stride().get_offset() * idx);
-        reg.set_nbits(reg.get_nbits() + re->get_stride().get_nbits() * idx);
+        reg.majorNumber(reg.majorNumber() + re->get_stride().majorNumber() * idx);
+        reg.minorNumber(reg.minorNumber() + re->get_stride().minorNumber() * idx);
+        reg.offset(reg.offset() + re->get_stride().offset() * idx);
+        reg.nBits(reg.nBits() + re->get_stride().nBits() * idx);
         retval = operators->readRegister(reg);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         BaseSemantics::SValuePtr addr = effectiveAddress(mre, addr_nbits);
@@ -727,7 +746,7 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits
         retval = operators->unsignedExtend(retval, value_nbits);
     return retval;
 }
-    
+
 } // namespace
 } // namespace
 } // namespace

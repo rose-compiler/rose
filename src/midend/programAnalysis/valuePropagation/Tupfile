@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) ArrayAnnot.C ValueAnnot.C ValuePropagate.C
+
+run $(public_header) ArrayAnnot.h ValueAnnot.h ValuePropagate.h

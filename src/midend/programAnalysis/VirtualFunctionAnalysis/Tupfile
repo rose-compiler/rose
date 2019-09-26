@@ -1,0 +1,7 @@
+include_rules
+
+run $(librose_compile) IntraProcDataFlowAnalysis.C InterProcDataFlowAnalysis.C VirtualFunctionAnalysis.C \
+    PtrAliasAnalysis.C IntraProcAliasAnalysis.C 
+
+run $(public_header) IntraProcDataFlowAnalysis.h InterProcDataFlowAnalysis.h VirtualFunctionAnalysis.h \
+    PtrAliasAnalysis.h IntraProcAliasAnalysis.h 

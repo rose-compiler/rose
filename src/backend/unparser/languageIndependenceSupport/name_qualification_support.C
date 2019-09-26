@@ -46,9 +46,20 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
         }
      ROSE_ASSERT(referencedNode != NULL);
 
+  // TV (10/24/2018): (ROSE-1399) unparsing template from AST requires to namequal expressions in template arguments
+     SgExpression* expr = isSgExpression(referencedNode);
+     if (expr != NULL) {
+       nameQualifier = expr->get_qualified_name_prefix_for_referenced_type();
+#if 0
+     printf ("In Unparser_Nameq::lookup_generated_qualified_name(): case of SgExpression: referencedNode = %p = %s \n",referencedNode,referencedNode->class_name().c_str());
+#endif
+       return nameQualifier;
+     }
+
 #if 0
      printf ("In Unparser_Nameq::lookup_generated_qualified_name(): referencedNode = %p = %s \n",referencedNode,referencedNode->class_name().c_str());
 #endif
+
      switch (referencedNode->variantT())
         {
           case V_SgInitializedName:
@@ -77,7 +88,78 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
           case V_SgTypedefDeclaration:
              {
                SgTypedefDeclaration* node = isSgTypedefDeclaration(referencedNode);
+#if 0
+               printf ("In Unparser_Nameq::lookup_generated_qualified_name(): case V_SgTypedefDeclaration: calling SgTypedefDeclaration::get_qualified_name_prefix_for_base_type() \n");
+#endif
                nameQualifier = node->get_qualified_name_prefix_for_base_type();
+               break;
+             }
+
+       // DQ (2/18/2019): Adding support for name qualification of enum declaration in typedef declarations (and SgClassDeclaration, SgTemplateInstantiationDecl).
+          case V_SgTemplateInstantiationDecl:
+          case V_SgClassDeclaration:
+          case V_SgEnumDeclaration:
+             {
+            // SgEnumDeclaration* node = isSgEnumDeclaration(referencedNode);
+               SgDeclarationStatement* node = isSgDeclarationStatement(referencedNode);
+#if 0
+               printf ("In Unparser_Nameq::lookup_generated_qualified_name(): node = %p = %s \n",node,node->class_name().c_str());
+               printf ("In Unparser_Nameq::lookup_generated_qualified_name(): case V_SgEnumDeclaration: calling SgEnumDeclaration::get_qualified_name_prefix_for_base_type() \n");
+               printf ("In Unparser_Nameq::lookup_generated_qualified_name(): SgNode::get_globalQualifiedNameMapForNames().size() = %zu \n",SgNode::get_globalQualifiedNameMapForNames().size());
+#endif
+            // DQ (2/18/2019): If this works then we might want to generate an associated get_qualified_name_prefix_for_base_type() function for the SgEnumDeclaration.
+            // nameQualifier = node->get_qualified_name_prefix_for_base_type();
+
+            // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(const_cast<SgTypedefDeclaration*>(this));
+            // std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTypes().find(node);
+            // std::map<SgNode*,std::string>::iterator i = SgNode::get_qualifiedNameMapForNames().find(node);
+               std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForNames().find(node);
+
+            // if (i != SgNode::get_globalQualifiedNameMapForTypes().end())
+               if (i != SgNode::get_globalQualifiedNameMapForNames().end())
+                  {
+#if 0
+                    printf ("FOUND a valid name qualification: i->first = %p \n",i->first);
+                    printf ("FOUND a valid name qualification: i->second = %s \n",i->second.c_str());
+#endif
+                 // DQ (2/22/2019): Added assertion.
+                    ROSE_ASSERT(node == i->first);
+
+#if 1
+                    nameQualifier = i->second;
+#else
+                 // DQ (2/22/2019): This only appears to be a problem for ROSE when compiled with GNU 4.9.3.
+                 // It might be a special case of the implementation of SgName and it's constructor that 
+                 // take a string as well.  But it only appears as an issue for GNU 4.9.3.
+#if 0
+                    printf ("before test for empty string \n");
+
+#endif
+                    if (i->second.empty() == false)
+                       {
+#if 0
+                         printf ("before assignment to nameQualifier \n");
+#endif
+                         nameQualifier = i->second;
+#if 0
+                         printf ("after assignment to nameQualifier \n");
+#endif
+                       }
+#if 0
+                    printf ("FOUND a valid name qualification: nameQualifier %s \n",nameQualifier.str());
+#endif
+#endif
+                  }
+                 else
+                  {
+#if 0
+                    printf ("COULD NOT find a valid name qualification \n");
+#endif
+                  }
+
+#if 0
+               printf ("nameQualifier for SgEnumDeclaration = %p = %s = %s \n",node,node->class_name().c_str(),nameQualifier.str());
+#endif
                break;
              }
 
@@ -86,6 +168,24 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
 #if 0
             // DQ (5/4/2013): This was previously disabled, maybe because the SgTemplateArgument is shared between too many declarations (in different scopes).
                printf ("WARNING: lookup of qualifier prefix from SgTemplateArgument was previously disabled \n");
+#endif
+#if 0
+            // DQ (3/14/2019): Avaliable collections of data to support name qualification.
+            // SgNode::get_globalQualifiedNameMapForNames(),
+            // SgNode::get_globalQualifiedNameMapForTypes(),
+            // SgNode::get_globalQualifiedNameMapForTemplateHeaders(),
+            // SgNode::get_globalTypeNameMap(),
+            // SgNode::get_globalQualifiedNameMapForMapsOfTypes(),
+            // referencedNameSet
+
+               printf ("Calling outputNameQualificationMap(): using SgNode::get_globalQualifiedNameMapForNames() \n");
+               outputNameQualificationMap(SgNode::get_globalQualifiedNameMapForNames());
+               printf ("Calling outputNameQualificationMap(): using SgNode::get_globalQualifiedNameMapForTypes() \n");
+               outputNameQualificationMap(SgNode::get_globalQualifiedNameMapForTypes());
+               printf ("Calling outputNameQualificationMap(): using SgNode::get_globalQualifiedNameMapForTemplateHeaders() \n");
+               outputNameQualificationMap(SgNode::get_globalQualifiedNameMapForTemplateHeaders());
+               printf ("Calling outputNameQualificationMap(): using SgNode::get_globalTypeNameMap() \n");
+               outputNameQualificationMap(SgNode::get_globalTypeNameMap());
 #endif
                SgTemplateArgument* node = isSgTemplateArgument(referencedNode);
                nameQualifier = node->get_qualified_name_prefix_for_type();
@@ -108,6 +208,9 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
 
        // DQ (9/12/2016): Adding support for whatever types are used within alignOf operators.
           case V_SgAlignOfOp:
+
+       // DQ (1/19/2019): Added support for SgDotExp (required for some unparseToString_tests test codes (e.g. test2010_24.C, and a dozen others).
+          case V_SgDotExp:
 
           case V_SgTypeIdOp:
           case V_SgSizeOfOp:
@@ -146,6 +249,20 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
             // printf ("WARNING: Note that qualified types in typedef types are not yet supported... \n");
                break;
              }
+
+          case V_SgPointerMemberType:
+             {
+               SgPointerMemberType* node = isSgPointerMemberType(referencedNode);
+            // nameQualifier = node->get_qualified_name_prefix_for_type();
+
+            // DQ (4/21/2019): Added support for SgPointerMemberType, but not clear which of these functions should be called here.
+               printf ("In Unparser_Nameq::lookup_generated_qualified_name(): case SgPointerMemberType: calling node->get_qualified_name_prefix_for_class_of() \n");
+
+            // nameQualifier = node->get_qualified_name_prefix_for_base_type();
+               nameQualifier = node->get_qualified_name_prefix_for_class_of();
+               break;
+             }
+
 #if 0
           case V_:
              {
@@ -161,9 +278,29 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
              }
         }
 
+#if 0
+     printf ("In Unparser_Nameq::lookup_generated_qualified_name(): info.get_reference_node_for_qualification() = %p = %s nameQualifier = %s \n",
+          referencedNode,referencedNode->class_name().c_str(),nameQualifier.str());
+#endif
+
      return nameQualifier;
    }
 
+// DQ (3/14/2019): Adding debugging support to output the map of names.
+void
+Unparser_Nameq::outputNameQualificationMap( const std::map<SgNode*,std::string> & qualifiedNameMap )
+   {
+     printf ("qualifiedNameMap.size() = %zu \n",qualifiedNameMap.size());
+     std::map<SgNode*,std::string>::const_iterator i = qualifiedNameMap.begin();
+     while (i != qualifiedNameMap.end())
+       {
+         ROSE_ASSERT(i->first != NULL);
+
+         printf (" --- *i = i->first = %p = %s i->second = %s \n",i->first,i->first->class_name().c_str(),i->second.c_str());
+
+         i++;
+       }
+   }
 
 
 
@@ -181,6 +318,8 @@ Unparser_Nameq::generateNameQualifier( SgInitializedName* initializedName, const
      ROSE_ASSERT(initializedName != NULL);
      return generateNameQualifierSupport(initializedName->get_scope(),info,qualificationOfType);
    }
+
+#error "DEAD CODE!"
 
 SgName
 Unparser_Nameq::generateNameQualifier( SgDeclarationStatement* declarationStatement, const SgUnparse_Info & info, bool qualificationOfType )
@@ -231,6 +370,8 @@ Unparser_Nameq::generateNameQualifierSupport ( SgScopeStatement* scope, const Sg
                          printf ("key not found in node map nameQualificationReferenceNode = %s \n",nameQualificationReferenceNode->class_name().c_str());
                          ROSE_ASSERT(false);
                        }
+#error "DEAD CODE!"
+
                   }
                  else
                   {
@@ -263,6 +404,8 @@ Unparser_Nameq::generateNameQualifierSupport ( SgScopeStatement* scope, const Sg
                          ROSE_ASSERT(false);
                        }
                   }
+#error "DEAD CODE!"
+
              }
             else
              {
@@ -278,6 +421,8 @@ Unparser_Nameq::generateNameQualifierSupport ( SgScopeStatement* scope, const Sg
 
      return qualifiedName;
    }
+
+#error "DEAD CODE!"
 
 #endif
 

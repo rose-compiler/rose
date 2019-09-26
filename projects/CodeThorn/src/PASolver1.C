@@ -6,7 +6,7 @@
 #include "PASolver1.h"
 #include "Timer.h"
 
-SPRAY::PASolver1::PASolver1(WorkListSeq<Edge>& workList,
+CodeThorn::PASolver1::PASolver1(WorkListSeq<Edge>& workList,
 				  vector<Lattice*>& analyzerDataPreInfo,
 				  vector<Lattice*>& analyzerDataPostInfo,
 				  PropertyStateFactory& initialElementFactory,
@@ -24,7 +24,7 @@ SPRAY::PASolver1::PASolver1(WorkListSeq<Edge>& workList,
 }
 
 void
-SPRAY::PASolver1::computeCombinedPreInfo(Label lab,Lattice& info) {
+CodeThorn::PASolver1::computeCombinedPreInfo(Label lab,Lattice& info) {
   if(!_flow.contains(lab)) {
     // schroder3 (2016-07-07): If the label does not exist in the CFG, then
     //  it does not have predecessors and the given pre-info therefore does
@@ -44,13 +44,13 @@ SPRAY::PASolver1::computeCombinedPreInfo(Label lab,Lattice& info) {
 }
 
 void
-SPRAY::PASolver1::computePostInfo(Label lab,Lattice& info) {
+CodeThorn::PASolver1::computePostInfo(Label lab,Lattice& info) {
   _transferFunctions.transfer(lab,info);
 }
 
 // runs until worklist is empty
 void
-SPRAY::PASolver1::runSolver() {
+CodeThorn::PASolver1::runSolver() {
   Timer solverTimer;
   cout<<"INFO: solver 1 started."<<endl;
   solverTimer.start();
@@ -76,8 +76,8 @@ SPRAY::PASolver1::runSolver() {
       approximatedByMemFunc = &Lattice::approximatedBy;
     }
 
-    //if(_trace)
-    //  cout<<"TRACE: computing edge "<<lab0<<"->"<<lab1<<endl;
+    if(_trace)
+      cout<<"TRACE: computing edge "<<lab0<<"->"<<lab1<<endl;
     Lattice* info=_initialElementFactory.create();
     ROSE_ASSERT(info);
     info->combine(*_analyzerDataPreInfo[lab0.getId()]);

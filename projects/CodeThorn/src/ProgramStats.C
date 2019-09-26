@@ -6,7 +6,7 @@
 using namespace CodeThorn;
 using namespace std;
 
-void SPRAY::ProgramStatistics::printBasicCodeInfo(SgNode* root) {
+void CodeThorn::ProgramStatistics::printBasicCodeInfo(SgNode* root) {
   SgProject* project=isSgProject(root);
   VariableIdMapping variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(project);
@@ -22,7 +22,7 @@ void SPRAY::ProgramStatistics::printBasicCodeInfo(SgNode* root) {
   cout<<"----------------------------------------------------------------------"<<endl;
 }
 
-void SPRAY::ProgramStatistics::floatIntStats(SgNode* node, SPRAY::ComputationInfo& cit) {
+void CodeThorn::ProgramStatistics::floatIntStats(SgNode* node, CodeThorn::ComputationInfo& cit) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgExpression* expr=isSgExpression(*i)) {
@@ -56,7 +56,7 @@ void SPRAY::ProgramStatistics::floatIntStats(SgNode* node, SPRAY::ComputationInf
   }
 }
 
-void SPRAY::ProgramStatistics::computeOpStats(SPRAY::ComputationInfo& ci, SgNode* node) {
+void CodeThorn::ProgramStatistics::computeOpStats(CodeThorn::ComputationInfo& ci, SgNode* node) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(isSgAddOp(*i)||isSgDivideOp(*i)||isSgSubtractOp(*i)||isSgModOp(*i)||isSgMultiplyOp(*i)) {
@@ -92,7 +92,7 @@ void SPRAY::ProgramStatistics::computeOpStats(SPRAY::ComputationInfo& ci, SgNode
   }
 }
 
-SPRAY::ComputationInfo SPRAY::ProgramStatistics::computeComputationInfo(Label lab, VariableIdMapping* vidm) {
+CodeThorn::ComputationInfo CodeThorn::ProgramStatistics::computeComputationInfo(Label lab, VariableIdMapping* vidm) {
   SgNode* node=labeler->getNode(lab);
   // TODO: check node for not being at the expression yet
   if(isSgExprStatement(node))
@@ -141,7 +141,7 @@ SPRAY::ComputationInfo SPRAY::ProgramStatistics::computeComputationInfo(Label la
   return ci;
 }
 
-SPRAY::ProgramStatistics::ProgramStatistics(VariableIdMapping* vidm, Labeler* labeler, Flow* icfg, string useDefAstAttributeName)
+CodeThorn::ProgramStatistics::ProgramStatistics(VariableIdMapping* vidm, Labeler* labeler, Flow* icfg, string useDefAstAttributeName)
   :vidm(vidm),
    labeler(labeler),
    icfg(icfg),
@@ -150,11 +150,11 @@ SPRAY::ProgramStatistics::ProgramStatistics(VariableIdMapping* vidm, Labeler* la
 {
   computationInfo.resize(labeler->numberOfLabels());
 }
-void SPRAY::ProgramStatistics::setGenerateWithSource(bool withsource) {
+void CodeThorn::ProgramStatistics::setGenerateWithSource(bool withsource) {
   _withSource=withsource;
 }
 
-void SPRAY::ProgramStatistics::computeStatistics() {
+void CodeThorn::ProgramStatistics::computeStatistics() {
   LabelSet labSet=icfg->nodeLabels();
   //long labelNum=labeler->numberOfLabels();
   for(LabelSet::iterator i=labSet.begin();i!=labSet.end();++i) {
@@ -172,7 +172,7 @@ void SPRAY::ProgramStatistics::computeStatistics() {
 
 }
 
-void SPRAY::ProgramStatistics::printStatistics() {
+void CodeThorn::ProgramStatistics::printStatistics() {
   LabelSet labSet=icfg->nodeLabels();
   // print results
   cout<< "-----------------------------------"<<endl;    
@@ -184,7 +184,7 @@ void SPRAY::ProgramStatistics::printStatistics() {
   cout<< "-----------------------------------"<<endl;    
 }
 
-string SPRAY::ProgramStatistics::generateNodeResourceUsageDotString(Label lab) {
+string CodeThorn::ProgramStatistics::generateNodeResourceUsageDotString(Label lab) {
   stringstream dot;
   dot<<lab;
   string labelstart="[label=";
@@ -222,7 +222,7 @@ string SPRAY::ProgramStatistics::generateNodeResourceUsageDotString(Label lab) {
   return result;
 }
 
-void SPRAY::ProgramStatistics::generateResourceUsageICFGDotFile(string dotfilename) {
+void CodeThorn::ProgramStatistics::generateResourceUsageICFGDotFile(string dotfilename) {
   // generate ICFG visualization
   cout << "generating "<<dotfilename<<endl;
   icfg->setDotOptionDisplayLabel(false);

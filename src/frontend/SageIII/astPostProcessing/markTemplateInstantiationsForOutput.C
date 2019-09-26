@@ -1,7 +1,6 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
-// DQ (12/29//2011): Since this file used the TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS macro we need to include rose_config.h.
 #include "rose_config.h"
 
 #include "markForOutputInCodeGeneration.h"
@@ -337,11 +336,7 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                ROSE_ASSERT ( isfirstNondefiningDeclaration == true || isDefiningDeclaration == true );
 
             // If the template declaration is in the current file then we need not output the instantiation (skip marking instantiation for output!)
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                SgDeclarationStatement* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
-#else
-               SgTemplateDeclaration* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
-#endif
 
             // DQ (1/21/2013): This is a problem for specialized templates containing declarations (e.g. member functions) 
             // that are not in the associated template class.  These member function instantiations, don't always have an 
@@ -371,11 +366,7 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                  // (so it might be a templated member function or a non-templated member function).
                     SgTemplateInstantiationDecl* memberFunctionScopeTemplateInstantiationDeclaration = isSgTemplateInstantiationDecl(memberFunctionScopeTemplateInstantiationDefinition->get_declaration());
                     ROSE_ASSERT(memberFunctionScopeTemplateInstantiationDeclaration != NULL);
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                     SgDeclarationStatement* memberFunctionScopeTemplateDeclaration = memberFunctionScopeTemplateInstantiationDeclaration->get_templateDeclaration();
-#else
-                    SgTemplateDeclaration* memberFunctionScopeTemplateDeclaration = memberFunctionScopeTemplateInstantiationDeclaration->get_templateDeclaration();
-#endif
                     ROSE_ASSERT(memberFunctionScopeTemplateDeclaration != NULL);
 #if 0
                     printf ("Warning the member function might be specified in a templated class which is nested in another templated class! \n");
@@ -409,11 +400,7 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                     printf ("MarkTemplateInstantiationsForOutput::ProcessMemberFunctionTemplateDeclarations(): isSpecialization = %s \n",isSpecialization ? "true" : "false");
                     printf ("MarkTemplateInstantiationsForOutput::ProcessMemberFunctionTemplateDeclarations(): isDefinedInClass = %s \n",isDefinedInClass ? "true" : "false");
 #endif
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                     SgDeclarationStatement* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
-#else
-                    SgTemplateDeclaration* templateDeclaration = memberFunctionInstantiation->get_templateDeclaration();
-#endif
                  // bool templateDeclarationIsDeclaredInClass = (templateDeclaration->get_parent() == templateDeclaration->get_scope());
                     SgNode* parentOfTemplateDeclaration = templateDeclaration->get_parent();
                  // Later this test will have to be for "isTemplateDefinition(parentOfTemplateDeclaration));"
@@ -651,35 +638,30 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
 
                                         ROSE_ASSERT(memberFunctionInstantiation->get_class_scope() != NULL);
 
-                                     // This is used in the case above and could be refactored farther above. But it can sometimes be a SgTemplateDeclaration!
-                                     // SgDeclarationStatement* parentDeclaration = SageInterface::getNonInstantiatonDeclarationForClass(memberFunctionInstantiation);
-                                     // ROSE_ASSERT(parentDeclaration != NULL);
-                                     // printf ("parentDeclaration = %p = %s \n",parentDeclaration,parentDeclaration->class_name().c_str());
-
-                                        SgClassDeclaration* parentClassDeclaration = memberFunctionInstantiation->get_class_scope()->get_declaration();
-                                     // SgClassDeclaration* parentClassDeclaration = isSgClassDeclaration(parentDeclaration);
-
-                                        ROSE_ASSERT(parentClassDeclaration != NULL);
-
+                                        SgDeclarationStatement* parentDeclaration = memberFunctionInstantiation->get_associatedClassDeclaration();
+                                        ROSE_ASSERT(parentDeclaration != NULL);
 #if 0
-                                        printf ("parentClassDeclaration = %p = %s \n",parentClassDeclaration,parentClassDeclaration->class_name().c_str());
-                                        printf ("parentClassDeclaration->get_parent() = %p = %s \n",parentClassDeclaration->get_parent(),parentClassDeclaration->get_parent()->class_name().c_str());
-                                        printf ("parentClassDeclaration->get_scope() = %p = %s \n",parentClassDeclaration->get_scope(),parentClassDeclaration->get_scope()->class_name().c_str());
+                                        printf ("parentDeclaration = %p = %s \n",parentDeclaration,parentDeclaration->class_name().c_str());
+                                        printf ("parentDeclaration->get_parent() = %p = %s \n",parentDeclaration->get_parent(),parentDeclaration->get_parent()->class_name().c_str());
+                                        printf ("parentDeclaration->get_scope() = %p = %s \n",parentDeclaration->get_scope(),parentDeclaration->get_scope()->class_name().c_str());
 
                                      // DQ (10/11/2007): I would like to uncomment this assertion.
                                      // DQ (12/22/2006): This is a reasonable case that we need to allow!
                                      // DQ (8/30/2005): I don't think this is a problem! (see test2005_153.C)
-                                        if (parentClassDeclaration->get_scope() != globalScope)
+                                        if (parentDeclaration->get_scope() != globalScope)
                                            {
-                                             printf ("########## parentClassDeclaration->get_scope() is not global scope it is a %s ########## \n",parentClassDeclaration->get_scope()->class_name().c_str());
+                                             printf ("########## parentDeclaration->get_scope() is not global scope it is a %s ########## \n",parentDeclaration->get_scope()->class_name().c_str());
                                              printf ("memberFunctionInstantiation = %p defining = %p nondefining = %p \n",memberFunctionInstantiation,
                                                   memberFunctionInstantiation->get_firstNondefiningDeclaration(),memberFunctionInstantiation->get_definingDeclaration());
                                            }
-                                     // ROSE_ASSERT(parentClassDeclaration->get_scope() == globalScope);
+                                     // ROSE_ASSERT(parentDeclaration->get_scope() == globalScope);
 #endif
 
+//                                      SgClassDeclaration* parentClassDeclaration = isSgClassDeclaration(parentDeclaration);
+//                                      SgNonrealDecl* parentNonrealDecl = isSgNonrealDecl(parentDeclaration);
+
                                      // DQ (11/4/2007): This looks for a forward declaration of matching name exists in the specificed scope (starting as "parentClassDeclaration").
-                                        bool foundExistingPrototype = SageInterface::isPrototypeInScope ( globalScope, memberFunctionInstantiation, parentClassDeclaration );
+                                        bool foundExistingPrototype = SageInterface::isPrototypeInScope ( globalScope, memberFunctionInstantiation, parentDeclaration );
 
                                      // DQ (11/4/2007): If not found in global scope then check if it has already been moved to a namespace.
                                         SgNamespaceDefinitionStatement* classNamespaceScope = SageInterface::enclosingNamespaceScope(memberFunctionInstantiation);
@@ -706,7 +688,7 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                                         if (foundExistingPrototype == false)
                                            {
                                           // DQ (11/3/2007): Only build the new member function prototype declaration if we are going to insert it into place.
-                                             SgDeclarationStatementPtrList::iterator parentLocation = find(declarationList.begin(),declarationList.end(),parentClassDeclaration);
+                                             SgDeclarationStatementPtrList::iterator parentLocation = find(declarationList.begin(),declarationList.end(),parentDeclaration);
                                              if (parentLocation != declarationList.end())
                                                 {
 #if 0
@@ -734,9 +716,6 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
 #endif
                                                // This is important to copytest2007_64.C
                                                   bool inFront = false;
-#if 0
-                                                  globalScope->insert_statement(parentClassDeclaration,copyOfMemberFunction,inFront);
-#else
                                                // SgTemplateInstantiationMemberFunctionDecl* nondefiningMemberFunctionInstantiation = isSgTemplateInstantiationMemberFunctionDecl(memberFunctionInstantiation->get_firstNondefiningDeclaration());
 
                                                // I think we can assert this!
@@ -766,11 +745,10 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
 #if 0
                                                        printf ("classNamespaceScope == NULL: Insert prototype into globalScope \n");
 #endif
-                                                       globalScope->insert_statement(parentClassDeclaration,copyOfMemberFunction,inFront);
+                                                       globalScope->insert_statement(parentDeclaration,copyOfMemberFunction,inFront);
 
                                                        ROSE_ASSERT(copyOfMemberFunction->get_parent() == globalScope);
                                                      }
-#endif
                                                // DQ (10/12/2007): Reset the parent to reflect the structural change.
                                                // ROSE_ASSERT(copyOfMemberFunction->get_parent() == globalScope);
                                                 }
@@ -883,11 +861,7 @@ MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations ( set<S
 #endif
 
             // If the template declaration is in the current file then we need not output the instantiation (skip marking instantiation for output!)
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                SgDeclarationStatement* templateDeclaration = functionInstantiation->get_templateDeclaration();
-#else
-               SgTemplateDeclaration* templateDeclaration = functionInstantiation->get_templateDeclaration();
-#endif
 
             // DQ (11/3/2012): Changed this assertion to a conditional.
             // Looking at the code for where the template declaration is set, it seems reasonable that it might 
@@ -975,11 +949,7 @@ MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations ( set<SgDe
                ROSE_ASSERT ( isfirstNondefiningDeclaration == true || isDefiningDeclaration == true );
 
             // If the template declaration is in the current file then we need not output the instantiation (skip marking instantiation for output!)
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                SgDeclarationStatement* templateDeclaration = classInstantiation->get_templateDeclaration();
-#else
-               SgTemplateDeclaration* templateDeclaration = classInstantiation->get_templateDeclaration();
-#endif
                ROSE_ASSERT(templateDeclaration != NULL);
 #if 0
             // printf ("templateDeclaration = %p = %s \n",templateDeclaration,templateDeclaration->get_name().str());
@@ -1573,12 +1543,17 @@ MarkTemplateInstantiationsForOutputSupport::evaluateSynthesizedAttribute (
                                    SgMemberFunctionDeclaration* destructor = SageInterface::getDefaultDestructor(classDeclaration);
                                    if (destructor != NULL)
                                       {
+#if 0
                                         if (isSgTemplateInstantiationMemberFunctionDecl(destructor) == NULL)
                                            {
                                              printf ("ERROR: destructor = %p = %s \n",destructor,destructor->class_name().c_str());
                                              destructor->get_file_info()->display("Error: isSgTemplateInstantiationMemberFunctionDecl(destructor) == NULL: debug");
                                            }
-                                        ROSE_ASSERT(isSgTemplateInstantiationMemberFunctionDecl(destructor) != NULL);
+#endif
+                                     // DQ (3/2/2019): We are trying to refine what is a template instantiation and what is a normal function.
+                                     // I think the example that is an issue here is in facat a normal function (see Cxx11_tests/test2014_04.C).
+                                     // ROSE_ASSERT(isSgTemplateInstantiationMemberFunctionDecl(destructor) != NULL);
+
                                         saveDeclaration(destructor);
                                       }
                                  }

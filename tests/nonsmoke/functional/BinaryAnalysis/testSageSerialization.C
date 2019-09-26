@@ -10,11 +10,13 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 #include <AstSerialization.h>                           // needed for Rose::saveAst and Rose::restoreAst
-#include <sageBuilderAsm.h>                             // used to build some IR nodes for testing
+#include <SageBuilderAsm.h>                             // used to build some IR nodes for testing
 
 // binary archives should work equally well, but we use text here to aid in debugging.
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+
+using namespace Rose::BinaryAnalysis;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Testing support

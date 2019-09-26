@@ -1,1 +1,4 @@
-add_subdirectory(nonsmoke)
+if(NOT disable-tests-directory)
+  add_subdirectory(nonsmoke)
+endif()
+

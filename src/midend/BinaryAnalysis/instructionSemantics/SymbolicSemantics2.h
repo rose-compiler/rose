@@ -605,11 +605,11 @@ public:
                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 
 protected:
-    virtual BaseSemantics::SValuePtr readOrPeekMemory(const BaseSemantics::SValuePtr &address,
-                                                      const BaseSemantics::SValuePtr &dflt,
-                                                      BaseSemantics::RiscOperators *addrOps,
-                                                      BaseSemantics::RiscOperators *valOps,
-                                                      bool allowSideEffects);
+    BaseSemantics::SValuePtr readOrPeekMemory(const BaseSemantics::SValuePtr &address,
+                                              const BaseSemantics::SValuePtr &dflt,
+                                              BaseSemantics::RiscOperators *addrOps,
+                                              BaseSemantics::RiscOperators *valOps,
+                                              bool allowSideEffects);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared in this class
@@ -949,25 +949,6 @@ protected:
     // Configuration properties
 public:
 
-    // [Robb P. Matzke 2015-09-17] deprecated API
-    bool computingUseDef() const ROSE_DEPRECATED("use computingDefiners instead") {
-        return computingDefiners() == TRACK_ALL_DEFINERS;
-    }
-    void computingUseDef(bool b) ROSE_DEPRECATED("use computingDefiners instead") {
-        computingDefiners(b ? TRACK_ALL_DEFINERS : TRACK_NO_DEFINERS);
-    }
-
-    // [Robb P. Matzke 2015-08-10] deprecated API
-    void set_compute_usedef(bool b=true) ROSE_DEPRECATED("use computingDefiners instead") {
-        computingDefiners(b ? TRACK_ALL_DEFINERS : TRACK_NO_DEFINERS);
-    }
-    void clear_compute_usedef() ROSE_DEPRECATED("use computingDefiners instead") {
-        computingDefiners(TRACK_NO_DEFINERS);
-    }
-    bool get_compute_usedef() ROSE_DEPRECATED("use computingDefiners instead") {
-        return computingDefiners() == TRACK_ALL_DEFINERS;
-    }
-
     /** Property: Track which instructions define a semantic value.
      *
      *  Each semantic value (@ref SValue) is capable of storing a set of instruction addresses. This property controls how
@@ -1010,17 +991,6 @@ public:
     void computingMemoryWriters(WritersMode m) { computingMemoryWriters_ = m; }
     WritersMode computingMemoryWriters() const { return computingMemoryWriters_; }
     /** @} */
-
-    // [Robb P. Matzke 2015-08-10] deprecated API
-    void set_compute_memwriters(bool b = true) ROSE_DEPRECATED("use computingMemoryWriters instead") {
-        computingMemoryWriters(b ? TRACK_LATEST_WRITER : TRACK_NO_WRITERS);
-    }
-    void clear_compute_memwriters() ROSE_DEPRECATED("use computingMemoryWriters instead") {
-        computingMemoryWriters(TRACK_NO_WRITERS);
-    }
-    bool get_compute_memwriters() const ROSE_DEPRECATED("use computingMemoryWriters instead") {
-        return computingMemoryWriters() != TRACK_NO_WRITERS;
-    }
 
     /** Property: Track latest writer to each register.
      *
@@ -1202,10 +1172,10 @@ public:
                              const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
 protected:
-    virtual BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg,
-                                                      const BaseSemantics::SValuePtr &addr,
-                                                      const BaseSemantics::SValuePtr &dflt,
-                                                      bool allowSideEffects);
+    BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg,
+                                              const BaseSemantics::SValuePtr &addr,
+                                              const BaseSemantics::SValuePtr &dflt,
+                                              bool allowSideEffects);
 };
 
 } // namespace

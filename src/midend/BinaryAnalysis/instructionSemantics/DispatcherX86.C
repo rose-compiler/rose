@@ -311,7 +311,7 @@ struct IP_bittest: P {
         if (insn->get_lockPrefix() && (x86_bt==kind || !isSgAsmMemoryReferenceExpression(args[0]))) {
             ops->interrupt(x86_exception_ud, 0);
         } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(args[0])) {
-            const size_t addrSize = d->REG_anyIP.get_nbits();
+            const size_t addrSize = d->REG_anyIP.nBits();
             BaseSemantics::SValuePtr bitBase = ops->unsignedExtend(d->effectiveAddress(mre), addrSize);
             BaseSemantics::SValuePtr bitOffset = ops->signExtend(d->read(args[1]), addrSize);
 
@@ -427,12 +427,12 @@ struct IP_call: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr targetVa = ops->unsignedExtend(d->read(args[0]), d->REG_anyIP.get_nbits());
+            BaseSemantics::SValuePtr targetVa = ops->unsignedExtend(d->read(args[0]), d->REG_anyIP.nBits());
             
             // Push return address onto stack
-            size_t nBytesPush = d->REG_anyIP.get_nbits() >> 3;
+            size_t nBytesPush = d->REG_anyIP.nBits() >> 3;
             BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
-            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(d->REG_anySP.get_nbits(), -nBytesPush));
+            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(d->REG_anySP.nBits(), -nBytesPush));
             BaseSemantics::SValuePtr yes = ops->boolean_(true);
             BaseSemantics::SValuePtr ip = d->readRegister(d->REG_anyIP);
             ops->writeMemory(d->REG_SS, d->fixMemoryAddress(newSp), ip, yes);
@@ -611,8 +611,8 @@ struct IP_cmpstrings: P {
                 default:
                     ASSERT_not_reachable("invalid instruction address size");
             }
-            ASSERT_require(reg1.is_valid());
-            ASSERT_require(reg2.is_valid());
+            ASSERT_forbid(reg1.isEmpty());
+            ASSERT_forbid(reg2.isEmpty());
             BaseSemantics::SValuePtr addr1 = d->readRegister(reg1);
             BaseSemantics::SValuePtr addr2 = d->readRegister(reg2);
 
@@ -633,8 +633,8 @@ struct IP_cmpstrings: P {
             (void) d->doAddOperation(val1, ops->invert(val2), true, no, inLoop);
 
             // Adjust the address registers
-            BaseSemantics::SValuePtr positiveNBytes = ops->number_(reg1.get_nbits(), +nbytes);
-            BaseSemantics::SValuePtr negativeNBytes = ops->number_(reg1.get_nbits(), -nbytes);
+            BaseSemantics::SValuePtr positiveNBytes = ops->number_(reg1.nBits(), +nbytes);
+            BaseSemantics::SValuePtr negativeNBytes = ops->number_(reg1.nBits(), -nbytes);
             BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF), negativeNBytes, positiveNBytes);
             BaseSemantics::SValuePtr reg1val = d->readRegister(reg1);
             d->writeRegister(reg1, ops->ite(inLoop, ops->add(d->readRegister(reg1), step), reg1val));
@@ -659,7 +659,7 @@ struct IP_cmpxchg: P {
             ASSERT_require(asm_type_width(args[1]->get_type()) == nbits);
             BaseSemantics::SValuePtr op0 = d->read(args[0]);
             RegisterDescriptor A = d->REG_AX;
-            A.set_nbits(nbits);
+            A.nBits(nbits);
             BaseSemantics::SValuePtr oldA = d->readRegister(A);
             BaseSemantics::SValuePtr no = ops->boolean_(false);
             (void) d->doAddOperation(oldA, ops->invert(op0), true, no);
@@ -775,7 +775,7 @@ struct IP_hlt: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             ops->hlt();
-            d->writeRegister(d->REG_anyIP, ops->number_(d->REG_anyIP.get_nbits(), insn->get_address()));
+            d->writeRegister(d->REG_anyIP, ops->number_(d->REG_anyIP.nBits(), insn->get_address()));
         }
     }
 };
@@ -792,8 +792,8 @@ struct IP_divide: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             size_t nbits = asm_type_width(args[0]->get_type());
-            RegisterDescriptor regA = d->REG_AX; regA.set_nbits(8==nbits ? 16 : nbits);
-            RegisterDescriptor regD = d->REG_DX; regD.set_nbits(8==nbits ? 16 : nbits);
+            RegisterDescriptor regA = d->REG_AX; regA.nBits(8==nbits ? 16 : nbits);
+            RegisterDescriptor regD = d->REG_DX; regD.nBits(8==nbits ? 16 : nbits);
             BaseSemantics::SValuePtr dividend;
             if (8==nbits) {
                 dividend = d->readRegister(regA);
@@ -943,7 +943,7 @@ struct IP_imul: P {
                     factor1 = d->readRegister(d->REG_AL);
                     factor2 = d->read(args[0]);
                 } else {
-                    RegisterDescriptor reg0 = d->REG_AX; reg0.set_nbits(arg0Width);
+                    RegisterDescriptor reg0 = d->REG_AX; reg0.nBits(arg0Width);
                     factor1 = d->readRegister(reg0);
                     factor2 = d->read(args[0]);
                 }
@@ -971,8 +971,8 @@ struct IP_imul: P {
                 if (8 == arg0Width) {
                     d->writeRegister(d->REG_AX, product);
                 } else {
-                    RegisterDescriptor aReg = d->REG_AX; aReg.set_nbits(arg0Width);
-                    RegisterDescriptor dReg = d->REG_DX; dReg.set_nbits(arg0Width);
+                    RegisterDescriptor aReg = d->REG_AX; aReg.nBits(arg0Width);
+                    RegisterDescriptor dReg = d->REG_DX; dReg.nBits(arg0Width);
                     d->writeRegister(aReg, ops->extract(product, 0, arg0Width));
                     d->writeRegister(dReg, ops->extract(product, arg0Width, 2*arg0Width));
                 }
@@ -1053,7 +1053,7 @@ struct IP_jmp: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            size_t tgtWidth = d->REG_anyIP.get_nbits();
+            size_t tgtWidth = d->REG_anyIP.nBits();
             BaseSemantics::SValuePtr tgt = ops->filterIndirectJumpTarget(ops->unsignedExtend(d->read(args[0]), tgtWidth));
             if (insn->get_operandSize() == x86_insnsize_16 && tgtWidth == 32) {
                 BaseSemantics::SValuePtr zero16 = ops->number_(16, 0);
@@ -1078,7 +1078,7 @@ struct IP_jcc: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            size_t tgtWidth = d->REG_anyIP.get_nbits();
+            size_t tgtWidth = d->REG_anyIP.nBits();
             BaseSemantics::SValuePtr cond = d->flagsCombo(kind);
             BaseSemantics::SValuePtr ip = d->readRegister(d->REG_anyIP);
             BaseSemantics::SValuePtr tgt = ops->ite(cond,
@@ -1125,7 +1125,7 @@ struct IP_leave: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            size_t nbitsBP = d->REG_anyBP.get_nbits();
+            size_t nbitsBP = d->REG_anyBP.nBits();
             d->writeRegister(d->REG_anySP, d->readRegister(d->REG_anyBP));
             BaseSemantics::SValuePtr oldSP = d->readRegister(d->REG_anySP);
             BaseSemantics::SValuePtr newSP = ops->add(oldSP, ops->number_(oldSP->get_width(), nbitsBP/8));
@@ -1182,7 +1182,7 @@ struct IP_loadstring: P {
                 default:
                     ASSERT_not_reachable("invalid instruction address size");
             }
-            ASSERT_require(srcReg.is_valid());
+            ASSERT_forbid(srcReg.isEmpty());
             BaseSemantics::SValuePtr stringPtr = d->readRegister(srcReg);
 
             // Adjust address width based on how memory is accessed.  All addresses in memory have the same width.
@@ -1195,12 +1195,12 @@ struct IP_loadstring: P {
             BaseSemantics::SValuePtr val = ops->readMemory(sr, addr, ops->undefined_(nbits), inLoop);
 
             // Save value into destination register
-            RegisterDescriptor dstReg = d->REG_AX; dstReg.set_nbits(nbits);
+            RegisterDescriptor dstReg = d->REG_AX; dstReg.nBits(nbits);
             d->writeRegister(dstReg, val);
 
             // Advance pointer register
-            BaseSemantics::SValuePtr positiveNBytes = ops->number_(srcReg.get_nbits(), +nbytes);
-            BaseSemantics::SValuePtr negativeNBytes = ops->number_(srcReg.get_nbits(), -nbytes);
+            BaseSemantics::SValuePtr positiveNBytes = ops->number_(srcReg.nBits(), +nbytes);
+            BaseSemantics::SValuePtr negativeNBytes = ops->number_(srcReg.nBits(), -nbytes);
             BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF), negativeNBytes, positiveNBytes);
             d->writeRegister(srcReg, ops->ite(inLoop, ops->add(stringPtr, step), stringPtr));
 
@@ -1266,7 +1266,7 @@ struct IP_loop: P {
 
             // Adjust the instruction pointer to either loop or fall through.
             BaseSemantics::SValuePtr ip = d->readRegister(d->REG_anyIP);
-            d->writeRegister(d->REG_anyIP, ops->ite(doLoop, d->read(args[0], d->REG_anyIP.get_nbits()), ip));
+            d->writeRegister(d->REG_anyIP, ops->ite(doLoop, d->read(args[0], d->REG_anyIP.nBits()), ip));
         }
     }
 };
@@ -1347,17 +1347,17 @@ struct IP_movhpd: P {
             ops->interrupt(x86_exception_ud, 0);
         } else if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0])) {
             RegisterDescriptor reg = rre->get_descriptor();
-            ASSERT_require(reg.get_offset() == 0 && reg.get_nbits() == 128);
-            reg.set_offset(64);
-            reg.set_nbits(64);
+            ASSERT_require(reg.offset() == 0 && reg.nBits() == 128);
+            reg.offset(64);
+            reg.nBits(64);
             BaseSemantics::SValuePtr val = d->read(args[1]);
             ASSERT_require(val->get_width() == 64);
             d->writeRegister(reg, val);
         } else if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[1])) {
             RegisterDescriptor reg = rre->get_descriptor();
-            ASSERT_require(reg.get_offset() == 0 && reg.get_nbits() == 128);
-            reg.set_offset(64);
-            reg.set_nbits(64);
+            ASSERT_require(reg.offset() == 0 && reg.nBits() == 128);
+            reg.offset(64);
+            reg.nBits(64);
             BaseSemantics::SValuePtr val = d->readRegister(reg);
             d->write(args[0], val);
         } else {
@@ -1374,15 +1374,15 @@ struct IP_movlpd: P {
             ops->interrupt(x86_exception_ud, 0);
         } else if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0])) {
             RegisterDescriptor reg = rre->get_descriptor();
-            ASSERT_require(reg.get_offset() == 0 && reg.get_nbits() == 128);
-            reg.set_nbits(64);
+            ASSERT_require(reg.offset() == 0 && reg.nBits() == 128);
+            reg.nBits(64);
             BaseSemantics::SValuePtr val = d->read(args[1]);
             ASSERT_require(val->get_width() == 64);
             d->writeRegister(reg, val);
         } else if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[1])) {
             RegisterDescriptor reg = rre->get_descriptor();
-            ASSERT_require(reg.get_offset() == 0 && reg.get_nbits() == 128);
-            reg.set_nbits(64);
+            ASSERT_require(reg.offset() == 0 && reg.nBits() == 128);
+            reg.nBits(64);
             BaseSemantics::SValuePtr val = d->readRegister(reg);
             d->write(args[0], val);
         } else {
@@ -1405,8 +1405,8 @@ struct IP_movsd: P {
                 // register->memory or register->register. High order 64 bits are unchanged.
                 if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0])) {
                     RegisterDescriptor reg = rre->get_descriptor();
-                    ASSERT_require(reg.get_offset() == 0 && reg.get_nbits() == 128);
-                    reg.set_nbits(64);
+                    ASSERT_require(reg.offset() == 0 && reg.nBits() == 128);
+                    reg.nBits(64);
                     d->writeRegister(reg, src);
                 } else {
                     d->write(args[0], src);
@@ -1431,8 +1431,8 @@ struct IP_movss: P {
                 // register->memory or register->register. High order 96 bits are unchanged.
                 if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0])) {
                     RegisterDescriptor reg = rre->get_descriptor();
-                    ASSERT_require(reg.get_offset() == 0 && reg.get_nbits() == 128);
-                    reg.set_nbits(32);
+                    ASSERT_require(reg.offset() == 0 && reg.nBits() == 128);
+                    reg.nBits(32);
                     d->writeRegister(reg, src);
                 } else {
                     d->write(args[0], src);
@@ -1527,8 +1527,8 @@ struct IP_movestring: P {
                 default:
                     ASSERT_not_reachable("invalid instruction address size");
             }
-            ASSERT_require(srcReg.is_valid());
-            ASSERT_require(dstReg.is_valid());
+            ASSERT_forbid(srcReg.isEmpty());
+            ASSERT_forbid(dstReg.isEmpty());
             BaseSemantics::SValuePtr srcRegVal = d->readRegister(srcReg);
             BaseSemantics::SValuePtr dstRegVal = d->readRegister(dstReg);
 
@@ -1545,8 +1545,8 @@ struct IP_movestring: P {
             ops->writeMemory(d->REG_ES, dstAddr, value, inLoop);
 
             // Adjust the address registers
-            BaseSemantics::SValuePtr positiveNBytes = ops->number_(srcReg.get_nbits(), +nbytes);
-            BaseSemantics::SValuePtr negativeNBytes = ops->number_(srcReg.get_nbits(), -nbytes);
+            BaseSemantics::SValuePtr positiveNBytes = ops->number_(srcReg.nBits(), +nbytes);
+            BaseSemantics::SValuePtr negativeNBytes = ops->number_(srcReg.nBits(), -nbytes);
             BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF), negativeNBytes, positiveNBytes);
             d->writeRegister(srcReg, ops->ite(inLoop, ops->add(srcRegVal, step), srcRegVal));
             d->writeRegister(dstReg, ops->ite(inLoop, ops->add(dstRegVal, step), dstRegVal));
@@ -2733,14 +2733,14 @@ struct IP_pop: P {
                 default:
                     ASSERT_not_reachable("invalid address size");
             }
-            ASSERT_require(sp.is_valid());
+            ASSERT_forbid(sp.isEmpty());
         
             // Increment the stack pointer before writing to args[0] just in case args[0] is stack-relative
             size_t operandWidth = asm_type_width(args[0]->get_type());
             ASSERT_require(operandWidth % 8 == 0);
             size_t stackDelta = operandWidth / 8;
             BaseSemantics::SValuePtr oldSp = d->readRegister(sp);
-            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(sp.get_nbits(), stackDelta));
+            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(sp.nBits(), stackDelta));
             d->writeRegister(sp, newSp);
 
             // Read from stack and write to args[0]
@@ -3397,22 +3397,22 @@ struct IP_push: P {
                 default:
                     ASSERT_not_reachable("invalid address size");
             }
-            ASSERT_require(sp.is_valid());
+            ASSERT_forbid(sp.isEmpty());
 
             // Read the value to push onto the stack before decrementing the stack pointer.
             BaseSemantics::SValuePtr toPush = d->read(args[0]);
-            if (isSgAsmIntegerValueExpression(args[0]) && toPush->get_width() < sp.get_nbits()) {
-                toPush = ops->signExtend(toPush, sp.get_nbits());
-            } else if (isSgAsmRegisterReferenceExpression(args[0]) && toPush->get_width() < sp.get_nbits() &&
+            if (isSgAsmIntegerValueExpression(args[0]) && toPush->get_width() < sp.nBits()) {
+                toPush = ops->signExtend(toPush, sp.nBits());
+            } else if (isSgAsmRegisterReferenceExpression(args[0]) && toPush->get_width() < sp.nBits() &&
                        (isSgAsmRegisterReferenceExpression(args[0])->get_descriptor() == d->REG_FS ||
                         isSgAsmRegisterReferenceExpression(args[0])->get_descriptor() == d->REG_GS)) {
-                toPush = ops->unsignedExtend(toPush, sp.get_nbits());
+                toPush = ops->unsignedExtend(toPush, sp.nBits());
             }
             
             // Decrement the stack pointer before writing to args[0] just in case args[0] is stack-relative
             int stackDelta = toPush->get_width() / 8;
             BaseSemantics::SValuePtr oldSp = d->readRegister(sp);
-            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(sp.get_nbits(), -stackDelta));
+            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(sp.nBits(), -stackDelta));
             d->writeRegister(sp, newSp);
 
             // Write data to stack
@@ -3553,7 +3553,7 @@ struct IP_ret: P {
         if (args.size()>1)
             throw BaseSemantics::Exception("instruction must have zero or one operand", insn);
         BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
-        size_t stackDelta = d->REG_anyIP.get_nbits() / 8;
+        size_t stackDelta = d->REG_anyIP.nBits() / 8;
         if (args.size() == 1) {
             ASSERT_require(isSgAsmIntegerValueExpression(args[0]));
             stackDelta += isSgAsmIntegerValueExpression(args[0])->get_absoluteValue();
@@ -3562,7 +3562,7 @@ struct IP_ret: P {
         BaseSemantics::SValuePtr stackVa = d->fixMemoryAddress(oldSp);
         BaseSemantics::SValuePtr yes = ops->boolean_(true);
         BaseSemantics::SValuePtr retVa = ops->filterReturnTarget(ops->readMemory(d->REG_SS, stackVa,
-                                                                                 ops->undefined_(d->REG_anyIP.get_nbits()),
+                                                                                 ops->undefined_(d->REG_anyIP.nBits()),
                                                                                  yes));
         d->writeRegister(d->REG_anyIP, retVa);
         d->writeRegister(d->REG_anySP, newSp);
@@ -3650,22 +3650,22 @@ struct IP_scanstring: P {
                 default:
                     ASSERT_not_reachable("invalid instruction address size");
             }
-            ASSERT_require(stringReg.is_valid());
+            ASSERT_forbid(stringReg.isEmpty());
             BaseSemantics::SValuePtr stringPtr = d->readRegister(stringReg);
 
             // Adjust address width based on how memory is accessed.  All addresses in memory have the same width.
             BaseSemantics::SValuePtr addr = d->fixMemoryAddress(stringPtr);
 
             // Compare values and set status flags.
-            RegisterDescriptor compareReg = d->REG_AX; compareReg.set_nbits(nbits);
+            RegisterDescriptor compareReg = d->REG_AX; compareReg.nBits(nbits);
             BaseSemantics::SValuePtr val1 = d->readRegister(compareReg);
             BaseSemantics::SValuePtr val2 = ops->readMemory(d->REG_ES, addr, ops->undefined_(nbits), inLoop);
             BaseSemantics::SValuePtr no = ops->boolean_(false);
             (void) d->doAddOperation(val1, ops->invert(val2), true, no, inLoop);
 
             // Advance string pointer register
-            BaseSemantics::SValuePtr positiveNBytes = ops->number_(stringReg.get_nbits(), +nbytes);
-            BaseSemantics::SValuePtr negativeNBytes = ops->number_(stringReg.get_nbits(), -nbytes);
+            BaseSemantics::SValuePtr positiveNBytes = ops->number_(stringReg.nBits(), +nbytes);
+            BaseSemantics::SValuePtr negativeNBytes = ops->number_(stringReg.nBits(), -nbytes);
             BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF), negativeNBytes, positiveNBytes);
             d->writeRegister(stringReg, ops->ite(inLoop, ops->add(stringPtr, step), stringPtr));
 
@@ -3794,17 +3794,17 @@ struct IP_storestring: P {
                 default:
                     ASSERT_not_reachable("invalid instruction address size");
             }
-            ASSERT_require(dstReg.is_valid());
+            ASSERT_forbid(dstReg.isEmpty());
             BaseSemantics::SValuePtr stringPtr = d->readRegister(dstReg);
             BaseSemantics::SValuePtr addr = d->fixMemoryAddress(stringPtr);
             BaseSemantics::SValuePtr directionFlag = d->readRegister(d->REG_DF);
-            BaseSemantics::SValuePtr positiveNBytes = ops->number_(dstReg.get_nbits(), +nbytes);
+            BaseSemantics::SValuePtr positiveNBytes = ops->number_(dstReg.nBits(), +nbytes);
             BaseSemantics::SValuePtr step = ops->ite(directionFlag,
-                                                     ops->number_(dstReg.get_nbits(), -nbytes),
+                                                     ops->number_(dstReg.nBits(), -nbytes),
                                                      positiveNBytes);
 
             // Source value
-            RegisterDescriptor regA = d->REG_AX; regA.set_nbits(nbits);
+            RegisterDescriptor regA = d->REG_AX; regA.nBits(nbits);
             BaseSemantics::SValuePtr src = d->readRegister(regA);
 
             // If CX is a known value then we can unroll the loop right now.
@@ -3820,7 +3820,7 @@ struct IP_storestring: P {
                                                          addr->get_width()));
                         ops->writeMemory(d->REG_ES, va, src, inLoop);
                     }
-                    d->writeRegister(d->REG_anyCX, ops->number_(d->REG_anyCX.get_nbits(), 0));
+                    d->writeRegister(d->REG_anyCX, ops->number_(d->REG_anyCX.nBits(), 0));
 
                     // Final value for (E)DI register
                     BaseSemantics::SValuePtr va =
@@ -4493,9 +4493,14 @@ DispatcherX86::stackPointerRegister() const {
     return REG_anySP;
 }
 
+RegisterDescriptor
+DispatcherX86::callReturnRegister() const {
+    return RegisterDescriptor();
+}
+
 static bool
 isStatusRegister(RegisterDescriptor reg) {
-    return reg.get_major()==x86_regclass_flags && reg.get_minor()==x86_flags_status;
+    return reg.majorNumber()==x86_regclass_flags && reg.minorNumber()==x86_flags_status;
 }
 
 RegisterDictionary::RegisterDescriptors
@@ -4681,8 +4686,8 @@ DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SVal
     ASSERT_require(in_loop!=NULL && in_loop->get_width()==1);
 
     // conditionally decrement the CX register
-    BaseSemantics::SValuePtr zero = operators->number_(REG_anyCX.get_nbits(),  0);
-    BaseSemantics::SValuePtr maybeDecrement = operators->ite(in_loop, operators->number_(REG_anyCX.get_nbits(), -1), zero);
+    BaseSemantics::SValuePtr zero = operators->number_(REG_anyCX.nBits(),  0);
+    BaseSemantics::SValuePtr maybeDecrement = operators->ite(in_loop, operators->number_(REG_anyCX.nBits(), -1), zero);
     BaseSemantics::SValuePtr new_cx = operators->add(readRegister(REG_anyCX), maybeDecrement);
     writeRegister(REG_anyCX, new_cx);
     BaseSemantics::SValuePtr nonzero_cx = operators->invert(operators->equalToZero(new_cx));
@@ -4712,7 +4717,7 @@ DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SVal
     BaseSemantics::SValuePtr ip = readRegister(REG_anyIP);
     writeRegister(REG_anyIP,
                   operators->ite(again,
-                                 operators->number_(REG_anyIP.get_nbits(), insn_va),    // repeat
+                                 operators->number_(REG_anyIP.nBits(), insn_va),    // repeat
                                  ip)); // exit loop
 }
 
@@ -5019,16 +5024,16 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
 BaseSemantics::SValuePtr
 DispatcherX86::readRegister(RegisterDescriptor reg, AccessMode mode) {
     // When reading FLAGS, EFLAGS as a whole do not coalesce individual flags into the single register.
-    if (reg.get_major()==x86_regclass_flags && reg.get_offset()==0 && reg.get_nbits()>1) {
+    if (reg.majorNumber()==x86_regclass_flags && reg.offset()==0 && reg.nBits()>1) {
         if (BaseSemantics::StatePtr ss = operators->currentState()) {
             BaseSemantics::RegisterStatePtr rs = ss->registerState();
             if (BaseSemantics::RegisterStateGeneric *rsg = dynamic_cast<BaseSemantics::RegisterStateGeneric*>(rs.get())) {
-                BaseSemantics::RegisterStateGeneric::NoCoalesceOnRead guard(rsg);
+                BaseSemantics::RegisterStateGeneric::AccessModifiesExistingLocationsGuard guard(rsg, false);
                 switch (mode) {
                     case READ_REGISTER:
                         return operators->readRegister(reg);
                     case PEEK_REGISTER:
-                        return operators->peekRegister(reg, operators->undefined_(reg.get_nbits()));
+                        return operators->peekRegister(reg, operators->undefined_(reg.nBits()));
                 }
             }
         }
@@ -5037,25 +5042,25 @@ DispatcherX86::readRegister(RegisterDescriptor reg, AccessMode mode) {
         case READ_REGISTER:
             return operators->readRegister(reg);
         case PEEK_REGISTER:
-            return operators->peekRegister(reg, operators->undefined_(reg.get_nbits()));
+            return operators->peekRegister(reg, operators->undefined_(reg.nBits()));
     }
     ASSERT_not_reachable("unhandled access mode");
 }
 
 void
 DispatcherX86::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value) {
-    if (reg.get_nbits() == 32 && reg.get_offset() == 0 && REG_anyIP.get_nbits() == 64) {
+    if (reg.nBits() == 32 && reg.offset() == 0 && REG_anyIP.nBits() == 64) {
         // Writing to a 32-bit GPR in x86-64 will also clear the upper 32 bits of the same 64-bit register. E.g., "MOV EDI,
         // EDI" is one way to clear the upper 32-bits in RDI.
-        if (reg.get_major() == x86_regclass_gpr || reg.get_major() == x86_regclass_ip) {
-            RegisterDescriptor upperHalf(reg.get_major(), reg.get_minor(), 32, 32);
+        if (reg.majorNumber() == x86_regclass_gpr || reg.majorNumber() == x86_regclass_ip) {
+            RegisterDescriptor upperHalf(reg.majorNumber(), reg.minorNumber(), 32, 32);
             operators->writeRegister(upperHalf, operators->number_(32, 0));
         }
-    } else if (reg.get_major()==x86_regclass_st && reg.get_minor()<8 && reg.get_offset()==0 && reg.get_nbits()==64) {
+    } else if (reg.majorNumber()==x86_regclass_st && reg.minorNumber()<8 && reg.offset()==0 && reg.nBits()==64) {
         // When writing to an MM register, the high-order 16 bits are set in order to make the underlying
         // ST register NaN.
         RegisterDescriptor wider = reg;
-        wider.set_nbits(80);
+        wider.nBits(80);
         operators->writeRegister(wider, operators->concat(value, number_(16, 0xffff)));
         return;
     }
@@ -5081,8 +5086,8 @@ DispatcherX86::pushFloatingPoint(const BaseSemantics::SValuePtr &value)
     BaseSemantics::SValuePtr newTopOfStack = operators->add(topOfStack, operators->number_(topOfStack->get_width(), -1));
     ASSERT_require2(newTopOfStack->is_number(), "constant folding is required for FP-stack");
 
-    RegisterDescriptor reg(REG_ST0.get_major(), (REG_ST0.get_minor() + newTopOfStack->get_number()) % 8,
-                           REG_ST0.get_offset(), REG_ST0.get_nbits());
+    RegisterDescriptor reg(REG_ST0.majorNumber(), (REG_ST0.minorNumber() + newTopOfStack->get_number()) % 8,
+                           REG_ST0.offset(), REG_ST0.nBits());
     writeRegister(reg, value);
     writeRegister(REG_FPSTATUS_TOP, newTopOfStack);
 }
@@ -5093,8 +5098,8 @@ DispatcherX86::readFloatingPointStack(size_t position)
     BaseSemantics::SValuePtr topOfStack = readRegister(REG_FPSTATUS_TOP);
     if (!topOfStack->is_number())
         throw BaseSemantics::Exception("FP-stack top is not concrete", NULL);
-    RegisterDescriptor reg(REG_ST0.get_major(), (REG_ST0.get_minor() + topOfStack->get_number()) % 8,
-                           REG_ST0.get_offset(), REG_ST0.get_nbits());
+    RegisterDescriptor reg(REG_ST0.majorNumber(), (REG_ST0.minorNumber() + topOfStack->get_number()) % 8,
+                           REG_ST0.offset(), REG_ST0.nBits());
     return readRegister(reg);
 }
 

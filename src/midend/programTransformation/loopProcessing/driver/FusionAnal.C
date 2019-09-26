@@ -183,8 +183,7 @@ std::cerr << "MultiLevelFusion:Fuse\n";
   for (int j = 0; j < num1; ++j) {
     int k;
     for ( k = j; k < num2; ++k) {
-      FusionInfo info;
-      if (info = (*anal)(reg, n1, n2, j, k, e)) {
+      if (FusionInfo info = (*anal)(reg, n1, n2, j, k, e)) {
 
          fuse.Entry(j,j) = DepRel(DEPDIR_EQ, info.align);
          if (k != j) {

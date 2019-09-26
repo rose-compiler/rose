@@ -2,8 +2,8 @@
 0x080480a0: ================================== Function (entry point, graph) <_start>
 
 0x080480a0: Basic block reasons: entry point, CFG head
-0x080480a0: 0f ef e5                |...     |<sp+0 >   pxor   BAD_REGISTER(4.4.0.64), BAD_REGISTER(4.5.0.64)
-0x080480a3: 66 0f ef c1             |f...    |<sp+0 >   pxor   BAD_REGISTER(5.0.0.128), BAD_REGISTER(5.1.0.128)
+0x080480a0: 0f ef e5                |...     |<sp+0 >   pxor   mm4, mm5
+0x080480a3: 66 0f ef c1             |f...    |<sp+0 >   pxor   xmm0, xmm1
 0x080480a7: b8 01 00 00 00          |.....   |<sp+0 >   mov    eax, 0x00000001
 0x080480ac: cd 80                   |..      |<sp+0 >   int    0x80<-128>
 0x080480ac: Successor blocks: unknown

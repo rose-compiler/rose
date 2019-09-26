@@ -1,0 +1,47 @@
+include_rules
+
+ifeq (,)
+   # This is the short way to compile programs that consist of just a few source files
+   run $(tool_compile_linkexe) basicLinkTest.C
+
+else
+   # And this is the more general way. Start by listing the source files for the tester:
+   basicLinkTest_SOURCES = basicLinkTest.C
+
+   # How source files get compiled to objects. Testers are just "tools" that use librose.
+   : foreach $(basicLinkTest_SOURCES) |> !cxx_tool_compile |> %B.o {basicLinkTest_OBJECTS}
+
+   # How object files get linked into an executable.
+   : {basicLinkTest_OBJECTS} |> !cxx_tool_linkexe |> basicLinkTest
+endif
+
+# If basicLinkTest were intended to be run just once, do the following. The first argument
+# is the tup rule's input, and the remaining arguments are the command to run. As a special
+# case, "run $(test) foo" is the same as "run $(test) foo ./foo".
+run $(test) basicLinkTest ./basicLinkTest --algorithm=${algo}
+
+# Here's another checker that we want to run three times with different arguments. Therefore, we need three
+# ":"-rules. You could do this by listing the rules explicitly. On the other hand, the Tup "run" command runs a shell
+# script whose output is the rules. The $(test) script is able to generate rules that use the ROSE Test Harness, which
+# has a few nice features:
+#    1. It only produces output when a test fails
+#    2. The test output is saved in a *.result file
+#    3. The test times out if it exceeds a certain duration
+#    4. The $(test) rules have a consistent title in the Tup output
+#    5. It's a one-stop shop if we ever want to change behavior of all tests
+# The first argument is the generated rule's INPUT, which is just the executable we created above. Each test needs to
+# have a different output which is specified with --output=X, and causes the rule's output to be named "INPUT-X.result".
+run $(tool_compile_linkexe) runAlgorithm.C
+run $(test) runAlgorithm --output=alpha ./runAlgorithm --algorithm=alpha
+run $(test) runAlgorithm --output=beta  ./runAlgorithm --algorithm=beta
+run $(test) runAlgorithm --output=gamma ./runAlgorithm --algorithm=gamma
+
+# If you have lots of tests, it might be easier to use a 'for' loop to generate the rules.
+ALGORITHMS = delta epsilon zeta eta theta iota kappa lambda mu
+run for algo in $(ALGORITHMS); do $(test) runAlgorithm --output=${algo} ./runAlgorithm --algorithm=${algo}; done
+
+# You can run all the tests in a particular directory this this command:
+#  $ tup '<tests>'
+#  $ tup 'tests/smoke/functional/BinaryAnalysis/<tests>'
+#  etc.
+

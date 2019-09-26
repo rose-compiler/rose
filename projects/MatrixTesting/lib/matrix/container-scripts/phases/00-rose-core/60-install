@@ -1,0 +1,33 @@
+#!/bin/bash
+set -e
+
+(set -x; rmc -C ~/rose/_build install)
+
+# Only Tup builds install to the proper locaton. For the other build types, just force a symlink
+# from the proper location to the actual location.
+#
+# FIXME: Perhaps the $ROSE/scripts/tup/install-staged script should be enhanced to copy a ROSE
+# installation from one directory to another. [Matzke 2019-04-37]
+build_type="$(./container-scripts/scan-config rose/_build/.rmc-main.cfg build autoconf)"
+case "$build_type" in
+    tup)
+	: good
+	;;
+    *)
+	mkdir -p "$HOME/rose-installed"
+	(set -x; cd "$HOME/rose-installed"; ln -sf "$HOME/rose/_build/installed" latest)
+	;;
+esac
+
+# Make sure things were actually installed
+was-installed() {
+    local file="$1"
+    if [ ! -f "$HOME/rose-installed/latest/$file" ]; then
+	echo "error: installation step did not install \"$file\"" >&2
+	return 1
+    fi
+    return 0
+}
+was-installed include/ROSE_LICENSE
+was-installed include/rose/rose.h
+was-installed lib/librose.so

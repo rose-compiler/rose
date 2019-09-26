@@ -23,7 +23,9 @@ namespace Rose {
   bool extractOptionWithParameter(vector<string>& argv, const string & option,  string& value)
   {
     int pos1=-1, pos2=-1; // the matched option offsets for option and value
+#ifndef NDEBUG
     int sz=argv.size();
+#endif
     for (size_t i=0; i< argv.size(); i++)
     {
       if (argv[i]== option)
@@ -140,7 +142,6 @@ namespace Rose {
       {
         cout<<"Error in dlopen: error code: "<<dlerror()<<" when loading "<<lib_file_name <<endl;
         exit(1);
-        return NULL;
       }
     }
 

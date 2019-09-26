@@ -79,7 +79,7 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
                     if (rre->get_descriptor()==REG_IP) {
                         gotEntryVa_ = baseVa_ + offset->get_absoluteValue() + insn->get_address() + insn->get_size();
                         nBytesMatched_ = insn->get_size();
-                    } else if (rre->get_descriptor().get_major()==x86_regclass_gpr) {
+                    } else if (rre->get_descriptor().majorNumber()==x86_regclass_gpr) {
                         gotEntryVa_ = baseVa_ + offset->get_absoluteValue();
                         nBytesMatched_ = insn->get_size();
                     }
@@ -305,15 +305,15 @@ isStaticArchive(const boost::filesystem::path &fileName) {
 }
 
 bool
-tryLink(const std::string &commandTemplate, std::string outputName, std::vector<std::string> inputNames,
-        Sawyer::Message::Stream &errors, FixUndefinedSymbols::Boolean fixUndefinedSymbols) {
+tryLink(const std::string &commandTemplate, const boost::filesystem::path &outputName,
+        std::vector<boost::filesystem::path> inputNames, Sawyer::Message::Stream &errors,
+        FixUndefinedSymbols::Boolean fixUndefinedSymbols) {
     if (commandTemplate.empty() || outputName.empty() || inputNames.empty())
         return false;
 
-    outputName = StringUtility::bourneEscape(outputName);
-    BOOST_FOREACH (std::string &input, inputNames)
-        input = StringUtility::bourneEscape(input);
-    std::string allInputs = StringUtility::join(" ", inputNames);
+    std::string allInputs;
+    BOOST_FOREACH (const boost::filesystem::path &input, inputNames)
+        allInputs += (allInputs.empty()?"":" ") + StringUtility::bourneEscape(input.native());
 
     std::string cmd;
     bool escaped = false;
@@ -324,7 +324,7 @@ tryLink(const std::string &commandTemplate, std::string outputName, std::vector<
         } else if (escaped) {
             cmd += commandTemplate[i];
         } else if ('%' == commandTemplate[i] && i+1 < commandTemplate.size() && 'o' == commandTemplate[i+1]) {
-            cmd += outputName;
+            cmd += StringUtility::bourneEscape(outputName.native());
             ++i;                                        // skip the "o"
         } else if ('%' == commandTemplate[i] && i+1 < commandTemplate.size() && 'f' == commandTemplate[i+1]) {
             cmd += allInputs;
@@ -388,8 +388,41 @@ tryLink(const std::string &commandTemplate, std::string outputName, std::vector<
         return false;
 
     // Try the linking again, but with the object file as well
-    inputNames.insert(inputNames.begin(), oFile.name().string());
+    inputNames.insert(inputNames.begin(), oFile.name().native());
     return tryLink(commandTemplate, outputName, inputNames, errors, FixUndefinedSymbols::NO);
+}
+
+std::vector<boost::filesystem::path>
+extractStaticArchive(const boost::filesystem::path &directory, const boost::filesystem::path &archive) {
+    std::vector<boost::filesystem::path> retval;
+
+    // Create subdirectory
+    boost::filesystem::path subdir = directory / archive.filename();
+    boost::filesystem::create_directory(subdir);
+
+    boost::filesystem::path absArchive = boost::filesystem::absolute(archive);
+
+    // Run extraction command
+    std::string cmd = "cd " + StringUtility::bourneEscape(subdir.native()) +
+                      " && ar x " + StringUtility::bourneEscape(absArchive.native());
+    SAWYER_MESG(mlog[DEBUG]) <<"extracting members of " <<archive <<" into " <<subdir <<"\n";
+    SAWYER_MESG(mlog[DEBUG]) <<"extraction command: " <<cmd <<"\n";
+    int status = system(cmd.c_str());
+    if (status) {
+        SAWYER_MESG(mlog[DEBUG]) <<"command failed\n";
+        return retval;
+    }
+
+    // Get list of object files
+    for (boost::filesystem::directory_iterator dentry(subdir); dentry != boost::filesystem::directory_iterator(); ++dentry) {
+        if (isObjectFile(dentry->path())) {
+            SAWYER_MESG(mlog[DEBUG]) <<"  extracted object file " <<dentry->path().filename() <<"\n";
+            retval.push_back(dentry->path());
+        } else {
+            mlog[WARN] <<dentry->path().filename() <<" extracted from " <<archive <<" is not an object file\n";
+        }
+    }
+    return retval;
 }
 
 std::vector<Function::Ptr>
@@ -407,6 +440,21 @@ findPltFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
             findPltFunctions(partitioner, isSgAsmElfFileHeader(fileHeader), functions);
     }
     return functions;
+}
+
+std::vector<SgAsmElfSection*>
+findSectionsByName(SgAsmInterpretation *interp, const std::string &name) {
+    std::vector<SgAsmElfSection*> retval;
+    if (interp!=NULL) {
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
+            std::vector<SgAsmGenericSection*> sections = fileHeader->get_sections_by_name(name);
+            BOOST_FOREACH (SgAsmGenericSection *section, sections) {
+                if (SgAsmElfSection *elfSection = isSgAsmElfSection(section))
+                    retval.push_back(elfSection);
+            }
+        }
+    }
+    return retval;
 }
 
 void

@@ -11,14 +11,14 @@ public:
     SomeType() : number(42) {}
 };
 
-class SomeType  {
+class SomeType2  {
     int number;
  
 private:
     void Construct(int new_number) { number = new_number; }
 public:
-    SomeType(int new_number) { Construct(new_number); }
-    SomeType() { Construct(42); }
+    SomeType2(int new_number) { Construct(new_number); }
+    SomeType2() { Construct(42); }
 };
 
 // Constructors for base classes cannot be directly exposed to derived classes; each derived class must 
@@ -34,12 +34,12 @@ public:
 
 // This syntax is as follows:
 
-class SomeType  {
+class SomeType3  {
     int number;
  
 public:
-    SomeType(int new_number) : number(new_number) {}
-    SomeType() : SomeType(42) {}
+    SomeType3(int new_number) : number(new_number) {}
+    SomeType3() : SomeType3(42) {}
 };
 
 // Notice that, in this case, the same effect could have been achieved by making new_number a defaulting parameter. 
@@ -69,6 +69,7 @@ public:
  
 class DerivedClass : public BaseClass {
 public:
+ // BUG: this is unparsed as "using ::BaseClass;"
     using BaseClass::BaseClass;
 };
 

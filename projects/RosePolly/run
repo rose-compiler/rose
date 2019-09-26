@@ -1,4 +1,0 @@
-#!/bin/bash
-
-../../../.RosePolly/src/rpolly $1 $2 | tee log.txt
-

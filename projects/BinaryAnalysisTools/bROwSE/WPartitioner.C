@@ -368,7 +368,7 @@ WPartitioner::loadSpecimen() {
     Sawyer::Stopwatch timer;
     Sawyer::Message::Stream info(mlog[INFO] <<"load specimen");
 
-    // This tool doesn't support certain load resources because they require using BinaryDebugger, but the Wt web server does
+    // This tool doesn't support certain load resources because they require using Debugger, but the Wt web server does
     // funny things with certain signals (like assuming any SIGCHLD should cause the server to restart!)  I don't have time to
     // debug this right now, so we just check for these things explicitly and fail.  Besides, there are other ways around
     // this. You can use the projects/BinaryAnalysis/dumpMemory tool to take a snapshot of the process and store it in a bunch

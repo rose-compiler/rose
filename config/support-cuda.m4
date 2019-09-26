@@ -37,7 +37,7 @@ if test "x$cudasetting" != xno; then
 			NVCCBIN="$cudasetting"
 			USE_CUDA=1
 		else
-			AC_MSG_ERROR([Argument to --with-cuda must be path to bin directory, but argument is not a directory])
+			AC_MSG_ERROR([argument to --with-cuda must be path to bin directory, but argument is not a directory])
 		fi
 	fi
 fi

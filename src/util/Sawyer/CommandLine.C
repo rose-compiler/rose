@@ -20,10 +20,12 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/config.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/regex.hpp>
 #include <cerrno>
 #include <cstdio>
+#include <cstring>
 #include <ctime>
 #include <iostream>
 #include <Sawyer/Assert.h>
@@ -587,7 +589,7 @@ SAWYER_EXPORT void
 ParsedValue::save() const {
     if (valueSaver_)
         valueSaver_->save(value_, switchKey_);
-    
+
     if (value_.type() == typeid(ListParser::ValueList)) {
         const ListParser::ValueList &values = boost::any_cast<ListParser::ValueList>(value_);
         BOOST_FOREACH (const ParsedValue &pval, values)
@@ -715,7 +717,7 @@ Switch::synopsis(const ParsingProperties &swProps, const SwitchGroup *sg /*=NULL
                 break;
         }
     }
-    
+
     std::vector<std::string> perName;
     BOOST_FOREACH (const std::string &name, longNames_) {
         std::string s = "@s{" + optionalPart + name +"}{noerror}";
@@ -841,7 +843,7 @@ Switch::extraTextAfterSwitch(const std::string &switchString, const Location &en
                                       values.back().string() + "\"; extra text is \"" + extraText + "\"");
         }
     }
-    
+
 
     BOOST_FOREACH (std::string sep, props.valueSeparators) {
         if (0!=sep.compare(" ")) {
@@ -857,7 +859,7 @@ SAWYER_EXPORT std::runtime_error
 Switch::extraTextAfterArgument(const Cursor &cursor, const ParsedValue &value) const {
     return std::runtime_error("value \"" + value.string() + "\" unexpectedly followed by \"" + cursor.rest() + "\"");
 }
-    
+
 SAWYER_EXPORT std::runtime_error
 Switch::missingArgument(const std::string &switchString, const Cursor&,
                         const SwitchArgument &sa, const std::string &reason) const {
@@ -889,7 +891,7 @@ Switch::matchLongName(Cursor &cursor, const ParsingProperties &props,
                 rest = rest.substr(optionalPart.size());
                 retval += optionalPart.size();
             }
-                
+
             if (boost::starts_with(rest, requiredPart)) {
                 retval += requiredPart.size();
                 rest = rest.substr(requiredPart.size());
@@ -1210,6 +1212,36 @@ SwitchGroup::removeByPointer(const void *swptr) {
     return false;
 }
 
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::removeByIndex(size_t idx) {
+    if (idx >= switches_.size())
+        throw std::runtime_error("switch index " + boost::lexical_cast<std::string>(idx) + " not found\n");
+    switches_.erase(switches_.begin() + idx);
+    return *this;
+}
+
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::removeByName(const std::string &s) {
+    for (size_t i=0; i<switches_.size(); ++i) {
+        for (size_t j=0; j<switches_[i].longNames().size(); ++j) {
+            if (switches_[i].longNames()[j] == s)
+                return removeByIndex(i);
+        }
+        if (s.size() == 1 && strchr(switches_[i].shortNames().c_str(), s[0]) != NULL)
+            return removeByIndex(i);
+    }
+    return *this;
+}
+
+SAWYER_EXPORT SwitchGroup&
+SwitchGroup::removeByKey(const std::string &s) {
+    for (size_t i=0; i<switches_.size(); ++i) {
+        if (switches_[i].key() == s)
+            return removeByIndex(i);
+    }
+    return *this;
+}
+
 /*******************************************************************************************************************************
  *                                      Parser results
  *******************************************************************************************************************************/
@@ -1288,7 +1320,7 @@ ParserResult::insertOneValue(const ParsedValue &pval, const Switch *sw, bool sav
 #endif
     }
 }
-    
+
 SAWYER_EXPORT void
 ParserResult::skip(const Location &loc) {
     if (loc.idx != (size_t)(-1) && std::find(skippedIndex_.begin(), skippedIndex_.end(), loc.idx) == skippedIndex_.end())
@@ -1400,6 +1432,44 @@ Parser::init() {
     properties_.valueSeparators.push_back(" ");         // switch value is in next program argument
     terminationSwitches_.push_back("--");
     inclusionPrefixes_.push_back("@");
+}
+
+SAWYER_EXPORT bool
+Parser::switchGroupExists(const std::string &name) const {
+    BOOST_FOREACH (const SwitchGroup &sg, switchGroups_) {
+        if (sg.name() == name)
+            return true;
+    }
+    return false;
+}
+
+SAWYER_EXPORT const SwitchGroup&
+Parser::switchGroup(const std::string &name) const {
+    BOOST_FOREACH (const SwitchGroup &sg, switchGroups_) {
+        if (sg.name() == name)
+            return sg;
+    }
+    throw Exception::NotFound("switch group \"" + name + "\" not found");
+}
+
+SAWYER_EXPORT SwitchGroup&
+Parser::switchGroup(const std::string &name) {
+    BOOST_FOREACH (SwitchGroup &sg, switchGroups_) {
+        if (sg.name() == name)
+            return sg;
+    }
+    throw Exception::NotFound("switch group \"" + name + "\" not found");
+}
+
+SAWYER_EXPORT bool
+Parser::eraseSwitchGroup(const std::string &name) {
+    for (size_t i = 0; i < switchGroups_.size(); ++i) {
+        if (switchGroups_[i].name() == name) {
+            switchGroups_.erase(switchGroups_.begin()+i);
+            return true;
+        }
+    }
+    return false;
 }
 
 SAWYER_EXPORT Parser&
@@ -1558,7 +1628,7 @@ Parser::parseInternal(const std::vector<std::string> &programArguments) {
         }
         if (inserted)
             continue;
-        
+
         // Does this look like a switch (even one that we might not know about)?
         bool isSwitch = apparentSwitch(cursor);
         if (!isSwitch) {
@@ -1672,7 +1742,7 @@ Parser::parseOneSwitch(Cursor &cursor, const NamedSwitches &ambiguities, ParserR
                         result.skip(pval.valueLocation());
                 }
             }
-            
+
             guard.cancel();
             return true;
         }
@@ -1699,7 +1769,7 @@ Parser::ambiguityErrorMesg(const std::string &switchString, const std::string &o
     std::string prefix = switchString.substr(0, switchString.size() - switchName.size());
     if (boost::ends_with(prefix, optionalPart))
         prefix.resize(prefix.size() - optionalPart.size());
-    
+
     // Construct the error message
     std::string mesg = "switch \"" + switchString + "\" is ambiguous, declared in groups:";
     BOOST_FOREACH (const SwitchGroup *otherGroup, ambiguities[switchString].keys()) {
@@ -1830,7 +1900,7 @@ Parser::parseShortSwitch(Cursor &cursor, ParsedValues &parsedValues, const Named
                         throw std::runtime_error(mesg);
                     }
                 }
-                
+
                 // Parse switch value(s) if any
                 try {
                     ParsedValues pvals;
@@ -1849,7 +1919,7 @@ Parser::parseShortSwitch(Cursor &cursor, ParsedValues &parsedValues, const Named
     }
     return NULL;
 }
-    
+
 SAWYER_EXPORT bool
 Parser::apparentSwitch(const Cursor &cursor) const {
     BOOST_FOREACH (const SwitchGroup &sg, switchGroups_) {
@@ -2337,7 +2407,7 @@ Parser::docForSwitches() const {
             s += (s.empty() ? "" : "\n\n") + sg.doc();
             groupDescriptions.insert(groupKey, s);
         }
-        
+
         // Accumulate doc strings for the switches in this group.
         BOOST_FOREACH (const Switch &sw, sg.switches()) {
             if (sw.hidden())
@@ -2355,7 +2425,7 @@ Parser::docForSwitches() const {
         }
     }
     std::sort(switchDocs.begin(), switchDocs.end(), sortSwitchDoc);
-    
+
     // Generate the result
     std::string result, prevGroupKey, closeSection;
     BOOST_FOREACH (const SwitchDoc &switchDoc, switchDocs) {
@@ -2398,7 +2468,7 @@ Parser::docForSection(const std::string &sectionName) const {
     } else if (docKey == "documentation issues") {
         doc += "\n\n@s{**issues**}";
     }
-    
+
     return doc;
 }
 
@@ -2449,7 +2519,7 @@ Parser::documentationMarkup() const {
         doc += "@section{See Also}{" + docForSection("see also") + "}\n";
     if (created.insert("documentation issues").second)
         doc += "@section{Documentation Issues}{" + docForSection("documentation issues") + "}\n";
-    
+
     return doc;
 }
 
@@ -2696,7 +2766,7 @@ Parser::regroupArgs(const std::vector<std::string> &args, const Container::Inter
             throw std::runtime_error(mesg.str());
         }
     }
-    
+
     return retval;
 }
 

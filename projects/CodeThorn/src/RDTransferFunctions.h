@@ -4,16 +4,25 @@
 #include "DFTransferFunctions.h"
 #include "RDLattice.h"
 
-class RDTransferFunctions : public SPRAY::DFTransferFunctions {
+namespace CodeThorn
+{
+
+class RDTransferFunctions : public CodeThorn::DFTransferFunctions {
 public:
   RDTransferFunctions();
-  void transferExpression(SPRAY::Label label, SgExpression* expr, SPRAY::Lattice& element);
-  void transferDeclaration(SPRAY::Label label, SgVariableDeclaration* decl, SPRAY::Lattice& element);
-  void transferReturnStmtExpr(SPRAY::Label label, SgExpression* expr, SPRAY::Lattice& element);
-  void transferFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, SPRAY::Lattice& element);
-  void transferFunctionCallReturn(SPRAY::Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, SPRAY::Lattice& element);
-  void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, SPRAY::Lattice& element);
-  void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, SPRAY::VariableIdSet& localVariablesInFunction, SPRAY::Lattice& element);
+  void transferExpression(CodeThorn::Label label, SgExpression* expr, CodeThorn::Lattice& element);
+  void transferDeclaration(CodeThorn::Label label, SgVariableDeclaration* decl, CodeThorn::Lattice& element);
+  void transferReturnStmtExpr(CodeThorn::Label label, SgExpression* expr, CodeThorn::Lattice& element);
+  void transferFunctionCall(CodeThorn::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, CodeThorn::Lattice& element);
+  //void transferFunctionCallReturn(CodeThorn::Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, CodeThorn::Lattice& element);
+  void transferFunctionCallReturn(CodeThorn::Label lab, CodeThorn::VariableId lhsVarId, SgFunctionCallExp* callExp, CodeThorn::Lattice& element);
+  void transferFunctionEntry(CodeThorn::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, CodeThorn::Lattice& element);
+  void transferFunctionExit(CodeThorn::Label lab, SgFunctionDefinition* funDef, CodeThorn::VariableIdSet& localVariablesInFunction, CodeThorn::Lattice& element);
+  void initializeExtremalValue(CodeThorn::Lattice& element);
 };
+
+}
+
+//~ using CodeThorn::RDTransferFunctions;
 
 #endif

@@ -18,7 +18,7 @@ namespace P2 = Partitioner2;
 
 static Sawyer::Message::Facility mlog;
 
-typedef Sawyer::Container::DistinctList<P2::ControlFlowGraph::ConstVertexIterator> VertexWorkList;
+typedef Sawyer::Container::GraphIteratorSet<P2::ControlFlowGraph::ConstVertexIterator> VertexWorkList;
 typedef Sawyer::Container::DistinctList<P2::Function::Ptr> FunctionWorkList;
 
 // Convenient struct to hold settings specific to this tool. Settings related to disassembling are in the engine.
@@ -249,7 +249,7 @@ reachableVertices(const AddressIntervalSet &reachable, const P2::Partitioner &pa
     VertexWorkList retval;
     BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &vertex, partitioner.cfg().vertices()) {
         if (isReachable(reachable, partitioner, vertex))
-            retval.pushBack(partitioner.cfg().findVertex(vertex.id()));
+            retval.insert(partitioner.cfg().findVertex(vertex.id()));
     }
     return retval;
 }
@@ -381,7 +381,7 @@ insertReachableByImmediates(AddressIntervalSet &reachable /*in,out*/, const P2::
                 AddressIntervalSet targetVas = targetVertex->value().addresses();
                 if (!reachable.contains(targetVas)) {
                     reachable |= targetVas;
-                    vertices.pushBack(targetVertex);
+                    vertices.insert(targetVertex);
                 }
             }
         }
@@ -419,7 +419,7 @@ findDataFlowValues(const P2::Partitioner &partitioner, const P2::Function::Ptr &
     const RegisterDescriptor SP = cpu->stackPointerRegister();
     const RegisterDescriptor memSegReg;
     BaseSemantics::SValuePtr initialStackPointer = ops->readRegister(SP);
-    size_t wordSize = SP.get_nbits() >> 3;              // word size in bytes
+    size_t wordSize = SP.nBits() >> 3;              // word size in bytes
 
     // Run the data flow
     try {
@@ -442,14 +442,14 @@ findDataFlowValues(const P2::Partitioner &partitioner, const P2::Function::Ptr &
             BaseSemantics::RegisterStateGenericPtr regs =
                 BaseSemantics::RegisterStateGeneric::promote(state->registerState());
             BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &kv, regs->get_stored_registers()) {
-                if (kv.value->is_number() && kv.value->get_width() <= SP.get_nbits())
+                if (kv.value->is_number() && kv.value->get_width() <= SP.nBits())
                     retval.insert(kv.value->get_number());
             }
 
             BOOST_FOREACH (const StackVariable &var, P2::DataFlow::findStackVariables(ops, initialStackPointer)) {
                 BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.location.address,
                                                                  ops->undefined_(8*var.location.nBytes), ops->boolean_(true));
-                if (value->is_number() && value->get_width() <= SP.get_nbits())
+                if (value->is_number() && value->get_width() <= SP.nBits())
                     retval.insert(value->get_number());
             }
 
@@ -457,7 +457,7 @@ findDataFlowValues(const P2::Partitioner &partitioner, const P2::Function::Ptr &
                 if (var.isAddress()) {
                     BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.getAddress(),
                                                                      ops->undefined_(8*var.nBytes()), ops->boolean_(true));
-                    if (value->is_number() && value->get_width() <= SP.get_nbits())
+                    if (value->is_number() && value->get_width() <= SP.nBits())
                         retval.insert(value->get_number());
                 }
             }
@@ -569,7 +569,7 @@ int main(int argc, char *argv[]) {
     info <<"analyzing " <<StringUtility::plural(executableSpace.size(), "bytes") <<" of address space\n";
 
     if (0 == settings.addressSize)
-        settings.addressSize = partitioner.newDispatcher(partitioner.newOperators())->stackPointerRegister().get_nbits() >> 3;
+        settings.addressSize = partitioner.newDispatcher(partitioner.newOperators())->stackPointerRegister().nBits() >> 3;
     if (0 == settings.addressAlignment)
         settings.addressAlignment = 1;
 
@@ -692,7 +692,7 @@ int main(int argc, char *argv[]) {
             while (nRemain > 0) {
                 size_t bufsz = std::min((rose_addr_t)sizeof(buf), nRemain);
                 if (va % 16)                            // partial first line in order to align the rest
-                    bufsz = std::min(bufsz, 16 - va%16);
+                    bufsz = std::min((rose_addr_t)bufsz, 16 - va%16);
                 size_t nRead = engine.memoryMap()->at(va).limit(bufsz).read(buf).size();
                 std::cout <<fmt.prefix;
                 SgAsmExecutableFileFormat::hexdump(std::cout, va, buf, nRead, fmt);

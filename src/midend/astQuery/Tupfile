@@ -1,0 +1,8 @@
+include_rules
+
+run $(librose_compile) nodeQuery.C nodeQueryInheritedAttribute.C booleanQuery.C booleanQueryInheritedAttribute.C nameQuery.C \
+    nameQueryInheritedAttribute.C numberQuery.C numberQueryInheritedAttribute.C astQuery.C astQueryInheritedAttribute.C
+
+run $(public_header) nodeQuery.h nodeQueryInheritedAttribute.h booleanQuery.h booleanQueryInheritedAttribute.h \
+    nameQuery.h nameQueryInheritedAttribute.h numberQuery.h numberQueryInheritedAttribute.h astQuery.h \
+    astQueryInheritedAttribute.h roseQueryLib.h

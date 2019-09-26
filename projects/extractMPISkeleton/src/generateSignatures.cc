@@ -117,7 +117,11 @@ int main(int argc, char **argv) {
        sigs[funDecl->get_name()] = sig;
     }
     if(debug) std::cout << sigs << std::endl;
+#if __cplusplus < 201103L
     std::auto_ptr<SExpr> sx(toSExpr(sigs));
+#else
+    std::unique_ptr<SExpr> sx(toSExpr(sigs));
+#endif
     if(debug || sig_fname == "") std::cout << *sx << std::endl;
     if( sig_fname != "" ){
        std::ofstream out(sig_fname.c_str());

@@ -5,7 +5,7 @@
 #include "Viz/objects.hpp"
 #include "Viz/Traversals/traversal.hpp"
 
-#include "rose.h"
+#include "sage3basic.h"
 
 #include <string>
 #include <sstream>

@@ -7,8 +7,9 @@ using namespace std;
 
 #include "CollectionOperators.h"
 #include "DFTransferFunctions.h"
+#include "AnalysisAbstractionLayer.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 
 DFTransferFunctions::DFTransferFunctions():_programAbstractionLayer(0){}
 
@@ -39,7 +40,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
 
   if(element.isBot()) {
     // transfer function applied to the bottom element is the bottom element (non-reachable state)
-    // the extremal value must be different to the bottom element. 
+    // the extremal value must be different to the bottom element.
     return;
   }
   if(getLabeler()->isFunctionCallLabel(lab)) {
@@ -69,7 +70,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
         exit(1);
       }
       SgNode* rhs=SgNodeHelper::getRhs(node);
-      while(isSgCastExp(rhs)) 
+      while(isSgCastExp(rhs))
         rhs=SgNodeHelper::getFirstChild(rhs);
       SgFunctionCallExp* funCall=isSgFunctionCallExp(rhs);
       if(!funCall) {
@@ -83,6 +84,12 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
       SgVarRefExp* lhsVar=0;
       transferFunctionCallReturn(lab, lhsVar, funCall, element);
       return;
+    } else if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCallExpInVariableDeclaration(node)) {
+      // handle special case of function call in variable declaration: type var=f();
+      SgVariableDeclaration* varDecl=SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall(node);
+      VariableId lhsVarId=getVariableIdMapping()->variableId(varDecl);
+      ROSE_ASSERT(lhsVarId.isValid());
+      transferFunctionCallReturn(lab, lhsVarId, funCall, element);
     } else if(isSgReturnStmt(node)) {
       // special case of return f(...);
       node=SgNodeHelper::getFirstChild(node);
@@ -91,9 +98,13 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
         return;
       }
     } else {
-      cerr<<"Error: function-call-return unhandled function call."<<endl;
-      cerr<<node->unparseToString()<<endl;
-      exit(1);
+      if(getSkipSelectedFunctionCalls()) {
+        // ignore unknown function call (requires command line option --ignore-unknown-functions)
+      } else {
+        cerr<<"Error: function-call-return unhandled function call."<<endl;
+        cerr<<node->unparseToString()<<endl;
+        exit(1);
+      }
     }
   }
 
@@ -108,13 +119,13 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
       ROSE_ASSERT(0);
     }
   }
-  
+
   if(getLabeler()->isFunctionExitLabel(lab)) {
     if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(lab))) {
       // 1) determine all local variables (including formal parameters) of function
       // 2) delete all local variables from state
       // 2a) remove variable from state
-      
+
       // ad 1)
       set<SgVariableDeclaration*> varDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
       // ad 2)
@@ -134,11 +145,11 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     transferEmptyStmt(lab,stmt,element);
     return;
   }
-  
+
   if(isSgExprStatement(node)) {
     node=SgNodeHelper::getExprStmtChild(node);
   }
-  
+
   // detect SgReturn statement expressions
   if(isSgReturnStmt(node)) {
     node=SgNodeHelper::getFirstChild(node);
@@ -149,7 +160,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   }
 
   // default identity functions
-  if(isSgBreakStmt(node) 
+  if(isSgBreakStmt(node)
      || isSgContinueStmt(node)
      || isSgLabelStatement(node)
      || isSgGotoStatement(node)) {
@@ -213,7 +224,7 @@ void DFTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* expr, 
   transferExpression(lab,expr,element);
 }
 
-  
+
 
 void DFTransferFunctions::transferDeclaration(Label label, SgVariableDeclaration* decl, Lattice& element) {
   // default identity function
@@ -239,7 +250,17 @@ void DFTransferFunctions::transferExternalFunctionCall(Label lab, SgFunctionCall
   // default identity function
 }
 
-void DFTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp*, SgFunctionCallExp* callExp, Lattice& element) {
+void DFTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element) {
+  // default function implementation
+  VariableId varId;
+  if(lhsVar) {
+    varId=getVariableIdMapping()->variableId(lhsVar);
+  }
+  // for void functions, varId remains invalid
+  transferFunctionCallReturn(lab,varId,callExp,element);
+}
+
+void DFTransferFunctions::transferFunctionCallReturn(Label lab, VariableId varId, SgFunctionCallExp* callExp, Lattice& element) {
   // default identity function
 }
 
@@ -285,12 +306,57 @@ VariableId DFTransferFunctions::getResultVariableId() {
 }
 
 void DFTransferFunctions::setSkipSelectedFunctionCalls(bool flag) {
-  // empty by default. Only transfer functions that reason on function
-  // calls need to override this function.
+  _skipSelectedFunctionCalls=flag;
+}
+
+bool DFTransferFunctions::getSkipSelectedFunctionCalls() {
+  return _skipSelectedFunctionCalls;
 }
 
 bool DFTransferFunctions::isExternalFunctionCall(Label lab) {
   return _programAbstractionLayer->getLabeler()->isExternalFunctionCallLabel(lab);
+}
+
+void DFTransferFunctions::setInitialElementFactory(PropertyStateFactory* pf) {
+  _initialElementFactory=pf;
+}
+
+PropertyStateFactory* DFTransferFunctions::getInitialElementFactory() {
+  return _initialElementFactory;
+}
+
+void DFTransferFunctions::initializeExtremalValue(Lattice& element) {
+  // default empty function
+}
+
+Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
+  ROSE_ASSERT(root);
+  cout << "INFO: Initializing property state with global variables."<<endl;
+  VariableIdSet globalVars=AnalysisAbstractionLayer::globalVariables(root,getVariableIdMapping());
+  VariableIdSet usedVarsInFuncs=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,getVariableIdMapping());
+  VariableIdSet usedVarsInGlobalVarsInitializers=AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(root,getVariableIdMapping());
+  VariableIdSet usedGlobalVarIds=globalVars; //*usedVarsInFuncs; //+usedVarsInGlobalVarsInitializers;;
+  //  usedGlobalVarIds.insert(usedVarsInGlobalVarsInitializers.begin(),
+  //        usedVarsInGlobalVarsInitializers.end());
+  cout <<"INFO: number of global variables: "<<globalVars.size()<<endl;
+  //  cout <<"INFO: used variables in functions: "<<usedVarsInFuncs.size()<<endl;
+  //cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;
+  Lattice* elem=_initialElementFactory->create();
+  this->initializeExtremalValue(*elem);
+  //cout << "INIT: initial element: ";elem->toStream(cout,getVariableIdMapping());
+  list<SgVariableDeclaration*> globalVarDecls=SgNodeHelper::listOfGlobalVars(root);
+  for(list<SgVariableDeclaration*>::iterator i=globalVarDecls.begin();i!=globalVarDecls.end();++i) {
+    if(usedGlobalVarIds.find(getVariableIdMapping()->variableId(*i))!=usedGlobalVarIds.end()) {
+      //cout<<"DEBUG: transfer for global var @"<<_labeler->getLabel(*i)<<" : "<<(*i)->unparseToString()<<endl;
+      transfer(getLabeler()->getLabel(*i),*elem);
+    } else {
+      cout<<"INFO: filtered from initial state: "<<(*i)->unparseToString()<<endl;
+    }
+  }
+  //cout << "INIT: initial state: ";
+  //elem->toStream(cout,getVariableIdMapping());
+  //cout<<endl;
+  return elem;
 }
 
 #endif

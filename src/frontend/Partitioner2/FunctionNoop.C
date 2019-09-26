@@ -130,7 +130,7 @@ struct FunctionNoopWorker {
 void
 Partitioner::allFunctionIsNoop() const {
     size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
-    FunctionCallGraph::Graph cg = functionCallGraph().graph();
+    FunctionCallGraph::Graph cg = functionCallGraph(AllowParallelEdges::NO).graph();
     Sawyer::Container::Algorithm::graphBreakCycles(cg);
     Sawyer::ProgressBar<size_t> progress(cg.nVertices(), mlog[MARCH], "function no-op analysis");
     progress.suffix(" functions");

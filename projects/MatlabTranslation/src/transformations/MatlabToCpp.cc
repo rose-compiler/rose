@@ -20,6 +20,7 @@ namespace MatlabToCpp
     transformMatrixOnFunctionCallArguments(proj);
     transformRangeExpression(proj);
     transformForloop(proj);
+    transformSelectedCalls(proj);
 
     // expression transformations
     transformLeftDivide(proj);

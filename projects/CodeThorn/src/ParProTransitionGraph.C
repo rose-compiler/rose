@@ -5,20 +5,20 @@
 #include <unordered_set>
 #include <unordered_map>
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 
-bool SPRAY::operator==(const ParProTransition& t1, const ParProTransition& t2) {
+bool CodeThorn::operator==(const ParProTransition& t1, const ParProTransition& t2) {
   // TODO: decide how edges from different CFGs are handled. Currently ignored
   //  return (t1.source==t2.source && t1.edge==t2.edge && t1.target==t2.target);
   return (t1.source==t2.source && t1.edge.getAnnotation() == t2.edge.getAnnotation() && t1.target==t2.target);
 }
 
-bool SPRAY::operator!=(const ParProTransition& t1, const ParProTransition& t2) {
+bool CodeThorn::operator!=(const ParProTransition& t1, const ParProTransition& t2) {
   return !(t1==t2);
 }
 
-bool SPRAY::operator<(const ParProTransition& t1, const ParProTransition& t2) {
+bool CodeThorn::operator<(const ParProTransition& t1, const ParProTransition& t2) {
   if (t1.source!=t2.source) {
     return (t1.source<t2.source);
     // TODO: decide how edges from different CFGs are handled. Currently ignored

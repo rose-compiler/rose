@@ -5,7 +5,7 @@
 #include "VariableIdMapping.h"
 #include "Lattice.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 /*! 
   * \author Markus Schordan
@@ -35,7 +35,7 @@ class LVLattice : public Lattice {
   bool _bot;
 };
 
-} // end namespace SPRAY
+} // end namespace CodeThorn
 
 #endif
 

@@ -415,7 +415,7 @@ DisassemblerMips::makeFpccRegister(unsigned cc)
     const RegisterDescriptor *regdesc = registerDictionary()->lookup("fscr");
     if (!regdesc)
         throw Exception("no such register: fcsr");
-    RegisterDescriptor r(regdesc->get_major(), regdesc->get_minor(), cc?24+cc:23, 1);
+    RegisterDescriptor r(regdesc->majorNumber(), regdesc->minorNumber(), cc?24+cc:23, 1);
     return new SgAsmDirectRegisterExpression(r);
 }
 
@@ -451,7 +451,7 @@ DisassemblerMips::makeShadowRegister(unsigned cc)
 
     // Turn it into a shadow register
     RegisterDescriptor desc = regref->get_descriptor();
-    desc.set_major(mips_regclass_sgpr);
+    desc.majorNumber(mips_regclass_sgpr);
     regref->set_descriptor(desc);
     return regref;
 }

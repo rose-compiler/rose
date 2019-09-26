@@ -1,5 +1,0 @@
-#!/bin/bash
-
-# g++ $@
-/home/dquinlan2/ROSE/LINUX-3.3.2/developersScratchSpace/Dan/preprocessor -rose:C -rose:strict -rose:negative_test --edg:no_warnings $@
-

@@ -27,7 +27,7 @@ TraversalWrapper<InheritedAttr_, SynthesizedAttr_>::TraversalWrapper(Traversals:
 }
 
 template <class InheritedAttr_, class SynthesizedAttr_>
-TraversalWrapper<InheritedAttr_, SynthesizedAttr_>::~Traversal() {
+TraversalWrapper<InheritedAttr_, SynthesizedAttr_>::~TraversalWrapper() {
   assert(universe_graph != NULL);
   delete universe_graph;
 }

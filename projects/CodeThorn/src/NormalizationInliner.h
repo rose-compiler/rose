@@ -12,7 +12,7 @@
 using namespace std;
 using namespace Rose;
 
-namespace SPRAY {
+namespace CodeThorn {
   class InlinerBase {
   public:
     virtual void inlineFunctions(SgNode* root)=0;

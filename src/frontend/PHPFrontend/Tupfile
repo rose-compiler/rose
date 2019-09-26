@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) PHPFrontend.C
+
+run $(public_header) PHPFrontend.h

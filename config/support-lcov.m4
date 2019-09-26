@@ -11,12 +11,11 @@ dnl *********************************************************************
 dnl * Set the lcov tool compiler flags in CXXFLAGS and CFLAGS
 dnl *********************************************************************
 
-echo "Setup CXXFLAGS and CFLAGS for CXX = $CXX"
+AC_MSG_NOTICE([setup CXXFLAGS and CFLAGS for CXX = "$CXX"])
 
 AC_ARG_ENABLE(lcov, AS_HELP_STRING([--enable-lcov], [Support Linux coverage test tools (compiler options) for ROSE development]),[enableval=yes],[enableval=no])
 
-echo "enableval = $enableval"
-echo "enable_lcov = $enable_lcov"
+AC_MSG_NOTICE([enable_lcov = "$enable_lcov"])
 
 if test "x$enable_lcov" = "x"; then
    if test "x$enableval" = "xyes"; then
@@ -27,14 +26,14 @@ if test "x$enable_lcov" = "x"; then
       fi
    fi
 else
-   echo "enable_lcov is explictly set to: $enable_lcov"
+   AC_MSG_NOTICE([enable_lcov is explictly set to: "$enable_lcov"])
 fi
 
-echo "After initialization: enable_lcov = $enable_lcov"
+AC_MSG_NOTICE([after initialization: enable_lcov = "$enable_lcov"])
 
 if test "x$enable_lcov" = "xyes"; then
 # enable_lcov was activated but not specified, so set it.
-  echo "Using default options for maximal warnings (true case)"
+  AC_MSG_NOTICE([using default options for maximal warnings (true case)])
   case $CXX in
     g++)
       CXXFLAGS+=" -g -fprofile-arcs -ftest-coverage"
@@ -42,11 +41,11 @@ if test "x$enable_lcov" = "xyes"; then
       ;;
     clang)
     # For LLVM the support for lcov .
-      echo "Clang compilers do support lcov tools."
+      AC_MSG_NOTICE([Clang compilers do support lcov tools])
       ;;
     icpc)
     # For Intel turn on 64bit migration/portability warnings
-      echo "Intel compilers don't support lcov tools."
+      AC_MSG_NOTICE([Intel compilers don't support lcov tools])
       ;;
   esac
 fi
@@ -59,8 +58,8 @@ fi
 
 AM_CONDITIONAL(ROSE_USE_LCOV,test "$enable_lcov" = yes)
 
-echo "debugging: CXXFLAGS = $CXXFLAGS"
-echo "debugging: CFLAGS   = $CFLAGS"
+AC_MSG_NOTICE([debugging: CXXFLAGS = "$CXXFLAGS"])
+AC_MSG_NOTICE([debugging: CFLAGS   = "$CFLAGS"])
 
 # exit 1
 

@@ -105,7 +105,8 @@ AddPrototypesForTemplateInstantiations::evaluateInheritedAttribute (
 #if 0
           printf ("In AddPrototypesForTemplateInstantiations::evaluateInheritedAttribute(): found SgTemplateInstantiationFunctionDecl: node = %p = %s \n",node,node->class_name().c_str());
 #endif
-          SgTemplateInstantiationFunctionDecl* definingFunctionDeclaration         = isSgTemplateInstantiationFunctionDecl(functionDeclaration->get_definingDeclaration());
+       // Removed unused variable declaration [Rasmussen 2019.01.29]
+       // SgTemplateInstantiationFunctionDecl* definingFunctionDeclaration         = isSgTemplateInstantiationFunctionDecl(functionDeclaration->get_definingDeclaration());
           SgTemplateInstantiationFunctionDecl* firstNondefiningFunctionDeclaration = isSgTemplateInstantiationFunctionDecl(functionDeclaration->get_firstNondefiningDeclaration());
           ROSE_ASSERT(firstNondefiningFunctionDeclaration != NULL);
 

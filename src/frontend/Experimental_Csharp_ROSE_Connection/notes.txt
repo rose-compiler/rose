@@ -1,18 +1,18 @@
 Notes on the support for C# in ROSE
+===================================
 
-Our approach is to use the Csharp language support for building C# compiler tools (called "Roslyn").
-This library support has been especially difficult to install, but onc installed it appears to work 
+Our approach is to use the C# language support for building C# compiler tools (called "Roslyn").
+This library support has been especially difficult to install, but once installed it appears to work 
 well on at least the introductory C# programs that I have built to conduct initial testing.
 
-
 Roslyn generates an AST with embedded syntax that can be selectively ignored.
-It apears to support symbols and types, so all initial indications are that 
-this could work well for supporting the trnslation into ROSE IR and thus allowing
+It appears to support symbols and types, so all initial indications are that 
+this could work well for supporting the translation into ROSE IR and thus allowing
 ROSE to support the C# language.
 
 
+References to C# information:
 
-References to Csharp information:
-
-https://github.com/dotnet/roslyn/wiki/Roslyn%20Overview#syntax-trees
+- https://github.com/dotnet/roslyn/wiki/Roslyn%20Overview#syntax-trees
+- https://www.mono-project.com/docs/advanced/pinvoke/#library-handling
 

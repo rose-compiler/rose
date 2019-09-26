@@ -15,7 +15,7 @@
 #include "ParProAnalyzer.h" // definition of ComponentAbstraction
 #include "DotGraphCfgFrontend.h" // typedef EdgeAnnotationMap
 
-//SPRAY includes
+//CodeThorn includes
 #include "Flow.h"
 
 //BOOST includes
@@ -26,7 +26,7 @@
 #include "boost/lexical_cast.hpp"
 #include "boost/unordered_map.hpp"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 
 namespace CodeThorn {

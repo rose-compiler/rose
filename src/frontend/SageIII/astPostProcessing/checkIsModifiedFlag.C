@@ -73,6 +73,12 @@ unsetNodesMarkedAsModified(SgNode *node)
    {
   // DQ (4/16/2015): This function sets the isModified flag on each node of the AST to false.
 
+#if 0
+  // DQ (6/4/2019): Debuggin the outlining to a seperate file (friend function inserted as 
+  // part of transformation is marked as modified (but is reset, unclear how this is done).
+     printf ("In unsetNodesMarkedAsModified(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
      class NodesMarkedAsModified : public AstSimpleProcessing
         {
           public:
@@ -98,6 +104,12 @@ bool
 checkIsModifiedFlag(SgNode *node)
    {
   // DQ (4/16/2015): This function is a reimplementation of the previous version which used to much space on large programs.
+
+#if 0
+  // DQ (6/4/2019): Debugging the outlining to a seperate file (friend function inserted as 
+  // part of transformation is marked as modified (but is reset, unclear how this is done).
+     printf ("In checkIsModifiedFlag(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
 
   // This function reproduces the functionality of the original checkIsModifiedFlag() function by both
   // returning a bool value if any subtree was marked as isModified and also resetting the isModified flags.

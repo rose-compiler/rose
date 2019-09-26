@@ -1,0 +1,6 @@
+@failure
+connect sqlite3://./testNonExisting.db
+
+! echo ok.
+
+

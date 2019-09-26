@@ -180,21 +180,21 @@ Application::init() {
     styleSheet().addRule(".hexdump_unmapped", "background-color:black;");
     styleSheet().addRule(".hexdump_nochar", "background-color:lightgray;");
     styleSheet().addRule(".hexdump_addr_none", "font-family:monospace;"
-                         " background-color:" + toHtml(darken(Color::red, 0.25)) + ";");
+                         " background-color:" + toHtml(darken(Color::HSV_RED, 0.25)) + ";");
     styleSheet().addRule(".hexdump_addr_r", "font-family:monospace;"
                          "background-color:" + toHtml(Color::RGB(0.9, 0.8, 0)) + ";");
     styleSheet().addRule(".hexdump_addr_w", "font-family:monospace;"
-                         " background-color:" + toHtml(fade(darken(Color::red, 0.25), 0.75)) + ";");
+                         " background-color:" + toHtml(fade(darken(Color::HSV_RED, 0.25), 0.75)) + ";");
     styleSheet().addRule(".hexdump_addr_x", "font-family:monospace;"
-                         " background-color:" + toHtml(darken(Color::green, 0.15)) + ";");
+                         " background-color:" + toHtml(darken(Color::HSV_GREEN, 0.15)) + ";");
     styleSheet().addRule(".hexdump_addr_rw", "font-family:monospace;"
                          " background-color:" + toHtml(fade(Color::RGB(0.9, 0.8, 0), 0.75)) + ";");
     styleSheet().addRule(".hexdump_addr_rx", "font-family:monospace;"
-                         " background-color:" + toHtml(darken(Color::green, 0.15)) + ";"); // same as execute-only
+                         " background-color:" + toHtml(darken(Color::HSV_GREEN, 0.15)) + ";"); // same as execute-only
     styleSheet().addRule(".hexdump_addr_wx", "font-family:monospace;"
-                         " background-color:" + toHtml(fade(darken(Color::green, 0.15), 0.75)) + ";");
+                         " background-color:" + toHtml(fade(darken(Color::HSV_GREEN, 0.15), 0.75)) + ";");
     styleSheet().addRule(".hexdump_addr_rwx", "font-family:monospace;"
-                         " background-color:" + toHtml(fade(darken(Color::green, 0.15), 0.75)) + ";");
+                         " background-color:" + toHtml(fade(darken(Color::HSV_GREEN, 0.15), 0.75)) + ";");
 
     // Status message style sheet rules.
     styleSheet().addRule(".status_oddrow", "background-color:#f9f9f9;");

@@ -323,8 +323,10 @@ class FindReferenceVariablesVisitor: public AstSimpleProcessing {
           // cout << "Found potential copy from " << orig_vr->get_symbol()->get_name().str() << " to " << copy_vr->get_symbol()->get_name().str() << endl;
           SgInitializedName* orig = orig_vr->get_symbol()->get_declaration();
           assert (orig);
+#ifndef NDEBUG
           SgNode* origscope = orig->get_parent()->get_parent();
           assert (origscope);
+#endif
           shouldReplace = true;
         }
         if (shouldReplace) {

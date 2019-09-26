@@ -1,0 +1,29 @@
+include_rules
+
+run $(tool_compile_linkexe) bitFlags.C
+run $(test) bitFlags
+
+run $(tool_compile_linkexe) testCopyFile.C
+run $(test) -x copyFile-target -x copyFile-source testCopyFile
+
+run $(tool_compile_linkexe) testFileNameClassifier.C
+run $(test) testFileNameClassifier --disabled="access denied [CH 2010-02-02]"
+
+run $(tool_compile_linkexe) filenameSupport.C
+run $(test) filenameSupport
+
+#run $(tool_compile_linkexe) directorySupport.C
+#run $(test) directorySupport \
+#    ./directorySupport -c -rose:verbose 0 $(minimal_input_code)
+
+run $(tool_compile_linkexe) graphPerformance.C
+run $(test) graphPerformance
+
+run $(tool_compile_linkexe) graphIO.C
+run $(test) graphIO
+
+run $(tool_compile_linkexe) progressReports.C
+run $(test) progressReports
+
+run $(tool_compile_linkexe) hash.C
+run $(test) hash

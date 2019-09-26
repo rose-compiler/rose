@@ -232,11 +232,29 @@ public:
      *  otherwise the data block is inserted and the method returns true. */
     bool insertDataBlock(const DataBlock::Ptr&);
 
-    /** Remove a data block from this function.  This method does not adjust the partitioner CFG.  Data blocks cannot be
-     *  removed by this method when this function is attached to the CFG since it would cause the CFG to become outdated with
-     *  respect to this function, but as long as the function is detached blocks can be inserted and removed arbitrarily.  If
-     *  the specified pointer is null or the data block does not exist in this function then this method is a no-op. */
-    void eraseDataBlock(const DataBlock::Ptr&);
+    /** Remove specified or equivalent data block from this function.
+     *
+     *  If this function is in a detached state (i.e., not part of the CFG/AUM) then the specified data block or equivalent
+     *  data block is removed from this function. Returns the data block that was erased, or null if none was erased.
+     *
+     *  It is an error to invoke this method on function that is attached to the CFG/AUM, for which @ref isFrozen returns
+     *  true. This method is a no-op if the specified data block is a null pointer. */
+    DataBlock::Ptr eraseDataBlock(const DataBlock::Ptr&);
+
+    /** Determine if this function contains the specified data block, or equivalent.
+     *
+     *  If this function owns the specified data block or an equivalent data block then this method returns a pointer to the
+     *  existing data block, otherwise it returns the null pointer.
+     *
+     *  Thread safety: This method is not thread safe. */
+    DataBlock::Ptr dataBlockExists(const DataBlock::Ptr&) const;
+
+    /** Addresses that are part of static data.
+     *
+     *  Returns all addresses that are part of static data.
+     *
+     *  Thread safety: This method is not thread safe. */
+    AddressIntervalSet dataAddresses() const;
 
     /** Determines whether a function is frozen.  The ownership relations (instructions, basic blocks, and data blocks) cannot
      *  be adjusted while a function is in a frozen state.  All functions that are represented in the control flow graph are in
@@ -254,6 +272,9 @@ public:
 
     /** Number of basic blocks in the function. */
     size_t nBasicBlocks() const { return bblockVas_.size(); }
+
+    /** Number of data blocks in the function. */
+    size_t nDataBlocks() const { return dblocks_.size(); }
 
     /** Property: Stack delta.
      *
@@ -338,6 +359,9 @@ private:
     friend class Partitioner;
     void freeze() { isFrozen_ = true; }
     void thaw() { isFrozen_ = false; }
+
+    // Find an equivalent data block and replace it with the specified data block, or insert the specified data block
+    void replaceOrInsertDataBlock(const DataBlock::Ptr&);
 };
 
 typedef Sawyer::Container::Map<rose_addr_t, Function::Ptr> Functions;

@@ -1,5 +1,9 @@
 // Example from C++11 Wiki web page:
 
+#include<initializer_list>
+#include<vector>
+#include<string>
+
 // Initializer lists
 // C++03 inherited the initializer-list feature from C. A struct or array is given a list of 
 // arguments in curly brackets, in the order of the members' definitions in the struct. These 
@@ -46,12 +50,16 @@ SequenceClass some_var = {1, 4, 5, 6};
 // Regular functions can take typed initializer lists as arguments. For example:
 
 void function_name(std::initializer_list<float> list);
- 
-function_name({1.0f, -3.45f, -0.4f});
+
+void foobar()
+   {
+  // function_name({1.0f, -3.45f, -0.4f});
+     function_name({1.0f, -3.45f, -0.4f});
+   }
 
 // Standard containers can also be initialized in the following ways:
 
-std::vector<std::string> v = { "xyzzy", "plugh", "abracadabra" };
-std::vector<std::string> v({ "xyzzy", "plugh", "abracadabra" });
-std::vector<std::string> v{ "xyzzy", "plugh", "abracadabra" }; // see "Uniform initialization" below
+std::vector<std::string> v1 = { "xyzzy", "plugh", "abracadabra" };
+std::vector<std::string> v2 ({ "xyzzy", "plugh", "abracadabra" });
+std::vector<std::string> v3 { "xyzzy", "plugh", "abracadabra" }; // see "Uniform initialization" below
 

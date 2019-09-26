@@ -24,12 +24,45 @@ namespace Sawyer {
 
 /** Reference-counting smart pointer.
  *
- *  This class is a reference-counting pointer to an object that inherits from @ref SharedObject. Usage is similar to
- *  <code>boost::shared_ptr</code>.
- *  
- *  @sa SharedObject, @ref SharedFromThis
+ *  This class implements a reference-counting pointer to an object that inherits from @ref SharedObject. See @ref SharedObject
+ *  for a detailed description of how to prepare objects to be referenced by @ref SharedPointer.
  *
- *  @todo Write documentation for SharedPointer. */
+ *  Usage is similar to @c std::shared_ptr to the extent that the number of pointers pointing to an object is recorded
+ *  somewhere, and when that reference count reaches zero the object is destroyed and freed by calling @c delete. The main
+ *  difference is that @ref SharedPointer stores the reference count in the object itself (i.e., "intrusive"). The effects
+ *  are:
+ *
+ *  @li @ref SharedPointer is faster than non-intrusive reference-counting pointers like @c std::shared_ptr and @c
+ *  boost::shared_ptr.
+ *
+ *  @li The concepts of weak pointers and unique pointers are not supported because there is no separate pointer group object.
+ *
+ *  @li A class is declared as either having a reference count (inheriting from @ref SharedObject) or not having a reference
+ *  count (not inheriting). All objects that have such a built-in reference count are expected to have a working "delete" and
+ *  therefore must always be allocated on the heap.
+ *
+ *  Some best practices (see also, @ref SharedObject):
+ *
+ *  @li When returning a shared pointer from a function, return a new @ref SharedPointer rather than a reference.
+ *
+ *  @li When a shared pointer is used as a function argument, the function can take a const reference argument to avoid
+ *  incrementing the reference count in the object. This is safe since the caller will hold a reference to the object for the
+ *  duration of the call.
+ *
+ *  @li Avoid creating circular data structures since the cycle will be self-referencing and thus the objects are not freed
+ *  even after the last external reference to the cycle is removed. Breaking the cycle is the only way to cause the objects to
+ *  be freeable. An example of a cycle is a tree data structure where a parent has pointers to the children and the children in
+ *  turn point back to their parent--each parent-child pair is a cycle.
+ *
+ *  Use @ref SharedPointer if you need utmost speed, and are able to modify the definition of the pointee class to inherit from
+ *  @ref SharedObject, and are willing to always allocate all such objects on the heap not the stack, and don't need weak or
+ *  unique pointers to such objects.  Otherwise default to using @c std::shared_ptr et. al. (or @c boost::shared_ptr for C++03
+ *  and earlier).
+ *
+ *  Thread safety: The @ref SharedPointer implementation is thread safe when compiled with thread support. For GCC and LLVM,
+ *  the "-pthread" switch must be specified for both compiling and linking.
+ *  
+ *  @sa SharedObject, @ref SharedFromThis */
 template<class T>
 class SharedPointer {
 public:

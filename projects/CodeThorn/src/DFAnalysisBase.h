@@ -19,7 +19,7 @@
 #include "PointerAnalysisInterface.h"
 #include "ProgramAbstractionLayer.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
   using std::set;
   using std::vector;
@@ -32,7 +32,12 @@ class DFAnalysisBase {
   DFAnalysisBase();
   virtual ~DFAnalysisBase();
   void setExtremalLabels(LabelSet extremalLabels);
-  void initialize(SgProject* root, bool variableIdForEachArrayElement = false);
+  virtual void initializeExtremalValue(Lattice* element);
+
+  // \todo maybe split into initialize(root,variableIdForEachArrayElement)
+  //       and initialize(ProgramAbstractionLayer*).
+  virtual void initialize(SgProject* root, ProgramAbstractionLayer* programAbstractionLayer=nullptr, bool variableIdForEachArrayElement = false);
+
   void setForwardAnalysis();
   void setBackwardAnalysis();
   bool isForwardAnalysis();
@@ -42,7 +47,6 @@ class DFAnalysisBase {
   // computes state for global variable initializations
   virtual Lattice* initializeGlobalVariables(SgProject* root);
   // initializes an element with the combined global initialization state and the extremal value
-  virtual void initializeExtremalValue(Lattice* element);
   virtual void initializeTransferFunctions();
   virtual void initializeSolver();
   void determineExtremalLabels(SgNode* startFunRoot=0,bool onlySingleStartLabel=true);
@@ -60,7 +64,7 @@ class DFAnalysisBase {
   CFAnalysis* getCFAnalyzer();
   VariableIdMapping* getVariableIdMapping();
   FunctionIdMapping* getFunctionIdMapping();
-  Flow* getFlow() { return &_flow; }
+  Flow* getFlow() const { return _flow; }
   Lattice* getPreInfo(Label lab);
   Lattice* getPostInfo(Label lab);
   void attachInInfoToAst(string attributeName);
@@ -70,23 +74,24 @@ class DFAnalysisBase {
   void setSolverTrace(bool trace) { _solver->setTrace(trace); }
 
   // optional: allows to set a pointer analysis (if not set the default behavior is used (everything is modified through any pointer)).
-  void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pa);
-  SPRAY::PointerAnalysisInterface* getPointerAnalysis();
+  void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pa);
+  CodeThorn::PointerAnalysisInterface* getPointerAnalysis();
   void setSkipSelectedFunctionCalls(bool defer);
- protected:
+  ProgramAbstractionLayer* getProgramAbstractionLayer() { return _programAbstractionLayer; }
 
+ protected:
   enum AnalysisType {FORWARD_ANALYSIS, BACKWARD_ANALYSIS};
   virtual void solve();
   ProgramAbstractionLayer* _programAbstractionLayer=nullptr;
-  CFAnalysis* _cfanalyzer=nullptr;
   LabelSet _extremalLabels;
-  Flow _flow;
+  Flow* _flow;
   // following members are initialized by function initialize()
   long _numberOfLabels=0;
   vector<Lattice*> _analyzerDataPreInfo;
   vector<Lattice*> _analyzerDataPostInfo;
   WorkListSeq<Edge> _workList;
   void setInitialElementFactory(PropertyStateFactory*);
+  PropertyStateFactory* getInitialElementFactory();
 
   //typedef AnalyzerData::iterator iterator;
   typedef AnalyzerData::iterator iterator;
@@ -104,16 +109,15 @@ class DFAnalysisBase {
  public:
   DFTransferFunctions* _transferFunctions=nullptr;
  protected:
-  PropertyStateFactory* _initialElementFactory=nullptr;
-  SPRAY::PASolver1* _solver=nullptr;
+  CodeThorn::PASolver1* _solver=nullptr;
   AnalysisType _analysisType=DFAnalysisBase::FORWARD_ANALYSIS;
   bool _no_topological_sort=false;
-  
  private:
-  SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
-  SPRAY::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;
+  CodeThorn::PointerAnalysisInterface* _pointerAnalysisInterface=nullptr;
+  CodeThorn::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation=nullptr;
   Lattice* _globalVariablesState=nullptr;
   bool _skipSelectedFunctionCalls=false;
+  bool _programAbstractionLayerOwner=true;
 };
 
 } // end of namespace

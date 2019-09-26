@@ -33,7 +33,10 @@ endif
 #      PASSING TESTS
 # #######################
 
-F90_TESTCODES_REQUIRED_TO_PASS = \
+F90_TESTCODES_REQUIRED_TO_PASS =  \
+     jira-par-2_literal_max.f90   \
+     jira-par-11_write_format.f90 \
+     jira-par-18_common_block.f90 \
      R832.f90        \
      R837.f90        \
      test2007_01.f90 \
@@ -153,7 +156,6 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2007_219.f90 \
      test2007_236.f90 \
      test2007_238.f90 \
-     test2007_239.f90 \
      test2007_244.f90 \
      test2007_248.f90 \
      test2007_249.f90 \
@@ -316,11 +318,32 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_wrong-func-type-3.f90 \
      test2011_Rice_wrong-func-type.f90 \
      test2011_Rice_wrong-func-type-2.f90 \
+     test2019_derived_type.f90 \
+     test2019_class_var_decl.f90 \
+     test2019_write_io_control_spec.f90 \
+     test2019_recursive_function.f90 \
+     test2019_derived_type_name_conflict.f90 \
+     test2019_derived_type_name_conflict_2.f90 \
+     test2019_rewind.f90 \
+     test2019_renameList.f90 \
+     test2019_designator.f90 \
+     test2019_contiguous_attr.f90 \
+     test2019_doconstruct.f90 \
+     test2019_OpenStmt_Unit.f90 \
+     test2019_common_block_name.f90 \
+     test2019_multi_associate.f90 \
+     test2019_accessibility_attribute.f90 \
+     test2019_accessibility_attribute2.f90 \
+     rose-issue-par-39.f90 \
      canonicalExample.f90 
 
-# DQ (11/11/2014): These test fail due to changes to support C++11 work (need to look into this seperately).
-#    test2010_154.f90 
+# Rasmussen(1/9/2019): rose-1612.f90 uses the module in rose_iso_c_binding.f90 which runs afoul of a
+# naming conflict policy.  Need to figure out how to get around this and have the module build first.
+#    rose_iso_c_binding.f90
+#    rose-1612.f90
 
+# DQ (11/11/2014): These test fail due to changes to support C++11 work (need to look into this separately).
+#    test2010_154.f90
 
 # SKW 8/21/2011: these test fails with gfortran 4.1.2, but there is no 'ROSE_USING_GFORTRAN_VERSION_4_1_2'
 # yet so I am just commenting them out for now. They pass with gfortran 4.4.1
@@ -840,6 +863,7 @@ F90_TESTCODES_CURRENTLY_FAILING += \
      test2007_152.f90 \
      test2007_177.f90 \
      test2007_237.f90 \
+     test2007_239.f90 \
      test2007_LANL.f90 \
      test2007_example.f90 \
      test2010_19.f90 \
@@ -1072,8 +1096,8 @@ testTokenGeneration: ../../testTokenGeneration
 # 	rm -f testTranslator_$(@:.o=)
 # endif
 
-# DQ (9/25/2013): The location of the SDF version of OFP.
-SDF_OFP = $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser
+# Rasmussen (12/20/2018): Path to the SDF Fortran parse table
+SDF_OFP = $(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/share/rose
 
 $(TEST_F90_Sources): ../../testTranslator ../../testGraphGeneration ../../testTokenGeneration ${ALL_TESTCODES}
 if !ROSE_USE_INSURE
@@ -1085,11 +1109,13 @@ if !ROSE_USE_INSURE
 	@$(RTH_RUN) CMD="../../testTokenGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $(@:.f90.passed=.f90.testTokenGeneration.passed)
 #	$(VALGRIND) ../../testParser $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-#	sglri -i $(srcdir)/$(@:.f90.passed=.f90) -p $(top_builddir)/src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl | implode-asfix | pp-aterm -o $(@:.f90.passed=.f90).aterm
-#	@$(RTH_RUN) CMD="sglri -i $(srcdir)/$(@:.f90.passed=.f90) -p $(SDF_OFP)/Fortran.tbl | implode-asfix | pp-aterm -o $(@:.f90.passed=.f90).aterm" $(top_srcdir)/scripts/test_exit_status $(@:.f90.passed=.f90.testAtermGeneration.passed) || true
-	@$(RTH_RUN) CMD="../../testTranslator -rose:experimental_fortran_frontend $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $(@:.f90.passed=.f90.testTokenGeneration.passed)
+#	sglri -i $(srcdir)/$(@:.f90.passed=.f90) -p $(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/share/rose/Fortran.tbl | pp-aterm -o $(@:.f90.passed=.f90).aterm
+#	@$(RTH_RUN) CMD="sglri -i $(srcdir)/$(@:.f90.passed=.f90) -p $(SDF_OFP)/Fortran.tbl | pp-aterm -o $(@:.f90.passed=.f90).aterm" $(top_srcdir)/scripts/test_exit_status $(@:.f90.passed=.f90.testAtermGeneration.passed) || true
+# Rasmussen (12/20/2018): Turned off running experimental frontend on normal Fortran tests.  Not ready for these tests yet!
+#	@$(RTH_RUN) CMD="../../testTranslator -rose:experimental_fortran_frontend $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $(@:.f90.passed=.f90.testTokenGeneration.passed)
 if ROSE_WITH_ATERM
-	@$(RTH_RUN) CMD="../../testAtermGraphGeneration $(@:.f90.passed=.f90.aterm)" $(top_srcdir)/scripts/test_exit_status $(@:.f90.passed=.f90.testAtermGraphGeneration.passed) || true
+# Rasmussen (12/20/2018): Turned off running experimental frontend on normal Fortran tests.  Not ready for these tests yet!
+#	@$(RTH_RUN) CMD="../../testAtermGraphGeneration $(@:.f90.passed=.f90.aterm)" $(top_srcdir)/scripts/test_exit_status $(@:.f90.passed=.f90.testAtermGraphGeneration.passed) || true
 endif
 endif
 else
@@ -1125,8 +1151,9 @@ if !ROSE_USE_INSURE
 #	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.F90)
 	@$(RTH_RUN) CMD="../../testTokenGeneration $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $(@:.F90.passed=.F90.testTokenGeneration.passed)
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-#	@$(RTH_RUN) CMD="sglri -i $(srcdir)/$(@:.F90.passed=.F90) -p $(SDF_OFP)/Fortran.tbl | implode-asfix | pp-aterm -o $(@:.F90.passed=.F90).aterm" $(top_srcdir)/scripts/test_exit_status $(@:.F90.passed=.F90.testAtermGeneration.passed) || true
-	@$(RTH_RUN) CMD="../../testTranslator -rose:experimental_fortran_frontend $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $(@:.F90.passed=.F90.testTokenGeneration.passed)
+#	@$(RTH_RUN) CMD="sglri -i $(srcdir)/$(@:.F90.passed=.F90) -p $(SDF_OFP)/Fortran.tbl | pp-aterm -o $(@:.F90.passed=.F90).aterm" $(top_srcdir)/scripts/test_exit_status $(@:.F90.passed=.F90.testAtermGeneration.passed) || true
+# Rasmussen (12/20/2018): Turned off running experimental frontend on normal Fortran tests.  Not ready for these tests yet!
+#	@$(RTH_RUN) CMD="../../testTranslator -rose:experimental_fortran_frontend $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $(@:.F90.passed=.F90.testTokenGeneration.passed)
 endif
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
@@ -1163,8 +1190,9 @@ if !ROSE_USE_INSURE
 #	$(VALGRIND) ../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.f77)
 	@$(RTH_RUN) CMD="../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f77.passed=.f77)" $(top_srcdir)/scripts/test_exit_status $(@:.f77.passed=.f77.testTokenGeneration.passed)
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-#	@$(RTH_RUN) CMD="sglri -i $(srcdir)/$(@:.f77.passed=.f77) -p $(SDF_OFP)/Fortran.tbl | implode-asfix | pp-aterm -o $(@:.f77.passed=.f77).aterm" $(top_srcdir)/scripts/test_exit_status $(@:.f77.passed=.f77.testAtermGeneration.passed) || true
-	@$(RTH_RUN) CMD="../../testTranslator -rose:experimental_fortran_frontend $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f77.passed=.f77)" $(top_srcdir)/scripts/test_exit_status $(@:.f77.passed=.f77.experimental.passed)
+#	@$(RTH_RUN) CMD="sglri -i $(srcdir)/$(@:.f77.passed=.f77) -p $(SDF_OFP)/Fortran.tbl | pp-aterm -o $(@:.f77.passed=.f77).aterm" $(top_srcdir)/scripts/test_exit_status $(@:.f77.passed=.f77.testAtermGeneration.passed) || true
+# Rasmussen (12/20/2018): Turned off running experimental frontend on normal Fortran tests.  Not ready for these tests yet!
+#	@$(RTH_RUN) CMD="../../testTranslator -rose:experimental_fortran_frontend $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f77.passed=.f77)" $(top_srcdir)/scripts/test_exit_status $(@:.f77.passed=.f77.experimental.passed)
 endif
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
@@ -1203,7 +1231,8 @@ if !ROSE_USE_INSURE
 	@$(RTH_RUN) CMD="../../testTokenGeneration $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f.passed=.f)" $(top_srcdir)/scripts/test_exit_status $(@:.f.passed=.f.testTokenGeneration.passed)
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
 #	@$(RTH_RUN) CMD="sglri -i $(srcdir)/$(@:.f.passed=.f) -p $(SDF_OFP)/Fortran.tbl | implode-asfix | pp-aterm -o $(@:.f.passed=.f).aterm" $(top_srcdir)/scripts/test_exit_status $(@:.f.passed=.f.testAtermGeneration.passed) || true
-	@$(RTH_RUN) CMD="../../testTranslator -rose:experimental_fortran_frontend$(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f.passed=.f)" $(top_srcdir)/scripts/test_exit_status $(@:.f.passed=.f.testTokenGeneration.passed)
+# Rasmussen (12/20/2018): Turned off running experimental frontend on normal Fortran tests.  Not ready for these tests yet!
+#	@$(RTH_RUN) CMD="../../testTranslator -rose:experimental_fortran_frontend$(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.f.passed=.f)" $(top_srcdir)/scripts/test_exit_status $(@:.f.passed=.f.testTokenGeneration.passed)
 endif
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
@@ -1251,7 +1280,7 @@ if !ROSE_USE_INSURE
 	@echo "   ...force generation of $@, because gfortran compiler does not handle fortran 2003 standard (and the makefile needs $@ to avoid recompilation)."
 	@touch $@
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-	@$(RTH_RUN) CMD="sglri -i $(srcdir)/$(@:.f03.passed=.f03) -p $(SDF_OFP)/Fortran.tbl | implode-asfix | pp-aterm -o $(@:.f03.passed=.f03).aterm" $(top_srcdir)/scripts/test_exit_status $(@:.f03.passed=.f03.testAtermGeneration.passed) || true
+	@$(RTH_RUN) CMD="sglri -i $(srcdir)/$(@:.f03.passed=.f03) -p $(SDF_OFP)/Fortran.tbl | pp-aterm -o $(@:.f03.passed=.f03).aterm" $(top_srcdir)/scripts/test_exit_status $(@:.f03.passed=.f03.testAtermGeneration.passed) || true
 endif
 else
 #	DQ (4/22/2011): For Insure++ we want to get the filename into the names used for the report files.
@@ -1299,6 +1328,20 @@ module_B_file.f90.passed: testTranslator module_A_file.f90.passed
 #	../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.f90)
 	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
 
+test2019_module_1_file.f90.passed: testTranslator
+	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
+
+# Force representation of module dependency so that mod files are properly generated before use.
+test2019_module_2_file.f90.passed: testTranslator test2019_module_1_file.f90.passed
+	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
+
+test2019_private_attribute2.f90.passed: testTranslator
+	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
+
+# Force representation of module dependency so that mod files are properly generated before use.
+test2019_private_attribute.f90.passed: testTranslator test2019_private_attribute2.f90.passed
+	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
+
 test2010_01.o:
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:relax_syntax_check -c $(srcdir)/$(@:.o=.f90)
 
@@ -1325,10 +1368,10 @@ problemTests:
 
 # We will build a larger collection of module tests soon (supported by makefile dependence rules).
 # PASSING_MODULE_TEST_Objects = module_B_file.o
-PASSING_MODULE_TEST_Objects = module_B_file.f90.passed
+PASSING_MODULE_TEST_Objects = module_B_file.f90.passed test2019_module_2_file.f90.passed test2019_private_attribute.f90.passed
 
 # DQ (10/4/2010): Test calling OFP directly and ROSE for different filename extensions.
-CALL_OFP = java -Djava.class.path=$(top_srcdir)/src/3rdPartyLibraries/antlr-jars/antlr-3.2.jar:$(top_builddir)/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.2.jar fortran.ofp.FrontEnd
+CALL_OFP = java -Djava.class.path=$(top_srcdir)/src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar:$(top_builddir)/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.5.jar fortran.ofp.FrontEnd
 testSuffixRules:
 	$(CALL_OFP) --dump $(srcdir)/test2007_suffixTest_01.f
 	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2007_suffixTest_01.f

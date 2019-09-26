@@ -50,6 +50,10 @@ class SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute
 
        // Specific constructors are required
           SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute();
+
+       // DQ (11/13/2018): Added constructor.
+          SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute(SgSourceFile* input_sourceFile);
+
           SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute(SgSourceFile* input_sourceFile, int start, int end,bool processed);
 
           SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute ( const SimpleFrontierDetectionForTokenStreamMapping_InheritedAttribute & X ); // : processChildNodes(X.processChildNodes) {};

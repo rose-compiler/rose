@@ -15,6 +15,10 @@ public:
     void processDimensionExpressions();
     void processRemainingFunctions();
 
+    void setupAdHocVisitor(LLVMAstAttributes *attributes) {
+        setAttributes(attributes);
+    }
+      
 protected:
 
     FunctionAstAttribute *current_function_decls;
@@ -59,7 +63,11 @@ protected:
     void genDivideBinaryOperationAndAssign(SgBinaryOp *, std::string, std::string const &);
 
     SgFunctionType *getFunctionType(SgType *);
+
+    /**
+     * TODO: Obsolete !
     void generateArraySizeCode(const std::string &, SgType *, SgArrayType *);
+    */
 
     virtual bool preVisitEnter(SgNode *);
     virtual void preVisit(SgNode *);

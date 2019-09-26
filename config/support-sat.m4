@@ -13,12 +13,12 @@ if test ! "$with_sat" ; then
 fi
 )
 
-echo "In ROSE SUPPORT MACRO: with_sat $with_sat"
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: with_sat = "$with_sat"])
 
 if test "$with_sat" = no; then
-   echo "Skipping use of internal SAT Solver support!"
+   AC_MSG_NOTICE([skipping use of internal SAT Solver support])
 else
-   echo "Setup internal SAT solver support in ROSE! with_sat = $with_sat"
+   AC_MSG_NOTICE([setup internal SAT solver support in ROSE. with_sat = "$with_sat"])
    AC_DEFINE([USE_ROSE_SAT_SUPPORT],1,[Controls use of ROSE support for internal Satisfiability (SAT) Solver.])
 fi
 

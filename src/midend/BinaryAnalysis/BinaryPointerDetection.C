@@ -46,7 +46,7 @@ Analysis::init(Disassembler *disassembler) {
     if (disassembler) {
         const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
-        size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
+        size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
@@ -348,7 +348,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
 
     // Find data pointers
     SAWYER_MESG(mlog[DEBUG]) <<"  potential data pointers:\n";
-    size_t dataWordSize = partitioner.instructionProvider().stackPointerRegister().get_nbits();
+    size_t dataWordSize = partitioner.instructionProvider().stackPointerRegister().nBits();
     Sawyer::Container::Set<SymbolicExpr::Hash> addrSeen;
     BOOST_FOREACH (const BaseSemantics::StatePtr &state, dfEngine.getFinalStates()) {
         BaseSemantics::MemoryCellStatePtr memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
@@ -358,12 +358,12 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
 
     // Find code pointers
     SAWYER_MESG(mlog[DEBUG]) <<"  potential code pointers:\n";
-    size_t codeWordSize = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+    size_t codeWordSize = partitioner.instructionProvider().instructionPointerRegister().nBits();
     addrSeen.clear();
     const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
     BOOST_FOREACH (const BaseSemantics::StatePtr &state, dfEngine.getFinalStates()) {
         SymbolicSemantics::SValuePtr ip =
-            SymbolicSemantics::SValue::promote(state->readRegister(IP, ops->undefined_(IP.get_nbits()), ops.get()));
+            SymbolicSemantics::SValue::promote(state->peekRegister(IP, ops->undefined_(IP.nBits()), ops.get()));
         SymbolicExpr::Ptr ipExpr = ip->get_expression();
         if (!addrSeen.exists(ipExpr->hash())) {
             bool isSignificant = false;

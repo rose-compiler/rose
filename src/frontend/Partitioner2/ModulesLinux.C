@@ -33,7 +33,7 @@ systemCallAnalyzer(const Partitioner &partitioner, const boost::filesystem::path
                 break;
         }
     }
-    
+
     return analyzer;
 }
 
@@ -78,10 +78,10 @@ SyscallSuccessors::operator()(bool chain, const Args &args) {
     } catch (...) {
         // Not an error if we can't figure out the system call name.
     }
-    
+
     return chain;
 }
-            
+
 void
 nameSystemCalls(const Partitioner &partitioner, const boost::filesystem::path &syscallHeader) {
     SystemCall analyzer = systemCallAnalyzer(partitioner);
@@ -124,46 +124,50 @@ LibcStartMain::operator()(bool chain, const Args &args) {
     SAWYER_MESG(debug) <<"LibcStartMain analysis: found call to __libc_start_main\n";
 
     // One of the arguments to the function call is the address of "main". We need instruction semantics to get its value.
-    args.bblock->undropSemantics();
-    BaseSemantics::DispatcherPtr cpu = args.bblock->dispatcher();
-    BaseSemantics::StatePtr state = args.bblock->finalState();
-    if (!cpu || !state) {
-        try {
-            // Map-based memory seems to work best for this. Maybe we should use that also when the partitioners semantics are
-            // enabled in general?
-            if (BaseSemantics::RiscOperatorsPtr ops = args.partitioner.newOperators(MAP_BASED_MEMORY)) {
-                if (cpu = args.partitioner.newDispatcher(ops)) {
-                    BOOST_FOREACH (SgAsmInstruction *insn, args.bblock->instructions())
-                        cpu->processInstruction(insn);
-                    state = cpu->currentState();
-                }
+    // Map-based memory seems to work best for this because it's faster, simpler to understand, and avoids inconsistencies when
+    // the basic block has aliasing near the top of the stack.  Since __libc_start_main is called by _start, which is also
+    // responsible for aligning the stack pointer, the stack pointer ends up often being an somewhat complicated symbolic
+    // expression, which in turn causes aliasing-aware memory states to return unknown values when reading the stack (using
+    // similar complicated expression) due to possible aliasing.
+    BaseSemantics::DispatcherPtr dispatcher;
+    BaseSemantics::RiscOperatorsPtr ops;
+    BaseSemantics::StatePtr state;
+    try {
+        ops = args.partitioner.newOperators(MAP_BASED_MEMORY);
+        if (ops) {
+            dispatcher = args.partitioner.newDispatcher(ops);
+            if (dispatcher) {
+                BOOST_FOREACH (SgAsmInstruction *insn, args.bblock->instructions())
+                    dispatcher->processInstruction(insn);
+                state = dispatcher->currentState();
             }
-        } catch (...) {
         }
+    } catch (...) {
     }
     if (!state) {
         SAWYER_MESG(debug) <<"LibcStartMain analysis: failed to obtain basic block semantic state\n";
         return chain;
     }
-    
+
     // Location and size of argument varies by architecture
     Semantics::SValuePtr mainVa;
     if (isSgAsmX86Instruction(args.bblock->instructions().back())) {
-        if (cpu->addressWidth() == 64) {
-            const RegisterDescriptor REG_RCX = cpu->findRegister("rcx", 64, true /*allowMissing*/);
+        if (dispatcher->addressWidth() == 64) {
+            const RegisterDescriptor REG_RCX = dispatcher->findRegister("rcx", 64, true /*allowMissing*/);
             ASSERT_require(!REG_RCX.isEmpty());
-            
-            BaseSemantics::SValuePtr rcx = state->peekRegister(REG_RCX, cpu->undefined_(64), &*cpu->get_operators());
+
+            BaseSemantics::SValuePtr rcx = state->peekRegister(REG_RCX, dispatcher->undefined_(64), ops.get());
             if (rcx->is_number())
                 mainVa = Semantics::SValue::promote(rcx);
 
-        } else if (cpu->addressWidth() == 32) {
-            cpu->get_operators()->currentState(state);
+        } else if (dispatcher->addressWidth() == 32) {
+            dispatcher->get_operators()->currentState(state);
             const RegisterDescriptor REG_ESP = args.partitioner.instructionProvider().stackPointerRegister();
             ASSERT_require(!REG_ESP.isEmpty());
-            BaseSemantics::SValuePtr esp = cpu->get_operators()->peekRegister(REG_ESP, cpu->undefined_(32));
-            BaseSemantics::SValuePtr arg0addr = cpu->get_operators()->add(esp, cpu->number_(32, 4));
-            BaseSemantics::SValuePtr arg0 = cpu->get_operators()->peekMemory(RegisterDescriptor(), arg0addr, cpu->undefined_(32));
+            BaseSemantics::SValuePtr esp = dispatcher->get_operators()->peekRegister(REG_ESP, dispatcher->undefined_(32));
+            BaseSemantics::SValuePtr arg0addr = dispatcher->get_operators()->add(esp, dispatcher->number_(32, 4));
+            BaseSemantics::SValuePtr arg0 = dispatcher->get_operators()->peekMemory(RegisterDescriptor(),
+                                                                                        arg0addr, dispatcher->undefined_(32));
             SAWYER_MESG(debug) <<"LibcStartMain analysis: x86-32 arg0 addr  = " <<*arg0addr <<"\n"
                                <<"LibcStartMain analysis: x86-32 arg0 value = " <<*arg0 <<"\n";
             if (arg0->is_number())
@@ -184,7 +188,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
         if (mainVa->is_number() && mainVa->get_width() <= 64)
             mainVa_ = mainVa->get_number();
     }
-    
+
     return true;
 }
 

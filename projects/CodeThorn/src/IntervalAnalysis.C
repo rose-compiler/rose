@@ -10,36 +10,29 @@
 
 using namespace std;
 
-SPRAY::IntervalAnalysis::IntervalAnalysis() {
-  _transferFunctions=new SPRAY::IntervalTransferFunctions();
-  _initialElementFactory=new SPRAY::IntervalPropertyStateFactory();
+CodeThorn::IntervalAnalysis::IntervalAnalysis() {
+  _transferFunctions=new CodeThorn::IntervalTransferFunctions();
+  _transferFunctions->setInitialElementFactory(new CodeThorn::IntervalPropertyStateFactory());
 }
 
-SPRAY::IntervalAnalysis::~IntervalAnalysis() {
+CodeThorn::IntervalAnalysis::~IntervalAnalysis() {
   delete _transferFunctions;
-  delete _initialElementFactory;
+  delete _transferFunctions->getInitialElementFactory();
 }
 
-void SPRAY::IntervalAnalysis::initializeExtremalValue(Lattice* element) {
-  SPRAY::IntervalPropertyState* pstate=dynamic_cast<SPRAY::IntervalPropertyState*>(element);
-  pstate->setEmptyState();
-  //iElement->... init to empty state, not being bottom
-  cout<<"INFO: initialized extremal value."<<endl;
-}
-
-DFAstAttribute* SPRAY::IntervalAnalysis::createDFAstAttribute(Lattice* elem) {
-  SPRAY::IntervalPropertyState* ivElem=dynamic_cast<SPRAY::IntervalPropertyState*>(elem);
+DFAstAttribute* CodeThorn::IntervalAnalysis::createDFAstAttribute(Lattice* elem) {
+  CodeThorn::IntervalPropertyState* ivElem=dynamic_cast<CodeThorn::IntervalPropertyState*>(elem);
   ROSE_ASSERT(ivElem);
   return new IntervalAstAttribute(ivElem);
 }
 
-void SPRAY::IntervalAnalysis::initializeTransferFunctions() {
+void CodeThorn::IntervalAnalysis::initializeTransferFunctions() {
    DFAnalysisBase::initializeTransferFunctions();
   _numberIntervalLattice=new NumberIntervalLattice();
   ROSE_ASSERT(_numberIntervalLattice);
-  SPRAY::IntervalTransferFunctions* intervalTransferFunctions=dynamic_cast<SPRAY::IntervalTransferFunctions*>(_transferFunctions);
+  CodeThorn::IntervalTransferFunctions* intervalTransferFunctions=dynamic_cast<CodeThorn::IntervalTransferFunctions*>(_transferFunctions);
   ROSE_ASSERT(intervalTransferFunctions->getCppExprEvaluator()==0);
-  SPRAY::CppExprEvaluator* cppExprEvaluator=new SPRAY::CppExprEvaluator(_numberIntervalLattice,getVariableIdMapping());
+  CodeThorn::CppExprEvaluator* cppExprEvaluator=new CodeThorn::CppExprEvaluator(_numberIntervalLattice,getVariableIdMapping());
   cppExprEvaluator->setShowWarnings(false);
   cppExprEvaluator->setPointerAnalysis(getPointerAnalysis());
   cppExprEvaluator->setSoundness(false);

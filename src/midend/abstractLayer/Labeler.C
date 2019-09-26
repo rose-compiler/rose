@@ -3,7 +3,7 @@
  *************************************************************/
 
 #include "sage3basic.h"
-#include "SprayException.h"
+#include "CodeThornException.h"
 
 #include "Labeler.h"
 #include "SgNodeHelper.h"
@@ -11,7 +11,7 @@
 #include <sstream>
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 Label Labeler::NO_LABEL;
 
@@ -84,7 +84,7 @@ std::string Label::toString() const {
 }
 
 // friend function
-ostream& SPRAY::operator<<(ostream& os, const Label& label) {
+ostream& CodeThorn::operator<<(ostream& os, const Label& label) {
   os<<label.toString();
   return os;
 }
@@ -170,7 +170,7 @@ string LabelProperty::labelTypeToString(LabelType lt) {
   case LABEL_BLOCKEND: return "blockend";
   case LABEL_EMPTY_STMT: return "emptystmt";
   default:
-    throw SPRAY::Exception("Error: unknown label type.");
+    throw CodeThorn::Exception("Error: unknown label type.");
   }
 }
 
@@ -222,8 +222,20 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   if(SgNodeHelper::isForIncExpr(node))
     return 1;
 
+  // special case of FunctionCall is matched as : return f(...);
+  if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node)) {
+    //cout << "DEBUG: Labeler: assigning 3 labels for SgReturnStmt(SgFunctionCallExp)"<<endl;
+    return 3;
+  }
+
+  //special case of FunctionCall is matched as : f(), x=f(); T x=f();
+  if(SgNodeHelper::Pattern::matchFunctionCall(node)) {
+    //cout << "DEBUG: Labeler: assigning 2 labels for SgFunctionCallExp"<<endl;
+    return 2;
+  }
+
   switch(node->variantT()) {
-  case V_SgFunctionCallExp:
+    //  case V_SgFunctionCallExp:
   case V_SgBasicBlock:
     return 1;
   case V_SgFunctionDefinition:
@@ -240,7 +252,7 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgWhileStmt:
   case V_SgDoWhileStmt:
   case V_SgForStatement:
-    //  case V_SgForInitStatement: // TODO: investigate: we might not need this
+    //  case V_SgForInitStatement: // not necessary
   case V_SgBreakStmt:
   case V_SgContinueStmt:
   case V_SgGotoStatement:
@@ -281,12 +293,7 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
     return 1;
 
   case V_SgReturnStmt:
-    if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node)) {
-      //cout << "DEBUG: Labeler: assigning 3 labels for SgReturnStmt(SgFunctionCallExp)"<<endl;
-      return 3;
-    } else {
       return 1;
-    }
   default:
     return 0;
   }
@@ -364,9 +371,9 @@ SgNode* Labeler::getNode(Label label) {
        << mappingLabelToLabelProperty.size()
        << " ]";
     string errorInfo=ss.str();
-    throw SPRAY::Exception("Labeler: getNode: label id out of bounds "+errorInfo);
+    throw CodeThorn::Exception("Labeler: getNode: label id out of bounds "+errorInfo);
   } else if(label==Label()) {
-    throw SPRAY::Exception("Labeler: getNode: invalid label id");
+    throw CodeThorn::Exception("Labeler: getNode: invalid label id");
   }
   return mappingLabelToLabelProperty[label.getId()].getNode();
 }
@@ -415,7 +422,7 @@ Label Labeler::getLabel(SgNode* node) {
     computeNodeToLabelMapping(); // sets _isValidMappingNodeToLabel to true.
     return mappingNodeToLabel[node];
   }
-  throw SPRAY::Exception("Error: internal error getLabel.");
+  throw CodeThorn::Exception("Error: internal error getLabel.");
 }
 
 long Labeler::numberOfLabels() {
@@ -423,12 +430,12 @@ long Labeler::numberOfLabels() {
 }
 
 Label Labeler::functionCallLabel(SgNode* node) {
-  assert(SgNodeHelper::Pattern::matchFunctionCall(node));
+  ROSE_ASSERT(SgNodeHelper::Pattern::matchFunctionCall(node));
   return getLabel(node);
 }
 
 Label Labeler::functionCallReturnLabel(SgNode* node) {
-  assert(SgNodeHelper::Pattern::matchFunctionCall(node));
+  ROSE_ASSERT(SgNodeHelper::Pattern::matchFunctionCall(node));
   // in its current implementation it is guaranteed that labels associated with the same node
   // are associated as an increasing sequence of labels
   Label lab=getLabel(node);
@@ -438,11 +445,11 @@ Label Labeler::functionCallReturnLabel(SgNode* node) {
     return lab+1; 
 }
 Label Labeler::blockBeginLabel(SgNode* node) {
-  assert(isSgBasicBlock(node));
+  ROSE_ASSERT(isSgBasicBlock(node));
   return getLabel(node);
 }
 Label Labeler::blockEndLabel(SgNode* node) {
-  assert(isSgBasicBlock(node));
+  ROSE_ASSERT(isSgBasicBlock(node));
   Label lab=getLabel(node);
   if(lab==NO_LABEL) 
     return NO_LABEL;
@@ -450,11 +457,11 @@ Label Labeler::blockEndLabel(SgNode* node) {
     return lab+1; 
 }
 Label Labeler::functionEntryLabel(SgNode* node) {
-  assert(isSgFunctionDefinition(node));
+  ROSE_ASSERT(isSgFunctionDefinition(node));
   return getLabel(node);
 }
 Label Labeler::functionExitLabel(SgNode* node) {
-  assert(isSgFunctionDefinition(node));
+  ROSE_ASSERT(isSgFunctionDefinition(node));
   Label lab=getLabel(node);
   if(lab==NO_LABEL) 
     return NO_LABEL;

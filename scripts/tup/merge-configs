@@ -1,0 +1,53 @@
+#!/usr/bin/perl
+=pod
+
+=head1 NAME
+
+merge-configs - merges tup configurations
+
+=head1 SYNOPSIS
+
+merge-configs VAR=VALUE... <ORIG >NEW
+
+=head1 DESCRIPTION
+
+Copies standard input to standard output, replacing or inserting the specified VAR=VALUE pairs
+from the command-line.
+
+=cut
+
+use strict;
+use FindBin;
+use lib "$FindBin::Bin";
+use TupScripts;
+
+my %varvals;
+for my $arg (@ARGV) {
+    if ($arg =~ /^(-h|--help|-\?)$/) {
+	TupScripts::help;
+	exit 0;
+    } elsif (my($var, $val) = $arg =~ /^([a-zA-Z]\w*)=(.*)/) {
+	$var = "CONFIG_$var" unless $var =~ /^CONFIG_/;
+	$varvals{$var} = $val;
+    } else {
+	die "$0: bad command-line argument '$arg'\n";
+    }
+}
+
+my %seen;
+while (<STDIN>) {
+    if (my($var, $val) = /^(CONFIG_\w+)\s*=\s*(.*?)\s*$/) {
+	if (exists $varvals{$var}) {
+	    printf "%s=%s\n", $var, $varvals{$var};
+	    $seen{$var} = 1;
+	} else {
+	    print $_;
+	}
+    } else {
+	print $_;
+    }
+}
+
+for my $var (sort keys %varvals) {
+    printf "%s=%s\n", $var, $varvals{$var} unless $seen{$var};
+}

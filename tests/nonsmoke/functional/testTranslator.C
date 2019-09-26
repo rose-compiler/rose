@@ -68,6 +68,11 @@ int main( int argc, char * argv[] )
      SageBuilder::clearScopeStack();
 
 #if 0
+  // DQ (3/22/2019): Test this on our regression tests.
+     SageInterface::translateToUseCppDeclarations(project);
+#endif
+
+#if 0
   // DQ (9/8/2017): Debugging ROSE_ASSERT.
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);

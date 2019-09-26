@@ -29,9 +29,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2011_15.java \
      test2011_16.java \
      test2011_17.java \
-     test2011_18.java \
      test2011_19.java \
-     test2011_20.java \
      test2011_21.java \
      test2011_22.java \
      test2011_23.java \
@@ -143,14 +141,8 @@ TESTCODES_REQUIRED_TO_PASS_FAILING_BACKEND_COMPILE = \
 
 # This is where the Java generics tests are put (currently not required to pass all phases).
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
-     test2011_43.java \
      test2011_44.java \
      test2011_45.java \
-     test2011_46.java \
-     test2011_48.java \
-     test2011_49.java \
-     \
-     pgc_test2011_09.java \
      \
      cave3_assert0.java \
      cave3_assert1.java \
@@ -158,13 +150,7 @@ TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 = \
      cave3_import3.java \
      cave3_foreach0.java \
      cave3_foreach1.java \
-     cave3_foreach2.java \
      cave3_foreach3.java \
-     cave3_foreach4.java \
-     cave3_foreach5.java \
-     cave3_foreach6.java \
-     cave3_foreach7.java \
-     cave3_labelBreak4.java \
      \
      InterfaceWithGenericMethod.java
 
@@ -172,13 +158,9 @@ TESTCODES_REQUIRED_TO_PASS_FAILING_FOR_JAVA_6 =
 
 TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7 = \
 	Test_1_7_binary_literals.java \
-	Test_1_7_Exceptions.java \
 	Test_1_7_non_reifiable_formal_parameters.java \
 	Test_1_7_strings_in_switch_statement.java \
-	Test_1_7_try_with_resources_statement.java \
-	Test_1_7_type_inference_for_generic_instance_creation.java \
 	Test_1_7_underscores_in_numeric_literal.java \
-	Test_1_7_warnings_and_errors_for_non_reifiable_parameters.java \
 	14.20.3.try-with-resources/TryWithResources001.java
 
 # Later we will move these tests to the gcjTestSuite subdirectory.
@@ -393,6 +375,34 @@ GCJ_TESTCODE_CURRENTLY_FAILING = \
    WalkerTest.java
 
 
+if !ROSE_USING_GCC_VERSION_LATER_4_9
+TESTCODES_REQUIRED_TO_PASS += \
+     test2011_18.java \
+     test2011_20.java 
+
+TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6 += \
+     test2011_43.java \
+     test2011_46.java \
+     test2011_48.java \
+     test2011_49.java \
+     \
+     pgc_test2011_09.java \
+     \
+     cave3_foreach2.java \
+     cave3_foreach4.java \
+     cave3_foreach5.java \
+     cave3_foreach6.java \
+     cave3_foreach7.java \
+     cave3_labelBreak4.java 
+
+ 
+TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7 += \
+	Test_1_7_Exceptions.java \
+	Test_1_7_warnings_and_errors_for_non_reifiable_parameters.java \
+	Test_1_7_type_inference_for_generic_instance_creation.java \
+	Test_1_7_try_with_resources_statement.java 
+
+endif
 
 noinst_headers = 
 
@@ -629,7 +639,7 @@ conditional-check-local:
 # Jave support is independent of EDG 4.9 or EDG 4.12 or later (run all tests independent of the C/C++ frontend).
 	mkdir -p "$(builddir)/javac-output-classes"
 if USING_GNU_COMPILER
-if !ROSE_USING_GCC_VERSION_LATER_4_9
+#if !ROSE_USING_GCC_VERSION_LATER_4_9
 	@echo "Some specific Java tests are skipped with any later GNU compiler (GNU 4.9 or later)."
 # conditional-check-local: extraTests
 	@$(MAKE) extraTests
@@ -640,7 +650,7 @@ if !ROSE_USING_GCC_VERSION_LATER_4_9
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_6_Objects)
 	@$(MAKE) $(TESTCODES_REQUIRED_TO_PASS_FOR_JAVA_7_Objects)
-endif # NOT ROSE_USING_GCC_VERSION_LATER_4_9
+#endif # NOT ROSE_USING_GCC_VERSION_LATER_4_9
 else
 if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.

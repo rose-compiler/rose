@@ -5,17 +5,10 @@ AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD    = $(ROSE_LIBS)
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-   test2016_02.C \
-   test2016_04.C \
-   test2016_05.C \
    test2016_07.C \
    test2016_08.C \
    test2016_09.C \
-   test2016_10.C \
    test2016_14.C \
-   test2016_15.C \
-   test2016_19.C \
-   test2016_24.C \
    test2016_26.C \
    test2018_01.C
 
@@ -50,6 +43,26 @@ else
        test2016_11.C \
        test2016_25.C
 endif
+endif
+
+if USING_INTEL_COMPILER
+   TESTCODE_CURRENTLY_FAILING += \
+     test2016_02.C \
+     test2016_04.C \
+     test2016_05.C \
+     test2016_10.C \
+     test2016_15.C \
+     test2016_19.C \
+     test2016_24.C
+else
+   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+     test2016_02.C \
+     test2016_04.C \
+     test2016_05.C \
+     test2016_10.C \
+     test2016_15.C \
+     test2016_19.C \
+     test2016_24.C
 endif
 
 # DQ (11/19/2016): This test is failing in the unparsed code (a RAJA example) at least for the GNU 6.1 compiler and using EDG 4.11).
@@ -108,15 +121,17 @@ TEST_Source_passed = ${ALL_TESTCODES:.C=.C.passed}
 ../../testBackend:
 	cd ../..; $(MAKE) testBackend
 
-../../testCompiler:
-	ln -s `which $(CC)` ../../testCompiler
+testCompiler:
+	ln -s `which @BACKEND_CXX_COMPILER@` testCompiler
 
 TEST_TRANSLATOR=../../testTranslator
 
 #########
 # ROSE_FLAGS
 
-ROSE_FLAGS = -rose:Cxx14
+LANG_FLAGS = -std=c++14
+
+ROSE_FLAGS =
 if !ROSE_USE_CLANG_FRONTEND
    ROSE_FLAGS += --edg:no_warnings --edg:restrict
 endif
@@ -128,11 +143,11 @@ ROSE_FLAGS += -w -rose:verbose 0 -rose:skip_unparse_asm_commands
 $(TEST_Source_passed): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 if !ROSE_USE_INSURE
 	@$(RTH_RUN) \
-	   CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" \
+	   CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)" \
 	   TITLE="TEST: $(TEST_TRANSLATOR) $(@:.C.passed=.C)" \
 	   $(top_srcdir)/scripts/test_exit_status $@
 else
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)
 endif
 
 #
@@ -200,6 +215,7 @@ clean-local:
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest
 	rm -f *.int.c
+	rm -f *.passed
 
 status:
 	@$(MAKE) $(TEST_Source_passed)

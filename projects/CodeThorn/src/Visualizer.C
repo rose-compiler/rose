@@ -12,8 +12,10 @@
 #include "AstAnnotator.h"
 #include "AbstractValue.h"
 #include "Miscellaneous2.h"
+#include <sstream>
 
 #include "rose_config.h"
+
 #ifdef HAVE_SPOT
 // SPOT includes
 #include "tgba/succiter.hh"
@@ -25,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using namespace CodeThorn;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 class AssertionAttribute : public DFAstAttribute {
 public:
@@ -152,6 +154,9 @@ void Visualizer::setPStateSet(PStateSet* x) { pstateSet=x; }
 void Visualizer::setEStateSet(EStateSet* x) { estateSet=x; }
 void Visualizer::setTransitionGraph(TransitionGraph* x) { transitionGraph=x; }
 
+void Visualizer::setOptionMemorySubGraphs(bool flag) { optionMemorySubGraphs=flag; }
+bool Visualizer::getOptionMemorySubGraphs() { return optionMemorySubGraphs; }
+
 /*! 
  * \author Marc Jasper
  * \date 2016.
@@ -234,9 +239,9 @@ string Visualizer::estateToString(const EState* estate) {
   if((tg1&&args.getBool("tg1-estate-predicate"))||(tg2&&args.getBool("tg2-estate-predicate"))) {
     string s=estate->predicateToString(variableIdMapping);
     // replace ASCII with HTML characters
-    s=SPRAY::replace_string(s,",","&and;");
-    s=SPRAY::replace_string(s,"!=","&ne;");
-    s=SPRAY::replace_string(s,"==","=");
+    s=CodeThorn::replace_string(s,",","&and;");
+    s=CodeThorn::replace_string(s,"!=","&ne;");
+    s=CodeThorn::replace_string(s,"==","=");
     ss<<s;
   }
   return ss.str();
@@ -318,21 +323,81 @@ string Visualizer::parProTransitionGraphToDot(ParProTransitionGraph* parProTrans
   return ss.str();
 }
 
+string Visualizer::dotEStateAddressString(const EState* estate) {
+  stringstream ss;
+  ss<<"s"<<estate;
+  return ss.str();
+}
+
+string Visualizer::dotEStateMemoryString(const EState* estate) {
+  string prefix=dotClusterName(estate);
+  return estate->pstate()->toDotString(prefix,variableIdMapping);
+}
+
+std::string Visualizer::dotClusterName(const EState* estate) {
+  return "cluster_"+this->dotEStateAddressString(estate);
+}
+
 string Visualizer::transitionGraphToDot() {
   tg1=true;
+  EStatePtrSet allEStates=transitionGraph->estateSet();
   stringstream ss;
+  ss<<"compound=true;"<<endl; // required for cluster edges to appear
   ss<<"node [shape=box style=filled color=lightgrey];"<<endl;
+  // generate all graph node ids with label strings
+  if(!getOptionMemorySubGraphs()) {
+    // default behavior
+    for(auto s : allEStates) {
+      ss<<dotEStateAddressString(s)<<" [label="<<estateToDotString(s)<<"];"<<endl;
+    }
+  } else {
+    // memory subgraphs visualization
+    // note: for empty clusters: DUMMY_0 [shape=point style=invis]
+    // note: minlen=1 on the edges necessary if clusters are only connected vertically (otherwise arrows are collapsed)
+    std::set<string> nodes;
+    for(auto s : allEStates) {
+      ss<<"subgraph "<<dotClusterName(s)<<" {"<<endl;
+      ss<<"style=filled; color=lightgrey; node [style=filled,color=white];"<<endl;
+      //ss<<"label=\"@"<<s<<"\";"<<endl;
+      ss<<"label="<<estateIdStringWithTemporaries(s)<<";"<<endl;
+
+      // deactivated because putting all cluster nodes at the same
+      // rank triggers a dot assertion to fail when a node is shared.
+#if 0
+      
+      ss<<"{ rank = same; "; // rank start
+      string prefix=dotClusterName(s);
+      auto idStringsSet=s->pstate()->getDotNodeIdStrings(prefix);
+      for(auto id : idStringsSet) {
+        ss<<"\""<<id<<"\""<<";"<<endl;
+      }
+      ss<<dotEStateAddressString(s)<<"[color=brown label=< <FONT COLOR=\"white\">" "L"+Labeler::labelToString(s->label())+"</FONT> >];"<<endl;
+      ss<< " }"<<endl; // rank end
+#endif
+      ss<<dotEStateAddressString(s)<<"[color=brown label=< <FONT COLOR=\"white\">" "L"+Labeler::labelToString(s->label())+"</FONT> >];"<<endl;
+      ss<<dotEStateAddressString(s)<<endl; // hook for cluster edges
+      ss<<dotEStateMemoryString(s);
+      ss<<"}"<<endl; // end of subgraph
+    } 
+  }
+
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
 
     // // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
     if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
 
-    ss <<"\""<<estateToString((*j)->source)<<"\""<< "->" <<"\""<<estateToString((*j)->target)<<"\"";
+    ss <<dotEStateAddressString((*j)->source)<< "->"<<dotEStateAddressString((*j)->target);
     ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j)->edge.source()));
     ss <<"["<<(*j)->edge.typesToString()<<"]";
     ss <<"\" ";
     ss <<" color="<<(*j)->edge.color()<<" ";
     ss <<" stype="<<(*j)->edge.dotEdgeStyle()<<" ";
+    if(getOptionMemorySubGraphs()) {
+      // change head and tail of arrows for clusters
+      ss<<" ltail="<<dotClusterName((*j)->source);
+      ss<<" lhead="<<dotClusterName((*j)->target);
+    }
+    ss<<" penwidth=3.0 weight=1.0"; // bold cfg edges
     ss <<"]"<<";"<<endl;
   }
   tg1=false;
@@ -704,17 +769,33 @@ string Visualizer::visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToRe
 string Visualizer::foldedTransitionGraphToDot() {
   tg2=true;
   stringstream ss;
+  size_t gSize=transitionGraph->size();
+  LabelSet labelSet=flow->nodeLabels();
+  size_t labelSetSize=labelSet.size();
+  size_t reportInterval=100;
+  cout<<"INFO: generating folded state graph: "<<labelSetSize<<" nodes, "<<gSize<<" edges"<<endl;
+
+  // generate graph
   ss<<"digraph html {\n";
   // generate nodes
-  LabelSet labelSet=flow->nodeLabels();
+  size_t labelNr=0;
   for(LabelSet::iterator i=labelSet.begin();i!=labelSet.end();++i) {
     ss<<transitionGraphDotHtmlNode(*i);
+    if(labelSetSize>reportInterval && labelNr%reportInterval==0) {
+      cout<<"INFO: generating label "<<labelNr<<" of "<<labelSetSize<<endl;
+    }
+    labelNr++;
   }
   // generate edges
-  for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
+  size_t edgeNr=0;
+   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
     const EState* source=(*j)->source;
     const EState* target=(*j)->target;
 
+    if(gSize>reportInterval && edgeNr%reportInterval==0) {
+      cout<<"INFO: generating transition "<<edgeNr<<" of "<<gSize<<endl;
+    }
+    edgeNr++;
     // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
     if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
 
@@ -730,7 +811,7 @@ string Visualizer::foldedTransitionGraphToDot() {
     ss<<"style="<<(*j)->edge.dotEdgeStyle();
     ss<<"]";
     ss<<";"<<endl;
-    //ss <<" [label=\""<<SgNodeHelper::nodeToString(getLabeler()->getNode((*j).edge.source))<<"\"]"<<";"<<endl;
+    // ss <<" [label=\""<<SgNodeHelper::nodeToString(getLabeler()->getNode((*j).edge.source))<<"\"]"<<";"<<endl;
   }
   ss<<"}\n";
   tg2=false;

@@ -11,7 +11,7 @@
 #   1. The ROSE library has been properly installed (refer to the
 #      documentation for configuring, building, and installing ROSE).
 #
-#   2. The top of the installation directory is $(ROSE_INSTALLED). This
+#   2. The top of the installation directory is $(ROSE_HOME). This
 #      is the same directory you specified for the "--prefix" argument
 #      of the "configure" script, or the "CMAKE_INSTALL_PREFIX" if using
 #      cmake. E.g., "/usr/local".
@@ -22,12 +22,21 @@
 # supported by "rose-config" [September 2015].
 ##############################################################################
 
+#If the ROSE bin directory is in your path, rose-config can be found automatically
+ifndef ROSE_HOME
+ROSE_HOME = $(shell rose-config prefix)
+endif
+
+include $(ROSE_HOME)/lib/rose-config.cfg
+
 # Standard C++ compiler stuff (see rose-config --help)
-CXX      = $(shell $(ROSE_INSTALLED)/bin/rose-config cxx)
-CPPFLAGS = $(shell $(ROSE_INSTALLED)/bin/rose-config cppflags)
-CXXFLAGS = $(shell $(ROSE_INSTALLED)/bin/rose-config cxxflags)
-LDFLAGS  = $(shell $(ROSE_INSTALLED)/bin/rose-config ldflags)
-LIBDIRS  = $(shell $(ROSE_INSTALLED)/bin/rose-config libdirs)
+ROSE_CXX         = $(shell $(ROSE_HOME)/bin/rose-config ROSE_CXX)
+ROSE_CPPFLAGS    = $(shell $(ROSE_HOME)/bin/rose-config ROSE_CPPFLAGS)
+ROSE_CXXFLAGS    = $(shell $(ROSE_HOME)/bin/rose-config ROSE_CXXFLAGS)
+ROSE_LDFLAGS     = $(shell $(ROSE_HOME)/bin/rose-config ROSE_LDFLAGS)
+ROSE_LIBDIRS     = $(shell $(ROSE_HOME)/bin/rose-config ROSE_LIBDIRS)
+ROSE_RPATHS      = $(shell $(ROSE_HOME)/bin/rose-config ROSE_RPATHS)
+ROSE_LINK_RPATHS = $(shell $(ROSE_HOME)/bin/rose-config ROSE_LINK_RPATHS)
 
 MOSTLYCLEANFILES =
 
@@ -37,12 +46,10 @@ MOSTLYCLEANFILES =
 all: demo
 
 demo.o: demo.C
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ -c $^
+	$(ROSE_CXX) $(ROSE_CPPFLAGS) $(ROSE_CXXFLAGS) -o $@ -c $^
 
 demo: demo.o
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
-	@echo "Remember to set:"
-	@echo "  LD_LIBRARY_PATH=$(LIBDIRS):$$LD_LIBRARY_PATH"
+	$(ROSE_CXX) $(ROSE_CXXFLAGS) -o $@ $^ $(ROSE_LDFLAGS) $(ROSE_LINK_RPATHS) -Wl,-rpath=$(ROSE_HOME)/lib
 
 MOSTLYCLEANFILES += demo demo.o
 

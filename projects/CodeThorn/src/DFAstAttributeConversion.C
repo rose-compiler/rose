@@ -5,7 +5,7 @@
 #include "UDAstAttribute.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 
 void DFAstAttributeConversion::createUDAstAttributeFromRDAttribute(Labeler* labeler, string rdAttributeName, string udAttributeName) {
   long labelNum=labeler->numberOfLabels();

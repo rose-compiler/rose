@@ -12,13 +12,17 @@
 #include "BinaryFunctionSimilarity.h"                   // Rose::BinaryAnalysis::FunctionSimilarity
 #include "BinaryLoader.h"                               // Rose::BinaryAnalysis::BinaryLoader
 #include "BinaryNoOperation.h"                          // Rose::BinaryAnalysis::NoOperation
+#include "BinaryReachability.h"                         // Rose::BinaryAnalysis::Reachability
 #include "BinarySmtSolver.h"                            // Rose::BinaryAnalysis::SmtSolver
+#include "BinarySymbolicExprParser.h"                   // Rose::BinaryAnalysis::SymbolicExprParser
 #include "BinaryTaintedFlow.h"                          // Rose::BinaryAnalysis::TaintedFlow
+#include "BinaryToSource.h"                             // Rose::BinaryAnalysis::BinaryToSource
 #include "Disassembler.h"                               // Rose::BinaryAnalysis::Disassembler
 
 namespace Rose {
 namespace BinaryAnalysis {
     namespace CallingConvention { void initDiagnostics(); }
+    namespace Concolic { void initDiagnostics(); }
     namespace InstructionSemantics2 { void initDiagnostics(); }
     namespace Partitioner2 { void initDiagnostics(); }
     namespace PointerDetection { void initDiagnostics(); }
@@ -115,6 +119,7 @@ void initialize() {
         BinaryAnalysis::BestMapAddress::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
         BinaryAnalysis::CodeInserter::initDiagnostics();
+        BinaryAnalysis::Concolic::initDiagnostics();
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::Disassembler::initDiagnostics();
         BinaryAnalysis::FeasiblePath::initDiagnostics();
@@ -123,12 +128,15 @@ void initialize() {
         BinaryAnalysis::NoOperation::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();
         BinaryAnalysis::PointerDetection::initDiagnostics();
+        BinaryAnalysis::Reachability::initDiagnostics();
         BinaryAnalysis::ReturnValueUsed::initDiagnostics();
         BinaryAnalysis::SerialIo_initDiagnostics();
         BinaryAnalysis::SmtSolver::initDiagnostics();
         BinaryAnalysis::StackDelta::initDiagnostics();
         BinaryAnalysis::Strings::initDiagnostics();
+        BinaryAnalysis::SymbolicExprParser::initDiagnostics();
         BinaryAnalysis::TaintedFlow::initDiagnostics();
+        BinaryAnalysis::BinaryToSource::initDiagnostics();
         BinaryAnalysis::Unparser::initDiagnostics();
         SgAsmExecutableFileFormat::initDiagnostics();
 #endif

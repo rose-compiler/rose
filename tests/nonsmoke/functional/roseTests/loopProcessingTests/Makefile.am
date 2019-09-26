@@ -45,7 +45,7 @@ test2.passed: LoopProcessor.conf LoopProcessor lufac.C lufac.$(EDG).ans funcs.an
 
 #QY: test3 triggered some incorrectly templated code by gcc 4.8.5
 if ROSE_USING_GCC_VERSION_LATER_5_1
-TEST_NAMES += test3
+#TEST_NAMES += test3
 EXTRA_DIST += lufac.C lufac-split.edg3.ans lufac-split.edg4.ans funcs.annot
 test3.passed: LoopProcessor.conf LoopProcessor lufac.C lufac-split.$(EDG).ans funcs.annot
 	@$(RTH_RUN) SWITCHES="-c -bk1 -fs0 -splitloop -annot $(srcdir)/funcs.annot" \

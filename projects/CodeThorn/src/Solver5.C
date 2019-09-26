@@ -2,9 +2,11 @@
 #include "Solver5.h"
 #include "Analyzer.h"
 
-using namespace CodeThorn;
 using namespace std;
+using namespace CodeThorn;
 using namespace Sawyer::Message;
+
+#include "Analyzer.h"
 
 Sawyer::Message::Facility Solver5::logger;
 // initialize static member flag
@@ -47,7 +49,7 @@ void Solver5::run() {
     ioReductionThreshold = args["io-reduction"].as<int>();
   }
 
-  logger[TRACE]<<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
+  SAWYER_MESG(logger[TRACE])<<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
   _analyzer->printStatusMessage(true);
 # pragma omp parallel shared(workVector) private(threadNum)
   {
@@ -94,7 +96,7 @@ void Solver5::run() {
       } else {
         ROSE_ASSERT(currentEStatePtr);
         Flow edgeSet=_analyzer->flow.outEdges(currentEStatePtr->label());
-        // logger[DEBUG] << "out-edgeSet size:"<<edgeSet.size()<<endl;
+        //cout << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
           list<EState> newEStateList;
@@ -114,7 +116,7 @@ void Solver5::run() {
                 assert (!fout.fail( ));
                 fout<<"ESTATE-IN :"<<currentEStatePtr->toString(&(_analyzer->variableIdMapping));
                 string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
-                if(sourceString.size()==40) sourceString+="...";
+                if(sourceString.size()==60) sourceString+="...";
                 fout<<"\n==>"<<"TRANSFER:"<<sourceString;
                 fout<<"==>\n"<<"ESTATE-OUT:"<<newEState.toString(&(_analyzer->variableIdMapping));
                 fout<<endl;
@@ -122,12 +124,56 @@ void Solver5::run() {
                 fout.close();
               }
             }
-
+            
             if((!newEState.constraints()->disequalityExists()) &&(!_analyzer->isFailedAssertEState(&newEState)&&!_analyzer->isVerificationErrorEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
               const EState* newEStatePtr=pres.second;
-              if(pres.first==true)
-                _analyzer->addToWorkList(newEStatePtr);
+              if(pres.first==true) {
+                int abstractionMode=_analyzer->getAbstractionMode();
+                switch(abstractionMode) {
+                case 0:
+                  // no abstraction
+                  //cout<<"DEBUG: Adding estate to worklist."<<endl;
+                  _analyzer->addToWorkList(newEStatePtr);
+                  break;
+                case 1: {
+                  // performing merge
+#pragma omp critical(SUMMARY_STATES_MAP)
+                  {
+                    const EState* summaryEState=_analyzer->getSummaryState(newEStatePtr->label(),newEStatePtr->callString);
+                    if(_analyzer->isApproximatedBy(newEStatePtr,summaryEState)) {
+                      // this is not a memory leak. newEStatePtr is
+                      // stored in EStateSet and will be collected
+                      // later. It may be already used in the state
+                      // graph as an existing estate.
+                      newEStatePtr=summaryEState; 
+                    } else {
+                      EState newEState2=_analyzer->combine(summaryEState,const_cast<EState*>(newEStatePtr));
+                      ROSE_ASSERT(_analyzer);
+                      HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
+                      const EState* newEStatePtr2=pres.second;
+                      if(pres.first==true) {
+                        newEStatePtr=newEStatePtr2;
+                      } else {
+                        // nothing to do, EState already exists
+                      }
+                      ROSE_ASSERT(newEStatePtr);
+                      _analyzer->setSummaryState(newEStatePtr->label(),newEStatePtr->callString,newEStatePtr);
+                    }
+                  }
+                  _analyzer->addToWorkList(newEStatePtr);  
+                  break;
+                  case 2: 
+                    cout<<"Mode 2 (topifying) not available for this option yet."<<endl;
+                    exit(1);
+                }
+                default:
+                  cerr<<"Error: unknown abstraction mode "<<abstractionMode<<endl;
+                  exit(1);
+                }
+              } else {
+                //cout<<"DEBUG: pres.first==false (not adding estate to worklist)"<<endl;
+              }
               _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
             }
             if((!newEState.constraints()->disequalityExists()) && ((_analyzer->isFailedAssertEState(&newEState))||_analyzer->isVerificationErrorEState(&newEState))) {
@@ -139,7 +185,7 @@ void Solver5::run() {
               if(_analyzer->isVerificationErrorEState(&newEState)) {
 #pragma omp critical
                 {
-                  logger[TRACE] <<"STATUS: detected verification error state ... terminating early"<<endl;
+                  SAWYER_MESG(logger[TRACE]) <<"STATUS: detected verification error state ... terminating early"<<endl;
                   // set flag for terminating early
                   _analyzer->reachabilityResults.reachable(0);
 		  _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));

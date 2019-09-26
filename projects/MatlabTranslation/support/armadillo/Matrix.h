@@ -3,8 +3,8 @@
  *
  */
 
-#ifndef MATRIX_H_
-#define MATRIX_H_
+#ifndef _MATRIX_H
+#define _MATRIX_H
 
 #include <cassert>
 #include <iostream>
@@ -33,6 +33,67 @@ namespace fastnumbuiltin
 
   template <class T>
   using Vec = ::arma::Row<T>;
+
+  template<typename T>
+  struct Range
+  {
+      Range(T _start, T _stride, T _end)
+      : start(_start), stride(_stride), end(_end)
+      {}
+              
+      Range(T _start, T _end)
+      : Range(_start, 1, _end)
+      {}
+  
+      Range()
+      : Range(0, 0, 0)
+      {}
+      
+      void setBounds(T _start, T _end)
+      {
+        start = _start;
+        stride = 1;
+        end = _end;
+      }
+    
+      void setBounds(T _start, T _stride, T _end)
+      {
+        start = _start;
+        stride = _stride;
+        end = _end;
+      }
+    
+      /**
+       * getMatrix is called on a range expression
+       *   eg. funcCall(1:2:3) will be funcCall(range.getMatrix()) after creating range object
+       *   or x = 1:2:3 will be x = range.getMatrix() after creating range object
+       *   or A = [1, 2, 3; 4  5 6]
+       *   A(1:2, :) will be A(range.getMatrix(), :)
+       */
+      Matrix<T> getMatrix()
+      {
+        int numOfElements = (end - start) / stride + 1;
+    
+        if (numOfElements <= 0) return Matrix<T>();
+            
+        Matrix<T> matrix(1, numOfElements);
+        T         start_element = start;
+    
+        for (size_t i = 0; i < numOfElements; ++i)
+        {
+          matrix(i) = start_element;
+    
+          start_element += stride;
+        }
+    
+        return matrix;
+      }
+
+    private:
+      T start;
+      T stride;
+      T end;
+  };
 }
 
 
@@ -87,73 +148,6 @@ class MatrixIterator
   }
 };
 
-
-
-template<typename T>
-class Range
-{
-private:
-  T start, stride, end;
-
-public:
- Range():Range(0, 0, 0)
-    {
-    }
-
- Range(T _start, T _stride, T _end)
-  {
-    setBounds(_start, _stride, _end);
-  }
-
-Range(T _start, T _end)
-  {
-    setBounds(_start, _end);
-  }
-
-  void setBounds(T _start, T _end)
-  {
-    start = _start;
-    stride = 1;
-    end = _end;
-  }
-
-  void setBounds(T _start, T _stride,  T _end)
-  {
-    start = _start;
-    stride = _stride;
-    end = _end;
-  }
-
-  /*getMatrix is called on a range expression
-   *eg. funcCall(1:2:3) will be funcCall(range.getMatrix()) after creating range object
-   * or x = 1:2:3 will be x = range.getMatrix() after creating range object
-   * or A = [1, 2, 3; 4  5 6]
-   * A(1:2, :) will be A(range.getMatrix(), :)
-   */
-  Matrix<T> getMatrix()
-  {
-    int numOfElements = (end - start) / stride + 1;
-
-    if(numOfElements <= 0)
-    {
-      arma::Mat<T> emptyMatrix;
-      return Matrix<T>(emptyMatrix);
-    }
-
-    arma::Mat<T> matrix(1, numOfElements);
-
-    T start_element = start;
-
-    for(int i = 0; i < numOfElements; i++)
-    {
-      matrix(i) = start_element;
-
-      start_element += stride;
-    }
-
-    return Matrix<T>(matrix);
-  }
-};
 
 template<class T>
   class Matrix
@@ -599,4 +593,5 @@ Matrix<double> operator*(double factor, const Matrix<T>& m)
   //   os << m.matrix;
   //   return os;
   // }
-#endif /* MATRIX_H_ */
+  
+#endif /* _MATRIX_H */

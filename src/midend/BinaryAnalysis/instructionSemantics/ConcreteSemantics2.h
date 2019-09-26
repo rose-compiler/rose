@@ -259,11 +259,11 @@ public:
                        BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
 
 protected:
-    virtual BaseSemantics::SValuePtr readOrPeekMemory(const BaseSemantics::SValuePtr &addr,
-                                                      const BaseSemantics::SValuePtr &dflt,
-                                                      BaseSemantics::RiscOperators *addrOps,
-                                                      BaseSemantics::RiscOperators *valOps,
-                                                      bool allowSideEffects);
+    BaseSemantics::SValuePtr readOrPeekMemory(const BaseSemantics::SValuePtr &addr,
+                                              const BaseSemantics::SValuePtr &dflt,
+                                              BaseSemantics::RiscOperators *addrOps,
+                                              BaseSemantics::RiscOperators *valOps,
+                                              bool allowSideEffects);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared in this class
@@ -348,8 +348,8 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
-    /** Instantiates a new RiscOperators object and configures it to use semantic values and states that are defaults for
-     * ConcreteSemantics. */
+    /** Instantiates a new @ref RiscOperators object and configures it to use semantic values and states that are defaults for
+     *  @ref ConcreteSemantics. */
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
         BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
@@ -358,9 +358,9 @@ public:
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
-    /** Instantiates a new RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
-     *  second argument because the base class expects one, but it is not used for concrete semantics. See @ref solver for
-     *  details. */
+    /** Instantiates a new @ref RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
+     *  second argument because the base class expects one, but it is not used for @ref ConcreteSemantics. See @ref SmtSolver
+     *  for details. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
@@ -491,8 +491,8 @@ public:
 
 protected:
     // handles readMemory and peekMemory
-    virtual BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
-                                                      const BaseSemantics::SValuePtr &dflt, bool allowSideEffects);
+    BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
+                                              const BaseSemantics::SValuePtr &dflt, bool allowSideEffects);
 
     // Convert expression to double
     double exprToDouble(const BaseSemantics::SValuePtr &expr, SgAsmFloatType*);

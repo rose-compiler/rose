@@ -25,7 +25,12 @@ public:
      *  thread that will be simulating the speciment's thread described by this object. */
     RSIM_Thread(RSIM_Process *process, boost::thread &hostThread)
         : runState_(INITIALIZING), process(process),
-          real_thread(boost::detail::thread_move_t<boost::thread>(hostThread)), my_tid(-1),
+#if __cplusplus < 201103L
+          real_thread(boost::detail::thread_move_t<boost::thread>(hostThread)),
+#else
+          real_thread(std::move(hostThread)),
+#endif
+          my_tid(-1),
           report_interval(10.0), do_coredump(true), show_exceptions(true),
           robustListHeadVa_(0), clearChildTidVa_(0) {
         memset(trace_mesg, 0, sizeof trace_mesg);

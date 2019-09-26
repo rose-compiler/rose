@@ -10,13 +10,13 @@ using namespace std;
 #include "IntervalTransferFunctions.h"
 #include "AnalysisAbstractionLayer.h"
 
-SPRAY::IntervalTransferFunctions::IntervalTransferFunctions():
+CodeThorn::IntervalTransferFunctions::IntervalTransferFunctions():
   _cppExprEvaluator(0),
   _domain(0)
 {
 }
 
-SPRAY::IntervalTransferFunctions::~IntervalTransferFunctions() {
+CodeThorn::IntervalTransferFunctions::~IntervalTransferFunctions() {
   if(_cppExprEvaluator)
     delete _cppExprEvaluator;
 }
@@ -25,7 +25,7 @@ SPRAY::IntervalTransferFunctions::~IntervalTransferFunctions() {
   * \author Markus Schordan
   * \date 2015.
  */
-void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate) {
+void CodeThorn::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate) {
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(pstate);
   if(isSgExprStatement(condStmt)) {
     SgExpression* cond=isSgExpression(SgNodeHelper::getExprStmtChild(condStmt));
@@ -91,7 +91,7 @@ void SPRAY::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement*
   * \author Markus Schordan
   * \date 2015.
  */
-void SPRAY::IntervalTransferFunctions::transferCondition(Edge edge, Lattice& pstate) {
+void CodeThorn::IntervalTransferFunctions::transferCondition(Edge edge, Lattice& pstate) {
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(pstate);
   Label lab0=edge.source();
   //Label lab1=edge.target();
@@ -106,8 +106,8 @@ void SPRAY::IntervalTransferFunctions::transferCondition(Edge edge, Lattice& pst
     //  true, false, bot, nor top (e.g. "if(0.5) { }" returns the interval [0, 1] as condition
     //  result). Just set the lattice to bot if the result is bot or if the branch is unreachable
     //  (and do nothing in all other cases):
-    if(res.isBot() || (res.isFalse() && edge.isType(SPRAY::EDGE_TRUE))
-                   || (res.isTrue() && edge.isType(SPRAY::EDGE_FALSE))
+    if(res.isBot() || (res.isFalse() && edge.isType(CodeThorn::EDGE_TRUE))
+                   || (res.isTrue() && edge.isType(CodeThorn::EDGE_FALSE))
     ) {
       //cout<<"INFO: detected non-reachable state."<<endl;
       //cout<<"DEBUG: EDGE: "<<edge.toString()<<endl;
@@ -125,14 +125,14 @@ void SPRAY::IntervalTransferFunctions::transferCondition(Edge edge, Lattice& pst
   * \author Markus Schordan
   * \date 2015.
  */
-void SPRAY::IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& pstate) {
+void CodeThorn::IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& pstate) {
   // schroder3 (2016-08-25): Added if to ignore SgNullExpressions (e.g. ";;")
   if(!isSgNullExpression(node)) {
     evalExpression(lab,node,pstate); // ignore return value
   }
 }
 
-void SPRAY::IntervalTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* node, Lattice& pstate) {
+void CodeThorn::IntervalTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* node, Lattice& pstate) {
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(pstate);
   NumberIntervalLattice res=evalExpression(lab,node,pstate);
   VariableId resVarId=getResultVariableId();
@@ -143,7 +143,7 @@ void SPRAY::IntervalTransferFunctions::transferReturnStmtExpr(Label lab, SgExpre
   * \author Markus Schordan
   * \date 2015.
  */
-SPRAY::NumberIntervalLattice SPRAY::IntervalTransferFunctions::evalExpression(Label lab, SgExpression* node, Lattice& pstate) {
+CodeThorn::NumberIntervalLattice CodeThorn::IntervalTransferFunctions::evalExpression(Label lab, SgExpression* node, Lattice& pstate) {
   //ROSE_ASSERT(getVariableIdMapping()); TODO
   NumberIntervalLattice niLattice;
   //cout<<"TINFO: transferExpression "<<node->unparseToString()<<endl;
@@ -164,7 +164,7 @@ SPRAY::NumberIntervalLattice SPRAY::IntervalTransferFunctions::evalExpression(La
   * \author Markus Schordan
   * \date 2015.
  */
-void SPRAY::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element) {
+void CodeThorn::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element) {
   ROSE_ASSERT(this!=0);
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
   ROSE_ASSERT(getVariableIdMapping());
@@ -192,7 +192,7 @@ void SPRAY::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariable
   * \author Markus Schordan
   * \date 2015.
  */
-void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element) {
+void CodeThorn::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element) {
   int paramNr=0;
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
   // TODO: handle external function call: do not add paramters and model pointer arguments
@@ -201,7 +201,7 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctio
     //cout<<"DEBUG: external function call detected: "<<callExp->unparseToString()<<endl;
     // arguments must be processed for worst-case assumptions: any pointer/address passed can be used by external function to potentially modifiy reachable memory cells
     // an external function my modify any address-taken variable in the program (including global variables)
-    SPRAY::PointerAnalysisInterface* pa=getPointerAnalysisInterface();
+    CodeThorn::PointerAnalysisInterface* pa=getPointerAnalysisInterface();
     ips.topifyVariableSet(pa->getModByPointer());
   } else {
     //cout<<"DEBUG: function call detected: "<<callExp->unparseToString()<<endl;
@@ -217,7 +217,7 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctio
   * \author Markus Schordan
   * \date 2015.
  */
-void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element) {
+void CodeThorn::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element) {
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
   if(isSgCompoundAssignOp(callExp->get_parent())) {
     cerr<<"Error: transferFunctionCallReturn: compound assignment of function call results not supported. Normalization required."<<endl;
@@ -239,7 +239,7 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgV
   * \author Markus Schordan
   * \date 2015.
  */
-void SPRAY::IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element) {
+void CodeThorn::IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element) {
   // generate Intervals for each parameter variable
   int paramNr=0;
   for(SgInitializedNamePtrList::iterator i=formalParameters.begin();
@@ -262,7 +262,7 @@ void SPRAY::IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFuncti
   * \author Markus Schordan
   * \date 2015.
  */
-void SPRAY::IntervalTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element) {
+void CodeThorn::IntervalTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element) {
   // remove all declared variables at function exit (including function parameter variables)
   for(VariableIdSet::iterator i=localVariablesInFunction.begin();i!=localVariablesInFunction.end();++i) {
     VariableId varId=*i;
@@ -271,15 +271,22 @@ void SPRAY::IntervalTransferFunctions::transferFunctionExit(Label lab, SgFunctio
   }
 }
 
-SPRAY::CppExprEvaluator* SPRAY::IntervalTransferFunctions::getCppExprEvaluator() {
+CodeThorn::CppExprEvaluator* CodeThorn::IntervalTransferFunctions::getCppExprEvaluator() {
   return _cppExprEvaluator;
 }
 
-void SPRAY::IntervalTransferFunctions::setCppExprEvaluator(SPRAY::CppExprEvaluator* expEval) {
+void CodeThorn::IntervalTransferFunctions::setCppExprEvaluator(CodeThorn::CppExprEvaluator* expEval) {
   _cppExprEvaluator=expEval;
 }
 
-void SPRAY::IntervalTransferFunctions::setSkipSelectedFunctionCalls(bool flag) {
+void CodeThorn::IntervalTransferFunctions::setSkipSelectedFunctionCalls(bool flag) {
   ROSE_ASSERT(getCppExprEvaluator());
   getCppExprEvaluator()->setSkipSelectedFunctionCalls(flag);
+}
+
+void CodeThorn::IntervalTransferFunctions::initializeExtremalValue(Lattice& element) {
+  CodeThorn::IntervalPropertyState* pstate=dynamic_cast<CodeThorn::IntervalPropertyState*>(&element);
+  pstate->setEmptyState();
+  //iElement->... init to empty state, not being bottom
+  cout<<"INFO: initialized extremal value."<<endl;
 }

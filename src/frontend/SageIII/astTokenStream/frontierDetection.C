@@ -1184,20 +1184,25 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
   // Output an optional graph of the AST (just the tree, so we can identify the frontier)
      SgFileList* fileList = isSgFileList(sourceFile->get_parent());
-     ROSE_ASSERT(fileList != NULL);
-     SgProject* project = isSgProject(fileList->get_parent());
-     ROSE_ASSERT(project != NULL);
+
+  // DQ (9/10/2018): Alternatives are either the SgFileList (for the source file) or the SgHeaderFileBody (for header files)
+  // ROSE_ASSERT(fileList != NULL);
+     SgProject* project = fileList != NULL ? isSgProject(fileList->get_parent()) : NULL;
+     if (project != NULL)
+        {
+       // ROSE_ASSERT(project != NULL);
 
 #if 0
-     printf ("In frontierDetectionForTokenStreamMapping(): Generate the graph of the AST with the frontier defined \n");
+          printf ("In frontierDetectionForTokenStreamMapping(): Generate the graph of the AST with the frontier defined \n");
 #endif
 
 #if 1
-     if ( SgProject::get_verbose() > 1 )
-        {
-          generateDOT ( *project, "_token_unparsing_frontier" );
-        }
+          if ( SgProject::get_verbose() > 1 )
+             {
+               generateDOT ( *project, "_token_unparsing_frontier" );
+             }
 #endif
+        }
 
 #if 0
      printf ("In frontierDetectionForTokenStreamMapping(): DONE: Generate the graph of the AST with the frontier defined \n");
@@ -1266,9 +1271,12 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 #endif
 
 #if 1
-     if ( SgProject::get_verbose() > 1 )
+     if (project != NULL)
         {
-          generateDOT(*project,"_token_unparsing_frontier_with_next_previous_edges");
+          if ( SgProject::get_verbose() > 1 )
+             {
+               generateDOT(*project,"_token_unparsing_frontier_with_next_previous_edges");
+             }
         }
 #endif
 
@@ -1290,7 +1298,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
      printf ("In frontierDetectionForTokenStreamMapping(): Output dot file for project \n");
 
-     generateDOTforMultipleFile(*project);
+     generateDOTforMultipleFile(*project,"in_frontierDetectionForTokenStreamMapping");
 #endif
 
 #if 0

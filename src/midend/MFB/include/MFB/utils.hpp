@@ -2,6 +2,27 @@
 #ifndef __MFB_UTILS_HPP__
 #define __MFB_UTILS_HPP__
 
+
+
+class SgVariableSymbol;
+class SgType;
+class SgScopeStatement;
+class SgInitializer;
+class SgExpression;
+class SgFunctionSymbol;
+class SgSymbol;
+class SgDeclarationScope;
+class SgTemplateParameter;
+class SgTemplateArgument;
+
+#include <vector>
+
+typedef std::vector<SgTemplateParameter*> SgTemplateParameterPtrList;
+typedef std::vector<SgTemplateArgument*> SgTemplateArgumentPtrList;
+
+#include <string>
+#include <map>
+
 namespace MFB {
 
 namespace Utils {
@@ -19,6 +40,8 @@ SgExpression * buildPtrArrElemField(SgExpression * expr, SgVariableSymbol * arra
 
 // Build: 'func'('var', 'idx')
 SgExpression * buildCallVarIdx(size_t idx, SgVariableSymbol * var, SgFunctionSymbol * func);
+
+void collect_symbol_template_info(SgSymbol * sym, SgSymbol * & tpl_sym, SgDeclarationScope * & nrscope, SgTemplateParameterPtrList * & tpl_params, SgTemplateArgumentPtrList * & tpl_args);
 
 }
 

@@ -175,8 +175,8 @@ void removeClonedFunctions_s(MatlabAnalysis::NameToDeclarationMap::value_type& o
 
 /**
  * Removes those declarations that were cloned.
- * This means we dont need the original function any more.
- * Also builds variable declarations in the all the functions
+ * This means we don't need the original function any more.
+ * Also builds variable declarations in all the functions
  */
 static inline
 void removeClonedFunctions(MatlabAnalysis::NameToDeclarationMap& nameToFuncDeclarations)
@@ -227,6 +227,8 @@ void revertForLoopChanges(SgProject *project)
 
 namespace MatlabAnalysis
 {
+#if OBSOLETE_CODE
+  
   // \todo check if this is needed
   void addAssignOpBeforeMatlabForStatement(SgProject *project)
   {
@@ -243,6 +245,8 @@ namespace MatlabAnalysis
       assignOp->set_parent(matlabFor);
     }
   }
+
+#endif /* OBSOLETE_CODE */
 
   static inline
   bool

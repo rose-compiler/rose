@@ -8,10 +8,6 @@
 #
 #   Determine if support is requested for the Message Passing Interface.
 #
-# LAST MODIFICATION
-#
-#   2012-06-08
-#
 # COPYLEFT
 #
 #   Copyright (c) 2012 Justin Too <too1@llnl.gov>
@@ -22,7 +18,7 @@
 
 AC_DEFUN([ROSE_SUPPORT_MPI],
 [
-  ROSE_CONFIGURE_SECTION([Message Passing Interface (MPI)])
+  ROSE_CONFIGURE_SECTION([Checking message passing interface (MPI)])
   dnl --with-mpi=<path>
   dnl
   dnl --show* option of MPICC is used to determine the include and library flags for MPI

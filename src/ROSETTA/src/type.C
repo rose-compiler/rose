@@ -34,6 +34,8 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TypeSignedLongLong  , "TypeSignedLongLong",   "T_SIGNED_LONG_LONG" );
      NEW_TERMINAL_MACRO ( TypeUnsignedLongLong, "TypeUnsignedLongLong", "T_UNSIGNED_LONG_LONG" );
      NEW_TERMINAL_MACRO ( TypeLongDouble      , "TypeLongDouble",       "T_LONG_DOUBLE" );
+     NEW_TERMINAL_MACRO ( TypeFloat80         , "TypeFloat80",          "T_FLOAT80" );
+     NEW_TERMINAL_MACRO ( TypeFloat128        , "TypeFloat128",         "T_FLOAT128" );
      NEW_TERMINAL_MACRO ( TypeString          , "TypeString",           "T_STRING" );
      NEW_TERMINAL_MACRO ( TypeBool            , "TypeBool",             "T_BOOL" );
 
@@ -81,8 +83,11 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( JavaWildcardType, "JavaWildcardType", "T_JAVA_WILD" );
 
   // DQ (2/10/2014): Added SgNamedType IR nodes for Philippe.
-     NEW_TERMINAL_MACRO ( JavaUnionType    , "JavaUnionType", "T_JAVA_UNION" );
+     NEW_TERMINAL_MACRO ( JavaUnionType     , "JavaUnionType", "T_JAVA_UNION" );
      NEW_TERMINAL_MACRO ( JavaParameterType , "JavaParameterType", "T_JAVA_PARAMETER" );
+
+  // Rasmussen (5/10/2019): Added a Table type for Jovial (tables are structs with array dimensions)
+     NEW_TERMINAL_MACRO ( JovialTableType , "JovialTableType", "T_JOVIAL_TABLE" );
 
      //
      // [DT] 5/11/2000 -- Added TemplateType.  Should it be called TemplateInstantiationType
@@ -99,6 +104,13 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TemplateType        , "TemplateType",         "T_TEMPLATE" );
      NEW_TERMINAL_MACRO ( EnumType            , "EnumType",             "T_ENUM" );
      NEW_TERMINAL_MACRO ( TypedefType         , "TypedefType",          "T_TYPEDEF" );
+
+  // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
+     NEW_TERMINAL_MACRO ( NonrealType, "NonrealType", "T_NONREAL");
+
+  // TV (04/11/2018): Type for declaration of auto typed variables
+     NEW_TERMINAL_MACRO ( AutoType        , "AutoType",         "T_AUTO" );
+
      NEW_TERMINAL_MACRO ( ModifierType        , "ModifierType",         "T_MODIFIER" );
 
   // DQ (4/14/2004): Support for new function modifiers (wrapper class design
@@ -155,11 +167,13 @@ Grammar::setUpTypes ()
                             "NamedType","T_NAME", false);
 #else
   // DQ (2/10/2014): Added SgNamedType IR nodes for Philippe.
+  // Rasmussen (5/10/2019): Added a Table type for Jovial (tables are structs with array dimensions)
      NEW_NONTERMINAL_MACRO (ClassType,
-                            JavaParameterType,
+                            JavaParameterType | JovialTableType,
                             "ClassType","T_CLASS", true);
      NEW_NONTERMINAL_MACRO (NamedType,
-                            ClassType | JavaParameterizedType | JavaQualifiedType | EnumType | TypedefType | JavaWildcardType,
+                            ClassType | EnumType | TypedefType | NonrealType |
+                            JavaParameterizedType | JavaQualifiedType | JavaWildcardType,
                             "NamedType","T_NAME", false);
 #endif
  
@@ -186,14 +200,16 @@ Grammar::setUpTypes ()
           TypeSignedInt        | TypeUnsignedInt         | TypeLong                  | TypeSignedLong       | 
           TypeUnsignedLong     | TypeVoid                | TypeGlobalVoid            | TypeWchar            |
           TypeFloat            | TypeDouble              | TypeLongLong              | TypeSignedLongLong   |
-          TypeUnsignedLongLong | TypeSigned128bitInteger | TypeUnsigned128bitInteger |
+          TypeUnsignedLongLong | TypeSigned128bitInteger | TypeUnsigned128bitInteger | TypeFloat80          |
           TypeLongDouble       | TypeString              | TypeBool                  | PointerType          |
           ReferenceType        | NamedType               | ModifierType              | FunctionType         |
           ArrayType            | TypeEllipse             | TemplateType              | QualifiedNameType    |
           TypeComplex          | TypeImaginary           | TypeDefault               | TypeCAFTeam          |
           TypeCrayPointer      | TypeLabel               | JavaUnionType             | RvalueReferenceType  | 
           TypeNullptr          | DeclType                | TypeOfType                | TypeMatrix           |
-          TypeTuple            | TypeChar16              | TypeChar32, "Type","TypeTag", false);
+          TypeTuple            | TypeChar16              | TypeChar32                | TypeFloat128         |
+          AutoType,
+        "Type","TypeTag", false);
 
      //SK(08/20/2015): TypeMatrix and TypeTuple for Matlab
 
@@ -460,6 +476,8 @@ Grammar::setUpTypes ()
      TypeCrayPointer.setDataPrototype ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
      TypeLongDouble.setDataPrototype       ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     TypeFloat80.setDataPrototype          ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     TypeFloat128.setDataPrototype         ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
   // This type now has a length parameter, so we cannot use a single static builtin_type to represent all of the variations.
   // TypeString.setDataPrototype           ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -577,9 +595,16 @@ Grammar::setUpTypes ()
             "SOURCE_CREATE_TYPE_FOR_JAVA_PARAMETER_TYPE",
             "SgClassDeclaration* decl = NULL");
 
+     CUSTOM_CREATE_TYPE_MACRO(JovialTableType,
+            "SOURCE_CREATE_TYPE_FOR_JOVIAL_TABLE_TYPE",
+            "SgClassDeclaration* decl = NULL");
+
    // DQ (11/28/2011): Make this more like the NamedType internal support.
   // CUSTOM_CREATE_TYPE_MACRO(TemplateType,"SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE","SgTemplateInstantiationDecl* decl = NULL");
      CUSTOM_CREATE_TYPE_MACRO(TemplateType,"SOURCE_CREATE_TYPE_FOR_TEMPLATE_TYPE","SgTemplateDeclaration* decl = NULL");
+
+     CUSTOM_CREATE_TYPE_MACRO(NonrealType,"SOURCE_CREATE_TYPE_FOR_NONREAL_TYPE","SgNonrealDecl* decl = NULL");
+     CUSTOM_CREATE_TYPE_MACRO(AutoType,"SOURCE_CREATE_TYPE_FOR_AUTO_TYPE","SgNode* node = NULL");
 
      CUSTOM_CREATE_TYPE_MACRO(JavaWildcardType,
             "SOURCE_CREATE_TYPE_FOR_JAVA_WILDCARD_TYPE",
@@ -687,6 +712,33 @@ Grammar::setUpTypes ()
      PointerMemberType.setDataPrototype ("SgType*","class_type","= NULL",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (4/17/2019): To support SgPointerMemberType name qualification for the class type and the base type,
+  // we need to add a name qualification field to the SgPointerMemberType which will allow the name qualification
+  // to be computed for a set of types in a specific context (location in the code, e.g. statement) and then use 
+  // the mechanism to generate a string for the type (as is used for template instantiations) and then put the
+  // generated string into a map used for name qualificaiton of types.  The reason we can't just use a limited 
+  // number of fields on each IR node that can reference a type is that there can be an abitrary number of
+  // points in the nested representation of SgPointerMemberType(s) where name qualificaiton is required.
+  // To this extent it is similar to the name qualification complexity of the template instantiations which
+  // can have arbitrary numbers of template arguments with additional name qualification.
+
+  // To support each context generating the name qualification for every part of type tree, we need to put
+  // support for the name qualificaiton directly into the SgPointerMemberType.
+
+#if 0
+  // DQ (4/17/2019): This is needed to support pointers to member type in IR nodes that reference types.
+     PointerMemberType.setDataPrototype ( "int", "name_qualification_length", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/17/2019): This is needed to support pointers to member type in IR nodes that reference types.
+     PointerMemberType.setDataPrototype("bool","type_elaboration_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/17/2019): This is needed to support pointers to member type in IR nodes that reference types.
+     PointerMemberType.setDataPrototype("bool","global_qualification_required","= false",
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
      NamedType.setFunctionPrototype ("HEADER_VIRTUAL_GET_NAME", "../Grammar/Type.code" );
      NamedType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 
@@ -718,6 +770,14 @@ Grammar::setUpTypes ()
   // This is required only for the RoseExample tests using Boost 1.56 (no where else that I know of so far).
      ClassType.setDataPrototype     ("bool","packed","= false",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     NonrealType.setFunctionPrototype ( "HEADER_NONREAL_TYPE", "../Grammar/Type.code" );
+     NonrealType.setFunctionPrototype ( "HEADER_GET_NAME",     "../Grammar/Type.code" );
+//   NonrealType.excludeFunctionPrototype ( "HEADER_GET_NAME",     "../Grammar/Type.code" );
+//   NonrealType.excludeFunctionPrototype ( "HEADER_GET_MANGLED",  "../Grammar/Type.code" );
+
+     AutoType.setFunctionPrototype        ( "HEADER_AUTO_TYPE",   "../Grammar/Type.code" );
+//   AutoType.excludeFunctionPrototype    ( "HEADER_GET_NAME",    "../Grammar/Type.code" );
+//   AutoType.excludeFunctionPrototype    ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
 
      JavaParameterizedType.setFunctionPrototype ("HEADER_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code" );
      JavaParameterizedType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
@@ -762,6 +822,17 @@ Grammar::setUpTypes ()
      JavaParameterType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
      JavaParameterType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 
+     JovialTableType.setFunctionPrototype   ("HEADER_JOVIAL_TABLE_TYPE", "../Grammar/Type.code" );
+     JovialTableType.setFunctionPrototype   ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
+     JovialTableType.setFunctionPrototype   ("HEADER_GET_NAME", "../Grammar/Type.code" );
+
+     JovialTableType.setDataPrototype ("SgType*"       , "base_type", "= NULL",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL,  NO_DELETE);
+     JovialTableType.setDataPrototype ("SgExprListExp*", "dim_info" , "= NULL",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+     JovialTableType.setDataPrototype ("int", "rank" , "= 0",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL,  NO_DELETE);
+
    // TemplateInstantiationType.setFunctionPrototype ("HEADER_TEMPLATE_INSTANTIATION_TYPE", "../Grammar/Type.code" );
      TemplateType.setFunctionPrototype ("HEADER_TEMPLATE_TYPE", "../Grammar/Type.code" );
   // TemplateInstantiationType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
@@ -770,7 +841,14 @@ Grammar::setUpTypes ()
   // using a template parameter.  This should likely be mapped back to the template parameter by position in the sequence of 
   // template parameters and the template declaration (OR just the template paramters only; I have not decided).
      TemplateType.setDataPrototype     ("SgName","name","= \"\"",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateType.setDataPrototype     ("int","template_parameter_position","= -1",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateType.setDataPrototype     ("int","template_parameter_position","= -1",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateType.setDataPrototype     ("int","template_parameter_depth","= -1",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     TemplateType.setDataPrototype     ("SgType *","class_type","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+     TemplateType.setDataPrototype     ("SgType *","parent_class_type","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+     TemplateType.setDataPrototype     ("SgTemplateParameter *","template_parameter","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
+     TemplateType.setDataPrototype     ("SgTemplateArgumentPtrList", "tpl_args", "= SgTemplateArgumentPtrList()", NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateType.setDataPrototype     ("SgTemplateArgumentPtrList", "part_spec_tpl_args", "= SgTemplateArgumentPtrList()", NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/18/2017): We need to support a flag to indicate packing in template parameters.
      TemplateType.setDataPrototype     ("bool","packed","= false",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -903,6 +981,8 @@ Grammar::setUpTypes ()
                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      MemberFunctionType.setDataPrototype     ("unsigned int", "mfunc_specifier","= 0",
                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     MemberFunctionType.setDataPrototype     ("unsigned int", "ref_qualifiers","= 0",
+                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      PartialFunctionType.setFunctionPrototype ("HEADER_PARTIAL_FUNCTION_TYPE", "../Grammar/Type.code" );
 
@@ -1011,7 +1091,8 @@ Grammar::setUpTypes ()
 
   // DQ (8/2/2014): Adding support for C++11 decltype().
      DeclType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
-     DeclType.setFunctionSource     ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
+  // TV (02/21/2019): We need a specific version of this function for the decltype() operator.
+  // DeclType.setFunctionSource     ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
 
   // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
      TypeOfType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
@@ -1035,6 +1116,14 @@ Grammar::setUpTypes ()
 
      ClassType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
+//   NonrealType.excludeFunctionSource    ( "SOURCE_GET_NAME",    "../Grammar/Type.code");
+     NonrealType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     NonrealType.setFunctionSource        ( "SOURCE_NONREAL_TYPE", "../Grammar/Type.code");
+
+//   AutoType.excludeFunctionSource    ( "SOURCE_GET_NAME",    "../Grammar/Type.code");
+     AutoType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     AutoType.setFunctionSource        ( "SOURCE_AUTO_TYPE", "../Grammar/Type.code");
+
      JavaParameterizedType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
      JavaQualifiedType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
@@ -1044,6 +1133,8 @@ Grammar::setUpTypes ()
   // DQ (2/10/2014): Added SgNamedType IR nodes for Philippe.
      JavaUnionType.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      JavaParameterType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+
+     JovialTableType.excludeFunctionSource   ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
   // TemplateInstantiationType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      EnumType.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
@@ -1077,6 +1168,10 @@ Grammar::setUpTypes ()
      TypeLongLong.editSubstitute( "MANGLED_ID_STRING", "L" );
      TypeSignedLongLong.editSubstitute( "MANGLED_ID_STRING", "SL" );
      TypeUnsignedLongLong.editSubstitute( "MANGLED_ID_STRING", "UL" );
+
+  // TV (12/29/2018): using literal suffixes
+     TypeFloat80.editSubstitute( "MANGLED_ID_STRING", "w" );
+     TypeFloat128.editSubstitute( "MANGLED_ID_STRING", "q" );
 
   // DQ (3/24/2014): Adding support for 128 bit integers.
      TypeSigned128bitInteger.editSubstitute( "MANGLED_ID_STRING", "SL128" );
@@ -1139,6 +1234,8 @@ Grammar::setUpTypes ()
 
      JavaUnionType.setFunctionSource     ( "SOURCE_JAVA_UNION_TYPE", "../Grammar/Type.code");
      JavaParameterType.setFunctionSource ( "SOURCE_JAVA_PARAMETER_TYPE", "../Grammar/Type.code");
+
+     JovialTableType.setFunctionSource   ( "SOURCE_JOVIAL_TABLE_TYPE", "../Grammar/Type.code");
 
      TemplateType.setFunctionSource        ( "SOURCE_TEMPLATE_TYPE", "../Grammar/Type.code");
 

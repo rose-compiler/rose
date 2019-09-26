@@ -104,7 +104,6 @@ ConstantValue ConstantIntegerEvaluator::evaluateSynthesizedAttribute(SgNode *som
     else if (isSgSizeOfOp(node)) {
         SgSizeOfOp *sizeof_exp = (SgSizeOfOp *) node;
         IntAstAttribute *size_attribute = (IntAstAttribute *) sizeof_exp -> getAttribute(Control::LLVM_SIZE);
-
         if (size_attribute && size_attribute -> getValue() > 0) {
             value.setIntValue(size_attribute -> getValue());
         }

@@ -32,16 +32,21 @@ public:
         /** Number of inter-function control flow edges represented by this edge. */
         size_t count() const { return count_; }
     };
-    
-    /** Function call graph. */
-    typedef Sawyer::Container::Graph<FunctionPtr, Edge> Graph;
 
-    /** Maps function address to function call graph vertex. */
-    typedef Sawyer::Container::Map<rose_addr_t, Graph::VertexIterator> Index;
+    class VertexKey {
+    public:
+        rose_addr_t address;
+        VertexKey();
+        explicit VertexKey(rose_addr_t);
+        explicit VertexKey(const FunctionPtr&);
+        bool operator<(VertexKey) const;
+    };
+        
+    /** Function call graph. */
+    typedef Sawyer::Container::Graph<FunctionPtr, Edge, VertexKey> Graph;
 
 private:
     Graph graph_;
-    Index index_;
 
 public:
     /** Underlying function call graph.
@@ -50,20 +55,8 @@ public:
      *  must be done in conjunction with updating the function-to-vertex index. */
     const Graph& graph() const { return graph_; }
 
-    /** Function-to-vertex index.
-     *
-     *  Returns the index mapping function addresses to function call graph vertices. The index is read-only since updating the
-     *  index must be done in conjunction with updating the graph. */
-    const Index& index() const { return index_; }
-
     /** Constructs an empty function call graph. */
     FunctionCallGraph();
-
-    /** Copy constructor. */
-    FunctionCallGraph(const FunctionCallGraph &other);
-
-    /** Assignment operator. */
-    FunctionCallGraph& operator=(const FunctionCallGraph &other);
 
     ~FunctionCallGraph();
 
@@ -103,7 +96,7 @@ public:
      *  Inserts an edge representing a call from source (caller) to target (callee). The @p type can be @ref E_FUNCTION_CALL or
      *  @ref E_FUNCTION_XFER.
      *
-     *  If @p edgeCount is non-zero an an edge of the correct type already exists between the @p source and @p target, then the
+     *  If @p edgeCount is non-zero and an edge of the correct type already exists between the @p source and @p target, then the
      *  count on that edge is incremented instead. Otherwise, when @p edgeCount is zero, a new edge with unit count is inserted
      *  even if it means creating an edge parallel to an existing edge.
      *

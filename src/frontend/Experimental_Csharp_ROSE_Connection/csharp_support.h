@@ -30,5 +30,5 @@ class Container {
 extern "C" void process(char* top_builddir, char* sourceFileNameWithPath);
 
 //Used by C# to store the results
-extern "C" void storeResults(uint64_t container,int value);
+extern "C" void storeResults(uint64_t container, int value);
 

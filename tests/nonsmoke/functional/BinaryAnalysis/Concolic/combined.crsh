@@ -1,0 +1,34 @@
+create sqlite3://./combined.db
+
+@ success
+ls :: t01
+{
+  ls -la /
+}
+
+@ success
+ls :: t02
+{
+  ls -l --author /
+}
+
+
+@ success
+tail :: t03
+{
+  tail Makefile
+}
+
+
+@ success
+tail :: t04
+{
+  tail -10 Makefile
+}
+
+
+ls :: run 1
+
+run 2
+
+! echo ok.

@@ -1,0 +1,31 @@
+include_rules
+
+ifeq (@(ENABLE_X10_ANALYSIS),yes)
+    libX10Traversal_SOURCES = \
+        jni_x10SourceCodePosition.C \
+	jni_x10_token.C \
+	jni_x10_utils.C \
+	x10ActionROSE.C \
+	x10SourceCodePosition.C \
+	x10Traversal.C \
+	x10_support.C \
+	x10_token.C \
+        ParserActionROSE.C
+
+    libroseX10_SOURCES = \
+        x10.C \
+	jserver.C \
+	x10_main.cpp
+else
+    libroseX10_SOURCES = \
+        dummy_x10_main.cpp
+endif
+
+#FIXME: It this library needed?
+#: foreach $(libX10Traversal_SOURCES) |> !cxx_librose_compile |> %B.o {libX10Traversal_OBJECTS}
+#: {libX10Traversal_OBJECTS} |> !for_librose |>
+
+run $(librose_compile) $(libroseX10_SOURCES)
+
+run $(public_header) jni_x10SourceCodePosition.h jni_x10_token.h jni_x10_utils.h x10.h x10SourceCodePosition.h \
+    x10_support.h x10_token.h x10Parser.h jserver.h

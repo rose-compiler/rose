@@ -1,0 +1,110 @@
+include_rules
+
+ifeq (@(ENABLE_BINARY_ANALYSIS) @(WITH_SQLITE),yes yes)
+
+#------------------------------------------------------------------------------------------------------------------------
+# Database tests
+
+#
+# utilities and sample codes
+
+# a.1) sample program to load and store in DB
+run $(support_compile_linkexe) sampleExecutable.C
+
+# a.2) sample program to test the execution monitor
+run $(support_compile_linkexe) test-execution-monitor.C
+
+# a.3) execution monitor to produce quality score
+run $(tool_compile_linkexe) ExecutionMonitor.C
+
+# a.4) test compiled programs
+run $(tool_compile_linkexe) testConcolicDB.C
+run $(test) testConcolicDB
+
+# a.5) execution wrapper for perf to intercept signals
+run $(support_compile_linkexe) rose-perf-execution-wrapper.c
+
+# TODO \PP use flex and bison to create rose-perf-analyzer
+# a.6) reads perf-report output and computes unique instruction count
+
+: PerfOutputAnalyzer/parser.ypp \
+|> ^ BISON %f^ $(ROSE)/config/ylwrap %f y.tab.c %o y.tab.h PerfOutputAnalyzer/parser.hpp -- bison -y -d -t \
+|> parser.cpp | parser.hpp
+
+: PerfOutputAnalyzer/lexer.lpp \
+|> ^ FLEX %f^ $(ROSE)/config/ylwrap %f lex.yy.c %o -- flex \
+|> lexer.cpp
+
+run $(tool_compile_linkexe) -o rose-perf-analyzer --depend=parser.hpp parser.cpp lexer.cpp PerfOutputAnalyzer/analyzer.cpp 
+
+
+# TODO (1) \PP cp $(srcdir)/rose-execution-monitor-linux-perf-intel-x86_64.sh rose-execmon-linux-perf-intel-x86-64.sh
+# TODO (2) \PP create rose-perf-analyzer
+# a.7) the script that organizes perf's execution
+
+#noinst_SCRIPTS = rose-execmon-linux-perf-intel-x86-64.sh
+
+#rose-execmon-linux-perf-intel-x86-64.sh: $(srcdir)/rose-execution-monitor-linux-perf-intel-x86_64.sh rose-perf-analyzer
+#	cp $< $@
+#	chmod u+x $@
+
+# b) test various executions
+run $(test) ./crsh/crsh -o testOpenDB \
+    --extra=openDB.db \
+    ./crsh/crsh openDB.crsh
+
+run $(test) ./crsh/crsh -o testDefineTests \
+    --extra=defineTests.db \
+    ./crsh/crsh defineTests.crsh
+
+run $(test) ./crsh/crsh -o testRun1 \
+    --extra=run1.db \
+    ./crsh/crsh run1.crsh
+
+run $(test) ./crsh/crsh -o testRun10 \
+    --extra=run10.db \
+    ./crsh/crsh run10.crsh
+
+run $(test) ./crsh/crsh -o testDefineFail \
+    --extra=defineFail.db \
+    ./crsh/crsh defineFail.crsh
+
+run $(test) ./crsh/crsh -o testCombined \
+    --extra=combined.db \
+    ./crsh/crsh combined.crsh
+
+run $(test) ./crsh/crsh -o testExport \
+    --input=sampleExecutable \
+    --extra=testExport.db \
+    ./crsh/crsh testExport.crsh
+
+run $(test) ./crsh/crsh -o testAddressRandomization \
+    --input=sampleExecutable \
+    ./crsh/crsh testAddressRandomization.crsh
+    
+run $(test) ./crsh/crsh -o testExecutionMonitor \
+    --input=ExecutionMonitor test-execution-monitor sampleExecutable\
+    ./crsh/crsh testExecutionMonitor.crsh
+
+run $(test) ./crsh/crsh -o testPerfExecutionMonitor \
+    --input=rose-execmon-linux-perf-intel-x86-64.sh rose-perf-execution-wrapper test-execution-monitor sampleExecutable\
+    ./crsh/crsh testPerfExecutionMonitor.crsh
+
+run $(test) ./crsh/crsh -o testConnectNonExisting \
+    ./crsh/crsh testConnectNonExisting.crsh
+
+run $(test) ./crsh/crsh -o testCreateOverwrites \
+    ./crsh/crsh testCreateOverwrites.crsh
+
+run $(test) ./crsh/crsh -o testConnect \
+    ./crsh/crsh testConnect.crsh
+
+#------------------------------------------------------------------------------------------------------------------------
+# Concolic executor tests
+
+run $(tool_compile_linkexe) testConcolicExecutor.C
+run $(test) testConcolicExecutor \
+    ./testConcolicExecutor --log 'Rose::BinaryAnalysis::Concolic\(debug\)' \
+    $(ROSE)/tests/nonsmoke/specimens/binary/concolic-specimen-01
+
+endif

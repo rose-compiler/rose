@@ -1,0 +1,24 @@
+START
+
+% DESCRIPTION COMMENT %
+
+COMPOOL TYPES'2;
+
+TYPE STATUS'1 STATUS
+(
+  V(LOW),
+  V(MED),
+  V(HIGH)
+);
+
+TYPE STATUS'2 STATUS
+(
+   V(ZERO),
+  1V(ONE),
+   V(TWO),
+  3V(THREE),
+  5V(FIVE),
+   V(SIX)
+);
+
+TERM

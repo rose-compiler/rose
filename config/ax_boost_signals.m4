@@ -18,10 +18,6 @@
 #
 #     HAVE_BOOST_SIGNALS
 #
-# LAST MODIFICATION
-#
-#   2007-11-22
-#
 # COPYLEFT
 #
 #   Copyright (c) 2007 Thomas Porschberg <thomas@randspringer.de>
@@ -100,7 +96,7 @@ AC_DEFUN([AX_BOOST_SIGNALS],
 
             fi
 			if test "x$link_signals" != "xyes"; then
-				AC_MSG_ERROR(Could not link against $ax_lib !)
+				AC_MSG_ERROR([could not link against "$ax_lib"])
 			fi
 		fi
 

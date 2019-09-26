@@ -1,0 +1,51 @@
+#!/bin/bash
+set -e
+arg0="${0##*/}"
+dir0="${0%/*}"
+[ "$dir0" = "${dir0#/}" ] && dir0="$(pwd)/$dir0"
+
+LIBDIR="$dir0/../lib/matrix"
+VARDIR="$dir0/../var/matrix"
+ETCDIR="$dir0/../etc/matrix"
+
+########################################################################################################################
+help() {
+    echo "usage: $arg0 [SWITCHES]"
+    echo
+    echo "Descriptor"
+    echo "    Monitors the output of running tests."
+    echo
+    echo "Switches"
+    echo "    --var=DIRECTORY"
+    echo "        Name of directory that contains run-time information for testing."
+    echo "        The directory need not exist; it will be created. The default is to"
+    echo "        use \$PREFIX/var/matrix where \$PREFIX is the installation root"
+    echo "        directory for the matrix testing tools."
+}
+
+########################################################################################################################
+# Die with an error message
+die() {
+    echo "$arg0:" "error:" "$@" >&2
+    exit 1
+}
+
+########################################################################################################################
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--var=*)
+	    VARDIR="${1#--var=}"
+	    shift
+	    ;;
+
+	-*)
+	    die "unrecognized command-line switch \"$1\"; see --help"
+	    ;;
+
+	*)
+	    die "incorrect usage; see --help"
+	    ;;
+    esac
+done
+
+exec watch -c "$dir0/rose-matrix-show-latest" --var="$VARDIR"

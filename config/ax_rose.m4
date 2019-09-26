@@ -21,10 +21,6 @@
 #
 #     HAVE_ROSE
 #
-# LAST MODIFICATION
-#
-#   2008-03-24
-#
 # COPYLEFT
 #
 #   Copyright (c) 2008 Thomas Porschberg <thomas@randspringer.de>
@@ -152,7 +148,7 @@ if test "x$want_rose" = "xyes"; then
 			        	stage_version_shorten=`expr $stage_version : '\([[0-9]]*\.[[0-9]]*\)'`
 					V_CHECK=`expr $stage_version_shorten \>\= $_version`
                     if test "$V_CHECK" = "1" -a "$ac_rose_lib_path" = "" ; then
-						AC_MSG_NOTICE(We will use a staged rose library from $ROSE_ROOT)
+						AC_MSG_NOTICE([will use a staged rose library from "$ROSE_ROOT"])
 						ROSE_CPPFLAGS="-I$ROSE_ROOT"
 						ROSE_LDFLAGS="-L$ROSE_ROOT/stage/lib"
 					fi
@@ -171,7 +167,7 @@ if test "x$want_rose" = "xyes"; then
 		if test "$_version" = "0" ; then
 			AC_MSG_ERROR([[We could not detect the rose libraries (version $rose_lib_version_req_shorten or higher). If you have a staged rose library (still not installed) please specify \$ROSE_ROOT in your environment and do not give a PATH to --with-rose option.  If you are sure you have rose installed, then check your version number looking in <rose_paths.h>. See http://randspringer.de/rose for more documentation.]])
 		else
-			AC_MSG_NOTICE([Your rose libraries seems to old (version $_version).])
+			AC_MSG_NOTICE([your rose libraries seems to old (version $_version)])
 		fi
 	else
 		AC_SUBST(ROSE_CPPFLAGS)

@@ -5,7 +5,7 @@
 #include "AstTerm.h"
 #include "DFAstAttribute.h"
 
-class AstTermRepresentationAttribute : public SPRAY::DFAstAttribute {
+class AstTermRepresentationAttribute : public CodeThorn::DFAstAttribute {
  public:
   AstTermRepresentationAttribute(SgNode* node);
   std::string toString();

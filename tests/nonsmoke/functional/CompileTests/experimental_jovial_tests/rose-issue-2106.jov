@@ -1,0 +1,14 @@
+START
+DEF ITEM ITEM'1 F = 0.0;
+
+DEF PROC $TIME() F;
+  BEGIN
+   $TIME = 3.1415926;
+  END
+
+DEF PROC PROC'1;
+  BEGIN
+   ITEM'1 = $TIME() + 1.0;
+   ITEM'1 = 1.0;
+  END
+TERM

@@ -4,10 +4,10 @@
 #include "Labeler.h"
 #include "AstTerm.h"
 #include <boost/foreach.hpp>
-#include "SprayException.h"
+#include "CodeThornException.h"
 #include "Sawyer/GraphTraversal.h"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 
 Edge::Edge():_source(0),_target(0),_annotation(""){
@@ -199,7 +199,7 @@ string InterFlow::toString() const {
   return res;
 }
 
-bool SPRAY::operator<(const InterEdge& e1, const InterEdge& e2) {
+bool CodeThorn::operator<(const InterEdge& e1, const InterEdge& e2) {
   if(e1.call!=e2.call) 
     return e1.call<e2.call;
   if(e1.entry!=e2.entry)
@@ -209,7 +209,7 @@ bool SPRAY::operator<(const InterEdge& e1, const InterEdge& e2) {
   return e1.callReturn<e2.callReturn;
 }
 
-bool SPRAY::operator==(const InterEdge& e1, const InterEdge& e2) {
+bool CodeThorn::operator==(const InterEdge& e1, const InterEdge& e2) {
   return e1.call==e2.call
     && e1.entry==e2.entry
     && e1.exit==e2.exit
@@ -217,19 +217,19 @@ bool SPRAY::operator==(const InterEdge& e1, const InterEdge& e2) {
     ;
 }
 
-bool SPRAY::operator!=(const InterEdge& e1, const InterEdge& e2) {
+bool CodeThorn::operator!=(const InterEdge& e1, const InterEdge& e2) {
   return !(e1==e2);
 }
 
-bool SPRAY::operator==(const Edge& e1, const Edge& e2) {
+bool CodeThorn::operator==(const Edge& e1, const Edge& e2) {
   assert(&e1);
   assert(&e2);
   return e1.source()==e2.source() && e1.typesCode()==e2.typesCode() && e1.target()==e2.target() && e1.getAnnotation() == e2.getAnnotation();
 }
-bool SPRAY::operator!=(const Edge& e1, const Edge& e2) {
+bool CodeThorn::operator!=(const Edge& e1, const Edge& e2) {
   return !(e1==e2);
 }
-bool SPRAY::operator<(const Edge& e1, const Edge& e2) {
+bool CodeThorn::operator<(const Edge& e1, const Edge& e2) {
   assert(&e1);
   assert(&e2);
   if(e1.source()!=e2.source())
@@ -263,7 +263,7 @@ Flow::Flow() {
   resetDotOptions(); 
 }
 
-SPRAY::Flow Flow::reverseFlow() {
+CodeThorn::Flow Flow::reverseFlow() {
   Flow reverseFlow;
   for(Flow::iterator i=begin();i!=end();++i) {
     reverseFlow.insert(Edge((*i).target(),(*i).getTypes(),(*i).source()));
@@ -398,7 +398,7 @@ Flow::node_iterator Flow::nodes_begin() {
 #ifdef USE_SAWYER_GRAPH
   return _sawyerFlowGraph.vertexValues().begin();
 #else
-  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+  throw CodeThorn::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
 #endif
 }
 
@@ -406,7 +406,7 @@ Flow::node_iterator Flow::nodes_end() {
 #ifdef USE_SAWYER_GRAPH
   return _sawyerFlowGraph.vertexValues().end();
 #else
-  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+  throw CodeThorn::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
 #endif
 }
 
@@ -414,7 +414,7 @@ Flow::const_node_iterator Flow::nodes_begin() const {
 #ifdef USE_SAWYER_GRAPH
   return _sawyerFlowGraph.vertexValues().begin();
 #else
-  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+  throw CodeThorn::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
 #endif
 }
 
@@ -422,7 +422,7 @@ Flow::const_node_iterator Flow::nodes_end() const {
 #ifdef USE_SAWYER_GRAPH
   return _sawyerFlowGraph.vertexValues().end();
 #else
-  throw SPRAY::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
+  throw CodeThorn::Exception("Nodes iterator not implemented because STL set is used as underlying datastructure.");
 #endif
 }
 

@@ -1,0 +1,49 @@
+include_rules
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+
+tool_CPPFLAGS += -I.
+
+run $(public_header)				\
+    RSIM_Adapter.h				\
+    RSIM_Callbacks.h				\
+    RSIM_ColdFire.h				\
+    RSIM_Common.h				\
+    RSIM_Debugger.h				\
+    RSIM_Futex.h				\
+    RSIM_Linux.h				\
+    RSIM_Linux32.h				\
+    RSIM_Linux64.h				\
+    RSIM_Pentium4.h				\
+    RSIM_Printer.h				\
+    RSIM_Process.h				\
+    RSIM_Semantics.h				\
+    RSIM_SignalHandling.h			\
+    RSIM_Simulator.h				\
+    RSIM_Thread.h				\
+    RSIM_Tools.h
+
+run $(tool_compile_linklib) --install -o libRSIM	\
+    RSIM_Adapter.C					\
+    RSIM_Callbacks.C					\
+    RSIM_ColdFire.C					\
+    RSIM_Common.C					\
+    RSIM_Debugger.C					\
+    RSIM_Futex.C					\
+    RSIM_Linux.C					\
+    RSIM_Linux32.C					\
+    RSIM_Linux64.C					\
+    RSIM_Pentium4.C					\
+    RSIM_Printer.C					\
+    RSIM_Process.C					\
+    RSIM_Semantics.C					\
+    RSIM_SignalHandling.C				\
+    RSIM_Simulator.C					\
+    RSIM_Thread.C					\
+    RSIM_Tools.C					\
+    $(ROSE)/src/librose
+
+run $(tool_compile_linkexe) --install -o rsim-x86sim x86sim.C libRSIM -lrt
+run $(tool_compile_linkexe) --install -o rsim-show-initial-stack show-initial-stack.C libRSIM -lrt
+run $(tool_compile_linkexe) --install -o rsim-ports-opened demos/ports_opened.C libRSIM -lrt
+
+endif

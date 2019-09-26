@@ -4,14 +4,20 @@
 // more complicated, it exposed a number of limitations, particularly with regard to template function 
 // declarations. The following, for example, is not allowed in C++03:
 
+#if 0
+// This is not valid code.
 template<class Lhs, class Rhs>
   Ret adding_func(const Lhs &lhs, const Rhs &rhs) {return lhs + rhs;} //Ret must be the type of lhs+rhs
+#endif
 
 // The type Ret is whatever the addition of types Lhs and Rhs will produce. Even with the aforementioned 
 // C++11 functionality of decltype, this is not possible:
 
+#if 0
+// This is not valid code.
 template<class Lhs, class Rhs>
   decltype(lhs+rhs) adding_func(const Lhs &lhs, const Rhs &rhs) {return lhs + rhs;} //Not legal C++11
+#endif
 
 // This is not legal C++ because lhs and rhs have not yet been defined; they will not be valid identifiers 
 // until after the parser has parsed the rest of the function prototype.

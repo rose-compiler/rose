@@ -8,7 +8,7 @@
 #include <string>
 #include <list>
 
-// SPRAY includes
+// CodeThorn includes
 #include "ParProTransitionGraph.h"
 
 //CodeThron includes

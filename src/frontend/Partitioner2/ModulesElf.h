@@ -33,6 +33,11 @@ std::vector<Function::Ptr> findPltFunctions(const Partitioner&, SgAsmInterpretat
 size_t findPltFunctions(const Partitioner&, SgAsmElfFileHeader*, std::vector<Function::Ptr>&);
 /** @} */
 
+/** Get a list of all ELF sections by name.
+ *
+ *  Returns an empty list if the interpretation is null or it doesn't have any sections that match the specified name. */
+std::vector<SgAsmElfSection*> findSectionsByName(SgAsmInterpretation*, const std::string&);
+
 /** True if the function is an import.
  *
  *  True if the specified function is an import, whether it's actually been linked in or not. This is a weaker version of @ref
@@ -75,8 +80,17 @@ enum Boolean {
  *
  *  The substring "%o" is replaced by the quoted output name, and the substring "%f" is replaced by the space separated list of
  *  quoted input names.  Bourne shell escape syntax is used. Returns true if the link command was successful, false otherwise. */
-bool tryLink(const std::string &command, std::string outputName, std::vector<std::string> inputNames,
-             Sawyer::Message::Stream &errors, FixUndefinedSymbols::Boolean fixUndefinedSymbols = FixUndefinedSymbols::YES);
+bool tryLink(const std::string &command, const boost::filesystem::path &outputName,
+             std::vector<boost::filesystem::path> inputNames, Sawyer::Message::Stream &errors,
+             FixUndefinedSymbols::Boolean fixUndefinedSymbols = FixUndefinedSymbols::YES);
+
+/** Extract object files from a static archive.
+ *
+ *  Given the name of an archive file, extract the member files and return a list of object files. The files are extracted into
+ *  a subdirectory of the specified @p directory. The name of the subdirectory is the same as the file name (not directory
+ *  part) of the archive. */
+std::vector<boost::filesystem::path>
+extractStaticArchive(const boost::filesystem::path &directory, const boost::filesystem::path &archive);
 
 /** Matches an ELF PLT entry.  The address through which the PLT entry branches is remembered. This address is typically an
  *  RVA which is added to the initial base address. */

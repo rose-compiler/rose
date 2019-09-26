@@ -1,9 +1,12 @@
-#ifndef ROSE_InstructionEnumsM68k_H
-#define ROSE_InstructionEnumsM68k_H
+#ifndef ROSE_BinaryAnalysis_InstructionEnumsM68k_H
+#define ROSE_BinaryAnalysis_InstructionEnumsM68k_H
 /* References:
  *   [1] "M68000 PM/AD REV.1 Programmers Reference Manual (Includes CPU32 Instructions)" Downloaded from the
  *       Freescale website on 2013-10-07.
  */
+
+namespace Rose {
+namespace BinaryAnalysis {
 
 /** Members of the Motorola Coldfire family of m68k processors.  These descriptions come from page 1-1 of the manual. In
  *  particular, when the manual mentions a processor (like "MC68020") it refers to both that particular processor and the
@@ -46,6 +49,7 @@ enum M68kFamily {
     m68k_freescale_emacb= 0x80000000                    /**< Freescale EMAC_B, dual accumulation instructions. */
 };
 
+/** M68k register classes. */
 enum M68kRegisterClass {
     m68k_regclass_data,                                 /**< Data registers. */
     m68k_regclass_addr,                                 /**< Address registers. */
@@ -55,6 +59,7 @@ enum M68kRegisterClass {
     m68k_regclass_sup                                   /**< Supervisor registers. */
 };
 
+/** M68k special purpose registers. */
 enum M68kSpecialPurposeRegister {
     m68k_spr_pc,                                        /**< Program counter. */
     m68k_spr_sr,                                        /**< Status register, including condition codes. */
@@ -63,6 +68,7 @@ enum M68kSpecialPurposeRegister {
     m68k_spr_fpiar                                      /**< Floating-point instruction address register. */
 };
 
+/** M68k MAC registers. */
 enum M68kMacRegister {
     m68k_mac_macsr,                                     /**< MAC status register. */
     m68k_mac_acc0,                                      /**< MAC 32-bit accumulator #0. */
@@ -78,6 +84,7 @@ enum M68kMacRegister {
     m68k_mac_mask                                       /**< MAC mask register. */
 };
 
+/** M68k EMAC registers. */
 enum M68kEmacRegister {
     m68k_emac_macsr,                                    /**< EMAC status register. */
     m68k_emac_acc0,                                     /**< EMAC accumulator 0. */
@@ -87,6 +94,7 @@ enum M68kEmacRegister {
     m68k_emac_mask                                      /**< EMAC mask register. */
 };
 
+/** M68k supervisor registers. */
 enum M68kSupervisorRegister {
     m68k_sup_vbr,                                       /**< Interrupt vector base address. */
     m68k_sup_ssp,                                       /**< Supervisor stack pointer. */
@@ -239,6 +247,7 @@ enum M68kDataFormat {
     m68k_fmt_unknown = 255                              /**< Invalid format. */
 };
 
+/** M68k instruction types. */
 enum M68kInstructionKind {
     m68k_unknown_instruction,
     m68k_abcd,                                          /**< Add decimal with extended */
@@ -491,5 +500,8 @@ enum M68kInstructionKind {
     // must be last
     m68k_last_instruction
 };
+
+} // namespace
+} // namespace
 
 #endif

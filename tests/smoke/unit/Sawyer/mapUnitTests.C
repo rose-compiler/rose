@@ -317,7 +317,8 @@ void stdMapIterators() {
     map.insert(std::make_pair("", 5));
 
     Map::iterator ni = map.find("mouth");
-    Map::const_iterator cni = ni;
+    Map::const_iterator cni = ni; // conversion from non-const to const
+    ASSERT_always_require(cni == ni); // comparison between const and non-const
 
     ASSERT_always_require(ni != map.end());
     ASSERT_always_require(ni->first == "mouth");

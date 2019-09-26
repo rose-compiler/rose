@@ -71,7 +71,7 @@ public:
      *
      *  Returns true if and only if this abstract location refers to a register. It is impossible for an abstract location to
      *  refer to both a register and memory. */
-    bool isRegister() const { return reg_.is_valid(); }
+    bool isRegister() const { return !reg_.isEmpty(); }
 
     /** Checks memory reference.
      *

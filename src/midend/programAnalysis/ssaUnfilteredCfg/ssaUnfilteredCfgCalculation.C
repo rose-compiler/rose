@@ -504,7 +504,7 @@ void SSA_UnfilteredCfg::insertDefsForExternalVariables(SgFunctionDefinition* fun
 
         //Are there any other types of external vars?
         ROSE_ASSERT(isBuiltinVar(rootName) || isSgClassDefinition(varScope) || isSgNamespaceDefinitionStatement(varScope)
-                || isSgGlobal(varScope));
+                || isSgGlobal(varScope) || isSgDeclarationScope(varScope));
 
         //The variable is not in local scope; we need to insert a def for it at the function definition
         for (size_t i = 0; i < usedVar.size(); i++)

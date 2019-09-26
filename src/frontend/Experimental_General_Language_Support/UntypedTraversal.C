@@ -45,6 +45,33 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
           currentScope = sg_scope;
           break;
       }
+    case V_SgUntypedDirectiveDeclaration:
+      {
+         SgUntypedDirectiveDeclaration* ut_decl = dynamic_cast<SgUntypedDirectiveDeclaration*>(node);
+         pConverter->convertUntypedDirectiveDeclaration(ut_decl, currentScope);
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
+    case V_SgUntypedEnumDeclaration:
+      {
+         SgUntypedEnumDeclaration* ut_decl = dynamic_cast<SgUntypedEnumDeclaration*>(node);
+         pConverter->convertUntypedEnumDeclaration(ut_decl, currentScope);
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
+    case V_SgUntypedStructureDeclaration:
+      {
+         SgUntypedStructureDeclaration* ut_struct = dynamic_cast<SgUntypedStructureDeclaration*>(node);
+         pConverter->convertUntypedStructureDeclaration(ut_struct,currentScope);
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
+    case V_SgUntypedStructureDefinition:
+      {
+      // This node is converted by the containing SgUntypedStructureDeclaration
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
     case V_SgUntypedModuleDeclaration:
       {
          SgUntypedModuleDeclaration* ut_module = dynamic_cast<SgUntypedModuleDeclaration*>(node);
@@ -167,7 +194,7 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
     case V_SgUntypedNamedStatement:
       {
          SgUntypedNamedStatement* ut_decl = dynamic_cast<SgUntypedNamedStatement*>(node);
-         pConverter->convertSgUntypedNamedStatement(ut_decl, currentScope);
+         pConverter->convertUntypedNamedStatement(ut_decl, currentScope);
          currentScope = SageBuilder::topScopeStack();
          break;
       }
@@ -380,6 +407,12 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
          sg_node = SageBuilder::topScopeStack();
          SageBuilder::popScopeStack();
 
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
+    case V_SgUntypedStructureDeclaration:
+      {
+         SageBuilder::popScopeStack();  // structure scope
          currentScope = SageBuilder::topScopeStack();
          break;
       }

@@ -3,6 +3,7 @@
 
 #include <ByteOrder.h>
 #include <Combinatorics.h>
+#include <RoseException.h>
 
 #include <Sawyer/Access.h>
 #include <Sawyer/AddressMap.h>
@@ -24,7 +25,7 @@ namespace BinaryAnalysis {
 
 /** Align address downward to boundary.
  *
- *  Returns the largest multiple of @p alignment which is less than or equal to @p address. The alignment is cast to the same
+ *  Returns the smallest multiple of @p alignment which is greater than or equal to @p address. The alignment is cast to the same
  *  type as the address before any calculations are performed. Both arguments must be integral types. An alignment less than
  *  one has undefined behavior. */
 template<typename T, typename U>
@@ -37,7 +38,7 @@ alignUp(T address, U alignment) {
 
 /** Align address upward to boundary.
  *
- *  Returns the smallest multiple of @p alignment which is greater than or equal to @p address. The alignment is cast to the
+ *  Returns the largest multiple of @p alignment which is less than or equal to @p address. The alignment is cast to the
  *  same type as the address before any calculations are performed. Both arguments must be integral types. An alignment less
  *  than one has undefined behavior. Returns zero if no such value can be returned due to overflow. */
 template<typename T, typename U>
@@ -182,9 +183,9 @@ public:
 
 public:
     /** Exception for MemoryMap operations. */
-    class Exception: public std::runtime_error {
+    class Exception: public Rose::Exception {
     public:
-        Exception(const std::string &mesg, const MemoryMap::Ptr map): std::runtime_error(mesg), map(map) {}
+        Exception(const std::string &mesg, const MemoryMap::Ptr map): Rose::Exception(mesg), map(map) {}
         virtual ~Exception() throw() {}
         virtual std::string leader(std::string dflt="memory map problem") const;   /**< Leading part of the error message. */
         virtual std::string details(bool) const; /**< Details emitted on following lines, indented two spaces. */

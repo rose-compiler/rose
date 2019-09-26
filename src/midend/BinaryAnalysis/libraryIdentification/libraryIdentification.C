@@ -30,8 +30,11 @@ namespace P2 = Partitioner2;
  * @param[in] libraryName  Library names cannot be discovered from all
  *                         library types, so pass in name.
  * @param[in] libraryVersion  Library version, same problem
- * @param[in] project      Rose SgProject that has the functions to
- * write or find
+ * @param[in] libraryHash  Unique hash identifing the libary.
+ *                         Partitioner can't generate it
+ * @param[in] partitioner  The main ROSE binary anlysis object,
+ *                         contains all functions, code, etc.
+ * @param[in] dupOption    tells what to do with duplicate functions
  **/
 void
 LibraryIdentification::generateLibraryIdentificationDataBase( const std::string& databaseName, 
@@ -39,21 +42,20 @@ LibraryIdentification::generateLibraryIdentificationDataBase( const std::string&
                                                               const std::string& libraryVersion, 
                                                               const std::string& libraryHash, 
                                                               const P2::Partitioner& partitioner,
-                                                              bool replace)
+                                                              enum DUPLICATE_OPTION dupOption)
 {
     Rose::BinaryAnalysis::Demangler demangler;
     // DQ (9/1/2006): Introduce tracking of performance of ROSE at the top most level.
     TimingPerformance timer ("AST Library Identification reader : time (sec) = ",true);
     
-    //TODO Switch these printfs to mlog
-    printf ("Building LibraryIdentification database: %s from AST of library: %s : %s \n", databaseName.c_str(),libraryName.c_str(), libraryVersion.c_str());
+    mlog[INFO] << "Building LibraryIdentification database: " << databaseName.c_str() << " from AST of Library: " << libraryName.c_str() << " : " << libraryVersion.c_str() << std::endl;
     
     FunctionIdDatabaseInterface ident(databaseName);
 
     const std::string& libraryIsa = partitioner.instructionProvider().disassembler()->name();
 
     LibraryInfo libraryInfo( libraryName, libraryVersion, libraryHash, libraryIsa); 
-    ident.addLibraryToDB(libraryInfo, replace);
+    ident.addLibraryToDB(libraryInfo, dupOption == NO_ADD ? false : true); //libraries don't have a "COMBINE option, so convert dupOption to a bool replace
     
     //Now get all the functions in the library
     std::vector< P2::Function::Ptr > binaryFunctionList = partitioner.functions();
@@ -68,28 +70,31 @@ LibraryIdentification::generateLibraryIdentificationDataBase( const std::string&
             
             string mangledFunctionName = binaryFunction->name();
             string demangledFunctionName = binaryFunction->demangledName();
-            printf ("Function %s demangled = %s going into database\n", mangledFunctionName.c_str(), demangledFunctionName.c_str());
+            mlog[INFO] << "Function " << mangledFunctionName.c_str() << " demangled = " << demangledFunctionName.c_str() << "going into database" << std::endl;           
             
-            ident.addFunctionToDB(functionInfo, replace);         
+            ident.addFunctionToDB(functionInfo, dupOption);         
         }
             
 }
 
-/** match functions in root to  Library Identification Database
+/** match functions against the Library Identification Database
  *  This is a function to simplify matching functions in a binary
- *  root to library functions in the database.  It will attempt to
+ *  partitioner to library functions in the database.  It will attempt to
  *  match every function defined in the root to a library function.
  *
  *  It returns a LibToFuncsMap that contains every function defined in
  *  the project in the following form: Library->set(Function).  
  *  Functions that could not be matched in the database are found in
  *  the "UNKNOWN" library.
+ *  Functions that cannot be *uniquely* identified, end up in the
+ *  "multiLibarary" special library.
  *
  * @param[in] databaseName Filename of the database to create/access
- * @param[in] project      Rose SgProject that has the functions to
+ * @param[in] partitioner  Binary partitioner has the functions to
  * write or find
  * @return libToFuncsMap Libraries->set(Functions) unmatched
- * functions under "UNKNOWN"
+ * functions under "UNKNOWN", multimatched functions returned in 
+ * "MULTIPLE_LIBS"
  **/
 LibraryIdentification::LibToFuncsMap 
 LibraryIdentification::matchLibraryIdentificationDataBase (const std::string& databaseName,
@@ -99,57 +104,63 @@ LibraryIdentification::matchLibraryIdentificationDataBase (const std::string& da
     TimingPerformance timer ("AST Library Identification matcher : time (sec) = ",true);
     LibraryIdentification::LibToFuncsMap libToFuncsMap;
     
-    FunctionIdDatabaseInterface ident(databaseName);
-    //    Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (root,V_SgAsmFunction);
-//     Rose_STL_Container<SgNode*> binaryInterpretationList = NodeQuery::querySubTree (root,V_SgAsmInterpretation);
-    
-//     std::cerr << "Queried for Interpretations " << std::endl;
-    
-
-//     for (Rose_STL_Container<SgNode*>::iterator j = binaryInterpretationList.begin(); j != binaryInterpretationList.end(); j++)
-//         {
-//             std::cerr << "Interpretation " << (size_t)(j - binaryInterpretationList.begin()) << std::endl;
-//             SgAsmInterpretation* asmInterpretation = isSgAsmInterpretation(*j);
-//             ASSERT_require(asmInterpretation != NULL);
-            
-//             //Now get all the function for the interpretation
-//             Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (asmInterpretation,V_SgAsmFunction);
-//
-//    for (Rose_STL_Container<SgNode*>::iterator i = binaryFunctionList.begin(); i != binaryFunctionList.end(); i++)
-        
-            
+    FunctionIdDatabaseInterface ident(databaseName);            
     std::vector< P2::Function::Ptr > binaryFunctionList = partitioner.functions();
+
     for (std::vector< P2::Function::Ptr >::iterator funcIt = binaryFunctionList.begin(); funcIt != binaryFunctionList.end(); funcIt++)
         {            
             P2::Function::Ptr binaryFunction = *funcIt;
             ROSE_ASSERT(binaryFunction != NULL);
             FunctionInfo functionInfo(partitioner, binaryFunction);
             
-            //If the library did not have a name for this function,
-            //might the current binary?
-            if(functionInfo.funcName.empty() &&
-               !binaryFunction->name().empty()) 
-                {  
-                    functionInfo.funcName = binaryFunction->name();                    
-                }
+            std::vector<FunctionInfo> matches = ident.matchFunction(functionInfo);
             
-            if(ident.matchFunction(functionInfo)) 
-                { //match, insert it into the libToFuncsMap
-                    LibraryInfo libraryInfo(functionInfo.libHash);
+            if(matches.size() == 0) 
+                {
+                    //No match, leave name from binary and put it under the UNKNOWN library
+                    LibraryInfo libraryInfo = LibraryInfo::getUnknownLibraryInfo();
+                    functionInfo.libHash = libraryInfo.libHash;
+                    insertFunctionToMap(libToFuncsMap, libraryInfo, functionInfo);
+                } 
+
+            else if(matches.size() > 1) 
+                { //Lots of matches, stick in the multi-library.
+                  //Use the name in the binary if it exists, otherwise
+                  //first match  
+                    functionInfo = matches[0];
+                    if(!binaryFunction->name().empty()) 
+                        {
+                            functionInfo.funcName = binaryFunction->name();                    
+                        } 
+
+                    LibraryInfo libraryInfo = LibraryInfo::getMultiLibraryInfo();
                     ident.matchLibrary(libraryInfo);
                     insertFunctionToMap(libToFuncsMap, libraryInfo, functionInfo);
                 } 
-            else 
-                {  //No match, put it under the UNKNOWN library
-                    LibraryInfo libraryInfo = LibraryInfo::getUnknownLibraryInfo();
-                    functionInfo.libHash = libraryInfo.libHash;
-                    insertFunctionToMap(libToFuncsMap, libraryInfo, functionInfo);                            
+            else  //Only one match, positive ID!
+                {                              
+                    functionInfo = matches[0];
+                    LibraryInfo libraryInfo(functionInfo.libHash);
+                    ident.matchLibrary(libraryInfo);
+                    insertFunctionToMap(libToFuncsMap, libraryInfo, functionInfo);
                 }
         }
-    //}    
+
     return libToFuncsMap;
 }
 
+/** insertFunctionToMap
+ *
+ *  Helper function, when a matching function is found in the
+ *  database, it needs to be added to the map returned from
+ *  matchLibraryIdentificationDataBase.  This function does that.
+ *
+ * @param[inout] libToFuncsMap Lists every library, and all the
+ *                             functions is contains.  Insert function
+ *                             to this data structure.
+ * @param[in] libraryInfo      Fully describes the library to add(?)
+ * @param[in] functionInfo     Fully describes the function to add
+ **/
 void LibraryIdentification::insertFunctionToMap(LibraryIdentification::LibToFuncsMap& libToFuncsMap, const LibraryInfo& libraryInfo, const FunctionInfo& functionInfo) 
 {
     LibraryIdentification::LibToFuncsMap::iterator libIt = libToFuncsMap.find(libraryInfo);

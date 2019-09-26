@@ -1,0 +1,95 @@
+include_rules
+
+ifeq (@(ENABLE_CXX_ANALYSIS),yes)
+
+# Include various lists of test specimens
+nonsmoke_specimens_openmp_path = $(ROSE)/tests/nonsmoke/functional/CompileTests/OpenMP_tests
+include $(nonsmoke_specimens_openmp_path)/Specimens.inc
+
+nonsmoke_specimens_C_tests_path = $(ROSE)/tests/nonsmoke/functional/CompileTests/C_tests
+include $(nonsmoke_specimens_C_tests_path)/Specimens.inc
+
+nonsmoke_specimens_Cxx_tests_path = $(ROSE)/tests/nonsmoke/functional/CompileTests/Cxx_tests
+include $(nonsmoke_specimens_Cxx_tests_path)/Specimens.inc
+
+########################################################################################################################
+# getDataSharingAttribute
+########################################################################################################################
+run $(tool_compile_linkexe) getDataSharingAttribute.C
+
+# This test no longer passes. The error is: "variables.c.output: No such file or directory" [matzke 2018-09-13]
+ifeq (0,1)
+run for specimen in $(nonsmoke_getDataSharingAttribute_c); do \
+        basename=`basename $specimen .c`; \
+        answer="referenceOutput/$specimen.output"; \
+        if [ -e "$answer" ]; then answer="--answer=$answer"; else answer=; fi; \
+        $(test) getDataSharingAttribute -o $specimen $answer \
+            -x $basename.o -x rose_$specimen -x $basename.c.getDataSharingAttribute.output \
+            "./getDataSharingAttribute -c -rose:openmp:ast_only $(nonsmoke_specimens_openmp_path)/$specimen && \
+                cat $specimen.output"; \
+    done
+endif
+
+########################################################################################################################
+# get_C_array_dimensions
+########################################################################################################################
+run $(tool_compile_linkexe) get_C_array_dimensions.C
+
+run for specimen in $(nonsmoke_get_C_array_dimensions_c); do \
+        basename=`basename $specimen .c`; \
+        answer="referenceOutput/$specimen.get_C_array_dimensions.output"; \
+        if [ -e "$answer" ]; then answer="--answer=$answer"; else answer=; fi; \
+        $(test) get_C_array_dimensions -o $specimen $answer \
+            -x $basename.o -x $specimen.get_C_array_dimensions.output -x rose_$specimen \
+            "./get_C_array_dimensions -c $(nonsmoke_specimens_C_tests_path)/$specimen && \
+                cat $specimen.get_C_array_dimensions.output"; \
+    done
+
+########################################################################################################################
+# genericCoverage
+########################################################################################################################
+run $(tool_compile_linkexe) genericCoverage.C
+
+# FIXME: In the original Makefile.am, this was not run unless ROSE_USING_GCC_VERSION_LATER_6_1 is defined
+run for specimen in $(nonsmoke_genericCoverage_c); do \
+        basename=`basename $specimen .c`; \
+        answer="referenceOutput/$specimen.genericCoverage.output"; \
+        if [ -e "$answer" ]; then answer="--answer=$answer"; else answer=; fi; \
+        $(test) genericCoverage -o $specimen $answer \
+            -x $specimen.genericCoverage.output \
+            "./genericCoverage -c $(nonsmoke_specimens_Cxx_tests_path)/$specimen && \
+                cat $specimen.genericCoverage.output"; \
+    done
+
+########################################################################################################################
+# collectFunctionSideEffect
+########################################################################################################################
+run $(tool_compile_linkexe) collectFunctionSideEffect.C
+
+run for specimen in $(nonsmoke_almost_all_cpp); do \
+        basename=`basename $specimen .C`; \
+        answer="referenceOutput/$specimen.collectFunctionSideEffect.output"; \
+        if [ -e "$answer" ]; then answer="--answer=$answer"; else answer=; fi; \
+        $(test) collectFunctionSideEffect -o $specimen $answer \
+            -x $basename.o -x rose_$specimen -x $specimen.collectFunctionSideEffect.output \
+            "./collectFunctionSideEffect -sort -annot vectorXY.annot -c $(nonsmoke_specimens_Cxx_tests_path)/$specimen && \
+                cat $specimen.collectFunctionSideEffect.output"; \
+    done
+
+########################################################################################################################
+# performAliasAnalysis
+########################################################################################################################
+run $(tool_compile_linkexe) performAliasAnalysis.C
+
+# FIXME: In the original Makefile.am, this was not run unless ROSE_USING_GCC_VERSION_LATER_6_1 is defined
+alias_analysis_tests_cpp = alias-001.cpp alias-002.cpp alias-003.cpp
+run for specimen in $(alias_analysis_tests_cpp); do \
+        basename=`basename $specimen .cpp`; \
+        answer="referenceOutput/$specimen.performAliasAnalysis.output"; \
+        if [ -e "$answer" ]; then answer="--answer=$answer"; else answer=; fi; \
+        $(test) performAliasAnalysis -o $specimen $answer \
+            -x $basename.o -x rose_$specimen -x $specimen.performAliasAnalysis.output \
+            "./performAliasAnalysis -c tests/$specimen && cat $specimen.performAliasAnalysis.output"; \
+    done
+
+endif

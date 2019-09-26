@@ -1,0 +1,6 @@
+include_rules
+
+
+run $(public_script) -o lib/matrix/container-scripts/phases/10-basic-project	\
+    config									\
+    10-project

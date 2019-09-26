@@ -69,28 +69,6 @@ sortByExpression(const BasicBlock::Successor &a, const BasicBlock::Successor &b)
 }
 
 bool
-sortVerticesByAddress(const ControlFlowGraph::ConstVertexIterator &a,
-                      const ControlFlowGraph::ConstVertexIterator &b) {
-    const CfgVertex &av = a->value();
-    const CfgVertex &bv = b->value();
-    if (av.type() != bv.type() || av.type() != V_BASIC_BLOCK)
-        return av.type() < bv.type();
-    return av.address() < bv.address();
-}
-
-bool
-sortEdgesBySrc(const ControlFlowGraph::ConstEdgeIterator &a,
-               const ControlFlowGraph::ConstEdgeIterator &b) {
-    return sortVerticesByAddress(a->source(), b->source());
-}
-
-bool
-sortEdgesByDst(const ControlFlowGraph::ConstEdgeIterator &a,
-               const ControlFlowGraph::ConstEdgeIterator &b) {
-    return sortVerticesByAddress(a->target(), b->target());
-}
-
-bool
 sortBlocksForAst(SgAsmBlock *a, SgAsmBlock *b) {
     ASSERT_not_null(a);
     ASSERT_not_null(b);
@@ -131,6 +109,13 @@ AddressIntervalParser::docString() {
 
 Sawyer::CommandLine::ParsedValue
 AddressIntervalParser::operator()(const char *input, const char **rest, const Sawyer::CommandLine::Location &loc) {
+    AddressInterval val = parse(input, rest);
+    std::string parsed(input, *rest-input);
+    return Sawyer::CommandLine::ParsedValue(val, loc, parsed, valueSaver());
+}
+
+AddressInterval
+AddressIntervalParser::parse(const char *input, const char **rest) {
     const char *s = input;
     char *r = NULL;
     bool hadRangeError = false, isEmpty = false;
@@ -193,10 +178,24 @@ AddressIntervalParser::operator()(const char *input, const char **rest, const Sa
     if (greatest < least)
         throw std::range_error("interval seems backward: \""+parsed+"\"");
 
-    AddressInterval val;
-    if (!isEmpty)
-        val = AddressInterval::hull(least, greatest);
-    return Sawyer::CommandLine::ParsedValue(val, loc, parsed, valueSaver());
+    if (!isEmpty) {
+        return AddressInterval::hull(least, greatest);
+    } else {
+        return AddressInterval();
+    }
+}
+
+AddressInterval
+AddressIntervalParser::parse(const std::string &str) {
+    const char *s = str.c_str();
+    const char *rest = NULL;
+    AddressInterval retval = parse(s, &rest);
+    while (isspace(*rest)) ++rest;
+    if (*rest) {
+        throw std::runtime_error("extra text after end of address or address interval: "
+                                 "\"" + StringUtility::cEscape(rest) + "\"");
+    }
+    return retval;
 }
 
 AddressIntervalParser::Ptr
@@ -241,18 +240,6 @@ std::string
 Trigger::docString() {
     Settings settings;
     return Sawyer::CommandLine::Parser().with(switches(settings)).docForSwitches();
-}
-
-std::ostream&
-operator<<(std::ostream &out, const ControlFlowGraph::Vertex &x) {
-    out <<Partitioner::vertexName(x);
-    return out;
-}
-
-std::ostream&
-operator<<(std::ostream &out, const ControlFlowGraph::Edge &x) {
-    out <<Partitioner::edgeName(x);
-    return out;
 }
 
 std::ostream&

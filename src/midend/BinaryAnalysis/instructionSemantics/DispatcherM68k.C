@@ -1267,7 +1267,7 @@ struct IP_fp_add: P {
         SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
         SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
         SValuePtr a;
-        if (rre && rre->get_descriptor().get_major() == m68k_regclass_fpr) {
+        if (rre && rre->get_descriptor().majorNumber() == m68k_regclass_fpr) {
             // F{D,S}ADD.D FPx, FPy
             a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
         } else {
@@ -1742,7 +1742,7 @@ struct IP_fp_move: P {
         SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
         SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
         SValuePtr result, src;
-        if (rre && rre->get_descriptor().get_major() == m68k_regclass_fpr) {
+        if (rre && rre->get_descriptor().majorNumber() == m68k_regclass_fpr) {
             if (dstType) {
                 // F{D,S}MOVE.{D,S} FPx, FPy
                 // FMOVE.{D,S} FPx, ea
@@ -1823,7 +1823,7 @@ struct IP_fp_mul: P {
         ASSERT_not_null(dstType);
         SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
         SValuePtr a;
-        if (rre && rre->get_descriptor().get_major() == m68k_regclass_fpr) {
+        if (rre && rre->get_descriptor().majorNumber() == m68k_regclass_fpr) {
             // F{D,S}MUL.{D,S} FPx, FPy
             a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
         } else {
@@ -1929,7 +1929,7 @@ struct IP_fp_sub: P {
         SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
         SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
         SValuePtr a;
-        if (rre && rre->get_descriptor().get_major() == m68k_regclass_fpr) {
+        if (rre && rre->get_descriptor().majorNumber() == m68k_regclass_fpr) {
             // F{D,S}SUB.D FPx, FPy
             a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
         } else {
@@ -2120,10 +2120,10 @@ struct IP_mac: P {
         ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
         size_t nBits = args[0]->get_nBits();
 
-        if (!d->REG_MACSR_SU.is_valid() || !d->REG_MACSR_FI.is_valid() || !d->REG_MACSR_N.is_valid() ||
-            !d->REG_MACSR_Z.is_valid()  || !d->REG_MACSR_V.is_valid()  || !d->REG_MACSR_C.is_valid() ||
-            !d->REG_MAC_MASK.is_valid() || !d->REG_MACEXT0.is_valid()  || !d->REG_MACEXT1.is_valid() ||
-            !d->REG_MACEXT2.is_valid()  || !d->REG_MACEXT3.is_valid()) {
+        if (d->REG_MACSR_SU.isEmpty() || d->REG_MACSR_FI.isEmpty() || d->REG_MACSR_N.isEmpty() ||
+            d->REG_MACSR_Z.isEmpty()  || d->REG_MACSR_V.isEmpty()  || d->REG_MACSR_C.isEmpty() ||
+            d->REG_MAC_MASK.isEmpty() || d->REG_MACEXT0.isEmpty()  || d->REG_MACEXT1.isEmpty() ||
+            d->REG_MACEXT2.isEmpty()  || d->REG_MACEXT3.isEmpty()) {
             throw BaseSemantics::Exception("MAC registers are not available for " +
                                            d->get_register_dictionary()->get_architecture_name(),
                                            insn);
@@ -2153,16 +2153,17 @@ struct IP_mac: P {
         SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[3]);
         ASSERT_not_null2(rre, "fourth operand must be a MAC accumulator register");
         RegisterDescriptor macAccReg = rre->get_descriptor();
-        ASSERT_require2(macAccReg.get_major()==m68k_regclass_mac, "fourth operand must be a MAC accumulator register");
-        ASSERT_require2(macAccReg.get_nbits()==32, "MAC accumulator register must be 32 bits");
+        ASSERT_require2(macAccReg.majorNumber()==m68k_regclass_mac, "fourth operand must be a MAC accumulator register");
+        ASSERT_require2(macAccReg.nBits()==32, "MAC accumulator register must be 32 bits");
         RegisterDescriptor macExtReg;
-        switch (macAccReg.get_minor()) {
+        switch (macAccReg.minorNumber()) {
             case m68k_mac_acc0: macExtReg = d->REG_MACEXT0; break;
             case m68k_mac_acc1: macExtReg = d->REG_MACEXT1; break;
             case m68k_mac_acc2: macExtReg = d->REG_MACEXT2; break;
             case m68k_mac_acc3: macExtReg = d->REG_MACEXT3; break;
             default:
-                ASSERT_not_reachable("invalid mac accumulator register: " + stringifyM68kMacRegister(macAccReg.get_minor()));
+                ASSERT_not_reachable("invalid mac accumulator register: " +
+                                     stringifyBinaryAnalysisM68kMacRegister(macAccReg.minorNumber()));
         }
         SValuePtr macAcc = ops->readRegister(macAccReg);
         SValuePtr macExt = ops->readRegister(macExtReg);
@@ -2396,7 +2397,7 @@ struct IP_movem: P {
             firstAddr = d->effectiveAddress(mre, 32);
 
         if (isRegToMem) {                               // registers-to-memory operation
-            if (autoAdjust.is_valid()) {
+            if (!autoAdjust.isEmpty()) {
                 // Copying registers to memory and decrementing the address each time. Registers are copied from A7-A0, D7-D0
                 // so that D0 is at the lowest (ending) address.  For M68020, M68030, M68040, and CPU32 the address register is
                 // decremented before writing it to memory.
@@ -2418,7 +2419,7 @@ struct IP_movem: P {
                 }
             }
         } else {                                        // memory-to-registers operation
-            if (autoAdjust.is_valid()) {
+            if (!autoAdjust.isEmpty()) {
                 // Copying memory to registers and incrementing the address each time.  Registers are copied from D0-D7, A0-A7
                 // since D0 was stored at the lowest (starting) address.  The auto-adjusted register is clobbered after being
                 // read from memory.
@@ -3701,7 +3702,7 @@ DispatcherM68k::regcache_init() {
             REG_D[i] = findRegister("d"+StringUtility::numberToString(i), 32);
             REG_A[i] = findRegister("a"+StringUtility::numberToString(i), 32);
             REG_FP[i] = findRegister("fp"+StringUtility::numberToString(i));
-            ASSERT_require2(REG_FP[i].get_nbits()==64 || REG_FP[i].get_nbits()==80, "invalid floating point register size");
+            ASSERT_require2(REG_FP[i].nBits()==64 || REG_FP[i].nBits()==80, "invalid floating point register size");
         }
         REG_PC = findRegister("pc", 32);
         REG_CCR   = findRegister("ccr", 8);
@@ -3784,6 +3785,11 @@ DispatcherM68k::stackPointerRegister() const {
     return REG_A[7];
 }
 
+RegisterDescriptor
+DispatcherM68k::callReturnRegister() const {
+    return RegisterDescriptor();
+}
+
 void
 DispatcherM68k::set_register_dictionary(const RegisterDictionary *regdict) {
     BaseSemantics::Dispatcher::set_register_dictionary(regdict);
@@ -3864,7 +3870,8 @@ DispatcherM68k::condition(M68kInstructionKind kind, RiscOperators *ops) {
             return ops->or_(z, ops->or_(ops->and_(n, ops->invert(v)), x));
         }
         default:
-            ASSERT_not_reachable("instruction is not conditional: " + stringifyM68kInstructionKind(kind));
+            ASSERT_not_reachable("instruction is not conditional: " +
+                                 stringifyBinaryAnalysisM68kInstructionKind(kind));
     }
 }
 

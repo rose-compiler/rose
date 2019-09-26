@@ -4,7 +4,7 @@
 
 #include "sage3basic.h"
 
-// SPRAY includes
+// CodeThorn includes
 #include "Flow.h"
 #include "ParProEState.h"
 #include "ParProTransitionGraph.h"
@@ -24,7 +24,7 @@
 #include "boost/algorithm/string/trim.hpp"
 #include "boost/algorithm/string/regex.hpp"
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace CodeThorn;
 
 namespace CodeThorn {

@@ -6,5 +6,8 @@
 // ways to "hide" pointers from a possible garbage collector, like applying xor to it.[citation needed]
 
 
-#error "NEED AND EXAMPLE OF THIS!"
+// #error "NEED AND EXAMPLE OF THIS!"
+
+// There appears to not be any example of this anywhere, because it is a feature not supported by any C++11 compiler.
+
 

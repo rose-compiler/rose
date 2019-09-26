@@ -237,7 +237,7 @@ struct SingleSubstituter {
 
     SingleSubstituter(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver)
         : from(from), to(to), solver(solver) {}
-    
+
     Ptr substitute(const Ptr &input) {
         ASSERT_not_null(input);
         Ptr retval;
@@ -272,7 +272,7 @@ struct SingleSubstituter {
         return retval;
     }
 };
-            
+
 struct MultiSubstituter {
     const ExprExprHashMap &substitutions;
     SmtSolverPtr solver;
@@ -933,18 +933,29 @@ Interior::mayEqual(const Ptr &other, const SmtSolverPtr &solver/*NULL*/) {
     if (mayEqualCallback) {
         boost::logic::tribool result = (mayEqualCallback)(sharedFromThis(), other, solver);
         if (true == result || false == result)
-            return result;
+            return result ? true : false;
     }
 
     // Two addition operations of the form V + C1 and V + C2 where V is a variable and C1 and C2 are constants, are equal if
     // and only if C1 = C2.
     LeafPtr variableA, variableB, constantA, constantB;
-    if (matchAddVariableConstant(variableA/*out*/, constantA/*out*/) &&
-        other->matchAddVariableConstant(variableB/*out*/, constantB/*out*/)) {
-        if (variableA->nameId() == variableB->nameId()) {
-            ASSERT_require(variableA->nBits() == variableB->nBits());
-            ASSERT_require(constantA->nBits() == constantB->nBits());
-            return constantA->bits().compare(constantB->bits()) == 0;
+    if (matchAddVariableConstant(variableA/*out*/, constantA/*out*/)) {
+        if (other->matchAddVariableConstant(variableB/*out*/, constantB/*out*/)) {
+            // Comparing V + C1 with V + C2; return true iff C1 == C2
+            if (variableA->nameId() == variableB->nameId()) {
+                ASSERT_require(variableA->nBits() == variableB->nBits());
+                ASSERT_require(constantA->nBits() == constantB->nBits());
+                return constantA->bits().compare(constantB->bits()) == 0;
+            }
+        } else if ((variableB = other->isLeafNode()) && variableB->isVariable()) {
+            // Comparing V + C with V; return true iff C == 0 (which it shouldn't or else the additive identity rule would have
+            // already kicked in and removed it.
+            if (variableA->nameId() == variableB->nameId()) {
+                ASSERT_require(variableA->nBits() == variableB->nBits());
+                ASSERT_require(constantA->nBits() == variableA->nBits());
+                ASSERT_forbid2(constantA->bits().isEqualToZero(), "additive identity should have been simplified");
+                return false;
+            }
         }
     }
 
@@ -1160,6 +1171,27 @@ Interior::commutative() {
     return InteriorPtr(inode);
 }
 
+InteriorPtr
+Interior::idempotent(const SmtSolverPtr &solver) {
+    Nodes newArgs;
+    bool isSimplified = false;
+    BOOST_FOREACH (const Ptr &arg, children()) {
+        if (!newArgs.empty() && newArgs.back()->mustEqual(arg, solver)) {
+            isSimplified = true;
+        } else {
+            newArgs.push_back(arg);
+        }
+    }
+
+    if (isSimplified) {
+        // Construct the new node but don't simplify it yet (i.e., don't use Interior::create())
+        Interior *inode = new Interior(nBits(), getOperator(), newArgs, comment());
+        return InteriorPtr(inode);
+    } else {
+        return sharedFromThis().dynamicCast<Interior>();
+    }
+}
+        
 Ptr
 Interior::involutary() {
     if (InteriorPtr inode = isInteriorNode()) {
@@ -1300,8 +1332,8 @@ AddSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // and simplify the add operations
     if (inode->nChildren() == 2) {
         if (InteriorPtr ite = inode->child(0)->isOperator(OP_ITE)) {
-            if (!inode->child(0)->isOperator(OP_ITE)) {
-                // (add (ite C X Y) Z) => (ite (add X Z) (add Y Z))
+            // (add (ite C X Y) Z) => (ite (add X Z) (add Y Z))
+            if (!inode->child(1)->isOperator(OP_ITE)) {
                 return makeIte(ite->child(0),
                                makeAdd(ite->child(1), inode->child(1), solver),
                                makeAdd(ite->child(2), inode->child(1), solver),
@@ -1309,13 +1341,14 @@ AddSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
             }
         } else if (InteriorPtr ite = inode->child(1)->isOperator(OP_ITE)) {
             // (add Z (ite C X Y)) => (ite (add Z X) (add Z Y))
+            ASSERT_forbid(inode->child(0)->isOperator(OP_ITE));
             return makeIte(ite->child(0),
                            makeAdd(inode->child(0), ite->child(1), solver),
                            makeAdd(inode->child(0), ite->child(2), solver),
                            solver);
         }
     }
-        
+
     // A and B are duals if they have one of the following forms:
     //    (1) A = x           AND  B = (negate x)
     //    (2) A = x           AND  B = (invert x)   [adjust constant]
@@ -1694,9 +1727,12 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         prevLoOffset = curLoOffset;                     // valid only if isPrevExtract is non-null
     }
 
-    // Construct a new, simplified expression
+    // Identity
+    // (concat x) => x (flags from both)
     if (newArgs.size() == 1)
-        return newArgs[0]->newFlags(inode->flags());    // (concat X) => X, flags from both
+        return newArgs[0]->newFlags(inode->flags());
+
+    // Construct a new, simplified expression
     if (newArgs.size() == inode->nChildren())
         return Ptr();                                   // no simplification possible
     return Interior::create(inode->nBits(), inode->getOperator(), newArgs, solver, inode->comment(), inode->flags());
@@ -1876,6 +1912,11 @@ IteSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         return newExtract;
     }
 
+    // Convert a negative condition to a positive condition
+    //   (ite (invert X) A B) => (ite X B A)
+    if (InteriorPtr invert = inode->child(0)->isOperator(OP_INVERT))
+        return makeIte(invert->child(0), inode->child(2), inode->child(1), solver, inode->comment(), inode->flags());
+
     return Ptr();
 }
 
@@ -1996,7 +2037,12 @@ UextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Noop case
     size_t oldsize = inode->child(1)->nBits();
     size_t newsize = inode->nBits();
-    if (oldsize==newsize)
+
+    // Identity
+    // (uextend newsize arg[oldsize])
+    //   and newsize = oldsize
+    // => arg[oldsize]
+    if (oldsize == newsize)
         return inode->child(1);
 
     // Constant folding
@@ -2007,10 +2053,28 @@ UextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         return makeConstant(result, inode->comment(), inode->flags());
     }
 
-    // If the new size is smaller than the old size, use OP_EXTRACT instead.
-    if (newsize<oldsize) {
+    // Extending an extend
+    // (uextend newsize (uextend oldsize arg[k]))
+    //   and newsize >= oldsize
+    //   and oldsize >= k
+    // => (uextend newsize arg[k])
+    InteriorPtr arg = inode->child(1)->isInteriorNode();
+    if (arg && arg->getOperator() == OP_UEXTEND && newsize >= oldsize && oldsize >= arg->child(1)->nBits())
+        return makeExtend(inode->child(0), arg->child(1), solver, inode->comment());
+
+    // Shrinking an extend
+    // (uextend newsize (uextend oldsize arg[k]))
+    //   and k <= newsize <= oldsize
+    // => (uextend newsize arg[k])
+    if (arg && arg->getOperator() == OP_UEXTEND && newsize >= arg->child(1)->nBits() && newsize <= oldsize)
+        return makeExtend(inode->child(0), arg->child(1), solver, inode->comment());
+    
+    // Shrinking
+    // (uextend newsize arg[oldsize])
+    //   and newsize < oldsize
+    // => (extract 0 newsize arg[oldsize])
+    if (newsize < oldsize)
         return makeExtract(makeInteger(32, 0), makeInteger(32, newsize), inode->child(1), solver, inode->comment());
-    }
 
     return Ptr();
 }
@@ -2479,6 +2543,8 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
     while (InteriorPtr inode = node->isInteriorNode()) {
         Ptr newnode = node;
         switch (inode->getOperator()) {
+            case OP_NONE:
+                ASSERT_not_reachable("not possible for an interior node");
             case OP_ADD:
                 newnode = inode->rewrite(AddSimplifier(), solver);
                 if (newnode==node)
@@ -2489,7 +2555,7 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
                     newnode = inode->foldConstants(AddSimplifier());
                 break;
             case OP_AND:
-                newnode = inode->associative()->commutative()->identity((uint64_t)-1, solver);
+                newnode = inode->associative()->commutative()->idempotent(solver)->identity((uint64_t)-1, solver);
                 if (newnode==node)
                     newnode = inode->foldConstants(AndSimplifier());
                 if (newnode==node)
@@ -2549,7 +2615,7 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
                 newnode = inode->rewrite(NoopSimplifier(), solver);
                 break;
             case OP_OR:
-                newnode = inode->associative()->commutative()->identity(0, solver);
+                newnode = inode->associative()->commutative()->idempotent(solver)->identity(0, solver);
                 if (newnode==node)
                     newnode = inode->foldConstants(OrSimplifier());
                 if (newnode==node)
@@ -2753,15 +2819,45 @@ Leaf::nextNameCounter(uint64_t useThis) {
 }
 
 bool
-Leaf::isNumber() {
+Leaf::isNumber() const {
     return CONSTANT==leafType_;
 }
 
 uint64_t
 Leaf::toInt() {
-    ASSERT_require(isNumber());
-    ASSERT_require(nBits() <= 64);
-    return bits_.toInteger();
+    return toUnsigned().get();
+}
+
+Sawyer::Optional<uint64_t>
+Leaf::toUnsigned() const {
+    if (!isNumber())
+        return Sawyer::Nothing();
+    if (nBits() <= 64)
+        return bits_.toInteger();
+    size_t mssb = bits_.mostSignificantSetBit().orElse(0);
+    if (mssb < 64)
+        return bits_.toInteger(mssb+1);
+    return Sawyer::Nothing();
+}
+
+Sawyer::Optional<int64_t>
+Leaf::toSigned() const {
+    using namespace Sawyer::Container;
+    if (!isNumber())
+        return Sawyer::Nothing();
+    if (nBits() <= 64)
+        return bits_.toSignedInteger();
+    bool isNegative = bits_.get(bits_.size()-1);
+    if (isNegative) {
+        size_t mscb = bits_.mostSignificantClearBit().orElse(0);
+        if (mscb >= 63)
+            return Sawyer::Nothing();
+    } else {
+        size_t mssb = bits_.mostSignificantSetBit().orElse(0);
+        if (mssb >= 63)
+            return Sawyer::Nothing();
+    }
+    return bits_.toSignedInteger();
 }
 
 const Sawyer::Container::BitVector&
@@ -2944,11 +3040,20 @@ Leaf::mayEqual(const Ptr &other, const SmtSolverPtr &solver) {
     if (isNumber() && otherLeaf->isNumber())
         return bits().compare(otherLeaf->bits()) == 0;
 
+    // When compare V with V+C where V is a variable and C is a constant, then V may-equal V+C is true iff C is zero.
+    LeafPtr variableB, constantB;
+    if (isVariable() && matchAddVariableConstant(variableB /*out*/, constantB /*out*/)) {
+        ASSERT_require(nBits() == variableB->nBits());
+        ASSERT_require(variableB->nBits() == constantB->nBits());
+        ASSERT_forbid2(constantB->bits().isEqualToZero(), "additive identity should have been simplified");
+        return false;
+    }
+
     // Give the user a chance to decide.
     if (mayEqualCallback) {
         boost::logic::tribool result = (mayEqualCallback)(sharedFromThis(), other, solver);
         if (true == result || false == result)
-            return result;
+            return result ? true : false;
     }
 
     // The other cases are variable, memory, or constant compared to variable, memory, or constant as long as both are not
@@ -3007,6 +3112,12 @@ Leaf::depthFirstTraversal(Visitor &v) {
     if (TERMINATE!=retval)
         retval = v.postVisit(self);
     return retval;
+}
+
+const Nodes&
+Leaf::children() const {
+    static const Nodes empty;
+    return empty;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

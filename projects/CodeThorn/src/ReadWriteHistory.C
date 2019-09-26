@@ -4,7 +4,7 @@
 #include "EState.h"
 
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace CodeThorn;
 
 bool CodeThorn::operator<(const ReadsWritesUnorderedBlock& s1, const ReadsWritesUnorderedBlock& s2) {

@@ -1,0 +1,120 @@
+#!/bin/bash
+# Scans the RMC/Spock build environment and emits KEY=VAL pairs, one per line, on standard ouptut.
+
+########################################################################################################################
+# Emit KEY=VAL if VAL is not empty
+# Else KEY=VAL2 if VAL2 is not empty
+emit-pair() {
+    local key="$1" val="$2" val2="$3"
+
+    if [ -n "$val" ]; then
+	echo "${key}=${val}"
+    elif [ -n "$val2" ]; then
+	echo "${key}=${val2}"
+    fi
+}
+
+########################################################################################################################
+# Returns VAL or OTHER
+either() {
+    local val="$1" other="$2"
+    if [ -n "$val" ]; then
+	echo "$val"
+    else
+	echo "$other"
+    fi
+}
+
+########################################################################################################################
+# Scan variables in an RMC build environment.
+#
+# In the RMC/Spock environment there are generally two sets of variables. Those whose names begin with "$RMC_" are the
+# arguments from the corresponding rmc_* directive in the .rmc-main.cfg configuration file at the top of the build tree;
+# those whose names end with "_VERSION" are from Spock.
+#
+# The Spock (*_VERSION) variables describe what's actually being used and are very specific.
+#
+# On the other hand, the RMC (RMC_*) variables describe what the user asked for and are less specific but exist even for
+# packages that are not in use.
+scan-rmc-environment() {
+    emit-pair assertions  "$RMC_ASSERTIONS"
+    emit-pair boost       "$BOOST_VERSION"
+    emit-pair build       "$RMC_BUILD"
+    emit-pair cmake       "$CMAKE_VERSION"           "$RMC_CMAKE"
+    emit-pair debug       "$RMC_DEBUG"
+    emit-pair dlib        "$DLIB_VERSION"            "$RMC_DLIB"
+    emit-pair doxygen     "$DOXYGEN_VERSION"         "$RMC_DOXYGEN"
+    emit-pair dwarf       "$DWARF_VERSION"           "$RMC_DWARF"
+    emit-pair edg         "$RMC_EDG"
+    emit-pair edg_compile "$RMC_EDG_COMPILE"
+    emit-pair jq          "$JQ_VERSION"              "$RMC_JQ"
+    emit-pair languages   "$RMC_LANGUAGES"
+    emit-pair magic       "$LIBMAGIC_VERSION"        "$RMC_MAGIC"
+    emit-pair optimize    "$RMC_OPTIMIZE"
+    emit-pair python      "$PYTHON_VERSION"          "$RMC_PYTHON"
+    emit-pair qt          "$QT_VERSION"              "$RMC_QT"
+    emit-pair readline    "$READLINE_VERSION"        "$RMC_READLINE"
+    emit-pair sqlite      "$SQLITE_VERSION"          "$RMC_SQLITE"
+    emit-pair tup         "$TUP_VERSION"             "$RMC_TUP"
+    emit-pair warnings    "$RMC_WARNINGS"
+    emit-pair wt          "$WT_VERSION"              "$RMC_WT"
+    emit-pair yaml        "$YAMLCPP_VERSION"         "$RMC_YAML"
+    emit-pair yices       "$YICES_VERSION"           "$RMC_YICES"
+    emit-pair z3          "$Z3_VERSION"              "$RMC_Z3"
+
+    if [ -n "$CXX_VENDOR" -a -n "$CXX_VERSION" -a -n "$CXX_LANGUAGE" ]; then
+	emit-pair compiler "${CXX_VENDOR}-${CXX_LANGUAGE}-${CXX_VERSION}" "$RMC_COMPILER"
+    fi
+
+    if [ -n "$JAVA_VENDOR" ]; then
+	emit-pair java "${JAVA_VENDOR}-java-${JAVA_VERSION}" "$RMC_JAVA"
+    else
+	emit-pair java "$RMC_JAVA"
+    fi
+}
+
+########################################################################################################################
+# Read a line from the RMC config file.
+config-line() {
+    local config_file="$1" key="$2"
+
+    local value="$(sed -n  "s/^[ \\t]*rmc_${key}[ \\t]\\+//p" <"$config_file" |sed 's/[ \\t]*#.*//')"
+    emit-pair "$key" "$value"
+}
+
+########################################################################################################################
+# Scan an RMC configuration file without trying to start an RMC build environment.
+scan-rmc-config() {
+    local config_file="$1"
+    config-line "$config_file" assertions
+    config-line "$config_file" boost
+    config-line "$config_file" build
+    config-line "$config_file" compiler
+    config-line "$config_file" debug
+    config-line "$config_file" dlib
+    config-line "$config_file" doxygen
+    config-line "$config_file" dwarf
+    config-line "$config_file" edg
+    config-line "$config_file" edg_compile
+    config-line "$config_file" java
+    config-line "$config_file" jq
+    config-line "$config_file" languages
+    config-line "$config_file" magic
+    config-line "$config_file" optimize
+    config-line "$config_file" python
+    config-line "$config_file" qt
+    config-line "$config_file" readline
+    config-line "$config_file" sqlite
+    config-line "$config_file" warnings
+    config-line "$config_file" wt
+    config-line "$config_file" yaml
+    config-line "$config_file" yices
+    config-line "$config_file" z3
+}
+
+########################################################################################################################
+if [ -n "$RMC_HASH" ]; then
+    scan-rmc-environment
+elif [ -n "$1" -a -r "$1" ] && grep -q rmc_ "$1"; then
+    scan-rmc-config "$1"
+fi

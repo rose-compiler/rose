@@ -1,3 +1,7 @@
+-------------------------------------------------
+HEADER FILE:
+-------------------------------------------------
+
 Adding logger to class A:
 class A {
   ...
@@ -7,7 +11,12 @@ class A {
   ...
 };
 
----
+-------------------------------------------------
+SOURCE FILE:
+-------------------------------------------------
+
+#include "Diagnostics.h"
+using namespace Sawyer::Message;
 
 Sawyer::Message::Facility A::logger;
 
@@ -20,7 +29,27 @@ void A::initDiagnostics() {
   }
 }
 
----
+-------------------------------------------------
+USAGE IN CODE:
+-------------------------------------------------
 
 usage in methods of class A:
 logger[TRACE|DEBUG|...]<<...;
+
+SAWYER_MESG(logger[TRACE])<< ....
+
+if(logger[TRACE]) {
+    cout<<"I am tracing!"<<endl;
+}
+
+identityTranslator test.C -rose:log help
+identityTranslator test.C -rose:log list
+
+Progress Bar:
+http://rosecompiler.org/ROSE_HTML_Reference/classSawyer_1_1ProgressBar.html
+void f() {
+    int total = 200;
+    ProgressBar<int> progress(total, mlog[INFO], "test");
+    for (int i=0; i<total; ++i, ++progress)
+        do_some_work();
+}

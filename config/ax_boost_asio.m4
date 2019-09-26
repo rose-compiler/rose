@@ -18,10 +18,6 @@
 #
 #     HAVE_BOOST_ASIO
 #
-# LAST MODIFICATION
-#
-#   2007-07-26
-#
 # COPYLEFT
 #
 #   Copyright (c) 2007 Thomas Porschberg <thomas@randspringer.de>
@@ -97,7 +93,7 @@ AC_DEFUN([AX_BOOST_ASIO],
 
             fi
 			if test "x$link_asio" = "xno"; then
-				AC_MSG_ERROR(Could not link against $ax_lib !)
+				AC_MSG_ERROR([could not link against "$ax_lib"])
 			fi
 		fi
 

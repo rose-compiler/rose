@@ -326,7 +326,7 @@ insertGlobalPrototype (SgFunctionDeclaration* def,
             // proto_i->set_firstNondefiningDeclaration (prototype);
                if (proto_i->get_firstNondefiningDeclaration() != NULL)
                   {
-#if 1
+#if 0
                     printf ("In insertGlobalPrototype(): prototype = %p = %s \n",prototype,prototype->class_name().c_str());
                     printf ("In insertGlobalPrototype(): proto_i->get_firstNondefiningDeclaration() = %p = %s \n",proto_i->get_firstNondefiningDeclaration(),proto_i->get_firstNondefiningDeclaration()->class_name().c_str());
                     printf ("In insertGlobalPrototype(): proto_i->get_firstNondefiningDeclaration()->get_firstNondefiningDeclaration() = %p = %s \n",
@@ -394,6 +394,52 @@ insertFriendDecl (const SgFunctionDeclaration* func,
       cls_def->get_members().insert(i, friend_proto);
       friend_proto->set_parent (cls_def);
       friend_proto->set_scope (scope);
+
+   // Address the iterator invalidation caused by the insertion of a new element into the list.
+   // i = mems.begin();
+   // ROSE_ASSERT(*i == friend_proto);
+   // i++;
+
+#if 0
+      printf ("In insertFriendDecl(): friend_proto = %p friend_proto->get_isModified() = %s (mark explicitly as modified) \n",
+           friend_proto,friend_proto->get_isModified() ? "true" : "false");
+#endif
+
+   // DQ (6/4/2019): The isModified flag is reset by the SageBuilder functions as part of adding the function.
+   // It is however marked as a transformation.  To support the header file unparsing, we also need to set
+   // the physical file name to the header file name.
+      string filename = cls_def->get_startOfConstruct()->get_physical_filename();
+#if 0
+      printf (" --- Set the physical filename: filename = %s \n",filename.c_str());
+#endif
+
+      friend_proto->get_startOfConstruct()->set_physical_filename(filename);
+      friend_proto->get_endOfConstruct()->set_physical_filename(filename);
+
+   // DQ (6/4/2019): Need to mark this as a modification, so that it will be detected as something to 
+   // trigger the output of the header file when the class declaration appears in a header file.
+   // Maybe the insert function should do this?
+      friend_proto->set_isModified(true);
+      cls_def->set_isModified(true);
+
+#if 0
+     friend_proto->get_startOfConstruct()->display("insertFriendDecl(): debug");
+#endif
+
+#if 0
+     Sg_File_Info* fileInfo    = friend_proto->get_startOfConstruct();
+     int physical_file_id      = fileInfo->get_physical_file_id();
+  // string normalizedFileName = FileHelper::normalizePath(fileInfo->getFilenameFromID(physical_file_id));
+     string normalizedFileName = fileInfo->getFilenameFromID(physical_file_id);
+
+     printf ("insertFriendDecl(): normalizedFileName = %s \n",normalizedFileName.c_str());
+#endif
+
+#if 0
+      printf ("Exiting as a test! \n");
+      ROSE_ASSERT(false);
+#endif
+
     }
 
 //  printf ("In insertFriendDecl(): Returning SgFunctionDeclaration prototype = %p \n",friend_proto);
@@ -411,23 +457,45 @@ insertFriendDecl (const SgFunctionDeclaration* func,
 static
 bool
 isProtPriv (const SgDeclarationStatement* decl)
-{
-  if (decl)
-    {
-      SgDeclarationStatement* decl_tmp =
-        const_cast<SgDeclarationStatement *> (decl);
-      // Liao 3/1/2013. workaround a bug introduced by Dan: only the defining decl has the correct access modifier.  
-      if (decl_tmp ->get_definingDeclaration () != NULL )
-        decl_tmp = decl_tmp ->get_definingDeclaration ();
-      ROSE_ASSERT (decl_tmp);
-      const SgAccessModifier& decl_access_mod =
-        decl_tmp->get_declarationModifier ().get_accessModifier ();
-      return decl && (decl_access_mod.isPrivate ()
-                      || decl_access_mod.isProtected ());
-    }
+   {
+#if 0
+     printf ("Inside of isProtPriv(): decl = %p \n",decl);
+#endif
 
-  return false;
-}
+     if (decl)
+        {
+          SgDeclarationStatement* decl_tmp = const_cast<SgDeclarationStatement *> (decl);
+
+#if 0
+          printf ("Inside of isProtPriv(): decl     = %p = %s \n",decl,decl->class_name().c_str());
+          if (decl_tmp != NULL)
+             {
+               printf ("Inside of isProtPriv(): decl_tmp = %p = %s \n",decl_tmp,decl_tmp->class_name().c_str());
+               printf (" --- decl_tmp->get_definingDeclaration() = %p \n",decl_tmp->get_definingDeclaration ());
+             }
+#endif
+
+       // Liao 3/1/2013. workaround a bug introduced by Dan: only the defining decl has the correct access modifier.  
+          if (decl_tmp->get_definingDeclaration () != NULL )
+             {
+               decl_tmp = decl_tmp ->get_definingDeclaration ();
+             }
+
+          ROSE_ASSERT (decl_tmp);
+          const SgAccessModifier& decl_access_mod = decl_tmp->get_declarationModifier ().get_accessModifier ();
+#if 0
+          printf ("decl_access_mod.isPrivate()   = %s \n",decl_access_mod.isPrivate()   ? "true" : "false");
+          printf ("decl_access_mod.isProtected() = %s \n",decl_access_mod.isProtected() ? "true" : "false");
+#endif
+          return decl && (decl_access_mod.isPrivate () || decl_access_mod.isProtected ());
+        }
+
+#if 0
+     printf ("Leaving isProtPriv(): return false \n");
+#endif
+
+     return false;
+   }
 
 /*!
  *  \brief Returns 'true' if the given variable use is a 'protected'
@@ -436,23 +504,60 @@ isProtPriv (const SgDeclarationStatement* decl)
 static
 SgClassDefinition *
 isProtPrivMember (SgVarRefExp* v)
-{
-  if (v)
-    {
-      SgVariableSymbol* sym = v->get_symbol ();
-      if (sym)
+   {
+#if 0
+     printf ("Inside of isProtPrivMember(): v = %p \n",v);
+#endif
+     if (v)
         {
-          SgInitializedName* name = sym->get_declaration ();
-          ROSE_ASSERT (name);
-          SgClassDefinition* cl_def =
-            isSgClassDefinition (name->get_scope ());
-          if (cl_def && isProtPriv (name->get_declaration ()))
-            return cl_def;
-        }
-    }
+          SgVariableSymbol* sym = v->get_symbol ();
+#if 0
+          printf ("Inside of isProtPrivMember(): sym = %p \n",sym);
+#endif
+          if (sym)
+             {
+               SgInitializedName* name = sym->get_declaration();
+               ROSE_ASSERT (name != NULL);
+#if 0
+               SgScopeStatement* scope = name->get_scope();
+               ROSE_ASSERT(scope != NULL);
+               printf ("Inside of isProtPrivMember(): scope = %p = %s \n",scope,scope->class_name().c_str());
+#endif
+               SgClassDefinition* cl_def = isSgClassDefinition (name->get_scope ());
+#if 0
+               printf ("Inside of isProtPrivMember(): cl_def = %p \n",cl_def);
+#endif
+               if (cl_def != NULL)
+                  {
+#if 0
+                    printf ("Inside of isProtPrivMember(): cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
+                    printf (" --- name = %p name->get_name() = %s \n",name,name->get_name().str());
+                    printf (" --- name->get_declaration() = %p = %s \n",name->get_declaration(),name->get_declaration()->class_name().c_str());
+#endif
+                  }
 
-  return NULL; // default: is not
-}
+               if (cl_def && isProtPriv(name->get_declaration()))
+                  {
+#if 0
+                    printf ("Inside of isProtPrivMember(): isProtPriv() returned valid pointer: cl_def = %p \n",cl_def);
+#endif
+                    return cl_def;
+                  }
+                 else
+                  {
+#if 0
+                    printf ("Inside of isProtPrivMember(): isProtPriv() returned FALSE \n");
+#endif
+                  }
+             }
+        }
+
+#if 0
+     printf ("Inside of isProtPrivMember(): returning NULL \n");
+#endif
+
+     return NULL; // default: is not
+   }
 
 /*!
  *  \brief Returns 'true' if the given type was declared as a
@@ -518,9 +623,17 @@ insertFriendDecls (SgFunctionDeclaration* func,
                    SgGlobal* scope,
                    FuncDeclList_t& friends)
 {
+#if 0
+     printf ("In insertFriendDecls(): func = %p = %s name = %s \n",func,func->class_name().c_str(),func->get_name().str());
+     printf ("In insertFriendDecls(): scope = %p = %s \n",scope,scope->class_name().c_str());
+     printf ("In insertFriendDecls(): friends list size = %" PRIuPTR " \n",friends.size());
+#endif
+
   if (func && scope)
     {
-   // printf ("In insertFriendDecls(): friends list size = %" PRIuPTR " \n",friends.size());
+#if 0
+      printf ("In insertFriendDecls(): friends list size = %" PRIuPTR " \n",friends.size());
+#endif
 
    // Collect a list of all classes that need a 'friend' decl.
    // The outlining target has accesses to those classes' private/protected members 
@@ -534,11 +647,38 @@ insertFriendDecls (SgFunctionDeclaration* func,
         {
           SgVarRefExp* v_ref = isSgVarRefExp (*v);
           SgClassDefinition* cl_def = isProtPrivMember (v_ref);
-          if (!cl_def)
-            cl_def = isProtPrivType (v_ref->get_type ());
-          
-          if (cl_def)
-            classes.insert (cl_def);
+#if 0
+          printf ("In insertFriendDecls(): after isProtPrivMember(): cl_def = %p \n",cl_def);
+#endif
+#if 0
+          SgVariableSymbol* variableSymbol = v_ref->get_symbol();
+          ROSE_ASSERT(variableSymbol != NULL);
+          SgInitializedName* initializedName = variableSymbol->get_declaration();
+          ROSE_ASSERT(initializedName != NULL);
+          printf ("In insertFriendDecls(): v_ref = %p = %s initializedName name = %s \n",v_ref,v_ref->class_name().c_str(), initializedName->get_name().str());
+          printf ("In insertFriendDecls(): cl_def = %p \n",cl_def);
+#endif
+       // if (!cl_def)
+          if (cl_def == NULL)
+             {
+#if 0
+               ROSE_ASSERT(v_ref->get_type() != NULL);
+               printf ("Calling isProtPrivType(): v_ref->get_type() = %p = %s \n",v_ref->get_type(),v_ref->get_type()->class_name().c_str());
+#endif
+               cl_def = isProtPrivType (v_ref->get_type());
+#if 0
+               printf ("In insertFriendDecls(): after isProtPrivType(): cl_def = %p \n",cl_def);
+#endif
+             }
+
+       // if (cl_def)
+          if (cl_def != NULL)
+             {
+#if 0
+               printf ("Calling classes.insert(): variables: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
+#endif
+               classes.insert (cl_def);
+             }
         }
       
    // Get a list of all function reference expressions.
@@ -549,7 +689,12 @@ insertFriendDecls (SgFunctionDeclaration* func,
           SgMemberFunctionRefExp* f_ref = isSgMemberFunctionRefExp (*f);
           SgClassDefinition* cl_def = isProtPrivMember (f_ref);
           if (cl_def)
-            classes.insert (cl_def);
+             {
+#if 0
+               printf ("Calling classes.insert(): member functions: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
+#endif
+               classes.insert (cl_def);
+             }
         }
 
    // Insert 'em
@@ -645,13 +790,32 @@ Outliner::insert (SgFunctionDeclaration* func,
         }
        else
         {
+       // DQ (6/15/2019): Adding more debugging information.
+          if (scope == src_global)
+             {
+               printf ("error: scope == src_global: scope = %p = %s \n",scope,scope->class_name().c_str());
+               ROSE_ASSERT(scope->get_file_info() != NULL);
+               scope->get_file_info()->display("error: In Outliner::insert(): scope == src_global : debug");
+
+               printf (" --- func = %p = %s name = %s \n",func,func->class_name().c_str(), func->get_name().str());
+               ROSE_ASSERT(func->get_file_info() != NULL);
+               func->get_file_info()->display("error: In Outliner::insert(): func : debug");
+             }
+#if 0
+       // DQ (6/15/2019): Original code.
           ROSE_ASSERT(scope != src_global);
           ROSE_ASSERT(func->get_scope() == scope);
           ROSE_ASSERT(func->get_scope() != src_global);
+#else
+       // DQ (6/15/2019): This is the only assertion that might be best.
+          ROSE_ASSERT(func->get_scope() == scope);
+#endif
         }
-    // no need to build nondefining function prototype for Fortran, Liao, 3/11/2009    
-    //if (SageInterface::is_Fortran_language() == true)
-    //  return;
+
+  // no need to build nondefining function prototype for Fortran, Liao, 3/11/2009
+  // if (SageInterface::is_Fortran_language() == true)
+  // return;
+
 #if 0
      printf ("************************************************************ \n");
      printf ("Building the outline function prototype in the ORIGINAL file \n");
@@ -683,14 +847,18 @@ Outliner::insert (SgFunctionDeclaration* func,
 
      SgFunctionType *ftype = buildFunctionType(buildVoidType(), tlist);//func->get_type();
      string var_name = func->get_name().getString()+"p";
-     SgVariableDeclaration * ptofunc = buildVariableDeclaration(var_name,buildPointerType(ftype), NULL, src_global);
-     prependStatement(ptofunc,src_global);
+  // SgVariableDeclaration * ptofunc = buildVariableDeclaration(var_name,buildPointerType(ftype), NULL, src_global);
+  // prependStatement(ptofunc,src_global);
+     SgVariableDeclaration * ptofunc = buildVariableDeclaration(var_name,buildPointerType(ftype), NULL, target_outlined_code->get_scope());
+  // prependStatement(ptofunc,target_outlined_code);
+     SageInterface::insertStatementBefore(target_outlined_code,ptofunc);
    }
 //   else 
 //   Liao, 5/1/2009
 //   We still generate the prototype even they are not needed if dlopen() is used. 
 //   since SageInterface::appendStatementWithDependentDeclaration() depends on it
-   if (SageInterface::is_Fortran_language() == false ) // C/C++ only
+// if (SageInterface::is_Fortran_language() == false ) // C/C++ only
+   if (use_dlopen == false && SageInterface::is_Fortran_language() == false ) // C/C++ only
    {
      // This is done in the original file (does not effect the separate file if we outline the function there)
      // Insert a single, global prototype (i.e., a first non-defining

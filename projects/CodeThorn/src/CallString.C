@@ -12,7 +12,11 @@ namespace CodeThorn {
   // use maximum value for default call string length
   size_t CallString::_maxLength=std::numeric_limits<size_t>::max();
 
-  bool CallString::addLabel(SPRAY::Label lab) {
+  bool CallString::isEmpty() {
+    return getLength()==0;
+  }
+
+  bool CallString::addLabel(CodeThorn::Label lab) {
     if(getLength()<=getMaxLength()) {
       _callString.push_back(lab);
       return true;
@@ -21,17 +25,24 @@ namespace CodeThorn {
     }
   }
 
-  void CallString::removeLabel() {
+  void CallString::removeLastLabel() {
     if(_callString.size()>0) {
       _callString.pop_back();
     }
   }
 
-  bool CallString::removeIfLastLabel(SPRAY::Label lab) {
+  bool CallString::removeIfLastLabel(CodeThorn::Label lab) {
+    if(isLastLabel(lab)) {
+      _callString.pop_back();
+      return true;
+    }
+    return false;
+  }
+
+  bool CallString::isLastLabel(CodeThorn::Label lab) {
     if(_callString.size()>0) {
       if(lab==_callString.back()) {
-        _callString.pop_back();
-        return true;
+        return  true;
       }
     }
     return false;
@@ -90,5 +101,12 @@ namespace CodeThorn {
     } else {
       return _callString.size()<other._callString.size();
     }
+  }
+  size_t CallString::hash() const {
+    size_t h=1;
+    for(auto lab : _callString) {
+      h=h*11*lab.getId();
+    }
+    return h;
   }
 }

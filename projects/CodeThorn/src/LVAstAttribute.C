@@ -4,42 +4,42 @@
 #include <sstream>
 
 using namespace std;
-SPRAY::LVAstAttribute::LVAstAttribute(SPRAY::LVLattice* elem):_elem(elem) {
+CodeThorn::LVAstAttribute::LVAstAttribute(CodeThorn::LVLattice* elem):_elem(elem) {
 }
 
-bool SPRAY::LVAstAttribute::isLive(SPRAY::VariableId variableId) {
+bool CodeThorn::LVAstAttribute::isLive(CodeThorn::VariableId variableId) {
   return _elem->exists(variableId);
 }
 
-void SPRAY::LVAstAttribute::toStream(ostream& os, SPRAY::VariableIdMapping* vim) {
+void CodeThorn::LVAstAttribute::toStream(ostream& os, CodeThorn::VariableIdMapping* vim) {
   os<<"LV:";
   _elem->toStream(os,vim);
 }
 
-string SPRAY::LVAstAttribute::toString() {
+string CodeThorn::LVAstAttribute::toString() {
   stringstream ss; 
   toStream(ss,0);
   return ss.str();
 }
 
-bool SPRAY::LVAstAttribute::isBottomElement() {
+bool CodeThorn::LVAstAttribute::isBottomElement() {
   return _elem->isBot();
 }
 
-SPRAY::VariableIdSet SPRAY::LVAstAttribute::allVariableIds() {
-  SPRAY::VariableIdSet set;
-  for(SPRAY::LVLattice::iterator i=begin();i!=end();++i) {
+CodeThorn::VariableIdSet CodeThorn::LVAstAttribute::allVariableIds() {
+  CodeThorn::VariableIdSet set;
+  for(CodeThorn::LVLattice::iterator i=begin();i!=end();++i) {
     set.insert(*i);
   }
   return set;
 }
-SPRAY::LVLattice::iterator
-SPRAY::LVAstAttribute::begin() {
+CodeThorn::LVLattice::iterator
+CodeThorn::LVAstAttribute::begin() {
   return _elem->begin();
 }
-SPRAY::LVLattice::iterator
-SPRAY::LVAstAttribute::end() {
+CodeThorn::LVLattice::iterator
+CodeThorn::LVAstAttribute::end() {
   return _elem->end();
 }
-SPRAY::LVAstAttribute::~LVAstAttribute() {
+CodeThorn::LVAstAttribute::~LVAstAttribute() {
 }

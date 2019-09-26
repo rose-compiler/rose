@@ -213,8 +213,8 @@ void fixupEdgBugDuplicateVariablesInAST()
                   {
                     if (possible_matching_variable_declaration->get_variables()[0]->get_name() == name)
                        {
-#if 0
-                         printf ("matching variable declaration found for name = %s \n",name.str());
+#if 1
+                         printf ("In fixupEdgBugDuplicateVariablesInAST(): matching variable declaration found for name = %s \n",name.str());
 #endif
                          declarations_to_remove.insert(var_decl);
                        }
@@ -242,6 +242,10 @@ void fixupEdgBugDuplicateVariablesInAST()
 
        // members.erase(*k);
        // members.erase(myvector.begin(),myvector.end());
+
+#if 1
+          printf ("In fixupEdgBugDuplicateVariablesInAST(): remove/erase idiom: *k = %p = %s name = %s \n",*k,(*k)->class_name().c_str(),(*k)->get_variables()[0]->get_name().str());
+#endif
 
        // This is the remove/erase idiom.
           members.erase(remove(members.begin(), members.end(), *k), members.end());

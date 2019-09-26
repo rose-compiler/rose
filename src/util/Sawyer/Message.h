@@ -386,7 +386,7 @@ struct SAWYER_EXPORT ColorSpec {
     ColorSpec(AnsiColor fg, AnsiColor bg, bool bold): foreground(fg), background(bg), bold(bold) {}
 
     /** Returns true if this object is in its default-constructed state. */
-    bool isDefault() const { return COLOR_DEFAULT==foreground && COLOR_DEFAULT==background && !bold; }
+    bool isDefault() const { return COLOR_DEFAULT==foreground && COLOR_DEFAULT==background && !bold ? true : false; }
 };
 
 /** Colors to use for each message importance.
@@ -1488,6 +1488,16 @@ public:
      *  SAWYER_MESG(mlog[DEBUG]) <<"the memory map is: " <<memoryMap <<"\n";
      * @endcode
      *
+     * The SAWYER_MESG_OR macro is similar in that it short circuits, but it prints to either the first stream (if enabled)
+     * or the second stream (if enabled) but not both. For example, these two are equivalent:
+     *
+     * @code
+     *  if (mlog[TRACE] || mlog[DEBUG])
+     *      (mlog[TRACE] ? mlog[TRACE] : mlog[DEBUG]) <<"got here\n";
+     *     
+     *  SAWYER_MESG_OR(mlog[TRACE], mlog[DEBUG]) <<"got here\n";
+     * @code
+     *
      * Thread safety: This method is thread-safe.
      *
      * @{ */
@@ -1510,7 +1520,8 @@ public:
     bool operator!() const { return !enabled(); }
         
     // See Stream::bool()
-    #define SAWYER_MESG(message_stream) message_stream && message_stream
+    #define SAWYER_MESG(message_stream) (message_stream) && (message_stream)
+    #define SAWYER_MESG_OR(s1, s2) ((s1) || (s2)) && ((s1) ? (s1) : (s2))
 
     /** Enable or disable a stream.
      *
@@ -1603,15 +1614,6 @@ public:
      *  The destination facility will point to the same streams as the source facility. */
     Facility& operator=(const Facility &src);
 
-    /** Create a named facility with default destinations.  All streams are enabled and all output goes to file descriptor
-     *  2 (standard error) via unbuffered system calls.  Facilities initialized to this state can typically be used before the
-     *  C++ runtime is fully initialized and before @ref Sawyer::initializeLibrary is called. */
-    explicit Facility(const std::string &name): constructed_(CONSTRUCTED_MAGIC), name_(name) {
-        //initializeLibrary() //delay until later
-        initStreams(FdSink::instance(2));
-    }
-
-    /** Creates streams of all importance levels. */
     Facility(const std::string &name, const DestinationPtr &destination): constructed_(CONSTRUCTED_MAGIC), name_(name) {
         initStreams(destination);
     }
@@ -1619,6 +1621,14 @@ public:
     ~Facility() {
         constructed_ = 0;
     }
+
+    /** Initializes this facility with default destinations.
+     *
+     *  All streams are enabled and all output goes to file descriptor 2 (standard error) via unbuffered system calls. */
+    Facility& initialize(const std::string &name);
+
+    /** Initialize all streams with specified destination. */
+    Facility& initialize(const std::string &name, const DestinationPtr &destination);
 
     /** Returns true if called on an object that has been constructed.
      *

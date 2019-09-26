@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) HiddenList.C HiddenList_Intersection.C HiddenList_Output.C NamespacesAndClassTraversal.C
+
+run $(public_header) HiddenList.h  HiddenList_Intersection.h  HiddenList_Output.h

@@ -8,10 +8,12 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include "Registers.h"
 
+using namespace Rose::BinaryAnalysis;
+
 int
 main()
 {
-    const RegisterDictionary *dict = RegisterDictionary::dictionary_powerpc();
+    const RegisterDictionary *dict = RegisterDictionary::dictionary_powerpc32();
     ROSE_ASSERT(dict!=NULL);
     // std::cout <<*dict;
 

@@ -303,9 +303,11 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
         calleeReturnRegs &= calleeBehavior.outputRegisters();
     calleeReturnRegs -= RegisterParts(partitioner.instructionProvider().stackPointerRegister());
     StackVariables calleeReturnMem;
+#if 0 // [Robb Matzke 2019-08-14]: turning off warning
     BOOST_FOREACH (const CallingConvention::ParameterLocation &location, calleeDefinition->outputParameters()) {
         // FIXME[Robb P Matzke 2017-03-20]: todo
     }
+#endif
     
     // Build the instruction semantics that will look for which of the callee's return values are used by the caller. "Used"
     // means (1) the caller reads the callee output location without first writing to it, or (2) the caller calls a second
@@ -417,7 +419,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
                     SAWYER_MESG(mlog[DEBUG]) <<"  return from " <<caller->printableName() <<" implicitly uses: "
                                              <<locationNames(callerBehavior.outputRegisters(), regdict) <<"\n";
                     BOOST_FOREACH (RegisterDescriptor reg, callerBehavior.outputRegisters().listAll(regdict))
-                        (void) ops->readRegister(reg, ops->undefined_(reg.get_nbits()));
+                        (void) ops->readRegister(reg, ops->undefined_(reg.nBits()));
                 }
             }
         }

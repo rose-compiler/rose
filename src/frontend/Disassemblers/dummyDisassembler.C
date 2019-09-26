@@ -61,6 +61,15 @@ SgAsmInstruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>&, bo
     return std::vector<std::pair<size_t,size_t> >();
 }
 
+std::set<rose_addr_t>
+SgAsmInstruction::explicitConstants() const {
+    return std::set<rose_addr_t>();
+}
+
+size_t SgAsmInstruction::semanticFailure() const { abort(); }
+void SgAsmInstruction::semanticFailure(size_t) { abort(); }
+void SgAsmInstruction::incrementSemanticFailure() { abort(); }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmArmInstruction
 
@@ -201,9 +210,13 @@ SgAsmBlock::has_instructions() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RegisterDescriptor
+namespace Rose {
+namespace BinaryAnalysis {
 void RegisterDescriptor::majorNumber(unsigned) { abort(); }
 void RegisterDescriptor::minorNumber(unsigned) { abort(); }
 void RegisterDescriptor::offset(size_t) { abort(); }
 void RegisterDescriptor::nBits(size_t) { abort(); }
 void RegisterDescriptor::setOffsetWidth(size_t, size_t) { abort(); }
-std::iostream& operator<<(std::ostream, RegisterDescriptor) { abort(); }
+std::ostream& operator<<(std::ostream&, RegisterDescriptor) { abort(); }
+} // namespace
+} // namespace

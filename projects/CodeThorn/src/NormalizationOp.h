@@ -1,7 +1,7 @@
 #ifndef NORMALIZATION_OP_H
 #define NORMALIZATION_OP_H
 
-namespace SPRAY {
+namespace CodeThorn {
 
   class NormalizationOp {
   public:

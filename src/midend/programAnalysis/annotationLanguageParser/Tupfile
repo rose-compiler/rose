@@ -1,0 +1,22 @@
+include_rules
+
+: language.y \
+  |> ^ BISON %f^ \
+     bison -d -pann -o ./tempBisonOutput.c %f && \
+     mv tempBisonOutput.c language-parser.cc && \
+     mv tempBisonOutput.h language.tab.h \
+  |> language-parser.cc language.tab.h
+
+: language.l \
+  |> ^ FLEX %f^ \
+     flex -olex.ann.c %f && \
+     mv lex.ann.c language-lexer.cc \
+  |> language-lexer.cc
+
+run $(librose_compile) -D__LOCALSTL_H --depend=language.tab.h \
+    language-lexer.cc language-parser.cc annotations.cc annvariable.cc structure.cc enum_property.cc procedure.cc \
+    set_property.cc pointerrule.cc analyze.cc rule.cc broadway_expr.cc report.cc
+
+run $(public_header) actionchanger.h analyze.h annvariable.h callingcontext.h diagnostic.h localstl.h property.h \
+    set_property.h action.h ann.h bdwy_liveness.h constantprop.h enum_property.h pointerrule.h report.h structure.h \
+    adaptor_statistics.h annotations.h broadway.h cpattern.h broadway_expr.h procedure.h rule.h unification_ann.h

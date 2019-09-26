@@ -130,12 +130,12 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX], [dnl
   AC_LANG_POP([C++])
   if test x$ax_cxx_compile_cxx$1_required = xtrue; then
     if test x$ac_success = xno; then
-      AC_MSG_ERROR([*** A compiler with support for C++$1 language features is required.])
+      AC_MSG_ERROR([a compiler with support for C++$1 language features is required])
     fi
   fi
   if test x$ac_success = xno; then
     HAVE_CXX$1=0
-    AC_MSG_NOTICE([No compiler with C++$1 support was found])
+    AC_MSG_NOTICE([no compiler with C++$1 support was found])
   else
     HAVE_CXX$1=1
     AC_DEFINE(HAVE_CXX$1,1,

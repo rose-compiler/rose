@@ -60,7 +60,7 @@
 // temporary
 #include "IntervalTransferFunctions.h"
 
-#include "SprayException.h"
+#include "CodeThornException.h"
 #include "CodeThornException.h"
 #include "DeadCodeAnalysis.h"
 #include "Normalization.h"
@@ -100,6 +100,10 @@ bool option_show_source_code=false;
 bool option_show_path=true;
 //boost::program_options::variables_map args;
 
+void myInitDiagnostics() {
+  Normalization::initDiagnostics();
+}
+
 void writeFile(std::string filename, std::string data) {
   std::ofstream myfile;
   myfile.open(filename.c_str(),std::ios::out);
@@ -109,7 +113,7 @@ void writeFile(std::string filename, std::string data) {
 
 void generateRessourceUsageVis(RDAnalysis* rdAnalyzer) {
   cout << "INFO: computing program statistics."<<endl;
-  SPRAY::ProgramStatistics ps(rdAnalyzer->getVariableIdMapping(),
+  CodeThorn::ProgramStatistics ps(rdAnalyzer->getVariableIdMapping(),
                        rdAnalyzer->getLabeler(), 
                        rdAnalyzer->getFlow(),
                        "ud-analysis");
@@ -121,10 +125,10 @@ void generateRessourceUsageVis(RDAnalysis* rdAnalyzer) {
   rdAnalyzer->getFlow()->resetDotOptions();
 }
 
-void checkStaticArrayBounds(SgProject* root, SPRAY::IntervalAnalysis* intervalAnalysis) {
+void checkStaticArrayBounds(SgProject* root, CodeThorn::IntervalAnalysis* intervalAnalysis) {
   cout<<"STATUS: checking static array bounds."<<endl;
   int issuesFound=0;
-  SPRAY::Labeler* labeler=intervalAnalysis->getLabeler();
+  CodeThorn::Labeler* labeler=intervalAnalysis->getLabeler();
   for(Labeler::iterator j=labeler->begin();j!=labeler->end();++j) {
     SgNode* node=labeler->getNode(*j);
     std::string lineCol=SgNodeHelper::sourceLineColumnToString(node);
@@ -261,7 +265,7 @@ string getScopeAsMangledStableString(SgLocatedNode* stmt) {
           if(funcDecl->get_name() == tempSgName) {
             // There is a function whose name contains tempName. The mangled scope
             //  will probably be wrong:
-            throw SPRAY::Exception("Found function whose name contains the reserved text \"" + tempName + "\". "
+            throw CodeThorn::Exception("Found function whose name contains the reserved text \"" + tempName + "\". "
                                    "Mangling of scope is not possible.");
           }
           else if(funcDecl->get_name() == mainSgName) {
@@ -344,7 +348,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     }
 
     cout << "STATUS: computing address taken sets."<<endl;
-    SPRAY::FIPointerAnalysis fipa(&variableIdMapping, &functionIdMapping, root);
+    CodeThorn::FIPointerAnalysis fipa(&variableIdMapping, &functionIdMapping, root);
     fipa.initialize();
     fipa.run();
 
@@ -472,19 +476,19 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 
 #if 0
     VariableIdSet vidset=fipa.getModByPointer();
-    cout<<"mod-set: "<<SPRAY::VariableIdSetPrettyPrint::str(vidset,variableIdMapping)<<endl;
+    cout<<"mod-set: "<<CodeThorn::VariableIdSetPrettyPrint::str(vidset,variableIdMapping)<<endl;
 #endif
   }
   
   if(option_interval_analysis) {
     cout << "STATUS: creating interval analyzer."<<endl;
-    SPRAY::IntervalAnalysis* intervalAnalyzer=new SPRAY::IntervalAnalysis();
+    CodeThorn::IntervalAnalysis* intervalAnalyzer=new CodeThorn::IntervalAnalysis();
     cout << "STATUS: initializing interval analyzer."<<endl;
     intervalAnalyzer->setNoTopologicalSort(option_no_topological_sort);
     intervalAnalyzer->initialize(root);
     cout << "STATUS: running pointer analysis."<<endl;
     ROSE_ASSERT(intervalAnalyzer->getVariableIdMapping());
-    SPRAY::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(), intervalAnalyzer->getFunctionIdMapping(), root);
+    CodeThorn::FIPointerAnalysis* fipa=new FIPointerAnalysis(intervalAnalyzer->getVariableIdMapping(), intervalAnalyzer->getFunctionIdMapping(), root);
     fipa->initialize();
     fipa->run();
     intervalAnalyzer->setPointerAnalysis(fipa);
@@ -524,14 +528,14 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 
   if(option_lv_analysis) {
     cout << "STATUS: creating LV analysis."<<endl;
-    SPRAY::LVAnalysis* lvAnalysis=new SPRAY::LVAnalysis();
+    CodeThorn::LVAnalysis* lvAnalysis=new CodeThorn::LVAnalysis();
     cout << "STATUS: initializing LV analysis."<<endl;
     lvAnalysis->setBackwardAnalysis();
     lvAnalysis->setNoTopologicalSort(option_no_topological_sort);
     lvAnalysis->initialize(root);
     cout << "STATUS: running pointer analysis."<<endl;
     ROSE_ASSERT(lvAnalysis->getVariableIdMapping());
-    SPRAY::FIPointerAnalysis* fipa = new FIPointerAnalysis(lvAnalysis->getVariableIdMapping(), lvAnalysis->getFunctionIdMapping(), root);
+    CodeThorn::FIPointerAnalysis* fipa = new FIPointerAnalysis(lvAnalysis->getVariableIdMapping(), lvAnalysis->getFunctionIdMapping(), root);
     fipa->initialize();
     fipa->run();
     lvAnalysis->setPointerAnalysis(fipa);
@@ -539,11 +543,14 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     lvAnalysis->initializeTransferFunctions();
     cout << "STATUS: initializing LV global variables."<<endl;
     lvAnalysis->initializeGlobalVariables(root);
+    lvAnalysis->setSolverTrace(option_trace);
     std::string funtofind=option_start_function;
     RoseAst completeast(root);
     SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
     cout << "generating icfg_backward.dot."<<endl;
     write_file("icfg_backward.dot", lvAnalysis->getFlow()->toDot(lvAnalysis->getLabeler()));
+
+    lvAnalysis->setSkipSelectedFunctionCalls(option_ignore_unknown_functions);
 
     lvAnalysis->determineExtremalLabels(startFunRoot);
     lvAnalysis->run();
@@ -572,7 +579,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 
   if(option_rd_analysis) {
       cout << "STATUS: creating RD analyzer."<<endl;
-      SPRAY::RDAnalysis* rdAnalysis=new SPRAY::RDAnalysis();
+      CodeThorn::RDAnalysis* rdAnalysis=new CodeThorn::RDAnalysis();
       cout << "STATUS: initializing RD analyzer."<<endl;
       rdAnalysis->setNoTopologicalSort(option_no_topological_sort);
       rdAnalysis->initialize(root);
@@ -580,6 +587,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       rdAnalysis->initializeTransferFunctions();
       cout << "STATUS: initializing RD global variables."<<endl;
       rdAnalysis->initializeGlobalVariables(root);
+      rdAnalysis->setSolverTrace(option_trace);
       
       cout << "generating icfg_forward.dot."<<endl;
       write_file("icfg_forward.dot", rdAnalysis->getFlow()->toDot(rdAnalysis->getLabeler()));
@@ -587,6 +595,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       std::string funtofind=option_start_function;
       RoseAst completeast(root);
       SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
+      rdAnalysis->setSkipSelectedFunctionCalls(option_ignore_unknown_functions);
       rdAnalysis->determineExtremalLabels(startFunRoot);
       rdAnalysis->run();
     
@@ -676,6 +685,10 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 }
 
 int main(int argc, char* argv[]) {
+  // required for Sawyer logger streams
+  ROSE_INITIALIZE;
+  myInitDiagnostics();
+
   try {
     if(argc==1) {
       cout << "Error: wrong command line options."<<endl;
@@ -854,7 +867,7 @@ int main(int argc, char* argv[]) {
     //  AstTests::runAllTests(root);
 
    if(option_stats) {
-      SPRAY::ProgramStatistics::printBasicCodeInfo(root);
+      CodeThorn::ProgramStatistics::printBasicCodeInfo(root);
     }
 
   cout<<"STATUS: computing variableid mapping"<<endl;
@@ -939,9 +952,6 @@ int main(int argc, char* argv[]) {
   // main function try-catch
   } catch(CodeThorn::Exception& e) {
     cerr << "CodeThorn::Exception raised: " << e.what() << endl;
-    return 1;
-  } catch(SPRAY::Exception& e) {
-    cerr << "Spray::Exception raised: " << e.what() << endl;
     return 1;
   } catch(std::exception& e) {
     cerr << "std::exception raised: " << e.what() << endl;

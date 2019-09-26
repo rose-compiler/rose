@@ -18,7 +18,7 @@
 // DQ (3/24/2018): Added include file (using Boost 1.60, if that makes a difference).
 #include <vector>
 
-namespace SPRAY {
+namespace CodeThorn {
   std::string replace_string(std::string toModify, std::string toReplace, std::string with);
   int randomIntInRange(std::pair<int,int> range);
   std::list<int> nDifferentRandomIntsInRange(int n, std::pair<int,int> range);
@@ -45,6 +45,6 @@ namespace SPRAY {
    std::vector<std::string> commandLineArgs(std::string commandLine);
  }
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
 
 #endif

@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 
-using namespace SPRAY;
+using namespace CodeThorn;
 using namespace std;
 
 ProgramInfo::ProgramInfo(ProgramAbstractionLayer* pal) {
@@ -19,9 +19,11 @@ ProgramInfo::ProgramInfo(SgProject* root) {
 void ProgramInfo::compute() {
   ROSE_ASSERT(root);
   RoseAst ast(root);
+  _validData=true;
   for (auto node : ast) {
-    if(isSgFunctionCallExp(node)) {
+    if(SgFunctionCallExp* fc=isSgFunctionCallExp(node)) {
       numFunCall++;
+      _functionCallNodes.push_back(fc);
     } else if(isSgWhileStmt(node)) {
       numWhileLoop++;
     } else if(isSgDoWhileStmt(node)) {
@@ -45,10 +47,12 @@ void ProgramInfo::compute() {
 }
 
 void ProgramInfo::printDetailed() {
+  ROSE_ASSERT(_validData);
   cout<<toStringDetailed();
 }
 
 std::string ProgramInfo::toStringDetailed() {
+  ROSE_ASSERT(_validData);
   stringstream ss;
   ss<<"Function calls  : "<<numFunCall<<endl;
   ss<<"While loops     : "<<numWhileLoop<<endl;
@@ -61,4 +65,25 @@ std::string ProgramInfo::toStringDetailed() {
   ss<<"Dereference ops : "<<numDerefOp<<endl;
   ss<<"Dot ops         : "<<numStructAccess<<endl;
   return ss.str();
+}
+
+void ProgramInfo::writeFunctionCallNodesToFile(string fileName, Labeler* labeler) {
+  ROSE_ASSERT(_validData);
+  std::ofstream outFile;
+  outFile.open(fileName.c_str(),std::ios::out);
+  if (outFile.fail()) {
+    cerr << "Error: couldn't open file "<<fileName<<" for generating program function call info."<<endl;
+    exit(1);
+  }
+  for(auto node : _functionCallNodes) {
+    if(node) {
+      outFile<<SgNodeHelper::sourceLineColumnToString(node,";");
+      outFile<<";";
+      outFile<<SgNodeHelper::nodeToString(node);
+      outFile<<";";
+      outFile<<SgNodeHelper::sourceFilenameToString(node);
+      outFile<<endl;
+    }
+  }
+  outFile.close();
 }

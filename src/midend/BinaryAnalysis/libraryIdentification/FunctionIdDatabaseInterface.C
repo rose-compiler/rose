@@ -8,12 +8,29 @@ using namespace LibraryIdentification;
 using namespace Sawyer::Message::Common;
 using namespace Rose::Diagnostics;
 
-FunctionIdDatabaseInterface::FunctionIdDatabaseInterface(std::string dbName) 
+enum DUPLICATE_OPTION LibraryIdentification::duplicateOptionFromString(std::string option)
+{
+    char opChar = ::toupper(option[0]);
+    if(opChar == 'C') {
+        return COMBINE;
+    } 
+    if(opChar == 'R') {
+        return REPLACE;
+    } 
+    if(opChar == 'N') {
+        return NO_ADD;
+    } 
+    return UNKNOWN;    
+}
+
+
+
+FunctionIdDatabaseInterface::FunctionIdDatabaseInterface(const std::string& dbName) 
 {
     database_name = dbName;
     //open the database
-    con.open(database_name.c_str());
-    con.setbusytimeout(1800 * 1000); // 30 minutes
+    sqConnection.open(database_name.c_str());
+    sqConnection.setbusytimeout(1800 * 1000); // 30 minutes
     createTables();
     
 }
@@ -27,17 +44,17 @@ void
 FunctionIdDatabaseInterface::createTables()
 {
     try { //Functions: identifying hash, name, link to the source library
-        con.executenonquery("CREATE TABLE IF NOT EXISTS functions(functionID TEXT PRIMARY KEY, function_name TEXT, libraryID TEXT)");
+        sqConnection.executenonquery("CREATE TABLE IF NOT EXISTS functions(functionID TEXT KEY, function_name TEXT, libraryID TEXT)");
         //libraries: id hash, name, version, ISA, and time as an int
         //May also want calling convention and compile flags
-        con.executenonquery("CREATE TABLE IF NOT EXISTS libraries(libraryID TEXT PRIMARY KEY, library_name TEXT, library_version TEXT, architecture TEXT, time UNSIGNED BIG INTEGER)");
+        sqConnection.executenonquery("CREATE TABLE IF NOT EXISTS libraries(libraryID TEXT PRIMARY KEY, library_name TEXT, library_version TEXT, architecture TEXT, time UNSIGNED BIG INTEGER)");
     }
     catch(exception &ex) {
         mlog[ERROR] << "Exception Occurred: " << ex.what() << endl;
     }
     
     /*    try {
-        con.executenonquery("create index if not exists vectors_by_md5 on vectors(md5_sum)");
+        sqConnection.executenonquery("create index if not exists vectors_by_md5 on vectors(md5_sum)");
     }
     catch(exception &ex) {
         mlog[ERROR] << "Exception Occurred: " << ex.what() << endl;
@@ -46,62 +63,147 @@ FunctionIdDatabaseInterface::createTables()
 };
 
 // @brief Add an entry for a function to the database
-void FunctionIdDatabaseInterface::addFunctionToDB(const FunctionInfo& fInfo, bool replace) 
+void FunctionIdDatabaseInterface::addFunctionToDB(const FunctionInfo& fInfo, enum DUPLICATE_OPTION dupOption) 
 {
-    FunctionInfo checkFunc(fInfo.funcHash);
-    if(matchFunction(checkFunc)) 
+    vector<FunctionInfo> foundFunctions = matchFunction(fInfo);
+    
+    if(foundFunctions.size() > 0) 
         {
-            LibraryInfo checkLib(checkFunc.libHash);
-            if(!matchLibrary(checkLib)) 
+            if(dupOption == NO_ADD) 
                 {
-                    mlog[ERROR] << "INSERT of " << fInfo.funcName << " failed as duplicate hash was found in the database." << endl;
-                    mlog[ERROR] << "         The duplicate was caused by " << checkFunc.funcName << " but no library was found for hash " << checkLib.libHash << endl;
-                    ASSERT_require(false);
-                    
+                    LibraryInfo checkLib(foundFunctions[0].libHash);
+                    mlog[ERROR] << "INSERT of " << fInfo.funcName << " failed as duplicate hash was found in the database, and NO_ADD was set" << endl;
+                    mlog[ERROR] << "         The duplicate was caused by " << foundFunctions[0].funcName << " of library: " << checkLib.toString() << endl;
+                    return;
                 }
-            else 
-                {
-                    mlog[WARN] << "INSERT of " << fInfo.funcName << " failed as duplicate hash was found in the database." << endl;
-                    mlog[WARN] << "         The duplicate was caused by " << checkFunc.funcName << " of " << checkLib.libName << endl;
+            if(dupOption == REPLACE) 
+                {//In order to replace, we have to delete all functions with that hash
+                    removeFunctions(fInfo.funcHash);
                 }
-            if(!replace)
-                return;  //Otherwise entry will be replaced
-            
+            else //Finally, even if we're adding, we need to make sure
+                 //there isn't an exact match for this function 
+                { //If there is an exact match, bail
+                    if(exactMatchFunction(fInfo))
+                        {
+                            LibraryInfo checkLib(fInfo.libHash);
+                            mlog[ERROR] << "INSERT of " << fInfo.funcName << " failed as duplicate function was found in the database" << endl;
+                            mlog[ERROR] << "         The duplicate was caused by " << foundFunctions[0].funcName << " of library: " << checkLib.toString() << endl;
+                            return;
+                        }
+                }
         }
     
 
-    string db_select_n = "REPLACE INTO functions( functionId, function_name, libraryId ) VALUES(?,?,?);";
+    string db_select_n = "INSERT INTO functions( functionId, function_name, libraryId ) VALUES(?,?,?);";
     
-    sqlite3_command cmd(con, db_select_n.c_str());
+    sqlite3_command cmd(sqConnection, db_select_n.c_str());
     cmd.bind(1, fInfo.funcHash );
     cmd.bind(2, fInfo.funcName);
     cmd.bind(3, fInfo.libHash);
     cmd.executenonquery();
 }
 
+/** @brief Removes any functions that match the hash
+ *  @param[inout] The hash to remove from the database
+ **/
+void FunctionIdDatabaseInterface::removeFunctions(const std::string& funcHash) 
+{
+    std::string db_select_n = "delete from functions where functionID = ?;";
+    sqlite3_command cmd(sqConnection, db_select_n );
+    
+    cmd.bind(1, funcHash);
+    
+    sqlite3_reader sqReader = cmd.executereader();
+ 
+    while(sqReader.read());
+}
 
-/** @brief Lookup a function in the database.  True returned if found
+
+/** @brief See if any function with this hash exists in the database.
+ *  If so, return the first one
  *  @param[inout] fInfo The FunctionInfo only needs to
  *  contain the hash, the rest will be filled in.
+ *  @return True if a function was found.
  **/
-bool FunctionIdDatabaseInterface::matchFunction(FunctionInfo& fInfo) 
+bool FunctionIdDatabaseInterface::matchOneFunction(FunctionInfo& fInfo) 
 {
     std::string db_select_n = "select function_name, libraryId FROM functions where functionId=?;";
-    sqlite3_command cmd(con, db_select_n );
+    sqlite3_command cmd(sqConnection, db_select_n );
     
     cmd.bind(1, fInfo.funcHash);
     
-    sqlite3_reader r = cmd.executereader();
+    sqlite3_reader sqReader = cmd.executereader();
     
     
-    if(r.read()) { //entry found in database
-        fInfo.funcName = (std::string)(r.getstring(0));
-        fInfo.libHash = (std::string)(r.getstring(1));
+    if(sqReader.read()) { //entry found in database
+        fInfo.funcName = (std::string)(sqReader.getstring(0));
+        fInfo.libHash = (std::string)(sqReader.getstring(1));
 
-        //Only one entry should exist
-        if(r.read()) 
+        return true;
+    }
+    
+    return false;
+}
+
+
+/** @brief Lookup a function by hash in the database. All match
+ * functions will be returned in vector
+ *  
+ *  @param[in] funcHash The hash to search for
+ *  @return  All functions matching this hash will be returned
+ **/
+vector<FunctionInfo> FunctionIdDatabaseInterface::matchFunction(const FunctionInfo& inFInfo) 
+{
+    std::string db_select_n = "select function_name, libraryId FROM functions where functionId=?;";
+    sqlite3_command cmd(sqConnection, db_select_n );
+    
+    cmd.bind(1, inFInfo.funcHash);
+    
+    sqlite3_reader sqReader = cmd.executereader();
+    
+    vector<FunctionInfo> funcVector;
+
+    while(sqReader.read()) { //entry found in database
+        FunctionInfo fInfo(inFInfo);
+        fInfo.funcName = (std::string)(sqReader.getstring(0));
+        fInfo.libHash = (std::string)(sqReader.getstring(1));
+        funcVector.push_back(fInfo);
+    }
+    
+    return funcVector;
+}
+
+/** @brief Exactly lookup a function in the database.  There should
+ *  only be one that matches Id, name, and library hash
+ *  @param[inout] fInfo This FunctionInfo needs to
+ *  contain the hash, name, and library hash. There should only be one
+ *  matching function in the database.
+ *  @return true if found
+ **/
+bool FunctionIdDatabaseInterface::exactMatchFunction(const FunctionInfo& fInfo)
+{
+    std::string db_select_n = "select * FROM functions where functionId = ? and function_name = ? and libraryId = ?;";
+    sqlite3_command cmd(sqConnection, db_select_n );
+    
+    cmd.bind(1, fInfo.funcHash);
+    cmd.bind(2, fInfo.funcName);
+    cmd.bind(3, fInfo.libHash);
+    
+    sqlite3_reader sqReader = cmd.executereader();
+    
+    vector<FunctionInfo> funcVector;
+
+    while(sqReader.read()) { //entry found in database
+        FunctionInfo throwaway((std::string)sqReader.getstring(0));
+        throwaway.funcName = (std::string)(sqReader.getstring(1));
+        throwaway.libHash = (std::string)(sqReader.getstring(2));
+        
+        ROSE_ASSERT(throwaway == fInfo);
+
+        //Only one exact match can exist in the database
+        if(sqReader.read()) 
             {  
-                mlog[WARN] << "Duplicate entries for function: " << fInfo.funcName << " at hash: " << fInfo.funcHash<< " in the database. Exiting."  << endl;
+                mlog[ERROR] << "Duplicate entries for function: " << fInfo.funcName << " at hash: " << fInfo.funcHash<< " in the database. Exiting."  << endl;
             }
         return true;
     }
@@ -110,9 +212,8 @@ bool FunctionIdDatabaseInterface::matchFunction(FunctionInfo& fInfo)
 }
 
 
-
 // @brief Add an entry for a library to the database
-void FunctionIdDatabaseInterface::addLibraryToDB(const LibraryInfo& lInfo, bool replace) 
+void FunctionIdDatabaseInterface::addLibraryToDB(const LibraryInfo& lInfo, bool replace)
 {
     LibraryInfo checkLib(lInfo.libHash);
     if(matchLibrary(checkLib)) 
@@ -126,7 +227,7 @@ void FunctionIdDatabaseInterface::addLibraryToDB(const LibraryInfo& lInfo, bool 
         }
     string db_select_n = "INSERT INTO libraries ( libraryId, library_name, library_version, architecture, time) VALUES(?,?,?,?,?);";
      
-    sqlite3_command cmd(con, db_select_n.c_str());
+    sqlite3_command cmd(sqConnection, db_select_n.c_str());
     cmd.bind(1, lInfo.libHash );
     cmd.bind(2, lInfo.libName);
     cmd.bind(3, lInfo.libVersion);
@@ -140,11 +241,11 @@ void FunctionIdDatabaseInterface::addLibraryToDB(const LibraryInfo& lInfo, bool 
 /** @brief Lookup a library in the database.  True returned if found
  *  @param[inout] lInfo The LibraryInfo only needs to
  *  contain the hash, the rest will be filled in.
-          **/
+ **/
 bool FunctionIdDatabaseInterface::matchLibrary(LibraryInfo& lInfo) 
 {
     std::string db_select_n = "select library_name, library_version, architecture, time from libraries where libraryId=?;";
-    sqlite3_command cmd(con, db_select_n );
+    sqlite3_command cmd(sqConnection, db_select_n );
     
     cmd.bind(1, lInfo.libHash);
     

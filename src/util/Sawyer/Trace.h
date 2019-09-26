@@ -12,6 +12,7 @@
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>
 #include <Sawyer/Sawyer.h>
+#include <Sawyer/Set.h>
 #include <boost/foreach.hpp>
 #include <set>
 #include <vector>
@@ -173,7 +174,7 @@ struct TraceIndexTraits<Label, Value, TraceVectorIndexTag> {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Trace
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
 /** Records and replays traces.
  *
  *  This class is able to record a trace and replay it later. A trace is an ordered list of labels of type @p T, where a label
@@ -292,7 +293,7 @@ private:
 public:
     /** Default constructor. */
     Trace(): size_(0), nLabels_(0) {}
-    
+
     /** Clears the recorded trace.
      *
      *  This @ref Trace is reset to its default-constructed state. */
@@ -308,7 +309,7 @@ public:
     void reserve(size_t n) {
         index_.reserve(n);
     }
-    
+
     /** Determines if a trace is empty.
      *
      *  Returns true if and only if a trace contains no labels.
@@ -351,6 +352,16 @@ public:
         return nLabels_;
     }
 
+    /** Set of all labels in the trace.
+     *
+     *  This is the set of labels in no particular order. */
+    Sawyer::Container::Set<Label> labels() const {
+        Sawyer::Container::Set<Label> retval;
+        BOOST_FOREACH (const Label &label, index_.labels())
+            retval.insert(label);
+        return retval;
+    }
+
     /** Append a label to a trace.
      *
      *  Time complexity: amortized constant if labels are array indexes, amortized logirithmic if labels are map keys. */
@@ -374,7 +385,7 @@ public:
         back_ = label;
         ++size_;
     }
-        
+
     /** Traversal of the trace labels.
      *
      *  The @p visitor functor takes one argument: the label being visited, and should return true if the traversal should
@@ -437,7 +448,7 @@ public:
         PrintHelper visitor(out, separator);
         traverse(visitor);
     }
-    
+
     /** Low-level debugging information.
      *
      *  This method is intended for debugging. It prints the storage representation of this trace. The output format is not
@@ -469,7 +480,7 @@ private:
             return true;
         }
     };
-    
+
 public:
     /** Convert a trace into a vector.
      *
@@ -491,7 +502,7 @@ public:
             unique.insert(successor.next);
         return unique;
     }
-    
+
     /** The burstiness of a label.
      *
      *  Loosely speaking, the "burstiness" of a label is a measure of how often successive occurrences of the label transition
@@ -537,7 +548,7 @@ public:
         }
         return size ? sum / size : 0.0;
     }
-    
+
     /** Ordered successors for a label.
      *
      *  Given a label, return a vector that describes the ordered successors for this label. The return value is a list whose

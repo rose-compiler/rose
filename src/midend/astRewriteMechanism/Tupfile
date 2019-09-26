@@ -1,0 +1,10 @@
+include_rules
+
+run $(librose_compile) nodeCollection.C rewriteMidLevelInterface.C rewriteHighLevelInterface.C \
+    rewriteSynthesizedAttribute.C rewriteASTFragementString.C rewriteAccumulatedAttribute.C rewriteTypeDeclaration.C \
+    rewriteDebuggingSupport.C rewriteLowLevelInterface.C rewriteTemplateInstantiations.C
+
+run $(public_header) rewriteMidLevelInterfaceTemplatesImpl.h prefixGenerationImpl.h ASTFragmentCollectorTraversalImpl.h \
+    rewriteSynthesizedAttributeTemplatesImpl.h rewriteTreeTraversalImpl.h rewriteASTFragementStringTemplatesImpl.h \
+    nodeCollectionTemplatesImpl.h rewriteDebuggingSupportTemplatesImpl.h rewriteTemplateImpl.h rewrite.h \
+    lowLevelRewriteInterface.h midLevelRewriteInterface.h highLevelRewriteInterface.h

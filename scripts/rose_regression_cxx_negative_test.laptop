@@ -1,5 +1,0 @@
-#!/bin/bash
-
-# g++ $@
-/home/dquinlan/ROSE/roseCompileTree-g++3.3.2/developersScratchSpace/Dan/preprocessor -rose:strict -rose:negative_test --edg:no_warnings $@
-

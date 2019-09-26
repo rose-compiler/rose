@@ -3,8 +3,9 @@
 
 #include "BinarySmtSolver.h"
 #include "Diagnostics.h"
-#include "Registers.h"
 #include "FormatRestorer.h"
+#include "Registers.h"
+#include "RoseException.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -316,8 +317,8 @@ public:
 
     /** The register dictionary which is used for printing register names.
      * @{ */
-    RegisterDictionary *get_register_dictionary() const { return regdict; }
-    void set_register_dictionary(RegisterDictionary *rd) { regdict = rd; }
+    const RegisterDictionary *get_register_dictionary() const { return regdict; }
+    void set_register_dictionary(const RegisterDictionary *rd) { regdict = rd; }
     /** @} */
 
     /** Whether register initial values should be suppressed.  If a register's value has a comment that is equal to the
@@ -355,7 +356,7 @@ public:
     /** @} */
 
 protected:
-    RegisterDictionary *regdict;
+    const RegisterDictionary *regdict;
     bool suppress_initial_values;
     std::string line_prefix;
     std::string indentation_suffix;
@@ -411,10 +412,10 @@ typedef Sawyer::Container::Set<InputOutputProperty> InputOutputPropertySet;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Base class for exceptions thrown by instruction semantics. */
-class Exception: public std::runtime_error {
+class Exception: public Rose::Exception {
 public:
     SgAsmInstruction *insn;
-    Exception(const std::string &mesg, SgAsmInstruction *insn): std::runtime_error(mesg), insn(insn) {}
+    Exception(const std::string &mesg, SgAsmInstruction *insn): Rose::Exception(mesg), insn(insn) {}
     void print(std::ostream&) const;
 };
 
@@ -752,9 +753,11 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
+    void serialize(S &s, const unsigned version) {
         //s & merger_; -- not saved
         s & BOOST_SERIALIZATION_NVP(protoval_);
+        if (version >= 1)
+            s & BOOST_SERIALIZATION_NVP(regdict);
     }
 #endif
 
@@ -762,7 +765,8 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    RegisterState() {}                                  // for serialization
+    RegisterState()
+        : regdict(NULL) {}                                // for serialization
 
     RegisterState(const SValuePtr &protoval, const RegisterDictionary *regdict)
         : protoval_(protoval), regdict(regdict) {
@@ -818,11 +822,6 @@ public:
 
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
     SValuePtr protoval() const { return protoval_; }
-
-    // [Robb Matzke 2016-01-22]: deprecated
-    SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
-        return protoval();
-    }
 
     /** The register dictionary should be compatible with the register dictionary used for other parts of binary analysis. At
      *  this time (May 2013) the dictionary is only used when printing.
@@ -952,7 +951,7 @@ protected:
     MemoryState()                                       // for serialization
         : byteOrder_(ByteOrder::ORDER_UNSPECIFIED), byteRestricted_(true) {}
 
-    explicit MemoryState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
+    MemoryState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
         : addrProtoval_(addrProtoval), valProtoval_(valProtoval), byteOrder_(ByteOrder::ORDER_UNSPECIFIED),
           byteRestricted_(true) {
         ASSERT_not_null(addrProtoval);
@@ -1231,11 +1230,6 @@ public:
     /** Return the protoval.  The protoval is used to construct other values via its virtual constructors. */
     SValuePtr protoval() const { return protoval_; }
 
-    // [Robb Matzke 2016-01-22]: deprecated
-    SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
-        return protoval();
-    }
-
     /** Initialize state.  The register and memory states are cleared. */
     virtual void clear();
 
@@ -1256,11 +1250,6 @@ public:
         return registers_;
     }
 
-    // [Robb Matzke 2016-01-22]: deprecated
-    RegisterStatePtr get_register_state() ROSE_DEPRECATED("use registerState instead") {
-        return registerState();
-    }
-
     /** Property: Memory state.
      *
      *  This read-only property is the memory substate of this whole state. */
@@ -1268,11 +1257,6 @@ public:
         return memory_;
     }
 
-    // [Robb Matzke 2016-01-22]: deprecated
-    MemoryStatePtr get_memory_state() ROSE_DEPRECATED("use memoryState instead") {
-        return memoryState();
-    }
-    
     /** Read a value from a register.
      *
      *  The @ref BaseSemantics::readRegister implementation simply delegates to the register state member of this state.  See
@@ -1320,16 +1304,6 @@ public:
     virtual void printRegisters(std::ostream &stream, Formatter &fmt) const;
     /** @} */
 
-    // [Robb Matzke 2015-11-16]: deprecated
-    void print_registers(std::ostream &stream, const std::string &prefix = "") ROSE_DEPRECATED("use printRegisters instead") {
-        printRegisters(stream, prefix);
-    }
-
-    // [Robb Matzke 2015-11-16]: deprecated
-    virtual void print_registers(std::ostream &stream, Formatter &fmt) const ROSE_DEPRECATED("use printRegisters instead") {
-        printRegisters(stream, fmt);
-    }
-
     /** Print memory contents.
      *
      *  This simply calls the MemoryState::print method.
@@ -1338,16 +1312,6 @@ public:
     void printMemory(std::ostream &stream, const std::string &prefix = "") const;
     virtual void printMemory(std::ostream &stream, Formatter &fmt) const;
     /** @} */
-
-    // [Robb Matzke 2015-11-16]: deprecated
-    void print_memory(std::ostream &stream, const std::string prefix = "") const ROSE_DEPRECATED("use printMemory instead") {
-        printMemory(stream, prefix);
-    }
-
-    // [Robb Matzke 2015-11-16]: deprecated
-    virtual void print_memory(std::ostream &stream, Formatter &fmt) const ROSE_DEPRECATED("use printMemory instead") {
-        printMemory(stream, fmt);
-    }
 
     /** Print the state.  This emits a multi-line string containing the registers and all known memory locations.
      * @{ */
@@ -1498,11 +1462,6 @@ public:
      *  The protoval is used to construct other values via its virtual constructors. */
     virtual SValuePtr protoval() const { return protoval_; }
 
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
-        return protoval();
-    }
-
     /** Property: Satisfiability module theory (SMT) solver.
      *
      *  This property holds a pointer to the satisfiability modulo theory (SMT) solver to use for certain operations.  An SMT
@@ -1529,16 +1488,6 @@ public:
     virtual StatePtr currentState() const { return currentState_; }
     virtual void currentState(const StatePtr &s) { currentState_ = s; }
     /** @} */
-
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual StatePtr get_state() const ROSE_DEPRECATED("use currentState instead") {
-        return currentState();
-    }
-
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual void set_state(const StatePtr &s) ROSE_DEPRECATED("use currentState instead") {
-        currentState(s);
-    }
 
     /** Property: Optional lazily updated initial state.
      *
@@ -1590,10 +1539,6 @@ public:
     virtual void name(const std::string &s) { name_ = s; }
     /** @} */
 
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual const std::string& get_name() const ROSE_DEPRECATED("use name instead") { return name(); }
-    virtual void set_name(const std::string &s) ROSE_DEPRECATED("use name instead") { name(s); }
-
     /** Print multi-line output for this object.
      * @{ */
     void print(std::ostream &stream, const std::string prefix="") const {
@@ -1635,21 +1580,12 @@ public:
     virtual void nInsns(size_t n) { nInsns_ = n; }
     /** @} */
 
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual size_t get_ninsns() const ROSE_DEPRECATED("use nInsns instead") { return nInsns(); }
-    virtual void set_ninsns(size_t n) ROSE_DEPRECATED("use nInsns instead") { nInsns(n); }
-
     /** Returns current instruction.
      *
      *  Returns the instruction which is being processed. This is set by @ref startInstruction and cleared by @ref
      *  finishInstruction. Returns null if we are not processing an instruction. */
     virtual SgAsmInstruction* currentInstruction() const {
         return currentInsn_;
-    }
-
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual SgAsmInstruction *get_insn() const ROSE_DEPRECATED("use currentInstruction instead") {
-        return currentInstruction();
     }
 
     /** Called at the beginning of every instruction.  This method is invoked every time the translation object begins
@@ -1753,10 +1689,19 @@ public:
      *  number zero. The begin_bit and end_bit values must be valid for the width of @p a. */
     virtual SValuePtr extract(const SValuePtr &a, size_t begin_bit, size_t end_bit) = 0;
 
-    /** Concatenates the bits of two values.  The bits of @p a and @p b are concatenated so that the result has @p
-     *  b in the high-order bits and @p a in the low order bits. The width of the return value is the sum of the widths of @p
-     *  a and @p b. */
-    virtual SValuePtr concat(const SValuePtr &a, const SValuePtr &b) = 0;
+    /** Concatenates the bits of two values.  The bits of @p lowBits and @p highBits are concatenated so that the result has @p
+     *  lowBits in the low-order bits and @p highBits in the high order bits. The width of the return value is the sum of the
+     *  widths of @p lowBits and @p highBits.
+     *
+     *  Note that the order of arguments for this method is the reverse of the @ref SymbolicExpr concatenation function. */
+    virtual SValuePtr concat(const SValuePtr &lowBits, const SValuePtr &highBits) = 0;
+
+    /** Split a value into two narrower values. Returns the two parts as a pair consisting of the low-order bits of @p a and
+     *  the high-order bits of @p a. The returned low-order bits are bits zero (inclusive) to @p splitPoint (exclusvie) and
+     *  has width @p splitPoint. The returned high-order bits are bits @p splitPoint (inclusive) to the width of @p a
+     *  (exclusive) and has width which is the width of @p a minus @p splitPoint. This is not a pure virtual function because
+     *  it can be implemented in terms of @ref extract. */
+    virtual std::pair<SValuePtr /*low*/, SValuePtr /*high*/> split(const SValuePtr &a, size_t splitPoint);
 
     /** Returns position of least significant set bit; zero when no bits are set. The return value will have the same width as
      * the operand, although this can be safely truncated to the log-base-2 + 1 width. */
@@ -1812,7 +1757,6 @@ public:
      *  width. It doesn't matter if they are interpreted as signed or unsigned quantities.
      *
      * @{ */
-    SValuePtr equal(const SValuePtr &a, const SValuePtr &b) ROSE_DEPRECATED("use isEqual instead");
     virtual SValuePtr isEqual(const SValuePtr &a, const SValuePtr &b);
     virtual SValuePtr isNotEqual(const SValuePtr &a, const SValuePtr &b);
     /** @} */
@@ -1861,9 +1805,25 @@ public:
      * as @p a and @p b. */
     virtual SValuePtr add(const SValuePtr &a, const SValuePtr &b) = 0;
 
-    /** Subtract one value from another.  This is not a virtual function because it can be implemented in terms of @ref add and
-     * @ref negate. We define it because it's something that occurs often enough to warrant its own function. */
+    /** Adds two integers of equal size and carry. The width of @p a and @p b must be the same, and the resulting sum will
+     *  also have the same width. Returns the sum by value and a carry-out bit by reference. This method is not pure abstract
+     *  and is generally not overridden in subclasses because it can be implemented in terms of other operations. */
+    virtual SValuePtr addCarry(const SValuePtr &a, const SValuePtr &b, SValuePtr &carryOut /*out*/);
+
+    /** Subtract one value from another.
+     *
+     *  Subtracts the @p subtrahend from the @p minuend and returns the result. The two arguments must be the same width and
+     *  the return value will also be that same width.  This method is not pure virtual and is not usually overridden by
+     *  subclasses because it can be implemented in terms of other operations. */
     virtual SValuePtr subtract(const SValuePtr &minuend, const SValuePtr &subtrahend);
+
+    /** Subtract one value from another and carry.
+     *
+     *  Subtracts the @p subtrahend from the @p minuend and returns the result. The two arguments must be the same width and
+     *  the return value will also be that same width. A carry-out bit is returned via reference. Overflow is indicated when
+     *  the carry-out bit is different than the sign bit of the result. This method is not pure virtual and is not usually
+     *  overridden by subclasses because it can be implemented in terms of other operations. */
+    virtual SValuePtr subtractCarry(const SValuePtr &minuend, const SValuePtr &subtrahend, SValuePtr &carryOut /*out*/);
 
     /** Add two values of equal size and a carry bit.  Carry information is returned via carry_out argument.  The carry_out
      *  value is the tick marks that are written above the first addend when doing long arithmetic like a 2nd grader would do
@@ -1887,8 +1847,8 @@ public:
     /** Two's complement. The return value will have the same width as the operand. */
     virtual SValuePtr negate(const SValuePtr &a) = 0;
 
-    /** Divides two signed values. The width of the result will be the same as the width of operand @p a. */
-    virtual SValuePtr signedDivide(const SValuePtr &a, const SValuePtr &b) = 0;
+    /** Divides two signed values. The width of the result will be the same as the width of the @p dividend. */
+    virtual SValuePtr signedDivide(const SValuePtr &dividend, const SValuePtr &divisor) = 0;
 
     /** Calculates modulo with signed values. The width of the result will be the same as the width of operand @p b. */
     virtual SValuePtr signedModulo(const SValuePtr &a, const SValuePtr &b) = 0;
@@ -1896,8 +1856,8 @@ public:
     /** Multiplies two signed values. The width of the result will be the sum of the widths of @p a and @p b. */
     virtual SValuePtr signedMultiply(const SValuePtr &a, const SValuePtr &b) = 0;
 
-    /** Divides two unsigned values. The width of the result is the same as the width of operand @p a. */
-    virtual SValuePtr unsignedDivide(const SValuePtr &a, const SValuePtr &b) = 0;
+    /** Divides two unsigned values. The width of the result is the same as the width of the @p dividend. */
+    virtual SValuePtr unsignedDivide(const SValuePtr &dividend, const SValuePtr &divisor) = 0;
 
     /** Calculates modulo with unsigned values. The width of the result is the same as the width of operand @p b. */
     virtual SValuePtr unsignedModulo(const SValuePtr &a, const SValuePtr &b) = 0;
@@ -2027,7 +1987,7 @@ public:
      *
      *  @{ */
     virtual SValuePtr readRegister(RegisterDescriptor reg) {   // old subclasses can still override this if they want,
-        return readRegister(reg, undefined_(reg.get_nbits())); // but new subclasses should not override this method.
+        return readRegister(reg, undefined_(reg.nBits())); // but new subclasses should not override this method.
     }
     virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt); // new subclasses override this
     /** @} */
@@ -2050,8 +2010,14 @@ public:
      *
      *  This is a lower-level operation than @ref readRegister in that it doesn't cause the register to be marked as having
      *  been read. It is typically used in situations where the register is being accessed for analysis purposes rather than as
-     *  part of an instruction emulation. */
+     *  part of an instruction emulation.
+     *
+     * @{ */
     virtual SValuePtr peekRegister(RegisterDescriptor, const SValuePtr &dflt);
+    SValuePtr peekRegister(RegisterDescriptor reg) {
+        return peekRegister(reg, undefined_(reg.nBits()));
+    }
+    /** @} */
 
     /** Reads a value from memory.
      *
@@ -2229,18 +2195,8 @@ public:
      *  convenience. */
     virtual StatePtr currentState() const { return operators ? operators->currentState() : StatePtr(); }
 
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual StatePtr get_state() const ROSE_DEPRECATED("use currentState instead") {
-        return currentState();
-    }
-
     /** Return the prototypical value.  The prototypical value comes from the RISC operators object. */
     virtual SValuePtr protoval() const { return operators ? operators->protoval() : SValuePtr(); }
-
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual SValuePtr get_protoval() const ROSE_DEPRECATED("use protoval instead") {
-        return protoval();
-    }
 
     /** Returns the instruction that is being processed.
      *
@@ -2248,11 +2204,6 @@ public:
      *  object. */
     virtual SgAsmInstruction* currentInstruction() const {
          return operators ? operators->currentInstruction() : NULL;
-    }
-
-    // [Robb Matzke 2016-01-22]: deprecated
-    virtual SgAsmInstruction *get_insn() const ROSE_DEPRECATED("use currentInstruction instead") {
-        return currentInstruction();
     }
 
     /** Return a new undefined semantic value. */
@@ -2314,6 +2265,9 @@ public:
 
     /** Returns the stack pointer register. */
     virtual RegisterDescriptor stackPointerRegister() const = 0;
+
+    /** Returns the function call return address register. */
+    virtual RegisterDescriptor callReturnRegister() const = 0;
 
     /** Property: Reset instruction pointer register for each instruction.
      *
@@ -2395,5 +2349,8 @@ std::ostream& operator<<(std::ostream&, const RiscOperators::WithFormatter&);
 } // namespace
 } // namespace
 } // namespace
+
+// Class versions must be at global scope
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterState, 1);
 
 #endif

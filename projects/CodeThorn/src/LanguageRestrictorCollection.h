@@ -4,7 +4,7 @@
 #include "LanguageRestrictor.h"
 
 namespace CodeThorn {
-  class LanguageRestrictorCppSubset1 : public SPRAY::LanguageRestrictor {
+  class LanguageRestrictorCppSubset1 : public CodeThorn::LanguageRestrictor {
 public:
   void initialize();
 };

@@ -1,2 +1,0 @@
-./parallel_compass -save irs.ast `cat parseLine_irs.parse`
-

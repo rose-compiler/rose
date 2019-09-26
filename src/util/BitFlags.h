@@ -1,7 +1,10 @@
 #ifndef Rose_BitFlags_H
 #define Rose_BitFlags_H
 
+#include <rosePublicConfig.h>
+#include <boost/foreach.hpp>
 #include <boost/format.hpp>
+#include <boost/serialization/access.hpp>
 #include <Sawyer/Assert.h>
 #include <vector>
 
@@ -52,7 +55,7 @@ namespace Rose {
  *      }
  *  };
  * @endcode */
-template<typename E, typename V = unsigned long>
+template<typename E, typename V = int64_t>
 class BitFlags {
 public:
     typedef E Enum;
@@ -60,6 +63,16 @@ public:
 
 private:
     Vector vector_;
+
+private:
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(vector_);
+    }
+#endif
 
 public:
     /** Default constructor with all bits clear. */
@@ -80,6 +93,21 @@ public:
         return (vector_ & Vector(e)) != 0;
     }
 
+    /** True if all specified bits are set. */
+    bool isAllSet(BitFlags other) const {
+        return (vector_ & other.vector_) == other.vector_;
+    }
+
+    /** True if any of the specified bits are set. */
+    bool isAnySet(BitFlags other) const {
+        return (vector_ & other.vector_) != 0;
+    }
+
+    /** True if any bit is set. */
+    bool isAnySet() const {
+        return vector_ != 0;
+    }
+
     /** Test whether a bit is clear. */
     bool isClear(Enum e) const {
         return !isSet(e);
@@ -91,12 +119,30 @@ public:
         return *this;
     }
 
+    /** Set all bits that are set in @p other. */
+    BitFlags& set(BitFlags other) {
+        vector_ |= other.vector_;
+        return *this;
+    }
+
     /** Clear the specified bit. */
     BitFlags& clear(Enum e) {
         vector_ &= ~Vector(e);
         return *this;
     }
 
+    /** Clear all bits that are set in @p other. */
+    BitFlags& clear(BitFlags other) {
+        vector_ &= ~other.vector_;
+        return *this;
+    }
+
+    /** Clear all bits. */
+    BitFlags& clear() {
+        vector_ = Vector(0);
+        return *this;
+    }
+    
     /** Test whether a bit is set, then clear it. */
     bool testAndClear(Enum e) {
         bool retval = isSet(e);
@@ -110,7 +156,7 @@ public:
         set(e);
         return retval;
     }
-    
+
     /** Set the vector to an exact value. */
     BitFlags& operator=(Vector v) {
         vector_ = v;
@@ -123,6 +169,34 @@ public:
         return *this;
     }
 
+    /** Create a new vector that's the union of two vectors.
+     *
+     * @{ */
+    BitFlags operator|(BitFlags other) const {
+        return vector_ | other.vector_;
+    }
+    BitFlags operator|(Enum e) const {
+        return vector_ | Vector(e);
+    }
+    /** @} */
+
+    /** Create a new vector that's the intersection of two vectors.
+     *
+     * @{ */
+    BitFlags intersection(BitFlags other) const {
+        return vector_ & other.vector_;
+    }
+    BitFlags intersection(Enum e) const {
+        return vector_ & Vector(e);
+    }
+    BitFlags operator&(BitFlags other) const {
+        return intersection(other);
+    }
+    BitFlags operator&(Enum e) const {
+        return intersection(e);
+    }
+    /** @} */
+    
     /** Compare two vectors.
      *
      * @{ */
@@ -145,41 +219,57 @@ public:
         return vector_ >= other.vector_;
     }
     /** @} */
-    
-    /** Convert to string.
+
+    /** Split a vector into the individual enum values.
      *
-     *  Converts a bit vector to a string of the form "NAME1|NAME2|...". The @p constants are the individual enum flags, and
-     *  the @p stringifier is a function that converts each of those constants to strings. */
-    std::string toString(std::vector<long> constants, const char*(*stringifier)(long)) const {
-        std::string retval;
-        Vector tmp = vector_;
+     *  The enum constants are first sorted so that those with more set bits appear before those with fewer bits. Then each
+     *  constant is searched in the bit vector and those bits are removed. This continues until either no bits remain or no
+     *  matching constant is found. The @p leftovers is set to those bits that could not be matched by this process. */
+    std::vector<Enum> split(std::vector<int64_t> constants, Vector &leftovers /*out*/) const {
+        leftovers = Vector(0);
+        std::vector<Enum> retval;
         std::sort(constants.begin(), constants.end(), moreBits);
+        Vector tmp = vector_;
         while (tmp) {
             bool found = false;
             for (size_t i=0; i<constants.size() && !found; ++i) {
                 if (Vector(tmp & constants[i]) == Vector(constants[i])) {
-                    const char *name = stringifier(constants[i]);
-                    ASSERT_not_null(name);
-                    retval += std::string(retval.empty()?"":"|") + name;
+                    retval.push_back(Enum(constants[i]));
                     tmp &= ~constants[i];
                     found = true;
                 }
             }
             if (!found) {
-                retval += retval.empty()?"":"|" + (boost::format("%lx") % (unsigned long)tmp).str();
+                leftovers = tmp;
                 tmp = 0;
-                break;
             }
         }
+        return retval;
+    }
 
-        if (!vector_) {
+    /** Convert to string.
+     *
+     *  Converts a bit vector to a string of the form "NAME1|NAME2|...". The @p constants are the individual enum flags, and
+     *  the @p stringifier is a function that converts each of those constants to strings. */
+    std::string toString(std::vector<int64_t> constants, const char*(*stringifier)(int64_t)) const {
+        std::string retval;
+        if (vector_ != Vector(0)) {
+            Vector leftovers(0);
+            std::vector<Enum> members = split(constants, leftovers /*out*/);
+            BOOST_FOREACH (Enum member, members) {
+                const char *name = stringifier(member);
+                ASSERT_not_null(name);
+                retval += std::string(retval.empty()?"":"|") + name;
+            }
+            if (leftovers != Vector(0))
+                retval += retval.empty()?"":"|" + (boost::format("%lx") % (unsigned long)leftovers).str();
+        } else {
             if (const char* name = stringifier(0)) {
                 retval = name;
             } else {
                 retval = "0";
             }
         }
-
         return retval;
     }
 

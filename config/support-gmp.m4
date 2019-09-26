@@ -8,10 +8,6 @@
 #
 #   Determine if support is requested for the GNU Multiple Precision Arithmetic Library.
 #
-# LAST MODIFICATION
-#
-#   2012-05-09
-#
 # COPYLEFT
 #
 #   Copyright (c) 2011 Justin Too <too1@llnl.gov>

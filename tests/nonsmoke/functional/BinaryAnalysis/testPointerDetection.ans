@@ -35,7 +35,7 @@ Pointer detection analysis for function 0x080483b0 "simple03"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
-    32-bit pointer at v19769[32]
+    32-bit pointer at v19849[32]
     32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
 
 Pointer detection analysis for function 0x080483bc "simple04"
@@ -74,7 +74,7 @@ Pointer detection analysis for function 0x080483d2 "simple06"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
-    32-bit pointer at v20252[32]
+    32-bit pointer at v20332[32]
     32-bit pointer at 0x080497f0<134518768>[32]
 
 Pointer detection analysis for function 0x080483e0 "simple07"
@@ -189,8 +189,8 @@ Pointer detection analysis for function 0x08048444 "simple15"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
+    32-bit pointer at v21812[32]
     32-bit pointer at 0x080497fc<134518780>[32]
-    32-bit pointer at v21732[32]
 
 Pointer detection analysis for function 0x08048452 "simple16"
   Instructions:
@@ -278,8 +278,8 @@ Pointer detection analysis for function 0x080484a0 "simple22"
     0x080484ab: leave  
     0x080484ac: ret    
   Code pointers:
-    32-bit pointer at esp_0[32]
     32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
+    32-bit pointer at esp_0[32]
   Data pointers:
 
 Pointer detection analysis for function 0x080484ad "simple23"
@@ -295,8 +295,8 @@ Pointer detection analysis for function 0x080484ad "simple23"
     0x080484c5: leave  
     0x080484c6: ret    
   Code pointers:
-    32-bit pointer at esp_0[32]
     32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
+    32-bit pointer at esp_0[32]
   Data pointers:
 
 Pointer detection analysis for function 0x080484c7 "simple24"
@@ -328,8 +328,8 @@ Pointer detection analysis for function 0x080484da "simple25"
     0x080484ed: leave  
     0x080484ee: ret    
   Code pointers:
-    32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
     32-bit pointer at esp_0[32]
+    32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
   Data pointers:
     32-bit pointer at (add[32] esp_0[32] 0x00000008[32])
 

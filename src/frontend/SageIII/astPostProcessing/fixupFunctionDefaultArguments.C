@@ -7,6 +7,40 @@
    #include "transformationSupport.h"
 #endif
 
+
+
+
+bool
+containsLambdaSupportForFixupFunctionDefaultArguments (SgExpression* node)
+   {
+  // This function takes the initializer for any default initialization.
+  // I need it becasue the SageInterface::deleteAST is not robust enough to support the rather complicated 
+  // case of deleting a lambda expression and allof the associated generated classes and member functions.
+
+     class LambdaTestTraversal : public AstSimpleProcessing
+        {
+          public:
+               bool foundLambda;
+
+               LambdaTestTraversal() : foundLambda(false) {}
+               void visit (SgNode* node)
+                  {
+                    SgLambdaExp* lambda = isSgLambdaExp(node);
+                    if (lambda != NULL)
+                       {
+                         foundLambda = true;
+                       }
+                  }
+        };
+
+  // Now build the traveral object and call the traversal (preorder) on the AST subtree.
+     LambdaTestTraversal traversal;
+     traversal.traverse(node, preorder);
+
+     return traversal.foundLambda;
+   }
+
+
 void
 fixupFunctionDefaultArguments( SgNode* node )
    {
@@ -121,9 +155,23 @@ fixupFunctionDefaultArguments( SgNode* node )
                                    if (defaultArgument != NULL)
                                       {
 #if 0
-                                        printf ("In fixupFunctionDefaultArguments(): Found a redundant default argument = %p \n",defaultArgument);
+                                        printf ("In fixupFunctionDefaultArguments(): Found a redundant default argument = %p = %s \n",defaultArgument,defaultArgument->class_name().c_str());
 #endif
-                                        SageInterface::deleteAST(defaultArgument);
+                                     // DQ (1/27/2019): Test this for a Lambda Expression: see Cxx11_tests/test2019_38.C.
+                                     // This sort of test would not be suffient, comment out the call to delete instead.
+                                     // printf ("Commenting out call to SageInterface::deleteAST(): for default argument \n");
+                                     // SageInterface::deleteAST(defaultArgument);
+
+                                        bool foundLambda = containsLambdaSupportForFixupFunctionDefaultArguments(defaultArgument);
+                                        if (foundLambda == false)
+                                           {
+                                             SageInterface::deleteAST(defaultArgument);
+                                           }
+                                          else
+                                           {
+                                             printf ("NOTE: Skipping call to SageInterface::deleteAST() for default arguments containing lambda expressions \n");
+                                           }
+
                                         defaultArgument = NULL;
 
                                         arg->set_initializer(NULL);

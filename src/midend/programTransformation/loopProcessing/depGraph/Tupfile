@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) DepGraphBuild.C LoopAnalysis.C TransDepGraph.C
+
+run $(public_header) DepGraphBuild.h DepGraph.h DepGraphTransform.h LoopAnalysis.h TransDepGraph.h TransDepGraphImpl.h

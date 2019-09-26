@@ -287,9 +287,3 @@
 0x004006c5: Outgoing stack delta: +8
 0x004006c5: Successor blocks: unknown
 
-0x00400aac: ================================== Function (call instruction, graph) unknown name
-
-0x00400aac: Basic block reasons: entry point, CFG head
-0x00400aac: ff                      |.       |          unknown 
-0x00400aac: Successor blocks: unknown
-

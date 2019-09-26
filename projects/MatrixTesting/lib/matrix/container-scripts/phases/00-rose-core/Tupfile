@@ -1,0 +1,18 @@
+include_rules
+
+
+run $(public_script) -o lib/matrix/container-scripts/phases/00-rose-core	\
+    config									\
+    00-setup									\
+    10-configure								\
+    20-library-build								\
+    30-library-check								\
+    40-projects-robb								\
+    42-projects-dan								\
+    43-projects-markus								\
+    44-projects-peihung								\
+    45-projects-leo								\
+    50-tutorial-build								\
+    60-install									\
+    70-bindist									\
+    99-end

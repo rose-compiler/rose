@@ -1,3 +1,4 @@
+\UseRawInputEncoding
 \documentclass[10pt]{book}
 
 % Fixme margin note package (turn on draft mode)
@@ -352,7 +353,6 @@ debugging.}
 \input{abstractHandle}
 \input{roseHPCT}
 \input{tauInstrumentation}
-\input{haskell}
 
 %-----------------------------------------------------------
 %          Parallelism

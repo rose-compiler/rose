@@ -1,0 +1,71 @@
+include_rules
+tool_CPPFLAGS += -I.
+
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+
+########################################################################################################################
+# Plain command-line tools. See the descriptions at the top of each source file for details.
+########################################################################################################################
+run $(tool_compile_linkexe) --install -o rose-dump-memory dumpMemory.C
+run $(tool_compile_linkexe) --install -o rose-linear-disassemble linearDisassemble.C
+run $(tool_compile_linkexe) --install -o rose-recursive-disassemble recursiveDisassemble.C
+run $(tool_compile_linkexe) --install -o rose-native-execution-trace nativeExecutionTrace.C
+run $(tool_compile_linkexe) --install -o rose-check-execution-addresses checkExecutionAddresses.C
+run $(tool_compile_linkexe) --install -o rose-magic-scanner magicScanner.C
+run $(tool_compile_linkexe) --install -o rose-simulate simulate.C
+run $(tool_compile_linkexe) --install -o rose-string-decoder stringDecoder.C
+run $(tool_compile_linkexe) --install -o rose-find-dead-code findDeadCode.C
+run $(tool_compile_linkexe) --install -o rose-symbolic-simplifier symbolicSimplifier.C
+run $(tool_compile_linkexe) --install -o rose-binary-to-source binaryToSource.C
+run $(tool_compile_linkexe) --install -o rose-trace trace.C
+run $(tool_compile_linkexe) --install -o rose-generate-paths generatePaths.C
+run $(tool_compile_linkexe) --install -o rose-max-bijection maxBijection.C
+run $(tool_compile_linkexe) --install -o rose-debug-semantics debugSemantics.C
+run $(tool_compile_linkexe) --install -o rose-x86-call-targets x86-call-targets.C
+run $(tool_compile_linkexe) --install -o rose-rxml rxml.C
+run $(tool_compile_linkexe) --install -o rose-dwarf-lines dwarf-lines.C
+run $(tool_compile_linkexe) --install -o rose-xml2json xml2json.C
+run $(tool_compile_linkexe) --install -o rose-execution-monitor ExecutionMonitor.C
+run $(tool_compile_linkexe) --install -o rose-perf-execution-wrapper rose-perf-execution-wrapper.c
+run $(public_script) rose-missing-semantics
+
+ifneq (@(WITH_DLIB),no)
+    run $(tool_compile_linkexe) --install -o rose-find-similar-functions findSimilarFunctions.C
+endif
+
+
+
+########################################################################################################################
+# Tests
+########################################################################################################################
+
+
+run $(test) rose-debug-semantics -o testAdaptiveRegisters \
+    --answer=TestAnswers/testAdaptiveRegisters.ans \
+    --filter='perl -p semanticsFilter' \
+    ./rose-debug-semantics --test-adaptive-registers --semantics=symbolic --track-writers=last specimens/x86-64-adaptiveRegs
+
+xml2json_INPUT =				\
+	xml2json-test01.xml			\
+	xml2json-test02.xml			\
+	xml2json-test03.xml			\
+	xml2json-test04.xml			\
+	xml2json-test05.xml			\
+	xml2json-test06.xml			\
+	xml2json-test07.xml			\
+	xml2json-test08.xml			\
+	xml2json-test09.xml			\
+	xml2json-test10.xml			\
+	xml2json-test11.xml			\
+	xml2json-test12.xml
+
+run for iname in $(xml2json_INPUT); do \
+        input=./specimens/${iname}; \
+        basename=`basename ${iname} .xml`; \
+        output=${basename}.json; \
+        answer=./TestAnswers/${basename}.xml.ans; \
+        $(test) rose-xml2json -i ${input} -i ${answer} -o "${basename#xml2json-}" -x ${output} --answer=${answer} --filter='jq .' \
+	    "./rose-xml2json ${input} ${output} && cat ${output}"; \
+    done
+
+endif

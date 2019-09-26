@@ -1,0 +1,1 @@
+install(FILES ROSE_BSD_License.txt DESTINATION include RENAME ROSE_LICENSE)

@@ -18,20 +18,21 @@
 0x00401012: Successor blocks: 0x00401013, unknown
 
 0x00401013: Basic block reasons: 
-0x00401013: d9 7d fe                |.}.     |          fnstcw word ss:[ebp + 0xfe<-2>]
-0x00401016: 0f b7 45 fe             |..E.    |          movzx  eax, word ss:[ebp + 0xfe<-2>]
-0x0040101a: 25 c0 f0 ff ff          |%....   |          and    eax, 0xfffff0c0<-3904>
-0x0040101f: 66 89 45 fe             |f.E.    |          mov    word ss:[ebp + 0xfe<-2>], ax
-0x00401023: 0f b7 45 fe             |..E.    |          movzx  eax, word ss:[ebp + 0xfe<-2>]
-0x00401027: 0d 3f 03 00 00          |.?...   |          or     eax, 0x0000033f<831>
-0x0040102c: 66 89 45 fe             |f.E.    |          mov    word ss:[ebp + 0xfe<-2>], ax
-0x00401030: d9 6d fe                |.m.     |          fldcw  word ss:[ebp + 0xfe<-2>]
-0x00401033: c7 04 24 4b 14 40 00    |..$K.@. |          mov    dword ss:[esp], 0x0040144b<<Func>>
-0x0040103a: e8 71 05 00 00          |.q...   |          call   0x004015b0<<Func>>
+0x00401013: d9 7d fe                |.}.     |<sp-16>   fnstcw word ss:[ebp + 0xfe<-2>]
+0x00401016: 0f b7 45 fe             |..E.    |<sp-16>   movzx  eax, word ss:[ebp + 0xfe<-2>]
+0x0040101a: 25 c0 f0 ff ff          |%....   |<sp-16>   and    eax, 0xfffff0c0<-3904>
+0x0040101f: 66 89 45 fe             |f.E.    |<sp-16>   mov    word ss:[ebp + 0xfe<-2>], ax
+0x00401023: 0f b7 45 fe             |..E.    |<sp-16>   movzx  eax, word ss:[ebp + 0xfe<-2>]
+0x00401027: 0d 3f 03 00 00          |.?...   |<sp-16>   or     eax, 0x0000033f<831>
+0x0040102c: 66 89 45 fe             |f.E.    |<sp-16>   mov    word ss:[ebp + 0xfe<-2>], ax
+0x00401030: d9 6d fe                |.m.     |<sp-16>   fldcw  word ss:[ebp + 0xfe<-2>]
+0x00401033: c7 04 24 4b 14 40 00    |..$K.@. |<sp-16>   mov    dword ss:[esp], 0x0040144b<<Func>>
+0x0040103a: e8 71 05 00 00          |.q...   |<sp-16>   call   0x004015b0<<Func>>
+0x0040103a: Outgoing stack delta: -20
 0x0040103a: Successor blocks: 0x0040103f, 0x004015b0<<Func>>
 
 0x0040103f: Basic block reasons: 
-0x0040103f: c9                      |.       |          leave  
+0x0040103f: c9                      |.       |<sp-16>   leave  
 0x00401040: c3                      |.       |<sp+0 >   ret    
 0x00401040: Outgoing stack delta: +4
 0x00401040: Successor blocks: unknown

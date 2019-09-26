@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Generate VAR=VALUE on standard output to be fed into a command to run merge-configs. The
+# output is based on things that GNU autotool's "configure" script detected.
+
+# ROSE version number
+
+# EDG version number (CONFIG_EDG_VERSION)
+edg_major=$(awk '/^#define ROSE_EDG_MAJOR_VERSION_NUMBER/ {print $3}' <rose_config.h)
+edg_minor=$(awk '/^#define ROSE_EDG_MINOR_VERSION_NUMBER/ {print $3}' <rose_config.h)
+[ -n "$edg_major" -a -n "$edg_minor" ] && echo "EDG_VERSION=${edg_major}.${edg_minor}"
+
+rose_version=$(sed -n '/^#define VERSION "/  s/.*"\(.*\)"/\1/p' <rose_config.h)
+[ -n "$rose_version" ] && echo "ROSE_VERSION=$rose_version"

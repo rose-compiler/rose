@@ -12,25 +12,40 @@ BENCH_PASS=0
 BENCH_FAIL=0
 
 function NormalizationTests {
-testNumbers=`echo {01..26}`
-echo "Scheduled tests: $testNumbers"
-for testNumber in $testNumbers; do
-    benchmarkprefix=$TESTDIR/NORM${testNumber};
-    for benchmark in ${benchmarkprefix}*.C; do
-        benchmarkname=$(basename $benchmark)
-        echo -n "Testing $benchmarkname : "
-        g++ $benchmark
-        ./codethorn $benchmark --normalize-all=yes --unparse=yes #> /dev/null
-        g++ rose_${benchmarkname} 
-        if [ ! $? -eq 0 ]
-        then
-	    echo "FAIL"
-            exit 1
-        else
-	    echo "PASS"
-        fi
+    testNumbers=`echo {01..42}`
+    #testNumbers=`echo {40..42}`
+    echo "Scheduled tests: $testNumbers"
+    for testNumber in $testNumbers; do
+        benchmarkprefix=$TESTDIR/NORM${testNumber};
+        for benchmark in ${benchmarkprefix}*.[cC]; do
+            benchmarkname=$(basename $benchmark)
+            if [[ $benchmark = *.c ]]; then
+                echo -n "Testing C $benchmarkname: "
+                gcc $benchmark
+            else
+                echo -n "Testing C++ $benchmarkname: "
+                g++ $benchmark
+            fi
+            ./codethorn $benchmark --normalize-all=yes --unparse=yes #> /dev/null
+            if [ ! $? -eq 0 ]
+            then
+	            echo "FAIL"
+                exit 1
+            fi
+            if [[ $benchmark = *.c ]]; then
+                gcc rose_${benchmarkname} 
+            else
+                g++ rose_${benchmarkname} 
+            fi
+            if [ ! $? -eq 0 ]
+            then
+	            echo "FAIL"
+                exit 1
+            else
+	            echo "PASS"
+            fi
+        done
     done
-done
 }
 
 NormalizationTests

@@ -161,7 +161,7 @@ RiscOperators::get_stored_registers()
         if (regstate->is_partly_stored(regs[i])) {
             const std::string &name = dictionary->lookup(regs[i]);
             ASSERT_require(!name.empty());
-            BaseSemantics::SValuePtr dflt = undefined_(regs[i].get_nbits());
+            BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
             SValuePtr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
 
             // Sometimes registers only have a value because they've been read.  There is no need to emit a definition for
@@ -187,7 +187,7 @@ RiscOperators::get_modified_registers()
         if (cur_regstate->is_partly_stored(regs[i])) {
             const std::string &name = dictionary->lookup(regs[i]);
             ASSERT_require(!name.empty());
-            BaseSemantics::SValuePtr dflt = undefined_(regs[i].get_nbits());
+            BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
             SValuePtr cur_value = SValue::promote(cur_regstate->readRegister(regs[i], dflt, this));
             if (0==cur_value->get_comment().compare(name + "_0")) {
                 // This register has it's initial value, probably because it was read (registers that have never been read or
@@ -216,7 +216,7 @@ SValuePtr
 RiscOperators::get_instruction_pointer()
 {
     RegisterDescriptor EIP = get_insn_pointer_register();
-    BaseSemantics::SValuePtr dflt = undefined_(EIP.get_nbits());
+    BaseSemantics::SValuePtr dflt = undefined_(EIP.nBits());
     return SValue::promote(currentState()->registerState()->readRegister(EIP, dflt, this));
 }
 
@@ -261,7 +261,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
     // Prerequisites for the registers
     RegisterStatePtr regstate = RegisterState::promote(currentState()->registerState());
     for (size_t i=0; i<regs.size(); ++i) {
-        BaseSemantics::SValuePtr dflt = undefined_(regs[i].get_nbits());
+        BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
         SValuePtr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
         value->get_expression()->depthFirstTraversal(t1);
     }
@@ -283,7 +283,7 @@ RiscOperators::emit_register_declarations(std::ostream &o, const RegisterDescrip
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         ASSERT_require(!name.empty());
-        o <<prefix() <<"@" <<name <<" = external global " <<llvm_integer_type(regs[i].get_nbits()) <<"\n";
+        o <<prefix() <<"@" <<name <<" = external global " <<llvm_integer_type(regs[i].nBits()) <<"\n";
     }
 }
 
@@ -295,7 +295,7 @@ RiscOperators::emit_register_definitions(std::ostream &o, const RegisterDescript
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         ASSERT_require(!name.empty());
-        BaseSemantics::SValuePtr dflt = undefined_(regs[i].get_nbits());
+        BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
         SValuePtr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
         o <<prefix() <<"; register " <<name <<" = " <<*value <<"\n";
         ExpressionPtr t1 = emit_expression(o, value);
@@ -1109,6 +1109,8 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
         ExpressionPtr operator_result;
         TreeNodes operands = inode->children();
         switch (inode->getOperator()) {
+            case SymbolicExpr::OP_NONE:
+                ASSERT_not_reachable("cannot happen for an interior node");
             case SymbolicExpr::OP_ADD:
                 operator_result = emit_left_associative(o, "add", operands);
                 break;
@@ -1435,7 +1437,7 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
                 // guaranteed.
                 o <<operators->prefix() <<";;ERROR: " <<e <<"\n";
                 RegisterDescriptor IP_REG = operators->get_insn_pointer_register();
-                BaseSemantics::SValuePtr fallthrough_va = operators->number_(IP_REG.get_nbits(),
+                BaseSemantics::SValuePtr fallthrough_va = operators->number_(IP_REG.nBits(),
                                                                              insn->get_address() + insn->get_size());
                 operators->currentState()->registerState()->writeRegister(IP_REG, fallthrough_va, operators.get());
             } else {

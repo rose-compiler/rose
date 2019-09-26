@@ -1,0 +1,381 @@
+#include <iostream>
+#include <sstream>
+#include <string>
+
+//~ #include <boost/filesystem.hpp>
+
+#include <boost/algorithm/string.hpp>
+
+#include "sage3basic.h"
+#include "sageInterface.h"
+#include "sageGeneric.h"
+
+#include "ast2dot.hpp"
+
+namespace sb = SageBuilder;
+namespace si = SageInterface;
+
+namespace dot
+{
+  /// converts object of type E to T via string conversion
+  template <class T, class E>
+  static inline
+  T conv(const E& el)
+  {
+    std::stringstream s;
+    T                 res;
+
+    s << el;
+    s >> res;
+    return res;
+  }
+
+  void edge(std::ostream& os, const void* src, const void* tgt, std::string lbl, std::string attr)
+  {
+    os << "  p" << size_t(src) << " -> p" << size_t(tgt)
+       << "[ taillabel = \"" << lbl << "\" " << attr << "];" << std::endl;
+  }
+
+  void node(std::ostream& os, const void* n, std::string lbl, std::string attr)
+  {
+    os << "  p" << size_t(n) << "[ label = \"" << lbl << "\" " << attr << "];" << std::endl;
+  }
+
+  std::string short_name(SgNode& n)
+  {
+    std::string s = typeid(n).name();
+    size_t      pre = s.find_first_of("Sg");
+
+    ROSE_ASSERT(pre != std::string::npos);
+    return s.substr(pre+2);
+  }
+
+  std::string short_name(SgNode* n)
+  {
+    if (n == NULL)
+      return "<null>";
+
+    return short_name(*n);
+  }
+
+
+  template <class T>
+  static
+  bool freshlyDiscovered(std::set<const T*>& aset, const T* elem)
+  {
+    if (aset.find(elem) != aset.end())
+      return false;
+
+    aset.insert(elem);
+    return true;
+  }
+
+  template <class T>
+  static inline
+  bool freshlyDiscovered(std::set<const T*>& aset, const T& elem)
+  {
+    return freshlyDiscovered(aset, &elem);
+  }
+
+  static inline
+  std::string nameIfNeeded(std::string s)
+  {
+    if (s.empty()) return "<noname>";
+
+    return s;
+  }
+
+
+  struct DotPrinter
+  {
+    DotPrinter(std::ostream& s, attr_set options)
+    : os(&s), opts(options), known_types(), known_init_names(), known_symbols(),
+      known_decls()
+    {}
+
+    bool with_opt(int o) const { return (opts & o) == o; }
+
+    void recurse(SgNode& n)
+    {
+      *this = sg::traverseChildren(*this, n);
+    }
+
+    void descend(SgNode* n)
+    {
+      //~ *this = sg::forAllNodes(*this, n, preorder);
+      *this = sg::dispatch(*this, n);
+
+      recurse(*n);
+    }
+
+    void write_type(SgExpression& n, attr_set opt = ::dot::types)
+    {
+      if (!with_opt(opt))
+        return;
+
+      prn_node_type(n.get_type());
+      edge(*os, &n, n.get_type(), "", type_color);
+    }
+
+    void prn_node_type(SgType* n)
+    {
+      if (!freshlyDiscovered(known_types, n))
+        return;
+
+      *this = sg::dispatch(*this, n);
+    }
+
+    void prn_decllink(SgNode* src, SgInitializedName* decl, std::string edgelbl, std::string edgeattr)
+    {
+      edge(*os, src, decl, edgelbl, edgeattr);
+    }
+
+    void prn_decllink(SgNode* src, SgVariableSymbol* sy, std::string edgeattr)
+    {
+      std::string edgelbl = shortcut_lbl;
+
+      if (with_opt(::dot::symbols))
+      {
+        // include extra nodes and edges
+
+        if (freshlyDiscovered(known_symbols, static_cast<SgSymbol*>(sy)))
+          node(*os, sy, short_name(sy), decl_color);
+
+        edge(*os, src, sy, "", edgeattr);
+
+        edgelbl = "";
+        src     = sy;
+      }
+
+      prn_decllink(src, sy ? sy->get_declaration() : 0, edgelbl, edgeattr);
+    }
+
+    void normal_node(SgLocatedNode& n, std::string lbl, std::string nodeattr)
+    {
+      //~ if (n.isCompilerGenerated()) return;
+
+      if (isSgMemberFunctionDeclaration(&n)) std::cerr << "**** memfun" << std::endl;
+
+      node(*os, &n, lbl, nodeattr);
+      edge(*os, n.get_parent(), &n, "", "");
+    }
+
+    void normal_node(SgLocatedNode& n, std::string nodeattr)
+    {
+      normal_node(n, short_name(n), nodeattr);
+    }
+
+    void expr_node(SgExpression& n, attr_set opt = ::dot::types)
+    {
+      normal_node(n, expr_color);
+
+      write_type(n, opt);
+      recurse(n);
+    }
+
+    template <class SgValNode>
+    void value_expression(SgValNode& n)
+    {
+      std::string val = conv<std::string>(n.get_value());
+      //~ std::string val = n.get_valueString();
+
+      node(*os, &n, short_name(n) + ": " + val, expr_color);
+      edge(*os, n.get_parent(), &n, "", "");
+
+      write_type(n, ::dot::moretypes);
+    }
+
+    void handle(SgNode& n)
+    {
+      node(*os, &n, short_name(n), udef_color);
+    }
+
+    void handle(SgSourceFile& n)
+    {
+      node(*os, &n, short_name(n), udef_color);
+      recurse(n);
+    }
+
+    void handle(SgLocatedNode& n)
+    {
+      normal_node(n, short_name(n), udef_color);
+      recurse(n);
+    }
+
+    void handle(SgType& n)
+    {
+      node(*os, &n, short_name(n), type_color);
+    }
+
+    void handle(SgArrayType& n)
+    {
+      std::string arrname = short_name(n);
+
+      arrname = arrname + "[" + conv<std::string>(n.get_number_of_elements()) + "]"
+                        + " @" + conv<std::string>(n.get_rank())
+                        ;
+
+      node(*os, &n, arrname, type_color);
+
+      prn_node_type(n.get_base_type());
+      descend(n.get_index());
+      descend(n.get_dim_info());
+
+      edge(*os, &n, n.get_base_type(), "",  type_color);
+      //~ edge(*os, &n, n.get_index(),     "index", type_color);
+      //~ edge(*os, &n, n.get_dim_info(),  "dim",   type_color);
+    }
+
+    void handle(SgInitializedName& n)
+    {
+      if (!freshlyDiscovered(known_init_names, n))
+        return;
+
+      known_init_names.insert(&n);
+      normal_node(n, nameIfNeeded(n.get_name()), decl_color);
+
+      if (!with_opt(::dot::types))
+        return;
+
+      prn_node_type(n.get_type());
+      edge(*os, &n, n.get_type(), "", type_color);
+      recurse(n);
+    }
+
+    void handle(SgStatement& n)
+    {
+      normal_node(n, stmt_color);
+      recurse(n);
+    }
+
+    void handle(SgRenamePair& n)
+    {
+      normal_node(n, udef_color);
+      recurse(n);
+    }
+
+    void handle(SgDeclarationStatement& n)
+    {
+      if (!freshlyDiscovered(known_decls, n))
+        return;
+
+      known_decls.insert(&n);
+
+      normal_node(n, decl_color);
+      recurse(n);
+    }
+
+    void handle(SgFunctionDeclaration& n)
+    {
+      if (!freshlyDiscovered(known_decls, static_cast<SgDeclarationStatement&>(n)))
+        return;
+
+      known_decls.insert(&n);
+
+      if (  !with_opt(attr_set::builtins)
+         && boost::starts_with(std::string(n.get_name()), "__")
+         )
+        return;
+
+      normal_node(n, decl_color);
+      recurse(n);
+    }
+
+    void handle(SgFunctionParameterList& n)
+    {
+      SgInitializedNamePtrList& args = n.get_args();
+
+      // normal_node(n, short_name(n) + ": " + conv<std::string>(args.size()), udef_color);
+      normal_node(n, short_name(n), udef_color);
+
+      for (size_t i = 0; i < args.size(); ++i)
+      {
+        SgInitializedName& child = sg::deref(args.at(i));
+
+        handle(child);
+
+        // fortran special ..
+        if (child.get_parent() != &n)
+          edge(*os, &n, &child, unusual_lbl, udef_color);
+      }
+    }
+
+    void handle(SgIntVal& n)         { value_expression(n); }
+    void handle(SgFloatVal& n)       { value_expression(n); }
+    void handle(SgDoubleVal& n)      { value_expression(n); }
+    void handle(SgBoolValExp& n)     { value_expression(n); }
+    // void handle(SgComplexVal& n) { value_expression(n); }
+
+    void handle(SgExpression& n)     { expr_node(n); }
+    void handle(SgExprListExp& n)    { expr_node(n, ::dot::moretypes); }
+    void handle(SgNullExpression& n) { expr_node(n, ::dot::moretypes); }
+
+    void handle(SgVarRefExp& n)
+    {
+      expr_node(n);
+
+      if (!with_opt(::dot::decllinks))
+        return;
+
+      prn_decllink(&n, n.get_symbol(), "style = dotted");
+    }
+
+    std::ostream*                           os;
+    attr_set                                opts;
+    std::set<const SgType*>                 known_types;
+    std::set<const SgInitializedName*>      known_init_names;
+    std::set<const SgSymbol*>               known_symbols;
+    std::set<const SgDeclarationStatement*> known_decls;
+
+    static constexpr const char* decl_color = "color=gold";
+    static constexpr const char* stmt_color = "color=blue";
+    static constexpr const char* type_color = "color=red";
+    static constexpr const char* expr_color = "color=indigo";
+    static constexpr const char* udef_color = "color=green";
+
+    static constexpr const char* shortcut_lbl = "**";
+    static constexpr const char* unusual_lbl  = "??";
+  };
+
+
+  void dot_header(std::ostream& os, std::string s = "f2cxx")
+  {
+    os << "digraph " << s << " {" << std::endl;
+  }
+
+  void dot_footer(std::ostream& os)
+  {
+    os << "}" << std::endl;
+  }
+
+  void dot_noheader(std::ostream& os, SgNode& n, attr_set options)
+  {
+    // print type nodes
+    //~ if ((attributes & attr::types) == attr::types)
+    //~ {
+      //~ dot_types(os, prog);
+
+      //~ dot_type_relations(os, prog);
+    //~ }
+
+    sg::dispatch(DotPrinter(os, options), &n);
+  }
+
+
+  /// generates a dot file ( https://www.graphviz.org/doc/info/lang.html )
+  ///   for the AST rooted in p. The attribute set determine if types and
+  ///   decl-backlinks are included in the graph.
+  void print_dot(std::ostream& os, SgNode& n, attr_set options)
+  {
+    dot_header(os);
+    dot_noheader(os, n, options);
+    dot_footer(os);
+  }
+
+  void save_dot(std::string s, SgNode& n, attr_set options)
+  {
+    std::fstream out(s, std::fstream::out);
+
+    print_dot(out, n, options);
+  }
+}

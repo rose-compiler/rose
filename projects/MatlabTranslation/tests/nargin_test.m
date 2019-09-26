@@ -2,7 +2,6 @@ function res = nargin_test()
     res = addme(1)
     res = res + addme(1, 2)
     res = res + addme()
-    res = res + donothing()
 end
 
 function c = addme(a,b)
@@ -15,9 +14,7 @@ function c = addme(a,b)
     else 
       c = -(a+b)
     end
-end
 
-function res = donothing()
-    res = 1 + 1
+    c = 0
 end
 

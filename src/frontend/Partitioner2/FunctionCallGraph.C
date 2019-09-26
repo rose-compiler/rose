@@ -7,22 +7,29 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// VertexKey
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+FunctionCallGraph::VertexKey::VertexKey()
+    : address(0) {}
+
+FunctionCallGraph::VertexKey::VertexKey(rose_addr_t va)
+    : address(va) {}
+
+FunctionCallGraph::VertexKey::VertexKey(const Function::Ptr &function)
+    : address(function ? function->address() : 0) {}
+
+bool
+FunctionCallGraph::VertexKey::operator<(VertexKey other) const {
+    return address < other.address;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// FunctionCallGraph
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 FunctionCallGraph::FunctionCallGraph() {}
-
-FunctionCallGraph::FunctionCallGraph(const FunctionCallGraph &other)
-    : graph_(other.graph_) {
-    for (Graph::VertexIterator iter=graph_.vertices().begin(); iter!=graph_.vertices().end(); ++iter)
-        index_.insert(iter->value()->address(), iter);
-}
-
-FunctionCallGraph&
-FunctionCallGraph::operator=(const FunctionCallGraph &other) {
-    graph_ = other.graph_;
-    for (Graph::VertexIterator iter=graph_.vertices().begin(); iter!=graph_.vertices().end(); ++iter)
-        index_.insert(iter->value()->address(), iter);
-    return *this;
-}
-
 FunctionCallGraph::~FunctionCallGraph() {}
 
 FunctionCallGraph::Graph::ConstVertexIterator
@@ -32,8 +39,7 @@ FunctionCallGraph::findFunction(const FunctionPtr &function) const {
 
 FunctionCallGraph::Graph::ConstVertexIterator
 FunctionCallGraph::findFunction(rose_addr_t entryVa) const {
-    Index::ConstValueIterator found = index_.find(entryVa);
-    return found==index_.values().end() ? graph_.vertices().end() : Graph::ConstVertexIterator(*found);
+    return graph_.findVertexKey(VertexKey(entryVa));
 }
 
 bool
@@ -48,15 +54,14 @@ FunctionCallGraph::exists(rose_addr_t entryVa) const {
 
 FunctionCallGraph::Graph::VertexIterator
 FunctionCallGraph::insertFunction(const Function::Ptr &function) {
-    Graph::VertexIterator vertex = graph_.vertices().end();
-    if (function && !index_.getOptional(function->address()).assignTo(vertex))
-        index_.insert(function->address(), vertex=graph_.insertVertex(function));
-    return vertex;
+    return function ? graph_.insertVertexMaybe(function) : graph_.vertices().end();
 }
 
 FunctionCallGraph::Graph::EdgeIterator
 FunctionCallGraph::insertCall(const Function::Ptr &source, const Function::Ptr &target, EdgeType type, size_t edgeCount) {
-    return insertCall(insertFunction(source), insertFunction(target), type, edgeCount);
+    Graph::VertexIterator srcVertex = insertFunction(source);
+    Graph::VertexIterator dstVertex = insertFunction(target);
+    return insertCall(srcVertex, dstVertex, type, edgeCount);
 }
 
 FunctionCallGraph::Graph::EdgeIterator

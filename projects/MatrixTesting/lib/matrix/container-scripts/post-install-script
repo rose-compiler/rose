@@ -1,0 +1,139 @@
+#!/bin/bash
+# This script is invoked by the mkinstaller-generated binary distribution of ROSE in order to fix up
+# things like RPATH values in executables and libraries, compiler names, compiler and C preprocessor
+# search directories, ROSE configuration files that have paths embedded in them, etc.
+
+set -e +x
+arg0="${0##*/}"
+
+TARGET_PREFIX=
+SOURCE_PREFIX=
+
+die() {
+    echo "$arg0" "$@" >&2
+    exit 1
+}
+
+########################################################################################################################
+# Get the name of the ROSE installation prefix on the source machine (the one that built the binary release).
+source-prefix() {
+    if [ -f "$TARGET_PREFIX/include/rose-installed-make.cfg" ]; then
+	sed -n 's/^[ \t]*ROSE_PREFIX[ \t]*=[ \t]*\(.*\)/\1/p' <"$TARGET_PREFIX/include/rose-installed-make.cfg"
+    elif [ -f "$TARGET_PREFIX/lib/rose-config.cfg" ]; then
+	sed -n 's/^[ \t]*ROSE_PREFIX[ \t]*=[ \t]*\(.*\)/\1/p' <"$TARGET_PREFIX/lib/rose-config.cfg"
+    else
+	: unkown
+    fi
+}
+
+########################################################################################################################
+# Adjust the rpath for executables and libraries
+adjust-all-rpaths() {
+    for f in "$TARGET_PREFIX"/bin/* "$TARGET_PREFIX"/lib/lib*.so; do
+	echo -n "adjusting rpath for $f... " >&2
+	echo $(patchelf --set-rpath "$TARGET_PREFIX/lib" "$f" || true)
+    done
+}
+
+########################################################################################################################
+# Replace all occurrences of the source machine's installation prefix with that of the target machine's prefix.
+adjust-prefixes() {
+    local file="$1"
+    if [ -f "$file" ]; then
+	sed -i~ "s%$SOURCE_PREFIX%$TARGET_PREFIX%g" "$file"
+    fi
+}
+
+########################################################################################################################
+# Find suitable C++ compiler
+find-cxx-compiler() {
+    local config_file="$1"
+    local cxx_triplet=$(sed -n 's/^[ \t]*ROSE_CXX_INFO[ \t]*=[ \t]*\([^ \t]\+\).*/\1/p' "$config_file")
+    local cxx_vendor=$(echo $cxx_triplet |cut -d: -f1)
+    local cxx_language=$(echo $cxx_triplet |cut -d: -f2)
+    local cxx_version=$(echo $cxx_triplet |cut -d: -f3)
+
+    case "$cxx_vendor" in
+	gnu)
+	    echo "g++ -std=$cxx_language"
+	    ;;
+	llvm)
+	    echo "clang++ -std=$cxx_language"
+	    ;;
+	intel)
+	    echo "icpc -std=$cxx_language"
+	    ;;
+	*)
+	    echo "c++ -std=$cxx_language"
+	    ;;
+    esac
+}
+
+########################################################################################################################
+# Find a suitable C compiler
+find-c-compiler() {
+    local config_file="$1"
+    local c_triplet=$(sed -n 's/^[ \t]*ROSE_CC_INFO[ \t]*=[ \t]*\([^ \t]\+\).*/\1/p' "$config_file")
+    local c_vendor=$(echo $c_triplet |cut -d: -f1)
+    local c_language=$(echo $c_triplet |cut -d: -f2)
+    local c_version=$(echo $c_triplet |cut -d: -f3)
+
+    # WARNING: This is just a stub for now that uses the default compiler regardless of version.
+    case "$c_vendor" in
+	gnu)
+	    echo "gcc -std=$c_language"
+	    ;;
+	llvm)
+	    echo "clang -std=$c_language"
+	    ;;
+	intel)
+	    echo "icc -std=$c_lanauge"
+	    ;;
+	*)
+	    echo "cc -std=$c_language"
+	    ;;
+    esac
+}
+
+########################################################################################################################
+# Substitute an existing C and C++ compiler in the specified config file.
+adjust-compilers() {
+    local config_file="$1"
+    if [ -f "$config_file" ]; then
+	local target_cxx_compiler="$(find-cxx-compiler "$config_file")"
+	local target_c_compiler="$(find-c-compiler "$config_file")"
+
+	sed -i~ 's%^[ \t]*ROSE_CXX[ \t]*=.*%${target_cxx_compiler}%p' "$config_file"
+	sed -i~ 's%^[ \t]*ROSE_CC[ \t]*=.*%${target_cc_compiler}%p' "$config_file"
+    fi
+}
+
+########################################################################################################################
+
+# Parse command-line arguments
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--prefix-bin=*)
+	    TARGET_PREFIX="${1#--prefix-bin=}"
+	    shift
+	    ;;
+	*)
+	    shift
+	    ;;
+    esac
+done
+[ -n "$TARGET_PREFIX" ] || die "unknown target machine installation prefix"
+[ -d "$TARGET_PREFIX/bin" ] || die "missing installation directory: $TARGET_PREFIX/bin"
+[ -d "$TARGET_PREFIX/lib" ] || die "missing installation directory: $TARGET_PREFIX/lib"
+
+SOURCE_PREFIX="$(source-prefix)"
+ 
+adjust-all-rpaths
+
+adjust-prefixes "$TARGET_PREFIX/include/rose-installed-make.cfg"
+adjust-prefixes "$TARGET_PREFIX/include/rose-installed-shell.cfg"
+adjust-prefixes "$TARGET_PREFIX/lib/rose-config.cfg"
+
+adjust-compilers "$TARGET_PREFIX/include/rose-installed-make.cfg"
+adjust-compilers "$TARGET_PREFIX/include/rose-installed-shell.cfg"
+adjust-compilers "$TARGET_PREFIX/lib/rose-config.cfg"

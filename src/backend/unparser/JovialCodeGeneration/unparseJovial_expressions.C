@@ -215,7 +215,7 @@ Unparse_Jovial::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseAsteriskShapeExpr(SgExpression* expr, SgUnparse_Info& info) 
    {
-     ROSE_ASSERT( isSgAsteriskShapeExp(expr) != NULL);
+     ROSE_ASSERT( isSgAsteriskShapeExp(expr) != NULL );
 
      curprint("*");
    }
@@ -283,4 +283,41 @@ Unparse_Jovial::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
      ROSE_ASSERT(assn_init != NULL);
 
      unparseExpression(assn_init->get_operand(), info);
+   }
+
+//----------------------------------------------------------------------------
+//  Table dimension list
+//----------------------------------------------------------------------------
+
+void
+Unparse_Jovial::unparseDimInfo(SgExprListExp* dim_info, SgUnparse_Info& info)
+   {
+      ROSE_ASSERT(dim_info != NULL);
+
+   // If this is a scalar don't print the parens
+      if (dim_info->get_expressions().size() < 1) return;
+
+      bool first = true;
+      curprint("(");
+
+      BOOST_FOREACH(SgExpression* expr, dim_info->get_expressions())
+         {
+            if (first) first = false;
+            else       curprint(",");
+
+            if (isSgSubscriptExpression(expr))
+               {
+                  unparseSubscriptExpr(expr, info);
+               }
+            else if (isSgAsteriskShapeExp(expr))
+               {
+                  unparseAsteriskShapeExpr(expr, info);
+               }
+            else
+               {
+                  unparseExpression(expr, info);
+               }
+         }
+
+      curprint(") ");
    }

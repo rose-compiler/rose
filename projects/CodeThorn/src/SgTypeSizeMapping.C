@@ -1,8 +1,8 @@
 #include "sage3basic.h"
 #include "SgTypeSizeMapping.h"
 
-namespace SPRAY {
-  SPRAY::TypeSize SgTypeSizeMapping::determineTypeSize(SgType* sgType) {
+namespace CodeThorn {
+  CodeThorn::TypeSize SgTypeSizeMapping::determineTypeSize(SgType* sgType) {
     ROSE_ASSERT(_mapping.size()!=0);
     ROSE_ASSERT(sgType);
     switch (sgType->variantT()) {
@@ -53,14 +53,14 @@ namespace SPRAY {
     case V_SgReferenceType:
       return getTypeSize(BITYPE_REFERENCE);
     case V_SgArrayType: {
-      SPRAY::TypeSize elementTypeSize=determineElementTypeSize(isSgArrayType(sgType));
+      CodeThorn::TypeSize elementTypeSize=determineElementTypeSize(isSgArrayType(sgType));
       // TODO determine size of the array and multiply it with element type size.
-      SPRAY::TypeSize numberOfElements=1;
+      CodeThorn::TypeSize numberOfElements=1;
       return numberOfElements*elementTypeSize;
     }
     case V_SgClassType: {
       typedef std::vector< std::pair< SgNode*, std::string > > DataMemberPointers;
-      SPRAY::TypeSize sum=0;
+      CodeThorn::TypeSize sum=0;
       DataMemberPointers dataMemPtrs=isSgClassType(sgType)->returnDataMemberPointers();
       // returnDataMemberPointers includes all declarations (methods need to be filtered)
       for(DataMemberPointers::iterator i=dataMemPtrs.begin();i!=dataMemPtrs.end();++i) {
@@ -79,16 +79,16 @@ namespace SPRAY {
     }
   }
 
-  SPRAY::TypeSize SgTypeSizeMapping::determineElementTypeSize(SgArrayType* sgType) {
+  CodeThorn::TypeSize SgTypeSizeMapping::determineElementTypeSize(SgArrayType* sgType) {
     ROSE_ASSERT(_mapping.size()!=0);
     SgType* elementType=sgType->get_base_type();
     return determineTypeSize(elementType);
   }
 
-  SPRAY::TypeSize SgTypeSizeMapping::determineTypeSizePointedTo(SgPointerType* sgType) {
+  CodeThorn::TypeSize SgTypeSizeMapping::determineTypeSizePointedTo(SgPointerType* sgType) {
     ROSE_ASSERT(_mapping.size()!=0);
     SgType* typePointedTo=sgType->get_base_type();
     return determineTypeSize(typePointedTo);
   }
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn

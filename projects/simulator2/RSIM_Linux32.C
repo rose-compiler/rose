@@ -4081,7 +4081,6 @@ RSIM_Linux32::syscall_futex_body(RSIM_Thread *t, int callno)
     uint32_t op = t->syscall_arg(1);
     uint32_t val1 = t->syscall_arg(2);
     uint32_t timeout_va = 0;                    /* arg 3 when present */
-    uint32_t futex2_va = 0;                     /* arg 4 when present */
     uint32_t val3 = 0;                          /* arg 5 when present */
 
     int result = -ENOSYS;
@@ -4095,29 +4094,42 @@ RSIM_Linux32::syscall_futex_body(RSIM_Thread *t, int callno)
             result = t->futex_wake(futex1_va, val1);
             break;
         case 2: /*FUTEX_FD*/
-            assert(0); // NOT HANDLED YET
+            abort(); // NOT HANDLED YET
+        case 3: /*FUTEX_REQUEUE*/ {
+#if 0 // [Robb Matzke 2019-04-09]
+            uint32_t futex2_va = t->syscall_arg(4);
             break;
-        case 3: /*FUTEX_REQUEUE*/
-            futex2_va = t->syscall_arg(4);
-            assert(0); // NOT HANDLED YET
-            break;
-        case 4: /*FUTEX_CMP_REQUEUE*/
-            futex2_va = t->syscall_arg(4);
+#else
+            abort(); // NOT HANDLED YET
+#endif
+        }
+
+        case 4: /*FUTEX_CMP_REQUEUE*/ {
+#if 0 // [Robb Matzke 2019-04-09]
+            uint32_t futex2_va = t->syscall_arg(4);
             val3 = t->syscall_arg(5);
-            assert(0); // NOT HANDLED YET
             break;
+#else
+            abort(); // NOT HANDLED YET
+#endif
+        }
+
         case 9: /*FUTEX_WAIT_BITSET*/
             timeout_va = t->syscall_arg(3);
-            assert(0==timeout_va); // NOT HANDLED YET
+            ASSERT_always_require(0 == timeout_va); // NOT HANDLED YET
             val3 = t->syscall_arg(5);
             result = t->futex_wait(futex1_va, val1, val3/*bitset*/);
             break;
-        default:
+        default: {
+#if 0 // [Robb Matzke 2019-04-09]
             timeout_va =t->syscall_arg(3);
-            futex2_va = t->syscall_arg(4);
+            uint32_t futex2_va = t->syscall_arg(4);
             val3 = t->syscall_arg(5);
-            assert(0); // NOT HANDLED YET
             break;
+#else
+            abort(); // NOT HANDLED YET
+#endif
+        }
     }
 
     t->syscall_return(result);
@@ -4440,11 +4452,11 @@ RSIM_Linux32::syscall_utimes_body(RSIM_Thread *t, int callno)
 
         size_t size_timeval_sample = sizeof(timeval_32)*2;
 
-        timeval_32 ubuf[1];
+        timeval_32 ubuf[2];
 
         size_t nread = t->get_process()->mem_read(&ubuf, t->syscall_arg(1), size_timeval_sample);
 
-        timeval timeval64[1];
+        timeval timeval64[2];
         timeval64[0].tv_sec  = ubuf[0].tv_sec;
         timeval64[0].tv_usec = ubuf[0].tv_usec;
         timeval64[1].tv_sec  = ubuf[1].tv_sec;

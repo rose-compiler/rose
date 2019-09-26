@@ -79,7 +79,8 @@ noinst_PROGRAMS = \
    testPDFGeneration \
    testTokenGeneration \
    testTemplates \
-   testBackend
+   testBackend \
+   readFileTwice
 
 if ROSE_WITH_ATERM
    noinst_PROGRAMS += testAtermGraphGeneration
@@ -163,6 +164,8 @@ KeepGoingTranslator_SOURCES = KeepGoingTranslator.cpp
 testTemplates_SOURCES = testTemplates.C
 
 testBackend_SOURCES = testBackend.C
+
+readFileTwice_SOURCES = readFileTwice.C
 
 # DQ (7/3/2013): Added support to output some pre-defined macro values.
 # Program to output predefined relevant macros.
@@ -403,9 +406,9 @@ endif
 # Rule to run all the example translator tests
 # test: test_testAnalysis test_testCodeGeneration test_testTranslator test_testAstFileIO testSimpleLinkFileTranslator
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_readFileTwice
 else
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration test_testAstFileIO testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator test_readFileTwice
 endif
 
 # Liao, 4/12/2017 restrict_template_parameter.C will trigger frontend error.
@@ -415,6 +418,9 @@ testKeepGoingTranslator: $(top_builddir)/exampleTranslators/defaultTranslator/Ke
 
 # DQ (7/2/2015): template test code that marks all template instantiations for output (as a test).
 test_testTemplates: testTemplates
+
+# DQ (7/12/2019): Adding support for testing outliner feature to outpline functions to a seperate file.
+test_readFileTwice: readFileTwice
 
 # This appears to be a bug, in that the executable is not build (ROSE assumes an implicit -c for compile only mode).
 #predefinedMacros: testTranslator

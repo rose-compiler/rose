@@ -1,15 +1,30 @@
 #include "sage3basic.h"                                 // every librose .C file must start with this
+#include "Diagnostics.h"
 
 #include "FunctionIdMapping.h"
 #include "RoseAst.h"
 
-#include "SprayException.h"
+#include "CodeThornException.h"
 
+using namespace Sawyer::Message;
 using namespace std;
-using namespace SPRAY;
+using namespace CodeThorn;
+
+Sawyer::Message::Facility CodeThorn::FunctionIdMapping::logger;
 
 FunctionIdMapping::FunctionIdMapping() {
 
+}
+FunctionId FunctionIdMapping::getFunctionIdFromFunctionDef(SgFunctionDefinition* funDef) {
+  return mappingFunctionDefToFunctionId.at(funDef);
+}
+SgFunctionDefinition* FunctionIdMapping::getFunctionDefFromFunctionId(CodeThorn::FunctionId funId) {
+  auto iter=mappingFunctionIdToFunctionDef.find(funId);
+  if(iter==mappingFunctionIdToFunctionDef.end()) {
+    return 0;
+  } else {
+    return (*iter).second;
+  }
 }
 
 SgFunctionType* FunctionIdMapping::getTypeFromFunctionId(FunctionId id) const {
@@ -52,7 +67,6 @@ std::string FunctionIdMapping::toString() const {
   return oss.str();
 }
 
-
 FunctionIdMapping::FunctionIdSet FunctionIdMapping::getFunctionIdSet() const {
   FunctionIdSet set;
   for(map<SgSymbol*,size_t>::const_iterator i=mappingSymbolToFunctionId.begin();i!=mappingSymbolToFunctionId.end();++i) {
@@ -64,9 +78,6 @@ FunctionIdMapping::FunctionIdSet FunctionIdMapping::getFunctionIdSet() const {
   return set;
 }
 
-
-
-
 void FunctionIdMapping::generateStmtSymbolDotEdge(std::ofstream& file, SgNode* node,FunctionId id) {
   file<<"_"<<node<<" "
       <<"->"
@@ -74,39 +85,11 @@ void FunctionIdMapping::generateStmtSymbolDotEdge(std::ofstream& file, SgNode* n
       << endl;
 }
 
-
 string FunctionIdMapping::generateDotSgSymbol(SgSymbol* sym) {
   stringstream ss;
   ss<<"_"<<sym;
   return ss.str();
 }
-
-#if 0
-SgSymbol*
-my_search_for_symbol_from_symbol_table(SgInitializedName* initname) const
-   {
-     SgSymbol *symbol;
-     SgInitializedName* aPrevDeclItem = p_prev_decl_item;
-     while(aPrevDeclItem != NULL && aPrevDeclItem->p_prev_decl_item != NULL)
-        {
-       // DQ (11/19/2011): This loop will not terminate if (aPrevDeclItem->p_prev_decl_item == aPrevDeclItem).
-       // This should not happen but this mistake has happened and this assertion helps it be caught instead
-       // of be an infinite loop.
-          ROSE_ASSERT(aPrevDeclItem->p_prev_decl_item != aPrevDeclItem);
-
-          aPrevDeclItem = aPrevDeclItem->p_prev_decl_item;
-        }
-
-     if (aPrevDeclItem != NULL)
-          symbol = aPrevDeclItem->get_symbol_from_symbol_table();
-       else
-          symbol = get_symbol_from_symbol_table();
-
-     assert(symbol != NULL);
-     return symbol;
-   }
-#endif
-
 
 FunctionId FunctionIdMapping::getFunctionIdFromSymbol(SgSymbol* symbol) const {
   assert(symbol);
@@ -214,7 +197,7 @@ void FunctionIdMapping::deleteUniqueTemporaryFunctionId(FunctionId varFunctionId
     delete getSymbolFromFunctionId(varFunctionId);
   }
   else
-    throw SPRAY::Exception("FunctionIdMapping::deleteUniqueTemporarySymbol: improper id operation.");
+    throw CodeThorn::Exception("FunctionIdMapping::deleteUniqueTemporarySymbol: improper id operation.");
 }
 
 
@@ -270,26 +253,31 @@ void FunctionId::setIdCode(int code) {
   }
 }
 
-bool SPRAY::operator<(FunctionId id1, FunctionId id2) {
-  return id1._id<id2._id;
-}
-bool SPRAY::operator==(FunctionId id1, FunctionId id2) {
+bool CodeThorn::operator==(CodeThorn::FunctionId id1, CodeThorn::FunctionId id2) {
   return id1._id==id2._id;
 }
-bool SPRAY::operator!=(FunctionId id1, FunctionId id2) {
+bool CodeThorn::operator!=(CodeThorn::FunctionId id1, CodeThorn::FunctionId id2) {
   return !(id1==id2);
 }
+bool CodeThorn::operator<(CodeThorn::FunctionId id1, CodeThorn::FunctionId id2)  {
+  return id1._id<id2._id;
+}
 
-FunctionIdSet& SPRAY::operator+=(FunctionIdSet& s1, const FunctionIdSet& s2) {
+FunctionIdSet& CodeThorn::operator+=(FunctionIdSet& s1, const FunctionIdSet& s2) {
   for(FunctionIdSet::const_iterator i=s2.begin();i!=s2.end();++i) {
     s1.insert(*i);
   }
   return s1;
 }
 
-size_t SPRAY::hash_value(const FunctionId& id) {
-  return id.getIdCode();
+//size_t CodeThorn::hash_value(const FunctionId& id) {
+//  return id.getIdCode();
+//}
+
+size_t CodeThorn::FunctionIdHashFunction::operator()(const FunctionId& fid) const {
+  return fid.getIdCode();;
 }
+
 
 SgFunctionDeclaration* FunctionIdMapping::getFunctionDeclaration(FunctionId funcFunctionId) const {
   SgSymbol* funcSym=getSymbolFromFunctionId(funcFunctionId);
@@ -355,6 +343,8 @@ void FunctionIdMapping::generateDot(string filename, SgNode* astRoot) {
 }
 
 void FunctionIdMapping::computeFunctionSymbolMapping(SgProject* project) {
+
+  // compute symbols of all function declarations
   set<SgSymbol*> symbolSet;
   list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
   for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
@@ -370,29 +360,59 @@ void FunctionIdMapping::computeFunctionSymbolMapping(SgProject* project) {
       }
     }
   }
-  cout << "STATUS: computeFunctionSymbolMapping: done."<<endl;
-  return;
-}
 
-void FunctionIdMapping::computeFunctionSymbolMapping(/*const*/ Flow& ICFG, /*const*/ Labeler& labeler) {
-  // TODO: There should be const versions of Flow::begin() and Flow::end()
-  for(Flow::iterator edgeIter = ICFG.begin(); edgeIter != ICFG.end(); ++edgeIter) {
-    Edge edge = *edgeIter;
-    if(labeler.isFunctionEntryLabel(edge.source())) {
-      SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(labeler.getNode(edge.source()));
-      ROSE_ASSERT(functionDefinition);
-      SgFunctionSymbol* funcSymbol = SgNodeHelper::getSymbolOfFunctionDeclaration(functionDefinition->get_declaration());
-      if(!funcSymbol) {
-        cout << "WARNING: No function symbol for function definition " << functionDefinition->unparseToString() << ". Ignoring..." << endl;
-        //ROSE_ASSERT(false);
-        continue;
-      }
-      if(!getFunctionIdFromSymbol(funcSymbol).isValid()) {
-        registerNewSymbol(funcSymbol);
-      }
+  // compute biderictional mapping FunctionDefinition<->FunctionSymbol
+  std::list<SgFunctionDefinition*> funDefList=SgNodeHelper::listOfFunctionDefinitions(project);
+  int nr=1;
+  for(auto funDef : funDefList) {
+    SgFunctionDeclaration* funDecl=funDef->get_declaration();
+    if(!funDecl) {
+      cerr<<"Error: FunctionIdMapping: function definition without declaration."<<endl;
+      cerr<<"funDef: "<<funDef->unparseToString()<<endl;
+      exit(1);
     }
+    SAWYER_MESG(logger[TRACE])<<"Processing function def "<<nr<<": "<<SgNodeHelper::getFunctionName(funDef);
+    // build bi-directional mapping
+    FunctionId funDefFunId=getFunctionIdFromDeclaration(funDecl);
+    ROSE_ASSERT(funDefFunId.isValid());
+    SAWYER_MESG(logger[TRACE])<<" FunctionId:" << funDefFunId.toString();
+    auto funDefIter=mappingFunctionDefToFunctionId.find(funDef);
+    if(funDefIter!=mappingFunctionDefToFunctionId.end()) {
+      // ensure that existing mapping is the same
+      ROSE_ASSERT((*funDefIter).second==funDefFunId);
+    } else {
+      mappingFunctionDefToFunctionId[funDef]=funDefFunId;
+    }
+
+    auto funIdIter=mappingFunctionIdToFunctionDef.find(funDefFunId);
+    if(funIdIter!=mappingFunctionIdToFunctionDef.end()) {
+      // ensure that existing mapping is the same
+      if((*funIdIter).second==0) {
+        mappingFunctionIdToFunctionDef[funDefFunId]=funDef;
+        SAWYER_MESG(logger[TRACE])<<" setting FunctionId to def: "<<funDef<<endl;
+      } else {
+        SAWYER_MESG(logger[TRACE])<<" Problem: FunctionId maps to more than one def: ";
+        SAWYER_MESG(logger[TRACE])<<"FunctionId1: "<<(*funIdIter).first.toString()<<" ==>" <<(*funIdIter).second << "|" << funDef<<endl;
+#if 0
+        cout<<"- 1 ------------------"<<endl;
+        cout<<(*funIdIter).second->unparseToString()<<endl;
+        cout<<"- 2 ------------------"<<endl;
+        cout<<funDef->unparseToString()<<endl;
+        cout<<"----------------------"<<endl;
+#endif
+        //ROSE_ASSERT((*funIdIter).second==funDef);
+      }
+    } else {
+      mappingFunctionIdToFunctionDef[funDefFunId]=funDef;
+      SAWYER_MESG(logger[TRACE])<<" setting FunctionId to def: "<<funDef<<endl;
+    }
+    nr++;
   }
-  cout << "STATUS: computeFunctionSymbolMapping: done."<<endl;
+
+  // compute mapping for each functionref
+  computeFunctionCallMapping(project);
+
+  cout<<"STATUS: computeFunctionSymbolMapping: done."<<endl;
   return;
 }
 
@@ -424,3 +444,50 @@ FunctionIdMapping::FunctionIdSet FunctionIdMapping::getFunctionIdsOfAstSubTree(S
   return idSet;
 }
 
+void FunctionIdMapping::computeFunctionCallMapping(SgProject* project) {
+  std::list<SgFunctionDefinition*> funDefList=SgNodeHelper::listOfFunctionDefinitions(project);
+  RoseAst ast(project);
+  for(auto node:ast) {
+    if(SgFunctionRefExp* functionRefExp=isSgFunctionRefExp(node)) {
+      FunctionCallTarget funCallTarget;
+
+      // case 1: function id mapping can resolve it
+      FunctionId funId=getFunctionIdFromFunctionRef(functionRefExp);
+      if(funId.isValid()) {
+        if(SgFunctionDefinition* funDef=getFunctionDefFromFunctionId(funId)) {
+          funCallTarget.setDefinition(funDef);
+          funCallTarget.setDeclaration(funDef->get_declaration());
+        }
+      }
+      functionCallMapping[functionRefExp].push_back(funCallTarget);
+    } else if(isSgTemplateFunctionRefExp(node)
+              ||isSgMemberFunctionRefExp(node)
+              ||isSgTemplateMemberFunctionRefExp(node)) {
+      cerr<<"WARNING: "<<SgNodeHelper::sourceFilenameLineColumnToString(node)<<": unsupported kind of function ref exp: "<<node->unparseToString()<<endl;
+    }
+  }
+}
+
+SgFunctionDefinition* FunctionIdMapping::resolveFunctionRef(SgFunctionRefExp* funRefExp) {
+
+  // this is guaranteed since all funRefExps are supposed to be in the map
+  ROSE_ASSERT(functionCallMapping.find(funRefExp)!=functionCallMapping.end()); 
+
+  // function definition can be 0
+  if(functionCallMapping[funRefExp].size()==1) {
+    return functionCallMapping[funRefExp][0].getDefinition();
+  } else if(functionCallMapping[funRefExp].size()>=2) {
+    cout<<"WARNING: multiple targets in function resolution."<<endl;
+    return functionCallMapping[funRefExp][0].getDefinition();
+  }
+  return 0;
+}
+
+void FunctionIdMapping::initDiagnostics() {
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    logger = Sawyer::Message::Facility("CodeThorn::FunctionIdMapping", Rose::Diagnostics::destination);
+    Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
+  }
+}

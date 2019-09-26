@@ -248,11 +248,7 @@ FunctionSimilarity::lists(const P2::Function::Ptr &function, CategoryId id) cons
 double
 FunctionSimilarity::compare(const P2::Function::Ptr &f1, const P2::Function::Ptr &f2, double dflt) const {
     ASSERT_require(f1 != NULL || f2 != NULL);
-
-    if (f1 && !functions_.exists(f1))
-        return dflt;
-    if (f2 && !functions_.exists(f2))
-        return dflt;
+    std::vector<double> categoryDistances;
 
     // If only one function is supplied, then compare it against no-function (i.e., use the distance of the non-null function
     // from the origin).
@@ -260,7 +256,6 @@ FunctionSimilarity::compare(const P2::Function::Ptr &f1, const P2::Function::Ptr
     const FunctionInfo &finfo1 = f1 ? functions_[f1] : empty;
     const FunctionInfo &finfo2 = f2 ? functions_[f2] : empty;
 
-    std::vector<double> categoryDistances;
     for (CategoryId id=0; id<categories_.size(); ++id) {
         double d = NAN;
         switch (categories_[id].kind) {
@@ -308,21 +303,22 @@ typedef Sawyer::Container::Graph<ComparisonTask> ComparisonTasks;
 
 // How a worker thread processes one task.
 struct ComparisonFunctor {
-    static const double dfltCompare;                    // distance between functions when either has no data
     const FunctionSimilarity *self;
     const std::vector<P2::Function::Ptr> &rowFunctions; // functions for each row of the matrix
     const std::vector<P2::Function::Ptr> &colFunctions; // functions for each column of the matrix
     const size_t matrixSize;                            // number of rows and columns in square matrix
     Progress::Ptr progress;
     Sawyer::ProgressBar<size_t> &progressBar;
+    const double dfltCompare;                           // distance between functions when either has no data
 
     ComparisonFunctor(const FunctionSimilarity *self,
                       const std::vector<P2::Function::Ptr> &rowFunctions,
                       const std::vector<P2::Function::Ptr> &colFunctions,
-                      const Progress::Ptr &progress, Sawyer::ProgressBar<size_t> &progressBar)
+                      const Progress::Ptr &progress, Sawyer::ProgressBar<size_t> &progressBar,
+                      double dfltCompare)
         : self(self), rowFunctions(rowFunctions), colFunctions(colFunctions),
           matrixSize(std::max(rowFunctions.size(), colFunctions.size())),
-          progress(progress), progressBar(progressBar) {}
+          progress(progress), progressBar(progressBar), dfltCompare(dfltCompare) {}
 
     void operator()(size_t taskId, const ComparisonTask &task) {
         ASSERT_require(task.nComparisons > 0);
@@ -342,12 +338,10 @@ struct ComparisonFunctor {
                 j = 0;
             }
         }
-        ++progressBar;
+        progressBar.increment(task.nComparisons);
         progress->update(progressBar.ratio());
     }
 };
-
-const double ComparisonFunctor::dfltCompare = 0.0;
 
 // Monitor progress of comparison for debugging
 struct ComparisonMonitor {
@@ -428,9 +422,9 @@ FunctionSimilarity::computeDistances(const std::vector<P2::Function::Ptr> &rowFu
                                      size_t nThreads) const {
     ComparisonTasks tasks;
     std::vector<double> distances = buildTasks(rowFunctions, colFunctions, nThreads, tasks /*out*/);
-    Sawyer::ProgressBar<size_t> progressBar(tasks.nVertices(), mlog[MARCH], "dist matrix");
+    Sawyer::ProgressBar<size_t> progressBar(rowFunctions.size()*colFunctions.size(), mlog[MARCH], "dist matrix");
     progressBar.suffix(" elements");
-    ComparisonFunctor f(this, rowFunctions, colFunctions, progress_, progressBar);
+    ComparisonFunctor f(this, rowFunctions, colFunctions, progress_, progressBar, 1.0);
     if (mlog[WHERE]) {
         ComparisonMonitor monitor(this, rowFunctions, colFunctions, mlog[WHERE]);
         Sawyer::workInParallel(tasks, nThreads, f, monitor, boost::chrono::seconds(10));

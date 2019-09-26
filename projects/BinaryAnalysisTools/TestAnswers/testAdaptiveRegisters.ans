@@ -1,7 +1,7 @@
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
-0x004000e0: hlt 
+0x004000e0: hlt
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rip [writer=0x004000e0] write-only = 0x00000000004000e0<4194528>[64]
@@ -363,7 +363,7 @@ memory:
  addr=(add[64] rsp_0[64] 0xfffffffffffffff9<18446744073709551609,-7>[64]) writer=0x004000e1 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] rbp_0[64])
  addr=(add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64]) writer=0x004000e1 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] rbp_0[64])
 
-0x0040012b: leave 
+0x0040012b: leave
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  al [writer=0x004000e5] = 0x00[8]
@@ -412,7 +412,7 @@ memory:
  addr=(add[64] rsp_0[64] 0xfffffffffffffff9<18446744073709551609,-7>[64]) writer=0x004000e1 value=(extract[8] 0x00000008[32] 0x00000010[32] rbp_0[64])
  addr=(add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64]) writer=0x004000e1 value=(extract[8] 0x00000000[32] 0x00000008[32] rbp_0[64])
 
-0x0040012c: ret 
+0x0040012c: ret
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  al [writer=0x004000e5] = 0x00[8]
@@ -663,7 +663,7 @@ memory:
  addr=(add[64] rsp_0[64] 0xfffffffffffffff9<18446744073709551609,-7>[64]) writer=0x0040012d write-only value=(extract[8] 0x00000008[32] 0x00000010[32] rbp_0[64])
  addr=(add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64]) writer=0x0040012d write-only value=(extract[8] 0x00000000[32] 0x00000008[32] rbp_0[64])
 
-0x00400163: leave 
+0x00400163: leave
 RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations=yes
 registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[64]
@@ -695,7 +695,7 @@ memory:
  addr=(add[64] rsp_0[64] 0xfffffffffffffff9<18446744073709551609,-7>[64]) writer=0x0040012d value=(extract[8] 0x00000008[32] 0x00000010[32] rbp_0[64])
  addr=(add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64]) writer=0x0040012d value=(extract[8] 0x00000000[32] 0x00000008[32] rbp_0[64])
 
-0x00400164: ret 
+0x00400164: ret
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rax [writer=0x00400131] = 0x0706050403020100<506097522914230528>[64]
@@ -927,7 +927,7 @@ memory:
  addr=(add[64] rsp_0[64] 0xfffffffffffffff9<18446744073709551609,-7>[64]) writer=0x00400165 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] rbp_0[64])
  addr=(add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64]) writer=0x00400165 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] rbp_0[64])
 
-0x00400193: leave 
+0x00400193: leave
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  al [writer=0x00400187] write-only = 0xa0<-96>[8]
@@ -945,7 +945,7 @@ memory:
  addr=(add[64] rsp_0[64] 0xfffffffffffffff9<18446744073709551609,-7>[64]) writer=0x00400165 value=(extract[8] 0x00000008[32] 0x00000010[32] rbp_0[64])
  addr=(add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64]) writer=0x00400165 value=(extract[8] 0x00000000[32] 0x00000008[32] rbp_0[64])
 
-0x00400194: ret 
+0x00400194: ret
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  al [writer=0x00400187] write-only = 0xa0<-96>[8]
@@ -1169,7 +1169,7 @@ memory:
  addr=(add[64] rsp_0[64] 0xfffffffffffffff9<18446744073709551609,-7>[64]) writer=0x00400195 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] rbp_0[64])
  addr=(add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64]) writer=0x00400195 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] rbp_0[64])
 
-0x004001cd: leave 
+0x004001cd: leave
 RegisterStateGeneric: accessModifiesExistingLocations=no, accessCreatesLocations=yes
 registers:
  rax [writers={0x004001c1, 0x004001cb}] write-only = 0xa7a6a5a4a3a2ffa0<12080525177006522272>[64]
@@ -1185,7 +1185,7 @@ memory:
  addr=(add[64] rsp_0[64] 0xfffffffffffffff9<18446744073709551609,-7>[64]) writer=0x00400195 value=(extract[8] 0x00000008[32] 0x00000010[32] rbp_0[64])
  addr=(add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64]) writer=0x00400195 value=(extract[8] 0x00000000[32] 0x00000008[32] rbp_0[64])
 
-0x004001ce: ret 
+0x004001ce: ret
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rax [writers={0x004001c1, 0x004001cb}] write-only = 0xa7a6a5a4a3a2ffa0<12080525177006522272>[64]
@@ -1335,7 +1335,7 @@ memory:
  addr=(add[64] rsp_0[64] 0xfffffffffffffff9<18446744073709551609,-7>[64]) writer=0x004001cf write-only value=(extract[8] 0x00000008[32] 0x00000010[32] rbp_0[64])
  addr=(add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64]) writer=0x004001cf write-only value=(extract[8] 0x00000000[32] 0x00000008[32] rbp_0[64])
 
-0x004001f6: leave 
+0x004001f6: leave
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=no
 registers:
  rax [writer=0x004001d3] = 0x0706050403020100<506097522914230528>[64]
@@ -1364,7 +1364,7 @@ memory:
  addr=(add[64] rsp_0[64] 0xfffffffffffffff9<18446744073709551609,-7>[64]) writer=0x004001cf value=(extract[8] 0x00000008[32] 0x00000010[32] rbp_0[64])
  addr=(add[64] rsp_0[64] 0xfffffffffffffff8<18446744073709551608,-8>[64]) writer=0x004001cf value=(extract[8] 0x00000000[32] 0x00000008[32] rbp_0[64])
 
-0x004001f7: ret 
+0x004001f7: ret
 RegisterStateGeneric: accessModifiesExistingLocations=yes, accessCreatesLocations=yes
 registers:
  rax [writer=0x004001d3] = 0x0706050403020100<506097522914230528>[64]

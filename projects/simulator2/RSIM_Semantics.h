@@ -73,7 +73,7 @@ private:
     Architecture architecture_;
     bool allocateOnDemand_;                             // allocate rather than returning an error?
     RSIM_Thread *thread_;
-    typedef Sawyer::Container::Map<X86SegmentRegister, SegmentInfo> SegmentInfoMap;
+    typedef Sawyer::Container::Map<Rose::BinaryAnalysis::X86SegmentRegister, SegmentInfo> SegmentInfoMap;
 
     // In x86-64 the CS, SS, DS, and ES segment selector registers are forced to zero, have a base of zero and a limit of
     // 2^64. The FS and GS registers can still be used, but only their descriptors' base address is used, not the limit.
@@ -91,7 +91,8 @@ protected:
         : Super(state, solver), architecture_(arch), allocateOnDemand_(false), thread_(thread) {}
 
 public:
-    static RiscOperatorsPtr instance(Architecture arch, RSIM_Thread *thread, const RegisterDictionary *regdict,
+    static RiscOperatorsPtr instance(Architecture arch, RSIM_Thread *thread,
+                                     const Rose::BinaryAnalysis::RegisterDictionary *regdict,
                                      const Rose::BinaryAnalysis::SmtSolverPtr &solver=Rose::BinaryAnalysis::SmtSolverPtr()) {
         using namespace Rose::BinaryAnalysis::InstructionSemantics2;
         BaseSemantics::SValuePtr protoval = SValue::instance();
@@ -156,10 +157,10 @@ public:
     RSIM_Thread* thread() const { return thread_; }
 
     // Load shadow register with an entry from the GDT
-    void loadShadowRegister(X86SegmentRegister, unsigned gdtIdx);
+    void loadShadowRegister(Rose::BinaryAnalysis::X86SegmentRegister, unsigned gdtIdx);
 
     // Return segment info for register
-    SegmentInfo& segmentInfo(X86SegmentRegister sr);
+    SegmentInfo& segmentInfo(Rose::BinaryAnalysis::X86SegmentRegister sr);
 
     // Semantics of an x86 POP instruction so the simulator can easily pop a word from the top of the stack.
     Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr pop();
@@ -171,7 +172,7 @@ public:
     Architecture architecture() const { return architecture_; }
 
 public:
-    virtual void hlt() {
+    virtual void hlt() ROSE_OVERRIDE {
         throw Halt(currentInstruction()->get_address());
     }
 
@@ -181,18 +182,18 @@ public:
     virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
 
     // Special handling for segment registers.
-    virtual void writeRegister(RegisterDescriptor reg,
+    virtual void writeRegister(Rose::BinaryAnalysis::RegisterDescriptor reg,
                                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE;
 
     // Read and write memory from the memory map directly.
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr
-    readMemory(RegisterDescriptor segreg,
+    readMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &address,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
     virtual void
-    writeMemory(RegisterDescriptor segreg,
+    writeMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &address,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;

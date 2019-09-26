@@ -112,17 +112,17 @@ sub showHistogram {
     # Print results in a table. The table is sorted by score. If two authors
     # have the same score (as often happens with a zero ratio), then sort by
     # increasing number of bad commits, otherwise just sort by author name.
-    printf "Percent Good/Total Score Author\n";
-    printf "------- ---------- ----- --------------------\n";
+    printf "Score Percent Good/Total Author\n";
+    printf "----- ------- ---------- --------------------\n";
     for my $record (sort {
                              -1 * ($a->{score} <=> $b->{score}) ||
                              $a->{nbad} <=> $b->{nbad} ||
                              $a->{author} cmp $b->{author}
                          } @results) {
-	printf("%-7d %4d/%-5d %5d %s\n",
+	printf("%5d %7d %4d/%-5d %s\n",
+	       $record->{score},
 	       100 * $record->{ratio},
 	       $record->{ngood}, $record->{total},
-	       $record->{score},
 	       $record->{author});
     }
 }
@@ -138,7 +138,10 @@ sub showEachCommit {
     
 ####################################################################################################
 
-if (grep {$_ eq "--histogram"} @ARGV) {
+if (@ARGV == 0) {
+    my($author) = git("config", "user.email");
+    showEachCommit("--author=$author", "--no-merges", "--since", "1 month ago", "HEAD");
+} elsif (grep {$_ eq "--histogram"} @ARGV) {
     showHistogram grep {$_ ne "--histogram"} @ARGV;
 } else {
     showEachCommit @ARGV;
