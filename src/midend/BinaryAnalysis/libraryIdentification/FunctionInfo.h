@@ -166,7 +166,7 @@ namespace LibraryIdentification
         
         static std::string getHash(const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner, Rose::BinaryAnalysis::Partitioner2::Function::Ptr function) 
         {
-            boost::shared_ptr<Rose::Combinatorics::Hasher> hasher = Rose::Combinatorics::Hasher::createHasher("FNV");
+            boost::shared_ptr<Rose::Combinatorics::Hasher> hasher = Rose::Combinatorics::Hasher::HasherFactory::Instance().createHasher("SHA256");
             Rose::BinaryAnalysis::AstHash astHash(hasher);            
 
             const std::set<rose_addr_t>& basicBlocks = function->basicBlockAddresses();

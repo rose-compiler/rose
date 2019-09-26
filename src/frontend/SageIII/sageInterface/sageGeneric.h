@@ -114,9 +114,16 @@ namespace sg
     report_error(msg + typeid(n).name(), file, ln);
   }
 
-  //
-  // Convenience class
-
+/**
+ * struct DispatchHandler
+ *
+ * @brief Base class for any handlers passed to @ref dispatch
+ *
+ * This templated class should be used as a BaseClass for Handlers to
+ * be passed to dispatch.  "handle" functions will have to be
+ * implemented for each possible type to be handled.  @ref _ReturnType
+ * holds any data that should be returned from the traversal.
+ **/
   template <class _ReturnType>
   struct DispatchHandler
   {
@@ -893,19 +900,23 @@ namespace sg
 
 
 /// \brief    uncovers the type of SgNode and passes it to an
-///           overloaded function handle in RoseVisitor.
-/// \tparam   RoseVisitor the visitor that will be called back with
-///           the recovered type information. The handle function with
-///           the most suitable SgNode type will get invoked.
-/// \param rv an instance of a rose visitor; note that the argument is essentially
+///           function "handle" in RoseVisitor. which should be
+///           overloaded with every possible target node.  After the
+///           traversal, RoseVisitor should contain the intended return data.
+/// \tparam   RoseVisitor. The visitor that will be called back with
+///           the recovered type information. It must implement
+///           "handle." The handle function with the most suitable SgNode type will get invoked.
+/// \param rv an instance of a rose visitor; ie any class with a
+///           "handle" function.  Note: rv is essentially
 ///           passed by value (similar to STL's for_each).
-/// \param n  a Sage node
-/// \return   a copy of the RoseVisitor object
+/// \param n  The root of the tree to visit. @ref SgNode
+/// \return   a copy of the RoseVisitor object, that will contain the
+///           intended return data.
 /// \details  The following code has two classes.
 ///           - Counter counts the number of all expression and statement nodes.
-///             It implements handlers for SgNode (not interesting nodes),
-///             for SgExpression and SgStatement (to count the nodes).
-///           - Traversal inherits from ASTTraversal and contains a counter.
+///             It implements handlers for @ref SgNode (not interesting nodes),
+///             for @ref SgExpression and @ref SgStatement (to count the nodes).
+///           - Traversal inherits from @ref ASTTraversal and contains a counter.
 ///             The dispatch function is invoked using a Counter object and
 ///             a pointer to an AST node. Since the counter object is passed
 ///             by value we need to store back the result (similar to
@@ -988,7 +999,15 @@ namespace sg
   }
 #endif /* c++11 */
 
-
+/**
+ * struct DefaultHandler
+ *
+ * Base class for @ref AncestorTypeFinder.  It was probably intended
+ * to be a generic BaseClass for many RoseVisitor types, but it isn't
+ * used by anything else, and isn't actually necessary.  
+ * If any specific type is not handled by its
+ * derived class, DefaultHandler provides the function to ignore it.
+ **/
   template <class SageNode>
   struct DefaultHandler
   {
