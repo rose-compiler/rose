@@ -43,7 +43,7 @@ AC_DEFUN([ROSE_SUPPORT_Z3],[
     fi
 
     if test $USE_Z3 = 1; then
-        # Try to figure out a version number because the backlisting needs it.
+        # Try to figure out a version number because the blacklisting needs it.
         if test -r "$Z3_INCLUDE_PATH/z3_version.h"; then
             Z3_VERSION=`sed -n 's/#define Z3_FULL_VERSION.*"Z3 \(.*\)"/\1/p' "$Z3_INCLUDE_PATH/z3_version.h"`
         elif test -r "$Z3_LIBRARY_PATH/cmake/z3/Z3Config.cmake"; then

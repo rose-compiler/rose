@@ -1,7 +1,14 @@
 include_rules
 
 ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
-ifneq (@(WITH_SQLITE),no)
+
+# Tests are disabled if SQLite3 is not available since the tests only support that one database driver.
+ifeq (@(WITH_SQLITE),no)
+    ENABLED = --disabled='no supported database driver'
+else
+    ENABLED = --enabled
+endif
+
 
 #------------------------------------------------------------------------------------------------------------------------
 # Database tests
@@ -27,36 +34,36 @@ run $(support_compile_linkexe) rose-perf-execution-wrapper.c
 
 # b) test various executions
 run $(test) ./crsh/crsh -o testOpenDB \
-    --extra=openDB.db \
+    --extra=openDB.db $(ENABLED) \
     ./crsh/crsh openDB.crsh
 
 run $(test) ./crsh/crsh -o testDefineTests \
-    --extra=defineTests.db \
+    --extra=defineTests.db $(ENABLED) \
     ./crsh/crsh defineTests.crsh
 
 run $(test) ./crsh/crsh -o testRun1 \
-    --extra=run1.db \
+    --extra=run1.db $(ENABLED) \
     ./crsh/crsh run1.crsh
 
 run $(test) ./crsh/crsh -o testRun10 \
-    --extra=run10.db \
+    --extra=run10.db $(ENABLED) \
     ./crsh/crsh run10.crsh
 
 run $(test) ./crsh/crsh -o testDefineFail \
-    --extra=defineFail.db \
+    --extra=defineFail.db $(ENABLED) \
     ./crsh/crsh defineFail.crsh
 
 run $(test) ./crsh/crsh -o testCombined \
-    --extra=combined.db \
+    --extra=combined.db $(ENABLED) \
     ./crsh/crsh combined.crsh
 
 run $(test) ./crsh/crsh -o testExport \
-    --input=sampleExecutable \
+    --input=sampleExecutable $(ENABLED) \
     --extra=testExport.db \
     ./crsh/crsh testExport.crsh
 
 run $(test) ./crsh/crsh -o testAddressRandomization \
-    --input=sampleExecutable \
+    --input=sampleExecutable $(ENABLED) \
     ./crsh/crsh testAddressRandomization.crsh
 
 #FIXME# Reported by Matzke 2019-09-23
@@ -67,37 +74,36 @@ run $(test) ./crsh/crsh -o testAddressRandomization \
 #FIXME#   /tmp/filewm1VzF: line 1: test-execution-monitor: command not found
 #FIXME# Therefore I'm commenting out this one until Peter can fix it.
 #FIXME#
-#FIXME# run $(test) ./crsh/crsh -o testExecutionMonitor \
-#FIXME#     --input=ExecutionMonitor test-execution-monitor sampleExecutable\
+#FIXME# run $(test) ./crsh/crsh -o testExecutionMonitor $(ENABLED) \
+#FIXME#     --input=ExecutionMonitor test-execution-monitor sampleExecutable \
 #FIXME#     ./crsh/crsh testExecutionMonitor.crsh
 
 #FIXME# Reported by Matzke 2019-09-23
 #FIXME# This rule and the previous rule both wrote to test-execution-monitor, which tup rightfully complains
 #FIXME# would be a race in a parallel build. Therefore I'm commenting out this one until Peter can fix it.
-#FIXME# 
-#FIXME# run $(test) ./crsh/crsh -o testPerfExecutionMonitor \
+#FIXME#
+#FIXME# run $(test) ./crsh/crsh -o testPerfExecutionMonitor $(ENABLED) \
 #FIXME#     --input=$(ROSE)/projects/BinaryAnalysisTools/rose-execution-monitor-linux-perf-intel-x86_64.sh \
 #FIXME#     --extra=test-execution-monitor \
 #FIXME#     $(ROSE)/projects/BinaryAnalysisTools/rose-perf-execution-wrapper test-execution-monitor sampleExecutable \
 #FIXME#     ./crsh/crsh testPerfExecutionMonitor.crsh
 
-run $(test) ./crsh/crsh -o testConnectNonExisting \
+run $(test) ./crsh/crsh -o testConnectNonExisting $(ENABLED) \
     ./crsh/crsh testConnectNonExisting.crsh
 
-run $(test) ./crsh/crsh -o testCreateOverwrites \
+run $(test) ./crsh/crsh -o testCreateOverwrites $(ENABLED) \
     ./crsh/crsh testCreateOverwrites.crsh
 
-run $(test) ./crsh/crsh -o testConnect \
+run $(test) ./crsh/crsh -o testConnect $(ENABLED) \
     ./crsh/crsh testConnect.crsh
 
 #------------------------------------------------------------------------------------------------------------------------
 # Concolic executor tests
 
 run $(tool_compile_linkexe) testConcolicExecutor.C
-run $(test) testConcolicExecutor \
+run $(test) testConcolicExecutor $(ENABLED) \
     --extra testConcolicExecutor-1.db \
     ./testConcolicExecutor --log 'Rose::BinaryAnalysis::Concolic\(debug\)' --database=testConcolicExecutor-1.db\
     $(ROSE)/tests/nonsmoke/specimens/binary/concolic-specimen-01
 
-endif
 endif
