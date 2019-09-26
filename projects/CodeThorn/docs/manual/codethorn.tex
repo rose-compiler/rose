@@ -9,6 +9,7 @@
 \usepackage{amsmath,amssymb}
 \usepackage{rotating}
 \usepackage{colortbl}
+\usepackage{color} % load color package
 \usepackage{pifont}
 \usepackage{tikz}
 %\usetikzlibrary{shapes,shadows,arrows,calc,positioning,fit,matrix,mindmap,trees}
@@ -30,6 +31,18 @@
 % \hfuzz
 % \raggedbottom
 
+% eg:
+% HEX: 006666 -> range[0,1] -> 
+\definecolor{lavender}{rgb}{.0,.32,.32}
+\definecolor{algomarkcolor}{rgb}{.82,.82,.42}
+\definecolor{black}{rgb}{.0,.0,.0}
+\definecolor{red}{rgb}{1.0,.0,.0}
+\definecolor{green}{rgb}{.1,0.6,.1}
+\definecolor{blue}{rgb}{.0,.0,1.0}
+\definecolor{lightblue}{rgb}{.3,.3,0.8}
+
+\definecolor{colTitle}{rgb}{.3,.3,0.8}
+
 \newcommand{\ignore}[1]{}
 \newcommand{\st}{\textit{s.\,t.}\xspace}
 \newcommand{\eg}{\textit{e.\,g.}\xspace}
@@ -41,6 +54,11 @@
 \newcommand{\minibox}[2]{\begin{minipage}{#1}\raggedright #2\end{minipage}}
 
 \newcommand{\enquote}[1]{``#1''}
+
+\newcommand{\ptsize}[1]{} % ignored
+
+\input{formalisms2}
+\input{programanalysismacros}
 
 %\newcommand{\fixme}[1]{\begin{tikzpicture}
 %\node[bottom color=red!80!white, top color=red!70!black, rounded corners,
@@ -681,6 +699,121 @@ read from stdin, or printed to stdout or stderr. Furthermore it
 determines whether the state produces an output which is caused by a
 failed assert.
 
+\subsection{Syntactic categories}
+
+\begin{tabular}{llll}
+$a$ & $\in$ \textup{AExp} & artithmetic expressions \\
+$b$ & $\in$ \textup{BExp} & boolean expressions \\
+$S$ & $\in$ \textup{Stmt} & statements \\
+\end{tabular}
+
+\bigskip
+\begin{tabular}{llll}
+$x,y$ & $\in$ \textup{Var} & variables \\
+$n$ & $\in$ \textup{Num} & numerals \\
+$\ell$ & $\in$ \textup{Lab} & labels \\
+\end{tabular}
+
+\bigskip
+\begin{tabular}{llll}
+$op_a$ & $\in$ \textup{Op$_a$} & arithmetic operators \\
+$op_b$ & $\in$ \textup{Op$_b$} & boolean operators \\
+$op_r$ & $\in$ \textup{Op$_r$} & relational operators \\
+\end{tabular}
+
+
+
+\subsection{Abstract Syntax}
+\begin{displaymath}
+\begin{array}{llll}
+%p &::=& x~|~x.sel~|~  \textup{null} \\
+a & \textup{::=} & x ~|~ n ~|~ a_1~ op_a~ a_2 \\
+b & \textup{::=} & \textup{true}~ |~ \textup{false}~ |~ \textup{not}~ b~ |~ b_1~ op_b~ b_2~ |~ a_1~ op_r~ a_2\\
+S & \textup{::=} & [ \textup{x:=a} ]^\ell ~|~ [ \textup{skip}]^\ell\\
+  &     & |~\textup{if}~ [b]^\ell~ \textup{then} ~S_1~  \textup{else}~ S_2\\ 
+  &     & |~\textup{while} [b]^\ell~\textup{do} ~S~ \textup{od}\\
+  &     & |~S_1;S_2\\
+\end{array}
+\end{displaymath}
+
+\bigskip
+Assignments and tests are (uniquely) labelled to allow analyses to refer
+to these program fragments -- the labels correspond to pointers into the
+syntax tree. We use abstract syntax and insert paranthesis to disambiguate syntax.
+
+\bigskip
+We will often refer to labelled fragments as {\em elementary blocks}.
+
+
+
+\subsection{Auxiliary Functions for Flow Graphs}
+\bigskip
+\begin{tabular}{lp{9.5cm}}
+labels(S) & set of nodes of flow graphs of $S$\\
+init(S)   & initial node of flow graph of $S$; the unique node where execution of program starts\\
+final(S)  & final nodes of flow graph for $S$; set of nodes where program execution may terminate\\
+flow(S)   & edges of flow graphs for $S$ (used for forward analyses)\\
+flow$^R$(S) & reverse edges of flow graphs for $S$ (used for backward analyses)\\
+blocks(S) & set of elementary blocks in a flow graph
+\end{tabular}
+
+
+\subsection{Computing the Information (1)}
+\bigskip
+\begin{tabular}{l|p{2.5cm}|l|p{2.5cm}}
+$S$ & $\auxlabels{S}$ & $\auxinit{S}$ & $\auxfinal{S}$ \\\hline
+$\whlnodeassignxal$ & $\ellset$ & $\ell$ & $\ellset$ \\
+$\whlnodeskipl$ & $\ellset$ & $\ell$ & $\ellset$ \\
+$\whlnodesequence$ & $\auxlabels{S_1}\setunion\auxlabels{S_2}$ & $\auxinit{S_1}$ & $\auxfinal{S_2}$ \\
+$\whlnodeifl$ & $\ellset\setunion\auxlabels{S_1}\setunion\auxlabels{S_2}$ & $\ell$ & $\auxfinal{S_1}\setunion\auxfinal{S_2}$\\
+$\whlnodewhilel$ & $\ellset\setunion\auxlabels{S}$ & $\ell$ & $\ellset$\\
+\end{tabular}
+
+
+\subsection{Example}
+\exampleprogramfactorial
+
+\vspace{0.2cm}
+\begin{center}
+\begin{tabular}{l|l}
+\begin{minipage}[t]{25ex}
+\exampleflowgraphforward
+
+\vspace{-0.0cm}
+
+{
+\ptsize{8}
+$
+\auxflow{S_\star} = \{ 
+\pair{1}{2},
+\pair{2}{3},
+\pair{3}{4},\\
+~~~~~~~~~~~~~~~~~~~~~~\pair{4}{5},
+\pair{5}{3},
+\pair{3}{6}\}
+$
+}
+\end{minipage}
+&
+\begin{minipage}[t]{25ex}
+\exampleflowgraphbackward
+
+{
+\ptsize{8}
+$
+\auxflowr{S_\star} = \{
+\pair{6}{3},
+\pair{3}{5},
+\pair{5}{4},\\
+~~~~~~~~~~~~~~~~~~~~~~~~~\pair{4}{3},
+\pair{3}{2},
+\pair{2}{1}
+\}
+$
+}
+\end{minipage}
+\end{tabular}
+\end{center}
 
 \subsubsection{Parallel Program State}
 
