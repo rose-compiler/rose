@@ -495,7 +495,7 @@ SgAssignInitializer* splitExpression_GB(SgExpression* from, SgVarRefExp* &replac
         // cout << "This expression to split has " << ancestors.size() << " ancestor(s)" << endl;
         for (list<SgExpression*>::iterator ai = ancestors.begin(); ai != ancestors.end(); ++ai)
         {
-                SageInterface::StatementGenerator* gen;
+                SageInterface::StatementGenerator* gen = NULL;
                 switch ((*ai)->variantT()) {
                         case V_SgAndOp: 
                                 gen = new AndOpGenerator(isSgAndOp(*ai)); break;

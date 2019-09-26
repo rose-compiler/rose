@@ -167,7 +167,9 @@ SLA_FCN_BEGIN( sla_str, std::string ) {
               << std::endl;
 #endif
 #endif
-  register unsigned int i, k;
+// Rasmussen-2019.01.25: Removed register as it is deprecated and incompatible with C++17
+//                       (as reported by clang compiler)
+  unsigned int i, k;
   int nvalue=0;
   regex_t flind_re, pname_re, assop_re, sup_assop_re;
   regmatch_t pm;

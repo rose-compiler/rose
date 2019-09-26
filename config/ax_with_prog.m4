@@ -22,10 +22,6 @@
 #   NOTE: This macro is based upon the original AX_WITH_PYTHON macro from
 #   Dustin J. Mitchell <dustin@cs.uchicago.edu>.
 #
-# LAST MODIFICATION
-#
-#   2008-05-05
-#
 # COPYLEFT
 #
 #   Copyright (c) 2008 Francesco Salvestrini <salvestrini@users.sourceforge.net>

@@ -19,10 +19,6 @@
 #
 #     HAVE_BOOST_UNIT_TEST_FRAMEWORK
 #
-# LAST MODIFICATION
-#
-#   2007-11-22
-#
 # COPYLEFT
 #
 #   Copyright (c) 2007 Thomas Porschberg <thomas@randspringer.de>
@@ -124,7 +120,7 @@ AC_DEFUN([AX_BOOST_UNIT_TEST_FRAMEWORK],
                done
             fi
 			if test "x$link_unit_test_framework" != "xyes"; then
-				AC_MSG_ERROR(Could not link against $ax_lib !)
+				AC_MSG_ERROR([could not link against "$ax_lib"])
 			fi
 		fi
 

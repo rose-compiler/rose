@@ -90,8 +90,9 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # DQ (9/29/2009): Renamed preproc.ll to preproc-c.ll in SVN.
 # This will hopefull avoid a linking problem where multiple files
 # are called preproc.o (from here and from EDG).
+# Rasmussen (04/17/2019): Support for ATerms has been deprecated (atermSupport.h removed)
 EXTRA_DIST = CMakeLists.txt preproc-c.ll docs rtiHelpers.h attributeListMap.h \
-             advanced_preprocessing_hooks.h rose_attributes_list.h dwarfSupport.h atermSupport.h \
+             advanced_preprocessing_hooks.h rose_attributes_list.h dwarfSupport.h \
              omplexer.cc ompparser.cc ompparser.h sage3basic.hhh fileoffsetbits.h rosedll.h \
 	     ompAstConstruction.h PolicyControl.txt Utf8.h
 CLEANFILES = haveRosettaGeneratedSource
@@ -124,7 +125,6 @@ else
 GENERATED_SOURCE = \
 	Cxx_Grammar.h \
 	Cxx_Grammar.C \
-	Cxx_GrammarAtermSupport.C \
 	Cxx_GrammarRTI.C \
 	Cxx_GrammarMemoryPoolSupport.C \
 	AstQueryMemoryPool.h \
@@ -162,6 +162,11 @@ force-haveRosettaGeneratedSource:
 
 $(GENERATED_SOURCE): haveRosettaGeneratedSource
 
+# Rasmussen (04/17/2019): Support for ATerms has been deprecated as it is no longer needed
+# and likely never fully implemented nor tested.  Files remain in the src tree but are no
+# longer built.  Files atermSupport.C and nodeBuildFunctionsForAterms.C have been removed
+# from libsage3Sources below (in the else clause).
+
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 libsage3Sources = \
    Utf8.C \
@@ -191,8 +196,6 @@ libsage3Sources = \
    ompFortranParser.C \
    ompAstConstruction.cpp \
    dwarfSupport.C \
-   atermSupport.C \
-   nodeBuildFunctionsForAterms.C \
    rose_graph_support.C \
    $(fSageSupport_la_sources)
 endif
@@ -317,6 +320,7 @@ test_roseh: roseh
 
 # DQ (10/18/2007): Added AST_FILE_IO.h StorageClasses.h
 # Removed sla.h (redundant with location in src/util/commandlineProcessing/sla.h)
+# Rasmussen (04/17/2019): Support for ATerms has been deprecated (atermSupport.h removed)
 pkginclude_HEADERS = \
    sage3.h sage3basic.h rose_attributes_list.h \
    attachPreprocessingInfo.h \
@@ -324,7 +328,7 @@ pkginclude_HEADERS = \
    attach_all_info.h manglingSupport.h C++_include_files.h \
    fixupCopy.h \
    general_token_defs.h rtiHelpers.h \
-   OmpAttribute.h omp.h dwarfSupport.h atermSupport.h \
+   OmpAttribute.h omp.h dwarfSupport.h \
    omp_lib_kinds.h omp_lib.h sage3basic.hhh rosedefs.h  fileoffsetbits.h rosedll.h \
    Cxx_GrammarSerialization.h \
    $(fSageSupport_includeHeaders)

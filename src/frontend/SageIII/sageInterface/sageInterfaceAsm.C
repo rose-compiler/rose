@@ -8,6 +8,7 @@
 
 using namespace std;
 using namespace Rose;
+using namespace Rose::BinaryAnalysis;
 
 // DQ (4/26/2010): Added functions to support ASM specific details in the ROSE interface.
 void
@@ -240,7 +241,7 @@ SageInterface::get_valueString( SgAsmValueExpression* asmValueExpression )
 bool
 SageInterface::isMovInstruction ( SgAsmInstruction* asmInstruction )
    {
-     return isInstructionKind(asmInstruction,x86_mov);
+     return isInstructionKind(asmInstruction, x86_mov);
    }
 
 bool

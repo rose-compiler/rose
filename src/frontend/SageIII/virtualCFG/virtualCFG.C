@@ -804,11 +804,13 @@ EdgeConditionKind CFGEdge::condition() const
 
  // printf ("In CFGNode::outEdges(): result.size() = %zu \n",result.size());
 
+#ifndef NDEBUG
     for ( vector<CFGEdge>::const_iterator i = result.begin(); i!= result.end(); i++)
    {
       CFGEdge e = *i;
       assert (e.source().getNode() != NULL && e.target().getNode() != NULL);
     }
+#endif
     
  // printf ("Leaving CFGNode::outEdges() \n");
 
@@ -824,12 +826,13 @@ EdgeConditionKind CFGEdge::condition() const
 #endif
 
     vector<CFGEdge> result = node->cfgInEdges(index);
+#ifndef NDEBUG
    for ( vector<CFGEdge>::const_iterator i = result.begin(); i!= result.end(); i++)
    {
       CFGEdge e = *i;
       assert (e.source().getNode() != NULL && e.target().getNode() != NULL);
     }
-    
+#endif
     
     //return node->cfgInEdges(index);
     return result;

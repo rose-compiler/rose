@@ -89,7 +89,6 @@ void NopReplacementTraversal::visit ( SgNode* n )
                  // We want to build a (binary AST node) SgAsmInstruction object instead of a (source code AST node) SgAsmStmt.
                  // SgAsmStmt* nopStatement = buildMultibyteNopStatement(i);
                  // SgAsmInstruction* multiByteNop = makeInstruction(x86_nop, "nop", modrm);
-                 // SgAsmInstruction* multiByteNopInstruction = buildMultibyteNopInstruction(i);
                     SgAsmInstruction* multiByteNopInstruction = buildX86MultibyteNopInstruction(i);
 
                  // Add to the front o the list of statements in the function body

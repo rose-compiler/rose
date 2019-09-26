@@ -59,6 +59,27 @@ namespace LibraryIdentification
         {
              initializeHash(partitioner, function);
         }
+
+
+        /**
+         *  FunctionInfo
+         *
+         *  Constructor.  Combines all the information required to
+         *  identify a function. 
+         *  This constructor constructs the hash from the
+         *  SgAsmFunction node.
+         *  Note that currently on FNV hasher is used.  This should be
+         *  an option.
+         *
+         * @param[in] partitioner Required to get the basic blocks of
+         * the function
+         * @param[in] function Binary AST Function Node
+         **/
+    FunctionInfo(const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner, Rose::BinaryAnalysis::Partitioner2::Function::Ptr function) :
+        funcName(function->name()),  libHash(), binaryFunction(function)
+        {
+             initializeHash(partitioner, function);
+        }
         
         /**
          *  FunctionInfo
@@ -84,11 +105,11 @@ namespace LibraryIdentification
         /**
          *  FunctionInfo
          *
-         *  Constructor.  Only takes the hash, Rest to be filled in from
-         *  matching in the database. 
+         *  Constructor.  Only takes the hash. (Never used?  Nomrmally
+         *  there is a binaryFunction availible as well.) 
+         *  Rest to be filled in from matching in the database. 
          *
-         * @param[in] funcHash  Unique Hash of the function to add
-         * (Please use Fowler-Noll-Vo HasherFnv class in Combinatorics.h)
+         * @param[in] funcHash  Unique Hash of the function
          **/
     FunctionInfo(const std::string& ifuncHash) :
         funcName(""), funcHash(ifuncHash), libHash(""), binaryFunction() {};
@@ -96,22 +117,37 @@ namespace LibraryIdentification
         /**
          *  FunctionInfo
          *
-         *  Constructor just takes a function, but only initializes
-         *  the hash. Rest to be filled in from
-         *  matching in the database
+         *  Constructor.  Only takes the hash and the binaryFunction. 
+         *  Rest to be filled in from matching in the database. 
          *
-         * @param[in] function Binary AST Function Node
+         * @param[in] funcHash  Unique Hash of the function to add
+         * (Please use Fowler-Noll-Vo HasherFnv class in Combinatorics.h)
+         * @param[in] binaryFunction  from the partitioner
          **/
-    FunctionInfo(const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner, Rose::BinaryAnalysis::Partitioner2::Function::Ptr function) :
-        funcName(function->name()),  libHash(""), binaryFunction(function)
-        {
-            initializeHash(partitioner, function);
-        }
+    FunctionInfo(const std::string& ifuncHash, Rose::BinaryAnalysis::Partitioner2::Function::Ptr function) :
+        funcHash(ifuncHash), libHash(""), binaryFunction(function) {
+            if(function != 0) {
+                funcName = function->name();    
+            }
+        }; 
 
         friend bool operator<(const FunctionInfo& lhs, const FunctionInfo& rhs) 
         {
             return lhs.funcHash < rhs.funcHash;
         }
+
+        bool operator==(const FunctionInfo& rhs) 
+        {
+            if(funcName == rhs.funcName &&
+               funcHash == rhs.funcHash &&
+               libHash == rhs.libHash) 
+                {
+                    return true;
+                }
+            return false;
+            
+        }
+        
 
 
         //@brief The name of the function
@@ -128,12 +164,9 @@ namespace LibraryIdentification
         //IT'S AVAILIBLE.  THIS IS LIKELY TO BE NULL
         Rose::BinaryAnalysis::Partitioner2::Function::Ptr binaryFunction;
         
-
-    private:
-        void initializeHash(const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner, Rose::BinaryAnalysis::Partitioner2::Function::Ptr function) 
-        {   //Ordered set, so it should always be the same order...
-            Rose::Combinatorics::HasherFnv fnv;
-            Rose::Combinatorics::Hasher& hasher = dynamic_cast<Rose::Combinatorics::Hasher&>(fnv);            
+        static std::string getHash(const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner, Rose::BinaryAnalysis::Partitioner2::Function::Ptr function) 
+        {
+            boost::shared_ptr<Rose::Combinatorics::Hasher> hasher = Rose::Combinatorics::Hasher::HasherFactory::Instance().createHasher("SHA256");
             Rose::BinaryAnalysis::AstHash astHash(hasher);            
 
             const std::set<rose_addr_t>& basicBlocks = function->basicBlockAddresses();
@@ -146,7 +179,15 @@ namespace LibraryIdentification
                     
                 }
 
-            funcHash = fnv.toString();
+            return hasher->toString();
+        }
+        
+
+    private:
+        void initializeHash(const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner, Rose::BinaryAnalysis::Partitioner2::Function::Ptr function) 
+        {   //Ordered set, so it should always be the same order...
+            funcHash = getHash(partitioner, function);
+            
         }
 
     };

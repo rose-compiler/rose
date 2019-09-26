@@ -72,7 +72,7 @@ class AttachPreprocessingInfoTreeTraversalInheritedAttrribute
           bool isPartOfTemplateInstantiationDeclaration;
    };
 
-// This is an empty class, meaning that we could likely just have implemented a TopDownProcessing traversal.
+// This is an empty class, meaning that we could likely just have implemented just a TopDownProcessing traversal.
 class AttachPreprocessingInfoTreeTraversalSynthesizedAttribute {};
 
 class AttachPreprocessingInfoTreeTrav 
@@ -108,6 +108,9 @@ class AttachPreprocessingInfoTreeTrav
       //! current source file name id (only handle strings from current file)
        // int currentFileNameId;
          SgSourceFile* sourceFile;
+
+      // DQ (2/28/2019): We need to return the line that is associated with the source file where this can be a ode shared between multiple ASTs.
+         int source_file_id;
 
       //! AS(011306) Map of ROSEAttributesLists mapped to filename from Wave
        // DQ (12./12/2008): this should be updated to use int instead of strings.

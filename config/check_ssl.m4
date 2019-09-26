@@ -27,10 +27,6 @@
 #           SRCS+= @srcdir@/my_file_that_needs_ssl.c
 #       .endif
 #
-# LAST MODIFICATION
-#
-#   2003-01-28
-#
 # COPYLEFT
 #
 #   Copyright (c) 2003 Mark Ethan Trostler <trostler@juniper.net>
@@ -58,7 +54,7 @@ AC_DEFUN([CHECK_SSL],
         fi
     done
     if test x_$found_ssl != x_yes; then
-        AC_MSG_ERROR(Cannot find ssl libraries)
+        AC_MSG_ERROR(cannot find ssl libraries)
     else
         printf "OpenSSL found in $ssldir\n";
         LIBS="$LIBS -lssl -lcrypto";

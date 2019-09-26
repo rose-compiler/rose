@@ -20,14 +20,13 @@ process_headers()
 # make sure the source directory structure exists
   if  [ ! -d "$2" -o ! -r "$2" -o ! -x "$2" ]
   then
-    echo "*****************************************"
-    echo "Parameter 1 = $1"
-    echo "Parameter 2 = $2"
-    echo "Parameter 3 = $3"
-    echo "*****************************************"
-    echo "ERROR: Directory $2 is invalid"
-    echo "*************  FAILING ***** FAILING *****************"
-    exit 2
+      (
+	  echo "$0: error: directory '$2' is invalid"
+	  echo "  parameter 1 = '$1'"
+	  echo "  parameter 2 = '$2'"
+	  echo "  parameter 3 = '$3'"
+      ) >&2
+      exit 2
   fi
 
 # get full path for the current working directory, the src and target dirs
@@ -56,18 +55,18 @@ process_headers()
 # now check that the parent directory of target_dir exists and is writable
   if [ ! -d "$target_parent_dir" -o ! -w "$target_parent_dir" ]
   then
-    echo "ERROR: Target directory cannot be created (Parent directory $target_parent_dir not writable)"
+    echo "$0: error: Target directory cannot be created (Parent directory $target_parent_dir not writable)" >&2
     exit 5
   fi
-  changesNeededForThisDir=`find "$src_dir/." \( -name complex -o -name c++config.h \) -a -type f -a -print 2>/dev/null | wc -l`
-  echo "$src_dir needs $changesNeededForThisDir change(s)"
+  changesNeededForThisDir=`find "$src_dir/." -name c++config.h -a -type f -a -print 2>/dev/null | wc -l`
+  [ -n "$VERBOSE" ] && echo "$src_dir needs $changesNeededForThisDir change(s)"
   if test $changesNeededForThisDir -eq 0; then
-    echo "$src_dir does not need any changes"
+    [ -n "$VERBOSE" ] && echo "$src_dir does not need any changes"
     target_dir=$src_dir
     target_base_dir=$src_base_dir
     target_parent_dir=$src_parent_dir
   else
-    echo "$src_dir needs to be copied and modified"
+    [ -n "$VERBOSE" ] && echo "$src_dir needs to be copied and modified"
     find "$src_dir/." -type d -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|mkdir -p '$target_dir/\\1'|p" | sh -s
     if [[ "$OSTYPE" == "darwin"* ]]; then
     find "$src_dir/." -type f -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|ln -s -F '&' '$target_dir/\\1'|p" | sh -s
@@ -75,9 +74,9 @@ process_headers()
     find "$src_dir/." -type f -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|ln -s --force '&' '$target_dir/\\1'|p" | sh -s
     fi
   # find "$src_dir/." -type f -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|ln -s '&' '$target_dir/\\1'|p" | sh -s &
-    echo "Done copying"
+    [ -n "$VERBOSE" ] && echo "Done copying"
     # Find the special-case files to process
-    find "$src_dir/." \( -name complex -o -name c++config.h \) -a -type f -a -print 2>/dev/null | \
+    find "$src_dir/." -name c++config.h -a -type f -a -print 2>/dev/null | \
     while read srcName; do
      # echo "processing files in directory $srcDirName to put into $targetDirName"
      # this is not the most efficient thing to do ...
@@ -96,13 +95,13 @@ process_headers()
            # attribute which EDG 3.3 does not support.  A #define can be changed to turn
            # that feature off, though.  Also, the built-in synchronization functions in
            # new versions of GCC are not yet supported in ROSE, so turn them off too.
-           echo "Processing c++config header file (removing use of visibility attribute) at $targetName"
+           [ -n "$VERBOSE" ] && echo "Processing c++config header file (removing use of visibility attribute) at $targetName"
            cat "$srcName" | \
              sed 's/# *define _GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY 1/#define _GLIBCXX_HAVE_ATTRIBUTE_VISIBILITY 0/' | \
              sed 's/# *define _GLIBCXX_ATOMIC_BUILTINS/#undef _GLIBCXX_ATOMIC_BUILTINS/' | \
              sed 's/# *define _GLIBCXX_USE_FLOAT128/#undef _GLIBCXX_USE_FLOAT128/' > "$targetName"
            ;;
-         * ) echo "Should not get here -- modify find pattern" >&2; exit 1 ;;
+         * ) echo "$0: error: should not get here -- modify find pattern" >&2; exit 1 ;;
        esac
     done
   fi
@@ -124,7 +123,7 @@ if [ $# -eq 5 ]; then
   :
 else
 #  echo "ERROR: Usage is $0 <compiler> <target_dir> <source_dir>"
-   echo "ERROR: Usage is $0 <compiler> <target_dir> <source_dir> <language> <compilerVendorName>"
+   echo "usage: $0 <compiler> <target_dir> <source_dir> <language> <compilerVendorName>" >&2
    exit 1
 fi
 
@@ -140,13 +139,13 @@ language="$4"
 compilerVendorName="$5"
 
 # echo "In script file: create system headers: Using back-end compiler = \"$1\" compiler vendor name = $compilerVendorName for processing of unparsed source files from ROSE preprocessors."
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-echo "compilerName       = $compilerName"
-echo "compilerBinDir     = $compilerBinDir"
-echo "roseHome           = $roseHome"
-echo "language           = $language"
-echo "compilerVendorName = $compilerVendorName"
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+if [ -n "$VERBOSE" ]; then
+    echo "compilerName       = $compilerName"
+    echo "compilerBinDir     = $compilerBinDir"
+    echo "roseHome           = $roseHome"
+    echo "language           = $language"
+    echo "compilerVendorName = $compilerVendorName"
+fi
 
 # DQ (2/2/2016): We don't compiler ROSE using ROSE as the backend (this was from when we had 
 # to support ROSE compiling ROSE, but this should not require specialized support now).
@@ -188,13 +187,13 @@ targetDirParent="`dirname "$targetDir"`"
 targetDirBase="`basename "$targetDir"`"
 mainTargetDir="`cd \"$targetDirParent\" 2>/dev/null && pwd || echo \"$targetDirParent\"`/$targetDirBase"
 
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-echo "Now these should be set ..."
-echo "targetDir =  $targetDir"
-echo "targetDirParent =  $targetDirParent"
-echo "targetDirBase =  $targetDirBase"
-echo "mainTargetDir =  $mainTargetDir"
-echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+if [ -n "$VERBOSE" ]; then
+    echo "Now these should be set ..."
+    echo "targetDir =  $targetDir"
+    echo "targetDirParent =  $targetDirParent"
+    echo "targetDirBase =  $targetDirBase"
+    echo "mainTargetDir =  $mainTargetDir"
+fi
 
 # is_C_compiler="no"
 
@@ -203,13 +202,13 @@ echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 if mkdir -p "$mainTargetDir"; then
   : # echo "created target directory"
 else
-  echo "ERROR: cannot create target directory $mainTargetDir"
+  echo "$0: error: cannot create target directory $mainTargetDir" >&2
   exit 1
 fi
 
 if [ ! -w "$mainTargetDir" ]
 then
-   echo "ERROR: target directory $mainTargetDir is not writable"
+   echo "$0: error: target directory $mainTargetDir is not writable" >&2
    exit 1
 fi
 
@@ -218,20 +217,22 @@ fi
 # DQ (2/1/2016): Simplify the logic to avoid use of the backend compiler name.
 if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
 
-       echo "In create system headers: this is processing C or C++: language = $language"
+       [ -n "$VERBOSE" ] && echo "In create system headers: this is processing C or C++: language = $language"
 
      # DQ (1/14/2007): To work with Wave we supress the __STDC_HOSTED__ macro
        tmpFile="`mktemp -t roseconfigtempXXXXXXXXXX`"
        "$1" -E -dM -x $language /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
 
-       echo "******************************************************"
-       echo "******** BEFORE INTEL SPECIFIC TRANSFORMATION ********"
-       echo "******************************************************"
-       echo "tmpFile name = $tmpFile"
-       echo "******************************************************"
-       cat "$tmpFile"
-       echo "******************************************************"
-       echo "******************************************************"
+       if [ -n "$VERBOSE" ]; then
+	   echo "******************************************************"
+	   echo "******** BEFORE INTEL SPECIFIC TRANSFORMATION ********"
+	   echo "******************************************************"
+	   echo "tmpFile name = $tmpFile"
+	   echo "******************************************************"
+	   cat "$tmpFile"
+	   echo "******************************************************"
+	   echo "******************************************************"
+       fi
 
      # DQ (12/13/2016): Added edits specific to Intel defines for floating point values that EDG reports and not in range.
      # This is thus far not reproducable except on non RZ systems using the Intel v16 compiler. We are editing:
@@ -243,7 +244,7 @@ if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
      # to be:
      #    #define __FLT_DENORM_MIN__ 1.40129846e-45L
 
-       echo "compilerVendorName = $compilerVendorName"
+       [ -n "$VERBOSE" ] && echo "compilerVendorName = $compilerVendorName"
        if [ "x$compilerVendorName" = "xintel" ]; then
           # Build a new temp file to store the results of the editing.
             tmpFile2="`mktemp -t roseconfigtempXXXXXXXXXX`"
@@ -308,9 +309,9 @@ if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
        rm "$tmpFile"
 
      # echo "PREPROCESSOR_DEFS = $PREPROCESSOR_DEFS"
-       echo "Generating  $mainTargetDir/rose_edg_required_macros_and_functions.h"
+       [ -n "$VERBOSE" ] && echo "Generating  $mainTargetDir/rose_edg_required_macros_and_functions.h"
 else
-       echo "ERROR: Usage is create_system_headers compiler target_dir src_dir language"
+       echo "$0: error: usage is create_system_headers compiler target_dir src_dir language" >&2
        exit 1
 fi
 # fi
@@ -324,8 +325,10 @@ fi
 # DQ (2/2/2016): Debugging new compiler vendor detection.
 # echo "shell script to be run next: $roseHome/config/get_compiler_header_dirs"
 
-echo "Calling get_compiler_header_dirs"
-echo "status $?"
+if [ -n "$VERBOSE" ]; then
+    echo "Calling get_compiler_header_dirs"
+    echo "status $?"
+fi
 
 # DQ (2/2/2016): When the shell script returns an error we don't catch it.
 iDir=0
@@ -333,7 +336,7 @@ iDir=0
 sh "$roseHome/config/get_compiler_header_dirs" "$1" "$language" "$compilerVendorName" | while read dirName
    do
         iDir=`expr "$iDir" + 1 `
-        echo "processing header file compiler name = $1 directory = $dirName to be mapped to $mainTargetDir/hdrs${iDir} roseHome = $roseHome compilerVendorName = $compilerVendorName"
+        [ -n "$VERBOSE" ] && echo "processing header file compiler name = $1 directory = $dirName to be mapped to $mainTargetDir/hdrs${iDir} roseHome = $roseHome compilerVendorName = $compilerVendorName"
 
       # DQ (1/14/2007): Added "&" so that this would happen in parallel (to improve performance of configure on multi-core machines). 
       # JJW (7/18/2008): Commented it out because the process does not take too
@@ -343,11 +346,11 @@ sh "$roseHome/config/get_compiler_header_dirs" "$1" "$language" "$compilerVendor
    done
 
 if [ "${PIPESTATUS[0]}" -ne 0 ]; then
-    echo "get_compiler_header_dirs failed"
+    echo "$0: error: get_compiler_header_dirs failed" >&2
     exit 1
 fi
 
-echo "DONE: Calling get_compiler_header_dirs: status $?"
+[ -n "$VERBOSE" ] && echo "DONE: Calling get_compiler_header_dirs: status $?"
 
 # DQ (1/14/2007): It is not required to wait until the calls to process_headers complete
 # wait
@@ -361,15 +364,20 @@ echo "DONE: Calling get_compiler_header_dirs: status $?"
 
 # DQ (1/14/2007): The variable target_parent_dir is not set in this shell procedure, so it causes an error.
 system_headers_directory="$mainTargetDir/hdrs"
-echo "system_headers_directory = $system_headers_directory should be used instead of target_parent_dir = $target_parent_dir"
-
-echo "building the sys directory"
+if [ -n "$VERBOSE" ]; then
+     echo "system_headers_directory = $system_headers_directory should be used instead of target_parent_dir = $target_parent_dir"
+     echo "building the sys directory"
+fi
 mkdir -p "$system_headers_directory/sys"
-echo "DONE: building the sys directory"
-echo "status $?"
+if [ -n "$VERBOSE" ]; then
+    echo "DONE: building the sys directory"
+    echo "status $?"
+fi
 
 
 ###### Fixups for cdefs.h
+## PP (05/15/19) solaris does not seem to have a cdefs.h file
+if [[ "$OSTYPE" != solaris2* ]]; then
 
 # Replace "#include "/.../cdefs.h" with the path that's valid for this platform, copying the file from the ROSE source
 # tree to the build tree in the process (because the source tree should not be modified when building).  The old behavior
@@ -383,6 +391,12 @@ if [ "$rose_system_cdefs_h" = "" ]; then
 elif [ ! -r "$rose_system_cdefs_h" ]; then
     # The "#include </.../cdefs.h> in the ROSE-specific cdefs.h is wrong, so try to fix it.
     real_system_cdefs_h=$(find /usr/include -follow -name cdefs.h |head -n1)
+
+    # Fix cdefs.h path for later versions of Mac OSX [Craig Rasmussen, 2019-01-23]
+    if [[ "$OSTYPE" == "darwin18" ]]; then
+        real_system_cdefs_h="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/include/sys/cdefs.h"
+    fi
+
     if [ ! -r "$real_system_cdefs_h" ]; then
 	(
 	    echo "$0: error: cannot find a system cdefs.h header.  The ROSE-specific version of this header,"
@@ -405,24 +419,35 @@ else
     cp "$rose_src_cdefs_h" "$rose_bld_cdefs_h" || exit 1
 fi
 
+fi  # SOLARIS test  
 ###### End of fixups for cdefs.h
 
 
-
+###### FIXUP for missing err.h on Solaris
+## PP (05/15/19)
+if [[ "$OSTYPE" = solaris2* ]]; then
+  echo "Solaris Fix: install fake err.h in src/roseSupport"
+  cp "$roseHome/solaris-includes/err.h" "$roseHome/src/roseSupport/"
+fi
+###### End of fixup for missing err.h on Solaris
 
 # if [ is_C_compiler = "yes" ]
 if [ "x$language" = "xc" ]
 then
-    echo "We are handling C compiler specific details, so copy the ROSE specific fix for complex.h to $system_headers_directory" >&2
+    [ -n "$VERBOSE" ] && echo "We are handling C compiler specific details, so copy the ROSE specific fix for complex.h to $system_headers_directory" >&2
     cp "$roseHome/config/rose_specific_complex.h" "$system_headers_directory/complex.h"
 fi
 
 error_code=$?
 if test $error_code != 0; then
-     echo "Error in cp $roseHome/config/rose_specific_complex.h $system_headers_directory/complex.h: nonzero exit code returned to caller error_code = $error_code" >&2
+     [ -n "$VERBOSE" ] && echo "Error in cp $roseHome/config/rose_specific_complex.h $system_headers_directory/complex.h: nonzero exit code returned to caller error_code = $error_code" >&2
      exit 1
 fi
 
-echo "status $?"
-echo "Leaving script for processing header files: create_system_headers"
-echo "status $?"
+if [ -n "$VERBOSE" ]; then
+    echo "status $?"
+    echo "Leaving script for processing header files: create_system_headers"
+    echo "status $?"
+fi
+
+exit 0

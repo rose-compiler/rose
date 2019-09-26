@@ -196,6 +196,12 @@ struct hash_nodeptr
                                                          const SgType* t,
                                                          SgScopeStatement *currentScope=NULL);
 
+   ROSE_DLL_API SgFunctionSymbol *lookupTemplateFunctionSymbolInParentScopes (const SgName & functionName, SgFunctionType * ftype, SgTemplateParameterPtrList * tplparams, SgScopeStatement *currentScope=NULL);
+   ROSE_DLL_API SgFunctionSymbol *lookupTemplateMemberFunctionSymbolInParentScopes (const SgName & functionName, SgFunctionType * ftype, SgTemplateParameterPtrList * tplparams, SgScopeStatement *currentScope=NULL);
+
+   ROSE_DLL_API SgTemplateVariableSymbol * lookupTemplateVariableSymbolInParentScopes (const SgName & name, SgTemplateParameterPtrList * tplparams, SgTemplateArgumentPtrList* tplargs, SgScopeStatement *currentScope=NULL);
+
+
 // DQ (8/21/2013): Modified to make newest function parameters be default arguments.
 // DQ (8/16/2013): For now we want to remove the use of default parameters and add the support for template parameters and template arguments.
 // DQ (5/7/2011): Added support for SgClassSymbol (used in name qualification support).
@@ -203,6 +209,7 @@ struct hash_nodeptr
    ROSE_DLL_API SgClassSymbol*     lookupClassSymbolInParentScopes    (const SgName & name, SgScopeStatement *currentScope = NULL, SgTemplateArgumentPtrList* templateArgumentList = NULL);
    ROSE_DLL_API SgTypedefSymbol*   lookupTypedefSymbolInParentScopes  (const SgName & name, SgScopeStatement *currentScope = NULL);
 
+   ROSE_DLL_API SgNonrealSymbol*   lookupNonrealSymbolInParentScopes  (const SgName & name, SgScopeStatement *currentScope = NULL, SgTemplateParameterPtrList* templateParameterList = NULL, SgTemplateArgumentPtrList* templateArgumentList = NULL);
 #if 0
  // DQ (8/13/2013): This function does not make since any more, now that we have made the symbol
  // table handling more precise and we have to provide template parameters for any template lookup.
@@ -1628,6 +1635,39 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   //! Get the closest class definition enclosing the specified AST node,
   ROSE_DLL_API SgClassDefinition* getEnclosingClassDefinition(SgNode* astnode, const bool includingSelf=false);
 
+  //! Get the closest class declaration enclosing the specified AST node,
+  ROSE_DLL_API SgClassDeclaration* getEnclosingClassDeclaration( SgNode* astNode );
+
+  // DQ (2/7/2019): Adding support for name qualification of variable references associated with SgPointerMemberType function parameters.
+  //! Get the enclosing SgExprListExp (used as part of function argument index evaluation in subexpressions).
+  ROSE_DLL_API SgExprListExp* getEnclosingExprListExp(SgNode* astNode, const bool includingSelf = false);
+
+  // DQ (2/7/2019): Need a function to return when an expression is in an expression subtree.
+  // This is part of index evaluation ofr expressions in function argument lists, but likely usefule elsewhere as well.
+  ROSE_DLL_API bool isInSubTree(SgExpression* subtree, SgExpression* exp);
+
+  // DQ (2/7/2019): Need a function to return the SgFunctionDeclaration from a SgFunctionCallExp.
+  ROSE_DLL_API SgFunctionDeclaration* getFunctionDeclaration ( SgFunctionCallExp* functionCallExp );
+
+  // DQ (2/17/2019): Generalizing this support for SgVarRefExp and SgMemberFunctionRefExp nodes.
+  // DQ (2/8/2019): Adding support for detecting when to use added name qualification for pointer-to-member expressions.
+  ROSE_DLL_API bool isDataMemberReference(SgVarRefExp* varRefExp);
+  // ROSE_DLL_API bool isAddressTaken(SgVarRefExp* varRefExp);
+  ROSE_DLL_API bool isAddressTaken(SgExpression* refExp);
+
+  // DQ (2/17/2019): Adding support for detecting when to use added name qualification for membr function references.
+  ROSE_DLL_API bool isMemberFunctionMemberReference(SgMemberFunctionRefExp* memberFunctionRefExp);
+
+  // DQ (2/15/2019): Adding support for detecting which class a member reference is being made from.
+  // ROSE_DLL_API SgClassType* getClassTypeForDataMemberReference(SgVarRefExp* varRefExp);
+  // ROSE_DLL_API std::list<SgClassType*> getClassTypeChainForDataMemberReference(SgVarRefExp* varRefExp);
+  ROSE_DLL_API std::list<SgClassType*> getClassTypeChainForMemberReference(SgExpression* refExp);
+
+
+  // DQ (2/17/2019): Display the shared nodes in the AST for debugging.
+  ROSE_DLL_API void outputSharedNodes( SgNode* node );
+
+
 // TODO
 #if 0
    SgNode * getEnclosingSgNode(SgNode* source,VariantT, SgNode* endNode=NULL);
@@ -1677,6 +1717,12 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   // preorder traversal from current SgNode till find next SgNode of type V_SgXXX
   SgNode* getNextSgNode( const SgNode* currentNode, VariantT=V_SgNode);
 #endif
+
+  // DQ (11/15/2018): Adding support for traversals over the include file tree.
+  //! return path prefix for subtree of include files. 
+  void listHeaderFiles ( SgIncludeFile* includeFile );
+
+
 //@}
 
 //------------------------------------------------------------------------
@@ -1780,8 +1826,10 @@ ROSE_DLL_API void insertStatementBeforeFirstNonDeclaration(SgStatement *newStmt,
 
 //! Insert statements before the first non-declaration statement in a scope.  If the scope has no non-declaration statements
 //then the new statements are inserted at the end of the scope.
-ROSE_DLL_API void insertStatementListBeforeFirstNonDeclaration(const std::vector<SgStatement*> &newStmts,
-                                                               SgScopeStatement *scope);
+ROSE_DLL_API void insertStatementListBeforeFirstNonDeclaration(const std::vector<SgStatement*> &newStmts, SgScopeStatement *scope);
+
+// DQ (11/21/2018): We need to sometimes insert something after the last statement of the collection from rose_edg_required_macros_and_functions.h.
+ROSE_DLL_API SgStatement* lastFrontEndSpecificStatement( SgGlobal* globalScope );
 
 //! Remove a statement from its attach point of the AST. Automatically keep its associated preprocessing information at the original place after the removal. The statement is still in memory and it is up to the users to decide if the removed one will be inserted somewhere else or released from memory (deleteAST()).
 ROSE_DLL_API void removeStatement(SgStatement* stmt, bool autoRelocatePreprocessingInfo = true);
@@ -1798,6 +1846,13 @@ ROSE_DLL_API SgNode* replaceWithPattern (SgNode * anchor, SgNode* new_pattern);
 //! Replace all variable references to an old symbol in a scope to being references to a new symbol.
 // Essentially replace variable a with b. 
 ROSE_DLL_API void replaceVariableReferences(SgVariableSymbol* old_sym, SgVariableSymbol* new_sym, SgScopeStatement * scope );
+
+// DQ (11/12/2018): Adding test to avoid issues that we can't test for in the unparsing of header files using the token based unparsing.
+//! If header file unparsing and token-based unparsing are used, then some statements in header files 
+//! used with the same name and different include syntax can't be transformed. This is currently because 
+//! there is no way to generally test the resulting transformed code generated by ROSE.
+ROSE_DLL_API bool statementCanBeTransformed(SgStatement* stmt);
+
 
 /** Given an expression, generates a temporary variable whose initializer optionally evaluates
 * that expression. Then, the var reference expression returned can be used instead of the original
@@ -1939,6 +1994,11 @@ ROSE_DLL_API void wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject*
 // DQ (12/1/2015): Adding support for fixup internal data struuctures that have references to statements (e.g. macro expansions).
 ROSE_DLL_API void resetInternalMapsForTargetStatement(SgStatement* sourceStatement);
 
+// DQ (6/7/2019): Add support for transforming function definitions to function prototypes in a subtree.
+// We might have to make this specific to a file (only traversing the functions in that file).
+ROSE_DLL_API void convertFunctionDefinitionsToFunctionPrototypes(SgNode* node);
+
+
 //@}
 //------------------------------------------------------------------------
 //@{
@@ -1955,7 +2015,7 @@ ROSE_DLL_API void resetInternalMapsForTargetStatement(SgStatement* sourceStateme
  to get the work done. Users should call fixVariableReference() when AST is complete and all
  variable declarations are in place.
 */
-ROSE_DLL_API int fixVariableReferences(SgNode* root);
+ROSE_DLL_API int fixVariableReferences(SgNode* root,  bool cleanUnusedSymbol=true);
 
 //!Patch up symbol, scope, and parent information when a SgVariableDeclaration's scope is known.
 /*!
@@ -2000,6 +2060,24 @@ ROSE_DLL_API std::set<SgStatement*> collectModifiedStatements( SgNode* node );
 
 //! This collects the SgLocatedNodes that are marked as modified (a flag automatically set by all set_* generated functions) (useful in debugging).
 ROSE_DLL_API std::set<SgLocatedNode*> collectModifiedLocatedNodes( SgNode* node );
+
+// DQ (6/5/2019): Use the previously constructed set (above) to reset the IR nodes to be marked as isModified.
+//! Use the set of IR nodes and set the isModified flag in each IR node to true.
+ROSE_DLL_API void resetModifiedLocatedNodes(const std::set<SgLocatedNode*> & modifiedNodeSet);
+
+
+// DQ (10/23/2018): Report nodes that are marked as modified.
+ROSE_DLL_API void reportModifiedStatements(const std::string & label, SgNode* node);
+
+// DQ (3/22/2019): Translate CPP directives from attached preprocessor information to CPP Directive Declaration IR nodes.
+ROSE_DLL_API void translateToUseCppDeclarations( SgNode* n );
+
+ROSE_DLL_API void translateScopeToUseCppDeclarations( SgScopeStatement* scope );
+
+ROSE_DLL_API std::vector<SgC_PreprocessorDirectiveStatement*> translateStatementToUseCppDeclarations( SgStatement* statement, SgScopeStatement* scope);
+ROSE_DLL_API void printOutComments ( SgLocatedNode* locatedNode );
+ROSE_DLL_API bool skipTranslateToUseCppDeclaration( PreprocessingInfo* currentPreprocessingInfo );
+
 
 //@}
 
@@ -2634,7 +2712,7 @@ bool isTemplateInstantiationFromTemplateDeclarationSatisfyingFilter (SgFunctionD
      return retval;
    }
 
-
+void detectCycleInType(SgType * type, const std::string & from);
 
 }// end of namespace
 

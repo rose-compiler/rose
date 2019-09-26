@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) BreakupStmt.C LoopUnroll.C PrivatizeScalar.C
+
+run $(public_header) BreakupStmt.h LoopUnroll.h PrePostTransformation.h PrivatizeScalar.h

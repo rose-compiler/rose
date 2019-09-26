@@ -1,0 +1,55 @@
+#!/usr/bin/perl
+
+=pod
+
+=head1 NAME
+
+absolute-paths -- convert all relative paths to absolute paths
+
+=head1 SYNOPSIS
+
+absolute-paths <input >output
+
+=head1 DESCRIPTION
+
+Looks for relative path names in the input and converts them to absolute path names using the current working directory. The
+input is broken into space-separated words and a path is any word starting with "./" or "../" optionally preceded by "-I"
+or "-L".
+
+=cut
+
+use strict;
+
+my $cwd=`pwd`; chomp $cwd;
+
+sub expand {
+    my($prefix, $relative) = @_;
+
+    my($suffix);
+    if ($relative =~ m((.*)/$)) {
+	$suffix = "/";
+	$relative = $1;
+    }
+
+    my @comps = split /\/+/, "$cwd/$relative";
+    my @ret;
+
+    for my $comp (@comps) {
+	if ($comp eq ".") {
+	    # nothing
+	} elsif ($comp eq "..") {
+	    pop @ret;
+	    push @ret, "" unless @ret;
+	} else {
+	    push @ret, $comp;
+	}
+    }
+    return $prefix . join("/", @ret) . $suffix;
+}
+
+while (<STDIN>) {
+    s/(^|\s)(-I|-L)?((\.\/|\.\.\/)+)/expand "$1$2", $3/ge;
+    s/(^|\s)(-I|-L)(\.\.)(?=\s|$)/expand "$1$2", $3/ge;
+    print;
+}
+       

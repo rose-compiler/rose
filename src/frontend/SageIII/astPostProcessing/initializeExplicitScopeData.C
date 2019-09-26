@@ -285,13 +285,21 @@ InitializeExplicitScopes::visit ( SgNode *node)
                       // DQ (10/12/2007): This review of the semantics of get_associatedClassDeclaration() appears fine!
                       // This should work even when the memberFunctionDeclaration is associated with a pointer to a member 
                       // function and the class definition has not been declared.
-                         SgClassDeclaration* classDeclaration = memberFunctionDeclaration->get_associatedClassDeclaration();
+                         SgDeclarationStatement* classDeclaration = memberFunctionDeclaration->get_associatedClassDeclaration();
                          ROSE_ASSERT(classDeclaration != NULL);
 
-                         SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
-                      // ROSE_ASSERT(definingClassDeclaration != NULL);
-                         if (definingClassDeclaration == NULL)
-                            {
+                         SgDeclarationStatement* definingDeclaration = classDeclaration->get_definingDeclaration();
+                         SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(definingDeclaration);
+                         SgNonrealDecl* definingNonrealDecl = isSgNonrealDecl(definingDeclaration);
+                         if (definingClassDeclaration != NULL) {
+                              SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
+                              ROSE_ASSERT(classDefinition != NULL);
+                              memberFunctionDeclaration->set_scope(classDefinition);
+                         } else if (definingNonrealDecl != NULL) {
+                              SgDeclarationScope* nrscope = definingNonrealDecl->get_nonreal_decl_scope();
+                              ROSE_ASSERT(nrscope != NULL);
+                              memberFunctionDeclaration->set_scope(nrscope);
+                         } else {
                            // DQ (7/31/2007): If the class is not defined and we have a member function pointer 
                            // of this class type then we can't set the scope, so we use the SgGlobal case.
 #if PRINT_DEVELOPER_WARNINGS
@@ -304,13 +312,7 @@ InitializeExplicitScopes::visit ( SgNode *node)
                               SgGlobal* globalScope = TransformationSupport::getGlobalScope(classDeclaration);
                               ROSE_ASSERT(globalScope != NULL);
                               memberFunctionDeclaration->set_scope(globalScope);
-                            }
-                           else
-                            {
-                              SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                              ROSE_ASSERT(classDefinition != NULL);
-                              memberFunctionDeclaration->set_scope(classDefinition);
-                            }
+                         }
 #if 0
                          printf ("Fixed up memberFunctionDeclaration = %p = %s = %s \n",
                               memberFunctionDeclaration,memberFunctionDeclaration->class_name().c_str(),

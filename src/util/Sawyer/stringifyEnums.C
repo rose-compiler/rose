@@ -17,6 +17,8 @@ static const char *description =
 #include <boost/algorithm/string/predicate.hpp>
 #include <ctype.h>
 #include <errno.h>
+#include <iostream>
+#include <stdint.h>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -120,7 +122,7 @@ operator<<(std::ostream &out, const Scopes &scopes) {
     return out;
 }
 
-typedef Sawyer::Container::Map<std::string, long> SymbolValues;
+typedef Sawyer::Container::Map<std::string, int64_t> SymbolValues;
 typedef SymbolValues EnumMembers;
 
 static SymbolValues globalSymbols;
@@ -210,9 +212,9 @@ parseClass(TokenStream &tokens, Scopes &scopes) {
     tokens.consume();                                   // the opening brace
 }
 
-static long
+static int64_t
 parseIntegralConstant(TokenStream &tokens) {
-    long retval = 0;
+    int64_t retval = 0;
     std::string s = tokens.lexeme(tokens[0]);
     if (boost::starts_with(s, "0b") && s.size() > 2) {
         for (size_t i = 2; i < s.size(); ++i) {
@@ -228,7 +230,7 @@ parseIntegralConstant(TokenStream &tokens) {
     } else {
         char *rest = NULL;
         errno = 0;
-        retval = (long) strtoul(s.c_str(), &rest, 0);
+        retval = (int64_t) strtoul(s.c_str(), &rest, 0);
         if (errno != 0 || *rest)
             std::cerr <<where(tokens.fileName(), tokens.location(tokens[0])) <<": error: invalid integer literal\n";
     }
@@ -236,12 +238,12 @@ parseIntegralConstant(TokenStream &tokens) {
     return retval;
 }
 
-static long parseCommaExpr(TokenStream&);
-static long parseConstExpr(TokenStream&);
+static int64_t parseCommaExpr(TokenStream&);
+static int64_t parseConstExpr(TokenStream&);
 
-static long
+static int64_t
 parseTermExpr(TokenStream &tokens) {
-    long retval = 0;
+    int64_t retval = 0;
     if (tokens[0].type() == TOK_NUMBER) {
         retval = parseIntegralConstant(tokens);
     } else if (currentEnumMembers.getOptional(tokens.lexeme(tokens[0])).assignTo(retval)) {
@@ -263,11 +265,11 @@ parseTermExpr(TokenStream &tokens) {
     return retval;
 }
 
-static long
+static int64_t
 parseParenExpr(TokenStream &tokens) {
     if (tokens.matches(tokens[0], "(")) {
         tokens.consume();
-        long retval = parseCommaExpr(tokens);
+        int64_t retval = parseCommaExpr(tokens);
         if (tokens.matches(tokens[0], ")")) {
             tokens.consume();
         } else {
@@ -280,9 +282,9 @@ parseParenExpr(TokenStream &tokens) {
     }
 }
 
-static long
+static int64_t
 parseScopeExpr(TokenStream &tokens) {
-    long retval = parseParenExpr(tokens);
+    int64_t retval = parseParenExpr(tokens);
     while (tokens.matches(tokens[0], "::")) {
         std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
                   <<": error: \"::\" is not supported\n";
@@ -292,9 +294,9 @@ parseScopeExpr(TokenStream &tokens) {
     return retval;
 }
 
-static long
+static int64_t
 parseSuffixExpr(TokenStream &tokens) {
-    long retval = parseScopeExpr(tokens);
+    int64_t retval = parseScopeExpr(tokens);
     while (1) {
         if (tokens.matches(tokens[0], "++") || tokens.matches(tokens[0], "--")) {
             std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
@@ -335,7 +337,7 @@ parseSuffixExpr(TokenStream &tokens) {
     return retval;
 }
 
-static long
+static int64_t
 parsePrefixExpr(TokenStream &tokens) {
     if ((tokens.matches(tokens[0], "delete") || tokens.matches(tokens[0], "new")) &&
         tokens.matches(tokens[1], "[") && tokens.matches(tokens[2], "]")) {
@@ -367,9 +369,9 @@ parsePrefixExpr(TokenStream &tokens) {
     }
 }
 
-static long
+static int64_t
 parsePointerExpr(TokenStream &tokens) {
-    long retval = parsePrefixExpr(tokens);
+    int64_t retval = parsePrefixExpr(tokens);
     while (tokens.matches(tokens[0], ".*") || tokens.matches(tokens[0], "->*")) {
         std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
                   <<": error: \"" <<tokens.lexeme(tokens[0]) <<"\" not supported\n";
@@ -379,21 +381,21 @@ parsePointerExpr(TokenStream &tokens) {
     return retval;
 }
 
-static long
+static int64_t
 parseMultiplicativeExpr(TokenStream &tokens) {
-    long retval = parsePointerExpr(tokens);
+    int64_t retval = parsePointerExpr(tokens);
     while (1) {
         if (tokens.matches(tokens[0], "*")) {
             tokens.consume();
-            long b = parsePointerExpr(tokens);
+            int64_t b = parsePointerExpr(tokens);
             retval *= b;
         } else if (tokens.matches(tokens[0], "/")) {
             tokens.consume();
-            long b = parsePointerExpr(tokens);
+            int64_t b = parsePointerExpr(tokens);
             retval /= b;
         } else if (tokens.matches(tokens[0], "%")) {
             tokens.consume();
-            long b = parsePointerExpr(tokens);
+            int64_t b = parsePointerExpr(tokens);
             retval %= b;
         } else {
             break;
@@ -402,17 +404,17 @@ parseMultiplicativeExpr(TokenStream &tokens) {
     return retval;
 }
 
-static long
+static int64_t
 parseAdditiveExpr(TokenStream &tokens) {
-    long retval = parseMultiplicativeExpr(tokens);
+    int64_t retval = parseMultiplicativeExpr(tokens);
     while (1) {
         if (tokens.matches(tokens[0], "+")) {
             tokens.consume();
-            long b = parseMultiplicativeExpr(tokens);
+            int64_t b = parseMultiplicativeExpr(tokens);
             retval += b;
         } else if (tokens.matches(tokens[0], "-")) {
             tokens.consume();
-            long b = parseMultiplicativeExpr(tokens);
+            int64_t b = parseMultiplicativeExpr(tokens);
             retval -= b;
         } else {
             break;
@@ -421,17 +423,17 @@ parseAdditiveExpr(TokenStream &tokens) {
     return retval;
 }
 
-static long
+static int64_t
 parseShiftExpr(TokenStream &tokens) {
-    long retval = parseAdditiveExpr(tokens);
+    int64_t retval = parseAdditiveExpr(tokens);
     while (1) {
         if (tokens.matches(tokens[0], "<<")) {
             tokens.consume();
-            long b = parseAdditiveExpr(tokens);
+            int64_t b = parseAdditiveExpr(tokens);
             retval = retval << b;
         } else if (tokens.matches(tokens[0], ">>")) {
             tokens.consume();
-            long b = parseAdditiveExpr(tokens);
+            int64_t b = parseAdditiveExpr(tokens);
             retval = retval >> b;
         } else {
             break;
@@ -440,25 +442,25 @@ parseShiftExpr(TokenStream &tokens) {
     return retval;
 }
 
-static long
+static int64_t
 parseRelationalExpr(TokenStream &tokens) {
-    long retval = parseShiftExpr(tokens);
+    int64_t retval = parseShiftExpr(tokens);
     while (1) {
         if (tokens.matches(tokens[0], "<")) {
             tokens.consume();
-            long b = parseShiftExpr(tokens);
+            int64_t b = parseShiftExpr(tokens);
             retval = retval < b;
         } else if (tokens.matches(tokens[0], "<=")) {
             tokens.consume();
-            long b = parseShiftExpr(tokens);
+            int64_t b = parseShiftExpr(tokens);
             retval = retval <= b;
         } else if (tokens.matches(tokens[0], ">")) {
             tokens.consume();
-            long b = parseShiftExpr(tokens);
+            int64_t b = parseShiftExpr(tokens);
             retval = retval > b;
         } else if (tokens.matches(tokens[0], ">=")) {
             tokens.consume();
-            long b = parseShiftExpr(tokens);
+            int64_t b = parseShiftExpr(tokens);
             retval = retval >= b;
         } else {
             break;
@@ -467,17 +469,17 @@ parseRelationalExpr(TokenStream &tokens) {
     return retval;
 }
 
-static long
+static int64_t
 parseEqualityExpr(TokenStream &tokens) {
-    long retval = parseRelationalExpr(tokens);
+    int64_t retval = parseRelationalExpr(tokens);
     while (1) {
         if (tokens.matches(tokens[0], "==")) {
             tokens.consume();
-            long b = parseRelationalExpr(tokens);
+            int64_t b = parseRelationalExpr(tokens);
             retval = retval == b;
         } else if (tokens.matches(tokens[0], "!=")) {
             tokens.consume();
-            long b = parseRelationalExpr(tokens);
+            int64_t b = parseRelationalExpr(tokens);
             retval = retval != b;
         } else {
             break;
@@ -486,64 +488,64 @@ parseEqualityExpr(TokenStream &tokens) {
     return retval;
 }
 
-static long
+static int64_t
 parseBitwiseAndExpr(TokenStream &tokens) {
-    long retval = parseEqualityExpr(tokens);
+    int64_t retval = parseEqualityExpr(tokens);
     while (tokens.matches(tokens[0], "&")) {
         tokens.consume();
-        long b = parseEqualityExpr(tokens);
+        int64_t b = parseEqualityExpr(tokens);
         retval &= b;
     }
     return retval;
 }
 
-static long
+static int64_t
 parseBitwiseXorExpr(TokenStream &tokens) {
-    long retval = parseBitwiseAndExpr(tokens);
+    int64_t retval = parseBitwiseAndExpr(tokens);
     while (tokens.matches(tokens[0], "^")) {
         tokens.consume();
-        long b = parseBitwiseAndExpr(tokens);
+        int64_t b = parseBitwiseAndExpr(tokens);
         retval ^= b;
     }
     return retval;
 }
 
-static long
+static int64_t
 parseBitwiseOrExpr(TokenStream &tokens) {
-    long retval = parseBitwiseXorExpr(tokens);
+    int64_t retval = parseBitwiseXorExpr(tokens);
     while (tokens.matches(tokens[0], "|")) {
         tokens.consume();
-        long b = parseBitwiseXorExpr(tokens);
+        int64_t b = parseBitwiseXorExpr(tokens);
         retval |= b;
     }
     return retval;
 }
 
-static long
+static int64_t
 parseLogicalAndExpr(TokenStream &tokens) {
-    long retval = parseBitwiseOrExpr(tokens);
+    int64_t retval = parseBitwiseOrExpr(tokens);
     while (tokens.matches(tokens[0], "&&")) {
         tokens.consume();
-        long b = parseBitwiseOrExpr(tokens);
+        int64_t b = parseBitwiseOrExpr(tokens);
         retval = retval && b;
     }
     return retval;
 }
 
-static long
+static int64_t
 parseLogicalOrExpr(TokenStream &tokens) {
-    long retval = parseLogicalAndExpr(tokens);
+    int64_t retval = parseLogicalAndExpr(tokens);
     while (tokens.matches(tokens[0], "||")) {
         tokens.consume();
-        long b = parseLogicalAndExpr(tokens);
+        int64_t b = parseLogicalAndExpr(tokens);
         retval = retval || b;
     }
     return retval;
 }
 
-static long
+static int64_t
 parseAssignExpr(TokenStream &tokens) {
-    long retval = parseLogicalOrExpr(tokens);
+    int64_t retval = parseLogicalOrExpr(tokens);
     if (tokens.matches(tokens[0], "=") || tokens.matches(tokens[0], "+=") || tokens.matches(tokens[0], "-=") ||
         tokens.matches(tokens[0], "*=") || tokens.matches(tokens[0], "/=") || tokens.matches(tokens[0], "%=") ||
         tokens.matches(tokens[0], "<<=") || tokens.matches(tokens[0], ">>=") || tokens.matches(tokens[0], "&=") ||
@@ -554,10 +556,10 @@ parseAssignExpr(TokenStream &tokens) {
         retval = parseAssignExpr(tokens);
     } else if (tokens.matches(tokens[0], "?")) {
         tokens.consume();
-        long a = parseLogicalOrExpr(tokens);
+        int64_t a = parseLogicalOrExpr(tokens);
         if (tokens.matches(tokens[0], ":")) {
             tokens.consume();
-            long b = parseAssignExpr(tokens);
+            int64_t b = parseAssignExpr(tokens);
             retval = retval ? a : b;
         } else {
             std::cerr <<where(tokens.fileName(), tokens.location(tokens[0])) <<": error: \":\" expected\n";
@@ -566,14 +568,14 @@ parseAssignExpr(TokenStream &tokens) {
     return retval;
 }
 
-static long
+static int64_t
 parseConstExpr(TokenStream &tokens) {
     return parseAssignExpr(tokens);
 }
 
-static long
+static int64_t
 parseCommaExpr(TokenStream &tokens) {
-    long retval = parseConstExpr(tokens);
+    int64_t retval = parseConstExpr(tokens);
     while (tokens.matches(tokens[0], ",")) {
         std::cerr <<where(tokens.fileName(), tokens.location(tokens[0]))
                   <<": error: comma operator cannot appear in a constant-expression\n";
@@ -661,13 +663,13 @@ generateDeclaration(const std::string &fileName, const Location &loc, const Scop
     size_t nns = generateNamespaces(outerNamespace, scopes, 1);
     std::cout <<"\n"
               <<"    /** Convert " <<enumName <<" enum constant to a string. */\n"
-              <<"    const char* " <<scopes.back().name <<"(long);\n"
+              <<"    const char* " <<scopes.back().name <<"(int64_t);\n"
               <<"\n"
               <<"    /** Convert " <<enumName <<" enum constant to a string. */\n"
-              <<"    std::string " <<scopes.back().name <<"(long, const std::string &strip);\n"
+              <<"    std::string " <<scopes.back().name <<"(int64_t, const std::string &strip);\n"
               <<"\n"
               <<"    /** Return all " <<enumName <<" member values as a vector. */\n"
-              <<"    const std::vector<long>& " <<scopes.back().name <<"();\n";
+              <<"    const std::vector<int64_t>& " <<scopes.back().name <<"();\n";
     std::cout <<std::string(nns, '}') <<"\n\n";
 }
 
@@ -678,7 +680,7 @@ generateImplementation(const std::string &fileName, const Location &loc,
         return;
     std::string enumName = fullyQualifiedEnumName(scopes);
 
-    typedef Sawyer::Container::Map<long, std::string> ReverseMembers;
+    typedef Sawyer::Container::Map<int64_t, std::string> ReverseMembers;
     ReverseMembers reverseMembers;
     BOOST_FOREACH (const EnumMembers::Node &node, members.nodes())
         reverseMembers.insert(node.value(), node.key());
@@ -693,7 +695,7 @@ generateImplementation(const std::string &fileName, const Location &loc,
     std::cout <<" line " <<(loc.first+1) <<"\n";
     size_t nns = generateNamespaces(outerNamespace, scopes, 1);
     std::cout <<"\n"
-              <<"    const char* " <<scopes.back().name <<"(long i) {\n"
+              <<"    const char* " <<scopes.back().name <<"(int64_t i) {\n"
               <<"        switch (i) {\n";
     BOOST_FOREACH (const ReverseMembers::Node &node, reverseMembers.nodes())
         std::cout <<"            case " <<node.key() <<"L: return \"" <<node.value() <<"\";\n";
@@ -701,7 +703,7 @@ generateImplementation(const std::string &fileName, const Location &loc,
               <<"        }\n"
               <<"    }\n"
               <<"\n"
-              <<"    std::string " <<scopes.back().name <<"(long i, const std::string &strip) {\n"
+              <<"    std::string " <<scopes.back().name <<"(int64_t i, const std::string &strip) {\n"
               <<"        std::string s = " <<scopes.back().name <<"(i);\n"
               <<"        if (s.empty())\n"
               <<"            s = \"(" <<enumName <<")\" + boost::lexical_cast<std::string>(i);\n"
@@ -711,19 +713,19 @@ generateImplementation(const std::string &fileName, const Location &loc,
               <<"    }\n"
               <<"\n";
 
-    std::cout <<"    const std::vector<long>& " <<scopes.back().name <<"() {\n";
+    std::cout <<"    const std::vector<int64_t>& " <<scopes.back().name <<"() {\n";
     if (reverseMembers.isEmpty()) {
-        std::cout <<"        static const std::vector<long> retval;\n"
+        std::cout <<"        static const std::vector<int64_t> retval;\n"
                   <<"        return retval;\n";
     } else {
-        std::cout <<"        static const long values[] = {";
+        std::cout <<"        static const int64_t values[] = {";
         BOOST_FOREACH (const ReverseMembers::Node &node, reverseMembers.nodes()) {
             std::cout <<(node.key() == reverseMembers.nodes().begin()->key() ? "\n" : ",\n")
                       <<"            " <<node.key() <<"L";
         }
         std::cout <<"\n"
                   <<"        };\n"
-                  <<"        static const std::vector<long> retval(values, values + " <<reverseMembers.size() <<");\n"
+                  <<"        static const std::vector<int64_t> retval(values, values + " <<reverseMembers.size() <<");\n"
                   <<"        return retval;\n";
     }
     std::cout <<"    }\n"
@@ -753,11 +755,11 @@ generateCompatibleDeclaration(const Scopes &scopes) {
         return;
     std::string enumName = (outerNamespace.empty()?"":outerNamespace+"::") + fullyQualifiedEnumName(scopes);
     std::cout <<"namespace Rose {\n"
-              <<"    std::string " <<compatibleEnumName(scopes) <<"(long int n, const char *strip=NULL, bool canonic=false)";
+              <<"    std::string " <<compatibleEnumName(scopes) <<"(int64_t n, const char *strip=NULL, bool canonic=false)";
     if (deprecateCompatible)
         std::cout <<"\n        SAWYER_DEPRECATED(\"use " <<enumName <<"\")";
     std::cout <<";\n"
-              <<"    const std::vector<long>& " <<compatibleEnumName(scopes) <<"()";
+              <<"    const std::vector<int64_t>& " <<compatibleEnumName(scopes) <<"()";
     if (deprecateCompatible)
         std::cout <<"\n        SAWYER_DEPRECATED(\"use " <<enumName <<"\")";
     std::cout <<";\n"
@@ -770,7 +772,7 @@ generateCompatibleImplementation(const Scopes &scopes) {
         return;
     std::string enumName = fullyQualifiedEnumName(scopes);
     std::cout <<"namespace Rose {\n"
-              <<"    std::string " <<compatibleEnumName(scopes) <<"(long int i, const char *strip, bool canonic) {\n"
+              <<"    std::string " <<compatibleEnumName(scopes) <<"(int64_t i, const char *strip, bool canonic) {\n"
               <<"        std::string retval = stringify::" <<enumName <<"(i);\n"
               <<"        if (retval.empty()) {\n"
               <<"            retval = \"(" <<enumName <<")\" + boost::lexical_cast<std::string>(i);\n"
@@ -783,7 +785,7 @@ generateCompatibleImplementation(const Scopes &scopes) {
               <<"        return retval;\n"
               <<"    }\n"
               <<"\n"
-              <<"    const std::vector<long>& " <<compatibleEnumName(scopes) <<"() {\n"
+              <<"    const std::vector<int64_t>& " <<compatibleEnumName(scopes) <<"() {\n"
               <<"        return stringify::" <<enumName <<"();\n"
               <<"    }\n"
               <<"}\n\n";
@@ -825,7 +827,7 @@ parseEnum(TokenStream &tokens, Scopes &scopes) {
     // Parse the enum members
     currentEnumMembers.clear();
     EnumMembers members;
-    long memberValue = 0;
+    int64_t memberValue = 0;
     while (tokens[0].type() != TOK_EOF && !tokens.matches(tokens[0], "}")) {
         // The enum member name
         if (tokens[0].type() != TOK_WORD) {
@@ -890,7 +892,7 @@ generateOnce() {
 static void
 generateStringifierClass() {
     std::cout <<"namespace Rose {\n"
-              <<"/** Shortens names of long stringifiers.\n"
+              <<"/** Shortens names of int64_t stringifiers.\n"
               <<" *\n"
               <<" *  Enum stringifier functions are automatically and sometimes have very long names.  This class is intended to be a convenient\n"
               <<" *  way to make a locally short-named object that can be used in place of the long stringifier.\n"
@@ -900,10 +902,10 @@ generateStringifierClass() {
               <<" *   std::cout <<stringifyType(CLOBBER) <<\"\\n\";\n"
               <<" *  @endcode */\n"
               <<"class Stringifier {\n"
-              <<"    std::string(*stringifier_)(long int, const char*, bool);\n"
+              <<"    std::string(*stringifier_)(int64_t, const char*, bool);\n"
               <<"public:\n"
-              <<"    Stringifier(std::string(*stringifier)(long int, const char*, bool)): stringifier_(stringifier) {}\n"
-              <<"    std::string operator()(long int n, const char *strip=NULL, bool canonic=false) {\n"
+              <<"    Stringifier(std::string(*stringifier)(int64_t, const char*, bool)): stringifier_(stringifier) {}\n"
+              <<"    std::string operator()(int64_t n, const char *strip=NULL, bool canonic=false) {\n"
               <<"        return stringifier_(n, strip, canonic);\n"
               <<"    }\n"
               <<"};\n"
@@ -932,7 +934,7 @@ generateDocumentation() {
 int
 main(int argc, char *argv[]) {
     Sawyer::initializeLibrary();
-    mlog = Sawyer::Message::Facility("tool");
+    mlog.initialize("tool");
     Sawyer::Message::mfacilities.insertAndAdjust(mlog);
     mlog[INFO].enable();
     globalSymbols.insert("false", 0);

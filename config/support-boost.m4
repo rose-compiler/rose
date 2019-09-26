@@ -21,10 +21,6 @@
 #     AC_DEFINE_UNQUOTED(ROSE_BOOST_PATH)
 #     AC_DEFINE_UNQUOTED(ROSE_WAVE_PATH)
 #
-# LAST MODIFICATION
-#
-#   2013-07-31
-#
 # COPYLEFT
 #
 #   Copyright (c) 2013 Justin Too <too1@llnl.gov>
@@ -35,11 +31,11 @@
 
 AC_DEFUN([ROSE_SUPPORT_BOOST],
 [
-  ROSE_CONFIGURE_SECTION([Boost C++ Libraries])
+  ROSE_CONFIGURE_SECTION([Checking Boost])
 
 
   #============================================================================
-  # --with-x10=/path/to/x10-trunk/x10.dist/
+  # --enable-boost-version-check
   #============================================================================
   ROSE_ARG_ENABLE(
     [boost-version-check],
@@ -54,13 +50,20 @@ dnl Hack using an internal variable from AX_BOOST_BASE -- this path should only
 dnl be used to set --with-boost in distcheck.
 AC_SUBST(ac_boost_path)
 
-rose_boost_version=`grep "#define BOOST_VERSION " ${ac_boost_path}/include/boost/version.hpp | cut -d" " -f 3 | tr -d '\r'`
+BOOST_VERSION_HEADER="${ac_boost_path}/include/boost/version.hpp"
+
+# Liao, 2019/3/12. Check file existence before calling grep
+if test -f "$BOOST_VERSION_HEADER" ; then
+  rose_boost_version=`grep "#define BOOST_VERSION " ${ac_boost_path}/include/boost/version.hpp | cut -d" " -f 3 | tr -d '\r'`
+else
+  ROSE_MSG_ERROR([Unable to find $ac_boost_path/include/boost/version.hpp . Please specify the right boost installation path with --with-boost=/path/to/boost])
+fi
 
 AC_MSG_NOTICE([rose_boost_version = '$rose_boost_version'])
 ROSE_CONFIG_TOKEN="$ROSE_CONFIG_TOKEN boost-$rose_boost_version"
 
 if test "x$rose_boost_version" = "x"; then
-  ROSE_MSG_ERROR([Unable to compute the version of your Boost C++ libraries: '$ac_boost_path'])
+  ROSE_MSG_ERROR([Unable to compute the version of your Boost C++ libraries from '$ac_boost_path'/include/boost/version.hpp . Please make sure the file exists or specify the right path with --with-boost])
 fi
 
 # DQ (10/22/2015): Added more tests (1.55 through 1.62)
@@ -69,40 +72,42 @@ fi
 #
 # !! We don't want conditional compilation or code in ROSE based on version numbers of Boost. !!
 #
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_35, test "x$rose_boost_version" = "x103500" -o "x$_version" = "x1.35")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_36, test "x$rose_boost_version" = "x103600" -o "x$_version" = "x1.36")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_37, test "x$rose_boost_version" = "x103700" -o "x$_version" = "x1.37")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_38, test "x$rose_boost_version" = "x103800" -o "x$_version" = "x1.38")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_39, test "x$rose_boost_version" = "x103900" -o "x$_version" = "x1.39")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_40, test "x$rose_boost_version" = "x104000" -o "x$_version" = "x1.40")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_41, test "x$rose_boost_version" = "x104100" -o "x$_version" = "x1.41")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_42, test "x$rose_boost_version" = "x104200" -o "x$_version" = "x1.42")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_43, test "x$rose_boost_version" = "x104300" -o "x$_version" = "x1.43")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44, test "x$rose_boost_version" = "x104400" -o "x$_version" = "x1.44")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45, test "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46, test "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46, test "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_47, test "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_48, test "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_49, test "x$rose_boost_version" = "x104900" -o "x$_version" = "x1.49")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_50, test "x$rose_boost_version" = "x105000" -o "x$_version" = "x1.50")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_51, test "x$rose_boost_version" = "x105100" -o "x$_version" = "x1.51")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_52, test "x$rose_boost_version" = "x105200" -o "x$_version" = "x1.52")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_53, test "x$rose_boost_version" = "x105300" -o "x$_version" = "x1.53")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_54, test "x$rose_boost_version" = "x105400" -o "x$_version" = "x1.54")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_55, test "x$rose_boost_version" = "x105500" -o "x$_version" = "x1.55")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_56, test "x$rose_boost_version" = "x105600" -o "x$_version" = "x1.56")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_57, test "x$rose_boost_version" = "x105700" -o "x$_version" = "x1.57")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_58, test "x$rose_boost_version" = "x105800" -o "x$_version" = "x1.58")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_59, test "x$rose_boost_version" = "x105900" -o "x$_version" = "x1.59")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_60, test "x$rose_boost_version" = "x106000" -o "x$_version" = "x1.60")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_61, test "x$rose_boost_version" = "x106100" -o "x$_version" = "x1.61")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_62, test "x$rose_boost_version" = "x106200" -o "x$_version" = "x1.62")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_63, test "x$rose_boost_version" = "x106300" -o "x$_version" = "x1.63")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_64, test "x$rose_boost_version" = "x106400" -o "x$_version" = "x1.64")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_65, test "x$rose_boost_version" = "x106500" -o "x$_version" = "x1.65")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_66, test "x$rose_boost_version" = "x106600" -o "x$_version" = "x1.66")
-AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_67, test "x$rose_boost_version" = "x106700" -o "x$_version" = "x1.67")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_35, test "$rose_boost_version" = "103500" -o "$_version" = "1.35")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_36, test "$rose_boost_version" = "103600" -o "$_version" = "1.36")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_37, test "$rose_boost_version" = "103700" -o "$_version" = "1.37")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_38, test "$rose_boost_version" = "103800" -o "$_version" = "1.38")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_39, test "$rose_boost_version" = "103900" -o "$_version" = "1.39")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_40, test "$rose_boost_version" = "104000" -o "$_version" = "1.40")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_41, test "$rose_boost_version" = "104100" -o "$_version" = "1.41")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_42, test "$rose_boost_version" = "104200" -o "$_version" = "1.42")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_43, test "$rose_boost_version" = "104300" -o "$_version" = "1.43")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_44, test "$rose_boost_version" = "104400" -o "$_version" = "1.44")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_45, test "$rose_boost_version" = "104500" -o "$_version" = "1.45")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46, test "$rose_boost_version" = "104600" -o "$_version" = "1.46")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_46, test "$rose_boost_version" = "104601" -o "$_version" = "1.46")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_47, test "$rose_boost_version" = "104700" -o "$_version" = "1.47")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_48, test "$rose_boost_version" = "104800" -o "$_version" = "1.48")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_49, test "$rose_boost_version" = "104900" -o "$_version" = "1.49")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_50, test "$rose_boost_version" = "105000" -o "$_version" = "1.50")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_51, test "$rose_boost_version" = "105100" -o "$_version" = "1.51")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_52, test "$rose_boost_version" = "105200" -o "$_version" = "1.52")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_53, test "$rose_boost_version" = "105300" -o "$_version" = "1.53")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_54, test "$rose_boost_version" = "105400" -o "$_version" = "1.54")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_55, test "$rose_boost_version" = "105500" -o "$_version" = "1.55")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_56, test "$rose_boost_version" = "105600" -o "$_version" = "1.56")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_57, test "$rose_boost_version" = "105700" -o "$_version" = "1.57")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_58, test "$rose_boost_version" = "105800" -o "$_version" = "1.58")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_59, test "$rose_boost_version" = "105900" -o "$_version" = "1.59")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_60, test "$rose_boost_version" = "106000" -o "$_version" = "1.60")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_61, test "$rose_boost_version" = "106100" -o "$_version" = "1.61")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_62, test "$rose_boost_version" = "106200" -o "$_version" = "1.62")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_63, test "$rose_boost_version" = "106300" -o "$_version" = "1.63")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_64, test "$rose_boost_version" = "106400" -o "$_version" = "1.64")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_65, test "$rose_boost_version" = "106500" -o "$_version" = "1.65")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_66, test "$rose_boost_version" = "106600" -o "$_version" = "1.66")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_67, test "$rose_boost_version" = "106700" -o "$_version" = "1.67")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_68, test "$rose_boost_version" = "106800" -o "$_version" = "1.68")
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_69, test "$rose_boost_version" = "106900" -o "$_version" = "1.69")
 
 # DQ (10/22/2015): Added more tests (1.55 through 1.62)
 # TOO1 (3/16/2015):
@@ -140,35 +145,28 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_64, test $rose_boost_version -ge 10
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_65, test $rose_boost_version -ge 106500)
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_66, test $rose_boost_version -ge 106600)
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_67, test $rose_boost_version -ge 106700)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_68, test $rose_boost_version -ge 106800)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_69, test $rose_boost_version -ge 106900)
 
 # DQ (10/22/2015): Added acceptable case 1.54.
 # DQ (8/2/2016): Added acceptable case 1.55 through 1.61.
 # [Matzke, 2016-09-19] Acceptable cases now 1.49-1.53, 1.55-1.60 decided at Jun 17 meeting, but leaving in 1.61
+# [Matzke, 2019-01-31] Acceptable versions no 1.57-1.69. We decided to support only latest 10 versions from now on.
+boost_minimum_version=105700
 
-if test \
-      "x$rose_boost_version" = "x105100" -o "x$_version" = "x1.51" \
-   -o "x$rose_boost_version" = "x105200" -o "x$_version" = "x1.52" \
-   -o "x$rose_boost_version" = "x105300" -o "x$_version" = "x1.53" \
-   -o "x$rose_boost_version" = "x105500" -o "x$_version" = "x1.55" \
-   -o "x$rose_boost_version" = "x105600" -o "x$_version" = "x1.56" \
-   -o "x$rose_boost_version" = "x105700" -o "x$_version" = "x1.57" \
-   -o "x$rose_boost_version" = "x105800" -o "x$_version" = "x1.58" \
-   -o "x$rose_boost_version" = "x105900" -o "x$_version" = "x1.59" \
-   -o "x$rose_boost_version" = "x106000" -o "x$_version" = "x1.60" \
-   -o "x$rose_boost_version" = "x106100" -o "x$_version" = "x1.61"
-then
-    echo "Reasonable version of Boost found!"
+if test "$rose_boost_version" -lt "$boost_minimum_version"; then
+   if test "$ROSE_ENABLE_BOOST_VERSION_CHECK" = "yes"; then
+       AC_MSG_FAILURE([boost version $rose_boost_version is unsupported (need $boost_minimum_version or later)])
+   else      
+       AC_MSG_WARN([boost version $rose_boost_version is unsupported (need $boost_minimum_version or later)])
+   fi
 else
-  if test "x$ROSE_ENABLE_BOOST_VERSION_CHECK" = "xyes"; then
-    ROSE_MSG_ERROR([Unsupported version of Boost: '$rose_boost_version'. Versions 1.51 to 1.61 (except 1.54) supported.])
-  else
-    AC_MSG_WARN([Unsupported version of Boost is being used])
-  fi
+   AC_MSG_NOTICE([reasonable version of Boost found: $rose_boost_version])
 fi
 
 # DQ (12/22/2008): Fix boost configure to handle OS with older version of Boost that will
 # not work with ROSE, and use the newer version specified by the user on the configure line.
-echo "In ROSE/configure: ac_boost_path = $ac_boost_path"
+AC_MSG_NOTICE([in ROSE/configure: ac_boost_path = "$ac_boost_path"])
 #AC_DEFINE([ROSE_BOOST_PATH],"$ac_boost_path",[Location of Boost specified on configure line.])
 AC_DEFINE_UNQUOTED([ROSE_BOOST_PATH],"$ac_boost_path",[Location (unquoted) of Boost specified on configure line.])
 #AC_DEFINE([ROSE_WAVE_PATH],"$ac_boost_path/wave",[Location of Wave specified on configure line.])

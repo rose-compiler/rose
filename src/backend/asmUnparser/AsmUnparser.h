@@ -551,7 +551,7 @@ public:
         StaticDataRawBytes() {
             show_address = true;
             show_offset = false;
-            fmt.prefix = NULL;          /* Adjusted by the callback each time called. */
+            fmt.prefix = "";            /* Adjusted by the callback each time called. */
             fmt.multiline = false;      /* Do not emit prefix before first line and linefeed after last line. */
             fmt.width = 8;              /* Max data bytes per line of output. */
             fmt.pad_chars = true;       /* Show ASCII characters as well as bytes. */

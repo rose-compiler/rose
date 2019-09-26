@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) unparseJovial_expressions.C unparseJovial_statements.C unparseJovial_types.C
+
+run $(public_header) unparseJovial.h

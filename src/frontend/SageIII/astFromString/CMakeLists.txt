@@ -4,4 +4,4 @@ if(NOT enable-internalFrontendDevelopment)
 endif()
 
 install(FILES AstFromString.h ParserBuilder.hpp ParserBuilder.tpp
-  DESTINATION include)
+  DESTINATION ${INCLUDE_INSTALL_DIR})

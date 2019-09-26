@@ -1,0 +1,4 @@
+include_rules
+
+: ROSE_BSD_License.txt |> cp %f %o |> ROSE_LICENSE
+run $(public_file) -o include ROSE_LICENSE

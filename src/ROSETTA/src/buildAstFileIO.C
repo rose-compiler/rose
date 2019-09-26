@@ -304,9 +304,14 @@ Grammar::build_source_AST_FILE_IO_CLASS()
                compressAst += "        {  \n" ;
                compressAst += "          " + nodeNameString + "StorageArray = "\
                               "new " + nodeNameString + "StorageClass[sizeOfActualPool] ; \n" ;
+#ifdef NDEBUG
+               compressAst += "          " + nodeNameString +
+                              "_initializeStorageClassArray (" + nodeNameString + "StorageArray); ;\n" ;
+#else
                compressAst += "          unsigned long storageClassIndex = " + nodeNameString + 
                               "_initializeStorageClassArray (" + nodeNameString + "StorageArray); ;\n" ;
                compressAst += "          assert ( storageClassIndex == sizeOfActualPool ); \n" ;
+#endif
                compressAst += "        }  \n" ;
              }
         }

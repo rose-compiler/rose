@@ -39,7 +39,7 @@ dnl Adds separator title configure output (idea borrowed from mm)
 dnl
 AC_DEFUN([ROSE_CONFIGURE_SECTION],[
   AC_MSG_RESULT()
-  AC_MSG_RESULT([${T_BM}$1${T_NM}])
+  echo "${T_BM}$1${T_NM}"
 ])
 
 dnl ----------------------------------------------------------------------------
@@ -57,7 +57,7 @@ AC_DEFUN([ROSE_MSG_ERROR],[
 "$rose_shtool" echo "--------------------------------------------------------------------------------"
 AC_MSG_ERROR([$1
 
-For assistance, please contact the rose-public@nersc.gov mailing list.
+For assistance, please visit http://rosecompiler.org or contact the rose-public@nersc.gov mailing list.
 ])
 ])
 
@@ -200,7 +200,7 @@ dnl ROSE_REAL_ARG_WITH
 dnl internal
 AC_DEFUN([ROSE_REAL_ARG_WITH],[
 ifelse([$2],,,[AC_MSG_CHECKING([$2])])
-AC_ARG_WITH($1,AS_HELP_STRING([--with-$1],[$3]),
+AC_ARG_WITH($1,AS_HELP_STRING([--with-$1=PREFIX],[$3]),
 [
   CONFIG_HAS_[]$5=yes
   $5=[$]withval

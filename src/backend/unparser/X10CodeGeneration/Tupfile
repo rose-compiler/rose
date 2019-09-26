@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) unparseX10_expressions.C unparseX10_statements.C unparseX10_types.C
+
+run $(public_header) unparseX10.h

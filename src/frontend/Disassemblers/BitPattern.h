@@ -7,6 +7,8 @@
 #include <iostream>
 #include <vector>
 
+namespace Rose {
+
 /** Describes a pattern of bits in a finite number of words.
  *
  *  A BitPattern is a set of one or more alternative values for certain significant bits in a finite sequence of words. The
@@ -79,7 +81,9 @@ public:
                           <<"    mask_.size() = " <<mask_.size() <<"\n"
                           <<"    patterns_[" <<i <<"].size() = " <<patterns_[i].size() <<"\n"
                           <<"    these two vectors should have been the same size\n";
-                std::cerr <<"    this = " <<*this <<"\n"; // printing might fail
+                std::cerr <<"    this = ";
+                print(std::cerr);                       // printing might fail
+                std::cerr <<"\n";
                 return false;
             }
         }
@@ -170,8 +174,9 @@ public:
             if (T differ = conflict(msk, pat, wordnum)) {
                 std::cerr <<"BitPattern::insert(msk=" <<Rose::StringUtility::addrToString(msk, 8*sizeof(T))
                           <<", pat=" <<Rose::StringUtility::addrToString(pat, 8*sizeof(T))
-                          <<", wordnum=" <<wordnum <<") conflicts with existing pattern " <<*this
-                          <<" at bits " <<Rose::StringUtility::addrToString(differ, 8*sizeof(T)) <<"\n";
+                          <<", wordnum=" <<wordnum <<") conflicts with existing pattern ";
+                print(std::cerr);
+                std::cerr <<" at bits " <<Rose::StringUtility::addrToString(differ, 8*sizeof(T)) <<"\n";
                 assert(!"new bit pattern conflicts with existing pattern");
                 abort();
             }
@@ -239,9 +244,6 @@ public:
 
     /** Return a new BitPattern with the pattern bits shifted left by the indicated amount. */
     BitPattern shift_left(size_t nbits) const {
-#if 0 /*DEBUGGING [Robb P. Matzke 2013-10-02]*/
-        std::cerr <<"BitPattern::shift_left: nbits=" <<nbits <<"; this=" <<*this <<"\n";
-#endif
         assert(is_consistent());
         if (0==nbits || patterns_.empty())
             return *this;
@@ -272,9 +274,6 @@ public:
             }
         }
         assert(is_consistent());
-#if 0 /*DEBUGGING [Robb P. Matzke 2013-10-02]*/
-        std::cerr <<"  shift_left result=" <<retval <<"\n";
-#endif
         return retval;
     }
     
@@ -284,11 +283,6 @@ public:
      *  alternatives; the number of alternatives in the result will be on the order of the product of the number of
      *  alternatives in the originals. */
     BitPattern& conjunction(const BitPattern &other) {
-#if 0 /*DEBUGGING [Robb P. Matzke 2013-10-02]*/
-        std::cerr <<"BitPattern::conjunction:\n"
-                  <<"  this  = " <<*this <<"\n"
-                  <<"  other = " <<other <<"\n";
-#endif
         assert(is_consistent());
         assert(other.is_consistent());
         // check that the operation is possible
@@ -328,9 +322,6 @@ public:
         }
         patterns_ = retval;
         assert(is_consistent());
-#if 0 /*DEBUGGING [Robb P. Matzke 2013-10-02]*/
-        std::cerr <<"  conjunction result = " <<*this <<"\n";
-#endif
         return *this;
     }
 
@@ -454,8 +445,10 @@ public:
     }
 };
 
+} // namespace
+
 template<typename T>
-std::ostream& operator<<(std::ostream &o, const BitPattern<T> &bp) 
+std::ostream& operator<<(std::ostream &o, const Rose::BitPattern<T> &bp) 
 {
     bp.print(o);
     return o;

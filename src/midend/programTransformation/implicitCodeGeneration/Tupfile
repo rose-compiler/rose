@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) analysisUtils.C defaultFunctionGenerator.C destructorCallAnnotator.C shortCircuitingTransformation.C
+
+run $(public_header) analysisUtils.h defaultFunctionGenerator.h destructorCallAnnotator.h shortCircuitingTransformation.h

@@ -173,6 +173,33 @@ mangleTemplateFunction (const std::string& templ_name,
                         const SgFunctionType* func_type,
                         const SgScopeStatement* scope);
 
+/*! Mangles a template parameter container, returning an STL std::string.
+ *
+ *  \param[in] b  First element in the container to mangle.
+ *  \param[in] e  End (last+1) in the container to mangle.
+ *  \returns The specified parameters mangled and concatenated by "__sep__".
+ */
+std::string mangleTemplateArgsToString (const SgTemplateParameterPtrList::const_iterator b, const SgTemplateParameterPtrList::const_iterator e);
+ 
+/*! Mangles a template.
+ *
+ *  \param[in] templ_name   Unmangled base name of the template. This std::string
+ *                            should not contain the template parameter (i.e.,
+ *                            should be 'foo' and not 'foo < typename T >').
+ *  \param[in] templ_params Container of template parameters.
+ *  \param[in] scope        Scope of the function (e.g., via 'get_scope ()'),
+ *                            used to get qualifiers.
+ *  \returns Mangled name, including all parameter information.
+ */
+std::string mangleTemplateToString (const std::string& templ_name,
+                               const SgTemplateParameterPtrList& templ_params,
+                               const SgScopeStatement* scope);
+
+//! Mangles a template, returning an SgName object.
+SgName mangleTemplate (const SgName& templ_name,
+                       const SgTemplateParameterPtrList& templ_params,
+                       const SgScopeStatement* scope);
+
 //! Mangles a boolean expression.
 std::string mangleSgValueExp (const SgBoolValExp* expr);
 

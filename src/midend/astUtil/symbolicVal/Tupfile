@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) SymbolicBound.C SymbolicExpr.C SymbolicFind.C SymbolicOperator.C SymbolicUnwrapCond.C SymbolicVal.C
+
+run $(public_header) SymbolicMultiply.h SymbolicPlus.h SymbolicVal.h SymbolicExpr.h SymbolicSelect.h SymbolicBound.h

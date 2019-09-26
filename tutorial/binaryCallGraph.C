@@ -64,7 +64,7 @@ main(int argc, char *argv[]) {
     //! [partition]
 
     //! [callgraph]
-    Partitioner2::FunctionCallGraph callgraph = partitioner.functionCallGraph(false);
+    Partitioner2::FunctionCallGraph callgraph = partitioner.functionCallGraph(Partitioner2::AllowParallelEdges::NO);
     //! [callgraph]
 
     //! [emit]

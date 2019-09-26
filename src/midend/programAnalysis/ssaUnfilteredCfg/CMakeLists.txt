@@ -1,3 +1,3 @@
 install(FILES
     defsAndUsesUnfilteredCfg.h  reachingDefUnfilteredCfg.h  ssaUnfilteredCfg.h
-  DESTINATION include)
+  DESTINATION ${INCLUDE_INSTALL_DIR})

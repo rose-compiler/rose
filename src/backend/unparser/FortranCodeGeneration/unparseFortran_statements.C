@@ -2144,8 +2144,12 @@ FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUn
        // cout << "stmt: " << hex << (*p) << dec << endl;
           ROSE_ASSERT((*p) != NULL);
          // FMZ: for module file, only output the variable declarations (not definitions)
+         // Pei-Hung (05/23/2019) Need to add SgUseStatement, SgimplicitStatement and SgDerivedTypeStatement into rmod file
          if ( !info.outputFortranModFile() || (*p)->variantT()==V_SgVariableDeclaration
-                 || (*p)->variantT()==V_SgAttributeSpecificationStatement )  // DXN (02/07/2012): unparse attribute statements also
+                 || (*p)->variantT()==V_SgAttributeSpecificationStatement // DXN (02/07/2012): unparse attribute statements also
+                 || (*p)->variantT()==V_SgUseStatement
+                 || (*p)->variantT()==V_SgImplicitStatement
+                 || (*p)->variantT()==V_SgDerivedTypeStatement)
              unparseStatement((*p), info);
      }
 
@@ -2432,26 +2436,36 @@ FortranCodeGeneration_locatedNode::unparseDoConcurrentStatement(SgStatement* stm
      SgExprListExp* forAllHeader = forAllStatement->get_forall_header();
      ROSE_ASSERT(forAllHeader != NULL);
 
-     SgExpressionPtrList header = forAllHeader->get_expressions();
+#if 0
+  // This was redesigned for SDF parser using ATerms.  This was implemented incorrectly,
+  // it should use SgAssignOp expressions instead.  If this is ever resurrected it must
+  // be fixed [Rasmussen 2019.08.23].
 
   // The expressions in the forall header are in pairs (var, SgSubscriptExpression)
      ROSE_ASSERT( ( forAllHeader->get_expressions().size() % 2 ) == 0);
      int num_vars = forAllHeader->get_expressions().size() / 2;
+     for (int i = 0; i <= num_vars; i += 2)
+#endif
+
+     SgExpressionPtrList header = forAllHeader->get_expressions();
+     int num_vars = header.size();
 
      curprint("DO CONCURRENT (");
 
-     for (int i = 0; i <= num_vars; i += 2)
+     for (int i = 0; i < num_vars; i++)
         {
            if (i != 0) curprint(", ");
 
-        // variable
-           unparseExpression(header[i],  info);
+           SgAssignOp* assignOp = isSgAssignOp(header[i]);
+           ROSE_ASSERT(assignOp);
+
+           unparseExpression(assignOp->get_lhs_operand_i(), info);
            curprint("=");
-        // subscripts
-           unparseExpression(header[i+1],info);
+           unparseExpression(assignOp->get_rhs_operand_i(), info);
         }
 
      curprint(")");
+     unp->cur.insert_newline(1);
 
   // Unparse the body
      SgStatement* statement = NULL;
@@ -3317,20 +3331,24 @@ FortranCodeGeneration_locatedNode::unparseReadStatement(SgStatement* stmt, SgUnp
           curprint("(");
           unparse_IO_Support(readStatement,false,info);
 
-       // printf ("In unparseReadStatement(): FMT = %p = %s \n",readStatement->get_format(),readStatement->get_format()->class_name().c_str());
+       // Added missing items to the io-control-spec-list [Rasmussen, 2019.05.31]
 
-          unparse_IO_Control_Support("FMT",readStatement->get_format(),false,info);
-          unparse_IO_Control_Support("REC",readStatement->get_rec(),false,info);
-          unparse_IO_Control_Support("END",readStatement->get_end(),false,info);
-
-       // F90 specific
-          unparse_IO_Control_Support("NML",readStatement->get_namelist(),false,info);
-          unparse_IO_Control_Support("ADVANCE",readStatement->get_advance(),false,info);
-          unparse_IO_Control_Support("EOR",readStatement->get_eor(),false,info);
-          unparse_IO_Control_Support("SIZE",readStatement->get_size(),false,info);
-
-       // F2003 specific
+          unparse_IO_Control_Support("FMT",         readStatement->get_format(),      false,info);
+          unparse_IO_Control_Support("NML",         readStatement->get_namelist(),    false,info);
+          unparse_IO_Control_Support("ADVANCE",     readStatement->get_advance(),     false,info);
           unparse_IO_Control_Support("ASYNCHRONOUS",readStatement->get_asynchronous(),false,info);
+          unparse_IO_Control_Support("BLANK",       readStatement->get_blank(),       false,info);
+          unparse_IO_Control_Support("DECIMAL",     readStatement->get_decimal(),     false,info);
+          unparse_IO_Control_Support("DELIM",       readStatement->get_delim(),       false,info);
+          unparse_IO_Control_Support("END",         readStatement->get_end(),         false,info);
+          unparse_IO_Control_Support("EOR",         readStatement->get_eor(),         false,info);
+          unparse_IO_Control_Support("ID",          readStatement->get_id(),          false,info);
+          unparse_IO_Control_Support("PAD",         readStatement->get_pad(),         false,info);
+          unparse_IO_Control_Support("POS",         readStatement->get_pos(),         false,info);
+          unparse_IO_Control_Support("REC",         readStatement->get_rec(),         false,info);
+          unparse_IO_Control_Support("ROUND",       readStatement->get_round(),       false,info);
+          unparse_IO_Control_Support("SIGN",        readStatement->get_sign(),        false,info);
+          unparse_IO_Control_Support("SIZE",        readStatement->get_size(),        false,info);
 
           curprint(") ");
         }
@@ -3353,13 +3371,24 @@ FortranCodeGeneration_locatedNode::unparseWriteStatement(SgStatement* stmt, SgUn
 
      unparse_IO_Support(stmt,false,info);
 
-     unparse_IO_Control_Support("FMT",writeStatement->get_format(),false,info);
-     unparse_IO_Control_Support("REC",writeStatement->get_rec(),false,info);
-     unparse_IO_Control_Support("NLT",writeStatement->get_namelist(),false,info);
-     unparse_IO_Control_Support("ADVANCE",writeStatement->get_advance(),false,info);
+  // Added missing items to the io-control-spec-list [Rasmussen, 2019.05.31]
 
-  // F2003 specific
+     unparse_IO_Control_Support("FMT",         writeStatement->get_format(),      false,info);
+     unparse_IO_Control_Support("NML",         writeStatement->get_namelist(),    false,info);
+     unparse_IO_Control_Support("ADVANCE",     writeStatement->get_advance(),     false,info);
      unparse_IO_Control_Support("ASYNCHRONOUS",writeStatement->get_asynchronous(),false,info);
+     unparse_IO_Control_Support("BLANK",       writeStatement->get_blank(),       false,info);
+     unparse_IO_Control_Support("DECIMAL",     writeStatement->get_decimal(),     false,info);
+     unparse_IO_Control_Support("DELIM",       writeStatement->get_delim(),       false,info);
+     unparse_IO_Control_Support("END",         writeStatement->get_end(),         false,info);
+     unparse_IO_Control_Support("EOR",         writeStatement->get_eor(),         false,info);
+     unparse_IO_Control_Support("ID",          writeStatement->get_id(),          false,info);
+     unparse_IO_Control_Support("PAD",         writeStatement->get_pad(),         false,info);
+     unparse_IO_Control_Support("POS",         writeStatement->get_pos(),         false,info);
+     unparse_IO_Control_Support("REC",         writeStatement->get_rec(),         false,info);
+     unparse_IO_Control_Support("ROUND",       writeStatement->get_round(),       false,info);
+     unparse_IO_Control_Support("SIGN",        writeStatement->get_sign(),        false,info);
+     unparse_IO_Control_Support("SIZE",        writeStatement->get_size(),        false,info);
 
      curprint(") ");
 
@@ -3813,15 +3842,30 @@ FortranCodeGeneration_locatedNode::unparseAssociateStatement(SgStatement* stmt, 
 
      curprint("ASSOCIATE (");
 
-     SgVariableDeclaration* variableDeclaration = associateStatement->get_variable_declaration();
-     ROSE_ASSERT(variableDeclaration != NULL);
-     SgInitializedName* variable = *(variableDeclaration->get_variables().begin());
-     ROSE_ASSERT(variable != NULL);
+     // Pei-Hung (07/24/2019) unparse SgDeclarationStatementPtrList for multiple associates
+     SgDeclarationStatementPtrList::iterator pp = associateStatement->get_associates().begin();
+     while ( pp != associateStatement->get_associates().end() )
+        {
+          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(*pp);
+          ROSE_ASSERT(variableDeclaration != NULL);
 
-     curprint(variable->get_name());
-     curprint(" => ");
-     unparseExpression(variable->get_initializer(),info);
-     curprint(") ");
+          SgInitializedName* variable = *(variableDeclaration->get_variables().begin());
+          ROSE_ASSERT(variable != NULL);
+
+          curprint(variable->get_name());
+          curprint(" => ");
+          unparseExpression(variable->get_initializer(),info);
+          pp++;
+          if(pp != associateStatement->get_associates().end())
+            curprint(", ");
+          
+        }
+        curprint(") ");
+
+
+
+
+
   // unp->cur.insert_newline(1);
 
      ROSE_ASSERT(associateStatement->get_body() != NULL);
@@ -5306,7 +5350,6 @@ FortranCodeGeneration_locatedNode::unparse_helper(SgFunctionDeclaration* funcdec
 void
 FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement* stmt, SgUnparse_Info& info)
    {
-  // SgClassDeclaration* classdecl_stmt = isSgClassDeclaration(stmt);
      SgDerivedTypeStatement* classdecl_stmt = isSgDerivedTypeStatement(stmt);
      ROSE_ASSERT(classdecl_stmt != NULL);
 
@@ -5323,9 +5366,8 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
 
   // info.display("Inside of unparseClassDeclStmt");
 
-  // printf ("At top of unparseClassDeclStmt name = %s \n",classdecl_stmt->get_name().str());
-
 #if 0
+     printf ("At top of unparseClassDeclStmt name = %s \n",classdecl_stmt->get_name().str());
      printf ("In Unparse_ExprStmt::unparseClassDeclStmt(): classdecl_stmt = %p isForward() = %s info.SkipClassDefinition() = %s name = %s \n",
           classdecl_stmt,(classdecl_stmt->isForward() == true) ? "true" : "false",
           (info.SkipClassDefinition() == true) ? "true" : "false",classdecl_stmt->get_name().str());
@@ -5371,9 +5413,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
 
           curprint ("TYPE ");
 
-       // SgName nm = classdecl_stmt->get_name();
-
-       // printf ("variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() = %s \n",variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_accessModifier().isPublic() = %s \n",classdecl_stmt->get_declarationModifier().get_accessModifier().isPublic() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_accessModifier().isPublic() == true)
              {
             // The PUBLIC keyword is only permitted within Modules
@@ -5387,7 +5427,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_accessModifier().isPrivate() = %s \n",variableDeclaration->get_declarationModifier().get_accessModifier().isPrivate() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_accessModifier().isPrivate() = %s \n",classdecl_stmt->get_declarationModifier().get_accessModifier().isPrivate() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_accessModifier().isPrivate() == true)
              {
             // The PRIVATE keyword is only permitted within Modules
@@ -5401,7 +5441,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isSave() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isSave() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_typeModifier().isBind() = %s \n",classdecl_stmt->get_declarationModifier().get_typeModifier().isBind() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_typeModifier().isBind() == true)
              {
             // The BIND keyword is only permitted within Modules
@@ -5416,7 +5456,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isSave() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isSave() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_typeModifier().isExtends() = %s \n",classdecl_stmt->get_declarationModifier().get_typeModifier().isExtends() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_typeModifier().isExtends() == true)
              {
             // The EXTENDS keyword is only permitted within Modules
@@ -5430,7 +5470,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isSave() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isSave() ? "true" : "false");
+       // printf ("classdecl_stmt->get_declarationModifier().get_typeModifier().isAbstract() = %s \n",classdecl_stmt->get_declarationModifier().get_typeModifier().isAbstract() ? "true" : "false");
           if (classdecl_stmt->get_declarationModifier().get_typeModifier().isAbstract() == true)
              {
             // The ABSTRACT keyword is only permitted within Modules

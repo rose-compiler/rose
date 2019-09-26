@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) PtrAnal.C PtrAnalCFG.C
+
+run $(public_header) steensgaard.h PtrAnal.h

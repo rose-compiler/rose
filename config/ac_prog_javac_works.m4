@@ -17,10 +17,6 @@
 #   general documentation, as well as the sample configure.in, is included
 #   in the AC_PROG_JAVA macro.
 #
-# LAST MODIFICATION
-#
-#   2008-04-12
-#
 # COPYLEFT
 #
 #   Copyright (c) 2008 Stephane Bortzmeyer <bortzmeyer@pasteur.fr>
@@ -63,7 +59,7 @@ EOF
 if AC_TRY_COMMAND($JAVAC $JAVACFLAGS $JAVA_TEST) >/dev/null 2>&1; then
   ac_cv_prog_javac_works=yes
 else
-  AC_MSG_ERROR([The Java compiler $JAVAC failed (see config.log, check the CLASSPATH?)])
+  AC_MSG_ERROR([the Java compiler $JAVAC failed (see config.log, check the CLASSPATH)])
   echo "configure: failed program was:" >&AC_FD_CC
   cat $JAVA_TEST >&AC_FD_CC
 fi

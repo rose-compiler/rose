@@ -1,4 +1,4 @@
-// -*- c++-mode -*-
+// -*- c++ -*-
 HEADER_NODE_PREDECLARATION_START
 
 #include <semaphore.h>
@@ -14,6 +14,7 @@ HEADER_NODE_PREDECLARATION_START
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/set.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/version.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 #include <Sawyer/CommandLine.h>
@@ -135,22 +136,21 @@ AddressIntervalSet toAddressIntervalSet(const ExtentMap&);
 /** Settings that control how the lowest-level SgAsmExecutableFileFormat::hexdump function behaves. */
 struct HexdumpFormat {
     HexdumpFormat()
-        : prefix(NULL), width(16), colsize(8), addr_fmt(NULL), multiline(false),
-          show_numeric(true), numeric_fmt(NULL), numeric_sep(NULL), pad_numeric(true),
-          show_chars(true), pad_chars(false)
-        {}
+        : width(16), colsize(8), multiline(false), show_numeric(true), pad_numeric(true),
+          show_chars(true), pad_chars(false) {}
+
     /* General settings */
-    const char *prefix;         /**< Characters to emit after internal linefeeds. */
+    std::string prefix;         /**< Characters to emit after internal linefeeds. */
     size_t width;               /**< Bytes per line of output (default 16). */
     size_t colsize;             /**< Bytes per column group (default 8). */
-    const char *addr_fmt;       /**< Printf format for addresses (default "0x%08llx: "). */
+    std::string addr_fmt;       /**< Printf format for addresses (default "0x%08llx: "). */
     bool multiline;             /**< Emit prefix at beginning and line feed at end of output. */
 
     /* Settings for numeric output of bytes */
     bool show_numeric;		/**< Show numeric format of bytes (default true). */
-    const char *numeric_fmt;    /**< Printf format for bytes (default "%02x"). */
+    std::string numeric_fmt;    /**< Printf format for bytes (default "%02x"). */
     std::map<unsigned char,std::string> numeric_fmt_special; /**< Special formatting for certain values. */
-    const char *numeric_sep;    /**< String to print between numeric values (default " "). */
+    std::string numeric_sep;    /**< String to print between numeric values (default " "). */
     bool pad_numeric;           /**< Pad numeric part of output with spaces for partial final line (default true). */
 
     /* Settings for ASCII output of bytes */
@@ -351,11 +351,17 @@ class SgFile;
 typedef std::vector<SgFile*>                SgFilePtrList;
 typedef SgFilePtrList*                      SgFilePtrListPtr;
 
+// DQ (2/27/2019): Modified to add the line number so that we could support adding comments 
+// and CPP directives to shared IR nodes to support multi-file compilation.
 // DQ (5/22/2006): Added this support so that we could have general way of interpreting STL 
 // containers so that we could simplify that code used to generated code for the destructors.
 // JJW (6/21/2008): Changed to a unordered vector for performance
-typedef int                                 SgFileId;
-typedef std::vector<SgFileId>               SgFileIdList;
+typedef int                                   SgFileId;
+typedef std::vector<SgFileId>                 SgFileIdList;
+// typedef struct { int file_id; int line_number; } SgFileIdLineNumber;
+// typedef std::vector<SgFileIdLineNumber>          SgFileIdList;
+typedef int                                   SgFileLineNumber;
+typedef std::vector<SgFileLineNumber>         SgFileLineNumberList;
 
 // DQ (5/22/2006): Added this support so that we could have general way of interpreting STL 
 // containers so that we could simplify that code used to generated code for the destructors.
@@ -440,9 +446,6 @@ typedef SgAsmIntegerValuePtrList* 		 SgAsmIntegerValuePtrListPtr;
 // DQ (3/15/2007): Added support for binaries.
 typedef Rose_STL_Container<SgAsmSynthesizedDeclaration*> SgAsmSynthesizedDeclarationPtrList;
 typedef SgAsmSynthesizedDeclarationPtrList*              SgAsmSynthesizedDeclarationPtrListPtr;
-
-// RPM (10/1/2014): Temporary to help people migrate from SgAsmx86Instruction to SgAsmX86Instruction
-typedef SgAsmX86Instruction SgAsmx86Instruction;
 
 // JJW (3/19/2008): Added support for containers of x86 instructions
 typedef Rose_STL_Container<SgAsmX86Instruction*> SgAsmX86InstructionPtrList;
@@ -622,6 +625,16 @@ typedef SgAsmRegisterReferenceExpressionPtrList* SgAsmRegisterReferenceExpressio
 // DQ (9/3/2014): Added support for C++11 Lambda expressions.
 typedef Rose_STL_Container<SgLambdaCapture*>     SgLambdaCapturePtrList;
 typedef SgLambdaCapturePtrList*                  SgLambdaCapturePtrListPtr;
+
+// DQ (9/15/2018) Add SgSourceFile list support for header file reporting (for unparse headers option).
+class SgSourceFile;
+typedef Rose_STL_Container<SgSourceFile*>        SgSourceFilePtrList;
+typedef SgSourceFilePtrList*                     SgSourceFilePtrListPtr;
+
+// DQ (9/18/2018) Add SgIncludeFile list support for header file reporting (for unparse headers option).
+class SgIncludeFile;
+typedef Rose_STL_Container<SgIncludeFile*>        SgIncludeFilePtrList;
+typedef SgIncludeFilePtrList*                     SgIncludeFilePtrListPtr;
 
 
 // DQ (10/28/2013): Forward declaration for new token unparsing support.
@@ -1542,6 +1555,9 @@ std::ostream & operator<< ( std::ostream & os, const std::set<SgSymbol*> & l );
 // tps (8/13/2007): working on binary cfg mechanism.
 //#include "virtualBinCFG.h"
 
+// Version numbers for SgAsm* nodes. Used for backward compatibility. */
+BOOST_CLASS_VERSION(SgAsmInstruction, 1);
+
 HEADER_NODE_PREDECLARATION_END
 
 
@@ -1680,6 +1696,24 @@ HEADER_START
           type, variable type, etc.).
        */
           static void set_globalQualifiedNameMapForTypes ( const std::map<SgNode*,std::string> & X );
+
+       // DQ (3/13/2019): Added name qualification support for references to types than can embed many types.
+      /*! \brief Access function for name qualification support (for maps of types).
+
+          This qualified name is stored with reference to where the type is used (as required) instead
+          of with the IR node representing the type (which are typically shared) (e.g. function return 
+          type, variable type, etc.).
+       */
+          static std::map<SgNode*,std::map<SgNode*,std::string> > & get_globalQualifiedNameMapForMapsOfTypes();
+
+       // DQ (3/13/2019): Added name qualification support for references to types than can embed many types.
+      /*! \brief Access function for name qualification support (for maps of types).
+
+          This qualified name is stored with reference to where the type is used (as required) instead
+          of with the IR node representing the type (which are typically shared) (e.g. function return 
+          type, variable type, etc.).
+       */
+          static void set_globalQualifiedNameMapForMapsOfTypes ( const std::map<SgNode*,std::map<SgNode*,std::string> > & X );
 
       /*! \brief Access function for name qualification support (for template headers in template declarations).
 
@@ -2073,6 +2107,11 @@ std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTypes;
 std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTemplateHeaders;
 std::map<SgNode*,std::string> SgNode::p_globalTypeNameMap;
 
+// DQ (3/13/2019): The fix for referencing types than contain many parts is to have a map of maps 
+// to the generated name qualification substrings for each type, all associted with a single reference 
+// node to the statement refering to the type.
+std::map<SgNode*,std::map<SgNode*,std::string> > SgNode::p_globalQualifiedNameMapForMapsOfTypes;
+
 // DQ (7/22/2011): array dimensions may include expressions that require name qualification.
 // std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForArrayTypeDimensions;
 
@@ -2242,6 +2281,20 @@ void
 SgNode::set_globalQualifiedNameMapForTypes(const std::map<SgNode*,std::string> & X)
    {
      p_globalQualifiedNameMapForTypes = X;
+   }
+
+// DQ (3/13/2019): Added support for holding the name qualification map.
+std::map<SgNode*,std::map<SgNode*,std::string> > &
+SgNode::get_globalQualifiedNameMapForMapsOfTypes()
+   {
+     return p_globalQualifiedNameMapForMapsOfTypes;
+   }
+
+// DQ (3/13/2019): Added support for holding the name qualification map.
+void
+SgNode::set_globalQualifiedNameMapForMapsOfTypes(const std::map<SgNode*,std::map<SgNode*,std::string> > & X)
+   {
+     p_globalQualifiedNameMapForMapsOfTypes = X;
    }
 
 // DQ (5/28/2011): Added support for holding the name qualification map.
@@ -2433,6 +2486,30 @@ SgNode::set_isModified ( bool isModified)
      ROSE_ASSERT(this != NULL);
 
 #if 0
+  // DQ (6/4/2019): Use this to debug the outlining to seperate file mechanism (remove some spew by ignoring some IR nodes).
+     if (variantT() != V_Sg_File_Info && variantT() != V_SgUnparse_Info)
+        {
+          printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
+        }
+#endif
+
+#if 0
+  // DQ (6/6/2019): Testing where isModified is being reset.
+     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(this);
+     if (functionDeclaration != NULL && functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration())
+        {
+          if (functionDeclaration->get_name() == "OUT_1_transformation_0")
+             {
+               printf ("%%%%%%%%%%%%%%%%%% Setting SgFunctionDeclaration: OUT_1_transformation_0: isModified = %s \n",isModified ? "true" : "false");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+#endif
+
+#if 0
   // DQ (4/14/2015): Adding testing to identify side-effects in the AST.
      if (SgProject::get_verbose() >= 3)
         {
@@ -2442,7 +2519,7 @@ SgNode::set_isModified ( bool isModified)
           if (isSgUnparse_Info(this) == NULL && isSgToken(this) == NULL)
              {
                printf ("SgNode::set_isModified(%s) called for node = %p = %s \n",isModified ? "true" : "false",this,this->class_name().c_str());
-#if 1
+#if 0
                if (SgProject::get_verbose() >= 4)
                   {
                     printf ("Exiting as a test (when verbose >= 3) in SgNode::set_isModified \n");
@@ -2537,7 +2614,12 @@ SgNode::set_parent ( SgNode* parent )
      ROSE_ASSERT(this != NULL);
      ROSE_ASSERT(this != parent);
 
-  // printf ("In SgNode::set_parent(): Setting parent of %p = %s to %p = %s \n",this,class_name().c_str(),parent,parent->class_name().c_str());
+#if 0
+     printf ("In SgNode::set_parent():\n");
+     printf (" - this     = %p (%s)\n", this,     class_name().c_str());
+     printf (" - parent   = %p (%s)\n", parent,   parent ? parent->class_name().c_str() : "" );
+     printf (" - p_parent = %p (%s)\n", p_parent, p_parent ? p_parent->class_name().c_str() : "" );
+#endif
 
      p_parent = parent;
 
@@ -2851,14 +2933,14 @@ operator<< ( std::ostream & os, const struct stat & sb )
 VirtualCFG::CFGNode
 SgNode::cfgForBeginning()
    {
-     ROSE_ASSERT (this);
+     ROSE_ASSERT (this != NULL);
      return VirtualCFG::CFGNode(this, 0);
    }
 
 VirtualCFG::CFGNode
 SgNode::cfgForEnd()
    {
-     ROSE_ASSERT (this);
+     ROSE_ASSERT (this != NULL);
      return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
    }
  

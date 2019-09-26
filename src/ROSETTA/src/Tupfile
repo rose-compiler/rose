@@ -1,0 +1,28 @@
+include_rules
+
+CxxGrammarMetaProgram_SOURCES = CxxGrammarMetaProgram.C grammar.C GrammarFile.C grammarGenerator.C grammarString.C \
+    AstNodeClass.C type.C symbol.C expression.C statement.C support.C binaryInstruction.C storageSize.C visitorSupport.C \
+    poolBasedTraversal.C node.C buildAstFileIO.C buildStorageClasses.C buildConstructorsWithoutSourcePositionInformation.C \
+    outputClassesAndFields.C java/terminals.cpp
+
+CxxGrammarMetaProgram_LIBS = \
+    $(ROSE)/src/util/librose_util \
+    $(ROSE)/src/util/stringSupport/librose_string \
+    $(ROSE)/src/util/Sawyer/libsawyer
+
+run $(support_compile_linkexe) $(CxxGrammarMetaProgram_SOURCES) $(CxxGrammarMetaProgram_LIBS) -o CxxGrammarMetaProgram
+
+: CxxGrammarMetaProgram \
+  |> ^o support GEN ROSETTA grammar^ \
+     mkdir -p astFileIO && \
+     ./CxxGrammarMetaProgram && \
+     mv astFileIO/* . && rmdir astFileIO \
+  |> $(CxxGrammarMetaProgram_OUTPUT) <CxxGrammarMetaProgram>
+
+# The outputs from CxxGrammarMetaProgram become part of librose.
+run $(librose_compile) $(CxxGrammarMetaProgram_GENSRC)
+
+# The header files produced by CxxGrammarMetaProgram are public and should be installed
+run $(public_header) AST_FILE_IO.h AstQueryMemoryPool.h AstSpecificDataManagingClass.h Cxx_Grammar.h \
+    Cxx_GrammarMemoryPoolSupport.h Cxx_GrammarSerialization.h Cxx_GrammarTreeTraversalAccessEnums.h \
+    StorageClasses.h

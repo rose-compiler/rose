@@ -81,6 +81,9 @@
 // DQ (5/18/2017): Added support to insert template instantiation prototypes.
 #include "addPrototypesForTemplateInstantiations.h"
 
+// DQ (2/25/2019): Adding support for marking shared defining declarations across multiple files.
+#include "markSharedDeclarationsForOutputInCodeGeneration.h"
+
 
 /*! \brief Postprocessing that is not likely to be handled in the EDG/Sage III translation.
  */

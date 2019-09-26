@@ -1,25 +1,20 @@
 // C++ code calling a C# function.
 
-#include <rose_paths.h>
 
-#include <iostream>
-#include <assert.h>
 #include <dlfcn.h>
+#include <cassert>
+#include <cstring>
+#include <iostream>
+#include <string>
 
-#include <string.h>
+#include <rose_paths.h>
 
 // using namespace std;
 
 bool process(std::string &lib, std::string &function, std::string sourceFileNameWithPath)
    {
      void *handle          = NULL;
-#if 0
-     void (*process)(void) = NULL;
-#else
-  // void (*process)(std::string s) = NULL;
-  // void (*process)(char*) = NULL;
      void (*process)(char*,char*) = NULL;
-#endif
      char *error           = NULL;
 
      printf ("In C++ process(): calling dlopen() lib = %s \n",lib.c_str());
@@ -39,13 +34,7 @@ bool process(std::string &lib, std::string &function, std::string sourceFileName
 
      printf ("In C++ process(): calling dlsym() function = %s \n",function.c_str());
 
-#if 0
-     process = (void (*)(void)) dlsym(handle, function.c_str());
-#else
-  // process = (void (*)(std::string)) dlsym(handle, function.c_str());
-  // process = (void (*)(char*)) dlsym(handle, function.c_str());
      process = (void (*)(char*,char*)) dlsym(handle, function.c_str());
-#endif
 
      printf ("In C++ process(): after call to dlsym(): process = %p \n",process);
 
@@ -62,32 +51,25 @@ bool process(std::string &lib, std::string &function, std::string sourceFileName
 
      printf ("In C++ process(): calling process() \n");
 
-#if 0
-     process();
-#else
-  // process(sourceFileNameWithPath);
      char buffer[2000];
-  // char* s = const_cast<char*>(sourceFileNameWithPath.c_str());
-     char* s = strncpy(buffer,sourceFileNameWithPath.c_str(),1000);
+     char* s = strncpy(buffer, sourceFileNameWithPath.c_str(), 1000);
      s[1001] = '\0';
 
      char buffer_2[2000];
      char* top_builddir = strncpy(buffer_2,ROSE_AUTOMAKE_TOP_BUILDDIR.c_str(),1000);
+     
      top_builddir[1001] = '\0';
 
      printf ("In C++ process(): top_builddir = %s s = %s \n",top_builddir,s);
-
      process(top_builddir,s);
-#endif
-
+     
      printf ("In C++ process(): calling dlclose() \n");
-
      dlclose(handle);
 
      printf ("Leaving C++ process() \n");
-
      return true;
    }
+      
 
 #ifdef BUILD_EXECUTABLE
 
@@ -104,8 +86,10 @@ int csharp_main(int argc, char** argv, std::string sourceFileNameWithPath)
    {
   // std::string lib("./Kazelib.so");
   // std::string lib("./csharp_support_lib.so");
-     std::string libdir = ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/frontend/Experimental_Csharp_ROSE_Connection/csharp_support_lib.so";
-     std::string lib(libdir);
+     //~ std::string libdir = ROSE_AUTOMAKE_TOP_BUILDDIR + "/src/frontend/Experimental_Csharp_ROSE_Connection/csharp_support_lib.so";
+     //~ std::string lib(libdir);
+
+     std::string lib("libcsharpBuilder.so");
 
      printf ("In csharp_main(): lib = %s \n",lib.c_str());
 
@@ -120,7 +104,7 @@ int csharp_main(int argc, char** argv, std::string sourceFileNameWithPath)
   // int status = process(lib, function);
      int status = process(lib, function, sourceFileNameWithPath);
      assert (status != 0);
-
+     
      printf ("Leaving csharp_main() \n");
 
      return 0;

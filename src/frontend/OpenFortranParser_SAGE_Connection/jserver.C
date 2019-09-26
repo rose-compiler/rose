@@ -42,40 +42,26 @@ void     jserver_start(JvmT* je);
 void     jserver_destroy();
 jclass   jserver_getJavaStringClass();
 
-/* These  should be defined in jni.h */
-#ifndef JNI_VERSION_1_6
-#define JNI_VERSION_1_6 6
-#endif
-#ifndef JNI_VERSION_1_4
-#define JNI_VERSION_1_4 4
-#endif
-#ifndef JNI_VERSION_1_2
-#define JNI_VERSION_1_2 2
-#endif
-#ifndef JNI_VERSION_1_1
-#define JNI_VERSION_1_1 1
-#endif
-
-
 /* 
  * This function does nothing since Java VM will
- * be loaded and started automatically when it needed. 
+ * be loaded and started automatically when it is needed.
  *
  */
-void 
-jserver_init()
-{
-  return ;
-}
+// Rasmussen (2/17/2019): This function should not be defined. For some very strange reason
+// having it defined and not optimized away (I think) doesn't actually allow use of the JNI
+// functions defined in this file. I believe that JNI_CreateJavaVM in jserver_start effectively
+// initializes the JVM.
+//
+// void jserver_init() { return ; }
 
 JNIEnv* getEnv() {
-  return get_env();
+   return get_env();
 }
 
 void 
 jserver_finish()
 {
-  return jserver_destroy();
+   return jserver_destroy();
 }
 
 jclass 
@@ -146,7 +132,9 @@ jserver_start(JvmT* je)
 {
   JavaVMInitArgs jvm_args;  /* VM initialization args.  */
   // Rasmussen (6/28/2017): Bumped to latest(?), unsure why 1_4 was used
-  jvm_args.version = JNI_VERSION_1_6;
+  // Rasmussen (2/13/2019): Increased JNI version to 1.8.  This should
+  // remove need to install legacy jdk version 1.6 from Apple.
+  jvm_args.version = JNI_VERSION_1_8;
   jvm_args.ignoreUnrecognized = JNI_FALSE;
 
   //----------------------------------------------------------------------------
@@ -180,6 +168,10 @@ jserver_start(JvmT* je)
   // Create and load the Java VM.
   //----------------------------------------------------------------------------
   int res = JNI_CreateJavaVM(&(je->jvm), (void **)&(je->env), &jvm_args);
+
+//sanity check
+  JNIEnv* env = get_env();
+  ROSE_ASSERT(env->GetVersion() == JNI_VERSION_1_8);
 
   if (res<0 || je->jvm==NULL || je->env==NULL)
   {

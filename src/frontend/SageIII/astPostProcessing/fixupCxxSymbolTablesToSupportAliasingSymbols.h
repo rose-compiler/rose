@@ -34,6 +34,9 @@ class FixupAstSymbolTablesToSupportAliasedSymbols : public AstSimpleProcessing
        // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
           static Sawyer::Message::Facility mlog;
           static void initDiagnostics();
+
+       // DQ (1/21/2019): Added to support Cxx_tests/test2019_21.C (symbol aliasing of data member in private base class of base class of derived class).
+          static bool isDefinedThroughPrivateBaseClass ( SgClassDeclaration* classDeclaration, SgSymbol* symbol );
    };
 
 // endif for FIXUP_CXX_TO_USE_ALIASING_SYMBOLS_H

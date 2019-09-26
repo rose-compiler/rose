@@ -221,6 +221,12 @@ void CompilerOutputParser::processFile(SgFile* inputFile, bool isVerbose) {
         parseIncludedFilesFromCompilerOutput(FileHelper::normalizePath(inputFile -> getFileName()), topLevelParsePrefix);
     }
 
+#if 0
+ // DQ (11/5/2018): Output as part of debugging unparsing of header files (filename and directory selection).
+    printf ("In CompilerOutputParser::processFile(): inputFile->getFileName()      = %s \n",inputFile->getFileName().c_str());
+    printf ("In CompilerOutputParser::processFile(): originalUnparseOutputFileName = %s \n",originalUnparseOutputFileName.c_str());
+#endif
+
     //Restore back original settings
     inputFile -> set_skip_unparse(originalSkipUnparse);
     inputFile -> set_unparse_output_filename(originalUnparseOutputFileName);

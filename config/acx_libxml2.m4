@@ -74,7 +74,7 @@ if test x"${acx_libxml2_ok}" != xdisable ; then
 
   dnl Check test results
   if test x"${acx_found_libxml2_includes}" != xyes ; then
-    AC_MSG_NOTICE([Couldn't find a valid libxml2 header.])
+    AC_MSG_NOTICE([could not find a valid libxml2 header])
     acx_libxml2_includes=""
     acx_libxml2_ok=disable
   fi
@@ -109,7 +109,7 @@ if test x"${acx_libxml2_ok}" != xdisable ; then
 
   dnl Check test results
   if test x"${acx_found_libxml2_libs}" != xyes ; then
-    AC_MSG_NOTICE([Couldn't find a libxml2 library to link against.])
+    AC_MSG_NOTICE([could not find a libxml2 library to link against])
     acx_libxml2_libs=""
     acx_libxml2_ok=disable
   else
@@ -118,7 +118,7 @@ if test x"${acx_libxml2_ok}" != xdisable ; then
 fi
 
 if test x"$acx_libxml2_ok" = xyes; then
-  AC_MSG_NOTICE([found a seemingly valid libxml2 installation.])
+  AC_MSG_NOTICE([found a seemingly valid libxml2 installation])
   AC_DEFINE(HAVE_LIBXML2, 1, [Define if you have libxml2.])
 	:
   $1

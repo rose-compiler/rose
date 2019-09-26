@@ -1,1 +1,1 @@
-install(FILES ReachingDefinitionFacade.h DESTINATION include)
+install(FILES ReachingDefinitionFacade.h DESTINATION ${INCLUDE_INSTALL_DIR})

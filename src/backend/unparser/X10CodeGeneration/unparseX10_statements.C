@@ -1081,7 +1081,7 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 //      cout << "NAME=" << mfuncdecl_stmt->get_name() << ", CLASS_NAME=" << mfuncdecl_stmt->get_associatedClassDeclaration()->get_qualified_name() 
 //                              << ", MANGLED=" << mfuncdecl_stmt->get_associatedClassDeclaration()->get_mangled_name() << endl;
         // MH (7/7/2014) : Added 
-        string str = mfuncdecl_stmt->get_associatedClassDeclaration()->get_qualified_name().getString();
+        string str = isSgClassDeclaration(mfuncdecl_stmt->get_associatedClassDeclaration())->get_qualified_name().getString();
         string shorten = str.substr(2);
         str = shorten + "$$this$" + shorten;
         replaceString(str, "::", "$");
@@ -1095,7 +1095,7 @@ Unparse_X10::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
         int isConstructor = 0;
         // if constructor
-        if (mfuncdecl_stmt->get_name() == mfuncdecl_stmt->get_associatedClassDeclaration()->get_name()) 
+        if (mfuncdecl_stmt->get_name() == isSgClassDeclaration(mfuncdecl_stmt->get_associatedClassDeclaration())->get_name()) 
                 isConstructor = 1;
 
     AstSgNodeListAttribute *annotations_attribute = (AstSgNodeListAttribute *) mfuncdecl_stmt -> getAttribute("annotations");
@@ -1219,7 +1219,7 @@ curprint(">");
      if (isConstructor) {
 //         unparseName(mfuncdecl_stmt -> get_associatedClassDeclaration() -> get_name(), info);
          curprint(": ");
-         unparseName(mfuncdecl_stmt->get_associatedClassDeclaration()->get_name(), info);
+         unparseName(isSgClassDeclaration(mfuncdecl_stmt->get_associatedClassDeclaration())->get_name(), info);
      }
      else {
 // TODO: Remove this !
@@ -1265,7 +1265,7 @@ curprint(">");
      if (isConstructor) {
 //         unparseName(mfuncdecl_stmt -> get_associatedClassDeclaration() -> get_name(), info);
          curprint(": ");
-         unparseName(mfuncdecl_stmt->get_associatedClassDeclaration()->get_name(), info);
+         unparseName(isSgClassDeclaration(mfuncdecl_stmt->get_associatedClassDeclaration())->get_name(), info);
      }
      else {
 // TODO: Remove this !

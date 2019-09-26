@@ -9,7 +9,7 @@
 #include "SgNodeHelper.h"
 #include "limits.h"
 #include "RoseAst.h"
-#include "SprayException.h"
+#include "CodeThornException.h"
 
 using namespace std;
 
@@ -58,7 +58,7 @@ SgDeclarationStatement* SgNodeHelper::findVariableDeclarationWithVariableSymbol(
     ROSE_ASSERT(declstmt);
     return declstmt;
   } else {
-    throw SPRAY::Exception("SgNodeHelper::getSgVariableDeclarationOfSgVariableSymbol : parameter not a SgVariableSymbol");
+    throw CodeThorn::Exception("SgNodeHelper::getSgVariableDeclarationOfSgVariableSymbol : parameter not a SgVariableSymbol");
   }
   return 0; // non-reachable
 }
@@ -69,7 +69,7 @@ SgFunctionDeclaration* SgNodeHelper::findFunctionDeclarationWithFunctionSymbol(S
     ROSE_ASSERT(decl);
     return decl;
   } else {
-    throw SPRAY::Exception("SgNodeHelper::getSgFunctionDeclarationOfSgFunctionSymbol : parameter not a SgFunctionSymbol");
+    throw CodeThorn::Exception("SgNodeHelper::getSgFunctionDeclarationOfSgFunctionSymbol : parameter not a SgFunctionSymbol");
   }
 }
 
@@ -90,10 +90,18 @@ std::string SgNodeHelper::sourceFilenameToString(SgNode* node) {
   * \date 2012.
  */
 std::string SgNodeHelper::sourceLineColumnToString(SgNode* node) {
+  return sourceLineColumnToString(node, ":");
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2019.
+ */
+std::string SgNodeHelper::sourceLineColumnToString(SgNode* node, string separator) {
   std::stringstream ss;
   Sg_File_Info* fi=node->get_file_info();
   ss<<fi->get_line();
-  ss<<":";
+  ss<<separator;
   ss<<fi->get_col();
   return ss.str();
 }
@@ -111,6 +119,11 @@ std::string SgNodeHelper::sourceFilenameLineColumnToString(SgNode* node) {
   ss<<lc;
   return ss.str();
 }
+
+std::string SgNodeHelper::lineColumnNodeToString(SgNode* node) {
+  return SgNodeHelper::sourceLineColumnToString(node)+": "+SgNodeHelper::nodeToString(node);
+}
+
 
 /*! 
   * \author Markus Schordan
@@ -151,16 +164,16 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarScanf(SgNode* node) {
       if(actualParams.size()==2) {
         SgAddressOfOp* addressOp=isSgAddressOfOp(actualParams[1]);
         if(!addressOp) {
-          throw SPRAY::Exception("SgNodeHelper::Pattern::matchSingleVarScanf: unsupported scanf argument #2 (no address operator found). Required form: scanf(\"%d\",&v).");
+          throw CodeThorn::Exception("SgNodeHelper::Pattern::matchSingleVarScanf: unsupported scanf argument #2 (no address operator found). Required form: scanf(\"%d\",&v).");
         }
         SgVarRefExp* varRefExp=isSgVarRefExp(SgNodeHelper::getFirstChild(addressOp));
         if(!varRefExp) {
-          throw SPRAY::Exception("SgNodeHelper::Pattern::matchSingleVarScanf: unsupported scanf argument #2 (no variable found). Required form: scanf(\"%d\",&v).");
+          throw CodeThorn::Exception("SgNodeHelper::Pattern::matchSingleVarScanf: unsupported scanf argument #2 (no variable found). Required form: scanf(\"%d\",&v).");
         }
         // matched: SgAddressOfOp(SgVarRefExp())
         return varRefExp;
       } else {
-        throw SPRAY::Exception("SgNodeHelper::Pattern::matchSingleVarScanf: unsupported number of arguments of scanf.Exactly one variable of the form scanf(\"%d\",&v) is required.");
+        throw CodeThorn::Exception("SgNodeHelper::Pattern::matchSingleVarScanf: unsupported number of arguments of scanf.Exactly one variable of the form scanf(\"%d\",&v) is required.");
       }
     }
   }
@@ -219,11 +232,11 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarPrintf(SgNode* node) {
       if(actualParams.size()==2) {
         SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[1]);
         if(!varRefExp) {
-          throw SPRAY::Exception(string("Error: unsupported print argument #2 (no variable found). Required form of printf(\"...%d...\",v).")+" Source: "+node->unparseToString());
+          throw CodeThorn::Exception(string("Error: unsupported print argument #2 (no variable found). Required form of printf(\"...%d...\",v).")+" Source: "+node->unparseToString());
         }
         return varRefExp;
       } else {
-        throw SPRAY::Exception("Error: unsupported number of printf arguments. Required form of printf(\"...%d...\",v).");
+        throw CodeThorn::Exception("Error: unsupported number of printf arguments. Required form of printf(\"...%d...\",v).");
       }
     }
   }    
@@ -264,20 +277,6 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node, bool sho
   * \author Markus Schordan
   * \date 2012.
  */
-bool SgNodeHelper::Pattern::matchAssertExpr(SgNode* node) {
-  if(isSgExprStatement(node)) {
-    node=SgNodeHelper::getExprStmtChild(node);
-  }
-  // TODO: refine this to also check for name, paramters, etc.
-  if(isSgConditionalExp(node))
-    return true;
-  return false;
-}
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 SgExpression* SgNodeHelper::getInitializerExpressionOfVariableDeclaration(SgVariableDeclaration* decl) {
   SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(decl);
   SgInitializer* initializer=initName->get_initializer();
@@ -303,10 +302,10 @@ SgInitializedName* SgNodeHelper::getInitializedNameOfVariableDeclaration(SgVaria
     if(SgInitializedName* initName=isSgInitializedName(initName0)) {
       return initName;
     } else {
-      throw SPRAY::Exception("Error: AST structure failure: no variable found (@initializedName).");
+      throw CodeThorn::Exception("Error: AST structure failure: no variable found (@initializedName).");
     }
   } else {
-    throw SPRAY::Exception("Error: AST structure failure: no variable found.");
+    throw CodeThorn::Exception("Error: AST structure failure: no variable found.");
   }
 }
 
@@ -334,7 +333,7 @@ list<SgGlobal*> SgNodeHelper::listOfSgGlobal(SgProject* project) {
       SgGlobal* global=sourceFile->get_globalScope();
       globalList.push_back(global);
     } else {
-      throw SPRAY::Exception("Error: Ast structure failure: file is not a source file.");
+      throw CodeThorn::Exception("Error: Ast structure failure: file is not a source file.");
     }
   }
   return globalList;
@@ -355,14 +354,25 @@ list<SgVariableDeclaration*> SgNodeHelper::listOfGlobalVars(SgProject* project) 
   return globalVarDeclList;
 }
 
+#if __cplusplus > 199711L
+list<SgVariableDeclaration*> SgNodeHelper::listOfGlobalFields(SgProject* project) {
+  list<SgVariableDeclaration*> globalFieldDeclList;
+  list<SgGlobal*> globalList=SgNodeHelper::listOfSgGlobal(project);
+  for(list<SgGlobal*>::iterator i=globalList.begin();i!=globalList.end();++i) {
+    list<SgVariableDeclaration*> varDeclList=SgNodeHelper::listOfGlobalFields(*i);
+    globalFieldDeclList.splice(globalFieldDeclList.end(),varDeclList); // we are *moving* objects (not copying)
+  }
+  return globalFieldDeclList;
+}
+#endif
 
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
-list<SgFunctionDefinition*> SgNodeHelper::listOfFunctionDefinitions(SgProject* project) {
+list<SgFunctionDefinition*> SgNodeHelper::listOfFunctionDefinitions(SgNode* node) {
   list<SgFunctionDefinition*> funDefList;
-  RoseAst ast(project);
+  RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgFunctionDefinition* funDef=isSgFunctionDefinition(*i)) {
       funDefList.push_back(funDef);
@@ -370,6 +380,30 @@ list<SgFunctionDefinition*> SgNodeHelper::listOfFunctionDefinitions(SgProject* p
   }
   return funDefList;
 }
+
+
+/*! 
+  * \author Tristan Vanderbruggen
+  * \date 2019.
+ */
+#if __cplusplus > 199711L
+list<SgFunctionDeclaration*> SgNodeHelper::listOfFunctionDeclarations(SgNode* node) {
+  list<SgFunctionDeclaration*> funDeclList;
+
+  if (node == nullptr) {
+    node = SageInterface::getProject();
+  }
+  assert(node != nullptr);
+
+  RoseAst ast(node);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    SgFunctionDeclaration * funDecl = isSgFunctionDeclaration(*i);
+    if (funDecl == NULL) continue;
+    funDeclList.push_back(funDecl);
+  }
+  return funDeclList;
+}
+#endif
 
 
 /*! 
@@ -408,6 +442,26 @@ list<SgVariableDeclaration*> SgNodeHelper::listOfGlobalVars(SgGlobal* global) {
   return varDeclList;
 }
 
+#if __cplusplus > 199711L
+list<SgVariableDeclaration*> SgNodeHelper::listOfGlobalFields(SgGlobal* global) {
+  list<SgVariableDeclaration*> fields;
+  auto s_decls = global->get_declarations();
+  for(auto s : s_decls) {
+    SgClassDeclaration * xdecl = isSgClassDeclaration(s);
+    SgClassDefinition * xdefn = xdecl ? xdecl->get_definition() : nullptr;
+    if (xdefn != nullptr) {
+      auto v_decls = xdefn->getDeclarationList();
+      for (auto v : v_decls) {
+        SgVariableDeclaration * vdecl = isSgVariableDeclaration(v);
+        if (vdecl != nullptr) {
+          fields.push_back(vdecl);
+        }
+      }
+    }
+  }
+  return fields;
+}
+#endif
 
 /*! 
   * \author Markus Schordan
@@ -463,7 +517,7 @@ SgNodeHelper::getSymbolOfVariable(SgVarRefExp* varRefExp) {
     }
   }
   if(!varSym) {
-    throw SPRAY::Exception("SgNodeHelper::getSymbolofVariable: SgVariableSymbol of varRefExp==0");
+    throw CodeThorn::Exception("SgNodeHelper::getSymbolofVariable: SgVariableSymbol of varRefExp==0");
 #if 0
     SgInitializedName* varInitName=varSym->get_declaration(); // schroder3: varSym is 0 here!
     if(varInitName==0) {
@@ -538,7 +592,7 @@ SgNodeHelper::getSymbolOfInitializedName(SgInitializedName* initName) {
         }
       }
       if(!declFound) {
-        throw SPRAY::Exception("Error: Unable to find declaration of member \"" + initName->get_name().getString()
+        throw CodeThorn::Exception("Error: Unable to find declaration of member \"" + initName->get_name().getString()
                                 + "\" that is referenced in constructor initializer list.");
       }
     }
@@ -571,7 +625,7 @@ list<SgClassDeclaration*> SgNodeHelper::classDeclarationNestingSequence(SgDeclar
 string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
   if(!(isSgVarRefExp(node)||isSgVariableDeclaration(node)||isSgVariableSymbol(node))) {
     string s="Error: uniqueVariableName: unsupported node type: "+node->class_name();
-    throw SPRAY::Exception(s);
+    throw CodeThorn::Exception(s);
   }
   SgSymbol* sym=0;
   bool found=false;
@@ -638,7 +692,7 @@ string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
   } // end of FunctionParameter-check
   if(found) {
     if(sym==0) {
-      throw SPRAY::Exception("SgNodeHelper::uniqueVariableName: sym==0.");
+      throw CodeThorn::Exception("SgNodeHelper::uniqueVariableName: sym==0.");
     }
 
     // NOTE: in case of a function parameter varDecl is represented by the function declaration
@@ -656,7 +710,7 @@ string SgNodeHelper::uniqueLongVariableName(SgNode* node) {
     string longName=string("$")+filename+string("$")+funName+"$"+scopeLevel+"/"+scopesequencenumber+"$"+classnestingname+"$"+name;
     return longName;
   } else {
-    throw SPRAY::Exception("SgNodeHelper::uniqueVariableName: improper node operation ("+node->class_name());
+    throw CodeThorn::Exception("SgNodeHelper::uniqueVariableName: improper node operation ("+node->class_name());
   }
 }
 
@@ -723,7 +777,7 @@ int SgNodeHelper::scopeSequenceNumber(SgNode* node) {
         return cnum;
     }
   }
-  throw SPRAY::Exception("SgNodeHelper::scopeSequenceNumber: improper node operation.");
+  throw CodeThorn::Exception("SgNodeHelper::scopeSequenceNumber: improper node operation.");
 }
 
 
@@ -752,33 +806,7 @@ SgFunctionDefinition* SgNodeHelper::determineFunctionDefinition(SgFunctionCallEx
         if(SgFunctionDefinition* funDef=funDecl2->get_definition()) {
           return funDef;
         } else {
-          //cout<<"INFO: no definition found for call: "<<funCall->unparseToString()<<endl;
           return 0;
-          // the following code is dead code: searching the AST is inefficient. This code will refactored and removed from here.
-          // forward declaration (we have not found the function definition yet)
-          // 1) use parent pointers and search for Root node (likely to be SgProject node)
-          SgNode* root=defFunDecl;
-          SgNode* parent=0;
-          while(!SgNodeHelper::isAstRoot(root)) {
-            parent=SgNodeHelper::getParent(root);
-            root=parent;
-          }
-          ROSE_ASSERT(root);
-          // 2) search in AST for the function's definition now
-          RoseAst ast(root);
-          for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-            if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(*i)) {
-              if(!SgNodeHelper::isForwardFunctionDeclaration(funDecl2)) {
-                SgSymbol* sym2=funDecl2->search_for_symbol_from_symbol_table();
-                SgSymbol* sym1=funDecl->search_for_symbol_from_symbol_table();
-                if(sym1!=0 && sym1==sym2) {
-                  SgFunctionDefinition* fundef2=funDecl2->get_definition();
-                  ROSE_ASSERT(fundef2);
-                  return fundef2;
-                }
-              }
-            }
-          }
         }
       }
     }
@@ -793,7 +821,7 @@ SgFunctionDefinition* SgNodeHelper::determineFunctionDefinition(SgFunctionCallEx
  */
 string SgNodeHelper::getLabelName(SgNode* node) {
   if(!isSgLabelStatement(node))
-    throw SPRAY::Exception("SgNodeHelper::getLabelName: improper node operation.");
+    throw CodeThorn::Exception("SgNodeHelper::getLabelName: improper node operation.");
   string labelName=node->unparseToString();
   // strip off trailing ":"
   return labelName.substr(0,labelName.size()-1);
@@ -806,7 +834,7 @@ string SgNodeHelper::getLabelName(SgNode* node) {
  */
 SgExpressionPtrList& SgNodeHelper::getFunctionCallActualParameterList(SgNode* node) {
   if(!isSgFunctionCallExp(node))
-    throw SPRAY::Exception("SgNodeHelper::getFunctionCallActualParameterList: improper node operation.");
+    throw CodeThorn::Exception("SgNodeHelper::getFunctionCallActualParameterList: improper node operation.");
   return isSgExprListExp(node->get_traversalSuccessorByIndex(1))->get_expressions();
 }
 
@@ -838,7 +866,7 @@ SgFunctionType* SgNodeHelper::getCalleeFunctionType(/*const*/ SgFunctionCallExp*
 SgInitializedNamePtrList& SgNodeHelper::getFunctionDefinitionFormalParameterList(SgNode* node) {
   SgFunctionDefinition* funDef=isSgFunctionDefinition(node);
   if(!funDef)
-    throw SPRAY::Exception("SgNodeHelper::getFunctionDefinitionFormalParameterList: improper node operation.");
+    throw CodeThorn::Exception("SgNodeHelper::getFunctionDefinitionFormalParameterList: improper node operation.");
   SgFunctionDeclaration* funDecl=funDef->get_declaration();
   return funDecl->get_args();
 }
@@ -850,7 +878,7 @@ SgInitializedNamePtrList& SgNodeHelper::getFunctionDefinitionFormalParameterList
 SgType* SgNodeHelper::getFunctionReturnType(SgNode* node) {
   SgFunctionDefinition* funDef=isSgFunctionDefinition(node);
   if(!funDef)
-    throw SPRAY::Exception("SgNodeHelper::getFunctionReturnType: improper node operation.");
+    throw CodeThorn::Exception("SgNodeHelper::getFunctionReturnType: improper node operation.");
   SgFunctionDeclaration* funDecl=funDef->get_declaration();
   return funDecl->get_orig_return_type();
 }
@@ -954,7 +982,7 @@ SgType* SgNodeHelper::getReferenceBaseType(const SgType* t) {
     return rvalueReferenceType->get_base_type();
   }
   else {
-    throw SPRAY::Exception("SgNodeHelper::getReferenceBaseType(...): Parameter is not a"
+    throw CodeThorn::Exception("SgNodeHelper::getReferenceBaseType(...): Parameter is not a"
         " lvalue or rvalue reference type.");
   }
 }
@@ -1016,6 +1044,10 @@ SgFunctionCallExp* SgNodeHelper::Pattern::matchFunctionCall(SgNode* node) {
     return fce;
   if(SgFunctionCallExp* fce=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(node))
     return fce;
+  if(SgFunctionCallExp* fce=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(node))
+    return fce;
+  if(SgFunctionCallExp* fce=SgNodeHelper::Pattern::matchFunctionCallExpInVariableDeclaration(node))
+    return fce;
   return 0;
 }
 
@@ -1074,6 +1106,40 @@ std::pair<SgVarRefExp*,SgFunctionCallExp*> SgNodeHelper::Pattern::matchExprStmtA
     }
   }
   return std::make_pair((SgVarRefExp*)0,(SgFunctionCallExp*)0);
+}
+
+SgVariableDeclaration* SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall(SgNode* node) {
+  std::pair<SgVariableDeclaration*,SgFunctionCallExp*> pair=SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall2(node);
+  return pair.first;
+}
+
+SgFunctionCallExp* SgNodeHelper::Pattern::matchFunctionCallExpInVariableDeclaration(SgNode* node) {
+  std::pair<SgVariableDeclaration*,SgFunctionCallExp*> pair=SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall2(node);
+  return pair.second;
+}
+
+std::pair<SgVariableDeclaration*,SgFunctionCallExp*> SgNodeHelper::Pattern::matchVariableDeclarationWithFunctionCall2(SgNode* node) {
+  if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
+    SgExpression* initializer=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
+    if(SgFunctionCallExp* funCall=isSgFunctionCallExp(initializer)) {
+      return std::make_pair(varDecl,funCall);
+    }
+  }
+  return std::make_pair((SgVariableDeclaration*)0,(SgFunctionCallExp*)0);
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
+bool SgNodeHelper::Pattern::matchAssertExpr(SgNode* node) {
+  if(isSgExprStatement(node)) {
+    node=SgNodeHelper::getExprStmtChild(node);
+  }
+  // TODO: refine this to also check for name, paramters, etc.
+  if(isSgConditionalExp(node))
+    return true;
+  return false;
 }
 
 
@@ -1169,7 +1235,7 @@ SgNode* SgNodeHelper::getParent(SgNode* node) {
   SgNode* origNode=node;
   node=node->get_parent();
   if(node==0 && !isSgProject(origNode)) {
-    throw SPRAY::Exception("SgNodeHelper::getParent: improper node operation (@"+origNode->class_name()+")");
+    throw CodeThorn::Exception("SgNodeHelper::getParent: improper node operation (@"+origNode->class_name()+")");
   }
   return node;
 }
@@ -1193,6 +1259,21 @@ bool SgNodeHelper::isLoopCond(SgNode* node) {
  */
 bool SgNodeHelper::isLoopStmt(SgNode* node) {
   return isSgWhileStmt(node)||isSgDoWhileStmt(node)||isSgForStatement(node);
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2019.
+ */
+bool SgNodeHelper::isCondInBranchStmt(SgNode* node) {
+  SgNode* parent=node->get_parent();
+  if(isSgExprStatement(parent)) {
+    parent=parent->get_parent();
+  }
+  if(isCondStmt(parent))
+    return SgNodeHelper::getCond(parent)==node && node!=0;
+  else
+    return false;
 }
 
 /*! 
@@ -1258,7 +1339,7 @@ SgStatementPtrList& SgNodeHelper::getForInitList(SgNode* node) {
     return forstmt->get_init_stmt();
   }
   // SgForInitStatement
-  throw SPRAY::Exception("SgNodeHelper::getForInitList: improper node operation.");
+  throw CodeThorn::Exception("SgNodeHelper::getForInitList: improper node operation.");
 }
 
 
@@ -1271,7 +1352,7 @@ SgExpression* SgNodeHelper::getForIncExpr(SgNode* node) {
     return forstmt->get_increment();
   }
   // SgForInitStatement
-  throw SPRAY::Exception("SgNodeHelper::getForIncExpr: improper node operation.");
+  throw CodeThorn::Exception("SgNodeHelper::getForIncExpr: improper node operation.");
 }
 
 
@@ -1308,7 +1389,7 @@ SgNode* SgNodeHelper::getCond(SgNode* node) {
   } else if(SgSwitchStatement* switchstmt=isSgSwitchStatement(node)) {
     return switchstmt->get_item_selector();
   } else {
-    throw SPRAY::Exception("SgNodeHelper::getCond: improper node operation.");
+    throw CodeThorn::Exception("SgNodeHelper::getCond: improper node operation.");
   }
 }
 
@@ -1329,11 +1410,11 @@ void SgNodeHelper::setCond(SgStatement* stmt, SgNode* cond) {
     } else if(SgSwitchStatement* switchstmt=isSgSwitchStatement(stmt)) {
       return switchstmt->set_item_selector(stmtCond);
     } else {
-      throw SPRAY::Exception("SgNodeHelper::setCond: improper node operation (unknown branching construct).");
+      throw CodeThorn::Exception("SgNodeHelper::setCond: improper node operation (unknown branching construct).");
     }
   } else {
     cerr<<"Error: ConditionType: node type: "<<cond->class_name()<<endl;
-    throw SPRAY::Exception("SgNodeHelper::setCond: improper node operation (wrong condition type).");
+    throw CodeThorn::Exception("SgNodeHelper::setCond: improper node operation (wrong condition type).");
   }
 }
 
@@ -1345,7 +1426,7 @@ string SgNodeHelper::unparseCond(SgNode* cond) {
       condString.erase(condString.size()-1); // C++11: condString.pop_back()
     return condString;
   } else {
-    throw SPRAY::Exception("SgNodeHelper::unparseCond: improper node operation.");
+    throw CodeThorn::Exception("SgNodeHelper::unparseCond: improper node operation.");
   }
 }
 
@@ -1362,7 +1443,7 @@ SgNode* SgNodeHelper::getTrueBranch(SgNode* node) {
   if(SgConditionalExp*  condexp=isSgConditionalExp(node)) {
     return condexp->get_true_exp();
   }
-  throw SPRAY::Exception("SgNodeHelper::getTrueBranch: improper node operation.");
+  throw CodeThorn::Exception("SgNodeHelper::getTrueBranch: improper node operation.");
 }
 
 
@@ -1377,7 +1458,7 @@ SgNode* SgNodeHelper::getFalseBranch(SgNode* node) {
   if(SgConditionalExp*  condexp=isSgConditionalExp(node)) {
     return condexp->get_false_exp();
   }
-  throw SPRAY::Exception("SgNodeHelper::getFalseBranch: improper node operation.");
+  throw CodeThorn::Exception("SgNodeHelper::getFalseBranch: improper node operation.");
 }
 
 
@@ -1395,7 +1476,7 @@ SgNode* SgNodeHelper::getLoopBody(SgNode* node) {
   if(SgForStatement* forstmt=isSgForStatement(node)) {
     return forstmt->get_loop_body();
   }
-  throw SPRAY::Exception("SgNodeHelper::getLoopBody: improper node operation.");
+  throw CodeThorn::Exception("SgNodeHelper::getLoopBody: improper node operation.");
 }
 
 
@@ -1411,7 +1492,7 @@ SgNode* SgNodeHelper::getFirstOfBlock(SgNode* node) {
       return node->get_traversalSuccessorByIndex(0);
   }
   // MS: note, the child could be 0 as well. Therefore we do not return 0, but throw an exception.
-  throw SPRAY::Exception("SgNodeHelper::getFirstBlock: improper node operation.");
+  throw CodeThorn::Exception("SgNodeHelper::getFirstBlock: improper node operation.");
 }
 
 
@@ -1426,7 +1507,7 @@ SgNode* SgNodeHelper::getLastOfBlock(SgNode* node) {
       return node->get_traversalSuccessorByIndex(len-1);
   }
   // MS: note, the child could be 0 as well. Therefore we do not return 0, but throw an exception.
-  throw SPRAY::Exception("SgNodeHelper::getLastOfBlock: improper node operation.");
+  throw CodeThorn::Exception("SgNodeHelper::getLastOfBlock: improper node operation.");
 }
 
 
@@ -1513,7 +1594,7 @@ string SgNodeHelper::getFunctionName(SgNode* node) {
     SgName fname=fundecl->get_name();
     return fname.getString();
   }
-  throw SPRAY::Exception("SgNodeHelper::getFunctionName: improper node operation.");
+  throw CodeThorn::Exception("SgNodeHelper::getFunctionName: improper node operation.");
 }
 
 
@@ -1523,7 +1604,7 @@ string SgNodeHelper::getFunctionName(SgNode* node) {
  */
 SgNode* SgNodeHelper::getExprStmtChild(SgNode* node) {
   if(!isSgExprStatement(node)) {
-    throw SPRAY::Exception("SgNodeHelper::getExprStmtChild: improper type ("+node->class_name()+")");
+    throw CodeThorn::Exception("SgNodeHelper::getExprStmtChild: improper type ("+node->class_name()+")");
   }
   return SgNodeHelper::getFirstChild(node);
 }
@@ -1534,7 +1615,7 @@ SgNode* SgNodeHelper::getExprStmtChild(SgNode* node) {
  */
 SgNode* SgNodeHelper::getExprRootChild(SgNode* node) {
   if(!isSgExpressionRoot(node)) {
-    throw SPRAY::Exception("SgNodeHelper::getExprRootChild: improper type ("+node->class_name()+")");
+    throw CodeThorn::Exception("SgNodeHelper::getExprRootChild: improper type ("+node->class_name()+")");
   }
   return SgNodeHelper::getFirstChild(node);
 }
@@ -1578,7 +1659,7 @@ bool SgNodeHelper::isFloatingPointType(SgType* type) {
  */
 SgNode* SgNodeHelper::getUnaryOpChild(SgNode* node) {
   if(!dynamic_cast<SgUnaryOp*>(node)) {
-    throw SPRAY::Exception("Error: improper type in getUnaryOpChild ("+node->class_name()+")");
+    throw CodeThorn::Exception("Error: improper type in getUnaryOpChild ("+node->class_name()+")");
   }
   return SgNodeHelper::getFirstChild(node);
 }
@@ -1594,7 +1675,7 @@ SgNode* SgNodeHelper::getFirstChild(SgNode* node) {
     return node->get_traversalSuccessorByIndex(0);
   else {
     // MS: note, the child could be 0 as well. Therefore we do not return 0, but throw an exception.
-    throw SPRAY::Exception("SgNodeHelper::getFirstChild: improper node operation.");
+    throw CodeThorn::Exception("SgNodeHelper::getFirstChild: improper node operation.");
   }
 }
 
@@ -1607,7 +1688,7 @@ SgNode* SgNodeHelper::getLhs(SgNode* node) {
   if(dynamic_cast<SgBinaryOp*>(node)) 
     return node->get_traversalSuccessorByIndex(0);
   else 
-    throw SPRAY::Exception("SgNodeHelper::getLhs: improper node operation.");
+    throw CodeThorn::Exception("SgNodeHelper::getLhs: improper node operation.");
 }
 
 
@@ -1619,7 +1700,7 @@ SgNode* SgNodeHelper::getRhs(SgNode* node) {
   if(dynamic_cast<SgBinaryOp*>(node)) 
     return node->get_traversalSuccessorByIndex(1);
   else 
-    throw SPRAY::Exception("SgNodeHelper::getRhs: improper node operation.");
+    throw CodeThorn::Exception("SgNodeHelper::getRhs: improper node operation.");
 }
 
 
@@ -1633,7 +1714,7 @@ int SgNodeHelper::numChildren(SgNode* node) {
     if(len<=(size_t)INT_MAX)
       return (int)len;
     else
-      throw SPRAY::Exception("SgNodeHelper::numChildren: number of children beyond max int.");
+      throw CodeThorn::Exception("SgNodeHelper::numChildren: number of children beyond max int.");
   } else {
     return 0; // if node==0 we return 0 as number of children
   }
@@ -1698,7 +1779,7 @@ SgExpressionPtrList& SgNodeHelper::getInitializerListOfAggregateDeclaration(SgVa
       return exprPtrList;
     }
   }
-  throw SPRAY::Exception("SgNodeHelper::getInitializerListOfAggregateDeclaration: getInitializerListOfArrayVariable failed.");
+  throw CodeThorn::Exception("SgNodeHelper::getInitializerListOfAggregateDeclaration: getInitializerListOfArrayVariable failed.");
 }
 
 SgNodeHelper::PragmaList
@@ -1729,10 +1810,10 @@ SgNodeHelper::collectPragmaLines(string pragmaName,SgNode* root) {
               //cout<<"PRAGMA REVERSE: "<<str<<" : "<<(assocStmt)->unparseToString()<<endl;
               l.push_back(make_pair(str,assocStmt));
             } else {
-              throw SPRAY::Exception("SgNodeHelper::collectPragmaLines "+SgNodeHelper::sourceLineColumnToString(*p)+": pragma not associated with a method or statement.");
+              throw CodeThorn::Exception("SgNodeHelper::collectPragmaLines "+SgNodeHelper::sourceLineColumnToString(*p)+": pragma not associated with a method or statement.");
             }
           } else {
-              throw SPRAY::Exception("SgNodeHelper::collectPragmaLines "+SgNodeHelper::sourceLineColumnToString(*p)+": pragma at end of block. This is not allowed.");
+              throw CodeThorn::Exception("SgNodeHelper::collectPragmaLines "+SgNodeHelper::sourceLineColumnToString(*p)+": pragma at end of block. This is not allowed.");
           }
         }
       }
@@ -1770,3 +1851,71 @@ std::string SgNodeHelper::getPragmaDeclarationString(SgPragmaDeclaration* pragma
   ROSE_ASSERT(pragma);
   return pragma->get_pragma();
 }
+
+namespace SgNodeHelper {
+
+template <typename N>
+bool node_can_be_changed(N * node);
+
+template <>
+bool node_can_be_changed<SgLocatedNode>(SgLocatedNode * lnode) {
+  return ! SageInterface::insideSystemHeader(lnode) &&
+         ! lnode->isCompilerGenerated();
+}
+
+template <>
+bool node_can_be_changed<SgLocatedNodeSupport>(SgLocatedNodeSupport * lnode_s) {
+  return SgNodeHelper::node_can_be_changed<SgLocatedNode>(lnode_s);
+}
+
+template <>
+bool node_can_be_changed<SgStatement>(SgStatement * stmt) {
+  return SgNodeHelper::node_can_be_changed<SgLocatedNode>(stmt);
+}
+
+template <>
+bool node_can_be_changed<SgDeclarationStatement>(SgDeclarationStatement * decl) {
+  return SgNodeHelper::node_can_be_changed<SgStatement>(decl);
+}
+
+template <>
+bool node_can_be_changed<SgFunctionDeclaration>(SgFunctionDeclaration * fdecl) {
+  std::string fname = fdecl->get_name().getString();
+  return fname.find("__builtin_") != 0 && SgNodeHelper::node_can_be_changed<SgDeclarationStatement>(fdecl);
+}
+
+template <>
+bool node_can_be_changed<SgVariableDeclaration>(SgVariableDeclaration * vdecl) {
+  return SgNodeHelper::node_can_be_changed<SgDeclarationStatement>(vdecl);
+}
+
+template <>
+bool node_can_be_changed<SgScopeStatement>(SgScopeStatement * scope) {
+  return SgNodeHelper::node_can_be_changed<SgStatement>(scope);
+}
+
+template <>
+bool node_can_be_changed<SgFunctionDefinition>(SgFunctionDefinition * fdefn) {
+  return SgNodeHelper::node_can_be_changed<SgScopeStatement>(fdefn);
+}
+
+template <>
+bool node_can_be_changed<SgInitializedName>(SgInitializedName * iname) {
+  return SgNodeHelper::node_can_be_changed<SgLocatedNodeSupport>(iname);
+}
+
+
+#if __cplusplus > 199711L
+bool nodeCanBeChanged(SgLocatedNode * lnode) {
+  // TODO big switch statement...
+  SgFunctionDeclaration * fdecl = isSgFunctionDeclaration(lnode);
+  if (fdecl != nullptr) {
+    return SgNodeHelper::node_can_be_changed(fdecl);
+  } else {
+    return SgNodeHelper::node_can_be_changed(lnode);
+  }
+}
+#endif
+
+}
+

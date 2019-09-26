@@ -15,11 +15,6 @@
 // the use of directory structure support as required for scalable code generation.
 #define ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT 0
 
-// DQ (12/29/2011): This is now defined automatically when configured to use the newer version 4.3 of EDG.
-// DQ (12/22/2011): This is part of the new desgin for template declarations, namely that they are derived
-// from their associated declarations (e.g. SgTemplateClassDeclaration is derived from SgClassDeclaration).
-// #define TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS 1
-
 //#include "sage3basic.h"
 
 // DQ (12/9/2004): The name of this file has been changed to be the new location

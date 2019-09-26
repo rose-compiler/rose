@@ -547,10 +547,11 @@ ResetTemplateNamesOnMemoryPool::visit ( SgNode* node )
      ROSE_ASSERT(node);
   // cerr << "reset parent for node " << node->unparseToString();
 
+#if 0
   // DQ (6/30/2018): Added to support debuggin test2018_118.C (infinit loop).
+  // Moved declaration here to avoid unused variable warning [Rasmussen 2019.01.29]
      static int counter = 0;
 
-#if 0
   // printf ("#### ResetTemplateNamesOnMemoryPool::visit(node = %p = %s) \n",node,node->sage_class_name());
      printf ("#### ResetTemplateNamesOnMemoryPool::visit(node = %p = %s): counter = %d \n",node,node->sage_class_name(),counter++);
 #endif
@@ -742,10 +743,21 @@ void resetTemplateNames( SgNode* node )
        // in this case this make the traversal about 30% faster, since we visit such a small subset 
        // of IR nodes.
           ResetTemplateNamesOnMemoryPool t;
-
+#if 0
+          printf ("Calling memory pool traversal on SgTemplateInstantiationDecl \n");
+#endif
           SgTemplateInstantiationDecl::traverseMemoryPoolNodes(t);
+#if 0
+          printf ("Calling memory pool traversal on SgTemplateInstantiationFunctionDecl \n");
+#endif
           SgTemplateInstantiationFunctionDecl::traverseMemoryPoolNodes(t);
+#if 0
+          printf ("Calling memory pool traversal on SgTemplateInstantiationMemberFunctionDecl \n");
+#endif
           SgTemplateInstantiationMemberFunctionDecl::traverseMemoryPoolNodes(t);
+#if 0
+          printf ("DONE: Calling memory pool traversal on template instantiations \n");
+#endif
 #endif
         }
        else

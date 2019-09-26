@@ -30,7 +30,7 @@ m4_define([binary_support_requires],[
 
 
 AC_DEFUN([ROSE_SUPPORT_BINARY],[
-ROSE_CONFIGURE_SECTION([Binary analysis support])
+ROSE_CONFIGURE_SECTION([Checking binary analysis])
 
 dnl  ==================================================================================
 dnl   The following tests check prerequisites for binary analysis in librose.
@@ -84,7 +84,7 @@ ROSE_SUPPORT_I386
 ROSE_SUPPORT_SAT
 
 # Setup Automake conditional in --- (not yet ready for use)
-echo "with_sat = $with_sat"
+AC_MSG_NOTICE([with_sat = "$with_sat"])
 AM_CONDITIONAL(ROSE_USE_SAT,test ! "$with_sat" = no)
 
 # Call supporting macro to Intel Pin Dynamic Instrumentation
@@ -115,13 +115,16 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 ROSE_SUPPORT_LIBGCRYPT
 
 dnl http://dlib.net
-AC_ARG_WITH(dlib,
-        [  --with-dlib=PATH Installation prefix for optional dlib (http://dlib.net) library.
-                            Dlib requires no installation; just untar its source and specify
-                            the name of the directory that was created (e.g., "dlib-18.17") and
-                            which contains the "dlib" subdirectory.],
+AC_ARG_WITH(
+    [dlib],
+    AS_HELP_STRING(
+        [--with-dlib=PREFIX],
+        [Use the optional dlib support library available from http://dlib.net. The PREFIX, if specified, should be the
+         prefix used to install dlib, such as "/usr/local".  The default is the empty prefix, in which case the headers
+         and library must be installed in a place where they will be found. Saying "no" for the prefix is the same as
+         saying "--without-dlib".]),
         [],
-	[with_dlib=no])
+        [with_dlib=no])
 AS_IF([test "$with_dlib" != "no"],
         [AC_DEFINE(ROSE_HAVE_DLIB, 1, [Defined if dlib is available.])
          if test "$with_dlib" = "yes"; then DLIB_PREFIX=/usr; else DLIB_PREFIX="$with_dlib"; fi])
@@ -164,6 +167,7 @@ AM_CONDITIONAL(ROSE_USE_TEST_SMT_SOLVER,test ! "$TEST_SMT_SOLVER" = "")
 AC_SUBST(TEST_SMT_SOLVER)
 
 dnl A blank line to separate binary analysis from some miscellaneous tests in support-rose.m4 that don't have a heading.
-AC_MSG_NOTICE([All seems good for binary analysis if it's enabled.])
-echo
+AC_MSG_NOTICE([all seems good for binary analysis if it's enabled.
+])
+
 ])

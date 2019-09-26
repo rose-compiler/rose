@@ -1,0 +1,8 @@
+include_rules
+
+run $(librose_compile) DGBaseGraphImpl.C SCCAnalysis.C TransAnalysis.C TypedFusion.C
+
+run $(public_header) BaseGraphCreate.h GraphScope.h VirtualGraphCreate.h TransAnalysis.h GraphGroup.h MultiGraphCreate.h \
+    TypedFusion.h DGBaseGraphImpl.h GraphAccess.h GraphUtils.h GraphUpdate.h SCCAnalysis.h GraphDotOutput.h GraphIO.h \
+    MultiGraphObserve.h
+

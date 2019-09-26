@@ -3,7 +3,6 @@
 ############################################################
 # Author:             Bobby Philip                         #
 # Creation Date:      11/20/2001                           #
-# Last Modified Date: 01/30/2008                           #
 ############################################################
 
 #given a target directory name, creates a list of include subdirectories
@@ -12,7 +11,7 @@
 # and save them into a list
 if [ $# -ne 2 ] 
 then
-  echo "ERROR: Usage is create_include_path parentdir includedir" 1>&2
+  echo "$0: error: Usage is create_include_path parentdir includedir" >&2
   exit 1
 else
    origparentdir="$1"
@@ -40,7 +39,7 @@ else
      echo "$includeString"
      exit 0
    else
-     echo "ERROR: $1 is not a directory" 1>&2
+     echo "$0: error: $1 is not a directory" >&2
      exit 1
    fi
 fi

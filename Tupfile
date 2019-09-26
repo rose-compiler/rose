@@ -1,0 +1,63 @@
+include_rules
+
+# rose_config.h is not installed because it is a private header file. See rosePublicConfig.h below.
+: |> ^o GEN %o^ cp -p @(AUTOTOOLS_STASH)/rose_config.h . |> rose_config.h
+
+# The rosePublicConfig.h is pretty much just the rose_config.h file but with "ROSE_" prependend
+# to any symbols that didn't already start with that.
+: rose_config.h |> ^o GEN %o^ $(ROSE)/scripts/publicConfiguration.pl <%f >%o  |> rosePublicConfig.h
+run $(public_header) rosePublicConfig.h
+
+# Write some Tupfile varaibles to a file for debugging
+: |> ^ GEN %o^ ( \
+        echo "Some debug output. This file is updated as part of running tup."; \
+	echo "If you make changes here, they just get overwritten instead of"; \
+	echo "being used.  If you want to change your build configuration, edit"; \
+	echo "the \$ROSE_BUILD/tup.config file instead."; \
+	echo; \
+	echo "==== Phase 1 Variables ===="; \
+	echo "support_CC       = $(support_CC)"; \
+	echo "support_CXX      = $(support_CXX)"; \
+	echo "support_CPPFLAGS = $(support_CPPFLAGS)"; \
+	echo "support_CFLAGS   = $(support_CFLAGS)"; \
+	echo "support_CXXFLAGS = $(support_CXXFLAGS)"; \
+	echo "support_LDFLAGS  = $(support_LDFLAGS)"; \
+	echo; \
+	echo "==== Phase 2 Variables ===="; \
+	echo "librose_CC       = $(librose_CC)"; \
+	echo "librose_CXX      = $(librose_CXX)"; \
+	echo "librose_CPPFLAGS = $(librose_CPPFLAGS)"; \
+	echo "librose_CFLAGS   = $(librose_CFLAGS)"; \
+	echo "librose_CXXFLAGS = $(librose_CXXFLAGS)"; \
+	echo "librose_LDFLAGS  = $(librose_LDFLAGS)"; \
+	echo; \
+	echo "==== Phase 3 Variables ===="; \
+	echo "tool_CC          = $(tool_CC)"; \
+	echo "tool_CXX         = $(tool_CXX)"; \
+	echo "tool_CPPFLAGS    = $(tool_CPPFLAGS)"; \
+	echo "tool_CFLAGS      = $(tool_CFLAGS)"; \
+	echo "tool_CXXFLAGS    = $(tool_CXXFLAGS)"; \
+	echo "tool_LDFLAGS     = $(tool_LDFLAGS)"; \
+    ) >%o |> tup.debug
+
+# macOS needs to use libtool, so install whatever libtool ROSE is using. However, since libtool is created
+# in the build directory by "configure" before Tup is initialized, and since the build directory needs to be
+# empty (except for dot files) when tup is configured, we've renamed libtool to be .libtool, and now we need
+# to install it.
+: .libtool |> ^ PRE-INSTALL %b^ cp -p %f %o |> libtool.preinstall $(ROOT)/install-staging/bin/<staging>
+
+# Generate a compilation database from all the parts
+ifeq (@(COMPILATION_DATABASE),yes)
+    : <compdb> |> cat %<compdb> |jq -nc '[inputs]' >%o |> compile_commands.json
+endif
+
+# This rule is intended to fail unless the tup.config file defines ACKNOWLEDGEMENT.
+ifneq (@(TUP_ACKNOWLEDGMENT),yes)
+    : |> ^ ROSE Tup support is experimental^ \
+	echo "Tup support in ROSE is an unsupported, experimental work in progress and not intended for end users" \
+	     "at this time. ROSE developers may experiment with Tup by editing the tup.config file in the build tree" \
+	     "(not the one in the source tree) and setting 'CONFIG_TUP_ACKNOWLEDGMENT=yes'. Robb Matzke is the point" \
+	     "of contact for ROSE's Tup support." |tee %o; false |> tup.acknowledgment
+else
+    : |> ^ ROSE Tup support is experimental (acknowledged)^ echo acknowledged >%o |> tup.acknowledgment
+endif

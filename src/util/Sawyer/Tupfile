@@ -1,0 +1,21 @@
+include_rules
+
+# Sawyer doesn't depend on ROSE, so we can compile in Phase-1 and then link the objects into librose. For convenience,
+# we also create a libsawyer.so.
+run $(support_compile_linklib) -o sawyer --objects=OBJECTS \
+    Assert.C Attribute.C Clexer.C CommandLine.C CommandLineBoost.C DocumentBaseMarkup.C DocumentMarkup.C DocumentPodMarkup.C \
+    DocumentTextMarkup.C GraphTraversal.C LineVector.C Message.C ProgressBar.C Sawyer.C SmallObject.C Stopwatch.C \
+    Synchronization.C useHeaders.C
+: {OBJECTS} |> !for_librose |>
+
+run $(public_header) -o include/Sawyer --license=LICENSE \
+    Access.h AddressMap.h AddressSegment.h AllocatingBuffer.h Assert.h Attribute.h BiMap.h BitVector.h \
+    BitVectorSupport.h Buffer.h Cached.h Callbacks.h Clexer.h CommandLine.h CommandLineBoost.h DefaultAllocator.h DenseIntegerSet.h \
+    DistinctList.h DocumentBaseMarkup.h DocumentMarkup.h DocumentPodMarkup.h DocumentTextMarkup.h Exception.h FileSystem.h \
+    Graph.h GraphAlgorithm.h GraphBoost.h GraphIteratorBiMap.h GraphIteratorMap.h GraphIteratorSet.h GraphTraversal.h HashMap.h \
+    IndexedList.h Interval.h IntervalMap.h IntervalSet.h IntervalSetMap.h Lexer.h LineVector.h Map.h MappedBuffer.h Message.h \
+    NullBuffer.h Optional.h PoolAllocator.h ProgressBar.h Sawyer.h Set.h SharedObject.h SharedPointer.h SmallObject.h Stack.h \
+    StackAllocator.h StaticBuffer.h Stopwatch.h Synchronization.h ThreadWorkers.h Trace.h Tracker.h Tree.h Type.h WarningsOff.h \
+    WarningsRestore.h
+
+run $(support_compile_linkexe) --install -o stringify-enums stringifyEnums.C $(ROSE)/src/util/Sawyer/libsawyer

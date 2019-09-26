@@ -231,8 +231,11 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
                   }
              }
 #else
+
+       // DQ (4/15/2019): With the new support for SgType::STRIP_POINTER_MEMBER_TYPE, we want to use it here.
        // Strip past pointers and other wrapping modifiers (but not the typedef types, since the whole point is to detect private instatances).
-          type = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
+       // type = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
+          type = type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_POINTER_MEMBER_TYPE|SgType::STRIP_ARRAY_TYPE);
 #endif
 
 #if 0
@@ -244,6 +247,7 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
              }
 #endif
           ROSE_ASSERT(type != NULL);
+
 
        // Make sure this is not a simple template type (else we will have infinite recursion).
        // if (type != NULL && type->isIntegerType() == false && type->isFloatType() == false)
@@ -266,9 +270,15 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
        // DQ (2/16/2017): This is a case causeing many C codes to fail.
           SgTypeOfType* typeOfType = isSgTypeOfType(type);
 
-          if (type != NULL && templateType == NULL && classType == NULL && voidType == NULL && rvalueReferenceType == NULL && 
-                              functionType == NULL && declType  == NULL && enumType == NULL && typeEllipse         == NULL && 
-                              typeUnknown  == NULL && typeComplex == NULL && typeOfType == NULL)
+       // TV (04/23/2018): deprecated SgTemplateType. Now using the notion of non-real declaration (and associated declaration, symbol, and reference expression)
+          SgNonrealType*         typeNonreal         = isSgNonrealType(type);
+          SgAutoType*            typeAuto            = isSgAutoType(type);
+          SgTypeNullptr *        typeNullptr         = isSgTypeNullptr(type);
+
+          if (type != NULL && typeNonreal  == NULL && classType   == NULL && voidType   == NULL && rvalueReferenceType == NULL && 
+                              functionType == NULL && declType    == NULL && enumType   == NULL && typeEllipse         == NULL && 
+                              typeUnknown  == NULL && typeComplex == NULL && typeOfType == NULL && typeAuto            == NULL && 
+                              templateType == NULL && typeNullptr == NULL)
              {
 #if DEBUG_PRIVATE_TYPE || 0
                printf ("found unwrapped type = %p = %s = %s (not a template class instantiaton) \n",type,type->class_name().c_str(),type->unparseToString().c_str());
@@ -305,10 +315,12 @@ bool FixupTemplateArguments::contains_private_type (SgType* type, SgScopeStateme
              {
             // This is where we need to resolve is any types that are associated with declarations might be private (e.g. SgEnumType).
 
+            // DQ (3/1/2019): I think we need to resolve if an unnamed type is being used here (since they can't be template arguments).
+
                if (classType != NULL)
                   {
                  // Check if this is associated with a template class instantiation.
-#if 0
+#if DEBUG_PRIVATE_TYPE
                     SgClassDeclaration* classDeclaration = isSgClassDeclaration(classType->get_declaration());
                     ROSE_ASSERT(classDeclaration != NULL);
                     printf ("--------- classDeclaration = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
@@ -512,11 +524,68 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
             // Note also that this does not address types that might appear in name qualification.
                returnValue = contains_private_type(templateArgumentType,targetScope);
 
+
+            // DQ (3/2/2019): Detect any class declaration that is un-named since it can't be a tempalte argument either.
+               SgNamedType* namedType = isSgNamedType(templateArgumentType);
+               if (namedType != NULL)
+                  {
+                    SgDeclarationStatement* declarationStatement = namedType->get_declaration();
+                    ROSE_ASSERT(declarationStatement != NULL);
+
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(declarationStatement);
+                    if (classDeclaration != NULL)
+                       {
+#if DEBUG_PRIVATE_TYPE
+                         printf ("classDeclaration->get_isUnNamed() = %s \n",classDeclaration->get_isUnNamed() ? "true" : "false");
+#endif
+                         if (classDeclaration->get_isUnNamed() == true)
+                            {
+                              returnValue = true;
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                              SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(declarationStatement->get_definingDeclaration());
+                              if (definingClassDeclaration != NULL)
+                                 {
+#if 0
+                                   printf ("--- definingClassDeclaration = %p = %s name = %s \n",definingClassDeclaration,definingClassDeclaration->class_name().c_str(),definingClassDeclaration->get_name().str());
+#endif
+                                   ROSE_ASSERT(definingClassDeclaration->get_isUnNamed() == true);
+                                 }
+                            }
+
+                       }
+                  }
+
+#if DEBUG_PRIVATE_TYPE
+            // DQ (3/1/2019): I think we need to resolve if an unnamed type is being used here (since they can't be template arguments).
+               printf ("In contains_private_type(SgTemplateArgument*): templateArgumentType = %p = %s \n",templateArgumentType,templateArgumentType->class_name().c_str());
+               if (namedType != NULL)
+                  {
+                    printf ("--- namedType: name = %s \n",namedType->get_name().str());
+                    SgDeclarationStatement* declarationStatement = namedType->get_declaration();
+                    ROSE_ASSERT(declarationStatement != NULL);
+
+                    SgClassDeclaration* classDeclaration = isSgClassDeclaration(declarationStatement);
+                    if (classDeclaration != NULL)
+                       {
+                         printf ("--- classDeclaration = %p = %s name = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+                         SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(declarationStatement->get_definingDeclaration());
+                         if (definingClassDeclaration != NULL)
+                            {
+                              printf ("--- definingClassDeclaration = %p = %s name = %s \n",definingClassDeclaration,definingClassDeclaration->class_name().c_str(),definingClassDeclaration->get_name().str());
+                            }
+                       }
+                  }
+#endif
+
 #if DEBUGGING_USING_RECURSIVE_DEPTH
                depth--;
                global_depth--;
 #endif
-#if 0
+
+#if DEBUG_PRIVATE_TYPE || 0
                printf ("In contains_private_type(SgTemplateArgument*): case SgTemplateArgument::type_argument: DONE calling contains_private_type(templateArgumentType): returnValue = %s \n",returnValue ? "true" : "false");
 #endif
                if (returnValue == true)
@@ -538,12 +607,13 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                               printf ("--- base_type: name = %s \n",namedType->get_name().str());
                             }
 #endif
-#if 0
+#if DEBUG_PRIVATE_TYPE || 0
                          printf ("******* Reset the typedefType to what was found in the modifier type as a base type = %p = %s \n",base_type,base_type->class_name().c_str());
 #endif
                          typedefType = isSgTypedefType(base_type);
                        }
 
+                    SgTypedefSeq* typedef_table = NULL;
                     if (typedefType != NULL)
                        {
                       // Check if this is a type from a typedef that is in the same scope as the target declaration (variable declaration).
@@ -563,106 +633,123 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                               ROSE_ASSERT(false);
                             }
 #endif
-
-                      // Consult the list of alreanative typedefs.
-                         SgTypedefSeq* typedef_table = typedefType->get_typedefs();
-                         ROSE_ASSERT(typedef_table != NULL);
-
 #if DEBUG_PRIVATE_TYPE || 0
                          printf ("Looking at typedef typedefType = %p = %s = %s \n",typedefType,typedefType->class_name().c_str(),typedefType->unparseToString().c_str());
 #endif
 
-                         SgTypePtrList & typedefList = typedef_table->get_typedefs();
+                      // Consult the list of alreanative typedefs.
+                         typedef_table = typedefType->get_typedefs();
+                       }
+                      else
+                       {
+                      // DQ (3/2/2019): We need to select an alternative type to support a non-un-named and non-private type as a template argument.
+                         typedef_table = templateArgumentType->get_typedefs();
+                       }
 
-                         bool foundNonPrivateTypeAlias = false;
-                         SgType* suitableTypeAlias = NULL;
+                 // Consult the list of alternative typedefs.
+                 // SgTypedefSeq* typedef_table = typedefType->get_typedefs();
+                    ROSE_ASSERT(typedef_table != NULL);
 
-                         int counter = 0;
-                         SgTypePtrList::iterator i = typedefList.begin();
-                         while (foundNonPrivateTypeAlias == false && i != typedefList.end())
-                           {
-                             ROSE_ASSERT(*i != NULL);
+                    SgTypePtrList & typedefList = typedef_table->get_typedefs();
+
+                    bool foundNonPrivateTypeAlias = false;
+                    SgType* suitableTypeAlias = NULL;
+
+                    int counter = 0;
+                    SgTypePtrList::iterator i = typedefList.begin();
+                    while (foundNonPrivateTypeAlias == false && i != typedefList.end())
+                      {
+                        ROSE_ASSERT(*i != NULL);
 #if DEBUG_PRIVATE_TYPE || 0
-                             printf ("Looking for suitable type alias (#%d): *i = %p = %s = %s \n",counter,*i,(*i)->class_name().c_str(),(*i)->unparseToString().c_str());
+                        printf ("Looking for suitable type alias (#%d): *i = %p = %s = %s \n",counter,*i,(*i)->class_name().c_str(),(*i)->unparseToString().c_str());
 #endif
 #if DEBUGGING_USING_RECURSIVE_DEPTH
-                             global_depth++;
+                        global_depth++;
 #endif
-                             bool isPrivateType = contains_private_type(*i,targetScope);
+                        bool isPrivateType = contains_private_type(*i,targetScope);
 
 #if DEBUGGING_USING_RECURSIVE_DEPTH
-                             global_depth--;
+                        global_depth--;
 #endif
-                             if (isPrivateType == false)
-                                {
-                                  suitableTypeAlias = *i;
-                                  foundNonPrivateTypeAlias = true;
-                                }
-
-                          // foundNonPrivateTypeAlias = !isPrivateType;
-
-                             i++;
-                             counter++;
+                        if (isPrivateType == false)
+                           {
+                             suitableTypeAlias = *i;
+                             foundNonPrivateTypeAlias = true;
                            }
+
+                     // foundNonPrivateTypeAlias = !isPrivateType;
+
+                        i++;
+                        counter++;
+                      }
 #if 0
-                         printf ("foundNonPrivateTypeAlias = %s \n",foundNonPrivateTypeAlias ? "true" : "false");
+                    printf ("foundNonPrivateTypeAlias = %s \n",foundNonPrivateTypeAlias ? "true" : "false");
 #endif
-                         if (foundNonPrivateTypeAlias == true)
-                            {
-                              ROSE_ASSERT(suitableTypeAlias != NULL);
+                    if (foundNonPrivateTypeAlias == true)
+                       {
+                         ROSE_ASSERT(suitableTypeAlias != NULL);
+#if 0
 #if DEBUG_PRIVATE_TYPE_TRANSFORMATION || 0
-                              printf ("targetScope             = %p = %s \n",targetScope,targetScope->class_name().c_str());
-                              printf ("typedefDeclarationScope = %p = %s \n",typedefDeclarationScope,typedefDeclarationScope->class_name().c_str());
-                              targetScope->get_file_info()->display("targetScope: debug");
-                              typedefDeclarationScope->get_file_info()->display("typedefDeclarationScope: debug");
+                         printf ("targetScope             = %p = %s \n",targetScope,targetScope->class_name().c_str());
+                         printf ("typedefDeclarationScope = %p = %s \n",typedefDeclarationScope,typedefDeclarationScope->class_name().c_str());
+                         targetScope->get_file_info()->display("targetScope: debug");
+                         typedefDeclarationScope->get_file_info()->display("typedefDeclarationScope: debug");
 
-                              printf ("Found private type to be replaced: typedefType       = %p = %s = %s \n",typedefType,typedefType->class_name().c_str(),typedefType->unparseToString().c_str());
-                              printf ("Found suitable type alias:         suitableTypeAlias = %p = %s = %s \n",suitableTypeAlias,suitableTypeAlias->class_name().c_str(),suitableTypeAlias->unparseToString().c_str());
+                         printf ("Found private type to be replaced: typedefType       = %p = %s = %s \n",typedefType,typedefType->class_name().c_str(),typedefType->unparseToString().c_str());
+                         printf ("Found suitable type alias:         suitableTypeAlias = %p = %s = %s \n",suitableTypeAlias,suitableTypeAlias->class_name().c_str(),suitableTypeAlias->unparseToString().c_str());
+#endif
 #endif
 #if 0
-                              printf ("SageInterface::whereAmI(targetScope): \n");
-                              SageInterface::whereAmI(targetScope);
-                              printf ("SageInterface::whereAmI(typedefDeclaration): \n");
-                              SageInterface::whereAmI(typedefDeclaration);
+                         printf ("SageInterface::whereAmI(targetScope): \n");
+                         SageInterface::whereAmI(targetScope);
+                         printf ("SageInterface::whereAmI(typedefDeclaration): \n");
+                         SageInterface::whereAmI(typedefDeclaration);
 #endif
 #if 0
-                              printf ("Selecting alternative type to use for unparsing: \n");
-                              printf ("--- were going to use: %s \n",templateArgument->unparseToString().c_str());
-                              printf ("--- selecing instead : %s \n",suitableTypeAlias->unparseToString().c_str());
+                         printf ("Selecting alternative type to use for unparsing: \n");
+                         printf ("--- were going to use: %s \n",templateArgument->unparseToString().c_str());
+                         printf ("--- selecing instead : %s \n",suitableTypeAlias->unparseToString().c_str());
 #endif
 
-                           // TV (10/05/2018): (ROSE-1431) Traverse the chain of all associated template arguments (coming from the same EDG template argument)
-                              SgTemplateArgument * templateArgument_it = templateArgument;
-                              while (templateArgument_it->get_previous_instance() != NULL) {
-                                templateArgument_it = templateArgument_it->get_previous_instance();
-                              }
-                              ROSE_ASSERT(templateArgument_it != NULL && templateArgument_it->get_previous_instance() == NULL);
-                              do {
-                                printf ("  Update templateArgument = %p\n", templateArgument);
-                                templateArgument_it->set_unparsable_type_alias(suitableTypeAlias);
+                      // TV (10/05/2018): (ROSE-1431) Traverse the chain of all associated template arguments (coming from the same EDG template argument)
+                         SgTemplateArgument * templateArgument_it = templateArgument;
+                         while (templateArgument_it->get_previous_instance() != NULL) 
+                            {
+                              templateArgument_it = templateArgument_it->get_previous_instance();
+                            }
+                         ROSE_ASSERT(templateArgument_it != NULL && templateArgument_it->get_previous_instance() == NULL);
+                         do {
+#if 0
+                              printf ("  Update templateArgument = %p\n", templateArgument);
+#endif
+                              templateArgument_it->set_unparsable_type_alias(suitableTypeAlias);
 
-                             // DQ (1/9/2017): Also set the return result from get_type() so that the name qualification will be handled correctly.
-                                templateArgument_it->set_type(suitableTypeAlias);
+                           // DQ (1/9/2017): Also set the return result from get_type() so that the name qualification will be handled correctly.
+                              templateArgument_it->set_type(suitableTypeAlias);
 
-                                templateArgument_it = templateArgument_it->get_next_instance();
-                              } while (templateArgument_it != NULL);
-                              ROSE_ASSERT(templateArgument_it == NULL);
+                              templateArgument_it = templateArgument_it->get_next_instance();
+                            }
+                         while (templateArgument_it != NULL);
+
+                         ROSE_ASSERT(templateArgument_it == NULL);
 
 // #if DEBUG_PRIVATE_TYPE_TRANSFORMATION
 #if 0
-                              string typedefType_typeName       = generate_string_name (typedefType,NULL);
-                              printf ("typedefType_typeName size = %zu \n",typedefType_typeName.length());
-                              printf ("typedefType_typeName       = %s \n",typedefType_typeName.c_str());
+                         string typedefType_typeName       = generate_string_name (typedefType,NULL);
+                         printf ("typedefType_typeName size = %zu \n",typedefType_typeName.length());
+                         printf ("typedefType_typeName       = %s \n",typedefType_typeName.c_str());
 
-                              string suitableTypeAlias_typeName = generate_string_name (suitableTypeAlias,NULL);
-                              printf ("suitableTypeAlias_typeName size = %zu \n",suitableTypeAlias_typeName.length());
-                              printf ("suitableTypeAlias_typeName size = %s \n",suitableTypeAlias_typeName.c_str());
+                         string suitableTypeAlias_typeName = generate_string_name (suitableTypeAlias,NULL);
+                         printf ("suitableTypeAlias_typeName size = %zu \n",suitableTypeAlias_typeName.length());
+                         printf ("suitableTypeAlias_typeName size = %s \n",suitableTypeAlias_typeName.c_str());
 
-                              ROSE_ASSERT(suitableTypeAlias_typeName.length() < typedefType_typeName.length() * 100);
-                              ROSE_ASSERT(suitableTypeAlias_typeName.length() < 40000);
+                         ROSE_ASSERT(suitableTypeAlias_typeName.length() < typedefType_typeName.length() * 100);
+                         ROSE_ASSERT(suitableTypeAlias_typeName.length() < 40000);
 #endif
-                            }
                        }
+
+#if 0
+                 // DQ (3/1/2019): We now handle the case where the typedef is NULL.
                       else
                        {
 #if DEBUG_PRIVATE_TYPE
@@ -683,6 +770,7 @@ FixupTemplateArguments::contains_private_type (SgTemplateArgument* templateArgum
                             }
 #endif
                        }
+#endif
                   }
 
                break;

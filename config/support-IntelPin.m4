@@ -13,14 +13,14 @@ if test ! "$with_IntelPin" ; then
 fi
 )
 
-echo "In ROSE SUPPORT MACRO: with_IntelPin $with_IntelPin"
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: with_IntelPin = "$with_IntelPin"])
 
 if test "$with_IntelPin" = no; then
    # If --with-IntelPin is not specified, then don't use it.
-   echo "Skipping use of Intel Pin package support!"
+   AC_MSG_NOTICE([skipping use of Intel Pin package support])
 else
    IntelPin_path=$with_IntelPin
-   echo "Setup IntelPin support in ROSE! path = $IntelPin_path"
+   AC_MSG_NOTICE([setup IntelPin support in ROSE. path = "$IntelPin_path"])
    AC_DEFINE([USE_ROSE_INTEL_PIN_SUPPORT],1,[Controls use of ROSE support for Intel Pin Dynamic Instrumentation Package.])
 fi
 

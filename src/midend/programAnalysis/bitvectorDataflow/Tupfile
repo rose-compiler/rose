@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) DataFlowAnalysis.C DefUseChain.C ReachingDefinition.C ReachingDefinitionFacade.C
+
+run $(public_header) DataFlowAnalysis.h DefUseChain.h ReachingDefinition.h ReachingDefinitionFacade.h

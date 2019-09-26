@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) sage_support.cpp keep_going.cpp cmdline.cpp
+
+run $(public_header) sage_support.h keep_going.h cmdline.h

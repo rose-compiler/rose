@@ -41,10 +41,8 @@ AC_MSG_CHECKING(for insure)
 AC_ARG_WITH(insure,
 [  --with-insure=PATH	Specify the prefix where insure++ is installed], , test "$insure_PREFIX" && with_insure="$insure_PREFIX")
 test "$with_insure" && test ! "$with_insure" = no && insure_PREFIX="$with_insure"
-echo "Evaluating use of insure on commandline..."
+AC_MSG_NOTICE([evaluating use of insure on commandline...])
 AC_MSG_RESULT($insure_PREFIX)
-echo "insure_PREFIX is $insure_PREFIX" >&5
-echo "insure_PREFIX is $insure_PREFIX"
 if test "$insure_PREFIX" ; then
 #  insure_INCLUDES="-I$insure_PREFIX"
 #  insure_LIBS="$insure_PREFIX/insure_stubs.a"
@@ -56,15 +54,9 @@ AC_SUBST(insure_PREFIX)
 # AC_SUBST(insure_INCLUDES)
 AC_SUBST(insure_LIBS)
 AC_SUBST(insure_BIN)
-echo "insure_INCLUDES is $insure_INCLUDES" >&5
-echo "insure_LIBS is $insure_LIBS" >&5
-echo "insure_BIN is $insure_BIN" >&5
-
-echo "insure_INCLUDES is $insure_INCLUDES"
-echo "insure_LIBS is $insure_LIBS"
-echo "insure_BIN is $insure_BIN"
-
-
+AC_MSG_NOTICE([insure_INCLUDES = "$insure_INCLUDES"])
+AC_MSG_NOTICE([insure_LIBS     = "$insure_LIBS"])
+AC_MSG_NOTICE([insure_BIN      = "$insure_BIN"])
 
 dnl Allows insure windows to be disabled, as it is too much load over the network.
 # AC_ARG_ENABLE(insure-windows,
@@ -96,7 +88,7 @@ AC_SUBST(INSURE_OPTIONS)
 
 # if test "$enable_insure_linker" = yes ; then
 # if test "$with_insure" = yes ; then
-echo "enable_insure = $enable_insure"
+AC_MSG_NOTICE([enable_insure = "$enable_insure"])
 if test "$enable_insure" = yes ; then
 # Setup compiler specific options for using insure
 # Different compilers (e.g KCC) require options in different order.
@@ -141,10 +133,10 @@ fi
 
 AC_SUBST(AUX_LINKER)
 
-echo "In macro ROSE SUPPORT INSURE: CC    = $CC"
-echo "In macro ROSE SUPPORT INSURE: CCLD  = $CCLD"
-echo "In macro ROSE SUPPORT INSURE: CXX   = $CXX"
-echo "In macro ROSE SUPPORT INSURE: CXXLD = $CXXLD"
+AC_MSG_NOTICE([in macro ROSE SUPPORT INSURE: CC    = "$CC"])
+AC_MSG_NOTICE([in macro ROSE SUPPORT INSURE: CCLD  = "$CCLD"])
+AC_MSG_NOTICE([in macro ROSE SUPPORT INSURE: CXX   = "$CXX"])
+AC_MSG_NOTICE([in macro ROSE SUPPORT INSURE: CXXLD = "$CXXLD"])
 
 # DQ (4/7/2011): Added automake conditional to control what code would be compiled 
 # and tested using Insure++ (dynamic analysis tool for error checking from Parasoft).

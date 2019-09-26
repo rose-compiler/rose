@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+
+# Purpose: Generates on standard output a suitable "-fdebug-prefix-map=OLD=NEW" switch which causes the
+# DWARF information to contain the correct paths to the source files even though we compile in an environment
+# where tup has union-mounted the source directory hiearchy under the build directory hieararchy via userfs. Although
+# this is useful for building, it causes all kinds of problems for runtime tools that need to use DWARF to find the
+# source code (debuggers, profilers, mainenance tools, etc.).
+
+use strict;
+use Cwd;
+
+my $updirs = $ARGV[0];
+my $srcdir = $ARGV[1];
+my @cwd = split /\//, cwd();
+
+# The first argument says how far up in the directory hieararchy to get to the tup build root.
+my @upcomponents = grep {$_ ne "" && $_ ne "."} split /\//, $updirs;
+die "incorrect upward directory (first argument): \"$updirs\"\n" if grep {$_ ne ".."} @upcomponents;
+my $nupward = @upcomponents;
+
+# Get the current working directory relative to the root of the tup root directory
+my @cwdrel = @cwd[scalar(@cwd)-$nupward .. scalar(@cwd)-1];
+
+print "-fdebug-prefix-map=", join("/", @cwd), "=", $srcdir, "/", join("/", @cwdrel), "\n";

@@ -1872,16 +1872,15 @@ main ( int argc, char* argv[])
   if (preprocessingOnly)
      return backend(project);
 
-  // register midend signal handling function                                                                         
-  if (KEEP_GOING_CAUGHT_MIDEND_SIGNAL)                                                                                
-  {                                                                                                                   
-    std::cout                                                                                                         
+  // register signal handling function: mark the label as midend. 
+  // But it does not really differentiate when the signal happens! 
+  if (KEEP_GOING_CAUGHT_MIDEND_SIGNAL)
+  {
+    std::cout
       << "[WARN] "
-      << "Configured to keep going after catching a "
-      << "signal in rajaChecker"
-      << std::endl;                                                                                                   
+      << "Configured to keep going after catching a signal in rajaChecker"
+      << std::endl; 
     Rose::KeepGoing::setMidendErrorCode (project, 100);                                                               
-    goto label_end;                                                                                                   
   }
   else
   {
@@ -1904,18 +1903,28 @@ main ( int argc, char* argv[])
     if (RAJA_Checker::enable_debug)
       ofile.close();
   }
+  int status =0; 
+  // backend() may also cause trouble. we have to catch signals for it also.
+  if (KEEP_GOING_CAUGHT_BACKEND_UNPARSER_SIGNAL)
+  {
+    std::cout
+      << "[WARN] "
+      << "Configured to keep going after catching a backend unparser's signal in rajaChecker"
+      << std::endl; 
+  }
+  else
+  { 
+    // Report errors
+    // For this analysis-only tool. 
+    // Can we turn off backend unparsing and compilation. 
+    // So the tool can process more files and generate more complete reports.
+    // We cannot do this. Some build processes need *.o files. 
+    status = backend(project);
+    // important: MUST call backend() first, then generate reports.
+    // otherwise, backend errors will not be caught by keep-going feature!!
+  }
 
-label_end:
-  // Report errors
-  // For this analysis-only tool. 
-  // Can we turn off backend unparsing and compilation. 
-  // So the tool can process more files and generate more complete reports.
-  // We cannot do this. Some build processes need *.o files. 
-  int status = backend(project);
- // important: MUST call backend() first, then generate reports.
- // otherwise, backend errors will not be caught by keep-going feature!!
-
-  // One problem: some files fail backend , but the analysis generates useful info.
+ // One problem: some files fail backend , but the analysis generates useful info.
   // How to output analysis info for them?
   // the report of failed files will contain the analysis results. 
   //TODO: would a single report file easier for users?

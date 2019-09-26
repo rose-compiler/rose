@@ -207,7 +207,7 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
 
         // Initialize the function's entry NodeState
         //Akshatha(08/12): Uncommenting the code which updates the function's entry( As per Greg's suggestion)
-        NodeState* entryState = initializeFunctionNodeState(func, fState);
+        /*NodeState* entryState =*/ initializeFunctionNodeState(func, fState);
 
         // int i=0;
         //Dbg::dbg << "after: entryState-above="<<endl;

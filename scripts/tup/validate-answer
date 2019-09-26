@@ -1,0 +1,163 @@
+#!/bin/bash
+set -e
+arg0="${0##*/}"
+
+usage() {
+    #     --------------------------------------------------------------------------------
+    echo "usage $arg0 [SWITCHES] RESULT_FILES..."
+    echo "  Shows differences between test output and precalculated answers, and allows"
+    echo "  the user to verify that that results are correct and accept them as the new"
+    echo "  answer."
+    echo
+    echo "  Switches"
+    echo "    --answer=FILE"
+    echo "        File holding the precomputed answer."
+    echo
+    echo "    --diff=COMMAND"
+    echo "        The command used to show the differences between the precomputed answer"
+    echo "        and the result. It will be invoked with two additional arguments which"
+    echo "        are the names of the two filtered files: the answer and the result."
+    echo
+    echo "    -f FILTER | --filter=FILTER"
+    echo "        Run the specified filter command on both the precomputed answer and the"
+    echo "        result before comparing them. The filter command should read from"
+    echo "        standard input and write to standard output."
+}
+
+########################################################################################################################
+# Print error and exit
+die() {
+    echo "$arg0:" "$@" >&2
+    exit 1
+}
+
+########################################################################################################################
+# Parse command-line
+answer_file=
+filter=cat
+: ${diff:=meld}
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--)
+	    shift
+	    break
+	    ;;
+	--answer)
+	    [ "$#" -gt 1 ] || die "\"$1\" switch expects an argument"
+	    answer_file="$2"
+	    shift 2
+	    ;;
+	--answer=*)
+	    answer_file="${1#--answer=}"
+	    shift
+	    ;;
+	--diff)
+	    [ "$#" -gt 1 ] || die "\"$1\" switch expects an argument"
+	    diff="$2"
+	    shift 2
+	    ;;
+	--diff=*)
+	    diff="${1#--diff=}"
+	    shift
+	    ;;
+	-f|--filter)
+	    [ "$#" -gt 1 ] || die "\"$1\" switch expects an argument"
+	    filter="$2"
+	    shift 2
+	    ;;
+	--filter=*)
+	    filter="${1#--filter=}"
+	    shift
+	    ;;
+	-f*)
+	    filter="${1#-f}"
+	    shift
+	    ;;
+	-h|--help)
+	    usage
+	    exit 0
+	    ;;
+	-*)
+	    die "unknown switch \"$1\""
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+done
+
+robb_diff() {
+    wdiff "$1" "$2" |colordiff |less
+}
+
+
+for result_file in "$@"; do
+
+    # If invoked with no test file, then run the validation command that's saved
+    # in the result file.
+    if [ "$answer_file" = "" ]; then
+	validation_cmd="$(sed -n '/^REVALIDATE/ s/^REVALIDATE *//p' "$result_file")"
+	if [ -n "$validation_cmd" ]; then
+	    # If the validation command's filter is "--filter="perl -p FILE" and FILE exists
+	    # in the ROSE source directory, then replace FILE with that name.
+	    srcdir="$(rg-src 2>/dev/null)"
+	    filename="$(echo "$validation_cmd" |perl -ne '/--filter="perl -p (.*?)"/ && print $1')"
+	    if [ -n "$srcdir" -a -n "$filename" -a -r "$srcdir/$filename" ]; then
+		filename="$srcdir/$filename"
+		validation_cmd="$(echo "$validation_cmd" |\
+                                  perl -p -e "\$filename='$filename';" \
+                                          -e 's/--filter="perl -p (.*?)"/--filter="perl -p $filename"/')"
+	    fi
+	    echo "+ $validation_cmd"
+	    diff="$diff" eval "$validation_cmd"
+	    continue
+	elif ! grep -q TEST_FAILED "$result_file"; then
+	    continue
+	fi
+    fi
+
+    # If we get here, then either the user specified an answer file, or the result
+    # file doesn't indicate a failure, or the result file has no REVALIDATE command.
+    echo
+    echo "*** validating $result_file"
+    if ! grep -q TEST_FAILED "$result_file"; then
+	echo "This test did not appear to have failed (no TEST_FAILED marker present)"
+	continue
+    fi
+
+    echo "Answer = $answer_file"
+    filtered_result=$(tempfile)
+    sed  '/======== CUT ========/,$ d' <"$result_file" |$filter >"$filtered_result"
+    filtered_answer=$(tempfile)
+    $filter <"$answer_file" >"$filtered_answer"
+
+    while true; do
+	# Show the differences
+	read -p "Comparison command (empty to skip): " -e -i "$diff" command
+	if [ "$command" = "" ]; then
+	    echo "skipped"
+	    continue
+	fi
+	$command "$filtered_answer" "$filtered_result" || true
+
+	# What to do?
+	read -p "Disposition? (a = accept, s = skip, r = re-show): "
+	case "$REPLY" in
+	    a*)
+		# Accept as the new answer
+		echo "accepted as new answer"
+		sed '/======== CUT ========/,$ d' <"$result_file" >"$answer_file"
+		rm -f "$result_file"
+		break
+		;;
+	    s*)
+		echo "skipped (rejected)"
+		break
+		;;
+	    *)
+		continue # show it again
+		;;
+	esac
+    done
+done

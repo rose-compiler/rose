@@ -352,7 +352,10 @@
     // Apple OSX, iOS, Darwin
     //--------------------------
     #define SAWYER_EXPORT /*void*/
-    #define SAWYER_EXPORT_NORETURN _Noreturn
+
+    // This was changed from _Noreturn to compile with g++17. /*void*/ doesn't seem to cause problems for OSX [Rasmussen
+    // 2019.09.03]
+    #define SAWYER_EXPORT_NORETURN /*void*/
 #else
     //--------------------------
     // Other OS compilers
@@ -452,6 +455,21 @@ SAWYER_EXPORT std::string thisExecutableName();
 # define SAWYER_VARIABLE_LENGTH_ARRAY(TYPE, NAME, SIZE) \
     std::vector<TYPE> NAME##Vec_(SIZE);                 \
     TYPE *NAME = &(NAME##Vec_[0]);
+
+#elif defined(__sun)
+//--------------------------
+// Sun Solaris
+//--------------------------
+
+# define SAWYER_ATTR_UNUSED /*void*/
+# define SAWYER_ATTR_NORETURN /*void*/
+# define SAWYER_PRETTY_FUNCTION __PRETTY_FUNCTION__
+# define SAWYER_MAY_ALIAS /*void*/
+# define SAWYER_STATIC_INIT /*void*/
+# define SAWYER_DEPRECATED(WHY) /*void*/
+
+# define SAWYER_VARIABLE_LENGTH_ARRAY(TYPE, NAME, SIZE) \
+    TYPE NAME[SIZE]; memset(NAME, 0, (SIZE)*sizeof(TYPE))
 
 #elif defined(__APPLE__) && defined(__MACH__)
 //--------------------------

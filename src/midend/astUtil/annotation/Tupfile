@@ -1,0 +1,7 @@
+include_rules
+
+run $(librose_compile) AnnotCollect.C AnnotExpr.C OperatorAnnotation.C TypeAnnotation.C AnnotDescriptors.C AnnotIO.C \
+    OperatorDescriptors.C
+
+run $(public_header) AnnotCollect.h AnnotExpr.h AnnotStmt.h OperatorDescriptors.h AnnotDescriptors.h AnnotIO.h \
+    OperatorAnnotation.h TypeAnnotation.h CPPAnnotation.h

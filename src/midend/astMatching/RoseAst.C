@@ -32,6 +32,20 @@ RoseAst::findFunctionByName(std::string name) {
   return 0; // no function found with this name
 }
 
+std::list<SgFunctionDeclaration*> RoseAst::findFunctionDeclarationsByName(std::string name) {
+  std::list<SgFunctionDeclaration*> fdecl_list;
+
+  for(RoseAst::iterator i=begin();i!=end();++i) {
+    if(SgFunctionDeclaration* fundecl = isSgFunctionDeclaration(*i)) {
+      SgName fname=fundecl->get_name();
+      if(fname.getString() == name)
+        fdecl_list.push_back(fundecl);
+    }
+  }
+
+  return fdecl_list;
+}
+
 SgNode* RoseAst::iterator::parent() const {
   return _stack.top().node;
 }

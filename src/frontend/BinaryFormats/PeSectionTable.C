@@ -240,8 +240,8 @@ SgAsmPESectionTable::parse()
      * SgAsmExecutableFileFormat::parseBinaryFormat() except we're doing it here early because we need it in the rest of the
      * PE parser. */
     ROSE_ASSERT(NULL==fhdr->get_loader_map());
-    BinaryLoader *loader = BinaryLoader::lookup(fhdr); /*no need to clone; we're not changing any settings*/
-    ROSE_ASSERT(loader!=NULL);
+    BinaryLoader::Ptr loader = BinaryLoader::lookup(fhdr); /*no need to clone; we're not changing any settings*/
+    ASSERT_not_null(loader);
     MemoryMap::Ptr loader_map = MemoryMap::instance();
     loader->remap(loader_map, fhdr);
     fhdr->set_loader_map(loader_map);

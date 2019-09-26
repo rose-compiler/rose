@@ -23,6 +23,9 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
 
           virtual void unparseStringVal              (SgExpression* expr, SgUnparse_Info& info);  
 
+          virtual void unparseDefineDeclStmt         (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseDirectiveStmt          (SgStatement* stmt, SgUnparse_Info& info);
+
           virtual void unparseCompoolStmt            (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseProgHdrStmt            (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseFuncDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
@@ -43,6 +46,9 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseStopOrPauseStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseReturnStmt             (SgStatement* stmt, SgUnparse_Info& info);
 
+          virtual void unparseEnumDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseTableDeclStmt          (SgStatement* stmt, SgUnparse_Info& info);
+
           virtual void unparseVarDeclStmt            (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseVarDecl                (SgStatement* stmt, SgInitializedName* initializedName, SgUnparse_Info& info);
 
@@ -51,7 +57,8 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
        // Types
           virtual void unparseType        (SgType* type,  SgUnparse_Info& info);
           virtual void unparseTypeSize    (SgType* expr,  SgUnparse_Info& info);
-          virtual void unparseArrayType   (SgArrayType* type, SgUnparse_Info& info);
+          virtual void unparseArrayType   (SgType* type,  SgUnparse_Info& info);
+          virtual void unparseTableType   (SgType* type,  SgUnparse_Info& info);
 
 #if 0
           virtual void unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info);
@@ -85,6 +92,9 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
 
        // Initializers
           virtual void unparseAssnInit       (SgExpression* expr, SgUnparse_Info& info);
+
+       // Table dimension list
+          void unparseDimInfo (SgExprListExp* dim_info, SgUnparse_Info& info);
 
 #if 0
           void unparseOneElemConInit(SgConstructorInitializer* con_init, SgUnparse_Info& info);
@@ -174,7 +184,6 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseX10PackageStmt  (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseClassDeclStmt    (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseClassDefnStmt    (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseEnumDeclStmt     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseLabelStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseWhileStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseDoWhileStmt      (SgStatement* stmt, SgUnparse_Info& info);

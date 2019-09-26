@@ -3284,6 +3284,124 @@ void EasyStorage < std::map<SgNode*,std::string> > :: readFromFile (std::istream
 
 
 
+/*
+***************************************************************************************************
+   **      Implementations for EasyStorage < std::map<int,std::map<SgNode*,std::string> > >      **
+***************************************************************************************************
+*/
+void EasyStorage < std::map<SgNode*,std::map<SgNode*,std::string> > > :: storeDataInEasyStorageClass(const std::map<SgNode*,std::map<SgNode*,std::string> >& data_) 
+   {
+  // DQ (3/13/2019): Comment out so that we can debug the compiling issues
+#if 0
+     std::map<SgNode*,std::string>::const_iterator dat = data_.begin();
+     long offset = Base::setPositionAndSizeAndReturnOffset ( data_.size() ) ;
+  // if the new data does not fit in the actual block
+     if (0 < offset)
+        {
+       // if there is still space in the actual block
+          if (offset < Base::getSizeOfData())
+             {
+               if (Base::actual != NULL)
+                  {
+                    for (; (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++dat)
+                       {
+                         Base::actual->storeDataInEasyStorageClass(*dat);
+                       }
+                  }
+             }
+       // the data does not fit in one block
+          while (Base::blockSize < (unsigned long)(offset))
+             {
+               Base::actual = Base::getNewMemoryBlock();
+               for (; (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++dat)
+                  {
+                    Base::actual->storeDataInEasyStorageClass(*dat);
+                  }
+               offset -= Base::blockSize;
+             };
+          Base::actual = Base::getNewMemoryBlock();
+        }
+     for (; dat != data_.end(); ++dat, ++Base::actual)
+        {
+          Base::actual->storeDataInEasyStorageClass(*dat);
+        }
+#endif
+   }
+
+std::map<SgNode*,std::map<SgNode*,std::string> > 
+EasyStorage < std::map<SgNode*,std::map<SgNode*,std::string> > > :: rebuildDataStoredInEasyStorageClass() const
+   {
+#if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
+      assert ( Base::actualBlock <= 1 );
+      assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() <= 0 ) );
+#endif
+      std::map<SgNode*,std::map<SgNode*,std::string> > data_;
+
+  // DQ (3/13/2019): Comment out so that we can debug the linking issues
+#if 0
+   // if the memory pool is valid
+      std::pair <SgNode*, std::string> tempPair;
+      if ( Base::actual != NULL && 0 < Base::getSizeOfData() )
+         {
+           EasyStorageMapEntry<SgNode*,std::string>* pointer = Base::getBeginningOfDataBlock();
+           for ( long i=0; i < Base::getSizeOfData(); ++i )
+              {
+                assert (Base::actualBlock == 1);
+                tempPair = (pointer+i)->rebuildDataStoredInEasyStorageClass();
+                data_[tempPair.first] = tempPair.second;
+              }
+         }
+#endif
+      return data_;
+
+   }
+
+void EasyStorage < std::map<SgNode*,std::map<SgNode*,std::string> > > :: arrangeMemoryPoolInOneBlock()
+   {
+  // DQ (3/13/2019): Comment out so that we can debug the linking issues
+#if 0
+     StorageClassMemoryManagement< EasyStorageMapEntry<SgNode*, std::string> > :: arrangeMemoryPoolInOneBlock();
+     EasyStorageMapEntry<SgNode*, std::string> :: arrangeMemoryPoolInOneBlock();
+#endif
+   }
+
+void EasyStorage < std::map<SgNode*,std::map<SgNode*,std::string> > > :: deleteMemoryPool()
+   {
+  // DQ (3/13/2019): Comment out so that we can debug the linking issues
+#if 0
+     StorageClassMemoryManagement< EasyStorageMapEntry<SgNode*, std::string> > :: deleteMemoryPool();
+     EasyStorageMapEntry<SgNode*, std::string> :: deleteMemoryPool();
+#endif
+   }
+
+
+void EasyStorage < std::map<SgNode*,std::map<SgNode*,std::string> > > :: writeToFile(std::ostream& outputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::writeMarker("|23|",outputFileStream);
+#endif
+
+  // DQ (3/13/2019): Comment out so that we can debug the linking issues
+#if 0
+     StorageClassMemoryManagement< EasyStorageMapEntry<SgNode*, std::string> > :: writeToFile(outputFileStream);
+     EasyStorageMapEntry<SgNode*, std::string> :: writeToFile(outputFileStream);
+#endif
+   }
+
+void EasyStorage < std::map<SgNode*,std::map<SgNode*,std::string> > > :: readFromFile (std::istream& inputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::readMarker("|23|",inputFileStream);
+#endif
+
+  // DQ (3/13/2019): Comment out so that we can debug the linking issues
+#if 0
+     StorageClassMemoryManagement< EasyStorageMapEntry<SgNode*, std::string> > :: readFromFile (inputFileStream);
+     EasyStorageMapEntry<SgNode*, std::string> :: readFromFile (inputFileStream);
+#endif
+   }
+
+
 //#ifdef ROSE_USE_NEW_GRAPH_NODES
 
 // ****************************************************************************************

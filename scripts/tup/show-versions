@@ -1,0 +1,3 @@
+#!/bin/bash
+
+spock-using |sort |tr '=@' '\t\t' |awk '{printf "#  %-24s %-10s %s\n", $1, $2, $3}'; \

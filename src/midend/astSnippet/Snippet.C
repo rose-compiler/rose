@@ -91,6 +91,7 @@ SnippetFile::lookup(const std::string &fileName)
     return registry.get_value_or(fileName, SnippetFilePtr());
 }
 
+#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 // Return the first non-empty statement from the specified source code, without the trailing semicolon.  This returns the
 // non-comment material from the beginning of the supplied string up to but not including the first semicolon that is not part
 // of a comment or string literal.  Comments are C++/Java style comments. Strings are delimited by single and double quotes
@@ -180,6 +181,8 @@ static std::string getJavaClassNameFromFileName(const std::string fileName)
 
     return boost::erase_last_copy(notDir, ".java");
 }
+#endif
+
 #ifdef _MSC_VER
 #define UNUSED_VAR
 #else

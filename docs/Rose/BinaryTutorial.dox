@@ -9,8 +9,8 @@ namespace BinaryAnalysis {
  *
  *  @section bintut_why Why binary analysis?
  *
- *  ROSE was originally designed as a source-to-source analysis and trasformation system, but it turns out that parsing and
- *  analyzing a binary specimen shares much of the same basic ideas:
+ *  ROSE was originally designed as a source-to-source analysis and transformation system, but it turns out that parsing and
+ *  analyzing a binary specimen shares many of the same basic ideas:
  *
  *  @li A binary specimen usually lives in a container that describes areas of memory, symbols, and other things needed when
  *      the specimen is executed or linked. These various containers (executables, libraries, object files, core dumps) can be
@@ -38,16 +38,23 @@ namespace BinaryAnalysis {
  *
  *  @section bintut_features What binary analysis features are available?
  * 
- *  ROSE can parse a variety of binary inputs. It can parse executable formats including Linux ELF executables, Microsoft
- *  Windows PE and DOS executables, and Motorola S-Records.  It has disassemblers for ARM, Amd64 (x86-64), MIPS, Motorola 68k,
- *  PowerPC, and x86 families.  It can read raw memory dumps if the user supplies mapping information, or it can obtain memory
- *  and register states from a running executable (Linux).
+ *  ROSE can parse a variety of binary inputs. It can parse executable formats such as Linux ELF executables, shared libraries,
+ *  core dumps, object files, and library archives; and Microsoft Windows PE and DOS executables and libraries. It can parse
+ *  memory initialization formats such as Motorola S-Records, Intel HEX files, and raw memory dumps. It can analyze running or
+ *  paused programs on Linux. ROSE can also analyze combinations of these formats&emdash;such as an ELF file extended by
+ *  providing additional initialized memory from an S-Record file&emdash;and has a mini command-line language for specifying
+ *  this for all binary analysis tools.
  *
- *  ROSE understands semantics for common subsets of Amd64, m68k, PowerPC, and x86 and can therefore reason about how execution
- *  of instructions affects a machine's state. It uses that information to drive recursive disassembly and discern where code
- *  and data are located. This reasoning can occur in various semantic domains: a domain that operates on concrete values like
- *  a real CPU, a domain that operates on symbolic values that can be fed into Satisfiability Modulo Theory (SMT) solvers, an
- *  interval domain that represents ranges of values, and many other more specialized domains and user-defined domains.
+ *  The ROSE disassembler uses a hybrid linear sweep and recursive descent approach that handles things like overlapping
+ *  instructions (on architectures where that's possible), interleaved functions, rewritten execution flow, and more.  ROSE has
+ *  instruction decoders for ARM, AMD64 (x86_64), Intel x86, MIPS, Motorola 68k, and PowerPC (32- and 64-bit). ROSE is designed
+ *  so that most analysis is architecture independent.
+ *
+ *  ROSE understands semantics for common subsets of AMD64, Intel x86, Motorola 68k, and PowerPC (32- and 64-bit) and can
+ *  therefore reason about how execution of instructions affects a machine's state. It can perform this reasoning symbolically,
+ *  using only concrete values, using sets of intervals of concrete values, and many more special-purpose domains. If an
+ *  Satisfiability Modulo Theory (SMT) solver is available, ROSE can use it to increase the fidelity of its analyses, including
+ *  reasoning that's employed during the disassembly phase.
  *
  *  ROSE is able to construct control flow graphs and call graphs and has a number of pre-built analysis capabilities such as
  *  tainted flow analysis, edit distances, code statistics, memory maps, reasoning about register interactions, address usage
@@ -58,7 +65,7 @@ namespace BinaryAnalysis {
  *  and dynamic string decoding, control flow dominance, pointer detection, DWARF parsing, library identification, etc.
  *
  *  %Analysis results are available in a number of formats, depending on the analysis: through various APIs, decoration of the
- *  abstract syntax tree or control flow graph, commentary in assembly listings, databases, or to a certain extent, as a new
+ *  abstract syntax tree or control flow graph, commentary in assembly listings, databases, or to a certain extent as a new
  *  translated binary specimen.
  *
  *  This document only attempts to describe a few of the easiest features to get you started.
@@ -86,15 +93,14 @@ namespace BinaryAnalysis {
  *
  *  @snippet binaryHelloWorld.C rose include
  *
- *  All programs start by including the main ROSE include file. This declares most things that are common to source and binary
- *  analysis.
+ *  All programs start by including the main ROSE include file that declares most things that are common to source and binary
+ *  analysis. This must be the first ROSE header to be included.
  *
  *  @snippet binaryHelloWorld.C other includes
  *
- *  ROSE's binary components are declared in individual header files that can only be included after including "rose.h". This
- *  ordering is true in general for ROSE.  The binary headers themselves can be included in any order since each header includes
- *  those other headers on which it depends.  The binary analysis headers usually have the same names as the primary class they
- *  contain.
+ *  ROSE's binary components are declared in individual header files that can only be included after including "rose.h".  The
+ *  binary headers themselves can be included in any order (after rose.h) since each header includes those other headers on
+ *  which it depends.  The binary analysis headers usually have the same names as the primary class they contain.
  *
  *  @snippet binaryHelloWorld.C commandline
  *
@@ -113,15 +119,18 @@ namespace BinaryAnalysis {
  *  instructions or data (actually, "partitioner" is a bit of a misnomer since instructions and data can also overlap, although
  *  they seldom do in practice).
  *
- *  The Partitioner2 namespace contains many classes, but @ref Partitioner2::Engine "Engine" is the highest abstraction and the
- *  one that most tools use.  In this example, we are invoking the @ref Partitioner2::Engine::frontend "frontend", which is
- *  similar in nature to ROSE's global @ref ::frontend in that it does everything necessary to make ROSE ready to do analysis: it
- *  parses, loads, disassembles, partitions, runs basic analysis, and checks consistency. In the end, it returns an abstract
- *  syntax tree (AST).
+ *  The Partitioner2 namespace contains many classes, but @ref Partitioner2::Engine "Engine" and @ref Partitioner2::Partitioner
+ *  "Partitioner" are the two most important classes. The @ref Partitioner2::Engine "Engine" is used to drive the disassembly
+ *  process and create a @ref Partitioner2::Partitioner "Partitioner", which holds the results in data structures that have
+ *  better time complexities than an AST when it comes to most forms of analysis.  In this example, we are invoking the @ref
+ *  Partitioner2::Engine::frontend "Engine::frontend", which is similar in nature to ROSE's global @ref ::frontend in that it
+ *  does everything necessary to make ROSE ready to do analysis: it parses, loads, disassembles, partitions, runs basic
+ *  analysis, and checks consistency. In the end, it returns an abstract syntax tree (AST) instead of a @ref
+ *  Partitioner2::Partitioner "Partitioner".
  *
  *  AST nodes in ROSE all begin with the letters "Sg" (from "Sage"). Those nodes that are specific to binary analysis begin
  *  with "SgAsm" (from "Sage assembly").  Within source code analysis, source files combine to form a single @ref SgProject
- *  node, and the same is usually true with binary analysis also.  For specimens that have a container, like Linux ELF and
+ *  node, and the same is often true with binary analysis also.  For specimens that have a container, like Linux ELF and
  *  Windows PE files, the AST has two large subtrees: one subtree describes the containers (there may be more than one), and
  *  another subtree describes the instructions organized into interpretation subtrees (@ref SgAsmInterpretation).
  *  Interpretations organize instructions into coherent sets, such as the PE32 and DOS subcomponents of a Windows PE
@@ -134,7 +143,8 @@ namespace BinaryAnalysis {
  *  than unparsing source code. Binary specimens are usually not transformed like source code, so the unparser for a binary
  *  generates a human-readable pseudo-assembly listing instead.  We could have also called the global @ref ::backend (same as
  *  source code) which would have produced a number of output files including a new executable, but backend only works on
- *  SgProject nodes which might not be present (see above).
+ *  SgProject nodes which might not be present (see above). Note that there are better ways to obtain an unparser, and we'll
+ *  see them later.
  *
  *  Here's the entire "Hello, World!" program:
  *
@@ -153,26 +163,9 @@ namespace BinaryAnalysis {
  *
  *  On the other hand, if you've already installed the ROSE library and blown away your build tree, or if you're writing your
  *  own programs that use ROSE, you won't be able to leverage ROSE's own build system to compile your program, and you probably
- *  have no idea what compiler command was used to compile ROSE. Fear not, ROSE installed a "rose-config" tool in its "bin"
- *  directory that has all this info (at least if you configured and built ROSE using GNU auto-tools; CMake users are out of
- *  luck for the time being). Using it is a three step process:
- *
- *  @li First, you need to be able to run "rose-config". Since it uses a couple shared libraries, you may need to add those
- *  directories to your LD_LIBRARY_PATH environment variable. On my machine, I need the directory that holds the Java virtual
- *  machine library (libjvm.so) and the directory that holds the Boost libraries. Be sure to use the same libraries that were
- *  used when you compiled ROSE, and be sure that LD_LIBRARY_PATH is exported.  Once you do this, the <code>rose-config
- *  --help</code> should work. If the program runs but you don't get a man page, try installing perldoc, which on Debian-based
- *  systems (inc. Ubunbu) is done with <code>sudo apt-get install perl-doc</code>.
- *
- *  @li Once rose-config is working, you can compile your program like this: <code>$(rose-config cxx) $(rose-config cppflags)
- *  $(rose-config cxxflags) -o binaryHelloWorld binaryHelloWorld.C $(rose-config ldflags)</code>.  Most projects will have a
- *  Makefile or CMakeLists.txt that can call rose-config to set variables. Traditionally, makefiles have variables with the
- *  same name (but upper case) as the argument passed to rose-config.  The @ref installation "ROSE installation guide" as an
- *  example makefile at the bottom of the page.
- *
- *  @li When you run your program, you may need additional shared libraries beyond what is needed to run rose-config. You can
- *  get this list with <code>rose-config libdirs</code> and add them to your LD_LIBRARY_PATH environment variable. It is
- *  important that you use the same libraries at runtime as you did when compiling ROSE and your program.
+ *  have no idea what compiler command was used to compile ROSE. Fear not, ROSE installed a "rose-config.cfg" file that has the
+ *  information you need, and in a format that can be included directly into GNU make files. See @ref tooldev for an example
+ *  Makefile.
  *
  *
  *
@@ -184,9 +177,13 @@ namespace BinaryAnalysis {
  *  @snippet binaryFunctionCfg.C prologue
  *
  *  Then, in the @c main program, we create a disassembling and partitioning engine and use it to parse the command-line. This
- *  allows our tool to easily support the multitude of partitioner settings and container formats:
+ *  allows our tool to easily support the multitude of partitioner settings and container formats. The command-line parser and
+ *  its documentation is easily customizable for more advanced tools, but the following works fine for this tool:
  *
  *  @snippet binaryFunctionCfg.C setup
+ *
+ *  The "mlog[FATAL]" in the previous code uses ROSE's diagnostics facility, a large set of coordinated streams for different
+ *  software components and message severity levels, all of which can be controlled from the command-line.
  *
  *  Next, now that the engine is configured and we know the name(s) or resources for the specimen, we can parse the specimen
  *  container, load the specimen into memory, disassemble, and discover functions. The results are stored in a @ref
@@ -197,10 +194,13 @@ namespace BinaryAnalysis {
  *  Finally, we'll iterate over those functions to create function control flow graphs and print each graph.  The @ref
  *  Partitioner2::Partitioner::cfg "cfg" method returns a const reference to a global control flow graph, which normally serves
  *  as the starting point for many analyses. But in this case, we want only the subgraph that represents an individual
- *  function, so we copy the global CFG and then remove those vertices and edges that are uninteresting. This operation takes
- *  time that is linear with respect to the number of vertices and edges:
+ *  function, so we copy the global CFG and then remove those vertices and edges that are uninteresting:
  *
  *  @snippet binaryFunctionCfg.C function cfg
+ *
+ *  In the above code, the @ref Partitioner2::ControlFlowGraph is a specialization of @ref Sawyer::Graph, which is a generic
+ *  yet easy-to-use graph implementation with very good time complexity for most operations. So the previous "for" loop has
+ *  linear time complexity with respect to the total number of vertices and edges.
  *
  *  The @ref Partitioner2::DataFlow namespace has a @ref Partitioner2::DataFlow::buildDfCfg "buldDfCfg" function that creates a
  *  slightly different kind of control flow graph--one that's more useful for data-flow--which also permits intra- and
@@ -226,9 +226,10 @@ namespace BinaryAnalysis {
  *  @snippet binaryCallGraph.C namespaces
  *
  *  This time we'll use a few namespaces to reduce our typing. The @ref Rose::Diagnostics namespace brings into scope the
- *  diagnostic support (@c mlog and @c FATAL in this example) which is accessed through the "--log" or "-L" command-line
- *  switches and controls what kinds of debugging output is produced. If you run this program with "-L all" you'll get traces
- *  and debugging from all the ROSE components that use this mechanism; see "-L help" for info about fine tuning this.
+ *  diagnostic support (@c mlog and @c FATAL in this example) which is accessed through the "--log" command-line switches and
+ *  controls what kinds of diagnostic output is produced. If you run this program with "--log=all" you'll get traces and
+ *  debugging from all the ROSE components that use this mechanism (lots of output); see "--log=help" for info about fine
+ *  tuning this.
  *
  *  @snippet binaryCallGraph.C settings
  *

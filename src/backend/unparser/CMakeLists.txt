@@ -2,33 +2,21 @@ add_subdirectory(CxxCodeGeneration)
 add_subdirectory(languageIndependenceSupport)
 add_subdirectory(formatSupport)
 
-if (WIN32)
-  message ("WARNING : Fortran and PHP not supported yet on Windows")
-else (WIN32)
+if(WIN32)
+  message("WARNING : Fortran and PHP not supported yet on Windows")
+else()
   # tps (11/23/2009) commented out fortran and php for windows for now
-  if(enable-fortran)
-    add_subdirectory(FortranCodeGeneration)
-  endif()
-  if(enable-java)
-    add_subdirectory(JavaCodeGeneration)
-  endif()
-  if(enable-x10)
-    add_subdirectory(X10CodeGeneration)
-  endif()
-  if(enable-ada)
-    add_subdirectory(AdaCodeGeneration)
-  endif()
-  if(enable-jovial)
-    add_subdirectory(JovialCodeGeneration)
-  endif()
-  if(enable-php)
-    add_subdirectory(PHPCodeGeneration)
-  endif()
-  if(enable-python)
-    add_subdirectory(PythonCodeGeneration)
-  endif()
-endif (WIN32)
 
+  # Excluding these subdirectories based on which analyses languages are supported is not sufficient because
+  # the headers are still included from unparser.h and so need to still be installed.
+  add_subdirectory(FortranCodeGeneration)
+  add_subdirectory(JavaCodeGeneration)
+  add_subdirectory(X10CodeGeneration)
+  add_subdirectory(AdaCodeGeneration)
+  add_subdirectory(JovialCodeGeneration)
+  add_subdirectory(PHPCodeGeneration)
+  add_subdirectory(PythonCodeGeneration)
+endif()
 
 ########### next target ###############
 
@@ -51,6 +39,7 @@ add_library (unparser OBJECT
   nameQualificationSupport.C
   unparse_sym.C
   IncludedFilesUnparser.C
+  includeFileSupport.C
   formatSupport/unparseFormatHelp.C
   formatSupport/unparse_format.C
   languageIndependenceSupport/modified_sage_isUnaryOp.C
@@ -73,6 +62,6 @@ add_dependencies(unparser rosetta_generated)
 ########### install files ###############
 
 set(unparser_headers copy_unparser.h unparser.h unparse_sym.h
-  astUnparseAttribute.h IncludedFilesUnparser.h nameQualificationSupport.h)
+  astUnparseAttribute.h IncludedFilesUnparser.h includeFileSupport.h nameQualificationSupport.h)
 
 install(FILES ${unparser_headers} DESTINATION ${INCLUDE_INSTALL_DIR})

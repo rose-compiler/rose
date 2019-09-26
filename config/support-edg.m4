@@ -1,117 +1,115 @@
+AC_DEFUN([ROSE_SUPPORT_EDG], [
 
-AC_DEFUN([ROSE_SUPPORT_EDG],
-[
+    ###############################################################################################################################
+    # This part of the configuration is about what *version* of EDG to use when building ROSE. It has nothing to do with deciding
+    # whether to compile EDG from source code, use a precompiled EDG binary, or do neither (that's all later).
+    ###############################################################################################################################
 
-# DQ (2/2/2010): New code to control use of different versions of EDG with ROSE.
-AC_ARG_ENABLE(edg-version,
-[  --enable-edg_version     major.minor version number for EDG (e.g. \[4.9\], 4.12, 4.14, 5.0).],
-[ echo "Setting up EDG version"
-])
+    AC_ARG_ENABLE([edg-version],
+                  [AC_HELP_STRING([--with-edg-version=VERSION],
+                                  [Specifies the version of EDG to use as the parser for C/C++ when ROSE is configured
+                                   to be able to analyze C and C++. Specifying a version number with this switch causes
+                                   that version of the EDG library to be used by either compiling it from source code
+                                   (which is proprietary) or by downloading a precompiled library.])])
 
-echo "enable_edg_version = $enable_edg_version"
-if test "x$enable_edg_version" = "x"; then
-# DQ (5/22/2016): Changed the default version of EDG to 4.9.
-   echo "Default version of EDG used (4.9)"
-   edg_major_version_number=4
-   edg_minor_version_number=9
-else
-   echo "Specifying EDG version is not recommended"
-   edg_major_version_number=`echo $enable_edg_version | cut -d\. -f1`
-   edg_minor_version_number=`echo $enable_edg_version | cut -d\. -f2`
-fi
-
-echo "edg_major_version_number = $edg_major_version_number"
-echo "edg_minor_version_number = $edg_minor_version_number"
-
-if test "x$edg_major_version_number" = "x4"; then
-  echo "Recognized an accepted major version number."
-  if test "x$edg_minor_version_number" = "x4"; then
-    echo "Recognized an accepted minor version number."
-    enable_edg_version44=yes
-    AC_DEFINE([ROSE_USE_EDG_VERSION_4_4], [], [Whether to use the new EDG version 4.4])
-  else
-    if test "x$edg_minor_version_number" = "x7"; then
-      echo "Recognized an accepted minor version number."
-      enable_edg_version47=yes
-      AC_DEFINE([ROSE_USE_EDG_VERSION_4_7], [], [Whether to use the new EDG version 4.7])
+    AC_MSG_NOTICE([enable_edg_version = "$enable_edg_version"])
+    if test "$enable_edg_version" = ""; then
+       AC_MSG_NOTICE([default version of EDG used (5.0)])
+       edg_major_version_number=5
+       edg_minor_version_number=0
     else
-      if test "x$edg_minor_version_number" = "x8"; then
-        echo "Recognized an accepted minor version number."
-        enable_edg_version48=yes
-        AC_DEFINE([ROSE_USE_EDG_VERSION_4_8], [], [Whether to use the new EDG version 4.8])
-      else
-        if test "x$edg_minor_version_number" = "x9"; then
-          echo "Recognized an accepted minor version number."
-          enable_edg_version49=yes
-          AC_DEFINE([ROSE_USE_EDG_VERSION_4_9], [], [Whether to use the new EDG version 4.9])
+       AC_MSG_NOTICE([specifying EDG version is not recommended])
+       edg_major_version_number=`echo $enable_edg_version | cut -d\. -f1`
+       edg_minor_version_number=`echo $enable_edg_version | cut -d\. -f2`
+    fi
+
+    # Only certain versions of EDG are valid
+    if test "$edg_major_version_number" = "4"; then
+        if test "$edg_minor_version_number" = "9"; then
+            enable_edg_version49=yes
+            AC_DEFINE([ROSE_USE_EDG_VERSION_4_9], [], [Whether to use the new EDG version 4.9])
+        elif test "$edg_minor_version_number" = "12"; then
+            enable_edg_version412=yes
+            AC_DEFINE([ROSE_USE_EDG_VERSION_4_12], [], [Whether to use the new EDG version 4.12])
         else
-          if test "x$edg_minor_version_number" = "x11"; then
-            echo "Recognized an accepted minor version number."
-            enable_edg_version411=yes
-            AC_DEFINE([ROSE_USE_EDG_VERSION_4_11], [], [Whether to use the new EDG version 4.11])
-          else
-            if test "x$edg_minor_version_number" = "x12"; then
-              echo "Recognized an accepted minor version number."
-              enable_edg_version412=yes
-              AC_DEFINE([ROSE_USE_EDG_VERSION_4_12], [], [Whether to use the new EDG version 4.12])
-            else
-              if test "x$edg_minor_version_number" = "x14"; then
-                echo "Recognized an accepted minor version number."
-                enable_edg_version414=yes
-                AC_DEFINE([ROSE_USE_EDG_VERSION_4_14], [], [Whether to use the new EDG version 4.14])
-              else
-                echo "ERROR: Could not identify the EDG minor version number."
-                exit 1
-              fi
-            fi
-          fi
+            AC_MSG_FAILURE([EDG-$edg_major_version_number.$edg_minor_version_number is not valid])
         fi
-      fi
-    fi
-  fi
-else
-  if test "x$edg_major_version_number" = "x5"; then
-    echo "Recognized an accepted major version number."
-    if test "x$edg_minor_version_number" = "x0"; then
-      echo "Recognized an accepted minor version number."
-      enable_edg_version50=yes
-      AC_DEFINE([ROSE_USE_EDG_VERSION_5_0], [], [Whether to use the new EDG version 5.0])
+    elif test "x$edg_major_version_number" = "x5"; then
+        if test "x$edg_minor_version_number" = "x0"; then
+            enable_edg_version50=yes
+            AC_DEFINE([ROSE_USE_EDG_VERSION_5_0], [], [Whether to use the new EDG version 5.0])
+        else
+            AC_MSG_FAILURE([EDG-$edg_major_version_number.$edg_minor_version_number is not valid])
+        fi
     else
-      echo "ERROR: Could not identify the EDG minor version number."
-      exit 1
+        AC_MSG_FAILURE([EDG-$edg_major_version_number.$edg_minor_version_number is not valid])
     fi
-  else
-    echo "ERROR: Could not identify the EDG major version number."
-    exit 1
-  fi
-fi
 
-enable_edg_version4=yes
-AC_DEFINE([ROSE_USE_EDG_VERSION_4], [], [Whether to use the new EDG version 4.x])
+    enable_new_edg_interface=yes
+    AC_DEFINE_UNQUOTED([ROSE_EDG_MAJOR_VERSION_NUMBER], $edg_major_version_number , [EDG major version number])
+    AC_DEFINE_UNQUOTED([ROSE_EDG_MINOR_VERSION_NUMBER], $edg_minor_version_number , [EDG minor version number])
 
-enable_new_edg_interface=yes
-AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
+    ROSE_EDG_MAJOR_VERSION_NUMBER=$edg_major_version_number
+    ROSE_EDG_MINOR_VERSION_NUMBER=$edg_minor_version_number
 
-AC_DEFINE_UNQUOTED([ROSE_EDG_MAJOR_VERSION_NUMBER], $edg_major_version_number , [EDG major version number])
-AC_DEFINE_UNQUOTED([ROSE_EDG_MINOR_VERSION_NUMBER], $edg_minor_version_number , [EDG minor version number])
+    AC_SUBST(ROSE_EDG_MAJOR_VERSION_NUMBER)
+    AC_SUBST(ROSE_EDG_MINOR_VERSION_NUMBER)
 
-ROSE_EDG_MAJOR_VERSION_NUMBER=$edg_major_version_number
-ROSE_EDG_MINOR_VERSION_NUMBER=$edg_minor_version_number
+    # DQ (2/3/2010): I would like to not have to use these and use the new
+    # ROSE_EDG_MAJOR_VERSION_NUMBER and ROSE_EDG_MINOR_VERSION_NUMBER instead.
+    AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_9,  [test "x$enable_edg_version49" = xyes])
+    AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_12, [test "x$enable_edg_version412" = xyes])
+    AM_CONDITIONAL(ROSE_USE_EDG_VERSION_5_0,  [test "x$enable_edg_version50" = xyes])
 
-AC_SUBST(ROSE_EDG_MAJOR_VERSION_NUMBER)
-AC_SUBST(ROSE_EDG_MINOR_VERSION_NUMBER)
+    ###############################################################################################################################
+    # This part of the configuration is about whether to compile the EDG library from source code, or to use a precompiled EDG
+    # library that's downloaded, or to not link with EDG at all (e.g., when ROSE is configured without C or C++ support).
+    ###############################################################################################################################
 
+    AC_ARG_ENABLE([edg-compile],
+                  [AC_HELP_STRING([--enable-edg-compile=maybe|yes|no],
+				  [Whether to compile the Edison Design Group (EDG) C/C++ parsing library from source code.
+				   The default, "maybe", means that the library is compiled from source code if the source code
+				   is available (it's proprietary) otherwise the build will attempt to download a precompiled
+				   version of the library. The values "yes" and "no" are used by the ROSE development team for
+				   testing and mean, respectively, fail if the source code is not available or ignore the source
+				   code even if it is available.])],
+		  [want_edg_source="$enableval"],
+		  [want_edg_source=maybe])
 
-# DQ (2/3/2010): I would like to not have to use these and use the new
-# ROSE_EDG_MAJOR_VERSION_NUMBER and ROSE_EDG_MINOR_VERSION_NUMBER instead.
-AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_4, [test "x$enable_edg_version44" = xyes])
-AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_7, [test "x$enable_edg_version47" = xyes])
-AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_8, [test "x$enable_edg_version48" = xyes])
-AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_9, [test "x$enable_edg_version49" = xyes])
-AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_11, [test "x$enable_edg_version411" = xyes])
-AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_12, [test "x$enable_edg_version412" = xyes])
-AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_14, [test "x$enable_edg_version414" = xyes])
-AM_CONDITIONAL(ROSE_USE_EDG_VERSION_5_0, [test "x$enable_edg_version50" = xyes])
-]
-)
+    if test -e ${srcdir}/src/frontend/CxxFrontend/EDG/Makefile.am; then
+        has_edg_source=yes
+    else
+        has_edg_source=no
+    fi
+
+    if test "$want_edg_source" = yes -a "$has_edg_source" = no; then
+        AC_MSG_FAILURE(["--with-edg-source=yes" was specified but the EDG source code is not present])
+    elif test "$want_edg_source" = no; then
+        AC_MSG_NOTICE([EDG source code ignored even if present])
+        has_edg_source=no
+    fi
+
+    AM_CONDITIONAL(ROSE_HAS_EDG_SOURCE, [test "$has_edg_source" = "yes"])
+
+    ###############################################################################################################################
+    # This part of the configuration is about whether we should build an EDG binary tarball by compiling the EDG source code.
+    ###############################################################################################################################
+
+    # Find md5 or md5sum and create a signature for ROSE binary compatibility
+    AC_CHECK_PROGS(MD5, [md5 md5sum], [false])
+    AC_SUBST(MD5)
+    if test "$has_edg_source" = yes; then
+        if test "$MD5" = "false"; then
+            AC_MSG_WARN([could not find either md5 or md5sum; building binary EDG tarballs is disabled])
+            binary_edg_tarball_enabled=no
+        else
+            binary_edg_tarball_enabled=yes
+        fi
+    else
+        binary_edg_tarball_enabled=no
+    fi
+
+    AM_CONDITIONAL(BINARY_EDG_TARBALL_ENABLED, [test "$binary_edg_tarball_enabled" = "yes"])
+])
 

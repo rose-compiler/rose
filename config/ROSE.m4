@@ -15,7 +15,12 @@ AC_REQUIRE([AC_PROG_CXX])
 # DQ (9/26/2015): Commented out to supress warning in aclocal.
 # AC_REQUIRE([BTNG_INFO_CXX_ID])
 
-echo "In c++ option setting: FRONTEND_CXX_COMPILER_VENDOR = $FRONTEND_CXX_COMPILER_VENDOR"
+# Given the C++ compiler command-line, create output variables HOST_CXX_VENDOR, HOST_CXX_VERSION, and HOST_CXX_LANGUAGE
+# that contain the vendor (gnu, llvm, or intel), the version (as defined by CPP macros, not the --version output), and
+# the language dialect (c++17, gnu++11, etc.).
+ROSE_COMPILER_FEATURES([c++], [$CXX $CPPFLAGS $CXXFLAGS], [HOST_CXX_])
+
+AC_MSG_NOTICE([in c++ option setting: FRONTEND_CXX_COMPILER_VENDOR = "$FRONTEND_CXX_COMPILER_VENDOR"])
 
 dnl *********************************************************************
 dnl * Set up the Preprocessor -D options CXXDEBUG and ARCH_DEFINES
@@ -34,8 +39,7 @@ AC_ARG_WITH(CXX_DEBUG, AS_HELP_STRING([--with-CXX_DEBUG], [manually set the C++ 
 #  CXX_DEBUG=$with_CXX_DEBUG
 #fi
 
-echo "withval = $withval"
-echo "with_CXX_DEBUG = $with_CXX_DEBUG"
+AC_MSG_NOTICE([with_CXX_DEBUG = "$with_CXX_DEBUG"])
 
 if test "x$with_CXX_DEBUG" = "x"; then
    if test "x$withval" = "xyes"; then
@@ -46,17 +50,17 @@ if test "x$with_CXX_DEBUG" = "x"; then
       fi
    fi
 else
-   echo "with_CXX_DEBUG is explictly set to: $with_CXX_DEBUG"
+   AC_MSG_NOTICE([with_CXX_DEBUG is explictly set to "$with_CXX_DEBUG"])
 fi
 
-echo "After initialization: with_CXX_DEBUG = $with_CXX_DEBUG"
+AC_MSG_NOTICE([after initialization: with_CXX_DEBUG = "$with_CXX_DEBUG"])
 
 # echo "Setting with_CXX_DEBUG to withval = $withval"
 # with_CXX_DEBUG=$withval
 
 if test "x$with_CXX_DEBUG" = "xyes"; then
 # CXX_DEBUG was activated but not specified, so set it.
-  echo "Using default options for maximal debug (true case)"
+  AC_MSG_NOTICE([using default options for maximal debug (true case)])
   case $CXX in
     g++)
       CXX_DEBUG="-g"
@@ -77,7 +81,7 @@ if test "x$with_CXX_DEBUG" = "xyes"; then
 elif test "x$with_CXX_DEBUG" = "xno"; then
   CXX_DEBUG=''
 # DQ (10/22/2010): turn on debug flags by default.
-  echo "Using at least some default (minimal) options for debug flags (currently the same as above) (false case)"
+  AC_MSG_NOTICE([using at least some default (minimal) options for debug flags (currently the same as above) (false case)])
   case $CXX in
     g++)
       CXX_DEBUG=""
@@ -97,7 +101,7 @@ elif test "x$with_CXX_DEBUG" = "xno"; then
   esac
 else
 # Settings specified explicitly by the user.
-  echo "Using user provided options for CXX_DEBUG..."
+  AC_MSG_NOTICE([using user provided options for CXX_DEBUG])
   CXX_DEBUG=$with_CXX_DEBUG
 fi
 
@@ -113,7 +117,7 @@ dnl * Set the C++ compiler optimization flags in CXXOPT
 dnl *********************************************************************
 dnl This should use the AC_ARG_ENABLE not AC_ARC_WITH!
 
-echo "Setup CXX_OPTIMIZE"
+AC_MSG_NOTICE([setup CXX_OPTIMIZE])
 
 AC_ARG_WITH(CXX_OPTIMIZE, [  --with-CXX_OPTIMIZE=ARG   manually set the C++ compiler optimization
                            to ARG (leave blank to choose automatically)])
@@ -136,8 +140,8 @@ fi
 AC_SUBST(CXX_OPTIMIZE)
 if test "$CXX_OPTIMIZE"; then CXXFLAGS="$CXXFLAGS $CXX_OPTIMIZE"; fi
 
-echo "After initialization: with_CXX_OPTIMIZE = $with_CXX_OPTIMIZE"
-echo "After initialization: CXX_OPTIMIZE = $CXX_OPTIMIZE"
+AC_MSG_NOTICE([after initialization: with_CXX_OPTIMIZE = "$with_CXX_OPTIMIZE"])
+AC_MSG_NOTICE([after initialization: CXX_OPTIMIZE = "$CXX_OPTIMIZE"])
 
 # echo "After processing CXX_OPTIMIZE: Exiting as a test!"
 # exit 1
@@ -147,15 +151,14 @@ dnl * Set the C++ compiler flags in CXX_WARNINGS
 dnl *********************************************************************
 dnl This should use the AC_ARG_ENABLE not AC_ARC_WITH!
 
-echo "Setup CXX_WARNING CXX = $CXX"
+AC_MSG_NOTICE([setup CXX_WARNING CXX = "$CXX"])
 
 # AC_ARG_ENABLE(warnings, AS_HELP_STRING([--enable-warnings], [Support for a uniform warning level for ROSE development]),[enableval=yes],[enableval=yes])
 # AC_ARG_WITH(CXX_WARNINGS, [  --with-CXX_WARNINGS=ARG   manually set the C++ compiler warning flags to ARG (leave blank to choose automatically)])
 AC_ARG_WITH(CXX_WARNINGS, AS_HELP_STRING([--with-CXX_WARNINGS], [Support for a uniform warning level for ROSE development]),[withval=yes],[withval=yes])
 # AC_ARG_WITH(CXX_WARNINGS, AS_HELP_STRING([--with-CXX_WARNINGS], [Support for a uniform warning level for ROSE development]),[with_CXX_WARNINGS=yes],[with_CXX_WARNINGS=yes])
 
-echo "withval = $withval"
-echo "with_CXX_WARNINGS = $with_CXX_WARNINGS"
+AC_MSG_NOTICE([with_CXX_WARNINGS = "$with_CXX_WARNINGS"])
 
 if test "x$with_CXX_WARNINGS" = "x"; then
    if test "x$withval" = "xyes"; then
@@ -166,10 +169,10 @@ if test "x$with_CXX_WARNINGS" = "x"; then
       fi
    fi
 else
-   echo "with_CXX_WARNINGS is explictly set to: $with_CXX_WARNINGS"
+   AC_MSG_NOTICE([with_CXX_WARNINGS is explictly set to "$with_CXX_WARNINGS"])
 fi
 
-echo "After initialization: with_CXX_WARNINGS = $with_CXX_WARNINGS"
+AC_MSG_NOTICE([after initialization: with_CXX_WARNINGS = "$with_CXX_WARNINGS"])
 
 # echo "Setting with_CXX_WARNINGS to withval = $withval"
 # with_CXX_WARNINGS=$withval
@@ -177,7 +180,7 @@ echo "After initialization: with_CXX_WARNINGS = $with_CXX_WARNINGS"
 if test "x$with_CXX_WARNINGS" = "xyes"; then
 # DQ (12/3/2016): Add these options to what may have been specified using enable_fatal_rose_warnings.
 # CXX_WARNINGS was activated but not specified, so set it.
-  echo "Using default options for maximal warnings (true case)"
+  AC_MSG_NOTICE([using default options for maximal warnings (true case)])
 # case $CXX in
   case $FRONTEND_CXX_COMPILER_VENDOR in
 #   g++)
@@ -223,7 +226,7 @@ elif test "x$with_CXX_WARNINGS" = "xno"; then
 
   CXX_WARNINGS=''
 # DQ (1/15/2007): turn on warnings by default.
-  echo "Using at least some default (minimal) options for warnings (false case)"
+  AC_MSG_NOTICE([using at least some default (minimal) options for warnings (false case)])
 # case $CXX in
   case $FRONTEND_CXX_COMPILER_VENDOR in
 #   g++)
@@ -254,7 +257,7 @@ elif test "x$with_CXX_WARNINGS" = "xno"; then
   esac
 else
 # Settings specified explicitly by the user.
-  echo "Adding explicitly specified warnings to be used for CXX_WARNINGS...."
+  AC_MSG_NOTICE([adding explicitly specified warnings to be used for CXX_WARNINGS])
   CXX_WARNINGS+=$with_CXX_WARNINGS
 fi
 
@@ -276,11 +279,10 @@ AC_SUBST(CXX_TEMPLATE_OBJECTS)
 ## configure compilation tests (and we want don't want those templates in our repository)
 dnl if test "$CXX_TEMPLATES"; then CXXFLAGS="$CXXFLAGS $CXX_TEMPLATES"; fi
 
-echo "C_DEBUG   = $C_DEBUG"
-echo "CXX_DEBUG = $CXX_DEBUG"
-
-echo "C_WARNINGS   = $C_WARNINGS"
-echo "CXX_WARNINGS = $CXX_WARNINGS"
+AC_MSG_NOTICE([C_DEBUG      = "$C_DEBUG"])
+AC_MSG_NOTICE([CXX_DEBUG    = "$CXX_DEBUG"])
+AC_MSG_NOTICE([C_WARNINGS   = "$C_WARNINGS"])
+AC_MSG_NOTICE([CXX_WARNINGS = "$CXX_WARNINGS"])
 
 # echo "Exiting at the base of ROSE FLAG CXX OPTIONS..."
 # exit 1;
@@ -303,7 +305,7 @@ AC_REQUIRE([AC_CANONICAL_HOST])
 AC_REQUIRE([AC_PROG_CC])
 # AC_REQUIRE([BTNG_INFO_CXX_ID])
 
-echo "In c option setting: FRONTEND_CXX_COMPILER_VENDOR = $FRONTEND_CXX_COMPILER_VENDOR"
+AC_MSG_NOTICE([in c option setting: FRONTEND_CXX_COMPILER_VENDOR = "$FRONTEND_CXX_COMPILER_VENDOR"])
 
 dnl *********************************************************************
 dnl * Set up the C compiler options C_DEBUG
@@ -322,8 +324,7 @@ AC_ARG_WITH(C_DEBUG, AS_HELP_STRING([--with-C_DEBUG], [manually set the C compil
 #   C_DEBUG=$with_C_DEBUG
 # fi
 
-echo "withval = $withval"
-echo "with_C_DEBUG = $with_C_DEBUG"
+AC_MSG_NOTICE([with_C_DEBUG = "$with_C_DEBUG"])
 
 if test "x$with_C_DEBUG" = "x"; then
    if test "x$withval" = "xyes"; then
@@ -334,17 +335,17 @@ if test "x$with_C_DEBUG" = "x"; then
       fi
    fi
 else
-   echo "with_C_DEBUG is explictly set to: $with_C_DEBUG"
+   AC_MSG_NOTICE([with_C_DEBUG is explictly set to "$with_C_DEBUG"])
 fi
 
-echo "After initialization: with_C_DEBUG = $with_C_DEBUG"
+AC_MSG_NOTICE([after initialization: with_C_DEBUG = "$with_C_DEBUG"])
 
 # echo "Setting with_C_DEBUG to withval = $withval"
 # with_C_DEBUG=$withval
 
 if test "x$with_C_DEBUG" = "xyes"; then
 # C_DEBUG was activated but not specified, so set it.
-  echo "Using default options for maximal debug (true case)"
+  AC_MSG_NOTICE([using default options for maximal debug (true case)])
   case $CC in
     gcc)
       C_DEBUG="-g"
@@ -365,7 +366,7 @@ if test "x$with_C_DEBUG" = "xyes"; then
 elif test "x$with_C_DEBUG" = "xno"; then
   C_DEBUG=''
 # DQ (10/22/2010): turn on debug flags by default.
-  echo "Using at least some default (minimal) options for debug flags (currently the same as above) (false case)"
+  AC_MSG_NOTICE([using at least some default (minimal) options for debug flags (currently the same as above) (false case)])
   case $CC in
     gcc)
       C_DEBUG=""
@@ -385,7 +386,7 @@ elif test "x$with_C_DEBUG" = "xno"; then
   esac
 else
 # Settings specified explicitly by the user.
-  echo "Using user provided options for C_DEBUG..."
+  AC_MSG_NOTICE([using user provided options for C_DEBUG])
   C_DEBUG=$with_C_DEBUG
 fi
 
@@ -400,7 +401,7 @@ dnl * Set the C compiler optimization flags in C_OPTIMIZE
 dnl *********************************************************************
 dnl This should use the AC_ARG_ENABLE not AC_ARC_WITH!
 
-echo "Setup C_OPTIMIZE"
+AC_MSG_NOTICE([setup C_OPTIMIZE])
 
 AC_ARG_WITH(C_OPTIMIZE, [  --with-C_OPTIMIZE=ARG   manually set the C compiler optimization
                            to ARG (leave blank to choose automatically)])
@@ -422,22 +423,21 @@ fi
 AC_SUBST(C_OPTIMIZE)
 if test "$C_OPTIMIZE"; then CFLAGS="$CFLAGS $C_OPTIMIZE"; fi
 
-echo "After initialization: with_C_OPTIMIZE = $with_C_OPTIMIZE"
-echo "After initialization: C_OPTIMIZE = $C_OPTIMIZE"
+AC_MSG_NOTICE([after initialization: with_C_OPTIMIZE = "$with_C_OPTIMIZE"])
+AC_MSG_NOTICE([after initialization: C_OPTIMIZE = "$C_OPTIMIZE"])
 
 dnl *********************************************************************
 dnl * Set the C++ compiler flags in C_WARNINGS
 dnl *********************************************************************
 dnl This should use the AC_ARG_ENABLE not AC_ARC_WITH!
 
-echo "Setup C_WARNINGS CC = $CC"
+AC_MSG_NOTICE([setup C_WARNINGS CC = "$CC"])
 
 # AC_ARG_WITH(C_WARNINGS, [  --with-C_WARNINGS=ARG   manually set the C compiler warning flags to ARG (leave blank to choose automatically)])
 # AC_ARG_WITH(C_WARNINGS, AS_HELP_STRING([--with-C_WARNINGS], [Support for a uniform warning level for ROSE development]),[with_C_WARNINGS=yes],[with_C_WARNINGS=yes])
 AC_ARG_WITH(C_WARNINGS, AS_HELP_STRING([--with-C_WARNINGS], [Support for a uniform warning level for ROSE development]),[withval=yes],[withval=yes])
 
-echo "withval = $withval"
-echo "with_C_WARNINGS = $with_C_WARNINGS"
+AC_MSG_NOTICE([with_C_WARNINGS = "$with_C_WARNINGS"])
 
 if test "x$with_C_WARNINGS" = "x"; then
    if test "x$withval" = "xyes"; then
@@ -448,10 +448,10 @@ if test "x$with_C_WARNINGS" = "x"; then
       fi
    fi
 else
-   echo "with_C_WARNINGS is explictly set to: $with_C_WARNINGS"
+   AC_MSG_NOTICE([with_C_WARNINGS is explictly set to "$with_C_WARNINGS"])
 fi
 
-echo "After initialization: with_C_WARNINGS = $with_C_WARNINGS"
+AC_MSG_NOTICE([after initialization: with_C_WARNINGS = "$with_C_WARNINGS"])
 
 if test "x$with_C_WARNINGS" = "xyes"; then
   # C_WARNINGS was activated but not specified, so set it.
@@ -520,7 +520,7 @@ elif test "x$with_C_WARNINGS" = "xno"; then
     ;;
   esac
 else
-  echo "Adding explicitly specified warnings to be used."
+  AC_MSG_NOTICE([adding explicitly specified warnings to be used.])
   C_WARNINGS+=$with_C_WARNINGS
 fi
 
@@ -528,11 +528,10 @@ AC_SUBST(C_WARNINGS)
 
 if test "$C_WARNINGS"; then CFLAGS="$CFLAGS $C_WARNINGS"; fi
 
-echo "C_DEBUG   = $C_DEBUG"
-echo "CXX_DEBUG = $CXX_DEBUG"
-
-echo "C_WARNINGS   = $C_WARNINGS"
-echo "CXX_WARNINGS = $CXX_WARNINGS"
+AC_MSG_NOTICE([C_DEBUG      = "$C_DEBUG"])
+AC_MSG_NOTICE([CXX_DEBUG    = "$CXX_DEBUG"])
+AC_MSG_NOTICE([C_WARNINGS   = "$C_WARNINGS"])
+AC_MSG_NOTICE([CXX_WARNINGS = "$CXX_WARNINGS"])
 
 # echo "Exiting at the base of ROSE FLAG C OPTIONS..."
 # exit 1;
@@ -554,7 +553,7 @@ AC_DEFUN([ROSE_CXX_HEADER_OPTIONS], [
 # used instead of the ones that the ROSE configure process will set up automatically.
 # such header are specified, they should be put into the srcdir.
 
-echo "Setup ROSE_CXX_HEADERS_DIR"
+AC_MSG_NOTICE([setup ROSE_CXX_HEADERS_DIR])
 # echo "GCC_MAJOR = $GCC_MAJOR"
 
 AC_ARG_WITH(GNU_CXX_HEADERS, [  --with-GNU_CXX_HEADERS            use the the directory of included GNU header files in the ROSE source tree])
@@ -565,10 +564,10 @@ AC_ARG_WITH(GNU_CXX_HEADERS, [  --with-GNU_CXX_HEADERS            use the the di
 if test "$with_GNU_CXX_HEADERS" = yes; then
 # if ((test "$with_GNU_HEADERS" = yes) || (test "$GCC_MAJOR" = 3)); then
   # GNU_HEADERS was activated but not specified, so set it.
-    echo "with-GNU_CXX_HEADERS = yes (use default GNU headers (preprocessed) distributed with ROSE)"
+    AC_MSG_NOTICE([with-GNU_CXX_HEADERS = yes (use default GNU headers (preprocessed) distributed with ROSE)])
     ROSE_CXX_HEADERS_DIR="${srcdir}/GNU_CXX_HEADERS"
 else
-    echo "with-GNU_CXX_HEADERS = no"
+    AC_MSG_NOTICE([with_GNU_CXX_HEADERS = "$with_GNU_CXX_HEADERS"])
 fi
 
 # echo "with-GNU_CXX_HEADERS = $with_GNU_CXX_HEADERS"
@@ -576,9 +575,9 @@ fi
 
 AC_ARG_WITH(ROSE_INTERNAL_HEADERS, [  --with-ROSE_INTERNAL_HEADERS=ARG  manually set the directory of header files used internally)])
 if test "$with_ROSE_INTERNAL_HEADERS" = ""; then
-    echo "with-ROSE_INTERNAL_HEADERS not set"
+    AC_MSG_NOTICE([with-ROSE_INTERNAL_HEADERS not set])
 else
-    echo "with-ROSE_INTERNAL_HEADERS = user defined directory"
+    AC_MSG_NOTICE([with-ROSE_INTERNAL_HEADERS is a user defined directory])
     ROSE_CXX_HEADERS_DIR=$with_ROSE_INTERNAL_HEADERS
 fi
 
@@ -603,7 +602,7 @@ AC_DEFUN([ROSE_C_HEADER_OPTIONS], [
 # used instead of the ones that the ROSE configure process will set up automatically.
 # such header are specified, they should be put into the srcdir.
 
-echo "Setup ROSE_C_HEADERS_DIR"
+AC_MSG_NOTICE([setup ROSE_C_HEADERS_DIR])
 # echo "GCC_MAJOR = $GCC_MAJOR"
 
 AC_ARG_WITH(GNU_C_HEADERS, [  --with-GNU_C_HEADERS              use the the directory of included GNU header files in the ROSE source tree])
@@ -614,10 +613,10 @@ AC_ARG_WITH(GNU_C_HEADERS, [  --with-GNU_C_HEADERS              use the the dire
 if test "$with_GNU_C_HEADERS" = yes; then
 # if ((test "$with_GNU_HEADERS" = yes) || (test "$GCC_MAJOR" = 3)); then
   # GNU_HEADERS was activated but not specified, so set it.
-    echo "with-GNU_C_HEADERS = yes (use default GNU headers (preprocessed) distributed with ROSE)"
+    AC_MSG_NOTICE([with-GNU_C_HEADERS = yes (use default GNU headers (preprocessed) distributed with ROSE)])
     ROSE_C_HEADERS_DIR="${srcdir}/GNU_C_HEADERS"
 else
-    echo "with-GNU_C_HEADERS = no"
+    AC_MSG_NOTICE([with-GNU_C_HEADERS = "$with_GNU_C_HEADERS"])
 fi
 
 # echo "with-GNU_C_HEADERS = $with_GNU_C_HEADERS"
@@ -625,9 +624,9 @@ fi
 
 AC_ARG_WITH(ROSE_INTERNAL_HEADERS, [  --with-ROSE_INTERNAL_HEADERS=ARG  manually set the directory of header files used internally)])
 if test "$with_ROSE_INTERNAL_HEADERS" = ""; then
-    echo "with-ROSE_INTERNAL_HEADERS not set"
+    AC_MSG_NOTICE([with-ROSE_INTERNAL_HEADERS not set])
 else
-    echo "with-ROSE_INTERNAL_HEADERS = user defined directory"
+    AC_MSG_NOTICE([with-ROSE_INTERNAL_HEADERS is a user defined directory])
     ROSE_C_HEADERS_DIR=$with_ROSE_INTERNAL_HEADERS
 fi
 
@@ -656,9 +655,9 @@ AC_DEFUN([ROSE_SUPPORT_LONG_MAKE_CHECK_RULE], [
 
 AC_ARG_ENABLE(ROSE_LONG_MAKE_CHECK_RULE, [  --with-ROSE_LONG_MAKE_CHECK_RULE=yes  specify longer internal testsing by "make check" rule)])
 if test "$with_ROSE_LONG_MAKE_CHECK_RULE" = "yes"; then
-    echo "with_ROSE_LONG_MAKE_CHECK_RULE set (long testing used for \"make check\" rule)"
+    AC_MSG_NOTICE([with_ROSE_LONG_MAKE_CHECK_RULE set (long testing used for "make check" rule)])
 else
-    echo "with_ROSE_LONG_MAKE_CHECK_RULE not set (short testing used by default)"
+    AC_MSG_NOTICE([with_ROSE_LONG_MAKE_CHECK_RULE not set (short testing used by default)])
 fi
 
 ])

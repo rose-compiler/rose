@@ -249,9 +249,9 @@ SgAssignStatement
 SgAssignedGotoStatement
 SgAssociateStatement
 SgAsteriskShapeExp
-SgAterm
 SgAttribute
 SgAttributeSpecificationStatement
+SgAutoType
 SgBackspaceStatement
 SgBaseClass
 SgExpBaseClass
@@ -347,6 +347,7 @@ SgElementwiseSubtractOp
 SgElseDirectiveStatement
 SgElseWhereStatement
 SgElseifDirectiveStatement
+SgEmptyDeclaration
 SgEmptyDirectiveStatement
 SgEndfileStatement
 SgEndifDirectiveStatement
@@ -369,6 +370,8 @@ SgExpressionRoot
 SgFile
 SgFileList
 SgFloatVal
+SgFloat128Val
+SgFloat80Val
 SgFlushStatement
 SgForAllStatement
 SgForInitStatement
@@ -418,6 +421,7 @@ SgImportStatement
 SgIncidenceDirectedGraph
 SgIncidenceUndirectedGraph
 SgIncludeDirectiveStatement
+SgIncludeFile
 SgIncludeNextDirectiveStatement
 SgInitializedName
 SgInitializer
@@ -428,6 +432,7 @@ SgIntegerDivideOp
 SgIntegerDivideAssignOp
 SgInterfaceBody
 SgHeaderFileBody
+SgHeaderFileReport
 SgInterfaceStatement
 SgInterfaceSymbol
 SgIntrinsicSymbol
@@ -436,6 +441,9 @@ SgIsNotOp
 SgIorAssignOp
 SgJovialCompoolStatement
 SgJovialForThenStatement
+SgJovialDefineDeclaration
+SgJovialDirectiveStatement
+SgJovialTableStatement
 SgKeyDatumPair
 SgCudaKernelExecConfig
 SgCudaKernelCallExp
@@ -502,6 +510,11 @@ SgNoexceptOp
 SgNotEqualOp
 SgNotOp
 SgNonMembershipOp
+SgNonrealDecl
+SgNonrealRefExp
+SgNonrealSymbol
+SgNonrealType
+SgNonrealBaseClass
 SgNullExpression
 SgNullptrValExp
 SgNullStatement
@@ -691,6 +704,8 @@ SgTypeLabel
 SgTypeDouble
 SgTypeEllipse
 SgTypeFloat
+SgTypeFloat128
+SgTypeFloat80
 SgTypeGlobalVoid
 SgTypeIdOp
 SgTypeImaginary
@@ -762,6 +777,8 @@ SgUntypedImageControlStatement
 SgUntypedOtherStatement
 SgUntypedUseStatement
 SgUntypedDeclarationStatement
+SgUntypedDirectiveDeclaration
+SgUntypedEnumDeclaration
 SgUntypedInitializedName
 SgUntypedName
 SgUntypedNameListDeclaration
@@ -803,6 +820,7 @@ SgUntypedToken
 SgUntypedTokenPair
 SgUntypedType
 SgUntypedArrayType
+SgUntypedTableType
 SgUntypedAttribute
 SgUntypedFile
 SgUntypedScope
@@ -813,6 +831,7 @@ SgUntypedModuleDeclaration
 SgUntypedSubmoduleDeclaration
 SgUntypedBlockDataDeclaration
 SgUntypedStructureDeclaration
+SgUntypedStructureDefinition
 SgUntypedPackageDeclaration
 SgUntypedExceptionDeclaration
 SgUntypedExceptionHandlerDeclaration
@@ -852,6 +871,7 @@ SgVariableDefinition
 SgVariableSymbol
 SgVariantExpression
 SgVariantStatement
+SgVoidVal
 SgWaitStatement
 SgWarningDirectiveStatement
 SgWithStatement
@@ -882,6 +902,7 @@ SgJavaQualifiedType
 SgClassExp
 SgJavaUnionType
 SgJavaParameterType
+SgJovialTableType
 SgAsyncStmt
 SgFinishStmt
 SgAtStmt

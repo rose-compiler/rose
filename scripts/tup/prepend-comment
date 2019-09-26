@@ -1,0 +1,136 @@
+#!/bin/bash
+arg0="${0##*/}"
+
+usage() {
+    #     --------------------------------------------------------------------------------
+    echo "usage: $arg0 [SWITCHES] FILES... <INPUT >OUTPUT"
+    echo "  Description"
+    echo "    Emits the contents of the command-line FILES after formatting them as"
+    echo "    comments, then copies INPUT to OUTPUT.  This is typically used to insert"
+    echo "    copyright or license text at the beginning of files."
+    echo
+    echo "  Switches"
+    echo "    --language=LANG | --LANG"
+    echo "        Uses the specified language's syntax to convert the command-line files"
+    echo "        to a block comment.  The following LANG values are understood:"
+    echo "          c header: C source code, the default. \"-c\" is an alias for \"--c\"."
+    echo "          c++ cxx cpp: C++ source code using \"//\" for comments."
+    echo "          shell: shell code, or anything that uses \"#\" for comments."
+    echo
+    echo "    -w N | --width=N"
+    echo "        Width of the dilimiters for block comments. If you're trying to make the"
+    echo "        delimiter width match the text width, use the exact text width. The"
+    echo "        actual delimiter will be slightly wider to compensate for the leading "
+    echo "        comment characters and space inserted at the beginning of each line of"
+    echo "        text. If N is the word \"auto\" (the default) then each commandline"
+    echo "        argument is scanned and the length of its longest line is used."
+}
+
+# Insert the contents of the text files given on the command-line as C comments
+# in the beginning of the output, then copy input to output
+
+die() {
+    echo "$arg0" "$@" >&2
+    exit 1
+}
+
+language=c
+inputs=()
+width=auto
+while [ "$#" -gt 0 ]; do
+    arg="$1"
+    shift
+
+    case "$arg" in
+	--c|-c|--header)
+	    arg="--language=c"
+	    ;;
+	--c++|--cxx|--cpp)
+	    arg="--language=c++"
+	    ;;
+	--shell)
+	    arg="--language=shell"
+	    ;;
+    esac
+
+    case "$arg" in
+	# Help
+	-h|--help)
+	    usage
+	    exit 0
+	    ;;
+
+	# Language
+	--language)
+	    [ "$#" -gt 0 ] || die "\"$arg\" requires an argument" >&2
+	    language="$1"
+	    shift
+	    ;;
+	--language=*)
+	    language="${arg#--language=}"
+	    ;;
+
+	# Width
+	-w|--width)
+	    [ "$#" -gt 0 ] || die "\"$arg\" requires an argument" >&2
+	    width="$1"
+	    shift
+	    ;;
+	-w*)
+	    width="${arg#-w}"
+	    ;;
+	--width=*)
+	    width="${arg#--width=}"
+	    ;;
+	   
+	# Errors
+	-*)
+	    die "unknown command-line switch \"$arg\"" >&2
+	    exit 1
+	    ;;
+	*)
+	    inputs=("${inputs[@]}" "$arg")
+	    ;;
+    esac
+done
+
+[ "$width" != auto ] && [ "$width" -lt 0 ] >/dev/null 2>&1 && width=0
+
+comment_line() {
+    #local leading="$1" middle="$2" mid_repeat="$3" trailing="$4"
+    perl -e 'print $ARGV[0], $ARGV[1] x $ARGV[2], $ARGV[3], "\n"' "$@"
+}
+
+for copyright in "${inputs[@]}"; do
+    if [ "$width" = "auto" ]; then
+	w=$(awk 'BEGIN{n=0} {if (length($0) > n) n = length($0)} END{print n}' <"$copyright")
+    else
+	w="$width"
+    fi
+    [ -n "$w" ] || w=0
+
+    case "$language" in
+	c)
+	    comment_line "/*" "*" $w
+	    sed 's/^/* /' <"$copyright"
+	    comment_line "" "*" $w "*/"
+	    echo
+	    ;;
+	c++)
+	    comment_line "///" "/" $w
+	    sed 's@^@// @' <"$copyright"
+	    comment_line "///" "/" $w
+	    echo
+	    ;;
+	shell)
+	    comment_line "##" "#" $w
+	    sed 's/^/# /' <"$copyright"
+	    comment_line "##" "#" $w
+	    echo
+	    ;;
+	*)
+	    die "unknown language \"$language\""
+	    ;;
+    esac
+done
+cat

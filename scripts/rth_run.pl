@@ -586,7 +586,10 @@ if (!$immediate_output) {
     open CMD_STDOUT, "|tee $cmd_stdout_file |sed 's/^/$target [out]: /'" or die "tee $cmd_stdout_file: $!\n";
     open CMD_STDERR, "|tee $cmd_stderr_file |sed 's/^/$target [err]: /' >&2" or die "tee $cmd_stderr_file: $!\n";
 }
+my($starttime) = time;
 my($status) = run_command($config{timeout}, $subdir, @{$config{cmd}});
+my($elapsed_time) = time - $starttime;
+print CMD_STDERR "ELAPSED_TIME $elapsed_time\n";
 
 # Close the CMD_STDOUT before we start comparing it with an answer.  All subsequent command stdout will
 # be redirected to CMD_STDERR instead.

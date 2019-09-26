@@ -41,6 +41,10 @@ void fixupAstDeclarationScope( SgNode* node )
      while (i != mapOfSets.end())
         {
           SgDeclarationStatement* firstNondefiningDeclaration = i->first;
+          if (isSgNonrealDecl(firstNondefiningDeclaration)) {
+            i++;
+            continue;
+          }
 
        // DQ (3/2/2015): Added assertion.
           ROSE_ASSERT(firstNondefiningDeclaration != NULL);

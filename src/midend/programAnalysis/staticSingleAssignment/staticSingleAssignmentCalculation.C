@@ -140,13 +140,24 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
         if (memFunction == NULL)
             return false;
 
-        SgClassDefinition* funcClassScope = memFunction->get_class_scope();
-        ROSE_ASSERT(funcClassScope != NULL);
+        SgScopeStatement* funcScope = memFunction->get_class_scope();
+        ROSE_ASSERT(funcScope != NULL);
 
         //If they are members of the same class, we're done
-        if (funcClassScope == varClassScope)
+        if (funcScope == varClassScope)
         {
             return true;
+        }
+
+        SgDeclarationStatement * decl = NULL;
+        SgClassDefinition* funcClassScope = isSgClassDefinition(funcScope);
+        SgDeclarationScope* funcNonrealScope = isSgDeclarationScope(funcScope);
+        if (funcClassScope != NULL) {
+          decl = funcClassScope->get_declaration();
+        } else if (funcNonrealScope != NULL) {
+          decl = isSgDeclarationStatement(funcClassScope->get_parent());
+        } else {
+          ROSE_ASSERT(false);
         }
 
         //The two are not from the same class. Let's see if there is a friend class declaration
@@ -161,7 +172,7 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
             {
                 //The variable's class has friend class. Check if the member function in question is in that friend
                 if (nestedDeclaration->get_firstNondefiningDeclaration() ==
-                        funcClassScope->get_declaration()->get_firstNondefiningDeclaration())
+                        decl->get_firstNondefiningDeclaration())
                 {
                     return true;
                 }
@@ -171,7 +182,9 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
         //The variable is not in the same class and there is no friend class declaration, but we need to check the inheritance tree
         //We do a search of the inheritance tree; this will terminate because it's a DAG
         set<SgBaseClass*> worklist;
-        worklist.insert(funcClassScope->get_inheritances().begin(), funcClassScope->get_inheritances().end());
+        if (funcClassScope != NULL) {
+          worklist.insert(funcClassScope->get_inheritances().begin(), funcClassScope->get_inheritances().end());
+        }
 
         while (!worklist.empty())
         {

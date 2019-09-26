@@ -2,15 +2,13 @@
 #-----------------------------------------------------------------------------
 AC_DEFUN([ROSE_SUPPORT_ROSE_PART_1],
 [
-echo "Testing 2 value of FC = $FC"
-
 # Begin macro ROSE_SUPPORT_ROSE_PART_1.
 
 # *********************************************************************
 # This macro encapsulates the complexity of the tests required for ROSE
 # to understnd the machine environment and the configure command line.
 # It is represented a s single macro so that we can simplify the ROSE
-# configure.in and permit other external project to call this macro as 
+# configure.in and permit other external project to call this macro as
 # a way to set up there environment and define the many macros that an
 # application using ROSE might require.
 # *********************************************************************
@@ -18,23 +16,16 @@ echo "Testing 2 value of FC = $FC"
 # DQ (2/11/2010): Jeremiah reported this as bad syntax, I think he is correct.
 # I'm not sure how this made it into this file.
 # AMTAR ?= $(TAR)
-AMTAR = $(TAR)
-
-# DQ (9/9/2009): Added output to test values of am__tar and am__untar (fails on nmi:x86_sles_9).
-echo "Defined: am__tar   = $am__tar"
-echo "Defined: am__untar = $am__untar"
-echo "Defined: AMTAR     = $AMTAR"
+AMTAR="$TAR"
 
 # DQ (9/9/2009): Added test.
 if test "$am__tar" = "false"; then
-   echo "am__tar set to false -- this will be a problem later."
-   exit 1
+   AC_MSG_FAILURE([am__tar set to false])
 fi
 
 # DQ (9/9/2009): Added test.
 if test "$am__untar" = "false"; then
-   echo "am__untar set to false -- this will be a problem later."
-   exit 1
+   AC_MSG_FAILURE([am__untar set to false])
 fi
 
 # DQ (3/20/2009): Trying to get information about what system we are on so that I
@@ -94,7 +85,7 @@ AC_SUBST(configure_date)
 # echo "In configure: pwd = $PWD"
 
 if test "$prefix" = NONE; then
-   echo "Setting prefix to default: $PWD"
+   AC_MSG_NOTICE([setting prefix to default: "$PWD"])
    prefix="$PWD"
 fi
 
@@ -110,7 +101,7 @@ if false; then
      done
 
      if test $JAVA = "gcj"; then
-        AC_MSG_ERROR( "Error: gcj not supported. Please configure sun java as javac" );
+        AC_MSG_ERROR([gcj not supported; please configure sun java as javac])
      fi
 
     fi
@@ -125,7 +116,7 @@ AS_SET_CATFILE([ABSOLUTE_SRCDIR], [`pwd`], [${srcdir}])
 # Check for Java support used internally to support both the Fortran language (OFP fortran parser) and Java language (ECJ java parser).
 ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
 
-ROSE_CONFIGURE_SECTION([GNU Fortran])
+ROSE_CONFIGURE_SECTION([Checking GNU Fortran])
 # DQ (10/18/2010): Check for gfortran (required for syntax checking and semantic analysis of input Fortran codes)
 AX_WITH_PROG(GFORTRAN_PATH, [gfortran], [])
 AC_SUBST(GFORTRAN_PATH)
@@ -138,7 +129,7 @@ else
    AC_DEFINE([USE_GFORTRAN_IN_ROSE], [0], [Mark that GFORTRAN is not available])
 fi
 
-echo "GFORTRAN_PATH = $GFORTRAN_PATH"
+AC_MSG_NOTICE([GFORTRAN_PATH = "$GFORTRAN_PATH"])
 
 # Call supporting macro for X10 language compiler path
 
@@ -190,7 +181,7 @@ fi
 AM_CONDITIONAL(ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT, [test "x$ROSE_ENABLE_PROJECTS_DIRECTORY" = "xyes"])
 
 # ****************************************************
-# ROSE/tests directory compilation & testing 
+# ROSE/tests directory compilation & testing
 # ****************************************************
 AC_MSG_CHECKING([if we should build & test the ROSE/tests directory])
 AC_ARG_ENABLE([tests-directory],AS_HELP_STRING([--disable-tests-directory],[Disable compilation and testing of the ROSE/tests directory]),[],[enableval=yes])
@@ -221,16 +212,16 @@ fi
 AM_CONDITIONAL(ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT, [test "x$support_tutorial_directory" = xyes])
 
 # ************************************************************
-# Option to turn on a special mode of memory pools: no reuse of deleted memory. 
+# Option to turn on a special mode of memory pools: no reuse of deleted memory.
 # This is useful to track AST nodes during transformation, otherwise the same memory may be reused
-# by multiple different AST nodes. 
+# by multiple different AST nodes.
 # Liao 8/13/2014
 # ************************************************************
 
 AC_ARG_ENABLE(memoryPoolNoReuse, AS_HELP_STRING([--enable-memory-pool-no-reuse], [Enable special memory pool model: no reuse of deleted memory (default is to reuse memory)]))
 AM_CONDITIONAL(ROSE_USE_MEMORY_POOL_NO_REUSE, [test "x$enable_memory_pool_no_reuse" = xyes])
 if test "x$enable_memory_pool_no_reuse" = "xyes"; then
-  AC_MSG_WARN([Turn on a special mode in memory pools: no reuse of deleted memory blocks.])
+  AC_MSG_WARN([turn on a special mode in memory pools: no reuse of deleted memory blocks])
   AC_DEFINE([ROSE_USE_MEMORY_POOL_NO_REUSE], [], [Whether to use a special no-reuse mode of memory pools])
 fi
 
@@ -243,18 +234,18 @@ fi
 AC_ARG_ENABLE(smallerGeneratedFiles, AS_HELP_STRING([--enable-smaller-generated-files], [ROSETTA generates smaller files (but more of them so it takes longer to compile)]))
 AM_CONDITIONAL(ROSE_USE_SMALLER_GENERATED_FILES, [test "x$enable_smaller_generated_files" = xyes])
 if test "x$enable_smaller_generated_files" = "xyes"; then
-  AC_MSG_WARN([Using optional ROSETTA mechanism to generate numerous but smaller files for the ROSE IR.])
+  AC_MSG_WARN([using optional ROSETTA mechanism to generate numerous but smaller files for the ROSE IR])
   AC_DEFINE([ROSE_USE_SMALLER_GENERATED_FILES], [], [Whether to use smaller (but more numerous) generated files for the ROSE IR])
 fi
 
-# DQ (11/14/2011): Added new configure mode to support faster development of langauge specific 
+# DQ (11/14/2011): Added new configure mode to support faster development of langauge specific
 # frontend support (e.g. for work on new EDG 4.3 front-end integration into ROSE).
 AC_ARG_ENABLE(internalFrontendDevelopment, AS_HELP_STRING([--enable-internalFrontendDevelopment], [Enable development mode to reduce files required to support work on language frontends]))
 AM_CONDITIONAL(ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT, [test "x$enable_internalFrontendDevelopment" = xyes])
 if test "x$enable_internalFrontendDevelopment" = "xyes"; then
-  AC_MSG_WARN([Using reduced set of files to support faster development of language frontend work; e.g. new EDG version 4.3 to translate EDG to ROSE (internal use only)!])
+  AC_MSG_WARN([using reduced set of files to support faster development of language frontend work; e.g. new EDG version 4.3 to translate EDG to ROSE (internal use only)!])
 
-# DQ (11/14/2011): It is not good enough for this to be processed here (added to the rose_config.h file) 
+# DQ (11/14/2011): It is not good enough for this to be processed here (added to the rose_config.h file)
 # since it is seen too late in the process.
 # AC_DEFINE([ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT], [], [Whether to use internal reduced mode to support integration of the new EDG version 4.x])
 fi
@@ -265,6 +256,8 @@ ROSE_SUPPORT_EDG
 # This is the support for using Clang as a frontend in ROSE not the support for Clang as a compiler to compile ROSE source code.
 ROSE_SUPPORT_CLANG
 
+# Support for using F18/Flang as a Fortran frontend in ROSE
+ROSE_SUPPORT_FLANG
 
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
@@ -275,6 +268,24 @@ else
   ROSE_SUPPORT_GNU_EXTENSIONS="FALSE"
 fi
 AC_SUBST(ROSE_SUPPORT_GNU_EXTENSIONS)
+
+# TV (12/31/2018): Defining macro to detect the support of __float128 in EDG
+#   Only valid if compiling ROSE using GNU compiler (depends on -lquadmath)
+AC_LANG(C++)
+AX_COMPILER_VENDOR
+
+rose_use_edg_quad_float=no
+if test "x$ax_cv_cxx_compiler_vendor" == "xgnu"; then
+if test $edg_major_version_number -ge 5; then
+if test "x$build_vendor" != "xsun"; then
+  rose_use_edg_quad_float=yes
+  AC_DEFINE([ROSE_USE_EDG_QUAD_FLOAT], [], [Enables support for __float80 and __float128 in EDG.])
+fi
+fi
+fi
+AC_SUBST(ROSE_USE_EDG_QUAD_FLOAT)
+AM_CONDITIONAL(ROSE_USE_EDG_QUAD_FLOAT, [ test $rose_use_edg_quad_float == yes ])
+unset ax_cv_cxx_compiler_vendor
 
 # DQ (1/4/2009) Added support for optional Microsoft language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
@@ -288,13 +299,13 @@ fi
 AC_SUBST(ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
 AM_CONDITIONAL(ROSE_USE_MICROSOFT_EXTENSIONS, [test "x$enable_microsoft_extensions" = xyes])
 
-# DQ (9/16/2012): Added support for debugging output of new EDG/ROSE connection.  More specifically 
+# DQ (9/16/2012): Added support for debugging output of new EDG/ROSE connection.  More specifically
 # if this is not enabled then it skips the use of output spew in the new EDG/ROSE connection code.
 AC_ARG_ENABLE(debug_output_for_new_edg_interface,
     AS_HELP_STRING([--enable-debug_output_for_new_edg_interface], [Enable debugging output (spew) of new EDG/ROSE connection]))
 AM_CONDITIONAL(ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION, [test "x$enable_debug_output_for_new_edg_interface" = xyes])
 if test "x$enable_debug_output_for_new_edg_interface" = "xyes"; then
-  AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
+  AC_MSG_WARN([using this mode causes large volumes of output spew (internal debugging only)!])
   AC_DEFINE([ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new EDG/ROSE connection code])
 fi
 
@@ -303,7 +314,7 @@ AC_ARG_ENABLE(experimental_fortran_frontend,
     AS_HELP_STRING([--enable-experimental_fortran_frontend], [Enable experimental fortran frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION, [test "x$enable_experimental_fortran_frontend" = xyes])
 if test "x$enable_experimental_fortran_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enables experimental fortran front-end (internal development only)!])
+  AC_MSG_WARN([using this mode enables experimental fortran front-end (internal development only)!])
   AC_DEFINE([ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Enables development of experimental fortran frontend])
 fi
 
@@ -312,8 +323,17 @@ AC_ARG_ENABLE(debug_output_for_experimental_fortran_frontend,
     AS_HELP_STRING([--enable-debug_output_for_experimental_fortran_frontend], [Enable debugging output (spew) of new OFP/ROSE connection]))
 AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_OFP_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_fortran_frontend" = xyes])
 if test "x$enable_debug_output_for_experimental_fortran_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
+  AC_MSG_WARN([using this mode causes large volumes of output spew (internal debugging only)!])
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new OFP/ROSE connection code])
+fi
+
+# Added support for Fortran front-end development using the flang (F18) compiler [Rasmussen 8/12/2019]
+AC_ARG_ENABLE(experimental_flang_frontend,
+    AS_HELP_STRING([--enable-experimental_flang_frontend], [Enable experimental fortran frontend development using flang]))
+AM_CONDITIONAL(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION, [test "x$enable_experimental_flang_frontend" = xyes])
+if test "x$enable_experimental_flang_frontend" = "xyes"; then
+  AC_MSG_WARN([using this mode enables the experimental fortran flang front-end (internal development only)!])
+  AC_DEFINE([ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION], [], [Enables development of experimental fortran flang frontend])
 fi
 
 # DQ (8/23/2017): Added support for new csharp front-end development.
@@ -321,7 +341,7 @@ AC_ARG_ENABLE(experimental_csharp_frontend,
     AS_HELP_STRING([--enable-experimental_csharp_frontend], [Enable experimental csharp frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION, [test "x$enable_experimental_csharp_frontend" = xyes])
 if test "x$enable_experimental_csharp_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enables experimental csharp front-end (internal development only)!])
+  AC_MSG_WARN([using this mode enables experimental csharp front-end (internal development only)!])
   AC_DEFINE([ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION], [], [Enables development of experimental csharp frontend])
 
 # DQ (8/23/2017): Need to review now to get the MONO_HOME and ROSLYN_HOME environment variables.
@@ -331,17 +351,14 @@ if test "x$enable_experimental_csharp_frontend" = "xyes"; then
   mono_home=`roslyn-config mono-home`
   roslyn_home=`roslyn-config csharp-home`
 
-  echo "Mono home   = $mono_home"
-  echo "Roslyn home = $rosyln_home"
+  AC_MSG_NOTICE([Mono home   = "$mono_home"])
+  AC_MSG_NOTICE([Roslyn home = "$rosyln_home"])
 
   AC_DEFINE_UNQUOTED([ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION_MONO_HOME], ["$mono_home"], [Path to Mono Csharp compiler used in development of experimental csharp frontend])
   AC_DEFINE_UNQUOTED([ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION_ROSLYN_HOME], ["$roslyn_home"], [Path to Roslyn Csharp library used in development of experimental csharp frontend])
 
   AC_SUBST(mono_home)
   AC_SUBST(rosyln_home)
-
-# echo "Exiting as a test!"
-# exit 0
 fi
 
 # DQ (6/7/2013): Added support for debugging new csharp front-end development.
@@ -349,7 +366,7 @@ AC_ARG_ENABLE(debug_output_for_experimental_csharp_frontend,
     AS_HELP_STRING([--enable-debug_output_for_experimental_csharp_frontend], [Enable debugging output (spew) of new CSHARP/ROSE connection]))
 AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_CSHARP_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_csharp_frontend" = xyes])
 if test "x$enable_debug_output_for_experimental_csharp_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
+  AC_MSG_WARN([using this mode causes large volumes of output spew (internal debugging only)!])
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_CSHARP_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new CSHARP/ROSE connection code])
 fi
 
@@ -358,7 +375,7 @@ AC_ARG_ENABLE(experimental_ada_frontend,
     AS_HELP_STRING([--enable-experimental_ada_frontend], [Enable experimental ada frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION, [test "x$enable_experimental_ada_frontend" = xyes])
 if test "x$enable_experimental_ada_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enables experimental ada front-end (internal development only)!])
+  AC_MSG_WARN([using this mode enables experimental ada front-end (internal development only)!])
   AC_DEFINE([ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION], [], [Enables development of experimental ada frontend])
 fi
 
@@ -367,7 +384,7 @@ AC_ARG_ENABLE(debug_output_for_experimental_ada_frontend,
     AS_HELP_STRING([--enable-debug_output_for_experimental_ada_frontend], [Enable debugging output (spew) of new ADA/ROSE connection]))
 AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_ADA_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_ada_frontend" = xyes])
 if test "x$enable_debug_output_for_experimental_ada_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
+  AC_MSG_WARN([using this mode causes large volumes of output spew (internal debugging only)!])
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_ADA_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new ADA/ROSE connection code])
 fi
 
@@ -379,7 +396,7 @@ AM_CONDITIONAL(ROSE_USE_GNAT,test ! "$with_gnat" = no)
 
 if test "x$enable_experimental_ada_frontend" = "xyes"; then
   gnat_home=$with_gnat
-  echo "GNAT home = $gnat_home"
+  AC_MSG_NOTICE([GNAT home = "$gnat_home"])
   AC_DEFINE_UNQUOTED([ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION_GNAT_HOME], ["$with_gnat"], [Path to GNAT Ada compiler used in development of experimental ada frontend])
   AC_SUBST(gnat_home)
 fi
@@ -389,7 +406,7 @@ AC_ARG_ENABLE(experimental_jovial_frontend,
     AS_HELP_STRING([--enable-experimental_jovial_frontend], [Enable experimental jovial frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION, [test "x$enable_experimental_jovial_frontend" = xyes])
 if test "x$enable_experimental_jovial_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enables experimental jovial front-end (internal development only)!])
+  AC_MSG_WARN([using this mode enables experimental jovial front-end (internal development only)!])
   AC_DEFINE([ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION], [], [Enables development of experimental jovial frontend])
 fi
 
@@ -398,7 +415,7 @@ AC_ARG_ENABLE(debug_output_for_experimental_jovial_frontend,
     AS_HELP_STRING([--enable-debug_output_for_experimental_jovial_frontend], [Enable debugging output (spew) of new JOVIAL/ROSE connection]))
 AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_jovial_frontend" = xyes])
 if test "x$enable_debug_output_for_experimental_jovial_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
+  AC_MSG_WARN([using this mode causes large volumes of output spew (internal debugging only)!])
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new JOVIAL/ROSE connection code])
 fi
 
@@ -407,7 +424,7 @@ AC_ARG_ENABLE(experimental_cobol_frontend,
     AS_HELP_STRING([--enable-experimental_cobol_frontend], [Enable experimental cobol frontend development]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION, [test "x$enable_experimental_cobol_frontend" = xyes])
 if test "x$enable_experimental_cobol_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enables experimental cobol front-end (internal development only)!])
+  AC_MSG_WARN([using this mode enables experimental cobol front-end (internal development only)!])
   AC_DEFINE([ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION], [], [Enables development of experimental cobol frontend])
 fi
 
@@ -416,7 +433,7 @@ AC_ARG_ENABLE(debug_output_for_experimental_cobol_frontend,
     AS_HELP_STRING([--enable-debug_output_for_experimental_cobol_frontend], [Enable debugging output (spew) of new COBOL/ROSE connection]))
 AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_COBOL_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_cobol_frontend" = xyes])
 if test "x$enable_debug_output_for_experimental_cobol_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
+  AC_MSG_WARN([using this mode causes large volumes of output spew (internal debugging only)!])
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_COBOL_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new COBOL/ROSE connection code])
 fi
 
@@ -425,7 +442,7 @@ AC_ARG_ENABLE([experimental_matlab_frontend],
     AS_HELP_STRING([--enable-experimental_matlab_frontend], [Enable experimental Octave/Matlab frontend development (default=no)]))
 AM_CONDITIONAL(ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION, [test "x$enable_experimental_matlab_frontend" = xyes])
 if test "x$enable_experimental_matlab_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode enables experimental Octave/Matlab front-end (internal development only)!])
+  AC_MSG_WARN([using this mode enables experimental Octave/Matlab front-end (internal development only)!])
   AC_DEFINE([ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION], [], [Enables development of experimental Octave/Matlab frontend])
 fi
 
@@ -434,7 +451,7 @@ AC_ARG_ENABLE(debug_output_for_experimental_matlab_frontend,
     AS_HELP_STRING([--enable-debug_output_for_experimental_matlab_frontend], [Enable debugging output (spew) of new Octave/Matlab ROSE connection]))
 AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_MATLAB_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_matlab_frontend" = xyes])
 if test "x$enable_debug_output_for_experimental_matlab_frontend" = "xyes"; then
-  AC_MSG_WARN([Using this mode causes large volumes of output spew (internal debugging only)!])
+  AC_MSG_WARN([using this mode causes large volumes of output spew (internal debugging only)!])
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_MATLAB_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new Octave/Matlab ROSE connection code])
 fi
 
@@ -452,7 +469,7 @@ AC_ARG_ENABLE(use_new_graph_node_backward_compatability,
     AS_HELP_STRING([--enable-use_new_graph_node_backward_compatability], [Enable new (experimental) graph IR nodes backward compatability API]))
 AM_CONDITIONAL(ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY, [test "x$enable_use_new_graph_node_backward_compatability" = xyes])
 if test "x$enable_use_new_graph_node_backward_compatability" = "xyes"; then
-  AC_MSG_WARN([Using the new graph IR nodes in ROSE (experimental)!])
+  AC_MSG_WARN([using the new graph IR nodes in ROSE (experimental)!])
   AC_DEFINE([ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY], [], [Whether to use the new graph IR nodes compatability option with older API])
 fi
 
@@ -464,7 +481,7 @@ fi
 # option to build it (or have the makefile system have it be built).
 AC_ARG_ENABLE(dot2gml_translator,
 [  --enable-dot2gml_translator   Configure option to have DOT to GML translator built (bison version specific tool).],
-[ echo "Setting up optional DOT-to-GML translator in directory: src/roseIndependentSupport/dot2gml"
+[ AC_MSG_NOTICE([setting up optional DOT-to-GML translator in directory: src/roseIndependentSupport/dot2gml])
 ])
 AM_CONDITIONAL(DOT_TO_GML_TRANSLATOR,test "$enable_dot2gml_translator" = yes)
 
@@ -488,18 +505,18 @@ AC_CANONICAL_HOST
 
 # *****************************************************************
 
-# DQ (3/21/2017): Moved this to here (earlier than where is it used below) so that 
+# DQ (3/21/2017): Moved this to here (earlier than where is it used below) so that
 # the warnings options can use the compiler vendor instead of the compiler name.
 AC_LANG(C++)
 
-# Get frontend compiler vendor 
+# Get frontend compiler vendor
 AX_COMPILER_VENDOR
 FRONTEND_CXX_COMPILER_VENDOR="$ax_cv_cxx_compiler_vendor"
 
 # echo "_AC_LANG_ABBREV              = $_AC_LANG_ABBREV"
-echo "ax_cv_c_compiler_vendor      = $ax_cv_c_compiler_vendor"
-echo "ax_cv_cxx_compiler_vendor    = $ax_cv_cxx_compiler_vendor"
-echo "FRONTEND_CXX_COMPILER_VENDOR = $FRONTEND_CXX_COMPILER_VENDOR"
+# echo "ax_cv_c_compiler_vendor      = $ax_cv_c_compiler_vendor"
+# echo "ax_cv_cxx_compiler_vendor    = $ax_cv_cxx_compiler_vendor"
+AC_MSG_NOTICE([FRONTEND_CXX_COMPILER_VENDOR = "$FRONTEND_CXX_COMPILER_VENDOR"])
 
 unset ax_cv_cxx_compiler_vendor
 
@@ -514,14 +531,14 @@ ROSE_FLAG_CXX_OPTIONS
 
 # DQ (11/14/2011): This is defined here since it must be seen before any processing of the rose_config.h file.
 if test "x$enable_internalFrontendDevelopment" = "xyes"; then
-  AC_MSG_NOTICE([Adding -D to command line to support faster development of language frontend work.])
+  AC_MSG_NOTICE([adding -D to command line to support faster development of language frontend work])
   CFLAGS+=" -DROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT"
   CXXFLAGS+=" -DROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT"
 fi
 
-echo "CFLAGS   = $CFLAGS"
-echo "CXXFLAGS = $CXXFLAGS"
-echo "CPPFLAGS = $CPPFLAGS"
+AC_MSG_NOTICE([CFLAGS   = "$CFLAGS"])
+AC_MSG_NOTICE([CXXFLAGS = "$CXXFLAGS"])
+AC_MSG_NOTICE([CPPFLAGS = "$CPPFLAGS"])
 
 # *****************************************************************
 #    Option to define a uniform debug level for ROSE development
@@ -533,7 +550,7 @@ AC_MSG_CHECKING([for enabled advanced warning support])
 AC_ARG_ENABLE(advanced_warnings, AS_HELP_STRING([--enable-advanced-warnings], [Support for an advanced uniform warning level for ROSE development]),[enableval=yes],[enableval=no])
 AM_CONDITIONAL(ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT, [test "x$enable_advanced_warnings" = xyes])
 if test "x$enable_advanced_warnings" = "xyes"; then
-  AC_MSG_WARN([Using an advanced uniform warning level for ROSE development.])
+  AC_MSG_WARN([using an advanced uniform warning level for ROSE development])
   AC_DEFINE([ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT], [], [Support for an advanced uniform warning level for ROSE development])
 
 # Suggested C++ specific flags (used to be run before Hudson, but fail currently).
@@ -548,20 +565,20 @@ fi
 # ROSE_USE_UNIFORM_DEBUG_SUPPORT=7
 AC_SUBST(ROSE_USE_UNIFORM_ADVANCED_WARNINGS_SUPPORT)
 
-echo "After processing --enable-advanced-warnings: CXX_ADVANCED_WARNINGS = ${CXX_ADVANCED_WARNINGS}"
-echo "After processing --enable-advanced-warnings: CXX_WARNINGS = ${CXX_WARNINGS}"
-echo "After processing --enable-advanced-warnings: C_WARNINGS   = ${C_WARNINGS}"
+AC_MSG_NOTICE([after processing --enable-advanced-warnings: CXX_ADVANCED_WARNINGS = "${CXX_ADVANCED_WARNINGS}"])
+AC_MSG_NOTICE([after processing --enable-advanced-warnings: CXX_WARNINGS = "${CXX_WARNINGS}"])
+AC_MSG_NOTICE([after processing --enable-advanced-warnings: C_WARNINGS   = "${C_WARNINGS}"])
 
-echo "CFLAGS   = $CFLAGS"
-echo "CXXFLAGS = $CXXFLAGS"
-echo "CPPFLAGS = $CPPFLAGS"
+AC_MSG_NOTICE([CFLAGS   = "$CFLAGS"])
+AC_MSG_NOTICE([CXXFLAGS = "$CXXFLAGS"])
+AC_MSG_NOTICE([CPPFLAGS = "$CPPFLAGS"])
 
 # echo "Exiting in support after enabled advanced warnings"
 # exit 1
 
 # *****************************************************************
 
-# DQ: added here to see if it would be defined for the template tests and avoid placing 
+# DQ: added here to see if it would be defined for the template tests and avoid placing
 # a $(CXX_TEMPLATE_REPOSITORY_PATH) directory in the top level build directory (a minor error)
 CXX_TEMPLATE_REPOSITORY_PATH='$(top_builddir)/src'
 
@@ -586,12 +603,12 @@ case "$enable_assertion_behavior" in
     exit|"")  assertion_behavior=ROSE_ASSERTION_EXIT ;;
     throw)    assertion_behavior=ROSE_ASSERTION_THROW ;;
     *)
-        AC_MSG_ERROR(["--enable-assertion-behavior should be "abort", "exit", or "throw"])
+        AC_MSG_ERROR([--enable-assertion-behavior should be "abort", "exit", or "throw"])
         ;;
 esac
 
 AC_DEFINE_UNQUOTED([ROSE_ASSERTION_BEHAVIOR], [$assertion_behavior], [Determines how failed assertions should behave.])
-    
+
 # *****************************************************************
 
 # ********************************************************************************
@@ -642,7 +659,7 @@ AM_CONDITIONAL(ROSE_USE_MYSQL,test "$found_mysql" = yes)
 # we can make the backend selection a bit more compiler dependent. Actually we likely
 # don't need this!
 # DQ (9/17/2006): These should be the same for both C and C++ (else we will need separate macros)
-# Setup the -D<xxx> defines required to allow EDG to take the same path through the compiler 
+# Setup the -D<xxx> defines required to allow EDG to take the same path through the compiler
 # specific and system specific header files as for the backend compiler.  These depend
 # upon the selection of the back-end compiler.
 # GET_COMPILER_SPECIFIC_DEFINES
@@ -650,17 +667,13 @@ AM_CONDITIONAL(ROSE_USE_MYSQL,test "$found_mysql" = yes)
 # Test this macro here at the start to avoid long processing times (before it fails)
 CHOOSE_BACKEND_COMPILER
 
-# DQ (12/29/2011): Adding support for improved template declaration handling (only for EDG 4.3 and later)
-# TV (06/17/2013): Now always the case (EDG 4.7).
-AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [Controls design of internal template declaration support within the ROSE AST.])
-
 # *****************************************************************
 
 # Calling available macro from Autoconf (test by optionally pushing C language onto the internal autoconf language stack).
 # This function must be called from this support-rose file (error in ./build if called from the GET COMPILER SPECIFIC DEFINES macro.
 # AC_LANG_PUSH(C)
 
-# Get frontend compiler vendor 
+# Get frontend compiler vendor
 AX_COMPILER_VENDOR
 FRONTEND_CXX_COMPILER_VENDOR="$ax_cv_cxx_compiler_vendor"
 unset ax_cv_cxx_compiler_vendor
@@ -668,22 +681,22 @@ unset ax_cv_cxx_compiler_vendor
 # Get backend compiler vendor
   saved_compiler_name=$CXX
   CXX=$BACKEND_CXX_COMPILER
-  echo "After resetting CXX to be the backend compiler: CXX = $CXX"
+  AC_MSG_NOTICE([after resetting CXX to be the backend compiler: CXX = "$CXX"])
 
   AX_COMPILER_VENDOR
-# returns string ax_cv_cxx_compiler_vendor if this is the C++ compiler else returns 
+# returns string ax_cv_cxx_compiler_vendor if this is the C++ compiler else returns
 # the vendor for the C compiler in ax_cv_c_compiler_vendor for the C compiler.
 # CcompilerVendorName= $ax_cv_c_compiler_vendor
 # CxxcompilerVendorName= $ax_cv_cxx_compiler_vendor
 # echo "Output the names of the vendor for the C or C++ backend compilers."
 # echo "Using back-end C   compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_c_compiler_vendor   for processing of unparsed source files from ROSE preprocessors."
-  echo "Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors."
+  AC_MSG_NOTICE([using back-end C++ compiler = "$BACKEND_CXX_COMPILER" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors])
   BACKEND_CXX_COMPILER_VENDOR="$ax_cv_cxx_compiler_vendor"
 
   CXX=$saved_compiler_name
-  echo "After resetting CXX to be the saved name of the original compiler: CXX = $CXX"
+  AC_MSG_NOTICE([after resetting CXX to be the saved name of the original compiler: CXX = "$CXX"])
 
-echo "FRONTEND_CXX_COMPILER_VENDOR = $FRONTEND_CXX_COMPILER_VENDOR"
+AC_MSG_NOTICE([FRONTEND_CXX_COMPILER_VENDOR = "$FRONTEND_CXX_COMPILER_VENDOR"])
 
 # echo "Exiting after computing the backend compiler vendor"
 # exit 1
@@ -708,7 +721,7 @@ if test "x$enableval" = "xyes" ; then
        ],
        [AC_MSG_RESULT([done])],
        gcc_version=`gcc -dumpversion`
-       [AC_MSG_FAILURE([your GCC $gcc_version version is currently NOT supported by ROSE. GCC 4.0.x to 4.8.x is supported now.])])
+       [AC_MSG_FAILURE([your GCC $gcc_version version is currently NOT supported by ROSE; GCC 4.0.x to 4.8.x is supported now])])
       AC_LANG_POP([C])
 else
     AC_MSG_RESULT([skipping])
@@ -721,13 +734,13 @@ fi
 
 # DQ (2/7/17): This is a problem reported by Robb (sometimes gcc is not installed).
 # This is used in EDG (host_envir.h)  Test by building a bad version of gcc
-# use shell script called gcc with "exit 1" inside. 
+# use shell script called gcc with "exit 1" inside.
 if test "x$FRONTEND_CXX_COMPILER_VENDOR" = "xgnu" ; then
    GCC_VERSION=`gcc -dumpversion | cut -d\. -f1`
    GCC_MINOR_VERSION=`gcc -dumpversion | cut -d\. -f2`
 
-   echo "Initial compiler version test: GCC_VERSION = $GCC_VERSION"
-   echo "Initial compiler version test: GCC_MINOR_VERSION = $GCC_MINOR_VERSION"
+   AC_MSG_NOTICE([initial compiler version test: GCC_VERSION = "$GCC_VERSION"])
+   AC_MSG_NOTICE([initial compiler version test: GCC_MINOR_VERSION = "$GCC_MINOR_VERSION"])
 
    AC_SUBST(GCC_VERSION)
    AC_SUBST(GCC_MINOR_VERSION)
@@ -742,35 +755,35 @@ fi
 
 # *****************************************************************
 
-# DQ (2/7/2017): These macros test for C++11 and C++14 features and 
+# DQ (2/7/2017): These macros test for C++11 and C++14 features and
 # the default behavior of the CXX compiler.  Unfortunately the also
 # modify the CXX value so we have to save it and reset it after the
-# macros are called.  We modified the macros as well to save the 
+# macros are called.  We modified the macros as well to save the
 # default behavior of the CXX compiler so that we can detect C++11
 # mode within the frontend compiler used to compile ROSE.  Thi is used
 # mostly so far to just disable some test that are causing GNU g++
 # version 4.8.x internal errors (because the C++11 support is new).
 
-echo "Before checking C++11 support: CXX = $CXX CXXCPP = $CXXCPP"
+AC_MSG_NOTICE([before checking C++11 support: CXX = $CXX CXXCPP = "$CXXCPP"])
 
-echo "Calling AX CXX COMPILE STDCXX 11 macro."
+AC_MSG_NOTICE([calling AX CXX COMPILE STDCXX 11 macro])
 save_CXX="$CXX"
 AX_CXX_COMPILE_STDCXX_11(, optional)
 
-echo "After checking C++11 support: CXX = $CXX CXXCPP = $CXXCPP"
+AC_MSG_NOTICE([after checking C++11 support: CXX = "$CXX", CXXCPP = "$CXXCPP"])
 
-echo "rose_frontend_compiler_default_is_cxx11_success = $rose_frontend_compiler_default_is_cxx11_success"
-echo "gcc_version_4_8                                 = $gcc_version_4_8"
+AC_MSG_NOTICE([rose_frontend_compiler_default_is_cxx11_success = "$rose_frontend_compiler_default_is_cxx11_success"])
+AC_MSG_NOTICE([gcc_version_4_8                                 = "$gcc_version_4_8"])
 
 AM_CONDITIONAL(ROSE_USING_GCC_VERSION_4_8_CXX11, [test "x$gcc_version_4_8" = "xyes" && test "x$rose_frontend_compiler_default_is_cxx11_success" = "xyes"])
 
-echo "Calling AX CXX COMPILE STDCXX 14 macro."
+AC_MSG_NOTICE([calling AX CXX COMPILE STDCXX 14 macro])
 AX_CXX_COMPILE_STDCXX_14(, optional)
 
-echo "After checking C++14 support: CXX = $CXX CXXCPP = $CXXCPP"
+AC_MSG_NOTICE([after checking C++14 support: CXX = "$CXX", CXXCPP = "$CXXCPP"])
 CXX="$save_CXX"
 
-echo "After restoring the saved value of CXX: CXX = $CXX CXXCPP = $CXXCPP"
+AC_MSG_NOTICE([after restoring the saved value of CXX: CXX = "$CXX", CXXCPP = "$CXXCPP"])
 
 # echo "Exiting in support-rose after computing the C++ mode (c++11, and c++14 modes)"
 # exit 1
@@ -795,7 +808,7 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES],
 [
 # Begin macro ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES.
 
-echo "In ROSE SUPPORT ROSE BUILD INCLUDE FILES: Using back-end C++ compiler = \"$BACKEND_CXX_COMPILER\" compiler vendor name = $ax_cv_cxx_compiler_vendor for processing of unparsed source files from ROSE preprocessors."
+AC_MSG_NOTICE([in ROSE SUPPORT ROSE BUILD INCLUDE FILES: Using back-end C++ compiler = "$BACKEND_CXX_COMPILER" compiler vendor name = "$ax_cv_cxx_compiler_vendor" for processing of unparsed source files from ROSE preprocessors])
 
 # Note that this directory name is not spelled correctly, is this a typo?
 # JJW (12/10/2008): We don't preprocess the header files for the new interface
@@ -804,7 +817,7 @@ rm -rf ./include-stagin
 if test x$enable_clang_frontend = xyes; then
   INSTALL_CLANG_SPECIFIC_HEADERS
 else
-  # DQ (11/1/2011): I think that we need these for more complex header file 
+  # DQ (11/1/2011): I think that we need these for more complex header file
   # requirements than we have seen in testing C code to date.  Previously
   # in testing C codes with the EDG 4.x we didn't need as many header files.
   GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
@@ -829,10 +842,10 @@ m4_require([_LT_SYS_DYNAMIC_LINKER])
 # AC_REQUIRE([AC_PROG_CXX])
 AC_PROG_CXX
 
-echo "In configure.in ... CXX = $CXX"
+AC_MSG_NOTICE([in configure.in ... CXX = "$CXX"])
 
 # DQ (9/17/2006): These should be the same for both C and C++ (else we will need separate macros)
-# Setup the -D<xxx> defines required to allow EDG to take the same path through the compiler 
+# Setup the -D<xxx> defines required to allow EDG to take the same path through the compiler
 # specific and system specific header files as for the backend compiler.  These depend
 # upon the selection of the back-end compiler.
 GET_COMPILER_SPECIFIC_DEFINES
@@ -843,7 +856,7 @@ ROSE_CONFIG_TOKEN="$ROSE_CONFIG_TOKEN $FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CX
 # SETUP_BACKEND_COMPILER_SPECIFIC_REFERENCES
 # JJW (12/10/2008): We don't preprocess the header files for the new interface,
 # but we still need to use the original C++ header directories
-ROSE_CONFIGURE_SECTION([Backend C/C++ compiler specific references])
+ROSE_CONFIGURE_SECTION([Checking backend C/C++ compiler specific references])
 SETUP_BACKEND_C_COMPILER_SPECIFIC_REFERENCES
 SETUP_BACKEND_CXX_COMPILER_SPECIFIC_REFERENCES
 
@@ -869,7 +882,7 @@ AM_PATH_XML2(2.0.0, [with_xml="yes"])
 AM_CONDITIONAL(ROSE_USE_XML,test "$with_xml" != no)
 
 # DQ (10/17/2009): This is a bug introduced (again) into ROSE which disables the Java support.
-# See elsewhere in this file where this macro is commented out and the reason explained in 
+# See elsewhere in this file where this macro is commented out and the reason explained in
 # more details.
 # AS Check for ssl for the binary clone detection work
 # CHECK_SSL
@@ -884,23 +897,16 @@ AM_CONDITIONAL(ROSE_USE_BINARYCONTEXTLOOKUP, [test "$with_xml" != "no" -a "$ROSE
 AC_CHECK_TOOL(ROSE_WGET_PATH, [wget], [no])
 AM_CONDITIONAL(ROSE_USE_WGET, [test "$ROSE_WGET_PATH" != "no"])
 if test "$ROSE_WGET_PATH" = "no"; then
-   echo "***** wget was NOT found *****";
-   echo "ROSE now requires wget to download EDG binaries automatically.";
-   exit 1;
+   AC_MSG_FAILURE([wget was not found; ROSE requires wget to download EDG binaries automatically])
 else
- # Not clear if we really should have ROSE configure automatically do something like this.
-   echo "ROSE might use wget to automatically download EDG binaries as required during the build ...";
-   echo "***** wget WAS found *****";
+   # Not clear if we really should have ROSE configure automatically do something like this.
+   AC_MSG_NOTICE([ROSE might use wget to automatically download EDG binaries as required during the build])
 fi
 # Check for availability of ps2pdf, part of ghostscript (used for generating pdf files).
 AC_CHECK_TOOL(ROSE_PS2PDF_PATH, [ps2pdf], [no])
 AM_CONDITIONAL(ROSE_USE_PS2PDF, [test "$ROSE_PS2PDF_PATH" != "no"])
 if test "$ROSE_PS2PDF_PATH" = "no"; then
-   echo "Error: ps2pdf was NOT found "
-   echo "ROSE requires ps2pdf (part of ghostscript) to generate pdf files.";
-   exit 1;
-else
-   echo "***** ps2pdf WAS found *****";
+   AC_MSG_FAILURE([ps2pdf was not found; ROSE requires ps2pdf (part of ghostscript) to generate pdf files])
 fi
 
 AC_C_BIGENDIAN
@@ -935,8 +941,8 @@ AC_SUBST(YACC)
 AC_PROG_MAKE_SET
 
 # DQ (9/21/2009): Debugging for RH release 5
-echo "Testing the value of CC: (CC = $CC)"
-echo "Testing the value of CPPFLAGS: (CPPFLAGS = $CPPFLAGS)"
+AC_MSG_NOTICE([testing the value of CC: (CC = "$CC")])
+AC_MSG_NOTICE([testing the value of CPPFLAGS: (CPPFLAGS = "$CPPFLAGS")])
 
 # Call supporting macro for MAPLE
 ROSE_SUPPORT_MAPLE
@@ -945,7 +951,7 @@ ROSE_SUPPORT_MAPLE
 AM_CONDITIONAL(ROSE_USE_MAPLE,test ! "$with_maple" = no)
 
 # DQ (5/21/2017): I don't think we use this anymore.
-ROSE_SUPPORT_VXWORKS
+#ROSE_SUPPORT_VXWORKS
 
 # Setup Automake conditional.
 AM_CONDITIONAL(ROSE_USE_VXWORKS,test ! "$with_vxworks" = no)
@@ -993,34 +999,34 @@ ROSE_SUPPORT_STRATEGO
 
 if test "x$enable_experimental_fortran_frontend" = "xyes"; then
    if test "x$ATERM_LIBRARY_PATH" = "x"; then
-      AC_MSG_ERROR([Support for experimental_fortran_frontend requires Aterm library support, --with-aterm=<path> must be specified!])
+      AC_MSG_ERROR([support for experimental_fortran_frontend requires Aterm library support, --with-aterm=PATH must be specified])
    fi
    if test "x$STRATEGO_LIBRARY_PATH" = "x"; then
-      AC_MSG_ERROR([Support for experimental_fortran_frontend requires Stratego library support, --with-stratego=<path> must be specified!])
+      AC_MSG_ERROR([support for experimental_fortran_frontend requires Stratego library support, --with-stratego=PATH must be specified])
    fi
 fi
 
 # Rasmussen (10/24/2017): ATerm and Stratego/XT tools binary installation required for Jovial support.
 if test "x$enable_experimental_jovial_frontend" = "xyes"; then
    if test "x$ATERM_LIBRARY_PATH" = "x"; then
-      AC_MSG_ERROR([Support for experimental_jovial_frontend requires Aterm library support, --with-aterm=<path> must be specified!])
+      AC_MSG_ERROR([support for experimental_jovial_frontend requires Aterm library support, --with-aterm=PATH must be specified!])
    fi
    if test "x$STRATEGO_LIBRARY_PATH" = "x"; then
-      AC_MSG_ERROR([Support for experimental_jovial_frontend requires Stratego library support, --with-stratego=<path> must be specified!])
+      AC_MSG_ERROR([support for experimental_jovial_frontend requires Stratego library support, --with-stratego=PATH must be specified!])
    fi
 fi
 
 # Rasmussen (10/24/2017): GnuCobol parse-tree library installation required for Cobol support.
 if test "x$enable_experimental_cobol_frontend" = "xyes"; then
    if test "x$COBPT_LIBRARY_PATH" = "x"; then
-      AC_MSG_ERROR([Support for experimental_cobol_frontend requires GnuCobol parse-tree library support, --with-cobpt=<path> must be specified!])
+      AC_MSG_ERROR([support for experimental_cobol_frontend requires GnuCobol parse-tree library support, --with-cobpt=PATH must be specified!])
    fi
 fi
 
 # Rasmussen (11/19/2017): Octave/Matlab parser installation required for Matlab support.
 if test "x$enable_experimental_matlab_frontend" = "xyes"; then
    if test "x$OCTAVE_PARSER_INSTALL_TARFILE" = "x"; then
-      AC_MSG_ERROR([Support for experimental_matlab_frontend requires the modified GNU Octave parser, --with-octave-parser=<path> must be specified!])
+      AC_MSG_ERROR([support for experimental_matlab_frontend requires the modified GNU Octave parser, --with-octave-parser=PATH must be specified!])
    fi
 fi
 
@@ -1051,7 +1057,7 @@ AM_CONDITIONAL(ROSE_USE_WINDOWS_ANALYSIS_SUPPORT,test ! "$with_wine" = no)
 ROSE_SUPPORT_EDG_DEBUGGING
 
 # Call supporting macro for Omni OpenMP
-# 
+#
 ROSE_SUPPORT_OMNI_OPENMP
 
 # call supporting macro for GCC 4.4.x gomp OpenMP runtime library
@@ -1068,7 +1074,7 @@ AM_CONDITIONAL(ROSE_USE_GCC_OMP,test ! "$with_parallel_ast_traversal_omp" = no)
 # JJW and TP (3-17-2008) -- added MPI support
 AC_ARG_WITH(parallel_ast_traversal_mpi,
 [  --with-parallel_ast_traversal_mpi     Enable AST traversal in parallel using MPI.],
-[ echo "Setting up optional MPI-based tools"
+[ AC_MSG_NOTICE([setting up optional MPI-based tools])
 ])
 AM_CONDITIONAL(ROSE_MPI,test "$with_parallel_ast_traversal_mpi" = yes)
 AC_CHECK_TOOLS(MPICXX, [mpiCC mpic++ mpicxx])
@@ -1077,19 +1083,19 @@ AC_CHECK_TOOLS(MPICXX, [mpiCC mpic++ mpicxx])
 # TPS (2-11-2009) -- added PCH Support
 AC_ARG_WITH(pch,
 [  --with-pch                    Configure option to have pre-compiled header support enabled.],
-[ echo "Enabling precompiled header"
+[ AC_MSG_NOTICE([enabling precompiled header])
 ])
 AM_CONDITIONAL(ROSE_PCH,test "$with_pch" = yes)
 if test "x$with_pch" = xyes; then
-  AC_MSG_NOTICE( "PCH enabled: You got the following CPPFLAGS: $CPPFLAGS" );
+  AC_MSG_NOTICE(["PCH enabled: CPPFLAGS = "$CPPFLAGS"])
   if test "x$with_parallel_ast_traversal_mpi" = xyes; then
-    AC_MSG_ERROR( "PCH Support cannot be configured together with MPI support" );
+    AC_MSG_ERROR([PCH support cannot be configured together with MPI support])
   fi
   if test "x$with_parallel_ast_traversal_omp" = xyes; then
-    AC_MSG_ERROR( "PCH Support cannot be configured together with GCC_OMP support" );
+    AC_MSG_ERROR([PCH Support cannot be configured together with GCC_OMP support])
   fi
 else
-  AC_MSG_NOTICE( "PCH disabled: No Support for PCH." );
+  AC_MSG_NOTICE("PCH disabled: no Support for PCH")
 fi
 
 
@@ -1112,24 +1118,23 @@ AC_PATH_X dnl We need to do this by hand for some reason
 # MDL_HAVE_OPENGL
 AC_FIND_OPENGL
 
-echo "have_GL = '$have_GL' and have_glut = '$have_glut' and rose_openGL = '$rose_openGL'"
+AC_MSG_NOTICE([have_GL = "$have_GL" and have_glut = "$have_glut" and rose_openGL = "$rose_openGL"])
 #AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$openGL" = xno)
 if test ! "x$rose_openGL" = xno; then
-   AC_MSG_NOTICE( "Checking OpenGL dependencies..." );
+   AC_MSG_NOTICE([checking OpenGL dependencies..."])
   if test "x$have_GL" = xyes; then
-    AC_MSG_NOTICE( "OpenGL enabled. Found OpenGL." );
+    AC_MSG_NOTICE([OpenGL enabled: found OpenGL])
   else
-    AC_MSG_ERROR( "OpenGL not found!" );
+    AC_MSG_ERROR([OpenGL not found])
   fi
  if test "x$have_glut" = xyes; then
-    AC_MSG_NOTICE( "OpenGL enabled. Found GLUT." );
+    AC_MSG_NOTICE([OpenGL enabled: found GLUT])
  else
-#    AC_MSG_NOTICE( "OpenGL GLUT not found Msg" );
-   AC_MSG_NOTICE( "OpenGL GLUT not found. Please use --with-glut" );
+   AC_MSG_NOTICE([OpenGL GLUT not found; please use --with-glut])
  fi
 fi
 ], [ rose_openGL=no
-  AC_MSG_NOTICE( "OpenGL disabled." );
+  AC_MSG_NOTICE([OpenGL disabled])
 ])
 AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$rose_openGL" = xno)
 
@@ -1144,15 +1149,15 @@ if test ! "$with_glut" ; then
 fi
 )
 
-echo "In ROSE SUPPORT MACRO: with_glut $with_glut"
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: with_glut = "$with_glut"])
 
 if test "$with_glut" = no; then
    # If dwarf is not specified, then don't use it.
-   echo "Skipping use of GLUT support!"
+   AC_MSG_NOTICE([skipping use of GLUT support])
 else
    AM_CONDITIONAL(USE_ROSE_GLUT_SUPPORT, true)
    glut_path=$with_glut
-   echo "Setup GLUT support in ROSE! path = $glut_path"
+   AC_MSG_NOTICE([setup GLUT support in ROSE. path = "$glut_path"])
    AC_DEFINE([USE_ROSE_GLUT_SUPPORT],1,[Controls use of ROSE support for GLUT library.])
 fi
 
@@ -1167,17 +1172,17 @@ AC_CHECK_PROGS(PERL, [perl])
 # This command is used in the tests/nonsmoke/functional/roseTests/astInterfaceTests/Makefile.am file.
 AC_CHECK_PROGS(INDENT, [indent])
 AM_CONDITIONAL(ROSE_USE_INDENT, [test "x$INDENT" = "xindent"])
-echo "value of INDENT variable = $INDENT"
+AC_MSG_NOTICE([INDENT = "$INDENT"])
 
 # DQ (9/30/2009): Added checking for tclsh command (common in Linux, but not on some platforms).
 AC_CHECK_PROGS(TCLSH, [tclsh])
 AM_CONDITIONAL(ROSE_USE_TCLSH, [test "x$TCLSH" = "xtclsh"])
-echo "value of TCLSH variable = $TCLSH"
+AC_MSG_NOTICE([TCLSH = "$TCLSH"])
 
 # Call supporting macro for OFP
 ROSE_SUPPORT_OFP
 
-# DQ (3/6/2013): The major version number must match or the ac_pkg_swig.m4 will report 
+# DQ (3/6/2013): The major version number must match or the ac_pkg_swig.m4 will report
 # we are using the wrong version of swig (likely we need a newer version of this m4 script).
 # AC_PROG_SWIG(1.3.31)
 AC_PROG_SWIG(2.0.0)
@@ -1191,14 +1196,14 @@ AM_CONDITIONAL(ENABLE_JAVAPORT,test "$with_javaport" = yes)
 
 if test "x$with_javaport" = "xyes"; then
   if test "x$USE_JAVA" = "x0"; then
-    AC_MSG_ERROR([Trying to enable --with-javaport without --with-java also being set])
+    AC_MSG_ERROR([trying to enable --with-javaport without --with-java also being set])
   fi
   if /bin/sh -c "$SWIG -version" >& /dev/null; then
     :
   else
-    AC_MSG_ERROR([Trying to enable --with-javaport without SWIG installed])
+    AC_MSG_ERROR([trying to enable --with-javaport without SWIG installed])
   fi
-  AC_MSG_WARN([Enabling Java binding support -- SWIG produces invalid C++ code, so -fno-strict-aliasing is being added to CXXFLAGS to work around this issue.  If you are not using GCC as a compiler, this flag will need to be changed.])
+  AC_MSG_WARN([enabling Java binding support -- SWIG produces invalid C++ code, so -fno-strict-aliasing is being added to CXXFLAGS to work around this issue.  If you are not using GCC as a compiler, this flag will need to be changed.])
   CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
 
 # DQ (3/6/2013): Added support to permit conditional compilation for use of SWIG.
@@ -1249,14 +1254,12 @@ AC_ARG_WITH(
         AS_HELP_STRING([--with-ppl@<:@=DIR@:>@], [use Parma Polyhedral Library (PPL)]),
         [
         if test "$withval" = "no"; then
-                echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
-                exit 1
+      AC_MSG_FAILURE([--with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)])
         elif test "$withval" = "yes"; then
-                echo "Error: --with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)"
-                exit 1
+      AC_MSG_FAILURE([--with-ppl=PATH must be specified to use option --with-ppl (a valid Parma Polyhedral Library (PPL) intallation)])
         else
-                has_ppl_path="yes"
-                ppl_path="$withval"
+            has_ppl_path="yes"
+            ppl_path="$withval"
         fi
         ],
         [has_ppl_path="no"]
@@ -1290,14 +1293,12 @@ AC_ARG_WITH(
         AS_HELP_STRING([--with-cloog@<:@=DIR@:>@], [use Cloog]),
         [
         if test "$withval" = "no"; then
-                echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
-                exit 1
+      AC_MSG_FAILURE([--with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)])
         elif test "$withval" = "yes"; then
-                echo "Error: --with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)"
-                exit 1
+            AC_MSG_FAILURE([--with-cloog=PATH must be specified to use option --with-cloog (a valid Cloog intallation)])
         else
-                has_cloog_path="yes"
-                cloog_path="$withval"
+            has_cloog_path="yes"
+            cloog_path="$withval"
         fi
         ],
         [has_cloog_path="no"]
@@ -1331,14 +1332,12 @@ AC_ARG_WITH(
         AS_HELP_STRING([--with-scoplib@<:@=DIR@:>@], [use ScopLib]),
         [
         if test "$withval" = "no"; then
-                echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
-                exit 1
+      AC_MSG_FAILURE([--with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)])
         elif test "$withval" = "yes"; then
-                echo "Error: --with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)"
-                exit 1
+      AC_MSG_FAILURE([--with-scoplib=PATH must be specified to use option --with-scoplib (a valid ScopLib intallation)])
         else
-                has_scoplib_path="yes"
-                scoplib_path="$withval"
+            has_scoplib_path="yes"
+            scoplib_path="$withval"
         fi
         ],
         [has_scoplib_path="no"]
@@ -1372,14 +1371,12 @@ AC_ARG_WITH(
         AS_HELP_STRING([--with-candl@<:@=DIR@:>@], [use Candl]),
         [
         if test "$withval" = "no"; then
-                echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
-                exit 1
+            AC_MSG_FAILURE([--with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)])
         elif test "$withval" = "yes"; then
-                echo "Error: --with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)"
-                exit 1
+            AC_MSG_FAILURE([--with-candl=PATH must be specified to use option --with-candl (a valid Candl intallation)])
         else
-                has_candl_path="yes"
-                candl_path="$withval"
+            has_candl_path="yes"
+            candl_path="$withval"
         fi
         ],
         [has_candl_path="no"]
@@ -1424,7 +1421,7 @@ ROSE_SUPPORT_DOXYGEN
 # Setup Automake conditional to allow use of Doxygen Tag file to speedup
 # generation of Rose documentation this does not however provide the
 # best organized documentation so we use it as an option to speed up
-# the development of the documenation and then alternatively build the 
+# the development of the documenation and then alternatively build the
 # final documentation.
 # AM_CONDITIONAL(DOXYGEN_GENERATE_FAST_DOCS,test "$enable_doxygen_generate_fast_docs" = yes)
 # echo "In configure.in: enable_doxygen_generate_fast_docs = $enable_doxygen_generate_fast_docs"
@@ -1432,9 +1429,9 @@ ROSE_SUPPORT_DOXYGEN
 # Test for setup of document merge of Sage docs with Rose docs
 # Causes document build process to take longer but builds better documentation
 if (test "$enable_doxygen_generate_fast_docs" = yes) ; then
-   AC_MSG_NOTICE([Generate Doxygen documentation faster (using tag file mechanism) ...])
+   AC_MSG_NOTICE([generate Doxygen documentation faster (using tag file mechanism)])
 else
-   AC_MSG_NOTICE([Generate Doxygen documentation slower (reading all of Sage III and Rose together) ...])
+   AC_MSG_NOTICE([generate Doxygen documentation slower (reading all of Sage III and Rose together)])
 fi
 
 AC_PROG_CXXCPP
@@ -1465,7 +1462,7 @@ dnl This seems to be an internal variable, set by different macros in different
 dnl Libtool versions, but with the same name
 AC_DEFINE_UNQUOTED(ROSE_SHLIBPATH_VAR, ["$shlibpath_var"], [Variable like LD_LIBRARY_PATH])
 
-echo 'int i;' > conftest.$ac_ext
+#echo 'int i;' > conftest.$ac_ext
 AC_TRY_EVAL(ac_compile);
 # echo "In configure.in (after libtool setup): libtool test for 64 bit libs = `/usr/bin/file conftest.o`"
 
@@ -1513,11 +1510,11 @@ AC_MSG_RESULT($CXX_ID-$CXX_VERSION)
 
 # Enable turning on purify and setting its options, etc.
 ROSE_SUPPORT_PURIFY
-# echo "In ROSE/configure: AUX_LINKER = $AUX_LINKER" 
+# echo "In ROSE/configure: AUX_LINKER = $AUX_LINKER"
 
 # Enable turning on Insure and setting its options, etc.
 ROSE_SUPPORT_INSURE
-# echo "In ROSE/configure: AUX_LINKER = $AUX_LINKER" 
+# echo "In ROSE/configure: AUX_LINKER = $AUX_LINKER"
 
 # DQ (7/8/2004): Added support for shared libraries using Brian's macros
 # ROSE_TEST_LIBS="-L`pwd`/src"
@@ -1554,7 +1551,7 @@ AC_MSG_CHECKING(for A++P++)
 AC_ARG_WITH(AxxPxx,
 [  --with-AxxPxx=PATH   Specify the prefix where A++P++ is installed],
 ,
-if test "$AxxPxx_PREFIX" ; then 
+if test "$AxxPxx_PREFIX" ; then
    with_AxxPxx="$AxxPxx_PREFIX"
 else
    with_AxxPxx=no
@@ -1598,7 +1595,7 @@ AC_ARG_WITH(PERFORMANCE_TESTS,
    [  --with-PERFORMANCE_TESTS ... compile and run performance tests within both A++ and P++],, with_PERFORMANCE_TESTS=no )
 # BTNG_AC_LOG(with_PERFORMANCE_TESTS is $with_PERFORMANCE_TESTS)
 # with_PERFORMANCE_TESTS variable is exported so that other packages
-# (e.g. indirect addressing) can set 
+# (e.g. indirect addressing) can set
 # themselves up dependent upon the use/non-use of PADRE
 export with_PERFORMANCE_TESTS;
 
@@ -1629,11 +1626,11 @@ dnl    fi
 dnl    with_gcj=yes
 dnl ],[
 dnl    _AM_IF_OPTION([no-dependencies],, [_AM_DEPENDENCIES(GCJ)])
-dnl ]) 
+dnl ])
 with_gcj=no ; # JJW 5-22-2008 The code that was here before broke if gcj was not present, even if the --with-gcj flag was absent
 AM_CONDITIONAL(USE_GCJ,test "$with_gcj" = yes)
 
-ROSE_CONFIGURE_SECTION([Running system checks])
+ROSE_CONFIGURE_SECTION([Checking system capabilities])
 
 AC_SEARCH_LIBS(clock_gettime, [rt], [
   RT_LIBS="$LIBS"
@@ -1653,8 +1650,8 @@ AC_SUBST(RT_LIBS)
 # AC_CONFIG_SUBDIRS(TESTS/PerformanceTests/BenchmarkBase)
 # AC_SUBST(optional_PERFORMANCE_subdirs)
 
-# DQ (12/16/2009): This option is now removed since the developersScratchSpace has been 
-# removed from the ROSE's git repository and it is a separate git repository that can be 
+# DQ (12/16/2009): This option is now removed since the developersScratchSpace has been
+# removed from the ROSE's git repository and it is a separate git repository that can be
 # checked out internally by ROSE developers.
 # Set up for Dan Quinlan's development test directory.
 # AC_ARG_ENABLE(dq-developer-tests,
@@ -1708,24 +1705,6 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_3],
 ## Setup the EDG specific stuff
 SETUP_EDG
 
-# Find md5 or md5sum and create a signature for ROSE binary compatibility
-AC_CHECK_PROGS(MD5, [md5 md5sum], [false])
-AC_SUBST(MD5)
-if test -e ${srcdir}/src/frontend/CxxFrontend/EDG/Makefile.am; then
-  has_edg_source=yes
-  if test "x$MD5" = "xfalse"; then
-    AC_MSG_WARN([Could not find either md5 or md5sum -- building binary EDG tarballs is disabled])
-    binary_edg_tarball_enabled=no
-  else
-    binary_edg_tarball_enabled=yes
-  fi
-else
-  has_edg_source=no
-  binary_edg_tarball_enabled=no # This is a binary release version of ROSE anyway
-fi
-
-AM_CONDITIONAL(ROSE_HAS_EDG_SOURCE, [test "x$has_edg_source" = "xyes"])
-AM_CONDITIONAL(BINARY_EDG_TARBALL_ENABLED, [test "x$binary_edg_tarball_enabled" = "xyes"])
 
 ROSE_ARG_ENABLE(
   [alternate-edg-build-cpu],
@@ -1751,15 +1730,15 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_4],
 # Begin macro ROSE_SUPPORT_ROSE_PART_4.
 
 dnl ---------------------------------------------------------------------
-dnl (8/29/2007): This was added to provide more portable times upon the 
+dnl (8/29/2007): This was added to provide more portable times upon the
 dnl suggestion of Matt Sottile at LANL.
 dnl ---------------------------------------------------------------------
 AC_C_INLINE
 AC_HEADER_TIME
 AC_CHECK_HEADERS([sys/time.h c_asm.h intrinsics.h mach/mach_time.h])
 
-AC_CHECK_TYPE([hrtime_t],[AC_DEFINE(HAVE_HRTIME_T, 1, [Define to 1 if hrtime_t is defined in <sys/time.h>])],,[#if HAVE_SYS_TIME_H 
-#include <sys/time.h> 
+AC_CHECK_TYPE([hrtime_t],[AC_DEFINE(HAVE_HRTIME_T, 1, [Define to 1 if hrtime_t is defined in <sys/time.h>])],,[#if HAVE_SYS_TIME_H
+#include <sys/time.h>
 #endif])
 
 AC_CHECK_FUNCS([gethrtime read_real_time time_base_to_time clock_gettime mach_absolute_time])
@@ -1782,7 +1761,7 @@ AC_SUBST(top_pwd)
 absolute_path_srcdir="`cd $srcdir; pwd`"
 AC_SUBST(absolute_path_srcdir)
 
-# Liao 6/20/2011, store source path without symbolic links, used to have consistent source and compile paths for ROSE 
+# Liao 6/20/2011, store source path without symbolic links, used to have consistent source and compile paths for ROSE
 # when call graph analysis tests are used.
 res_top_src=$(cd "$srcdir" && pwd -P)
 AC_DEFINE_UNQUOTED([ROSE_SOURCE_TREE_PATH],"$res_top_src",[Location of ROSE Source Tree.])
@@ -1826,12 +1805,10 @@ export with_zlib
 AC_ARG_WITH(QRose, [  --with-QRose=PATH     prefix of QRose installation],
    [QROSE_PREFIX=$with_QRose
     if test "x$with_QRose" = xyes; then
-       echo "Error: --with-QRose=PATH must be specified to use option --with-QRose (a valid QRose intallation)"
-       exit 1
+       AC_MSG_FAILURE([--with-QRose=PATH must be specified to use option --with-QRose (a valid QRose intallation)])
     fi
     if test "x$with_QRose" = x; then
-       echo "Error: empty path used in --with-QRose=PATH must be specified to use option --with-QRose (a valid Qt intallation)"
-       exit 1
+       AC_MSG_FAILURE([empty path used in --with-QRose=PATH must be specified to use option --with-QRose (a valid Qt intallation)])
     fi
    ],
         [with_QRose=no])
@@ -1839,7 +1816,7 @@ AC_ARG_WITH(QRose, [  --with-QRose=PATH     prefix of QRose installation],
 AC_SUBST(QROSE_PREFIX)
 AM_CONDITIONAL(ROSE_USE_QROSE,test "x$with_QRose" != xno)
 
-echo "with_QRose = $with_QRose"
+AC_MSG_NOTICE([with_QRose = "$with_QRose"])
 
 #AM_CONDITIONAL(USE_QROSE, test "$with_QRose" != no)
 #QROSE_LDFLAGS="-L${QROSE_PREFIX}/lib -lqrose"
@@ -1853,7 +1830,7 @@ echo "with_QRose = $with_QRose"
 #         Support for Qt (General GUI support)
 # ****************************************************
 
-# These are defined in config/qrose_indigo_1.m4, they 
+# These are defined in config/qrose_indigo_1.m4, they
 # are not standard AC macros.
 AC_PATH_QT
 AC_PATH_QT_MOC
@@ -1863,18 +1840,16 @@ AC_PATH_QT_UIC
 # The code to set ROSEQT is in this macro's definition.
 AC_PATH_QT_VERSION
 
-echo "with_qt     = $with_qt"
+AC_MSG_NOTICE([with_qt     = "$with_qt"])
 AM_CONDITIONAL(ROSE_USE_QT,test x"$with_qt" != x"no")
 if test "x$with_qt" = xyes; then
-   echo "Error: Path to Qt not specified...(usage: --with-qt=PATH)"
-   exit 1
+   AC_MSG_FAILURE([path to Qt not specified (usage: --with-qt=PATH)])
 fi
 
 # If QRose was specified then make sure that Qt was specified.
 if test "x$with_QRose" != xno; then
    if test "x$with_qt" = xno; then
-      echo "Error: QRose requires valid specification of Qt installation...(requires option: --with-qt=PATH)"
-      exit 1
+      AC_MSG_FAILURE([QRose requires valid specification of Qt installation (requires option: --with-qt=PATH)])
    fi
 fi
 
@@ -1942,10 +1917,10 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_5],
 # Begin macro ROSE_SUPPORT_ROSE_PART_5.
 
 # DQ (9/21/2009): Debugging for RH release 5
-echo "Testing the value of CC: (CC = $CC)"
-echo "Testing the value of CPPFLAGS: (CPPFLAGS = $CPPFLAGS)"
+AC_MSG_NOTICE([CC = "$CC"])
+AC_MSG_NOTICE([CPPFLAGS = "$CPPFLAGS"])
 
-echo "subdirs $subdirs"
+AC_MSG_NOTICE([subdirs = "$subdirs"])
 AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
 
 # This list should be the same as in build (search for Makefile.in)
@@ -1953,41 +1928,16 @@ AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
 CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
 AC_CONFIG_FILES([
 src/frontend/CxxFrontend/EDG/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.7/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.7/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.7/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.7/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.7/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.8/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.8/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.8/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.8/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.8/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.11/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.11/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.11/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.11/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.11/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.14/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.14/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.14/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.14/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.14/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/src/Makefile
@@ -2040,19 +1990,13 @@ exampleTranslators/documentedExamples/Makefile
 exampleTranslators/documentedExamples/dataBaseExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/exampleMakefile
+LicenseInformation/Makefile
 projects/ArithmeticMeasureTool/Makefile
-projects/AstEquivalence/Makefile
-projects/AstEquivalence/gui/Makefile
-projects/AtermTranslation/Makefile
-projects/AtermTranslation/roseAtermAPI/Makefile
-projects/BabelPreprocessor/Makefile
-projects/BinFuncDetect/Makefile
 projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/compression/Makefile
 projects/BinaryCloneDetection/semantic/Makefile
 projects/BinaryCloneDetection/syntactic/Makefile
 projects/BinaryCloneDetection/syntactic/gui/Makefile
-projects/C_to_Promela/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
 projects/RaaS/Makefile
@@ -2068,23 +2012,7 @@ projects/CompilationDB/examples/kripke/Makefile
 projects/CompilationDB/examples/doxygen/Makefile
 projects/CompilationDB/static/js/Makefile
 projects/CompilationDB/static/css/Makefile
-projects/ConstructNameSimilarityAnalysis/Makefile
-projects/DataFaultTolerance/Makefile
-projects/DataFaultTolerance/src/Makefile
-projects/DataFaultTolerance/test/Makefile
-projects/DataFaultTolerance/test/array/Makefile
-projects/DataFaultTolerance/test/array/faultCheck/Makefile
-projects/DataFaultTolerance/test/array/transformation/Makefile
-projects/DataFaultTolerance/test/array/transformation/tests/Makefile
-projects/DatalogAnalysis/Makefile
-projects/DatalogAnalysis/relationTranslatorGenerator/Makefile
-projects/DatalogAnalysis/src/DBFactories/Makefile
-projects/DatalogAnalysis/src/Makefile
-projects/DatalogAnalysis/tests/Makefile
-projects/DistributedMemoryAnalysisCompass/Makefile
-projects/DocumentationGenerator/Makefile
 projects/EditDistanceMetric/Makefile
-projects/FiniteStateModelChecker/Makefile
 projects/Fortran_to_C/Makefile
 projects/Fortran_to_C/src/Makefile
 projects/Fortran_to_C/tests/Makefile
@@ -2094,70 +2022,32 @@ projects/Jovial_to_C/tests/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/HeaderFilesInclusion/Makefile
-projects/LineDeleter/Makefile
-projects/LineDeleter/src/Makefile
 projects/MPI_Tools/MPICodeMotion/Makefile
 projects/MPI_Tools/MPIDeterminismAnalysis/Makefile
 projects/MPI_Tools/Makefile
-projects/MacroRewrapper/Makefile
 projects/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
-projects/ManyCoreRuntime2/Makefile
-projects/ManyCoreRuntime2/docs/Makefile
-projects/ManyCoreRuntime2/runtime/Makefile
-projects/ManyCoreRuntime2/tests/Makefile
-projects/ManyCoreRuntime2/transformation/Makefile
 projects/MapleDSL/Makefile
-projects/MultiLevelMemory/Makefile
-projects/MultiLevelMemory/src/Makefile
-projects/MultiLevelMemory/tests/Makefile
-projects/OpenMP_Analysis/Makefile
-projects/OpenMP_Checker/Makefile
-projects/OpenMP_Translator/Makefile
-projects/OpenMP_Translator/includes/Makefile
-projects/OpenMP_Translator/tests/Makefile
-projects/OpenMP_Translator/tests/cvalidationsuite/Makefile
-projects/OpenMP_Translator/tests/developmentTests/Makefile
-projects/OpenMP_Translator/tests/epcc-c/Makefile
-projects/OpenMP_Translator/tests/npb2.3-omp-c/BT/Makefile
-projects/OpenMP_Translator/tests/npb2.3-omp-c/CG/Makefile
-projects/OpenMP_Translator/tests/npb2.3-omp-c/EP/Makefile
-projects/OpenMP_Translator/tests/npb2.3-omp-c/FT/Makefile
-projects/OpenMP_Translator/tests/npb2.3-omp-c/IS/Makefile
-projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile
-projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
-projects/OpenMP_Translator/tests/npb2.3-omp-c/Makefile
-projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
-projects/PolyhedralModel/Makefile
-projects/PolyhedralModel/docs/Makefile
-projects/PolyhedralModel/projects/Makefile
-projects/PolyhedralModel/projects/loop-ocl/Makefile
-projects/PolyhedralModel/projects/polygraph/Makefile
-projects/PolyhedralModel/projects/spmd-generator/Makefile
-projects/PolyhedralModel/projects/utils/Makefile
-projects/PolyhedralModel/src/Makefile
-projects/PolyhedralModel/tests/Makefile
-projects/PolyhedralModel/tests/cuda-kernel/Makefile
-projects/PolyhedralModel/tests/rose-max-cover/Makefile
-projects/PolyhedralModel/tests/rose-pragma/Makefile
-projects/PowerAwareCompiler/Makefile
 projects/QtDesignerPlugins/Makefile
-projects/RTC/Makefile
 projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile
 projects/RTED/CppRuntimeSystem/Makefile
 projects/RTED/Makefile
 projects/RoseBlockLevelTracing/Makefile
 projects/RoseBlockLevelTracing/src/Makefile
-projects/RosePolly/Makefile
 projects/RoseQt/AstViewer/Makefile
 projects/RoseQt/Makefile
 projects/SMTPathFeasibility/Makefile
-projects/SatSolver/Makefile
-projects/ShiftCalculus/Makefile
-projects/ShiftCalculus2/Makefile
-projects/ShiftCalculus3/Makefile
 projects/ShiftCalculus4/Makefile
+projects/TemplateAnalysis/Makefile
+projects/TemplateAnalysis/include/ROSE/Analysis/Template/Makefile
+projects/TemplateAnalysis/include/ROSE/proposed/Makefile
+projects/TemplateAnalysis/include/nlohmann/Makefile
+projects/TemplateAnalysis/lib/ROSE/Analysis/Template/Makefile
+projects/TemplateAnalysis/lib/ROSE/proposed/Makefile
+projects/TemplateAnalysis/src/Makefile
+projects/TemplateAnalysis/examples/Makefile
+projects/TemplateAnalysis/examples/inspect-autovar/Makefile
 projects/TileK/Makefile
 projects/TileK/doc/Makefile
 projects/TileK/doc/dlx.doxy
@@ -2212,13 +2102,6 @@ projects/autoParallelization/difftests/Makefile
 projects/autoTuning/Makefile
 projects/autoTuning/doc/Makefile
 projects/autoTuning/tests/Makefile
-projects/binCompass/Makefile
-projects/binCompass/analyses/Makefile
-projects/binCompass/graphanalyses/Makefile
-projects/binaryVisualization/Makefile
-projects/bugSeeding/Makefile
-projects/bugSeeding/bugSeeding.tex
-projects/checkPointExample/Makefile
 projects/compass/Makefile
 projects/compass/src/Makefile
 projects/compass/src/compassSupport/Makefile
@@ -2242,22 +2125,6 @@ projects/compass/tools/compass/tests/Compass_OpenMP_tests/Makefile
 projects/compass/tools/compass/tests/Makefile
 projects/compass/tools/compassVerifier/Makefile
 projects/compass/tools/sampleCompassSubset/Makefile
-projects/dataStructureGraphing/Makefile
-projects/demos-dlx-mdcg/Makefile
-projects/demos-dlx-mdcg/include/DLX/Logger/Makefile
-projects/demos-dlx-mdcg/include/DLX/Makefile
-projects/demos-dlx-mdcg/include/MDCG/Logger/Makefile
-projects/demos-dlx-mdcg/include/MDCG/Makefile
-projects/demos-dlx-mdcg/include/Makefile
-projects/demos-dlx-mdcg/include/libLogger/Makefile
-projects/demos-dlx-mdcg/lib/Makefile
-projects/demos-dlx-mdcg/lib/dlx/Makefile
-projects/demos-dlx-mdcg/lib/dlx/logger/Makefile
-projects/demos-dlx-mdcg/lib/liblogger/Makefile
-projects/demos-dlx-mdcg/lib/mdcg/Makefile
-projects/demos-dlx-mdcg/lib/mdcg/logger/Makefile
-projects/demos-dlx-mdcg/src/Makefile
-projects/demos-dlx-mdcg/tests/Makefile
 projects/dsl_infrastructure/Makefile
 projects/extractMPISkeleton/Makefile
 projects/extractMPISkeleton/src/Makefile
@@ -2265,50 +2132,9 @@ projects/extractMPISkeleton/tests/Makefile
 projects/fuse/Makefile
 projects/fuse/src/Makefile
 projects/fuse/tests/Makefile
-projects/graphColoring/Makefile
-projects/highLevelGrammars/Makefile
 projects/interpreter/Makefile
-projects/javaport/Makefile
-projects/mint/Makefile
-projects/mint/src/Makefile
-projects/mint/tests/Makefile
 projects/palette/Makefile
 projects/pragmaParsing/Makefile
-projects/programModeling/Makefile
-projects/rose-tooling/Makefile
-projects/rose-tooling/include/DLX/Makefile
-projects/rose-tooling/include/DLX/Tooling/Makefile
-projects/rose-tooling/include/Makefile
-projects/rose-tooling/lib/Makefile
-projects/rose-tooling/lib/dlx/Makefile
-projects/rose-tooling/lib/dlx/tooling/Makefile
-projects/rose-tooling/src/Makefile
-projects/rose-tooling/tests/Makefile
-projects/roseToLLVM/Analysis/Alias/Makefile
-projects/roseToLLVM/Analysis/Alias/src/Makefile
-projects/roseToLLVM/Analysis/Alias/tests/Makefile
-projects/roseToLLVM/Analysis/Makefile
-projects/roseToLLVM/Makefile
-projects/roseToLLVM/src/Makefile
-projects/roseToLLVM/src/rosetollvm/Makefile
-projects/roseToLLVM/tests/Makefile
-projects/symbolicAnalysisFramework/Makefile
-projects/symbolicAnalysisFramework/include/Makefile
-projects/symbolicAnalysisFramework/src/Makefile
-projects/symbolicAnalysisFramework/src/chkptRangeAnalysis/Makefile
-projects/symbolicAnalysisFramework/src/external/Makefile
-projects/symbolicAnalysisFramework/src/mpiAnal/Makefile
-projects/symbolicAnalysisFramework/src/ompAnal/Makefile
-projects/symbolicAnalysisFramework/src/parallelCFG/Makefile
-projects/symbolicAnalysisFramework/src/taintAnalysis/Makefile
-projects/symbolicAnalysisFramework/src/unionFind/Makefile
-projects/symbolicAnalysisFramework/src/varBitVector/Makefile
-projects/symbolicAnalysisFramework/src/varLatticeVector/Makefile
-projects/symbolicAnalysisFramework/tests/Makefile
-projects/taintcheck/Makefile
-projects/vectorization/Makefile
-projects/vectorization/src/Makefile
-projects/vectorization/tests/Makefile
 projects/xgenTranslator/Makefile
 python/Makefile
 python/Rose/Makefile
@@ -2319,6 +2145,7 @@ scripts/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
+src/3rdPartyLibraries/flang-parser/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
 src/3rdPartyLibraries/java-parser/Makefile
 src/3rdPartyLibraries/qrose/Components/Common/Makefile
@@ -2347,6 +2174,7 @@ src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/Experimental_General_Language_Support/Makefile
 src/frontend/Experimental_General_Language_Support/ATerm/Makefile
 src/frontend/Experimental_OpenFortranParser_ROSE_Connection/Makefile
+src/frontend/Experimental_Flang_ROSE_Connection/Makefile
 src/frontend/Experimental_Csharp_ROSE_Connection/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/Makefile
 src/frontend/Experimental_Jovial_ROSE_Connection/Makefile
@@ -2473,6 +2301,8 @@ tests/nonsmoke/functional/BinaryAnalysis/Dwarf_tests/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/Pin_tests/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/libraryIdentification_tests/Makefile
+tests/nonsmoke/functional/BinaryAnalysis/Concolic/Makefile
+tests/nonsmoke/functional/BinaryAnalysis/Concolic/crsh/Makefile
 tests/nonsmoke/functional/CompileTests/A++Code/Makefile
 tests/nonsmoke/functional/CompileTests/A++Tests/Makefile
 tests/nonsmoke/functional/CompileTests/C_tests/Makefile
@@ -2484,6 +2314,7 @@ tests/nonsmoke/functional/CompileTests/CudaTests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx11_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Cxx14_tests/Makefile
+tests/nonsmoke/functional/CompileTests/Cxx17_tests/Makefile
 tests/nonsmoke/functional/CompileTests/ElsaTestCases/Makefile
 tests/nonsmoke/functional/CompileTests/ElsaTestCases/ctests/Makefile
 tests/nonsmoke/functional/CompileTests/ElsaTestCases/gnu/Makefile
@@ -2501,6 +2332,7 @@ tests/nonsmoke/functional/CompileTests/Java_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Java_tests/unit_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_csharp_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_fortran_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_jovial_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_cobol_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_matlab_tests/Makefile
@@ -2521,6 +2353,7 @@ tests/nonsmoke/functional/CompileTests/RoseExample_tests/Makefile
 tests/nonsmoke/functional/CompileTests/STL_tests/Makefile
 tests/nonsmoke/functional/CompileTests/UPC_tests/Makefile
 tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/Makefile
+tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/Makefile
 tests/nonsmoke/functional/CompileTests/boost_tests/Makefile
 tests/nonsmoke/functional/CompileTests/colorAST_tests/Makefile
 tests/nonsmoke/functional/CompileTests/copyAST_tests/Makefile
@@ -2538,6 +2371,7 @@ tests/nonsmoke/functional/CompileTests/uninitializedField_tests/Makefile
 tests/nonsmoke/functional/CompileTests/unparseToString_tests/Makefile
 tests/nonsmoke/functional/CompileTests/virtualCFG_tests/Makefile
 tests/nonsmoke/functional/CompileTests/x10_tests/Makefile
+tests/nonsmoke/functional/CompileTests/unparse_template_from_ast/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/collectAllCommentsAndDirectives_tests/Makefile
 tests/nonsmoke/functional/CompilerOptionsTests/preinclude_tests/Makefile
@@ -2592,7 +2426,6 @@ tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/generalDataFlowAnalysisTests/Makefile
-tests/nonsmoke/functional/roseTests/programAnalysisTests/sideEffectAnalysisTests/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/ssa_UnfilteredCfg_Test/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/staticSingleAssignmentTests/Makefile
@@ -2650,6 +2483,8 @@ tests/smoke/unit/Sawyer/Makefile
 tests/smoke/unit/Utility/Makefile
 tools/Makefile
 tools/globalVariablesInLambdas/Makefile
+tools/classMemberVariablesInLambdas/Makefile
+tools/checkFortranInterfaces/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile
 tutorial/exampleMakefile
@@ -2668,90 +2503,8 @@ tutorial/roseHPCT/Makefile
 
 # Liao, 1/16/2014, comment out a few directories which are turned off for EDG 4.x upgrade
 #projects/BinaryDataStructureRecognition/Makefile
-#projects/haskellport/Makefile
-#projects/haskellport/Setup.hs
-#projects/haskellport/rose.cabal.in
 #tests/nonsmoke/functional/CompileTests/CAF2_tests/Makefile
 
-dnl
-dnl Compass2
-dnl
-AC_CONFIG_FILES([
-projects/compass2/Makefile
-projects/compass2/docs/Makefile
-projects/compass2/docs/asciidoc/Makefile
-projects/compass2/docs/doxygen/doxygen.config
-projects/compass2/docs/doxygen/Makefile
-projects/compass2/share/xml/compass_parameters.xml
-projects/compass2/tests/checkers/asynchronous_signal_handler/compass_parameters.xml
-projects/compass2/tests/checkers/asynchronous_signal_handler/Makefile
-projects/compass2/tests/Makefile
-projects/compass2/tests/checkers/Makefile
-projects/compass2/tests/checkers/no_vfork/Makefile
-projects/compass2/tests/checkers/no_vfork/compass_parameters.xml
-projects/compass2/tests/checkers/no_variadic_functions/Makefile
-projects/compass2/tests/checkers/no_variadic_functions/compass_parameters.xml
-projects/compass2/tests/checkers/no_goto/Makefile
-projects/compass2/tests/checkers/no_goto/compass_parameters.xml
-projects/compass2/tests/checkers/floating_point_exact_comparison/Makefile
-projects/compass2/tests/checkers/floating_point_exact_comparison/compass_parameters.xml
-projects/compass2/tests/checkers/no_rand/Makefile
-projects/compass2/tests/checkers/no_rand/compass_parameters.xml
-projects/compass2/tests/checkers/allocate_and_free_in_the_same_module/Makefile
-projects/compass2/tests/checkers/allocate_and_free_in_the_same_module/compass_parameters.xml
-projects/compass2/tests/checkers/discard_assignment/Makefile
-projects/compass2/tests/checkers/discard_assignment/compass_parameters.xml
-projects/compass2/tests/checkers/explicit_test_for_non_boolean_value/Makefile
-projects/compass2/tests/checkers/explicit_test_for_non_boolean_value/compass_parameters.xml
-projects/compass2/tests/checkers/data_member_access/Makefile
-projects/compass2/tests/checkers/data_member_access/compass_parameters.xml
-projects/compass2/tests/checkers/unary_minus/Makefile
-projects/compass2/tests/checkers/unary_minus/compass_parameters.xml
-projects/compass2/tests/checkers/pointer_comparison/Makefile
-projects/compass2/tests/checkers/pointer_comparison/compass_parameters.xml
-projects/compass2/tests/checkers/do_not_delete_this/Makefile
-projects/compass2/tests/checkers/do_not_delete_this/compass_parameters.xml
-projects/compass2/tests/checkers/size_of_pointer/Makefile
-projects/compass2/tests/checkers/size_of_pointer/compass_parameters.xml
-projects/compass2/tests/checkers/float_for_loop_counter/Makefile
-projects/compass2/tests/checkers/float_for_loop_counter/compass_parameters.xml
-projects/compass2/tests/checkers/ternary_operator/Makefile
-projects/compass2/tests/checkers/ternary_operator/compass_parameters.xml
-projects/compass2/tests/checkers/forbidden_functions/Makefile
-projects/compass2/tests/checkers/forbidden_functions/compass_parameters.xml
-projects/compass2/tests/checkers/magic_number/Makefile
-projects/compass2/tests/checkers/magic_number/compass_parameters.xml
-projects/compass2/tests/checkers/dangerous_overload/Makefile
-projects/compass2/tests/checkers/dangerous_overload/compass_parameters.xml
-projects/compass2/tests/checkers/comma_operator/Makefile
-projects/compass2/tests/checkers/comma_operator/compass_parameters.xml
-projects/compass2/tests/checkers/byte_by_byte_structure_comparison/Makefile
-projects/compass2/tests/checkers/byte_by_byte_structure_comparison/compass_parameters.xml
-projects/compass2/tests/checkers/boolean_is_has/Makefile
-projects/compass2/tests/checkers/boolean_is_has/compass_parameters.xml
-projects/compass2/tests/checkers/dead_function/Makefile
-projects/compass2/tests/checkers/dead_function/compass_parameters.xml
-projects/compass2/tests/checkers/default_argument/Makefile
-projects/compass2/tests/checkers/default_argument/compass_parameters.xml
-projects/compass2/tests/checkers/function_pointer/Makefile
-projects/compass2/tests/checkers/function_pointer/compass_parameters.xml
-projects/compass2/tests/checkers/function_prototype/Makefile
-projects/compass2/tests/checkers/function_prototype/compass_parameters.xml
-projects/compass2/tests/checkers/function_with_multiple_returns/Makefile
-projects/compass2/tests/checkers/function_with_multiple_returns/compass_parameters.xml
-projects/compass2/tests/checkers/global_variables/Makefile
-projects/compass2/tests/checkers/global_variables/compass_parameters.xml
-projects/compass2/tests/checkers/keyword_macro/Makefile
-projects/compass2/tests/checkers/keyword_macro/compass_parameters.xml
-projects/compass2/tests/checkers/non_global_cpp_directive/Makefile
-projects/compass2/tests/checkers/non_global_cpp_directive/compass_parameters.xml
-projects/compass2/tests/checkers/non_static_array_size/Makefile
-projects/compass2/tests/checkers/non_static_array_size/compass_parameters.xml
-projects/compass2/tests/checkers/variable_name_similarity/Makefile
-projects/compass2/tests/checkers/variable_name_similarity/compass_parameters.xml
-projects/compass2/tests/core/Makefile
-projects/compass2/tests/core/compass_parameters.xml
-])
 
 # DQ (10/27/2010): New Fortran tests (from gfortan test suite).
 # tests/nonsmoke/functional/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
@@ -2767,12 +2520,6 @@ projects/compass2/tests/core/compass_parameters.xml
 # src/frontend/CxxFrontend/EDG_3.10/src/Makefile
 # src/frontend/CxxFrontend/EDG_3.10/src/disp/Makefile
 # src/frontend/CxxFrontend/EDG_3.10/lib/Makefile
-
-
-# DQ (9/12/2009): Removed so that this can be added properly a little later.
-# This currently breaks "make distcheck"
-# projects/StaticDynamicAnalysis/DynamicCPU/Makefile
-
 
 # DQ (12/31/2008): Skip these, since we don't have SPEC and NAS benchmarks setup yet.
 # developersScratchSpace/Dan/Fortran_tests/NPB3.2-SER/Makefile
@@ -2807,23 +2554,26 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_7],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_7.
 
-AC_CONFIG_COMMANDS([default],[[
-     echo "Ensuring Grammar in the compile tree (assuming source tree is not the same as the compile tree)."
+AC_CONFIG_COMMANDS([default],
+    [
+     AC_MSG_NOTICE([ensuring Grammar in the compile tree (assuming source tree is not the same as the compile tree)])
      pathToSourceDir="`cd $srcdir && pwd`"
      test -d src/ROSETTA/Grammar || ( rm -rf src/ROSETTA/Grammar && ln -s "$pathToSourceDir/src/ROSETTA/Grammar" src/ROSETTA/Grammar )
-]],[[
-]])
+    ],
+    [])
 
 # Generate rose_paths.C
-AC_CONFIG_COMMANDS([rose_paths.C], [[
-        make src/util/rose_paths.C
-]])
+AC_CONFIG_COMMANDS([rose_paths.C], [
+    AC_MSG_NOTICE([building src/util/rose_paths.C])
+    make src/util/rose_paths.C
+])
 
 # Generate public config file from private config file. The public config file adds "ROSE_" to the beginning of
 # certain symbols. See scripts/publicConfiguration.pl for details.
-AC_CONFIG_COMMANDS([rosePublicConfig.h],[[
-        make rosePublicConfig.h
-]])
+AC_CONFIG_COMMANDS([rosePublicConfig.h],[
+    AC_MSG_NOTICE([building rosePublicConfig.h])
+    make rosePublicConfig.h
+])
 
 # [TOO1, 2014-04-22]
 # TODO: Re-enable once we phase out support for older version of Autotools.

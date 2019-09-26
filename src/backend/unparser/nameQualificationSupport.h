@@ -29,6 +29,22 @@ class NameQualificationInheritedAttribute
      private:
           SgScopeStatement* currentScope;
 
+       // DQ (4/19/2019): Added support to include current statement (required for nested traversals 
+       // of types to support name qualification for SgPointerMemberType).
+          SgStatement* currentStatement;
+          SgNode* referenceNode;
+
+#if 0
+       // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
+
+       // DQ (2/7/2019): Namen qaulification can under rare circumstances depende on the type.  And we need 
+       // to pass the type through from the lhs to the rhs to get the name qualification correct on the rhs.
+       // See Cxx11_tests/test2019_80.C and test2019_81.C for examples of this.
+          SgPointerMemberType* usingPointerToMemberType;
+
+          bool containsFunctionArgumentsOfPointerMemberType;
+#endif
+
      public:
 
           NameQualificationInheritedAttribute();
@@ -39,6 +55,25 @@ class NameQualificationInheritedAttribute
        // See test2013_187.C for an example of this.
           SgScopeStatement* get_currentScope();
           void set_currentScope(SgScopeStatement* scope);         
+
+       // DQ (4/19/2019): Added support to include current statement (required for nested traversals 
+       // of types to support name qualification for SgPointerMemberType).
+          SgStatement* get_currentStatement();
+          void set_currentStatement(SgStatement* statement);         
+          SgNode* get_referenceNode();
+          void set_referenceNode(SgNode* referenceNode);         
+
+#if 0
+       // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
+
+       // DQ (2/7/2019): Name qualification can under rare circumstances depends on the type.
+          SgPointerMemberType* get_usingPointerToMemberType();
+          void set_usingPointerToMemberType(SgPointerMemberType* type);
+
+       // DQ (2/7/2019): Name qualification can under rare circumstances depends on the type.
+          bool get_containsFunctionArgumentsOfPointerMemberType();
+          void set_containsFunctionArgumentsOfPointerMemberType( bool x );
+#endif
    };
 
 
@@ -82,6 +117,20 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // from different locations in the source code.
           std::map<SgNode*,std::string> & typeNameMap;
 
+       // DQ (3/13/2019): Adding support for name qualification of the many parts of more complex types such as template types.
+          std::map<SgNode*,std::map<SgNode*,std::string> > & qualifiedNameMapForMapsOfTypes;
+
+       // DQ (1/24/2019): We need to accumulate the list of possible classes that are private base classes so 
+       // that additional name qualification can be added to prevent the access of base classes that have been 
+       // made private in nested chass hierarchies.
+          typedef std::map<SgClassDeclaration*,std::set<SgClassDeclaration*> > BaseClassSetMap;
+
+       // DQ (1/24/2019): This is the list of private base classes.
+          BaseClassSetMap privateBaseClassSets;
+
+       // DQ (1/24/2019): From the set of private base classes we construct the set of unaccessible base classes
+          BaseClassSetMap inaccessibleClassSets;
+
        // DQ (7/22/2011): Alternatively we should treat array types just like templated types that can
        // contain subtypes that require arbitrarily complex name qualification for their different parts.
        // DQ (7/22/2011): We need to handle array types with dimensions that require qualification.
@@ -100,6 +149,10 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // specified. I think this only happens for the index in the SgArrayType.
           SgScopeStatement* explictlySpecifiedCurrentScope;
 
+       // DQ (4/19/2019): Added support to include current statement (required for nested traversals 
+       // of types to support name qualification for SgPointerMemberType).
+          SgStatement* explictlySpecifiedCurrentStatement;
+
      public:
        // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
           static Sawyer::Message::Facility mlog;
@@ -115,16 +168,19 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // HiddenListTraversal(SgNode* root);
 
        // DQ (9/7/2014): Modified to handle template header map (for template declarations).
-          NameQualificationTraversal(std::map<SgNode*,std::string> & input_qualifiedNameMapForNames, 
-                                     std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes, 
-                                     std::map<SgNode*,std::string> & input_qualifiedNameMapForTemplateHeaders, 
-                                     std::map<SgNode*,std::string> & input_typeNameMap, 
+          NameQualificationTraversal(std::map<SgNode*,std::string> & input_qualifiedNameMapForNames,
+                                     std::map<SgNode*,std::string> & input_qualifiedNameMapForTypes,
+                                     std::map<SgNode*,std::string> & input_qualifiedNameMapForTemplateHeaders,
+                                     std::map<SgNode*,std::string> & input_typeNameMap,
+                                     std::map<SgNode*,std::map<SgNode*,std::string> > & input_qualifiedNameMapForMapsOfTypes, 
                                      std::set<SgNode*> & input_referencedNameSet);
 
+       // DQ (4/19/2019): When a type is the input we need the current statement as well, might want to require this uniformally.
        // DQ (7/23/2011): This permits recursive calls to the traversal AND specification of the current scope
        // used to support name qualification on expressions where we can't backout the current scope.  Used 
        // for name qualification of const expressions in SgArrayType index expressions.
-          void generateNestedTraversalWithExplicitScope( SgNode* node, SgScopeStatement* currentScope );
+       // void generateNestedTraversalWithExplicitScope( SgNode* node, SgScopeStatement* currentScope );
+          void generateNestedTraversalWithExplicitScope( SgNode* node, SgScopeStatement* currentScope, SgStatement* currentStatement = NULL, SgNode* referenceNode = NULL );
 
        // Evaluates how much name qualification is required (typically 0 (no qualification), but sometimes 
        // the depth of the nesting of scopes plus 1 (full qualification with global scoping operator)).
@@ -173,16 +229,29 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
 
        // DQ (8/4/2012): Added support to permit global qualification be be skipped explicitly (see test2012_164.C and test2012_165.C for examples where this is important).
        // void setNameQualification ( SgInitializedName* initializedName, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
-          void setNameQualification ( SgInitializedName* initializedName, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired, bool skipGlobalQualification );
+       // void setNameQualification ( SgInitializedName* initializedName, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired, bool skipGlobalQualification );
+          void setNameQualificationOnType ( SgInitializedName* initializedName, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired, bool skipGlobalQualification );
 
        // DQ (12/17/2013): Added support for the name qualification of the SgInitializedName object when used in the context of the preinitialization list.
           void setNameQualificationOnName(SgInitializedName* initializedName,SgDeclarationStatement* declaration, int amountOfNameQualificationRequired, bool skipGlobalQualification);
 
           void setNameQualification ( SgVariableDeclaration* variableDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
-          void setNameQualification ( SgTypedefDeclaration* typedefDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
+
+       // DQ (4/10/2019): We need to handle the general case of name qualification on the base type, AND also when the base type is a SgPointerMemberType 
+       // we need to handled the PointerMemberType base type and the SgPointerMemberType class.  The setNameQualificationOnBaseType() is used to support 
+       // the base type of the SgPointerMemberType where that is used.
+       // void setNameQualification ( SgTypedefDeclaration* typedefDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
+          void setNameQualificationOnBaseType ( SgTypedefDeclaration* typedefDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
+          void setNameQualificationOnPointerMemberClass ( SgTypedefDeclaration* typedefDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
+
           void setNameQualification ( SgTemplateArgument* templateArgument, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
        // void setNameQualification ( SgCastExp* castExp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired);
           void setNameQualification ( SgExpression* exp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired);
+
+       // DQ (4/16/2019): Added to support use of SgPointerMemberType with subset of expressions.
+          void setNameQualificationForPointerToMember(SgExpression* exp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired);
+
+          void setNameQualification ( SgNonrealRefExp* exp, SgDeclarationStatement* typeDeclaration, int amountOfNameQualificationRequired);
 
           void setNameQualification ( SgEnumVal* enumVal, SgEnumDeclaration* enumDeclaration, int amountOfNameQualificationRequired);
 
@@ -197,10 +266,18 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // DQ (7/8/2014): Adding support for name qualification of SgNamespaceDeclarations within a SgNamespaceAliasDeclarationStatement.
           void setNameQualification ( SgNamespaceAliasDeclarationStatement* namespaceAliasDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
 
+       // DQ (2/14/2019): Adding support for C++11 enum prototypes (and defining declaratins in different scopes requiring name qualification).
+          void setNameQualification ( SgEnumDeclaration* enumDeclaration, int amountOfNameQualificationRequired );
+
        // This is a separate function just for setting the information specific to the name qualification of return types.
        // This information cannot be stored in the SgFunctionType since that might be shared and referenced from different locations.
        // void setNameQualificationReturnType ( SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired );
           void setNameQualificationReturnType ( SgFunctionDeclaration* functionDeclaration, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
+
+       // DQ (4/19/2019): Adding support for chains of SpPointerMemberType types (requires type traversal).
+       // void setNameQualification ( SgPointerMemberType* pointerMemberType, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
+          void setNameQualificationOnClassOf  ( SgPointerMemberType* pointerMemberType, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
+          void setNameQualificationOnBaseType ( SgPointerMemberType* pointerMemberType, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired );
 
           SgDeclarationStatement* getDeclarationAssociatedWithType( SgType* type );
 
@@ -221,6 +298,11 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
           const std::map<SgNode*,std::string> & get_qualifiedNameMapForTypes() const;
           const std::map<SgNode*,std::string> & get_qualifiedNameMapForTemplateHeaders() const;
 
+       // DQ (3/13/2019): Adding support for name qualification to support multiple types that may be asociated with a 
+       // single type used as a function return type (for example, always a template type containing multiple template 
+       // arguments that require additional name qualification).
+          const std::map<SgNode*,std::map<SgNode*,std::string> > & get_qualifiedNameMapForMapsOfTypes() const;
+
        // DQ (6/3/2011): Evaluate types to permit the strings representing unparsing the types 
        // are saved in a separate map associated with the IR node referencing the type.  This 
        // supports the cases where a type with template arguments may require different name 
@@ -235,8 +317,11 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
        // DQ (6/21/2011): Added support to generate function names containing template arguments.
           void traverseTemplatedFunction(SgFunctionRefExp* functionRefExp, SgNode* nodeReference, SgScopeStatement* currentScope, SgStatement* positionStatement );
 
-       // DQ (5/24/2013): Added support to generate function names containing template arguments.
+       // DQ (5/24/2013): Added support to generate member function names containing template arguments.
           void traverseTemplatedMemberFunction(SgMemberFunctionRefExp* memberFunctionRefExp, SgNode* nodeReference, SgScopeStatement* currentScope, SgStatement* positionStatement );
+
+       // DQ (4/12/2019): Added support to generate class names containing template arguments.
+          void traverseTemplatedClass(SgBaseClass* baseClass, SgNode* nodeReference, SgScopeStatement* currentScope, SgStatement* positionStatement );
 
        // DQ (6/21/2011): Added function to store names with associated SgNode IR nodes.
           void addToNameMap ( SgNode* nodeReference, std::string typeNameString );
@@ -255,6 +340,13 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
 
        // DQ (4/5/2018): Debugging support.
           void functionReport(SgFunctionDeclaration* functionDeclaration);
+
+       // DQ (1/24/2019): display accumulated private base class map.
+       // void displayBaseClassMap (BaseClassSetMap & x);
+          void displayBaseClassMap ( const std::string & label, BaseClassSetMap & x );
+
+       // DQ (3/14/2019): Adding debugging support to output the map of names.
+          void outputNameQualificationMap( const std::map<SgNode*,std::string> & qualifiedNameMap );
    };
 
 

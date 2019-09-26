@@ -114,9 +114,6 @@ public:
     // These are here for compatibility with another WorkList API
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    /** An alias for empty(). This is deprecated; use empty() instead, which is the naming convention used by the STL. */
-    bool isEmpty() const ROSE_DEPRECATED("use empty instead");
-
     /** Adds an item(s) to the end of the queue.  The item is not added if the list was constructed to check for duplicates and
      * the item being inserted is already in the list.
      * @{ */
@@ -127,9 +124,6 @@ public:
 
     /** Remove and return an item from the front of the work list.  The list must not be empty. */
     T take() { return shift(); }
-
-    /** Alias for front(). */
-    const T& examine() const ROSE_DEPRECATED("use front instead");
 
 private:
     void removed(const T&);
@@ -283,22 +277,6 @@ WorkList<T, Compare>::removed(const T &item)
         }
     }
     --nitems_;
-}
-
-// deprecated
-template<typename T, class Compare>
-bool
-WorkList<T, Compare>::isEmpty() const
-{
-    return empty();
-}
-
-// deprecated
-template<typename T, class Compare>
-const T&
-WorkList<T, Compare>::examine() const
-{
-    return front();
 }
 
 #endif

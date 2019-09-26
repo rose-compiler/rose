@@ -1060,7 +1060,7 @@ class EasyStorageMapEntry <SgNode*,std::string>
    };
 
 
-// DQ (10/6/2006): Added to support maping of SgNode* to strings for name namgling support
+// DQ (10/6/2006): Added to support mapping of SgNode* to strings for name mangling support
 // EasyStorage for ROSEAttributesListContainerPtr (PreprocessingInfo*)
 // * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
 template <>
@@ -1071,6 +1071,24 @@ class EasyStorage < std::map<SgNode*, std::string> >
     public:
      void storeDataInEasyStorageClass(const std::map<SgNode*,std::string>& data_);
      std::map<SgNode*,std::string> rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock();
+     static void deleteMemoryPool();
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+
+// DQ (3/13/2019): Added to support mapping of SgNode* to a map of SgNode* to strings for name mangling support
+// EasyStorage for ROSEAttributesListContainerPtr (PreprocessingInfo*)
+// * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
+template <>
+class EasyStorage < std::map<SgNode*, std::map<SgNode*, std::string> > > 
+   : public StorageClassMemoryManagement< EasyStorageMapEntry<SgNode*, std::map<SgNode*, std::string> > >
+   {
+     typedef StorageClassMemoryManagement< EasyStorageMapEntry<SgNode*, std::map<SgNode*, std::string> > > Base;
+    public:
+     void storeDataInEasyStorageClass(const std::map<SgNode*,std::map<SgNode*, std::string> >& data_);
+     std::map<SgNode*,std::map<SgNode*,std::string> > rebuildDataStoredInEasyStorageClass() const;
      static void arrangeMemoryPoolInOneBlock();
      static void deleteMemoryPool();
 

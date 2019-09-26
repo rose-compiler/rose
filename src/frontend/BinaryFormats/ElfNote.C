@@ -73,7 +73,8 @@ SgAsmElfNoteEntry::parse(rose_addr_t at)
 
     /* NUL-terminated name */
     std::string note_name = notes->read_content_local_str(at);
-    ROSE_ASSERT(note_name.size()+1 == name_size);
+    if (note_name.size() + 1 > name_size && name_size > 0)
+        note_name = note_name.substr(0, name_size-1);
     at += name_size;
     at = (at+3) & ~0x3; /* payload is aligned on a four-byte offset */
 

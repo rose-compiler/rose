@@ -1,13 +1,17 @@
-/* ---  rose_config.h.cmake  ---
- * DQ (10/16/2010): Comment added to clarify how this works and how to set macros.
- * This is not an automatically generated file, it is checked into git as
- * a regular file. Then it is used to generate the rose_config.h file in the
- * cmake build tree.
- * If new macros are defined they should be defined using either 
- * define or cmakedefine.  define macros will always be defined
- * however they are set in this file, while cmakedefine will be
- * set or left unset based on the cmake configurations step
+/* -*- c -*-
+ *
+ * DQ (10/16/2010): Comment added to clarify how this works and how to set macros.  This is not an automatically generated
+ * file, it is checked into git as a regular file. Then it is used to generate the rose_config.h file in the cmake build tree.
+ *
+ * If new macros are defined they should be defined using either define or cmakedefine.  Define macros will always be defined
+ * however they are set in this file, while cmakedefine will be set or left unset based on the cmake configurations step
  * (running cmake before running make within the build process).
+ *
+ * Since this file is contains name-space pollution (symbols not beginning with "ROSE_") it must be processed in order to
+ * create a non-polluting file (rosePublicConfig.h) for inclusion into user code (either directly or via other ROSE public
+ * header files). The script that does this (publicConfiguration.pl) reads the rose_config.h file and copies (while renaming)
+ * certain "#define" lines. Therefore, don't put the "#define" inside conditional compilation--the conditional compilation
+ * will not be copied (and cannot be since the conditions contain polluting symbols).
  */
 
 /* Git SCM version information for ROSE: commit identifier. */
@@ -15,6 +19,9 @@
 
 /* Git SCM version information for ROSE: commit date (Unix timestamp). */
 #cmakedefine ROSE_SCM_VERSION_UNIX_DATE @ROSE_SCM_VERSION_UNIX_DATE@
+
+/* Define user-friendly ROSE version */
+#cmakedefine ROSE_PACKAGE_VERSION "@ROSE_PACKAGE_VERSION@"
 
 /* Define to 1 if you have the `argz_append' function. */
 #cmakedefine HAVE_ARGZ_APPEND 1
@@ -30,53 +37,50 @@
 #cmakedefine HAVE_ARGZ_H 1
 
 /* define if the Boost library is available , convert the cmake output Boost_FOUND to our custom HAVE_BOOST */
-#cmakedefine Boost_FOUND 
-#ifdef Boost_FOUND
-  #define HAVE_BOOST
-#endif
+#cmakedefine HAVE_BOOST
 
 /* define if the Boost::Date_Time library is available */
-#cmakedefine Boost_DATE_TIME_FOUND
-#ifdef Boost_DATE_TIME_FOUND
-  #define HAVE_BOOST_DATE_TIME
-#endif
+#cmakedefine HAVE_BOOST_DATE_TIME
 
 /* define if the Boost::Filesystem library is available */
-#cmakedefine Boost_FILESSYSTEM_FOUND
-#ifdef Boost_FILESSYSTEM_FOUND
-  #define HAVE_BOOST_FILESYSTEM 
-#endif
+#cmakedefine HAVE_BOOST_FILESYSTEM 
+
 /* define if the Boost::PROGRAM_OPTIONS library is available */
-#cmakedefine Boost_PROGRAM_OPTIONS_FOUND
-#ifdef Boost_PROGRAM_OPTIONS_FOUND
-  #define HAVE_BOOST_PROGRAM_OPTIONS
-#endif
+#cmakedefine HAVE_BOOST_PROGRAM_OPTIONS
 
 /* define if the Boost::Regex library is available */
-#cmakedefine Boost_REGEX_FOUND
-#ifdef Boost_REGEX_FOUND
-  #define HAVE_BOOST_REGEX
-#endif
+#cmakedefine HAVE_BOOST_REGEX
 
 /* define if the Boost::System library is available */
-#cmakedefine Boost_SYSTEM_FOUND
-#ifdef Boost_SYSTEM_FOUND
-  #define HAVE_BOOST_SYSTEM
-#endif
+#cmakedefine HAVE_BOOST_SYSTEM
 
 /* define if the Boost::Thread library is available */
-#cmakedefine Boost_THREAD_FOUND
-#ifdef Boost_THREAD_FOUND
-  #define HAVE_BOOST_THREAD
-#endif
-
+#cmakedefine HAVE_BOOST_THREAD
 
 /* define if the Boost::Wave library is available */
-#cmakedefine Boost_WAVE_FOUND
-#ifdef Boost_WAVE_FOUND
-  #define HAVE_BOOST_WAVE
-  #define USE_ROSE_BOOST_WAVE_SUPPORT
-#endif
+#cmakedefine HAVE_BOOST_WAVE
+#cmakedefine USE_ROSE_BOOST_WAVE_SUPPORT
+
+/* Define if the boost::serialization library is available */
+#cmakedefine HAVE_BOOST_SERIALIZATION_LIB 1
+
+/* Define if Z3 library is available */
+#cmakedefine ROSE_HAVE_Z3
+
+/* Location of Z3 executable */
+#cmakedefine ROSE_Z3 "@ROSE_Z3@"
+
+/* Define if z3_version.h is available. */
+#cmakedefine ROSE_HAVE_Z3_VERSION_H
+
+/* Define if libgcrypt is available. */
+#cmakedefine ROSE_HAVE_LIBGCRYPT
+
+/* Define if YAML-CPP library is available. */
+#cmakedefine ROSE_HAVE_LIBYAML
+
+/* Define if Dlib is available. */
+#cmakedefine ROSE_HAVE_DLIB
 
 /* Define to 1 if you have the <byteswap.h> header file. */
 #cmakedefine HAVE_BYTESWAP_H 1
@@ -371,10 +375,7 @@
 #cmakedefine HAVE_SHL_LOAD 1
 
 /* Have the SQLITE3 library */
-#cmakedefine SQLITE3_FOUND
-#ifdef HAVE_SQLITE3
-  #define HAVE_SQLITE3
-#endif
+#cmakedefine HAVE_SQLITE3
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #cmakedefine HAVE_STDINT_H 1
@@ -544,9 +545,6 @@
 /* Whether to use the new EDG version 4.7 */
 #cmakedefine ROSE_USE_EDG_VERSION_4_7
 
-/* Whether to use the new interface to EDG */
-#cmakedefine ROSE_USE_NEW_EDG_INTERFACE
-
 /* Use Valgrind calls in ROSE */
 //AS Don't know what to do with this
 #undef ROSE_USE_VALGRIND
@@ -695,7 +693,7 @@
 /* Version number of package */
 //AS Don't know what to do with this
 
-#define VERSION "0.9.4"
+#define VERSION "0.9.10"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
@@ -760,10 +758,6 @@
 
 /* Defined if we're using a prebuilt EDG library */
 #cmakedefine BINARY_EDG
-
-/* Controls design of internal template declaration support within the ROSE
-   AST. */
-#cmakedefine TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 
 /* Build ROSE to support the Binary Analysis */
 #cmakedefine ROSE_BUILD_BINARY_ANALYSIS_SUPPORT

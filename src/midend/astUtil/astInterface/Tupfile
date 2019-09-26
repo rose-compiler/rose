@@ -1,0 +1,5 @@
+include_rules
+
+run $(librose_compile) AstInterface.C CPPAstInterface.C
+
+run $(public_header) AstInterface.h CPPAstInterface.h AstInterface_ROSE.h

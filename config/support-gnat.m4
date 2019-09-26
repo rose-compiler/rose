@@ -13,14 +13,14 @@ if test ! "$with_gnat" ; then
 fi
 )
 
-echo "In ROSE SUPPORT MACRO: with_gnat $with_gnat"
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: with_gnat = "$with_gnat"])
 
 if test "$with_gnat" = no; then
    # If gnat is not specified, then don't use it.
-   echo "Skipping use of GNAT!"
+   AC_MSG_NOTICE([skipping use of GNAT])
 else
    gnat_path=$with_gnat
-   echo "Setup GNAT support in ROSE! path = $gnat_path"
+   AC_MSG_NOTICE([GNAT supported in ROSE: gnat path = "$gnat_path"])
 
  # GNAT_SYSTEM_TYPE="`$gnat_path/bin/gnat.system.type`"
  # GNAT_LIBDIR="$gnat_path/$GNAT_SYSTEM_TYPE"

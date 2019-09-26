@@ -9,7 +9,7 @@
 #include "DFAstAttribute.h"
 #include "Labeler.h"
 
-namespace SPRAY {
+namespace CodeThorn {
 
 /*! 
   * \author Markus Schordan
@@ -17,8 +17,8 @@ namespace SPRAY {
  */
 class AstAnnotator {
  public:
-  AstAnnotator(SPRAY::Labeler* labeler);
-  AstAnnotator(SPRAY::Labeler* labeler, VariableIdMapping* variableIdMapping);
+  AstAnnotator(CodeThorn::Labeler* labeler);
+  AstAnnotator(CodeThorn::Labeler* labeler, VariableIdMapping* variableIdMapping);
   // annotates attributes of Type DFAstAttribute of name 'attributeName' as comment for all nodes in the AST subtree of  node 'node'.
   void annotateAstAttributesAsCommentsBeforeStatements(SgNode* node, std::string attributeName);
   void annotateAstAttributesAsCommentsAfterStatements(SgNode* node, std::string attributeName);
@@ -26,10 +26,13 @@ class AstAnnotator {
  protected:
   void annotateAstAttributesAsComments(SgNode* node, std::string attributeName, PreprocessingInfo::RelativePositionType posSpecifier,std::string analysisInfoTypeDescription);
   void insertComment(std::string comment, PreprocessingInfo::RelativePositionType posSpecifier, SgStatement* node);
-  SPRAY::Labeler* _labeler;
+  CodeThorn::Labeler* _labeler;
   VariableIdMapping* _variableIdMapping;
 };
 
-} // end of namespace SPRAY
+} // end of namespace CodeThorn
+
+// backward compatibility
+namespace SPRAY = CodeThorn;
 
 #endif

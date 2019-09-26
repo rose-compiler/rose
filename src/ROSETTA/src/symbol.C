@@ -94,8 +94,10 @@ Grammar::setUpSymbols ()
   // DQ (9/26/2008): Added support for references to symbols to support: "use" declaration in F90, "using" declaration in C++, and "namespace aliasing" in C++.
      NEW_TERMINAL_MACRO ( AliasSymbol,          "AliasSymbol",         "ALIAS_SYMBOL" );
 
+     NEW_TERMINAL_MACRO ( NonrealSymbol, "NonrealSymbol", "NONREAL_SYMBOL" );
+
      NEW_NONTERMINAL_MACRO (Symbol,
-          VariableSymbol /*| TypeSymbol*/           | FunctionSymbol         | FunctionTypeSymbol | 
+          VariableSymbol   | NonrealSymbol          | FunctionSymbol         | FunctionTypeSymbol | 
           ClassSymbol      | TemplateSymbol         | EnumSymbol             | EnumFieldSymbol    | 
           TypedefSymbol    | LabelSymbol            | DefaultSymbol          | NamespaceSymbol    |
           IntrinsicSymbol  | ModuleSymbol           | InterfaceSymbol        | CommonSymbol       | 
@@ -170,6 +172,10 @@ Grammar::setUpSymbols ()
   //               CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL);
      TemplateSymbol.setDataPrototype ( "SgTemplateDeclaration*","declaration", "= NULL",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE); // [DT] 5/10/2000
+
+  // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
+     NonrealSymbol.setDataPrototype ( "SgNonrealDecl*", "declaration", "= NULL",
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (2/29/2004): Header file support code for template declaration support
   // TemplateInstantiationSymbol.setFunctionPrototype( "HEADER_TEMPLATE_INSTANTIATION_DECLARATION", "../Grammar/Symbol.code" );
@@ -278,7 +284,7 @@ Grammar::setUpSymbols ()
   // that caused the sgAliasSymbol symbol to be built.  This is critical to support for name qualification
   // that is different before and after a using declaration; but which forces the sgAliasSymbol to be 
   // generated only once within the AST (before uparsing the associated using declaration of using directive
-  // that caused the generation of the sgAliasSymbol in the symbol tabel for the associated scope.
+  // that caused the generation of the SgAliasSymbol in the symbol tabel for the associated scope).
   // Note that test2014_90.C is a simple example of why this is important.
      AliasSymbol.setDataPrototype("SgNodePtrList", "causal_nodes", "",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -330,6 +336,7 @@ Grammar::setUpSymbols ()
      TemplateFunctionSymbol.setFunctionSource( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
      ClassSymbol.setFunctionSource          ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
      TemplateClassSymbol.setFunctionSource  ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
+     NonrealSymbol.setFunctionSource        ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
 
   // DQ (12/15/2011): I think we have to support types for templates.
      TemplateSymbol.setFunctionSource     ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );       // [DT] 5/10/2000
@@ -364,6 +371,7 @@ Grammar::setUpSymbols ()
      TemplateFunctionSymbol.setFunctionSource       ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
      ClassSymbol.setFunctionSource          ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
      TemplateClassSymbol.setFunctionSource  ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
+     NonrealSymbol.setFunctionSource        ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
 
   // DQ (3/11/2004): Force name of templateSymbol to be the template string (at least until we can get 
   // to the point in the processing were we have access to the realy template name within EDG (then it 

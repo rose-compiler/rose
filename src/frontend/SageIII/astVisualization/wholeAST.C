@@ -186,7 +186,9 @@ CustomAstDOTGenerationData::additionalEdgeInfo(SgNode* from, SgNode* to, std::st
      if (i != edgeList.end())
         {
           returnString = (*i).labelString;
-       // printf ("Adding edge label info (%p) to (%p) \n",from,to);
+#if 1
+          printf ("Adding edge label info (%p) to (%p): returnString = %s \n",from,to,returnString.c_str());
+#endif
         }
 
      return returnString;
@@ -1710,6 +1712,22 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     string flagString  = (variableDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration() == true) ? "variableDeclarationContainsBaseTypeDefiningDeclaration" : "!variableDeclarationContainsBaseTypeDefiningDeclaration";
                     labelWithSourceCode = "\\n  " + flagString +
                                           "\\n  " + StringUtility::numberToString(variableDeclaration) + "  ";
+#if 1
+                 // DQ (6/15/2019): Debugging the outliner support and detection of protected or private data 
+                 // members that trigger declarations to be marked as friend declaration in the class definitions.
+
+                 // printf ("decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()   = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isPrivate()   ? "true" : "false");
+                 // printf ("decl_stmt->get_declarationModifier().get_accessModifier().isProtected() = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false");
+                 // printf ("decl_stmt->get_declarationModifier().get_accessModifier().isPublic()    = %s \n",decl_stmt->get_declarationModifier().get_accessModifier().isPublic()    ? "true" : "false");
+
+                    string isPrivate   = variableDeclaration->get_declarationModifier().get_accessModifier().isPrivate()   ? "true" : "false";
+                    string isProtected = variableDeclaration->get_declarationModifier().get_accessModifier().isProtected() ? "true" : "false";
+                    string isPublic    = variableDeclaration->get_declarationModifier().get_accessModifier().isPublic()    ? "true" : "false";
+
+                    labelWithSourceCode += "\\n isPrivate   = " + isPrivate   + "  ";
+                    labelWithSourceCode += "\\n isProtected = " + isProtected + "  ";
+                    labelWithSourceCode += "\\n isPublic    = " + isPublic    + "  ";
+#endif
                     break;
                   }
 

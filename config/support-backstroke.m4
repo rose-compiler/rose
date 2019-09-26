@@ -16,23 +16,22 @@ if test ! "$with_backstroke_ross" ; then
 fi
 )
 
-echo "In ROSE SUPPORT MACRO: with_backstroke_ross $with_backstroke_ross"
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: with_backstroke_ross = "$with_backstroke_ross"])
 
 if test "$with_backstroke_ross" = no; then
    # If BACKSTROKE ROSS is not specified, then don't use it.
-   echo "Skipping use of BACKSTROKE ROSS specific support!"
+   AC_MSG_NOTICE([skipping use of BACKSTROKE ROSS specific support])
 else
    if test "$with_backstroke_ross" = yes; then
       # Path not specified...
-      echo "Error: Path to ROSS not specified...(usage: --with-backstroke-ross=PATH)"
-      exit 1
+      AC_MSG_FAILURE([path to ROSS not specified (usage: --with-backstroke-ross=PATH)])
    fi
    backstroke_ross_path=$with_backstroke_ross
-   echo "Setup ROSS support in ROSE! path = $backstroke_ross_path"
+   AC_MSG_NOTICE([setup ROSS support in ROSE. path = "$backstroke_ross_path"])
    AC_DEFINE([USE_ROSE_SUPPORT_BACKSTROKE_ROSS],1,[Controls use of ROSE support in Backstroke project for ROSS Discrete Event Simulator.])
    BACKSTROKE_ROSS_INCLUDE="-I$backstroke_ross_path"
 
-   echo "BACKSTROKE_ROSS_INCLUDE = $BACKSTROKE_ROSS_INCLUDE"
+   AC_MSG_NOTICE([BACKSTROKE_ROSS_INCLUDE = "$BACKSTROKE_ROSS_INCLUDE"])
 fi
 
 AC_SUBST(backstroke_ross_path)
@@ -48,23 +47,22 @@ if test ! "$with_backstroke_speedes" ; then
 fi
 )
 
-echo "In ROSE SUPPORT MACRO: with_backstroke_speedes $with_backstroke_speedes"
+AC_MSG_NOTICE([in ROSE SUPPORT MACRO: with_backstroke_speedes = "$with_backstroke_speedes"])
 
 if test "$with_backstroke_speedes" = no; then
    # If BACKSTROKE SPEEDES is not specified, then don't use it.
-   echo "Skipping use of BACKSTROKE SPEEDES specific support!"
+   AC_MSG_NOTICE([skipping use of BACKSTROKE SPEEDES specific support])
 else
    if test "$with_backstroke_speedes" = yes; then
       # Path not specified...
-      echo "Error: Path to SPEEDES not specified...(usage: --with-backstroke-speedes=PATH)"
-      exit 1
+      AC_MSG_FAILURE([path to SPEEDES not specified (usage: --with-backstroke-speedes=PATH)])
    fi
    backstroke_speedes_path=$with_backstroke_speedes
-   echo "Setup SPEEDES support in ROSE! path = $backstroke_speedes_path"
+   AC_MSG_NOTICE([setup SPEEDES support in ROSE. path = "$backstroke_speedes_path"])
    AC_DEFINE([USE_ROSE_SUPPORT_BACKSTROKE_SPEEDES],1,[Controls use of ROSE support in Backstroke project for SPEEDES Discrete Event Simulator.])
    BACKSTROKE_SPEEDES_INCLUDE="-I$backstroke_backstroke_path"
 
-   echo "BACKSTROKE_SPEEDES_INCLUDE = $BACKSTROKE_SPEEDES_INCLUDE"
+   AC_MSG_NOTICE([BACKSTROKE_SPEEDES_INCLUDE = "$BACKSTROKE_SPEEDES_INCLUDE"])
 fi
 
 AC_SUBST(backstroke_speedes_path)

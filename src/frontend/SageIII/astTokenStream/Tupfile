@@ -1,0 +1,8 @@
+include_rules
+
+run $(librose_compile) tokenStreamMapping.C frontierDetection.C simpleFrontierDetection.C previousAndNextNode.C \
+    maxExtents.C detectMacroOrIncludeFileExpansions.C detectMacroExpansionsToBeUnparsedAsAstTransformations.C
+
+run $(public_header) createMap.h  doCompleteMapping.h  linearizeAST.h unparseMacro.h tokenStreamMapping.h \
+    frontierDetection.h simpleFrontierDetection.h previousAndNextNode.h maxExtents.h detectMacroOrIncludeFileExpansions.h \
+    detectMacroExpansionsToBeUnparsedAsAstTransformations.h

@@ -722,8 +722,26 @@ SgBaseClass::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
      SgBaseClass* baseClass_copy = isSgBaseClass(copy);
      ROSE_ASSERT(baseClass_copy != NULL);
 
-     ROSE_ASSERT(this->get_base_class() != NULL);
-     this->get_base_class()->fixupCopy_references(baseClass_copy->get_base_class(),help);
+     const SgNonrealBaseClass* nrBaseClass = isSgNonrealBaseClass(this);
+     SgNonrealBaseClass* nrBaseClass_copy = isSgNonrealBaseClass(copy);
+
+     if (this->get_base_class() != NULL) {
+       ROSE_ASSERT(baseClass_copy->get_base_class());
+
+       ROSE_ASSERT(nrBaseClass == NULL);
+       ROSE_ASSERT(nrBaseClass_copy == NULL);
+
+       this->get_base_class()->fixupCopy_references(baseClass_copy->get_base_class(),help);
+     } else if (nrBaseClass != NULL) {
+       ROSE_ASSERT(nrBaseClass->get_base_class_nonreal() != NULL);
+
+       ROSE_ASSERT(nrBaseClass_copy != NULL);
+       ROSE_ASSERT(nrBaseClass_copy->get_base_class_nonreal() != NULL);
+
+       nrBaseClass->get_base_class_nonreal()->fixupCopy_references(nrBaseClass_copy->get_base_class_nonreal(),help);
+     } else {
+       ROSE_ASSERT(false);
+     }
    }
 
 

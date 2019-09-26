@@ -511,8 +511,8 @@ CallTargetSet::solveMemberFunctionCall(SgClassType *crtClass, ClassHierarchyWrap
      // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      // SgFunctionDefinition *functionDefinition = NULL;
 
-        SgMemberFunctionDeclaration* memberFunctionDefDeclaration = 
-            isSgMemberFunctionDeclaration(memberFunctionDeclaration->get_definingDeclaration());
+     // SgMemberFunctionDeclaration* memberFunctionDefDeclaration = 
+     //     isSgMemberFunctionDeclaration(memberFunctionDeclaration->get_definingDeclaration());
 
      // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      // if (memberFunctionDefDeclaration != NULL) {

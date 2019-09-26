@@ -1,0 +1,189 @@
+#!/usr/bin/perl
+
+=pod
+
+=head1 NAME
+
+generate-test-rules - generates Tup rules for running tests
+
+=head1 SYNOPSIS
+
+generate-test-rules I<INPUT> [I<SWITCHES>] I<COMMAND>...
+
+=head1 DESCRIPTION
+
+This command generates Tup rules for running tests. The I<INPUT> is the inputs for the generated rule and is usually
+just the name of the command to run.  If the command has more than one input they can be listed with the c<--input>
+switch.
+
+The resulting rules run the I<COMMAND> using the run-test script which saves the command output in a file, and ensures
+that the command finishes in a reasonable amount of time.
+
+=head1 SWITCHES
+
+=over
+
+=item -i I<FILE> | --input=I<FILE>
+
+Add I<FILE> as an additional input, in addition to the main I<INPUT> which is always required.  This switch may appear
+multiple times and/or the argument may be a space-separated list of file names.
+
+=item --name=I<NAME>
+
+Specializes or replaces the abbreviated command string printed by Tup when run without C<--verbose>.  The default output
+is "TEST I<INPUT_NAME>" where I<INPUT_NAME> is derived from the I<INPUT> argument. If the C<--name> switch is specified
+and given a I<NAME> that is a single word, a space and that word is appended to the default message. A multi-word value
+replaces the entire default string.
+
+=item -o I<NAME> | --output=I<NAME>
+
+Specifies the name of the results file (in the current working directory) that is produced by the run-test script when
+running this command.  The default output name is formed by appending ".result" to the base name of I<INPUT>. If I<NAME>
+ends with ".result" then the specified name is used verbatim, otherwise the output is formed as per default except a
+hyphen and I<NAME> is inserted before the ".result" string.
+
+This argument is typically used when there's a need to run the same checker executable on multiple inputs. By supplying
+a different output name for each test, Tup will know that the rules produce non-conflicting outputs.
+
+=item -x <FILE> | --extra=<FILE>
+
+Extra output files produced from the command. Tup requires knowledge of all files produced by a command, and all files
+must be produced each time.  A command cannot avoid an output by simply removing the file after the fact since this
+could interfere with other commands that are trying to legitimately produce the same file.  It is permissible, however,
+for a command to write to unannounced files that are outside the build tree. This switch may appear multiple times and/or the argument may be a space-separated list of file names.
+
+=back
+
+=cut
+
+use strict;
+use FindBin;
+use lib "$FindBin::Bin";
+use TupScripts;
+
+# Command-line arguments
+my($arg0) = $0 =~ m(([^/]+)$);
+my $input; # first non-switch argument, the main input file for the rule
+my @extra_inputs; # values from the --input switch
+my $output; # value of the --output switch, then adjusted to be the actual output name
+my @extra_outputs; # values from the --extra switch
+my @other_switches; # switches appearing prior to command
+my $command_name; # value from the --name switch
+my @command; # arguments forming the command to run
+
+# Parse command-line
+while (@ARGV) {
+    my($arg) = shift @ARGV;
+
+    # --help
+    if ($arg =~ /^(-h|--help|-\?)$/) {
+	TupScripts::help;
+	exit(0);
+    }
+
+    # --input
+    if ($arg eq "-i" || $arg eq "--input") {
+	die "$arg0: \"$arg\" expects an argument\n" unless @ARGV;
+	push @extra_inputs, (split " ", shift @ARGV);
+	next;
+    }
+    if ($arg =~ /^(-i|--input=)(.*)/) {
+	push @extra_inputs, (split " ", $2);
+	next;
+    }
+
+    # --name
+    if ($arg eq "--name") {
+	die "$arg0: \"$arg\" expects an argument\n" unless @ARGV;
+	$command_name = shift @ARGV;
+	next;
+    }
+    if ($arg =~ /^--name=(.*)/) {
+	$command_name = $1;
+	next;
+    }
+
+    # --output
+    if ($arg eq "-o" || $arg eq "--output") {
+	die "$arg0: \"$arg\" expects an argument\n" unless @ARGV;
+	die "$arg0: multiple --output|-o switches not allowed\n" if $output;
+	$output = shift @ARGV;
+	next;
+    }
+    if ($arg =~ /^(-o|--output=)(.*)/) {
+	die "$arg0: multiple --output|-o switches not allowed\n" if $output;
+	$output = $2;
+	next;
+    }
+
+    # --extra outputs
+    if ($arg eq "-x" || $arg eq "--extra") {
+	die "$arg0: \"$arg\" expects an argument\n" unless @ARGV;
+	push @extra_outputs, (split " ", shift @ARGV);
+	next;
+    }
+    if ($arg =~ /^(-x|--extra=)(.*)/) {
+	push @extra_outputs, (split " ", $2);
+	next;
+    }
+
+    # Other switches appearing after INPUT but before COMMAND get passed verbatim to the rule.
+    if ($arg =~ /^-/) {
+	if ($input) {
+	    push @other_switches, $arg;
+	    next;
+	} else {
+	    die "$arg0: unknown switch \"$arg\"\n";
+	}
+    }
+
+    # non-switch is either INPUT or start of COMMAND
+    if ($input) {
+	@command = ($arg, @ARGV);
+	@ARGV = ();
+	next;
+    } else {
+	$input = $arg;
+    }
+}
+
+# Validate command-line and assign default values
+if ($input eq "") {
+    die "$arg0: no main output (1st arg) specified\n" unless $input;
+}
+
+$output = $1 while $output =~ /^\.\/(.*)/; # strip leading "./"
+die "$arg0: output must be in the CWD\n" if $output =~ /\//;
+my($output_base) = TupScripts::base_name($input);
+$output_base .= "-${output}" if $output;
+$output = "${output_base}.result";
+
+if ($command_name eq "") {
+    $command_name = "TEST ${output_base}";
+} elsif ($command_name =~ /\s/) {
+    # use $name as-is
+} else {
+    $command_name = "TEST ${output_base} ${command_name}";
+}
+
+@extra_inputs = grep {$_ ne ""} @extra_inputs;
+@extra_outputs = grep {$_ ne ""} @extra_outputs;
+
+if (!@command) {
+    if ($input =~ /^[.\/]/) {
+	@command = $input;
+    } else {
+	@command = "./${input}";
+    }
+}
+
+# Generate the rule
+print ": $input";
+print " | ", join(" ", @extra_inputs) if @extra_inputs;
+print " |> ^ ${command_name}^";
+print " \$(run_test) -o %o";
+print " ", join(" ", map {TupScripts::shell_escape($_)} @other_switches) if @other_switches;
+print " ", join(" ", map {TupScripts::shell_escape($_)} @command);
+print " |> ${output}";
+print " | ", join(" ", @extra_outputs) if @extra_outputs;
+print " <tests>\n";

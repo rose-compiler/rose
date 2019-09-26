@@ -29,6 +29,7 @@ sub checkdir {
     next if $entry =~ /^\.git$/; # Git can handle its own problems
     next if $entry =~ /^_build/; # typical names for build directories
     next if $entry =~ /^build_tree$/; # Jenkins' build directory
+    next if $entry =~ /~$/; # editor backup file
     checkdir("$dir/$entry") if -d "$dir/$entry" && ! -d "$dir/$entry/include_staging";
     my $key = lc $entry;
     $index{$key} ||= [];

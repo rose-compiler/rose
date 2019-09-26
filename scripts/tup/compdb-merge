@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Find all the *.o.json files in the specified directories and all
+# children recursively, read their objects, one per file, and emit a
+# new JSON file on stdout that contains the objects in an
+# array. You'll need jq-1.5 or later.
+
+find "$@" -name '*.o.json' -type f -print0 |\
+    xargs -0 cat |\
+    jq -nc '[inputs]'
