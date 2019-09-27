@@ -202,7 +202,6 @@ Grammar::buildStaticDataMemberListClassEntries(AstNodeClass & node)
      std::string classMembers = node.buildStaticDataMemberList();
      string temp = classMembers;
      classMembers = GrammarString::copyEdit(temp, "$CLASSNAME",  node.name);
-     vector<AstNodeClass *>::const_iterator treeListIterator;
      DO_ON_CHILDREN_TO_STRING(node, classMembers, buildStaticDataMemberListClassEntries);
      return classMembers;
    }
