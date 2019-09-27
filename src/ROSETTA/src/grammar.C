@@ -2414,8 +2414,6 @@ Grammar::buildVariantsStringDataBase ( StringUtility::FileWithLineNumbers & outp
      string openString      = "          {";
      string separatorString = ", \"";
      string closeString     = "\"}, \n";
-     vector<AstNodeClass *>::const_iterator  it;
-
      string middleString;
 
      vector<string> variantNames;
