@@ -547,13 +547,13 @@ run $(test) testSRecords
 run $(tool_compile_linkexe) testDisassembler.C
 
 # PowerPC-32
-run $(test) testDisassembler -o ppc32 --answer=testDisassembler-ppc32.ans \
+run $(test) testDisassembler -o ppc32 --input=testDisassembler-ppc32.txt --answer=testDisassembler-ppc32.ans \
     ./testDisassembler --isa=ppc32 ./testDisassembler-ppc32.txt
 
 # PowerPC-64
-run $(test) testDisassembler -o ppc64a --answer=testDisassembler-ppc64a.ans \
+run $(test) testDisassembler -o ppc64a --input=testDisassembler-ppc32.txt --answer=testDisassembler-ppc64a.ans \
     ./testDisassembler --isa=ppc64 ./testDisassembler-ppc32.txt
-run $(test) testDisassembler -o ppc64b --answer=testDisassembler-ppc64b.ans \
+run $(test) testDisassembler -o ppc64b --input=testDisassembler-ppc64.txt --answer=testDisassembler-ppc64b.ans \
     ./testDisassembler --isa=ppc64 ./testDisassembler-ppc64.txt
 
 ########################################################################################################################

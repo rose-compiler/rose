@@ -3,6 +3,7 @@
 #include <Diagnostics.h>
 #include <DispatcherPowerpc.h>
 #include <integerOps.h>
+#include <SageBuilderAsm.h>
 
 using namespace Rose::Diagnostics;
 
@@ -972,6 +973,14 @@ struct IP_ldux: P {
 
 // Load doubleword indexed
 struct IP_ldx: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        d->write(args[0], d->read(args[1], 64));
+    }
+};
+
+// Load floating-point double
+struct IP_lfd: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         d->write(args[0], d->read(args[1], 64));
@@ -1953,6 +1962,26 @@ struct IP_stdux: P {
     }
 };
 
+// Store floating-point double
+struct IP_stfd: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        d->write(args[1], d->read(args[0], 64));
+    }
+};
+
+// Store floating-point single
+struct IP_stfs: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        BaseSemantics::SValuePtr src = d->read(args[0], 64);
+        SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type());
+        ASSERT_not_null(srcType);
+        BaseSemantics::SValuePtr single = ops->fpConvert(src, srcType, SageBuilderAsm::buildIeee754Binary32());
+        d->write(args[1], single);
+    }
+};
+
 // Store halfword
 struct IP_sth: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -2505,6 +2534,7 @@ DispatcherPowerpc::iproc_init() {
     iproc_set(powerpc_ldu,              new Powerpc::IP_ldu);
     iproc_set(powerpc_ldux,             new Powerpc::IP_ldux);
     iproc_set(powerpc_ldx,              new Powerpc::IP_ldx);
+    iproc_set(powerpc_lfd,              new Powerpc::IP_lfd);
     iproc_set(powerpc_lha,              new Powerpc::IP_lha);
     iproc_set(powerpc_lhau,             new Powerpc::IP_lhau);
     iproc_set(powerpc_lhaux,            new Powerpc::IP_lhau);
@@ -2611,6 +2641,8 @@ DispatcherPowerpc::iproc_init() {
     iproc_set(powerpc_sthu,             new Powerpc::IP_sthu);
     iproc_set(powerpc_sthux,            new Powerpc::IP_sthux);
     iproc_set(powerpc_sthx,             new Powerpc::IP_sthx);
+    iproc_set(powerpc_stfd,             new Powerpc::IP_stfd);
+    iproc_set(powerpc_stfs,             new Powerpc::IP_stfs);
     iproc_set(powerpc_stswi,            new Powerpc::IP_stswi);
     iproc_set(powerpc_stswx,            new Powerpc::IP_stswx);
     iproc_set(powerpc_stmw,             new Powerpc::IP_stmw);
