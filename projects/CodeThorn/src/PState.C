@@ -8,7 +8,7 @@
 #include "CodeThornException.h"
 
 // only necessary for class VariableValueMonitor
-#include "Analyzer.h"
+//#include "Analyzer.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -103,9 +103,6 @@ long PState::memorySize() const {
     mem+=sizeof(*i);
   }
   return mem+sizeof(*this);
-}
-long EState::memorySize() const {
-  return sizeof(*this);
 }
 
 /*! 

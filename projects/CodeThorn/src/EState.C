@@ -120,6 +120,10 @@ EStateId EStateSet::estateId(const EState* estate) const {
   return estateId(*estate);
 }
 
+long EState::memorySize() const {
+  return sizeof(*this);
+}
+
 EStateId EStateSet::estateId(const EState estate) const {
   EStateId id=0;
   // MS: TODO: we may want to use the new function id(estate) here

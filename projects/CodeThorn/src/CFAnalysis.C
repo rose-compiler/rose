@@ -337,8 +337,8 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   case V_SgOmpBarrierStatement: {
     return labeler->barrierLabel(node);
   }
-  case V_SgOmpSectionStatement:
   case V_SgOmpTargetStatement:
+  case V_SgOmpSectionStatement:
   case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
@@ -581,6 +581,7 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
   
+  case V_SgOmpTargetStatement:
   case V_SgOmpAtomicStatement: {
     auto atomicStmt = node->get_traversalSuccessorByIndex(0);
     auto atomicFinals = finalLabels(atomicStmt);
@@ -588,7 +589,6 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
 
-  case V_SgOmpTargetStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
@@ -1212,6 +1212,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     return edgeSet;
   }
 
+  case V_SgOmpTargetStatement:
   case V_SgOmpAtomicStatement:
   case V_SgOmpSectionStatement: {
     auto nextStmt = node->get_traversalSuccessorByIndex(0);
@@ -1221,6 +1222,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     edgeSet.insert(e);
     return edgeSet;
   }
+  
 
     // omp statements that introduce some sort of synchronization (no all implemented yet?)
   case V_SgOmpBarrierStatement:
@@ -1229,7 +1231,6 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgOmpMasterStatement:
   case V_SgOmpSingleStatement:
   // these omp statements do not generate edges in addition to the ingoing and outgoing edge
-  case V_SgOmpTargetStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpOrderedStatement:
   case V_SgOmpTargetDataStatement:	
@@ -1606,21 +1607,111 @@ FunctionIdMapping* CFAnalysis::getFunctionIdMapping() {
 }
 
 bool CFAnalysis::forkJoinConsistencyChecks(Flow &flow) const {
-  logger[INFO] << "Running fork/join consistency tests." << endl;
+  SAWYER_MESG(logger[INFO]) << "Running fork/join consistency tests." << endl;
   const auto flowLabels = flow.nodeLabels();
-  int forks, joins;
-  forks = joins = 0;
+  int forks, joins, workshares, barriers;
+  forks = joins = workshares = barriers = 0;
   for (const auto l : flowLabels) {
     if (labeler->isForkLabel(l)) {
+      auto node = isSgOmpParallelStatement(labeler->getNode(l));
+      assert(node && "Node for fork label is SgOmpParallelNode");
       forks++;
     }
     if (labeler->isJoinLabel(l)) {
+      auto node = isSgOmpParallelStatement(labeler->getNode(l));
+      assert(node && "Node for join label is SgOmpParallelNode");
       joins++;
+    }
+    if (labeler->isWorkshareLabel(l)) {
+      auto node = labeler->getNode(l);
+      bool correctNodeType = isSgOmpForStatement(node) || isSgOmpSectionsStatement(node) || isSgOmpSimdStatement(node) || isSgOmpForSimdStatement(node);
+      assert(correctNodeType && "Node for workshare label is one of for / sections / simd / simd for");
+      workshares++;
+    }
+    if (labeler->isBarrierLabel(l)) {
+      auto node = labeler->getNode(l);
+      bool correctNodeType = isSgOmpForStatement(node) || isSgOmpSectionsStatement(node) || isSgOmpBarrierStatement(node) || isSgOmpSimdStatement(node) || isSgOmpForSimdStatement(node);
+      assert(correctNodeType && "Node for barrier label is one of for / sections / barrier");
+      barriers++;
     }
   }
   // At that point we cannot really make any more assumptions
+  SAWYER_MESG(logger[TRACE]) << "Forks: " << forks << " | " << joins << " :Joins" << endl;
   bool forksEqualJoins(forks == joins);
   assert(forksEqualJoins);
+  SAWYER_MESG(logger[INFO]) << "Passed fork/join consistency checks 1/2" << endl;
+
+  /* Lambda function to collext all function definitions */
+  const auto collectFunctionDefs = [&] (const LabelSet &ls) {
+    std::vector<SgFunctionDefinition *> nodes;
+    for (auto l : ls) {
+      if (labeler->isFunctionEntryLabel(l)) {
+        auto n = isSgFunctionDefinition(labeler->getNode(l));
+        assert(n);
+        nodes.push_back(n);
+      }
+    }
+    return nodes;
+  };
+
+  auto startNodes = collectFunctionDefs(flowLabels);
+  assert(startNodes.size() > 0 && "Target AST has no function definition. No control flow.");
+ 
+  /* 
+   * We sum all parallel cfg labels and check whether the numbers make sense when compared to all AST nodes.
+   * Every omp parallel construct introduces one fork and one join node.
+   * Every omp for / omp sections / omp simd / omp for simd introduces a workshare and a barrier node.
+   * Every omp nowait removed a barrier node.
+   * Every omp barrier introduces a barrier node.
+   */
+  int parallelNodes, forNodes, sectionsNodes, simdNodes, forSimdNodes, barrierNodes;
+  parallelNodes = forNodes = sectionsNodes = simdNodes = forSimdNodes = barrierNodes = 0;
+  
+  /* This might be somewhat time consuming for large programs. */
+  for (auto rootNode : startNodes) {
+  RoseAst ast(rootNode);
+
+    for(auto n : ast) {
+      switch (n->variantT()) {
+        case V_SgOmpParallelStatement: {
+          parallelNodes++;
+          continue;
+        }
+        case V_SgOmpForStatement: {
+          forNodes++;
+          continue;
+        }
+        case V_SgOmpSectionsStatement: {
+          sectionsNodes++;
+          continue;
+        }
+        case V_SgOmpSimdStatement: {
+          simdNodes++;
+          continue;
+        }
+        case V_SgOmpForSimdStatement: {
+          forSimdNodes++;
+          continue;
+        }
+        case V_SgOmpBarrierStatement: {
+          barrierNodes++;
+          continue;
+        }
+        default: { }
+      }
+    }
+  }
+  int workshareAstNodes = forNodes + sectionsNodes + simdNodes + forSimdNodes;
+  int barrierAstNodes = forNodes + sectionsNodes + simdNodes + forSimdNodes + barrierNodes;
+  SAWYER_MESG(logger[TRACE]) << "Type | CFG nodes | AST nodes\nFork | " << forks << " | " << parallelNodes << "\n";
+  SAWYER_MESG(logger[TRACE]) << "Join | " << joins << " | " << parallelNodes << "\n";
+  SAWYER_MESG(logger[TRACE]) << "Workshare | " << workshares << " | " << workshareAstNodes << "\n";
+  SAWYER_MESG(logger[TRACE]) << "Barrier | " << barriers << " | " << barrierAstNodes << "\n";
+  assert(forks == parallelNodes);
+  assert(joins == parallelNodes);
+  assert(workshares == workshareAstNodes);
+  assert(barriers <= barrierAstNodes);
+  SAWYER_MESG(logger[INFO]) << "Passed fork/join consistency checks 2/2" << endl;
 
   return forksEqualJoins;
 }
