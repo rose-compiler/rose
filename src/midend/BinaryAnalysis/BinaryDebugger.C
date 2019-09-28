@@ -574,6 +574,41 @@ Debugger::readRegister(RegisterDescriptor desc) {
     return bits;
 }
 
+Sawyer::Container::BitVector
+Debugger::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
+    using namespace Sawyer::Container;
+
+    struct Resources {
+        uint8_t *buffer;
+        Resources(): buffer(NULL) {}
+        ~Resources() {
+            delete[] buffer;
+        }
+    } r;
+
+    r.buffer = new uint8_t[nBytes];
+    size_t nRead = readMemory(va, nBytes, r.buffer);
+    if (nRead != nBytes)
+        throw std::runtime_error("short read at " + StringUtility::addrToString(va));
+
+    BitVector retval(8*nBytes);
+    for (size_t i=0; i<nBytes; ++i) {
+        BitVector::BitRange where;
+        switch (sex) {
+            case ByteOrder::ORDER_LSB:
+                where = BitVector::BitRange::baseSize(8*i, 8);
+                break;
+            case ByteOrder::ORDER_MSB:
+                where = BitVector::BitRange::baseSize(8*nBytes-(i+1), 8);
+                break;
+            default:
+                ASSERT_not_reachable("invalid byte order");
+        }
+        retval.fromInteger(where, r.buffer[i]);
+    }
+    return retval;
+}
+
 size_t
 Debugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
 #ifdef __linux__

@@ -9,10 +9,10 @@ namespace NativeSemantics = IS::NativeSemantics;
 int main(int argc, char *argv[]) {
     ASSERT_require(argc >= 2);
 
-    boost::filesystem::path exeName = argv[1];
-    std::vector<std::string> exeArgs(argv+2, argv+argc);
+    Debugger::Specimen exe(argv[1]);
+    exe.arguments(std::vector<std::string>(argv+2, argv+argc));
 
-    NativeSemantics::DispatcherPtr cpu = NativeSemantics::Dispatcher::instance(exeName, exeArgs);
+    NativeSemantics::DispatcherPtr cpu = NativeSemantics::Dispatcher::instance(exe);
     ASSERT_not_null(cpu);
     BaseSemantics::RiscOperatorsPtr ops = cpu->get_operators();
 
