@@ -327,7 +327,7 @@ LinuxExecutor::Result::Result(double rank, int exitStatus)
   ROSE_ASSERT(!"NOT_LINUX");
 }
 
-ConcreteExecutor::Result*
+LinuxExecutor::Result*
 LinuxExecutor::execute(const TestCase::Ptr& tc)
 {
   ROSE_ASSERT(!"NOT_LINUX");
