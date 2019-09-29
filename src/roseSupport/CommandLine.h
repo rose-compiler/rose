@@ -89,9 +89,9 @@ ROSE_DLL_API Sawyer::CommandLine::Parser createEmptyParserStage(const std::strin
  * @code
  *  static Sawyer::CommandLine::ParserResult
  *  parseCommandLine(int argc, char *argv[]) {
- *      Sawyer::CommandLine::Parser parser = CommandlineProcessing::createEmptyParser(purpose, description);
+ *      Sawyer::CommandLine::Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
  *      return parser
- *          .with(CommandlineProcessing::genericSwitches()) // these generic switches
+ *          .with(Rose::CommandLine::genericSwitches()) // these generic switches
  *          .with(mySwitches)                               // my own switches, etc.
  *          .parse(argc, argv)                              // parse without side effects
  *          .apply();                                       // apply parser results

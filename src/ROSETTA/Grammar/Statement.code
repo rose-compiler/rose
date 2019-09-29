@@ -14981,7 +14981,7 @@ SgNonrealDecl::get_mangled_name (void) const {
   }
 
   if (get_is_template_param()) {
-    mangled_name << "__templ_param_" << p_template_parameter_depth << "_" << p_template_parameter_position + "__";
+    mangled_name << "__templ_param_" << p_template_parameter_depth << "_" << p_template_parameter_position << "__";
   } else {
     mangled_name << get_name().getString();
   }

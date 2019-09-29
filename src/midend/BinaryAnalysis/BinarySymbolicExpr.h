@@ -799,8 +799,8 @@ public:
     virtual Operator getOperator() const ROSE_OVERRIDE { return op_; }
     virtual size_t nChildren() const ROSE_OVERRIDE { return children_.size(); }
     virtual Ptr child(size_t idx) const ROSE_OVERRIDE { return idx < children_.size() ? children_[idx] : Ptr(); }
-    virtual Sawyer::Optional<uint64_t> toUnsigned() const { return Sawyer::Nothing(); }
-    virtual Sawyer::Optional<int64_t> toSigned() const { return Sawyer::Nothing(); }
+    virtual Sawyer::Optional<uint64_t> toUnsigned() const ROSE_OVERRIDE { return Sawyer::Nothing(); }
+    virtual Sawyer::Optional<int64_t> toSigned() const ROSE_OVERRIDE { return Sawyer::Nothing(); }
 
     /** Simplifies the specified interior node.
      *
@@ -946,7 +946,7 @@ public:
 
     // from base class
     virtual size_t nChildren() const ROSE_OVERRIDE { return 0; }
-    virtual Ptr child(size_t idx) const { return Ptr(); }
+    virtual Ptr child(size_t idx) const ROSE_OVERRIDE { return Ptr(); }
     virtual const Nodes& children() const ROSE_OVERRIDE;
     virtual Operator getOperator() const ROSE_OVERRIDE { return OP_NONE; }
     virtual bool isNumber() const ROSE_OVERRIDE;
