@@ -182,6 +182,7 @@ print ": $input";
 print " | ", join(" ", @extra_inputs) if @extra_inputs;
 print " |> ^ ${command_name}^";
 print " \$(run_test) -o %o";
+print " ", join(" ", map {"-x " . TupScripts::shell_escape($_)} @extra_outputs);
 print " ", join(" ", map {TupScripts::shell_escape($_)} @other_switches) if @other_switches;
 print " ", join(" ", map {TupScripts::shell_escape($_)} @command);
 print " |> ${output}";
