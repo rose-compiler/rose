@@ -621,9 +621,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_DataDeclaration(ATerm term, SgUnt
    else if (traverse_ConstantDeclaration(term, decl_list)) {
       // MATCHED ConstantDeclaration
    }
+   else if (traverse_BlockDeclaration(term, decl_list)) {
+      // MATCHED BlockDeclaration
+   }
    else return ATfalse;
-
-   //  BlockDeclaration            -> DataDeclaration
 
    return ATtrue;
 }
@@ -2220,6 +2221,205 @@ ATbool ATermToUntypedJovialTraversal::traverse_ConstantDeclaration(ATerm term, S
 }
 
 //========================================================================================
+// 2.1.4 BLOCK DECLARATION
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_BlockDeclaration: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_name, t_alloc, t_body, t_type_name, t_preset;
+   std::string block_name, block_type_name;
+   SgUntypedStructureDefinition*  block_def  = NULL;
+   SgUntypedStructureDeclaration* block_decl = NULL;
+   SgUntypedExprListExpression* modifiers = NULL;
+   SgUntypedExprListExpression* preset = NULL;
+
+   if (ATmatch(term, "BlockDeclarationBodyPart(<term>,<term>,<term>)", &t_name, &t_alloc, &t_body)) {
+      cout << "WARNING UNIMPLEMENTED: BlockDeclarationBodyPart\n";
+
+      // TODO list
+      // 1. need variable declaration
+      // 2. need source position information
+      // 3. make sure STATIC works
+
+      if (traverse_Name(t_name, block_name)) {
+         // MATCHED BlockName
+      } else return ATfalse;
+
+#if 0
+      block_decl = UntypedBuilder::buildStructureDeclaration(block_name);
+#endif
+
+      modifiers = block_decl->get_modifiers();
+      ROSE_ASSERT(modifiers != NULL);
+      SageInterface::setSourcePosition(modifiers);
+
+      if (traverse_OptAllocationSpecifier(t_alloc, modifiers)) {
+         // MATCHED OptAllocationSpecifier
+      } else return ATfalse;
+
+      block_def = block_decl->get_definition();
+      ROSE_ASSERT(block_def != NULL);
+      setSourcePosition(block_def, t_body);
+
+      SgUntypedScope* block_scope = block_def->get_scope();
+
+      SgUntypedDeclarationStatementList* block_decl_list = block_scope->get_declaration_list();
+
+      if (traverse_BlockBodyPart(t_body, block_decl_list)) {
+         // MATCHED BlockBodyPart
+      } else return ATfalse;
+   }
+
+   else if (ATmatch(term, "BlockDeclarationTypeName(<term>,<term>,<term>,<term>)", &t_name, &t_alloc, &t_type_name, &t_preset)) {
+      cout << "WARNING UNIMPLEMENTED: BlockDeclarationTypeName\n";
+
+      if (traverse_Name(t_name, block_name)) {
+         // MATCHED BlockName
+      } else return ATfalse;
+
+      if (traverse_Name(t_type_name, block_type_name)) {
+         // MATCHED BlockTypeName
+      } else return ATfalse;
+
+#if 0
+      block_decl = UntypedBuilder::buildStructureDeclaration(block_name, block_type_name, /*has_body*/false);
+#endif
+
+      modifiers = block_decl->get_modifiers();
+      ROSE_ASSERT(modifiers != NULL);
+      SageInterface::setSourcePosition(modifiers);
+
+      if (traverse_OptAllocationSpecifier(t_alloc, modifiers)) {
+         // MATCHED OptAllocationSpecifier
+      } else return ATfalse;
+
+      if (traverse_BlockPreset(t_preset, preset)) {
+         // MATCHED BlockPreset
+      } else return ATfalse;
+
+      //What do we do with the preset?
+      ROSE_ASSERT(false);
+   }
+   else return ATfalse;
+
+   ROSE_ASSERT(block_decl);
+   decl_list->get_decl_list().push_back(block_decl);
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_BlockBodyPart(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_BlockBodyPart: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_dirs, t_body_options;
+
+   if (ATmatch(term, "BlockBodyPart(<term>,<term>)", &t_dirs, &t_body_options)) {
+      if (traverse_DirectiveList(t_dirs, decl_list)) {
+         // MATCHED OrderDirective*
+      } else return ATfalse;
+
+      ATermList tail = (ATermList) ATmake("<term>", t_body_options);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_DataDeclaration(head, decl_list)) {
+            // MATCHED DataDeclaration
+         }
+         else if (traverse_OverlayDeclaration(head, decl_list)) {
+            // MATCHED OverlayDeclaration
+         }
+         else if (traverse_NullDeclaration(head, decl_list)) {
+            // MATCHED NullDeclaration
+         } else return ATfalse;
+      }
+   }
+   else if (traverse_NullDeclaration(term, decl_list)) {
+      // MATCHED NullDeclaration
+   }
+   else if (traverse_DataDeclaration(term, decl_list)) {
+      // MATCHED DataDeclaration
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_BlockPreset(ATerm term, SgUntypedExprListExpression* preset_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_BlockPreset: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_block_preset;
+
+   if (ATmatch(term, "no-block-preset")) {
+      // MATCHED no-block-preset
+   }
+   else if (ATmatch(term, "BlockPreset(<term>)", &t_block_preset)) {
+      if (traverse_BlockPresetList(t_block_preset, preset_list)) {
+         // MATCHED BlockPresetList
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_BlockPresetList(ATerm term, SgUntypedExprListExpression* preset_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_BlockPresetList: %s\n", ATwriteToString(term));
+#endif
+
+   SgUntypedExpression* preset;
+
+   ATermList tail = (ATermList) ATmake("<term>", term);
+   while (! ATisEmpty(tail)) {
+      ATerm head = ATgetFirst(tail);
+      tail = ATgetNext(tail);
+      if (traverse_PresetValuesOption(head, preset)) {
+         // MATCHED PresetValuesOption
+      }
+      else if (traverse_TablePresetList(head, preset_list)) {
+         // MATCHED TablePresetList
+      }
+      else if (traverse_OptBlockPresetList(head, preset_list)) {
+         // MATCHED OptBlockPresetList
+      }
+      else return ATfalse;
+   }
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_OptBlockPresetList(ATerm term, SgUntypedExprListExpression* preset_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_OptBlockPresetList: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_list;
+
+   if (ATmatch(term, "no-block-preset-list")) {
+      // MATCHED no-block-preset-list
+   }
+   else if (ATmatch(term, "OptBlockPresetlist(<term>)", &t_list)) {
+      if (traverse_BlockPresetList(t_list, preset_list)) {
+         //   '(' BlockPresetList ')'         -> OptBlockPresetList    {cons("OptBlockPresetlist")}
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
 // 2.1.5 ALLOCATION OF DATA OBJECTS
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedJovialTraversal::traverse_OptAllocationSpecifier(ATerm term, SgUntypedExprListExpression* attr_list)
@@ -2232,6 +2432,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptAllocationSpecifier(ATerm term
       // MATCHED no-allocation-specifier
    }
    else if (ATmatch(term, "STATIC()")) {
+      ROSE_ASSERT(attr_list);
       SgUntypedExpression* attr = new SgUntypedOtherExpression(General_Language_Translation::e_storage_modifier_static);
       setSourcePosition(attr, term);
       attr_list->get_expressions().push_back(attr);
@@ -2895,6 +3096,137 @@ ATbool ATermToUntypedJovialTraversal::traverse_RefSpecificationChoice(ATerm term
    } else return ATfalse;
 
    //  StatementNameDeclaration        -> RefSpecificationChoice
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 2.6 OVERLAY DECLARATIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_OverlayDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_OverlayDeclaration: %s\n", ATwriteToString(term));
+#endif
+
+   // 'OVERLAY'
+   //   OptAbsoluteAddress
+   //   OverlayExpression ';'         -> OverlayDeclaration   {cons("OverlayDeclaration")}
+
+   ATerm t_addr, t_absolute_addr, t_expr;
+   //   SgUntypedExpression* addr = NULL;
+   SgUntypedExpression *addr, *expr = NULL;
+
+   if (ATmatch(term, "OverlayDeclaration(<term>,<term>)", &t_addr, &t_expr)) {
+      if (ATmatch(t_addr, "AbsoluteAddress(<term>)", &t_absolute_addr)) {
+         // 'POS' '(' OverlayAddress ')'    -> AbsoluteAddress      {cons("AbsoluteAddress")}
+         if (traverse_NumericFormula(t_absolute_addr, addr)) {
+            // MATCHED OverlayAddress
+            // CompileTimeNumericFormula       -> OverlayAddress
+         } else return ATfalse;
+      }
+      else if (ATmatch(t_addr, "no-absolute-address")) {
+         // MATCHED no-absolute-address
+      }
+      else return ATfalse;
+
+      if (traverse_OverlayExpression(t_expr, expr)) {
+         // MATCHED OverlayExpression
+      } else return ATfalse;
+
+   }
+   else return ATfalse;
+
+   return ATtrue;
+
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_OverlayExpression(ATerm term, SgUntypedExpression* & expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_OverlayExpression: %s\n", ATwriteToString(term));
+#endif
+
+   //   {OverlayString ':'}+            -> OverlayExpression
+
+   ATermList tail = (ATermList) ATmake("<term>", term);
+   while (! ATisEmpty(tail)) {
+      ATerm head = ATgetFirst(tail);
+      tail = ATgetNext(tail);
+      if (traverse_OverlayString(head, expr)) {
+         // MATCHED OverlayString
+      } else return ATfalse;
+   }
+
+   return ATtrue;
+
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_OverlayString(ATerm term, SgUntypedExpression* & expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_OverlayString: %s\n", ATwriteToString(term));
+#endif
+
+   //  {OverlayElement ','}+           -> OverlayString
+
+   ATermList tail = (ATermList) ATmake("<term>", term);
+   while (! ATisEmpty(tail)) {
+      ATerm head = ATgetFirst(tail);
+      tail = ATgetNext(tail);
+      if (traverse_OverlayElement(head, expr)) {
+         // MATCHED OverlayElement
+      } else return ATfalse;
+   }
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_OverlayElement(ATerm term, SgUntypedExpression* & expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_OverlayElement: %s\n", ATwriteToString(term));
+#endif
+
+   //  Spacer                          -> OverlayElement
+   //  DataName                        -> OverlayElement
+   //  '(' OverlayExpression ')'       -> OverlayElement       {cons("OverlayElement")}
+
+   ATerm t_expr;
+   std::string name;
+   SgUntypedExpression *spacer; // *overlay_expr;
+
+   if (ATmatch(term, "OverlayElement(<term>)", &t_expr)) {
+      if (traverse_OverlayExpression(t_expr, expr)) {
+         // MATCHED OverlayExpression
+      } else return ATfalse;
+   }
+   else if (traverse_Spacer(term, spacer)) {
+      // MATCHED Spacer
+   }
+   else if (traverse_Name(term, name)) {
+      // MATCHED DataName
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_Spacer(ATerm term, SgUntypedExpression* & expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_OverlayString: %s\n", ATwriteToString(term));
+#endif
+
+   //   'W' CompileTimeNumericFormula   -> Spacer               {cons("Spacer")}
+
+   ATerm t_num;
+   SgUntypedExpression* num;
+
+   if (ATmatch(term, "Spacer(<term>)", &t_num)) {
+      if (traverse_NumericFormula(t_num, num)) {
+         // MATCHED NumericFormula
+      } else return ATfalse;
+   } else return ATfalse;
 
    return ATtrue;
 }

@@ -115,6 +115,13 @@ ATbool traverse_WordsPerEntry                 (ATerm term, SgUntypedExprListExpr
 // 2.1.3 CONSTANT DECLARATIONS
 ATbool traverse_ConstantDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
+// 2.1.4 BLOCK DECLARATION
+ATbool traverse_BlockDeclaration   (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_BlockBodyPart      (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_BlockPreset        (ATerm term, SgUntypedExprListExpression* preset_list);
+ATbool traverse_BlockPresetList    (ATerm term, SgUntypedExprListExpression* preset_list);
+ATbool traverse_OptBlockPresetList (ATerm term, SgUntypedExprListExpression* preset_list);
+
 // 2.1.5 ALLOCATION OF DATA OBJECTS
 ATbool traverse_OptAllocationSpecifier(ATerm term, SgUntypedExprListExpression* attr_list);
 
@@ -153,6 +160,13 @@ ATbool traverse_DefSpecificationChoice(ATerm term, SgUntypedDeclarationStatement
 ATbool traverse_SimpleRef             (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_CompoundRef           (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_RefSpecificationChoice(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+
+// 2.6 OVERLAY DECLARATIONS
+ATbool traverse_OverlayDeclaration    (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_OverlayExpression     (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_OverlayString         (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_OverlayElement        (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_Spacer                (ATerm term, SgUntypedExpression* & expr);
 
 // 3.0 PROCEDURES AND FUNCTIONS
 ATbool traverse_ProcedureDefinition(ATerm term, SgUntypedFunctionDeclarationList* func_list);
