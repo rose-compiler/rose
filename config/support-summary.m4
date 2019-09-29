@@ -69,6 +69,7 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
 	echo "    i386 support                     ${CFLAGS32:-none}"
 	echo "    libmagic                         ${ROSE_HAVE_LIBMAGIC:-none}"
 	echo "    readline                         ${LIBREADLINE_LIBRARY_PATH:-none}"
+	echo "    SQLite3                          ${SQLITE3_VERSION:-none}"
 	echo "    YAML-cpp                         ${ROSE_YAML_PREFIX:-none}"
 	echo "    yices executable                 ${ROSE_YICES:-none}"
 	echo "    yices library                    ${ROSE_HAVE_LIBYICES:-none}"

@@ -29,7 +29,7 @@ run yum -y group install "Development Tools"
 run yum -y install wget tar cmake java-1.8.0-openjdk-devel python-devel graphviz gcc-c++ flex bison \
     bzip2 zlib-devel libtool libtool-ltdl-devel byacc libgcrypt-devel xz \
     fuse fuse-devel passwd fontconfig mesa-libGLU git pcre-devel patch glibc-static libstdc++-static \
-    libstdc++-devel.i686 ncurses-devel.i686 sudo postgresql-devel
+    libstdc++-devel.i686 ncurses-devel.i686 sudo postgresql-devel ghostscript
 
 # Some dependencies are part of the core CentOS distribution
 run yum -y install epel-release

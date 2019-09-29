@@ -1,5 +1,5 @@
 /* compile as:
- *   gcc -nostdlib -o concolic-specimen-01 concolic-specimen-01.c
+ *   gcc -nostdlib -o concolic-specimen-01 concolic-specimen-01-source.c
  */
 void halt() {
     asm("hlt");
