@@ -19,8 +19,8 @@ T_NM="$("$rose_shtool" echo -n -e %b)" dnl "terminal normal mode"
 dnl +--------------------------------------------------------------------------+
 dnl | Source tree build - disabled
 dnl +--------------------------------------------------------------------------+
-AC_CONFIG_SRCDIR([README])
-if test -e "README"; then
+AC_CONFIG_SRCDIR([README.md])
+if test -e "README.md"; then
   AC_MSG_FAILURE(
     [
       ROSE cannot be built in the source tree '$(dirname "$0")' yet.
