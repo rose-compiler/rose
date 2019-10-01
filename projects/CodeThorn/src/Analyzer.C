@@ -1486,7 +1486,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   Label startLabel=cfanalyzer->getLabel(startFunRoot);
   transitionGraph.setStartLabel(startLabel);
   transitionGraph.setAnalyzer(this);
-
+  
   EState estate(startLabel,initialPStateStored,emptycsetstored);
 
   if(SgProject* project=isSgProject(root)) {
