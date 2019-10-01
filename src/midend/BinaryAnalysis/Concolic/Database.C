@@ -729,10 +729,15 @@ namespace BinaryAnalysis {
     QY_RM_RBAFILE        = "DELETE FROM RBAFiles"
                            "  WHERE specimen_id = " + SqlInt() + ";";
 
+    //~ static const
+    //~ SqlQuery<bt::tuple<int, std::string>::inherited>
+    //~ QY_NEW_CONCRETE_RES  = "INSERT INTO ConcreteResults"
+                           //~ "  (testcase_id, result)"
+                           //~ "  VALUES(" + SqlInt() + "," + SqlString() + ");";
 
     static const
     SqlQuery<bt::tuple<int, std::string>::inherited>
-    QY_NEW_CONCRETE_RES  = "INSERT INTO ConcreteResults"
+    QY_NEW_CONCRETE_RES  = "REPLACE INTO ConcreteResults"
                            "  (testcase_id, result)"
                            "  VALUES(" + SqlInt() + "," + SqlString() + ");";
 
@@ -1905,9 +1910,7 @@ Database::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExe
 
     updateDBObject(*this, dbtx.tx(), testCase, tcid);
 
-    // \todo can we overwrite existing results?
-    //       if yes, the entries in the QY_NEW_CONCRETE_RES may need
-    //       to be updated or deleted.
+    // \note existing results will be overwritten?
     sqlPrepare(dbtx.tx(), QY_NEW_CONCRETE_RES, tcid.get(), detailtxt)
       ->execute();
 

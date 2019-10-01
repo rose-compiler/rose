@@ -514,8 +514,7 @@ public:
     /** @} */
 
     virtual
-    ConcreteExecutor::Result*
-    execute(const TestCase::Ptr&) ROSE_OVERRIDE;
+    Result* execute(const TestCase::Ptr&) ROSE_OVERRIDE;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -870,6 +869,9 @@ public:
    std::vector<Database::TestCaseId> needConcolicTesting(size_t);
 
    /** Updates a test case and its results.
+    *
+    * @param testCase a pointer to a test case
+    * @param details  a polymorphic object holding results for a concrete execution
     *
     * Thread safety: thread safe
     */

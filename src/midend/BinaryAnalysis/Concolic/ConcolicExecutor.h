@@ -1,8 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_ConcolicExecutor_H
 #define ROSE_BinaryAnalysis_Concolic_ConcolicExecutor_H
 
-#include <BaseSemantics2.h>
-#include <ConcreteSemantics2.h>
+#include <BinaryDebugger.h>
+#include <DispatcherX86.h>
+#include <Sawyer/FileSystem.h>
 #include <SymbolicSemantics2.h>
 
 namespace Rose {
@@ -10,81 +11,8 @@ namespace BinaryAnalysis {
 namespace Concolic {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/** Semantics for concolic execution. */
-namespace Emulation {
-
-typedef InstructionSemantics2::BaseSemantics::SValuePtr BaseValuePtr; /**< Pointer to semantic base values. */
-typedef InstructionSemantics2::BaseSemantics::RegisterStatePtr BaseRegistersPtr;/**< Pointer to semantic base registers. */
-typedef InstructionSemantics2::BaseSemantics::MemoryStatePtr BaseMemoryPtr; /**< Pointer to semantic base memory. */
-typedef InstructionSemantics2::BaseSemantics::StatePtr BaseStatePtr; /**< Pointer to semantic base machine state. */
-typedef InstructionSemantics2::BaseSemantics::RiscOperatorsPtr BaseOperatorsPtr; /**< Pointer to semantic base operators. */
-typedef InstructionSemantics2::BaseSemantics::DispatcherPtr BaseCpuPtr;/**< Pointer to semantic base CPU. */
-
-typedef InstructionSemantics2::ConcreteSemantics::SValuePtr ConcreteValuePtr; /**< Pointer to concrete values. */
-typedef InstructionSemantics2::ConcreteSemantics::SValue ConcreteValue; /**< Type of concrete values. */
-typedef InstructionSemantics2::ConcreteSemantics::RegisterStatePtr ConcreteRegistersPtr; /**< Pointer to concrete registers. */
-typedef InstructionSemantics2::ConcreteSemantics::RegisterState ConcreteRegisters; /**< Type of concrete register space. */
-typedef InstructionSemantics2::ConcreteSemantics::MemoryStatePtr ConcreteMemoryPtr; /**< Pointer to concrete memory. */
-typedef InstructionSemantics2::ConcreteSemantics::MemoryState ConcreteMemory; /**< Type of concrete memory space. */
-typedef InstructionSemantics2::ConcreteSemantics::StatePtr ConcreteStatePtr; /**< Pointer to concrete machine state. */
-typedef InstructionSemantics2::ConcreteSemantics::State ConcreteState; /**< Concrete machine state. */
-typedef boost::shared_ptr<class ConcreteOperators> ConcreteOperatorsPtr; /**< Pointer to concrete semantics operators. */
-
-/** Concrete semantic operators. */
-class ConcreteOperators: public InstructionSemantics2::ConcreteSemantics::RiscOperators {
-public:
-    /** Base class. */
-    typedef InstructionSemantics2::ConcreteSemantics::RiscOperators Super;
-
-protected:
-    /** Constructor for subclasses. Most users will use @ref instance. */
-    ConcreteOperators(const BaseValuePtr &protoval, const SmtSolverPtr &solver)
-        : Super(protoval, solver) {
-        name("Concolic-concrete");
-        (void) ConcreteValue::promote(protoval);
-    }
-
-    /** Constructor for subclasses. Most users will use @ref instance. */
-    ConcreteOperators(const BaseStatePtr &state, const SmtSolverPtr &solver)
-        : Super(state, solver) {
-        name("Concolic-concrete");
-        (void) ConcreteValue::promote(state->protoval());
-    }
-
-public:
-    /** Create a new instance of concrete semantic operators. */
-    static ConcreteOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr());
-
-    /** Create a new instance of concrete semantic operators. */
-    static ConcreteOperatorsPtr instance(const BaseValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr());
-
-    /** Create a new instance of concrete semantic operators. */
-    static ConcreteOperatorsPtr instance(const BaseStatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr());
-
-    /** Dynamic cast. */
-    static ConcreteOperatorsPtr promote(const BaseOperatorsPtr &x);
-
-    // Overrides documented in base class
-    virtual BaseOperatorsPtr create(const BaseValuePtr &protoval,
-                                    const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
-    virtual BaseOperatorsPtr create(const BaseStatePtr &state,
-                                    const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
-    virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
-
-private:
-    // Handles a Linux system call of the INT 0x80 variety.
-    void systemCall();
-};
-
-typedef InstructionSemantics2::SymbolicSemantics::SValuePtr SymbolicValuePtr; /**< Pointer to symbolic values. */
-typedef InstructionSemantics2::SymbolicSemantics::SValue SymbolicValue; /**< Type of symbolic values. */
-typedef InstructionSemantics2::SymbolicSemantics::RegisterStatePtr SymbolicRegistersPtr; /**< Pointer to symbolic registers. */
-typedef InstructionSemantics2::SymbolicSemantics::RegisterState SymbolicRegisters; /**< Type of symbolic register space. */
-typedef InstructionSemantics2::SymbolicSemantics::MemoryStatePtr SymbolicMemoryPtr; /**< Pointer to symbolic memory. */
-typedef InstructionSemantics2::SymbolicSemantics::MemoryState SymbolicMemory; /**< Type of symbolic memory space. */
-typedef InstructionSemantics2::SymbolicSemantics::StatePtr SymbolicStatePtr; /**< Pointer to symbolic machine state. */
-typedef InstructionSemantics2::SymbolicSemantics::State SymbolicState; /**< Symbolic machine state. */
-typedef boost::shared_ptr<class SymbolicOperators> SymbolicOperatorsPtr; /**< Pointer to symbolic semantic operations. */
+// Variables that exist in the specimen.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Describes where a symbolic variable came from. */
 struct VariableProvenance {
@@ -96,7 +24,7 @@ struct VariableProvenance {
     };
     Whence whence;                                      /**< Where did symbolic variable come from? */
     RegisterDescriptor reg;                             /**< The register where the variable was defined. */
-    BaseValuePtr addr;                                  /**< Memory address where the variable was defined. */
+    InstructionSemantics2::BaseSemantics::SValuePtr addr; /**< Memory address where the variable was defined. */
 
     /** Default constructor. */
     VariableProvenance()
@@ -107,49 +35,62 @@ struct VariableProvenance {
         : whence(REGISTER), reg(reg) {}
 
     /** Construct a memory provenance record. */
-    explicit VariableProvenance(const BaseValuePtr &addr)
+    explicit VariableProvenance(const InstructionSemantics2::BaseSemantics::SValuePtr &addr)
         : whence(MEMORY), addr(addr) {}
 };
 
 /** Mapping of symbolic variables to their provenance information. */
 typedef Sawyer::Container::Map<SymbolicExpr::LeafPtr, VariableProvenance> Variables;
 
-/** Symbolic semantic operations. */
-class SymbolicOperators: public InstructionSemantics2::SymbolicSemantics::RiscOperators {
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Concolic emulation semantics.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Semantics for concolic execution. */
+namespace Emulation {
+
+typedef InstructionSemantics2::SymbolicSemantics::SValuePtr SValuePtr; /**< Pointer to semantic values. */
+typedef InstructionSemantics2::SymbolicSemantics::SValue SValue; /**< Type of semantic values. */
+typedef InstructionSemantics2::SymbolicSemantics::RegisterStatePtr RegisterStatePtr; /**< Pointer to semantic registers. */
+typedef InstructionSemantics2::SymbolicSemantics::RegisterState RegisterState; /**< Type of semantic register space. */
+typedef InstructionSemantics2::SymbolicSemantics::MemoryStatePtr MemoryStatePtr; /**< Pointer to semantic memory. */
+typedef InstructionSemantics2::SymbolicSemantics::MemoryState MemoryState; /**< Type of semantic memory space. */
+typedef InstructionSemantics2::SymbolicSemantics::StatePtr StatePtr; /**< Pointer to semantic machine state. */
+typedef InstructionSemantics2::SymbolicSemantics::State State; /**< Semantic machine state. */
+typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr; /**< Pointer to semantic operations. */
+
+/** Semantic operations. */
+class RiscOperators: public InstructionSemantics2::SymbolicSemantics::RiscOperators {
 public:
     /** Base class. */
     typedef InstructionSemantics2::SymbolicSemantics::RiscOperators Super;
 
+    /** Special "path" Boolean register. */
+    const RegisterDescriptor REG_PATH;
+
 private:
+    const Partitioner2::Partitioner &partitioner_;      // ROSE disassembly info about the specimen
+    Debugger::Ptr process_;                             // subordinate process
     Variables variables_;                               // where did symbolic variables come from?
 
-protected: // Real constructors
-    /** Constructor for subclasses. Most uses will use @ref instance. */
-    SymbolicOperators(const BaseValuePtr &protoval, const SmtSolverPtr &solver)
-        : Super(protoval, solver) {
+protected:
+    /** Allocating constructor. */
+    RiscOperators(const Partitioner2::Partitioner &partitioner, const Debugger::Ptr &process,
+                  const InstructionSemantics2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver)
+        : Super(state, solver), REG_PATH(*state->registerState()->get_register_dictionary()->lookup("path")),
+          partitioner_(partitioner), process_(process) {
         name("Concolic-symbolic");
-        (void) SymbolicValue::promote(protoval);
-    }
-
-    /** Constructor for subclasses. Most uses will use @ref instance. */
-    SymbolicOperators(const BaseStatePtr &state, const SmtSolverPtr &solver)
-        : Super(state, solver) {
-        name("Concolic-symbolic");
-        (void) SymbolicValue::promote(state->protoval());
+        (void) SValue::promote(state->protoval());
     }
 
 public:
-    /** Create a new instance of symbolic semantic operations. */
-    static SymbolicOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr());
+    /** Allocating constructor. */
+    static RiscOperatorsPtr instance(const Partitioner2::Partitioner&, const DebuggerPtr&process,
+                                     const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+                                     const SmtSolverPtr &solver = SmtSolverPtr());
 
-    /** Create a new instance of symbolic semantic operations. */
-    static SymbolicOperatorsPtr instance(const BaseValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr());
-
-    /** Create a new instance of symbolic semantic operations. */
-    static SymbolicOperatorsPtr instance(const BaseStatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr());
-
-    /** Dynamic pointer cast. */
-    static SymbolicOperatorsPtr promote(const BaseOperatorsPtr &x);
+    /** Dynamic pointer downcast. */
+    static RiscOperatorsPtr promote(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
 
     /** Symbolic variables. */
     const Variables& variables() const {
@@ -157,78 +98,93 @@ public:
     }
 
     // Overrides documented in base class
-    virtual BaseOperatorsPtr create(const BaseValuePtr &protoval,
-                                    const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
-    virtual BaseOperatorsPtr create(const BaseStatePtr &state,
-                                    const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
-    virtual BaseValuePtr readRegister(RegisterDescriptor reg, const BaseValuePtr &dflt) ROSE_OVERRIDE;
-    virtual BaseValuePtr readMemory(RegisterDescriptor segreg, const BaseValuePtr &addr, const BaseValuePtr &dflt,
-                                    const BaseValuePtr &cond) ROSE_OVERRIDE;
-};
-
-/** Main semantics class for concolic execution. */
-class Semantics {
-private:
-    static const rose_addr_t initialStackPointer_ = 0xc0000000;
-    const Partitioner2::Partitioner &partitioner_;
-    const RegisterDictionary *regdict_;
-    BaseCpuPtr symbolicCpu_;
-    BaseCpuPtr concreteCpu_;
-    RegisterDescriptor REG_PATH;
-
-public:
-    /** Constructor. */
-    Semantics(const Partitioner2::Partitioner &partitioner)
-        : partitioner_(partitioner) {
-        init();
+    virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
+    create(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+        ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
+    }
+    virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
+    create(const InstructionSemantics2::BaseSemantics::StatePtr &state,
+           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+        ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
     }
 
-    /** Partitioner used for disassembling. */
-    const Partitioner2::Partitioner& partitioner() const { return partitioner_; }
+public:
+    /** Property: Partitioner. */
+    const Partitioner2::Partitioner& partitioner() const {
+        return partitioner_;
+    }
 
-    /** Symbolic semantic operators. */
-    SymbolicOperatorsPtr symbolicOperators() const;
-
-    /** Concrete semantic operators. */
-    ConcreteOperatorsPtr concreteOperators() const;
-
-    /** Symbolic registers. */
-    SymbolicRegistersPtr symbolicRegisters() const;
-
-    /** Concrete registers. */
-    ConcreteRegistersPtr concreteRegisters() const;
-
-    /** Symbolic memory. */
-    SymbolicMemoryPtr symbolicMemory() const;
-
-    /** Concrete memory. */
-    ConcreteMemoryPtr concreteMemory() const;
-
-    /** Emulate one instruction.
+    /** Property: Subordinate process. */
+    Debugger::Ptr process() const {
+        return process_;
+    }
+    
+    /** Number of bits in a word.
      *
-     *  Process the specified instruction and transition concrete and symbolic states based on the instruction's semantics. */
-    void processInstruction(SgAsmInstruction *insn);
+     *  The definition of "word" is the natural width of the instruction pointer, stack pointer, most general-purpose
+     *  registers, etc. */
+    size_t wordSizeBits() const;
 
-    /** Concrete value of current instruction pointer. */
-    rose_addr_t concreteInstructionPointer() const;
+    /** Register definitions. */
+    const RegisterDictionary* registerDictionary() const;
 
-    /** Information about symbolic variables.
-     *
-     * For each symbolic variable in the symbolic machine state, this map contains information about where the variable came
-     * from in the binary specimen. */
-    const Variables& symbolicVariables() const;
+public:
+    virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
 
-    /** Print the concrete and symbolic states for debugging. */
-    void print(std::ostream &out) const;
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    readRegister(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    readMemory(RegisterDescriptor segreg, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+               const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
+               const InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
 private:
-    // Post-construction initialization.
-    void init();
+    // Handles a Linux system call of the INT 0x80 variety.
+    void systemCall();
+
+    // Mark locations of specimen command-line arguments.
+    void markProgramArguments();
+};
+
+/**< Pointer to virtual CPU. */
+typedef boost::shared_ptr<class Dispatcher> DispatcherPtr;
+
+/** CPU for concolic emulation. */
+class Dispatcher: public InstructionSemantics2::DispatcherX86 {
+    typedef InstructionSemantics2::DispatcherX86 Super;
+protected:
+    /** Constructor. */
+    explicit Dispatcher(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops)
+        : Super(ops, RiscOperators::promote(ops)->wordSizeBits(), RiscOperators::promote(ops)->registerDictionary()) {}
+
+public:
+    /** Allocating constructor. */
+    static DispatcherPtr instance(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops) {
+        return DispatcherPtr(new Dispatcher(ops));
+    }
+
+public:
+    /** Concrete instruction pointer. */
+    rose_addr_t concreteInstructionPointer() const;
+
+    /** True if subordinate process has terminated.
+     *
+     *  Once the subordinate process terminates no more instructions can be processed and no state information
+     *  is available. */
+    bool isTerminated() const;
+
+public:
+    // overrides
+    virtual void processInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
 };
 
 } // namespace
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Concolic executor.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Concolic executor.
  *
@@ -286,18 +242,18 @@ public:
      *
      *  This is mostly for debugging. It prints each symbolic variable and some information about where it came from in
      *  the specimen. */
-    void printVariables(std::ostream&, const Emulation::Semantics&) const;
+    void printVariables(std::ostream&, const Emulation::StatePtr&) const;
 
-#if 0 // FIXME[Robb Matzke 2019-06-06]: public for testing, but will eventually be private
 private:
-#endif
     // Disassemble the specimen and cache the result in the database. If the specimen has previously been disassembled
     // then reconstitute the analysis results from the database.
     Partitioner2::Partitioner partition(const DatabasePtr&, const Specimen::Ptr&);
 
+    // Create the process for the concrete execution.
+    Debugger::Ptr makeProcess(const DatabasePtr&, const TestCase::Ptr&, Sawyer::FileSystem::TemporaryDirectory&);
+
     // Run the execution
-    void run(const Partitioner2::Partitioner&);
-    void run(const Partitioner2::Partitioner&, rose_addr_t startVa);
+    void run(const Emulation::DispatcherPtr&);
 
     // TODO: Lots of properties to control the finer aspects of executing a test case!
 };
@@ -305,8 +261,5 @@ private:
 } // namespace
 } // namespace
 } // namespace
-
-std::ostream&
-operator<<(std::ostream &out, const Rose::BinaryAnalysis::Concolic::Emulation::Semantics&);
 
 #endif

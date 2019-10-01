@@ -13,6 +13,7 @@ disabled_cond=0
 filter=cat
 map_srcroot=
 map_bldroot=
+extra_outputs=()
 
 ########################################################################################################################
 usage() {
@@ -62,6 +63,11 @@ usage() {
     echo "        a positive integer followed by the suffix \"s\", \"m\", or \"h\" for"
     echo "        seconds, minutes, or hours. Lack of a suffix is the same as \"s\". The"
     echo "        default is ${timeout}."
+    echo
+    echo "    -x FILE | --extra=FILE"
+    echo "        Extra output files created by this test. Since Tup requires that a rule"
+    echo "        write to all its output files, these files will be created if the test"
+    echo "        is disabled."
     echo
     echo "  Exit status"
     echo "    0:   command succeeded within allowed time, or was disabled"
@@ -179,6 +185,19 @@ while [ "$#" -gt 0 ]; do
 	    timeout="${1#--timeout=}"
 	    shift
 	    ;;
+	-x|--extra)
+	    [ "$#" -gt 1 ] || die "\"$1\" switch expects an argument"
+	    extra_outputs=("${extra_outputs[@]}" "$2")
+	    shift 2
+	    ;;
+	-x*)
+	    extra_outputs=("${extra_outputs[@]}" "${1#-x}")
+	    shift
+	    ;;
+	--extra=*)
+	    extra_outputs=("${extra_outputs[@]}" "${1#--extra=}")
+	    shift
+	    ;;
 	-*)
 	    die "unknown switch \"$1\""
 	    ;;
@@ -205,6 +224,7 @@ if perl -I"$dir0" -Mversions -e "exit !($disabled_cond)"; then
     echo -n "This test is disabled ($disabled_mesg)"
     echo -e '\033[0m'
     echo "This test is disabled ($disabled_mesg)" >"$output_file"
+    [ "${#extra_outputs[*]}" -gt 0 ] && touch "${extra_outputs[@]}"
     exit 0
 fi
 

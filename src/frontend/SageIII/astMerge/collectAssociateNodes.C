@@ -2417,6 +2417,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgUntypedProgramHeaderDeclaration:
           case V_SgUntypedExprListExpression:
           case V_SgUntypedNullExpression:
+          case V_SgUntypedOtherExpression:
           case V_SgUntypedSubscriptExpression:
           case V_SgUntypedValueExpression:
              {
