@@ -370,7 +370,7 @@ void traverse(Processor &processor,
               LowToHigh dir) {
     traverse2(processor, vec1, range1, vec2, range2, dir);
 }
-    
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -473,6 +473,34 @@ void swap(Word *vec1, const BitRange &range1, Word *vec2, const BitRange &range2
     traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
 }
 
+template<class Word>
+struct EqualTo {
+    bool wasEqv;
+
+    EqualTo()
+        : wasEqv(true) {}
+
+    bool operator()(const Word &w1, Word &w2, size_t nbits) {
+        if (wasEqv) {
+            Word a = w1 & bitMask<Word>(0, nbits);
+            Word b = w2 & bitMask<Word>(0, nbits);
+            wasEqv = a == b;
+        }
+        return false;
+    }
+};
+
+/** Compare bits for equality.
+ *
+ *  Returns true if and only if the ranges are the same size and contain the same bit values in the same order. */
+template<class Word>
+bool equalTo(const Word *vec1, const BitRange &range1, const Word *vec2, const BitRange &range2) {
+    if (range1.size() != range2.size())
+        return false;
+    EqualTo<Word> visitor;
+    traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
+    return visitor.wasEqv;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Counting/searching
@@ -707,7 +735,7 @@ Optional<size_t> leastSignificantDifference(const Word *vec1, const BitRange &ra
     traverse(visitor, vec1, range1, vec2, range2, LowToHigh());
     return visitor.result;
 }
-    
+
 template<class Word>
 struct MostSignificantDifference {
     size_t offset;
@@ -1310,7 +1338,7 @@ struct ToString {
         ASSERT_require(bitsPerDigit >= 1 && bitsPerDigit <= 4);
         ASSERT_require(bitsPerDigit <= bitsPerWord<Word>::value);
     }
-    
+
     bool operator()(const Word &word, size_t nbits) {
         static const char digits[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
         Word tmp = word & bitMask<Word>(0, nbits);
