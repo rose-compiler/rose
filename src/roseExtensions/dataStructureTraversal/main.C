@@ -620,8 +620,12 @@ main (int argc, char **argv)
   bool debug = true;
   if (debug == true)
     {
+#if ROSE_WITH_LIBHARU
       AstPDFGeneration pdfOut;
       pdfOut.generateInputFiles (project);
+#else
+      cout << "Warning: libharu support is not enabled" << endl;
+#endif
       AstDOTGeneration dotOut;
       dotOut.generateInputFiles (project, AstDOTGeneration::PREORDER);
     }
