@@ -11573,12 +11573,12 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
       if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_lhs_operand()))) {
         // cases : var + incr, var - incr
         incr_var=varRefExp;
-        stepast=isSgBinaryOp(incr)->get_rhs_operand();
+        stepast=isSgBinaryOp(arithOp)->get_rhs_operand();
       } else if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_rhs_operand()))) {
         if(isSgAddOp(arithOp)) {
           // case : incr + var (not allowed: incr-var)
           incr_var=varRefExp;
-          stepast=isSgBinaryOp(incr)->get_lhs_operand();
+          stepast=isSgBinaryOp(arithOp)->get_lhs_operand();
         }
       }
       break;
