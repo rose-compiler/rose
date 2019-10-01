@@ -162,7 +162,7 @@ class Labeler {
   LabelSet getLabelSet(std::set<SgNode*>& nodeSet);
 
   /** Returns the node with the label 'label'. If the return value is 0 then no node exists for this label -
-     this can only be the case if label is errornously higher than the number of labeled nodes or NO_LABEL.
+     this can only be the case if label is erroneously higher than the number of labeled nodes or NO_LABEL.
   */
   SgNode* getNode(Label label);
   long numberOfLabels();
