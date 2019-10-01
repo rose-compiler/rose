@@ -17,15 +17,17 @@ mAstProcessing_la_sources=\
 	$(mAstProcessingPath)/AstSharedMemoryParallelSimpleProcessing.C
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 mAstProcessing_la_sources+=\
-	$(mAstProcessingPath)/AstPDFGeneration.C \
 	$(mAstProcessingPath)/AstRestructure.C
+if ROSE_WITH_LIBHARU
+mAstProcessing_la_sources+=\
+	$(mAstProcessingPath)/AstPDFGeneration.C 
+endif
 endif
 
 mAstProcessing_libadd=\
 	$(CXX_TEMPLATE_OBJECTS)
 
 mAstProcessing_includeHeaders=\
-	$(mAstProcessingPath)/AstPDFGeneration.h \
 	$(mAstProcessingPath)/AstNodeVisitMapping.h \
 	$(mAstProcessingPath)/AstAttributeMechanism.h \
 	$(mAstProcessingPath)/AstTextAttributesHandling.h \
@@ -52,6 +54,11 @@ mAstProcessing_includeHeaders=\
 	$(mAstProcessingPath)/graphProcessingSgIncGraph.h \
 	$(mAstProcessingPath)/graphTemplate.h \
         $(mAstProcessingPath)/SgGraphTemplate.h
+
+if ROSE_WITH_LIBHARU
+mAstProcessing_includeHeaders+=\
+	$(mAstProcessingPath)/AstPDFGeneration.h 
+endif
 
 mAstProcessing_extraDist=\
 	$(mAstProcessingPath)/CMakeLists.txt \
