@@ -761,7 +761,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term
       // MATCHED OptRoundOrTruncate
       if (has_round_or_truncate) {
          if (modifier_enum == General_Language_Translation::e_type_modifier_round) {
-            cerr << "WARNING: e_type_modifier_round information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_round information not forwarded from ATerm traversal \n";
          }
          else if (modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
             cerr << "WARNING: e_type_modifier_truncate information not forwarded from ATerm traversal \n";
@@ -832,13 +832,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_FloatingItemDescription(ATerm ter
       // MATCHED OptRoundOrTruncate
       if (has_round_or_truncate) {
          if (modifier_enum == General_Language_Translation::e_type_modifier_round) {
-            cerr << "WARNING: e_type_modifier_round information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_round information not forwarded from ATerm traversal \n";
          }
          else if (modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
-            cerr << "WARNING: e_type_modifier_truncate information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_truncate information not forwarded from ATerm traversal \n";
          }
          else if (modifier_enum == General_Language_Translation::e_type_modifier_z) {
-            cerr << "WARNING: e_type_modifier_z information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_z information not forwarded from ATerm traversal \n";
          }
          else ROSE_ASSERT(false);
       }
@@ -908,13 +908,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedItemDescription(ATerm term, 
       // MATCHED OptRoundOrTruncate
       if (has_round_or_truncate) {
          if (modifier_enum == General_Language_Translation::e_type_modifier_round) {
-            cerr << "WARNING: e_type_modifier_round information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_round information not forwarded from ATerm traversal \n";
          }
          else if (modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
-            cerr << "WARNING: e_type_modifier_truncate information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_truncate information not forwarded from ATerm traversal \n";
          }
          else if (modifier_enum == General_Language_Translation::e_type_modifier_z) {
-            cerr << "WARNING: e_type_modifier_z information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_z information not forwarded from ATerm traversal \n";
          }
          else ROSE_ASSERT(false);
       }
@@ -929,8 +929,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedItemDescription(ATerm term, 
       // MATCHED no-fraction-specifier
    }
    else if (traverse_FractionSpecifier(t_fraction, fraction)) {
-      cerr << "WARNING: fraction specifier has not been implemented \n";
-      return ATfalse;
+      cerr << "WARNING UNIMPLEMENTED: FractionSpecifier \n";
+      return ATtrue;
    }
    else return ATfalse;
 
@@ -2637,9 +2637,14 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDeclaration(ATerm term, S
 
       if (traverse_ItemTypeDescription(t_type_desc, declared_type, attr_list)) {
          // MATCHED ItemTypeDescription
-         // TODO - don't know what to do with this yet
-         ROSE_ASSERT(false);
-         return ATfalse;
+
+         ROSE_ASSERT(declared_type);
+
+         SgUntypedTypedefDeclaration* type_def_decl = new SgUntypedTypedefDeclaration(name, declared_type);
+         ROSE_ASSERT(type_def_decl);
+         setSourcePosition(type_def_decl, term);
+
+         decl_list->get_decl_list().push_back(type_def_decl);
       }
       else if (traverse_StatusItemDescription(t_type_desc, status_list, has_size, status_size)) {
          // MATCHED StatusItemDescription

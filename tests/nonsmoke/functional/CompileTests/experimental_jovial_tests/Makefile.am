@@ -37,14 +37,12 @@ JOVIAL_TESTCODES = \
  rose-issue-2143.jov
 
 COMPOOL_TESTCODES = \
- 1_2_1_compool_a.cpl                    \
  define_dollar.cpl                      \
  status_type.cpl                        \
- table_type.cpl                         \
  rose-issue-1518.cpl                    \
  rose-issue-1520.cpl                    \
  rose-issue-2143.cpl                    \
- rose-issue-2144.cpl
+ rose-issue-2286.cpl
 
 # should finish formulas next
 #
@@ -68,8 +66,9 @@ JOVIAL_TESTCODES_PASS_TRAVERSE = \
  5_5_pointer_formula_a.jov              \
  5_5_pointer_formula_b.jov              \
  5_5_pointer_formula_c.jov              \
- 5_5_pointer_formula_d.jov
-
+ 5_5_pointer_formula_d.jov              \
+ table_type.cpl                         \
+ rose-issue-2144.cpl
 
 JOVIAL_TESTCODES_WORKING_ON = \
  rose-issue-2100.jov                    \
