@@ -1822,6 +1822,12 @@ SgNodeHelper::collectPragmaLines(string pragmaName,SgNode* root) {
   return l;
 }
 
+std::string SgNodeHelper::getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl) {
+  SgPragma* pragma=pragmaDecl->get_pragma();
+  ROSE_ASSERT(pragma);
+  return pragma->get_pragma();
+}
+
 void SgNodeHelper::replaceString(std::string& str, const std::string& from, const std::string& to) {
   if(from.empty())
     return;
@@ -1846,6 +1852,7 @@ bool SgNodeHelper::isLastChildOf(SgNode* elem, SgNode* parent) {
   return elem==children.back();
 }
 
+#if __cplusplus > 199711L
 bool SgNodeHelper::hasOmpNoWait(SgOmpClauseBodyStatement *ompNode) {
   for (auto c : ompNode->get_clauses()) {
     if (isSgOmpNowaitClause(c)) {
@@ -1854,7 +1861,6 @@ bool SgNodeHelper::hasOmpNoWait(SgOmpClauseBodyStatement *ompNode) {
   }
   return false;
 }
-
 
 SgNodeHelper::OmpSectionList SgNodeHelper::getOmpSectionList(SgOmpSectionsStatement *sectionsStmt) {
   auto bb = isSgBasicBlock(sectionsStmt->get_traversalSuccessorByIndex(0));
@@ -1866,13 +1872,9 @@ SgNodeHelper::OmpSectionList SgNodeHelper::getOmpSectionList(SgOmpSectionsStatem
   }
   return l;
 }
+#endif
 
-std::string SgNodeHelper::getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl) {
-  SgPragma* pragma=pragmaDecl->get_pragma();
-  ROSE_ASSERT(pragma);
-  return pragma->get_pragma();
-}
-
+#if __cplusplus > 199711L
 namespace SgNodeHelper {
 
 template <typename N>
@@ -1925,8 +1927,6 @@ bool node_can_be_changed<SgInitializedName>(SgInitializedName * iname) {
   return SgNodeHelper::node_can_be_changed<SgLocatedNodeSupport>(iname);
 }
 
-
-#if __cplusplus > 199711L
 bool nodeCanBeChanged(SgLocatedNode * lnode) {
   // TODO big switch statement...
   SgFunctionDeclaration * fdecl = isSgFunctionDeclaration(lnode);
