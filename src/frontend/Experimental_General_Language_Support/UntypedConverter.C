@@ -875,7 +875,7 @@ void
 UntypedConverter::convertUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
    {
    // Only a Fortran specific implementation needed for now
-      cout << "-x- TODO: implement convertUntypedFunctionDeclarationList for Jovial \n";
+      cerr << "WARNING UNIMPLEMENTED: convertUntypedFunctionDeclarationList \n";
    }
 
 #if 0
@@ -887,6 +887,24 @@ UntypedConverter::convertUntypedStructureDeclaration (SgUntypedStructureDeclarat
       return NULL;
    }
 #endif
+
+SgTypedefDeclaration*
+UntypedConverter::convertUntypedTypedefDeclaration  (SgUntypedTypedefDeclaration* ut_decl, SgScopeStatement* scope)
+   {
+      SgTypedefDeclaration* sg_decl = NULL;
+      std::string name = ut_decl->get_name();
+
+      SgUntypedType* ut_base_type = ut_decl->get_base_type();
+      SgType*        sg_base_type = convertUntypedType(ut_base_type, scope);
+
+      sg_decl = SageBuilder::buildTypedefDeclaration (name, sg_base_type, scope, /*has_defining_base*/false);
+      ROSE_ASSERT(sg_decl != NULL);
+      setSourcePositionFrom(sg_decl, ut_decl);
+
+      SageInterface::appendStatement(sg_decl, scope);
+
+      return sg_decl;
+   }
 
 SgModuleStatement*
 UntypedConverter::convertUntypedModuleDeclaration (SgUntypedModuleDeclaration* ut_module, SgScopeStatement* scope)

@@ -91,6 +91,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
           case V_SgCaseOptionStmt:             unparseCaseStmt       (stmt, info);  break;
           case V_SgDefaultOptionStmt:          unparseDefaultStmt    (stmt, info);  break;
           case V_SgBreakStmt:                  unparseBreakStmt      (stmt, info);  break;
+          case V_SgTypedefDeclaration:         unparseTypeDefStmt    (stmt, info);  break;
 
           case V_SgStopOrPauseStatement:       unparseStopOrPauseStmt(stmt, info);  break;
           case V_SgReturnStmt:                 unparseReturnStmt     (stmt, info);  break;
@@ -107,7 +108,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
           case V_SgContinueStmt:           unparseContinueStmt(stmt, info);     break;
 
-          case V_SgTypedefDeclaration:     unparseTypeDefStmt(stmt, info);      break;
+
 
           case V_SgForInitStatement:       unparseForInitStmt(stmt, info);      break;
 
@@ -587,6 +588,24 @@ Unparse_Jovial::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info)
  // It should not be unparsed, unparseCaseOptionStmt and unparseDefaultStmt will
  // unparse the FALLTHRU keyward as needed.
   }
+
+void Unparse_Jovial::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+      SgTypedefDeclaration* typedef_decl = isSgTypedefDeclaration(stmt);
+      ROSE_ASSERT(typedef_decl);
+
+      curprint("TYPE ");
+
+      SgName name = typedef_decl->get_name();
+      curprint(name.str());
+
+      SgType* base_type = typedef_decl->get_base_type();
+      ROSE_ASSERT(base_type);
+      curprint(" ");
+      unparseType(base_type, info);
+      curprint(";");
+      unp->cur.insert_newline(1);
+   }
 
 void
 Unparse_Jovial::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
