@@ -7,7 +7,11 @@
 #include "sageBuilder.h"
 #include <iostream>
 #include <analysisUtils.h>
+
+#if ROSE_WITH_LIBHARU
 #include "AstPDFGeneration.h"
+#endif
+
 #include <shortCircuitingTransformation.h>
 
 using namespace std;
@@ -866,7 +870,12 @@ bool reduceIfStmtsWithSCchild(SgProject *prj)
 
                default:
                      {
+
+#if ROSE_WITH_LIBHARU
                        AstPDFGeneration().generate("error", prj);
+#else
+                       cout << "Warning: libharu support is not enabled" << endl;
+#endif
                        cerr << "Error: reduceIfStmtsWithSCchild: basicBlockChild has unknown type " << basicBlockChild->class_name() << basicBlockChild << endl;
                        ROSE_ASSERT(false);
                      }
@@ -981,14 +990,22 @@ bool reduceIfStmtsWithSCchild(SgProject *prj)
 
                        stringstream beforeNameSS;
                        beforeNameSS << "beforeIfConst" << optCounter;
+#if ROSE_WITH_LIBHARU
                        AstPDFGeneration().generate(beforeNameSS.str(), prj);
+#else
+                       cout << "Warning: libharu support is not enabled" << endl;
+#endif
 #endif
                        
                        ifConstOptimization(trueExp);
 #ifdef SCDBG
                        stringstream afterNameSS;
                        afterNameSS << "afterIfConst" << optCounter;
+#if ROSE_WITH_LIBHARU
                        AstPDFGeneration().generate(afterNameSS.str(), prj);
+#else
+                       cout << "Warning: libharu support is not enabled" << endl;
+#endif
 #endif
 
                     // Build the false branch of the if statement into fullStmtBlock
@@ -1028,13 +1045,21 @@ bool reduceIfStmtsWithSCchild(SgProject *prj)
 
                        stringstream beforeNameSS2;
                        beforeNameSS2 << "beforeIfConst" << optCounter;
+#if ROSE_WITH_LIBHARU
                        AstPDFGeneration().generate(beforeNameSS2.str(), prj);
+#else
+                       cout << "Warning: libharu support is not enabled" << endl;
+#endif
 #endif
                        ifConstOptimization(falseExp);
 #ifdef SCDBG
                        stringstream afterNameSS2;
                        afterNameSS2 << "afterIfConst" << optCounter;
+#if ROSE_WITH_LIBHARU
                        AstPDFGeneration().generate(afterNameSS2.str(), prj);
+#else
+                       cout << "Warning: libharu support is not enabled" << endl;
+#endif
 #endif
 
                     // done creating branches, now create if statement
@@ -1112,7 +1137,11 @@ void shortCircuitingTransformation(SgProject *prj)
      do {
           stringstream ss;
           ss << "scdbg_p" << pass++;
+#if ROSE_WITH_LIBHARU
           AstPDFGeneration().generate(ss.str(), prj);
+#else
+          cout << "Warning: libharu support is not enabled" << endl;
+#endif
           AstTests::runAllTests(prj);
           ss << ".C";
           ofstream f(ss.str().c_str());
