@@ -143,14 +143,14 @@ setToIte(const Ptr &set, const SmtSolverPtr &solver, const LeafPtr &var) {
     if (!iset || iset->getOperator() != OP_SET)
         return set;
     ASSERT_require(iset->nChildren() >= 1);
-    LeafPtr condVar = var==NULL ? makeVariable(32)->isLeafNode() : var;
+    LeafPtr condVar = var==NULL ? makeIntegerVariable(32)->isLeafNode() : var;
     Ptr retval;
     for (size_t i=iset->nChildren(); i>0; --i) {
         Ptr member = iset->child(i-1);
         if (!retval) {
             retval = member;
         } else {
-            Ptr cond = makeEq(condVar, makeInteger(32, i), solver);
+            Ptr cond = makeEq(condVar, makeIntegerConstant(32, i), solver);
             retval = makeIte(cond, member, retval, solver);
         }
     }
@@ -194,31 +194,22 @@ struct VariableRenamer {
             if (!anyChildRenamed) {
                 retval = input;
             } else {
-                retval = Interior::create(0, inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+                retval = Interior::instance(inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
             }
             seen.insert(std::make_pair(input, retval));
         } else {
             LeafPtr leaf = input->isLeafNode();
             ASSERT_not_null(leaf);
-            if (leaf->isNumber()) {
+            if (leaf->isVariable2()) {
+                ExprExprHashMap::iterator found = index.find(input);
+                if (found != index.end()) {
+                    retval = found->second;
+                } else {
+                    retval = makeVariable(leaf->type(), nextVariableId++, leaf->comment(), leaf->flags());
+                    index[input] = retval;
+                }
+            } else {
                 retval = leaf;
-            } else if (leaf->isVariable()) {
-                ExprExprHashMap::iterator found = index.find(input);
-                if (found != index.end()) {
-                    retval = found->second;
-                } else {
-                    retval = makeExistingVariable(leaf->nBits(), nextVariableId++, leaf->comment(), leaf->flags());
-                    index[input] = retval;
-                }
-            } else if (leaf->isMemory()) {
-                ExprExprHashMap::iterator found = index.find(input);
-                if (found != index.end()) {
-                    retval = found->second;
-                } else {
-                    retval = makeExistingMemory(leaf->domainWidth(), leaf->nBits(), nextVariableId++, leaf->comment(),
-                                                leaf->flags());
-                    index[input] = retval;
-                }
             }
             seen.insert(std::make_pair(input, retval));
         }
@@ -259,7 +250,7 @@ struct SingleSubstituter {
                 newChildren.push_back(newChild);
             }
             if (anyChildChanged) {
-                retval = Interior::create(0, inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+                retval = Interior::instance(inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
             } else {
                 retval = input;
             }
@@ -304,7 +295,7 @@ struct MultiSubstituter {
             if (!anyChildChanged) {
                 retval = input;
             } else {
-                retval = Interior::create(0, inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+                retval = Interior::instance(inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
             }
         } else {
             retval = input;
@@ -316,34 +307,56 @@ struct MultiSubstituter {
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Types
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool
+Type::operator<(const Type &other) const {
+    if (typeClass_ != other.typeClass_)
+        return typeClass_ < other.typeClass_;
+    if (totalWidth_ != other.totalWidth_)
+        return totalWidth_ < other.totalWidth_;
+    return secondaryWidth_ < other.secondaryWidth_;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Base node
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 boost::logic::tribool (*Node::mayEqualCallback)(const Ptr&, const Ptr&, const SmtSolver::Ptr&) = NULL;
 
+InteriorPtr
+Node::isInteriorNode() const {
+    return InteriorPtr(dynamic_cast<Interior*>(const_cast<Node*>(this)));
+}
+
+LeafPtr
+Node::isLeafNode() const {
+    return LeafPtr(dynamic_cast<Leaf*>(const_cast<Node*>(this)));
+}
+
 Ptr
-Node::newFlags(unsigned newFlags) {
+Node::newFlags(unsigned newFlags) const {
     if (newFlags == flags_)
-        return sharedFromThis();
+        return Ptr(const_cast<Node*>(this));
     if (InteriorPtr inode = isInteriorNode()) {
         // No SMT solver is necessary since changing the flags won't cause the new expression to simplify any differently than
         // it already is. In fact, it there might be a faster way to create the new expression given this fact.
         SmtSolverPtr solver;
-        return Interior::create(0, inode->getOperator(), inode->children(), solver, comment(), newFlags);
+        return Interior::instance(inode->getOperator(), inode->children(), solver, comment(), newFlags);
     }
     LeafPtr lnode = isLeafNode();
     ASSERT_not_null(lnode);
-    if (lnode->isNumber())
-        return makeConstant(lnode->bits(), comment(), newFlags);
-    if (lnode->isVariable())
-        return makeVariable(nBits(), comment(), newFlags);
-    if (lnode->isMemory())
-        return makeMemory(domainWidth(), nBits(), comment(), newFlags);
-    ASSERT_not_reachable("invalid leaf node type");
+    if (lnode->isConstant()) {
+        return makeConstant(type(), lnode->bits(), comment(), newFlags);
+    } else {
+        ASSERT_require(lnode->isVariable2());
+        return makeVariable(type(), lnode->nameId(), comment(), newFlags);
+    }
 }
 
 std::set<LeafPtr>
-Node::getVariables() {
+Node::getVariables() const {
     struct T1: public Visitor {
         std::set<LeafPtr> vars;
         std::set<const Node*> seen;
@@ -358,7 +371,7 @@ Node::getVariables() {
 
         VisitAction postVisit(const Ptr &node) {
             LeafPtr l_node = node->isLeafNode();
-            if (l_node && !l_node->isNumber())
+            if (l_node && l_node->isVariable2())
                 vars.insert(l_node);
             return CONTINUE;
         }
@@ -386,11 +399,11 @@ struct Hasher: Visitor {
 
     virtual VisitAction postVisit(const Ptr &node) ROSE_OVERRIDE {
         if (!node->isHashed()) {                        // probably true, but some other thread may have beaten us here.
-            Hash h = hash(hash(node->domainWidth(), node->nBits()), node->flags());
+            Hash h = hash(hash(node->isMemoryExpr() ? node->domainWidth() : 0, node->nBits()), node->flags());
             if (LeafPtr leaf = node->isLeafNode()) {
-                if (leaf->isNumber()) {
-                    if (leaf->nBits() <= 64) {
-                        h = hash(h, leaf->toInt());
+                if (leaf->isConstant()) {
+                    if (leaf->isIntegerConstant() && leaf->nBits() <= 64) {
+                        h = hash(h, leaf->toUnsigned().get());
                     } else {
                         for (size_t i=0; i<leaf->nBits(); i+=64) {
                             size_t j = std::min(i+64, leaf->nBits());
@@ -398,8 +411,8 @@ struct Hasher: Visitor {
                         }
                     }
                 } else {
-                    // It's okay to not hash whether the leaf is a variable or memory because variables always have a zero
-                    // domain width and memory has a non-zero width, which is already incorporated into the hash from above.
+                    // It's okay to hash only the variable ID and not the type because one variable shouldn't never be more
+                    // than one type.
                     h = hash(h, leaf->nameId());
                 }
             } else {
@@ -431,7 +444,7 @@ struct Hasher: Visitor {
 };
 
 Hash
-Node::hash() {
+Node::hash() const {
     if (0==hashval_) {
         Hasher hasher;
         depthFirstTraversal(hasher);
@@ -447,7 +460,7 @@ Node::hash(Hash h) {
 }
 
 void
-Node::assertAcyclic() {
+Node::assertAcyclic() const {
 #ifndef NDEBUG
     struct T1: Visitor {
         std::vector<const Node*> ancestors;
@@ -467,18 +480,19 @@ Node::assertAcyclic() {
 }
 
 uint64_t
-Node::nNodesUnique() {
-    std::vector<Ptr> exprs(1, sharedFromThis());
+Node::nNodesUnique() const {
+    std::vector<Ptr> exprs(1, Ptr(const_cast<Node*>(this)));
     return SymbolicExpr::nNodesUnique(exprs.begin(), exprs.end());
 }
 
 std::vector<Ptr>
-Node::findCommonSubexpressions() {
-    return SymbolicExpr::findCommonSubexpressions(std::vector<Ptr>(1, sharedFromThis()));
+Node::findCommonSubexpressions() const {
+    std::vector<Ptr> exprs(1, Ptr(const_cast<Node*>(this)));
+    return SymbolicExpr::findCommonSubexpressions(exprs);
 }
 
 void
-Node::printFlags(std::ostream &o, unsigned flags, char &bracket) {
+Node::printFlags(std::ostream &o, unsigned flags, char &bracket) const {
     if ((flags & INDETERMINATE) != 0) {
         o <<bracket <<"indet";
         bracket = ',';
@@ -501,7 +515,7 @@ Node::printFlags(std::ostream &o, unsigned flags, char &bracket) {
 }
 
 InteriorPtr
-Node::isOperator(Operator op) {
+Node::isOperator(Operator op) const {
     if (InteriorPtr inode = isInteriorNode()) {
         if (inode->getOperator() == op)
             return inode;
@@ -510,17 +524,17 @@ Node::isOperator(Operator op) {
 }
 
 bool
-Node::matchAddVariableConstant(LeafPtr &variable/*out*/, LeafPtr &constant/*out*/) {
+Node::matchAddVariableConstant(LeafPtr &variable/*out*/, LeafPtr &constant/*out*/) const {
     if (InteriorPtr inode = isOperator(OP_ADD)) {
         if (inode->nChildren() == 2) {
             LeafPtr arg0 = inode->child(0)->isLeafNode();
             LeafPtr arg1 = inode->child(1)->isLeafNode();
             if (arg0 && arg1) {
-                if (arg0->isVariable() && arg1->isNumber()) {
+                if (arg0->isIntegerVariable() && arg1->isIntegerConstant()) {
                     variable = arg0;
                     constant = arg1;
                     return true;
-                } else if (arg0->isNumber() && arg1->isVariable()) {
+                } else if (arg0->isIntegerConstant() && arg1->isIntegerVariable()) {
                     variable = arg1;
                     constant = arg0;
                     return true;
@@ -535,52 +549,118 @@ Node::matchAddVariableConstant(LeafPtr &variable/*out*/, LeafPtr &constant/*out*
 //                                      Interior node
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Interior::Interior(size_t nbits, Operator op, const Ptr &a, const std::string &comment, unsigned flags)
-    : Node(comment), op_(op), nnodes_(1) {
-    addChild(a);
-    adjustWidth();
-    adjustBitFlags(flags);
-    if (nbits != 0 && nbits != nBits()) {
-        throw Exception("operator size mismatch (specified=" + StringUtility::numberToString(nbits) +
-                        ", actual=" + StringUtility::numberToString(nBits()) + ")");
-    }
-}
+Interior::Interior()
+    : op_(OP_ADD), nnodes_(1) {}
 
-Interior::Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const std::string &comment, unsigned flags)
-    : Node(comment), op_(op), nnodes_(1) {
-    addChild(a);
-    addChild(b);
-    adjustWidth();
-    adjustBitFlags(flags);
-    if (nbits != 0 && nbits != nBits()) {
-        throw Exception("operator size mismatch (specified=" + StringUtility::numberToString(nbits) +
-                        ", actual=" + StringUtility::numberToString(nBits()) + ")");
-    }
-}
-
-Interior::Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c, const std::string &comment,
-                   unsigned flags)
-    : Node(comment), op_(op), nnodes_(1) {
-    addChild(a);
-    addChild(b);
-    addChild(c);
-    adjustWidth();
-    adjustBitFlags(flags);
-    if (nbits != 0 && nbits != nBits()) {
-        throw Exception("operator size mismatch (specified=" + StringUtility::numberToString(nbits) +
-                        ", actual=" + StringUtility::numberToString(nBits()) + ")");
-    }
-}
-
-Interior::Interior(size_t nbits, Operator op, const Nodes &children, const std::string &comment, unsigned flags)
+Interior::Interior(const Type &type, Operator op, const Nodes &children, const std::string &comment, unsigned flags)
     : Node(comment), op_(op), nnodes_(1) {
     for (size_t i=0; i<children.size(); ++i)
         addChild(children[i]);
     adjustWidth();
     adjustBitFlags(flags);
-    if (nbits != 0 && nbits != nBits()) {
-        throw Exception("operator size mismatch (specified=" + StringUtility::numberToString(nbits) +
-                        ", actual=" + StringUtility::numberToString(nBits()) + ")");
+    if (type.isValid() && type != this->type())
+        throw Exception("operator type mismatch");
+}
+
+Ptr
+Interior::instance(Operator op, const Ptr &a,
+                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    return instance(Type(), op, a, solver, comment, flags);
+}
+
+Ptr
+Interior::instance(const Type &type, Operator op, const Ptr &a,
+                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    Nodes args;
+    args.push_back(a);
+    return instance(type, op, args, solver, comment, flags);
+}
+
+Ptr
+Interior::instance(Operator op, const Ptr &a, const Ptr &b,
+                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    return instance(Type(), op, a, b, solver, comment, flags);
+}
+
+Ptr
+Interior::instance(const Type &type, Operator op, const Ptr &a, const Ptr &b,
+                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    Nodes args;
+    args.push_back(a);
+    args.push_back(b);
+    return instance(type, op, args, solver, comment, flags);
+}
+
+Ptr
+Interior::instance(Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
+                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    return instance(Type(), op, a, b, c, solver, comment, flags);
+}
+
+Ptr
+Interior::instance(const Type &type, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
+                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    Nodes args;
+    args.push_back(a);
+    args.push_back(b);
+    args.push_back(c);
+    return instance(type, op, args, solver, comment, flags);
+}
+
+Ptr
+Interior::instance(Operator op, const Nodes &arguments,
+                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    return instance(Type(), op, arguments, solver, comment, flags);
+}
+
+Ptr
+Interior::instance(const Type &type, Operator op, const Nodes &arguments,
+                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    InteriorPtr retval(new Interior(type, op, arguments, comment, flags));
+    return retval->simplifyTop(solver);
+}
+
+// deprecated [Robb Matzke 2019-10-01]
+Ptr
+Interior::create(size_t nbits, Operator op, const Ptr &a,
+                 const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    if (nbits == 0) {
+        return instance(op, a, solver, comment, flags);
+    } else {
+        return instance(Type::integer(nbits), op, a, solver, comment, flags);
+    }
+}
+
+// deprecated [Robb Matzke 2019-10-01]
+Ptr
+Interior::create(size_t nbits, Operator op, const Ptr &a, const Ptr &b,
+                 const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    if (nbits == 0) {
+        return instance(op, a, b, solver, comment, flags);
+    } else {
+        return instance(Type::integer(nbits), op, a, b, solver, comment, flags);
+    }
+}
+
+// deprecated [Robb Matzke 2019-10-01]
+Ptr
+Interior::create(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
+                 const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    if (nbits == 0) {
+        return instance(op, a, b, c, solver, comment, flags);
+    } else {
+        return instance(Type::integer(nbits), op, a, b, c, solver, comment, flags);
+    }
+}
+
+// deprecated [Robb Matzke 2019-10-02]
+Ptr
+Interior::create(size_t nbits, Operator op, const Nodes &arguments,
+                 const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    if (nbits == 0) {
+        return instance(op, arguments, solver, comment, flags);
+    } else {
+        return instance(Type::integer(nbits), op, arguments, solver, comment, flags);
     }
 }
 
@@ -612,23 +692,21 @@ Interior::adjustWidth() {
         case OP_SHR1: {
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
-            if (!child(0)->isScalar())
-                throw Exception(toStr(op_) + " operator's first argument (shift amount) must be scalar");
-            if (!child(1)->isScalar())
-                throw Exception(toStr(op_) + " operator's second argument (value to shift) must be scalar");
-            nBits_ = child(1)->nBits();
-            domainWidth_ = 0;
+            if (!child(0)->isIntegerExpr())
+                throw Exception(toStr(op_) + " operator's first argument (shift amount) must be integer");
+            if (!child(1)->isIntegerExpr())
+                throw Exception(toStr(op_) + " operator's second argument (value to shift) must be integer");
+            type_ = Type::integer(child(1)->nBits());
             break;
         }
         case OP_CONCAT: {
             size_t totalWidth = 0;
             BOOST_FOREACH (const Ptr &child, children_) {
-                if (!child->isScalar())
-                    throw Exception(toStr(op_) + " operator's arguments must be scalar");
+                if (!child->isIntegerExpr())
+                    throw Exception(toStr(op_) + " operator's arguments must be integer");
                 totalWidth += child->nBits();
             }
-            nBits_ = totalWidth;
-            domainWidth_ = 0;
+            type_ = Type::integer(totalWidth);
             break;
         }
         case OP_EQ:
@@ -643,50 +721,50 @@ Interior::adjustWidth() {
         case OP_ULT: {
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
+            if (!child(0)->isIntegerExpr())
+                throw Exception(toStr(op_) + " operator's first argument (shift amount) must be integer");
+            if (!child(1)->isIntegerExpr())
+                throw Exception(toStr(op_) + " operator's second argument (value to shift) must be integer");
             if (child(0)->nBits() != child(1)->nBits())
                 throw Exception(toStr(op_) + " operator's arguments must both be the same width");
-            nBits_ = 1;
-            domainWidth_ = 0;
+            type_ = Type::integer(1);
             break;
         }
         case OP_EXTRACT: {
             if (nChildren() != 3)
                 throw Exception(toStr(op_) + " operator expects three arguments");
-            if (!child(0)->isNumber())
+            if (!child(0)->isIntegerConstant())
                 throw Exception(toStr(op_) + " operator's first argument (begin bit) must be an integer constant");
-            if (!child(1)->isNumber())
+            if (!child(1)->isIntegerConstant())
                 throw Exception(toStr(op_) + " operator's second argument (end bit) must be an integer constant");
             if (child(0)->nBits() > 64)
                 throw Exception(toStr(op_) + " operator's first argument (begin bit) must be 64 bits or narrower");
             if (child(1)->nBits() > 64)
                 throw Exception(toStr(op_) + " operator's second argument (end bit) must be 64 bits or narrower");
-            if (!child(2)->isScalar())
-                throw Exception(toStr(op_) + " operator's third argument must be scalar");
-            if (child(0)->toInt() >= child(1)->toInt())
+            if (!child(2)->isIntegerExpr())
+                throw Exception(toStr(op_) + " operator's third argument must be integer");
+            if (*child(0)->toUnsigned() >= *child(1)->toUnsigned())
                 throw Exception(toStr(op_) + " operator's first argument must be less than the second");
-            size_t totalSize = child(1)->toInt() - child(0)->toInt();
-            nBits_ = totalSize;
-            domainWidth_ = 0;
+            size_t totalSize = *child(1)->toUnsigned() - *child(0)->toUnsigned();
+            type_ = Type::integer(totalSize);
             break;
         }
         case OP_ITE: {
             if (nChildren() != 3)
                 throw Exception(toStr(op_) + " operator expects three arguments");
-            if (!child(0)->isScalar())
-                throw Exception(toStr(op_) + " operator's first argument (condition) must be scalar");
+            if (!child(0)->isIntegerExpr())
+                throw Exception(toStr(op_) + " operator's first argument (condition) must be integer");
             if (child(0)->nBits() != 1)
                 throw Exception(toStr(op_) + " operator's first argument (condition) must be Boolean");
-            if (child(1)->nBits() != child(2)->nBits() || child(1)->domainWidth() != child(2)->domainWidth())
-                throw Exception(toStr(op_) + " operator's second and third arguments must have equal width");
-            nBits_ = child(1)->nBits();
-            domainWidth_ = child(1)->domainWidth();
+            if (child(1)->type() != child(2)->type())
+                throw Exception(toStr(op_) + " operator's second and third arguments must have the same type");
+            type_ = child(1)->type();
             break;
         }
         case OP_LET: {
             if (nChildren() != 3)
                 throw Exception(toStr(op_) + " operator expects three arguments");
-            nBits_ = child(2)->nBits();
-            domainWidth_ = child(2)->domainWidth();
+            type_ = child(2)->type();
             break;
         }
         case OP_LSSB:
@@ -694,61 +772,56 @@ Interior::adjustWidth() {
         case OP_NEGATE: {
             if (nChildren() != 1)
                 throw Exception(toStr(op_) + " operator expects one argument");
-            if (!child(0)->isScalar())
-                throw Exception(toStr(op_) + " argument must be scalar");
-            nBits_ = child(0)->nBits();
-            domainWidth_ = 0;
+            if (!child(0)->isIntegerExpr())
+                throw Exception(toStr(op_) + " argument must be integer");
+            type_ = child(0)->type();
             break;
         }
         case OP_READ: {
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
-            if (child(0)->isScalar())
+            if (!child(0)->isMemoryExpr())
                 throw Exception(toStr(op_) + " operator's first argument must be a memory state");
-            if (!child(1)->isScalar())
-                throw Exception(toStr(op_) + " operator's second argument (address) must be scalar");
+            if (!child(1)->isIntegerExpr())
+                throw Exception(toStr(op_) + " operator's second argument (address) must be integer");
             if (child(0)->domainWidth() != child(1)->nBits())
                 throw Exception(toStr(op_) + " operator's arguments have mismatched sizes");
-            nBits_ = child(0)->nBits();              // size of values stored in memory
-            domainWidth_ = 0;
+            type_ = Type::integer(child(0)->nBits());   // size of values stored in memory
             break;
         }
         case OP_SDIV:
         case OP_UDIV: {
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
-            if (!child(0)->isScalar())
-                throw Exception(toStr(op_) + " operator's first argument must be scalar");
-            if (!child(1)->isScalar())
-                throw Exception(toStr(op_) + " operator's second argument must be scalar");
-            nBits_ = child(0)->nBits();
-            domainWidth_ = 0;
+            if (!child(0)->isIntegerExpr())
+                throw Exception(toStr(op_) + " operator's first argument must be integer");
+            if (!child(1)->isIntegerExpr())
+                throw Exception(toStr(op_) + " operator's second argument must be integer");
+            type_ = child(0)->type();
             break;
         }
         case OP_SEXTEND:
         case OP_UEXTEND: {
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
-            if (!child(0)->isNumber())
-                throw Exception(toStr(op_) + " operator's first argument (size) must be a numeric constant");
+            if (!child(0)->isIntegerConstant())
+                throw Exception(toStr(op_) + " operator's first argument (size) must be an integer constant");
             if (child(0)->nBits() > 64)
                 throw Exception(toStr(op_) + " operator's first argument (size) must be 64 bits or narrower");
-            if (!child(1)->isScalar())
-                throw Exception(toStr(op_) + " operator's second argument must be scalar");
-            nBits_ = child(0)->toInt();
-            domainWidth_ = 0;
+            if (!child(1)->isIntegerExpr())
+                throw Exception(toStr(op_) + " operator's second argument must be integer");
+            type_ = Type::integer(child(0)->toUnsigned().get());
             break;
         }
         case OP_SMOD:
         case OP_UMOD: {
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
-            if (!child(0)->isScalar())
-                throw Exception(toStr(op_) + " operator's first argument must be scalar");
-            if (!child(1)->isScalar())
-                throw Exception(toStr(op_) + " operator's second argument must be scalar");
-            nBits_ = child(1)->nBits();
-            domainWidth_ = 0;
+            if (!child(0)->isIntegerExpr())
+                throw Exception(toStr(op_) + " operator's first argument must be integer");
+            if (!child(1)->isIntegerExpr())
+                throw Exception(toStr(op_) + " operator's second argument must be integer");
+            type_ = child(1)->type();
             break;
         }
         case OP_SMUL:
@@ -757,57 +830,78 @@ Interior::adjustWidth() {
                 throw Exception(toStr(op_) + " operator expects at least one argument");
             size_t totalWidth = 0;
             for (size_t i=0; i<nChildren(); ++i) {
-                if (!child(i)->isScalar())
-                    throw Exception(toStr(op_) + " operator's arguments must all be scalar");
+                if (!child(i)->isIntegerExpr())
+                    throw Exception(toStr(op_) + " operator's arguments must all be integer");
                 totalWidth += child(i)->nBits();
             }
-            nBits_ = totalWidth;
-            domainWidth_ = 0;
+            type_ = Type::integer(totalWidth);
             break;
         }
         case OP_WRITE: {
             if (nChildren() != 3)
                 throw Exception(toStr(op_) + " operator expects three arguments");
-            if (child(0)->isScalar())
+            if (!child(0)->isMemoryExpr())
                 throw Exception(toStr(op_) + " operator's first operand must be a memory state");
-            if (!child(1)->isScalar())
-                throw Exception(toStr(op_) + " operator's second argument (address) must be scalar");
-            if (!child(2)->isScalar())
-                throw Exception(toStr(op_) + " operator's third argument (value to write) must be scalar");
+            if (!child(1)->isIntegerExpr())
+                throw Exception(toStr(op_) + " operator's second argument (address) must be integer");
+            if (!child(2)->isIntegerExpr())
+                throw Exception(toStr(op_) + " operator's third argument (value to write) must be integer");
             if (child(1)->nBits() != child(0)->domainWidth())
                 throw Exception(toStr(op_) + " operator's second argument (address) has incorrect width");
             if (child(2)->nBits() != child(0)->nBits())
                 throw Exception(toStr(op_) + " operator's third argument (value to write) has incorrect width");
-            nBits_ = child(0)->nBits();
-            domainWidth_ = child(0)->domainWidth();
+            type_ = child(0)->type();
             break;
         }
         case OP_ZEROP: {
             if (nChildren() != 1)
                 throw Exception(toStr(op_) + " operator expects one argument");
-            if (!child(0)->isScalar())
-                throw Exception(toStr(op_) + " operator's argument must be scalar");
-            nBits_ = 1;
-            domainWidth_ = 0;
+            if (!child(0)->isIntegerExpr())
+                throw Exception(toStr(op_) + " operator's argument must be integer");
+            type_ = Type::integer(1);
+            break;
+        }
+        case OP_FP_LE:
+        case OP_FP_LT:
+        case OP_FP_GE:
+        case OP_FP_GT:
+        case OP_FP_EQ: {
+            if (nChildren() != 2)
+                throw Exception(toStr(op_) + " operator expects two arguments");
+            if (!child(0)->isFloatingPointExpr())
+                throw Exception(toStr(op_) + " operator's first argument must be floating-point");
+            if (!child(1)->isFloatingPointExpr())
+                throw Exception(toStr(op_) + " operator's second argument must be floating-point");
+            type_ = Type::integer(1);
+            break;
+        }
+        case OP_FP_ISNORM:
+        case OP_FP_ISSUBNORM:
+        case OP_FP_ISZERO:
+        case OP_FP_ISINFINITE:
+        case OP_FP_ISNAN:
+        case OP_FP_ISNEG:
+        case OP_FP_ISPOS: {
+            if (nChildren() != 1)
+                throw Exception(toStr(op_) + " operator expects one argument");
+            if (!child(0)->isFloatingPointExpr())
+                throw Exception(toStr(op_) + " operator's argument must be floating-point");
+            type_ = Type::integer(1);
             break;
         }
         default: {
-            // All children must have the same width, which is the width of this expression. This is suitable for things like
+            // All children must have the same type, which is the type of this expression. This is suitable for things like
             // bitwise operators, add, etc.
-            if (!child(0)->isScalar())
-                throw Exception(toStr(op_) + " operator's arguments must all be scalar");
-            for (size_t i=1; i<nChildren(); ++i) {
-                if (!child(i)->isScalar())
-                    throw Exception(toStr(op_) + " operator's arguments must all be scalar");
-                if (child(i)->nBits() != child(0)->nBits())
-                    throw Exception(toStr(op_) + " operator's arguments must all have the same width");
+            ASSERT_require(nChildren() > 0);
+            for (size_t i = 1; i < nChildren(); ++i) {
+                if (child(i)->type() != child(0)->type())
+                    throw Exception(toStr(op_) + " operator's arguments must all be the same type");
             }
-            nBits_ = child(0)->nBits();
-            domainWidth_ = 0;
+            type_ = child(0)->type();
             break;
         }
     }
-    ASSERT_require(nBits_ != 0);
+    ASSERT_require(nBits() != 0);
 }
 
 void
@@ -818,7 +912,7 @@ Interior::adjustBitFlags(unsigned flags) {
 }
 
 void
-Interior::print(std::ostream &o, Formatter &fmt) {
+Interior::print(std::ostream &o, Formatter &fmt) const {
     struct FormatGuard {
         Formatter &fmt;
         FormatGuard(Formatter &fmt): fmt(fmt) {
@@ -835,7 +929,7 @@ Interior::print(std::ostream &o, Formatter &fmt) {
     // print it anyway for the benefit of mere humans.
     char bracket = '[';
     if (fmt.show_width) {
-        o <<bracket <<nBits_;
+        o <<bracket <<nBits();
         bracket = ',';
     }
     if (fmt.show_flags)
@@ -885,6 +979,18 @@ Interior::print(std::ostream &o, Formatter &fmt) {
                 case OP_UMOD:
                 case OP_UMUL:
                 case OP_LET:
+                case OP_FP_LT:
+                case OP_FP_LE:
+                case OP_FP_GT:
+                case OP_FP_GE:
+                case OP_FP_EQ:
+                case OP_FP_ISNORM:
+                case OP_FP_ISSUBNORM:
+                case OP_FP_ISZERO:
+                case OP_FP_ISINFINITE:
+                case OP_FP_ISNAN:
+                case OP_FP_ISNEG:
+                case OP_FP_ISPOS:
                     if (child_leaf) {
                         child_leaf->printAsUnsigned(o, fmt);
                         printed = true;
@@ -908,7 +1014,7 @@ Interior::print(std::ostream &o, Formatter &fmt) {
 bool
 Interior::mustEqual(const Ptr &other_, const SmtSolverPtr &solver/*NULL*/) {
     bool retval = false;
-    if (this==getRawPointer(other_)) {
+    if (this == getRawPointer(other_)) {
         retval = true;
     } else if (isEquivalentTo(other_)) {
         // This is probably faster than using an SMT solver. It also serves as the naive approach when an SMT solver
@@ -947,7 +1053,7 @@ Interior::mayEqual(const Ptr &other, const SmtSolverPtr &solver/*NULL*/) {
                 ASSERT_require(constantA->nBits() == constantB->nBits());
                 return constantA->bits().compare(constantB->bits()) == 0;
             }
-        } else if ((variableB = other->isLeafNode()) && variableB->isVariable()) {
+        } else if ((variableB = other->isLeafNode()) && variableB->isIntegerVariable()) {
             // Comparing V + C with V; return true iff C == 0 (which it shouldn't or else the additive identity rule would have
             // already kicked in and removed it.
             if (variableA->nameId() == variableB->nameId()) {
@@ -988,8 +1094,8 @@ Interior::compareStructure(const Ptr &other_) {
         return 1;                                       // leaf nodes < internal nodes
     } else if (op_ != other->op_) {
         return op_ < other->op_ ? -1 : 1;
-    } else if (nBits() != other->nBits()) {
-        return nBits() < other->nBits() ? -1 : 1;
+    } else if (type() != other->type()) {
+        return type() < other->type() ? -1 : 1;
     } else if (children_.size() != other->children_.size()) {
         return children_.size() < other->children_.size() ? -1 : 1;
     } else if (flags() != other->flags()) {
@@ -1009,29 +1115,29 @@ bool
 Interior::isEquivalentTo(const Ptr &other_) {
     bool retval = false;
     InteriorPtr other = other_->isInteriorNode();
-    if (this==getRawPointer(other)) {
+    if (this == getRawPointer(other)) {
         retval = true;
-    } else if (other==NULL || nBits()!=other->nBits() || flags()!=other->flags()) {
+    } else if (NULL == other || type() != other->type() || flags() != other->flags()) {
         retval = false;
-    } else if (hashval_!=0 && other->hashval_!=0 && hashval_!=other->hashval_) {
+    } else if (hashval_ != 0 && other->hashval_ != 0 && hashval_ != other->hashval_) {
         // Unequal hashvals imply non-equivalent expressions.  The converse is not necessarily true due to possible
         // collisions.
         retval = false;
-    } else if (op_==other->op_ && children_.size()==other->children_.size()) {
+    } else if (op_ == other->op_ && children_.size() == other->children_.size()) {
         retval = true;
-        for (size_t i=0; i<children_.size() && retval; ++i)
+        for (size_t i=0; i < children_.size() && retval; ++i)
             retval = children_[i]->isEquivalentTo(other->children_[i]);
         // Cache hash values. There's no need to compute a hash value if we've determined that the two expressions are
         // equivalent because it wouldn't save us any work--two equal hash values doesn't necessarily mean that two expressions
         // are equivalent.  However, if we already know one of the hash values then we can cache that hash value in the other
         // expression too.
         if (retval) {
-            if (hashval_!=0 && other->hashval_==0) {
+            if (hashval_ != 0 && other->hashval_ == 0) {
                 other->hashval_ = hashval_;
-            } else if (hashval_==0 && other->hashval_!=0) {
+            } else if (hashval_ == 0 && other->hashval_ != 0) {
                 hashval_ = other->hashval_;
             } else {
-                ASSERT_require(hashval_==other->hashval_);
+                ASSERT_require(hashval_ == other->hashval_);
             }
         } else {
 #ifdef InsnInstructionExpr_USE_HASHES
@@ -1053,8 +1159,8 @@ Interior::substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver)
 }
 
 VisitAction
-Interior::depthFirstTraversal(Visitor &v) {
-    Ptr self = sharedFromThis();
+Interior::depthFirstTraversal(Visitor &v) const {
+    InteriorPtr self(const_cast<Interior*>(this));
     VisitAction action = v.preVisit(self);
     if (CONTINUE==action) {
         for (std::vector<Ptr>::const_iterator ci=children_.begin(); ci!=children_.end(); ++ci) {
@@ -1088,7 +1194,7 @@ Interior::associative() {
         return isInteriorNode();
 
     // Return the new expression without simplifying it again.
-    return InteriorPtr(new Interior(nBits(), op_, newOperands, comment()));
+    return InteriorPtr(new Interior(type(), op_, newOperands, comment(), 0));
 }
 
 
@@ -1117,22 +1223,60 @@ expr_cmp(const Ptr &a, const Ptr &b)
     } else if (al!=NULL) {
         // both are leaf nodes
         ASSERT_not_null(bl);
-        if (al->isNumber() != bl->isNumber()) {
-            // constants are greater than variables
-            return al->isNumber() ? 1 : -1;
-        } else if (al->isNumber()) {
-            // both are constants, sort by unsigned value
-            ASSERT_require(bl->isNumber());
+
+        // Floating point constants are greater than all other nodes
+        if (al->isFloatingPointConstant() != bl->isFloatingPointConstant()) {
+            return al->isFloatingPointConstant() ? 1 : -1;
+        } else if (al->isFloatingPointConstant() && bl->isFloatingPointConstant()) {
+            return al->bits().compare(bl->bits()); // compare bits, not actual FP values
+        }
+        ASSERT_forbid(al->isFloatingPointConstant());
+        ASSERT_forbid(bl->isFloatingPointConstant());
+
+        // Integer constants are greater than remaining nodes
+        if (al->isIntegerConstant() != bl->isIntegerConstant()) {
+            return al->isIntegerConstant() ? 1 : -1;
+        } else if (al->isIntegerConstant() && bl->isIntegerConstant()) {
             return al->bits().compare(bl->bits());
-        } else if (al->isVariable() != bl->isVariable()) {
-            // variables are less than memory
-            return al->isVariable() ? -1 : 1;
-        } else {
-            // both are variables or both are memory; sort by variable name
-            ASSERT_require((al->isVariable() && bl->isVariable()) || (al->isMemory() && bl->isMemory()));
-            if (al->nameId() != bl->nameId())
+        }
+        ASSERT_forbid(al->isIntegerConstant());
+        ASSERT_forbid(bl->isIntegerConstant());
+
+        ASSERT_require(al->isVariable2());
+        ASSERT_require(bl->isVariable2());
+
+        // Memory variables are greater than all other variables
+        if (al->isMemoryVariable() != bl->isMemoryVariable()) {
+            return al->isMemoryVariable() ? 1 : -1;
+        } else if (al->isMemoryVariable() && bl->isMemoryVariable()) {
+            if (al->nameId() == bl->nameId()) {
+                return 0;
+            } else {
                 return al->nameId() < bl->nameId() ? -1 : 1;
+            }
+        }
+        ASSERT_forbid(al->isMemoryVariable());
+        ASSERT_forbid(bl->isMemoryVariable());
+
+        // Floating-point variables are greater than all remaining variable types
+        if (al->isFloatingPointVariable() != bl->isFloatingPointVariable()) {
+            return al->isFloatingPointVariable() ? 1 : -1;
+        } else if (al->isFloatingPointVariable() && b->isFloatingPointVariable()) {
+            if (al->nameId() == bl->nameId()) {
+                return 0;
+            } else {
+                return al->nameId() < bl->nameId() ? -1 : 1;
+            }
+        }
+        ASSERT_forbid(al->isFloatingPointVariable());
+        ASSERT_forbid(bl->isFloatingPointVariable());
+
+        ASSERT_require(al->isIntegerVariable());
+        ASSERT_require(bl->isIntegerVariable());
+        if (al->nameId() == bl->nameId()) {
             return 0;
+        } else {
+            return al->nameId() < bl->nameId() ? -1 : 1;
         }
     } else {
         // both are internal nodes
@@ -1167,7 +1311,7 @@ Interior::commutative() {
         return isInteriorNode();
 
     // construct the new node but don't simplify it yet (i.e., don't use Interior::create())
-    Interior *inode = new Interior(nBits(), getOperator(), sorted_operands, comment());
+    Interior *inode = new Interior(type(), getOperator(), sorted_operands, comment(), 0);
     return InteriorPtr(inode);
 }
 
@@ -1185,7 +1329,7 @@ Interior::idempotent(const SmtSolverPtr &solver) {
 
     if (isSimplified) {
         // Construct the new node but don't simplify it yet (i.e., don't use Interior::create())
-        Interior *inode = new Interior(nBits(), getOperator(), newArgs, comment());
+        Interior *inode = new Interior(type(), getOperator(), newArgs, comment(), 0);
         return InteriorPtr(inode);
     } else {
         return sharedFromThis().dynamicCast<Interior>();
@@ -1220,12 +1364,15 @@ Interior::additiveNesting(const SmtSolverPtr &solver) {
         // The two addends must be the same width, so zero-extend them if necessary (or should we sign extend?)
         // Note that the first argument (new width) of the UEXTEND operator is not actually used.
         Ptr a = child(0)->nBits()==additive_nbits ? child(0) :
-                makeExtend(makeInteger(8, additive_nbits), child(0), solver);
+                makeExtend(makeIntegerConstant(8, additive_nbits), child(0), solver);
         Ptr b = nested->child(0)->nBits()==additive_nbits ? nested->child(0) :
-                makeExtend(makeInteger(8, additive_nbits), nested->child(0), solver);
+                makeExtend(makeIntegerConstant(8, additive_nbits), nested->child(0), solver);
 
         // construct the new node but don't simplify it yet (i.e., don't use Interior::create())
-        Interior *inode = new Interior(nBits(), getOperator(), makeAdd(a, b, solver), nested->child(1), comment());
+        Nodes newArgs;
+        newArgs.push_back(makeAdd(a, b, solver));
+        newArgs.push_back(nested->child(1));
+        Interior *inode = new Interior(type(), getOperator(), newArgs, comment(), 0);
         return InteriorPtr(inode);
     }
     return isInteriorNode();
@@ -1237,7 +1384,7 @@ Interior::identity(uint64_t ident, const SmtSolverPtr &solver) {
     bool modified = false;
     for (Nodes::const_iterator ci=children_.begin(); ci!=children_.end(); ++ci) {
         LeafPtr leaf = (*ci)->isLeafNode();
-        if (leaf && leaf->isNumber()) {
+        if (leaf && leaf->isIntegerConstant()) {
             Sawyer::Container::BitVector identBv = Sawyer::Container::BitVector(leaf->nBits()).fromInteger(ident);
             if (0==leaf->bits().compare(identBv)) {
                 // skip this arg
@@ -1252,20 +1399,30 @@ Interior::identity(uint64_t ident, const SmtSolverPtr &solver) {
     if (!modified)
         return sharedFromThis();
     if (args.empty())
-        return makeInteger(nBits(), ident, comment());
+        return makeIntegerConstant(nBits(), ident, comment());
     if (1==args.size()) {
         if (args.front()->nBits()!=nBits())
-            return makeExtend(makeInteger(8, nBits()), args.front(), solver);
+            return makeExtend(makeIntegerConstant(8, nBits()), args.front(), solver);
         return args.front();
     }
 
     // Don't simplify the return value recursively
-    Interior *inode = new Interior(0, getOperator(), args, comment());
+    Interior *inode = new Interior(Type::none(), getOperator(), args, comment(), 0);
     if (inode->nBits() != nBits()) {
         delete inode;
         return sharedFromThis();                        // don't simplify if width changed.
     }
     return InteriorPtr(inode);
+}
+
+Ptr
+Interior::poisonNan(const SmtSolverPtr &solver) {
+    BOOST_FOREACH (Ptr child, children()) {
+        LeafPtr leaf = child->isLeafNode();
+        if (leaf && leaf->isFloatingPointNan())
+            return makeFloatingPointNan(leaf->type().exponentWidth(), leaf->type().significandWidth(), comment(), flags());
+    }
+    return sharedFromThis();
 }
 
 Ptr
@@ -1288,7 +1445,8 @@ Interior::foldConstants(const Simplifier &simplifier) {
     while (ci1!=children_.end()) {
         Nodes::const_iterator ci2 = ci1;
         LeafPtr leaf;
-        while (ci2!=children_.end() && (leaf=(*ci2)->isLeafNode()) && leaf->isNumber()) ++ci2;
+        while (ci2 != children_.end() && (leaf = (*ci2)->isLeafNode()) && leaf->isIntegerConstant())
+            ++ci2;
         if (ci1==ci2 || ci1+1==ci2) {                           // arg is not a constant, or we had only one constant by itself
             newOperands.push_back(*ci1);
             ++ci1;
@@ -1307,7 +1465,7 @@ Interior::foldConstants(const Simplifier &simplifier) {
         return newOperands.front();
 
     // Do not simplify again (i.e., don't use Interior::create())
-    return InteriorPtr(new Interior(nBits(), op_, newOperands, comment()));
+    return InteriorPtr(new Interior(type(), op_, newOperands, comment(), 0));
 }
 
 Ptr
@@ -1318,7 +1476,7 @@ AddSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
         accumulator.add((*begin)->isLeafNode()->bits());
         flags |= (*begin)->flags();
     }
-    return makeConstant(accumulator, "", flags);
+    return makeIntegerConstant(accumulator, "", flags);
 }
 
 Ptr
@@ -1416,7 +1574,7 @@ AddSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
             }
             if (!distributed)
                 return Ptr();
-            return Interior::create(0, OP_ADD, children, solver, add->comment());
+            return Interior::instance(OP_ADD, children, solver, add->comment());
         }
     };
 
@@ -1448,12 +1606,12 @@ AddSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Build the new expression
     children.erase(std::remove(children.begin(), children.end(), Ptr()), children.end());
     if (!adjustment.isEqualToZero())
-        children.push_back(makeConstant(adjustment));
+        children.push_back(makeIntegerConstant(adjustment));
     if (children.empty())
-        return makeInteger(inode->nBits(), 0, inode->comment());
+        return makeIntegerConstant(inode->nBits(), 0, inode->comment());
     if (children.size()==1)
         return children[0];
-    return Interior::create(0, OP_ADD, children, solver, inode->comment());
+    return Interior::instance(OP_ADD, children, solver, inode->comment());
 }
 
 Ptr
@@ -1464,7 +1622,7 @@ AndSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
         accumulator.bitwiseAnd((*begin)->isLeafNode()->bits());
         flags |= (*begin)->flags();
     }
-    return makeConstant(accumulator, "", flags);
+    return makeIntegerConstant(accumulator, "", flags);
 }
 
 Ptr
@@ -1472,8 +1630,8 @@ AndSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Result is zero if any argument is zero
     for (size_t i=0; i<inode->nChildren(); ++i) {
         LeafPtr child = inode->child(i)->isLeafNode();
-        if (child && child->isNumber() && child->bits().isEqualToZero())
-            return makeInteger(inode->nBits(), 0, inode->comment(), child->flags());
+        if (child && child->isIntegerConstant() && child->bits().isEqualToZero())
+            return makeIntegerConstant(inode->nBits(), 0, inode->comment(), child->flags());
     }
 
     // (and X X) => X (for any number of arguments that are all the same)
@@ -1496,7 +1654,7 @@ OrSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const
         accumulator.bitwiseOr((*begin)->isLeafNode()->bits());
         flags |= (*begin)->flags();
     }
-    return makeConstant(accumulator, "", flags);
+    return makeIntegerConstant(accumulator, "", flags);
 }
 
 Ptr
@@ -1507,11 +1665,11 @@ OrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     bool modified = false;
     for (size_t i=0; i<inode->nChildren(); ++i) {
         LeafPtr child = inode->child(i)->isLeafNode();
-        if (child && child->isNumber()) {
+        if (child && child->isIntegerConstant()) {
             if (child->bits().isEqualToZero()) {
                 removed[i] = modified = true;
             } else if (child->bits().isAllSet()) {
-                return makeConstant(child->bits(), inode->comment(), child->flags());
+                return makeIntegerConstant(child->bits(), inode->comment(), child->flags());
             }
         }
     }
@@ -1523,7 +1681,7 @@ OrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // If we removed all the arguments, return 0. I.e., (or 0) => (or) => 0
     if (newargs.empty())
-        return makeInteger(inode->nBits(), 0, inode->comment());
+        return makeIntegerConstant(inode->nBits(), 0, inode->comment());
 
     // If there's only one argument left, return it. I.e., (or 0 x 0) => (or x) => x
     if (newargs.size() == 1)
@@ -1532,7 +1690,7 @@ OrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Return original or modified expression
     if (!modified)
         return Ptr();
-    return Interior::create(0, inode->getOperator(), newargs, solver, inode->comment());
+    return Interior::instance(inode->getOperator(), newargs, solver, inode->comment());
 }
 
 Ptr
@@ -1543,7 +1701,7 @@ XorSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
         accumulator.bitwiseXor((*begin)->isLeafNode()->bits());
         flags |= (*begin)->flags();
     }
-    return makeConstant(accumulator, "", flags);
+    return makeIntegerConstant(accumulator, "", flags);
 }
 
 Ptr
@@ -1556,7 +1714,7 @@ XorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         if (removed[i])
             continue;
         LeafPtr leaf = inode->child(i)->isLeafNode();
-        if (leaf && leaf->isNumber() && leaf->bits().isEqualToZero()) {
+        if (leaf && leaf->isIntegerConstant() && leaf->bits().isEqualToZero()) {
             removed[i] = modified = true;
         } else {
             for (size_t j=i+1; j<inode->nChildren(); ++j) {
@@ -1575,7 +1733,7 @@ XorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // If we removed all the arguments, return 0. I.e., (xor X X) = (xor) = 0
     if (newargs.empty())
-        return makeInteger(inode->nBits(), 0, inode->comment());
+        return makeIntegerConstant(inode->nBits(), 0, inode->comment());
 
     // If there's only one argument left, return it. I.e., (xor X) == (xor X Y Y) == (xor X 0) == X
     if (newargs.size() == 1)
@@ -1584,7 +1742,7 @@ XorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Return original or modified expression
     if (!modified)
         return Ptr();
-    return Interior::create(0, inode->getOperator(), newargs, solver, inode->comment());
+    return Interior::instance(inode->getOperator(), newargs, solver, inode->comment());
 }
 
 Ptr
@@ -1600,10 +1758,10 @@ SmulSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) con
         if (totalWidth > 8*sizeof(product))
             return Ptr();
         LeafPtr leaf = (*begin)->isLeafNode();
-        product *= (int64_t)leaf->toInt();
+        product *= leaf->toSigned().get();
         flags |= (*begin)->flags();
     }
-    return makeInteger(totalWidth, product, "", flags);
+    return makeIntegerConstant(totalWidth, product, "", flags);
 }
 
 Ptr
@@ -1619,10 +1777,10 @@ UmulSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) con
         if (totalWidth > 8*sizeof(product))
             return Ptr();
         LeafPtr leaf = (*begin)->isLeafNode();
-        product *= (uint64_t)leaf->toInt();
+        product *= leaf->toUnsigned().get();
         flags |= (*begin)->flags();
     }
-    return makeInteger(totalWidth, product, "", flags);
+    return makeIntegerConstant(totalWidth, product, "", flags);
 }
 
 Ptr
@@ -1642,7 +1800,7 @@ ConcatSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) c
         accumulator.copy(destination, leaf->bits(), leaf->bits().hull());
         flags |= (*begin)->flags();
     }
-    return makeConstant(accumulator, "", flags);
+    return makeIntegerConstant(accumulator, "", flags);
 }
 
 Ptr
@@ -1669,9 +1827,9 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         falseValues.push_back(ite->child(2));
     }
     if (condition) {
-        Ptr trueConcat = Interior::create(inode->nBits(), OP_CONCAT, trueValues, solver);
-        Ptr falseConcat = Interior::create(inode->nBits(), OP_CONCAT, falseValues, solver);
-        return Interior::create(inode->nBits(), OP_ITE, condition, trueConcat, falseConcat, solver);
+        Ptr trueConcat = Interior::instance(OP_CONCAT, trueValues, solver);
+        Ptr falseConcat = Interior::instance(OP_CONCAT, falseValues, solver);
+        return Interior::instance(OP_ITE, condition, trueConcat, falseConcat, solver);
     }
 
     // If all the concatenated expressions are extract expressions, all extracting bits from the same expression and
@@ -1706,10 +1864,10 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         if (isCurExtract!=NULL && isCurExtract->getOperator()==OP_EXTRACT &&
             isCurExtract->child(0)->nBits() <= 8*sizeof(prevLoOffset) &&
             isCurExtract->child(1)->nBits() <= 8*sizeof(prevLoOffset) &&
-            isCurExtract->child(0)->isLeafNode() && isCurExtract->child(0)->isLeafNode()->isNumber() &&
-            isCurExtract->child(1)->isLeafNode() && isCurExtract->child(1)->isLeafNode()->isNumber()) {
-            curLoOffset = isCurExtract->child(0)->isLeafNode()->toInt();
-            curHiOffset = isCurExtract->child(1)->isLeafNode()->toInt();
+            isCurExtract->child(0)->isLeafNode() && isCurExtract->child(0)->isLeafNode()->isIntegerConstant() &&
+            isCurExtract->child(1)->isLeafNode() && isCurExtract->child(1)->isLeafNode()->isIntegerConstant()) {
+            curLoOffset = isCurExtract->child(0)->isLeafNode()->toUnsigned().get();
+            curHiOffset = isCurExtract->child(1)->isLeafNode()->toUnsigned().get();
             ASSERT_require(curLoOffset < curHiOffset);
         } else {
             isCurExtract = InteriorPtr();
@@ -1735,7 +1893,7 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Construct a new, simplified expression
     if (newArgs.size() == inode->nChildren())
         return Ptr();                                   // no simplification possible
-    return Interior::create(inode->nBits(), inode->getOperator(), newArgs, solver, inode->comment(), inode->flags());
+    return Interior::instance(inode->getOperator(), newArgs, solver, inode->comment(), inode->flags());
 }
 
 Ptr
@@ -1743,26 +1901,26 @@ ExtractSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     LeafPtr from_node = inode->child(0)->isLeafNode();
     LeafPtr to_node   = inode->child(1)->isLeafNode();
     Ptr operand   = inode->child(2);
-    ASSERT_require(!from_node->isNumber() || from_node->nBits() <= 8*sizeof(size_t));
-    ASSERT_require(!to_node->isNumber()   || to_node->nBits() <= 8*sizeof(size_t));
-    size_t from = from_node && from_node->isNumber() ? from_node->toInt() : 0;
-    size_t to = to_node && to_node->isNumber() ? to_node->toInt() : 0;
+    ASSERT_require(!from_node->isIntegerConstant() || from_node->nBits() <= 8*sizeof(size_t));
+    ASSERT_require(!to_node->isIntegerConstant()   || to_node->nBits() <= 8*sizeof(size_t));
+    size_t from = from_node && from_node->isIntegerConstant() ? from_node->toUnsigned().get() : 0;
+    size_t to = to_node && to_node->isIntegerConstant() ? to_node->toUnsigned().get() : 0;
 
     // If limits are backward or extend beyond the operand size, don't simplify
-    if (from_node && to_node && from_node->isNumber() && to_node->isNumber() && (from>=to || to>operand->nBits()))
+    if (from_node && to_node && from_node->isIntegerConstant() && to_node->isIntegerConstant() && (from>=to || to>operand->nBits()))
         return Ptr();
 
     // Constant folding
-    if (from_node && to_node && from_node->isNumber() && to_node->isNumber() &&
-        operand->isLeafNode() && operand->isLeafNode()->isNumber()) {
+    if (from_node && to_node && from_node->isIntegerConstant() && to_node->isIntegerConstant() &&
+        operand->isLeafNode() && operand->isLeafNode()->isIntegerConstant()) {
         Sawyer::Container::BitVector result(to-from);
         BitRange source = BitRange::hull(from, to-1);
         result.copy(result.hull(), operand->isLeafNode()->bits(), source);
-        return makeConstant(result, inode->comment(), inode->flags());
+        return makeIntegerConstant(result, inode->comment(), inode->flags());
     }
 
     // Extracting the whole thing is a no-op
-    if (from_node && to_node && from_node->isNumber() && from==0 && to==operand->nBits())
+    if (from_node && to_node && from_node->isIntegerConstant() && from==0 && to==operand->nBits())
         return operand;
 
     // Hoist concat operations to the outside of the extract
@@ -1770,7 +1928,7 @@ ExtractSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // (extract 0 24 (concat X[24] Y[8]))  ==> (concat (extract 0 16 X) Y)
     Nodes newChildren;
     InteriorPtr ioperand = operand->isInteriorNode();
-    if (from_node && to_node && from_node->isNumber() && to_node->isNumber() &&
+    if (from_node && to_node && from_node->isIntegerConstant() && to_node->isIntegerConstant() &&
         ioperand && OP_CONCAT==ioperand->getOperator()) {
         size_t partAt = 0;                              // starting bit number in child
         BOOST_REVERSE_FOREACH (const Ptr part, ioperand->children()) { // concatenated parts
@@ -1784,21 +1942,21 @@ ExtractSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
             } else if (partAt < from && partEnd > to) {
                 // We need the middle of this part, and then we're done
                 size_t need = to-from;                  // number of bits we need
-                newChildren.push_back(makeExtract(makeInteger(32, from-partAt), makeInteger(32, to-partAt), part, solver));
+                newChildren.push_back(makeExtract(makeIntegerConstant(32, from-partAt), makeIntegerConstant(32, to-partAt), part, solver));
                 partAt = partEnd;
                 from += need;
             } else if (partAt < from) {
                 // We need the end of the part
                 ASSERT_require(partEnd <= to);
                 size_t need = partEnd - from;
-                newChildren.push_back(makeExtract(makeInteger(32, from-partAt), makeInteger(32, part->nBits()), part, solver));
+                newChildren.push_back(makeExtract(makeIntegerConstant(32, from-partAt), makeIntegerConstant(32, part->nBits()), part, solver));
                 partAt = partEnd;
                 from += need;
             } else if (partEnd > to) {
                 // We need the beginning of the part
                 ASSERT_require(partAt == from);
                 size_t need = to-from;
-                newChildren.push_back(makeExtract(makeInteger(32, 0), makeInteger(32, need), part, solver));
+                newChildren.push_back(makeExtract(makeIntegerConstant(32, 0), makeIntegerConstant(32, need), part, solver));
                 break;
             } else {
                 // We need the whole part
@@ -1812,26 +1970,26 @@ ExtractSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         // Concatenate all the parts.
         if (newChildren.size() > 1) {
             std::reverse(newChildren.begin(), newChildren.end());// high bits must be first
-            return Interior::create(0, OP_CONCAT, newChildren, solver, inode->comment());
+            return Interior::instance(OP_CONCAT, newChildren, solver, inode->comment());
         }
         newChildren[0]->comment(inode->comment());
         return newChildren[0];
     }
 
     // If the operand is another extract operation and we know all the limits then they can be replaced with a single extract.
-    if (from_node && to_node && from_node->isNumber() && to_node->isNumber() &&
+    if (from_node && to_node && from_node->isIntegerConstant() && to_node->isIntegerConstant() &&
         ioperand && OP_EXTRACT==ioperand->getOperator()) {
         LeafPtr from2_node = ioperand->child(0)->isLeafNode();
         LeafPtr to2_node = ioperand->child(1)->isLeafNode();
-        if (from2_node && to2_node && from2_node->isNumber() && to2_node->isNumber()) {
-            size_t from2 = from2_node->toInt();
-            return makeExtract(makeInteger(32, from2+from), makeInteger(32, from2+to), ioperand->child(2),
+        if (from2_node && to2_node && from2_node->isIntegerConstant() && to2_node->isIntegerConstant()) {
+            size_t from2 = from2_node->toUnsigned().get();
+            return makeExtract(makeIntegerConstant(32, from2+from), makeIntegerConstant(32, from2+to), ioperand->child(2),
                                solver, inode->comment());
         }
     }
 
     // Simplifications for (extract 0 a (uextend b c))
-    if (from_node && to_node && from_node->isNumber() && 0==from && to_node->isNumber()) {
+    if (from_node && to_node && from_node->isIntegerConstant() && 0==from && to_node->isIntegerConstant()) {
         size_t a=to, b=operand->nBits();
         // (extract[a] 0 a (uextend[b] b c[a])) => c when b>=a
         if (ioperand && OP_UEXTEND==ioperand->getOperator() && b>=a && ioperand->child(1)->nBits()==a)
@@ -1849,11 +2007,11 @@ AsrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr shift_leaf   = inode->child(0)->isLeafNode();
     LeafPtr operand_leaf = inode->child(1)->isLeafNode();
-    if (shift_leaf!=NULL && operand_leaf!=NULL && shift_leaf->isNumber() && operand_leaf->isNumber()) {
-        size_t sa = shift_leaf->toInt();
+    if (shift_leaf!=NULL && operand_leaf!=NULL && shift_leaf->isIntegerConstant() && operand_leaf->isIntegerConstant()) {
+        size_t sa = shift_leaf->toUnsigned().get();
         Sawyer::Container::BitVector result = operand_leaf->bits();
         result.shiftRightArithmetic(sa);
-        return makeConstant(result, inode->comment(), inode->flags());
+        return makeIntegerConstant(result, inode->comment(), inode->flags());
     }
     return Ptr();
 }
@@ -1862,29 +2020,29 @@ Ptr
 InvertSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr operand_node = inode->child(0)->isLeafNode();
-    if (operand_node==NULL || !operand_node->isNumber())
+    if (operand_node==NULL || !operand_node->isIntegerConstant())
         return Ptr();
     Sawyer::Container::BitVector result = operand_node->bits();
     result.invert();
-    return makeConstant(result, inode->comment(), inode->flags());
+    return makeIntegerConstant(result, inode->comment(), inode->flags());
 }
 
 Ptr
 NegateSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr operand_node = inode->child(0)->isLeafNode();
-    if (operand_node==NULL || !operand_node->isNumber())
+    if (operand_node==NULL || !operand_node->isIntegerConstant())
         return Ptr();
     Sawyer::Container::BitVector result = operand_node->bits();
     result.negate();
-    return makeConstant(result, inode->comment(), inode->flags());
+    return makeIntegerConstant(result, inode->comment(), inode->flags());
 }
 
 Ptr
 IteSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Is the condition known?
     LeafPtr cond_node = inode->child(0)->isLeafNode();
-    if (cond_node!=NULL && cond_node->isNumber()) {
+    if (cond_node!=NULL && cond_node->isIntegerConstant()) {
         if (cond_node->nBits() != 1)
             throw Exception(toStr(inode->getOperator()) + " operator's first argument (condition) should be one bit wide");
         bool condition = ! cond_node->bits().isAllClear();
@@ -1944,9 +2102,9 @@ RolSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // Get the effective shift amount
     Sawyer::Optional<uint64_t> sa;
-    if (sa_leaf && sa_leaf->isNumber()) {
+    if (sa_leaf && sa_leaf->isIntegerConstant()) {
         if (sa_leaf->nBits() <= 64) {
-            sa = sa_leaf->toInt();
+            sa = sa_leaf->toUnsigned();
         } else {
             Sawyer::Optional<size_t> msbSetIdx = sa_leaf->bits().mostSignificantSetBit();
             size_t twoPow = 0;
@@ -1963,10 +2121,10 @@ RolSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     }
 
     // Constant folding
-    if (val_leaf && val_leaf->isNumber() && sa) {
+    if (val_leaf && val_leaf->isIntegerConstant() && sa) {
         Sawyer::Container::BitVector result = val_leaf->bits();
         result.rotateLeft(*sa);
-        return makeConstant(result, inode->comment(), inode->flags());
+        return makeIntegerConstant(result, inode->comment(), inode->flags());
     }
 
     // If the shift amount is zero then this is a no-op
@@ -1975,11 +2133,11 @@ RolSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // If the shift amount is greater than the value width, replace it with modulo
     if (sa && *sa > inode->nBits()) {
-        return Interior::create(0, inode->getOperator(),
-                                makeInteger(inode->child(0)->nBits(), *sa % inode->nBits(),
-                                               inode->child(0)->comment(), inode->child(0)->flags()),
-                                inode->child(1),
-                                solver, inode->comment(), inode->flags());
+        return Interior::instance(inode->getOperator(),
+                                  makeIntegerConstant(inode->child(0)->nBits(), *sa % inode->nBits(),
+                                                      inode->child(0)->comment(), inode->child(0)->flags()),
+                                  inode->child(1),
+                                  solver, inode->comment(), inode->flags());
     }
 
     return Ptr();
@@ -1991,9 +2149,9 @@ RorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // Get the effective shift amount
     Sawyer::Optional<uint64_t> sa;
-    if (sa_leaf && sa_leaf->isNumber()) {
+    if (sa_leaf && sa_leaf->isIntegerConstant()) {
         if (sa_leaf->nBits() <= 64) {
-            sa = sa_leaf->toInt();
+            sa = sa_leaf->toUnsigned();
         } else {
             Sawyer::Optional<size_t> msbSetIdx = sa_leaf->bits().mostSignificantSetBit();
             size_t twoPow = 0;
@@ -2010,10 +2168,10 @@ RorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     }
 
     // Constant folding
-    if (val_leaf && val_leaf->isNumber() && sa) {
+    if (val_leaf && val_leaf->isIntegerConstant() && sa) {
         Sawyer::Container::BitVector result = val_leaf->bits();
         result.rotateRight(*sa);
-        return makeConstant(result, inode->comment(), inode->flags());
+        return makeIntegerConstant(result, inode->comment(), inode->flags());
     }
 
     // If the shift amount is zero then this is a no-op
@@ -2022,11 +2180,11 @@ RorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // If the shift amount is greater than the value width, replace it with modulo
     if (sa && *sa > inode->nBits()) {
-        return Interior::create(0, inode->getOperator(),
-                                makeInteger(inode->child(0)->nBits(), *sa % inode->nBits(),
-                                               inode->child(0)->comment(), inode->child(0)->flags()),
-                                inode->child(1),
-                                solver, inode->comment(), inode->flags());
+        return Interior::instance(inode->getOperator(),
+                                  makeIntegerConstant(inode->child(0)->nBits(), *sa % inode->nBits(),
+                                                      inode->child(0)->comment(), inode->child(0)->flags()),
+                                  inode->child(1),
+                                  solver, inode->comment(), inode->flags());
     }
 
     return Ptr();
@@ -2047,10 +2205,10 @@ UextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // Constant folding
     LeafPtr val_leaf = inode->child(1)->isLeafNode();
-    if (val_leaf && val_leaf->isNumber()) {
+    if (val_leaf && val_leaf->isIntegerConstant()) {
         Sawyer::Container::BitVector result = val_leaf->bits();
         result.resize(newsize);
-        return makeConstant(result, inode->comment(), inode->flags());
+        return makeIntegerConstant(result, inode->comment(), inode->flags());
     }
 
     // Extending an extend
@@ -2074,7 +2232,7 @@ UextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     //   and newsize < oldsize
     // => (extract 0 newsize arg[oldsize])
     if (newsize < oldsize)
-        return makeExtract(makeInteger(32, 0), makeInteger(32, newsize), inode->child(1), solver, inode->comment());
+        return makeExtract(makeIntegerConstant(32, 0), makeIntegerConstant(32, newsize), inode->child(1), solver, inode->comment());
 
     return Ptr();
 }
@@ -2089,15 +2247,15 @@ SextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // Constant folding
     LeafPtr val_leaf = inode->child(1)->isLeafNode();
-    if (val_leaf && val_leaf->isNumber()) {
+    if (val_leaf && val_leaf->isIntegerConstant()) {
         Sawyer::Container::BitVector result(inode->nBits());
         result.signExtend(val_leaf->bits());
-        return makeConstant(result, inode->comment(), inode->flags());
+        return makeIntegerConstant(result, inode->comment(), inode->flags());
     }
 
     // Downsizing should be represented as an extract operation
     if (newsize < oldsize) {
-        return makeExtract(makeInteger(32, 0), makeInteger(32, newsize), inode->child(1), solver, inode->comment());
+        return makeExtract(makeIntegerConstant(32, 0), makeIntegerConstant(32, newsize), inode->child(1), solver, inode->comment());
     }
 
     return Ptr();
@@ -2108,14 +2266,14 @@ EqSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber()) {
+    if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compare(b_leaf->bits());
-        return makeBoolean(0==cmp, inode->comment(), inode->flags());
+        return makeBooleanConstant(0==cmp, inode->comment(), inode->flags());
     }
 
     // (eq x x) => 1
     if (inode->child(0)->mustEqual(inode->child(1), SmtSolverPtr()))
-        return makeBoolean(true, inode->comment(), inode->flags());
+        return makeBooleanConstant(true, inode->comment(), inode->flags());
 
     return Ptr();
 }
@@ -2125,14 +2283,14 @@ SgeSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber()) {
+    if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compareSigned(b_leaf->bits());
-        return makeBoolean(cmp>=0, inode->comment(), inode->flags());
+        return makeBooleanConstant(cmp>=0, inode->comment(), inode->flags());
     }
 
     // (sge x x) => 1
     if (inode->child(0)->mustEqual(inode->child(1), SmtSolverPtr()))
-        return makeBoolean(true, inode->comment(), inode->flags());
+        return makeBooleanConstant(true, inode->comment(), inode->flags());
 
     return Ptr();
 }
@@ -2142,9 +2300,9 @@ SgtSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber()) {
+    if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compareSigned(b_leaf->bits());
-        return makeBoolean(cmp>0, inode->comment(), inode->flags());
+        return makeBooleanConstant(cmp>0, inode->comment(), inode->flags());
     }
 
     return Ptr();
@@ -2155,14 +2313,14 @@ SleSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber()) {
+    if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compareSigned(b_leaf->bits());
-        return makeBoolean(cmp<=0, inode->comment(), inode->flags());
+        return makeBooleanConstant(cmp<=0, inode->comment(), inode->flags());
     }
 
     // (sle x x) => 1
     if (inode->child(0)->mustEqual(inode->child(1), SmtSolverPtr()))
-        return makeBoolean(true, inode->comment(), inode->flags());
+        return makeBooleanConstant(true, inode->comment(), inode->flags());
 
     return Ptr();
 }
@@ -2172,9 +2330,9 @@ SltSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber()) {
+    if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compareSigned(b_leaf->bits());
-        return makeBoolean(cmp<0, inode->comment(), inode->flags());
+        return makeBooleanConstant(cmp<0, inode->comment(), inode->flags());
     }
 
     return Ptr();
@@ -2185,14 +2343,14 @@ UgeSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber()) {
+    if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compare(b_leaf->bits());
-        return makeBoolean(cmp>=0, inode->comment(), inode->flags());
+        return makeBooleanConstant(cmp>=0, inode->comment(), inode->flags());
     }
 
     // (uge x x) => 1
     if (inode->child(0)->mustEqual(inode->child(1), SmtSolverPtr()))
-        return makeBoolean(true, inode->comment(), inode->flags());
+        return makeBooleanConstant(true, inode->comment(), inode->flags());
 
    return Ptr();
 }
@@ -2202,9 +2360,9 @@ UgtSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber()) {
+    if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compare(b_leaf->bits());
-        return makeBoolean(cmp>0, inode->comment(), inode->flags());
+        return makeBooleanConstant(cmp>0, inode->comment(), inode->flags());
     }
 
     return Ptr();
@@ -2215,14 +2373,14 @@ UleSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber()) {
+    if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compare(b_leaf->bits());
-        return makeBoolean(cmp<=0, inode->comment(), inode->flags());
+        return makeBooleanConstant(cmp<=0, inode->comment(), inode->flags());
     }
 
     // (ule x x) => 1
     if (inode->child(0)->mustEqual(inode->child(1), SmtSolverPtr()))
-        return makeBoolean(true, inode->comment(), inode->flags());
+        return makeBooleanConstant(true, inode->comment(), inode->flags());
 
     return Ptr();
 }
@@ -2232,9 +2390,9 @@ UltSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber()) {
+    if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compare(b_leaf->bits());
-        return makeBoolean(cmp<0, inode->comment(), inode->flags());
+        return makeBooleanConstant(cmp<0, inode->comment(), inode->flags());
     }
 
     return Ptr();
@@ -2244,8 +2402,8 @@ Ptr
 ZeropSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    if (a_leaf && a_leaf->isNumber())
-        return makeBoolean(a_leaf->bits().isEqualToZero(), inode->comment(), inode->flags());
+    if (a_leaf && a_leaf->isIntegerConstant())
+        return makeBooleanConstant(a_leaf->bits().isEqualToZero(), inode->comment(), inode->flags());
 
     return Ptr();
 }
@@ -2255,11 +2413,11 @@ SdivSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber() && !b_leaf->bits().isEqualToZero()) {
+    if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant() && !b_leaf->bits().isEqualToZero()) {
         if (a_leaf->nBits() <= 64 && b_leaf->nBits() <= 64) {
-            int64_t a = IntegerOps::signExtend2(a_leaf->toInt(), a_leaf->nBits(), 8*sizeof(int8_t));
-            int64_t b = IntegerOps::signExtend2(b_leaf->toInt(), b_leaf->nBits(), 8*sizeof(int8_t));
-            return makeInteger(a_leaf->nBits(), a/b, inode->comment(), inode->flags());
+            int64_t a = a_leaf->toSigned().get();
+            int64_t b = b_leaf->toSigned().get();
+            return makeIntegerConstant(a_leaf->nBits(), a/b, inode->comment(), inode->flags());
         } else {
             // FIXME[Robb P. Matzke 2014-05-05]: not folding constants larger than 64 bits because Sawyer::Container::BitVector
             // does not currently define division.
@@ -2273,11 +2431,11 @@ SmodSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber() && !b_leaf->bits().isEqualToZero()) {
+    if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant() && !b_leaf->bits().isEqualToZero()) {
         if (a_leaf->nBits() <= 64 && b_leaf->nBits() <= 64) {
-            int64_t a = IntegerOps::signExtend2(a_leaf->toInt(), a_leaf->nBits(), 8*sizeof(int8_t));
-            int64_t b = IntegerOps::signExtend2(b_leaf->toInt(), b_leaf->nBits(), 8*sizeof(int8_t));
-            return makeInteger(b_leaf->nBits(), a%b, inode->comment(), inode->flags());
+            int64_t a = a_leaf->toSigned().get();
+            int64_t b = b_leaf->toSigned().get();
+            return makeIntegerConstant(b_leaf->nBits(), a%b, inode->comment(), inode->flags());
         } else {
             // FIXME[Robb P. Matzke 2014-05-05]: not folding constants larger than 64 bits because Sawyer::Container::BitVector
             // does not currently define division.
@@ -2292,11 +2450,11 @@ UdivSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber() && !b_leaf->bits().isEqualToZero()) {
+    if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant() && !b_leaf->bits().isEqualToZero()) {
         if (a_leaf->nBits() <= 64 && b_leaf->nBits() <= 64) {
-            uint64_t a = a_leaf->toInt();
-            uint64_t b = b_leaf->toInt();
-            return makeInteger(a_leaf->nBits(), a/b, inode->comment(), inode->flags());
+            uint64_t a = a_leaf->toUnsigned().get();
+            uint64_t b = b_leaf->toUnsigned().get();
+            return makeIntegerConstant(a_leaf->nBits(), a/b, inode->comment(), inode->flags());
         } else {
             // FIXME[Robb P. Matzke 2014-05-05]: not folding constants larger than 64 bits because Sawyer::Container::BitVector
             // does not currently define division.
@@ -2311,11 +2469,11 @@ UmodSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
     LeafPtr b_leaf = inode->child(1)->isLeafNode();
-    if (a_leaf && b_leaf && a_leaf->isNumber() && b_leaf->isNumber() && !b_leaf->bits().isEqualToZero()) {
+    if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant() && !b_leaf->bits().isEqualToZero()) {
         if (a_leaf->nBits() <= 64 && b_leaf->nBits() <= 64) {
-            uint64_t a = a_leaf->toInt();
-            uint64_t b = b_leaf->toInt();
-            return makeInteger(b_leaf->nBits(), a%b, inode->comment(), inode->flags());
+            uint64_t a = a_leaf->toUnsigned().get();
+            uint64_t b = b_leaf->toUnsigned().get();
+            return makeIntegerConstant(b_leaf->nBits(), a%b, inode->comment(), inode->flags());
         } else {
             // FIXME[Robb P. Matzke 2014-05-05]: not folding constants larger than 64 bits because Sawyer::Container::BitVector
             // does not currently define division.
@@ -2347,9 +2505,9 @@ ShiftSimplifier::combine_strengths(Ptr strength1, Ptr strength2, size_t value_wi
     // Zero-extend the strengths if they're not as wide as the sum.  This is because the ADD operator requires that its
     // operands are the same width, and the result will also be that width.
     if (strength1->nBits() < sum_width)
-        strength1 = makeExtend(makeInteger(32, sum_width), strength1, solver);
+        strength1 = makeExtend(makeIntegerConstant(32, sum_width), strength1, solver);
     if (strength2->nBits() < sum_width)
-        strength2 = makeExtend(makeInteger(32, sum_width), strength2, solver);
+        strength2 = makeExtend(makeIntegerConstant(32, sum_width), strength2, solver);
 
     return makeAdd(strength1, strength2, solver);
 }
@@ -2361,9 +2519,9 @@ ShlSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // Effective shift amount
     Sawyer::Optional<uint64_t> sa;
-    if (sa_leaf && sa_leaf->isNumber()) {
+    if (sa_leaf && sa_leaf->isIntegerConstant()) {
         if (sa_leaf->nBits() <= 64) {
-            sa = sa_leaf->toInt();
+            sa = sa_leaf->toUnsigned();
         } else {
             Sawyer::Optional<size_t> msbSetIdx = sa_leaf->bits().mostSignificantSetBit();
             if (!msbSetIdx) {
@@ -2379,10 +2537,10 @@ ShlSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         sa = std::min((uint64_t)inode->nBits(), *sa);
 
     // Constant folding
-    if (val_leaf && val_leaf->isNumber() && sa) {
+    if (val_leaf && val_leaf->isIntegerConstant() && sa) {
         Sawyer::Container::BitVector result = val_leaf->bits();
         result.shiftLeft(*sa, newbits);
-        return makeConstant(result, inode->comment(), inode->flags());
+        return makeIntegerConstant(result, inode->comment(), inode->flags());
     }
 
     // If the shifted operand is itself a shift of the same kind, then simplify by combining the strengths:
@@ -2390,14 +2548,14 @@ ShlSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     InteriorPtr val_inode = inode->child(1)->isInteriorNode();
     if (val_inode && val_inode->getOperator()==inode->getOperator()) {
         if (Ptr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->nBits(), solver)) {
-            return Interior::create(0, inode->getOperator(), strength, val_inode->child(1), solver);
+            return Interior::instance(inode->getOperator(), strength, val_inode->child(1), solver);
         }
     }
 
     // If the shift amount is known to be at least as large as the value, then replace the value with a constant.
     if (sa && *sa >= inode->nBits()) {
         Sawyer::Container::BitVector result(inode->nBits(), newbits);
-        return makeConstant(result, inode->comment());
+        return makeIntegerConstant(result, inode->comment());
     }
 
     // If the shift amount is zero then this is a no-op
@@ -2410,8 +2568,8 @@ ShlSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     if (sa) {
         ASSERT_require(*sa > 0 && *sa < inode->nBits());// handled above
         size_t nHiBits = inode->nBits() - *sa;
-        Ptr hiBits = makeExtract(makeInteger(32, 0), makeInteger(32, nHiBits), inode->child(1), solver);
-        Ptr loBits = makeInteger(*sa, newbits?uint64_t(-1):uint64_t(0));
+        Ptr hiBits = makeExtract(makeIntegerConstant(32, 0), makeIntegerConstant(32, nHiBits), inode->child(1), solver);
+        Ptr loBits = makeIntegerConstant(*sa, newbits?uint64_t(-1):uint64_t(0));
         return makeConcat(hiBits, loBits, solver);
     }
 
@@ -2425,9 +2583,9 @@ ShrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // Effective shift amount
     Sawyer::Optional<uint64_t> sa;
-    if (sa_leaf && sa_leaf->isNumber()) {
+    if (sa_leaf && sa_leaf->isIntegerConstant()) {
         if (sa_leaf->nBits() <= 64) {
-            sa = sa_leaf->toInt();
+            sa = sa_leaf->toUnsigned();
         } else {
             Sawyer::Optional<size_t> msbSetIdx = sa_leaf->bits().mostSignificantSetBit();
             if (!msbSetIdx) {
@@ -2443,10 +2601,10 @@ ShrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         sa = std::min((uint64_t)inode->nBits(), *sa);
 
     // Constant folding
-    if (val_leaf && val_leaf->isNumber() && sa) {
+    if (val_leaf && val_leaf->isIntegerConstant() && sa) {
         Sawyer::Container::BitVector result = val_leaf->bits();
         result.shiftRight(*sa, newbits);
-        return makeConstant(result, inode->comment(), inode->flags());
+        return makeIntegerConstant(result, inode->comment(), inode->flags());
     }
 
     // If the shifted operand is itself a shift of the same kind, then simplify by combining the strengths:
@@ -2454,14 +2612,14 @@ ShrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     InteriorPtr val_inode = inode->child(1)->isInteriorNode();
     if (val_inode && val_inode->getOperator()==inode->getOperator()) {
         if (Ptr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->nBits(), solver)) {
-            return Interior::create(0, inode->getOperator(), strength, val_inode->child(1), solver);
+            return Interior::instance(inode->getOperator(), strength, val_inode->child(1), solver);
         }
     }
 
     // If the shift amount is known to be at least as large as the value, then replace the value with a constant.
     if (sa && *sa >= inode->nBits()) {
         Sawyer::Container::BitVector result(inode->nBits(), newbits);
-        return makeConstant(result, inode->comment(), inode->flags());
+        return makeIntegerConstant(result, inode->comment(), inode->flags());
     }
 
     // If the shift amount is zero then this is a no-op
@@ -2473,8 +2631,8 @@ ShrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // (shr1[N] AMT X) ==> (concat -1[AMT] (extract AMT N X))
     if (sa) {
         ASSERT_require(*sa > 0 && *sa < inode->nBits());// handled above
-        Ptr loBits = makeExtract(makeInteger(32, *sa), makeInteger(32, inode->nBits()), inode->child(1), solver);
-        Ptr hiBits = makeInteger(*sa, newbits?uint64_t(-1):uint64_t(0));
+        Ptr loBits = makeExtract(makeIntegerConstant(32, *sa), makeIntegerConstant(32, inode->nBits()), inode->child(1), solver);
+        Ptr hiBits = makeIntegerConstant(*sa, newbits?uint64_t(-1):uint64_t(0));
         return makeConcat(hiBits, loBits, solver);
     }
 
@@ -2485,10 +2643,10 @@ Ptr
 LssbSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    if (a_leaf && a_leaf->isNumber()) {
+    if (a_leaf && a_leaf->isIntegerConstant()) {
         if (Sawyer::Optional<size_t> idx = a_leaf->bits().leastSignificantSetBit())
-            return makeInteger(inode->nBits(), *idx, inode->comment());
-        return makeInteger(inode->nBits(), 0, inode->comment(), inode->flags());
+            return makeIntegerConstant(inode->nBits(), *idx, inode->comment());
+        return makeIntegerConstant(inode->nBits(), 0, inode->comment(), inode->flags());
     }
 
     return Ptr();
@@ -2498,10 +2656,10 @@ Ptr
 MssbSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
     LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    if (a_leaf && a_leaf->isNumber()) {
+    if (a_leaf && a_leaf->isIntegerConstant()) {
         if (Sawyer::Optional<size_t> idx = a_leaf->bits().mostSignificantSetBit())
-            return makeInteger(inode->nBits(), *idx, inode->comment());
-        return makeInteger(inode->nBits(), 0, inode->comment(), inode->flags());
+            return makeIntegerConstant(inode->nBits(), *idx, inode->comment());
+        return makeIntegerConstant(inode->nBits(), 0, inode->comment(), inode->flags());
     }
 
     return Ptr();
@@ -2534,7 +2692,7 @@ SetSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         return Ptr();
     if (1==elements.size())
         return elements[0];
-    return Interior::create(0, inode->getOperator(), elements, solver, inode->comment());
+    return Interior::instance(inode->getOperator(), elements, solver, inode->comment());
 }
 
 Ptr
@@ -2711,6 +2869,33 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
             case OP_ZEROP:
                 newnode = inode->rewrite(ZeropSimplifier(), solver);
                 break;
+            case OP_FP_ABS:
+            case OP_FP_NEGATE:
+            case OP_FP_ADD:
+            case OP_FP_MUL:
+            case OP_FP_DIV:
+            case OP_FP_MULADD:
+            case OP_FP_SQRT:
+            case OP_FP_MOD:
+            case OP_FP_ROUND:
+            case OP_FP_MIN:
+            case OP_FP_MAX:
+                newnode = inode->poisonNan(solver);
+                break;
+            case OP_FP_LE:
+            case OP_FP_LT:
+            case OP_FP_GE:
+            case OP_FP_GT:
+            case OP_FP_EQ:
+            case OP_FP_ISNORM:
+            case OP_FP_ISSUBNORM:
+            case OP_FP_ISZERO:
+            case OP_FP_ISINFINITE:
+            case OP_FP_ISNAN:
+            case OP_FP_ISNEG:
+            case OP_FP_ISPOS:
+                // no simplification
+                break;
         }
         if (newnode==node)
             break;
@@ -2726,84 +2911,44 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
 
 // class method
 LeafPtr
-Leaf::createVariable(size_t nbits, const std::string &comment, unsigned flags) {
-    if (0 == nbits)
+Leaf::createVariable(const Type &type, const std::string &comment, unsigned flags) {
+    return createVariable(type, nextNameCounter(), comment, flags);
+}
+
+// class method
+LeafPtr
+Leaf::createVariable(const Type &type, const uint64_t id, const std::string &comment, unsigned flags) {
+    if (type.nBits() == 0)
         throw Exception("variables must have positive width");
     Leaf *node = new Leaf(comment, flags);
-    node->nBits_ = nbits;
-    node->leafType_ = BITVECTOR;
-    node->name_ = nextNameCounter();
-    LeafPtr retval(node);
-    return retval;
+    node->type_ = type;
+    node->name_ = id;
+    return LeafPtr(node);
 }
 
 // class method
 LeafPtr
-Leaf::createExistingVariable(size_t nbits, uint64_t id, const std::string &comment, unsigned flags) {
-    if (0 == nbits)
-        throw Exception("variables must have positive width");
+Leaf::createConstant(const Type &type, const Sawyer::Container::BitVector &bits, const std::string &comment, unsigned flags) {
+    if (type.nBits() != bits.size())
+        throw Exception("bit vector is wrong size for type");
+    if (bits.size() == 0)
+        throw Exception("zero-sized constants are not allowed"); // bits.isEmpty implies leaf is a variable
     Leaf *node = new Leaf(comment, flags);
-    node->nBits_ = nbits;
-    node->leafType_ = BITVECTOR;
-    node->name_ = nextNameCounter(id);
-    LeafPtr retval(node);
-    return retval;
-}
-
-// class method
-LeafPtr
-Leaf::createInteger(size_t nbits, uint64_t n, const std::string &comment, unsigned flags) {
-    if (0 == nbits)
-        throw Exception("integers must have positive width");
-    Leaf *node = new Leaf(comment, flags);
-    node->nBits_ = nbits;
-    node->leafType_ = CONSTANT;
-    node->bits_ = Sawyer::Container::BitVector(nbits).fromInteger(n);
-    LeafPtr retval(node);
-    return retval;
-}
-
-// class method
-LeafPtr
-Leaf::createConstant(const Sawyer::Container::BitVector &bits, const std::string &comment, unsigned flags) {
-    Leaf *node = new Leaf(comment, flags);
-    node->nBits_ = bits.size();
-    node->leafType_ = CONSTANT;
+    node->type_ = type;
     node->bits_ = bits;
-    LeafPtr retval(node);
-    return retval;
+    return LeafPtr(node);
 }
 
-// class method
+// deprecated [Robb Matzke 2019-09-30]
 LeafPtr
-Leaf::createMemory(size_t addressWidth, size_t valueWidth, const std::string &comment, unsigned flags) {
-    if (0 == addressWidth)
-        throw Exception("memory addresses must have positive width");
-    if (0 == valueWidth)
-        throw Exception("memory values must have positive width");
-    Leaf *node = new Leaf(comment, flags);
-    node->nBits_ = valueWidth;
-    node->domainWidth_ = addressWidth;
-    node->leafType_ = MEMORY;
-    node->name_ = nextNameCounter();
-    LeafPtr retval(node);
-    return retval;
+Leaf::createInteger(size_t nBits, uint64_t value, const std::string &comment, unsigned flags) {
+    return makeIntegerConstant(nBits, value, comment, flags)->isLeafNode();
 }
 
-// class method
+// deprecated [Robb Matzke 2019-09-30]
 LeafPtr
-Leaf::createExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const std::string &comment, unsigned flags) {
-    if (0 == addressWidth)
-        throw Exception("memory addresses must have positive width");
-    if (0 == valueWidth)
-        throw Exception("memory values must have positive width");
-    Leaf *node = new Leaf(comment, flags);
-    node->nBits_ = valueWidth;
-    node->domainWidth_ = addressWidth;
-    node->leafType_ = MEMORY;
-    node->name_ = nextNameCounter(id);
-    LeafPtr retval(node);
-    return retval;
+Leaf::createBoolean(bool b, const std::string &comment, unsigned flags) {
+    return makeBooleanConstant(b, comment, flags);
 }
 
 // class method
@@ -2818,19 +2963,9 @@ Leaf::nextNameCounter(uint64_t useThis) {
     return useThis;
 }
 
-bool
-Leaf::isNumber() const {
-    return CONSTANT==leafType_;
-}
-
-uint64_t
-Leaf::toInt() {
-    return toUnsigned().get();
-}
-
 Sawyer::Optional<uint64_t>
 Leaf::toUnsigned() const {
-    if (!isNumber())
+    if (!isIntegerConstant())
         return Sawyer::Nothing();
     if (nBits() <= 64)
         return bits_.toInteger();
@@ -2843,7 +2978,7 @@ Leaf::toUnsigned() const {
 Sawyer::Optional<int64_t>
 Leaf::toSigned() const {
     using namespace Sawyer::Container;
-    if (!isNumber())
+    if (!isIntegerConstant())
         return Sawyer::Nothing();
     if (nBits() <= 64)
         return bits_.toSignedInteger();
@@ -2861,48 +2996,39 @@ Leaf::toSigned() const {
 }
 
 const Sawyer::Container::BitVector&
-Leaf::bits() {
-    ASSERT_require(isNumber());
+Leaf::bits() const {
+    ASSERT_require(isConstant());
     return bits_;
 }
 
-bool
-Leaf::isVariable() {
-    return BITVECTOR==leafType_;
-}
-
-bool
-Leaf::isMemory() {
-    return MEMORY==leafType_;
-}
-
 uint64_t
-Leaf::nameId() {
-    ASSERT_require(isVariable() || isMemory());
+Leaf::nameId() const {
+    ASSERT_require(isVariable2());
     return name_;
 }
 
 std::string
-Leaf::toString() {
-    if (isNumber())
+Leaf::toString() const {
+    if (isConstant()) {                                 // integers or floating-point
         return "0x" + bits().toHex();
-    if (isVariable())
-        return "v" + StringUtility::numberToString(nameId());
-    if (isMemory())
+    } else if (isMemoryVariable()) {
         return "m" + StringUtility::numberToString(nameId());
+    } else if (isVariable2()) {
+        return "v" + StringUtility::numberToString(nameId());
+    }
     ASSERT_not_reachable("invalid leaf type");
     return "";
 }
 
 void
-Leaf::print(std::ostream &o, Formatter &formatter) {
+Leaf::print(std::ostream &o, Formatter &formatter) const {
     printAsSigned(o, formatter);
 }
 
 void
-Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) {
+Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) const {
     bool showed_comment = false;
-    if (isNumber()) {
+    if (isIntegerConstant()) {
         if (bits_.size() == 1) {
             // Boolean values
             if (bits_.toInteger()) {
@@ -2913,26 +3039,26 @@ Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) {
         } else if (bits_.size() <= 64) {
             // Integer values that are small enough to use the machine's native type.
             uint64_t ival = bits_.toInteger();
-            if ((32==nBits_ || 64==nBits_) && 0!=(ival & 0xffff0000) && 0xffff0000!=(ival & 0xffff0000)) {
+            if ((32==nBits() || 64==nBits()) && 0!=(ival & 0xffff0000) && 0xffff0000!=(ival & 0xffff0000)) {
                 // The value is probably an address, so print it like one.
                 if (formatter.use_hexadecimal) {
-                    o <<StringUtility::unsignedToHex2(ival, nBits_);
+                    o <<StringUtility::unsignedToHex2(ival, nBits());
                 } else {
                     // The old behavior (which is enabled when formatter.use_hexadecimal is false) was to print only the
                     // hexadecimal format and not the decimal format, so we'll emulate that. [Robb P. Matzke 2013-12-26]
-                    o <<StringUtility::addrToString(ival, nBits_);
+                    o <<StringUtility::addrToString(ival, nBits());
                 }
             } else if (as_signed) {
                 if (formatter.use_hexadecimal) {
-                    o <<StringUtility::toHex2(ival, nBits_); // show as signed and unsigned
-                } else if (IntegerOps::signBit2(ival, nBits_)) {
-                    o <<(int64_t)IntegerOps::signExtend2(ival, nBits_, 64);
+                    o <<StringUtility::toHex2(ival, nBits()); // show as signed and unsigned
+                } else if (IntegerOps::signBit2(ival, nBits())) {
+                    o <<(int64_t)IntegerOps::signExtend2(ival, nBits(), 64);
                 } else {
                     o <<ival;
                 }
             } else {
                 if (formatter.use_hexadecimal) {
-                    o <<StringUtility::unsignedToHex2(ival, nBits_); // show only as unsigned
+                    o <<StringUtility::unsignedToHex2(ival, nBits()); // show only as unsigned
                 } else {
                     o <<ival;
                 }
@@ -2942,12 +3068,18 @@ Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) {
             // FIXME[Robb P. Matzke 2014-05-05]: we should change StringUtility functions to handle BitVector arguments also.
             o <<"0x" <<bits_.toHex();
         }
-    } else if (formatter.show_comments==Formatter::CMT_INSTEAD && !comment_.empty()) {
+    } else if (isFloatingPointConstant()) {
+        o <<"0x" <<bits_.toHex();
+        
+    } else if (formatter.show_comments == Formatter::CMT_INSTEAD && !comment_.empty()) {
         // Use the comment as the variable name.
+        ASSERT_require(isVariable2());
         o <<nameEscape(comment_);
         showed_comment = true;
+
     } else {
         // Show the variable name.
+        ASSERT_require(isVariable2());
         uint64_t renamed = name_;
         if (formatter.do_rename) {
             RenameMap::iterator found = formatter.renames.find(name_);
@@ -2958,23 +3090,17 @@ Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) {
                 renamed = found->second;
             }
         }
-        switch (leafType_) {
-            case MEMORY:
-                o <<"m";
-                break;
-            case BITVECTOR:
-                o <<"v";
-                break;
-            case CONSTANT:
-                ASSERT_not_reachable("handled above");
+        if (isMemoryVariable()) {
+            o <<"m" <<renamed;
+        } else {
+            o <<"v" <<renamed;
         }
-        o <<renamed;
     }
 
     // Bit width of variable.  All variables have this otherwise there's no way for the parser to tell how wide a variable is
     // when reading it back in.
     if (formatter.show_width) {
-        o <<'[' <<nBits_ <<']';
+        o <<'[' <<nBits() <<']';
     }
 
     // Comment stuff
@@ -2993,12 +3119,12 @@ bool
 Leaf::mustEqual(const Ptr &other_, const SmtSolverPtr &solver) {
     bool retval = false;
     LeafPtr other = other_->isLeafNode();
-    if (this==getRawPointer(other)) {
+    if (this == getRawPointer(other)) {
         retval = true;
     } else if (flags() != other_->flags()) {
         // Expressions with different flags are not considered mustEqual
         retval = false;
-    } else if (other==NULL) {
+    } else if (other == NULL) {
         // We need an SMT solver to figure this out.  This handles things like "x mustEqual (not (not x))" which is true.
         if (solver) {
             SmtSolver::Transaction transaction(solver);
@@ -3006,17 +3132,30 @@ Leaf::mustEqual(const Ptr &other_, const SmtSolverPtr &solver) {
             solver->insert(assertion);
             retval = SmtSolver::SAT_NO == solver->check(); // must equal if there is no soln for inequality
         }
-    } else if (isNumber() && other->isNumber()) {
-        // Both are numbers
-        retval = 0 == bits_.compare(other->bits());
+    } else if (isConstant() && other->isConstant()) {
+        if (isIntegerConstant() && other->isIntegerConstant()) {
+            // Both are integers
+            retval = 0 == bits_.compare(other->bits());
+        } else {
+            // At least one is something other than an integer constant
+            if (solver) {
+                SmtSolver::Transaction transaction(solver);
+                Ptr assertion = makeNe(sharedFromThis(), other_, solver);
+                solver->insert(assertion);
+                retval = SmtSolver::SAT_NO == solver->check(); // must equal if there is no soln for inequality
+            }
+        }
+
     } else if (solver && solver->nAssertions() > 0) {
         // At least one is a variable and the solver has some context that might affect the comparison
         SmtSolver::Transaction transaction(solver);
         Ptr assertion = makeNe(sharedFromThis(), other_, solver);
         solver->insert(assertion);
         retval = SmtSolver::SAT_NO == solver->check(); // must equal if there is no soln for inequality
-    } else if (!isNumber() && !other->isNumber()) {
+
+    } else if (isVariable2() && other->isVariable2()) {
         // Both are variables, and no solver context. Variables must be equal if they have the same name.
+        ASSERT_require2(name_ != other->name_ || type_ == other->type_, "vars with same name must have same type");
         retval = name_ == other->name_;
     }
     return retval;
@@ -3024,6 +3163,8 @@ Leaf::mustEqual(const Ptr &other_, const SmtSolverPtr &solver) {
 
 bool
 Leaf::mayEqual(const Ptr &other, const SmtSolverPtr &solver) {
+    LeafPtr otherLeaf = other->isLeafNode();
+
     // Fast comparison of literally the same expression pointer
     if (this == getRawPointer(other))
         return true;
@@ -3033,22 +3174,6 @@ Leaf::mayEqual(const Ptr &other, const SmtSolverPtr &solver) {
     if (other->isInteriorNode())
         return other->mayEqual(sharedFromThis(), solver);
 
-    // If both expressions are constant leaf nodes, we can reach a conclusion without a solver.  Two constants that are
-    // different sizes can be equal (e.g., 42[8] == 42[16]).
-    LeafPtr otherLeaf = other->isLeafNode();
-    ASSERT_not_null(otherLeaf);
-    if (isNumber() && otherLeaf->isNumber())
-        return bits().compare(otherLeaf->bits()) == 0;
-
-    // When compare V with V+C where V is a variable and C is a constant, then V may-equal V+C is true iff C is zero.
-    LeafPtr variableB, constantB;
-    if (isVariable() && matchAddVariableConstant(variableB /*out*/, constantB /*out*/)) {
-        ASSERT_require(nBits() == variableB->nBits());
-        ASSERT_require(variableB->nBits() == constantB->nBits());
-        ASSERT_forbid2(constantB->bits().isEqualToZero(), "additive identity should have been simplified");
-        return false;
-    }
-
     // Give the user a chance to decide.
     if (mayEqualCallback) {
         boost::logic::tribool result = (mayEqualCallback)(sharedFromThis(), other, solver);
@@ -3056,9 +3181,41 @@ Leaf::mayEqual(const Ptr &other, const SmtSolverPtr &solver) {
             return result ? true : false;
     }
 
-    // The other cases are variable, memory, or constant compared to variable, memory, or constant as long as both are not
-    // constants.  In all eight of those cases, the two expressions can be equal to each other and we don't need an SMT
-    // solver to prove it.
+    // If both expressions are variables of the same type then they might be equal.
+    if (isVariable2() && other->isVariable2() && type() == other->type())
+        return true;
+
+    // If both expressions are integer constants, they're equal if the integer interpretation of their bits is equal. The
+    // integer constants don't have to be the same width in order to be equal (e.g., 42[8] == 42[16]).
+    if (isIntegerConstant() && other->isIntegerConstant())
+        return bits().compare(otherLeaf->bits()) == 0;
+
+    // If both expressions are floating point constants, we can reach a conclusion without a solver. Two floating point
+    // constants are equal if they have the same bit pattern and neither one is a NaN bit pattern.
+    if (isFloatingPointConstant() && other->isFloatingPointConstant())
+        return !isFloatingPointNan() && !otherLeaf->isFloatingPointNan() && bits().equalTo(otherLeaf->bits());
+
+    // When comparing V with V+C where V is an integer variable and C is an integer constant, then V may-equal V+C is true iff
+    // C is zero.
+    LeafPtr variableB, constantB;
+    if (isIntegerVariable() && matchAddVariableConstant(variableB /*out*/, constantB /*out*/)) {
+        ASSERT_require(nBits() == variableB->nBits());
+        ASSERT_require(variableB->nBits() == constantB->nBits());
+        ASSERT_forbid2(constantB->bits().isEqualToZero(), "additive identity should have been simplified");
+        return false;
+    }
+
+    // Use an SMT solver (if there is one) for all remaining cases
+    if (solver) {
+        ASSERT_require(isFloatingPointConstant() != other->isFloatingPointConstant());
+        ASSERT_require(isIntegerConstant() != other->isIntegerConstant());
+        SmtSolver::Transaction transaction(solver);
+        Ptr assertion = makeEq(sharedFromThis(), other, solver);
+        solver->insert(assertion);
+        return SmtSolver::SAT_NO == solver->check();
+    }
+
+    // If all else fails, assume that two expressions might be equal.
     return true;
 }
 
@@ -3073,9 +3230,13 @@ Leaf::compareStructure(const Ptr &other_) {
         return nBits() < other->nBits() ? -1 : 1;
     } else if (flags() != other->flags()) {
         return flags() < other->flags() ? -1 : 1;
-    } else if (isNumber() != other->isNumber()) {
-        return isNumber() ? -1 : 1;                     // concrete values < non-concrete
-    } else if (name_ != other->name_) {
+    } else if (isIntegerConstant() != other->isIntegerConstant()) {
+        return isIntegerConstant() ? -1 : 1;            // integer constants less than non-integer constants
+    } else if (isFloatingPointConstant() != other->isFloatingPointConstant()) {
+        return isFloatingPointConstant() ? -1 : 1;      // FP constants less than remaining types
+    } else {
+        ASSERT_require(isVariable2());
+        ASSERT_require(other->isVariable2());
         return name_ < other->name_ ? -1 : 1;
     }
     return 0;
@@ -3087,11 +3248,11 @@ Leaf::isEquivalentTo(const Ptr &other_) {
     LeafPtr other = other_->isLeafNode();
     if (this==getRawPointer(other)) {
         retval = true;
-    } else if (other && nBits()==other->nBits() && flags()==other->flags()) {
-        if (isNumber()) {
-            retval = other->isNumber() && 0==bits_.compare(other->bits_);
+    } else if (other && nBits() == other->nBits() && flags() == other->flags()) {
+        if (isConstant()) {
+            retval = other->isConstant() && bits().equalTo(other->bits());
         } else {
-            retval = !other->isNumber() && name_==other->name_;
+            retval = !other->isConstant() && name_ == other->name_;
         }
     }
     return retval;
@@ -3106,8 +3267,8 @@ Leaf::substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver) {
 }
 
 VisitAction
-Leaf::depthFirstTraversal(Visitor &v) {
-    Ptr self = sharedFromThis();
+Leaf::depthFirstTraversal(Visitor &v) const {
+    LeafPtr self(const_cast<Leaf*>(this));
     VisitAction retval = v.preVisit(self);
     if (TERMINATE!=retval)
         retval = v.postVisit(self);
@@ -3118,6 +3279,16 @@ const Nodes&
 Leaf::children() const {
     static const Nodes empty;
     return empty;
+}
+
+bool
+Leaf::isFloatingPointNan() const {
+    using namespace Sawyer::Container;
+    if (!isFloatingPointExpr() || !isConstant())
+        return false;
+    BitVector::BitRange significandRange = BitVector::BitRange::baseSize(0, type().significandWidth() - 1);
+    BitVector::BitRange exponentRange = BitVector::BitRange::baseSize(type().significandWidth() - 1, type().exponentWidth());
+    return bits_.isAllSet(exponentRange) && !bits_.isAllClear(significandRange);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3160,44 +3331,198 @@ findCommonSubexpressions(const std::vector<Ptr> &exprs) {
 //                                      Factory functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Ptr
-makeVariable(size_t nbits, const std::string &comment, unsigned flags) {
-    return Leaf::createVariable(nbits, comment, flags);
+LeafPtr
+makeVariable(const Type &type, const std::string &comment, unsigned flags) {
+    return Leaf::createVariable(type, comment, flags);
 }
 
-Ptr
-makeExistingVariable(size_t nbits, uint64_t id, const std::string &comment, unsigned flags) {
-    return Leaf::createExistingVariable(nbits, id, comment, flags);
+LeafPtr
+makeVariable(const Type &type, uint64_t id, const std::string &comment, unsigned flags) {
+    return Leaf::createVariable(type, id, comment, flags);
 }
 
-Ptr
-makeInteger(size_t nbits, uint64_t n, const std::string &comment, unsigned flags) {
-    return Leaf::createInteger(nbits, n, comment, flags);
+LeafPtr
+makeConstant(const Type &type, const Sawyer::Container::BitVector &bits, const std::string &comment, unsigned flags) {
+    return Leaf::createConstant(type, bits, comment, flags);
 }
 
+LeafPtr
+makeIntegerVariable(size_t nBits, const std::string &comment, unsigned flags) {
+    return Leaf::createVariable(Type::integer(nBits), comment, flags);
+}
+
+LeafPtr
+makeIntegerVariable(size_t nBits, uint64_t id, const std::string &comment, unsigned flags) {
+    return Leaf::createVariable(Type::integer(nBits), id, comment, flags);
+}
+
+LeafPtr
+makeIntegerConstant(size_t nBits, uint64_t value, const std::string &comment, unsigned flags) {
+    Sawyer::Container::BitVector bits(nBits);
+    bits.fromInteger(value);
+    return Leaf::createConstant(Type::integer(nBits), bits, comment, flags);
+}
+
+LeafPtr
+makeIntegerConstant(const Sawyer::Container::BitVector &bits, const std::string &comment, unsigned flags) {
+    return Leaf::createConstant(Type::integer(bits.size()), bits, comment, flags);
+}
+
+LeafPtr
+makeBooleanConstant(bool b, const std::string &comment, unsigned flags) {
+    Sawyer::Container::BitVector bits(1);
+    if (b)
+        bits.set(0);
+    return Leaf::createConstant(Type::integer(1), bits, comment, flags);
+}
+
+LeafPtr
+makeMemoryVariable(size_t addressWidth, size_t valueWidth, const std::string &comment, unsigned flags) {
+    return Leaf::createVariable(Type::memory(addressWidth, valueWidth), comment, flags);
+}
+
+LeafPtr
+makeMemoryVariable(size_t addressWidth, size_t valueWidth, uint64_t id, const std::string &comment, unsigned flags) {
+    return Leaf::createVariable(Type::memory(addressWidth, valueWidth), id, comment, flags);
+}
+
+LeafPtr
+makeFloatingPointVariable(size_t eb, size_t sb, const std::string &comment, unsigned flags) {
+    return Leaf::createVariable(Type::floatingPoint(eb, sb), comment, flags);
+}
+
+LeafPtr
+makeFloatingPointVariable(size_t eb, size_t sb, uint64_t id, const std::string &comment, unsigned flags) {
+    return Leaf::createVariable(Type::floatingPoint(eb, sb), id, comment, flags);
+}
+
+LeafPtr
+makeFloatingPointConstant(float f, const std::string &comment, unsigned flags) {
+    using namespace Sawyer::Container;
+    ASSERT_require(4 == sizeof f);
+    union {
+        float f;
+        uint8_t b[4];
+    } u;
+    u.f = f;
+    BitVector bv(4);
+    switch (ByteOrder::host_order()) {
+        case ByteOrder::ORDER_LSB:
+            bv.fromInteger(BitVector::BitRange::baseSize(0, 8),  u.b[0]);
+            bv.fromInteger(BitVector::BitRange::baseSize(8, 8),  u.b[1]);
+            bv.fromInteger(BitVector::BitRange::baseSize(16, 8), u.b[2]);
+            bv.fromInteger(BitVector::BitRange::baseSize(24, 8), u.b[3]);
+            break;
+        case ByteOrder::ORDER_MSB:
+            bv.fromInteger(BitVector::BitRange::baseSize(0, 8),  u.b[3]);
+            bv.fromInteger(BitVector::BitRange::baseSize(8, 8),  u.b[2]);
+            bv.fromInteger(BitVector::BitRange::baseSize(16, 8), u.b[1]);
+            bv.fromInteger(BitVector::BitRange::baseSize(24, 8), u.b[0]);
+            break;
+        default:
+            ASSERT_not_reachable("invalid host byte order");
+    }
+    return Leaf::createConstant(Type::floatingPoint(8, 24), bv, comment, flags);
+}
+
+LeafPtr
+makeFloatingPointConstant(double d, const std::string &comment, unsigned flags) {
+    using namespace Sawyer::Container;
+    ASSERT_require(8 == sizeof d);
+    union {
+        double d;
+        uint8_t b[8];
+    } u;
+    u.d = d;
+    BitVector bv(8);
+    switch (ByteOrder::host_order()) {
+        case ByteOrder::ORDER_LSB:
+            bv.fromInteger(BitVector::BitRange::baseSize(0, 8),  u.b[0]);
+            bv.fromInteger(BitVector::BitRange::baseSize(8, 8),  u.b[1]);
+            bv.fromInteger(BitVector::BitRange::baseSize(16, 8), u.b[2]);
+            bv.fromInteger(BitVector::BitRange::baseSize(24, 8), u.b[3]);
+            bv.fromInteger(BitVector::BitRange::baseSize(32, 8), u.b[4]);
+            bv.fromInteger(BitVector::BitRange::baseSize(40, 8), u.b[5]);
+            bv.fromInteger(BitVector::BitRange::baseSize(48, 8), u.b[6]);
+            bv.fromInteger(BitVector::BitRange::baseSize(56, 8), u.b[7]);
+            break;
+        case ByteOrder::ORDER_MSB:
+            bv.fromInteger(BitVector::BitRange::baseSize(0, 8),  u.b[7]);
+            bv.fromInteger(BitVector::BitRange::baseSize(8, 8),  u.b[6]);
+            bv.fromInteger(BitVector::BitRange::baseSize(16, 8), u.b[5]);
+            bv.fromInteger(BitVector::BitRange::baseSize(24, 8), u.b[4]);
+            bv.fromInteger(BitVector::BitRange::baseSize(32, 8), u.b[3]);
+            bv.fromInteger(BitVector::BitRange::baseSize(40, 8), u.b[2]);
+            bv.fromInteger(BitVector::BitRange::baseSize(48, 8), u.b[1]);
+            bv.fromInteger(BitVector::BitRange::baseSize(56, 8), u.b[0]);
+            break;
+        default:
+            ASSERT_not_reachable("invalid host byte order");
+    }
+    return Leaf::createConstant(Type::floatingPoint(11, 53), bv, comment, flags);
+}
+
+LeafPtr
+makeFloatingPointNan(size_t eb, size_t sb, const std::string &comment, unsigned flags) {
+    using namespace Sawyer::Container;
+    BitVector bits(eb+sb);
+
+    // There are many NaN bit patterns, we use just one.  The sign bit can be set or clear, the exponent bits must all
+    // be set, and the significand bits must not be all clear. It's easiest for us to just set all bits, plus it's an
+    // easy bit pattern to recognize in the output.
+    bits.set(bits.hull());
+    return Leaf::createConstant(Type::floatingPoint(eb, sb), bits, comment, flags);
+}
+
+// deprecated [Robb Matzke 2019-09-30]
+Ptr
+makeVariable(size_t nBits, const std::string &comment, unsigned flags) {
+    return makeIntegerVariable(nBits, comment, flags);
+}
+
+// deprecated [Robb Matzke 2019-09-30]
+Ptr
+makeExistingVariable(size_t nBits, uint64_t id, const std::string &comment, unsigned flags) {
+    return makeIntegerVariable(nBits, id, comment, flags);
+}
+
+// deprecated [Robb Matzke 2019-09-30]
+Ptr
+makeInteger(size_t nBits, uint64_t value, const std::string &comment, unsigned flags) {
+    return makeIntegerConstant(nBits, value, comment, flags);
+}
+
+// deprecated [Robb Matzke 2019-09-30]
 Ptr
 makeConstant(const Sawyer::Container::BitVector &bits, const std::string &comment, unsigned flags) {
-    return Leaf::createConstant(bits, comment, flags);
+    return makeIntegerConstant(bits, comment, flags);
 }
 
+// deprecated [Robb Matzke 2019-09-30]
 Ptr
 makeBoolean(bool b, const std::string &comment, unsigned flags) {
-    return Leaf::createBoolean(b, comment, flags);
+    return makeBooleanConstant(b, comment, flags);
 }
 
+// deprecated [Robb Matzke 2019-09-30]
 Ptr
 makeMemory(size_t addressWidth, size_t valueWidth, const std::string &comment, unsigned flags) {
-    return Leaf::createMemory(addressWidth, valueWidth, comment, flags);
+    return makeMemoryVariable(addressWidth, valueWidth, comment, flags);
 }
 
+// deprecated [Robb Matzke 2019-09-30]
 Ptr
 makeExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const std::string &comment, unsigned flags) {
-    return Leaf::createExistingMemory(addressWidth, valueWidth, id, comment, flags);
+    return makeMemoryVariable(addressWidth, valueWidth, id, comment, flags);
 }
 
 Ptr
 makeAdd(const Ptr&a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_ADD, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_ADD, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_ADD, a, b, solver, comment, flags);
+    }
 }
 
 Ptr
@@ -3207,216 +3532,395 @@ makeBooleanAnd(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std
 
 Ptr
 makeAsr(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_ASR, sa, a, solver, comment, flags);
+    return Interior::instance(OP_ASR, sa, a, solver, comment, flags);
 }
 
 Ptr
 makeAnd(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_AND, a, b, solver, comment, flags);
+    return Interior::instance(OP_AND, a, b, solver, comment, flags);
 }
 
 Ptr
 makeOr(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_OR, a, b, solver, comment, flags);
+    return Interior::instance(OP_OR, a, b, solver, comment, flags);
 }
 
 Ptr
 makeXor(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_XOR, a, b, solver, comment, flags);
+    return Interior::instance(OP_XOR, a, b, solver, comment, flags);
 }
 
 Ptr
 makeConcat(const Ptr &hi, const Ptr &lo, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_CONCAT, hi, lo, solver, comment, flags);
+    return Interior::instance(OP_CONCAT, hi, lo, solver, comment, flags);
+}
+
+Ptr
+makeConvert(const Ptr &a, Type &dstType, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    return Interior::instance(dstType, OP_CONCAT, a, solver, comment, flags);
 }
 
 Ptr
 makeEq(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_EQ, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_EQ, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_EQ, a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeExtract(const Ptr &begin, const Ptr &end, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment,
             unsigned flags) {
-    return Interior::create(0, OP_EXTRACT, begin, end, a, solver, comment, flags);
+    return Interior::instance(OP_EXTRACT, begin, end, a, solver, comment, flags);
 }
 
 Ptr
 makeInvert(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_INVERT, a, solver, comment, flags);
+    return Interior::instance(OP_INVERT, a, solver, comment, flags);
+}
+
+Ptr
+makeIsInfinite(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    return Interior::instance(OP_FP_ISINFINITE, a, solver, comment, flags);
+}
+
+Ptr
+makeIsNan(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    return Interior::instance(OP_FP_ISNAN, a, solver, comment, flags);
+}
+
+Ptr
+makeIsNeg(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    if (a->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_ISNEG, a, solver, comment, flags);
+    } else {
+        return makeSignedLt(a, makeIntegerConstant(a->nBits(), 0), solver, comment, flags);
+    }
+}
+
+Ptr
+makeIsNorm(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    return Interior::instance(OP_FP_ISNORM, a, solver, comment, flags);
+}
+
+Ptr
+makeIsPos(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    if (a->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_ISPOS, a, solver, comment, flags);
+    } else {
+        return makeGt(a, makeIntegerConstant(a->nBits(), 0), solver, comment, flags);
+    }
+}
+
+Ptr
+makeIsSubnorm(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    return Interior::instance(OP_FP_ISSUBNORM, a, solver, comment, flags);
 }
 
 Ptr
 makeIte(const Ptr &cond, const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment,
         unsigned flags) {
-    return Interior::create(0, OP_ITE, cond, a, b, solver, comment, flags);
+    return Interior::instance(OP_ITE, cond, a, b, solver, comment, flags);
 }
 
 Ptr
 makeLet(const Ptr &a, const Ptr &b, const Ptr &c, const SmtSolverPtr &solver, const std::string &comment,
         unsigned flags) {
-    return Interior::create(0, OP_LET, a, b, c, solver, comment, flags);
+    return Interior::instance(OP_LET, a, b, c, solver, comment, flags);
 }
 
 Ptr
 makeLssb(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_LSSB, a, solver, comment, flags);
+    return Interior::instance(OP_LSSB, a, solver, comment, flags);
+}
+
+Ptr
+makeMax(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_MAX, a, b, solver, comment, flags);
+    } else {
+        return makeIte(makeGe(a, b, solver, "", 0), a, b, solver, comment, flags);
+    }
+}
+
+Ptr
+makeMin(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_MIN, a, b, solver, comment, flags);
+    } else {
+        return makeIte(makeLe(a, b, solver, "", 0), a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeMssb(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_MSSB, a, solver, comment, flags);
+    return Interior::instance(OP_MSSB, a, solver, comment, flags);
+}
+
+Ptr
+makeMultiplyAdd(const Ptr &a, const Ptr &b, const Ptr &c, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr() && c->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_MULADD, a, b, c, solver, comment, flags);
+    } else {
+        return makeAdd(makeSignedMul(a, b, solver, "", 0), c, solver, comment, flags);
+    }
 }
 
 Ptr
 makeNe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_NE, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return makeInvert(Interior::instance(OP_FP_EQ, a, b, solver), solver, comment, flags);
+    } else {
+        return Interior::instance(OP_NE, a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeNegate(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_NEGATE, a, solver, comment, flags);
+    if (a->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_NEGATE, a, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_NEGATE, a, solver, comment, flags);
+    }
 }
 
 Ptr
 makeBooleanOr(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_OR, a, b, solver, comment, flags);
+    return Interior::instance(OP_OR, a, b, solver, comment, flags);
 }
 
 Ptr
 makeRead(const Ptr &mem, const Ptr &addr, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_READ, mem, addr, solver, comment, flags);
+    return Interior::instance(OP_READ, mem, addr, solver, comment, flags);
 }
 
 Ptr
 makeRol(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_ROL, sa, a, solver, comment, flags);
+    return Interior::instance(OP_ROL, sa, a, solver, comment, flags);
 }
 
 Ptr
 makeRor(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_ROR, sa, a, solver, comment, flags);
+    return Interior::instance(OP_ROR, sa, a, solver, comment, flags);
+}
+
+Ptr
+makeRound(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    return Interior::instance(OP_FP_ROUND, a, solver, comment, flags);
 }
 
 Ptr
 makeSet(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SET, a, b, solver, comment, flags);
+    return Interior::instance(OP_SET, a, b, solver, comment, flags);
 }
 
 Ptr
 makeSet(const Ptr &a, const Ptr &b, const Ptr &c, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SET, a, b, c, solver, comment, flags);
+    return Interior::instance(OP_SET, a, b, c, solver, comment, flags);
 }
 
 Ptr
 makeSignedDiv(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SDIV, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_DIV, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_SDIV, a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeSignExtend(const Ptr &newSize, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SEXTEND, newSize, a, solver, comment, flags);
+    return Interior::instance(OP_SEXTEND, newSize, a, solver, comment, flags);
 }
 
 Ptr
 makeSignedGe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SGE, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_GE, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_SGE, a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeSignedGt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SGT, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_GT, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_SGT, a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeShl0(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SHL0, sa, a, solver, comment, flags);
+    return Interior::instance(OP_SHL0, sa, a, solver, comment, flags);
 }
 
 Ptr
 makeShl1(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SHL1, sa, a, solver, comment, flags);
+    return Interior::instance(OP_SHL1, sa, a, solver, comment, flags);
 }
 
 Ptr
 makeShr0(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SHR0, sa, a, solver, comment, flags);
+    return Interior::instance(OP_SHR0, sa, a, solver, comment, flags);
 }
 
 Ptr
 makeShr1(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SHR1, sa, a, solver, comment, flags);
+    return Interior::instance(OP_SHR1, sa, a, solver, comment, flags);
+}
+
+Ptr
+makeSignedIsPos(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    if (a->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_ISPOS, a, solver, comment, flags);
+    } else {
+        return makeSignedGt(a, makeIntegerConstant(a->nBits(), 0), solver, comment, flags);
+    }
 }
 
 Ptr
 makeSignedLe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SLE, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_LE, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_SLE, a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeSignedLt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SLT, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_LT, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_SLT, a, b, solver, comment, flags);
+    }
+}
+
+Ptr
+makeSignedMax(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_MAX, a, b, solver, comment, flags);
+    } else {
+        return makeIte(makeSignedGe(a, b, solver, "", 0), a, b, solver, comment, flags);
+    }
+}
+
+Ptr
+makeSignedMin(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_MIN, a, b, solver, comment, flags);
+    } else {
+        return makeIte(makeSignedLe(a, b, solver, "", 0), a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeSignedMod(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SMOD, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_MOD, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_SMOD, a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeSignedMul(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_SMUL, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_MUL, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_SMUL, a, b, solver, comment, flags);
+    }
+}
+
+Ptr
+makeSqrt(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    return Interior::instance(OP_FP_SQRT, a, solver, comment, flags);
 }
 
 Ptr
 makeDiv(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_UDIV, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_DIV, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_UDIV, a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeExtend(const Ptr &newSize, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_UEXTEND, newSize, a, solver, comment, flags);
+    return Interior::instance(OP_UEXTEND, newSize, a, solver, comment, flags);
 }
 
 Ptr
 makeGe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_UGE, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_GE, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_UGE, a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeGt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_UGT, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_GT, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_UGT, a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeLe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_ULE, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_LE, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_ULE, a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeLt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_ULT, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_LT, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_ULT, a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeMod(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_UMOD, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_MOD, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_UMOD, a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeMul(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_UMUL, a, b, solver, comment, flags);
+    if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_MUL, a, b, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_UMUL, a, b, solver, comment, flags);
+    }
 }
 
 Ptr
 makeWrite(const Ptr &mem, const Ptr &addr, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment,
           unsigned flags) {
-    return Interior::create(0, OP_WRITE, mem, addr, a, solver, comment, flags);
+    return Interior::instance(OP_WRITE, mem, addr, a, solver, comment, flags);
 }
 
 Ptr
 makeZerop(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::create(0, OP_ZEROP, a, solver, comment, flags);
+    if (a->isFloatingPointExpr()) {
+        return Interior::instance(OP_FP_ISZERO, a, solver, comment, flags);
+    } else {
+        return Interior::instance(OP_ZEROP, a, solver, comment, flags);
+    }
 }
 
 } // namespace

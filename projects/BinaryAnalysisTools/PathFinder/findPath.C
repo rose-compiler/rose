@@ -982,7 +982,7 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
                 return SmtSolver::SAT_NO;
             }
         } else if (hasVirtualAddress(pathEdge->target())) {
-            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), virtualAddress(pathEdge->target()));
+            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeIntegerConstant(ip->get_width(), virtualAddress(pathEdge->target()));
             SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
                                                                 SymbolicSemantics::SValue::promote(ip)->get_expression(),
                                                                 solver);
@@ -1339,7 +1339,7 @@ singleThreadBfsWorker(BfsContext *ctx) {
         // If this edge is not a number and we know the EIP at the end of this path edge, then we have a path constraint that
         // needs to be solved.
         if (!abandonPrefix && !ip->is_number() && pathsEdge->target()->value().type() != P2::V_INDETERMINATE) {
-            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), pathsEdge->target()->value().address());
+            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeIntegerConstant(ip->get_width(), pathsEdge->target()->value().address());
             SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
                                                                 SymbolicSemantics::SValue::promote(ip)->get_expression(),
                                                                 solver);

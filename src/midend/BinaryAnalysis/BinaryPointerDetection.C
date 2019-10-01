@@ -370,9 +370,9 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
             if (!settings_.ignoreConstIp) {
                 isSignificant = true;
             } else if (ipExpr->isInteriorNode() && ipExpr->isInteriorNode()->getOperator() == SymbolicExpr::OP_ITE) {
-                isSignificant = !ipExpr->isInteriorNode()->child(1)->isNumber() ||
-                                !ipExpr->isInteriorNode()->child(2)->isNumber();
-            } else if (!ipExpr->isNumber()) {
+                isSignificant = !ipExpr->isInteriorNode()->child(1)->isIntegerConstant() ||
+                                !ipExpr->isInteriorNode()->child(2)->isIntegerConstant();
+            } else if (!ipExpr->isIntegerConstant()) {
                 isSignificant = true;
             }
             if (isSignificant)

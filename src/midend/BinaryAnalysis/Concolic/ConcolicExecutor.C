@@ -98,7 +98,7 @@ IS::BaseSemantics::SValuePtr
 RiscOperators::readRegister(RegisterDescriptor reg, const IS::BaseSemantics::SValuePtr &dflt) {
     IS::BaseSemantics::SValuePtr retval = Super::readRegister(reg, dflt);
     if (SymbolicExpr::LeafPtr variable = SValue::promote(retval)->get_expression()->isLeafNode()) {
-        if (variable->isVariable() && !variables_.exists(variable))
+        if (variable->isVariable2() && !variables_.exists(variable))
             variables_.insert(variable, VariableProvenance(reg));
     }
     return retval;
@@ -109,7 +109,7 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SV
                           const IS::BaseSemantics::SValuePtr &dflt, const IS::BaseSemantics::SValuePtr &cond) {
     SValuePtr retval = SValue::promote(Super::readMemory(segreg, addr, dflt, cond));
     if (SymbolicExpr::LeafPtr variable = retval->get_expression()->isLeafNode()) {
-        if (variable->isVariable() && !variables_.exists(variable))
+        if (variable->isVariable2() && !variables_.exists(variable))
             variables_.insert(variable, VariableProvenance(addr));
     }
     return retval;

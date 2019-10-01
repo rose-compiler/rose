@@ -60,7 +60,7 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSe
                              expr->isInteriorNode()->nChildren() : (size_t)1;
         size_t setSizeLimit = merger ? merger->setSizeLimit() : (size_t)1;
         if (exprSetSize > setSizeLimit) {
-            expr = SymbolicExpr::makeVariable(retval->get_width());
+            expr = SymbolicExpr::makeVariable(retval->get_expression()->type());
             mergedFlags |= SymbolicExpr::Node::BOTTOM;
         }
         retval->set_expression(expr);
@@ -90,7 +90,7 @@ SValue::get_number() const
 {
     LeafPtr leaf = expr->isLeafNode();
     ASSERT_not_null(leaf);
-    return leaf->toInt();
+    return leaf->toUnsigned().get();
 }
 
 SValuePtr
@@ -214,7 +214,7 @@ MemoryListState::CellCompressorMcCarthy::operator()(const SValuePtr &address, co
     DefinersMode valDefinersMode = valOpsSymbolic->computingDefiners();
 
     // FIXME: This makes no attempt to remove duplicate values [Robb Matzke 2013-03-01]
-    ExprPtr expr = SymbolicExpr::makeMemory(address->get_width(), dflt->get_width());
+    ExprPtr expr = SymbolicExpr::makeMemoryVariable(address->get_width(), dflt->get_width());
     InsnSet addrDefiners, valDefiners;
     for (CellList::const_reverse_iterator ci=cells.rbegin(); ci!=cells.rend(); ++ci) {
         SValuePtr cell_addr = SValue::promote((*ci)->get_address());
@@ -365,7 +365,7 @@ RiscOperators::filterResult(const BaseSemantics::SValuePtr &a_) {
     if (a->get_expression()->nNodes() <= trimThreshold_)
         return a_;
 
-    SymbolicExpr::Ptr expr = SymbolicExpr::makeVariable(a->get_width(),
+    SymbolicExpr::Ptr expr = SymbolicExpr::makeVariable(a->get_expression()->type(),
                                                         a->get_expression()->comment(),
                                                         a->get_expression()->flags());
     a->set_expression(expr);
@@ -488,8 +488,8 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
     if (a->isBottom())
         return filterResult(bottom_(end_bit-begin_bit));
 
-    SymbolicExpr::Ptr beginExpr = SymbolicExpr::makeInteger(32, begin_bit);
-    SymbolicExpr::Ptr endExpr = SymbolicExpr::makeInteger(32, end_bit);
+    SymbolicExpr::Ptr beginExpr = SymbolicExpr::makeIntegerConstant(32, begin_bit);
+    SymbolicExpr::Ptr endExpr = SymbolicExpr::makeIntegerConstant(32, end_bit);
     SValuePtr retval = svalue_expr(SymbolicExpr::makeExtract(beginExpr, endExpr, a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
@@ -807,7 +807,7 @@ RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_wid
     if (a->isBottom())
         return filterResult(bottom_(new_width));
 
-    SValuePtr retval = svalue_expr(SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, new_width),
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, new_width),
                                                             a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
@@ -1022,7 +1022,7 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
     if (a->isBottom())
         return filterResult(bottom_(new_width));
 
-    SValuePtr retval = svalue_expr(SymbolicExpr::makeSignExtend(SymbolicExpr::makeInteger(32, new_width),
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeSignExtend(SymbolicExpr::makeIntegerConstant(32, new_width),
                                                                 a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
