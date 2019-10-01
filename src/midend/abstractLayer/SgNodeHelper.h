@@ -463,11 +463,13 @@ namespace SgNodeHelper {
   // checks whether 'elem' is the last child (in traversal order) of node 'parent'.
   bool isLastChildOf(SgNode* elem, SgNode* parent);
 
+#if __cplusplus > 199711L
   // Checks if an OpenMP construct is marked with a nowait clause
   bool hasOmpNoWait(SgOmpClauseBodyStatement *ompNode);
 
   typedef std::vector<SgOmpSectionStatement *> OmpSectionList;
   OmpSectionList getOmpSectionList(SgOmpSectionsStatement *sectionsStmt);
+#endif
 
   //! Provides functions which match a certain AST pattern and return a pointer to a node of interest inside that pattern.
   namespace Pattern {
