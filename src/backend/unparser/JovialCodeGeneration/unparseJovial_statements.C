@@ -697,16 +697,13 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgJovialTableStatement* table_decl = isSgJovialTableStatement(stmt);
      ROSE_ASSERT(table_decl != NULL);
 
-     cout << "--> unparse TableDeclStmt: table_decl is " << table_decl << ": " << table_decl->class_name() << endl;
+     bool is_block = (table_decl->get_class_type() == SgClassDeclaration::e_jovial_block);
 
      SgJovialTableStatement* defining_decl = isSgJovialTableStatement(table_decl->get_definingDeclaration());
-     cout << "--> unparse TableDeclStmt: defining_decl is " << defining_decl << ": " << defining_decl->class_name() << endl;
      ROSE_ASSERT(isSgJovialTableStatement(defining_decl));
 
      SgClassDefinition* table_def = defining_decl->get_definition();
      ROSE_ASSERT(table_def);
-
-     cout << "--> unparse TableDeclStmt: table_def is " << table_def << ": " << table_def->class_name() << endl;
 
      SgName table_name = table_decl->get_name();
 
@@ -718,7 +715,9 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
       curprint("TYPE ");
       curprint(table_name);
-      curprint(" TABLE ");
+
+      if (is_block) curprint(" BLOCK ");
+      else          curprint(" TABLE ");
 
    // Table DimensionList
       SgExprListExp* dim_info = table_type->get_dim_info();
@@ -762,7 +761,11 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
            curprint(base_class_decl->get_name());
         }
 
-     curprint(";");
+     if (!is_block)
+        {
+           // BLOCKs don't need the semicolon!
+           curprint(";");
+        }
      unp->cur.insert_newline(1);
 
   // Unparse body if present
