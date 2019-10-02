@@ -475,6 +475,63 @@ buildVariableDeclaration(const std::string & name, SgUntypedType* type, SgUntype
    return variable_decl;
 }
 
+// Build an untyped StructureDeclaration. This version builds a contained StructureDefinition with a type name created
+// based on the declared variable name.
+SgUntypedStructureDeclaration* buildStructureDeclaration(const std::string struct_name)
+{
+   SgUntypedStructureDeclaration* struct_decl = NULL;
+   std::string struct_type_name = "";
+   bool has_body = true;
+
+   struct_decl = buildStructureDeclaration(struct_name, struct_type_name, has_body);
+   ROSE_ASSERT(struct_decl != NULL);
+
+   return struct_decl;
+}
+
+
+// Build an untyped StructureDeclaration.
+// If the has_body flag is true an untyped StructureDefinition is created.
+// Source position for the initializer and structure definition should be set after construction.
+SgUntypedStructureDeclaration* buildStructureDeclaration(const std::string struct_name,
+                                                         const std::string struct_type_name, bool has_body)
+{
+   SgUntypedStructureDeclaration* struct_decl = NULL;
+   SgUntypedStructureDefinition*  struct_def  = NULL;
+   SgUntypedExprListExpression*     modifiers = NULL;
+   SgUntypedExprListExpression*         shape = NULL;
+
+   std::string type_name = struct_type_name;
+
+   if (struct_type_name.length() < 1) {
+   // There should be a function created for this
+      type_name = "_anon_typeof_" + struct_type_name;
+   }
+
+   if (has_body) {
+      struct_def = buildStructureDefinition(type_name, has_body, /*scope*/NULL);
+      ROSE_ASSERT(struct_def != NULL);
+      SageInterface::setSourcePosition(struct_def);
+   }
+
+   modifiers = new SgUntypedExprListExpression(General_Language_Translation::e_struct_modifier_list);
+   ROSE_ASSERT(modifiers != NULL);
+   SageInterface::setSourcePosition(modifiers);
+
+// There may be a shape if a Jovial table
+   shape = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
+   ROSE_ASSERT(shape);
+   SageInterface::setSourcePosition(shape);
+
+   std::string label = "";
+   int stmt_enum = General_Language_Translation::e_unknown;
+   struct_decl = new SgUntypedStructureDeclaration(label, stmt_enum, type_name, modifiers, shape, struct_def);
+   ROSE_ASSERT(struct_decl);
+   SageInterface::setSourcePosition(struct_decl);
+
+   return struct_decl;
+}
+
 
 // Build an untyped StructureDefinition. This version has a body and thus a scope.
 // Source position for the initializer and modifier lists and table description should be set after construction.
@@ -571,7 +628,8 @@ SgUntypedStructureDeclaration* buildJovialTableDeclaration(std::string table_typ
    SageInterface::setSourcePosition(shape);
 
    std::string label = "";
-   table_decl = new SgUntypedStructureDeclaration(label, table_type_name, modifiers, shape, table_desc);
+   int stmt_enum = General_Language_Translation::e_unknown;
+   table_decl = new SgUntypedStructureDeclaration(label, stmt_enum, table_type_name, modifiers, shape, table_desc);
    ROSE_ASSERT(table_decl);
    SageInterface::setSourcePosition(table_decl);
 
