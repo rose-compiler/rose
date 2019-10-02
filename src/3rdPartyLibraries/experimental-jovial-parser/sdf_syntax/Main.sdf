@@ -851,7 +851,9 @@ context-free syntax
 %% 2.1.2.2 TABLE STRUCTURE
 %%
   'PARALLEL'                 -> StructureSpecifier       {cons("StructureSpecifier")}
-  'T' OptBitsPerEntry        -> StructureSpecifier       {cons("StructureSpecifierT")}
+%%  'T'
+  StrucSpecT
+    OptBitsPerEntry          -> StructureSpecifier       {cons("StructureSpecifierT")}
 
   StructureSpecifier         -> OptStructureSpecifier
   % empty %                  -> OptStructureSpecifier    {cons("no-structure-specifier")}
@@ -1695,6 +1697,7 @@ context-free syntax
   NumericFormula              -> RelationalFormula      {prefer}
   GeneralFormula              -> RelationalFormula
   BitFormula                  -> RelationalFormula
+  UserDefinedFunctionCall     -> RelationalFormula      {reject}
 
 %%FloatingFormula
 %%  RelationalOperator

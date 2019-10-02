@@ -363,6 +363,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_NonNestedSubroutineList(ATerm ter
          if (ATmatch(head, "NonNestedSubroutine(<term>)", &t_proc)) {
             if (traverse_ProcedureDefinition(t_proc, func_list)) {
                // MATCHED ProcedureDefinition
+            }
+            else if (traverse_FunctionDefinition(t_proc, func_list)) {
+               // MATCHED FunctionDefinition
             } else return ATfalse;
          } else return ATfalse;
       }
@@ -764,10 +767,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term
             cerr << "WARNING UNIMPLEMENTED: e_type_modifier_round information not forwarded from ATerm traversal \n";
          }
          else if (modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
-            cerr << "WARNING: e_type_modifier_truncate information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_truncate information not forwarded from ATerm traversal \n";
          }
          else if (modifier_enum == General_Language_Translation::e_type_modifier_z) {
-            cerr << "WARNING: e_type_modifier_z information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_z information not forwarded from ATerm traversal \n";
          }
          else ROSE_ASSERT(false);
       }
@@ -894,7 +897,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedItemDescription(ATerm term, 
    printf("... traverse_FixedItemDescription: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_round_or_truncate, t_scale, t_fraction;
+   ATerm t_round_or_truncate, t_scale, t_fraction, t_scale_spec, t_frac_spec;
    bool has_round_or_truncate;  //, has_fraction_specifier;
    General_Language_Translation::ExpressionKind modifier_enum;
    SgUntypedExpression * scale, * fraction;
@@ -920,19 +923,25 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedItemDescription(ATerm term, 
       }
    } else return ATfalse;
 
-   if (traverse_NumericFormula(t_scale, scale)) {
-      type->set_has_kind(true);
-      type->set_type_kind(scale);
+   if (ATmatch(t_scale, "ScaleSpecifier(<term>)", &t_scale_spec)) {
+      if (traverse_NumericFormula(t_scale_spec, scale)) {
+         type->set_has_kind(true);
+         type->set_type_kind(scale);
+      } else return ATfalse;
    } else return ATfalse;
 
    if (ATmatch(t_fraction, "no-fraction-specifier()")) {
       // MATCHED no-fraction-specifier
    }
-   else if (traverse_FractionSpecifier(t_fraction, fraction)) {
-      cerr << "WARNING UNIMPLEMENTED: FractionSpecifier \n";
-      return ATtrue;
-   }
-   else return ATfalse;
+   else if (ATmatch(t_fraction, "OptFractionSpecifier(<term>)", &t_frac_spec)) {
+      if (traverse_FractionSpecifier(t_frac_spec, fraction)) {
+         cerr << "WARNING UNIMPLEMENTED: fraction specifier has not been implemented \n";
+
+         //  CompileTimeNumericFormula   -> FractionSpecifier       {cons("FractionSpecifier")}
+         //  ',' FractionSpecifier       -> OptFractionSpecifier    {cons("OptFractionSpecifier")}
+
+      } else return ATfalse;
+   } else return ATfalse;
 
    return ATtrue;
 }
@@ -1303,7 +1312,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
    SgUntypedExprListExpression*     dim_info = NULL;
    SgUntypedExprListExpression*       preset = NULL;
 
-
    if (ATmatch(term, "TableDeclaration(<term>,<term>,<term>,<term>)", &t_name,&t_alloc,&t_dim_list,&t_table_desc)) {
 
       attr_list = new SgUntypedExprListExpression(General_Language_Translation::e_struct_modifier_list);
@@ -1343,6 +1351,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
 
    if (table_desc != NULL) {
       cout << ".x. did traverse a TableDescription with a body \n";
+      cerr << "WARNING UNIMPLEMENTED: TableDescription with a body\n";
+      return ATtrue;
    // NEED to figure out how to include a structure as the type for a variable (look at array type)
       ROSE_ASSERT(false);
 
@@ -1356,9 +1366,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
       ROSE_ASSERT(table_decl);
       setSourcePosition(table_decl, term);
 #endif
-
-   // TODO
-      ROSE_ASSERT(false);
    }
    else if (base_type != NULL) {
       ROSE_ASSERT(dim_info != NULL);
@@ -1495,6 +1502,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDescription(ATerm term, SgUn
 
       if (traverse_EntrySpecifier(t_entry_spec, type, attr_list, preset)) {
          // MATCHED EntrySpecifier
+      }
+      else if (traverse_EntrySpecifierBody(t_entry_spec, table_desc)){
+         // MATCHED EntrySpecifierBody
       } else return ATfalse;
    }
    else if (ATmatch(term, "TableDescriptionName(<term>,<term>)", &t_name, &t_preset)) {
@@ -1655,9 +1665,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptStructureSpecifier(ATerm term,
       // MATCHED no-structure-specifier
    }
    else {
-      // TODO
+      cerr << "WARNING UNIMPLEMENTED: StructureSpecifier \n";
+      return ATtrue;
+
       ROSE_ASSERT(false);
-      return ATfalse;
    }
 
    return ATtrue;
@@ -1735,8 +1746,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryEntrySpecifierBody(ATerm 
    }
    else return ATfalse;
 
-   ROSE_ASSERT(table_preset != NULL);
-   table_desc->set_initializer(table_preset);
+   if (table_preset != NULL) {
+      table_desc->set_initializer(table_preset);
+   }
 
    return ATtrue;
 }
@@ -1749,9 +1761,14 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryTableBody(ATerm term, SgU
 
    ROSE_ASSERT(decl_list);
 
-   ATerm t_table_option_list;
+   ATerm t_directives, t_table_option_list;
 
-   if (ATmatch(term, "OrdinaryTableBody(<term>)", &t_table_option_list)) {
+   if (ATmatch(term, "OrdinaryTableBody(<term>,<term>)", &t_directives, &t_table_option_list)) {
+
+      if (traverse_DirectiveList(t_directives, decl_list)) {
+         // MATCHED DirectiveList
+      } else return ATfalse;
+
       ATermList tail = (ATermList) ATmake("<term>", t_table_option_list);
       // Match OrdinaryTableOptions
       while (! ATisEmpty(tail)) {
@@ -1766,6 +1783,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryTableBody(ATerm term, SgU
          else return ATfalse;
       }
    }
+   else if (traverse_OrdinaryTableItemDeclaration(term, decl_list)) {
+      // MATCHED OrdinaryTableItemDeclaration
+   }
+   else return ATfalse;
 
    return ATtrue;
 }
@@ -1796,25 +1817,21 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATer
       ROSE_ASSERT(attr_list);
       setSourcePosition(attr_list, t_item_desc);
 
-#if 0
-ATbool traverse_ItemTypeDescription(ATerm term, SgUntypedType* & type, SgUntypedExprListExpression* attr_list);
-#endif
-
       if (traverse_ItemTypeDescription(t_item_desc, item_type, attr_list)) {
          // MATCHED ItemTypeDescription
       } else return ATfalse;
-
-      cout << ".x. SUCCESSfully traversed ItemTypeDescription item_type is " << item_type << endl;
 
       if (traverse_TablePreset(t_preset, preset)) {
          // MATCHED TablePreset
       } else return ATfalse;
 
-      cout << ".x. SUCCESSfully traversed TablePreset is " << preset << endl;
-
    } else return ATfalse;
 
    // TODO - handle preset
+   if (preset != NULL) {
+      cerr << "WARNING UNIMPLEMENTED: TablePreset in OrdinaryTableItemDeclaration \n";
+      return ATtrue;
+   }
    ROSE_ASSERT(preset == NULL);
 
    ROSE_ASSERT(attr_list);
@@ -1838,14 +1855,6 @@ ATbool traverse_ItemTypeDescription(ATerm term, SgUntypedType* & type, SgUntyped
    setSourcePosition(variable_decl, term);
 
    decl_list->get_decl_list().push_back(variable_decl);
-
-#if 1
-   std::cout << "TABLE ITEM DECLARATION " << name << endl;
-   std::cout << "TABLE ITEM DECLARATION attr_list: " << attr_list << " : size " << attr_list->get_expressions().size() << endl;
-   std::cout << "TABLE ITEM DECLARATION var_name_list: " << var_name_list << endl;
-#endif
-
-   ROSE_ASSERT(false);
 
    return ATtrue;
 }
@@ -2481,8 +2490,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemPresetValue(ATerm term, SgUnt
    else if (traverse_Formula(term, preset)) {
       // MATCHED CompileTimeFormula
    }
-   //   else if (traverse_LocFunction()) {
-   //   }
+   else if (traverse_LocFunction(term, preset)) {
+      // MATCHED LocFunction
+   }
    else return ATfalse;
 
    return ATtrue;
@@ -2674,56 +2684,58 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableTypeDeclaration(ATerm term, 
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_TableTypeDeclaration: %s\n", ATwriteToString(term));
 #endif
-   cout << ".x. \n";
 
    ATerm t_name, t_type_desc;
-   std::string table_type_name;
+   std::string type_name;
 
-// NOTE: This declares a new type not a variable
-//       See implementation of TableDeclaration for guidance as it also must declare a type
-
-   SgUntypedStructureDeclaration* table_decl = NULL;
-   SgUntypedStructureDefinition*  table_desc = NULL;
-   SgUntypedExprListExpression*    attr_list = NULL;
-   SgUntypedExprListExpression*     dim_info = NULL;
+   SgUntypedStructureDeclaration* struct_decl = NULL;
 
    if (ATmatch(term, "TableTypeDeclaration(<term>,<term>)", &t_name, &t_type_desc)) {
-      if (traverse_Name(t_name, table_type_name)) {
+      if (traverse_Name(t_name, type_name)) {
          // MATCHED TableTypeName
       } else return ATfalse;
 
-      cout << ".x. table_type_name is " << table_type_name << endl;
+      int struct_type = Jovial_ROSE_Translation::e_table_type_declaration;
 
-      table_desc = UntypedBuilder::buildJovialTableDescription(table_type_name, /*has_body*/true, /*scope*/NULL);
-      ROSE_ASSERT(table_desc);
-      setSourcePosition(table_desc, t_type_desc);
+// This portion could be moved to UntypedBuilder::
+//--------------------------------------------------
+      SgUntypedStructureDefinition* struct_def  = NULL;
+      SgUntypedExprListExpression*    modifiers = NULL;
+      SgUntypedExprListExpression*        shape = NULL;
 
-#if 0
-   // These modifiers belong to the declaration
-      attr_list = new SgUntypedExprListExpression(General_Language_Translation::e_struct_modifier_list);
-      ROSE_ASSERT(attr_list);
-      setSourcePosition(attr_list, t_type_desc);
+      struct_def = UntypedBuilder::buildStructureDefinition(type_name, /*has_body*/true, /*scope*/NULL);
+      ROSE_ASSERT(struct_def != NULL);
+      SageInterface::setSourcePosition(struct_def);
 
-      dim_info = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
-      ROSE_ASSERT(dim_info);
-      SageInterface::setSourcePosition(dim_info);
+      modifiers = new SgUntypedExprListExpression(General_Language_Translation::e_struct_modifier_list);
+      ROSE_ASSERT(modifiers != NULL);
+      SageInterface::setSourcePosition(modifiers);
+
+      // There may be a shape if a Jovial table
+      shape = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
+      ROSE_ASSERT(shape);
+      SageInterface::setSourcePosition(shape);
 
       std::string label = "";
-      table_decl = new SgUntypedStructureDeclaration(label, table_type_name, attr_list, dim_info, 0/*rank*/, table_desc);
-      ROSE_ASSERT(table_decl);
-      setSourcePosition(table_decl, term);
-#endif
+      struct_decl = new SgUntypedStructureDeclaration(label, struct_type, type_name, modifiers, shape, struct_def);
+      ROSE_ASSERT(struct_decl);
+      SageInterface::setSourcePosition(struct_decl);
+//--------------------------------------------------
 
-      if (traverse_TableTypeSpecifier(t_type_desc, table_decl)) {
+      ROSE_ASSERT(struct_def != NULL);
+      setSourcePosition(struct_def, t_type_desc);
+
+      if (traverse_TableTypeSpecifier(t_type_desc, struct_decl)) {
          // MATCHED TableTypeSpecifier
       } else return ATfalse;
 
    }
    else return ATfalse;
 
-   ROSE_ASSERT(table_decl);
+   ROSE_ASSERT(struct_decl != NULL);
+   setSourcePosition(struct_decl, term);
 
-   decl_list->get_decl_list().push_back(table_decl);
+   decl_list->get_decl_list().push_back(struct_decl);
 
    return ATtrue;
 }
@@ -2769,15 +2781,15 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableTypeSpecifier(ATerm term, Sg
          has_table_type_name = true;
       } else return ATfalse;
 
-      cout << "TODO implement table-type-spec with two arguments \n";
+      cerr << "WARNING UNIMPLEMENTED: TableTypeSpecifierName \n";
+      return ATtrue;
+
       ROSE_ASSERT(false);
    }
 
 // TableTypeSpecifier with four arguments
    else if (ATmatch(term, "TableTypeSpecifier(<term>,<term>,<term>,<term>)",
                           &t_dim_list, &t_struct_spec, &t_like_option, &t_entry_spec)) {
-
-      cout << ".x. matched TableTypeSpecifier with four arguments \n";
 
       if (traverse_OptDimensionList(t_dim_list, dim_info)) {
          // MATCHED OptDimensionList
@@ -2791,14 +2803,18 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableTypeSpecifier(ATerm term, Sg
    // Like option
       if (ATmatch(t_like_option, "no-like-option()")) {
          // MATCHED no-like-option
-         cout << ".x. matched TableTypeSpecifier no-like-option \n";
       }
       else if (ATmatch(t_like_option, "LikeOption(<term>)", &t_type_name)) {
          if (traverse_Name(t_type_name, table_type_name)) {
             // MATCHED Like option TableTypeName
             has_like_option = true;
             has_table_type_name = true;
-            ROSE_ASSERT(false);  // TODO: like-option (apparently not needed at the moment)
+
+         // TODO: like-option (apparently not needed at the moment)
+            cerr << "WARNING UNIMPLEMENTED: LikeOption \n";
+            return ATtrue;
+
+            ROSE_ASSERT(false);
          } else return ATfalse;
       }
       else return ATfalse;
@@ -2814,12 +2830,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableTypeSpecifier(ATerm term, Sg
    }
    else return ATfalse;
 
-   cout << ".x. matched opt-dim-list of length " << dim_info->get_expressions().size() << endl;
-
 // Source position for was originally unknown, now it can be set
    setSourcePosition(dim_info, t_dim_list);
 
-#if 1
+#if 0
    std::cout << "TABLE TYPE SPEC # items are " << item_decl_list->get_decl_list().size() << endl;
    std::cout << "TABLE TYPE SPEC rank is "     << dim_info->get_expressions().size() << endl;
    std::cout << "TABLE TYPE SPEC dim_info: "   << dim_info << endl;
@@ -2835,14 +2849,71 @@ ATbool ATermToUntypedJovialTraversal::traverse_BlockTypeDeclaration(ATerm term, 
 #endif
 
    ATerm t_name, t_type_desc;
+   std::string type_name;
+
+   SgUntypedStructureDeclaration* struct_decl = NULL;
 
    if (ATmatch(term, "BlockTypeDeclaration(<term>,<term>)", &t_name, &t_type_desc)) {
-      cout << ".x. matched block-type-decl \n";
-      // MATCHED BlockTypeDeclaration
+      if (traverse_Name(t_name, type_name)) {
+         // MATCHED BlockTypeName
+      } else return ATfalse;
+
+      int struct_type = Jovial_ROSE_Translation::e_block_type_declaration;
+
+// This portion could be moved to UntypedBuilder::
+//--------------------------------------------------
+      SgUntypedStructureDefinition* struct_def  = NULL;
+      SgUntypedExprListExpression*    modifiers = NULL;
+      SgUntypedExprListExpression*        shape = NULL;
+
+      struct_def = UntypedBuilder::buildStructureDefinition(type_name, /*has_body*/true, /*scope*/NULL);
+      ROSE_ASSERT(struct_def != NULL);
+      SageInterface::setSourcePosition(struct_def);
+
+      modifiers = new SgUntypedExprListExpression(General_Language_Translation::e_struct_modifier_list);
+      ROSE_ASSERT(modifiers != NULL);
+      SageInterface::setSourcePosition(modifiers);
+
+      // There may be a shape if a Jovial table
+      shape = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
+      ROSE_ASSERT(shape);
+      SageInterface::setSourcePosition(shape);
+
+      std::string label = "";
+      struct_decl = new SgUntypedStructureDeclaration(label, struct_type, type_name, modifiers, shape, struct_def);
+      ROSE_ASSERT(struct_decl);
+      SageInterface::setSourcePosition(struct_decl);
+//--------------------------------------------------
+
+      ROSE_ASSERT(struct_def != NULL);
+      setSourcePosition(struct_def, t_type_desc);
+
+      SgUntypedScope* block_scope = struct_def->get_scope();
+      ROSE_ASSERT(block_scope != NULL);
+
+      SgUntypedDeclarationStatementList* block_decl_list = block_scope->get_declaration_list();
+      ROSE_ASSERT(block_decl_list);
+
+      if (traverse_BlockBodyPart(t_type_desc, block_decl_list)) {
+         // MATCHED BlockBodyPart
+      }
+      else if (traverse_DataDeclaration(t_type_desc, block_decl_list)) {
+         // MATCHED DataDeclaration -> BlockBodyPart
+      }
+      else if (traverse_NullDeclaration(t_type_desc, block_decl_list)) {
+         // MATCHED NullDeclaration -> BlockBodyPart
+      }
+      else return ATfalse;
+
    }
    else return ATfalse;
 
-   return ATfalse;
+   ROSE_ASSERT(struct_decl != NULL);
+   setSourcePosition(struct_decl, term);
+
+   decl_list->get_decl_list().push_back(struct_decl);
+
+   return ATtrue;
 }
 
 //========================================================================================
@@ -3588,6 +3659,46 @@ ATbool ATermToUntypedJovialTraversal::traverse_FunctionDeclaration(ATerm term, S
    setSourcePosition(function_decl, term);
 
    decl_list->get_decl_list().push_back(function_decl);
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_FunctionDefinition(ATerm term, SgUntypedFunctionDeclarationList* func_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_FunctionDefinition: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_func_heading, t_dirs, t_proc_body;
+
+   std::string label, name;
+   SgUntypedType* function_type = NULL;
+   SgUntypedFunctionScope* function_scope = NULL;
+   SgUntypedExprListExpression* modifiers = NULL;
+   SgUntypedInitializedNameList* param_list = NULL;
+
+   if (ATmatch(term, "FunctionDefinition(<term>,<term>,<term>)", &t_func_heading, &t_dirs, &t_proc_body)) {
+      cerr << "WARNING UNIMPLEMENTED: FunctionDefinition\n";
+
+      if (traverse_FunctionHeading(t_func_heading, name, function_type, &modifiers, &param_list)) {
+         // MATCHED FunctionHeading
+      } else return ATfalse;
+
+      // OUT OF ORDER to get function scope
+      // fix this
+
+      if (traverse_SubroutineBody(t_proc_body, function_scope)) {
+         // MATCHED FunctionBody
+      } else return ATfalse;
+
+      SgUntypedDeclarationStatementList* dir_list = function_scope->get_declaration_list();
+
+      if (traverse_DirectiveList(t_dirs, dir_list)) {
+         // MATCHED ReducibleDirective*
+      } else return ATfalse;
+
+   }
+   else return ATfalse;
 
    return ATtrue;
 }
@@ -5200,9 +5311,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericPrimary(ATerm term, SgUnty
       } else return ATfalse;
    }
 
-   else return ATfalse;
+   else if (traverse_FunctionCall(term, expr)) {
+      // MATCHED NumericFunctionCall
+   }
 
-   //  IntegerFunctionCall         -> NumericPrimary
+   else return ATfalse;
 
    ROSE_ASSERT(expr);
 
@@ -5879,6 +5992,148 @@ ATbool ATermToUntypedJovialTraversal::traverse_NamedConstant(ATerm term, SgUntyp
       //  ConstantItemName            -> NamedConstant         {prefer}  %% ambiguous with ConstantTableName
       //  ConstantTableName           -> NamedConstant         {cons("ConstantTableName")}
       //  ConstantTableName Subscript -> NamedConstant         {cons("NamedConstant")}
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 6.3 FUNCTION CALLS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_FunctionCall(ATerm term, SgUntypedExpression* & expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_FunctionCall: %s\n", ATwriteToString(term));
+#endif
+
+   if (traverse_UserDefinedFunctionCall(term, expr)) {
+      // MATCHED UserDefinedFunctionCall
+   }
+   else if (traverse_IntrinsicFunctionCall(term, expr)) {
+      // MATCHED IntrinsicFunctionCall
+   } else return ATfalse;
+
+   //   MachineSpecificFunctionCall -> FunctionCall
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, SgUntypedExpression* & expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_UserDefinedFunctionCall: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_name, t_arg_list;
+   std::string name;
+   SgUntypedExprListExpression* arg_list = NULL;
+
+   if (ATmatch(term, "UserDefinedFunctionCall(<term>,<term>)", &t_name, &t_arg_list)) {
+      cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall\n";
+      if (traverse_Name(t_name, name)) {
+         // MATCHED FunctionName
+      } else return ATfalse;
+
+      arg_list = new SgUntypedExprListExpression(General_Language_Translation::e_argument_list);
+      ROSE_ASSERT(arg_list);
+      setSourcePosition(arg_list, t_arg_list);
+
+      if (traverse_ActualParameterList(t_arg_list, arg_list)) {
+         // MATCHED ActualParameterList
+      } else return ATfalse;
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+ATbool ATermToUntypedJovialTraversal::traverse_IntrinsicFunctionCall(ATerm term, SgUntypedExpression* & expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_IntrinsicFunctionCall: %s\n", ATwriteToString(term));
+#endif
+
+   if (traverse_StatusInverseFunction(term, expr)) {
+      // MATCHED StatusInverseFunction
+   }
+   else if (traverse_LocFunction(term, expr)) {
+      // MATCHED LocFunction
+   } else return ATfalse;
+
+   //   NextFunction                -> IntrinsicFunctionCall
+   //   BitFunction                 -> IntrinsicFunctionCall
+   //   ByteFunction                -> IntrinsicFunctionCall
+   //   ShiftFunction               -> IntrinsicFunctionCall
+   //   AbsFunction                 -> IntrinsicFunctionCall
+   //   SignFunction                -> IntrinsicFunctionCall
+   //   SizeFunction                -> IntrinsicFunctionCall
+   //   BoundsFunction              -> IntrinsicFunctionCall
+   //   NwdsenFunction              -> IntrinsicFunctionCall
+   //   NentFunction                -> IntrinsicFunctionCall
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 6.3.1 LOC FUNCTIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_LocFunction(ATerm term, SgUntypedExpression* & expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_LocFunction: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_argument;
+   std::string loc_arg_str;
+   SgUntypedExpression* loc_arg_expr;
+
+   if (ATmatch(term, "LocFunction(<term>)", &t_argument)) {
+      cerr << "WARNING UNIMPLEMENTED: LocFunction\n";
+      if (traverse_Name(t_argument, loc_arg_str)) {
+         // MATCHED LocArgument
+      }
+      else if (traverse_Variable(t_argument, loc_arg_expr)) {
+         // MATCHED NamedVariable -> Variable
+      } else return ATfalse;
+   } else return ATfalse;
+
+   //  BlockReference              -> LocArgument
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 6.3.11 STATUS INVERSE FUNCTIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_StatusInverseFunction(ATerm term, SgUntypedExpression* & expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_StatusInverseFunction: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_argument;
+   SgUntypedExpression* argument;
+   std::string name;
+
+   if (ATmatch(term, "StatusInverseFunctionFIRST(<term>)", &t_argument)) {
+      cerr << "WARNING UNIMPLEMENTED: StatusInverseFunctionFIRST\n";
+      if (traverse_StatusFormula(t_argument, argument)) {
+         // MATCHED StatusFormula
+      }
+      else if (traverse_Name(t_argument, name)) {
+         // MATCHED StatusTypeName
+      }
+      else return ATfalse;
+   }
+   else if (ATmatch(term, "StatusInverseFunctionLAST(<term>)", &t_argument)) {
+      cerr << "WARNING UNIMPLEMENTED: StatusInverseFunctionLAST\n";
+      if (traverse_StatusFormula(t_argument, argument)) {
+         // MATCHED StatusFormula
+      }
+      else if (traverse_Name(t_argument, name)) {
+         // MATCHED StatusTypeName
+      }
+      else return ATfalse;
+   }
+   else return ATfalse;
 
    return ATtrue;
 }
