@@ -67,7 +67,8 @@ namespace CodeThorn {
     bool isComplete() { return _completeStg; }
     void setIsComplete(bool c) { _completeStg = c; }
     Flow* toFlowEnumerateStates(NumberGenerator& numGen);
-
+    // generates a string for visiualization with dot/graphviz.
+    std::string toDot();
   private:
     EStateTransitionMap _outEdges;
     const ParProEState* _startState;

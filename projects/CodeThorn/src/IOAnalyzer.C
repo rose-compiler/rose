@@ -5,7 +5,7 @@
 #include "Solver8.h"
 #include "RersCounterexample.h"
 #include "CodeThornException.h"
-#include "Timer.h"
+#include "TimeMeasurement.h"
 
 #include <unordered_set>
 

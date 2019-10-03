@@ -19,8 +19,9 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 
-#include "Timer.h"
+#include "TimeMeasurement.h"
 #include "CollectionOperators.h"
+#include "RERS_empty_specialization.h"
 
 using namespace std;
 using namespace Sawyer::Message;
@@ -1529,8 +1530,8 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   if(args.getBool("rers-binary")) {
     //initialize the global variable arrays in the linked binary version of the RERS problem
     logger[DEBUG]<< "init of globals with arrays for "<< _numberOfThreadsToUse << " threads. " << endl;
-    RERS_Problem::rersGlobalVarsArrayInit(_numberOfThreadsToUse);
-    RERS_Problem::createGlobalVarAddressMaps(this);
+    RERS_Problem::rersGlobalVarsArrayInitFP(_numberOfThreadsToUse);
+    RERS_Problem::createGlobalVarAddressMapsFP(this);
   }
 
   SAWYER_MESG(logger[TRACE])<< "INIT: finished."<<endl;
@@ -1951,7 +1952,7 @@ long CodeThorn::Analyzer::analysisRunTimeInSeconds() {
   long result;
 #pragma omp critical(TIMER)
   {
-    result = (long) (_analysisTimer.getElapsedTimeInMilliSec() / 1000);
+    result = (long) (_analysisTimer.getTimeDuration().seconds());
   }
   return result;
 }
@@ -1974,7 +1975,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
   if(args.getBool("rers-binary")) {
     // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
     string funName=SgNodeHelper::getFunctionName(funCall);
-    if(funName=="calculate_output") {
+    if(funName=="calculate_outputFP") {
       // logger[DEBUG]<< "rers-binary mode: skipped static-analysis call."<<endl;
       return elistify();
     }
@@ -2063,19 +2064,19 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallLocalEdge(Edge edge, 
     if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
       ROSE_ASSERT(funCall);
       string funName=SgNodeHelper::getFunctionName(funCall);
-      if(funName=="calculate_output") {
+      if(funName=="calculate_outputFP") {
         // RERS global vars binary handling
         PState _pstate=*estate->pstate();
-        RERS_Problem::rersGlobalVarsCallInit(this,_pstate, omp_get_thread_num());
+        RERS_Problem::rersGlobalVarsCallInitFP(this,_pstate, omp_get_thread_num());
 #if 0
         //input variable passed as a parameter (obsolete since usage of script "transform_globalinputvar")
-        int rers_result=RERS_Problem::calculate_output(argument);
-        (void) RERS_Problem::calculate_output(argument);
+        int rers_result=RERS_Problem::calculate_outputFP(argument);
+        (void) RERS_Problem::calculate_outputFP(argument);
 #else
-        (void) RERS_Problem::calculate_output( omp_get_thread_num() );
+        (void) RERS_Problem::calculate_outputFP( omp_get_thread_num() );
         int rers_result=RERS_Problem::output[omp_get_thread_num()];
 #endif
-        //logger[DEBUG]<< "Called calculate_output("<<argument<<")"<<" :: result="<<rers_result<<endl;
+        //logger[DEBUG]<< "Called calculate_outputFP("<<argument<<")"<<" :: result="<<rers_result<<endl;
         if(rers_result<=-100) {
           // we found a failing assert
           // = rers_result*(-1)-100 : rers error-number
@@ -2096,7 +2097,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallLocalEdge(Edge edge, 
           EState _eState=createEState(edge.target(),estate->callString,newPstate,_cset,_io);
           return elistify(_eState);
         }
-        RERS_Problem::rersGlobalVarsCallReturnInit(this,_pstate, omp_get_thread_num());
+        RERS_Problem::rersGlobalVarsCallReturnInitFP(this,_pstate, omp_get_thread_num());
         InputOutput newio;
         if (rers_result == -2) {
           newio.recordVariable(InputOutput::STDERR_VAR,globalVarIdByName("input"));	  
@@ -2208,7 +2209,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
     if(args.getBool("rers-binary")) {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName=="calculate_output") {
+        if(funName=="calculate_outputFP") {
           EState newEState=currentEState;
           newEState.setLabel(edge.target());
           newEState.callString=cs;
@@ -2245,7 +2246,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
     if(args.getBool("rers-binary")) {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName=="calculate_output") {
+        if(funName=="calculate_outputFP") {
           EState newEState=currentEState;
           newEState.setLabel(edge.target());
           newEState.callString=cs;

@@ -13,7 +13,7 @@
 #include "Labeler.h"
 #include "VariableIdMapping.h"
 #include "EState.h"
-#include "Timer.h"
+#include "TimeMeasurement.h"
 #include <cstdio>
 #include <cstring>
 #include <map>
@@ -823,7 +823,8 @@ void automataDotInput(Sawyer::Message::Facility logger) {
     } else {
       ltlResults = explorer.propertyValueTable();
     }
-    string promelaLtlFormulae = ltlResults->getLtlsAsPromelaCode(withResults, withAnnotations);
+    // uses SpotMiscellaneous::spinSyntax as callback to avoid static dependency of ltlResults on SpotMisc.
+    string promelaLtlFormulae = ltlResults->getLtlsAsPromelaCode(withResults, withAnnotations,&SpotMiscellaneous::spinSyntax);
     promelaCode += "\n" + promelaLtlFormulae;
     string filename = args["promela-output"].as<string>();
     write_file(filename, promelaCode);
@@ -1093,7 +1094,7 @@ int main( int argc, char * argv[] ) {
   Rose::Diagnostics::initAndRegister(&logger, "CodeThorn");
 
   try {
-    Timer timer;
+    TimeMeasurement timer;
     timer.start();
 
     parseCommandLine(argc, argv, logger);
@@ -1324,7 +1325,7 @@ int main( int argc, char * argv[] ) {
     }
     SgProject* sageProject = frontend(argvList);
     SAWYER_MESG(logger[TRACE]) << "Parsing and creating AST: finished."<<endl;
-    double frontEndRunTime=timer.getElapsedTimeInMilliSec();
+    double frontEndRunTime=timer.getTimeDuration().milliSeconds();
 
     /* perform inlining before variable ids are computed, because
        variables are duplicated by inlining. */
@@ -1557,14 +1558,14 @@ int main( int argc, char * argv[] ) {
       analyzer->setStartPState(*analyzer->popWorkList()->pstate());
     }
 
-    double initRunTime=timer.getElapsedTimeInMilliSec();
+    double initRunTime=timer.getTimeDuration().milliSeconds();
 
     timer.start();
     analyzer->printStatusMessageLine("==============================================================");
     if(!analyzer->getModeLTLDriven() && args.count("z3") == 0 && !args.getBool("ssa")) {
       analyzer->runSolver();
     }
-    double analysisRunTime=timer.getElapsedTimeInMilliSec();
+    double analysisRunTime=timer.getTimeDuration().milliSeconds();
     analyzer->printStatusMessageLine("==============================================================");
 
     if (args.getBool("svcomp-mode") && args.isDefined("witness-file")) {
@@ -1576,7 +1577,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE]) << "STATUS: extracting assertion traces (this may take some time)"<<endl;
       timer.start();
       analyzer->extractRersIOAssertionTraces();
-      extractAssertionTracesTime = timer.getElapsedTimeInMilliSec();
+      extractAssertionTracesTime = timer.getTimeDuration().milliSeconds();
     }
 
     double determinePrefixDepthTime= 0; // MJ: Determination of prefix depth currently deactivated.
@@ -1688,7 +1689,7 @@ int main( int argc, char * argv[] ) {
       assert (!args.getBool("keep-error-states"));
       cout << "recursively removing all leaves (1)."<<endl;
       timer.start();
-      infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
+      infPathsOnlyTime = timer.getTimeDuration().milliSeconds();
       pstateSetSizeInf=analyzer->getPStateSet()->size();
       eStateSetSizeInf = analyzer->getEStateSet()->size();
       transitionGraphSizeInf = analyzer->getTransitionGraph()->size();
@@ -1706,7 +1707,7 @@ int main( int argc, char * argv[] ) {
       if(args.getBool("inf-paths-only")) {
         analyzer->pruneLeaves();
       }
-      stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
+      stdIoOnlyTime = timer.getTimeDuration().milliSeconds();
     }
 
     long eStateSetSizeIoOnly = 0;
@@ -1724,7 +1725,7 @@ int main( int argc, char * argv[] ) {
           cout<< "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
           timer.start();
           analyzer->pruneLeaves();
-          infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
+          infPathsOnlyTime = timer.getTimeDuration().milliSeconds();
 
           pstateSetSizeInf=analyzer->getPStateSet()->size();
           eStateSetSizeInf = analyzer->getEStateSet()->size();
@@ -1740,7 +1741,7 @@ int main( int argc, char * argv[] ) {
           } else {
             analyzer->reduceStgToInOutStates();
           }
-          stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
+          stdIoOnlyTime = timer.getTimeDuration().milliSeconds();
           printStgSize(analyzer->getTransitionGraph(), "after reducing non-I/O states");
         }
       }
@@ -1784,7 +1785,7 @@ int main( int argc, char * argv[] ) {
       } else {
 	spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
       }
-      spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
+      spotLtlAnalysisTime=timer.getTimeDuration().milliSeconds();
       SAWYER_MESG(logger[TRACE]) << "LTL: get results from spot connection."<<endl;
       ltlResults = spotConnection.getLtlResults();
       SAWYER_MESG(logger[TRACE]) << "LTL: results computed."<<endl;
@@ -1898,7 +1899,7 @@ int main( int argc, char * argv[] ) {
       rewriteSystem.setRuleCommutativeSort(useRuleCommutativeSort); // commutative sort only used in substituteArrayRefs
       //cout<<"DEBUG: Rewrite3:"<<rewriteSystem.getStatistics().toString()<<endl;
       speci.substituteArrayRefs(arrayUpdates, analyzer->getVariableIdMapping(), sarMode, rewriteSystem);
-      arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
+      arrayUpdateExtractionRunTime=timer.getTimeDuration().milliSeconds();
 
       if(args.getBool("print-update-infos")) {
         speci.printUpdateInfos(arrayUpdates,analyzer->getVariableIdMapping());
@@ -1906,7 +1907,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE]) <<"STATUS: establishing array-element SSA numbering."<<endl;
       timer.start();
       speci.createSsaNumbering(arrayUpdates, analyzer->getVariableIdMapping());
-      arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
+      arrayUpdateSsaNumberingRunTime=timer.getTimeDuration().milliSeconds();
 
       if(args.count("dump-non-sorted")) {
         string filename=args["dump-non-sorted"].as<string>();
@@ -1916,7 +1917,7 @@ int main( int argc, char * argv[] ) {
         timer.start();
         string filename=args["dump-sorted"].as<string>();
         speci.writeArrayUpdatesToFile(arrayUpdates, filename, sarMode, true);
-        sortingAndIORunTime=timer.getElapsedTimeInMilliSec();
+        sortingAndIORunTime=timer.getTimeDuration().milliSeconds();
       }
       totalRunTime+=arrayUpdateExtractionRunTime+verifyUpdateSequenceRaceConditionRunTime+arrayUpdateSsaNumberingRunTime+sortingAndIORunTime;
     }
@@ -2257,7 +2258,7 @@ void CodeThorn::printAnalyzerStatistics(IOAnalyzer* analyzer, double totalRunTim
   }
   ss << "=============================================================="<<endl;
   ss << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
-  ss << "Time total           : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
+  ss << "TimeMeasurement total           : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
   ss << "=============================================================="<<endl;
   ss <<color("normal");
   analyzer->printStatusMessage(ss.str());

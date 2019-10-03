@@ -21,7 +21,7 @@
 #include <boost/unordered_map.hpp>
 #include <unordered_map>
 
-#include "Timer.h"
+#include "TimeMeasurement.h"
 #include "AstTerm.h"
 #include "Labeler.h"
 #include "CFAnalysis.h"
@@ -434,7 +434,7 @@ namespace CodeThorn {
 
     std::string _stg_trace_filename;
 
-    Timer _analysisTimer;
+    TimeMeasurement _analysisTimer;
     bool _timerRunning = false;
 
     std::vector<string> _commandLineOptions;

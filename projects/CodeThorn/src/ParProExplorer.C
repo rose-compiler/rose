@@ -268,7 +268,6 @@ ParallelSystem ParProExplorer::exploreOnce() {
     }
   }
   if (_visualize) {
-    Visualizer visualizer;
     if (system.hasStg()) {
       string dotStg = visualizer.parProTransitionGraphToDot(system.stg());
       string outputFilename = "stgParallelProgram_no_approx.dot";

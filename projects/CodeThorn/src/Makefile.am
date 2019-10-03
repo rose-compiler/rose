@@ -28,306 +28,315 @@ endif
 
 MYDATE = $(shell date +%Y_%m_%d)
 
-lib_LTLIBRARIES = libcodethorndf.la libcodethorn.la
-
-libcodethorndf_la_LDFLAGS= -no-undefined
-libcodethorndf_la_CXXFLAGS = -Wall -O3
-libcodethorndf_la_SOURCES=\
- AliasAnalysis.h \
- AnalysisAbstractionLayer.h \
- AnalysisAstAnnotator.h \
- AbstractValue.h \
- BoolLattice.h \
- CFAnalysis.h \
- DFAnalysisBase.h \
- DFTransferFunctions.h \
- DotGraphCfgFrontend.h \
- IntervalAnalysis.h \
- IntervalAstAttribute.h \
- IntervalAstAttributeInterface.h \
- IntervalPropertyState.h \
- IntervalPropertyStateFactory.h \
- IntervalTransferFunctions.h \
- FunctionId.h \
- FunctionIdMapping.h \
- FunctionCallMapping.h \
- FunctionCallTarget.h \
- LVAnalysis.h \
- LVAstAttribute.h \
- LVAstAttributeInterface.h \
- LVLattice.h \
- LVTransferFunctions.h \
- LanguageRestrictor.h \
- Miscellaneous2.h \
- Normalization.h \
- NormalizationOp.h \
- NormalizationInliner.h \
- NumberIntervalLattice.h \
- ParallelAutomataGenerator.h \
- PASolver1.h \
- PointerAnalysisInterface.h \
- PromelaCodeGenerator.h \
- RDAnalysis.h \
- RDAstAttribute.h \
- RDTransferFunctions.h \
- WorkListSeq.h \
- TypeSizeMapping.h \
- SgTypeSizeMapping.h \
- AnalysisAstAnnotator.C \
- AliasAnalysis.C \
- AbstractValue.C \
- BoolLattice.C \
- CFAnalysis.C \
- CppExprEvaluator.C \
- DFAnalysisBase.C \
- DFTransferFunctions.C \
- DotGraphCfgFrontend.C \
- Flow.C \
- FunctionCallTarget.C \
- IntervalAnalysis.C \
- IntervalAstAttribute.C \
- IntervalPropertyStateFactory.C \
- IntervalPropertyState.C \
- IntervalTransferFunctions.C \
- IntervalAstAttributeInterface.C \
- FunctionId.C \
- FunctionIdMapping.C \
- FunctionCallMapping.C \
- LanguageRestrictor.C \
- Lattice.C \
- LVAnalysis.C \
- LVAstAttribute.C \
- LVAstAttributeInterface.C \
- LVLattice.C \
- LVTransferFunctions.C \
- Miscellaneous2.C \
- Normalization.C \
- NormalizationOp.C \
- NormalizationInliner.C \
- NumberIntervalLattice.C \
- ParallelAutomataGenerator.C \
- PASolver1.C \
- PointerAnalysisInterface.C \
- PromelaCodeGenerator.C \
- PropertyState.C \
- RDAnalysis.C \
- RDAstAttribute.C \
- RDLattice.C \
- RDTransferFunctions.C \
- VariableIdUtils.C \
- AnalysisAbstractionLayer.C \
- ProgramAbstractionLayer.C \
- addressTakenAnalysis.C \
- defUseQuery.C \
- TypeSizeMapping.C \
- SgTypeSizeMapping.C \
- Timer.h \
- Timer.cpp \
- CtxAnalysis.h \
- CtxCallStrings.h \
- CtxCallStrings.C \
- CtxLattice.h \
- CtxTransfer.h
+lib_LTLIBRARIES = libcodethorn.la
 
 #libcodethorn_la_LDFLAGS= -no-undefined
 libcodethorn_la_LDFLAGS=
 libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3
-libcodethorn_la_SOURCES=\
-  AnalysisParameters.h             \
-  AstNodeInfo.h \
-  AstNodeInfo.C \
-  CallString.h \
-  CallString.C \
-  ParProAnalyzer.C                 \
-  ParProAnalyzer.h                 \
-  ParProExplorer.C                 \
-  ParProExplorer.h                 \
-  ArrayElementAccessData.h \
-  ArrayElementAccessData.C \
-  CollectionOperators.h            \
-  CommandLineOptions.C             \
-  CommandLineOptions.h             \
-  ConstraintRepresentation.C       \
-  ConstraintRepresentation.h       \
+libcodethorn_ladir=.
+libcodethorn_la_HEADERS=\
   CounterexampleGenerator.h	   \
-  CounterexampleGenerator.C	   \
-  ExecutionTrace.h		   \
-  RersCounterexample.h		   \
-  RersCounterexample.C		   \
-  SvcompWitness.h		   \
-  SvcompWitness.C		   \
-  CounterexampleAnalyzer.C \
-  CounterexampleAnalyzer.h \
-  CPAstAttribute.h CPAstAttribute.C \
+  AbstractValue.h \
+  AliasAnalysis.h \
+  AnalysisAbstractionLayer.h \
+  AnalysisAstAnnotator.h \
+  AnalysisParameters.h             \
+  Analyzer.h                       \
+  ArrayElementAccessData.h \
+  AstNodeInfo.h \
+  AstTermRepresentation.h \
+  addressTakenAnalysis.h \
+  BoolLattice.h \
+  CallString.h \
+  CFAnalysis.h \
+  CollectionOperators.h            \
+  ConstraintRepresentation.h       \
+  ContNodeAttribute.h \
+  CPAstAttribute.h \
   CTIOLabeler.h                    \
-  CTIOLabeler.C                    \
-  DataDependenceVisualizer.h DataDependenceVisualizer.C \
+  CtxAnalysis.h \
+  CtxCallStrings.h \
+  CtxLattice.h \
+  CtxTransfer.h \
+  DataDependenceVisualizer.h \
   DataRaceDetection.h \
-  DataRaceDetection.C \
+  DFAnalysisBase.h \
+  DFTransferFunctions.h \
+  DotGraphCfgFrontend.h \
   EqualityMaintainer.h             \
-  ExprAnalyzer.C                   \
-  ExprAnalyzer.h                   \
   EquivalenceChecking.h            \
-  EquivalenceChecking.C            \
+  EState.h           \
   Evaluator.h                      \
+  ExecutionTrace.h		   \
+  ExprAnalyzer.h                   \
   FIConstAnalysis.h FIConstAnalysis.C \
+  FunctionCallMapping.h \
+  FunctionCallTarget.h \
+  FunctionId.h \
+  FunctionIdMapping.h \
+  HashFun.h                        \
   HSet.h                           \
   HSetMaintainer.h                 \
-  HashFun.h                        \
-  InternalChecks.C                 \
-  InternalChecks.h                 \
-  ContNodeAttribute.h \
-  ContNodeAttribute.C \
-  LtsminConnection.h		   \
-  LtsminConnection.C		   \
-  LanguageRestrictorCollection.C   \
-  LanguageRestrictorCollection.h   \
-  LoopInfo.h                       \
-  LoopInfo.C                       \
-  Miscellaneous.C                  \
-  Miscellaneous.h                  \
-  ProgramLocationsReport.h \
-  ProgramLocationsReport.C \
-  PhiAttribute.h \
-  PhiAttribute.C \
-  PhiStatement.h \
-  PhiStatement.C \
-  PragmaHandler.h \
-  PragmaHandler.C \
-  PropertyValueTable.h \
-  PropertyValueTable.C \
-  ProgramInfo.h \
-  ProgramInfo.C \
-  ProgramAbstractionLayer.h \
-  ProgramAbstractionLayer.C \
-  ReachabilityAnalysis.h ReachabilityAnalysis.C \
-  ReachabilityAnalyzerZ3.h \
-  ReachabilityAnalyzerZ3.C \
-  ReadWriteAnalyzer.h \
-  ReadWriteAnalyzer.C \
-  ReadWriteHistory.h \
-  ReadWriteHistory.C \
-  RewriteStatistics.C \
-  RewriteStatistics.h \
-  RewriteSystem.C \
-  RewriteSystem.h \
-  RWState.h \
-  RWState.C \
-  SetAlgo.h \
-  Solver.h \
-  Solver.C \
-  IOSolver.h \
-  IOSolver.C \
-  Solver5.h \
-  Solver5.C \
-  Solver8.h \
-  Solver8.C \
-  Solver10.h \
-  Solver10.C \
-  Solver11.h \
-  Solver11.C \
-  Solver12.h \
-  Solver12.C \
-  Specialization.h \
-  Specialization.C \
-  SpotConnection.C \
-  SpotConnection.h \
-  SpotRenameVisitor.C \
-  SpotRenameVisitor.h \
-  SpotMiscellaneous.C \
-  SpotMiscellaneous.h \
-  SpotTgba.C \
-  SpotTgba.h \
-  SpotState.C \
-  SpotState.h \
-  SpotSuccIter.C \
-  SpotSuccIter.h \
-  SSAGenerator.h \
-  SSAGenerator.C \
-  StructureAccessLookup.h \
-  StructureAccessLookup.C \
-  ParProSpotTgba.C \
-  ParProSpotTgba.h \
-  ParProSpotState.C \
-  ParProSpotState.h \
-  ParProSpotSuccIter.C \
-  ParProSpotSuccIter.h \
-  ParProLtlMiner.C                 \
-  ParProLtlMiner.h                 \
-  ReadWriteData.h \
-  PState.C           \
-  PState.h           \
-  EState.C           \
-  EState.h           \
-  InputOutput.C           \
   InputOutput.h           \
-  ParProEState.C           \
-  ParProEState.h           \
-  Timer.cpp                        \
-  Timer.h                          \
+  InternalChecks.h                 \
+  IntervalAnalysis.h \
+  IntervalAstAttribute.h \
+  IntervalAstAttributeInterface.h \
+  IntervalPropertyStateFactory.h \
+  IntervalPropertyState.h \
+  IntervalTransferFunctions.h \
+  LanguageRestrictorCollection.h   \
+  LanguageRestrictor.h \
+  LoopInfo.h                       \
+  LVAnalysis.h \
+  LVAstAttribute.h \
+  LVAstAttributeInterface.h \
+  LVLattice.h \
+  LVTransferFunctions.h \
+  Miscellaneous2.h \
+  Miscellaneous.h                  \
+  Normalization.h \
+  NormalizationInliner.h \
+  NormalizationOp.h \
+  NumberIntervalLattice.h \
+  PASolver1.h \
+  PhiAttribute.h \
+  PhiStatement.h \
+  PointerAnalysisInterface.h \
+  PragmaHandler.h \
+  ProgramAbstractionLayer.h \
+  ProgramInfo.h \
+  ProgramLocationsReport.h \
+  PropertyValueTable.h \
+  PState.h           \
+  RDAnalysis.h \
+  RDAstAttribute.h \
+  RDTransferFunctions.h \
+  ReachabilityAnalysis.h \
+  ReadWriteData.h \
+  ReadWriteHistory.h \
+  RWState.h \
+  SetAlgo.h \
+  SgTypeSizeMapping.h \
+  Solver5.h \
+  Solver.h \
+  Specialization.h \
+  StructureAccessLookup.h \
+  SvcompWitness.h		   \
+  TimeMeasurement.h \
   TransitionGraph.h                \
-  TransitionGraph.C                \
   TransitionGraphReducer.h	   \
-  TransitionGraphReducer.C	   \
-  ParProTransitionGraph.h          \
-  ParProTransitionGraph.C          \
-  VariableValueMonitor.h \
-  VariableValueMonitor.C \
-  Visualizer.C                     \
-  Visualizer.h                     \
-  AstTermRepresentation.h \
-  AstTermRepresentation.C \
-  Analyzer.C                       \
-  Analyzer.h                       \
-  IOAnalyzer.C                     \
-  IOAnalyzer.h                     \
+  TypeSizeMapping.h \
   UDAstAttribute.h                 \
-  UDAstAttribute.C                 
+  VariableValueMonitor.h \
+  Visualizer.h                     \
+  WorkListSeq.h \
+  RewriteStatistics.h \
+  RewriteSystem.h \
+  RERS_empty_specialization.h
+
+libcodethorn_la_SOURCES=\
+  AbstractValue.C \
+  AliasAnalysis.C \
+  AnalysisAbstractionLayer.C \
+  AnalysisAstAnnotator.C \
+  Analyzer.C                       \
+  ArrayElementAccessData.C \
+  AstNodeInfo.C \
+  AstTermRepresentation.C \
+  BoolLattice.C \
+  CallString.C \
+  CFAnalysis.C \
+  ConstraintRepresentation.C       \
+  ContNodeAttribute.C \
+  CounterexampleGenerator.C	   \
+  CPAstAttribute.C \
+  CppExprEvaluator.C \
+  CTIOLabeler.C                    \
+  CtxCallStrings.C \
+  DataDependenceVisualizer.C \
+  DataRaceDetection.C \
+  defUseQuery.C \
+  DFAnalysisBase.C \
+  DFTransferFunctions.C \
+  DotGraphCfgFrontend.C \
+  EquivalenceChecking.C            \
+  EState.C           \
+  ExprAnalyzer.C                   \
+  FIConstAnalysis.h FIConstAnalysis.C \
+  Flow.C \
+  FunctionCallMapping.C \
+  FunctionCallTarget.C \
+  FunctionId.C \
+  FunctionIdMapping.C \
+  InputOutput.C           \
+  InternalChecks.C                 \
+  IntervalAnalysis.C \
+  IntervalAstAttribute.C \
+  IntervalAstAttributeInterface.C \
+  IntervalPropertyState.C \
+  IntervalPropertyStateFactory.C \
+  IntervalTransferFunctions.C \
+  LanguageRestrictor.C \
+  LanguageRestrictorCollection.C   \
+  Lattice.C \
+  LoopInfo.C                       \
+  LVAnalysis.C \
+  LVAstAttribute.C \
+  LVAstAttributeInterface.C \
+  LVLattice.C \
+  LVTransferFunctions.C \
+  Miscellaneous2.C \
+  Miscellaneous.C                  \
+  Normalization.C \
+  NormalizationInliner.C \
+  NormalizationOp.C \
+  NumberIntervalLattice.C \
+  PASolver1.C \
+  PhiAttribute.C \
+  PhiStatement.C \
+  PointerAnalysisInterface.C \
+  PragmaHandler.C \
+  ProgramAbstractionLayer.C \
+  ProgramInfo.C \
+  ProgramLocationsReport.C \
+  PropertyState.C \
+  PropertyValueTable.C \
+  PState.C           \
+  RDAnalysis.C \
+  RDAstAttribute.C \
+  RDLattice.C \
+  RDTransferFunctions.C \
+  ReachabilityAnalysis.C \
+  ReadWriteHistory.C \
+  RWState.C \
+  SgTypeSizeMapping.C \
+  Solver5.C \
+  Solver.C \
+  Specialization.C \
+  StructureAccessLookup.C \
+  SvcompWitness.C		   \
+  TransitionGraph.C                \
+  TransitionGraphReducer.C	   \
+  TypeSizeMapping.C \
+  UDAstAttribute.C                 \
+  VariableIdUtils.C \
+  VariableValueMonitor.C \
+  Visualizer.C \
+  RewriteStatistics.C \
+  RewriteSystem.C \
+  TimeMeasurement.C \
+  addressTakenAnalysis.C \
+  RERS_empty_specialization.C
 
 codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 # this line create speparately named object files
 codethorn_CXXFLAGS = -fopenmp -Wall -O3
-codethorn_DEPENDENCIES=libcodethorndf.la libcodethorn.la
+codethorn_DEPENDENCIES=libcodethorn.la
 
-#codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorndf -lspot -lbdd -lz3
+#codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lspot -lbdd -lz3
 if ROSE_WITH_SPOT
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorndf -lcodethorn -lspot -lbdd $(Z3_LINK)
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lcodethorn $(Z3_LINK)
 codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
 else
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorndf -lcodethorn
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
 endif
 
-codethorn_SOURCES = \
-  RERS_empty_specialization.C \
+codethorndir=.
+
+codethorn_HEADERS = \
+  IOAnalyzer.h                     \
+  IOSolver.h \
+  ReachabilityAnalyzerZ3.h \
+  ParallelAutomataGenerator.h \
+  LtsminConnection.h		   \
+  CounterexampleAnalyzer.h \
+  RersCounterexample.h		   \
+  SpotConnection.h \
+  SpotMiscellaneous.h \
+  SpotRenameVisitor.h \
+  SpotState.h \
+  SpotSuccIter.h \
+  SpotTgba.h \
+  SSAGenerator.h \
+  ParProAnalyzer.h                 \
+  ParProEState.h           \
+  ParProExplorer.h                 \
+  ParProLtlMiner.h                 \
+  ParProSpotState.h \
+  ParProSpotSuccIter.h \
+  ParProSpotTgba.h \
+  ParProTransitionGraph.h          \
+  Solver8.h \
+  Solver10.h \
+  Solver11.h \
+  Solver12.h \
+  PromelaCodeGenerator.h \
   LTL.h                            \
+  ReadWriteAnalyzer.h \
+  CommandLineOptions.h             \
+  codethorn.h
+
+codethorn_SOURCES = \
+  IOAnalyzer.C                     \
+  IOSolver.C \
+  ReachabilityAnalyzerZ3.C \
+  ParallelAutomataGenerator.C \
+  LtsminConnection.C		   \
+  CounterexampleAnalyzer.C \
+  RersCounterexample.C		   \
+  SpotConnection.C \
+  SpotMiscellaneous.C \
+  SpotRenameVisitor.C \
+  SpotState.C \
+  SpotSuccIter.C \
+  SpotTgba.C \
+  SSAGenerator.C \
+  ParProAnalyzer.C                 \
+  ParProEState.C           \
+  ParProExplorer.C                 \
+  ParProLtlMiner.C                 \
+  ParProSpotState.C \
+  ParProSpotSuccIter.C \
+  ParProSpotTgba.C \
+  ParProTransitionGraph.C          \
+  Solver8.C \
+  Solver10.C \
+  Solver11.C \
+  Solver12.C \
+  PromelaCodeGenerator.C \
   LTLParser.y++                    \
-  codethorn.h \
+  ReadWriteAnalyzer.C \
+  CommandLineOptions.C             \
   codethorn.C
 
 addressTakenAnalysis_SOURCES = \
-  Timer.cpp \
-  Miscellaneous.C \
   CommandLineOptions.C \
   addressTakenAnalysisDriver.C
 
-addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorndf
+if ROSE_WITH_SPOT
+addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lspot -lbdd
+addressTakenAnalysis_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
+else
+addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
+endif
 addressTakenAnalysis_CXXFLAGS = -Wall -O3
-addressTakenAnalysis_DEPENDENCIES=libcodethorndf.la
+addressTakenAnalysis_DEPENDENCIES=libcodethorn.la
 
 REGRESSION_DATA_DIR=regressiondata
 
 .PHONY: codethorn-dist viz bsps docs test checkdemos
 
-woodpecker_DEPENDENCIES=libcodethorndf.la
+woodpecker_DEPENDENCIES=libcodethorn.la
 if ROSE_WITH_SPOT
-woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorndf -lspot -lbdd
+woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lspot -lbdd
 woodpecker_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
-woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorndf
+woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
 endif
 woodpecker_CXXFLAGS= -fopenmp -Wall -O3
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
- LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
+  LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
   CPAstAttribute.h CPAstAttribute.C \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
@@ -350,24 +359,19 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   RewriteStatistics.C \
   RewriteSystem.h \
   RewriteSystem.C \
-  SpotMiscellaneous.h \
-  SpotMiscellaneous.C \
-  SpotRenameVisitor.h \
-  SpotRenameVisitor.C \
-  Timer.h \
-  Timer.cpp \
+  TimeMeasurement.h \
+  TimeMeasurement.C \
   woodpecker.C
-
 
 #  DFAnalysisBase.C \
 #  DFAnalysisBase.h
 
-analyterix_DEPENDENCIES=libcodethorndf.la
+analyterix_DEPENDENCIES=libcodethorn.la
 if ROSE_WITH_SPOT
-analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorndf -lspot -lbdd
+analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lspot -lbdd
 analyterix_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
-analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorndf
+analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
 endif
 analyterix_SOURCES = \
   CPAstAttribute.h CPAstAttribute.C \
@@ -387,10 +391,6 @@ analyterix_SOURCES = \
   LanguageRestrictorCollection.h \
   Miscellaneous.C \
   Miscellaneous.h \
-  SpotMiscellaneous.C \
-  SpotMiscellaneous.h \
-  SpotRenameVisitor.C \
-  SpotRenameVisitor.h \
   ProgramStats.C \
   ProgramStats.h \
   PropertyValueTable.C \
@@ -418,18 +418,18 @@ check-roseonlytools: check-flow-insenstive
 #	rm lex.yy.c y.tab.c
 
 # MS: matcher_demo
-matcher_demo_DEPENDENCIES=libcodethorndf.la
-matcher_demo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorndf
+matcher_demo_DEPENDENCIES=libcodethorn.la
+matcher_demo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
 matcher_demo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-matcher_demo_SOURCES = Timer.cpp matcher_demo.C
+matcher_demo_SOURCES = TimeMeasurement.C matcher_demo.C
 BUILT_SOURCES =
 AM_YFLAGS =
 AM_LFLAGS =
 
-matcher_DEPENDENCIES=libcodethorndf.la
-matcher_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorndf
+matcher_DEPENDENCIES=libcodethorn.la
+matcher_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
 matcher__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-matcher_SOURCES = Timer.cpp matcher.C
+matcher_SOURCES = matcher.C
 
 cldemo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 cldemo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
@@ -440,7 +440,7 @@ cldemo_SOURCES = cldemo.C
 #iterator_test_LDADD = -lrose libmatcher.la
 
 #MS: ast_demo not integrated yet
-#ast_demo_SOURCES = ast_demo.C Timer.cpp Timer.h  RoseAst.C RoseAst.h
+#ast_demo_SOURCES = ast_demo.C TimeMeasurement.C TimeMeasurement.h  RoseAst.C RoseAst.h
 #ast_demo_LFLAGS = -Pmatcher
 #ast_demo_YFLAGS = -d -p matcher
 
@@ -700,6 +700,7 @@ clean-local:
 	rm -f Problem1401_assert_results_forcedtop_1000_n_bf.csv
 	rm -f transitiongraph1.pdf
 	rm -f transitiongraph2.pdf
+	rm -f rose_NORM*.[Cc]
 
 distclean-local: clean
 	rm -f *.tgz
