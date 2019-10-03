@@ -102,13 +102,12 @@ run $(test) ./crsh/crsh -o testAddressRandomization \
 #FIXME#     --input=ExecutionMonitor test-execution-monitor sampleExecutable \
 #FIXME#     ./crsh/crsh testExecutionMonitor.crsh
 
-#FIXME# Reported by Matzke 2019-09-23
-#FIXME# This rule and the previous rule both wrote to test-execution-monitor, which tup rightfully complains
-#FIXME# would be a race in a parallel build. Therefore I'm commenting out this one until Peter can fix it.
 
-run $(test) ./crsh/crsh -o testExecutionMonitor $(ENABLED) \
-    --input=rose-execution-monitor-zero test-execution-monitor sampleExecutable\
-    ./crsh/crsh testExecutionMonitor.crsh
+# Robb commented out the following test (testExecutionMonitor) because it depends on
+# rose-execution-monitor-zero, which Peter commented out above in the previous change to this file.
+#run $(test) ./crsh/crsh -o testExecutionMonitor $(ENABLED) \
+#    --input=rose-execution-monitor-zero test-execution-monitor sampleExecutable\
+#    ./crsh/crsh testExecutionMonitor.crsh
 
 #run $(test) ./crsh/crsh -o testPerfExecutionMonitor \
 #    --input=rose-execmon-linux-perf-intel-x86-64.sh rose-perf-execution-wrapper test-execution-monitor sampleExecutable\
