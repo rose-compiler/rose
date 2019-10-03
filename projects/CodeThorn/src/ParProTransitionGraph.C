@@ -116,3 +116,24 @@ Flow* ParProTransitionGraph::toFlowEnumerateStates(NumberGenerator& numGen) {
   }
   return result;
 }
+
+/*! 
+ * \author Marc Jasper
+ * \date 2016.
+ */
+std::string ParProTransitionGraph:toDot() {
+  EStateTransitionMap* outEdgesMap = getOutEdgesMap();
+  stringstream ss;
+  ss << "digraph G {" << endl;
+  for(EStateTransitionMap::iterator i=outEdgesMap->begin(); i!=outEdgesMap->end(); i++) {
+    const ParProEState* source = i->first;
+    ParProTransitions outEdges = i->second;
+    for (ParProTransitions::iterator k=outEdges.begin(); k!=outEdges.end(); k++) {
+      ss <<"  \""<<source->toString()<<"\""<< "->" <<"\""<<k->target->toString()<<"\"";
+      ss <<" [label=\""<<k->edge.getAnnotation()<<"\"]"<<";"<<endl;      
+    }
+  }
+  ss << "}" << endl;
+  return ss.str();
+}
+

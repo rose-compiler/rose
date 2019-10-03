@@ -269,19 +269,19 @@ ParallelSystem ParProExplorer::exploreOnce() {
   }
   if (_visualize) {
     if (system.hasStg()) {
-      string dotStg = visualizer.parProTransitionGraphToDot(system.stg());
+      string dotStg = system.stg()->toDot();
       string outputFilename = "stgParallelProgram_no_approx.dot";
       write_file(outputFilename, dotStg);
       cout << "generated " << outputFilename <<"."<<endl;
     }
     if (system.hasStgOverApprox()) {
-      string dotStg = visualizer.parProTransitionGraphToDot(system.stgOverApprox());
+      string dotStg = system.stgOverApprox()->toDot();
       string outputFilename = "stgParallelProgram_over_approx.dot";
       write_file(outputFilename, dotStg);
       cout << "generated " << outputFilename <<"."<<endl;
     }
     if (system.hasStgUnderApprox()) {
-      string dotStg = visualizer.parProTransitionGraphToDot(system.stgUnderApprox());
+      string dotStg = system.stgUnderApprox()->toDot();
       string outputFilename = "stgParallelProgram_under_approx.dot";
       write_file(outputFilename, dotStg);
       cout << "generated " << outputFilename <<"."<<endl;
