@@ -1,7 +1,7 @@
 
 #include "sage3basic.h"
 #include "TransitionGraph.h"
-#include "IOAnalyzer.h"
+#include "Analyzer.h"
 #include "CodeThornException.h"
 
 using namespace CodeThorn;
@@ -168,9 +168,9 @@ TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate
     }
     if(_outEdges[estate].size()==0) {
       ROSE_ASSERT(_analyzer);
-      IOAnalyzer::SubSolverResultType subSolverResult;
-      if(IOAnalyzer* iOAnalyzer = dynamic_cast<IOAnalyzer*>(_analyzer)) {
-	subSolverResult = iOAnalyzer->subSolver(estate);
+      Analyzer::SubSolverResultType subSolverResult;
+      if(_analyzer) {
+	subSolverResult = _analyzer->subSolver(estate);
       } else {
 	throw CodeThorn::Exception("Used analyzer must be an instance of \"IOAnalyzer\" in order to run the sub solver.");
       }

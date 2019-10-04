@@ -280,6 +280,13 @@ namespace CodeThorn {
 
     void setOptionOutputWarnings(bool flag);
     bool getOptionOutputWarnings();
+
+    // first: list of new states (worklist), second: set of found existing states
+    typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
+    SubSolverResultType subSolver(const EState* currentEStatePtr);
+    void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
+    bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
+
   protected:
     static Sawyer::Message::Facility logger;
     void printStatusMessage(string s, bool newLineFlag);
@@ -445,6 +452,11 @@ namespace CodeThorn {
     // to represent multiple summary states in the transition system)
     size_t getSummaryStateMapSize();
     const EState* getBottomSummaryState(Label lab, CallString cs);
+
+    size_t _prevStateSetSizeDisplay = 0;
+    size_t _prevStateSetSizeResource = 0;
+    bool isLTLRelevantEState(const EState* estate);
+
   private:
     //std::unordered_map<int,const EState*> _summaryStateMap;
     std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;
