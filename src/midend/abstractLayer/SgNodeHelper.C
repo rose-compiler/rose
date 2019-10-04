@@ -1936,7 +1936,6 @@ bool nodeCanBeChanged(SgLocatedNode * lnode) {
     return SgNodeHelper::node_can_be_changed(lnode);
   }
 }
-#endif
 
 }
-
+#endif
