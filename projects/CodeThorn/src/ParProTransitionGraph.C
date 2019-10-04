@@ -4,6 +4,7 @@
 
 #include <unordered_set>
 #include <unordered_map>
+#include <string>
 
 using namespace CodeThorn;
 using namespace std;
@@ -121,7 +122,7 @@ Flow* ParProTransitionGraph::toFlowEnumerateStates(NumberGenerator& numGen) {
  * \author Marc Jasper
  * \date 2016.
  */
-std::string ParProTransitionGraph:toDot() {
+std::string ParProTransitionGraph::toDot() {
   EStateTransitionMap* outEdgesMap = getOutEdgesMap();
   stringstream ss;
   ss << "digraph G {" << endl;

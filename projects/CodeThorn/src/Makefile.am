@@ -3,8 +3,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix matcher_demo matcher astinfo cldemo
-noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo cldemo
+bin_PROGRAMS = codethorn woodpecker analyterix
+# matcher_demo matcher astinfo cldemo
+#noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo cldemo
 
 CLEANFILES =
 
@@ -373,6 +374,7 @@ analyterix_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
 analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
 endif
+analyterix_CXXFLAGS = -fopenmp -Wall -O3
 analyterix_SOURCES = \
   CPAstAttribute.h CPAstAttribute.C \
   CommandLineOptions.h \
