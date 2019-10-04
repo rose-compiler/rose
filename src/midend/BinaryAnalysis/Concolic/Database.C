@@ -1445,7 +1445,6 @@ updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj, 
   const int                specId       = db.id_ns(tx, obj->specimen(), Update::NO).get();
   Sawyer::Optional<double> concreteRank = obj->concreteRank();
 
-  // \todo use NO_CONCRETE_RANK, since queries cannot test for null
   const double             rank         = concreteRank ? concreteRank.get() : NO_CONCRETE_RANK;
   const bool               hasConc      = obj->hasConcolicTest();
 
@@ -1688,23 +1687,6 @@ struct GuardedStmt
     sqlite3_stmt*   stmt_;
 };
 
-//~ struct SqlLiteStringGuard
-//~ {
-  //~ explicit
-  //~ SqlLiteStringGuard(const char* s)
-  //~ : str(s)
-  //~ {}
-
-  //~ ~SqlLiteStringGuard()
-  //~ {
-    //~ if (str) sqlite3_free(const_cast<char*>(str));
-  //~ }
-
-  //~ operator const char*() { return str; }
-
-  //~ const char* const str;
-//~ };
-
 
 void GuardedDB::debug(GuardedStmt& sql)
 {
@@ -1858,7 +1840,7 @@ Database::hasUntested() const
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 template <class T>
 static
-std::string xml(const T& o)
+std::string xml(const T* o)
 {
   std::stringstream            stream;
   boost::archive::xml_oarchive oa(stream);
@@ -1869,7 +1851,7 @@ std::string xml(const T& o)
 
 template <class T>
 static
-std::string text(const T& o)
+std::string text(const T* o)
 {
   std::stringstream             stream;
   boost::archive::text_oarchive oa(stream);
@@ -1879,23 +1861,15 @@ std::string text(const T& o)
 }
 #endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
+
 void
 Database::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result& details)
 {
   std::string  detailtxt = "<error>requires BOOST serialization</error>";
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-  // was: detailtxt = xml(details);
-  //      BOOST serialization does not seem to pick up the polymorphic
-  //      type...
-  //      BOOST_CLASS_EXPORT_KEYs are defined in BinaryConcolic.h
-  //      BOOST_CLASS_EXPORT_IMPLEMENTs are defined in LinuxExecutor.C
-  const LinuxExecutor::Result* linuxres = dynamic_cast<const LinuxExecutor::Result*>(&details);
-
-  // \todo enable BOOST serialization polymorphism
-  detailtxt = linuxres ? xml(*linuxres) : xml(details);
+  detailtxt = xml(&details);
   //~ detailtxt = text(details);
-
   //~ std::cerr << "XML:" << detailtxt << std::endl;
 #else
   //~ Sawyer::Message::mlog[Sawyer::Message::INFO]
