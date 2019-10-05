@@ -1402,7 +1402,10 @@ ATbool ATermToUntypedFortranTraversal::traverse_DerivedTypeDef(ATerm term, SgUnt
       // t_private, can this be added to the attr_list?
       // t_type_bound
 
-      struct_decl = new SgUntypedStructureDeclaration(label, struct_name, attr_list, dim_info, struct_def);
+      // neither a jovial block nor table (only one choice for Fortran, derived type)
+      int struct_type = General_Language_Translation::e_unknown;
+
+      struct_decl = new SgUntypedStructureDeclaration(label, struct_type, struct_name, attr_list, dim_info, struct_def);
       ROSE_ASSERT(struct_decl);
       setSourcePosition(struct_decl, term);
    }

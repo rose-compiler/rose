@@ -326,6 +326,9 @@ ATbool traverse_RelationalOperator (ATerm term, General_Language_Translation::Ex
 ATbool traverse_FixedOrFloatingLiteral (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_Exponent               (ATerm term, std::string & opt_exp);
 
+// 8.3.2 BIT LITERAL
+ATbool traverse_BitLiteral     (ATerm term, SgUntypedExpression* & expr);
+
 // 8.3.3 BOOLEAN LITERAL
 ATbool traverse_BooleanLiteral (ATerm term, SgUntypedExpression* & expr);
 
