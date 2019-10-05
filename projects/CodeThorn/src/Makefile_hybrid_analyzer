@@ -37,7 +37,7 @@ LDFLAGS  = $(shell $(ROSE_INSTALLED)/bin/rose-config ldflags) -L.
 LIBDIRS  = $(shell $(ROSE_INSTALLED)/bin/rose-config libdirs)
 
 # ROSE_INSTALL_LIB is environment variable referring to installed libs dir (-lquadmath necessary for GCC 7.3)
-ROSE_LIBS_OPTIONS = -Wl,-rpath -Wl,$(ROSE_INSTALL_LIB) -L $(ROSE_INSTALL_LIB) -L $(ROSE_INSTALL_LIB)/rose -L $(SPOT_PREFIX)/lib -lbdd -lspot -lspray -lrose -lquadmath
+ROSE_LIBS_OPTIONS = -Wl,-rpath -Wl,$(ROSE_INSTALL_LIB) -L $(ROSE_INSTALL_LIB) -L $(ROSE_INSTALL_LIB)/rose -L $(SPOT_PREFIX)/lib -lbdd -lspot -lrose -lquadmath
 
 # Default make rule to use
 all: RERS_BINARY

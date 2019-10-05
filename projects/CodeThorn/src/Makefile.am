@@ -34,8 +34,8 @@ lib_LTLIBRARIES = libcodethorn.la
 #libcodethorn_la_LDFLAGS= -no-undefined
 libcodethorn_la_LDFLAGS=
 libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3
-libcodethorn_ladir=.
-libcodethorn_la_HEADERS=\
+codethornincludedir = $(pkgincludedir)/codethorn
+codethorninclude_HEADERS=\
   CounterexampleGenerator.h	   \
   AbstractValue.h \
   AliasAnalysis.h \
@@ -70,7 +70,7 @@ libcodethorn_la_HEADERS=\
   Evaluator.h                      \
   ExecutionTrace.h		   \
   ExprAnalyzer.h                   \
-  FIConstAnalysis.h FIConstAnalysis.C \
+  FIConstAnalysis.h \
   FunctionCallMapping.h \
   FunctionCallTarget.h \
   FunctionId.h \
@@ -164,7 +164,7 @@ libcodethorn_la_SOURCES=\
   EquivalenceChecking.C            \
   EState.C           \
   ExprAnalyzer.C                   \
-  FIConstAnalysis.h FIConstAnalysis.C \
+  FIConstAnalysis.C \
   Flow.C \
   FunctionCallMapping.C \
   FunctionCallTarget.C \
@@ -245,7 +245,7 @@ endif
 
 codethorndir=.
 
-codethorn_HEADERS = \
+codethorn_xHEADERS = \
   IOAnalyzer.h                     \
   IOSolver.h \
   ReachabilityAnalyzerZ3.h \
