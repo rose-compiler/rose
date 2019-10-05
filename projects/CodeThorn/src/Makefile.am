@@ -29,7 +29,7 @@ endif
 
 MYDATE = $(shell date +%Y_%m_%d)
 
-lib_LTLIBRARIES = libcodethorn.la
+lib_LTLIBRARIES = libcodethorn.la libcodethornltl.la
 
 #libcodethorn_la_LDFLAGS= -no-undefined
 libcodethorn_la_LDFLAGS=
@@ -233,19 +233,22 @@ libcodethorn_la_SOURCES=\
 codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 # this line create speparately named object files
 codethorn_CXXFLAGS = -fopenmp -Wall -O3
-codethorn_DEPENDENCIES=libcodethorn.la
+codethorn_DEPENDENCIES=libcodethorn.la libcodethornltl.la
 
 #codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lspot -lbdd -lz3
 if ROSE_WITH_SPOT
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lcodethorn $(Z3_LINK)
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lcodethorn -lcodethornltl $(Z3_LINK)
 codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
 else
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lcodethornltl
 endif
 
 codethorndir=.
 
-codethorn_xHEADERS = \
+libcodethornltl_la_LDFLAGS=
+libcodethornltl_la_CXXFLAGS = -fopenmp -Wall -O3
+
+libcodethornltl_xHEADERS = \
   IOAnalyzer.h                     \
   IOSolver.h \
   ReachabilityAnalyzerZ3.h \
@@ -273,12 +276,10 @@ codethorn_xHEADERS = \
   Solver11.h \
   Solver12.h \
   PromelaCodeGenerator.h \
-  LTL.h                            \
   ReadWriteAnalyzer.h \
-  CommandLineOptions.h             \
-  codethorn.h
+  CommandLineOptions.h
 
-codethorn_SOURCES = \
+libcodethornltl_la_SOURCES= \
   IOAnalyzer.C                     \
   IOSolver.C \
   ReachabilityAnalyzerZ3.C \
@@ -306,103 +307,80 @@ codethorn_SOURCES = \
   Solver11.C \
   Solver12.C \
   PromelaCodeGenerator.C \
-  LTLParser.y++                    \
   ReadWriteAnalyzer.C \
-  CommandLineOptions.C             \
+  CommandLineOptions.C
+
+codethorn_xHEADERS = \
+  codethorn.h \
+  LTL.h
+
+codethorn_SOURCES = \
+  LTLParser.y++                    \
   codethorn.C
 
-addressTakenAnalysis_SOURCES = \
+#addressTakenAnalysis_SOURCES = \
   CommandLineOptions.C \
   addressTakenAnalysisDriver.C
 
-if ROSE_WITH_SPOT
-addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lspot -lbdd
-addressTakenAnalysis_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
-else
-addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
-endif
-addressTakenAnalysis_CXXFLAGS = -Wall -O3
-addressTakenAnalysis_DEPENDENCIES=libcodethorn.la
+#if ROSE_WITH_SPOT
+#addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lspot -lbdd
+#addressTakenAnalysis_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
+#else
+#addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
+#endif
+#addressTakenAnalysis_CXXFLAGS = -Wall -O3
+#addressTakenAnalysis_DEPENDENCIES=libcodethorn.la libcodethornltl.la
 
 REGRESSION_DATA_DIR=regressiondata
 
 .PHONY: codethorn-dist viz bsps docs test checkdemos
 
-woodpecker_DEPENDENCIES=libcodethorn.la
+woodpecker_DEPENDENCIES=libcodethorn.la libcodethornltl.la
 if ROSE_WITH_SPOT
-woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lspot -lbdd
+woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lcodethornltl -lspot -lbdd
 woodpecker_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
-woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
+woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lcodethornltl
 endif
 woodpecker_CXXFLAGS= -fopenmp -Wall -O3
-woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
-  LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
-  CPAstAttribute.h CPAstAttribute.C \
-  Miscellaneous.C                  \
-  Miscellaneous.h                  \
+woodpecker_SOURCES = \
   ProgramStats.h                 \
   ProgramStats.C                 \
-  FIConstAnalysis.h FIConstAnalysis.C \
-  PropertyValueTable.h \
-  PropertyValueTable.C \
   Threadification.h \
   Threadification.C \
   TrivialInlining.C                \
   TrivialInlining.h                \
   DeadCodeElimination.C                \
   DeadCodeElimination.h                \
-  ReachabilityAnalysis.C \
-  ReachabilityAnalysis.h \
   ConversionFunctionsGenerator.h \
   ConversionFunctionsGenerator.C \
-  RewriteStatistics.h \
-  RewriteStatistics.C \
-  RewriteSystem.h \
-  RewriteSystem.C \
-  TimeMeasurement.h \
-  TimeMeasurement.C \
   woodpecker.C
 
 #  DFAnalysisBase.C \
 #  DFAnalysisBase.h
 
-analyterix_DEPENDENCIES=libcodethorn.la
+analyterix_DEPENDENCIES=libcodethorn.la libcodethornltl.la
 if ROSE_WITH_SPOT
-analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lspot -lbdd
+analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lcodethornltl -lspot -lbdd
 analyterix_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
-analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
+analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lcodethornltl
 endif
 analyterix_CXXFLAGS = -fopenmp -Wall -O3
 analyterix_SOURCES = \
-  CPAstAttribute.h CPAstAttribute.C \
-  CommandLineOptions.h \
-  CommandLineOptions.C \
   CppStdUtilities.C \
   CppStdUtilities.h \
   DeadCodeAnalysis.C \
   DeadCodeAnalysis.h \
-  DataDependenceVisualizer.C \
-  DataDependenceVisualizer.h \
   DFAstAttributeConversion.h DFAstAttributeConversion.C \
-  FIConstAnalysis.h FIConstAnalysis.C \
   FIPointerAnalysis.C \
   FIPointerAnalysis.h \
-  LanguageRestrictorCollection.C \
-  LanguageRestrictorCollection.h \
-  Miscellaneous.C \
-  Miscellaneous.h \
   ProgramStats.C \
   ProgramStats.h \
-  PropertyValueTable.C \
-  PropertyValueTable.h \
   RoseRDAnalysis.C \
   RoseRDAnalysis.h \
   TransformationOperators.h \
   TransformationOperators.C \
-  UDAstAttribute.C \
-  UDAstAttribute.h \
   analyterix.C
 
 roseonlytools: woodpecker analyterix
@@ -420,35 +398,35 @@ check-roseonlytools: check-flow-insenstive
 #	rm lex.yy.c y.tab.c
 
 # MS: matcher_demo
-matcher_demo_DEPENDENCIES=libcodethorn.la
-matcher_demo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
-matcher_demo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-matcher_demo_SOURCES = TimeMeasurement.C matcher_demo.C
-BUILT_SOURCES =
-AM_YFLAGS =
-AM_LFLAGS =
+#matcher_demo_DEPENDENCIES=libcodethorn.la
+#matcher_demo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
+#matcher_demo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+#matcher_demo_SOURCES = TimeMeasurement.C matcher_demo.C
+#BUILT_SOURCES =
+#AM_YFLAGS =
+#AM_LFLAGS =
 
-matcher_DEPENDENCIES=libcodethorn.la
-matcher_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
-matcher__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-matcher_SOURCES = matcher.C
+#matcher_DEPENDENCIES=libcodethorn.la
+#matcher_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
+#matcher__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+#matcher_SOURCES = matcher.C
 
-cldemo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-cldemo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-cldemo_SOURCES = cldemo.C
+#cldemo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+#cldemo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+#cldemo_SOURCES = cldemo.C
 
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h
 #iterator_test_LDADD = -lrose libmatcher.la
 
+#astinfo_DEPENDENCIES=
+#astinfo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+#astinfo_SOURCES = astinfo.C LineColInfo.C
+
 #MS: ast_demo not integrated yet
 #ast_demo_SOURCES = ast_demo.C TimeMeasurement.C TimeMeasurement.h  RoseAst.C RoseAst.h
 #ast_demo_LFLAGS = -Pmatcher
 #ast_demo_YFLAGS = -d -p matcher
-
-astinfo_DEPENDENCIES=
-astinfo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-astinfo_SOURCES = astinfo.C LineColInfo.C
 
 check-astinfo: astinfo
 	@echo "-------------------------------------------------------------"
@@ -704,6 +682,7 @@ clean-local:
 	rm -f transitiongraph1.pdf
 	rm -f transitiongraph2.pdf
 	rm -f rose_NORM*.[Cc]
+	rm -f LTLParser.c++
 
 distclean-local: clean
 	rm -f *.tgz
