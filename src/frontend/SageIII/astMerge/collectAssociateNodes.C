@@ -2412,14 +2412,20 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
              }
 
        // Rasmussen 6/14/2017: Ignore SgUntyped nodes for now.  Untyped nodes are currently used in
-       // parsing Fortran as a temporary conversion mechanism to store node information before complete
+       // parsing Jovial as a temporary conversion mechanism to store node information before complete
        // type resolution has been done.
           case V_SgUntypedProgramHeaderDeclaration:
+          case V_SgUntypedDeclarationStatementList:
+          case V_SgUntypedFunctionDeclarationList:
           case V_SgUntypedExprListExpression:
           case V_SgUntypedNullExpression:
           case V_SgUntypedOtherExpression:
+          case V_SgUntypedScope:
+          case V_SgUntypedStatementList:
+          case V_SgUntypedStructureDefinition:
           case V_SgUntypedSubscriptExpression:
           case V_SgUntypedValueExpression:
+          case V_SgUntypedVariableDeclaration:
              {
                break;
              }

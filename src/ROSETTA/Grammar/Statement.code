@@ -2095,6 +2095,7 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
                e_java_interface,     /*!< A Java interface type declaration */
                e_java_enum,          /*!< A Java enum type declaration */
                e_java_parameter,     /*!< A Java parameter type declaration */
+               e_jovial_block,       /*!< A Jovial block type declaration */
                e_jovial_table        /*!< A Jovial table type declaration */
              };
 

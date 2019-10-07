@@ -180,6 +180,7 @@ ATbool traverse_ProcedureDeclaration(ATerm term, SgUntypedDeclarationStatementLi
 
 // 3.2 FUNCTIONS
 ATbool traverse_FunctionDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_FunctionDefinition (ATerm term, SgUntypedFunctionDeclarationList* func_list);
 ATbool traverse_FunctionHeading    (ATerm term, std::string & name, SgUntypedType* & type,
                                     SgUntypedExprListExpression** attrs, SgUntypedInitializedNameList** params);
 
@@ -295,6 +296,17 @@ ATbool traverse_Dereference      (ATerm term, SgUntypedExpression* & formula);
 // 6.2 NAMED CONSTANTS
 ATbool traverse_NamedConstant        (ATerm term, SgUntypedExpression* & var);
 
+// 6.3 FUNCTION CALLS
+ATbool traverse_FunctionCall           (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_UserDefinedFunctionCall(ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_IntrinsicFunctionCall  (ATerm term, SgUntypedExpression* & expr);
+
+// 6.3.1 LOC FUNCTION
+ATbool traverse_LocFunction          (ATerm term, SgUntypedExpression* & expr);
+
+// 6.3.11 STATUS INVERSE FUNCTIONS
+ATbool traverse_StatusInverseFunction(ATerm term, SgUntypedExpression* & expr);
+
 // 7.0 TYPE MATCHING AND TYPE CONVERSIONS
 ATbool traverse_IntegerConversion    (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_GeneralConversion    (ATerm term, SgUntypedExpression* & expr);
@@ -313,6 +325,9 @@ ATbool traverse_RelationalOperator (ATerm term, General_Language_Translation::Ex
 // 8.3.1 NUMERIC LITERAL
 ATbool traverse_FixedOrFloatingLiteral (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_Exponent               (ATerm term, std::string & opt_exp);
+
+// 8.3.2 BIT LITERAL
+ATbool traverse_BitLiteral     (ATerm term, SgUntypedExpression* & expr);
 
 // 8.3.3 BOOLEAN LITERAL
 ATbool traverse_BooleanLiteral (ATerm term, SgUntypedExpression* & expr);

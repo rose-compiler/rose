@@ -1002,6 +1002,8 @@ Grammar::setUpNodes ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      UntypedStructureDeclaration.setFunctionPrototype    ( "HEADER_UNTYPED_STRUCTURE_DECLARATION", "../Grammar/LocatedNode.code");
+     UntypedStructureDeclaration.setDataPrototype         ( "int", "statement_enum", "= 0",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedStructureDeclaration.setDataPrototype        ( "std::string", "name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL, NO_DELETE);
      UntypedStructureDeclaration.setDataPrototype        ( "SgUntypedExprListExpression*", "modifiers", "= NULL",
