@@ -1370,6 +1370,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
    else if (base_type != NULL) {
       ROSE_ASSERT(dim_info != NULL);
 
+      if (base_type->get_is_intrinsic() == false) {
+         cerr << "WARNING UNIMPLEMENTED: TableDescription before buildJovialTableType\n";
+         return ATtrue;
+      }
+
       // There is no table_desc thus no table body containing structure components
       table_type = UntypedBuilder::buildJovialTableType("", base_type, dim_info, /*is_anonymous*/true);
       ROSE_ASSERT(table_type != NULL);
@@ -2085,25 +2090,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATe
    ROSE_ASSERT(attr_list);
    ROSE_ASSERT(declared_type);
 
-#if 0 // DELETE_ME
-   SgUntypedInitializedNameList* var_name_list = new SgUntypedInitializedNameList();
-   ROSE_ASSERT(var_name_list);
-   setSourcePosition(var_name_list, t_name);
-
-   SgUntypedInitializedName* initialized_name = new SgUntypedInitializedName(declared_type, name);
-   ROSE_ASSERT(initialized_name);
-   setSourcePosition(initialized_name, t_name);
-
-// There will be only one variable declared in Jovial
-   var_name_list->get_name_list().push_back(initialized_name);
-
-   std::string label = "";
-
-   variable_decl = new SgUntypedVariableDeclaration(label, declared_type, attr_list, var_name_list);
-   ROSE_ASSERT(variable_decl);
-   setSourcePosition(variable_decl, term);
-#endif
-
    variable_decl = UntypedBuilder::buildVariableDeclaration(name, declared_type, attr_list, preset);
    ROSE_ASSERT(variable_decl);
    setSourcePosition(variable_decl, term);
@@ -2470,6 +2456,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemPreset(ATerm term, SgUntypedE
    else if (ATmatch(term, "ItemPreset(<term>)", &t_preset_value)) {
       if (traverse_ItemPresetValue(t_preset_value, preset)) {
          // MATCHED ItemPresetValue
+         if (!preset) {
+            cerr << "WARNING UNIMPLEMENTED: ItemPresetValue \n";
+            return ATtrue;
+         }
          ROSE_ASSERT(preset);
       } else return ATfalse;
    }
@@ -5231,7 +5221,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericPrimary(ATerm term, SgUnty
 #endif
 
    ATerm t_table_item, t_formula, t_factor, t_num_term, t_conversion;
-   char *literal, *name, *variable;
+   char *literal, *name, *variable, *letter;
    SgUntypedType* type;
    SgUntypedExpression *table_item, *conv, *num_term, *factor;
    Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
@@ -5312,7 +5302,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericPrimary(ATerm term, SgUnty
    }
 
    else if (traverse_FunctionCall(term, expr)) {
-      // MATCHED NumericFunctionCall
+      // MATCHED FunctionCall
+   }
+
+   else if (ATmatch(term, "ControlLetter(<str>)" , &letter)) {
+      // MATCHED special case of ControlLetter -> NumericPrimary
+      std::cout << ".x. ControlLetter is " << letter << endl;
+
    }
 
    else return ATfalse;
@@ -5579,15 +5575,19 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitPrimary(ATerm term, SgUntypedE
    expr = NULL;
    if (traverse_BooleanLiteral(term, expr)) {
       // MATCHED BooleanLiteral
-   } else if (ATmatch(term,"BitPrimaryParens(<term>)", &t_bit)) {
+   }
+   else if (ATmatch(term,"BitPrimaryParens(<term>)", &t_bit)) {
       // TODO: Add parentheses
       cout << "Matched BitPrimaryParens" << endl;
       if (traverse_BitFormula(t_bit, expr)) {
       // MATCHED '(' BitFormula ')'
       } else return ATfalse;
-   } else return ATfalse;
+   }
+   else if (traverse_BitLiteral(term, expr)) {
+      // MATCHED BitLiteral
+   }
+   else return ATfalse;
       // TODO: create else if for following
-      // BitLiteral                    -> BitPrimary (no cons)
       // BitVariable                   -> BitPrimary {cons("BitVariable")} (not currently working in tests)
       // NamedBitConstant              -> BitPrimary {cons("NamedBitConstant")} (rejected in grammar)
       // BitFunctionCall               -> BitPrimary (no cons)
@@ -5647,6 +5647,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_GeneralFormula(ATerm term, SgUnty
    printf("... traverse_GeneralFormula: %s\n", ATwriteToString(term));
 #endif
 
+   ATerm t_function_or_constant;
    char* variable;
    Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
 
@@ -5654,7 +5655,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_GeneralFormula(ATerm term, SgUnty
       expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
       expr = new SgUntypedReferenceExpression(expr_enum, variable);
       setSourcePosition(expr, term);
-
+   } else if (ATmatch(term, "GeneralFormula(<term>)", &t_function_or_constant)) {
+      if (traverse_FunctionCall(t_function_or_constant, expr)) {
+         // MATCHED FunctionCall
+      } else if (traverse_NamedConstant(t_function_or_constant, expr)) {
+         // MATCHED NamedConstant
+      } else return ATfalse;
    } else if (traverse_CharacterFormula(term, expr)) {
       // MATCHED CharacterFormula
    } else if (traverse_StatusFormula(term, expr)) {
@@ -5856,9 +5862,14 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableItem(ATerm term, SgUntypedEx
 
       if (traverse_Subscript(t_subscript, subscript)) {
          // MATCHED Subscript
+         if (subscript.size() > 1) {
+            cerr << "WARNING UNIMPLEMENTED: TableItem - subscript.size() > 1 not fully implemented\n";
+         }
 
+         if (subscript.size() > 0) {
          // TODO - convert to SgUntypedExprListExpression
-         ROSE_ASSERT(subscript.size() == 1);
+         ROSE_ASSERT(subscript.size() > 0);
+         //         ROSE_ASSERT(subscript.size() == 1);
          ROSE_ASSERT(subscript[0]);
 
          array_subscripts = new SgUntypedExprListExpression(General_Language_Translation::e_array_subscripts);
@@ -5870,6 +5881,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableItem(ATerm term, SgUntypedEx
 #if 0
          cout << ".x. found subscript # is " << subscript.size() << ": subscript is " << subscript[0] << endl;
 #endif
+
+         }
+         else {
+            cerr << "WARNING UNIMPLEMENTED: TableItem with a subscript with size " << subscript.size() << std::endl;
+            SgUntypedExpression* array_subscripts = UntypedBuilder::buildUntypedNullExpression();
+            ROSE_ASSERT(array_subscripts);
+         }
 
          SgUntypedExpression* coarray_subscripts = UntypedBuilder::buildUntypedNullExpression();
          ROSE_ASSERT(coarray_subscripts);
@@ -6559,6 +6577,56 @@ ATbool ATermToUntypedJovialTraversal::traverse_Exponent(ATerm term, std::string 
    }
 
    else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 8.3.2 BIT LITERAL
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_BitLiteral(ATerm term, SgUntypedExpression* & expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_BitLiteral: %s\n", ATwriteToString(term));
+#endif
+
+   //  BeadSize 'B' "'" Bead+ "'"  -> BitLiteral              {cons("BitLiteral")}
+
+   // from JovialLex.sdf
+   //  [1-5]                     -> BeadSize
+   //  [A-V]                     -> Bead
+
+   ATerm t_bead_size, t_bead;
+   char * bead_size, *bead;
+   std::string literal = "";
+
+   if (ATmatch(term, "BitLiteral(<term>,<term>)", &t_bead_size, &t_bead)) {
+      if (ATmatch(t_bead_size, "<str>", &bead_size)) {
+         // MATCHED BeadSize
+         literal += bead_size;
+      } else return ATfalse;
+
+      literal += "B'";
+
+      ATermList tail = (ATermList) ATmake("<term>", t_bead);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (ATmatch(head, "<str>", &bead)) {
+            // MATCHED Bead
+            literal += bead;
+         } else return ATfalse;
+      }
+
+      literal += "'";
+      SgUntypedType *type = UntypedBuilder::buildType(SgUntypedType::e_bit);
+      Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_literalExpression;
+      expr = new SgUntypedValueExpression(expr_enum, literal, type);
+      setSourcePosition(expr, term);
+
+   } else return ATfalse;
+
+   ROSE_ASSERT(expr);
 
    return ATtrue;
 }
