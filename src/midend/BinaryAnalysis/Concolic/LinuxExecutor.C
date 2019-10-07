@@ -32,6 +32,9 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
 
+const char* const tagConcreteExecutorResult = "ConcreteExecutorResult";
+const char* const tagLinuxExecutorResult    = "LinuxExecutorResult";
+
 #if defined(__linux__)
 
 /*****
