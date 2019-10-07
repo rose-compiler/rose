@@ -321,8 +321,8 @@ public:
 // Concrete executors and their results
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* const tagConcreteExecutorResult = "ConcreteExecutorResult";
-static const char* const tagLinuxExecutorResult    = "LinuxExecutorResult";
+extern const char* const tagConcreteExecutorResult;
+extern const char* const tagLinuxExecutorResult;
 
 /** Base class for executing test cases concretely.
  *
