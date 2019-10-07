@@ -1157,7 +1157,6 @@ void initializeDB(SqlTransactionPtr tx)
   sqlPrepare(tx, QY_MK_ENVVARS)->execute();
   sqlPrepare(tx, QY_MK_TESTCASE_ARGS)->execute();
   sqlPrepare(tx, QY_MK_TESTCASE_EVAR)->execute();
-  //~ sqlPrepare(tx, QY_MK_TESTSUITE_TESTCASE)->execute();
   sqlPrepare(tx, QY_MK_RBA_FILES)->execute();
   sqlPrepare(tx, QY_MK_CONCRETE_RES)->execute();
 }
@@ -1901,7 +1900,6 @@ void writeDBSchema(std::ostream& os)
      << QY_MK_ENVVARS            << "\n\n"
      << QY_MK_TESTCASE_ARGS      << "\n\n"
      << QY_MK_TESTCASE_EVAR      << "\n\n"
-     //~ << QY_MK_TESTSUITE_TESTCASE << "\n\n"
      << QY_MK_RBA_FILES          << "\n\n"
      << QY_MK_CONCRETE_RES       ;
 }
