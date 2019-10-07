@@ -861,6 +861,9 @@ namespace sg
     GEN_VISIT(SgQualifiedNameType)
    // DQ (4/5/2017): Added this case that shows up using GNU 6.1 and Boost 1.51 (or Boost 1.52).
     GEN_VISIT(SgDeclType)
+		GEN_VISIT(SgAutoType)
+	  GEN_VISIT(SgTypeSigned128bitInteger)
+		GEN_VISIT(SgTypeUnsigned128bitInteger)
 
     // * token
     GEN_VISIT(SgToken)
