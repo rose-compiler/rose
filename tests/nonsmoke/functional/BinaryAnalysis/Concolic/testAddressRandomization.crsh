@@ -1,0 +1,27 @@
+create sqlite3://./testAddressRandomization.db
+
+@success
+withASLR :: e01
+{
+  ./sampleExecutable --address-randomization=true
+}
+
+@success
+withoutASLR :: e01
+{
+  ./sampleExecutable --address-randomization=false
+}
+
+@success @ASLR
+withASLR :: run 1 
+
+@success @noASLR
+withoutASLR :: run 1 
+
+close
+
+! rm ./testAddressRandomization.db
+
+! echo ok.
+
+

@@ -16,8 +16,8 @@
 #include "UntypedJovialConverter.h"
 
 #define DEBUG_EXPERIMENTAL_JOVIAL 0
-#define OUTPUT_WHOLE_GRAPH_AST 1
-#define OUTPUT_DOT_FILE_AST 1
+#define OUTPUT_WHOLE_GRAPH_AST 0
+#define OUTPUT_DOT_FILE_AST 0
 
 #if OUTPUT_WHOLE_GRAPH_AST
 #  include "wholeAST_API.h"

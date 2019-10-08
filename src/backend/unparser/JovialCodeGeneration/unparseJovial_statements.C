@@ -91,6 +91,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
           case V_SgCaseOptionStmt:             unparseCaseStmt       (stmt, info);  break;
           case V_SgDefaultOptionStmt:          unparseDefaultStmt    (stmt, info);  break;
           case V_SgBreakStmt:                  unparseBreakStmt      (stmt, info);  break;
+          case V_SgTypedefDeclaration:         unparseTypeDefStmt    (stmt, info);  break;
 
           case V_SgStopOrPauseStatement:       unparseStopOrPauseStmt(stmt, info);  break;
           case V_SgReturnStmt:                 unparseReturnStmt     (stmt, info);  break;
@@ -107,7 +108,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
           case V_SgContinueStmt:           unparseContinueStmt(stmt, info);     break;
 
-          case V_SgTypedefDeclaration:     unparseTypeDefStmt(stmt, info);      break;
+
 
           case V_SgForInitStatement:       unparseForInitStmt(stmt, info);      break;
 
@@ -588,6 +589,24 @@ Unparse_Jovial::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info)
  // unparse the FALLTHRU keyward as needed.
   }
 
+void Unparse_Jovial::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+      SgTypedefDeclaration* typedef_decl = isSgTypedefDeclaration(stmt);
+      ROSE_ASSERT(typedef_decl);
+
+      curprint("TYPE ");
+
+      SgName name = typedef_decl->get_name();
+      curprint(name.str());
+
+      SgType* base_type = typedef_decl->get_base_type();
+      ROSE_ASSERT(base_type);
+      curprint(" ");
+      unparseType(base_type, info);
+      curprint(";");
+      unp->cur.insert_newline(1);
+   }
+
 void
 Unparse_Jovial::unparseStopOrPauseStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
@@ -678,16 +697,13 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgJovialTableStatement* table_decl = isSgJovialTableStatement(stmt);
      ROSE_ASSERT(table_decl != NULL);
 
-     cout << "--> unparse TableDeclStmt: table_decl is " << table_decl << ": " << table_decl->class_name() << endl;
+     bool is_block = (table_decl->get_class_type() == SgClassDeclaration::e_jovial_block);
 
      SgJovialTableStatement* defining_decl = isSgJovialTableStatement(table_decl->get_definingDeclaration());
-     cout << "--> unparse TableDeclStmt: defining_decl is " << defining_decl << ": " << defining_decl->class_name() << endl;
      ROSE_ASSERT(isSgJovialTableStatement(defining_decl));
 
      SgClassDefinition* table_def = defining_decl->get_definition();
      ROSE_ASSERT(table_def);
-
-     cout << "--> unparse TableDeclStmt: table_def is " << table_def << ": " << table_def->class_name() << endl;
 
      SgName table_name = table_decl->get_name();
 
@@ -699,7 +715,9 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
       curprint("TYPE ");
       curprint(table_name);
-      curprint(" TABLE ");
+
+      if (is_block) curprint(" BLOCK ");
+      else          curprint(" TABLE ");
 
    // Table DimensionList
       SgExprListExp* dim_info = table_type->get_dim_info();
@@ -743,7 +761,11 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
            curprint(base_class_decl->get_name());
         }
 
-     curprint(";");
+     if (!is_block)
+        {
+           // BLOCKs don't need the semicolon!
+           curprint(";");
+        }
      unp->cur.insert_newline(1);
 
   // Unparse body if present

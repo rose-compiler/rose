@@ -25,54 +25,15 @@ run $(tool_compile_linkexe) --install -o rose-x86-call-targets x86-call-targets.
 run $(tool_compile_linkexe) --install -o rose-rxml rxml.C
 run $(tool_compile_linkexe) --install -o rose-dwarf-lines dwarf-lines.C
 run $(tool_compile_linkexe) --install -o rose-xml2json xml2json.C
-run $(tool_compile_linkexe) --install -o rose-execution-monitor ExecutionMonitor.C
+#run $(tool_compile_linkexe) --install -o rose-execution-monitor ExecutionMonitor.C
+#run $(tool_compile_linkexe) --install -o rose-perf-execution-wrapper rose-perf-execution-wrapper.c
 run $(public_script) rose-missing-semantics
-
-findPath_SOURCES = PathFinder/PathFinder.C PathFinder/semantics.C PathFinder/findPath.C
-run $(tool_compile_linkexe) -o rose-find-path --install $(findPath_SOURCES)
 
 ifneq (@(WITH_DLIB),no)
     run $(tool_compile_linkexe) --install -o rose-find-similar-functions findSimilarFunctions.C
 endif
 
-########################################################################################################################
-# A web browser interface to ROSE. The bROwSE_server is an HTTP daemon to which you connect with any browser that's
-# capable of running Javascript.
-########################################################################################################################
-ifneq (@(WITH_WT),no)
 
-bROwSE_SOURCES = \
-	bROwSE/Application.C			\
-	bROwSE/bROwSE.C				\
-	bROwSE/FunctionListModel.C		\
-	bROwSE/FunctionUtil.C			\
-	bROwSE/InstructionListModel.C		\
-	bROwSE/Statistics.C			\
-	bROwSE/WAddressComboBox.C		\
-	bROwSE/WAddressSpace.C			\
-	bROwSE/WAssemblyListing.C		\
-	bROwSE/WBusy.C				\
-	bROwSE/WCrossReferences.C		\
-	bROwSE/WFunctionCfg.C			\
-	bROwSE/WFunctionList.C			\
-	bROwSE/WFunctionNavigation.C		\
-	bROwSE/WFunctionSummary.C		\
-	bROwSE/WHexDump.C			\
-	bROwSE/WHexValueEdit.C			\
-	bROwSE/WInstructionList.C		\
-	bROwSE/WMagic.C				\
-	bROwSE/WMemoryMap.C			\
-	bROwSE/WPartitioner.C			\
-	bROwSE/WSemantics.C			\
-	bROwSE/WSplash.C			\
-	bROwSE/WStatus.C			\
-	bROwSE/WStringDetail.C			\
-	bROwSE/WStrings.C			\
-	bROwSE/WToggleButton.C
-
-run $(tool_compile_linkexe) $(bROwSE_SOURCES) -o bROwSE_server --install -lwthttp
-
-endif
 
 ########################################################################################################################
 # Tests

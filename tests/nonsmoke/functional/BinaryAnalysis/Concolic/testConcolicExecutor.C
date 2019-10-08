@@ -16,25 +16,34 @@ using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static Sawyer::Message::Facility mlog;
+static std::string databaseUrl = "testConcolicExecutor.db";
 
-static std::vector<std::string>
-parseCommandLine(int argc, char *argv[], P2::Engine &engine) {
+// Parse command-line and return name of specimen executable.
+static std::string
+parseCommandLine(int argc, char *argv[]) {
     using namespace Sawyer::CommandLine;
+
+    SwitchGroup tool("Tool-specific switches");
+    tool.insert(Switch("database", 'D')
+                .argument("URL", anyParser(databaseUrl))
+                .doc("Name of the database to create for this test."));
+
+
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.groupNameSeparator("-");
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen_names}");
-    parser.doc("Specimens", engine.specimenNameDocumentation());
-    parser.with(engine.engineSwitches());
-    parser.with(engine.loaderSwitches());
-    parser.with(engine.disassemblerSwitches());
-    parser.with(engine.partitionerSwitches());
+    parser.doc("Specimens",
+               "The @v{specimen_name} must be the name of a Linux ELF executable file with an x86 or amd64 "
+               "instruction set architecture.");
+    parser.with(Rose::CommandLine::genericSwitches());
+    parser.with(tool);
 
-    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
-    if (specimen.empty()) {
+    std::vector<std::string> specimenArgs = parser.parse(argc, argv).apply().unreachedArgs();
+    if (specimenArgs.empty()) {
         mlog[FATAL] <<"no binary specimen specified; see --help\n";
         exit(1);
     }
-    return specimen;
+    return specimenArgs[0];
 }
 
 int
@@ -42,29 +51,26 @@ main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     Rose::Diagnostics::initAndRegister(&mlog, "tool");
     mlog.comment("concolic testing tool proper");
+    std::string exeName = parseCommandLine(argc, argv);
 
 #if !defined(__linux__)
     mlog[INFO] <<"this test supported only for Linux operating systems\n";
     exit(0); // test succeeds since it does nothing
 #endif
 
-    P2::Engine engine;
-    std::vector<std::string> specimen = parseCommandLine(argc, argv, engine);
-    P2::Partitioner partitioner = engine.partition(specimen);
+    // Create the database and add a specimen to it.
+    Concolic::Database::Ptr db = Concolic::Database::create(databaseUrl);
+    Concolic::Specimen::Ptr specimen = Concolic::Specimen::instance(exeName);
+    Concolic::TestCase::Ptr testCase = Concolic::TestCase::instance(specimen);
+#if 1
+    std::vector<std::string> args;
+    args.push_back("1");
+    args.push_back("2");
+    testCase->args(args);
+#endif
+    Concolic::TestCaseId testCaseId = db->id(testCase);
 
-    // Find the starting address
-    SgAsmInterpretation *interp = engine.interpretation();
-    ASSERT_not_null(interp);
-    SgAsmElfFileHeader *hdr = isSgAsmElfFileHeader(interp->get_headers()->get_headers().back());
-    if (!hdr || hdr->get_exec_format()->get_purpose() != SgAsmExecutableFileFormat::PURPOSE_EXECUTABLE ||
-        hdr->get_exec_format()->get_word_size() != 8 ||
-        !hdr->get_sections_by_name(".interp").empty()) {
-        mlog[FATAL] <<"only statically-linked 64-bit ELF executables are supported\n";
-        exit(1);
-    }
-    rose_addr_t entryVa = hdr->get_entry_rva() + hdr->get_base_va();
-
-    // Test concolic executor
-    Concolic::ConcolicExecutor::Ptr concolicExecutor = Concolic::ConcolicExecutor::instance();
-    concolicExecutor->run(partitioner, entryVa);
+    // Run the concolic executor on the test case
+    Concolic::ConcolicExecutor::Ptr executor = Concolic::ConcolicExecutor::instance();
+    executor->execute(db, testCase);
 }

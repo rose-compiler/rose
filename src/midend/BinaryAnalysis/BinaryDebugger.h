@@ -258,14 +258,22 @@ public:
      * of the compiled version of this header. */
     size_t kernelWordSize();
 
-    /** Read subordinate register.  Some registers are wider than what can be easily represented on this architecture (e.g.,
-     *  x86 XMM registers are 128 bits), therefore return the result as a bit vector. If you want just the low-order 64 bits,
-     *  invoke it like this:
+    /** Read subordinate register.
+     *
+     *  Some registers are wider than what can be easily represented on this architecture (e.g., x86 XMM registers are 128
+     *  bits), therefore return the result as a bit vector. If you want just the low-order 64 bits, invoke it like this:
      *
      * @code
-     *  uint64_t value = debugger.readRegister(RIP).toInteger();
+     *  uint64_t value = debugger->readRegister(RIP).toInteger();
      * @endcode */
     Sawyer::Container::BitVector readRegister(RegisterDescriptor);
+
+    /** Read subordinate memory as a bit vector.
+     *
+     * @code
+     *  uint64_t value = debugger->readMemory(0x12345678, 4, ByteOrder::ORDER_LSB).toInteger();
+     * @endcode */
+    Sawyer::Container::BitVector readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness order);
 
     /** Read subordinate memory.
      *
@@ -286,6 +294,9 @@ public:
     Disassembler* disassembler() const {
         return disassembler_;
     }
+    
+    /** Returns the last status from a call to waitpid. */
+    int waitpidStatus() const { return wstat_; }
     
 private:
     // Initialize tables during construction

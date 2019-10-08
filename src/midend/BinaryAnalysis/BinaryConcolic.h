@@ -321,8 +321,8 @@ public:
 // Concrete executors and their results
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* const tagConcreteExecutorResult = "ConcreteExecutorResult";
-static const char* const tagLinuxExecutorResult    = "LinuxExecutorResult";
+extern const char* const tagConcreteExecutorResult;
+extern const char* const tagLinuxExecutorResult;
 
 /** Base class for executing test cases concretely.
  *
@@ -385,6 +385,42 @@ public:
     virtual
     Result*
     execute(const TestCase::Ptr&) = 0;
+
+    /** \brief
+     *  Sets an execution monitor for a test run. The execution monitor
+     *  observes a test and computes a quality score that can be used to
+     *  rank different executions (higher indicates better quality).
+     *
+     *  \details
+     *  The execution monitor (e.g., execmon) needs to understand the
+     *  following command line arguments:
+     *    execmon -o outfile -- specimen test-arguments..
+     *      -o outfile       a file containing two lines:
+     *  or  --output=outfile (1) a human-readable integer value,
+     *                           the exit code of the child process;
+     *                       (2) a human-readable floating point value,
+     *                           the quality score of the execution.
+     *      --               separator between arguments to execmon
+     *                       and test specification.
+     *      specimen         the tested specimen
+     *      test-arguments.. an arbitrary long argument list passed
+     *                       to specimen.
+     *
+     *  @{
+     */
+    void executionMonitor(const boost::filesystem::path& executorName)
+    {
+      execmon = executorName;
+    }
+
+    boost::filesystem::path executionMonitor() const
+    {
+      return execmon;
+    }
+    /** @} */
+
+private:
+    boost::filesystem::path execmon; // the execution monitor
 };
 
 /** Concrete executor for Linux ELF executables. */
@@ -422,8 +458,7 @@ public:
         }
 
     public:
-        explicit
-        Result(int exitStatus);
+        Result(double rank, int exitStatus);
 
         Result() {} // required for boost serialization
 
@@ -449,9 +484,9 @@ public:
         /** @} */
 
         /** Property: textual representation of how a test exited.
+         *            The property is set together with exitStatus.
          * @{ */
         std::string exitKind() const            { return exitKind_; }
-        void exitKind(const std::string& desc)  { exitKind_ = desc; }
         /* @} */
     };
 
@@ -479,8 +514,7 @@ public:
     /** @} */
 
     virtual
-    ConcreteExecutor::Result*
-    execute(const TestCase::Ptr&) ROSE_OVERRIDE;
+    Result* execute(const TestCase::Ptr&) ROSE_OVERRIDE;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -835,6 +869,9 @@ public:
    std::vector<Database::TestCaseId> needConcolicTesting(size_t);
 
    /** Updates a test case and its results.
+    *
+    * @param testCase a pointer to a test case
+    * @param details  a polymorphic object holding results for a concrete execution
     *
     * Thread safety: thread safe
     */

@@ -2543,6 +2543,8 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
     while (InteriorPtr inode = node->isInteriorNode()) {
         Ptr newnode = node;
         switch (inode->getOperator()) {
+            case OP_NONE:
+                ASSERT_not_reachable("not possible for an interior node");
             case OP_ADD:
                 newnode = inode->rewrite(AddSimplifier(), solver);
                 if (newnode==node)
@@ -2817,15 +2819,45 @@ Leaf::nextNameCounter(uint64_t useThis) {
 }
 
 bool
-Leaf::isNumber() {
+Leaf::isNumber() const {
     return CONSTANT==leafType_;
 }
 
 uint64_t
 Leaf::toInt() {
-    ASSERT_require(isNumber());
-    ASSERT_require(nBits() <= 64);
-    return bits_.toInteger();
+    return toUnsigned().get();
+}
+
+Sawyer::Optional<uint64_t>
+Leaf::toUnsigned() const {
+    if (!isNumber())
+        return Sawyer::Nothing();
+    if (nBits() <= 64)
+        return bits_.toInteger();
+    size_t mssb = bits_.mostSignificantSetBit().orElse(0);
+    if (mssb < 64)
+        return bits_.toInteger(mssb+1);
+    return Sawyer::Nothing();
+}
+
+Sawyer::Optional<int64_t>
+Leaf::toSigned() const {
+    using namespace Sawyer::Container;
+    if (!isNumber())
+        return Sawyer::Nothing();
+    if (nBits() <= 64)
+        return bits_.toSignedInteger();
+    bool isNegative = bits_.get(bits_.size()-1);
+    if (isNegative) {
+        size_t mscb = bits_.mostSignificantClearBit().orElse(0);
+        if (mscb >= 63)
+            return Sawyer::Nothing();
+    } else {
+        size_t mssb = bits_.mostSignificantSetBit().orElse(0);
+        if (mssb >= 63)
+            return Sawyer::Nothing();
+    }
+    return bits_.toSignedInteger();
 }
 
 const Sawyer::Container::BitVector&
@@ -3080,6 +3112,12 @@ Leaf::depthFirstTraversal(Visitor &v) {
     if (TERMINATE!=retval)
         retval = v.postVisit(self);
     return retval;
+}
+
+const Nodes&
+Leaf::children() const {
+    static const Nodes empty;
+    return empty;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

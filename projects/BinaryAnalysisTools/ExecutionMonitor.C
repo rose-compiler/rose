@@ -8,6 +8,7 @@ static const char* description =
     "intervals. Code intervals are non-overlapping, contiguous code segments.\n";
 
 #include <algorithm>
+#include <fstream>
 
 #include "sage3basic.h"
 #include "Sawyer/IntervalSet.h"
@@ -26,7 +27,7 @@ static const char* description =
     || defined(__mips__) || defined(__mips)       /* GNU */       \
     )
 
-  static constexpr size_t INSTRUCTION_LENGTH = 4; /* bytes */
+  static const size_t INSTRUCTION_LENGTH = 4; /* bytes */
 
   /*
    * - PowerPC: All PowerPCs (including 64-bit implementations) use fixed-length 32-bit instructions.
@@ -36,7 +37,7 @@ static const char* description =
    */
 
 #else
-  static constexpr size_t INSTRUCTION_LENGTH = 0; /* variable-length encoding */
+  static const size_t INSTRUCTION_LENGTH = 0; /* variable-length encoding */
 
   /* variable-length instruction encoding requires disassembler
    *
@@ -106,13 +107,19 @@ namespace BinaryAnalysis {
   struct ExecutionMonitor : Debugger
   {
       /* this is an imprecise estimate. */
-      static constexpr size_t INSTR_LENGTH_ESTIMATE = 4;
-      static constexpr size_t INSTR_LENGTH_MARGIN   = 1;
+      static const size_t INSTR_LENGTH_ESTIMATE = 4;
+      static const size_t INSTR_LENGTH_MARGIN   = 1;
 
       typedef rose_addr_t                                     addr_t;
       typedef Sawyer::Container::Interval<addr_t>             AddressInterval;
       typedef Sawyer::Container::IntervalSet<AddressInterval> AddressIntervalSet;
 
+/*
+      ExecutionMonitor(const boost::filesystem::path& exeName, const std::vector<std::string>& args, Disassembler* disasm) 
+      : Debugger(exeName, args, Debugger::CLOSE_FILES),
+        disassembler(disasm), currIval(), intervals()
+      {}
+*/
       ExecutionMonitor(const std::vector<std::string>& exeNameAndArgs, Disassembler* disasm)
           : disassembler(disasm), currIval(), intervals()
       {
@@ -283,8 +290,7 @@ int main(int argc, char** argv)
   char**                  specpos = sep;
   if (specpos != argv+argc) ++specpos;
 
-  std::vector<std::string> specimen(specpos, argv+argc);
-
+  std::vector<std::string> specimenAndArgs(specpos, argv+argc);
   Disassembler*            disassembler = NULL;
 
   // Parse command-line
@@ -295,6 +301,12 @@ int main(int argc, char** argv)
   for (size_t i = 0; i < unused.size(); ++i)
   {
     ::mlog[WARN] << "unknown argument: " << unused.at(i) << std::endl;
+  }
+  
+  if (specimenAndArgs.size() == 0)
+  {
+    ::mlog[FATAL] << "No specimen given (use --help)\n";
+    exit(1);
   }
 
   // Trace output goes to either std::cout or some file.
@@ -311,7 +323,7 @@ int main(int argc, char** argv)
   if (INSTRUCTION_LENGTH == 0 && settings.disassembler)
   {
     // Load specimen into ROSE's simulated memory
-    if (!engine.parseContainers(specimen.front()))
+    if (!engine.parseContainers(specimenAndArgs.front()))
     {
       ::mlog[FATAL] << "cannot parse specimen binary container\n";
       exit(1);
@@ -326,16 +338,13 @@ int main(int argc, char** argv)
     }
   }
 
-  if (specimen.size() == 0)
-  {
-    ::mlog[FATAL] << "No specimen given (use --help)\n";
-    exit(1);
-  }
-
-  ExecutionMonitor execmon(specimen, disassembler);
+  ExecutionMonitor execmon(specimenAndArgs, disassembler);
 
   execmon.run();
-  traceOutput << "#estimated unique instruction bytes = " << execmon.estimateDistinctInstructionBytes() << std::endl;
+
+  traceOutput << execmon.waitpidStatus() << '\n'
+              << execmon.estimateDistinctInstructionBytes()
+              << std::endl;
 
   return 0;
 }

@@ -10,9 +10,10 @@ extern "C" int yywrap(void) { return 1; }
 "create"                       return DBCREATE;
 "connect"                      return DBCONNECT;
 "close"                        return DBCLOSE;
-"export"                       return EXPORT;
-"run"                          return RUN;
 "exit"                         return EXIT;
+"export"                       return EXPORT;
+"MONITOR"                      return MONITOR;
+"run"                          return RUN;
 "::"                           return QUAL;
 !                              return SHELL;
 

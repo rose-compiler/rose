@@ -51,26 +51,27 @@ copyBinaryToDB( concolic::Database::Ptr db,
     concolic::Specimen::Ptr binary = concolic::Specimen::instance(executableName);
     concolic::SpecimenId    id = db->id(binary, update);
     std::cout << "dbtest: copying over " << executableName
-              << " new id: " << id.get()
+              << " new id: " << (id ? id.get() : -1)
+              << " update: " << update
               << std::endl;
 
     return id;
   }
   catch (const SqlDatabase::Exception& e)
   {
-    std::cout << "dbtest: copying over " << executableName
+    std::cout << "dbtest: copying over x" << executableName
               << " failed with: " << e.what()
               << std::endl;
   }
   catch (const std::logic_error& e)
   {
-    std::cout << "dbtest: copying over " << executableName
+    std::cout << "dbtest: copying over" << executableName
               << " failed with: " << e.what()
               << std::endl;
   }
   catch (const std::runtime_error& e)
   {
-    std::cout << "dbtest: copying over " << executableName
+    std::cout << "dbtest: copying over v" << executableName
               << " failed with: " << e.what()
               << std::endl;
   }
@@ -175,7 +176,7 @@ concolic::TestCaseId
 createTestCase(concolic::Database::Ptr db, concolic::SpecimenId specimenId, std::string n) {
     return createTestCase(db, specimenId, n, std::vector<std::string>());
 }
-    
+
 concolic::TestCaseId
 createTestCase(concolic::Database::Ptr db, concolic::SpecimenId specimenId, std::string n,
                 const std::string &arg) {
@@ -292,26 +293,43 @@ void testAll(std::string dburi)
 
   // add new file(s)
   concolic::SpecimenId              tst       = copyBinaryToDB(db, "testConcolicDB", concolic::Update::YES);
+  assert(tst);
+
   concolic::SpecimenId              ls_bin    = copyBinaryToDB(db, findFile("ls", executionPaths()), concolic::Update::YES);
-  if (!ls_bin) ls_bin = concolic::SpecimenId(2); // in case the db alreay existed
+  assert(ls_bin);
+  // storing a specimen multiple times is allowed
+  // if (!ls_bin) ls_bin = concolic::SpecimenId(2); // in case the db alreay existed
 
   concolic::SpecimenId              ls2_bin   = copyBinaryToDB(db, findFile("ls", executionPaths()), concolic::Update::YES);
+  assert(ls2_bin);
+
   concolic::SpecimenId              grep_bin  = copyBinaryToDB(db, findFile("grep", executionPaths()), concolic::Update::NO );
+  assert(!grep_bin); /* update is NO, thus no object is created. */
+
   concolic::SpecimenId              more_bin  = copyBinaryToDB(db, findFile("more", executionPaths()), concolic::Update::YES);
-  if (!more_bin) more_bin = concolic::SpecimenId(3); // in case the db alreay existed
+  assert(more_bin);
+  // storing a specimen multiple times is allowed
+  // if (!more_bin) more_bin = concolic::SpecimenId(5); // in case the db alreay existed
 
   ASSERT_forbid(boost::filesystem::exists("/usr/bin/xyz"));
   concolic::SpecimenId              xyz_bin   = copyBinaryToDB(db, "/usr/bin/xyz", concolic::Update::YES);
+  assert(!xyz_bin);
 
   // define test cases
   concolic::TestCaseId              ls_tst    = createTestCase(db, ls_bin, "ls", "/");
-  if (!ls_tst) ls_tst = concolic::TestCaseId(1); // in case the db already existed
+  assert(ls_tst);
+  // test-case names are not unique
+  // if (!ls_tst) ls_tst = concolic::TestCaseId(1); // in case the db already existed
 
   concolic::TestCaseId              ls_la_tst = createTestCase(db, ls_bin, "ls -la", "-la", "/");
-  if (!ls_la_tst) ls_la_tst = concolic::TestCaseId(2); // in case the db already existed
+  assert(ls_la_tst);
+  // test-case names are not unique
+  // if (!ls_la_tst) ls_la_tst = concolic::TestCaseId(2); // in case the db already existed
 
   concolic::TestCaseId              more_tst = createTestCase(db, ls_bin, "more", "y.txt");
-  if (!more_tst) more_tst = concolic::TestCaseId(3); // in case the db already existed
+  assert(more_tst);
+  // test-case names are not unique
+  // if (!more_tst) more_tst = concolic::TestCaseId(3); // in case the db already existed
 
   runTestcase(db, ls_tst);
   runTestcase(db, ls_la_tst);

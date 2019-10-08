@@ -27,6 +27,8 @@ int yylex();
   Environment*        m_environment;
   std::string*        m_arg;
   Arguments*          m_arguments;
+  std::string*        m_annotation;                      
+  Annotations*        m_annotations;
   InvocationDesc*     m_invoke;
 }
 
@@ -36,6 +38,7 @@ int yylex();
 %token EQUAL
 %token EXIT
 %token EXPORT
+%token MONITOR
 %token LBLK
 %token NOTE
 %token RBLK
@@ -51,11 +54,13 @@ int yylex();
 
 %type <m_num>         num num_opt
 %type <m_str>         filename ident string specimen testsuite_opt
-%type <m_str>         simple_string quoted_string annotation_opt
+%type <m_str>         simple_string quoted_string 
 %type <m_env>         export
 %type <m_environment> environ_opt
 %type <m_arg>         argument
 %type <m_arguments>   arguments_opt
+%type <m_annotation>  annotation
+%type <m_annotations> annotations_opt
 %type <m_invoke>      test_invoke
 
 %start crush
@@ -87,6 +92,7 @@ environ_opt      : /* empty */                  { $$ = crsh().environment();    
                  ;
 
 argument         : string                       { $$ = crsh().arg($1); }
+                 | num                          { $$ = crsh().arg($1); }
                  ;
 
 arguments_opt    : /* empty */                  { $$ = crsh().args();       }
@@ -96,20 +102,23 @@ arguments_opt    : /* empty */                  { $$ = crsh().args();       }
 specimen         : string                       { $$ = $1; }
                  ;
 
-annotation_opt   : /* empty */                  { $$ = NULL; }
-                 | NOTE string                  { $$ = $2;      }
+annotation       : NOTE string                  { $$ = crsh().annotation($2); }
+                 ;
+                 
+annotations_opt  : /* empty */                  { $$ = crsh().annotations();       }
+                 | annotations_opt annotation   { $$ = crsh().annotations($1, $2); } 
                  ;
 
-test_invoke      : annotation_opt
+test_invoke      : annotations_opt
                    specimen arguments_opt       { $$ = crsh().invoke($1, $2, $3); }
                  ;
 
-test_cmd         : ident QUAL ident
-                   annotation_opt
+test_cmd         : annotations_opt
+                   ident QUAL ident
                    LBLK
                      environ_opt
                      test_invoke
-                   RBLK                         { crsh().test($1, $3, $4, $6, $7); }
+                   RBLK                         { crsh().test($2, $4, $1, $6, $7); }
                  ;
 
 testsuite_opt    : /* empty */                  { $$ = NULL; }
@@ -120,14 +129,18 @@ num_opt          : /* empty */                  { $$ = -1; }
                  | num                          { $$ = $1; }
                  ;
 
-exectest_cmd     : testsuite_opt
-                   RUN num_opt annotation_opt   { crsh().runTest($1, $3, $4); }
+exectest_cmd     : annotations_opt
+                   testsuite_opt
+                   RUN num_opt                  { crsh().runTest($1, $2, $4); }
                  ;
+                 
+monitor_cmd      : MONITOR EQUAL string         { crsh().setMonitor($3); }
+                 ; 
 
 shell_cmd        : SHELL test_invoke            { crsh().execute($2); }
 
-dbconnect_cmd    : DBCONNECT
-                     filename annotation_opt    { crsh().connectdb($2, $3); }
+dbconnect_cmd    : annotations_opt
+                   DBCONNECT filename           { crsh().connectdb($1, $3); }
                  ;
 
 dbcreate_cmd     : DBCREATE filename            { crsh().createdb($2); }
@@ -143,6 +156,7 @@ exit_cmd         : EXIT
 cmd              : test_cmd
                  | exectest_cmd
                  | shell_cmd
+                 | monitor_cmd
                  | dbconnect_cmd
                  | dbcreate_cmd
                  | dbclose_cmd

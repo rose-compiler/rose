@@ -61,6 +61,7 @@ class UntypedConverter
       virtual SgEnumDeclaration*          convertUntypedEnumDeclaration          (SgUntypedEnumDeclaration*          ut_decl, SgScopeStatement* scope);
 
       virtual SgDeclarationStatement*     convertUntypedStructureDeclaration     (SgUntypedStructureDeclaration*     ut_decl, SgScopeStatement* scope) = 0;
+      virtual SgTypedefDeclaration*       convertUntypedTypedefDeclaration       (SgUntypedTypedefDeclaration*       ut_decl, SgScopeStatement* scope);
 
       virtual SgModuleStatement*          convertUntypedModuleDeclaration        (SgUntypedModuleDeclaration*        ut_decl, SgScopeStatement* scope);
       virtual SgProgramHeaderStatement*   convertUntypedProgramHeaderDeclaration (SgUntypedProgramHeaderDeclaration* ut_decl, SgScopeStatement* scope);

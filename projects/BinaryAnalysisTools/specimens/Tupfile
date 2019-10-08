@@ -1,3 +1,0 @@
-include_rules
-
-run $(support_compile_linkexe) -o testExecutionMonitor test-execution-monitor.C

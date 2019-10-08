@@ -75,11 +75,20 @@ namespace BinaryAnalysis {
     static const size_t
     DBSQLITE_FIRST_ROWID = 1;
 
+    // Unfortunately, the current sqlite3x interface is not able to query
+    // NULL values. Thus, a negative pseudo value is used to indicate that
+    // no concrete test has been performed.
+    // \todo upgrade to newer sqlite3x interface that supports NULL values
+    //       e.g., https://github.com/ptrv/sqlite3x
+
     static const double
-    NO_CONCRETE_RANK     = -99;
+    NO_CONCRETE_RANK     = -9999;
 
     static const std::string
-    NO_CONCRETE_RANK_STR = "\"" + boost::lexical_cast<std::string>(NO_CONCRETE_RANK) + "\"";
+    NO_CONCRETE_RANK_STR = boost::lexical_cast<std::string>(NO_CONCRETE_RANK);
+
+    static const std::string
+    NO_CONCRETE_RANK_MAX = boost::lexical_cast<std::string>(NO_CONCRETE_RANK+1);
 
     // type function to add types to the end of a boost::tuple
     //   generic case
@@ -429,7 +438,7 @@ namespace BinaryAnalysis {
                             "  \"testsuite_id\" int,"
                             "  \"name\" varchar(128),"
                             "  \"executor\" varchar(128) CHECK(executor = \"linux\"),"
-                            "  \"concrete_result\" float,"
+                            "  \"concrete_rank\" float,"
                             "  \"concolic_result\" int,"
                             //~ " CONSTRAINT \"uq_specimen_name\" UNIQUE (\"specimen_id\", \"name\"),"
                             " CONSTRAINT \"fk_specimen_testcase\" FOREIGN KEY (\"specimen_id\") REFERENCES \"Specimens\" (\"id\")"
@@ -456,7 +465,6 @@ namespace BinaryAnalysis {
     QY_MK_CONCRETE_RES   = "CREATE TABLE \"ConcreteResults\" ("
                            "  \"testcase_id\" int UNIQUE NOT NULL,"
                            "  \"result\" Text,"
-                           "  \"concolic_run\" boolean,"
                            " CONSTRAINT \"fk_testcase_results\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\")"
                            ");";
 
@@ -480,18 +488,6 @@ namespace BinaryAnalysis {
                             " CONSTRAINT \"fk_envvar_testcasevar\" FOREIGN KEY (\"envvar_id\") REFERENCES \"EnvironmentVariables\" (\"id\"),"
                             " CONSTRAINT \"pk_testcasevar\" PRIMARY KEY (\"testcase_id\", \"envvar_id\")"
                             ");";
-
-/*
-    static const
-    SqlQuery<> QY_MK_TESTSUITE_TESTCASE =
-                            "CREATE TABLE \"TestSuiteTestCases\" ("
-                            "  \"testsuite_id\" int NOT NULL,"
-                            "  \"testcase_id\" int NOT NULL,"
-                            " CONSTRAINT \"fk_testsuite_parent\" FOREIGN KEY (\"testsuite_id\") REFERENCES \"TestSuites\" (\"id\"),"
-                            " CONSTRAINT \"fk_testsuite_children\" FOREIGN KEY (\"testcase_id\") REFERENCES \"TestCases\" (\"id\"),"
-                            " CONSTRAINT \"pk_testsuite_members\" PRIMARY KEY (\"testsuite_id\", \"testcase_id\")"
-                            ");";
-*/
 
     static const
     SqlQuery<>
@@ -577,32 +573,25 @@ namespace BinaryAnalysis {
                             " LIMIT " + SqlInt() + ";";
 
     static const
-    std::string
-    HAS_CONCRETE_RESULTS  = " EXISTS"
-                            "    ( SELECT *"
-                            "        FROM ConcreteResults cr"
-                            "       WHERE cr.testcase_id = tc.rowid )";
-
-    static const
     SqlQuery<bt::tuple<int, int>::inherited>
-    QY_NEED_CONCRETE      = "SELECT tc.rowid"
-                            "  FROM TestCases tc"
-                            " WHERE tc.testsuite_id = " + SqlInt() +
-                            "   AND NOT" + HAS_CONCRETE_RESULTS +
-                            " ORDER BY concrete_result ASC"
+    QY_NEED_CONCRETE      = "SELECT rowid"
+                            "  FROM TestCases"
+                            " WHERE testsuite_id = " + SqlInt() +
+                            "   AND concrete_rank < " + NO_CONCRETE_RANK_MAX +
+                            " ORDER BY concrete_rank ASC"
                             " LIMIT " + SqlInt() + ";";
 
     static const
     SqlQuery<bt::tuple<int>::inherited>
-    QY_ALL_NEED_CONCRETE  = "SELECT tc.rowid"
-                            "  FROM TestCases tc"
-                            " WHERE NOT" + HAS_CONCRETE_RESULTS +
-                            " ORDER BY tc.concrete_result ASC"
+    QY_ALL_NEED_CONCRETE  = "SELECT rowid"
+                            "  FROM TestCases"
+                            " WHERE concrete_rank < " + NO_CONCRETE_RANK_MAX +
+                            " ORDER BY concrete_rank ASC"
                             " LIMIT " + SqlInt() + ";";
 
     static const
     SqlQuery<bt::tuple<int>::inherited>
-    QY_TESTCASE           = "SELECT name, executor, concrete_result, concolic_result"
+    QY_TESTCASE           = "SELECT name, executor, concrete_rank, concolic_result"
                             "  FROM TestCases"
                             " WHERE rowid = " + SqlInt() + ";";
 
@@ -654,16 +643,16 @@ namespace BinaryAnalysis {
     static const
     SqlQuery<bt::tuple<int, std::string, std::string>::inherited>
     QY_NEW_TESTCASE      = "INSERT INTO TestCases"
-                           "  (specimen_id, name, executor, concrete_result)"
+                           "  (specimen_id, name, executor, concrete_rank, concolic_result)"
                            "  VALUES(" + SqlInt() + "," + SqlString() + "," + SqlString()
-                                       + ", " + NO_CONCRETE_RANK_STR +
+                                       + ", " + NO_CONCRETE_RANK_STR + ", 0"
                                     ");";
 
     static const
     SqlQuery<bt::tuple<int, std::string, std::string, double, bool, int>::inherited>
     QY_UPD_TESTCASE      = "UPDATE TestCases"
                            "   SET specimen_id = " + SqlInt() + ", name = " + SqlString() + ","
-                           "       executor = " + SqlString() + ", concrete_result = " + SqlReal() + ","
+                           "       executor = " + SqlString() + ", concrete_rank = " + SqlReal() + ","
                            "       concolic_result = " + SqlBool() +
                            " WHERE rowid = " + SqlInt() + ";";
 
@@ -740,10 +729,15 @@ namespace BinaryAnalysis {
     QY_RM_RBAFILE        = "DELETE FROM RBAFiles"
                            "  WHERE specimen_id = " + SqlInt() + ";";
 
+    //~ static const
+    //~ SqlQuery<bt::tuple<int, std::string>::inherited>
+    //~ QY_NEW_CONCRETE_RES  = "INSERT INTO ConcreteResults"
+                           //~ "  (testcase_id, result)"
+                           //~ "  VALUES(" + SqlInt() + "," + SqlString() + ");";
 
     static const
     SqlQuery<bt::tuple<int, std::string>::inherited>
-    QY_NEW_CONCRETE_RES  = "INSERT INTO ConcreteResults"
+    QY_NEW_CONCRETE_RES  = "REPLACE INTO ConcreteResults"
                            "  (testcase_id, result)"
                            "  VALUES(" + SqlInt() + "," + SqlString() + ");";
 
@@ -784,15 +778,16 @@ namespace BinaryAnalysis {
 
     void populateObjFromQuery(SqlIterator& it, Concolic::TestCase& obj)
     {
-      obj.name(it.get_str(0));
-      // obj.executor(it.get_str(1)));
-      /* std::string exec = */ it.get_str(1);
+      typedef Sawyer::Optional<double> Double_opt;
 
-      // the SQLlite interface does not allow to test for NULL values
-      double                   concreteTest = it.get_dbl(2);
-      Sawyer::Optional<double> concreteTest_opt = ( concreteTest >= 0
-                                                     ? Sawyer::Optional<double>(concreteTest)
-                                                     : Sawyer::Optional<double>()
+      obj.name(it.get_str(0));
+      /* std::string exec = */ it.get_str(1); // executor
+
+      // \todo sqlite3x does currently not support NULL tests
+      const double concreteTest = it.get_dbl(2);
+      Double_opt   concreteTest_opt = ( concreteTest > (NO_CONCRETE_RANK+1)
+                                          ? Double_opt(concreteTest)
+                                          : Double_opt()
                                                   );
       obj.concreteRank(concreteTest_opt);
       obj.concolicTest(it.get_i32(3));
@@ -1162,7 +1157,6 @@ void initializeDB(SqlTransactionPtr tx)
   sqlPrepare(tx, QY_MK_ENVVARS)->execute();
   sqlPrepare(tx, QY_MK_TESTCASE_ARGS)->execute();
   sqlPrepare(tx, QY_MK_TESTCASE_EVAR)->execute();
-  //~ sqlPrepare(tx, QY_MK_TESTSUITE_TESTCASE)->execute();
   sqlPrepare(tx, QY_MK_RBA_FILES)->execute();
   sqlPrepare(tx, QY_MK_CONCRETE_RES)->execute();
 }
@@ -1450,9 +1444,8 @@ updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj, 
   const int                specId       = db.id_ns(tx, obj->specimen(), Update::NO).get();
   Sawyer::Optional<double> concreteRank = obj->concreteRank();
 
-  // \todo use some negative number, since queries cannot test for null
-  double                   rank         = concreteRank ? concreteRank.get() : -9.0 /* some negative value */;
-  bool                     hasConc      = obj->hasConcolicTest();
+  const double             rank         = concreteRank ? concreteRank.get() : NO_CONCRETE_RANK;
+  const bool               hasConc      = obj->hasConcolicTest();
 
   sqlPrepare(tx, QY_UPD_TESTCASE, specId, obj->name(), "linux", rank, hasConc, id.get())
      ->execute();
@@ -1693,23 +1686,6 @@ struct GuardedStmt
     sqlite3_stmt*   stmt_;
 };
 
-//~ struct SqlLiteStringGuard
-//~ {
-  //~ explicit
-  //~ SqlLiteStringGuard(const char* s)
-  //~ : str(s)
-  //~ {}
-
-  //~ ~SqlLiteStringGuard()
-  //~ {
-    //~ if (str) sqlite3_free(const_cast<char*>(str));
-  //~ }
-
-  //~ operator const char*() { return str; }
-
-  //~ const char* const str;
-//~ };
-
 
 void GuardedDB::debug(GuardedStmt& sql)
 {
@@ -1863,7 +1839,7 @@ Database::hasUntested() const
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 template <class T>
 static
-std::string xml(const T& o)
+std::string xml(const T* o)
 {
   std::stringstream            stream;
   boost::archive::xml_oarchive oa(stream);
@@ -1874,7 +1850,7 @@ std::string xml(const T& o)
 
 template <class T>
 static
-std::string text(const T& o)
+std::string text(const T* o)
 {
   std::stringstream             stream;
   boost::archive::text_oarchive oa(stream);
@@ -1884,24 +1860,16 @@ std::string text(const T& o)
 }
 #endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
+
 void
 Database::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result& details)
 {
   std::string  detailtxt = "<error>requires BOOST serialization</error>";
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-  // was: detailtxt = xml(details);
-  //      BOOST serialization does not seem to pick up the polymorphic
-  //      type...
-  //      BOOST_CLASS_EXPORT_KEYs are defined in BinaryConcolic.h
-  //      BOOST_CLASS_EXPORT_IMPLEMENTs are defined in LinuxExecutor.C
-  const LinuxExecutor::Result* linuxres = dynamic_cast<const LinuxExecutor::Result*>(&details);
-
-  // \todo enable BOOST serialization polymorphism
-  detailtxt = linuxres ? xml(*linuxres) : xml(details);
+  detailtxt = xml(&details);
   //~ detailtxt = text(details);
-
-  std::cerr << "XML:" << detailtxt << std::endl;
+  //~ std::cerr << "XML:" << detailtxt << std::endl;
 #else
   //~ Sawyer::Message::mlog[Sawyer::Message::INFO]
   std::cerr
@@ -1915,6 +1883,7 @@ Database::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExe
 
     updateDBObject(*this, dbtx.tx(), testCase, tcid);
 
+    // \note existing results will be overwritten?
     sqlPrepare(dbtx.tx(), QY_NEW_CONCRETE_RES, tcid.get(), detailtxt)
       ->execute();
 
@@ -1931,7 +1900,6 @@ void writeDBSchema(std::ostream& os)
      << QY_MK_ENVVARS            << "\n\n"
      << QY_MK_TESTCASE_ARGS      << "\n\n"
      << QY_MK_TESTCASE_EVAR      << "\n\n"
-     //~ << QY_MK_TESTSUITE_TESTCASE << "\n\n"
      << QY_MK_RBA_FILES          << "\n\n"
      << QY_MK_CONCRETE_RES       ;
 }

@@ -156,6 +156,8 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
     } else {
         ASSERT_not_null(inode);
         switch (inode->getOperator()) {
+            case SymbolicExpr::OP_NONE:
+                ASSERT_not_reachable("not possible for an interior node");
             case SymbolicExpr::OP_ADD:
                 retval = outputList("bvadd", inode);
                 break;
@@ -450,6 +452,8 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
     } else {
         ASSERT_not_null(inode);
         switch (inode->getOperator()) {
+            case SymbolicExpr::OP_NONE:
+                ASSERT_not_reachable("not possible for an interior node");
             case SymbolicExpr::OP_ADD: {
                 Etv children = ctxCast(ctxExpressions(inode->children()), BIT_VECTOR);
                 ASSERT_forbid(children.empty());

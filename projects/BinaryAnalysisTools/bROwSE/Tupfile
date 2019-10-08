@@ -1,0 +1,46 @@
+########################################################################################################################
+# A web browser interface to ROSE. The bROwSE_server is an HTTP daemon to which you connect with any browser that's
+# capable of running Javascript.
+########################################################################################################################
+
+include_rules
+
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+    ifneq (@(WITH_WT),no)
+
+	# Because bROwSE/*.C try to #include <bROwSE/*.h> instead of just <*.h>.
+	tool_CPPFLAGS += -I..
+
+        bROwSE_SOURCES = \
+                Application.C                    \
+                bROwSE.C                         \
+                FunctionListModel.C              \
+                FunctionUtil.C                   \
+                InstructionListModel.C           \
+                Statistics.C                     \
+                WAddressComboBox.C               \
+                WAddressSpace.C                  \
+                WAssemblyListing.C               \
+                WBusy.C                          \
+                WCrossReferences.C               \
+                WFunctionCfg.C                   \
+                WFunctionList.C                  \
+                WFunctionNavigation.C            \
+                WFunctionSummary.C               \
+                WHexDump.C                       \
+                WHexValueEdit.C                  \
+                WInstructionList.C               \
+                WMagic.C                         \
+                WMemoryMap.C                     \
+                WPartitioner.C                   \
+                WSemantics.C                     \
+                WSplash.C                        \
+                WStatus.C                        \
+                WStringDetail.C                  \
+                WStrings.C                       \
+                WToggleButton.C
+
+        run $(tool_compile_linkexe) $(bROwSE_SOURCES) -o bROwSE_server --install -lwthttp
+
+    endif
+endif

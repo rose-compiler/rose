@@ -1331,7 +1331,7 @@ SERVER_BASED_SEARCH    = YES
 
 # The following needs doxygen 1.8.3 or later. [Matzke 2015-09-14]
 EXTERNAL_SEARCH = YES
-SEARCHENGINE_URL = http://rosecompiler.org/doxygen/doxysearch.cgi
+SEARCHENGINE_URL = http://rosecompiler.org/cgi-bin/doxysearch.cgi
 
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output

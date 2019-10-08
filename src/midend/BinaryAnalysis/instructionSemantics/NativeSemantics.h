@@ -91,9 +91,17 @@ public:
     }
 
     //----------------------------------------
+    // Additional properties
+    //----------------------------------------
+public:
+    /** Property: Subordinate process storing the registers. */
+    Debugger::Ptr process() const {
+        return process_;
+    }
+
+    //----------------------------------------
     // Virtual function implementations
     //----------------------------------------
-
 public:
     virtual void clear() ROSE_OVERRIDE {}
 
@@ -183,6 +191,15 @@ public:
     }
 
     //----------------------------------------
+    // Additional properties
+    //----------------------------------------
+public:
+    /** Property: Subordinate process storing the registers. */
+    Debugger::Ptr process() const {
+        return process_;
+    }
+
+    //----------------------------------------
     // Virtual function implementations
     //----------------------------------------
 public:
@@ -267,7 +284,8 @@ protected:
 public:
     /** Instantiate a new @ref RiscOperators object.
      *
-     *  The @ref State (registers and memory) for this object is the subordinate process. */
+     *  The register state, memory state, and combined state are instantiations of @ref NativeSemantics @ref RegisterState,
+     *  @ref MemoryState, and @ref State, which point to the subordinate process and which are not copyable. */
     static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const Debugger::Ptr &process) {
         RegisterStatePtr registers = RegisterState::instance(protoval, process);
         MemoryStatePtr memory = MemoryState::instance(protoval, protoval, process);
@@ -275,6 +293,16 @@ public:
         return RiscOperatorsPtr(new RiscOperators(state));
     }
 
+    /** Instantiate a new @ref RiscOperators object.
+     *
+     *  The @ref state (registers and memory) for this object is provided by the caller and must be an instance of the
+     *  @ref NativeSemantics @ref State that points to @ref NativeSemantics @ref RegisterState and @ref MemoryState.
+     *  User-defined subclasses can also be used. */
+    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state) {
+        (void) State::promote(state);                   // check that it's the correct type
+        return RiscOperatorsPtr(new RiscOperators(state));
+    }
+    
     //----------------------------------------
     // Virtual constructors
     //----------------------------------------
@@ -295,6 +323,17 @@ public:
         ASSERT_not_null(retval);
         return retval;
     }
+
+    //----------------------------------------
+    // Additional properties
+    //----------------------------------------
+public:
+    /** Property: Process storing the state.
+     *
+     *  This is just a convenience function that queries the state for the information. */
+    Debugger::Ptr process() const {
+        return RegisterState::promote(currentState()->registerState())->process();
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -311,19 +350,43 @@ class Dispatcher: public BaseSemantics::Dispatcher {
     // Real constructors
     //----------------------------------------
 protected:
-    Dispatcher(const boost::filesystem::path &program, const std::vector<std::string> &args)
-        : process_(Debugger::instance(Debugger::Specimen(program, args))) {
+    Dispatcher(const Debugger::Ptr &process, const BaseSemantics::SValuePtr &protoval)
+        : process_(process) {
         set_register_dictionary(process_->registerDictionary());
         addressWidth(process_->kernelWordSize());
-        operators = RiscOperators::instance(SValue::instance(), process_);
+        operators = RiscOperators::instance(protoval, process_);
+    }
+
+    Dispatcher(const BaseSemantics::RiscOperatorsPtr &ops)
+        : process_(RiscOperators::promote(ops)->process()) {
+        set_register_dictionary(process_->registerDictionary());
+        addressWidth(process_->kernelWordSize());
+        operators = ops;
     }
     
     //----------------------------------------
     // Static allocating constructors
     //----------------------------------------
 public:
-    static DispatcherPtr instance(const boost::filesystem::path &exeName, const std::vector<std::string> &args) {
-        return DispatcherPtr(new Dispatcher(exeName, args));
+    /** Create a new dispatcher using the specified process. */
+    static DispatcherPtr instance(const Debugger::Ptr &process,
+                                  const BaseSemantics::SValuePtr &protoval = SValue::instance()) {
+        return DispatcherPtr(new Dispatcher(process, protoval));
+    }
+    
+    /** Create a new dispatcher using the specified executable specimen. */
+    static DispatcherPtr instance(const Debugger::Specimen &specimen,
+                                  const BaseSemantics::SValuePtr &protoval = SValue::instance()) {
+        Debugger::Ptr process = Debugger::instance(specimen);
+        return DispatcherPtr(new Dispatcher(process, protoval));
+    }
+
+    /** Create a new dispatcher using the specified operators.
+     *
+     *  The operators must derive from @ref NativeSemantics::RiscOperators. */
+    static DispatcherPtr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
+        (void) RiscOperators::promote(ops);             // check type
+        return DispatcherPtr(new Dispatcher(ops));
     }
     
     //----------------------------------------

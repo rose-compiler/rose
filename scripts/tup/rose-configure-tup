@@ -280,9 +280,10 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
     WITH_DWARF="$(value_or_no "$(config_switch --with-dwarf "$@")")" \
     WITH_ELF="$(value_or_no "$(config_switch --with-elf "$@")")" \
     WITH_GCRYPT="$(value_or_no "$(config_switch --with-gcrypt "$@")")" \
-    WITH_GPG_ERROR="$(value_or_else "$LIBGPG_ERROR_ROOT" "$(value_ite "$(config_switch --with-gcrypt "$@")" system)")" \
+    WITH_GPG_ERROR="$(value_or_else "$LIBGPG_ERROR_ROOT" "$(value_ite "$(config_switch --with-gcrypt "$@")" system no)")" \
     WITH_GRAPHICSMAGICK="$(value_or_no "$LIBGRAPHICSMAGICK_ROOT")" \
     WITH_JPEG="$(value_or_no "$LIBJPEG_ROOT")" \
+    WITH_JQ="$(value_or_no "$(makefile_value ROSE_USE_JQ Makefile)")" \
     WITH_LCMS="$(value_or_no "$LIBLCMS_ROOT")" \
     WITH_LZMA="$(value_or_no "$LIBLZMA_ROOT")" \
     WITH_MAGIC="$(value_or_no "$(config_switch --with-magic "$@")")" \

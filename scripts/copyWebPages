@@ -25,19 +25,17 @@ Here are the relavant commands that I used:
   187  ln -s ROSE_WebPages/ROSE_UserManual ROSE_UserManual
   188  mv ROSE_Tutorial ROSE_Tutorial.b02
   189  ln -s ROSE_WebPages/ROSE_Tutorial ROSE_Tutorial
-  190  mv ROSE_ResearchPapers ROSE_ResearchPapers.b02
-  191  ln -s ROSE_WebPages/ROSE_ResearchPapers ROSE_ResearchPapers
-  192  mv ROSE_HTML_Reference ROSE_HTML_Reference.b02
-  193  ln -s ROSE_WebPages/ROSE_HTML_Reference ROSE_HTML_Reference
-  194  pwd
-  195  ls -l
-  196  ls ROSE_WebPages
-  197  mv WEB_DOCS_README WEB_DOCS_README.b02
-  198  ln -s ROSE_WebPages/WEB_DOCS_README WEB_DOCS_README
+  190  mv ROSE_HTML_Reference ROSE_HTML_Reference.b02
+  191  ln -s ROSE_WebPages/ROSE_HTML_Reference ROSE_HTML_Reference
+  192  pwd
+  193  ls -l
+  194  ls ROSE_WebPages
+  195  mv WEB_DOCS_README WEB_DOCS_README.b02
+  196  ln -s ROSE_WebPages/WEB_DOCS_README WEB_DOCS_README
 
 # Note that compass_rose.ps is not used and compass_rose.gif is now used.
 
-  199  mv compass_rose.ps compass_rose.ps.b02
-  200  ln -s ROSE_WebPages/compass_rose.ps compass_rose.ps
-  201  mv compass_rose.gif compass_rose.gif.b02
-  202  ln -s ROSE_WebPages/compass_rose.gif compass_rose.gif
+  197  mv compass_rose.ps compass_rose.ps.b02
+  198  ln -s ROSE_WebPages/compass_rose.ps compass_rose.ps
+  199  mv compass_rose.gif compass_rose.gif.b02
+  200  ln -s ROSE_WebPages/compass_rose.gif compass_rose.gif
