@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix
+bin_PROGRAMS = codethorn woodpecker analyterix addressTakenAnalysis
 # matcher_demo matcher astinfo cldemo
 #noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo cldemo
 
@@ -36,6 +36,7 @@ libcodethorn_la_LDFLAGS=
 libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3
 codethornincludedir = $(pkgincludedir)/codethorn
 codethorninclude_HEADERS=\
+  CommandLineOptions.h \
   CounterexampleGenerator.h	   \
   AbstractValue.h \
   AliasAnalysis.h \
@@ -137,6 +138,7 @@ codethorninclude_HEADERS=\
   RERS_empty_specialization.h
 
 libcodethorn_la_SOURCES=\
+  CommandLineOptions.C \
   AbstractValue.C \
   AliasAnalysis.C \
   AnalysisAbstractionLayer.C \
@@ -230,12 +232,14 @@ libcodethorn_la_SOURCES=\
   addressTakenAnalysis.C \
   RERS_empty_specialization.C
 
+##############################################################
+# CODETHORN TOOL
+##############################################################
+
 codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
-# this line create speparately named object files
-codethorn_CXXFLAGS = -fopenmp -Wall -O3
+codethorn_CXXFLAGS = -fopenmp -Wall -O3 # this line creates speparately named object files
 codethorn_DEPENDENCIES=libcodethorn.la libcodethornltl.la
 
-#codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lspot -lbdd -lz3
 if ROSE_WITH_SPOT
 codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lcodethorn -lcodethornltl $(Z3_LINK)
 codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
@@ -318,29 +322,28 @@ codethorn_SOURCES = \
   LTLParser.y++                    \
   codethorn.C
 
-#addressTakenAnalysis_SOURCES = \
-  CommandLineOptions.C \
-  addressTakenAnalysisDriver.C
-
-#if ROSE_WITH_SPOT
-#addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lspot -lbdd
-#addressTakenAnalysis_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
-#else
-#addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
-#endif
-#addressTakenAnalysis_CXXFLAGS = -Wall -O3
-#addressTakenAnalysis_DEPENDENCIES=libcodethorn.la libcodethornltl.la
+if ROSE_WITH_SPOT
+addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
+addressTakenAnalysis_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
+else
+addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
+endif
+addressTakenAnalysis_CXXFLAGS = -fopenmp -Wall -O3
+addressTakenAnalysis_DEPENDENCIES=libcodethorn.la
 
 REGRESSION_DATA_DIR=regressiondata
 
+addressTakenAnalysis_SOURCES = \
+  addressTakenAnalysisDriver.C
+
 .PHONY: codethorn-dist viz bsps docs test checkdemos
 
-woodpecker_DEPENDENCIES=libcodethorn.la libcodethornltl.la
+woodpecker_DEPENDENCIES=libcodethorn.la
 if ROSE_WITH_SPOT
-woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lcodethornltl -lspot -lbdd
+woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
 woodpecker_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
-woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lcodethornltl
+woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
 endif
 woodpecker_CXXFLAGS= -fopenmp -Wall -O3
 woodpecker_SOURCES = \
@@ -359,12 +362,12 @@ woodpecker_SOURCES = \
 #  DFAnalysisBase.C \
 #  DFAnalysisBase.h
 
-analyterix_DEPENDENCIES=libcodethorn.la libcodethornltl.la
+analyterix_DEPENDENCIES=libcodethorn.la
 if ROSE_WITH_SPOT
-analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lcodethornltl -lspot -lbdd
+analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
 analyterix_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
-analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lcodethornltl
+analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
 endif
 analyterix_CXXFLAGS = -fopenmp -Wall -O3
 analyterix_SOURCES = \
