@@ -196,6 +196,15 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum, std::string name)
                                           is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
+             case SgUntypedType::e_block:
+               {
+                 is_user_defined = true;
+                 is_class = true;
+                 is_intrinsic = false;
+                 type = new SgUntypedType(name,type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
+                 break;
+               }
              case SgUntypedType::e_table:
                {
                  is_user_defined = true;

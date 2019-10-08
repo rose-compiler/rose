@@ -2226,42 +2226,70 @@ ATbool ATermToUntypedJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUn
 
    ATerm t_name, t_alloc, t_body, t_type_name, t_preset;
    std::string block_name, block_type_name;
-   SgUntypedStructureDefinition*  block_def  = NULL;
-   SgUntypedStructureDeclaration* block_decl = NULL;
-   SgUntypedExprListExpression* modifiers = NULL;
+
    SgUntypedExprListExpression* preset = NULL;
+   SgUntypedStructureDeclaration* block_decl = NULL;
+   SgUntypedVariableDeclaration* var_decl = NULL;
 
    if (ATmatch(term, "BlockDeclarationBodyPart(<term>,<term>,<term>)", &t_name, &t_alloc, &t_body)) {
-      cout << "WARNING UNIMPLEMENTED: BlockDeclarationBodyPart\n";
-
       // TODO list
-      // 1. need variable declaration
-      // 2. need source position information
-      // 3. make sure STATIC works
+      // 1. need block type declaration ("named anonymous")
+      // 2. need variable declaration
+      // 3. need source position information
+      // 4. make sure STATIC works
 
       if (traverse_Name(t_name, block_name)) {
          // MATCHED BlockName
       } else return ATfalse;
 
-#if 0
-      block_decl = UntypedBuilder::buildStructureDeclaration(block_name);
-#endif
+      // TODO: function to create anaonymous name
+      block_type_name = "_anon_typeof_" + block_name;
+
+      std::string type_name = block_type_name;
+      int struct_type = Jovial_ROSE_Translation::e_block_type_declaration;
+
+// This portion could be moved to UntypedBuilder::
+//--------------------------------------------------
+      SgUntypedStructureDefinition* struct_def  = NULL;
+      SgUntypedExprListExpression*    modifiers = NULL;
+      SgUntypedExprListExpression*        shape = NULL;
+
+      struct_def = UntypedBuilder::buildStructureDefinition(type_name, /*has_body*/true, /*scope*/NULL);
+      ROSE_ASSERT(struct_def != NULL);
+      SageInterface::setSourcePosition(struct_def);
+
+      modifiers = new SgUntypedExprListExpression(General_Language_Translation::e_struct_modifier_list);
+      ROSE_ASSERT(modifiers != NULL);
+      SageInterface::setSourcePosition(modifiers);
+
+      // There may be a shape if a Jovial table
+      shape = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
+      ROSE_ASSERT(shape);
+      SageInterface::setSourcePosition(shape);
+
+      std::string label = "";
+      block_decl = new SgUntypedStructureDeclaration(label, struct_type, type_name, modifiers, shape, struct_def);
+      ROSE_ASSERT(block_decl);
+      SageInterface::setSourcePosition(block_decl);
+//--------------------------------------------------
+
+      SgUntypedStructureDefinition* block_def = struct_def;
+
+      ROSE_ASSERT(block_def != NULL);
+      setSourcePosition(block_def, t_body);
+
+      SgUntypedScope* block_scope = struct_def->get_scope();
+      ROSE_ASSERT(block_scope != NULL);
+
+      SgUntypedDeclarationStatementList* block_decl_list = block_scope->get_declaration_list();
+      ROSE_ASSERT(block_decl_list);
 
       modifiers = block_decl->get_modifiers();
       ROSE_ASSERT(modifiers != NULL);
-      SageInterface::setSourcePosition(modifiers);
 
       if (traverse_OptAllocationSpecifier(t_alloc, modifiers)) {
          // MATCHED OptAllocationSpecifier
       } else return ATfalse;
-
-      block_def = block_decl->get_definition();
-      ROSE_ASSERT(block_def != NULL);
-      setSourcePosition(block_def, t_body);
-
-      SgUntypedScope* block_scope = block_def->get_scope();
-
-      SgUntypedDeclarationStatementList* block_decl_list = block_scope->get_declaration_list();
 
       if (traverse_BlockBodyPart(t_body, block_decl_list)) {
          // MATCHED BlockBodyPart
@@ -2269,7 +2297,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUn
    }
 
    else if (ATmatch(term, "BlockDeclarationTypeName(<term>,<term>,<term>,<term>)", &t_name, &t_alloc, &t_type_name, &t_preset)) {
-      cout << "WARNING UNIMPLEMENTED: BlockDeclarationTypeName\n";
 
       if (traverse_Name(t_name, block_name)) {
          // MATCHED BlockName
@@ -2279,11 +2306,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUn
          // MATCHED BlockTypeName
       } else return ATfalse;
 
-#if 0
-      block_decl = UntypedBuilder::buildStructureDeclaration(block_name, block_type_name, /*has_body*/false);
-#endif
+      cout << "WARNING UNIMPLEMENTED: BlockDeclarationTypeName\n";
+      return ATtrue;
 
-      modifiers = block_decl->get_modifiers();
+      SgUntypedExprListExpression* modifiers = block_decl->get_modifiers();
       ROSE_ASSERT(modifiers != NULL);
       SageInterface::setSourcePosition(modifiers);
 
@@ -2294,14 +2320,28 @@ ATbool ATermToUntypedJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUn
       if (traverse_BlockPreset(t_preset, preset)) {
          // MATCHED BlockPreset
       } else return ATfalse;
-
-      //What do we do with the preset?
-      ROSE_ASSERT(false);
    }
    else return ATfalse;
 
+
+   cout << "WARNING UNIMPLEMENTED: __implementing__ BlockDeclarationBodyPart\n";
+
+   // we have the type declaration, now we need a variable declaration
    ROSE_ASSERT(block_decl);
+   SgUntypedExprListExpression* modifiers = block_decl->get_modifiers();
+
+   // TODO: change this to SgUntypedType::e_block
+   SgUntypedType* block_type = UntypedBuilder::buildType(SgUntypedType::e_table, block_type_name);
+
+   // TODO: is modifiers the correct list?
+
+   var_decl = UntypedBuilder::buildVariableDeclaration(block_name, block_type, modifiers, preset);
+   ROSE_ASSERT(var_decl != NULL);
+   setSourcePosition(var_decl, term);
+
+   // TODO: it seems like the block type should have a pointer to the block_decl?
    decl_list->get_decl_list().push_back(block_decl);
+   decl_list->get_decl_list().push_back(var_decl);
 
    return ATtrue;
 }
