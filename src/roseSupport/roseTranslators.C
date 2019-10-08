@@ -72,11 +72,15 @@ bool CppToPdfTranslator::dumpFullAST = false;
 
 void CppToPdfTranslator::backend() {
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+#if ROSE_WITH_LIBHARU
   AstPDFGeneration pdf;
   if (dumpFullAST)
     pdf.generate(getAstRoot()); // traverse entire AST 
   else  
     pdf.generateInputFiles(getAstRoot());  // traverse AST from the input files only
+#else
+  cout << "Warning: libharu support is not enabled" << endl;
+#endif
 #endif
 }
 

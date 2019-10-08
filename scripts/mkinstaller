@@ -22,11 +22,11 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "5";
-$mkinstaller_ver_build = "11";
+$mkinstaller_ver_build = "15";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.5.11";
-$mkinstaller_ver_time  = "12Sep2019,16:01:20z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.11 - 12Sep2019,16:01:20z";
+$mkinstaller_ver_name  = "2.5.15";
+$mkinstaller_ver_time  = " 5Oct2019,04:11:32z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.15 -  5Oct2019,04:11:32z";
 
 #{------------------------------------------------------------------------------
 #
@@ -196,6 +196,7 @@ if ($valueOfDebugVar ne "") {
    my $CXX_stdcxxlib_libcVersion       = "";
    my @CXX_stdcxxlib_libcVerList       = ( );
 
+   my $defaultPrefix                   = "";
    my $devNull                         = nullPathname();
    my %dirBasenames                    = ( );
    my @dirBasenames                    = ( );
@@ -225,10 +226,7 @@ if ($valueOfDebugVar ne "") {
    my $isCompressed                    = "";
    my $keep                            = 0;
    my $libDirBasename                  = "";
-   my $myPath                          = "";
-   my @myPath                          = ( );
    my $oldOSname                       = ""; # Only for backwards compatability
-   my $OSclass                         = getOSclass();
    my $OSname                          = lc $^O;
    my $OSversion                       = "";
    my $postInstallBasename             = "";
@@ -273,6 +271,7 @@ if ($valueOfDebugVar ne "") {
    my $use_hasher                      = "";
    my $use_ls                          = "";
    my $use_makensis                    = "";
+   my $use_mkinstaller                 = "";
    my $use_pshaw                       = "";
    my $use_shaNNNsum                   = "";
    my $use_tar                         = "";
@@ -286,7 +285,10 @@ if ($valueOfDebugVar ne "") {
    my $withFiles                       = 0;
    my $withNotice                      = "";
    my $withPayload                     = 1;
-   print DBGOUT "mkinstaller: ...done\n" if $debugging;
+
+   my $OSclass                         = getOSclass();
+   my $myPATH                          = getTheSearchPATH();
+   my @myPATH                          = splitTheSearchPATH($myPATH,$OSclass);
 
    if ( exists $ENV{"INEFFECTIVE_mkinstaller"}) {
       $withPayload                     = 0;
@@ -300,9 +302,11 @@ if ($valueOfDebugVar ne "") {
    }
    else {
       print STDERR "mkinstaller: fatal: host doesn't appear either UNIX-like nor Windows-like\n";
+      cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
       close DBGOUT if $dbgOutToPathname ne "";
       exit 1;
    }
+   print DBGOUT "mkinstaller: ...done\n" if $debugging;
 
    #---------------------------------------
    #
@@ -313,101 +317,45 @@ if ($valueOfDebugVar ne "") {
    #
    #---------------------------------------
 
-   if (suffix($rawCommand) ne ".perl") {
-      print DBGOUT "mkinstaller: locate [$rawCommand]...\n" if $debugging;
-      if (basename($rawCommand) ne $rawCommand) {
-         $foundInDir = dirname($rawCommand);
+   if (suffix($theCommand) ne ".perl") {
+      print DBGOUT "mkinstaller: locate [$theCommand]...\n" if $debugging;
+      if (basename($theCommand) ne $theCommand) {
+         $foundInDir = dirname($theCommand);
          if ($foundInDir eq "") {
-            print STDERR "mkinstaller: error: can't determine where \"".nativePathname($rawCommand)."\" is located, can't isolate directory\n";
-            close DBGOUT if $dbgOutToPathname ne "";
-            exit 1;
+            print STDERR "mkinstaller: can't determine where \"$theCommand\" is located, can't isolate directory\n";
+            errorExit();
          }
          if ( exists $ENV{'PATH'} ) {
-            my $isWindows;
-            $myPath = $ENV{'PATH'};
-            $myPath =~ tr/\\/\//;
-            if ($OSclass eq "Windows-like") {
-               $isWindows   = 1;
-               @myPath      = split /;/, $myPath;
-               $with_exeExt = ".exe";
-               unshift @myPath, $foundInDir;
-               $myPath      = join(';',@myPath);
-               $myPath      =~ tr/\//\\/;
+            if ( ! alreadyOnSearchPATH($foundInDir,\@myPATH)) {
+               @myPATH      = prependToSearchPATH($foundInDir,\@myPATH);
+               $myPATH      = joinTheSearchPATH(\@myPATH);
+               $ENV{'PATH'} = $myPATH;
             }
-            elsif ($OSclass eq "UNIX-like") {
-               $isWindows   = 0;
-               @myPath      = split /:/, $myPath;
-               $with_exeExt = "";
-               unshift @myPath, $foundInDir;
-               $myPath      = join(':',@myPath);
-            }
-            else {
-               print STDERR "mkinstaller: error: host isn't UNIX- or Windows-like\n";
-               close DBGOUT if $dbgOutToPathname ne "";
-               exit 1;
-            }
-            $ENV{'PATH'} = $myPath;
          }
          else {
-            $myPath = $foundInDir;
-            $myPath =~ tr/\\/\//;
-            @myPath = ( $myPath );
-            if ($OSclass eq "Windows-like") {
-               $myPath      =~ tr/\//\\/;
-               $with_exeExt = ".exe";
-            }
-            elsif ($OSclass eq "UNIX-like") {
-               $with_exeExt = "";
-            }
-            $ENV{'PATH'} = $myPath;
+            $ENV{'PATH'} = $foundInDir;
          }
+         $use_mkinstaller = $theCommand;
       }
       else {
-         if ( exists $ENV{'PATH'} ) {
-            $myPath = $ENV{'PATH'};
-            if ($OSclass eq "Windows-like") {
-               $with_exeExt = ".exe";
-               $myPath      =~ tr/\\/\//;
-               @myPath      = split /;/, $myPath;
-               my $i;
-               for ($i=0; $i<=$#myPath; $i+=1) {
-                  my $pathname = joinpath($myPath[$i],"mkinstaller.exe");
-                  if (-f $pathname) {
-                     $foundInDir = $myPath[$i];
-                     last;
-                  }
-               }
-               $myPath     =~ tr/\//\\/;
-            }
-            elsif ($OSclass eq "UNIX-like") {
-               $with_exeExt = "";
-               @myPath      = split /:/, $myPath;
-               my $i;
-               for ($i=0; $i<=$#myPath; $i+=1) {
-                  my $pathname = joinpath($myPath[$i],"mkinstaller");
-                  if (-f $pathname) {
-                     if (-x $pathname) {
-                        $foundInDir = $myPath[$i];
-                        last;
-                     }
-                  }
-               }
-            }
-            else {
-               print STDERR "mkinstaller: error: host isn't UNIX- or Windows-like\n";
-               close DBGOUT if $dbgOutToPathname ne "";
-               exit 1;
-            }
-            if ($foundInDir eq "") {
-               print STDERR "mkinstaller: error: can't determine where \"".nativePathname($rawCommand)."\" is located\n";
-               close DBGOUT if $dbgOutToPathname ne "";
-               exit 1;
-            }
+         if ( ! exists $ENV{'PATH'} ) {
+            print STDERR "mkinstaller: can't determine where \"$theCommand\" is located, PATH not set\n";
+            errorExit();
          }
-         else {
-            print STDERR "mkinstaller: error: can't determine where \"".nativePathname($rawCommand)."\" is located, PATH not set\n";
-            close DBGOUT if $dbgOutToPathname ne "";
-            exit 1;
+         my $lookingFor;
+         if ($OSclass eq "UNIX-like") {
+            $lookingFor   = "mkinstaller".$TBG_PERL_EXT;
+         }
+         elsif ($OSclass eq "Windows-like") {
+            $lookingFor   = "mkinstaller".$TBG_X_EXT;
+         }
+         $use_mkinstaller = lookForExecutable($lookingFor,\@myPATH,$osClass);
+         if ($use_mkinstaller ne "") {
+            $foundInDir = dirname($use_mkinstaller);
+         }
+         if ( ! $foundInDir) {
+            print STDERR "mkinstaller: can't determine where \"$theCommand\" is located, is on PATH\n";
+            errorExit();
          }
       }
       print DBGOUT "mkinstaller: ...found in [$foundInDir]...\n" if $debugging;
@@ -418,7 +366,9 @@ if ($valueOfDebugVar ne "") {
    #  Now that we've found where this command is located, and if we're on a
    #  SunOS or Solaris system we can add /usr/xpg6/bin and /usr/xpg4/bin to
    #  the command search path (if they exist of course). Of course we may have
-   #  to re-form both $myPath and @mypath.
+   #  to re-form both $myPATH and @mypath.
+   #
+   #  Solaris/SunOS systems are of course UNIX-like hosts.
    #
    #----------------------------------------------------------------------------
 
@@ -429,30 +379,30 @@ if ($valueOfDebugVar ne "") {
          print DBGOUT "mkinstaller: ...is SunOS or Solaris\n" if $debugging;
          my $changed = 0;
          if ( exists $ENV{'PATH'} ) {
-            $myPath      = $ENV{'PATH'};
+            $myPATH      = $ENV{'PATH'};
             my $tryPath  = "/usr/xpg4/bin";
             if ( -d $tryPath) {
                print DBGOUT "mkinstaller:    prepend \"$tryPath\"\n" if $debugging;
-               $myPath   = $tryPath.":".$myPath;
+               $myPATH   = $tryPath.":".$myPATH;
                $changed  = 1;
             }
             $tryPath     = "/usr/xpg6/bin";
             if ( -d $tryPath) {
                print DBGOUT "mkinstaller:    prepend \"$tryPath\"\n" if $debugging;
-               $myPath   = $tryPath.":".$myPath;
+               $myPATH   = $tryPath.":".$myPATH;
                $changed  = 1;
             }
             if ($changed) {
-               @myPath     = split /:/, $myPath;
+               @myPATH     = split /:/, $myPATH;
                if ($debugging) {
                   print DBGOUT "mkinstaller: ...PATH is now:\n" if $debugging;
                   my $i;
-                  for ($i=0; $i<=$#myPath; $i+=1) {
-                     my $dir = $myPath[$i];
+                  for ($i=0; $i<=$#myPATH; $i+=1) {
+                     my $dir = $myPATH[$i];
                      print DBGOUT "mkinstaller:    \"".$dir."\"\n" if $debugging;
                   }
                }
-               $ENV{'PATH'} = $myPath;
+               $ENV{'PATH'} = $myPATH;
             }
          }
       }
@@ -509,6 +459,7 @@ if ($valueOfDebugVar ne "") {
 
                           && do {
                              help();
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 0;
                           };
@@ -519,6 +470,7 @@ if ($valueOfDebugVar ne "") {
                              $i += 1;
                              if ($#ARGV < $i) {
                                 print STDERR "mkinstaller: error: missing argument to $opt option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -527,10 +479,12 @@ if ($valueOfDebugVar ne "") {
                              $theCommandLine[$cmdIdx] = $theCommandLine[$cmdIdx]." ".quoteIfReqd($given);
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: empty argument to $opt option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              html($given);
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 0;
                           };
@@ -539,6 +493,7 @@ if ($valueOfDebugVar ne "") {
 
                           && do {
                              print "$mkinstaller_ver_name\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 0;
                           };
@@ -547,6 +502,7 @@ if ($valueOfDebugVar ne "") {
 
                           && do {
                              print "mkinstaller: version $mkinstaller_ver_name rev. $mkinstaller_ver_time\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 0;
                           };
@@ -555,6 +511,7 @@ if ($valueOfDebugVar ne "") {
 
                           && do {
                              copyright();
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 0;
                           };
@@ -571,6 +528,7 @@ if ($valueOfDebugVar ne "") {
                              $i += 1;
                              if ($#ARGV < $i) {
                                 print STDERR "mkinstaller: error: missing argument to $opt option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -581,12 +539,14 @@ if ($valueOfDebugVar ne "") {
                              if ($given ne $bn) {
                                 print STDERR "mkinstaller: error: invalid argument(=\"".$given."\") to ".$opt." option\n";
                                 print STDERR "mkinstaller: ..script name must be simple; without directory components\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($scriptName ne "") {
                                 print STDERR "mkinstaller: error: unexpected $opt \"".$given."\"\n";
                                 print STDERR "mkinstaller: ...already specified name of generated script as \"".$scriptName."\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -595,6 +555,7 @@ if ($valueOfDebugVar ne "") {
                                 if ($sfx ne "") {
                                    print STDERR "mkinstaller: error: invalid argument(=\"".$given."\" to ".$opt." option\n";
                                    print STDERR "mkinstaller: ...suffix not allowed on \"Windows-like\" host\n";
+                                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
@@ -613,6 +574,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print STDERR "mkinstaller: error: the --cc=... option has been obsoleted. Use the\n";
                              print STDERR "mkinstaller:    CC=... and CC-options=... instead.\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -622,6 +584,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print STDERR "mkinstaller: error: the --cc=... option has been obsoleted. Use the\n";
                              print STDERR "mkinstaller:    CC=... and CC-options=... instead.\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -630,6 +593,7 @@ if ($valueOfDebugVar ne "") {
 
                           && do {
                              print STDERR "mkinstaller: error: missing or zero-length argument to $opt option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -643,11 +607,13 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    with [$given]\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: missing or zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($Contact ne "") {
                                 print STDERR "mkinstaller: error: unexpected $optName=\"$given\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -660,6 +626,7 @@ if ($valueOfDebugVar ne "") {
 
                           && do {
                              print STDERR "mkinstaller: error: missing or zero-length argument to $opt option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -673,6 +640,7 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    with [$given]\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: missing or zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -680,11 +648,13 @@ if ($valueOfDebugVar ne "") {
                              if ($given ne $bn) {
                                 print STDERR "mkinstaller: error: invalid argument(=\"".$given."\" to ".$opt." option\n";
                                 print STDERR "mkinstaller: ..script name must be simple\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($scriptName ne "") {
                                 print STDERR "mkinstaller: error: unexpected $optName=\"$given\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -693,6 +663,7 @@ if ($valueOfDebugVar ne "") {
                                 if ($sfx ne "") {
                                    print STDERR "mkinstaller: error: invalid argument(=\"".$given."\") to ".$opt." option\n";
                                    print STDERR "mkinstaller: ...suffix not allowed on \"Windows-like\" host\n";
+                                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
@@ -711,6 +682,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print STDERR "mkinstaller: error: the --cxx=... option has been obsoleted. Use the\n";
                              print STDERR "mkinstaller:    CXX=... and CXX-options=... instead.\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -720,6 +692,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print STDERR "mkinstaller: error: the --cxx=... option has been obsoleted. Use the\n";
                              print STDERR "mkinstaller:    CXX=... and CXX-options=... instead.\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -740,6 +713,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              my $optName = $1;
                              print STDERR "mkinstaller: error: missing pathname argument to $optName option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -754,12 +728,60 @@ if ($valueOfDebugVar ne "") {
                              if ( ! $debugging) {
                                 if ( ! open(DBGOUT,"> $pathname")) {
                                    print STDERR "mkinstaller: error: can't send debugging output to \"".nativePathname($pathname)."\"\n"; # can't send to DBGOUT
+                                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
                                 $debugging        = 1;
                                 $dbgOutToPathname = $pathname;
                              }
+                             last parseArgs;
+                          };
+
+                       /^(--default-prefix)$/
+
+                          && do {
+                             $i += 1;
+                             if ($#ARGV < $i) {
+                                print STDERR "mkinstaller: error: missing argument to $opt option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                                close DBGOUT if $dbgOutToPathname ne "";
+                                exit 1;
+                             }
+                             my $given      = $ARGV[$i];
+                             print DBGOUT "mkinstaller:    with \"".nativePathname($given)."\"\n" if $debugging;
+                             if ($given eq "") {
+                                print STDERR "mkinstaller: error: missing or zero-length pathname argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                                close DBGOUT if $dbgOutToPathname ne "";
+                                exit 1;
+                             }
+                             $defaultPrefix = $given;
+                             last parseArgs;
+                          };
+
+                       /^(--default-prefix)=$/
+
+                          && do {
+                             my $optName     = $1;
+                             print STDERR "mkinstaller: error: missing or zero-length pathname argument to $optName option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                             close DBGOUT if $dbgOutToPathname ne "";
+                             exit 1;
+                          };
+
+                       /^(--default-prefix)=(.+)$/
+
+                          && do {
+                             my $optName    = $1;
+                             my $pathname   = unquote($2);
+                             if ($pathname eq "") {
+                                print STDERR "mkinstaller: error: missing or zero-length pathname argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                                close DBGOUT if $dbgOutToPathname ne "";
+                                exit 1;
+                             }
+                             $defaultPrefix = $pathname;
                              last parseArgs;
                           };
 
@@ -787,6 +809,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              my $optName = $1;
                              print STDERR "mkinstaller: error: missing argument to $optName option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -800,11 +823,13 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    with [$given]\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: empty argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($HWtype ne "") {
                                 print STDERR "mkinstaller: error: already specified $optName=".quoteIfReqd($HWtype)."\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -836,6 +861,7 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: missing or zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -843,12 +869,14 @@ if ($valueOfDebugVar ne "") {
                              if ($given ne $bn) {
                                 print STDERR "mkinstaller: error: invalid argument(=\"".$given."\") to ".$optName." option\n";
                                 print STDERR "mkinstaller: ...intermediate directory name must be simple; without directory components\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($intermediateName ne "") {
                                 print STDERR "mkinstaller: error: unexpected $opt\n";
                                 print STDERR "mkinstaller: ...already specified name of intermediate directory name as \"".$intermediateName."\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -857,6 +885,7 @@ if ($valueOfDebugVar ne "") {
                                 if ($sfx ne "") {
                                    print STDERR "mkinstaller: error: invalid argument(=\"".$given."\") to ".$optName." option\n";
                                    print STDERR "mkinstaller: ...suffix not allowed on \"Windows-like\" host\n";
+                                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
@@ -924,6 +953,7 @@ if ($valueOfDebugVar ne "") {
                              print STDERR "mkinstaller: note: the --os option is obsolete and is ignored\n";
                              if ($oldOSname ne "") {
                                 print STDERR "mkinstaller: error: unexpected $opt\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -942,11 +972,13 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: missing or zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($oldOSname ne "") {
                                 print STDERR "mkinstaller: error: unexpected $opt\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -964,6 +996,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              print STDERR "mkinstaller: error: missing or zero-length argument to $opt option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -976,11 +1009,13 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: missing or zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($postInstallPathname ne "") {
                                 print STDERR "mkinstaller: error: unexpected $optName=\"$given\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -989,6 +1024,7 @@ if ($valueOfDebugVar ne "") {
                              $postInstallStyle    = "binary";
                              if ($postInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".nativePathname($postInstallPathname)."\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1004,6 +1040,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              print STDERR "mkinstaller: error: missing or zero-length argument to $opt option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -1016,11 +1053,13 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: missing or zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($postInstallPathname ne "") {
                                 print STDERR "mkinstaller: error: unexpected $optName=\"$given\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1029,6 +1068,7 @@ if ($valueOfDebugVar ne "") {
                              $postInstallStyle    = "perl";
                              if ($postInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".nativePathname($postInstallPathname)."\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1044,6 +1084,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              print STDERR "mkinstaller: error: missing or zero-length argument to $opt option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -1056,11 +1097,13 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: missing or zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($postInstallPathname ne "") {
                                 print STDERR "mkinstaller: error: unexpected $optName=\"$given\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1069,6 +1112,7 @@ if ($valueOfDebugVar ne "") {
                              $postInstallStyle    = "python";
                              if ($postInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".nativePathname($postInstallPathname)."\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1084,6 +1128,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              print STDERR "mkinstaller: error: missing or zero-length argument to $opt option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -1096,11 +1141,13 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: missing or zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($postInstallPathname ne "") {
                                 print STDERR "mkinstaller: error: unexpected $optName=\"$given\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1109,6 +1156,7 @@ if ($valueOfDebugVar ne "") {
                              $postInstallStyle    = "sh";
                              if ($postInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".nativePathname($postInstallPathname)."\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1124,6 +1172,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              print STDERR "mkinstaller: error: missing or zero-length argument to $opt option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -1136,11 +1185,13 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: missing or zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($preInstallPathname ne "") {
                                 print STDERR "mkinstaller: error: unexpected $optName=\"$given\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1149,6 +1200,7 @@ if ($valueOfDebugVar ne "") {
                              $preInstallStyle    = "binary";
                              if ($preInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".nativePathname($preInstallPathname)."\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1164,6 +1216,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              print STDERR "mkinstaller: error: missing or zero-length argument to $opt option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -1176,11 +1229,13 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: missing or zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($preInstallPathname ne "") {
                                 print STDERR "mkinstaller: error: unexpected $optName=\"$given\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1189,6 +1244,7 @@ if ($valueOfDebugVar ne "") {
                              $preInstallStyle    = "perl";
                              if ($preInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".nativePathname($preInstallPathname)."\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1204,6 +1260,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              print STDERR "mkinstaller: error: missing or zero-length argument to $opt option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -1216,11 +1273,13 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: missing or zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($preInstallPathname ne "") {
                                 print STDERR "mkinstaller: error: unexpected $optName=\"$given\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1229,6 +1288,7 @@ if ($valueOfDebugVar ne "") {
                              $preInstallStyle    = "python";
                              if ($preInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".nativePathname($preInstallPathname)."\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1244,6 +1304,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              print STDERR "mkinstaller: error: missing or zero-length argument to $opt option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -1256,11 +1317,13 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: missing or zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($preInstallPathname ne "") {
                                 print STDERR "mkinstaller: error: unexpected $optName=\"$given\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1269,6 +1332,7 @@ if ($valueOfDebugVar ne "") {
                              $preInstallStyle    = "sh";
                              if ($preInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".nativePathname($preInstallPathname)."\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1284,6 +1348,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              print STDERR "mkinstaller: error: missing or zero-length argument to $opt option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -1296,11 +1361,13 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: missing or zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($ProjectName ne "") {
                                 print STDERR "mkinstaller: error: unexpected $optName=\"$given\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1314,6 +1381,7 @@ if ($valueOfDebugVar ne "") {
                           && do {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              print STDERR "mkinstaller: error: missing or zero-length argument to $opt option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -1326,11 +1394,13 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: missing or zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($ProjectVer ne "") {
                                 print STDERR "mkinstaller: error: unexpected $optName=\"$given\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1344,6 +1414,7 @@ if ($valueOfDebugVar ne "") {
                                 print STDERR "mkinstaller:    C, D are optional and S is an optional string which may not\n";
                                 print STDERR "mkinstaller:    start with a digit and may not contain spaces and/or tabs.\n";
                                 print STDERR "mkinstaller:\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1383,11 +1454,13 @@ if ($valueOfDebugVar ne "") {
                              else {
                                 print STDERR "mkinstaller: error: unknown option \"".$opt."\"\n";
                                 print STDERR "mkinstaller: ...did you mean: --sha-1, --sha-160, --sha-256, --sha-384, or --sha-512?\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($oldGenSHA != 0) {
                                 print STDERR "mkinstaller: error: unexpected $opt\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1418,6 +1491,7 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: missing or zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1425,12 +1499,14 @@ if ($valueOfDebugVar ne "") {
                              if ($given ne $bn) {
                                 print STDERR "mkinstaller: error: invalid argument(=\"".$given."\") to ".$optName." option\n";
                                 print STDERR "mkinstaller: ...version directory name must be simple; without directory components\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($intermediateName ne "") {
                                 print STDERR "mkinstaller: error: unexpected $opt\n";
                                 print STDERR "mkinstaller: ...already specified name of version directory name as \"".$intermediateName."\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1439,6 +1515,7 @@ if ($valueOfDebugVar ne "") {
                                 if ($sfx ne "") {
                                    print STDERR "mkinstaller: error: invalid argument(=\"".$given."\") to ".$optName." option\n";
                                    print STDERR "mkinstaller: ...suffix not allowed on \"Windows-like\" host\n";
+                                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
@@ -1455,6 +1532,7 @@ if ($valueOfDebugVar ne "") {
                              $i += 1;
                              if ($#ARGV < $i) {
                                 print STDERR "mkinstaller: error: missing argument to $opt option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1462,12 +1540,14 @@ if ($valueOfDebugVar ne "") {
                              $theCommandLine[$cmdIdx] = $theCommandLine[$cmdIdx]." ".quoteIfReqd($given);
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: zero-length argument to $opt option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($withNotice ne "") {
                                 print STDERR "mkinstaller: error: unexpected $opt \"".$given."\"\n";
                                 print STDERR "mkinstaller: ...already file containing payload copyright notice as \"".$withNotice."\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1479,12 +1559,14 @@ if ($valueOfDebugVar ne "") {
                                 else {
                                    print STDERR "mkinstaller: ...can't find/read \"".$given."\"\n";
                                 }
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 0;
                              }
                              if ( ! -T $given) {
                                 print STDERR "mkinstaller: error: invalid argument(=\"".$given."\") to $opt option\n";
                                 print STDERR "mkinstaller: ...\"".$given."\" doesn't appear to be a textfile\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1502,12 +1584,14 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ($given eq "") {
                                 print STDERR "mkinstaller: error: zero-length argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
                              if ($withNotice ne "") {
                                 print STDERR "mkinstaller: error: unexpected $optName=\"".$given."\"\n";
                                 print STDERR "mkinstaller: ...already file containing payload copyright notice as \"".$withNotice."\"\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1519,12 +1603,14 @@ if ($valueOfDebugVar ne "") {
                                 else {
                                    print STDERR "mkinstaller: ...can't find/read \"".$given."\"\n";
                                 }
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 0;
                              }
                              if ( ! -T $given) {
                                 print STDERR "mkinstaller: error: invalid argument(=\"".$given."\") to $optName option\n";
                                 print STDERR "mkinstaller: ...\"".$given."\" doesn't appear to be a textfile\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1554,12 +1640,14 @@ if ($valueOfDebugVar ne "") {
                              if ( -f $given) {
                                 if ( exists $withFilePathnames{$given}) {
                                    print STDERR "mkinstaller: error: unexpected $opt\n";
+                                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
                                 print DBGOUT "mkinstaller:    ...a file\n" if $debugging;
                                 if ($bn =~ /[\s\/\\]/) {
                                    print STDERR "mkinstaller: error: $optName= contains spaces, tabs, and/or slashes\n";
+                                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
@@ -1591,6 +1679,7 @@ if ($valueOfDebugVar ne "") {
                                 else {
                                    print STDERR "mkinstaller: error: can't find/read \"".nativePathname($given)."\"\n";
                                 }
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1691,6 +1780,7 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              print STDERR "mkinstaller: error: missing or zero-length argument to $opt\n";
                              print STDERR "mkinstaller: ...expected C compiler basename\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -1703,6 +1793,7 @@ if ($valueOfDebugVar ne "") {
                              my $given   = unquote($3);
                              if ( defined $CC_pathname) {
                                 print STDERR "mkinstaller: error: unexpected $opt\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1714,6 +1805,7 @@ if ($valueOfDebugVar ne "") {
                                 if ($CC_basename ne $bn) {
                                    print STDERR "mkinstaller: error: improper argument(=\"$given\") to $optName\n";
                                    print STDERR "mkinstaller: ...C compiler name(=$CC_basename) should be simple; without directory components\n";
+                                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
@@ -1726,9 +1818,10 @@ if ($valueOfDebugVar ne "") {
                                    print DBGOUT "mkinstaller:       with a simple name\n" if $debugging;
                                    $CC_basename = $given;
                                    print DBGOUT "mkinstaller:       ...locate \"$CC_basename\"\n" if $debugging;
-                                   $CC_pathname = lookForExecutable($CC_basename,\@myPath,$OSclass);
+                                   $CC_pathname = lookForExecutable($CC_basename,\@myPATH,$OSclass);
                                    if ($CC_pathname eq "") {
                                       print STDERR "mkinstaller: error: can't locate executable \"$CC_basename\"\n";
+                                      cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                       close DBGOUT if $dbgOutToPathname ne "";
                                       exit 1;
                                    }
@@ -1750,6 +1843,7 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ( defined $CC_options) {
                                 print STDERR "mkinstaller: error: unexpected $opt\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1766,6 +1860,7 @@ if ($valueOfDebugVar ne "") {
                              my $given       = unquote($4);
                              if ( defined $CC_options) {
                                 print STDERR "mkinstaller: error: unexpected $opt\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1781,6 +1876,7 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              print STDERR "mkinstaller: error: missing or zero-length argument to $opt\n";
                              print STDERR "mkinstaller: ...expected C++ compiler basename\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -1793,6 +1889,7 @@ if ($valueOfDebugVar ne "") {
                              my $given   = unquote($3);
                              if ( defined $CXX_pathname) {
                                 print STDERR "mkinstaller: error: unexpected $opt\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1803,6 +1900,7 @@ if ($valueOfDebugVar ne "") {
                                 if ($CXX_basename ne $bn) {
                                    print STDERR "mkinstaller: error: improper argument(=\"$given\") to $optName\n";
                                    print STDERR "mkinstaller: ...C++ compiler name(=$CXX_basename) should be simple; without directory components\n";
+                                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
@@ -1813,9 +1911,10 @@ if ($valueOfDebugVar ne "") {
                              else {
                                 if (isSimple($given)) {
                                    $CXX_basename = $given;
-                                   $CXX_pathname = lookForExecutable($CXX_basename,\@myPath,$OSclass);
+                                   $CXX_pathname = lookForExecutable($CXX_basename,\@myPATH,$OSclass);
                                    if ($CXX_pathname eq "") {
                                       print STDERR "mkinstaller: error: can't locate executable \"$CXX_basename\"\n";
+                                      cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                       close DBGOUT if $dbgOutToPathname ne "";
                                       exit 1;
                                    }
@@ -1836,6 +1935,7 @@ if ($valueOfDebugVar ne "") {
                              print DBGOUT "mkinstaller:    is $opt\n" if $debugging;
                              if ( defined $CXX_options) {
                                 print STDERR "mkinstaller: error: unexpected $opt\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1852,6 +1952,7 @@ if ($valueOfDebugVar ne "") {
                              my $given       = unquote($4);
                              if ( defined $CXX_options) {
                                 print STDERR "mkinstaller: error: unexpected $opt\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1878,6 +1979,7 @@ if ($valueOfDebugVar ne "") {
                              elsif (1 <= length($opt)) {
                                 print STDERR "mkinstaller: ...did you mean \"./".$opt."\"\n";
                              }
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -1893,6 +1995,7 @@ if ($valueOfDebugVar ne "") {
                              elsif (1 <= length($opt)) {
                                 print STDERR "mkinstaller: ...did you mean \"./".$opt."\"\n";
                              }
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -1928,6 +2031,7 @@ if ($valueOfDebugVar ne "") {
                                    else {
                                       print STDERR "mkinstaller: error: \"".nativePathname($given)."\" is a broken symbolic-link not a directory\n";
                                    }
+                                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
@@ -1945,6 +2049,7 @@ if ($valueOfDebugVar ne "") {
                                 else {
                                    print STDERR "mkinstaller: error: basename of \"".nativePathname($given)."\" contains spaces and/or tabs\n";
                                 }
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                 close DBGOUT if $dbgOutToPathname ne "";
                                 exit 1;
                              }
@@ -1959,6 +2064,7 @@ if ($valueOfDebugVar ne "") {
                                    #
                                    #---------------------------------------
                                    print STDERR "mkinstaller: error: basename of \"".nativePathname($given)."\" is known to be a file basename\n";
+                                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
@@ -2035,6 +2141,7 @@ if ($valueOfDebugVar ne "") {
                                       #
                                       #---------------------------------------
                                       print STDERR "mkinstaller: error: basename of \"".nativePathname($given)."\" is known to be a directory basename\n";
+                                      cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                       close DBGOUT if $dbgOutToPathname ne "";
                                       exit 1;
                                    }
@@ -2049,6 +2156,7 @@ if ($valueOfDebugVar ne "") {
                                       #
                                       #---------------------------------------
                                       print STDERR "mkinstaller: error: basename of \"".nativePathname($given)."\" collides with basename of \"".$fileBasenames{$bn}."\"\n";
+                                      cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                       close DBGOUT if $dbgOutToPathname ne "";
                                       exit 1;
                                    }
@@ -2070,11 +2178,13 @@ if ($valueOfDebugVar ne "") {
                                 }
                                 elsif ($OSclass eq "Windows-like") {
                                    print STDERR "mkinstaller: error: \"".nativePathname($given)."\" is a file, this isn't supported on Windows-like hosts (yet)\n";
+                                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
                                 else {
                                    print STDERR "mkinstaller: error: host isn't UNIX- or Windows-like\n";
+                                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                    close DBGOUT if $dbgOutToPathname ne "";
                                    exit 1;
                                 }
@@ -2086,6 +2196,7 @@ if ($valueOfDebugVar ne "") {
 
                           && do {
                              print STDERR "mkinstaller: error: zero-length parameter\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                              close DBGOUT if $dbgOutToPathname ne "";
                              exit 1;
                           };
@@ -2099,12 +2210,32 @@ if ($valueOfDebugVar ne "") {
          }
       }
    }
+
+   #----------------------------------------------------------------------------
+   #
+   #  Initial announcments...
+   #
+   #  We want this done as soon as possible, right after the command line has
+   #  been processesed.
+   #
+   #----------------------------------------------------------------------------
+
+   if (1 <= $verbosityLevel) {
+      my $FancyStart = convertTimeToDateTime($TstartOverall,"std","local");
+      print STDERR "mkinstaller: version ".$mkinstaller_ver_name." rev. ".$mkinstaller_ver_time."\n";
+      print STDERR "mkinstaller: ...the host appears to be \"".getOSclass()."\" (Perl reported \"".$^O."\")\n";
+      print STDERR "mkinstaller:    running \"".getOSname(3)."\"\n";
+      print STDERR "mkinstaller: ...running at \"".$FancyStart."\"\n";
+      print STDERR "mkinstaller: ...running within \"".$here."\"\n";
+   }
+
    #---------------------------------------
    #
    #  Collect a scalar version of the command
    #  line.
    #
    #---------------------------------------
+
    {
       my $i;
       for ($i=0; $i<=$#theCommandLine; $i+=1) {
@@ -2179,6 +2310,7 @@ if ($valueOfDebugVar ne "") {
       $TmpDir = findTempDir("MKINSTALLER_TMPDIR");
       if ($TmpDir eq "") {
          print STDERR "mkinstaller: error: can't decide on a location for a temp directory\n";
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          close DBGOUT if $dbgOutToPathname ne "";
          exit 1;
       }
@@ -2313,10 +2445,6 @@ if ($valueOfDebugVar ne "") {
       else {
          print DBGOUT "mkinstaller:    now have directory \"".nativePathname($TmpDirW)."\"\n" if $debugging;
       }
-      if (1 <= $verbosityLevel) {
-         print STDERR "mkinstaller: ...location for temporaries is \"".nativePathname($TmpDir)."\"\n";
-         print STDERR "mkinstaller:       my top temp directory is \"".nativePathname($TmpDirT)."\"\n";
-      }
    }
    print DBGOUT "mkinstaller: ...done\n" if $debugging;
 
@@ -2329,15 +2457,34 @@ if ($valueOfDebugVar ne "") {
 
    if ($HWtype eq "") {
       if ($OSclass eq "UNIX-like") {
-         $HWtype      = idTheHardware();
+         $HWtype = idTheHardware();
          if ($HWtype eq "") {
             print STDERR "mkinstaller: error: can't properly identify the hardware\n";
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             close DBGOUT if $dbgOutToPathname ne "";
             exit 1;
          }
       }
       else {
-         $HWtype      = "x86_64";
+         $HWtype = "x86_64";
+      }
+   }
+
+   #----------------------------------------------------------------------------
+   #
+   #  More announcments...
+   #
+   #----------------------------------------------------------------------------
+
+   if (1 <= $verbosityLevel) {
+      print STDERR "mkinstaller: ...hardware appears to be \"".$HWtype."\"\n";
+      print STDERR "mkinstaller: ...location for temporaries is \"".nativePathname($TmpDir)."\"\n";
+      print STDERR "mkinstaller:       my top temp directory is \"".nativePathname($TmpDirT)."\"\n";
+      if ($ProjectName ne "") {
+         print STDERR "mkinstaller: ...project = \"".$ProjectName."\"\n";
+         if ($ProjectVer ne "") {
+            print STDERR "mkinstaller:    version = \"".$ProjectVer."\"\n";
+         }
       }
    }
 
@@ -2361,7 +2508,7 @@ if ($valueOfDebugVar ne "") {
          #---------------------------------------
 
          print DBGOUT "mkinstaller: ...locate required \"cp\" utility...\n" if $debugging;
-         $use_cp = lookForExecutable("cp",\@myPath,$OSclass);
+         $use_cp = lookForExecutable("cp",\@myPATH,$OSclass);
          if ($use_cp eq "") {
             print STDERR "mkinstaller: error: can't locate required \"cp\" utility\n";
             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
@@ -2437,6 +2584,7 @@ if ($valueOfDebugVar ne "") {
                else {
                   print STDERR "mkinstaller: error: basename of \"".nativePathname($dn)."\" contains spaces and/or tabs\n";
                }
+               cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                close DBGOUT if $dbgOutToPathname ne "";
                exit 1;
             }
@@ -2513,12 +2661,14 @@ if ($valueOfDebugVar ne "") {
                if ( -d $pathname) {
                   if (isDirEmpty($pathname)) {
                      print STDERR "mkinstaller: error: \"".nativePathname($pathname)."\" is an empty directory\n";
+                     cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                      close DBGOUT if $dbgOutToPathname ne "";
                      exit 1;
                   }
                }
                else {
                   print STDERR "mkinstaller: error: \"".nativePathname($pathname)."\" is not a directory\n";
+                  cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                   close DBGOUT if $dbgOutToPathname ne "";
                   exit 1;
                }
@@ -2548,6 +2698,7 @@ if ($valueOfDebugVar ne "") {
          if ( ! $somethingGiven) {
             print STDERR "mkinstaller: error: expected at least 1 directory pathname\n";
             print STDERR "mkinstaller: ...and/or file pathname (via --with-<name>-file=<pathname> option)\n";
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             close DBGOUT if $dbgOutToPathname ne "";
             exit 1;
          }
@@ -2567,6 +2718,7 @@ if ($valueOfDebugVar ne "") {
                   print STDERR "mkinstaller:    \"$given\"\n";
                }
             }
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             close DBGOUT if $dbgOutToPathname ne "";
             exit 1;
          }
@@ -2604,6 +2756,7 @@ if ($valueOfDebugVar ne "") {
                print STDERR "mkinstaller: error - a \"bin\", \"lib\", or \"lib64\" directory was specified\n" if ( ! $told);
                $told = 1;
                print STDERR "mkinstaller: ...but no C compiler was specified\n";
+               cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                close DBGOUT if $dbgOutToPathname ne "";
                exit 1;
             }
@@ -2642,6 +2795,7 @@ if ($valueOfDebugVar ne "") {
       if ($ProjectVer ne "") {
          if ($ProjectName eq "") {
             print STDERR "mkinstaller: error: use of --project-version requires use of --project-name\n";
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             close DBGOUT if $dbgOutToPathname ne "";
             exit 1;
          }
@@ -2737,7 +2891,7 @@ if ($valueOfDebugVar ne "") {
       #---------------------------------------
 
       print DBGOUT "mkinstaller: locate optional \"pshaw\" utility...\n" if $debugging;
-      $use_pshaw = lookForExecutable("pshaw",\@myPath,$OSclass);
+      $use_pshaw = lookForExecutable("pshaw",\@myPATH,$OSclass);
       if ($use_pshaw eq "") {
          print STDERR "mkinstaller: warning: can't locate optional \"pshaw\" utility\n";
       }
@@ -2746,16 +2900,16 @@ if ($valueOfDebugVar ne "") {
       }
       print DBGOUT "mkinstaller: locate optional \"shaNNNsum\" utility...\n" if $debugging;
       if ($genSHA == 1) {
-         $use_shaNNNsum = lookForExecutable("sha1sum",\@myPath,$OSclass);
+         $use_shaNNNsum = lookForExecutable("sha1sum",\@myPATH,$OSclass);
       }
       elsif ($genSHA == 256) {
-         $use_shaNNNsum = lookForExecutable("sha256sum",\@myPath,$OSclass);
+         $use_shaNNNsum = lookForExecutable("sha256sum",\@myPATH,$OSclass);
       }
       elsif ($genSHA == 384) {
-         $use_shaNNNsum = lookForExecutable("sha384sum",\@myPath,$OSclass);
+         $use_shaNNNsum = lookForExecutable("sha384sum",\@myPATH,$OSclass);
       }
       elsif ($genSHA == 512) {
-         $use_shaNNNsum = lookForExecutable("sha512sum",\@myPath,$OSclass);
+         $use_shaNNNsum = lookForExecutable("sha512sum",\@myPATH,$OSclass);
       }
       else {
          $use_shaNNNsum = ""
@@ -2782,30 +2936,6 @@ if ($valueOfDebugVar ne "") {
          print STDERR "mkinstaller: warning: can't generate a hash file\n";
       }
       print STDERR "mkinstaller: ...using \"".nativePathname($use_hasher)."\"\n" if (1 <= $verbosityLevel);
-   }
-
-   #----------------------------------------------------------------------------
-   #
-   #  Initial announcments...
-   #
-   #----------------------------------------------------------------------------
-
-   if (1 <= $verbosityLevel) {
-      my $FancyStart = convertTimeToDateTime($TstartOverall,"std","local");
-      print STDERR "mkinstaller: version ".$mkinstaller_ver_name." rev. ".$mkinstaller_ver_time."\n";
-      print STDERR "mkinstaller: ...the host appears to be \"".$osClass."\" (Perl reported \"".$^O."\")\n";
-      {
-      my $myOSname = getOSname(3);
-      print STDERR "mkinstaller:    running \"".$myOSname."\"\n" if $myOSname ne "";
-      }
-      print STDERR "mkinstaller: ...running at \"".$FancyStart."\"\n";
-      print STDERR "mkinstaller: ...running within \"".$here."\"\n";
-      if ($ProjectName ne "") {
-         print STDERR "mkinstaller: ...project = \"".$ProjectName."\"\n";
-        if ($ProjectVer ne "") {
-            print STDERR "mkinstaller:    version = \"".$ProjectVer."\"\n";
-        }
-      }
    }
 
    #----------------------------------------------------------------------------
@@ -2925,6 +3055,7 @@ if ($valueOfDebugVar ne "") {
                                  else {
                                     print STDERR "mkinstaller: error: \"".nativePathname($joinName)."\" is a broken symbolic-link not a directory\n";
                                  }
+                                 cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                  close DBGOUT if $dbgOutToPathname ne "";
                                  exit 1;
                               }
@@ -2984,6 +3115,7 @@ if ($valueOfDebugVar ne "") {
                      else {
                         print STDERR "mkinstaller: error: basename of \"".nativePathname($pathname)."\" contains spaces and/or tabs\n";
                      }
+                     cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                      close DBGOUT if $dbgOutToPathname ne "";
                      exit 1;
                   }
@@ -3087,6 +3219,7 @@ if ($valueOfDebugVar ne "") {
       print DBGOUT "mkinstaller: check the pre-install script\n" if $debugging;
       if ( ! -f $preInstallPathname) {
          print STDERR "mkinstaller: error: can't find pre-install script \"".nativePathname($preInstallPathname)."\"\n";
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          close DBGOUT if $dbgOutToPathname ne "";
          exit 1;
       }
@@ -3105,6 +3238,7 @@ if ($valueOfDebugVar ne "") {
       }
       if ( ! $ok) {
          print STDERR "mkinstaller: error: invalid pre-install style(=\"$preInstallStyle\")\n";
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          close DBGOUT if $dbgOutToPathname ne "";
          exit 1;
       }
@@ -3123,6 +3257,7 @@ if ($valueOfDebugVar ne "") {
                   print STDERR "mkinstaller:    \"".nativePathname($pathname)."\"\n";
                }
             }
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             close DBGOUT if $dbgOutToPathname ne "";
             exit 1;
          }
@@ -3144,6 +3279,7 @@ if ($valueOfDebugVar ne "") {
       print DBGOUT "mkinstaller: check the post-install script\n" if $debugging;
       if ( ! -f $postInstallPathname) {
          print STDERR "mkinstaller: error: can't find post-install script \"".nativePathname($postInstallPathname)."\"\n";
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          close DBGOUT if $dbgOutToPathname ne "";
          exit 1;
       }
@@ -3162,6 +3298,7 @@ if ($valueOfDebugVar ne "") {
       }
       if ( ! $ok) {
          print STDERR "mkinstaller: error: invalid post-install style(=\"$postInstallStyle\")\n";
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          close DBGOUT if $dbgOutToPathname ne "";
          exit 1;
       }
@@ -3180,6 +3317,7 @@ if ($valueOfDebugVar ne "") {
                   print STDERR "mkinstaller:    \"".nativePathname($pathname)."\"\n";
                }
             }
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             close DBGOUT if $dbgOutToPathname ne "";
             exit 1;
          }
@@ -3542,6 +3680,7 @@ if ($valueOfDebugVar ne "") {
                                  else {
                                     print STDERR "mkinstaller: error: \"".nativePathname($joinName)."\" is a broken symbolic-link not a directory\n";
                                  }
+                                 cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                                  close DBGOUT if $dbgOutToPathname ne "";
                                  exit 1;
                               }
@@ -3601,6 +3740,7 @@ if ($valueOfDebugVar ne "") {
                      else {
                         print STDERR "mkinstaller: error: basename of \"".nativePathname($pathname)."\" contains spaces and/or tabs\n";
                      }
+                     cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                      close DBGOUT if $dbgOutToPathname ne "";
                      exit 1;
                   }
@@ -3704,6 +3844,7 @@ if ($valueOfDebugVar ne "") {
       print DBGOUT "mkinstaller: check the pre-install script\n" if $debugging;
       if ( ! -f $preInstallPathname) {
          print STDERR "mkinstaller: error: can't find pre-install script \"".nativePathname($preInstallPathname)."\"\n";
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          close DBGOUT if $dbgOutToPathname ne "";
          exit 1;
       }
@@ -3722,6 +3863,7 @@ if ($valueOfDebugVar ne "") {
       }
       if ( ! $ok) {
          print STDERR "mkinstaller: error: invalid pre-install style(=\"$preInstallStyle\")\n";
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          close DBGOUT if $dbgOutToPathname ne "";
          exit 1;
       }
@@ -3740,6 +3882,7 @@ if ($valueOfDebugVar ne "") {
                   print STDERR "mkinstaller:    \"".nativePathname($pathname)."\"\n";
                }
             }
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             close DBGOUT if $dbgOutToPathname ne "";
             exit 1;
          }
@@ -3761,6 +3904,7 @@ if ($valueOfDebugVar ne "") {
       print DBGOUT "mkinstaller: check the post-install script\n" if $debugging;
       if ( ! -f $postInstallPathname) {
          print STDERR "mkinstaller: error: can't find post-install script \"".nativePathname($postInstallPathname)."\"\n";
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          close DBGOUT if $dbgOutToPathname ne "";
          exit 1;
       }
@@ -3779,6 +3923,7 @@ if ($valueOfDebugVar ne "") {
       }
       if ( ! $ok) {
          print STDERR "mkinstaller: error: invalid post-install style(=\"$postInstallStyle\")\n";
+         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          close DBGOUT if $dbgOutToPathname ne "";
          exit 1;
       }
@@ -3797,6 +3942,7 @@ if ($valueOfDebugVar ne "") {
                   print STDERR "mkinstaller:    \"".nativePathname($pathname)."\"\n";
                }
             }
+            cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
             close DBGOUT if $dbgOutToPathname ne "";
             exit 1;
          }
@@ -3884,7 +4030,7 @@ if ($valueOfDebugVar ne "") {
          #
          #---------------------------------------
          print DBGOUT "mkinstaller: locate required \"tar\" utility...\n" if $debugging;
-         $use_tar = lookForExecutable("tar",\@myPath,$OSclass);
+         $use_tar = lookForExecutable("tar",\@myPATH,$OSclass);
          if ($use_tar eq "") {
             print STDERR "mkinstaller: error: can't locate required \"tar\" utility\n";
             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
@@ -3932,10 +4078,10 @@ if ($valueOfDebugVar ne "") {
             #
             #---------------------------------------
             print DBGOUT "mkinstaller: locate required \"gzcat\" utility...\n" if $debugging;
-            $use_gzcat = lookForExecutable("gzcat",\@myPath,$OSclass);
+            $use_gzcat = lookForExecutable("gzcat",\@myPATH,$OSclass);
             if ($use_gzcat eq "") {
                print DBGOUT "mkinstaller: ...failed, try \"zcat\" utility...\n" if $debugging;
-               $use_gzcat = lookForExecutable("zcat",\@myPath,$OSclass);
+               $use_gzcat = lookForExecutable("zcat",\@myPATH,$OSclass);
                if ($use_gzcat eq "") {
                   print STDERR "mkinstaller: error: can't locate required \"gzcat\" utility\n";
                   cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
@@ -3949,7 +4095,7 @@ if ($valueOfDebugVar ne "") {
             #
             #---------------------------------------
             print DBGOUT "mkinstaller: locate required \"gzip\" utility...\n" if $debugging;
-            $use_gzip = lookForExecutable("gzip",\@myPath,$OSclass);
+            $use_gzip = lookForExecutable("gzip",\@myPATH,$OSclass);
             if ($use_gzip eq "") {
                print STDERR "mkinstaller: error: can't locate required \"gzip\" utility\n";
                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
@@ -3982,10 +4128,10 @@ if ($valueOfDebugVar ne "") {
             else {
                print DBGOUT "mkinstaller:    doesn't look like it's GNU tar\n" if $debugging;
                print DBGOUT "mkinstaller: locate the \"gzcat\" utility...\n" if $debugging;
-               $use_gzcat = lookForExecutable("gzcat",\@myPath,$OSclass);
+               $use_gzcat = lookForExecutable("gzcat",\@myPATH,$OSclass);
                if ($use_gzcat eq "") {
                   print DBGOUT "mkinstaller: ...failed, try \"zcat\" utility...\n" if $debugging;
-                  $use_gzcat = lookForExecutable("zcat",\@myPath,$OSclass);
+                  $use_gzcat = lookForExecutable("zcat",\@myPATH,$OSclass);
                   if ($use_gzcat eq "") {
                      print STDERR "mkinstaller: note: can't locate \"gzcat\" (or \"zcat\") utility\n";
                   }
@@ -3997,7 +4143,7 @@ if ($valueOfDebugVar ne "") {
                   print DBGOUT "mkinstaller: ...found \"".nativePathname($use_gzcat)."\"\n" if $debugging;
                }
                print DBGOUT "mkinstaller: locate the \"gzip\" utility...\n" if $debugging;
-               $use_gzip = lookForExecutable("gzip",\@myPath,$OSclass);
+               $use_gzip = lookForExecutable("gzip",\@myPATH,$OSclass);
                if ($use_gzip eq "") {
                   print STDERR "mkinstaller: note: can't locate \"gzip\" utility\n";
                }
@@ -4356,7 +4502,7 @@ if ($valueOfDebugVar ne "") {
                   #---------------------------------------
 
                   print DBGOUT "mkinstaller: ...locate required \"cp\" utility...\n" if $debugging;
-                  $use_cp = lookForExecutable("cp",\@myPath,$OSclass);
+                  $use_cp = lookForExecutable("cp",\@myPATH,$OSclass);
                   if ($use_cp eq "") {
                      print STDERR "mkinstaller: error: can't locate required \"cp\" utility\n";
                      cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
@@ -4559,7 +4705,7 @@ if ($valueOfDebugVar ne "") {
                      #---------------------------------------
 
                      print DBGOUT "mkinstaller:    ...locate required \"cp\" utility...\n" if $debugging;
-                     $use_cp = lookForExecutable("cp",\@myPath,$OSclass);
+                     $use_cp = lookForExecutable("cp",\@myPATH,$OSclass);
                      if ($use_cp eq "") {
                         print STDERR "mkinstaller: error: can't locate required \"cp\" utility\n";
                         cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
@@ -5007,6 +5153,7 @@ EOF03
          |Use_cc=""
          |Use_cxx=""
          |
+         |DefaultPrefix="$defaultPrefix"
          |PREFIX=""
 EOF04
 
@@ -10276,6 +10423,19 @@ EOF32
          |   then
          |      #---------------------------------------
          |      #
+         |      #  First try the default (if any) that
+         |      #  was given when this script was
+         |      #  generated...
+         |      #
+         |      #---------------------------------------
+         |
+         |      if ["X\${PREFIX}" = "X" ]
+         |      then
+         |         PREFIX="\${DefaultPrefix}"
+         |      fi
+         |
+         |      #---------------------------------------
+         |      #
          |      #  Ask for PREFIX if one wasn't given...
          |      #
          |      #---------------------------------------
@@ -12908,9 +13068,31 @@ EOF67
       #---------------------------------------
 
       print DBGOUT "mkinstaller: locate required \"makensis\" utility...\n" if $debugging;
-      $use_makensis = lookForExecutable("makensis",\@myPath,$OSclass);
+      $use_makensis = lookForExecutable("makensis",\@myPATH,$OSclass);
       if ($use_makensis eq "") {
          print STDERR "mkinstaller: error: can't locate required \"makensis\" utility\n";
+         if ( exists $ENV{'PATH'} ) {
+            my $havePath = $ENV{'PATH'};
+            if ($havePath ne "") {
+               my @havePath = split /;/, $havePath; # Remember, this is a Windows-like host
+               my $i;
+               for ($i=0; $i<=$#havePath; ++$i) {
+                  my $pathname = $havePath[$i];
+                  if ($i == 0) {
+                     print STDERR "mkinstaller: ...PATH is: \"$pathname\"\n";
+                  }
+                  else {
+                     print STDERR "mkinstaller:             \"$pathname\"\n";
+                  }
+               }
+            }
+            else {
+               print STDERR "mkinstaller: ...PATH is empty\n";
+            }
+         }
+         else {
+            print STDERR "mkinstaller: ...PATH isn't defined\n";
+         }
          cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
          close DBGOUT if $dbgOutToPathname ne "";
          exit 1;
@@ -13357,35 +13539,53 @@ EOF67
       my $debugging      = shift;
 
       print DBGOUT "mkinstaller.cleanupTemps[ myTmpDirT=\"$myTmpDirT\", keep=$keep, verbosityLevel=$verbosityLevel...\n" if $debugging;
-      if ( ! $keep) {
-         print DBGOUT "mkinstaller.cleanupTemps: ...not keeping\n" if $debugging;
-         print STDERR "mkinstaller: ...cleanup\n" if (1 <= $verbosityLevel);
-         if ( -d "$myTmpDirT") {
-            my $first = 1;
-            my $count = 8;
-            while ( -d "$myTmpDirT") {
-               print DBGOUT "mkinstaller.cleanupTemps:    have \"$myTmpDirT\" directory\n" if $debugging;
-               $count -= 1;
-               if (count < 0) {
-                  print DBGOUT "mkinstaller.cleanupTemps:    ...but giving-up\n" if $debugging;
-                  last;
-               }
-               else {
-                  if ($first) {
-                     $first = 0;
-                     print STDERR "mkinstaller:    \"".nativePathname($myTmpDirT)."\"\n" if (1 <= $verbosityLevel);
+      if ($myTmpDirT ne "") {
+         if ( ! $keep) {
+            print DBGOUT "mkinstaller.cleanupTemps: ...not keeping\n" if $debugging;
+            print STDERR "mkinstaller: ...cleanup\n" if (1 <= $verbosityLevel);
+            if ( -d "$myTmpDirT") {
+               my $first = 1;
+               my $count = 8;
+               while ( -d "$myTmpDirT") {
+                  print DBGOUT "mkinstaller.cleanupTemps:    have \"$myTmpDirT\" directory\n" if $debugging;
+                  $count -= 1;
+                  if (count < 0) {
+                     print DBGOUT "mkinstaller.cleanupTemps:    ...but giving-up\n" if $debugging;
+                     last;
                   }
-                  shouldDeletePathname("mkinstaller: ",$myTmpDirT);
+                  else {
+                     if ($first) {
+                        $first = 0;
+                        print STDERR "mkinstaller:    \"".nativePathname($myTmpDirT)."\"\n" if (1 <= $verbosityLevel);
+                     }
+                     my @remainder  = shouldDeletePathname($myTmpDirT);
+                     my $Nremainder = $#remainder + 1;
+                     if (1 <= $Nremainder) {
+                        my $i;
+                        for ($i=0; $i<$Nremainder; $i+=1) {
+                           my $pathname = $remainder[$i];
+                           if ($i == 0) {
+                              print STDERR "mkinstaller: ...couldn't delete \"".nativePathname($pathname)."\"\n";
+                           }
+                           else {
+                              print STDERR "mkinstaller:                 or \"".nativePathname($pathname)."\"\n";
+                           }
+                        }
+                     }
+                  }
                }
             }
+            else {
+               print DBGOUT "mkinstaller.cleanupTemps:    don't have \"$myTmpDirT\" directory\n" if $debugging;
+            }
+            print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
          }
          else {
-            print DBGOUT "mkinstaller.cleanupTemps:    don't have \"$myTmpDirT\" directory\n" if $debugging;
+            print DBGOUT "mkinstaller:    keeping \"$myTmpDirT\"\n" if $debugging;
          }
-         print STDERR "mkinstaller:    done\n" if (2 <= $verbosityLevel);
       }
       else {
-         print DBGOUT "mkinstaller:    keeping \"$myTmpDirT\"\n" if $debugging;
+         print DBGOUT "mkinstaller: ...nothing to cleanup\n" if $debugging;
       }
       print DBGOUT "mkinstaller.cleanupTemps] ...done\n" if $debugging;
    }
@@ -15005,11 +15205,11 @@ EOF
                else {
                   print DBGOUT "mki_check_prog: ...\"$given\" is a simple name\n" if $debugging;
                   if ( exists $ENV{'PATH'} ) {
-                     $myPath = $ENV{'PATH'};
-                     @myPath = split /:/, $myPath;
+                     $myPATH = $ENV{'PATH'};
+                     @myPATH = split /:/, $myPATH;
                      my $i;
-                     for ($i=0; $i<=$#myPath; ++$i) {
-                        my $pathname = joinpath($myPath[$i],$programName);
+                     for ($i=0; $i<=$#myPATH; ++$i) {
+                        my $pathname = joinpath($myPATH[$i],$programName);
                         print DBGOUT "mki_check_prog:    check \"$pathname\"\n" if $debugging;
                         if (-f $pathname) {
                            print DBGOUT "mki_check_prog:    ...\"$pathname\" exists and is a file\n" if $debugging;
@@ -17089,9 +17289,14 @@ EOFc
 #  This subroutine is used to translate a relative pathname to an absolute
 #  pathname.
 #
+#  This function uses: fixpath(),
+#                      getOSclass(),
+#                      getWorkingDirectory(),
+#                      joinpath()
+#
 #  see: totebag/src/perl-lib/absname.psub
 #
-#  Dated: 01Jun2018
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
@@ -17141,6 +17346,73 @@ sub absname {
    }
    print DBGOUT "absname] ...done(=\"$result\")\n" if $debugging;
    return $result;
+}
+
+# MyUniqueFileId: b6ad466e-02ec-4fe0-d32d-770350efae70
+#-------------------------------------------------------------------------------
+#
+#  Check if pathname is on the search path.
+#
+#  This function is used to check if a given pathname (string) is already in a
+#  given array of pathnames (such as found in the PATH environment variable or
+#  returned by the getTheSearchPATH() function). Note that the second parameter
+#  is expected to be a reference to an array of strings (pathnames). Simple
+#  example:
+#
+#     $myPATH = getTheSearchPATH();
+#     @myPATH = splitTheSearchPATH($myPATH);
+#     if ( ! alreadyOnSearchPATH($dirPathname,\@myPATH)) {
+#        @myPATH = prependToSearchPATH($dirPathname,\@myPATH);
+#        $myPATH = joinTheSearchPATH(\@myPATH);
+#     }
+#
+#  calls: getOSclass(),
+#         makePathWindowslike()
+#
+#  see: totebag/src/perl-lib/alreadyOnSearchPATH.psub
+#
+#  Dated: 02Sep2019
+#
+#-------------------------------------------------------------------------------
+
+sub alreadyOnSearchPATH {
+   my $pathname   = shift;   # A pathname to prepend.
+   my $refMyPATH  = shift;   # A reference to an array of pathnames
+   my $theOSclass = shift;   # ...an optional parameter
+   print DBGOUT "alreadyOnSearchPATH[ pathname=\"$pathname\", refMyPATH=..., theOSclass=\"$theOSclass\"...\n" if $debugging;
+   my $isOnPATH   = 0;
+   if (ref($refMyPATH) eq "ARRAY") {
+      if ($pathname ne "") {
+         #
+         #  Adjust pathname if necessary...
+         #
+         if ($theOSclass eq "") {
+            $theOSclass = getOSclass();
+            print DBGOUT "alreadyOnSearchPATH: ...assume \"$theOSclass\"\n" if $debugging;
+         }
+         if ($theOSclass eq "Windows-like") {
+            $pathname = makePathWindowslike($pathname);
+            print DBGOUT "alreadyOnSearchPATH: ...adjusted pathname to \"$pathname\"\n" if $debugging;
+         }
+         #
+         #  ...then scan through the array...
+         #
+         print DBGOUT "alreadyOnSearchPATH: ...scan through PATH\n" if $debugging;
+         my $Nelems = @$refMyPATH;
+         my $i;
+         for ($i=0; $i<$Nelems; ++$i) {
+            print DBGOUT "alreadyOnSearchPATH:    \"".$$refMyPATH[$i]."\"\n" if $debugging;
+            if ($$refMyPATH[$i] eq $pathname) {
+               $isOnPATH = 1;
+               print DBGOUT "alreadyOnSearchPATH:    ...found\n" if $debugging;
+               last;
+            }
+         }
+         print DBGOUT "alreadyOnSearchPATH:    ...NOT found\n" if ($debugging && ! $isOnPATH);
+      }
+   }
+   print DBGOUT "alreadyOnSearchPATH] ...done(=$isOnPATH)\n" if $debugging;
+   return $isOnPATH;
 }
 
 # MyUniqueFileId: c16cf2c9-02f4-48a7-bf6f-6d74697af801
@@ -17306,13 +17578,6 @@ sub convertTimeToDateTime {
 #  files, and/or symbolic-links. An array of pathnames that could not be
 #  deleted is returned.
 #
-#  see: totebag/src/perl-lib/deletePathnames.psub
-#
-#  Uses: basename()
-#        getOSclass()
-#        getWorkingDirectory()
-#        joinpath()
-#
 #  Note: This function appears to be a lot more complex than neccessary. It
 #        not only requests that given pathnames (and recursive contents) be
 #        removed, it also checks to see that it's all gone (returning any
@@ -17321,7 +17586,14 @@ sub convertTimeToDateTime {
 #        a what should be empty directory from being removed (it doesn't look
 #        empty).
 #
-#  Dated: 23Aug2019
+#  This function uses: basename(),
+#                      getOSclass(),
+#                      getWorkingDirectory(),
+#                      joinpath()
+#
+#  see: totebag/src/perl-lib/deletePathnames.psub
+#
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
@@ -17601,33 +17873,48 @@ sub deletePathnames {
 #  component) from a given pathname. Note that this kind of operation is
 #  generally available in the File module.
 #
-#  This function uses: fixpath()
+#  This function uses: fixpath(),
+#                      nativePathname(()
 #
 #  see: totebag/src/perl-lib/dirname.psub
 #
-#  Dated: 22Oct2018
+#  Dated: 01Oct2019
 #
 #-------------------------------------------------------------------------------
 
 sub dirname {
-   my $pathname  = shift(@_);
+   my $pathname    = shift(@_);
    print DBGOUT "dirname[ pathname=\"$pathname\"...\n" if $debugging;
-   my $result    = "";
+   my $result      = "";
+   my $changed     = $pathname =~ tr/\\/\//;
+   if ($debugging && (1 <= $changed)) {
+      print DBGOUT "dirname: ...adjusted slashing to \"$pathname\"\n" if $debugging;
+   }
    #---------------------------------------
    #
    #  Remove drive name if there is one
    #
-   my $haveDrive = "";
+   my $driveLetter = "";
    if ($pathname =~ /^([a-zA-Z]):(.*)$/) {
-      $haveDrive = $1;
-      $pathname  = $2;
-      print DBGOUT "dirname: ...with drive \"".$haveDrive."\"\n" if $debugging;
+      $driveLetter = $1;
+      $pathname    = $2;
+      print DBGOUT "dirname: ...with drive \"".$driveLetter."\"\n" if $debugging;
+      print DBGOUT "dirname:      and path \"".$pathname."\"\n" if $debugging;
    }
-   my $adjusted  = fixpath($pathname);
-   if ($adjusted ne $pathname) {
-      print DBGOUT "dirname: ...adjusted \"".nativePathname($adjusted)."\"\n" if $debugging;
+   elsif ($pathname =~ /^\/([a-zA-Z])\/(.*)$/) {
+      $driveLetter = $1;
+      $pathname    = $2;
+      print DBGOUT "dirname: ...with drive \"".$driveLetter."\"\n" if $debugging;
+      print DBGOUT "dirname:      and path \"".$pathname."\"\n" if $debugging;
    }
-   $_            = $adjusted;
+   else {
+      print DBGOUT "dirname: ...no drive letter\n" if $debugging;
+   }
+   my $adjusted    = fixpath($pathname);
+   if ($debugging && ($adjusted ne $pathname)) {
+      print DBGOUT "dirname: ...adjusted to \"".nativePathname($adjusted)."\"\n" if $debugging;
+   }
+   $_              = $adjusted;
    parse: {
              /^(.+)[\/\\]([^\/\\]*)$/
 
@@ -17657,9 +17944,15 @@ sub dirname {
    #---------------------------------------
    #
    #  Restore drive name if there was one
+   #  and change back to backslashes if
+   #  we originally had backslashes.
    #
-   if ($haveDrive ne "") {
-      $result = $haveDrive.":".$result;
+   if ($driveLetter ne "") {
+      $result = $driveLetter.":".$result;
+   }
+   if ($changed) {
+      $result =~ tr/\//\\/;
+      print DBGOUT "dirname: ...adjusted back to \"$result\"\n" if $debugging;
    }
    print DBGOUT "dirname] ...done(=\"".nativePathname($result)."\")\n" if $debugging;
    return $result;
@@ -17707,9 +18000,11 @@ sub dumpTextfileToHandle {
 #
 #  Dumping a textfile to <stderr>
 #
+#  This function uses: dumpTextfileToHandle()
+#
 #  see: totebag/src/perl-lib/dumpTextfileToSTDERR.psub
 #
-#  Dated: 21Jan2017
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
@@ -17741,9 +18036,14 @@ sub dumpTextfileToSTDERR {
 #     $return[$e]{"NsymbolicLinks"}    An integer -- the number of symbolic-links in this directory
 #     $return[$e]{"ok"}                An integer -- 0 or 1 (could directory be read?)
 #
+#  This function uses: fixpath(),
+#                      getOSclass(),
+#                      joinpath(),
+#                      makePathWindowslike()
+#
 #  see: totebag/src/perl-lib/findAllSubdirs.psub
 #
-#  Dated: 14Nov2018
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
@@ -17751,6 +18051,15 @@ sub findAllSubdirs {
    my $pathname           = shift;
    my $sponsor            = shift;
    print DBGOUT "findAllSubdirs[ pathname=\"$pathname\", sponsor=\"$sponsor\"...\n" if $debugging;
+   if (getOSclass() eq "Windows-like") {
+      if ($pathname =~ /[\/\\]/) {
+         my $p = makePathWindowslike($pathname);
+         if ($p ne $pathname) {
+            $pathname = $p;
+            print DBGOUT "findAllSubdirs: ...adjusted pathname to \"$pathname\"\n" if $debugging;
+         }
+      }
+   }
    my @result             = ( );
    $result[0]             = 1;
    print DBGOUT "findAllSubdirs: ...requirements appear ok\n";
@@ -17906,24 +18215,31 @@ sub findAllSubdirs {
 #     2) Try HOMEDRIVE and HOMEPATH environment variables
 #     3) Try USERPROFILE environment variable
 #
+#  Note that last two cases: 2 and 3 are only applicable on Windows-like hosts.
+#
+#  This function uses: getOSclass(),
+#                      makePathWindowslike()
+#
 #  see: totebag/src/perl-lib/findHomeDirectory.psub
 #
-#  Dated: 19Feb2016
+#  Dated: 30Sep2019
 #
 #--------------------------------------------------------------------------------
 
 sub findHomeDirectory {
-   my $result = "";
+   my $homedir = "";
    #---------------------------------------
    #
    #  First try HOME environment variable...
    #
-   if ($result eq "") {
+   if ($homedir eq "") {
       if ( exists $ENV{'HOME'}) {
-         $result = $ENV{'HOME'};
-         $result =~ tr/\\/\//;
-         if ( ! -d $result) {
-            $result = "";
+         my $trydir = $ENV{'HOME'};
+         if (getOSclass() eq "Windows-like") {
+            $trydir = makePathWindowslike($trydir);
+         }
+         if ( -d $trydir) {
+            $homedir = $trydir;
          }
       }
    }
@@ -17932,15 +18248,29 @@ sub findHomeDirectory {
    #  ...then try HOMEDRIVE and HOMEPATH
    #     environment variables...
    #
-   if ($result eq "") {
-      if ( exists $ENV{'HOMEDRIVE'}) {
-         my $HOMEDRIVE = $ENV{'HOMEDRIVE'};
+   #     NOTE: The existance of HOMEDRIVE
+   #           is optional here. If not
+   #           defined we'll assume it is
+   #           an empty string.
+   #
+   if ($homedir eq "") {
+      if (getOSclass() eq "Windows-like") {
+         my $HOMEDRIVE;
+         my $HOMEPATH;
+         if ( exists $ENV{'HOMEDRIVE'}) {
+            $HOMEDRIVE = $ENV{'HOMEDRIVE'};
+         }
+         else {
+            $HOMEDRIVE = "";
+         }
          if ( exists $ENV{'HOMEPATH'}) {
-            my $HOMEPATH = $ENV{'HOMEPATH'};
-            $result      = "$HOMEDRIVE$HOMEPATH";
-            $result      =~ tr/\\/\//;
-            if ( ! -d $result) {
-               $result = "";
+            $HOMEPATH = $ENV{'HOMEPATH'};
+            if ($HOMEPATH ne "") {
+               my $trydir   = "$HOMEDRIVE$HOMEPATH";
+               $trydir      = makePathWindowslike($trydir);
+               if ( -d $trydir) {
+                  $homedir = $trydir;
+               }
             }
          }
       }
@@ -17950,16 +18280,18 @@ sub findHomeDirectory {
    #  ...finally try USERPROFILE environment
    #     variables...
    #
-   if ($result eq "") {
-      if ( exists $ENV{'USERPROFILE'}) {
-         $result = $ENV{'USERPROFILE'};
-         $result =~ tr/\\/\//;
-         if ( ! -d $result) {
-            $result = "";
+   if ($homedir eq "") {
+      if (getOSclass() eq "Windows-like") {
+         if ( exists $ENV{'USERPROFILE'}) {
+            my $trydir = $ENV{'USERPROFILE'};
+            $trydir    = makePathWindowslike($trydir);
+            if ( -d $trydir) {
+               $homedir = $trydir;
+            }
          }
       }
    }
-   return $result;
+   return $homedir;
 }
 
 # MyUniqueFileId: c58e95af-7811-46b9-ba94-c63e6b2ed7ee
@@ -17983,16 +18315,19 @@ sub findHomeDirectory {
 #  Note that 5, 8, and 9 are only applicable on Windows-like hosts.
 #
 #  This function uses: findHomeDirectory(),
-#                      getOSclass()
+#                      getOSclass(),
+#                      joinpath()
+#                      makePathWindowslike()
 #
 #  see: totebag/src/perl-lib/findTempDir.psub
 #
-#  Dated: 07Jul2017
+#  Dated: 30Sep2019
 #
 #-------------------------------------------------------------------------------
 
 sub findTempDir {
    my $envVarName = shift;
+   print DBGOUT "findTempDir[ envVarName=\"$envVarName\"...\n" if $debugging;
    my $tmpdir     = "";
 
    #---------------------------------------
@@ -18001,11 +18336,16 @@ sub findTempDir {
    #
    if ($tmpdir eq "") {
       if ($envVarName ne "") {
+         print DBGOUT "findTempDir: ...consider \"$envVarName\"\n" if $debugging;
          if ( exists $ENV{$envVarName}) {
             my $trydir = $ENV{$envVarName};
+            if (getOSclass() eq "Windows-like") {
+               $trydir = makePathWindowslike($trydir);
+            }
             if ( -d $trydir) {
                if ( -w $trydir) {
                   $tmpdir = $trydir;
+                  print DBGOUT "findTempDir:    use value\n" if $debugging;
                }
             }
          }
@@ -18018,10 +18358,15 @@ sub findTempDir {
    #
    if ($tmpdir eq "") {
       if ( exists $ENV{'TMPDIR'}) {
+         print DBGOUT "findTempDir: ...consider \"${TMPDIR}\"\n" if $debugging;
          my $trydir = $ENV{'TMPDIR'};
+         if (getOSclass() eq "Windows-like") {
+            $trydir = makePathWindowslike($trydir);
+         }
          if ( -d $trydir) {
             if ( -w $trydir) {
                $tmpdir = $trydir;
+               print DBGOUT "findTempDir:    use value\n" if $debugging;
             }
          }
       }
@@ -18033,10 +18378,15 @@ sub findTempDir {
    #
    if ($tmpdir eq "") {
       if ( exists $ENV{'TMP'}) {
+         print DBGOUT "findTempDir: ...consider \"${TMP}\"\n" if $debugging;
          my $trydir = $ENV{'TMP'};
+         if (getOSclass() eq "Windows-like") {
+            $trydir = makePathWindowslike($trydir);
+         }
          if ( -d $trydir) {
             if ( -w $trydir) {
                $tmpdir = $trydir;
+               print DBGOUT "findTempDir:    use value\n" if $debugging;
             }
          }
       }
@@ -18048,10 +18398,15 @@ sub findTempDir {
    #
    if ($tmpdir eq "") {
       if ( exists $ENV{'TEMP'}) {
+         print DBGOUT "findTempDir: ...consider \"${TEMP}\"\n" if $debugging;
          my $trydir = $ENV{'TEMP'};
+         if (getOSclass() eq "Windows-like") {
+            $trydir = makePathWindowslike($trydir);
+         }
          if ( -d $trydir) {
             if ( -w $trydir) {
                $tmpdir = $trydir;
+               print DBGOUT "findTempDir:    use value\n" if $debugging;
             }
          }
       }
@@ -18069,11 +18424,16 @@ sub findTempDir {
       #
       my $theHomeDir = findHomeDirectory();
       if ($theHomeDir ne "") {
+         print DBGOUT "findTempDir: ...consider \"${HOME}/tmp\"\n" if $debugging;
          if ( -d $theHomeDir) {
-            my $trydir = $theHomeDir."/tmp";
+            my $trydir = joinpath($theHomeDir,"tmp");
+            if (getOSclass() eq "Windows-like") {
+               $trydir = makePathWindowslike($trydir);
+            }
             if ( -d $trydir) {
                if ( -w $trydir) {
                   $tmpdir = $trydir;
+                  print DBGOUT "findTempDir:    use it\n" if $debugging;
                }
             }
          }
@@ -18091,10 +18451,13 @@ sub findTempDir {
          if ( exists $ENV{'USERPROFILE'} ) {
             my $usrProf   = $ENV{'USERPROFILE'};
             if ($usrProf ne "") {
+               print DBGOUT "findTempDir: ...consider \"${USERPROFILE}\\AppData\\Local\\Temp\"\n" if $debugging;
                my $trydir = "$usrProf\\AppData\\Local\\Temp";
+               $trydir    = makePathWindowslike($trydir);
                if ( -d $trydir) {
                   if ( -w $trydir) {
                      $tmpdir = $trydir;
+                     print DBGOUT "findTempDir:    use it\n" if $debugging;
                   }
                }
             }
@@ -18108,9 +18471,14 @@ sub findTempDir {
    #
    if ($tmpdir eq "") {
       my $trydir = "/tmp";
+      print DBGOUT "findTempDir: ...consider \"/tmp\"\n" if $debugging;
+      if (getOSclass() eq "Windows-like") {
+         $trydir = makePathWindowslike($trydir);
+      }
       if ( -d $trydir) {
          if ( -w $trydir) {
             $tmpdir = $trydir;
+            print DBGOUT "findTempDir:    use it\n" if $debugging;
          }
       }
    }
@@ -18124,9 +18492,12 @@ sub findTempDir {
          #
          if ($tmpdir eq "") {
             my $trydir = "C:\\Temp";
+            print DBGOUT "findTempDir: ...consider \"C:\\Temp\"\n" if $debugging;
+            $trydir    = makePathWindowslike($trydir);
             if ( -d $trydir) {
                if ( -w $trydir) {
                   $tmpdir = $trydir;
+                  print DBGOUT "findTempDir:    use it\n" if $debugging;
                }
             }
          }
@@ -18137,9 +18508,11 @@ sub findTempDir {
          #
          if ($tmpdir eq "") {
             my $trydir = "C:\\Windows\\Temp";
+            print DBGOUT "findTempDir: ...consider \"C:\\Windows\\Temp\"\n" if $debugging;
             if ( -d $trydir) {
                if ( -w $trydir) {
                   $tmpdir = $trydir;
+                  print DBGOUT "findTempDir:    use it\n" if $debugging;
                }
             }
          }
@@ -18152,11 +18525,16 @@ sub findTempDir {
    #
    if ($tmpdir eq "") {
       my $trydir = ".";
-      if ( -w $trydir) {
-         $tmpdir = $trydir;
+      print DBGOUT "findTempDir: ...consider \".\"\n" if $debugging;
+      if ( -d $trydir) {
+         if ( -w $trydir) {
+            $tmpdir = $trydir;
+            print DBGOUT "findTempDir:    use it\n" if $debugging;
+         }
       }
    }
 
+   print DBGOUT "findTempDir] ...done(=\"$tmpdir\")\n" if $debugging;
    return $tmpdir;
 }
 
@@ -18182,14 +18560,16 @@ sub fixIndentStuff {
 #-------------------------------------------------------------------------------
 #
 #  "Fixing" a pathname. This gets rid of excess dots and such that don't
-#  make any difference but are hard to read. Note that backslashes are
-#  translated into forward slashes in the process.
+#  make any difference but are hard to read. Note that the format of the
+#  pathname is made proper for Windows-like hosts (to protect against
+#  cygwin issues).
 #
-#  Note that this function uses: getOSclass()
+#  Note that this function uses: getOSclass(),
+#                                makePathWindowslike()
 #
 #  see: totebag/src/perl-lib/fixpath.psub
 #
-#  Dated: 03Jun2018
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
@@ -18197,25 +18577,33 @@ sub fixpath {
    my $pathname = shift;
    my $result   = "";
    my $drive;
-   my $useslash;
    #
    #  Decide on an appropriate pathname component separator (which kind
    #  of slash to use). Remove and hold on to the drive letter if there
    #  is one (only on Windows of course).
    #
    if (getOSclass() eq "UNIX-like") {
-      $useslash = "/";
       $drive    = "";
    }
-   else {
-      $useslash = "\\";
+   elsif (getOSclass() eq "Windows-like") {
+      if ($pathname =~ /[\/\\]/) {
+         $pathname = makePathWindowslike($pathname);
+      }
       if ($pathname =~ /^([a-zA-Z]):([\/\\].*)$/) {
+         $drive    = $1;
+         $pathname = $2;
+      }
+      elsif ($pathname =~ /^[\/\\]([a-zA-Z])([\/\\].*)$/) {
          $drive    = $1;
          $pathname = $2;
       }
       else {
          $drive    = "";
       }
+   }
+   else {
+      $drive    = "";
+      $pathname = "";
    }
    if ($pathname ne "") {
       if ($pathname eq ".") {
@@ -18329,13 +18717,20 @@ sub fixpath {
          }
       }
    }
-   #---------------------------------------
-   #
-   #  Finally re-attach drive letter if
-   #  necessary.
-   #
-   if ($drive ne "") {
-      $result = $drive.":".$result;
+   if (($result ne "") || ($drive ne "")) {
+      #---------------------------------------
+      #
+      #  Finally re-attach drive letter if
+      #  necessary and make sure format is
+      #  proper if this is a Windows-like
+      #  host.
+      #
+      if ($drive ne "") {
+         $result = $drive.":".$result;
+      }
+      if (getOSclass() eq "Windows-like") {
+         $result = makePathWindowslike($result);
+      }
    }
    return $result;
 }
@@ -18358,7 +18753,7 @@ sub fixpath {
 #
 #  see: totebag/src/perl-lib/getOSclass.psub
 #
-#  Dated: 11Sep2019
+#  Dated: 30Sep2019
 #
 #-------------------------------------------------------------------------------
 
@@ -18429,11 +18824,16 @@ sub getOSclass {
       #
       if ( defined $ENV{'PATH'} ) {
          my $tmpPath = $ENV{'PATH'};
-         if ($tmpPath =~ /;/) {
-            $result = "Windows-like";
-         }
-         elsif ($tmpPath =~ /:/) {
-            $result = "UNIX-like";
+         if ($tmpPath ne "") {
+            if ($tmpPath =~ /;/) {
+               $result = "Windows-like";
+            }
+            elsif ($tmpPath =~ /:/) {
+               $result = "UNIX-like";
+            }
+            else {
+               $result = "unknown";
+            }
          }
          else {
             $result = "unknown";
@@ -18484,9 +18884,11 @@ sub getOSclass {
 #  appropriate for Windows-like hosts. Default is to use the output of the
 #  systeminfo command.
 #
+#  This function uses: getOSclass()
+#
 #  see: totebag/src/perl-lib/getOSname.psub
 #
-#  Dated: 12Sep2019
+#  Dated: 04Oct2019
 #
 #  NOTE: This code has only been tested on FreeBSD, Linux, MacOS, and Solaris
 #        and a number of Windows desktop and server versions. Other other
@@ -19264,6 +19666,58 @@ sub getOSname {
    return $result;
 }
 
+# MyUniqueFileId: 8bfa6d6a-377a-4d1e-84f3-7235c5ae0877
+#-------------------------------------------------------------------------------
+#
+#  Retrieve the command search path.
+#
+#  This is simply the value of the given environment variable. Note that the
+#  value retrieved from the given environment variable is split then rejoined
+#  in order to force the individual pathnames in to the proper form (this is
+#  particularly important when cygwin is involved). The optional parameter is
+#  the name of the environment variable to get (which is PATH by default).
+#
+#  calls: getOSclass(),
+#         splitTheSearchPATH()
+#
+#  see: totebag/src/perl-lib/getTheSearchPATH.psub
+#
+#  Dated: 01Oct2019
+#
+#-------------------------------------------------------------------------------
+
+sub getTheSearchPATH {
+   my $varName = shift;
+   print DBGOUT "getTheSearchPATH[ varName=\"".$varName."\"...\n" if $debugging;
+   if ($varName eq "") {
+      $varName = "PATH";
+   }
+   my $theValue;
+   if ( exists $ENV{$varName}) {
+      print DBGOUT "getTheSearchPATH: ...\"".$varName."\" is defined\n" if $debugging;
+      $theValue     = $ENV{$varName};
+      print DBGOUT "getTheSearchPATH: ...value is \"".$theValue."\"\n" if $debugging;
+      print DBGOUT "getTheSearchPATH:    split value\n" if $debugging;
+      my @tmpVals   = splitTheSearchPATH($theValue);
+      print DBGOUT "getTheSearchPATH:    rejoin value\n" if $debugging;
+      my $myOSclass = getOSclass();
+      if ($myOSclass eq "UNIX-like") {
+         print DBGOUT "getTheSearchPATH:    ...host appears UNIX-like, use colons\n" if $debugging;
+         $theValue  = join ':', @tmpVals;
+      }
+      elsif ($myOSclass eq "Windows-like") {
+         print DBGOUT "getTheSearchPATH:    ...host appears Windows-like, use semicolons\n" if $debugging;
+         $theValue  = join ';', @tmpVals;
+      }
+   }
+   else {
+      print DBGOUT "getTheSearchPATH: ...\"".$varName."\" is NOT defined\n" if $debugging;
+      $theValue = "";
+   }
+   print DBGOUT "getTheSearchPATH] ...done(=\"".$theValue."\")\n" if $debugging;
+   return $theValue;
+}
+
 # MyUniqueFileId: c01f73fc-3153-477a-c68b-cbb74bc9526f
 #-------------------------------------------------------------------------------
 #
@@ -19271,25 +19725,28 @@ sub getOSname {
 #
 #  This function is used to determine the current working directory. Note
 #  that this sort of thing is generally supplied by a standard module but
-#  Perl installations have been sometimes found to lack this (rarely but...).
-#  Note that this does this operation the hard way.
+#  some Perl installations have been sometimes found to lack this (rarely
+#  but...). Note that this function does this operation the hard way.
 #
 #  This function uses: findTempDir(),
-#                      getOSclass()
+#                      getOSclass(),
+#                      makePathWindowslike()
 #
 #  see: totebag/src/perl-lib/getWorkingDirectory.psub
 #
-#  Dated: 22Oct2018
+#  Dated: 30Sep2019
 #
 #-------------------------------------------------------------------------------
 
 sub getWorkingDirectory {
    my $callerIs = shift;
+   print DBGOUT "getWorkingDirectory[ callerIs=\"$callerIs\"...\n" if $debugging;
    my $exitCode;
    my $gives;
    my $tmpdir   = findTempDir("");
    my $osClass  = getOSclass();
    if ($osClass eq "UNIX-like") {
+      print DBGOUT "getWorkingDirectory: ...host looks UNIX-like\n" if $debugging;
       my $tmpFile = "$tmpdir/pwd-$$.tmp";
       $gives      = `pwd 2>$tmpFile`;
       $exitCode   = $? + 0;
@@ -19297,20 +19754,23 @@ sub getWorkingDirectory {
       unlink $tmpFile if -f $tmpFile;
    }
    elsif ($osClass eq "Windows-like") {
+      print DBGOUT "getWorkingDirectory: ...host looks Windows-like\n" if $debugging;
       my $tmpFile = "$tmpdir\\pwd-$$.tmp";
       $gives      = `cd 2>$tmpFile`;
       $exitCode   = $? + 0;
       chomp $gives;
       unlink $tmpFile if -f $tmpFile;
+      $gives      = makePathWindowslike($gives);
    }
    else {
+      print DBGOUT "getWorkingDirectory: ...host doesn't look UNIX- or Windows-like\n" if $debugging;
       $gives    = "";
       $exitCode = 1;
    }
    if ($exitCode != 0) {
-      print STDERR "$callerIscan't determine current working directory\n";
-      $gives = "";
+      $gives    = "";
    }
+   print DBGOUT "getWorkingDirectory] ...done(=\"$gives\")\n" if $debugging;
    return $gives;
 }
 
@@ -19356,6 +19816,8 @@ sub getWorkingDirectory {
 #
 #        amd64    x86_64
 #        x86      x86_32
+#
+#  This function uses: getOSclass()
 #
 #  see: totebag/src/perl-lib/idTheHardware.psub
 #
@@ -19696,14 +20158,13 @@ sub isDirEmpty {
 #  Does the given tar implementation appear to be GNU tar?
 #
 #  This function uses: findTempDir(),
-#                      getOSclass(),
 #                      makePathNative(),
 #                      nullPathname(),
 #                      quoteIfReqd()
 #
 #  see: totebag/src/perl-lib/isGNUtar.psub
 #
-#  Dated: 22Oct2018
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
@@ -19791,11 +20252,12 @@ sub isGNUtar {
 #
 #  Is the given pathname simple (without directory components).
 #
-#  This function uses: basename()
+#  This function uses: basename(),
+#                      dirname()
 #
 #  see: totebag/src/perl-lib/isSimple.psub
 #
-#  Dated: 23May2019
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
@@ -19825,27 +20287,58 @@ sub isSimple {
 #
 #  This function uses: basename(),
 #                      fixpath(),
-#                      getOSclass()
+#                      getOSclass(),
+#                      makePathWindowslike()
 #
 #  see: totebag/src/perl-lib/joinpath.psub
 #
-#  Dated: 20Oct2017
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
 sub joinpath {
    my @theComponents  = @_;
    my $Ncomponents    = $#theComponents + 1;
+   if ($debugging) {
+      print DBGOUT "joinpath[ theComponents={" if $debugging;
+      my $i;
+      for ($i=0; $i<=$#theComponents; ++$i) {
+         my $pathname = $theComponents[$i];
+         if ($i == 0) {
+            print DBGOUT "\"$pathname\"" if $debugging;
+         }
+         else {
+            print DBGOUT ", \"$pathname\"" if $debugging;
+         }
+      }
+      print DBGOUT "}...\n" if $debugging;
+   }
+   my $OSclass        = getOSclass();
    my $wasSpecialCase = 0;
    my $result;
 
+   if (1 <= $Ncomponents) {
+      if ($OSclass eq "UNIX-like") {
+         print DBGOUT "joinpath: ...looks \"UNIX-like\"\n" if $debugging;
+      }
+      elsif ($OSclass eq "Windows-like") {
+         print DBGOUT "joinpath: ...looks \"Windows-like\"\n" if $debugging;
+         print DBGOUT "joinpath:    adjust the components\"\n" if $debugging;
+         my $i;
+         for ($i=0; $i<$Ncomponents; $i+=1) {
+            if ($theComponents[$i] =~ /[\/\\]/) {
+               $theComponents[$i] = makePathWindowslike($theComponents[$i]);
+            }
+         }
+      }
+   }
    if ($Ncomponents == 2) {
       my $Lpart = $theComponents[0];
       my $Rpart = $theComponents[1];
       if ($Lpart eq ".") {
          my $bn = basename($Rpart);
          if ($Rpart eq $bn) {
-            if (getOSclass() eq "UNIX-like") {
+            if ($OSclass eq "UNIX-like") {
                $result      = $Lpart."/".$Rpart;     # implementing joinpath()
             }
             else {
@@ -19857,12 +20350,13 @@ sub joinpath {
    }
 
    if ( ! $wasSpecialCase) {
+      print DBGOUT "joinpath: ...not the special case\n" if $debugging;
       $result = $theComponents[0];
       if (0 < $#theComponents) {
          my $i;
          for ($i=1; $i<=$#theComponents; ++$i) {
             my $component = $theComponents[$i];
-            if (getOSclass() eq "UNIX-like") {
+            if ($OSclass eq "UNIX-like") {
                if ($component =~ "^/") {
                   $result = $component;
                }
@@ -19885,7 +20379,72 @@ sub joinpath {
          $result = fixpath($result);
       }
    }
+   else {
+      print DBGOUT "joinpath: ...was the special case\n" if $debugging;
+   }
+   if ($OSclass eq "Windows-like") {
+      my $tmpPathname = makePathWindowslike($result);
+      if ($tmpPathname ne $result) {
+         $result      = $tmpPathname;
+         print DBGOUT "joinpath: ...adjusted to \"$result\"\n" if $debugging;
+      }
+   }
+   print DBGOUT "joinpath] ...done(=\"$result\")\n" if $debugging;
    return $result;
+}
+
+# MyUniqueFileId: 08af42dd-91a9-4ff7-bda5-47f0147eb1f2
+#-------------------------------------------------------------------------------
+#
+#  Rejoin search path array to form PATH string.
+#
+#  Rejoin the given search path (array) to form a PATH (string) appropriate for
+#  the host OS. On a UNIX-like host colons (:) are used, on a Windows-like host
+#  semicolons (;) are used.
+#
+#     my $myPATH = getTheSearchPATH();
+#     my @myPATH = splitTheSearchPATH();
+#     if ( ! alreadyOnSearchPATH($dirPathname,\@myPATH)) {
+#        @myPATH = prependToSearchPATH($dirPathname,\@myPATH);
+#        $myPATH = joinTheSearchPATH(\@myPATH);
+#     }
+#
+#  Note the peculiar way the array is passed in to joinTheSearchPATH(). This
+#  is a Perl pass array by reference.
+#
+#  This function uses: getOSclass()
+#                      makePathWindowslike()
+#
+#  see: totebag/src/perl-lib/joinTheSearchPATH.psub
+#
+#  Dated: 04Oct2019
+#
+#-------------------------------------------------------------------------------
+
+sub joinTheSearchPATH {
+   my $refMyPATH  = shift;   # A reference to an array of pathnames
+   my $theOSclass = shift;   # ...an optional parameter
+   if ($theOSclass eq "") {
+      $theOSclass = getOSclass();
+   }
+   if ($theOSclass eq "UNIX-like") {
+      $myPATH = join ':', @$refMyPATH;
+   }
+   elsif ($theOSclass eq "Windows-like") {
+      my $Nelems = @$refMyPATH;
+      my $i;
+      for ($i=0; $i<$Nelems; $i+=1) {
+         my $thisPathname = $$refMyPATH[$i];
+         if ($thisPathname =~ /[\/\\]/) {
+            $$refMyPATH[$i] = makePathWindowslike($thisPathname);
+         }
+      }
+      $myPATH = join ';', @$refMyPATH;
+   }
+   else {
+      $myPATH = "";
+   }
+   return $myPATH;
 }
 
 # MyUniqueFileId: 1bcb3952-6c59-4cbf-b8de-fb66028261f3
@@ -19902,59 +20461,162 @@ sub joinpath {
 #              A reference to an array of directory pathnames (from PATH).
 #              The OS class ("UNIX-like" or "Windows-like").
 #
-#  Uses: joinpath
+#  This function uses: getOSclass(),
+#                      joinpath()
 #
 #  see: totebag/src/perl-lib/lookForExecutable.psub
 #
-#  Dated: 15Jun2018
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
 sub lookForExecutable {
    my ($theName,$myPathRef,$osClass) = @_;
-   my @myPath      = @{$myPathRef};
+   my @myPath                        = @{$myPathRef};
    if ($debugging) {
-      print DBGOUT "lookForExecutable[ theName=\"$theName\" myPath={" if $debugging;
+      print STDERR "lookForExecutable[ theName=[$theName], myPath=..., osClass=[$osClass]...\n" if $debugging;
       my $i;
       for ($i=0; $i<=$#myPath; $i+=1) {
-         if (0 < $i) {
-            print DBGOUT ", " if $debugging;
+         my $pathname = $myPath[$i];
+         if ($i == 0) {
+            print STDERR "lookForExecutable: ...myPath is: \"$pathname\"\n" if $debugging;
          }
-         print DBGOUT $myPath[$i] if $debugging;
+         else {
+            print STDERR "lookForExecutable:               \"$pathname\"\n" if $debugging;
+         }
       }
-      print DBGOUT "}, osClass=\"$osClass\"...\n" if $debugging;
+   }
+   if ($osClass eq "") {
+      $osClass = getOSclass();
+      print STDERR "lookForExecutable: ...OS class not supplied, assume \"$osClass\"\n" if $debugging;
    }
    my $usePathname = "";
    if ($osClass eq "Windows-like") {
-      print DBGOUT "lookForExecutable: ...Windows-like environment\n" if $debugging;
-      my $i;
-      for ($i=0; $i<=$#myPath; $i+=1) {
-         my $pathname = joinpath($myPath[$i],$theName.".exe");
-         if (-f $pathname) {
-            $usePathname = $pathname;
-            last;
+      print STDERR "lookForExecutable: ...host is Windows-like\n" if $debugging;
+      if ( ! (($theName =~ /\.exe$/i) || ($theName =~ /\.bat$/i))) {
+         print STDERR "lookForExecutable:    doesn't end with either .exe or .bat\n" if $debugging;
+         my $i;
+         for ($i=0; $i<=$#myPath; $i+=1) {
+            my $pathname = joinpath($myPath[$i],$theName.".exe");
+            print STDERR "lookForExecutable:    ...consider [$pathname]\n" if $debugging;
+            if (-f $pathname) {
+               print STDERR "lookForExecutable:    ...found\n" if $debugging;
+               $usePathname = $pathname;
+               last;
+            }
+         }
+         if ($usePathname eq "") {
+            for ($i=0; $i<=$#myPath; $i+=1) {
+               my $pathname = joinpath($myPath[$i],$theName.".bat");
+               print STDERR "lookForExecutable:    ...consider [$pathname]\n" if $debugging;
+               if (-f $pathname) {
+                  print STDERR "lookForExecutable:       found\n" if $debugging;
+                  $usePathname = $pathname;
+                  last;
+               }
+            }
          }
       }
-   }
-   elsif ($osClass eq "UNIX-like") {
-      print DBGOUT "lookForExecutable: ...UNIX-like environment\n" if $debugging;
-      my $i;
-      for ($i=0; $i<=$#myPath; $i+=1) {
-         my $pathname = joinpath($myPath[$i],$theName);
-         if (-f $pathname) {
-            if (-x $pathname) {
+      else {
+         print STDERR "lookForExecutable:    already ends with .exe or .bat\n" if $debugging;
+         my $i;
+         for ($i=0; $i<=$#myPath; $i+=1) {
+            my $pathname = joinpath($myPath[$i],$theName);
+            print STDERR "lookForExecutable:    ...consider [$pathname]\n" if $debugging;
+            if (-f $pathname) {
+               print STDERR "lookForExecutable:       found\n" if $debugging;
                $usePathname = $pathname;
                last;
             }
          }
       }
+      if ($usePathname eq "") {
+         print STDERR "lookForExecutable:       NOT found\n" if $debugging;
+      }
+   }
+   elsif ($osClass eq "UNIX-like") {
+      print STDERR "lookForExecutable: ...host is UNIX-like\n" if $debugging;
+      my $i;
+      for ($i=0; $i<=$#myPath; $i+=1) {
+         my $pathname = joinpath($myPath[$i],$theName);
+         print STDERR "lookForExecutable:    consider [$pathname]\n" if $debugging;
+         if (-f $pathname) {
+            if (-x $pathname) {
+               print STDERR "lookForExecutable:    ...found\n" if $debugging;
+               $usePathname = $pathname;
+               last;
+            }
+         }
+      }
+      if ($usePathname eq "") {
+         print STDERR "lookForExecutable:    ...NOT found\n" if $debugging;
+      }
    }
    else {
-      print DBGOUT "lookForExecutable: ...unknown environment\n" if $debugging;
+      print STDERR "lookForExecutable: ...host is not Windows- or UNIX-like\n" if $debugging;
       $usePathname = "";
    }
-   print DBGOUT "lookForExecutable] ...done(=\"$usePathname\")\n" if $debugging;
+   print STDERR "lookForExecutable] ...done(=[$usePathname]\n" if $debugging;
    return $usePathname;
+}
+
+# MyUniqueFileId: 207bb6dd-57d8-4f8c-e73c-0626eba9e6b4
+#-------------------------------------------------------------------------------
+#
+#  Create a directory...
+#
+#  This function uses: dirname(),
+#                      makeDirectory(),    <---  is recuresive!
+#
+#  see: totebag/src/perl-lib/makeDirectory.psub
+#
+#  Dated: 03Nov2015
+#
+#-------------------------------------------------------------------------------
+
+sub makeDirectory {
+   my $makingPathname = shift;
+   my $fullPathname   = shift;
+   my $makeParents    = shift;
+   my $translated     = shift;
+   my $sponsor        = shift;
+   my $result;
+   if (($fullPathname eq "/") || ($fullPathname eq ".") || ($fullPathname eq "..")) {
+      $result = 1;
+   }
+   else {
+      my $parentDir = dirname($fullPathname);
+      if ( ! -d $parentDir) {
+         if ($makeParents) {
+            $result = makeDirectory($makingPathname,$parentDir,$makeParents,$translated,$sponsor);
+         }
+         else {
+            print STDERR "$sponsor: can't create \"$makingPathname\", \"$parentDir\" doesn't exist\n" if $sponsor ne "";
+            $result = 0;
+         }
+      }
+      else {
+         $result = 1;
+      }
+      if ($result) {
+         if (mkdir($fullPathname,0777)) {
+            my $createdPathname;
+            if ($translated) {
+               $createdPathname = $fullPathname;
+               $createdPathname =~ tr/\//\\/;
+            }
+            else {
+               $createdPathname = $fullPathname;
+            }
+            $result = 1;
+         }
+         else {
+            print STDERR "$sponsor: can't create \"$makingPathname\"\n" if $sponsor ne "";
+            $result = 0;
+         }
+      }
+   }
+   return $result;
 }
 
 # MyUniqueFileId: 28f944a3-7816-48a9-ece1-7c8281e5cf68
@@ -19971,23 +20633,28 @@ sub lookForExecutable {
 #
 #  see: totebag/src/perl-lib/makePathNative.psub
 #
-#  Dated: 04May2016
+#  Dated: 25Sep2019
 #
 #-------------------------------------------------------------------------------
 
 sub makePathNative {
    my $pathname   = shift;
+   print DBGOUT "makePathNative[ pathname=\"$pathname\"...\n" if $debugging;
    my $result;
    my $theOsClass = getOSclass();
    if ($theOsClass eq "UNIX-like") {
+      print DBGOUT "makePathNative: ...host looks UNIX-like\n" if $debugging;
       $result = makePathUNIXlike($pathname);
    }
    elsif ($theOsClass eq "Windows-like") {
+      print DBGOUT "makePathNative: ...host looks Windows-like\n" if $debugging;
       $result = makePathWindowslike($pathname);
    }
    else {
+      print DBGOUT "makePathNative: ...host doesn't look UNIX- or Windows-like\n" if $debugging;
       $result = "";
    }
+   print DBGOUT "makePathNative] ...done(=\"$result\")\n" if $debugging;
    return $result;
 }
 
@@ -19995,17 +20662,46 @@ sub makePathNative {
 #-------------------------------------------------------------------------------
 #
 #  Translate all backslashes in the given pathname to forward slashes. Thus
-#  converting it to a UNIX-like style.
+#  converting it to a UNIX-like style. Note that drive letters will be
+#  translated using a cygwin-like style.
+#
+#  This function uses: fixpath()
 #
 #  see: totebag/src/perl-lib/makePathUNIXlike.psub
 #
-#  Dated: 03Nov2015
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
 sub makePathUNIXlike {
    my $pathname = shift;
-   $pathname    =~ tr/\\/\//;
+   print DBGOUT "makePathUNIXlike[ pathname=\"$pathname\"...\n" if $debugging;
+   if ($pathname =~ /^([a-zA-Z]):([\/\\].*)$/) {
+      print DBGOUT "makePathUNIXlike: ...with drive (absolute)\n" if $debugging;
+      my $drive = $1;
+      my $path  = $2;
+      $pathname = "/".$drive.$path;
+      $pathname =~ tr/\\/\//;
+   }
+   elsif ($pathname =~ /^([a-zA-Z]):(.+)$/) {
+      print DBGOUT "makePathUNIXlike: ...with drive (relative -- shame)\n" if $debugging;
+      my $drive = $1;
+      my $path  = $2;
+      $pathname = "/".$drive."/".$path;
+      $pathname =~ tr/\\/\//;
+   }
+   elsif ($pathname =~ /^([a-zA-Z]):$/) {
+      print DBGOUT "makePathUNIXlike: ...just drive\n" if $debugging;
+      my $drive = $1;
+      $pathname = "/".$drive."/";
+      $pathname =~ tr/\\/\//;
+   }
+   else {
+      print DBGOUT "makePathUNIXlike: ...just path\n" if $debugging;
+      $pathname =~ tr/\\/\//;
+   }
+   $pathname = fixpath($pathname);
+   print DBGOUT "makePathUNIXlike] ...done(=\"$result\")\n" if $debugging;
    return $pathname;
 }
 
@@ -20013,17 +20709,29 @@ sub makePathUNIXlike {
 #-------------------------------------------------------------------------------
 #
 #  Translate all forward slashes in the given pathname to backslashes. Thus
-#  converting it to a Windows-like style.
+#  converting it to a Windows-like style. Note that it also handles Cygwin-like
+#  encoding of a drive letter (where C:\... is encoded as /C/...).
 #
 #  see: totebag/src/perl-lib/makePathWindowslike.psub
 #
-#  Dated: 03Nov2015
+#  Dated: 25Sep2019
 #
 #-------------------------------------------------------------------------------
 
 sub makePathWindowslike {
    my $pathname = shift;
+   print DBGOUT "makePathWindowslike[ pathname=\"$pathname\"...\n" if $debugging;
+   $pathname    =~ tr/\\/\//;
+   if ($pathname =~ /^\/([a-zA-Z])(\/.*)$/) {
+      print DBGOUT "makePathWindowslike: ...looks cygwin-like\n" if $debugging;
+      my $driveLetter = $1;
+      my $remainder   = $2;
+      print DBGOUT "makePathWindowslike: ...has a drive letter(=\"$driveLetter\")\n" if $debugging;
+      print DBGOUT "makePathWindowslike:    and \"$remainder\"\n" if $debugging;
+      $pathname       = $driveLetter.":".$remainder
+   }
    $pathname    =~ tr/\//\\/;
+   print DBGOUT "makePathWindowslike] ...done(=\"$pathname\")\n" if $debugging;
    return $pathname;
 }
 
@@ -20047,12 +20755,13 @@ sub makePathWindowslike {
 #
 #           Optional name of caller.
 #
-#  Note: this function may call:
+#  This function uses: dirname(),
+#                      makePathNative(),
+#                      mkDirectory() -- is recursive
 #
-#           dirname()
-#           mkDirectory() -- it is recursive
+#  see: totebag/src/perl-lib/mkDirectory.psub
 #
-#  Dated: 21Jun2019
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
@@ -20061,6 +20770,7 @@ sub mkDirectory {
    my $pFlag    = shift;
    my $sponsor  = shift;
 
+   $pathname    = makePathNative($pathname);
    my $result;
    if ( -e $pathname) {
       if ( -d $pathname) {
@@ -20101,9 +20811,11 @@ sub mkDirectory {
 #  If it exists but can't be properly deleted then it will fail with an error
 #  message.
 #
+#  This function uses: deletePathnames()
+#
 #  see: totebag/src/perl-lib/mustDeletePathname.psub
 #
-#  Dated: 08Oct2018
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
@@ -20219,6 +20931,93 @@ sub nullPathname {
    return $result;
 }
 
+# MyUniqueFileId: a9e6b24e-5f72-4998-a4f9-e5345d2187c6
+#-------------------------------------------------------------------------------
+#
+#  Prepend a pathname to the search path.
+#
+#  Prepend a pathname (string) to an array of pathnames (such as found in the
+#  PATH environment variable or returned by the getTheSearchPATH() function).
+#  Note that the first parameter is expected to be a reference to an array of
+#  strings (pathnames). Simple example:
+#
+#     my $myPATH = getTheSearchPATH();
+#     my @myPATH = splitTheSearchPATH($myPATH);
+#     if ( ! alreadyOnSearchPATH($dirPathname,\@myPATH)) {
+#        @myPATH = prependToSearchPATH($dirPathname,\@myPATH);
+#        $myPATH = joinTheSearchPATH(\@myPATH);
+#     }
+#
+#  calls: getOSclass(),
+#         makePathWindowslike()
+#
+#  see: totebag/src/perl-lib/prependToSearchPATH.psub
+#
+#  Dated: 04Oct2019
+#
+#-------------------------------------------------------------------------------
+
+sub prependToSearchPATH {
+   my $pathname   = shift;   # A pathname to prepend.
+   my $refMyPATH  = shift;   # A reference to an array of pathnames
+   my $theOSclass = shift;   # ...an optional parameter
+   print DBGOUT "prependToSearchPATH[ pathname=\"$pathname\"...\n" if $debugging;
+   if ($pathname ne "") {
+      #
+      #  Adjust pathname if necessary
+      #
+      if ($theOSclass eq "") {
+         $theOSclass = getOSclass();
+      }
+      if ($theOSclass eq "Windows-like") {
+         if ($pathname =~ /[\/\\]/) {
+            my $p = makePathWindowslike($pathname);
+            if ($p ne $pathname) {
+               $pathname = $p;
+               print DBGOUT "prependToSearchPATH: ...adjusted to \"$pathname\"\n" if $debugging;
+            }
+         }
+      }
+      #
+      #  Check if pathname is already in array
+      #
+      print DBGOUT "prependToSearchPATH: ...looking for \"$pathname\"\n" if $debugging;
+      my $alreadyKnown = 0;
+      my $size         = @$refMyPATH;
+      my $i;
+      for ($i=0; $i<$size; ++$i) {
+         if ($$refMyPATH[$i] eq $pathname) {
+            $alreadyKnown = 1;
+            print DBGOUT "prependToSearchPATH:    found\n" if $debugging;
+            last;
+         }
+      }
+      #
+      #  ...if not then prepend it to start of
+      #     the array (as first element).
+      #
+      if ( ! $alreadyKnown) {
+         print DBGOUT "prependToSearchPATH: ...prepend \"$pathname\"\n" if $debugging;
+         unshift @$refMyPATH, $pathname;
+         if ($debugging) {
+            my $size = @$refMyPATH;
+            my $i;
+            for ($i=0; $i<$size; ++$i) {
+               my $thisPathname = $$refMyPATH[$i];
+               if ($i == 0) {
+                  print DBGOUT "prependToSearchPATH: ...gives: \"$thisPathname\"\n";
+               }
+               else {
+                  print DBGOUT "prependToSearchPATH:           \"$thisPathname\"\n";
+               }
+            }
+         }
+      }
+   }
+   print DBGOUT "prependToSearchPATH] ...done\n" if $debugging;
+   return @$refMyPATH;
+}
+
 # MyUniqueFileId: 3c057bb8-8eba-4030-b741-8d0a25a3b1f5
 #-------------------------------------------------------------------------------
 #
@@ -20229,7 +21028,11 @@ sub nullPathname {
 #  Windows-like hosts if the given pathname contains a double-quote then
 #  enclosing single-quotes will be used.
 #
-#  Dated: 03Jun2018
+#  This function uses: getOSclass()
+#
+#  see: totebag/src/perl-lib/quoteIfReqd.psub
+#
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
@@ -20281,18 +21084,21 @@ sub quoteIfReqd {
 #-------------------------------------------------------------------------------
 #
 #  This subroutine deletes a single pathname (directory, file, or symbolic-link)
-#  If it can't be properly deleted then it will produce a warning message.
+#  Returns an array of those pathnames that couldn't be deleted.
+#
+#  This function uses: deletePathnames(),
+#                      makePathNative()
 #
 #  see: totebag/src/perl-lib/shouldDeletePathname.psub
 #
-#  Dated: 08Oct2018
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
 sub shouldDeletePathname {
-   my $callerIs  = shift;
-   my $pathname  = shift;
-   my $result    = 1;
+   my $pathname = shift;
+   $pathname    = makePathNative($pathname);
+   my @failures = ();
    if ($pathname ne "") {
       my $exists = 0;
       if ( -l $pathname) {
@@ -20302,29 +21108,10 @@ sub shouldDeletePathname {
          $exists = 1;
       }
       if ($exists) {
-         my @failures  = deletePathnames($pathname);
-         my $Nfailures = $#failures + 1;
-         if (1 <= $Nfailures) {
-            $result = 0;
-            my $count;
-            my $failedOn;
-            foreach $failedOn (@failures) {
-               $count += 1;
-               print STDERR $callerIs."warning: can't delete \"$failedOn\"\n";
-               if (10 <= $count) {
-                  print STDERR $callerIs."   :         :     :\n";
-                  my $lastOne = $failures[$#failures];
-                  print STDERR $callerIs."warning: can't delete \"$lastOne\"\n";
-                  last;
-               }
-            }
-         }
+         @failures = deletePathnames($pathname);
       }
    }
-   else {
-      $result = 0;
-   }
-   return $result;
+   return @failures;
 }
 
 # MyUniqueFileId: 7b1bd298-6cb1-478a-8d02-9eee62a15d0a
@@ -20333,7 +21120,9 @@ sub shouldDeletePathname {
 #  This function is used to read a given file returning the contents of
 #  the ENTIRE FILE as an array of strings (retaining all embedded whitespace).
 #
-#  Dated: 30Jun2017
+#  see: totebag/src/perl-lib/slurpPathnameIntoArray.psub
+#
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
@@ -20357,18 +21146,110 @@ sub slurpPathnameIntoArray {
    return @contents;
 }
 
+# MyUniqueFileId: 8c4752ad-7b22-47ab-8eb8-8d684d548421
+#-------------------------------------------------------------------------------
+#
+#  Split the command search path.
+#
+#  Returns an array of pathnames found in the given search path string (such
+#  as found in the PATH environment variable or from the getTheSearchPATH()
+#  function. Note that the division markers typically depend on the OS hosting
+#  this script. UNIX-like hosts normally split on colons (:) and Windows-like
+#  hosts split on semicolons (;) but cygwin may complicate things on Windows-like
+#  hosts as cygwin split on colons. However since directory pathnames should
+#  never contain semicolons just the fact that PATH environment variable
+#  contains semicolons normally indicates that it is a Windows-style pathname
+#  and should be split on semicolons.
+#
+#  This function uses: getOSclass(),
+#                      makePathWindowslike()
+#
+#  see: totebag/src/perl-lib/splitTheSearchPATH.psub
+#
+#  Dated: 04Oct2019
+#
+#-------------------------------------------------------------------------------
+
+sub splitTheSearchPATH {
+   my $thePATH    = shift;   # Such as from getTheSearchPATH()
+   my $theOSclass = shift;   # ...an optional parameter
+   print DBGOUT "splitTheSearchPATH[ thePATH=\"$thePATH\", theOSclass=\"$theOSclass\"...\n" if $debugging;
+   my @splitPATH  = ( );
+   if ($theOSclass eq "") {
+      $theOSclass = getOSclass();
+      print DBGOUT "splitTheSearchPATH: ...detected theOSclass=\"$theOSclass\"\n" if $debugging;
+   }
+   if ($theOSclass eq "UNIX-like") {
+      print DBGOUT "splitTheSearchPATH: ...host is \"UNIX-like\", split on colons\n" if $debugging;
+      @splitPATH = split /:/, $thePATH;
+   }
+   elsif ($theOSclass eq "Windows-like") {
+      print DBGOUT "splitTheSearchPATH: ...host is \"Windows-like\"\n" if $debugging;
+      #
+      #  Count number of semicolons...
+      #
+      my $s       = $thePATH;
+      my $Nsemi   = $s =~ tr/;//;
+      $s          = $thePATH;
+      my $Ncolons = $s =~ tr/://;
+      if ($debugging) {
+         print DBGOUT "splitTheSearchPATH:    given path contains no semicolons\n" if ($Nsemi == 0);
+         print DBGOUT "splitTheSearchPATH:    given path contains 1 semicolon\n" if ($Nsemi == 1);
+         print DBGOUT "splitTheSearchPATH:    given path contains $Nsemi semicolons\n" if (2 <= $Nsemi);
+         print DBGOUT "splitTheSearchPATH:    given path contains no colons\n" if ($Ncolons == 0);
+         print DBGOUT "splitTheSearchPATH:    given path contains 1 colon\n" if ($Ncolons == 1);
+         print DBGOUT "splitTheSearchPATH:    given path contains $Ncolons colons\n" if (2 <= $Ncolons);
+      }
+      if (1 <= $Nsemi) {
+         print DBGOUT "splitTheSearchPATH:    ...consider \"Windows-like\", split on semicolons\n" if $debugging;
+         @splitPATH = split /;/, $thePATH;
+      }
+      else {
+         print DBGOUT "splitTheSearchPATH:    ...consider \"UNIX-like\" split on colons\n" if $debugging;
+         @splitPATH = split /:/, $thePATH;
+      }
+      print DBGOUT "splitTheSearchPATH:    ...repair individual pathnames\n" if $debugging;
+      my $i;
+      for ($i=0; $i<=$#splitPATH; $i+=1) {
+         my $pathname   = $splitPATH[$i];
+         $splitPATH[$i] = makePathWindowslike($pathname);
+      }
+   }
+   else {
+      print DBGOUT "splitTheSearchPATH: ...host is neither \"UNIX-like\" nor \"Windows-like\"\n" if $debugging;
+      @splitPATH  = ( );
+   }
+   if ($debugging) {
+      my $i;
+      for ($i=0; $i<=$#splitPATH; $i+=1) {
+         my $pathname = $splitPATH[$i];
+         if ($i == 0) {
+            print DBGOUT "splitTheSearchPATH: ...gives: \"$pathname\"\n";
+         }
+         else {
+            print DBGOUT "splitTheSearchPATH:           \"$pathname\"\n";
+         }
+      }
+      print DBGOUT "splitTheSearchPATH] ...done\n";
+   }
+   return @splitPATH;
+}
+
 # MyUniqueFileId: d10a2ee1-2593-4a09-fd40-f6314a9dd348
 #-------------------------------------------------------------------------------
 #
 #  This function is used to extract the suffix from a given pathname. Note
 #  that this kind of operation is generally available in the File module.
 #
-#  Dated: 03Nov2015
+#  see: totebag/src/perl-lib/suffix.psub
+#
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
 sub suffix {
    my $pathname = shift(@_);
+   print DBGOUT "suffix[ pathname=\"$pathname\"...\n" if $debugging;
    my $result   = "";
    if ( $pathname =~ /^(.+)(\.[^\/\\.]+)$/ ) {
       $result = $2;
@@ -20376,6 +21257,7 @@ sub suffix {
    else {
       $result = "";
    }
+   print DBGOUT "suffix] ...done(=\"$pathname\")\n" if $debugging;
    return $result;
 }
 
@@ -20445,7 +21327,9 @@ sub touchPathname {
 #  Unquote a string (generally a pathname). Returns a copy of the given string
 #  with any enclosing quotes (double or single) removed.
 #
-#  Dated: 29Aug2017
+#  see: totebag/src/perl-lib/unquote.psub
+#
+#  Dated: 04Oct2019
 #
 #-------------------------------------------------------------------------------
 
@@ -20751,6 +21635,13 @@ sub help {
    |            Produce extra output useful when debugging the "mkinstaller"
    |            script itself. Output will be sent to <stderr> if no pathname
    |            is provided.
+   |
+   |        --default-prefix=<pathname>
+   |
+   |            Uses to set a default installation prefix in the generated
+   |            script. Note that by default there is no default installation
+   |            prefix in the generated script and so the user of that script
+   |            must supply a pathname for the installation prefix.
    |
    |        --fill
    |
@@ -21803,6 +22694,14 @@ sub html {
    |               Produce extra output useful when debugging the <i>mkinstaller</i>
    |               script itself. Output will be sent to <i>stderr</i> if no pathname
    |               is provided.
+   |            </blockquote>
+   |
+   |            <b>--default-prefix=</b><i>pathname</i>
+   |            <blockquote>
+   |               Used to set a default installation prefix in the generated
+   |               script. Note that by default there is no default installation
+   |               prefix in the generated script and so the user of that script
+   |               must supply a pathname for the installation prefix.
    |            </blockquote>
    |
    |            <b>--fill</b>

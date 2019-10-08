@@ -36,7 +36,7 @@ if ROSE_OFP_CONTAINS_JAVA_FILE
    OFP_SOURCE_FILES += fortran/ofp/parser/java/IFortranParserAction.java
 endif
 
-# DQ (4/5/2010): And we need a version of this macro withouth the paths.
+# DQ (4/5/2010): And we need a version of this macro without the paths.
 OFP_SOURCE_FILES_WITHOUT_PATHS = \
    c_actions_jni.c \
    token.h \

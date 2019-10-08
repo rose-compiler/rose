@@ -122,22 +122,12 @@
  *
  * @section mainpage_next Next steps
  *
- *  ROSE is an open source project that can be installed from source code. See @ref installation.
- *
- *
- *
- *  @todo The "all-versions" link doesn't work yet.  Eventually that link will point back into the top of the documentation for
- *        each released version of ROSE, both older and newer than this version. [Robb P. Matzke 2015-09-26]
+ *  ROSE is an open source project that can be installed from source code. See [Download and
+ *  installation](https://github.com/rose-compiler/rose/wiki/How-to-Set-Up-ROSE)
  *
  *  @todo The links to the "ROSE tutorial" (at least the source code part) and the "ROSE user manual" are to versions
  *        served from http://rosecompiler.org, which might not match this release of ROSE. A better approach might be to use
  *        relative linking: it would point to a version consistent with the documentation you're now reading, including the
  *        case when a user generates their own local copies and has no Internet connection. These documents may move into
  *        doxygen, in which case this is no longer an issue. [Robb P. Matzke 2015-09-25]
- *
- *  @todo We have two sources of research publications. They need to be combined. [Robb P. Matzke 2015-09-25]
- *
- *  @todo We have two sources for "outreach" that need to be combined: one at rosecompiler.org and the other on the
- *        doxygen-generated mainpage.  Both are out of date. [Robb P. Matzke 2015-09-26]
- *
- *  @todo The "Hightlights" (sic) page says "Recent highlights" but the last one is from 2012. [Robb P. Matzke 2015-09-26] */
+ */
