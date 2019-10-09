@@ -519,7 +519,7 @@ check-domain-old:
 	@echo ================================================================
 	@echo DOMAIN TESTS
 	@echo ================================================================
-	@xxx
+	@echo
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest1.C
 	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest2.C
 	@./codethorn --edg:no_warnings $(srcdir)/tests/struct1.C
@@ -554,53 +554,7 @@ check-const-analysis:
 
 
 check-par-cfg:
-	@echo ================================================================
-	@echo RUNNING PARALLEL CFG CHECK
-	@echo ================================================================
-	@echo 01
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-01-SimpleOmpParallelFor.c
-	@echo 02
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-02-OnlyOmpParallel.c
-	@echo 03
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-03-OmpParallelOmpForLoop.c
-	@echo 04
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-04-OmpParLoopTrailStmt.c
-	@echo 05
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-05-LoopOmpParallelFor.c
-	@echo 06
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-06-OmpParallelNestedForLoops.c
-	@echo 07
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-07-ParallelOmpForNestedOmpParallelFor.c
-	@echo 08
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-08-ParallelForParallelFor.c
-	@echo 09
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-09-ParallelConsecutiveForLoops.c
-	@echo 10
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-10-ParallelForContinueStmt.c
-	@echo 11
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-11-ParallelForSeqStmtsParallelFor.c
-	@echo 12
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-12-SeqForParForNestedParFor.c
-	@echo 13
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-13-ParForNestedParForNestedParFor.c
-	@echo 14
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-14-NestedFollowingNestedPar.c
-	@echo 15
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-15-ParConsecutiveNoWaitFor.c
-	@echo 20
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-20-ParallelForCallFuncParallelFor.c
-	@echo 30
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-30-ParSectionsForLoop.c
-	@echo 31
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-31-ParSectionsAssignment.c
-	@echo 32
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-32-ParSectionsAssignments.c
-	@echo 33
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-33-ParSectionsParForLoop.c
-	@echo 34
-	@./codethorn --omp-ast=yes $(srcdir)/tests/ompcfg/Par-34-ParSectionsNoWait.c
-
-
+	$(srcdir)/scripts/runParCfgTests $(srcdir)/tests/ompcfg
 
 # outdated tests (but still passing)
 check-ltl-old: check-ltl-rers-different-versions
@@ -722,6 +676,8 @@ clean-local:
 	rm -f transitiongraph2.pdf
 	rm -f rose_NORM*.[Cc]
 	rm -f LTLParser.c++
+	rm -f *.cfg.dot # runParCfgTests
+	rm -f a.out
 
 distclean-local: clean
 	rm -f *.tgz

@@ -346,8 +346,9 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("tg2-estate-properties", po::value< bool >()->default_value(false)->implicit_value(true),"Transition graph 2: Visualize all estate-properties.")
     ("tg2-estate-predicate", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 2: Show estate as predicate.")
     ("visualize-read-write-sets", po::value< bool >()->default_value(false)->implicit_value(true), "Generate a read/write-set graph that illustrates the read and write accesses of the involved threads.")
-    ("viz", po::value< bool >()->default_value(false)->implicit_value(true),"Generate visualizations (.dot) outputs.")
+    ("viz", po::value< bool >()->default_value(false)->implicit_value(true),"Generate visualizations of AST, CFG, and transition system as dot files (ast.dot, cfg.dot, transitiongraph1/2.dot.")
     ("viz-tg2", po::value< bool >()->default_value(false)->implicit_value(true),"Generate transition graph 2 (.dot).")
+    ("cfg", po::value< string >(), "Generate inter-procedural cfg as dot file. Each function is visualized as one dot cluster.")
     ;
 
   parallelProgramOptions.add_options()
@@ -2049,66 +2050,75 @@ int main( int argc, char * argv[] ) {
       cout << "generated "<<filename<<endl;
     }
 
-    Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
-    if(args.getBool("viz")) {
-      cout << "generating graphviz files:"<<endl;
-      visualizer.setOptionMemorySubGraphs(args.getBool("tg1-estate-memory-subgraphs"));
-      string dotFile="digraph G {\n";
-      dotFile+=visualizer.transitionGraphToDot();
-      dotFile+="}\n";
-      write_file("transitiongraph1.dot", dotFile);
-      cout << "generated transitiongraph1.dot."<<endl;
-      string dotFile3=visualizer.foldedTransitionGraphToDot();
-      write_file("transitiongraph2.dot", dotFile3);
-      cout << "generated transitiongraph2.dot."<<endl;
 
-      string datFile1=(analyzer->getTransitionGraph())->toString();
-      write_file("transitiongraph1.dat", datFile1);
-      cout << "generated transitiongraph1.dat."<<endl;
+    {
+      Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
+      if (args.isDefined("cfg")) {
+        string cfgFileName=args.getString("cfg");
+        DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
+        ddvis.setDotGraphName("CFG");
+        ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,false);
+        cout << "generated "<<cfgFileName<<endl;
+      }
+      if(args.getBool("viz")) {
+        cout << "generating graphviz files:"<<endl;
+        visualizer.setOptionMemorySubGraphs(args.getBool("tg1-estate-memory-subgraphs"));
+        string dotFile="digraph G {\n";
+        dotFile+=visualizer.transitionGraphToDot();
+        dotFile+="}\n";
+        write_file("transitiongraph1.dot", dotFile);
+        cout << "generated transitiongraph1.dot."<<endl;
+        string dotFile3=visualizer.foldedTransitionGraphToDot();
+        write_file("transitiongraph2.dot", dotFile3);
+        cout << "generated transitiongraph2.dot."<<endl;
 
-      assert(analyzer->startFunRoot);
-      //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
-      //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
-      SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;
-      analyzer->generateAstNodeInfo(sageProject);
-      cout << "generating AST node info ... "<<endl;
-      dotFile=AstTerm::functionAstTermsWithNullValuesToDot(sageProject);
-      write_file("ast.dot", dotFile);
-      cout << "generated ast.dot."<<endl;
+        string datFile1=(analyzer->getTransitionGraph())->toString();
+        write_file("transitiongraph1.dat", datFile1);
+        cout << "generated transitiongraph1.dat."<<endl;
 
-      SAWYER_MESG(logger[TRACE]) << "Option VIZ: generating cfg dot file ..."<<endl;
-      write_file("cfg_non_clustered.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
-      DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
-      ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),"cfg.dot",false);
-      cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
-      cout << "=============================================================="<<endl;
+        assert(analyzer->startFunRoot);
+        //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
+        //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
+        SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;
+        analyzer->generateAstNodeInfo(sageProject);
+        cout << "generating AST node info ... "<<endl;
+        dotFile=AstTerm::functionAstTermsWithNullValuesToDot(sageProject);
+        write_file("ast.dot", dotFile);
+        cout << "generated ast.dot."<<endl;
+
+        SAWYER_MESG(logger[TRACE]) << "Option VIZ: generating cfg dot file ..."<<endl;
+        write_file("cfg_non_clustered.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
+        DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
+        ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),"cfg.dot",false);
+        cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
+        cout << "=============================================================="<<endl;
+      }
+      if(args.getBool("viz-tg2")) {
+        string dotFile3=visualizer.foldedTransitionGraphToDot();
+        write_file("transitiongraph2.dot", dotFile3);
+        cout << "generated transitiongraph2.dot."<<endl;
+      }
+
+      if (args.count("dot-io-stg")) {
+        string filename=args["dot-io-stg"].as<string>();
+        cout << "generating dot IO graph file:"<<filename<<endl;
+        string dotFile="digraph G {\n";
+        dotFile+=visualizer.transitionGraphWithIOToDot();
+        dotFile+="}\n";
+        write_file(filename, dotFile);
+        cout << "=============================================================="<<endl;
+      }
+
+      if (args.count("dot-io-stg-forced-top")) {
+        string filename=args["dot-io-stg-forced-top"].as<string>();
+        cout << "generating dot IO graph file for an abstract STG:"<<filename<<endl;
+        string dotFile="digraph G {\n";
+        dotFile+=visualizer.abstractTransitionGraphToDot();
+        dotFile+="}\n";
+        write_file(filename, dotFile);
+        cout << "=============================================================="<<endl;
+      }
     }
-    if(args.getBool("viz-tg2")) {
-      string dotFile3=visualizer.foldedTransitionGraphToDot();
-      write_file("transitiongraph2.dot", dotFile3);
-      cout << "generated transitiongraph2.dot."<<endl;
-    }
-
-    if (args.count("dot-io-stg")) {
-      string filename=args["dot-io-stg"].as<string>();
-      cout << "generating dot IO graph file:"<<filename<<endl;
-      string dotFile="digraph G {\n";
-      dotFile+=visualizer.transitionGraphWithIOToDot();
-      dotFile+="}\n";
-      write_file(filename, dotFile);
-      cout << "=============================================================="<<endl;
-    }
-
-    if (args.count("dot-io-stg-forced-top")) {
-      string filename=args["dot-io-stg-forced-top"].as<string>();
-      cout << "generating dot IO graph file for an abstract STG:"<<filename<<endl;
-      string dotFile="digraph G {\n";
-      dotFile+=visualizer.abstractTransitionGraphToDot();
-      dotFile+="}\n";
-      write_file(filename, dotFile);
-      cout << "=============================================================="<<endl;
-    }
-
     // InputPathGenerator
 #if 1
     {
