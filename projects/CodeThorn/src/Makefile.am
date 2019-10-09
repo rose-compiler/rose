@@ -68,7 +68,6 @@ codethorninclude_HEADERS=\
   CtxLattice.h \
   CtxTransfer.h \
   DataDependenceVisualizer.h \
-  DataRaceDetection.h \
   DFAnalysisBase.h \
   DFTransferFunctions.h \
   DotGraphCfgFrontend.h \
@@ -146,6 +145,7 @@ codethorninclude_HEADERS=\
 
 # codethorn (core) library sources
 libcodethorn_la_SOURCES=\
+  CommandLineOptions.C \
   AbstractValue.C \
   AliasAnalysis.C \
   AnalysisAbstractionLayer.C \
@@ -165,7 +165,6 @@ libcodethorn_la_SOURCES=\
   CTIOLabeler.C                    \
   CtxCallStrings.C \
   DataDependenceVisualizer.C \
-  DataRaceDetection.C \
   defUseQuery.C \
   DFAnalysisBase.C \
   DFTransferFunctions.C \
@@ -249,6 +248,7 @@ libcodethornltl_la_CXXFLAGS = -fopenmp -Wall -O3
 
 # only informative
 libcodethornltl_xHEADERS = \
+  DataRaceDetection.h \
   IOAnalyzer.h                     \
   IOSolver.h \
   ReachabilityAnalyzerZ3.h \
@@ -309,7 +309,8 @@ libcodethornltl_la_SOURCES= \
   Solver12.C \
   PromelaCodeGenerator.C \
   ReadWriteAnalyzer.C \
-  CommandLineOptions.C
+  DataRaceDetection.C
+
 
 ##############################################################
 # TOOL: CODETHORN
@@ -335,7 +336,7 @@ codethorndir=.
 
 # only informative
 codethorn_xHEADERS = \
-  CommandLineOptions.C \
+  CommandLineOptions.h \
   codethorn.h \
   LTL.h
 
@@ -358,7 +359,6 @@ woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
 endif
 woodpecker_CXXFLAGS= -fopenmp -Wall -O3
 woodpecker_SOURCES = \
-  CommandLineOptions.C \
   ProgramStats.h                 \
   ProgramStats.C                 \
   Threadification.h \
@@ -385,7 +385,6 @@ analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
 endif
 analyterix_CXXFLAGS = -fopenmp -Wall -O3
 analyterix_SOURCES = \
-  CommandLineOptions.C \
   CppStdUtilities.C \
   CppStdUtilities.h \
   DeadCodeAnalysis.C \
@@ -422,7 +421,6 @@ addressTakenAnalysis_DEPENDENCIES=libcodethorn.la
 REGRESSION_DATA_DIR=regressiondata
 
 addressTakenAnalysis_SOURCES = \
-  CommandLineOptions.C \
   addressTakenAnalysisDriver.C
 
 .PHONY: codethorn-dist viz bsps docs test checkdemos
