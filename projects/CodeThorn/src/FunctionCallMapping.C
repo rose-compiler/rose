@@ -67,14 +67,14 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
           funCallType=funType;
           assert(funCallType);
         } else {
-          cout<<"DEBUG: unknown function call."<<endl;
+          SAWYER_MESG(logger[DEBUG])<<"DEBUG: unknown function call."<<endl;
           exit(1);
         }
       } else {
-        cout<<"DEBUG: unknown function call."<<endl;
+        SAWYER_MESG(logger[DEBUG])<<"DEBUG: unknown function call."<<endl;
         exit(1);
       }
-      cout<<AstTerm::astTermWithNullValuesAndTypesToString(type)<<endl;
+      //cout<<AstTerm::astTermWithNullValuesAndTypesToString(type)<<endl;
     }
     
     SgName mangledFunCallType=funCallType->get_mangled();
@@ -86,9 +86,9 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
       SgName funDefName=fd->get_declaration()->get_name(); //fd->get_qualified_name(); 
       SgName mangledFunDefType=funCallType->get_mangled();
       if(funCallType==funDefType || mangledFunCallType==mangledFunDefType) {
-        cout<<AstTerm::astTermWithNullValuesAndTypesToString(funCallType)<<endl;
+        //cout<<AstTerm::astTermWithNullValuesAndTypesToString(funCallType)<<endl;
         if(funCallName==funDefName || isFunctionPointer) {
-          cout<<"DEBUG: RESOLVED CALL across translation units based on TYPES and Names: "<<fc->unparseToString()<<" ::: "<<fd->get_declaration()->unparseToString()<<endl;
+          SAWYER_MESG(logger[TRACE])<<"RESOLVED CALL across translation units based on TYPES and Names: "<<fc->unparseToString()<<" ::: "<<fd->get_declaration()->unparseToString()<<endl;
           funCallTarget.setDefinition(fd);
           funCallTarget.setDeclaration(fd->get_declaration());
         }
@@ -96,8 +96,8 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
     }
     mapping[fc].insert(funCallTarget);
   }
-  cout<<"INFO: FunctionCallMapping established: resolved "<<mapping.size()<<" of "<<funCallList.size()<<" function calls."<<endl;
-  cout<<toString()<<endl;
+  SAWYER_MESG(logger[TRACE])<<"INFO: FunctionCallMapping established: resolved "<<mapping.size()<<" of "<<funCallList.size()<<" function calls."<<endl;
+  SAWYER_MESG(logger[TRACE])<<toString()<<endl;
 }
 
 std::string FunctionCallMapping::toString() {

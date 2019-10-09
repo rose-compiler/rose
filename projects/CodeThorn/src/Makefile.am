@@ -1,11 +1,12 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
-EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
+EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 bin_PROGRAMS = codethorn woodpecker analyterix addressTakenAnalysis
 # matcher_demo matcher astinfo cldemo
-#noinst_PROGRAMS = addressTakenAnalysis matcher_demo matcher astinfo cldemo
+noinst_PROGRAMS = addressTakenAnalysis
+#noinst_PROGRAMS matcher_demo matcher astinfo cldemo
 
 CLEANFILES =
 
@@ -31,9 +32,15 @@ MYDATE = $(shell date +%Y_%m_%d)
 
 lib_LTLIBRARIES = libcodethorn.la libcodethornltl.la
 
+##############################################################
+# LIBRARY: CODETHORN (CORE)
+##############################################################
+
 #libcodethorn_la_LDFLAGS= -no-undefined
 libcodethorn_la_LDFLAGS=
 libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3
+
+# codethorn header files are installed in <installpath>/rose/codethorn
 codethornincludedir = $(pkgincludedir)/codethorn
 codethorninclude_HEADERS=\
   CommandLineOptions.h \
@@ -137,8 +144,8 @@ codethorninclude_HEADERS=\
   RewriteSystem.h \
   RERS_empty_specialization.h
 
+# codethorn (core) library sources
 libcodethorn_la_SOURCES=\
-  CommandLineOptions.C \
   AbstractValue.C \
   AliasAnalysis.C \
   AnalysisAbstractionLayer.C \
@@ -232,26 +239,15 @@ libcodethorn_la_SOURCES=\
   addressTakenAnalysis.C \
   RERS_empty_specialization.C
 
-##############################################################
-# CODETHORN TOOL
-##############################################################
 
-codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
-codethorn_CXXFLAGS = -fopenmp -Wall -O3 # this line creates speparately named object files
-codethorn_DEPENDENCIES=libcodethorn.la libcodethornltl.la
-
-if ROSE_WITH_SPOT
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lcodethorn -lcodethornltl $(Z3_LINK)
-codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
-else
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lcodethornltl
-endif
-
-codethorndir=.
+################################################################
+# LIBRARY: CODETHORNLTL (for linear temporal logic verification)
+################################################################
 
 libcodethornltl_la_LDFLAGS=
 libcodethornltl_la_CXXFLAGS = -fopenmp -Wall -O3
 
+# only informative
 libcodethornltl_xHEADERS = \
   IOAnalyzer.h                     \
   IOSolver.h \
@@ -283,6 +279,7 @@ libcodethornltl_xHEADERS = \
   ReadWriteAnalyzer.h \
   CommandLineOptions.h
 
+# library sources
 libcodethornltl_la_SOURCES= \
   IOAnalyzer.C                     \
   IOSolver.C \
@@ -314,29 +311,43 @@ libcodethornltl_la_SOURCES= \
   ReadWriteAnalyzer.C \
   CommandLineOptions.C
 
+##############################################################
+# TOOL: CODETHORN
+##############################################################
+
+# yacc flags for LTL parser
+codethorn_YFLAGS = -p ltl_ 
+
+# this line creates speparately named object files
+codethorn_CXXFLAGS = -fopenmp -Wall -O3 
+
+# codethorn has most of its code organized in two separate libraries
+codethorn_DEPENDENCIES=libcodethorn.la libcodethornltl.la
+
+if ROSE_WITH_SPOT
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lcodethorn -lcodethornltl $(Z3_LINK)
+codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+else
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lcodethornltl
+endif
+
+codethorndir=.
+
+# only informative
 codethorn_xHEADERS = \
+  CommandLineOptions.C \
   codethorn.h \
   LTL.h
 
+# codethorn sources in addition to libcodethorn and libcodethornltl
 codethorn_SOURCES = \
-  LTLParser.y++                    \
+  LTLParser.y++ \
   codethorn.C
 
-if ROSE_WITH_SPOT
-addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
-addressTakenAnalysis_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
-else
-addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
-endif
-addressTakenAnalysis_CXXFLAGS = -fopenmp -Wall -O3
-addressTakenAnalysis_DEPENDENCIES=libcodethorn.la
 
-REGRESSION_DATA_DIR=regressiondata
-
-addressTakenAnalysis_SOURCES = \
-  addressTakenAnalysisDriver.C
-
-.PHONY: codethorn-dist viz bsps docs test checkdemos
+##############################################################
+# TOOL: WOODPECKER
+##############################################################
 
 woodpecker_DEPENDENCIES=libcodethorn.la
 if ROSE_WITH_SPOT
@@ -347,6 +358,7 @@ woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
 endif
 woodpecker_CXXFLAGS= -fopenmp -Wall -O3
 woodpecker_SOURCES = \
+  CommandLineOptions.C \
   ProgramStats.h                 \
   ProgramStats.C                 \
   Threadification.h \
@@ -359,8 +371,10 @@ woodpecker_SOURCES = \
   ConversionFunctionsGenerator.C \
   woodpecker.C
 
-#  DFAnalysisBase.C \
-#  DFAnalysisBase.h
+
+##############################################################
+# TOOL: ANALYTERIX
+##############################################################
 
 analyterix_DEPENDENCIES=libcodethorn.la
 if ROSE_WITH_SPOT
@@ -371,6 +385,7 @@ analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
 endif
 analyterix_CXXFLAGS = -fopenmp -Wall -O3
 analyterix_SOURCES = \
+  CommandLineOptions.C \
   CppStdUtilities.C \
   CppStdUtilities.h \
   DeadCodeAnalysis.C \
@@ -390,6 +405,27 @@ roseonlytools: woodpecker analyterix
 
 check-roseonlytools: check-flow-insenstive
 
+
+##############################################################
+# TOOL: ADDRESSTAKENANALYSIS (for testing only)
+##############################################################
+
+if ROSE_WITH_SPOT
+addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
+addressTakenAnalysis_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
+else
+addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
+endif
+addressTakenAnalysis_CXXFLAGS = -fopenmp -Wall -O3
+addressTakenAnalysis_DEPENDENCIES=libcodethorn.la
+
+REGRESSION_DATA_DIR=regressiondata
+
+addressTakenAnalysis_SOURCES = \
+  CommandLineOptions.C \
+  addressTakenAnalysisDriver.C
+
+.PHONY: codethorn-dist viz bsps docs test checkdemos
 
 # obsolete since integration into ROSE
 # explicit rules because of multiple bison parser
@@ -571,9 +607,11 @@ check-par-cfg:
 # outdated tests (but still passing)
 check-ltl-old: check-ltl-rers-different-versions
 
+# failing tests
+#check-failing: check-ltl-rers-timeout 
+
 # failing tests due to changes in domain
 #check-ltl-failing: check-ltl-rers-array
-#check-ltl-rers-timeout 
 
 # current tests all passing
 check-ltl: check-ltl-start check-ltl-rers-arithmetic check-ltl-rers-loop-aware-sync check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array
