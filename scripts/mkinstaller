@@ -22,11 +22,11 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "5";
-$mkinstaller_ver_build = "15";
+$mkinstaller_ver_build = "16";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.5.15";
-$mkinstaller_ver_time  = " 5Oct2019,04:11:32z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.15 -  5Oct2019,04:11:32z";
+$mkinstaller_ver_name  = "2.5.16";
+$mkinstaller_ver_time  = " 8Oct2019,18:08:04z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.16 -  8Oct2019,18:08:04z";
 
 #{------------------------------------------------------------------------------
 #
@@ -21161,12 +21161,14 @@ sub slurpPathnameIntoArray {
 #  contains semicolons normally indicates that it is a Windows-style pathname
 #  and should be split on semicolons.
 #
+#  Note that this function doesn't treat empty components in any special fashion.
+#
 #  This function uses: getOSclass(),
 #                      makePathWindowslike()
 #
 #  see: totebag/src/perl-lib/splitTheSearchPATH.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 08Oct2019
 #
 #-------------------------------------------------------------------------------
 
@@ -21193,26 +21195,32 @@ sub splitTheSearchPATH {
       $s          = $thePATH;
       my $Ncolons = $s =~ tr/://;
       if ($debugging) {
-         print DBGOUT "splitTheSearchPATH:    given path contains no semicolons\n" if ($Nsemi == 0);
-         print DBGOUT "splitTheSearchPATH:    given path contains 1 semicolon\n" if ($Nsemi == 1);
-         print DBGOUT "splitTheSearchPATH:    given path contains $Nsemi semicolons\n" if (2 <= $Nsemi);
-         print DBGOUT "splitTheSearchPATH:    given path contains no colons\n" if ($Ncolons == 0);
-         print DBGOUT "splitTheSearchPATH:    given path contains 1 colon\n" if ($Ncolons == 1);
-         print DBGOUT "splitTheSearchPATH:    given path contains $Ncolons colons\n" if (2 <= $Ncolons);
+         print DBGOUT "splitTheSearchPATH:    $thePATH contains no semicolons\n" if ($debugging && ($Nsemi == 0));
+         print DBGOUT "splitTheSearchPATH:    $thePATH contains 1 semicolon\n" if ($debugging && ($Nsemi == 1));
+         print DBGOUT "splitTheSearchPATH:    $thePATH contains $Nsemi semicolons\n" if ($debugging && (2 <= $Nsemi));
+         print DBGOUT "splitTheSearchPATH:    $thePATH contains no colons\n" if ($debugging && ($Ncolons == 0));
+         print DBGOUT "splitTheSearchPATH:    $thePATH contains 1 colon\n" if ($debugging && ($Ncolons == 1));
+         print DBGOUT "splitTheSearchPATH:    $thePATH contains $Ncolons colons\n" if ($debugging && (2 <= $Ncolons));
       }
       if (1 <= $Nsemi) {
-         print DBGOUT "splitTheSearchPATH:    ...consider \"Windows-like\", split on semicolons\n" if $debugging;
+         print DBGOUT "splitTheSearchPATH:    ...looks \"Windows-like\", split on semicolons\n" if $debugging;
          @splitPATH = split /;/, $thePATH;
       }
       else {
-         print DBGOUT "splitTheSearchPATH:    ...consider \"UNIX-like\" split on colons\n" if $debugging;
+         print DBGOUT "splitTheSearchPATH:    ...looks \"UNIX-like\" split on colons\n" if $debugging;
          @splitPATH = split /:/, $thePATH;
       }
       print DBGOUT "splitTheSearchPATH:    ...repair individual pathnames\n" if $debugging;
       my $i;
       for ($i=0; $i<=$#splitPATH; $i+=1) {
-         my $pathname   = $splitPATH[$i];
-         $splitPATH[$i] = makePathWindowslike($pathname);
+         my $component = $splitPATH[$i];
+         if ($component ne "") {
+            my $repaired = makePathWindowslike($component);
+            if ($repaired ne $component) {
+               $splitPATH[$i] = $repaired;
+               print DBGOUT "splitTheSearchPATH:       \"".$component."\" ---> \"".$splitPATH[$i]."\"\n" if $debugging;
+            }
+         }
       }
    }
    else {
@@ -21224,13 +21232,13 @@ sub splitTheSearchPATH {
       for ($i=0; $i<=$#splitPATH; $i+=1) {
          my $pathname = $splitPATH[$i];
          if ($i == 0) {
-            print DBGOUT "splitTheSearchPATH: ...gives: \"$pathname\"\n";
+            print DBGOUT "splitTheSearchPATH: ...gives: \"$pathname\"\n" if $debugging;
          }
          else {
-            print DBGOUT "splitTheSearchPATH:           \"$pathname\"\n";
+            print DBGOUT "splitTheSearchPATH:           \"$pathname\"\n" if $debugging;
          }
       }
-      print DBGOUT "splitTheSearchPATH] ...done\n";
+      print DBGOUT "splitTheSearchPATH] ...done\n" if $debugging;
    }
    return @splitPATH;
 }
@@ -22429,7 +22437,7 @@ sub html {
    |         <blockquote>
    |            <ol>
    |               <li><b>Build-time</b>. This is the time when the software (binaries
-   |                   and/or text files) is built and installed on the <b>source</b system.
+   |                   and/or text files) is built and installed on the <b>source</b> system.
    |                   How this software is built and installed is not discussed here.
    |               </li>
    |               <li><b>Generation-time</b>. This is the time when <i>mkinstaller</i> is used
