@@ -502,9 +502,13 @@ check-svcomp:
 	@echo ================================================================
 	@echo RUNNING VERIFICATION ERROR TESTS
 	@echo ================================================================
-	@./codethorn $(srcdir)/tests/svcomp-test2.c --edg:no_warnings
-	@./codethorn $(srcdir)/tests/svcomp-test4.c --max-transitions=10 --edg:no_warnings
-	@./codethorn $(srcdir)/tests/svcomp-test5.c --edg:no_warnings
+	@./codethorn $(srcdir)/tests/svcomp/svcomp-test1.c
+	@./codethorn $(srcdir)/tests/svcomp/svcomp-test2.c
+	@./codethorn $(srcdir)/tests/svcomp/svcomp-test3.c
+	@./codethorn $(srcdir)/tests/svcomp/svcomp-test4.c
+	@./codethorn $(srcdir)/tests/svcomp/svcomp-test5.c
+	@./codethorn $(srcdir)/tests/svcomp/svcomp-test6.c
+	@./codethorn $(srcdir)/tests/svcomp/svcomp-test7.c
 
 check-codethorn-internal:
 	@echo ================================================================
