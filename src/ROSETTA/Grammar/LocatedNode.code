@@ -838,8 +838,9 @@ HEADER_UNTYPED_TYPE_START
                e_fixed,          //! fixed type as identified by parser.
                e_ptr,            //! ptr type as identified by parser.
                e_status,         //! status type as identified by parser.
-            // Rasmussen (05/07/2019): Added e_user_defined for Fortran and e_table for Jovial
+            // Rasmussen (10/09/2019): Added e_user_defined for Fortran; e_table and e_block for Jovial
                e_table,          //! table type as identified by parser.
+               e_block,          //! block type as identified by parser.
                e_user_defined,   //! type defined by the programmer as identified by the parser.
                e_last,           //! last type
              };
