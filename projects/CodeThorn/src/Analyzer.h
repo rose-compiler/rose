@@ -21,7 +21,7 @@
 #include <boost/unordered_map.hpp>
 #include <unordered_map>
 
-#include "Timer.h"
+#include "TimeMeasurement.h"
 #include "AstTerm.h"
 #include "Labeler.h"
 #include "CFAnalysis.h"
@@ -40,6 +40,7 @@
 
 #include "VariableIdMapping.h"
 #include "FunctionIdMapping.h"
+#include "FunctionCallMapping.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
@@ -155,6 +156,7 @@ namespace CodeThorn {
     // access  functions for computed information
     VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
     FunctionIdMapping* getFunctionIdMapping() { return &functionIdMapping; }
+    FunctionCallMapping* getFunctionCallMapping() { return &functionCallMapping; }
     CTIOLabeler* getLabeler() const;
     Flow* getFlow() { return &flow; }
     PStateSet* getPStateSet() { return &pstateSet; }
@@ -278,6 +280,13 @@ namespace CodeThorn {
 
     void setOptionOutputWarnings(bool flag);
     bool getOptionOutputWarnings();
+
+    // first: list of new states (worklist), second: set of found existing states
+    typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
+    SubSolverResultType subSolver(const EState* currentEStatePtr);
+    void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
+    bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
+
   protected:
     static Sawyer::Message::Facility logger;
     void printStatusMessage(string s, bool newLineFlag);
@@ -380,6 +389,7 @@ namespace CodeThorn {
     ExprAnalyzer exprAnalyzer;
     VariableIdMapping variableIdMapping;
     FunctionIdMapping functionIdMapping;
+    FunctionCallMapping functionCallMapping;
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
     EStateWorkList* estateWorkListCurrent;
     EStateWorkList* estateWorkListNext;
@@ -431,7 +441,7 @@ namespace CodeThorn {
 
     std::string _stg_trace_filename;
 
-    Timer _analysisTimer;
+    TimeMeasurement _analysisTimer;
     bool _timerRunning = false;
 
     std::vector<string> _commandLineOptions;
@@ -442,6 +452,11 @@ namespace CodeThorn {
     // to represent multiple summary states in the transition system)
     size_t getSummaryStateMapSize();
     const EState* getBottomSummaryState(Label lab, CallString cs);
+
+    size_t _prevStateSetSizeDisplay = 0;
+    size_t _prevStateSetSizeResource = 0;
+    bool isLTLRelevantEState(const EState* estate);
+
   private:
     //std::unordered_map<int,const EState*> _summaryStateMap;
     std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;

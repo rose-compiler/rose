@@ -2,27 +2,6 @@
   #define NO_STATE -3
   #define NO_ESTATE -4
   from file Labeler.h to CodeThorn.h header file (to be created).
-17) AST Normalization (operators ++,--; function calls)
-
-WARNINGS:
-
-/net/wci-cl1.llnl.gov/vol/home/reus1/markus_demo/rose-develop/projects/CodeThorn/src/SpotConnection.C: In member function 'PropertyValueTable* CodeThorn::SpotConnection::getLtlResults()':
-/net/wci-cl1.llnl.gov/vol/home/reus1/markus_demo/rose-develop/projects/CodeThorn/src/SpotConnection.C:692:1: warning: no return statement in function returning non-void [-Wreturn-type]
- }
- ^
-/net/wci-cl1.llnl.gov/vol/home/reus1/markus_demo/rose-develop/projects/CodeThorn/src/SpotConnection.C: In member function 'PropertyValue CodeThorn::SpotConnection::checkPropertyParPro(std::string, SPRAY::ParProTransitionGraph&, std::set<std::basic_string<char> >)':
-/net/wci-cl1.llnl.gov/vol/home/reus1/markus_demo/rose-develop/projects/CodeThorn/src/SpotConnection.C:712:1: warning: no return statement in function returning non-void [-Wreturn-type]
- }
- ^
-/net/wci-cl1.llnl.gov/vol/home/reus1/markus_demo/rose-develop/projects/CodeThorn/src/SpotConnection.C: In member function 'CodeThorn::ParProSpotTgba* CodeThorn::SpotConnection::toTgba(SPRAY::ParProTransitionGraph&)':
-/net/wci-cl1.llnl.gov/vol/home/reus1/markus_demo/rose-develop/projects/CodeThorn/src/SpotConnection.C:721:1: warning: no return statement in function returning non-void [-Wreturn-type]
- }
- ^
-/net/wci-cl1.llnl.gov/vol/home/reus1/markus_demo/rose-develop/projects/CodeThorn/src/SpotConnection.C: In member function 'std::string CodeThorn::SpotConnection::spinSyntax(std::string)':
-/net/wci-cl1.llnl.gov/vol/home/reus1/markus_demo/rose-develop/projects/CodeThorn/src/SpotConnection.C:745:1: warning: no return statement in function returning non-void [-Wreturn-type]
- }
- ^
-/net/wci-cl1.llnl.gov/vol/home/reus1/markus_demo/rose-develop/projects/CodeThorn/src/SpotConnection.C: In member function 'std::set<std::basic_string<char> > CodeThorn::SpotConnection::atomicPropositions(std::string)':
-/net/wci-cl1.llnl.gov/vol/home/reus1/markus_demo/rose-develop/projects/CodeThorn/src/SpotConnection.C:749:1: warning: no return statement in function returning non-void [-Wreturn-type]
- }
- ^
+11)
+  some CommandLineOptions are used in functions of libcodethorn. Therefore CommandLineOptoins.C is still compiled in libcodethorn.
+  This does not effect the DF* classes, only Solver5 based analysis (timeout options, etc.)

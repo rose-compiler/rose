@@ -19,6 +19,6 @@ int main() {
   x=fp(1,2);
   printf("%d\n",x);
   fp=f2;
-  x=f2(2,3);
+  x=fp(2,3);
   printf("%d\n",x);
 }

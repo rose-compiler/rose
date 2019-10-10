@@ -10,7 +10,7 @@
 #include "AstTerm.C"
 
 // for measurements only
-#include "Timer.cpp"
+#include "TimeMeasurement.cpp"
 // to make ROSE policy check succeed only
 #include "ShowSeq.h"
 
@@ -44,21 +44,21 @@ int main( int argc, char * argv[] ) {
   RoseAst ast(mainroot);
   //  SgNode* ast=completeast.findMethodInClass("myclass","mymethod");
 
-  Timer timer;
+  TimeMeasurement timer;
   timer.start();
   long num1=0,num2=0,num3=0;
   for(RoseAst::iterator i=ast.begin().withNullValues();i!=ast.end();++i) {
     num1++;
   }
   timer.stop();
-  double iteratorMeasurementTime=timer.getElapsedTimeInMilliSec();
+  double iteratorMeasurementTime=timer.getTimeDuration().milliSeconds();
 
   timer.start();
   for(RoseAst::iterator i=ast.begin().withoutNullValues();i!=ast.end();++i) {
     num2++;
   }
   timer.stop();
-  double iteratorMeasurementTimeWithoutNull=timer.getElapsedTimeInMilliSec();
+  double iteratorMeasurementTimeWithoutNull=timer.getTimeDuration().milliSeconds();
 
 #if 0
   timer.start();
@@ -66,7 +66,7 @@ int main( int argc, char * argv[] ) {
     num3++;
   }
   timer.stop();
-  double fastiteratorMeasurementTimeWithoutNull=timer.getElapsedTimeInMilliSec();
+  double fastiteratorMeasurementTimeWithoutNull=timer.getTimeDuration().milliSeconds();
 #endif
 
   std::cout << "Iteration Length: with    null: " << num1 << std::endl;
@@ -79,7 +79,7 @@ int main( int argc, char * argv[] ) {
   timer.start();
   tt.traverse(root, preorder);
   timer.stop();
-  double ttm=timer.getElapsedTimeInMilliSec();
+  double ttm=timer.getTimeDuration().milliSeconds();
 
   write_file("iterator_test.dot", astTermToDot(ast.begin().withNullValues(),ast.end()));
 

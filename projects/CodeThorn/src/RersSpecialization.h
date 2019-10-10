@@ -18,8 +18,10 @@
 // create an entry in the mapping    <var_address>  <-->  <var_name>
 #define REGISTER_GLOBAL_VAR_ADDRESS(VARNAME) analyzer->mapGlobalVarInsert(STR_VALUE(VARNAME), (int*) &VARNAME);
 
+#include "RERS_empty_specialization.h"
+
 namespace RERS_Problem {
-  void rersGlobalVarsCallInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
+  //void rersGlobalVarsCallInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
   void rersGlobalVarsCallReturnInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
   void rersGlobalVarsArrayInit(int numberOfThreads);
   void createGlobalVarAddressMaps(CodeThorn::Analyzer* analyzer);

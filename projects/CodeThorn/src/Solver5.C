@@ -237,7 +237,7 @@ void Solver5::run() {
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),tmpcomplete);
     _analyzer->printStatusMessage(true);
     _analyzer->transitionGraph.setIsComplete(tmpcomplete);
-    cout<< "analysis finished (worklist is empty)."<<endl;
+    cout<< "STATUS: analysis finished (worklist is empty)."<<endl;
   }
   _analyzer->transitionGraph.setIsPrecise(_analyzer->isPrecise());
 }

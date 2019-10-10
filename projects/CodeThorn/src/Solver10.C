@@ -2,6 +2,7 @@
 #include "Solver10.h"
 #include "IOAnalyzer.h"
 #include "SpotConnection.h"
+#include "RERS_empty_specialization.h"
 
 using namespace CodeThorn;
 using namespace std;
@@ -145,9 +146,9 @@ bool isEmptyWorkList;
         list<int> newHistory = currentState.second;
         ROSE_ASSERT(newHistory.size() % 2 == 0);
         newHistory.push_back(*inputVal);
-        // call the next-state function (a.k.a. "calculate_output")
-        RERS_Problem::rersGlobalVarsCallInit(_analyzer, newPState, omp_get_thread_num());
-        (void) RERS_Problem::calculate_output( omp_get_thread_num() );
+        // call the next-state function (a.k.a. "calculate_outputFP")
+        RERS_Problem::rersGlobalVarsCallInitFP(_analyzer, newPState, omp_get_thread_num());
+        (void) RERS_Problem::calculate_outputFP( omp_get_thread_num() );
         int rers_result=RERS_Problem::output[omp_get_thread_num()];
         // handle assertions found to be reachable
         if (rers_result==-2) {
@@ -172,7 +173,7 @@ bool isEmptyWorkList;
             }
           }
         } else {  // not a failed assertion, continue searching
-          RERS_Problem::rersGlobalVarsCallReturnInit(_analyzer, newPState, omp_get_thread_num());
+          RERS_Problem::rersGlobalVarsCallReturnInitFP(_analyzer, newPState, omp_get_thread_num());
           newHistory.push_back(rers_result);
           ROSE_ASSERT(newHistory.size() % 2 == 0);
           // check for all possible patterns in the current I/O-trace "newHistory"
@@ -292,9 +293,9 @@ int Solver10::pStateDepthFirstSearch(PState* startPState, int maxDepth, int thre
       list<int> newHistory = currentState.second;
       ROSE_ASSERT(newHistory.size() % 2 == 0);
       newHistory.push_back(*inputVal);
-      // call the next-state function (a.k.a. "calculate_output")
-      RERS_Problem::rersGlobalVarsCallInit(_analyzer, newPState, thread_id);
-      (void) RERS_Problem::calculate_output( thread_id );
+      // call the next-state function (a.k.a. "calculate_outputFP")
+      RERS_Problem::rersGlobalVarsCallInitFP(_analyzer, newPState, thread_id);
+      (void) RERS_Problem::calculate_outputFP( thread_id );
       int rers_result=RERS_Problem::output[thread_id];
       // handle assertions found to be reachable
       if (rers_result==-2) {
@@ -324,7 +325,7 @@ int Solver10::pStateDepthFirstSearch(PState* startPState, int maxDepth, int thre
           }
         }
       } else {  // not a failed assertion, continue searching
-        RERS_Problem::rersGlobalVarsCallReturnInit(_analyzer, newPState, thread_id);
+        RERS_Problem::rersGlobalVarsCallReturnInitFP(_analyzer, newPState, thread_id);
         newHistory.push_back(rers_result);
         ROSE_ASSERT(newHistory.size() % 2 == 0);
         // continue only if the maximum depth of input symbols has not yet been reached
@@ -367,9 +368,9 @@ bool Solver10::computePStateAfterInputs(PState& pState, list<int>& inputs, int t
     //pState[globalVarIdByName("input")]=CodeThorn::AbstractValue(*i);
     pState.writeToMemoryLocation(_analyzer->globalVarIdByName("input"),
                               CodeThorn::AbstractValue(*i));
-    RERS_Problem::rersGlobalVarsCallInit(_analyzer, pState, thread_id);
-    (void) RERS_Problem::calculate_output(thread_id);
-    RERS_Problem::rersGlobalVarsCallReturnInit(_analyzer, pState, thread_id);
+    RERS_Problem::rersGlobalVarsCallInitFP(_analyzer, pState, thread_id);
+    (void) RERS_Problem::calculate_outputFP(thread_id);
+    RERS_Problem::rersGlobalVarsCallReturnInitFP(_analyzer, pState, thread_id);
     if (iOSequence) {
       iOSequence->push_back(*i);
       int outputVal=RERS_Problem::output[thread_id];

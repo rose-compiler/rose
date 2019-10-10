@@ -4,6 +4,7 @@
 #include "Labeler.h"
 #include "VariableIdMapping.h"
 #include "FunctionIdMapping.h"
+#include "FunctionCallMapping.h"
 #include "CFAnalysis.h"
 #include "Flow.h"
 
