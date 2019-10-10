@@ -1,0 +1,835 @@
+% macros used in "optimizing compilers" slides
+% Author: Markus Schordan
+
+% lattice terminology
+\newcommand{\lle}[0]{\sqsubseteq} % lattice less or equal
+\newcommand{\notlle}[0]{\not\sqsubseteq} % lattice less or equal
+\newcommand{\mapto}[0]{\rightarrow}
+\newcommand{\poset}[0]{{L=\pair{L}{\lle}}}
+\newcommand{\transferfunction}[2]{f_{#1} : #2 \mapto #2}
+
+% colors
+\newcommand{\sourcetooptimizecol}[1]{\textcolor{red}{#1}}
+\newcommand{\optimizedsourcecol}[1]{\textcolor{green}{#1}}
+\newcommand{\sourcetooptimize}[1]{\framebox{\sourcetooptimizecol{#1}}}
+\newcommand{\optimizedsource}[1]{\framebox{\optimizedsourcecol{#1}}}
+\newcommand{\marksource}[1]{\framebox{\textcolor{blue}{#1}}}
+\newcommand{\fmarksource}[1]{\framebox{\textcolor{blue}{#1}}}
+\newcommand{\nonfmarksource}[1]{\textcolor{blue}{#1}}
+
+\newcommand{\defname}[1]{\textcolor{colTitle}{#1}}
+\newcommand{\emcolor}[1]{\textcolor{colTitle}{#1}}
+
+\newcommand{\emcolora}[1]{\textcolor{colTitle}{#1}}
+\newcommand{\emcolorb}[1]{\textcolor{green}{#1}}
+
+% shorthands for while language
+\newcommand{\tnode}[2]{[{#1}]^{#2}}
+\newcommand{\ttnode}[3]{[{#1}]^{#2}_{#3}}
+\newcommand{\whltest}[1]{{#1}}
+\newcommand{\whlassign}[2]{{#1 := #2}}
+\newcommand{\whlskip}[0]{\textup{skip}}
+\newcommand{\whlif}[3]{\textup{if} ~ {#1} ~ \textup{then} ~({#2})~ \textup{else} ~({#3})}
+\newcommand{\whlwhile}[2]{\textup{while}~{#1}~\textup{do}~{#2}~\textup{od}}
+
+\newcommand{\whlvar}[1]{\textup{{#1}}}
+
+\newcommand{\whlgtc}[2]{{\whlvar{#1} > \whlvar{#2}}}
+\newcommand{\whlassignc}[2]{\whlassign{\whlvar{#1}}{\whlvar{#2}}}
+
+\newcommand{\analysisin}[2]{{\textup{#1}}_{\circ}({#2})}
+\newcommand{\analysisout}[2]{{\textup{#1}}_{\fullcirc}({#2})}
+\newcommand{\nodelabel}[0]{\ell}
+\newcommand{\ellset}[0]{\{\ell\}}
+\newcommand{\extremalvalue}[0]{\iota}
+\newcommand{\mappingf}[0]{f.}
+\newcommand{\starsetLab}[0]{Lab$_{\star}$}
+
+\newcommand{\whlnodeassignxal}[0]{\tnode{\whlassign{x}{a}}{\ell}}
+\newcommand{\whlnodeassignxalprime}[0]{\tnode{\whlassign{x}{a}}{\ell'}}
+\newcommand{\whlnodeassignxyl}[0]{\tnode{\whlassign{x}{y}}{\ell}}
+\newcommand{\whlnodeassignxylj}[0]{\tnode{\whlassign{x}{y}}{\ell_j}}
+\newcommand{\whlnodeassignxy}[0]{\tnode{\whlassign{x}{y}}{}}
+\newcommand{\whlnodeskipl}[0]{\tnode{\whlskip}{\ell}}
+\newcommand{\whlnodesequence}[0]{S_1;S_2}
+\newcommand{\whlnodetestl}[0]{\tnode{b}{\ell}}
+\newcommand{\whlnodeifl}[0]{\whlif{\whlnodetestl}{S_1}{S_2}}
+\newcommand{\whlnodewhilel}[0]{\whlwhile{\whlnodetestl}{S}}
+
+\newcommand{\whlnodecallcr}[0]{\ttnode{\textup{call}~p(a,z)}{\ell_c}{\ell_r}}
+\newcommand{\whlnodeprocedurexn}[0]{\textup{proc}~p(\textup{val}~x;~\textup{res}~y)~\textup{is}^{\ell_n}~S~\textup{end}^{\ell_x}}
+
+
+\newcommand{\auxlabels}[1]{\textup{labels}(#1)}
+\newcommand{\auxinit}[1]{\textup{init}(#1)}
+\newcommand{\auxfinal}[1]{\textup{final}(#1)}
+\newcommand{\auxflow}[1]{\textup{flow}(#1)}
+\newcommand{\auxflowr}[1]{\textup{flow}^{R}(#1)}
+\newcommand{\auxblocks}[1]{\textup{blocks}(#1)}
+\newcommand{\auxS}[0]{S_\star}
+
+\newcommand{\auxkill}[2]{\textup{kill}_{\textup{#1}}(#2)}
+\newcommand{\auxgen}[2]{\textup{gen}_{\textup{#1}}(#2)}
+\newcommand{\auxskill}[1]{\ensuremath{\textup{kill}_{#1}}} % short kill
+\newcommand{\auxsgen}[1]{\textup{gen}_{#1}} % short gen
+
+\newcommand{\varstar}[0]{\textup{Var}_\star}
+\newcommand{\Varstar}[0]{\textup{Var}_\star}
+\newcommand{\SAALoc}[0]{\textup{ALoc}}
+\newcommand{\SASel}[0]{\textup{Sel}}
+\newcommand{\SAAState}[0]{\textup{AState}}
+\newcommand{\SAAHeap}[0]{\textup{AHeap}}
+\newcommand{\SAIsShared}[0]{\textup{IsShared}}
+\newcommand{\SAS}[0]{\textup{S}}
+\newcommand{\SAH}[0]{\textup{H}}
+\newcommand{\SAis}[0]{\textup{is}}
+\newcommand{\SASG}[0]{\textup{SG}}
+\newcommand{\SAsgtriple}[0]{(\SAS,\SAH,\SAis)}
+\newcommand{\SAtfname}[0]{f_\ell^{\textup{SA}}}
+\newcommand{\SAtfmapping}[0]{\SAtfname : \pow{\SASG} \mapto \pow{\SASG}}
+\newcommand{\SAsubtfname}[0]{\phi_\ell^{\textup{SA}}}
+\newcommand{\SAsubtf}[1]{\SAsubtfname(#1)}
+\newcommand{\SAsubtfmapping}[0]{\SAsubtfname : \SASG \mapto \pow{\SASG}}
+\newcommand{\SAPExp}[0]{\textup{PExp}}
+
+\newcommand{\equationininit}[3]{ % (analysisname,label,initvalue)
+\analysisin{#1}{#2}&=&{#3}\\
+}
+\newcommand{\equationinidentity}[3]{ % (analysisname,labelLHS,labelRHS)
+\analysisin{#1}{#2}&=&\analysisout{#1}{#3}\\
+}
+\newcommand{\equationoutidentity}[2]{ % (analysisname,label)
+\analysisout{#1}{#2}&=&\analysisin{#1}{#2}\\
+}
+\newcommand{\equationoutkillgen}[4]{ % (analysisname,label,killset,genset)
+\analysisout{#1}{#2}&=&\analysisin{#1}{#2}~\setdif~{#3}~\setunion~{#4}\\
+}
+\newcommand{\equationincombination}[5]{ % (analysisname,labelLHS,labelRHS1,combinationop,labelRHS2)
+\analysisin{#1}{#2}&=&\analysisout{#1}{#3}~{#4}~\analysisout{#1}{#5}\\
+}
+\newcommand{\algokillgen}[1]{
+(\analysisin{#1}{\ell}\setdif \textup{kill}_\textup{#1}(B^\ell))~\setunion~\textup{gen}_\textup{#1}(B^\ell)
+}
+
+\newcommand{\exampleprogramreverselist}[0]{
+%Example:% {\em Factorial}
+%\\
+\begin{sourcecodenofontsize}
+$\tnode{\whlassignc{y}{null}}{1};$\\
+$\mathtt{while}~\tnode{\mathtt{not~isnull(x)}}{2}~\mathtt{do}$\\
+~~$\tnode{\whlassignc{t}{y}}{3};$\\
+~~$\tnode{\whlassignc{y}{x}}{4};$\\
+~~$\tnode{\whlassignc{x}{x.next}}{5};$\\
+~~$\tnode{\whlassignc{y.next}{t}}{6};$\\
+od\\
+$\tnode{\whlassignc{t}{null}}{7}$
+\end{sourcecodenofontsize}
+}
+
+\newcommand{\exampleprogramfibonacci}[0]{
+\begin{sourcecode}
+begin \\
+\>proc fib(val z,u; res v) is\\
+\>\> if z<3 then\\
+\>\>\> (v:=u+1; r:=r+1)\\
+\>\> else (\\
+\>\>\> call fib (z-1,u,v);\\
+\>\>\> call fib (z-2,v,v)\\
+\>\>\> )\\
+\>end;\\
+r:=0; \\
+call fib(x,0,y)\\
+end   \\
+\end{sourcecode}
+}
+
+\newcommand{\exampleprogramfactorial}[0]{
+Example:% {\em Factorial}
+\\
+$\tnode{\whlassignc{y}{x}}{1};
+\tnode{\whlassignc{z}{1}}{2};
+\whlwhile{\tnode{\whlgtc{y}{1}}{3}}
+  {\tnode{\whlassignc{z}{z $\ast$ y}}{4};
+   \tnode{\whlassignc{y}{y $-$ 1}}{5}
+  };
+\tnode{\whlassignc{y}{0}}{6}
+$
+}
+
+\newcommand{\exampleprogramavailableexpressions}[0]{
+Example:% {\em Available Expressions}
+\\
+$
+\tnode{\whlassignc{x}{a$+$b}}{1};
+\tnode{\whlassignc{y}{a$*$x}}{2};
+\whlwhile{\tnode{\whlgtc{y}{a$+$b}}{3}}
+  {\tnode{\whlassignc{a}{a $+$ 1}}{4};
+   \tnode{\whlassignc{x}{a $+$ b}}{5}
+  }
+$
+}
+
+\newcommand{\exampleprogramavailableexpressionscse}[0]{
+%Example:% {\em Available Expressions and CSE}
+{
+\ptsize{8}
+$
+\tnode{\whlassignc{u}{a$+$b}}{1'};
+\tnode{\whlassignc{x}{u}}{1};
+\tnode{\whlassignc{y}{a$*$x}}{2};
+\whlwhile{\tnode{\whlgtc{y}{u}}{3}}
+  {\tnode{\whlassignc{a}{a $+$ 1}}{4};
+   \tnode{\whlassignc{u}{a $+$ b}}{5'};
+   \tnode{\whlassignc{x}{u}}{5}
+  }
+$
+}
+}
+
+\newcommand{\exampleprogramavailableexpressionscp}[0]{
+%Example:% {\em Available Expressions and CSE}
+%\\
+{
+\ptsize{8}
+$
+\tnode{\whlassignc{u}{a$+$b}}{1'};
+\tnode{\whlassignc{y}{a$*$u}}{2};
+\whlwhile{\tnode{\whlgtc{y}{u}}{3}}
+  {\tnode{\whlassignc{a}{a $+$ 1}}{4};
+   \tnode{\whlassignc{u}{a $+$ b}}{5'};
+   \tnode{\whlassignc{x}{u}}{5}
+  }
+$
+}
+}
+
+\newcommand{\exampleprogramlivevariablesanalysis}[0]{
+%Example:% {\em Available Expressions and CSE}
+%\\
+{
+\ptsize{8}
+$
+\tnode{\whlassignc{y}{0}}{0};
+\tnode{\whlassignc{u}{a$+$b}}{1};
+\tnode{\whlassignc{y}{a$*$u}}{2};
+\whlwhile{\tnode{\whlgtc{y}{u}}{3}}
+  {\tnode{\whlassignc{a}{a $+$ 1}}{4};
+   \tnode{\whlassignc{u}{a $+$ b}}{5};
+   \tnode{\whlassignc{x}{u}}{6}
+  }
+$
+}
+}
+
+\newcommand{\exampleprogramdeadcodeeliminationbefore}[0]{
+%Example:% {\em Available Expressions and CSE}
+%\\
+{
+\ptsize{8}
+$
+\emcolor{\tnode{\whlassignc{y}{0}}{0}};
+\tnode{\whlassignc{u}{a$+$b}}{1};
+\tnode{\whlassignc{y}{a$*$u}}{2};
+\whlwhile{\tnode{\whlgtc{y}{u}}{3}}
+  {\tnode{\whlassignc{a}{a $+$ 1}}{4};
+   \tnode{\whlassignc{u}{a $+$ b}}{5};
+   \emcolor{\tnode{\whlassignc{x}{u}}{6}}
+  }
+$
+}
+}
+
+\newcommand{\exampleprogramdeadcodeeliminationafter}[0]{
+%Example:% {\em Available Expressions and CSE}
+%\\
+{
+\ptsize{8}
+$
+\tnode{\whlassignc{u}{a$+$b}}{1};
+\tnode{\whlassignc{y}{a$*$u}}{2};
+\whlwhile{\tnode{\whlgtc{y}{u}}{3}}
+  {\tnode{\whlassignc{a}{a $+$ 1}}{4};
+   \tnode{\whlassignc{u}{a $+$ b}}{5};
+  }
+$
+}
+}
+
+\newcommand{\exampleprogramlvsimple}[0]{
+%Example:% {\em Live Variables Analysis}
+%\\
+{
+\ptsize{8}
+$
+\tnode{\whlassignc{x}{1}}{1};
+\tnode{\whlassignc{x}{2}}{2};
+\tnode{\whlassignc{y}{x}}{3};
+$
+}
+}
+
+\newcommand{\exampleprogramverybusyexpressions}[0]{
+$
+\whlif
+{\tnode{\whlgtc{a}{b}}{1}}
+{\tnode{\whlassignc{x}{\emcolor{b$-$a}}}{2};\tnode{\whlassignc{y}{\color{green}{a$-$b}}}{3}}
+{\tnode{\whlassignc{y}{\emcolor{b$-$a}}}{4};\tnode{\whlassignc{x}{\color{green}{a$-$b}}}{5}}
+$
+}
+
+\newcommand{\exampleprogramcodehoistingbefore}[0]{
+\exampleprogramverybusyexpressions
+}
+
+\newcommand{\exampleprogramcodehoistingafter}[0]{
+$
+\tnode{\whlassignc{t1}{a$-$b}}{0};
+\tnode{\whlassignc{t2}{b$-$a}}{0'};\newline
+\whlif
+{\tnode{\whlgtc{a}{b}}{1}}
+{\tnode{\whlassignc{x}{t2}}{2};\tnode{\whlassignc{y}{t1}}{3}}
+{\tnode{\whlassignc{y}{t2}}{4};\tnode{\whlassignc{x}{t1}}{5}}
+$
+}
+
+\newcommand{\exampleprogramcopyanalysis}[0]{
+Example:% {\em Factorial}
+\\
+$\tnode{\whlassignc{a}{b}}{1};
+\whlif{\tnode{\whlgtc{x}{b}}{2}}
+  {\tnode{\whlassignc{y}{a}}{3}}
+  {\tnode{\whlassignc{b}{b $+$ 1}}{4};
+   \tnode{\whlassignc{y}{a}}{5}
+  };
+  \tnode{\whlskip}{6}
+$
+}
+\outcomment{
+% WHILE program
+/*  1: */  program CopyAnalysis
+/*  2: */  
+/*  3: */  begin
+/*  4: */  
+/*  5: */  a:=b;
+/*  6: */  if (x>b) then 
+/*  7: */   y:=a;
+/*  8: */  else (
+/*  9: */   b:=b+1;
+/* 10: */   y=a;
+/* 11: */  )
+/* 12: */  skip;  
+/* 13: */  end
+}
+
+
+\newcommand{\elementaryblockgraph}[2]{ %(analysisname,elementaryblock) 
+\begin{picture}(100,60)
+\put(30,43){\textup{{#1}}$_\circ$($\ell$)}
+\put(2,25){\framebox{${#2}$}}
+\put(30,7){\textup{{#1}}$_\fullcirc$($\ell$)}
+
+\put(24,58){\vector(0,-1){21}}
+\put(24,19){\vector(0,-1){21}}
+\end{picture}
+}
+
+\newcommand{\elementaryblockgraphbackward}[2]{ %(analysisname,elementaryblock) 
+\begin{picture}(100,60)
+\put(30,43){\textup{{#1}}$_\circ$($\ell$)}
+\put(2,25){\framebox{${#2}$}}
+\put(30,7){\textup{{#1}}$_\fullcirc$($\ell$)}
+
+\put(24,37){\vector(0,1){21}}
+\put(24,-2){\vector(0,1){21}}
+\end{picture}
+}
+
+\newcommand{\allelementaryblocksgraph}[1]{
+\begin{tabular}{r|r|r}
+\elementaryblockgraph{#1}{\whlnodeassignxal}
+&
+\elementaryblockgraph{#1}{~~~~\whlnodetestl~~~~}
+&
+\elementaryblockgraph{#1}{~\whlnodeskipl~}\\\hline
+\end{tabular}
+}
+
+\newcommand{\allelementaryblocksgraphbackward}[1]{
+\begin{tabular}{r|r|r}
+\elementaryblockgraphbackward{#1}{\whlnodeassignxal}
+&
+\elementaryblockgraphbackward{#1}{~~~~\whlnodetestl~~~~}
+&
+\elementaryblockgraphbackward{#1}{~\whlnodeskipl~}\\\hline
+\end{tabular}
+}
+
+\newcommand{\exampleflowgraphforward}{
+% 6 statements (per statement: , per arrow between statements: )
+{
+\ptsize{8}
+\begin{picture}(100,145)
+\put(30,135){\framebox{$\tnode{\whlassignc{y}{x}}{1}$}}
+\put(50,130){\vector(0,-1){10}}
+\put(30,110){\framebox{$\tnode{\whlassignc{z}{1}}{2}$}}
+\put(50,105){\vector(0,-1){10}}
+\put(31,85){\framebox{$\tnode{\whlgtc{y}{1}}{3}$}}
+\put(50,80){\vector(0,-1){10}}
+\put(26,60){\framebox{$\tnode{\whlassignc{z}{z$*$y}}{4}$}}
+\put(50,55){\vector(0,-1){10}}
+\put(24,35){\framebox{$\tnode{\whlassignc{y}{y$-$1}}{5}$}}
+\put(30,5){\framebox{$\tnode{\whlassignc{y}{0}}{6}$}}
+
+% back edge
+\put(73,38){\line(1,0){15}}
+\put(88,38){\line(0,1){50}}
+\put(88,88){\vector(-1,0){21}}
+
+% exit loop edge
+\put(31,88){\line(-1,0){21}}
+\put(10,88){\line(0,-1){66}}
+\put(10,22){\line(1,0){40}}
+\put(50,22){\vector(0,-1){8}}
+
+\end{picture}
+}
+}
+
+\newcommand{\exampleflowgraphbackward}{
+% 6 statements (per statement: , per arrow between statements: )
+{
+\ptsize{8}
+
+\begin{picture}(100,145)
+\put(30,135){\framebox{$\tnode{\whlassignc{y}{x}}{1}$}}
+\put(50,120){\vector(0,1){10}}
+\put(30,110){\framebox{$\tnode{\whlassignc{z}{1}}{2}$}}
+\put(50,95){\vector(0,1){10}}
+\put(31,85){\framebox{$\tnode{\whlgtc{y}{1}}{3}$}}
+\put(50,70){\vector(0,1){10}}
+\put(26,60){\framebox{$\tnode{\whlassignc{z}{z$*$y}}{4}$}}
+\put(50,45){\vector(0,1){10}}
+\put(24,35){\framebox{$\tnode{\whlassignc{y}{y$-$1}}{5}$}}
+\put(30,5){\framebox{$\tnode{\whlassignc{y}{0}}{6}$}}
+
+% back edge
+\put(88,38){\vector(-1,0){15}}
+\put(88,38){\line(0,1){50}}
+\put(88,88){\line(-1,0){21}}
+
+% exit loop edge
+\put(10,88){\vector(1,0){21}}
+\put(10,88){\line(0,-1){66}}
+\put(10,22){\line(1,0){40}}
+\put(50,22){\line(0,-1){8}}
+
+\end{picture}
+}
+}
+
+\newcommand{\basicideagraph}[2]{
+\bigskip
+\begin{center}
+\begin{tabular}{l|r}
+\elementaryblockgraph{#1}{\whlnodeassignxal}
+&
+\begin{picture}(100,60)
+\put(30,50){\framebox{$\tnode{...}{\ell_1}$}}
+\put(10,35){\textup{{#1}}$_\fullcirc$($\ell_1$)}
+\put(90,50){\framebox{$\tnode{...}{\ell_2}$}}
+\put(105,35){\textup{{#1}}$_\fullcirc$($\ell_2$)}
+
+\put(91,9){\textup{{#1}}$_\circ$($\ell$)}
+\put(62,0){\framebox{$\tnode{...}{\ell}$}}
+
+\put(46,44){\vector(2,-3){21}}
+\put(102,44){\vector(-2,-3){21}}
+\put(70,21){{#2}} % combination operator
+\end{picture}
+\end{tabular}
+\end{center}
+\bigskip
+}
+
+\newcommand{\basicideagraphbackward}[2]{
+\bigskip
+\begin{center}
+\begin{tabular}{l|r}
+\elementaryblockgraphbackward{#1}{\whlnodeassignxal}
+&
+\begin{picture}(100,60)
+\put(30,2){\framebox{$\tnode{...}{\ell_1}$}}
+\put(10,18){$\analysisin{#1}{\ell_1}$}
+\put(90,2){\framebox{$\tnode{...}{\ell_2}$}}
+\put(108,18){$\analysisin{#1}{\ell_2}$}
+
+\put(92,41){$\analysisout{#1}{\ell}$}
+\put(62,49){\framebox{$\tnode{...}{\ell}$}}
+
+\put(102,14){\vector(-2,3){20}}
+\put(46,14){\vector(2,3){20}}
+\put(70,31){{#2}} % combination operator
+\end{picture}
+\end{tabular}
+\end{center}
+\bigskip
+}
+
+\newcommand{\bitvectorrhscombination}[4]{ %(analysisName,InitialValue,CombOp,extremalValueSet)
+\longifelse{{#2}}{\textup{if}~\ell={#4}}{{#3} \{\analysisout{#1}{\ell'}|\tuple{\ell',\ell}\in \auxflow{\auxS}\}}{\textup{otherwise}}
+}
+
+\newcommand{\bitvectorrhscombinationbackward}[4]{ %(analysisName,InitialValue,CombOp,extremalValueSet)
+\longifelse{{#2}}{\textup{if}~\ell={#4}}{{#3} \{\analysisin{#1}{\ell'}|\tuple{\ell',\ell}\in \auxflowr{\auxS}\}}{\textup{otherwise}}
+}
+
+\newcommand{\bitvectorrhskillgen}[2]{ %(analysisname,analysisrhs{analysisname})
+({#2}\setdif \textup{kill}_\textup{#1}(B^\ell))~\setunion~\textup{gen}_\textup{#1}(B^\ell) ~~~~\textup{where}~B^\ell\in\auxblocks{S_\star}
+}
+
+\newcommand{\bitvectoranalysisin}[3]{ %(analysisname,InitialValue,CombOp)
+\analysisin{#1}{\ell}&=&\bitvectorrhscombination{#1}{#2}{#3}{\auxinit{\auxS}}
+}
+
+\newcommand{\bitvectoranalysisout}[1]{ %(analysisname)
+\analysisout{#1}{\ell}&=&\bitvectorrhskillgen{#1}{\analysisin{#1}{\ell}}
+}
+
+\newcommand{\bitvectoranalysisinbackward}[1]{ %(analysisname)
+\analysisin{#1}{\ell}&=&\bitvectorrhskillgen{#1}{\analysisout{#1}{\ell}}
+} 
+
+\newcommand{\bitvectoranalysisoutbackward}[3]{ %(analysisname,InitialValue,CombOp)
+\analysisout{#1}{\ell}&=&\bitvectorrhscombinationbackward{#1}{#2}{#3}{\auxfinal{\auxS}}
+}
+
+\newcommand{\bitvectoranalysis}[3]{%(Name,InitialValue,CombinationOperator}
+\begin{formula}
+\bitvectoranalysisin{#1}{#2}{#3}\\
+\bitvectoranalysisout{#1}
+\end{formula} 
+}
+
+\newcommand{\bitvectoranalysisbackward}[3]{%(Name,InitialValue,CombinationOperator}
+\begin{formula}
+\bitvectoranalysisinbackward{#1}\\
+\bitvectoranalysisoutbackward{#1}{#2}{#3}
+\end{formula} 
+}
+
+\newcommand{\elementaryblocksanalysis}[7]{ % (AnalysisName,kill-assign,kill-skip,kill-b,gen-assign,gen-skip,gen-b)
+\allelementaryblocksgraph{#1}
+\begin{formula}
+\textup{kill}_{\textup{#1}}(\tnode{\whlassign{x}{a}}{\ell})&=&{#2}\}\\
+\textup{kill}_{\textup{#1}}(\tnode{\whlskip}{\ell})&=&{#3}\\
+\textup{kill}_{\textup{#1}}(\tnode{\whltest{b}}{\ell})&=&{#4}\\
+\textup{gen}_{\textup{#1}}(\tnode{\whlassign{x}{a}}{\ell})&=&{#5}\\
+\textup{gen}_{\textup{#1}}(\tnode{\whlskip}{\ell})&=&{#6}\\
+\textup{gen}_{\textup{#1}}(\tnode{\whltest{b}}{\ell})&=&{#7}\\
+\end{formula}
+
+\begin{formula}
+\bitvectoranalysisout{#1}
+\end{formula}
+}
+
+\newcommand{\elementaryblocksanalysisbackward}[7]{ % (AnalysisName,kill-assign,kill-skip,kill-b,gen-assign,gen-skip,gen-b)
+\allelementaryblocksgraphbackward{#1}
+\begin{formula}
+\textup{kill}_{\textup{#1}}(\tnode{\whlassign{x}{a}}{\ell})&=&{#2}\\
+\textup{kill}_{\textup{#1}}(\tnode{\whlskip}{\ell})&=&{#3}\\
+\textup{kill}_{\textup{#1}}(\tnode{\whltest{b}}{\ell})&=&{#4}\\
+\textup{gen}_{\textup{#1}}(\tnode{\whlassign{x}{a}}{\ell})&=&{#5}\\
+\textup{gen}_{\textup{#1}}(\tnode{\whlskip}{\ell})&=&{#6}\\
+\textup{gen}_{\textup{#1}}(\tnode{\whltest{b}}{\ell})&=&{#7}\\
+\end{formula}
+
+\begin{formula}
+\bitvectoranalysisinbackward{#1}
+\end{formula}
+}
+
+\newcommand{\basicanalysisinformation}[4]{ % (AnalysisName,AinText,AoutText,killText,genText)
+Analysis information: $\analysisin{#1}{\nodelabel}$,$\analysisout{#1}{\nodelabel}$ : $\textup{Lab}_\star \rightarrow \pow{#4}$
+
+\begin{itemize}
+\item $\analysisin{#1}{\nodelabel}$: {#2} {#3} \defname{entry} of block $\nodelabel$.
+\item $\analysisout{#1}{\nodelabel}$: {#2} {#3} \defname{exit} of block $\nodelabel$.
+\end{itemize}
+
+}
+
+\newcommand{\basicanalysisproperties}[3]{ %(Direction, MayMust, Combination Operator)
+Analysis properties:
+\begin{itemize}
+\item Direction: {#1} 
+\item #2 analysis with combination operator #3
+\end{itemize}
+}
+
+\outcomment{
+\newcommand{\forwardalgorithm}[5]{ % (analysisname,init,topelem,fixpointtestop,combinationop)
+\begin{sourcecode}
+W:=nil;\\
+foreach $\pair{\ell}{\ell'} \in \auxflow{S_\star}~\textup{do}$ W := cons($\pair{\ell}{\ell'}$,W); od;\\
+foreach $\ell \in \auxlabels{S_\star}~\textup{do}$\\
+\>if $\ell=\auxinit{S_\star}$ then \\
+\>\>$\analysisin{#1}{\ell} := $\colorbox{algomarkcolor}{$#2$}\\
+\>else\\
+\>\> $\analysisin{#1}{\ell}:= $\colorbox{algomarkcolor}{$#3$}\\
+\>fi\\
+od\\
+while $W \neq nil$ do\\
+\> $\pair{\ell}{\ell'}$ := head(W);\\
+\> W := tail(W);\\
+\> if $\algokillgen{#1}$ \colorbox{algomarkcolor}{$#4$} $\analysisin{#1}{\ell'}$ then\\
+\>\> $\analysisin{#1}{\ell'}$ := $\analysisin{#1}{\ell'}$ \colorbox{algomarkcolor}{$#5$} $\algokillgen{#1}$;\\
+\>\> foreach $\ell''$ with $\pair{\ell'}{\ell''}$ in $\auxflow{S_\star}$ do\\
+\>\>\> W := cons($\pair{\ell'}{\ell''}$,W);\\
+\>\> od\\
+\> fi\\
+od\\
+\end{sourcecode}
+}
+}
+
+\newcommand{\forwardalgorithm}[5]{ % (analysisname,init,topelem,fixpointtestop,combinationop)
+\genericworklistalgorithm{#1}{#2}{#3}{#4}{#5}{\auxflow{S_\star}}{\auxinit{S_\star}}
+{\algokillgen{#1}}
+{\auxlabels{S_\star}}
+}
+
+\newcommand{\genericworklistalgorithm}[9]{ % 
+% (
+% 1 analysisname,
+% 2 iota,
+% 3 topelem,
+% 4 fixpointtestop,
+% 5 combinationop,
+% 6 flow,
+% 7 initlabelset,
+% 8 transferfunctioncall
+% 9 all programlabels set
+% )
+% localy redefine macro \analysisin[2] to get a different analysis results notation
+\begin{sourcecode}
+W:=nil;\\
+foreach $\pair{\ell}{\ell'} \in {#6}~\textup{do}$ W := cons($\pair{\ell}{\ell'}$,W); od;\\
+foreach $\ell \in #9~\textup{do}$\\
+\>if $\ell \in {#7}$ then \\
+\>\>$\analysisin{#1}{\ell} := $\colorbox{algomarkcolor}{$#2$}\\
+\>else\\
+\>\> $\analysisin{#1}{\ell}:= $\colorbox{algomarkcolor}{$#3$}\\
+\>fi\\
+od\\
+while $W \neq nil$ do\\
+\> $\pair{\ell}{\ell'}$ := head(W);\\
+\> W := tail(W);\\
+\> if ${#8}$ \colorbox{algomarkcolor}{$#4$} $\analysisin{#1}{\ell'}$ then\\
+\>\> $\analysisin{#1}{\ell'}$ := $\analysisin{#1}{\ell'}$ \colorbox{algomarkcolor}{$#5$} ${#8}$;\\
+\>\> foreach $\ell''$ with $\pair{\ell'}{\ell''}$ in ${#6}$ do\\
+\>\>\> W := cons($\pair{\ell'}{\ell''}$,W);\\
+\>\> od\\
+\> fi\\
+od\\
+\end{sourcecode}
+}
+
+\newcommand{\RDextremalvalue}[0]{\{\pair{x}{?} \mid x\in FV(S_\star)\}}
+\newcommand{\RDcombop}[0]{\setunion}
+\newcommand{\AEextremalvalue}[0]{\emptyset}
+\newcommand{\AEcombop}[0]{\setintersect}
+
+\newcommand{\LVextremalvalue}[0]{\emptyset} %NNHSlides:{\textup{Var}_{\star}}
+\newcommand{\LVcombop}[0]{\setunion}
+\newcommand{\VBEextremalvalue}[0]{\emptyset}
+\newcommand{\VBEcombop}[0]{\setintersect}
+
+\newcommand{\SAextremalvalue}[0]{\iota}
+\newcommand{\SAcombop}[0]{\setunion}
+
+\newcommand{\cube}[8]{
+\begin{picture}(140,80)
+\put(50, 5){\line( 0,1){25}}
+
+\put(50, 5){\line(-2, 1){47}}
+\put(50, 5){\line( 2, 1){47}}
+
+\put(50,30){\line(-2, 1){47}}
+\put(50,30){\line( 2, 1){47}}
+
+\put(50,55){\line(-2,-1){47}}
+\put(50,55){\line( 2,-1){47}}
+
+\put(50,80){\line(-2,-1){47}}
+\put(50,80){\line( 2,-1){47}}
+
+\put(50,55){\line( 0,1){25}}
+
+\put( 2,30){\line( 0,1){25}}
+\put(98,30){\line( 0,1){25}}
+
+% points; texts with offset y-10
+%   middle
+\put(50,6 ){\circle*{4}} \put(60,2){$#1$}
+\put(50,31){\circle*{4}} \put(60,27){$#3$}
+\put(50,55){\circle*{4}} \put(60,53){$#6$}
+\put(50,80){\circle*{4}} \put(60,78){$#8$}
+%   left
+\put(2 ,30){\circle*{4}} \put(12,28){$#2$}
+\put(2 ,55){\circle*{4}} \put(12,53){$#5$}
+%   right
+\put(97,30){\circle*{4}} \put(107,28){$#4$}
+\put(97,55){\circle*{4}} \put(107,53){$#7$}
+
+\end{picture}
+}
+
+% Complete Path Example Grammar
+\newcommand{\mCP}[1]{\mathit{CP}_{#1}}
+\newcommand{\completePathExampleGrammar}{
+{
+\ptsize{8}
+\begin{tabular}{lll}
+\begin{minipage}[t]{30ex}
+\begin{tabular}{lcl}
+$\mCP{10,12} $ & $\rightarrow$ & $ 10,\mCP{11,12}$\\
+$\mCP{11,12} $ & $\rightarrow$ & $ 11,\mCP{1,9} ,\mCP{12,12}$\\
+$\mCP{1,9} $ & $\rightarrow$ & $ 1,\mCP{2,9}$\\
+$\mCP{2,9} $ & $\rightarrow$ & $ 2,\mCP{3,9}$\\
+$\mCP{2,9} $ & $\rightarrow$ & $ 2,\mCP{5,9}$\\
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}[t]{25ex}
+\begin{tabular}{lcl}
+$\mCP{3,9} $ & $\rightarrow$ & $ 3,\mCP{4,9}$\\
+$\mCP{4,9} $ & $\rightarrow$ & $ 4,\mCP{9,9}$\\
+$\mCP{5,9} $ & $\rightarrow$ & $ 5,\mCP{1,9} ,\mCP{6,9}$\\
+$\mCP{6,9} $ & $\rightarrow$ & $ 6,\mCP{7,9}$\\
+$\mCP{7,9} $ & $\rightarrow$ & $ 7,\mCP{1,9} ,\mCP{8,9}$\\
+$\mCP{8,9} $ & $\rightarrow$ & $ 8,\mCP{9,9}$\\
+\end{tabular}
+\end{minipage}
+&
+\begin{minipage}[t]{20ex}
+\begin{tabular}{lcl}
+$\mCP{12,12} $ & $\rightarrow$ & $ 12$\\
+$\mCP{9,9} $ & $\rightarrow$ & $ 9$\\
+\end{tabular}
+\end{minipage}
+\end{tabular}
+}
+}
+
+\newcommand{\examplefibonacciflowgraph}{
+% 6 statements (per statement: , per arrow between statements: )
+{
+\ptsize{8}
+\begin{picture}(160,125)
+%\put(30,135){\framebox{
+%\put(50,130){\vector(0,-1){10}}
+\put(100,110){\framebox{$\tnode{\textup{is}}{1}$}}
+\put(110,105){\vector(0,-1){10}}
+\put(91,85){\framebox{$\tnode{\textup{z}<3}{2}$}}
+\put(110,80){\vector(0,-1){10}} % true path
+\put(126,86){\line(1,0){59}} % false path
+\put(185,86){\vector(0,-1){16}}
+
+\put(86,60){\framebox{$\tnode{\whlassignc{v}{u$+$1}}{3}$}}
+\put(110,55){\vector(0,-1){10}}
+\put(88,35){\framebox{$\tnode{\whlassignc{r}{r$+$1}}{4}$}}
+
+\put(110,30){\vector(0,-1){15}} % from true
+\put(185,22){\line(0,1){7}}
+\put(115,22){\line(1,0){70}} % from false return
+\put(115,22){\vector(0,-1){7}}
+\put(93,5){\framebox{$\tnode{\textup{end}}{9}$}}
+
+% recursive calls
+\put(144,60){\framebox{$\ttnode{\textup{call}~\textup{fib}(\textup{z-1},\textup{u},\textup{v})}{5}{6}$}}
+\put(185,55){\vector(0,-1){10}}
+\put(144,35){\framebox{$\ttnode{\textup{call}~\textup{fib}(\textup{z-2},\textup{v},\textup{v})}{7}{8}$}}
+
+% to 'is' long
+\put(235,115){\vector(-1,0){115}}
+\put(235,115){\line(0,-1){50}}
+\put(235,65){\line(-1,0){16}}
+\put(230,110){\vector(-1,0){110}}
+\put(230,110){\line(0,-1){70}}
+\put(230,40){\line(-1,0){11}}
+
+% from 'end' long
+\put(235,10){\line(-1,0){110}}
+\put(235,10){\line(0,1){50}}
+\put(235,60){\vector(-1,0){16}}
+\put(230,5){\line(-1,0){105}}
+\put(230,5){\line(0,1){30}}
+\put(230,35){\vector(-1,0){11}}
+
+% from 'end' and to 'is' short
+
+
+
+% main program
+\put(20,105){\vector(0,-1){10}}
+\put(0,85){\framebox{$\tnode{\whlassignc{r}{0}}{10}$}}
+\put(20,80){\vector(0,-1){10}}
+\put(0,60){\framebox{$\ttnode{\textup{call}~\textup{fib}(x,0,y)}{11}{12}$}}
+\put(20,55){\vector(0,-1){10}}
+
+% main call edge
+\put(60,70){\line(0,1){40}}
+\put(60,110){\vector(1,0){41}}
+
+% main return edge
+\put(60,5){\vector(0,1){50}}
+\put(60,5){\line(1,0){33}}
+
+
+% exit loop edge
+%\put(31,88){\line(-1,0){21}}
+%\put(10,88){\line(0,-1){66}}
+%\put(10,22){\line(1,0){40}}
+%\put(50,22){\vector(0,-1){8}}
+
+\end{picture}
+}
+}
+
+\newcommand{\generalformulationinterproc}{
+% 6 statements (per statement: , per arrow between statements: )
+{
+\ptsize{8}
+\begin{picture}(220,150)
+\put(196,130){proc $p$(val $x$; res $y$)}
+\put(196,100){\framebox{$\tnode{\textup{is}}{\ell_n}$}}
+\put(209,95){\vector(0,-1){75}}
+\put(196,10){\framebox{$\tnode{\textup{end}}{\ell_x}$}}
+
+\put(100,72){\vector(3,1){96}}
+\put(196,15){\vector(-3,1){96}}
+\put(40,58){$\whlnodecallcr$}
+\put(50,62){\oval(100,60)}
+
+\put(35,140){\vector(0,-1){48}}
+\put(35,87){\vector(0,-1){53}} % going through line/edge
+\put(35,32){\vector(0,-1){48}}
+
+\put(42,72){\vector(1,0){56}}
+\put(45,82){\oval(20,20)[bl]}
+\put(98,47){\line(-1,0){54}}
+\put(45,37){\oval(20,20)[tl]}
+
+\put(22,100){X}
+\put(22,56){X}
+\put(40,20){$f_{\ell_c,\ell_r}(X,Y)$}
+
+\put(120,95){$f_{\ell_c}(X)$}
+\put(120,25){$Y$}
+
+\put(215,60){body}
+
+\end{picture}
+}
+}

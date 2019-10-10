@@ -363,33 +363,6 @@ void PropertyValueTable::printResultsStatistics() {
       <<endl;
 }
 
-#ifdef HAVE_SPOT
-string PropertyValueTable::getLtlsAsPromelaCode(bool withResults, bool withAnnotations) {
-  stringstream propertiesSpinSyntax;
-  for (map<size_t, string>::iterator i=_formulas.begin(); i!=_formulas.end(); i++) {
-    propertiesSpinSyntax << "ltl p"<<i->first<<"\t { "<<SpotMiscellaneous::spinSyntax(i->second)<<" }";
-    if (withResults) {
-      PropertyValue val = _propertyValueTable[i->first];
-      if (val == PROPERTY_VALUE_YES) {
-	propertiesSpinSyntax << "\t /* true */";
-      } else if (val == PROPERTY_VALUE_NO) {
-	propertiesSpinSyntax << "\t /* false */";
-      } else if (val == PROPERTY_VALUE_UNKNOWN) {
-	propertiesSpinSyntax << "\t /* unknown */";
-      } else {
-	cerr << "ERROR: Unknown PropertyValue detected." << endl;
-	ROSE_ASSERT(0);
-      }
-    }
-    if (withAnnotations) {
-      propertiesSpinSyntax << "\t /* annotation: "<<_annotations[i->first]<<" */"; 
-    }
-    propertiesSpinSyntax << endl;
-  }
-  return propertiesSpinSyntax.str();
-}
-#endif
-
 string PropertyValueTable::getLtlsRersFormat(bool withResults, bool withAnnotations) {
   stringstream propertiesRersFormat;
   for (map<size_t, string>::iterator i=_formulas.begin(); i!=_formulas.end(); i++) {
@@ -462,3 +435,31 @@ void PropertyValueTable::shuffle() {
   _counterexamples = counterexamples;
   _annotations = annotations;
 }
+
+#ifdef HAVE_SPOT
+string PropertyValueTable::getLtlsAsPromelaCode(bool withResults, bool withAnnotations, std::string (*spinSyntaxCallBackFP)(std::string) ) {
+  stringstream propertiesSpinSyntax;
+  for (map<size_t, string>::iterator i=_formulas.begin(); i!=_formulas.end(); i++) {
+    //propertiesSpinSyntax << "ltl p"<<i->first<<"\t { "<<SpotMiscellaneous::spinSyntax(i->second)<<" }";
+    propertiesSpinSyntax << "ltl p"<<i->first<<"\t { "<<spinSyntaxCallBackFP(i->second)<<" }";
+    if (withResults) {
+      PropertyValue val = _propertyValueTable[i->first];
+      if (val == PROPERTY_VALUE_YES) {
+	propertiesSpinSyntax << "\t /* true */";
+      } else if (val == PROPERTY_VALUE_NO) {
+	propertiesSpinSyntax << "\t /* false */";
+      } else if (val == PROPERTY_VALUE_UNKNOWN) {
+	propertiesSpinSyntax << "\t /* unknown */";
+      } else {
+	cerr << "ERROR: Unknown PropertyValue detected." << endl;
+	ROSE_ASSERT(0);
+      }
+    }
+    if (withAnnotations) {
+      propertiesSpinSyntax << "\t /* annotation: "<<_annotations[i->first]<<" */"; 
+    }
+    propertiesSpinSyntax << endl;
+  }
+  return propertiesSpinSyntax.str();
+}
+#endif
