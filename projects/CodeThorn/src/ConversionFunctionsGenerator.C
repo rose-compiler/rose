@@ -17,7 +17,7 @@ string ConversionFunctionsGenerator::generateCodeForGlobalVarAdressMaps(set<stri
          mapGlobalVarAddress[name]=addr;\n \
          mapAddressGlobalVar[addr]=name;\n \
          }\n";
-  code+="void createGlobalVarAddressMaps() {\n";
+  code+="void createGlobalVarAddressMapsFP() {\n";
   for(set<string>::iterator i=vars.begin();i!=vars.end();++i) {
     string var=*i;
     string varNameCode="\""+var+"\"";

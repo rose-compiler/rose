@@ -2,9 +2,9 @@
 
 #include "addressTakenAnalysis.h"
 #include "defUseQuery.h"
-#include "Timer.h"
+#include "TimeMeasurement.h"
 #include "AnalysisAbstractionLayer.h"
-
+//#include "CommandLineOptions.h"
 
 /*************************************************************
  * Copyright: (C) 2013 by Sriram Aananthakrishnan            *
@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
 
   RoseAst ast(root);
 
-  Timer timer;
+  TimeMeasurement timer;
 
   timer.start();
 
@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
   fipi.printInfoSets();
 
   timer.stop();
-  double fipaMeasuredTime=timer.getElapsedTimeInMilliSec();
+  double fipaMeasuredTime=timer.getTimeDuration().milliSeconds();
 
   TestDefUseVarsInfoTraversal tt(vidm);
   // change to traverse for entire project
@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
   tt.traverse(project, preorder);
   timer.stop();
 
-  double duMeasuredTime = timer.getElapsedTimeInMilliSec();
+  double duMeasuredTime = timer.getTimeDuration().milliSeconds();
 
   std::cout << "fipa : " << fipaMeasuredTime << "\n";
   std::cout << "du : " << duMeasuredTime << "\n";

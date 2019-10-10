@@ -14,7 +14,6 @@
 #include "VariableIdMapping.h"
 #include "Analyzer.h"
 #include "LanguageRestrictor.h"
-#include "Timer.h"
 #include <cstdio>
 #include <cstring>
 #include <map>

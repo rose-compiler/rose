@@ -27,8 +27,6 @@ namespace CodeThorn {
     virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void resetAnalysis();
 
-    void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
-    bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
     // only used in LTL-driven mode
     void setSpotConnection(SpotConnection* connection) { _spotConnection = connection; }
     void setStartEState(const EState* estate);
@@ -56,12 +54,7 @@ namespace CodeThorn {
     const EState* getLatestErrorEState() {return _latestErrorEState;}
     std::set<int> getInputVarValues() { return _inputVarValues; }
 
-    // first: list of new states (worklist), second: set of found existing states
-    typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
-    SubSolverResultType subSolver(const EState* currentEStatePtr);
-
   private:
-    bool isLTLRelevantEState(const EState* estate);
     // adds a string representation of the input (/output) path from start state to assertEState to reachabilityResults.
     void addCounterexample(int assertCode, const EState* assertEState);
 
@@ -72,8 +65,6 @@ namespace CodeThorn {
 
     // only used in LTL-driven mode
     SpotConnection* _spotConnection = nullptr;
-    size_t _prevStateSetSizeDisplay = 0;
-    size_t _prevStateSetSizeResource = 0;
 
     // solver 10
     PState _startPState;

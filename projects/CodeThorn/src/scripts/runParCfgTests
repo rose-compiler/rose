@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# test 1-9: normalization: YES
+# test 10:  normalization: NO
+
+TESTDIR=$1
+echo "------------------------------------------------"
+echo "RUNNING PARALLEL/OPENMP CFG TESTS"
+echo "------------------------------------------------"
+
+BENCH_PASS=0
+BENCH_FAIL=0
+
+function ParCFGTests {
+    for benchmark in ${TESTDIR}/Par-??-*.[cC]; do
+        benchmarkname=$(basename $benchmark)
+        if [[ $benchmark = *.c ]]; then
+            echo -n "Testing C $benchmarkname: "
+            gcc $benchmark
+        else
+            echo -n "Testing C++ $benchmarkname: "
+            g++ $benchmark
+        fi
+        ./codethorn $benchmark --omp-ast=yes --cfg=${benchmark}.cfg.dot > /dev/null
+        if [ $? -eq 0 ]
+        then
+	    echo "PASS"
+        else
+	    echo "FAIL"
+            exit 1
+        fi
+    done
+}
+
+ParCFGTests
+

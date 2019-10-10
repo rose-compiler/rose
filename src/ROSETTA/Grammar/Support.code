@@ -16895,7 +16895,7 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
 
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenMap = this->get_tokenSubsequenceMap();
 
-#if 1
+#if 0
      printf ("In SgSourceFile::set_tokenSubsequenceMap(): (before): tokenMap.size() = %zu \n",tokenMap.size());
 #endif
 
@@ -16995,7 +16995,7 @@ SgSourceFile::get_tokenSubsequenceMap()
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* result = Rose::tokenSubsequenceMapOfMaps[index];
      ROSE_ASSERT(result != NULL);
 
-#if 1
+#if 0
   // DQ (10/4/2018): Run a test each time this map is accessed: Output the tokenStreamSequenceMap:
 #if 0
      printf ("In SgSourceFile::get_tokenSubsequenceMap(): Output TokenStreamSequenceToNodeMapping \n");
@@ -17442,7 +17442,7 @@ SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement
 
      std::map<SgScopeStatement*,SgStatement*> & frontierMap = this->get_representativeWhitespaceStatementMap();
 
-#if 1
+#if 0
      printf ("In SgSourceFile::set_representativeWhitespaceStatementMap(): (before): frontierMap.size() = %zu \n",frontierMap.size());
 #endif
 
@@ -17484,7 +17484,7 @@ SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement
           i++;
         }
 
-#if 1
+#if 0
      printf ("In SgSourceFile::set_representativeWhitespaceStatementMap(): (after): frontierMap.size() = %zu \n",frontierMap.size());
 #endif
    }

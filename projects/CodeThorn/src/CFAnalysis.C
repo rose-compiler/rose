@@ -169,50 +169,69 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
 #endif
     SAWYER_MESG(logger[TRACE])<<"Resolving function call: "<<funCall<<": "<<funCall->unparseToString()<<": ";
     SgFunctionDefinition* funDef=nullptr;
+    FunctionCallTargetSet funCallTargetSet;
     switch(functionResolutionMode) {
     case FRM_TRANSLATION_UNIT: funDef=SgNodeHelper::determineFunctionDefinition(funCall);break;
     case FRM_WHOLE_AST_LOOKUP: funDef=determineFunctionDefinition2(funCall);break;
     case FRM_FUNCTION_ID_MAPPING: funDef=determineFunctionDefinition3(funCall);break;
+    case FRM_FUNCTION_CALL_MAPPING: {
+      funCallTargetSet=determineFunctionDefinition4(funCall);
+      Label callLabel,entryLabel,exitLabel,callReturnLabel;
+      for(auto fct : funCallTargetSet) {
+        callLabel=*i;
+        entryLabel=Labeler::NO_LABEL;
+        exitLabel=Labeler::NO_LABEL;
+        SgFunctionDefinition* funDef=fct.getDefinition();
+        if(funDef) {
+          entryLabel=labeler->functionEntryLabel(funDef);
+          exitLabel=labeler->functionExitLabel(funDef);
+        }
+        callReturnLabel=labeler->functionCallReturnLabel(callNode);
+        interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
+      }
+      break;
+    }
     default:
       logger[ERROR]<<endl<<"Unsupported function resolution mode."<<endl;
       exit(1);
     }
     
-    Label callLabel,entryLabel,exitLabel,callReturnLabel;
-    if(funDef==0) {
-      //cout<<" [no definition found]"<<endl;
-      // we were not able to find the funDef in the AST
-      //cout << "STATUS: External function ";
-      SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration();
-      if(funDecl) {
-        //cout << "External function: "<<SgNodeHelper::getFunctionName(funDecl)<<"."<<endl;
-        externalFunCalls++;
+    if(functionResolutionMode!=FRM_FUNCTION_CALL_MAPPING) {
+      Label callLabel,entryLabel,exitLabel,callReturnLabel;
+      if(funDef==0) {
+        //cout<<" [no definition found]"<<endl;
+        // we were not able to find the funDef in the AST
+        //cout << "STATUS: External function ";
+        SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration();
+        if(funDecl) {
+          //cout << "External function: "<<SgNodeHelper::getFunctionName(funDecl)<<"."<<endl;
+          externalFunCalls++;
+        } else {
+          //cout << "No function declaration found (call:"<<funCall->unparseToString()<<endl;
+          externalFunCallsWithoutDecl++;
+        }
+        callLabel=*i;
+        entryLabel=Labeler::NO_LABEL;
+        exitLabel=Labeler::NO_LABEL;
+        callReturnLabel=labeler->functionCallReturnLabel(callNode);
+        //cout <<"No function definition found for call: "<<funCall->unparseToString()<<endl;
       } else {
-        //cout << "No function declaration found (call:"<<funCall->unparseToString()<<endl;
-        externalFunCallsWithoutDecl++;
+        //cout<<"Found function: "<<SgNodeHelper::getFunctionName(funDef)<<endl;
+        callLabel=*i;
+        entryLabel=labeler->functionEntryLabel(funDef);
+        exitLabel=labeler->functionExitLabel(funDef);
+        callReturnLabel=labeler->functionCallReturnLabel(callNode);
+        functionsFound++;
       }
-      callLabel=*i;
-      entryLabel=Labeler::NO_LABEL;
-      exitLabel=Labeler::NO_LABEL;
-      callReturnLabel=labeler->functionCallReturnLabel(callNode);
-      //cout <<"No function definition found for call: "<<funCall->unparseToString()<<endl;
-    } else {
-      //cout<<"Found function: "<<SgNodeHelper::getFunctionName(funDef)<<endl;
-      callLabel=*i;
-      entryLabel=labeler->functionEntryLabel(funDef);
-      exitLabel=labeler->functionExitLabel(funDef);
-      callReturnLabel=labeler->functionCallReturnLabel(callNode);
-      functionsFound++;
+      interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
+      callLabNr++;
+      //cout<<"STATUS: inter-flow established."<<endl;
+      //cout<<"INFO: Call labels: "<<callLabNr<<endl;
+      //cout<<"INFO: externalFunCalls: "<<externalFunCalls<<endl;
+      //cout<<"INFO: externalFunCallWitoutDecl: "<<externalFunCallsWithoutDecl<<endl;
+      //cout<<"INFO: functions found: "<<functionsFound<<endl;
     }
-    interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
-    callLabNr++;
   }
-  //cout<<"STATUS: inter-flow established."<<endl;
-  //cout<<"INFO: Call labels: "<<callLabNr<<endl;
-  //cout<<"INFO: externalFunCalls: "<<externalFunCalls<<endl;
-  //cout<<"INFO: externalFunCallWitoutDecl: "<<externalFunCallsWithoutDecl<<endl;
-  //cout<<"INFO: functions found: "<<functionsFound<<endl;
-
   return interFlow;
 }
 
@@ -325,18 +344,26 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   }
 
     // all omp statements
-  case V_SgOmpTargetStatement:
-  case V_SgOmpParallelStatement:
+  case V_SgOmpParallelStatement: {
+    return labeler->forkLabel(node);
+  }
+  case V_SgOmpForSimdStatement:
   case V_SgOmpSimdStatement:
-  case V_SgOmpForStatement:
+  case V_SgOmpSectionsStatement:
+  case V_SgOmpForStatement: {
+    return labeler->workshareLabel(node);
+  }
+  case V_SgOmpBarrierStatement: {
+    return labeler->barrierLabel(node);
+  }
+  case V_SgOmpTargetStatement:
+  case V_SgOmpSectionStatement:
   case V_SgOmpAtomicStatement:
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpSectionStatement:
-  case V_SgOmpSectionsStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
   case V_SgOmpTaskStatement:
@@ -526,26 +553,66 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
 
-  case V_SgOmpTargetStatement:
-  case V_SgOmpParallelStatement:
+  case V_SgOmpParallelStatement: {
+    finalSet.insert(labeler->joinLabel(node));
+    return finalSet;
+  }
+  case V_SgOmpSectionsStatement: {
+    ROSE_ASSERT(isSgOmpClauseBodyStatement(node));
+    // If sections are marked nowait, we need to connect all final labels of sections to successive / join node
+    if (SgNodeHelper::hasOmpNoWait(isSgOmpClauseBodyStatement(node))) {
+      auto sections = SgNodeHelper::getOmpSectionList(isSgOmpSectionsStatement(node));
+      for (auto s : sections) {
+        auto finals = finalLabels(s);
+        finalSet += finals;
+      }
+    } else {
+      // normally introduce barrier node and return its label as final label
+      finalSet.insert(labeler->barrierLabel(node));
+    }
+    return finalSet;
+  }
+
   case V_SgOmpSimdStatement:
+  case V_SgOmpForSimdStatement:
   case V_SgOmpForStatement: {
-    // the final label is the final label of the child node's construct
-    SgNode* nextNestedStmt=node->get_traversalSuccessorByIndex(0);
-    LabelSet finalLabelSet=finalLabels(nextNestedStmt);
-    finalSet+=finalLabelSet;
+    ROSE_ASSERT(isSgOmpClauseBodyStatement(node));
+    // In case the workshare is marked with nowait ommit barrier
+    if (SgNodeHelper::hasOmpNoWait(isSgOmpClauseBodyStatement(node))) {
+      auto lbls = finalLabels(node->get_traversalSuccessorByIndex(0));
+      finalSet += lbls;
+    } else {
+      // normally introduce barrier node and return its label as final label
+      finalSet.insert(labeler->barrierLabel(node));
+    }
     return finalSet;
   }
     
     // all omp statements
-  case V_SgOmpAtomicStatement:
+  case V_SgOmpSectionStatement:{
+    auto body = node->get_traversalSuccessorByIndex(0);
+    auto bodyFinals = finalLabels(body);
+    finalSet += bodyFinals;
+    return finalSet;
+  }
+  case V_SgOmpBarrierStatement: {
+    finalSet.insert(labeler->barrierLabel(node));
+    return finalSet;
+  }
+  
+  case V_SgOmpTargetStatement:
+  case V_SgOmpAtomicStatement: {
+    auto atomicStmt = node->get_traversalSuccessorByIndex(0);
+    auto atomicFinals = finalLabels(atomicStmt);
+    finalSet += atomicFinals;
+    return finalSet;
+  }
+
   case V_SgOmpCriticalStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpSectionStatement:
-  case V_SgOmpSectionsStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:	
   case V_SgOmpTaskStatement:
@@ -1082,32 +1149,109 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgEnumDeclaration:
     return edgeSet;
 
-    // parallel nested omp constructs
-  case V_SgOmpTargetStatement:
-  case V_SgOmpParallelStatement:
-  case V_SgOmpSimdStatement:
-  case V_SgOmpForStatement: {
-    SgNode* nextNestedStmt=node->get_traversalSuccessorByIndex(0);
-    // need to compute flow of next stmt because it is nested (and not at basic-block level)
-    Flow nextNestedStmtFlow=flow(nextNestedStmt);
-    edgeSet+=nextNestedStmtFlow;
+  // Code duplication only for easy distinction between OMP parallel and OMP for (could be combined easily)
+  case V_SgOmpParallelStatement: {
+    SgNode *nextNestedStmt = node->get_traversalSuccessorByIndex(0);
+    auto nextFlow = flow(nextNestedStmt);
+    edgeSet += nextFlow;
 
-    // the label is the final label (but function finalLabels cannot be used here because it gives the final labels of the entire nested construct)
-    Label lab=getLabel(node);
-    Edge edge1=Edge(lab,EDGE_FORWARD,initialLabel(nextNestedStmt));
-    edgeSet.insert(edge1);
+    // Forward edge to connect nested body
+    auto lab = labeler->forkLabel(node);
+    auto e = Edge(lab, EDGE_FORWARD, initialLabel(nextNestedStmt));
+    edgeSet.insert(e);
+
+    // Edges connecting inner final labels with join node for proper indication of synchonization
+    auto finals = finalLabels(nextNestedStmt);
+    auto join = labeler->joinLabel(node);
+    for (auto l : finals) {
+      auto e = Edge(l, EDGE_FORWARD, join);
+      edgeSet.insert(e);
+    }
     return edgeSet;
   }
-    // these omp statements do not generate edges in addition to the ingoing and outgoing edge
+  
+  case V_SgOmpForSimdStatement:
+  case V_SgOmpSimdStatement:
+  case V_SgOmpForStatement: {
+    SgNode *nextNestedStmt = node->get_traversalSuccessorByIndex(0);
+    auto nextFlow = flow(nextNestedStmt);
+    edgeSet += nextFlow;
+
+    // Forward edge to connect nested body
+    auto lab = labeler->workshareLabel(node);
+    auto e = Edge(lab, EDGE_FORWARD, initialLabel(nextNestedStmt));
+    edgeSet.insert(e);
+
+    // Edges connecting inner final labels with barrier node for proper indication of synchonization
+    auto finals = finalLabels(nextNestedStmt);
+    // omit edge to barrier node when nowait clause is given
+    if (SgNodeHelper::hasOmpNoWait(isSgOmpClauseBodyStatement(node))) {
+      return edgeSet;
+    }
+    // Introduce the edges to the implicit barrier
+    auto barrier = labeler->barrierLabel(node); 
+    for (auto l : finals) {
+      auto e = Edge(l, EDGE_FORWARD, barrier);
+      if (SgNodeHelper::isCond(labeler->getNode(l))) {
+        e.addType(EDGE_FALSE);
+      }
+      edgeSet.insert(e);
+    }
+    return edgeSet;
+  }
+  
+  case V_SgOmpSectionsStatement: {
+    // every statement in the basic block needs to be a SgOmpSectionStatement
+    // don't construct the control flow for the basic block, because OMP semantics is different here
+    auto lab = labeler->workshareLabel(node); 
+    auto sections = SgNodeHelper::getOmpSectionList(isSgOmpSectionsStatement(node));
+    for (auto s : sections) {
+      ROSE_ASSERT(isSgOmpSectionStatement(s));
+      auto bodyFlow = flow(s);
+      edgeSet += bodyFlow;
+      auto e = Edge(lab, EDGE_FORWARD, initialLabel(s));
+      edgeSet.insert(e);
+    }
+
+    // Omit the introduction of additional final->barrier edges when nowait is given
+    if (SgNodeHelper::hasOmpNoWait(isSgOmpClauseBodyStatement(node))) {
+      return edgeSet;
+    }
+    // Add the edge to the barrier node
+    ROSE_ASSERT(isSgOmpSectionsStatement(node));
+    auto bb = isSgBasicBlock(node->get_traversalSuccessorByIndex(0));
+    auto barrier = labeler->barrierLabel(node);
+    for (auto stmt : bb->get_statements()) {
+      auto finals = finalLabels(stmt);
+      for (auto l : finals) {
+        auto e = Edge(l, EDGE_FORWARD, barrier);
+        edgeSet.insert(e);
+      }
+    }
+    return edgeSet;
+  }
+
+  case V_SgOmpTargetStatement:
   case V_SgOmpAtomicStatement:
+  case V_SgOmpSectionStatement: {
+    auto nextStmt = node->get_traversalSuccessorByIndex(0);
+    auto bodyFlow = flow(nextStmt);
+    edgeSet += bodyFlow;
+    auto e = Edge(labeler->getLabel(node), EDGE_FORWARD, initialLabel(nextStmt));
+    edgeSet.insert(e);
+    return edgeSet;
+  }
+  
+
+    // omp statements that introduce some sort of synchronization (no all implemented yet?)
+  case V_SgOmpBarrierStatement:
   case V_SgOmpCriticalStatement:
-  case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:	
   case V_SgOmpMasterStatement:
-  case V_SgOmpOrderedStatement:
-  case V_SgOmpSectionStatement:
-  case V_SgOmpSectionsStatement:
   case V_SgOmpSingleStatement:
+  // these omp statements do not generate edges in addition to the ingoing and outgoing edge
+  case V_SgOmpDoStatement:
+  case V_SgOmpOrderedStatement:
   case V_SgOmpTargetDataStatement:	
   case V_SgOmpTaskStatement:
   case V_SgOmpTaskwaitStatement:
@@ -1419,6 +1563,23 @@ SgFunctionDefinition* CFAnalysis::determineFunctionDefinition3(SgFunctionCallExp
   return funDef;
 }
 
+FunctionCallTargetSet CFAnalysis::determineFunctionDefinition4(SgFunctionCallExp* funCall) {
+  cout<<"DEBUG: CFAnalysis::determineFunctionDefinition4(!):"<<funCall->unparseToString();
+  ROSE_ASSERT(getFunctionCallMapping());
+  FunctionCallTargetSet res=getFunctionCallMapping()->resolveFunctionCall(funCall);
+#if 1
+  if(res.size()>0) {
+    if(res.size()==1) {
+      logger[TRACE] << ": RESOLVED to "<<(*res.begin()).getDefinition()<<endl;
+    } else {
+      logger[TRACE]<< ": RESOLVED to "<<res.size()<<" targets"<<endl;
+    }
+  } else {
+    cout << ": NOT RESOLVED."<<endl;
+  }
+#endif
+  return res;
+}
 SgFunctionDefinition* CFAnalysis::determineFunctionDefinition2(SgFunctionCallExp* funCall) {
 
   SgExpression* funExp=funCall->get_function();
@@ -1479,4 +1640,122 @@ void CFAnalysis::setFunctionIdMapping(FunctionIdMapping* fim) {
 
 FunctionIdMapping* CFAnalysis::getFunctionIdMapping() {
   return _functionIdMapping;
+}
+
+void CFAnalysis::setFunctionCallMapping(FunctionCallMapping* fcm) {
+  _functionCallMapping=fcm;
+}
+
+FunctionCallMapping* CFAnalysis::getFunctionCallMapping() {
+  return _functionCallMapping;
+}
+
+bool CFAnalysis::forkJoinConsistencyChecks(Flow &flow) const {
+  SAWYER_MESG(logger[INFO]) << "Running fork/join consistency tests." << endl;
+  const auto flowLabels = flow.nodeLabels();
+  int forks, joins, workshares, barriers;
+  forks = joins = workshares = barriers = 0;
+  for (const auto l : flowLabels) {
+    if (labeler->isForkLabel(l)) {
+      auto node = isSgOmpParallelStatement(labeler->getNode(l));
+      assert(node && "Node for fork label is SgOmpParallelNode");
+      forks++;
+    }
+    if (labeler->isJoinLabel(l)) {
+      auto node = isSgOmpParallelStatement(labeler->getNode(l));
+      assert(node && "Node for join label is SgOmpParallelNode");
+      joins++;
+    }
+    if (labeler->isWorkshareLabel(l)) {
+      auto node = labeler->getNode(l);
+      bool correctNodeType = isSgOmpForStatement(node) || isSgOmpSectionsStatement(node) || isSgOmpSimdStatement(node) || isSgOmpForSimdStatement(node);
+      assert(correctNodeType && "Node for workshare label is one of for / sections / simd / simd for");
+      workshares++;
+    }
+    if (labeler->isBarrierLabel(l)) {
+      auto node = labeler->getNode(l);
+      bool correctNodeType = isSgOmpForStatement(node) || isSgOmpSectionsStatement(node) || isSgOmpBarrierStatement(node) || isSgOmpSimdStatement(node) || isSgOmpForSimdStatement(node);
+      assert(correctNodeType && "Node for barrier label is one of for / sections / barrier");
+      barriers++;
+    }
+  }
+  // At that point we cannot really make any more assumptions
+  SAWYER_MESG(logger[TRACE]) << "Forks: " << forks << " | " << joins << " :Joins" << endl;
+  bool forksEqualJoins(forks == joins);
+  assert(forksEqualJoins);
+  SAWYER_MESG(logger[INFO]) << "Passed fork/join consistency checks 1/2" << endl;
+
+  /* Lambda function to collext all function definitions */
+  const auto collectFunctionDefs = [&] (const LabelSet &ls) {
+    std::vector<SgFunctionDefinition *> nodes;
+    for (auto l : ls) {
+      if (labeler->isFunctionEntryLabel(l)) {
+        auto n = isSgFunctionDefinition(labeler->getNode(l));
+        assert(n);
+        nodes.push_back(n);
+      }
+    }
+    return nodes;
+  };
+
+  auto startNodes = collectFunctionDefs(flowLabels);
+  assert(startNodes.size() > 0 && "Target AST has no function definition. No control flow.");
+ 
+  /* 
+   * We sum all parallel cfg labels and check whether the numbers make sense when compared to all AST nodes.
+   * Every omp parallel construct introduces one fork and one join node.
+   * Every omp for / omp sections / omp simd / omp for simd introduces a workshare and a barrier node.
+   * Every omp nowait removed a barrier node.
+   * Every omp barrier introduces a barrier node.
+   */
+  int parallelNodes, forNodes, sectionsNodes, simdNodes, forSimdNodes, barrierNodes;
+  parallelNodes = forNodes = sectionsNodes = simdNodes = forSimdNodes = barrierNodes = 0;
+  
+  /* This might be somewhat time consuming for large programs. */
+  for (auto rootNode : startNodes) {
+  RoseAst ast(rootNode);
+
+    for(auto n : ast) {
+      switch (n->variantT()) {
+        case V_SgOmpParallelStatement: {
+          parallelNodes++;
+          continue;
+        }
+        case V_SgOmpForStatement: {
+          forNodes++;
+          continue;
+        }
+        case V_SgOmpSectionsStatement: {
+          sectionsNodes++;
+          continue;
+        }
+        case V_SgOmpSimdStatement: {
+          simdNodes++;
+          continue;
+        }
+        case V_SgOmpForSimdStatement: {
+          forSimdNodes++;
+          continue;
+        }
+        case V_SgOmpBarrierStatement: {
+          barrierNodes++;
+          continue;
+        }
+        default: { }
+      }
+    }
+  }
+  int workshareAstNodes = forNodes + sectionsNodes + simdNodes + forSimdNodes;
+  int barrierAstNodes = forNodes + sectionsNodes + simdNodes + forSimdNodes + barrierNodes;
+  SAWYER_MESG(logger[TRACE]) << "Type | CFG nodes | AST nodes\nFork | " << forks << " | " << parallelNodes << "\n";
+  SAWYER_MESG(logger[TRACE]) << "Join | " << joins << " | " << parallelNodes << "\n";
+  SAWYER_MESG(logger[TRACE]) << "Workshare | " << workshares << " | " << workshareAstNodes << "\n";
+  SAWYER_MESG(logger[TRACE]) << "Barrier | " << barriers << " | " << barrierAstNodes << "\n";
+  assert(forks == parallelNodes);
+  assert(joins == parallelNodes);
+  assert(workshares == workshareAstNodes);
+  assert(barriers <= barrierAstNodes);
+  SAWYER_MESG(logger[INFO]) << "Passed fork/join consistency checks 2/2" << endl;
+
+  return forksEqualJoins;
 }

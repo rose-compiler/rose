@@ -19,13 +19,166 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 
-#include "Timer.h"
+#include "TimeMeasurement.h"
 #include "CollectionOperators.h"
+#include "RERS_empty_specialization.h"
 
 using namespace std;
 using namespace Sawyer::Message;
 
 Sawyer::Message::Facility CodeThorn::Analyzer::logger;
+
+bool Analyzer::isLTLRelevantEState(const EState* estate) {
+  ROSE_ASSERT(estate);
+  return ((estate)->io.isStdInIO()
+          || (estate)->io.isStdOutIO()
+          || (estate)->io.isStdErrIO()
+          || (estate)->io.isFailedAssertIO());
+}
+
+CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const CodeThorn::EState* currentEStatePtr) {
+  // start the timer if not yet done
+  if (!_timerRunning) {
+    _analysisTimer.start();
+    _timerRunning=true;
+  }
+  // first, check size of global EStateSet and print status or switch to topify/terminate analysis accordingly.
+  unsigned long estateSetSize;
+  bool earlyTermination = false;
+  int threadNum = 0; //subSolver currently does not support multiple threads.
+  // print status message if required
+  if (args.getBool("status") && _displayDiff) {
+#pragma omp critical(HASHSET)
+    {
+      estateSetSize = estateSet.size();
+    }
+    if(threadNum==0 && (estateSetSize>(_prevStateSetSizeDisplay+_displayDiff))) {
+      printStatusMessage(true);
+      _prevStateSetSizeDisplay=estateSetSize;
+    }
+  }
+  // switch to topify mode or terminate analysis if resource limits are exceeded
+  if (_maxBytes != -1 || _maxBytesForcedTop != -1 || _maxSeconds != -1 || _maxSecondsForcedTop != -1
+      || _maxTransitions != -1 || _maxTransitionsForcedTop != -1 || _maxIterations != -1 || _maxIterationsForcedTop != -1) {
+#pragma omp critical(HASHSET)
+    {
+      estateSetSize = estateSet.size();
+    }
+    if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(_prevStateSetSizeResource+_resourceLimitDiff))) {
+      if (isIncompleteSTGReady()) {
+#pragma omp critical(ESTATEWL)
+	{
+	  earlyTermination = true;
+	}	  
+      }
+      isActiveGlobalTopify(); // Checks if a switch to topify is necessary. If yes, it changes the analyzer state.
+      _prevStateSetSizeResource=estateSetSize;
+    }
+  } 
+  EStateWorkList deferedWorkList;
+  std::set<const EState*> existingEStateSet;
+  if (earlyTermination) {
+    if(args.getBool("status")) {
+      cout << "STATUS: Early termination within subSolver (resource limit reached)." << endl;
+    }
+    transitionGraph.setForceQuitExploration(true);
+  } else {
+    // run the actual sub-solver
+    EStateWorkList localWorkList;
+    localWorkList.push_back(currentEStatePtr);
+    while(!localWorkList.empty()) {
+      // logger[DEBUG]<<"local work list size: "<<localWorkList.size()<<endl;
+      const EState* currentEStatePtr=*localWorkList.begin();
+      localWorkList.pop_front();
+      if(isFailedAssertEState(currentEStatePtr)) {
+	// ensure we do not compute any successors of a failed assert state
+	continue;
+      }
+      Flow edgeSet=flow.outEdges(currentEStatePtr->label());
+      for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
+	Edge e=*i;
+	list<EState> newEStateList;
+	newEStateList=transferEdgeEState(e,currentEStatePtr);
+	for(list<EState>::iterator nesListIter=newEStateList.begin();
+	    nesListIter!=newEStateList.end();
+	    ++nesListIter) {
+	  // newEstate is passed by value (not created yet)
+	  EState newEState=*nesListIter;
+	  ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
+
+	  if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
+	    HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
+	    const EState* newEStatePtr=pres.second;
+	    ROSE_ASSERT(newEStatePtr);
+	    if(pres.first==true) {
+	      if(isLTLRelevantEState(newEStatePtr)) {
+		deferedWorkList.push_back(newEStatePtr);
+	      } else {
+		localWorkList.push_back(newEStatePtr);
+	      }
+	    } else {
+	      // we have found an existing state, but need to make also sure it's a relevent one
+	      if(isLTLRelevantEState(newEStatePtr)) {
+		ROSE_ASSERT(newEStatePtr!=nullptr);
+		existingEStateSet.insert(const_cast<EState*>(newEStatePtr));
+	      } else {
+		// TODO: use a unique list
+		localWorkList.push_back(newEStatePtr);
+	      }
+	    }
+	    // TODO: create reduced transition set at end of this function
+	    if(!getModeLTLDriven()) {
+	      recordTransition(currentEStatePtr,e,newEStatePtr);
+	    }
+	  }
+	  if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
+	    // failed-assert end-state: do not add to work list but do add it to the transition graph
+	    const EState* newEStatePtr;
+	    newEStatePtr=processNewOrExisting(newEState);
+	    // TODO: create reduced transition set at end of this function
+	    if(!getModeLTLDriven()) {
+	      recordTransition(currentEStatePtr,e,newEStatePtr);
+	    }
+	    deferedWorkList.push_back(newEStatePtr);
+	    if(isVerificationErrorEState(&newEState)) {
+	      logger[TRACE]<<"STATUS: detected verification error state ... terminating early"<<endl;
+	      // set flag for terminating early
+	      reachabilityResults.reachable(0);
+	      _firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
+	      EStateWorkList emptyWorkList;
+	      EStatePtrSet emptyExistingStateSet;
+	      return make_pair(emptyWorkList,emptyExistingStateSet);
+	    } else if(isFailedAssertEState(&newEState)) {
+	      // record failed assert
+	      int assertCode;
+	      if(args.getBool("rers-binary")) {
+		assertCode=reachabilityAssertCode(newEStatePtr);
+	      } else {
+		assertCode=reachabilityAssertCode(currentEStatePtr);
+	      }
+	      /* if a property table is created for reachability we can also
+		 collect on the fly reachability results in LTL-driven mode
+		 but for now, we don't
+	      */
+	      if(!getModeLTLDriven()) {
+		if(assertCode>=0) {
+		  if(args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
+		    //if this particular assertion was never reached before, compute and update counterexample
+		    if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
+		      _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
+		    }
+		  }
+		  reachabilityResults.reachable(assertCode);
+		}	    // record failed assert
+	      }
+	    } // end of failed assert handling
+	  } // end of if (no disequality (= no infeasable path))
+	} // end of loop on transfer function return-estates
+      } // edge set iterator
+    }
+  }
+  return make_pair(deferedWorkList,existingEStateSet);
+}
 
 std::string CodeThorn::Analyzer::programPositionInfo(CodeThorn::Label lab) {
   SgNode* node=getLabeler()->getNode(lab);
@@ -1315,6 +1468,7 @@ void CodeThorn::Analyzer::initializeVariableIdMapping(SgProject* project) {
   exprAnalyzer.initializeStructureAccessLookup(project);
   SAWYER_MESG(logger[TRACE])<<"initializeStructureAccessLookup finished."<<endl;
   functionIdMapping.computeFunctionSymbolMapping(project);
+  functionCallMapping.computeFunctionCallMapping(project);
 }
 
 void CodeThorn::Analyzer::initializeCommandLineArgumentsInState(PState& initialPState) {
@@ -1425,6 +1579,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   //funIdMapping->computeFunctionSymbolMapping(isSgProject(root));
   //cfanalyzer->setFunctionIdMapping(funIdMapping);
   cfanalyzer->setFunctionIdMapping(getFunctionIdMapping());
+  cfanalyzer->setFunctionCallMapping(getFunctionCallMapping());
 
   getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
   getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
@@ -1437,6 +1592,12 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     flow=cfanalyzer->flow(startFunRoot);
   else
     flow=cfanalyzer->flow(root);
+
+  // Runs consistency checks on the fork / join and workshare / barrier nodes in the parallel CFG
+  // If the --omp-ast flag is not selected by the user, the parallel nodes are not inserted into the CFG
+  if (args.getBool("omp-ast")) {
+    cfanalyzer->forkJoinConsistencyChecks(flow);
+  }
 
   SAWYER_MESG(logger[TRACE])<< "STATUS: Building CFGs finished."<<endl;
   if(args.getBool("reduce-cfg")) {
@@ -1478,7 +1639,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   Label startLabel=cfanalyzer->getLabel(startFunRoot);
   transitionGraph.setStartLabel(startLabel);
   transitionGraph.setAnalyzer(this);
-
+  
   EState estate(startLabel,initialPStateStored,emptycsetstored);
 
   if(SgProject* project=isSgProject(root)) {
@@ -1521,8 +1682,8 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   if(args.getBool("rers-binary")) {
     //initialize the global variable arrays in the linked binary version of the RERS problem
     logger[DEBUG]<< "init of globals with arrays for "<< _numberOfThreadsToUse << " threads. " << endl;
-    RERS_Problem::rersGlobalVarsArrayInit(_numberOfThreadsToUse);
-    RERS_Problem::createGlobalVarAddressMaps(this);
+    RERS_Problem::rersGlobalVarsArrayInitFP(_numberOfThreadsToUse);
+    RERS_Problem::createGlobalVarAddressMapsFP(this);
   }
 
   SAWYER_MESG(logger[TRACE])<< "INIT: finished."<<endl;
@@ -1943,7 +2104,7 @@ long CodeThorn::Analyzer::analysisRunTimeInSeconds() {
   long result;
 #pragma omp critical(TIMER)
   {
-    result = (long) (_analysisTimer.getElapsedTimeInMilliSec() / 1000);
+    result = (long) (_analysisTimer.getTimeDuration().seconds());
   }
   return result;
 }
@@ -1966,7 +2127,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
   if(args.getBool("rers-binary")) {
     // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
     string funName=SgNodeHelper::getFunctionName(funCall);
-    if(funName=="calculate_output") {
+    if(funName=="calculate_outputFP") {
       // logger[DEBUG]<< "rers-binary mode: skipped static-analysis call."<<endl;
       return elistify();
     }
@@ -2055,19 +2216,19 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallLocalEdge(Edge edge, 
     if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
       ROSE_ASSERT(funCall);
       string funName=SgNodeHelper::getFunctionName(funCall);
-      if(funName=="calculate_output") {
+      if(funName=="calculate_outputFP") {
         // RERS global vars binary handling
         PState _pstate=*estate->pstate();
-        RERS_Problem::rersGlobalVarsCallInit(this,_pstate, omp_get_thread_num());
+        RERS_Problem::rersGlobalVarsCallInitFP(this,_pstate, omp_get_thread_num());
 #if 0
         //input variable passed as a parameter (obsolete since usage of script "transform_globalinputvar")
-        int rers_result=RERS_Problem::calculate_output(argument);
-        (void) RERS_Problem::calculate_output(argument);
+        int rers_result=RERS_Problem::calculate_outputFP(argument);
+        (void) RERS_Problem::calculate_outputFP(argument);
 #else
-        (void) RERS_Problem::calculate_output( omp_get_thread_num() );
+        (void) RERS_Problem::calculate_outputFP( omp_get_thread_num() );
         int rers_result=RERS_Problem::output[omp_get_thread_num()];
 #endif
-        //logger[DEBUG]<< "Called calculate_output("<<argument<<")"<<" :: result="<<rers_result<<endl;
+        //logger[DEBUG]<< "Called calculate_outputFP("<<argument<<")"<<" :: result="<<rers_result<<endl;
         if(rers_result<=-100) {
           // we found a failing assert
           // = rers_result*(-1)-100 : rers error-number
@@ -2088,7 +2249,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallLocalEdge(Edge edge, 
           EState _eState=createEState(edge.target(),estate->callString,newPstate,_cset,_io);
           return elistify(_eState);
         }
-        RERS_Problem::rersGlobalVarsCallReturnInit(this,_pstate, omp_get_thread_num());
+        RERS_Problem::rersGlobalVarsCallReturnInitFP(this,_pstate, omp_get_thread_num());
         InputOutput newio;
         if (rers_result == -2) {
           newio.recordVariable(InputOutput::STDERR_VAR,globalVarIdByName("input"));	  
@@ -2200,7 +2361,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
     if(args.getBool("rers-binary")) {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName=="calculate_output") {
+        if(funName=="calculate_outputFP") {
           EState newEState=currentEState;
           newEState.setLabel(edge.target());
           newEState.callString=cs;
@@ -2237,7 +2398,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
     if(args.getBool("rers-binary")) {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName=="calculate_output") {
+        if(funName=="calculate_outputFP") {
           EState newEState=currentEState;
           newEState.setLabel(edge.target());
           newEState.callString=cs;
@@ -3087,5 +3248,6 @@ set<const EState*> CodeThorn::Analyzer::transitionSourceEStateSetOfLabel(Label l
   }
   return estateSet;
 }
+
 
 #endif

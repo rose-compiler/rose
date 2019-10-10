@@ -35,6 +35,8 @@ class DataDependenceVisualizer {
   std::string nodeSourceCode(Label lab);
   bool _showSourceCode;
   void setFunctionLabelSetSets(LabelSetSet);
+  void setDotGraphName(std::string);
+  std::string getDotGraphName();
  private:
   enum DDVMode { DDVMODE_USEDEF, DDVMODE_DEFUSE };
   void generateDot(SgNode* root, std::string fileName);
@@ -45,8 +47,9 @@ class DataDependenceVisualizer {
   std::string  _useDefAttributeName;
   DDVMode _mode;
   Flow* _flow;
-  std::string _dotFunctionClusters;
   LabelSetSet _functionLabelSetSets;
+  std::string _dotGraphName;
+  //std::string _dotFunctionClusters;
 };
 
 }
