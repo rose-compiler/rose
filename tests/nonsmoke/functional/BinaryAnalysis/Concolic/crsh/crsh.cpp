@@ -538,33 +538,32 @@ Crsh::test(const char* ts, const char* tst, Annotations* usrnotes, Environment* 
   try
   {
     // get the object for the specimen's name
-    Specimen::Ptr               specobj = specimen(inv->specimen, reuse(inv->notes));
-    TestCase::Ptr               test    = TestCase::instance(specobj);
+    Specimen::Ptr               specObj   = specimen(inv->specimen, reuse(inv->notes));
+    TestCase::Ptr               testObj   = TestCase::instance(specObj);
 
-    test->name(testname);
-    test->args(mkVector(inv->arguments));
-    test->env(mkVector(*env));
+    testObj->name(testname);
+    testObj->args(mkVector(inv->arguments));
+    testObj->env(mkVector(*env));
 
-    TestCaseId                  id        = db->id(test);
-    TestSuite::Ptr              suite_obj = testSuite(suitename);
-    if (!suite_obj) {
+    TestCaseId                  testId    = db->id(testObj);
+    TestSuite::Ptr              suiteObj  = testSuite(suitename);
+    if (!suiteObj) {
         // if the test suite doesn't exist then create it. [Robb Matzke 2019-08-14]
-        suite_obj = TestSuite::instance(suitename);
+        suiteObj = TestSuite::instance(suitename);
     }
-    ASSERT_not_null(suite_obj);
-    TestSuiteId                 suite_id  = db->id(suite_obj);
+    ASSERT_not_null(suiteObj);
+    TestSuiteId                 suiteId  = db->id(suiteObj);
 
-    ROSE_ASSERT(id);
-    ROSE_ASSERT(suite_id);
+    ROSE_ASSERT(testId);
+    ROSE_ASSERT(suiteId);
 
-    db->assocTestCaseWithTestSuite(id, suite_id);
+    db->assocTestCaseWithTestSuite(testId, suiteId);
   }
   catch (const Rose::BinaryAnalysis::Concolic::Exception &e) {
     failureMessage = e.what();
     state = execute_failure;
   }
-  catch (...)
-  {
+  catch (...) {
     state = execute_failure;
   }
 
@@ -607,29 +606,31 @@ byName( Crsh::Database::Ptr& db,
 Crsh::Specimen::Ptr
 Crsh::specimen(const std::string& specimen_name, annotation_desc reuse)
 {
-    if (reuse_duplicate == reuse)
-    {
-      Specimen::Ptr specimen = Specimen::instance(specimen_name);
+  if (reuse_duplicate == reuse)
+  {
+    Specimen::Ptr specimen = Specimen::instance(specimen_name);
 
-      db->id(specimen);
-      return specimen;
-    }
+    db->id(specimen); // \todo \pp
+                      //   storing the object may be not necessary
+                      //   b/c it will be stored with the test case anyways.
+    return specimen;
+  }
 
-    ROSE_ASSERT(reuse_unique == reuse);
-    std::vector<SpecimenId> found = db->findSpecimensByName(specimen_name);
+  ROSE_ASSERT(reuse_unique == reuse);
+  std::vector<SpecimenId> found = db->findSpecimensByName(specimen_name);
 
-    if (found.empty())
-    {
-      Specimen::Ptr specimen = Specimen::instance(specimen_name);
+  if (found.empty())
+  {
+    Specimen::Ptr specimen = Specimen::instance(specimen_name);
+    SpecimenId    specId = db->id(specimen); // \todo \pp see note above
 
-      db->id(specimen);
-      return specimen;
-    }
+    return specimen;
+  }
 
-    if (found.size() > 1)
-      throw std::runtime_error("specimen name is not unique");
+  if (found.size() > 1)
+    throw std::runtime_error("specimen name is not unique");
 
-    return db->object(found.at(0));
+  return db->object(found.at(0));
 }
 
 
