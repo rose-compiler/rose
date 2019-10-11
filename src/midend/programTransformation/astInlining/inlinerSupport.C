@@ -63,7 +63,7 @@ void flattenBlocks(SgNode* n) {
 // Internal routine to check whether a given variable declaration is a
 // member variable.
 bool isMemberVariable(const SgNode& in) {
-  if (!&in) return false;
+  //if (!&in) return false;
   SgNode* p = in.get_parent();
   if (isSgClassDefinition(p)) return true;
   if (isSgGlobal(p)) return false;

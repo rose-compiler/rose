@@ -353,17 +353,17 @@ isStackAddress(const Rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
 
     variable = inode->child(0)->isLeafNode();
     SymbolicExpr::LeafPtr constant = inode->child(1)->isLeafNode();
-    if (!constant || !constant->isNumber())
+    if (!constant || !constant->isIntegerConstant())
         std::swap(variable, constant);
-    if (!constant || !constant->isNumber())
+    if (!constant || !constant->isIntegerConstant())
         return Sawyer::Nothing();
-    if (!variable || !variable->isVariable())
+    if (!variable || !variable->isIntegerVariable())
         return Sawyer::Nothing();
 
     if (!variable->mustEqual(initialStack, solver))
         return Sawyer::Nothing();
 
-    int64_t val = IntegerOps::signExtend2(constant->toInt(), constant->nBits(), 64);
+    int64_t val = constant->toSigned().get();
     return val;
 }
 
@@ -543,6 +543,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
     DfCfg::ConstVertexIterator vertex = dfCfg.findVertex(vertexId);
     ASSERT_require(vertex != dfCfg.vertices().end());
     if (DfCfgVertex::FAKED_CALL == vertex->value().type()) {
+        CallingConvention::Definition::Ptr ccDefn;
         Function::Ptr callee = vertex->value().callee();
         BaseSemantics::RegisterStateGenericPtr genericRegState =
             boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(retval->registerState());
@@ -557,6 +558,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         if (callee && callee->callingConventionAnalysis().didConverge()) {
             // A previous calling convention analysis knows what registers are clobbered by the call.
             const CallingConvention::Analysis &ccAnalysis = callee->callingConventionAnalysis();
+            ccDefn = ccAnalysis.defaultCallingConvention();
             BOOST_FOREACH (RegisterDescriptor reg, ccAnalysis.outputRegisters().listAll(regDict)) {
                 ops->writeRegister(reg, ops->undefined_(reg.nBits()));
                 if (genericRegState)
@@ -565,17 +567,17 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
             if (ccAnalysis.stackDelta())
                 stackDelta = ops->number_(STACK_POINTER_REG.nBits(), *ccAnalysis.stackDelta());
 
-        } else if (defaultCallingConvention_) {
+        } else if ((ccDefn = defaultCallingConvention_)) {
             // Use a default calling convention definition to decide what registers should be clobbered. Don't clobber the
             // stack pointer because we might be able to adjust it more intelligently below.
-            BOOST_FOREACH (const CallingConvention::ParameterLocation &loc, defaultCallingConvention_->outputParameters()) {
+            BOOST_FOREACH (const CallingConvention::ParameterLocation &loc, ccDefn->outputParameters()) {
                 if (loc.type() == CallingConvention::ParameterLocation::REGISTER && loc.reg() != STACK_POINTER_REG) {
                     ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().nBits()));
                     if (genericRegState)
                         genericRegState->updateWriteProperties(loc.reg(), BaseSemantics::IO_WRITE);
                 }
             }
-            BOOST_FOREACH (RegisterDescriptor reg, defaultCallingConvention_->scratchRegisters()) {
+            BOOST_FOREACH (RegisterDescriptor reg, ccDefn->scratchRegisters()) {
                 if (reg != STACK_POINTER_REG) {
                     ops->writeRegister(reg, ops->undefined_(reg.nBits()));
                     if (genericRegState)
@@ -586,9 +588,9 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
             // Use the stack delta from the default calling convention only if we don't already know the stack delta from a
             // stack delta analysis, and only if the default CC is caller-cleanup.
             if (!stackDelta || !stackDelta->is_number() || stackDelta->get_width() > 64) {
-                if (defaultCallingConvention_->stackCleanup() == CallingConvention::CLEANUP_BY_CALLER) {
-                    stackDelta = ops->number_(origStackPtr->get_width(), defaultCallingConvention_->nonParameterStackSize());
-                    if (defaultCallingConvention_->stackDirection() == CallingConvention::GROWS_UP)
+                if (ccDefn->stackCleanup() == CallingConvention::CLEANUP_BY_CALLER) {
+                    stackDelta = ops->number_(origStackPtr->get_width(), ccDefn->nonParameterStackSize());
+                    if (ccDefn->stackDirection() == CallingConvention::GROWS_UP)
                         stackDelta = ops->negate(stackDelta);
                 }
             }
@@ -598,7 +600,6 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
             // conservative approach would need to set all registers to bottom.  We'll only adjust the stack pointer (below).
         }
 
-        // Adjust the stack pointer (regardless of whether we also did something to it above)
         BaseSemantics::SValuePtr newStack;
         if (stackDelta && stackDelta->is_number() && stackDelta->get_width() <= 64) {
             newStack = ops->add(origStackPtr, stackDelta);

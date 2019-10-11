@@ -1,0 +1,7 @@
+START
+
+COMPOOL TYPE'DEF;
+
+TYPE type'name U 4;
+  
+TERM

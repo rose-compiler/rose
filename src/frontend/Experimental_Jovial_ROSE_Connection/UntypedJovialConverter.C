@@ -106,13 +106,14 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
       cout << "-x- has_type_name " << has_type_name << endl;
       cout << "-x- has_body " << has_body << endl;
       cout << "-x- has_base_type " << has_base_type << endl;
+      cout << "-x- structure type enum " << ut_struct->get_statement_enum() << endl;
 
       if (has_base_type) cout << "-x- ut_base_type " << ut_base_type << " : " << ut_base_type->class_name() << endl;
       if (has_base_type) cout << "-x- sg_base_type " << sg_base_type << " : " << sg_base_type->class_name() << endl;
       cout << "-x- size of modifier list is " << ut_table_def->get_modifiers()->get_expressions().size() << endl;
 
       cout << "..........\n\n";
-      cout << "-x- creating SgClassDeclaration (or is this a variable) for name " << type_name << endl;
+      cout << "-x- creating SgClassDeclaration for name " << type_name << endl;
 #endif
 
    // This function builds a class declaration and definition with both the defining and nondefining declarations as required
@@ -120,7 +121,15 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
       ROSE_ASSERT(table_decl);
       setSourcePositionFrom(table_decl, ut_struct);
 
-      cout << "-x- created SgClassDeclaration " << table_decl << endl;
+      int struct_type = ut_struct->get_statement_enum();
+      if (struct_type == Jovial_ROSE_Translation::e_block_type_declaration)
+         {
+            table_decl->set_class_type(SgClassDeclaration::e_jovial_block);
+         }
+      else if (struct_type == Jovial_ROSE_Translation::e_table_type_declaration)
+         {
+            table_decl->set_class_type(SgClassDeclaration::e_jovial_table);
+         }
 
       SgType* sg_type = table_decl->get_type();
       ROSE_ASSERT(sg_type);
@@ -148,7 +157,9 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
       sg_table_type->set_dim_info(shape);
       sg_table_type->set_rank(shape->get_expressions().size());
 
+#if 0
       cout << "-x- has rank " << sg_table_type->get_rank() << endl;
+#endif
 
       if (ut_table_def->get_modifiers()->get_expressions().size() > 0)
          {
@@ -184,6 +195,7 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
       ROSE_ASSERT(table_def);
 
 // If there is a (base class) type name, a base class for inheritance needs to be created
+#if 0
    if (has_type_name)
       {
          std::string base_type_name = ut_table_def->get_type_name();
@@ -206,6 +218,7 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
          SgBaseClass* base_class = SageBuilder::buildBaseClass(base_class_decl, table_def, /*isVirtual*/false, /*isDirect*/true);
          ROSE_ASSERT(base_class);
       }
+#endif
 
    // Jovial is insensitive to case
    // TODO: src/midend/astDiagnostics/AstConsistencyTests.C, line 6406
@@ -217,7 +230,7 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
 
 #if 1
    // How to decide?  THIS IS NOT A VARIABLE DECLARATION!!!
-      cout << "--- TABLE: skipping variable declaration \n";
+   // cout << "--- TABLE: skipping variable declaration \n";
       SageInterface::appendStatement(table_decl, scope);
 #else
 

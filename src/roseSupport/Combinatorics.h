@@ -211,8 +211,106 @@ public:
      *  string, and sends it to the stream. */
     void print(std::ostream&);
 
-    static boost::shared_ptr<Hasher> createHasher(const std::string& inType);    
+    /** 
+     * Common subclass all the classes that construct Hashers (for the HasherFactory)
+     *
+     * Actually, there is only one (templated) class that makes
+     * Hashers.  @ref HasherMaker does it all. 
+     **/
+    class IHasherMaker
+    {
+    public:
+        virtual boost::shared_ptr<Hasher> create() const = 0;
+        virtual ~IHasherMaker() {}
+    };
+    
+    /** 
+     * Templated to create any Hasher and register it with @ref HasherFactory
+     *
+     * HasherMaker makes the Hasher named by typename T, and
+     * automatically registers itself with @ref HasherFactory.
+     * If a user creates a new Hasher, In their implemntation file
+     * (.C) they should include a static variable declared and defined
+     * like this: 
+     * static Hasher::HasherMaker<HasherSha256Builtin>  makerSHA256("SHA256");
+     *
+     * The instantiation of this variable at module load time will
+     * call the HasherMaker constructor, which automatically registers
+     * it with the HasherFactor (and constructs the HasherFactory if
+     * necessary.) 
+     **/
+    template<typename T>
+    class HasherMaker : public IHasherMaker
+    {
+    public:
+        /** 
+         * Creates a HasherMaker and registers it with @ref
+         * HasherFactory. Make HasherMakers static variableso so this is
+         * run at module initialization time. 
+         *
+         * @param[in] hashType  The name/key of this hasher in the
+         * HasherFactory.  
+         **/
+        HasherMaker(const std::string& hashType)
+        {
+            HasherFactory::Instance().registerMaker(hashType, this);
+        }
 
+        /** 
+         * Creates a Hasher (the type of Hasher is determined by the
+         * template T) and returns it as a shared_ptr. 
+         **/
+        virtual boost::shared_ptr<Hasher> create() const
+        {
+            T* hasher = new T;
+            boost::shared_ptr<Hasher> hashPtr(hasher);
+            return hashPtr;
+        }
+        
+    };
+
+    /** 
+     * HasherFactory is a singleton that creates and returns Hashers
+     * by name
+     *
+     * Hasher factory contains a map of names to @ref HasherMaker .
+     * When createHasher is passed a name, it will attempt to create
+     * the correct Hasher and pass it back.  
+     * Users can add Hashers to HasherFactory using @HasherMaker.
+     * HasherFactory is created when Instance is first called.
+     * Generally this is done at module initialization time.
+     **/
+    class HasherFactory
+    {
+    public:
+        /** Returns a reference to the HasherFactory singleton.
+         * Creates a HasherFactory if necessary **/
+    static HasherFactory& Instance();
+        
+        /** Adds a new @HasherMaker to the HasherFactory.
+         *  Ussually called by the HasherMaker constructor **/
+    void registerMaker(const std::string& hashType, IHasherMaker* createHasherPtr);
+        
+        /** Creates a registered Hasher by type from the map 
+         *
+         *  @param[in] hashType The type of the Hasher to create.
+         *  e.g. FNV
+         *  @return A Hasher of the correct type in a boost::shared_ptr
+         *  @throw  Rose::Combinatorics::Exception if inType names an unsupported type
+         **/
+    boost::shared_ptr<Hasher> createHasher(const std::string& hashType) const;
+        
+    private:
+        HasherFactory() {}
+        
+        /** Disable copying **/
+        HasherFactory(const HasherFactory& other); 
+        /** Disable assignment **/
+        HasherFactory& operator=(const HasherFactory& other);
+        
+        /** Maps keys to @ref HasherMaker s **/
+        std::map<std::string, IHasherMaker* > hashMakers;
+    };
 };
 
 /** Hasher for any libgcrypt hash algorithm.

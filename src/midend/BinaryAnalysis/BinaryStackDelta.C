@@ -131,7 +131,8 @@ public:
 void
 Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::FunctionPtr &function,
                           Partitioner2::DataFlow::InterproceduralPredicate &ipPredicate) {
-    mlog[DEBUG] <<"analyzeFunction(" <<function->printableName() <<")\n";
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"analyzeFunction(" <<function->printableName() <<")\n";
     clearResults();
 
     // Build the CFG used by the data-flow: dfCfg. The dfCfg includes only those vertices that are reachable from the entry
@@ -149,7 +150,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         }
     }
     if (returnVertex == dfCfg.vertices().end()) {
-        mlog[DEBUG] <<"  function CFG has no return vertex\n";
+        SAWYER_MESG(debug) <<"  function CFG has no return vertex\n";
         // continue anyway, to get stack delta info for blocks and instructions...
     }
 
@@ -157,7 +158,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // it in this analysis object.
     typedef DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, TransferFunction, DataFlow::SemanticsMerge> DfEngine;
     if (!cpu_ && NULL==(cpu_ = partitioner.newDispatcher(partitioner.newOperators()))) {
-        mlog[DEBUG] <<"  no instruction semantics\n";
+        SAWYER_MESG(debug) <<"  no instruction semantics\n";
         return;
     }
     const CallingConvention::Dictionary &ccDefs = partitioner.instructionProvider().callingConventions();
@@ -194,24 +195,24 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
         converged = false;
     }
-    
+
     // Get the final dataflow state
     BaseSemantics::StatePtr finalState;
     BaseSemantics::RegisterStateGenericPtr finalRegState;
     if (dfCfg.isValidVertex(returnVertex)) {
         finalState = dfEngine.getInitialState(returnVertex->id());
         if (finalState == NULL) {
-            mlog[DEBUG] <<"  data flow analysis did not reach final state\n";
+            SAWYER_MESG(debug) <<"  data flow analysis did not reach final state\n";
             // continue anyway for stack delta info for blocks and instructions
         }
-        if (mlog[DEBUG]) {
+        if (debug) {
             if (!converged) {
-                mlog[DEBUG] <<"  data flow analysis did not converge to a solution (using partial solution)\n";
+                debug <<"  data flow analysis did not converge to a solution (using partial solution)\n";
             } else if (finalState) {
                 SymbolicSemantics::Formatter fmt;
                 fmt.set_line_prefix("    ");
                 fmt.expr_formatter.max_depth = 10;          // prevent really long output
-                mlog[DEBUG] <<"  final state:\n" <<(*finalState+fmt);
+                debug <<"  final state:\n" <<(*finalState+fmt);
             }
         }
         if (finalState)
@@ -237,14 +238,19 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
             }
         }
     }
-    
+
     // Functon stack delta is final stack pointer minus initial stack pointer.  This includes popping the return address from
     // the stack (if the function did that) and popping arguments (if the function did that).
     const RegisterDescriptor REG_SP = cpu_->stackPointerRegister();
     functionStackPtrs_.first = initialRegState->peekRegister(REG_SP, ops->undefined_(REG_SP.nBits()), ops.get());
+    SAWYER_MESG(debug) <<"  function initial stack pointer is " <<*functionStackPtrs_.first <<"\n";
     if (finalRegState) {
         functionStackPtrs_.second = finalRegState->peekRegister(REG_SP, ops->undefined_(REG_SP.nBits()), ops.get());
         functionDelta_ = ops->subtract(functionStackPtrs_.second, functionStackPtrs_.first);
+        SAWYER_MESG(debug) <<"  function final stack pointer is " <<*functionStackPtrs_.second <<"\n";
+        SAWYER_MESG(debug) <<"  function stack delta is " <<*functionDelta_ <<"\n";
+    } else {
+        SAWYER_MESG(debug) <<"  no final state, thus no stack delta\n";
     }
 
     hasResults_ = true;

@@ -32,6 +32,9 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
 
+const char* const tagConcreteExecutorResult = "ConcreteExecutorResult";
+const char* const tagLinuxExecutorResult    = "LinuxExecutorResult";
+
 #if defined(__linux__)
 
 /*****
@@ -250,7 +253,7 @@ createLinuxResult(int errcode, std::string outstr, std::string errstr, double ra
   return res;
 }
 
-ConcreteExecutor::Result*
+LinuxExecutor::Result*
 LinuxExecutor::execute(const TestCase::Ptr& tc)
 {
   namespace bstfs = boost::filesystem;
@@ -287,7 +290,6 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
     execmonArgs.push_back("-o");
     execmonArgs.push_back(qualScore.native());
     // execmonArgs.push_back("--no-disassembler");
-    execmonArgs.push_back("--");
   }
 
   int                      errcode = executeBinary( executionMonitor(),
@@ -324,11 +326,11 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
 
 LinuxExecutor::Result::Result(double rank, int exitStatus)
 : ConcreteExecutor::Result(rank), exitStatus_(exitStatus)
-{ 
+{
   ROSE_ASSERT(!"NOT_LINUX");
 }
 
-ConcreteExecutor::Result*
+LinuxExecutor::Result*
 LinuxExecutor::execute(const TestCase::Ptr& tc)
 {
   ROSE_ASSERT(!"NOT_LINUX");

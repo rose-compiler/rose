@@ -3,7 +3,11 @@
 #include "sage3basic.h"
 
 #include "checkIsModifiedFlag.h"
+
+#if ROSE_WITH_LIBHARU
 #include "AstPDFGeneration.h"
+#endif
+
 #include "AstDOTGeneration.h"
 
 #include "wholeAST_API.h"
@@ -975,9 +979,14 @@ generatePDF ( const SgProject & project )
           printf ("Inside of generatePDF \n");
 
   // Output the source code file (as represented by the SAGE AST) as a PDF file (with bookmarks)
+#if ROSE_WITH_LIBHARU
      AstPDFGeneration pdftest;
      SgProject & nonconstProject = (SgProject &) project;
      pdftest.generateInputFiles(&nonconstProject);
+#else
+     printf("Warning: libharu support is not enabled\n");
+#endif
+
 #endif
    }
 

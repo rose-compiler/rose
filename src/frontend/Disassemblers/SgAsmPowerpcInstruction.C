@@ -146,6 +146,15 @@ SgAsmPowerpcInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>
         if (return_va)
             *return_va = insn->get_address() + insn->get_size();
         return true;
+    } else if (insn->get_kind() == powerpc_bcctrl && insn->nOperands() == 3 &&
+               (insn->operand(0)->asUnsigned().orElse(0) & 0x14) == 0x14 &&
+               insn->operand(2)->asUnsigned().orElse(1) == 0) {
+        // Indirect function call, as in:
+        //   mtspr    ctr, r9                                  ; copy to special-purpose register
+        //   bcctrl   0x14<20>, cr0.lt, 0                      ; branch to count register and link unconditionally
+        if (return_va)
+            *return_va = insn->get_address() + insn->get_size();
+        return true;
     }
     
     return false;

@@ -7,9 +7,12 @@ static const char *description =
 #include <CommandLine.h>                                // rose
 #include <Diagnostics.h>                                // rose
 #include <Partitioner2/Engine.h>                        // rose
+#include <Partitioner2/InstructionProvider.h>           // rose
 
 #include <boost/filesystem.hpp>
 #include <Sawyer/CommandLine.h>
+
+static const bool WITH_INSTRUCTION_PROVIDER = true;
 
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 using namespace Rose;
@@ -18,6 +21,48 @@ using namespace Sawyer::Message::Common;
 
 Sawyer::Message::Facility mlog;
 boost::filesystem::path outputFileName;
+
+namespace
+{
+  inline
+  Rose::BinaryAnalysis::InstructionProvider::Ptr
+  makeInstructionProvider(P2::Engine& engine)
+  {
+    using Rose::BinaryAnalysis::Disassembler;
+    using Rose::BinaryAnalysis::MemoryMap;
+
+    Disassembler*  disasm = engine.obtainDisassembler();
+    MemoryMap::Ptr memmap = engine.memoryMap();
+
+    if (!disasm)
+    {
+      ::mlog[FATAL] << "no disassembler for this architecture\n";
+      exit(1);
+    }
+
+    if (!memmap)
+    {
+      ::mlog[FATAL] << "no memory map available\n";
+      exit(1);
+    }
+
+    return Rose::BinaryAnalysis::InstructionProvider::instance(disasm, memmap);
+  }
+
+  SgAsmInstruction*
+  disassembleOne(InstructionProvider::Ptr& instructionProvider, rose_addr_t ip) {
+      return instructionProvider->operator[](ip);
+  }
+
+  SgAsmInstruction*
+  disassembleOne(Disassembler *disassembler, const uint8_t *buf, size_t bufSize, rose_addr_t ip)
+  try {
+      return disassembler->disassembleOne(buf, ip, bufSize, ip);
+  } catch (const Disassembler::Exception &e) {
+      mlog[WARN] <<"cannot disassemble instruction at " <<StringUtility::addrToString(ip) <<": " <<e.what() <<"\n";
+      return NULL;
+  }
+}
 
 struct Settings {
     bool listingEachInsn;                               // show each instruction as it's executed
@@ -52,16 +97,6 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     return parser.parse(argc, argv).apply().unreachedArgs();
 }
 
-static SgAsmInstruction*
-disassembleOne(Disassembler *disassembler, const uint8_t *buf, size_t bufSize, rose_addr_t ip) {
-    try {
-        return disassembler->disassembleOne(buf, ip, bufSize, ip);
-    } catch (const Disassembler::Exception &e) {
-        mlog[WARN] <<"cannot disassemble instruction at " <<StringUtility::addrToString(ip) <<": " <<e.what() <<"\n";
-        return NULL;
-    }
-}
-
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
@@ -85,10 +120,15 @@ main(int argc, char *argv[]) {
     std::ostream traceOutput(outputFileName.empty() ? std::cout.rdbuf() : &fb);
 
     // Load specimen into ROSE's simulated memory
-    if (!engine.parseContainers(args.front())) {
+    if (!engine.loadSpecimens(args.front())) {
         ::mlog[FATAL] <<"cannot parse specimen binary container\n";
         exit(1);
     }
+
+    InstructionProvider::Ptr instructionProvider;
+
+    if (WITH_INSTRUCTION_PROVIDER) instructionProvider = makeInstructionProvider(engine);
+
     Disassembler *disassembler = engine.obtainDisassembler();
     if (!disassembler) {
         ::mlog[FATAL] <<"no disassembler for this architecture\n";
@@ -104,7 +144,21 @@ main(int argc, char *argv[]) {
         ++nSteps;
         uint64_t ip = debugger->readRegister(REG_IP).toInteger();
 
-        if (settings.listingEachInsn) {
+        if (WITH_INSTRUCTION_PROVIDER) {
+          if (settings.listingEachInsn) {
+            uint8_t buf[16];                            // 16 should be large enough for any instruction
+            size_t nBytes = debugger->readMemory(ip, sizeof buf, buf);
+            if (0 == nBytes) {
+                ::mlog[ERROR] <<"cannot read memory at " <<StringUtility::addrToString(ip) <<"\n";
+            } else if (SgAsmInstruction *insn = disassembleOne(instructionProvider, ip)) {
+                traceOutput <<insn->toString() <<"\n";
+            } else {
+                ::mlog[ERROR] <<"cannot disassemble instruction at " <<StringUtility::addrToString(ip) <<"\n";
+            }
+          }
+        }
+        else {
+          if (settings.listingEachInsn) {
             uint8_t buf[16];                            // 16 should be large enough for any instruction
             size_t nBytes = debugger->readMemory(ip, sizeof buf, buf);
             if (0 == nBytes) {
@@ -114,6 +168,7 @@ main(int argc, char *argv[]) {
             } else {
                 ::mlog[ERROR] <<"cannot disassemble instruction at " <<StringUtility::addrToString(ip) <<"\n";
             }
+          }
         }
 
         debugger->singleStep();

@@ -4,7 +4,11 @@
 #include "markLhsValues.h"
 #include "fixupNames.h"
 #include "FileUtility.h"
+
+#if ROSE_WITH_LIBHARU
 #include "AstPDFGeneration.h"
+#endif
+
 #include "SgNodeHelper.h" //Markus's helper functions
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -4727,15 +4731,9 @@ SageInterface::getProject()
   return resultlist[0];
 }
 
-SgProject * SageInterface::getProject(const SgNode * node) {
-  assert(node != NULL);
-  SgNode * parent = node->get_parent();
-  SgProject * project = NULL;
-  while (parent != NULL) {
-    if ((project = isSgProject(parent)) != NULL) break;
-    parent = parent->get_parent();
-  }
-  return project;
+SgProject*
+SageInterface::getProject(const SgNode * node) {
+    return getEnclosingNode<SgProject>(node, true /*includingSelf*/);
 }
 
 SgFunctionDeclaration* SageInterface::getDeclarationOfNamedFunction(SgExpression* func) {
@@ -7964,13 +7962,9 @@ vector<SgVariableSymbol*> SageInterface::getSymbolsUsedInExpression(SgExpression
 }
 #endif
 
-SgSourceFile* SageInterface::getEnclosingSourceFile(SgNode* n,bool includingSelf)
-{
-    SgSourceFile* temp = getEnclosingNode<SgSourceFile>(n,includingSelf);
-  if (temp)
-    return temp;
-  else
-    return NULL;
+SgSourceFile*
+SageInterface::getEnclosingSourceFile(SgNode* n,bool includingSelf) {
+    return getEnclosingNode<SgSourceFile>(n, includingSelf);
 }
 
 
@@ -7985,37 +7979,15 @@ SgFunctionDefinition* SageInterface::getEnclosingProcedure(SgNode* n, bool inclu
   return getEnclosingFunctionDefinition(n,includingSelf);
 }
 
-SgFunctionDefinition* SageInterface::getEnclosingFunctionDefinition(SgNode* n,bool includingSelf)
-{
-    SgFunctionDefinition* temp = getEnclosingNode<SgFunctionDefinition>(n,includingSelf);
-  if (temp)
-    return temp;
-  else
-    return NULL;
+SgFunctionDefinition*
+SageInterface::getEnclosingFunctionDefinition(SgNode* n,bool includingSelf) {
+    return getEnclosingNode<SgFunctionDefinition>(n, includingSelf);
 }
 
 
-SgFunctionDeclaration *
-SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingSelf)
-{
-  SgNode* temp = getEnclosingNode<SgFunctionDeclaration>(astNode,includingSelf);
-  if (temp)
-    return isSgFunctionDeclaration(temp);
-  else
-    return NULL;
-#if 0
-  SgNode *astnode = astNode;
-  ROSE_ASSERT (astNode != NULL);
-  do
-    {
-      astnode = astnode->get_parent ();
-    }
-  while ((astnode != NULL) &&
-         (isSgFunctionDeclaration (astnode) == NULL) &&
-         (isSgMemberFunctionDeclaration (astnode) == NULL));
-  if (astnode==NULL) return NULL;
-  else return isSgFunctionDeclaration(astnode);
-#endif
+SgFunctionDeclaration*
+SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingSelf) {
+    return getEnclosingNode<SgFunctionDeclaration>(astNode, includingSelf);
 }
 
 // #endif
@@ -8023,48 +7995,28 @@ SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingS
 // #ifndef USE_ROSE
 
 SgGlobal*
-SageInterface::getGlobalScope( const SgNode* astNode )
-   {
-  // should including itself in this case
-     SgNode* temp = getEnclosingNode<SgGlobal>(astNode,true);
-     if (temp)
-          return isSgGlobal(temp);
-       else
-          return NULL;
-  }
+SageInterface::getGlobalScope(const SgNode* astNode) {
+    // should including itself in this case
+    return getEnclosingNode<SgGlobal>(astNode, true /*includingSelf*/);
+}
 
 SgClassDefinition*
-SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool includingSelf/* =false*/)
-  {
-    SgNode* temp = getEnclosingNode<SgClassDefinition>(astNode,includingSelf);
-    if (temp)
-      return isSgClassDefinition(temp);
-    else
-      return NULL;
- }
+SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool includingSelf/* =false*/) {
+    return getEnclosingNode<SgClassDefinition>(astNode, includingSelf);
+}
 
 
 SgClassDeclaration*
-SageInterface::getEnclosingClassDeclaration(SgNode* astNode)
-  {
- // DQ (1/24/2019): This might have to get the SgClassDefinition and then the SgClassDeclaration from that.
- // I'm having trouble making this work for a member function declared outside of the class definition.
-    SgNode* temp = getEnclosingNode<SgClassDeclaration>(astNode,true);
-    if (temp)
-      return isSgClassDeclaration(temp);
-    else
-      return NULL;
- }
+SageInterface::getEnclosingClassDeclaration(SgNode* astNode) {
+    // DQ (1/24/2019): This might have to get the SgClassDefinition and then the SgClassDeclaration from that.
+    // I'm having trouble making this work for a member function declared outside of the class definition.
+    return getEnclosingNode<SgClassDeclaration>(astNode, true);
+}
 
 SgExprListExp*
-SageInterface::getEnclosingExprListExp(SgNode* astNode, const bool includingSelf/* =false*/)
-   {
-     SgNode* temp = getEnclosingNode<SgExprListExp>(astNode,includingSelf);
-     if (temp)
-          return isSgExprListExp(temp);
-       else
-          return NULL;
-   }
+SageInterface::getEnclosingExprListExp(SgNode* astNode, const bool includingSelf/* =false*/) {
+    return getEnclosingNode<SgExprListExp>(astNode, includingSelf);
+}
 
 bool
 SageInterface::isInSubTree(SgExpression* subtree, SgExpression* exp)
@@ -11621,12 +11573,12 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
       if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_lhs_operand()))) {
         // cases : var + incr, var - incr
         incr_var=varRefExp;
-        stepast=isSgBinaryOp(incr)->get_rhs_operand();
+        stepast=isSgBinaryOp(arithOp)->get_rhs_operand();
       } else if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_rhs_operand()))) {
         if(isSgAddOp(arithOp)) {
           // case : incr + var (not allowed: incr-var)
           incr_var=varRefExp;
-          stepast=isSgBinaryOp(incr)->get_lhs_operand();
+          stepast=isSgBinaryOp(arithOp)->get_lhs_operand();
         }
       }
       break;
@@ -22178,7 +22130,7 @@ bool typesAreEqual(SgType *t1, SgType *t2) {
   RoseAst subT2(t2);
 
   for (RoseAst::iterator i = subT1.begin(), j = subT2.begin();
-       i != subT1.end(), j != subT2.end(); ++i, ++j) {
+       i != subT1.end() && j != subT2.end(); ++i, ++j) {
     SgNode *nodeT1 = *i;
     SgNode *nodeT2 = *j;
 
@@ -22276,7 +22228,7 @@ bool typesAreEqual(SgType *t1, SgType *t2) {
 
           for(SgTypePtrList::const_iterator ii = funcTypeA->get_arguments().begin(),
               jj = funcTypeB->get_arguments().begin();
-              ii != funcTypeA->get_arguments().end(),
+              ii != funcTypeA->get_arguments().end() &&
               jj != funcTypeB->get_arguments().end();
               ++ii, ++jj) {
 //            std::cout << (*ii)->class_name() << " " << (*jj)->class_name() << std::endl;
@@ -22792,8 +22744,12 @@ void SageInterface:: saveToPDF(SgNode* node)
 void SageInterface:: saveToPDF(SgNode* node, std::string filename)
 {
   ROSE_ASSERT(node != NULL); 
+#if ROSE_WITH_LIBHARU
   AstPDFGeneration pdf;
   pdf.generateWithinFile(filename, getEnclosingFileNode(node));
+#else
+     printf ("Warning: libharu support is not enabled\n");
+#endif
 }
 
 bool SageInterface::insideSystemHeader (SgLocatedNode* node)

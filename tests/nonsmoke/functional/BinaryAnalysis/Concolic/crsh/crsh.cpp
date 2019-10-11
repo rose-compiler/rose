@@ -74,15 +74,15 @@ struct InvocationDesc
 std::string str(int val)
 {
   if (val == Crsh::none) return "none";
-  
+
   std::string res;
-  
-  if (val & Crsh::expect_success)   res += "success, "; 
-  if (val & Crsh::expect_failure)   res += "failure, "; 
-  if (val & Crsh::reuse_unique)     res += "unique, "; 
-  if (val & Crsh::reuse_duplicate)  res += "duplicate, "; 
-  if (val & Crsh::addr_randomize)   res += "ASLR, "; 
-  if (val & Crsh::addr_norandomize) res += "noASLR, "; 
+
+  if (val & Crsh::expect_success)   res += "success, ";
+  if (val & Crsh::expect_failure)   res += "failure, ";
+  if (val & Crsh::reuse_unique)     res += "unique, ";
+  if (val & Crsh::reuse_duplicate)  res += "duplicate, ";
+  if (val & Crsh::addr_randomize)   res += "ASLR, ";
+  if (val & Crsh::addr_norandomize) res += "noASLR, ";
 
   ROSE_ASSERT(res.size() > 2);
   return res.substr(0, res.size()-2);
@@ -108,7 +108,7 @@ struct AnnotationHandler
     AnnotationHandler(std::vector<std::string>& unhandled_notes)
     : unhandled(unhandled_notes), res(Crsh::none)
     {}
-    
+
     void operator()(const std::string& note)
     {
       if      ("success"      == note) res |= Crsh::expect_success;
@@ -119,19 +119,19 @@ struct AnnotationHandler
       else if ("noASLR"       == note) res |= Crsh::addr_norandomize;
       else                             unhandled.push_back(note);
     }
-  
+
     operator Crsh::annotation_desc() const { return res; }
-  
+
   private:
     std::vector<std::string>& unhandled;
     Crsh::annotation_desc     res;
 };
 
-Crsh::annotation_desc 
+Crsh::annotation_desc
 convAnnotations(Annotations* annotations, Crsh::annotation_desc enabled, std::vector<std::string>& unhandled)
 {
   ASSERT_not_null(annotations);
-  
+
   return std::for_each( annotations->begin(), annotations->end(), AnnotationHandler(unhandled));
 }
 
@@ -140,16 +140,16 @@ convAnnotations(Annotations* annotations, Crsh::annotation_desc enabled = Crsh::
 {
   std::vector<std::string> unhandled;
   Crsh::annotation_desc    res = convAnnotations(annotations, enabled, unhandled);
-  
-  if (unhandled.size()) 
+
+  if (unhandled.size())
   {
     std::string err = "unknown annotations: ";
-    
+
     for (size_t i = 0; i < unhandled.size(); ++i) err += unhandled.at(i);
-    
+
     throw std::runtime_error(err);
   }
-  
+
   return res;
 }
 
@@ -164,7 +164,7 @@ convAnnotations(Annotations* annotations, Crsh::annotation_desc enabled = Crsh::
 #else /* __GNUC__ */
   #define BITCOUNT32(x) (((BX_(x)+(BX_(x)>>4)) & 0x0F0F0F0F) % 255)
   #define BX_(x) ((x) - (((x)>>1)&0x77777777) - (((x)>>2)&0x33333333) - (((x)>>3)&0x11111111))
-  
+
   /// \brief  returns the number of bits set in an integer
   /// \param  bnr size_t the integer value
   /// \return the number of bits set in bnr
@@ -188,37 +188,37 @@ void checkBitcount(unsigned int x)
 
 
 inline
-Crsh::annotation_desc subset( Crsh::annotation_desc notes, 
-                              Crsh::annotation_desc group, 
+Crsh::annotation_desc subset( Crsh::annotation_desc notes,
+                              Crsh::annotation_desc group,
                               Crsh::annotation_desc defaultvalue
                             )
 {
   Crsh::annotation_desc res = static_cast<Crsh::annotation_desc>(notes & group);
-  
-  if (res == Crsh::none) 
+
+  if (res == Crsh::none)
     res = defaultvalue;
-  else 
+  else
     checkBitcount(res);
-  
+
   return res;
 }
 
 inline
-Crsh::annotation_desc 
+Crsh::annotation_desc
 expect(Crsh::annotation_desc notes)
 {
-  return subset(notes, Crsh::expect_all, Crsh::expect_default); 
+  return subset(notes, Crsh::expect_all, Crsh::expect_default);
 }
 
 inline
-Crsh::annotation_desc 
+Crsh::annotation_desc
 reuse(Crsh::annotation_desc notes)
 {
   return subset(notes, Crsh::reuse_all, Crsh::reuse_default);
 }
 
 inline
-Crsh::annotation_desc 
+Crsh::annotation_desc
 randomize_address_space(Crsh::annotation_desc notes)
 {
   return subset(notes, Crsh::addr_randomize_all, Crsh::addr_randomize_default);
@@ -486,13 +486,13 @@ Crsh::annotation(const char* argument) const
 }
 
 
-Annotations* 
+Annotations*
 Crsh::annotations() const
 {
   return new Annotations();
 }
 
-Annotations* 
+Annotations*
 Crsh::annotations(Annotations* annotations, const std::string* note) const
 {
   return enlist(annotations, note);
@@ -510,7 +510,7 @@ Crsh::invoke(Annotations* notes, const char* specimen, Arguments* args) const
   return new InvocationDesc(annotations, specimenname, *arguments.get());
 }
 
-void 
+void
 Crsh::setMonitor(const char* str)
 {
   execmon = conv(str);
@@ -531,7 +531,7 @@ Crsh::test(const char* ts, const char* tst, Annotations* usrnotes, Environment* 
   std::auto_ptr<InvocationDesc> invguard(inv);
   std::string                   suitename = conv(ts);
   std::string                   testname  = conv(tst);
-  annotation_desc               expct     = convAnnotations(usrnotes, expect_all);  
+  annotation_desc               expct     = convAnnotations(usrnotes, expect_all);
   int                           state     = execute_success;
   std::string                   failureMessage;
 
@@ -573,7 +573,7 @@ Crsh::test(const char* ts, const char* tst, Annotations* usrnotes, Environment* 
     err() << "error in test: " << suitename << "::" << testname << '\n'
           << "  exited with " << str(state) << ", expected " << str(expct)
           << std::endl;
-          
+
     if (state == execute_failure)
         err() <<"  failure was: " <<(failureMessage.empty() ? "unknown" : failureMessage) <<"\n";
 
@@ -641,20 +641,20 @@ void Crsh::runTestcase(TestCaseId testcaseId, annotation_desc allnotes)
 
   typedef Concolic::LinuxExecutor::Result ExecutionResult;
   typedef std::auto_ptr<ExecutionResult>  ExecutionResultGuard;
-  
+
   int                        state    = execute_failure;
   int                        processDisposition = 0; // disposition returned by waitpid
   Concolic::LinuxExecutorPtr exec     = Concolic::LinuxExecutor::instance();
   Concolic::TestCase::Ptr    testcase = db->object(testcaseId, Concolic::Update::YES);
   annotation_desc            expct    = expect(allnotes);
   const bool                 addrRandomize = (randomize_address_space(allnotes) == addr_randomize);
-  
-  exec->useAddressRandomization(addrRandomize); 
-  exec->executionMonitor(execmon); 
-  
+
+  exec->useAddressRandomization(addrRandomize);
+  exec->executionMonitor(execmon);
+
   if (testcase.getRawPointer())
   {
-    ExecutionResultGuard result(dynamic_cast<ExecutionResult*>(exec->execute(testcase)));
+    ExecutionResultGuard result(exec->execute(testcase));
 
     processDisposition = result->exitStatus();
     db->insertConcreteResults(testcase, *result.get());
@@ -733,7 +733,7 @@ struct TestCaseStarter
     Crsh::annotation_desc notes;
 };
 
-void 
+void
 Crsh::runTest(Annotations* usrnotes, const char* testsuite, int num)
 {
   TestSuite::Ptr  suite;

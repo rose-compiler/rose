@@ -8,6 +8,7 @@
 #include "Map.h"
 
 #include <boost/any.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/logic/tribool.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -21,10 +22,13 @@
 #include <RoseException.h>
 #include <Sawyer/Attribute.h>
 #include <Sawyer/BitVector.h>
+#include <Sawyer/Optional.h>
 #include <Sawyer/Set.h>
 #include <Sawyer/SharedPointer.h>
 #include <Sawyer/SmallObject.h>
 #include <set>
+#include <string>
+#include <vector>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -97,6 +101,34 @@ enum Operator {
     OP_WRITE,               /**< Write (update) memory with a new value. Arguments are memory, address and value. */
     OP_XOR,                 /**< Bitwise exclusive disjunction. One or more operands, all the same width. */
     OP_ZEROP,               /**< Equal to zero. One operand. Result is a single bit, set iff A is equal to zero. */
+
+    OP_FP_ABS,              /**< Floating-point absolute value. Argument is FP value. */
+    OP_FP_NEGATE,           /**< Floating-point negation. Argument is FP value. */
+    OP_FP_ADD,              /**< Floating-point addition. Args are the FP addends. */
+    OP_FP_MUL,              /**< Floating-point multiply. Args are the FP factors. */
+    OP_FP_DIV,              /**< Floating-point division. Args are FP dividend and FP divisor. */
+    OP_FP_MULADD,           /**< Floating-point multiply-add. For xy+z, args are x, y, z. */
+    OP_FP_SQRT,             /**< Floating-point square root. Argument is the FP square. */
+    OP_FP_MOD,              /**< Floating-point remainder. Args are FP dividend and FP divisor. */
+    OP_FP_ROUND,            /**< Floating-point round to integer as FP type. Argument and result are both FP values. */
+    OP_FP_MIN,              /**< Floating-point minimum. Args are one or more FP values. */
+    OP_FP_MAX,              /**< Floating-point maximum. Args are one or more FP values. */
+    OP_FP_LE,               /**< Floating-point less-than or equal. Args are the two FP values to compare. */
+    OP_FP_LT,               /**< Floating-point less-than. Args are the two FP values to compare. */
+    OP_FP_GE,               /**< Floating-point greater-than or equal. Args are the two FP values to compare. */
+    OP_FP_GT,               /**< Floating-point greater than. Args are the two FP values to compare. */
+    OP_FP_EQ,               /**< Floating-point equality. Args are the two FP values to compare. */
+    OP_FP_ISNORM,           /**< Floating-point normal class. Argument is the FP value to check. */
+    OP_FP_ISSUBNORM,        /**< Floating-point subnormal class. Argument is the FP value to check. */
+    OP_FP_ISZERO,           /**< Floating-point zero class. Argument is the FP value to check. */
+    OP_FP_ISINFINITE,       /**< Floating-point infinity class. Argument is the FP value to check. */
+    OP_FP_ISNAN,            /**< Floating-point NaN class. Argument is the FP value to check. */
+    OP_FP_ISNEG,            /**< Floating-point negative class. Argument is the FP value to check. */
+    OP_FP_ISPOS,            /**< Floating-point positive class. Argument is the FP value to check. */
+
+    OP_CONVERT,             /**< Convert from one type to another. Argument is the source type. */
+
+    OP_NONE,                /**< No operation. Result of getOperator on a node that doesn't have an operator. */
 
     OP_BV_AND = OP_AND,                                 // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
     OP_BV_OR = OP_OR,                                   // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
@@ -173,6 +205,154 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Expression type information
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Type of symbolic expression. */
+class Type {
+public:
+    /** Type class. */
+    enum TypeClass {
+        INTEGER,                                        /**< Integer type. */
+        FP,                                             /**< Floating-point type. */
+        MEMORY,                                         /**< Memory type. */
+        INVALID                                         /**< Default constructed. */
+    };
+
+private:
+    TypeClass typeClass_;
+    size_t totalWidth_;
+    size_t secondaryWidth_;
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(typeClass_);
+        s & BOOST_SERIALIZATION_NVP(totalWidth_);
+        s & BOOST_SERIALIZATION_NVP(secondaryWidth_);
+    }
+#endif
+
+    /** Create an invalid, empty type.
+     *
+     *  This is used mainly for default arguments. */
+public:
+    Type()
+        : typeClass_(INVALID), totalWidth_(0), secondaryWidth_(0) {}
+
+private:
+    Type(TypeClass tc, size_t w1, size_t w2)
+        : typeClass_(tc), totalWidth_(w1), secondaryWidth_(w2) {}
+
+public:
+    /** Create no type.
+     *
+     *  This is the same as a default constructor, but somewhat more self-documenting. */
+    static Type none() {
+        return Type();
+    }
+    
+    /** Create a new integer type.
+     *
+     *  This is an integer type whose size is specified in bits. Whether an integer is signed is determined by the context in
+     *  which it's used. For instance, unsigned less-than operation will interpret its arguments as unsigned integers, whereas
+     *  a signed less-than operation will interpret its arguments as 2's complement signed integers. */
+    static Type integer(size_t nBits) {
+        return Type(INTEGER, nBits, 0);
+    }
+
+    /** Create a new memory type.
+     *
+     *  A memory type has an address width and a value width. The value width is the size of the value stored at each address. */
+    static Type memory(size_t addressWidth, size_t valueWidth) {
+        return Type(MEMORY, valueWidth, addressWidth);
+    }
+
+    /** Create a new floating-point type.
+     *
+     *  A floating point type describes an IEEE-754 style of value and is parameterized by two properties: the width of the
+     *  exponent field, and the width of the significand field including the implied bit.  The actual storage size of the
+     *  floating point value is the sum of these two widths since although the implied bit is not stored, a sign bit is
+     *  stored. */
+    static Type floatingPoint(size_t exponentWidth, size_t significandWidth) {
+        return Type(FP, exponentWidth + significandWidth, exponentWidth);
+    }
+
+    /** Check whether this object is valid.
+     *
+     *  A default constructed type is invalid. */
+    bool isValid() const {
+        return typeClass_ != INVALID;
+    }
+    
+    /** Property: Type class.
+     *
+     *  The type class specifies whether this is an integer type, a floating-point type, or a memory type. */
+    TypeClass typeClass() const {
+        return typeClass_;
+    }
+
+    /** Property: Total width of values.
+     *
+     *  This is the total width in bits of the values represented by this type. For memory types, it's the width of the value
+     *  stored at each address. */
+    size_t nBits() const {
+        return totalWidth_;
+    }
+
+    /** Property: Width of memory addresses.
+     *
+     *  Returns the width in bits of each memory address for a memory type. This should only be invoked on types for which @ref
+     *  typeClass returns @ref MEMORY. */
+    size_t addressWidth() const {
+        ASSERT_require(MEMORY == typeClass_);
+        return secondaryWidth_;
+    }
+
+    /** Property: Exponent width.
+     *
+     *  Returns the width in bits of the exponent for floating-point types. This should only be invoked on types for which @ref
+     *  typeClass returns @ref FP. */
+    size_t exponentWidth() const {
+        ASSERT_require(FP == typeClass_);
+        return secondaryWidth_;
+    }
+
+    /** Property: Significand width.
+     *
+     *  Returns the logical width in bits of the significand for floating-point types, which includes the implied bit. The
+     *  actual storage size of the significand is one bit fewer. This should only be invoked on types for which @ref typeClass
+     *  returns FP. */
+    size_t significandWidth() const {
+        ASSERT_require(FP == typeClass_);
+        return totalWidth_ - exponentWidth();
+    }
+
+    /** Type equality.
+     *
+     *  Types are equivalent if they have the same class and sizes.
+     *
+     * @{ */
+    bool operator==(const Type &other) const {
+        return typeClass_ == other.typeClass_ && totalWidth_ == other.totalWidth_ && secondaryWidth_ == other.secondaryWidth_;
+    }
+    bool operator!=(const Type &other) const {
+        return !(*this == other);
+    }
+    /** @} */
+
+    /** Type comparison. */
+    bool operator<(const Type &other) const;
+};
+
+    
+    
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Base Node Type
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -185,14 +365,14 @@ public:
  *  @em values of their arguments.
  *
  *  In order that subtrees can be freely assigned as children of other nodes (provided the structure as a whole remains a
- *  lattice and not a graph with cycles), two things are required: First, tree nodes are always referenced through
+ *  lattice and not a graph with cycles), two things are required: First, expression tree nodes are always referenced through
  *  shared-ownership pointers that collectively own the expression node (expressions are never explicitly deleted). Second,
  *  expression nodes are immutable once they're instantiated.  There are a handful of exceptions to the immutable rule:
- *  comments and attributes are allowed to change since they're not significant to hashing or arithmetic operations.
+ *  comments and attributes are allowed to change freely since they're not significant to hashing or arithmetic operations.
  *
  *  Each node has a bit flags property, the bits of which are defined by the user.  New nodes are created having all bits
- *  cleared unless the user specifies a value in the constructor.  Bits are significant for hashing. Simplifiers produce
- *  result expressions whose bits are set in a predictable manner with the following rules:
+ *  cleared unless the user specifies a value in the constructor.  Bits are significant for hashing. Simplifiers produce result
+ *  expressions whose bits are set in a predictable manner with the following rules:
  *
  *  @li Interior Node Rule: The flags for an interior node are the union of the flags of its subtrees.
  *
@@ -219,8 +399,7 @@ class Node
       public Sawyer::SmallObject,
       public Sawyer::Attribute::Storage<> { // Attributes are not significant for hashing or arithmetic
 protected:
-    size_t nBits_;                    /**< Number of significant bits. Constant over the life of the node. */
-    size_t domainWidth_;              /**< Width of domain for unary functions. E.g., memory. */
+    Type type_;
     unsigned flags_;                  /**< Bit flags. Meaning of flags is up to the user. Low-order 16 bits are reserved. */
     std::string comment_;             /**< Optional comment. Only for debugging; not significant for any calculation. */
     Hash hashval_;                    /**< Optional hash used as a quick way to indicate that two expressions are different. */
@@ -231,9 +410,10 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_NVP(nBits_);
-        s & BOOST_SERIALIZATION_NVP(domainWidth_);
+    void serialize(S &s, const unsigned version) {
+        if (version < 1)
+            ASSERT_not_reachable("SymbolicExpr version " + boost::lexical_cast<std::string>(version) + " is no longer supported");
+        s & BOOST_SERIALIZATION_NVP(type_);
         s & BOOST_SERIALIZATION_NVP(flags_);
         s & BOOST_SERIALIZATION_NVP(comment_);
         s & BOOST_SERIALIZATION_NVP(hashval_);
@@ -262,11 +442,16 @@ public:
 
 protected:
     Node()
-        : nBits_(0), domainWidth_(0), flags_(0), hashval_(0) {}
+        : type_(Type::integer(0)), flags_(0), hashval_(0) {}
     explicit Node(const std::string &comment, unsigned flags=0)
-        : nBits_(0), domainWidth_(0), flags_(flags), comment_(comment), hashval_(0) {}
+        : type_(Type::integer(0)), flags_(flags), comment_(comment), hashval_(0) {}
 
 public:
+    /** Type of value. */
+    Type type() const {
+        return type_;
+    }
+
     /** User-supplied predicate to augment alias checking.
      *
      * If this pointer is non-null, then the @ref mayEqual methods invoke this function. If this function returns true
@@ -325,17 +510,91 @@ public:
     Ptr renameVariables(ExprExprHashMap &index /*in,out*/, size_t &nextVariableId /*in,out*/,
                         const SmtSolverPtr &solver = SmtSolverPtr());
 
-    /** Returns true if the expression is a known numeric value.
+    /** Operator for interior nodes.
      *
-     *  The value itself is stored in the @ref number property. */
-    virtual bool isNumber() = 0;
+     *  Return the operator for interior nodes, or @ref OP_NONE for leaf nodes that have no operator. */
+    virtual Operator getOperator() const = 0;
 
-    /** Property: integer value of expression node.
+    /** Number of arguments.
      *
-     *  Returns the integer value of a node for which @ref isKnown returns true.  The high-order bits, those beyond the number
-     *  of significant bits returned by the @ref nBits propert, are guaranteed to be zero. */
-    virtual uint64_t toInt() = 0;
+     *  Returns the number of children for an interior node, zero for leaf nodes. */
+    virtual size_t nChildren() const = 0;
 
+    /** Argument.
+     *
+     *  Returns the specified argument by index. If the index is out of range, then returns null. A leaf node always returns
+     *  null since it never has children. */
+    virtual Ptr child(size_t idx) const = 0;
+
+    /** Arguments.
+     *
+     *  Returns the arguments of an operation for an interior node, or an empty list for a leaf node. */
+    virtual const Nodes& children() const = 0;
+
+    /** The unsigned integer value of the expression.
+     *
+     *  Returns nothing if the expression is not a concrete integer value or the value is too wide to be represented by the
+     *  return type. */
+    virtual Sawyer::Optional<uint64_t> toUnsigned() const = 0;
+
+    /** The signed integer value of the expression.
+     *
+     *  Returns nothing if the expression is not a concrete integer value or the value doesn't fit in the return type. */
+    virtual Sawyer::Optional<int64_t> toSigned() const = 0;
+
+    /** True if this expression is of an integer type. */
+    bool isIntegerExpr() const {
+        return type_.typeClass() == Type::INTEGER;
+    }
+
+    /** True if this expression is of a floating-point type. */
+    bool isFloatingPointExpr() const {
+        return type_.typeClass() == Type::FP;
+    }
+
+    /** True if this expression is of a memory type. */
+    bool isMemoryExpr() const {
+        return type_.typeClass() == Type::MEMORY;
+    }
+    
+    /** True if this expression is a constant. */
+    virtual bool isConstant() const = 0;
+
+    /** True if this expression is an integer constant. */
+    bool isIntegerConstant() const {
+        return isIntegerExpr() && isConstant();
+    }
+
+    /** True if this epxression is a floating-point constant. */
+    bool isFloatingPointConstant() const {
+        return isFloatingPointExpr() && isConstant();
+    }
+
+    /** True if this expression is a floating-point NaN constant. */
+    bool isFloatingPointNan() const;
+
+    /** True if this expression is a variable.
+     *
+     *  Warning: Leaf nodes have a deprecated isVariable method that returns false for memory state variables, thus this
+     *  method has a "2" appended to its name. After a suitable period of deprecation for Leaf::isVariable, a new isVariable
+     *  will be added to this class hiearchy and will have the same semantics as isVariable2, which will become deprecated. */
+    virtual bool isVariable2() const = 0;
+    
+    /** True if this expression is an integer variable. */
+    bool isIntegerVariable() const {
+        return isIntegerExpr() && isVariable2();
+    }
+
+    /** True if this expression is a floating-point variable. */
+    bool isFloatingPointVariable() const {
+        return isFloatingPointExpr() && isVariable2();
+    }
+
+    /** True if this expression is a memory state variable. */
+    bool isMemoryVariable() const {
+        return isMemoryExpr() && isVariable2();
+    }
+    
     /** Property: Comment.
      *
      *  Comments can be changed after a node has been created since the comment is not intended to be used for anything but
@@ -344,8 +603,12 @@ public:
      *  not considered significant for comparisons, computing hash values, etc.
      *
      * @{ */
-    const std::string& comment() { return comment_; }
-    void comment(const std::string &s) { comment_ = s; }
+    const std::string& comment() const {
+        return comment_;
+    }
+    void comment(const std::string &s) {
+        comment_ = s;
+    }
     /** @} */
 
     /** Property: User-defined data.
@@ -358,7 +621,7 @@ public:
     void userData(boost::any &data) {
         userData_ = data;
     }
-    const boost::any& userData() {
+    const boost::any& userData() const {
         return userData_;
     }
     /** @} */
@@ -366,34 +629,42 @@ public:
     /** Property: Number of significant bits.
      *
      *  An expression with a known value is guaranteed to have all higher-order bits cleared. */
-    size_t nBits() { return nBits_; }
+    size_t nBits() const {
+        return type_.nBits();
+    }
 
     /** Property: User-defined bit flags.
      *
      *  This property is significant for hashing, comparisons, and possibly other operations, therefore it is immutable.  To
      *  change the flags one must create a new expression; see @ref newFlags. */
-    unsigned flags() { return flags_; }
+    unsigned flags() const {
+        return flags_;
+    }
 
     /** Sets flags. Since symbolic expressions are immutable it is not possible to change the flags directly. Therefore if the
      *  desired flags are different than the current flags a new expression is created that is the same in every other
      *  respect. If the flags are not changed then the original expression is returned. */
-    Ptr newFlags(unsigned flags);
+    Ptr newFlags(unsigned flags) const;
 
     /** Property: Width for memory expressions.
      *
      *  The return value is non-zero if and only if this tree node is a memory expression. */
-    size_t domainWidth() { return domainWidth_; }
+    size_t domainWidth() const {
+        return type_.addressWidth();
+    }
 
     /** Check whether expression is scalar.
      *
      *  Everything is scalar except for memory. */
-    bool isScalar() { return 0 == domainWidth_; }
+    bool isScalar() const {
+        return type_.typeClass() != Type::MEMORY;
+    }
 
     /** Traverse the expression.
      *
      *  The expression is traversed in a depth-first visit.  The final return value is the final return value of the last call
      *  to the visitor. */
-    virtual VisitAction depthFirstTraversal(Visitor&) = 0;
+    virtual VisitAction depthFirstTraversal(Visitor&) const = 0;
 
     /** Computes the size of an expression by counting the number of nodes.
      *
@@ -404,42 +675,40 @@ public:
      *  @code
      *   SymbolicExpr expr = Leaf::createVariable(32);
      *   for(size_t i=0; i<64; ++i)
-     *       expr = Interior::create(32, OP_ADD, expr, expr)
+     *       expr = makeAdd(expr, expr)
      *  @endcode
      *
      *  When an overflow occurs the result is meaningless.
      *
      *  @sa nNodesUnique */
-    virtual uint64_t nNodes() = 0;
+    virtual uint64_t nNodes() const = 0;
 
     /** Number of unique nodes in expression. */
-    uint64_t nNodesUnique();
+    uint64_t nNodesUnique() const;
 
     /** Returns the variables appearing in the expression. */
-    std::set<LeafPtr> getVariables();
+    std::set<LeafPtr> getVariables() const;
 
     /** Dynamic cast of this object to an interior node.
      *
      *  Returns null if the cast is not valid. */
-    InteriorPtr isInteriorNode() {
-        return sharedFromThis().dynamicCast<Interior>();
-    }
+    InteriorPtr isInteriorNode() const;
 
     /** Dynamic cast of this object to a leaf node.
      *
      *  Returns null if the cast is not valid. */
-    LeafPtr isLeafNode() {
-        return sharedFromThis().dynamicCast<Leaf>();
-    }
+    LeafPtr isLeafNode() const;
 
     /** Returns true if this node has a hash value computed and cached. The hash value zero is reserved to indicate that no
      *  hash has been computed; if a node happens to actually hash to zero, it will not be cached and will be recomputed for
      *  every call to hash(). */
-    bool isHashed() { return hashval_ != 0; }
+    bool isHashed() const {
+        return hashval_ != 0;
+    }
 
     /** Returns (and caches) the hash value for this node.  If a hash value is not cached in this node, then a new hash value
      *  is computed and cached. */
-    Hash hash();
+    Hash hash() const;
 
     // used internally to set the hash value
     void hash(Hash);
@@ -475,32 +744,43 @@ public:
     /** Print the expression to a stream.  The output is an S-expression with no line-feeds. The format of the output is
      *  controlled by the mutable Formatter argument.
      *  @{ */
-    virtual void print(std::ostream&, Formatter&) = 0;
-    void print(std::ostream &o) { Formatter fmt; print(o, fmt); }
+    virtual void print(std::ostream&, Formatter&) const = 0;
+    void print(std::ostream &o) const { Formatter fmt; print(o, fmt); }
     /** @} */
 
     /** Asserts that expressions are acyclic. This is intended only for debugging. */
-    void assertAcyclic();
+    void assertAcyclic() const;
 
     /** Find common subexpressions.
      *
      *  Returns a vector of the largest common subexpressions. The list is computed by performing a depth-first search on this
      *  expression and adding expressions to the return vector whenever a subtree is encountered a second time. Therefore the
      *  if a common subexpression A contains another common subexpression B then B will appear earlier in the list than A. */
-    std::vector<Ptr> findCommonSubexpressions();
+    std::vector<Ptr> findCommonSubexpressions() const;
 
     /** Determine whether an expression is a variable plus a constant.
      *
-     *  If this expression is of the form V + X or X + V where V is a variable and X is a constant, return true and make @p
-     *  variable point to the variable and @p constant point to the constant.  If the expression is not one of these forms,
-     *  then return false without modifying the arguments. */
-    bool matchAddVariableConstant(LeafPtr &variable/*out*/, LeafPtr &constant/*out*/);
+     *  If this expression is of the form V + X or X + V where V is an integer variable and X is an integer constant, return
+     *  true and make @p variable point to the variable and @p constant point to the constant.  If the expression is not one of
+     *  these forms, then return false without modifying the arguments. */
+    bool matchAddVariableConstant(LeafPtr &variable/*out*/, LeafPtr &constant/*out*/) const;
 
     /** True (non-null) if this node is the specified operator. */
-    InteriorPtr isOperator(Operator);
+    InteriorPtr isOperator(Operator) const;
 
 protected:
-    void printFlags(std::ostream &o, unsigned flags, char &bracket);
+    void printFlags(std::ostream &o, unsigned flags, char &bracket) const;
+
+public:
+    // Deprecated [Robb Matzke 2019-09-27]
+    bool isNumber() const ROSE_DEPRECATED("use isIntegerConstant instead") {
+        return isIntegerConstant();
+    }
+
+    // Deprecated [Robb Matzke 2019-09-27]
+    uint64_t toInt() ROSE_DEPRECATED("use toUnsigned() instead") {
+        return toUnsigned().get();
+    }
 };
 
 /** Operator-specific simplification methods. */
@@ -682,25 +962,21 @@ struct SetSimplifier: Simplifier {
 //                                      Interior Nodes
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Interior node of an expression tree for instruction semantics. Each interior node has an operator (constant for the life of
- *  the node and obtainable with get_operator()) and zero or more children. Children are added to the interior node during the
- *  construction phase. Once construction is complete, the children should only change in ways that don't affect the value of
- *  the node as a whole (since this node might be pointed to by any number of expressions). */
+/** Interior node of an expression tree for instruction semantics.
+ *
+ *  Each interior node has an operator (constant for the life of the node and obtainable with get_operator()) and zero or more
+ *  children. Children are added to the interior node during the construction phase. Once construction is complete, the
+ *  children should only change in ways that don't affect the value of the node as a whole (since this node might be pointed to
+ *  by any number of expressions). */
 class Interior: public Node {
 private:
     Operator op_;
     Nodes children_;
     uint64_t nnodes_;                                   // total number of nodes; self + children's nnodes
 
-    // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
-    // accidently using pointers to these objects -- all access should be through shared-ownership pointers.
-    Interior(): op_(OP_ADD), nnodes_(1) {} // needed for serialization
-    Interior(size_t nbits, Operator op, const Ptr &a, const std::string &comment="", unsigned flags=0);
-    Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const std::string &comment="", unsigned flags=0);
-    Interior(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c, const std::string &comment="",
-             unsigned flags=0);
-    Interior(size_t nbits, Operator op, const Nodes &children, const std::string &comment="", unsigned flags=0);
-
+    //--------------------------------------------------------
+    // Serialization
+    //--------------------------------------------------------
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
@@ -714,67 +990,63 @@ private:
     }
 #endif
 
+    //--------------------------------------------------------
+    // Real constructors
+    //--------------------------------------------------------
+private:
+    Interior();                                         // needed for serialization
+    // Only constructs, does not simplify.
+    Interior(const Type&, Operator, const Nodes &arguments, const std::string &comment, unsigned flags);
+
+    //--------------------------------------------------------
+    // Allocating constructors
+    //--------------------------------------------------------
 public:
     /** Create a new expression node.
      *
-     *  Although we're creating interior nodes, the simplification process might replace it with a leaf node. Use these class
-     *  methods instead of c'tors.
-     *
-     *  The SMT solver is optional and may be the null pointer.
-     *
-     *  Flags are normally initialized as the union of the flags of the operator arguments subject to various rules in the
-     *  expression simplifiers. Flags specified in the constructor are set in addition to those that would normally be set.
-     *
-     *  @{ */
-    static Ptr create(size_t nbits, Operator op, const Ptr &a,
-                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0) {
-        InteriorPtr retval(new Interior(nbits, op, a, comment, flags));
-        return retval->simplifyTop(solver);
-    }
-    static Ptr create(size_t nbits, Operator op, const Ptr &a, const Ptr &b,
-                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0) {
-        InteriorPtr retval(new Interior(nbits, op, a, b, comment, flags));
-        return retval->simplifyTop(solver);
-    }
-    static Ptr create(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
-                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0) {
-        InteriorPtr retval(new Interior(nbits, op, a, b, c, comment, flags));
-        return retval->simplifyTop(solver);
-    }
-    static Ptr create(size_t nbits, Operator op, const Nodes &children,
-                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0) {
-        InteriorPtr retval(new Interior(nbits, op, children, comment, flags));
-        return retval->simplifyTop(solver);
-    }
+     * @{ */
+    static Ptr instance(Operator op, const Ptr &a,
+                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+    static Ptr instance(const Type &type, Operator op, const Ptr &a,
+                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+    static Ptr instance(Operator op, const Ptr &a, const Ptr &b,
+                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+    static Ptr instance(const Type &type, Operator op, const Ptr &a, const Ptr &b,
+                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+    static Ptr instance(Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
+                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+    static Ptr instance(const Type &type, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
+                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+    static Ptr instance(Operator op, const Nodes &arguments,
+                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+    static Ptr instance(const Type &type, Operator op, const Nodes &arguments,
+                        const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
     /** @} */
 
-    /* see superclass, where these are pure virtual */
+    //--------------------------------------------------------
+    // Overrides
+    //--------------------------------------------------------
+public:
     virtual bool mustEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
     virtual bool mayEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
     virtual bool isEquivalentTo(const Ptr &other) ROSE_OVERRIDE;
     virtual int compareStructure(const Ptr& other) ROSE_OVERRIDE;
     virtual Ptr substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
-    virtual bool isNumber() ROSE_OVERRIDE {
-        return false; /*if it's known, then it would have been folded to a leaf*/
-    }
-    virtual uint64_t toInt() ROSE_OVERRIDE { ASSERT_forbid2(true, "not a number"); return 0;}
-    virtual VisitAction depthFirstTraversal(Visitor&) ROSE_OVERRIDE;
-    virtual uint64_t nNodes() ROSE_OVERRIDE { return nnodes_; }
+    virtual VisitAction depthFirstTraversal(Visitor&) const ROSE_OVERRIDE;
+    virtual uint64_t nNodes() const ROSE_OVERRIDE { return nnodes_; }
+    virtual const Nodes& children() const ROSE_OVERRIDE { return children_; }
+    virtual Operator getOperator() const ROSE_OVERRIDE { return op_; }
+    virtual size_t nChildren() const ROSE_OVERRIDE { return children_.size(); }
+    virtual Ptr child(size_t idx) const ROSE_OVERRIDE { return idx < children_.size() ? children_[idx] : Ptr(); }
+    virtual Sawyer::Optional<uint64_t> toUnsigned() const ROSE_OVERRIDE { return Sawyer::Nothing(); }
+    virtual Sawyer::Optional<int64_t> toSigned() const ROSE_OVERRIDE { return Sawyer::Nothing(); }
+    virtual bool isConstant() const ROSE_OVERRIDE { return false; }
+    virtual bool isVariable2() const ROSE_OVERRIDE { return false; }
 
-    /** Returns the number of children. */
-    size_t nChildren() { return children_.size(); }
-
-    /** Returns the specified child. */
-    Ptr child(size_t idx) { ASSERT_require(idx<children_.size()); return children_[idx]; }
-
-    /** Property: Children.
-     *
-     *  The children are the operands for an operator expression. */
-    const Nodes& children() { return children_; }
-
-    /** Returns the operator. */
-    Operator getOperator() { return op_; }
-
+    //--------------------------------------------------------
+    // Simplification
+    //--------------------------------------------------------
+public:
     /** Simplifies the specified interior node.
      *
      *  Returns a new node if necessary, otherwise returns this. The SMT solver is optional and my be the null pointer. */
@@ -819,6 +1091,12 @@ public:
      *  Returns either a new expression or the original expression. The solver may be a null pointer. */
     Ptr identity(uint64_t ident, const SmtSolverPtr &solver = SmtSolverPtr());
 
+    /** Returns NaN if any argument is NaN.
+     *
+     *  If any argument is NaN then a new NaN constant expression is returned, otherwise the original expression is returned.
+     *  The solver may be a null pointer. */
+    Ptr poisonNan(const SmtSolverPtr &solver = SmtSolverPtr());
+
     /** Replaces a binary operator with its only argument. Returns either a new expression or the original expression. */
     Ptr unaryNoOp();
 
@@ -827,7 +1105,11 @@ public:
      *  and may be the null pointer. */
     Ptr rewrite(const Simplifier &simplifier, const SmtSolverPtr &solver = SmtSolverPtr());
 
-    virtual void print(std::ostream&, Formatter&) ROSE_OVERRIDE;
+    //--------------------------------------------------------
+    // Functions specific to internal nodes
+    //--------------------------------------------------------
+public:
+    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
 protected:
     /** Appends @p child as a new child of this node. This must only be called from constructors. */
@@ -839,6 +1121,24 @@ protected:
     /** Adjust user-defined bit flags. This must only be called from constructors.  Flags are the union of the operand flags
      *  subject to simplification rules, unioned with the specified flags. */
     void adjustBitFlags(unsigned extraFlags);
+
+    //--------------------------------------------------------
+    // Deprecated [Robb Matzke 2019-10-01]
+    //--------------------------------------------------------
+public:
+    static Ptr create(size_t nbits, Operator op, const Ptr &a,
+                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use instance instead");
+    static Ptr create(size_t nbits, Operator op, const Ptr &a, const Ptr &b,
+                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use instance instead");
+    static Ptr create(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
+                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use instance instead");
+    static Ptr create(size_t nbits, Operator op, const Nodes &children,
+                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use instance instead");
+
 };
 
 
@@ -851,11 +1151,12 @@ protected:
  *  A leaf node is either a known bit vector value, a free bit vector variable, or a memory state. */
 class Leaf: public Node {
 private:
-    enum LeafType { CONSTANT, BITVECTOR, MEMORY };
-    LeafType leafType_;
-    Sawyer::Container::BitVector bits_; /**< Value when 'known' is true */
-    uint64_t name_;                     /**< Variable ID number when 'known' is false. */
+    Sawyer::Container::BitVector bits_; // Value for constants if size > 0
+    uint64_t name_;                     // Variable ID for variables when bits_.size() == 0
 
+    //--------------------------------------------------------
+    // Serialization
+    //--------------------------------------------------------
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
@@ -863,7 +1164,6 @@ private:
     template<class S>
     void save(S &s, const unsigned /*version*/) const {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Node);
-        s & BOOST_SERIALIZATION_NVP(leafType_);
         s & BOOST_SERIALIZATION_NVP(bits_);
         s & BOOST_SERIALIZATION_NVP(name_);
     }
@@ -871,7 +1171,6 @@ private:
     template<class S>
     void load(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Node);
-        s & BOOST_SERIALIZATION_NVP(leafType_);
         s & BOOST_SERIALIZATION_NVP(bits_);
         s & BOOST_SERIALIZATION_NVP(name_);
         nextNameCounter(name_);
@@ -880,89 +1179,149 @@ private:
     BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
 
-    // Private to help prevent creating pointers to leaf nodes.  See create_* methods instead.
+    //--------------------------------------------------------
+    // Private constructors. Use create methods instead.
+    //--------------------------------------------------------
 private:
     Leaf()
-        : Node(""), leafType_(CONSTANT), name_(0) {}
+        : name_(0) {}
     explicit Leaf(const std::string &comment, unsigned flags=0)
-        : Node(comment, flags), leafType_(CONSTANT), name_(0) {}
+        : Node(comment, flags), name_(0) {}
 
+    // Allocating constructors.
 public:
-    /** Construct a new free variable with a specified number of significant bits. */
-    static LeafPtr createVariable(size_t nbits, const std::string &comment="", unsigned flags=0);
+    /** Create a new variable. */
+    static LeafPtr createVariable(const Type&,
+                                  const std::string &comment = "", unsigned flags = 0);
 
-    /** Construct another reference to an existing variable.  This method is used internally by the expression parsing
-     *  mechanism to produce a new instance of some previously existing variable -- both instances are the same variable and
-     *  therefore should be given the same size (although this consistency cannot be checked automatically). */
-    static LeafPtr createExistingVariable(size_t nbits, uint64_t id, const std::string &comment="", unsigned flags=0);
+    /** Create an existing variable. */
+    static LeafPtr createVariable(const Type&, const uint64_t id,
+                                  const std::string &comment = "", unsigned flags = 0);
 
-    /** Construct a new integer with the specified number of significant bits. Any high-order bits beyond the specified size
-     *  will be zeroed. */
-    static LeafPtr createInteger(size_t nbits, uint64_t n, const std::string &comment="", unsigned flags=0);
+    /** Create a constant. */
+    static LeafPtr createConstant(const Type&, const Sawyer::Container::BitVector&,
+                                  const std::string &comment = "", unsigned flags = 0);
 
-    /** Construct a new known value with the specified bits. */
-    static LeafPtr createConstant(const Sawyer::Container::BitVector &bits, const std::string &comment="", unsigned flags=0);
-
-    /** Create a new Boolean, a single-bit integer. */
-    static LeafPtr createBoolean(bool b, const std::string &comment="", unsigned flags=0) {
-        return createInteger(1, (uint64_t)(b?1:0), comment, flags);
-    }
-
-    /** Construct a new memory state.  A memory state is a function that maps addresses to values. */
-    static LeafPtr createMemory(size_t addressWidth, size_t valueWidth, const std::string &comment="", unsigned flags=0);
-
-    /** Construct another reference to an existing variable.  This method is used internally by the expression parsing
-     * mechanism to produce a new instance of some previously existing memory state. Both instances are the same state and
-     * therefore should be given the same domain and range size (although this consistency cannot be checked automatically.) */
-    static LeafPtr createExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const std::string &comment="",
-                                        unsigned flags=0);
-
-    // from base class
-    virtual bool isNumber() ROSE_OVERRIDE;
-    virtual uint64_t toInt() ROSE_OVERRIDE;
+    //--------------------------------------------------------
+    // Override base class implementations
+    //--------------------------------------------------------
+public:
+    virtual size_t nChildren() const ROSE_OVERRIDE { return 0; }
+    virtual Ptr child(size_t idx) const ROSE_OVERRIDE { return Ptr(); }
+    virtual const Nodes& children() const ROSE_OVERRIDE;
+    virtual Operator getOperator() const ROSE_OVERRIDE { return OP_NONE; }
     virtual bool mustEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
     virtual bool mayEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
     virtual bool isEquivalentTo(const Ptr &other) ROSE_OVERRIDE;
     virtual int compareStructure(const Ptr& other) ROSE_OVERRIDE;
     virtual Ptr substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
-    virtual VisitAction depthFirstTraversal(Visitor&) ROSE_OVERRIDE;
-    virtual uint64_t nNodes() ROSE_OVERRIDE { return 1; }
+    virtual VisitAction depthFirstTraversal(Visitor&) const ROSE_OVERRIDE;
+    virtual uint64_t nNodes() const ROSE_OVERRIDE { return 1; }
+    virtual Sawyer::Optional<uint64_t> toUnsigned() const ROSE_OVERRIDE;
+    virtual Sawyer::Optional<int64_t> toSigned() const ROSE_OVERRIDE;
+    virtual bool isConstant() const ROSE_OVERRIDE { return !bits_.isEmpty(); }
+    virtual bool isVariable2() const ROSE_OVERRIDE { return !isConstant(); }
+    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
-    /** Property: Bits stored for numeric values. */
-    const Sawyer::Container::BitVector& bits();
+    //--------------------------------------------------------
+    // Leaf-specific methods
+    //--------------------------------------------------------
+public:
+    /** Property: Bits stored for numeric constants. */
+    const Sawyer::Container::BitVector& bits() const;
 
-    /** Is the node a bitvector variable? */
-    virtual bool isVariable();
+    /** Is this node an integer variable? */
+    bool isIntegerVariable() const {
+        return type().typeClass() == Type::INTEGER && !isConstant();
+    }
 
-    /** Does the node represent memory? */
-    virtual bool isMemory();
+    /** Is this node a floating-point variable? */
+    bool isFloatingPointVariable() const {
+        return type().typeClass() == Type::FP && !isConstant();
+    }
 
+    /** Is this node a floating-point NaN constant? */
+    bool isFloatingPointNan() const;
+
+    /** Is this node a memory variable? */
+    bool isMemoryVariable() const {
+        return type().typeClass() == Type::MEMORY && !isConstant();
+    }
+    
     /** Returns the name ID of a free variable.
      *
      *  The output functions print variables as "vN" where N is an integer. It is this N that this method returns.  It should
-     *  only be invoked on leaf nodes for which @ref isNumber returns false. */
-    uint64_t nameId();
+     *  only be invoked on leaf nodes for which @ref isConstant returns false. */
+    uint64_t nameId() const;
 
     /** Returns a string for the leaf.
      *
-     *  Variables are returned as "vN", memory is returned as "mN", and constants are returned as a hexadecimal string, where N
-     *  is a variable or memory number. */
-    std::string toString();
+     *  Integer and floating-point variables are returned as "vN", memory variables are returned as "mN", and constants are
+     *  returned as a hexadecimal string, where N is a variable identification number. */
+    std::string toString() const;
 
-    // documented in super class
-    virtual void print(std::ostream&, Formatter&) ROSE_OVERRIDE;
+    /** Prints an integer constant interpreted as a signed value. */
+    void printAsSigned(std::ostream&, Formatter&, bool asSigned = true) const;
 
-    /** Prints an integer interpreted as a signed value. */
-    void printAsSigned(std::ostream&, Formatter&, bool asSigned=true);
-
-    /** Prints an integer interpreted as an unsigned value. */
-    void printAsUnsigned(std::ostream &o, Formatter &f) {
+    /** Prints an integer constant interpreted as an unsigned value. */
+    void printAsUnsigned(std::ostream &o, Formatter &f) const {
         printAsSigned(o, f, false);
     }
 
 private:
     // Obtain or register a name ID
     static uint64_t nextNameCounter(uint64_t useThis = (uint64_t)(-1));
+
+    // Deprecated functions
+public:
+    // Deprecated [Robb Matzke 2019-09-27]
+    static LeafPtr createVariable(size_t nBits, const std::string &comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use createVariable with type or makeIntegerVariable, etc.") {
+        return createVariable(Type::integer(nBits), comment, flags);
+    }
+    
+    // Deprecated [Robb Matzke 2019-09-27]
+    static LeafPtr createExistingVariable(size_t nBits, uint64_t id, const std::string &comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use createVariable or makeIntegerVariable, etc.") {
+        return createVariable(Type::integer(nBits), id, comment, flags);
+    }
+    
+    // Deprecated [Robb Matzke 2019-09-27]
+    static LeafPtr createInteger(size_t nBits, uint64_t value, const std::string &comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use createConstant or makeIntegerConstant, etc.");
+    
+    // Deprecated [Robb Matzke 2019-09-27]
+    static LeafPtr createConstant(const Sawyer::Container::BitVector &bits, const std::string &comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use createConstant with type or makeIntegerConstant, etc.") {
+        return createConstant(Type::integer(bits.size()), bits, comment, flags);
+    }
+    
+    // Deprecated [Robb Matzke 2019-09-27]
+    static LeafPtr createBoolean(bool b, const std::string &comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use createConstant or makeBooleanConstant");
+
+    // Deprecated [Robb Matzke 2019-09-27]
+    static LeafPtr createMemory(size_t addressWidth, size_t valueWidth, const std::string &comment="", unsigned flags=0)
+        ROSE_DEPRECATED("use createVariable with type or makeMemoryVariable") {
+        return createVariable(Type::memory(addressWidth, valueWidth), comment, flags);
+    }
+    
+    // Deprecated [Robb Matzke 2019-09-27]
+    static LeafPtr createExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const std::string &comment="",
+                                        unsigned flags=0)
+        ROSE_DEPRECATED("use createVariable with type or makeMemoryVariable") {
+        return createVariable(Type::memory(addressWidth, valueWidth), id, comment, flags);
+    }
+
+    // Deprecated [Robb Matzke 2019-09-27]. The definition will eventually change to isVariable2()
+    bool isVariable() const ROSE_DEPRECATED("use isIntegerVariable or isVariable2 instead") {
+        return isIntegerVariable();
+    }
+
+    // Deprecated [Robb Matzke 2019-09-27]
+    virtual bool isMemory() ROSE_DEPRECATED("use isMemoryVariable or isMemoryExpr instead") {
+        return isMemoryVariable();
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -974,14 +1333,38 @@ private:
  *  Constructs an expression leaf node. This is a wrapper around one of the "create" factory methods in @ref Leaf.
  *
  * @{ */
-Ptr makeVariable(size_t nbits, const std::string &comment="", unsigned flags=0);
-Ptr makeExistingVariable(size_t nbits, uint64_t id, const std::string &comment="", unsigned flags=0);
-Ptr makeInteger(size_t nbits, uint64_t n, const std::string &comment="", unsigned flags=0);
-Ptr makeConstant(const Sawyer::Container::BitVector&, const std::string &comment="", unsigned flags=0);
-Ptr makeBoolean(bool, const std::string &comment="", unsigned flags=0);
-Ptr makeMemory(size_t addressWidth, size_t valueWidth, const std::string &comment="", unsigned flags=0);
-Ptr makeExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const std::string &comment="", unsigned flags=0);
+LeafPtr makeVariable(const Type&, const std::string &comment="", unsigned flags=0);
+LeafPtr makeVariable(const Type&, uint64_t id, const std::string &comment="", unsigned flags=0);
+LeafPtr makeConstant(const Type&, const Sawyer::Container::BitVector&, const std::string &comment="", unsigned flags=0);
+LeafPtr makeIntegerVariable(size_t nBits, const std::string &comment="", unsigned flags=0);
+LeafPtr makeIntegerVariable(size_t nBits, uint64_t id, const std::string &comment="", unsigned flags=0);
+LeafPtr makeIntegerConstant(size_t nBits, uint64_t n, const std::string &comment="", unsigned flags=0);
+LeafPtr makeIntegerConstant(const Sawyer::Container::BitVector&, const std::string &comment="", unsigned flags=0);
+LeafPtr makeBooleanConstant(bool, const std::string &comment="", unsigned flags=0);
+LeafPtr makeMemoryVariable(size_t addressWidth, size_t valueWidth, const std::string &comment="", unsigned flags=0);
+LeafPtr makeMemoryVariable(size_t addressWidth, size_t valueWidth, uint64_t id, const std::string &comment="", unsigned flags=0);
+LeafPtr makeFloatingPointVariable(size_t eb, size_t sb, const std::string &comment="", unsigned flags=0);
+LeafPtr makeFloatingPointVariable(size_t eb, size_t sb, uint64_t id, const std::string &comment="", unsigned flags=0);
+LeafPtr makeFloatingPointConstant(float, const std::string &comment="", unsigned flags=0);
+LeafPtr makeFloatingPointConstant(double, const std::string &comment="", unsigned flags=0);
+LeafPtr makeFloatingPointNan(size_t eb, size_t sb, const std::string &comment="", unsigned flags=0);
 /** @} */
+
+// Deprecated [Robb Matzke 2019-09-27]
+Ptr makeVariable(size_t nbits, const std::string &comment="", unsigned flags=0)
+    ROSE_DEPRECATED("use makeIntegerVariable instead");
+Ptr makeExistingVariable(size_t nbits, uint64_t id, const std::string &comment="", unsigned flags=0)
+    ROSE_DEPRECATED("use makeIntegerVariable instead");
+Ptr makeInteger(size_t nbits, uint64_t n, const std::string &comment="", unsigned flags=0)
+    ROSE_DEPRECATED("use makeIntegerConstant instead");
+Ptr makeConstant(const Sawyer::Container::BitVector&, const std::string &comment="", unsigned flags=0)
+    ROSE_DEPRECATED("use makeIntegerConstant instead");
+Ptr makeBoolean(bool, const std::string &comment="", unsigned flags=0)
+    ROSE_DEPRECATED("use makeBooleanConstant instead");
+Ptr makeMemory(size_t addressWidth, size_t valueWidth, const std::string &comment="", unsigned flags=0)
+    ROSE_DEPRECATED("use makeMemoryVariable instead");
+Ptr makeExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const std::string &comment="", unsigned flags=0)
+    ROSE_DEPRECATED("use makeMemoryVariable instead");
 
 /** Interior node constructor.
  *
@@ -1004,19 +1387,39 @@ Ptr makeXor(const Ptr &a, const Ptr &b,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeConcat(const Ptr &hi, const Ptr &lo,
                const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeConvert(const Ptr &a,
+                const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeEq(const Ptr &a, const Ptr &b,
            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeExtract(const Ptr &begin, const Ptr &end, const Ptr &a,
                 const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeInvert(const Ptr &a,
                const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeIsInfinite(const Ptr &a,
+                   const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeIsNan(const Ptr &a,
+              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeIsNeg(const Ptr &a,
+              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeIsNorm(const Ptr &a,
+               const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeIsPos(const Ptr &a,
+              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeIsSubnorm(const Ptr &a,
+                  const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeIte(const Ptr &cond, const Ptr &a, const Ptr &b,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeLet(const Ptr &a, const Ptr &b, const Ptr &c,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeLssb(const Ptr &a,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeMax(const Ptr &a, const Ptr &b,
+             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeMin(const Ptr &a, const Ptr &b,
+             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeMssb(const Ptr &a,
+             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeMultiplyAdd(const Ptr &a, const Ptr &b, const Ptr &c,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeNe(const Ptr &a, const Ptr &b,
            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
@@ -1031,6 +1434,8 @@ Ptr makeRol(const Ptr &sa, const Ptr &a,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeRor(const Ptr &sa, const Ptr &a,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeRound(const Ptr &a,
+              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeSet(const Ptr &a, const Ptr &b,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeSet(const Ptr &a, const Ptr &b, const Ptr &c,
@@ -1051,14 +1456,22 @@ Ptr makeShr0(const Ptr &sa, const Ptr &a,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeShr1(const Ptr &sa, const Ptr &a,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeIsSignedPos(const Ptr &a,
+                    const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeSignedLe(const Ptr &a, const Ptr &b,
                  const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeSignedLt(const Ptr &a, const Ptr &b,
                  const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeSignedMax(const Ptr &a, const Ptr &b,
+                  const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeSignedMin(const Ptr &a, const Ptr &b,
+                  const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeSignedMod(const Ptr &a, const Ptr &b,
                   const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeSignedMul(const Ptr &a, const Ptr &b,
                   const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeSqrt(const Ptr &a,
+             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeDiv(const Ptr &a, const Ptr &b,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeExtend(const Ptr &newSize, const Ptr &a,
@@ -1223,7 +1636,7 @@ Ptr substitute(const Ptr &src, Substitution &subber, const SmtSolverPtr &solver 
         return src;
 
     // Some subexpression changed, so build a new expression
-    return Interior::create(0, inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+    return Interior::instance(inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
 }
 
 } // namespace
@@ -1233,6 +1646,7 @@ Ptr substitute(const Ptr &src, Substitution &subber, const SmtSolverPtr &solver 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::SymbolicExpr::Interior);
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::SymbolicExpr::Leaf);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::SymbolicExpr::Node, 1);
 #endif
 
 #endif

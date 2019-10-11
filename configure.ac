@@ -1,10 +1,10 @@
 dnl DQ (1/11/2010): Consider handing configure options as specified at:
 dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 
-dnl The version number in the AC_INIT([ROSE], [0.9.11.125])
-dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.9.11.125])
+dnl The version number in the AC_INIT([ROSE], [0.9.11.148])
+dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.9.11.148])
 dnl shell variable.
-AC_INIT([ROSE], [0.9.11.125])
+AC_INIT([ROSE], [0.9.11.148])
 AC_PREREQ([2.59])
 
 test "$verbose" = "" && echo "Run configure with --verbose to see more output"
@@ -19,8 +19,8 @@ T_NM="$("$rose_shtool" echo -n -e %b)" dnl "terminal normal mode"
 dnl +--------------------------------------------------------------------------+
 dnl | Source tree build - disabled
 dnl +--------------------------------------------------------------------------+
-AC_CONFIG_SRCDIR([README])
-if test -e "README"; then
+AC_CONFIG_SRCDIR([README.md])
+if test -e "README.md"; then
   AC_MSG_FAILURE(
     [
       ROSE cannot be built in the source tree '$(dirname "$0")' yet.

@@ -7081,10 +7081,15 @@ int SgProject::link ( std::string linkerName )
 #endif
 
   // DQ (30/8/2017): Csharp does not include a concept of linking, as I understand it presently.
-  // if (get_Csharp_only() == true)
-     if (get_Csharp_only() == true || get_Ada_only() == true || get_Jovial_only() == true || get_Cobol_only() == true)
+     if (get_Csharp_only() == true || get_Ada_only() == true || get_Cobol_only() == true)
         {
           printf ("WARNING: In SgProject::link(): New language support is skipping the linking step (for now) \n");
+          return 0;
+        }
+     else if (get_Jovial_only() == true)
+        {
+          if (get_verbose() > 0)
+             cout << "WARNING: In SgProject::link(): Language support for Jovial is skipping the linking step (for now) \n";
           return 0;
         }
 
