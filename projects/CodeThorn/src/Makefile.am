@@ -141,7 +141,8 @@ codethorninclude_HEADERS=\
   WorkListSeq.h \
   RewriteStatistics.h \
   RewriteSystem.h \
-  RERS_empty_specialization.h
+  RERS_empty_specialization.h \
+  CodeThornLib.h
 
 # codethorn (core) library sources
 libcodethorn_la_SOURCES=\
@@ -236,8 +237,8 @@ libcodethorn_la_SOURCES=\
   RewriteSystem.C \
   TimeMeasurement.C \
   addressTakenAnalysis.C \
-  RERS_empty_specialization.C
-
+  RERS_empty_specialization.C \
+  CodeThornLib.C
 
 ################################################################
 # LIBRARY: CODETHORNLTL (for linear temporal logic verification)
@@ -277,7 +278,8 @@ libcodethornltl_xHEADERS = \
   Solver12.h \
   PromelaCodeGenerator.h \
   ReadWriteAnalyzer.h \
-  CommandLineOptions.h
+  CommandLineOptions.h \
+  CodeThornLTLLib.h
 
 # library sources
 libcodethornltl_la_SOURCES= \
@@ -309,7 +311,8 @@ libcodethornltl_la_SOURCES= \
   Solver12.C \
   PromelaCodeGenerator.C \
   ReadWriteAnalyzer.C \
-  DataRaceDetection.C
+  DataRaceDetection.C \
+  CodeThornLTLLib.C
 
 
 ##############################################################

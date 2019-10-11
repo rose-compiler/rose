@@ -71,6 +71,9 @@
 #include <sys/resource.h>
 #endif
 
+#include "CodeThornLib.h"
+#include "CodeThornLTLLib.h"
+
 //BOOST includes
 #include "boost/lexical_cast.hpp"
 
@@ -109,19 +112,6 @@ void handler(int sig) {
   fprintf(stderr, "Error: signal %d:\n", sig);
   backtrace_symbols_fd(array, size, STDERR_FILENO);
   exit(1);
-}
-
-void CodeThorn::initDiagnostics() {
-  Rose::Diagnostics::initialize();
-  Analyzer::initDiagnostics();
-  IOAnalyzer::initDiagnostics();
-  ReadWriteAnalyzer::initDiagnostics();
-  CounterexampleGenerator::initDiagnostics();
-  RewriteSystem::initDiagnostics();
-  Specialization::initDiagnostics();
-  Normalization::initDiagnostics();
-  FunctionIdMapping::initDiagnostics();
-  FunctionCallMapping::initDiagnostics();
 }
 
 bool isExprRoot(SgNode* node) {
@@ -1079,17 +1069,18 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
 
 int main( int argc, char * argv[] ) {
   ROSE_INITIALIZE;
+  CodeThorn::initDiagnostics();
+  CodeThorn::initDiagnosticsLTL();
+
+  Rose::Diagnostics::mprefix->showProgramName(false);
+  Rose::Diagnostics::mprefix->showThreadId(false);
+  Rose::Diagnostics::mprefix->showElapsedTime(false);
 
   Rose::global_options.set_frontend_notes(false);
   Rose::global_options.set_frontend_warnings(false);
   Rose::global_options.set_backend_warnings(false);
 
   signal(SIGSEGV, handler);   // install handler for backtrace
-  CodeThorn::initDiagnostics();
-
-  Rose::Diagnostics::mprefix->showProgramName(false);
-  Rose::Diagnostics::mprefix->showThreadId(false);
-  Rose::Diagnostics::mprefix->showElapsedTime(false);
 
   Sawyer::Message::Facility logger;
   Rose::Diagnostics::initAndRegister(&logger, "CodeThorn");
