@@ -1805,10 +1805,12 @@ public:
      * as @p a and @p b. */
     virtual SValuePtr add(const SValuePtr &a, const SValuePtr &b) = 0;
 
-    /** Adds two integers of equal size and carry. The width of @p a and @p b must be the same, and the resulting sum will
-     *  also have the same width. Returns the sum by value and a carry-out bit by reference. This method is not pure abstract
-     *  and is generally not overridden in subclasses because it can be implemented in terms of other operations. */
-    virtual SValuePtr addCarry(const SValuePtr &a, const SValuePtr &b, SValuePtr &carryOut /*out*/);
+    /** Adds two integers of equal size and carry. The width of @p a and @p b must be the same, and the resulting sum will also
+     *  have the same width. Returns the sum by value and a carry-out bit by reference.  An overflow bit is also returned and
+     *  is useful when @p a and @p b are interpreted as signed values. This method is not pure abstract and is generally not
+     *  overridden in subclasses because it can be implemented in terms of other operations. */
+    virtual SValuePtr addCarry(const SValuePtr &a, const SValuePtr &b,
+                               SValuePtr &carryOut /*out*/, SValuePtr &overflowed /*out*/);
 
     /** Subtract one value from another.
      *
@@ -1820,10 +1822,13 @@ public:
     /** Subtract one value from another and carry.
      *
      *  Subtracts the @p subtrahend from the @p minuend and returns the result. The two arguments must be the same width and
-     *  the return value will also be that same width. A carry-out bit is returned via reference. Overflow is indicated when
-     *  the carry-out bit is different than the sign bit of the result. This method is not pure virtual and is not usually
-     *  overridden by subclasses because it can be implemented in terms of other operations. */
-    virtual SValuePtr subtractCarry(const SValuePtr &minuend, const SValuePtr &subtrahend, SValuePtr &carryOut /*out*/);
+     *  the return value will also be that same width.  A carry-out bit and overflow bit are returned by reference. The carry
+     *  out bit is simply the carry out from adding the minuend and negated subtrahend. The overflow bit is set if the result
+     *  would overflow the width of the return value, and is calculated as the XOR of the two most significant carray-out
+     *  bits. This method is not pure virtual and is not usually overridden by subclasses because it can be implemented in
+     *  terms of other operations. */
+    virtual SValuePtr subtractCarry(const SValuePtr &minuend, const SValuePtr &subtrahend,
+                                    SValuePtr &carryOut /*out*/, SValuePtr &overflowed /*out*/);
 
     /** Add two values of equal size and a carry bit.  Carry information is returned via carry_out argument.  The carry_out
      *  value is the tick marks that are written above the first addend when doing long arithmetic like a 2nd grader would do

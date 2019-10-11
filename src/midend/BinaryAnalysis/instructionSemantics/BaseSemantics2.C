@@ -236,22 +236,17 @@ RiscOperators::split(const SValuePtr &a, size_t splitPoint) {
 }
 
 SValuePtr
-RiscOperators::addCarry(const SValuePtr &a, const SValuePtr &b, SValuePtr &carryOut /*out*/) {
+RiscOperators::addCarry(const SValuePtr &a, const SValuePtr &b,
+                        SValuePtr &carryOut /*out*/, SValuePtr &overflowed /*out*/) {
     ASSERT_not_null(a);
     ASSERT_not_null(b);
     ASSERT_require(a->get_width() == b->get_width());
     size_t nBits = a->get_width();
-    SValuePtr result = add(a, b);
-
-    // We compute the carry-out bit by repeating the operation with wider addend. The alternative, to perform the addition once
-    // on wider addends and then extracting the carry out and the main sum, results in more complicated expressions.  If we had
-    // a simplifiers (e.g., in the symbolic domain) that recognized and simplified these more complicated expressions we might
-    // be able to get by with performing the addition only once.
-    SValuePtr aWide = signExtend(a, nBits+1);
-    SValuePtr bWide = signExtend(b, nBits+1);
-    carryOut = extract(add(aWide, bWide), nBits, nBits+1);
-
-    return result;
+    SValuePtr carries;
+    SValuePtr sum = addWithCarries(a, b, boolean_(false), carries /*out*/);
+    carryOut = extract(carries, nBits-1, nBits);
+    overflowed = xor_(carryOut, extract(carries, nBits-2, nBits-1));
+    return sum;
 }
 
 SValuePtr
@@ -260,8 +255,19 @@ RiscOperators::subtract(const SValuePtr &minuend, const SValuePtr &subtrahend) {
 }
 
 SValuePtr
-RiscOperators::subtractCarry(const SValuePtr &minuend, const SValuePtr &subtrahend, SValuePtr &carryOut /*out*/) {
-    return addCarry(minuend, negate(subtrahend), carryOut);
+RiscOperators::subtractCarry(const SValuePtr &minuend, const SValuePtr &subtrahend,
+                             SValuePtr &carryOut /*out*/, SValuePtr &overflowed /*out*/) {
+    ASSERT_not_null(minuend);
+    ASSERT_not_null(subtrahend);
+    ASSERT_require(minuend->get_width() == subtrahend->get_width());
+    size_t nBits = minuend->get_width();
+    ASSERT_require(nBits > 1);
+    SValuePtr negatedSubtrahend = negate(subtrahend);
+    SValuePtr carries;
+    SValuePtr difference = addWithCarries(minuend, negatedSubtrahend, boolean_(false), carries /*out*/);
+    carryOut = extract(carries, nBits-1, nBits);
+    overflowed = xor_(carryOut, extract(carries, nBits-2, nBits-1));
+    return difference;
 }
 
 SValuePtr
@@ -300,9 +306,12 @@ RiscOperators::isUnsignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr 
 SValuePtr
 RiscOperators::isSignedLessThan(const SValuePtr &a, const SValuePtr &b) {
     ASSERT_require(a->get_width() == b->get_width());
-    SValuePtr carryOut;
-    (void) subtractCarry(a, b, carryOut);
-    return carryOut; // a < b implies a - b is negative
+    size_t nBits = a->get_width();
+    SValuePtr wideA = signExtend(a, nBits+1);
+    SValuePtr wideB = signExtend(b, nBits+1);
+    SValuePtr difference = subtract(wideA, wideB);
+    SValuePtr isNeg = extract(difference, nBits, nBits+1);
+    return isNeg; // a < b implies a - b is negative
 }
 
 SValuePtr

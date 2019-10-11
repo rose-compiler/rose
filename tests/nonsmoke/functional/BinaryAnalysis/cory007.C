@@ -42,8 +42,8 @@ main() {
     ASSERT_always_require(Sawyer::Attribute::name(DUCKS) == "Number of ducks");
 
     // Make a symbolic expression to which we can attach some attributes.
-    SymbolicExpr::Ptr a = SymbolicExpr::makeVariable(32, "a");
-    SymbolicExpr::Ptr b = SymbolicExpr::makeInteger(32, 4);
+    SymbolicExpr::Ptr a = SymbolicExpr::makeIntegerVariable(32, "a");
+    SymbolicExpr::Ptr b = SymbolicExpr::makeIntegerConstant(32, 4);
     SymbolicExpr::Ptr c = SymbolicExpr::makeAdd(a, b);
 
     // Every expression has a hash value. Save it for comparison later.

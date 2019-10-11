@@ -505,7 +505,7 @@ public:
      * @{ */
     virtual SymbolicExpr::Ptr evidenceForVariable(const SymbolicExpr::Ptr &var) {
         SymbolicExpr::LeafPtr ln = var->isLeafNode();
-        ASSERT_require(ln && !ln->isNumber());
+        ASSERT_require(ln && ln->isVariable2());
         return evidenceForVariable(ln->nameId());
     }
     virtual SymbolicExpr::Ptr evidenceForVariable(uint64_t varno) {

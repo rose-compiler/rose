@@ -1098,14 +1098,14 @@ Partitioner::basicBlockPopsStack(const BasicBlock::Ptr &bb) const {
         // has an initial value that's not near the minimum or maximum possible value.  Therefore, we'll substitute a concrete
         // value for the stack pointer.
         SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
-        SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.nBits(), 0x8000); // arbitrary
+        SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeIntegerConstant(REG_SP.nBits(), 0x8000); // arbitrary
         SymbolicExpr::Ptr spNExpr =
             Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, sem.operators->solver());
 
         // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down.
         // SPn > SP0 == true implies at least one byte popped.
         SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, sem.operators->solver());
-        bb->popsStack() = cmpExpr->mustEqual(SymbolicExpr::makeBoolean(true));
+        bb->popsStack() = cmpExpr->mustEqual(SymbolicExpr::makeBooleanConstant(true));
     } while (0);
 
 #if 0 // [Robb Matzke 2019-01-16]: commented out to debug race

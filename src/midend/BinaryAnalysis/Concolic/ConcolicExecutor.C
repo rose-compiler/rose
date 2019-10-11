@@ -37,6 +37,7 @@ RiscOperators::instance(const P2::Partitioner &partitioner, const Debugger::Ptr 
     // Initialize machine state
     RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
     MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
+    memory->set_byteOrder(ByteOrder::ORDER_LSB);
     StatePtr state = State::instance(registers, memory);
     RiscOperatorsPtr ops(new RiscOperators(partitioner, process, state, solver));
     ASSERT_require(ops->REG_PATH == path);
@@ -97,7 +98,7 @@ IS::BaseSemantics::SValuePtr
 RiscOperators::readRegister(RegisterDescriptor reg, const IS::BaseSemantics::SValuePtr &dflt) {
     IS::BaseSemantics::SValuePtr retval = Super::readRegister(reg, dflt);
     if (SymbolicExpr::LeafPtr variable = SValue::promote(retval)->get_expression()->isLeafNode()) {
-        if (variable->isVariable() && !variables_.exists(variable))
+        if (variable->isVariable2() && !variables_.exists(variable))
             variables_.insert(variable, VariableProvenance(reg));
     }
     return retval;
@@ -108,7 +109,7 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SV
                           const IS::BaseSemantics::SValuePtr &dflt, const IS::BaseSemantics::SValuePtr &cond) {
     SValuePtr retval = SValue::promote(Super::readMemory(segreg, addr, dflt, cond));
     if (SymbolicExpr::LeafPtr variable = retval->get_expression()->isLeafNode()) {
-        if (variable->isVariable() && !variables_.exists(variable))
+        if (variable->isVariable2() && !variables_.exists(variable))
             variables_.insert(variable, VariableProvenance(addr));
     }
     return retval;
@@ -116,17 +117,21 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SV
 
 void
 RiscOperators::markProgramArguments() {
-    // Even for amd64, the argc and argv values are on the stack, not in registers.
+    // For Linux ELF x86 and amd64, the argc and argv values are on the stack, not in registers.
     const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
+    size_t wordSizeBytes = SP.nBits() / 8;
     rose_addr_t sp = process_->readRegister(SP).toInteger();
-    rose_addr_t argcVa = sp;                            // address of "argc"
+    rose_addr_t argcVa = sp;                            // specimen's &argc
+    rose_addr_t argvVa = sp + wordSizeBytes;            // specimen's argv+0
+    size_t argc = process_->readMemory(sp, wordSizeBytes, ByteOrder::ORDER_LSB).toInteger();
 #if 1 // DEBUGGING [Robb Matzke 2019-09-23]
-    size_t wordSizeBytes = 4;                           // FIXME[Robb Matzke 2019-09-23]
-    rose_addr_t argc = process_->readMemory(sp, wordSizeBytes, ByteOrder::ORDER_LSB).toInteger();
     std::cerr <<"ROBB: argc = " <<argc <<"\n";
 #endif
-    
-    //BaseValuePtr argv = ops->add(sp, wordsize);
+
+    // Create symbolic values for argc
+    SValuePtr argcSem = SValue::promote(undefined_(SP.nBits()));
+    argcSem->set_comment("argc");
+    writeMemory(RegisterDescriptor(), number_(SP.nBits(), argcVa), argcSem, boolean_(true));
 }
 
 rose_addr_t
@@ -137,9 +142,14 @@ Dispatcher::concreteInstructionPointer() const {
 void
 Dispatcher::processInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
+
+    // Concrete execution
     Debugger::Ptr process = RiscOperators::promote(get_operators())->process();
     process->executionAddress(insn->get_address());
     process->singleStep();
+
+    // Symbolic execution
+    Super::processInstruction(insn);
 }
 
 bool
@@ -287,7 +297,6 @@ ConcolicExecutor::run(const Emulation::DispatcherPtr &cpu) {
         printVariables(std::cerr, ops->currentState());
 #endif
         va = cpu->concreteInstructionPointer();
-        //SAWYER_MESG(debug) <<semantics;
     }
 }
 

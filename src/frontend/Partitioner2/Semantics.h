@@ -363,9 +363,9 @@ MemoryState<Super>::readOrPeekMemory(const InstructionSemantics2::BaseSemantics:
         if (!isModifiable || isInitialized) {
             uint8_t byte;
             if (1 == map_->at(va).limit(1).read(&byte).size()) {
-                SymbolicExpr::Ptr expr = SymbolicExpr::makeInteger(8, byte);
+                SymbolicExpr::Ptr expr = SymbolicExpr::makeIntegerConstant(8, byte);
                 if (isModifiable) {
-                    SymbolicExpr::Ptr indet = SymbolicExpr::makeVariable(8);
+                    SymbolicExpr::Ptr indet = SymbolicExpr::makeIntegerVariable(8);
                     expr = SymbolicExpr::makeSet(expr, indet, valOps->solver());
                 }
                 SymbolicSemantics::SValuePtr val = SymbolicSemantics::SValue::promote(valOps->undefined_(8));

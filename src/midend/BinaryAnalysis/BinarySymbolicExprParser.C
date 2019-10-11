@@ -638,7 +638,8 @@ public:
     immediateExpansion(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
         if (!ops_.exists(op.lexeme()))
             return SymbolicExpr::Ptr();
-        return SymbolicExpr::Interior::create(op.width(), ops_[op.lexeme()], args, solver);
+        SymbolicExpr::Type type = op.width() > 0 ? SymbolicExpr::Type::integer(op.width()) : SymbolicExpr::Type::none();
+        return SymbolicExpr::Interior::instance(type, ops_[op.lexeme()], args, solver);
     }
 };
 
@@ -775,7 +776,8 @@ public:
     immediateExpansion(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
         if (!ops_.exists(op.lexeme()))
             return SymbolicExpr::Ptr();
-        return SymbolicExpr::Interior::create(op.width(), ops_[op.lexeme()], args, solver);
+        SymbolicExpr::Type type = op.width() > 0 ? SymbolicExpr::Type::integer(op.width()) : SymbolicExpr::Type::none();
+        return SymbolicExpr::Interior::instance(type, ops_[op.lexeme()], args, solver);
     }
 };
 
@@ -811,12 +813,12 @@ public:
                 throw symbol.syntaxError("variable \"" + StringUtility::cEscape(symbol.lexeme()) + "\""
                                          " should have scalar width");
             }
-            return SymbolicExpr::makeExistingVariable(symbol.width(), varId);
+            return SymbolicExpr::makeIntegerVariable(symbol.width(), varId);
         } else {
             ASSERT_require(symbol.lexeme()[0] == 'm');
             size_t domainWidth = symbol.width();
             size_t rangeWidth = symbol.width2() ? symbol.width2() : (size_t)8;
-            return SymbolicExpr::makeExistingMemory(domainWidth, rangeWidth, varId);
+            return SymbolicExpr::makeMemoryVariable(domainWidth, rangeWidth, varId);
         }
     }
 };
@@ -836,9 +838,9 @@ public:
     }
     SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &symbol) {
         if (symbol.lexeme() == "true") {
-            return SymbolicExpr::makeBoolean(true);
+            return SymbolicExpr::makeBooleanConstant(true);
         } else if (symbol.lexeme() == "false") {
-            return SymbolicExpr::makeBoolean(false);
+            return SymbolicExpr::makeBooleanConstant(false);
         } else {
             return SymbolicExpr::Ptr();
         }
@@ -931,7 +933,7 @@ SymbolicExprParser::RegisterSubstituter::immediateExpansion(const Token &token) 
     if (reg2var_.forward().getOptional(*regp).assignTo(retval))
         return retval;
 
-    retval = SymbolicExpr::makeVariable(regp->nBits(), token.lexeme());
+    retval = SymbolicExpr::makeIntegerVariable(regp->nBits(), token.lexeme());
     reg2var_.insert(*regp, retval);
     return retval;
 }
@@ -999,7 +1001,7 @@ SymbolicExprParser::MemorySubstituter::immediateExpansion(const Token &func, con
         throw func.syntaxError("invalid memory width (specified=" + StringUtility::numberToString(func.width()) +
                                ", required multiple of 8)");
     } else {
-        SymbolicExpr::Ptr retval = SymbolicExpr::makeVariable(func.width(), "memory-ref");
+        SymbolicExpr::Ptr retval = SymbolicExpr::makeIntegerVariable(func.width(), "memory-ref");
         exprToMem_.insert(retval, operands[0]);
         return retval;
     }
@@ -1046,7 +1048,7 @@ SymbolicExprParser::TermPlaceholders::immediateExpansion(const Token &token) {
         return retval;
     if (token.width() == 0)
         throw token.syntaxError("non-zero variable width required");
-    retval = SymbolicExpr::makeVariable(token.width());
+    retval = SymbolicExpr::makeIntegerVariable(token.width());
     name2var_.insert(token.lexeme(), retval);
     return retval;
 }
@@ -1202,7 +1204,7 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 break;
             }
             case Token::BITVECTOR: {
-                SymbolicExpr::Ptr leaf = SymbolicExpr::makeConstant(tokens[0].bits());
+                SymbolicExpr::Ptr leaf = SymbolicExpr::makeIntegerConstant(tokens[0].bits());
                 tokens.shift(1);
                 if (stack.empty())
                     return leaf;

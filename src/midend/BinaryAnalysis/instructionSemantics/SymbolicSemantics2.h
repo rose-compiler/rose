@@ -216,10 +216,10 @@ private:
 protected:
     SValue() {}                                         // needed for serialization
     explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {
-        expr = SymbolicExpr::makeVariable(nbits);
+        expr = SymbolicExpr::makeIntegerVariable(nbits);
     }
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
-        expr = SymbolicExpr::makeInteger(nbits, number);
+        expr = SymbolicExpr::makeIntegerConstant(nbits, number);
     }
     SValue(ExprPtr expr): BaseSemantics::SValue(expr->nBits()) {
         this->expr = expr;
@@ -230,27 +230,27 @@ protected:
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
-        return SValuePtr(new SValue(SymbolicExpr::makeVariable(1)));
+        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(1)));
     }
 
     /** Instantiate a new data-flow bottom value of specified width. */
     static SValuePtr instance_bottom(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpr::makeVariable(nbits, "", ExprNode::BOTTOM)));
+        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(nbits, "", ExprNode::BOTTOM)));
     }
 
     /** Instantiate a new undefined value of specified width. */
     static SValuePtr instance_undefined(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpr::makeVariable(nbits)));
+        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(nbits)));
     }
 
     /** Instantiate a new unspecified value of specified width. */
     static SValuePtr instance_unspecified(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpr::makeVariable(nbits, "", ExprNode::UNSPECIFIED)));
+        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(nbits, "", ExprNode::UNSPECIFIED)));
     }
 
     /** Instantiate a new concrete value. */
     static SValuePtr instance_integer(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(SymbolicExpr::makeInteger(nbits, value)));
+        return SValuePtr(new SValue(SymbolicExpr::makeIntegerConstant(nbits, value)));
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -308,7 +308,7 @@ public:
     virtual bool isBottom() const ROSE_OVERRIDE;
 
     virtual bool is_number() const ROSE_OVERRIDE {
-        return expr->isNumber();
+        return expr->isIntegerConstant();
     }
 
     virtual uint64_t get_number() const ROSE_OVERRIDE;

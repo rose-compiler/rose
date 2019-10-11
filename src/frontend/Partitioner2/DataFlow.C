@@ -353,17 +353,17 @@ isStackAddress(const Rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
 
     variable = inode->child(0)->isLeafNode();
     SymbolicExpr::LeafPtr constant = inode->child(1)->isLeafNode();
-    if (!constant || !constant->isNumber())
+    if (!constant || !constant->isIntegerConstant())
         std::swap(variable, constant);
-    if (!constant || !constant->isNumber())
+    if (!constant || !constant->isIntegerConstant())
         return Sawyer::Nothing();
-    if (!variable || !variable->isVariable())
+    if (!variable || !variable->isIntegerVariable())
         return Sawyer::Nothing();
 
     if (!variable->mustEqual(initialStack, solver))
         return Sawyer::Nothing();
 
-    int64_t val = IntegerOps::signExtend2(constant->toInt(), constant->nBits(), 64);
+    int64_t val = constant->toSigned().get();
     return val;
 }
 
