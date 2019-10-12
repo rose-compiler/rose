@@ -124,7 +124,7 @@ void FunctionCallMapping::initDiagnostics() {
 FunctionCallTargetSet FunctionCallMapping::resolveFunctionCall(SgFunctionCallExp* funCall) {
   FunctionCallTargetSet fcs;
   if(funCall) {
-    cout << "DEBUG: @FunctionCallMapping::resolveFunctionCall:"<<funCall->unparseToString()<<endl;
+    SAWYER_MESG(logger[TRACE]) << "DEBUG: @FunctionCallMapping::resolveFunctionCall:"<<funCall->unparseToString()<<endl;
     auto iter=mapping.find(funCall);
     if(iter!=mapping.end()) {
       return (*iter).second;
