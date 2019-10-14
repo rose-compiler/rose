@@ -16934,7 +16934,7 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
           i++;
         }
 
-#if 1
+#if 0
      printf ("In SgSourceFile::set_tokenSubsequenceMap(): (after): tokenMap.size() = %zu \n",tokenMap.size());
 #endif
 
