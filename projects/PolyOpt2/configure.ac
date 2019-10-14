@@ -60,8 +60,9 @@ AX_BOOST_BASE([1.35.0], [], [AC_MSG_ERROR([
 # Make sure Rose is present and useable.
 dnl All of this should go into a separate AX_ROSE macro someday.
 AC_ARG_WITH([rose], [AS_HELP_STRING([--with-rose], [defines the root directory of a local Rose installation.])], [MY_ROSE_ROOT=$withval], [MY_ROSE_ROOT=$ROSE_ROOT])
-ROSE_CPPFLAGS="-I$MY_ROSE_ROOT/include -I$MY_ROSE_ROOT/include/rose"
-ROSE_LDFLAGS="-L$MY_ROSE_ROOT/lib -lrose"
+ROSE_CPPFLAGS="$($MY_ROSE_ROOT/bin/rose-config cppflags)"
+ROSE_LDFLAGS="$($MY_ROSE_ROOT/bin/rose-config ldflags)"
+
 
 dnl Check for rose.h
 CPPFLAGS_BACKUP=$CPPFLAGS
