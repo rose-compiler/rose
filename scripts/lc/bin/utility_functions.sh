@@ -1,12 +1,41 @@
 #!/bin/echo ERROR: Source, do not execute, this script:
 #
-# These are utility functions for use by demo_srun, runnee, do_srun, etc.
+# Sets strict mode, defines set_strict, unset_strict, log_*,
+# log_then_run, run_or_not, etc.:
+#
+# set_strict
+# unset_strict 
+# do_time_log 
+# do_time_file 
+# do_date_log 
+# do_date_file 
+# do_date 
+# do_env 
+# log 
+# log_w_time
+# log_w_date
+# log_w_line
+# log_w_line_w_time
+# log_w_line_w_date
+# log_no_prefix 
+# log_blank 
+# log_blank_no_prefix 
+# log_separator_0 
+# log_separator_1 
+# log_separator_2 
+# log_separator_3 
+# log_start 
+# log_invocation 
+# log_end
+# run_or_not
+# log_then_run 
+# log_then_run_or_exit 
 #
 # This file should have execute permission so it can be found by "which", but 
 # it should be sourced, not executed.  For example:
 #   utility_functions=`which utility_functions.sh`
 #   source ${utility_functions}
-
+#
 # Note:
 # $*, $@ - all args
 # "$*"   - all args quoted in one string. 
@@ -48,7 +77,63 @@ unset_strict () {
 }
 
 set_strict
+
 # END bash strict mode setup
+###############################################################################
+
+###############################################################################
+# Functions to push and pop the current state of set.  
+# Only for one level deep.
+
+push_set_state () {
+  # Using set +u in a subshell so that detection of an unset variable does not 
+  # itself trigger an error:
+  if [ `(set +u; echo ${SET_STATE-not_set})` != "not_set" ]
+  then
+    echo "push_set_state: ERROR - SET_STATE should not be set, but is: \"${SET_STATE}\""
+    return 1
+  else  
+    export SET_STATE=$-
+  fi
+}
+
+pop_set_state () {
+  # Using set +u in a subshell so that detection of an unset variable does not 
+  # itself trigger an error:
+  if [ `(set +u; echo ${SET_STATE-not_set})` == "not_set" ]
+  then
+    echo "pop_set_state: ERROR - SET_STATE should be set, but is not."
+    return 1
+  else
+    set -${SET_STATE}
+    unset SET_STATE
+  fi
+}
+
+test_push_pop_u () {
+  echo $-
+  push_set_state
+  set +u
+  echo $-
+  pop_set_state
+  echo $-
+}
+
+test_two_pushes () {
+  push_set_state
+  push_set_state
+}
+
+test_two_pops () {
+  pop_set_state
+  pop_set_state
+}
+
+#test_push_pop_u
+#test_two_pushes
+#test_two_pop
+
+# END Functions to push and pop the current state of set.
 ###############################################################################
 
 # Changes all \"this that\" to "this that"
@@ -169,17 +254,20 @@ log_w_line_w_date() {
   log ${BASH_LINENO[0]}: `do_date_log`: "$*"
 }
 
-# One more stack level deep:
+# Ignore the intermediate calls in utility_functions.sh.
+# Works for two levels of calls (call from _log...internal below)
 _log_w_line_internal() {
-  log ${BASH_LINENO[1]}: "$*"
+  echo `basename ${BASH_SOURCE[3]}` ${BASH_LINENO[2]}: "$*"
 }
 
+# Works for one level of calls (call directly from run_or_not or log_then_run)
 _log_w_line_w_time_internal() {
-  log ${BASH_LINENO[1]}: `do_time_log`: "$*"
+  _log_w_line_internal `do_time_log`: "$*"
 }
 
+# Works for one level of calls (call directly from run_or_not or log_then_run)
 _log_w_line_w_date_internal() {
-  log ${BASH_LINENO[1]}: `do_date_log`: "$*"
+   _log_w_line_internal `do_date_log`: "$*"
 }
 
 log_no_prefix () {
@@ -236,6 +324,43 @@ log_end () {
   fi
 }
 
+# Check RUN_OR_NOT_EFFORT_ONLY and return 1 if it is
+# set to FALSE, or not set:
+_should_run () {
+  if [ -z "${RUN_OR_NOT_EFFORT_ONLY+var_is_set}" ]
+  then
+    # Not set or set to null
+    true; return $?
+  else
+    # Set to something...
+    if [ "${RUN_OR_NOT_EFFORT_ONLY}" == "FALSE" ]
+    then
+      true; return $?
+    else
+      false; return $?
+    fi
+  fi
+}
+
+# If RUN_OR_NOT_EFFORT_ONLY is set, does not actually run the command:
+run_or_not () {
+  if _should_run
+  then
+    # Temporarily turn off error exit so the exit status can be logged:
+    push_set_state
+    set -e
+    "$@"
+    command_status=$?
+    pop_set_state
+  else
+    _log_w_line_w_time_internal "RUN_OR_NOT_EFFORT_ONLY is set. Not running \"$*\"."
+    command_status=0
+  fi
+  # Exit with the command status:
+  return ${command_status}
+}
+
+# If RUN_OR_NOT_EFFORT_ONLY is set, does not actually run the command:
 log_then_run () {
   # Caller source file and line:
   caller_info="${BASH_SOURCE[*]:1}:${LINENO}"
@@ -248,19 +373,26 @@ log_then_run () {
   _log_w_line_w_time_internal "Running: \"$*\""
 #  _log_w_line_internal "Running: ${command_line}"
   log_blank_no_prefix
-  # Temporarily turn off error exit so the exit status can be logged:
-  unset_strict
-  "$@"
-#  ${command_line}
-  log_then_run_status=$?
-  # Turn err exit and trap again:
-#  set_strict
+  # Clone of run_or_not instead of calling it to make using _log_w_line_w_date_internal easier:
+  if _should_run
+  then
+    # Temporarily turn off error exit so the exit status can be logged:
+    push_set_state
+    set -e
+    "$@"
+#    ${command_line}
+    command_status=$?
+    pop_set_state
+  else
+    log "RUN_OR_NOT_EFFORT_ONLY is set. Not running."
+    command_status=0
+  fi
   log_blank_no_prefix
-  _log_w_line_w_time_internal "Done. (status ${log_then_run_status})"
+  _log_w_line_w_time_internal "Done. (status ${command_status})"
   log_separator_1
   log_separator_0
-  # Exit with the right run status:
-  return ${log_then_run_status}
+  # Exit with the command status:
+  return ${command_status}
 }
 
 # Confusing name (too much like run_and_log), deprecated:
