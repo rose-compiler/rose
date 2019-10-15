@@ -10,13 +10,19 @@
 #   ROSE_LD_LIBRARY_PATH
 #   ROSE_REPO:
 
-set_ROSE_HOME_dir=`dirname ${BASH_SOURCE[0]}`
-export AUTOMATION_HOME=`(cd ${set_ROSE_HOME_dir}/../..;pwd)`
-set_ROSE_HOME_support_dir="${AUTOMATION_HOME}/ROSE"
+rel_script_dir=`dirname ${BASH_SOURCE[0]}`
+export AUTOMATION_HOME=`(cd ${rel_script_dir}/../..;pwd)`
+ROSE_AUTOMATION_DIR="${AUTOMATION_HOME}/ROSE"
 
-# Declare define_component_variables, define_desired_export_vars:
-source "${set_ROSE_HOME_support_dir}/set_ROSE_HOME_support.sh"
+# Declare funcs define_component_variables, define_desired_export_vars:
+source "${ROSE_AUTOMATION_DIR}/set_ROSE_HOME_support.sh"
 
+# define_component_variables sets ROSE_PROJECT_BASE.  Need it to get latest version:
+define_component_variables
+export ROSE_VERSION=`cat ${ROSE_PROJECT_BASE}/VERSION_OF_LATEST_WORKSPACE`
+
+# define_component_variables uses the current definition of ROSE_VERSION if 
+# there is one.  Rerun with our ROSE_VERSION:
 # Set:
 #   ROSE_VERSION
 #   CODE_BASE

@@ -2,12 +2,13 @@
 
 define_component_variables () {
   # Most likely to change:
-  export ROSE_VERSION="0.9.11.115"
+  export ROSE_VERSION=${ROSE_VERSION:-"0.9.11.115"}
   export ROSE_BRANCH_NAME="master"
  
   export CODE_BASE="${HOME}/code"
 #  export ROSE_PROJECT_BASE="${CODE_BASE}/ROSE"
-  export ROSE_PROJECT_BASE="/usr/workspace/wsrzd/charles/bamboo/ROSEARES-rzgenie2-charles-1/xml-data/build-dir/ROSE-ROSE-CLONEPRE"
+#  export ROSE_PROJECT_BASE="/usr/workspace/wsrzd/charles/bamboo/ROSEARES-rzgenie2-charles-1/xml-data/build-dir/ROSE-ROSE-CLONEPRE"
+  export ROSE_PROJECT_BASE="/collab/usr/global/tools/rose/toss_3_x86_64_ib"
   export ROSE_REPO_NAME="rose"
   export ROSE_REPO_PATH_CLONED="${ROSE_PROJECT_BASE}/${ROSE_REPO_NAME}"
   # Take out any slashes:
