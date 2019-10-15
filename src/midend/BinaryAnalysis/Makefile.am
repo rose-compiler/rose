@@ -50,11 +50,19 @@ libbinaryMidend_la_SOURCES =					\
     Concolic/Utility.C						\
     DwarfLineMapper.C						\
     instructionSemantics/BaseSemantics2.C			\
+    instructionSemantics/BaseSemanticsDispatcher.C		\
+    instructionSemantics/BaseSemanticsException.C		\
+    instructionSemantics/BaseSemanticsMemoryState.C		\
+    instructionSemantics/BaseSemanticsRegisterState.C		\
+    instructionSemantics/BaseSemanticsRiscOperators.C		\
+    instructionSemantics/BaseSemanticsState.C			\
+    instructionSemantics/BaseSemanticsSValue.C			\
     instructionSemantics/ConcreteSemantics2.C			\
     instructionSemantics/DataFlowSemantics2.C			\
     instructionSemantics/DispatcherM68k.C			\
     instructionSemantics/DispatcherPowerpc.C			\
     instructionSemantics/DispatcherX86.C			\
+    instructionSemantics/InstructionSemantics2.C		\
     instructionSemantics/IntervalSemantics2.C			\
     instructionSemantics/LlvmSemantics2.C			\
     instructionSemantics/MemoryCell.C				\
@@ -121,11 +129,22 @@ pkginclude_HEADERS =					\
     DwarfLineMapper.h					\
     ether.h						\
     instructionSemantics/BaseSemantics2.h		\
+    instructionSemantics/BaseSemanticsDispatcher.h	\
+    instructionSemantics/BaseSemanticsException.h	\
+    instructionSemantics/BaseSemanticsFormatter.h	\
+    instructionSemantics/BaseSemanticsMemoryState.h	\
+    instructionSemantics/BaseSemanticsMerger.h		\
+    instructionSemantics/BaseSemanticsRegisterState.h	\
+    instructionSemantics/BaseSemanticsRiscOperators.h	\
+    instructionSemantics/BaseSemanticsState.h		\
+    instructionSemantics/BaseSemanticsSValue.h		\
+    instructionSemantics/BaseSemanticsTypes.h		\
     instructionSemantics/ConcreteSemantics2.h		\
     instructionSemantics/DataFlowSemantics2.h		\
     instructionSemantics/DispatcherM68k.h		\
     instructionSemantics/DispatcherPowerpc.h		\
     instructionSemantics/DispatcherX86.h		\
+    instructionSemantics/InstructionSemantics2.h	\
     instructionSemantics/IntervalSemantics2.h		\
     instructionSemantics/LlvmSemantics2.h		\
     instructionSemantics/MemoryCell.h			\
