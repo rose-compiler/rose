@@ -86,7 +86,6 @@ namespace po = boost::program_options;
 #endif
 
 using namespace CodeThorn;
-using namespace CodeThorn;
 using namespace boost;
 
 #include "Diagnostics.h"

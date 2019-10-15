@@ -32,10 +32,10 @@ namespace CodeThorn {
    */
   
   // private inharitance ensures PState is only used through methods defined here
-  class PState : private map<AbstractValue,CodeThorn::AbstractValue> {
+  class PState : private std::map<AbstractValue,CodeThorn::AbstractValue> {
   public:
-    typedef map<AbstractValue,CodeThorn::AbstractValue>::const_iterator const_iterator;
-    typedef map<AbstractValue,CodeThorn::AbstractValue>::iterator iterator;
+    typedef std::map<AbstractValue,CodeThorn::AbstractValue>::const_iterator const_iterator;
+    typedef std::map<AbstractValue,CodeThorn::AbstractValue>::iterator iterator;
     friend std::ostream& operator<<(std::ostream& os, const PState& value);
     friend std::istream& operator>>(std::istream& os, PState& value);
     friend class PStateHashFun;
@@ -78,7 +78,7 @@ namespace CodeThorn {
   };
   
   std::ostream& operator<<(std::ostream& os, const PState& value);
-  typedef set<const PState*> PStatePtrSet;
+  typedef std::set<const PState*> PStatePtrSet;
   
 class PStateHashFun {
    public:
