@@ -4,6 +4,7 @@ COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counte
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 bin_PROGRAMS = codethorn woodpecker analyterix addressTakenAnalysis
+
 # matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis
 #noinst_PROGRAMS matcher_demo matcher astinfo cldemo
@@ -36,71 +37,75 @@ lib_LTLIBRARIES = libcodethorn.la libcodethornltl.la
 # LIBRARY: CODETHORN (CORE)
 ##############################################################
 
-#libcodethorn_la_LDFLAGS= -no-undefined
-libcodethorn_la_LDFLAGS=
-libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3
+CODETHORN_SOLO_HEADER_FILES=\
+  AnalysisParameters.h \
+  CollectionOperators.h \
+  CtxAnalysis.h \
+  CtxLattice.h \
+  CtxTransfer.h \
+  EqualityMaintainer.h \
+  Evaluator.h \
+  ExecutionTrace.h \
+  HashFun.h \
+  HSetMaintainer.h \
+  ReadWriteData.h \
+  SetAlgo.h \
+  WorkListSeq.h
 
-# codethorn header files are installed in <installpath>/rose/codethorn
-codethornincludedir = $(pkgincludedir)/codethorn
-codethorninclude_HEADERS=\
-  CommandLineOptions.h \
-  CounterexampleGenerator.h	   \
+CODETHORN_HEADER_FILES=\
   AbstractValue.h \
+  addressTakenAnalysis.h \
   AliasAnalysis.h \
   AnalysisAbstractionLayer.h \
   AnalysisAstAnnotator.h \
-  AnalysisParameters.h             \
-  Analyzer.h                       \
+  Analyzer.h \
   ArrayElementAccessData.h \
   AstNodeInfo.h \
   AstTermRepresentation.h \
-  addressTakenAnalysis.h \
   BoolLattice.h \
   CallString.h \
   CFAnalysis.h \
-  CollectionOperators.h            \
-  ConstraintRepresentation.h       \
+  CommandLineOptions.h \
+  ConstraintRepresentation.h \
   ContNodeAttribute.h \
+  CounterexampleGenerator.h \
   CPAstAttribute.h \
-  CTIOLabeler.h                    \
-  CtxAnalysis.h \
+  CppExprEvaluator.h \
+  CTIOLabeler.h \
   CtxCallStrings.h \
-  CtxLattice.h \
-  CtxTransfer.h \
   DataDependenceVisualizer.h \
+  defUseQuery.h \
   DFAnalysisBase.h \
   DFTransferFunctions.h \
   DotGraphCfgFrontend.h \
-  EqualityMaintainer.h             \
-  EquivalenceChecking.h            \
-  EState.h           \
-  ExecutionTrace.h		   \
-  ExprAnalyzer.h                   \
+  EquivalenceChecking.h \
+  EState.h \
+  ExprAnalyzer.h \
   FIConstAnalysis.h \
+  Flow.h \
   FunctionCallMapping.h \
   FunctionCallTarget.h \
   FunctionId.h \
   FunctionIdMapping.h \
-  HashFun.h                        \
-  HSetMaintainer.h                 \
-  InputOutput.h           \
-  InternalChecks.h                 \
+  InputOutput.h \
+  InternalChecks.h \
   IntervalAnalysis.h \
   IntervalAstAttribute.h \
   IntervalAstAttributeInterface.h \
   IntervalPropertyStateFactory.h \
   IntervalPropertyState.h \
   IntervalTransferFunctions.h \
-  LanguageRestrictorCollection.h   \
+  LanguageRestrictorCollection.h \
   LanguageRestrictor.h \
-  LoopInfo.h                       \
+  Lattice.h \
+  LoopInfo.h \
   LVAnalysis.h \
   LVAstAttribute.h \
   LVAstAttributeInterface.h \
   LVLattice.h \
   LVTransferFunctions.h \
   Miscellaneous2.h \
-  Miscellaneous.h                  \
+  Miscellaneous.h \
   Normalization.h \
   NormalizationInliner.h \
   NormalizationOp.h \
@@ -113,89 +118,88 @@ codethorninclude_HEADERS=\
   ProgramAbstractionLayer.h \
   ProgramInfo.h \
   ProgramLocationsReport.h \
+  PropertyState.h \
   PropertyValueTable.h \
-  PState.h           \
+  PState.h \
   RDAnalysis.h \
   RDAstAttribute.h \
+  RDLattice.h \
   RDTransferFunctions.h \
   ReachabilityAnalysis.h \
-  ReadWriteData.h \
   ReadWriteHistory.h \
+  RERS_empty_specialization.h \
+  RewriteStatistics.h \
+  RewriteSystem.h \
   RWState.h \
-  SetAlgo.h \
   SgTypeSizeMapping.h \
   Solver5.h \
   Solver.h \
   Specialization.h \
   StructureAccessLookup.h \
-  SvcompWitness.h		   \
+  SvcompWitness.h \
   TimeMeasurement.h \
-  TransitionGraph.h                \
-  TransitionGraphReducer.h	   \
+  TransitionGraph.h \
+  TransitionGraphReducer.h \
   TypeSizeMapping.h \
-  UDAstAttribute.h                 \
+  UDAstAttribute.h \
+  VariableIdUtils.h \
   VariableValueMonitor.h \
-  Visualizer.h                     \
-  WorkListSeq.h \
-  RewriteStatistics.h \
-  RewriteSystem.h \
-  RERS_empty_specialization.h \
-  CodeThornLib.h
+  Visualizer.h
 
-# codethorn (core) library sources
-libcodethorn_la_SOURCES=\
-  CommandLineOptions.C \
+CODETHORN_SOURCE_FILES=\
   AbstractValue.C \
+  addressTakenAnalysis.C \
   AliasAnalysis.C \
   AnalysisAbstractionLayer.C \
   AnalysisAstAnnotator.C \
-  Analyzer.C                       \
+  Analyzer.C \
   ArrayElementAccessData.C \
   AstNodeInfo.C \
   AstTermRepresentation.C \
   BoolLattice.C \
   CallString.C \
   CFAnalysis.C \
-  ConstraintRepresentation.C       \
+  CommandLineOptions.C \
+  ConstraintRepresentation.C \
   ContNodeAttribute.C \
-  CounterexampleGenerator.C	   \
+  CounterexampleGenerator.C \
   CPAstAttribute.C \
   CppExprEvaluator.C \
-  CTIOLabeler.C                    \
+  CTIOLabeler.C \
   CtxCallStrings.C \
   DataDependenceVisualizer.C \
   defUseQuery.C \
   DFAnalysisBase.C \
   DFTransferFunctions.C \
   DotGraphCfgFrontend.C \
-  EquivalenceChecking.C            \
-  EState.C           \
-  ExprAnalyzer.C                   \
+  EquivalenceChecking.C \
+  EState.C \
+  ExprAnalyzer.C \
   FIConstAnalysis.C \
   Flow.C \
   FunctionCallMapping.C \
   FunctionCallTarget.C \
   FunctionId.C \
   FunctionIdMapping.C \
-  InputOutput.C           \
-  InternalChecks.C                 \
+  InputOutput.C \
+  InternalChecks.C \
   IntervalAnalysis.C \
   IntervalAstAttribute.C \
   IntervalAstAttributeInterface.C \
-  IntervalPropertyState.C \
   IntervalPropertyStateFactory.C \
+  IntervalPropertyState.C \
   IntervalTransferFunctions.C \
+  LanguageRestrictorCollection.C \
   LanguageRestrictor.C \
-  LanguageRestrictorCollection.C   \
   Lattice.C \
-  LoopInfo.C                       \
+  LoopInfo.C \
   LVAnalysis.C \
   LVAstAttribute.C \
   LVAstAttributeInterface.C \
   LVLattice.C \
   LVTransferFunctions.C \
   Miscellaneous2.C \
-  Miscellaneous.C                  \
+  Miscellaneous.C \
   Normalization.C \
   NormalizationInliner.C \
   NormalizationOp.C \
@@ -210,106 +214,127 @@ libcodethorn_la_SOURCES=\
   ProgramLocationsReport.C \
   PropertyState.C \
   PropertyValueTable.C \
-  PState.C           \
+  PState.C \
   RDAnalysis.C \
   RDAstAttribute.C \
   RDLattice.C \
   RDTransferFunctions.C \
   ReachabilityAnalysis.C \
   ReadWriteHistory.C \
+  RERS_empty_specialization.C \
+  RewriteStatistics.C \
+  RewriteSystem.C \
   RWState.C \
   SgTypeSizeMapping.C \
   Solver5.C \
   Solver.C \
   Specialization.C \
   StructureAccessLookup.C \
-  SvcompWitness.C		   \
-  TransitionGraph.C                \
-  TransitionGraphReducer.C	   \
+  SvcompWitness.C \
+  TimeMeasurement.C \
+  TransitionGraph.C \
+  TransitionGraphReducer.C \
   TypeSizeMapping.C \
-  UDAstAttribute.C                 \
+  UDAstAttribute.C \
   VariableIdUtils.C \
   VariableValueMonitor.C \
-  Visualizer.C \
-  RewriteStatistics.C \
-  RewriteSystem.C \
-  TimeMeasurement.C \
-  addressTakenAnalysis.C \
-  RERS_empty_specialization.C \
+  Visualizer.C
+
+#libcodethorn_la_LDFLAGS= -no-undefined
+libcodethorn_la_LDFLAGS=
+libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3
+
+# codethorn header files are installed in <installpath>/rose/codethorn
+codethornincludedir = $(pkgincludedir)/codethorn
+codethorninclude_HEADERS=\
+  $(CODETHORN_SOLO_HEADER_FILES) \
+  $(CODETHORN_HEADER_FILES) \
+  CodeThornLib.h
+
+# codethorn (core) library sources
+libcodethorn_la_SOURCES=\
+  $(CODETHORN_SOURCE_FILES) \
   CodeThornLib.C
 
 ################################################################
-# LIBRARY: CODETHORNLTL (for linear temporal logic verification)
+# LIBRARY: LTLTHORN/ (for linear temporal logic verification)
 ################################################################
 
 libcodethornltl_la_LDFLAGS=
 libcodethornltl_la_CXXFLAGS = -fopenmp -Wall -O3
 
-# only informative
-libcodethornltl_xHEADERS = \
-  DataRaceDetection.h \
-  IOAnalyzer.h                     \
-  IOSolver.h \
-  ReachabilityAnalyzerZ3.h \
-  ParallelAutomataGenerator.h \
-  LtsminConnection.h		   \
+LTLTHORN_SOLO_HEADER_FILES=
+LTLTHORN_HEADER_FILES=\
   CounterexampleAnalyzer.h \
-  RersCounterexample.h		   \
+  DataRaceDetection.h \
+  IOAnalyzer.h \
+  IOSolver.h \
+  LtsminConnection.h \
+  ParallelAutomataGenerator.h \
+  ParProAnalyzer.h \
+  ParProEState.h \
+  ParProExplorer.h \
+  ParProLtlMiner.h \
+  ParProSpotState.h \
+  ParProSpotSuccIter.h \
+  ParProSpotTgba.h \
+  ParProTransitionGraph.h \
+  PromelaCodeGenerator.h \
+  ReachabilityAnalyzerZ3.h \
+  ReadWriteAnalyzer.h \
+  RersCounterexample.h \
+  Solver10.h \
+  Solver11.h \
+  Solver12.h \
+  Solver8.h \
   SpotConnection.h \
   SpotMiscellaneous.h \
   SpotRenameVisitor.h \
   SpotState.h \
   SpotSuccIter.h \
   SpotTgba.h \
-  SSAGenerator.h \
-  ParProAnalyzer.h                 \
-  ParProEState.h           \
-  ParProExplorer.h                 \
-  ParProLtlMiner.h                 \
-  ParProSpotState.h \
-  ParProSpotSuccIter.h \
-  ParProSpotTgba.h \
-  ParProTransitionGraph.h          \
-  Solver8.h \
-  Solver10.h \
-  Solver11.h \
-  Solver12.h \
-  PromelaCodeGenerator.h \
-  ReadWriteAnalyzer.h \
-  CommandLineOptions.h \
-  CodeThornLTLLib.h
+  SSAGenerator.h
 
-# library sources
-libcodethornltl_la_SOURCES= \
-  IOAnalyzer.C                     \
-  IOSolver.C \
-  ReachabilityAnalyzerZ3.C \
-  ParallelAutomataGenerator.C \
-  LtsminConnection.C		   \
+LTLTHORN_SOURCE_FILES=\
   CounterexampleAnalyzer.C \
-  RersCounterexample.C		   \
+  DataRaceDetection.C \
+  IOAnalyzer.C \
+  IOSolver.C \
+  LtsminConnection.C \
+  ParallelAutomataGenerator.C \
+  ParProAnalyzer.C \
+  ParProEState.C \
+  ParProExplorer.C \
+  ParProLtlMiner.C \
+  ParProSpotState.C \
+  ParProSpotSuccIter.C \
+  ParProSpotTgba.C \
+  ParProTransitionGraph.C \
+  PromelaCodeGenerator.C \
+  ReachabilityAnalyzerZ3.C \
+  ReadWriteAnalyzer.C \
+  RersCounterexample.C \
+  Solver10.C \
+  Solver11.C \
+  Solver12.C \
+  Solver8.C \
   SpotConnection.C \
   SpotMiscellaneous.C \
   SpotRenameVisitor.C \
   SpotState.C \
   SpotSuccIter.C \
   SpotTgba.C \
-  SSAGenerator.C \
-  ParProAnalyzer.C                 \
-  ParProEState.C           \
-  ParProExplorer.C                 \
-  ParProLtlMiner.C                 \
-  ParProSpotState.C \
-  ParProSpotSuccIter.C \
-  ParProSpotTgba.C \
-  ParProTransitionGraph.C          \
-  Solver8.C \
-  Solver10.C \
-  Solver11.C \
-  Solver12.C \
-  PromelaCodeGenerator.C \
-  ReadWriteAnalyzer.C \
-  DataRaceDetection.C \
+  SSAGenerator.C
+
+# only informative
+libcodethornltl_xHEADERS = \
+  $(LTLTHORN_SOLO_HEADER_FILES) \
+  $(LTLTHORN_HEADER_FILES) \
+  CodeThornLTLLib.h
+
+# library sources
+libcodethornltl_la_SOURCES= \
+  $(LTLTHORN_SOURCE_FILES) \
   CodeThornLTLLib.C
 
 
@@ -345,6 +370,12 @@ codethorn_xHEADERS = \
 codethorn_SOURCES = \
   LTLParser.y++ \
   codethorn.C
+
+##############################################################
+# TOOL: LTLTHORN
+##############################################################
+
+# TODO
 
 
 ##############################################################
