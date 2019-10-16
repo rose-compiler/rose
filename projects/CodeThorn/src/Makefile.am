@@ -74,7 +74,6 @@ codethorninclude_HEADERS=\
   EqualityMaintainer.h             \
   EquivalenceChecking.h            \
   EState.h           \
-  Evaluator.h                      \
   ExecutionTrace.h		   \
   ExprAnalyzer.h                   \
   FIConstAnalysis.h \
@@ -83,7 +82,6 @@ codethorninclude_HEADERS=\
   FunctionId.h \
   FunctionIdMapping.h \
   HashFun.h                        \
-  HSet.h                           \
   HSetMaintainer.h                 \
   InputOutput.h           \
   InternalChecks.h                 \

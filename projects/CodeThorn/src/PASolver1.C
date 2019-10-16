@@ -6,6 +6,8 @@
 #include "PASolver1.h"
 #include "TimeMeasurement.h"
 
+using namespace std;
+
 CodeThorn::PASolver1::PASolver1(WorkListSeq<Edge>& workList,
 				  vector<Lattice*>& analyzerDataPreInfo,
 				  vector<Lattice*>& analyzerDataPostInfo,
