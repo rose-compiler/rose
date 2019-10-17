@@ -41,6 +41,7 @@ CODETHORN_SOLO_HEADER_FILES=\
   AnalysisParameters.h \
   CollectionOperators.h \
   CtxAnalysis.h \
+  CtxAttribute.h \
   CtxLattice.h \
   CtxTransfer.h \
   EqualityMaintainer.h \
@@ -50,7 +51,8 @@ CODETHORN_SOLO_HEADER_FILES=\
   HSetMaintainer.h \
   ReadWriteData.h \
   SetAlgo.h \
-  WorkListSeq.h
+  WorkListSeq.h \
+  WorkList.h
 
 CODETHORN_HEADER_FILES=\
   AbstractValue.h \

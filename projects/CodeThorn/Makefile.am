@@ -26,7 +26,6 @@ all:
 
 clean:
 	make -C src clean
-	make -C src distclean
 
 docs: $(srcdir)/docs/doxygen/index.html
 
