@@ -56,11 +56,11 @@
 #include "AstTermRepresentation.h"
 #include "Normalization.h"
 #include "DataDependenceVisualizer.h" // also used for clustered ICFG
+#include "Evaluator.h" // CppConstExprEvaluator
 
 // test
 #include "SSAGenerator.h"
 #include "ReachabilityAnalyzerZ3.h"
-#include "Evaluator.h"
 #include "DotGraphCfgFrontend.h"
 #include "ParProAnalyzer.h"
 #include "PromelaCodeGenerator.h"
@@ -72,7 +72,7 @@
 #endif
 
 #include "CodeThornLib.h"
-#include "CodeThornLTLLib.h"
+#include "LTLThornLib.h"
 
 //BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -85,7 +85,6 @@ namespace po = Sawyer::CommandLine::Boost;
 namespace po = boost::program_options;
 #endif
 
-using namespace CodeThorn;
 using namespace CodeThorn;
 using namespace boost;
 

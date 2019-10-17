@@ -2,7 +2,7 @@
 #include "IOAnalyzer.h"
 #include "ReadWriteAnalyzer.h"
 #include "CounterexampleGenerator.h"
-#include "CodeThornLTLLib.h"
+#include "LTLThornLib.h"
 
 void CodeThorn::initDiagnosticsLTL() {
   IOAnalyzer::initDiagnostics();

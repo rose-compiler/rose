@@ -21,6 +21,17 @@ demo:
 roseonlytools:
 	make -C src roseonlytools
 
+all:
+	make -C src
+
+clean:
+	make -C src clean
+
+docs: $(srcdir)/docs/doxygen/index.html
+
+$(srcdir)/docs/doxygen/index.html: $(srcdir)/src/Doxyfile
+	make -C src docs
+
 endif
 endif
 endif

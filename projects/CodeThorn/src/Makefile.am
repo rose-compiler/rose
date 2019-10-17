@@ -3,9 +3,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix addressTakenAnalysis
+bin_PROGRAMS = codethorn woodpecker analyterix addressTakenAnalysis cldemo
+
 # matcher_demo matcher astinfo cldemo
-noinst_PROGRAMS = addressTakenAnalysis
+noinst_PROGRAMS = addressTakenAnalysis cldemo
 #noinst_PROGRAMS matcher_demo matcher astinfo cldemo
 
 CLEANFILES =
@@ -30,79 +31,83 @@ endif
 
 MYDATE = $(shell date +%Y_%m_%d)
 
-lib_LTLIBRARIES = libcodethorn.la libcodethornltl.la
+lib_LTLIBRARIES = libcodethorn.la libltlthorn.la
 
 ##############################################################
 # LIBRARY: CODETHORN (CORE)
 ##############################################################
 
-#libcodethorn_la_LDFLAGS= -no-undefined
-libcodethorn_la_LDFLAGS=
-libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3
+CODETHORN_SOLO_HEADER_FILES=\
+  AnalysisParameters.h \
+  CollectionOperators.h \
+  CtxAnalysis.h \
+  CtxAttribute.h \
+  CtxLattice.h \
+  CtxTransfer.h \
+  EqualityMaintainer.h \
+  Evaluator.h \
+  ExecutionTrace.h \
+  HashFun.h \
+  HSetMaintainer.h \
+  ReadWriteData.h \
+  SetAlgo.h \
+  WorkListSeq.h \
+  WorkList.h
 
-# codethorn header files are installed in <installpath>/rose/codethorn
-codethornincludedir = $(pkgincludedir)/codethorn
-codethorninclude_HEADERS=\
-  CommandLineOptions.h \
-  CounterexampleGenerator.h	   \
+CODETHORN_HEADER_FILES=\
   AbstractValue.h \
+  addressTakenAnalysis.h \
   AliasAnalysis.h \
   AnalysisAbstractionLayer.h \
   AnalysisAstAnnotator.h \
-  AnalysisParameters.h             \
-  Analyzer.h                       \
+  Analyzer.h \
   ArrayElementAccessData.h \
   AstNodeInfo.h \
   AstTermRepresentation.h \
-  addressTakenAnalysis.h \
   BoolLattice.h \
   CallString.h \
   CFAnalysis.h \
-  CollectionOperators.h            \
-  ConstraintRepresentation.h       \
+  CommandLineOptions.h \
+  ConstraintRepresentation.h \
   ContNodeAttribute.h \
+  CounterexampleGenerator.h \
   CPAstAttribute.h \
-  CTIOLabeler.h                    \
-  CtxAnalysis.h \
+  CppExprEvaluator.h \
+  CTIOLabeler.h \
   CtxCallStrings.h \
-  CtxLattice.h \
-  CtxTransfer.h \
   DataDependenceVisualizer.h \
+  defUseQuery.h \
   DFAnalysisBase.h \
   DFTransferFunctions.h \
   DotGraphCfgFrontend.h \
-  EqualityMaintainer.h             \
-  EquivalenceChecking.h            \
-  EState.h           \
-  Evaluator.h                      \
-  ExecutionTrace.h		   \
-  ExprAnalyzer.h                   \
+  EquivalenceChecking.h \
+  EState.h \
+  ExprAnalyzer.h \
   FIConstAnalysis.h \
+  Flow.h \
   FunctionCallMapping.h \
   FunctionCallTarget.h \
   FunctionId.h \
   FunctionIdMapping.h \
-  HashFun.h                        \
-  HSet.h                           \
-  HSetMaintainer.h                 \
-  InputOutput.h           \
-  InternalChecks.h                 \
+  InputOutput.h \
+  InternalChecks.h \
   IntervalAnalysis.h \
   IntervalAstAttribute.h \
   IntervalAstAttributeInterface.h \
   IntervalPropertyStateFactory.h \
   IntervalPropertyState.h \
   IntervalTransferFunctions.h \
-  LanguageRestrictorCollection.h   \
+  LanguageRestrictorCollection.h \
   LanguageRestrictor.h \
-  LoopInfo.h                       \
+  Lattice.h \
+  LoopInfo.h \
   LVAnalysis.h \
   LVAstAttribute.h \
   LVAstAttributeInterface.h \
   LVLattice.h \
   LVTransferFunctions.h \
   Miscellaneous2.h \
-  Miscellaneous.h                  \
+  Miscellaneous.h \
   Normalization.h \
   NormalizationInliner.h \
   NormalizationOp.h \
@@ -115,89 +120,88 @@ codethorninclude_HEADERS=\
   ProgramAbstractionLayer.h \
   ProgramInfo.h \
   ProgramLocationsReport.h \
+  PropertyState.h \
   PropertyValueTable.h \
-  PState.h           \
+  PState.h \
   RDAnalysis.h \
   RDAstAttribute.h \
+  RDLattice.h \
   RDTransferFunctions.h \
   ReachabilityAnalysis.h \
-  ReadWriteData.h \
   ReadWriteHistory.h \
+  RERS_empty_specialization.h \
+  RewriteStatistics.h \
+  RewriteSystem.h \
   RWState.h \
-  SetAlgo.h \
   SgTypeSizeMapping.h \
   Solver5.h \
   Solver.h \
   Specialization.h \
   StructureAccessLookup.h \
-  SvcompWitness.h		   \
+  SvcompWitness.h \
   TimeMeasurement.h \
-  TransitionGraph.h                \
-  TransitionGraphReducer.h	   \
+  TransitionGraph.h \
+  TransitionGraphReducer.h \
   TypeSizeMapping.h \
-  UDAstAttribute.h                 \
+  UDAstAttribute.h \
+  VariableIdUtils.h \
   VariableValueMonitor.h \
-  Visualizer.h                     \
-  WorkListSeq.h \
-  RewriteStatistics.h \
-  RewriteSystem.h \
-  RERS_empty_specialization.h \
-  CodeThornLib.h
+  Visualizer.h
 
-# codethorn (core) library sources
-libcodethorn_la_SOURCES=\
-  CommandLineOptions.C \
+CODETHORN_SOURCE_FILES=\
   AbstractValue.C \
+  addressTakenAnalysis.C \
   AliasAnalysis.C \
   AnalysisAbstractionLayer.C \
   AnalysisAstAnnotator.C \
-  Analyzer.C                       \
+  Analyzer.C \
   ArrayElementAccessData.C \
   AstNodeInfo.C \
   AstTermRepresentation.C \
   BoolLattice.C \
   CallString.C \
   CFAnalysis.C \
-  ConstraintRepresentation.C       \
+  CommandLineOptions.C \
+  ConstraintRepresentation.C \
   ContNodeAttribute.C \
-  CounterexampleGenerator.C	   \
+  CounterexampleGenerator.C \
   CPAstAttribute.C \
   CppExprEvaluator.C \
-  CTIOLabeler.C                    \
+  CTIOLabeler.C \
   CtxCallStrings.C \
   DataDependenceVisualizer.C \
   defUseQuery.C \
   DFAnalysisBase.C \
   DFTransferFunctions.C \
   DotGraphCfgFrontend.C \
-  EquivalenceChecking.C            \
-  EState.C           \
-  ExprAnalyzer.C                   \
+  EquivalenceChecking.C \
+  EState.C \
+  ExprAnalyzer.C \
   FIConstAnalysis.C \
   Flow.C \
   FunctionCallMapping.C \
   FunctionCallTarget.C \
   FunctionId.C \
   FunctionIdMapping.C \
-  InputOutput.C           \
-  InternalChecks.C                 \
+  InputOutput.C \
+  InternalChecks.C \
   IntervalAnalysis.C \
   IntervalAstAttribute.C \
   IntervalAstAttributeInterface.C \
-  IntervalPropertyState.C \
   IntervalPropertyStateFactory.C \
+  IntervalPropertyState.C \
   IntervalTransferFunctions.C \
+  LanguageRestrictorCollection.C \
   LanguageRestrictor.C \
-  LanguageRestrictorCollection.C   \
   Lattice.C \
-  LoopInfo.C                       \
+  LoopInfo.C \
   LVAnalysis.C \
   LVAstAttribute.C \
   LVAstAttributeInterface.C \
   LVLattice.C \
   LVTransferFunctions.C \
   Miscellaneous2.C \
-  Miscellaneous.C                  \
+  Miscellaneous.C \
   Normalization.C \
   NormalizationInliner.C \
   NormalizationOp.C \
@@ -212,107 +216,128 @@ libcodethorn_la_SOURCES=\
   ProgramLocationsReport.C \
   PropertyState.C \
   PropertyValueTable.C \
-  PState.C           \
+  PState.C \
   RDAnalysis.C \
   RDAstAttribute.C \
   RDLattice.C \
   RDTransferFunctions.C \
   ReachabilityAnalysis.C \
   ReadWriteHistory.C \
+  RERS_empty_specialization.C \
+  RewriteStatistics.C \
+  RewriteSystem.C \
   RWState.C \
   SgTypeSizeMapping.C \
   Solver5.C \
   Solver.C \
   Specialization.C \
   StructureAccessLookup.C \
-  SvcompWitness.C		   \
-  TransitionGraph.C                \
-  TransitionGraphReducer.C	   \
+  SvcompWitness.C \
+  TimeMeasurement.C \
+  TransitionGraph.C \
+  TransitionGraphReducer.C \
   TypeSizeMapping.C \
-  UDAstAttribute.C                 \
+  UDAstAttribute.C \
   VariableIdUtils.C \
   VariableValueMonitor.C \
-  Visualizer.C \
-  RewriteStatistics.C \
-  RewriteSystem.C \
-  TimeMeasurement.C \
-  addressTakenAnalysis.C \
-  RERS_empty_specialization.C \
+  Visualizer.C
+
+#libcodethorn_la_LDFLAGS= -no-undefined
+libcodethorn_la_LDFLAGS=
+libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3
+
+# codethorn header files are installed in <installpath>/rose/codethorn
+codethornincludedir = $(pkgincludedir)/codethorn
+codethorninclude_HEADERS=\
+  $(CODETHORN_SOLO_HEADER_FILES) \
+  $(CODETHORN_HEADER_FILES) \
+  CodeThornLib.h
+
+# codethorn (core) library sources
+libcodethorn_la_SOURCES=\
+  $(CODETHORN_SOURCE_FILES) \
   CodeThornLib.C
 
 ################################################################
-# LIBRARY: CODETHORNLTL (for linear temporal logic verification)
+# LIBRARY: LTLTHORN/ (for linear temporal logic verification)
 ################################################################
 
-libcodethornltl_la_LDFLAGS=
-libcodethornltl_la_CXXFLAGS = -fopenmp -Wall -O3
+libltlthorn_la_LDFLAGS=
+libltlthorn_la_CXXFLAGS = -fopenmp -Wall -O3
 
-# only informative
-libcodethornltl_xHEADERS = \
-  DataRaceDetection.h \
-  IOAnalyzer.h                     \
-  IOSolver.h \
-  ReachabilityAnalyzerZ3.h \
-  ParallelAutomataGenerator.h \
-  LtsminConnection.h		   \
+LTLTHORN_SOLO_HEADER_FILES=
+LTLTHORN_HEADER_FILES=\
   CounterexampleAnalyzer.h \
-  RersCounterexample.h		   \
+  DataRaceDetection.h \
+  IOAnalyzer.h \
+  IOSolver.h \
+  LtsminConnection.h \
+  ParallelAutomataGenerator.h \
+  ParProAnalyzer.h \
+  ParProEState.h \
+  ParProExplorer.h \
+  ParProLtlMiner.h \
+  ParProSpotState.h \
+  ParProSpotSuccIter.h \
+  ParProSpotTgba.h \
+  ParProTransitionGraph.h \
+  PromelaCodeGenerator.h \
+  ReachabilityAnalyzerZ3.h \
+  ReadWriteAnalyzer.h \
+  RersCounterexample.h \
+  Solver10.h \
+  Solver11.h \
+  Solver12.h \
+  Solver8.h \
   SpotConnection.h \
   SpotMiscellaneous.h \
   SpotRenameVisitor.h \
   SpotState.h \
   SpotSuccIter.h \
   SpotTgba.h \
-  SSAGenerator.h \
-  ParProAnalyzer.h                 \
-  ParProEState.h           \
-  ParProExplorer.h                 \
-  ParProLtlMiner.h                 \
-  ParProSpotState.h \
-  ParProSpotSuccIter.h \
-  ParProSpotTgba.h \
-  ParProTransitionGraph.h          \
-  Solver8.h \
-  Solver10.h \
-  Solver11.h \
-  Solver12.h \
-  PromelaCodeGenerator.h \
-  ReadWriteAnalyzer.h \
-  CommandLineOptions.h \
-  CodeThornLTLLib.h
+  SSAGenerator.h
 
-# library sources
-libcodethornltl_la_SOURCES= \
-  IOAnalyzer.C                     \
-  IOSolver.C \
-  ReachabilityAnalyzerZ3.C \
-  ParallelAutomataGenerator.C \
-  LtsminConnection.C		   \
+LTLTHORN_SOURCE_FILES=\
   CounterexampleAnalyzer.C \
-  RersCounterexample.C		   \
+  DataRaceDetection.C \
+  IOAnalyzer.C \
+  IOSolver.C \
+  LtsminConnection.C \
+  ParallelAutomataGenerator.C \
+  ParProAnalyzer.C \
+  ParProEState.C \
+  ParProExplorer.C \
+  ParProLtlMiner.C \
+  ParProSpotState.C \
+  ParProSpotSuccIter.C \
+  ParProSpotTgba.C \
+  ParProTransitionGraph.C \
+  PromelaCodeGenerator.C \
+  ReachabilityAnalyzerZ3.C \
+  ReadWriteAnalyzer.C \
+  RersCounterexample.C \
+  Solver10.C \
+  Solver11.C \
+  Solver12.C \
+  Solver8.C \
   SpotConnection.C \
   SpotMiscellaneous.C \
   SpotRenameVisitor.C \
   SpotState.C \
   SpotSuccIter.C \
   SpotTgba.C \
-  SSAGenerator.C \
-  ParProAnalyzer.C                 \
-  ParProEState.C           \
-  ParProExplorer.C                 \
-  ParProLtlMiner.C                 \
-  ParProSpotState.C \
-  ParProSpotSuccIter.C \
-  ParProSpotTgba.C \
-  ParProTransitionGraph.C          \
-  Solver8.C \
-  Solver10.C \
-  Solver11.C \
-  Solver12.C \
-  PromelaCodeGenerator.C \
-  ReadWriteAnalyzer.C \
-  DataRaceDetection.C \
-  CodeThornLTLLib.C
+  SSAGenerator.C
+
+# only informative (not installed)
+libltlthorn_xHEADERS = \
+  $(LTLTHORN_SOLO_HEADER_FILES) \
+  $(LTLTHORN_HEADER_FILES) \
+  LTLThornLib.h
+
+# library sources
+libltlthorn_la_SOURCES= \
+  $(LTLTHORN_SOURCE_FILES) \
+  LTLThornLib.C
 
 
 ##############################################################
@@ -326,13 +351,13 @@ codethorn_YFLAGS = -p ltl_
 codethorn_CXXFLAGS = -fopenmp -Wall -O3 
 
 # codethorn has most of its code organized in two separate libraries
-codethorn_DEPENDENCIES=libcodethorn.la libcodethornltl.la
+codethorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
 
 if ROSE_WITH_SPOT
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lcodethorn -lcodethornltl $(Z3_LINK)
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lcodethorn -lltlthorn $(Z3_LINK)
 codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
 else
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lcodethornltl
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
 endif
 
 codethorndir=.
@@ -343,10 +368,16 @@ codethorn_xHEADERS = \
   codethorn.h \
   LTL.h
 
-# codethorn sources in addition to libcodethorn and libcodethornltl
+# codethorn sources in addition to libcodethorn and libltlthorn
 codethorn_SOURCES = \
   LTLParser.y++ \
   codethorn.C
+
+##############################################################
+# TOOL: LTLTHORN
+##############################################################
+
+# TODO
 
 
 ##############################################################
@@ -426,7 +457,7 @@ REGRESSION_DATA_DIR=regressiondata
 addressTakenAnalysis_SOURCES = \
   addressTakenAnalysisDriver.C
 
-.PHONY: codethorn-dist viz bsps docs test checkdemos
+.PHONY: codethorn-dist viz bsps test checkdemos
 
 # obsolete since integration into ROSE
 # explicit rules because of multiple bison parser
@@ -441,7 +472,7 @@ addressTakenAnalysis_SOURCES = \
 #matcher_demo_DEPENDENCIES=libcodethorn.la
 #matcher_demo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
 #matcher_demo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-#matcher_demo_SOURCES = TimeMeasurement.C matcher_demo.C
+#matcher_demo_SOURCES = matcher_demo.C
 #BUILT_SOURCES =
 #AM_YFLAGS =
 #AM_LFLAGS =
@@ -451,9 +482,9 @@ addressTakenAnalysis_SOURCES = \
 #matcher__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
 #matcher_SOURCES = matcher.C
 
-#cldemo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-#cldemo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-#cldemo_SOURCES = cldemo.C
+cldemo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+cldemo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+cldemo_SOURCES = cldemo.C
 
 #MS: iterator_test not ingegrated yet
 #iterator_test_SOURCES = iterator_test.C ShowSeq.h
@@ -581,36 +612,48 @@ check-ltl-start:
 	@echo ================================================================
 	@rm -f *.consistent
 
+#run RERS Problem1 from 2012 in several versions and compare to previous results
 check-ltl-rers-different-versions:
-	@$(srcdir)/scripts/runRersTestsDifferentVersion $(srcdir) $(top_builddir)/projects/CodeThorn/src #run RERS Problem1 from 2012 in several versions and compare to previous results
+	@$(srcdir)/scripts/runRersTestsDifferentVersion $(srcdir) $(top_builddir)/projects/CodeThorn/src
 
+#test the parallel analysis of RERS Problem1402 (4 threads, problem features arithmetic)
 check-ltl-rers-arithmetic:
-	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the parallel analysis of RERS Problem1402 (4 threads, problem features arithmetic)
+	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 
 
+#test the analysis of RERS Problem1403 (which features arrays)
 check-ltl-rers-array:
-	@$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403 (which features arrays)
+	@$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
 
+#test the analysis of RERS Problem1403, abstracting from global variables after 10,000 transitions
 check-ltl-rers-topify:
-	@$(srcdir)/scripts/runRersTopifyTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1403, abstracting from global variables after 10,000 transitions
+	@$(srcdir)/scripts/runRersTopifyTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
 
 # SKIPPED
+#test the analysis of RERS Problem1603 while using up to 1GB of RAM up to and including the STG computation (4 threads)
 check-ltl-rers-memory-bound:
-	@$(srcdir)/scripts/runRersMemoryBoundTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1603 while using up to 1GB of RAM up to and including the STG computation (4 threads)
+	@$(srcdir)/scripts/runRersMemoryBoundTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
 
+#test the analysis of RERS Problem1402 and terminate after 5 seconds (4 threads)
 check-ltl-rers-timeout:
-	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #test the analysis of RERS Problem1402 and terminate after 5 seconds (4 threads)
-check-ltl-rers-loop-aware-sync:
-	@$(srcdir)/scripts/runRersLoopAwareSyncTest $(srcdir) $(top_builddir)/projects/CodeThorn/src #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
-check-ltl-cegpra:
-	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src #run CEGPRA tests
+	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
 
+#one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
+check-ltl-rers-loop-aware-sync:
+	@$(srcdir)/scripts/runRersLoopAwareSyncTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
+
+#run CEGPRA tests
+check-ltl-cegpra:
+	@$(srcdir)/scripts/run_tests_cegpra $(srcdir) $(top_builddir)/projects/CodeThorn/src
+
+# not used
 check-arrays:
 	./codethorn $(srcdir)/tests/pointer/test48.cpp --explicit-arrays=yes --viz=yes && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
+# not used
 check-array-bounds: ./codethorn
 	./codethorn --explicit-arrays=yes $(srcdir)/tests/arraybounds1.C
 
-# seg-faults with --reset-analyzer=no. Works with --reset-analyzer=yes
+# seg-faults with --reset-analyzer=no. Works with --reset-analyzer=yes (see below)
 check-ltl-driven:
 	./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt  --display-diff=100000 --ltl-driven --reset-analyzer=no
 
@@ -643,30 +686,12 @@ check-deadcode:
 check-normalization:
 	$(srcdir)/scripts/runNormalizationTests $(srcdir)/tests
 
-check-dev:
-	./codethorn $(srcdir)/tests/DOM007_sequence_arrays.C --stg-trace-file=trace.txt --log-level=trace
-	@echo "Generated trace.txt for DOM007_sequence_arrays.C."
-check-dev2:
-	./codethorn $(srcdir)/tests/DOM008_sequence_structs.C --stg-trace-file=trace.txt --log-level=trace
-	@echo "Generated trace.txt for DOM008_sequence_structs.C."
-
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
 rers: $(RERS)
 
 docs:
 	cd "$(srcdir)" && doxygen
-
-viz: transitiongraph1.dot transitiongraph2.dot cfg.dot ast.dot
-	dot -Tps transitiongraph1.dot -oviz/transitiongraph1.ps
-	dot -Tps transitiongraph2.dot -oviz/transitiongraph2.ps
-	dot -Tps cfg.dot -oviz/cfg.ps
-	dot -Gordering=out -Tps ast.dot -oviz/ast.ps
-vizjpg: transitiongraph1.dot transitiongraph2.dot cfg.dot ast.dot
-	dot -Tjpg transitiongraph1.dot -oviz/transitiongraph1.jpg
-	dot -Tjpg transitiongraph2.dot -oviz/transitiongraph2.jpg
-	dot -Tjpg cfg.dot -oviz/cfg.jpg
-	dot -Gordering=out -Tjpg ast.dot -oviz/ast.jpg
 
 clean-local:
 	rm -f *.dot
@@ -685,39 +710,12 @@ clean-local:
 	rm -f LTLParser.c++
 	rm -f *.cfg.dot # runParCfgTests
 	rm -f a.out
+	rm -rf ../docs/doxygen
 
 distclean-local: clean
 	rm -f *.tgz
 	rm -f *~
-	rm -rf ../docs/doxygen
 	rm -f codethornref
-
-bsps: codethorn
-	./codethorn $(srcdir)/tests/basictest10f.C && make viz && make vizjpg
-	cp $(srcdir)/tests/basictest10f.C bsps
-	cp viz/cfg.ps bsps/basictest10f_cfg.ps
-	cp viz/transitiongraph1.ps bsps/basictest10f_transitiongraph1.ps
-	cp viz/transitiongraph2.ps bsps/basictest10f_transitiongraph2.ps
-	cp viz/ast.jpg bsps/basictest10f_ast.jpg
-	cp viz/cfg.jpg bsps/basictest10f_cfg.jpg
-	cp viz/transitiongraph1.jpg bsps/basictest10f_transitiongraph1.jpg
-	cp viz/transitiongraph2.jpg bsps/basictest10f_transitiongraph2.jpg
-	ps2pdf bsps/basictest10f_transitiongraph2.ps bsps/basictest10f_transitiongraph2.pdf
-	./codethorn $(srcdir)/tests/basictest15.C && make viz && make vizjpg
-	cp $(srcdir)/tests/basictest15.C bsps
-	cp viz/cfg.ps bsps/basictest15_cfg.ps
-	cp viz/transitiongraph1.ps bsps/basictest15_transitiongraph1.ps
-	cp viz/transitiongraph2.ps bsps/basictest15_transitiongraph2.ps
-	cp viz/ast.jpg bsps/basictest15_ast.jpg
-	cp viz/cfg.jpg bsps/basictest15_cfg.jpg
-	cp viz/transitiongraph1.jpg bsps/basictest15_transitiongraph1.jpg
-	cp viz/transitiongraph2.jpg bsps/basictest15_transitiongraph2.jpg
-	ps2pdf bsps/basictest15_transitiongraph2.ps bsps/basictest15_transitiongraph2.pdf
-
-	./codethorn --rersmode=yes $(srcdir)/tests/rers/Problem1.c
-	cp $(srcdir)/tests/rers/Problem1.c bsps
-	dot -Tjpg transitiongraph2.dot -oviz/transitiongraph2.jpg
-	cp viz/transitiongraph2.jpg bsps/rers1_transitiongraph2.jpg
 
 codethorn-dist:
 	tar cvzf codethorn_$(MYDATE).tgz *.C *cpp *.h *.lxx *.yxx tests/*.C tests/*.c Makefile*

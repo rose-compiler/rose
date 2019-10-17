@@ -19,7 +19,7 @@ class HSetMaintainer
   : public boost::unordered_set<KeyType*,HashFun,EqualToPred>
   {
 public:
-  typedef pair<bool,const KeyType*> ProcessingResult;
+  typedef std::pair<bool,const KeyType*> ProcessingResult;
 
   /*! 
    * \author Marc Jasper
@@ -108,11 +108,11 @@ public:
       typename HSetMaintainer::iterator iter=this->find(const_cast<KeyType*>(key)); // TODO: eliminate const_cast
       if(iter!=this->end()) {
         // found it!
-        res=make_pair(iter,false);
+        res=std::make_pair(iter,false);
       } else {
         res=this->insert(const_cast<KeyType*>(key)); // TODO: eliminate const_cast
       }
-      res2=make_pair(res.second,*res.first);
+      res2=std::make_pair(res.second,*res.first);
     }
     return res2;
   }
@@ -131,7 +131,7 @@ public:
     typename HSetMaintainer::iterator iter=this->find(&key);
     if(iter!=this->end()) {
       // found it!
-      res=make_pair(iter,false);
+      res=std::make_pair(iter,false);
     } else {
       // converting the stack allocated object to heap allocated
       // this copies the entire object
@@ -143,7 +143,7 @@ public:
       if (!res.second) {
 	// this case should never occur, condition "iter!=this->end()" above would have been satisfied and 
 	// this else branch would have therefore been ignored
-	cerr << "ERROR: HSetMaintainer: Element was not inserted even though it could not be found in the set." << endl;
+	std::cerr << "ERROR: HSetMaintainer: Element was not inserted even though it could not be found in the set." << std::endl;
 	ROSE_ASSERT(0);
 	delete keyPtr;
 	keyPtr = NULL; 
@@ -155,14 +155,14 @@ public:
     std::pair<typename HSetMaintainer::iterator, bool> res2;
     res2=this->insert(key);
     if(!(res1==res2)) {
-      cerr<< "Error: HsetMaintainer failed:"<<endl;
-      cerr<< "res1:"<<(*res1.first).toString()<<":"<<res1.second<<endl;
-      cerr<< "res2:"<<(*res2.first).toString()<<":"<<res2.second<<endl;
+      std::cerr<< "Error: HsetMaintainer failed:"<<std::endl;
+      std::cerr<< "res1:"<<(*res1.first).toString()<<":"<<res1.second<<std::endl;
+      std::cerr<< "res2:"<<(*res2.first).toString()<<":"<<res2.second<<std::endl;
       exit(1);
     }
-    cerr << "HSET insert OK"<<endl;
+    std::cerr << "HSET insert OK"<<std::endl;
 #endif
-    res2=make_pair(res.second,*res.first);
+    res2=std::make_pair(res.second,*res.first);
     }
     return res2;
   }
@@ -171,10 +171,10 @@ public:
     //std::pair<typename HSetMaintainer::iterator, bool> res=process(s);
     ProcessingResult res=process(s);
     if(res.first!=true) {
-      cerr<< "Error: HsetMaintainer::processNew failed:"<<endl;
-      cerr<< "res:";
-      cout <<":"<<res.first<<endl;
-      cout <<res.second->toString();
+      std::cerr<< "Error: HsetMaintainer::processNew failed:"<<std::endl;
+      std::cerr<< "res:";
+      std::cout <<":"<<res.first<<std::endl;
+      std::cout <<res.second->toString();
       exit(1);
     }
     return res.second;

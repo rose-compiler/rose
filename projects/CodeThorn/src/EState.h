@@ -131,7 +131,7 @@ class EStateHashFun {
    CodeThorn::ConstraintSetMaintainer* _constraintSetMaintainer; 
  };
  
- class EStateList : public list<EState> {
+ class EStateList : public std::list<EState> {
  public:
    std::string toString();
  };
