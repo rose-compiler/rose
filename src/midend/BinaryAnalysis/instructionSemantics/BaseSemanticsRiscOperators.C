@@ -91,6 +91,14 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
     ++nInsns_;
 };
 
+void
+RiscOperators::finishInstruction(SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+    ASSERT_require(currentInsn_==insn);
+    hotPatch_.apply(shared_from_this());
+    currentInsn_ = NULL;
+};
+
 std::pair<SValuePtr /*low*/, SValuePtr /*high*/>
 RiscOperators::split(const SValuePtr &a, size_t splitPoint) {
     return std::make_pair(extract(a, 0, splitPoint), extract(a, splitPoint, a->get_width()));

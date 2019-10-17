@@ -22,6 +22,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryFeasiblePath.C					\
     BinaryFunctionCall.C					\
     BinaryFunctionSimilarity.C					\
+    BinaryHotPatch.C						\
     BinaryMagic.C						\
     BinaryNoOperation.C						\
     BinaryPointerDetection.C					\
@@ -53,6 +54,7 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/BaseSemanticsDispatcher.C		\
     instructionSemantics/BaseSemanticsException.C		\
     instructionSemantics/BaseSemanticsMemoryState.C		\
+    instructionSemantics/BaseSemanticsMerger.C			\
     instructionSemantics/BaseSemanticsRegisterState.C		\
     instructionSemantics/BaseSemanticsRiscOperators.C		\
     instructionSemantics/BaseSemanticsState.C			\
@@ -107,6 +109,7 @@ pkginclude_HEADERS =					\
     BinaryFeasiblePath.h				\
     BinaryFunctionCall.h				\
     BinaryFunctionSimilarity.h				\
+    BinaryHotPatch.h					\
     BinaryMagic.h					\
     BinaryMatrix.h					\
     BinaryNoOperation.h					\

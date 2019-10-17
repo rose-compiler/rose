@@ -2,11 +2,13 @@
 #define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_RiscOperators_H
 
 #include <BaseSemanticsTypes.h>
+#include <BinaryHotPatch.h>
 #include <BinarySmtSolver.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/version.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -45,6 +47,7 @@ class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
     SgAsmInstruction *currentInsn_;                     // Current instruction, as set by latest startInstruction call
     size_t nInsns_;                                     // Number of instructions processed
     std::string name_;                                  // Name to use for debugging
+    HotPatch hotPatch_;                                 // Adjustments to the semantic state after each instruction.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
@@ -53,7 +56,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
+    void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_NVP(protoval_);
         s & BOOST_SERIALIZATION_NVP(currentState_);
         s & BOOST_SERIALIZATION_NVP(initialState_);
@@ -61,6 +64,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(currentInsn_);
         s & BOOST_SERIALIZATION_NVP(nInsns_);
         s & BOOST_SERIALIZATION_NVP(name_);
+        if (version >= 1)
+            s & BOOST_SERIALIZATION_NVP(hotPatch_);
     }
 #endif
 
@@ -124,6 +129,17 @@ public:
      * @{ */
     virtual SmtSolverPtr solver() const { return solver_; }
     virtual void solver(const SmtSolverPtr &s) { solver_ = s; }
+    /** @} */
+
+    /** Property: Post-instruction hot patches.
+     *
+     *  The hot patches describe how to modify the current state after each instruction is executed. This is performed by the
+     *  @ref finishInstruction method.
+     *
+     * @{ */
+    const HotPatch& hotPatch() const { return hotPatch_; }
+    HotPatch& hotPatch() { return hotPatch_; }
+    void hotPatch(const HotPatch &hp) { hotPatch_ = hp; }
     /** @} */
 
     /** Property: Current semantic state.
@@ -240,11 +256,7 @@ public:
 
     /** Called at the end of every instruction.  This method is invoked whenever the translation object ends processing for an
      *  instruction.  This is not called if there's an exception during processing. */
-    virtual void finishInstruction(SgAsmInstruction *insn) {
-        ASSERT_not_null(insn);
-        ASSERT_require(currentInsn_==insn);
-        currentInsn_ = NULL;
-    };
+    virtual void finishInstruction(SgAsmInstruction *insn);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -704,5 +716,8 @@ std::ostream& operator<<(std::ostream&, const RiscOperators::WithFormatter&);
 } // namespace
 } // namespace
 } // namespace
+
+// Class versions must be at global scope
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperators, 1);
 
 #endif

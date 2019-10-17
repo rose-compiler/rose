@@ -33,16 +33,16 @@ class Merger: public Sawyer::SharedObject {
     bool memoryMergeDebugging_;
 
 protected:
-    Merger(): memoryAddressesMayAlias_(true), memoryMergeDebugging_(false) {}
+    Merger();
 
 public:
     /** Shared ownership pointer for @ref Merger. See @ref heap_object_shared_ownership. */
     typedef MergerPtr Ptr;
 
+    ~Merger();
+
     /** Allocating constructor. */
-    static Ptr instance() {
-        return Ptr(new Merger);
-    }
+    static Ptr instance();
 
     /** Whether memory addresses can alias one another.
      *
