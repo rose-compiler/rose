@@ -72,7 +72,7 @@
 #endif
 
 #include "CodeThornLib.h"
-#include "CodeThornLTLLib.h"
+#include "LTLThornLib.h"
 
 //BOOST includes
 #include "boost/lexical_cast.hpp"
