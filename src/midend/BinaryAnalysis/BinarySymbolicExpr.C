@@ -2894,6 +2894,7 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
             case OP_FP_ISNAN:
             case OP_FP_ISNEG:
             case OP_FP_ISPOS:
+            case OP_CONVERT:
                 // no simplification
                 break;
         }
@@ -3234,6 +3235,12 @@ Leaf::compareStructure(const Ptr &other_) {
         return isIntegerConstant() ? -1 : 1;            // integer constants less than non-integer constants
     } else if (isFloatingPointConstant() != other->isFloatingPointConstant()) {
         return isFloatingPointConstant() ? -1 : 1;      // FP constants less than remaining types
+    } else if (isConstant()) {
+        ASSERT_require(other->isConstant());
+        ASSERT_require(nBits() == other->nBits());
+        // compare constants (even FP) as unsigned integers since all we need is an order for the bits without
+        // any particular interpretation.
+        return bits().compare(other->bits());
     } else {
         ASSERT_require(isVariable2());
         ASSERT_require(other->isVariable2());

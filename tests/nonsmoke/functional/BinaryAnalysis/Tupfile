@@ -238,6 +238,12 @@ run $(tool_compile_linkexe) cory008.C
 run $(test) cory008 --answer=cory008.ans ./cory008 $(ROSE)/tests/nonsmoke/specimens/binary/i386-nologin
 
 ###############################################################################################################################
+# Test structural comparison of symbolic integer constants
+###############################################################################################################################
+run $(tool_compile_linkexe) cory009.C
+run $(test) cory009
+
+###############################################################################################################################
 # Test symbolic semantics memory read-after-write
 ###############################################################################################################################
 run $(tool_compile_linkexe) testSymReadWrite.C
