@@ -98,6 +98,33 @@ BasicBlockSizeLimiter::operator()(bool chain, const Args &args) {
     return chain;
 }
 
+bool
+IpRewriter::operator()(bool chain, const Args &args) {
+    using namespace InstructionSemantics2;
+    if (chain && !rewrites_.empty()) {
+        size_t wordSize = args.partitioner.instructionProvider().instructionPointerRegister().nBits();
+        std::vector<BasicBlock::Successor> succs;
+        if (args.bblock->successors().isCached())
+            succs = args.bblock->successors().get();
+        bool isModified = false;
+        BaseSemantics::RiscOperatorsPtr ops = args.partitioner.newOperators();
+        for (size_t i = 0; i < succs.size(); ++i) {
+            BOOST_FOREACH (const AddressPair &rewrite, rewrites_) {
+                BaseSemantics::SValuePtr oldValue = ops->number_(wordSize, rewrite.first);
+                if (succs[i].expr()->must_equal(oldValue)) {
+                    Semantics::SValuePtr newValue = Semantics::SValue::promote(ops->number_(wordSize, rewrite.second));
+                    succs[i] = BasicBlock::Successor(newValue, succs[i].type(), succs[i].confidence());
+                    isModified = true;
+                    break;
+                }
+            }
+        }
+        if (isModified)
+            args.bblock->successors() = succs;
+    }
+    return chain;
+}
+
 // class method
 Sawyer::CommandLine::SwitchGroup
 InstructionLister::switches(Settings &settings) {
