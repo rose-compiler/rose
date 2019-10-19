@@ -82,7 +82,7 @@ Unparse_Jovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
 
 void
 Unparse_Jovial::unparseTableType(SgType* type, SgUnparse_Info& info)
-{
+  {
      SgJovialTableType* table_type = isSgJovialTableType(type);
      ROSE_ASSERT(table_type != NULL);
 
@@ -97,20 +97,15 @@ Unparse_Jovial::unparseTableType(SgType* type, SgUnparse_Info& info)
 
      SgType* base_type = table_type->get_base_type();
 
-     if (base_type == NULL)
+     if (base_type != NULL)
         {
-           cout << "--> unparse TableType: base type is NULL \n";
-           return;
+           unparseType(base_type, info);
         }
-
-     ROSE_ASSERT(base_type);
-
-     unparseType(base_type, info);
-}
+  }
 
 void
 Unparse_Jovial::unparseArrayType(SgType* type, SgUnparse_Info& info)
-{
+  {
      SgArrayType* array_type = isSgArrayType(type);
      ROSE_ASSERT(array_type != NULL);
 
@@ -119,4 +114,4 @@ Unparse_Jovial::unparseArrayType(SgType* type, SgUnparse_Info& info)
      curprint(") ");
 
      unparseType(array_type->get_base_type(), info);
-}
+  }

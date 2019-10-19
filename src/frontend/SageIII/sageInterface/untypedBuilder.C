@@ -471,15 +471,36 @@ buildVariableDeclaration(const std::string & name, SgUntypedType* type, SgUntype
 
    std::string label = "";
 
+   bool has_base_type = false;
+   SgUntypedDeclarationStatement* base_type_decl = NULL;
+
    SgUntypedInitializedName* initialized_name = buildInitializedName(name, type, initializer);
    ROSE_ASSERT(initialized_name);
 
    SgUntypedInitializedNameList* var_name_list = buildInitializedNameList(initialized_name);
    ROSE_ASSERT(var_name_list);
 
-   SgUntypedVariableDeclaration* variable_decl = new SgUntypedVariableDeclaration(label, type, attr_list, var_name_list);
+   SgUntypedVariableDeclaration*
+   variable_decl = new SgUntypedVariableDeclaration(label, type, base_type_decl, has_base_type, attr_list, var_name_list);
    ROSE_ASSERT(variable_decl);
    SageInterface::setSourcePosition(variable_decl);
+
+   return variable_decl;
+}
+
+SgUntypedVariableDeclaration*
+buildVariableDeclaration(const std::string & name, SgUntypedType* type, SgUntypedStructureDeclaration* base_type_decl, SgUntypedExprListExpression* attr_list, SgUntypedExpression* initializer)
+{
+   ROSE_ASSERT(type);
+   ROSE_ASSERT(base_type_decl);
+   ROSE_ASSERT(attr_list);
+
+   SgUntypedVariableDeclaration* variable_decl = buildVariableDeclaration(name, type, attr_list, initializer);
+   ROSE_ASSERT(variable_decl != NULL);
+
+   // Set the base-type declaration
+   variable_decl->set_has_base_type(true);
+   variable_decl->set_base_type_declaration(base_type_decl);
 
    return variable_decl;
 }

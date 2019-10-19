@@ -34,6 +34,12 @@ SgUntypedVariableDeclaration* buildVariableDeclaration(const std::string & name,
                                                        SgUntypedExprListExpression* attr_list,
                                                        SgUntypedExpression* initializer = NULL);
 
+ //! Build a variable declaration for only one variable with the given name and base-type declaration.
+SgUntypedVariableDeclaration* buildVariableDeclaration(const std::string & name, SgUntypedType* type,
+                                                       SgUntypedStructureDeclaration* base_type_decl,
+                                                       SgUntypedExprListExpression* attr_list,
+                                                       SgUntypedExpression* initializer = NULL);
+
 //! Build an untyped StructureDefinition. This version has a body and thus a scope.
 //! Source position for the initializer and modifier lists and table description should be set after construction.
 SgUntypedStructureDefinition* buildStructureDefinition();
