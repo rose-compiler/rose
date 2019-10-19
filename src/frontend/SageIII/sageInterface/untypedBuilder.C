@@ -190,6 +190,7 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum, std::string name)
                                           is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
+             case SgUntypedType::e_char:
              case SgUntypedType::e_string:
                {
                  type = new SgUntypedType("C",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,

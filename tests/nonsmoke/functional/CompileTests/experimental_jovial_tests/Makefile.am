@@ -12,6 +12,7 @@ JOVIAL_TESTCODES = \
  1_2_3_main-program-module_b.jov        \
  1_2_3_program-body_b.jov               \
  1_2_3_program-body_c.jov               \
+ 2_1_1_5_char_item_desc.jov             \
  2_1_2_simple_table_var.jov             \
  2_1_2_compound_table_var.jov           \
  2_1_2_1_table_dimension_list_a.jov     \
