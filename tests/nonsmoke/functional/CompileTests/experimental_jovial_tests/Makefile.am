@@ -44,6 +44,7 @@ COMPOOL_TESTCODES = \
  2_2_compound_table_type.cpl            \
  2_2_simple_block_type.cpl              \
  2_2_simple_table_type.cpl              \
+ 2_5_def_ref_item.cpl                   \
  define_dollar.cpl                      \
  status_type.cpl                        \
  rose-issue-1518.cpl                    \

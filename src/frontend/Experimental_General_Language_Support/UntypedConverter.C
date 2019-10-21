@@ -259,6 +259,16 @@ UntypedConverter::setDeclarationModifiers(SgDeclarationStatement* decl, SgUntype
                decl->get_declarationModifier().get_storageModifier().setExtern();
                break;
             }
+          case e_storage_modifier_jovial_def:
+            {
+               decl->get_declarationModifier().get_storageModifier().setJovialDef();
+               break;
+            }
+          case e_storage_modifier_jovial_ref:
+            {
+               decl->get_declarationModifier().get_storageModifier().setJovialRef();
+               break;
+            }
           case e_storage_modifier_static:
             {
                cerr << "WARNING UNIMPLEMENTED: setDeclarationModifiers: Static\n";

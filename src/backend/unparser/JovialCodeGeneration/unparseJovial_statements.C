@@ -813,6 +813,14 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         {
            curprint("CONSTANT ");
         }
+     if (variableDeclaration->get_declarationModifier().get_storageModifier().isJovialDef())
+        {
+           curprint("DEF ");
+        }
+     if (variableDeclaration->get_declarationModifier().get_storageModifier().isJovialRef())
+        {
+           curprint("REF ");
+        }
 #if 0
      if (variableDeclaration->get_declarationModifier().get_typeModifier().isStatic())
         {
