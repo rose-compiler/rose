@@ -32,12 +32,47 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
   // NOTE: SgFunctionDeclaration* funDecl=SgNodeHelper::findFunctionDeclarationWithFunctionSymbol(funSym);
   // SgName qfName=funDecl->get_qualified_name();
 
+  cout<<"DUMP FUNCTON CALLS:"<<endl;
+  for (auto fc : funCallList) {
+    SgExpression* exp=fc->get_function();
+    SgExprListExp* funCallArgs=fc->get_args();
+    if(SgFunctionRefExp* functionRef=isSgFunctionRefExp(exp)) {
+      // direct function call
+      SgFunctionSymbol* funSym=functionRef->get_symbol();
+      assert(funSym);
+      SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(funSym);
+      string funCallName=functionSymbol->get_name();
+      SgFunctionType* funCallType = isSgFunctionType(functionSymbol->get_type());
+      SgName mangledFunCallType=funCallType->get_mangled();
+      cout<<"CALL: DIRECT-";
+      cout<<"NAME: "<<funCallName<<" TYPE: "<<funCallType->unparseToString()<<" MANGLEDFUNCALLTYPE: "<<mangledFunCallType<<endl;
+    } else if(SgVarRefExp* varRefExp=isSgVarRefExp(exp)) {
+      // function pointer call
+      SgType* type=varRefExp->get_type();
+      const SgPointerType* pointerType = SgNodeHelper::isPointerType(type);
+      ROSE_ASSERT(pointerType);
+      SgFunctionType* funType=isSgFunctionType(pointerType->get_base_type());
+      SgName mangledFunCallType=funType->get_mangled();
+      ROSE_ASSERT(funType);
+      cout<<"CALL: FP-"<<"TYPE: "<<funType->unparseToString()<<" MANGLEDFUNCALLTYPE: "<<mangledFunCallType<<endl;
+    } else {
+      cout<<"UNKNOWN FUNCTION CALL EXP."<<endl;
+    }
+  }
+  for (auto fd : funDefList) {
+    SgName funDefName=fd->get_declaration()->get_name();//fd->get_qualified_name();
+    SgFunctionType* funDefType= fd->get_declaration()->get_type();
+    SgName mangledFunDefType=funDefType->get_mangled();
+    cout<<"DEF: NAME:"<<funDefName<<" TYPE:"<<funDefType->unparseToString();
+    cout<<"  MANGLEDTYPE : "<<mangledFunDefType<<endl;
+
+  }
+  return;
+  
   for (auto fc : funCallList) {
     // determine all components of call
     // name or fpointer or other
     // type of params
-    FunctionCallTarget funCallTarget;
-
     SgExpression* exp=fc->get_function();
     //cout<<"get_function:exp:"<<AstTerm::astTermWithNullValuesAndTypesToString(exp)<<endl;
     SgExprListExp* funCallArgs=fc->get_args();
@@ -46,6 +81,7 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
     bool isFunctionPointer=false;
     SgName funCallName;
     SgFunctionType* funCallType=nullptr;
+    FunctionCallTarget funCallTarget;
     if(SgFunctionDefinition* funDef=SgNodeHelper::determineFunctionDefinition(fc)) {
       funCallTarget.setDefinition(funDef);
       funCallTarget.setDeclaration(funDef->get_declaration());
@@ -85,14 +121,32 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
       SgFunctionType* funDefType= fd->get_declaration()->get_type();
       SgName funDefName=fd->get_declaration()->get_name(); //fd->get_qualified_name(); 
       SgName mangledFunDefType=funCallType->get_mangled();
+      cout<<"Source: "<<fc->unparseToString()<<endl;
+      cout<<"FUNCALLTYPE: "<<AstTerm::astTermWithNullValuesAndTypesToString(funCallType)<<endl;
+      cout<<"FUNDEFTYPE: "<<AstTerm::astTermWithNullValuesAndTypesToString(funCallType)<<endl;
+      cout<<"MANGLEDFUNCALLTYPE: "<<mangledFunCallType<<endl;
+      cout<<"MANGLEDFUNDEFTYPE : "<<mangledFunDefType<<endl;
       if(funCallType==funDefType || mangledFunCallType==mangledFunDefType) {
-        //cout<<AstTerm::astTermWithNullValuesAndTypesToString(funCallType)<<endl;
         if(funCallName==funDefName || isFunctionPointer) {
-          SAWYER_MESG(logger[TRACE])<<"RESOLVED CALL across translation units based on TYPES and Names: "<<fc->unparseToString()<<" ::: "<<fd->get_declaration()->unparseToString()<<endl;
+          //SAWYER_MESG(logger[TRACE])<<"RESOLVED CALL across translation units based on TYPES and Names: "<<fc->unparseToString()<<" ::: "<<fd->get_declaration()->unparseToString()<<endl;
+	  //cout<<"RESOLVED CALL across translation units based on TYPES and Names: "<<fc->unparseToString()<<" ::: "<<fd->get_declaration()->unparseToString()<<endl;
+	  if(isFunctionPointer)
+	    cout<<"RESOLVED CALL: function pointer to def name: "<<funDefName<<endl;
+	  else
+	    cout<<"RESOLVED CALL: mismatching names:"<<funCallName<<":"<<funDefName<<endl;
           funCallTarget.setDefinition(fd);
           funCallTarget.setDeclaration(fd->get_declaration());
-        }
+        } else {
+	  cout<<"ONLY TYPES MATCH";
+	  if(isFunctionPointer)
+	    cout<<" function pointer"<<endl;
+	  else
+	    cout<<" mismatching names:"<<funCallName<<":"<<funDefName<<endl;
+	}
+      } else {
+	cout<<"NOT MATCHED."<<endl;
       }
+      cout<<endl;
     }
     mapping[fc].insert(funCallTarget);
   }
