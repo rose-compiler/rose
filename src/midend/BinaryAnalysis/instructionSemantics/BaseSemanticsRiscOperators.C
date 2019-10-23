@@ -329,6 +329,104 @@ RiscOperators::fpRoundTowardZero(const SValuePtr &a, SgAsmFloatType *aType) {
 }
 
 SValuePtr
+RiscOperators::convert(const SValuePtr &a, SgAsmType *srcType, SgAsmType *dstType) {
+    ASSERT_not_null(a);
+    ASSERT_not_null(srcType);
+    ASSERT_not_null(dstType);
+    SValuePtr srcVal = reinterpret(a, srcType);
+    if (srcType == dstType)
+        return srcVal;
+
+    //--------------------------------
+    // Integer to integer conversions
+    //--------------------------------
+
+    SgAsmIntegerType *iSrcType = isSgAsmIntegerType(srcType);
+    SgAsmIntegerType *iDstType = isSgAsmIntegerType(dstType);
+    if (iSrcType && iDstType) {
+        if (!iSrcType->get_isSigned() && !iDstType->get_isSigned()) {
+            // unsigned -> unsigned (overflows truncated for decreasing width)
+            return reinterpret(unsignedExtend(srcVal, dstType->get_nBits()), dstType);
+        } else if (!iSrcType->get_isSigned()) {
+            ASSERT_require(iDstType->get_isSigned());
+            if (dstType->get_nBits() > srcType->get_nBits()) {
+                // unsigned -> signed, increasing width (no overflow possible)
+                return reinterpret(unsignedExtend(srcVal, dstType->get_nBits()), dstType);
+            } else {
+                ASSERT_require(dstType->get_nBits() < srcType->get_nBits());
+                // unsigned -> signed, decreasing width (overflows truncated)
+                return reinterpret(unsignedExtend(srcVal, dstType->get_nBits()), dstType);
+            }
+        } else if (!iDstType->get_isSigned()) {
+            ASSERT_require(iSrcType->get_isSigned());
+            // signed -> unsigned (overflows truncated)
+            return reinterpret(unsignedExtend(srcVal, dstType->get_nBits()), dstType);
+        } else {
+            ASSERT_require(iSrcType->get_isSigned());
+            ASSERT_require(iDstType->get_isSigned());
+            if (dstType->get_nBits() >= srcType->get_nBits()) {
+                // signed -> signed, increasing width (no overflow possible)
+                return reinterpret(signExtend(srcVal, dstType->get_nBits()), dstType);
+            } else {
+                // signed -> signed, decreasing width (overflows truncated)
+                return reinterpret(unsignedExtend(srcVal, dstType->get_nBits()), dstType);
+            }
+        }
+    }
+
+    //--------------------------------
+    // FP to FP conversions
+    //--------------------------------
+
+    SgAsmFloatType *fpSrcType = isSgAsmFloatType(srcType);
+    SgAsmFloatType *fpDstType = isSgAsmFloatType(dstType);
+    if (fpSrcType && fpDstType)
+        return fpConvert(srcVal, fpSrcType, fpDstType);
+
+    //--------------------------------
+    // Integer to FP conversions
+    //--------------------------------
+
+    if (iSrcType && fpDstType)
+        throw Exception("unable to convert from integer to floating-point", currentInsn_);
+
+    //--------------------------------
+    // FP to integer conversions
+    //--------------------------------
+
+    if (fpSrcType && iDstType)
+        throw Exception("unable to convert from floating-point to integer", currentInsn_);
+
+    //--------------------------------
+    // Vector conversions
+    //--------------------------------
+
+    SgAsmVectorType *vSrcType = isSgAsmVectorType(srcType);
+    SgAsmVectorType *vDstType = isSgAsmVectorType(dstType);
+    if (vSrcType)
+        throw Exception("unable to convert from vector type", currentInsn_);
+    if (vDstType)
+        throw Exception("unable to convert to vector type", currentInsn_);
+
+    //--------------------------------
+    // Catch-all
+    //--------------------------------
+
+    throw Exception("unable to convert between specified types", currentInsn_);
+}
+
+SValuePtr
+RiscOperators::reinterpret(const SValuePtr &a, SgAsmType *type) {
+    ASSERT_not_null(a);
+    ASSERT_not_null(type);
+    if (a->get_width() != type->get_nBits()) {
+        throw Exception("reinterpret type has different size (" + StringUtility::plural(type->get_nBits(), "bits") + ")"
+                        " than value (" + StringUtility::plural(a->get_width(), "bits") + ")", currentInsn_);
+    }
+    return a->copy();
+}
+
+SValuePtr
 RiscOperators::readRegister(RegisterDescriptor reg, const SValuePtr &dflt_) {
     SValuePtr dflt = dflt_;
     ASSERT_not_null(currentState_);
@@ -366,7 +464,7 @@ void
 RiscOperators::print(std::ostream &stream, Formatter &fmt) const {
     currentState_->print(stream, fmt);
 }
-    
+
 } // namespace
 } // namespace
 } // namespace

@@ -605,6 +605,29 @@ public:
      *  Truncate the fractional part of the floating point number. */
     virtual SValuePtr fpRoundTowardZero(const SValuePtr &a, SgAsmFloatType *fpType);
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Conversion operations
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** Reinterpret an expression as a different type.
+     *
+     *  For semantic domains whose values don't carry type information this is a no-op. For other domains, this creates a
+     *  new value having the same bits as the original value but a new type. The old and new types must be the same size. This
+     *  is similar to a C++ @c reinterpret_cast. */
+    virtual SValuePtr reinterpret(const SValuePtr &a, SgAsmType *retType);
+
+    /** Convert value from one type to another.
+     *
+     *  This method converts the argument value from one type to another and returns the new value. This is more than what
+     *  @ref reinterpret does. For instance, if the argument is an integer with the value "-42" and the @p dstType is an
+     *  IEEE-754 32-bit floating-point type, then the return value will have an entirely different bit pattern that is "-42"
+     *  as a floating-point value.
+     *
+     *  The @p srcType is necessary for semantic domains whose values don't carry type information, and is redundant for domains
+     *  whose values do carry type information. In order to be more useful, the input value, @p a, is always reinterpreted as
+     *  type @p srcType by calling @ref reinterpret before any conversion takes place. */
+    virtual SValuePtr convert(const SValuePtr &a, SgAsmType *srcType, SgAsmType *dstType);
+
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  State Accessing Operations

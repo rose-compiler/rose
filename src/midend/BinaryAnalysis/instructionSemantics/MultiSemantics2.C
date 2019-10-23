@@ -806,6 +806,14 @@ RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatTy
 }
 
 BaseSemantics::SValuePtr
+RiscOperators::reinterpret(const BaseSemantics::SValuePtr &a, SgAsmType *type) {
+    SValuePtr retval = svalue_empty(type->get_nBits());
+    SUBDOMAINS(sd, (a))
+        retval->set_subvalue(sd.idx(), sd->reinterpret(sd(a), type));
+    return retval;
+}
+
+BaseSemantics::SValuePtr
 RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt)
 {
     SValuePtr retval = svalue_empty(reg.nBits());
