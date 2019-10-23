@@ -760,6 +760,13 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                                MAP_BASED_MEMORY==settings.memoryParadigm?"map-based":
                                "UNKNOWN") + " paradigm."));
 
+    sg.insert(Switch("ip-rewrite")
+              .argument("from", nonNegativeIntegerParser(settings.ipRewrite))
+              .argument("to", nonNegativeIntegerParser(settings.ipRewrite))
+              .whichValue(SAVE_ALL)
+              .doc("After each instruction, if the instruction pointer has the value @v{from} then change it to be @v{to}. "
+                   "This switch may appear multiple times."));
+
     return sg;
 }
 
@@ -801,6 +808,14 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, this, path, pathProcessor);
     ops->initialState(ops->currentState()->clone());
     ops->nullPtrSolver(solver);
+    for (size_t i = 0; i < settings().ipRewrite.size(); i += 2) {
+        const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
+        BaseSemantics::SValuePtr oldValue = ops->number_(REG_IP.nBits(), settings().ipRewrite[i+0]);
+        BaseSemantics::SValuePtr newValue = ops->number_(REG_IP.nBits(), settings().ipRewrite[i+1]);
+        SAWYER_MESG(mlog[DEBUG]) <<"ip-rewrite hot-patch from " <<*oldValue <<" to " <<*newValue <<"\n";
+        ops->hotPatch().append(HotPatch::Record(REG_IP, oldValue, newValue, HotPatch::Record::MATCH_BREAK));
+    }
+
     ASSERT_not_null(partitioner.instructionProvider().dispatcher());
     BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
     ASSERT_not_null(cpu);
@@ -812,6 +827,7 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
                               const P2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex) {
     ASSERT_not_null(cpu);
     ASSERT_forbid(REG_PATH.isEmpty());
+    checkSettings();
 
     // Create the new state from an existing state and make the new state current.
     BaseSemantics::StatePtr state = cpu->currentState()->clone();
@@ -847,6 +863,7 @@ void
 FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::DispatcherPtr &cpu,
                                 size_t pathInsnIndex) {
     ASSERT_not_null(bblock);
+    checkSettings();
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"      processing basic block " <<bblock->printableName() <<"\n";
 
@@ -980,6 +997,7 @@ void
 FeasiblePath::processVertex(const BaseSemantics::DispatcherPtr &cpu,
                             const P2::ControlFlowGraph::ConstVertexIterator &pathsVertex,
                             size_t &pathInsnIndex /*in,out*/) {
+    checkSettings();
     switch (pathsVertex->value().type()) {
         case P2::V_BASIC_BLOCK:
             processBasicBlock(pathsVertex->value().bblock(), cpu, pathInsnIndex);
@@ -1865,6 +1883,20 @@ FeasiblePath::VarDetail::toString() const {
         ss <<" return from function " <<StringUtility::addrToString(*returnFrom);
 
     return boost::trim_copy(ss.str());
+}
+
+void
+FeasiblePath::checkSettings() const {
+    if (settings().maxVertexVisit <= 0)
+        throw Exception("setting \"maxVertexVisit\" must be positive");
+    if (settings().maxPathLength <= 0)
+        throw Exception("setting \"maxPathLength\" must be positive");
+    if (settings().maxCallDepth <= 0)
+        throw Exception("setting \"maxCallDepth\" must be positive");
+    if (settings().maxRecursionDepth <= 0)
+        throw Exception("setting \"maxRecursionDepth\" must be positive");
+    if (settings().ipRewrite.size() % 2 != 0)
+        throw Exception("settingss \"ipRewrite\" must have an even number of members");
 }
 
 } // namespace
