@@ -187,12 +187,13 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
       } else {
         for(auto fct : funCallTargetSet) {
           callLabel=*i;
-          entryLabel=Labeler::NO_LABEL;
-          exitLabel=Labeler::NO_LABEL;
           SgFunctionDefinition* funDef=fct.getDefinition();
           if(funDef) {
             entryLabel=labeler->functionEntryLabel(funDef);
             exitLabel=labeler->functionExitLabel(funDef);
+          } else {
+            entryLabel=Labeler::NO_LABEL;
+            exitLabel=Labeler::NO_LABEL;
           }
           callReturnLabel=labeler->functionCallReturnLabel(callNode);
           interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));

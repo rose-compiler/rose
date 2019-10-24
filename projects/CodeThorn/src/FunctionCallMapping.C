@@ -68,7 +68,7 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
   }
   // NOTE: SgFunctionDeclaration* funDecl=SgNodeHelper::findFunctionDeclarationWithFunctionSymbol(funSym);
   // SgName qfName=funDecl->get_qualified_name();
-#if 0
+#if 1
   cout<<"DUMP FUNCTION CALLS:"<<endl;
   for (auto fc : funCallList) {
     FunctionCallInfo fcInfo=determineFunctionCallInfo(fc);
@@ -138,7 +138,6 @@ void FunctionCallMapping::initDiagnostics() {
 }
 
 FunctionCallTargetSet FunctionCallMapping::resolveFunctionCall(SgFunctionCallExp* funCall) {
-  FunctionCallTargetSet fcs;
   if(funCall) {
     //SAWYER_MESG(logger[TRACE]) << "DEBUG: @FunctionCallMapping::resolveFunctionCall:"<<funCall->unparseToString()<<endl;
     auto iter=mapping.find(funCall);
@@ -146,5 +145,6 @@ FunctionCallTargetSet FunctionCallMapping::resolveFunctionCall(SgFunctionCallExp
       return (*iter).second;
     }
   }
-  return fcs;
+  FunctionCallTargetSet emptySet;
+  return emptySet;
 }
