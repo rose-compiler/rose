@@ -37,24 +37,45 @@ main (int argc, char* argv[]) {
   // handle for all processing of the AST(s) associated with one or more source files.
   std::vector<std::string> argvList(argv, argv+argc);
 
-  // inlining only, without any post processing of AST
-  if (CommandlineProcessing::isOption (argvList,"-inline-only","",true))
+
+  if (CommandlineProcessing::isOption(argvList,"(-h|-help|--help)","", false))
   {
-    cout<<"Enabling inlining only mode, without any postprocessing ...."<<endl;
-    e_inline_only = true;
+    cout<<"---------------------Tool-Specific Help-----------------------------------"<<endl;
+    cout<<"This is a program transformation tool to inline function calls in your C/C++ or Fortran code."<<endl;
+    cout<<"Usage: "<<argvList[0]<<" -c [options] "<< "input.c"<<endl;
+    cout<<endl;
+    cout<<"The optional options include: "<<endl;
+    cout<<" -skip-postprocessing: Skip postprocessing which cleanups code"<<endl;
+    cout<<" -process-headers:     Process calls within header files"<<endl;
+    cout<<" -verbose:            Printout debugging information"<<endl;
+    cout<<"----------------------Generic Help for ROSE tools--------------------------"<<endl;
+  }
+
+  // inlining only, without any post processing of AST
+  if (CommandlineProcessing::isOption (argvList,"-skip-postprocessing","",false))
+  {
+    cout<<"Skip postprocessing which cleans up the code...."<<endl;
+    e_inline_only = true ;
   }
   else 
     e_inline_only = false;
 
   // skip calls within headers or not
-  if (CommandlineProcessing::isOption (argvList,"-skip-headers","",true))
+  if (CommandlineProcessing::isOption (argvList,"-process-headers","",false))
   {
-    Inliner::skipHeaders = true;
-    cout<<"Skipping calls within header files ...."<<endl;
+    Inliner::skipHeaders = false;
+    cout<<"Processing calls within header files ...."<<endl;
   }
   else 
-    Inliner::skipHeaders = false;
+    Inliner::skipHeaders = true;
 
+  if (CommandlineProcessing::isOption (argvList,"-verbose","",false))
+  {
+    Inliner::verbose= true;
+    cout<<"Turning on verbose mode ...."<<endl;
+  }
+  else 
+    Inliner::verbose= false;
 
   SgProject* sageProject = frontend(argvList);
 
@@ -62,6 +83,7 @@ main (int argc, char* argv[]) {
   std::vector <SgFunctionCallExp*> inlined_calls; 
 
   // Inline one call at a time until all have been inlined.  Loops on recursive code.
+// this is essentially recursion by default.
   int call_count =0; 
   size_t nInlined = 0;
   for (int count=0; count<10; ++count) {

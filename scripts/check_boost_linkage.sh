@@ -51,10 +51,12 @@ fi
 
 boostlibdirs="$(eval $cmd)"
 
-if test -n "$boostlibdirs"; then
-    : echo "[INFO] [${0}] Boost is being linked from '$(echo "$boostlibdirs" | xargs)' in '$LIBRARY'"
+if test "$boostlibdirs" = ""; then
+    : no dynamic boost linkage at all
+elif test -n "$boostlibdirs"; then
+    : echo "$0: info: Boost is being linked from '$(echo "$boostlibdirs" | xargs)' in '$LIBRARY'"
 else
-    echo "[ERROR] [${0}] Boost link dependencies not found in '${LIBRARY}'."
+    echo "$0: error: Boost link dependencies not found in '${LIBRARY}'."
     echo "  It looks like the directory you specified during ROSE's configure step for Boost libraries"
     echo "  is not being used in the ROSE test executable we just compiled.  Perhaps some other Boost"
     echo "  is being picked up instead?"
@@ -66,7 +68,7 @@ else
 fi
 
 if test $(echo "$boostlibdirs" | wc -l) -gt 1; then
-    echo "[ERROR] [${0}] Boost libraries are being linked from multiple directories in '${LIBRARY}'."
+    echo "$0: error: Boost libraries are being linked from multiple directories in '${LIBRARY}'."
     echo "  This is probably an error; it's not likely that you would have libraries from one version"
     echo "  of Boost spread into multiple directories.  Perhaps one of the installed Boost versions is"
     echo "  not complete?"

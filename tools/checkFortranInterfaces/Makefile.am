@@ -44,7 +44,7 @@ clean-local:
 BIN_EXECUTABLES = \
 	checkFortranInterfaces
 
-checkFortranInterfaces_SOURCES = checkFortranInterfaces.C
+checkFortranInterfaces_SOURCES = checkFortranInterfaces.C checkFortranInterfaces.h main.C
 checkFortranInterfaces.test: checkFortranInterfaces
 	./checkFortranInterfaces $(top_srcdir)/tools/checkFortranInterfaces_test_01.c checkFortranInterfaces_test_01.f90
 

@@ -3137,6 +3137,17 @@ SgUntypedDirectiveDeclaration* SgUntypedDirectiveDeclaration::build_node_from_no
      return returnNode;
    }
 
+SgUntypedEnumDeclaration* SgUntypedEnumDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, std::string enum_name )
+   {
+#if 0
+  // debugging information!
+     printf ("In SgUntypedEnumDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string enum_name): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgUntypedEnumDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
 
 SgUntypedLabelStatement* SgUntypedLabelStatement::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct )
    {
@@ -3150,7 +3161,6 @@ SgUntypedLabelStatement* SgUntypedLabelStatement::build_node_from_nonlist_childr
      return returnNode;
    }
 
-// Generated static function for building IR nodes for Aterm support (like a constructor).
 SgUntypedNameListDeclaration* SgUntypedNameListDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int statement_enum )
    {
 #if 0
@@ -3163,7 +3173,6 @@ SgUntypedNameListDeclaration* SgUntypedNameListDeclaration::build_node_from_nonl
      return returnNode;
    }
 
-// Generated static function for building IR nodes for Aterm support (like a constructor).
 SgUntypedInitializedNameListDeclaration* SgUntypedInitializedNameListDeclaration::build_node_from_nonlist_children ( Sg_File_Info* startOfConstruct, int statement_enum )
    {
 #if 0
@@ -4647,6 +4656,30 @@ SgJovialForThenStatement* SgJovialForThenStatement::build_node_from_nonlist_chil
      return returnNode;
    }
 
+SgJovialDefineDeclaration* SgJovialDefineDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string define_string)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgJovialDefineDeclaration::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string define_string): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgJovialDefineDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+SgJovialDirectiveStatement* SgJovialDirectiveStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string directive_content, SgJovialDirectiveStatement::directive_types directive_type)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgJovialDirectiveStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, std::string directive_content, SgJovialDirectiveStatement::directive_types directive_type): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgJovialDirectiveStatement* returnNode = NULL;
+
+     return returnNode;
+   }
+
 SgJovialCompoolStatement* SgJovialCompoolStatement::build_node_from_nonlist_children (Sg_File_Info* startOfConstruct, SgName name)
    {
 #if 0
@@ -4659,6 +4692,17 @@ SgJovialCompoolStatement* SgJovialCompoolStatement::build_node_from_nonlist_chil
      return returnNode;
    }
 
+SgJovialTableStatement* SgJovialTableStatement::build_node_from_nonlist_children (Sg_File_Info*, SgName, SgClassDeclaration::class_types, SgClassType*, SgClassDefinition*)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgJovialTableStatement::build_node_from_nonlist_children (Sg_File_Info*, SgName, SgClassDeclaration::class_types, SgClassType*, SgClassDefinition*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgJovialTableStatement* returnNode = NULL;
+
+     return returnNode;
+   }
 
 /* #line 3798 "../../../src/frontend/SageIII//Cxx_GrammarAtermNodeBuildFunctions.C" */
 

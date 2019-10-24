@@ -127,10 +127,6 @@ ifeq (@(ENABLE_PYTHON_ANALYSIS),yes)
     error Python is not supported by the tup ROSE build system yet
 endif
 
-ifeq (@(ENABLE_X10_ANALYSIS),yes)
-    error X10 is not supported by the tup ROSE build system yet
-endif
-
 ########################################################################################################################
 # Minimal input code, depending on what language is supported. This is for testing since the test will fail if given
 # an input file for a language that's not supported.
@@ -691,6 +687,7 @@ librose_INCDIRS = \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/BinaryLoader \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/Disassemblers \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/DLX/include \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/Experimental_General_Language_Support \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/PHPFrontend \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/PythonFrontend \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/astFileIO \
@@ -806,7 +803,6 @@ CxxGrammarMetaProgram_GENHDR = \
 CxxGrammarMetaProgram_GENSRC = \
  $(ROSE)/src/ROSETTA/src/AST_FILE_IO.C \
  $(ROSE)/src/ROSETTA/src/Cxx_Grammar.C \
- $(ROSE)/src/ROSETTA/src/Cxx_GrammarAtermSupport.C \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.C \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarCopyMemberFunctions.C \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarGetChildIndex.C \

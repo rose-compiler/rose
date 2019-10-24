@@ -169,6 +169,10 @@ string LabelProperty::labelTypeToString(LabelType lt) {
   case LABEL_BLOCKBEGIN: return "blockbegin";
   case LABEL_BLOCKEND: return "blockend";
   case LABEL_EMPTY_STMT: return "emptystmt";
+  case LABEL_FORK: return "fork";
+  case LABEL_JOIN: return "join";
+  case LABEL_WORKSHARE: return "workshare";
+  case LABEL_BARRIER: return "barrier";
   default:
     throw CodeThorn::Exception("Error: unknown label type.");
   }
@@ -189,6 +193,10 @@ bool LabelProperty::isFunctionExitLabel() { assert(_isValid); return _labelType=
 bool LabelProperty::isBlockBeginLabel() { assert(_isValid); return _labelType==LABEL_BLOCKBEGIN; }
 bool LabelProperty::isBlockEndLabel() { assert(_isValid); return _labelType==LABEL_BLOCKEND; }
 bool LabelProperty::isEmptyStmtLabel() { assert(_isValid); return _labelType==LABEL_EMPTY_STMT; }
+bool LabelProperty::isForkLabel() { assert(_isValid); return _labelType == LABEL_FORK; }
+bool LabelProperty::isJoinLabel() { assert(_isValid); return _labelType == LABEL_JOIN; }
+bool LabelProperty::isWorkshareLabel() { assert(_isValid); return _labelType == LABEL_WORKSHARE; }
+bool LabelProperty::isBarrierLabel() { assert(_isValid); return _labelType == LABEL_BARRIER; }
 
 void LabelProperty::makeTerminationIrrelevant(bool t) {assert(_isTerminationRelevant); _isTerminationRelevant=false;}
 bool LabelProperty::isTerminationRelevant() {assert(_isValid); return _isTerminationRelevant;}
@@ -271,18 +279,24 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgTypedefDeclaration:
     return 1;
 
-    // represent all parallel omp constructs as nodes
+  // All OpenMP constructs are in the CFG
+  // omp parallel results in fork/join nodes.
+  // for and sections (and currently also SIMD) results in workshare/barrier nodes
+  case V_SgOmpForSimdStatement:
+  case V_SgOmpSimdStatement:
+  case V_SgOmpForStatement:
+  case V_SgOmpSectionsStatement:
+  case V_SgOmpParallelStatement:
+    return 2;
+  // OpenMP barrier results in an actual barrier node
+  case V_SgOmpBarrierStatement:
   case V_SgOmpCriticalStatement:
+  case V_SgOmpAtomicStatement:
   case V_SgOmpDoStatement:
   case V_SgOmpFlushStatement:   
-  case V_SgOmpForStatement:
-  case V_SgOmpForSimdStatement:
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
-  case V_SgOmpParallelStatement:
   case V_SgOmpSectionStatement:
-  case V_SgOmpSectionsStatement:
-  case V_SgOmpSimdStatement:
   case V_SgOmpSingleStatement:
   case V_SgOmpTargetDataStatement:      
   case V_SgOmpTargetStatement:
@@ -327,6 +341,18 @@ void Labeler::createLabels(SgNode* root) {
         assert(num==1);
         registerLabel(LabelProperty(*i,LabelProperty::LABEL_BLOCKBEGIN));
         // registerLabel(LabelProperty(*i,LabelProperty::LABEL_BLOCKEND));
+      } else if(isSgOmpParallelStatement(*i)){
+        assert(num == 2);
+        registerLabel(LabelProperty(*i, LabelProperty::LABEL_FORK));
+        registerLabel(LabelProperty(*i, LabelProperty::LABEL_JOIN));
+      } else if(isSgOmpForStatement(*i) || isSgOmpSectionsStatement(*i) 
+                  || isSgOmpSimdStatement(*i) || isSgOmpForSimdStatement(*i)) {
+        assert(num == 2);
+        registerLabel(LabelProperty(*i, LabelProperty::LABEL_WORKSHARE));
+        registerLabel(LabelProperty(*i, LabelProperty::LABEL_BARRIER));
+      } else if(isSgOmpBarrierStatement(*i)) {
+        assert(num == 1);
+        registerLabel(LabelProperty(*i, LabelProperty::LABEL_BARRIER));
       } else {
         // all other cases
         for(int j=0;j<num;j++) {
@@ -469,6 +495,36 @@ Label Labeler::functionExitLabel(SgNode* node) {
     return lab+1; 
 }
 
+Label Labeler::forkLabel(SgNode *node) {
+  ROSE_ASSERT(isSgOmpParallelStatement(node));
+  Label lab = getLabel(node);
+  return lab;
+}
+
+Label Labeler::joinLabel(SgNode *node) {
+  ROSE_ASSERT(isSgOmpParallelStatement(node));
+  Label lab = getLabel(node);
+  return lab+1;
+}
+
+Label Labeler::workshareLabel(SgNode *node) {
+  ROSE_ASSERT(isSgOmpForStatement(node) || isSgOmpSectionsStatement(node) 
+                || isSgOmpSimdStatement(node) || isSgOmpForSimdStatement(node));
+  Label lab = getLabel(node);
+  return lab;
+}
+
+Label Labeler::barrierLabel(SgNode *node) {
+  if (isSgOmpBarrierStatement(node)) {
+    Label lab = getLabel(node);
+    return lab;
+  }
+  ROSE_ASSERT(isSgOmpForStatement(node) || isSgOmpSectionsStatement(node) 
+                || isSgOmpSimdStatement(node) || isSgOmpForSimdStatement(node));
+  Label lab = getLabel(node);
+  return lab+1;
+}
+
 bool Labeler::isConditionLabel(Label lab) {
   return SgNodeHelper::isCond(getNode(lab));
 }
@@ -526,6 +582,22 @@ void Labeler::setExternalFunctionCallLabel(Label lab) {
 
 bool Labeler::isFunctionCallReturnLabel(Label lab) {
   return mappingLabelToLabelProperty[lab.getId()].isFunctionCallReturnLabel();
+}
+
+bool Labeler::isForkLabel(Label lab) {
+  return mappingLabelToLabelProperty[lab.getId()].isForkLabel();
+}
+
+bool Labeler::isJoinLabel(Label lab) {
+  return mappingLabelToLabelProperty[lab.getId()].isJoinLabel();
+}
+
+bool Labeler::isWorkshareLabel(Label lab) {
+  return mappingLabelToLabelProperty[lab.getId()].isWorkshareLabel();
+}
+
+bool Labeler::isBarrierLabel(Label lab) {
+  return mappingLabelToLabelProperty[lab.getId()].isBarrierLabel();
 }
 
 LabelSet Labeler::getLabelSet(set<SgNode*>& nodeSet) {

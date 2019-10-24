@@ -11,13 +11,23 @@ UntypedTraversal::UntypedTraversal(SgSourceFile* sourceFile, UntypedConverter* c
 {
    p_source_file = sourceFile;
    pConverter = converter;
+
+   p_has_base_type_name = false;
+   p_base_type_name     = "";
+   p_var_name           = "";
+   p_var_initializer    = NULL;
 }
 
 InheritedAttribute
 UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute currentScope)
 {
 #if DEBUG_UNTYPED_TRAVERSAL > 0
-        cout << "Down traverse: found a node of type ... " << node->class_name() << ": " << node << endl;
+   static bool first = true;
+   if (first) {
+      cout << "\n.........................................................................................\n";
+      first = false;
+   }
+   cout << "Down traverse: found a node of type ... " << node->class_name() << ": " << node << endl;
 #endif
 
 // The currentScope is being changed somewhere unexpectedly
@@ -49,6 +59,33 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
       {
          SgUntypedDirectiveDeclaration* ut_decl = dynamic_cast<SgUntypedDirectiveDeclaration*>(node);
          pConverter->convertUntypedDirectiveDeclaration(ut_decl, currentScope);
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
+    case V_SgUntypedEnumDeclaration:
+      {
+         SgUntypedEnumDeclaration* ut_decl = dynamic_cast<SgUntypedEnumDeclaration*>(node);
+         pConverter->convertUntypedEnumDeclaration(ut_decl, currentScope);
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
+    case V_SgUntypedStructureDeclaration:
+      {
+         SgUntypedStructureDeclaration* ut_struct = dynamic_cast<SgUntypedStructureDeclaration*>(node);
+         pConverter->convertUntypedStructureDeclaration(ut_struct,currentScope);
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
+    case V_SgUntypedStructureDefinition:
+      {
+      // This node is converted by the containing SgUntypedStructureDeclaration
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
+    case V_SgUntypedTypedefDeclaration:
+      {
+         SgUntypedTypedefDeclaration* ut_decl = dynamic_cast<SgUntypedTypedefDeclaration*>(node);
+         pConverter->convertUntypedTypedefDeclaration(ut_decl, currentScope);
          currentScope = SageBuilder::topScopeStack();
          break;
       }
@@ -110,13 +147,36 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
     case V_SgUntypedVariableDeclaration:
       {
          SgUntypedVariableDeclaration* ut_decl = dynamic_cast<SgUntypedVariableDeclaration*>(node);
-         pConverter->convertSgUntypedVariableDeclaration(ut_decl, currentScope);
+
+         if (ut_decl->get_has_base_type() == false) {
+             pConverter->convertUntypedVariableDeclaration(ut_decl, currentScope);
+         }
+         else {
+          // This variable has an anonymous type, save the information and create the variable declaration upon traversal back up the tree
+             SgUntypedStructureDeclaration* base_type_decl = dynamic_cast<SgUntypedStructureDeclaration*>(ut_decl->get_base_type_declaration());
+             ROSE_ASSERT(base_type_decl != NULL);
+
+          // The initialized name will be needed for the variable name and its initializer
+          //
+             SgUntypedInitializedNamePtrList ut_vars = ut_decl->get_variables()->get_name_list();
+             SgUntypedInitializedName*  ut_init_name = ut_vars[0];
+
+          // There will be only one variable for Jovial (make sure this holds in case of another language)
+             ROSE_ASSERT(ut_vars.size() == 1);
+
+             SgInitializer* sg_initializer = pConverter->convertUntypedInitializerOnly(ut_init_name);
+
+             p_has_base_type_name = true;
+             p_base_type_name = base_type_decl->get_name();
+             p_var_name = ut_init_name->get_name();
+             p_var_initializer = sg_initializer;
+         }
          break;
       }
     case V_SgUntypedImplicitDeclaration:
       {
          SgUntypedImplicitDeclaration* ut_decl = dynamic_cast<SgUntypedImplicitDeclaration*>(node);
-         pConverter->convertSgUntypedImplicitDeclaration(ut_decl, currentScope);
+         pConverter->convertUntypedImplicitDeclaration(ut_decl, currentScope);
          break;
       }
     case V_SgUntypedNameListDeclaration:
@@ -128,7 +188,7 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
     case V_SgUntypedInitializedNameListDeclaration:
       {
          SgUntypedInitializedNameListDeclaration* ut_decl = dynamic_cast<SgUntypedInitializedNameListDeclaration*>(node);
-         pConverter->convertSgUntypedInitializedNameListDeclaration(ut_decl, currentScope);
+         pConverter->convertUntypedInitializedNameListDeclaration(ut_decl, currentScope);
          break;
       }
     case V_SgUntypedBlockStatement:
@@ -139,9 +199,10 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
          cout << "-x- scope is : " << ut_block_stmt->get_scope() << std::endl;
 #endif
 
-         SgBasicBlock* sg_basic_block = pConverter->convertSgUntypedBlockStatement(ut_block_stmt, currentScope);
-
-#if 0
+#if 1
+         pConverter->convertUntypedBlockStatement(ut_block_stmt, currentScope);
+#else
+         SgBasicBlock* sg_basic_block = pConverter->convertUntypedBlockStatement(ut_block_stmt, currentScope);
          cout << "---     top scope is : " << SageBuilder::topScopeStack() << " "
               << SageBuilder::topScopeStack()->class_name() << endl;
          cout << "--- current scope is : " << currentScope << " " << currentScope->class_name() << endl;
@@ -155,20 +216,20 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
     case V_SgUntypedForAllStatement:
       {
          SgUntypedForAllStatement* ut_stmt = dynamic_cast<SgUntypedForAllStatement*>(node);
-         pConverter->convertSgUntypedForAllStatement(ut_stmt, currentScope);
+         pConverter->convertUntypedForAllStatement(ut_stmt, currentScope);
          currentScope = SageBuilder::topScopeStack();
          break;
       }
     case V_SgUntypedImageControlStatement:
       {
          SgUntypedImageControlStatement* ut_stmt = dynamic_cast<SgUntypedImageControlStatement*>(node);
-         pConverter->convertSgUntypedImageControlStatement(ut_stmt, currentScope);
+         pConverter->convertUntypedImageControlStatement(ut_stmt, currentScope);
          break;
       }
     case V_SgUntypedLabelStatement:
       {
          SgUntypedLabelStatement* ut_decl = dynamic_cast<SgUntypedLabelStatement*>(node);
-         pConverter->convertSgUntypedLabelStatement_decl(ut_decl, currentScope);
+         pConverter->convertUntypedLabelStatement_decl(ut_decl, currentScope);
          break;
       }
     case V_SgUntypedNamedStatement:
@@ -181,7 +242,7 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
     case V_SgUntypedNullStatement:
       {
          SgUntypedNullStatement* ut_decl = dynamic_cast<SgUntypedNullStatement*>(node);
-         pConverter->convertSgUntypedNullStatement(ut_decl, currentScope);
+         pConverter->convertUntypedNullStatement(ut_decl, currentScope);
          break;
       }
     default:
@@ -221,7 +282,7 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
       {
          SgUntypedExpression* ut_expr = isSgUntypedUnaryOperator(node);
          SgNodePtrList children(childAttrs);
-         sg_node = pConverter->convertSgUntypedExpression(ut_expr, children);
+         sg_node = pConverter->convertUntypedExpression(ut_expr, children);
          break;
       }
 
@@ -229,7 +290,7 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
       {
          SgUntypedExpression* ut_expr = isSgUntypedBinaryOperator(node);
          SgNodePtrList children(childAttrs);
-         sg_node = pConverter->convertSgUntypedExpression(ut_expr, children);
+         sg_node = pConverter->convertUntypedExpression(ut_expr, children);
          break;
       }
 
@@ -238,7 +299,7 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
     case V_SgUntypedValueExpression:
       {
          SgUntypedExpression* ut_expr = isSgUntypedExpression(node);
-         sg_node = pConverter->convertSgUntypedExpression(ut_expr);
+         sg_node = pConverter->convertUntypedExpression(ut_expr);
          break;
       }
     case V_SgUntypedArrayReferenceExpression:
@@ -252,27 +313,27 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
       {
          SgUntypedExprListExpression* ut_expr = isSgUntypedExprListExpression(node);
          SgNodePtrList children(childAttrs);
-         sg_node = pConverter->convertSgUntypedExprListExpression(ut_expr, children);
+         sg_node = pConverter->convertUntypedExprListExpression(ut_expr, children);
          break;
       }
     case V_SgUntypedSubscriptExpression:
       {
          SgUntypedSubscriptExpression* ut_expr = isSgUntypedSubscriptExpression(node);
          SgNodePtrList children(childAttrs);
-         sg_node = pConverter->convertSgUntypedSubscriptExpression(ut_expr, children);
+         sg_node = pConverter->convertUntypedSubscriptExpression(ut_expr, children);
          break;
       }
     case V_SgUntypedAbortStatement:
       {
          SgUntypedAbortStatement* ut_stmt = dynamic_cast<SgUntypedAbortStatement*>(node);
-         sg_node = pConverter->convertSgUntypedAbortStatement(ut_stmt, currentScope);
+         sg_node = pConverter->convertUntypedAbortStatement(ut_stmt, currentScope);
          break;
       }
     case V_SgUntypedAssignmentStatement:
       {
          SgUntypedAssignmentStatement* ut_stmt = dynamic_cast<SgUntypedAssignmentStatement*>(node);
          SgNodePtrList children(childAttrs);
-         sg_node = pConverter->convertSgUntypedAssignmentStatement(ut_stmt, children, currentScope);
+         sg_node = pConverter->convertUntypedAssignmentStatement(ut_stmt, children, currentScope);
          break;
       }
     case V_SgUntypedCaseStatement:
@@ -286,13 +347,13 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
       {
          SgUntypedExpressionStatement* ut_stmt = dynamic_cast<SgUntypedExpressionStatement*>(node);
          SgNodePtrList children(childAttrs);
-         sg_node = pConverter->convertSgUntypedExpressionStatement(ut_stmt, children, currentScope);
+         sg_node = pConverter->convertUntypedExpressionStatement(ut_stmt, children, currentScope);
          break;
       }
     case V_SgUntypedExitStatement:
       {
          SgUntypedExitStatement* ut_stmt = dynamic_cast<SgUntypedExitStatement*>(node);
-         sg_node = pConverter->convertSgUntypedExitStatement(ut_stmt, currentScope);
+         sg_node = pConverter->convertUntypedExitStatement(ut_stmt, currentScope);
          break;
       }
     case V_SgUntypedForStatement:
@@ -306,27 +367,27 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
       {
          SgUntypedFunctionCallStatement* ut_stmt = dynamic_cast<SgUntypedFunctionCallStatement*>(node);
          SgNodePtrList children(childAttrs);
-         sg_node = pConverter->convertSgUntypedFunctionCallStatement(ut_stmt, children, currentScope);
+         sg_node = pConverter->convertUntypedFunctionCallStatement(ut_stmt, children, currentScope);
          break;
       }
     case V_SgUntypedGotoStatement:
       {
          SgUntypedGotoStatement* ut_stmt = dynamic_cast<SgUntypedGotoStatement*>(node);
-         sg_node = pConverter->convertSgUntypedGotoStatement(ut_stmt, currentScope);
+         sg_node = pConverter->convertUntypedGotoStatement(ut_stmt, currentScope);
          break;
       }
     case V_SgUntypedIfStatement:
       {
          SgUntypedIfStatement* ut_stmt = dynamic_cast<SgUntypedIfStatement*>(node);
          SgNodePtrList children(childAttrs);
-         sg_node = pConverter->convertSgUntypedIfStatement(ut_stmt, children, currentScope);
+         sg_node = pConverter->convertUntypedIfStatement(ut_stmt, children, currentScope);
          break;
       }
     case V_SgUntypedImageControlStatement:
       {
          SgUntypedImageControlStatement* ut_stmt = dynamic_cast<SgUntypedImageControlStatement*>(node);
          SgNodePtrList children(childAttrs);
-         pConverter->convertSgUntypedImageControlStatement(ut_stmt, children, currentScope);
+         pConverter->convertUntypedImageControlStatement(ut_stmt, children, currentScope);
          break;
       }
 #if 0
@@ -341,21 +402,21 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
     case V_SgUntypedOtherStatement:
       {
          SgUntypedOtherStatement* ut_stmt = dynamic_cast<SgUntypedOtherStatement*>(node);
-         sg_node = pConverter->convertSgUntypedOtherStatement(ut_stmt, currentScope);
+         sg_node = pConverter->convertUntypedOtherStatement(ut_stmt, currentScope);
          break;
       }
     case V_SgUntypedReturnStatement:
       {
          SgUntypedReturnStatement* ut_stmt = dynamic_cast<SgUntypedReturnStatement*>(node);
          SgNodePtrList children(childAttrs);
-         sg_node = pConverter->convertSgUntypedReturnStatement(ut_stmt, children, currentScope);
+         sg_node = pConverter->convertUntypedReturnStatement(ut_stmt, children, currentScope);
          break;
       }
     case V_SgUntypedStopStatement:
       {
          SgUntypedStopStatement* ut_stmt = dynamic_cast<SgUntypedStopStatement*>(node);
          SgNodePtrList children(childAttrs);
-         sg_node = pConverter->convertSgUntypedStopStatement(ut_stmt, children, currentScope);
+         sg_node = pConverter->convertUntypedStopStatement(ut_stmt, children, currentScope);
          break;
       }
     case V_SgUntypedWhileStatement:
@@ -388,6 +449,28 @@ UntypedTraversal::evaluateSynthesizedAttribute(SgNode* node, InheritedAttribute 
          SageBuilder::popScopeStack();
 
          currentScope = SageBuilder::topScopeStack();
+         break;
+      }
+    case V_SgUntypedStructureDeclaration:
+      {
+         SageBuilder::popScopeStack();  // structure scope
+         currentScope = SageBuilder::topScopeStack();
+         break;
+      }
+    case V_SgUntypedVariableDeclaration:
+      {
+         if (p_has_base_type_name) {
+         // This is a variable declaration with an anonymous type declaration, it has to be
+         // converted after the type declaration has been done.
+            SgUntypedVariableDeclaration* ut_decl = dynamic_cast<SgUntypedVariableDeclaration*>(node);
+            pConverter->convertUntypedVariableDeclaration(ut_decl, currentScope, p_base_type_name, p_var_name, p_var_initializer);
+
+            p_has_base_type_name = false;
+            p_base_type_name     = "";
+            p_var_name           = "";
+            p_var_initializer    = NULL;
+         }
+
          break;
       }
     case V_SgUntypedProgramHeaderDeclaration:

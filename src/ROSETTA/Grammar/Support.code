@@ -598,6 +598,10 @@ HEADER_STORAGE_MODIFIER_START
                e_cuda_pinned         = 22, /*!< CUDA, in device's texture memory (read only)  */
                e_cuda_texture        = 23, /*!< CUDA, in host's page-locked memory */
 
+            // Rasmussen (10/20/2019): Jovial storage modifiers
+               e_jovial_def          = 24, /*!< Jovial, specifies that variable is available (memory allocated) */
+               e_jovial_ref          = 25, /*!< Jovial, specifies that variable is available (no memory created) */
+
                e_last_modifier  /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -665,6 +669,14 @@ HEADER_STORAGE_MODIFIER_START
        // Rasmussen (02/06/2018): Fortran contiguous array storage attribute
           bool isContiguous() const;
           void setContiguous();
+
+       // Rasmussen (10/20/2019): Jovial storage modifiers
+       //
+          bool isJovialDef() const;
+          void setJovialDef();
+
+          bool isJovialRef() const;
+          void setJovialRef();
 
        // TV (04/08/2010): Support for CUDA storage modifiers
 
@@ -2424,6 +2436,14 @@ void $CLASSNAME::setPointerBased()      { p_modifier = e_pointer_based; }
 // Rasmussen (02/04/2018): Fortran contiguous array storage attribute
 bool SgStorageModifier::isContiguous() const { return p_modifier == e_contiguous; }
 void SgStorageModifier::setContiguous()      {        p_modifier  = e_contiguous; }
+
+// Rasmussen (10/20/2019): Jovial storage modifiers
+//
+bool SgStorageModifier::isJovialDef() const { return p_modifier == e_jovial_def; }
+void SgStorageModifier::setJovialDef()      {        p_modifier  = e_jovial_def; }
+
+bool SgStorageModifier::isJovialRef() const { return p_modifier == e_jovial_ref; }
+void SgStorageModifier::setJovialRef()      {        p_modifier  = e_jovial_ref; }
 
 // TV (08/04/2010): Support for CUDA storage modifiers
 
@@ -7562,6 +7582,7 @@ SgSymbolTable::get_name( const SgNode* node) const
           case V_SgDerivedTypeStatement:
           case V_SgModuleStatement:
           case V_SgJavaPackageDeclaration:
+          case V_SgJovialTableStatement:
              {
                const SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
                name = classDeclaration->get_name();
@@ -16905,7 +16926,7 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
 
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenMap = this->get_tokenSubsequenceMap();
 
-#if 1
+#if 0
      printf ("In SgSourceFile::set_tokenSubsequenceMap(): (before): tokenMap.size() = %zu \n",tokenMap.size());
 #endif
 
@@ -16944,7 +16965,7 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
           i++;
         }
 
-#if 1
+#if 0
      printf ("In SgSourceFile::set_tokenSubsequenceMap(): (after): tokenMap.size() = %zu \n",tokenMap.size());
 #endif
 
@@ -17005,7 +17026,7 @@ SgSourceFile::get_tokenSubsequenceMap()
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* result = Rose::tokenSubsequenceMapOfMaps[index];
      ROSE_ASSERT(result != NULL);
 
-#if 1
+#if 0
   // DQ (10/4/2018): Run a test each time this map is accessed: Output the tokenStreamSequenceMap:
 #if 0
      printf ("In SgSourceFile::get_tokenSubsequenceMap(): Output TokenStreamSequenceToNodeMapping \n");
@@ -17452,7 +17473,7 @@ SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement
 
      std::map<SgScopeStatement*,SgStatement*> & frontierMap = this->get_representativeWhitespaceStatementMap();
 
-#if 1
+#if 0
      printf ("In SgSourceFile::set_representativeWhitespaceStatementMap(): (before): frontierMap.size() = %zu \n",frontierMap.size());
 #endif
 
@@ -17494,7 +17515,7 @@ SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement
           i++;
         }
 
-#if 1
+#if 0
      printf ("In SgSourceFile::set_representativeWhitespaceStatementMap(): (after): frontierMap.size() = %zu \n",frontierMap.size());
 #endif
    }

@@ -36,20 +36,21 @@ namespace Untyped {
 
    // Declaration statements
    //
-      virtual SgDeclarationStatement* convertSgUntypedNameListDeclaration (SgUntypedNameListDeclaration* ut_decl, SgScopeStatement* scope);
-      virtual SgImplicitStatement*    convertSgUntypedImplicitDeclaration (SgUntypedImplicitDeclaration* ut_decl, SgScopeStatement* scope);
-      virtual SgVariableDeclaration*  convertSgUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope);
+      virtual SgDeclarationStatement* convertUntypedNameListDeclaration  (SgUntypedNameListDeclaration*  ut_decl, SgScopeStatement* scope);
+      virtual SgImplicitStatement*    convertUntypedImplicitDeclaration  (SgUntypedImplicitDeclaration*  ut_decl, SgScopeStatement* scope);
+      virtual SgVariableDeclaration*  convertUntypedVariableDeclaration  (SgUntypedVariableDeclaration*  ut_decl, SgScopeStatement* scope);
+      virtual SgDeclarationStatement* convertUntypedStructureDeclaration (SgUntypedStructureDeclaration* ut_decl, SgScopeStatement* scope);
 
    // Executable statements
    //
-      virtual SgStatement* convertSgUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
-      virtual SgStatement* convertUntypedForStatement          (SgUntypedForStatement*        ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
-      virtual SgStatement* convertSgUntypedOtherStatement      (SgUntypedOtherStatement* ut_stmt, SgScopeStatement* scope);
+      virtual SgStatement* convertUntypedExpressionStatement (SgUntypedExpressionStatement* ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
+      virtual SgStatement* convertUntypedForStatement        (SgUntypedForStatement*        ut_stmt, SgNodePtrList& children, SgScopeStatement* scope);
+      virtual SgStatement* convertUntypedOtherStatement      (SgUntypedOtherStatement* ut_stmt, SgScopeStatement* scope);
 
    // Fortran image control statements
-      virtual SgImageControlStatement* convertSgUntypedImageControlStatement (SgUntypedImageControlStatement* ut_stmt, SgScopeStatement* scope);
-      virtual SgImageControlStatement* convertSgUntypedImageControlStatement (SgUntypedImageControlStatement* ut_stmt,
-                                                                              SgNodePtrList& children, SgScopeStatement* scope);
+      virtual SgImageControlStatement* convertUntypedImageControlStatement (SgUntypedImageControlStatement* ut_stmt, SgScopeStatement* scope);
+      virtual SgImageControlStatement* convertUntypedImageControlStatement (SgUntypedImageControlStatement* ut_stmt,
+                                                                            SgNodePtrList& children, SgScopeStatement* scope);
    // Expressions
    //
   };

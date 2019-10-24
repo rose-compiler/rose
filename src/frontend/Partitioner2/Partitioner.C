@@ -5,14 +5,15 @@
 #include <Partitioner2/DataFlow.h>
 #include <Partitioner2/Exception.h>
 #include <Partitioner2/GraphViz.h>
+#include <Partitioner2/ModulesPowerpc.h>
 #include <Partitioner2/Utility.h>
 
-#include "AsmUnparser_compat.h"
-#include "BinaryUnparserBase.h"
-#include "CommandLine.h"
-#include "Diagnostics.h"
-#include "RecursionCounter.h"
-#include "SymbolicSemantics2.h"
+#include <AsmUnparser_compat.h>
+#include <BinaryUnparserBase.h>
+#include <CommandLine.h>
+#include <Diagnostics.h>
+#include <RecursionCounter.h>
+#include <SymbolicSemantics2.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/config.hpp>
@@ -1097,14 +1098,14 @@ Partitioner::basicBlockPopsStack(const BasicBlock::Ptr &bb) const {
         // has an initial value that's not near the minimum or maximum possible value.  Therefore, we'll substitute a concrete
         // value for the stack pointer.
         SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
-        SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeInteger(REG_SP.nBits(), 0x8000); // arbitrary
+        SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeIntegerConstant(REG_SP.nBits(), 0x8000); // arbitrary
         SymbolicExpr::Ptr spNExpr =
             Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, sem.operators->solver());
 
         // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down.
         // SPn > SP0 == true implies at least one byte popped.
         SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, sem.operators->solver());
-        bb->popsStack() = cmpExpr->mustEqual(SymbolicExpr::makeBoolean(true));
+        bb->popsStack() = cmpExpr->mustEqual(SymbolicExpr::makeBooleanConstant(true));
     } while (0);
 
 #if 0 // [Robb Matzke 2019-01-16]: commented out to debug race
@@ -1275,59 +1276,14 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
     SAWYER_MESG(debug) <<"  last instruction of block: " <<lastInsn->toString() <<"\n";
 
     // Use our own semantics if we have them.
-    BasicBlockSemantics sem = bb->semantics();
-    if (BaseSemantics::StatePtr state = sem.finalState()) {
-        // This is a function return if the new instruction pointer (after processing this basic block semantically) has a
-        // value equal to a return address which is now past the top of the stack.
-        ASSERT_not_null(sem.dispatcher);
-        ASSERT_not_null(sem.operators);
-        SAWYER_MESG(debug) <<"  block has semantic information\n";
-        const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
-        const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
-        const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
-
-        // Find the pointer to the return address. Since the return instruction (e.g., x86 RET) has been processed semantically
-        // already, the return address is beyond the end of the stack.  Here we handle architecture-specific instructions that
-        // might pop more than just the return address (e.g., x86 "RET 4").
-        BaseSemantics::SValuePtr stackOffset;           // added to stack ptr to get ptr to return address
-        if (SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(lastInsn)) {
-            if ((x86insn->get_kind() == x86_ret || x86insn->get_kind() == x86_retf) &&
-                x86insn->nOperands() == 1 &&
-                isSgAsmIntegerValueExpression(x86insn->operand(0))) {
-                uint64_t nbytes = isSgAsmIntegerValueExpression(x86insn->operand(0))
-                                  ->get_absoluteValue();
-                nbytes += REG_IP.nBits() / 8;       // size of return address
-                stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.nBits(), nbytes));
-            }
-        }
-        if (!stackOffset) {
-            // If no special case above, assume return address is the word beyond the top-of-stack and that the stack grows
-            // downward.
-            stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.nBits(), REG_IP.nBits()/8));
-        }
-        BaseSemantics::SValuePtr sp = sem.operators->peekRegister(REG_SP);
-        BaseSemantics::SValuePtr retAddrPtr = sem.operators->add(sp, stackOffset);
-
-        // Now that we have the ptr to the return address, read it from the stack and compare it with the new instruction
-        // pointer. If equal, then the basic block returns to the caller.
-        BaseSemantics::SValuePtr retAddr = sem.operators->undefined_(REG_IP.nBits());
-        retAddr = sem.operators->peekMemory(REG_SS, retAddrPtr, retAddr);
-        BaseSemantics::SValuePtr ip = sem.operators->peekRegister(REG_IP);
-        BaseSemantics::SValuePtr isEqual =
-            sem.operators->equalToZero(sem.operators->add(retAddr, sem.operators->negate(ip)));
-        retval = isEqual->is_number() ? (isEqual->get_number() != 0) : false;
-
-        if (debug) {
-            debug <<"    stackOffset  = " <<*stackOffset <<"\n";
-            debug <<"    sp           = " <<*sp <<"\n";
-            debug <<"    retAddrPtr   = " <<*retAddrPtr <<"\n";
-            debug <<"    retAddr      = " <<*retAddr <<"\n";
-            debug <<"    ip           = " <<*ip <<"\n";
-            debug <<"    retAddr==ip? = " <<*isEqual <<"\n";
-            debug <<"    returning " <<(retval ? "true" : "false") <<"\n";
-            //debug <<"    state:" <<*state; // produces lots of output!
-        }
-
+    boost::logic::tribool isReturn;
+    if (isSgAsmPowerpcInstruction(lastInsn)) {
+        isReturn = ModulesPowerpc::isFunctionReturn(*this, bb);
+    } else {
+        isReturn = Modules::isStackBasedReturn(*this, bb);
+    }
+    if (isReturn || !isReturn) {
+        bool retval = isReturn ? true : false;
         bb->isFunctionReturn() = retval;
         return retval;
     }
@@ -2173,15 +2129,17 @@ Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function) const {
     while (!worklist.isEmpty()) {
         const ControlFlowGraph::Vertex &vertex = *cfg_.findVertex(worklist.pop());
 
-        // Find vertex neighbors that could be in the same function.
-        Sawyer::Container::Set<ControlFlowGraph::ConstVertexIterator> neighbors;
+        // Find vertex neighbors that could be in the same function.  The neighbors are sorted by ID instead of vertex iterator
+        // because sorting by ID is reproducible across runs, but vertex comparisons are based on addresses, which are not
+        // reproducible.
+        Sawyer::Container::Map<size_t, ControlFlowGraph::ConstVertexIterator> neighbors;
         BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.outEdges()) {
             if (edge.value().type() != E_FUNCTION_CALL &&
                 edge.value().type() != E_FUNCTION_XFER &&
                 edge.value().type() != E_FUNCTION_RETURN && !edge.isSelfEdge() &&
                 !edge.target()->value().isEntryBlock()) {
                 SAWYER_MESG(debug) <<"  following edge " <<edgeName(edge) <<"\n";
-                neighbors.insert(edge.target());
+                neighbors.insert(edge.target()->id(), edge.target());
             }
         }
         BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.inEdges()) {
@@ -2190,7 +2148,7 @@ Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function) const {
                 edge.value().type() != E_FUNCTION_RETURN && !edge.isSelfEdge() &&
                 !edge.source()->value().isEntryBlock()) {
                 SAWYER_MESG(debug) <<"  following edge " <<edgeName(edge) <<"\n";
-                neighbors.insert(edge.target());
+                neighbors.insert(edge.target()->id(), edge.target());
             }
         }
 

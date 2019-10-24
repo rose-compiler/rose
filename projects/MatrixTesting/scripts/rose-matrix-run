@@ -217,7 +217,7 @@ select-os() {
     if [ -n "$TARGET_OS" ]; then
 	echo "$TARGET_OS"
     else
-	local os="$(rose-matrix-slave-config --value-only --plain TEST_OS |tr ' ' '\n' |shuf -n1)"
+	local os="$(rose-matrix-slave-config --database="$DATABASE" --value-only --plain TEST_OS |tr ' ' '\n' |shuf -n1)"
 	[ -n "$os" ] || die "no operating systems configured (TEST_OS slave setting)"
 	echo "$os"
     fi
@@ -286,7 +286,7 @@ generate-docker-image() {
     sed "s%\\\${os}%$os%g" <"$template" >"${tempdir}/Dockerfile"
     if [ "$VERBOSITY" -gt 0 ]; then
 	echo "Docker file:"
-	cat -n "${tempdir}/DockerFile"
+	cat -n "${tempdir}/Dockerfile"
     fi
 
     rsync -a --exclude='*~' "${LIBDIR}/container-scripts/" "${tempdir}/container-scripts"

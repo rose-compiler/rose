@@ -102,4 +102,11 @@ namespace CodeThorn {
       return _callString.size()<other._callString.size();
     }
   }
+  size_t CallString::hash() const {
+    size_t h=1;
+    for(auto lab : _callString) {
+      h=h*11*lab.getId();
+    }
+    return h;
+  }
 }

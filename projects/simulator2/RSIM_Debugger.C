@@ -543,7 +543,13 @@ public:
             uint8_t bytes[16];
             memset(bytes, 0xaa, sizeof bytes);          // debugging
             size_t nRead = 0;
-            uint64_t value = 0;
+            union {
+                uint64_t u64;
+                double d;
+                float f;
+            } value;
+            memset(&value, 0, sizeof value);
+
             if (fmt!='i' && fmt!='s') {
                 nRead = thread->get_process()->get_memory()->at(va).limit(nBytes).read(bytes).size();
                 if (nRead != nBytes)
@@ -556,11 +562,11 @@ public:
                 switch (hostOrder) {
                     case ByteOrder::ORDER_LSB:
                         for (size_t j=0; j<nBytes; ++j)
-                            value |= uint64_t(bytes[j]) << (j*8);
+                            value.u64 |= uint64_t(bytes[j]) << (j*8);
                         break;
                     case ByteOrder::ORDER_MSB:
                         for (size_t j=0; j<nBytes; ++j)
-                            value = (value << 8) | bytes[j];
+                            value.u64 = (value.u64 << 8) | bytes[j];
                         break;
                     default:
                         ASSERT_not_reachable("invalid byte order");
@@ -572,19 +578,19 @@ public:
                 case '\0':
                 case 'a':
                 case 'x':
-                    out_ << StringUtility::toHex2(value, 8*nBytes) <<"\n";
+                    out_ << StringUtility::toHex2(value.u64, 8*nBytes) <<"\n";
                     va += nBytes;
                     break;
                 case 'o': {
                     char buffer[64];
-                    sprintf(buffer, "0%" PRIo64, value);
+                    sprintf(buffer, "0%" PRIo64, value.u64);
                     out_ <<buffer <<"\n";
                     va += nBytes;
                     break;
                 }
                 case 'd': {
                     char buffer[64];
-                    int64_t sv = IntegerOps::signExtend2(value, 8*nBytes, 8*sizeof(value));
+                    int64_t sv = IntegerOps::signExtend2(value.u64, 8*nBytes, 8*sizeof(value.u64));
                     sprintf(buffer, "%" PRId64, sv);
                     out_ <<buffer <<"\n";
                     va += nBytes;
@@ -592,24 +598,24 @@ public:
                 }
                 case 'u': {
                     char buffer[64];
-                    sprintf(buffer, "%" PRIu64, value);
+                    sprintf(buffer, "%" PRIu64, value.u64);
                     out_ <<buffer <<"\n";
                     va += nBytes;
                     break;
                 }
                 case 't': {
                     Sawyer::Container::BitVector bv(8*nBytes);
-                    bv.fromInteger(value);
+                    bv.fromInteger(value.u64);
                     out_ <<"0b" <<bv.toBinary() <<"\n";
                     va += nBytes;
                     break;
                 }
                 case 'f':
                     if (nBytes == sizeof(float)) {
-                        out_ <<*(float*)&value <<"\n";
+                        out_ <<value.f <<"\n";
                     } else {
                         ASSERT_require(nBytes == sizeof(double));
-                        out_ <<*(double*)&value <<"\n";
+                        out_ <<value.d <<"\n";
                     }
                     va += nBytes;
                     break;

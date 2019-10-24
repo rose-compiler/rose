@@ -584,7 +584,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
         std::cout <<"Initial state:\n" <<(*ops+formatter) <<"\n";
     BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
         if (perInstructionOutput(settings))
-            std::cout <<unparseInstructionWithAddress(insn) <<"\n";
+            std::cout <<insn->toString() <<"\n";
         ++allInsns.insertMaybe(insn->get_mnemonic(), 0);
 
         // See the comments in $ROSE/binaries/samples/x86-64-adaptiveRegs.s for details

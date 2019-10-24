@@ -176,7 +176,6 @@ private:
         Derived operator--(int) { Derived old(this->base_); base_ = base_->prev; return old; }
         template<class OtherIter> bool operator==(const OtherIter &other) const { return base_ == other.base(); }
         template<class OtherIter> bool operator!=(const OtherIter &other) const { return base_ != other.base(); }
-        bool operator<(const IteratorBase &other) const { return base_ < other.base_; }
     protected:
         Derived* derived() { return static_cast<Derived*>(this); }
         const Derived* derived() const { return static_cast<const Derived*>(this); }

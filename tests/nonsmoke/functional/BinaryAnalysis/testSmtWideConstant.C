@@ -8,8 +8,8 @@ using namespace Sawyer::Message::Common;
 
 static void test01(const std::string &solverName) {
     std::cout <<"test01: 96-bit constant\n";
-    SymbolicExpr::Ptr var = SymbolicExpr::makeVariable(64+32);
-    SymbolicExpr::Ptr wide = SymbolicExpr::makeInteger(64+32, 0x42);
+    SymbolicExpr::Ptr var = SymbolicExpr::makeIntegerVariable(64+32);
+    SymbolicExpr::Ptr wide = SymbolicExpr::makeIntegerConstant(64+32, 0x42);
     
     SmtSolver::Ptr solver = SmtSolver::instance(solverName);
     std::cout <<"SMT solver: " <<solver->name() <<"\n";
@@ -30,10 +30,10 @@ static void test01(const std::string &solverName) {
 
 static void test02(const std::string &solverName) {
     std::cout <<"test02: 160-bit constant\n";
-    SymbolicExpr::Ptr var = SymbolicExpr::makeVariable(64+64+32);
+    SymbolicExpr::Ptr var = SymbolicExpr::makeIntegerVariable(64+64+32);
     Sawyer::Container::BitVector bits(64+64+32);
     bits.fromHex("55555555_44444444_33333333_22222222_11111111");
-    SymbolicExpr::Ptr wide = SymbolicExpr::makeConstant(bits);
+    SymbolicExpr::Ptr wide = SymbolicExpr::makeIntegerConstant(bits);
     
     SmtSolver::Ptr solver = SmtSolver::instance(solverName);
     std::cout <<"SMT solver: " <<solver->name() <<"\n";

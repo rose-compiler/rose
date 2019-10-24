@@ -148,6 +148,10 @@ Here we summarize the separate sub-directoies of this directory:
       flow graph.
 
 
+# Rasmussen (04/17/2019): Support for ATerms has been deprecated.  The following notes
+# may be useful to help debug its removal. Function build_node_from_nonlist_children has
+# been removed.
+
 Aterm support notes:
    1) Function declated in generated header ROSE IR files:
 static SgTemplateParameter* 

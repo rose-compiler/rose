@@ -4,7 +4,9 @@
 #include "sage3basic.h"
 
 #include "PASolver1.h"
-#include "Timer.h"
+#include "TimeMeasurement.h"
+
+using namespace std;
 
 CodeThorn::PASolver1::PASolver1(WorkListSeq<Edge>& workList,
 				  vector<Lattice*>& analyzerDataPreInfo,
@@ -51,7 +53,7 @@ CodeThorn::PASolver1::computePostInfo(Label lab,Lattice& info) {
 // runs until worklist is empty
 void
 CodeThorn::PASolver1::runSolver() {
-  Timer solverTimer;
+  TimeMeasurement solverTimer;
   cout<<"INFO: solver 1 started."<<endl;
   solverTimer.start();
   //ROSE_ASSERT(!_workList.isEmpty()); empty files (programs of zero length)
@@ -136,7 +138,7 @@ CodeThorn::PASolver1::runSolver() {
     }
     delete info;
   }
-  cout<<"INFO: solver 1 finished after " << static_cast<unsigned long>(solverTimer.getElapsedTimeInMilliSec()) << "ms."<<endl;
+  cout<<"INFO: solver 1 finished after " << static_cast<unsigned long>(solverTimer.getTimeDuration().milliSeconds()) << "ms."<<endl;
 }
 
 #endif

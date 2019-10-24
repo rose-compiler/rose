@@ -342,9 +342,3 @@
 0x00400915: Outgoing stack delta: +8
 0x00400915: Successor blocks: unknown
 
-0x00400df4: ================================== Function (call instruction, graph) unknown name
-
-0x00400df4: Basic block reasons: entry point, CFG head
-0x00400df4: ff                      |.       |          unknown 
-0x00400df4: Successor blocks: unknown
-

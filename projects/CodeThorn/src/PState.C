@@ -8,7 +8,7 @@
 #include "CodeThornException.h"
 
 // only necessary for class VariableValueMonitor
-#include "Analyzer.h"
+//#include "Analyzer.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -55,21 +55,26 @@ string PState::toString(VariableIdMapping* variableIdMapping) const {
   return ss.str();
 }
 
-std::set<std::string> PState::getDotNodeIdStrings() const {
+std::set<std::string> PState::getDotNodeIdStrings(std::string prefix) const {
   std::set<std::string> nodeIds;
   for(PState::const_iterator j=begin();j!=end();++j) {
-    nodeIds.insert(dotNodeIdString((*j).first));
+    nodeIds.insert(dotNodeIdString(prefix,(*j).first));
+    if((*j).first.isPtr()) {
+      // need to insert also target if pointer value. Using set ensures no duplicates for shared targets.
+      if((*j).second.isPtr())
+        nodeIds.insert(dotNodeIdString(prefix,(*j).second)); 
+    }
   }
   return nodeIds;
 }
 
-std::string PState::dotNodeIdString(AbstractValue av) const {
+std::string PState::dotNodeIdString(std::string prefix, AbstractValue av) const {
   stringstream ss;
-  ss<<string("n")<<this<<av.toString();
+  ss<<prefix<<string("n")<<this<<av.toString();
   return ss.str();
 }
 
-string PState::toDotString(VariableIdMapping* variableIdMapping) const {
+string PState::toDotString(std::string prefix, VariableIdMapping* variableIdMapping) const {
   stringstream ss;
   for(PState::const_iterator j=begin();j!=end();++j) {
     //    AbstractValue v1=(*j).first;
@@ -77,15 +82,16 @@ string PState::toDotString(VariableIdMapping* variableIdMapping) const {
     // this pointer is used to get unique names for all elements of a PState
     if(v2.isPtr()) {
       // nodes
-      ss<<"\""<<dotNodeIdString((*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<"\"];"<<endl;
-      ss<<"\""<<dotNodeIdString((*j).second)<<"\";"<<endl; // target label intentionally not generated
+      ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<"\"];"<<endl;
+      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\""<< " [label=\""<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
+      //endl; // target label intentionally not generated
       // edge
-      ss <<"\""<<dotNodeIdString((*j).first)<<"\"";
+      ss <<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"";
       ss<<"->";
-      ss<<"\""<<dotNodeIdString((*j).second)<<"\"";
+      ss<<"\""<<dotNodeIdString(prefix,(*j).second)<<"\" [weight=\"0.0\"]";
       ss<<";"<<endl;
     } else {
-      ss<<"\""<<dotNodeIdString((*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<":"<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
+      ss<<"\""<<dotNodeIdString(prefix,(*j).first)<<"\"" << " [label=\""<<(*j).first.toString(variableIdMapping)<<":"<<(*j).second.toString(variableIdMapping)<<"\"];"<<endl;
     }
   }  
   return ss.str();
@@ -97,9 +103,6 @@ long PState::memorySize() const {
     mem+=sizeof(*i);
   }
   return mem+sizeof(*this);
-}
-long EState::memorySize() const {
-  return sizeof(*this);
 }
 
 /*! 
@@ -177,6 +180,17 @@ AbstractValue PState::varValue(AbstractValue varId) const {
 void PState::writeTopToAllMemoryLocations() {
   CodeThorn::AbstractValue val=CodeThorn::Top();
   writeValueToAllMemoryLocations(val);
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2019.
+ */
+void PState::combineValueAtAllMemoryLocations(AbstractValue val) {
+  for(PState::iterator i=begin();i!=end();++i) {
+    AbstractValue memLoc=(*i).first;
+    combineAtMemoryLocation(memLoc,val);
+  }
 }
 
 /*! 
@@ -318,6 +332,13 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
   operator[](abstractMemLoc)=abstractValue;
 }
 
+void PState::combineAtMemoryLocation(AbstractValue abstractMemLoc,
+                                   AbstractValue abstractValue) {
+  AbstractValue currentValue=operator[](abstractMemLoc);
+  AbstractValue newValue=AbstractValue::combine(currentValue,abstractValue);
+  operator[](abstractMemLoc)=newValue;
+}
+
 size_t PState::stateSize() const {
   return this->size();
 }
@@ -365,7 +386,7 @@ CodeThorn::PState PState::combine(CodeThorn::PState& p1, CodeThorn::PState& p2) 
     auto iter=p2.find(elem1.first);
     if(iter!=p2.end()) {
       // same memory location in both states: elem.first==(*iter).first
-      // merge values elem.second and (*iter).second
+      // combine values elem.second and (*iter).second
 
       res.writeToMemoryLocation(elem1.first,AbstractValue::combine(elem1.second,(*iter).second));
       numMatched++;
@@ -383,5 +404,20 @@ CodeThorn::PState PState::combine(CodeThorn::PState& p1, CodeThorn::PState& p2) 
       }
     }
   }
+#if 1
+  // consistency check: all elements of p1 and p2 must be represented in res
+  for(auto elem1:p1) {
+    if(res.find(elem1.first)==res.end()) {
+      cerr<<"Error: Element of PState1 "<<elem1.first.toString()<<" not in combined state."<<endl;
+      exit(1);
+    }
+  }
+  for(auto elem2:p2) {
+    if(res.find(elem2.first)==res.end()) {
+      cerr<<"Error: Element of PState2 "<<elem2.first.toString()<<" not in combined state."<<endl;
+      exit(1);
+    }
+  }
+#endif
   return res;
 }

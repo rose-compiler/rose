@@ -13,7 +13,7 @@ using namespace Rose::BinaryAnalysis;
 int
 main()
 {
-    const RegisterDictionary *dict = RegisterDictionary::dictionary_powerpc();
+    const RegisterDictionary *dict = RegisterDictionary::dictionary_powerpc32();
     ROSE_ASSERT(dict!=NULL);
     // std::cout <<*dict;
 

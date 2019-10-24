@@ -115,8 +115,11 @@ public:
      * minor number indicates the register number: 0-15 for general purpose, 0 or 1 for status. */
     static const RegisterDictionary *dictionary_arm7();
 
-    /** PowerPC registers. */
-    static const RegisterDictionary *dictionary_powerpc();
+    /** PowerPC-32 registers. */
+    static const RegisterDictionary *dictionary_powerpc32();
+
+    /** PowerPC-64 registers. */
+    static const RegisterDictionary *dictionary_powerpc64();
 
     /** MIPS32 Release 1.
      *

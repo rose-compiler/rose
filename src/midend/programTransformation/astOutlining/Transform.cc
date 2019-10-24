@@ -403,6 +403,7 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 #endif
 
   SgStatement *func_call = NULL;
+  SgVarRefExp* wrapper_exp = NULL; 
   if (use_dlopen) 
     // if dlopen() is used, insert a lib call to find the function pointer from a shared lib file
     // e.g. OUT__2__8072__p = findFunctionUsingDlopen("OUT__2__8072__", "OUT__2__8072__.so");
@@ -430,7 +431,8 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     // Generate a function call using the func pointer
     // e.g. (*OUT__2__8888__p)(__out_argv2__1527__);
     SgExprListExp* exp_list_exp = SageBuilder::buildExprListExp();
-    appendExpression(exp_list_exp, buildVarRefExp(wrapper_name,p_scope));
+    wrapper_exp= buildVarRefExp(wrapper_name,p_scope);
+    appendExpression(exp_list_exp, wrapper_exp);
     func_call = buildFunctionCallStmt(buildPointerDerefExp(buildVarRefExp(func_name_str+"p",p_scope)), exp_list_exp);   
   }
   else  // regular function call for other cases
@@ -475,14 +477,21 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   SageInterface::fixVariableReferences(p_scope);
 
+  //ROSE_ASSERT (wrapper_exp->get_symbol()->get_declaration() != NULL);
   //-----------handle dependent declarations, headers if new file is generated-------------
   if (new_file)
   {
-    SageInterface::fixVariableReferences(new_file);
+    // Liao, 2019/8/14. We disable unused symbol clean up for now. 
+    // Searching for all symbols then check if they are used within a new file. 
+    // This will wrongfully delete symbols used in the original files. 
+    SageInterface::fixVariableReferences(new_file, false);
     // SgProject * project2= new_file->get_project();
     // AstTests::runAllTests(project2);// turn it off for now
     // project2->unparse();
   }
+
+  if (wrapper_exp)
+    ROSE_ASSERT (wrapper_exp->get_symbol()->get_declaration() != NULL);
 
   // Retest this...
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());

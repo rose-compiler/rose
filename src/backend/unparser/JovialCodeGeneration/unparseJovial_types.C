@@ -28,6 +28,7 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
 
      switch (type->variantT())
         {
+       // Primitive types
           case V_SgTypeInt:         curprint("S"); unparseTypeSize(type, info);  break;
           case V_SgTypeUnsignedInt: curprint("U"); unparseTypeSize(type, info);  break;
           case V_SgTypeFloat:       curprint("F"); unparseTypeSize(type, info);  break;
@@ -36,7 +37,8 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgTypeString:      curprint("C"); unparseTypeSize(type, info);  break;
           case V_SgTypeVoid:                                                     break;
 
-          case V_SgArrayType:      unparseArrayType( isSgArrayType(type), info); break;
+          case V_SgJovialTableType:    unparseTableType(type, info);             break;
+          case V_SgArrayType:          unparseArrayType(type, info);             break;
 
           case V_SgFunctionType:
              {
@@ -79,8 +81,31 @@ Unparse_Jovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseArrayType(SgArrayType* type, SgUnparse_Info& info)
-{
+Unparse_Jovial::unparseTableType(SgType* type, SgUnparse_Info& info)
+  {
+     SgJovialTableType* table_type = isSgJovialTableType(type);
+     ROSE_ASSERT(table_type != NULL);
+
+     SgDeclarationStatement* type_decl = type->getAssociatedDeclaration();
+     ROSE_ASSERT(type_decl);
+
+     SgExprListExp* dim_info = table_type->get_dim_info();
+     if (dim_info != NULL)
+        {
+           unparseDimInfo(dim_info, info);
+        }
+
+     SgType* base_type = table_type->get_base_type();
+
+     if (base_type != NULL)
+        {
+           unparseType(base_type, info);
+        }
+  }
+
+void
+Unparse_Jovial::unparseArrayType(SgType* type, SgUnparse_Info& info)
+  {
      SgArrayType* array_type = isSgArrayType(type);
      ROSE_ASSERT(array_type != NULL);
 
@@ -89,4 +114,4 @@ Unparse_Jovial::unparseArrayType(SgArrayType* type, SgUnparse_Info& info)
      curprint(") ");
 
      unparseType(array_type->get_base_type(), info);
-}
+  }

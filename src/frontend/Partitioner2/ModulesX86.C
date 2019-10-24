@@ -2,6 +2,7 @@
 #include "AsmUnparser_compat.h"
 #include "Diagnostics.h"
 
+#include <boost/format.hpp>
 #include <Partitioner2/ModulesX86.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
@@ -16,7 +17,7 @@ namespace ModulesX86 {
 bool
 MatchStandardPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
     // Look for PUSH EBP
-    SgAsmX86Instruction *insn = NULL; 
+    SgAsmX86Instruction *insn = NULL;
     rose_addr_t pushVa = anchor;
     if (partitioner.instructionExists(pushVa))
         return false;                                   // already in the CFG/AUM
@@ -342,38 +343,106 @@ matchPushSi(const Partitioner &partitioner, SgAsmX86Instruction *push) {
 
 std::vector<rose_addr_t>
 scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimits /*in,out*/,
-                     const AddressInterval &targetLimits, size_t tableEntrySize) {
-    ASSERT_require(tableEntrySize>0 && tableEntrySize<=sizeof(rose_addr_t));
+                     const AddressInterval &targetLimits, size_t tableEntrySize,
+                     Sawyer::Optional<rose_addr_t> probableStartVa, size_t nSkippable) {
+    ASSERT_require(tableEntrySize > 0 && tableEntrySize <= sizeof(rose_addr_t));
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"scanCodeAddressTable: tableLimits = " <<StringUtility::addrToString(tableLimits)
+                       <<", targetLimits = " <<StringUtility::addrToString(targetLimits)
+                       <<", tableEntrySize = " <<StringUtility::plural(tableEntrySize, "bytes")
+                       <<(probableStartVa ? ", probable start = " + StringUtility::addrToString(*probableStartVa) : "")
+                       <<", nSkippable = " <<nSkippable <<"\n";
 
-    std::vector<rose_addr_t> successors;
+    std::vector<rose_addr_t> tableEntries;              // decoded entries in the table
+
     if (tableLimits.isEmpty() || targetLimits.isEmpty())
-        return successors;
-
+        return tableEntries;
     MemoryMap::Ptr map = partitioner.memoryMap();
+
+    // Look forward from the probable start address, but possibly allow the table to start with some addresses that are out of
+    // range (which are skipped and not officially part of the table).
+    rose_addr_t actualStartVa = probableStartVa.orElse(tableLimits.least()); // adjusted later if entries are skipped
+    size_t nSkippedEntries = 0;
     while (1) {
         // Read table entry to get target address
         uint8_t bytes[sizeof(rose_addr_t)];
-        rose_addr_t tableEntryVa = tableLimits.least() + successors.size() * tableEntrySize;
-        if (!tableLimits.isContaining(AddressInterval::baseSize(tableEntryVa, tableEntrySize)))
-            break;                                      // table entry is outside of table boundary
+        rose_addr_t tableEntryVa = actualStartVa + tableEntries.size() * tableEntrySize;
+        if (!tableLimits.isContaining(AddressInterval::baseSize(tableEntryVa, tableEntrySize))) {
+            SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" falls outside table boundary\n";
+            break;
+        }
         if (tableEntrySize != (map->at(tableEntryVa).limit(tableEntrySize)
-                               .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(bytes).size()))
-            break;                                      // table entry must be readable but not writable
+                               .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(bytes).size())) {
+            SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" is not read-only\n";
+            break;
+        }
         rose_addr_t target = 0;
         for (size_t i=0; i<tableEntrySize; ++i)
-            target |= bytes[i] << (8*i);
+            target |= bytes[i] << (8*i);                // x86 is little endian
 
-        // Check target validity
-        if (!targetLimits.isContaining(target))
-            break;                                      // target is outside allowed interval
-        if (!map->at(target).require(MemoryMap::EXECUTABLE).exists())
-            break;                                      // target address is not executable
-
-        successors.push_back(target);
+        // Save or skip the table entry
+        if (targetLimits.isContaining(target) && map->at(target).require(MemoryMap::EXECUTABLE).exists()) {
+            tableEntries.push_back(target);
+        } else if (tableEntries.empty() && nSkippedEntries < nSkippable) {
+            ++nSkippedEntries;
+            actualStartVa += tableEntrySize;
+            SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" is skipped"
+                               <<": value is " <<StringUtility::addrToString(target) <<"\n";
+        } else {
+            SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" is invalid"
+                               <<": value is " <<StringUtility::addrToString(target) <<"\n";
+            break;
+        }
     }
-    if (successors.empty()) {
-        tableLimits = AddressInterval();
-        return successors;
+
+    // Look backward from the start address to see if there are valid table entries at negative indexes, even if we didn't find
+    // any by looking forward from the probable start address. Be careful of over/under flows.
+    size_t nBackwardEntries = 0;
+    if (0 == nSkippedEntries) {
+        while (actualStartVa >= tableEntrySize &&
+               tableLimits.isContaining(AddressInterval::baseSize(actualStartVa-tableEntrySize, tableEntrySize))) {
+            uint8_t bytes[sizeof(rose_addr_t)];
+            rose_addr_t tableEntryVa = actualStartVa - tableEntrySize;
+            if (tableEntrySize != (map->at(tableEntryVa).limit(tableEntrySize)
+                                   .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(bytes).size()))
+                break;
+            rose_addr_t target = 0;
+            for (size_t i=0; i<tableEntrySize; ++i)
+                target |= bytes[i] << (8*i);            // x86 is little endian
+
+            // Save entry if valid, otherwise we've reached the beginning of the table
+            if (targetLimits.isContaining(target) && map->at(target).require(MemoryMap::EXECUTABLE).exists()) {
+                tableEntries.insert(tableEntries.begin(), target);
+                actualStartVa -= tableEntrySize;
+                ++nBackwardEntries;
+                SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" found by backward search\n";
+            } else {
+                break;
+            }
+        }
+    }
+
+    if (debug) {
+        if (tableEntries.empty()) {
+            debug <<"  no valid table entries found\n";
+        } else {
+            if (nSkippedEntries > 0)
+                debug <<"  skipped " <<StringUtility::plural(nSkippedEntries, "leading table entries") <<"\n";
+            if (tableEntries.size() > nBackwardEntries) {
+                debug <<"  found " <<StringUtility::plural(tableEntries.size() - nBackwardEntries, "entries")
+                      <<" by scanning forward\n";
+            }
+            if (nBackwardEntries > 0)
+                debug <<"  found " <<StringUtility::plural(nBackwardEntries, "entries") <<" by scanning backward\n";
+            debug <<"  total entries found: " <<tableEntries.size() <<"\n";
+            int idx = -nBackwardEntries;
+            BOOST_FOREACH (rose_addr_t target, tableEntries) {
+                debug <<"    entry[" <<boost::format("%4d") % idx <<"]"
+                      <<" at " <<StringUtility::addrToString(actualStartVa + idx * tableEntrySize)
+                      <<" = " <<StringUtility::addrToString(target) <<"\n";
+                ++idx;
+            }
+        }
     }
 
     // Sometimes the jump table is followed by 1-byte offsets into the jump table, and we should read those offsets as part of
@@ -389,24 +458,35 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
     //     [0x0040165c,0x0040166f]: uint32_t addresses[5] = { <target addresses> };
     //
     //     [0x00401670,0x00401712]: uint8_t index[0xa3] = { <values 0..4> };
-    rose_addr_t indexArrayStartVa = tableLimits.least() + successors.size()*tableEntrySize;
-    rose_addr_t indexArrayCurrentVa = indexArrayStartVa;
-    if (successors.size() <= 16 /*arbitrarily small tables*/) {
-        while (indexArrayCurrentVa <= tableLimits.greatest()) {
-            uint8_t byte;
-            if (!map->at(indexArrayCurrentVa).limit(1).require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(&byte))
-                break;
-            if (byte >= successors.size())
-                break;
-            if (indexArrayCurrentVa == tableLimits.greatest())
-                break;                                  // avoid overflow
-            ++indexArrayCurrentVa;
+    //
+    // Let's hope that the compiler doesn't combine the offset table technique with negative offsets.
+    size_t nIndexes = 0;
+    if (!tableEntries.empty() && 0 == nBackwardEntries) {
+        rose_addr_t indexArrayStartVa = actualStartVa + tableEntries.size() * tableEntrySize;
+        rose_addr_t indexArrayCurrentVa = indexArrayStartVa;
+        if (tableEntries.size() <= 16 /*arbitrarily small tables*/) {
+            while (indexArrayCurrentVa <= tableLimits.greatest()) {
+                uint8_t byte;
+                if (!map->at(indexArrayCurrentVa).limit(1).require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(&byte))
+                    break;
+                if (byte >= tableEntries.size())
+                    break;
+                if (indexArrayCurrentVa == tableLimits.greatest())
+                    break;                                  // avoid overflow
+                ++indexArrayCurrentVa;
+                ++nIndexes;
+            }
         }
+        if (nIndexes > 0)
+            SAWYER_MESG(debug) <<"  found " <<StringUtility::plural(nIndexes, "post table indexes") <<"\n";
     }
-    
+
     // Return values
-    tableLimits = AddressInterval::hull(tableLimits.least(), indexArrayCurrentVa-1);
-    return successors;
+    AddressInterval actualTableLocation = AddressInterval::baseSize(actualStartVa, tableEntries.size() * tableEntrySize + nIndexes);
+    ASSERT_require(tableLimits.isContaining(actualTableLocation));
+    tableLimits = actualTableLocation;
+    SAWYER_MESG(debug) <<"  actual table location = " <<StringUtility::addrToString(actualTableLocation) <<"\n";
+    return tableEntries;
 }
 
 Sawyer::Optional<rose_addr_t>
@@ -511,12 +591,19 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     // table-reading loop (like table is mapped read-only).
     size_t wordSizeBytes = args.partitioner.instructionProvider().instructionPointerRegister().nBits() / 8;
     AddressInterval whole = AddressInterval::hull(0, IntegerOps::genMask<rose_addr_t>(8*wordSizeBytes));
-    AddressInterval tableLimits = AddressInterval::hull(tableVa, whole.greatest());
+    AddressInterval tableLimits;
+    if (tableVa > jmp->get_address()) {
+        // table is after the jmp instruction
+        tableLimits = AddressInterval::hull(std::min(jmp->get_address() + jmp->get_size(), tableVa), whole.greatest());
+    } else {
+        // table is before the jmp instruction
+        tableLimits = AddressInterval::hull(0, jmp->get_address());
+    }
 
     // Set some limits on allowable target addresses contained in the table, besides those restrictions that will be imposed
     // during the table-reading loop (like targets must be mapped with execute permission).
     AddressInterval targetLimits = AddressInterval::hull(args.bblock->fallthroughVa(), whole.greatest());
-    
+
     // If there's a function that follows us then the switch targets are almost certainly not after the beginning of that
     // function.
     {
@@ -533,8 +620,9 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     }
 
     // Read the table
+    static const size_t maxSkippable = 1;               // max number of invalid table entries to skip; arbitrary
     std::vector<rose_addr_t> tableEntries = scanCodeAddressTable(args.partitioner, tableLimits /*in,out*/,
-                                                                 targetLimits, wordSizeBytes);
+                                                                 targetLimits, wordSizeBytes, tableVa, maxSkippable);
     if (tableEntries.empty())
         return chain;
 
@@ -549,7 +637,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     SgAsmType *tableEntryType = SageBuilderAsm::buildTypeU(8*wordSizeBytes);
     SgAsmType *tableType = SageBuilderAsm::buildTypeVector(nTableEntries, tableEntryType);
     DataBlock::Ptr addressTable = DataBlock::instance(tableLimits.least(), tableType);
-    addressTable->comment("x86 \"switch\" statement's \"case\" address table");
+    addressTable->comment("x86 'switch' statement's 'case' address table");
     args.bblock->insertDataBlock(addressTable);
 
     // Debugging
@@ -571,7 +659,6 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     return chain;
 }
 
-    
 } // namespace
 } // namespace
 } // namespace

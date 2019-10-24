@@ -1055,7 +1055,6 @@ HEADER_LIST_DECLARATIONS
        // DQ (10/6/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
-
 HEADER_BASIC_BLOCK_END
 
 
@@ -1437,12 +1436,13 @@ HEADER_JOVIAL_FOR_THEN_STATEMENT_END
 
 HEADER_JOVIAL_COMPOOL_STATEMENT_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-
       virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
-
 #endif
 HEADER_JOVIAL_COMPOOL_STATEMENT_END
 
+HEADER_JOVIAL_TABLE_STATEMENT_START
+      virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
+HEADER_JOVIAL_TABLE_STATEMENT_END
 
 HEADER_MATLAB_FOR_STATEMENT_START
 /*#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -1627,7 +1627,8 @@ HEADER_LIST_DECLARATIONS
           SgName get_qualified_name_prefix_for_return_type() const;
 
        // DQ (10/11/2014): Adding support for aterm translation to ROSE AST.
-          static SgFunctionDeclaration* build_node_from_nonlist_children(SgType* return_type, SgFunctionParameterList* parameterList, SgScopeStatement* scope, Sg_File_Info* startOfConstruct, SgName name, SgFunctionType* type, SgFunctionDefinition* definition); 
+       // Rasmussen (04/17/2019): Support for ATerms has been deprecated.
+       // static SgFunctionDeclaration* build_node_from_nonlist_children(SgType* return_type, SgFunctionParameterList* parameterList, SgScopeStatement* scope, Sg_File_Info* startOfConstruct, SgName name, SgFunctionType* type, SgFunctionDefinition* definition);
 
        // DQ (12/22/2014): Adding support for EDG normalized template member and non-member functions.
           bool isNormalizedTemplateFunction() const;
@@ -2084,9 +2085,7 @@ HEADER_VARIABLE_DEFINITION_STATEMENT_END
 
 HEADER_CLASS_DECLARATION_STATEMENT_START
 
-       // enum class_types { e_class, e_struct, e_union };
-
-      /*! A declaration can be of either class, struct, or union */
+      /*! A declaration can be of either class, struct, union, or ... */
           enum class_types
              {
                e_class,              /*!< class declaration (default) */
@@ -2095,7 +2094,9 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
                e_template_parameter, /*!< type parameter in a template declaration */
                e_java_interface,     /*!< A Java interface type declaration */
                e_java_enum,          /*!< A Java enum type declaration */
-               e_java_parameter      /*!< A Java parameter type declaration */
+               e_java_parameter,     /*!< A Java parameter type declaration */
+               e_jovial_block,       /*!< A Jovial block type declaration */
+               e_jovial_table        /*!< A Jovial table type declaration */
              };
 
           virtual SgName get_qualified_name() const;
@@ -2937,10 +2938,8 @@ HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_START
 
 // DQ (9/26/2012): We can't use these macros in the header files else they would require the rose_config.h 
 // file to be defined for all user source code (which we can't allow for portability reasons).
-// #ifdef ROSE_USE_NEW_EDG_INTERFACE
        // DQ (9/10/2012): Added general name mangling for new template class declaration IR node.
           virtual SgName get_mangled_name(void) const $ROSE_OVERRIDE;
-// #endif
 
 HEADER_TEMPLATE_CLASS_DECLARATION_STATEMENT_END
 
@@ -3008,6 +3007,7 @@ HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_START
           void set_definition( SgTemplateInstantiationDefn* definition );
 
        // DQ (10/10/2014): Implemented to support Aterm constructor functions.
+       // Rasmussen (04/17/2019): Support for ATerms has been deprecated. But this may be used elsewhere.
           void set_definition( SgClassDefinition* definition );
 
        // DQ (2/11/2007): Add this to the derived class so that the SgSymbolTable::find() function will work properly
@@ -3103,26 +3103,11 @@ HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
 
 // DQ (10/5/2014): This is now wrong because we now include rose_config.h before processing the
 // files generated from this file.  This change was required to support the ATerm libraries.
-// #ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 // BH (11/13/2015) on windows this caused incosistent defines of this
 // so that it was not defined in the .h but used in the cxx file
-// #ifndef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      private:
        // DQ (12/29/2011): This is added to support backward compatability.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
-//#endif
-
-// DQ (2/17/2016): Checking that the correct values are set.
-#ifndef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-   #error "ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS should NOT be defined!"
-#endif
-
-#if 0
-// DQ (2/17/2016): Checking that the correct values are set.
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
-   #error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS should NOT be defined!"
-#endif
-#endif
 
 HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
 
@@ -3135,11 +3120,9 @@ HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
        // $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
 // BH (11/13/2015) on windows this caused incosistent defines of this
 // so that it was not defined in the .h but used in the cxx file
-//#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      private:
        // DQ (12/29/2011): This is added to support backward compatability.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
-//#endif
 
        // DQ (2/25/2018): This appears to be built as a function prototype by default, so I think we don't need this here (redundant).
        // DQ (2/25/2018): Added a specific version of the post_construction_initialization() function 
@@ -3942,6 +3925,7 @@ HEADER_IMPORT_STATEMENT_END
 
 
 HEADER_ASSOCIATE_STATEMENT_START
+HEADER_LIST_DECLARATIONS
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
@@ -4021,6 +4005,52 @@ HEADER_LIST_DECLARATIONS
           virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 HEADER_UPC_FORALL_STATEMENT_END
+
+
+HEADER_JOVIAL_DEFINE_DECLARATION_START
+
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
+
+HEADER_JOVIAL_DEFINE_DECLARATION_END
+
+
+HEADER_JOVIAL_DIRECTIVE_STATEMENT_START
+
+      /*! A Jovial directive can be types */
+          enum directive_types
+             {
+               e_compool,              /*!< 9.1 COMPOOL DIRECTIVE (default) */
+                                       /*!< 9.2 TEXT DIRECTIVES */
+               e_copy,                 /*!< 9.2.1 COPY DIRECTIVE */
+               e_skip,                 /*!< 9.2.2 SKIP DIRECTIVE */
+               e_begin,                /*!<       BEGIN DIRECTIVE */
+               e_end,                  /*!<       END DIRECTIVE */
+               e_linkage,              /*!< 9.3 LINKAGES DIRECTIVES */
+               e_trace,                /*!< 9.4 TRACE DIRECTIVES */
+               e_interference,         /*!< 9.5 INTERFERENCE DIRECTIVES */
+               e_reducible,            /*!< 9.6 REDUCIBLE DIRECTIVES */
+                                       /*!< 9.7 LISTING DIRECTIVES */
+                                       /*!< 9.7.1 SOURCE-LISTING DIRECTIVES */
+               e_nolist,               /*!<       NOLIST DIRECTIVE */
+               e_list,                 /*!<       LIST DIRECTIVE */
+               e_eject,                /*!<       EJECT DIRECTIVE */
+                                       /*!< 9.7.1 DEFINE-LISTING DIRECTIVES */
+               e_listinv,              /*!<       LISTINV DIRECTIVE */
+               e_listexp,              /*!<       LISTEXP DIRECTIVE */
+                                       /*!< 9.8 REGISTER DIRECTIVES */
+               e_base,                 /*!<     BASE DIRECTIVE */
+               e_isbase,               /*!<     ISBASE DIRECTIVE */
+               e_drop,                 /*!<     DROP DIRECTIVE */
+                                       /*!< 9.9 EXPRESSION EVALUATION ORDER DIRECTIVES */
+               e_left_right,           /*!<     LEFTRIGHT DIRECTIVE */
+               e_rearrange,            /*!<     REARRANGE DIRECTIVE */
+               e_initialize,           /*!< 9.10 INITIALIZATION DIRECTIVES */
+               e_order                 /*!< 9.11 ALLOCATION ORDER DIRECTIVES */
+             };
+
+          virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
+
+HEADER_JOVIAL_DIRECTIVE_STATEMENT_END
 
 HEADER_PREPROCESSOR_DIRECTIVE_STATEMENT_START
 
@@ -7977,13 +8007,8 @@ SOURCE_FUNCTION_TYPE_TABLE_STATEMENT_START
 
 // SgFunctionTypeTable::SgFunctionTypeTable( bool case_insensitive )
 SgFunctionTypeTable::SgFunctionTypeTable()
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
   // DQ (12/17/2012): Set the source position as compiler generated to avoid a filename of "" in the static filename tables.
    : SgStatement( Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode ())
-#else
-  // DQ (8/31/2006): Use an empty name for the fileInfo so that we can support testing for absolute paths for filenames.
-   : SgStatement( new Sg_File_Info ("",0,0) )
-#endif
    {
   // DQ (11/27/2010): Added support for case sensitive and insensitive matching (for C/C++ and Fortran, respectively).
   // DQ (2/19/2007): Use a much larger size symbol table for the function types (the input value is the hash table size, which should be a prime number)!
@@ -8002,14 +8027,9 @@ SgFunctionTypeTable::SgFunctionTypeTable()
   // p_startOfConstruct->set_parent(this);
      this->get_startOfConstruct()->set_parent(this);
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
   // DQ (12/17/2012): Set the source position as compiler generated.
      ROSE_ASSERT(get_endOfConstruct() == NULL);
      this->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
-#else
-  // DQ (11/3/2007): The internal test like to see that both the startOfConstruct and endOfConstruct are set!
-     this->set_endOfConstruct( new Sg_File_Info ("",0,0) );
-#endif
      this->get_endOfConstruct()->set_parent(this);
 
   // DQ (11/27/2010): In retrospect I think that should should always be false!
@@ -11168,6 +11188,21 @@ SgJovialForThenStatement::post_construction_initialization()
    {
    }
 SOURCE_JOVIAL_FOR_THEN_STATEMENT_END
+
+SOURCE_JOVIAL_TABLE_STATEMENT_START
+void
+SgJovialTableStatement::post_construction_initialization()
+   {
+     // Nothing to setup here.
+   }
+
+SgName
+SgJovialTableStatement::get_mangled_name(void) const
+   {
+   // Don't believe name mangling required for Jovial
+      return get_name();
+   }
+SOURCE_JOVIAL_TABLE_STATEMENT_END
 
 
 SOURCE_MATLAB_FOR_STATEMENT_START
@@ -14953,7 +14988,7 @@ SgNonrealDecl::get_mangled_name (void) const {
   }
 
   if (get_is_template_param()) {
-    mangled_name << "__templ_param_" << p_template_parameter_depth << "_" << p_template_parameter_position + "__";
+    mangled_name << "__templ_param_" << p_template_parameter_depth << "_" << p_template_parameter_position << "__";
   } else {
     mangled_name << get_name().getString();
   }
@@ -18162,7 +18197,6 @@ SgTemplateVariableDeclaration::post_construction_initialization()
    }
 
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 SgTemplateVariableDeclaration::SgTemplateVariableDeclaration( const SgName& var_name, SgType *type, SgInitializer *initializer)
    : SgVariableDeclaration(var_name,type,initializer)
    {
@@ -18173,9 +18207,6 @@ SgTemplateVariableDeclaration::SgTemplateVariableDeclaration( const SgName& var_
   // printf ("Inside of SgTemplateVariableDeclaration constructor taking all parameters \n");
   // initializeData (NULL,var_name,type,initializer);
    }
-#endif
-
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 
 // DQ (12/29/2011): The generate Cxx_Grammar.h header file will see the prototype for this function (even though I tried to make it NOT visible).
 // As a result we need a function definition (but we need only call the base class version of the function).
@@ -18184,20 +18215,6 @@ SgTemplateVariableDeclaration::compute_baseTypeDefiningDeclaration() const
    {
      return SgVariableDeclaration::compute_baseTypeDefiningDeclaration();
    }
-
-#else
-
-SgDeclarationStatement *
-SgTemplateVariableDeclaration::compute_baseTypeDefiningDeclaration() const
-   {
-  // DQ (12/29/2011): Not clear what this definition should be.  This is provided for backward compatability with the EDG 3.3 version.
-  // I think it will not be used. So we return an error so that it will be detected if called.
-     printf ("This function should not be called under the EDG 3.3 interface, and is not defined under the EDG 4.3 interface. \n");
-     ROSE_ASSERT(false);
-
-     return NULL;
-   }
-#endif
 
 SOURCE_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
 
@@ -18215,7 +18232,6 @@ SgTemplateTypedefDeclaration::post_construction_initialization()
 #endif
 
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 
 // DQ (12/29/2011): The generate Cxx_Grammar.h header file will see the prototype for this function (even though I tried to make it NOT visible).
 // As a result we need a function definition (but we need only call the base class version of the function).
@@ -18227,23 +18243,6 @@ SgTemplateTypedefDeclaration::compute_baseTypeDefiningDeclaration() const
   // return SgTypedefDeclaration::compute_baseTypeDefiningDeclaration();
      return NULL;
    }
-
-#else
-
-#error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS must be defined!"
-
-SgDeclarationStatement *
-SgTemplateTypedefDeclaration::compute_baseTypeDefiningDeclaration() const
-   {
-  // DQ (12/29/2011): Not clear what this definition should be.  This is provided for backward compatability with the EDG 3.3 version.
-  // I think it will not be used. So we return an error so that it will be detected if called.
-     printf ("This function should not be called under the EDG 3.3 interface, and is not defined under the EDG 4.3 interface. \n");
-     ROSE_ASSERT(false);
-
-     return NULL;
-   }
-
-#endif
 
 void
 SgTemplateTypedefDeclaration::post_construction_initialization()
@@ -19925,7 +19924,6 @@ SgDerivedTypeStatement::get_mangled_name() const
    }
 SOURCE_DERIVED_TYPE_STATEMENT_END
 
-
 SOURCE_ATTRIBUTE_SPECIFICATION_STATEMENT_START
 void
 SgAttributeSpecificationStatement::post_construction_initialization()
@@ -20152,6 +20150,7 @@ SgImportStatement::get_import_list()
 SOURCE_IMPORT_STATEMENT_END
 
 SOURCE_ASSOCIATE_STATEMENT_START
+
 void
 SgAssociateStatement::post_construction_initialization()
    {}
@@ -20162,6 +20161,21 @@ SgAssociateStatement::get_mangled_name(void) const
      return SgName ("__associate__");
    }
 
+void
+SgAssociateStatement::prepend_associate(SgDeclarationStatement *what)
+   {
+     get_associates().insert(get_associates().begin(), what);
+     what->set_parent(this);
+     ROSE_ASSERT(what->get_parent() != NULL);
+   }
+
+void
+SgAssociateStatement::append_associate(SgDeclarationStatement *what)
+   {
+     get_associates().push_back(what);
+     what->set_parent(this);
+     ROSE_ASSERT(what->get_parent() != NULL);
+   }
 SOURCE_ASSOCIATE_STATEMENT_END
 
 
@@ -20215,7 +20229,37 @@ SgFortranIncludeLine::get_mangled_name(void) const
 SOURCE_FORTRAN_INCLUDE_LINE_END
 
 
+SOURCE_JOVIAL_DEFINE_DECLARATION_START
+
+void
+SgJovialDefineDeclaration::post_construction_initialization()
+   {
+   }
+
+SgName SgJovialDefineDeclaration::get_mangled_name() const
+   {
+     return "__jovial_language_directive__";
+   }
+
+SOURCE_JOVIAL_DEFINE_DECLARATION_END
+
+SOURCE_JOVIAL_DIRECTIVE_STATEMENT_START
+
+void
+SgJovialDirectiveStatement::post_construction_initialization()
+   {
+   }
+
+SgName SgJovialDirectiveStatement::get_mangled_name() const
+   {
+     return "__jovial_language_directive__";
+   }
+
+SOURCE_JOVIAL_DIRECTIVE_STATEMENT_END
+
+
 SOURCE_PREPROCESSOR_DIRECTIVE_STATEMENT_START
+
 void
 SgC_PreprocessorDirectiveStatement::post_construction_initialization()
    {

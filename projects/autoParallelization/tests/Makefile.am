@@ -76,27 +76,9 @@ true_dep.c \
 true_dep_2.c \
 true_dep_scalar.c \
 true_l2.c \
-bitRightShift.c
-
-# These are different depending upon use of EDG 4.7 and EDG 4.8 vs. EDG 4.9.
-# This is because translation of floating poitn is more precise using EDG 4.9
-# (examples such as "0." are not normalized to "0.0").
-#  ROSE_USE_EDG_VERSION_4_9
-if ROSE_USE_EDG_VERSION_4_7
-C_TESTCODES_REQUIRED_TO_PASS += \
-slowInput_47.c \
-Stress-1_47.c
-else
-if ROSE_USE_EDG_VERSION_4_8
-C_TESTCODES_REQUIRED_TO_PASS += \
-slowInput_47.c \
-Stress-1_47.c
-else
-C_TESTCODES_REQUIRED_TO_PASS += \
+bitRightShift.c \
 slowInput.c \
 Stress-1.c
-endif
-endif
 
 #------------------------------------------------------------------------------
 # a list of c tests for default use of autoPar: without passing any special commond options

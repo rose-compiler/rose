@@ -40,7 +40,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
 
   if(element.isBot()) {
     // transfer function applied to the bottom element is the bottom element (non-reachable state)
-    // the extremal value must be different to the bottom element. 
+    // the extremal value must be different to the bottom element.
     return;
   }
   if(getLabeler()->isFunctionCallLabel(lab)) {
@@ -70,7 +70,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
         exit(1);
       }
       SgNode* rhs=SgNodeHelper::getRhs(node);
-      while(isSgCastExp(rhs)) 
+      while(isSgCastExp(rhs))
         rhs=SgNodeHelper::getFirstChild(rhs);
       SgFunctionCallExp* funCall=isSgFunctionCallExp(rhs);
       if(!funCall) {
@@ -119,13 +119,13 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
       ROSE_ASSERT(0);
     }
   }
-  
+
   if(getLabeler()->isFunctionExitLabel(lab)) {
     if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(lab))) {
       // 1) determine all local variables (including formal parameters) of function
       // 2) delete all local variables from state
       // 2a) remove variable from state
-      
+
       // ad 1)
       set<SgVariableDeclaration*> varDecls=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
       // ad 2)
@@ -145,11 +145,11 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     transferEmptyStmt(lab,stmt,element);
     return;
   }
-  
+
   if(isSgExprStatement(node)) {
     node=SgNodeHelper::getExprStmtChild(node);
   }
-  
+
   // detect SgReturn statement expressions
   if(isSgReturnStmt(node)) {
     node=SgNodeHelper::getFirstChild(node);
@@ -160,7 +160,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   }
 
   // default identity functions
-  if(isSgBreakStmt(node) 
+  if(isSgBreakStmt(node)
      || isSgContinueStmt(node)
      || isSgLabelStatement(node)
      || isSgGotoStatement(node)) {
@@ -224,7 +224,7 @@ void DFTransferFunctions::transferReturnStmtExpr(Label lab, SgExpression* expr, 
   transferExpression(lab,expr,element);
 }
 
-  
+
 
 void DFTransferFunctions::transferDeclaration(Label label, SgVariableDeclaration* decl, Lattice& element) {
   // default identity function
@@ -308,7 +308,7 @@ VariableId DFTransferFunctions::getResultVariableId() {
 void DFTransferFunctions::setSkipSelectedFunctionCalls(bool flag) {
   _skipSelectedFunctionCalls=flag;
 }
-                       
+
 bool DFTransferFunctions::getSkipSelectedFunctionCalls() {
   return _skipSelectedFunctionCalls;
 }

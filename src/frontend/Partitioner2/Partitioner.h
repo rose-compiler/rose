@@ -53,12 +53,11 @@
 //   candidates are:
 //   Rose::BinaryAnalysis::Partitioner2::Partitioner::Partitioner(boost::rv<Rose::BinaryAnalysis::Partitioner2::Partitioner>&)
 //
-// This is apparently GCC issue 49377 [https://gcc.gnu.org/bugzilla/show_bug.cgi?id=49377] fixed in GCC-6.1.0, however we've
-// seen it on a more limited basis so far.
+// This is apparently GCC issue 49377 [https://gcc.gnu.org/bugzilla/show_bug.cgi?id=49377] fixed in GCC-6.1.0.
 #if __cplusplus >= 201103L
     #define ROSE_PARTITIONER_MOVE
 #elif defined(__GNUC__)
-    #if __GNUC__ > 4
+    #if __GNUC__ > 5
        #define ROSE_PARTITIONER_MOVE
     #elif BOOST_VERSION >= 106900 // 1.68.0 might be okay too, but ROSE blacklists it for other reasons
        #define ROSE_PARTITIONER_MOVE

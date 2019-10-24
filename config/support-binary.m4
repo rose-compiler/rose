@@ -115,13 +115,16 @@ AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 ROSE_SUPPORT_LIBGCRYPT
 
 dnl http://dlib.net
-AC_ARG_WITH(dlib,
-        [  --with-dlib=PATH Installation prefix for optional dlib (http://dlib.net) library.
-                            Dlib requires no installation; just untar its source and specify
-                            the name of the directory that was created (e.g., "dlib-18.17") and
-                            which contains the "dlib" subdirectory.],
+AC_ARG_WITH(
+    [dlib],
+    AS_HELP_STRING(
+        [--with-dlib=PREFIX],
+        [Use the optional dlib support library available from http://dlib.net. The PREFIX, if specified, should be the
+         prefix used to install dlib, such as "/usr/local".  The default is the empty prefix, in which case the headers
+         and library must be installed in a place where they will be found. Saying "no" for the prefix is the same as
+         saying "--without-dlib".]),
         [],
-	[with_dlib=no])
+        [with_dlib=no])
 AS_IF([test "$with_dlib" != "no"],
         [AC_DEFINE(ROSE_HAVE_DLIB, 1, [Defined if dlib is available.])
          if test "$with_dlib" = "yes"; then DLIB_PREFIX=/usr; else DLIB_PREFIX="$with_dlib"; fi])

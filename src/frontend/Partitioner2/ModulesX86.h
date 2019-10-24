@@ -126,13 +126,23 @@ bool matchPushSi(const Partitioner&, SgAsmX86Instruction*);
 
 /** Reads a table of code addresses.
  *
- *  Reads a table that starts at the lower limit of @p tableLimits and does not extend past the upper limit.  Each entry in the
- *  table is an instruction address of @p tableEntrySize bytes and the entry must exist in read-only memory.  The address
- *  stored in the entry must be within the @p targetLimits interval and must be an address that is mapped with execute
- *  permission.  As many entries as possible are read into the return vector.  Upon return, the @p tableLimits is adjusted to
- *  indicate the actual location of the table. */
+ *  Reads a table of code addresses from within the @p tableLimits memory range starting at either the specified @p
+ *  probableStartVa or the beginning of the @ref tableLimits. If @p nSkippable is positive, up to that many invalid entries can
+ *  be skipped before actual valid entries are found.  If no entries are skipped and the @p probableStartVa is larger than the
+ *  minimum @p tableLimits then we also look backward from the @p probableStartVa to consume as many valid table entries as
+ *  possible within the @p tableLimits.  An entry is valid if it exists in read-only memory and its value (the target address)
+ *  falls within @p targetLimits.
+ *
+ *  If valid table entries are found, and the table is some arbitrarily small number of entries, then it can be followed by
+ *  zero or more single-byte indexes into the table entries.
+ *
+ *  Upon return, the @p tableLimits is adjusted to be the addresses where valid table entries were found unioned with the
+ *  addresses of the optional post-table indexes.  The return value is the valid table entries in the order they occur in the
+ *  table. */
 std::vector<rose_addr_t> scanCodeAddressTable(const Partitioner&, AddressInterval &tableLimits /*in,out*/,
-                                              const AddressInterval &targetLimits, size_t tableEntrySize);
+                                              const AddressInterval &targetLimits, size_t tableEntrySize,
+                                              Sawyer::Optional<rose_addr_t> probableStartVa = Sawyer::Nothing(),
+                                              size_t nSkippable = 0);
 
 /** Try to match a base+offset expression.
  *

@@ -11,14 +11,15 @@ CodeThorn::ProgramAbstractionLayer::ProgramAbstractionLayer()
 }
 
 CodeThorn::ProgramAbstractionLayer::~ProgramAbstractionLayer() {
+  delete _cfanalyzer;
 }
 
 void CodeThorn::ProgramAbstractionLayer::setModeArrayElementVariableId(bool val) {
-  _modeArrayElementVariableId=val; 
+  _modeArrayElementVariableId=val;
 }
 
 bool CodeThorn::ProgramAbstractionLayer::getModeArrayElementVariableId() {
-  return _modeArrayElementVariableId;; 
+  return _modeArrayElementVariableId;;
 }
 
 SgProject* CodeThorn::ProgramAbstractionLayer::getRoot() {
@@ -27,6 +28,7 @@ SgProject* CodeThorn::ProgramAbstractionLayer::getRoot() {
 
 void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
   _root=root;
+  cout << "INIT: Normalizing " << getNormalizationLevel() << endl;
   CodeThorn::Normalization lowering;
   lowering.setInliningOption(getInliningOption());
   lowering.normalizeAst(root,getNormalizationLevel());
@@ -36,6 +38,34 @@ void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
   _labeler=new Labeler(root);
   _functionIdMapping=new FunctionIdMapping();
   getFunctionIdMapping()->computeFunctionSymbolMapping(root);
+
+  // PP (07/15/19) moved flow generation from DFAnalysisBase class
+  _cfanalyzer = new CFAnalysis(_labeler);
+
+  //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
+  cout << "INIT: Building CFG for each function."<<endl;
+  _fwFlow = _cfanalyzer->flow(root);
+  cout << "STATUS: Building CFGs finished."<<endl;
+  cout << "INIT: Intra-Flow OK. (size: " << _fwFlow.size() << " edges)"<<endl;
+  InterFlow interFlow=_cfanalyzer->interFlow(_fwFlow);
+  cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
+  _cfanalyzer->intraInterFlow(_fwFlow,interFlow);
+  cout << "INIT: IntraInter-CFG OK. (size: " << _fwFlow.size() << " edges)"<<endl;
+
+  _bwFlow = _fwFlow.reverseFlow();
+}
+
+CodeThorn::Flow* CodeThorn::ProgramAbstractionLayer::getFlow(bool backwardflow)
+{
+  if (backwardflow) return &_bwFlow;
+
+  return &_fwFlow;
+}
+
+CodeThorn::CFAnalysis* CodeThorn::ProgramAbstractionLayer::getCFAnalyzer()
+{
+  ROSE_ASSERT(_cfanalyzer);
+  return _cfanalyzer;
 }
 
 CodeThorn::Labeler* CodeThorn::ProgramAbstractionLayer::getLabeler(){
@@ -57,7 +87,7 @@ void CodeThorn::ProgramAbstractionLayer::setNormalizationLevel(unsigned int leve
   _normalizationLevel=level;
 }
 
-bool CodeThorn::ProgramAbstractionLayer::getNormalizationLevel() {
+unsigned int CodeThorn::ProgramAbstractionLayer::getNormalizationLevel() {
   return _normalizationLevel;
 }
 

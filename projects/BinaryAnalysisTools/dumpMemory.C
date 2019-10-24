@@ -21,13 +21,13 @@ static Diagnostics::Facility mlog;                      // further initializatio
 
 struct Settings {
     bool showAsHex;                                     // show memory in hexdump format
-    bool showAsSRecords;                                // show memory in Motorola S-Record format
+    Sawyer::Optional<SRecord::Syntax> showAsSRecords;   // show memory in Motorola S-Record format
     bool showAsBinary;                                  // show memory as raw bytes (output prefix required)
     bool showMap;                                       // show memory mapping information
     std::string outputPrefix;                           // file name prefix for output, or send it to standard output
     std::vector<AddressInterval> where;                 // addresses that should be dumped
     Settings()
-        : showAsHex(false), showAsSRecords(false), showAsBinary(false), showMap(false) {}
+        : showAsHex(false), showAsBinary(false), showMap(false) {}
 };
 
 static std::vector<std::string>
@@ -62,8 +62,14 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
                .doc("Dump the specimen memory as ASCII text using an output format similar to the @man{hexdump}{1} command."));
 
     fmt.insert(Switch("srecords")
-               .intrinsicValue(true, settings.showAsSRecords)
-               .doc("Dump the specimen memory as Motorola S-Records."));
+               .argument("syntax", enumParser<SRecord::Syntax>(settings.showAsSRecords)
+                         ->with("motorola", SRecord::SREC_MOTOROLA)
+                         ->with("intel", SRecord::SREC_INTEL),
+                         "motorola")
+               .doc("Dump the specimen memory as Motorola S-Records. The optional @v{syntax} argument specifies which syntax "
+                    "to use for the output. The choices are:"
+                    "@named{motorola}{Motorola S-Record syntax, the default.}"
+                    "@named{intel}{Intel HEX syntax.}"));
 
     fmt.insert(Switch("binary")
                .intrinsicValue(true, settings.showAsBinary)
@@ -151,12 +157,19 @@ public:
 };
 
 class SRecordDumper: public Dumper {
+    SRecord::Syntax syntax_;
+
 public:
+    explicit SRecordDumper(SRecord::Syntax syntax)
+        : syntax_(syntax) {}
+
     virtual void formatData(std::ostream &stream, const AddressInterval &segmentInterval, const MemoryMap::Segment &segment,
                             const AddressInterval &dataInterval, const uint8_t *data) ROSE_OVERRIDE {
         MemoryMap::Ptr map = MemoryMap::instance();
         map->insert(dataInterval, MemoryMap::Segment::staticInstance(data, dataInterval.size(), MemoryMap::READABLE));
-        SRecord::dump(map, stream, 4);
+        std::vector<SRecord> srecs = SRecord::create(map, syntax_);
+        BOOST_FOREACH (const SRecord &srec, srecs)
+            stream <<srec <<"\n";
     }
 };
 
@@ -221,8 +234,11 @@ main(int argc, char *argv[]) {
             if (settings.outputPrefix.empty()) {
                 if (settings.showAsHex)
                     HexDumper()(settings, map, interval, std::cout);
-                if (settings.showAsSRecords)
-                    SRecordDumper()(settings, map, interval, std::cout);
+                if (settings.showAsSRecords) {
+                    SRecordDumper(*settings.showAsSRecords)(settings, map, interval, std::cout);
+                    if (SRecord::SREC_INTEL == *settings.showAsSRecords)
+                        std::cout <<SRecord(SRecord::SREC_I_END, 0, std::vector<uint8_t>()) <<"\n";
+                }
                 ASSERT_forbid2(settings.showAsBinary, "binary output is never emitted to standard output");
             } else {
                 std::string outputName = settings.outputPrefix + StringUtility::addrToString(interval.least()).substr(2);
@@ -236,7 +252,9 @@ main(int argc, char *argv[]) {
                     std::ofstream output((outputName+".srec").c_str());
                     if (!output.good())
                         throw std::runtime_error("cannot create \"" + outputName + ".srec\"");
-                    SRecordDumper()(settings, map, interval, output);
+                    SRecordDumper(*settings.showAsSRecords)(settings, map, interval, output);
+                    if (SRecord::SREC_INTEL == *settings.showAsSRecords)
+                        std::cout <<SRecord(SRecord::SREC_I_END, 0, std::vector<uint8_t>()) <<"\n";
                 }
                 if (settings.showAsBinary) {
                     std::ofstream output((outputName+".raw").c_str());

@@ -355,6 +355,7 @@ Settings::Settings() {
     insn.mnemonic.semanticFailureMarker = "[!]";
     insn.operands.separator = ", ";
     insn.operands.fieldWidth = 40;
+    insn.operands.showingWidth = false;
     insn.comment.showing = true;
     insn.comment.usingDescription = true;
     insn.comment.pre = "; ";
@@ -398,6 +399,7 @@ Settings::minimal() {
     s.insn.mnemonic.fieldWidth = 8;
     s.insn.mnemonic.semanticFailureMarker = "[!]";
     s.insn.operands.fieldWidth = 40;
+    s.insn.operands.showingWidth = false;
     s.insn.comment.showing = false;
     s.insn.comment.usingDescription = true;             // but hidden by s.insn.comment.showing being false
     s.insn.semantics.showing = false;
@@ -532,6 +534,11 @@ commandLineSwitches(Settings &settings) {
               .argument("nchars", positiveIntegerParser(settings.insn.operands.fieldWidth))
               .doc("Minimum size of the instruction operands field in characters. The default is " +
                    boost::lexical_cast<std::string>(settings.insn.operands.fieldWidth) + "."));
+
+    insertBooleanSwitch(sg, "insn-operand-size", settings.insn.operands.showingWidth,
+                        "Show the width in bits of each term in an operand expression. The width is shown in square brackets "
+                        "after the term, similar to how it's shown for symbolic expressions. Although memory dereferences are "
+                        "also shown in square brackets, they are formatted different.");
 
     insertBooleanSwitch(sg, "insn-comment", settings.insn.comment.showing,
                         "Show comments for instructions that have them. The comments are shown to the right of each "
@@ -877,6 +884,7 @@ Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, 
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_ENTRY_POINT,  "program entry point");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_IMPORT,       "import");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_THUNK,        "thunk");
+        addFunctionReason(strings, flags, SgAsmFunction::FUNC_THUNK_TARGET, "thunk target");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_EXPORT,       "export");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_CALL_TARGET,  "function call target");
         addFunctionReason(strings, flags, SgAsmFunction::FUNC_CALL_INSN,    "possible function call target");
@@ -1283,7 +1291,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
                 ASSERT_not_null(successors[i].expr());
                 SymbolicExpr::Ptr expr = successors[i].expr()->get_expression();
 
-                if (targetVa && expr->isNumber() && expr->nBits() <= 64 && expr->toInt() == *targetVa) {
+                if (targetVa && expr->toUnsigned().isEqual(targetVa)) {
                     // Edge to concrete node
                     state.frontUnparser().emitLinePrefix(out, state);
                     out <<"\t;; successor: " <<edgeTypeName(successors[i].type()) <<" edge to ";
@@ -1293,7 +1301,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
                     emitted = true;
                     break;
 
-                } else if (!targetVa && !expr->isNumber()) {
+                } else if (!targetVa && !expr->isIntegerConstant()) {
                     // Edge to computed address
                     state.frontUnparser().emitLinePrefix(out, state);
                     out <<"\t;; successor: " <<edgeTypeName(successors[i].type()) <<" edge to " <<*expr <<"\n";
@@ -1320,11 +1328,11 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
         BOOST_FOREACH (const P2::BasicBlock::Successor &successor, successors) {
             ASSERT_not_null(successor.expr());
             SymbolicExpr::Ptr expr = successor.expr()->get_expression();
-            if (expr->isNumber() && expr->nBits() <= 64) {
+            if (expr->isIntegerConstant() && expr->nBits() <= 64) {
                 // Edge to concrete node
                 state.frontUnparser().emitLinePrefix(out, state);
                 out <<"\t;; successor: (not in CFG) " <<edgeTypeName(successor.type()) <<" edge to ";
-                state.frontUnparser().emitAddress(out, expr->toInt(), state);
+                state.frontUnparser().emitAddress(out, expr->toUnsigned().get(), state);
                 out <<"\n";
             } else if (expr->isLeafNode()) {
                 // What?
@@ -1805,6 +1813,8 @@ Base::emitInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, Sta
                     comments.push_back(boost::lexical_cast<std::string>(si));
             }
         }
+        if (settings().insn.operands.showingWidth)
+            out <<"[" <<bv.size() <<"]";
         return comments;
     }
 }
@@ -1833,6 +1843,8 @@ Base::emitRegister(std::ostream &out, RegisterDescriptor reg, State &state) cons
         nextUnparser()->emitRegister(out, reg, state);
     } else {
         out <<state.registerNames()(reg);
+        if (settings().insn.operands.showingWidth)
+            out <<"[" <<reg.nBits() <<"]";
     }
 }
 

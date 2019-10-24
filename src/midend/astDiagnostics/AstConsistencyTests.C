@@ -4,7 +4,6 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
-// DQ (12/29//2011): Since "markCompilerGenerated.h" uses the TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS macro we need to include rose_config.h.
 #include "rose_config.h"
 
 // tps : needed to define this here as it is defined in rose.h
@@ -1136,147 +1135,20 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 
-#if defined(ROSE_USE_EDG_VERSION_4) || defined(ROSE_USE_CLANG_FRONTEND)
-                 // DQ (12/31/2008): In EDG 4.0, the translation of a function call such as "(*callback_lookup)();" 
-                 // can cause the functionExpression to be a wider number of IR nodes (e.g. SgVarRefExp).
-                 // See test2007_94.C for an example.
-                    case V_SgVarRefExp:
-                       {
-                         SgVarRefExp* varRefExp = isSgVarRefExp(functionExpression);
-                         ROSE_ASSERT(varRefExp != NULL);
-
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgVarRefExp returned from SgFunctionCallExp::get_function() member function \n");
-#endif
-                         break;
-                       }
-#endif
-
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (2/12/2012): This case is required for test2004_35.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
+                 // TV (04/16/2019): used to be casses guarded by ROSE_USE_EDG_VERSION_4
                     case V_SgIntVal:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#if 1
-                      // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         static int count = 0;
-                         if (count++ % 100 == 0)
-                            {
-                              printf ("Warning: EDG 4.0 specific case, found unusual case of SgIntVal returned from SgFunctionCallExp::get_function() member function \n");
-                            }
-#endif
-#else
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgIntVal returned from SgFunctionCallExp::get_function() member function \n");
-#endif
-                         break;
-                       }
-#endif
-
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (2/25/2012): This case is required for test2012_08.C (related to support for STL map.h header file).
                     case V_SgFunctionCallExp:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgFunctionCallExp returned from SgFunctionCallExp::get_function() member function \n");
-#endif
-                         break;
-                       }
-#endif
-
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (3/13/2012): This case is required for test2004_85.C (related to support for STL string.h header file).
                     case V_SgConstructorInitializer:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgConstructorInitializer returned from SgFunctionCallExp::get_function() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (3/13/2012): This case is required for test2004_85.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
+                    case V_SgCastExp:
+                    case V_SgConditionalExp:
+                    case V_SgTemplateParameterVal:
+                    case V_SgAddressOfOp:
+                    case V_SgPntrArrRefExp:
+                    case V_SgVarRefExp:
                     case V_SgTemplateMemberFunctionRefExp:
                        {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTemplateMemberFunctionRefExp returned from SgFunctionCallExp::get_type() member function \n");
-#endif
                          break;
                        }
-#endif
-
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (10/5/2012): This case is required for test2012_15.c.
-                    case V_SgPntrArrRefExp:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.x specific case, found unusual case of SgPntrArrRefExp returned from SgFunctionCallExp::get_type() member function \n");
-                      // printf ("Investigate this location in the code: \n");
-                      // functionExpression->get_startOfConstruct()->display("Warning: EDG 4.x specific case, found unusual case of SgPntrArrRefExp returned from SgFunctionCallExp::get_type() member function: debug");
-#endif
-#if 0
-                         printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (10/26/2012): This case is required for zsh/Src/Module/module.c (and test2012_102.c).
-                    case V_SgCastExp:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgCastExp returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (10/30/2012): This case is required for postfix/src/global/valid_mailhost_addr.c (and test2012_133.c, and simplified in test2012_139.c).
-                    case V_SgConditionalExp:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgConditionalExp returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (10/30/2012): This case is required for postfix/src/global/valid_mailhost_addr.c (and test2012_133.c, and simplified in test2012_139.c).
-                    case V_SgTemplateParameterVal:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTemplateParameterVal returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (1/29/2018): This case is required for Plum Hall test: 522Y13b.cpp.
-                    case V_SgAddressOfOp:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.x specific case, found unusual case of SgAddressOfOp returned from SgFunctionCallExp::get_type() member function \n");
-                      // printf ("Investigate this location in the code: \n");
-                      // functionExpression->get_startOfConstruct()->display("Warning: EDG 4.x specific case, found unusual case of SgPntrArrRefExp returned from SgFunctionCallExp::get_type() member function: debug");
-#endif
-#if 0
-                         printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
-#endif
-                         break;
-                       }
-#endif
 
                     case V_SgNonrealRefExp:
                        {
@@ -1332,108 +1204,21 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
                     case V_SgPartialFunctionType:
                        {
                       // This case is only present in the new EDG/Sage interface (demonstrated by gzip.c)
                          break;
                        }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (2/12/2012): This case is required for test2004_35.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
+                 // TV: these cases were guarded with EDG 4 condition (date from EDG 3)
                     case V_SgTypeInt:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#if 1
-                      // DQ (8/26/2012): Decrease the volume of warnings from this part of the code.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         static int count = 0;
-                         if (count++ % 100 == 0)
-                            {
-                              printf ("Warning: EDG 4.0 specific case, found unusual case of SgTypeInt returned from SgFunctionCallExp::get_type() member function \n");
-                            }
-#endif
-#else
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTypeInt returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (2/12/2012): This case is required for test2004_35.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
                     case V_SgTemplateType:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTemplateType returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (3/13/2012): This case is required for test2004_85.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
                     case V_SgClassType:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgClassType returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (3/13/2012): This case is required for test2004_85.C (might be related to support for SgPseudoDestructorRefExp which is edg version 4 specific).
                     case V_SgReferenceType:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgReferenceType returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (1/30/2013): This case is required for ROSE compiling ROSE header files.
                     case V_SgModifierType:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgModifierType returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (2/26/2013): This case is required for ROSE compiling ROSE header files.
                     case V_SgTypeVoid:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTypeVoid returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-#ifdef ROSE_USE_EDG_VERSION_4
-                 // DQ (7/7/2014): This case is required for ROSE compiling ROSE header files.
                     case V_SgTypeUnknown:
-                       {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.x specific case, found unusual case of SgTypeUnknown returned from SgFunctionCallExp::get_type() member function \n");
-#endif
-                         break;
-                       }
-#endif
-
-                 // DQ (11/10/2014): This case is required for ROSE compiling C++11 header files.
                     case V_SgRvalueReferenceType:
                        {
-                      // Unclear what should be checked here, for now allow this as an acceptable case.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.x specific case, found unusual case of SgTypeUnknown returned from SgFunctionCallExp::get_type() member function \n");
-#endif
                          break;
                        }
 
@@ -1521,7 +1306,9 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                   {
                     listOfNodesWithoutValidFileInfo.sort();
                     listOfNodesWithoutValidFileInfo.unique();
+#if 0
                     list<SgNode*>::iterator i = listOfNodesWithoutValidFileInfo.begin();
+#endif
                     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
                          printf ("\n     List of %ld IR nodes in the AST with default information in their file info objects: \n",(long)listOfNodesWithoutValidFileInfo.size());
 
@@ -2315,7 +2102,6 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
      ROSE_ASSERT(mangledName.find(':') == string::npos);
      ROSE_ASSERT(mangledName.find(';') == string::npos);
      ROSE_ASSERT(mangledName.find('\"') == string::npos);
-     ROSE_ASSERT(mangledName.find('\'') == string::npos);
      ROSE_ASSERT(mangledName.find('?') == string::npos);
      ROSE_ASSERT(mangledName.find('.') == string::npos);
      ROSE_ASSERT(mangledName.find('/') == string::npos);
@@ -2324,6 +2110,12 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
   // These are the most common cases that fail
      ROSE_ASSERT(mangledName.find('<') == string::npos);
      ROSE_ASSERT(mangledName.find('>') == string::npos);
+
+  // Jovial can have names like a'variable'name so don't disallow '\'' for Jovial [Rasmussen 2/10/2019]
+     if (!SageInterface::is_Jovial_language())
+        {
+           ROSE_ASSERT(mangledName.find('\'') == string::npos);
+        }
    }
 
 TestAstForProperlyMangledNames::TestAstForProperlyMangledNames()
@@ -4172,6 +3964,7 @@ TestExpressionTypes::visit ( SgNode* node )
                     case V_SgClassDeclaration:
                     case V_SgDerivedTypeStatement:
                     case V_SgTemplateInstantiationDecl:
+                    case V_SgJovialTableStatement:
                        {
                          SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(definingDeclaration);
                          ROSE_ASSERT(definingClassDeclaration->get_definition() != NULL);

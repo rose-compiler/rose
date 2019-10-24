@@ -349,9 +349,11 @@ namespace AbstractHandle{
     specifier_value_t svalue;
 
     // check leading '<'
+#ifndef NDEBUG
     char current;
     current = buffer.get();
     assert (current =='<'); 
+#endif
     // get type string and value string
     buffer.getline(type_str,256,','); 
     buffer.getline(value_str,PATH_MAX+256, '>');

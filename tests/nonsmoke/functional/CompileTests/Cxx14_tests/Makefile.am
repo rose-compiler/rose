@@ -5,17 +5,10 @@ AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD    = $(ROSE_LIBS)
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
-   test2016_02.C \
-   test2016_04.C \
-   test2016_05.C \
    test2016_07.C \
    test2016_08.C \
    test2016_09.C \
-   test2016_10.C \
    test2016_14.C \
-   test2016_15.C \
-   test2016_19.C \
-   test2016_24.C \
    test2016_26.C \
    test2018_01.C
 
@@ -50,6 +43,26 @@ else
        test2016_11.C \
        test2016_25.C
 endif
+endif
+
+if USING_INTEL_COMPILER
+   TESTCODE_CURRENTLY_FAILING += \
+     test2016_02.C \
+     test2016_04.C \
+     test2016_05.C \
+     test2016_10.C \
+     test2016_15.C \
+     test2016_19.C \
+     test2016_24.C
+else
+   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+     test2016_02.C \
+     test2016_04.C \
+     test2016_05.C \
+     test2016_10.C \
+     test2016_15.C \
+     test2016_19.C \
+     test2016_24.C
 endif
 
 # DQ (11/19/2016): This test is failing in the unparsed code (a RAJA example) at least for the GNU 6.1 compiler and using EDG 4.11).

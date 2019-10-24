@@ -5,6 +5,7 @@
 #include <BinarySmtSolver.h>
 #include <BinarySymbolicExprParser.h>
 #include <Partitioner2/CfgPath.h>
+#include <RoseException.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <boost/filesystem/path.hpp>
@@ -20,6 +21,14 @@ class FeasiblePath {
     //                                  Types and public data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Exception for errors specific to feasible path analysis. */
+    class Exception: public Rose::Exception {
+    public:
+        Exception(const std::string &what)
+            : Rose::Exception(what) {}
+        ~Exception() throw () {}
+    };
+
     /** How to search for paths. */
     enum SearchMode {
         SEARCH_SINGLE_DFS,                              /**< Perform a depth first search. */
@@ -87,6 +96,7 @@ public:
         double kCycleCoefficient;                       /**< Coefficient for adjusting maxPathLengh during CFG cycles. */
         EdgeVisitOrder edgeVisitOrder;                  /**< Order in which to visit edges. */
         bool trackingCodeCoverage;                      /**< If set, track which block addresses are reached. */
+        std::vector<rose_addr_t> ipRewrite;             /**< An even number of from,to pairs for rewriting the insn ptr reg. */
 
         // Null dereferences
         struct NullDeref {
@@ -180,13 +190,15 @@ public:
          *  return address from the stack for a function that was called but whose implementation is not present (such as when
          *  the inter-procedural depth was too great, the function is a non-linked import, etc.) */
         virtual void nullDeref(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
-                               IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr, SgAsmInstruction*) {}
+                               const SmtSolverPtr &solver, IoMode ioMode,
+                               const InstructionSemantics2::BaseSemantics::SValuePtr &addr, SgAsmInstruction *insn) {}
 
         /** Function invoked every time a memory reference occurs.
          *
          *  The @p ioMode indicates whether the memory location was read or written, and the @p value is the value read or
          *  written. */
-        virtual void memoryIo(const FeasiblePath &analyzer, IoMode ioMode,
+        virtual void memoryIo(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
+                              const SmtSolverPtr &solver, IoMode ioMode,
                               const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                               const InstructionSemantics2::BaseSemantics::SValuePtr &value,
                               const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops) {}
@@ -522,6 +534,9 @@ public:
     //                                  Private supporting functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
+    // Check that analysis settings are valid, or throw an exception.
+    void checkSettings() const;
+
     static rose_addr_t virtualAddress(const Partitioner2::ControlFlowGraph::ConstVertexIterator &vertex);
 
     void insertCallSummary(const Partitioner2::ControlFlowGraph::ConstVertexIterator &pathsCallSite,

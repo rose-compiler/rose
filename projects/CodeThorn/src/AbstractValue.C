@@ -518,9 +518,9 @@ string AbstractValue::toRhsString(CodeThorn::VariableIdMapping* vim) const {
     stringstream ss;
     ss<<"&"; // on the rhs an abstract pointer is always a pointer value of some abstract value
     if(vim->getNumberOfElements(variableId)==1) {
-      ss<<variableId.toString(vim); // variables are arrays of size 1
+      ss<<variableId.toUniqueString(vim); // variables are arrays of size 1
     } else {
-      ss<<variableId.toString(vim)<<"["<<getIntValue()<<"]";
+      ss<<variableId.toUniqueString(vim)<<"["<<getIntValue()<<"]";
     }
     return ss.str();
   }
@@ -557,7 +557,7 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
     //    if(vim->hasArrayType(variableId)||vim->hasClassType(variableId)||vim->hasReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
       stringstream ss;
       ss<<"("
-        <<variableId.toString(vim)
+        <<variableId.toUniqueString(vim)
         <<","
         <<getIntValue()
         <<")";
@@ -624,6 +624,14 @@ AbstractValue::TypeSize AbstractValue::getValueSize() const {
 
 void AbstractValue::setTypeSize(AbstractValue::TypeSize typeSize) {
   this->typeSize=typeSize;
+}
+
+AbstractValue AbstractValue::getIndexValue() const { 
+  if(isTop()||isBot()) {
+    return *this;
+  } else {
+    return AbstractValue(getIndexIntValue());
+  }
 }
 
 int AbstractValue::getIndexIntValue() const { 

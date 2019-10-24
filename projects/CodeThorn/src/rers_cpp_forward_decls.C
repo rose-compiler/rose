@@ -76,7 +76,6 @@ void calculate_output72(int input);
 void calculate_output73(int input);
 void calculate_output74(int input);
 void calculate_output75(int input);
-
 void calculate_output76(int input);
 void calculate_output77(int input);
 void calculate_output78(int input);

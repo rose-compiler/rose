@@ -1,5 +1,7 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
+#include <BinaryUnparserBase.h>
+#include <CommandLine.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <AsmFunctionIndex.h>
@@ -73,12 +75,14 @@ struct Settings {
     AddressInterval gvCfgInterval;                      // show part of the global CFG
     bool gvCallGraph;                                   // produce a function call graph?
     bool gvInlineImports;                               // inline imports when emitting a call graph?
+    bool usingOldUnparser;                              // use the old binary unparser?
+    BinaryAnalysis::Unparser::Settings unparserSettings;// what assembly listings should look like
     Settings()
         : doListCfg(false), doListAum(false), doListAsm(true), doListFunctions(false), doListFunctionAddresses(false),
           doListInstructionAddresses(false), doListContainer(false), doListStrings(false), doShowMap(false),
           doShowStats(false), doListUnused(false), selectFunctions(ALL_FUNCTIONS), selectFunctionsInverted(false),
           gvUseFunctionSubgraphs(true), gvShowInstructions(true), gvShowFunctionReturns(false), gvCfgGlobal(false),
-          gvCallGraph(false), gvInlineImports(false) {}
+          gvCallGraph(false), gvInlineImports(false), usingOldUnparser(false) {}
 };
 
 // Describe and parse the command-line
@@ -225,6 +229,16 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                .intrinsicValue(false, settings.doListContainer)
                .hidden(true));
 
+    CommandLine::insertBooleanSwitch(out, "old-unparser", settings.usingOldUnparser,
+                                     "Use the old assembly listing format instead of the more modern one. This switch "
+                                     "is mostly here for backward compatibility when @prop{programName} is called by "
+                                     "shell scripts and testing harnesses.");
+
+    // Assembly output
+    SwitchGroup ass = BinaryAnalysis::Unparser::commandLineSwitches(settings.unparserSettings);
+    ass.name("assembly");
+    ass.doc("These switches control the assembly listing output, but they're ignored if @s{old-unparser} is specified.");
+
     // Switches controlling GraphViz output
     SwitchGroup dot("Graphviz switches");
     dot.name("gv");
@@ -361,7 +375,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                     ));
     
 
-    return parser.with(out).with(dot).with(dbg).parse(argc, argv).apply().unreachedArgs();
+    return parser.with(out).with(ass).with(dot).with(dbg).parse(argc, argv).apply().unreachedArgs();
 }
 
 
@@ -842,12 +856,18 @@ int main(int argc, char *argv[]) {
 
     // Build the AST and unparse it.
     if (settings.doListAsm) {
-        SgAsmBlock *gblock = buildAst(engine, partitioner);
-        AsmUnparser unparser;
-        unparser.set_registers(partitioner.instructionProvider().registerDictionary());
-        unparser.add_control_flow_graph(ControlFlow().build_block_cfg_from_ast<ControlFlow::BlockGraph>(gblock));
-        unparser.staticDataDisassembler.init(engine.disassembler());
-        unparser.unparse(std::cout, gblock);
+        if (settings.usingOldUnparser) {
+            SgAsmBlock *gblock = buildAst(engine, partitioner);
+            AsmUnparser unparser;
+            unparser.set_registers(partitioner.instructionProvider().registerDictionary());
+            unparser.add_control_flow_graph(ControlFlow().build_block_cfg_from_ast<ControlFlow::BlockGraph>(gblock));
+            unparser.staticDataDisassembler.init(engine.disassembler());
+            unparser.unparse(std::cout, gblock);
+        } else {
+            BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner.unparser();
+            unparser->settings() = settings.unparserSettings;
+            unparser->unparse(std::cout, partitioner);
+        }
     }
 
     

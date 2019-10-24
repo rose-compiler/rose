@@ -452,9 +452,9 @@ string VariableIdMapping::uniqueVariableName(VariableId varId) {
     if(!varId.isValid())
       return "$invalidId";
     else
-      return variableName(varId)+"_"+varId.toString().substr(1);
+      return variableName(varId)+"#"+varId.toString().substr(1);
   } else {
-    return string("tmp")+"_"+varId.toString().substr(1);
+    return string("tmp")+"#"+varId.toString().substr(1);
   }
 }
 

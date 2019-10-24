@@ -6,6 +6,12 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
+/** PowerPC word size. */
+enum PowerpcWordSize {
+    powerpc_32,                                         /**< 32 bits per word. */
+    powerpc_64                                          /**< 64 bits per word. */
+};
+
 /** PowerPC instruction types. */
 enum PowerpcInstructionKind {
      powerpc_unknown_instruction = 0,
@@ -345,6 +351,7 @@ enum PowerpcInstructionKind {
      powerpc_orc_record,                                /**< OR with Complement. */
      powerpc_ori,                                       /**< OR Immediate. */
      powerpc_oris,                                      /**< OR Immediate Shifted. */
+     powerpc_popcntb,                                   /**< Population count bytes. */
      powerpc_rfi,                                       /**< Return from Interrupt. */
      powerpc_rfid,                                      /**< Return from Interrupt. */
      powerpc_rldcl,                                     /**< Rotate Left Doubleword then Clear Left. */

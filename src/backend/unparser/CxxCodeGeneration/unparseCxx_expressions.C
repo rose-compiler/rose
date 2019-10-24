@@ -385,24 +385,6 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
         }
      curprint("] ");
 
-  // DQ (1/24/2016): Before the function is output, we want to support an experimental "__device__" keyword.
-  // Find the associated function where this SgLambdaExp is a function argument.  Note that it might be 
-  // better to support this as a transformation instead of directly in the unparser.  But then I would have
-  // to explicitly mark the lambdaExp.
-#if 1
-     bool lambaFunctionMarkedAsDevice = lambdaExp->get_is_device();
-     if (lambaFunctionMarkedAsDevice == true)
-        {
-#if 0
-          printf ("Use the __device__ keyword in the unparsed code \n");
-#endif
-          curprint(" __device__ ");
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
-#endif
-        }
-#endif
      SgFunctionDeclaration* lambdaFunction =  lambdaExp->get_lambda_function();
      ROSE_ASSERT(lambdaFunction != NULL);
      ROSE_ASSERT(lambdaFunction->get_firstNondefiningDeclaration() != NULL);
@@ -413,6 +395,16 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      printf ("lambdaFunction->get_firstNondefiningDeclaration() = %p = %s \n",lambdaFunction->get_firstNondefiningDeclaration(),lambdaFunction->get_firstNondefiningDeclaration()->class_name().c_str());
      printf ("lambdaFunction->get_definingDeclaration()         = %p = %s \n",lambdaFunction->get_definingDeclaration(),lambdaFunction->get_definingDeclaration()->class_name().c_str());
 #endif
+
+     if (lambdaFunction->get_functionModifier().isCudaHost()) {
+       curprint("__host__ ");
+     }
+     if (lambdaFunction->get_functionModifier().isCudaKernel()) {
+       curprint("__global__ ");
+     }
+     if (lambdaFunction->get_functionModifier().isCudaDevice()) {
+       curprint("__device__ ");
+     }
 
      if (lambdaExp->get_has_parameter_decl() == true)
         {
@@ -446,7 +438,7 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
 
      if (lambdaExp->get_explicit_return_type() == true)
         {
-#if 0
+#if 1
           curprint(" -> ");
 #else
        // DQ (7/5/2018): Debugging test2018_120.C.
@@ -958,9 +950,18 @@ void SgTemplateArgument::outputTemplateArgument(bool & skip_unparsing, bool & st
   if (this->get_argumentType() == SgTemplateArgument::type_argument) {
     SgClassType * xtype = isSgClassType(this->get_type());
     if (xtype != NULL) {
+#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
+      printf ("   - xtype = %p (%s) = %s \n", xtype, xtype->class_name().c_str(), xtype->unparseToString().c_str());
+#endif
       SgDeclarationStatement * xdecl = xtype->get_declaration();
       ROSE_ASSERT(xdecl != NULL);
+#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
+      printf ("   - xdecl = %p (%s)\n", xdecl, xdecl->class_name().c_str());
+#endif
       SgNode * pnode = xdecl->get_parent();
+#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
+      printf ("   - pnode = %p (%s)\n", pnode, pnode ? pnode->class_name().c_str() : "");
+#endif
       SgLambdaExp * lambda_exp = isSgLambdaExp(pnode);
       if (lambda_exp != NULL) {
         isAssociatedWithLambdaExp = true;
@@ -1061,10 +1062,19 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
           SgTemplateArgument * tplarg = *copy_iter;
           ROSE_ASSERT(tplarg != NULL);
 
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+          printf (" - tplarg = %s\n", tplarg->unparseToString().c_str());
+#endif
+
        // DQ (2/11/2019): Use simpler version of code now that logic has been refactored.
           bool skipTemplateArgument = false;
           bool stopTemplateArgument = false;
           tplarg->outputTemplateArgument(skipTemplateArgument, stopTemplateArgument);
+
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+          printf (" - skipTemplateArgument = %d\n", skipTemplateArgument);
+          printf (" - stopTemplateArgument = %d\n", stopTemplateArgument);
+#endif
 
           if (stopTemplateArgument) {
             break;
@@ -4393,23 +4403,13 @@ Unparse_ExprStmt::unparseComplexVal(SgExpression* expr, SgUnparse_Info& info)
      } else if (complex_val->get_real_value() == NULL) { // Pure imaginary
        curprint ("(");
        unparseValue(complex_val->get_imaginary_value(), info);
-#ifdef ROSE_USE_NEW_EDG_INTERFACE 
-    // curprint (" * __I__)");
        curprint (" * 1.0i)");
-#else
-       curprint (" * _Complex_I)");
-#endif
      } else { // Complex number
        curprint ("(");
        unparseValue(complex_val->get_real_value(), info);
        curprint (" + ");
        unparseValue(complex_val->get_imaginary_value(), info);
-#ifdef ROSE_USE_NEW_EDG_INTERFACE 
-    // curprint (" * __I__)");
        curprint (" * 1.0i)");
-#else
-       curprint (" * _Complex_I)");
-#endif
      }
    }
 

@@ -13,7 +13,7 @@
 #include "Labeler.h"
 #include "VariableIdMapping.h"
 #include "EState.h"
-#include "Timer.h"
+#include "TimeMeasurement.h"
 #include <cstdio>
 #include <cstring>
 #include <map>
@@ -50,15 +50,17 @@
 #include "CodeThornException.h"
 #include "CodeThornException.h"
 #include "ProgramInfo.h"
+#include "FunctionCallMapping.h"
 
 #include "DataRaceDetection.h"
 #include "AstTermRepresentation.h"
 #include "Normalization.h"
+#include "DataDependenceVisualizer.h" // also used for clustered ICFG
+#include "Evaluator.h" // CppConstExprEvaluator
 
 // test
 #include "SSAGenerator.h"
 #include "ReachabilityAnalyzerZ3.h"
-#include "Evaluator.h"
 #include "DotGraphCfgFrontend.h"
 #include "ParProAnalyzer.h"
 #include "PromelaCodeGenerator.h"
@@ -68,6 +70,9 @@
 #if defined(__unix__) || defined(__unix) || defined(unix)
 #include <sys/resource.h>
 #endif
+
+#include "CodeThornLib.h"
+#include "LTLThornLib.h"
 
 //BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -80,7 +85,6 @@ namespace po = Sawyer::CommandLine::Boost;
 namespace po = boost::program_options;
 #endif
 
-using namespace CodeThorn;
 using namespace CodeThorn;
 using namespace boost;
 
@@ -107,17 +111,6 @@ void handler(int sig) {
   fprintf(stderr, "Error: signal %d:\n", sig);
   backtrace_symbols_fd(array, size, STDERR_FILENO);
   exit(1);
-}
-
-void CodeThorn::initDiagnostics() {
-  Rose::Diagnostics::initialize();
-  Analyzer::initDiagnostics();
-  IOAnalyzer::initDiagnostics();
-  ReadWriteAnalyzer::initDiagnostics();
-  CounterexampleGenerator::initDiagnostics();
-  RewriteSystem::initDiagnostics();
-  Specialization::initDiagnostics();
-  Normalization::initDiagnostics();
 }
 
 bool isExprRoot(SgNode* node) {
@@ -309,7 +302,6 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("max-transitions-forced-top5",po::value< int >(),"Performs approximation after <arg> transitions (exact for input,output,df and vars with 0 to 2 assigned values)).")
     ("solver",po::value< int >()->default_value(5),"Set solver <arg> to use (one of 1,2,3,...).")
     ("relop-constraints", po::value< bool >()->default_value(false)->implicit_value(true),"Flag for the expression analyzer .")
-    ("omp-ast", po::value< bool >()->default_value(false)->implicit_value(true),"Flag for using the OpenMP AST - useful when visualizing the ICFG.")
     ;
 
   passOnToRose.add_options()
@@ -343,8 +335,9 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("tg2-estate-properties", po::value< bool >()->default_value(false)->implicit_value(true),"Transition graph 2: Visualize all estate-properties.")
     ("tg2-estate-predicate", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 2: Show estate as predicate.")
     ("visualize-read-write-sets", po::value< bool >()->default_value(false)->implicit_value(true), "Generate a read/write-set graph that illustrates the read and write accesses of the involved threads.")
-    ("viz", po::value< bool >()->default_value(false)->implicit_value(true),"Generate visualizations (.dot) outputs.")
+    ("viz", po::value< bool >()->default_value(false)->implicit_value(true),"Generate visualizations of AST, CFG, and transition system as dot files (ast.dot, cfg.dot, transitiongraph1/2.dot.")
     ("viz-tg2", po::value< bool >()->default_value(false)->implicit_value(true),"Generate transition graph 2 (.dot).")
+    ("cfg", po::value< string >(), "Generate inter-procedural cfg as dot file. Each function is visualized as one dot cluster.")
     ;
 
   parallelProgramOptions.add_options()
@@ -377,8 +370,9 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ;
 
   experimentalOptions.add_options()
-    ("normalize-all", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize function calls before analysis (does not apply to conditions).")
-    ("normalize-fcalls", po::value< bool >()->default_value(false)->implicit_value(true),"Lower AST before analysis (includes normalization).")
+    ("omp-ast", po::value< bool >()->default_value(false)->implicit_value(true),"Flag for using the OpenMP AST - useful when visualizing the ICFG.")
+    ("normalize-all", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize all expressions before analysis.")
+    ("normalize-fcalls", po::value< bool >()->default_value(false)->implicit_value(true),"Normalize only expressions with function calls.")
     ("inline", po::value< bool >()->default_value(false)->implicit_value(false),"inline functions before analysis .")
     ("inlinedepth",po::value< int >()->default_value(10),"Default value is 10. A higher value inlines more levels of function calls.")
     ("eliminate-compound-assignments", po::value< bool >()->default_value(true)->implicit_value(true),"Replace all compound-assignments by assignments.")
@@ -399,10 +393,15 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("std-functions",po::value< bool >()->default_value(true)->implicit_value(true),"model std function semantics (malloc, memcpy, etc). Must be turned off explicitly.")
     ("ignore-unknown-functions",po::value< bool >()->default_value(true)->implicit_value(true), "Unknown functions are assumed to be side-effect free.")
     ("ignore-undefined-dereference",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore pointer dereference of uninitalized value (assume data exists).")
-    ("function-resolution-mode",po::value< int >(),"1:Translation unit only, 2:slow lookup, 3: fast (not implemented yet)")
+    ("ignore-function-pointers",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore function pointers (functions are not called).")
+    ("function-resolution-mode",po::value< int >()->default_value(1),"1:Translation unit only, 2:slow lookup, 3: fast (not implemented yet)")
     ("context-sensitive",po::value< bool >()->default_value(false)->implicit_value(true),"Perform context sensitive analysis. Uses call strings with arbitrary length, recursion is not supported yet.")
-    ("abstraction-mode",po::value< int >()->default_value(false)->implicit_value(true),"Perform abstract model checking.")
+    ("abstraction-mode",po::value< int >()->default_value(0),"Select abstraction mode (0: equality merge (explicit model checking), 1: approximating merge (abstract model checking).")
+    ("interpretation-mode",po::value< int >()->default_value(0),"Select interpretation mode. 0: default, 1: execute stdout functions.")
      //    ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
+    ("print-warnings",po::value< bool >()->default_value(false)->implicit_value(true),"Print warnings on stdout during analysis (this can slow down the analysis significantly)")
+    ("print-violations",po::value< bool >()->default_value(false)->implicit_value(true),"Print detected violations on stdout during analysis (this can slow down the analysis significantly)")
+    ("testing-options-set",po::value< int >()->default_value(0)->implicit_value(0),"Use an alternative set of default options (for testing only: 0..1).")
     ;
 
   rersOptions.add_options()
@@ -474,6 +473,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("help-vis", "Show options for visualization output files.")
     ("help-data-race", "Show options for data race detection.")
     ("help-info", "Show options for program info.")
+    ("start-function", po::value< string >(), "Name of function to start the analysis from.")
     ("list-unknown-functions","show all functions in provided input-program for which the semantics are unknown (external functions).")
     ("status", po::value< bool >()->default_value(false)->implicit_value(true), "Show status messages.")
     ("reduce-cfg", po::value< bool >()->default_value(true)->implicit_value(true), "Reduce CFG nodes that are irrelevant for the analysis.")
@@ -500,7 +500,8 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ;
 
   infoOptions.add_options()
-    ("print-varid-mapping", po::value< bool >()->default_value(false)->implicit_value(true), "Print all information stored in var-id mapping after analysis.")
+    ("print-variable-id-mapping",po::value< bool >()->default_value(false)->implicit_value(true),"Print variable-id-mapping on stdout.")
+    ("print-function-id-mapping",po::value< bool >()->default_value(false)->implicit_value(true),"Print function-id-mapping on stdout.")
     ;
 
   po::options_description all("All supported options");
@@ -582,7 +583,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.10.6\n";
+    cout << "CodeThorn version 1.10.9\n";
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
@@ -812,7 +813,8 @@ void automataDotInput(Sawyer::Message::Facility logger) {
     } else {
       ltlResults = explorer.propertyValueTable();
     }
-    string promelaLtlFormulae = ltlResults->getLtlsAsPromelaCode(withResults, withAnnotations);
+    // uses SpotMiscellaneous::spinSyntax as callback to avoid static dependency of ltlResults on SpotMisc.
+    string promelaLtlFormulae = ltlResults->getLtlsAsPromelaCode(withResults, withAnnotations,&SpotMiscellaneous::spinSyntax);
     promelaCode += "\n" + promelaLtlFormulae;
     string filename = args["promela-output"].as<string>();
     write_file(filename, promelaCode);
@@ -870,6 +872,9 @@ void generateAutomata() {
 }
 
 void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
+  analyzer->setOptionOutputWarnings(args.getBool("print-warnings"));
+  analyzer->setPrintDetectedViolations(args.getBool("print-violations"));
+
   if(args.getBool("explicit-arrays")==false) {
     analyzer->setSkipArrayAccesses(true);
   }
@@ -1063,23 +1068,24 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
 
 int main( int argc, char * argv[] ) {
   ROSE_INITIALIZE;
+  CodeThorn::initDiagnostics();
+  CodeThorn::initDiagnosticsLTL();
+
+  Rose::Diagnostics::mprefix->showProgramName(false);
+  Rose::Diagnostics::mprefix->showThreadId(false);
+  Rose::Diagnostics::mprefix->showElapsedTime(false);
 
   Rose::global_options.set_frontend_notes(false);
   Rose::global_options.set_frontend_warnings(false);
   Rose::global_options.set_backend_warnings(false);
 
   signal(SIGSEGV, handler);   // install handler for backtrace
-  CodeThorn::initDiagnostics();
-
-  Rose::Diagnostics::mprefix->showProgramName(false);
-  Rose::Diagnostics::mprefix->showThreadId(false);
-  Rose::Diagnostics::mprefix->showElapsedTime(false);
 
   Sawyer::Message::Facility logger;
   Rose::Diagnostics::initAndRegister(&logger, "CodeThorn");
 
   try {
-    Timer timer;
+    TimeMeasurement timer;
     timer.start();
 
     parseCommandLine(argc, argv, logger);
@@ -1158,11 +1164,43 @@ int main( int argc, char * argv[] ) {
         return 0;
     }
 
+    if(args.getInt("testing-options-set")==1) {
+      args.setOption("explicit-arrays",true);
+      args.setOption("in-state-string-literals",true);
+      args.setOption("ignore-unknown-functions",true);
+      args.setOption("ignore-function-pointers",true);
+      args.setOption("std-functions",true);
+      args.setOption("context-sensitive",true);
+      args.setOption("normalize-all",true);
+      args.setOption("abstraction-mode",1);
+    }
+
     analyzer->optionStringLiteralsInState=args.getBool("in-state-string-literals");
     analyzer->setSkipSelectedFunctionCalls(args.getBool("ignore-unknown-functions"));
+    analyzer->setIgnoreFunctionPointers(args.getBool("ignore-function-pointers"));
     analyzer->setStdFunctionSemantics(args.getBool("std-functions"));
+
     analyzerSetup(analyzer, logger);
-   
+
+    switch(int mode=args.getInt("interpretation-mode")) {
+    case 0: analyzer->setInterpretationMode(IM_ABSTRACT); break;
+    case 1: analyzer->setInterpretationMode(IM_CONCRETE); break;
+    default:
+      cerr<<"Unknown interpretation mode "<<mode<<" provided on command line (supported: 0..1)."<<endl;
+      exit(1);
+    }
+
+    {
+      switch(int argVal=args.getInt("function-resolution-mode")) {
+      case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
+      case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
+      case 3: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_ID_MAPPING;break;
+      case 4: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;break;
+      default: 
+        cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
+        exit(1);
+      }
+    }
     // analyzer->setFunctionResolutionMode(args.getInt("function-resolution-mode")); xxx
     // needs to set CFAnalysis functionResolutionMode
 
@@ -1182,6 +1220,9 @@ int main( int argc, char * argv[] ) {
     vector<int> option_specialize_fun_const_list;
     vector<string> option_specialize_fun_varinit_list;
     vector<int> option_specialize_fun_varinit_const_list;
+    if(args.count("start-function")) {
+      option_specialize_fun_name = args["start-function"].as<string>();
+    }
     if(args.count("specialize-fun-name")) {
       option_specialize_fun_name = args["specialize-fun-name"].as<string>();
       // logger[DEBUG] << "option_specialize_fun_name: "<< option_specialize_fun_name<<endl;
@@ -1275,7 +1316,7 @@ int main( int argc, char * argv[] ) {
     }
     SgProject* sageProject = frontend(argvList);
     SAWYER_MESG(logger[TRACE]) << "Parsing and creating AST: finished."<<endl;
-    double frontEndRunTime=timer.getElapsedTimeInMilliSec();
+    double frontEndRunTime=timer.getTimeDuration().milliSeconds();
 
     /* perform inlining before variable ids are computed, because
        variables are duplicated by inlining. */
@@ -1285,7 +1326,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
     }
 
-    if(args.getBool("normalize-all")) {
+    if(args.getBool("normalize-all")||args.getInt("testing-options-set")==1) {
       lowering.normalizeAst(sageProject,2);
       SAWYER_MESG(logger[TRACE])<<"STATUS: normalize all expressions."<<endl;
     }
@@ -1319,30 +1360,26 @@ int main( int argc, char * argv[] ) {
         programInfo.compute();
         if(showProgramStats) {
           programInfo.printDetailed();
+          ROSE_ASSERT(analyzer);
+          programInfo.writeFunctionCallNodesToFile("functionCalls.csv",0);
         }
         exit(0);
       }
     }
 
-    {
-      bool listUnknownFunctions=args.isUserProvided("list-unknown-functions");
-      bool listKnownFunctions=args.isUserProvided("list-unknown-functions");
-      if(listUnknownFunctions||listKnownFunctions) {
-        //
-      }
-    }
     if(args.getBool("unparse")) {
       sageProject->unparse(0,0);
       exit(0);
     }
 
+    // TODO: introduce ProgramAbstractionLayer
     analyzer->initializeVariableIdMapping(sageProject);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
-    
-    if(args.getBool("print-varid-mapping")) {
+
+    if(args.getBool("print-variable-id-mapping")) {
       analyzer->getVariableIdMapping()->toStream(cout);
     }
-    
+  
     if(args.count("run-rose-tests")) {
       cout << "ROSE tests started."<<endl;
       // Run internal consistency tests on AST
@@ -1497,6 +1534,14 @@ int main( int argc, char * argv[] ) {
     }
     analyzer->initLabeledAssertNodes(sageProject);
 
+    // function-id-mapping is initialized in initializeSolver.
+    if(args.getBool("print-function-id-mapping")) {
+      ROSE_ASSERT(analyzer->getCFAnalyzer());
+      ROSE_ASSERT(analyzer->getCFAnalyzer()->getFunctionIdMapping());
+      analyzer->getCFAnalyzer()->getFunctionIdMapping()->toStream(cout);
+    }
+
+
     if(args.isUserProvided("pattern-search-max-depth") || args.isUserProvided("pattern-search-max-suffix")
        || args.isUserProvided("pattern-search-repetitions") || args.isUserProvided("pattern-search-exploration")) {
       logger[INFO] << "at least one of the parameters of mode \"pattern search\" was set. Choosing solver 10." << endl;
@@ -1504,14 +1549,14 @@ int main( int argc, char * argv[] ) {
       analyzer->setStartPState(*analyzer->popWorkList()->pstate());
     }
 
-    double initRunTime=timer.getElapsedTimeInMilliSec();
+    double initRunTime=timer.getTimeDuration().milliSeconds();
 
     timer.start();
     analyzer->printStatusMessageLine("==============================================================");
     if(!analyzer->getModeLTLDriven() && args.count("z3") == 0 && !args.getBool("ssa")) {
       analyzer->runSolver();
     }
-    double analysisRunTime=timer.getElapsedTimeInMilliSec();
+    double analysisRunTime=timer.getTimeDuration().milliSeconds();
     analyzer->printStatusMessageLine("==============================================================");
 
     if (args.getBool("svcomp-mode") && args.isDefined("witness-file")) {
@@ -1523,7 +1568,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE]) << "STATUS: extracting assertion traces (this may take some time)"<<endl;
       timer.start();
       analyzer->extractRersIOAssertionTraces();
-      extractAssertionTracesTime = timer.getElapsedTimeInMilliSec();
+      extractAssertionTracesTime = timer.getTimeDuration().milliSeconds();
     }
 
     double determinePrefixDepthTime= 0; // MJ: Determination of prefix depth currently deactivated.
@@ -1635,7 +1680,7 @@ int main( int argc, char * argv[] ) {
       assert (!args.getBool("keep-error-states"));
       cout << "recursively removing all leaves (1)."<<endl;
       timer.start();
-      infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
+      infPathsOnlyTime = timer.getTimeDuration().milliSeconds();
       pstateSetSizeInf=analyzer->getPStateSet()->size();
       eStateSetSizeInf = analyzer->getEStateSet()->size();
       transitionGraphSizeInf = analyzer->getTransitionGraph()->size();
@@ -1653,7 +1698,7 @@ int main( int argc, char * argv[] ) {
       if(args.getBool("inf-paths-only")) {
         analyzer->pruneLeaves();
       }
-      stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
+      stdIoOnlyTime = timer.getTimeDuration().milliSeconds();
     }
 
     long eStateSetSizeIoOnly = 0;
@@ -1671,7 +1716,7 @@ int main( int argc, char * argv[] ) {
           cout<< "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
           timer.start();
           analyzer->pruneLeaves();
-          infPathsOnlyTime = timer.getElapsedTimeInMilliSec();
+          infPathsOnlyTime = timer.getTimeDuration().milliSeconds();
 
           pstateSetSizeInf=analyzer->getPStateSet()->size();
           eStateSetSizeInf = analyzer->getEStateSet()->size();
@@ -1687,7 +1732,7 @@ int main( int argc, char * argv[] ) {
           } else {
             analyzer->reduceStgToInOutStates();
           }
-          stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
+          stdIoOnlyTime = timer.getTimeDuration().milliSeconds();
           printStgSize(analyzer->getTransitionGraph(), "after reducing non-I/O states");
         }
       }
@@ -1731,7 +1776,7 @@ int main( int argc, char * argv[] ) {
       } else {
 	spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
       }
-      spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
+      spotLtlAnalysisTime=timer.getTimeDuration().milliSeconds();
       SAWYER_MESG(logger[TRACE]) << "LTL: get results from spot connection."<<endl;
       ltlResults = spotConnection.getLtlResults();
       SAWYER_MESG(logger[TRACE]) << "LTL: results computed."<<endl;
@@ -1845,7 +1890,7 @@ int main( int argc, char * argv[] ) {
       rewriteSystem.setRuleCommutativeSort(useRuleCommutativeSort); // commutative sort only used in substituteArrayRefs
       //cout<<"DEBUG: Rewrite3:"<<rewriteSystem.getStatistics().toString()<<endl;
       speci.substituteArrayRefs(arrayUpdates, analyzer->getVariableIdMapping(), sarMode, rewriteSystem);
-      arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
+      arrayUpdateExtractionRunTime=timer.getTimeDuration().milliSeconds();
 
       if(args.getBool("print-update-infos")) {
         speci.printUpdateInfos(arrayUpdates,analyzer->getVariableIdMapping());
@@ -1853,7 +1898,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE]) <<"STATUS: establishing array-element SSA numbering."<<endl;
       timer.start();
       speci.createSsaNumbering(arrayUpdates, analyzer->getVariableIdMapping());
-      arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
+      arrayUpdateSsaNumberingRunTime=timer.getTimeDuration().milliSeconds();
 
       if(args.count("dump-non-sorted")) {
         string filename=args["dump-non-sorted"].as<string>();
@@ -1863,7 +1908,7 @@ int main( int argc, char * argv[] ) {
         timer.start();
         string filename=args["dump-sorted"].as<string>();
         speci.writeArrayUpdatesToFile(arrayUpdates, filename, sarMode, true);
-        sortingAndIORunTime=timer.getElapsedTimeInMilliSec();
+        sortingAndIORunTime=timer.getTimeDuration().milliSeconds();
       }
       totalRunTime+=arrayUpdateExtractionRunTime+verifyUpdateSequenceRaceConditionRunTime+arrayUpdateSsaNumberingRunTime+sortingAndIORunTime;
     }
@@ -1995,64 +2040,75 @@ int main( int argc, char * argv[] ) {
       cout << "generated "<<filename<<endl;
     }
 
-    Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
-    if(args.getBool("viz")) {
-      cout << "generating graphviz files:"<<endl;
-      visualizer.setOptionMemorySubGraphs(args.getBool("tg1-estate-memory-subgraphs"));
-      string dotFile="digraph G {\n";
-      dotFile+=visualizer.transitionGraphToDot();
-      dotFile+="}\n";
-      write_file("transitiongraph1.dot", dotFile);
-      cout << "generated transitiongraph1.dot."<<endl;
-      string dotFile3=visualizer.foldedTransitionGraphToDot();
-      write_file("transitiongraph2.dot", dotFile3);
-      cout << "generated transitiongraph2.dot."<<endl;
 
-      string datFile1=(analyzer->getTransitionGraph())->toString();
-      write_file("transitiongraph1.dat", datFile1);
-      cout << "generated transitiongraph1.dat."<<endl;
+    {
+      Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
+      if (args.isDefined("cfg")) {
+        string cfgFileName=args.getString("cfg");
+        DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
+        ddvis.setDotGraphName("CFG");
+        ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,false);
+        cout << "generated "<<cfgFileName<<endl;
+      }
+      if(args.getBool("viz")) {
+        cout << "generating graphviz files:"<<endl;
+        visualizer.setOptionMemorySubGraphs(args.getBool("tg1-estate-memory-subgraphs"));
+        string dotFile="digraph G {\n";
+        dotFile+=visualizer.transitionGraphToDot();
+        dotFile+="}\n";
+        write_file("transitiongraph1.dot", dotFile);
+        cout << "generated transitiongraph1.dot."<<endl;
+        string dotFile3=visualizer.foldedTransitionGraphToDot();
+        write_file("transitiongraph2.dot", dotFile3);
+        cout << "generated transitiongraph2.dot."<<endl;
 
-      assert(analyzer->startFunRoot);
-      //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
-      //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
-      SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;
-      analyzer->generateAstNodeInfo(sageProject);
-      cout << "generating AST node info ... "<<endl;
-      dotFile=AstTerm::functionAstTermsWithNullValuesToDot(sageProject);
-      write_file("ast.dot", dotFile);
-      cout << "generated ast.dot."<<endl;
+        string datFile1=(analyzer->getTransitionGraph())->toString();
+        write_file("transitiongraph1.dat", datFile1);
+        cout << "generated transitiongraph1.dat."<<endl;
 
-      SAWYER_MESG(logger[TRACE]) << "Option VIZ: generating cfg dot file ..."<<endl;
-      write_file("cfg.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
-      cout << "generated cfg.dot."<<endl;
-      cout << "=============================================================="<<endl;
+        assert(analyzer->startFunRoot);
+        //analyzer->generateAstNodeInfo(analyzer->startFunRoot);
+        //dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
+        SAWYER_MESG(logger[TRACE]) << "Option VIZ: generate ast node info."<<endl;
+        analyzer->generateAstNodeInfo(sageProject);
+        cout << "generating AST node info ... "<<endl;
+        dotFile=AstTerm::functionAstTermsWithNullValuesToDot(sageProject);
+        write_file("ast.dot", dotFile);
+        cout << "generated ast.dot."<<endl;
+
+        SAWYER_MESG(logger[TRACE]) << "Option VIZ: generating cfg dot file ..."<<endl;
+        write_file("cfg_non_clustered.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
+        DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
+        ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),"cfg.dot",false);
+        cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
+        cout << "=============================================================="<<endl;
+      }
+      if(args.getBool("viz-tg2")) {
+        string dotFile3=visualizer.foldedTransitionGraphToDot();
+        write_file("transitiongraph2.dot", dotFile3);
+        cout << "generated transitiongraph2.dot."<<endl;
+      }
+
+      if (args.count("dot-io-stg")) {
+        string filename=args["dot-io-stg"].as<string>();
+        cout << "generating dot IO graph file:"<<filename<<endl;
+        string dotFile="digraph G {\n";
+        dotFile+=visualizer.transitionGraphWithIOToDot();
+        dotFile+="}\n";
+        write_file(filename, dotFile);
+        cout << "=============================================================="<<endl;
+      }
+
+      if (args.count("dot-io-stg-forced-top")) {
+        string filename=args["dot-io-stg-forced-top"].as<string>();
+        cout << "generating dot IO graph file for an abstract STG:"<<filename<<endl;
+        string dotFile="digraph G {\n";
+        dotFile+=visualizer.abstractTransitionGraphToDot();
+        dotFile+="}\n";
+        write_file(filename, dotFile);
+        cout << "=============================================================="<<endl;
+      }
     }
-    if(args.getBool("viz-tg2")) {
-      string dotFile3=visualizer.foldedTransitionGraphToDot();
-      write_file("transitiongraph2.dot", dotFile3);
-      cout << "generated transitiongraph2.dot."<<endl;
-    }
-
-    if (args.count("dot-io-stg")) {
-      string filename=args["dot-io-stg"].as<string>();
-      cout << "generating dot IO graph file:"<<filename<<endl;
-      string dotFile="digraph G {\n";
-      dotFile+=visualizer.transitionGraphWithIOToDot();
-      dotFile+="}\n";
-      write_file(filename, dotFile);
-      cout << "=============================================================="<<endl;
-    }
-
-    if (args.count("dot-io-stg-forced-top")) {
-      string filename=args["dot-io-stg-forced-top"].as<string>();
-      cout << "generating dot IO graph file for an abstract STG:"<<filename<<endl;
-      string dotFile="digraph G {\n";
-      dotFile+=visualizer.abstractTransitionGraphToDot();
-      dotFile+="}\n";
-      write_file(filename, dotFile);
-      cout << "=============================================================="<<endl;
-    }
-
     // InputPathGenerator
 #if 1
     {
@@ -2202,7 +2258,7 @@ void CodeThorn::printAnalyzerStatistics(IOAnalyzer* analyzer, double totalRunTim
   }
   ss << "=============================================================="<<endl;
   ss << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
-  ss << "Time total           : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
+  ss << "TimeMeasurement total           : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
   ss << "=============================================================="<<endl;
   ss <<color("normal");
   analyzer->printStatusMessage(ss.str());

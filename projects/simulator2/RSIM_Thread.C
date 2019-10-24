@@ -224,7 +224,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::SigInfo &_info)
         Sawyer::Message::Stream mesg(tracing(TRACE_SIGNAL));
         SigAction sa;
         int status = get_process()->sys_sigaction(signo, NULL, &sa);
-        assert(status>=0);
+        ASSERT_always_require(status>=0);
 
         if (sa.handlerVa==(rose_addr_t)SIG_IGN) {
             /* The signal action may have changed since the signal was generated, so we need to check this again. */

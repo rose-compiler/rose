@@ -3,7 +3,7 @@ include_rules
 CxxGrammarMetaProgram_SOURCES = CxxGrammarMetaProgram.C grammar.C GrammarFile.C grammarGenerator.C grammarString.C \
     AstNodeClass.C type.C symbol.C expression.C statement.C support.C binaryInstruction.C storageSize.C visitorSupport.C \
     poolBasedTraversal.C node.C buildAstFileIO.C buildStorageClasses.C buildConstructorsWithoutSourcePositionInformation.C \
-    outputClassesAndFields.C buildAtermSupport.C java/terminals.cpp
+    outputClassesAndFields.C java/terminals.cpp
 
 CxxGrammarMetaProgram_LIBS = \
     $(ROSE)/src/util/librose_util \

@@ -42,7 +42,7 @@ namespace
       template <class Key>
       void operator()(std::pair<const Key, Lattice*>& p) const
       {
-        component.transfer(object, sg::deref(p.second));
+        component.transfer(object, SG_DEREF(p.second));
       }
 
     private:
@@ -66,6 +66,30 @@ struct CtxAnalysis;
 //
 // implements call context transfers on top of underlying components
 
+namespace
+{
+  template <class CallContext>
+  CtxLattice<CallContext>&
+  mkCtxLattice(CtxAnalysis<CallContext>& ctxanalysis, const CtxLattice<CallContext>& init)
+  {
+    return SG_DEREF(cloneLattice(ctxanalysis.factory(), init));
+  }
+
+  template <class CallContext>
+  CtxLattice<CallContext>&
+  mkCtxLattice(CtxAnalysis<CallContext>& ctxanalysis, DFTransferFunctions& component)
+  {
+    CtxLattice<CallContext>& elem = SG_DEREF(ctxanalysis.factory().create());
+    Lattice*                 sub  = elem.componentFactory().create();
+
+    ROSE_ASSERT(elem.isBot() && sub->isBot());
+    component.initializeExtremalValue(*sub);
+    elem[CallContext()] = sub;
+    ROSE_ASSERT(!elem.isBot() && !sub->isBot());
+    return elem;
+  }
+}
+
 //! Transfer functions for context-sensitive dataflow analysis.
 //!
 //! \tparam  CallContext an implementation of a CallContext
@@ -75,31 +99,48 @@ struct CtxTransfer : DFTransferFunctions
     typedef DFTransferFunctions     base;
     typedef CtxLattice<CallContext> ctx_lattice_t;
 
-    //! Initializes a new transfer object.
-    //! \param comptrans   the component transfer functions (e.g., for reaching
-    //!                    definitions).
-    //! \param ctxanalysis the context sensitive analysis class.
-    CtxTransfer(DFTransferFunctions& comptrans, CtxAnalysis<CallContext>& ctxanalysis)
-    : base(), component(comptrans), analysis(ctxanalysis)
+    /// Initializes a new transfer object.
+    /// \param comptrans   the component transfer functions (e.g., for reaching
+    ///                    definitions).
+    /// \param ctxanalysis the context sensitive analysis class.
+    /// \param init        a prototype lattice to initialize extremal values
+    CtxTransfer(DFTransferFunctions& comptrans, CtxAnalysis<CallContext>& ctxanalysis, const ctx_lattice_t& init)
+    : base(), component(comptrans), analysis(ctxanalysis), initialElement(mkCtxLattice(analysis, init))
     {}
 
-    //! sets its and its' component's abstraction layer
+    /// Initializes a new transfer object.
+    /// \param comptrans   the component transfer functions (e.g., for reaching
+    ///                    definitions).
+    /// \param ctxanalysis the context sensitive analysis class.
+    CtxTransfer(DFTransferFunctions& comptrans, CtxAnalysis<CallContext>& ctxanalysis)
+    : base(), component(comptrans), analysis(ctxanalysis), initialElement(mkCtxLattice(analysis, component))
+    {}
+
+
+    /// sets its and its' component's abstraction layer
     void setProgramAbstractionLayer(ProgramAbstractionLayer* pal) ROSE_OVERRIDE
     {
       ROSE_ASSERT(pal);
 
       base::setProgramAbstractionLayer(pal);
-
       component.setProgramAbstractionLayer(pal);
     }
 
-    //! actual transfer function.
-    //! \details computes call context changes for call and return labels
-    //! \note the method does not override
+    void setPointerAnalysis(PointerAnalysisInterface* pai) ROSE_OVERRIDE
+    {
+      ROSE_ASSERT(pai);
+
+      base::setPointerAnalysis(pai);
+      component.setPointerAnalysis(pai);
+    }
+
+    /// actual transfer function.
+    /// \details computes call context changes for call and return labels
+    /// \note the method does not override
     void transfer(Label lbl, ctx_lattice_t& lat);
 
-    //! handles transfers on edges
-    //! \note CURRENTLY ONLY CALLED form post-info processing
+    /// handles transfers on edges
+    /// \note CURRENTLY ONLY CALLED form post-info processing
     void transfer(Label lbl, Lattice& element) ROSE_OVERRIDE
     {
       ctx_lattice_t& lat = dynamic_cast<ctx_lattice_t&>(element);
@@ -108,16 +149,37 @@ struct CtxTransfer : DFTransferFunctions
       std::for_each(lat.begin(), lat.end(), componentTransfer(component, lbl));
     }
 
-    //! this method is invoked from the solver/worklist algorithm and
-    //!   calls the component's transfer function for each context.
-    //!   It also calls the concrete transfer function (above) to
-    //!   handle context changes.
+    /// this method is invoked from the solver/worklist algorithm and
+    ///   calls the component's transfer function for each context.
+    ///   It also calls the concrete transfer function (above) to
+    ///   handle context changes.
     void transfer(Edge edge, Lattice& element) ROSE_OVERRIDE;
+
+    /// initializes extremal values
+    void initializeExtremalValue(Lattice& element) ROSE_OVERRIDE
+    {
+      ctx_lattice_t& lat = dynamic_cast<ctx_lattice_t&>(element);
+
+      lat.combine(const_cast<ctx_lattice_t&>(initialElement));
+    }
+
+    /// overrides behavior from base function for cases where
+    ///   root = nullptr, indicating a nested analysis that must not
+    ///   reinitialize global state.
+    ctx_lattice_t* initializeGlobalVariables(SgProject* root) ROSE_OVERRIDE
+    {
+      if (!root) return cloneLattice(analysis.factory(), initialElement);
+
+      Lattice* elem = base::initializeGlobalVariables(root);
+
+      return dynamic_cast<ctx_lattice_t*>(elem);
+    }
 
 
   private:
-    DFTransferFunctions&      component; //!< The component transfer
-    CtxAnalysis<CallContext>& analysis;  //!< The analysis objects
+    DFTransferFunctions&      component;       ///< The component transfer
+    CtxAnalysis<CallContext>& analysis;        ///< The analysis objects
+    const ctx_lattice_t&      initialElement;  ///< prototype lattice for extremal value
 };
 
 
@@ -127,7 +189,7 @@ struct CtxTransfer : DFTransferFunctions
 template <class CallContext>
 void CtxTransfer<CallContext>::transfer(Label lbl, ctx_lattice_t& lat)
 {
-  CodeThorn::Labeler& labeler = sg::deref(getLabeler());
+  CodeThorn::Labeler& labeler = SG_DEREF(getLabeler());
 
   // we are only interested in Call context modifications
   if (!isCallContextModifier(labeler, lbl)) return;
@@ -154,6 +216,7 @@ void CtxTransfer<CallContext>::transfer(Edge edge, Lattice& element)
   this->transfer(edge.source(), element);
   std::for_each(lat.begin(), lat.end(), componentTransfer(component, edge));
 }
+
 
 } // namespace CodeThorn
 

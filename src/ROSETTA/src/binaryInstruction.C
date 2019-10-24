@@ -108,14 +108,16 @@ DOCUMENTATION_should_never_be_defined;
 #define DECLARE_HEADERS(CLASS_WITHOUT_Sg) /*void*/
 #else
 #define DECLARE_HEADERS(CLASS_WITHOUT_Sg) \
-    CLASS_WITHOUT_Sg.setPredeclarationString("Sg" #CLASS_WITHOUT_Sg "_HEADERS", __FILE__)
+    CLASS_WITHOUT_Sg.setPredeclarationString("Sg" #CLASS_WITHOUT_Sg "_HEADERS", \
+                                             ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
 #define DECLARE_OTHERS(CLASS_WITHOUT_Sg) /*void*/
 #else
 #define DECLARE_OTHERS(CLASS_WITHOUT_Sg) \
-    CLASS_WITHOUT_Sg.setFunctionPrototype("Sg" #CLASS_WITHOUT_Sg "_OTHERS", __FILE__)
+    CLASS_WITHOUT_Sg.setFunctionPrototype("Sg" #CLASS_WITHOUT_Sg "_OTHERS", \
+                                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -494,6 +496,12 @@ void Grammar::setUpBinaryInstructions() {
          *  that causes the branch to be taken. "BO" is the term used in the PowerPC documentation to denote the first argument
          *  of the conditional instruction; it is a 5-bit integer constant. */
         std::string conditionalBranchDescription() const;
+
+        /** Return the register dictionary for a PowerPC architecture.
+         *
+         *  Given an instruction size of 32 or 64 return the register dictionary that describes the PowerPC architecture with
+         *  the specified word size. */
+        static const Rose::BinaryAnalysis::RegisterDictionary* registersForWidth(size_t);
         
         // Overrides are documented in the base class
         virtual std::string description() const $ROSE_OVERRIDE;
@@ -766,12 +774,14 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned /*version*/) {
+        void serialize(S &s, const unsigned version) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
             s & BOOST_SERIALIZATION_NVP(p_mnemonic);
             s & BOOST_SERIALIZATION_NVP(p_raw_bytes);
             s & BOOST_SERIALIZATION_NVP(p_operandList);
             s & BOOST_SERIALIZATION_NVP(p_sources);
+            if (version >= 1)
+                s & BOOST_SERIALIZATION_NVP(semanticFailure_);
         }
 #endif
 
@@ -779,6 +789,15 @@ void Grammar::setUpBinaryInstructions() {
         struct SemanticFailure {
             size_t n;
             SemanticFailure(): n(0) {}
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+        private:
+            friend class boost::serialization::access;
+            template<class S>
+            void serialize(S &s, const unsigned /*version*/) {
+                s & BOOST_SERIALIZATION_NVP(n);
+            }
+#endif
         };
         SemanticFailure semanticFailure_;
 
@@ -3451,6 +3470,7 @@ void Grammar::setUpBinaryInstructions() {
                 // NOTE: If you add more here, then fix Partitioner::parse_switches()
                 //       Also fix SgAsmFunction::reason_key()
                 FUNC_NONE        = 0x00000000,  /**< Used for initialization; not a bit flag. */
+                FUNC_THUNK_TARGET= 0x00004000,  /**< Function is the target of a thunk. */
                 FUNC_EXCEPTION_HANDLER
                                  = 0x00008000,  /**< Function for handling an exception. */
                 FUNC_ENTRY_POINT = 0x00010000,  /**< An entry point specified in the file header. */

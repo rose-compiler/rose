@@ -5,8 +5,8 @@
 #include "VariableIdUtils.h"
 #include "CFAnalysis.h"
 
-using namespace CodeThorn;
 using namespace std;
+using namespace CodeThorn;
 
 class VariableIdSetAttribute;
 
@@ -16,14 +16,15 @@ class VariableIdSetAttribute;
   * \author Markus Schordan
   * \date 2013.
  */
-DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping, string useDefAttributeName)
+CodeThorn::DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping, string useDefAttributeName)
   : _showSourceCode(true),
     _labeler(labeler),
     _variableIdMapping(varIdMapping),
     _useDefAttributeName(useDefAttributeName),
     _mode(DDVMODE_DEFUSE),
     _flow(0),
-    _dotFunctionClusters("")
+    //    _dotFunctionClusters(""),
+    _dotGraphName("DataDependenceGraph")
 {
 }
 
@@ -31,7 +32,7 @@ DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdM
   * \author Markus Schordan
   * \date 2013.
  */
-VariableIdSet DataDependenceVisualizer::useVars(SgNode* expr) {
+VariableIdSet CodeThorn::DataDependenceVisualizer::useVars(SgNode* expr) {
   UDAstAttribute* useDefAttribute=getUDAstAttribute(expr,_useDefAttributeName);
   ROSE_ASSERT(useDefAttribute);
   return useDefAttribute->useVariables(*_variableIdMapping);
@@ -41,7 +42,7 @@ VariableIdSet DataDependenceVisualizer::useVars(SgNode* expr) {
   * \author Markus Schordan
   * \date 2013.
  */
-LabelSet DataDependenceVisualizer::defLabels(SgNode* expr, VariableId useVar) {
+LabelSet CodeThorn::DataDependenceVisualizer::defLabels(SgNode* expr, VariableId useVar) {
   UDAstAttribute* useDefAttribute=getUDAstAttribute(expr,_useDefAttributeName);
   ROSE_ASSERT(useDefAttribute);
   return useDefAttribute->definitionsOfVariable(useVar);
@@ -51,7 +52,7 @@ LabelSet DataDependenceVisualizer::defLabels(SgNode* expr, VariableId useVar) {
   * \author Markus Schordan
   * \date 2013.
  */
-Label DataDependenceVisualizer::getLabel(SgNode* stmt) {
+Label CodeThorn::DataDependenceVisualizer::getLabel(SgNode* stmt) {
   return _labeler->getLabel(stmt);
 }
 
@@ -59,7 +60,7 @@ Label DataDependenceVisualizer::getLabel(SgNode* stmt) {
   * \author Markus Schordan
   * \date 2013.
  */
-SgNode* DataDependenceVisualizer::getNode(Label label) {
+SgNode* CodeThorn::DataDependenceVisualizer::getNode(Label label) {
   return _labeler->getNode(label);
 }
 
@@ -67,7 +68,7 @@ SgNode* DataDependenceVisualizer::getNode(Label label) {
   * \author Markus Schordan
   * \date 2013.
  */
-string DataDependenceVisualizer::nodeSourceCode(Label lab) {
+string CodeThorn::DataDependenceVisualizer::nodeSourceCode(Label lab) {
   if(_labeler->isFunctionEntryLabel(lab))
     return "FunctionEntry";
   if(_labeler->isFunctionExitLabel(lab))
@@ -81,7 +82,7 @@ string DataDependenceVisualizer::nodeSourceCode(Label lab) {
   * \author Markus Schordan
   * \date 2013.
  */
-void DataDependenceVisualizer::generateDefUseDotGraph(SgNode* root, string fileName) {
+void CodeThorn::DataDependenceVisualizer::generateDefUseDotGraph(SgNode* root, string fileName) {
   _mode=DDVMODE_DEFUSE;
   generateDot(root,fileName);
 }
@@ -89,7 +90,7 @@ void DataDependenceVisualizer::generateDefUseDotGraph(SgNode* root, string fileN
   * \author Markus Schordan
   * \date 2013.
  */
-void DataDependenceVisualizer::generateUseDefDotGraph(SgNode* root, string fileName) {
+void CodeThorn::DataDependenceVisualizer::generateUseDefDotGraph(SgNode* root, string fileName) {
   _mode=DDVMODE_USEDEF;  
   generateDot(root,fileName);
 }
@@ -98,7 +99,7 @@ void DataDependenceVisualizer::generateUseDefDotGraph(SgNode* root, string fileN
   * \author Markus Schordan
   * \date 2013.
  */
-void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnalysis* cfanalyzer, string fileName, bool withDataDependencies) {
+void CodeThorn::DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnalysis* cfanalyzer, string fileName, bool withDataDependencies) {
   /*
     generates a new cfg and a dot-cluster for each function and
     computes the inter-procedural edges with interFlow and adds them
@@ -112,7 +113,7 @@ void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnaly
 
   std::ofstream myfile;
   myfile.open(fileName.c_str(),std::ios::out);
-  myfile<<"digraph DataDependence {"<<endl;
+  myfile<<"digraph "<<getDotGraphName()<<" {"<<endl;
   int k=0;
   stringstream accessToGlobalVariables; // NOT handling static vars of other functions yet
   for(LabelSet::iterator i=entryLabels.begin();i!=entryLabels.end();++i) {
@@ -136,34 +137,34 @@ void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnaly
         Label lab=*fl;
         SgNode* node=_labeler->getNode(lab);
         if(existsUDAstAttribute(node,_useDefAttributeName)) {
-        VariableIdSet useVarSet=useVars(node);
-        for(VariableIdSet::iterator i=useVarSet.begin();i!=useVarSet.end();++i) {
-          VariableId useVar=*i;
-          LabelSet defLabSet=defLabels(node,useVar);
-          for(LabelSet::iterator i=defLabSet.begin();i!=defLabSet.end();++i) {
-            Label sourceNode=lab;
-            Label targetNode=*i;
-            string edgeAnnotationString=_variableIdMapping->uniqueVariableName(useVar);
-            stringstream ddedge;
-            switch(_mode) {
-            case DDVMODE_USEDEF: ddedge<<sourceNode<<" -> "<<targetNode; break;
-            case DDVMODE_DEFUSE: ddedge<<targetNode<<" -> "<<sourceNode; break;
-            default: 
-              cerr<<"Error: unknown visualization mode."<<endl;
-              exit(1);
-            }
-            if(_showSourceCode) {
-              ddedge<<"[label=\""<<edgeAnnotationString<<"\" color=darkgoldenrod4];";
-            }
-            ddedge<<endl;
-            if(functionLabelSet.isElement(sourceNode) && functionLabelSet.isElement(targetNode)) {
-              myfile<<ddedge.str();
-            } else {
-              accessToGlobalVariables<<ddedge.str();
-            }
-            //            if(_showSourceCode) {
-            //  myfile<<sourceNode<<" [label=\""<<sourceNode<<":"<<nodeSourceCode(sourceNode)<<"\"];"<<endl;
-            //  myfile<<targetNode<<" [label=\""<<targetNode<<":"<<nodeSourceCode(targetNode)<<"\"];"<<endl;
+          VariableIdSet useVarSet=useVars(node);
+          for(VariableIdSet::iterator i=useVarSet.begin();i!=useVarSet.end();++i) {
+            VariableId useVar=*i;
+            LabelSet defLabSet=defLabels(node,useVar);
+            for(LabelSet::iterator i=defLabSet.begin();i!=defLabSet.end();++i) {
+              Label sourceNode=lab;
+              Label targetNode=*i;
+              string edgeAnnotationString=_variableIdMapping->uniqueVariableName(useVar);
+              stringstream ddedge;
+              switch(_mode) {
+              case DDVMODE_USEDEF: ddedge<<sourceNode<<" -> "<<targetNode; break;
+              case DDVMODE_DEFUSE: ddedge<<targetNode<<" -> "<<sourceNode; break;
+              default: 
+                cerr<<"Error: unknown visualization mode."<<endl;
+                exit(1);
+              }
+              if(_showSourceCode) {
+                ddedge<<"[label=\""<<edgeAnnotationString<<"\" color=darkgoldenrod4];";
+              }
+              ddedge<<endl;
+              if(functionLabelSet.isElement(sourceNode) && functionLabelSet.isElement(targetNode)) {
+                myfile<<ddedge.str();
+              } else {
+                accessToGlobalVariables<<ddedge.str();
+              }
+              //            if(_showSourceCode) {
+              //  myfile<<sourceNode<<" [label=\""<<sourceNode<<":"<<nodeSourceCode(sourceNode)<<"\"];"<<endl;
+              //  myfile<<targetNode<<" [label=\""<<targetNode<<":"<<nodeSourceCode(targetNode)<<"\"];"<<endl;
             }
             
           }
@@ -176,11 +177,13 @@ void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnaly
   for(InterFlow::iterator i=iflow.begin();i!=iflow.end();++i) {
     if(((*i).call != Labeler::NO_LABEL) && ((*i).entry!= Labeler::NO_LABEL))
       myfile<<(*i).call<<" -> "<<(*i).entry<<";\n";
-    if(((*i).exit != Labeler::NO_LABEL) && ((*i).callReturn!= Labeler::NO_LABEL))
+    if(((*i).exit != Labeler::NO_LABEL) && ((*i).callReturn!= Labeler::NO_LABEL)) {
       myfile<<(*i).exit<<" -> "<<(*i).callReturn<<";\n";
+    }
     // generate optional local edge
-    //if(((*i).entry == Labeler::NO_LABEL) && ((*i).exit== Labeler::NO_LABEL))
-    //  myfile<<(*i).call<<" -> "<<(*i).callReturn<<" [style=dotted];\n";
+    if(((*i).entry == Labeler::NO_LABEL) && ((*i).exit== Labeler::NO_LABEL))
+      myfile<<(*i).call<<" -> "<<(*i).callReturn<<" [style=dotted];\n";
+    //  cerr<<"WARNING: inconsistent inter-procedural cfg edge: "<<(*i).call<<" -> "<<(*i).callReturn<<endl;
   }
   myfile<<"// access to global variables\n";
   myfile<<accessToGlobalVariables.str();
@@ -191,7 +194,7 @@ void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnaly
   * \author Markus Schordan
   * \date 2013.
  */
-void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
+void CodeThorn::DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
   std::ofstream myfile;
   myfile.open(fileName.c_str(),std::ios::out);
   myfile<<"digraph DataDependence {"<<endl;
@@ -254,7 +257,7 @@ void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
   * \author Markus Schordan
   * \date 2013.
  */
-UDAstAttribute* DataDependenceVisualizer::getUDAstAttribute(SgNode* expr,string attributeName){
+UDAstAttribute* CodeThorn::DataDependenceVisualizer::getUDAstAttribute(SgNode* expr,string attributeName){
   if(existsUDAstAttribute(expr,attributeName)) {
     UDAstAttribute* udAttr=dynamic_cast<UDAstAttribute*>(expr->getAttribute(attributeName));
     return udAttr;
@@ -266,7 +269,7 @@ UDAstAttribute* DataDependenceVisualizer::getUDAstAttribute(SgNode* expr,string 
   * \author Markus Schordan
   * \date 2013.
  */
-bool DataDependenceVisualizer::existsUDAstAttribute(SgNode* expr,string attributeName){
+bool CodeThorn::DataDependenceVisualizer::existsUDAstAttribute(SgNode* expr,string attributeName){
   return expr->attributeExists(attributeName);
 }
 
@@ -274,12 +277,20 @@ bool DataDependenceVisualizer::existsUDAstAttribute(SgNode* expr,string attribut
   * \author Markus Schordan
   * \date 2013.
  */
-void DataDependenceVisualizer::setFunctionLabelSetSets(LabelSetSet functionLabelSetSets) {
+void CodeThorn::DataDependenceVisualizer::setFunctionLabelSetSets(LabelSetSet functionLabelSetSets) {
   _functionLabelSetSets=functionLabelSetSets;
 }
 
+void CodeThorn::DataDependenceVisualizer::setDotGraphName(std::string name) {
+  _dotGraphName=name;
+}
+
+std::string CodeThorn::DataDependenceVisualizer::getDotGraphName() {
+  return _dotGraphName;
+}
+
 #if 0
-void DataDependenceVisualizer::generateDotFunctionClusters(LabelSetSet functionLabelSetSet) {
+void CodeThorn::DataDependenceVisualizer::generateDotFunctionClusters(LabelSetSet functionLabelSetSet) {
   stringstream ss;
   ss<<"// function clusters\n";
   int k=0;

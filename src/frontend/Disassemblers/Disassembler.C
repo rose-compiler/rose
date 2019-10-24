@@ -79,7 +79,8 @@ void
 Disassembler::initclassHelper()
 {
     registerSubclass(new DisassemblerArm());
-    registerSubclass(new DisassemblerPowerpc());
+    registerSubclass(new DisassemblerPowerpc(powerpc_32));
+    registerSubclass(new DisassemblerPowerpc(powerpc_64));
     registerSubclass(new DisassemblerM68k(m68k_freescale_isab));
     registerSubclass(new DisassemblerMips());
     registerSubclass(new DisassemblerX86(2)); /*16-bit*/
@@ -180,7 +181,8 @@ Disassembler::isaNames() {
     v.push_back("m68040");
     v.push_back("mips-be");
     v.push_back("mips-le");
-    v.push_back("ppc");
+    v.push_back("ppc32");
+    v.push_back("ppc64");
     return v;
 }
 
@@ -189,29 +191,31 @@ Disassembler *
 Disassembler::lookup(const std::string &name)
 {
     Disassembler *retval = NULL;
-    if (0==name.compare("list")) {
+    if (name == "list") {
         std::cout <<"The following ISAs are supported:\n";
         BOOST_FOREACH (const std::string &name, isaNames())
             std::cout <<"  " <<name <<"\n";
         exit(0);
-    } else if (0==name.compare("arm")) {
+    } else if (name == "arm") {
         retval = new DisassemblerArm();
-    } else if (0==name.compare("ppc")) {
-        retval = new DisassemblerPowerpc();
-    } else if (0==name.compare("mips-be")) {
+    } else if (name == "ppc32") {
+        retval = new DisassemblerPowerpc(powerpc_32);
+    } else if (name == "ppc64") {
+        retval = new DisassemblerPowerpc(powerpc_64);
+    } else if (name == "mips-be") {
         retval = new DisassemblerMips(ByteOrder::ORDER_MSB);
-    } else if (0==name.compare("mips-le")) {
+    } else if (name == "mips-le") {
         retval = new DisassemblerMips(ByteOrder::ORDER_LSB);
-    } else if (0==name.compare("i386")) {
+    } else if (name == "i386") {
         retval = new DisassemblerX86(4);
-    } else if (0==name.compare("amd64")) {
+    } else if (name == "amd64") {
         retval = new DisassemblerX86(8);
-    } else if (0==name.compare("m68040")) {
+    } else if (name == "m68040") {
         retval = new DisassemblerM68k(m68k_68040);
-    } else if (0==name.compare("coldfire")) {
+    } else if (name == "coldfire") {
         retval = new DisassemblerM68k(m68k_freescale_emacb);
     } else {
-        throw std::runtime_error("invalid ISA name \""+name+"\"; use --isa=list");
+        throw std::runtime_error("invalid ISA name \"" + StringUtility::cEscape(name) + "\"; use --isa=list");
     }
     ASSERT_not_null(retval);
     retval->name(name);

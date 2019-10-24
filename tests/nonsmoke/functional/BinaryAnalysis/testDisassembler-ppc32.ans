@@ -1,0 +1,1032 @@
+L1    # The section numbers and titles in this file come from "PowerPC User
+L2    # Instruction Set Architecture Book I" Version 2.02, January 28, 2005.
+L3    
+L4    ################################################################################
+L5    # 2.4 PowerPC-32 Branch Processor Instructions
+L6    ################################################################################
+L7    
+L8    #-------------------------------------------------------------------------------
+L9    # 2.4.1 Branch instructions
+L10   #-------------------------------------------------------------------------------
+L11   
+L12   va 0x1000
+L13   
+L14   # b 0x1000
+L15   0x48 0x00 0x00 0x00
+L15   0x00001000: 48 00 00 00               ?? b        0x00001000<4096>                         ; branch
+L16   
+L17   # b 0xffc
+L18   0x4b 0xff 0xff 0xfc
+L18   0x00001000: 4b ff ff fc               ?? b        0x00000ffc<4092>                         ; branch
+L19   
+L20   # ba 0
+L21   0x48 0x00 0x00 0x02
+L21   0x00001000: 48 00 00 02               ?? ba       0                                        ; branch
+L22   
+L23   # ba 4
+L24   0x48 0x00 0x00 0x06
+L24   0x00001000: 48 00 00 06               ?? ba       4                                        ; branch
+L25   
+L26   # ba 0xfffffffc
+L27   0x4b 0xff 0xff 0xfe
+L27   0x00001000: 4b ff ff fe               ?? ba       0xfffffffc<4294967292,-4>                ; branch
+L28   
+L29   # bl 0x1000
+L30   0x48 0x00 0x00 0x01
+L30   0x00001000: 48 00 00 01               ?? bl       0x00001000<4096>                         ; branch
+L31   
+L32   # bl 0xffc
+L33   0x4b 0xff 0xff 0xfd
+L33   0x00001000: 4b ff ff fd               ?? bl       0x00000ffc<4092>                         ; branch
+L34   
+L35   # bla 0
+L36   0x48 0x00 0x00 0x03
+L36   0x00001000: 48 00 00 03               ?? bla      0                                        ; branch
+L37   
+L38   # bla 4
+L39   0x48 0x00 0x00 0x07
+L39   0x00001000: 48 00 00 07               ?? bla      4                                        ; branch
+L40   
+L41   # bla 0xfffffffc
+L42   0x4b 0xff 0xff 0xff
+L42   0x00001000: 4b ff ff ff               ?? bla      0xfffffffc<4294967292,-4>                ; branch
+L43   
+L44   # bc 0, cr0.lt, 0x1000 (decrement CTR)
+L45   0x40 0x00 0x00 0x00
+L45   0x00001000: 40 00 00 00               ?? bc       0, cr0.lt, 0x00001000<4096>              ; branch if --CTR != 0 && condition clear
+L46   
+L47   # bc 1, cr0.lt, 0xffc
+L48   0x40 0x20 0xff 0xfc
+L48   0x00001000: 40 20 ff fc               ?? bc       1, cr0.lt, 0x00000ffc<4092>              ; branch if --CTR != 0 && condition clear
+L49   
+L50   # bca 2, cr0.gt, 0x0
+L51   0x40 0x41 0x00 0x02
+L51   0x00001000: 40 41 00 02               ?? bca      2, cr0.gt, 0                             ; branch if --CTR == 0 && condition clear
+L52   
+L53   # bca 3, cr0.gt, 0xfffffffc
+L54   0x40 0x61 0xff 0xfe
+L54   0x00001000: 40 61 ff fe               ?? bca      3, cr0.gt, 0xfffffffc<4294967292,-4>     ; branch if --CTR == 0 && condition clear
+L55   
+L56   # bca 4, cr0.eq, 0x4
+L57   0x40 0x82 0x00 0x06
+L57   0x00001000: 40 82 00 06               ?? bca      4, cr0.eq, 4                             ; branch if condition clear
+L58   
+L59   # bca 5, cr0.eq, 0xffff8000
+L60   0x40 0xa2 0x80 0x02
+L60   0x00001000: 40 a2 80 02               ?? bca      5, cr0.eq, 0xffff8000<4294934528,-32768> ; branch if condition clear
+L61   
+L62   # bca 6, cr0.so, 0x1000
+L63   0x40 0xc3 0x00 0x02
+L63   0x00001000: 40 c3 00 02               ?? bca      6, cr0.so, 0                             ; branch if condition clear (unlikely)
+L64   
+L65   # bca 7, cr0.so, 0xfffffffc
+L66   0x40 0xe3 0xff 0xfe
+L66   0x00001000: 40 e3 ff fe               ?? bca      7, cr0.so, 0xfffffffc<4294967292,-4>     ; branch if condition clear (likely)
+L67   
+L68   # bca 8, cr0.so, 0x4
+L69   0x41 0x03 0x00 0x06
+L69   0x00001000: 41 03 00 06               ?? bca      8, cr0.so, 4                             ; branch if --CTR != 0 && condition set
+L70   
+L71   # bca 9, cr0.so, 0
+L72   0x41 0x23 0x00 0x02
+L72   0x00001000: 41 23 00 02               ?? bca      9, cr0.so, 0                             ; branch if --CTR != 0 && condition set
+L73   
+L74   # bcl 10, cr1.lt, 0x1000
+L75   0x41 0x44 0x00 0x01
+L75   0x00001000: 41 44 00 01               ?? bcl      10, cr1.lt, 0x00001000<4096>             ; branch and link if --CTR == 0 && condition set
+L76   
+L77   # bcl 11, cr1.lt, 0xffc
+L78   0x41 0x64 0xff 0xfd
+L78   0x00001000: 41 64 ff fd               ?? bcl      11, cr1.lt, 0x00000ffc<4092>             ; branch and link if --CTR == 0 && condition set
+L79   
+L80   # bcl 12, cr1.lt, 0x1004
+L81   0x41 0x84 0x00 0x05
+L81   0x00001000: 41 84 00 05               ?? bcl      12, cr1.lt, 0x00001004<4100>             ; branch and link if condition set
+L82   
+L83   # bcl 13, cr1.lt, 0x1000
+L84   0x41 0xa4 0x00 0x01
+L84   0x00001000: 41 a4 00 01               ?? bcl      13, cr1.lt, 0x00001000<4096>             ; branch and link if condition set
+L85   
+L86   # bcl 14, cr1.lt, 0x1000
+L87   0x41 0xc4 0x00 0x01
+L87   0x00001000: 41 c4 00 01               ?? bcl      14, cr1.lt, 0x00001000<4096>             ; branch and link if condition set (unlikely)
+L88   
+L89   # bcl 15, cr1.lt, 0x1000
+L90   0x41 0xe4 0x00 0x01
+L90   0x00001000: 41 e4 00 01               ?? bcl      15, cr1.lt, 0x00001000<4096>             ; branch and link if condition set (likely)
+L91   
+L92   # bcla 16, cr1.gt, 0
+L93   0x42 0x05 0x00 0x03
+L93   0x00001000: 42 05 00 03               ?? bcla     0x10<16>, cr1.gt, 0                      ; branch and link if --CTR != 0
+L94   
+L95   # bcla 17, cr1.gt, 0
+L96   0x42 0x25 0x00 0x03
+L96   0x00001000: 42 25 00 03               ?? bcla     0x11<17>, cr1.gt, 0                      ; branch and link if --CTR != 0
+L97   
+L98   # bcla 18, cr1.gt, 0
+L99   0x42 0x45 0x00 0x03
+L99   0x00001000: 42 45 00 03               ?? bcla     0x12<18>, cr1.gt, 0                      ; branch and link if --CTR == 0
+L100  
+L101  # bcla 19, cr1.gt, 0
+L102  0x42 0x65 0x00 0x03
+L102  0x00001000: 42 65 00 03               ?? bcla     0x13<19>, cr1.gt, 0                      ; branch and link if --CTR == 0
+L103  
+L104  # bcla 20, cr1.gt, 0
+L105  0x42 0x85 0x00 0x03
+L105  0x00001000: 42 85 00 03               ?? bcla     0x14<20>, cr1.gt, 0                      ; branch and link unconditionally
+L106  
+L107  # bcla 21, cr1.gt, 0
+L108  0x42 0xa5 0x00 0x03
+L108  0x00001000: 42 a5 00 03               ?? bcla     0x15<21>, cr1.gt, 0                      ; branch and link unconditionally
+L109  
+L110  # bcla 22, cr1.gt, 0
+L111  0x42 0xc5 0x00 0x03
+L111  0x00001000: 42 c5 00 03               ?? bcla     0x16<22>, cr1.gt, 0                      ; branch and link unconditionally
+L112  
+L113  # bcla 23, cr1.gt, 0
+L114  0x42 0xe5 0x00 0x03
+L114  0x00001000: 42 e5 00 03               ?? bcla     0x17<23>, cr1.gt, 0                      ; branch and link unconditionally
+L115  
+L116  # bcla 24, cr1.gt, 0
+L117  0x43 0x05 0x00 0x03
+L117  0x00001000: 43 05 00 03               ?? bcla     0x18<24>, cr1.gt, 0                      ; branch and link if --CTR != 0 (unlikely)
+L118  
+L119  # bcla 25, cr1.gt, 0
+L120  0x43 0x25 0x00 0x03
+L120  0x00001000: 43 25 00 03               ?? bcla     0x19<25>, cr1.gt, 0                      ; branch and link if --CTR != 0 (likely)
+L121  
+L122  # bcla 26, cr1.gt, 0
+L123  0x43 0x45 0x00 0x03
+L123  0x00001000: 43 45 00 03               ?? bcla     0x1a<26>, cr1.gt, 0                      ; branch and link if --CTR == 0 (unlikely)
+L124  
+L125  # bcla 27, cr1.gt, 0
+L126  0x43 0x65 0x00 0x03
+L126  0x00001000: 43 65 00 03               ?? bcla     0x1b<27>, cr1.gt, 0                      ; branch and link if --CTR == 0 (likely)
+L127  
+L128  # bcla 28, cr1.gt, 0
+L129  0x43 0x85 0x00 0x03
+L129  0x00001000: 43 85 00 03               ?? bcla     0x1c<28>, cr1.gt, 0                      ; branch and link unconditionally
+L130  
+L131  # bcla 29, cr1.gt, 0
+L132  0x43 0xa5 0x00 0x03
+L132  0x00001000: 43 a5 00 03               ?? bcla     0x1d<29>, cr1.gt, 0                      ; branch and link unconditionally
+L133  
+L134  # bcla 30, cr1.gt, 0
+L135  0x43 0xc5 0x00 0x03
+L135  0x00001000: 43 c5 00 03               ?? bcla     0x1e<30>, cr1.gt, 0                      ; branch and link unconditionally
+L136  
+L137  # bcla 31, cr1.gt, 0
+L138  0x43 0xe5 0x00 0x03
+L138  0x00001000: 43 e5 00 03               ?? bcla     0x1f<31>, cr1.gt, 0                      ; branch and link unconditionally
+L139  
+L140  # bclr 0, cr0.lt, 0
+L141  0x4c 0x00 0x00 0x20
+L141  0x00001000: 4c 00 00 20               ?? bclr     0, cr0.lt, 0                             ; branch to link register if --CTR != 0 && condition clear
+L142  
+L143  # bclr 31, cr0.lt, 0
+L144  0x4f 0xe0 0x00 0x20
+L144  0x00001000: 4f e0 00 20               ?? bclr     0x1f<31>, cr0.lt, 0                      ; branch to link register unconditionally
+L145  
+L146  # bclr 0, cr7.so, 0
+L147  0x4c 0x1f 0x00 0x20
+L147  0x00001000: 4c 1f 00 20               ?? bclr     0, cr7.so, 0                             ; branch to link register if --CTR != 0 && condition clear
+L148  
+L149  # bclr 0, cr0.lt, 1
+L150  0x4c 0x00 0x08 0x20
+L150  0x00001000: 4c 00 08 20               ?? bclr     0, cr0.lt, 1                             ; branch to link register if --CTR != 0 && condition clear
+L151  
+L152  # bclr 0, cr0.lt, 2
+L153  0x4c 0x00 0x10 0x20
+L153  0x00001000: 4c 00 10 20               ?? bclr     0, cr0.lt, 2                             ; branch to link register if --CTR != 0 && condition clear
+L154  
+L155  # bclr 0, cr0.lt, 3
+L156  0x4c 0x00 0x18 0x20
+L156  0x00001000: 4c 00 18 20               ?? bclr     0, cr0.lt, 3                             ; branch to link register if --CTR != 0 && condition clear
+L157  
+L158  # bclrl 0, cr0.lt, 0
+L159  0x4c 0x00 0x00 0x21
+L159  0x00001000: 4c 00 00 21               ?? bclrl    0, cr0.lt, 0                             ; branch to link register and link if --CTR != 0 && condition clear
+L160  
+L161  # bcctr 0, cr0.lt, 0
+L162  0x4c 0x00 0x04 0x20
+L162  0x00001000: 4c 00 04 20               ?? bcctr    0, cr0.lt, 0                             ; branch to count register if --CTR != 0 && condition clear
+L163  
+L164  # bcctrl 0, cr0.lt, 0
+L165  0x4c 0x00 0x04 0x21
+L165  0x00001000: 4c 00 04 21               ?? bcctrl   0, cr0.lt, 0                             ; branch to count register and link if --CTR != 0 && condition clear
+L166  
+L167  #-------------------------------------------------------------------------------
+L168  # 2.4.2 System Call Instruction
+L169  #-------------------------------------------------------------------------------
+L170  
+L171  # sc 0
+L172  0x44 0x00 0x00 0x02
+L172  0x00001000: 44 00 00 02               ?? sc       0                                        ; system call
+L173  
+L174  # sc 0x7f
+L175  0x44 0x00 0x0f 0xe2
+L175  0x00001000: 44 00 0f e2               ?? sc       0x7f<127>                                ; system call
+L176  
+L177  #-------------------------------------------------------------------------------
+L178  # 2.4.3 Condition Register Logical Instructions
+L179  #-------------------------------------------------------------------------------
+L180  
+L181  # crand cr0.lt, cr0.gt, cr0.eq
+L182  0x4c 0x01 0x12 0x02
+L182  0x00001000: 4c 01 12 02               ?? crand    cr0.lt, cr0.gt, cr0.eq                   ; condition register AND
+L183  
+L184  # cror cr0.lt, cr0.gt, cr0.eq
+L185  0x4c 0x01 0x13 0x82
+L185  0x00001000: 4c 01 13 82               ?? cror     cr0.lt, cr0.gt, cr0.eq                   ; condition register OR
+L186  
+L187  # crxor cr0.lt, cr0.gt, cr0.eq
+L188  0x4c 0x01 0x11 0x82
+L188  0x00001000: 4c 01 11 82               ?? crxor    cr0.lt, cr0.gt, cr0.eq                   ; condition register XOR
+L189  
+L190  # crnand cr0.lt, cr0.gt, cr0.eq
+L191  0x4c 0x01 0x11 0xc2
+L191  0x00001000: 4c 01 11 c2               ?? crnand   cr0.lt, cr0.gt, cr0.eq                   ; condition register NAND
+L192  
+L193  # crnor cr0.lt, cr0.gt, cr0.eq
+L194  0x4c 0x01 0x10 0x42
+L194  0x00001000: 4c 01 10 42               ?? crnor    cr0.lt, cr0.gt, cr0.eq                   ; condition register NOR
+L195  
+L196  # creqv cr0.lt, cr0.gt, cr0.eq
+L197  0x4c 0x01 0x12 0x42
+L197  0x00001000: 4c 01 12 42               ?? creqv    cr0.lt, cr0.gt, cr0.eq                   ; condition register equivalent
+L198  
+L199  # crandc cr0.lt, cr0.gt, cr0.eq
+L200  0x4c 0x01 0x11 0x02
+L200  0x00001000: 4c 01 11 02               ?? crandc   cr0.lt, cr0.gt, cr0.eq                   ; condition register AND with complement
+L201  
+L202  # crorc cr0.lt, cr0.gt, cr0.eq
+L203  0x4c 0x01 0x13 0x42
+L203  0x00001000: 4c 01 13 42               ?? crorc    cr0.lt, cr0.gt, cr0.eq                   ; condition register OR with complement
+L204  
+L205  #-------------------------------------------------------------------------------
+L206  # 2.4.4 Condition Register Field Instruction
+L207  #-------------------------------------------------------------------------------
+L208  
+L209  # mcrf cr0, cr1
+L210  0x4c 0x04 0x00 0x00
+L210  0x00001000: 4c 04 00 00               ?? mcrf     cr0, cr1                                 ; copy condition register field
+L211  
+L212  ################################################################################
+L213  # 3. PowerPC-32 Fixed-Point Processor
+L214  ################################################################################
+L215  
+L216  #-------------------------------------------------------------------------------
+L217  # 3.3.2 Fixed-Point Load Instructions
+L218  #-------------------------------------------------------------------------------
+L219  
+L220  # lbz r0, u8 [0]
+L221  0x88 0x00 0x00 0x00
+L221  0x00001000: 88 00 00 00               ?? lbz      r0, u8 [0 + 0]                           ; load byte and zero
+L222  
+L223  # lbz r1, u8 [-4]
+L224  0x88 0x20 0xff 0xfc
+L224  0x00001000: 88 20 ff fc               ?? lbz      r1, u8 [0 + 0xfffffffc<4294967292,-4>]   ; load byte and zero
+L225  
+L226  # lbz r1, u8 [r2 - 1]
+L227  0x88 0x22 0xff 0xff
+L227  0x00001000: 88 22 ff ff               ?? lbz      r1, u8 [r2 + 0xffffffff<4294967295,-1>]  ; load byte and zero
+L228  
+L229  # lbzx r1, u8 [r2 + r3]
+L230  0x7c 0x22 0x18 0xae
+L230  0x00001000: 7c 22 18 ae               ?? lbzx     r1, u8 [r2 + r3]                         ; load byte and zero indexed
+L231  
+L232  # lbzu r1, u8 [r2 - 4]
+L233  0x8c 0x22 0xff 0xfc
+L233  0x00001000: 8c 22 ff fc               ?? lbzu     r1, u8 [r2 + 0xfffffffc<4294967292,-4>]  ; load byte and zero with update
+L234  
+L235  # lbzux r1, u8 [r2 + r3]
+L236  0x7c 0x22 0x18 0xee
+L236  0x00001000: 7c 22 18 ee               ?? lbzux    r1, u8 [r2 + r3]                         ; load byte and zero with update indexed
+L237  
+L238  # lhz r1, u16 [r2 - 4]
+L239  0xa0 0x22 0xff 0xfc
+L239  0x00001000: a0 22 ff fc               ?? lhz      r1, u16 [r2 + 0xfffffffc<4294967292,-4>] ; load half and zero
+L240  
+L241  # lhzx r2, u16 [r3 + r4]
+L242  0x7c 0x43 0x22 0x2e
+L242  0x00001000: 7c 43 22 2e               ?? lhzx     r2, u16 [r3 + r4]                        ; load half and zero indexed
+L243  
+L244  # lhzu r3, u16 [r4 - 4]
+L245  0xa4 0x64 0xff 0xfc
+L245  0x00001000: a4 64 ff fc               ?? lhzu     r3, u16 [r4 + 0xfffffffc<4294967292,-4>] ; load half and zero with update
+L246  
+L247  # lhzux r4, u16 [r5 + r6]
+L248  0x7c 0x85 0x32 0x6e
+L248  0x00001000: 7c 85 32 6e               ?? lhzux    r4, u16 [r5 + r6]                        ; load half and zero with update indexed
+L249  
+L250  # lha r5, u16 [r6 - 4]
+L251  0xa8 0xa6 0xff 0xfc
+L251  0x00001000: a8 a6 ff fc               ?? lha      r5, u16 [r6 + 0xfffffffc<4294967292,-4>] ; load half algebraic
+L252  
+L253  # lhax r5, u16 [r6 + r7]
+L254  0x7c 0xa6 0x3a 0xae
+L254  0x00001000: 7c a6 3a ae               ?? lhax     r5, u16 [r6 + r7]                        ; load half algebraic indexed
+L255  
+L256  # lhau r6, u16 [r7 - 4]
+L257  0xac 0xc7 0xff 0xfc
+L257  0x00001000: ac c7 ff fc               ?? lhau     r6, u16 [r7 + 0xfffffffc<4294967292,-4>] ; load half algebraic with update
+L258  
+L259  # lhaux r6, u16 [r7 + r8]
+L260  0x7c 0xc7 0x42 0xee
+L260  0x00001000: 7c c7 42 ee               ?? lhaux    r6, u16 [r7 + r8]                        ; load half algebraic with update indexed
+L261  
+L262  # lwz r7, u32 [r8 - 4]
+L263  0x80 0xe8 0xff 0xfc
+L263  0x00001000: 80 e8 ff fc               ?? lwz      r7, u32 [r8 + 0xfffffffc<4294967292,-4>] ; load word and zero
+L264  
+L265  # lwzu r7, u32 [r8 - 4]
+L266  0x84 0xe8 0xff 0xfc
+L266  0x00001000: 84 e8 ff fc               ?? lwzu     r7, u32 [r8 + 0xfffffffc<4294967292,-4>] ; load word with zero update
+L267  
+L268  # lwzx r7, u32 [r8 + r9]
+L269  0x7c 0xe8 0x48 0x2e
+L269  0x00001000: 7c e8 48 2e               ?? lwzx     r7, u32 [r8 + r9]                        ; load word and zero indexed
+L270  
+L271  # lwzux r7, u32 [r8 + r9]
+L272  0x7c 0xe8 0x48 0x6e
+L272  0x00001000: 7c e8 48 6e               ?? lwzux    r7, u32 [r8 + r9]                        ; load word and zero with update indexed
+L273  
+L274  # lwa r8, u32 [r9 - 4]
+L275  0xe9 0x09 0xff 0xfe
+L275  0x00001000: e9 09 ff fe               ?? lwa      r8, u32 [r9 + 0xfffffffc<4294967292,-4>] ; load word algebraic
+L276  
+L277  # lwax r8, u32 [r9 + r10]
+L278  0x7d 0x09 0x52 0xaa
+L278  0x00001000: 7d 09 52 aa               ?? lwax     r8, u32 [r9 + r10]                       ; load word algebraic indexed
+L279  
+L280  # lwaux r8, u32 [r9 + r10]
+L281  0x7d 0x09 0x52 0xea
+L281  0x00001000: 7d 09 52 ea               ?? lwaux    r8, u32 [r9 + r10]                       ; load word algebraic with update indexed
+L282  
+L283  #-------------------------------------------------------------------------------
+L284  # 3.3.3 Fixed-Point Store instructions
+L285  #-------------------------------------------------------------------------------
+L286  
+L287  # stb r10, u8 [r11 - 4]
+L288  0x99 0x4b 0xff 0xfc
+L288  0x00001000: 99 4b ff fc               ?? stb      r10, u8 [r11 + 0xfffffffc<4294967292,-4>] ; store byte
+L289  
+L290  # stbu r10, u8 [r11 - 4]
+L291  0x9d 0x4b 0xff 0xfc
+L291  0x00001000: 9d 4b ff fc               ?? stbu     r10, u8 [r11 + 0xfffffffc<4294967292,-4>] ; store byte with update
+L292  
+L293  # stbx r10, u8 [r11 + r12]
+L294  0x7d 0x4b 0x61 0xae
+L294  0x00001000: 7d 4b 61 ae               ?? stbx     r10, u8 [r11 + r12]                      ; store byte indexed
+L295  
+L296  # stbux r10, u8 [r11 + r12]
+L297  0x7d 0x4b 0x61 0xee
+L297  0x00001000: 7d 4b 61 ee               ?? stbux    r10, u8 [r11 + r12]                      ; store byte with update indexed
+L298  
+L299  # sth r11, u16 [r12 - 4]
+L300  0xb1 0x6c 0xff 0xfc
+L300  0x00001000: b1 6c ff fc               ?? sth      r11, u16 [r12 + 0xfffffffc<4294967292,-4>] ; store half
+L301  
+L302  # sthu r11, u16 [r12 - 4]
+L303  0xb5 0x6c 0xff 0xfc
+L303  0x00001000: b5 6c ff fc               ?? sthu     r11, u16 [r12 + 0xfffffffc<4294967292,-4>] ; store half with update
+L304  
+L305  # sthx r11, u16 [r12 + r13]
+L306  0x7d 0x6c 0x6b 0x2e
+L306  0x00001000: 7d 6c 6b 2e               ?? sthx     r11, u16 [r12 + r13]                     ; store half indexed
+L307  
+L308  # sthux r11, u16 [r12 + r13]
+L309  0x7d 0x6c 0x6b 0x6e
+L309  0x00001000: 7d 6c 6b 6e               ?? sthux    r11, u16 [r12 + r13]                     ; store half with update indexed
+L310  
+L311  # stw r12, u32 [r13 - 4]
+L312  0x91 0x8d 0xff 0xfc
+L312  0x00001000: 91 8d ff fc               ?? stw      r12, u32 [r13 + 0xfffffffc<4294967292,-4>] ; store
+L313  
+L314  # stwu r12, u32 [r13 - 4]
+L315  0x95 0x8d 0xff 0xfc
+L315  0x00001000: 95 8d ff fc               ?? stwu     r12, u32 [r13 + 0xfffffffc<4294967292,-4>] ; store word with update
+L316  
+L317  # stwx r12, u32 [r13 + r14]
+L318  0x7d 0x8d 0x71 0x2e
+L318  0x00001000: 7d 8d 71 2e               ?? stwx     r12, u32 [r13 + r14]                     ; store word indexed
+L319  
+L320  # stwux r12, u32 [r13 + r14]
+L321  0x7d 0x8d 0x71 0x6e
+L321  0x00001000: 7d 8d 71 6e               ?? stwux    r12, u32 [r13 + r14]                     ; store word with update indexed
+L322  
+L323  #-------------------------------------------------------------------------------
+L324  # 3.3.4 Fixed-Point Load and Store with Byte Reversal Instructions
+L325  #-------------------------------------------------------------------------------
+L326  
+L327  # lhbrx r13, u16 [r14 + r15]
+L328  0x7d 0xae 0x7e 0x2c
+L328  0x00001000: 7d ae 7e 2c               ?? lhbrx    r13, u16 [r14 + r15]                     ; load half byte-reversed indexed
+L329  
+L330  # lwbrx r13, u32 [r14 + r15]
+L331  0x7d 0xae 0x7c 0x2c
+L331  0x00001000: 7d ae 7c 2c               ?? lwbrx    r13, u32 [r14 + r15]                     ; load word byte-reversed indexed
+L332  
+L333  # sthbrx r13, u16 [r14 + r15]
+L334  0x7d 0xae 0x7f 0x2c
+L334  0x00001000: 7d ae 7f 2c               ?? sthbrx   r13, u16 [r14 + r15]                     ; store half byte-reverse indexed
+L335  
+L336  # stwbrx r13, u32 [r14 + r15]
+L337  0x7d 0xae 0x7d 0x2c
+L337  0x00001000: 7d ae 7d 2c               ?? stwbrx   r13, u32 [r14 + r15]                     ; store word byte-reversed indexed
+L338  
+L339  #-------------------------------------------------------------------------------
+L340  # 3.3.5 Fixed-Point Load and Store Multiple Instructions
+L341  #-------------------------------------------------------------------------------
+L342  
+L343  # lmw r14, u32 [r15 - 4]
+L344  0xb9 0xcf 0xff 0xfc
+L344  0x00001000: b9 cf ff fc               ?? lmw      r14, u32 [r15 + 0xfffffffc<4294967292,-4>] ; load multiple word
+L345  
+L346  # stmw r14, u32 [r15 - 4]
+L347  0xbd 0xcf 0xff 0xfc
+L347  0x00001000: bd cf ff fc               ?? stmw     r14, u32 [r15 + 0xfffffffc<4294967292,-4>] ; store multiple word
+L348  
+L349  #-------------------------------------------------------------------------------
+L350  # 3.3.6 Fixed-Point Move Assist Instructions
+L351  #-------------------------------------------------------------------------------
+L352  
+L353  # lswi r15, u8 [r16], 8
+L354  0x7d 0xf0 0x44 0xaa
+L354  0x00001000: 7d f0 44 aa               ?? lswi     r15, u8 [r16], 8                         ; load string word immediate
+L355  
+L356  # lswx r15, u8 [r16 + r17]
+L357  0x7d 0xf0 0x8c 0x2a
+L357  0x00001000: 7d f0 8c 2a               ?? lswx     r15, u8 [r16 + r17]                      ; load string word indexed
+L358  
+L359  # stswi r15, u8 [r16], 8
+L360  0x7d 0xf0 0x45 0xaa
+L360  0x00001000: 7d f0 45 aa               ?? stswi    r15, u8 [r16], 8                         ; store string word immediate
+L361  
+L362  # stswx r15, u8 [r16 + r17]
+L363  0x7d 0xf0 0x8d 0x2a
+L363  0x00001000: 7d f0 8d 2a               ?? stswx    r15, u8 [r16 + r17]                      ; store string word indexed
+L364  
+L365  #-------------------------------------------------------------------------------
+L366  # 3.3.8 Fixed-Point Arithmetic Instructions
+L367  #-------------------------------------------------------------------------------
+L368  
+L369  # addi r0, r1, -4
+L370  0x38 0x01 0xff 0xfc
+L370  0x00001000: 38 01 ff fc               ?? addi     r0, r1, 0xfffffffc<4294967292,-4>        ; add immediate
+L371  
+L372  # addis r0, r1, -4
+L373  0x3c 0x01 0xff 0xfc
+L373  0x00001000: 3c 01 ff fc               ?? addis    r0, r1, 0xfffffffc<4294967292,-4>        ; add immediate shifted
+L374  
+L375  # add r0, r1, r2
+L376  0x7c 0x01 0x12 0x14
+L376  0x00001000: 7c 01 12 14               ?? add      r0, r1, r2                               ; add
+L377  
+L378  # add. r0, r1, r2
+L379  0x7c 0x01 0x12 0x15
+L379  0x00001000: 7c 01 12 15               ?? add.     r0, r1, r2                               ; add
+L380  
+L381  # addo r0, r1, r2
+L382  0x7c 0x01 0x16 0x14
+L382  0x00001000: 7c 01 16 14               ?? addo     r0, r1, r2                               ; add
+L383  
+L384  # addo. r0, r1, r2
+L385  0x7c 0x01 0x16 0x15
+L385  0x00001000: 7c 01 16 15               ?? addo.    r0, r1, r2                               ; add
+L386  
+L387  # subf r0, r1, r2
+L388  0x7c 0x01 0x10 0x50
+L388  0x00001000: 7c 01 10 50               ?? subf     r0, r1, r2                               ; subtract from
+L389  
+L390  # subf. r0, r1, r2
+L391  0x7c 0x01 0x10 0x51
+L391  0x00001000: 7c 01 10 51               ?? subf.    r0, r1, r2                               ; subtract from
+L392  
+L393  # subfo r0, r1, r2
+L394  0x7c 0x01 0x14 0x50
+L394  0x00001000: 7c 01 14 50               ?? subfo    r0, r1, r2                               ; subtract from
+L395  
+L396  # subfo. r0, r1, r2
+L397  0x7c 0x01 0x14 0x51
+L397  0x00001000: 7c 01 14 51               ?? subfo.   r0, r1, r2                               ; subtract from
+L398  
+L399  # addic r0, r1, -4
+L400  0x30 0x01 0xff 0xfc
+L400  0x00001000: 30 01 ff fc               ?? addic    r0, r1, 0xfffffffc<4294967292,-4>        ; add immediate carrying
+L401  
+L402  # addic. r0, r1, -4
+L403  0x34 0x01 0xff 0xfc
+L403  0x00001000: 34 01 ff fc               ?? addic.   r0, r1, 0xfffffffc<4294967292,-4>        ; add immediate carrying and record
+L404  
+L405  # subfic r0, r1, -4
+L406  0x20 0x01 0xff 0xfc
+L406  0x00001000: 20 01 ff fc               ?? subfic   r0, r1, 0xfffffffc<4294967292,-4>        ; subtract from immediate carrying
+L407  
+L408  # addc r0, r1, r2
+L409  0x7c 0x01 0x10 0x14
+L409  0x00001000: 7c 01 10 14               ?? addc     r0, r1, r2                               ; add carrying
+L410  
+L411  # addc. r0, r1, r2
+L412  0x7c 0x01 0x10 0x15
+L412  0x00001000: 7c 01 10 15               ?? addc.    r0, r1, r2                               ; add carrying
+L413  
+L414  # addco r0, r1, r2
+L415  0x7c 0x01 0x14 0x14
+L415  0x00001000: 7c 01 14 14               ?? addco    r0, r1, r2                               ; add carrying
+L416  
+L417  # addco. r0, r1, r2
+L418  0x7c 0x01 0x14 0x15
+L418  0x00001000: 7c 01 14 15               ?? addco.   r0, r1, r2                               ; add carrying
+L419  
+L420  # subfc r0, r1, r2
+L421  0x7c 0x01 0x10 0x10
+L421  0x00001000: 7c 01 10 10               ?? subfc    r0, r1, r2                               ; subtract from carrying
+L422  
+L423  # subfc. r0, r1, r2
+L424  0x7c 0x01 0x10 0x11
+L424  0x00001000: 7c 01 10 11               ?? subfc.   r0, r1, r2                               ; subtract from carrying
+L425  
+L426  # subfco r0, r1, r2
+L427  0x7c 0x01 0x14 0x10
+L427  0x00001000: 7c 01 14 10               ?? subfco   r0, r1, r2                               ; subtract from carrying
+L428  
+L429  # subfco. r0, r1, r2
+L430  0x7c 0x01 0x14 0x11
+L430  0x00001000: 7c 01 14 11               ?? subfco.  r0, r1, r2                               ; subtract from carrying
+L431  
+L432  # adde r0, r1, r2
+L433  0x7c 0x01 0x11 0x14
+L433  0x00001000: 7c 01 11 14               ?? adde     r0, r1, r2                               ; add extended
+L434  
+L435  # adde. r0, r1, r2
+L436  0x7c 0x01 0x11 0x15
+L436  0x00001000: 7c 01 11 15               ?? adde.    r0, r1, r2                               ; add extended
+L437  
+L438  # addeo r0, r1, r2
+L439  0x7c 0x01 0x15 0x14
+L439  0x00001000: 7c 01 15 14               ?? addeo    r0, r1, r2                               ; add extended
+L440  
+L441  # addeo. r0, r1, r2
+L442  0x7c 0x01 0x15 0x15
+L442  0x00001000: 7c 01 15 15               ?? addeo.   r0, r1, r2                               ; add extended
+L443  
+L444  # subfe r0, r1, r2
+L445  0x7c 0x01 0x11 0x10
+L445  0x00001000: 7c 01 11 10               ?? subfe    r0, r1, r2                               ; subtract from extended
+L446  
+L447  # subfe. r0, r1, r2
+L448  0x7c 0x01 0x11 0x11
+L448  0x00001000: 7c 01 11 11               ?? subfe.   r0, r1, r2                               ; subtract from extended
+L449  
+L450  # subfeo r0, r1, r2
+L451  0x7c 0x01 0x15 0x10
+L451  0x00001000: 7c 01 15 10               ?? subfeo   r0, r1, r2                               ; subtract from extended
+L452  
+L453  # subfeo. r0, r1, r2
+L454  0x7c 0x01 0x15 0x11
+L454  0x00001000: 7c 01 15 11               ?? subfeo.  r0, r1, r2                               ; subtract from extended
+L455  
+L456  # addme r0, r1
+L457  0x7c 0x01 0x01 0xd4
+L457  0x00001000: 7c 01 01 d4               ?? addme    r0, r1                                   ; add to minus one extended
+L458  
+L459  # addme. r0, r1
+L460  0x7c 0x01 0x01 0xd5
+L460  0x00001000: 7c 01 01 d5               ?? addme.   r0, r1                                   ; add to minus one extended
+L461  
+L462  # addmeo r0, r1
+L463  0x7c 0x01 0x05 0xd4
+L463  0x00001000: 7c 01 05 d4               ?? addmeo   r0, r1                                   ; add to minus one extended
+L464  
+L465  # addmeo. r0, r1
+L466  0x7c 0x01 0x05 0xd5
+L466  0x00001000: 7c 01 05 d5               ?? addmeo.  r0, r1                                   ; add to minus one extended
+L467  
+L468  # subfme r0, r1
+L469  0x7c 0x01 0x01 0xd0
+L469  0x00001000: 7c 01 01 d0               ?? subfme   r0, r1                                   ; subtract from minus one extended
+L470  
+L471  # subfme. r0, r1
+L472  0x7c 0x01 0x01 0xd1
+L472  0x00001000: 7c 01 01 d1               ?? subfme.  r0, r1                                   ; subtract from minus one extended
+L473  
+L474  # subfmeo r0, r1
+L475  0x7c 0x01 0x05 0xd0
+L475  0x00001000: 7c 01 05 d0               ?? subfmeo  r0, r1                                   ; subtract from minus one extended
+L476  
+L477  # subfmeo. r0, r1
+L478  0x7c 0x01 0x05 0xd1
+L478  0x00001000: 7c 01 05 d1               ?? subfmeo. r0, r1                                   ; subtract from minus one extended
+L479  
+L480  # addze r0, r1
+L481  0x7c 0x01 0x01 0x94
+L481  0x00001000: 7c 01 01 94               ?? addze    r0, r1                                   ; add to zero extended
+L482  
+L483  # addze. r0, r1
+L484  0x7c 0x01 0x01 0x95
+L484  0x00001000: 7c 01 01 95               ?? addze.   r0, r1                                   ; add to zero extended
+L485  
+L486  # addzeo r0, r1
+L487  0x7c 0x01 0x05 0x94
+L487  0x00001000: 7c 01 05 94               ?? addzeo   r0, r1                                   ; add to zero extended
+L488  
+L489  # addzeo. r0, r1
+L490  0x7c 0x01 0x05 0x95
+L490  0x00001000: 7c 01 05 95               ?? addzeo.  r0, r1                                   ; add to zero extended
+L491  
+L492  # subfze r0, r1
+L493  0x7c 0x01 0x01 0x90
+L493  0x00001000: 7c 01 01 90               ?? subfze   r0, r1                                   ; subtract from zero extended
+L494  
+L495  # subfze. r0, r1
+L496  0x7c 0x01 0x01 0x91
+L496  0x00001000: 7c 01 01 91               ?? subfze.  r0, r1                                   ; subtract from zero extended
+L497  
+L498  # subfzeo r0, r1
+L499  0x7c 0x01 0x05 0x90
+L499  0x00001000: 7c 01 05 90               ?? subfzeo  r0, r1                                   ; subtract from zero extended
+L500  
+L501  # subfzeo. r0, r1
+L502  0x7c 0x01 0x05 0x91
+L502  0x00001000: 7c 01 05 91               ?? subfzeo. r0, r1                                   ; subtract from zero extended
+L503  
+L504  # neg r0, r1
+L505  0x7c 0x01 0x00 0xd0
+L505  0x00001000: 7c 01 00 d0               ?? neg      r0, r1                                   ; negate
+L506  
+L507  # neg. r0, r1
+L508  0x7c 0x01 0x00 0xd1
+L508  0x00001000: 7c 01 00 d1               ?? neg.     r0, r1                                   ; negate
+L509  
+L510  # nego r0, r1
+L511  0x7c 0x01 0x04 0xd0
+L511  0x00001000: 7c 01 04 d0               ?? nego     r0, r1                                   ; negate
+L512  
+L513  # nego. r0, r1
+L514  0x7c 0x01 0x04 0xd1
+L514  0x00001000: 7c 01 04 d1               ?? nego.    r0, r1                                   ; negate
+L515  
+L516  # mulli r0, r1, -4
+L517  0x1c 0x01 0xff 0xfc
+L517  0x00001000: 1c 01 ff fc               ?? mulli    r0, r1, 0xfffffffc<4294967292,-4>        ; multiply low immediate
+L518  
+L519  # mullw r0, r1, r2
+L520  0x7c 0x01 0x11 0xd6
+L520  0x00001000: 7c 01 11 d6               ?? mullw    r0, r1, r2                               ; multiply low word
+L521  
+L522  # mullw. r0, r1, r2
+L523  0x7c 0x01 0x11 0xd7
+L523  0x00001000: 7c 01 11 d7               ?? mullw.   r0, r1, r2                               ; multiply low word
+L524  
+L525  # mullwo r0, r1, r2
+L526  0x7c 0x01 0x15 0xd6
+L526  0x00001000: 7c 01 15 d6               ?? mullwo   r0, r1, r2                               ; multiply low word
+L527  
+L528  # mullwo. r0, r1, r2
+L529  0x7c 0x01 0x15 0xd7
+L529  0x00001000: 7c 01 15 d7               ?? mullwo.  r0, r1, r2                               ; multiply low word
+L530  
+L531  # mulhw r0, r1, r2
+L532  0x7c 0x01 0x10 0x96
+L532  0x00001000: 7c 01 10 96               ?? mulhw    r0, r1, r2                               ; multiply high word
+L533  
+L534  # mullhw. r0, r1, r2
+L535  0x7c 0x01 0x10 0x97
+L535  0x00001000: 7c 01 10 97               ?? mulhw.   r0, r1, r2                               ; multiply high word
+L536  
+L537  # mulhwu r0, r1, r2
+L538  0x7c 0x01 0x10 0x16
+L538  0x00001000: 7c 01 10 16               ?? mulhwu   r0, r1, r2                               ; multiply high word unsigned
+L539  
+L540  # mulhwu. r0, r1, r2
+L541  0x7c 0x01 0x10 0x17
+L541  0x00001000: 7c 01 10 17               ?? mulhwu.  r0, r1, r2                               ; multiply high word unsigned
+L542  
+L543  # divw r0, r1, r2
+L544  0x7c 0x01 0x13 0xd6
+L544  0x00001000: 7c 01 13 d6               ?? divw     r0, r1, r2                               ; divide word
+L545  
+L546  # divw. r0, r1, r2
+L547  0x7c 0x01 0x13 0xd7
+L547  0x00001000: 7c 01 13 d7               ?? divw.    r0, r1, r2                               ; divide word
+L548  
+L549  # divwo r0, r1, r2
+L550  0x7c 0x01 0x17 0xd6
+L550  0x00001000: 7c 01 17 d6               ?? divwo    r0, r1, r2                               ; divide word
+L551  
+L552  # divwo. r0, r1, r2
+L553  0x7c 0x01 0x17 0xd7
+L553  0x00001000: 7c 01 17 d7               ?? divwo.   r0, r1, r2                               ; divide word
+L554  
+L555  # divwu r0, r1, r2
+L556  0x7c 0x01 0x13 0x96
+L556  0x00001000: 7c 01 13 96               ?? divwu    r0, r1, r2                               ; divide word unsigned
+L557  
+L558  # divwu. r0, r1, r2
+L559  0x7c 0x01 0x13 0x97
+L559  0x00001000: 7c 01 13 97               ?? divwu.   r0, r1, r2                               ; divide word unsigned
+L560  
+L561  # divwuo r0, r1, r2
+L562  0x7c 0x01 0x17 0x96
+L562  0x00001000: 7c 01 17 96               ?? divwuo   r0, r1, r2                               ; divide word unsigned
+L563  
+L564  # divwuo. r0, r1, r2
+L565  0x7c 0x01 0x17 0x97
+L565  0x00001000: 7c 01 17 97               ?? divwuo.  r0, r1, r2                               ; divide word unsigned
+L566  
+L567  #-------------------------------------------------------------------------------
+L568  # 3.3.9 Fixed-Point Compare Instructions
+L569  #-------------------------------------------------------------------------------
+L570  
+L571  # cmpi cr1, 0, r31, -4
+L572  0x2c 0x9f 0xff 0xfc
+L572  0x00001000: 2c 9f ff fc               ?? cmpi     cr1, 0, r31, 0xfffffffc<4294967292,-4>   ; signed compare immediate
+L573  
+L574  # cmp cr1, 0, r31, r1
+L575  0x7c 0x9f 0x08 0x00
+L575  0x00001000: 7c 9f 08 00               ?? cmp      cr1, 0, r31, r1                          ; signed compare
+L576  
+L577  # cmpli cr1, 0, r10, 0xffff
+L578  0x28 0x8a 0xff 0xff
+L578  0x00001000: 28 8a ff ff               ?? cmpli    cr1, 0, r10, 0x0000ffff                  ; unsigned compare immediate
+L579  
+L580  # cmpl cr1, 0, r10, r11
+L581  0x7c 0x8a 0x58 0x40
+L581  0x00001000: 7c 8a 58 40               ?? cmpl     cr1, 0, r10, r11                         ; unsigned compare
+L582  
+L583  #-------------------------------------------------------------------------------
+L584  # 3.3.10 Fixed-Point Trap Instructions
+L585  #-------------------------------------------------------------------------------
+L586  
+L587  # twi 0x15, r1, -1
+L588  0x0e 0xa1 0xff 0xff
+L588  0x00001000: 0e a1 ff ff               ?? twi      0x15<21>, r1, 0xffffffff<4294967295,-1>  ; trap word immediate
+L589  
+L590  # tw 0x15, r1, r2
+L591  0x7e 0xa1 0x10 0x08
+L591  0x00001000: 7e a1 10 08               ?? tw       0x15<21>, r1, r2                         ; trap word
+L592  
+L593  #-------------------------------------------------------------------------------
+L594  # 3.3.11 Fixed-Point Logical Instructions
+L595  #-------------------------------------------------------------------------------
+L596  
+L597  # andi. r1, r2, 0xffff
+L598  0x70 0x41 0xff 0xff
+L598  0x00001000: 70 41 ff ff               ?? andi.    r1, r2, 0x0000ffff                       ; AND immediate
+L599  
+L600  # andis. r1, r2, 0xffff
+L601  0x74 0x41 0xff 0xff
+L601  0x00001000: 74 41 ff ff               ?? andis.   r1, r2, 0x0000ffff                       ; AND immediate shifted
+L602  
+L603  # ori r1, r2, 0xffff
+L604  0x60 0x41 0xff 0xff
+L604  0x00001000: 60 41 ff ff               ?? ori      r1, r2, 0x0000ffff                       ; OR immediate
+L605  
+L606  # oris r1, r2, 0xffff
+L607  0x64 0x41 0xff 0xff
+L607  0x00001000: 64 41 ff ff               ?? oris     r1, r2, 0x0000ffff                       ; OR immediate shifted
+L608  
+L609  # xori r1, r2, 0xffff
+L610  0x68 0x41 0xff 0xff
+L610  0x00001000: 68 41 ff ff               ?? xori     r1, r2, 0x0000ffff                       ; XOR immediate
+L611  
+L612  # xoris r1, r2, 0xffff
+L613  0x6c 0x41 0xff 0xff
+L613  0x00001000: 6c 41 ff ff               ?? xoris    r1, r2, 0x0000ffff                       ; XOR immediate shift
+L614  
+L615  # and r1, r2, r3
+L616  0x7c 0x41 0x18 0x38
+L616  0x00001000: 7c 41 18 38               ?? and      r1, r2, r3                               ; AND
+L617  
+L618  # and. r1, r2, r3
+L619  0x7c 0x41 0x18 0x39
+L619  0x00001000: 7c 41 18 39               ?? and.     r1, r2, r3                               ; AND
+L620  
+L621  # or r1, r2, r3
+L622  0x7c 0x41 0x1b 0x78
+L622  0x00001000: 7c 41 1b 78               ?? or       r1, r2, r3                               ; OR
+L623  
+L624  # or. r1, r2, r3
+L625  0x7c 0x41 0x1b 0x79
+L625  0x00001000: 7c 41 1b 79               ?? or.      r1, r2, r3                               ; OR
+L626  
+L627  # xor r1, r2, r3
+L628  0x7c 0x41 0x1a 0x78
+L628  0x00001000: 7c 41 1a 78               ?? xor      r1, r2, r3                               ; XOR
+L629  
+L630  # xor. r1, r2, r3
+L631  0x7c 0x41 0x1a 0x79
+L631  0x00001000: 7c 41 1a 79               ?? xor.     r1, r2, r3                               ; XOR
+L632  
+L633  # nand r1, r2, r3
+L634  0x7c 0x41 0x1b 0xb8
+L634  0x00001000: 7c 41 1b b8               ?? nand     r1, r2, r3                               ; NAND
+L635  
+L636  # nand. r1, r2, r3
+L637  0x7c 0x41 0x1b 0xb9
+L637  0x00001000: 7c 41 1b b9               ?? nand.    r1, r2, r3                               ; NAND
+L638  
+L639  # nor r1, r2, r3
+L640  0x7c 0x41 0x18 0xf8
+L640  0x00001000: 7c 41 18 f8               ?? nor      r1, r2, r3                               ; NOR
+L641  
+L642  # nor. r1, r2, r3
+L643  0x7c 0x41 0x18 0xf9
+L643  0x00001000: 7c 41 18 f9               ?? nor.     r1, r2, r3                               ; NOR
+L644  
+L645  # eqv r1, r2, r3
+L646  0x7c 0x41 0x1a 0x38
+L646  0x00001000: 7c 41 1a 38               ?? eqv      r1, r2, r3                               ; equivalent
+L647  
+L648  # eqv. r1, r2, r3
+L649  0x7c 0x41 0x1a 0x39
+L649  0x00001000: 7c 41 1a 39               ?? eqv.     r1, r2, r3                               ; equivalent
+L650  
+L651  # andc r1, r2, r3
+L652  0x7c 0x41 0x18 0x78
+L652  0x00001000: 7c 41 18 78               ?? andc     r1, r2, r3                               ; AND with complement
+L653  
+L654  # andc. r1, r2, r3
+L655  0x7c 0x41 0x18 0x79
+L655  0x00001000: 7c 41 18 79               ?? andc.    r1, r2, r3                               ; AND with complement
+L656  
+L657  # orc r1, r2, r3
+L658  0x7c 0x41 0x1b 0x38
+L658  0x00001000: 7c 41 1b 38               ?? orc      r1, r2, r3                               ; OR with complement
+L659  
+L660  # orc. r1, r2, r3
+L661  0x7c 0x41 0x1b 0x39
+L661  0x00001000: 7c 41 1b 39               ?? orc.     r1, r2, r3                               ; OR with complement
+L662  
+L663  # extsb r1, r2
+L664  0x7c 0x41 0x07 0x74
+L664  0x00001000: 7c 41 07 74               ?? extsb    r1, r2                                   ; extend sign byte
+L665  
+L666  # extsb. r1, r2
+L667  0x7c 0x41 0x07 0x75
+L667  0x00001000: 7c 41 07 75               ?? extsb.   r1, r2                                   ; extend sign byte
+L668  
+L669  # extsh r1, r2
+L670  0x7c 0x41 0x0f 0x34
+L670  0x00001000: 7c 41 0f 34               ?? extsh    r1, r2                                   ; extend sign halfword
+L671  
+L672  # extsh. r1, r2
+L673  0x7c 0x41 0x0f 0x35
+L673  0x00001000: 7c 41 0f 35               ?? extsh.   r1, r2                                   ; extend sign halfword
+L674  
+L675  # cntlzw r1, r2
+L676  0x7c 0x41 0x00 0x34
+L676  0x00001000: 7c 41 00 34               ?? cntlzw   r1, r2                                   ; count leading zeros word
+L677  
+L678  # cntlzw. r1, r2
+L679  0x7c 0x41 0x00 0x35
+L679  0x00001000: 7c 41 00 35               ?? cntlzw.  r1, r2                                   ; count leading zeros word
+L680  
+L681  # popcntb r1, r2
+L682  0x7c 0x41 0x00 0xf4
+L682  0x00001000: 7c 41 00 f4               ?? popcntb  r1, r2                                   ; population count bytes
+L683  
+L684  #-------------------------------------------------------------------------------
+L685  # 3.3.12.1 Fixed-Point Rotate Instructions
+L686  #-------------------------------------------------------------------------------
+L687  
+L688  # rlwinm r1, r2, 3, 4, 5
+L689  0x54 0x41 0x19 0x0a
+L689  0x00001000: 54 41 19 0a               ?? rlwinm   r1, r2, 3, 4, 5                          ; rotate left word immediate then AND with mask
+L690  
+L691  # rlwinm. r1, r2, 3, 4, 5
+L692  0x54 0x41 0x19 0x0b
+L692  0x00001000: 54 41 19 0b               ?? rlwinm.  r1, r2, 3, 4, 5                          ; rotate left word immediate then AND with mask
+L693  
+L694  # rlwnm r1, r2, r3, 4, 5
+L695  0x5c 0x41 0x19 0x0a
+L695  0x00001000: 5c 41 19 0a               ?? rlwnm    r1, r2, r3, 4, 5                         ; rotate left word then AND with mask
+L696  
+L697  # rlwnm. r1, r2, r3, 4, 5
+L698  0x5c 0x41 0x19 0x0b
+L698  0x00001000: 5c 41 19 0b               ?? rlwnm.   r1, r2, r3, 4, 5                         ; rotate left word then AND with mask
+L699  
+L700  # rlwimi r1, r2, 3, 4, 5
+L701  0x50 0x41 0x19 0x0a
+L701  0x00001000: 50 41 19 0a               ?? rlwimi   r1, r2, 3, 4, 5                          ; rotate left word immediate then mask insert
+L702  
+L703  # rlwimi. r1, r2, 3, 4, 5
+L704  0x50 0x41 0x19 0x0b
+L704  0x00001000: 50 41 19 0b               ?? rlwimi.  r1, r2, 3, 4, 5                          ; rotate left word immediate then mask insert
+L705  
+L706  #-------------------------------------------------------------------------------
+L707  # 3.3.12.2 Fixed-Point Shift Instructions
+L708  #-------------------------------------------------------------------------------
+L709  
+L710  # slw r1, r2, r3
+L711  0x7c 0x41 0x18 0x30
+L711  0x00001000: 7c 41 18 30               ?? slw      r1, r2, r3                               ; shift left word
+L712  
+L713  # slw. r1, r2, r3
+L714  0x7c 0x41 0x18 0x31
+L714  0x00001000: 7c 41 18 31               ?? slw.     r1, r2, r3                               ; shift left word
+L715  
+L716  # srw r1, r2, r3
+L717  0x7c 0x41 0x1c 0x30
+L717  0x00001000: 7c 41 1c 30               ?? srw      r1, r2, r3                               ; shift right word
+L718  
+L719  # srw. r1, r2, r3
+L720  0x7c 0x41 0x1c 0x31
+L720  0x00001000: 7c 41 1c 31               ?? srw.     r1, r2, r3                               ; shift right word
+L721  
+L722  # srawi r1, r2, 3
+L723  0x7c 0x41 0x1e 0x70
+L723  0x00001000: 7c 41 1e 70               ?? srawi    r1, r2, 3                                ; shift right algebraic word immediate
+L724  
+L725  # srawi. r1, r2, 3
+L726  0x7c 0x41 0x1e 0x71
+L726  0x00001000: 7c 41 1e 71               ?? srawi.   r1, r2, 3                                ; shift right algebraic word immediate
+L727  
+L728  # sraw r1, r2, r3
+L729  0x7c 0x41 0x1e 0x30
+L729  0x00001000: 7c 41 1e 30               ?? sraw     r1, r2, r3                               ; shift right algebraic word
+L730  
+L731  # sraw. r1, r2, r3
+L732  0x7c 0x41 0x1e 0x31
+L732  0x00001000: 7c 41 1e 31               ?? sraw.    r1, r2, r3                               ; shift right algebraic word
+L733  
+L734  #-------------------------------------------------------------------------------
+L735  # 3.3.13 Move To/From System Register Instructions
+L736  #-------------------------------------------------------------------------------
+L737  
+L738  # mtspr xer, r2
+L739  0x7c 0x41 0x03 0xa6
+L739  0x00001000: 7c 41 03 a6               ?? mtspr    xer, r2                                  ; copy to special-purpose register
+L740  
+L741  # mtspr lr, r2
+L742  0x7c 0x48 0x03 0xa6
+L742  0x00001000: 7c 48 03 a6               ?? mtspr    lr, r2                                   ; copy to special-purpose register
+L743  
+L744  # mtspr ctr, r2
+L745  0x7c 0x49 0x03 0xa6
+L745  0x00001000: 7c 49 03 a6               ?? mtspr    ctr, r2                                  ; copy to special-purpose register
+L746  
+L747  # mfspr r2, xer
+L748  0x7c 0x41 0x02 0xa6
+L748  0x00001000: 7c 41 02 a6               ?? mfspr    r2, xer                                  ; copy from special-purpose register
+L749  
+L750  # mfspr r2, lr
+L751  0x7c 0x48 0x02 0xa6
+L751  0x00001000: 7c 48 02 a6               ?? mfspr    r2, lr                                   ; copy from special-purpose register
+L752  
+L753  # mfspr r2, ctr
+L754  0x7c 0x49 0x02 0xa6
+L754  0x00001000: 7c 49 02 a6               ?? mfspr    r2, ctr                                  ; copy from special-purpose register
+L755  
+L756  # mtcrf 0xb4, r1
+L757  0x7c 0x2b 0x41 0x20
+L757  0x00001000: 7c 2b 41 20               ?? mtcrf    0xb4<180,-76>, r1                        ; copy to condition register fields
+L758  
+L759  # mfcr r1
+L760  0x7c 0x20 0x00 0x26
+L760  0x00001000: 7c 20 00 26               ?? mfcr     r1                                       ; copy from condition register
+L761  
+L762  #-------------------------------------------------------------------------------
+L763  # 4.6.2 Floating-Point Load Instructions
+L764  #-------------------------------------------------------------------------------
+L765  
+L766  # lfd f5, f64 [r2 - 4]
+L767  0xc8 0xa2 0xff 0xfc
+L767  0x00001000: c8 a2 ff fc               ?? lfd      f5, f64 [r2 + 0xfffffffc<4294967292,-4>] ; load fp double
+L768  
+L769  #-------------------------------------------------------------------------------
+L770  # 4.6.3 Floating-Point Store Instructions
+L771  #-------------------------------------------------------------------------------
+L772  
+L773  # stfs f5, f32 [r2 - 4]
+L774  0xd0 0xa2 0xff 0xfc
+L774  0x00001000: d0 a2 ff fc               ?? stfs     f5, f32 [r2 + 0xfffffffc<4294967292,-4>] ; store fp single
+L775  
+L776  # stfd f5, f64 [r2 - 4]
+L777  0xd8 0xa2 0xff 0xfc
+L777  0x00001000: d8 a2 ff fc               ?? stfd     f5, f64 [r2 + 0xfffffffc<4294967292,-4>] ; store fp double
+L778  
+L779  #-------------------------------------------------------------------------------
+L780  # 4.6.4 Floating-Point Move Instructions
+L781  #-------------------------------------------------------------------------------
+L782  
+L783  #-------------------------------------------------------------------------------
+L784  # 4.6.5.1 Floating-Point Elementary Arithmetic Instructions
+L785  #-------------------------------------------------------------------------------
+L786  
+L787  #-------------------------------------------------------------------------------
+L788  # 4.6.5.2 Floating-Point Multiply-Add Instructions
+L789  #-------------------------------------------------------------------------------
+L790  
+L791  #-------------------------------------------------------------------------------
+L792  # 4.6.6 FLoating-Point Rounding and Conversion Instructions
+L793  #-------------------------------------------------------------------------------
+L794  
+L795  #-------------------------------------------------------------------------------
+L796  # 4.6.7 Floating-Point Compare Instructions
+L797  #-------------------------------------------------------------------------------
+L798  
+L799  #-------------------------------------------------------------------------------
+L800  # 4.6.8 Floating-Point Status and Control Register Instructions
+L801  #-------------------------------------------------------------------------------

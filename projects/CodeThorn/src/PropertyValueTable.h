@@ -58,7 +58,8 @@ class PropertyValueTable {
   void printResultsStatistics();
   string getLtlsRersFormat(bool withResults=false, bool withAnnotations=false);
 #ifdef HAVE_SPOT
-  string getLtlsAsPromelaCode(bool withResults=false, bool withAnnotations=false);
+  // 3rd parameter is a callback to not have a dependency on SpotMisc.
+  string getLtlsAsPromelaCode(bool withResults, bool withAnnotations, std::string (*spinSyntaxCallBackFP)(std::string));
 #endif
   void init();
   void init(size_t size);

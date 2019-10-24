@@ -945,15 +945,10 @@ TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 
-# DQ (4/18/2015): Uncommented this so that it can be properyl tested after being fixed!
-# if !ROSE_USE_EDG_VERSION_4_4
-# if !ROSE_USE_EDG_VERSION_4_7
 # any programs needed by your tests that does not need to be built by make all.
 check_PROGRAMS = $(PASSING_TEST_Executables)
 # a list of programs or scripts to run in order to do the testing 
 TESTS= $(check_PROGRAMS) caller.out 
-# endif
-# endif
 
 # DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
 # this, this implementation needs review).  It might be better to prepend the information to the 

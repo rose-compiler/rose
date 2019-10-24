@@ -96,7 +96,7 @@ void Solver5::run() {
       } else {
         ROSE_ASSERT(currentEStatePtr);
         Flow edgeSet=_analyzer->flow.outEdges(currentEStatePtr->label());
-        // logger[DEBUG] << "out-edgeSet size:"<<edgeSet.size()<<endl;
+        //cout << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
           list<EState> newEStateList;
@@ -116,7 +116,7 @@ void Solver5::run() {
                 assert (!fout.fail( ));
                 fout<<"ESTATE-IN :"<<currentEStatePtr->toString(&(_analyzer->variableIdMapping));
                 string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
-                if(sourceString.size()==40) sourceString+="...";
+                if(sourceString.size()==60) sourceString+="...";
                 fout<<"\n==>"<<"TRANSFER:"<<sourceString;
                 fout<<"==>\n"<<"ESTATE-OUT:"<<newEState.toString(&(_analyzer->variableIdMapping));
                 fout<<endl;
@@ -125,9 +125,6 @@ void Solver5::run() {
               }
             }
             
-            //cout<<"Analyzing: "<<_analyzer->programPositionInfo(newEState.label());
-
-  
             if((!newEState.constraints()->disequalityExists()) &&(!_analyzer->isFailedAssertEState(&newEState)&&!_analyzer->isVerificationErrorEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
               const EState* newEStatePtr=pres.second;
@@ -136,18 +133,19 @@ void Solver5::run() {
                 switch(abstractionMode) {
                 case 0:
                   // no abstraction
+                  //cout<<"DEBUG: Adding estate to worklist."<<endl;
                   _analyzer->addToWorkList(newEStatePtr);
                   break;
                 case 1: {
                   // performing merge
 #pragma omp critical(SUMMARY_STATES_MAP)
                   {
-                    const EState* summaryEState=_analyzer->getSummaryState(newEStatePtr->label());
+                    const EState* summaryEState=_analyzer->getSummaryState(newEStatePtr->label(),newEStatePtr->callString);
                     if(_analyzer->isApproximatedBy(newEStatePtr,summaryEState)) {
                       // this is not a memory leak. newEStatePtr is
                       // stored in EStateSet and will be collected
-                      // later. It may be an existing estate alread
-                      // used in the state graph.
+                      // later. It may be already used in the state
+                      // graph as an existing estate.
                       newEStatePtr=summaryEState; 
                     } else {
                       EState newEState2=_analyzer->combine(summaryEState,const_cast<EState*>(newEStatePtr));
@@ -160,7 +158,7 @@ void Solver5::run() {
                         // nothing to do, EState already exists
                       }
                       ROSE_ASSERT(newEStatePtr);
-                      _analyzer->setSummaryState(newEStatePtr->label(),newEStatePtr);
+                      _analyzer->setSummaryState(newEStatePtr->label(),newEStatePtr->callString,newEStatePtr);
                     }
                   }
                   _analyzer->addToWorkList(newEStatePtr);  
@@ -173,6 +171,8 @@ void Solver5::run() {
                   cerr<<"Error: unknown abstraction mode "<<abstractionMode<<endl;
                   exit(1);
                 }
+              } else {
+                //cout<<"DEBUG: pres.first==false (not adding estate to worklist)"<<endl;
               }
               _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
             }
@@ -237,7 +237,7 @@ void Solver5::run() {
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),tmpcomplete);
     _analyzer->printStatusMessage(true);
     _analyzer->transitionGraph.setIsComplete(tmpcomplete);
-    cout<< "analysis finished (worklist is empty)."<<endl;
+    cout<< "STATUS: analysis finished (worklist is empty)."<<endl;
   }
   _analyzer->transitionGraph.setIsPrecise(_analyzer->isPrecise());
 }

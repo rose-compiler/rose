@@ -172,8 +172,12 @@ int main ( int argc, char** argv) {
    astdotgen.generateInputFiles(root,AstDOTGeneration::PREORDER);
 
    // Generate a pdf file showing the AST
+#if ROSE_WITH_LIBHARU
    AstPDFGeneration astpdfgen;
    astpdfgen.generateInputFiles(root);
+#else
+   cout << "Warning: libharu is not enabled" << endl;
+#endif
    
    return 0;
 }   

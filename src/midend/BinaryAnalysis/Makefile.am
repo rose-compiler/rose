@@ -16,11 +16,13 @@ libbinaryMidend_la_SOURCES =					\
     BinaryCodeInserter.C					\
     BinaryControlFlow.C						\
     BinaryDataFlow.C						\
+    BinaryDebugger.C						\
     BinaryDemangler.C						\
     BinaryDominance.C						\
     BinaryFeasiblePath.C					\
     BinaryFunctionCall.C					\
     BinaryFunctionSimilarity.C					\
+    BinaryHotPatch.C						\
     BinaryMagic.C						\
     BinaryNoOperation.C						\
     BinaryPointerDetection.C					\
@@ -49,11 +51,20 @@ libbinaryMidend_la_SOURCES =					\
     Concolic/Utility.C						\
     DwarfLineMapper.C						\
     instructionSemantics/BaseSemantics2.C			\
+    instructionSemantics/BaseSemanticsDispatcher.C		\
+    instructionSemantics/BaseSemanticsException.C		\
+    instructionSemantics/BaseSemanticsMemoryState.C		\
+    instructionSemantics/BaseSemanticsMerger.C			\
+    instructionSemantics/BaseSemanticsRegisterState.C		\
+    instructionSemantics/BaseSemanticsRiscOperators.C		\
+    instructionSemantics/BaseSemanticsState.C			\
+    instructionSemantics/BaseSemanticsSValue.C			\
     instructionSemantics/ConcreteSemantics2.C			\
     instructionSemantics/DataFlowSemantics2.C			\
     instructionSemantics/DispatcherM68k.C			\
     instructionSemantics/DispatcherPowerpc.C			\
     instructionSemantics/DispatcherX86.C			\
+    instructionSemantics/InstructionSemantics2.C		\
     instructionSemantics/IntervalSemantics2.C			\
     instructionSemantics/LlvmSemantics2.C			\
     instructionSemantics/MemoryCell.C				\
@@ -61,6 +72,7 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/MemoryCellMap.C			\
     instructionSemantics/MemoryCellState.C			\
     instructionSemantics/MultiSemantics2.C			\
+    instructionSemantics/NativeSemantics.C			\
     instructionSemantics/NullSemantics2.C			\
     instructionSemantics/PartialSymbolicSemantics2.C		\
     instructionSemantics/RegisterStateGeneric.C			\
@@ -91,11 +103,13 @@ pkginclude_HEADERS =					\
     BinaryConcolic.h					\
     BinaryControlFlow.h					\
     BinaryDataFlow.h					\
+    BinaryDebugger.h					\
     BinaryDemangler.h					\
     BinaryDominance.h					\
     BinaryFeasiblePath.h				\
     BinaryFunctionCall.h				\
     BinaryFunctionSimilarity.h				\
+    BinaryHotPatch.h					\
     BinaryMagic.h					\
     BinaryMatrix.h					\
     BinaryNoOperation.h					\
@@ -118,11 +132,22 @@ pkginclude_HEADERS =					\
     DwarfLineMapper.h					\
     ether.h						\
     instructionSemantics/BaseSemantics2.h		\
+    instructionSemantics/BaseSemanticsDispatcher.h	\
+    instructionSemantics/BaseSemanticsException.h	\
+    instructionSemantics/BaseSemanticsFormatter.h	\
+    instructionSemantics/BaseSemanticsMemoryState.h	\
+    instructionSemantics/BaseSemanticsMerger.h		\
+    instructionSemantics/BaseSemanticsRegisterState.h	\
+    instructionSemantics/BaseSemanticsRiscOperators.h	\
+    instructionSemantics/BaseSemanticsState.h		\
+    instructionSemantics/BaseSemanticsSValue.h		\
+    instructionSemantics/BaseSemanticsTypes.h		\
     instructionSemantics/ConcreteSemantics2.h		\
     instructionSemantics/DataFlowSemantics2.h		\
     instructionSemantics/DispatcherM68k.h		\
     instructionSemantics/DispatcherPowerpc.h		\
     instructionSemantics/DispatcherX86.h		\
+    instructionSemantics/InstructionSemantics2.h	\
     instructionSemantics/IntervalSemantics2.h		\
     instructionSemantics/LlvmSemantics2.h		\
     instructionSemantics/MemoryCell.h			\
@@ -130,6 +155,7 @@ pkginclude_HEADERS =					\
     instructionSemantics/MemoryCellMap.h		\
     instructionSemantics/MemoryCellState.h		\
     instructionSemantics/MultiSemantics2.h		\
+    instructionSemantics/NativeSemantics.h		\
     instructionSemantics/NullSemantics2.h		\
     instructionSemantics/PartialSymbolicSemantics2.h	\
     instructionSemantics/RegisterStateGeneric.h		\
@@ -140,6 +166,9 @@ pkginclude_HEADERS =					\
     instructionSemantics/TestSemantics2.h		\
     instructionSemantics/TraceSemantics2.h		\
     Concolic/io-utility.h
+
+nobase_pkginclude_HEADERS =			\
+    Concolic/ConcolicExecutor.h
 
 if ROSE_USE_SQLITE_DATABASE
 pkginclude_HEADERS +=					\

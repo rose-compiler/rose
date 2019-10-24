@@ -1043,7 +1043,9 @@ void IncludedFilesUnparser::visit(SgNode* node)
 #endif
 
   // DQ (6/5/2019): Use this as a predicate to control output spew.
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
      bool isStatement = (isSgStatement(node) != NULL);
+#endif
 
      SgSourceFile* sourceFile = isSgSourceFile(node);
      if (sourceFile != NULL)
@@ -1162,9 +1164,9 @@ void IncludedFilesUnparser::visit(SgNode* node)
           bool isTransformation     = fileInfo->isTransformation();
           bool isCompilerGenerated  = fileInfo->isCompilerGenerated();
           bool isModified           = node->get_isModified();
-          bool isShared             = fileInfo->isShared();
 
 #if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
+          bool isShared             = fileInfo->isShared();
           if (isStatement == true)
              {
                printf ("In IncludedFilesUnparser::visit(): physical_file_id             = %d \n",physical_file_id);

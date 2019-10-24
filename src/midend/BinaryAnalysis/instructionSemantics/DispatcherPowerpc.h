@@ -30,7 +30,8 @@ public:
     /** Cached register. This register is cached so that there are not so many calls to Dispatcher::findRegister(). The
      *  register descriptor is updated only when the register dictionary is changed (see set_register_dictionary()).
      * @{ */
-    RegisterDescriptor REG_IAR, REG_LR, REG_XER, REG_XER_CA, REG_XER_OV, REG_XER_SO, REG_CR, REG_CR0, REG_CTR;
+    RegisterDescriptor REG_IAR, REG_LR, REG_XER, REG_XER_CA, REG_XER_OV, REG_XER_SO, REG_CTR;
+    RegisterDescriptor REG_CR, REG_CR0, REG_CR0_LT;
     /** @}*/
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -54,12 +55,16 @@ private:
 #endif
 
 protected:
-    // prototypical constructor
-    DispatcherPowerpc(): BaseSemantics::Dispatcher(32, RegisterDictionary::dictionary_powerpc()) {}
+    // Prototypical constructor
+    DispatcherPowerpc(): BaseSemantics::Dispatcher(32, RegisterDictionary::dictionary_powerpc32()) {}
 
+    // Prototypical constructor
+    DispatcherPowerpc(size_t addrWidth, const RegisterDictionary *regs/*=NULL*/)
+        : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmPowerpcInstruction::registersForWidth(addrWidth)) {}
+    
     DispatcherPowerpc(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
-        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : RegisterDictionary::dictionary_powerpc()) {
-        ASSERT_require(32==addrWidth);
+        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : SgAsmPowerpcInstruction::registersForWidth(addrWidth)) {
+        ASSERT_require(32==addrWidth || 64==addrWidth);
         regcache_init();
         iproc_init();
         memory_init();
@@ -80,7 +85,12 @@ public:
     static DispatcherPowerpcPtr instance() {
         return DispatcherPowerpcPtr(new DispatcherPowerpc);
     }
-    
+
+    /** Constructor. */
+    static DispatcherPowerpcPtr instance(size_t addrWidth, const RegisterDictionary *regs = NULL) {
+        return DispatcherPowerpcPtr(new DispatcherPowerpc(addrWidth, regs));
+    }
+            
     /** Constructor. */
     static DispatcherPowerpcPtr instance(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth,
                                          const RegisterDictionary *regs=NULL) {
@@ -116,11 +126,23 @@ public:
         return insn->get_kind();
     }
 
-    /** Update OV and SO bits of the XER register. Should be called before @ref record. */
-    void updateXerOverflow(const BaseSemantics::SValuePtr &result, const BaseSemantics::SValuePtr &carryOut);
-    
+    /** Set the XER OV and SO bits as specified.
+     *
+     *  The XER OV bit is assigned the argument, and the XER SO bit is set only if the argument is set. This function should
+     *  be called before @ref updateCr0 since @ref updateCr0 will copy some of the XER into the CR result. */
+    void setXerOverflow(const BaseSemantics::SValuePtr &hadOverflow);
+
     /** Write status flags for result. */
-    virtual void record(const BaseSemantics::SValuePtr &result);
+    virtual void updateCr0(const BaseSemantics::SValuePtr &result);
+
+    /** Reads from a memory address and updates a register with the effective address that was read. The address expression
+     *  must be a binary add operation whose first argument is a register, and it is this register that gets updated. */
+    BaseSemantics::SValuePtr readAndUpdate(BaseSemantics::RiscOperators*, SgAsmExpression*, size_t valueNBits);
+
+    /** Writes a value to a memory address and updates a register with the effective address to which the value was
+     *  written. The address expression must be a binary add operation whose first argument is a register, and it is this
+     *  register that gets updated. */
+    void writeAndUpdate(BaseSemantics::RiscOperators*, SgAsmExpression *destination, const BaseSemantics::SValuePtr &value);
 };
         
 } // namespace

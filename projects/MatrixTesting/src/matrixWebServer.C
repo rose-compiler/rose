@@ -3992,7 +3992,7 @@ public:
             if (depNames_[i] != "rose")
                 dep.comboBox->addItem(WILD_CARD_STR);
             dep.comboBox->activated().connect(this, &WFindWorkingConfig::updateCounts);
-            dep.comboBox->setMinimumSize(Wt::WLength(15, Wt::WLength::FontEm), Wt::WLength::Auto);
+            dep.comboBox->setMinimumSize(Wt::WLength(17, Wt::WLength::FontEm), Wt::WLength::Auto);
             std::vector<std::string> humanValues = sortedHumanValues(dep, SORT_VERTICALLY);
             BOOST_FOREACH (const std::string &s, humanValues) {
                 dep.comboBox->addItem(s);

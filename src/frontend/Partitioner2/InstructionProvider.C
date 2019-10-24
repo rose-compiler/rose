@@ -14,11 +14,13 @@ InstructionProvider::operator[](rose_addr_t va) const {
             } catch (const Disassembler::Exception &e) {
                 insn = disassembler_->makeUnknownInstruction(e);
                 ASSERT_not_null(insn);
-                uint8_t byte;
-                if (1==memMap_->at(va).limit(1).require(MemoryMap::EXECUTABLE).read(&byte).size())
-                    insn->set_raw_bytes(SgUnsignedCharList(1, byte));
                 ASSERT_require(insn->get_address()==va);
-                ASSERT_require(insn->get_size()==1);
+                if (0 == insn->get_size()) {
+                    uint8_t byte;
+                    if (1==memMap_->at(va).limit(1).require(MemoryMap::EXECUTABLE).read(&byte).size())
+                        insn->set_raw_bytes(SgUnsignedCharList(1, byte));
+                    ASSERT_require(insn->get_size()==1);
+                }
             }
         }
         insnMap_.insert(va, insn);

@@ -16,6 +16,8 @@ using namespace CodeThorn;
 
 namespace CodeThorn {
 
+  bool InputOutput::isBot() const { return op==BOT; }
+  bool InputOutput::isNone() const { return op==NONE; }
   bool InputOutput::isStdInIO() const { return op==STDIN_VAR; }
   bool InputOutput::isStdOutIO() const { return op==STDOUT_VAR || op==STDOUT_CONST; }
   bool InputOutput::isStdErrIO() const { return op==STDERR_VAR || op==STDERR_CONST; }
@@ -23,6 +25,20 @@ namespace CodeThorn {
   bool InputOutput::isVerificationError() const { return op==VERIFICATION_ERROR; }
   bool InputOutput::isNonIO() const { return !(isStdInIO()||isStdOutIO()||isStdErrIO()); }
   
+  void InputOutput::initVarValValues() {
+    var=CodeThorn::AbstractValue();
+    val=CodeThorn::Bot();
+  }
+
+  void InputOutput::recordBot() {
+    initVarValValues();
+    op=BOT;
+  }
+  void InputOutput::recordNone() {
+    initVarValValues();
+    op=NONE;
+  }
+
   /*! 
    * \author Markus Schordan
    * \date 2012.
@@ -80,6 +96,7 @@ namespace CodeThorn {
   string InputOutput::toString() const {
     string str;
     switch(op) {
+    case BOT: str="bot";break;
     case NONE: str="none";break;
     case STDIN_VAR: str="stdin:"+var.toString();break;
     case STDOUT_VAR: str="stdout:"+var.toString();break;
@@ -102,6 +119,7 @@ namespace CodeThorn {
     string str;
     string varName=var.toString(variableIdMapping);
     switch(op) {
+    case BOT: str="bot";break;
     case NONE: str="none";break;
     case STDIN_VAR: str="stdin:"+varName;break;
     case STDOUT_VAR: str="stdout:"+varName;break;
@@ -115,10 +133,6 @@ namespace CodeThorn {
       exit(1);
     }
     return str;
-  }
-
-  bool InputOutput::isBot() const {
-    return op==NONE && val==CodeThorn::Bot();
   }
 
   /*! 

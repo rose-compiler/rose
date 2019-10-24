@@ -32,10 +32,10 @@ namespace CodeThorn {
    */
   
   // private inharitance ensures PState is only used through methods defined here
-  class PState : private map<AbstractValue,CodeThorn::AbstractValue> {
+  class PState : private std::map<AbstractValue,CodeThorn::AbstractValue> {
   public:
-    typedef map<AbstractValue,CodeThorn::AbstractValue>::const_iterator const_iterator;
-    typedef map<AbstractValue,CodeThorn::AbstractValue>::iterator iterator;
+    typedef std::map<AbstractValue,CodeThorn::AbstractValue>::const_iterator const_iterator;
+    typedef std::map<AbstractValue,CodeThorn::AbstractValue>::iterator iterator;
     friend std::ostream& operator<<(std::ostream& os, const PState& value);
     friend std::istream& operator>>(std::istream& os, PState& value);
     friend class PStateHashFun;
@@ -54,13 +54,16 @@ namespace CodeThorn {
     void toStream(std::ostream& os) const;
     string toString() const;
     string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
-    string toDotString(CodeThorn::VariableIdMapping* variableIdMapping) const;
-    std::string dotNodeIdString(AbstractValue av) const;
-    std::set<std::string> getDotNodeIdStrings() const;
+    string toDotString(std::string prefix, CodeThorn::VariableIdMapping* variableIdMapping) const;
+    std::string dotNodeIdString(std::string prefix, AbstractValue av) const;
+    std::set<std::string> getDotNodeIdStrings(std::string prefix) const;
     void writeTopToAllMemoryLocations();
+    void combineValueAtAllMemoryLocations(CodeThorn::AbstractValue val);
     void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);  
     void writeTopToMemoryLocation(AbstractValue varId);
     AbstractValue readFromMemoryLocation(AbstractValue abstractMemLoc) const;
+    void combineAtMemoryLocation(AbstractValue abstractMemLoc,
+                                 AbstractValue abstractValue);  
     void writeToMemoryLocation(AbstractValue abstractMemLoc,
                                AbstractValue abstractValue);
     size_t stateSize() const;
@@ -75,7 +78,7 @@ namespace CodeThorn {
   };
   
   std::ostream& operator<<(std::ostream& os, const PState& value);
-  typedef set<const PState*> PStatePtrSet;
+  typedef std::set<const PState*> PStatePtrSet;
   
 class PStateHashFun {
    public:

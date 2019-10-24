@@ -1,26 +1,27 @@
 create sqlite3://./combined.db
 
+@ success
 ls :: t01
-  @ success
 {
-  ls -la
+  ls -la /
 }
 
+@ success
 ls :: t02
-  @ success
 {
-  ls -l --author
+  ls -l --author /
 }
 
 
+@ success
 tail :: t03
-  @ success
 {
   tail Makefile
 }
 
+
+@ success
 tail :: t04
-  @ success
 {
   tail -10 Makefile
 }

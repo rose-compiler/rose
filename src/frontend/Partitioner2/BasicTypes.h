@@ -321,6 +321,7 @@ struct PartitionerSettings {
                                                      *   the other in memory--the block can have internal unconditional
                                                      *   branches. */
     size_t maxBasicBlockSize;                       /**< Maximum basic block size. Number of instructions. 0 => no limit. */
+    std::vector<rose_addr_t> ipRewrites;            /**< Pairs of addresses for rewriting CFG edges. */
     bool findingFunctionPadding;                    /**< Look for padding before each function entry point? */
     bool findingDeadCode;                           /**< Look for unreachable basic blocks? */
     rose_addr_t peScramblerDispatcherVa;            /**< Run the PeDescrambler module if non-zero. */
@@ -362,6 +363,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(followingGhostEdges);
         s & BOOST_SERIALIZATION_NVP(discontiguousBlocks);
         s & BOOST_SERIALIZATION_NVP(maxBasicBlockSize);
+        if (version >= 6)
+            s & BOOST_SERIALIZATION_NVP(ipRewrites);
         s & BOOST_SERIALIZATION_NVP(findingFunctionPadding);
         s & BOOST_SERIALIZATION_NVP(findingDeadCode);
         s & BOOST_SERIALIZATION_NVP(peScramblerDispatcherVa);
@@ -469,6 +472,6 @@ typedef Sawyer::SharedPointer<ThunkPredicates> ThunkPredicatesPtr;
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 5);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 6);
 
 #endif

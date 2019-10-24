@@ -35,7 +35,7 @@ Pointer detection analysis for function 0x080483b0 "simple03"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
-    32-bit pointer at v19900[32]
+    32-bit pointer at v19460[32]
     32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
 
 Pointer detection analysis for function 0x080483bc "simple04"
@@ -74,7 +74,7 @@ Pointer detection analysis for function 0x080483d2 "simple06"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
-    32-bit pointer at v20383[32]
+    32-bit pointer at v19943[32]
     32-bit pointer at 0x080497f0<134518768>[32]
 
 Pointer detection analysis for function 0x080483e0 "simple07"
@@ -189,7 +189,7 @@ Pointer detection analysis for function 0x08048444 "simple15"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
-    32-bit pointer at v21863[32]
+    32-bit pointer at v21423[32]
     32-bit pointer at 0x080497fc<134518780>[32]
 
 Pointer detection analysis for function 0x08048452 "simple16"
@@ -230,8 +230,8 @@ Pointer detection analysis for function 0x08048468 "simple18"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
-    32-bit pointer at 0x080497f8<134518776>[32]
     32-bit pointer at (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])
+    32-bit pointer at 0x080497f8<134518776>[32]
 
 Pointer detection analysis for function 0x0804847d "simple19"
   Instructions:
@@ -295,8 +295,8 @@ Pointer detection analysis for function 0x080484ad "simple23"
     0x080484c5: leave  
     0x080484c6: ret    
   Code pointers:
-    32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
     32-bit pointer at esp_0[32]
+    32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
   Data pointers:
 
 Pointer detection analysis for function 0x080484c7 "simple24"
@@ -311,8 +311,8 @@ Pointer detection analysis for function 0x080484c7 "simple24"
     0x080484d8: leave  
     0x080484d9: ret    
   Code pointers:
-    32-bit pointer at esp_0[32]
     32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
+    32-bit pointer at esp_0[32]
   Data pointers:
 
 Pointer detection analysis for function 0x080484da "simple25"
@@ -328,8 +328,8 @@ Pointer detection analysis for function 0x080484da "simple25"
     0x080484ed: leave  
     0x080484ee: ret    
   Code pointers:
-    32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
     32-bit pointer at esp_0[32]
+    32-bit pointer at (add[32] esp_0[32] 0x00000004[32])
   Data pointers:
     32-bit pointer at (add[32] esp_0[32] 0x00000008[32])
 
@@ -368,8 +368,8 @@ Pointer detection analysis for function 0x08048506 "flow02"
   Code pointers:
     32-bit pointer at esp_0[32]
   Data pointers:
-    32-bit pointer at (add[32] esp_0[32] 0x00000008[32])
     32-bit pointer at (add[32] esp_0[32] 0x0000000c[32])
+    32-bit pointer at (add[32] esp_0[32] 0x00000008[32])
 
 Pointer detection analysis for function 0x0804851d "flow03"
   Instructions:

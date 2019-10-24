@@ -179,8 +179,8 @@ rose-installer-rmc2: install-rose-library
 	$(top_srcdir)/scripts/mkinstaller --version
 	TMPDIR=$@.tmp $(top_srcdir)/scripts/mkinstaller									\
 		--create="$@"												\
-		--CC="$(CC) \
-		--CXX="$(CXX) \
+		--CC="$(CC)"												\
+		--CXX="$(CXX)"												\
 		--contact="http://rosecompiler.org"									\
 		--prjnam=ROSE												\
 		--prjver=$(PACKAGE_VERSION)										\
@@ -258,7 +258,7 @@ check-policies: enforce_policies
 # EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in COPYRIGHT \
 #              LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
 EXTRA_DIST += cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in COPYRIGHT \
-             LicenseInformation ROSE_ResearchPapers build ChangeLog2
+             LicenseInformation build 
 
 # The bincompat-sig file contains the SHA1 part of the EDG binary tarball name and must be generated anew
 # each time we make a distribution because we don't want to distribute stale information.
@@ -315,7 +315,6 @@ install-exec-local:
 install-data-local: uninstall-local
 	-mkdir -p $(DESTDIR)$(includedir)
 #	DQ (11/1/2011): The EDG 4.x support does not require a separate include-staging directory.
-#	if !ROSE_USE_NEW_EDG_INTERFACE
 	mkdir -p "$(DESTDIR)$(includedir)/edg"
 	cp -R $(top_builddir)/include-staging/* "$(DESTDIR)$(includedir)/edg"
 #	endif

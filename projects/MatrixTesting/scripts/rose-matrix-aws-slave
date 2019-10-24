@@ -228,7 +228,7 @@ matrix-install-matrix-tools() {
 	    rmc --install=yes build
 	    rmc config
 	    rmc make
-	    rm -rf $HOME/rose-installed/.
+	    rm -rf $HOME/rose-installed
 	    rmc install
 	)
 	rm -rf matrix-src
@@ -299,7 +299,17 @@ matrix-maybe-remove-os-images() {
     local desired_version="$TEST_ENVIRONMENT_VERSION"
 
     if [ "$installed_version" != "$desired_version" ]; then
-	rose-matrix-run --rebuild-images
+	if false; then
+	    # More precise
+	    rose-matrix-run --rebuild-images
+	else
+	    # Nuclear option tries to remove all containers and images
+	    docker container rm $(docker container ls -a |tail +2 |cut -d' ' -f1) || true
+	    docker container rm $(docker container ls -a |tail +2 |cut -d' ' -f1) || true
+	    docker image rm $(docker image ls -a |tail +2 |tr -s ' ' '\t' |cut -f3) || true
+	    docker image rm $(docker image ls -a |tail +2 |tr -s ' ' '\t' |cut -f3) || true
+	    rm -rf $HOME/rose-installed/latest/var/matrix/spock
+	fi
 	echo "$desired_version" >images-key
     fi
 }
@@ -324,7 +334,8 @@ matrix-reclaim-disk() {
 		# Get the name of the package
 		local package_name="$(sed -n "/^package/ s/package:[ \t]*'\(.*\)'.*/\1/p" <"$installed.yaml")"
 		if [ "$package_name" = "" ]; then
-		    package_name="$(sed -n '/^package/ s/package:[ \t]*\([-_a-zA-Z0-9]*\)[ \t]*$/\1/p' <"$installed.yaml")"
+		    package_name="$(sed -n "/^package/ s/package:[ \t]*\([-_a-zA-Z0-9]*\)[ \t]*\$/\1/p" <"$installed.yaml")"
+		    package_name="$(echo "$package_name" |tr -d "'")"
 		fi
 
 		# Avoid removing compilers and other important things

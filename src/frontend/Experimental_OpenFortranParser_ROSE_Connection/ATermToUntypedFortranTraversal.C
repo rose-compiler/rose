@@ -577,10 +577,11 @@ ATbool ATermToUntypedFortranTraversal::traverse_DeclarationConstruct(ATerm term,
       // MATCHED InterfaceBlock
    }
 
-#if 0
-   if (traverse_DerivedTypeDef(term, decl_list)) {
+   else if (traverse_DerivedTypeDef(term, decl_list)) {
       // MATCHED DerivedTypeDef
    }
+
+#if 0
    else if (traverse_EntryStmt(term, decl_list)) {
       // MATCHED EntryStmt
    }
@@ -709,6 +710,9 @@ ATbool ATermToUntypedFortranTraversal::traverse_SpecStmt(ATerm term, SgUntypedDe
    if (traverse_TypeDeclarationStmt(term, decl_list)) {
       // Matched TypeDeclarationStmt
    }
+   else if (traverse_DerivedTypeDef(term, decl_list)) {
+      // Matched DerivedTypeDef
+   }
    else if (traverse_ImplicitStmt(term, decl_list)) {
       // Matched ImplicitStmt
    }
@@ -729,7 +733,6 @@ ATbool ATermToUntypedFortranTraversal::traverse_SpecStmt(ATerm term, SgUntypedDe
    //  ParameterStmt                          -> DeclarationConstruct
    //  ProcedureDeclarationStmt               -> DeclarationConstruct
    //  OtherSpecificationStmt                 -> DeclarationConstruct
-   //  TypeDeclarationStmt                    -> DeclarationConstruct
 
    else {
       return ATfalse;
@@ -873,7 +876,7 @@ class ImplicitSpecMatch
          std::vector<FAST::LetterSpec> letter_spec_list;
          LetterSpecMatch match_letter_spec(&letter_spec_list);
          if (ATmatch(term, "ImplicitSpec(<term>,<term>)", &term1, &term2)) {
-            if (pTraversal->traverse_DeclarationTypeSpec(term1, &type_spec)) {
+            if (pTraversal->traverse_DeclarationTypeSpec(term1, type_spec)) {
             } else return ATfalse;
             if (traverse_List(term2, match_letter_spec)) {
             } else return ATfalse;
@@ -894,7 +897,7 @@ class ImplicitSpecMatch
 //========================================================================================
 // DeclarationTypeSpec
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedFortranTraversal::traverse_DeclarationTypeSpec(ATerm term, SgUntypedType** type)
+ATbool ATermToUntypedFortranTraversal::traverse_DeclarationTypeSpec(ATerm term, SgUntypedType* & type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_DeclarationTypeSpec: %s\n", ATwriteToString(term));
@@ -903,12 +906,10 @@ ATbool ATermToUntypedFortranTraversal::traverse_DeclarationTypeSpec(ATerm term, 
    if (traverse_IntrinsicTypeSpec(term, type)) {
       //MATCHED IntrinsicTypeSpec
    }
-
-   else {
-      //TODO DerivedTypeSpec
-      std::cerr << "...TODO... implement DerivedTypeSpec" << std::endl;
-      return ATfalse;
+   else if (traverse_DerivedTypeSpec(term, type)) {
+      //MATCHED DerivedTypeSpec
    }
+   else return ATfalse;
 
   return ATtrue;
 }
@@ -916,7 +917,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_DeclarationTypeSpec(ATerm term, 
 //========================================================================================
 // IntrinsicTypeSpec
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, SgUntypedType** type)
+ATbool ATermToUntypedFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, SgUntypedType* & type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_IntrinsicTypeSpec: %s\n", ATwriteToString(term));
@@ -924,7 +925,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, Sg
   
    ATerm t_type, t_kind;
 
-   *type = NULL;
+   type = NULL;
 
    if (ATmatch(term, "IntrinsicType(<term>)", &t_type)) {
       // MATCHED IntrinsicType
@@ -932,29 +933,29 @@ ATbool ATermToUntypedFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, Sg
 
 // Check for type declarations without type-kind parameter
    if (ATmatch(t_type, "INTEGER()")) {
-      *type = UntypedBuilder::buildType(SgUntypedType::e_int);
+      type = UntypedBuilder::buildType(SgUntypedType::e_int);
    }
    else if (ATmatch(t_type, "REAL()")) {
-      *type = UntypedBuilder::buildType(SgUntypedType::e_float);
+      type = UntypedBuilder::buildType(SgUntypedType::e_float);
    }
    else if (ATmatch(t_type, "DOUBLEPRECISION()")) {
-      //*type = UntypedBuilder::buildType(SgUntypedType::e_float);
+      //type = UntypedBuilder::buildType(SgUntypedType::e_float);
    }
    else if (ATmatch(t_type, "CHARACTER()")) {
    // No length parameter given so build a char type
-      *type = UntypedBuilder::buildType(SgUntypedType::e_char);
+      type = UntypedBuilder::buildType(SgUntypedType::e_char);
    }
    else if (ATmatch(t_type, "COMPLEX()")) {
-      *type = UntypedBuilder::buildType(SgUntypedType::e_complex);
+      type = UntypedBuilder::buildType(SgUntypedType::e_complex);
    }
    else if (ATmatch(t_type, "LOGICAL()")) {
-      *type = UntypedBuilder::buildType(SgUntypedType::e_bool);
+      type = UntypedBuilder::buildType(SgUntypedType::e_bool);
    }
    else if (ATmatch(t_type, "DOUBLECOMPLEX()")) {
-      //*type = UntypedBuilder::buildType(SgUntypedType::e_float);
+      //type = UntypedBuilder::buildType(SgUntypedType::e_float);
    }
 
-   if (*type != NULL) {
+   if (type != NULL) {
    // have a type without a type-kind parameter, return
       return ATtrue;
    }
@@ -963,26 +964,26 @@ ATbool ATermToUntypedFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, Sg
 // ----------------------------------------------------------------------
 
    if (ATmatch(t_type, "INTEGER(<term>)", &t_kind)) {
-      *type = UntypedBuilder::buildType(SgUntypedType::e_int);
+      type = UntypedBuilder::buildType(SgUntypedType::e_int);
    }
    else if (ATmatch(t_type, "REAL(<term>)", &t_kind)) {
-      *type = UntypedBuilder::buildType(SgUntypedType::e_float);
+      type = UntypedBuilder::buildType(SgUntypedType::e_float);
    }
    else if (ATmatch(t_type, "COMPLEX(<term>)", &t_kind)) {
-      //*type = UntypedBuilder::buildType(SgUntypedType::e_complex);
+      //type = UntypedBuilder::buildType(SgUntypedType::e_complex);
       return ATfalse;
    }
    else if (ATmatch(t_type, "LOGICAL(<term>)", &t_kind)) {
-      *type = UntypedBuilder::buildType(SgUntypedType::e_bool);
+      type = UntypedBuilder::buildType(SgUntypedType::e_bool);
    }
 
 // Check for a type-kind parameter
-   if (*type != NULL) {
+   if (type != NULL) {
       SgUntypedExpression* kind;
       if (traverse_KindSelector(t_kind, &kind)) {
       // add type kind expression
-         (*type)->set_has_kind(true);
-         (*type)->set_type_kind(kind);
+         type->set_has_kind(true);
+         type->set_type_kind(kind);
       }
       else {
          cerr << "ERROR: no expected kind-type parameter in IntrinsictypeSpec" << endl;
@@ -995,12 +996,76 @@ ATbool ATermToUntypedFortranTraversal::traverse_IntrinsicTypeSpec(ATerm term, Sg
    }
 
 // TODO - Check for a character string
-   if (*type != NULL) {
+   if (type != NULL) {
    // have a type with a type-kind parameter, return
       return ATtrue;
    }
 
   return ATtrue;
+}
+
+//========================================================================================
+// DerivedTypeSpec
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_DerivedTypeSpec(ATerm term, SgUntypedType* & type)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_DerivedTypeSpec: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_type, t_list;
+   char* name;
+
+   bool is_class = false;
+   bool is_user_defined = false;
+   bool is_assumed_class = false;
+   bool is_assumed_type  = false;
+
+   type = NULL;
+
+   if (ATmatch(term, "derived-type-spec(<term>)", &t_type)) {
+      is_user_defined = true;
+   }
+   else if (ATmatch(term, "class-type-spec(<term>)", &t_type)) {
+      is_class = true;
+   }
+   else if (ATmatch(term, "AssumedClass()")) {
+      is_assumed_class = true;
+      std::cerr << "...TODO... found AssumedClass" << std::endl;
+   }
+   else if (ATmatch(term, "AssumedType()")) {
+      is_assumed_type = true;
+      std::cerr << "...TODO... found AssumedClass" << std::endl;
+   }
+   else return ATfalse;
+
+   if (ATmatch(t_type, "DerivedTypeSpec(<str>,<term>)", &name, &t_list)) {
+      // DerivedTypeSpec applies for both TYPE and CLASS
+
+      if (ATmatch(t_list, "no-list()")) {
+         // There is no DerivedParamSpecList
+      }
+      else {
+         std::cerr << "...TODO... found DerivedTypeSpec name " << name << " : need to implement TypeParamSpecList \n";
+         ROSE_ASSERT(false);
+         return ATfalse;
+      }
+
+      type = UntypedBuilder::buildType(SgUntypedType::e_user_defined, name);
+      type->set_is_class(is_class);
+   }
+
+   else if (is_assumed_class || is_assumed_type) {
+   }
+
+   else return ATfalse;
+
+   if (type == NULL) {
+      std::cerr << "...TODO... implement DerivedTypeSpec" << std::endl;
+      ROSE_ASSERT(false);
+   }
+
+   return ATtrue;
 }
 
 //========================================================================================
@@ -1226,6 +1291,171 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptCharLength(ATerm term, SgUnty
 }
 
 //========================================================================================
+// R425 derived-type-def
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_DerivedTypeDef(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_DerivedTypeDef: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_type_stmt, t_param, t_private, t_components, t_type_bound, t_end_stmt;
+
+   if (ATmatch(term, "DerivedTypeDef(<term>,<term>,<term>,<term>,<term>,<term>)",
+                     &t_type_stmt, &t_param, &t_private, &t_components, &t_type_bound, &t_end_stmt)) {
+   }
+   else return ATfalse;
+
+// Handle the DerivedTypeStmt here as all of the information needed has been matched
+//
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_DerivedTypeStmt: %s\n", ATwriteToString(t_type_stmt));
+#endif
+
+   ATerm t_label, t_name, t_attr_list, t_param_list, t_eos;
+
+   char* name;
+   std::string label, struct_name, end_stmt_name, end_stmt_label, eos;
+
+   SgUntypedStructureDeclaration* struct_decl = NULL;
+   SgUntypedStructureDefinition*  struct_def  = NULL;
+   SgUntypedExprListExpression*     attr_list = NULL;
+   SgUntypedExprListExpression*      dim_info = NULL;
+
+   if (ATmatch(t_type_stmt, "DerivedTypeStmt(<term>,<term>,<str>,<term>,<term>)",
+                            &t_label, &t_attr_list, &name, &t_param_list, &t_eos)) {
+      struct_name = name;
+
+   // Traverse the easy stuff first before creating new nodes
+   //
+      if (traverse_OptLabel(t_label, label)) {
+         // MATCHED OptLabel
+      } else return ATfalse;
+
+      if (traverse_eos(t_eos, eos)) {
+         // MATCHED eos string
+      } else return ATfalse;
+
+      // EndTypeStmt can pretty much be ignored (except for name)
+      if (ATmatch(t_end_stmt, "EndTypeStmt(<term>,<term>,<term>)", &t_label, &t_name, &t_eos)) {
+
+         if (traverse_OptLabel(t_label, end_stmt_label)) {
+            // MATCHED OptLabel
+         } else return ATfalse;
+         if (traverse_eos(t_eos, eos)) {
+            // MATCHED eos string
+         } else return ATfalse;
+
+         if (traverse_OptName(t_name, end_stmt_name)) {
+            // MATCHED OptName
+         } else return ATfalse;
+
+         // if there is an end_stmt_name the names must match
+         if (end_stmt_name.length() > 0) {
+            ROSE_ASSERT(struct_name == end_stmt_name);
+         }
+
+      } else return ATfalse;
+
+      struct_def = UntypedBuilder::buildStructureDefinition(struct_name, /*has_body*/true, /*scope*/NULL);
+      ROSE_ASSERT(struct_def);
+
+      SgUntypedScope* struct_scope = struct_def->get_scope();
+      ROSE_ASSERT(struct_scope);
+
+      attr_list = new SgUntypedExprListExpression(General_Language_Translation::e_struct_modifier_list);
+      ROSE_ASSERT(attr_list);
+      setSourcePosition(attr_list, t_attr_list);
+
+      // This won't be used for Fortran
+      dim_info = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
+      ROSE_ASSERT(dim_info);
+      SageInterface::setSourcePosition(dim_info);
+
+// TODO
+      std::cout << "...TODO... TypeParamNameList not implemented \n";
+#if 0
+      if (traverse_TypeAttrSpecList(t_attr_list, attr_list)) {
+         // MATCHED TypeAttrSpecList
+      } else return ATfalse;
+#endif
+
+      // TODO: TypeParamNameList needs to be implemented
+      if (ATmatch(t_param_list, "no-list()")) {
+      }
+      else {
+         std::cout << "TODO: TypeParamNameList not implemented \n";
+         ROSE_ASSERT(0);
+      }
+
+      // traverse components adding to struct_scope
+      SgUntypedDeclarationStatementList* component_decl_list = struct_scope->get_declaration_list();
+      ROSE_ASSERT(component_decl_list);
+
+      if (traverse_DataComponentDefStmtList(t_components, component_decl_list)) {
+         // Added components
+      }
+      else ROSE_ASSERT(0); // Not completely implemented so fail locally for now
+
+      // TODO:
+      // t_param
+      // t_private, can this be added to the attr_list?
+      // t_type_bound
+
+      // neither a jovial block nor table (only one choice for Fortran, derived type)
+      int struct_type = General_Language_Translation::e_unknown;
+
+      struct_decl = new SgUntypedStructureDeclaration(label, struct_type, struct_name, attr_list, dim_info, struct_def);
+      ROSE_ASSERT(struct_decl);
+      setSourcePosition(struct_decl, term);
+   }
+   else return ATfalse;
+
+   ROSE_ASSERT(struct_decl);
+
+   decl_list->get_decl_list().push_back(struct_decl);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// R436 DataComponentDefStmt
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_DataComponentDefStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_DataComponentDefStmt: %s\n", ATwriteToString(term));
+#endif
+
+   printf("...TODO... DataComponentDefStmt: \n");
+
+   return ATfalse;
+}
+
+//========================================================================================
+// DataComponentDefStmtList
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedFortranTraversal::traverse_DataComponentDefStmtList(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_DataComponentDefStmtList: %s\n", ATwriteToString(term));
+#endif
+
+   ATermList tail = (ATermList) ATmake("<term>", term);
+   while (! ATisEmpty(tail)) {
+      ATerm head = ATgetFirst(tail);
+      tail = ATgetNext(tail);
+
+      if (traverse_DataComponentDefStmt(head, decl_list)) {
+         // MATCHED DeclarationConstruct
+      }
+      else return ATfalse;
+   }
+
+   return ATtrue;
+}
+
+//========================================================================================
 // R501 type-declaration-stmt
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedFortranTraversal::traverse_TypeDeclarationStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list)
@@ -1248,7 +1478,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_TypeDeclarationStmt(ATerm term, 
          // MATCHED OptLabel
       } else return ATfalse;
 
-      if (traverse_DeclarationTypeSpec(term2, &declared_type)) {
+      if (traverse_DeclarationTypeSpec(term2, declared_type)) {
          // MATCHED DeclarationTypeSpec
          ROSE_ASSERT(declared_type);
       } else return ATfalse;
@@ -1276,7 +1506,8 @@ ATbool ATermToUntypedFortranTraversal::traverse_TypeDeclarationStmt(ATerm term, 
 
    std::cerr << "...TODO... fully implement AttrSpecList in TypeDeclarationStmt: list is " << attr_list << std::endl;
 
-   variable_decl = new SgUntypedVariableDeclaration(label, declared_type, attr_list, var_name_list);
+   variable_decl = new SgUntypedVariableDeclaration(label, declared_type, /*base_type_decl*/NULL, false, attr_list, var_name_list);
+   ROSE_ASSERT(variable_decl != NULL);
    setSourcePositionExcludingTerm(variable_decl, term, term_eos);
 
    decl_list->get_decl_list().push_back(variable_decl);
@@ -1660,6 +1891,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ArraySpec(ATerm term, SgUntypedT
 
    // TODO: The builder should probably be based on the declared (or base) type
       *array_type = UntypedBuilder::buildArrayType(base_type->get_type_enum_id(),dim_info,rank);
+      cout << ".x. in ArraySpec type is " << *array_type << " : " << (*array_type)->class_name() << endl;
    }
    else {
       return ATfalse;
@@ -2466,7 +2698,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_NonlabelDoStmt(ATerm term, SgUnt
          // MATCHED OptLoopControl
       }
    // DO CONCURRENT
-      else if (traverse_LoopConcurrentControl(t_loop_ctrl, &concur_type, &iterates, &locality, &mask)) {
+      else if (traverse_LoopConcurrentControl(t_loop_ctrl, concur_type, &iterates, &locality, &mask)) {
          // This is a DO CONCURRENT construct
          isConcurrent = true;
       }
@@ -3534,7 +3766,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ForallConstructStmt(ATerm term, 
          // MATCHED OptName
       } else return ATfalse;
 
-      if (traverse_ConcurrentHeader(t_header, &forall_type, &iterates, &mask)) {
+      if (traverse_ConcurrentHeader(t_header, forall_type, &iterates, &mask)) {
          // MATCHED ConcurrentHeader
       } else return ATfalse;
 
@@ -3646,7 +3878,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ForallStmt(ATerm term, SgUntyped
          // MATCHED OptLabel
       } else return ATfalse;
 
-      if (traverse_ConcurrentHeader(t_header, &forall_type, &iterates, &mask)) {
+      if (traverse_ConcurrentHeader(t_header, forall_type, &iterates, &mask)) {
          // MATCHED ConcurrentHeader
       } else return ATfalse;
 
@@ -4634,7 +4866,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_EndBlockDataStmt(ATerm term, SgU
 //========================================================================================
 // loop-control (R1123-2018-N2146): DO CONCURRENT
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedFortranTraversal::traverse_LoopConcurrentControl(ATerm term, SgUntypedType** type, SgUntypedExprListExpression** header,
+ATbool ATermToUntypedFortranTraversal::traverse_LoopConcurrentControl(ATerm term, SgUntypedType* & type, SgUntypedExprListExpression** header,
                                                                                   SgUntypedExprListExpression** locality, SgUntypedExpression** mask)
 {
 #if PRINT_ATERM_TRAVERSAL
@@ -4643,7 +4875,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_LoopConcurrentControl(ATerm term
 
    ATerm t_header, t_locality;
 
-   *type     = NULL;
+   type      = NULL;
    *header   = NULL;
    *locality = NULL;
    *mask     = NULL;
@@ -4666,7 +4898,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_LoopConcurrentControl(ATerm term
 //========================================================================================
 // concurrent-header (R1125-2018-N2146)
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedFortranTraversal::traverse_ConcurrentHeader(ATerm term, SgUntypedType** type,
+ATbool ATermToUntypedFortranTraversal::traverse_ConcurrentHeader(ATerm term, SgUntypedType* & type,
                                                                              SgUntypedExprListExpression** header, SgUntypedExpression** mask)
 {
 #if PRINT_ATERM_TRAVERSAL
@@ -4680,7 +4912,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ConcurrentHeader(ATerm term, SgU
    SgUntypedExprListExpression* concurrent_header  = NULL;
    SgUntypedNamedExpression*    concurrent_control = NULL;
 
-   *type     = NULL;
+   type      = NULL;
    *header   = NULL;
    *mask     = NULL;
 
@@ -4688,7 +4920,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ConcurrentHeader(ATerm term, SgU
 
       if (ATmatch(t_type, "no-type-spec()")) {
          // there is no type spec
-         *type = UntypedBuilder::buildType(SgUntypedType::e_unknown);
+         type = UntypedBuilder::buildType(SgUntypedType::e_unknown);
       }
       else if (traverse_IntrinsicTypeSpec(t_type, type)) {
          // MATCHED TypeSpec
@@ -5693,7 +5925,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_ActualArgSpecList(ATerm term, Sg
 //========================================================================================
 // prefix (R1225)
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedFortranTraversal::traverse_OptPrefix(ATerm term, SgUntypedExprListExpression* prefix_list, SgUntypedType** type)
+ATbool ATermToUntypedFortranTraversal::traverse_OptPrefix(ATerm term, SgUntypedExprListExpression* prefix_list, SgUntypedType* & type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptPrefix: %s\n", ATwriteToString(term));
@@ -5818,7 +6050,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_FunctionSubprogram(ATerm term, S
          param_list  = new SgUntypedInitializedNameList();
          prefix_list = new SgUntypedExprListExpression();
 
-         if (traverse_OptPrefix(prefix_term, prefix_list, &function_type)) {
+         if (traverse_OptPrefix(prefix_term, prefix_list, function_type)) {
             // MATCHED OptPrefix
             std::cerr << "...TODO... implement function prefix in SgUntypedFunctionDeclaration" << std::endl;
          } else return ATfalse;
@@ -6000,7 +6232,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_SubroutineSubprogram(ATerm term,
          param_list  = new SgUntypedInitializedNameList();
          prefix_list = new SgUntypedExprListExpression();
 
-         if (traverse_OptPrefix(prefix_term, prefix_list, &function_type)) {
+         if (traverse_OptPrefix(prefix_term, prefix_list, function_type)) {
             // MATCHED OptPrefix
             ROSE_ASSERT(function_type == NULL);
          } else return ATfalse;

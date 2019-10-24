@@ -1,6 +1,8 @@
 #include <sage3basic.h>
 #include <Diagnostics.h>
+#include <FormatRestorer.h>
 #include <RegisterStateGeneric.h>
+#include <boost/format.hpp>
 
 // Define this if you want extra consistency checking before and after each mutator.  This slows things down considerably but
 // can be useful for narrowing down logic errors in the implementation.
@@ -174,7 +176,8 @@ SValuePtr
 RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) {
     ASSERT_forbid(reg.isEmpty());
     ASSERT_not_null(dflt);
-    ASSERT_require(reg.nBits() == dflt->get_width());
+    ASSERT_require2(reg.nBits() == dflt->get_width(), "value being read must be same size as register" +
+                    (boost::format(": %|u| -> %|u|") % reg.nBits() % dflt->get_width()).str());
     ASSERT_not_null(ops);
     assertStorageConditions("at start of read", reg);
     BitRange accessedLocation = BitRange::baseSize(reg.offset(), reg.nBits());
@@ -274,7 +277,8 @@ BaseSemantics::SValuePtr
 RegisterStateGeneric::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) {
     ASSERT_forbid(reg.isEmpty());
     ASSERT_not_null(dflt);
-    ASSERT_require(reg.nBits() == dflt->get_width());
+    ASSERT_require2(reg.nBits() == dflt->get_width(), "value being read must be same size as register" +
+                    (boost::format(": %|u| -> %|u|") % reg.nBits() % dflt->get_width()).str());
     ASSERT_not_null(ops);
     assertStorageConditions("at start of read", reg);
     BitRange accessedLocation = BitRange::baseSize(reg.offset(), reg.nBits());
@@ -323,7 +327,8 @@ void
 RegisterStateGeneric::writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops)
 {
     ASSERT_not_null(value);
-    ASSERT_require2(reg.nBits()==value->get_width(), "value written to register must be the same width as the register");
+    ASSERT_require2(reg.nBits()==value->get_width(), "value written to register must be the same width as the register" +
+                    (boost::format(": %|u| -> %|u|") % value->get_width() % reg.nBits()).str());
     ASSERT_not_null(ops);
     assertStorageConditions("at start of write", reg);
     BitRange accessedLocation = BitRange::baseSize(reg.offset(), reg.nBits());

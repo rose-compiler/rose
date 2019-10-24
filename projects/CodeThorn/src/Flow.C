@@ -308,9 +308,9 @@ Flow::iterator Flow::find(Edge e) {
     for (SawyerCfg::EdgeIterator i=outEdges.begin(); i!=outEdges.end(); ++i) {
       EdgeData eData = (*i).value();
       if (eData.edgeTypes == e.types() && eData.annotation == e.getAnnotation()) {
-	if ((*((*i).target())).value() == e.target()) {
-	  return Flow::iterator(i);
-	}
+        if ((*((*i).target())).value() == e.target()) {
+          return Flow::iterator(i);
+        }
       }
     }
   }
@@ -518,6 +518,23 @@ string Flow::toDot(Labeler* labeler) {
         ss<<":";
       } else if(isSgDefaultOptionStmt(node)) {
         ss<<"default:";
+      } else if(labeler->isJoinLabel(*i)) {
+        ss<<"Join for fork "<<labeler->forkLabel(node);
+      } else if(labeler->isForkLabel(*i)) {
+        ss<<"Fork: ";
+      } else if(labeler->isWorkshareLabel(*i)) {
+        ss<<"Workshare: ";
+        if (isSgOmpForStatement(node)) {
+          ss << "OMP for";
+        } else if (isSgOmpSectionsStatement(node)) {
+          ss << "OMP sections";
+        }
+      } else if(labeler->isBarrierLabel(*i)) {
+        if (isSgOmpBarrierStatement(node)) {
+          ss<<"Barrier";
+        } else {
+          ss<<"Barrier for workshare "<<labeler->workshareLabel(node);
+        }
       } else if(isSgOmpBodyStatement(node)) {
         ss<<node->class_name();
       } else {
@@ -527,17 +544,17 @@ string Flow::toDot(Labeler* labeler) {
     if(_dotOptionDisplayLabel||_dotOptionDisplayStmt) {
       ss << "\"";
       if (labeler) {
-	SgNode* node=labeler->getNode(*i);
-	if(SgNodeHelper::isCond(node)) {
-	  ss << " shape=oval style=filled ";
-	  ss<<"color=yellow "; 
-	} else {
-	  ss << " shape=box ";
-	}
+        SgNode* node=labeler->getNode(*i);
+        if(SgNodeHelper::isCond(node)) {
+          ss << " shape=oval style=filled ";
+          ss<<"color=yellow ";
+        } else {
+          ss << " shape=box ";
+        }
       } else {
-	if (_fixedNodeColor != "white") {
-	  ss << " fillcolor=\""<<_fixedNodeColor<<"\" style=filled";
-	}
+        if (_fixedNodeColor != "white") {
+          ss << " fillcolor=\""<<_fixedNodeColor<<"\" style=filled";
+        }
       }
       ss << "];\n";
     }

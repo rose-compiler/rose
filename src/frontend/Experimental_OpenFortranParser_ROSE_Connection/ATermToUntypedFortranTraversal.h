@@ -71,6 +71,13 @@ ATbool traverse_KindSelector(ATerm term, SgUntypedExpression** expr);
 // R422
 ATbool traverse_OptCharLength(ATerm term, SgUntypedExpression** expr);
 
+// R425
+ATbool traverse_DerivedTypeDef(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+
+// R436
+ATbool traverse_DataComponentDefStmt     (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_DataComponentDefStmtList (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+
 // R501
 ATbool traverse_TypeDeclarationStmt(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
@@ -134,9 +141,9 @@ ATbool traverse_OptImageSelector(ATerm term, SgUntypedExprListExpression** image
 
 ATbool traverse_ContinueStmt(ATerm term, SgUntypedStatement** continue_stmt);
 
-ATbool traverse_DeclarationTypeSpec ( ATerm term, SgUntypedType** type );
-ATbool traverse_IntrinsicTypeSpec   ( ATerm term, SgUntypedType** type );
-//TODO traverse_DerivedTypeSpec
+ATbool traverse_DeclarationTypeSpec ( ATerm term, SgUntypedType* & type );
+ATbool traverse_IntrinsicTypeSpec   ( ATerm term, SgUntypedType* & type );
+ATbool traverse_DerivedTypeSpec     ( ATerm term, SgUntypedType* & type );
 
 // R722
 ATbool traverse_Expression ( ATerm term, SgUntypedExpression** expr );
@@ -281,11 +288,11 @@ ATbool traverse_BlockDataStmt(ATerm term, SgUntypedNamedStatement** block_data_s
 ATbool traverse_EndBlockDataStmt(ATerm term, SgUntypedNamedStatement** end_block_data_stmt);
 
 // R1123-2018-N2146
-ATbool traverse_LoopConcurrentControl(ATerm term, SgUntypedType** type, SgUntypedExprListExpression** header,
+ATbool traverse_LoopConcurrentControl(ATerm term, SgUntypedType* & type, SgUntypedExprListExpression** header,
                                                   SgUntypedExprListExpression** locality, SgUntypedExpression** mask);
 
 // R1125-2018-N2146
-ATbool traverse_ConcurrentHeader(ATerm term, SgUntypedType** type, SgUntypedExprListExpression** header, SgUntypedExpression** mask);
+ATbool traverse_ConcurrentHeader(ATerm term, SgUntypedType* & type, SgUntypedExprListExpression** header, SgUntypedExpression** mask);
 
 // R1126-2018-N2146
 ATbool traverse_ConcurrentControl(ATerm term, SgUntypedNamedExpression** control);
@@ -349,7 +356,7 @@ ATbool traverse_ActualArgSpec      (ATerm term, SgUntypedExpression** arg);
 ATbool traverse_ActualArgSpecList  (ATerm term, SgUntypedExprListExpression** args);
 
 // R1225
-ATbool traverse_OptPrefix(ATerm term, SgUntypedExprListExpression* prefix_list, SgUntypedType** type);
+ATbool traverse_OptPrefix(ATerm term, SgUntypedExprListExpression* prefix_list, SgUntypedType* & type);
 ATbool traverse_CudaAttributesPrefix(ATerm term, SgUntypedOtherExpression** prefix);
 
 // R1227

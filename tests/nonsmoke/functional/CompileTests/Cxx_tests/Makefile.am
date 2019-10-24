@@ -584,6 +584,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    rose-2007-01.C \
    rose-2007-02.C \
    rose-2008.C \
+   rose-2073.C \
    test2019_01.C \
    test2019_02.C \
    test2019_03.C \
@@ -1137,18 +1138,8 @@ else
 endif
 endif
 
-if !ROSE_USE_EDG_VERSION_4_7
-if !ROSE_USE_EDG_VERSION_4_8
-  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-       test2012_68.C
-else
-  TESTCODE_CURRENTLY_FAILING += \
-       test2012_68.C
-endif
-else
-  TESTCODE_CURRENTLY_FAILING += \
-     test2012_68.C
-endif
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2012_68.C
 
 if ROSE_USING_GCC_VERSION_LATER_4_4
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
@@ -1157,10 +1148,16 @@ if ROSE_USING_GCC_VERSION_LATER_4_4
      test2017_44.C \
      test2017_46.C \
      test2017_47.C \
-     test2017_69.C \
      test2016_96.C \
      test2015_135.C \
      test2015_136.C
+
+if USING_INTEL_COMPILER
+   TESTCODE_CURRENTLY_FAILING += test2017_69.C
+else
+   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += test2017_69.C
+endif
+
 else
   TESTCODE_CURRENTLY_FAILING += \
      test2017_31.C \
@@ -1508,10 +1505,12 @@ testTemplateExample: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_36.C
 
 
+if ROSE_WITH_LIBHARU
 TEST_PDF_TRANSLATOR = ../../testPDFGeneration
 
 $(TEST_PDF_TRANSLATOR):
 	cd ../..; $(MAKE) testPDFGeneration
+endif
 
 ../../testTranslatorFoldedConstants:
 	cd ../..; $(MAKE) testTranslatorFoldedConstants
@@ -1610,12 +1609,17 @@ print_testcodes:
 performance_timing:
 	../../testGraphGeneration --edg:no_warnings -w -rose:verbose 3 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I$(srcdir) -c $(srcdir)/testPerformance.C
 
+if ROSE_WITH_LIBHARU
 # DQ (3/17/2017): Added PDF test for ROSE evaluation (forces testing of parts of ROSE for lcov):
 test_pdf_generation: $(TEST_PDF_TRANSLATOR)
 	../../testPDFGeneration --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I$(srcdir) -c $(srcdir)/test2004_77.C
 	ls -l *.pdf
 	@echo "Removing the generated PDF file because it is up to 150Meg and we want to save disk space."
 	rm *.pdf
+else
+test_pdf_generation:
+	@echo "libharu support is not enabled"
+endif
 
 # DQ (11/19/2012): HPCToolKit use.  This makes some significant assumptions on how we have setup HPCToolKit.
 hpctoolkit:

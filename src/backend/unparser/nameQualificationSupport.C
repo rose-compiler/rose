@@ -6040,7 +6040,9 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        // Could it be that we only want to do this for the defining declaration? No, since prototypes must also use name qualification!
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("In name qualification: classDeclaration = %p = %s \n",classDeclaration,classDeclaration->class_name().c_str());
+          printf ("In name qualification:\n");
+          printf (" - classDeclaration   = %p = %s \n",classDeclaration, classDeclaration->class_name().c_str());
+          printf (" -     ->get_parent() = %p = %s \n",classDeclaration->get_parent(), classDeclaration->get_parent() ? classDeclaration->get_parent()->class_name().c_str() : "");
 #endif
 
        // We need the structural location in scope (not the semantic one).
@@ -6122,67 +6124,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                printf ("currentScope                  = %p = %s \n",currentScope,currentScope->class_name().c_str());
                printf ("classDeclaration->get_scope() = %p = %s \n",class_scope,class_scope->class_name().c_str());
 #endif
-            // if (currentScope != classDeclaration->get_scope())
-               if (currentScope != class_scope)
+               if (currentScope != class_scope && !SgScopeStatement::isEquivalentScope(currentScope, class_scope))
                   {
-                 // DQ (1/21/2013): We should be able to assert this.
-                    ROSE_ASSERT(classDeclaration->get_scope() != NULL);
-#if 1
-                 // DQ (1/21/2013): Added new static function to support testing for equivalent when the scopes are namespaces.
-                    bool isSameNamespace = SgScopeStatement::isEquivalentScope(currentScope,classDeclaration->get_scope());
-
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("isSameNamespace = %s \n",isSameNamespace ? "true" : "false");
-#endif
-#else
-
-#error "DEAD CODE!"
-
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
-                    printf ("classDeclaration->get_scope() = %p = %s \n",classDeclaration->get_scope(),classDeclaration->get_scope()->class_name().c_str());
-#endif
-                 // DQ (1/21/2013): If these are both namespace scopes then do a more sophisticated test for equivalent namespace.
-                 // Note that over qualification of generated code can be an error.
-                    SgNamespaceDefinitionStatement* currentNamespaceDefinition = isSgNamespaceDefinitionStatement(currentScope);
-                    SgNamespaceDefinitionStatement* classDeclarationNamespaceDefinition = isSgNamespaceDefinitionStatement(classDeclaration->get_scope());
-                    bool isSameNamespace = false;
-                    if (currentNamespaceDefinition != NULL && classDeclarationNamespaceDefinition != NULL)
-                       {
-#error "DEAD CODE!"
-
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                         printf ("These are both in namespaces and we need to check if it is the same namespace (instead of just matching scope pointers) \n");
-#endif
-                         SgNamespaceDeclarationStatement* currentNamespaceDeclaration = isSgNamespaceDeclarationStatement(currentNamespaceDefinition->get_namespaceDeclaration());
-                         SgNamespaceDeclarationStatement* classDeclarationNamespaceDeclaration = isSgNamespaceDeclarationStatement(classDeclarationNamespaceDefinition->get_namespaceDeclaration());
-
-#error "DEAD CODE!"
-
-                      // Test for equivalent namespaces.
-                         if (currentNamespaceDeclaration->get_firstNondefiningDeclaration() == classDeclarationNamespaceDeclaration->get_firstNondefiningDeclaration())
-                            {
-                              isSameNamespace = true;
-                            }
-                           else
-                            {
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                              printf ("These namespaces are different \n");
-#endif
-                            }
-
-#error "DEAD CODE!"
-
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                         printf ("SgClassDeclaration: (detected equivalent namespaces) isSameNamespace = %s \n",isSameNamespace ? "true" : "false");
-#endif
-                       }
-#error "DEAD CODE!"
-
-#endif
-                 // DQ (1/21/2013): Added code to support when equivalent namespaces are detected.
-                    if (isSameNamespace == false)
-                       {
                       // DQ (6/11/2013): Added test to make sure that name qualification is ignored for friend function where the class has not yet been seen.
                       // if (classDeclaration->get_declarationModifier().isFriend() == false)
                          SgDeclarationStatement* declarationForReferencedNameSet = classDeclaration->get_firstNondefiningDeclaration();
@@ -6211,42 +6154,17 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                    printf ("SgClassDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
                                    setNameQualification(classDeclaration,amountOfNameQualificationRequired);
-#if 0
-                                // DQ (2/12/2019): debugging Cxx11_tests/test2019_107.C.
-                                   printf ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
-#endif
                                  }
                             }
-                       }
                   }
                  else
                   {
-                 // Don't know what test code exercises this case (see test2011_62.C).
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("WARNING: SgClassDeclaration -- currentScope is not available through predicate (currentScope != classDeclaration->get_scope()), not clear why! \n");
-#endif
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("Commenting out: classDeclaration->get_parent() == classDeclaration->get_scope() in name qualitication (processing a template instantiation directive) \n");
-                 // ROSE_ASSERT(classDeclaration->get_parent() == classDeclaration->get_scope());
-#endif
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("name qualification for classDeclaration->get_scope()  = %p = %s \n",classDeclaration->get_scope(),classDeclaration->get_scope()->class_name().c_str());
-                    printf ("classDeclaration->get_parent()                        = %p = %s \n",classDeclaration->get_parent(),classDeclaration->get_parent()->class_name().c_str());
-#endif
-                 // ROSE_ASSERT(false);
-
-                 // DQ (7/22/2017): I think the template arguments name qualification can be required, but is ignored.
-#if 0
-                    printf ("ERROR: When the scopes are the same we don't require name qualification on the template instnatiation, but it might still be required for it's template arguments! \n");
-#endif
                  // DQ (7/22/2017): I think the template arguments name qualification can be required. This fixes test2017_56.C.
                     int amountOfNameQualificationRequired = nameQualificationDepth(classDeclaration,currentScope,classDeclaration);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                    printf ("NEW CASE: currentScope != classDeclaration->get_scope(): SgClassDeclaration: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+                    printf (" - amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
-                 // setNameQualification(classDeclaration,0);
                     setNameQualification(classDeclaration,amountOfNameQualificationRequired);
                   }
              }
@@ -14485,10 +14403,16 @@ NameQualificationTraversal::setNameQualification(SgClassDeclaration* classDeclar
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("In setNameQualification(SgClassDeclaration*) \n");
+     printf (" - classDeclaration = %p (%s)\n", classDeclaration, classDeclaration->class_name().c_str());
+     printf (" - amountOfNameQualificationRequired = %s\n", amountOfNameQualificationRequired);
 #endif
 
      SgScopeStatement * scope = traverseNonrealDeclForCorrectScope(classDeclaration);
      string qualifier = setNameQualificationSupport(scope,amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf (" - qualifier = %s\n", qualifier.c_str());
+#endif
 
      classDeclaration->set_global_qualification_required(outputGlobalQualification);
      classDeclaration->set_name_qualification_length(outputNameQualificationLength);
@@ -14498,9 +14422,9 @@ NameQualificationTraversal::setNameQualification(SgClassDeclaration* classDeclar
      ROSE_ASSERT(outputTypeEvaluation == false);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-     printf ("In NameQualificationTraversal::setNameQualification(): classDeclaration->get_name_qualification_length()     = %d \n",classDeclaration->get_name_qualification_length());
-     printf ("In NameQualificationTraversal::setNameQualification(): classDeclaration->get_type_elaboration_required()     = %s \n",classDeclaration->get_type_elaboration_required() ? "true" : "false");
-     printf ("In NameQualificationTraversal::setNameQualification(): classDeclaration->get_global_qualification_required() = %s \n",classDeclaration->get_global_qualification_required() ? "true" : "false");
+     printf (" - classDeclaration->get_name_qualification_length()     = %d \n",classDeclaration->get_name_qualification_length());
+     printf (" - classDeclaration->get_type_elaboration_required()     = %s \n",classDeclaration->get_type_elaboration_required() ? "true" : "false");
+     printf (" - classDeclaration->get_global_qualification_required() = %s \n",classDeclaration->get_global_qualification_required() ? "true" : "false");
 #endif
 
      if (qualifiedNameMapForNames.find(classDeclaration) == qualifiedNameMapForNames.end())

@@ -31,6 +31,7 @@ using namespace SageInterface;
 // a namespace
 namespace Inliner {
   bool skipHeaders = false;
+  bool verbose = false ; // if set to true, generate debugging information
 } 
 
 SgExpression* generateAssignmentMaybe(SgExpression* lhs, SgExpression* rhs)
@@ -247,8 +248,13 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
       // also check if it is compiler generated, mostly template instantiations. They are not from user code.
       if (funcall->get_file_info()->isCompilerGenerated() )
         return false; 
+      // check if the file is within include-staging/ header directories
+      if (insideSystemHeader(funcall))
+        return false;
     }
 
+// Handle member function calls like a.foo() or aptr->foo()
+// Walk to its right-hand side to get the member function reference expression.
      SgExpression* funname = funcall->get_function();
      SgExpression* func_ref_exp = isSgFunctionRefExp(funname);
      SgDotExp* dotexp = isSgDotExp(funname);
@@ -285,28 +291,33 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 
      if (!func_ref_exp)
         {
-       // std::cout << "Inline failed: not a call to a named function" << std::endl;
+           if (Inliner::verbose)        
+           {
+              std::cout << "Inline returns false: not a call to a named function for SgFunctionCallExp*"<< funcall << std::endl;
+              funcall->get_file_info()->display();
+           }
           return false; // Probably a call through a fun ptr
         }
 
      SgFunctionSymbol* funsym = 0;
      if (isSgFunctionRefExp(func_ref_exp))
-          funsym = isSgFunctionRefExp(func_ref_exp)->get_symbol();
-       else
-          if (isSgMemberFunctionRefExp(func_ref_exp))
-               funsym = isSgMemberFunctionRefExp(func_ref_exp)->get_symbol();
-            else // template member function is not supported yet
-            {
-               cerr<<"doInline() unhandled function reference type:"<< func_ref_exp->class_name() <<endl;
-               //assert (false);
-               return false;
-            }
+       funsym = isSgFunctionRefExp(func_ref_exp)->get_symbol();
+     else
+       if (isSgMemberFunctionRefExp(func_ref_exp))
+         funsym = isSgMemberFunctionRefExp(func_ref_exp)->get_symbol();
+       else // template member function is not supported yet
+       {
+         cerr<<"doInline() unhandled function reference type:"<< func_ref_exp->class_name() <<endl;
+         //assert (false);
+         return false;
+       }
 
      assert (funsym);
      if (isSgMemberFunctionSymbol(funsym) &&
          isSgMemberFunctionSymbol(funsym)->get_declaration()->get_functionModifier().isVirtual())
         {
-       // std::cout << "Inline failed: cannot inline virtual member functions" << std::endl;
+           if (Inliner::verbose)        
+              std::cout << "Inline returns false: cannot inline virtual member functions" << std::endl;
           return false;
         }
 
@@ -316,7 +327,8 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      SgFunctionDefinition* fundef = fundecl ? fundecl->get_definition() : NULL;
      if (!fundef)
         {
-       // std::cout << "Inline failed: no definition is visible" << std::endl;
+           if (Inliner::verbose)        
+             std::cout << "Inline returns false: no function definition is visible" << std::endl;
           return false; // No definition of the function is visible
         }
 
@@ -338,7 +350,8 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
           assert (isSgFunctionDefinition(my_fundef));
           if (isSgFunctionDefinition(my_fundef) == fundef)
              {
-               std::cout << "Inline failed: trying to inline a procedure into itself" << std::endl;
+               if (Inliner::verbose)    
+                  std::cout << "Inline failed: trying to inline a procedure into itself" << std::endl;
                return false;
              }
         }
@@ -348,51 +361,53 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      thisname << ++gensym_counter;
      SgInitializedName* thisinitname = 0;
 
+     // create a new variable declaration for member function call : 
+     //   TYPE*  this__ =  thisPtr; ??
      // static member functions cannot access this->data (non-static data). That is why we check non-static for thisptr case. 
      if (isSgMemberFunctionSymbol(funsym) && !fundecl->get_declarationModifier().get_storageModifier().isStatic())
-        {
-          assert (thisptr != NULL);
-          SgType* thisptrtype = thisptr->get_type();
-          const SgSpecialFunctionModifier& specialMod = 
-            funsym->get_declaration()->get_specialFunctionModifier();
-          if (specialMod.isConstructor()) {
-            SgFunctionType* ft = funsym->get_declaration()->get_type();
-            ROSE_ASSERT (ft);
-            SgMemberFunctionType* mft = isSgMemberFunctionType(ft);
-            ROSE_ASSERT (mft);
-            SgType* ct = mft->get_class_type();
-            thisptrtype = new SgPointerType(ct);
-          }
-          SgConstVolatileModifier& thiscv = fundecl->get_declarationModifier().get_typeModifier().get_constVolatileModifier();
+     {
+       assert (thisptr != NULL);
+       SgType* thisptrtype = thisptr->get_type();
+       const SgSpecialFunctionModifier& specialMod = 
+         funsym->get_declaration()->get_specialFunctionModifier();
+       if (specialMod.isConstructor()) {
+         SgFunctionType* ft = funsym->get_declaration()->get_type();
+         ROSE_ASSERT (ft);
+         SgMemberFunctionType* mft = isSgMemberFunctionType(ft);
+         ROSE_ASSERT (mft);
+         SgType* ct = mft->get_class_type();
+         thisptrtype = new SgPointerType(ct);
+       }
+       SgConstVolatileModifier& thiscv = fundecl->get_declarationModifier().get_typeModifier().get_constVolatileModifier();
        // if (thiscv.isConst() || thiscv.isVolatile()) { FIXME
-          thisptrtype = new SgModifierType(thisptrtype);
-          isSgModifierType(thisptrtype)->get_typeModifier().get_constVolatileModifier() = thiscv;
+       thisptrtype = new SgModifierType(thisptrtype);
+       isSgModifierType(thisptrtype)->get_typeModifier().get_constVolatileModifier() = thiscv;
        // }
        // cout << thisptrtype->unparseToString() << " --- " << thiscv.isConst() << " " << thiscv.isVolatile() << endl;
-          SgAssignInitializer* assignInitializer = new SgAssignInitializer(SgNULL_FILE, thisptr);
-          assignInitializer->set_endOfConstruct(SgNULL_FILE);
+       SgAssignInitializer* assignInitializer = new SgAssignInitializer(SgNULL_FILE, thisptr);
+       assignInitializer->set_endOfConstruct(SgNULL_FILE);
 #if 0
-          printf ("before new SgVariableDeclaration(): assignInitializer = %p assignInitializer->isTransformation() = %s \n",assignInitializer,assignInitializer->isTransformation() ? "true" : "false");
+       printf ("before new SgVariableDeclaration(): assignInitializer = %p assignInitializer->isTransformation() = %s \n",assignInitializer,assignInitializer->isTransformation() ? "true" : "false");
 #endif
-          thisdecl = new SgVariableDeclaration(SgNULL_FILE, thisname, thisptrtype, assignInitializer);
+       thisdecl = new SgVariableDeclaration(SgNULL_FILE, thisname, thisptrtype, assignInitializer);
 #if 0
-          printf ("(after new SgVariableDeclaration(): assignInitializer = %p assignInitializer->isTransformation() = %s \n",assignInitializer,assignInitializer->isTransformation() ? "true" : "false");
+       printf ("(after new SgVariableDeclaration(): assignInitializer = %p assignInitializer->isTransformation() = %s \n",assignInitializer,assignInitializer->isTransformation() ? "true" : "false");
 #endif
-          thisdecl->set_endOfConstruct(SgNULL_FILE);
-          thisdecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
-          thisdecl->set_definingDeclaration(thisdecl);
+       thisdecl->set_endOfConstruct(SgNULL_FILE);
+       thisdecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
+       thisdecl->set_definingDeclaration(thisdecl);
 
-          thisinitname = (thisdecl->get_variables()).back();
-          //thisinitname = lastElementOfContainer(thisdecl->get_variables());
-          // thisinitname->set_endOfConstruct(SgNULL_FILE);
-          assignInitializer->set_parent(thisinitname);
-          markAsTransformation(assignInitializer);
+       thisinitname = (thisdecl->get_variables()).back();
+       //thisinitname = lastElementOfContainer(thisdecl->get_variables());
+       // thisinitname->set_endOfConstruct(SgNULL_FILE);
+       assignInitializer->set_parent(thisinitname);
+       markAsTransformation(assignInitializer);
 
        // printf ("Built new SgVariableDeclaration #1 = %p \n",thisdecl);
 
        // DQ (6/23/2006): New test
-          ROSE_ASSERT(assignInitializer->get_parent() != NULL);
-        }
+       ROSE_ASSERT(assignInitializer->get_parent() != NULL);
+     }
 
      // Get the list of actual argument expressions from the function call, which we'll later use to initialize new local
      // variables in the inlined code.  We need to detach the actual arguments from the AST here since we'll be reattaching
@@ -411,7 +426,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      SgFunctionDefinition* function_copy = isSgFunctionDefinition(fundef->copy(tc));
      ROSE_ASSERT (function_copy);
      SgBasicBlock* funbody_copy = function_copy->get_body();
-
+     // rename labels in an inlined function definition. goto statements to them will be updated. 
      renameLabels(funbody_copy, targetFunction);
 
      // print more information in case the following assertion fails

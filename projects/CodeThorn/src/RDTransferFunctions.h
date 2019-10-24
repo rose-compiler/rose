@@ -4,6 +4,9 @@
 #include "DFTransferFunctions.h"
 #include "RDLattice.h"
 
+namespace CodeThorn
+{
+
 class RDTransferFunctions : public CodeThorn::DFTransferFunctions {
 public:
   RDTransferFunctions();
@@ -17,5 +20,9 @@ public:
   void transferFunctionExit(CodeThorn::Label lab, SgFunctionDefinition* funDef, CodeThorn::VariableIdSet& localVariablesInFunction, CodeThorn::Lattice& element);
   void initializeExtremalValue(CodeThorn::Lattice& element);
 };
+
+}
+
+//~ using CodeThorn::RDTransferFunctions;
 
 #endif

@@ -319,13 +319,22 @@ F90_TESTCODES_REQUIRED_TO_PASS =  \
      test2011_Rice_wrong-func-type.f90 \
      test2011_Rice_wrong-func-type-2.f90 \
      test2019_derived_type.f90 \
+     test2019_class_var_decl.f90 \
      test2019_write_io_control_spec.f90 \
      test2019_recursive_function.f90 \
      test2019_derived_type_name_conflict.f90 \
+     test2019_derived_type_name_conflict_2.f90 \
      test2019_rewind.f90 \
      test2019_renameList.f90 \
      test2019_designator.f90 \
      test2019_contiguous_attr.f90 \
+     test2019_doconstruct.f90 \
+     test2019_OpenStmt_Unit.f90 \
+     test2019_common_block_name.f90 \
+     test2019_multi_associate.f90 \
+     test2019_accessibility_attribute.f90 \
+     test2019_accessibility_attribute2.f90 \
+     rose-issue-par-39.f90 \
      canonicalExample.f90 
 
 # Rasmussen(1/9/2019): rose-1612.f90 uses the module in rose_iso_c_binding.f90 which runs afoul of a
@@ -1319,6 +1328,20 @@ module_B_file.f90.passed: testTranslator module_A_file.f90.passed
 #	../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.f90)
 	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
 
+test2019_module_1_file.f90.passed: testTranslator
+	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
+
+# Force representation of module dependency so that mod files are properly generated before use.
+test2019_module_2_file.f90.passed: testTranslator test2019_module_1_file.f90.passed
+	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
+
+test2019_private_attribute2.f90.passed: testTranslator
+	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
+
+# Force representation of module dependency so that mod files are properly generated before use.
+test2019_private_attribute.f90.passed: testTranslator test2019_private_attribute2.f90.passed
+	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
+
 test2010_01.o:
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:relax_syntax_check -c $(srcdir)/$(@:.o=.f90)
 
@@ -1345,7 +1368,7 @@ problemTests:
 
 # We will build a larger collection of module tests soon (supported by makefile dependence rules).
 # PASSING_MODULE_TEST_Objects = module_B_file.o
-PASSING_MODULE_TEST_Objects = module_B_file.f90.passed
+PASSING_MODULE_TEST_Objects = module_B_file.f90.passed test2019_module_2_file.f90.passed test2019_private_attribute.f90.passed
 
 # DQ (10/4/2010): Test calling OFP directly and ROSE for different filename extensions.
 CALL_OFP = java -Djava.class.path=$(top_srcdir)/src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar:$(top_builddir)/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.5.jar fortran.ofp.FrontEnd

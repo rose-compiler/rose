@@ -181,7 +181,6 @@ public:
         require(v3->must_equal(v3), "a value must_equal itself");
         require(v3->must_equal(v4) == v4->must_equal(v3), "must_equal should be symmetric");
         
-        
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // RegisterState (read/write is tested by RiscOperators)

@@ -90,7 +90,8 @@ bool
 SValue::may_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
 {
     SValuePtr other = SValue::promote(other_);
-    ASSERT_require(get_width() == other->get_width());
+    if (get_width() != other->get_width())
+        return false;
     if (isBottom() || other->isBottom())
         return true;
     if (must_equal(other))      // this is faster
@@ -102,7 +103,8 @@ bool
 SValue::must_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
 {
     SValuePtr other = SValue::promote(other_);
-    ASSERT_require(get_width() == other->get_width());
+    if (get_width() != other->get_width())
+        return false;
     if (isBottom() || other->isBottom())
         return false;
     return is_number() && other->is_number() && get_number()==other->get_number();

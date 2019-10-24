@@ -557,29 +557,29 @@ RSIM_Process::binary_trace_start()
     
     static const uint16_t magic = 0x5445;
     size_t n = fwrite(&magic, 2, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     static const uint16_t version = 0x0033;
     n = fwrite(&version, 2, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     static const uint32_t nprocs = 1;
     n = fwrite(&nprocs, 4, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     char exename_buf[32];
     strncpy(exename_buf, simulator->exeName().c_str(), 32);
     exename_buf[31] = '\0';
     n = fwrite(exename_buf, 32, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     uint32_t pid = getpid();
     n = fwrite(&pid, 4, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     static const uint32_t nmodules = 0;
     n = fwrite(&nmodules, 4, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 }
 
 void
@@ -590,67 +590,67 @@ RSIM_Process::binary_trace_add(RSIM_Thread *thread, const SgAsmInstruction *insn
 
     uint32_t addr = insn->get_address();
     size_t n = fwrite(&addr, 4, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     static const uint32_t tid = thread->get_tid();
     n = fwrite(&tid, 4, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     size_t insn_size = insn->get_size();
-    assert(insn_size<=255);
+    ASSERT_always_require(insn_size<=255);
     uint8_t insn_size_byte = insn_size;
     n = fwrite(&insn_size_byte, 1, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     n = fwrite(&insn->get_raw_bytes()[0], insn_size, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     PtRegs regs = thread->get_regs();
 
     n = fwrite(&regs.flags, 4, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     n = fwrite(&regs.ax, 4, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
     
     n = fwrite(&regs.bx, 4, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
     
     n = fwrite(&regs.cx, 4, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
     
     n = fwrite(&regs.dx, 4, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
     
     n = fwrite(&regs.si, 4, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
     
     n = fwrite(&regs.di, 4, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
     
     n = fwrite(&regs.bp, 4, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
     
     n = fwrite(&regs.sp, 4, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     n = fwrite(&regs.cs, 2, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     n = fwrite(&regs.ss, 2, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     n = fwrite(&regs.es, 2, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     n = fwrite(&regs.ds, 2, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     n = fwrite(&regs.fs, 2, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 
     n = fwrite(&regs.gs, 2, 1, btrace_file);
-    assert(1==n);
+    ASSERT_always_require(1==n);
 }
 
 SgAsmInstruction *

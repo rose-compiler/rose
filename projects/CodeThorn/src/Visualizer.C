@@ -303,26 +303,6 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
   return s;
 }
 
-/*! 
- * \author Marc Jasper
- * \date 2016.
- */
-string Visualizer::parProTransitionGraphToDot(ParProTransitionGraph* parProTransitionGraph) {
-  EStateTransitionMap* outEdgesMap = parProTransitionGraph->getOutEdgesMap();
-  stringstream ss;
-  ss << "digraph G {" << endl;
-  for(EStateTransitionMap::iterator i=outEdgesMap->begin(); i!=outEdgesMap->end(); i++) {
-    const ParProEState* source = i->first;
-    ParProTransitions outEdges = i->second;
-    for (ParProTransitions::iterator k=outEdges.begin(); k!=outEdges.end(); k++) {
-      ss <<"  \""<<source->toString()<<"\""<< "->" <<"\""<<k->target->toString()<<"\"";
-      ss <<" [label=\""<<k->edge.getAnnotation()<<"\"]"<<";"<<endl;      
-    }
-  }
-  ss << "}" << endl;
-  return ss.str();
-}
-
 string Visualizer::dotEStateAddressString(const EState* estate) {
   stringstream ss;
   ss<<"s"<<estate;
@@ -330,7 +310,8 @@ string Visualizer::dotEStateAddressString(const EState* estate) {
 }
 
 string Visualizer::dotEStateMemoryString(const EState* estate) {
-  return estate->pstate()->toDotString(variableIdMapping);
+  string prefix=dotClusterName(estate);
+  return estate->pstate()->toDotString(prefix,variableIdMapping);
 }
 
 std::string Visualizer::dotClusterName(const EState* estate) {
@@ -360,13 +341,20 @@ string Visualizer::transitionGraphToDot() {
       //ss<<"label=\"@"<<s<<"\";"<<endl;
       ss<<"label="<<estateIdStringWithTemporaries(s)<<";"<<endl;
 
-      ss<<"{ rank = same; ";
-      auto idStringsSet=s->pstate()->getDotNodeIdStrings();
+      // deactivated because putting all cluster nodes at the same
+      // rank triggers a dot assertion to fail when a node is shared.
+#if 0
+      
+      ss<<"{ rank = same; "; // rank start
+      string prefix=dotClusterName(s);
+      auto idStringsSet=s->pstate()->getDotNodeIdStrings(prefix);
       for(auto id : idStringsSet) {
         ss<<"\""<<id<<"\""<<";"<<endl;
       }
       ss<<dotEStateAddressString(s)<<"[color=brown label=< <FONT COLOR=\"white\">" "L"+Labeler::labelToString(s->label())+"</FONT> >];"<<endl;
-      ss<< " }"<<endl;
+      ss<< " }"<<endl; // rank end
+#endif
+      ss<<dotEStateAddressString(s)<<"[color=brown label=< <FONT COLOR=\"white\">" "L"+Labeler::labelToString(s->label())+"</FONT> >];"<<endl;
       ss<<dotEStateAddressString(s)<<endl; // hook for cluster edges
       ss<<dotEStateMemoryString(s);
       ss<<"}"<<endl; // end of subgraph
@@ -389,6 +377,7 @@ string Visualizer::transitionGraphToDot() {
       ss<<" ltail="<<dotClusterName((*j)->source);
       ss<<" lhead="<<dotClusterName((*j)->target);
     }
+    ss<<" penwidth=3.0 weight=1.0"; // bold cfg edges
     ss <<"]"<<";"<<endl;
   }
   tg1=false;

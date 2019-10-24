@@ -51,12 +51,12 @@
  * @subsection mainpage_gtoc_current Current release
  *
  *  @li [The ROSE public website](http://rosecompiler.org)
- *  @li @ref installation "Download and installation"
+ *  @li [Download and installation](https://github.com/rose-compiler/rose/wiki#basic-info)
  *  @li [Source code analysis tutorial](http://rosecompiler.org/ROSE_Tutorial/ROSE-Tutorial.pdf) (PDF)
  *  @li @ref binary_tutorial
  *  @li [ROSE user manual](http://rosecompiler.org/ROSE_UserManual/ROSE-UserManual.pdf) (PDF)
- *  @li @ref rosetools "ROSE-Based Tools"
- *  @li [Publications](http://rosecompiler.org/?page_id=182)
+ *  @li [ROSE-Based Tools](https://github.com/rose-compiler/rose/wiki/ROSE-based-tools)
+ *  @li [Publications](https://github.com/rose-compiler/rose/wiki/Publications)
  *  @li [Public mailing list](https://mailman.nersc.gov/mailman/listinfo/rose-public) for anyone that uses ROSE.
  *  @li [Developers mailing list](https://mailman.nersc.gov/mailman/listinfo/rose-developer) for anyone who
  *      contributes to the ROSE project.
@@ -73,57 +73,6 @@
  *  The documentation you're currently viewing is for a specific version of ROSE. Documentation for other releases can be found
  *  [here](http://doxygen.rosecompiler.org).
  *  
- * @section mainpage_where_to_start Where new users should start
- *
- * ROSE is a large and complex piece of software consisting of libraries, tools, projects; parsers, analyzers, backends; unit
- * tests, functional tests, application tests, etc.  This section is intended to offer some suggestions as to where a new user
- * might get started in an overwhelming sea of documentation.
- *
- * <table>
- *   <tr>
- *     <th>Your goal</th>
- *     <th>Some places to start</th>
- *   </tr>
- *
- *   <tr>
- *     <td>To install the ROSE library</td>
- *     <td>You'll almost certainly need to do more than the standard "configure && make install". See @ref installation.</td>
- *   </tr>
- *
- *   <tr>
- *     <td>To use a tool that comes with ROSE</td>
- *     <td>Compile and install the ROSE library (above), then compile and install the tools.
- *         See @ref rosetools for more info.</td>
- *   </tr>
- *
- *   <tr>
- *     <td>To write a source-to-source translator</td>
- *     <td>You'll need to call @ref ::frontend (@ref rose_frontend) to obtain a @ref SgProject node of an AST, then
- *         transform the AST as you see fit (@ref rose_midend), then call @ref ::backend (@ref rose_backend) to generate
- *         new code. All node classes start with the letters "Sg" (short for "Sage"), and the base class @ref SgNode.</td>
- *   </tr>
- *
- *   <tr>
- *     <td>To write an analyzer of source code</td>
- *     <td>Analyzers start with the first third of a translator (@ref ::frontend, see above) and continue by operating,
- *         usually, on the AST. See @ref rose_midend.</td>
- *   </tr>
- *
- *   <tr>
- *     <td>To write an analyzer of binaries</td>
- *     <td>See the @ref binary_tutorial, the @ref Rose::BinaryAnalysis namespace, and the @ref binary_faq. The
- *         @ref rosetools page lists existing tools, many of which are distributed with ROSE and can be used
- *         as further examples.</td>
- *   </tr>
- *   
- *   <tr>
- *     <td>To improve ROSE documentation</td>
- *     <td>Documentation suggestions, bug reports, and contributions are always welcome. ROSE is written by a team
- *         of mostly of researchers, and although we want the library to be user friendly, we're not always sure
- *         how to effectively acheive that. See @ref how_to_document.</td>
- *   </tr>
- * </table>
- *
  * @section mainpage_contributors Contributors to this release
  *
  * <!-- These are the people that contributed since the last major release of ROSE.  The complete history of all contributors
@@ -173,22 +122,12 @@
  *
  * @section mainpage_next Next steps
  *
- *  ROSE is an open source project that can be installed from source code. See @ref installation.
- *
- *
- *
- *  @todo The "all-versions" link doesn't work yet.  Eventually that link will point back into the top of the documentation for
- *        each released version of ROSE, both older and newer than this version. [Robb P. Matzke 2015-09-26]
+ *  ROSE is an open source project that can be installed from source code. See [Download and
+ *  installation](https://github.com/rose-compiler/rose/wiki/How-to-Set-Up-ROSE)
  *
  *  @todo The links to the "ROSE tutorial" (at least the source code part) and the "ROSE user manual" are to versions
  *        served from http://rosecompiler.org, which might not match this release of ROSE. A better approach might be to use
  *        relative linking: it would point to a version consistent with the documentation you're now reading, including the
  *        case when a user generates their own local copies and has no Internet connection. These documents may move into
  *        doxygen, in which case this is no longer an issue. [Robb P. Matzke 2015-09-25]
- *
- *  @todo We have two sources of research publications. They need to be combined. [Robb P. Matzke 2015-09-25]
- *
- *  @todo We have two sources for "outreach" that need to be combined: one at rosecompiler.org and the other on the
- *        doxygen-generated mainpage.  Both are out of date. [Robb P. Matzke 2015-09-26]
- *
- *  @todo The "Hightlights" (sic) page says "Recent highlights" but the last one is from 2012. [Robb P. Matzke 2015-09-26] */
+ */

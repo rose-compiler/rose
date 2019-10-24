@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include "untypedBuilder.h"
 #include "ATermToUntypedTraversal.h"
 
 #define PRINT_ATERM_TRAVERSAL 0
@@ -10,10 +11,7 @@ using std::endl;
 
 ATermToUntypedTraversal::ATermToUntypedTraversal(SgSourceFile* source)
 {
-   SgUntypedDeclarationStatementList* sg_decls = new SgUntypedDeclarationStatementList();
-   SgUntypedStatementList*            sg_stmts = new SgUntypedStatementList();
-   SgUntypedFunctionDeclarationList*  sg_funcs = new SgUntypedFunctionDeclarationList();
-   SgUntypedGlobalScope*          global_scope = new SgUntypedGlobalScope("",sg_decls,sg_stmts,sg_funcs);
+   SgUntypedGlobalScope* global_scope = UntypedBuilder::buildScope<SgUntypedGlobalScope>();
 
    pSourceFile = source;
    ROSE_ASSERT(pSourceFile != NULL);
@@ -102,8 +100,6 @@ void
 ATermToUntypedTraversal::setSourcePosition( SgLocatedNode* locatedNode, PosInfo & pos )
 {
    ROSE_ASSERT(locatedNode != NULL);
-   ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
-   ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
 
    std::string filename = getCurrentFilename();
 

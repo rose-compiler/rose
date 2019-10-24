@@ -1,0 +1,10 @@
+START
+ITEM ITEM'1 B 5 ;
+DEF PROC PROC'1 RENT;
+  BEGIN
+    FOR I :1 BY 1 WHILE I <= 5;
+      BEGIN
+        BIT(ITEM'1,  I - 1, 1) = TRUE;
+      END
+  END
+TERM

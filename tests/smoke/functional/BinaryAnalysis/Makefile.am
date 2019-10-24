@@ -39,6 +39,28 @@ testPartitioner2_%.passed: $(testPartitioner2_specdir)/% testPartitioner2 testPa
 PHONIES += check-testPartitioner2
 check-testPartitioner2: $(testPartitioner2_targets)
 
+########################################################################################################################
+# Test that certain header files can be included by themselves. Test passes if the source can be compiled.
+########################################################################################################################
+
+noinst_PROGRAMS += testSemanticSValue
+testSemanticSValue_SOURCES = testSemanticSValue.C
+
+noinst_PROGRAMS += testSemanticRegisterState
+testSemanticRegisterState_SOURCES = testSemanticRegisterState.C
+
+noinst_PROGRAMS += testSemanticMemoryState
+testSemanticMemoryState_SOURCES = testSemanticMemoryState.C
+
+noinst_PROGRAMS += testSemanticState
+testSemanticState_SOURCES = testSemanticState.C
+
+noinst_PROGRAMS += testSemanticRiscOperators
+testSemanticRiscOperators_SOURCES = testSemanticRiscOperators.C
+
+noinst_PROGRAMS += testSemanticDispatcher
+testSemanticDispatcher_SOURCES = testSemanticDispatcher.C
+
 
 ###############################################################################################################################
 # Boilerplate

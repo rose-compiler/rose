@@ -533,18 +533,6 @@ stringTest(std::string s)
     return true;
 }
 
-// WARNING: This "test" doesn't really test anything. It just calls the functions and spits out results without checking that
-//          the results are valid.
-static bool
-test_removePseudoRedundentSubstrings() // sic
-{
-    std::string X = "ARRAY_OPERAND_UNIFORM_SIZE_INITIALIZATION_MACRO_D6(A);";
-    printf("X = \n%s\n",X.c_str());
-    std::string Y = StringUtility::removePseudoRedundentSubstrings ( X );
-    printf("Y = \n%s\n",Y.c_str());
-    return true;
-}
-
 // Here's another implementation of Damerau-Levenshtein edit distance which we can use to test the one in ROSE.
 // https://github.com/ugexe/Text--Levenshtein--Damerau--XS/blob/master/damerau-int.c
 namespace DamerauLevenshtein2 {
@@ -776,8 +764,6 @@ main()
     test_fixLineTermination();
 
     size_t nfailures = 0;
-
-    nfailures += test_removePseudoRedundentSubstrings() ? 0 : 1;
 
     nfailures += stringTest("foo.h") ? 0 : 1;
     nfailures += stringTest("/foo.h") ? 0 : 1;

@@ -1,3 +1,7 @@
+// Rasmussen (04/17/2019): Support for ATerms has been deprecated as it is no longer needed
+// and likely never fully implemented nor tested.  Files remain in the src tree but are no
+// longer built.
+
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 

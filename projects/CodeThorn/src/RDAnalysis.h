@@ -23,7 +23,7 @@ class RDPropertyStateFactory : public PropertyStateFactory {
   virtual ~RDPropertyStateFactory();
 };
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */
@@ -34,7 +34,15 @@ class RDAnalysis : public DFAnalysisBase {
   CodeThorn::LabelSet getPreRDs(Label lab, VariableId);
   CodeThorn::LabelSet getPostRDs(Label lab, VariableId);
   virtual void initializeExtremalValue(Lattice* element);
-  void initialize(SgProject* root) { DFAnalysisBase::initialize(root, true); }
+
+  void initialize(SgProject* root)
+  {
+    DFAnalysisBase::initialize( root,
+                                nullptr /* no existing abstraction layer */,
+                                true /* id mapping for array elements */
+                              );
+  }
+
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice* elem);
 };

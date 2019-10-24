@@ -14,115 +14,115 @@ namespace Partitioner2 {
 // Individual thunk predicates
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-size_t
+ThunkDetection
 isX86JmpMemThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
     if (insns.empty())
-        return 0;
+        return ThunkDetection();
     SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[0]);
     if (!ModulesX86::matchJmpMem(partitioner, jmp))
-        return 0;
-    return 1;
+        return ThunkDetection();
+    return ThunkDetection(1, "JMP [address]");
 }
 
-size_t
+ThunkDetection
 isX86LeaJmpThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
     if (insns.size() < 2)
-        return 0;
+        return ThunkDetection();
 
     // LEA ECX, [EBP + constant]
     SgAsmX86Instruction *lea = isSgAsmX86Instruction(insns[0]);
     if (!ModulesX86::matchLeaCxMemBpConst(partitioner, lea))
-        return 0;
+        return ThunkDetection();
 
     // JMP address
     SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[1]);
     if (!ModulesX86::matchJmpConst(partitioner, jmp))
-        return 0;
+        return ThunkDetection();
 
-    return 2;
+    return ThunkDetection(2, "LEA ECX, [EBP + constant]; JMP address");
 }
 
-size_t
+ThunkDetection
 isX86MovJmpThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
     if (insns.size() < 2)
-        return 0;
+        return ThunkDetection();
 
-    // MOV reg1 [address]
+    // MOV reg1, [address]
     SgAsmX86Instruction *mov = isSgAsmX86Instruction(insns[0]);
     if (!mov || mov->get_kind() != x86_mov)
-        return 0;
+        return ThunkDetection();
     const SgAsmExpressionPtrList &movArgs = mov->get_operandList()->get_operands();
     if (movArgs.size() != 2)
-        return 0;
+        return ThunkDetection();
     SgAsmDirectRegisterExpression *movArg0 = isSgAsmDirectRegisterExpression(movArgs[0]);
     SgAsmMemoryReferenceExpression *movArg1 = isSgAsmMemoryReferenceExpression(movArgs[1]);
     if (!movArg0 || !movArg1)
-        return 0;
+        return ThunkDetection();
 
     // JMP reg1
     SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[1]);
     if (!jmp || jmp->get_kind() != x86_jmp)
-        return 0;
+        return ThunkDetection();
     const SgAsmExpressionPtrList &jmpArgs = jmp->get_operandList()->get_operands();
     if (jmpArgs.size() != 1)
-        return 0;
+        return ThunkDetection();
     SgAsmDirectRegisterExpression *jmpArg0 = isSgAsmDirectRegisterExpression(jmpArgs[0]);
     if (!jmpArg0)
-        return 0;
+        return ThunkDetection();
     if (jmpArg0->get_descriptor() != movArg0->get_descriptor())
-        return 0;
+        return ThunkDetection();
 
-    return 2;
+    return ThunkDetection(2, "MOV reg1, [address]; JMP reg1");
 }
 
-size_t
+ThunkDetection
 isX86JmpImmThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
     if (insns.empty())
-        return 0;
+        return ThunkDetection();
     SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[0]);
     if (!jmp || jmp->get_kind() != x86_jmp)
-        return 0;
+        return ThunkDetection();
     const SgAsmExpressionPtrList &jmpArgs = jmp->get_operandList()->get_operands();
     if (jmpArgs.size() != 1)
-        return 0;
+        return ThunkDetection();
     SgAsmIntegerValueExpression *jmpArg0 = isSgAsmIntegerValueExpression(jmpArgs[0]);
     if (!jmpArg0)
-        return 0;
+        return ThunkDetection();
     rose_addr_t targetVa = jmpArg0->get_absoluteValue();
     if (!partitioner.memoryMap()->require(MemoryMap::EXECUTABLE).at(targetVa).exists())
-        return 0;                                       // target must be an executable address
+        return ThunkDetection();                        // target must be an executable address
     if (!partitioner.instructionExists(targetVa) && !partitioner.instructionsOverlapping(targetVa).empty())
-        return 0;                                       // points to middle of some instruction
-    return 1;
+        return ThunkDetection();                        // points to middle of some instruction
+    return ThunkDetection(1, "JMP address");
 }
 
-size_t
+ThunkDetection
 isX86AddJmpThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
     if (insns.size() < 2)
-        return 0;
+        return ThunkDetection();
     SgAsmX86Instruction *add = isSgAsmX86Instruction(insns[0]);
     if (!add || add->get_kind() != x86_add)
-        return 0;
+        return ThunkDetection();
     const SgAsmExpressionPtrList &addArgs = add->get_operandList()->get_operands();
     if (addArgs.size() != 2)
-        return 0;
+        return ThunkDetection();
     SgAsmDirectRegisterExpression *addArg0 = isSgAsmDirectRegisterExpression(addArgs[0]);
     if (!addArg0 || addArg0->get_descriptor().majorNumber() != x86_regclass_gpr ||
         addArg0->get_descriptor().minorNumber() != x86_gpr_cx)
-        return 0;
+        return ThunkDetection();
     SgAsmIntegerValueExpression *addArg1 = isSgAsmIntegerValueExpression(addArgs[1]);
     if (!addArg1)
-        return 0;
+        return ThunkDetection();
     SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[1]);
     if (!jmp || jmp->get_kind() != x86_jmp)
-        return 0;
+        return ThunkDetection();
     const SgAsmExpressionPtrList &jmpArgs = jmp->get_operandList()->get_operands();
     if (jmpArgs.size() != 1)
-        return 0;
+        return ThunkDetection();
     SgAsmIntegerValueExpression *jmpArg0 = isSgAsmIntegerValueExpression(jmpArgs[0]);
     if (!jmpArg0)
-        return 0;
-    return 2;
+        return ThunkDetection();
+    return ThunkDetection(2, "ADD r, constant; JMP address <where \"r\" is one of the cx registers>");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -160,15 +160,15 @@ ThunkPredicates::allThunks() {
     return retval;
 }
 
-size_t
+ThunkDetection
 ThunkPredicates::isThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) const {
     BOOST_FOREACH (ThunkPredicate predicate, predicates_) {
         if (predicate) {
-            if (size_t retval = (predicate)(partitioner, insns))
+            if (ThunkDetection retval = (predicate)(partitioner, insns))
                 return retval;
         }
     }
-    return 0;
+    return ThunkDetection();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -213,15 +213,17 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
             continue;
 
         // Does the function appear to start with a thunk pattern of instructions?
-        size_t thunkSize = thunkPredicates->isThunk(partitioner, entryBlock->instructions());
-        if (0 == thunkSize)
+        ThunkDetection found = thunkPredicates->isThunk(partitioner, entryBlock->instructions());
+        if (!found)
             continue;
 
         // Is the thunk pattern a proper subsequence of the entry block?
-        bool thunkIsPrefix = thunkSize < entryBlock->nInstructions();
+        bool thunkIsPrefix = found.nInsns < entryBlock->nInstructions();
         if (!thunkIsPrefix && candidate->basicBlockAddresses().size()==1) {
             // Function is only a thunk already, so make sure the FUNC_THUNK bit is set.
             candidate->insertReasons(SgAsmFunction::FUNC_THUNK);
+            if (candidate->reasonComment().empty() && !found.name.empty())
+                candidate->reasonComment("matched " + found.name);
             continue;                                   // function is only a thunk already
         }
         if (!thunkIsPrefix && entryVertex->nOutEdges() != 1)
@@ -241,7 +243,7 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
         ControlFlowGraph::ConstVertexIterator targetVertex = partitioner.cfg().vertices().end();
         if (thunkIsPrefix) {
             SAWYER_MESG(debug) <<"    splitting entry " <<origEntryBlock->printableName() <<"\n";
-            targetVertex = partitioner.truncateBasicBlock(entryVertex, entryBlock->instructions()[thunkSize]);
+            targetVertex = partitioner.truncateBasicBlock(entryVertex, entryBlock->instructions()[found.nInsns]);
             entryBlock = entryVertex->value().bblock();
             SAWYER_MESG(debug) <<"    new entry is " <<entryBlock->printableName() <<"\n";
             ASSERT_require(entryBlock != origEntryBlock); // we need the original block for its analysis results below
@@ -254,6 +256,9 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
 
         // Create the new thunk function.
         Function::Ptr thunkFunction = Function::instance(candidate->address(), SgAsmFunction::FUNC_THUNK);
+        std::string reasonComment = found.name.empty() ? "" : "matched " + found.name;
+        reasonComment = (reasonComment.empty() ? "" : " ") + std::string("split from ") + candidate->printableName();
+        thunkFunction->reasonComment(reasonComment);
         SAWYER_MESG(debug) <<"    created thunk " <<thunkFunction->printableName() <<"\n";
         partitioner.attachFunction(thunkFunction);
 
@@ -264,9 +269,14 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
         // block owned by multiple functions), the target vertex might already be a function, in which case we shouldn't try to
         // create it.
         if (targetVertex->value().type() == V_BASIC_BLOCK && !partitioner.functionExists(targetVertex->value().address())) {
-            unsigned newReasons = (candidate->reasons() & ~SgAsmFunction::FUNC_THUNK) | SgAsmFunction::FUNC_GRAPH;
+            unsigned newReasons = (candidate->reasons() & ~SgAsmFunction::FUNC_THUNK) | SgAsmFunction::FUNC_THUNK_TARGET;
             Function::Ptr newFunc = Function::instance(targetVertex->value().address(), candidate->name(), newReasons);
             newFunc->comment(candidate->comment());
+            if (candidate->reasonComment().empty()) {
+                newFunc->reasonComment("from thunk " + thunkFunction->printableName());
+            } else {
+                newFunc->reasonComment(candidate->reasonComment());
+            }
             BOOST_FOREACH (rose_addr_t va, candidate->basicBlockAddresses()) {
                 if (va != thunkFunction->address())
                     newFunc->insertBasicBlock(va);

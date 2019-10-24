@@ -1,7 +1,7 @@
 #include <sage3basic.h>
 
 #include <BinaryConcolic.h>
-#include <ConcreteSemantics2.h>
+#include <CommandLine.h>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/FileSystem.h>
@@ -13,7 +13,6 @@
 
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
-namespace ISBase = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 
 using namespace Sawyer::Message::Common;
 
@@ -21,306 +20,163 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
 
-typedef ISBase::Dispatcher Cpu;
-typedef ISBase::DispatcherPtr CpuPtr;
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Semantic domain for concrete execution.
-//
-// For now we're emulating instructions with the concrete semantic domain because this is the more general method, but the plan
-// is to replace this with native execution (e.g., single stepping in a debugger) where it can be supported.
+// RiscOperators for concolic emulation
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+namespace Emulation {
 
-typedef IS::ConcreteSemantics::SValue ConcreteValue;
-typedef IS::ConcreteSemantics::SValuePtr ConcreteValuePtr;
-typedef IS::ConcreteSemantics::RegisterState ConcreteRegisters;
-typedef IS::ConcreteSemantics::RegisterStatePtr ConcreteRegistersPtr;
-typedef IS::ConcreteSemantics::MemoryState ConcreteMemory;
-typedef IS::ConcreteSemantics::MemoryStatePtr ConcreteMemoryPtr;
-typedef IS::ConcreteSemantics::State ConcreteState;
-typedef IS::ConcreteSemantics::StatePtr ConcreteStatePtr;
+RiscOperatorsPtr
+RiscOperators::instance(const P2::Partitioner &partitioner, const Debugger::Ptr &process,
+                        const IS::BaseSemantics::SValuePtr &protoval, const SmtSolver::Ptr &solver) {
+    // Extend the register set with an additional Boolean register named "path"
+    RegisterDictionary *regdict = new RegisterDictionary("Rose::BinaryAnalysis::Concolic");
+    regdict->insert(process->registerDictionary());
+    const RegisterDescriptor path(process->registerDictionary()->firstUnusedMajor(), 0, 0, 1);
+    regdict->insert("path", path);
 
-typedef boost::shared_ptr<class ConcreteOperators> ConcreteOperatorsPtr;
-class ConcreteOperators: public IS::ConcreteSemantics::RiscOperators {
-public:
-    typedef IS::ConcreteSemantics::RiscOperators Super;
+    // Initialize machine state
+    RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
+    MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
+    memory->set_byteOrder(ByteOrder::ORDER_LSB);
+    StatePtr state = State::instance(registers, memory);
+    RiscOperatorsPtr ops(new RiscOperators(partitioner, process, state, solver));
+    ASSERT_require(ops->REG_PATH == path);
+    ops->writeRegister(path, ops->boolean_(true));
 
-protected: // Real constructors
-    ConcreteOperators(const ISBase::SValuePtr &protoval, const SmtSolverPtr &solver)
-        : Super(protoval, solver) {
-        name("Concolic-concrete");
-        (void) ConcreteValue::promote(protoval);
-    }
+    // Mark program inputs
+    ops->markProgramArguments();
 
-    ConcreteOperators(const ISBase::StatePtr &state, const SmtSolverPtr &solver)
-        : Super(state, solver) {
-        name("Concolic-concrete");
-        (void) ConcreteValue::promote(state->protoval());
-    }
-
-public: // Static allocating constructors
-    static ConcreteOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        ISBase::SValuePtr protoval = ConcreteValue::instance();
-        ISBase::RegisterStatePtr registers = ConcreteRegisters::instance(protoval, regdict);
-        ISBase::MemoryStatePtr memory = ConcreteMemory::instance(protoval, protoval);
-        ISBase::StatePtr state = ConcreteState::instance(registers, memory);
-        return ConcreteOperatorsPtr(new ConcreteOperators(state, solver));
-    }
-
-    static ConcreteOperatorsPtr instance(const ISBase::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return ConcreteOperatorsPtr(new ConcreteOperators(protoval, solver));
-    }
-
-    static ConcreteOperatorsPtr instance(const ISBase::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return ConcreteOperatorsPtr(new ConcreteOperators(state, solver));
-    }
-
-public: // Virtual constructors
-    virtual ISBase::RiscOperatorsPtr create(const ISBase::SValuePtr &protoval,
-                                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
-        return instance(protoval, solver);
-    }
-
-    virtual ISBase::RiscOperatorsPtr create(const ISBase::StatePtr &state,
-                                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
-        return instance(state, solver);
-    }
-    
-public: // Dynamic pointer casts
-    static ConcreteOperatorsPtr promote(const ISBase::RiscOperatorsPtr &x) {
-        ConcreteOperatorsPtr retval = boost::dynamic_pointer_cast<ConcreteOperators>(x);
-        ASSERT_not_null(retval);
-        return retval;
-    }
-
-public:
-    virtual void interrupt(int majr, int minr) ROSE_OVERRIDE {
-        if (x86_exception_int == majr && 0x80 == minr) {
-            systemCall();
-        } else {
-            Super::interrupt(majr, minr);
-        }
-    }
-
-private:
-    // Handles a Linux system call of the INT 0x80 variety.
-    void systemCall() {
-        // Result of an "int 0x80" system call instruction
-        const RegisterDictionary *regdict = currentState()->registerState()->get_register_dictionary();
-        const RegisterDescriptor REG_AX = *regdict->lookup("rax");
-        ISBase::SValuePtr ax = peekRegister(REG_AX);
-#ifdef __linux__
-        if (SYS_exit_group == ax->get_number() || SYS_exit == ax->get_number()) {
-            const RegisterDescriptor REG_DI = *regdict->lookup("rdi");
-            ISBase::SValuePtr di = readRegister(REG_DI);
-            int64_t exitValue = di->get_number();
-
-            // FIXME[Robb Matzke 2019-06-06]: need better way to handle this
-            mlog[ERROR] <<"specimen exiting with value " <<exitValue <<"\n";
-            exit(0);
-        }
-#endif
-    }
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Semantic domain for symbolic execution
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-typedef IS::SymbolicSemantics::SValue SymbolicValue;
-typedef IS::SymbolicSemantics::SValuePtr SymbolicValuePtr;
-typedef IS::SymbolicSemantics::RegisterState SymbolicRegisters;
-typedef IS::SymbolicSemantics::RegisterStatePtr SymbolicRegistersPtr;
-typedef IS::SymbolicSemantics::MemoryState SymbolicMemory;
-typedef IS::SymbolicSemantics::MemoryStatePtr SymbolicMemoryPtr;
-typedef IS::SymbolicSemantics::State SymbolicState;
-typedef IS::SymbolicSemantics::StatePtr SymbolicStatePtr;
-
-typedef boost::shared_ptr<class SymbolicOperators> SymbolicOperatorsPtr;
-class SymbolicOperators: public IS::SymbolicSemantics::RiscOperators {
-public:
-    typedef IS::SymbolicSemantics::RiscOperators Super;
-
-protected: // Real constructors
-    SymbolicOperators(const ISBase::SValuePtr &protoval, const SmtSolverPtr &solver)
-        : Super(protoval, solver) {
-        name("Concolic-symbolic");
-        (void) SymbolicValue::promote(protoval);
-    }
-
-    SymbolicOperators(const ISBase::StatePtr &state, const SmtSolverPtr &solver)
-        : Super(state, solver) {
-        name("Concolic-symbolic");
-        (void) SymbolicValue::promote(state->protoval());
-    }
-
-public: // Static allocating constructors
-    static SymbolicOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        ISBase::SValuePtr protoval = SymbolicValue::instance();
-        ISBase::RegisterStatePtr registers = SymbolicRegisters::instance(protoval, regdict);
-        ISBase::MemoryStatePtr memory = SymbolicMemory::instance(protoval, protoval);
-        ISBase::StatePtr state = SymbolicState::instance(registers, memory);
-        return SymbolicOperatorsPtr(new SymbolicOperators(state, solver));
-    }
-
-    static SymbolicOperatorsPtr instance(const ISBase::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return SymbolicOperatorsPtr(new SymbolicOperators(protoval, solver));
-    }
-
-    static SymbolicOperatorsPtr instance(const ISBase::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return SymbolicOperatorsPtr(new SymbolicOperators(state, solver));
-    }
-
-public: // Virtual constructors
-    virtual ISBase::RiscOperatorsPtr create(const ISBase::SValuePtr &protoval,
-                                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
-        return instance(protoval, solver);
-    }
-
-    virtual ISBase::RiscOperatorsPtr create(const ISBase::StatePtr &state,
-                                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
-        return instance(state, solver);
-    }
-    
-public: // Dynamic pointer casts
-    static SymbolicOperatorsPtr promote(const ISBase::RiscOperatorsPtr &x) {
-        SymbolicOperatorsPtr retval = boost::dynamic_pointer_cast<SymbolicOperators>(x);
-        ASSERT_not_null(retval);
-        return retval;
-    }
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Combined concrete and symbolic semantics
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-class Semantics {
-private:
-    static const rose_addr_t initialStackPointer = 0xc0000000;
-    const P2::Partitioner &partitioner_;
-    const RegisterDictionary *regdict_;
-    CpuPtr symbolicCpu_;
-    CpuPtr concreteCpu_;
-    RegisterDescriptor REG_PATH;
-
-public:
-    Semantics(const P2::Partitioner &partitioner)
-        : partitioner_(partitioner) {
-
-        // Extend the register set with an additional Boolean register named "path"
-        RegisterDictionary *regdict = new RegisterDictionary("Rose::BinaryAnalysis::Concolic");
-        regdict->insert(partitioner_.instructionProvider().registerDictionary());
-        ASSERT_require(REG_PATH.isEmpty());
-        REG_PATH = RegisterDescriptor(regdict->firstUnusedMajor(), 0, 0, 1);
-        regdict->insert("path", REG_PATH);
-        regdict_ = regdict;
-
-        // Symbolic semantics
-        SymbolicOperatorsPtr symbolicOps = SymbolicOperators::instance(regdict_);
-        SymbolicRegistersPtr symbolicRegisters = SymbolicRegisters::promote(symbolicOps->currentState()->registerState());
-        SymbolicMemoryPtr symbolicMemory = SymbolicMemory::promote(symbolicOps->currentState()->memoryState());
-        symbolicCpu_ = partitioner_.newDispatcher(symbolicOps);
-        ASSERT_not_null(symbolicCpu_);
-
-        // Concrete semantics
-        ConcreteOperatorsPtr concreteOps = ConcreteOperators::instance(regdict_);
-        ConcreteRegistersPtr concreteRegisters = ConcreteRegisters::promote(concreteOps->currentState()->registerState());
-        ConcreteMemoryPtr concreteMemory = ConcreteMemory::promote(concreteOps->currentState()->memoryState());
-        MemoryMap::Ptr concreteMap = partitioner_.memoryMap()->shallowCopy();
-        concreteMap->shrinkUnshare(); // make it a deep copy
-        concreteMemory->memoryMap(concreteMap);
-        concreteCpu_ = partitioner_.newDispatcher(concreteOps);
-        ASSERT_not_null(concreteCpu_);
-
-        // Give the stack pointer a concrete value for both domains
-        const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
-        concreteOperators()->writeRegister(SP, concreteOperators()->number_(SP.nBits(), initialStackPointer));
-        symbolicOperators()->writeRegister(SP, symbolicOperators()->number_(SP.nBits(), initialStackPointer));
-
-        // The PATH pseudo-register's initial value is true
-        concreteOperators()->writeRegister(REG_PATH, concreteOperators()->boolean_(true));
-        symbolicOperators()->writeRegister(REG_PATH, symbolicOperators()->boolean_(true));
-    }
-
-    SymbolicOperatorsPtr symbolicOperators() const {
-        return SymbolicOperators::promote(symbolicCpu_->get_operators());
-    }
-
-    ConcreteOperatorsPtr concreteOperators() const {
-        return ConcreteOperators::promote(concreteCpu_->get_operators());
-    }
-
-    SymbolicRegistersPtr symbolicRegisters() const {
-        return SymbolicRegisters::promote(symbolicCpu_->currentState()->registerState());
-    }
-
-    ConcreteRegistersPtr concreteRegisters() const {
-        return ConcreteRegisters::promote(concreteCpu_->currentState()->registerState());
-    }
-
-    SymbolicMemoryPtr symbolicMemory() const {
-        return SymbolicMemory::promote(symbolicCpu_->currentState()->memoryState());
-    }
-
-    ConcreteMemoryPtr concreteMemory() const {
-        return ConcreteMemory::promote(concreteCpu_->currentState()->memoryState());
-    }
-    
-    // Process the specified instruction and transition concrete and symbolic states based on the instruction's semantics.
-    void processInstruction(SgAsmInstruction *insn) {
-        ASSERT_not_null(insn);
-
-        // FIXME[Robb Matzke 2019-06-07]: These should be executed in tandom even if the first throws an exception
-        symbolicCpu_->processInstruction(insn);
-        concreteCpu_->processInstruction(insn);
-    }
-
-    // Returns the instruction pointer register's concrete value from the concrete domain.
-    rose_addr_t concreteInstructionPointer() const {
-        return concreteOperators()
-            ->peekRegister(partitioner_.instructionProvider().instructionPointerRegister())
-            ->get_number();
-    }
-
-    // Print the concrete and symbolic states for debugging
-    void print(std::ostream &out) const {
-        IS::SymbolicSemantics::Formatter symbolicFmt;
-        symbolicFmt.set_line_prefix("  ");
-        IS::ConcreteSemantics::Formatter concreteFmt;
-        concreteFmt.set_line_prefix("  ");
-
-        out <<"symbolic registers:\n";
-        out <<(*symbolicRegisters() + symbolicFmt);
-        out <<"concrete registers:\n";
-        out <<(*concreteRegisters() + concreteFmt);
-        out <<"symbolic memory:\n";
-        out <<(*symbolicMemory() + symbolicFmt);
-        out <<"concrete memory:\n";
-        out <<(*concreteMemory() + concreteFmt);
-    }
-};
-
-std::ostream&
-operator<<(std::ostream &out, const Semantics &semantics) {
-    semantics.print(out);
-    return out;
+    return ops;
 }
 
+RiscOperatorsPtr
+RiscOperators::promote(const IS::BaseSemantics::RiscOperatorsPtr &x) {
+    RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+size_t
+RiscOperators::wordSizeBits() const {
+    return partitioner_.instructionProvider().instructionPointerRegister().nBits();
+}
+
+const RegisterDictionary*
+RiscOperators::registerDictionary() const {
+    return partitioner_.instructionProvider().registerDictionary();
+}
+
+void
+RiscOperators::interrupt(int majr, int minr) {
+    if (x86_exception_int == majr && 0x80 == minr) {
+        systemCall();
+    } else {
+        Super::interrupt(majr, minr);
+    }
+}
+
+void
+RiscOperators::systemCall() {
+    // Result of an "int 0x80" system call instruction
+    const RegisterDictionary *regdict = currentState()->registerState()->get_register_dictionary();
+    const RegisterDescriptor REG_AX = *regdict->lookup("rax");
+    IS::BaseSemantics::SValuePtr ax = peekRegister(REG_AX, undefined_(REG_AX.nBits()));
+#ifdef __linux__
+    if (SYS_exit_group == ax->get_number() || SYS_exit == ax->get_number()) {
+        const RegisterDescriptor REG_DI = *regdict->lookup("rdi");
+        IS::BaseSemantics::SValuePtr di = readRegister(REG_DI, undefined_(REG_DI.nBits()));
+        int64_t exitValue = di->get_number();
+
+        // FIXME[Robb Matzke 2019-06-06]: need better way to handle this
+        mlog[ERROR] <<"specimen exiting with value " <<exitValue <<"\n";
+        exit(0);
+    }
+#endif
+}
+
+IS::BaseSemantics::SValuePtr
+RiscOperators::readRegister(RegisterDescriptor reg, const IS::BaseSemantics::SValuePtr &dflt) {
+    IS::BaseSemantics::SValuePtr retval = Super::readRegister(reg, dflt);
+    if (SymbolicExpr::LeafPtr variable = SValue::promote(retval)->get_expression()->isLeafNode()) {
+        if (variable->isVariable2() && !variables_.exists(variable))
+            variables_.insert(variable, VariableProvenance(reg));
+    }
+    return retval;
+}
+
+IS::BaseSemantics::SValuePtr
+RiscOperators::readMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SValuePtr &addr,
+                          const IS::BaseSemantics::SValuePtr &dflt, const IS::BaseSemantics::SValuePtr &cond) {
+    SValuePtr retval = SValue::promote(Super::readMemory(segreg, addr, dflt, cond));
+    if (SymbolicExpr::LeafPtr variable = retval->get_expression()->isLeafNode()) {
+        if (variable->isVariable2() && !variables_.exists(variable))
+            variables_.insert(variable, VariableProvenance(addr));
+    }
+    return retval;
+}
+
+void
+RiscOperators::markProgramArguments() {
+    // For Linux ELF x86 and amd64, the argc and argv values are on the stack, not in registers.
+    const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
+    size_t wordSizeBytes = SP.nBits() / 8;
+    rose_addr_t sp = process_->readRegister(SP).toInteger();
+    rose_addr_t argcVa = sp;                            // specimen's &argc
+    rose_addr_t argvVa = sp + wordSizeBytes;            // specimen's argv+0
+    size_t argc = process_->readMemory(sp, wordSizeBytes, ByteOrder::ORDER_LSB).toInteger();
+#if 1 // DEBUGGING [Robb Matzke 2019-09-23]
+    std::cerr <<"ROBB: argc = " <<argc <<"\n";
+#endif
+
+    // Create symbolic values for argc
+    SValuePtr argcSem = SValue::promote(undefined_(SP.nBits()));
+    argcSem->set_comment("argc");
+    writeMemory(RegisterDescriptor(), number_(SP.nBits(), argcVa), argcSem, boolean_(true));
+}
+
+rose_addr_t
+Dispatcher::concreteInstructionPointer() const {
+    return RiscOperators::promote(get_operators())->process()->executionAddress();
+}
+
+void
+Dispatcher::processInstruction(SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+
+    // Concrete execution
+    Debugger::Ptr process = RiscOperators::promote(get_operators())->process();
+    process->executionAddress(insn->get_address());
+    process->singleStep();
+
+    // Symbolic execution
+    Super::processInstruction(insn);
+}
+
+bool
+Dispatcher::isTerminated() const {
+    return RiscOperators::promote(get_operators())->process()->isTerminated();
+}
+
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ConcolicExecutor
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// class method
 ConcolicExecutor::Ptr
 ConcolicExecutor::instance() {
     return Ptr(new ConcolicExecutor);
 }
 
-    
-std::vector<TestCase::Ptr>
-ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase) {
-    ASSERT_not_null(db);
-    ASSERT_not_null(testCase);
-    P2::Partitioner partitioner = partition(db, testCase->specimen());
-    ASSERT_not_implemented("more to do");
+// class method
+std::vector<Sawyer::CommandLine::SwitchGroup>
+ConcolicExecutor::commandLineSwitches(Settings &settings /*in,out*/) {
+    std::vector<Sawyer::CommandLine::SwitchGroup> sgroups;
+    sgroups.push_back(P2::Engine::loaderSwitches(settings.loader));
+    sgroups.push_back(P2::Engine::disassemblerSwitches(settings.disassembler));
+    sgroups.push_back(P2::Engine::partitionerSwitches(settings.partitioner));
+    return sgroups;
 }
 
 P2::Partitioner
@@ -345,7 +201,10 @@ ConcolicExecutor::partition(const Database::Ptr &db, const Specimen::Ptr &specim
         ASSERT_forbid(specimen->content().empty()); // &std::vector<T>::operator[](0) is UB if empty; "data" is C++11
         specimenFile.write((const char*)&specimen->content()[0], specimen->content().size());
         specimenFile.close();
-        partitioner = engine.partition(specimenFileName.native());
+        boost::filesystem::permissions(specimenFileName, boost::filesystem::owner_all);
+
+        // Use the "run:" scheme to load the simulated virtual memory in order to get all the shared libraries.
+        partitioner = engine.partition("run:replace:" + specimenFileName.native());
 
         // Cache the results in the database.
         boost::filesystem::path rbaFileName = tempDir.name() / "specimen.rba";
@@ -360,31 +219,91 @@ ConcolicExecutor::partition(const Database::Ptr &db, const Specimen::Ptr &specim
     return boost::move(partitioner);
 }
 
-void
-ConcolicExecutor::run(const P2::Partitioner &partitioner) {
-    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
-        if ((function->reasons() & SgAsmFunction::FUNC_ENTRY_POINT) != 0) {
-            run(partitioner, function->address());
-            break;
+Debugger::Ptr
+ConcolicExecutor::makeProcess(const Database::Ptr &db, const TestCase::Ptr &testCase,
+                              Sawyer::FileSystem::TemporaryDirectory &tempDir) {
+    ASSERT_not_null(db);
+    ASSERT_not_null(testCase);
+
+    // Extract the executable into the working directory
+    boost::filesystem::path exeName = boost::filesystem::path(testCase->specimen()->name()).filename();
+    if (exeName.empty())
+        exeName = "a.out";
+    exeName = tempDir.name() / exeName;
+    {
+        std::ofstream executable(exeName.native().c_str(), std::ios_base::binary | std::ios_base::trunc);
+        if (!executable)
+            mlog[ERROR] <<"cannot write to " <<exeName <<"\n";
+        if (!testCase->specimen()->content().empty()) {
+            executable.write(reinterpret_cast<const char*>(&testCase->specimen()->content()[0]),
+                             testCase->specimen()->content().size());
         }
     }
+    boost::filesystem::permissions(exeName, boost::filesystem::owner_all);
+
+    // Describe the process to be created from the executable
+    Debugger::Specimen ds = exeName;
+    ds.arguments(testCase->args());
+    ds.workingDirectory(tempDir.name());
+    ds.flags()
+        .set(Debugger::REDIRECT_INPUT)
+        .set(Debugger::REDIRECT_OUTPUT)
+        .set(Debugger::REDIRECT_ERROR)
+        .set(Debugger::CLOSE_FILES);
+
+    // Create the process, which is where all the concrete state is stored.
+    return Debugger::instance(ds);
+}
+
+std::vector<TestCase::Ptr>
+ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase) {
+    ASSERT_not_null(db);
+    ASSERT_not_null(testCase);
+    Sawyer::FileSystem::TemporaryDirectory tempDir;     // working files for this execution
+
+    // Create the semantics layers. The symbolic semantics uses a Partitioner, and the concrete semantics uses a suborinate
+    // process which is created from the specimen.
+    P2::Partitioner partitioner = partition(db, testCase->specimen());
+    Debugger::Ptr process = makeProcess(db, testCase, tempDir);
+    Emulation::RiscOperatorsPtr ops =
+        Emulation::RiscOperators::instance(partitioner, process, Emulation::SValue::instance(), SmtSolver::Ptr());
+    Emulation::DispatcherPtr cpu = Emulation::Dispatcher::instance(ops);
+
+    run(cpu);
+    
+    std::vector<TestCase::Ptr> newCases;
+    return newCases;
 }
 
 void
-ConcolicExecutor::run(const P2::Partitioner &partitioner, rose_addr_t startVa) {
+ConcolicExecutor::run(const Emulation::DispatcherPtr &cpu) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
-    Semantics semantics(partitioner);
+    Sawyer::Message::Stream trace(mlog[TRACE]);
+    Emulation::RiscOperatorsPtr ops = Emulation::RiscOperators::promote(cpu->get_operators());
 
     // Process instructions in execution order starting at startVa
-    rose_addr_t va = startVa;
-    while (true) {
-        SgAsmInstruction *insn = partitioner.instructionProvider()[va];
+    rose_addr_t va = cpu->concreteInstructionPointer();
+    while (!cpu->isTerminated()) {
+        SgAsmInstruction *insn = ops->partitioner().instructionProvider()[va];
         ASSERT_not_null2(insn, StringUtility::addrToString(va) + " is not a valid execution address");
-        SAWYER_MESG(debug) <<"executing " <<insn->toString() <<"\n";
-        semantics.processInstruction(insn);
-        va = semantics.concreteInstructionPointer();
-        SAWYER_MESG(debug) <<semantics;
+        SAWYER_MESG_OR(trace, debug) <<"executing " <<insn->toString() <<"\n";
+        cpu->processInstruction(insn);
+        if (cpu->isTerminated()) {
+            SAWYER_MESG_OR(trace, debug) <<"subordinate has terminated\n";
+            break;
+        }
+
+#if 1 // DEBUGGING [Robb Matzke 2019-08-15]
+        printVariables(std::cerr, ops->currentState());
+#endif
+        va = cpu->concreteInstructionPointer();
     }
+}
+
+// Print variable information for debugging
+void
+ConcolicExecutor::printVariables(std::ostream &out, const Emulation::StatePtr &state) const {
+    out <<*state;
 }
 
 } // namespace

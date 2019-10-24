@@ -120,6 +120,10 @@ EStateId EStateSet::estateId(const EState* estate) const {
   return estateId(*estate);
 }
 
+long EState::memorySize() const {
+  return sizeof(*this);
+}
+
 EStateId EStateSet::estateId(const EState estate) const {
   EStateId id=0;
   // MS: TODO: we may want to use the new function id(estate) here
@@ -368,7 +372,13 @@ string EStateSet::toString(VariableIdMapping* variableIdMapping) const {
 bool EState::isApproximatedBy(const EState* other) const {
   ROSE_ASSERT(label()==other->label()); // ensure same location
   ROSE_ASSERT(constraints()==other->constraints()); // pointer equality
+  if(callString!=other->callString) {
+    return false;
+  }
   // it only remains to check the pstate
   return pstate()->isApproximatedBy(*const_cast<PState*>(other->pstate())) && (io.isBot()||(io==other->io));
 }
 
+std::string EState::labelString() const {
+  return "L"+label().toString();
+}
