@@ -22440,10 +22440,31 @@ SageInterface::reportModifiedStatements( const string & label, SgNode* node )
      ROSE_ASSERT(node != NULL);
      std::set<SgStatement*> collection = collectModifiedStatements(node);
 
+#if 1
+     printf ("In reportModifiedStatements(): collection.size() = %zu \n",collection.size());
+#endif
+
      std::set<SgStatement*>::iterator i = collection.begin();
      while (i != collection.end())
         {
-          printf ("   --- modified statement = %p = %s \n",(*i),(*i)->class_name().c_str());
+       // DQ (10/9/2019): Adding filename to debug output.
+          string filename = (*i)->get_file_info()->get_filename();
+
+       // DQ (10/14/2019): Get the best name possible.
+          if (filename == "transformation")
+             {
+#if 0
+               printf ("   --- filename == transformation: sourceFile = %p using physical filename \n",sourceFile);
+#endif
+            // filename = (*i)->get_file_info()->get_physical_filename();
+               SgSourceFile* sourceFile = TransformationSupport::getSourceFile(*i);
+               if (sourceFile != NULL)
+                  {
+                    filename = sourceFile->getFileName();
+                  }
+             }
+
+          printf ("   --- filename = %s modified statement = %p = %s \n",filename.c_str(),(*i),(*i)->class_name().c_str());
 
           i++;
         }

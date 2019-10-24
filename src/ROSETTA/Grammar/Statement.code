@@ -4344,6 +4344,12 @@ SgStatement::get_scope(void) const
           case V_SgFunctionParameterList:
              {
             // Handle case of SgFunctionDeclaration or SgMemberFunctionDeclaration
+               if (stmt->get_parent() == NULL)
+                  {
+                 // DQ (9/16/2019): Adding debugging support.
+                    ROSE_ASSERT (stmt != NULL);
+                    printf ("Error: SgStatement::get_scope(): stmt->get_parent() == NULL: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+                  }
                ROSE_ASSERT (stmt->get_parent() != NULL);
 
                if ( SageInterface::is_Python_language() && isSgLambdaRefExp(stmt->get_parent()) ) {

@@ -5217,11 +5217,14 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
 
-          // DQ (6/3/2019): Added support for SgIncludeFile (parent is a SgIncludeDirectiveStatement).
-          // case V_SgIncludeDirectiveStatement:
-             case V_SgIncludeFile:
+            // DQ (6/3/2019): Added support for SgIncludeFile (parent is a SgIncludeDirectiveStatement).
+            // case V_SgIncludeDirectiveStatement:
+               case V_SgIncludeFile:
                   {
+                 // DQ (10/22/2019): Note that there is no parent pointer defined for this IR node, so no warning message really make sense, I think.
+#if 0
                     printf ("NOTE: In AST Consistancy tests: TestParentPointersInMemoryPool::visit(): case SgIncludeFile: parent == NULL \n");
+#endif
                  // ROSE_ASSERT(support->get_parent() != NULL);
                     break;
                   }

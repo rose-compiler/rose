@@ -211,7 +211,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
        // when used with the AST merge mechanism).
 
        // For the moment we can attemt to test this support by retuning true when we detect the use of this feature.
-#if 0
+#if 1
           printf ("In statementFromFile(): stmt->get_file_info()->get_fileIDsToUnparse().empty() == false: return true \n");
 #endif
           return true;
@@ -348,8 +348,11 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
 #if 0
           printf ("In statementFromFile(): isOutputInCodeGeneration = %s \n",isOutputInCodeGeneration ? "true" : "false");
-          printf ("   --- sourceFile->get_unparse_tokens()          = %s \n",sourceFile->get_unparse_tokens()     ? "true" : "false");
-          printf ("   --- sourceFile->get_unparseHeaderFiles()      = %s \n",sourceFile->get_unparseHeaderFiles() ? "true" : "false");
+          if (sourceFile != NULL)
+             {
+               printf ("   --- sourceFile->get_unparse_tokens()          = %s \n",sourceFile->get_unparse_tokens()     ? "true" : "false");
+               printf ("   --- sourceFile->get_unparseHeaderFiles()      = %s \n",sourceFile->get_unparseHeaderFiles() ? "true" : "false");
+             }
           printf ("   --- forceOutputOfGeneratedCode                = %s \n",forceOutputOfGeneratedCode ? "true" : "false");
 #endif
        // DQ (10/25/2018): If we are using the unarsing of header files then we require a more complex test to avoid 
@@ -513,7 +516,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 #endif
 
 #if 1
-                 // DQ (5/30/2019): If we are using the token unparsing then we need to supress the unparing of the normalized functions.
+                 // DQ (5/30/2019): If we are using the token unparsing then we need to supress the unparsing of the normalized functions.
                  // See moveDeclarationTool/inputmoveDeclarationToInnermostScope_test2014_26.C for an example of this.
                     if ( (sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
                       {
@@ -551,6 +554,18 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
 #if 0
      printf ("Leaving statementFromFile(): stmt = %p = %s = %s statementInFile = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
+#endif
+
+#if 0
+  // DQ (10/15/2019): limit output spew when debugging.
+     if (statementInFile == true)
+        {
+          printf ("Leaving statementFromFile(): stmt = %p = %s = %s statementInFile = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
+        }
+       else
+        {
+          printf ("@@@@@@@@@@@@@@ Leaving statementFromFile(): stmt = %p = %s = %s statementInFile = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
+        }
 #endif
 
 #if 0

@@ -16045,6 +16045,17 @@ X aggressive
      p_unparserErrorCode = 0;
      p_midendErrorCode= 0; // Liao, 4/26/2017 add midend error code
      p_backendCompilerErrorCode = 0;
+
+  // DQ (9/19/2019): Added these missing variable initializations.
+     p_edg_il_to_graphviz                      = false;
+     p_no_optimize_flag_for_frontend           = false;
+     p_unparse_edg_normalized_method_ROSE_1392 = false;
+
+  // DQ (9/19/2019): Support optimizations of header file unparsing (specifically restricting 
+  // the number of header files for which we collect comments and CPP directives).
+     p_header_file_unparsing_optimization             = false;
+     p_header_file_unparsing_optimization_source_file = false;
+     p_header_file_unparsing_optimization_header_file = false;
    }
 
 #if 0

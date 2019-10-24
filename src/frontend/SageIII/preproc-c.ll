@@ -1632,7 +1632,21 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
      ROSEAttributesList *preprocessorInfoList = new ROSEAttributesList; // create a new list
      ROSE_ASSERT (preprocessorInfoList != NULL);
 
-  // printf ("&&&&&&&&&&&&&&&&&&& Inside of lex file: getPreprocessorDirectives() \n");
+#if 0
+  // DQ (8/18/2019): Debugging the performance overhead of the header file unparsing support.
+     printf ("&&&&&&&&&&&&&&&&&&& Inside of lex file: getPreprocessorDirectives(): fileName = %s \n",fileName.c_str());
+#endif
+
+#if 0
+  // DQ (8/18/2019): Trying to find where this is called in the processing of the header files.
+     static int counter = 0;
+     if (counter > 10)
+        {
+          printf ("Exiting as a test while processing the 10th file \n");
+          ROSE_ASSERT(false);
+        }
+     counter++;
+#endif
 
   // printf ("Inside of lex file: getPreprocessorDirectives() \n");
   // ROSE_ASSERT(false);

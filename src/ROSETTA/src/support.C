@@ -1563,6 +1563,17 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "unparse_edg_normalized_method_ROSE_1392", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/19/2019): Adding support to optimize the performance of the header file unarsing.
+  // Specifically we want to limit the collection of comments and CPP dirctives to a set determined
+  // as part of the unparsing, after we know what parts of the AST have been modified, but 
+  // immediiately before the unparsing of each file.
+     File.setDataPrototype("bool", "header_file_unparsing_optimization", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype("bool", "header_file_unparsing_optimization_source_file", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype("bool", "header_file_unparsing_optimization_header_file", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // ******************************************************************************
   // ******************************************************************************
   //                             ROSE Graph IR Nodes
