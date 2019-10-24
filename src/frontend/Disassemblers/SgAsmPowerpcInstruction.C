@@ -7,6 +7,16 @@
 using namespace Rose;                                   // temporary until this lives in "rose"
 using namespace Rose::BinaryAnalysis;
 
+// class method
+const RegisterDictionary*
+SgAsmPowerpcInstruction::registersForWidth(size_t nBits) {
+    switch (nBits) {
+        case 32: return RegisterDictionary::dictionary_powerpc32();
+        case 64: return RegisterDictionary::dictionary_powerpc64();
+        default: ASSERT_not_reachable("invalid PowerPC instruction size");
+    }
+}
+
 unsigned
 SgAsmPowerpcInstruction::get_anyKind() const {
     return p_kind;
@@ -133,6 +143,15 @@ SgAsmPowerpcInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>
                (insn->operand(0)->asUnsigned().orElse(0) & 0x14) == 0x14 &&
                insn->operand(2)->asUnsigned().orElse(1) == 0) {
         // Indirect function call, assuming the LR register is dynamically initialized with the target address.
+        if (return_va)
+            *return_va = insn->get_address() + insn->get_size();
+        return true;
+    } else if (insn->get_kind() == powerpc_bcctrl && insn->nOperands() == 3 &&
+               (insn->operand(0)->asUnsigned().orElse(0) & 0x14) == 0x14 &&
+               insn->operand(2)->asUnsigned().orElse(1) == 0) {
+        // Indirect function call, as in:
+        //   mtspr    ctr, r9                                  ; copy to special-purpose register
+        //   bcctrl   0x14<20>, cr0.lt, 0                      ; branch to count register and link unconditionally
         if (return_va)
             *return_va = insn->get_address() + insn->get_size();
         return true;
@@ -562,6 +581,7 @@ SgAsmPowerpcInstruction::description() const {
         case powerpc_orc_record:       return "OR with complement";
         case powerpc_ori:              return "OR immediate";
         case powerpc_oris:             return "OR immediate shifted";
+        case powerpc_popcntb:          return "population count bytes";
         case powerpc_rfi:              return "return from interrupt";
         case powerpc_rfid:             return "return from interrupt";
         case powerpc_rldcl:            return "rotate left doubleword then clear left";

@@ -35,7 +35,7 @@ AC_DEFUN([ROSE_SUPPORT_BOOST],
 
 
   #============================================================================
-  # --with-x10=/path/to/x10-trunk/x10.dist/
+  # --enable-boost-version-check
   #============================================================================
   ROSE_ARG_ENABLE(
     [boost-version-check],

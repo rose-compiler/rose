@@ -38,6 +38,15 @@ else
    libroseOpenFortranParserlibraries =
 endif
 
+# Added support for Fortran front-end development using the flang (F18) compiler [Rasmussen 8/12/2019]
+if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
+   libroseExperimentalFlangParserlibraries = \
+        frontend/Experimental_Flang_ROSE_Connection/libexperimentalRoseFlang.la \
+        3rdPartyLibraries/flang-parser/libFlangParser.la
+else
+   libroseExperimentalFlangParserlibraries =
+endif
+
 # Rasmussen (01/21/2018): Adding general support for experimental languages
 # Rasmussen (05/29/2018): Moved parse tables for installation in $(prefix)/share/rose
 if ROSE_BUILD_ATERM_SUPPORT
@@ -189,11 +198,11 @@ libroseLibraries = \
 else
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
-   $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la \
    $(top_builddir)/src/backend/libbackend.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseCxxlibraries) \
    $(libroseOpenFortranParserlibraries) \
+   $(libroseExperimentalFlangParserlibraries) \
    $(libroseExperimentalGeneralLanguagelibraries) \
    $(libroseExperimentalOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
@@ -218,6 +227,11 @@ libroseLibraries = \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
+
+if ROSE_WITH_LIBHARU
+libroseLibraries += \
+   $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la 
+endif
 
 # DQ (6/10/2017): Added libhpdf.la library and removed it from LIBADD rule.
 # This is being done to fix the "make install" rule (which failes for me).
@@ -297,7 +311,7 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
           $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
           $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) \
           $(OPT_SQLITE3_LDFLAGS) \
-          $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS) \
+          $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS) $(ROSE_FLANG_LIBS) \
           $(ROSE_COBOL_PT_LIBS_WITH_PATH)
 
 # DQ (6/9/2017): Removed because it failes for "make install" rule on my machine.
@@ -423,6 +437,7 @@ rose_config_installed_ldflags =			\
 	$(ROSE_ETHER_LIBS)			\
 	$(ROSE_INTEL_COMPILER_MATH_LIBS)	\
 	$(ROSE_ATERM_LIBS)			\
+	$(ROSE_FLANG_LIBS)			\
 	$(ROSE_COBOL_PT_LIBS_WITH_PATH)         \
 	$(ROSE_YAML_LIBS_WITH_PATH)		\
 	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\
@@ -511,9 +526,11 @@ rose_fortran_LDADD        = $(ROSEBIN_LDADD)
 ########################################################################################################################
 # Test that a simple ROSE program can run, and as a side effect, print some version numbers.
 
-check-local: $(bin_PROGRAMS)
+check-boost:
 	@echo "  TEST     boost shared linkage [rose-compiler]"
 	${AM_V_at}$(top_srcdir)/scripts/check_boost_linkage.sh .libs/rose-compiler >&2
+
+check-dynload:
 	@echo "  TEST     whether a trivial ROSE program runs [rose-compiler]"
 	${AM_V_at}if ! ./rose-compiler --version; then                                           \
 	  echo "error: You cannot run a program linked with ROSE. Please be sure that your" >&2; \
@@ -521,9 +538,13 @@ check-local: $(bin_PROGRAMS)
 	  echo "error: correct libraries (JVM, Boost, librose.so, etc.)" >&2;                    \
 	  exit 1;                                                                                \
 	fi
+
+check-config:
 	@echo "  TEST     ROSE configuration tool [rose-config]"
 	./rose-config --version
-if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+
+if ROSE_BUILD_C_LANGUAGE_SUPPORT
+check-hello-c:
 	@echo "  TEST     ROSE C compiler [rose-cc]"
 	${AM_V_at}echo "#include <stdio.h>"                     >  hello-world.c
 	${AM_V_at}echo "int main() {"                           >> hello-world.c
@@ -532,6 +553,9 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	${AM_V_at}echo "}"                                      >> hello-world.c
 	${AM_V_at}./rose-cc hello-world.c -o hello-world-c
 	${AM_V_at}./hello-world-c
+endif
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+check-hello-cxx:
 	@echo "  TEST     ROSE C++ compiler [rose-c++]"
 	${AM_V_at}echo "#include <iostream>"                                      >  hello-world.cpp
 	${AM_V_at}echo "int main() {"                                             >> hello-world.cpp
@@ -542,12 +566,27 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 	${AM_V_at}./hello-world-cpp
 endif
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+check-hello-fortran:
 	@echo "  TEST     ROSE Fortran compiler [rose-fortran]"
 	${AM_V_at}echo "program hello"                            >  hello-world.f90
 	${AM_V_at}echo "  print *, \"Hello World from Fortran!\"" >> hello-world.f90
 	${AM_V_at}echo "end program hello"                        >> hello-world.f90
 	${AM_V_at}./rose-fortran hello-world.f90 -o hello-world-f90
 	${AM_V_at}./hello-world-f90
+endif
+
+check-local: $(bin_PROGRAMS)
+	${AM_V_at}$(MAKE) check-boost
+	${AM_V_at}$(MAKE) check-dynload
+	${AM_V_at}$(MAKE) check-config
+if ROSE_BUILD_C_LANGUAGE_SUPPORT
+	${AM_V_at}$(MAKE) check-hello-c
+endif
+if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+	${AM_V_at}$(MAKE) check-hello-cxx
+endif
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+	${AM_V_at}$(MAKE) check-hello-fortran
 endif
 
 ########################################################################################################################

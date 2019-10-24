@@ -256,6 +256,8 @@ ROSE_SUPPORT_EDG
 # This is the support for using Clang as a frontend in ROSE not the support for Clang as a compiler to compile ROSE source code.
 ROSE_SUPPORT_CLANG
 
+# Support for using F18/Flang as a Fortran frontend in ROSE
+ROSE_SUPPORT_FLANG
 
 # DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
 # This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
@@ -272,12 +274,16 @@ AC_SUBST(ROSE_SUPPORT_GNU_EXTENSIONS)
 AC_LANG(C++)
 AX_COMPILER_VENDOR
 
-rose_use_edg_quad_float=no
-if test "x$ax_cv_cxx_compiler_vendor" == "xgnu"; then
-if test $edg_major_version_number -ge 5; then
-  rose_use_edg_quad_float=yes
+ac_save_LIBS="$LIBS"
+LIBS="$ac_save_LIBS -lquadmath"
+AC_LINK_IFELSE([
+            AC_LANG_PROGRAM([[#include <quadmath.h>]])],
+            [rose_use_edg_quad_float=yes],
+            [rose_use_edg_quad_float=no])
+LIBS="$ac_save_LIBS"
+
+if test "x$rose_use_edg_quad_float" == "xyes"; then
   AC_DEFINE([ROSE_USE_EDG_QUAD_FLOAT], [], [Enables support for __float80 and __float128 in EDG.])
-fi
 fi
 AC_SUBST(ROSE_USE_EDG_QUAD_FLOAT)
 AM_CONDITIONAL(ROSE_USE_EDG_QUAD_FLOAT, [ test $rose_use_edg_quad_float == yes ])
@@ -321,6 +327,15 @@ AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_OFP_ROSE_CONNECTION, [test "x$enable_debu
 if test "x$enable_debug_output_for_experimental_fortran_frontend" = "xyes"; then
   AC_MSG_WARN([using this mode causes large volumes of output spew (internal debugging only)!])
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new OFP/ROSE connection code])
+fi
+
+# Added support for Fortran front-end development using the flang (F18) compiler [Rasmussen 8/12/2019]
+AC_ARG_ENABLE(experimental_flang_frontend,
+    AS_HELP_STRING([--enable-experimental_flang_frontend], [Enable experimental fortran frontend development using flang]))
+AM_CONDITIONAL(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION, [test "x$enable_experimental_flang_frontend" = xyes])
+if test "x$enable_experimental_flang_frontend" = "xyes"; then
+  AC_MSG_WARN([using this mode enables the experimental fortran flang front-end (internal development only)!])
+  AC_DEFINE([ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION], [], [Enables development of experimental fortran flang frontend])
 fi
 
 # DQ (8/23/2017): Added support for new csharp front-end development.
@@ -653,10 +668,6 @@ AM_CONDITIONAL(ROSE_USE_MYSQL,test "$found_mysql" = yes)
 
 # Test this macro here at the start to avoid long processing times (before it fails)
 CHOOSE_BACKEND_COMPILER
-
-# DQ (12/29/2011): Adding support for improved template declaration handling (only for EDG 4.3 and later)
-# TV (06/17/2013): Now always the case (EDG 4.7).
-AC_DEFINE([TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS], [], [Controls design of internal template declaration support within the ROSE AST.])
 
 # *****************************************************************
 
@@ -1028,6 +1039,8 @@ ROSE_SUPPORT_VECTORIZATION
 
 # Pei-Hung (12/17/2014): Adding support for POCC.
 ROSE_SUPPORT_POCC
+
+ROSE_SUPPORT_LIBHARU
 
 ROSE_SUPPORT_PHP
 
@@ -1912,48 +1925,23 @@ AC_MSG_NOTICE([CC = "$CC"])
 AC_MSG_NOTICE([CPPFLAGS = "$CPPFLAGS"])
 
 AC_MSG_NOTICE([subdirs = "$subdirs"])
-AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
+AC_CONFIG_SUBDIRS([libltdl])
 
 # This list should be the same as in build (search for Makefile.in)
 
 CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
 AC_CONFIG_FILES([
 src/frontend/CxxFrontend/EDG/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.4/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.7/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.7/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.7/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.7/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.7/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.8/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.8/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.8/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.8/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.8/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.9/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.11/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.11/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.11/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.11/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.11/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.14/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.14/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.14/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.14/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.14/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/src/Makefile
@@ -2161,6 +2149,7 @@ scripts/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
+src/3rdPartyLibraries/flang-parser/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
 src/3rdPartyLibraries/java-parser/Makefile
 src/3rdPartyLibraries/qrose/Components/Common/Makefile
@@ -2189,6 +2178,7 @@ src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/Experimental_General_Language_Support/Makefile
 src/frontend/Experimental_General_Language_Support/ATerm/Makefile
 src/frontend/Experimental_OpenFortranParser_ROSE_Connection/Makefile
+src/frontend/Experimental_Flang_ROSE_Connection/Makefile
 src/frontend/Experimental_Csharp_ROSE_Connection/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/Makefile
 src/frontend/Experimental_Jovial_ROSE_Connection/Makefile
@@ -2346,6 +2336,7 @@ tests/nonsmoke/functional/CompileTests/Java_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Java_tests/unit_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_csharp_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_fortran_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_jovial_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_cobol_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_matlab_tests/Makefile
@@ -2439,7 +2430,6 @@ tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/generalDataFlowAnalysisTests/Makefile
-tests/nonsmoke/functional/roseTests/programAnalysisTests/sideEffectAnalysisTests/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/ssa_UnfilteredCfg_Test/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
 tests/nonsmoke/functional/roseTests/programAnalysisTests/staticSingleAssignmentTests/Makefile

@@ -1,7 +1,6 @@
 #include "sage3basic.h"
 #include "fixupTypeReferences.h"
 
-// We need this so that ROSE_USE_NEW_EDG_INTERFACE will be seen (set via configure).
 #include <rose_config.h>
 
 using namespace std;

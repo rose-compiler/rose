@@ -36,8 +36,10 @@ will be shared between such functions).
    Figure~\ref{Tutorial:exampleTypeInfoFromFunctionParameters} shows a translator which
 reads an application (shown in
 figure~\ref{Tutorial:exampleInputCode_TypeInfoFromFunctionParameters}) 
-and outputs information about the function parameter types for each function,
-shown in figure~\ref{Tutorial:exampleOutput_TypeInfoFromFunctionParameters}.
+and outputs information about the function parameter types for each function
+%(09/10/2019) Pei-Hung comment this out because example output cannot be generated
+%,shown in figure~\ref{Tutorial:exampleOutput_TypeInfoFromFunctionParameters}
+.
 This information includes the order of the function declaration in the global
 scope, and name of the function, and the types of each parameter declared in 
 the function declaration.
@@ -72,6 +74,7 @@ instantiated template functions are classified as {\em compiler generated}.
 \label{Tutorial:exampleInputCode_TypeInfoFromFunctionParameters}
 \end{figure}
 
+\commentout{
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
@@ -94,6 +97,5 @@ instantiated template functions are classified as {\em compiler generated}.
 \caption{Output of input to typeInfoFromFunctionParameters.C.}
 \label{Tutorial:exampleOutput_TypeInfoFromFunctionParameters}
 \end{figure}
-
-
+}
 

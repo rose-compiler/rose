@@ -45,7 +45,6 @@ include $(srcdir)/dominanceAnalysis/Makefile_variables
 include $(srcdir)/genericDataflow/Makefile_variables
 include $(srcdir)/OAWrap/Makefile_variables
 include $(srcdir)/pointerAnal/Makefile_variables
-include $(srcdir)/sideEffectAnalysis/Makefile_variables
 include $(srcdir)/staticInterproceduralSlicing/Makefile_variables
 include $(srcdir)/valuePropagation/Makefile_variables
 include $(srcdir)/variableRenaming/Makefile_variables
@@ -64,7 +63,6 @@ mpaDominanceAnalysisPath=$(srcdir)/dominanceAnalysis#
 mpaGenericDataflowPath=$(srcdir)/genericDataflow#
 mpaOAWrapPath=$(srcdir)/OAWrap#
 mpaPointerAnalPath=$(srcdir)/pointerAnal#
-mpaSideEffectAnalysisPath=$(srcdir)/sideEffectAnalysis#
 mpaStaticInterproceduralSlicingPath=$(srcdir)/staticInterproceduralSlicing#
 mpaValuePropagationPath=$(srcdir)/valuePropagation#
 mpaVariableRenamingPath=$(srcdir)/variableRenaming#

@@ -2296,20 +2296,14 @@ SgMemberFunctionDeclaration* DefaultFunctionGenerator::generateDefaultFunctionDe
           SgTemplateInstantiationDecl *classDecl = isSgTemplateInstantiationDecl(parentClassDef1->get_declaration());
           ROSE_ASSERT(classDecl);
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
        // DQ (12/22/2011): This is required by the new design to support SgTemplateClassDeclaration derived from SgClassDeclaration.
        // A better solution might be to fix this to use the SageBuilder API directly. Make this a runtime error.
 
        // DQ (8/28/2012): Make this an error at runtime.
-          printf ("ERROR: Not using the new API for TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS \n");
+          printf ("ERROR: Not using the new API for template declaration\n");
           ROSE_ASSERT(false);
 
-          SgTemplateInstantiationMemberFunctionDecl *tempFunc = NULL;
-#else
-      // Older code
-      //! TODO use SageBuilder
-          SgTemplateInstantiationMemberFunctionDecl *tempFunc =  new SgTemplateInstantiationMemberFunctionDecl(COMPILERGENERATED_FILE_INFO,func_name, func_type, NULL, classDecl->get_templateDeclaration(), classDecl->get_templateArguments());
-#endif
+          SgTemplateInstantiationMemberFunctionDecl *tempFunc = NULL;// new SgTemplateInstantiationMemberFunctionDecl(COMPILERGENERATED_FILE_INFO,func_name, func_type, NULL, classDecl->get_templateDeclaration(), classDecl->get_templateArguments());
           tempFunc->set_definingDeclaration(tempFunc);
           tempFunc->set_templateName(func_name);
           func = tempFunc;

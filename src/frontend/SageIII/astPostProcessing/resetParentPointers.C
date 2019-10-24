@@ -1,7 +1,6 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
-// DQ (12/29//2011): Since this file used the TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS macro we need to include rose_config.h.
 #include "rose_config.h"
 
 #include "resetParentPointers.h"
@@ -1011,11 +1010,7 @@ ResetParentPointers::evaluateInheritedAttribute (
                  // this is likely redundant
                     resetParentPointersInDeclaration (templateInstantiation, inheritedAttribute.parentNode);
 
-#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
                     SgDeclarationStatement* templateDeclaration = templateInstantiation->get_templateDeclaration();
-#else
-                    SgTemplateDeclaration* templateDeclaration = templateInstantiation->get_templateDeclaration();
-#endif
                     if (templateDeclaration == NULL)
                        {
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
@@ -1152,15 +1147,11 @@ ResetParentPointers::evaluateInheritedAttribute (
                                    classDeclaration,classDeclaration->class_name().c_str(),
                                    classDeclaration->get_parent(),classDeclaration->get_parent() != NULL ? classDeclaration->get_parent()->class_name().c_str() : "null",
                                    inheritedAttribute.parentNode,inheritedAttribute.parentNode->class_name().c_str());
-#endif
-#if 0
                               SgNode* parentBeforeReset = classDeclaration->get_parent();
 #endif
                               resetParentPointers (classDeclaration,inheritedAttribute.parentNode);
 #if 0
                               SgNode* parentAfterReset = classDeclaration->get_parent();
-#endif
-#if 0
                               printf ("DONE: Calling resetParentPointers(): classDeclaration = %p = %s inheritedAttribute.parentNode = %p = %s \n",
                                    classDeclaration,classDeclaration->class_name().c_str(),inheritedAttribute.parentNode,inheritedAttribute.parentNode->class_name().c_str());
 #endif

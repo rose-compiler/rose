@@ -4,7 +4,11 @@
 #include "markLhsValues.h"
 #include "fixupNames.h"
 #include "FileUtility.h"
+
+#if ROSE_WITH_LIBHARU
 #include "AstPDFGeneration.h"
+#endif
+
 #include "SgNodeHelper.h" //Markus's helper functions
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -1130,7 +1134,9 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
         }
        else
         {
+#if 0
           printf ("In SageInterface::set_name(): This statement can be transformed! parent_declaration = %p = %s \n",parent_declaration,get_name(parent_declaration).c_str());
+#endif
 
 #if 0
        // DQ (11/12/2018): Initial test problem should not permit a transformation! 
@@ -1202,7 +1208,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 
                     if (varRefExp->get_symbol() == variableSymbol)
                        {
-#if 1
+#if 0
                          printf ("In SageInterface::set_name(): Found associated SgVarRefExp varRefExp = %p to symbol associated_symbol = %p \n",varRefExp,variableSymbol);
 #endif
 #if 0
@@ -1375,7 +1381,18 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
 
           case V_SgClassDeclaration:
           case V_SgDerivedTypeStatement:
+          case V_SgJovialTableStatement:
                name = isSgClassDeclaration(declaration)->get_name().str();
+               break;
+
+       // Rasmussen (8/2/2019): Added SgJovialDefineDeclaration and SgJovialDirectiveStatement
+       // I'm not sure class_name() is correct. Probably get_name() should be fixed.
+          case V_SgJovialDefineDeclaration:
+               name = isSgJovialDefineDeclaration(declaration)->class_name();
+               break;
+
+          case V_SgJovialDirectiveStatement:
+               name = isSgJovialDirectiveStatement(declaration)->class_name();
                break;
 
           case V_SgEnumDeclaration:
@@ -4714,15 +4731,9 @@ SageInterface::getProject()
   return resultlist[0];
 }
 
-SgProject * SageInterface::getProject(const SgNode * node) {
-  assert(node != NULL);
-  SgNode * parent = node->get_parent();
-  SgProject * project = NULL;
-  while (parent != NULL) {
-    if ((project = isSgProject(parent)) != NULL) break;
-    parent = parent->get_parent();
-  }
-  return project;
+SgProject*
+SageInterface::getProject(const SgNode * node) {
+    return getEnclosingNode<SgProject>(node, true /*includingSelf*/);
 }
 
 SgFunctionDeclaration* SageInterface::getDeclarationOfNamedFunction(SgExpression* func) {
@@ -7951,13 +7962,9 @@ vector<SgVariableSymbol*> SageInterface::getSymbolsUsedInExpression(SgExpression
 }
 #endif
 
-SgSourceFile* SageInterface::getEnclosingSourceFile(SgNode* n,bool includingSelf)
-{
-    SgSourceFile* temp = getEnclosingNode<SgSourceFile>(n,includingSelf);
-  if (temp)
-    return temp;
-  else
-    return NULL;
+SgSourceFile*
+SageInterface::getEnclosingSourceFile(SgNode* n,bool includingSelf) {
+    return getEnclosingNode<SgSourceFile>(n, includingSelf);
 }
 
 
@@ -7972,37 +7979,15 @@ SgFunctionDefinition* SageInterface::getEnclosingProcedure(SgNode* n, bool inclu
   return getEnclosingFunctionDefinition(n,includingSelf);
 }
 
-SgFunctionDefinition* SageInterface::getEnclosingFunctionDefinition(SgNode* n,bool includingSelf)
-{
-    SgFunctionDefinition* temp = getEnclosingNode<SgFunctionDefinition>(n,includingSelf);
-  if (temp)
-    return temp;
-  else
-    return NULL;
+SgFunctionDefinition*
+SageInterface::getEnclosingFunctionDefinition(SgNode* n,bool includingSelf) {
+    return getEnclosingNode<SgFunctionDefinition>(n, includingSelf);
 }
 
 
-SgFunctionDeclaration *
-SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingSelf)
-{
-  SgNode* temp = getEnclosingNode<SgFunctionDeclaration>(astNode,includingSelf);
-  if (temp)
-    return isSgFunctionDeclaration(temp);
-  else
-    return NULL;
-#if 0
-  SgNode *astnode = astNode;
-  ROSE_ASSERT (astNode != NULL);
-  do
-    {
-      astnode = astnode->get_parent ();
-    }
-  while ((astnode != NULL) &&
-         (isSgFunctionDeclaration (astnode) == NULL) &&
-         (isSgMemberFunctionDeclaration (astnode) == NULL));
-  if (astnode==NULL) return NULL;
-  else return isSgFunctionDeclaration(astnode);
-#endif
+SgFunctionDeclaration*
+SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingSelf) {
+    return getEnclosingNode<SgFunctionDeclaration>(astNode, includingSelf);
 }
 
 // #endif
@@ -8010,48 +7995,28 @@ SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingS
 // #ifndef USE_ROSE
 
 SgGlobal*
-SageInterface::getGlobalScope( const SgNode* astNode )
-   {
-  // should including itself in this case
-     SgNode* temp = getEnclosingNode<SgGlobal>(astNode,true);
-     if (temp)
-          return isSgGlobal(temp);
-       else
-          return NULL;
-  }
+SageInterface::getGlobalScope(const SgNode* astNode) {
+    // should including itself in this case
+    return getEnclosingNode<SgGlobal>(astNode, true /*includingSelf*/);
+}
 
 SgClassDefinition*
-SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool includingSelf/* =false*/)
-  {
-    SgNode* temp = getEnclosingNode<SgClassDefinition>(astNode,includingSelf);
-    if (temp)
-      return isSgClassDefinition(temp);
-    else
-      return NULL;
- }
+SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool includingSelf/* =false*/) {
+    return getEnclosingNode<SgClassDefinition>(astNode, includingSelf);
+}
 
 
 SgClassDeclaration*
-SageInterface::getEnclosingClassDeclaration(SgNode* astNode)
-  {
- // DQ (1/24/2019): This might have to get the SgClassDefinition and then the SgClassDeclaration from that.
- // I'm having trouble making this work for a member function declared outside of the class definition.
-    SgNode* temp = getEnclosingNode<SgClassDeclaration>(astNode,true);
-    if (temp)
-      return isSgClassDeclaration(temp);
-    else
-      return NULL;
- }
+SageInterface::getEnclosingClassDeclaration(SgNode* astNode) {
+    // DQ (1/24/2019): This might have to get the SgClassDefinition and then the SgClassDeclaration from that.
+    // I'm having trouble making this work for a member function declared outside of the class definition.
+    return getEnclosingNode<SgClassDeclaration>(astNode, true);
+}
 
 SgExprListExp*
-SageInterface::getEnclosingExprListExp(SgNode* astNode, const bool includingSelf/* =false*/)
-   {
-     SgNode* temp = getEnclosingNode<SgExprListExp>(astNode,includingSelf);
-     if (temp)
-          return isSgExprListExp(temp);
-       else
-          return NULL;
-   }
+SageInterface::getEnclosingExprListExp(SgNode* astNode, const bool includingSelf/* =false*/) {
+    return getEnclosingNode<SgExprListExp>(astNode, includingSelf);
+}
 
 bool
 SageInterface::isInSubTree(SgExpression* subtree, SgExpression* exp)
@@ -8466,20 +8431,23 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
           printf (" --- *i = %p = %s name = %s \n",*i,(*i)->class_name().c_str(),(*i)->get_name().str());
           printf (" --- --- referenceSymbol = %p = %s \n",referenceSymbol,referenceSymbol->class_name().c_str());
 #endif
+          bool ambiguityDetected = false;
+
           SgDeclarationStatement* declarationStatement = (*i)->get_declaration();
           ROSE_ASSERT(declarationStatement != NULL);
           SgDeclarationStatement* definingDeclarationStatement = declarationStatement->get_definingDeclaration();
-          ROSE_ASSERT(definingDeclarationStatement != NULL);
-          SgClassDeclaration* classDeclaration = isSgClassDeclaration(definingDeclarationStatement);
-          ROSE_ASSERT(classDeclaration != NULL);
-          SgClassDefinition* classDefinition =  classDeclaration->get_definition();
+          if (definingDeclarationStatement != NULL) {
+            SgClassDeclaration* classDeclaration = isSgClassDeclaration(definingDeclarationStatement);
+            ROSE_ASSERT(classDeclaration != NULL);
+            SgClassDefinition* classDefinition =  classDeclaration->get_definition();
 
-       // This works for any SgName and SgSymbol, so it need not be specific to variables.
-          bool ambiguityDetected = classDefinition->hasAmbiguity(symbolName,referenceSymbol);
+         // This works for any SgName and SgSymbol, so it need not be specific to variables.
+            ambiguityDetected = classDefinition->hasAmbiguity(symbolName,referenceSymbol);
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
-          printf ("ambiguityDetected = %s \n",ambiguityDetected ? "true" : "false");
+            printf ("ambiguityDetected = %s \n",ambiguityDetected ? "true" : "false");
 #endif
+          }
 
           if (ambiguityDetected == true)
              {
@@ -11605,12 +11573,12 @@ bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=N
       if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_lhs_operand()))) {
         // cases : var + incr, var - incr
         incr_var=varRefExp;
-        stepast=isSgBinaryOp(incr)->get_rhs_operand();
+        stepast=isSgBinaryOp(arithOp)->get_rhs_operand();
       } else if(SgVarRefExp* varRefExp=isSgVarRefExp(SkipCasting(isSgBinaryOp(arithOp)->get_rhs_operand()))) {
         if(isSgAddOp(arithOp)) {
           // case : incr + var (not allowed: incr-var)
           incr_var=varRefExp;
-          stepast=isSgBinaryOp(incr)->get_lhs_operand();
+          stepast=isSgBinaryOp(arithOp)->get_lhs_operand();
         }
       }
       break;
@@ -13900,7 +13868,7 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
         }
    }
 
-int SageInterface::fixVariableReferences(SgNode* root)
+int SageInterface::fixVariableReferences(SgNode* root, bool cleanUnusedSymbols/*=true*/)
 {
   ROSE_ASSERT(root);
   int counter=0;
@@ -14049,7 +14017,8 @@ int SageInterface::fixVariableReferences(SgNode* root)
     }
   } // end for
   // Liao 2/1/2013: delete unused initname and symbol, considering possible use by the current subtree from root node
-  clearUnusedVariableSymbols(root); 
+  if (cleanUnusedSymbols)
+    clearUnusedVariableSymbols(root); 
   return counter;
 }
 
@@ -19472,16 +19441,29 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                       // Reset the scopes on any SgInitializedName objects.
                          SgVariableDeclaration* varDecl = isSgVariableDeclaration(declaration);
                          SgInitializedNamePtrList & l = varDecl->get_variables();
-                         for (SgInitializedNamePtrList::iterator i = l.begin(); i != l.end(); i++)
-                            {
+                         for (SgInitializedNamePtrList::iterator ii = l.begin(); ii != l.end(); ii++)
+                         {
                            // reset the scope, but make sure it was set to sourceBlock to make sure.
                            // This might be an issue for extern variable declaration that have a scope
                            // in a separate namespace of a static class member defined external to
                            // its class, etc. I don't want to worry about those cases right now.
-                              ROSE_ASSERT((*i)->get_scope() == sourceBlock);
 
-                              (*i)->set_scope(targetBlock);
-                            }
+                           SgInitializedName * init_name = (*ii);
+//                         ROSE_ASSERT(init_name ->get_scope() == sourceBlock);
+                           
+                           // Must also move the symbol into the new scope, Liao 2019/8/14
+                           SgVariableSymbol* var_sym = isSgVariableSymbol(init_name -> search_for_symbol_from_symbol_table ()) ;
+                           ROSE_ASSERT (var_sym);
+                           SgScopeStatement * old_scope = var_sym -> get_scope();
+                           if (old_scope != targetBlock)
+                           {
+                             old_scope->remove_symbol (var_sym);
+                             targetBlock ->insert_symbol(init_name->get_name(), var_sym);
+                           }
+
+                           init_name->set_scope(targetBlock);
+
+                         }
                          break;
                        }
                      case V_SgFunctionDeclaration: // Liao 1/15/2009, I don't think there is any extra things to do here
@@ -21382,6 +21364,7 @@ bool SageInterface::getForLoopInformations(
   SgExpression * rhs_exp = bin_test->get_rhs_operand_i();
   while (isSgCastExp(rhs_exp)) rhs_exp = ((SgCastExp *)rhs_exp)->get_operand_i();
   SgVarRefExp * rhs_var_ref = isSgVarRefExp(rhs_exp);
+#ifndef NDEBUG
   bool rhs_it = (rhs_var_ref != NULL) && (rhs_var_ref->get_symbol() == iterator);
 
 // DQ (4/21/2016): Replacing use of bitwise xor with something more approriate for logical types.
@@ -21391,6 +21374,7 @@ bool SageInterface::getForLoopInformations(
 // value.  Since these are boolean typed values we can use "a != b", directly.
 // assert(lhs_it xor rhs_it);
   assert(lhs_it != rhs_it);
+#endif
 
   upper_bound = lhs_it ? bin_test->get_rhs_operand_i() : bin_test->get_lhs_operand_i();
 
@@ -21433,24 +21417,30 @@ bool SageInterface::getForLoopInformations(
     case V_SgPlusAssignOp:
     {
       SgBinaryOp * bin_op = (SgBinaryOp *)increment;
+#ifndef NDEBUG
       SgVarRefExp * var_ref_lhs = isSgVarRefExp(bin_op->get_lhs_operand_i());
       assert(var_ref_lhs != NULL && var_ref_lhs->get_symbol() == iterator);
+#endif
       stride = bin_op->get_rhs_operand_i();
       break;
     }
     case V_SgMinusAssignOp:
     {
       SgBinaryOp * bin_op = (SgBinaryOp *)increment;
+#ifndef NDEBUG
       SgVarRefExp * var_ref_lhs = isSgVarRefExp(bin_op->get_lhs_operand_i());
       assert(var_ref_lhs != NULL && var_ref_lhs->get_symbol() == iterator);
+#endif
       stride = bin_op->get_rhs_operand_i();
       break;
     }
     case V_SgAssignOp:
     {
       SgAssignOp * assign_op = (SgAssignOp *)increment;
+#ifndef NDEBUG
       SgVarRefExp * inc_assign_lhs = isSgVarRefExp(assign_op->get_lhs_operand_i());
       assert(inc_assign_lhs != NULL && inc_assign_lhs->get_symbol() == iterator);
+#endif
       SgBinaryOp * inc_assign_rhs = isSgBinaryOp(assign_op->get_rhs_operand_i());
       assert(inc_assign_rhs != NULL);
       SgVarRefExp * inc_assign_rhs_lhs = isSgVarRefExp(inc_assign_rhs->get_lhs_operand_i());
@@ -22140,7 +22130,7 @@ bool typesAreEqual(SgType *t1, SgType *t2) {
   RoseAst subT2(t2);
 
   for (RoseAst::iterator i = subT1.begin(), j = subT2.begin();
-       i != subT1.end(), j != subT2.end(); ++i, ++j) {
+       i != subT1.end() && j != subT2.end(); ++i, ++j) {
     SgNode *nodeT1 = *i;
     SgNode *nodeT2 = *j;
 
@@ -22238,7 +22228,7 @@ bool typesAreEqual(SgType *t1, SgType *t2) {
 
           for(SgTypePtrList::const_iterator ii = funcTypeA->get_arguments().begin(),
               jj = funcTypeB->get_arguments().begin();
-              ii != funcTypeA->get_arguments().end(),
+              ii != funcTypeA->get_arguments().end() &&
               jj != funcTypeB->get_arguments().end();
               ++ii, ++jj) {
 //            std::cout << (*ii)->class_name() << " " << (*jj)->class_name() << std::endl;
@@ -22775,8 +22765,12 @@ void SageInterface:: saveToPDF(SgNode* node)
 void SageInterface:: saveToPDF(SgNode* node, std::string filename)
 {
   ROSE_ASSERT(node != NULL); 
+#if ROSE_WITH_LIBHARU
   AstPDFGeneration pdf;
   pdf.generateWithinFile(filename, getEnclosingFileNode(node));
+#else
+     printf ("Warning: libharu support is not enabled\n");
+#endif
 }
 
 bool SageInterface::insideSystemHeader (SgLocatedNode* node)

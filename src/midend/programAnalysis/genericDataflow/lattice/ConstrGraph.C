@@ -4551,7 +4551,7 @@ string ConstrGraph::str(string indent, bool useIsBottom)
                 if(l.second==unknown) outs << "ConstrGraph : constrKnown - Unknown";
                 else if(l.second==inconsistent) outs << "ConstrGraph : constrKnown - Inconsistent";
                 else {
-                        bool needEndl=false; // =true if the previous line was printed and needs a \n before the next line can begin
+                        //bool needEndl=false; // =true if the previous line was printed and needs a \n before the next line can begin
                         outs << "ConstrGraph : \n";
         //              Dbg::dbg << "vars2Value.size()="<<vars2Value.size()<<"\n";
                         /*for(map<varID, map<varID, affineInequality> >::iterator itX = vars2Value.begin();

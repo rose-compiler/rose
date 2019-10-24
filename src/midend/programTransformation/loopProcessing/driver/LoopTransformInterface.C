@@ -319,8 +319,10 @@ IsDynamicFusionConfig( const AstNodePtr& n, AstNodePtr* configvar, int* configID
   if (sig == "DynamicFusionConfig") {
     if (configID != 0) {
       AstNodePtr idnode = args.front();
+#ifndef NDEBUG
       bool isconst = fa->IsConstInt( idnode, configID);
       assert(isconst);
+#endif
     } 
     if (params != 0) {
       *params = args;

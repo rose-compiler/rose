@@ -2,11 +2,14 @@ AC_DEFUN([ROSE_SUPPORT_Z3],[
 
     dnl Parse configure command-line switches for Z3 and/or obtain the value from the cache.
     AC_ARG_WITH([z3],
-                [AC_HELP_STRING([[[[--with-z3[=PREFIX]]]]], dnl yes, we really need 4 quotes (autoconf 2.6.1)!
-                                [Use the Z3 Satisfiability Modulo Theories Solver. PREFIX is where the
-                                executable z3 is contained])],
-                [ac_cv_use_z3=$withval],
-                [ac_cv_use_z3=no])
+        AS_HELP_STRING([--with-z3=PREFIX],
+            [Use the Z3 SMT solver available from https://github.com/Z3Prover/z3.
+             The PREFIX, if specified, should be the prefix used to install Z3, such as "/usr/local".
+             The default is the empty prefix, in which case the headers and library must be installed
+             in a place where they will be found. Saying "no" for the prefix is the same as saying
+             "--without-z3".]),
+        [ac_cv_use_z3=$withval],
+        [ac_cv_use_z3=no])
 
     USE_Z3=0
     if test "$ac_cv_use_z3" != no; then
@@ -40,7 +43,7 @@ AC_DEFUN([ROSE_SUPPORT_Z3],[
     fi
 
     if test $USE_Z3 = 1; then
-        # Try to figure out a version number because the backlisting needs it.
+        # Try to figure out a version number because the blacklisting needs it.
         if test -r "$Z3_INCLUDE_PATH/z3_version.h"; then
             Z3_VERSION=`sed -n 's/#define Z3_FULL_VERSION.*"Z3 \(.*\)"/\1/p' "$Z3_INCLUDE_PATH/z3_version.h"`
         elif test -r "$Z3_LIBRARY_PATH/cmake/z3/Z3Config.cmake"; then

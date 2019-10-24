@@ -198,11 +198,6 @@ void postProcessingSupport (SgNode* node)
 #endif
 #endif
 
-  // JJW (12/5/2008): Turn off C and C++ postprocessing steps when the new EDG
-  // interface is being used (it should produce correct, complete ASTs on its
-  // own and do its own fixups)
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
-
   // Only do AST post-processing for C/C++
   // Rasmussen (4/8/2018): Added Ada, Cobol, and Jovial. The logic should probably
   // be inverted to only process C and C++ but I don't understand interactions like OpenMP langauges.
@@ -661,7 +656,6 @@ void postProcessingSupport (SgNode* node)
 #endif
           return;
         }
-#endif // ROSE_USE_NEW_EDG_INTERFACE -- do postprocessing unconditionally when the old EDG interface is used
 
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
   // TimingPerformance timer ("AST Fixup: time (sec) = ");

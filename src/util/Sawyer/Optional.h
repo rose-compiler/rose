@@ -271,7 +271,8 @@ public:
      *  while (Optional<std::string> opt = imap.getOptional(key)) {
      *      std::string value = *opt;
      * @endcode */
-    bool assignTo(Value &out) const {
+    template<class U>
+    bool assignTo(U &out) const {
         if (isEmpty_) {
             return false;
         } else {

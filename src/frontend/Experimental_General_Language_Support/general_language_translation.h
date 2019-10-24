@@ -22,6 +22,9 @@ namespace General_Language_Translation
           e_storage_modifier_contiguous,
           e_storage_modifier_external,
           e_storage_modifier_static,
+          e_storage_modifier_location,
+          e_storage_modifier_jovial_def,     /* SimpleDef or CompoundDef */
+          e_storage_modifier_jovial_ref,     /* SimpleRef or CompoundRef */
 
        // Type modifiers
        // --------------
@@ -56,6 +59,10 @@ namespace General_Language_Translation
           e_function_modifier_pure,
           e_function_modifier_recursive,
           e_function_modifier_reentrant,
+
+       // Structure modifiers
+          e_struct_modifier_list,
+          e_struct_item_modifier_list,
 
        // Operators
        // ---------
@@ -127,6 +134,10 @@ namespace General_Language_Translation
           e_star_dimension,
 
           e_star_expression,
+
+       // Expressions for initialization (preset in Jovial)
+          e_initializer,
+          e_struct_initializer,
 
        // Statements
        // ----------

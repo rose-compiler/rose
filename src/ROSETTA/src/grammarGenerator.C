@@ -212,6 +212,8 @@ Grammar::restrictedTypeStringOfGrammarString(GrammarString* gs, AstNodeClass* gr
    
 */
 
+// Rasmussen (04/17/2019): Support for ATerms has been deprecated. I believe the following function can just return true?
+//
 bool Grammar::isFilteredMemberVariable(string varName) {
   // c++11: set<string> filteredMemberVariablesSet={...};
   string nonAtermMemberVariables[]={"parent","freepointer","isModified","containsTransformation","startOfConstruct","endOfConstruct",

@@ -39,7 +39,7 @@ class ConstrGraph : public virtual InfiniteLattice, public dottable//, public vi
 {
 public:
         // Possible levels of this constraint graph, defined by their information content in ascending order.
-        typedef enum levels {
+        enum levels {
                 // Uninitialized constraint graph. Uninitialized constraint graphs behave
                 //    just like regular constraint graphs but they are not equal to any other graph
                 //    until they are initialized. Any operation that modifies or reads the state  

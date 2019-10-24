@@ -7,7 +7,47 @@
  *************************************************************/
 
 #include <set>
+#include <list>
+#include <vector>
 #include <string>
+
+class SgNode;
+class SgProject;
+class SgLocatedNode;
+
+class SgStatement;
+
+class SgScopeStatement;
+class SgGlobal;
+class SgFunctionDefinition;
+
+class SgDeclarationStatement;
+class SgVariableDeclaration;
+class SgFunctionDeclaration;
+class SgInitializedName;
+class SgClassDeclaration;
+
+class SgExpression;
+class SgVarRefExp;
+class SgFunctionRefExp;
+class SgFunctionCallExp;
+
+class SgSymbol;
+class SgVariableSymbol;
+class SgFunctionSymbol;
+
+class SgType;
+class SgPointerType;
+class SgReferenceType;
+class SgRvalueReferenceType;
+class SgFunctionType;
+
+class SgContinueStmt;
+class SgCaseOptionStmt;
+class SgDefaultOptionStmt;
+
+class SgPragmaDeclaration;
+class SgOmpClauseBodyStatement;
 
 namespace SgNodeHelper {
 
@@ -44,6 +84,8 @@ namespace SgNodeHelper {
 
   //! returns filename followed by line:column in one string. Used for generating readable output.
   std::string sourceLineColumnToString(SgNode* node);
+  //! returns filename followed by line, separator, and column in one string. Used for generating readable output.
+  std::string sourceLineColumnToString(SgNode* node, std::string separator);
 
   //! returns line, column, and unparsed node in one string.
   std::string lineColumnNodeToString(SgNode* node);
@@ -71,9 +113,10 @@ namespace SgNodeHelper {
 
 
   //! returns the initializer-list of For.
-  SgStatementPtrList& getForInitList(SgNode* node);
+  std::vector<SgStatement *> & getForInitList(SgNode* node);
+
   //! returns the incr/derc-expr of For.
-  SgExpression* getForIncExpr(SgNode* node);
+  SgExpression * getForIncExpr(SgNode* node);
 
   //! determines whether a node is the root node of an AST representing the inc-expr
   //! in a SgForStatement. This function is helpful to deal with this special case
@@ -116,8 +159,11 @@ namespace SgNodeHelper {
      information as present in the AST. If this information is not
      sufficient to determine the definition of a function it returns
      0. For a consistent AST this will find all definitions in the
-     same file. It does not find definitions in a other SgFile
-     subtrees.
+     same file, but not in a other SgFile. 
+
+     For an inter-procedural analysis a more elaborate mechanism is
+     required to perform a static function call lresolution (also
+     handling function pointers and virtual functions).
   */
   SgFunctionDefinition* determineFunctionDefinition(SgFunctionCallExp* fCall);
 
@@ -163,7 +209,7 @@ namespace SgNodeHelper {
 
   //! returns true for Expr-- and Expr--, otherwise false;
   bool isPostfixIncDecOp(SgNode* node);
-  
+
   //! returns the SgSymbol* of the variable in a variable declaration
   SgSymbol* getSymbolOfVariableDeclaration(SgVariableDeclaration* decl);
 
@@ -221,7 +267,7 @@ namespace SgNodeHelper {
   SgNode* getFirstChild(SgNode* node);
 
   //! return a function-call's argument list
-  SgExpressionPtrList& getFunctionCallActualParameterList(SgNode* node);
+  std::vector<SgExpression *> & getFunctionCallActualParameterList(SgNode* node);
 
   // schroder3 (2016-07-27): Returns the callee of the given call expression
   SgExpression* getCalleeOfCall(/*const*/ SgFunctionCallExp* call);
@@ -230,7 +276,7 @@ namespace SgNodeHelper {
   SgFunctionType* getCalleeFunctionType(/*const*/SgFunctionCallExp* call);
 
   //! return a function-definition's list of formal paramters
-  SgInitializedNamePtrList& getFunctionDefinitionFormalParameterList(SgNode* node);
+  std::vector<SgInitializedName *> & getFunctionDefinitionFormalParameterList(SgNode* node);
 
   //! return a function-definition's return type
   SgType* getFunctionReturnType(SgNode* node);
@@ -296,13 +342,21 @@ namespace SgNodeHelper {
      Note: static/external can be resolved by further processing those objects
    */
   std::list<SgVariableDeclaration*> listOfGlobalVars(SgProject* project);
+#if __cplusplus > 199711L
+  std::list<SgVariableDeclaration*> listOfGlobalFields(SgProject* project);
+#endif
   /*! identifies the list of global variables
      Note: static/external can be resolved by further processing those objects
    */
   std::list<SgVariableDeclaration*> listOfGlobalVars(SgGlobal* global);
+#if __cplusplus > 199711L
+  std::list<SgVariableDeclaration*> listOfGlobalFields(SgGlobal* global);
+#endif
 
-  std::list<SgFunctionDefinition*> listOfFunctionDefinitions(SgProject* project);
-  std::list<SgFunctionDeclaration*> listOfFunctionDeclarations(SgProject* project);
+  std::list<SgFunctionDefinition*> listOfFunctionDefinitions(SgNode* node);
+#if __cplusplus > 199711L
+  std::list<SgFunctionDeclaration*> listOfFunctionDeclarations(SgNode* node);
+#endif
   std::list<SgVarRefExp*> listOfUsedVarsInFunctions(SgProject* SgProject);
 
   /*! identifies the list of SgFunctionDefinitions in global scope
@@ -373,7 +427,7 @@ namespace SgNodeHelper {
   bool isAggregateDeclaration(SgVariableDeclaration* decl);
 
   // returns the list of initializers of an array or struct (e.g. for int a[]={1,2,3} it return the list 1,2,3)
-  SgExpressionPtrList& getInitializerListOfAggregateDeclaration(SgVariableDeclaration* decl);
+  std::vector<SgExpression *> & getInitializerListOfAggregateDeclaration(SgVariableDeclaration* decl);
 
   /*! replaces expression e1 by expression e2. Currently it uses the
      SageInterface::rewriteExpression function but wraps around some
@@ -400,14 +454,22 @@ namespace SgNodeHelper {
   */
   std::string getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl);
 
-    // replace in string 'str' each string 'from' with string 'to'.
-    void replaceString(std::string& str, const std::string& from, const std::string& to);
+  // replace in string 'str' each string 'from' with string 'to'.
+  void replaceString(std::string& str, const std::string& from, const std::string& to);
 
-    // checks whether prefix 'prefix' is a prefix in string 's'.
-    bool isPrefix(const std::string& prefix, const std::string& s);
+  // checks whether prefix 'prefix' is a prefix in string 's'.
+  bool isPrefix(const std::string& prefix, const std::string& s);
 
-    // checks whether 'elem' is the last child (in traversal order) of node 'parent'.
-    bool isLastChildOf(SgNode* elem, SgNode* parent);
+  // checks whether 'elem' is the last child (in traversal order) of node 'parent'.
+  bool isLastChildOf(SgNode* elem, SgNode* parent);
+
+#if __cplusplus > 199711L
+  // Checks if an OpenMP construct is marked with a nowait clause
+  bool hasOmpNoWait(SgOmpClauseBodyStatement *ompNode);
+
+  typedef std::vector<SgOmpSectionStatement *> OmpSectionList;
+  OmpSectionList getOmpSectionList(SgOmpSectionsStatement *sectionsStmt);
+#endif
 
   //! Provides functions which match a certain AST pattern and return a pointer to a node of interest inside that pattern.
   namespace Pattern {
@@ -454,7 +516,12 @@ namespace SgNodeHelper {
 
  
   } // end of namespace Pattern
-  
+
+#if __cplusplus > 199711L
+  // Can a given node be changed? (aka transformed)
+  bool nodeCanBeChanged(SgLocatedNode * lnode);
+#endif
+
 } // end of namespace SgNodeHelper
 
 #endif
