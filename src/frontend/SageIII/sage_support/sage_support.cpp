@@ -931,7 +931,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
             // interface to be built to use case insensitive symbol table handling.
                SageBuilder::symbol_table_case_insensitive_semantics = true;
 
-               // determine whether to run this file through the C preprocessor
+            // determine whether to run this file through the C preprocessor
                bool requires_C_preprocessor =
                           // DXN (02/20/2011): rmod file should never require it
                      (filenameExtension != "rmod")
@@ -950,7 +950,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 #endif
                       );
 
-#if 0
+#if 1
                printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to %s (test 1) \n",requires_C_preprocessor ? "true" : "false");
 #endif
                file->set_requires_C_preprocessor(requires_C_preprocessor);
@@ -2230,7 +2230,7 @@ SgProject::parse()
   // Simplify multi-file handling so that a single file is just the trivial
   // case and not a special separate case.
 #if 0
-     printf ("Loop through the source files on the command line! p_sourceFileNameList = %" PRIuPTR " \n",p_sourceFileNameList.size());
+     printf ("In SgProject::parse(): Loop through the source files on the command line! p_sourceFileNameList = %" PRIuPTR " \n",p_sourceFileNameList.size());
 #endif
 
      Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
@@ -2474,10 +2474,68 @@ SgProject::parse()
                     printf ("Calling secondaryPassOverSourceFile(): file = %s \n",file->getFileName().c_str());
 #endif
 
+                 // DQ (8/19/2019): Divide this into two parts, for optimization of header file unparsing, optionally 
+                 // support the main file collection of comments and CPP directives, and seperately the header file 
+                 // collection of comments and CPP directives.
+#if 0
+                    printf ("######### In calling secondaryPassOverSourceFile() support an optimization improve performance of header file unparsing \n");
+#endif
                  // DQ (1/27/2019): Comment out enough to generate the dot file to debug symbol with null basis.
                  // printf ("ERROR: In Project::parse(): Comment out file->secondaryPassOverSourceFile() to generate the dot file to debug symbol with null basis \n");
+#if 0
+                    file->set_header_file_unparsing_optimization(false);
                     file->secondaryPassOverSourceFile();
+#else
+#if 0
+                    printf ("############### Setting file->set_header_file_unparsing_optimization(true): file = %p = %s \n",file,file->class_name().c_str());
+#endif
+                    file->set_header_file_unparsing_optimization(true);
+                    file->set_header_file_unparsing_optimization_source_file(true);
+#if 0
+                    printf ("Perform collection of comments and CPP directives only on the source file \n");
+                    printf ("###################################################### \n");
+                    printf ("Processing comments and CPP directives for source file \n");
+                    printf ("###################################################### \n");
+#endif
+                    file->secondaryPassOverSourceFile();
+#if 0
+                    printf ("Exiting after test! processed first phase of collecting comments and CPP directives for source file) \n");
+                    ROSE_ASSERT(false);
+#endif
+#if 0
+                    printf ("############### Setting file->set_header_file_unparsing_optimization_source_file(false): file = %p = %s \n",file,file->class_name().c_str());
+                    printf ("############### Setting file->set_header_file_unparsing_optimization_header_file(true): file = %p = %s \n",file,file->class_name().c_str());
+#endif
+                    file->set_header_file_unparsing_optimization_source_file(false);
 
+
+#if 0
+                    file->set_header_file_unparsing_optimization_header_file(true);
+
+#error "DEAD CODE!"
+
+#if 0
+                    printf ("Perform collection of comments and CPP directives only on the header files \n");
+                    printf ("####################################################### \n");
+                    printf ("Processing comments and CPP directives for header files \n");
+                    printf ("####################################################### \n");
+#endif
+                 // printf ("Commented out specific header file collection of comments and CPP directives \n");
+                    file->secondaryPassOverSourceFile();
+#if 0
+                    printf ("Exiting after test! processed second phase of collecting comments and CPP directives for header files) \n");
+                    ROSE_ASSERT(false);
+#endif
+#if 0
+                    printf ("############### Setting file->set_header_file_unparsing_optimization_header_file(false): file = %p = %s \n",file,file->class_name().c_str());
+#endif
+                    file->set_header_file_unparsing_optimization_header_file(false);
+#endif
+#endif
+                 // DQ (9/18/2019): I think this is true, though it might depend on the command-line options.
+                    ROSE_ASSERT(file->get_header_file_unparsing_optimization() == true);
+                    ROSE_ASSERT(file->get_header_file_unparsing_optimization_source_file() == false);
+                    ROSE_ASSERT(file->get_header_file_unparsing_optimization_header_file() == false);
 #if 0
                     printf ("DONE: Calling secondaryPassOverSourceFile() \n");
 #endif
@@ -2543,6 +2601,9 @@ SgProject::parse()
 
   // SgFilePtrList &files = get_fileList();
         {
+       // DQ (8/18/2019): Add performance analysis support.
+          TimingPerformance timer ("EDG-ROSE header file support for tokens:");
+
           BOOST_FOREACH(SgFile* file, files)
              {
                ROSE_ASSERT(file != NULL);
@@ -2563,7 +2624,7 @@ SgProject::parse()
                            // DQ (3/29/2019): This still needs to be debugged.
                               SageInterface::translateToUseCppDeclarations(sourceFile);
                             }
-#if 0
+#if 1
                          printf ("In SgProject::parse(): Building token stream mapping map! \n");
 #endif
                       // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
@@ -2592,11 +2653,14 @@ SgProject::parse()
                          if (sourceFile->get_associated_include_file() != NULL)
                             {
                               SgIncludeFilePtrList & include_file_list = sourceFile->get_associated_include_file()->get_include_file_list();
+#if 1
+                              printf ("In SgProject::parse(): include_file_list.size() = %zu \n",include_file_list.size());
+#endif
                               for (size_t i = 0; i < include_file_list.size(); i++)
                                  {
                                    SgIncludeFile* includeFile = include_file_list[i];
                                    ROSE_ASSERT(includeFile != NULL);
-#if 0
+#if 1
                                    printf ("In SgProject::parse(): includeFile->get_filename() = %s \n",includeFile->get_filename().str());
 #endif
                                 // DQ (9/26/2018): Note that this is null for include files that are not explicit in the source file (e.g. -isystem option).
@@ -2650,6 +2714,7 @@ SgProject::parse()
         }
 
 #if 0
+  // DQ (8/18/2019): Test if we are calling this parsing support (which had dependence on the SgIncludeFile IR nodes.
      printf ("Exiting after test! \n");
      ROSE_ASSERT(false);
 #endif
@@ -3212,6 +3277,68 @@ SgFile::callFrontEnd()
 void
 SgFile::secondaryPassOverSourceFile()
    {
+  // DQ (8/19/2019): We want to optionally seperate this function out over two phases to optimize the support for header file unparsing.
+  // When not optimized, we process all of the header file with the source file.
+  // When we are supporting optimization, we handle the collection of comments and 
+  // CPP directives and their insertion into the AST in two phases: 
+  //  1) Just the source file (no header files)
+  //  2) Just the header files (not the source file)
+
+#if 0
+     printf ("################ In SgFile::secondaryPassOverSourceFile(): this = %p = %s \n",this,this->class_name().c_str());
+     printf (" --- filename = %s \n",this->getFileName().c_str());
+#endif
+
+  // To support initial testing we will call one phase immediately after the other.  Late we will call the second phase, header 
+  // file processing, from within the unparser when we know what header files are intended to be unparsed.
+     bool header_file_unparsing_optimization             = false;
+     bool header_file_unparsing_optimization_source_file = false;
+     bool header_file_unparsing_optimization_header_file = false;
+
+     if (this->get_header_file_unparsing_optimization() == true)
+        {
+          header_file_unparsing_optimization = true;
+
+          if (this->get_header_file_unparsing_optimization_source_file() == true)
+             {
+#if 0
+               printf ("In SgFile::secondaryPassOverSourceFile(): this = %p = %s name = %s this->get_header_file_unparsing_optimization_header_file() = %s \n",
+                    this,this->class_name().c_str(),this->getFileName().c_str(),this->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+#endif
+
+            // DQ (9/19/2019): Set this to false explicitly (testing).
+               if (this->get_header_file_unparsing_optimization_header_file() == true)
+                  {
+                    printf ("In SgFile::secondaryPassOverSourceFile(): this = %p = %s name = %s explicitly call this->set_header_file_unparsing_optimization_header_file(false) \n",
+                         this,this->class_name().c_str(),this->getFileName().c_str());
+
+                    this->set_header_file_unparsing_optimization_header_file(false);
+                  }
+
+               ROSE_ASSERT(this->get_header_file_unparsing_optimization_header_file() == false);
+#if 0
+               printf ("In SgFile::secondaryPassOverSourceFile(): Optimize the collection of comments and CPP directives to seperate handling of the source file from the header files \n");
+#endif
+               header_file_unparsing_optimization_source_file = true;
+             }
+            else
+             {
+               ROSE_ASSERT(this->get_header_file_unparsing_optimization_source_file() == false);
+               if (this->get_header_file_unparsing_optimization_header_file() == true)
+                  {
+#if 0
+                    printf ("Optimize the collection of comments and CPP directives to seperate handling of the header files from the source file \n");
+#endif
+                    header_file_unparsing_optimization_header_file = true;
+                  }
+             }
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
   // **************************************************************************
   //                      Secondary Pass Over Source File
   // **************************************************************************
@@ -3245,12 +3372,41 @@ SgFile::secondaryPassOverSourceFile()
        else
         {
        // This is set in the unparser now so that we can handle the source file plus all header files
-          ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList == NULL);
 
+       // DQ (8/19/2019): When header file optimization is turned on the this asertion is incorrect.
+       // ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList == NULL);
+
+       // DQ (8/19/2019): When header file optimization is turned on the this asertion is incorrect.
        // Build the empty list container so that we can just add lists for new files as they are encountered
-          p_preprocessorDirectivesAndCommentsList = new ROSEAttributesListContainer();
-          ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList != NULL);
+       // p_preprocessorDirectivesAndCommentsList = new ROSEAttributesListContainer();
+       // ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList != NULL);
 
+          if (header_file_unparsing_optimization_header_file == true)
+             {
+               ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList != NULL);
+             }
+            else
+             {
+            // DQ (9/23/2019): We need to support calling this function multiple times.
+            // ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList == NULL);
+            // p_preprocessorDirectivesAndCommentsList = new ROSEAttributesListContainer();
+               if (p_preprocessorDirectivesAndCommentsList == NULL)
+                  {
+#if 0
+                    printf ("Initialize NULL p_preprocessorDirectivesAndCommentsList to empty ROSEAttributesListContainer \n");
+#endif
+                    p_preprocessorDirectivesAndCommentsList = new ROSEAttributesListContainer();
+                  }
+                 else
+                  {
+#if 0
+                    printf ("NOTE: p_preprocessorDirectivesAndCommentsList is already defined! \n");
+                    printf (" --- filename = %s \n",this->getFileName().c_str());
+                    printf (" --- p_preprocessorDirectivesAndCommentsList->getList().size() = %zu \n",p_preprocessorDirectivesAndCommentsList->getList().size());
+#endif
+                  }
+               ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList != NULL);
+             }
 #if 0
        // This is empty so there is nothing to display!
           p_preprocessorDirectivesAndCommentsList->display("Secondary Source File Processing at bottom of SgFile::callFrontEnd()");
@@ -3288,13 +3444,28 @@ SgFile::secondaryPassOverSourceFile()
                          set_requires_C_preprocessor(false);
                        }
                   }
+#if 0
+               printf ("In SgFile::secondaryPassOverSourceFile(): requiresCPP = %s \n",requiresCPP ? "true" : "false");
+#endif
 #if 1
             // Debugging code (eliminate use of CPP directives from source file so that we
             // can debug the insertion of linemarkers from first phase of CPP processing.
-            // printf ("In SgFile::secondaryPassOverSourceFile(): requiresCPP = %s \n",requiresCPP ? "true" : "false");
                if (requiresCPP == false)
                   {
+                 // DQ (10/21/2019): This will be tested below, in attachPreprocessingInfo(), if it is not in place then we need to do it here.
+                    ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
+#if 0
+                    printf ("In SgFile::secondaryPassOverSourceFile(): filePreprocInfo->getList().empty() = %s \n",filePreprocInfo->getList().empty() ? "true" : "false");
+#endif
+                 // ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
+
+#if 0
+                    printf ("@@@@@@@@@@@@@@ In SgFile::secondaryPassOverSourceFile(): Calling attachPreprocessingInfo(): sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
+#endif
                     attachPreprocessingInfo(sourceFile);
+#if 0
+                    printf ("@@@@@@@@@@@@@@ DONE: In SgFile::secondaryPassOverSourceFile(): Calling attachPreprocessingInfo(): sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
+#endif
 #if 0
                     printf ("Exiting as a test (should not be called for Fortran CPP source files) \n");
                     ROSE_ASSERT(false);
@@ -3323,12 +3494,12 @@ SgFile::secondaryPassOverSourceFile()
                   }
 
 #if 0
-               printf ("In SgFile::callFrontEnd(): exiting after attachPreprocessingInfo() \n");
+               printf ("In SgFile::secondaryPassOverSourceFile(): exiting after attachPreprocessingInfo() \n");
                ROSE_ASSERT(false);
 #endif
                if (get_verbose() > 1)
                   {
-                    printf ("In SgFile::callFrontEnd(): Done with attachAllPreprocessingInfo() \n");
+                    printf ("In SgFile::secondaryPassOverSourceFile(): Done with attachAllPreprocessingInfo() \n");
                   }
 
             // DQ (12/13/2012): Insert pass over AST to detect "#line" directives within only the input source file and
@@ -3347,8 +3518,11 @@ SgFile::secondaryPassOverSourceFile()
         }
 
 #if 0
-     printf ("Leaving SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
-     display("At bottom of SgFile::callFrontEnd()");
+     printf ("Leaving SgFile::secondaryPassOverSourceFile() \n");
+#endif
+#if 0
+     printf ("Leaving SgFile::secondaryPassOverSourceFile(): fileNameIndex = %d \n",fileNameIndex);
+     display("At bottom of SgFile::secondaryPassOverSourceFile()");
 #endif
 
 #if 1

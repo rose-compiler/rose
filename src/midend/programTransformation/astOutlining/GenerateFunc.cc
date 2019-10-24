@@ -1278,6 +1278,11 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
 {
   ROSE_ASSERT (s&&scope);
   ROSE_ASSERT(isSgGlobal(scope));
+
+#if 0
+  printf ("In generateFunction(): func_name_str = %s \n",func_name_str.c_str());
+#endif
+
 #if 0  
   // step 1: perform necessary liveness and side effect analysis, if requested.
   // This is moved out to the callers, who has freedom to decide if additional analysis is needed in the first place
@@ -1416,6 +1421,11 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
   // printf ("After resetting the parent: func->get_definition() = %p func->get_definition()->get_body()->get_parent() = %p \n",func->get_definition(),func->get_definition()->get_body()->get_parent());
   //
   ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()));
+
+#if 0
+  printf ("Leaving generateFunction(): func = %p func_name_str = %s \n",func,func_name_str.c_str());
+#endif
+
   return func;
 }
 

@@ -109,7 +109,7 @@ namespace EDG_ROSE_Translation
 
 AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* file, bool includeDirectivesAndCommentsFromAllFiles )
    {
-     use_Wave                      = file->get_wave();
+     use_Wave = file->get_wave();
 
   // Wave will get all Preprocessor Diretives by default and it is therefore reasonable
   // that it will attach all
@@ -131,6 +131,10 @@ AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* 
 #endif
 
      sourceFile = file;
+
+#if 0
+     printf ("In AttachPreprocessingInfoTreeTrav constructor: sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
+#endif
 
   // DQ (2/28/2019): We need to return the line that is associated with the source file where this can be a ode shared between multiple ASTs.
      ROSE_ASSERT(sourceFile != NULL);
@@ -224,6 +228,11 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #if 0
   // DQ (8/22/2018): Added debugging information.
      printf ("In AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): currentListOfAttributes->size() = %d \n",currentListOfAttributes->size());
+#endif
+
+#if 0
+  // DQ (9/17/2019): Added debugging information.
+     printf ("In AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
 #endif
 
 #if 0
@@ -524,22 +533,42 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                               printf ("sourceFile->get_include_file_list().size() = %zu \n",sourceFile->get_include_file_list().size());
                               for (size_t i = 0; i < sourceFile->get_include_file_list().size(); i++)
                                  {
-                                   printf ("Saved inlcude file information: filename = %s \n",sourceFile->get_include_file_list()[i]->get_filename().str());
+                                   printf ("Saved include file information: filename = %s \n",sourceFile->get_include_file_list()[i]->get_filename().str());
                                  }
 #endif
 #if 0
                               printf ("Exiting as a test! \n");
                               ROSE_ASSERT(false);
 #endif
+
+                              bool collectDataFromThisFile = false;
+                              if (sourceFile->get_header_file_unparsing_optimization_source_file() == true)
+                                 {
+#if 0
+                                   printf ("Collect comments and CPP directives from only source file (not header files) \n");
+#endif
+                                   collectDataFromThisFile = false;
+                                 }
+                                else
+                                 {
+#if 0
+                                   printf ("Collect comments and CPP directives from all files (source and header files) \n");
+#endif
+                                   collectDataFromThisFile = true;
+                                 }
+
                            // DQ (9/18/2018): Build a map so that the CPP include directives, processed in later stages of the frontend,
-                           // can initialize the pointer in the SgIncludeBody or the SGIncludeDirective so the SgInclude data structure.
+                           // can initialize the pointer in the SgIncludeBody or the SgIncludeDirective so the SgInclude data structure.
                            // We only want to process included files that are a part of the translation unit (for not this will exclude 
                            // pre-include files).
                               SgIncludeFile* include_file = NULL;
-                              if (EDG_ROSE_Translation::edg_include_file_map.find(includedFileName) != EDG_ROSE_Translation::edg_include_file_map.end())
+
+                           // DQ (8/19/2019): Adding optimization to separate collection of data from source files and header file.
+                           // if (EDG_ROSE_Translation::edg_include_file_map.find(includedFileName) != EDG_ROSE_Translation::edg_include_file_map.end())
+                              if (collectDataFromThisFile == true && EDG_ROSE_Translation::edg_include_file_map.find(includedFileName) != EDG_ROSE_Translation::edg_include_file_map.end())
                                  {
 #if 0
-                                   printf ("FOUND a SgIncludeFile \n");
+                                   printf ("Gather comments and CPP directives: includedFileName = %s \n",includedFileName.c_str());
 #endif
                                    include_file = EDG_ROSE_Translation::edg_include_file_map[includedFileName];
                                    ROSE_ASSERT(include_file != NULL);
@@ -548,7 +577,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                 // Removing the SgIncludeFile from the EDG_ROSE_Translation::edg_include_file_map and adding 
                                 // it to another map is not a really great design idea.  So this should be revisited later.
 #if 0
-                                   printf ("before erase: EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
+                                   printf (" --- before erase: EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
 #endif
                                 // Remove the file from the list to avoid it being refound.
                                    EDG_ROSE_Translation::edg_include_file_map.erase(includedFileName);
@@ -560,7 +589,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                    if (Rose::includeFileMapForUnparsing.find(includedFileName) == Rose::includeFileMapForUnparsing.end())
                                       {
 #if 0
-                                        printf ("Adding this include file to the map to support unparsing (if modified statements are identified) \n");
+                                        printf (" --- Adding this include file to the map to support unparsing (if modified statements are identified) \n");
 #endif
                                         Rose::includeFileMapForUnparsing.insert(std::pair<string,SgIncludeFile*>(includedFileName,include_file));
 #if 0
@@ -612,6 +641,15 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #if 0
                                    printf ("includedFileName = %s locatedNode = %p = %s \n",includedFileName.c_str(),locatedNode,locatedNode->class_name().c_str());
 #endif
+
+#if 1
+                                // DQ (9/30/2019): I think this code is not executed when the header file optimization is active,
+                                // and that is an issue since the AST does not include the header files required to support the 
+                                // header file unparsing of a subset of a scope associated with a specific header file.
+                                   printf ("Exiting as a test! \n");
+                                   ROSE_ASSERT(false);
+#endif
+
                                 // Currently, ROSE supports unparsing of header files only when #include directives do not appear inside expressions.
                                 // The only exception is SgHeaderFileBody, whose parent SgIncludeDirectiveStatement is used instead.
                                    SgStatement* locatedStatement;
@@ -720,7 +758,9 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 
                                 // DQ (5/28/2019): debugging test2019_441.C.
                                 // printf ("Using OneBillion figure for end of construct line number \n");
-
+#if 0
+                                   printf ("Calling getListOfAttributes(): processing header file \n");
+#endif
                                    bool reset_start_index = false;
                                    iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber (targetNode, OneBillion, PreprocessingInfo::after, reset_start_index, getListOfAttributes(fileNameId));
 
@@ -780,11 +820,17 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #if 0
                                         printf ("include_file->get_filename() = %s \n",include_file->get_filename().str());
                                         printf ("sourceFile->getFileName()    = %s \n",sourceFile->getFileName().c_str());
-#endif
 
+                                        printf ("include_file->get_source_file_of_translation_unit()                        = %p = %s \n",
+                                             include_file->get_source_file_of_translation_unit(),include_file->get_source_file_of_translation_unit()->class_name().c_str());
+                                        printf ("sourceFile                                                                 = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
+                                        ROSE_ASSERT(include_file->get_source_file_of_translation_unit() != NULL);
+                                        printf ("include_file->get_source_file_of_translation_unit()->getFileName().c_str() = %s \n",include_file->get_source_file_of_translation_unit()->getFileName().c_str());
+#endif
                                      // This is now set in EDG/ROSE translation.
                                      // We need to link to the source file for the translation unit, and the source file (or header file) that included this include file.
                                      // include_file->set_source_file_of_translation_unit(sourceFile);
+                                        ROSE_ASSERT(include_file->get_source_file_of_translation_unit()->getFileName() == sourceFile->getFileName());
                                         ROSE_ASSERT(include_file->get_source_file_of_translation_unit() == sourceFile);
 #if 0
                                         printf ("include_file->get_source_file_of_translation_unit() = %p filename = %s \n",
@@ -1189,6 +1235,9 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                         if (fileNameId < 0)
                                            {
                                              fileNameId = Sg_File_Info::addFilenameToMap(includedFileName);
+#if 1
+                                             printf ("Calling getListOfAttributes(): includedFileName = %s we attach preprocessed info comming from headers without any SgLocated node to the current SgFile \n",includedFileName.c_str());
+#endif
                                              ROSEAttributesList* headerAttributes = getListOfAttributes(fileNameId);
                                              if ( headerAttributes->size() )
                                                 {
@@ -1380,6 +1429,10 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
   // Note that we need the SgSourceFile so that we get information about what language type this is to support.
   // SgSourceFile* currentFilePtr = sourceFile;
 
+#if 0
+     printf ("In buildCommentAndCppDirectiveList(): use_Wave = %s \n",use_Wave ? "true" : "false");
+#endif
+
      if (use_Wave == false)
         {
        // std::cerr << "Not using wave" << std::endl;
@@ -1395,6 +1448,10 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                fileNameForDirectivesAndComments = sourceFile->get_sourceFileNameWithPath();
                fileNameForTokenStream           = fileNameForDirectivesAndComments;
              }
+
+#if 0
+          printf ("In buildCommentAndCppDirectiveList(): sourceFile->get_Fortran_only() = %s \n",sourceFile->get_Fortran_only() ? "true" : "false");
+#endif
 
           if (sourceFile->get_Fortran_only() == true)
              {
@@ -1503,15 +1560,18 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
             // Else we assume this is a C or C++ program (for which the lexical analysis is identical)
             // The lex token stream is now returned in the ROSEAttributesList object.
 
-#if 1
+            // DQ (8/19/2019): comment this redundant call out!  We are trying to optimize the performance of the header file unparsing.
+#if 0
+            // DQ (8/19/2019): This is a redundent call and in processing each header (for hundreds to thousands of headers) it will be a performance issue.
             // DQ (11/23/2008): This is part of CPP handling for Fortran, but tested on C and C++ codes additionally, (it is redundant for C and C++).
             // This is a way of testing the extraction of CPP directives (on C and C++ codes, so that it is more agressively tested).
             // Since this is a redundant test, it can be removed in later development (its use is only a performance issue).
             // returnListOfAttributes = new ROSEAttributesList();
 
             // This call is just a test, this function is defined for use on Fortran.  For C and C++ we have alternative methods to extract the CPP directives and comments.
-#if 0
-               printf ("Call collectPreprocessorDirectivesAndCommentsForAST to test C and C++ preprocessor directive collection \n");
+#if 1
+               printf ("REDUNDENT: Call collectPreprocessorDirectivesAndCommentsForAST to test C and C++ preprocessor directive collection: fileNameForDirectivesAndComments = %s \n",
+                    fileNameForDirectivesAndComments.c_str());
 #endif
                returnListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_C_language);
 #if 0
@@ -1525,8 +1585,12 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
             // objects (so that we can test the function: collectPreprocessorDirectivesAndCommentsForAST()).
             // returnListOfAttributes = getPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
 #if 0
-               printf ("Calling lex or wave based mechanism for collecting CPP directives, comments, and token stream \n");
+               printf ("Calling lex or wave based mechanism for collecting CPP directives, comments, and token stream:  fileNameForDirectivesAndComments = %s \n",
+                    fileNameForDirectivesAndComments.c_str());
 #endif
+
+            // DQ (8/19/2019): As a performance optimization we should record that we want to collect the comments and
+            // CPP directives from this file and only do so later if we discover that we have to unparse this file.
                returnListOfAttributes = getPreprocessorDirectives(fileNameForDirectivesAndComments);
 #if 0
                printf ("DONE: Calling lex or wave based mechanism for collecting CPP directives, comments, and token stream \n");
@@ -1665,7 +1729,8 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
 
                bool skipProcessFile = (processAllIncludeFiles == false) && (currentFileNameId != sourceFileNameId);
 #if 0
-               printf ("In AttachPreprocessingInfoTreeTrav::getListOfAttributes(): currentFileNameId = %d sourceFileNameId = %d skipProcessFile = %s \n",currentFileNameId,sourceFileNameId,skipProcessFile ? "true" : "false");
+               printf ("In AttachPreprocessingInfoTreeTrav::getListOfAttributes(): currentFileNameId = %d sourceFileNameId = %d skipProcessFile = %s \n",
+                    currentFileNameId,sourceFileNameId,skipProcessFile ? "true" : "false");
 #endif
                if (skipProcessFile == false)
                   {
@@ -1691,7 +1756,8 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
   // ROSE_ASSERT(currentListOfAttributes != NULL);
 
 #if 0
-     printf ("Leaving AttachPreprocessingInfoTreeTrav::getListOfAttributes(): currentListOfAttributes = %p currentListOfAttributes->size() = %d \n",currentListOfAttributes,currentListOfAttributes != NULL ? currentListOfAttributes->size() : -1);
+     printf ("Leaving AttachPreprocessingInfoTreeTrav::getListOfAttributes(): currentListOfAttributes = %p currentListOfAttributes->size() = %d \n",
+          currentListOfAttributes,currentListOfAttributes != NULL ? currentListOfAttributes->size() : -1);
 #endif
 
      return currentListOfAttributes;
@@ -1795,6 +1861,9 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
      if (currentFilePtr != NULL)
         {
        // Current AST node is an SgFile object, generate the corresponding list of attributes
+#if 0
+          printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): case of SgFile: n = %p = %s \n",n,n->class_name().c_str());
+#endif
 
 #if DEBUG_ATTACH_PREPROCESSING_INFO
           printf ("=== Visiting SgSourceFile node and building current list of attributes === \n");
@@ -1816,6 +1885,9 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
           printf ("(SgSourceFile) currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename()) = %s \n",
                currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename()).c_str());
 #endif
+
+        // DQ (9/23/2019): For C/C++ code this should be false (including all headers).
+           ROSE_ASSERT(sourceFile->get_requires_C_preprocessor() == false);
 
        // DQ (12/2/2018): This fails for the C/C++ snippet insertion tests.
        // DQ (12/2/2018): This fails for Fortran.
@@ -1865,19 +1937,44 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
        // std::cerr << "The filename " << sourceFile->get_file_info()->get_filename() << std::endl;
        // ROSE_ASSERT(attributeMapForAllFiles.find(currentFileNameId) == attributeMapForAllFiles.end());
 
+       // DQ (8/19/2019): Avoid processing this if we are optimizing the header file unparsing and only processing the header files.
+          ROSEAttributesList* currentListOfAttributes = NULL;
+          if (currentFilePtr->get_header_file_unparsing_optimization_header_file() == true)
+             {
 #if 0
-          printf ("@@@@@@@@@@@@@@@@@@@@ Reading the comments and CPP directives from the current file: \n");
-          printf ("   --- currentFileNameId = %d currentFileName = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
+               printf ("Skip processing the source file when using the headed file optimiation \n");
 #endif
+#if 1
+            // DQ (10/21/2019): This code does not change the assertion below.
+               currentListOfAttributes = getListOfAttributes(currentFileNameId);
+               ROSE_ASSERT(currentListOfAttributes != NULL);
+#endif
+            // DQ (10/21/2019): This will be tested below, if it is not in place then we need to do it here.
+               ROSEAttributesListContainerPtr filePreprocInfo = currentFilePtr->get_preprocessorDirectivesAndCommentsList();
+            // ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
 
-       // This will cause the CPP directives and comments list to be generated for the source file (plus the token stream).
-          ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);
-          ROSE_ASSERT(currentListOfAttributes != NULL);
-
+            // currentListOfAttributes = getListOfAttributes(currentFileNameId);
+            // ROSE_ASSERT(currentListOfAttributes != NULL);
 #if 0
-          printf ("@@@@@@@@@@@@@@@@@@@@ DONE: Reading the comments and CPP directives from the current file: \n");
-          printf ("   --- currentFileNameId = %d currentFileName = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
+               printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): filePreprocInfo->getList().empty() = %s \n",filePreprocInfo->getList().empty() ? "true" : "false");
 #endif
+            // ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
+             }
+            else
+             {
+#if 0
+               printf ("@@@@@@@@@@@@@@@@@@@@ Reading the comments and CPP directives from the current file: \n");
+               printf ("   --- currentFileNameId = %d currentFileName = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
+#endif
+            // This will cause the CPP directives and comments list to be generated for the source file (plus the token stream).
+            // ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);
+               currentListOfAttributes = getListOfAttributes(currentFileNameId);
+               ROSE_ASSERT(currentListOfAttributes != NULL);
+#if 0
+               printf ("@@@@@@@@@@@@@@@@@@@@ DONE: Reading the comments and CPP directives from the current file: \n");
+               printf ("   --- currentFileNameId = %d currentFileName = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
+#endif
+             }
 
        // *************************************************
        // ** Save the ROSEAttributesList into the SgFile **
@@ -1892,19 +1989,66 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
           ROSEAttributesListContainerPtr filePreprocInfo = currentFilePtr->get_preprocessorDirectivesAndCommentsList();
           if (filePreprocInfo != NULL)
              {
-               ROSE_ASSERT(filePreprocInfo->getList().empty() == true);
+#if 0
+               printf ("sourceFile->get_header_file_unparsing_optimization()             = %s \n",sourceFile->get_header_file_unparsing_optimization() ? "true" : "false");
+               printf ("sourceFile->get_header_file_unparsing_optimization_source_file() = %s \n",sourceFile->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+               printf ("sourceFile->get_header_file_unparsing_optimization_header_file() = %s \n",sourceFile->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+#endif
+            // DQ (8/19/2019): This assertion should depend upon if we are supporting unparse header file optimization and which phase we are in.
+            // ROSE_ASSERT(filePreprocInfo->getList().empty() == true);
+               if (sourceFile->get_header_file_unparsing_optimization_header_file() == true)
+                  {
+#if 0
+                    printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): filePreprocInfo->getList().empty() = %s \n",filePreprocInfo->getList().empty() ? "true" : "false");
+#endif
+#if 0
+                    ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
+
+                 // DQ (8/19/2019): I think we can assert this.
+                    ROSE_ASSERT(filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) != filePreprocInfo->getList().end());
+#endif
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(filePreprocInfo->getList().empty() == true);
+                  }
 #if 0
                printf ("Put the ROSEAttributesList into the ROSEAttributesListContainer (an stl map) \n");
 #endif
             // Put the ROSEAttributesList into the ROSEAttributesListContainer (an stl map)
-               filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = currentListOfAttributes;
+
+            // DQ (8/19/2019): We have to allow for the currentListOfAttributes to be NULL when optimizing header 
+            // file unparsing performance and header files are being processed instead of the source file.
+            // filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = currentListOfAttributes;
+               if (currentListOfAttributes != NULL)
+                  {
+#if 0
+                    printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): Adding an entry for comments and CPP directives for file = %s \n",sourceFile->get_file_info()->get_filename());
+#endif
+                 // DQ (10/22/2019): This should be true for us to be adding an entry below.
+                 // ROSE_ASSERT(filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end());
+                 // filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = currentListOfAttributes;
+                    if (filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
+                       {
+#if 0
+                         printf ("filePreprocInfo->getList() DOES NOT have an entry for this file: filename = %s \n",sourceFile->get_file_info()->get_filename());
+#endif
+                         filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = currentListOfAttributes;
+                       }
+                      else
+                       {
+#if 0
+                         printf ("filePreprocInfo->getList() ALREADY HAS an entry for this file: filename = %s \n",sourceFile->get_file_info()->get_filename());
+#endif
+                       }
+                  }
 #if 0
                printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): filePreprocInfo->getList().size() = %" PRIuPTR " \n",filePreprocInfo->getList().size());
 #endif
              }
             else
              {
-            // DQ (10/21/2013): I am not clear if this shuld be a warning, but I disabled the assertion above (required for 
+            // DQ (10/21/2013): I am not clear if this should be a warning, but I disabled the assertion above (required for 
             // Fortran or perhaps masking another issue).  After more investigation, I think this is OK to comment out.
 #if 0
                printf ("WARNING: currentFilePtr->get_preprocessorDirectivesAndCommentsList() == NULL \n");
@@ -1934,6 +2078,15 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
   // But we start with statements and initialized names first
      SgInitializedName * i_name = isSgInitializedName (n); 
      SgAggregateInitializer * a_initor = isSgAggregateInitializer (n);
+
+#if 0
+     printf ("statement = %p i_name = %p a_initor = %p \n",statement,i_name,a_initor);
+     if (statement != NULL)
+        {
+          printf (" --- statement = %p = %s \n",statement,statement->class_name().c_str());
+        }
+#endif
+
      if (statement != NULL || i_name != NULL || a_initor != NULL)
         {
           SgLocatedNode* currentLocNodePtr = NULL;
@@ -1981,6 +2134,18 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #endif
 
           ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);
+
+       // DQ (8/19/2019): The comments and CPP directives are being attached to the AST twice for those statements in the source file.
+       // We need to prevent this by setting currentListOfAttributes = NULL when doing the header file optimization within the header file phase.
+          ROSE_ASSERT(sourceFile != NULL);
+          if (sourceFile->get_header_file_unparsing_optimization_header_file() == true)
+             {
+#if 0
+               printf ("&&&&& Set currentListOfAttributes = NULL for the header file phase of the header file optimization \n");
+#endif
+               currentListOfAttributes = NULL;
+             }
+
 #if 0
           printf ("currentListOfAttributes = %p \n",currentListOfAttributes);
 #endif
@@ -2062,6 +2227,20 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                          n->class_name().c_str());
 #endif
 
+                 // DQ (8/19/2019): This is not the best place to isolate the two phases of processing the source file from the processin og the headers.
+                 // DQ (8/19/2019): If we want to defer the insertion of CPP directives from header files into the AST then
+                 // we need to be able to call this function later. But since this is a recursive function maybe we could 
+                 // just call the whole process to insert comments and CPP directives into ROSE later, however, that would 
+                 // mark the nodes as transformed.
+
+                 // Or maybe we could do it once where the comments and CPP directives are inserted into the main source file, 
+                 // and then later when they are inserted into all of the header files.
+#if 0
+                    printf ("Saving information about where to inpt comments and CPP directives from header files \n");
+                    printf (" --- currentLocNodePtr = %p = %s \n",currentLocNodePtr,currentLocNodePtr != NULL ? currentLocNodePtr->class_name().c_str() : "null");
+                    printf (" --- line = %zu \n",line);
+                    printf (" --- currentListOfAttributes = %p \n",currentListOfAttributes);
+#endif
                  // Iterate over the list of comments and directives and add them to the AST
                     bool reset_start_index = false;
                     iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(
@@ -2359,6 +2538,10 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
             // DQ (9/22/2013): This fails for the projects/haskellport tests (does not appear to be related to the move to physical source position information, but I can't be certain).
             // ROSE_ASSERT(processAllIncludeFiles == false || ((currentFileNameId < 0) || (attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end())));
 
+#if 0
+               printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): calling getListOfAttributes(): currentFileName for currentFileNameId = %d = %s \n",
+                    currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
+#endif
             // ROSEAttributesList* currentListOfAttributes = attributeMapForAllFiles[currentFileNameId];
                ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);
 #if 0

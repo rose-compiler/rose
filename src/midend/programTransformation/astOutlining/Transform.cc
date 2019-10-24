@@ -201,6 +201,10 @@ static void calculateVariableUsingAddressOf(const ASTtools::VarSymSet_t& syms, c
 Outliner::Result
 Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 {
+#if 0
+  printf ("Inside of Outliner::outlineBlock() \n");
+#endif
+
   //---------step 1. Preparations-----------------------------------
   //new file, cut preprocessing information, collect variables
   // Generate a new source file for the outlined function, if requested
@@ -296,7 +300,16 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     calculateVariableUsingAddressOf (syms, readOnlyVars, pdSyms);
   }
 
+#if 0
+  printf ("Calling generateFunction(): func_name_str = %s \n",func_name_str.c_str());
+#endif
+
   SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, pdSyms, restoreVars, struct_decl, glob_scope);
+
+#if 0
+  printf ("DONE: Calling generateFunction(): func_name_str = %s \n",func_name_str.c_str());
+#endif
+
   ROSE_ASSERT (func != NULL);
   ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
 
@@ -305,6 +318,7 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   // Retest this...
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+
 #if 0
   printf ("After resetting the parent: func->get_definition() = %p func->get_definition()->get_body()->get_parent() = %p \n",func->get_definition(),func->get_definition()->get_body()->get_parent());
 #endif
@@ -323,17 +337,38 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // DQ (2/16/2009): Added (with Liao) the target block which the outlined function will replace.
   // Insert the function and its prototype as necessary  
   ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
-  insert (func, glob_scope, s); //Outliner::insert() 
+
+#if 0
+  printf ("Calling insert() (func = %p to global scope) \n",func);
+#endif
+
+  // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
+  // insert (func, glob_scope, s); //Outliner::insert() 
+     DeferedTransformation headerFileTransformation = insert (func, glob_scope, s); //Outliner::insert() 
+
+#if 0
+     printf ("DONE: Calling insert() (func = %p to global scope) \n",func);
+#endif
+
   ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
   //
   // Retest this...
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+
+#if 0
+  printf ("Calling NodeQuery::querySubTree() \n");
+#endif
 
   // reproduce the lost OpenMP pragma attached to a outlining target loop 
   // The assumption is that OmpAttribute is attached to both the pragma and the affected loop
   // in the frontend already.
   // Liao, 3/12/2009
   Rose_STL_Container <SgNode*>  loops = NodeQuery::querySubTree(func,V_SgForStatement);
+
+#if 0
+  printf ("DONE: Calling NodeQuery::querySubTree() \n");
+#endif
+
   if (loops.size()>0)
   {
     Rose_STL_Container <SgNode*>::iterator liter =loops.begin();
@@ -343,12 +378,18 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   //-----------Step 4. Replace the outlining target with a function call-------------
 
+#if 0
+  printf ("Replace the outlining target with a function call \n");
+#endif
+
   // Prepare the parameter of the function call,
   // Generate packing statements, insert them into the beginning of the target s
   std::string wrapper_name;
   // two ways to pack parameters: an array of pointers v.s. A structure
   if (useParameterWrapper || useStructureWrapper)
-    wrapper_name= generatePackingStatements(s,syms,pdSyms, struct_decl );
+    {
+      wrapper_name= generatePackingStatements(s,syms,pdSyms, struct_decl );
+    }
 
   // Generate a call to the outlined function.
   SgScopeStatement * p_scope = s->get_scope();
@@ -356,6 +397,10 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   // Retest this...
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+
+#if 0
+  printf ("In outlineBlock(): use_dlopen = %s \n",use_dlopen ? "true" : "false");
+#endif
 
   SgStatement *func_call = NULL;
   if (use_dlopen) 
@@ -389,17 +434,33 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     func_call = buildFunctionCallStmt(buildPointerDerefExp(buildVarRefExp(func_name_str+"p",p_scope)), exp_list_exp);   
   }
   else  // regular function call for other cases
-    func_call = generateCall (func, syms, readOnlyVars, wrapper_name,p_scope);
+    {
+#if 0
+      printf ("use_dlopen == false: calling generateCall() \n");
+#endif
+      func_call = generateCall (func, syms, readOnlyVars, wrapper_name,p_scope);
+#if 0
+      printf ("DONE: use_dlopen == false: calling generateCall() \n");
+#endif
+    }
 
   ROSE_ASSERT (func_call != NULL);
 
   // Retest this...
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
+#if 0
+  printf ("Calling SageInterface::replaceStatement \n");
+#endif
+
   // What is this doing (what happens to "s")
   //  cout<<"Debug before replacement(s, func_call), s is\n "<< s<<endl; 
   //     SageInterface::insertStatementAfter(s,func_call);
   SageInterface::replaceStatement(s,func_call);
+
+#if 0
+  printf ("DONE: Calling SageInterface::replaceStatement \n");
+#endif
 
   ROSE_ASSERT(s != NULL);
   ROSE_ASSERT(s->get_statements().empty() == true);
@@ -425,6 +486,7 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   // Retest this...
   ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+
 #if 0
   printf ("After resetting the parent: func->get_definition() = %p func->get_definition()->get_body()->get_parent() = %p \n",func->get_definition(),func->get_definition()->get_body()->get_parent());
 #endif
@@ -455,6 +517,7 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
     ROSE_ASSERT(TransformationSupport::getSourceFile(func) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
     ROSE_ASSERT(TransformationSupport::getSourceFile(func->get_scope()) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
+
 #if 0
     printf ("******************************************************************** \n");
     printf ("Now calling SageInterface::appendStatementWithDependentDeclaration() \n");
@@ -498,7 +561,15 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 #endif
   }
 
-  return Result (func, func_call, new_file);
+#if 0
+  // DQ (8/7/2019): Tracing down how to get function prototype information into the return result of this function.
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+  // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
+  // return Result (func, func_call, new_file);
+     return Result (func, func_call, new_file, headerFileTransformation);
 }
 
 /**
@@ -718,8 +789,17 @@ Outliner::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
   }
   // remove pre-existing file with the same name
   remove (new_file_name.c_str());
+
+#if 0
+      printf ("In Outliner::generateNewSourceFile(): Calling buildFile(): new_file_name = %s \n",new_file_name.c_str());
+#endif
   // par1: input file, par 2: output file name, par 3: the project to attach the new file
   new_file = isSgSourceFile(buildFile(new_file_name, new_file_name,project));
+
+#if 0
+      printf ("DONE: In Outliner::generateNewSourceFile(): Calling buildFile(): new_file_name = %s \n",new_file_name.c_str());
+#endif
+
   //new_file = isSgSourceFile(buildFile(new_file_name, new_file_name));
   ROSE_ASSERT(new_file != NULL);
   return new_file;
@@ -766,6 +846,16 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
     std::string input_file_name = input_file->get_file_info()->get_filenameString();
 
     std::string new_file_name =   generateLibSourceFileName (target);
+
+#if 0
+    printf ("Before strip path: new_file_name = %s \n",new_file_name.c_str());
+#endif
+
+    new_file_name = Rose::utility_stripPathFromFileName(new_file_name);
+
+#if 0
+    printf ("After strip path: new_file_name = %s \n",new_file_name.c_str());
+#endif
     
     // Search if the lib file already exists. 
     SgFilePtrList file_list = project->get_files();
@@ -775,23 +865,48 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
     {   
       SgFile* cur_file = *iter;
       SgSourceFile * sfile = isSgSourceFile(cur_file);
+
+#if 0
+      printf ("In Outliner::getLibSourceFile(): sfile = %p = %s name = %s \n",sfile,sfile->class_name().c_str(),sfile->getFileName().c_str());
+#endif
+
       if (sfile!=NULL)
       {
           string cur_file_name =sfile->get_file_info()->get_filenameString();
-//          cout<<"\t Debug: compare cur vs. new file name:"<<cur_file_name <<" vs. " << new_file_name <<endl;
+       // cout < <"\t Debug: compare cur vs. new file name:"<<cur_file_name <<" vs. " << new_file_name <<endl;
+
+#if 0
+          printf ("cur_file_name = %s new_file_name = %s \n",cur_file_name.c_str(),new_file_name.c_str());
+#endif
+
           if (cur_file_name == new_file_name)
           {
+#if 0
+            printf ("Found file to use for outlining \n");
+#endif
               new_file = sfile;
               break;
           }
       }        
     } // end for SgFile
+
+#if 0
+    printf ("In Outliner::getLibSourceFile(): new_file = %p \n",new_file);
+#endif
     
     if (new_file == NULL)
     {
+#if 0
+      printf ("In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
+#endif
       // par1: input file, par 2: output file name, par 3: the project to attach the new file
         // to simplify the lib file generation, we copy entire original source file to it, then later append outlined functions
       new_file = isSgSourceFile(buildSourceFile(input_file_name, new_file_name, project));
+
+#if 0
+      printf ("DONE: In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
+#endif
+
       // buildFile() will set filename to be input file name by default. 
       // we have to rename the input file to be output file name. This is used to avoid duplicated creation later on
       new_file->get_file_info()->set_filenameString(new_file_name);

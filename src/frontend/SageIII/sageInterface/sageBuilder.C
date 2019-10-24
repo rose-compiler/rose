@@ -15314,14 +15314,30 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 // infrequently used option.
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildFile(inputFileName = %s, outputFileName = %s, project = %p \n",inputFileName.c_str(),outputFileName.c_str(),project);
+  // printf (" --- fullname = %s \n",fullname.c_str());
 #endif
 
-     ROSE_ASSERT(inputFileName.size()!=0);// empty file name is not allowed.
-     string sourceFilename = inputFileName, fullname;
+     ROSE_ASSERT(inputFileName.size() != 0); // empty file name is not allowed.
+
+  // DQ (9/18/2019): I am unclear what the use of fullname is below.
+  // string sourceFilename = inputFileName, fullname;
+     string sourceFilename_fullname = inputFileName, fullname;
+     string sourceFilename = inputFileName;
+
+#if 0
+     printf ("sourceFilename_fullname = %s \n",sourceFilename_fullname.c_str());
+     printf ("sourceFilename = %s \n",sourceFilename.c_str());
+#endif
+
+  // DQ (9/18/2019): Test that the use of fullname has no effect.
+     ROSE_ASSERT(sourceFilename == sourceFilename_fullname);
+
      Rose_STL_Container<std::string> arglist;
      int nextErrorCode = 0;
+
+     bool set_header_file_unparsing_optimization = false;
 
      if (project == NULL)
       // SgProject is created on the fly
@@ -15337,6 +15353,37 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
           arglist.push_back("cc");
           arglist.push_back("-c");
           project->set_originalCommandLineArgumentList (arglist);
+        }
+       else
+        {
+       // If project exists, then find the original source file if it exists and check the header file optimization setting for consistancy.
+
+       // DQ (9/18/2019): Adding debugging support to header file optimization support.
+          SgFilePtrList & files = project->get_fileList();
+          for (SgFilePtrList::iterator i = files.begin(); i != files.end(); i++)
+             {
+               SgFile* file = *i;
+#if 0
+               printf ("file = %p = %s name = %s \n",file,file->class_name().c_str(), file->getFileName().c_str());
+
+               printf ("file->get_header_file_unparsing_optimization() = %s \n",file->get_header_file_unparsing_optimization() ? "true" : "false");
+               printf ("file->get_header_file_unparsing_optimization_source_file() = %s \n",file->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+               printf ("file->get_header_file_unparsing_optimization_header_file() = %s \n",file->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+#endif
+               if (sourceFilename == file->getFileName())
+                  {
+                 // We are building a second copy of an originally specified file (so we need to set the optimization setting similarly).
+                    if (file->get_header_file_unparsing_optimization() == true)
+                       {
+                         set_header_file_unparsing_optimization = true;
+                       }
+                  }
+             }
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
         }
 
      ifstream testfile(inputFileName.c_str());
@@ -15379,9 +15426,10 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // DQ (2/6/2009): We will be compiling the source code generated in the
   // "rose_<inputFileName>" file, so we don't want this on the argument stack.
   // TV (09/19/2018): only add if not already present
-     if (std::find(arglist.begin(), arglist.end(), sourceFilename) == arglist.end()) {
-       arglist.push_back(sourceFilename);
-     }
+     if (std::find(arglist.begin(), arglist.end(), sourceFilename) == arglist.end()) 
+        {
+          arglist.push_back(sourceFilename);
+        }
 
   // DQ (2/6/2009): Modified.
   // There is output file name specified for rose translators
@@ -15412,6 +15460,44 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #if 0
      printf ("In SageBuilder::buildFile(): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
+
+#if 0
+  // DQ (9/18/2019): Adding debugging support.
+     printf ("In SageBuilder::buildFile(): file = %p = %s result->get_header_file_unparsing_optimization() = %s \n",
+          result,result->class_name().c_str(),result->get_header_file_unparsing_optimization() ? "true" : "false");
+     printf ("In SageBuilder::buildFile(): file = %p = %s result->get_header_file_unparsing_optimization_source_file() = %s \n",
+          result,result->class_name().c_str(),result->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+     printf ("In SageBuilder::buildFile(): file = %p = %s result->get_header_file_unparsing_optimization_header_file() = %s \n",
+          result,result->class_name().c_str(),result->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+#endif
+
+  // DQ (9/18/2019): Adding debugging support.
+     ROSE_ASSERT(result->get_header_file_unparsing_optimization() == false);
+     ROSE_ASSERT(result->get_header_file_unparsing_optimization_source_file() == false);
+     ROSE_ASSERT(result->get_header_file_unparsing_optimization_header_file() == false);
+
+  // ROSE_ASSERT(result->get_header_file_unparsing_optimization() == true);
+
+     if (set_header_file_unparsing_optimization == true)
+        {
+          result->set_header_file_unparsing_optimization(true);
+
+       // DQ (9/18/2019): Also set the values for the source file and header files.
+       // I think we only want to set the source file version to true and the header file version to false.
+       // This is enforced in the attachPreprocessingInfo() function.
+          result->set_header_file_unparsing_optimization_source_file(true);
+       // result->set_header_file_unparsing_optimization_header_file(true);
+          result->set_header_file_unparsing_optimization_header_file(false);
+
+#if 0
+          printf ("In SageBuilder::buildFile(): set_header_file_unparsing_optimization == true: file = %p = %s result->get_header_file_unparsing_optimization() = %s \n",
+               result,result->class_name().c_str(),result->get_header_file_unparsing_optimization() ? "true" : "false");
+          printf ("In SageBuilder::buildFile(): set_header_file_unparsing_optimization == true: file = %p = %s result->get_header_file_unparsing_optimization_source_file() = %s \n",
+               result,result->class_name().c_str(),result->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+          printf ("In SageBuilder::buildFile(): set_header_file_unparsing_optimization == true: file = %p = %s result->get_header_file_unparsing_optimization_header_file() = %s \n",
+               result,result->class_name().c_str(),result->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+#endif
+        }
 
 #if 0
   // DQ (3/4/2014): This fix is only for Java and for C will cause a second SgFile to be redundently added to the file list.
@@ -15523,14 +15609,14 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // generateAstGraph(project, 2000);
 #endif
 
-#if 1
-     printf ("Generate the dot output for multiple files (ROSE AST) \n");
+#if 0
+     printf ("In SageBuilder::buildFile(): Generate the dot output for multiple files (ROSE AST) \n");
   // generateDOT ( *project );
      generateDOTforMultipleFile ( *project );
      printf ("DONE: Generate the dot output of the SAGE III AST \n");
 #endif
 
-#if 1
+#if 0
   // DQ (7/18/2019): Output a graph of the AST for debugging.
   // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
@@ -15615,34 +15701,157 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
   // Call the supporting function to build a file.
      string inputFilePrefix = "temp_dummy_file_";
 
+#if 0
+     printf ("In SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* project): calling buildFile() \n");
+#endif
+
      SgFile* file = buildFile(inputFilePrefix+outputFileName,outputFileName,project);
      ROSE_ASSERT(file != NULL);
+
+#if 0
+     printf ("DONE: In SageBuilder::buildSourceFile(): calling buildFile() \n");
+#endif
 
      SgSourceFile* sourceFile = isSgSourceFile(file);
      ROSE_ASSERT(sourceFile != NULL);
 
      ROSE_ASSERT(sourceFile->get_globalScope() != NULL);
+
+#if 0
+     printf ("call the unparser on the just built file \n");
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
      return sourceFile;
 
    }
 
 SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project)
-{
+   {
+#if 0
+     printf ("In SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project): calling buildFile() \n");
+  // printf (" --- inputFileName  = %s outputFileName = %s \n",inputFileName.c_str(),outputFileName.c_str());
+     printf (" --- inputFileName  = %s \n",inputFileName.c_str());
+     printf (" --- outputFileName = %s \n",outputFileName.c_str());
+#endif
 
      SgFile* file = buildFile(inputFileName, outputFileName,project);
      ROSE_ASSERT(file != NULL);
+
+#if 0
+     printf ("DONE: In SageBuilder::buildSourceFile(): calling buildFile() \n");
+#endif
 
      SgSourceFile* sourceFile = isSgSourceFile(file);
      ROSE_ASSERT(sourceFile != NULL);
 
      ROSE_ASSERT(sourceFile->get_globalScope() != NULL);
 
-     // Liao, 2019, 1/31: We often need the preprocessing info. (e.g. #include ..) attached to make the new file compilable. 
+
+#if 0
+  // DQ (9/18/2019): Adding support for debugging the header file optimization.
+     printf ("Debugging the unparsing header file optimization \n");
+
+     printf ("sourceFile->get_header_file_unparsing_optimization()             = %s \n",sourceFile->get_header_file_unparsing_optimization() ? "true" : "false");
+     printf ("sourceFile->get_header_file_unparsing_optimization_source_file() = %s \n",sourceFile->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+     printf ("sourceFile->get_header_file_unparsing_optimization_header_file() = %s \n",sourceFile->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+#endif
+
+#if 1
+  // ROSE_ASSERT(sourceFile->get_header_file_unparsing_optimization_header_file() == false);
+
+  // DQ (9/18/2019): These are now set to true when the inputFileName matches a previously read file for which the optimizaton was turned on.
+     ROSE_ASSERT(sourceFile->get_header_file_unparsing_optimization() == true);
+     ROSE_ASSERT(sourceFile->get_header_file_unparsing_optimization_source_file() == true);
+  // ROSE_ASSERT(sourceFile->get_header_file_unparsing_optimization_header_file() == true);
+     ROSE_ASSERT(sourceFile->get_header_file_unparsing_optimization_header_file() == false);
+#endif
+
+  // DQ (9/18/2019): Adding support for the header file optimization.
+  // Check is this file matches an existing file and if so avoid regathering the CPP directives and comments (if posible).
+  // If the original file was specified as being optimized for unparsing header files, then make this one similarly.
+     SgFilePtrList & fileList = project->get_fileList();
+
+#if 0
+     printf ("Looking for file = %s \n",inputFileName.c_str());
+#endif
+
+     for (SgFilePtrList::iterator i = fileList.begin(); i != fileList.end(); i++)
+        {
+          SgFile* temp_file = *i;
+#if 0
+          printf ("temp_file = %p = %s name = %s \n",temp_file,temp_file->class_name().c_str(),temp_file->getFileName().c_str());
+#endif
+          if (temp_file != file)
+             {
+               if (temp_file->getFileName() == file->getFileName())
+                  {
+                 // Then the temp_file is the original version of the file we are building for a second time 
+                 // (usually as a part of the outlining to a seperate file).  and we need to mark at least the 
+                 // unparsing headr file optimizations to be the same across thje two file.
+
+                    temp_file->set_header_file_unparsing_optimization(sourceFile->get_header_file_unparsing_optimization());
+                    temp_file->set_header_file_unparsing_optimization_source_file(sourceFile->get_header_file_unparsing_optimization_source_file());
+                    temp_file->set_header_file_unparsing_optimization_header_file(sourceFile->get_header_file_unparsing_optimization_header_file());
+#if 0
+                    printf ("sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
+                    printf ("sourceFile->get_header_file_unparsing_optimization()             = %s \n",sourceFile->get_header_file_unparsing_optimization() ? "true" : "false");
+                    printf ("sourceFile->get_header_file_unparsing_optimization_source_file() = %s \n",sourceFile->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+                    printf ("sourceFile->get_header_file_unparsing_optimization_header_file() = %s \n",sourceFile->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+
+                    printf ("temp_file = %p = %s \n",temp_file,temp_file->class_name().c_str());
+                    printf ("temp_file->get_header_file_unparsing_optimization()             = %s \n",temp_file->get_header_file_unparsing_optimization() ? "true" : "false");
+                    printf ("temp_file->get_header_file_unparsing_optimization_source_file() = %s \n",temp_file->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+                    printf ("temp_file->get_header_file_unparsing_optimization_header_file() = %s \n",temp_file->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+#endif
+                  }
+                 else
+                  {
+                 // This is a different file.
+                  }
+             }
+          else
+            {
+           // This is the same file, already added to the SgProject file list (as it should be).
+            }
+        }
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+#if 0
+     printf ("In SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project): calling attachPreprocessingInfo() \n");
+#endif
+
+  // Liao, 2019, 1/31: We often need the preprocessing info. (e.g. #include ..) attached to make the new file compilable. 
      attachPreprocessingInfo (sourceFile);
-     
+
+#if 0
+     printf ("DONE: In SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project): calling attachPreprocessingInfo() \n");
+#endif
+
+#if 0
+     printf ("call the unparser on the just built file \n");
+#endif
+
+#if 0
+     printf ("In unparseFileList(): AS A TEST: calling unparseFile(): filename = %s \n",sourceFile->getFileName().c_str());
+     backend(project);
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
      return sourceFile;
-}
+   }
 
 
 PreprocessingInfo* SageBuilder::buildComment(SgLocatedNode* target, const std::string & content,PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/,PreprocessingInfo::DirectiveType dtype/* = PreprocessingInfo::CpreprocessorUnknownDeclaration*/)

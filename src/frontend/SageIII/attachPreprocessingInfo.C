@@ -644,7 +644,22 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      ROSE_ASSERT(sageFilePtr != NULL);
 
 #if 0
+     printf ("################################################################ \n");
+     printf ("################################################################ \n");
      printf ("In attachPreprocessingInfo(): wave = %s file = %p = %s \n",sageFilePtr->get_wave() ? "true" : "false",sageFilePtr,sageFilePtr->get_sourceFileNameWithPath().c_str());
+     printf (" --- unparse output filename = %s \n",sageFilePtr->get_unparse_output_filename().c_str());
+     printf ("################################################################ \n");
+     printf ("################################################################ \n");
+#endif
+
+#if 0
+  // DQ (10/23/2019): This name is allowed to be unset (and is unset by default at this point).
+  // DQ (10/21/2019): Output a warning in this case.
+     if (sageFilePtr->get_unparse_output_filename() == "")
+        {
+          printf ("WARNING: sageFilePtr->get_unparse_output_filename() is EMPTY \n");
+        }
+  // ROSE_ASSERT(sageFilePtr->get_unparse_output_filename() != "");
 #endif
 
 #ifndef  CXX_IS_ROSE_CODE_GENERATION
@@ -661,8 +676,57 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 
      bool processAllFiles = sageFilePtr->get_collectAllCommentsAndDirectives();
 
+  // To support initial testing we will call one phase immediately after the other.  Late we will call the second phase, header 
+  // file processing, from within the unparser when we know what header files are intended to be unparsed.
+     bool header_file_unparsing_optimization             = false;
+     bool header_file_unparsing_optimization_source_file = false;
+     bool header_file_unparsing_optimization_header_file = false;
+
+     if (sageFilePtr->get_header_file_unparsing_optimization() == true)
+        {
+          header_file_unparsing_optimization = true;
+
+          if (sageFilePtr->get_header_file_unparsing_optimization_source_file() == true)
+             {
+               ROSE_ASSERT(sageFilePtr->get_header_file_unparsing_optimization_header_file() == false);
+#if 0
+               printf ("In attachPreprocessingInfo(): Optimize the collection of comments and CPP directives to seperate handling of the source file from the header files \n");
+#endif
+               header_file_unparsing_optimization_source_file = true;
+             }
+            else
+             {
+               ROSE_ASSERT(sageFilePtr->get_header_file_unparsing_optimization_source_file() == false);
+               if (sageFilePtr->get_header_file_unparsing_optimization_header_file() == true)
+                  {
+                    printf ("Optimize the collection of comments and CPP directives to seperate handling of the header files from the source file \n");
+
+                    header_file_unparsing_optimization_header_file = true;
+                  }
+             }
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+     if (header_file_unparsing_optimization_source_file == true)
+        {
+#if 0
+          printf ("Setting processAllFiles = false \n");
+#endif
+          processAllFiles = false;
+        }
+
 #if 0
      printf ("In attachPreprocessingInfo(): processAllFiles = %s \n",processAllFiles ? "true" : "false");
+#endif
+
+#if 0
+  // DQ (9/30/2019): Need to trace down where the header files are provided a global scope to support the header file unparsing.
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
 #endif
 
      AttachPreprocessingInfoTreeTrav tt(sageFilePtr,processAllFiles);
@@ -716,6 +780,12 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 #if 0
      printf ("In attachPreprocessingInfo(): build include graph: wave = %s file = %p = %s \n",sageFilePtr->get_wave() ? "true" : "false",sageFilePtr,sageFilePtr->get_sourceFileNameWithPath().c_str());
 #endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
 #if 0
   // Note that this only builds the include graph starting at the first header file not the input source file.
      string dotgraph_filename = "include_file_graph_from_attachPreprocessingInfo";
@@ -732,11 +802,11 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      // This is pointless since at this point the last step of the traversla has reset the lists (state held in tt).
      // DQ (10/27/2007): Output debugging information
      if ( SgProject::get_verbose() >= 3 )
-     {
-       if (processAllFiles == true)
-         tt.display("Output from collecting ALL comments and CPP directives (across source and header files)");
-       else
-         tt.display("Output from collecting comments and CPP directives in source file only");
+        {
+          if (processAllFiles == true)
+               tt.display("Output from collecting ALL comments and CPP directives (across source and header files)");
+            else
+               tt.display("Output from collecting comments and CPP directives in source file only");
      }
 #endif
    }

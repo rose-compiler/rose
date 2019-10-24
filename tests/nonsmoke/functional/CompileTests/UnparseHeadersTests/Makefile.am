@@ -10,7 +10,10 @@ TestUnparseHeaders_LDADD = $(ROSE_LIBS)
 
 # Test specimens are actually directories, each of which contains a ROSE Test Harness "config" file.
 # TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13
-TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14
+
+# DQ (8/18/2019): Adding scalability testing (test15).
+# TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15
+TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15
 EXTRA_DIST += $(TEST_SPECIMENS) UnparseHeadersTransformVisitor.h
 
 # DQ (11/2/2018): Test with -rose:unparse_tokens

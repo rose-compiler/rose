@@ -84,6 +84,32 @@ namespace Outliner
   const std::string FIND_FUNCP_DLOPEN="findFunctionUsingDlopen";
   const std::string DEFAULT_OUTPUT_PATH="/tmp";
 
+  struct DeferedTransformation
+     {
+    // DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes 
+    // into class declaration (when this is required to support the outlined function's access to protected or private data members).
+    // This is part of an optimization to support the optimization of header file unparsing (limiting the overhead of supporting any 
+    // header file to just focus on the few (typically one) header file that would have to be unparsed.
+
+       SgClassDefinition* class_definition;
+       SgDeclarationStatement* target_class_member;
+       SgDeclarationStatement* new_function_prototype;
+
+       typedef std::set<SgClassDefinition *> ClassDefSet_t;
+       ClassDefSet_t targetClasses;
+
+       typedef std::vector<SgFunctionDeclaration *> FuncDeclList_t;
+       FuncDeclList_t targetFriends;
+
+       DeferedTransformation();
+       DeferedTransformation(SgClassDefinition* class_definition, SgDeclarationStatement* target_class_member, SgDeclarationStatement* new_function_prototype);
+       DeferedTransformation (const DeferedTransformation& X); //! Copy constructor.
+      ~DeferedTransformation (void); //! Shallow; does not delete fields.
+
+       DeferedTransformation & operator= (const DeferedTransformation& X); //! operator=()
+
+     };
+
   //! Stores the main results of an outlining transformation.
   struct Result
   {
@@ -97,8 +123,20 @@ namespace Outliner
     // outlined function if -rose:outline:new_file is specified (useNewFile==true)
     SgFile* file_;
 
+ // DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes 
+ // into class declaration (when this is required to support the outlined function's access to protected or private data members).
+    SgDeclarationStatement* target_class_member;
+    SgDeclarationStatement* new_function_prototype;
+
+ // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
+    DeferedTransformation deferedTransformation;
+
     Result (void); //! Sets all fields to 0
-    Result (SgFunctionDeclaration *, SgStatement *, SgFile* file=NULL);
+
+  // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
+ // Result (SgFunctionDeclaration *, SgStatement *, SgFile* file=NULL);
+    Result (SgFunctionDeclaration *, SgStatement *, SgFile* file, DeferedTransformation deferedTransformation);
+
     Result (const Result&); //! Copy constructor.
     ~Result (void) {}; //! Shallow; does not delete fields.
     bool isValid (void) const; //! Returns true iff result is usable
@@ -324,10 +362,9 @@ ROSE_DLL_API Sawyer::CommandLine::SwitchGroup commandLineSwitches();
      *  This information is used to insert the prototypes into the correct places in
      *  the AST.
      */
-    ROSE_DLL_API
-    void insert (SgFunctionDeclaration* func,
-                 SgGlobal* scope,
-                 SgBasicBlock* outlining_target );
+ // DQ (8/15/2019): Adding support to defer the transformations to header files.
+ // ROSE_DLL_API void insert (SgFunctionDeclaration* func, SgGlobal* scope, SgBasicBlock* target_outlined_code )
+    ROSE_DLL_API DeferedTransformation insert (SgFunctionDeclaration* func, SgGlobal* scope, SgBasicBlock* outlining_target );
 
     /*!
      *  \brief Generates a function call parameter list using a set of symbols
