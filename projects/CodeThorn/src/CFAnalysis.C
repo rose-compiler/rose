@@ -167,7 +167,8 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
       SgFunctionParameterTypeList* funParamTypeList=funType->get_argument_list();
     }
 #endif
-    SAWYER_MESG(logger[TRACE])<<"Resolving function call: "<<funCall<<": "<<funCall->unparseToString()<<": ";
+    if(functionResolutionMode!=FRM_FUNCTION_CALL_MAPPING)
+      SAWYER_MESG(logger[TRACE])<<"Resolving function call: "<<funCall<<": "<<funCall->unparseToString()<<": ";
     SgFunctionDefinition* funDef=nullptr;
     FunctionCallTargetSet funCallTargetSet;
     switch(functionResolutionMode) {
@@ -1564,18 +1565,18 @@ SgFunctionDefinition* CFAnalysis::determineFunctionDefinition3(SgFunctionCallExp
 }
 
 FunctionCallTargetSet CFAnalysis::determineFunctionDefinition4(SgFunctionCallExp* funCall) {
-  cout<<"DEBUG: CFAnalysis::determineFunctionDefinition4(!):"<<funCall->unparseToString();
+  SAWYER_MESG(logger[TRACE])<<"CFAnalysis::determineFunctionDefinition4:"<<funCall->unparseToString()<<": ";
   ROSE_ASSERT(getFunctionCallMapping());
   FunctionCallTargetSet res=getFunctionCallMapping()->resolveFunctionCall(funCall);
 #if 1
   if(res.size()>0) {
     if(res.size()==1) {
-      logger[TRACE] << ": RESOLVED to "<<(*res.begin()).getDefinition()<<endl;
+      SAWYER_MESG(logger[TRACE]) << "RESOLVED to "<<(*res.begin()).getDefinition()<<endl;
     } else {
-      logger[TRACE]<< ": RESOLVED to "<<res.size()<<" targets"<<endl;
+      SAWYER_MESG(logger[TRACE])<< "RESOLVED to "<<res.size()<<" targets"<<endl;
     }
   } else {
-    cout << ": NOT RESOLVED."<<endl;
+    SAWYER_MESG(logger[TRACE]) << "NOT RESOLVED."<<endl;
   }
 #endif
   return res;
