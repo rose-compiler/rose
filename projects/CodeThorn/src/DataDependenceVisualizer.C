@@ -180,9 +180,13 @@ void CodeThorn::DataDependenceVisualizer::generateDotFunctionClusters(SgNode* ro
     if(((*i).exit != Labeler::NO_LABEL) && ((*i).callReturn!= Labeler::NO_LABEL)) {
       myfile<<(*i).exit<<" -> "<<(*i).callReturn<<";\n";
     }
-    // generate optional local edge
+    // generate external edge
     if(((*i).entry == Labeler::NO_LABEL) && ((*i).exit== Labeler::NO_LABEL))
-      myfile<<(*i).call<<" -> "<<(*i).callReturn<<" [style=dotted];\n";
+      myfile<<(*i).call<<" -> "<<(*i).callReturn<<" [style=dashed label=external];\n";
+    else {
+      // if no local edge then generate dotted edge for better layout
+      myfile<<(*i).call<<" -> "<<(*i).callReturn<<" [style=dotted arrowhead=none];\n";
+    }
     //  cerr<<"WARNING: inconsistent inter-procedural cfg edge: "<<(*i).call<<" -> "<<(*i).callReturn<<endl;
   }
   myfile<<"// access to global variables\n";
