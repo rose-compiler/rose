@@ -469,8 +469,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
       resultList.push_front(res);
       return resultList;
     } else {
-      logger[ERROR]<<"function pointers are not supported yet: "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
-      exit(1);
+      // use of function addresses as values. Not implemented yet.
+      SAWYER_MESG(logger[WARN])<<"Imprecision: evaluating SgFunctionRefExp as top: "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
+      list<SingleEvalResultConstInt> resultList;
+      res.result=AbstractValue::createTop();
+      resultList.push_front(res);
+      return resultList;
     }
   }
   default:
@@ -1526,8 +1530,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       // (1) obtain arguments from estate
       // (2) marshall arguments
       // (3) perform function call (causing side effect on stdout)
-      // TODO
-      cout<<"DEBUG: PRINTF FUNCTION CALL :-)"<<endl;
       return execFunctionCallPrintf(funCall,estate);
     } else {
       if(getSkipSelectedFunctionCalls()) {

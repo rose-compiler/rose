@@ -2114,6 +2114,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
    // 2) obtain formal parameters from target
    // 3) eval each actual parameter and assign result to formal parameter in state
    // 4) create new estate and update callstring (context sensitive analysis)
+  SAWYER_MESG(logger[TRACE])<<"transferFunctionCall: "<<getLabeler()->getNode(edge.source())->unparseToString()<<endl;
   EState currentEState=*estate;
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
@@ -2121,8 +2122,6 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
   // ad 1)
   SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source()));
   ROSE_ASSERT(funCall);
-  string funName=SgNodeHelper::getFunctionName(funCall);
-  // handling of error function (TODO: generate dedicated state (not failedAssert))
 
   if(args.getBool("rers-binary")) {
     // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
