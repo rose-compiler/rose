@@ -1886,8 +1886,9 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename()).c_str());
 #endif
 
+        // DQ (10/25/2019): This is not a correct assertion for Fortran code.
         // DQ (9/23/2019): For C/C++ code this should be false (including all headers).
-           ROSE_ASSERT(sourceFile->get_requires_C_preprocessor() == false);
+        // ROSE_ASSERT(sourceFile->get_requires_C_preprocessor() == false);
 
        // DQ (12/2/2018): This fails for the C/C++ snippet insertion tests.
        // DQ (12/2/2018): This fails for Fortran.
