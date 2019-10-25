@@ -1,5 +1,6 @@
 #include <sage3basic.h>
 #include <Diagnostics.h>
+#include <FormatRestorer.h>
 #include <RegisterStateGeneric.h>
 #include <boost/format.hpp>
 

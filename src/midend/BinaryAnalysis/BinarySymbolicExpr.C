@@ -1,17 +1,16 @@
 #define __STDC_LIMIT_MACROS
+#include <sage3basic.h>
+#include <BinarySymbolicExpr.h>
 
-#include "sage3basic.h"
-
-#include "BinarySmtSolver.h"
-#include "BinarySymbolicExpr.h"
-#include "CommandLine.h"
-#include "stringify.h"
-#include "integerOps.h"
-#include "Combinatorics.h"
-
+#include <BinarySmtSolver.h>
 #include <boost/foreach.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
+#include <Combinatorics.h>
+#include <CommandLine.h>
+#include <integerOps.h>
+#include <stringify.h>
+#include <sstream>
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::SymbolicExpr::Interior);
@@ -319,6 +318,31 @@ Type::operator<(const Type &other) const {
     return secondaryWidth_ < other.secondaryWidth_;
 }
 
+void
+Type::print(std::ostream &out) const {
+    switch (typeClass()) {
+        case INTEGER:
+            out <<nBits() <<"-bit integer";
+            break;
+        case FP:
+            out <<nBits() <<"-bit float(e=" <<exponentWidth() <<" s=" <<significandWidth() <<")";
+            break;
+        case MEMORY:
+            out <<nBits() <<"-bit memory(a=" <<addressWidth() <<")";
+            break;
+        case INVALID:
+            out <<"invalid";
+            break;
+    }
+}
+
+std::string
+Type::toString() const {
+    std::ostringstream ss;
+    print(ss);
+    return ss.str();
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Base node
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -556,7 +580,7 @@ Interior::Interior(const Type &type, Operator op, const Nodes &children, const s
     : Node(comment), op_(op), nnodes_(1) {
     for (size_t i=0; i<children.size(); ++i)
         addChild(children[i]);
-    adjustWidth();
+    adjustWidth(type);
     adjustBitFlags(flags);
     if (type.isValid() && type != this->type())
         throw Exception("operator type mismatch");
@@ -679,7 +703,7 @@ Interior::addChild(const Ptr &child)
 }
 
 void
-Interior::adjustWidth() {
+Interior::adjustWidth(const Type &type) {
     if (children_.empty())
         throw Exception(toStr(op_) + " operator requires argument(s)");
     switch (op_) {
@@ -707,6 +731,19 @@ Interior::adjustWidth() {
                 totalWidth += child->nBits();
             }
             type_ = Type::integer(totalWidth);
+            break;
+        }
+        case OP_CONVERT: {
+            if (nChildren() != 1)
+                throw Exception(toStr(op_) + " operator expects one argument");
+            type_ = type;
+            break;
+        }
+        case OP_REINTERPRET: {
+            if (nChildren() != 1)
+                throw Exception(toStr(op_) + " operator expects one argument");
+            if (child(0)->type().nBits() == type.nBits())
+                type_ = type;
             break;
         }
         case OP_EQ:
@@ -741,11 +778,14 @@ Interior::adjustWidth() {
                 throw Exception(toStr(op_) + " operator's first argument (begin bit) must be 64 bits or narrower");
             if (child(1)->nBits() > 64)
                 throw Exception(toStr(op_) + " operator's second argument (end bit) must be 64 bits or narrower");
-            if (!child(2)->isIntegerExpr())
-                throw Exception(toStr(op_) + " operator's third argument must be integer");
+            if (!child(2)->isIntegerExpr() && !child(2)->isFloatingPointExpr())
+                throw Exception(toStr(op_) + " operator's third argument must be integer or floating-point");
             if (*child(0)->toUnsigned() >= *child(1)->toUnsigned())
                 throw Exception(toStr(op_) + " operator's first argument must be less than the second");
             size_t totalSize = *child(1)->toUnsigned() - *child(0)->toUnsigned();
+            // Result will be integer even if arg is floating-point. Example: extracting the bytes of a floating-point value in
+            // order to store it in memory results in integer-valued bytes since it doesn't make sense to interpret the bytes
+            // as floating-point values.
             type_ = Type::integer(totalSize);
             break;
         }
@@ -2894,6 +2934,8 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
             case OP_FP_ISNAN:
             case OP_FP_ISNEG:
             case OP_FP_ISPOS:
+            case OP_CONVERT:
+            case OP_REINTERPRET:
                 // no simplification
                 break;
         }
@@ -3234,6 +3276,12 @@ Leaf::compareStructure(const Ptr &other_) {
         return isIntegerConstant() ? -1 : 1;            // integer constants less than non-integer constants
     } else if (isFloatingPointConstant() != other->isFloatingPointConstant()) {
         return isFloatingPointConstant() ? -1 : 1;      // FP constants less than remaining types
+    } else if (isConstant()) {
+        ASSERT_require(other->isConstant());
+        ASSERT_require(nBits() == other->nBits());
+        // compare constants (even FP) as unsigned integers since all we need is an order for the bits without
+        // any particular interpretation.
+        return bits().compare(other->bits());
     } else {
         ASSERT_require(isVariable2());
         ASSERT_require(other->isVariable2());
@@ -3556,8 +3604,8 @@ makeConcat(const Ptr &hi, const Ptr &lo, const SmtSolverPtr &solver, const std::
 }
 
 Ptr
-makeConvert(const Ptr &a, Type &dstType, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    return Interior::instance(dstType, OP_CONCAT, a, solver, comment, flags);
+makeConvert(const Ptr &a, const Type &dstType, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    return Interior::instance(dstType, OP_CONVERT, a, solver, comment, flags);
 }
 
 Ptr
@@ -3693,6 +3741,11 @@ makeBooleanOr(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std:
 Ptr
 makeRead(const Ptr &mem, const Ptr &addr, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_READ, mem, addr, solver, comment, flags);
+}
+
+Ptr
+makeReinterpret(const Ptr &a, const Type &dstType, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+    return Interior::instance(dstType, OP_REINTERPRET, a, solver, comment, flags);
 }
 
 Ptr

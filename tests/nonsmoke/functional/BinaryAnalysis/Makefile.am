@@ -601,6 +601,23 @@ cory008.passed: $(TEST_WITH_ANSWER) cory008 cory008.ans conditionalDisable
 
 
 ###############################################################################################################################
+# Test symbolic structural comparison of integer constants
+###############################################################################################################################
+noinst_PROGRAMS += cory009
+cory009_SOURCES = cory009.C
+cory009_LDADD = $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += cory009.passed
+
+cory009.passed: $(TEST_EXIT_STATUS) cory009 conditionalDisable
+	@$(RTH_RUN)									\
+		TITLE="test symbolic structural comparison of integer constants [$@]"	\
+		DISABLED="$$(./conditionalDisable)"					\
+		CMD="./cory009"								\
+		$< $@
+
+
+###############################################################################################################################
 # Test symbolic semantics memory read-after-write
 ###############################################################################################################################
 noinst_PROGRAMS += testSymReadWrite

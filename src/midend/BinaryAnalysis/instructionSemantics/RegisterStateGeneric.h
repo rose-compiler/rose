@@ -6,6 +6,7 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
+#include <Sawyer/IntervalSetMap.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
