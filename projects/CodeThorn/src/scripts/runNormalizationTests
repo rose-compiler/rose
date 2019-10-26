@@ -39,10 +39,11 @@ function NormalizationTests {
             fi
             if [ ! $? -eq 0 ]
             then
-	            echo "FAIL"
+	        echo "FAIL"
                 exit 1
             else
-	            echo "PASS"
+	        echo "PASS"
+		rm -f rose_${benchmarkname}
             fi
         done
     done
