@@ -2565,9 +2565,19 @@ UntypedConverter::convertUntypedNamedStatement (SgUntypedNamedStatement* ut_stmt
               cout << "WARNING UNIMPLEMENTED: convertUntypedNamedStatement - e_fortran_end_forall_stmt\n";
               break;
            }
+        case e_end_proc_def_stmt:
+           {
+              cout << "WARNING UNIMPLEMENTED: convertUntypedNamedStatement - e_end_proc_def_stmt\n";
+              break;
+           }
         case e_end_proc_ref_stmt:
            {
               cout << "WARNING UNIMPLEMENTED: convertUntypedNamedStatement - e_end_proc_ref_stmt\n";
+              break;
+           }
+        case e_unknown:
+           {
+              cout << "WARNING UNIMPLEMENTED: convertUntypedNamedStatement - e_unknown\n";
               break;
            }
 
