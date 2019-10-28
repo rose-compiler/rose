@@ -1,4 +1,4 @@
-pragma Ada_2005;
+pragma Ada_2012;
 pragma Style_Checks (Off);
 
 with Interfaces.C; use Interfaces.C;
@@ -18,12 +18,12 @@ package a_nodes_h is
    type u_Element_ID_Array_Struct is record
       Length : aliased int;  -- a_nodes.h:41
       IDs : Element_ID_Ptr;  -- a_nodes.h:42
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Element_ID_Array_Struct);  -- a_nodes.h:40
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:40
 
-   subtype Element_ID_Array_Struct is u_Element_ID_Array_Struct;
+   subtype Element_ID_Array_Struct is u_Element_ID_Array_Struct;  -- a_nodes.h:43
 
-   subtype Element_ID_List is u_Element_ID_Array_Struct;
+   subtype Element_ID_List is Element_ID_Array_Struct;  -- a_nodes.h:45
 
    type Element_Kinds is 
      (Not_An_Element,
@@ -36,14 +36,14 @@ package a_nodes_h is
       A_Statement,
       A_Path,
       A_Clause,
-      An_Exception_Handler);
-   pragma Convention (C, Element_Kinds);  -- a_nodes.h:47
+      An_Exception_Handler)
+   with Convention => C;  -- a_nodes.h:47
 
    subtype Access_Type_Definition is Element_ID;  -- a_nodes.h:69
 
    subtype Association is Element_ID;  -- a_nodes.h:70
 
-   subtype Association_List is u_Element_ID_Array_Struct;
+   subtype Association_List is Element_ID_List;  -- a_nodes.h:71
 
    subtype Case_Statement_Alternative is Element_ID;  -- a_nodes.h:72
 
@@ -51,7 +51,7 @@ package a_nodes_h is
 
    subtype Component_Clause is Element_ID;  -- a_nodes.h:74
 
-   subtype Component_Clause_List is u_Element_ID_Array_Struct;
+   subtype Component_Clause_List is Element_ID_List;  -- a_nodes.h:75
 
    subtype Component_Declaration is Element_ID;  -- a_nodes.h:76
 
@@ -63,15 +63,15 @@ package a_nodes_h is
 
    subtype Context_Clause is Element_ID;  -- a_nodes.h:80
 
-   subtype Context_Clause_List is u_Element_ID_Array_Struct;
+   subtype Context_Clause_List is Element_ID_List;  -- a_nodes.h:81
 
    subtype Declaration is Element_ID;  -- a_nodes.h:82
 
    subtype Declaration_ID is Element_ID;  -- a_nodes.h:83
 
-   subtype Declaration_List is u_Element_ID_Array_Struct;
+   subtype Declaration_List is Element_ID_List;  -- a_nodes.h:84
 
-   subtype Declarative_Item_List is u_Element_ID_Array_Struct;
+   subtype Declarative_Item_List is Element_ID_List;  -- a_nodes.h:85
 
    subtype Defining_Name_ID is Element_ID;  -- a_nodes.h:86
 
@@ -79,13 +79,13 @@ package a_nodes_h is
 
    subtype Definition_ID is Element_ID;  -- a_nodes.h:88
 
-   subtype Definition_List is u_Element_ID_Array_Struct;
+   subtype Definition_List is Element_ID_List;  -- a_nodes.h:89
 
    subtype Discrete_Range is Element_ID;  -- a_nodes.h:90
 
    subtype Discrete_Range_ID is Element_ID;  -- a_nodes.h:91
 
-   subtype Discrete_Range_List is u_Element_ID_Array_Struct;
+   subtype Discrete_Range_List is Element_ID_List;  -- a_nodes.h:92
 
    subtype Discrete_Subtype_Definition is Element_ID;  -- a_nodes.h:93
 
@@ -93,65 +93,65 @@ package a_nodes_h is
 
    subtype Discriminant_Association is Element_ID;  -- a_nodes.h:95
 
-   subtype Discriminant_Association_List is u_Element_ID_Array_Struct;
+   subtype Discriminant_Association_List is Element_ID_List;  -- a_nodes.h:96
 
-   subtype Discriminant_Specification_List is u_Element_ID_Array_Struct;
+   subtype Discriminant_Specification_List is Element_ID_List;  -- a_nodes.h:97
 
    subtype Defining_Name is Element_ID;  -- a_nodes.h:98
 
-   subtype Defining_Name_List is u_Element_ID_Array_Struct;
+   subtype Defining_Name_List is Element_ID_List;  -- a_nodes.h:99
 
    subtype Exception_Handler is Element_ID;  -- a_nodes.h:100
 
-   subtype Exception_Handler_List is u_Element_ID_Array_Struct;
+   subtype Exception_Handler_List is Element_ID_List;  -- a_nodes.h:101
 
    subtype Expression is Element_ID;  -- a_nodes.h:102
 
    subtype Expression_ID is Element_ID;  -- a_nodes.h:103
 
-   subtype Expression_List is u_Element_ID_Array_Struct;
+   subtype Expression_List is Element_ID_List;  -- a_nodes.h:104
 
-   subtype Expression_Path_List is u_Element_ID_Array_Struct;
+   subtype Expression_Path_List is Element_ID_List;  -- a_nodes.h:105
 
    subtype Formal_Type_Definition is Element_ID;  -- a_nodes.h:106
 
    subtype Generic_Formal_Parameter is Element_ID;  -- a_nodes.h:107
 
-   subtype Generic_Formal_Parameter_List is u_Element_ID_Array_Struct;
+   subtype Generic_Formal_Parameter_List is Element_ID_List;  -- a_nodes.h:108
 
    subtype Identifier is Element_ID;  -- a_nodes.h:109
 
-   subtype Identifier_List is u_Element_ID_Array_Struct;
+   subtype Identifier_List is Element_ID_List;  -- a_nodes.h:110
 
    subtype Name is Element_ID;  -- a_nodes.h:111
 
    subtype Name_ID is Element_ID;  -- a_nodes.h:112
 
-   subtype Name_List is u_Element_ID_Array_Struct;
+   subtype Name_List is Element_ID_List;  -- a_nodes.h:113
 
    subtype Parameter_Specification is Element_ID;  -- a_nodes.h:114
 
-   subtype Parameter_Specification_List is u_Element_ID_Array_Struct;
+   subtype Parameter_Specification_List is Element_ID_List;  -- a_nodes.h:115
 
    subtype Path is Element_ID;  -- a_nodes.h:116
 
-   subtype Path_List is u_Element_ID_Array_Struct;
+   subtype Path_List is Element_ID_List;  -- a_nodes.h:117
 
    subtype Pragma_Element is Element_ID;  -- a_nodes.h:118
 
-   subtype Pragma_Element_ID_List is u_Element_ID_Array_Struct;
+   subtype Pragma_Element_ID_List is Element_ID_List;  -- a_nodes.h:119
 
    subtype Range_Constraint is Element_ID;  -- a_nodes.h:120
 
    subtype Record_Component is Element_ID;  -- a_nodes.h:121
 
-   subtype Record_Component_List is u_Element_ID_Array_Struct;
+   subtype Record_Component_List is Element_ID_List;  -- a_nodes.h:122
 
    subtype Record_Definition is Element_ID;  -- a_nodes.h:123
 
    subtype Representation_Clause is Element_ID;  -- a_nodes.h:124
 
-   subtype Representation_Clause_List is u_Element_ID_Array_Struct;
+   subtype Representation_Clause_List is Element_ID_List;  -- a_nodes.h:125
 
    subtype Root_Type_Definition is Element_ID;  -- a_nodes.h:126
 
@@ -161,7 +161,7 @@ package a_nodes_h is
 
    subtype Statement_ID is Element_ID;  -- a_nodes.h:129
 
-   subtype Statement_List is u_Element_ID_Array_Struct;
+   subtype Statement_List is Element_ID_List;  -- a_nodes.h:130
 
    subtype Subtype_Indication is Element_ID;  -- a_nodes.h:131
 
@@ -175,9 +175,9 @@ package a_nodes_h is
 
    subtype Variant is Element_ID;  -- a_nodes.h:136
 
-   subtype Variant_Component_List is u_Element_ID_Array_Struct;
+   subtype Variant_Component_List is Element_ID_List;  -- a_nodes.h:137
 
-   subtype Variant_List is u_Element_ID_Array_Struct;
+   subtype Variant_List is Element_ID_List;  -- a_nodes.h:138
 
    type Operator_Kinds is 
      (Not_An_Operator,
@@ -201,8 +201,8 @@ package a_nodes_h is
       A_Rem_Operator,
       An_Exponentiate_Operator,
       An_Abs_Operator,
-      A_Not_Operator);
-   pragma Convention (C, Operator_Kinds);  -- a_nodes.h:142
+      A_Not_Operator)
+   with Convention => C;  -- a_nodes.h:142
 
    type Pragma_Kinds is 
      (Not_A_Pragma,
@@ -260,16 +260,16 @@ package a_nodes_h is
       An_Unsuppress_Pragma,
       A_Volatile_Pragma,
       A_Volatile_Components_Pragma,
-      An_Implementation_Defined_Pragma);
-   pragma Convention (C, Pragma_Kinds);  -- a_nodes.h:172
+      An_Implementation_Defined_Pragma)
+   with Convention => C;  -- a_nodes.h:172
 
    type Pragma_Struct is record
       Pragma_Kind : aliased Pragma_Kinds;  -- a_nodes.h:233
       Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:234
       Pragma_Name_Image : Program_Text;  -- a_nodes.h:235
       Pragma_Argument_Associations : aliased Association_List;  -- a_nodes.h:236
-   end record;
-   pragma Convention (C_Pass_By_Copy, Pragma_Struct);  -- a_nodes.h:232
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:232
 
    type Defining_Name_Kinds is 
      (Not_A_Defining_Name,
@@ -277,8 +277,8 @@ package a_nodes_h is
       A_Defining_Character_Literal,
       A_Defining_Enumeration_Literal,
       A_Defining_Operator_Symbol,
-      A_Defining_Expanded_Name);
-   pragma Convention (C, Defining_Name_Kinds);  -- a_nodes.h:247
+      A_Defining_Expanded_Name)
+   with Convention => C;  -- a_nodes.h:247
 
    type Defining_Name_Struct is record
       Defining_Name_Kind : aliased Defining_Name_Kinds;  -- a_nodes.h:258
@@ -292,8 +292,8 @@ package a_nodes_h is
       Defining_Selector : aliased Defining_Name_ID;  -- a_nodes.h:272
       Corresponding_Constant_Declaration : aliased Declaration_ID;  -- a_nodes.h:274
       Corresponding_Generic_Element : aliased Defining_Name_ID;  -- a_nodes.h:277
-   end record;
-   pragma Convention (C_Pass_By_Copy, Defining_Name_Struct);  -- a_nodes.h:257
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:257
 
    type Declaration_Kinds is 
      (Not_A_Declaration,
@@ -361,31 +361,31 @@ package a_nodes_h is
       A_Formal_Procedure_Declaration,
       A_Formal_Function_Declaration,
       A_Formal_Package_Declaration,
-      A_Formal_Package_Declaration_With_Box);
-   pragma Convention (C, Declaration_Kinds);  -- a_nodes.h:288
+      A_Formal_Package_Declaration_With_Box)
+   with Convention => C;  -- a_nodes.h:288
 
    type Declaration_Origins is 
      (Not_A_Declaration_Origin,
       An_Explicit_Declaration,
       An_Implicit_Predefined_Declaration,
-      An_Implicit_Inherited_Declaration);
-   pragma Convention (C, Declaration_Origins);  -- a_nodes.h:392
+      An_Implicit_Inherited_Declaration)
+   with Convention => C;  -- a_nodes.h:392
 
    type Mode_Kinds is 
      (Not_A_Mode,
       A_Default_In_Mode,
       An_In_Mode,
       An_Out_Mode,
-      An_In_Out_Mode);
-   pragma Convention (C, Mode_Kinds);  -- a_nodes.h:408
+      An_In_Out_Mode)
+   with Convention => C;  -- a_nodes.h:408
 
    type Subprogram_Default_Kinds is 
      (Not_A_Default,
       A_Name_Default,
       A_Box_Default,
       A_Null_Default,
-      A_Nil_Default);
-   pragma Convention (C, Subprogram_Default_Kinds);  -- a_nodes.h:418
+      A_Nil_Default)
+   with Convention => C;  -- a_nodes.h:418
 
    type Declaration_Struct is record
       Declaration_Kind : aliased Declaration_Kinds;  -- a_nodes.h:431
@@ -453,8 +453,8 @@ package a_nodes_h is
       Generic_Actual_Part : aliased Association_List;  -- a_nodes.h:778
       Formal_Subprogram_Default : aliased Expression_ID;  -- a_nodes.h:781
       Is_Dispatching_Operation : aliased Extensions.bool;  -- a_nodes.h:792
-   end record;
-   pragma Convention (C_Pass_By_Copy, Declaration_Struct);  -- a_nodes.h:430
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:430
 
    type Definition_Kinds is 
      (Not_A_Definition,
@@ -479,8 +479,8 @@ package a_nodes_h is
       A_Task_Definition,
       A_Protected_Definition,
       A_Formal_Type_Definition,
-      An_Aspect_Specification);
-   pragma Convention (C, Definition_Kinds);  -- a_nodes.h:803
+      An_Aspect_Specification)
+   with Convention => C;  -- a_nodes.h:803
 
    type u_Type_Kinds is 
      (Not_A_Type_Definition,
@@ -498,10 +498,10 @@ package a_nodes_h is
       A_Record_Type_Definition,
       A_Tagged_Record_Type_Definition,
       An_Interface_Type_Definition,
-      An_Access_Type_Definition);
-   pragma Convention (C, u_Type_Kinds);  -- a_nodes.h:836
+      An_Access_Type_Definition)
+   with Convention => C;  -- a_nodes.h:836
 
-   subtype Type_Kinds is u_Type_Kinds;
+   subtype Type_Kinds is u_Type_Kinds;  -- a_nodes.h:858
 
    type u_Constraint_Kinds is 
      (Not_A_Constraint,
@@ -510,10 +510,10 @@ package a_nodes_h is
       A_Digits_Constraint,
       A_Delta_Constraint,
       An_Index_Constraint,
-      A_Discriminant_Constraint);
-   pragma Convention (C, u_Constraint_Kinds);  -- a_nodes.h:860
+      A_Discriminant_Constraint)
+   with Convention => C;  -- a_nodes.h:860
 
-   subtype Constraint_Kinds is u_Constraint_Kinds;
+   subtype Constraint_Kinds is u_Constraint_Kinds;  -- a_nodes.h:868
 
    type u_Interface_Kinds is 
      (Not_An_Interface,
@@ -521,10 +521,10 @@ package a_nodes_h is
       A_Limited_Interface,
       A_Task_Interface,
       A_Protected_Interface,
-      A_Synchronized_Interface);
-   pragma Convention (C, u_Interface_Kinds);  -- a_nodes.h:870
+      A_Synchronized_Interface)
+   with Convention => C;  -- a_nodes.h:870
 
-   subtype Interface_Kinds is u_Interface_Kinds;
+   subtype Interface_Kinds is u_Interface_Kinds;  -- a_nodes.h:877
 
    type u_Root_Type_Kinds is 
      (Not_A_Root_Type_Definition,
@@ -532,19 +532,19 @@ package a_nodes_h is
       A_Root_Real_Definition,
       A_Universal_Integer_Definition,
       A_Universal_Real_Definition,
-      A_Universal_Fixed_Definition);
-   pragma Convention (C, u_Root_Type_Kinds);  -- a_nodes.h:879
+      A_Universal_Fixed_Definition)
+   with Convention => C;  -- a_nodes.h:879
 
-   subtype Root_Type_Kinds is u_Root_Type_Kinds;
+   subtype Root_Type_Kinds is u_Root_Type_Kinds;  -- a_nodes.h:886
 
    type u_Discrete_Range_Kinds is 
      (Not_A_Discrete_Range,
       A_Discrete_Subtype_Indication,
       A_Discrete_Range_Attribute_Reference,
-      A_Discrete_Simple_Expression_Range);
-   pragma Convention (C, u_Discrete_Range_Kinds);  -- a_nodes.h:888
+      A_Discrete_Simple_Expression_Range)
+   with Convention => C;  -- a_nodes.h:888
 
-   subtype Discrete_Range_Kinds is u_Discrete_Range_Kinds;
+   subtype Discrete_Range_Kinds is u_Discrete_Range_Kinds;  -- a_nodes.h:893
 
    type u_Formal_Type_Kinds is 
      (Not_A_Formal_Type_Definition,
@@ -560,10 +560,10 @@ package a_nodes_h is
       A_Formal_Interface_Type_Definition,
       A_Formal_Unconstrained_Array_Definition,
       A_Formal_Constrained_Array_Definition,
-      A_Formal_Access_Type_Definition);
-   pragma Convention (C, u_Formal_Type_Kinds);  -- a_nodes.h:895
+      A_Formal_Access_Type_Definition)
+   with Convention => C;  -- a_nodes.h:895
 
-   subtype Formal_Type_Kinds is u_Formal_Type_Kinds;
+   subtype Formal_Type_Kinds is u_Formal_Type_Kinds;  -- a_nodes.h:915
 
    type u_Access_Type_Kinds is 
      (Not_An_Access_Type_Definition,
@@ -573,10 +573,10 @@ package a_nodes_h is
       An_Access_To_Procedure,
       An_Access_To_Protected_Procedure,
       An_Access_To_Function,
-      An_Access_To_Protected_Function);
-   pragma Convention (C, u_Access_Type_Kinds);  -- a_nodes.h:917
+      An_Access_To_Protected_Function)
+   with Convention => C;  -- a_nodes.h:917
 
-   subtype Access_Type_Kinds is u_Access_Type_Kinds;
+   subtype Access_Type_Kinds is u_Access_Type_Kinds;  -- a_nodes.h:926
 
    type u_Access_Definition_Kinds is 
      (Not_An_Access_Definition,
@@ -585,10 +585,10 @@ package a_nodes_h is
       An_Anonymous_Access_To_Procedure,
       An_Anonymous_Access_To_Protected_Procedure,
       An_Anonymous_Access_To_Function,
-      An_Anonymous_Access_To_Protected_Function);
-   pragma Convention (C, u_Access_Definition_Kinds);  -- a_nodes.h:928
+      An_Anonymous_Access_To_Protected_Function)
+   with Convention => C;  -- a_nodes.h:928
 
-   subtype Access_Definition_Kinds is u_Access_Definition_Kinds;
+   subtype Access_Definition_Kinds is u_Access_Definition_Kinds;  -- a_nodes.h:936
 
    type u_Access_Type_Struct is record
       Access_Type_Kind : aliased Access_Type_Kinds;  -- a_nodes.h:939
@@ -597,10 +597,10 @@ package a_nodes_h is
       Access_To_Object_Definition : aliased Subtype_Indication;  -- a_nodes.h:948
       Access_To_Subprogram_Parameter_Profile : aliased Parameter_Specification_List;  -- a_nodes.h:953
       Access_To_Function_Result_Profile : aliased Element_ID;  -- a_nodes.h:956
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Access_Type_Struct);  -- a_nodes.h:938
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:938
 
-   subtype Access_Type_Struct is u_Access_Type_Struct;
+   subtype Access_Type_Struct is u_Access_Type_Struct;  -- a_nodes.h:957
 
    type u_Type_Definition_Struct is record
       Type_Kind : aliased Type_Kinds;  -- a_nodes.h:960
@@ -633,19 +633,19 @@ package a_nodes_h is
       Array_Component_Definition : aliased Component_Definition;  -- a_nodes.h:1018
       Definition_Interface_List : aliased Expression_List;  -- a_nodes.h:1021
       Access_Type : aliased Access_Type_Struct;  -- a_nodes.h:1023
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Type_Definition_Struct);  -- a_nodes.h:959
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:959
 
-   subtype Type_Definition_Struct is u_Type_Definition_Struct;
+   subtype Type_Definition_Struct is u_Type_Definition_Struct;  -- a_nodes.h:1024
 
    type u_Subtype_Indication_Struct is record
       Has_Null_Exclusion : aliased Extensions.bool;  -- a_nodes.h:1027
       Subtype_Mark : aliased Expression;  -- a_nodes.h:1028
       Subtype_Constraint : aliased Constraint;  -- a_nodes.h:1029
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Subtype_Indication_Struct);  -- a_nodes.h:1026
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1026
 
-   subtype Subtype_Indication_Struct is u_Subtype_Indication_Struct;
+   subtype Subtype_Indication_Struct is u_Subtype_Indication_Struct;  -- a_nodes.h:1030
 
    type u_Constraint_Struct is record
       Constraint_Kind : aliased Constraint_Kinds;  -- a_nodes.h:1033
@@ -657,26 +657,26 @@ package a_nodes_h is
       Range_Attribute : aliased Expression;  -- a_nodes.h:1046
       Discrete_Ranges : aliased Discrete_Range_List;  -- a_nodes.h:1048
       Discriminant_Associations : aliased Discriminant_Association_List;  -- a_nodes.h:1050
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Constraint_Struct);  -- a_nodes.h:1032
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1032
 
-   subtype Constraint_Struct is u_Constraint_Struct;
+   subtype Constraint_Struct is u_Constraint_Struct;  -- a_nodes.h:1051
 
    type u_Component_Definition_Struct is record
       Component_Definition_View : aliased Definition;  -- a_nodes.h:1054
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Component_Definition_Struct);  -- a_nodes.h:1053
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1053
 
-   subtype Component_Definition_Struct is u_Component_Definition_Struct;
+   subtype Component_Definition_Struct is u_Component_Definition_Struct;  -- a_nodes.h:1055
 
    type u_Discrete_Subtype_Definition_Struct is record
       Discrete_Range_Kind : aliased Discrete_Range_Kinds;  -- a_nodes.h:1058
       Subtype_Mark : aliased Expression;  -- a_nodes.h:1061
       Subtype_Constraint : aliased Constraint;  -- a_nodes.h:1062
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Discrete_Subtype_Definition_Struct);  -- a_nodes.h:1057
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1057
 
-   subtype Discrete_Subtype_Definition_Struct is u_Discrete_Subtype_Definition_Struct;
+   subtype Discrete_Subtype_Definition_Struct is u_Discrete_Subtype_Definition_Struct;  -- a_nodes.h:1063
 
    type u_Discrete_Range_Struct is record
       Discrete_Range_Kind : aliased Discrete_Range_Kinds;  -- a_nodes.h:1066
@@ -685,42 +685,42 @@ package a_nodes_h is
       Lower_Bound : aliased Expression;  -- a_nodes.h:1072
       Upper_Bound : aliased Expression;  -- a_nodes.h:1073
       Range_Attribute : aliased Expression;  -- a_nodes.h:1075
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Discrete_Range_Struct);  -- a_nodes.h:1065
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1065
 
-   subtype Discrete_Range_Struct is u_Discrete_Range_Struct;
+   subtype Discrete_Range_Struct is u_Discrete_Range_Struct;  -- a_nodes.h:1076
 
    type u_Known_Discriminant_Part_Struct is record
       Discriminants : aliased Discriminant_Specification_List;  -- a_nodes.h:1079
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Known_Discriminant_Part_Struct);  -- a_nodes.h:1078
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1078
 
-   subtype Known_Discriminant_Part_Struct is u_Known_Discriminant_Part_Struct;
+   subtype Known_Discriminant_Part_Struct is u_Known_Discriminant_Part_Struct;  -- a_nodes.h:1080
 
    type u_Record_Definition_Struct is record
       Record_Components : aliased Record_Component_List;  -- a_nodes.h:1083
       Implicit_Components : aliased Record_Component_List;  -- a_nodes.h:1084
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Record_Definition_Struct);  -- a_nodes.h:1082
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1082
 
-   subtype Record_Definition_Struct is u_Record_Definition_Struct;
+   subtype Record_Definition_Struct is u_Record_Definition_Struct;  -- a_nodes.h:1085
 
    type u_Variant_Part_Struct is record
       Discriminant_Direct_Name : aliased Name;  -- a_nodes.h:1088
       Variants : aliased Variant_List;  -- a_nodes.h:1089
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Variant_Part_Struct);  -- a_nodes.h:1087
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1087
 
-   subtype Variant_Part_Struct is u_Variant_Part_Struct;
+   subtype Variant_Part_Struct is u_Variant_Part_Struct;  -- a_nodes.h:1090
 
    type u_Variant_Struct is record
       Record_Components : aliased Record_Component_List;  -- a_nodes.h:1093
       Implicit_Components : aliased Record_Component_List;  -- a_nodes.h:1094
       Variant_Choices : aliased Element_ID_List;  -- a_nodes.h:1095
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Variant_Struct);  -- a_nodes.h:1092
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1092
 
-   subtype Variant_Struct is u_Variant_Struct;
+   subtype Variant_Struct is u_Variant_Struct;  -- a_nodes.h:1096
 
    type u_Access_Definition_Struct is record
       Access_Definition_Kind : aliased Access_Definition_Kinds;  -- a_nodes.h:1099
@@ -729,29 +729,29 @@ package a_nodes_h is
       Anonymous_Access_To_Object_Subtype_Mark : aliased Expression;  -- a_nodes.h:1107
       Access_To_Subprogram_Parameter_Profile : aliased Parameter_Specification_List;  -- a_nodes.h:1112
       Access_To_Function_Result_Profile : aliased Element_ID;  -- a_nodes.h:1115
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Access_Definition_Struct);  -- a_nodes.h:1098
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1098
 
-   subtype Access_Definition_Struct is u_Access_Definition_Struct;
+   subtype Access_Definition_Struct is u_Access_Definition_Struct;  -- a_nodes.h:1116
 
    type u_Private_Type_Definition_Struct is record
       Has_Abstract : aliased Extensions.bool;  -- a_nodes.h:1119
       Has_Limited : aliased Extensions.bool;  -- a_nodes.h:1120
       Has_Private : aliased Extensions.bool;  -- a_nodes.h:1121
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Private_Type_Definition_Struct);  -- a_nodes.h:1118
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1118
 
-   subtype Private_Type_Definition_Struct is u_Private_Type_Definition_Struct;
+   subtype Private_Type_Definition_Struct is u_Private_Type_Definition_Struct;  -- a_nodes.h:1122
 
    type u_Tagged_Private_Type_Definition_Struct is record
       Has_Abstract : aliased Extensions.bool;  -- a_nodes.h:1125
       Has_Limited : aliased Extensions.bool;  -- a_nodes.h:1126
       Has_Private : aliased Extensions.bool;  -- a_nodes.h:1127
       Has_Tagged : aliased Extensions.bool;  -- a_nodes.h:1128
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Tagged_Private_Type_Definition_Struct);  -- a_nodes.h:1124
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1124
 
-   subtype Tagged_Private_Type_Definition_Struct is u_Tagged_Private_Type_Definition_Struct;
+   subtype Tagged_Private_Type_Definition_Struct is u_Tagged_Private_Type_Definition_Struct;  -- a_nodes.h:1129
 
    type u_Private_Extension_Definition_Struct is record
       Has_Abstract : aliased Extensions.bool;  -- a_nodes.h:1132
@@ -762,30 +762,30 @@ package a_nodes_h is
       Implicit_Inherited_Subprograms : aliased Declaration_List;  -- a_nodes.h:1137
       Definition_Interface_List : aliased Expression_List;  -- a_nodes.h:1138
       Ancestor_Subtype_Indication : aliased Subtype_Indication;  -- a_nodes.h:1139
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Private_Extension_Definition_Struct);  -- a_nodes.h:1131
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1131
 
-   subtype Private_Extension_Definition_Struct is u_Private_Extension_Definition_Struct;
+   subtype Private_Extension_Definition_Struct is u_Private_Extension_Definition_Struct;  -- a_nodes.h:1140
 
    type u_Task_Definition_Struct is record
       Has_Task : aliased Extensions.bool;  -- a_nodes.h:1143
       Visible_Part_Items : aliased Declarative_Item_List;  -- a_nodes.h:1144
       Private_Part_Items : aliased Declarative_Item_List;  -- a_nodes.h:1145
       Is_Private_Present : aliased Extensions.bool;  -- a_nodes.h:1146
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Task_Definition_Struct);  -- a_nodes.h:1142
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1142
 
-   subtype Task_Definition_Struct is u_Task_Definition_Struct;
+   subtype Task_Definition_Struct is u_Task_Definition_Struct;  -- a_nodes.h:1147
 
    type u_Protected_Definition_Struct is record
       Has_Protected : aliased Extensions.bool;  -- a_nodes.h:1150
       Visible_Part_Items : aliased Declarative_Item_List;  -- a_nodes.h:1151
       Private_Part_Items : aliased Declarative_Item_List;  -- a_nodes.h:1152
       Is_Private_Present : aliased Extensions.bool;  -- a_nodes.h:1153
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Protected_Definition_Struct);  -- a_nodes.h:1149
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1149
 
-   subtype Protected_Definition_Struct is u_Protected_Definition_Struct;
+   subtype Protected_Definition_Struct is u_Protected_Definition_Struct;  -- a_nodes.h:1154
 
    type u_Formal_Type_Definition_Struct is record
       Formal_Type_Kind : aliased Formal_Type_Kinds;  -- a_nodes.h:1157
@@ -804,18 +804,18 @@ package a_nodes_h is
       Subtype_Mark : aliased Expression;  -- a_nodes.h:1185
       Definition_Interface_List : aliased Expression_List;  -- a_nodes.h:1188
       Access_Type : aliased Access_Type_Struct;  -- a_nodes.h:1190
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Formal_Type_Definition_Struct);  -- a_nodes.h:1156
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1156
 
-   subtype Formal_Type_Definition_Struct is u_Formal_Type_Definition_Struct;
+   subtype Formal_Type_Definition_Struct is u_Formal_Type_Definition_Struct;  -- a_nodes.h:1191
 
    type u_Aspect_Specification_Struct is record
       Aspect_Mark : aliased Element_ID;  -- a_nodes.h:1194
       Aspect_Definition : aliased Element_ID;  -- a_nodes.h:1195
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Aspect_Specification_Struct);  -- a_nodes.h:1193
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1193
 
-   subtype Aspect_Specification_Struct is u_Aspect_Specification_Struct;
+   subtype Aspect_Specification_Struct is u_Aspect_Specification_Struct;  -- a_nodes.h:1196
 
    subtype No_Struct is int;  -- a_nodes.h:1198
 
@@ -876,17 +876,17 @@ package a_nodes_h is
          when others =>
             The_Aspect_Specification : aliased Aspect_Specification_Struct;  -- a_nodes.h:1227
       end case;
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Definition_Union);
-   pragma Unchecked_Union (u_Definition_Union);  -- a_nodes.h:1204
+   end record
+   with Convention => C_Pass_By_Copy,
+        Unchecked_Union => True;  -- a_nodes.h:1204
 
-   subtype Definition_Union is u_Definition_Union;
+   subtype Definition_Union is u_Definition_Union;  -- a_nodes.h:1228
 
    type Definition_Struct is record
       Definition_Kind : aliased Definition_Kinds;  -- a_nodes.h:1232
       The_Union : aliased Definition_Union;  -- a_nodes.h:1233
-   end record;
-   pragma Convention (C_Pass_By_Copy, Definition_Struct);  -- a_nodes.h:1231
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1231
 
    type Expression_Kinds is 
      (Not_An_Expression,
@@ -922,8 +922,8 @@ package a_nodes_h is
       A_Case_Expression,
       An_If_Expression,
       A_For_All_Quantified_Expression,
-      A_For_Some_Quantified_Expression);
-   pragma Convention (C, Expression_Kinds);  -- a_nodes.h:1244
+      A_For_Some_Quantified_Expression)
+   with Convention => C;  -- a_nodes.h:1244
 
    type Attribute_Kinds is 
      (Not_An_Attribute,
@@ -1022,8 +1022,8 @@ package a_nodes_h is
       A_Max_Alignment_For_Allocation_Attribute,
       An_Overlaps_Storage_Attribute,
       An_Implementation_Defined_Attribute,
-      An_Unknown_Attribute);
-   pragma Convention (C, Attribute_Kinds);  -- a_nodes.h:1289
+      An_Unknown_Attribute)
+   with Convention => C;  -- a_nodes.h:1289
 
    type Expression_Struct is record
       Expression_Kind : aliased Expression_Kinds;  -- a_nodes.h:1402
@@ -1067,8 +1067,8 @@ package a_nodes_h is
       Corresponding_Generic_Element : aliased Defining_Name_ID;  -- a_nodes.h:1501
       Is_Dispatching_Call : aliased Extensions.bool;  -- a_nodes.h:1503
       Is_Call_On_Dispatching_Operation : aliased Extensions.bool;  -- a_nodes.h:1504
-   end record;
-   pragma Convention (C_Pass_By_Copy, Expression_Struct);  -- a_nodes.h:1401
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1401
 
    type Association_Kinds is 
      (Not_An_Association,
@@ -1077,8 +1077,8 @@ package a_nodes_h is
       A_Record_Component_Association,
       An_Array_Component_Association,
       A_Parameter_Association,
-      A_Generic_Association);
-   pragma Convention (C, Association_Kinds);  -- a_nodes.h:1515
+      A_Generic_Association)
+   with Convention => C;  -- a_nodes.h:1515
 
    type Association_Struct is record
       Association_Kind : aliased Association_Kinds;  -- a_nodes.h:1528
@@ -1091,8 +1091,8 @@ package a_nodes_h is
       Discriminant_Expression : aliased Expression_ID;  -- a_nodes.h:1544
       Is_Normalized : aliased Extensions.bool;  -- a_nodes.h:1549
       Is_Defaulted_Association : aliased Extensions.bool;  -- a_nodes.h:1553
-   end record;
-   pragma Convention (C_Pass_By_Copy, Association_Struct);  -- a_nodes.h:1527
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1527
 
    type Statement_Kinds is 
      (Not_A_Statement,
@@ -1122,8 +1122,8 @@ package a_nodes_h is
       An_Asynchronous_Select_Statement,
       An_Abort_Statement,
       A_Raise_Statement,
-      A_Code_Statement);
-   pragma Convention (C, Statement_Kinds);  -- a_nodes.h:1564
+      A_Code_Statement)
+   with Convention => C;  -- a_nodes.h:1564
 
    type Statement_Struct is record
       Statement_Kind : aliased Statement_Kinds;  -- a_nodes.h:1601
@@ -1172,8 +1172,8 @@ package a_nodes_h is
       Is_Dispatching_Call : aliased Extensions.bool;  -- a_nodes.h:1697
       Is_Call_On_Dispatching_Operation : aliased Extensions.bool;  -- a_nodes.h:1698
       Corresponding_Called_Entity_Unwound : aliased Declaration;  -- a_nodes.h:1701
-   end record;
-   pragma Convention (C_Pass_By_Copy, Statement_Struct);  -- a_nodes.h:1600
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1600
 
    type Path_Kinds is 
      (Not_A_Path,
@@ -1187,8 +1187,8 @@ package a_nodes_h is
       A_Case_Expression_Path,
       An_If_Expression_Path,
       An_Elsif_Expression_Path,
-      An_Else_Expression_Path);
-   pragma Convention (C, Path_Kinds);  -- a_nodes.h:1712
+      An_Else_Expression_Path)
+   with Convention => C;  -- a_nodes.h:1712
 
    type Path_Struct is record
       Path_Kind : aliased Path_Kinds;  -- a_nodes.h:1768
@@ -1197,8 +1197,8 @@ package a_nodes_h is
       Condition_Expression : aliased Expression_ID;  -- a_nodes.h:1775
       Case_Path_Alternative_Choices : aliased Element_ID_List;  -- a_nodes.h:1778
       Guard : aliased Expression_ID;  -- a_nodes.h:1781
-   end record;
-   pragma Convention (C_Pass_By_Copy, Path_Struct);  -- a_nodes.h:1767
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1767
 
    type Clause_Kinds is 
      (Not_A_Clause,
@@ -1207,18 +1207,18 @@ package a_nodes_h is
       A_Use_All_Type_Clause,
       A_With_Clause,
       A_Representation_Clause,
-      A_Component_Clause);
-   pragma Convention (C, Clause_Kinds);  -- a_nodes.h:1792
+      A_Component_Clause)
+   with Convention => C;  -- a_nodes.h:1792
 
    type u_Representation_Clause_Kinds is 
      (Not_A_Representation_Clause,
       An_Attribute_Definition_Clause,
       An_Enumeration_Representation_Clause,
       A_Record_Representation_Clause,
-      An_At_Clause);
-   pragma Convention (C, u_Representation_Clause_Kinds);  -- a_nodes.h:1804
+      An_At_Clause)
+   with Convention => C;  -- a_nodes.h:1804
 
-   subtype Representation_Clause_Kinds is u_Representation_Clause_Kinds;
+   subtype Representation_Clause_Kinds is u_Representation_Clause_Kinds;  -- a_nodes.h:1810
 
    type u_Representation_Clause_Struct is record
       Representation_Clause_Kind : aliased Representation_Clause_Kinds;  -- a_nodes.h:1813
@@ -1227,10 +1227,10 @@ package a_nodes_h is
       Representation_Clause_Expression : aliased Expression;  -- a_nodes.h:1822
       Mod_Clause_Expression : aliased Expression;  -- a_nodes.h:1824
       Component_Clauses : aliased Component_Clause_List;  -- a_nodes.h:1825
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Representation_Clause_Struct);  -- a_nodes.h:1812
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1812
 
-   subtype Representation_Clause_Struct is u_Representation_Clause_Struct;
+   subtype Representation_Clause_Struct is u_Representation_Clause_Struct;  -- a_nodes.h:1826
 
    type Clause_Struct is record
       Clause_Kind : aliased Clause_Kinds;  -- a_nodes.h:1830
@@ -1243,16 +1243,16 @@ package a_nodes_h is
       Component_Clause_Position : aliased Expression_ID;  -- a_nodes.h:1844
       Component_Clause_Range : aliased Element_ID;  -- a_nodes.h:1845
       Representation_Clause : aliased Representation_Clause_Struct;  -- a_nodes.h:1848
-   end record;
-   pragma Convention (C_Pass_By_Copy, Clause_Struct);  -- a_nodes.h:1829
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1829
 
    type Exception_Handler_Struct is record
       Pragmas : aliased Pragma_Element_ID_List;  -- a_nodes.h:1864
       Choice_Parameter_Specification : aliased Declaration_ID;  -- a_nodes.h:1865
       Exception_Choices : aliased Element_ID_List;  -- a_nodes.h:1866
       Handler_Statements : aliased Statement_List;  -- a_nodes.h:1867
-   end record;
-   pragma Convention (C_Pass_By_Copy, Exception_Handler_Struct);  -- a_nodes.h:1863
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1863
 
    type Element_Union (discr : unsigned := 0) is record
       case discr is
@@ -1279,15 +1279,15 @@ package a_nodes_h is
          when others =>
             Exception_Handler : aliased Exception_Handler_Struct;  -- a_nodes.h:1890
       end case;
-   end record;
-   pragma Convention (C_Pass_By_Copy, Element_Union);
-   pragma Unchecked_Union (Element_Union);  -- a_nodes.h:1879
+   end record
+   with Convention => C_Pass_By_Copy,
+        Unchecked_Union => True;  -- a_nodes.h:1879
 
    type Enclosing_Kinds is 
      (Not_Enclosing,
       Enclosing_Element,
-      Enclosing_Unit);
-   pragma Convention (C, Enclosing_Kinds);  -- a_nodes.h:1893
+      Enclosing_Unit)
+   with Convention => C;  -- a_nodes.h:1893
 
    type Source_Location_Struct is record
       Unit_Name : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:1901
@@ -1295,8 +1295,8 @@ package a_nodes_h is
       First_Column : aliased int;  -- a_nodes.h:1903
       Last_Line : aliased int;  -- a_nodes.h:1904
       Last_Column : aliased int;  -- a_nodes.h:1905
-   end record;
-   pragma Convention (C_Pass_By_Copy, Source_Location_Struct);  -- a_nodes.h:1900
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1900
 
    subtype Unit_ID is int;  -- a_nodes.h:1909
 
@@ -1313,20 +1313,20 @@ package a_nodes_h is
       Source_Location : aliased Source_Location_Struct;  -- a_nodes.h:1922
       Debug_Image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:1923
       The_Union : aliased Element_Union;  -- a_nodes.h:1924
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Element_Struct);  -- a_nodes.h:1912
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1912
 
-   subtype Element_Struct is u_Element_Struct;
+   subtype Element_Struct is u_Element_Struct;  -- a_nodes.h:1925
 
    type Unit_ID_Ptr is access all Unit_ID;  -- a_nodes.h:1935
 
    type Unit_ID_Array_Struct is record
       Length : aliased int;  -- a_nodes.h:1940
       IDs : Unit_ID_Ptr;  -- a_nodes.h:1941
-   end record;
-   pragma Convention (C_Pass_By_Copy, Unit_ID_Array_Struct);  -- a_nodes.h:1939
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:1939
 
-   subtype Unit_List is Unit_ID_Array_Struct;
+   subtype Unit_List is Unit_ID_Array_Struct;  -- a_nodes.h:1943
 
    type Unit_Kinds is 
      (Not_A_Unit,
@@ -1356,8 +1356,8 @@ package a_nodes_h is
       A_Nonexistent_Declaration,
       A_Nonexistent_Body,
       A_Configuration_Compilation,
-      An_Unknown_Unit);
-   pragma Convention (C, Unit_Kinds);  -- a_nodes.h:1945
+      An_Unknown_Unit)
+   with Convention => C;  -- a_nodes.h:1945
 
    type Unit_Classes is 
      (Not_A_Class,
@@ -1366,15 +1366,15 @@ package a_nodes_h is
       A_Public_Declaration_And_Body,
       A_Private_Declaration,
       A_Private_Body,
-      A_Separate_Body);
-   pragma Convention (C, Unit_Classes);  -- a_nodes.h:2012
+      A_Separate_Body)
+   with Convention => C;  -- a_nodes.h:2012
 
    type Unit_Origins is 
      (Not_An_Origin,
       A_Predefined_Unit,
       An_Implementation_Unit,
-      An_Application_Unit);
-   pragma Convention (C, Unit_Origins);  -- a_nodes.h:2033
+      An_Application_Unit)
+   with Convention => C;  -- a_nodes.h:2033
 
    type u_Unit_Struct is record
       ID : aliased Unit_ID;  -- a_nodes.h:2053
@@ -1402,39 +1402,41 @@ package a_nodes_h is
       Corresponding_Body : aliased Unit_ID;  -- a_nodes.h:2109
       Subunits : aliased Unit_List;  -- a_nodes.h:2118
       Corresponding_Subunit_Parent_Body : aliased Unit_ID;  -- a_nodes.h:2124
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Unit_Struct);  -- a_nodes.h:2052
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:2052
 
-   subtype Unit_Struct is u_Unit_Struct;
+   subtype Unit_Struct is u_Unit_Struct;  -- a_nodes.h:2125
 
    type u_Context_Struct is record
       name : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2135
       parameters : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2136
       debug_image : Interfaces.C.Strings.chars_ptr;  -- a_nodes.h:2137
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Context_Struct);  -- a_nodes.h:2134
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:2134
 
-   subtype Context_Struct is u_Context_Struct;
+   subtype Context_Struct is u_Context_Struct;  -- a_nodes.h:2138
 
+   type u_Unit_Struct_List_Struct;
    type u_Unit_Struct_List_Struct is record
       Unit : aliased Unit_Struct;  -- a_nodes.h:2145
       Next : access u_Unit_Struct_List_Struct;  -- a_nodes.h:2146
       Next_Count : aliased int;  -- a_nodes.h:2147
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Unit_Struct_List_Struct);  -- a_nodes.h:2144
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:2144
 
-   subtype Unit_Struct_List_Struct is u_Unit_Struct_List_Struct;
+   subtype Unit_Struct_List_Struct is u_Unit_Struct_List_Struct;  -- a_nodes.h:2148
 
    type Unit_Structs_Ptr is access all Unit_Struct_List_Struct;  -- a_nodes.h:2150
 
+   type u_Element_Struct_List_Struct;
    type u_Element_Struct_List_Struct is record
       Element : aliased Element_Struct;  -- a_nodes.h:2153
       Next : access u_Element_Struct_List_Struct;  -- a_nodes.h:2154
       Next_Count : aliased int;  -- a_nodes.h:2155
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Element_Struct_List_Struct);  -- a_nodes.h:2152
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:2152
 
-   subtype Element_Struct_List_Struct is u_Element_Struct_List_Struct;
+   subtype Element_Struct_List_Struct is u_Element_Struct_List_Struct;  -- a_nodes.h:2156
 
    type Element_Structs_Ptr is access all Element_Struct_List_Struct;  -- a_nodes.h:2158
 
@@ -1442,9 +1444,9 @@ package a_nodes_h is
       Context : aliased Context_Struct;  -- a_nodes.h:2161
       Units : Unit_Structs_Ptr;  -- a_nodes.h:2162
       Elements : Element_Structs_Ptr;  -- a_nodes.h:2163
-   end record;
-   pragma Convention (C_Pass_By_Copy, u_Nodes_Struct);  -- a_nodes.h:2160
+   end record
+   with Convention => C_Pass_By_Copy;  -- a_nodes.h:2160
 
-   subtype Nodes_Struct is u_Nodes_Struct;
+   subtype Nodes_Struct is u_Nodes_Struct;  -- a_nodes.h:2164
 
 end a_nodes_h;

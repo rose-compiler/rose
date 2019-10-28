@@ -8,14 +8,14 @@ source `which utility_functions.sh`
 
 # Make GNAT compiler and gprbuild available:
 use_gnat () {
-  # Needed for use:
-  . /usr/local/tools/dotkit/init.sh
-  use -q gnat
+  # Loads the default gnat, if that is the one you want:
+  module load gnat
 }
 
 log_start
 log_invocation "$@"
 use_gnat
+
 # GNAT g++ options:
 # -fdump-ada-spec
 #  Generate Ada spec files for the given header files transitively (including all header files that these headers depend upon). 
@@ -30,6 +30,6 @@ use_gnat
 
 # -gnatceg
 #  Generate a _C_ header from an _Ada_ spec (includes withed specs).
-log_and_run g++ -c -fdump-ada-spec $1 || exit $?
+log_then_run g++ -c -fdump-ada-spec $1 || exit $?
 log_end
 

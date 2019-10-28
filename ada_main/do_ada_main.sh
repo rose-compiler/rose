@@ -41,7 +41,7 @@ build_asis_tool () {
   # -v       Verbose output
   # -vPx     Specify verbosity when parsing Project Files (x = 0/1/2)
   # -Xnm=val Specify an external reference for Project Files
-  gprbuild \
+  log_then_run gprbuild \
   -p \
   -P ${base_dir}/dot_asis.gpr \
   -XLIBRARY_TYPE=static \
@@ -60,7 +60,7 @@ process_units () {
     # -f - Input file name (required)
     # -g - GNAT home directory (required)
     # -o - Output directory (optional)
-    log_and_run ${obj_dir}/${tool_name} \
+    log_then_run ${obj_dir}/${tool_name} \
        -f ${target_dir}/${target_unit} \
        -g /usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux \
        -o `pwd` \

@@ -29,6 +29,6 @@ build_library () {
 log_start
 log_invocation "$@"
 check_for_gnat
-log_and_run build_library || exit $?
+log_then_run build_library || exit $?
 log_end
 
