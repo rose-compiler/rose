@@ -282,6 +282,9 @@ AC_LINK_IFELSE([
             [rose_use_edg_quad_float=no])
 LIBS="$ac_save_LIBS"
 
+if test "x$rose_use_edg_quad_float" == "xyes"; then
+  AC_DEFINE([ROSE_USE_EDG_QUAD_FLOAT], [], [Enables support for __float80 and __float128 in EDG.])
+fi
 AC_SUBST(ROSE_USE_EDG_QUAD_FLOAT)
 AM_CONDITIONAL(ROSE_USE_EDG_QUAD_FLOAT, [ test $rose_use_edg_quad_float == yes ])
 unset ax_cv_cxx_compiler_vendor
