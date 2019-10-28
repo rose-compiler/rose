@@ -4440,6 +4440,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
      printf ("Leaving buildNondefiningFunctionDeclaration_T(): func: unparseNameToString() = %s \n",func->unparseNameToString().c_str());
 #endif
 
+     ROSE_ASSERT(paralist->get_parent() != NULL); 
      return func;
    }
 
