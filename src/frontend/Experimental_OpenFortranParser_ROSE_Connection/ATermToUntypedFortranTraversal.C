@@ -1506,7 +1506,8 @@ ATbool ATermToUntypedFortranTraversal::traverse_TypeDeclarationStmt(ATerm term, 
 
    std::cerr << "...TODO... fully implement AttrSpecList in TypeDeclarationStmt: list is " << attr_list << std::endl;
 
-   variable_decl = new SgUntypedVariableDeclaration(label, declared_type, attr_list, var_name_list);
+   variable_decl = new SgUntypedVariableDeclaration(label, declared_type, /*base_type_decl*/NULL, false, attr_list, var_name_list);
+   ROSE_ASSERT(variable_decl != NULL);
    setSourcePositionExcludingTerm(variable_decl, term, term_eos);
 
    decl_list->get_decl_list().push_back(variable_decl);

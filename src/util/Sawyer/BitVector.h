@@ -1181,8 +1181,8 @@ public:
      *  the range is larger than 64 bits then only the low-order 64 bits are returned. */
     boost::int64_t toSignedInteger() const {
         if (size() <= 64)
-            return BitVectorSupport::toInteger(data(), size());
-        return BitVectorSupport::toInteger(data(), hull());
+            return BitVectorSupport::toSignedInteger(data(), size());
+        return BitVectorSupport::toSignedInteger(data(), hull());
     }
 
     /** Convert to a hexadecimal string.

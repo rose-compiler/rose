@@ -158,7 +158,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_DeclarationList(ATerm term, SgUnt
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_NullDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedJovialTraversal::traverse_NullDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_NullDeclaration: %s\n", ATwriteToString(term));
@@ -611,13 +611,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_Declaration(ATerm term, SgUntyped
 //========================================================================================
 // 2.1 DATA DECLARATIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedJovialTraversal::traverse_DataDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedJovialTraversal::traverse_DataDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_DataDeclaration: %s\n", ATwriteToString(term));
 #endif
 
-   if (traverse_ItemDeclaration(term, decl_list)) {
+   if (traverse_ItemDeclaration(term, decl_list, def_or_ref)) {
       // MATCHED ItemDeclaration
    }
    else if (traverse_TableDeclaration(term, decl_list)) {
@@ -637,7 +637,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_DataDeclaration(ATerm term, SgUnt
 //========================================================================================
 // 2.1.1 ITEM DECLARATION
 //----------------------------------------------------------------------------------------
-ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ItemDeclaration: %s\n", ATwriteToString(term));
@@ -662,6 +662,14 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUnt
       attr_list = new SgUntypedExprListExpression();
       ROSE_ASSERT(attr_list);
       setSourcePosition(attr_list, t_type);
+
+      if (    def_or_ref == General_Language_Translation::e_storage_modifier_jovial_def
+          ||  def_or_ref == General_Language_Translation::e_storage_modifier_jovial_ref ) {
+         SgUntypedOtherExpression* modifier = new SgUntypedOtherExpression(def_or_ref);
+         ROSE_ASSERT(modifier);
+         setSourcePosition(modifier, term);
+         attr_list->get_expressions().push_back(modifier);
+      }
 
       if (traverse_OptAllocationSpecifier(t_alloc, attr_list)) {
          // MATCHED OptAllocationSpecifier
@@ -1282,6 +1290,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
    SgUntypedTableType* table_type = NULL;
    SgUntypedVariableDeclaration* variable_decl = NULL;
 
+   SgUntypedStructureDeclaration* table_decl = NULL;
    SgUntypedStructureDefinition*  table_desc = NULL;
    SgUntypedExprListExpression*    attr_list = NULL;
    SgUntypedExprListExpression*     dim_info = NULL;
@@ -1325,22 +1334,21 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
    else return ATfalse;
 
    if (table_desc != NULL) {
-      cout << ".x. did traverse a TableDescription with a body \n";
-      cerr << "WARNING UNIMPLEMENTED: TableDescription with a body\n";
-      return ATtrue;
-   // NEED to figure out how to include a structure as the type for a variable (look at array type)
-      ROSE_ASSERT(false);
-
       std::string label = "";
-      int rank = dim_info->get_expressions().size();
+      std::string table_type_name = "_anon_typeof_" + std::string(table_name);
 
-   // This seems all wrong, we need a type with a body here (but could get the type from the declaration
-   // With the creation of SgUntypedTableType the dim_info isn't needed for the struct.
-#if 0
-      table_decl = new SgUntypedStructureDeclaration(label, table_name, attr_list, dim_info, rank, table_desc);
+      int struct_type = Jovial_ROSE_Translation::e_table_type_declaration;
+
+      table_decl = new SgUntypedStructureDeclaration(label, struct_type, table_type_name, attr_list, dim_info, table_desc);
       ROSE_ASSERT(table_decl);
       setSourcePosition(table_decl, term);
-#endif
+
+      SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_table, table_type_name);
+
+      // Create the variable for the declaration
+      variable_decl = UntypedBuilder::buildVariableDeclaration(table_name, type, table_decl, attr_list, preset);
+      ROSE_ASSERT(variable_decl);
+      setSourcePosition(variable_decl, term);
    }
    else if (base_type != NULL) {
       ROSE_ASSERT(dim_info != NULL);
@@ -1385,7 +1393,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
    std::cout << "TABLE DECLARATION " << table_name << ", rank is " << dim_info->get_expressions().size() << endl;
    std::cout << "TABLE DECLARATION attr_list: " << attr_list << " dim_info: " << dim_info << endl;
    std::cout << "TABLE DECLARATION pushing onto list " << decl_list << " : " << decl_list->class_name() << endl;
-   ROSE_ASSERT(table_type);
+#endif
+#if 0
+   ROSE_ASSERT(table_type != NULL);
    std::cout << "TABLE DECLARATION     base_type: " << base_type << " : " << base_type->class_name() << endl;
    std::cout << "TABLE DECLARATION     type name: " << base_type->get_type_name() << endl;
    std::cout << "TABLE DECLARATION name and enum: " << table_type->get_type_name() << " : " << table_type->get_type_enum_id() << endl;
@@ -1431,8 +1441,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_ArrayTableDescription(ATerm term,
          // MATCHED Name
       } else return ATfalse;
 
-      cout << "\n.x. traverse_TableDescription with only a name " << type_name << endl;
-
       type = UntypedBuilder::buildType(SgUntypedType::e_table, type_name);
       ROSE_ASSERT(type);
       setSourcePosition(type, t_name);
@@ -1441,7 +1449,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ArrayTableDescription(ATerm term,
          // MATCHED TablePreset
       } else return ATfalse;
 
-      std::cout << "TABLE DESCRIPTION NAME only: type_name is " << type_name << ": DIE \n";
+      cerr << "WARNING UNIMPLEMENTED: TableDescriptionName" << type_name << "\n";
    }
    else return ATfalse;
 
@@ -1473,8 +1481,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDescription(ATerm term, SgUn
       attr_list = table_desc->get_modifiers();
       ROSE_ASSERT(attr_list);
       setSourcePosition(attr_list, t_struct_spec);
-
-      cout << "\n.x. traverse_TableDescription with a body \n";
 
       if (traverse_OptStructureSpecifier(t_struct_spec, attr_list)) {
          // MATCHED OptStructureSpecifier
@@ -1508,7 +1514,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDescription(ATerm term, SgUn
 
    table_desc->set_initializer(preset);
 
-#if 1
+#if 0
    std::cout << "TABLE DESCRIPTION table_desc: " << table_desc << " : " << table_desc->class_name() << endl;
    std::cout << "TABLE DESCRIPTION scope: " << table_desc->get_scope() << endl;
    std::cout << "TABLE DESCRIPTION scope decl list: " << table_desc->get_scope()->get_declaration_list() << endl;
@@ -1817,22 +1823,20 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATer
    ROSE_ASSERT(attr_list);
    ROSE_ASSERT(item_type);
 
-   SgUntypedInitializedNameList* var_name_list = new SgUntypedInitializedNameList();
+   variable_decl = UntypedBuilder::buildVariableDeclaration(name, item_type, attr_list, preset);
+   ROSE_ASSERT(variable_decl);
+   setSourcePosition(variable_decl, term);
+
+// Set the source positions
+//
+   SgUntypedInitializedNameList* var_name_list = variable_decl->get_variables();
    ROSE_ASSERT(var_name_list);
    setSourcePosition(var_name_list, t_name);
 
-   SgUntypedInitializedName* initialized_name = new SgUntypedInitializedName(item_type, name);
+// There will be only one variable declared in Jovial
+   SgUntypedInitializedName* initialized_name = var_name_list->get_name_list()[0];
    ROSE_ASSERT(initialized_name);
    setSourcePosition(initialized_name, t_name);
-
-// There will be only one variable declared in Jovial
-   var_name_list->get_name_list().push_back(initialized_name);
-
-   std::string label = "";
-
-   variable_decl = new SgUntypedVariableDeclaration(label, item_type, attr_list, var_name_list);
-   ROSE_ASSERT(variable_decl);
-   setSourcePosition(variable_decl, term);
 
    decl_list->get_decl_list().push_back(variable_decl);
 
@@ -2070,6 +2074,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATe
    ROSE_ASSERT(variable_decl);
    setSourcePosition(variable_decl, term);
 
+   // TODO - set source position of the initialized_name and variable_name_list
+
    decl_list->get_decl_list().push_back(variable_decl);
 
 #if 1
@@ -2137,17 +2143,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_ConstantDeclaration(ATerm term, S
    SgUntypedExpression* preset;
 
    SgUntypedVariableDeclaration* variable_decl = NULL;
-   SgUntypedInitializedNameList* var_name_list = NULL;
    SgUntypedExprListExpression*      attr_list = NULL;
 
    if (ATmatch(term, "ConstantDeclaration(<term>,<term>,<term>)", &t_name,&t_type,&t_preset)) {
       if (ATmatch(t_name, "<str>", &name)) {
          // MATCHED ItemName
       } else return ATfalse;
-
-      var_name_list = new SgUntypedInitializedNameList();
-      ROSE_ASSERT(var_name_list);
-      setSourcePosition(var_name_list, t_name);
 
       attr_list = new SgUntypedExprListExpression(General_Language_Translation::e_type_modifier_list);
       ROSE_ASSERT(attr_list);
@@ -2163,23 +2164,20 @@ ATbool ATermToUntypedJovialTraversal::traverse_ConstantDeclaration(ATerm term, S
    }
    else return ATfalse;
 
-   std::string label = "";
+   variable_decl = UntypedBuilder::buildVariableDeclaration(name, declared_type, attr_list, preset);
+   ROSE_ASSERT(variable_decl);
+   setSourcePosition(variable_decl, term);
 
-   SgUntypedInitializedName* initialized_name = new SgUntypedInitializedName(declared_type, name);
-   ROSE_ASSERT(initialized_name != NULL);
-   setSourcePosition(initialized_name, t_name);
-
-   if (preset) {
-      // This variable has an initializer
-      initialized_name->set_has_initializer(true);
-      initialized_name->set_initializer(preset);
-   }
+// Set the source positions
+//
+   SgUntypedInitializedNameList* var_name_list = variable_decl->get_variables();
+   ROSE_ASSERT(var_name_list);
+   setSourcePosition(var_name_list, t_name);
 
 // There will be only one variable declared in Jovial
-   var_name_list->get_name_list().push_back(initialized_name);
-
-   variable_decl = new SgUntypedVariableDeclaration(label, declared_type, attr_list, var_name_list);
-   setSourcePosition(variable_decl, term);
+   SgUntypedInitializedName* initialized_name = var_name_list->get_name_list()[0];
+   ROSE_ASSERT(initialized_name);
+   setSourcePosition(initialized_name, t_name);
 
    SgUntypedOtherExpression* attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_const);
    ROSE_ASSERT(attr);
@@ -3199,9 +3197,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_DefSpecificationChoice(ATerm term
    printf("... traverse_DefSpecificationChoice: %s\n", ATwriteToString(term));
 #endif
 
-   if (traverse_NullDeclaration(term, decl_list)) {
+   // This is an 'DEF' declaration
+   int def_spec = General_Language_Translation::e_storage_modifier_jovial_def;
+
+   if (traverse_NullDeclaration(term, decl_list, def_spec)) {
       // MATCHED NullDeclaration
-   } else if (traverse_DataDeclaration(term, decl_list)) {
+   } else if (traverse_DataDeclaration(term, decl_list, def_spec)) {
       // MATCHED DataDeclaration
    } else return ATfalse;
 
@@ -3246,9 +3247,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_RefSpecificationChoice(ATerm term
    printf("... traverse_RefSpecificationChoice: %s\n", ATwriteToString(term));
 #endif
 
-   if (traverse_NullDeclaration(term, decl_list)) {
+   // This is an 'REF' declaration
+   int ref_spec = General_Language_Translation::e_storage_modifier_jovial_ref;
+
+   if (traverse_NullDeclaration(term, decl_list, ref_spec)) {
       // MATCHED NullDeclaration
-   } else if (traverse_DataDeclaration(term, decl_list)) {
+   } else if (traverse_DataDeclaration(term, decl_list, ref_spec)) {
       // MATCHED DataDeclaration
    } else if (traverse_FunctionDeclaration(term, decl_list)) {
       // MATCHED FunctionDeclaration (is a SubroutineDeclaration in grammar)

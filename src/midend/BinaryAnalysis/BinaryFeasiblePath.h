@@ -5,6 +5,7 @@
 #include <BinarySmtSolver.h>
 #include <BinarySymbolicExprParser.h>
 #include <Partitioner2/CfgPath.h>
+#include <RoseException.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <boost/filesystem/path.hpp>
@@ -20,6 +21,14 @@ class FeasiblePath {
     //                                  Types and public data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Exception for errors specific to feasible path analysis. */
+    class Exception: public Rose::Exception {
+    public:
+        Exception(const std::string &what)
+            : Rose::Exception(what) {}
+        ~Exception() throw () {}
+    };
+
     /** How to search for paths. */
     enum SearchMode {
         SEARCH_SINGLE_DFS,                              /**< Perform a depth first search. */
@@ -87,6 +96,7 @@ public:
         double kCycleCoefficient;                       /**< Coefficient for adjusting maxPathLengh during CFG cycles. */
         EdgeVisitOrder edgeVisitOrder;                  /**< Order in which to visit edges. */
         bool trackingCodeCoverage;                      /**< If set, track which block addresses are reached. */
+        std::vector<rose_addr_t> ipRewrite;             /**< An even number of from,to pairs for rewriting the insn ptr reg. */
 
         // Null dereferences
         struct NullDeref {
@@ -524,6 +534,9 @@ public:
     //                                  Private supporting functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
+    // Check that analysis settings are valid, or throw an exception.
+    void checkSettings() const;
+
     static rose_addr_t virtualAddress(const Partitioner2::ControlFlowGraph::ConstVertexIterator &vertex);
 
     void insertCallSummary(const Partitioner2::ControlFlowGraph::ConstVertexIterator &pathsCallSite,

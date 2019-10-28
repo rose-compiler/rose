@@ -126,7 +126,8 @@ enum Operator {
     OP_FP_ISNEG,            /**< Floating-point negative class. Argument is the FP value to check. */
     OP_FP_ISPOS,            /**< Floating-point positive class. Argument is the FP value to check. */
 
-    OP_CONVERT,             /**< Convert from one type to another. Argument is the source type. */
+    OP_CONVERT,             /**< Convert from one type to another. Argument is the destination type. */
+    OP_REINTERPRET,         /**< Interpret the value as a different type without converting. Argument is the destination type. */
 
     OP_NONE,                /**< No operation. Result of getOperator on a node that doesn't have an operator. */
 
@@ -278,7 +279,7 @@ public:
      *  floating point value is the sum of these two widths since although the implied bit is not stored, a sign bit is
      *  stored. */
     static Type floatingPoint(size_t exponentWidth, size_t significandWidth) {
-        return Type(FP, exponentWidth + significandWidth, exponentWidth);
+        return Type(FP, 1 /*sign bit*/ + exponentWidth + significandWidth, exponentWidth);
     }
 
     /** Check whether this object is valid.
@@ -328,7 +329,7 @@ public:
      *  returns FP. */
     size_t significandWidth() const {
         ASSERT_require(FP == typeClass_);
-        return totalWidth_ - exponentWidth();
+        return totalWidth_ - (1 /* sign bit */ + exponentWidth());
     }
 
     /** Type equality.
@@ -346,6 +347,12 @@ public:
 
     /** Type comparison. */
     bool operator<(const Type &other) const;
+
+    /** Print the type. */
+    void print(std::ostream&) const;
+
+    /** Print the type to a string. */
+    std::string toString() const;
 };
 
     
@@ -1115,8 +1122,10 @@ protected:
     /** Appends @p child as a new child of this node. This must only be called from constructors. */
     void addChild(const Ptr &child);
 
-    /** Adjust width based on operands. This must only be called from constructors. */
-    void adjustWidth();
+    /** Adjust width based on operands.
+     *
+     *  This must only be called from constructors. The type is needed for certain operations such as convert. */
+    void adjustWidth(const Type&);
 
     /** Adjust user-defined bit flags. This must only be called from constructors.  Flags are the union of the operand flags
      *  subject to simplification rules, unioned with the specified flags. */
@@ -1387,7 +1396,7 @@ Ptr makeXor(const Ptr &a, const Ptr &b,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeConcat(const Ptr &hi, const Ptr &lo,
                const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
-Ptr makeConvert(const Ptr &a,
+Ptr makeConvert(const Ptr &a, const Type &b,
                 const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeEq(const Ptr &a, const Ptr &b,
            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
@@ -1430,6 +1439,8 @@ Ptr makeBooleanOr(const Ptr &a, const Ptr &b,
                   ROSE_DEPRECATED("use makeOr instead"); // [Robb Matzke 2017-11-21]: deprecated
 Ptr makeRead(const Ptr &mem, const Ptr &addr,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
+Ptr makeReinterpret(const Ptr &a, const Type &b,
+                    const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeRol(const Ptr &sa, const Ptr &a,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeRor(const Ptr &sa, const Ptr &a,

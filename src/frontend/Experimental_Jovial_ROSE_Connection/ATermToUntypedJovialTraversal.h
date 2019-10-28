@@ -23,7 +23,7 @@ ATbool traverse_CompoolModule(ATerm term, SgUntypedScope* scope);
 // 1.2.2 PROCEDURE MODULES
 ATbool traverse_ProcedureModule(ATerm term, SgUntypedScope* scope);
 ATbool traverse_DeclarationList(ATerm term, SgUntypedDeclarationStatementList* decl_list);
-ATbool traverse_NullDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_NullDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref = 0);
 
 // 1.2.3 MAIN PROGRAM MODULES
 ATbool traverse_MainProgramModule(ATerm term, SgUntypedGlobalScope* global_scope);
@@ -41,10 +41,10 @@ ATbool traverse_SubroutineDefinitionList(ATerm term, SgUntypedFunctionDeclaratio
 ATbool traverse_Declaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // 2.1 DATA DECLARATIONS
-ATbool traverse_DataDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_DataDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref = 0);
 
 // 2.1.1 ITEM DECLARATION
-ATbool traverse_ItemDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_ItemDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref = 0);
 ATbool traverse_ItemTypeDescription(ATerm term, SgUntypedType* & type, SgUntypedExprListExpression* attr_list);
 
 // 2.1.1.1 INTEGER TYPE DESCRIPTIONS

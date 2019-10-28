@@ -1,5 +1,5 @@
-#ifndef CODETHORN_LTL_LIB_H
-#define CODETHORN_LTL_LIB_H
+#ifndef LTLTHORN_LIB_H
+#define LTLTHORN_LIB_H
 
 namespace CodeThorn {
   void initDiagnosticsLTL();

@@ -1,7 +1,8 @@
 #ifndef ROSE_DispatcherX86_H
 #define ROSE_DispatcherX86_H
 
-#include "BaseSemantics2.h"
+#include <BaseSemantics2.h>
+#include <Registers.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>

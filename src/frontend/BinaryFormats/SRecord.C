@@ -526,7 +526,7 @@ SRecord::create(const MemoryMap::Ptr &map, Syntax syntax, size_t bytesPerRecord,
         }
 
         // Increment va safely
-        va += nRead;
+        va += nRead - 1;
         if (va == map->hull().greatest())
             break;                                      // avoid possible overflow
         ++va;

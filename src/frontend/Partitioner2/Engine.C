@@ -364,6 +364,13 @@ Engine::partitionerSwitches(PartitionerSettings &settings) {
                    "available to some analyses. If @v{n} is zero then no limit is enforced.  The default is " +
                    StringUtility::numberToString(settings.maxBasicBlockSize) + "."));
 
+    sg.insert(Switch("ip-rewrite")
+              .argument("old", nonNegativeIntegerParser(settings.ipRewrites))
+              .argument("new", nonNegativeIntegerParser(settings.ipRewrites))
+              .whichValue(SAVE_ALL)
+              .doc("Rewrite the global control flow graph so that any edges that would have gone to address @v{old} instead "
+                   "go to @v{new}. This switch may appear multiple times."));
+
     sg.insert(Switch("find-function-padding")
               .intrinsicValue(true, settings.findingFunctionPadding)
               .doc("Cause each built-in and user-defined function padding analysis to run. The purpose of these "
@@ -1427,6 +1434,12 @@ Engine::createBarePartitioner() {
     p.semanticMemoryParadigm(settings_.partitioner.semanticMemoryParadigm);
 
     // Miscellaneous settings
+    if (!settings_.partitioner.ipRewrites.empty()) {
+        std::vector<Modules::IpRewriter::AddressPair> rewrites;
+        for (size_t i=0; i+1 < settings_.partitioner.ipRewrites.size(); i += 2)
+            rewrites.push_back(std::make_pair(settings_.partitioner.ipRewrites[i+0], settings_.partitioner.ipRewrites[i+1]));
+        p.basicBlockCallbacks().append(Modules::IpRewriter::instance(rewrites));
+    }
     if (settings_.partitioner.followingGhostEdges)
         p.basicBlockCallbacks().append(Modules::AddGhostSuccessors::instance());
     if (!settings_.partitioner.discontiguousBlocks)

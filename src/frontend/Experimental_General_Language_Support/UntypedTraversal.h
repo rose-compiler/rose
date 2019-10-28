@@ -31,6 +31,12 @@ class UntypedTraversal : public SgTopDownBottomUpProcessing<InheritedAttribute, 
 
       SgSourceFile* p_source_file;
       UntypedConverter* pConverter;
+
+   // For variable declarations with an anonymous type
+      bool p_has_base_type_name;
+      std::string p_base_type_name;
+      std::string p_var_name;
+      SgInitializer* p_var_initializer;
   };
 
 } // namespace Untyped

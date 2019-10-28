@@ -4,6 +4,7 @@
 #include <BaseSemantics2.h>
 #include <BinaryStackVariable.h>
 #include <Partitioner2/BasicTypes.h>
+#include <Registers.h>
 #include <RegisterParts.h>
 
 #include <boost/serialization/access.hpp>

@@ -1,6 +1,9 @@
 #include <sage3basic.h>
 #include <BinarySerialIo.h>
 #include <Partitioner2/Partitioner.h>
+#include <BaseSemantics2.h>
+#include <Registers.h>
+#include <boost/serialization/shared_ptr.hpp>
 
 #ifdef ROSE_SUPPORTS_SERIAL_IO
 #include <fcntl.h>
