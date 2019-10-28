@@ -7,21 +7,20 @@
 # e.g. run_and_log test_this_build.sh 0001 0400
 # 
 # DEPENDENCIES:
-#   ./set_ROSE_HOME
-#   ${BUILD_HOME}/compile_commands.json
 #   ${BUILD_HOME}/ares (a softlink to the ARES repo dir, two directories up, e.g.:
 #     ./ares -> /g/g17/charles/code/ARES/ares-develop-2019-03-14 or:
 #     ./ares -> ../../ares-develop-2019-03-14
+#   ${BUILD_HOME}/compile_commands.json
+#   ${ROSE_HOME}/bin/identityTranslator
+#   ${ROSE_ROSE_SCRIPT_DIR}/declare_install_functions.sh
 
-# Exit if error or undef variable:
-set -eu
+# Don't actually run:
+#export RUN_OR_NOT_EFFORT_ONLY=TRUE
 
 # Find ourselves:
-rel_script_dir=`dirname $0`
-export CONTAINING_DIR=`(cd ${rel_script_dir}; pwd)`
-
-# Run in this script's dir:
-cd ${CONTAINING_DIR}
+rel_enclosing_dir=`dirname $0`
+export TEST_SCRIPT_DIR=`(cd ${rel_enclosing_dir}; pwd)`
+export ROSE_ROSE_SCRIPT_DIR=`(cd ${rel_enclosing_dir}/../../ROSE; pwd)`
 
 # Get parms:
 if [ $# -eq 2 ]
@@ -33,33 +32,41 @@ else
   export  LAST_UNIT="1704"
 fi
 
-# Set ROSE version.  Sets:
-#   CODE_BASE
-#   ROSE_PROJECT_BASE
+# Declares and sets:
+#   log_then_run
+#   set_strict
+#   SRUN_DO
+#   use_latest_gcc_rose
+#   use_latest_intel_rose
+source ${ROSE_ROSE_SCRIPT_DIR}/declare_install_functions.sh
+
+# Sets:
+#   COMMON_BUILD_BASE
+#   COMP_DB_MAP
+#   RENDER_TEXT
 #   ROSE_HOME
-#   AUTOMATION_HOME (for automation scripts - may not be in ROSE_HOME)
-source set_ROSE_HOME
+#   ROSE_LD_LIBRARY_PATH
+#   ROSE_TOOL
+use_latest_intel_rose
 
-# Sets strict mode, defines set_strict, unset_strict, log_*,
-# log_then_run, run_or_not, etc.:
-source ${AUTOMATION_HOME}/bin/utility_functions.sh
+# Overriding COMMON_BUILD_BASE to make it match the directory string in 
+# compile_commands.json:
+export COMMON_BUILD_BASE="/usr/WS2/charles/code"
 
-export SOURCE_HOME="${CODE_BASE}/ARES/ares-develop-2019-03-14-build/ares"
-export BUILD_HOME="${CODE_BASE}/ARES/ares-develop-2019-03-14-build/TOSS3/build"
+export SOURCE_HOME="${COMMON_BUILD_BASE}/ARES/ares-develop-2019-03-14-build/ares"
+export BUILD_HOME="${COMMON_BUILD_BASE}/ARES/ares-develop-2019-03-14-build/TOSS3/build"
 export COMPILATION_DATABASE_PATH="${BUILD_HOME}/compile_commands.json"
 
 export REPORT_FILE_NAME_ROOT="report_${FIRST_UNIT}_${LAST_UNIT}"
 export JSON_REPORT_FILE_NAME="${REPORT_FILE_NAME_ROOT}.json"
 export TEXT_REPORT_FILE_NAME="${REPORT_FILE_NAME_ROOT}.txt"
 
-export SRUN_DO="${AUTOMATION_HOME}/bin/srun_do"
-export COMP_DB_MAP="${AUTOMATION_HOME}/compdb/comp_db_map.py"
-export RENDER_TEXT="${AUTOMATION_HOME}/compdb/render_text.py"
-export ROSE_TOOL="${ROSE_HOME}/bin/identityTranslator"
-
+# Run in this script's dir:
+cd ${TEST_SCRIPT_DIR}
 
 # Run ROSE on units (Expensive!  Use srun!):
-log_then_run ${SRUN_DO} -c36 \
+log_then_run \
+${SRUN_DO} -c36 \
 ${COMP_DB_MAP} \
 ${SOURCE_HOME} \
 ${BUILD_HOME} \

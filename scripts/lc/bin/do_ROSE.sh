@@ -1,28 +1,43 @@
 #!/bin/bash
 # Runs a ROSE Tool against a source file.
-# Parm $1 is a bash/sh script to be sourced, relative to the current dir,
+# Parm $1 is a bash script to be sourced, relative to the current dir,
 # that sets source_path and RUN_IT_ARGS
 
-# Sets strict, defines log, log_then_run, etc.:
-source `which utility_functions.sh`
+# Find ourselves:
+rel_enclosing_dir=`dirname $0`
+export TEST_SCRIPT_DIR=`(cd ${rel_enclosing_dir}; pwd)`
+export ROSE_ROSE_SCRIPT_DIR=`(cd ${rel_enclosing_dir}/../../ROSE; pwd)`
+
+# Get parms:
+parm_source_script=$1
+
+# Declares and sets:
+#   log_...
+#   set_strict
+#   use_latest_gcc_rose
+#   use_latest_intel_rose
+source ${ROSE_ROSE_SCRIPT_DIR}/declare_install_functions.sh
 log_start
 
-parm_source_script=$1
-source ${parm_source_script}
+# Sets:
+#   CC
+#   CXX
+#   ROSE_BACKEND_CXX
+#   ROSE_HOME
+#   ROSE_LD_LIBRARY_PATH
+#   ROSE_TOOL
+use_latest_gcc_rose
+#print_rose_vars
 
-rel_script_dir=`dirname $0`
-script_dir=`(cd ${rel_script_dir}; pwd)`
-project_dir=`dirname ${script_dir}`
-# Ardra build dir is inside repo:
-build_dir=${project_dir}/ardra/ardra-toss_3_x86_64_ib
+# Sets:
+#   source_path
+#   RUN_IT_ARGS
+source ${parm_source_script}
 
 source_dir=`dirname ${source_path}`
 source_path_no_suffix=${source_path%.*}
 object_path=${source_path_no_suffix}.o
 
-# Sets ROSE_HOME:
-# Sets BACKEND_COMPILER_PATH:
-source set_ROSE_HOME
 # /bin/ is executable in ROSE install dir:
 # /tutorial/ is libtool script in ROSE build dir:
 export ROSE_TOOL_PATH=${ROSE_HOME}/bin/identityTranslator
@@ -103,7 +118,7 @@ run_compiler () {
   log "RUNNING COMPILER BEFORE RUNNING TOOL"
   run_it \
   log_then_run \
-  ${BACKEND_COMPILER_PATH} \
+  ${ROSE_BACKEND_CXX} \
   -c \
   -o ${object_path} 
   status=$?

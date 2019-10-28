@@ -48,8 +48,13 @@ script_name=$0
 finish () {
   __exit_status=$? 
   if [[ ${__exit_status} -ne 0 ]]
-  then 
-    echo "ERROR: Exiting ${script_name} with status ${__exit_status}"
+  then
+    echo "finish: Stack: BASH_SOURCE, FUNCNAME, BASH_LINENO:"
+    for ((x=0; x < ${#FUNCNAME[*]}; x += 1 ))
+    do
+      echo "finish: ${BASH_SOURCE[x]}, ${FUNCNAME[x]}, ${BASH_LINENO[x]}"
+    done
+    echo "finish: ERROR: Exiting ${script_name} with status ${__exit_status}"
   fi
   exit ${__exit_status}
 }
@@ -73,7 +78,7 @@ set_strict () {
 unset_strict () {
   set +euo pipefail
   # Turn trap off:
-  trap "" EXIT
+  trap EXIT
 }
 
 set_strict
@@ -83,30 +88,45 @@ set_strict
 
 ###############################################################################
 # Functions to push and pop the current state of set.  
-# Only for one level deep.
 
 push_set_state () {
   # Using set +u in a subshell so that detection of an unset variable does not 
   # itself trigger an error:
-  if [ `(set +u; echo ${SET_STATE-not_set})` != "not_set" ]
+  if [ `(set +u; echo ${SET_STACK:-not_set})` == "not_set" ]
   then
-    echo "push_set_state: ERROR - SET_STATE should not be set, but is: \"${SET_STATE}\""
-    return 1
-  else  
-    export SET_STATE=$-
+    export SET_STACK_SIZE=0
+  else
+    SET_STACK_SIZE=${#SET_STACK[*]}
   fi
+  let "SET_STACK_SIZE = SET_STACK_SIZE + 1"
+#  echo "SET_STACK[SET_STACK_SIZE - 1]=$-"
+  export SET_STACK; SET_STACK[SET_STACK_SIZE - 1]=$-
+  # Variable array index is zero-based, so do increment after:
 }
 
 pop_set_state () {
   # Using set +u in a subshell so that detection of an unset variable does not 
   # itself trigger an error:
-  if [ `(set +u; echo ${SET_STATE-not_set})` == "not_set" ]
+  if [ `(set +u; echo ${SET_STACK_SIZE-not_set})` == "not_set" ]
   then
-    echo "pop_set_state: ERROR - SET_STATE should be set, but is not."
-    return 1
+    echo "pop_set_state: ERROR: SET_STACK_SIZE may not be unset or empty. Calling exit 1."
+    exit 1
+  elif [ ${SET_STACK_SIZE} -le 0 ]
+  then  
+    echo "pop_set_state: ERROR: SET_STACK_SIZE may not be 0. Calling exit 1."
+    exit 1
   else
-    set -${SET_STATE}
-    unset SET_STATE
+    set -${SET_STACK[SET_STACK_SIZE - 1]}
+    SET_STACK[SET_STACK_SIZE - 1]=""
+    # When SET_STACK_SIZE is one, this fails:
+    # let "SET_STACK_SIZE = SET_STACK_SIZE - 1"
+    # Therefore this if:
+    if [ ${SET_STACK_SIZE} == "1" ]
+    then
+      SET_STACK_SIZE=0
+    else
+      let "SET_STACK_SIZE = SET_STACK_SIZE - 1"
+    fi
   fi
 }
 
@@ -119,19 +139,47 @@ test_push_pop_u () {
   echo $-
 }
 
-test_two_pushes () {
+test_nested_push_pops () {
+  echo "testing test_nested_push_pops"
+#  set -x
+  set -eu
+  echo $-
   push_set_state
-  push_set_state
+  set +u
+  echo $-
+  push_set_state  
+  set +e  
+  echo $-
+  pop_set_state
+  echo $-
+  pop_set_state
+  echo $-
 }
 
-test_two_pops () {
-  pop_set_state
+test_pop_never_push () {
+  echo "testing test_pop_no_push: Should fail with SET_STACK_SIZE unset."  
+  # Using set +u in a subshell so that detection of an unset variable does not 
+  # itself trigger an error:
+  (set +u; echo "SET_STACK_SIZE: ${SET_STACK_SIZE-not_set}")
+#  set -x
   pop_set_state
 }
 
-#test_push_pop_u
-#test_two_pushes
-#test_two_pop
+test_too_many_pops () {
+  echo "testing test_too_many_pops: Should fail with SET_STACK_SIZE = 0."  
+  # Using set +u in a subshell so that detection of an unset variable does not 
+  # itself trigger an error:
+#  set -x
+  push_set_state
+  pop_set_state
+
+  (set +u; echo "SET_STACK_SIZE: ${SET_STACK_SIZE-not_set}")
+  pop_set_state
+}
+
+#test_nested_push_pops
+#test_pop_never_push
+#test_too_many_pops
 
 # END Functions to push and pop the current state of set.
 ###############################################################################

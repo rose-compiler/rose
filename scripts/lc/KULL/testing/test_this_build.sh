@@ -7,16 +7,17 @@
 # e.g. run_and_log test_this_build.sh 0001 0400
 # 
 # DEPENDENCIES:
-#   ./set_ROSE_HOME
 #   ${BUILD_HOME}/compile_commands.json
+#   ${ROSE_HOME}/bin/identityTranslator
+#   ${ROSE_ROSE_SCRIPT_DIR}/declare_install_functions.sh
 
-# Exit if error or undef variable:
-set -eu
+# Don't actually run:
+#export RUN_OR_NOT_EFFORT_ONLY=TRUE
 
 # Find ourselves:
-export REL_CONTAINING_DIR=`dirname $0`
-export CONTAINING_DIR=`(cd ${REL_CONTAINING_DIR}; pwd)`
-cd ${CONTAINING_DIR}
+rel_enclosing_dir=`dirname $0`
+export TEST_SCRIPT_DIR=`(cd ${rel_enclosing_dir}; pwd)`
+export ROSE_ROSE_SCRIPT_DIR=`(cd ${rel_enclosing_dir}/../../ROSE; pwd)`
 
 # Get parms:
 if [ $# -eq 2 ]
@@ -28,36 +29,42 @@ else
   export  LAST_UNIT="2237"
 fi
 
-# Set ROSE version.  Sets:
-#   CODE_BASE
-#   ROSE_PROJECT_BASE
-#   ROSE_HOME
-#   AUTOMATION_HOME (for automation scripts - may not be in ROSE_HOME)
-source set_ROSE_HOME
-# Defines log_then_run:
-source ${AUTOMATION_HOME}/bin/utility_functions.sh
+# Declares and sets:
+#   log_then_run
+#   set_strict
+#   SRUN_DO
+#   use_latest_gcc_rose
+#   use_latest_intel_rose
+source ${ROSE_ROSE_SCRIPT_DIR}/declare_install_functions.sh
 
-export SOURCE_HOME="${CODE_BASE}/KULL/kull-master-2019-02-11"
-export BUILD_HOME="${CODE_BASE}/KULL/kull-master-2019-02-11-gnu-4.9.3.mvapich2.2.2"
+# Sets:
+#   COMMON_BUILD_BASE
+#   COMP_DB_MAP
+#   RENDER_TEXT
+#   ROSE_HOME
+#   ROSE_LD_LIBRARY_PATH
+#   ROSE_TOOL
+use_latest_gcc_rose
+
+export SOURCE_HOME="${COMMON_BUILD_BASE}/KULL/kull-master-2019-02-11"
+export BUILD_HOME="${COMMON_BUILD_BASE}/KULL/kull-master-2019-02-11-gnu-4.9.3.mvapich2.2.2"
 export COMPILATION_DATABASE_PATH="${BUILD_HOME}/compile_commands.json"
 
 export REPORT_FILE_NAME_ROOT="report_${FIRST_UNIT}_${LAST_UNIT}"
 export JSON_REPORT_FILE_NAME="${REPORT_FILE_NAME_ROOT}.json"
 export TEXT_REPORT_FILE_NAME="${REPORT_FILE_NAME_ROOT}.txt"
 
-export SRUN_DO="${AUTOMATION_HOME}/bin/srun_do"
-export COMP_DB_MAP="${AUTOMATION_HOME}/compdb/comp_db_map.py"
-export RENDER_TEXT="${AUTOMATION_HOME}/compdb/render_text.py"
-export ROSE_TOOL="${ROSE_HOME}/bin/identityTranslator"
-
+# Run in this script's dir:
+cd ${TEST_SCRIPT_DIR}
 
 # Run ROSE on units (Expensive!  Use srun!):
+log_then_run \
 ${SRUN_DO} -c36 \
 ${COMP_DB_MAP} \
 ${SOURCE_HOME} \
 ${BUILD_HOME} \
 /usr/bin/timeout \
---database=${BUILD_HOME}/compile_commands.json \
+--database=${COMPILATION_DATABASE_PATH} \
 --report=${JSON_REPORT_FILE_NAME} \
 --start_at=${FIRST_UNIT} \
 --end_at=${LAST_UNIT} \
