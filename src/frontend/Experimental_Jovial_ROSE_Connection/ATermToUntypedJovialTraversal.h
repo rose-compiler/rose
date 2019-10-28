@@ -143,6 +143,7 @@ ATbool traverse_TableTypeSpecifier    (ATerm term, SgUntypedStructureDeclaration
 ATbool traverse_BlockTypeDeclaration  (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // 2.3 STATEMENT NAME DECLARATIONS
+ATbool traverse_StatementNameDeclaration (ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref = 0);
 
 // 2.4 DEFINE DECLARATIONS
 ATbool traverse_DefineDeclaration        (ATerm term, SgUntypedDeclarationStatementList* decl_list);
@@ -172,9 +173,9 @@ ATbool traverse_Spacer                (ATerm term, SgUntypedExpression* & expr);
 
 // 3.0 PROCEDURES AND FUNCTIONS
 ATbool traverse_ProcedureDefinition(ATerm term, SgUntypedFunctionDeclarationList* func_list);
-ATbool traverse_SubroutineAttribute(ATerm term, SgUntypedOtherExpression** attr_expr);
+ATbool traverse_SubroutineAttribute(ATerm term, SgUntypedOtherExpression* & attr_expr);
 ATbool traverse_ProcedureHeading   (ATerm term, std::string & name,
-                                    SgUntypedExprListExpression** attrs, SgUntypedInitializedNameList** params);
+                                    SgUntypedExprListExpression* & attrs, SgUntypedInitializedNameList* & params);
 ATbool traverse_SubroutineBody     (ATerm term, SgUntypedFunctionScope* & function_scope);
 
 // 3.1 PROCEDURES
@@ -184,7 +185,7 @@ ATbool traverse_ProcedureDeclaration(ATerm term, SgUntypedDeclarationStatementLi
 ATbool traverse_FunctionDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_FunctionDefinition (ATerm term, SgUntypedFunctionDeclarationList* func_list);
 ATbool traverse_FunctionHeading    (ATerm term, std::string & name, SgUntypedType* & type,
-                                    SgUntypedExprListExpression** attrs, SgUntypedInitializedNameList** params);
+                                    SgUntypedExprListExpression* & attrs, SgUntypedInitializedNameList* & params);
 
 // 3.3 PARAMETERS OF PROCEDURES AND FUNCTIONS
 ATbool traverse_FormalParameterList   (ATerm term, SgUntypedInitializedNameList* param_list);
