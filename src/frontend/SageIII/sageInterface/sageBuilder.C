@@ -3418,6 +3418,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           printf ("In buildNondefiningFunctionDeclaration_T(): isMemberFunction = %s scope == NULL resetting the scope = %p = %s \n",isMemberFunction ? "true" : "false",scope,scope->class_name().c_str());
 #endif
         }
+     ROSE_ASSERT (scope !=NULL);
 
 #if 0
      printf ("In buildNondefiningFunctionDeclaration_T(): scope = %p = %s templateArgumentsList = %p templateParameterList = %p \n",
