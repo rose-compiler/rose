@@ -751,12 +751,12 @@ Interior::adjustWidth(const Type &type) {
             break;
         }
         case OP_CONCAT: {
+            // When concatenating, the inputs can be any scalar type but the output will always be integer. E.g, concatenating
+            // two floating-point values results in an integer (i.e., bit vector) since it wouldn't make sense interpretted as
+            // floating-point. If you want a floating-point result you must wrap the concatenation in a reinterpret operation.
             size_t totalWidth = 0;
-            BOOST_FOREACH (const Ptr &child, children_) {
-                if (!child->isIntegerExpr())
-                    throw Exception(toStr(op_) + " operator's arguments must be integer");
+            BOOST_FOREACH (const Ptr &child, children_)
                 totalWidth += child->nBits();
-            }
             type_ = Type::integer(totalWidth);
             break;
         }
@@ -805,8 +805,8 @@ Interior::adjustWidth(const Type &type) {
                 throw Exception(toStr(op_) + " operator's first argument (begin bit) must be 64 bits or narrower");
             if (child(1)->nBits() > 64)
                 throw Exception(toStr(op_) + " operator's second argument (end bit) must be 64 bits or narrower");
-            if (!child(2)->isIntegerExpr() && !child(2)->isFloatingPointExpr())
-                throw Exception(toStr(op_) + " operator's third argument must be integer or floating-point");
+            if (!child(2)->isScalarExpr())
+                throw Exception(toStr(op_) + " operator's third argument must be scalar");
             if (*child(0)->toUnsigned() >= *child(1)->toUnsigned())
                 throw Exception(toStr(op_) + " operator's first argument must be less than the second");
             size_t totalSize = *child(1)->toUnsigned() - *child(0)->toUnsigned();
@@ -867,8 +867,7 @@ Interior::adjustWidth(const Type &type) {
             type_ = child(0)->type();
             break;
         }
-        case OP_SEXTEND:
-        case OP_UEXTEND: {
+        case OP_SEXTEND: {
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
             if (!child(0)->isIntegerConstant())
@@ -877,6 +876,21 @@ Interior::adjustWidth(const Type &type) {
                 throw Exception(toStr(op_) + " operator's first argument (size) must be 64 bits or narrower");
             if (!child(1)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's second argument must be integer");
+            type_ = Type::integer(child(0)->toUnsigned().get());
+            break;
+        }
+        case OP_UEXTEND: {
+            // This operator can make the argument wider or narrower. The argument can be any scalar type and the result will
+            // always be an integer (bit vector) type.  For instance, narrowing a floating-point value results in an integer
+            // bit vector type since it wouldn't make sense anymore as a floating point type.
+            if (nChildren() != 2)
+                throw Exception(toStr(op_) + " operator expects two arguments");
+            if (!child(0)->isIntegerConstant())
+                throw Exception(toStr(op_) + " operator's first argument (size) must be an integer constant");
+            if (child(0)->nBits() > 64)
+                throw Exception(toStr(op_) + " operator's first argument (size) must be 64 bits or narrower");
+            if (!child(1)->isScalarExpr())
+                throw Exception(toStr(op_) + " operator's second argument must be scalar");
             type_ = Type::integer(child(0)->toUnsigned().get());
             break;
         }
@@ -1964,6 +1978,15 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
+ConvertSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+    // (convert[X] Y[X]) => Y[X]
+    if (inode->type() == inode->child(0)->type())
+        return inode->child(0);
+
+    return Ptr();
+}
+
+Ptr
 ExtractSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     LeafPtr from_node = inode->child(0)->isLeafNode();
     LeafPtr to_node   = inode->child(1)->isLeafNode();
@@ -2733,6 +2756,15 @@ MssbSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
+ReinterpretSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+    // (reinterpret[X] Y[X]) => Y[X]
+    if (inode->type() == inode->child(0)->type())
+        return inode->child(0);
+
+    return Ptr();
+}
+
+Ptr
 SetSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // (set x) => x
     if (1 == inode->nChildren())
@@ -2803,6 +2835,9 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
                 if (newnode==node)
                     newnode = inode->rewrite(ConcatSimplifier(), solver);
                 break;
+            case OP_CONVERT:
+                newnode = inode->rewrite(ConvertSimplifier(), solver);
+                break;
             case OP_EQ:
                 newnode = inode->commutative();
                 if (newnode==node)
@@ -2848,6 +2883,9 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
                 break;
             case OP_READ:
                 // no simplifications
+                break;
+            case OP_REINTERPRET:
+                newnode = inode->rewrite(ReinterpretSimplifier(), solver);
                 break;
             case OP_ROL:
                 newnode = inode->rewrite(RolSimplifier(), solver);
@@ -2961,8 +2999,6 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
             case OP_FP_ISNAN:
             case OP_FP_ISNEG:
             case OP_FP_ISPOS:
-            case OP_CONVERT:
-            case OP_REINTERPRET:
                 // no simplification
                 break;
         }

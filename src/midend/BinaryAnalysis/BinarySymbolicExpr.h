@@ -72,7 +72,7 @@ enum Operator {
     OP_ADD,                 /**< Addition. One or more operands, all the same width. */
     OP_AND,                 /**< Bitwise conjunction. One or more operands all the same width. */
     OP_ASR,                 /**< Arithmetic shift right. Operand B shifted by A bits; 0 <= A < width(B). A is unsigned. */
-    OP_CONCAT,              /**< Concatenation. Operand A becomes high-order bits. Any number of operands. */
+    OP_CONCAT,              /**< Concatenation. Operand A becomes high-order bits. Any number of operands. Result is integer type. */
     OP_EQ,                  /**< Equality. Two operands, both the same width. */
     OP_EXTRACT,             /**< Extract subsequence of bits. Extract bits [A..B) of C. 0 <= A < B <= width(C). */
     OP_INVERT,              /**< Bitwise inversion. One operand. */
@@ -573,6 +573,13 @@ public:
     bool isMemoryExpr() const {
         return type_.typeClass() == Type::MEMORY;
     }
+
+    /** True if the expression is a scalar type.
+     *
+     *  Integers and floating-point expressions are scalar, memory is not. */
+    bool isScalarExpr() const {
+        return isIntegerExpr() || isFloatingPointExpr();
+    }
     
     /** True if this expression is a constant. */
     virtual bool isConstant() const = 0;
@@ -587,6 +594,13 @@ public:
         return isFloatingPointExpr() && isConstant();
     }
 
+    /** True if this expression is a scalar constant.
+     *
+     *  Integer and floating-point constants are scalar. */
+    bool isScalarConstant() const {
+        return isIntegerConstant() || isFloatingPointConstant();
+    }
+    
     /** True if this expression is a floating-point NaN constant. */
     bool isFloatingPointNan() const;
 
@@ -610,6 +624,13 @@ public:
     /** True if this expression is a memory state variable. */
     bool isMemoryVariable() const {
         return isMemoryExpr() && isVariable2();
+    }
+
+    /** True if this expression is a scalar variable.
+     *
+     *  Integer and floating-point variables are scalar, memory variables are not. */
+    bool isScalarVariable() const {
+        return isIntegerVariable() || isFloatingPointVariable();
     }
     
     /** Property: Comment.
@@ -860,6 +881,9 @@ struct AndSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
     virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
+struct ConvertSimplifier: Simplifier {
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+};
 struct OrSimplifier: Simplifier {
     virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
     virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
@@ -894,6 +918,9 @@ struct IteSimplifier: Simplifier {
     virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct NoopSimplifier: Simplifier {
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+};
+struct ReinterpretSimplifier: Simplifier {
     virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
 };
 struct RolSimplifier: Simplifier {

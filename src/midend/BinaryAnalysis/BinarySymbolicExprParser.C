@@ -425,7 +425,14 @@ protected:
         doc += "@named{concat}"
                "{Concatenate operands to produce a result whose width is the sum of the widths of the operands. The "
                "operands are in bit-endian order: the first operand becomes the most significant bits of the result and "
-               "the last operand becomes the least significant bits.}";
+               "the last operand becomes the least significant bits. The operands can be any scalar type and the result "
+               "will be an integer type (bit vector).}";
+
+        ops_.insert("convert",      SymbolicExpr::OP_CONVERT);
+        doc += "@named{convert}"
+               "{Converts the argument to the type of the operand. For instance, a 32-bit integer -1 "
+               "could be converted to a 64-bit floating-point -1.0, which has an entirely different bit pattern. See also, "
+               "\"reinterpret\".}";
 
         ops_.insert("eq",           SymbolicExpr::OP_EQ);
         doc += "@named{eq}"
@@ -436,7 +443,8 @@ protected:
                "{Extract part of a value. The bits of the third operand are numbered from zero (least significant) through "
                "N-1 (most significant) and those bits specified by the first operand (low bit) and second operand "
                "(one past high bit) are returned.  The width of the return value is the difference between the second "
-               "and first operands, both of which must have constant numeric values.}";
+               "and first operands, both of which must have constant numeric values. The third operand can be any scalar "
+               "type and the result is always an integer (bit vector) type.}";
 
         ops_.insert("invert",       SymbolicExpr::OP_INVERT);
         doc += "@named{invert}"
@@ -484,6 +492,12 @@ protected:
                "memory state, and the address from which a value is read. The address must have the same width as the "
                "memory state's domain, and the result has the same width as the memory state's range (usually eight).}";
 
+        ops_.insert("reinterpret", SymbolicExpr::OP_REINTERPRET);
+        doc += "@named{reinterpret}"
+               "{Reinterprets the argument as some other type without changing the bit pattern of the value. For instance, "
+               "reinterpreting the 32-bit integer constant -1 as a 32-bit floating-point type will result in NaN since they "
+               "can have the same bit pattern.  The source and destination types must have the same width.}";
+
         ops_.insert("rol",          SymbolicExpr::OP_ROL);
         doc += "@named{rol}"
                "{Rotate left.  Rotates the bits of the second operand left by the amount specified in the first operand. "
@@ -509,7 +523,8 @@ protected:
         ops_.insert("sextend",      SymbolicExpr::OP_SEXTEND);
         doc += "@named{sextend}"
                "{Sign extends the second operand so it has the width specified in the first operand. The first operand "
-               "must be an unsigned numeric constant not less than the width of the second operand.}";
+               "must be an unsigned numeric constant not less than the width of the second operand. The second operand "
+               "must be an integer type.}";
 
         ops_.insert("sge",          SymbolicExpr::OP_SGE);
         doc += "@named{sge}"
@@ -573,7 +588,8 @@ protected:
         ops_.insert("uextend",      SymbolicExpr::OP_UEXTEND);
         doc += "@named{uextend}"
                "{Extends or truncates the second operand so it has the width specified in the first operand. The first operand "
-               "must be an unsigned numeric constant.}";
+               "must be an unsigned numeric constant, the second operand must be of scalar type, and the result will be "
+               "an integer (bit vector) type.}";
 
         ops_.insert("uge",          SymbolicExpr::OP_UGE);
         doc += "@named{uge}"
@@ -1200,7 +1216,7 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 break;
             }
             case Token::BITVECTOR: {
-                SymbolicExpr::Ptr leaf = SymbolicExpr::makeIntegerConstant(tokens[0].bits());
+                SymbolicExpr::Ptr leaf = SymbolicExpr::makeConstant(tokens[0].exprType(), tokens[0].bits());
                 tokens.shift(1);
                 if (stack.empty())
                     return leaf;
