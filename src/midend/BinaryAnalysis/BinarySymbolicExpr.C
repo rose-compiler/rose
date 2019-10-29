@@ -319,16 +319,43 @@ Type::operator<(const Type &other) const {
 }
 
 void
-Type::print(std::ostream &out) const {
+Type::print(std::ostream &out, TypeStyle::Flag style) const {
     switch (typeClass()) {
         case INTEGER:
-            out <<nBits() <<"-bit integer";
+            switch (style) {
+                case TypeStyle::ABBREVIATED:
+                    out <<"u" <<nBits();
+                    break;
+                case TypeStyle::FULL:
+                    out <<nBits() <<"-bit integer";
+                    break;
+            }
             break;
         case FP:
-            out <<nBits() <<"-bit float(e=" <<exponentWidth() <<" s=" <<significandWidth() <<")";
+            switch (style) {
+                case TypeStyle::ABBREVIATED:
+                    if (exponentWidth() == 11 && significandWidth() == 53) {
+                        out <<"f64";
+                        break;
+                    } else if (exponentWidth() == 8 && significandWidth() == 24) {
+                        out <<"f32";
+                        break;
+                    }
+                    // fall through
+                case TypeStyle::FULL:
+                    out <<nBits() <<"-bit float(e=" <<exponentWidth() <<" s=" <<significandWidth() <<")";
+                    break;
+            }
             break;
         case MEMORY:
-            out <<nBits() <<"-bit memory(a=" <<addressWidth() <<")";
+            switch (style) {
+                case TypeStyle::ABBREVIATED:
+                    out <<"m" <<nBits() <<"[" <<addressWidth() <<"]";
+                    break;
+                case TypeStyle::FULL:
+                    out <<nBits() <<"-bit memory(a=" <<addressWidth() <<")";
+                    break;
+            }
             break;
         case INVALID:
             out <<"invalid";
@@ -337,9 +364,9 @@ Type::print(std::ostream &out) const {
 }
 
 std::string
-Type::toString() const {
+Type::toString(TypeStyle::Flag style) const {
     std::ostringstream ss;
-    print(ss);
+    print(ss, style);
     return ss.str();
 }
 
@@ -968,8 +995,8 @@ Interior::print(std::ostream &o, Formatter &fmt) const {
     // The width of an operator is not normally too useful since it can also be inferred from the width of its operands, but we
     // print it anyway for the benefit of mere humans.
     char bracket = '[';
-    if (fmt.show_width) {
-        o <<bracket <<nBits();
+    if (fmt.show_type) {
+        o <<bracket <<type().toString(TypeStyle::ABBREVIATED);
         bracket = ',';
     }
     if (fmt.show_flags)
@@ -3141,8 +3168,8 @@ Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) const
 
     // Bit width of variable.  All variables have this otherwise there's no way for the parser to tell how wide a variable is
     // when reading it back in.
-    if (formatter.show_width) {
-        o <<'[' <<nBits() <<']';
+    if (formatter.show_type) {
+        o <<'[' <<type().toString(TypeStyle::ABBREVIATED) <<']';
     }
 
     // Comment stuff

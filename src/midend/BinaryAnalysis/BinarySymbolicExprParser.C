@@ -241,92 +241,85 @@ SymbolicExprParser::TokenStream::consumeTerm() {
     return retval;
 }
 
-size_t
-SymbolicExprParser::TokenStream::consumeWidth() {
+SymbolicExpr::Type
+SymbolicExprParser::TokenStream::consumeType() {
     // '['
     consumeWhiteSpaceAndComments();
     unsigned startLine = lineNumber_;
     unsigned startColumn = columnNumber_;
     if (nextCharacter() != '[') {
-        throw SymbolicExprParser::SyntaxError("expected '[' to start a width specification",
+        throw SymbolicExprParser::SyntaxError("expected '[' to start a type specification",
                                               name_, startLine, startColumn);
     }
     consumeCharacter();
 
-    // width constant
+    // Type name or width constant
     consumeWhiteSpaceAndComments();
-    std::string s;
-    while (isdigit(nextCharacter()))
-        s += consumeCharacter();
-    consumeWhiteSpaceAndComments();
-    if (s.empty()) {
-        throw SymbolicExprParser::SyntaxError("expected decimal integer in width specification",
-                                              name_, startLine, startColumn);
-    }
-
-    // ']'
-    if (nextCharacter() == EOF)
-        throw SymbolicExprParser::SyntaxError("end of input reached while parsing width", name_, startLine, startColumn);
-    if (nextCharacter() != ']')
-        throw SymbolicExprParser::SyntaxError("missing closing ']' in width specification", name_, startLine, startColumn);
-    consumeCharacter();
-    return boost::lexical_cast<size_t>(s);
-}
-
-size_t
-SymbolicExprParser::TokenStream::consumeWidth(size_t &width2 /*out*/) {
-    // '['
-    consumeWhiteSpaceAndComments();
-    unsigned startLine = lineNumber_;
-    unsigned startColumn = columnNumber_;
-    if (nextCharacter() != '[') {
-        throw SymbolicExprParser::SyntaxError("expected '[' to start a width specification",
-                                              name_, startLine, startColumn);
-    }
-    consumeCharacter();
-
-    // width constant
-    consumeWhiteSpaceAndComments();
-    std::string s;
-    while (isdigit(nextCharacter()))
-        s += consumeCharacter();
-    if (s.empty()) {
-        throw SymbolicExprParser::SyntaxError("expected decimal integer in width specification",
-                                              name_, startLine, startColumn);
-    }
-    size_t retval = boost::lexical_cast<size_t>(s);
-
-    // optional '->'
-    consumeWhiteSpaceAndComments();
-    if (nextCharacter() == '-') {
-        consumeCharacter();
-        if (nextCharacter() != '>')
-            throw SymbolicExprParser::SyntaxError("expected '->' in width specification", name_, lineNumber_, columnNumber_);
-        consumeCharacter();
-
-        // width constant
-        consumeWhiteSpaceAndComments();
-        s = "";
-        unsigned ln = lineNumber_, cn = columnNumber_;
+    SymbolicExpr::Type retval;
+    if (isdigit(nextCharacter())) {
+        // integer width
+        std::string s;
         while (isdigit(nextCharacter()))
             s += consumeCharacter();
-        if (s.empty())
-            throw SymbolicExprParser::SyntaxError("expected decimal integer domain width after '->'", name_, ln, cn);
-        width2 = boost::lexical_cast<size_t>(s);
-        consumeWhiteSpaceAndComments();
+        // optional "->N"
+        if (nextCharacter() == '-') {
+            size_t width1 = boost::lexical_cast<size_t>(s);
+            consumeCharacter();
+            if (nextCharacter() != '>')
+                throw SymbolicExprParser::SyntaxError("expected '->' in type specification", name_, lineNumber_, columnNumber_);
+            consumeCharacter();
+            consumeWhiteSpaceAndComments();
+            s = "";
+            unsigned ln = lineNumber_, cn = columnNumber_;
+            while (isdigit(nextCharacter()))
+                s += consumeCharacter();
+            if (s.empty())
+                throw SymbolicExprParser::SyntaxError("expected decimal integer domain width after '->'", name_, ln, cn);
+            size_t width2 = boost::lexical_cast<size_t>(s);
+            consumeWhiteSpaceAndComments();
+            retval = SymbolicExpr::Type::memory(width1, width2);
+        } else {
+            retval = SymbolicExpr::Type::integer(boost::lexical_cast<size_t>(s));
+        }
+    } else if (nextCharacter() == 'u') {
+        // integer followed by width
+        consumeCharacter();
+        if (!isdigit(nextCharacter()))
+            throw SymbolicExprParser::SyntaxError("invalid type specification", name_, startLine, startColumn);
+        std::string s;
+        while (isdigit(nextCharacter()))
+            s += consumeCharacter();
+        retval = SymbolicExpr::Type::integer(boost::lexical_cast<size_t>(s));
+    } else if (nextCharacter() == 'f') {
+        // floating point followed by width
+        consumeCharacter();
+        if (!isdigit(nextCharacter()))
+            throw SymbolicExprParser::SyntaxError("invalid type specification", name_, startLine, startColumn);
+        std::string s;
+        while (isdigit(nextCharacter()))
+            s += consumeCharacter();
+        if ("32" == s) {
+            retval = SymbolicExpr::Type::floatingPoint(8, 24);
+        } else if ("64" == s) {
+            retval = SymbolicExpr::Type::floatingPoint(11, 53);
+        } else {
+            throw SymbolicExprParser::SyntaxError("invalid type specification", name_, startLine, startColumn);
+        }
+    } else {
+        throw SymbolicExprParser::SyntaxError("invalid type specification", name_, startLine, startColumn);
     }
+    consumeWhiteSpaceAndComments();
 
     // ']'
     if (nextCharacter() == EOF) {
-        throw SymbolicExprParser::SyntaxError("end of input reached inside '[' width expression",
+        throw SymbolicExprParser::SyntaxError("end of input reached inside '[' type expression",
                                               name_, startLine, startColumn);
     }
     if (nextCharacter() != ']')
-        throw SymbolicExprParser::SyntaxError("missing closing ']' in width specification", name_, startLine, startColumn);
+        throw SymbolicExprParser::SyntaxError("missing closing ']' in type specification", name_, startLine, startColumn);
     consumeCharacter();
     return retval;
 }
-
 
 SymbolicExprParser::Token
 SymbolicExprParser::TokenStream::scan() {
@@ -342,10 +335,10 @@ SymbolicExprParser::TokenStream::scan() {
             throw SymbolicExprParser::SyntaxError("found '>' outside inline comment", name_, startLine, startColumn);
         case '(':
             consumeCharacter();
-            return Token(Token::LTPAREN, 0, "(", startLine, startColumn);
+            return Token(Token::LTPAREN, SymbolicExpr::Type(), "(", startLine, startColumn);
         case ')':
             consumeCharacter();
-            return Token(Token::RTPAREN, 0, ")", startLine, startColumn);
+            return Token(Token::RTPAREN, SymbolicExpr::Type(), ")", startLine, startColumn);
         case '[':
             throw SymbolicExprParser::SyntaxError("unexpected width specification", name_, startLine, startColumn);
         case ']':
@@ -354,22 +347,25 @@ SymbolicExprParser::TokenStream::scan() {
             std::string s = consumeTerm();
             boost::smatch matches;
             if (boost::regex_match(s, matches, hexLiteralRe)) {
-                size_t nbits = consumeWidth();
-                Sawyer::Container::BitVector bv(nbits);
+                SymbolicExpr::Type exprType = consumeType();
+                if (exprType.typeClass() == SymbolicExpr::Type::MEMORY)
+                    throw SymbolicExprParser::SyntaxError("type of hex literal must be scalar", name_, startLine, startColumn);
+                Sawyer::Container::BitVector bv(exprType.nBits());
                 bv.fromHex(matches.str(1));         // hex digits without leading "0x"
-                return Token(bv, s, startLine, startColumn);
+                return Token(bv, exprType, s, startLine, startColumn);
             } else if (boost::regex_match(s, signedDecimalLiteralRe)) {
                 int n = boost::lexical_cast<int>(s);
                 consumeWhiteSpaceAndComments();
-                size_t nbits = nextCharacter() == '[' ? consumeWidth() : 8*sizeof(int);
-                Sawyer::Container::BitVector bv(nbits);
+                SymbolicExpr::Type exprType = nextCharacter() == '[' ? consumeType() : SymbolicExpr::Type::integer(8*sizeof(int));
+                if (exprType.typeClass() == SymbolicExpr::Type::MEMORY)
+                    throw SymbolicExprParser::SyntaxError("type of decimal literal must be scalar", name_, startLine, startColumn);
+                Sawyer::Container::BitVector bv(exprType.nBits());
                 bv.fromInteger(IntegerOps::signExtend2((uint64_t)n, 8*sizeof(int), 64));
-                return Token(bv, s, startLine, startColumn);
+                return Token(bv, exprType, s, startLine, startColumn);
             } else {
                 consumeWhiteSpaceAndComments();
-                size_t width2 = 0;
-                size_t width1 = nextCharacter() == '[' ? consumeWidth(width2 /*out*/) : 0;
-                return Token(Token::SYMBOL, width1, width2, s, startLine, startColumn);
+                SymbolicExpr::Type exprType = nextCharacter() == '[' ? consumeType() : SymbolicExpr::Type::none();
+                return Token(Token::SYMBOL, exprType, s, startLine, startColumn);
             }
         }
     }
@@ -380,7 +376,7 @@ void
 SymbolicExprParser::TokenStream::fillTokenList(size_t idx) {
     for (size_t i = tokens_.size(); i <= idx; ++i) {
         Token token = scan();
-        if (Token::NONE == token.type())
+        if (Token::NONE == token.tokenType())
             return;
         tokens_.push_back(token);
     }
@@ -638,8 +634,7 @@ public:
     immediateExpansion(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
         if (!ops_.exists(op.lexeme()))
             return SymbolicExpr::Ptr();
-        SymbolicExpr::Type type = op.width() > 0 ? SymbolicExpr::Type::integer(op.width()) : SymbolicExpr::Type::none();
-        return SymbolicExpr::Interior::instance(type, ops_[op.lexeme()], args, solver);
+        return SymbolicExpr::Interior::instance(op.exprType(), ops_[op.lexeme()], args, solver);
     }
 };
 
@@ -776,8 +771,7 @@ public:
     immediateExpansion(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
         if (!ops_.exists(op.lexeme()))
             return SymbolicExpr::Ptr();
-        SymbolicExpr::Type type = op.width() > 0 ? SymbolicExpr::Type::integer(op.width()) : SymbolicExpr::Type::none();
-        return SymbolicExpr::Interior::instance(type, ops_[op.lexeme()], args, solver);
+        return SymbolicExpr::Interior::instance(op.exprType(), ops_[op.lexeme()], args, solver);
     }
 };
 
@@ -803,22 +797,24 @@ public:
         boost::smatch matches;
         if (!boost::regex_match(symbol.lexeme(), matches, boost::regex("[vm](\\d+)")))
             return SymbolicExpr::Ptr();
-        if (symbol.width() == 0) {
+        if (symbol.exprType().nBits() == 0) {
             throw symbol.syntaxError("variable \"" + StringUtility::cEscape(symbol.lexeme()) + "\""
                                      " must have a non-zero width specified");
         }
         uint64_t varId = rose_strtoull(matches.str(1).c_str(), NULL, 10);
         if (symbol.lexeme()[0] == 'v') {
-            if (symbol.width2()) {
-                throw symbol.syntaxError("variable \"" + StringUtility::cEscape(symbol.lexeme()) + "\""
-                                         " should have scalar width");
+            if (symbol.exprType().typeClass() == SymbolicExpr::Type::MEMORY) {
+                throw symbol.syntaxError("scalar variable \"" + StringUtility::cEscape(symbol.lexeme()) + "\""
+                                         " should have scalar type");
             }
-            return SymbolicExpr::makeIntegerVariable(symbol.width(), varId);
+            return SymbolicExpr::makeVariable(symbol.exprType(), varId);
         } else {
             ASSERT_require(symbol.lexeme()[0] == 'm');
-            size_t domainWidth = symbol.width();
-            size_t rangeWidth = symbol.width2() ? symbol.width2() : (size_t)8;
-            return SymbolicExpr::makeMemoryVariable(domainWidth, rangeWidth, varId);
+            if (symbol.exprType().typeClass() != SymbolicExpr::Type::MEMORY) {
+                throw symbol.syntaxError("memory variable \"" + StringUtility::cEscape(symbol.lexeme()) + "\""
+                                         " should have memory type");
+            }
+            return SymbolicExpr::makeVariable(symbol.exprType(), varId);
         }
     }
 };
@@ -881,11 +877,11 @@ SymbolicExprParser::RegisterToValue::immediateExpansion(const Token &token) {
     const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(token.lexeme());
     if (NULL == regp)
         return SymbolicExpr::Ptr();
-    if (token.width()!=0 && token.width()!=regp->nBits()) {
-        throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.width()) +
+    if (token.exprType().nBits() != 0 && token.exprType().nBits() != regp->nBits()) {
+        throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.exprType().nBits()) +
                                 ", actual=" + StringUtility::numberToString(regp->nBits()) + ")");
     }
-    if (token.width2() != 0)
+    if (token.exprType().typeClass() == SymbolicExpr::Type::MEMORY)
         throw token.syntaxError("register width must be scalar");
     BaseSemantics::SValuePtr regValue = regState->peekRegister(*regp, ops_->undefined_(regp->nBits()), ops_.get());
     return SymbolicSemantics::SValue::promote(regValue)->get_expression();
@@ -922,11 +918,11 @@ SymbolicExprParser::RegisterSubstituter::immediateExpansion(const Token &token) 
 
     if (NULL == regp)
         return SymbolicExpr::Ptr();
-    if (token.width() != 0 && token.width() != regp->nBits()) {
-        throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.width()) +
+    if (token.exprType().nBits() != 0 && token.exprType().nBits() != regp->nBits()) {
+        throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.exprType().nBits()) +
                                 ", actual=" + StringUtility::numberToString(regp->nBits()) + ")");
     }
-    if (token.width2() != 0)
+    if (token.exprType().typeClass() == SymbolicExpr::Type::MEMORY)
         throw token.syntaxError("register width must be scalar");
 
     SymbolicExpr::Ptr retval;
@@ -997,11 +993,11 @@ SymbolicExprParser::MemorySubstituter::immediateExpansion(const Token &func, con
     } else if (operands.size() != 1) {
         throw func.syntaxError("wrong number of arguments for \"memory\""
                                "(specified=" + StringUtility::numberToString(operands.size()) + ", required=1)");
-    } else if (func.width() % 8 != 0) {
-        throw func.syntaxError("invalid memory width (specified=" + StringUtility::numberToString(func.width()) +
+    } else if (func.exprType().nBits() % 8 != 0) {
+        throw func.syntaxError("invalid memory width (specified=" + StringUtility::numberToString(func.exprType().nBits()) +
                                ", required multiple of 8)");
     } else {
-        SymbolicExpr::Ptr retval = SymbolicExpr::makeIntegerVariable(func.width(), "memory-ref");
+        SymbolicExpr::Ptr retval = SymbolicExpr::makeIntegerVariable(func.exprType().nBits(), "memory-ref");
         exprToMem_.insert(retval, operands[0]);
         return retval;
     }
@@ -1046,9 +1042,9 @@ SymbolicExprParser::TermPlaceholders::immediateExpansion(const Token &token) {
     SymbolicExpr::Ptr retval;
     if (name2var_.forward().getOptional(token.lexeme()).assignTo(retval))
         return retval;
-    if (token.width() == 0)
+    if (token.exprType().nBits() == 0)
         throw token.syntaxError("non-zero variable width required");
-    retval = SymbolicExpr::makeIntegerVariable(token.width());
+    retval = SymbolicExpr::makeIntegerVariable(token.exprType().nBits());
     name2var_.insert(token.lexeme(), retval);
     return retval;
 }
@@ -1152,7 +1148,7 @@ SymbolicExprParser::parse(const std::string &input, const std::string &inputName
     std::istringstream stream(input);
     TokenStream tokens(stream, inputName);
     SymbolicExpr::Ptr expr = parse(tokens);
-    if (tokens[0].type() != Token::NONE)
+    if (tokens[0].tokenType() != Token::NONE)
         throw SyntaxError("additional text after end of expression",
                           tokens.name(), tokens[0].lineNumber(), tokens[0].columnNumber());
     return expr;
@@ -1175,10 +1171,10 @@ struct PartialInternalNode {
 SymbolicExpr::Ptr
 SymbolicExprParser::parse(TokenStream &tokens) {
     std::vector<PartialInternalNode> stack;
-    while (tokens[0].type() != Token::NONE) {
-        switch (tokens[0].type()) {
+    while (tokens[0].tokenType() != Token::NONE) {
+        switch (tokens[0].tokenType()) {
             case Token::LTPAREN: {
-                if (tokens[1].type()!=Token::SYMBOL)
+                if (tokens[1].tokenType() != Token::SYMBOL)
                     throw tokens[0].syntaxError("expected operator after left paren", tokens.name());
                 stack.push_back(PartialInternalNode(tokens[1], tokens[0]));
                 tokens.shift(2);

@@ -47,6 +47,16 @@ namespace SymbolicExpr {
 //                                      Basic Types
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Whether to use abbreviated or full output. */
+namespace TypeStyle {
+    /** Flag to pass as type stringification style. */
+    enum Flag {
+        FULL,                                           /**< Show all details. */
+        ABBREVIATED                                     /**< Use abbreviated names if possible. */
+    };
+}
+
+
 /** Exceptions for symbolic expressions. */
 class Exception: public Rose::Exception {
 public:
@@ -167,7 +177,7 @@ struct Formatter {
     };
     Formatter()
         : show_comments(CMT_INSTEAD), do_rename(false), add_renames(true), use_hexadecimal(true),
-          max_depth(0), cur_depth(0), show_width(true), show_flags(true) {}
+          max_depth(0), cur_depth(0), show_type(true), show_flags(true) {}
     ShowComments show_comments;                 /**< Show node comments when printing? */
     bool do_rename;                             /**< Use the @p renames map to rename variables to shorter names? */
     bool add_renames;                           /**< Add additional entries to the @p renames as variables are encountered? */
@@ -175,7 +185,7 @@ struct Formatter {
     size_t max_depth;                           /**< If non-zero, then replace deep parts of expressions with "...". */
     size_t cur_depth;                           /**< Depth in expression. */
     RenameMap renames;                          /**< Map for renaming variables to use smaller integers. */
-    bool show_width;                            /**< Show width in bits inside square brackets. */
+    bool show_type;                             /**< Show data type inside square brackets. */
     bool show_flags;                            /**< Show user-defined flags inside square brackets. */
 };
 
@@ -279,7 +289,7 @@ public:
      *  floating point value is the sum of these two widths since although the implied bit is not stored, a sign bit is
      *  stored. */
     static Type floatingPoint(size_t exponentWidth, size_t significandWidth) {
-        return Type(FP, 1 /*sign bit*/ + exponentWidth + significandWidth, exponentWidth);
+        return Type(FP, 1 /*sign bit*/ + exponentWidth + significandWidth - 1 /*implied bit*/, exponentWidth);
     }
 
     /** Check whether this object is valid.
@@ -329,7 +339,7 @@ public:
      *  returns FP. */
     size_t significandWidth() const {
         ASSERT_require(FP == typeClass_);
-        return totalWidth_ - (1 /* sign bit */ + exponentWidth());
+        return totalWidth_ - (1 /* sign bit */ + exponentWidth() - 1 /*implied bit*/);
     }
 
     /** Type equality.
@@ -349,10 +359,10 @@ public:
     bool operator<(const Type &other) const;
 
     /** Print the type. */
-    void print(std::ostream&) const;
+    void print(std::ostream&, TypeStyle::Flag style = TypeStyle::FULL) const;
 
     /** Print the type to a string. */
-    std::string toString() const;
+    std::string toString(TypeStyle::Flag style = TypeStyle::FULL) const;
 };
 
     

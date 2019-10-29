@@ -1068,7 +1068,7 @@ SymbolicExpr::Type
 RiscOperators::sgTypeToSymbolicType(SgAsmType *sgType) {
     ASSERT_not_null(sgType);
     if (SgAsmFloatType *fpType = sgIsIeee754(sgType)) {
-        return SymbolicExpr::Type::floatingPoint(fpType->exponentBits().size(), fpType->significandBits().size());
+        return SymbolicExpr::Type::floatingPoint(fpType->exponentBits().size(), fpType->significandBits().size()+1/*implicit bit*/);
     } else if (SgAsmIntegerType *iType = isSgAsmIntegerType(sgType)) {
         return SymbolicExpr::Type::integer(iType->get_nBits());
     } else {
