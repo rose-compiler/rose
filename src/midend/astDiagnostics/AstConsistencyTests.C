@@ -4494,6 +4494,7 @@ TestMangledNames::visit ( SgNode* node )
 #if 0
           printf ("TestMangledNames::visit(): initializedName->get_scope() = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
 #endif
+	  ROSE_ASSERT (initializedName->get_scope() != NULL);
           if (initializedName->get_scope()->class_name() == "SgNode")
              {
                isDeletedNode = true;
