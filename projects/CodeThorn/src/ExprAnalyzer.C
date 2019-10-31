@@ -915,37 +915,41 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
                   return listify(res);
                 }
               } else {
-                cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
-                exit(1);
+                SAWYER_MESG(logger[WARN])<<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+                AbstractValue val=AbstractValue::createTop();
+                res.result=val;
+                return listify(res);
               }
             } else {
-              cerr<<"Error: no assign initialize:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+              SAWYER_MESG(logger[ERROR])<<"no assign initialize:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
               exit(1);
             }
             elemIndex++;
           }
-          cerr<<"Error: access to element of constant array (not in state). Not supported."<<endl;
+          SAWYER_MESG(logger[ERROR])<<"Error: access to element of constant array (not in state). Not supported."<<endl;
           exit(1);
         } else if(_variableIdMapping->isStringLiteralAddress(arrayVarId)) {
-          logger[ERROR]<<"Error: Found string literal address, but data not present in state."<<endl;
+          SAWYER_MESG(logger[ERROR])<<"Error: Found string literal address, but data not present in state."<<endl;
           exit(1);
         } else {
           cout<<estate.toString(_variableIdMapping)<<endl;
-          cout<<"DEBUG: Program error detected: potential out of bounds access (P1) : array: "<<arrayPtrValue.toString(_variableIdMapping)<<", access: address: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
-          cout<<"DEBUG: array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+          SAWYER_MESG(logger[TRACE])<<"Program error detected: potential out of bounds access (P1) : array: "<<arrayPtrValue.toString(_variableIdMapping)<<", access: address: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+          //cout<<"DEBUG: array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
           //cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
-          cerr<<"AST: "<<node->unparseToString()<<endl;
-          cerr<<"explicit arrays flag: "<<args.getBool("explicit-arrays")<<endl;
+          //cerr<<"AST: "<<node->unparseToString()<<endl;
+          //cerr<<"explicit arrays flag: "<<args.getBool("explicit-arrays")<<endl;
           _nullPointerDereferenceLocations.recordPotentialLocation(estate.label());
-          // do not generate a state because this is a null pointer dereference
+          // continue after potential out-of-bounds access (assume any value can have been read)
+          AbstractValue val=AbstractValue::createTop();
+          res.result=val;
+          return listify(res);
         }
       }
     } else {
-      cerr<<"Error: array-access uses expr for denoting the array (not supported yet) ";
-      cerr<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<" ";
-      cerr<<"expr: "<<arrayExpr->unparseToString()<<" ";
-      cerr<<"arraySkip: "<<getSkipArrayAccesses()<<endl;
-      exit(1);
+      SAWYER_MESG(logger[WARN])<<"Array-access uses expr for denoting the array (not supported yet) ";
+      SAWYER_MESG(logger[WARN])<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<" ";
+      SAWYER_MESG(logger[WARN])<<"expr: "<<arrayExpr->unparseToString()<<" ";
+      SAWYER_MESG(logger[WARN])<<"arraySkip: "<<getSkipArrayAccesses()<<endl;
     }
     return resultList;
   }

@@ -983,15 +983,17 @@ PState CodeThorn::Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVar
     SgExpression* exp=*i;
     SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
     if(assignInit==nullptr) {
-      logger[ERROR]<<"expected assign initializer but found "<<exp->unparseToString();
-      logger[ERROR]<<"AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
-      exit(1);
+      logger[WARN]<<"expected assign initializer but found "<<exp->unparseToString();
+      logger[WARN]<<"AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+      AbstractValue newVal=AbstractValue::createTop();
+      newPState.writeToMemoryLocation(arrayElemId,newVal);
+    } else {
+      // initialize element of array initializer in state
+      SgExpression* assignInitExpr=assignInit->get_operand();
+      // currentEState from above, newPState must be the same as in currentEState.
+      AbstractValue newVal=singleValevaluateExpression(assignInitExpr,currentEState);
+      newPState.writeToMemoryLocation(arrayElemId,newVal);
     }
-    // initialize element of array initializer in state
-    SgExpression* assignInitExpr=assignInit->get_operand();
-    // currentEState from above, newPState must be the same as in currentEState.
-    AbstractValue newVal=singleValevaluateExpression(assignInitExpr,currentEState);
-    newPState.writeToMemoryLocation(arrayElemId,newVal);
     elemIndex++;
   }
   // initialize remaining elements (if there are any) with default value
@@ -1069,8 +1071,11 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         //cout<<"DEBUG: lhs type: "<<getVariableIdMapping()->getType(initDeclVarId)->unparseToString()<<endl;
         if(getVariableIdMapping()->hasClassType(initDeclVarId)) {
           // TODO: initialization of structs not supported yet
-          cerr<<"Error: initialization of structs not supported yet - "<<decl->unparseToString()<<endl;
-          exit(1);
+          SAWYER_MESG(logger[WARN])<<"initialization of structs not supported yet (not added to state) "<<decl->unparseToString()<<endl;
+          //AbstractValue arrayAddress=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex))
+          //newPState.writeToMemoryLocation(arrayAddress,CodeThorn::Top());
+          PState newPState=*currentEState.pstate();
+          return createEState(targetLabel,cs,newPState,cset);
         }
         // has aggregate initializer
         if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {

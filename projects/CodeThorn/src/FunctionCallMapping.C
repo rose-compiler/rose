@@ -112,7 +112,7 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
       }
     }
   }
-  cout<<"Resolved "<<n<<" function calls."<<endl;
+  SAWYER_MESG(logger[INFO])<<"Resolved "<<n<<" function calls."<<endl;
   return;
 }
 
