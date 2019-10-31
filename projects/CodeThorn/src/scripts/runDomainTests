@@ -12,11 +12,8 @@ BENCH_PASS=0
 BENCH_FAIL=0
 
 function DomainTests {
-testNumbers=`echo {001..009}`
-testNumbers="$testNumbers 011 013 014 015 016"
-failNumbers="010 012"
+testNumbers=`echo {001..019}`
 echo "Scheduled tests: $testNumbers"
-echo "Skipping tests: $failNumbers"
 for testNumber in $testNumbers; do
     benchmarkprefix=$TESTDIR/DOM${testNumber};
     for benchmark in ${benchmarkprefix}*.[Cc]; do
