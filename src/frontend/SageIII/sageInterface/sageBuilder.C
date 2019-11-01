@@ -1511,7 +1511,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
           printf ("In SageBuilder::buildVariableDeclaration_nfi(): variableSymbol == NULL: varDecl = %p: initializedName = %p = %s \n",varDecl,tmp_initializedName,tmp_initializedName->get_name().str());
           printf (" --- tmp_initializedName->get_initptr() = %p \n",tmp_initializedName->get_initptr());
 #endif
-       // DQ (6/25/2019): This ia new feature to input the builtFromUseOnly function optional parameter.
+       // DQ (6/25/2019): This is a new feature to input the builtFromUseOnly function optional parameter.
           if (builtFromUseOnly == true)
              {
 #if DEBUG_BUILD_VARIABLE_DECLARATION
