@@ -1064,6 +1064,9 @@ SgLocatedNode::isCompilerGenerated () const
      const SgExpression* expression = isSgExpression(this);
      if (expression != NULL && expression->get_operatorPosition() != NULL)
         {
+          if (result != expression->get_operatorPosition()->isCompilerGenerated()) {
+            printf ("[SgLocatedNode::isCompilerGenerated] FATAL: expression->get_operatorPosition() does not match get_startOfConstruct().\n");
+          }
           ROSE_ASSERT(result == expression->get_operatorPosition()->isCompilerGenerated());
         }
 
