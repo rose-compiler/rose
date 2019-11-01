@@ -20,8 +20,17 @@ concept CallContext
   //! cctor
   CallContext(const CallContex&);
 
-  //! returns true, iff this context is valid for the return label @ref lbl
+  //! returns true, iff this context is valid for the return label @ref lbl.
   bool isValidReturn(Labeler& labeler, Label lbl) const;
+  
+  //! tests if this context could call that context at label @ref callsite.
+  //! \param target   a context at callee's definition 
+  //! \param callsite the function call label at the call-site 
+  //! \return true, iff this plus @ref callsite and @ref that are in a caller/callee relationship  
+  bool callerOf(const CallContext& that, Label callsite) const;
+  
+  //! returns true if *this equals that.
+  bool operator==(const CallContext& that) const;
 
   //! changes the contexts in @ref src for the function call described by @ref lbl
   //! and stores them into @ref tgt.
@@ -59,7 +68,7 @@ concept CallContext
                    Label                     lbl
                  );
 
-  //! defines a strict weak ordering on call contexts
+  //! defines a strict weak ordering on call contexts.
   friend
   operator<(const CallContext& lhs, const CallContext& rhs);
 }
@@ -69,8 +78,8 @@ concept CallContext
 template <class ContextType>
 struct CtxAnalysis;
 
-//! a class representing an infinite long call string. The class
-//! is precise, but will NOT WORK for analyzing codes with recursion.
+//! A class representing an infinitely long call string. 
+//! The class is precise, but will NOT WORK for recursive codes.
 struct InfiniteContext : private std::vector<Label>
 {
     typedef std::vector<Label> context_string;
@@ -81,10 +90,11 @@ struct InfiniteContext : private std::vector<Label>
     using context_string::rend;
     using context_string::size;  // dbg
 
+    bool operator==(const InfiniteContext& that) const;
+
     bool isValidReturn(Labeler& labeler, Label retlbl) const;
-
+    bool callerOf(const InfiniteContext& target, Label callsite) const;
     void callInvoke(const Labeler&, Label lbl);
-
     void callReturn(Labeler& labeler, Label lbl);
 
     static
@@ -125,10 +135,11 @@ struct FiniteContext : private std::vector<Label>
     using context_string::rend;
     using context_string::size;  // dbg
 
+    bool operator==(const FiniteContext& that) const;
+    
     bool isValidReturn(Labeler& labeler, Label retlbl) const;
-
+    bool callerOf(const FiniteContext& target, Label callsite) const;
     void callInvoke(const Labeler&, Label lbl);
-
     void callReturn(Labeler& labeler, Label lbl);
 
     static

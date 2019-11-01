@@ -3095,8 +3095,12 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
           Sg_File_Info* fileInfo = expr->get_file_info();
           ROSE_ASSERT(fileInfo != NULL);
           SgNode* fileInfoParent = fileInfo->get_parent();
+          if (fileInfoParent == NULL) {
+            printf ("[unparseExpression] file info = %p = %s has null parent.\n",fileInfo,fileInfo->class_name().c_str());
+          } else {
+            printf("parent of file info = %p = %s \n",fileInfoParent,fileInfoParent->class_name().c_str());
+          }
           ROSE_ASSERT(fileInfoParent != NULL);
-          printf ("parent of file info = %p = %s \n",fileInfoParent,fileInfoParent->class_name().c_str());
 
        // DQ (9/11/2011): Reorganize to make this better code that can be analyized using static analysis (static analysis tools don't understand access functions).
        // expr->get_file_info()->display("expr->get_file_info(): debug");
@@ -3108,6 +3112,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
           ROSE_ASSERT(startOfConstructFileInfo != NULL);
           startOfConstructFileInfo->display("expr->get_startOfConstruct(): debug");
         }
+  // Fails when merging ASTs loaded from files
      ROSE_ASSERT(expr->get_file_info()->isCompilerGenerated() == expr->get_startOfConstruct()->isCompilerGenerated());
 
 #if 0
