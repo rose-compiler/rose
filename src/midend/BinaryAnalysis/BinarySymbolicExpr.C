@@ -193,7 +193,8 @@ struct VariableRenamer {
             if (!anyChildRenamed) {
                 retval = input;
             } else {
-                retval = Interior::instance(inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+                retval = Interior::instance(inode->type(), inode->getOperator(), newChildren,
+                                            solver, inode->comment(), inode->flags());
             }
             seen.insert(std::make_pair(input, retval));
         } else {
@@ -249,7 +250,8 @@ struct SingleSubstituter {
                 newChildren.push_back(newChild);
             }
             if (anyChildChanged) {
-                retval = Interior::instance(inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+                retval = Interior::instance(inode->type(), inode->getOperator(), newChildren,
+                                            solver, inode->comment(), inode->flags());
             } else {
                 retval = input;
             }
@@ -294,7 +296,8 @@ struct MultiSubstituter {
             if (!anyChildChanged) {
                 retval = input;
             } else {
-                retval = Interior::instance(inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+                retval = Interior::instance(inode->type(), inode->getOperator(), newChildren,
+                                            solver, inode->comment(), inode->flags());
             }
         } else {
             retval = input;
@@ -394,7 +397,7 @@ Node::newFlags(unsigned newFlags) const {
         // No SMT solver is necessary since changing the flags won't cause the new expression to simplify any differently than
         // it already is. In fact, it there might be a faster way to create the new expression given this fact.
         SmtSolverPtr solver;
-        return Interior::instance(inode->getOperator(), inode->children(), solver, comment(), newFlags);
+        return Interior::instance(inode->type(), inode->getOperator(), inode->children(), solver, comment(), newFlags);
     }
     LeafPtr lnode = isLeafNode();
     ASSERT_not_null(lnode);
@@ -1006,7 +1009,7 @@ Interior::print(std::ostream &o, Formatter &fmt) const {
 
     o <<"(" <<toStr(op_);
 
-    // The width of an operator is not normally too useful since it can also be inferred from the width of its operands, but we
+    // The type of an operator is not normally too useful since it can also be inferred from the types of its operands, but we
     // print it anyway for the benefit of mere humans.
     char bracket = '[';
     if (fmt.show_type) {
@@ -1416,7 +1419,7 @@ Interior::idempotent(const SmtSolverPtr &solver) {
         return sharedFromThis().dynamicCast<Interior>();
     }
 }
-        
+
 Ptr
 Interior::involutary() {
     if (InteriorPtr inode = isInteriorNode()) {
@@ -1771,7 +1774,7 @@ OrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Return original or modified expression
     if (!modified)
         return Ptr();
-    return Interior::instance(inode->getOperator(), newargs, solver, inode->comment());
+    return Interior::instance(inode->type(), inode->getOperator(), newargs, solver, inode->comment());
 }
 
 Ptr
@@ -1823,7 +1826,7 @@ XorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Return original or modified expression
     if (!modified)
         return Ptr();
-    return Interior::instance(inode->getOperator(), newargs, solver, inode->comment());
+    return Interior::instance(inode->type(), inode->getOperator(), newargs, solver, inode->comment());
 }
 
 Ptr
@@ -1974,7 +1977,7 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Construct a new, simplified expression
     if (newArgs.size() == inode->nChildren())
         return Ptr();                                   // no simplification possible
-    return Interior::instance(inode->getOperator(), newArgs, solver, inode->comment(), inode->flags());
+    return Interior::instance(inode->type(), inode->getOperator(), newArgs, solver, inode->comment(), inode->flags());
 }
 
 Ptr
@@ -2223,7 +2226,7 @@ RolSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // If the shift amount is greater than the value width, replace it with modulo
     if (sa && *sa > inode->nBits()) {
-        return Interior::instance(inode->getOperator(),
+        return Interior::instance(inode->type(), inode->getOperator(),
                                   makeIntegerConstant(inode->child(0)->nBits(), *sa % inode->nBits(),
                                                       inode->child(0)->comment(), inode->child(0)->flags()),
                                   inode->child(1),
@@ -2270,7 +2273,7 @@ RorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // If the shift amount is greater than the value width, replace it with modulo
     if (sa && *sa > inode->nBits()) {
-        return Interior::instance(inode->getOperator(),
+        return Interior::instance(inode->type(), inode->getOperator(),
                                   makeIntegerConstant(inode->child(0)->nBits(), *sa % inode->nBits(),
                                                       inode->child(0)->comment(), inode->child(0)->flags()),
                                   inode->child(1),
@@ -2316,7 +2319,7 @@ UextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // => (uextend newsize arg[k])
     if (arg && arg->getOperator() == OP_UEXTEND && newsize >= arg->child(1)->nBits() && newsize <= oldsize)
         return makeExtend(inode->child(0), arg->child(1), solver, inode->comment());
-    
+
     // Shrinking
     // (uextend newsize arg[oldsize])
     //   and newsize < oldsize
@@ -2638,7 +2641,7 @@ ShlSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     InteriorPtr val_inode = inode->child(1)->isInteriorNode();
     if (val_inode && val_inode->getOperator()==inode->getOperator()) {
         if (Ptr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->nBits(), solver)) {
-            return Interior::instance(inode->getOperator(), strength, val_inode->child(1), solver);
+            return Interior::instance(inode->type(), inode->getOperator(), strength, val_inode->child(1), solver);
         }
     }
 
@@ -2702,7 +2705,7 @@ ShrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     InteriorPtr val_inode = inode->child(1)->isInteriorNode();
     if (val_inode && val_inode->getOperator()==inode->getOperator()) {
         if (Ptr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->nBits(), solver)) {
-            return Interior::instance(inode->getOperator(), strength, val_inode->child(1), solver);
+            return Interior::instance(inode->type(), inode->getOperator(), strength, val_inode->child(1), solver);
         }
     }
 
@@ -2791,7 +2794,7 @@ SetSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         return Ptr();
     if (1==elements.size())
         return elements[0];
-    return Interior::instance(inode->getOperator(), elements, solver, inode->comment());
+    return Interior::instance(inode->type(), inode->getOperator(), elements, solver, inode->comment());
 }
 
 Ptr
@@ -3175,7 +3178,7 @@ Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) const
         }
     } else if (isFloatingPointConstant()) {
         o <<"0x" <<bits_.toHex();
-        
+
     } else if (formatter.show_comments == Formatter::CMT_INSTEAD && !comment_.empty()) {
         // Use the comment as the variable name.
         ASSERT_require(isVariable2());
@@ -3202,7 +3205,7 @@ Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) const
         }
     }
 
-    // Bit width of variable.  All variables have this otherwise there's no way for the parser to tell how wide a variable is
+    // Type of variable.  All variables have this otherwise there's no way for the parser to tell how wide a variable is
     // when reading it back in.
     if (formatter.show_type) {
         o <<'[' <<type().toString(TypeStyle::ABBREVIATED) <<']';

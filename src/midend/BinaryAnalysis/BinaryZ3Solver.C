@@ -1,5 +1,7 @@
 #include <sage3basic.h>
 #include <BinaryZ3Solver.h>
+
+#include <boost/lexical_cast.hpp>
 #include <rose_strtoull.h>
 #include <stringify.h>
 #include <Sawyer/Stopwatch.h>
@@ -650,7 +652,8 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                 return ctxZerop(inode);
         }
     }
-    ASSERT_not_reachable("unhandled case");
+    ASSERT_not_reachable("unhandled case " + stringify::Rose::BinaryAnalysis::SymbolicExpr::Operator(inode->getOperator(), "") +
+                         " (" + boost::lexical_cast<std::string>(inode->getOperator()) + ")");
 }
 
 std::vector<Z3Solver::Z3ExprTypePair>

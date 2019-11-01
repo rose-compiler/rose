@@ -352,22 +352,22 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
                 if (section->get_base_va()!=0)
                     trace <<" with base va " <<StringUtility::addrToString(section->get_base_va());
                 trace <<"\n";
-                trace <<"    Specified RVA:       " <<StringUtility::addrToString(section->get_mapped_preferred_rva())
+                trace <<"    specified RVA:       " <<StringUtility::addrToString(section->get_mapped_preferred_rva())
                       <<" + " <<StringUtility::addrToString(section->get_mapped_size()) <<" bytes"
                       <<" = " <<StringUtility::addrToString(section->get_mapped_preferred_rva()+section->get_mapped_size())
                       <<"\n";
                 if (section->get_base_va()!=0) {
-                    trace <<"    Specified  VA:       "
+                    trace <<"    specified  VA:       "
                           <<StringUtility::addrToString(section->get_base_va() + section->get_mapped_preferred_rva()) <<" + "
                           <<StringUtility::addrToString(section->get_mapped_size()) <<" bytes = "
                           <<StringUtility::addrToString(section->get_base_va() + section->get_mapped_preferred_rva() +
                                                         section->get_mapped_size()) <<"\n";
                 }
-                trace <<"    Specified offset:    "
+                trace <<"    specified offset:    "
                       <<StringUtility::addrToString(section->get_offset()) <<" + "
                       <<StringUtility::addrToString(section->get_size()) <<" bytes = "
                       <<StringUtility::addrToString(section->get_offset()+section->get_size()) <<"\n";
-                trace <<"    Specified alignment: memory="
+                trace <<"    specified alignment: memory="
                       <<StringUtility::addrToString(section->get_mapped_alignment()) <<", file="
                       <<StringUtility::addrToString(section->get_file_alignment()) <<"\n";
             }
@@ -395,14 +395,14 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
 
             if (trace) {
                 if (CONTRIBUTE_NONE==contrib || 0==mem_size) {
-                    trace <<"    Does not contribute to map\n";
+                    trace <<"    does not contribute to map\n";
                 } else {
-                    trace <<"    Adjusted alignment:  memory=["
+                    trace <<"    adjusted alignment:  memory=["
                           <<StringUtility::addrToString(malign_lo) <<".."
                           <<StringUtility::addrToString(malign_hi) <<"], file=["
                           <<StringUtility::addrToString(falign_lo) <<".."
                           <<StringUtility::addrToString(falign_hi) <<"]\n";
-                    trace <<"    Aligned VA:          "
+                    trace <<"    aligned VA:          "
                           <<StringUtility::addrToString(va) <<" + "
                           <<StringUtility::addrToString(mem_size) <<" bytes = "
                           <<StringUtility::addrToString(va+mem_size);
@@ -418,18 +418,18 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
                               <<StringUtility::addrToString(new_base_va) <<"\n";
                     }
                     if (CONTRIBUTE_ADD==contrib) {
-                        trace <<"    Aligned offset:      " <<StringUtility::addrToString(offset) <<" + "
+                        trace <<"    aligned offset:      " <<StringUtility::addrToString(offset) <<" + "
                               <<StringUtility::addrToString(file_size) <<" bytes = "
                               <<StringUtility::addrToString(offset+file_size)
                               <<(section->get_offset()==offset && section->get_size()==file_size ? " (no change)\n" : "\n");
-                        trace <<"    Permissions:         "
+                        trace <<"    permissions:         "
                               <<((mapperms & MemoryMap::READABLE)   ? "r" : "-")
                               <<((mapperms & MemoryMap::WRITABLE)   ? "w" : "-")
                               <<((mapperms & MemoryMap::EXECUTABLE) ? "x" : "-");
                         if ((mapperms & ~MemoryMap::READ_WRITE_EXECUTE) != 0)
                             mfprintf(trace)("0x%x", (mapperms & ~MemoryMap::READ_WRITE_EXECUTE));
                         trace <<"\n";
-                        trace <<"    Internal offset:     " <<StringUtility::addrToString(va_offset)
+                        trace <<"    internal offset:     " <<StringUtility::addrToString(va_offset)
                               <<" (va " <<StringUtility::addrToString(va+va_offset) <<")\n";
                     }
                 }
@@ -442,13 +442,13 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
             if (file_size>mem_size) file_size = mem_size;
             ASSERT_require(va + va_offset >= header->get_base_va());
             if (trace) {
-                trace <<"    Current memory map (before we map this section)\n";
+                trace <<"    current memory map (before we map this section)\n";
                 map->dump(trace, "        ");
             }
 
             /* Erase part of the mapping? */
             if (CONTRIBUTE_SUB==contrib) {
-                trace <<"    Subtracting contribution\n";
+                trace <<"    subtracting contribution\n";
                 map->erase(AddressInterval::baseSize(va, mem_size));
                 continue;
             }
@@ -459,12 +459,12 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
                     case RESOLVE_THROW:
                         throw MemoryMap::NotMapped("cannot map segment", map, va);
                     case RESOLVE_OVERMAP:
-                        trace <<"    Conflict: resolved by making a hole\n";
+                        trace <<"    conflict: resolved by making a hole\n";
                         map->erase(AddressInterval::baseSize(va, mem_size));
                         break;
                     case RESOLVE_REMAP:
                     case RESOLVE_REMAP_ABOVE: {
-                        trace <<"    Unable to map entire desired region.\n";
+                        trace <<"    unable to map entire desired region.\n";
                         AddressInterval where = AddressInterval::hull(RESOLVE_REMAP_ABOVE==resolve ? va : 0,
                                                                       AddressInterval::whole().greatest());
                         rose_addr_t new_va = 0;
@@ -474,7 +474,7 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
                         }
                         ASSERT_require2(0 == (new_va+mem_size) % malign_hi, "FIXME: not handled yet [RPM 2010-09-03]");
                         va = new_va;
-                        trace <<"    Relocated to VA:     " <<StringUtility::addrToString(va) <<" + "
+                        trace <<"    relocated to VA:     " <<StringUtility::addrToString(va) <<" + "
                               <<StringUtility::addrToString(mem_size) <<" bytes = "
                               <<StringUtility::addrToString(va + mem_size) <<"\n";
                         break;
@@ -490,7 +490,7 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
             std::string::size_type file_basename_pos = file->get_name().find_last_of("/");
             file_basename_pos = file_basename_pos==file->get_name().npos ? 0 : file_basename_pos+1;
             std::string melmt_name = file->get_name().substr(file_basename_pos) + "(" + section->get_name()->get_string() + ")";
-            trace <<"    Map element name: " <<escapeString(melmt_name) <<"\n";
+            trace <<"    map element name: " <<escapeString(melmt_name) <<"\n";
 
             /* Anonymously map the part of memory beyond the physical end of the file */
             SgAsmGenericFile *file = section->get_file();
@@ -506,7 +506,7 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
                     n = (offset + mem_size) - total;
                     a = va + total - offset;
                 }
-                trace <<"    Mapping part beyond EOF(" <<StringUtility::addrToString(total) <<"):      "
+                trace <<"    mapping part beyond EOF(" <<StringUtility::addrToString(total) <<"):      "
                       <<"va=" <<StringUtility::addrToString(a) <<" + " <<StringUtility::addrToString(n) <<" = "
                       <<StringUtility::addrToString(a+n) <<"\n";
                 map->insert(AddressInterval::baseSize(a, n),
@@ -519,7 +519,7 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
             if (anon_hi && mem_size>file_size) {
                 rose_addr_t n = mem_size - file_size;
                 rose_addr_t a = va + file_size;
-                trace <<"    Mapping part beyond end of section:        va="
+                trace <<"    mapping part beyond end of section:        va="
                       <<StringUtility::addrToString(a) <<" + " <<StringUtility::addrToString(n) <<" = "
                       <<StringUtility::addrToString(a+n) <<"\n";
                 map->insert(AddressInterval::baseSize(a, n),
@@ -531,7 +531,7 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
             if (anon_lo && va_offset>0 && mem_size>0) {
                 rose_addr_t n = va_offset - va;
                 rose_addr_t a = va;
-                trace <<"    Mapping part before beginning of section: va="
+                trace <<"    mapping part before beginning of section: va="
                       <<StringUtility::addrToString(a) <<" + " <<StringUtility::addrToString(n) <<" = "
                       <<StringUtility::addrToString(a+n) <<"\n";
                 map->insert(AddressInterval::baseSize(a, n),
@@ -545,7 +545,7 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
             /* Map the section. We use the file content as the underlying storage of the map because we might be mapping parts of
              * the file left and right of the actual section. */
             if (mem_size>0) {
-                trace <<"    Mapping section:                          va="
+                trace <<"    mapping section:                          va="
                       <<StringUtility::addrToString(va) <<" + " <<StringUtility::addrToString(mem_size) <<" = "
                       <<StringUtility::addrToString(va+mem_size) <<" "
                       <<(map_private?"private":"shared") <<"\n";
@@ -564,7 +564,7 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
             }
 
             if (trace) {
-                trace <<"    After mapping this section:\n";
+                trace <<"    after mapping this section:\n";
                 map->dump(trace, "      ");
             }
         }
@@ -648,15 +648,15 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
         std::swap(Ma, Mb);
     }
 
-    SAWYER_MESG(trace) <<"    Aligning " <<addrToString(val1) <<" to " <<addrToString(align1)
+    SAWYER_MESG(trace) <<"    aligning " <<addrToString(val1) <<" to " <<addrToString(align1)
                        <<" and " <<addrToString(val2) <<" to " <<addrToString(align2) <<"\n"
-                       <<"      Misalignment: Ma=" <<addrToString(Ma) <<", Mb=" <<addrToString(Mb) <<"\n";
+                       <<"      misalignment: Ma=" <<addrToString(Ma) <<", Mb=" <<addrToString(Mb) <<"\n";
 
     /* Alignment constraints that must both be satisfied. */
     int64_t a = align1;
     int64_t b = align2;
     int64_t c = Mb - Ma;
-    SAWYER_MESG(trace) <<"      Constraints:  a=" <<addrToString(a) <<", b=" <<addrToString(b) <<", c=" <<addrToString(c) <<"\n";
+    SAWYER_MESG(trace) <<"      constraints:  a=" <<addrToString(a) <<", b=" <<addrToString(b) <<", c=" <<addrToString(c) <<"\n";
 
     /* Alignment is satsfied when:
      *
@@ -669,10 +669,10 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
      * This has solutions if and only if c is a multiple of the greatest common divisor of a and b. */
     int64_t t, u;
     int64_t g = gcd(a, b, &t, &u);
-    SAWYER_MESG(trace) <<"      Bezout coef:  t=" <<addrToString(t) <<", u=" <<addrToString(u)
+    SAWYER_MESG(trace) <<"      bezout coef:  t=" <<addrToString(t) <<", u=" <<addrToString(u)
                        <<", gcd(a,b)=" <<addrToString(g) <<"\n";
     if (c % g) {
-        trace <<"      No solutions (Mb-Ma not a multiple of gcd(a,b))\n";
+        trace <<"      no solutions (Mb-Ma not a multiple of gcd(a,b))\n";
         throw Exception("no solutions to alignment constraints");
     }
     ASSERT_require(t*a + u*b == g);
@@ -703,7 +703,7 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
     /* Calculate adjustment */
     int64_t Aa = m * t * a + Ma;
     int64_t Ab = m * u * b + Mb;
-    SAWYER_MESG(trace) <<"      Adjustment:   " <<addrToString(Aa) <<"\n";
+    SAWYER_MESG(trace) <<"      adjustment:   " <<addrToString(Aa) <<"\n";
     ASSERT_always_require(Aa==Ab);
     ASSERT_always_require2(Aa>0, "FIXME[Robb Matzke 2010-09-07]: add multiples of lcm(a,b) to make this positive");
     return (rose_addr_t)Aa;
@@ -744,7 +744,7 @@ BinaryLoader::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr &ma
     /* Align lower end of mapped region to satisfy both memory and file alignment constraints. */
     rose_addr_t va_offset = bialign(va, malign_lo, offset, falign_lo);
     if (va_offset>va || va_offset>offset) {
-        mlog[TRACE] <<"      Adjustment " <<va_offset <<" exceeds va or offset (va=" <<va
+        mlog[TRACE] <<"      adjustment " <<va_offset <<" exceeds va or offset (va=" <<va
                     <<", offset=" <<offset <<")\n";
         throw Exception("no solutions to memory/file alignment constraints");
     }
