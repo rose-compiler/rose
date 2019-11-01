@@ -274,14 +274,16 @@ AC_SUBST(ROSE_SUPPORT_GNU_EXTENSIONS)
 AC_LANG(C++)
 AX_COMPILER_VENDOR
 
-rose_use_edg_quad_float=no
-if test "x$ax_cv_cxx_compiler_vendor" == "xgnu"; then
-if test $edg_major_version_number -ge 5; then
-if test "x$build_vendor" != "xsun"; then
-  rose_use_edg_quad_float=yes
+ac_save_LIBS="$LIBS"
+LIBS="$ac_save_LIBS -lquadmath"
+AC_LINK_IFELSE([
+            AC_LANG_PROGRAM([[#include <quadmath.h>]])],
+            [rose_use_edg_quad_float=yes],
+            [rose_use_edg_quad_float=no])
+LIBS="$ac_save_LIBS"
+
+if test "x$rose_use_edg_quad_float" == "xyes"; then
   AC_DEFINE([ROSE_USE_EDG_QUAD_FLOAT], [], [Enables support for __float80 and __float128 in EDG.])
-fi
-fi
 fi
 AC_SUBST(ROSE_USE_EDG_QUAD_FLOAT)
 AM_CONDITIONAL(ROSE_USE_EDG_QUAD_FLOAT, [ test $rose_use_edg_quad_float == yes ])

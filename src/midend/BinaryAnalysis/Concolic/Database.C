@@ -1132,16 +1132,14 @@ bool isDbInitialized(SqlDatabase::ConnectionPtr dbconn)
 
   try
   {
-    DBTxGuard       dbtx(dbconn);
+    DBTxGuard dbtx(dbconn);
 
-    res  = sqlPrepare(dbtx.tx(), QY_DB_INITIALIZED)
-             ->execute_int();
+    res = sqlPrepare(dbtx.tx(), QY_DB_INITIALIZED)
+            ->execute_int();
 
     dbtx.commit();
   }
-  catch (SqlDatabase::Exception& ex)
-  {
-  }
+  catch (SqlDatabase::Exception& ex) {}
 
   return res >= 0;
 }
@@ -1246,7 +1244,7 @@ _object( Database& db,
   return res;
 }
 
-int sqlLastRowId(SqlTransactionPtr tx)
+size_t sqlLastRowId(SqlTransactionPtr tx)
 {
   return sqlPrepare(tx, QY_LAST_ROW_SQLITE3)
            ->execute_int();
@@ -1320,10 +1318,10 @@ void deleteTestCaseElems( SqlTransactionPtr tx, const SqlQueryInt& query, int tc
 struct CmdLineArgInserter
 {
   SqlTransactionPtr tx;
-  int               testcaseId;
-  int               num;
+  TestCaseId::Value testcaseId;
+  size_t            num;
 
-  CmdLineArgInserter(SqlTransactionPtr transx, int tcid)
+  CmdLineArgInserter(SqlTransactionPtr transx, TestCaseId::Value tcid)
   : tx(transx), testcaseId(tcid), num(0)
   {}
 
@@ -1355,13 +1353,13 @@ struct CmdLineArgInserter
 struct EnvVarInserter
 {
   SqlTransactionPtr tx;
-  int               testcaseId;
+  TestCaseId::Value testcaseId;
 
-  EnvVarInserter(SqlTransactionPtr transx, int tcid)
+  EnvVarInserter(SqlTransactionPtr transx, TestCaseId::Value tcid)
   : tx(transx), testcaseId(tcid)
   {}
 
-  int queryEnvVarId(const EnvValue& envvar)
+  size_t queryEnvVarId(const EnvValue& envvar)
   {
     SqlStatementPtr stmt = sqlPrepare(tx, QY_ENVVAR_ID, envvar.first, envvar.second);
     SqlIterator     iter = stmt->begin();
@@ -1377,14 +1375,14 @@ struct EnvVarInserter
 
   void operator()(const EnvValue& envvar)
   {
-    int             envvarId = queryEnvVarId(envvar);
+    size_t envvarId = queryEnvVarId(envvar);
 
     sqlPrepare(tx, QY_NEW_TESTCASE_EVAR, testcaseId, envvarId)
       ->execute();
   }
 };
 
-void dependentObjInsert(SqlTransactionPtr tx, int tcid, TestCase::Ptr obj)
+void dependentObjInsert(SqlTransactionPtr tx, TestCaseId::Value tcid, TestCase::Ptr obj)
 {
   std::vector<std::string> args = obj->args();
   std::vector<EnvValue>    envv = obj->env();
@@ -1393,7 +1391,7 @@ void dependentObjInsert(SqlTransactionPtr tx, int tcid, TestCase::Ptr obj)
   std::for_each(envv.begin(), envv.end(), EnvVarInserter(tx, tcid));
 }
 
-void dependentObjUpdate(SqlTransactionPtr tx, int tcid, TestCase::Ptr obj)
+void dependentObjUpdate(SqlTransactionPtr tx, TestCaseId::Value tcid, TestCase::Ptr obj)
 {
   deleteTestCaseElems(tx, QY_RM_TESTCASE_CARG, tcid);
   deleteTestCaseElems(tx, QY_RM_TESTCASE_EVAR, tcid);
@@ -1411,12 +1409,12 @@ insertDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj)
 {
   static const std::string exec = "linux";
 
-  const int       specimenId  = db.id_ns(tx, obj->specimen()).get();
+  const SpecimenId::Value specimenId  = db.id_ns(tx, obj->specimen()).get();
 
   sqlPrepare(tx, QY_NEW_TESTCASE, specimenId, obj->name(), exec)
     ->execute();
 
-  const int       testcaseId  = sqlLastRowId(tx);
+  const TestCaseId::Value testcaseId  = sqlLastRowId(tx);
 
   dependentObjInsert(tx, testcaseId, obj);
   return TestCaseId(testcaseId);
@@ -1441,7 +1439,7 @@ updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj, 
 {
   // Update::NO: updating the specimen object for every update to a
   //   testcase is excessive (i.e., copying the entire binary).
-  const int                specId       = db.id_ns(tx, obj->specimen(), Update::NO).get();
+  const SpecimenId::Value  specId       = db.id_ns(tx, obj->specimen(), Update::NO).get();
   Sawyer::Optional<double> concreteRank = obj->concreteRank();
 
   const double             rank         = concreteRank ? concreteRank.get() : NO_CONCRETE_RANK;

@@ -231,6 +231,42 @@ public:
     virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
 };
 
+/** Callback to rewrite CFG edges.
+ *
+ *  This basic block callback looks for instructions that have a CFG successor edge that points to a particular address and
+ *  replaces it with a successor edge that points to a different address. */
+class IpRewriter: public BasicBlockCallback {
+public:
+    /** Pairs of old and new addresses. */
+    typedef std::pair<rose_addr_t, rose_addr_t> AddressPair;
+
+private:
+    std::vector<AddressPair> rewrites_;
+
+protected:
+    IpRewriter(const std::vector<AddressPair> &rewrites)
+        : rewrites_(rewrites) {}
+
+public:
+    /** Shared-ownership pointer to a @ref IpRewriter. See @ref heap_object_shared_ownership. */
+    typedef Sawyer::SharedPointer<IpRewriter> Ptr;
+
+    /** Constructor. */
+    static Ptr instance(const std::vector<AddressPair> &rewrites) {
+        return Ptr(new IpRewriter(rewrites));
+    }
+
+    /** Property: Pairs of old/new addresses to rewrite.
+     *
+     * @{ */
+    const std::vector<AddressPair>& rewrites() const { return rewrites_; }
+    std::vector<AddressPair>& rewrites() { return rewrites_; }
+    void rewrites(std::vector<AddressPair> &v) { rewrites_ = v; }
+    /** @} */
+
+    virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
+};
+
 /** List some instructions at a certain time.
  *
  *  See @ref docString for full documentation. */

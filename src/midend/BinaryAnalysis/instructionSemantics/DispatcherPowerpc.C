@@ -987,7 +987,19 @@ struct IP_ldx: P {
 struct IP_lfd: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], d->read(args[1], 64));
+        BaseSemantics::SValuePtr fp64 = ops->reinterpret(d->read(args[1], 64), SageBuilderAsm::buildIeee754Binary64());
+        d->write(args[0], fp64);
+    }
+};
+
+// Load floating-point single
+struct IP_lfs: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        BaseSemantics::SValuePtr fp32 = ops->reinterpret(d->read(args[1], 32), SageBuilderAsm::buildIeee754Binary32());
+        BaseSemantics::SValuePtr fp64 = ops->fpConvert(fp32, SageBuilderAsm::buildIeee754Binary32(),
+                                                       SageBuilderAsm::buildIeee754Binary64());
+        d->write(args[0], fp64);
     }
 };
 
@@ -1978,9 +1990,8 @@ struct IP_stfd: P {
 struct IP_stfs: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        BaseSemantics::SValuePtr src = d->read(args[0], 64);
-        SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type());
-        ASSERT_not_null(srcType);
+        SgAsmFloatType *srcType = SageBuilderAsm::buildIeee754Binary64();
+        BaseSemantics::SValuePtr src = ops->reinterpret(d->read(args[0], 64), srcType);
         BaseSemantics::SValuePtr single = ops->fpConvert(src, srcType, SageBuilderAsm::buildIeee754Binary32());
         d->write(args[1], single);
     }
@@ -2543,6 +2554,7 @@ DispatcherPowerpc::iproc_init() {
     iproc_set(powerpc_ldux,             new Powerpc::IP_ldux);
     iproc_set(powerpc_ldx,              new Powerpc::IP_ldx);
     iproc_set(powerpc_lfd,              new Powerpc::IP_lfd);
+    iproc_set(powerpc_lfs,              new Powerpc::IP_lfs);
     iproc_set(powerpc_lha,              new Powerpc::IP_lha);
     iproc_set(powerpc_lhau,             new Powerpc::IP_lhau);
     iproc_set(powerpc_lhaux,            new Powerpc::IP_lhau);

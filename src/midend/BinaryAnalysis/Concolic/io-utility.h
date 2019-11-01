@@ -12,7 +12,13 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
 
-// FIXME[Robb Matzke 2019-08-15]: public functions must be documented
+/** Loads a file @ref filename and stores the raw char data in a sequence of
+ *  type Container.
+ *
+ *  @tparam Container a sequence container
+ *  @param  filename  the file to load
+ *  @param  mode      opening mode
+ */
 template <class Container>
 Container
 loadFile(const std::string& filename, std::ios_base::openmode mode = std::ios_base::in)
@@ -26,61 +32,89 @@ loadFile(const std::string& filename, std::ios_base::openmode mode = std::ios_ba
 
   Container     res;
 
-  // \todo reserve capacity of res
+  // \todo reserve capacity in res
   std::copy(stream_iterator(stream), stream_iterator(), std::back_inserter(res));
   return res;
 }
 
 
-// FIXME[Robb Matzke 2019-08-15]: public types must be documented with doxygen as well as all their public/protected members
-// FIXME[Robb Matzke 2019-08-15]: wrong naming style for public symbol ostreambin_iterator
-// https://stackoverflow.com/questions/31131907/writing-into-binary-file-with-the-stdostream-iterator
+/** An output iterator for streams that store binary data.
+ *
+ * @note https://stackoverflow.com/questions/31131907/writing-into-binary-file-with-the-stdostream-iterator
+ */
 template <class T, class CharT = char, class Traits = std::char_traits<CharT> >
-struct ostreambin_iterator : std::iterator<std::output_iterator_tag, void, void, void, void>
+struct OStreamBinaryIterator : std::iterator<std::output_iterator_tag, void, void, void, void>
 {
-  typedef std::basic_ostream<CharT, Traits> ostream_type;
-  typedef Traits                            traits_type;
-  typedef CharT                             char_type;
+    typedef std::basic_ostream<CharT, Traits> ostream_type;
+    typedef Traits                            traits_type;
+    typedef CharT                             char_type;
 
-  explicit
-  ostreambin_iterator(ostream_type& s) : stream(s) { }
+    /** creates a new OStreamBinaryIterator around a basic_ostream object. */
+    explicit
+    OStreamBinaryIterator(ostream_type& s) : stream(s) { }
 
-  ostreambin_iterator& operator=(const T& value)
-  {
-    stream.write(reinterpret_cast<const char*>(&value), sizeof(T));
-    return *this;
-  }
+    /** writes a character to the output stream. */
+    OStreamBinaryIterator& operator=(const T& value)
+    {
+      stream.write(reinterpret_cast<const char*>(&value), sizeof(T));
+      return *this;
+    }
 
-  ostreambin_iterator& operator*()     { return *this; }
-  ostreambin_iterator& operator++()    { return *this; }
-  ostreambin_iterator& operator++(int) { return *this; }
+    /** iterator compatibility functions
+     *  @{
+     */
+    OStreamBinaryIterator& operator*()     { return *this; }
+    OStreamBinaryIterator& operator++()    { return *this; }
+    OStreamBinaryIterator& operator++(int) { return *this; }
+    /** @} */
 
-  ostream_type& stream;
+  private:
+    ostream_type& stream;
+
+    OStreamBinaryIterator();
+    OStreamBinaryIterator& operator=(const OStreamBinaryIterator&);
 };
 
-// FIXME[Robb Matzke 2019-08-15]: public types must be documented with doxygen as well as all their public/protected members
+/** Implements an abstraction of storing data to a stream. This class
+ *  streams to a C++ output stream.
+ *
+ *  @note class could be replaced by other classes streaming efficiently
+ *        to files (e.g., memory mapped files).
+ */
 template <class T>
 struct FileSink
 {
-  typedef ostreambin_iterator<T> insert_iterator;
+    typedef OStreamBinaryIterator<T> insert_iterator;
 
-  std::ostream& datastream;
+    /** creates a new sink object. */
+    explicit
+    FileSink(std::ostream& stream)
+    : datastream(stream)
+    {}
 
-  explicit
-  FileSink(std::ostream& stream)
-  : datastream(stream)
-  {}
+    /** reserves a number of bytes on the stream. */
+    void reserve(size_t) {}
 
-  void reserve(size_t) {}
+    /** returns an inserter to the storage. */
+    insert_iterator
+    inserter()
+    {
+      return insert_iterator(datastream);
+    }
 
-  insert_iterator
-  inserter()
-  {
-    return insert_iterator(datastream);
-  }
+  private:
+    std::ostream& datastream;
 };
 
-// FIXME[Robb Matzke 2019-08-15]: public functions must be documented with doxygen
+
+/** copies to content of a sequence container @ref Container to a file
+ *  @ref filename.
+ *
+ *  @tparam Container a sequence container type.
+ *  @param  data      a sequence container
+ *  @param  filename  output file
+ *  @param  mode      file opening mode
+ */
 template <class Container>
 void
 storeFile(const Container& data, const std::string& filename, std::ios_base::openmode mode = std::ios_base::out)

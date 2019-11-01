@@ -10,6 +10,7 @@
 #include "BinaryDataFlow.h"                             // Rose::BinaryAnalysis::DataFlow
 #include "BinaryFeasiblePath.h"                         // Rose::BinaryAnalysis::FeasiblePath
 #include "BinaryFunctionSimilarity.h"                   // Rose::BinaryAnalysis::FunctionSimilarity
+#include "BinaryHotPatch.h"                             // Rose::BinaryAnalysis::HotPatch
 #include "BinaryLoader.h"                               // Rose::BinaryAnalysis::BinaryLoader
 #include "BinaryNoOperation.h"                          // Rose::BinaryAnalysis::NoOperation
 #include "BinaryReachability.h"                         // Rose::BinaryAnalysis::Reachability
@@ -124,6 +125,7 @@ void initialize() {
         BinaryAnalysis::Disassembler::initDiagnostics();
         BinaryAnalysis::FeasiblePath::initDiagnostics();
         BinaryAnalysis::FunctionSimilarity::initDiagnostics();
+        BinaryAnalysis::HotPatch::initDiagnostics();
         BinaryAnalysis::InstructionSemantics2::initDiagnostics();
         BinaryAnalysis::NoOperation::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();

@@ -813,6 +813,14 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         {
            curprint("CONSTANT ");
         }
+     if (variableDeclaration->get_declarationModifier().get_storageModifier().isJovialDef())
+        {
+           curprint("DEF ");
+        }
+     if (variableDeclaration->get_declarationModifier().get_storageModifier().isJovialRef())
+        {
+           curprint("REF ");
+        }
 #if 0
      if (variableDeclaration->get_declarationModifier().get_typeModifier().isStatic())
         {
@@ -860,7 +868,39 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
            unparseExpression(initializer, info);
         }
 
-     curprint(";\n");
+  // Unparse anonymous type declaration body if present
+     if (variableDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
+        {
+           SgDeclarationStatement* def_decl = variableDeclaration->get_baseTypeDefiningDeclaration();
+           ROSE_ASSERT(def_decl);
+
+           SgJovialTableStatement* table_decl = dynamic_cast<SgJovialTableStatement*>(def_decl);
+           ROSE_ASSERT(table_decl);
+
+           SgClassDefinition* table_def = table_decl->get_definition();
+           ROSE_ASSERT(table_def);
+
+           if (table_def->get_members().size() > 0)
+              {
+                 curprint(";");
+                 unp->cur.insert_newline(1);
+                 curprint("BEGIN");
+                 unp->cur.insert_newline(1);
+
+                 BOOST_FOREACH(SgDeclarationStatement* item_decl, table_def->get_members())
+                    {
+                       unparseVarDeclStmt(item_decl, info);
+                    }
+
+                 unp->cur.insert_newline(1);
+                 curprint("END");
+                 unp->cur.insert_newline(1);
+              }
+        }
+     else
+        {
+           curprint(";\n");
+        }
    }
 
 void

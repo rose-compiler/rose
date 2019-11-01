@@ -130,13 +130,21 @@ createTestCase( concolic::Database::Ptr db,
                 const std::vector<std::string>& args
               )
 {
+  assert(specimenId);
+
   try
   {
     concolic::Specimen::Ptr specimen = db->object(specimenId, concolic::Update::NO);
+    assert(specimen);
+
+    concolic::SpecimenId    checking = db->id(specimen, concolic::Update::NO);
+    assert(checking.get() == specimenId.get());
+
     concolic::TestCasePtr   testcase = concolic::TestCase::instance(specimen);
 
     testcase->name(n);
     testcase->args(args);
+
     concolic::TestCaseId    id       = db->id(testcase, concolic::Update::YES);
 
     std::cout << "dbtest: creating testcase "

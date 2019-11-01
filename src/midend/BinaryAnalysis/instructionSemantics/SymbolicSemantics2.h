@@ -1102,6 +1102,17 @@ public:
      *  zero), returns the argument, otherwise returns a new variable. */
     virtual BaseSemantics::SValuePtr filterResult(const BaseSemantics::SValuePtr&);
 
+    /** Tests whether a SgAsmType is an IEEE-754 floating-point type.
+     *
+     *  If the argument is an IEEE-754 floating-point type then returns the argument dynamically cast to a @ref SgAsmFloatType,
+     *  otherwise returns NULL.  Not all @ref SgAsmFloatType objects are IEEE-754 floating-point types. */
+    static SgAsmFloatType* sgIsIeee754(SgAsmType*);
+
+    /** Convert a SgAsmType to a symbolic type.
+     *
+     *  If the @ref SgAsmType cannot be converted to a @ref SymbolicExpr::Type then throws @ref Exception. */
+    static SymbolicExpr::Type sgTypeToSymbolicType(SgAsmType*);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
 public:
@@ -1154,6 +1165,9 @@ public:
                                                     const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
                                                       const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpConvert(const BaseSemantics::SValuePtr &a, SgAsmFloatType *aType,
+                                               SgAsmFloatType *retType) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr reinterpret(const BaseSemantics::SValuePtr&, SgAsmType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
                                                   const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr peekRegister(RegisterDescriptor reg,
