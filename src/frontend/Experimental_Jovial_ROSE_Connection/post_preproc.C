@@ -8,24 +8,21 @@ PostPreProc::PostPreProc()
 void PostPreProc::process(std::istream & in_stream, std::ostream & out_stream)
 {
    std::string line;
+   int pos1, pos2;
 
    while (std::getline(in_stream, line)) {
-      if (line.find(". ") != std::string::npos) {
-         if (line.find(": ", line.find(": ")) != std::string::npos) {
-            line.erase(0,line.find(":")+5);
-
-            if (line.find("DEFINE") != std::string::npos) {
-               for (int i = 0; i < line.size(); i++) {
-                  if (line.compare(i, 1, "\"") == 0) {
-                     line.replace(i, 1, "?");
-                  }
-               }
-               out_stream << line << "\n";
-            }
-            else {
-               out_stream << line << "\n";
+      pos1 = line.find("DEFINE");
+      pos2 = line.find(";");
+      if (pos1 != std::string::npos && pos2 != std::string::npos) {
+         for (int i = pos1; i < pos2 + 1; i++) {
+            if (line.compare(i, 1, "\"") == 0) {
+               line.replace(i, 1, "?");
             }
          }
+         out_stream << line << "\n";
+      }
+      else {
+         out_stream << line << "\n";
       }
    }
 }
@@ -37,8 +34,7 @@ int main(int argc, char* argv[])
    std::ofstream out_stream;
 
    for (int i = 1; i < argc; i++) {
-      std::string arg;
-      arg += argv[i];
+      std::string arg = argv[i];
       if (arg.compare("-i") == 0) {
          in_stream.open(argv[i+1]);
       }
