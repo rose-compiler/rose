@@ -3629,9 +3629,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProcedureDeclaration(ATerm term, 
    }
    else return ATfalse;
 
-   ROSE_ASSERT(modifiers != NULL);
-   ROSE_ASSERT(param_list != NULL);
-
    stmt_list = new SgUntypedStatementList();
    ROSE_ASSERT(stmt_list);
    setSourcePositionUnknown(stmt_list);
@@ -3693,9 +3690,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProcedureDefinition(ATerm term, S
    }
    else return ATfalse;
 
-   ROSE_ASSERT(modifiers != NULL);
-   ROSE_ASSERT(param_list != NULL);
-
    int stmt_enum = General_Language_Translation::e_end_proc_def_stmt;
    SgUntypedNamedStatement* end_proc_stmt = new SgUntypedNamedStatement(label, stmt_enum, "");
    ROSE_ASSERT(end_proc_stmt);
@@ -3704,6 +3698,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProcedureDefinition(ATerm term, S
 // void type OK here because is not a function definition
    SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_void);
    ROSE_ASSERT(type);
+
+   ROSE_ASSERT(modifiers);
 
 // create the function definition
    function_decl = new SgUntypedFunctionDeclaration(label, name, param_list, type,
@@ -3760,6 +3756,14 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProcedureHeading(ATerm term, std:
       } else return ATfalse;
 
    } else return ATfalse;
+
+
+   if (function_modifier_list->get_expressions().size() != 0) {
+      cerr << "WARNING UNIMPLEMENTED: ProcedureHeading - with function modifiers\n";
+      //      return ATtrue;
+   }
+// not handling function modifiers for now
+//   ROSE_ASSERT(function_modifier_list->get_expressions().size() == 0);
 
    attrs  = function_modifier_list;
    params = function_param_list;
@@ -4069,7 +4073,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_FunctionHeading(ATerm term, std::
    } else return ATfalse;
 
    if (function_modifier_list->get_expressions().size() != 0) {
-      cerr << "WARNING UNIMPLEMENTED: FunctionHeading - with function modifiers\n";
+      cerr << "WARNING UNIMPLEMENTED: ProcedureHeading - with function modifiers\n";
       //      return ATtrue;
    }
 // not handling function modifiers for now
@@ -4328,7 +4332,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
    printf("... traverse_SimpleStatement: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_labels, t_stmt;
+   ATerm t_labels, t_stmt, amb;
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
@@ -4381,6 +4385,42 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
       }
       else if (traverse_ProcedureCallStatement(t_stmt, stmt_list)) {
          // MATCHED ProcedureCallStatement
+      } else if (ATmatch(t_stmt, "amb(<term>)", &amb)) {
+         // MATCHED amb
+         ATermList tail = (ATermList) ATmake("<term>", amb);
+         ATerm head = ATgetFirst(tail);
+         // chose first amb path, now traverse it
+
+         if (traverse_IfStatement(head, stmt_list)) {
+            // MATCHED IfStatement
+         }
+         else if (traverse_AbortStatement(head, stmt_list)) {
+            // MATCHED AbortStatement
+         }
+         else if (traverse_StopStatement(head, stmt_list)) {
+            // MATCHED StopStatement
+         }
+         else if (traverse_ExitStatement(head, stmt_list)) {
+            // MATCHED ExitStatement
+         }
+         else if (traverse_GotoStatement(head, stmt_list)) {
+            // MATCHED GotoStatement
+         }
+         else if (traverse_ReturnStatement(head, stmt_list)) {
+            // MATCHED ReturnStatement
+         }
+         else if (traverse_CaseStatement(head, stmt_list)) {
+            // MATCHED CaseStatement
+         }
+         else if (traverse_WhileStatement(head, stmt_list)) {
+            // MATCHED WhileStatement
+         }
+         else if (traverse_ForStatement(head, stmt_list)) {
+            // MATCHED ForStatement
+         }
+         else if (traverse_ProcedureCallStatement(head, stmt_list)) {
+            // MATCHED ProcedureCallStatement
+         } else return ATfalse;
       }
       else return ATfalse;
    }
@@ -5804,12 +5844,20 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitFormula(ATerm term, SgUntypedE
    printf("... traverse_BitFormula: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_operand, t_continuation;
+   ATerm t_operand, t_continuation, t_amb;
    SgUntypedExpression* continuation;
 
    expr = NULL;
    if (ATmatch(term, "BitFormula(<term>,<term>)", &t_operand, &t_continuation)) {
-      if (traverse_LogicalOperand(t_operand, expr)) {
+      if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+         ATermList tail = (ATermList) ATmake("<term>", t_amb);
+         ATerm head = ATgetFirst(tail);
+         // chose first amb path, now traverse it
+
+         if (traverse_RelationalExpression(head, expr)) {
+            // MATCHED RelationalExpression
+         } else return ATfalse;
+      } else if (traverse_LogicalOperand(t_operand, expr)) {
          // MATCHED LogicalOperand
       } else return ATfalse;
 
