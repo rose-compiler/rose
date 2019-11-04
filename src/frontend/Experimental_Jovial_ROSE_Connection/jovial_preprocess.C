@@ -10,18 +10,46 @@
 static void preprocess(std::istream & in_stream, std::ostream & out_stream)
 {
    std::string line;
+   int posDefine, posSemicolon, posFirstQuote, posSecondQuote;
+   bool multiLineDefine = false;
 
    while (std::getline(in_stream, line)) {
-      if (line.find("DEFINE") != std::string::npos) {
-         for (int i = 0; i < line.size(); i++) {
-            if (line.compare(i, 1, "\"") == 0) {
-               line.replace(i, 1, "?");
+      if (!multiLineDefine) {                                 // no multi-line define currently being processed
+         posDefine = line.find("DEFINE");
+         posSemicolon = line.find(";");
+         if (posDefine == 0) {                                // found a DEFINE at the start of a line
+            if (posSemicolon != std::string::npos) {          // found a ; in same line, can process single line
+               posFirstQuote = line.find("\"");               // find quotes
+               posSecondQuote = line.find("\"", posFirstQuote + 1);
+
+               line.replace(posFirstQuote, 1, "?");           // replace quotes
+               line.replace(posSecondQuote, 1, "?");
+
+               out_stream << line << "\n";                    // output processed line
+            }
+            else {                                            // is a multiLineDefine
+               multiLineDefine = true;
+               posFirstQuote = line.find("\"");               // find first quote
+               if (posFirstQuote != std::string::npos) {
+                  line.replace(posFirstQuote, 1, "?");        // replace first quote
+                  out_stream << line << "\n";                 // output processed line
+               }
             }
          }
-         out_stream << line << "\n";
+         else {                                               // line doesn't start with a DEFINE
+            out_stream << line << "\n";                       // output unprocessed line
+         }
       }
-      else {
-         out_stream << line << "\n";
+      else {                                                  // process following lines of multi-line define
+         posSecondQuote = line.find("\"");
+         if (posSecondQuote != std::string::npos) {           // if found second quote
+            line.replace(posSecondQuote, 1, "?");             // replace second quote
+            out_stream << line << "\n";                       // output processed line
+            multiLineDefine = false;                          // reset bool as multi-line define is finished
+         }
+         else {                                               // second quote not found, multi-line define is not complete
+            out_stream << line << "\n";                       // output unprocessed line
+         }
       }
    }
 }
