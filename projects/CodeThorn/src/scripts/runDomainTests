@@ -19,7 +19,7 @@ for testNumber in $testNumbers; do
     for benchmark in ${benchmarkprefix}*.[Cc]; do
         benchmarkname=$(basename $benchmark)
         echo -n "Testing $benchmarkname : "
-        ./codethorn $benchmark --normalize-all=yes > /dev/null
+        ./codethorn $benchmark --normalize-all=yes --log-level=warn > /dev/null
         if [ ! $? -eq 0 ]
         then
 	    echo "FAIL"

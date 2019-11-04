@@ -226,7 +226,7 @@ void PropertyValueTable::finished() {
 }
 
 void PropertyValueTable::finishedReachability(bool isPrecise, bool isComplete) {
-  cout<<"STATUS: reachability finished: isPrecise: "<<isPrecise<<" isComplete: "<<isComplete<<endl;
+  //cout<<"STATUS: reachability finished: isPrecise: "<<isPrecise<<" isComplete: "<<isComplete<<endl;
   if(isPrecise&&isComplete) {
     convertValue(PROPERTY_VALUE_UNKNOWN, PROPERTY_VALUE_NO);
     return;

@@ -888,8 +888,11 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           exit(1);
         }
       } else {
-        SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" memory location not in state: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
-        SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<pstate2.toString(_variableIdMapping)<<endl;
+        SAWYER_MESG(logger[WARN])<<"evalArrayReferenceOp:"<<" memory location not in state: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+        SAWYER_MESG(logger[WARN])<<"evalArrayReferenceOp:"<<pstate2.toString(_variableIdMapping)<<endl;
+        Label lab=estate.label();
+        recordPotentialUninitializedAccessLocation(lab);
+
         if(mode==MODE_ADDRESS) {
           cerr<<"Internal error: ExprAnalyzer::evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
           exit(1);
@@ -1430,8 +1433,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
     } else {
       res.result=CodeThorn::Top();
       Label lab=estate.label();
-      cerr << "WARNING: at label "<<lab<<": "<<(_analyzer->getLabeler()->getNode(lab)->unparseToString())<<": variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
-      cerr << "WARNING: estate: "<<estate.toString(_variableIdMapping)<<endl;
+      logger[WARN] << "at label "<<lab<<": "<<(_analyzer->getLabeler()->getNode(lab)->unparseToString())<<": variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
+      //cerr << "WARNING: estate: "<<estate.toString(_variableIdMapping)<<endl;
+      recordPotentialUninitializedAccessLocation(lab);
       return listify(res);
     }
   }
@@ -1476,6 +1480,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
     } else {
       res.result=CodeThorn::Top();
       //cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
+      Label lab=estate.label();
+      logger[WARN] << "at label "<<lab<<": "<<(_analyzer->getLabeler()->getNode(lab)->unparseToString())<<": variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
+      recordPotentialUninitializedAccessLocation(lab);
+
       return listify(res);
     }
   }
@@ -1960,6 +1968,22 @@ void ExprAnalyzer::recordPotentialOutOfBoundsAccessLocation(Label label) {
     cout<<"Violation detected: potential out of bounds access at label "<<label.toString()<<endl;
 }
 
+ProgramLocationsReport ExprAnalyzer::getUninitializedAccessLocations() {
+  return _uninitializedAccessLocations;
+}
+
+void ExprAnalyzer::recordDefinitiveUninitializedAccessLocation(Label label) {
+  _uninitializedAccessLocations.recordDefinitiveLocation(label);
+  if(_printDetectedViolations)
+    cout<<"Violation detected: definitive out of bounds access at label "<<label.toString()<<endl;
+}
+
+void ExprAnalyzer::recordPotentialUninitializedAccessLocation(Label label) {
+  _uninitializedAccessLocations.recordPotentialLocation(label);
+  if(_printDetectedViolations)
+    cout<<"Violation detected: potential out of bounds access at label "<<label.toString()<<endl;
+}
+
 bool ExprAnalyzer::getPrintDetectedViolations() {
   return _printDetectedViolations;
 }
@@ -1972,9 +1996,9 @@ bool ExprAnalyzer::isStructMember(CodeThorn::VariableId varId) {
 }
 
 bool ExprAnalyzer::definitiveErrorDetected() {
-  return _outOfBoundsAccessLocations.numDefinitiveLocations()>0 || _nullPointerDereferenceLocations.numDefinitiveLocations()>0;
+  return _uninitializedAccessLocations.numDefinitiveLocations()>0 || _outOfBoundsAccessLocations.numDefinitiveLocations()>0 || _nullPointerDereferenceLocations.numDefinitiveLocations()>0;
 }
 
 bool ExprAnalyzer::potentialErrorDetected() {
-  return _outOfBoundsAccessLocations.numPotentialLocations()>0 || _nullPointerDereferenceLocations.numPotentialLocations()>0;
+  return _uninitializedAccessLocations.numPotentialLocations()>0 || _outOfBoundsAccessLocations.numPotentialLocations()>0 || _nullPointerDereferenceLocations.numPotentialLocations()>0;
 }
