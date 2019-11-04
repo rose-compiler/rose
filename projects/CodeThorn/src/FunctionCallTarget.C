@@ -1,7 +1,16 @@
+#include "sage3basic.h"
 #include "FunctionCallTarget.h"
 #include <sstream>
 
 using namespace std;
+
+CodeThorn::FunctionCallTarget::FunctionCallTarget() {
+}
+CodeThorn::FunctionCallTarget::FunctionCallTarget(SgFunctionDefinition* funDef) {
+  setDefinition(funDef);
+  // note: declarations can exist without definition
+  setDeclaration(funDef->get_declaration());
+}
 
 bool CodeThorn::FunctionCallTarget::isDefinedFunction() const {
   return _funDef!=nullptr;
@@ -28,6 +37,22 @@ std::string CodeThorn::FunctionCallTarget::toString() const {
   return ss.str();
 }
 
+std::string CodeThorn::FunctionCallTarget::getFunctionName() {
+  return getDeclaration()->get_name();//fd->get_qualified_name();
+}
+
+SgFunctionType* CodeThorn::FunctionCallTarget::getFunctionType() {
+  return getDeclaration()->get_type();
+}
+
+SgName CodeThorn::FunctionCallTarget::getMangledFunctionTypeName() {
+  return getFunctionType()->get_mangled();
+}
+
+void CodeThorn::FunctionCallTarget::print() {
+  cout<<"NAME: "<<getFunctionName()<<" TYPE: "<<getFunctionType()<<":"<<getFunctionType()->unparseToString()<<" MANGLEDFUNCALLTYPE: "<<getMangledFunctionTypeName()<<endl;
+}
+
 bool CodeThorn::FunctionCallTarget::operator==(const CodeThorn::FunctionCallTarget& other) const {
   return _funDecl==other._funDecl && _funDef==other._funDef;
 }
@@ -42,3 +67,4 @@ std::size_t CodeThorn::FunctionCallTargetHashFunction::operator()(const CodeThor
   std::size_t h2=((std::size_t)t.getDefinition())>>2;
   return h1 ^ h2;
 }
+
