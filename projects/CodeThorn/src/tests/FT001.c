@@ -1,5 +1,9 @@
 #include <stdio.h>
 
+int f0(int a) {
+  return a;
+}
+
 int f1(int a, int b) {
   return a+b;
 }
