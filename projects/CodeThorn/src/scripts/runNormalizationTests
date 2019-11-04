@@ -30,7 +30,7 @@ function NormalizationTests {
                 echo -n "Testing C++ $benchmarkname: "
                 g++ $benchmark
             fi
-            ./codethorn $benchmark --normalize-all=yes --unparse=yes #> /dev/null
+            ./codethorn $benchmark --normalize-all=yes --unparse=yes --quiet #> /dev/null
             if [ ! $? -eq 0 ]
             then
 	            echo "FAIL"

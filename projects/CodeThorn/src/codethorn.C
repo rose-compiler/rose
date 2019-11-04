@@ -465,6 +465,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("csv-stats",po::value< string >(),"Output statistics into a CSV file <arg>.")
     ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
     ("exploration-mode",po::value< string >(), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync)")
+    ("quiet", "Produce no output on screen.")
     ("help,h", "Produce this help message.")
     ("help-cegpra", "Show options for CEGRPA.")
     ("help-eq", "Show options for program equivalence checking.")
@@ -1309,7 +1310,9 @@ int main( int argc, char * argv[] ) {
     analyzer->setTreatStdErrLikeFailedAssert(args.getBool("stderr-like-failed-assert"));
 
     // Build the AST used by ROSE
-    cout<< "STATUS: Parsing and creating AST started."<<endl;
+    if(!args.count("quiet")) {
+      cout<< "STATUS: Parsing and creating AST started."<<endl;
+    }
     timer.stop();
     timer.start();
 
@@ -1319,7 +1322,9 @@ int main( int argc, char * argv[] ) {
       argvList.push_back("-rose:OpenMP:ast_only");
     }
     SgProject* sageProject = frontend(argvList);
-    cout << "STATUS: Parsing and creating AST finished."<<endl;
+    if(!args.count("quiet")) {
+      cout << "STATUS: Parsing and creating AST finished."<<endl;
+    }
     double frontEndRunTime=timer.getTimeDuration().milliSeconds();
 
     /* perform inlining before variable ids are computed, because
@@ -1331,7 +1336,9 @@ int main( int argc, char * argv[] ) {
     }
 
     if(args.getBool("normalize-all")||args.getInt("testing-options-set")==1) {
-      cout<<"STATUS: normalizing program."<<endl;
+      if(!args.count("quiet")) {
+        cout<<"STATUS: normalizing program."<<endl;
+      }
       //SAWYER_MESG(logger[INFO])<<"STATUS: normalizing program."<<endl;
       lowering.normalizeAst(sageProject,2);
     }
@@ -1377,7 +1384,9 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    cout<<"STATUS: analysis started."<<endl;
+    if(!args.count("quiet")) {
+      cout<<"STATUS: analysis started."<<endl;
+    }
     // TODO: introduce ProgramAbstractionLayer
     analyzer->initializeVariableIdMapping(sageProject);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
