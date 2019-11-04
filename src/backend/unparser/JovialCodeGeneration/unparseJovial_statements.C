@@ -228,10 +228,15 @@ Unparse_Jovial::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      bool isDefiningDeclaration = (func->get_definition() != NULL);
 
+  // This will likely need to be changed.  It may work for compool files but likely not for jovial files.
      if (isDefiningDeclaration)  curprint("DEF PROC ");
      else                        curprint("REF PROC ");
 
      curprint(func->get_name());
+
+  // unparse the function modifiers
+     if      (func->get_functionModifier().isRecursive())    curprint(" REC");
+     else if (func->get_functionModifier().isReentrant())    curprint(" RENT");
 
   // unparse function arguments
      SgFunctionParameterList* params = func->get_parameterList();
@@ -273,6 +278,12 @@ Unparse_Jovial::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (isDefiningDeclaration)
         {
            unparseStatement(func->get_definition(), ninfo);
+        }
+     else
+        {
+           // There still needs to be at least a BEGIN and END
+           curprint("  BEGIN\n");
+           curprint("  END\n");
         }
    }
 
