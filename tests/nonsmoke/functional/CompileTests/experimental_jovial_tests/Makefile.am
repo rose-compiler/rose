@@ -17,6 +17,7 @@ JOVIAL_TESTCODES = \
  2_1_2_compound_table_var.jov           \
  2_1_2_1_table_dimension_list_a.jov     \
  2_1_2_1_table_dimension_list_b.jov     \
+ 2_4_define.jov                         \
  4_2_loop_stmt_while_a.jov              \
  4_2_loop_stmt_b1.jov                   \
  4_2_loop_stmt_d1.jov                   \
