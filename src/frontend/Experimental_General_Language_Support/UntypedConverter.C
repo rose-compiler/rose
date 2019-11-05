@@ -132,7 +132,6 @@ UntypedConverter::convertFunctionPrefix (SgUntypedExprListExpression* prefix_lis
             }
          case e_function_modifier_elemental:
             {
-               cout << "..SETTING.. elemental \n";
                function_decl->get_functionModifier().setElemental();
                break;
             }
@@ -158,6 +157,11 @@ UntypedConverter::convertFunctionPrefix (SgUntypedExprListExpression* prefix_lis
          case e_function_modifier_recursive:
             {
                function_decl->get_functionModifier().setRecursive();
+               break;
+            }
+         case e_function_modifier_reentrant:
+            {
+               function_decl->get_functionModifier().setReentrant();
                break;
             }
 
@@ -192,6 +196,32 @@ UntypedConverter::convertFunctionPrefix (SgUntypedExprListExpression* prefix_lis
             }
        }
    }
+}
+
+void
+UntypedConverter::transferFunctionPrefix (SgFunctionDeclaration* to_function, SgFunctionDeclaration* from_function)
+{
+   ROSE_ASSERT(  to_function != NULL);
+   ROSE_ASSERT(from_function != NULL);
+
+// Jovial+ function modifiers
+   if (from_function->get_functionModifier().isRecursive()) to_function->get_functionModifier().setRecursive();
+   if (from_function->get_functionModifier().isReentrant()) to_function->get_functionModifier().setReentrant();
+
+// Fortran function modifiers
+   if (from_function->get_functionModifier().isElemental()) to_function->get_functionModifier().setElemental();
+   if (from_function->get_functionModifier().isPure())      to_function->get_functionModifier().setPure();
+#if 0
+// TODO
+   if (from_function->get_functionModifier().isImpure())    to_function->get_functionModifier().setImpure();
+   if (from_function->get_functionModifier().isModule())    to_function->get_functionModifier().setModule();
+#endif
+
+// Cuda function modifiers
+   if (from_function->get_functionModifier().isCudaHost())           to_function->get_functionModifier().setCudaHost();
+   if (from_function->get_functionModifier().isCudaGlobalFunction()) to_function->get_functionModifier().setCudaGlobalFunction();
+   if (from_function->get_functionModifier().isCudaDevice())         to_function->get_functionModifier().setCudaDevice();
+   if (from_function->get_functionModifier().isCudaGridGlobal())     to_function->get_functionModifier().setCudaGridGlobal();
 }
 
 void
@@ -908,8 +938,8 @@ UntypedConverter::convertUntypedEnumDeclaration (SgUntypedEnumDeclaration* ut_de
 void
 UntypedConverter::convertUntypedFunctionDeclarationList (SgUntypedFunctionDeclarationList* ut_list, SgScopeStatement* scope)
    {
-   // Only a Fortran specific implementation needed for now
-      cerr << "WARNING UNIMPLEMENTED: convertUntypedFunctionDeclarationList \n";
+      // The function declaration list is traversed so this function may not need to do anything except for Fortran
+      // (see Fortran subclass).
    }
 
 #if 0
@@ -1187,6 +1217,10 @@ UntypedConverter::convertUntypedSubroutineDeclaration (SgUntypedSubroutineDeclar
    }
 
 
+// This version converts untyped function declarations on the traversal down the tree.
+// Required because (for example) variable symbols can't be build until all the declarations have been seen.
+// See usage of isConvertingFunctionDecl and isDefiningDeclaration to see state that is communicated.
+//
 SgFunctionDeclaration*
 UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_function, SgScopeStatement* scope)
 {
@@ -1194,19 +1228,22 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
    SgFunctionDefinition*  function_def;
    SgBasicBlock* function_body;
 
+// TODO: try to take advantage of common code in UntypedConverter::buildProcedureSupport
+
    isConvertingFunctionDecl = true;
    isDefiningDeclaration    = false;
 
    SgUntypedType* ut_type = ut_function->get_type();
    SgType*    return_type = convertUntypedType(ut_type, scope);
 
-   //cout << "---                 : rtn type is " << return_type->class_name() << endl;
-
    SgUntypedNamedStatement* end_stmt = ut_function->get_end_statement();
    isDefiningDeclaration = (end_stmt->get_statement_enum() == General_Language_Translation::e_end_proc_def_stmt);
 
-   //cout << "---                 : end enum is " << end_stmt->get_statement_enum() << endl;
-   //cout << "---                 : is defd  is " << isDefiningDeclaration << endl;
+#if 0
+   cout << "---                 : rtn type is " << return_type->class_name() << endl;
+   cout << "---                 : end enum is " << end_stmt->get_statement_enum() << endl;
+   cout << "---                 : is defd  is " << isDefiningDeclaration << endl;
+#endif
 
 // Finished with untyped type so delete it ???
 // TODO (this should be done by destructors in ROSETTA)
@@ -1227,8 +1264,6 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
 
    BOOST_FOREACH(SgUntypedInitializedName* ut_name, ut_names)
       {
-         //cout << "---                 : arg name is " << ut_name->get_name() << endl;
-
          SgUntypedType* ut_type = ut_name->get_type();
          ROSE_ASSERT(ut_type);
 
@@ -1239,6 +1274,7 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
          ROSE_ASSERT(ut_param_binding);
 
 #if 0
+         cout << "---                 : arg name is " << ut_name->get_name() << endl;
          cout << "---                 : mod list is " << ut_modifiers << endl;
          cout << "---                 :     size is " << ut_modifiers->get_expressions().size() << endl;
          cout << "---                 :     expr is " << ut_param_binding << endl;
@@ -1313,7 +1349,6 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
       // May be case insensitive (Fortran and Jovial)
          function_body->setCaseInsensitive(pCaseInsensitive);
          function_def ->setCaseInsensitive(pCaseInsensitive);
-
 #if 0
          cout << "---                 : function_def "  << function_decl->get_definition() << endl;
          cout << "---                 : function_def "  << function_def << endl;
@@ -1327,18 +1362,27 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
          SageBuilder::pushScopeStack(function_body);
       }
 
-   //cout << "---                 : function_decl " << function_decl << endl;
+// Convert procedure prefix (e.g., RENT for Jovial or PURE ELEMENTAL for Fortran ...)
+   SgUntypedExprListExpression* modifiers = ut_function->get_modifiers();
+   convertFunctionPrefix(modifiers, function_decl);
 
    SageInterface::appendStatement(function_decl, scope);
 
    return function_decl;
 }
 
+// This version converts (finishes) untyped function declarations on the traversal up the tree.
+// Required because (for example) variable symbols can't be build until all the declarations have been seen.
+// See usage of isConvertingFunctionDecl and isDefiningDeclaration to see state that is communicated.
+//
 SgFunctionDeclaration*
 UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaration* ut_function, SgNodePtrList& children, SgScopeStatement* scope)
 {
    SgFunctionDeclaration* function_decl;
 
+// TODO: try to take advantage of common code in UntypedConverter::buildProcedureSupport
+
+// Not using children (I think they have to the correct type of expression to use, should figure this out)
    ROSE_ASSERT(children.size() == 4);
 
    SgName name = ut_function->get_name();
@@ -1353,7 +1397,6 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
    cout << "---                             : " << children[1] << endl;
    cout << "---                             : " << children[2] << endl;
    cout << "---                             : " << children[3] << endl;
-
    cout << "---                             : " << name << endl;
    cout << "---                             : " << prev_func_sym << endl;
    cout << "---                             : " << prev_nondef_func_decl->get_name() << endl;
@@ -1367,27 +1410,16 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
    ROSE_ASSERT(prev_params);
    SgInitializedNamePtrList & prev_names = prev_params->get_args();
 
-   //cout << "---                   # args is : " << prev_names.size() << endl;
-
    SgFunctionParameterList* param_list = SageBuilder::buildFunctionParameterList();
    ROSE_ASSERT(param_list);
    setSourcePositionFrom(param_list, prev_params);
 
-   //cout << "---             prev_param_list : " << prev_params << endl;
-   //cout << "---                  param_list : " << param_list << endl;
-
    BOOST_FOREACH(SgInitializedName* prev_name, prev_names)
       {
          SgName arg_name = prev_name->get_name();
-
-         //cout << "---                 arg name is : " << arg_name << endl;
-
          SgVariableSymbol* variable_sym = scope->lookup_variable_symbol(arg_name);
-         //cout << "---                             : " << variable_sym << endl;
          SgInitializedName* variable_decl = variable_sym->get_declaration();
-         //cout << "---                             : " << variable_decl->get_name() << endl;
          SgType* variable_type = variable_decl->get_typeptr();
-         //cout << "---                             : " << variable_type->class_name() << endl;
 
 #if 0
          SgUntypedExprListExpression* ut_modifiers = ut_type->get_modifiers();
@@ -1397,9 +1429,9 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
          SgUntypedExpression* ut_param_binding = ut_modifiers->get_expressions()[0];
          ROSE_ASSERT(ut_param_binding);
 
-         //cout << "---                 : mod list is " << ut_modifiers << endl;
-         //cout << "---                 :     size is " << ut_modifiers->get_expressions().size() << endl;
-         //cout << "---                 :     expr is " << ut_param_binding << endl;
+         cout << "---                 : mod list is " << ut_modifiers << endl;
+         cout << "---                 :     size is " << ut_modifiers->get_expressions().size() << endl;
+         cout << "---                 :     expr is " << ut_param_binding << endl;
 
       // Temporarily
          ROSE_ASSERT(ut_param_binding->get_expression_enum() == General_Language_Translation::e_unknown);
@@ -1453,12 +1485,10 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
       {
       // function body
          SgBasicBlock* function_body = isSgBasicBlock(scope);
-         //cout << "---            function body is : " << function_body << endl;
          ROSE_ASSERT(function_body);
 
       // function definition
          SgFunctionDefinition* function_def = isSgFunctionDefinition(function_body->get_parent());
-         //cout << "---      function definition is : " << function_def << endl;
          ROSE_ASSERT(function_def);
 
       // previous function declaration
@@ -1499,6 +1529,9 @@ UntypedConverter::convertUntypedFunctionDeclaration (SgUntypedFunctionDeclaratio
          SageBuilder::popScopeStack();  // procedure body
          SageBuilder::popScopeStack();  // procedure definition
       }
+
+// Transfer function modifiers from the previous function declaration used to gather information
+   transferFunctionPrefix(function_decl, prev_nondef_func_decl);
 
 // restore state of function conversion
    isDefiningDeclaration    = false;
@@ -2565,9 +2598,16 @@ UntypedConverter::convertUntypedNamedStatement (SgUntypedNamedStatement* ut_stmt
               cout << "WARNING UNIMPLEMENTED: convertUntypedNamedStatement - e_fortran_end_forall_stmt\n";
               break;
            }
+     // Jovial grammar doesn't use end statements for functions
+        case e_end_proc_def_stmt:
         case e_end_proc_ref_stmt:
            {
-              cout << "WARNING UNIMPLEMENTED: convertUntypedNamedStatement - e_end_proc_ref_stmt\n";
+           // Nothing to do here
+              break;
+           }
+        case e_unknown:
+           {
+              cout << "WARNING UNIMPLEMENTED: convertUntypedNamedStatement - e_unknown\n";
               break;
            }
 
@@ -3524,7 +3564,7 @@ UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_functi
    {
      ROSE_ASSERT(procedureDeclaration != NULL);
 
-   // Convert procedure prefix (e.g., PURE ELEMENTAL ...)
+   // Convert procedure prefix (e.g., RENT for Jovial or PURE ELEMENTAL for Fortran ...)
       SgUntypedExprListExpression* modifiers = ut_function->get_modifiers();
       convertFunctionPrefix(modifiers, procedureDeclaration);
 
