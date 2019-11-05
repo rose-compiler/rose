@@ -33,9 +33,9 @@ ATbool traverse_NonNestedSubroutineList(ATerm term, SgUntypedScope* scope);
 ATbool traverse_SubroutineDefinitionList(ATerm term, SgUntypedFunctionDeclarationList* func_list);
 
 // 1.4 IMPLEMENTATION PARAMETERS
-//ATbool traverse_IntegerMachineParameter(ATerm term, SgUntypedExpression* & expr);
-//ATbool traverse_FloatingMachineParameter(ATerm term, SgUntypedExpression* & expr);
-//ATbool traverse_FixedMachineParameter(ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_IntegerMachineParameter (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_FloatingMachineParameter(ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_FixedMachineParameter   (ATerm term, SgUntypedExpression* & expr);
 
 // 2.0 DECLARATIONS
 ATbool traverse_Declaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
@@ -194,6 +194,9 @@ ATbool traverse_FormalOutputParameters(ATerm term, SgUntypedInitializedNameList*
 ATbool traverse_FormalOutputParameter (ATerm term, SgUntypedInitializedNameList* param_list);
 ATbool traverse_ParameterBinding      (ATerm term, SgUntypedOtherExpression** binding_expr);
 
+// 3.4 INLINE DECLARATIONS
+ATbool traverse_InlineDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+
 // 4.0 STATEMENTS
 ATbool traverse_Statement(ATerm term, SgUntypedStatementList* stmt_list);
 ATbool traverse_StatementList(ATerm term, SgUntypedStatementList* stmt_list);
@@ -262,7 +265,7 @@ ATbool traverse_NumericFactor  (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_NumericPrimary (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_OptSign        (ATerm term, General_Language_Translation::ExpressionKind & op_enum);
 ATbool traverse_ExponentiationOp(ATerm term, SgUntypedExpression* & expr);
-//ATbool traverse_NumericMachineParameter(ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_NumericMachineParameter(ATerm term, SgUntypedExpression* & expr);
 
 // 5.2 BIT FORMULAS
 ATbool traverse_BitFormula             (ATerm term, SgUntypedExpression* & expr);
@@ -312,10 +315,14 @@ ATbool traverse_LocFunction          (ATerm term, SgUntypedExpression* & expr);
 // 6.3.2 NEXT FUNCTION
 ATbool traverse_NextFunction         (ATerm term, SgUntypedExpression* & expr);
 
+// 6.3.4 BYTE FUNCTION
+ATbool traverse_ByteFunction(ATerm term, SgUntypedExpression* & expr);
+
 // 6.3.11 STATUS INVERSE FUNCTIONS
 ATbool traverse_StatusInverseFunction(ATerm term, SgUntypedExpression* & expr);
 
 // 7.0 TYPE MATCHING AND TYPE CONVERSIONS
+ATbool traverse_BitConversion        (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_IntegerConversion    (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_GeneralConversion    (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_FloatingConversion   (ATerm term, SgUntypedExpression* & expr);
