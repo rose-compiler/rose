@@ -109,9 +109,15 @@ namespace CodeThorn {
     void recordDefinitiveNullPointerDereferenceLocation(Label lab);
     void recordPotentialNullPointerDereferenceLocation(Label lab);
     ProgramLocationsReport getNullPointerDereferenceLocations();
+
     void recordDefinitiveOutOfBoundsAccessLocation(Label lab);
     void recordPotentialOutOfBoundsAccessLocation(Label lab);
     ProgramLocationsReport getOutOfBoundsAccessLocations();
+
+    void recordDefinitiveUninitializedAccessLocation(Label lab);
+    void recordPotentialUninitializedAccessLocation(Label lab);
+    ProgramLocationsReport getUninitializedAccessLocations();
+
     bool definitiveErrorDetected();
     bool potentialErrorDetected();
 
@@ -310,6 +316,7 @@ namespace CodeThorn {
     VariableIdMapping* _variableIdMapping=nullptr;
     ProgramLocationsReport _nullPointerDereferenceLocations;
     ProgramLocationsReport _outOfBoundsAccessLocations;
+    ProgramLocationsReport _uninitializedAccessLocations;
    
     // Options
     bool _skipSelectedFunctionCalls=false;

@@ -75,6 +75,7 @@ namespace CodeThorn {
     static CodeThorn::PState combine(CodeThorn::PState& p1, CodeThorn::PState& p2);
     AbstractValueSet getVariableIds() const;
   private:
+    static bool combineConsistencyCheck;
   };
   
   std::ostream& operator<<(std::ostream& os, const PState& value);
