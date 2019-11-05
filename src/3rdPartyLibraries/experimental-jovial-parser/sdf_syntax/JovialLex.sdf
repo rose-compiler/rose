@@ -46,7 +46,7 @@ exports
 %% 2.4 DEFINE DECLARATIONS
 %%%%%%%%%%
 
-  [\?] (Mark | Digit | Letter)*  [\?]  -> DefString
+  [\?] (Mark | Digit | Letter | [\n\r])*  [\?]  -> DefString
 
 
 %%%%%%%%%%
