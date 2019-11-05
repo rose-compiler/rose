@@ -1067,6 +1067,18 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
       ConstraintSet cset=*currentEState.constraints();
       SgInitializer* initializer=initName->get_initializer();
       if(initializer) {
+        // special case that initializer is an assignment (reusing transferAssignOp)
+        if(SgAssignInitializer* assignInit=isSgAssignInitializer(initializer)) {
+          SgExpression* assignInitOperand=assignInit->get_operand_i();
+          ROSE_ASSERT(assignInitOperand);
+          if(SgAssignOp* assignOp=isSgAssignOp(assignInitOperand)) {
+            SAWYER_MESG(logger[TRACE])<<"assignment in initializer: "<<decl->unparseToString()<<endl;
+            Edge dummyEdge(targetLabel,EDGE_FORWARD,targetLabel); // only target label is used in transferAssignOp
+            std::list<EState> estateList=transferAssignOp(assignOp, dummyEdge, &currentEState);
+            ROSE_ASSERT(estateList.size()==1);
+            return *estateList.begin();
+          }
+        }
         //cout<<"DEBUG: initialize with "<<initializer->unparseToString()<<endl;
         //cout<<"DEBUG: lhs type: "<<getVariableIdMapping()->getType(initDeclVarId)->unparseToString()<<endl;
         if(getVariableIdMapping()->hasClassType(initDeclVarId)) {

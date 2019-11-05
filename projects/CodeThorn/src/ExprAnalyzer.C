@@ -870,8 +870,15 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           logger[ERROR]<<"array pointer value: "<<arrayPtrValue.toString(_variableIdMapping)<<"::"<<arrayPtrValue.toString()<<endl;
           logger[ERROR]<<"access out of allocated memory bounds."<<endl;
           logger[ERROR]<<"member check: "<<pstate2.varExists(arrayPtrValue)<<endl;
+          Label lab=estate.label();
+          res.result=CodeThorn::Top();
+          recordPotentialNullPointerDereferenceLocation(estate.label());
+          recordPotentialOutOfBoundsAccessLocation(estate.label());
+          recordPotentialUninitializedAccessLocation(lab);
+          resultList.push_back(res);
+          return resultList;
         }
-        exit(1);
+        exit(1); // not reachable
       }
       if(pstate2.varExists(arrayPtrPlusIndexValue)) {
         // address of denoted memory location
