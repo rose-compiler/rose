@@ -3315,12 +3315,10 @@ Leaf::mayEqual(const Ptr &other, const SmtSolverPtr &solver) {
 
     // Use an SMT solver (if there is one) for all remaining cases
     if (solver) {
-        ASSERT_require(isFloatingPointConstant() != other->isFloatingPointConstant());
-        ASSERT_require(isIntegerConstant() != other->isIntegerConstant());
         SmtSolver::Transaction transaction(solver);
         Ptr assertion = makeEq(sharedFromThis(), other, solver);
         solver->insert(assertion);
-        return SmtSolver::SAT_NO == solver->check();
+        return SmtSolver::SAT_YES == solver->check();
     }
 
     // If all else fails, assume that two expressions might be equal.
