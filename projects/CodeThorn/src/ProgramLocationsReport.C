@@ -21,6 +21,19 @@ string CodeThorn::ProgramLocationsReport::sourceCodeAtProgramLocation(Labeler* l
   return SgNodeHelper::doubleQuotedEscapedString(node->unparseToString());
 }
 
+void CodeThorn::ProgramLocationsReport::writeResultToStream(std::ostream& stream, CodeThorn::Labeler* labeler) {
+    for(auto lab : definitiveLocations) {
+      stream<<"definitive: "<<programLocation(labeler,lab);
+      stream<<": "<<sourceCodeAtProgramLocation(labeler,lab);
+      stream<<endl;
+    }
+    for(auto lab : potentialLocations) {
+      stream<<"potential: "<<programLocation(labeler,lab);
+      stream<<": "<<sourceCodeAtProgramLocation(labeler,lab);
+      stream<<endl;
+    }
+}
+
 void CodeThorn::ProgramLocationsReport::writeResultFile(string fileName, CodeThorn::Labeler* labeler) {
   std::ofstream myfile;
   myfile.open(fileName.c_str(),std::ios::out);
@@ -53,4 +66,7 @@ size_t ProgramLocationsReport::numDefinitiveLocations() {
 }
 size_t ProgramLocationsReport::numPotentialLocations() {
   return potentialLocations.size();
+}
+size_t ProgramLocationsReport::numTotalLocations() {
+  return definitiveLocations.size()+potentialLocations.size();
 }

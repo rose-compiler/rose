@@ -386,8 +386,12 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("rers-upper-input-bound", po::value< int >(), "RERS specific parameter for z3.")
     ("rers-verifier-error-number",po::value< int >(), "RERS specific parameter for z3.")
     ("ssa",  po::value< bool >()->default_value(false)->implicit_value(true), "Generate SSA form (only works for programs without function calls, loops, jumps, pointers and returns).")
+    ("null-pointer-analysis","Perform null pointer analysis and print results.")
+    ("out-of-bounds-analysis","Perform out-of-bounds analysis and print results.")
+    ("uninitialized-analysis","Perform uninitialized analysis and print results.")
     ("null-pointer-analysis-file",po::value< string >(),"Perform null pointer analysis and write results to file [arg].")
     ("out-of-bounds-analysis-file",po::value< string >(),"Perform out-of-bounds analysis and write results to file [arg].")
+    ("uninitialized-analysis-file",po::value< string >(),"Perform uninitialized analysis and write results to file [arg].")
     ("program-stats",po::value< bool >()->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs.")
     ("in-state-string-literals",po::value< bool >()->default_value(false)->implicit_value(true),"create string literals in initial state.")
     ("std-functions",po::value< bool >()->default_value(true)->implicit_value(true),"model std function semantics (malloc, memcpy, etc). Must be turned off explicitly.")
@@ -461,6 +465,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("csv-stats",po::value< string >(),"Output statistics into a CSV file <arg>.")
     ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
     ("exploration-mode",po::value< string >(), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync)")
+    ("quiet", "Produce no output on screen.")
     ("help,h", "Produce this help message.")
     ("help-cegpra", "Show options for CEGRPA.")
     ("help-eq", "Show options for program equivalence checking.")
@@ -583,7 +588,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.10.10\n";
+    cout << "CodeThorn version 1.10.11\n";
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
@@ -1305,7 +1310,9 @@ int main( int argc, char * argv[] ) {
     analyzer->setTreatStdErrLikeFailedAssert(args.getBool("stderr-like-failed-assert"));
 
     // Build the AST used by ROSE
-    SAWYER_MESG(logger[TRACE]) << "INIT: Parsing and creating AST: started."<<endl;
+    if(!args.count("quiet")) {
+      cout<< "STATUS: Parsing and creating AST started."<<endl;
+    }
     timer.stop();
     timer.start();
 
@@ -1315,7 +1322,9 @@ int main( int argc, char * argv[] ) {
       argvList.push_back("-rose:OpenMP:ast_only");
     }
     SgProject* sageProject = frontend(argvList);
-    SAWYER_MESG(logger[TRACE]) << "Parsing and creating AST: finished."<<endl;
+    if(!args.count("quiet")) {
+      cout << "STATUS: Parsing and creating AST finished."<<endl;
+    }
     double frontEndRunTime=timer.getTimeDuration().milliSeconds();
 
     /* perform inlining before variable ids are computed, because
@@ -1327,8 +1336,11 @@ int main( int argc, char * argv[] ) {
     }
 
     if(args.getBool("normalize-all")||args.getInt("testing-options-set")==1) {
+      if(!args.count("quiet")) {
+        cout<<"STATUS: normalizing program."<<endl;
+      }
+      //SAWYER_MESG(logger[INFO])<<"STATUS: normalizing program."<<endl;
       lowering.normalizeAst(sageProject,2);
-      SAWYER_MESG(logger[TRACE])<<"STATUS: normalize all expressions."<<endl;
     }
 
     /* Context sensitive analysis using call strings.
@@ -1372,6 +1384,9 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
+    if(!args.count("quiet")) {
+      cout<<"STATUS: analysis started."<<endl;
+    }
     // TODO: introduce ProgramAbstractionLayer
     analyzer->initializeVariableIdMapping(sageProject);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
@@ -1613,26 +1628,32 @@ int main( int argc, char * argv[] ) {
     }
 #endif	
 
-    if(args.getBool("ssa"))
-    {
-	SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
-	ssaGen->generateSSAForm();
-
-	exit(0);
+    if(args.getBool("ssa")) {
+      SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
+      ssaGen->generateSSAForm();
+      exit(0);
     }
 
-    if(args.isDefined("null-pointer-analysis-file")) {
-      ProgramLocationsReport nullPointerDereferenceLocations=analyzer->getExprAnalyzer()->getNullPointerDereferenceLocations();
-      string fileName=args.getString("null-pointer-analysis-file");
-      cout<<"Writing null-pointer analysis results to file "<<fileName<<endl;
-      nullPointerDereferenceLocations.writeResultFile(fileName,analyzer->getLabeler());
-    }
-
-    if(args.isDefined("out-of-bounds-analysis-file")) {
-      ProgramLocationsReport outOfBoundsAccessLocations=analyzer->getExprAnalyzer()->getOutOfBoundsAccessLocations();
-      string fileName=args.getString("out-of-bounds-analysis-file");
-      cout<<"Writing out-of-bounds analysis results to file "<<fileName<<endl;
-      outOfBoundsAccessLocations.writeResultFile(fileName,analyzer->getLabeler());
+    list<string> analysisNames={"null-pointer","out-of-bounds","uninitialized"};
+    for(auto analysisName : analysisNames) {
+      string analysisOption=analysisName+"-analysis";
+      string analysisOutputFileOption=analysisName+"-analysis-file";
+      if(args.count(analysisOption)>0||args.isDefined(analysisOutputFileOption)) {
+        ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getNullPointerDereferenceLocations();
+        if(args.count(analysisOption)>0) {
+          cout<<"\nResults for "<<analysisName<<" analysis:"<<endl;
+          if(locations.numTotalLocations()>0) {
+            locations.writeResultToStream(cout,analyzer->getLabeler());
+          } else {
+            cout<<"No violations detected."<<endl;
+          }
+        }
+        if(args.isDefined(analysisOutputFileOption)) {
+          string fileName=args.getString(analysisOutputFileOption);
+          cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
+          locations.writeResultFile(fileName,analyzer->getLabeler());
+        }
+      }
     }
 
     long pstateSetSize=analyzer->getPStateSet()->size();
