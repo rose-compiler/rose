@@ -12354,9 +12354,10 @@ SgDerivedTypeStatement * SageBuilder::buildDerivedTypeStatement(const SgName& na
    }
 
 //! Build a Jovial table declaration statement.  A Jovial table is essentially a C struct with an optional struct size.
-SgJovialTableStatement * SageBuilder::buildJovialTableStatement(const SgName& name, SgScopeStatement* scope /*=NULL*/)
+SgJovialTableStatement * SageBuilder::buildJovialTableStatement(const SgName& name,
+                                                                SgClassDeclaration::class_types kind,
+                                                                SgScopeStatement* scope /*=NULL*/)
    {
-     SgClassDeclaration::class_types kind = SgClassDeclaration::e_jovial_table;
      SgJovialTableStatement* table_decl = buildClassDeclarationStatement_nfi <SgJovialTableStatement> (name, kind, scope);
 
      setOneSourcePositionForTransformation(table_decl);
@@ -12509,6 +12510,7 @@ SageBuilder::buildClassDeclarationStatement_nfi(const SgName & name, SgClassDecl
                        class_type = SgJavaParameterType::createType(nondefdecl);
                        break;
                     case SgClassDeclaration::e_jovial_table:
+                    case SgClassDeclaration::e_jovial_block:
                        class_type = SgJovialTableType::createType(nondefdecl);
                        break;
                     default:
