@@ -335,6 +335,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
 
    // TODO - need list for labels in untyped IR
    //        can labels be on program definitions?
+
+      if (labels.size() > 1) {
+         cerr << "WARNING UNIMPLEMENTED: traverse_ProgramBody - labels.size > 1\n";
+         return ATtrue;
+      }
+
       assert(labels.size() <= 1);
       if (labels.size() == 1) temp_label = labels[0];
 
@@ -789,6 +795,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, S
    }
    else if (traverse_Name(term, name)) {
       // MATCHED ItemTypeName
+      cerr << "WARNING UNIMPLEMENTED: ItemTypeDescription - ItemTypeName\n";
       type = UntypedBuilder::buildType(SgUntypedType::e_user_defined, name);
       ROSE_ASSERT(type);
    }
@@ -1293,7 +1300,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_PointerItemDescription(ATerm term
    if (ATmatch(term, "PointerItemDescription(<str>,<term>)", &pntr, &t_type_name)) {
       std::cout << "PointerTypeDesc is " << pntr << endl;
 
-      if (traverse_OptTypeName(t_type_name, type_name)) {
+      if (traverse_OptTypeName(t_type_name, type, type_name)) {
          // MATCHED OptTypeName
       } else return ATfalse;
    } else return ATfalse;
@@ -1301,7 +1308,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_PointerItemDescription(ATerm term
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_OptTypeName(ATerm term, std::string & name)
+ATbool ATermToUntypedJovialTraversal::traverse_OptTypeName(ATerm term, SgUntypedType* & type, std::string & name)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptTypeName: %s\n", ATwriteToString(term));
@@ -1314,6 +1321,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptTypeName(ATerm term, std::stri
       std::cout << "Matched no-type-name" << endl;
    } else if (ATmatch(term, "TypeName(<term>)", &t_type_name)) {
       if (traverse_Name(t_type_name, name)) {
+         cerr << "WARNING UNIMPLEMENTED: TypeName - PointerItemDescription\n";
+         // MATCHED TypeName
+         type = UntypedBuilder::buildType(SgUntypedType::e_user_defined, name);
+         ROSE_ASSERT(type);
       } else return ATfalse;
    } else return ATfalse;
 
@@ -5959,7 +5970,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitFormula(ATerm term, SgUntypedE
    } else return ATfalse;
 
    if (!expr) {
-      cerr << "WARNING UNIMPLEMENTED: BitFormula - probably BitPrimaryConversion\n";
+      cerr << "WARNING UNIMPLEMENTED: BitFormula - BitPrimaryConversion or Dereference\n";
       return ATtrue;
    }
 
@@ -6084,6 +6095,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitPrimary(ATerm term, SgUntypedE
       // BitVariable                   -> BitPrimary {cons("BitVariable")} (not currently working in tests)
       // NamedBitConstant              -> BitPrimary {cons("NamedBitConstant")} (rejected in grammar)
       // BitFunctionCall               -> BitPrimary (no cons)
+
+   if (!expr) {
+      cerr << "WARNING UNIMPLEMENTED: BitPrimary - possibly Dereference\n";
+      return ATtrue;
+   }
 
    ROSE_ASSERT(expr != NULL);
 
@@ -6311,6 +6327,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_Variable(ATerm term, SgUntypedExp
       var = new SgUntypedReferenceExpression(expr_enum, name);
       setSourcePosition(var, term);
 
+   } else if (traverse_Dereference(term, var)) {
+      // MATCHED ItemDereference/TableDereference -> Item/Table -> NamedVariable
    } else if (traverse_TableItem(term, var)) {
       // MATCHED TableItem
    } else if (traverse_BitFunctionVariable(term, var)) {
@@ -6487,6 +6505,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_Dereference(ATerm term, SgUntyped
 
    if (ATmatch(term, "Dereference(<term>)", &t_deref)) {
       if (ATmatch(t_deref, "<str>", &name)) {
+         cerr << "WARNING UNIMPLEMENTED: Dereference -> PointerItemName\n";
          // MATCHED PointerItemName
       } else if (traverse_GeneralFormula(t_deref, formula)) {
          // MATCHED PointerFormula through GeneralFormula
@@ -6506,6 +6525,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitFunctionVariable(ATerm term, S
    SgUntypedExpression * fbit, * nbit;
 
    //  'BIT' '(' BitVariable ',' Fbit ',' Nbit ')' -> BitFunctionVariable   {cons("BitFunctionVariable"), prefer}
+   //  'BIT' '(' BitFormula ','  Fbit ',' Nbit ')' -> BitFunctionVariable   {cons("BitFunctionVariable")}
 
    if (ATmatch(term, "BitFunctionVariable(<term>,<term>,<term>)", &t_bitvar, &t_fbit, &t_nbit)) {
       cerr << "WARNING UNIMPLEMENTED: BitFunctionVariable\n";
@@ -6514,6 +6534,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitFunctionVariable(ATerm term, S
          if (traverse_Variable(t_var, var)) {
             // MATCHED BitVariable -> Variable
          } else return ATfalse;
+      } else if (traverse_BitFormula(t_bitvar, var)) {
+            // MATCHED BitFormula
       } else return ATfalse;
 
       if (ATmatch(t_fbit, "Fbit(<term>)", &t_fbit_num)) {
@@ -6878,10 +6900,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_GeneralConversion(ATerm term, SgU
 
    ATerm t_next;
    std::string type_name;
+   SgUntypedType* type;
 
    if (ATmatch(term, "GeneralConversion(<term>)", &t_next)) {
+      cerr << "WARNING UNIMPLEMENTED: GeneralConversion\n";
       // MATCHED GeneralConversion
-      if (traverse_OptTypeName(t_next, type_name)) {
+      if (traverse_OptTypeName(t_next, type, type_name)) {
          // MATCHED TypeName
       } else return ATfalse;
    }

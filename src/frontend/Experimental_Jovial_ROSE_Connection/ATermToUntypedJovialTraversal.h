@@ -77,7 +77,7 @@ ATbool traverse_SpecifiedSublist      (ATerm term, SgUntypedInitializedNameList*
 
 // 2.1.1.7 POINTER TYPE DESCRIPTIONS
 ATbool traverse_PointerItemDescription (ATerm term, SgUntypedType* & type);
-ATbool traverse_OptTypeName            (ATerm term, std::string & name);
+ATbool traverse_OptTypeName            (ATerm term, SgUntypedType* & type, std::string & name);
 
 // 2.1.2 TABLE DECLARATION
 ATbool traverse_TableDeclaration       (ATerm term, SgUntypedDeclarationStatementList* decl_list);

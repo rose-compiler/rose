@@ -218,7 +218,7 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum, std::string name)
              case SgUntypedType::e_user_defined:
                {
                  std::cerr << "WARNING UNIMPLEMENTED: UntypedBuilder::buildType - e_user_defined\n";
-#if 0
+#if 1
                  is_user_defined = true;
                  is_intrinsic = false;
                  type = new SgUntypedType(name,type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
