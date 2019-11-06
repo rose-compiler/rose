@@ -1576,6 +1576,8 @@ string SgNodeHelper::nodeToString(SgNode* node) {
   * \date 2012.
  */
 string SgNodeHelper::getFunctionName(SgNode* node) {
+  if(!node)
+    return "";
   SgFunctionDeclaration* fundecl=0;
   if(SgFunctionDefinition* fundef=isSgFunctionDefinition(node)) {
     node=fundef->get_declaration();

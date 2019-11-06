@@ -49,12 +49,13 @@ class UntypedConverter
       virtual SgInitializedName*        convertUntypedInitializedName     (SgUntypedInitializedName*     ut_name,      SgType* sg_base_type);
       virtual SgInitializedNamePtrList* convertUntypedInitializedNameList (SgUntypedInitializedNameList* ut_name_list, SgType* sg_base_type);
 
-      virtual void convertFunctionPrefix (SgUntypedExprListExpression* prefix_list, SgFunctionDeclaration* function_decl);
+      virtual void  convertFunctionPrefix  (SgUntypedExprListExpression* prefix_list, SgFunctionDeclaration* function_decl);
+      virtual void transferFunctionPrefix  (SgFunctionDeclaration* to_function, SgFunctionDeclaration* from_function);
 
       virtual void setDeclarationModifiers (SgDeclarationStatement* decl, SgUntypedExprListExpression* mod_list);
 
-      virtual SgType*   convertUntypedType (SgUntypedType* ut_type,            SgScopeStatement* scope);
-      virtual SgType*   convertUntypedType (SgUntypedInitializedName* ut_name, SgScopeStatement* scope, bool delete_ut_type=false);
+      virtual SgType* convertUntypedType (SgUntypedType* ut_type,            SgScopeStatement* scope);
+      virtual SgType* convertUntypedType (SgUntypedInitializedName* ut_name, SgScopeStatement* scope, bool delete_ut_type=false);
 
       virtual SgGlobal* convertUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgScopeStatement* scope);
 

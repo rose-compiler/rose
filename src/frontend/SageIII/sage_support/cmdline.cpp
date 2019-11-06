@@ -340,6 +340,10 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:astMergeCommandFile" ||
           argument == "-rose:projectSpecificDatabaseFile" ||
 
+          // AST I/O
+          argument == "-rose:ast:read" ||
+          argument == "-rose:ast:write" ||
+
           // TOO1 (2/13/2014): Starting to refactor CLI handling into separate namespaces
           Rose::Cmdline::Unparser::OptionRequiresArgument(argument) ||
           Rose::Cmdline::Fortran::OptionRequiresArgument(argument) ||
@@ -1558,14 +1562,44 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           ROSE_ASSERT (get_suppressConstantFoldingPostProcessing() == true);
         }
 
-#if 1
+  // AST I/O
+
+     // `-rose:ast:read in0.ast,in2.ast` (extension does not matter)
+     std::string rose_ast_option_param;
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:", "(ast:read)", rose_ast_option_param, true) == true ) {
+       size_t pos = 0;
+       size_t prev = 0;
+       while (pos < rose_ast_option_param.size()) {
+         if (rose_ast_option_param[pos] == ',') {
+           std::string astfile = rose_ast_option_param.substr(prev, pos-prev);
+           p_astfiles_in.push_back(astfile);
+           pos++;
+           prev = pos;
+         } else {
+           pos++;
+         }
+       }
+     }
+
+     // `-rose:ast:write out.ast` (extension does not matter)
+     rose_ast_option_param = "";
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:", "(ast:write)", rose_ast_option_param, true) == true ) {
+       p_astfile_out = rose_ast_option_param;
+     }
+
+     // `-rose:ast:merge`
+     if (CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(ast:merge)",true) == true ) {
+       p_ast_merge = true;
+     }
+
+  // Verbose ?
+
      if ( get_verbose() > 1 )
         {
        // Find out what file we are doing transformations upon
           printf ("In SgProject::processCommandLine() (verbose mode ON): \n");
           display ("In SgProject::processCommandLine()");
         }
-#endif
 
 #if 0
      printf ("Leaving SgProject::processCommandLine() \n");
@@ -3276,6 +3310,19 @@ SgFile::usage ( int status )
 "     -rose:no_optimize_flag_for_frontend\n"
 "                             ignore use of __builtin functions in frontend processing\n"
 "                             all optimization specified is still done on ROSE generated code\n"
+"\n"
+"AST I/O:\n"
+"     -rose:ast:read in1.ast,in2.ast\n"
+"                             Comma-separated list of input AST files (extension does *not* matter).\n"
+"                             Evaluated when the frontend finishes (before merge and plugins).\n"
+"     -rose:ast:write out.ast\n"
+"                             Output AST file (extension does *not* matter).\n"
+"                             Evaluated in the backend before any file unparsing or backend compiler calls.\n"
+"     -rose:ast:merge\n"
+"                             Boolean flag (default: false)\n"
+"                             Wether or not to minimize the AST with ROSE's merge algorithm.\n"
+"                             Useful when more than one source file is provided on the command line, or when ASTs are loaded from files.\n"
+"                             Occurs after the frontend and AST loading but before the plugin.\n"
 "\n"
 "Plugin Mode:\n"
 "     -rose:plugin_lib <shared_lib_filename>\n"
@@ -5584,6 +5631,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // TV (11/20/2018): ROSE-1529: removed non-standard standard selection
   // Rasmussen (11/17/2018): ROSE-1584: separated "++" into single characters [+][+] for regex handling.
      optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx)",1);
+
+  // AST I/O
+     optionCount = sla(argv, "-rose:ast:", "($)", "(read|write|merge)",1);
 
   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      ROSE_ASSERT(optionCount >= 0);

@@ -361,7 +361,7 @@ void FunctionIdMapping::computeFunctionSymbolMapping(SgProject* project) {
   // compute mapping for each functionref
   computeFunctionCallMapping(project);
 
-  cout<<"STATUS: computeFunctionSymbolMapping: done."<<endl;
+  //cout<<"STATUS: computeFunctionSymbolMapping: done."<<endl;
   return;
 }
 

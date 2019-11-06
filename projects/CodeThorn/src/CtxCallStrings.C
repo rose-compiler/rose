@@ -231,6 +231,26 @@ void InfiniteContext::callInvoke(const Labeler&, Label lbl)
 }
 
 
+bool InfiniteContext::callerOf(const InfiniteContext& target, Label callsite) const
+{
+  // target is invoked from this, if 
+  // (1) the target's last label is callsite
+  // (2) this' call string is one label shorter than target's call string
+  // (3) if all labels in the common subrange match 
+  return (  target.back() == callsite
+         && (this->size() + 1) == target.size()
+         && std::equal(begin(), end(), target.begin())
+         );
+}
+
+bool InfiniteContext::operator==(const InfiniteContext& that) const
+{
+  const context_string& self = *this;
+  
+  return self == that;
+}
+
+
 void InfiniteContext::callReturn(Labeler& labeler, Label lbl)
 {
   ROSE_ASSERT(isValidReturn(labeler, lbl));
@@ -317,6 +337,31 @@ void FiniteContext::callReturn(Labeler& labeler, CodeThorn::Label lbl)
 {
   ROSE_ASSERT(isValidReturn(labeler, lbl));
   pop_back();
+}
+
+bool FiniteContext::callerOf(const FiniteContext& target, Label callsite) const
+{
+  static const size_t MAX_OVERLAP = MAX_CTX_LENGTH-1;
+  
+  ROSE_ASSERT(MAX_CTX_LENGTH > 0);
+  
+  // target is invoked from this, if 
+  // (1) the target's last label is callsite
+  if (target.back() != callsite) return false;
+  
+  // (2) if all labels in the common subrange match
+  const size_t len         = size();
+  const size_t overlap     = std::min(len, MAX_OVERLAP);
+  const size_t ofs         = len-overlap;
+   
+  return std::equal(begin() + ofs, end(), target.begin());
+}
+
+bool FiniteContext::operator==(const FiniteContext& that) const
+{
+  const context_string& self = *this;
+  
+  return self == that;
 }
 
 // static

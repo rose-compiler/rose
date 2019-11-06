@@ -983,15 +983,17 @@ PState CodeThorn::Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVar
     SgExpression* exp=*i;
     SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
     if(assignInit==nullptr) {
-      logger[ERROR]<<"expected assign initializer but found "<<exp->unparseToString();
-      logger[ERROR]<<"AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
-      exit(1);
+      logger[WARN]<<"expected assign initializer but found "<<exp->unparseToString();
+      logger[WARN]<<"AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+      AbstractValue newVal=AbstractValue::createTop();
+      newPState.writeToMemoryLocation(arrayElemId,newVal);
+    } else {
+      // initialize element of array initializer in state
+      SgExpression* assignInitExpr=assignInit->get_operand();
+      // currentEState from above, newPState must be the same as in currentEState.
+      AbstractValue newVal=singleValevaluateExpression(assignInitExpr,currentEState);
+      newPState.writeToMemoryLocation(arrayElemId,newVal);
     }
-    // initialize element of array initializer in state
-    SgExpression* assignInitExpr=assignInit->get_operand();
-    // currentEState from above, newPState must be the same as in currentEState.
-    AbstractValue newVal=singleValevaluateExpression(assignInitExpr,currentEState);
-    newPState.writeToMemoryLocation(arrayElemId,newVal);
     elemIndex++;
   }
   // initialize remaining elements (if there are any) with default value
@@ -1065,12 +1067,27 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
       ConstraintSet cset=*currentEState.constraints();
       SgInitializer* initializer=initName->get_initializer();
       if(initializer) {
+        // special case that initializer is an assignment (reusing transferAssignOp)
+        if(SgAssignInitializer* assignInit=isSgAssignInitializer(initializer)) {
+          SgExpression* assignInitOperand=assignInit->get_operand_i();
+          ROSE_ASSERT(assignInitOperand);
+          if(SgAssignOp* assignOp=isSgAssignOp(assignInitOperand)) {
+            SAWYER_MESG(logger[TRACE])<<"assignment in initializer: "<<decl->unparseToString()<<endl;
+            Edge dummyEdge(targetLabel,EDGE_FORWARD,targetLabel); // only target label is used in transferAssignOp
+            std::list<EState> estateList=transferAssignOp(assignOp, dummyEdge, &currentEState);
+            ROSE_ASSERT(estateList.size()==1);
+            return *estateList.begin();
+          }
+        }
         //cout<<"DEBUG: initialize with "<<initializer->unparseToString()<<endl;
         //cout<<"DEBUG: lhs type: "<<getVariableIdMapping()->getType(initDeclVarId)->unparseToString()<<endl;
         if(getVariableIdMapping()->hasClassType(initDeclVarId)) {
           // TODO: initialization of structs not supported yet
-          cerr<<"Error: initialization of structs not supported yet - "<<decl->unparseToString()<<endl;
-          exit(1);
+          SAWYER_MESG(logger[WARN])<<"initialization of structs not supported yet (not added to state) "<<decl->unparseToString()<<endl;
+          //AbstractValue arrayAddress=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex))
+          //newPState.writeToMemoryLocation(arrayAddress,CodeThorn::Top());
+          PState newPState=*currentEState.pstate();
+          return createEState(targetLabel,cs,newPState,cset);
         }
         // has aggregate initializer
         if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
@@ -2114,6 +2131,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
    // 2) obtain formal parameters from target
    // 3) eval each actual parameter and assign result to formal parameter in state
    // 4) create new estate and update callstring (context sensitive analysis)
+  SAWYER_MESG(logger[TRACE])<<"transferFunctionCall: "<<getLabeler()->getNode(edge.source())->unparseToString()<<endl;
   EState currentEState=*estate;
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
@@ -2121,8 +2139,6 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
   // ad 1)
   SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source()));
   ROSE_ASSERT(funCall);
-  string funName=SgNodeHelper::getFunctionName(funCall);
-  // handling of error function (TODO: generate dedicated state (not failedAssert))
 
   if(args.getBool("rers-binary")) {
     // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
