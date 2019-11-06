@@ -125,8 +125,26 @@ if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) install -C $(top_builddir)/tutorial
 endif
 
-check-core: core
+check-recursive:
+	@true
+
+check-core:
 	$(MAKE) check -C $(top_builddir)/src
+
+check-smoke:
+	$(MAKE) check -C $(top_builddir)/tests/smoke
+
+check-nonsmoke:
+	$(MAKE) check -C $(top_builddir)/tests/nonsmoke/functional
+
+check:
+	$(MAKE) check-core
+	$(MAKE) check-smoke
+
+check-hard:
+	$(MAKE) check-core
+	$(MAKE) check-smoke
+	$(MAKE) check-nonsmoke
 
 check-tools: tools
 	$(MAKE) check -C $(top_builddir)/tools
@@ -302,10 +320,6 @@ pkginclude_HEADERS = rosePublicConfig.h
 # DQ (12/3/2007): Added rose_paths.h so that it would be copied to the install tree.
 # JJW (8/25/2008): Changed to a .c file
 include $(top_srcdir)/config/build_rose_paths.Makefile
-
-check-local: enforce_policies
-	@echo 'To run additional "non-smoke" tests, use this command:'
-	@echo "  $(MAKE) -C $$(pwd)/tests/nonsmoke check"
 
 install-exec-local:
 	@echo '*****************************************************************'
