@@ -1634,12 +1634,18 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    list<string> analysisNames={"null-pointer","out-of-bounds","uninitialized"};
-    for(auto analysisName : analysisNames) {
+    list<pair<CodeThorn::AnalysisSelector,string> > analysisNames={
+      {ANALYSIS_NULL_POINTER,"null-pointer"},
+      {ANALYSIS_OUT_OF_BOUNDS,"out-of-bounds"},
+      {ANALYSIS_UNINITIALIZED,"uninitialized"}
+    };
+    for(auto analysisInfo : analysisNames) {
+      AnalysisSelector analysisSel=analysisInfo.first;
+      string analysisName=analysisInfo.second;
       string analysisOption=analysisName+"-analysis";
       string analysisOutputFileOption=analysisName+"-analysis-file";
       if(args.count(analysisOption)>0||args.isDefined(analysisOutputFileOption)) {
-        ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getNullPointerDereferenceLocations();
+        ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getViolatingLocations(analysisSel);
         if(args.count(analysisOption)>0) {
           cout<<"\nResults for "<<analysisName<<" analysis:"<<endl;
           if(locations.numTotalLocations()>0) {
