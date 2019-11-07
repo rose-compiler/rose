@@ -427,7 +427,7 @@ public:
         if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr)) {
             ASSERT_not_null(fpAnalyzer_);
             ASSERT_not_null(path_);
-            SmtSolver::Ptr s = solver();
+            SmtSolver::Ptr s = nullPtrSolver();
             SmtSolver::Transaction tx(s);
             pathProcessor_->nullDeref(*fpAnalyzer_, *path_, s, FeasiblePath::READ, addr, currentInstruction());
         }
@@ -480,7 +480,7 @@ public:
         if (pathProcessor_) {
             ASSERT_not_null(fpAnalyzer_);
             ASSERT_not_null(path_);
-            SmtSolver::Ptr s = solver();
+            SmtSolver::Ptr s = nullPtrSolver();
             SmtSolver::Transaction tx(s);
             pathProcessor_->memoryIo(*fpAnalyzer_, *path_, s, FeasiblePath::READ, addr, retval, shared_from_this());
         }
@@ -501,7 +501,7 @@ public:
         if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr)) {
             ASSERT_not_null(fpAnalyzer_);
             ASSERT_not_null(path_);
-            SmtSolver::Ptr s = solver();
+            SmtSolver::Ptr s = nullPtrSolver();
             SmtSolver::Transaction tx(s);
             pathProcessor_->nullDeref(*fpAnalyzer_, *path_, s, FeasiblePath::WRITE, addr, currentInstruction());
         }
@@ -525,7 +525,7 @@ public:
         if (pathProcessor_) {
             ASSERT_not_null(fpAnalyzer_);
             ASSERT_not_null(path_);
-            SmtSolver::Ptr s = solver();
+            SmtSolver::Ptr s = nullPtrSolver();
             SmtSolver::Transaction tx(s);
             pathProcessor_->memoryIo(*fpAnalyzer_, *path_, s, FeasiblePath::WRITE, addr, value, shared_from_this());
         }

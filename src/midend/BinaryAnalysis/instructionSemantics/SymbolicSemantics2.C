@@ -51,6 +51,10 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSe
     if (other->isBottom())
         return bottom_(get_width());
 
+    // If the values are different types then return bottom.
+    if (get_expression()->type() != other->get_expression()->type())
+        return bottom_(get_width());
+
     // Merge symbolic expressions. The merge of x and y is the set {x, y}. If the size of this set is greater than the set size
     // limit (or 1 if merger is null) then the result is bottom.  Normal set simplifcations happen first (e.g., {x, x} => {x}
     // => x).
@@ -1064,7 +1068,7 @@ SymbolicExpr::Type
 RiscOperators::sgTypeToSymbolicType(SgAsmType *sgType) {
     ASSERT_not_null(sgType);
     if (SgAsmFloatType *fpType = sgIsIeee754(sgType)) {
-        return SymbolicExpr::Type::floatingPoint(fpType->exponentBits().size(), fpType->significandBits().size());
+        return SymbolicExpr::Type::floatingPoint(fpType->exponentBits().size(), fpType->significandBits().size()+1/*implicit bit*/);
     } else if (SgAsmIntegerType *iType = isSgAsmIntegerType(sgType)) {
         return SymbolicExpr::Type::integer(iType->get_nBits());
     } else {
@@ -1104,7 +1108,7 @@ RiscOperators::reinterpret(const BaseSemantics::SValuePtr &a_, SgAsmType *retTyp
         throw Exception("reinterpret type (" + dstType.toString() + ") is not the same size as the value type (" +
                         srcType.toString() + ")");
     }
-    
+
     BaseSemantics::SValuePtr result = svalue_expr(SymbolicExpr::makeReinterpret(a->get_expression(), dstType, solver()));
     ASSERT_not_null(result);
     return filterResult(result);

@@ -405,7 +405,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
      //    ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ("print-warnings",po::value< bool >()->default_value(false)->implicit_value(true),"Print warnings on stdout during analysis (this can slow down the analysis significantly)")
     ("print-violations",po::value< bool >()->default_value(false)->implicit_value(true),"Print detected violations on stdout during analysis (this can slow down the analysis significantly)")
-    ("testing-options-set",po::value< int >()->default_value(0)->implicit_value(0),"Use an alternative set of default options (for testing only: 0..1).")
+    ("options-set",po::value< int >()->default_value(0)->implicit_value(0),"Use a predefined set of default options (0..3).")
     ;
 
   rersOptions.add_options()
@@ -588,7 +588,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.10.12\n";
+    cout << "CodeThorn version 1.11.0\n";
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
@@ -1169,7 +1169,13 @@ int main( int argc, char * argv[] ) {
         return 0;
     }
 
-    if(args.getInt("testing-options-set")==1) {
+    string optionName="options-set";
+    int optionValue=args.getInt(optionName);
+    switch(optionValue) {
+    case 0:
+      // fall-through for default
+      break;
+    case 1:
       args.setOption("explicit-arrays",true);
       args.setOption("in-state-string-literals",true);
       args.setOption("ignore-unknown-functions",true);
@@ -1178,7 +1184,33 @@ int main( int argc, char * argv[] ) {
       args.setOption("context-sensitive",true);
       args.setOption("normalize-all",true);
       args.setOption("abstraction-mode",1);
+      break;
+    case 2:
+      args.setOption("explicit-arrays",true);
+      args.setOption("in-state-string-literals",true);
+      args.setOption("ignore-unknown-functions",true);
+      args.setOption("ignore-function-pointers",false);
+      args.setOption("std-functions",true);
+      args.setOption("context-sensitive",true);
+      args.setOption("normalize-all",true);
+      args.setOption("abstraction-mode",1);
+      break;
+    case 3:
+      args.setOption("explicit-arrays",true);
+      args.setOption("in-state-string-literals",true);
+      args.setOption("ignore-unknown-functions",true);
+      args.setOption("ignore-function-pointers",false);
+      args.setOption("std-functions",true);
+      args.setOption("context-sensitive",true);
+      args.setOption("normalize-all",true);
+      args.setOption("abstraction-mode",0);
+      break;
+    default:
+      cerr<<"Error: unsupported "<<optionName<<" value: "<<optionValue<<endl;
+      exit(1);
     }
+
+
 
     analyzer->optionStringLiteralsInState=args.getBool("in-state-string-literals");
     analyzer->setSkipSelectedFunctionCalls(args.getBool("ignore-unknown-functions"));
@@ -1220,14 +1252,16 @@ int main( int argc, char * argv[] ) {
       analyzer->setNumberOfThreadsToUse(1);
     }
 
+    string option_start_function="main";
+    if(args.count("start-function")) {
+      option_start_function = args["start-function"].as<string>();
+    }
+
     string option_specialize_fun_name="";
     vector<int> option_specialize_fun_param_list;
     vector<int> option_specialize_fun_const_list;
     vector<string> option_specialize_fun_varinit_list;
     vector<int> option_specialize_fun_varinit_const_list;
-    if(args.count("start-function")) {
-      option_specialize_fun_name = args["start-function"].as<string>();
-    }
     if(args.count("specialize-fun-name")) {
       option_specialize_fun_name = args["specialize-fun-name"].as<string>();
       // logger[DEBUG] << "option_specialize_fun_name: "<< option_specialize_fun_name<<endl;
@@ -1335,7 +1369,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
     }
 
-    if(args.getBool("normalize-all")||args.getInt("testing-options-set")==1) {
+    if(args.getBool("normalize-all")||args.getInt("options-set")==1) {
       if(!args.count("quiet")) {
         cout<<"STATUS: normalizing program."<<endl;
       }
@@ -1525,7 +1559,7 @@ int main( int argc, char * argv[] ) {
       // if a single function exist, use this function
       // in all other cases exit with error.
       RoseAst completeAst(root);
-      string startFunction="main";
+      string startFunction=option_start_function;
       SgNode* startFunRoot=completeAst.findFunctionByName(startFunction);
       if(startFunRoot==0) {
         // no main function exists. check if a single function exists in the translation unit
@@ -1634,12 +1668,18 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    list<string> analysisNames={"null-pointer","out-of-bounds","uninitialized"};
-    for(auto analysisName : analysisNames) {
+    list<pair<CodeThorn::AnalysisSelector,string> > analysisNames={
+      {ANALYSIS_NULL_POINTER,"null-pointer"},
+      {ANALYSIS_OUT_OF_BOUNDS,"out-of-bounds"},
+      {ANALYSIS_UNINITIALIZED,"uninitialized"}
+    };
+    for(auto analysisInfo : analysisNames) {
+      AnalysisSelector analysisSel=analysisInfo.first;
+      string analysisName=analysisInfo.second;
       string analysisOption=analysisName+"-analysis";
       string analysisOutputFileOption=analysisName+"-analysis-file";
       if(args.count(analysisOption)>0||args.isDefined(analysisOutputFileOption)) {
-        ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getNullPointerDereferenceLocations();
+        ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getViolatingLocations(analysisSel);
         if(args.count(analysisOption)>0) {
           cout<<"\nResults for "<<analysisName<<" analysis:"<<endl;
           if(locations.numTotalLocations()>0) {
@@ -2278,8 +2318,8 @@ void CodeThorn::printAnalyzerStatistics(IOAnalyzer* analyzer, double totalRunTim
     ss << "Number of iterations           : "<<analyzer->getIterations()<<"-"<<analyzer->getApproximatedIterations()<<endl;
   }
   ss << "=============================================================="<<endl;
-  ss << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
-  ss << "TimeMeasurement total           : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
+  ss << "Memory total                   : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
+  ss << "TimeMeasurement total          : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
   ss << "=============================================================="<<endl;
   ss <<color("normal");
   analyzer->printStatusMessage(ss.str());
