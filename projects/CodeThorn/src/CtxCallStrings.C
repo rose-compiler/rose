@@ -166,7 +166,7 @@ namespace
   //! on FiniteContext
   bool callerCalleeLengths(size_t caller, size_t callee, size_t MAXLEN)
   {
-    std::cerr << caller << " / " << callee << " : " << MAXLEN << std::endl;
+    //~ std::cerr << caller << " / " << callee << " : " << MAXLEN << std::endl;
 
     return (  ((caller == MAXLEN) && (callee == MAXLEN))
            || ((caller <  MAXLEN) && (callee == caller+1))
@@ -226,7 +226,7 @@ namespace
 
         if (!entry.first.isValidReturn(labeler, label))
         {
-          std::cerr << "** INVALID RETURN *" << std::endl;
+          //~ std::cerr << "** INVALID RETURN *" << std::endl;
           return;
         }
 
