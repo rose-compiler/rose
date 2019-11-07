@@ -30,24 +30,24 @@ namespace
   //
   // auxiliary functors
 
-  //! calls transfer on the TfObject.
-  //! \tparam TfObject either a node (source) or an edge
-  template <class TfObject>
+  //! calls transfer on the DfItem (data-flow object).
+  //! \tparam DfItem either a data-flow node (source) or a data-flow edge
+  template <class DfItem>
   struct ComponentTransfer
   {
-      ComponentTransfer(DFTransferFunctions& comptrans, TfObject tfobj)
-      : component(comptrans), object(tfobj)
+      ComponentTransfer(DFTransferFunctions& comptrans, DfItem dfitem)
+      : component(comptrans), item(dfitem)
       {}
 
       template <class Key>
       void operator()(std::pair<const Key, Lattice*>& p) const
       {
-        component.transfer(object, SG_DEREF(p.second));
+        component.transfer(item, SG_DEREF(p.second));
       }
 
     private:
       DFTransferFunctions& component;
-      TfObject             object;
+      DfItem               item;
   };
 
   template <class TfObject>
@@ -175,7 +175,6 @@ struct CtxTransfer : DFTransferFunctions
       return dynamic_cast<ctx_lattice_t*>(elem);
     }
 
-
   private:
     DFTransferFunctions&      component;       ///< The component transfer
     CtxAnalysis<CallContext>& analysis;        ///< The analysis objects
@@ -202,7 +201,12 @@ void CtxTransfer<CallContext>::transfer(Label lbl, ctx_lattice_t& lat)
   if (labeler.isFunctionCallLabel(lbl))
     CallContext::callInvoke(tmp, lat, analysis, labeler, lbl);
   else
+  {
     CallContext::callReturn(tmp, lat, analysis, labeler, lbl);
+
+    std::cerr << "*** CALL RETURN: " << tmp.size() << "<callee caller>" << lat.size()
+              << std::endl;
+  }
 
   // Sub-lattices in tmp WILL BE DELETED !!!
 }
@@ -213,7 +217,8 @@ void CtxTransfer<CallContext>::transfer(Edge edge, Lattice& element)
 {
   ctx_lattice_t& lat = dynamic_cast<ctx_lattice_t&>(element);
 
-  this->transfer(edge.source(), element);
+  //~ was: this->transfer(edge.source(), element);
+  this->transfer(edge.source(), lat);
   std::for_each(lat.begin(), lat.end(), componentTransfer(component, edge));
 }
 
