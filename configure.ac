@@ -1,10 +1,10 @@
 dnl DQ (1/11/2010): Consider handing configure options as specified at:
 dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 
-dnl The version number in the AC_INIT([ROSE], [0.9.12.14])
-dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.9.12.14])
+dnl The version number in the AC_INIT([ROSE], [0.9.12.15])
+dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.9.12.15])
 dnl shell variable.
-AC_INIT([ROSE], [0.9.12.14])
+AC_INIT([ROSE], [0.9.12.15])
 AC_PREREQ([2.59])
 
 test "$verbose" = "" && echo "Run configure with --verbose to see more output"
