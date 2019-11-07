@@ -18,6 +18,15 @@ make -j${NUM_PROCESSORS}
 make install -j${NUM_PROCESSORS}
 make check -j${NUM_PROCESSORS}
 ```
+
+For Ubuntu 18.04, we have experimental support for installating ROSE pre-built binaries packages using apt-get
+```
+sudo apt-get install software-properties-common
+sudo add-apt-repository ppa:rosecompiler/rose-development # Replace rose-development with rose-stable for release version
+sudo apt-get install rose
+sudo apt-get install rose-tools # Optional: Installs ROSE tools in addition to ROSE Core
+```
+
 For full install instructions go to https://github.com/rose-compiler/rose/wiki/How-to-Set-Up-ROSE
 
 # ROSE Directories 
