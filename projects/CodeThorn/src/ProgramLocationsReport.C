@@ -9,9 +9,33 @@ using namespace std;
 using namespace CodeThorn;
 using namespace CodeThorn;
 
+bool CodeThorn::ProgramLocationsReport::hasSourceLocation(SgStatement* stmt) {
+  ROSE_ASSERT(stmt);
+  Sg_File_Info* fi=stmt->get_file_info();
+  return fi->get_line()>0;
+}
+
 string CodeThorn::ProgramLocationsReport::programLocation(Labeler* labeler, Label lab) {
   SgNode* node=labeler->getNode(lab);
   ROSE_ASSERT(node);
+  // find non-transformation file info
+  SgNode* parent=node->get_parent();
+  // if node is inside expression, search for statement node
+  while(!isSgStatement(node)) {
+    node=node->get_parent();
+    if(node==nullptr)
+      return "[unresolved source location]";
+  }
+  SgStatement* stmt=isSgStatement(node);
+  ROSE_ASSERT(stmt);
+  while(!hasSourceLocation(stmt)) {
+    stmt=SageInterface::getPreviousStatement(stmt);
+    if(!stmt)
+      return "[unresolved source location]";
+  }
+  node=stmt;
+  ROSE_ASSERT(stmt);
+  // return fileinfo as formatted string
   return SgNodeHelper::sourceLineColumnToString(node)+","+SgNodeHelper::sourceFilenameToString(node);
 }
 

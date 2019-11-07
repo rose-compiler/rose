@@ -20,6 +20,7 @@ namespace CodeThorn {
   private:
     std::string programLocation(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
     std::string sourceCodeAtProgramLocation(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
+    bool hasSourceLocation(SgStatement* stmt);
   };
 }
 #endif
