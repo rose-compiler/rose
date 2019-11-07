@@ -405,7 +405,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
      //    ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ("print-warnings",po::value< bool >()->default_value(false)->implicit_value(true),"Print warnings on stdout during analysis (this can slow down the analysis significantly)")
     ("print-violations",po::value< bool >()->default_value(false)->implicit_value(true),"Print detected violations on stdout during analysis (this can slow down the analysis significantly)")
-    ("testing-options-set",po::value< int >()->default_value(0)->implicit_value(0),"Use an alternative set of default options (for testing only: 0..1).")
+    ("options-set",po::value< int >()->default_value(0)->implicit_value(0),"Use a predefined set of default options (0..3).")
     ;
 
   rersOptions.add_options()
@@ -1169,7 +1169,13 @@ int main( int argc, char * argv[] ) {
         return 0;
     }
 
-    if(args.getInt("testing-options-set")==1) {
+    string optionName="options-set";
+    int optionValue=args.getInt(optionName);
+    switch(optionValue) {
+    case 0:
+      // fall-through for default
+      break;
+    case 1:
       args.setOption("explicit-arrays",true);
       args.setOption("in-state-string-literals",true);
       args.setOption("ignore-unknown-functions",true);
@@ -1178,7 +1184,33 @@ int main( int argc, char * argv[] ) {
       args.setOption("context-sensitive",true);
       args.setOption("normalize-all",true);
       args.setOption("abstraction-mode",1);
+      break;
+    case 2:
+      args.setOption("explicit-arrays",true);
+      args.setOption("in-state-string-literals",true);
+      args.setOption("ignore-unknown-functions",true);
+      args.setOption("ignore-function-pointers",false);
+      args.setOption("std-functions",true);
+      args.setOption("context-sensitive",true);
+      args.setOption("normalize-all",true);
+      args.setOption("abstraction-mode",1);
+      break;
+    case 3:
+      args.setOption("explicit-arrays",true);
+      args.setOption("in-state-string-literals",true);
+      args.setOption("ignore-unknown-functions",true);
+      args.setOption("ignore-function-pointers",false);
+      args.setOption("std-functions",true);
+      args.setOption("context-sensitive",true);
+      args.setOption("normalize-all",true);
+      args.setOption("abstraction-mode",0);
+      break;
+    default:
+      cerr<<"Error: unsupported "<<optionName<<" value: "<<optionValue<<endl;
+      exit(1);
     }
+
+
 
     analyzer->optionStringLiteralsInState=args.getBool("in-state-string-literals");
     analyzer->setSkipSelectedFunctionCalls(args.getBool("ignore-unknown-functions"));
@@ -1337,7 +1369,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
     }
 
-    if(args.getBool("normalize-all")||args.getInt("testing-options-set")==1) {
+    if(args.getBool("normalize-all")||args.getInt("options-set")==1) {
       if(!args.count("quiet")) {
         cout<<"STATUS: normalizing program."<<endl;
       }
