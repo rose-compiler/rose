@@ -12,6 +12,10 @@ DEFINE MACRO3 "89  +
 
 DEFINE PI "3.14" ;
 
+" DEFINE is indented "
+  DEFINE ZERO "0.0" ;
+
+
 PROGRAM main ;
 BEGIN
   ITEM ia S ;
