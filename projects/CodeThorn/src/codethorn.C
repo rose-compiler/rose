@@ -1220,14 +1220,16 @@ int main( int argc, char * argv[] ) {
       analyzer->setNumberOfThreadsToUse(1);
     }
 
+    string option_start_function="main";
+    if(args.count("start-function")) {
+      option_start_function = args["start-function"].as<string>();
+    }
+
     string option_specialize_fun_name="";
     vector<int> option_specialize_fun_param_list;
     vector<int> option_specialize_fun_const_list;
     vector<string> option_specialize_fun_varinit_list;
     vector<int> option_specialize_fun_varinit_const_list;
-    if(args.count("start-function")) {
-      option_specialize_fun_name = args["start-function"].as<string>();
-    }
     if(args.count("specialize-fun-name")) {
       option_specialize_fun_name = args["specialize-fun-name"].as<string>();
       // logger[DEBUG] << "option_specialize_fun_name: "<< option_specialize_fun_name<<endl;
@@ -1525,7 +1527,7 @@ int main( int argc, char * argv[] ) {
       // if a single function exist, use this function
       // in all other cases exit with error.
       RoseAst completeAst(root);
-      string startFunction="main";
+      string startFunction=option_start_function;
       SgNode* startFunRoot=completeAst.findFunctionByName(startFunction);
       if(startFunRoot==0) {
         // no main function exists. check if a single function exists in the translation unit
