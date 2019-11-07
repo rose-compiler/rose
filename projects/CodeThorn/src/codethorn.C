@@ -2318,8 +2318,8 @@ void CodeThorn::printAnalyzerStatistics(IOAnalyzer* analyzer, double totalRunTim
     ss << "Number of iterations           : "<<analyzer->getIterations()<<"-"<<analyzer->getApproximatedIterations()<<endl;
   }
   ss << "=============================================================="<<endl;
-  ss << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
-  ss << "TimeMeasurement total           : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
+  ss << "Memory total                   : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
+  ss << "TimeMeasurement total          : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
   ss << "=============================================================="<<endl;
   ss <<color("normal");
   analyzer->printStatusMessage(ss.str());
