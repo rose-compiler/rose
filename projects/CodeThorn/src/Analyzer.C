@@ -3016,7 +3016,7 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
             case ACCESS_DEFINITELY_NP:
               exprAnalyzer.recordDefinitiveNullPointerDereferenceLocation(estate.label());
               cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze2)<<" : definitive null pointer dereference detected."<<endl;// ["<<lhs->unparseToString()<<"]"<<endl;
-              cerr<<"Violating pointer: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+              cerr<<"Violating pointer (np): "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
               return estateList;
               break;
             case ACCESS_DEFINITELY_INSIDE_BOUNDS:
@@ -3033,7 +3033,7 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
               exprAnalyzer.recordDefinitiveOutOfBoundsAccessLocation(estate.label());
               int index2=arrayPtrPlusIndexValue.getIndexIntValue();
               cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze2)<<" : write access out of bounds."<<endl;// ["<<lhs->unparseToString()<<"]"<<endl;
-              cerr<<"Violating pointer: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+              cerr<<"Violating pointer (bounds): "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
               //cerr<<"arrayVarId2: "<<arrayVarId2.toUniqueString(_variableIdMapping)<<endl;
               //cerr<<"array size: "<<_variableIdMapping->getNumberOfElements(arrayVarId)<<endl;
               // no state can follow, return estateList (may be empty)
