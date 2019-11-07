@@ -1947,6 +1947,20 @@ enum MemoryAccessBounds ExprAnalyzer::checkMemoryAccessBounds(AbstractValue addr
   }
 }    
 
+ProgramLocationsReport ExprAnalyzer::getViolatingLocations(enum AnalysisSelector analysisSelector) {
+  switch(analysisSelector) {
+  case ANALYSIS_NULL_POINTER:
+    return getNullPointerDereferenceLocations();
+  case ANALYSIS_OUT_OF_BOUNDS:
+    return getOutOfBoundsAccessLocations();
+  case ANALYSIS_UNINITIALIZED:
+    return getUninitializedAccessLocations();
+  default:
+    cerr<<"Error: ProgramLocationsReport: Unknown analysisSelector: "<<analysisSelector<<endl;
+    exit(1);
+  }
+}
+
 ProgramLocationsReport ExprAnalyzer::getNullPointerDereferenceLocations() {
   return _nullPointerDereferenceLocations;
 }
