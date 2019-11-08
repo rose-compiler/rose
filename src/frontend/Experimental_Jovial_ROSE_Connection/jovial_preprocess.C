@@ -10,14 +10,16 @@
 static void preprocess(std::istream & in_stream, std::ostream & out_stream)
 {
    std::string line;
-   int posDefine, posSemicolon, posFirstQuote, posSecondQuote;
+   int posDefine, posSkipWs, posSemicolon, posFirstQuote, posSecondQuote;
    bool multiLineDefine = false;
 
    while (std::getline(in_stream, line)) {
       if (!multiLineDefine) {                                 // no multi-line define currently being processed
+         posSkipWs = line.find_first_not_of(" ");
          posDefine = line.find("DEFINE");
          posSemicolon = line.find(";");
-         if (posDefine == 0) {                                // found a DEFINE at the start of a line
+         if (posDefine != std::string::npos && (posDefine == 0 || posDefine == posSkipWs)) {
+            // found a DEFINE at the start of a line
             if (posSemicolon != std::string::npos) {          // found a ; in same line, can process single line
                posFirstQuote = line.find("\"");               // find quotes
                posSecondQuote = line.find("\"", posFirstQuote + 1);
