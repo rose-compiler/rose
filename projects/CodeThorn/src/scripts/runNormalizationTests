@@ -14,8 +14,8 @@ BENCH_FAIL=0
 function NormalizationTests {
     testNumbers1=`echo {01..23}`
     #contain several 128 bit floating point (24-26)
-    #testNumbers2=`echo {24..42}`
-    testNumbers2=""
+    testNumbers2=`echo {24..43}`
+    #testNumbers2=""
     #128-bit float error
     testNumbers="$testNumbers1 $testNumbers2"
     echo "Scheduled tests: $testNumbers"
