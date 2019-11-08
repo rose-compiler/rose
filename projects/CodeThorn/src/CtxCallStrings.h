@@ -22,13 +22,13 @@ concept CallContext
 
   //! returns true, iff this context is valid for the return label @ref lbl.
   bool isValidReturn(Labeler& labeler, Label lbl) const;
-  
+
   //! tests if this context could call that context at label @ref callsite.
-  //! \param target   a context at callee's definition 
-  //! \param callsite the function call label at the call-site 
-  //! \return true, iff this plus @ref callsite and @ref that are in a caller/callee relationship  
+  //! \param target   a context at callee's definition
+  //! \param callsite the function call label at the call-site
+  //! \return true, iff this plus @ref callsite and @ref that are in a caller/callee relationship
   bool callerOf(const CallContext& that, Label callsite) const;
-  
+
   //! returns true if *this equals that.
   bool operator==(const CallContext& that) const;
 
@@ -78,7 +78,7 @@ concept CallContext
 template <class ContextType>
 struct CtxAnalysis;
 
-//! A class representing an infinitely long call string. 
+//! A class representing an infinitely long call string.
 //! The class is precise, but will NOT WORK for recursive codes.
 struct InfiniteContext : private std::vector<Label>
 {
@@ -131,12 +131,14 @@ struct FiniteContext : private std::vector<Label>
     static const size_t        MAX_CTX_LENGTH = 4;
 
     using context_string::reverse_iterator;
+    using context_string::begin;
+    using context_string::end;
     using context_string::rbegin;
     using context_string::rend;
     using context_string::size;  // dbg
 
     bool operator==(const FiniteContext& that) const;
-    
+
     bool isValidReturn(Labeler& labeler, Label retlbl) const;
     bool callerOf(const FiniteContext& target, Label callsite) const;
     void callInvoke(const Labeler&, Label lbl);

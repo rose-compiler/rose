@@ -241,6 +241,7 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*>
     using context_map::insert;
     using context_map::lower_bound;
     using context_map::find;
+    using context_map::size;
     using context_map::operator[];
 
     explicit
