@@ -114,7 +114,7 @@ struct CtxAnalysis : DFAnalysisBase
       SgStatement& call    = const_cast<SgStatement&>(stmt);
       Labeler&     labeler = *getLabeler();
 
-      std::cerr << call.unparseToString() << std::endl;
+      //~ std::cerr << call.unparseToString() << std::endl;
       return getCtxLattice( labeler.functionCallLabel(&call) );
     }
 
