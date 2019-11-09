@@ -229,6 +229,27 @@ public:
     std::vector<ControlFlowGraph::ConstEdgeIterator> truncate(const CfgConstEdgeSet&);
     /** @} */
 
+    /** Find indices of last vertex and instruction.
+     *
+     *  Given an instruction, return the index of the last occurrence of the instruction in this path. The return value is the
+     *  index of the vertex containing the last occurrence of the instruction, and the index of the instruction across all
+     *  instructions and summarized functions in this path. The path must contain at least one occurrence of the specified
+     *  instruction. */
+    std::pair<size_t /*vertex*/, size_t /*insn*/> lastInsnIndex(SgAsmInstruction*) const;
+
+    /** Hash the path.
+     *
+     *  The path vertex addresses are hashed in the order they appear in order to create a unique identifier for the path.
+     *  Any user-defined data attached to the path is not hashed. */
+    uint64_t hash() const;
+
+    /** Hash part of a path,
+     *
+     *  Hash this path up to and including the last occurrence of the specified instruction. This hash is calculated
+     *  differently than @p hash with no arguments, thus even if the specified instruction is the very last instruction of the
+     *  path the hashes returned by the two functions will differ. */
+    uint64_t hash(SgAsmInstruction*) const;
+
     /** Print the path. */
     void print(std::ostream &out) const;
 };
