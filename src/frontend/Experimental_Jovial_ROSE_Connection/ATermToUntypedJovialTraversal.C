@@ -1073,7 +1073,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_CharacterLiteral(ATerm term, SgUn
    Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
 
    if (ATmatch(term, "CharacterLiteral(<str>)", &name)) {
-      std::cout << "CharacterLiteral is " << name << endl;
       expr = new SgUntypedReferenceExpression(expr_enum, name);
       setSourcePosition(expr, term);
    } else return ATfalse;
@@ -1298,7 +1297,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_PointerItemDescription(ATerm term
    std::string type_name;
 
    if (ATmatch(term, "PointerItemDescription(<str>,<term>)", &pntr, &t_type_name)) {
-      std::cout << "PointerTypeDesc is " << pntr << endl;
 
       if (traverse_OptTypeName(t_type_name, type, type_name)) {
          // MATCHED OptTypeName
@@ -1318,7 +1316,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptTypeName(ATerm term, SgUntyped
 
    if (ATmatch(term, "no-type-name()")) {
       // MATCHED no-type-name
-      std::cout << "Matched no-type-name" << endl;
    } else if (ATmatch(term, "TypeName(<term>)", &t_type_name)) {
       if (traverse_Name(t_type_name, name)) {
          cerr << "WARNING UNIMPLEMENTED: TypeName - PointerItemDescription\n";
@@ -1925,13 +1922,17 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATer
 
    // TODO - handle preset
    if (preset != NULL) {
-      cerr << "WARNING UNIMPLEMENTED: TablePreset in OrdinaryTableItemDeclaration \n";
+      cerr << "WARNING UNIMPLEMENTED: OrdinaryTableItemDeclaration - preset \n";
       return ATtrue;
    }
    ROSE_ASSERT(preset == NULL);
 
    ROSE_ASSERT(attr_list);
-   ROSE_ASSERT(item_type);
+   if (item_type == NULL) {
+      // ROSE_ASSERT(item_type);
+      cerr << "WARNING UNIMPLEMENTED: OrdinaryTableItemDeclaration - item_type \n";
+      return ATtrue;
+   }
 
    variable_decl = UntypedBuilder::buildVariableDeclaration(name, item_type, attr_list, preset);
    ROSE_ASSERT(variable_decl);
@@ -2216,7 +2217,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATe
 
    decl_list->get_decl_list().push_back(variable_decl);
 
-#if 1
+#if 0
    std::cout << "TABLE ITEM DECLARATION " << name << endl;
    std::cout << "TABLE ITEM DECLARATION attr_list: " << attr_list << " : size " << attr_list->get_expressions().size() << endl;
 #endif
@@ -2905,7 +2906,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDeclaration(ATerm term, S
          // status item declarations have to be handled differently than other ItemTypeDescription terms
 
          // also assume an int is sufficient for status_size for now
-         ROSE_ASSERT(has_size == false);
+         if (has_size == true) {
+            // ROSE_ASSERT(has_size == false);
+            cerr << "WARNING UNIMPLEMENTED: ItemTypeDeclaration - has_size \n";
+         }
          ROSE_ASSERT(status_list);
 
          SgUntypedEnumDeclaration* enum_decl = new SgUntypedEnumDeclaration(label, name, status_list);
