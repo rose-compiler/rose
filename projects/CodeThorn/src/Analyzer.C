@@ -540,19 +540,32 @@ CodeThorn::Analyzer::VariableDeclarationList CodeThorn::Analyzer::computeUnusedG
   return globalVars;
 }
 
+#define DO_NOT_FILTER_VARS
 CodeThorn::Analyzer::VariableDeclarationList CodeThorn::Analyzer::computeUsedGlobalVariableDeclarationList(SgProject* root) {
   if(SgProject* project=isSgProject(root)) {
     CodeThorn::Analyzer::VariableDeclarationList usedGlobalVariableDeclarationList;
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
+#ifdef DO_NOT_FILTER_VARS
     VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,getVariableIdMapping());
+#endif
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
       VariableId globalVarId=variableIdMapping.variableId(*i);
+      // do not filter
+      usedGlobalVariableDeclarationList.push_back(*i);
+#ifdef DO_NOT_FILTER_VARS
+      if(true || setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
+        usedGlobalVariableDeclarationList.push_back(*i);
+      } else {
+        filteredVars++;
+      }
+#else
       if(setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
         usedGlobalVariableDeclarationList.push_back(*i);
       } else {
         filteredVars++;
       }
+#endif
     }
     return usedGlobalVariableDeclarationList;
   } else {
@@ -1666,8 +1679,13 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
     SAWYER_MESG(logger[TRACE])<< globalVars.size()<<endl;
 
+#if 1
+    // do not use usedVariablesInsideFunctions(project,&variableIdMapping); (on full C)
+    // this will not filter any variables
+    VariableIdSet setOfUsedVars;
+#else
     VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
-
+#endif
     SAWYER_MESG(logger[TRACE])<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 
     int filteredVars=0;
@@ -2998,7 +3016,7 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
               arrayPtrValue=AbstractValue::createTop();
             }
           } else {
-            logger[ERROR] <<"lhs array access: unknown type of array or pointer."<<endl;
+            SAWYER_MESG(logger[ERROR]) <<"lhs array access: unknown type of array or pointer."<<endl;
             exit(1);
           }
           AbstractValue arrayElementId;
@@ -3015,8 +3033,8 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
             switch(boundsCheckResult) {
             case ACCESS_DEFINITELY_NP:
               exprAnalyzer.recordDefinitiveNullPointerDereferenceLocation(estate.label());
-              cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze2)<<" : definitive null pointer dereference detected."<<endl;// ["<<lhs->unparseToString()<<"]"<<endl;
-              cerr<<"Violating pointer (np): "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+              SAWYER_MESG(logger[TRACE])<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze2)<<" : definitive null pointer dereference detected."<<endl;// ["<<lhs->unparseToString()<<"]"<<endl;
+              SAWYER_MESG(logger[TRACE])<<"Violating pointer (np): "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
               return estateList;
               break;
             case ACCESS_DEFINITELY_INSIDE_BOUNDS:
@@ -3032,8 +3050,8 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
             case ACCESS_DEFINITELY_OUTSIDE_BOUNDS: {
               exprAnalyzer.recordDefinitiveOutOfBoundsAccessLocation(estate.label());
               int index2=arrayPtrPlusIndexValue.getIndexIntValue();
-              cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze2)<<" : write access out of bounds."<<endl;// ["<<lhs->unparseToString()<<"]"<<endl;
-              cerr<<"Violating pointer (bounds): "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+              SAWYER_MESG(logger[TRACE])<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze2)<<" : write access out of bounds."<<endl;// ["<<lhs->unparseToString()<<"]"<<endl;
+              SAWYER_MESG(logger[TRACE])<<"Violating pointer (bounds): "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
               //cerr<<"arrayVarId2: "<<arrayVarId2.toUniqueString(_variableIdMapping)<<endl;
               //cerr<<"array size: "<<_variableIdMapping->getNumberOfElements(arrayVarId)<<endl;
               // no state can follow, return estateList (may be empty)
