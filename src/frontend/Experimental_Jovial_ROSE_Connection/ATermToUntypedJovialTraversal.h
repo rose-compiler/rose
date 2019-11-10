@@ -192,7 +192,7 @@ ATbool traverse_FormalParameterList   (ATerm term, SgUntypedInitializedNameList*
 ATbool traverse_FormalInputParameter  (ATerm term, SgUntypedInitializedNameList* param_list);
 ATbool traverse_FormalOutputParameters(ATerm term, SgUntypedInitializedNameList* param_list);
 ATbool traverse_FormalOutputParameter (ATerm term, SgUntypedInitializedNameList* param_list);
-ATbool traverse_ParameterBinding      (ATerm term, SgUntypedOtherExpression** binding_expr);
+ATbool traverse_ParameterBinding      (ATerm term, SgUntypedOtherExpression* & binding_expr);
 
 // 3.4 INLINE DECLARATIONS
 ATbool traverse_InlineDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
