@@ -7211,6 +7211,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term
 
          // NOTE: reconstruct the integer, ".", fractional part, exponent into one string
 
+         // TODO - fix this
+         cerr << "WARNING UNIMPLEMENTED: FixedOrFloatingLiteral, RealLiteralFF \n";
+         literal = "13.13";
+
+#if 0
          // integer part
          if (ATmatch(t_num1, "no-number()")) {
             // no integer part
@@ -7239,6 +7244,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term
          else if (traverse_Exponent(t_opt_exp, opt_exp)) {
             literal += opt_exp;
          }
+#endif
 
       }
 
