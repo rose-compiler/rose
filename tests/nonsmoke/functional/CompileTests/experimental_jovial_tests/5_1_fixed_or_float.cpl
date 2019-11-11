@@ -1,0 +1,9 @@
+START
+
+COMPOOL fixed'or'float;
+
+  CONSTANT ITEM an'item
+  A 0,31
+  = (*A 0,31 *) (3.3/360.0);
+
+TERM
