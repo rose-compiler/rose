@@ -741,11 +741,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUnt
    else return ATfalse;
 
    if (declared_type == NULL) {
-      ROSE_ASSERT(preset == NULL);
-      return ATtrue;
-   }
-
-   if (declared_type == NULL) {
       cerr << "WARNING UNIMPLEMENTED: ItemDeclaration - type is null \n";
       return ATtrue;
    }
