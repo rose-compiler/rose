@@ -22,11 +22,11 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "5";
-$mkinstaller_ver_build = "21";
+$mkinstaller_ver_build = "23";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.5.21";
-$mkinstaller_ver_time  = " 5Nov2019,19:03:10z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.21 -  5Nov2019,19:03:10z";
+$mkinstaller_ver_name  = "2.5.23";
+$mkinstaller_ver_time  = "11Nov2019,02:20:58z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.23 - 11Nov2019,02:20:58z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
@@ -35,8 +35,8 @@ $perl_library_ver_minor = "6";
 $perl_library_ver_build = "13";
 $perl_library_ver_patch = "";
 $perl_library_ver_name  = "1.6.13";
-$perl_library_ver_time  = " 5Nov2019,19:05:19z";
-$perl_library_ver_id    = "@(#)perl_library 1.6.13 -  5Nov2019,19:05:19z";
+$perl_library_ver_time  = "14Nov2019,20:17:49z";
+$perl_library_ver_id    = "@(#)perl_library 1.6.13 - 14Nov2019,20:17:49z";
 
 #{------------------------------------------------------------------------------
 #
@@ -13646,6 +13646,9 @@ EOF67
    #
    #  Dated: 11Apr2019
    #
+   #  NOTE: This really should be replaced with the more up-to-date function
+   #        in perl-lib/checkForCompilerVersion.psub
+   #
    #----------------------------------------------------------------------------
 
    sub mki_checkForCompilerVersion {
@@ -20428,7 +20431,7 @@ sub getWorkingDirectory {
 #
 #  see: totebag/src/perl-lib/idTheHardware.psub
 #
-#  Dated: 05Nov2019 idTheHardware
+#  Dated: 07Nov2019 idTheHardware
 #
 #  NOTE: This function is known to be "hand included" in the following
 #        source files:
@@ -20439,11 +20442,16 @@ sub getWorkingDirectory {
 
 sub idTheHardware {
    my $reported = shift;
+   print DBGOUT "idTheHardware[ reported=\"$reported\"...\n" if $debugging;
    my $HWtype   = "";
    my $osClass  = getOSclass();
    if ($osClass eq "UNIX-like") {
+      print DBGOUT "idTheHardware: ...is UNIX-like\n" if $debugging;
       if ($reported eq "") {
+         print DBGOUT "idTheHardware:    run [uname -m 2>/dev/null]\"\n" if $debugging;
          $reported = `uname -m 2>/dev/null`; chomp $reported; $reported =~ s/\r$//;
+         print DBGOUT "idTheHardware:    ...gives [$reported]\"\n" if $debugging;
+         print DBGOUT "idTheHardware:    assume reported=\"$reported\"\n" if $debugging;
       }
       if ($reported ne "") {
          $_ = $reported;
@@ -20672,8 +20680,10 @@ sub idTheHardware {
       }
    }
    elsif ($osClass eq "Windows-like") {
+      print DBGOUT "idTheHardware: ...is Windows-like\n" if $debugging;
       if ($reported eq "") {
          $reported = $ENV{'PROCESSOR_ARCHITECTURE'};
+         print DBGOUT "idTheHardware:    assume reported=\"$reported\"\n" if $debugging;
       }
       if ($reported ne "") {
          $_ = $reported;
@@ -20705,6 +20715,7 @@ sub idTheHardware {
    else {
       $HWtype = "";
    }
+   print DBGOUT "idTheHardware] ...done(=\"$HWtype\")\n" if $debugging;
    return $HWtype;
 }
 
@@ -23020,6 +23031,8 @@ EOF1
    |
    |    Note that 5, 8, and 9 are only applicable on Windows-like hosts.
    |
+   |    Support on cygwin and mingw system is rather experimental.
+   |
    |DETAILS
    |    The installer construction process is implemented in a different
    |    fashion on UNIX-like systems such as Linux, MacOS, and Solaris
@@ -24215,6 +24228,9 @@ EOF1
    |            </ol>
    |         </blockquote>
    |         Note that 5, 8, and 9 are only applicable on Windows-like hosts.
+   |      </blockquote>
+   |      <blockquote>
+   |         Support on <i>cygwin</i> and <i>mingw</i> system is rather experimental.
    |      </blockquote>
    |
    |      <h3>
