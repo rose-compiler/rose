@@ -7911,7 +7911,9 @@ void c_action_label(Token_t * lbl)
         // done in R612 and very little can be done in R612.
 
         // DQ (12/14/2007): Make sure that we have added the implicit program function to the scope (see test2007_17.f90)
-        build_implicit_program_statement_if_required();
+       
+        // Pei-Hung (11/15/2019) implicit program should be built at statement, not expression
+        // build_implicit_program_statement_if_required();
 
         ROSE_ASSERT(id != NULL);
 
