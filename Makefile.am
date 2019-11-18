@@ -137,6 +137,9 @@ check-smoke:
 check-nonsmoke:
 	$(MAKE) check -C $(top_builddir)/tests/nonsmoke/functional
 
+check-java:
+	$(MAKE) check -C $(top_builddir)/tests/nonsmoke/functional/CompileTests/Java_tests
+
 check:
 	$(MAKE) check-core
 	$(MAKE) check-smoke
