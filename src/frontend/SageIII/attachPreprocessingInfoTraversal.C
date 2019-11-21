@@ -2352,7 +2352,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                     SgGlobal* translation_unit_global_scope = translation_unit_source_file->get_globalScope();
                     ROSE_ASSERT(translation_unit_global_scope != NULL);
 #if 0
-                 // SgDeclarationStatementPtrList 	p_declarations
+                 // SgDeclarationStatementPtrList       p_declarations
                     printf ("translation_unit_global_scope->get_declarations().size() = %zu \n",translation_unit_global_scope->get_declarations().size());
 #endif
 #if 0
