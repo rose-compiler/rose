@@ -5588,6 +5588,15 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      ROSE_ASSERT(optionCount >= 0);
 
+  // DQ (10/26/2019): Remove outliner options.
+     optionCount = sla(argv, "-rose:outline:", "($)", "use_dlopen",1);
+     optionCount = sla(argv, "-rose:outline:", "($)", "copy_orig_file",1);
+     optionCount = sla(argv, "-rose:outline:", "($)", "temp_variable",1);
+     optionCount = sla(argv, "-rose:outline:", "($)", "exclude_headers",1);
+  // optionCount = sla(argv, "-rose:outline:", "($)", "output_path",1);
+     optionCount = sla(argv, "-rose:outline:", "($)^", "(output_path)", filename,1);
+
+
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {

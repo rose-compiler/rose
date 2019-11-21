@@ -154,7 +154,15 @@ Outliner::outline (SgStatement* s, const std::string& func_name)
   {
  // return Transform::outlineBlock (s_post, func_name);
 
+#if 0
+    printf ("Calling outline block(): func_name = %s \n",func_name.c_str());
+#endif
+
     Outliner::Result returnResult = outlineBlock (s_post, func_name);
+
+#if 0
+    printf ("DONE: Calling outline block(): func_name = %s \n",func_name.c_str());
+#endif
 
 #if 0
 // This is now done in ASTtools::replaceStatement().

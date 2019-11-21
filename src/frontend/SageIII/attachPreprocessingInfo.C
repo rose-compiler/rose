@@ -646,10 +646,23 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 #if 0
      printf ("################################################################ \n");
      printf ("################################################################ \n");
-     printf ("In attachPreprocessingInfo(): wave = %s file = %p = %s \n",sageFilePtr->get_wave() ? "true" : "false",sageFilePtr,sageFilePtr->get_sourceFileNameWithPath().c_str());
-     printf (" --- unparse output filename = %s \n",sageFilePtr->get_unparse_output_filename().c_str());
+     printf ("In attachPreprocessingInfo(): wave = %s file    = %p = %s \n",sageFilePtr->get_wave() ? "true" : "false",sageFilePtr,sageFilePtr->get_sourceFileNameWithPath().c_str());
+     printf (" --- unparse output filename                    = %s \n",sageFilePtr->get_unparse_output_filename().c_str());
+     printf (" --- sageFilePtr->get_globalScope()             = %p \n",sageFilePtr->get_globalScope());
+     printf (" --- sageFilePtr->get_unparse_output_filename() = %s \n",sageFilePtr->get_unparse_output_filename().c_str());
      printf ("################################################################ \n");
      printf ("################################################################ \n");
+#endif
+
+  // DQ (11/18/2019): Check the flag that indicates that this SgSourceFile has NOT yet had its CPP directives and comments added.
+     ROSE_ASSERT(sageFilePtr->get_processedToIncludeCppDirectivesAndComments() == false);
+
+#if 0
+     if (sageFilePtr->get_sourceFileNameWithPath() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_28.h")
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
 #endif
 
 #if 0
@@ -699,8 +712,9 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
                ROSE_ASSERT(sageFilePtr->get_header_file_unparsing_optimization_source_file() == false);
                if (sageFilePtr->get_header_file_unparsing_optimization_header_file() == true)
                   {
+#if 0
                     printf ("Optimize the collection of comments and CPP directives to seperate handling of the header files from the source file \n");
-
+#endif
                     header_file_unparsing_optimization_header_file = true;
                   }
              }
@@ -710,6 +724,12 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
           ROSE_ASSERT(false);
 #endif
         }
+
+#if 0
+     printf ("In attachPreprocessingInfo(): sageFilePtr->get_header_file_unparsing_optimization()             = %s \n",sageFilePtr->get_header_file_unparsing_optimization() ? "true" : "false");
+     printf ("In attachPreprocessingInfo(): sageFilePtr->get_header_file_unparsing_optimization_source_file() = %s \n",sageFilePtr->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+     printf ("In attachPreprocessingInfo(): sageFilePtr->get_header_file_unparsing_optimization_header_file() = %s \n",sageFilePtr->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+#endif
 
      if (header_file_unparsing_optimization_source_file == true)
         {
@@ -755,7 +775,11 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
      bool requiresCPP = sageFilePtr->get_requires_C_preprocessor();
 
 #if 0
+     printf ("####################################################################### \n");
+     printf ("####################################################################### \n");
      printf ("In attachPreprocessingInfo(): processAllFiles = %s requiresCPP = %s \n",processAllFiles ? "true" : "false",requiresCPP ? "true" : "false");
+     printf ("####################################################################### \n");
+     printf ("####################################################################### \n");
 #endif
 
      if (processAllFiles == true || requiresCPP == true)
@@ -787,11 +811,32 @@ attachPreprocessingInfo(SgSourceFile *sageFilePtr)
 #endif
 
 #if 0
+     printf ("################################################### \n");
+     printf ("################################################### \n");
+     printf ("Leaving attachPreprocessingInfo(): filename = %s \n",sageFilePtr->get_sourceFileNameWithPath().c_str());
+     printf ("################################################### \n");
+     printf ("################################################### \n");
+#endif
+
+#if 0
+  // DQ (10/27/2019): Testing the regression tests.
+  // if (sageFilePtr->get_sourceFileNameWithPath() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/test4/SimpleInternal.h")
+     if (sageFilePtr->get_sourceFileNameWithPath() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersUsingTokenStream_tests/test0/Simple.h")
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
+#if 0
   // Note that this only builds the include graph starting at the first header file not the input source file.
      string dotgraph_filename = "include_file_graph_from_attachPreprocessingInfo";
      ROSE_ASSERT(sageFilePtr != NULL);
      generateGraphOfIncludeFiles(sageFilePtr,dotgraph_filename);
 #endif
+
+  // DQ (11/18/2019): Set the flag that indicates that this SgSourceFile has had its CPP directives and comments added.
+     sageFilePtr->set_processedToIncludeCppDirectivesAndComments(true);
 
 #if 0
      printf ("Exiting as a test after either call to sageFilePtr or traverseWithinFile \n");

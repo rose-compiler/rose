@@ -461,8 +461,12 @@ outputTypeOfFileAndExit( const string & name )
 #else
      whatTypeOfFileIsThis(name);
 
-  // printf ("\n\nExiting: Unknown file Error \n\n");
-  // ROSE_ASSERT(false);
+#if 1
+     printf ("In outputTypeOfFileAndExit(): name = %s \n",name.c_str());
+     printf ("\n\nExiting: Unknown file Error \n\n");
+     ROSE_ASSERT(false);
+#endif
+
      abort();
 #endif
    }
@@ -891,6 +895,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
           string filenameExtension = StringUtility::fileNameSuffix(sourceFilename);
 
 #if 0
+          printf ("In determineFileType(): sourceFilename    = %s \n",sourceFilename.c_str());
           printf ("In determineFileType(): filenameExtension = %s \n",filenameExtension.c_str());
        // ROSE_ASSERT(false);
 #endif
@@ -1430,7 +1435,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                 // DQ (2/3/2009): Uncommented this to report the file type when we don't process it...
                                 // outputTypeOfFileAndExit(sourceFilename);
-                                   printf ("Warning: This is an unknown file type, not being processed by ROSE \n");
+                                   printf ("Warning: This is an unknown file type, not being processed by ROSE: sourceFilename = %s \n",sourceFilename.c_str());
                                    outputTypeOfFileAndExit(sourceFilename);
                                  }
                             }
@@ -2475,7 +2480,6 @@ SgProject::parse()
                     printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
                     printf ("Calling secondaryPassOverSourceFile(): file = %s \n",file->getFileName().c_str());
 #endif
-
                  // DQ (8/19/2019): Divide this into two parts, for optimization of header file unparsing, optionally 
                  // support the main file collection of comments and CPP directives, and seperately the header file 
                  // collection of comments and CPP directives.
@@ -2494,7 +2498,7 @@ SgProject::parse()
                     file->set_header_file_unparsing_optimization(true);
                     file->set_header_file_unparsing_optimization_source_file(true);
 #if 0
-                    printf ("Perform collection of comments and CPP directives only on the source file \n");
+                    printf ("In SgProject::parse(): Perform collection of comments and CPP directives only on the source file \n");
                     printf ("###################################################### \n");
                     printf ("Processing comments and CPP directives for source file \n");
                     printf ("###################################################### \n");
@@ -2539,7 +2543,7 @@ SgProject::parse()
                     ROSE_ASSERT(file->get_header_file_unparsing_optimization_source_file() == false);
                     ROSE_ASSERT(file->get_header_file_unparsing_optimization_header_file() == false);
 #if 0
-                    printf ("DONE: Calling secondaryPassOverSourceFile() \n");
+                    printf ("In SgProject::parse(): DONE: Calling secondaryPassOverSourceFile() \n");
 #endif
                   }
                  else
@@ -2626,7 +2630,7 @@ SgProject::parse()
                            // DQ (3/29/2019): This still needs to be debugged.
                               SageInterface::translateToUseCppDeclarations(sourceFile);
                             }
-#if 1
+#if 0
                          printf ("In SgProject::parse(): Building token stream mapping map! \n");
 #endif
                       // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
@@ -2655,14 +2659,14 @@ SgProject::parse()
                          if (sourceFile->get_associated_include_file() != NULL)
                             {
                               SgIncludeFilePtrList & include_file_list = sourceFile->get_associated_include_file()->get_include_file_list();
-#if 1
+#if 0
                               printf ("In SgProject::parse(): include_file_list.size() = %zu \n",include_file_list.size());
 #endif
                               for (size_t i = 0; i < include_file_list.size(); i++)
                                  {
                                    SgIncludeFile* includeFile = include_file_list[i];
                                    ROSE_ASSERT(includeFile != NULL);
-#if 1
+#if 0
                                    printf ("In SgProject::parse(): includeFile->get_filename() = %s \n",includeFile->get_filename().str());
 #endif
                                 // DQ (9/26/2018): Note that this is null for include files that are not explicit in the source file (e.g. -isystem option).
@@ -2702,7 +2706,7 @@ SgProject::parse()
                       // token sequence, but usig the token sequence permit us to gather more data.
                          detectMacroOrIncludeFileExpansions(sourceFile);
                        }
-#if 1
+#if 0
                     if ( SgProject::get_verbose() > 0 )
                        {
                          printf ("In SgProject::parse(): SgTokenPtrList token_list: token_list.size() = %zu \n",sourceFile->get_token_list().size());
@@ -3289,7 +3293,8 @@ SgFile::secondaryPassOverSourceFile()
 
 #if 0
      printf ("################ In SgFile::secondaryPassOverSourceFile(): this = %p = %s \n",this,this->class_name().c_str());
-     printf (" --- filename = %s \n",this->getFileName().c_str());
+     printf (" --- filename ================================= %s \n",this->getFileName().c_str());
+     printf (" --- get_header_file_unparsing_optimization() = %s \n",this->get_header_file_unparsing_optimization() ? "true" : "false");
 #endif
 
   // To support initial testing we will call one phase immediately after the other.  Late we will call the second phase, header 
@@ -3475,6 +3480,9 @@ SgFile::secondaryPassOverSourceFile()
 #endif
                   }
 #else
+
+#error "DEAD CODE!"
+
             // Normal path calling attachPreprocessingInfo()
                attachPreprocessingInfo(sourceFile);
 #endif
@@ -4624,14 +4632,16 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           currentListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(sourceFileNameOutputFromCpp,ROSEAttributesList::e_C_language);
 #endif
 
-#if 0
+#if 1
           printf ("Secondary pass over Fortran source file = %s to comment comments and CPP directives (might still be referencing the original source file) \n",sourceFileNameOutputFromCpp.c_str());
           printf ("Calling attachPreprocessingInfo() \n");
 #endif
 
           attachPreprocessingInfo(this);
 
-       // printf ("DONE: calling attachPreprocessingInfo() \n");
+#if 1
+          printf ("DONE: calling attachPreprocessingInfo() \n");
+#endif
 
        // DQ (12/19/2008): Now we have to do an analysis of the AST to interpret the linemarkers.
           processCppLinemarkers();

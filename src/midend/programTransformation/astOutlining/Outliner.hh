@@ -271,14 +271,14 @@ ROSE_DLL_API Sawyer::CommandLine::SwitchGroup commandLineSwitches();
     ROSE_DLL_API SgSourceFile* getLibSourceFile(SgBasicBlock* target);
     
     // DQ (3/20/2019): This function operates on the new file used to support outlined function definitions.
-    /*!\brief XXX 
+    /* \brief XXX 
      * This function operates on the new file used to support outlined function definitions.
      * We use a copy of the file where the code will be outlined FROM, so that if there are references to
      * declarations in the outlined code we can support the outpiled code with those references.  This
      * approach has the added advantage of also supporting the same include file tree as the original 
      * file where the outlined code is being taken from.
      */
-    ROSE_DLL_API void convertFunctionDefinitionsToFunctionPrototypes(SgNode* node);
+    // ROSE_DLL_API void convertFunctionDefinitionsToFunctionPrototypes(SgNode* node);
     
     /*!\brief the lib source file's name convention is rose_input_lib.[c|cxx].
      * 

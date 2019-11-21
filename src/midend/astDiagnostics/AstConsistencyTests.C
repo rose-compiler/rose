@@ -5340,12 +5340,17 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                                                // are assigned the class scope as a parent (independent of if they are first used in a function). So this 
                                                // case should not appear.
                                                // printf ("Error: non-defining memberFunctionDeclaration with parent not set to class scope \n");
+
+#if 0
+                                               // DQ (11/10/2019): Cleanup output spew for demo.
+
                                                   printf ("Note: non-defining memberFunctionDeclaration with parent not set to class scope \n");
                                                   printf ("     memberFunctionDeclaration = %p = %s = %s \n",memberFunctionDeclaration,memberFunctionDeclaration->class_name().c_str(),SageInterface::get_name(memberFunctionDeclaration).c_str());
                                                   SgNode* memberFunctionDeclarationParent = memberFunctionDeclaration->get_parent();
                                                   printf ("     memberFunctionDeclaration->get_parent() = %p = %s = %s \n",memberFunctionDeclarationParent,memberFunctionDeclarationParent->class_name().c_str(),SageInterface::get_name(memberFunctionDeclarationParent).c_str());
 
                                                   memberFunctionDeclaration->get_startOfConstruct()->display("Note: non-defining memberFunctionDeclaration with parent not set to class scope");
+#endif
                                                 }
                                            }
                                       }
