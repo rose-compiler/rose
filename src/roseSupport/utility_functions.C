@@ -43,6 +43,11 @@
 // DQ (9/8/2017): Debugging ROSE_ASSERT. Call sighandler_t signal(int signum, sighandler_t handler);
 #include<signal.h>
 
+#include "AST_FILE_IO.h"
+#include "merge.h"
+// Note that this is required to define the Sg_File_Info_XXX symbols (need for file I/O)
+#include "Cxx_GrammarMemoryPoolSupport.h"
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 using namespace Rose;
@@ -447,6 +452,126 @@ outputPredefinedMacros()
 #endif
    }
 
+namespace Rose {
+namespace AST {
+namespace IO {
+
+typedef std::map<int, std::string> f2n_t;
+typedef std::map<std::string, int> n2f_t;
+
+void mergeFileIDs(f2n_t const & f2n, n2f_t const & n2f, f2n_t & gf2n, n2f_t & gn2f, size_t start_node) {
+  std::map<int, int> idxmap;
+
+  for (f2n_t::const_iterator i = f2n.begin(); i != f2n.end(); i++) {
+    if (gn2f.count(i->second) == 0) {
+      int idx = (int)gn2f.size();
+
+      gn2f[i->second] = idx;
+      gf2n[idx] = i->second;
+      idxmap[i->first] = idx;
+    }
+  }
+  unsigned num_nodes = Sg_File_Info::numberOfNodes();
+  for (unsigned long i = start_node; i < num_nodes; i++) {
+    // Compute the postion of the indexed Sg_File_Info object in the memory pool.
+    unsigned long positionInPool = i % Sg_File_Info_CLASS_ALLOCATION_POOL_SIZE ;
+    unsigned long memoryBlock    = (i - positionInPool) / Sg_File_Info_CLASS_ALLOCATION_POOL_SIZE;
+
+    Sg_File_Info * fileInfo = &(((Sg_File_Info*)(Sg_File_Info_Memory_Block_List[memoryBlock]))[positionInPool]);
+    ROSE_ASSERT(fileInfo != NULL);
+
+    int oldFileId = fileInfo->get_file_id();
+    int newFileId = idxmap[oldFileId];
+
+    if (oldFileId >= 0 && oldFileId != newFileId) {
+      fileInfo->set_file_id(newFileId);
+    }
+  }
+}
+
+void mergeSymbolTable(SgSymbolTable * gst, SgSymbolTable * st) {
+  SgSymbolTable::BaseHashType* iht = st->get_table();
+  ROSE_ASSERT(iht != NULL);
+
+  SgSymbolTable::hash_iterator i = iht->begin();
+  while (i != iht->end()) {
+    SgSymbol * symbol = isSgSymbol((*i).second);
+    ROSE_ASSERT(symbol != NULL);
+
+    if (!gst->exists(i->first)) {
+      // This function in the local function type table is not in the global function type table, so add it.
+      gst->insert(i->first,i->second);
+    } else {
+      // These are redundant symbols, but likely something in the AST points to them so be careful.
+      // This function type is already in the global function type table, so there is nothing to do (later we can delete it to save space)
+    }
+    i++;
+  }
+}
+
+void mergeTypeSymbolTable(SgTypeTable * gtt, SgTypeTable * tt) {
+  SgSymbolTable * st  = tt->get_type_table();
+  SgSymbolTable * gst = gtt->get_type_table();
+
+  mergeSymbolTable(gst, st);
+}
+
+void mergeFunctionTypeSymbolTable(SgFunctionTypeTable * gftt, SgFunctionTypeTable * ftt) {
+  SgSymbolTable * fst  = ftt->get_function_type_table();
+  SgSymbolTable * gfst = gftt->get_function_type_table();
+
+  mergeSymbolTable(gfst, fst);
+}
+
+void append(SgProject * project, std::list<std::string> const & astfiles) {
+  size_t num_nodes = Sg_File_Info::numberOfNodes();
+
+  // Save shared (static) fields, TODO:
+  //   - global scope accross project
+  //   - name mangling caches?
+  SgTypeTable *         gtt = SgNode::get_globalTypeTable();
+  SgFunctionTypeTable * gftt = SgNode::get_globalFunctionTypeTable();
+  f2n_t gf2n = Sg_File_Info::get_fileidtoname_map();
+  n2f_t gn2f = Sg_File_Info::get_nametofileid_map();
+
+  std::list<std::string>::const_iterator astfile = astfiles.begin();
+  size_t cnt = 0;
+  while (astfile != astfiles.end()) {
+    // Note the postfix increment in the following two lines
+    AST_FILE_IO::readASTFromFile(*(astfile++));
+    AstData * ast = AST_FILE_IO::getAst(cnt++);
+
+    // Check that the root of the read AST is valid
+    SgProject * lproject = ast->getRootOfAst();
+    ROSE_ASSERT(lproject->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
+
+    // Insert all files into main project
+    std::vector<SgFile *> const & files = lproject->get_files();
+    for (std::vector<SgFile *>::const_iterator it = files.begin(); it != files.end(); ++it) {
+      project->get_files().push_back(*it);
+    }
+
+    // Load shared (static) fields from the AST being read
+    AST_FILE_IO::setStaticDataOfAst(ast);
+
+    // Merge static fields
+    mergeTypeSymbolTable(gtt, SgNode::get_globalTypeTable());
+    mergeFunctionTypeSymbolTable(gftt, SgNode::get_globalFunctionTypeTable());
+    mergeFileIDs(Sg_File_Info::get_fileidtoname_map(), Sg_File_Info::get_nametofileid_map(), gf2n, gn2f, num_nodes);
+
+    num_nodes = Sg_File_Info::numberOfNodes();
+  }
+
+  // Restore shared (static) fields
+  SgNode::set_globalTypeTable(gtt);
+  SgNode::set_globalFunctionTypeTable(gftt);
+  Sg_File_Info::set_fileidtoname_map(gf2n);
+  Sg_File_Info::set_nametofileid_map(gn2f);
+}
+
+} // IO
+} // AST
+} // ROSE
 
 /*! \brief Call to frontend, processes commandline and generates a SgProject object.
 
@@ -520,6 +645,14 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
      unsetNodesMarkedAsModified(project);
   // printf ("ERROR: In frontend(const std::vector<std::string>& argv): commented out unsetNodesMarkedAsModified() \n");
 
+     std::list<std::string> const & astfiles = project->get_astfiles_in();
+     if (astfiles.size() > 0) {
+       Rose::AST::IO::append(project, astfiles);
+     }
+
+     if (project->get_ast_merge()) {
+       mergeAST(project, /* skipFrontendSpecificIRnodes = */false);
+     }
    
   // Set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
   // Removed semicolon at end of if conditional to allow it to have a body [Rasmussen 2019.01.29]
@@ -658,6 +791,13 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
   // signal(SIG_DFL,NULL);
      signal(SIGABRT,SIG_DFL);
 #endif
+
+     std::string const & astfile_out = project->get_astfile_out();
+     if (astfile_out != "") {
+       AST_FILE_IO::reset();
+       AST_FILE_IO::startUp(project);
+       AST_FILE_IO::writeASTToFile(astfile_out);
+     }
 
 #if 0
   // DQ (9/8/2017): Debugging ROSE_ASSERT.

@@ -6155,6 +6155,9 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                  // check if the expression that we are casting is not a string
 
                  // DQ (7/26/2013): This should also be true (all of the source position info should be consistant).
+                    if (cast_op->get_file_info()->isCompilerGenerated()) {
+                      printf("[Unparse_ExprStmt::unparseCastOp] Fatal: cast_op->get_file_info()->isCompilerGenerated() but !cast_op->get_startOfConstruct()->isCompilerGenerated().\n");
+                    }
                     ROSE_ASSERT(cast_op->get_file_info()->isCompilerGenerated() == false);
 
                  // DQ (7/31/2013): This appears to happen for at least one test in projects/arrayOptimization.
@@ -6217,6 +6220,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                     curprint("/* case SgCastExp::e_C_style_cast: compiler generated cast not output */");
 #endif
                  // DQ (7/26/2013): This should also be true (all of the source position info should be consistant).
+                 //     -> FAILS when merging ASTs read from files (cast of a template parameter used as template argument of the parent class)
                     ROSE_ASSERT(cast_op->get_file_info()->isCompilerGenerated() == true);
                     ROSE_ASSERT(cast_op->get_endOfConstruct()->isCompilerGenerated() == true);
                   }

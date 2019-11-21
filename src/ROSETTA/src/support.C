@@ -2264,10 +2264,17 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("bool", "usingDeferredTransformations", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     Project.setDataPrototype("bool", "ast_merge", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Project.setDataPrototype("std::string", "astfile_out", "",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Project.setDataPrototype("std::list<std::string>", "astfiles_in", "",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-   //  Attribute.setAutomaticGenerationOfCopyFunction(false);
+  // Attribute.setAutomaticGenerationOfCopyFunction(false);
   // Attribute.setDataPrototype    ( "char*", "name"    , "= \"\"" );
 
      BitAttribute.setDataPrototype ( "unsigned long int"  , "bitflag", "= 0",
