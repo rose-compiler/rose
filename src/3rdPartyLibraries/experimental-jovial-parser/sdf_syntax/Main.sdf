@@ -1697,7 +1697,8 @@ context-free syntax
   NumericFormula              -> RelationalFormula      {prefer}
   GeneralFormula              -> RelationalFormula
   BitFormula                  -> RelationalFormula
-  UserDefinedFunctionCall     -> RelationalFormula      {reject}
+%% This reject that may be needed, but causes other problems, commenting out for now
+%%UserDefinedFunctionCall     -> RelationalFormula      {reject}
 
 %%FloatingFormula
 %%  RelationalOperator

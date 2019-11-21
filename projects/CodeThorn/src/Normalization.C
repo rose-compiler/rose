@@ -748,22 +748,35 @@ add
     } else if(isSgAssignOp(expr)||isSgCompoundAssignOp(expr)) {
       // special case: normalize assignment with lhs/rhs-semantics
 
-      // normalize rhs of assignment
-      mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
-
-      // normalize lhs of assignment
-      // skip normalizing top-most operator of lhs because an
-      // lvalue-expression must remain an
-      // lvalue-expression. Introduction of temporary would be
-      // wrong. Note: not all operators can appear as top-most op on
-      // lhs.
-      SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(expr));
-      ROSE_ASSERT(lhs);
-      if(isSgUnaryOp(lhs)) {
-        mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(lhs)),subExprTransformationList,insideExprToBeEliminated);
-      } else if(isSgBinaryOp(lhs)) {
-        registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(lhs)),subExprTransformationList,insideExprToBeEliminated);
-        mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(lhs)),subExprTransformationList,insideExprToBeEliminated);
+      if(isSgExprStatement(expr->get_parent())) {
+        // special handline of assignment that is not inside an expression
+        // normalize rhs of assignment
+        mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
+        // normalize lhs of assignment
+        // skip normalizing top-most operator of lhs because an
+        // lvalue-expression must remain an
+        // lvalue-expression. Introduction of temporary would be
+        // wrong. Note: not all operators can appear as top-most op on
+        // lhs.
+        SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(expr));
+        ROSE_ASSERT(lhs);
+        // v1: do not reserve lhs as temporary variable
+        if(isSgUnaryOp(lhs)) {
+          mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(lhs)),subExprTransformationList,insideExprToBeEliminated);
+        } else if(isSgBinaryOp(lhs)) {
+          registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(lhs)),subExprTransformationList,insideExprToBeEliminated);
+          mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(lhs)),subExprTransformationList,insideExprToBeEliminated);
+        }
+      } else {
+        // v2: treat it like any other unary or binary operator (duplicates the two cases)
+        if(isSgUnaryOp(expr)) {
+          Normalization::TmpVarNrType unaryResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)),subExprTransformationList,insideExprToBeEliminated);
+          mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,unaryResultTmpVarNr,subExprTransformationList);
+        } else {
+          Normalization::TmpVarNrType rhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
+          Normalization::TmpVarNrType lhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList,insideExprToBeEliminated);
+          mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,lhsResultTmpVarNr,rhsResultTmpVarNr,subExprTransformationList);
+        }
       }
     } else if(SgFunctionCallExp* funCallExp=isSgFunctionCallExp(expr)) {
       // special case: function call with normalization of arguments

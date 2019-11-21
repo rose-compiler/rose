@@ -180,28 +180,72 @@ public:
 
         /** Function invoked whenever a null pointer dereference is detected.
          *
-         *  The @p ioMode indicates whether the null address was read or written, and the @p addr is the address that was
-         *  accessed. The address might not be the constant zero depending on other settings (for example, it could be an
-         *  unknown value represented as a variable if "may" analysis is used and the comparison is not limited to only
-         *  constant expressions).
+         *  The following parameters are passed to this callback:
          *
-         *  The instruction during which the null dereference occurred is also passed as an argument, but it may be a null
-         *  pointer in some situations. For instance, the instruction will be null if the dereference occurs when popping the
-         *  return address from the stack for a function that was called but whose implementation is not present (such as when
-         *  the inter-procedural depth was too great, the function is a non-linked import, etc.) */
+         *  The @p analyzer is the state of the analysis at the time that the null dereference is detected. Additional
+         *  information such as the @ref Partitioner2::Partitioner "partitioner" is available through this object.
+         *
+         *  The @p path is the execution path from a starting vertex to the vertex in which the null dereference occurs.  Each
+         *  vertex of the path is a basic block or function summary. All but the last vertex will have a corresponding symbolic
+         *  state of the model checker as it existed at the end of processing the vertex. These states should not be modified
+         *  by this callback.
+         *
+         *  The @p cpu is the model checker's state immediately prior to the null dereference. This callback must not modify
+         *  the state.
+         *
+         *  The @p solver is the optional SMT solver used to conclude that the execution path is feasible and that a null
+         *  dereference occurs. This callback can query the SMT solver to obtain information about the evidence of
+         *  satisfiability.  This callback may use the solver for additional work either in its current transaction or by
+         *  pushing additional transactions; this callback should not pop the current transaction.
+         *
+         *  The @p ioMode indicates whether the null address was read or written.
+         *
+         *  The @p addr is the address that was accessed.  Depending on the model checker's settings, this is either a constant
+         *  or a symbolic expression. In the latter case, the @p solver will have evidence that the expression can be zero.
+         *
+         *  The @p insn is the instruction during which the null dereference occurred and may be a null pointer in some
+         *  situations. For instance, the instruction will be null if the dereference occurs when popping the return address
+         *  from the stack for a function that was called but whose implementation is not present (such as when the
+         *  inter-procedural depth was too great, the function is a non-linked import, etc.) */
         virtual void nullDeref(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
-                               const SmtSolverPtr &solver, IoMode ioMode,
-                               const InstructionSemantics2::BaseSemantics::SValuePtr &addr, SgAsmInstruction *insn) {}
+                               const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
+                               IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+                               SgAsmInstruction *insn) {}
 
         /** Function invoked every time a memory reference occurs.
          *
-         *  The @p ioMode indicates whether the memory location was read or written, and the @p value is the value read or
-         *  written. */
+         *  The following parameters are passed to this callback:
+         *
+         *  The @p analyzer is the state of the analysis at the time that the memory I/O is detected. Additional information
+         *  such as the @ref Partitioner2::Partitioner "partitioner" is available through this object.
+         *
+         *  The @p path is the execution path from a starting vertex to the vertex in which the memory I/O occurs.  Each vertex
+         *  of the path is a basic block or function summary. All but the last vertex will have a corresponding symbolic state
+         *  of the model checker as it existed at the end of processing the vertex. These states should not be modified by this
+         *  callback.
+         *
+         *  The @p cpu is the model checker's state immediately prior to the memory I/O. This callback must not modify the
+         *  state.
+         *
+         *  The @p solver is the optional SMT solver used to conclude that the execution path is feasible.  This callback can
+         *  query the SMT solver to obtain information about the evidence of satisfiability.  This callback may use the solver
+         *  for additional work either in its current transaction or by pushing additional transactions; this callback should
+         *  not pop the current transaction.
+         *
+         *  The @p ioMode indicates whether the memory address was read or written.
+         *
+         *  The @p addr is the address that was accessed.
+         *
+         *  The @p value is the value read or written.
+         *
+         *  The @p insn is the instruction during which the null dereference occurred and may be a null pointer in some
+         *  situations. For instance, the instruction will be null if the dereference occurs when popping the return address
+         *  from the stack for a function that was called but whose implementation is not present (such as when the
+         *  inter-procedural depth was too great, the function is a non-linked import, etc.) */
         virtual void memoryIo(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
-                              const SmtSolverPtr &solver, IoMode ioMode,
-                              const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-                              const InstructionSemantics2::BaseSemantics::SValuePtr &value,
-                              const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops) {}
+                              const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
+                              IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+                              const InstructionSemantics2::BaseSemantics::SValuePtr &value) {}
     };
 
     /** Information stored per V_USER_DEFINED path vertex.

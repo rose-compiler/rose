@@ -15,6 +15,43 @@ using namespace CodeThorn;
 
 Sawyer::Message::Facility CodeThorn::FunctionCallMapping::logger;
 
+void FunctionCallInfo::print() {
+  cout<<"NAME: "<<funCallName<<" TYPE: "<<funCallType<<":"<<funCallType->unparseToString()<<" MANGLEDFUNCALLTYPE: "<<mangledFunCallTypeName<<endl;
+}
+
+bool FunctionCallInfo::isFunctionPointerCall() {
+  return funCallName=="*";
+}
+
+FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallExp* fc) {
+    SgExpression* exp=fc->get_function();
+    SgExprListExp* funCallArgs=fc->get_args();
+    FunctionCallInfo fcInfo;
+    if(SgFunctionRefExp* functionRef=isSgFunctionRefExp(exp)) {
+      // direct function call
+      SgFunctionSymbol* funSym=functionRef->get_symbol();
+      assert(funSym);
+      SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(funSym);
+      fcInfo.funCallType = isSgFunctionType(functionSymbol->get_type());
+      fcInfo.funCallName=functionSymbol->get_name();
+      fcInfo.mangledFunCallTypeName=fcInfo.funCallType->get_mangled();
+    } else if(SgVarRefExp* varRefExp=isSgVarRefExp(exp)) {
+      // function pointer call
+      SgType* type=varRefExp->get_type();
+      const SgPointerType* pointerType = SgNodeHelper::isPointerType(type);
+      ROSE_ASSERT(pointerType);
+      SgFunctionType* funCallType=isSgFunctionType(pointerType->get_base_type());
+      ROSE_ASSERT(funCallType);
+      fcInfo.funCallName="*";
+      fcInfo.funCallType=funCallType;
+      fcInfo.mangledFunCallTypeName=funCallType->get_mangled();
+    } else {
+      SAWYER_MESG(logger[ERROR])<<"UNKNOWN FUNCTION CALL EXP."<<endl;
+      exit(1);
+    }
+    return fcInfo;
+}
+
 void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
   RoseAst ast(root);
   std::list<SgFunctionDeclaration*> funDeclList;
@@ -31,73 +68,52 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
   }
   // NOTE: SgFunctionDeclaration* funDecl=SgNodeHelper::findFunctionDeclarationWithFunctionSymbol(funSym);
   // SgName qfName=funDecl->get_qualified_name();
-
+#if 0
+  cout<<"DUMP FUNCTION CALLS:"<<endl;
   for (auto fc : funCallList) {
-    // determine all components of call
-    // name or fpointer or other
-    // type of params
-    FunctionCallTarget funCallTarget;
+    FunctionCallInfo fcInfo=determineFunctionCallInfo(fc);
+    fcInfo.print();
+  }
+  cout<<"DUMP FUNCTION TARGETS:"<<endl;
+  for (auto fd : funDefList) {
+    FunctionCallTarget fcTarget(fd);
+    fcTarget.print();
+  }
 
-    SgExpression* exp=fc->get_function();
-    //cout<<"get_function:exp:"<<AstTerm::astTermWithNullValuesAndTypesToString(exp)<<endl;
-    SgExprListExp* funCallArgs=fc->get_args();
-    //SgFunctionSymbol* funcSymbol = SgNodeHelper::getSymbolOfFunctionDeclaration(funcDecl);
-
-    bool isFunctionPointer=false;
-    SgName funCallName;
-    SgFunctionType* funCallType=nullptr;
-    if(SgFunctionDefinition* funDef=SgNodeHelper::determineFunctionDefinition(fc)) {
-      funCallTarget.setDefinition(funDef);
-      funCallTarget.setDeclaration(funDef->get_declaration());
-      mapping[fc].insert(funCallTarget);
-      return;
-    } else if(SgFunctionRefExp* functionRef=isSgFunctionRefExp(exp)) {
-      // direct function call
-      SgFunctionSymbol* funSym=functionRef->get_symbol();
-      assert(funSym);
-      SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(funSym);
-      funCallName=functionSymbol->get_name();
-      funCallType = isSgFunctionType(functionSymbol->get_type());
-    } else if(SgVarRefExp* varRefExp=isSgVarRefExp(exp)) {
-      // function pointer call
-      SgType* type=varRefExp->get_type();
-      if(const SgPointerType* pointerType = SgNodeHelper::isPointerType(type)) {
-        if(SgFunctionType* funType=isSgFunctionType(pointerType->get_base_type())) {
-          isFunctionPointer=true;
-          funCallType=funType;
-          assert(funCallType);
-        } else {
-          SAWYER_MESG(logger[DEBUG])<<"DEBUG: unknown function call."<<endl;
-          exit(1);
-        }
-      } else {
-        SAWYER_MESG(logger[DEBUG])<<"DEBUG: unknown function call."<<endl;
+  cout<<"RESOLVING FUNCTION CALLS"<<endl;
+#endif
+  // experimental O(m*n) matching
+  int n=0;
+  for (auto fc : funCallList) {
+    FunctionCallInfo fcInfo=determineFunctionCallInfo(fc);
+    for (auto fd : funDefList) {
+      FunctionCallTarget fcTarget(fd);
+      bool matching;
+      switch(_matchMode) {
+      case 1:
+        // this one should be working (but has a bug)
+        matching=fcInfo.funCallType==fcTarget.getFunctionType();break;
+      case 2:
+        // this one should be working (but has a bug)
+        matching=fcInfo.mangledFunCallTypeName==fcTarget.getMangledFunctionTypeName();break;
+      case 3:
+        // this one works as workaround
+        matching=fcInfo.funCallType->unparseToString()==fcTarget.getFunctionType()->unparseToString();break;
+      default:
+        cerr<<"Error: unknown matchmode "<<_matchMode<<endl;
         exit(1);
       }
-      //cout<<AstTerm::astTermWithNullValuesAndTypesToString(type)<<endl;
-    }
-    
-    SgName mangledFunCallType=funCallType->get_mangled();
-    // try to match type now
-    for(auto fd : funDefList) {
-      //SgInitializedNamePtrList& funDefParams=SgNodeHelper::getFunctionDefinitionFormalParameterList(fd);
-      //SgName funDefMangledName=fd->get_mangled_name();
-      SgFunctionType* funDefType= fd->get_declaration()->get_type();
-      SgName funDefName=fd->get_declaration()->get_name(); //fd->get_qualified_name(); 
-      SgName mangledFunDefType=funCallType->get_mangled();
-      if(funCallType==funDefType || mangledFunCallType==mangledFunDefType) {
-        //cout<<AstTerm::astTermWithNullValuesAndTypesToString(funCallType)<<endl;
-        if(funCallName==funDefName || isFunctionPointer) {
-          SAWYER_MESG(logger[TRACE])<<"RESOLVED CALL across translation units based on TYPES and Names: "<<fc->unparseToString()<<" ::: "<<fd->get_declaration()->unparseToString()<<endl;
-          funCallTarget.setDefinition(fd);
-          funCallTarget.setDeclaration(fd->get_declaration());
+      if(matching) {
+        if(fcInfo.isFunctionPointerCall()) {
+          mapping[fc].insert(fcTarget);n++;
+        } else if(fcInfo.funCallName==fcTarget.getFunctionName()) {
+          mapping[fc].insert(fcTarget);n++;
         }
       }
     }
-    mapping[fc].insert(funCallTarget);
   }
-  SAWYER_MESG(logger[TRACE])<<"INFO: FunctionCallMapping established: resolved "<<mapping.size()<<" of "<<funCallList.size()<<" function calls."<<endl;
-  SAWYER_MESG(logger[TRACE])<<toString()<<endl;
+  SAWYER_MESG(logger[INFO])<<"Resolved "<<n<<" function calls."<<endl;
+  return;
 }
 
 std::string FunctionCallMapping::toString() {
@@ -122,13 +138,13 @@ void FunctionCallMapping::initDiagnostics() {
 }
 
 FunctionCallTargetSet FunctionCallMapping::resolveFunctionCall(SgFunctionCallExp* funCall) {
-  FunctionCallTargetSet fcs;
   if(funCall) {
-    SAWYER_MESG(logger[TRACE]) << "DEBUG: @FunctionCallMapping::resolveFunctionCall:"<<funCall->unparseToString()<<endl;
+    //SAWYER_MESG(logger[TRACE]) << "DEBUG: @FunctionCallMapping::resolveFunctionCall:"<<funCall->unparseToString()<<endl;
     auto iter=mapping.find(funCall);
     if(iter!=mapping.end()) {
       return (*iter).second;
     }
   }
-  return fcs;
+  FunctionCallTargetSet emptySet;
+  return emptySet;
 }

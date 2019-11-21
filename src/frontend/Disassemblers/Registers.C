@@ -6,8 +6,7 @@ using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 
 std::ostream&
-operator<<(std::ostream &o, const RegisterDictionary &dict)
-{
+operator<<(std::ostream &o, const RegisterDictionary &dict) {
     dict.print(o);
     return o;
 }
@@ -18,8 +17,7 @@ operator<<(std::ostream &o, const RegisterDictionary &dict)
  *******************************************************************************************************************************/
 
 std::string
-RegisterNames::operator()(RegisterDescriptor rdesc, const RegisterDictionary *dict_/*=NULL*/) const
-{
+RegisterNames::operator()(RegisterDescriptor rdesc, const RegisterDictionary *dict_/*=NULL*/) const {
     if (rdesc.isEmpty())
         return prefix + (prefix==""?"":"_") + "NONE";
 
@@ -206,15 +204,13 @@ RegisterDictionary::firstUnusedMinor(unsigned majr) const {
 }
 
 RegisterDictionary::RegisterDescriptors
-RegisterDictionary::get_largest_registers() const
-{
+RegisterDictionary::get_largest_registers() const {
     SortBySize order(SortBySize::ASCENDING);
     return filter_nonoverlapping(get_descriptors(), order, true);
 }
 
 RegisterDictionary::RegisterDescriptors
-RegisterDictionary::get_smallest_registers() const
-{
+RegisterDictionary::get_smallest_registers() const {
     SortBySize order(SortBySize::DESCENDING);
     return filter_nonoverlapping(get_descriptors(), order, true);
 }
@@ -236,8 +232,7 @@ RegisterDictionary::print(std::ostream &o) const {
 
 // class method
 const RegisterDictionary *
-RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitecture isa)
-{
+RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitecture isa) {
     typedef SgAsmExecutableFileFormat EFF;
     switch (isa & EFF::ISA_FAMILY_MASK) {
         case EFF::ISA_IA32_Family:
@@ -276,14 +271,16 @@ RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitec
 
 // class method
 const RegisterDictionary *
-RegisterDictionary::dictionary_for_isa(SgAsmInterpretation *interp)
-{
+RegisterDictionary::dictionary_for_isa(SgAsmInterpretation *interp) {
     const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
     return hdrs.empty() ? NULL : dictionary_for_isa(hdrs.front()->get_isa());
 }
 
 const RegisterDictionary *
 RegisterDictionary::dictionary_i8086() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("i8086");
@@ -353,8 +350,10 @@ RegisterDictionary::dictionary_i8086() {
 }
 
 const RegisterDictionary *
-RegisterDictionary::dictionary_i8088()
-{
+RegisterDictionary::dictionary_i8088() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("i8088");
@@ -364,8 +363,10 @@ RegisterDictionary::dictionary_i8088()
 }
 
 const RegisterDictionary *
-RegisterDictionary::dictionary_i286()
-{
+RegisterDictionary::dictionary_i286() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("i286");
@@ -377,8 +378,10 @@ RegisterDictionary::dictionary_i286()
 }
 
 const RegisterDictionary *
-RegisterDictionary::dictionary_i386()
-{
+RegisterDictionary::dictionary_i386() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("i386");
@@ -428,8 +431,10 @@ RegisterDictionary::dictionary_i386()
 }
 
 const RegisterDictionary *
-RegisterDictionary::dictionary_i386_387()
-{
+RegisterDictionary::dictionary_i386_387() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("i386 w/387");
@@ -493,10 +498,11 @@ RegisterDictionary::dictionary_i386_387()
     return regs;
 }
         
-
 const RegisterDictionary *
-RegisterDictionary::dictionary_i486()
-{
+RegisterDictionary::dictionary_i486() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("i486");
@@ -507,8 +513,10 @@ RegisterDictionary::dictionary_i486()
 }
 
 const RegisterDictionary *
-RegisterDictionary::dictionary_pentium()
-{
+RegisterDictionary::dictionary_pentium() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("pentium");
@@ -536,8 +544,10 @@ RegisterDictionary::dictionary_pentium()
 }
 
 const RegisterDictionary *
-RegisterDictionary::dictionary_pentiumiii()
-{
+RegisterDictionary::dictionary_pentiumiii() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("pentiumiii");
@@ -573,8 +583,10 @@ RegisterDictionary::dictionary_pentiumiii()
 }
 
 const RegisterDictionary *
-RegisterDictionary::dictionary_pentium4()
-{
+RegisterDictionary::dictionary_pentium4() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("pentium4");
@@ -584,8 +596,10 @@ RegisterDictionary::dictionary_pentium4()
 }
 
 const RegisterDictionary *
-RegisterDictionary::dictionary_amd64()
-{
+RegisterDictionary::dictionary_amd64() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("amd64");
@@ -641,6 +655,9 @@ RegisterDictionary::dictionary_amd64()
 
 const RegisterDictionary *
 RegisterDictionary::dictionary_arm7() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     /* Documentation of the Nintendo GameBoy Advance is pretty decent. It's located here:
      * http:// nocash.emubase.de/gbatek.htm */
     static RegisterDictionary *regs = NULL;
@@ -683,6 +700,9 @@ RegisterDictionary::dictionary_arm7() {
 
 const RegisterDictionary *
 RegisterDictionary::dictionary_powerpc32() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // WARNING: PowerPC documentation numbers register bits in reverse of their power-of-two position. ROSE numbers bits
     //          according to their power of two, so that the bit corresponding to 2^i is said to be at position i in the
@@ -830,6 +850,9 @@ RegisterDictionary::dictionary_powerpc32() {
 
 const RegisterDictionary *
 RegisterDictionary::dictionary_powerpc64() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // WARNING: PowerPC documentation numbers register bits in reverse of their power-of-two position. ROSE numbers bits
     //          according to their power of two, so that the bit corresponding to 2^i is said to be at position i in the
@@ -976,8 +999,10 @@ RegisterDictionary::dictionary_powerpc64() {
 }
 
 const RegisterDictionary *
-RegisterDictionary::dictionary_mips32()
-{
+RegisterDictionary::dictionary_mips32() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("mips32");
@@ -1054,8 +1079,10 @@ RegisterDictionary::dictionary_mips32()
 }
 
 const RegisterDictionary *
-RegisterDictionary::dictionary_mips32_altnames()
-{
+RegisterDictionary::dictionary_mips32_altnames() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("mips32");
@@ -1100,8 +1127,10 @@ RegisterDictionary::dictionary_mips32_altnames()
 }
 
 const RegisterDictionary *
-RegisterDictionary::dictionary_m68000() 
-{
+RegisterDictionary::dictionary_m68000() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("m68000");
@@ -1195,8 +1224,10 @@ RegisterDictionary::dictionary_m68000()
 }
 
 const RegisterDictionary *
-RegisterDictionary::dictionary_m68000_altnames()
-{
+RegisterDictionary::dictionary_m68000_altnames() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("m68000");
@@ -1210,8 +1241,10 @@ RegisterDictionary::dictionary_m68000_altnames()
 // FIXME[Robb P. Matzke 2014-07-15]: This is fairly generic at this point. Eventually we'll split this function into
 // dictionaries for each specific Freescale ColdFire architecture.
 const RegisterDictionary *
-RegisterDictionary::dictionary_coldfire()
-{
+RegisterDictionary::dictionary_coldfire() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("freescale MAC");
@@ -1270,8 +1303,10 @@ RegisterDictionary::dictionary_coldfire()
 
 // FreeScale ColdFire CPUs with EMAC (extended multiply-accumulate) unit.
 const RegisterDictionary *
-RegisterDictionary::dictionary_coldfire_emac()
-{
+RegisterDictionary::dictionary_coldfire_emac() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     static RegisterDictionary *regs = NULL;
     if (!regs) {
         regs = new RegisterDictionary("freescale EMAC");

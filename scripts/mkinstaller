@@ -22,11 +22,21 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "5";
-$mkinstaller_ver_build = "16";
+$mkinstaller_ver_build = "23";
 $mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.5.16";
-$mkinstaller_ver_time  = " 8Oct2019,18:08:04z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.16 -  8Oct2019,18:08:04z";
+$mkinstaller_ver_name  = "2.5.23";
+$mkinstaller_ver_time  = "11Nov2019,02:20:58z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.23 - 11Nov2019,02:20:58z";
+
+# MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
+
+$perl_library_ver_major = "1";
+$perl_library_ver_minor = "6";
+$perl_library_ver_build = "13";
+$perl_library_ver_patch = "";
+$perl_library_ver_name  = "1.6.13";
+$perl_library_ver_time  = "14Nov2019,20:17:49z";
+$perl_library_ver_id    = "@(#)perl_library 1.6.13 - 14Nov2019,20:17:49z";
 
 #{------------------------------------------------------------------------------
 #
@@ -152,6 +162,10 @@ if ($valueOfDebugVar ne "") {
    }
 }
 
+#$debugging        = 1;
+#*DBGOUT           = STDERR;
+#$dbgOutToPathname = "";
+#
 #-------------------------------------------------------------------------------
 #
 #  Initialization...
@@ -2317,7 +2331,7 @@ if ($valueOfDebugVar ne "") {
    }
    print DBGOUT "mkinstaller: ...done\n" if $debugging;
    $TmpDir   = absname($TmpDir);
-   print DBGOUT "mkinstaller:    use: \"".nativePathname($TmpDir).$slash."\"\n" if $debugging;
+   print DBGOUT "mkinstaller:    use: \"".nativePathname($TmpDir).$slash."\"\n"  if $debugging;
    $TmpDirT  = "$TmpDir/mki.$$";
    print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirT).$slash."\"\n" if $debugging;
    $TmpDirA  = "$TmpDirT/accumulator";
@@ -2328,7 +2342,7 @@ if ($valueOfDebugVar ne "") {
    $TmpDirW  = "$TmpDirT/wrapper";
    print DBGOUT "mkinstaller:         \"".nativePathname($TmpDirW).$slash."\"\n" if $debugging;
    $TmpFile  = "$TmpDirT/script.tmp";
-   print DBGOUT "mkinstaller:         \"".nativePathname($TmpFile)."\"\n" if $debugging;
+   print DBGOUT "mkinstaller:         \"".nativePathname($TmpFile)."\"\n"  if $debugging;
    $TmpFileE = "$TmpDir/mki.$$.err";
    print DBGOUT "mkinstaller:    and: \"".nativePathname($TmpFileE)."\"\n" if $debugging;
 
@@ -2810,8 +2824,7 @@ if ($valueOfDebugVar ne "") {
             my $cmd     = "uname -s";
             print DBGOUT "mkinstaller:    run [$cmd]\n" if $debugging;
             my $gives   = `$cmd`;
-            my $status  = $? >> 8; chomp $gives;
-            chomp $gives;
+            my $status  = $? >> 8; chomp $gives; $gives =~ s/\r$//;
             if ($status != 0) {
                print DBGOUT "mkinstaller:    ...failed, exit code $status\n" if $debugging;
                $Sreturn = "";
@@ -2823,8 +2836,7 @@ if ($valueOfDebugVar ne "") {
             $cmd        = "uname -r";
             print DBGOUT "mkinstaller:    run [$cmd]\n" if $debugging;
             $gives      = `$cmd`;
-            my $status  = $? >> 8; chomp $gives;
-            chomp $gives;
+            my $status  = $? >> 8; chomp $gives; $gives =~ s/\r$//;
             if ($status != 0) {
                print DBGOUT "mkinstaller:    ...failed, exit code $status\n" if $debugging;
                $Rreturn = "";
@@ -4266,7 +4278,7 @@ if ($valueOfDebugVar ne "") {
                print STDERR "mkinstaller: working \"$bn\"\n" if (1 <= $verbosityLevel);
                {
                   if ($debugging) {
-                     my $imInDir = `pwd`; chomp $imInDir;
+                     my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
                      print DBGOUT "mkinstaller: ...now in \"".nativePathname($imInDir)."\"\n" if $debugging;
                   }
                   my @dirs = @{ $dirBasenames{$bn}{"pathnames"} };
@@ -4290,7 +4302,7 @@ if ($valueOfDebugVar ne "") {
                      }
                      {
                         if ($debugging) {
-                           my $imInDir = `pwd`; chomp $imInDir;
+                           my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
                            print DBGOUT "mkinstaller:    now in \"".nativePathname($imInDir)."\"\n" if $debugging;
                         }
                         #---------------------------------------
@@ -4342,7 +4354,7 @@ if ($valueOfDebugVar ne "") {
                            #  Show what the "initial" directory
                            #  now contains...
                            #
-                           my $back = `pwd`; chomp $back;
+                           my $back = `pwd`; chomp $back; $back =~ s/\r$//;
                            chdir($TmpDirI);
                               if (opendir(DIR,$TmpDirI)) {
                                  print DBGOUT "mkinstaller:    ...\"".$TmpDirI.$slash."\" now contains\n" if $debugging;
@@ -4378,7 +4390,7 @@ if ($valueOfDebugVar ne "") {
                         #  TmpDirA
                         #
                         if ($debugging) {
-                           my $imInDir = `pwd`; chomp $imInDir;
+                           my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
                            print DBGOUT "mkinstaller:    now in \"$imInDir\"\n" if $debugging;
                         }
                         my $cmd;
@@ -4437,7 +4449,7 @@ if ($valueOfDebugVar ne "") {
                            #  Show what the "accumulator" directory
                            #  now contains...
                            #
-                           my $back = `pwd`; chomp $back;
+                           my $back = `pwd`; chomp $back; $back =~ s/\r$//;
                            chdir($TmpDirA);
                               if (opendir(DIR,$TmpDirA)) {
                                  print DBGOUT "mkinstaller:    ...\"".$TmpDirI.$slash."\" now contains\n" if $debugging;
@@ -4456,7 +4468,7 @@ if ($valueOfDebugVar ne "") {
                      }
                   }
                   if ($debugging) {
-                     my $imInDir = `pwd`; chomp $imInDir;
+                     my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
                      print DBGOUT "mkinstaller:    still in \"$imInDir\"\n" if $debugging;
                   }
                   if ( ! chdir($here)) {
@@ -4466,7 +4478,7 @@ if ($valueOfDebugVar ne "") {
                      exit 1;
                   }
                   if ($debugging) {
-                     my $imInDir = `pwd`; chomp $imInDir;
+                     my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
                      print DBGOUT "mkinstaller: ...back in \"$imInDir\"\n" if $debugging;
                   }
                }
@@ -4566,7 +4578,7 @@ if ($valueOfDebugVar ne "") {
                exit 1;
             }
             if ($debugging) {
-               my $imInDir = `pwd`; chomp $imInDir;
+               my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
                print DBGOUT "mkinstaller:    now in \"$imInDir\"\n" if $debugging;
             }
             {
@@ -4575,7 +4587,7 @@ if ($valueOfDebugVar ne "") {
                   #  Show what the "wrapper" directory
                   #  now contains...
                   #
-                  my $back = `pwd`; chomp $back;
+                  my $back = `pwd`; chomp $back; $back =~ s/\r$//;
                   chdir($TmpDirW);
                      if (opendir(DIR,$TmpDirW)) {
                         my $count = 0;
@@ -4647,7 +4659,7 @@ if ($valueOfDebugVar ne "") {
                      #  Show what the "wrapper" directory
                      #  now contains...
                      #
-                     my $back = `pwd`; chomp $back;
+                     my $back = `pwd`; chomp $back; $back = s/\r$//;
                      chdir($TmpDirW);
                         if (opendir(DIR,$TmpDirW)) {
                            my $count = 0;
@@ -4677,12 +4689,12 @@ if ($valueOfDebugVar ne "") {
                exit 1;
             }
             if ($debugging) {
-               my $imInDir = `pwd`; chomp $imInDir;
+               my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
                print DBGOUT "mkinstaller:    back in \"$imInDir\"\n" if $debugging;
             }
             print DBGOUT "mkinstaller: ...copy the individual files into the wrapper directory\n" if $debugging;
             if ($debugging) {
-               my $imInDir = `pwd`; chomp $imInDir;
+               my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
                print DBGOUT "mkinstaller:    now in \"$imInDir\"\n" if $debugging;
             }
             {
@@ -13394,7 +13406,7 @@ EOF67
             if (open(ISCRIPT,"< $NSISscriptName")) {
                print DBGOUT "mkinstaller{ ...gives:\n";
                while (<ISCRIPT>) {
-                  chomp;
+                  chomp; s/\r$//;
                   my $got = $_;
                   print DBGOUT "mkinstaller|".$got."\n";
                }
@@ -13413,7 +13425,7 @@ EOF67
       {
          print STDERR "mkinstaller: ...\"compiling\" \"".nativePathname($NSISscriptName)."\"\n" if (1 <= $verbosityLevel);
          print STDERR "mkinstaller:    using \"".nativePathname($use_makensis)."\"\n" if (2 <= $verbosityLevel);
-         my $cmd    = quoteIfReqd(nativePathname($use_makensis))." ".quoteIfReqd(nativePathname($NSISscriptName));
+         my $cmd    = "\"".nativePathname($use_makensis)."\" \"".nativePathname($NSISscriptName)."\"";
          print DBGOUT "mkinstaller: ...run [$cmd]\n" if $debugging;
          my $status = system "( $cmd ) >$devNull 2>&1";
          print DBGOUT "mkinstaller:    gives exit code $status\n" if $debugging;
@@ -13634,6 +13646,9 @@ EOF67
    #
    #  Dated: 11Apr2019
    #
+   #  NOTE: This really should be replaced with the more up-to-date function
+   #        in perl-lib/checkForCompilerVersion.psub
+   #
    #----------------------------------------------------------------------------
 
    sub mki_checkForCompilerVersion {
@@ -13667,8 +13682,9 @@ EOF67
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^.*aCC:\s+HP\s+ANSI\s+C\+\+\s+\S+\s+[AB]\.([0-9]+\.[0-9]+\S*)/) {
                            $result   = "$theBasename $1";
@@ -13697,8 +13713,9 @@ EOF67
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response  = `$cmd`;
                            my $status    = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response     =~ tr!\n! !;
+                           $response     =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^.*Microsoft\s+.*\s+Optimizing Compiler Version ([0-9]+\.[0-9]+\S*)/) {
                               $result    = "$theBasename $1";
@@ -13728,8 +13745,9 @@ EOF67
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^.*\bclang\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)/i) {
                            $result   = "$theBasename $2";
@@ -13757,8 +13775,9 @@ EOF67
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^.*\bclang\s+version\s+(([0-9]+(\.[0-9]+(\.[0-9]+)?)?)\S*)/i) {
                            $result   = "$theBasename $2";
@@ -13798,8 +13817,9 @@ EOF67
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
                               $result   = "$theBasename $1";
@@ -13833,8 +13853,9 @@ EOF
                               print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                               my $response = `$cmd`;
                               my $status   = $?;
-                              chomp $response;
+                              chomp $response; $response =~ s/\r$//;
                               $response    =~ tr!\n! !;
+                              $response    =~ tr!\r!!d;
                               print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                               if ($response =~ /^.*ccom:\s+\S+\s+[AB]\.([0-9]+\.[0-9]+\S+)\s+HP\s+C\s+Compiler/) {
                                  $result   = "$theBasename $1";
@@ -13857,8 +13878,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*MIPSpro\s+Compilers:\s+Version\s+([0-9]+\.\S+)/) {
                               $result   = "$theBasename $1";
@@ -13874,8 +13896,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^.*DEC\s+C\s+V([0-9]+\.\S+)\s+/) {
                               $result   = "$theBasename $1";
@@ -13891,8 +13914,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*cc:\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
                               $result   = "$theBasename $1";
@@ -13908,8 +13932,9 @@ EOF
                               print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                               $response = `$cmd`;
                               $status   = $?;
-                              chomp $response;
-                              $response    =~ tr!\n! !;
+                              chomp $response; $response =~ s/\r$//;
+                              $response =~ tr!\n! !;
+                              $response =~ tr!\r!!d;
                               print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                               if ($response =~ /^\s*cc:\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
                                  $result   = "$theBasename $1";
@@ -13930,8 +13955,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
                               $result   = "$theBasename $1";
@@ -13974,8 +14000,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^.*DIGITAL\s+C\+\+\s+V([0-9]+\.\S+)\s+/) {
                               $result   = "$theBasename $1";
@@ -14001,8 +14028,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
                               $result   = "$theBasename $1";
@@ -14022,8 +14050,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
                               $result   = "$theBasename $1";
@@ -14050,8 +14079,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
                               $result   = "$theBasename $1";
@@ -14071,8 +14101,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*MIPSpro\s+Compilers:\s+Version\s+([0-9]+\.\S+)/) {
                               $result   = "$theBasename $1";
@@ -14088,8 +14119,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*CC:\s+Sun\s+C\+\+\s+([0-9]+\.[0-9]+\S*)/) {
                               $result   = "$theBasename $1";
@@ -14105,8 +14137,9 @@ EOF
                               print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                               $response = `$cmd`;
                               $status   = $?;
-                              chomp $response;
-                              $response    =~ tr!\n! !;
+                              chomp $response; $response =~ s/\r$//;
+                              $response =~ tr!\n! !;
+                              $response =~ tr!\r!!d;
                               print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                               if ($response =~ /^\s*CC:\s+Sun\s+C\+\+\s+([0-9]+\.[0-9]+\S*)/) {
                                  $result   = "$theBasename $1";
@@ -14127,8 +14160,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
                               $result   = "$theBasename $1";
@@ -14155,8 +14189,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*MIPSpro\s+Compilers:\s+Version\s+([0-9]+\.\S+)/) {
                               $result   = "$theBasename $1";
@@ -14172,8 +14207,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^.+\s+-f77\s+.+f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
                               $result   = "$theBasename $1";
@@ -14189,8 +14225,9 @@ EOF
                               print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                               $response = `$cmd`;
                               $status   = $?;
-                              chomp $response;
-                              $response    =~ tr!\n! !;
+                              chomp $response; $response =~ s/\r$//;
+                              $response =~ tr!\n! !;
+                              $response =~ tr!\r!!d;
                               print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                               if ($response =~ /^.+\s+-f77\s+.+f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
                                  $result   = "$theBasename $1";
@@ -14211,8 +14248,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*GNU\s+Fortran\s+\(GCC\)\s+([0-9]+\.\S+)/) {
                               $result   = "$theBasename $1";
@@ -14247,8 +14285,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*HP\s+F90\s+v([0-9]+\.[0-9]+\S*)/) {
                               $result   = "$theBasename $1";
@@ -14264,8 +14303,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*MIPSpro\s+Compilers:\s+Version\s+([0-9]+\.\S+)/) {
                               $result   = "$theBasename $1";
@@ -14281,8 +14321,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response = `$cmd`;
                            my $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response    =~ tr!\n! !;
+                           $response    =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
                               $result   = "$theBasename $1";
@@ -14298,8 +14339,9 @@ EOF
                               print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                               $response = `$cmd`;
                               $status   = $?;
-                              chomp $response;
+                              chomp $response; $response =~ s/\r$//;
                               $response    =~ tr!\n! !;
+                              $response    =~ tr!\r!!d;
                               print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                               if ($response =~ /^\s*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
                                  $result   = "$theBasename $1";
@@ -14335,8 +14377,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*GNU\s+Fortran\s+\(GCC\)\s+([0-9]+\.\S+)/) {
                            $result   = "$theBasename $1";
@@ -14368,8 +14411,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*gcc\s+\(GCC\)\s+([0-9]+\.\S+)/) {
                            $result   = "$theBasename $1";
@@ -14405,8 +14449,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*GNU\s+Fortran\s+\(GCC\)\s+([0-9]+\.\S+)/) {
                            $result   = "$theBasename $1";
@@ -14434,8 +14479,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*\S+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
                            $result   = "$theBasename $1";
@@ -14477,8 +14523,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*icc\s+\(ICC\)\s+([0-9]+\.\S+)/) {
                            $result   = "$theBasename $1";
@@ -14490,8 +14537,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            $response = `$cmd`;
                            $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response =~ tr!\n! !;
+                           $response =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*[Vv]ersion\s+([0-9]+\.[0-9]+(\S*))/) {
                               $result = "$theBasename $1";
@@ -14512,8 +14560,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*icpc\s+\(ICC\)\s+([0-9]+\.\S+)/) {
                            $result   = "$theBasename $1";
@@ -14525,8 +14574,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            $response = `$cmd`;
                            $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response =~ tr!\n! !;
+                           $response =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*[Vv]ersion\s+([0-9]+\.[0-9]+(\S*))/) {
                               $result = "$theBasename $1";
@@ -14547,8 +14597,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*ifort\s+\(IFORT\)\s+([0-9]+\.\S+)/) {
                            $result   = "$theBasename $1";
@@ -14560,8 +14611,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            $response = `$cmd`;
                            $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response =~ tr!\n! !;
+                           $response =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*ifort\s+version\s+([0-9]+\.[0-9]+(\S*))/) {
                               $result = "$theBasename $1";
@@ -14591,8 +14643,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            my $response  = `$cmd`;
                            my $status    = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response     =~ tr!\n! !;
+                           $response     =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^.*Microsoft\s+.*\s+Incremental\s+Linker\s+Version\s+([0-9]+\.[0-9]+\S*)/) {
                               $result    = "$theBasename $1";
@@ -14619,8 +14672,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*gcc\s+\(GCC\)\s+([0-9]+\.\S+)/) {
                            $result   = "$theBasename $1";
@@ -14640,8 +14694,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            $response = `$cmd`;
                            $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response =~ tr!\n! !;
+                           $response =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*[Vv]ersion\s+([0-9]+\.[0-9]+(\S*))/) {
                               $result = "$theBasename $1";
@@ -14653,8 +14708,9 @@ EOF
                               print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                               $response = `$cmd`;
                               $status   = $?;
-                              chomp $response;
+                              chomp $response; $response =~ s/\r$//;
                               $response =~ tr!\n! !;
+                              $response =~ tr!\r!!d;
                               print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                               if ($response =~ /^\s*pgcc\s+([0-9]+\.\S+)/) {
                                  $result = "$theBasename $1";
@@ -14676,8 +14732,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*g\+\+\s+\(GCC\)\s+([0-9]+\.\S+)/) {
                            $result   = "$theBasename $1";
@@ -14697,8 +14754,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            $response = `$cmd`;
                            $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response =~ tr!\n! !;
+                           $response =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*[Vv]ersion\s+([0-9]+\.[0-9]+(\S*))/) {
                               $result = "$theBasename $1";
@@ -14710,8 +14768,9 @@ EOF
                               print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                               $response = `$cmd`;
                               $status   = $?;
-                              chomp $response;
+                              chomp $response; $response =~ s/\r$//;
                               $response =~ tr!\n! !;
+                              $response =~ tr!\r!!d;
                               print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                               if ($response =~ /^\s*pgCC\s+([0-9]+\.\S+)/) {
                                  $result = "$theBasename $1";
@@ -14733,8 +14792,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*GNU\s+Fortran\s+\(GCC\)\s+([0-9]+\.\S+)/) {
                            $result   = "$theBasename $1";
@@ -14750,8 +14810,9 @@ EOF
                            print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                            $response = `$cmd`;
                            $status   = $?;
-                           chomp $response;
+                           chomp $response; $response =~ s/\r$//;
                            $response =~ tr!\n! !;
+                           $response =~ tr!\r!!d;
                            print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                            if ($response =~ /^\s*[Vv]ersion\s+([0-9]+\.[0-9]+(\S*))/) {
                               $result = "$theBasename $1";
@@ -14763,8 +14824,9 @@ EOF
                               print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                               $response = `$cmd`;
                               $status   = $?;
-                              chomp $response;
+                              chomp $response; $response =~ s/\r$//;
                               $response =~ tr!\n! !;
+                              $response =~ tr!\r!!d;
                               print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                               if ($response =~ /^\s*pgf77\s+([0-9]+\.\S+)/) {
                                  $result = "$theBasename $1";
@@ -14792,8 +14854,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*pgcc\s+([0-9]+\.\S+)/) {
                            $result   = "$theBasename $1";
@@ -14813,8 +14876,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*pgCC\s+([0-9]+\.\S+)/) {
                            $result   = "$theBasename $1";
@@ -14834,8 +14898,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*pgf77\s+([0-9]+\.\S+)/) {
                            $result   = "$theBasename $1";
@@ -14855,8 +14920,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*pgf90\s+([0-9]+\.\S+)/) {
                            $result   = "$theBasename $1";
@@ -14876,8 +14942,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*pgf95\s+([0-9]+\.\S+)/) {
                            $result   = "$theBasename $1";
@@ -14903,8 +14970,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd 2>&1`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*cc:\s+Sun\s+C\s+([0-9]+\.[0-9]+\S*)/) {
                            $result   = "$theBasename $1";
@@ -14924,8 +14992,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd 2>&1`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*CC:\s+Sun\s+C\+\+\s+([0-9]+\.[0-9]+\S*)/) {
                            $result   = "$theBasename $1";
@@ -14945,8 +15014,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd 2>&1`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^.*-f77.*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
                            $result   = "$theBasename $1";
@@ -14966,8 +15036,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd 2>&1`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^.*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
                            $result   = "$theBasename $1";
@@ -14987,8 +15058,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd 2>&1`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^.*f90:\s+Sun\s+Fortran\s+95\s+([0-9]+\.[0-9]+\S*)/) {
                            $result   = "$theBasename $1";
@@ -15014,8 +15086,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*IBM\s+XL\s+Fortran\s+for\s+Blue\s+Gene,\s+V([0-9]+\.[0-9]+)/) {
                            $result   = "$theBasename $1";
@@ -15035,8 +15108,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*IBM\s+XL\s+Fortran\s+for\s+Blue\s+Gene,\s+V([0-9]+\.[0-9]+)/) {
                            $result   = "$theBasename $1";
@@ -15056,8 +15130,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*IBM\s+XL\s+Fortran\s+for\s+Blue\s+Gene,\s+V([0-9]+\.[0-9]+)/) {
                            $result   = "$theBasename $1";
@@ -15077,8 +15152,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*IBM\s+XL\s+C\/C\+\+\s+for\s+Blue\s+Gene,\s+V([0-9]+\.[0-9]+)/) {
                            $result   = "$theBasename $1";
@@ -15098,8 +15174,9 @@ EOF
                         print DBGOUT "mki_checkForCompilerVersion:    run [$cmd]\n" if $debugging;
                         my $response = `$cmd`;
                         my $status   = $?;
-                        chomp $response;
+                        chomp $response; $response =~ s/\r$//;
                         $response    =~ tr!\n! !;
+                        $response    =~ tr!\r!!d;
                         print DBGOUT "mki_checkForCompilerVersion:    ...gives [$response]\n" if $debugging;
                         if ($response =~ /^\s*IBM\s+XL\s+C\/C\+\+\s+for\s+Blue\s+Gene,\s+V([0-9]+\.[0-9]+)/) {
                            $result   = "$theBasename $1";
@@ -15683,7 +15760,7 @@ EOFc
                                     my $libPathname = "";
                                     my $count       = 0;
                                     while (<mki_OUTPUT>) {
-                                       chomp;
+                                       chomp; s/\r$//;
                                        my $got = $_;
                                        if (256 < length $got) {
                                           print DBGOUT "mki_libc_version:    got: <too-long-to-show>\n" if $debugging;
@@ -15751,7 +15828,7 @@ EOFc
                                              if ( open(mki_OUTPUT, "< konftest.out") ) {
                                                 print DBGOUT "mki_libc_version: ...parse results\n" if $debugging;
                                                 while (<mki_OUTPUT>) {
-                                                   chomp;
+                                                   chomp; s/\r$//;
                                                    my $got = $_;
                                                    if (256 < length $got) {
                                                       print DBGOUT "mki_libc_version:    got: <too-long-to-show>\n" if $debugging;
@@ -15924,7 +16001,7 @@ EOFc
                if (open(MKI_OUTPUT,"< konftest.out")) {
                   print DBGOUT "mki_libc_version: ...read \"konftest.out\"\n" if $debugging;
                   while (<MKI_OUTPUT>) {
-                     chomp;
+                     chomp; s/\r$//;
                      my $got = $_;
                      print DBGOUT "mki_libc_version:    found [$got]\n" if $debugging;
                      parseOutput: {
@@ -16008,7 +16085,7 @@ EOFc
                   print DBGOUT "mki_os_version: ...parse results\n" if $debugging;
                   my $versionNumber = "";
                   while (<mki_OUTPUT>) {
-                     chomp;
+                     chomp; s/\r$//;
                      my $got = $_;
                      if (256 < length $got) {
                         print DBGOUT "mki_os_version:    got: <too-long-to-show>\n" if $debugging;
@@ -16335,7 +16412,7 @@ EOFc
                                     my $libPathname = "";
                                     my $count = 0;
                                     while (<mki_OUTPUT>) {
-                                       chomp;
+                                       chomp; s/\r$//;
                                        my $got = $_;
                                        if (256 < length $got) {
                                           print DBGOUT "mki_stdcxxlib_version:    got: <too-long-to-show>\n" if $debugging;
@@ -16406,7 +16483,7 @@ EOFc
                                                 my $first_libcxx_verNum = "";
                                                 my $first_libc_verNum   = "";
                                                 while (<mki_OUTPUT>) {
-                                                   chomp;
+                                                   chomp; s/\r$//;
                                                    my $got = $_;
                                                    if (256 < length $got) {
                                                       print DBGOUT "mki_stdcxxlib_version:    got: <too-long-to-show>\n" if $debugging;
@@ -16601,7 +16678,7 @@ EOFc
                                     my $libPathname = "";
                                     my $count       = 0;
                                     while (<mki_OUTPUT>) {
-                                       chomp;
+                                       chomp; s/\r$//;
                                        my $got = $_;
                                        if (256 < length $got) {
                                           print DBGOUT "mki_stdcxxlib_version:    got: <too-long-to-show>\n" if $debugging;
@@ -16673,7 +16750,7 @@ EOFc
                                                 my $first_libcxx_verNum = "";
                                                 my $first_libc_verNum   = "";
                                                 while (<mki_OUTPUT>) {
-                                                   chomp;
+                                                   chomp; s/\r$//;
                                                    my $got = $_;
                                                    if (256 < length $got) {
                                                       print DBGOUT "mki_stdcxxlib_version:    got: <too-long-to-show>\n" if $debugging;
@@ -17296,38 +17373,59 @@ EOFc
 #
 #  see: totebag/src/perl-lib/absname.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 14Oct2019 absname
 #
 #-------------------------------------------------------------------------------
 
 sub absname {
-   my $pathname = shift;
+   my $pathname    = shift;
    print DBGOUT "absname[ pathname=\"$pathname\"...\n" if $debugging;
-   my $drive    = "";
-   my $result   = "";
+   my $result      = "";
+   my $driveLetter = "";
+   my $changed     = $pathname =~ tr/\\/\//;
+   if ($debugging && (1 <= $changed)) {
+      print DBGOUT "absname: ...adjusted slashing to \"$pathname\"\n" if $debugging;
+   }
    #
    #  Remove and hold on to the drive letter if there is one (only on
    #  Windows of course).
    #
    if (getOSclass() eq "UNIX-like") {
       print DBGOUT "absname: ...UNIX-like\n" if $debugging;
-      $drive    = "";
+      $driveLetter = "";
       print DBGOUT "absname:    without drive\"\n" if $debugging;
    }
-   else {
+   elsif (getOSclass() eq "Windows-like") {
       print DBGOUT "absname: ...Windows-like\n" if $debugging;
-      if ($pathname =~ /^([a-zA-Z]):([\/\\].*)$/) {
-         $drive    = $1;
-         $pathname = $2;
+      if ($pathname =~ /^([a-zA-Z]):(.*)$/) {
+         $driveLetter = $1;
+         $pathname    = $2;
+         print DBGOUT "absname:    with drive = \"$drive\"\n" if $debugging;
+         print DBGOUT "absname:      pathname = \"$pathname\"\n" if $debugging;
+      }
+      elsif ($pathname =~ /^\/([a-zA-Z])(\/.*)$/) {
+         $driveLetter = $1;
+         $pathname    = $2;
+         print DBGOUT "absname:    with drive = \"$drive\"\n" if $debugging;
+         print DBGOUT "absname:      pathname = \"$pathname\"\n" if $debugging;
+      }
+      elsif ($pathname =~ /^\/cygdrive\/([a-zA-Z])(\/.*)$/) {
+         $driveLetter = $1;
+         $pathname    = $2;
          print DBGOUT "absname:    with drive = \"$drive\"\n" if $debugging;
          print DBGOUT "absname:      pathname = \"$pathname\"\n" if $debugging;
       }
       else {
-         $drive    = "";
+         $driveLetter = "";
          print DBGOUT "absname:    without drive\"\n" if $debugging;
       }
    }
-   if ($pathname =~ /^[\/\\]/) {
+   else {
+      print DBGOUT "absname: ...is neither UNIX- nor Windows-like\n" if $debugging;
+      $driveLetter = "";
+      print DBGOUT "absname:    assume no drive\"\n" if $debugging;
+   }
+   if ($pathname =~ /^\//) {
       print DBGOUT "absname: ...looks absolute\n" if $debugging;
       $result   = $pathname;
    }
@@ -17341,8 +17439,12 @@ sub absname {
    #
    #  Re-attach drive letter if necessary.
    #
-   if ($drive ne "") {
-      $result = $drive.":".$result;
+   if ($driveLetter ne "") {
+      $result = $driveLetter.":".$result;
+   }
+   if ($changed) {
+      $result =~ tr/\//\\/;
+      print DBGOUT "absname: ...adjusted back to \"$result\"\n" if $debugging;
    }
    print DBGOUT "absname] ...done(=\"$result\")\n" if $debugging;
    return $result;
@@ -17371,7 +17473,12 @@ sub absname {
 #
 #  see: totebag/src/perl-lib/alreadyOnSearchPATH.psub
 #
-#  Dated: 02Sep2019
+#  Dated: 15Oct2019 alreadyOnSearchPATH
+#
+#  NOTE: This function is know to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
 #
 #-------------------------------------------------------------------------------
 
@@ -17428,33 +17535,82 @@ sub alreadyOnSearchPATH {
 #
 #  see: totebag/src/perl-lib/basename.psub
 #
-#  Dated: 27Jun2016
+#  Dated: 16Oct2019 basename
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/scripts/perl/platform.pmain
+#            autokonf/example/src/unautokonf.perl
+#            autokonf/scripts/perl/platform.pmain
+#            build/runatest
+#            build/testing/run-all-tests
+#
+#            .doit/open/fuli.other.net/reus/doit.end
+#            .doit/open/fuli.reusfamily.org/reus/doit.end
+#            .doit/open/pumba.llnl.gov/reus1/XXX.doit.end.XXX
+#            .doit/open/scar.other.net/reus/doit.end
+#            .doit/open/scar.reusfamily.org/reus/doit.end
+#            .doit/open/simba.other.net/reus/doit.end
+#            .doit/open/simba.reusfamily.org/reus/doit.end
+#            .doit/open/zazu.reusfamily.org/reus/doit.end
+#            hooks_prj/fuli.other.net/reus/doit.end
+#            hooks_prj/fuli.reusfamily.org/reus/doit.end
+#            hooks_prj/scar.other.net/reus/doit.end
+#            hooks_prj/scar.reusfamily.org/reus/doit.end
+#            hooks_prj/simba.other.net/reus/doit.end
+#            hooks_prj/simba.reusfamily.org/reus/doit.end
+#            hooks_prj/zazu.reusfamily.org/reus/doit.end
+#
+#  NOTE: This function is included in the enstall and newver projects by
+#        running:
+#
+#            build enstall/MySource newver/MySource
+#
+#        from totebag/src is required.
+#
+#            enstall
+#            newver
 #
 #-------------------------------------------------------------------------------
 
 sub basename {
    my $pathname = shift(@_);
-   $_           = fixpath($pathname);
+   print DBGOUT "basename[ pathname=\"$pathname\"...\n" if $debugging;
+   my $result   = "";
+   my $adjusted = fixpath($pathname);
+   if ($adjusted ne $pathname) {
+      print DBGOUT "basename: ...normalized to \"$adjusted\"\n" if $debugging;
+   }
+   $_           = $adjusted;
    parse: {
              /^(.+)[\/\\]([^\/\\]*)$/
 
                 && do {
-                   return $2;
+                   $result = $2;
+                   print DBGOUT "basename: ...case 1\n" if $debugging;
+                   last;
                 };
 
              /^[\/\\]([^\/\\]*)$/
 
                 && do {
-                   return $1;
+                   $result = $1;
+                   print DBGOUT "basename: ...case 2\n" if $debugging;
+                   last;
                 };
 
              /^([^\/\\]*)$/
 
                 && do {
-                   return $1;
+                   $result = $1;
+                   print DBGOUT "basename: ...case 3\n" if $debugging;
+                   last;
                 };
 
           }
+   print DBGOUT "basename] ...done(=$result)\n" if $debugging;
+   return $result;
 }
 
 # MyUniqueFileId: a237e8e4-1371-49f0-da30-aad98b482e1f
@@ -17482,7 +17638,7 @@ sub basename {
 #
 #  see: totebag/src/perl-lib/convertTimeToDateTime.psub
 #
-#  Dated: 30Jan2019
+#  Dated: 15Oct2019 convertTimeToDateTime
 #
 #-------------------------------------------------------------------------------
 
@@ -17593,7 +17749,15 @@ sub convertTimeToDateTime {
 #
 #  see: totebag/src/perl-lib/deletePathnames.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 15Oct2019 deletePathnames
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            Generics/for.ale/unconfigure.perl
+#            autokonf/example/src/unautokonf.perl
+#            autokonf/example/src/unconfigure.perl
+#            build/runatest
 #
 #-------------------------------------------------------------------------------
 
@@ -17874,11 +18038,44 @@ sub deletePathnames {
 #  generally available in the File module.
 #
 #  This function uses: fixpath(),
-#                      nativePathname(()
+#                      getOSclass()
 #
 #  see: totebag/src/perl-lib/dirname.psub
 #
-#  Dated: 01Oct2019
+#  Dated: 30Oct2019 dirname
+#
+#  NOTE: This function is know to be "hand included" in the following
+#        source files:
+#
+#            autokonf/scripts/perl/platform.pmain
+#            autokonf/scripts/perl/platform.pmain
+#            build/testing/run-all-tests
+#
+#            configure.in
+#
+#            .doit/open/fuli.other.net/reus/doit.end
+#            .doit/open/fuli.reusfamily.org/reus/doit.end
+#            .doit/open/pumba.llnl.gov/reus1/XXX.doit.end.XXX
+#            .doit/open/scar.other.net/reus/doit.end
+#            .doit/open/scar.reusfamily.org/reus/doit.end
+#            .doit/open/simba.other.net/reus/doit.end
+#            .doit/open/simba.reusfamily.org/reus/doit.end
+#            .doit/open/zazu.reusfamily.org/reus/doit.end
+#            hooks_prj/fuli.other.net/reus/doit.end
+#            hooks_prj/fuli.reusfamily.org/reus/doit.end
+#            hooks_prj/scar.other.net/reus/doit.end
+#            hooks_prj/scar.reusfamily.org/reus/doit.end
+#            hooks_prj/simba.other.net/reus/doit.end
+#            hooks_prj/simba.reusfamily.org/reus/doit.end
+#            hooks_prj/zazu.reusfamily.org/reus/doit.end
+#
+#  NOTE: This function is included in the enstall project by running:
+#
+#            build enstall/MySource
+#
+#        from totebag/src is required.
+#
+#            enstall
 #
 #-------------------------------------------------------------------------------
 
@@ -17886,33 +18083,45 @@ sub dirname {
    my $pathname    = shift(@_);
    print DBGOUT "dirname[ pathname=\"$pathname\"...\n" if $debugging;
    my $result      = "";
+   my $driveLetter = "";
    my $changed     = $pathname =~ tr/\\/\//;
    if ($debugging && (1 <= $changed)) {
       print DBGOUT "dirname: ...adjusted slashing to \"$pathname\"\n" if $debugging;
    }
-   #---------------------------------------
-   #
-   #  Remove drive name if there is one
-   #
-   my $driveLetter = "";
-   if ($pathname =~ /^([a-zA-Z]):(.*)$/) {
-      $driveLetter = $1;
-      $pathname    = $2;
-      print DBGOUT "dirname: ...with drive \"".$driveLetter."\"\n" if $debugging;
-      print DBGOUT "dirname:      and path \"".$pathname."\"\n" if $debugging;
-   }
-   elsif ($pathname =~ /^\/([a-zA-Z])\/(.*)$/) {
-      $driveLetter = $1;
-      $pathname    = $2;
-      print DBGOUT "dirname: ...with drive \"".$driveLetter."\"\n" if $debugging;
-      print DBGOUT "dirname:      and path \"".$pathname."\"\n" if $debugging;
-   }
-   else {
-      print DBGOUT "dirname: ...no drive letter\n" if $debugging;
+   if (getOSclass() eq "Windows-like") {
+      print DBGOUT "dirname: ...host is \"Windows-like\"\n" if $debugging;
+      #---------------------------------------
+      #
+      #  Remove drive name if there is one
+      #
+      if ($pathname =~ /^([a-zA-Z]):(.*)$/) {
+         $driveLetter = $1;
+         $pathname    = $2;
+         print DBGOUT "dirname:    a Windows-style pathname\n" if $debugging;
+         print DBGOUT "dirname:    ...with drive \"".$driveLetter."\"\n" if $debugging;
+         print DBGOUT "dirname:         and path \"".$pathname."\"\n" if $debugging;
+      }
+      elsif ($pathname =~ /^[\/\\]([a-zA-Z])([\/\\].*)$/) {
+         $driveLetter = $1;
+         $pathname    = $2;
+         print DBGOUT "dirname:    an \"A\" cygwin-style pathname\n" if $debugging;
+         print DBGOUT "dirname:    ...with drive \"".$driveLetter."\"\n" if $debugging;
+         print DBGOUT "dirname:         and path \"".$pathname."\"\n" if $debugging;
+      }
+      elsif ($pathname =~ /^[\/\\]cygdrive[\/\\]([a-zA-Z])([\/\\].*)$/) {
+         $driveLetter = $1;
+         $pathname    = $2;
+         print DBGOUT "dirname:    a \"B\" cygwin-style pathname\n" if $debugging;
+         print DBGOUT "dirname:    ...with drive \"".$driveLetter."\"\n" if $debugging;
+         print DBGOUT "dirname:         and path \"".$pathname."\"\n" if $debugging;
+      }
+      else {
+         print DBGOUT "dirname:    no drive letter\n" if $debugging;
+      }
    }
    my $adjusted    = fixpath($pathname);
    if ($debugging && ($adjusted ne $pathname)) {
-      print DBGOUT "dirname: ...adjusted to \"".nativePathname($adjusted)."\"\n" if $debugging;
+      print DBGOUT "dirname: ...normalized to \"$adjusted\"\n" if $debugging;
    }
    $_              = $adjusted;
    parse: {
@@ -17950,11 +18159,11 @@ sub dirname {
    if ($driveLetter ne "") {
       $result = $driveLetter.":".$result;
    }
-   if ($changed) {
+   if (1 <= $changed) {
       $result =~ tr/\//\\/;
       print DBGOUT "dirname: ...adjusted back to \"$result\"\n" if $debugging;
    }
-   print DBGOUT "dirname] ...done(=\"".nativePathname($result)."\")\n" if $debugging;
+   print DBGOUT "dirname] ...done(=\"$result\")\n" if $debugging;
    return $result;
 }
 
@@ -17969,7 +18178,7 @@ sub dirname {
 #
 #  see: totebag/src/perl-lib/dumpTextfileToHandle.psub
 #
-#  Dated: 03Nov2015
+#  Dated: 05Nov2019 dumpTextfileToHandle
 #
 #-------------------------------------------------------------------------------
 
@@ -17979,7 +18188,7 @@ sub dumpTextfileToHandle {
    if ( -f $pathname) {
       if (open(TEXTFILE,"< $pathname")) {
          while (<TEXTFILE>) {
-            chomp;
+            chomp; s/\r$//;
             print FH $prefix.$_."\n";
          }
          close TEXTFILE;
@@ -18004,7 +18213,7 @@ sub dumpTextfileToHandle {
 #
 #  see: totebag/src/perl-lib/dumpTextfileToSTDERR.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 15Oct2019 dumpTextfileToSTDERR
 #
 #-------------------------------------------------------------------------------
 
@@ -18043,7 +18252,7 @@ sub dumpTextfileToSTDERR {
 #
 #  see: totebag/src/perl-lib/findAllSubdirs.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 15Oct2019 findAllSubdirs
 #
 #-------------------------------------------------------------------------------
 
@@ -18222,25 +18431,68 @@ sub findAllSubdirs {
 #
 #  see: totebag/src/perl-lib/findHomeDirectory.psub
 #
-#  Dated: 30Sep2019
+#  Dated: 15Oct2019 findHomeDirectory
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
+#            build/runatest
+#            build/testing/run-all-tests
+#            config/scripts/perl/thehost
+#
+#            .doit/open/fuli.other.net/reus/doit.end
+#            .doit/open/fuli.reusfamily.org/reus/doit.end
+#            .doit/open/pumba.llnl.gov/reus1/XXX.doit.end.XXX
+#            .doit/open/scar.other.net/reus/doit.end
+#            .doit/open/scar.reusfamily.org/reus/doit.end
+#            .doit/open/simba.other.net/reus/doit.end
+#            .doit/open/simba.reusfamily.org/reus/doit.end
+#            .doit/open/zazu.reusfamily.org/reus/doit.end
+#            hooks_prj/fuli.other.net/reus/doit.end
+#            hooks_prj/fuli.reusfamily.org/reus/doit.end
+#            hooks_prj/scar.other.net/reus/doit.end
+#            hooks_prj/scar.reusfamily.org/reus/doit.end
+#            hooks_prj/simba.other.net/reus/doit.end
+#            hooks_prj/simba.reusfamily.org/reus/doit.end
+#            hooks_prj/zazu.reusfamily.org/reus/doit.end
+#
+#  NOTE: This function is included in the enstall project by running:
+#
+#            build enstall/MySource
+#
+#        from totebag/src is required.
+#
+#            enstall
 #
 #--------------------------------------------------------------------------------
 
 sub findHomeDirectory {
-   my $homedir = "";
+   print DBGOUT "findHomeDirectory[ starting...\n" if $debugging;
+   my $homeDir = "";
    #---------------------------------------
    #
    #  First try HOME environment variable...
    #
-   if ($homedir eq "") {
+   if ($homeDir eq "") {
       if ( exists $ENV{'HOME'}) {
-         my $trydir = $ENV{'HOME'};
+         my $HOME   = $ENV{'HOME'};
+         print DBGOUT "findHomeDirectory: ...HOME is \"$HOME\"\n" if $debugging;
+         my $trydir = $HOME;
          if (getOSclass() eq "Windows-like") {
             $trydir = makePathWindowslike($trydir);
          }
+         print DBGOUT "findHomeDirectory: ...consider \"$trydir\"\n" if $debugging;
          if ( -d $trydir) {
-            $homedir = $trydir;
+            $homeDir = $trydir;
+            print DBGOUT "findHomeDirectory:    found\n" if $debugging;
          }
+         else {
+            print DBGOUT "findHomeDirectory:    NOT found\n" if $debugging;
+         }
+      }
+      else {
+         print DBGOUT "findHomeDirectory: ...HOME is not defined\n" if $debugging;
       }
    }
    #---------------------------------------
@@ -18253,25 +18505,35 @@ sub findHomeDirectory {
    #           defined we'll assume it is
    #           an empty string.
    #
-   if ($homedir eq "") {
+   if ($homeDir eq "") {
       if (getOSclass() eq "Windows-like") {
          my $HOMEDRIVE;
          my $HOMEPATH;
          if ( exists $ENV{'HOMEDRIVE'}) {
             $HOMEDRIVE = $ENV{'HOMEDRIVE'};
+            print DBGOUT "findHomeDirectory: ...HOMEDRIVE is \"$HOMEDRIVE\"\n" if $debugging;
          }
          else {
             $HOMEDRIVE = "";
+            print DBGOUT "findHomeDirectory: ...HOMEDRIVE is not defined\n" if $debugging;
          }
          if ( exists $ENV{'HOMEPATH'}) {
             $HOMEPATH = $ENV{'HOMEPATH'};
+            print DBGOUT "findHomeDirectory: ...HOMEPATH is \"$HOMEPATH\"\n" if $debugging;
             if ($HOMEPATH ne "") {
-               my $trydir   = "$HOMEDRIVE$HOMEPATH";
-               $trydir      = makePathWindowslike($trydir);
+               my $trydir  = makePathWindowslike("$HOMEDRIVE$HOMEPATH");
+               print DBGOUT "findHomeDirectory: ...consider \"$trydir\"\n" if $debugging;
                if ( -d $trydir) {
-                  $homedir = $trydir;
+                  $homeDir = $trydir;
+                  print DBGOUT "findHomeDirectory:    found\n" if $debugging;
+               }
+               else {
+                  print DBGOUT "findHomeDirectory:    NOT found\n" if $debugging;
                }
             }
+         }
+         else {
+            print DBGOUT "findHomeDirectory: ...HOMEPATH is not defined\n" if $debugging;
          }
       }
    }
@@ -18280,18 +18542,30 @@ sub findHomeDirectory {
    #  ...finally try USERPROFILE environment
    #     variables...
    #
-   if ($homedir eq "") {
+   if ($homeDir eq "") {
       if (getOSclass() eq "Windows-like") {
          if ( exists $ENV{'USERPROFILE'}) {
-            my $trydir = $ENV{'USERPROFILE'};
-            $trydir    = makePathWindowslike($trydir);
-            if ( -d $trydir) {
-               $homedir = $trydir;
+            my $USERPROFILE = $ENV{'USERPROFILE'};
+            print DBGOUT "findHomeDirectory: ...USERPROFILE is \"$USERPROFILE\"\n" if $debugging;
+            if ($USERPROFILE ne "") {
+               my $trydir   = makePathWindowslike($USERPROFILE);
+               print DBGOUT "findHomeDirectory: ...consider \"$trydir\"\n" if $debugging;
+               if ( -d $trydir) {
+                  $homeDir  = $trydir;
+                  print DBGOUT "findHomeDirectory:    found\n" if $debugging;
+               }
+               else {
+                  print DBGOUT "findHomeDirectory:    NOT found\n" if $debugging;
+               }
             }
+         }
+         else {
+            print DBGOUT "findHomeDirectory: ...USERPROFILE is not defined\n" if $debugging;
          }
       }
    }
-   return $homedir;
+   print DBGOUT "findHomeDirectory] ...done(=\"$homeDir\")\n" if $debugging;
+   return $homeDir;
 }
 
 # MyUniqueFileId: c58e95af-7811-46b9-ba94-c63e6b2ed7ee
@@ -18321,7 +18595,39 @@ sub findHomeDirectory {
 #
 #  see: totebag/src/perl-lib/findTempDir.psub
 #
-#  Dated: 30Sep2019
+#  Dated: 28Oct2019 findTempDir
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
+#            build/runatest
+#            build/testing/run-all-tests
+#            config/scripts/perl/thehost
+#
+#            .doit/open/fuli.other.net/reus/doit.end
+#            .doit/open/fuli.reusfamily.org/reus/doit.end
+#            .doit/open/pumba.llnl.gov/reus1/XXX.doit.end.XXX
+#            .doit/open/scar.other.net/reus/doit.end
+#            .doit/open/scar.reusfamily.org/reus/doit.end
+#            .doit/open/simba.other.net/reus/doit.end
+#            .doit/open/simba.reusfamily.org/reus/doit.end
+#            .doit/open/zazu.reusfamily.org/reus/doit.end
+#            hooks_prj/fuli.other.net/reus/doit.end
+#            hooks_prj/fuli.reusfamily.org/reus/doit.end
+#            hooks_prj/scar.other.net/reus/doit.end
+#            hooks_prj/scar.reusfamily.org/reus/doit.end
+#            hooks_prj/simba.other.net/reus/doit.end
+#            hooks_prj/simba.reusfamily.org/reus/doit.end
+#            hooks_prj/zazu.reusfamily.org/reus/doit.end
+#
+#  NOTE: This function is included in the enstall project by running:
+#
+#            build enstall/MySource
+#
+#        from totebag/src is required.
+#
+#            enstall
 #
 #-------------------------------------------------------------------------------
 
@@ -18336,18 +18642,29 @@ sub findTempDir {
    #
    if ($tmpdir eq "") {
       if ($envVarName ne "") {
-         print DBGOUT "findTempDir: ...consider \"$envVarName\"\n" if $debugging;
          if ( exists $ENV{$envVarName}) {
-            my $trydir = $ENV{$envVarName};
+            my $envVarValue = $ENV{$envVarName};
+            print DBGOUT "findTempDir: ...$envVarName is \"$envVarValue\"\n" if $debugging;
+            my $trydir      = $envVarValue;
             if (getOSclass() eq "Windows-like") {
-               $trydir = makePathWindowslike($trydir);
+               $trydir      = makePathWindowslike($trydir);
             }
+            print DBGOUT "findTempDir: ...consider \"$trydir\"\n" if $debugging;
             if ( -d $trydir) {
                if ( -w $trydir) {
                   $tmpdir = $trydir;
-                  print DBGOUT "findTempDir:    use value\n" if $debugging;
+                  print DBGOUT "findTempDir:    found\n" if $debugging;
+               }
+               else {
+                  print DBGOUT "findTempDir:    found, but not writable\n" if $debugging;
                }
             }
+            else {
+               print DBGOUT "findTempDir:    NOT found\n" if $debugging;
+            }
+         }
+         else {
+            print DBGOUT "findTempDir: ...$envVarName is not defined\n" if $debugging;
          }
       }
    }
@@ -18358,17 +18675,28 @@ sub findTempDir {
    #
    if ($tmpdir eq "") {
       if ( exists $ENV{'TMPDIR'}) {
-         print DBGOUT "findTempDir: ...consider \"${TMPDIR}\"\n" if $debugging;
-         my $trydir = $ENV{'TMPDIR'};
+         my $TMPDIR = $ENV{'TMPDIR'};
+         print DBGOUT "findTempDir: ...TMPDIR is \"$TMPDIR\"\n" if $debugging;
+         my $trydir = $TMPDIR;
          if (getOSclass() eq "Windows-like") {
             $trydir = makePathWindowslike($trydir);
          }
+         print DBGOUT "findTempDir: ...consider \"$trydir\"\n" if $debugging;
          if ( -d $trydir) {
             if ( -w $trydir) {
                $tmpdir = $trydir;
-               print DBGOUT "findTempDir:    use value\n" if $debugging;
+               print DBGOUT "findTempDir:    found\n" if $debugging;
+            }
+            else {
+               print DBGOUT "findTempDir:    found, but not writable\n" if $debugging;
             }
          }
+         else {
+            print DBGOUT "findTempDir:    NOT found\n" if $debugging;
+         }
+      }
+      else {
+         print DBGOUT "findTempDir: ...TMPDIR is not defined\n" if $debugging;
       }
    }
 
@@ -18378,17 +18706,28 @@ sub findTempDir {
    #
    if ($tmpdir eq "") {
       if ( exists $ENV{'TMP'}) {
-         print DBGOUT "findTempDir: ...consider \"${TMP}\"\n" if $debugging;
-         my $trydir = $ENV{'TMP'};
+         my $TMP    = $ENV{'TMP'};
+         print DBGOUT "findTempDir: ...TMP is \"$TMP\"\n" if $debugging;
+         my $trydir = $TMP;
          if (getOSclass() eq "Windows-like") {
             $trydir = makePathWindowslike($trydir);
          }
+         print DBGOUT "findTempDir: ...consider \"$TMP\"\n" if $debugging;
          if ( -d $trydir) {
             if ( -w $trydir) {
                $tmpdir = $trydir;
-               print DBGOUT "findTempDir:    use value\n" if $debugging;
+               print DBGOUT "findTempDir:    found\n" if $debugging;
+            }
+            else {
+               print DBGOUT "findTempDir:    found, but not writable\n" if $debugging;
             }
          }
+         else {
+            print DBGOUT "findTempDir:    NOT found\n" if $debugging;
+         }
+      }
+      else {
+         print DBGOUT "findTempDir: ...TMP is not defined\n" if $debugging;
       }
    }
 
@@ -18398,17 +18737,28 @@ sub findTempDir {
    #
    if ($tmpdir eq "") {
       if ( exists $ENV{'TEMP'}) {
-         print DBGOUT "findTempDir: ...consider \"${TEMP}\"\n" if $debugging;
-         my $trydir = $ENV{'TEMP'};
+         my $TEMP   = $ENV{'TEMP'};
+         print DBGOUT "findTempDir: ...TEMP is \"$TEMP\"\n" if $debugging;
+         my $trydir = $TEMP;
          if (getOSclass() eq "Windows-like") {
             $trydir = makePathWindowslike($trydir);
          }
+         print DBGOUT "findTempDir: ...consider \"$TEMP\"\n" if $debugging;
          if ( -d $trydir) {
             if ( -w $trydir) {
                $tmpdir = $trydir;
-               print DBGOUT "findTempDir:    use value\n" if $debugging;
+               print DBGOUT "findTempDir:    found\n" if $debugging;
+            }
+            else {
+               print DBGOUT "findTempDir:    found, but not writable\n" if $debugging;
             }
          }
+         else {
+            print DBGOUT "findTempDir:    NOT found\n" if $debugging;
+         }
+      }
+      else {
+         print DBGOUT "findTempDir: ...TEMP is not defined\n" if $debugging;
       }
    }
 
@@ -18423,20 +18773,35 @@ sub findTempDir {
       #  Find the user's home directory
       #
       my $theHomeDir = findHomeDirectory();
+      print DBGOUT "findTempDir: ...the home directory is \"$theHomeDir\"\n" if $debugging;
       if ($theHomeDir ne "") {
-         print DBGOUT "findTempDir: ...consider \"${HOME}/tmp\"\n" if $debugging;
+         print DBGOUT "findTempDir: ...consider \"$theHomeDir\"\n" if $debugging;
          if ( -d $theHomeDir) {
+            print DBGOUT "findTempDir:    found\n" if $debugging;
             my $trydir = joinpath($theHomeDir,"tmp");
             if (getOSclass() eq "Windows-like") {
                $trydir = makePathWindowslike($trydir);
             }
+            print DBGOUT "findTempDir: ...consider \"$trydir\"\n" if $debugging;
             if ( -d $trydir) {
                if ( -w $trydir) {
                   $tmpdir = $trydir;
-                  print DBGOUT "findTempDir:    use it\n" if $debugging;
+                  print DBGOUT "findTempDir:    found\n" if $debugging;
+               }
+               else {
+                  print DBGOUT "findTempDir:    found, but not writable\n" if $debugging;
                }
             }
+            else {
+               print DBGOUT "findTempDir:    NOT found\n" if $debugging;
+            }
          }
+         else {
+            print DBGOUT "findTempDir:    NOT found\n" if $debugging;
+         }
+      }
+      else {
+         print DBGOUT "findTempDir: ...can't find home directory\n" if $debugging;
       }
    }
 
@@ -18449,18 +18814,28 @@ sub findTempDir {
          #     directory...
          #
          if ( exists $ENV{'USERPROFILE'} ) {
-            my $usrProf   = $ENV{'USERPROFILE'};
-            if ($usrProf ne "") {
-               print DBGOUT "findTempDir: ...consider \"${USERPROFILE}\\AppData\\Local\\Temp\"\n" if $debugging;
-               my $trydir = "$usrProf\\AppData\\Local\\Temp";
+            my $USERPROFILE = $ENV{'USERPROFILE'};
+            print DBGOUT "findTempDir: ...USERPROFILE is \"$USERPROFILE\"\n" if $debugging;
+            if ($USERPROFILE ne "") {
+               my $trydir = "$USERPROFILE\\AppData\\Local\\Temp";
                $trydir    = makePathWindowslike($trydir);
+               print DBGOUT "findTempDir: ...consider \"${USERPROFILE}\\AppData\\Local\\Temp\"\n" if $debugging;
                if ( -d $trydir) {
                   if ( -w $trydir) {
                      $tmpdir = $trydir;
-                     print DBGOUT "findTempDir:    use it\n" if $debugging;
+                     print DBGOUT "findTempDir:    found\n" if $debugging;
+                  }
+                  else {
+                     print DBGOUT "findTempDir:    found, but not writable\n" if $debugging;
                   }
                }
+               else {
+                  print DBGOUT "findTempDir:    NOT found\n" if $debugging;
+               }
             }
+         }
+         else {
+            print DBGOUT "findTempDir: ...USERPROFILE is not defined\n" if $debugging;
          }
       }
    }
@@ -18471,10 +18846,10 @@ sub findTempDir {
    #
    if ($tmpdir eq "") {
       my $trydir = "/tmp";
-      print DBGOUT "findTempDir: ...consider \"/tmp\"\n" if $debugging;
       if (getOSclass() eq "Windows-like") {
          $trydir = makePathWindowslike($trydir);
       }
+      print DBGOUT "findTempDir: ...consider \"$trydir\"\n" if $debugging;
       if ( -d $trydir) {
          if ( -w $trydir) {
             $tmpdir = $trydir;
@@ -18492,13 +18867,18 @@ sub findTempDir {
          #
          if ($tmpdir eq "") {
             my $trydir = "C:\\Temp";
-            print DBGOUT "findTempDir: ...consider \"C:\\Temp\"\n" if $debugging;
-            $trydir    = makePathWindowslike($trydir);
+            print DBGOUT "findTempDir: ...consider \"$trydir\"\n" if $debugging;
             if ( -d $trydir) {
                if ( -w $trydir) {
                   $tmpdir = $trydir;
-                  print DBGOUT "findTempDir:    use it\n" if $debugging;
+                  print DBGOUT "findTempDir:    found\n" if $debugging;
                }
+               else {
+                  print DBGOUT "findTempDir:    found, but not writable\n" if $debugging;
+               }
+            }
+            else {
+               print DBGOUT "findTempDir:    NOT found\n" if $debugging;
             }
          }
 
@@ -18508,12 +18888,18 @@ sub findTempDir {
          #
          if ($tmpdir eq "") {
             my $trydir = "C:\\Windows\\Temp";
-            print DBGOUT "findTempDir: ...consider \"C:\\Windows\\Temp\"\n" if $debugging;
+            print DBGOUT "findTempDir: ...consider \"$trydir\"\n" if $debugging;
             if ( -d $trydir) {
                if ( -w $trydir) {
                   $tmpdir = $trydir;
-                  print DBGOUT "findTempDir:    use it\n" if $debugging;
+                  print DBGOUT "findTempDir:    found\n" if $debugging;
                }
+               else {
+                  print DBGOUT "findTempDir:    found, but not writable\n" if $debugging;
+               }
+            }
+            else {
+               print DBGOUT "findTempDir:    NOT found\n" if $debugging;
             }
          }
       }
@@ -18529,11 +18915,18 @@ sub findTempDir {
       if ( -d $trydir) {
          if ( -w $trydir) {
             $tmpdir = $trydir;
-            print DBGOUT "findTempDir:    use it\n" if $debugging;
+            print DBGOUT "findTempDir:    found\n" if $debugging;
          }
+         else {
+            print DBGOUT "findTempDir:    found, but not writable\n" if $debugging;
+         }
+      }
+      else {
+         print DBGOUT "findTempDir:    NOT found\n" if $debugging;
       }
    }
 
+   print DBGOUT "findTempDir: ...can't find a directory for temporaries\n" if ($debugging && ($tmpdir eq ""));
    print DBGOUT "findTempDir] ...done(=\"$tmpdir\")\n" if $debugging;
    return $tmpdir;
 }
@@ -18546,7 +18939,32 @@ sub findTempDir {
 #
 #  see: totebag/src/perl-lib/fixIndentStuff.psub
 #
-#  Dated: 03Nov2015
+#  Dated: 16Oct2019 fixIndentStuff
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            Generics/for.ale/unconfigure.perl
+#            autokonf/autokonf.pmain
+#            autokonf/example/src/unconfigure.perl
+#            build/mkuptodate
+#            build/p-cat
+#            build/runatest
+#            config/scripts/perl/thehost
+#            newver/fixIndentStuff.psub
+#            perl2exe/decho.perl
+#            srcmod/fixIndentStuff.psub
+#            ver2code/ver2code.pmain
+#
+#  NOTE: This function is included in the enstall and newver projects by
+#        running:
+#
+#            build enstall/MySource newver/MySource
+#
+#        from totebag/src is required.
+#
+#            enstall
+#            newver
 #
 #-------------------------------------------------------------------------------
 
@@ -18569,12 +18987,50 @@ sub fixIndentStuff {
 #
 #  see: totebag/src/perl-lib/fixpath.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 30Oct2019 fixpath
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
+#            autokonf/example/src/unautokonf.perl
+#            autokonf/scripts/perl/platform.pmain
+#            build/runatest
+#            build/testing/run-all-tests
+#            config/scripts/perl/platform
+#            config/scripts/perl/thehost
+#
+#            configure.in
+#
+#            .doit/open/fuli.other.net/reus/doit.end
+#            .doit/open/fuli.reusfamily.org/reus/doit.end
+#            .doit/open/pumba.llnl.gov/reus1/XXX.doit.end.XXX
+#            .doit/open/scar.other.net/reus/doit.end
+#            .doit/open/scar.reusfamily.org/reus/doit.end
+#            .doit/open/simba.other.net/reus/doit.end
+#            .doit/open/simba.reusfamily.org/reus/doit.end
+#            .doit/open/zazu.reusfamily.org/reus/doit.end
+#            hooks_prj/fuli.other.net/reus/doit.end
+#            hooks_prj/fuli.reusfamily.org/reus/doit.end
+#            hooks_prj/scar.other.net/reus/doit.end
+#            hooks_prj/scar.reusfamily.org/reus/doit.end
+#            hooks_prj/simba.other.net/reus/doit.end
+#            hooks_prj/simba.reusfamily.org/reus/doit.end
+#            hooks_prj/zazu.reusfamily.org/reus/doit.end
+#
+#  NOTE: This function is included in the enstall project by running:
+#
+#            build enstall/MySource
+#
+#        from totebag/src is required.
+#
+#            enstall
 #
 #-------------------------------------------------------------------------------
 
 sub fixpath {
    my $pathname = shift;
+   print DBGOUT "fixpath[ pathname=\"$pathname\"...\n" if $debugging;
    my $result   = "";
    my $drive;
    #
@@ -18582,26 +19038,49 @@ sub fixpath {
    #  of slash to use). Remove and hold on to the drive letter if there
    #  is one (only on Windows of course).
    #
-   if (getOSclass() eq "UNIX-like") {
-      $drive    = "";
+   my $osClass = getOSclass();
+   if ($osClass eq "UNIX-like") {
+      print DBGOUT "fixpath: ...host looks UNIX-like\n" if $debugging;
+      print DBGOUT "fixpath:    no drive\n" if $debugging;
+      $drive   = "";
    }
-   elsif (getOSclass() eq "Windows-like") {
+   elsif ($osClass eq "Windows-like") {
+      print DBGOUT "fixpath: ...host looks Windows-like\n" if $debugging;
       if ($pathname =~ /[\/\\]/) {
+         print DBGOUT "fixpath:    pathname looks complex\n" if $debugging;
          $pathname = makePathWindowslike($pathname);
+      }
+      else {
+         print DBGOUT "fixpath:    pathname looks simple\n" if $debugging;
       }
       if ($pathname =~ /^([a-zA-Z]):([\/\\].*)$/) {
          $drive    = $1;
          $pathname = $2;
+         print DBGOUT "fixpath:    ...normal Windows-style pathname\n" if $debugging;
+         print DBGOUT "fixpath:       with drive \"$drive\"\n" if $debugging;
+         print DBGOUT "fixpath:         and path \"$pathname\"\n" if $debugging;
       }
       elsif ($pathname =~ /^[\/\\]([a-zA-Z])([\/\\].*)$/) {
          $drive    = $1;
          $pathname = $2;
+         print DBGOUT "fixpath:    ...an \"A\" cygwin-style pathname\n" if $debugging;
+         print DBGOUT "fixpath:       with drive \"$drive\"\n" if $debugging;
+         print DBGOUT "fixpath:         and path \"$pathname\"\n" if $debugging;
+      }
+      elsif ($pathname =~ /^[\/\\]cygdrive[\/\\]([a-zA-Z])([\/\\].*)$/) {
+         $drive    = $1;
+         $pathname = $2;
+         print DBGOUT "fixpath:    ...an \"B\" cygwin-style pathname\n" if $debugging;
+         print DBGOUT "fixpath:       with drive \"$drive\"\n" if $debugging;
+         print DBGOUT "fixpath:         and path \"$pathname\"\n" if $debugging;
       }
       else {
+         print DBGOUT "fixpath:    ...easy pathname, with no drive\n" if $debugging;
          $drive    = "";
       }
    }
    else {
+      print DBGOUT "fixpath: ...host looks neither UNIX- nor Windows-like\n" if $debugging;
       $drive    = "";
       $pathname = "";
    }
@@ -18611,6 +19090,7 @@ sub fixpath {
          #
          #  Trivial "."
          #
+         print DBGOUT "fixpath: ...trivial \".\"\n" if $debugging;
          $result = ".";
       }
       elsif (($pathname eq "/") || ($pathname eq "\\")) {
@@ -18618,20 +19098,32 @@ sub fixpath {
          #
          #  Trivial "/"
          #
+         print DBGOUT "fixpath: ...trivial slash\n" if $debugging;
          $result = $pathname;
       }
       else {
+         print DBGOUT "fixpath: ...is non-trivial\n" if $debugging;
          #---------------------------------------
          #
          #  If non-trivial first switch backslashes
          #  to forward slashes...
          #
-         $pathname =~ s![\\]!/!g;
+         my $adjusted = $pathname;
+         $adjusted    =~ tr/\\/\//;
+         if ($adjusted ne $pathname) {
+            print DBGOUT "fixpath:    adjusted slashing to \"$adjusted\"\n" if $debugging;
+            $pathname = $adjusted;
+         }
          #---------------------------------------
          #
          #  Then reduce repeated slashes...
          #
-         $pathname =~ s![/][/]+!/!g;
+         $adjusted = $pathname;
+         $adjusted =~ s![/][/]+!/!g;
+         if ($adjusted ne $pathname) {
+            print DBGOUT "fixpath:    eliminated repeated slashes giving \"$adjusted\"\n" if $debugging;
+            $pathname = $adjusted;
+         }
          #---------------------------------------
          #
          #  Note if absolute or relative. If absolute
@@ -18641,26 +19133,63 @@ sub fixpath {
          #  Note that this is much like that in
          #  the splitPathname() function.
          #
+         my @components = ();
          if ($pathname =~ /^\/(.*)$/) {
+            print DBGOUT "fixpath:    looks absolute, split on slashes\n" if $debugging;
             @components = split(/[\/]+/,$1);
             $absolute   = 1;
          }
          else {
+            print DBGOUT "fixpath:    looks relative, split on slashes\n" if $debugging;
             @components = split(/[\/]+/,$pathname);
             $absolute   = 0;
+         }
+         if ($debugging) {
+            my $j;
+            for ($j=0; $j<=$#components; $j+=1) {
+               my $component = $components[$j];
+               if ($j == 0) {
+                  print DBGOUT "fixpath:    ...giving: \"$component\"\n" if $debugging;
+               }
+               else {
+                  print DBGOUT "fixpath:               \"$component\"\n" if $debugging;
+               }
+            }
          }
          #---------------------------------------
          #
          #  Scan for single dots and remove them...
          #
-         $changed = 1;
-         while ($changed) {
-            $changed = 0;
-            my $j;
-            for ($j=0; $j<=$#components; $j+=1) {
-               if ($components[$j] eq ".") {
-                  splice(@components,$j,1);
-                  $changed = 1;
+         print DBGOUT "fixpath:    remove single dots\n" if $debugging;
+         {
+            my $modified = 0;
+            my $changed  = 1;
+            while ($changed) {
+               $changed = 0;
+               my $j;
+               for ($j=0; $j<=$#components; $j+=1) {
+                  if ($components[$j] eq ".") {
+                     splice(@components,$j,1);
+                     $changed  = 1;
+                     $modified = 1;
+                  }
+               }
+            }
+            if ($debugging) {
+               if ($modified) {
+                  my $j;
+                  for ($j=0; $j<=$#components; $j+=1) {
+                     my $component = $components[$j];
+                     if ($j == 0) {
+                        print DBGOUT "fixpath:    ...giving: \"$component\"\n" if $debugging;
+                     }
+                     else {
+                        print DBGOUT "fixpath:               \"$component\"\n" if $debugging;
+                     }
+                  }
+               }
+               else {
+                  print DBGOUT "fixpath:    ...none\n" if $debugging;
                }
             }
          }
@@ -18668,23 +19197,47 @@ sub fixpath {
          #
          #  Scan for double dots and resolve them...
          #
-         if (1 <= $#components) {
-            $changed = 1;
-            while ($changed) {
-               $changed = 0;
-               if ($absolute && ($components[0] eq "..")) {
-                  splice(@components,0,1);
-                  $changed = 1;
-               }
-               else {
-                  my $j;
-                  for ($j=1; $j<=$#components; $j+=1) {
-                     if (($components[$j] eq "..") && ($components[$j-1] ne "..")) {
-                        splice(@components,$j-1,2);
-                        $changed = 1;
+         print DBGOUT "fixpath:    resolve double dots\n" if $debugging;
+         {
+            if (1 <= $#components) {
+               my $modified = 0;
+               my $changed  = 1;
+               while ($changed) {
+                  $changed = 0;
+                  if ($absolute && ($components[0] eq "..")) {
+                     splice(@components,0,1);
+                     $changed = 1;
+                  }
+                  else {
+                     my $j;
+                     for ($j=1; $j<=$#components; $j+=1) {
+                        if (($components[$j] eq "..") && ($components[$j-1] ne "..")) {
+                           splice(@components,$j-1,2);
+                           $changed = 1;
+                        }
                      }
                   }
                }
+               if ($debugging) {
+                  if ($modified) {
+                     my $j;
+                     for ($j=0; $j<=$#components; $j+=1) {
+                        my $component = $components[$j];
+                        if ($j == 0) {
+                           print DBGOUT "fixpath:    ...giving: \"$component\"\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "fixpath:               \"$component\"\n" if $debugging;
+                        }
+                     }
+                  }
+                  else {
+                     print DBGOUT "fixpath:    ...none\n" if $debugging;
+                  }
+               }
+            }
+            else {
+               print DBGOUT "fixpath:    ...not worth it\n" if $debugging;
             }
          }
          #---------------------------------------
@@ -18692,19 +19245,26 @@ sub fixpath {
          #  Output what we've found reintroducing
          #  the leading slash...
          #
+         print DBGOUT "fixpath:    reassemble\n" if $debugging;
          if ($#components < 0) {
+            print DBGOUT "fixpath:    ...but nothing left\n" if $debugging;
             if ($absolute) {
+               print DBGOUT "fixpath:       was absolute\n" if $debugging;
                $result = "/";
             }
             else {
+               print DBGOUT "fixpath:       was relative\n" if $debugging;
                $result = ".";
             }
          }
          else {
+            print DBGOUT "fixpath:    ...from remaining components\n" if $debugging;
             if ($absolute) {
+               print DBGOUT "fixpath:       was absolute\n" if $debugging;
                $result = "/";
             }
             else {
+               print DBGOUT "fixpath:       was relative\n" if $debugging;
                $result = "";
             }
             my $j;
@@ -18726,12 +19286,15 @@ sub fixpath {
       #  host.
       #
       if ($drive ne "") {
+         print DBGOUT "fixpath: ...re-attach drive letter\n" if $debugging;
          $result = $drive.":".$result;
       }
-      if (getOSclass() eq "Windows-like") {
+      if ($osClass eq "Windows-like") {
+         print DBGOUT "fixpath: ...a final adjustment\n" if $debugging;
          $result = makePathWindowslike($result);
       }
    }
+   print DBGOUT "fixpath] ...done(=\"$result\")\n" if $debugging;
    return $result;
 }
 
@@ -18753,57 +19316,98 @@ sub fixpath {
 #
 #  see: totebag/src/perl-lib/getOSclass.psub
 #
-#  Dated: 30Sep2019
+#  Dated: 30Oct2019 getOSclass
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            Generics/for.ale/unconfigure.perl
+#            autokonf/autokonf.pmain
+#            autokonf/example/src/unautokonf.perl
+#            autokonf/example/src/unconfigure.perl
+#            autokonf/scripts/perl/platform.pmain
+#            build/runatest
+#            build/testing/run-all-tests
+#            config/scripts/perl/platform
+#            config/scripts/perl/thehost
+#
+#            configure.in
+#
+#            .doit/open/fuli.other.net/reus/doit.end
+#            .doit/open/fuli.reusfamily.org/reus/doit.end
+#            .doit/open/pumba.llnl.gov/reus1/XXX.doit.end.XXX
+#            .doit/open/scar.other.net/reus/doit.end
+#            .doit/open/scar.reusfamily.org/reus/doit.end
+#            .doit/open/simba.other.net/reus/doit.end
+#            .doit/open/simba.reusfamily.org/reus/doit.end
+#            .doit/open/zazu.reusfamily.org/reus/doit.end
+#            hooks_prj/fuli.other.net/reus/doit.end
+#            hooks_prj/fuli.reusfamily.org/reus/doit.end
+#            hooks_prj/scar.other.net/reus/doit.end
+#            hooks_prj/scar.reusfamily.org/reus/doit.end
+#            hooks_prj/simba.other.net/reus/doit.end
+#            hooks_prj/simba.reusfamily.org/reus/doit.end
+#            hooks_prj/zazu.reusfamily.org/reus/doit.end
+#
+#  NOTE: This function is included in the enstall and newver projects by
+#        running:
+#
+#            build enstall/MySource newver/MySource
+#
+#        from totebag/src is required.
+#
+#            enstall
+#            newver
 #
 #-------------------------------------------------------------------------------
 
 sub getOSclass {
-   my $theOSname = shift;
-   print DBGOUT "getOSclass[ theOSname=\"".$theOSname."\"...\n" if $debugging;
+   my $osName = shift;
+   print DBGOUT "getOSclass[ osName=\"".$osName."\"...\n" if $debugging;
    my $result;
-   if ($theOSname eq "") {
-      $theOSname = $^O;
-      print DBGOUT "getOSclass: ...assume theOSname=\"".$theOSname."\"\n" if $debugging;
+   if ($osName eq "") {
+      $osName = $^O;
+      print DBGOUT "getOSclass: ...assume osName=\"".$osName."\"\n" if $debugging;
    }
    #---------------------------------------
    #
    #  First try to use a (fast) direct
    #  method...
    #
-   if ($theOSname =~ /^linux$/i) {
+   if ($osName =~ /^linux$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^MSWin32$/i) {
+   elsif ($osName =~ /^MSWin32$/i) {
       $result = "Windows-like";
    }
-   elsif ($theOSname =~ /^darwin$/i) {
+   elsif ($osName =~ /^darwin$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^freebsd$/i) {
+   elsif ($osName =~ /^freebsd$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^solaris$/i) {
+   elsif ($osName =~ /^solaris$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^aix$/i) {
+   elsif ($osName =~ /^aix$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^dec_osf$/i) {
+   elsif ($osName =~ /^dec_osf$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^hpux$/i) {
+   elsif ($osName =~ /^hpux$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^irix$/i) {
+   elsif ($osName =~ /^irix$/i) {
       $result = "UNIX-like";
    }
-   elsif ($theOSname =~ /^msys$/i) {
+   elsif ($osName =~ /^msys$/i) {
       $result = "Windows-like";
    }
-   elsif ($theOSname =~ /^dos$/i) {
+   elsif ($osName =~ /^dos$/i) {
       $result = "Windows-like";
    }
-   elsif ($theOSname =~ /^os2$/i) {
+   elsif ($osName =~ /^os2$/i) {
       $result = "Windows-like";
    }
    else {
@@ -18884,16 +19488,16 @@ sub getOSclass {
 #  appropriate for Windows-like hosts. Default is to use the output of the
 #  systeminfo command.
 #
-#  This function uses: getOSclass()
-#
-#  see: totebag/src/perl-lib/getOSname.psub
-#
-#  Dated: 04Oct2019
-#
 #  NOTE: This code has only been tested on FreeBSD, Linux, MacOS, and Solaris
 #        and a number of Windows desktop and server versions. Other other
 #        implementations has been known to work but haven't been tested for
 #        years.
+#
+#  This function uses: getOSclass()
+#
+#  see: totebag/src/perl-lib/getOSname.psub
+#
+#  Dated: 05Nov2019 getOSname
 #
 #-------------------------------------------------------------------------------
 
@@ -18947,7 +19551,7 @@ sub getOSname {
             else {
                $gives  = $givenCmd1Output;
             }
-            chomp $gives;
+            chomp $gives; $gives =~ s/\r$//;
             if ($gives ne "") {
                if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
                   my $major = $2;
@@ -18995,7 +19599,7 @@ sub getOSname {
             else {
                $gives  = $givenCmd1Output;
             }
-            chomp $gives;
+            chomp $gives; $gives =~ s/\r$//;
             if ($gives ne "") {
                if ($gives =~ /^\s*18\.\d+/) {
                   $result = "MacOS X Mojave";
@@ -19076,7 +19680,7 @@ sub getOSname {
             else {
                $gives  = $givenCmd1Output;
             }
-            chomp $gives;
+            chomp $gives; $gives =~ s/\r$//;
             if ($gives ne "") {
                if ($gives =~ /^\s*((\d+)(\.(\d+))?)/) {
                   my $major = $2;
@@ -19140,7 +19744,7 @@ sub getOSname {
             else {
                $gives  = $givenCmd1Output;
             }
-            chomp $gives;
+            chomp $gives; $gives =~ s/\r$//;
             if ($gives ne "") {
                if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
                   my $major = $2;
@@ -19188,7 +19792,7 @@ sub getOSname {
             else {
                $gives  = $givenCmd1Output;
             }
-            chomp $gives;
+            chomp $gives; $gives =~ s/\r$//;
             if ($gives ne "") {
                if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
                   my $major = $2;
@@ -19236,7 +19840,7 @@ sub getOSname {
             else {
                $gives  = $givenCmd1Output;
             }
-            chomp $gives;
+            chomp $gives; $gives =~ s/\r$//;
             if ($gives ne "") {
                if ($gives =~ /\s*[AB]\.(\d+)(\.(\d+))?/) {
                   $result = "HP/UX-$1";
@@ -19272,7 +19876,7 @@ sub getOSname {
             else {
                $gives  = $givenCmd1Output;
             }
-            chomp $gives;
+            chomp $gives; $gives =~ s/\r$//;
             if ($gives ne "") {
                if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
                   my $major = $2;
@@ -19320,7 +19924,7 @@ sub getOSname {
             else {
                $gives  = $givenCmd1Output;
             }
-            chomp $gives;
+            chomp $gives; $gives =~ s/\r$//;
             if ($gives ne "") {
                if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
                   my $major = $2;
@@ -19371,7 +19975,7 @@ sub getOSname {
                $verOutput = $givenCmd1Output;
                print DBGOUT "getOSname:    ...assume ver returns [".$verOutput."]\n" if $debugging;
             }
-            chomp $verOutput;
+            chomp $gives; $gives =~ s/\r$//;
             print DBGOUT "getOSname:    ver returns [".$verOutput."]\n" if $debugging;
             if ($verOutput ne "") {
                #
@@ -19390,7 +19994,7 @@ sub getOSname {
                   else {
                      $gives  = $givenCmd2Output;
                   }
-                  chomp $gives;
+                  chomp $gives; $gives =~ s/\r$//;
                   print DBGOUT "getOSname:    systeminfo gives [".$gives."]\n" if $debugging;
                   if ($gives =~ /Windows Server/) {
                      $result = "Windows Server 2016";
@@ -19410,7 +20014,7 @@ sub getOSname {
                   else {
                      $gives  = $givenCmd2Output;
                   }
-                  chomp $gives;
+                  chomp $gives; $gives =~ s/\r$//;
                   print DBGOUT "getOSname:    systeminfo gives [".$gives."]\n" if $debugging;
                   if ($gives =~ /Windows Server/) {
                      $result = "Windows Server 2012 R2";
@@ -19427,7 +20031,7 @@ sub getOSname {
                   else {
                      $gives  = $givenCmd2Output;
                   }
-                  chomp $gives;
+                  chomp $gives; $gives =~ s/\r$//;
                   print DBGOUT "getOSname:    systeminfo gives [".$gives."]\n" if $debugging;
                   if ($gives =~ /Windows Server/) {
                      $result = "Windows Server 2012";
@@ -19447,7 +20051,7 @@ sub getOSname {
                   else {
                      $gives  = $givenCmd2Output;
                   }
-                  chomp $gives;
+                  chomp $gives; $gives =~ s/\r$//;
                   if ($gives =~ /Windows Server/) {
                      $result = "Windows Server 2008 R2 SP1";
                      print DBGOUT "getOSname:    ...and it is a server edition\n" if $debugging;
@@ -19467,7 +20071,7 @@ sub getOSname {
                   else {
                      $gives  = $givenCmd2Output;
                   }
-                  chomp $gives;
+                  chomp $gives; $gives =~ s/\r$//;
                   if ($gives =~ /Windows Server/) {
                      $result = "Windows Server 2008 R2";
                      print DBGOUT "getOSname:    ...and it is a server edition\n" if $debugging;
@@ -19487,7 +20091,7 @@ sub getOSname {
                   else {
                      $gives  = $givenCmd2Output;
                   }
-                  chomp $gives;
+                  chomp $gives; $gives =~ s/\r$//;
                   if ($gives =~ /Windows Server/) {
                      $result = "Windows Server 2008 SP1";
                      print DBGOUT "getOSname:    ...and it is a server edition\n" if $debugging;
@@ -19507,7 +20111,7 @@ sub getOSname {
                   else {
                      $gives  = $givenCmd2Output;
                   }
-                  chomp $gives;
+                  chomp $gives; $gives =~ s/\r$//;
                   if ($gives =~ /Windows Server/) {
                      $result = "Windows Server 2008 SP1";
                      print DBGOUT "getOSname:    ...and it is a server edition\n" if $debugging;
@@ -19527,7 +20131,7 @@ sub getOSname {
                   else {
                      $gives  = $givenCmd2Output;
                   }
-                  chomp $gives;
+                  chomp $gives; $gives =~ s/\r$//;
                   if ($gives =~ /Windows Server/) {
                      $result = "Windows Server 2003";
                      print DBGOUT "getOSname:    ...and it is a server edition\n" if $debugging;
@@ -19547,7 +20151,7 @@ sub getOSname {
                   else {
                      $gives  = $givenCmd2Output;
                   }
-                  chomp $gives;
+                  chomp $gives; $gives =~ s/\r$//;
                   if ($gives =~ /Windows Server/) {
                      $result = "Windows Server 2003 SP1";
                      print DBGOUT "getOSname:    ...and it is a server edition\n" if $debugging;
@@ -19621,7 +20225,7 @@ sub getOSname {
             else {
                $gives  = $givenCmd1Output;
             }
-            chomp $gives;
+            chomp $gives; $gives =~ s/\r$//;
             if ($gives ne "") {
                if ($gives =~ /\s*((\d+)(\.(\d+))?)/) {
                   my $major = $2;
@@ -19682,7 +20286,29 @@ sub getOSname {
 #
 #  see: totebag/src/perl-lib/getTheSearchPATH.psub
 #
-#  Dated: 01Oct2019
+#  Dated: 16Oct2019 getTheSearchPATH
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
+#            config/scripts/perl/thehost
+#
+#            .doit/open/fuli.other.net/reus/doit.end
+#            .doit/open/fuli.reusfamily.org/reus/doit.end
+#            .doit/open/pumba.llnl.gov/reus1/XXX.doit.end.XXX
+#            .doit/open/scar.other.net/reus/doit.end
+#            .doit/open/scar.reusfamily.org/reus/doit.end
+#            .doit/open/simba.other.net/reus/doit.end
+#            .doit/open/simba.reusfamily.org/reus/doit.end
+#            .doit/open/zazu.reusfamily.org/reus/doit.end
+#            hooks_prj/fuli.other.net/reus/doit.end
+#            hooks_prj/fuli.reusfamily.org/reus/doit.end
+#            hooks_prj/scar.other.net/reus/doit.end
+#            hooks_prj/scar.reusfamily.org/reus/doit.end
+#            hooks_prj/simba.other.net/reus/doit.end
+#            hooks_prj/simba.reusfamily.org/reus/doit.end
+#            hooks_prj/zazu.reusfamily.org/reus/doit.end
 #
 #-------------------------------------------------------------------------------
 
@@ -19723,52 +20349,36 @@ sub getTheSearchPATH {
 #
 #  Get the current working directory.
 #
-#  This function is used to determine the current working directory. Note
-#  that this sort of thing is generally supplied by a standard module but
-#  some Perl installations have been sometimes found to lack this (rarely
-#  but...). Note that this function does this operation the hard way.
+#  This function is used to determine the current working directory. The
+#  actual work is done using the getcwd() function supplied by the standard
+#  Cwd module.
 #
-#  This function uses: findTempDir(),
-#                      getOSclass(),
+#  This function uses: getOSclass(),
 #                      makePathWindowslike()
 #
 #  see: totebag/src/perl-lib/getWorkingDirectory.psub
 #
-#  Dated: 30Sep2019
+#  Dated: 05Nov2019 getWorkingDirectory
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
+#            autokonf/example/src/unautokonf.perl
+#            build/runatest
+#            build/testing/run-all-tests
 #
 #-------------------------------------------------------------------------------
 
+use Cwd;
+
 sub getWorkingDirectory {
-   my $callerIs = shift;
-   print DBGOUT "getWorkingDirectory[ callerIs=\"$callerIs\"...\n" if $debugging;
-   my $exitCode;
-   my $gives;
-   my $tmpdir   = findTempDir("");
-   my $osClass  = getOSclass();
-   if ($osClass eq "UNIX-like") {
-      print DBGOUT "getWorkingDirectory: ...host looks UNIX-like\n" if $debugging;
-      my $tmpFile = "$tmpdir/pwd-$$.tmp";
-      $gives      = `pwd 2>$tmpFile`;
-      $exitCode   = $? + 0;
-      chomp $gives;
-      unlink $tmpFile if -f $tmpFile;
-   }
-   elsif ($osClass eq "Windows-like") {
+   print DBGOUT "getWorkingDirectory[ starting...\n" if $debugging;
+   my $gives    = getcwd();
+   print DBGOUT "getWorkingDirectory: ...getcwd() returns \"".$gives."\"\n" if $debugging;
+   if (getOSclass() eq "Windows-like") {
       print DBGOUT "getWorkingDirectory: ...host looks Windows-like\n" if $debugging;
-      my $tmpFile = "$tmpdir\\pwd-$$.tmp";
-      $gives      = `cd 2>$tmpFile`;
-      $exitCode   = $? + 0;
-      chomp $gives;
-      unlink $tmpFile if -f $tmpFile;
-      $gives      = makePathWindowslike($gives);
-   }
-   else {
-      print DBGOUT "getWorkingDirectory: ...host doesn't look UNIX- or Windows-like\n" if $debugging;
-      $gives    = "";
-      $exitCode = 1;
-   }
-   if ($exitCode != 0) {
-      $gives    = "";
+      $gives    = makePathWindowslike($gives);
    }
    print DBGOUT "getWorkingDirectory] ...done(=\"$gives\")\n" if $debugging;
    return $gives;
@@ -19821,17 +20431,27 @@ sub getWorkingDirectory {
 #
 #  see: totebag/src/perl-lib/idTheHardware.psub
 #
-#  Dated: 16Jan2019
+#  Dated: 07Nov2019 idTheHardware
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
 #
 #-------------------------------------------------------------------------------
 
 sub idTheHardware {
    my $reported = shift;
+   print DBGOUT "idTheHardware[ reported=\"$reported\"...\n" if $debugging;
    my $HWtype   = "";
-   my $OSclass  = getOSclass();
-   if ($OSclass eq "UNIX-like") {
+   my $osClass  = getOSclass();
+   if ($osClass eq "UNIX-like") {
+      print DBGOUT "idTheHardware: ...is UNIX-like\n" if $debugging;
       if ($reported eq "") {
-         $reported = `uname -m 2>/dev/null`; chomp $reported;
+         print DBGOUT "idTheHardware:    run [uname -m 2>/dev/null]\"\n" if $debugging;
+         $reported = `uname -m 2>/dev/null`; chomp $reported; $reported =~ s/\r$//;
+         print DBGOUT "idTheHardware:    ...gives [$reported]\"\n" if $debugging;
+         print DBGOUT "idTheHardware:    assume reported=\"$reported\"\n" if $debugging;
       }
       if ($reported ne "") {
          $_ = $reported;
@@ -20059,9 +20679,11 @@ sub idTheHardware {
          $HWtype = "";
       }
    }
-   elsif ($OSclass eq "Windows-like") {
+   elsif ($osClass eq "Windows-like") {
+      print DBGOUT "idTheHardware: ...is Windows-like\n" if $debugging;
       if ($reported eq "") {
          $reported = $ENV{'PROCESSOR_ARCHITECTURE'};
+         print DBGOUT "idTheHardware:    assume reported=\"$reported\"\n" if $debugging;
       }
       if ($reported ne "") {
          $_ = $reported;
@@ -20093,6 +20715,7 @@ sub idTheHardware {
    else {
       $HWtype = "";
    }
+   print DBGOUT "idTheHardware] ...done(=\"$HWtype\")\n" if $debugging;
    return $HWtype;
 }
 
@@ -20107,7 +20730,7 @@ sub idTheHardware {
 #
 #  see: totebag/src/perl-lib/isDirEmpty.psub
 #
-#  Dated: 05Nov2018
+#  Dated: 16Oct2019 isDirEmpty
 #
 #-------------------------------------------------------------------------------
 
@@ -20164,7 +20787,7 @@ sub isDirEmpty {
 #
 #  see: totebag/src/perl-lib/isGNUtar.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 05Nov2019 isGNUtar
 #
 #-------------------------------------------------------------------------------
 
@@ -20190,7 +20813,7 @@ sub isGNUtar {
          if (open(GMAKEOUT,"< $TMPFILE")) {
             print DBGOUT "isGNUtar: ...reading \"$TMPFILE\"\n" if $debugging;
       scan: while (<GMAKEOUT>) {
-               chomp;
+               chomp; s/\r$//;
                my $got = $_;
                print DBGOUT "isGNUtar:    [$got]\n" if $debugging;
                $_      = $got;
@@ -20257,7 +20880,7 @@ sub isGNUtar {
 #
 #  see: totebag/src/perl-lib/isSimple.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 16Oct2019 isSimple
 #
 #-------------------------------------------------------------------------------
 
@@ -20292,7 +20915,42 @@ sub isSimple {
 #
 #  see: totebag/src/perl-lib/joinpath.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 16Oct2019 joinpath
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
+#            autokonf/example/src/unautokonf.perl
+#            autokonf/scripts/perl/platform.pmain
+#            build/runatest
+#            build/testing/run-all-tests
+#            config/scripts/perl/platform
+#            config/scripts/perl/thehost
+#
+#            .doit/open/fuli.other.net/reus/doit.end
+#            .doit/open/fuli.reusfamily.org/reus/doit.end
+#            .doit/open/pumba.llnl.gov/reus1/XXX.doit.end.XXX
+#            .doit/open/scar.other.net/reus/doit.end
+#            .doit/open/scar.reusfamily.org/reus/doit.end
+#            .doit/open/simba.other.net/reus/doit.end
+#            .doit/open/simba.reusfamily.org/reus/doit.end
+#            .doit/open/zazu.reusfamily.org/reus/doit.end
+#            hooks_prj/fuli.other.net/reus/doit.end
+#            hooks_prj/fuli.reusfamily.org/reus/doit.end
+#            hooks_prj/scar.other.net/reus/doit.end
+#            hooks_prj/scar.reusfamily.org/reus/doit.end
+#            hooks_prj/simba.other.net/reus/doit.end
+#            hooks_prj/simba.reusfamily.org/reus/doit.end
+#            hooks_prj/zazu.reusfamily.org/reus/doit.end
+#
+#  NOTE: This function is included in the enstall project by running:
+#
+#            build enstall/MySource
+#
+#        from totebag/src is required.
+#
+#            enstall
 #
 #-------------------------------------------------------------------------------
 
@@ -20313,15 +20971,15 @@ sub joinpath {
       }
       print DBGOUT "}...\n" if $debugging;
    }
-   my $OSclass        = getOSclass();
-   my $wasSpecialCase = 0;
    my $result;
+   my $osClass        = getOSclass();
+   my $wasSpecialCase = 0;
 
    if (1 <= $Ncomponents) {
-      if ($OSclass eq "UNIX-like") {
+      if ($osClass eq "UNIX-like") {
          print DBGOUT "joinpath: ...looks \"UNIX-like\"\n" if $debugging;
       }
-      elsif ($OSclass eq "Windows-like") {
+      elsif ($osClass eq "Windows-like") {
          print DBGOUT "joinpath: ...looks \"Windows-like\"\n" if $debugging;
          print DBGOUT "joinpath:    adjust the components\"\n" if $debugging;
          my $i;
@@ -20338,7 +20996,7 @@ sub joinpath {
       if ($Lpart eq ".") {
          my $bn = basename($Rpart);
          if ($Rpart eq $bn) {
-            if ($OSclass eq "UNIX-like") {
+            if ($osClass eq "UNIX-like") {
                $result      = $Lpart."/".$Rpart;     # implementing joinpath()
             }
             else {
@@ -20356,7 +21014,7 @@ sub joinpath {
          my $i;
          for ($i=1; $i<=$#theComponents; ++$i) {
             my $component = $theComponents[$i];
-            if ($OSclass eq "UNIX-like") {
+            if ($osClass eq "UNIX-like") {
                if ($component =~ "^/") {
                   $result = $component;
                }
@@ -20382,7 +21040,7 @@ sub joinpath {
    else {
       print DBGOUT "joinpath: ...was the special case\n" if $debugging;
    }
-   if ($OSclass eq "Windows-like") {
+   if ($osClass eq "Windows-like") {
       my $tmpPathname = makePathWindowslike($result);
       if ($tmpPathname ne $result) {
          $result      = $tmpPathname;
@@ -20417,20 +21075,25 @@ sub joinpath {
 #
 #  see: totebag/src/perl-lib/joinTheSearchPATH.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 16Oct2019 joinTheSearchPATH
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
 #
 #-------------------------------------------------------------------------------
 
 sub joinTheSearchPATH {
-   my $refMyPATH  = shift;   # A reference to an array of pathnames
-   my $theOSclass = shift;   # ...an optional parameter
-   if ($theOSclass eq "") {
-      $theOSclass = getOSclass();
+   my $refMyPATH = shift;   # A reference to an array of pathnames
+   my $osClass   = shift;   # ...an optional parameter
+   if ($osClass eq "") {
+      $osClass = getOSclass();
    }
-   if ($theOSclass eq "UNIX-like") {
+   if ($osClass eq "UNIX-like") {
       $myPATH = join ':', @$refMyPATH;
    }
-   elsif ($theOSclass eq "Windows-like") {
+   elsif ($osClass eq "Windows-like") {
       my $Nelems = @$refMyPATH;
       my $i;
       for ($i=0; $i<$Nelems; $i+=1) {
@@ -20466,7 +21129,26 @@ sub joinTheSearchPATH {
 #
 #  see: totebag/src/perl-lib/lookForExecutable.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 16Oct2019 lookForExecutable
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            .doit/open/fuli.other.net/reus/doit.end
+#            .doit/open/fuli.reusfamily.org/reus/doit.end
+#            .doit/open/pumba.llnl.gov/reus1/XXX.doit.end.XXX
+#            .doit/open/scar.other.net/reus/doit.end
+#            .doit/open/scar.reusfamily.org/reus/doit.end
+#            .doit/open/simba.other.net/reus/doit.end
+#            .doit/open/simba.reusfamily.org/reus/doit.end
+#            .doit/open/zazu.reusfamily.org/reus/doit.end
+#            hooks_prj/fuli.other.net/reus/doit.end
+#            hooks_prj/fuli.reusfamily.org/reus/doit.end
+#            hooks_prj/scar.other.net/reus/doit.end
+#            hooks_prj/scar.reusfamily.org/reus/doit.end
+#            hooks_prj/simba.other.net/reus/doit.end
+#            hooks_prj/simba.reusfamily.org/reus/doit.end
+#            hooks_prj/zazu.reusfamily.org/reus/doit.end
 #
 #-------------------------------------------------------------------------------
 
@@ -20570,7 +21252,7 @@ sub lookForExecutable {
 #
 #  see: totebag/src/perl-lib/makeDirectory.psub
 #
-#  Dated: 03Nov2015
+#  Dated: 16Oct2019 makeDirectory
 #
 #-------------------------------------------------------------------------------
 
@@ -20633,20 +21315,53 @@ sub makeDirectory {
 #
 #  see: totebag/src/perl-lib/makePathNative.psub
 #
-#  Dated: 25Sep2019
+#  Dated: 30Oct2019 makePathNative
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
+#            autokonf/example/src/unautokonf.perl
+#            build/testing/run-all-tests
+#
+#            configure.in
+#
+#            .doit/open/fuli.other.net/reus/doit.end
+#            .doit/open/fuli.reusfamily.org/reus/doit.end
+#            .doit/open/pumba.llnl.gov/reus1/XXX.doit.end.XXX
+#            .doit/open/scar.other.net/reus/doit.end
+#            .doit/open/scar.reusfamily.org/reus/doit.end
+#            .doit/open/simba.other.net/reus/doit.end
+#            .doit/open/simba.reusfamily.org/reus/doit.end
+#            .doit/open/zazu.reusfamily.org/reus/doit.end
+#            hooks_prj/fuli.other.net/reus/doit.end
+#            hooks_prj/fuli.reusfamily.org/reus/doit.end
+#            hooks_prj/scar.other.net/reus/doit.end
+#            hooks_prj/scar.reusfamily.org/reus/doit.end
+#            hooks_prj/simba.other.net/reus/doit.end
+#            hooks_prj/simba.reusfamily.org/reus/doit.end
+#            hooks_prj/zazu.reusfamily.org/reus/doit.end
+#
+#  NOTE: This function is included in the enstall project by running:
+#
+#            build enstall/MySource
+#
+#        from totebag/src is required.
+#
+#            enstall
 #
 #-------------------------------------------------------------------------------
 
 sub makePathNative {
-   my $pathname   = shift;
+   my $pathname = shift;
    print DBGOUT "makePathNative[ pathname=\"$pathname\"...\n" if $debugging;
    my $result;
-   my $theOsClass = getOSclass();
-   if ($theOsClass eq "UNIX-like") {
+   my $osClass  = getOSclass();
+   if ($osClass eq "UNIX-like") {
       print DBGOUT "makePathNative: ...host looks UNIX-like\n" if $debugging;
       $result = makePathUNIXlike($pathname);
    }
-   elsif ($theOsClass eq "Windows-like") {
+   elsif ($osClass eq "Windows-like") {
       print DBGOUT "makePathNative: ...host looks Windows-like\n" if $debugging;
       $result = makePathWindowslike($pathname);
    }
@@ -20663,44 +21378,80 @@ sub makePathNative {
 #
 #  Translate all backslashes in the given pathname to forward slashes. Thus
 #  converting it to a UNIX-like style. Note that drive letters will be
-#  translated using a cygwin-like style.
+#  translated using an "A" cygwin-like style (resembling /x/something where
+#  "x" is a letter).
 #
 #  This function uses: fixpath()
 #
 #  see: totebag/src/perl-lib/makePathUNIXlike.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 30Oct2019 makePathUNIXlike
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
+#            autokonf/example/src/unautokonf.perl
+#            build/testing/run-all-tests
+#
+#            configure.in
+#
+#            .doit/open/fuli.other.net/reus/doit.end
+#            .doit/open/fuli.reusfamily.org/reus/doit.end
+#            .doit/open/pumba.llnl.gov/reus1/XXX.doit.end.XXX
+#            .doit/open/scar.other.net/reus/doit.end
+#            .doit/open/scar.reusfamily.org/reus/doit.end
+#            .doit/open/simba.other.net/reus/doit.end
+#            .doit/open/simba.reusfamily.org/reus/doit.end
+#            .doit/open/zazu.reusfamily.org/reus/doit.end
+#            hooks_prj/fuli.other.net/reus/doit.end
+#            hooks_prj/fuli.reusfamily.org/reus/doit.end
+#            hooks_prj/scar.other.net/reus/doit.end
+#            hooks_prj/scar.reusfamily.org/reus/doit.end
+#            hooks_prj/simba.other.net/reus/doit.end
+#            hooks_prj/simba.reusfamily.org/reus/doit.end
+#            hooks_prj/zazu.reusfamily.org/reus/doit.end
+#
+#  NOTE: This function is included in the enstall project by running:
+#
+#            build enstall/MySource
+#
+#        from totebag/src is required.
+#
+#            enstall
 #
 #-------------------------------------------------------------------------------
 
 sub makePathUNIXlike {
    my $pathname = shift;
    print DBGOUT "makePathUNIXlike[ pathname=\"$pathname\"...\n" if $debugging;
-   if ($pathname =~ /^([a-zA-Z]):([\/\\].*)$/) {
+   my $changed  = $pathname =~ tr/\\/\//;
+   if ($debugging && (1 <= $changed)) {
+      print DBGOUT "makePathUNIXlike: ...adjusted slashing to \"$pathname\"\n" if $debugging;
+   }
+   if ($pathname =~ /^([a-zA-Z]):(\/.*)$/) {
       print DBGOUT "makePathUNIXlike: ...with drive (absolute)\n" if $debugging;
       my $drive = $1;
       my $path  = $2;
+      $path     = fixpath($path);
       $pathname = "/".$drive.$path;
-      $pathname =~ tr/\\/\//;
    }
    elsif ($pathname =~ /^([a-zA-Z]):(.+)$/) {
       print DBGOUT "makePathUNIXlike: ...with drive (relative -- shame)\n" if $debugging;
       my $drive = $1;
       my $path  = $2;
+      $path     = fixpath($path);
       $pathname = "/".$drive."/".$path;
-      $pathname =~ tr/\\/\//;
    }
    elsif ($pathname =~ /^([a-zA-Z]):$/) {
       print DBGOUT "makePathUNIXlike: ...just drive\n" if $debugging;
       my $drive = $1;
-      $pathname = "/".$drive."/";
-      $pathname =~ tr/\\/\//;
+      $pathname = "/".$drive;
    }
    else {
       print DBGOUT "makePathUNIXlike: ...just path\n" if $debugging;
-      $pathname =~ tr/\\/\//;
+      $pathname = fixpath($pathname);
    }
-   $pathname = fixpath($pathname);
    print DBGOUT "makePathUNIXlike] ...done(=\"$result\")\n" if $debugging;
    return $pathname;
 }
@@ -20710,27 +21461,78 @@ sub makePathUNIXlike {
 #
 #  Translate all forward slashes in the given pathname to backslashes. Thus
 #  converting it to a Windows-like style. Note that it also handles Cygwin-like
-#  encoding of a drive letter (where C:\... is encoded as /C/...).
+#  encoding of a drive letter (where C:\... is encoded as /C/... or /cygdrive/C/...).
 #
 #  see: totebag/src/perl-lib/makePathWindowslike.psub
 #
-#  Dated: 25Sep2019
+#  Dated: 30Oct2019 makePathWindowslike
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
+#            autokonf/example/src/unautokonf.perl
+#            autokonf/scripts/perl/platform.pmain
+#            build/runatest
+#            build/testing/run-all-tests
+#            config/scripts/perl/platform
+#            config/scripts/perl/thehost
+#
+#            configure.in
+#
+#            .doit/open/fuli.other.net/reus/doit.end
+#            .doit/open/fuli.reusfamily.org/reus/doit.end
+#            .doit/open/pumba.llnl.gov/reus1/XXX.doit.end.XXX
+#            .doit/open/scar.other.net/reus/doit.end
+#            .doit/open/scar.reusfamily.org/reus/doit.end
+#            .doit/open/simba.other.net/reus/doit.end
+#            .doit/open/simba.reusfamily.org/reus/doit.end
+#            .doit/open/zazu.reusfamily.org/reus/doit.end
+#            hooks_prj/fuli.other.net/reus/doit.end
+#            hooks_prj/fuli.reusfamily.org/reus/doit.end
+#            hooks_prj/scar.other.net/reus/doit.end
+#            hooks_prj/scar.reusfamily.org/reus/doit.end
+#            hooks_prj/simba.other.net/reus/doit.end
+#            hooks_prj/simba.reusfamily.org/reus/doit.end
+#            hooks_prj/zazu.reusfamily.org/reus/doit.end
+#
+#  NOTE: This function is included in the enstall project by running:
+#
+#            build enstall/MySource
+#
+#        from totebag/src is required.
+#
+#            enstall
 #
 #-------------------------------------------------------------------------------
 
 sub makePathWindowslike {
    my $pathname = shift;
    print DBGOUT "makePathWindowslike[ pathname=\"$pathname\"...\n" if $debugging;
-   $pathname    =~ tr/\\/\//;
+   my $changed  = $pathname =~ tr/\\/\//;
+   if (1 <= $changed) {
+      print DBGOUT "makePathWindowslike: ...adjusted to \"$pathname\"\n" if $debugging;
+   }
    if ($pathname =~ /^\/([a-zA-Z])(\/.*)$/) {
-      print DBGOUT "makePathWindowslike: ...looks cygwin-like\n" if $debugging;
+      print DBGOUT "makePathWindowslike: ...looks \"A\" cygwin-like\n" if $debugging;
       my $driveLetter = $1;
       my $remainder   = $2;
-      print DBGOUT "makePathWindowslike: ...has a drive letter(=\"$driveLetter\")\n" if $debugging;
+      print DBGOUT "makePathWindowslike:    has a drive letter(=\"$driveLetter\")\n" if $debugging;
+      print DBGOUT "makePathWindowslike:    and \"$remainder\"\n" if $debugging;
+      $pathname       = $driveLetter.":".$remainder
+   }
+   elsif ($pathname =~ /^\/cygdrive\/([a-zA-Z])(\/.*)$/) {
+      print DBGOUT "makePathWindowslike: ...looks \"B\" cygwin-like\n" if $debugging;
+      my $driveLetter = $1;
+      my $remainder   = $2;
+      print DBGOUT "makePathWindowslike:    has a drive letter(=\"$driveLetter\")\n" if $debugging;
       print DBGOUT "makePathWindowslike:    and \"$remainder\"\n" if $debugging;
       $pathname       = $driveLetter.":".$remainder
    }
    $pathname    =~ tr/\//\\/;
+   if (1 <= $changed) {
+      print DBGOUT "makePathWindowslike: ...adjusted back to \"$pathname\"\n" if $debugging;
+   }
    print DBGOUT "makePathWindowslike] ...done(=\"$pathname\")\n" if $debugging;
    return $pathname;
 }
@@ -20761,7 +21563,28 @@ sub makePathWindowslike {
 #
 #  see: totebag/src/perl-lib/mkDirectory.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 30Oct2019 mkDirectory
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            configure.in
+#
+#            .doit/open/fuli.other.net/reus/doit.end
+#            .doit/open/fuli.reusfamily.org/reus/doit.end
+#            .doit/open/pumba.llnl.gov/reus1/XXX.doit.end.XXX
+#            .doit/open/scar.other.net/reus/doit.end
+#            .doit/open/scar.reusfamily.org/reus/doit.end
+#            .doit/open/simba.other.net/reus/doit.end
+#            .doit/open/simba.reusfamily.org/reus/doit.end
+#            .doit/open/zazu.reusfamily.org/reus/doit.end
+#            hooks_prj/fuli.other.net/reus/doit.end
+#            hooks_prj/fuli.reusfamily.org/reus/doit.end
+#            hooks_prj/scar.other.net/reus/doit.end
+#            hooks_prj/scar.reusfamily.org/reus/doit.end
+#            hooks_prj/simba.other.net/reus/doit.end
+#            hooks_prj/simba.reusfamily.org/reus/doit.end
+#            hooks_prj/zazu.reusfamily.org/reus/doit.end
 #
 #-------------------------------------------------------------------------------
 
@@ -20815,7 +21638,12 @@ sub mkDirectory {
 #
 #  see: totebag/src/perl-lib/mustDeletePathname.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 16Oct2019 mustDeletePathname
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            build/runatest
 #
 #-------------------------------------------------------------------------------
 
@@ -20874,7 +21702,37 @@ sub mustDeletePathname {
 #
 #  see: totebag/src/perl-lib/nativePathname.psub
 #
-#  Dated: 02Jun2018
+#  Dated: 16Oct2019 nativePathname
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
+#            autokonf/example/src/unautokonf.perl
+#
+#            .doit/open/fuli.other.net/reus/doit.end
+#            .doit/open/fuli.reusfamily.org/reus/doit.end
+#            .doit/open/pumba.llnl.gov/reus1/XXX.doit.end.XXX
+#            .doit/open/scar.other.net/reus/doit.end
+#            .doit/open/scar.reusfamily.org/reus/doit.end
+#            .doit/open/simba.other.net/reus/doit.end
+#            .doit/open/simba.reusfamily.org/reus/doit.end
+#            .doit/open/zazu.reusfamily.org/reus/doit.end
+#            hooks_prj/fuli.other.net/reus/doit.end
+#            hooks_prj/fuli.reusfamily.org/reus/doit.end
+#            hooks_prj/scar.other.net/reus/doit.end
+#            hooks_prj/scar.reusfamily.org/reus/doit.end
+#            hooks_prj/simba.other.net/reus/doit.end
+#            hooks_prj/simba.reusfamily.org/reus/doit.end
+#            hooks_prj/zazu.reusfamily.org/reus/doit.end
+#
+#  NOTE: This function is included in the enstall project by running:
+#
+#            build enstall/MySource
+#
+#        from totebag/src is required.
+#
+#            enstall
 #
 #-------------------------------------------------------------------------------
 
@@ -20912,7 +21770,7 @@ sub nativePathname {
 #
 #  see: totebag/src/perl-lib/nullPathname.psub
 #
-#  Dated: 03Nov2015
+#  Dated: 16Oct2019 nullPathname
 #
 #-------------------------------------------------------------------------------
 
@@ -20953,7 +21811,12 @@ sub nullPathname {
 #
 #  see: totebag/src/perl-lib/prependToSearchPATH.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 16Oct2019 prependToSearchPATH
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
 #
 #-------------------------------------------------------------------------------
 
@@ -21032,7 +21895,20 @@ sub prependToSearchPATH {
 #
 #  see: totebag/src/perl-lib/quoteIfReqd.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 16Oct2019 quoteIfReqd
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/example/src/unautokonf.perl
+#
+#  NOTE: This function is included in the newver project by running:
+#
+#            enstall/MySource newver/MySource
+#
+#        from totebag/src is required.
+#
+#            newver
 #
 #-------------------------------------------------------------------------------
 
@@ -21091,7 +21967,14 @@ sub quoteIfReqd {
 #
 #  see: totebag/src/perl-lib/shouldDeletePathname.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 16Oct2019 shouldDeletePathname
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            Generics/for.ale/unconfigure.perl
+#            autokonf/example/src/unautokonf.perl
+#            autokonf/example/src/unconfigure.perl
 #
 #-------------------------------------------------------------------------------
 
@@ -21122,7 +22005,7 @@ sub shouldDeletePathname {
 #
 #  see: totebag/src/perl-lib/slurpPathnameIntoArray.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 05Nov2019 slurpPathnameIntoArray
 #
 #-------------------------------------------------------------------------------
 
@@ -21132,7 +22015,7 @@ sub slurpPathnameIntoArray {
    my @contents;
    if ( open(F, "< $pathname") ) {
       while (<F>) {
-         chomp;
+         chomp; s/\r$//;
          $contents[$#contents+1] = $_;
       }
       close F;
@@ -21168,7 +22051,29 @@ sub slurpPathnameIntoArray {
 #
 #  see: totebag/src/perl-lib/splitTheSearchPATH.psub
 #
-#  Dated: 08Oct2019
+#  Dated: 16Oct2019 splitTheSearchPATH
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
+#            config/scripts/perl/thehost
+#
+#            .doit/open/fuli.other.net/reus/doit.end
+#            .doit/open/fuli.reusfamily.org/reus/doit.end
+#            .doit/open/pumba.llnl.gov/reus1/XXX.doit.end.XXX
+#            .doit/open/scar.other.net/reus/doit.end
+#            .doit/open/scar.reusfamily.org/reus/doit.end
+#            .doit/open/simba.other.net/reus/doit.end
+#            .doit/open/simba.reusfamily.org/reus/doit.end
+#            .doit/open/zazu.reusfamily.org/reus/doit.end
+#            hooks_prj/fuli.other.net/reus/doit.end
+#            hooks_prj/fuli.reusfamily.org/reus/doit.end
+#            hooks_prj/scar.other.net/reus/doit.end
+#            hooks_prj/scar.reusfamily.org/reus/doit.end
+#            hooks_prj/simba.other.net/reus/doit.end
+#            hooks_prj/simba.reusfamily.org/reus/doit.end
+#            hooks_prj/zazu.reusfamily.org/reus/doit.end
 #
 #-------------------------------------------------------------------------------
 
@@ -21251,7 +22156,12 @@ sub splitTheSearchPATH {
 #
 #  see: totebag/src/perl-lib/suffix.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 16Oct2019 suffix
+#
+#  NOTE: This function is known to be "hand included" in the following
+#        source files:
+#
+#            autokonf/autokonf.pmain
 #
 #-------------------------------------------------------------------------------
 
@@ -21283,7 +22193,7 @@ sub suffix {
 #
 #  see: totebag/src/perl-lib/touchPathname.psub
 #
-#  Dated: 08Apr2018
+#  Dated: 16Oct2019 touchPathname
 #
 #-------------------------------------------------------------------------------
 
@@ -21337,7 +22247,7 @@ sub touchPathname {
 #
 #  see: totebag/src/perl-lib/unquote.psub
 #
-#  Dated: 04Oct2019
+#  Dated: 16Oct2019 unquote
 #
 #-------------------------------------------------------------------------------
 
@@ -21397,10 +22307,12 @@ sub help {
    |       1) The "source" system. This is where the software to be installed
    |          is found and where the mkinstaller script (the generator) is
    |          used. On Windows-like hosts the NSIS software package must
-   |          have been properly installed.
+   |          have been properly installed on the "source" system.
    |
    |       2) The "target" system. This is where the generated installer
-   |          script is run, where the software is to be installed.
+   |          script is run, where the software is to be installed. Note
+   |          that the NSIS software package is NOT required on the "target"
+   |          system.
    |
    |    There are 3 pieces of software involved:
    |
@@ -21409,11 +22321,12 @@ sub help {
    |          have been built and is deemed ready for distribution.
    |
    |       2) The mkinstaller script. Note that on a Windows-like host
-   |          the NSIS software must be properly installed. NSIS will not
-   |          be required on the "target" system.
+   |          the NSIS software must be properly installed. The mkinstaller
+   |          script requires NSIS to generate the desired installer. NSIS
+   |          will NOT be required on the "target" system.
    |
    |       3) The generated installer script. On a UNIX-like host this is
-   |          the Bourne-shell script generated by the mkinstaller script.
+   |          a Bourne-shell script generated by the mkinstaller script.
    |          On a Windows-like host this is a binary executable (a .exe
    |          file) that is generated by the mkinstaller script using the
    |          NSIS package under the covers.
@@ -22071,6 +22984,12 @@ EOF1
    |    fail with an error message.
    |
    |NOTES
+   |    The script has no significant differences between hosts. Host specific
+   |    details are determined at mkinstaller script run time. Note that on
+   |    Windows-like hosts the script will fail with an error message if it
+   |    can't find/run makensis (make sure makensis is reachable through the
+   |    PATH environment variable).
+   |
    |    The directory where temporary files are to be placed is determined
    |    as follows:
    |
@@ -22111,6 +23030,8 @@ EOF1
    |           the program will exit with a non-zero exit code.
    |
    |    Note that 5, 8, and 9 are only applicable on Windows-like hosts.
+   |
+   |    Support on cygwin and mingw system is rather experimental.
    |
    |DETAILS
    |    The installer construction process is implemented in a different
@@ -22408,10 +23329,13 @@ sub html {
    |            <ol>
    |               <li>The <b>source</b> system. This is where the software to be installed
    |                   is found and where the <i>mkinstaller</i> script (the generator) is
-   |                   used.
+   |                   used. On Windows-like hosts the <i>NSIS</i> software package must
+   |                   have been properly installed on the <b>source</b> system.
    |               </li>
    |               <li>The <b>target</b> system. This is where the generated installer
-   |                   script is run, where the software is to be installed.
+   |                   script is run, where the software is to be installed. Note
+   |                   that the <i>NSIS</i> software package is NOT required on the "target"
+   |                   system.
    |               </li>
    |            </ol>
    |         </blockquote>
@@ -22423,10 +23347,12 @@ sub html {
    |                   have been built and is deemed ready for distribution.
    |               </li>
    |               <li>The <i>mkinstaller</i> script. Note that on a Windows-like host
-   |                   the <i>NSIS</i> software must be properly installed. <i>NSIS</i> will not
-   |                   be required on the <b>target</b> system.
+   |                   the <i>NSIS</i> software must be properly installed. The <i>mkinstaller</i>
+   |                   script required <i>NSIS</i> to generate the desired installer. <i>NSIS</i>
+   |                   will NOT be required on the <b>target</b> system.
+   |               </li>
    |               <li>The generated installer script. On a UNIX-like host this is
-   |                   the Bourne-shell script generated by the <i>mkinstaller</i> script.
+   |                   a Bourne-shell script generated by the <i>mkinstaller</i> script.
    |                   On a Windows-like host this is a binary executable (a <b><big><code>.exe</code></big></b>
    |                   file) that is generated by the <i>mkinstaller</i> script using the
    |                   <i>NSIS</i> package under the covers.
@@ -22452,10 +23378,8 @@ sub html {
    |                   involves <i>scp</i>, <i>ftp</i>, <i>curl</i>, CD, DVD, USB-drive, or a download from
    |                   a web site.
    |               </li>
-   |               <li><b>Installation-time</b>. This is the time when the installer
-   |                   script that was generated in phase 2 is executed on the <b>target</b>
-   |                   system.
-   |                   script that was generated by <i>mkinstaller</i> in phase 2 is executed
+   |               <li><b>Installation-time</b>. this is the time when the installer
+   |                   script that was generated by <i>mkinstaller<i> in phase 2 is executed
    |                   on the <b>target</b> system.
    |               </li>
    |            </ol>
@@ -23243,6 +24167,13 @@ EOF1
    |         NOTES
    |      </h3>
    |      <blockquote>
+   |         The script has no significant differences between hosts. Host specific
+   |         details are determined at <i>mkinstaller</i> script run time. Note that on
+   |         Windows-like hosts the script will fail with an error message if it
+   |         can't find/run <i>makensis</i> (make sure <i>makensis</i> is reachable through the
+   |         <b><big><code>PATH</code></big></b> environment variable).
+   |      </blockquote>
+   |      <blockquote>
    |         The directory where temporary files are to be placed is determined
    |         as follows:
    |         <blockquote>
@@ -23297,6 +24228,9 @@ EOF1
    |            </ol>
    |         </blockquote>
    |         Note that 5, 8, and 9 are only applicable on Windows-like hosts.
+   |      </blockquote>
+   |      <blockquote>
+   |         Support on <i>cygwin</i> and <i>mingw</i> system is rather experimental.
    |      </blockquote>
    |
    |      <h3>

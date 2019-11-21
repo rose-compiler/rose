@@ -145,7 +145,7 @@ testTranslator: ../../../testTranslator
 # DQ (9/14/2014): This forces the relinking of the testTranslator, which is a work 
 # around until the OFP and ATerm support is included in ROSE using shared libraries.
 recompile_translator:
-	rm ../../../testTranslator
+	rm -f ../../../testTranslator
 	$(MAKE) ../../../testTranslator
 
 $(TEST_F90_Objects): recompile_translator ../../../testTranslator

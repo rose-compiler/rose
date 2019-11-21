@@ -386,22 +386,26 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("rers-upper-input-bound", po::value< int >(), "RERS specific parameter for z3.")
     ("rers-verifier-error-number",po::value< int >(), "RERS specific parameter for z3.")
     ("ssa",  po::value< bool >()->default_value(false)->implicit_value(true), "Generate SSA form (only works for programs without function calls, loops, jumps, pointers and returns).")
+    ("null-pointer-analysis","Perform null pointer analysis and print results.")
+    ("out-of-bounds-analysis","Perform out-of-bounds analysis and print results.")
+    ("uninitialized-analysis","Perform uninitialized analysis and print results.")
     ("null-pointer-analysis-file",po::value< string >(),"Perform null pointer analysis and write results to file [arg].")
     ("out-of-bounds-analysis-file",po::value< string >(),"Perform out-of-bounds analysis and write results to file [arg].")
+    ("uninitialized-analysis-file",po::value< string >(),"Perform uninitialized analysis and write results to file [arg].")
     ("program-stats",po::value< bool >()->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs.")
     ("in-state-string-literals",po::value< bool >()->default_value(false)->implicit_value(true),"create string literals in initial state.")
     ("std-functions",po::value< bool >()->default_value(true)->implicit_value(true),"model std function semantics (malloc, memcpy, etc). Must be turned off explicitly.")
     ("ignore-unknown-functions",po::value< bool >()->default_value(true)->implicit_value(true), "Unknown functions are assumed to be side-effect free.")
     ("ignore-undefined-dereference",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore pointer dereference of uninitalized value (assume data exists).")
     ("ignore-function-pointers",po::value< bool >()->default_value(false)->implicit_value(true), "Ignore function pointers (functions are not called).")
-    ("function-resolution-mode",po::value< int >()->default_value(1),"1:Translation unit only, 2:slow lookup, 3: fast (not implemented yet)")
+    ("function-resolution-mode",po::value< int >()->default_value(4),"1:Translation unit only, 2:slow lookup, 3: -, 4: complete resolution (including function pointers)")
     ("context-sensitive",po::value< bool >()->default_value(false)->implicit_value(true),"Perform context sensitive analysis. Uses call strings with arbitrary length, recursion is not supported yet.")
     ("abstraction-mode",po::value< int >()->default_value(0),"Select abstraction mode (0: equality merge (explicit model checking), 1: approximating merge (abstract model checking).")
     ("interpretation-mode",po::value< int >()->default_value(0),"Select interpretation mode. 0: default, 1: execute stdout functions.")
      //    ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ("print-warnings",po::value< bool >()->default_value(false)->implicit_value(true),"Print warnings on stdout during analysis (this can slow down the analysis significantly)")
     ("print-violations",po::value< bool >()->default_value(false)->implicit_value(true),"Print detected violations on stdout during analysis (this can slow down the analysis significantly)")
-    ("testing-options-set",po::value< int >()->default_value(0)->implicit_value(0),"Use an alternative set of default options (for testing only: 0..1).")
+    ("options-set",po::value< int >()->default_value(0)->implicit_value(0),"Use a predefined set of default options (0..3).")
     ;
 
   rersOptions.add_options()
@@ -461,6 +465,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("csv-stats",po::value< string >(),"Output statistics into a CSV file <arg>.")
     ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
     ("exploration-mode",po::value< string >(), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync)")
+    ("quiet", "Produce no output on screen.")
     ("help,h", "Produce this help message.")
     ("help-cegpra", "Show options for CEGRPA.")
     ("help-eq", "Show options for program equivalence checking.")
@@ -482,7 +487,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("input-values",po::value< string >(),"Specify a set of input values. (e.g. \"{1,2,3}\")")
     ("input-values-as-constraints", po::value< bool >()->default_value(false)->implicit_value(true),"Represent input var values as constraints (otherwise as constants in PState).")
     ("input-sequence",po::value< string >(),"Specify a sequence of input values. (e.g. \"[1,2,3]\")")
-    ("log-level",po::value< string >()->default_value("none,>=warn"),"Set the log level (\"x,>=y\" with x,y in: (none|info|warn|trace|debug)).")
+    ("log-level",po::value< string >()->default_value("none"),"Set the log level (\"x,>=y\" with x,y in: (none|info|warn|trace|debug)).")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after <arg> transitions have been computed.")
     ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after <arg> loop iterations have been explored. Currently requires --exploration-mode=loop-aware[-sync].")
     ("max-memory",po::value< long int >(),"Stop computing the STG after a total physical memory consumption of approximately <arg> Bytes has been reached.")
@@ -583,7 +588,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.10.9\n";
+    cout << "CodeThorn version 1.11.0\n";
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
@@ -1164,7 +1169,13 @@ int main( int argc, char * argv[] ) {
         return 0;
     }
 
-    if(args.getInt("testing-options-set")==1) {
+    string optionName="options-set";
+    int optionValue=args.getInt(optionName);
+    switch(optionValue) {
+    case 0:
+      // fall-through for default
+      break;
+    case 1:
       args.setOption("explicit-arrays",true);
       args.setOption("in-state-string-literals",true);
       args.setOption("ignore-unknown-functions",true);
@@ -1173,7 +1184,33 @@ int main( int argc, char * argv[] ) {
       args.setOption("context-sensitive",true);
       args.setOption("normalize-all",true);
       args.setOption("abstraction-mode",1);
+      break;
+    case 2:
+      args.setOption("explicit-arrays",true);
+      args.setOption("in-state-string-literals",true);
+      args.setOption("ignore-unknown-functions",true);
+      args.setOption("ignore-function-pointers",false);
+      args.setOption("std-functions",true);
+      args.setOption("context-sensitive",true);
+      args.setOption("normalize-all",true);
+      args.setOption("abstraction-mode",1);
+      break;
+    case 3:
+      args.setOption("explicit-arrays",true);
+      args.setOption("in-state-string-literals",true);
+      args.setOption("ignore-unknown-functions",true);
+      args.setOption("ignore-function-pointers",false);
+      args.setOption("std-functions",true);
+      args.setOption("context-sensitive",true);
+      args.setOption("normalize-all",true);
+      args.setOption("abstraction-mode",0);
+      break;
+    default:
+      cerr<<"Error: unsupported "<<optionName<<" value: "<<optionValue<<endl;
+      exit(1);
     }
+
+
 
     analyzer->optionStringLiteralsInState=args.getBool("in-state-string-literals");
     analyzer->setSkipSelectedFunctionCalls(args.getBool("ignore-unknown-functions"));
@@ -1215,14 +1252,16 @@ int main( int argc, char * argv[] ) {
       analyzer->setNumberOfThreadsToUse(1);
     }
 
+    string option_start_function="main";
+    if(args.count("start-function")) {
+      option_start_function = args["start-function"].as<string>();
+    }
+
     string option_specialize_fun_name="";
     vector<int> option_specialize_fun_param_list;
     vector<int> option_specialize_fun_const_list;
     vector<string> option_specialize_fun_varinit_list;
     vector<int> option_specialize_fun_varinit_const_list;
-    if(args.count("start-function")) {
-      option_specialize_fun_name = args["start-function"].as<string>();
-    }
     if(args.count("specialize-fun-name")) {
       option_specialize_fun_name = args["specialize-fun-name"].as<string>();
       // logger[DEBUG] << "option_specialize_fun_name: "<< option_specialize_fun_name<<endl;
@@ -1305,7 +1344,9 @@ int main( int argc, char * argv[] ) {
     analyzer->setTreatStdErrLikeFailedAssert(args.getBool("stderr-like-failed-assert"));
 
     // Build the AST used by ROSE
-    SAWYER_MESG(logger[TRACE]) << "INIT: Parsing and creating AST: started."<<endl;
+    if(!args.count("quiet")) {
+      cout<< "STATUS: Parsing and creating AST started."<<endl;
+    }
     timer.stop();
     timer.start();
 
@@ -1315,7 +1356,9 @@ int main( int argc, char * argv[] ) {
       argvList.push_back("-rose:OpenMP:ast_only");
     }
     SgProject* sageProject = frontend(argvList);
-    SAWYER_MESG(logger[TRACE]) << "Parsing and creating AST: finished."<<endl;
+    if(!args.count("quiet")) {
+      cout << "STATUS: Parsing and creating AST finished."<<endl;
+    }
     double frontEndRunTime=timer.getTimeDuration().milliSeconds();
 
     /* perform inlining before variable ids are computed, because
@@ -1326,9 +1369,12 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
     }
 
-    if(args.getBool("normalize-all")||args.getInt("testing-options-set")==1) {
+    if(args.getBool("normalize-all")||args.getInt("options-set")==1) {
+      if(!args.count("quiet")) {
+        cout<<"STATUS: normalizing program."<<endl;
+      }
+      //SAWYER_MESG(logger[INFO])<<"STATUS: normalizing program."<<endl;
       lowering.normalizeAst(sageProject,2);
-      SAWYER_MESG(logger[TRACE])<<"STATUS: normalize all expressions."<<endl;
     }
 
     /* Context sensitive analysis using call strings.
@@ -1372,6 +1418,9 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
+    if(!args.count("quiet")) {
+      cout<<"STATUS: analysis started."<<endl;
+    }
     // TODO: introduce ProgramAbstractionLayer
     analyzer->initializeVariableIdMapping(sageProject);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
@@ -1510,7 +1559,7 @@ int main( int argc, char * argv[] ) {
       // if a single function exist, use this function
       // in all other cases exit with error.
       RoseAst completeAst(root);
-      string startFunction="main";
+      string startFunction=option_start_function;
       SgNode* startFunRoot=completeAst.findFunctionByName(startFunction);
       if(startFunRoot==0) {
         // no main function exists. check if a single function exists in the translation unit
@@ -1613,26 +1662,38 @@ int main( int argc, char * argv[] ) {
     }
 #endif	
 
-    if(args.getBool("ssa"))
-    {
-	SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
-	ssaGen->generateSSAForm();
-
-	exit(0);
+    if(args.getBool("ssa")) {
+      SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
+      ssaGen->generateSSAForm();
+      exit(0);
     }
 
-    if(args.isDefined("null-pointer-analysis-file")) {
-      ProgramLocationsReport nullPointerDereferenceLocations=analyzer->getExprAnalyzer()->getNullPointerDereferenceLocations();
-      string fileName=args.getString("null-pointer-analysis-file");
-      cout<<"Writing null-pointer analysis results to file "<<fileName<<endl;
-      nullPointerDereferenceLocations.writeResultFile(fileName,analyzer->getLabeler());
-    }
-
-    if(args.isDefined("out-of-bounds-analysis-file")) {
-      ProgramLocationsReport outOfBoundsAccessLocations=analyzer->getExprAnalyzer()->getOutOfBoundsAccessLocations();
-      string fileName=args.getString("out-of-bounds-analysis-file");
-      cout<<"Writing out-of-bounds analysis results to file "<<fileName<<endl;
-      outOfBoundsAccessLocations.writeResultFile(fileName,analyzer->getLabeler());
+    list<pair<CodeThorn::AnalysisSelector,string> > analysisNames={
+      {ANALYSIS_NULL_POINTER,"null-pointer"},
+      {ANALYSIS_OUT_OF_BOUNDS,"out-of-bounds"},
+      {ANALYSIS_UNINITIALIZED,"uninitialized"}
+    };
+    for(auto analysisInfo : analysisNames) {
+      AnalysisSelector analysisSel=analysisInfo.first;
+      string analysisName=analysisInfo.second;
+      string analysisOption=analysisName+"-analysis";
+      string analysisOutputFileOption=analysisName+"-analysis-file";
+      if(args.count(analysisOption)>0||args.isDefined(analysisOutputFileOption)) {
+        ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getViolatingLocations(analysisSel);
+        if(args.count(analysisOption)>0) {
+          cout<<"\nResults for "<<analysisName<<" analysis:"<<endl;
+          if(locations.numTotalLocations()>0) {
+            locations.writeResultToStream(cout,analyzer->getLabeler());
+          } else {
+            cout<<"No violations detected."<<endl;
+          }
+        }
+        if(args.isDefined(analysisOutputFileOption)) {
+          string fileName=args.getString(analysisOutputFileOption);
+          cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
+          locations.writeResultFile(fileName,analyzer->getLabeler());
+        }
+      }
     }
 
     long pstateSetSize=analyzer->getPStateSet()->size();
@@ -2257,8 +2318,8 @@ void CodeThorn::printAnalyzerStatistics(IOAnalyzer* analyzer, double totalRunTim
     ss << "Number of iterations           : "<<analyzer->getIterations()<<"-"<<analyzer->getApproximatedIterations()<<endl;
   }
   ss << "=============================================================="<<endl;
-  ss << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
-  ss << "TimeMeasurement total           : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
+  ss << "Memory total                   : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
+  ss << "TimeMeasurement total          : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
   ss << "=============================================================="<<endl;
   ss <<color("normal");
   analyzer->printStatusMessage(ss.str());

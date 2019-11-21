@@ -354,7 +354,8 @@ codethorn_CXXFLAGS = -fopenmp -Wall -O3
 codethorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
 
 if ROSE_WITH_SPOT
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lspot -lbdd -lcodethorn -lltlthorn $(Z3_LINK)
+#spot and bdd need to be linked last with gcc 5.4
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
 codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
 else
 codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
@@ -444,7 +445,7 @@ check-roseonlytools: check-flow-insenstive
 ##############################################################
 
 if ROSE_WITH_SPOT
-addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
+addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lboost_program_options
 addressTakenAnalysis_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
 addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn

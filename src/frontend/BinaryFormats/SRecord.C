@@ -206,8 +206,8 @@ SRecord::parseIntel(const std::string &input) {
             break;
         case 5:
             srec.type_ = SREC_I_START_LA;
-            if (payloadNBytes != 2)
-                return srec.error("Intel start linear address record should have a two-byte payload");
+            if (payloadNBytes != 4)
+                return srec.error("Intel start linear address record should have a four-byte payload");
             if (srec.address() != 0)
                 return srec.error("Intel start linear address record should have a zero address");
             break;

@@ -24,7 +24,7 @@ static void test01(const std::string &solverName) {
     ASSERT_always_not_null(val);
     std::ostringstream ss;
     ss <<*val;
-    ASSERT_always_require2(ss.str() == "0x000000000000000000000042[96]",
+    ASSERT_always_require2(ss.str() == "0x000000000000000000000042[u96]",
                            "actual  : ss.str() == \"" + ss.str() + "\"");
 }
 
@@ -48,7 +48,7 @@ static void test02(const std::string &solverName) {
     ASSERT_always_not_null(val);
     std::ostringstream ss;
     ss <<*val;
-    ASSERT_always_require2(ss.str() == "0x5555555544444444333333332222222211111111[160]",
+    ASSERT_always_require2(ss.str() == "0x5555555544444444333333332222222211111111[u160]",
                            "actual  : ss.str() == \"" + ss.str() + "\"");
 }
 
