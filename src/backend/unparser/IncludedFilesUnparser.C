@@ -7,6 +7,9 @@
 
 #include "IncludedFilesUnparser.h"
 
+// DQ (10/26/2019): Added header file to access buildSourceFileForHeaderFile().
+#include "unparser.h"
+
 
 // DQ (10/10/2019): Adding support to access the map of filenames to SgIncludeFile IR nodes.
 namespace EDG_ROSE_Translation
@@ -104,7 +107,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
              }
             else
              {
-               unparseRootPath = FileHelper::concatenatePaths(workingDirectory, userSpecifiedUnparseRootFolder);            
+               unparseRootPath = FileHelper::concatenatePaths(workingDirectory, userSpecifiedUnparseRootFolder);
              }
 
        // Check that the specified location does not exist or is empty. This is necessary to avoid data loss since this folder will be erased.
@@ -228,19 +231,24 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
   // of then can cause them to be unparsed twice (e.g. test9 in UnparseHeader_tests).  Also, modicication of the
   // include directives can trigger unparsing from the AST (which would not otherwise be required).
 
+#if 0
+  // DQ (11/4/2019): We don't want to change the relative paths in the #include directives. This can't be supported 
+  // by the unparsing from tokens as well.
+
   // Update including paths for the unparsed files according to unparseMap
   // applyFunctionToIncludingPreprocessingInfos(allFiles, &IncludedFilesUnparser::updatePreprocessingInfoPaths);
      if (projectNode->get_unparse_tokens() == false)
         {
           applyFunctionToIncludingPreprocessingInfos(allFiles, &IncludedFilesUnparser::updatePreprocessingInfoPaths);
         }
+#endif
 
      for (list<pair<int, string> >::const_iterator it = includeCompilerPaths.begin(); it != includeCompilerPaths.end(); it++)
         {
           FileHelper::ensureFolderExists(it -> second);
         }
 
-#if 1
+#if 0
      printDiagnosticOutput();
 #endif
 
@@ -359,6 +367,9 @@ void IncludedFilesUnparser::collectNotUnparsedFilesThatRequireUnparsingToAvoidFi
             preprocessingInfoPtr != notUnparsedPreprocessingInfos.end(); preprocessingInfoPtr++) {
         IncludeDirective includeDirective((*preprocessingInfoPtr) -> getString());
         const string& includePath  = includeDirective.getIncludedPath();
+#if 1
+        printf ("In collectNotUnparsedFilesThatRequireUnparsingToAvoidFileNameCollisions(): includePath = %s \n",includePath.c_str());
+#endif
         if (isConflictingIncludePath(includePath)) {
             newFilesToUnparse.insert(FileHelper::getNormalizedContainingFileName(*preprocessingInfoPtr));            
         }
@@ -439,45 +450,93 @@ void IncludedFilesUnparser::addIncludeCompilerPath(int upFolderCount, const stri
     }
 }
 
-void IncludedFilesUnparser::updatePreprocessingInfoPaths(const string& includedFile, PreprocessingInfo* includingPreprocessingInfo) {
-    string normalizedIncludingFileName = FileHelper::getNormalizedContainingFileName(includingPreprocessingInfo);
-    if (filesToUnparse.find(normalizedIncludingFileName) != filesToUnparse.end()) { //update include paths only in the unparsed files
-        map<string, string>::const_iterator includedFileUnparseMapEntry = unparseMap.find(includedFile);
-        string replacementIncludeString;
-        if (includedFileUnparseMapEntry != unparseMap.end()) {
-            //Included file is unparsed, make the include directive bracketed and relative to the unparse root.
-            replacementIncludeString = "<" + includedFileUnparseMapEntry -> second + ">";
-        } else {
-            //Included file is not unparsed, make the include directive quoted and relative to the unparsed including file's containing folder.
-            string includingFileUnparseFolder;
-            if (isInputFile(normalizedIncludingFileName)) {
-                //TODO: Currently, all input files are unparsed into the working directory regardless of where they come from. If this
-                //is changed (e.g. input files are unparsed in the folders of the original files), use the commented part.
-                includingFileUnparseFolder = workingDirectory;
+void IncludedFilesUnparser::updatePreprocessingInfoPaths(const string& includedFile, PreprocessingInfo* includingPreprocessingInfo) 
+   {
+     ROSE_ASSERT(includingPreprocessingInfo != NULL);
+
+#if 1
+     printf ("includedFile = %s \n",includedFile.c_str());
+     printf ("includingPreprocessingInfo->getString() = %s \n",includingPreprocessingInfo->getString().c_str());
+#endif
+
+     string normalizedIncludingFileName = FileHelper::getNormalizedContainingFileName(includingPreprocessingInfo);
+
+#if 1
+     printf ("normalizedIncludingFileName = %s \n",normalizedIncludingFileName.c_str());
+#endif
+
+#if 1
+     printf ("filesToUnparse: \n");
+     set<string>::const_iterator fileToUnparsePtr = filesToUnparse.begin();
+     while (fileToUnparsePtr != filesToUnparse.end())
+        {
+          printf (" --- *fileToUnparsePtr = %s \n",fileToUnparsePtr->c_str());
+          fileToUnparsePtr++;
+        }
+#endif
+
+     if (filesToUnparse.find(normalizedIncludingFileName) != filesToUnparse.end()) 
+        {
+       // update include paths only in the unparsed files
+
+#if 1
+          printf ("unparseMap: \n");
+          map<string, string>::const_iterator unparseMapPtr = unparseMap.begin();
+          while (unparseMapPtr != unparseMap.end())
+             {
+               printf (" --- *unparseMapPtr first = %s second = %s \n",unparseMapPtr->first.c_str(),unparseMapPtr->second.c_str());
+               unparseMapPtr++;
+             }
+#endif
+          map<string, string>::const_iterator includedFileUnparseMapEntry = unparseMap.find(includedFile);
+          string replacementIncludeString;
+
+          if (includedFileUnparseMapEntry != unparseMap.end())
+             {
+            // Included file is unparsed, make the include directive bracketed and relative to the unparse root.
+               replacementIncludeString = "<" + includedFileUnparseMapEntry -> second + ">";
+             } 
+            else
+             {
+            // Included file is not unparsed, make the include directive quoted and relative to the unparsed including file's containing folder.
+               string includingFileUnparseFolder;
+               if (isInputFile(normalizedIncludingFileName))
+                  {
+                 // TODO: Currently, all input files are unparsed into the working directory regardless of where they come from. If this
+                 // is changed (e.g. input files are unparsed in the folders of the original files), use the commented part.
+                    includingFileUnparseFolder = workingDirectory;
 
                 //                //Unparsed and original input files are in the same folder, so reuse the initial path: the file name of the unparsed 
                 //                //input file would be different, but this does not matter since we get its parent folder, which would be the same.
                 //                includingFileUnparsePath = FileHelper::getParentFolder(normalizedIncludingFileName);
-            } else {
-                map<string, string>::const_iterator includingFileUnparseMapEntry = unparseMap.find(normalizedIncludingFileName);
-                ROSE_ASSERT(includingFileUnparseMapEntry != unparseMap.end());
-                includingFileUnparseFolder = FileHelper::getParentFolder(FileHelper::concatenatePaths(unparseRootPath, includingFileUnparseMapEntry -> second));
-            }
-            replacementIncludeString = "\"" + FileHelper::getRelativePath(includingFileUnparseFolder, includedFile) + "\"";
+                  }
+                 else
+                  {
+                    map<string, string>::const_iterator includingFileUnparseMapEntry = unparseMap.find(normalizedIncludingFileName);
+                    ROSE_ASSERT(includingFileUnparseMapEntry != unparseMap.end());
+                    includingFileUnparseFolder = FileHelper::getParentFolder(FileHelper::concatenatePaths(unparseRootPath, includingFileUnparseMapEntry -> second));
+                  }
+
+               replacementIncludeString = "\"" + FileHelper::getRelativePath(includingFileUnparseFolder, includedFile) + "\"";
+             }
+
+          string includeString = includingPreprocessingInfo -> getString();
+          if (SgProject::get_verbose() >= 0)
+             {
+               cout << "Original include string:" << includeString << endl;
+             }
+
+          IncludeDirective includeDirective(includeString);
+       // Replace the original include directive with the new one, using a relative path and brackets.
+          includeString.replace(includeDirective.getStartPos() - 1, includeDirective.getIncludedPath().size() + 2, replacementIncludeString);
+          includingPreprocessingInfo -> setString(includeString);
+          if (SgProject::get_verbose() >= 0)
+             {
+               cout << "Updated include string:" << includingPreprocessingInfo -> getString() << endl;
+             }
         }
-        string includeString = includingPreprocessingInfo -> getString();
-        if (SgProject::get_verbose() >= 1) {
-            cout << "Original include string:" << includeString << endl;
-        }
-        IncludeDirective includeDirective(includeString);
-        //Replace the original include directive with the new one, using a relative path and brackets.
-        includeString.replace(includeDirective.getStartPos() - 1, includeDirective.getIncludedPath().size() + 2, replacementIncludeString);
-        includingPreprocessingInfo -> setString(includeString);
-        if (SgProject::get_verbose() >= 1) {
-            cout << "Updated include string:" << includingPreprocessingInfo -> getString() << endl;
-        }
-    }
-}
+   }
+
 
 void IncludedFilesUnparser::populateUnparseMap()
    {
@@ -646,8 +705,39 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #endif
                     SgIncludeFile* includeFile = EDG_ROSE_Translation::edg_include_file_map[filename];
                     ROSE_ASSERT(includeFile != NULL);
+#if 0
+                    printf ("In initializeFilesToUnparse(): includeFile = %p \n",includeFile);
+#endif
                  // SgSourceFile* sourceFile = includeFile->get_source_file();
                     sourceFile = includeFile->get_source_file();
+
+                 // DQ (10/26/2019): When this is NULL we need to add it directly.
+                    if (sourceFile == NULL)
+                       {
+                         printf ("When sourceFile == NULL we need to add it directly: filename = %s \n",filename.c_str());
+
+                         ROSE_ASSERT(projectNode != NULL);
+                         sourceFile = buildSourceFileForHeaderFile(projectNode,filename);
+
+                         ROSE_ASSERT(sourceFile != NULL);
+
+                         printf ("Calling includeFile->set_source_file(sourceFile): includeFile = %p filename = %s sourceFile = %p \n",includeFile,includeFile->get_filename().str(),sourceFile);
+
+                      // This is set in buildSourceFileForHeaderFile().
+                         ROSE_ASSERT(includeFile->get_source_file() != NULL);
+                      // includeFile->set_source_file(sourceFile);
+#if 1
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                      else
+                       {
+#if 0
+                         printf ("sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
+#endif
+                       }
+
                     ROSE_ASSERT(sourceFile != NULL);
 #if 0
                     printf ("Found entry in EDG_ROSE_Translation::edg_include_file_map: sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
@@ -729,57 +819,75 @@ IncludedFilesUnparser::initializeFilesToUnparse()
           ROSE_ASSERT(false);
 #endif
 
+       // DQ (11/16/2019): We only want to unparse header files if they were modified, and if they were 
+       // modified then they should have had their CPP directives and comments attached before being transformed.
+       // So this is too late in the process.  In some cases (such as the transformations in the regression tests)
+       // the transforamtions only change the name of a variable, and so attaching teh comments this late is 
+       // not an issue.  However, in order to know when we will have to unparse a header file we either alwasy 
+       // unparse them (which is too slow) or we only unparse the header files that will be transformed and
+       // then we have to attached the CPP directives and comments before the transformation.  This is the 
+       // concept of deferred transformations (an option for the outliner).
+
        // DQ (10/9/2019): We only want to process the header files identified as having been modified.
 #if 0
           printf ("Iterate over the modified header files and process them to attach comments and CPP directives: modifiedIncludeFiles.size() = %zu \n",modifiedIncludeFiles.size());
 #endif
-          std::set<SgIncludeFile*>::iterator includeFileIterator = modifiedIncludeFiles.begin();
-
-          while (includeFileIterator != modifiedIncludeFiles.end())
+          if (projectNode->get_usingDeferredTransformations() == false)
              {
-               SgIncludeFile* includeFile = *includeFileIterator;
-               ROSE_ASSERT(includeFile != NULL);
+               std::set<SgIncludeFile*>::iterator includeFileIterator = modifiedIncludeFiles.begin();
 
-               string filename = includeFile->get_filename();
-#if 0
-               printf ("Iterating over modifiedIncludeFiles: Calling function to collect comments and CPP directives from filename = %s \n",filename.c_str());
-#endif
-               SgSourceFile* sourceFile = isSgSourceFile(includeFile->get_source_file());
-               ROSE_ASSERT(sourceFile != NULL);
-
-            // DQ (10/11/2019): This is required to be set when using the header file optimization (tested in AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute()).
-#if 0
-               printf ("Setting sourceFile->set_header_file_unparsing_optimization_header_file(true), but it should have been set previously, I think! \n");
-#endif
-               sourceFile->set_header_file_unparsing_optimization_header_file(true);
-
-            // DQ (10/11/2019): This is required to be set when using the header file optimization (tested in AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute()).
-               ROSE_ASSERT (sourceFile->get_header_file_unparsing_optimization_header_file() == true);
-
-            // DQ (10/21/2019): This will be tested below, in secondaryPassOverSourceFile(), if it is not in place then we need to do it here.
-               ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
-
-#if 0
-            // ROSE_ASSERT(filePreprocInfo != NULL);
-               if (filePreprocInfo != NULL)
+               while (includeFileIterator != modifiedIncludeFiles.end())
                   {
-                    printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): filePreprocInfo->getList().empty() = %s \n",filePreprocInfo->getList().empty() ? "true" : "false");
-                 // ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
-                  }
-                 else
-                  {
-                    printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): filePreprocInfo == NULL \n");
-                  }
+                    SgIncludeFile* includeFile = *includeFileIterator;
+                    ROSE_ASSERT(includeFile != NULL);
+
+                    string filename = includeFile->get_filename();
+#if 0
+                    printf ("Iterating over modifiedIncludeFiles: Calling function to collect comments and CPP directives from filename = %s \n",filename.c_str());
+#endif
+                    SgSourceFile* sourceFile = isSgSourceFile(includeFile->get_source_file());
+                    ROSE_ASSERT(sourceFile != NULL);
+
+                 // DQ (10/11/2019): This is required to be set when using the header file optimization (tested in AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute()).
+#if 0
+                    printf ("Setting sourceFile->set_header_file_unparsing_optimization_header_file(true), but it should have been set previously, I think! \n");
+#endif
+                    sourceFile->set_header_file_unparsing_optimization_header_file(true);
+
+                // DQ (10/11/2019): This is required to be set when using the header file optimization (tested in AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute()).
+                    ROSE_ASSERT (sourceFile->get_header_file_unparsing_optimization_header_file() == true);
+
+                 // DQ (10/21/2019): This will be tested below, in secondaryPassOverSourceFile(), if it is not in place then we need to do it here.
+                    ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
+
+#if 0
+                 // ROSE_ASSERT(filePreprocInfo != NULL);
+                    if (filePreprocInfo != NULL)
+                       {
+                         printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): filePreprocInfo->getList().empty() = %s \n",filePreprocInfo->getList().empty() ? "true" : "false");
+                      // ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
+                       }
+                      else
+                       {
+                         printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): filePreprocInfo == NULL \n");
+                       }
 #endif
 #if 0
-               printf ("In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
+                    printf ("In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
-               sourceFile->secondaryPassOverSourceFile();
+                    sourceFile->secondaryPassOverSourceFile();
 #if 0
-               printf ("DONE: In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
+                    printf ("DONE: In initializeFilesToUnparse(): sourceFile = %p name = %s Calling file->secondaryPassOverSourceFile() \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
-               includeFileIterator++;
-            }
+                    includeFileIterator++;
+                  }
+             }
+            else
+             {
+#if 0
+               printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): Skipping attachment of CPP directives and comments because deferred transformations are being used \n");
+#endif
+             }
 #if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
@@ -790,6 +898,9 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #if 0
           printf ("In initializeFilesToUnparse(): file = %p = %s name = %s Calling file->secondaryPassOverSourceFile() \n",file,file->class_name().c_str(),file->getFileName().c_str());
 #endif
+
+#error "DEAD CODE!"
+
        // printf ("Commented out specific header file collection of comments and CPP directives \n");
           file->secondaryPassOverSourceFile();
 

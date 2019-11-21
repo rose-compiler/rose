@@ -15630,6 +15630,377 @@ SageBuilder::buildAccessModifier ( unsigned int access )
 #endif
 
 
+void
+SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std::string& newFileName)
+   {
+  // DQ (11/8/2019): This function changes the filename designation in all of the Sg_File_Info objects 
+  // associated with the designated AST subtree.
+
+     ROSE_ASSERT(subtreeRoot != NULL);
+     ROSE_ASSERT(newFileName != "");
+
+#if 0
+     printf ("In SageBuilder::fixupSourcePositionFileSpecification(): newFileName = %s \n",newFileName.c_str());
+     printf ("In SageBuilder::fixupSourcePositionFileSpecification(): subtreeRoot = %p = %s \n",subtreeRoot,subtreeRoot->class_name().c_str());
+#endif
+
+     class Traversal : public AstSimpleProcessing
+        {
+          public:
+
+               Traversal(const std::string& tmp_newFileName, int tmp_new_file_id, int tmp_originalFileId)
+                  {
+                    newFileName    = tmp_newFileName;
+                    new_file_id    = tmp_new_file_id;
+                    originalFileId = tmp_originalFileId;
+#if 0
+                    printf ("In SageBuilder::fixupSourcePositionFileSpecification(): newFileName = %s new_file_id = %d originalFileId = %d \n",newFileName.c_str(),new_file_id,originalFileId);
+#endif
+                  }
+
+               void visit (SgNode* node)
+                  {
+#if 0
+                    printf ("In visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
+                    SgLocatedNode* locatedNode = isSgLocatedNode(node);
+                    if (locatedNode != NULL)
+                       {
+                      // if (locatedNode->get_startOfConstruct()->get_file_id() == originalFileId)
+                         if (locatedNode->get_startOfConstruct()->get_physical_file_id() == originalFileId)
+                            {
+                              ROSE_ASSERT(locatedNode->get_startOfConstruct() != NULL);
+                              ROSE_ASSERT(locatedNode->get_endOfConstruct()   != NULL);
+
+                              if (locatedNode->get_startOfConstruct()->isShared() == true)
+                                 {
+#if 0
+                                   printf ("Found SgLocatedNode marked as isShared() == true: locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+#endif
+#if 0
+                                   printf ("Exiting as a test! \n");
+                                   ROSE_ASSERT(false);
+#endif
+                                 }
+                              locatedNode->get_startOfConstruct()->set_file_id(new_file_id);
+                              locatedNode->get_endOfConstruct  ()->set_file_id(new_file_id);
+
+                              locatedNode->get_startOfConstruct()->set_physical_file_id(new_file_id);
+                              locatedNode->get_endOfConstruct  ()->set_physical_file_id(new_file_id);
+
+#if 0
+                              printf ("locatedNode->get_startOfConstruct()->get_filename() = %s locatedNode->get_startOfConstruct()->get_physical_filename() = %s \n",
+                                   locatedNode->get_startOfConstruct()->get_filenameString().c_str(),locatedNode->get_startOfConstruct()->get_physical_filename().c_str());
+                              printf ("locatedNode->get_startOfConstruct()->get_file_id() = %d locatedNode->get_startOfConstruct()->get_physical_file_id() = %d \n",
+                                   locatedNode->get_startOfConstruct()->get_file_id(),locatedNode->get_startOfConstruct()->get_physical_file_id());
+                              printf ("locatedNode->get_startOfConstruct()->isShared() = %s \n",locatedNode->get_startOfConstruct()->isShared() ? "true" : "false");
+#endif
+                            }
+                           else
+                            {
+#if 0
+                              printf ("NOT MATCHING: originalFileId = %d locatedNode->get_startOfConstruct()->get_file_id() = %d locatedNode->get_startOfConstruct()->get_physical_file_id() = %d \n",
+                                      originalFileId,locatedNode->get_startOfConstruct()->get_file_id(),locatedNode->get_startOfConstruct()->get_physical_file_id());
+                              printf (" ------------ originalFileId = %d locatedNode->get_endOfConstruct()->get_file_id() = %d locatedNode->get_endOfConstruct()->get_physical_file_id() = %d \n",
+                                      originalFileId,locatedNode->get_endOfConstruct()->get_file_id(),locatedNode->get_endOfConstruct()->get_physical_file_id());
+#endif
+                            }
+                       }
+                      else
+                       {
+                         SgInitializedName* initializedName = isSgInitializedName(node);
+                         if (initializedName != NULL)
+                            {
+                           // if (initializedName->get_startOfConstruct()->get_file_id() == originalFileId)
+                              if (initializedName->get_startOfConstruct()->get_physical_file_id() == originalFileId)
+                                 {
+                                   ROSE_ASSERT(initializedName->get_startOfConstruct() != NULL);
+                                   ROSE_ASSERT(initializedName->get_endOfConstruct() != NULL);
+
+                                   initializedName->get_startOfConstruct()->set_file_id(new_file_id);
+                                   initializedName->get_endOfConstruct  ()->set_file_id(new_file_id);
+
+                                   initializedName->get_startOfConstruct()->set_physical_file_id(new_file_id);
+                                   initializedName->get_endOfConstruct  ()->set_physical_file_id(new_file_id);
+                                 }
+                            }
+                           else
+                            {
+                              SgSourceFile* sourceFile = isSgSourceFile(node);
+                              if (sourceFile != NULL)
+                                 {
+                                   ROSE_ASSERT(sourceFile->get_startOfConstruct() != NULL);
+#if 0
+                                // A SgSourceFile has no endOfConstruct.
+                                   if (sourceFile->get_endOfConstruct() == NULL)
+                                      {
+#if 0
+                                        printf ("sourceFile->get_endOfConstruct() == NULL: fixup endOfConstruct \n");
+#endif
+                                        sourceFile->set_endOfConstruct(new Sg_File_Info());
+                                        *(sourceFile->get_endOfConstruct()) = *(sourceFile->get_startOfConstruct());
+                                      }
+                                   ROSE_ASSERT(sourceFile->get_endOfConstruct() != NULL);
+#endif
+                                // Need to test the physical_file_id because we already set the regular file_id (as part of seeding the process).
+                                // if (sourceFile->get_startOfConstruct()->get_file_id() == originalFileId)
+                                   if (sourceFile->get_startOfConstruct()->get_physical_file_id() == originalFileId)
+                                      {
+                                        sourceFile->get_startOfConstruct()->set_file_id(new_file_id);
+                                        sourceFile->get_startOfConstruct()->set_physical_file_id(new_file_id);
+#if 0
+                                        printf ("sourceFile->get_startOfConstruct()->get_file_id()          = %d \n",sourceFile->get_startOfConstruct()->get_file_id());
+                                        printf ("sourceFile->get_startOfConstruct()->get_physical_file_id() = %d \n",sourceFile->get_startOfConstruct()->get_physical_file_id());
+#endif
+                                     // sourceFile->get_endOfConstruct  ()->set_file_id(new_file_id);
+                                     // sourceFile->get_endOfConstruct  ()->set_physical_file_id(new_file_id);
+                                      }
+                                 }
+                                else
+                                 {
+#if 0
+                                   printf ("Unhandled: node = %p = %s \n",node,node->class_name().c_str());
+#endif
+                                 }
+                            }
+                       }
+
+                    SgExpression* expression = isSgExpression(node);
+                    if (expression != NULL)
+                       {
+                         if (expression->get_operatorPosition()->get_physical_file_id() == originalFileId)
+                            {
+                              expression->get_operatorPosition()->set_file_id(new_file_id);
+                              expression->get_operatorPosition()->set_physical_file_id(new_file_id);
+                            }
+                       }
+                  }
+
+             // Data members.
+               int new_file_id;
+               int originalFileId;
+               string newFileName;
+        };
+
+
+     SgFile* file       = isSgFile(subtreeRoot);
+     int new_file_id    = -1;
+     int originalFileId = -1;
+
+     if (file != NULL)
+        {
+       // We need to set the filename in at least one Sg_File_Info object so that we can have 
+       // the file_id be computed ans saved into the file_id to filename maps.
+
+          originalFileId = file->get_startOfConstruct()->get_file_id();
+#if 0
+          printf ("originalFileId = %d \n",originalFileId);
+#endif
+          file->get_startOfConstruct()->set_filenameString(newFileName);
+          new_file_id = Sg_File_Info::get_nametofileid_map()[newFileName];
+
+
+#if 0
+          file->get_endOfConstruct()->set_physical_file_id(new_file_id);
+
+          file->get_startOfConstruct()->set_physical_file_id(new_file_id);
+          file->get_endOfConstruct()->set_physical_file_id(new_file_id);
+
+                                             // getFilenameFromID
+          int new_file_id_2     = Sg_File_Info::getIDFromFilename(newFileName);
+#if 0
+          printf ("new_file_id = %d new_file_id_2 = %d \n",new_file_id,new_file_id_2);
+#endif
+          ROSE_ASSERT(new_file_id == new_file_id_2);
+
+          string new_filename_2 = Sg_File_Info::getFilenameFromID(new_file_id);
+#if 0
+          printf ("newFileName = %s new_filename_2 = %s \n",newFileName.c_str(),new_filename_2.c_str());
+#endif
+          ROSE_ASSERT(newFileName == new_filename_2);
+#endif
+
+#if 0
+          printf ("In SageBuilder::fixupSourcePositionFileSpecification(): file != NULL: newFileName = %s new_file_id = %d \n",newFileName.c_str(),new_file_id);
+#endif
+        }
+       else
+        {
+          SgLocatedNode* subtreeLocatedNode = isSgLocatedNode(subtreeRoot);
+          if (subtreeLocatedNode != NULL)
+             {
+#if 0
+               printf ("subtreeLocatedNode->get_startOfConstruct()->get_file_id()          = %d \n",subtreeLocatedNode->get_startOfConstruct()->get_file_id());
+               printf ("subtreeLocatedNode->get_startOfConstruct()->get_physical_file_id() = %d \n",subtreeLocatedNode->get_startOfConstruct()->get_physical_file_id());
+#endif
+               originalFileId = subtreeLocatedNode->get_startOfConstruct()->get_file_id();
+               new_file_id = Sg_File_Info::getIDFromFilename(newFileName);
+#if 0
+               printf ("originalFileId = %d \n",originalFileId);
+               printf ("new_file_id    = %d \n",new_file_id);
+#endif
+#if 0
+               printf ("In SageBuilder::fixupSourcePositionFileSpecification(): subtreeLocatedNode = %s : originalFileId = %d newFileName = %s new_file_id = %d \n",
+                    subtreeLocatedNode->class_name().c_str(),originalFileId,newFileName.c_str(),new_file_id);
+#endif
+             }
+            else
+             {
+               printf ("Error: In SageBuilder::fixupSourcePositionFileSpecification(): subtree should be a SgFile or SgLocatedNode: subtreeRoot = %p = %s \n",subtreeRoot,subtreeRoot->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+
+#if 0
+          printf ("Error: In SageBuilder::fixupSourcePositionFileSpecification(): subtree should be a SgFile: subtreeRoot = %p = %s \n",subtreeRoot,subtreeRoot->class_name().c_str());
+          ROSE_ASSERT(false);
+#endif
+        }
+
+     ROSE_ASSERT(new_file_id >= 0);
+
+  // Now buid the traveral object and call the traversal (preorder) on the function definition.
+     Traversal traversal (newFileName,new_file_id,originalFileId);
+
+  // traversal.traverse(subtreeRoot, preorder);
+  // traversal.traverseInputFiles(subtreeRoot, preorder);
+  // traversal.traverseWithinFile(subtreeRoot, preorder);
+     traversal.traverse(subtreeRoot, preorder);
+
+#if 0
+     printf ("Exiting as a test in SageBuilder::fixupSourcePositionFileSpecification() \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+
+
+
+
+
+
+void
+SageBuilder::fixupSharingSourcePosition(SgNode* subtreeRoot, int new_file_id)
+   {
+  // DQ (11/8/2019): This function changes the filename designation in all of the Sg_File_Info objects 
+  // associated with the designated AST subtree.
+
+     ROSE_ASSERT(subtreeRoot != NULL);
+     ROSE_ASSERT(new_file_id >= 0);
+
+#if 0
+     printf ("In SageBuilder::fixupSharingSourcePosition(): subtreeRoot = %p = %s \n",subtreeRoot,subtreeRoot->class_name().c_str());
+     printf ("In SageBuilder::fixupSharingSourcePosition(): new_file_id = %s \n",new_file_id);
+#endif
+
+     class Traversal : public AstSimpleProcessing
+        {
+          public:
+
+               Traversal(int tmp_new_file_id)
+                  {
+                    new_file_id    = tmp_new_file_id;
+#if 0
+                    printf ("In SageBuilder::fixupSharingSourcePosition(): new_file_id = %d \n",new_file_id);
+#endif
+                  }
+
+               void visit (SgNode* node)
+                  {
+#if 0
+                    printf ("In visit(): node = %p = %s new_file_id = %d \n",node,node->class_name().c_str(),new_file_id);
+#endif
+
+                    SgStatement* statement = isSgStatement(node);
+                    if (statement != NULL)
+                       {
+                         Sg_File_Info* startOfConstruct = statement->get_startOfConstruct();
+                         Sg_File_Info* endOfConstruct   = statement->get_endOfConstruct();
+#if 0
+                         printf ("new_file_id = %d startOfConstruct->get_physical_file_id() = %d \n",new_file_id,startOfConstruct->get_physical_file_id());
+#endif
+                      // Only mark the files from the associated file (not statements in header files, for example).
+                         if (startOfConstruct->get_physical_file_id() == new_file_id)
+                            {
+                           // Mark this IR node as being shared
+                              startOfConstruct->setShared();
+                              endOfConstruct->setShared();
+
+                           // Add this file_id to those file_id that will trigger this IR node to be unparsed.
+#if 0
+                              printf ("  --- adding entries for file_id and line number to support sharing: new_file_id = %d line = %d end line = %d \n",
+                                   new_file_id,startOfConstruct->get_line(),endOfConstruct->get_line());
+#endif
+                              ROSE_ASSERT(startOfConstruct->get_fileIDsToUnparse().size() == startOfConstruct->get_fileLineNumbersToUnparse().size());
+                              ROSE_ASSERT(endOfConstruct->get_fileIDsToUnparse().size()   == endOfConstruct->get_fileLineNumbersToUnparse().size());
+                              ROSE_ASSERT(startOfConstruct->get_fileIDsToUnparse().size() == endOfConstruct->get_fileLineNumbersToUnparse().size());
+
+                           // Add this existing_fi->get_file_id() to the list of file id's that will permit the assocated language construct to be unparsed.
+                              startOfConstruct->get_fileIDsToUnparse().push_back(new_file_id);
+                              startOfConstruct->get_fileLineNumbersToUnparse().push_back(startOfConstruct->get_line());
+
+                              endOfConstruct->get_fileIDsToUnparse().push_back(new_file_id);
+                              endOfConstruct->get_fileLineNumbersToUnparse().push_back(endOfConstruct->get_line());
+
+                              ROSE_ASSERT(startOfConstruct->get_fileIDsToUnparse().size() == startOfConstruct->get_fileLineNumbersToUnparse().size());
+                              ROSE_ASSERT(endOfConstruct->get_fileIDsToUnparse().size()   == endOfConstruct->get_fileLineNumbersToUnparse().size());
+                              ROSE_ASSERT(startOfConstruct->get_fileIDsToUnparse().size() == endOfConstruct->get_fileLineNumbersToUnparse().size());
+                            }
+                       }
+                      else
+                       {
+#if 0
+                         printf ("Unhandled: node = %p = %s \n",node,node->class_name().c_str());
+#endif
+                       }
+                  }
+
+            // Data members.
+               int new_file_id;
+        };
+
+
+     SgStatement* statement = isSgStatement(subtreeRoot);
+     if (statement != NULL)
+        {
+#if 0
+          printf ("statement->get_startOfConstruct()->get_file_id()          = %d \n",statement->get_startOfConstruct()->get_file_id());
+          printf ("statement->get_startOfConstruct()->get_physical_file_id() = %d \n",statement->get_startOfConstruct()->get_physical_file_id());
+#endif
+#if 0
+          printf ("new_file_id    = %d \n",new_file_id);
+#endif
+#if 0
+          printf ("In SageBuilder::fixupSharingSourcePosition(): statement = %s : new_file_id = %d \n",statement->class_name().c_str(),new_file_id);
+#endif
+        }
+       else
+        {
+          printf ("Error: In SageBuilder::fixupSourcePositionFileSpecification(): subtree should be a SgFile or SgLocatedNode: subtreeRoot = %p = %s \n",subtreeRoot,subtreeRoot->class_name().c_str());
+          ROSE_ASSERT(false);
+        }
+
+     ROSE_ASSERT(new_file_id >= 0);
+
+  // Now buid the traveral object and call the traversal (preorder) on the function definition.
+     Traversal traversal (new_file_id);
+
+  // traversal.traverse(subtreeRoot, preorder);
+  // traversal.traverseInputFiles(subtreeRoot, preorder);
+  // traversal.traverseWithinFile(subtreeRoot, preorder);
+     traversal.traverse(subtreeRoot, preorder);
+
+#if 0
+     printf ("Exiting as a test in SageBuilder::fixupSharingSourcePosition() \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+
+
+
   //! Build a SgFile node
 SgFile*
 SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
@@ -15649,21 +16020,25 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
   // DQ (9/18/2019): I am unclear what the use of fullname is below.
   // string sourceFilename = inputFileName, fullname;
-     string sourceFilename_fullname = inputFileName, fullname;
-     string sourceFilename = inputFileName;
+  // string sourceFilename_fullname = inputFileName, fullname;
+     string sourceFilename          = inputFileName;
 
 #if 0
-     printf ("sourceFilename_fullname = %s \n",sourceFilename_fullname.c_str());
-     printf ("sourceFilename = %s \n",sourceFilename.c_str());
+  // printf ("sourceFilename_fullname = %s \n",sourceFilename_fullname.c_str());
+     printf ("sourceFilename          = %s \n",sourceFilename.c_str());
 #endif
 
   // DQ (9/18/2019): Test that the use of fullname has no effect.
-     ROSE_ASSERT(sourceFilename == sourceFilename_fullname);
+  // ROSE_ASSERT(sourceFilename == sourceFilename_fullname);
 
      Rose_STL_Container<std::string> arglist;
      int nextErrorCode = 0;
 
      bool set_header_file_unparsing_optimization = false;
+
+  // DQ (11/10/2019): Shared nodes between existing files that are copied need to be marked as shared.
+     bool isCopyOfExistingFile_testForSharedNodes = false;
+     SgFile* fileBeingCopied = NULL;
 
      if (project == NULL)
       // SgProject is created on the fly
@@ -15698,6 +16073,13 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #endif
                if (sourceFilename == file->getFileName())
                   {
+#if 0
+                    printf ("This is a copy of an existing file in the project: sourceFilename = %s \n",sourceFilename.c_str());
+#endif
+                 // DQ (11/10/2019): Shared nodes between existing files that are copied need to be marked as shared.
+                    isCopyOfExistingFile_testForSharedNodes = true;
+                    fileBeingCopied = file;
+
                  // We are building a second copy of an originally specified file (so we need to set the optimization setting similarly).
                     if (file->get_header_file_unparsing_optimization() == true)
                        {
@@ -15984,6 +16366,65 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      ROSE_ASSERT(false);
 #endif
 
+  // DQ (11/10/2019): Shared nodes between existing files that are copied need to be marked as shared.
+     if (isCopyOfExistingFile_testForSharedNodes == true)
+        {
+       // Sharing of IR nodes happens in the AST when the same file is read twice.
+       // Also in the case where two declarations in the global scope match in two different ASTs (typically in header files of different translation units).
+
+#if 0
+          printf ("Found isCopyOfExistingFile_testForSharedNodes == true \n");
+          printf ("fileBeingCopied = %p = %s \n",fileBeingCopied,fileBeingCopied->getFileName().c_str());
+#endif
+
+          SgSourceFile* sourceFileBeingCopied = isSgSourceFile(fileBeingCopied);
+          ROSE_ASSERT(sourceFileBeingCopied != NULL);
+
+          SgSourceFile* sourceResult = isSgSourceFile(result);
+          ROSE_ASSERT(sourceResult != NULL);
+
+          SgGlobal* fileBeingCopied_globalScope = sourceFileBeingCopied->get_globalScope();
+          SgGlobal* result_globalScope          = sourceResult->get_globalScope();
+
+          ROSE_ASSERT(fileBeingCopied_globalScope != NULL);
+          ROSE_ASSERT(result_globalScope != NULL);
+
+          SgDeclarationStatementPtrList fileBeingCopied_declarationList    = fileBeingCopied_globalScope->get_declarations();
+          SgDeclarationStatementPtrList result_declarationList = result_globalScope->get_declarations();
+
+          ROSE_ASSERT(fileBeingCopied_declarationList.size() == result_declarationList.size());
+
+#if 0
+          printf ("Statements from global scope (size = %zu): \n",fileBeingCopied_declarationList.size());
+#endif
+          for (size_t i = 0; i < fileBeingCopied_declarationList.size(); i++)
+             {
+               SgDeclarationStatement* fileBeingCopied_decl = fileBeingCopied_declarationList[i];
+               SgDeclarationStatement* result_decl          = result_declarationList[i];
+#if 0
+               printf ("  #%zu global scope entry: fileBeingCopied: %p %s result %p %s \n",i,fileBeingCopied_decl,fileBeingCopied_decl->class_name().c_str(),result_decl,result_decl->class_name().c_str());
+#endif
+               if (fileBeingCopied_decl == result_decl)
+                  {
+#if 0
+                    printf ("  --- SageBuilder::buildFile() is sharing this node: %p %s \n",fileBeingCopied_decl,fileBeingCopied_decl->class_name().c_str());
+#endif
+                 // DQ (11/10/2019): Need to recursively mark this as shared so that the unparser will be able to test each line?
+
+                    int fileBeingCopied_file_id = fileBeingCopied->get_startOfConstruct()->get_physical_file_id();
+                    fixupSharingSourcePosition(fileBeingCopied_decl,fileBeingCopied_file_id);
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+             }
+
+#if 0
+          printf ("exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 
 #if 0
      reportModifiedStatements("Leaving SageBuilder::buildFile(): calling reportModifiedStatements()",project);
@@ -15998,6 +16439,11 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 #endif
 
+#if 0
+  // DQ (11/8/2019): This is not working and breaks the current work at present.
+  // DQ (11/8/2019): Support function to change the name in each of the IR node's source position info objects.
+     fixupSourcePositionFileSpecification(result,outputFileName);
+#endif
 
      return result;
 #else
@@ -16145,9 +16591,49 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
             }
         }
 
+
+#if 0
+     printf ("sourceFile->get_file_info()->get_filename() = %s \n",sourceFile->get_file_info()->get_filename());
+     int filename_id          = Sg_File_Info::get_nametofileid_map()[sourceFile->get_file_info()->get_filename()];
+     int filename_physical_id = Sg_File_Info::get_nametofileid_map()[sourceFile->get_file_info()->get_filename()];
+     printf ("Sg_File_Info::get_nametofileid_map()[sourceFile->get_file_info()->get_filename()] = %d \n",filename_id);
+     printf ("Sg_File_Info::get_nametofileid_map()[sourceFile->get_file_info()->get_filename()] = %d \n",filename_physical_id);
+     sourceFile->get_file_info()->set_physical_file_id(filename_physical_id);
+
+     printf ("sourceFile->get_file_info()->get_physical_filename() = %s \n",sourceFile->get_file_info()->get_physical_filename().c_str());
+     printf ("sourceFile->get_file_info()->get_physical_file_id()  = %d \n",sourceFile->get_file_info()->get_physical_file_id());
+#endif
+
 #if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
+#endif
+
+#if 1
+  // DQ (11/4/2019): I need to add this when I went back to testing tool_G.
+  // It is required in the functions to attach CPP directives and comments.
+     if (sourceFile->get_preprocessorDirectivesAndCommentsList() == NULL)
+        {
+#if 0
+          printf ("Initialize NULL p_preprocessorDirectivesAndCommentsList to empty ROSEAttributesListContainer \n");
+#endif
+          ROSEAttributesListContainer* tmp_preprocessorDirectivesAndCommentsList = new ROSEAttributesListContainer();
+          sourceFile->set_preprocessorDirectivesAndCommentsList(tmp_preprocessorDirectivesAndCommentsList);
+        }
+       else
+        {
+#if 0
+          printf ("NOTE: p_preprocessorDirectivesAndCommentsList is already defined! \n");
+          printf (" --- inputFileName  = %s \n",inputFileName.c_str());
+          printf (" --- outputFileName = %s \n",outputFileName.c_str());
+          printf (" --- sourceFile->get_preprocessorDirectivesAndCommentsList()->getList().size() = %zu \n",sourceFile->get_preprocessorDirectivesAndCommentsList()->getList().size());
+#endif
+        }
+     ROSE_ASSERT (sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
+
+  // DQ (11/4/2019): This is a test that is use in attaching CPP directives and comments to the AST.
+     ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
+     ROSE_ASSERT(filePreprocInfo != NULL);
 #endif
 
 #if 0
@@ -16166,8 +16652,20 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
 #endif
 
 #if 0
-     printf ("In unparseFileList(): AS A TEST: calling unparseFile(): filename = %s \n",sourceFile->getFileName().c_str());
+     printf ("In buildSourceFile(): AS A TEST: calling unparseFile(): filename = %s \n",sourceFile->getFileName().c_str());
      backend(project);
+#endif
+
+#if 1
+  // DQ (11/8/2019): This is not working and breaks the current work at present.
+  // DQ (11/8/2019): Support function to change the name in each of the IR node's source position info objects.
+     fixupSourcePositionFileSpecification(sourceFile,outputFileName);
+#endif
+
+#if 0
+     printf ("Leaving SageBuilder::buildSourceFile() sourceFile = %p globalScope = %p \n",sourceFile,sourceFile->get_globalScope());
+     printf ("sourceFile->get_file_info()->get_file_id()          = %d \n",sourceFile->get_file_info()->get_file_id());
+     printf ("sourceFile->get_file_info()->get_physical_file_id() = %d \n",sourceFile->get_file_info()->get_physical_file_id());
 #endif
 
 #if 0

@@ -141,8 +141,12 @@ AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* 
      ROSE_ASSERT(sourceFile->get_file_info() != NULL);
      source_file_id = sourceFile->get_file_info()->get_physical_file_id();
 
+  // DQ (11/20/2019): Check this.
+  // ROSE_ASSERT(sourceFile->get_globalScope() != NULL);
+
 #if 0
      printf ("In AttachPreprocessingInfoTreeTrav() constructor: sourceFile = %p sourceFile->getFileName() = %s \n",sourceFile,sourceFile->getFileName().c_str());
+     printf (" --- sourceFile->get_globalScope() = %p \n",sourceFile->get_globalScope());
 #endif
    }
 
@@ -219,7 +223,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
   // DQ (11/23/2008): Added comment.
   // This is the main function called to insert all PreprocessingInfo objects into IR nodes.  This function currently 
   // adds the PreprocessingInfo objects as attributes, but will be modified to insert the CPP directive specific
-  // PreprocessingInfo objects as separate IR nodes and leave PreprocessingInfo objects that are comments inserts
+  // PreprocessingInfo objects as separate IR nodes and leave PreprocessingInfo objects that are comments inserted
   // as attributes.  Note that attributes imply PreprocessingInfo specific atrributes and not the more general 
   // mechanism available in ROSE for user defined attributes to be saved into the AST.
 
@@ -229,10 +233,16 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
   // DQ (8/22/2018): Added debugging information.
      printf ("In AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): currentListOfAttributes->size() = %d \n",currentListOfAttributes->size());
 #endif
+#if 0
+     currentListOfAttributes->display("Top of iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber()");
+#endif
 
 #if 0
   // DQ (9/17/2019): Added debugging information.
      printf ("In AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
+     printf (" --- currentListOfAttributes->size() = %d \n",currentListOfAttributes->size());
+     printf (" --- iterateOverListAndInsertPrev... locatedNode = %p = %s lineNumber = %d location = %s \n",
+          locatedNode,locatedNode->class_name().c_str(),lineNumber,PreprocessingInfo::relativePositionName(location).c_str());
 #endif
 
 #if 0
@@ -388,6 +398,9 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
        // while (currentPreprocessingInfoPtr->getLineNumber() < bound && i < sizeOfCurrentListOfAttributes)
           while ( (i < sizeOfCurrentListOfAttributes) && (currentPreprocessingInfoPtr->getLineNumber() < bound) )
 #endif
+#if 0
+            printf ("start_index = %d sizeOfCurrentListOfAttributes = %d \n",start_index,sizeOfCurrentListOfAttributes);
+#endif
           list<pair<SgIncludeDirectiveStatement*, SgStatement*> > localStatementsToInsertAfter;
           for ( int i = start_index; i < sizeOfCurrentListOfAttributes; i++ )
              {
@@ -434,7 +447,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                     attachCommentOrDirective = false;
                   }
 #if 0
-               printf ("attachCommentOrDirective = %s \n",attachCommentOrDirective ? "true" : "false");
+               printf ("attachCommentOrDirective = %s currentPreprocessingInfoLineNumber = %d lineNumber = %d \n",attachCommentOrDirective ? "true" : "false",currentPreprocessingInfoLineNumber,lineNumber);
 #endif
                if ( attachCommentOrDirective == true )
                   {
@@ -450,6 +463,20 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                       // (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_line());
                          (locatedNode->get_file_info()->isCompilerGenerated() == true) ? -1 : locatedNode->get_file_info()->get_physical_line(source_file_id),
                          PreprocessingInfo::relativePositionName(location).c_str());
+
+#if 0
+                    printf ("Attaching to nod from locatedNode->get_file_info()->get_filename() = %s \n",locatedNode->get_file_info()->get_filename());
+                    printf (" --- currentListOfAttributes->getFileName()                        = %s \n",currentListOfAttributes->getFileName().c_str());
+#endif
+
+                 // DQ (11/4/2019): If we want this assertion then it likely should be based on physical filenames (derived from physical fid ids).
+                 // DQ (11/3/2019): Check that the comment or CPP directive is from the same file as the locatedNode.
+                 // A variation of this test might be required later, though we should only be attacheing comments and 
+                 // CPP directives before possible transformations.
+                    printf ("In iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): locatedNode->get_file_info()->get_filename() = %s \n",locatedNode->get_file_info()->get_filename());
+                    printf ("In iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): currentListOfAttributes->getFileName()       = %s \n",currentListOfAttributes->getFileName().c_str());
+                 // ROSE_ASSERT(locatedNode->get_file_info()->get_filename() == currentListOfAttributes->getFileName());
+
                     SgNode* parentNode = locatedNode->get_parent();
                     if (parentNode != NULL)
                        {
@@ -466,15 +493,20 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                            else
                             {
                               SgStatement* associatedStatement = isSgStatement(locatedNode);
-                              ROSE_ASSERT(associatedStatement != NULL);
-                              SgScopeStatement* associatedScope = isSgScopeStatement(associatedStatement->get_scope());
-                              SgClassDefinition* classDefinition = isSgClassDefinition(associatedScope);
-                              if (classDefinition != NULL)
+
+                           // DQ (11/4/2019): This is not general enough code.
+                           // ROSE_ASSERT(associatedStatement != NULL);
+                              if (associatedStatement != NULL)
                                  {
-                                   SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
-                                   if (classDeclaration != NULL)
+                                   SgScopeStatement* associatedScope = isSgScopeStatement(associatedStatement->get_scope());
+                                   SgClassDefinition* classDefinition = isSgClassDefinition(associatedScope);
+                                   if (classDefinition != NULL)
                                       {
-                                        printf ("associatedScope: classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
+                                        SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+                                        if (classDeclaration != NULL)
+                                           {
+                                             printf ("associatedScope: classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
+                                           }
                                       }
                                  }
                             }
@@ -515,17 +547,26 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                        {
                       // ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
                        }
+#if 0
+                    printf ("sourceFile->getFileName()                            = %s \n",sourceFile->getFileName().c_str());
+                    printf ("sourceFile->get_unparseHeaderFiles()                 = %s \n",sourceFile->get_unparseHeaderFiles() ? "true" : "false");
+                    printf ("sourceFile->get_header_file_unparsing_optimization() = %s \n",sourceFile->get_header_file_unparsing_optimization() ? "true" : "false");
+                    printf ("currentPreprocessingInfoPtr->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration = %s \n",
+                            currentPreprocessingInfoPtr->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration ? "true" : "false");
+#endif
 
+                 // DQ (11/3/2019): Adding test for if sourceFile->get_header_file_unparsing_optimization() is true.
                  // negara1 (08/05/2011): If currentPreprocessingInfoPtr is an include directive, get the included file.
                  // If the included file exists, append all its trailing preprocessor directives to its last node and reset its 
                  // start index to the first preprocessor directive.
                  // Proceed only if header files unparsing is enabled.
-                    if (sourceFile->get_unparseHeaderFiles() == true)
+                 // if (sourceFile->get_unparseHeaderFiles() == true)
+                    if (sourceFile->get_unparseHeaderFiles() == true && sourceFile->get_header_file_unparsing_optimization() == false)
                        {
                          if (currentPreprocessingInfoPtr->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration)
                             {
                               string includedFileName = sourceFile->get_project()->findIncludedFile(currentPreprocessingInfoPtr);
-#if 0
+#if 1
                               printf ("))))))))))))))))))))))))))) sourceFile->get_unparseHeaderFiles() == true: includedFileName = %s \n",includedFileName.c_str());
                            // printf ("   --- includedFileName.length() = %zu \n",includedFileName.length());
 #endif
@@ -536,9 +577,16 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                    printf ("Saved include file information: filename = %s \n",sourceFile->get_include_file_list()[i]->get_filename().str());
                                  }
 #endif
-#if 0
+#if 1
                               printf ("Exiting as a test! \n");
                               ROSE_ASSERT(false);
+#endif
+
+#if 0
+                              printf ("sourceFile->getFileName()                                        = %s \n",sourceFile->getFileName().c_str());
+                              printf ("sourceFile->get_header_file_unparsing_optimization()             = %s \n",sourceFile->get_header_file_unparsing_optimization() ? "true" : "false");
+                              printf ("sourceFile->get_header_file_unparsing_optimization_source_file() = %s \n",sourceFile->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+                              printf ("sourceFile->get_header_file_unparsing_optimization_header_file() = %s \n",sourceFile->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
 #endif
 
                               bool collectDataFromThisFile = false;
@@ -556,6 +604,10 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #endif
                                    collectDataFromThisFile = true;
                                  }
+
+#if 0
+                              printf ("collectDataFromThisFile = %s \n",collectDataFromThisFile ? "true" : "false");
+#endif
 
                            // DQ (9/18/2018): Build a map so that the CPP include directives, processed in later stages of the frontend,
                            // can initialize the pointer in the SgIncludeBody or the SgIncludeDirective so the SgInclude data structure.
@@ -579,9 +631,12 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #if 0
                                    printf (" --- before erase: EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
 #endif
+#if 0
                                 // Remove the file from the list to avoid it being refound.
                                    EDG_ROSE_Translation::edg_include_file_map.erase(includedFileName);
-
+#else
+                                   printf ("Skipping EDG_ROSE_Translation::edg_include_file_map.erase(includedFileName) \n");
+#endif
                                 // Add the SgIncludeFile to another list so that we can find it again in the unparsing step, 
                                 // when we know what scope needs to be unparsed.  Note that global scope is not enough since
                                 // the header file may be associated with inclusion into a nested scope and we require the 
@@ -609,7 +664,26 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                 // NOTE: we want to add this information to the header file report.
 #if 0
                                    printf ("COULD NOT find a SgIncludeFile (skip this include file that is not in the translation unit (was not seen by EDG)) \n");
+                                   printf (" --- includedFileName = %s \n",includedFileName.c_str());
+                                   printf (" --- collectDataFromThisFile = %s \n",collectDataFromThisFile ? "true" : "false");
 #endif
+                                   if (includedFileName == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/test4/SimpleInternal.h")
+                                      {
+                                        printf ("Found include file that is not in EDG_ROSE_Translation::edg_include_file_map: \n");
+
+                                        std::map<std::string, SgIncludeFile*>::iterator map_itr = EDG_ROSE_Translation::edg_include_file_map.begin();
+                                        while (map_itr != EDG_ROSE_Translation::edg_include_file_map.end())
+                                          {
+                                            printf (" --- map_itr->first = %s map_itr->second = %p = %s \n",map_itr->first.c_str(),map_itr->second,map_itr->second->get_filename().str());
+                                            map_itr++;
+                                          }
+
+#if 0
+                                        printf ("Exiting as a test! \n");
+                                        ROSE_ASSERT(false);
+#endif
+                                      }
+
                                  }
 
                            // DQ (9/18/2018): Only process the include file if this matches one that was seen in the EDG/ROSE translation.
@@ -759,7 +833,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                 // DQ (5/28/2019): debugging test2019_441.C.
                                 // printf ("Using OneBillion figure for end of construct line number \n");
 #if 0
-                                   printf ("Calling getListOfAttributes(): processing header file \n");
+                                   printf ("Calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): processing header file \n");
 #endif
                                    bool reset_start_index = false;
                                    iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber (targetNode, OneBillion, PreprocessingInfo::after, reset_start_index, getListOfAttributes(fileNameId));
@@ -897,7 +971,8 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                 // DQ (8/7/2018): use of new data member to explicitly mark SgSourceFile as a header file.
                                    include_sourceFile->set_isHeaderFile(true);
 #if 0
-                                   printf ("In unparseIncludedFiles(): unparsedFile marked as header file: include_sourceFile->get_isHeaderFile() = %s \n",include_sourceFile->get_isHeaderFile() ? "true" : "false");
+                                   printf ("In iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): unparsedFile marked as header file: include_sourceFile->get_isHeaderFile() = %s \n",
+                                        include_sourceFile->get_isHeaderFile() ? "true" : "false");
 #endif
                                 // DQ (8/3/2018): Set the boolean unparse token option on the new SgSourceFile built for unparsing the header file.
                                    SgProject* project = TransformationSupport::getProject(locatedNode);
@@ -969,7 +1044,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 
 #if 0
                                 // printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
-                                   printf ("sourceFile->get_unparseHeaderFiles() == true: Calling secondaryPassOverSourceFile() \n");
+                                   printf ("Attaching CPP directives: sourceFile->get_unparseHeaderFiles() == true: Calling secondaryPassOverSourceFile() \n");
 #endif
 #if 0
                                    printf ("sourceFile->get_unparseHeaderFiles() == true: requires_C_preprocessor = %s \n",include_sourceFile->get_requires_C_preprocessor() ? "true" : "false");
@@ -982,7 +1057,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 
                                    include_sourceFile->secondaryPassOverSourceFile();
 #if 0
-                                   printf ("DONE: sourceFile->get_unparseHeaderFiles() == true: Calling secondaryPassOverSourceFile() \n");
+                                   printf ("Attaching CPP directives: DONE: sourceFile->get_unparseHeaderFiles() == true: Calling secondaryPassOverSourceFile() \n");
 #endif
                                 // DQ (9/5/2018): We should have already set the preprocessorDirectivesAndCommentsList, checked in getTokenStream().
                                    ROSE_ASSERT(include_sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
@@ -1235,7 +1310,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                                         if (fileNameId < 0)
                                            {
                                              fileNameId = Sg_File_Info::addFilenameToMap(includedFileName);
-#if 1
+#if 0
                                              printf ("Calling getListOfAttributes(): includedFileName = %s we attach preprocessed info comming from headers without any SgLocated node to the current SgFile \n",includedFileName.c_str());
 #endif
                                              ROSEAttributesList* headerAttributes = getListOfAttributes(fileNameId);
@@ -1275,7 +1350,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
        // DQ (1/7/2019): This appears to be nearly always an empty list, so we can improve the performance and also simlify the debugging with this test.
           if (localStatementsToInsertAfter.empty() == false)
              {
-#if 1
+#if 0
             // DQ (1/7/2019): Adding debugging support.
                printf ("Calling insert statements: statementsToInsertAfter.size() = %zu localStatementsToInsertAfter.size() = %zu \n",
                     statementsToInsertAfter.size(),localStatementsToInsertAfter.size());
@@ -1303,6 +1378,11 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
      SgProject* project = SageInterface::getProject(XXX);
      ROSE_ASSERT(project != NULL);
      generateGraphOfIncludeFiles(project,dotgraph_filename);
+#endif
+
+#if 0
+  // DQ (10/27/2019): Added debugging information.
+     printf ("Leaving AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): currentListOfAttributes->size() = %d \n",currentListOfAttributes->size());
 #endif
 
 #if 0
@@ -1408,13 +1488,53 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
      extern std::list <stream_element*>* getFortranFreeFormatPreprocessorDirectives ( std::string fileName );
 // #endif
 #endif
-     ROSEAttributesList* returnListOfAttributes = new ROSEAttributesList();
-
-  // Build an empty list while we skip the translation of tokens
-  // returnListOfAttributes = new ROSEAttributesList();
 
      ROSE_ASSERT(sourceFile != NULL);
      string fileNameForTokenStream = fileNameForDirectivesAndComments;
+
+  // DQ (11/2/2019): Avoid redundant calls to getListOfAttributes().
+  // ROSEAttributesList* returnListOfAttributes = new ROSEAttributesList();
+     ROSEAttributesList* returnListOfAttributes = NULL;
+     ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
+
+#if 0
+     printf ("sourceFile->get_file_info()->get_filename() = %s \n",sourceFile->get_file_info()->get_filename());
+#endif
+
+     if (filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
+        {
+          int currentFileNameId = sourceFile->get_file_info()->get_file_id();
+#if 0
+          printf ("Generating a new ROSEAttributesList: currentFileNameId = %d \n",currentFileNameId);
+#endif
+
+       // DQ (11/2/2019): A call to getListOfAttributes() will generate infinite recursion.
+       // returnListOfAttributes = getListOfAttributes(currentFileNameId);
+          returnListOfAttributes = getPreprocessorDirectives(fileNameForDirectivesAndComments);
+#if 0
+          printf ("DONE: Generating a new ROSEAttributesList: currentFileNameId = %d \n",currentFileNameId);
+#endif
+
+#if 0
+       // DQ (11/2/2019): Adding debugging code.
+          returnListOfAttributes->display("Display after DONE: Generating a new ROSEAttributesList");
+#endif
+       // DQ (11/2/2019): Add the new attributes to the list.
+          filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = returnListOfAttributes;
+        }
+       else
+        {
+#if 0
+          printf ("Using the existing ROSEAttributesList (setting the returnListOfAttributes) \n");
+#endif
+          returnListOfAttributes = filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()];
+#if 0
+          printf ("DONE: Using the existing ROSEAttributesList (setting the returnListOfAttributes) \n");
+#endif
+        }
+
+  // Build an empty list while we skip the translation of tokens
+  // returnListOfAttributes = new ROSEAttributesList();
 
   // If this is a CPP processed file then modify the name to reflect that the CPP output is
   // to be process and it was assigned a different file name (with "_preprocessed" suffix).
@@ -1569,7 +1689,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
             // returnListOfAttributes = new ROSEAttributesList();
 
             // This call is just a test, this function is defined for use on Fortran.  For C and C++ we have alternative methods to extract the CPP directives and comments.
-#if 1
+#if 0
                printf ("REDUNDENT: Call collectPreprocessorDirectivesAndCommentsForAST to test C and C++ preprocessor directive collection: fileNameForDirectivesAndComments = %s \n",
                     fileNameForDirectivesAndComments.c_str());
 #endif
@@ -1579,7 +1699,16 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #endif
 #endif
             // DQ (8/23/2018): The token stream has not been collected yet (verify).
-               ROSE_ASSERT (returnListOfAttributes->get_rawTokenStream() == NULL);
+            // ROSE_ASSERT (returnListOfAttributes->get_rawTokenStream() == NULL);
+               ROSE_ASSERT (returnListOfAttributes->get_rawTokenStream() != NULL);
+
+#if 0
+            // DQ (11/202019): comment this redundant call to getPreprocessorDirectives().
+
+#if 0
+               printf ("REDUNDENT: Call collectPreprocessorDirectivesAndCommentsForAST to test C and C++ preprocessor directive collection: fileNameForDirectivesAndComments = %s \n",
+                    fileNameForDirectivesAndComments.c_str());
+#endif
 
             // This function has been modified to clear any existing list of PreprocessingInfo*
             // objects (so that we can test the function: collectPreprocessorDirectivesAndCommentsForAST()).
@@ -1595,7 +1724,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #if 0
                printf ("DONE: Calling lex or wave based mechanism for collecting CPP directives, comments, and token stream \n");
 #endif
-
+#endif
             // DQ (8/23/2018): At this point the token stream has been collected (verify).
             // Note: to debug this support the token stream is always collected (the process 
             // is fast, but making it optional in the future might be helpful).
@@ -1727,7 +1856,11 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
 #endif
 #endif
 
-               bool skipProcessFile = (processAllIncludeFiles == false) && (currentFileNameId != sourceFileNameId);
+            // DQ (11/2/2019): Unparsing of header files requires that we gather the CPP directives and comments from header 
+            // files in addition to the original source files, so the currentFileNameId and sourceFileNameId will not always match,
+            // and yet we don't want to skip the collection of CPP directives and comments.
+            // bool skipProcessFile = (processAllIncludeFiles == false) && (currentFileNameId != sourceFileNameId);
+               bool skipProcessFile = (processAllIncludeFiles == true);
 #if 0
                printf ("In AttachPreprocessingInfoTreeTrav::getListOfAttributes(): currentFileNameId = %d sourceFileNameId = %d skipProcessFile = %s \n",
                     currentFileNameId,sourceFileNameId,skipProcessFile ? "true" : "false");
@@ -1738,7 +1871,12 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
                     printf ("In AttachPreprocessingInfoTreeTrav::getListOfAttributes(): currentFileNameId = %d sourceFileNameId = %d Sg_File_Info::getFilenameFromID(currentFileNameId) = %s \n",
                          currentFileNameId,sourceFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
 #endif
-                    attributeMapForAllFiles[currentFileNameId] = buildCommentAndCppDirectiveList(use_Wave, Sg_File_Info::getFilenameFromID(currentFileNameId) );
+
+                 // DQ (11/2/2019): Make sure that we never insert a NULL pointer into the attributeMapForAllFiles.
+                 // attributeMapForAllFiles[currentFileNameId] = buildCommentAndCppDirectiveList(use_Wave, Sg_File_Info::getFilenameFromID(currentFileNameId) );
+                    ROSEAttributesList* commentAndCppDirectiveList = buildCommentAndCppDirectiveList(use_Wave, Sg_File_Info::getFilenameFromID(currentFileNameId) );
+                    ROSE_ASSERT(commentAndCppDirectiveList != NULL);
+                    attributeMapForAllFiles[currentFileNameId] = commentAndCppDirectiveList;
 
                     ROSE_ASSERT(attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end());
                     currentListOfAttributes = attributeMapForAllFiles[currentFileNameId];
@@ -1774,8 +1912,12 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
   // executed as we last vist an IR node (post-order; see the evaluateSynthezidedAttribute()
   // member function).
 
+  // DQ (11/20/2019): Check this (should be set in constructor).
+     ROSE_ASSERT(sourceFile != NULL);
+
 #if 0
      printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
+     printf (" --- sourceFile->get_globalScope() = %p \n",sourceFile->get_globalScope());
 #endif
 
 #if 0
@@ -1875,12 +2017,23 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
           Sg_File_Info* currentFileInfo = currentFilePtr->get_file_info();
           ROSE_ASSERT(currentFileInfo != NULL);
 #if 0
-          printf ("(SgSourceFile) currentFilePtr->get_requires_C_preprocessor() = %s \n",currentFilePtr->get_requires_C_preprocessor() == true ? "true" : "false");
-          printf ("(SgSourceFile) sourceFile->get_file_info()->get_filename() = %s \n",sourceFile->get_file_info()->get_filename());
-          printf ("(SgSourceFile) sourceFile->get_file_info()->get_filenameString() = %s \n",sourceFile->get_file_info()->get_filenameString().c_str());
-          printf ("(SgSourceFile) sourceFile->get_file_info()->get_physical_filename() = %s \n",sourceFile->get_file_info()->get_physical_filename().c_str());
+          printf ("(SgSourceFile) sourceFile->get_requires_C_preprocessor()                = %s \n",sourceFile->get_requires_C_preprocessor() == true ? "true" : "false");
+          printf ("(SgSourceFile) sourceFile->get_file_info()->get_filename()              = %s \n",sourceFile->get_file_info()->get_filename());
+          printf ("(SgSourceFile) sourceFile->get_file_info()->get_filenameString()        = %s \n",sourceFile->get_file_info()->get_filenameString().c_str());
+          printf ("(SgSourceFile) sourceFile->get_file_info()->get_physical_filename()     = %s \n",sourceFile->get_file_info()->get_physical_filename().c_str());
+
+          printf ("(SgSourceFile) currentFilePtr->get_requires_C_preprocessor()            = %s \n",currentFilePtr->get_requires_C_preprocessor() == true ? "true" : "false");
+          printf ("(SgSourceFile) currentFilePtr->get_file_info()->get_filename()          = %s \n",currentFilePtr->get_file_info()->get_filename());
+          printf ("(SgSourceFile) currentFilePtr->get_file_info()->get_filenameString()    = %s \n",currentFilePtr->get_file_info()->get_filenameString().c_str());
+          printf ("(SgSourceFile) currentFilePtr->get_file_info()->get_physical_filename() = %s \n",currentFilePtr->get_file_info()->get_physical_filename().c_str());
 #endif
-          ROSE_ASSERT(sourceFile == currentFilePtr);
+
+       // DQ (11/2/2019): Commenting out this assertion so that we can support attaching comments to header files.
+       // ROSE_ASSERT(sourceFile == currentFilePtr);
+          if (sourceFile != currentFilePtr)
+             {
+               printf ("NOTE: sourceFile = %p currentFilePtr = %p \n",sourceFile,currentFilePtr);
+             }
 #if 0
           printf ("(SgSourceFile) currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename()) = %s \n",
                currentFilePtr->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename()).c_str());
@@ -1919,8 +2072,11 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #endif
 
 #if 0
-          printf ("(SgSourceFile) currentFileNameId = %d \n",currentFileNameId);
-          printf ("(SgSourceFile) currentFileName for currentFileNameId = %s \n",Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
+          printf ("(SgSourceFile) currentFileNameId                                          = %d \n",currentFileNameId);
+          printf ("(SgSourceFile) currentFileName for currentFileNameId: filename            = %s \n",Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
+          printf (" --- currentFilePtr->get_header_file_unparsing_optimization_header_file() = %s \n",currentFilePtr->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+          printf (" --- source_file_id                                                       = %d \n",source_file_id);
+          printf (" --- currentFilePtr->get_requires_C_preprocessor()                        = %s \n",currentFilePtr->get_requires_C_preprocessor() ? "true" : "false");
 #endif
 
        // Temporary code (testing this)
@@ -1945,14 +2101,65 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #if 0
                printf ("Skip processing the source file when using the headed file optimiation \n");
 #endif
-#if 1
-            // DQ (10/21/2019): This code does not change the assertion below.
-               currentListOfAttributes = getListOfAttributes(currentFileNameId);
-               ROSE_ASSERT(currentListOfAttributes != NULL);
+#if 0
+               printf ("Collect comments and CPP directives: currentFileNameId = %d \n",currentFileNameId);
 #endif
+
             // DQ (10/21/2019): This will be tested below, if it is not in place then we need to do it here.
                ROSEAttributesListContainerPtr filePreprocInfo = currentFilePtr->get_preprocessorDirectivesAndCommentsList();
             // ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
+
+#if 1
+            // DQ (10/21/2019): This code does not change the assertion below.
+            // currentListOfAttributes = getListOfAttributes(currentFileNameId);
+            // if (filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
+               if (filePreprocInfo->getList().find(currentFilePtr->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
+                  {
+#if 0
+                    printf ("Generating a new ROSEAttributesList: currentFileNameId = %d \n",currentFileNameId);
+#endif
+                    currentListOfAttributes = getListOfAttributes(currentFileNameId);
+#if 0
+                    printf ("DONE: Generating a new ROSEAttributesList \n");
+#endif
+                  }
+                 else
+                  {
+#if 0
+                    printf ("Using the existing ROSEAttributesList \n");
+#endif
+                 // currentListOfAttributes = filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()];
+                    currentListOfAttributes = filePreprocInfo->getList()[currentFilePtr->get_file_info()->get_filename()];
+#if 0
+                    printf ("DONE: Using the existing ROSEAttributesList \n");
+#endif
+                  }
+
+               ROSE_ASSERT(currentListOfAttributes != NULL);
+#endif
+
+#if 1
+            // DQ (11/2/2019): Avoid redundent reading of the source file for CPP directives and comments.
+            // if (filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
+               if (filePreprocInfo->getList().find(currentFilePtr->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
+                  {
+#if 0
+                    printf ("filePreprocInfo->getList() DOES NOT have an entry for this file: adding one: filename = %s \n",sourceFile->get_file_info()->get_filename());
+#endif
+                 // currentListOfAttributes = filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()];
+                 // filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = currentListOfAttributes;
+                    filePreprocInfo->getList()[currentFilePtr->get_file_info()->get_filename()] = currentListOfAttributes;
+                  }
+                 else
+                  {
+                 // ROSE_ASSERT (filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) != filePreprocInfo->getList().end());
+                 // printf ("Error: we should have seen the list of CPP directives and comments already collected \n");
+                 // ROSE_ASSERT(false);
+                  }
+
+            // ROSE_ASSERT (filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) != filePreprocInfo->getList().end());
+               ROSE_ASSERT (filePreprocInfo->getList().find(currentFilePtr->get_file_info()->get_filename()) != filePreprocInfo->getList().end());
+#endif
 
             // currentListOfAttributes = getListOfAttributes(currentFileNameId);
             // ROSE_ASSERT(currentListOfAttributes != NULL);
@@ -1969,8 +2176,34 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #endif
             // This will cause the CPP directives and comments list to be generated for the source file (plus the token stream).
             // ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);
-               currentListOfAttributes = getListOfAttributes(currentFileNameId);
+            // currentListOfAttributes = getListOfAttributes(currentFileNameId);
+            // ROSE_ASSERT(currentListOfAttributes != NULL);
+
+               ROSEAttributesListContainerPtr filePreprocInfo = currentFilePtr->get_preprocessorDirectivesAndCommentsList();
+               ROSE_ASSERT(filePreprocInfo != NULL);
+
+            // if (filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
+               if (filePreprocInfo->getList().find(currentFilePtr->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
+                  {
+#if 0
+                    printf ("Generating a new ROSEAttributesList (currentFilePtr->get_header_file_unparsing_optimization_header_file() == false) \n");
+#endif
+                    currentListOfAttributes = getListOfAttributes(currentFileNameId);
+#if 0
+                    printf ("DONE: Generating a new ROSEAttributesList (currentFilePtr->get_header_file_unparsing_optimization_header_file() == false) \n");
+#endif
+                  }
+                 else
+                  {
+#if 0
+                    printf ("Using the existing ROSEAttributesList (currentFilePtr->get_header_file_unparsing_optimization_header_file() == false) \n");
+#endif
+                 // currentListOfAttributes = filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()];
+                    currentListOfAttributes = filePreprocInfo->getList()[currentFilePtr->get_file_info()->get_filename()];
+                  }
+
                ROSE_ASSERT(currentListOfAttributes != NULL);
+
 #if 0
                printf ("@@@@@@@@@@@@@@@@@@@@ DONE: Reading the comments and CPP directives from the current file: \n");
                printf ("   --- currentFileNameId = %d currentFileName = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
@@ -1988,12 +2221,26 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
        // DQ (10/21/2013): This was reported as an error for test2008_01.F (fortran tests).
        // ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
           ROSEAttributesListContainerPtr filePreprocInfo = currentFilePtr->get_preprocessorDirectivesAndCommentsList();
+
+#if 0
+          printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): filePreprocInfo = %p \n",filePreprocInfo);
+#endif
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+
           if (filePreprocInfo != NULL)
              {
 #if 0
-               printf ("sourceFile->get_header_file_unparsing_optimization()             = %s \n",sourceFile->get_header_file_unparsing_optimization() ? "true" : "false");
-               printf ("sourceFile->get_header_file_unparsing_optimization_source_file() = %s \n",sourceFile->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
-               printf ("sourceFile->get_header_file_unparsing_optimization_header_file() = %s \n",sourceFile->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+               printf (" --- sourceFile->get_header_file_unparsing_optimization()             = %s \n",sourceFile->get_header_file_unparsing_optimization() ? "true" : "false");
+               printf (" --- sourceFile->get_header_file_unparsing_optimization_source_file() = %s \n",sourceFile->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+               printf (" --- sourceFile->get_header_file_unparsing_optimization_header_file() = %s \n",sourceFile->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+
+               printf (" --- currentFilePtr->get_header_file_unparsing_optimization()             = %s \n",currentFilePtr->get_header_file_unparsing_optimization() ? "true" : "false");
+               printf (" --- currentFilePtr->get_header_file_unparsing_optimization_source_file() = %s \n",currentFilePtr->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+               printf (" --- currentFilePtr->get_header_file_unparsing_optimization_header_file() = %s \n",currentFilePtr->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
 #endif
             // DQ (8/19/2019): This assertion should depend upon if we are supporting unparse header file optimization and which phase we are in.
             // ROSE_ASSERT(filePreprocInfo->getList().empty() == true);
@@ -2011,7 +2258,9 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                   }
                  else
                   {
-                    ROSE_ASSERT(filePreprocInfo->getList().empty() == true);
+                 // DQ (11/202019): I think that we should have at least seen one file (from where getListOfAttributes() is called above).
+                 // ROSE_ASSERT(filePreprocInfo->getList().empty() == true);
+                    ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
                   }
 #if 0
                printf ("Put the ROSEAttributesList into the ROSEAttributesListContainer (an stl map) \n");
@@ -2029,17 +2278,21 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                  // DQ (10/22/2019): This should be true for us to be adding an entry below.
                  // ROSE_ASSERT(filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end());
                  // filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = currentListOfAttributes;
-                    if (filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
+                 // if (filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
+                    if (filePreprocInfo->getList().find(currentFilePtr->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
                        {
 #if 0
-                         printf ("filePreprocInfo->getList() DOES NOT have an entry for this file: filename = %s \n",sourceFile->get_file_info()->get_filename());
+                      // printf ("filePreprocInfo->getList() DOES NOT have an entry for this file: adding one: filename = %s \n",sourceFile->get_file_info()->get_filename());
+                         printf ("filePreprocInfo->getList() DOES NOT have an entry for this file: adding one: filename = %s \n",currentFilePtr->get_file_info()->get_filename());
 #endif
-                         filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = currentListOfAttributes;
+                      // filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = currentListOfAttributes;
+                         filePreprocInfo->getList()[currentFilePtr->get_file_info()->get_filename()] = currentListOfAttributes;
                        }
                       else
                        {
 #if 0
-                         printf ("filePreprocInfo->getList() ALREADY HAS an entry for this file: filename = %s \n",sourceFile->get_file_info()->get_filename());
+                      // printf ("filePreprocInfo->getList() ALREADY HAS an entry for this file: filename = %s \n",sourceFile->get_file_info()->get_filename());
+                         printf ("filePreprocInfo->getList() ALREADY HAS an entry for this file: filename = %s \n",currentFilePtr->get_file_info()->get_filename());
 #endif
                        }
                   }
@@ -2064,9 +2317,163 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                  // ROSE_ASSERT(currentFilePtr->get_preprocessorDirectivesAndCommentsList() != NULL);
                   }
              }
+
+       // DQ (10/27/2019): Now make sure that we have a valid subtree for this SgSourceFile.
+          ROSE_ASSERT(currentFilePtr != NULL);
+          SgSourceFile* sourceFile = isSgSourceFile(currentFilePtr);
+          ROSE_ASSERT(sourceFile != NULL);
+#if 0
+          printf ("sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
+#endif
+          ROSE_ASSERT(sourceFile != NULL);
+          SgGlobal* globalScope = sourceFile->get_globalScope();
+          if (globalScope == NULL)
+             {
+               bool isHeaderFile = sourceFile->get_isHeaderFile();
+#if 0
+               printf ("isHeaderFile = %s \n",isHeaderFile ? "true" : "false");
+#endif
+               if (isHeaderFile == true)
+                  {
+                    SgIncludeFile* includeFile = sourceFile->get_associated_include_file();
+                    ROSE_ASSERT(includeFile != NULL);
+                    ROSE_ASSERT(includeFile->get_source_file() == sourceFile);
+#if 0
+                    printf ("includeFile->get_source_file() = %p filename = %s \n",includeFile->get_source_file(),includeFile->get_source_file()->getFileName().c_str());
+#endif
+                    SgSourceFile* translation_unit_source_file = includeFile->get_source_file_of_translation_unit();
+                    ROSE_ASSERT(translation_unit_source_file != NULL);
+#if 0
+                    printf ("translation_unit_source_file = %p = filename = %s \n",translation_unit_source_file,translation_unit_source_file->getFileName().c_str());
+#endif
+#if 0
+                    printf ("translation_unit_source_file->get_unparse_output_filename() = %s \n",translation_unit_source_file->get_unparse_output_filename().c_str());
+#endif
+                    SgGlobal* translation_unit_global_scope = translation_unit_source_file->get_globalScope();
+                    ROSE_ASSERT(translation_unit_global_scope != NULL);
+#if 0
+                 // SgDeclarationStatementPtrList 	p_declarations
+                    printf ("translation_unit_global_scope->get_declarations().size() = %zu \n",translation_unit_global_scope->get_declarations().size());
+#endif
+#if 0
+                    printf ("sourceFile = %p set_globalScope(): using translation_unit_global_scope = %p \n",sourceFile,translation_unit_global_scope);
+                    printf ("sourceFile->get_globalScope() = %p \n",sourceFile->get_globalScope());
+                    printf ("sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
+#endif
+                    sourceFile->set_globalScope(translation_unit_global_scope);
+
+                 // Reset the global scope.
+                    globalScope = sourceFile->get_globalScope();
+
+                 // DQ (10/27/2019): We need a nested traversal else we will only visit the global scope of the translation_unit_source_file.
+                 // This is because the external traversal is called using traverseWithinFile (for for a different file (I think). 
+                    bool processAllFiles = false;
+
+                 // Dummy attribute (nothing is done here since this is an empty class)
+                    AttachPreprocessingInfoTreeTraversalInheritedAttrribute inh;
+
+                 // DQ (11/3/2019): Should we be using the sourceFile instead of the translation_unit_source_file?
+                 // AttachPreprocessingInfoTreeTrav tt(translation_unit_source_file,processAllFiles);
+                    AttachPreprocessingInfoTreeTrav tt(sourceFile,processAllFiles);
+#if 0
+                    printf ("##### Using the sourceFile instead of the translation_unit_source_file when supporting header files ##### \n");
+#endif
+#if 0
+                    printf ("################################################################################# \n");
+                    printf ("################################################################################# \n");
+                    printf ("Calling nested traverseWithinFile(): to attach CPP directives and comments to AST \n");
+                    printf ("################################################################################# \n");
+                    printf ("################################################################################# \n");
+#endif
+#if 0
+                    printf (" --- sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
+#endif
+
+                 // DQ (11/3/2019): Add a data member to the AttachPreprocessingInfoTreeTraversalInheritedAttrribute to hold the source file 
+                 // and set it to the sourceFile so that we can reference the header files in the nested traversal.
+                 // Or set the source file in the AttachPreprocessingInfoTreeTrav traversla class (which might be a better idea.
+                 // Of could it be that the translation_unit_source_file parameter is the wrong argument to use here.
+                 // printf ("This is where I need to pick up the current work in the morning \n");
+
+#if 0
+                    printf ("Exiting as a test before the nested traversal over the global scope in the include file \n");
+                    ROSE_ASSERT(false);
+#endif
+                 // DQ (11/2/2019): We want this to traverse only the header file (not the whole translation unit).
+                 // However the header file could be nested inside of other scopes (and is at least nested in the 
+                 // global scope) so we need to traverse the whole AST.  There might be a better solution longer term
+                 // if we could mark all nesting scopes so that they could be traversed using a similar (but maybe 
+                 // different) traversal.
+                 // tt.traverseWithinFile(translation_unit_source_file,inh);
+                 // tt.traverseWithinFile(sourceFile,inh);
+#if 0
+                    tt.traverse(sourceFile,inh);
+#else
+#if 0
+                    printf ("############################### \n");
+                    printf ("############################### \n");
+                    printf ("Commented out nested traversal! \n");
+                    printf ("############################### \n");
+                    printf ("############################### \n");
+#else
+#if 0
+                    printf ("########################################## \n");
+                    printf ("########################################## \n");
+                    printf ("Previously Commented out nested traversal! \n");
+                    printf (" --- sourceFile->get_header_file_unparsing_optimization()             = %s \n",sourceFile->get_header_file_unparsing_optimization() ? "true" : "false");
+                    printf (" --- sourceFile->get_header_file_unparsing_optimization_header_file() = %s \n",sourceFile->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+                    printf ("########################################## \n");
+                    printf ("########################################## \n");
+#endif
+                 // DQ (11/5/2019): This is required for the test codes in UnparseHeadersTests, but an error for the the test codes in UnparseHeadersUsingTokenStream_tests.
+                    if (sourceFile->get_header_file_unparsing_optimization_header_file() == true)
+                       {
+                         tt.traverse(sourceFile,inh);
+                       }
+#endif
+#endif
+
+#if 0
+                    printf ("Exiting as a test after nested traversal over the global scope in the include file \n");
+                    ROSE_ASSERT(false);
+#endif
+#if 0
+                    if (includeFile->get_source_file()->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/test4/SimpleInternal.h")
+                       {
+                         printf ("Exiting as a test after nested traversal over the global scope in the include file \n");
+                         ROSE_ASSERT(false);
+                       }
+#endif
+                  }
+             }
+          ROSE_ASSERT(globalScope != NULL);
+
 #if 0
           printf ("Exiting as a test so that we can get the token information attached to the SgSourceFile \n");
           ROSE_ASSERT(false);
+#endif
+
+#if 0
+       // DQ (11/2/2019): Force processing to exist afer a selected header file is processed.
+             {
+            // SgSourceFile* sourceFile = isSgSourceFile(currentFilePtr);
+               bool isHeaderFile = sourceFile->get_isHeaderFile();
+#if 0
+               printf ("isHeaderFile = %s \n",isHeaderFile ? "true" : "false");
+#endif
+               if (isHeaderFile == true)
+                  {
+                    SgIncludeFile* includeFile = sourceFile->get_associated_include_file();
+                    ROSE_ASSERT(includeFile != NULL);
+                    ROSE_ASSERT(includeFile->get_source_file() == sourceFile);
+
+                    if (includeFile->get_source_file()->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/test4/SimpleInternal.h")
+                       {
+                         printf ("Exiting as a test after nested traversal over the global scope in the include file \n");
+                         ROSE_ASSERT(false);
+                       }
+                  }
+             }
 #endif
         }
 
@@ -2082,9 +2489,25 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 
 #if 0
      printf ("statement = %p i_name = %p a_initor = %p \n",statement,i_name,a_initor);
+#endif
+#if 0
      if (statement != NULL)
         {
-          printf (" --- statement = %p = %s \n",statement,statement->class_name().c_str());
+          printf (" --- Statement = %p = %s \n",statement,statement->class_name().c_str());
+        }
+       else
+        {
+          if (i_name != NULL)
+             {
+               printf (" --- InitializedName = %p = %s \n",i_name,i_name->class_name().c_str());
+             }
+            else
+             {
+               if (a_initor != NULL)
+                  {
+                    printf (" --- AggregateInitializer = %p = %s \n",a_initor,a_initor->class_name().c_str());
+                  }
+             }
         }
 #endif
 
@@ -2097,7 +2520,8 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
        // int col  = 0;
 
        // The following should always work since each statement is a located node
-          currentLocNodePtr = dynamic_cast<SgLocatedNode*>(n);
+       // currentLocNodePtr = dynamic_cast<SgLocatedNode*>(n);
+          currentLocNodePtr = isSgLocatedNode(n);
           ROSE_ASSERT(currentLocNodePtr != NULL);
 
        // Attach the comments only to nodes from the same file
@@ -2118,6 +2542,8 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 
 #if 0
           printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): Calling Sg_File_Info::getIDFromFilename() \n");
+          printf (" --- sourceFile->get_requires_C_preprocessor() = %s \n",sourceFile->get_requires_C_preprocessor() ? "true" : "false");
+          printf (" --- source_file_id = %d \n",source_file_id);
 #endif
 #if 0
           int currentFileNameId = (sourceFile->get_requires_C_preprocessor() == true) ? 
@@ -2132,8 +2558,23 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 #if 0
           printf ("(SgStatement) currentFileNameId = %d \n",currentFileNameId);
           printf ("(SgStatement) currentFileName for currentFileNameId = %s \n",Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
+          printf (" --- we should have alread collected all comments and CPP directives \n");
 #endif
 
+       // DQ (11/2/2019): Adding debugging code.
+       // if (currentFileNameId == 0)
+#if 0
+          printf ("sourceFile->get_file_info()->get_filename() = %s \n",sourceFile->get_file_info()->get_filename());
+#endif
+          if (sourceFile->get_file_info()->get_filename() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/test4/Simple4.C")
+             {
+               printf ("This can be a redundant call to getListOfAttributes() \n");
+
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+             }
+
+       // DQ (11/2/2019): This is the call that can be redundant.
           ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);
 
        // DQ (8/19/2019): The comments and CPP directives are being attached to the AST twice for those statements in the source file.
@@ -2142,9 +2583,15 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
           if (sourceFile->get_header_file_unparsing_optimization_header_file() == true)
              {
 #if 0
+#if 0
                printf ("&&&&& Set currentListOfAttributes = NULL for the header file phase of the header file optimization \n");
 #endif
                currentListOfAttributes = NULL;
+#else
+#if 0
+               printf ("&&&&& Commented out setting currentListOfAttributes = NULL for header file optimization \n");
+#endif
+#endif
              }
 
 #if 0
@@ -2158,7 +2605,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
           if (currentListOfAttributes != NULL)
              {
 #if 0
-               printf ("currentListOfAttributes = %p size = %d \n",currentListOfAttributes,currentListOfAttributes->size());
+               printf ("currentListOfAttributes = %p size = %d filename = %s \n",currentListOfAttributes,currentListOfAttributes->size(),currentListOfAttributes->getFileName().c_str());
 #endif
             // DQ (6/20/2005): Compiler generated is not enough, it must be marked for output explicitly
             // bool isCompilerGenerated = currentLocNodePtr->get_file_info()->isCompilerGenerated();
@@ -2188,6 +2635,12 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                     Sg_File_Info* currentFileInfo = currentLocNodePtr->get_file_info();
                     ROSE_ASSERT(currentFileInfo != NULL);
 
+#if 0
+                    printf ("sourceFile->get_requires_C_preprocessor() = %s \n",sourceFile->get_requires_C_preprocessor() ? "true" : "false");
+                    printf (" --- currentFileInfo->get_physical_file_id(source_file_id) = %d \n",currentFileInfo->get_physical_file_id(source_file_id));
+                    printf (" --- source_file_id                                                 = %d \n",source_file_id);
+#endif
+
                  // DQ (9/20/2013): Fixing up references to get_file_id() to use get_physical_file_id().
                  // fileIdForOriginOfCurrentLocatedNode = (sourceFile->get_requires_C_preprocessor() == true) ? 
                  //                         Sg_File_Info::getIDFromFilename(sourceFile->generate_C_preprocessor_intermediate_filename(sourceFile->get_file_info()->get_filename())) : 
@@ -2201,10 +2654,63 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                printf ("evaluateInheritedAttribute: isCompilerGenerated = %s isTransformation = %s fileIdForOriginOfCurrentLocatedNode = %d \n",
                     isCompilerGenerated ? "true" : "false",isTransformation ? "true" : "false",fileIdForOriginOfCurrentLocatedNode);
 #endif
+               int currentLocNode_physical_file_id = currentLocNodePtr->get_file_info()->get_physical_file_id();
+               string currentLocNode_physical_filename_from_id = Sg_File_Info::getFilenameFromID(currentLocNode_physical_file_id);
+#if 0
+               printf ("currentLocNode_physical_file_id = %d \n",currentLocNode_physical_file_id);
+               printf ("currentLocNode_physical_filename_from_id = %s \n",currentLocNode_physical_filename_from_id.c_str());
+#endif
+#if 0
+               printf ("Attaching to node from currentLocNodePtr->get_file_info()->get_filename() = %s \n",currentLocNodePtr->get_file_info()->get_filename());
+               printf (" --- currentListOfAttributes->getFileName()                               = %s \n",currentListOfAttributes->getFileName().c_str());
+               printf (" --- currentFileNameId                                                    = %d \n",currentFileNameId);
+               printf (" --- source_file_id                                                       = %d \n",source_file_id);
+               printf (" --- currentLocNodePtr->get_file_info()->get_file_id()                    = %d \n",currentLocNodePtr->get_file_info()->get_file_id());
+               printf (" --- currentLocNodePtr->get_file_info()->get_physical_file_id()           = %d \n",currentLocNodePtr->get_file_info()->get_physical_file_id());
+#endif
+
+            // DQ (11/3/2019): I think we want the source_file_id below, since they used to be that currentFileNameId 
+            // and source_file_id had the same value, but this didn't allow us to support the header file unparsing.
+            // Or perhaps it didn't allow the support of the optimization of the header file unparsing.
             // DQ (5/24/2005): Relaxed to handle compiler generated and transformed IR nodes
-               if ( isCompilerGenerated || isTransformation || currentFileNameId == fileIdForOriginOfCurrentLocatedNode )
+            // if ( isCompilerGenerated || isTransformation || currentFileNameId == fileIdForOriginOfCurrentLocatedNode )
+            // if ( isCompilerGenerated || isTransformation || source_file_id == fileIdForOriginOfCurrentLocatedNode )
+            // if ( source_file_id == fileIdForOriginOfCurrentLocatedNode )
+               if ( source_file_id == currentLocNode_physical_file_id )
                   {
-                 // DQ (2/28/2019): We need to return the line that is associated with the source file where this can be a ode shared between multiple ASTs.
+                 // DQ (11/3/2019): Check that the comment or CPP directive is from the same file as the locatedNode.
+                 // A variation of this test might be required later, though we should only be attacheing comments and 
+                 // CPP directives before possible transformations.
+                 // if (currentLocNodePtr->get_file_info()->get_filename() != currentListOfAttributes->getFileName())
+
+                 // int currentLocNode_physical_file_id = currentLocNodePtr->get_file_info()->get_physical_file_id();
+                 // string currentLocNode_physical_filename_from_id = Sg_File_Info::getFilenameFromID(currentLocNode_physical_file_id);
+#if 0
+                    printf ("currentLocNode_physical_file_id = %d \n",currentLocNode_physical_file_id);
+                    printf ("currentLocNode_physical_filename_from_id = %s \n",currentLocNode_physical_filename_from_id.c_str());
+#endif
+#if 0
+                    if (currentLocNodePtr->get_file_info()->get_physical_filename() != currentListOfAttributes->getFileName())
+                       {
+                         printf ("Error: currentLocNodePtr->get_file_info()->get_filename() != currentListOfAttributes->getFileName() \n");
+                         printf (" --- currentLocNodePtr->get_file_info()->get_filename()          = %s \n",currentLocNodePtr->get_file_info()->get_filename());
+                         printf (" --- currentLocNodePtr->get_file_info()->get_physical_filename() = %s \n",currentLocNodePtr->get_file_info()->get_physical_filename().c_str());
+                         printf (" --- currentListOfAttributes->getFileName()                      = %s \n",currentListOfAttributes->getFileName().c_str());
+                       }
+#endif
+                 // ROSE_ASSERT(currentLocNodePtr->get_file_info()->get_filename() == currentListOfAttributes->getFileName());
+                 // ROSE_ASSERT(currentLocNodePtr->get_file_info()->get_physical_filename() == currentListOfAttributes->getFileName());
+#if 0
+                    printf ("isCompilerGenerated = %s \n",isCompilerGenerated ? "true" : "false");
+                    printf ("isTransformation    = %s \n",isTransformation ? "true" : "false");
+#endif
+                 // DQ (11/4/2019): if we allow isCompilerGenerated || isTransformation above, then we need to uncomment this if statement.
+                    if (!isCompilerGenerated && !isTransformation)
+                       {
+                         ROSE_ASSERT(currentLocNode_physical_filename_from_id == currentListOfAttributes->getFileName());
+                       }
+
+                 // DQ (2/28/2019): We need to return the line that is associated with the source file where this can be a node shared between multiple ASTs.
                  // Current node belongs to the file the name of which has been specified on the command line
                  // line = currentLocNodePtr->get_file_info()->get_line();
                  // line = currentLocNodePtr->get_file_info()->get_physical_line();
@@ -2237,9 +2743,9 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                  // Or maybe we could do it once where the comments and CPP directives are inserted into the main source file, 
                  // and then later when they are inserted into all of the header files.
 #if 0
-                    printf ("Saving information about where to inpt comments and CPP directives from header files \n");
+                    printf ("Saving information about where to input comments and CPP directives from header files \n");
                     printf (" --- currentLocNodePtr = %p = %s \n",currentLocNodePtr,currentLocNodePtr != NULL ? currentLocNodePtr->class_name().c_str() : "null");
-                    printf (" --- line = %zu \n",line);
+                    printf (" --- line = %d \n",line);
                     printf (" --- currentListOfAttributes = %p \n",currentListOfAttributes);
 #endif
                  // Iterate over the list of comments and directives and add them to the AST
@@ -2262,7 +2768,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                        }
 #endif
                   }
-#if 1
+#if 0
              // Debugging output
                  else
                   {
@@ -2270,6 +2776,15 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                   }
 #endif
              } // end if current list of attribute is not empty
+
+#if 0
+       // DQ (11/4/2019): Exit after where we find an error.
+          if (isSgForStatement(n) != NULL && currentListOfAttributes->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/test4/SimpleInternal.h")
+             {
+               printf ("Exiting upon finding a SgForStatement! \n");
+               ROSE_ASSERT(false);
+             }
+#endif
         } // end if statement or init name
 
 #if 0
@@ -2362,6 +2877,39 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
   // SgFile* fileNode           = dynamic_cast<SgFile*>(n);
   // SgLocatedNode* locatedNode = dynamic_cast<SgLocatedNode*>(n);
      SgFile* fileNode           = isSgFile(n);
+
+
+#if 0
+  // DQ (11/3/2019): Force processing to exist afer a selected header file is processed.
+     if (fileNode != NULL)
+        {
+          SgSourceFile* sourceFile = isSgSourceFile(fileNode);
+          bool isHeaderFile = sourceFile->get_isHeaderFile();
+#if 1
+          printf ("isHeaderFile = %s \n",isHeaderFile ? "true" : "false");
+#endif
+          if (isHeaderFile == true)
+             {
+               SgIncludeFile* includeFile = sourceFile->get_associated_include_file();
+               ROSE_ASSERT(includeFile != NULL);
+               ROSE_ASSERT(includeFile->get_source_file() == sourceFile);
+
+            // if (includeFile->get_source_file()->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/test4/SimpleInternal.h")
+            // if (includeFile->get_source_file()->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/test4/InnerInternal1.h")
+               if (includeFile->get_source_file()->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/test4/SimpleInternal.h")
+                  {
+                    printf ("Exiting as a test in evaluateSynthesizedAttribute() in the include file \n");
+                    ROSE_ASSERT(false);
+                  }
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+#endif
+
+
      SgLocatedNode* locatedNode = isSgLocatedNode(n);
      if ( (locatedNode != NULL) || (fileNode != NULL) )
         {
@@ -2622,10 +3170,10 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          // if (targetNode->get_file_info()->get_file_id() < 0)
                             if (targetNode->get_file_info()->get_physical_file_id(source_file_id) < 0)
                                {
-#if 1
+#if 0
                                  printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_file_id()          = %d \n",targetNode->get_file_info()->get_file_id());
 #endif
-#if 1
+#if 0
                                  printf ("Error: we should not be calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber() using targetNode->get_file_info()->get_physical_file_id() = %d \n",targetNode->get_file_info()->get_physical_file_id(source_file_id));
                                  printf ("In SgFile: targetNode = %s \n",targetNode->class_name().c_str());
                                  printf ("currentFileName for currentFileNameId = %d = %s \n",currentFileNameId,Sg_File_Info::getFilenameFromID(currentFileNameId).c_str());
@@ -2682,7 +3230,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          // delete inheritedAttribute.currentListOfAttributes;
                          // delete currentListOfAttributes;
                             ROSE_ASSERT(attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end());
-
+#if 0
+                            printf ("$$$$$$$$$$$$$$$$$$$$$$$$ Setting attributeMapForAllFiles entry to NULL: currentFileNameId = %d \n",currentFileNameId);
+#endif
                          // For now just reset the pointer to NULL, but later we might want to delete the lists (to avoid a memory leak).
                          // delete attributeMapForAllFiles[currentFileNameId];
                             attributeMapForAllFiles[currentFileNameId] = NULL;
@@ -2794,6 +3344,34 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                                          }
                                     }
                                }
+
+#if 0
+                         // DQ (11/3/2019): Force processing to exist afer a selected header file is processed.
+                               {
+                              // SgSourceFile* sourceFile = isSgSourceFile(currentFilePtr);
+                                 bool isHeaderFile = sourceFile->get_isHeaderFile();
+#if 1
+                                 printf ("isHeaderFile = %s \n",isHeaderFile ? "true" : "false");
+#endif
+                                 if (isHeaderFile == true)
+                                    {
+                                      SgIncludeFile* includeFile = sourceFile->get_associated_include_file();
+                                      ROSE_ASSERT(includeFile != NULL);
+                                      ROSE_ASSERT(includeFile->get_source_file() == sourceFile);
+
+                                     if (includeFile->get_source_file()->getFileName() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/UnparseHeadersTests/test4/SimpleInternal.h")
+                                        {
+                                          printf ("Exiting as a test after nested traversal over the global scope in the include file \n");
+                                          ROSE_ASSERT(false);
+                                        }
+#if 1
+                                     printf ("Exiting as a test! \n");
+                                     ROSE_ASSERT(false);
+#endif
+                                    }
+                               }
+#endif
+
 
                             break;
                           }
@@ -3119,6 +3697,10 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
              }
 #endif
         } // end if (locatedNode) || (fileNode != NULL)
+
+#if 0
+     printf ("Leaving AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
+#endif
 
      return returnSynthesizeAttribute;
    }

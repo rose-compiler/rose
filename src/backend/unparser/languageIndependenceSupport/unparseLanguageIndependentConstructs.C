@@ -192,7 +192,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
      bool statementInFile = false;
 
 #if 0
-     printf ("In statementFromFile(): sourceFilename = %s stmt = %p = %s \n",sourceFilename.c_str(),stmt,stmt->class_name().c_str());
+     printf ("\nIn statementFromFile(): sourceFilename = %s stmt = %p = %s \n",sourceFilename.c_str(),stmt,stmt->class_name().c_str());
 #endif
 
 #if 0
@@ -202,20 +202,25 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
      printf ("   --- stmt->get_file_info()->get_fileIDsToUnparse().size() = %zu \n",stmt->get_file_info()->get_fileIDsToUnparse().size());
 #endif
 
+#if 0
+  // DQ (11/10/2019): This is too simple of a tests, and while it frequently will work we need to see if the 
+  // current file being unparse is actually in the list defined by fileIDsToUnparse.
+
   // DQ (2/26/2019): Adding support for multiple file to reference defining declaration and still unparse them.
      if (stmt->get_file_info()->get_fileIDsToUnparse().empty() == false)
         {
-       // Found case of multiple file handling causing a definng declaration to be used within more than one file.
+       // Found case of multiple file handling causing a defining declaration to be used within more than one file.
        // This design permits both files to reference the single definig declaration, while having only one 
        // defining declaration across the multi-file support (this permits global analysis, especially effective 
        // when used with the AST merge mechanism).
 
        // For the moment we can attemt to test this support by retuning true when we detect the use of this feature.
-#if 1
+#if 0
           printf ("In statementFromFile(): stmt->get_file_info()->get_fileIDsToUnparse().empty() == false: return true \n");
 #endif
           return true;
         }
+#endif
 
   // FMZ (comment by DQ (11/14/2008)):
   // This is part of the support for module files in Fortran.  Modules seen in the compilation 
@@ -489,6 +494,35 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                     statementInFile = true;
                   }
 
+            // DQ (11/10/2019): Details apply when nodes are shared across multiple files.
+               if (stmt->get_file_info()->isShared() == true)
+                  {
+                 // Need to consult the fileIDsToUnparse to see if the current file id is in the list.
+                    SgFileIdList & fileIdList = stmt->get_file_info()->get_fileIDsToUnparse();
+                    ROSE_ASSERT(fileIdList.size() == stmt->get_file_info()->get_fileLineNumbersToUnparse().size());
+#if 0
+                    printf ("Output fileIdList (size = %zu): \n",fileIdList.size());
+                    for (size_t i = 0; i < fileIdList.size(); i++)
+                       {
+                         printf ("  fileIdList[%zu] = %d \n",i,fileIdList[i]);
+                       }
+#endif
+                    SgFileIdList::const_iterator pos = find(fileIdList.begin(),fileIdList.end(),sourceFile->get_file_info()->get_physical_file_id());
+                    if (pos != fileIdList.end())
+                       {
+#if 0
+                         printf ("In statementFromFile(): current file is sharing this IR node: source file_id = %d stmt physical_file_id = %d \n",
+                              sourceFile->get_file_info()->get_physical_file_id(),stmt->get_file_info()->get_physical_file_id());
+#endif
+                         statementInFile = true;
+                       }
+
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
             // negara1 (08/15/2011): Make a special consideration for header file bodies in include directive statements.
             // TODO: Change when SgIncludeDirectiveStatement is used instead of attached PreprocessingInfo.
                SgIncludeDirectiveStatement* includeDirectiveStatement = isSgIncludeDirectiveStatement(stmt);
@@ -553,7 +587,13 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
         }
 
 #if 0
-     printf ("Leaving statementFromFile(): stmt = %p = %s = %s statementInFile = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
+     printf ("Leaving statementFromFile(): stmt = %p = %s = %s statementInFile = %s sourceFilename = %s \n",
+          stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false",sourceFilename.c_str());
+     if (isSgFunctionDeclaration(stmt) != NULL)
+        {
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt);
+          printf (" --- functionDeclaration->get_definition() = %p \n",functionDeclaration->get_definition());
+        }
 #endif
 
 #if 0
@@ -1481,7 +1521,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                        }
                       else
                        {
-#if 0
+#if 1
                          printf ("Unparse the leading whitespace from the AST because it's comments and/or CPP directives have been modified: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
                          unparseAttachedPreprocessingInfo(stmt,info,PreprocessingInfo::before);
@@ -2377,7 +2417,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                                       }
                                      else
                                       {
-#if 0
+#if 1
                                         printf ("In unparseStatement(): Unparse the leading whitespace from the AST because it's comments and/or CPP directives have been modified \n");
 #endif
                                         bool unparseExtraNewLine = (stmt->getAttachedPreprocessingInfo() != NULL);
@@ -2632,10 +2672,16 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                          curprint ("\n ");
                        }
 #if 0
+                    printf("In UnparseLanguageIndependentConstructs::unparseStatement(): calling unparseAttachedPreprocessingInfo test 4: before \n");
+#endif
+#if 0
                     curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): calling unparseAttachedPreprocessingInfo test 4 */ \n ");
 #endif
                  // DQ (11/30/2013): Move from above to where we can better support the token unparsing.
                     unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
+#if 0
+                    printf("In UnparseLanguageIndependentConstructs::unparseStatement(): DONE calling unparseAttachedPreprocessingInfo test 4: before \n");
+#endif
 #if 0
                     curprint("/* In UnparseLanguageIndependentConstructs::unparseStatement(): calling unparseAttachedPreprocessingInfo test 5 */ \n ");
 #endif
@@ -2978,6 +3024,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         {
           if (lastStatementOfGlobalScopeUnparsedUsingTokenStream == false)
              {
+#if 0
+               printf("PreprocessingInfo::after: skipOutputOfPreprocessingInfo == false (unparse attached comment or directive: after) \n");
+#endif
 #if 0
                curprint("/* PreprocessingInfo::after: skipOutputOfPreprocessingInfo == false (unparse attached comment or directive) */\n");
 #endif
@@ -3990,7 +4039,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
         {
        // There's no preprocessing info attached to the current statement
 #if 0
-          printf ("No comments or CPP directives associated with this statement ... \n");
+          printf ("In Unparse_ExprStmt::unparseAttachedPreprocessingInfo(): prepInfoPtr == NULL: No comments or CPP directives associated with this statement ... \n");
 #endif
           return;
         }

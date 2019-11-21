@@ -11245,8 +11245,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                if (currentStatement == NULL)
                   {
                  // This can be an expression in a type, in which case we don't have an associated scope.
+#if 0
                     printf ("Note: This can be an expression in a type, in which case we don't have an associated scope: expression = %p = %s originalExpressionTree = %p = %s \n",
                          expression,expression->class_name().c_str(),originalExpressionTree,originalExpressionTree->class_name().c_str());
+#endif
                   }
                  else
                   {

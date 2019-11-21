@@ -1996,7 +1996,18 @@ ROSE_DLL_API void resetInternalMapsForTargetStatement(SgStatement* sourceStateme
 
 // DQ (6/7/2019): Add support for transforming function definitions to function prototypes in a subtree.
 // We might have to make this specific to a file (only traversing the functions in that file).
+/*!\brief XXX 
+ * This function operates on the new file used to support outlined function definitions.
+ * We use a copy of the file where the code will be outlined FROM, so that if there are references to
+ * declarations in the outlined code we can support the outpiled code with those references.  This
+ * approach has the added advantage of also supporting the same include file tree as the original 
+ * file where the outlined code is being taken from.
+ */
 ROSE_DLL_API void convertFunctionDefinitionsToFunctionPrototypes(SgNode* node);
+
+// DQ (11/10/2019): Lower level support for convertFunctionDefinitionsToFunctionPrototypes().
+ROSE_DLL_API void replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunctionDeclaration* functionDeclaration );
+ROSE_DLL_API std::vector<SgFunctionDeclaration*> generateFunctionDefinitionsList(SgNode* node);
 
 
 //@}

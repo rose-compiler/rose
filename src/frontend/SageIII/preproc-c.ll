@@ -1712,12 +1712,23 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
                   {
                  // DQ (5/14/2006): Added error checking for collection of comments and CPP directives.
                     printf ("Error: can't find the requested file (%s) \n",fileName.c_str());
+
+                 // DQ (11/8/2019): Uncomment so that we can identify calling location where this is called with a filename that does not exist (see buildFile()).
                  // ROSE_ASSERT(false);
+                    ROSE_ASSERT(false);
                   }
              }
         }
 
-  // printf ("In getPreprocessorDirectives(fileName = %s): preprocessorInfoList->size() = %d \n",fileName.c_str(),(int)preprocessorInfoList->size());
+     preprocessorInfoList->setFileName(fileName);
+
+  // DQ (11/3/2019): Make sure that the filename is filled in.
+     ROSE_ASSERT(preprocessorInfoList->getFileName() != "");
+
+#if DEBUG_LEX_PASS || 0
+     printf ("In getPreprocessorDirectives(fileName = %s): preprocessorInfoList->size() = %d \n",fileName.c_str(),(int)preprocessorInfoList->size());
+     printf (" --- preprocessorInfoList->getFileName() = %s \n",preprocessorInfoList->getFileName().c_str());
+#endif
 
   // DQ (9/29/2013): Added assertion (debugging token handling in ROSE).
      ROSE_ASSERT(preprocessorInfoList->get_rawTokenStream() != NULL);

@@ -5317,7 +5317,10 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // DQ (3/4/2009): This test appear to only fail for tutorial/rose_inputCode_InstrumentationTranslator.C 
                if (firstNondefiningFunction->get_symbol_from_symbol_table() == NULL)
                   {
+#if 0
+                 // DQ (11/7/2019): Commented out output spew for demo.
                     printf ("Warning failing test: firstNondefiningFunction->get_symbol_from_symbol_table() == NULL, appears to happen for tutorial/rose_inputCode_InstrumentationTranslator.C \n");
+#endif
                   }
             // ROSE_ASSERT(firstNondefiningFunction->get_symbol_from_symbol_table() != NULL);
              }
