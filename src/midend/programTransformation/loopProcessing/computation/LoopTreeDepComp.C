@@ -312,12 +312,8 @@ void LoopTreeDepCompCreate :: BuildDepGraph()
   BuildLoopDepGraphCreate depImpl(treeCreate.GetTreeRoot(), *depCreate);
   BuildAstTreeDepGraph proc ( &depImpl, anal);
   AstInterface& fa = LoopTransformInterface::getAstInterface();
-#ifndef NDEBUG
   bool succ = ReadAstTraverse(fa, top, proc, AstInterface::PreAndPostOrder);
   assert(succ);
-#else
-  ReadAstTraverse(fa, top, proc, AstInterface::PreAndPostOrder); // side effects?
-#endif
 
   proc.TranslateCtrlDeps();
   PtrSetWrap <LoopTreeDepGraphNode> nodeSet;
@@ -360,11 +356,7 @@ LoopTreeDepCompCreate( const AstNodePtr& _top, bool builddep, bool supportNonFor
   SetMap(&nodeMap);
 
   LoopTreeBuild treeproc(supportNonFortranLoop);
-#ifndef NDEBUG
   bool succ = treeproc(fa, top, &treeCreate);
-#else
-  treeproc(fa, top, &treeCreate);                       // side effects?
-#endif
   SetTreeCreate(&treeCreate);
 
   assert(succ); 
