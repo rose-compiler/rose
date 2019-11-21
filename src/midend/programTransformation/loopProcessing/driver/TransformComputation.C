@@ -252,6 +252,8 @@ std::cerr << "LoopTransformation1\n";
         return false;
   }
 
+  AstInterface &fa = LoopTransformInterface::getAstInterface();
+
 
   if (debugloop) {
     std::cerr <<"----------------------------------------------"<<endl;
@@ -314,7 +316,6 @@ std::cerr << "LoopTransformation1\n";
         std::cerr <<"----------------------------------------------"<<endl;
    }
 
-  AstInterface &fa = LoopTransformInterface::getAstInterface();
   AstNodePtr r = comp.CodeGen();
   assert (r != 0);
   

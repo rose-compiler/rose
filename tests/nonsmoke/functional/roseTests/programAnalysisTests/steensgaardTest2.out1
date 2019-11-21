@@ -11,49 +11,51 @@ v:__bswap_32-1-__bsx LOC30=>LOC25
 v:__bswap_64 LOC31=>LOC32 (inparams:  LOC33) ->(outparams:  LOC34) 
 v:__bswap_64-0 LOC35=>LOC34 
 v:__bswap_64-3-4 LOC36=>LOC37 (pending  LOC34) 
-v:__bswap_64-3-__bsx LOC38=>LOC33 
-v:__builtin_bswap32 LOC39=>LOC40 (inparams:  LOC25) ->(outparams:  LOC29) 
-v:__builtin_bswap64 LOC41=>LOC42 (inparams:  LOC33) ->(outparams:  LOC37) 
-v:foo LOC43=>LOC44 (inparams:  LOC45=>LOC46 ) ->(outparams:  LOC45=>LOC46 ) 
-v:foo-0 LOC47=>LOC45 =>LOC46 
-v:foo-5-6 LOC48=>LOC16 =>LOC17 
-v:foo-5-7 LOC49=>LOC50 =>LOC16 
-v:foo-5-8 LOC51=>LOC16 =>LOC17 
-v:foo-5-9 LOC52=>LOC16 =>LOC17 
-v:foo-5-input LOC53=>LOC45 =>LOC46 
-v:foo-5-m LOC16=>LOC17 
-v:foo-5-p LOC50=>LOC16 =>LOC17 
-v:foo-5-p1 LOC54=>LOC16 =>LOC17 
-v:foo-5-pp LOC55=>LOC50 =>LOC16 
-v:foo-5-q LOC56=>LOC16 =>LOC17 
-v:foo-5-r LOC57=>LOC16 =>LOC17 
-v:goo LOC58=>LOC59 (inparams:  LOC44) ->(outparams:  LOC60) 
-v:goo-0 LOC61=>LOC60 
-v:goo-10-11 LOC62=>LOC45 =>LOC46 
-v:goo-10-12 LOC63=>LOC45 =>LOC46 
-v:goo-10-13 LOC64=>LOC65 =>LOC66 
-v:goo-10-14 LOC67=>LOC45 =>LOC46 
-v:goo-10-content LOC68=>LOC45 =>LOC46 
-v:goo-10-content2 LOC69=>LOC70 =>LOC71 
-v:goo-10-f LOC72=>LOC44 (inparams:  LOC45=>LOC46 ) ->(outparams:  LOC45=>LOC46 ) 
-v:goo-10-output LOC73=>LOC45 =>LOC46 
-v:main LOC74=>LOC75 (inparams:  LOC76 LOC77) ->(outparams:  LOC78) 
-v:main-0 LOC79=>LOC78 
-v:main-20-21 LOC80=>LOC13 
-v:main-20-22 LOC81=>LOC82 
-v:main-20-23 LOC83=>LOC84 =>LOC85 
-v:main-20-a LOC86=>LOC3 
-v:main-20-argc LOC87=>LOC76 
-v:main-20-argv LOC88=>LOC77 
-v:main-20-b LOC89=>LOC4 
-v:main-20-i LOC90=>LOC5 (pending  LOC13 LOC82) 
-v:malloc LOC91=>LOC92 (inparams:  LOC22) ->(outparams:  LOC93) 
-v:printf LOC94=>LOC95 (inparams:  LOC84=>LOC85  LOC3 LOC4) ->(outparams:  LOC96) 
-v:test LOC97=>LOC98 (inparams: ) ->(outparams:  LOC99) 
-v:test-0 LOC100=>LOC99 
-v:test-16-15 LOC101=>LOC102 
-v:test-16-17 LOC103=>LOC93 (pending  LOC102 LOC8) 
-v:test-16-18 LOC104=>LOC22 
-v:test-16-19 LOC105=>LOC12 (pending  LOC22) 
-v:test-16-intArray LOC106=>LOC9 
-v:test-16-intArray2 LOC107=>LOC8 
+v:__bswap_64-3-5 LOC38=>LOC39 (pending  LOC37) 
+v:__bswap_64-3-6 LOC40=>LOC41 
+v:__bswap_64-3-__bsx LOC42=>LOC33 (pending  LOC41) 
+v:__builtin_bswap32 LOC43=>LOC44 (inparams:  LOC25) ->(outparams:  LOC29) 
+v:__builtin_bswap64 LOC45=>LOC46 (inparams:  LOC41) ->(outparams:  LOC39) 
+v:foo LOC47=>LOC48 (inparams:  LOC49=>LOC50 ) ->(outparams:  LOC49=>LOC50 ) 
+v:foo-0 LOC51=>LOC49 =>LOC50 
+v:foo-7-10 LOC52=>LOC16 =>LOC17 
+v:foo-7-11 LOC53=>LOC16 =>LOC17 
+v:foo-7-8 LOC54=>LOC16 =>LOC17 
+v:foo-7-9 LOC55=>LOC56 =>LOC16 
+v:foo-7-input LOC57=>LOC49 =>LOC50 
+v:foo-7-m LOC16=>LOC17 
+v:foo-7-p LOC56=>LOC16 =>LOC17 
+v:foo-7-p1 LOC58=>LOC16 =>LOC17 
+v:foo-7-pp LOC59=>LOC56 =>LOC16 
+v:foo-7-q LOC60=>LOC16 =>LOC17 
+v:foo-7-r LOC61=>LOC16 =>LOC17 
+v:goo LOC62=>LOC63 (inparams:  LOC48) ->(outparams:  LOC64) 
+v:goo-0 LOC65=>LOC64 
+v:goo-12-13 LOC66=>LOC49 =>LOC50 
+v:goo-12-14 LOC67=>LOC49 =>LOC50 
+v:goo-12-15 LOC68=>LOC69 =>LOC70 
+v:goo-12-16 LOC71=>LOC49 =>LOC50 
+v:goo-12-content LOC72=>LOC49 =>LOC50 
+v:goo-12-content2 LOC73=>LOC74 =>LOC75 
+v:goo-12-f LOC76=>LOC48 (inparams:  LOC49=>LOC50 ) ->(outparams:  LOC49=>LOC50 ) 
+v:goo-12-output LOC77=>LOC49 =>LOC50 
+v:main LOC78=>LOC79 (inparams:  LOC80 LOC81) ->(outparams:  LOC82) 
+v:main-0 LOC83=>LOC82 
+v:main-22-23 LOC84=>LOC13 
+v:main-22-24 LOC85=>LOC86 
+v:main-22-25 LOC87=>LOC88 =>LOC89 
+v:main-22-a LOC90=>LOC3 
+v:main-22-argc LOC91=>LOC80 
+v:main-22-argv LOC92=>LOC81 
+v:main-22-b LOC93=>LOC4 
+v:main-22-i LOC94=>LOC5 (pending  LOC13 LOC86) 
+v:malloc LOC95=>LOC96 (inparams:  LOC22) ->(outparams:  LOC97) 
+v:printf LOC98=>LOC99 (inparams:  LOC88=>LOC89  LOC3 LOC4) ->(outparams:  LOC100) 
+v:test LOC101=>LOC102 (inparams: ) ->(outparams:  LOC103) 
+v:test-0 LOC104=>LOC103 
+v:test-18-17 LOC105=>LOC106 
+v:test-18-19 LOC107=>LOC97 (pending  LOC106 LOC8) 
+v:test-18-20 LOC108=>LOC22 
+v:test-18-21 LOC109=>LOC12 (pending  LOC22) 
+v:test-18-intArray LOC110=>LOC9 
+v:test-18-intArray2 LOC111=>LOC8 
