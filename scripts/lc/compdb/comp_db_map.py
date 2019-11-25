@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/env python2
 
 import os
 import sys
@@ -80,6 +80,7 @@ def substitute_args_placeholders(args, filepath, filename, workdir, origtool):
 
 def apply_tool(tool, trans_unit, args):
 	start_time = time.time()
+	time_limit = '600s'
 
 	arguments = trans_unit['arguments']
 
@@ -93,11 +94,12 @@ def apply_tool(tool, trans_unit, args):
 	filename = filepath.split('/')[-1]
 
 	arguments = transform_original_args(arguments, args['filter'], args['replace'])
-
 	arguments = args['tool'] + arguments
+	arguments = substitute_args_placeholders(arguments, filepath, filename, workdir, origtool)
 
-	# Timeout has return code 124 if it is triggered:
-	arguments = [ 'timeout', '10m',  tool ] + substitute_args_placeholders(arguments, filepath, filename, workdir, origtool)
+	# Timeout sends SIGTERM and has return code 124 if it is triggered. If that 
+	# doesn't work, and --kill-after is present, sends SIGKILL (return code -9):
+	arguments = [ 'timeout','--kill-after=5s', time_limit,  tool ] + arguments
 
 	trans_unit['arguments'].update({ 'tool' : arguments })
 
@@ -119,21 +121,25 @@ def apply_tool_helper(kwargs):
 		trans_unit.update({ 'exception' : str(e) })
 		return trans_unit
 
+def log_progress(number_done, total, elapsed_time):
+    sys.stdout.write(
+        "\r                                       \r{}/{} in {:.1f} seconds".
+        format(number_done, total, elapsed_time ))
+    sys.stdout.flush()
+
 def map_tool(job):
 	start_time = time.time()
 
 	workload = map(lambda tu: { 'trans_unit' : tu, 'tool' : job['tool']['command'], 'args' : job['arguments'] }, job['database'])
 
-	sys.stdout.write("\r                                       \r{}/{} in {:.1f} seconds".format(0, len(workload), 0 ))
-	sys.stdout.flush()
+	log_progress(0, len(workload), 0)
 
 	if job['config']['nprocs'] == 0:
 		results = list()
 		for kwargs in workload:
 			results.append(apply_tool(**kwargs))
-			elapsed_time = time.time() - start_time
-			sys.stdout.write("\r                                       \r{}/{} in {:.1f} seconds".format(len(results), len(workload), elapsed_time ))
-			sys.stdout.flush()
+			elapsed_time = time.time() - start_time	
+			log_progress(len(results), len(workload), elapsed_time)
 	else:
 		pool = multiprocessing.Pool(job['config']['nprocs'])
 		future_result = pool.map_async(func=apply_tool_helper, iterable=workload, chunksize=1)
@@ -142,16 +148,13 @@ def map_tool(job):
 		while (not future_result.ready()):
 			elapsed_time = time.time() - start_time
 			number_done = len(workload) - future_result._number_left
-			sys.stdout.write("\r                                       \r{}/{} in {:.1f} seconds".format(number_done, len(workload), elapsed_time ))
-			sys.stdout.flush()
+			log_progress(number_done, len(workload), elapsed_time)
 			time.sleep(5)
 
 		results = future_result.get()
 		elapsed_time = time.time() - start_time
 
-	sys.stdout.write("\r                                       \r{}/{} in {:.1f} seconds\n".format(len(results), len(workload), elapsed_time ))
-	sys.stdout.flush()
-
+	log_progress(len(results), len(workload), elapsed_time)
 	job.update({ 'elapsed' : elapsed_time, 'trans-units' : results })
 
 	return job

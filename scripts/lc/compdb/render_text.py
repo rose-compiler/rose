@@ -5,7 +5,8 @@ Glossary:
 Job: The whole comp_db_map process/result, consisting of multiple Runs
      Data: source dir, build dir, tool command, tool name, tool version
 Run: One execution of the tool.
-     Data: in file, out file, command line arguments (tool command is first one), elapsed time, stdout, stderr
+     Data: in file, out file, command line arguments (tool command is first 
+     one), elapsed time, stdout, stderr
      One "report"
 """
 
