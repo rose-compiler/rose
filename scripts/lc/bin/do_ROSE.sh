@@ -6,7 +6,7 @@
 # Find ourselves:
 rel_enclosing_dir=`dirname $0`
 export TEST_SCRIPT_DIR=`(cd ${rel_enclosing_dir}; pwd)`
-export ROSE_ROSE_SCRIPT_DIR=`(cd ${rel_enclosing_dir}/../../ROSE; pwd)`
+export ROSE_ROSE_SCRIPT_DIR=`(cd ${rel_enclosing_dir}/../ROSE; pwd)`
 
 # Get parms:
 parm_source_script=$1
