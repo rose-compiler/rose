@@ -335,6 +335,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProgramBody(ATerm term, SgUntyped
 
    // TODO - need list for labels in untyped IR
    //        can labels be on program definitions?
+
+      if (labels.size() > 1) {
+         cerr << "WARNING UNIMPLEMENTED: ProgramBody - labels.size > 1\n";
+         return ATtrue;
+      }
+
       assert(labels.size() <= 1);
       if (labels.size() == 1) temp_label = labels[0];
 
@@ -405,10 +411,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_SubroutineDefinitionList(ATerm te
    return ATtrue;
 }
 
-#if NEEDTOFIX
-//Traversing these always cause a seg fault or a bus error
-//when finishing up the traversal after traversing
-//the last aterm (traverse_NonNestedSubroutineList)
 //========================================================================================
 // 1.4 IMPLEMENTATION PARAMETERS
 //----------------------------------------------------------------------------------------
@@ -422,15 +424,19 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerMachineParameter(ATerm ter
    SgUntypedExpression *precision, *scale_spec, *frac_spec, *formula;
 
    if (ATmatch(term, "BITSINBYTE")) {
+      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - BITSINBYTE\n";
       // MATCHED BITSINBYTE
    }
    else if (ATmatch(term, "BITSINWORD")) {
+      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - BITSINWORD\n";
       // MATCHED BITSINWORD
    }
    else if (ATmatch(term, "LOCSINWORD")) {
+      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - LOCSINWORD\n";
       // MATCHED LOCSINWORD
    }
    else if (ATmatch(term, "BYTEPOS(<term>)", &t_formula)) {
+      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - BYTEPOS\n";
       // MATCHED BYTEPOS
       if (traverse_NumericFormula(t_formula, formula)) {
          // MATCHED CompileTimeNumericFormula
@@ -446,12 +452,14 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerMachineParameter(ATerm ter
 
 
    else if (ATmatch(term, "IMPLFLOATPRECISION(<term>)", &t_precision)) {
+      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - IMPLFLOATPRECISION\n";
       // MATCHED IMPLFLOATPRECISION
       if (traverse_NumericFormula(t_precision, precision)) {
          // MATCHED Precision
       } else return ATfalse;
    }
    else if (ATmatch(term, "IMPLFIXEDPRECISION(<term>,<term>)", &t_scale_spec, &t_frac_spec)) {
+      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - IMPLFIXEDPRECISION\n";
       // MATCHED IMPLFIXEDPRECISION
       if (traverse_NumericFormula(t_scale_spec, scale_spec)) {
          // MATCHED ScaleSpecifier
@@ -498,24 +506,28 @@ ATbool ATermToUntypedJovialTraversal::traverse_FloatingMachineParameter(ATerm te
    SgUntypedExpression* precision;
 
    if (ATmatch(term, "MAXFLOAT(<term>)", &t_precision)) {
+      cerr << "WARNING UNIMPLEMENTED: FloatingMachineParameter - MAXFLOAT\n";
       // MATCHED MAXFLOAT
       if (traverse_NumericFormula(t_precision, precision)) {
          // MATCHED Precision
       } else return ATfalse;
    }
    else if (ATmatch(term, "MINFLOAT(<term>)", &t_precision)) {
+      cerr << "WARNING UNIMPLEMENTED: FloatingMachineParameter - MINFLOAT\n";
       // MATCHED MINFLOAT
       if (traverse_NumericFormula(t_precision, precision)) {
          // MATCHED Precision
       } else return ATfalse;
    }
    else if (ATmatch(term, "FLOATRELPRECISION(<term>)", &t_precision)) {
+      cerr << "WARNING UNIMPLEMENTED: FloatingMachineParameter - FLOATRELPRECISION\n";
       // MATCHED FLOATRELPRECISION
       if (traverse_NumericFormula(t_precision, precision)) {
          // MATCHED Precision
       } else return ATfalse;
    }
    else if (ATmatch(term, "FLOATUNDERFLOW(<term>)", &t_precision)) {
+      cerr << "WARNING UNIMPLEMENTED: FloatingMachineParameter - FLOATUNDERFLOW\n";
       // MATCHED FLOATUNDERFLOW
       if (traverse_NumericFormula(t_precision, precision)) {
          // MATCHED Precision
@@ -533,25 +545,37 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedMachineParameter(ATerm term,
    printf("... traverse_FixedMachineParameter: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_scale_spec, t_frac_spec;
+   ATerm t_spec1, t_spec2, t_scale_spec, t_frac_spec;
    SgUntypedExpression *scale_spec, *frac_spec;
 
-   if (ATmatch(term, "MAXFIXED(<term>,<term>)", &t_scale_spec, &t_frac_spec)) {
+   if (ATmatch(term, "MAXFIXED(<term>,<term>)", &t_spec1, &t_spec2)) {
+      cerr << "WARNING UNIMPLEMENTED: FixedMachineParameter - MAXFIXED\n";
       // MATCHED MAXFIXED
-      if (traverse_NumericFormula(t_scale_spec, scale_spec)) {
-         // MATCHED ScaleSpecifier
+      if (ATmatch(t_spec1, "ScaleSpecifier(<term>)", &t_scale_spec)) {
+         if (traverse_NumericFormula(t_scale_spec, scale_spec)) {
+            // MATCHED ScaleSpecifier
+         } else return ATfalse;
       } else return ATfalse;
-      if (traverse_NumericFormula(t_frac_spec, frac_spec)) {
-         // MATCHED FractionSpecifier
+
+      if (ATmatch(t_spec2, "FractionSpecifier(<term>)", &t_frac_spec)) {
+         if (traverse_NumericFormula(t_frac_spec, frac_spec)) {
+            // MATCHED FractionSpecifier
+         } else return ATfalse;
       } else return ATfalse;
    }
-   else if (ATmatch(term, "MINFIXED(<term>,<term>)", &t_scale_spec, &t_frac_spec)) {
+   else if (ATmatch(term, "MINFIXED(<term>,<term>)", &t_spec1, &t_spec2)) {
+      cerr << "WARNING UNIMPLEMENTED: FixedMachineParameter - MINFIXED\n";
       // MATCHED MINFIXED
-      if (traverse_NumericFormula(t_scale_spec, scale_spec)) {
-         // MATCHED ScaleSpecifier
+      if (ATmatch(t_spec1, "ScaleSpecifier(<term>)", &t_scale_spec)) {
+         if (traverse_NumericFormula(t_scale_spec, scale_spec)) {
+            // MATCHED ScaleSpecifier
+         } else return ATfalse;
       } else return ATfalse;
-      if (traverse_NumericFormula(t_frac_spec, frac_spec)) {
-         // MATCHED FractionSpecifier
+
+      if (ATmatch(t_spec2, "FractionSpecifier(<term>)", &t_frac_spec)) {
+         if (traverse_NumericFormula(t_frac_spec, frac_spec)) {
+            // MATCHED FractionSpecifier
+         } else return ATfalse;
       } else return ATfalse;
    }
 
@@ -559,7 +583,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedMachineParameter(ATerm term,
 
    return ATtrue;
 }
-#endif
 
 //========================================================================================
 // 2.0 DECLARATIONS
@@ -597,12 +620,19 @@ ATbool ATermToUntypedJovialTraversal::traverse_Declaration(ATerm term, SgUntyped
    else if (traverse_DefineDeclaration(term, decl_list)) {
       // MATCHED DefineDeclaration
    }
+   else if (traverse_OverlayDeclaration(term, decl_list)) {
+      // MATCHED OverlayDeclaration
+   }
+   else if (traverse_StatementNameDeclaration(term, decl_list)) {
+      // MATCHED StatementNameDeclaration
+   }
+   else if (traverse_InlineDeclaration(term, decl_list)) {
+      // MATCHED InlineDeclaration
+   }
    else if (traverse_NullDeclaration(term, decl_list)) {
       // MATCHED NullDeclaration
    }
    else return ATfalse;
-
-//  OverlayDeclaration         -> CompoolDeclaration
 
    return ATtrue;
 
@@ -654,6 +684,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUnt
    SgUntypedInitializedName*  initialized_name = NULL;
    SgUntypedExprListExpression*      attr_list = NULL;
 
+// For StatusItemDescription
+   bool has_size;
+   SgUntypedExpression* status_size;
+   SgUntypedInitializedNameList* status_list = NULL;
+
+   std::string label = "";
+
    if (ATmatch(term, "ItemDeclaration(<term>,<term>,<term>,<term>)", &t_name,&t_alloc,&t_type,&t_preset)) {
       if (ATmatch(t_name, "<str>", &name)) {
          // MATCHED ItemName
@@ -677,6 +714,24 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUnt
 
       if (traverse_ItemTypeDescription(t_type, declared_type, attr_list)) {
          // MATCHED ItemTypeDescription
+      }
+      else if (traverse_StatusItemDescription(t_type, status_list, has_size, status_size)) {
+         // MATCHED StatusItemDescription
+
+         // status item declarations have to be handled differently than other ItemTypeDescription terms
+
+         // also assume an int is sufficient for status_size for now
+         //         ROSE_ASSERT(has_size == false);
+         if (!has_size) {
+            cerr << "WARNING UNIMPLEMENTED: ItemDeclaration - StatusItemDescription with size\n";
+         }
+         ROSE_ASSERT(status_list);
+
+         SgUntypedEnumDeclaration* enum_decl = new SgUntypedEnumDeclaration(label, name, status_list);
+         ROSE_ASSERT(enum_decl);
+         setSourcePosition(enum_decl, term);
+
+         decl_list->get_decl_list().push_back(enum_decl);
       } else return ATfalse;
 
       if (traverse_ItemPreset(t_preset, preset)) {
@@ -686,7 +741,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUnt
    else return ATfalse;
 
    if (declared_type == NULL) {
-      ROSE_ASSERT(preset == NULL);
+      cerr << "WARNING UNIMPLEMENTED: ItemDeclaration - type is null \n";
       return ATtrue;
    }
 
@@ -740,6 +795,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDescription(ATerm term, S
    }
    else if (traverse_Name(term, name)) {
       // MATCHED ItemTypeName
+      cerr << "WARNING UNIMPLEMENTED: ItemTypeDescription - ItemTypeName\n";
+      type = UntypedBuilder::buildType(SgUntypedType::e_user_defined, name);
+      ROSE_ASSERT(type);
    }
    else return ATfalse;
 
@@ -774,13 +832,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntegerItemDescription(ATerm term
       // MATCHED OptRoundOrTruncate
       if (has_round_or_truncate) {
          if (modifier_enum == General_Language_Translation::e_type_modifier_round) {
-            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_round information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_round in IntegerItemDescription \n";
          }
          else if (modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
-            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_truncate information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_truncate in IntegerItemDescription \n";
          }
          else if (modifier_enum == General_Language_Translation::e_type_modifier_z) {
-            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_z information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_z in IntegerItemDescription \n";
          }
          else ROSE_ASSERT(false);
       }
@@ -845,13 +903,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_FloatingItemDescription(ATerm ter
       // MATCHED OptRoundOrTruncate
       if (has_round_or_truncate) {
          if (modifier_enum == General_Language_Translation::e_type_modifier_round) {
-            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_round information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_round in FloatingItemDescription \n";
          }
          else if (modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
-            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_truncate information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_truncate in FloatingItemDescription \n";
          }
          else if (modifier_enum == General_Language_Translation::e_type_modifier_z) {
-            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_z information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_z in FloatingItemDescription \n";
          }
          else ROSE_ASSERT(false);
       }
@@ -921,13 +979,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedItemDescription(ATerm term, 
       // MATCHED OptRoundOrTruncate
       if (has_round_or_truncate) {
          if (modifier_enum == General_Language_Translation::e_type_modifier_round) {
-            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_round information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_round in FixedItemDescription \n";
          }
          else if (modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
-            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_truncate information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_truncate in FixedItemDescription \n";
          }
          else if (modifier_enum == General_Language_Translation::e_type_modifier_z) {
-            cerr << "WARNING UNIMPLEMENTED: e_type_modifier_z information not forwarded from ATerm traversal \n";
+            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_z in FixedItemDescription \n";
          }
          else ROSE_ASSERT(false);
       }
@@ -945,7 +1003,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedItemDescription(ATerm term, 
    }
    else if (ATmatch(t_fraction, "OptFractionSpecifier(<term>)", &t_frac_spec)) {
       if (traverse_FractionSpecifier(t_frac_spec, fraction)) {
-         cerr << "WARNING UNIMPLEMENTED: fraction specifier has not been implemented \n";
+         cerr << "WARNING UNIMPLEMENTED: FractionSpecifier - in FixedItemDescription \n";
 
          //  CompileTimeNumericFormula   -> FractionSpecifier       {cons("FractionSpecifier")}
          //  ',' FractionSpecifier       -> OptFractionSpecifier    {cons("OptFractionSpecifier")}
@@ -1015,7 +1073,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_CharacterLiteral(ATerm term, SgUn
    Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
 
    if (ATmatch(term, "CharacterLiteral(<str>)", &name)) {
-      std::cout << "CharacterLiteral is " << name << endl;
       expr = new SgUntypedReferenceExpression(expr_enum, name);
       setSourcePosition(expr, term);
    } else return ATfalse;
@@ -1240,9 +1297,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_PointerItemDescription(ATerm term
    std::string type_name;
 
    if (ATmatch(term, "PointerItemDescription(<str>,<term>)", &pntr, &t_type_name)) {
-      std::cout << "PointerTypeDesc is " << pntr << endl;
 
-      if (traverse_OptTypeName(t_type_name, type_name)) {
+      if (traverse_OptTypeName(t_type_name, type, type_name)) {
          // MATCHED OptTypeName
       } else return ATfalse;
    } else return ATfalse;
@@ -1250,7 +1306,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_PointerItemDescription(ATerm term
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_OptTypeName(ATerm term, std::string & name)
+ATbool ATermToUntypedJovialTraversal::traverse_OptTypeName(ATerm term, SgUntypedType* & type, std::string & name)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptTypeName: %s\n", ATwriteToString(term));
@@ -1260,9 +1316,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_OptTypeName(ATerm term, std::stri
 
    if (ATmatch(term, "no-type-name()")) {
       // MATCHED no-type-name
-      std::cout << "Matched no-type-name" << endl;
    } else if (ATmatch(term, "TypeName(<term>)", &t_type_name)) {
       if (traverse_Name(t_type_name, name)) {
+         cerr << "WARNING UNIMPLEMENTED: TypeName \n";
+         // MATCHED TypeName
+         type = UntypedBuilder::buildType(SgUntypedType::e_user_defined, name);
+         ROSE_ASSERT(type);
       } else return ATfalse;
    } else return ATfalse;
 
@@ -1345,6 +1404,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
 
       SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_table, table_type_name);
 
+      if (type == NULL) {
+         cerr << "WARNING UNIMPLEMENTED: TableDeclaration - type is null \n";
+         return ATtrue;
+      }
+
       // Create the variable for the declaration
       variable_decl = UntypedBuilder::buildVariableDeclaration(table_name, type, table_decl, attr_list, preset);
       ROSE_ASSERT(variable_decl);
@@ -1354,13 +1418,18 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDeclaration(ATerm term, SgUn
       ROSE_ASSERT(dim_info != NULL);
 
       if (base_type->get_is_intrinsic() == false) {
-         cerr << "WARNING UNIMPLEMENTED: TableDescription before buildJovialTableType\n";
+         cerr << "WARNING UNIMPLEMENTED: TableDescription - before buildJovialTableType\n";
          return ATtrue;
       }
 
       // There is no table_desc thus no table body containing structure components
       table_type = UntypedBuilder::buildJovialTableType("", base_type, dim_info, /*is_anonymous*/true);
       ROSE_ASSERT(table_type != NULL);
+
+      if (table_type == NULL) {
+         cerr << "WARNING UNIMPLEMENTED: TableDeclaration - type is null \n";
+         return ATtrue;
+      }
 
       // Create the variable for the declaration
       variable_decl = UntypedBuilder::buildVariableDeclaration(table_name, table_type, attr_list, preset);
@@ -1449,7 +1518,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ArrayTableDescription(ATerm term,
          // MATCHED TablePreset
       } else return ATfalse;
 
-      cerr << "WARNING UNIMPLEMENTED: TableDescriptionName" << type_name << "\n";
+      cerr << "WARNING UNIMPLEMENTED: TableDescriptionName \n";
    }
    else return ATfalse;
 
@@ -1498,7 +1567,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableDescription(ATerm term, SgUn
          // MATCHED Name
       } else return ATfalse;
 
+#if 0
       cout << "\n.x. traverse_TableDescription with type name " << type_name << endl;
+#endif
 
       table_desc = UntypedBuilder::buildJovialTableDescription(type_name);
       ROSE_ASSERT(table_desc);
@@ -1676,6 +1747,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryEntrySpecifier(ATerm term
    type = NULL;
    preset = NULL;
 
+// For StatusItemDescription
+   bool has_size;
+   SgUntypedExpression* status_size;
+   SgUntypedInitializedNameList* status_list = NULL;
+
+   std::string label = "";
+
    if (ATmatch(term, "OrdinaryEntrySpecifier(<term>,<term>,<term>)", &t_pack_spec, &t_item_desc, &t_preset)) {
 
       if (traverse_OptPackingSpecifier(t_pack_spec, attr_list)) {
@@ -1684,6 +1762,25 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryEntrySpecifier(ATerm term
 
       if (traverse_ItemTypeDescription(t_item_desc, type, attr_list)) {
          // MATCHED ItemTypeDescription
+      } else if (traverse_StatusItemDescription(t_item_desc, status_list, has_size, status_size)) {
+         // MATCHED StatusItemDescription
+
+         // status item declarations have to be handled differently than other ItemTypeDescription terms
+
+         // also assume an int is sufficient for status_size for now
+
+         cerr << "WARNING UNIMPLEMENTED: OrdinaryEntrySpecifier - StatusItemDescription\n";
+#if 0
+         ROSE_ASSERT(has_size == false);
+         ROSE_ASSERT(status_list);
+
+         SgUntypedEnumDeclaration* enum_decl = new SgUntypedEnumDeclaration(label, name, status_list);
+         ROSE_ASSERT(enum_decl);
+         setSourcePosition(enum_decl, term);
+
+         // need a SgUntypedDeclarationStatementList to push the enum_decl onto
+         //         decl_list->get_decl_list().push_back(enum_decl);
+#endif
       } else return ATfalse;
 
       if (traverse_TablePreset(t_preset, preset)) {
@@ -1793,6 +1890,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATer
    SgUntypedVariableDeclaration* variable_decl = NULL;
    SgUntypedExprListExpression*  attr_list     = NULL;
 
+// For StatusItemDescription
+   bool has_size;
+   SgUntypedExpression* status_size;
+   SgUntypedInitializedNameList* status_list = NULL;
+
+   std::string label = "";
+
    if (ATmatch(term, "OrdinaryTableItemDeclaration(<term>,<term>,<term>,<term>)", &t_name,&t_item_desc,&t_pack_spec,&t_preset)) {
 
       if (ATmatch(t_name, "<str>", &name)) {
@@ -1805,6 +1909,21 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATer
 
       if (traverse_ItemTypeDescription(t_item_desc, item_type, attr_list)) {
          // MATCHED ItemTypeDescription
+      } else if (traverse_StatusItemDescription(t_item_desc, status_list, has_size, status_size)) {
+         // MATCHED StatusItemDescription
+
+         // status item declarations have to be handled differently than other ItemTypeDescription terms
+
+         // also assume an int is sufficient for status_size for now
+
+         ROSE_ASSERT(has_size == false);
+         ROSE_ASSERT(status_list);
+
+         SgUntypedEnumDeclaration* enum_decl = new SgUntypedEnumDeclaration(label, name, status_list);
+         ROSE_ASSERT(enum_decl);
+         setSourcePosition(enum_decl, term);
+
+         decl_list->get_decl_list().push_back(enum_decl);
       } else return ATfalse;
 
       if (traverse_TablePreset(t_preset, preset)) {
@@ -1815,13 +1934,22 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATer
 
    // TODO - handle preset
    if (preset != NULL) {
-      cerr << "WARNING UNIMPLEMENTED: TablePreset in OrdinaryTableItemDeclaration \n";
+      cerr << "WARNING UNIMPLEMENTED: OrdinaryTableItemDeclaration - preset \n";
       return ATtrue;
    }
    ROSE_ASSERT(preset == NULL);
 
    ROSE_ASSERT(attr_list);
-   ROSE_ASSERT(item_type);
+   if (item_type == NULL) {
+      // ROSE_ASSERT(item_type);
+      cerr << "WARNING UNIMPLEMENTED: OrdinaryTableItemDeclaration - item_type \n";
+      return ATtrue;
+   }
+
+   if (item_type == NULL) {
+      cerr << "WARNING UNIMPLEMENTED: OrdinaryTableItemDeclaration - type is null \n";
+      return ATtrue;
+   }
 
    variable_decl = UntypedBuilder::buildVariableDeclaration(name, item_type, attr_list, preset);
    ROSE_ASSERT(variable_decl);
@@ -1964,10 +2092,37 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedItemDescription(ATerm te
    SgUntypedExpression* start_word = NULL;
    SgUntypedExprListExpression* loc_attr = NULL;
 
+// For StatusItemDescription
+   bool has_size;
+   SgUntypedExpression* status_size;
+   SgUntypedInitializedNameList* status_list = NULL;
+
+   std::string label = "";
+
    if (ATmatch(term, "SpecifiedItemDescription(<term>,<term>)", &t_item_desc, &t_loc_spec)) {
 
       if (traverse_ItemTypeDescription(t_item_desc, type, attr_list)) {
          // MATCHED ItemTypeDescription
+      }  else if (traverse_StatusItemDescription(t_item_desc, status_list, has_size, status_size)) {
+         // MATCHED StatusItemDescription
+         // status item declarations have to be handled differently than other ItemTypeDescription terms
+
+         type = UntypedBuilder::buildType(SgUntypedType::e_status);
+         ROSE_ASSERT(type);
+
+         cerr << "WARNING UNIMPLEMENTED: SpecifiedItemDescription - StatusItemDescription\n";
+#if 0
+         // also assume an int is sufficient for status_size for now
+         ROSE_ASSERT(has_size == false);
+         ROSE_ASSERT(status_list);
+
+         SgUntypedEnumDeclaration* enum_decl = new SgUntypedEnumDeclaration(label, name, status_list);
+         ROSE_ASSERT(enum_decl);
+         setSourcePosition(enum_decl, term);
+
+         // need a SgUntypedDeclarationStatementList to push the enum_decl onto
+         //         decl_list->get_decl_list().push_back(enum_decl);
+#endif
       } else return ATfalse;
 
       // process location-specifier here (don't really need to call a function)
@@ -1980,17 +2135,14 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedItemDescription(ATerm te
          if (traverse_Formula(t_start_bit, start_bit)) {
             // MATCHED StartingBit
             loc_attr->get_expressions().push_back(start_bit);
+         } else if (ATmatch(term, "StartingBitSTAR()")) {
+            cerr << "WARNING UNIMPLEMENTED: SpecifiedItemDescription - StartingBitSTAR \n";
          } else return ATfalse;
 
          if (traverse_Formula(t_start_word, start_word)) {
             // MATCHED StartingWord
             loc_attr->get_expressions().push_back(start_word);
-         }
-         else if (ATmatch(term, "StartingBitSTAR()")) {
-            cerr << "TODO: traverse_SpecifiedItemDescription: implement StartingBitSTAR \n";
-            ROSE_ASSERT(false);
-         }
-         else return ATfalse;
+         } else return ATfalse;
       }
 
    } else return ATfalse;
@@ -2068,7 +2220,16 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATe
    cerr << "WARNING UNIMPLEMENTED: SpecifiedTableItemDeclaration - preset\n";
 
    ROSE_ASSERT(attr_list);
+   if (!declared_type) {
+      cerr << "WARNING UNIMPLEMENTED: SpecifiedTableItemDeclaration - NOT declared_type\n";
+      return ATtrue;
+   }
    ROSE_ASSERT(declared_type);
+
+   if (declared_type == NULL) {
+      cerr << "WARNING UNIMPLEMENTED: SpecifiedTableItemDeclaration - type is null \n";
+      return ATtrue;
+   }
 
    variable_decl = UntypedBuilder::buildVariableDeclaration(name, declared_type, attr_list, preset);
    ROSE_ASSERT(variable_decl);
@@ -2078,7 +2239,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATe
 
    decl_list->get_decl_list().push_back(variable_decl);
 
-#if 1
+#if 0
    std::cout << "TABLE ITEM DECLARATION " << name << endl;
    std::cout << "TABLE ITEM DECLARATION attr_list: " << attr_list << " : size " << attr_list->get_expressions().size() << endl;
 #endif
@@ -2145,6 +2306,13 @@ ATbool ATermToUntypedJovialTraversal::traverse_ConstantDeclaration(ATerm term, S
    SgUntypedVariableDeclaration* variable_decl = NULL;
    SgUntypedExprListExpression*      attr_list = NULL;
 
+// For StatusItemDescription
+   bool has_size;
+   SgUntypedExpression* status_size;
+   SgUntypedInitializedNameList* status_list = NULL;
+
+   std::string label = "";
+
    if (ATmatch(term, "ConstantDeclaration(<term>,<term>,<term>)", &t_name,&t_type,&t_preset)) {
       if (ATmatch(t_name, "<str>", &name)) {
          // MATCHED ItemName
@@ -2156,6 +2324,21 @@ ATbool ATermToUntypedJovialTraversal::traverse_ConstantDeclaration(ATerm term, S
 
       if (traverse_ItemTypeDescription(t_type, declared_type, attr_list)) {
          // MATCHED ItemTypeDescription
+      }  else if (traverse_StatusItemDescription(t_type, status_list, has_size, status_size)) {
+         // MATCHED StatusItemDescription
+
+         // status item declarations have to be handled differently than other ItemTypeDescription terms
+
+         // also assume an int is sufficient for status_size for now
+
+         ROSE_ASSERT(has_size == false);
+         ROSE_ASSERT(status_list);
+
+         SgUntypedEnumDeclaration* enum_decl = new SgUntypedEnumDeclaration(label, name, status_list);
+         ROSE_ASSERT(enum_decl);
+         setSourcePosition(enum_decl, term);
+
+         decl_list->get_decl_list().push_back(enum_decl);
       } else return ATfalse;
 
       if (traverse_ItemPreset(t_preset, preset)) {
@@ -2163,6 +2346,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_ConstantDeclaration(ATerm term, S
       } else return ATfalse;
    }
    else return ATfalse;
+
+   if (declared_type == NULL) {
+      cerr << "WARNING UNIMPLEMENTED: ConstantDeclaration - type is null \n";
+      return ATtrue;
+   }
 
    variable_decl = UntypedBuilder::buildVariableDeclaration(name, declared_type, attr_list, preset);
    ROSE_ASSERT(variable_decl);
@@ -2298,7 +2486,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUn
    else return ATfalse;
 
 
-   cout << "WARNING UNIMPLEMENTED: __implementing__ BlockDeclarationBodyPart\n";
+   cout << "WARNING UNIMPLEMENTED: BlockDeclarationBodyPart __implementing__ \n";
 
    // we have the type declaration, now we need a variable declaration
    ROSE_ASSERT(block_decl);
@@ -2308,6 +2496,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUn
    SgUntypedType* block_type = UntypedBuilder::buildType(SgUntypedType::e_table, block_type_name);
 
    // TODO: is modifiers the correct list?
+
+   if (block_type == NULL) {
+      cerr << "WARNING UNIMPLEMENTED: BlockDeclaration - type is null \n";
+      return ATtrue;
+   }
 
    var_decl = UntypedBuilder::buildVariableDeclaration(block_name, block_type, modifiers, preset);
    ROSE_ASSERT(var_decl != NULL);
@@ -2745,7 +2938,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_ItemTypeDeclaration(ATerm term, S
          // status item declarations have to be handled differently than other ItemTypeDescription terms
 
          // also assume an int is sufficient for status_size for now
-         ROSE_ASSERT(has_size == false);
+         if (has_size == true) {
+            // ROSE_ASSERT(has_size == false);
+            cerr << "WARNING UNIMPLEMENTED: ItemTypeDeclaration - has_size \n";
+         }
          ROSE_ASSERT(status_list);
 
          SgUntypedEnumDeclaration* enum_decl = new SgUntypedEnumDeclaration(label, name, status_list);
@@ -3000,6 +3196,67 @@ ATbool ATermToUntypedJovialTraversal::traverse_BlockTypeDeclaration(ATerm term, 
 }
 
 //========================================================================================
+// 2.3 STATEMENT NAME DECLARATIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_StatementNameDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_StatementNameDeclaration: %s\n", ATwriteToString(term));
+#endif
+
+   //'LABEL' {StatementName ','}+ ';'  -> StatementNameDeclaration {cons("StatementNameDeclaration")}
+
+   ATerm t_name;
+   std::string name;
+
+   SgUntypedInitializedNameList* name_list = NULL;
+
+   if (ATmatch(term, "StatementNameDeclaration(<term>)", &t_name)) {
+      cerr << "WARNING UNIMPLEMENTED: StatementNameDeclaration\n";
+
+#if 0
+      name_list = new SgUntypedInitializedNameList();
+      ROSE_ASSERT(name_list);
+      setSourcePosition(name_list, t_name);
+#endif
+
+      ATermList tail = (ATermList) ATmake("<term>", t_name);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_Name(head, name)) {
+            // MATCHED Name
+
+#if 0
+            // type?
+            SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_unknown);
+
+            SgUntypedInitializedName* iname = new SgUntypedInitializedName(type, name);
+            ROSE_ASSERT(iname);
+            setSourcePosition(iname, head);
+
+            // where to push it?
+            name_list->get_name_list().push_back(iname);
+#endif
+         } else return ATfalse;
+      }
+   } else return ATfalse;
+
+#if 0
+   int stmt_enum = General_Language_Translation::e_unknown;
+   std::string label_string = "";
+
+   SgUntypedInitializedNameListDeclaration* name_list_decl = new SgUntypedInitializedNameListDeclaration(label_string, stmt_enum, name_list);
+   ROSE_ASSERT(name_list_decl);
+   setSourcePosition(name_list_decl, term); // correct source position?
+
+   decl_list->get_decl_list().push_back(name_list_decl);
+#endif
+
+   return ATtrue;
+}
+
+//========================================================================================
 // 2.4 DEFINE DECLARATIONS
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedJovialTraversal::traverse_DefineDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list)
@@ -3204,10 +3461,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_DefSpecificationChoice(ATerm term
       // MATCHED NullDeclaration
    } else if (traverse_DataDeclaration(term, decl_list, def_spec)) {
       // MATCHED DataDeclaration
+   } else if (traverse_StatementNameDeclaration(term, decl_list, def_spec)) {
+      // MATCHED StatementNameDeclaration
    } else return ATfalse;
 
    //  DefBlockInstantiation           -> DefSpecificationChoice
-   //  StatementNameDeclaration        -> DefSpecificationChoice
 
    return ATtrue;
 }
@@ -3254,13 +3512,14 @@ ATbool ATermToUntypedJovialTraversal::traverse_RefSpecificationChoice(ATerm term
       // MATCHED NullDeclaration
    } else if (traverse_DataDeclaration(term, decl_list, ref_spec)) {
       // MATCHED DataDeclaration
+   } else if (traverse_StatementNameDeclaration(term, decl_list, ref_spec)) {
+      // MATCHED StatementNameDeclaration
    } else if (traverse_FunctionDeclaration(term, decl_list)) {
       // MATCHED FunctionDeclaration (is a SubroutineDeclaration in grammar)
    } else if (traverse_ProcedureDeclaration(term, decl_list)) {
       // MATCHED ProcedureDeclaration (is a SubroutineDeclaration in grammar)
    } else return ATfalse;
 
-   //  StatementNameDeclaration        -> RefSpecificationChoice
 
    return ATtrue;
 }
@@ -3283,6 +3542,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_OverlayDeclaration(ATerm term, Sg
    SgUntypedExpression *addr, *expr = NULL;
 
    if (ATmatch(term, "OverlayDeclaration(<term>,<term>)", &t_addr, &t_expr)) {
+      cerr << "WARNING UNIMPLEMENTED: OverlayDeclaration\n";
       if (ATmatch(t_addr, "AbsoluteAddress(<term>)", &t_absolute_addr)) {
          // 'POS' '(' OverlayAddress ')'    -> AbsoluteAddress      {cons("AbsoluteAddress")}
          if (traverse_NumericFormula(t_absolute_addr, addr)) {
@@ -3421,7 +3681,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProcedureDeclaration(ATerm term, 
 
    if (ATmatch(term, "ProcedureDeclaration(<term>,<term>)", &t_proc_heading, &t_decl)) {
 
-      if (traverse_ProcedureHeading(t_proc_heading, name, &modifiers, &param_list)) {
+      if (traverse_ProcedureHeading(t_proc_heading, name, modifiers, param_list)) {
          // MATCHED ProcedureHeading
       } else return ATfalse;
 
@@ -3486,7 +3746,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProcedureDefinition(ATerm term, S
 
    if (ATmatch(term, "ProcedureDefinition(<term>,<term>)", &t_proc_heading, &t_proc_body)) {
 
-      if (traverse_ProcedureHeading(t_proc_heading, name, &modifiers, &param_list)) {
+      if (traverse_ProcedureHeading(t_proc_heading, name, modifiers, param_list)) {
          // MATCHED ProcedureHeading
       } else return ATfalse;
 
@@ -3520,7 +3780,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProcedureDefinition(ATerm term, S
 }
 
 ATbool ATermToUntypedJovialTraversal::traverse_ProcedureHeading(ATerm term, std::string & name,
-                                                                SgUntypedExprListExpression** attrs, SgUntypedInitializedNameList** params)
+                                                                SgUntypedExprListExpression* & attrs, SgUntypedInitializedNameList* & params)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ProcedureHeading: %s\n", ATwriteToString(term));
@@ -3533,8 +3793,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProcedureHeading(ATerm term, std:
    SgUntypedInitializedNameList* function_param_list;
    SgUntypedOtherExpression* function_modifier = NULL;
 
-   *attrs  = NULL;
-   *params = NULL;
+   attrs  = NULL;
+   params = NULL;
 
    if (ATmatch(term, "ProcedureHeading(<term>,<term>,<term>)", &t_name, &t_attr, &t_params)) {
 
@@ -3542,7 +3802,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProcedureHeading(ATerm term, std:
          // MATCHED Name
       } else return ATfalse;
 
-      if (traverse_SubroutineAttribute(t_attr, &function_modifier)) {
+      if (traverse_SubroutineAttribute(t_attr, function_modifier)) {
          // MATCHED SubroutineAttribute
       } else return ATfalse;
 
@@ -3572,16 +3832,16 @@ ATbool ATermToUntypedJovialTraversal::traverse_ProcedureHeading(ATerm term, std:
 // not handling function modifiers for now
 //   ROSE_ASSERT(function_modifier_list->get_expressions().size() == 0);
 
-   *attrs  = function_modifier_list;
-   *params = function_param_list;
+   attrs  = function_modifier_list;
+   params = function_param_list;
 
-   ROSE_ASSERT(*attrs);
-   ROSE_ASSERT(*params);
+   ROSE_ASSERT(attrs);
+   ROSE_ASSERT(params);
 
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_SubroutineAttribute(ATerm term, SgUntypedOtherExpression** attr_expr)
+ATbool ATermToUntypedJovialTraversal::traverse_SubroutineAttribute(ATerm term, SgUntypedOtherExpression* & attr_expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SubroutineAttribute: %s\n", ATwriteToString(term));
@@ -3589,10 +3849,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_SubroutineAttribute(ATerm term, S
 
    using namespace General_Language_Translation;
 
-   *attr_expr = NULL;
+   attr_expr = NULL;
 
    if (ATmatch(term, "no-subroutine-attribute()")) {
-      *attr_expr = NULL;
+      attr_expr = NULL;
       return ATtrue;
    }
 
@@ -3600,15 +3860,15 @@ ATbool ATermToUntypedJovialTraversal::traverse_SubroutineAttribute(ATerm term, S
    //
 
    if (ATmatch(term, "REC()")) {
-      *attr_expr = new SgUntypedOtherExpression(e_function_modifier_recursive);
+      attr_expr = new SgUntypedOtherExpression(e_function_modifier_recursive);
    }
    else if (ATmatch(term, "RENT()")) {
-      *attr_expr = new SgUntypedOtherExpression(e_function_modifier_reentrant);
+      attr_expr = new SgUntypedOtherExpression(e_function_modifier_reentrant);
    }
    else return ATfalse;
 
-   ROSE_ASSERT(*attr_expr);
-   setSourcePosition(*attr_expr, term);
+   ROSE_ASSERT(attr_expr);
+   setSourcePosition(attr_expr, term);
 
    return ATtrue;
 }
@@ -3718,7 +3978,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_FunctionDeclaration(ATerm term, S
 
    if (ATmatch(term, "FunctionDeclaration(<term>,<term>,<term>)", &t_func_heading, &t_dirs, &t_decl)) {
 
-      if (traverse_FunctionHeading(t_func_heading, name, function_type, &modifiers, &param_list)) {
+      if (traverse_FunctionHeading(t_func_heading, name, function_type, modifiers, param_list)) {
          // MATCHED FunctionHeading
       } else return ATfalse;
 
@@ -3779,7 +4039,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_FunctionDefinition(ATerm term, Sg
    if (ATmatch(term, "FunctionDefinition(<term>,<term>,<term>)", &t_func_heading, &t_dirs, &t_proc_body)) {
       cerr << "WARNING UNIMPLEMENTED: FunctionDefinition\n";
 
-      if (traverse_FunctionHeading(t_func_heading, name, function_type, &modifiers, &param_list)) {
+      if (traverse_FunctionHeading(t_func_heading, name, function_type, modifiers, param_list)) {
          // MATCHED FunctionHeading
       } else return ATfalse;
 
@@ -3803,7 +4063,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_FunctionDefinition(ATerm term, Sg
 }
 
 ATbool ATermToUntypedJovialTraversal::traverse_FunctionHeading(ATerm term, std::string & name, SgUntypedType* & type,
-                                                               SgUntypedExprListExpression** attrs, SgUntypedInitializedNameList** params)
+                                                               SgUntypedExprListExpression* & attrs, SgUntypedInitializedNameList* & params)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_FunctionHeading: %s\n", ATwriteToString(term));
@@ -3816,8 +4076,15 @@ ATbool ATermToUntypedJovialTraversal::traverse_FunctionHeading(ATerm term, std::
    SgUntypedInitializedNameList* function_param_list;
    SgUntypedOtherExpression* function_modifier = NULL;
 
-   *attrs  = NULL;
-   *params = NULL;
+   attrs  = NULL;
+   params = NULL;
+
+// For StatusItemDescription
+   bool has_size;
+   SgUntypedExpression* status_size;
+   SgUntypedInitializedNameList* status_list = NULL;
+
+   std::string label = "";
 
    if (ATmatch(term, "FunctionHeading(<term>,<term>,<term>,<term>)", &t_name, &t_attr, &t_params, &t_type)) {
 
@@ -3825,7 +4092,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_FunctionHeading(ATerm term, std::
          // MATCHED Name
       } else return ATfalse;
 
-      if (traverse_SubroutineAttribute(t_attr, &function_modifier)) {
+      if (traverse_SubroutineAttribute(t_attr, function_modifier)) {
          // MATCHED SubroutineAttribute
       } else return ATfalse;
 
@@ -3848,7 +4115,27 @@ ATbool ATermToUntypedJovialTraversal::traverse_FunctionHeading(ATerm term, std::
    // function type attributes (ItemType) are added to the function_modifier_list and will have to be sorted out later
       if (traverse_ItemTypeDescription(t_type, type, function_modifier_list)) {
          // MATCHED ItemTypeDescription
-      } else return ATfalse;
+      }
+      else if (traverse_StatusItemDescription(t_type, status_list, has_size, status_size)) {
+         // MATCHED StatusItemDescription
+
+         // status item declarations have to be handled differently than other ItemTypeDescription terms
+
+         // also assume an int is sufficient for status_size for now
+
+         cerr << "WARNING UNIMPLEMENTED: FunctionHeading - StatusItemDescription\n";
+#if 0
+         ROSE_ASSERT(has_size == false);
+         ROSE_ASSERT(status_list);
+
+         SgUntypedEnumDeclaration* enum_decl = new SgUntypedEnumDeclaration(label, name, status_list);
+         ROSE_ASSERT(enum_decl);
+         setSourcePosition(enum_decl, term);
+
+         // need a SgUntypedDeclarationStatementList to push the enum_decl onto
+         //         decl_list->get_decl_list().push_back(enum_decl);
+#endif
+     } else return ATfalse;
 
    } else return ATfalse;
 
@@ -3859,11 +4146,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_FunctionHeading(ATerm term, std::
 // not handling function modifiers for now
 //   ROSE_ASSERT(function_modifier_list->get_expressions().size() == 0);
 
-   *attrs  = function_modifier_list;
-   *params = function_param_list;
+   attrs  = function_modifier_list;
+   params = function_param_list;
 
-   ROSE_ASSERT(*attrs);
-   ROSE_ASSERT(*params);
+   ROSE_ASSERT(attrs);
+   ROSE_ASSERT(params);
 
    return ATtrue;
 }
@@ -3959,7 +4246,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_FormalInputParameter(ATerm term, 
 // There are input parameters (if not will have returned)
 //
    if (ATmatch(term, "FormalInputParameter(<term>,<term>)", &t_binding, &t_name)) {
-      if (traverse_ParameterBinding(t_binding, &binding_expr)) {
+      if (traverse_ParameterBinding(t_binding, binding_expr)) {
          // MATCHED ParameterBinding
       } else return ATfalse;
       if (traverse_Name(t_name, name)) {
@@ -4006,7 +4293,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_FormalOutputParameter(ATerm term,
 // There are output parameters (if not will have returned)
 //
    if (ATmatch(term, "FormalOutputParameter(<term>,<term>)", &t_binding, &t_name)) {
-      if (traverse_ParameterBinding(t_binding, &binding_expr)) {
+      if (traverse_ParameterBinding(t_binding, binding_expr)) {
          // MATCHED ParameterBinding
       } else return ATfalse;
       if (traverse_Name(t_name, name)) {
@@ -4041,7 +4328,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_FormalOutputParameter(ATerm term,
    return ATtrue;
 }
 
-ATbool ATermToUntypedJovialTraversal::traverse_ParameterBinding(ATerm term, SgUntypedOtherExpression** binding_expr)
+ATbool ATermToUntypedJovialTraversal::traverse_ParameterBinding(ATerm term, SgUntypedOtherExpression* & binding_expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ParameterBinding: %s\n", ATwriteToString(term));
@@ -4049,23 +4336,54 @@ ATbool ATermToUntypedJovialTraversal::traverse_ParameterBinding(ATerm term, SgUn
 
    using namespace General_Language_Translation;
 
-   *binding_expr = NULL;
+   binding_expr = NULL;
 
    if (ATmatch(term, "no-parameter-binding()")) {
-      *binding_expr = new SgUntypedOtherExpression(e_unknown);
+      binding_expr = new SgUntypedOtherExpression(e_unknown);
    }
    else if (ATmatch(term, "BYVAL()")) {
-      *binding_expr = new SgUntypedOtherExpression(e_type_modifier_value);
+      binding_expr = new SgUntypedOtherExpression(e_type_modifier_value);
    }
    else if (ATmatch(term, "BYREF()")) {
-      *binding_expr = new SgUntypedOtherExpression(e_type_modifier_reference);
+      binding_expr = new SgUntypedOtherExpression(e_type_modifier_reference);
    }
    else if (ATmatch(term, "BYRES()")) {
-      *binding_expr = new SgUntypedOtherExpression(e_type_modifier_result);
+      binding_expr = new SgUntypedOtherExpression(e_type_modifier_result);
    }
 
-   ROSE_ASSERT(*binding_expr);
-   setSourcePosition(*binding_expr, term);
+   ROSE_ASSERT(binding_expr);
+   setSourcePosition(binding_expr, term);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 3.4 INLINE DECLARATIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_InlineDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_InlineDeclaration: %s\n", ATwriteToString(term));
+#endif
+
+//  'INLINE'
+//    {SubroutineName ','}+ ';'     -> InlineDeclaration        {cons("InlineDeclaration")}
+
+   ATerm t_subroutine_name;
+   std::string subroutine_name;
+
+   if (ATmatch(term, "InlineDeclaration(<term>)", &t_subroutine_name)) {
+      cerr << "WARNING UNIMPLEMENTED: InlineDeclaration\n";
+      ATermList tail = (ATermList) ATmake("<term>", t_subroutine_name);
+      while (! ATisEmpty(tail)) {
+         ATerm head = ATgetFirst(tail);
+         tail = ATgetNext(tail);
+         if (traverse_Name(head, subroutine_name)) {
+            // MATCHED SubroutineName
+         } else return ATfalse;
+      }
+   }
+   else return ATfalse;
 
    return ATtrue;
 }
@@ -4112,7 +4430,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
    printf("... traverse_SimpleStatement: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_labels, t_stmt;
+   ATerm t_labels, t_stmt, amb;
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
@@ -4165,6 +4483,42 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
       }
       else if (traverse_ProcedureCallStatement(t_stmt, stmt_list)) {
          // MATCHED ProcedureCallStatement
+      } else if (ATmatch(t_stmt, "amb(<term>)", &amb)) {
+         // MATCHED amb
+         ATermList tail = (ATermList) ATmake("<term>", amb);
+         ATerm head = ATgetFirst(tail);
+         // chose first amb path, now traverse it
+
+         if (traverse_IfStatement(head, stmt_list)) {
+            // MATCHED IfStatement
+         }
+         else if (traverse_AbortStatement(head, stmt_list)) {
+            // MATCHED AbortStatement
+         }
+         else if (traverse_StopStatement(head, stmt_list)) {
+            // MATCHED StopStatement
+         }
+         else if (traverse_ExitStatement(head, stmt_list)) {
+            // MATCHED ExitStatement
+         }
+         else if (traverse_GotoStatement(head, stmt_list)) {
+            // MATCHED GotoStatement
+         }
+         else if (traverse_ReturnStatement(head, stmt_list)) {
+            // MATCHED ReturnStatement
+         }
+         else if (traverse_CaseStatement(head, stmt_list)) {
+            // MATCHED CaseStatement
+         }
+         else if (traverse_WhileStatement(head, stmt_list)) {
+            // MATCHED WhileStatement
+         }
+         else if (traverse_ForStatement(head, stmt_list)) {
+            // MATCHED ForStatement
+         }
+         else if (traverse_ProcedureCallStatement(head, stmt_list)) {
+            // MATCHED ProcedureCallStatement
+         } else return ATfalse;
       }
       else return ATfalse;
    }
@@ -4276,6 +4630,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_LabelList(ATerm term, std::vector
       }
    } else return ATfalse;
 
+   if (labels.size() > 1) {
+      cerr << "WARNING UNIMPLEMENTED: LabelList - with multiple labels\n";
+   }
+
    return ATtrue;
 }
 
@@ -4304,7 +4662,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_AssignmentStatement(ATerm term, s
       } else return ATfalse;
 
       ROSE_ASSERT (labels.size() <= 1);
-      ROSE_ASSERT (  vars.size() == 1);
+
+      if (vars.size() > 1) {
+         cerr << "WARNING UNIMPLEMENTED: AssignmentStatement - with multiple variables\n";
+      }
 
       if (!expr) {
          cerr << "WARNING UNIMPLEMENTED: AssignmentStatement - could be FunctionCall, or StatusConstant, or PointerLiteral, etc.\n";
@@ -4805,6 +5166,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_CaseAlternative(ATerm term, SgUnt
 
    } else return ATfalse;
 
+   if (!case_index_group) {
+      cerr << "WARNING UNIMPLEMENTED: CaseAlternative - probably StatusConstant\n";
+      return ATtrue;
+   }
+
    ROSE_ASSERT(case_index_group != NULL);
    ROSE_ASSERT(body != NULL);
 
@@ -4884,6 +5250,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_CaseIndexGroup(ATerm term, SgUnty
          tail = ATgetNext(tail);
          if (traverse_CaseIndex(head, case_index)) {
             // MATCHED CaseIndex
+            if (!case_index) {
+               cerr << "WARNING UNIMPLEMENTED: CaseIndexGroup - probably Status Constant\n";
+               return ATtrue;
+            }
             ROSE_ASSERT(case_index);
             index_group->get_expressions().push_back(case_index);
          } else return ATfalse;
@@ -4940,6 +5310,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_CaseIndex(ATerm term, SgUntypedEx
       case_index = range;
    }
    else {
+      cerr << "WARNING UNIMPLEMENTED: CaseIndex - probably StatusConstant in lower_bound or upper_bound\n";
+      return ATtrue;
       ROSE_ASSERT(0);
    }
    ROSE_ASSERT(case_index);
@@ -5025,7 +5397,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_ActualParameterList(ATerm term, S
 
    if (ATmatch(term, "no-actual-parameter-list()")) {
       // MATCHED no-actual-parameter-list
-      std::cout << "NOTE:::: no-actual-parameter-list" << std::endl;
    }
    else if (ATmatch(term, "ActualParameterList(<term>,<term>)" , &t_arg_list, &t_output)) {
       ATermList tail = (ATermList) ATmake("<term>", t_arg_list);
@@ -5340,10 +5711,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericPrimary(ATerm term, SgUnty
    printf("... traverse_NumericPrimary: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_table_item, t_formula, t_factor, t_num_term, t_conversion;
+   ATerm t_num_var, t_formula, t_factor, t_num_term, t_conversion;
    char *literal, *name, *variable, *letter;
    SgUntypedType* type;
-   SgUntypedExpression *table_item, *conv, *num_term, *factor;
+   SgUntypedExpression *conv, *num_term, *factor;
    Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
 
    if (ATmatch(term, "IntegerLiteral(<str>)", &literal)) {
@@ -5358,13 +5729,14 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericPrimary(ATerm term, SgUnty
          //FixedOrFloatingLiteral
    }
 
-#if NEEDTOFIXPARAMETERS
    else if (traverse_NumericMachineParameter(term, expr)) {
       // MATCHED NumericMachineParameter
-   }
-#endif
 
-   // NumericMachineParameter -> NumericPrimary
+      if (!expr) {
+         cerr << "WARNING UNIMPLEMENTED: NumericPrimary - NumericMachineParameter\n";
+         return ATtrue;
+      }
+   }
 
    else if (ATmatch(term, "NumericVariable(<str>)", &variable)) {
       expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
@@ -5372,7 +5744,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericPrimary(ATerm term, SgUnty
       setSourcePosition(expr, term);
    }
 
-   else if (ATmatch(term, "NumericVariable(<term>)", &t_table_item)) {
+   else if (ATmatch(term, "NumericVariable(<term>)", &t_num_var)) {
+#if 0
       if (traverse_TableItem(t_table_item, table_item)){
          //MATCHED TableItem
          expr = table_item;
@@ -5380,6 +5753,15 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericPrimary(ATerm term, SgUnty
       //      expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
       //      expr = new SgUntypedReferenceExpression(expr_enum, table_item);
       //      setSourcePosition(expr, term);
+#endif
+
+      // need to traverse all possible Variables, including TableItem
+      if (traverse_Variable(t_num_var, expr)) {
+         if (!expr) {
+            cerr << "WARNING UNIMPLEMENTED: NumericPrimary - NumericVariable\n";
+            return ATtrue;
+         }
+      } else return ATfalse;
    }
 
    else if (ATmatch(term, "<str>" , &name)) {
@@ -5437,9 +5819,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericPrimary(ATerm term, SgUnty
 
    else if (ATmatch(term, "ControlLetter(<str>)" , &letter)) {
       // MATCHED special case of ControlLetter -> NumericPrimary
-      std::cout << ".x. ControlLetter is " << letter << endl;
       if (!expr) {
-         cerr << "WARNING UNIMPLEMENTED: NumericPrimary - ControlLetter\n";
+         cerr << "WARNING UNIMPLEMENTED: NumericPrimary - ControlLetter " << letter << endl;
          return ATtrue;
       }
    }
@@ -5561,7 +5942,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_ExponentiationOp(ATerm term, SgUn
    return ATtrue;
 }
 
-#if NEEDTOFIXPARAMETERS
 ATbool ATermToUntypedJovialTraversal::traverse_NumericMachineParameter(ATerm term, SgUntypedExpression* & expr)
 {
 #if PRINT_ATERM_TRAVERSAL
@@ -5569,15 +5949,17 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericMachineParameter(ATerm ter
 #endif
 
    if (traverse_IntegerMachineParameter(term, expr)) {
+      // MATCHED IntegerMachineParameter
    } else if (traverse_FloatingMachineParameter(term, expr)) {
+      // MATCHED FloatingMachineParameter
    } else if (traverse_FixedMachineParameter(term, expr)) {
+      // MATCHED FixedMachineParameter
    }
 
    else return ATfalse;
 
    return ATtrue;
 }
-#endif
 
 //========================================================================================
 // 5.2 BIT FORMULAS
@@ -5588,12 +5970,20 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitFormula(ATerm term, SgUntypedE
    printf("... traverse_BitFormula: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_operand, t_continuation;
+   ATerm t_operand, t_continuation, t_amb;
    SgUntypedExpression* continuation;
 
    expr = NULL;
    if (ATmatch(term, "BitFormula(<term>,<term>)", &t_operand, &t_continuation)) {
-      if (traverse_LogicalOperand(t_operand, expr)) {
+      if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
+         ATermList tail = (ATermList) ATmake("<term>", t_amb);
+         ATerm head = ATgetFirst(tail);
+         // chose first amb path, now traverse it
+
+         if (traverse_RelationalExpression(head, expr)) {
+            // MATCHED RelationalExpression
+         } else return ATfalse;
+      } else if (traverse_LogicalOperand(t_operand, expr)) {
          // MATCHED LogicalOperand
       } else return ATfalse;
 
@@ -5601,7 +5991,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitFormula(ATerm term, SgUntypedE
          // MATCHED OptLogicalContinuation
       // TODO
          if (continuation != NULL) {
-            cerr << "WARNING UNIMPLEMENTED: traverse_BitFormula - with continuation\n";
+            cerr << "WARNING UNIMPLEMENTED: BitFormula - with continuation\n";
          }
          //         ROSE_ASSERT(continuation == NULL);
       } else return ATfalse;
@@ -5616,6 +6006,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitFormula(ATerm term, SgUntypedE
          // MATCHED Variable
       } else return ATfalse;
    } else return ATfalse;
+
+   if (!expr) {
+      cerr << "WARNING UNIMPLEMENTED: BitFormula - BitPrimaryConversion or Dereference\n";
+      return ATtrue;
+   }
 
    ROSE_ASSERT(expr != NULL);
 
@@ -5656,22 +6051,18 @@ ATbool ATermToUntypedJovialTraversal::traverse_LogicalContinuation(ATerm term, S
    expr = NULL;
 
    if (ATmatch(term, "AndContinuation(<term>)", &t_operand)) {
-      std::cout << "Matched AndContinuation" << endl;
       if (traverse_LogicalOperand(t_operand, expr)) {
       // MATCHED LogicalOperand
       } else return ATfalse;
    } else if (ATmatch(term, "OrContinuation(<term>)", &t_operand)) {
-      std::cout << "Matched OrContinuation" << endl;
       if (traverse_LogicalOperand(t_operand, expr)) {
       // MATCHED LogicalOperand
       } else return ATfalse;
    } else if (ATmatch(term, "XorContinuation(<term>)", &t_operand)) {
-      std::cout << "Matched XorContinuation" << endl;
       if (traverse_LogicalOperand(t_operand, expr)) {
       // MATCHED LogicalOperand
       } else return ATfalse;
    } else if (ATmatch(term, "EqvContinuation(<term>)", &t_operand)) {
-      std::cout << "Matched EqvContinuation" << endl;
       if (traverse_LogicalOperand(t_operand, expr)) {
       // MATCHED LogicalOperand
       } else return ATfalse;
@@ -5689,6 +6080,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_LogicalOperand(ATerm term, SgUnty
    expr = NULL;
    if (traverse_BitPrimary(term, expr)) {
       // MATCHED BitPrimary
+      if (!expr) {
+         cerr << "WARNING UNIMPLEMENTED: LogicalOperand - BitPrimary - probably BitPrimaryConversion\n";
+         return ATtrue;
+      }
    } else if (traverse_Variable(term, expr)) {
       // MATCHED Variable
    } else if (traverse_RelationalExpression(term, expr)) {
@@ -5714,7 +6109,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitPrimary(ATerm term, SgUntypedE
    }
    else if (ATmatch(term,"BitPrimaryParens(<term>)", &t_bit)) {
       // TODO: Add parentheses
-      cout << "Matched BitPrimaryParens" << endl;
+      cerr << "WARNING UNIMPLEMENTED: BitPrimary - BitPrimaryParens\n";
       if (traverse_BitFormula(t_bit, expr)) {
       // MATCHED '(' BitFormula ')'
       } else return ATfalse;
@@ -5722,12 +6117,23 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitPrimary(ATerm term, SgUntypedE
    else if (traverse_BitLiteral(term, expr)) {
       // MATCHED BitLiteral
    }
+   else if (traverse_BitConversion(term, expr)) {
+      // MATCHED BitPrimaryConversion
+      if (!expr) {
+         cerr << "WARNING UNIMPLEMENTED: BitPrimary - BitPrimaryConversion\n";
+         return ATtrue;
+      }
+   }
    else return ATfalse;
       // TODO: create else if for following
       // BitVariable                   -> BitPrimary {cons("BitVariable")} (not currently working in tests)
       // NamedBitConstant              -> BitPrimary {cons("NamedBitConstant")} (rejected in grammar)
       // BitFunctionCall               -> BitPrimary (no cons)
-      // BitConversion '(' Formula ')' -> BitPrimary {cons("BitPrimary")}
+
+   if (!expr) {
+      cerr << "WARNING UNIMPLEMENTED: BitPrimary - possibly Dereference\n";
+      return ATtrue;
+   }
 
    ROSE_ASSERT(expr != NULL);
 
@@ -5765,7 +6171,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_RelationalExpression(ATerm term, 
    } else return ATfalse;
 
    ROSE_ASSERT(expr1);
-   ROSE_ASSERT(expr2);
+   if (!expr2) {
+      cerr << "WARNING UNIMPLEMENTED: RelationalExpression - expr2 - maybe StatusConstant\n";
+   }
+   else {
+      ROSE_ASSERT(expr2);   // will want to keep this assert after implementation is complete
+   }
 
    expr = new SgUntypedBinaryOperator(op_enum, op_name, expr1, expr2);
    ROSE_ASSERT(expr);
@@ -5835,7 +6246,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_CharacterFormula(ATerm term, SgUn
          // MATCHED CharacterFormula
       } else return ATfalse;
 
-   } else if (ATmatch(term, "CharacterFormula(<term>,<term>)", &t_next, &t_formula)) {
+   } else if (ATmatch(term, "CharacterFormulaConversion(<term>,<term>)", &t_next, &t_formula)) {
       if (traverse_CharacterConversion(t_next, expr)) {
          // CharacterConversion '(' Formula ')'  ->  CharacterFormula
          // MATCHED CharacterConversion
@@ -5917,7 +6328,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_PointerFormula(ATerm term, SgUnty
          // MATCHED PointerFormula
       } else return ATfalse;
 
-   } else if (ATmatch(term, "PointerFormula(<term>,<term>)", &t_next, &t_formula)) {
+   } else if (ATmatch(term, "PointerFormulaConversion(<term>,<term>)", &t_next, &t_formula)) {
       if (traverse_PointerConversion(t_next, expr)) {
          // PointerConversion '(' Formula ')'  -> PointerFormula
          // MATCHED PointerConversion
@@ -5950,6 +6361,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_Variable(ATerm term, SgUntypedExp
       var = new SgUntypedReferenceExpression(expr_enum, name);
       setSourcePosition(var, term);
 
+   } else if (traverse_Dereference(term, var)) {
+      // MATCHED ItemDereference/TableDereference -> Item/Table -> NamedVariable
    } else if (traverse_TableItem(term, var)) {
       // MATCHED TableItem
    } else if (traverse_BitFunctionVariable(term, var)) {
@@ -6031,7 +6444,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableItem(ATerm term, SgUntypedEx
 
          }
          else {
-            cerr << "WARNING UNIMPLEMENTED: TableItem with a subscript with size " << subscript.size() << std::endl;
+            cerr << "WARNING UNIMPLEMENTED: TableItem - has a subscript with size " << subscript.size() << std::endl;
             SgUntypedExpression* array_subscripts = UntypedBuilder::buildUntypedNullExpression();
             ROSE_ASSERT(array_subscripts);
          }
@@ -6126,6 +6539,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_Dereference(ATerm term, SgUntyped
 
    if (ATmatch(term, "Dereference(<term>)", &t_deref)) {
       if (ATmatch(t_deref, "<str>", &name)) {
+         cerr << "WARNING UNIMPLEMENTED: Dereference -> PointerItemName\n";
          // MATCHED PointerItemName
       } else if (traverse_GeneralFormula(t_deref, formula)) {
          // MATCHED PointerFormula through GeneralFormula
@@ -6145,6 +6559,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitFunctionVariable(ATerm term, S
    SgUntypedExpression * fbit, * nbit;
 
    //  'BIT' '(' BitVariable ',' Fbit ',' Nbit ')' -> BitFunctionVariable   {cons("BitFunctionVariable"), prefer}
+   //  'BIT' '(' BitFormula ','  Fbit ',' Nbit ')' -> BitFunctionVariable   {cons("BitFunctionVariable")}
 
    if (ATmatch(term, "BitFunctionVariable(<term>,<term>,<term>)", &t_bitvar, &t_fbit, &t_nbit)) {
       cerr << "WARNING UNIMPLEMENTED: BitFunctionVariable\n";
@@ -6153,6 +6568,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitFunctionVariable(ATerm term, S
          if (traverse_Variable(t_var, var)) {
             // MATCHED BitVariable -> Variable
          } else return ATfalse;
+      } else if (traverse_BitFormula(t_bitvar, var)) {
+            // MATCHED BitFormula
       } else return ATfalse;
 
       if (ATmatch(t_fbit, "Fbit(<term>)", &t_fbit_num)) {
@@ -6221,12 +6638,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_NamedConstant(ATerm term, SgUntyp
 
    if (ATmatch(term, "ControlLetter(<str>)" , &letter)) {
       // MATCHED ControlLetter
-
-      std::cout << ".x. ControlLetter is " << letter << endl;
-
+      cerr << "WARNING UNIMPLEMENTED: NamedConstant - ControlLetter " << letter << endl;
    } else return ATfalse;
 
-   std::cout << ".x. successfully matched ControlLetter" << endl;
       //  ConstantItemName            -> NamedConstant         {prefer}  %% ambiguous with ConstantTableName
       //  ConstantTableName           -> NamedConstant         {cons("ConstantTableName")}
       //  ConstantTableName Subscript -> NamedConstant         {cons("NamedConstant")}
@@ -6297,10 +6711,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntrinsicFunctionCall(ATerm term,
    }
    else if (traverse_NextFunction(term, expr)) {
       // MATCHED NextFunction
+   }
+   else if (traverse_ByteFunction(term, expr)) {
+      // MATCHED ByteFunction
    } else return ATfalse;
 
    //   BitFunction                 -> IntrinsicFunctionCall
-   //   ByteFunction                -> IntrinsicFunctionCall
    //   ShiftFunction               -> IntrinsicFunctionCall
    //   AbsFunction                 -> IntrinsicFunctionCall
    //   SignFunction                -> IntrinsicFunctionCall
@@ -6370,6 +6786,36 @@ ATbool ATermToUntypedJovialTraversal::traverse_NextFunction(ATerm term, SgUntype
 }
 
 //========================================================================================
+// 6.3.4 BYTE FUNCTIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_ByteFunction(ATerm term, SgUntypedExpression* & expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ByteFunction: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_formula, t_fbyte, t_nbyte;
+   SgUntypedExpression * formula, * fbyte, * nbyte;
+
+   if (ATmatch(term, "ByteFunction(<term>, <term>,<term>)", &t_formula, &t_fbyte, &t_nbyte)) {
+      cerr << "WARNING UNIMPLEMENTED: ByteFunction\n";
+      if (traverse_CharacterFormula(t_formula, formula)) {
+         // MATCHED CharacterFormula
+      } else return ATfalse;
+
+      if (traverse_NumericFormula(t_fbyte, fbyte)) {
+         // MATCHED NumericFormula
+      } else return ATfalse;
+
+      if (traverse_NumericFormula(t_nbyte, nbyte)) {
+         // MATCHED NumericFormula
+      } else return ATfalse;
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
 // 6.3.11 STATUS INVERSE FUNCTIONS
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedJovialTraversal::traverse_StatusInverseFunction(ATerm term, SgUntypedExpression* & expr)
@@ -6410,6 +6856,32 @@ ATbool ATermToUntypedJovialTraversal::traverse_StatusInverseFunction(ATerm term,
 //========================================================================================
 // 7.0 TYPE MATCHING AND TYPE CONVERSIONS
 //----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_BitConversion(ATerm term, SgUntypedExpression* & expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_BitConversion: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_conv, t_formula;
+   SgUntypedExpression *formula;
+
+
+   if (ATmatch(term, "BitPrimaryConversion(<term>,<term>)", &t_conv, &t_formula)) {
+      cerr << "WARNING UNIMPLEMENTED: BitPrimaryConversion\n";
+      if (ATmatch(t_conv, "BitTypeConversion()")) {
+         // MATCHED BitTypeConversion
+      } else if (ATmatch(t_conv, "BitTypeConversionB()")) {
+         // MATCHED BitTypeConversionB
+      } else return ATfalse;
+
+      if (traverse_Formula(t_formula, formula)) {
+         // MATCHED Formula
+      } else return ATfalse;
+   } else return ATfalse;
+
+   return ATtrue;
+}
+
 ATbool ATermToUntypedJovialTraversal::traverse_IntegerConversion(ATerm term, SgUntypedExpression* & expr)
 {
 #if PRINT_ATERM_TRAVERSAL
@@ -6459,10 +6931,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_GeneralConversion(ATerm term, SgU
 
    ATerm t_next;
    std::string type_name;
+   SgUntypedType* type;
 
    if (ATmatch(term, "GeneralConversion(<term>)", &t_next)) {
+      cerr << "WARNING UNIMPLEMENTED: GeneralConversion\n";
       // MATCHED GeneralConversion
-      if (traverse_OptTypeName(t_next, type_name)) {
+      if (traverse_OptTypeName(t_next, type, type_name)) {
          // MATCHED TypeName
       } else return ATfalse;
    }
@@ -6594,14 +7068,15 @@ ATbool ATermToUntypedJovialTraversal::traverse_StatusConversion(ATerm term, SgUn
    expr = NULL;
 
    if (ATmatch(term, "StatusConversion(<term>)", &t_next)) {
+      cerr << "WARNING UNIMPLEMENTED: StatusConversion \n";
+
       if (traverse_StatusItemDescription(t_next, status_list, has_size, status_size)) {
          // MATCHED StatusItemDescription
       } else return ATfalse;
+
    } else return ATfalse;
 
-   cerr << ".x. traverse_StatusConversion: TODO - implementation \n";
-
-   return ATfalse;
+   return ATtrue;
 }
 
 ATbool ATermToUntypedJovialTraversal::traverse_PointerConversion(ATerm term, SgUntypedExpression* & expr)
@@ -6731,6 +7206,11 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term
 
          // NOTE: reconstruct the integer, ".", fractional part, exponent into one string
 
+         // TODO - fix this
+         cerr << "WARNING UNIMPLEMENTED: FixedOrFloatingLiteral, RealLiteralFF \n";
+         literal = "13.13";
+
+#if 0
          // integer part
          if (ATmatch(t_num1, "no-number()")) {
             // no integer part
@@ -6759,6 +7239,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term
          else if (traverse_Exponent(t_opt_exp, opt_exp)) {
             literal += opt_exp;
          }
+#endif
 
       }
 
@@ -6784,7 +7265,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term
       type = UntypedBuilder::buildType(SgUntypedType::e_float);
       expr_enum = Jovial_ROSE_Translation::e_literalExpression;
       expr = new SgUntypedValueExpression(expr_enum,literal,type);
-      std::cout << "REAL LITERAL is " << literal << "\n";
       setSourcePosition(expr, term);
    }
 
@@ -6800,7 +7280,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_Exponent(ATerm term, std::string 
 #endif
 
    ATerm t_sign, t_num;
-   //   std::string literal;
    char* number;
 
 
@@ -6922,7 +7401,6 @@ ATbool ATermToUntypedJovialTraversal::traverse_PointerLiteral(ATerm term, SgUnty
 #endif
 
    if (ATmatch(term, "Null()")) {
-     std::cout << "Matched Null()" << endl;
      // MATCHED Null
    } else return ATfalse;
 

@@ -1,17 +1,17 @@
 test setting of flags:
 test internal internal nodes:
 test printing flags:
-  e1 = (add[32,f=30000] b[32]<f=20000> a[32]<f=10000>)
+  e1 = (add[u32,f=30000] b[u32]<f=20000> a[u32]<f=10000>)
 test simplification discard rule:
-  e4 = e3[32]<f=20000>
+  e4 = e3[u32]<f=20000>
 test simplification new expression rule:
-  e2 = 0x00000000[32]
-  e3 = 0xffffffff<4294967295,-1>[32]
-  e4 = 0x00000000[32]
+  e2 = 0x00000000[u32]
+  e3 = 0xffffffff<4294967295,-1>[u32]
+  e4 = 0x00000000[u32]
 test simplification folding rule:
-  e3 = 0x0000000f[32]<f=30000>
+  e3 = 0x0000000f[u32]<f=30000>
 test hashing:
 test relational folding:
-  e3 = true[1]<f=30000>
-  e4 = false[1]<f=30000>
-  e6 = true[1]<f=10000>
+  e3 = true[u1]<f=30000>
+  e4 = false[u1]<f=30000>
+  e6 = true[u1]<f=10000>

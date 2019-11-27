@@ -258,7 +258,6 @@ CodeThorn::NumberIntervalLattice CodeThorn::CppExprEvaluator::evaluate(SgNode* n
       if(varRefExp) {
         VariableId varId=variableIdMapping->variableId(varRefExp);
         IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
-        Number plusOrMinusOne = (isSgMinusMinusOp(node) ? -1 : (isSgPlusPlusOp(node) ? 1 : (ROSE_ASSERT(false), 0)));
         if(variableIdMapping->hasReferenceType(varId)) {
           // schroder3 (2016-07-05):
           //  We change a reference and we do not know which variable the reference refers to.
@@ -266,8 +265,14 @@ CodeThorn::NumberIntervalLattice CodeThorn::CppExprEvaluator::evaluate(SgNode* n
           //  an alias/reference was created) to top:
           VariableIdSet varIdSet=_pointerAnalysisInterface->getModByPointer();
           ips->topifyVariableSet(varIdSet);
-        }
-        else {
+        } else {
+          Number plusOrMinusOne;
+          switch(node->variantT()) {
+          case V_SgPlusPlusOp:   plusOrMinusOne =  1; break;
+          case V_SgMinusMinusOp: plusOrMinusOne = -1; break;
+          default:
+            ROSE_ASSERT(false);
+          }
           if(SgNodeHelper::isPrefixIncDecOp(node)) {
             NumberIntervalLattice oldValue=evaluate(operand);
             NumberIntervalLattice newValue=domain->arithAdd(oldValue, plusOrMinusOne);

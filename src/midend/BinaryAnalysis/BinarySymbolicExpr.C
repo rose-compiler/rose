@@ -193,7 +193,8 @@ struct VariableRenamer {
             if (!anyChildRenamed) {
                 retval = input;
             } else {
-                retval = Interior::instance(inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+                retval = Interior::instance(inode->type(), inode->getOperator(), newChildren,
+                                            solver, inode->comment(), inode->flags());
             }
             seen.insert(std::make_pair(input, retval));
         } else {
@@ -249,7 +250,8 @@ struct SingleSubstituter {
                 newChildren.push_back(newChild);
             }
             if (anyChildChanged) {
-                retval = Interior::instance(inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+                retval = Interior::instance(inode->type(), inode->getOperator(), newChildren,
+                                            solver, inode->comment(), inode->flags());
             } else {
                 retval = input;
             }
@@ -294,7 +296,8 @@ struct MultiSubstituter {
             if (!anyChildChanged) {
                 retval = input;
             } else {
-                retval = Interior::instance(inode->getOperator(), newChildren, solver, inode->comment(), inode->flags());
+                retval = Interior::instance(inode->type(), inode->getOperator(), newChildren,
+                                            solver, inode->comment(), inode->flags());
             }
         } else {
             retval = input;
@@ -319,16 +322,43 @@ Type::operator<(const Type &other) const {
 }
 
 void
-Type::print(std::ostream &out) const {
+Type::print(std::ostream &out, TypeStyle::Flag style) const {
     switch (typeClass()) {
         case INTEGER:
-            out <<nBits() <<"-bit integer";
+            switch (style) {
+                case TypeStyle::ABBREVIATED:
+                    out <<"u" <<nBits();
+                    break;
+                case TypeStyle::FULL:
+                    out <<nBits() <<"-bit integer";
+                    break;
+            }
             break;
         case FP:
-            out <<nBits() <<"-bit float(e=" <<exponentWidth() <<" s=" <<significandWidth() <<")";
+            switch (style) {
+                case TypeStyle::ABBREVIATED:
+                    if (exponentWidth() == 11 && significandWidth() == 53) {
+                        out <<"f64";
+                        break;
+                    } else if (exponentWidth() == 8 && significandWidth() == 24) {
+                        out <<"f32";
+                        break;
+                    }
+                    // fall through
+                case TypeStyle::FULL:
+                    out <<nBits() <<"-bit float(e=" <<exponentWidth() <<" s=" <<significandWidth() <<")";
+                    break;
+            }
             break;
         case MEMORY:
-            out <<nBits() <<"-bit memory(a=" <<addressWidth() <<")";
+            switch (style) {
+                case TypeStyle::ABBREVIATED:
+                    out <<"m" <<nBits() <<"[" <<addressWidth() <<"]";
+                    break;
+                case TypeStyle::FULL:
+                    out <<nBits() <<"-bit memory(a=" <<addressWidth() <<")";
+                    break;
+            }
             break;
         case INVALID:
             out <<"invalid";
@@ -337,9 +367,9 @@ Type::print(std::ostream &out) const {
 }
 
 std::string
-Type::toString() const {
+Type::toString(TypeStyle::Flag style) const {
     std::ostringstream ss;
-    print(ss);
+    print(ss, style);
     return ss.str();
 }
 
@@ -367,7 +397,7 @@ Node::newFlags(unsigned newFlags) const {
         // No SMT solver is necessary since changing the flags won't cause the new expression to simplify any differently than
         // it already is. In fact, it there might be a faster way to create the new expression given this fact.
         SmtSolverPtr solver;
-        return Interior::instance(inode->getOperator(), inode->children(), solver, comment(), newFlags);
+        return Interior::instance(inode->type(), inode->getOperator(), inode->children(), solver, comment(), newFlags);
     }
     LeafPtr lnode = isLeafNode();
     ASSERT_not_null(lnode);
@@ -724,12 +754,12 @@ Interior::adjustWidth(const Type &type) {
             break;
         }
         case OP_CONCAT: {
+            // When concatenating, the inputs can be any scalar type but the output will always be integer. E.g, concatenating
+            // two floating-point values results in an integer (i.e., bit vector) since it wouldn't make sense interpretted as
+            // floating-point. If you want a floating-point result you must wrap the concatenation in a reinterpret operation.
             size_t totalWidth = 0;
-            BOOST_FOREACH (const Ptr &child, children_) {
-                if (!child->isIntegerExpr())
-                    throw Exception(toStr(op_) + " operator's arguments must be integer");
+            BOOST_FOREACH (const Ptr &child, children_)
                 totalWidth += child->nBits();
-            }
             type_ = Type::integer(totalWidth);
             break;
         }
@@ -778,8 +808,8 @@ Interior::adjustWidth(const Type &type) {
                 throw Exception(toStr(op_) + " operator's first argument (begin bit) must be 64 bits or narrower");
             if (child(1)->nBits() > 64)
                 throw Exception(toStr(op_) + " operator's second argument (end bit) must be 64 bits or narrower");
-            if (!child(2)->isIntegerExpr() && !child(2)->isFloatingPointExpr())
-                throw Exception(toStr(op_) + " operator's third argument must be integer or floating-point");
+            if (!child(2)->isScalarExpr())
+                throw Exception(toStr(op_) + " operator's third argument must be scalar");
             if (*child(0)->toUnsigned() >= *child(1)->toUnsigned())
                 throw Exception(toStr(op_) + " operator's first argument must be less than the second");
             size_t totalSize = *child(1)->toUnsigned() - *child(0)->toUnsigned();
@@ -840,8 +870,7 @@ Interior::adjustWidth(const Type &type) {
             type_ = child(0)->type();
             break;
         }
-        case OP_SEXTEND:
-        case OP_UEXTEND: {
+        case OP_SEXTEND: {
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
             if (!child(0)->isIntegerConstant())
@@ -850,6 +879,21 @@ Interior::adjustWidth(const Type &type) {
                 throw Exception(toStr(op_) + " operator's first argument (size) must be 64 bits or narrower");
             if (!child(1)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's second argument must be integer");
+            type_ = Type::integer(child(0)->toUnsigned().get());
+            break;
+        }
+        case OP_UEXTEND: {
+            // This operator can make the argument wider or narrower. The argument can be any scalar type and the result will
+            // always be an integer (bit vector) type.  For instance, narrowing a floating-point value results in an integer
+            // bit vector type since it wouldn't make sense anymore as a floating point type.
+            if (nChildren() != 2)
+                throw Exception(toStr(op_) + " operator expects two arguments");
+            if (!child(0)->isIntegerConstant())
+                throw Exception(toStr(op_) + " operator's first argument (size) must be an integer constant");
+            if (child(0)->nBits() > 64)
+                throw Exception(toStr(op_) + " operator's first argument (size) must be 64 bits or narrower");
+            if (!child(1)->isScalarExpr())
+                throw Exception(toStr(op_) + " operator's second argument must be scalar");
             type_ = Type::integer(child(0)->toUnsigned().get());
             break;
         }
@@ -965,11 +1009,11 @@ Interior::print(std::ostream &o, Formatter &fmt) const {
 
     o <<"(" <<toStr(op_);
 
-    // The width of an operator is not normally too useful since it can also be inferred from the width of its operands, but we
+    // The type of an operator is not normally too useful since it can also be inferred from the types of its operands, but we
     // print it anyway for the benefit of mere humans.
     char bracket = '[';
-    if (fmt.show_width) {
-        o <<bracket <<nBits();
+    if (fmt.show_type) {
+        o <<bracket <<type().toString(TypeStyle::ABBREVIATED);
         bracket = ',';
     }
     if (fmt.show_flags)
@@ -1375,7 +1419,7 @@ Interior::idempotent(const SmtSolverPtr &solver) {
         return sharedFromThis().dynamicCast<Interior>();
     }
 }
-        
+
 Ptr
 Interior::involutary() {
     if (InteriorPtr inode = isInteriorNode()) {
@@ -1730,7 +1774,7 @@ OrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Return original or modified expression
     if (!modified)
         return Ptr();
-    return Interior::instance(inode->getOperator(), newargs, solver, inode->comment());
+    return Interior::instance(inode->type(), inode->getOperator(), newargs, solver, inode->comment());
 }
 
 Ptr
@@ -1782,7 +1826,7 @@ XorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Return original or modified expression
     if (!modified)
         return Ptr();
-    return Interior::instance(inode->getOperator(), newargs, solver, inode->comment());
+    return Interior::instance(inode->type(), inode->getOperator(), newargs, solver, inode->comment());
 }
 
 Ptr
@@ -1933,7 +1977,16 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Construct a new, simplified expression
     if (newArgs.size() == inode->nChildren())
         return Ptr();                                   // no simplification possible
-    return Interior::instance(inode->getOperator(), newArgs, solver, inode->comment(), inode->flags());
+    return Interior::instance(inode->type(), inode->getOperator(), newArgs, solver, inode->comment(), inode->flags());
+}
+
+Ptr
+ConvertSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+    // (convert[X] Y[X]) => Y[X]
+    if (inode->type() == inode->child(0)->type())
+        return inode->child(0);
+
+    return Ptr();
 }
 
 Ptr
@@ -2173,7 +2226,7 @@ RolSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // If the shift amount is greater than the value width, replace it with modulo
     if (sa && *sa > inode->nBits()) {
-        return Interior::instance(inode->getOperator(),
+        return Interior::instance(inode->type(), inode->getOperator(),
                                   makeIntegerConstant(inode->child(0)->nBits(), *sa % inode->nBits(),
                                                       inode->child(0)->comment(), inode->child(0)->flags()),
                                   inode->child(1),
@@ -2220,7 +2273,7 @@ RorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // If the shift amount is greater than the value width, replace it with modulo
     if (sa && *sa > inode->nBits()) {
-        return Interior::instance(inode->getOperator(),
+        return Interior::instance(inode->type(), inode->getOperator(),
                                   makeIntegerConstant(inode->child(0)->nBits(), *sa % inode->nBits(),
                                                       inode->child(0)->comment(), inode->child(0)->flags()),
                                   inode->child(1),
@@ -2266,7 +2319,7 @@ UextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // => (uextend newsize arg[k])
     if (arg && arg->getOperator() == OP_UEXTEND && newsize >= arg->child(1)->nBits() && newsize <= oldsize)
         return makeExtend(inode->child(0), arg->child(1), solver, inode->comment());
-    
+
     // Shrinking
     // (uextend newsize arg[oldsize])
     //   and newsize < oldsize
@@ -2588,7 +2641,7 @@ ShlSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     InteriorPtr val_inode = inode->child(1)->isInteriorNode();
     if (val_inode && val_inode->getOperator()==inode->getOperator()) {
         if (Ptr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->nBits(), solver)) {
-            return Interior::instance(inode->getOperator(), strength, val_inode->child(1), solver);
+            return Interior::instance(inode->type(), inode->getOperator(), strength, val_inode->child(1), solver);
         }
     }
 
@@ -2652,7 +2705,7 @@ ShrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     InteriorPtr val_inode = inode->child(1)->isInteriorNode();
     if (val_inode && val_inode->getOperator()==inode->getOperator()) {
         if (Ptr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->nBits(), solver)) {
-            return Interior::instance(inode->getOperator(), strength, val_inode->child(1), solver);
+            return Interior::instance(inode->type(), inode->getOperator(), strength, val_inode->child(1), solver);
         }
     }
 
@@ -2706,6 +2759,15 @@ MssbSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
+ReinterpretSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+    // (reinterpret[X] Y[X]) => Y[X]
+    if (inode->type() == inode->child(0)->type())
+        return inode->child(0);
+
+    return Ptr();
+}
+
+Ptr
 SetSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // (set x) => x
     if (1 == inode->nChildren())
@@ -2732,7 +2794,7 @@ SetSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         return Ptr();
     if (1==elements.size())
         return elements[0];
-    return Interior::instance(inode->getOperator(), elements, solver, inode->comment());
+    return Interior::instance(inode->type(), inode->getOperator(), elements, solver, inode->comment());
 }
 
 Ptr
@@ -2775,6 +2837,9 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
                 newnode = inode->associative()->foldConstants(ConcatSimplifier());
                 if (newnode==node)
                     newnode = inode->rewrite(ConcatSimplifier(), solver);
+                break;
+            case OP_CONVERT:
+                newnode = inode->rewrite(ConvertSimplifier(), solver);
                 break;
             case OP_EQ:
                 newnode = inode->commutative();
@@ -2821,6 +2886,9 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
                 break;
             case OP_READ:
                 // no simplifications
+                break;
+            case OP_REINTERPRET:
+                newnode = inode->rewrite(ReinterpretSimplifier(), solver);
                 break;
             case OP_ROL:
                 newnode = inode->rewrite(RolSimplifier(), solver);
@@ -2934,8 +3002,6 @@ Interior::simplifyTop(const SmtSolverPtr &solver) {
             case OP_FP_ISNAN:
             case OP_FP_ISNEG:
             case OP_FP_ISPOS:
-            case OP_CONVERT:
-            case OP_REINTERPRET:
                 // no simplification
                 break;
         }
@@ -3112,7 +3178,7 @@ Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) const
         }
     } else if (isFloatingPointConstant()) {
         o <<"0x" <<bits_.toHex();
-        
+
     } else if (formatter.show_comments == Formatter::CMT_INSTEAD && !comment_.empty()) {
         // Use the comment as the variable name.
         ASSERT_require(isVariable2());
@@ -3139,10 +3205,10 @@ Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) const
         }
     }
 
-    // Bit width of variable.  All variables have this otherwise there's no way for the parser to tell how wide a variable is
+    // Type of variable.  All variables have this otherwise there's no way for the parser to tell how wide a variable is
     // when reading it back in.
-    if (formatter.show_width) {
-        o <<'[' <<nBits() <<']';
+    if (formatter.show_type) {
+        o <<'[' <<type().toString(TypeStyle::ABBREVIATED) <<']';
     }
 
     // Comment stuff
@@ -3249,12 +3315,10 @@ Leaf::mayEqual(const Ptr &other, const SmtSolverPtr &solver) {
 
     // Use an SMT solver (if there is one) for all remaining cases
     if (solver) {
-        ASSERT_require(isFloatingPointConstant() != other->isFloatingPointConstant());
-        ASSERT_require(isIntegerConstant() != other->isIntegerConstant());
         SmtSolver::Transaction transaction(solver);
         Ptr assertion = makeEq(sharedFromThis(), other, solver);
         solver->insert(assertion);
-        return SmtSolver::SAT_NO == solver->check();
+        return SmtSolver::SAT_YES == solver->check();
     }
 
     // If all else fails, assume that two expressions might be equal.

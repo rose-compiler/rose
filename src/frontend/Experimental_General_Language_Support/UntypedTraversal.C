@@ -119,9 +119,9 @@ UntypedTraversal::evaluateInheritedAttribute(SgNode* node, InheritedAttribute cu
       }
     case V_SgUntypedFunctionDeclarationList:
       {
+      // This list need not normally be converted.  However, the Fortran specific converter adds a
+      // required contains statement for modules.
          SgUntypedFunctionDeclarationList* ut_list = dynamic_cast<SgUntypedFunctionDeclarationList*>(node);
-
-      // The list is not converted (needed to add a contains statement) but the current scope may be modified
          pConverter->convertUntypedFunctionDeclarationList(ut_list, currentScope);
          break;
       }

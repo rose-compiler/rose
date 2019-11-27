@@ -201,10 +201,9 @@ EState CodeThorn::Analyzer::combine(const EState* es1, const EState* es2) {
   ROSE_ASSERT(es1->constraints()==es2->constraints()); // pointer equality
   if(es1->callString!=es2->callString) {
     if(getOptionOutputWarnings()) {
-      cerr<<"WARNING: combining estates with different callstrings at label:"<<es1->label().toString()<<endl;
-      cerr<<"cs1: "<<es1->callString.toString()<<endl;
-      cerr<<"cs2: "<<es2->callString.toString()<<endl;
-      //exit(1);
+      logger[WARN]<<"combining estates with different callstrings at label:"<<es1->label().toString()<<endl;
+      logger[WARN]<<"cs1: "<<es1->callString.toString()<<endl;
+      logger[WARN]<<"cs2: "<<es2->callString.toString()<<endl;
     }
   }
   PState ps1=*es1->pstate();
@@ -983,15 +982,17 @@ PState CodeThorn::Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVar
     SgExpression* exp=*i;
     SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
     if(assignInit==nullptr) {
-      logger[ERROR]<<"expected assign initializer but found "<<exp->unparseToString();
-      logger[ERROR]<<"AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
-      exit(1);
+      logger[WARN]<<"expected assign initializer but found "<<exp->unparseToString();
+      logger[WARN]<<"AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+      AbstractValue newVal=AbstractValue::createTop();
+      newPState.writeToMemoryLocation(arrayElemId,newVal);
+    } else {
+      // initialize element of array initializer in state
+      SgExpression* assignInitExpr=assignInit->get_operand();
+      // currentEState from above, newPState must be the same as in currentEState.
+      AbstractValue newVal=singleValevaluateExpression(assignInitExpr,currentEState);
+      newPState.writeToMemoryLocation(arrayElemId,newVal);
     }
-    // initialize element of array initializer in state
-    SgExpression* assignInitExpr=assignInit->get_operand();
-    // currentEState from above, newPState must be the same as in currentEState.
-    AbstractValue newVal=singleValevaluateExpression(assignInitExpr,currentEState);
-    newPState.writeToMemoryLocation(arrayElemId,newVal);
     elemIndex++;
   }
   // initialize remaining elements (if there are any) with default value
@@ -1065,12 +1066,27 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
       ConstraintSet cset=*currentEState.constraints();
       SgInitializer* initializer=initName->get_initializer();
       if(initializer) {
+        // special case that initializer is an assignment (reusing transferAssignOp)
+        if(SgAssignInitializer* assignInit=isSgAssignInitializer(initializer)) {
+          SgExpression* assignInitOperand=assignInit->get_operand_i();
+          ROSE_ASSERT(assignInitOperand);
+          if(SgAssignOp* assignOp=isSgAssignOp(assignInitOperand)) {
+            SAWYER_MESG(logger[TRACE])<<"assignment in initializer: "<<decl->unparseToString()<<endl;
+            Edge dummyEdge(targetLabel,EDGE_FORWARD,targetLabel); // only target label is used in transferAssignOp
+            std::list<EState> estateList=transferAssignOp(assignOp, dummyEdge, &currentEState);
+            ROSE_ASSERT(estateList.size()==1);
+            return *estateList.begin();
+          }
+        }
         //cout<<"DEBUG: initialize with "<<initializer->unparseToString()<<endl;
         //cout<<"DEBUG: lhs type: "<<getVariableIdMapping()->getType(initDeclVarId)->unparseToString()<<endl;
         if(getVariableIdMapping()->hasClassType(initDeclVarId)) {
           // TODO: initialization of structs not supported yet
-          cerr<<"Error: initialization of structs not supported yet - "<<decl->unparseToString()<<endl;
-          exit(1);
+          SAWYER_MESG(logger[WARN])<<"initialization of structs not supported yet (not added to state) "<<decl->unparseToString()<<endl;
+          //AbstractValue arrayAddress=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex))
+          //newPState.writeToMemoryLocation(arrayAddress,CodeThorn::Top());
+          PState newPState=*currentEState.pstate();
+          return createEState(targetLabel,cs,newPState,cset);
         }
         // has aggregate initializer
         if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
@@ -1149,8 +1165,9 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
           ConstraintSet cset=*estate.constraints();
           return createEState(targetLabel,cs,newPState,cset);
         } else {
-          logger[ERROR] << "unsupported initializer in declaration: "<<decl->unparseToString()<<endl;
-          exit(1);
+          logger[WARN] << "unsupported initializer in declaration: "<<decl->unparseToString()<<" not adding to state (assuming arbitrary value)"<<endl;
+          PState newPState=*currentEState.pstate();
+          return createEState(targetLabel,cs,newPState,cset);
         }
       } else {
         // no initializer (model default cases)
@@ -1164,8 +1181,10 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
             SAWYER_MESG(logger[TRACE])<<"Number of elements in array is 0 (from variableIdMapping) - evaluating expression"<<endl;
             std::vector<SgExpression*> arrayDimExps=SageInterface::get_C_array_dimensions(*arrayType);
             if(arrayDimExps.size()>1) {
-              cerr<<"Error: multi-dimensional arrays not supported yet. Only linear arrays are supported."<<endl;
-              exit(1);
+              logger[WARN]<<"multi-dimensional arrays not supported yet. Only linear arrays are supported. Not added to state (assuming arbitrary value)."<<endl;
+              // not adding it to state. Will be used as unknown.
+              PState newPState=*currentEState.pstate();
+              return createEState(targetLabel,cs,newPState,cset);
             }
             ROSE_ASSERT(arrayDimExps.size()==1);
             SgExpression* arrayDimExp=*arrayDimExps.begin();
@@ -2114,6 +2133,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
    // 2) obtain formal parameters from target
    // 3) eval each actual parameter and assign result to formal parameter in state
    // 4) create new estate and update callstring (context sensitive analysis)
+  SAWYER_MESG(logger[TRACE])<<"transferFunctionCall: "<<getLabeler()->getNode(edge.source())->unparseToString()<<endl;
   EState currentEState=*estate;
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
@@ -2121,8 +2141,6 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
   // ad 1)
   SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source()));
   ROSE_ASSERT(funCall);
-  string funName=SgNodeHelper::getFunctionName(funCall);
-  // handling of error function (TODO: generate dedicated state (not failedAssert))
 
   if(args.getBool("rers-binary")) {
     // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
@@ -2336,8 +2354,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
         cs.removeLastLabel();
       } else {
         if(cs.isEmpty()) {
-          SAWYER_MESG(logger[TRACE])<<"Empty context on non-feasable path at label "<<functionCallLabel.toString()<<endl;
-          //exit(1);
+          SAWYER_MESG(logger[WARN])<<"Empty context on non-feasable path at label "<<functionCallLabel.toString()<<endl;
         }
         // definitely not feasible path, do not return a state
         SAWYER_MESG(logger[TRACE])<<"definitly on non-feasable path at label (no next state)"<<functionCallLabel.toString()<<endl;
@@ -2892,8 +2909,7 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
       ConstraintSet cset=*estate.constraints();
       if(variableIdMapping.hasClassType(lhsVar)) {
         // assignments to struct variables are not supported yet (this test does not detect s1.s2 (where s2 is a struct, see below)).
-        cerr<<"Error: assignment of structs (copy constructor) is not supported yet."<<endl;
-        exit(1);
+        logger[WARN]<<"assignment of structs (copy constructor) is not supported yet. Target update ignored! (unsound)"<<endl;
       } else if(variableIdMapping.hasIntegerType(lhsVar)) {
         newPState.writeToMemoryLocation(lhsVar,(*i).result);
       } else if(variableIdMapping.hasFloatingPointType(lhsVar)) {
@@ -3000,7 +3016,7 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
             case ACCESS_DEFINITELY_NP:
               exprAnalyzer.recordDefinitiveNullPointerDereferenceLocation(estate.label());
               cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze2)<<" : definitive null pointer dereference detected."<<endl;// ["<<lhs->unparseToString()<<"]"<<endl;
-              cerr<<"Violating pointer: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+              cerr<<"Violating pointer (np): "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
               return estateList;
               break;
             case ACCESS_DEFINITELY_INSIDE_BOUNDS:
@@ -3017,7 +3033,7 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
               exprAnalyzer.recordDefinitiveOutOfBoundsAccessLocation(estate.label());
               int index2=arrayPtrPlusIndexValue.getIndexIntValue();
               cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze2)<<" : write access out of bounds."<<endl;// ["<<lhs->unparseToString()<<"]"<<endl;
-              cerr<<"Violating pointer: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+              cerr<<"Violating pointer (bounds): "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
               //cerr<<"arrayVarId2: "<<arrayVarId2.toUniqueString(_variableIdMapping)<<endl;
               //cerr<<"array size: "<<_variableIdMapping->getNumberOfElements(arrayVarId)<<endl;
               // no state can follow, return estateList (may be empty)

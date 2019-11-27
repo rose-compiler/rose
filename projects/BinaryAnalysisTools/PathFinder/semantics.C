@@ -21,7 +21,7 @@ symbolicFormat(const std::string &prefix) {
     SymbolicSemantics::Formatter retval;
     retval.set_line_prefix(prefix);
     retval.expr_formatter.max_depth = settings.maxExprDepth;
-    retval.expr_formatter.show_width = settings.showExprWidth;
+    retval.expr_formatter.show_type = settings.showExprType;
     return retval;
 }
 

@@ -6,7 +6,7 @@ int f2(int f2_x) {
 int f1(int f1_y) {
   int f1_x;
   f1_x=f1_y;
-  return f2(f1_x);
+  return 1+f2(f1_x);
 }
 
 int main() {

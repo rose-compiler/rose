@@ -50,25 +50,25 @@ std::string TimeDuration::longTimeString() {
 
 TimeMeasurement::TimeMeasurement():
   state(TIME_STOPPED),
-  startTimeInMicroSeconds(0),
-  endTimeInMicroSeconds(0)
+  startTimeInMicroSeconds(0.0),
+  endTimeInMicroSeconds(0.0)
 {
     startCount.tv_sec = startCount.tv_usec = 0;
     endCount.tv_sec = endCount.tv_usec = 0;
 }
 
 void TimeMeasurement::start() {
-  //  if(state==TIME_RUNNING) {
-  //  throw std::runtime_error("Internal error 1: TimeMeasurement in wrong state (RUNNING).");
-  //} else {
+  if(state==TIME_RUNNING) {
+    throw std::runtime_error("Internal error 1: start(): TimeMeasurement already running (state: RUNNING).");
+  } else {
     state=TIME_RUNNING;
     gettimeofday(&startCount, 0);
-    //}
+  }
 }
 
 void TimeMeasurement::stop() {
   if(state==TIME_STOPPED) {
-    throw std::runtime_error("Internal error 2: TimeMeasurement in wrong state (STOPPED).");
+    throw std::runtime_error("Internal error 2: stop(): TimeMeasurement already stopped (state: STOPPED).");
   } else {
     gettimeofday(&endCount, NULL);
     state=TIME_STOPPED;
@@ -76,9 +76,13 @@ void TimeMeasurement::stop() {
 } 
 
 TimeDuration TimeMeasurement::getTimeDuration() {
-  //  if(state==TIME_RUNNING) {
-  //  throw std::runtime_error("Internal error 3: TimeMeasurement in wrong state (RUNNING).");
-  //} else {
-    return TimeDuration((endCount.tv_sec-startCount.tv_sec)*1000000.0+(endCount.tv_usec-startCount.tv_usec));
-    //}
+  if(state==TIME_RUNNING) {
+    //throw std::runtime_error("Internal error 3: getTimeDuration(): TimeMeasurement in wrong state (RUNNING).");
+    stop();
+  }
+  TimeDuration td=TimeDuration((endCount.tv_sec-startCount.tv_sec)*1000000.0+(endCount.tv_usec-startCount.tv_usec));
+  if(state==TIME_RUNNING) {
+    start();
+  }
+  return td;
 }
