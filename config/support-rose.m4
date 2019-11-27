@@ -269,6 +269,18 @@ else
 fi
 AC_SUBST(ROSE_SUPPORT_GNU_EXTENSIONS)
 
+# DQ (1/4/2009) Added support for optional Microsoft language extensions in new EDG/ROSE interface.
+# This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
+AC_ARG_ENABLE(microsoft-extensions, AS_HELP_STRING([--enable-microsoft-extensions], [Enable internal support in ROSE for Microsoft language extensions]))
+if test "x$enable_microsoft_extensions" = "xyes"; then
+  ROSE_SUPPORT_MICROSOFT_EXTENSIONS="TRUE"
+  AC_DEFINE([ROSE_USE_MICROSOFT_EXTENSIONS], [], [Controls use of Microsoft MSVC features])
+else
+  ROSE_SUPPORT_MICROSOFT_EXTENSIONS="FALSE"
+fi
+AC_SUBST(ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
+AM_CONDITIONAL(ROSE_USE_MICROSOFT_EXTENSIONS, [test "x$enable_microsoft_extensions" = xyes])
+
 # TV (12/31/2018): Defining macro to detect the support of __float128 in EDG
 #   Only valid if compiling ROSE using GNU compiler (depends on -lquadmath)
 AC_LANG(C++)
@@ -282,24 +294,16 @@ AC_LINK_IFELSE([
             [rose_use_edg_quad_float=no])
 LIBS="$ac_save_LIBS"
 
+if test "$ROSE_SUPPORT_MICROSOFT_EXTENSIONS" == "TRUE"; then
+  rose_use_edg_quad_float=no
+fi
+
 if test "x$rose_use_edg_quad_float" == "xyes"; then
   AC_DEFINE([ROSE_USE_EDG_QUAD_FLOAT], [], [Enables support for __float80 and __float128 in EDG.])
 fi
 AC_SUBST(ROSE_USE_EDG_QUAD_FLOAT)
 AM_CONDITIONAL(ROSE_USE_EDG_QUAD_FLOAT, [ test $rose_use_edg_quad_float == yes ])
 unset ax_cv_cxx_compiler_vendor
-
-# DQ (1/4/2009) Added support for optional Microsoft language extensions in new EDG/ROSE interface.
-# This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
-AC_ARG_ENABLE(microsoft-extensions, AS_HELP_STRING([--enable-microsoft-extensions], [Enable internal support in ROSE for Microsoft language extensions]))
-if test "x$enable_microsoft_extensions" = "xyes"; then
-  ROSE_SUPPORT_MICROSOFT_EXTENSIONS="TRUE"
-  AC_DEFINE([ROSE_USE_MICROSOFT_EXTENSIONS], [], [Controls use of Microsoft MSVC features])
-else
-  ROSE_SUPPORT_MICROSOFT_EXTENSIONS="FALSE"
-fi
-AC_SUBST(ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
-AM_CONDITIONAL(ROSE_USE_MICROSOFT_EXTENSIONS, [test "x$enable_microsoft_extensions" = xyes])
 
 # DQ (9/16/2012): Added support for debugging output of new EDG/ROSE connection.  More specifically
 # if this is not enabled then it skips the use of output spew in the new EDG/ROSE connection code.

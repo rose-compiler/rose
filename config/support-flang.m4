@@ -65,8 +65,8 @@ AC_DEFUN([ROSE_SUPPORT_FLANG],
       FLANG_SOURCE_PATH="$ROSE_WITH_FLANG_SRC"
   fi
 
-AC_MSG_NOTICE([FLANG_INSTALL_PATH = "$FLANG_INSTALL_PATH"])
-AC_MSG_NOTICE([FLANG_SOURCE_PATH = "$FLANG_SOURCE_PATH"])
+  AC_MSG_NOTICE([FLANG_INSTALL_PATH = "$FLANG_INSTALL_PATH"])
+  AC_MSG_NOTICE([FLANG_SOURCE_PATH = "$FLANG_SOURCE_PATH"])
 
   #============================================================================
   # Validate installation (if provided)
