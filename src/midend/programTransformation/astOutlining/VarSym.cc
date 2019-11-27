@@ -131,7 +131,7 @@ getVarSym_const (const SgNode* n)
       {
         cerr<<"Warning: astOutlining/VarSym.cc getVarSym_const() did not find symbol for:"<<
         n->unparseToString()<<endl;
-        //ROSE_ASSERT(v_sym != NULL);
+        ROSE_ASSERT(v_sym != NULL);
         //GCC macros __FUNCTION__ and __PRETTY_FUNCTION__ have no symbols in ROSE for some reason
       } 
       else 
@@ -268,10 +268,24 @@ ASTtools::collectRefdVarSyms (const SgStatement* s, VarSymSet_t& syms)
   
   SageInterface::addVarRefExpFromArrayDimInfo(const_cast<SgStatement *> (s), var_refs);
   // Next, insert the variable symbol for each e into syms.
+#if 0 // Liao 2019/10/30 , this is not good to add assertion.
   transform (var_refs.begin (),
              var_refs.end (),
              inserter (syms, syms.begin ()),
              getVarSym);
+#endif  
+   for (NodeList_t::iterator iter = var_refs.begin(); iter != var_refs.end(); iter++)
+   {
+      SgVariableSymbol* symbol = getVarSym(*iter);
+      if (symbol)
+        syms.insert(symbol);
+      else
+      {
+	cerr<<"ASTtools::collectRefdVarSyms() finds NULL symbol for a SgVarRefExp:"<<*iter <<endl;
+        ROSE_ASSERT (symbol !=NULL);
+      }
+   }
+
 }
 
 // ========================================================================
@@ -282,6 +296,10 @@ ASTtools::collectDefdVarSyms (const SgStatement* s, VarSymSet_t& syms)
   typedef Rose_STL_Container<SgNode *> NodeList_t;
   NodeList_t vars_local = NodeQuery::querySubTree (const_cast<SgStatement *> (s), V_SgVariableDeclaration);
   for_each (vars_local.begin (), vars_local.end (), bind2nd (ptr_fun (getVarSyms), &syms));
+
+  for (VarSymSet_t::iterator it = syms.begin(); it != syms.end(); it++ )
+    ROSE_ASSERT (*it!=NULL);
+
 }
 
 void
