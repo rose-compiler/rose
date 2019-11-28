@@ -19451,7 +19451,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                            // its class, etc. I don't want to worry about those cases right now.
 
                            SgInitializedName * init_name = (*ii);
-			   
+                           
 //                         ROSE_ASSERT(init_name ->get_scope() == sourceBlock); // the sourceBlock is transformation generated basic block. the original scope of init_name is the one in the original scource code.
 //                           SgSymbol* symbol = s_table->find(init_name); // this will not return the right symbol
  //                          ROSE_ASSERT (symbol != NULL);
@@ -19468,7 +19468,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                            }
 #endif
                            init_name->set_scope(targetBlock);
-			   initname_vec.push_back(init_name);
+                           initname_vec.push_back(init_name);
                          }
                          break;
                        }
