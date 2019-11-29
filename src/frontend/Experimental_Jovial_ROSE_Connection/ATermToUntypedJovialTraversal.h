@@ -128,6 +128,7 @@ ATbool traverse_OptAllocationSpecifier(ATerm term, SgUntypedExprListExpression* 
 // 2.1.6 INITIALIZATION OF DATA OBJECTS
 ATbool traverse_ItemPreset            (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_ItemPresetValue       (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_OptItemPresetValue    (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_TablePreset           (ATerm term, SgUntypedExprListExpression* & preset);
 ATbool traverse_TablePresetList       (ATerm term, SgUntypedExprListExpression* preset);
 ATbool traverse_DefaultPresetSublist  (ATerm term, SgUntypedExprListExpression* preset);
