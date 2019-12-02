@@ -1546,7 +1546,10 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
        // DQ (6/25/2019): This is a new feature to input the builtFromUseOnly function optional parameter.
           if (builtFromUseOnly == true)
              {
+#if 0
+            // DQ (12/2/2019): Commented out output spew (from new tool).
                printf ("In buildVariableDeclaration_nfi(): this is a later reference to this variable (after the initial variable declaration and symbol): initializedName = %p name = %s \n",initializedName,name.str());
+#endif
             // varDecl->set_builtFromUseOnly(true);
 #if 0
             // DQ (7/12/2019): This may be overly conservative when used by the outlining to a seperate file.

@@ -4119,8 +4119,16 @@ SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFi
      printf ("include_sourceFile = %p include_sourceFile->getFileName() = %s \n",include_sourceFile,include_sourceFile->getFileName().c_str());
 #endif
 
+  // DQ (12/2/2019): This may have been setoff by testing at customer site, need to evaluated this next trip.
   // DQ (11/20/2019):Check that this is valid, if so then it is an error to reset it.
-     ROSE_ASSERT(include_sourceFile->get_globalScope() != NULL);
+  // ROSE_ASSERT(include_sourceFile->get_globalScope() != NULL);
+     if (include_sourceFile->get_globalScope() != NULL)
+        {
+          printf ("WARNING: global scope will be overwritten: calling set_globalScope() below \n");
+
+          printf ("Exiting to support debugging this case! \n");
+          ROSE_ASSERT(false);
+        }
 
 #if 0
      printf ("include_sourceFile->get_globalScope() = %p \n",include_sourceFile->get_globalScope());
