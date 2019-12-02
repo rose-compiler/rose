@@ -4370,6 +4370,92 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #if DEBUG_UNPARSE_INCLUDE_FILES
                     printf ("NOTE: originalFileName = %s not found in unparseSourceFileMap \n",originalFileName.c_str());
 #endif
+
+                    ROSE_ASSERT(project != NULL);
+                    string applicationRootDirectory = project->get_applicationRootDirectory();
+#if 0
+                    printf ("applicationRootDirectory = %s \n",applicationRootDirectory.c_str());
+#endif
+                    string filenameWithOutPath = FileHelper::getFileName(originalFileName);
+
+                    string adjusted_header_file_directory = unparseRootPath;
+
+                 // string name_used_in_include_directive = associated_include_file->get_name_used_in_include_directive();
+                    string name_used_in_include_directive = originalFileName;
+                    string directoryPathPrefix = Rose::getPathFromFileName(name_used_in_include_directive);
+
+                 // Subtract off the applicationRootDirectory as a prefix.
+                 // directoryPathPrefix.substr(0,applicationRootDirectory);
+                 // directoryPathPrefix = directoryPathPrefix.substr()
+                 // ROSE_ASSERT(applicationRootDirectory.is_null() == false);
+                 // ROSE_ASSERT(applicationRootDirectory.length() > 0);
+#if 0
+                    printf ("BEFORE: directoryPathPrefix = %s \n",directoryPathPrefix.c_str());
+#endif
+                    size_t pos = directoryPathPrefix.find(applicationRootDirectory);
+                    if (pos != string::npos)
+                       {
+                         directoryPathPrefix.erase(pos,applicationRootDirectory.length());
+                       }
+#if 0
+                    printf ("AFTER: directoryPathPrefix = %s \n",directoryPathPrefix.c_str());
+#endif
+                    if (directoryPathPrefix == ".")
+                       {
+                         directoryPathPrefix = "";
+                       }
+                      else
+                       {
+                      // Nothing to do.
+                       }
+
+                 // DQ (11/30/2019): Avoid output of string with double "/" as in "//".
+                    if (directoryPathPrefix != "")
+                       {
+                         directoryPathPrefix += "/";
+                       }
+
+                 // string newFileName = adjusted_header_file_directory + directoryPathPrefix + filenameWithOutPath;
+                 // adjusted_header_file_directory += directoryPathPrefix;
+                    adjusted_header_file_directory += "/" + directoryPathPrefix;
+
+                    string newFileName = adjusted_header_file_directory + filenameWithOutPath;
+
+                    boost::filesystem::path pathPrefix(adjusted_header_file_directory);
+                    create_directories(pathPrefix);
+
+                    boost::filesystem::path originalFileNamePath(originalFileName);
+                    boost::filesystem::path newFileNamePath(newFileName);
+#if 0
+                 // printf ("Copy this file: \n");
+                 // printf ("Copy this file: unparsedFile          = %p filename = %s \n",unparsedFile,unparsedFile->getFileName().c_str());
+                 // printf ("   --- size of global scope           = %zu \n",unparsedFile->get_globalScope()->get_declarations().size());
+                    printf ("   --- originalFileName               = %s \n",originalFileName.c_str());
+                    printf ("   --- filenameWithOutPath            = %s \n",filenameWithOutPath.c_str());
+                    printf ("   --- adjusted_header_file_directory = %s \n",adjusted_header_file_directory.c_str());
+                 // printf ("   --- name_used_in_include_directive = %s \n",name_used_in_include_directive.c_str());
+                    printf ("   --- directoryPathPrefix            = %s \n",directoryPathPrefix.c_str());
+                    printf ("   --- newFileName                    = %s \n",newFileName.c_str());
+                 // printf ("   --- isApplicationFile              = %s \n",isApplicationFile ? "true" : "false");
+#endif
+                    if (exists(newFileNamePath) == false)
+                       {
+#if 0
+                         printf ("Copying file = %s to newFileName = %s \n",originalFileName.c_str(),newFileName.c_str());
+#endif
+                      // syntax: copy_file(from, to, copy_option::fail_if_exists);
+                         copy_file(originalFileNamePath, newFileNamePath, boost::filesystem::copy_option::fail_if_exists);
+                       }
+                      else
+                       {
+#if 0
+                         printf ("File already exists: file = %s \n",newFileNamePath.c_str());
+#endif
+                       }
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
                   }
                  else
                   {
@@ -4382,9 +4468,9 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 
                     string adjusted_header_file_directory = unparseRootPath;
 
-                  // DQ (1/1/2019): Append the filename as a suffix to the userSpecifiedUnparseRootFolder so that we can avoid header file 
-                  // location collissions when compileing either multiple files or multiple files in parallel.
-                  // adjusted_header_file_directory += "/" + filenameWithOutPath;
+                 // DQ (1/1/2019): Append the filename as a suffix to the userSpecifiedUnparseRootFolder so that we can avoid header file 
+                 // location collissions when compileing either multiple files or multiple files in parallel.
+                 // adjusted_header_file_directory += "/" + filenameWithOutPath;
 
                     SgIncludeFile* associated_include_file = unparsedFile->get_associated_include_file();
                     ROSE_ASSERT(associated_include_file != NULL);

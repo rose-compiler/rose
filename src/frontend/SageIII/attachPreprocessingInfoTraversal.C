@@ -2180,29 +2180,33 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
             // ROSE_ASSERT(currentListOfAttributes != NULL);
 
                ROSEAttributesListContainerPtr filePreprocInfo = currentFilePtr->get_preprocessorDirectivesAndCommentsList();
-               ROSE_ASSERT(filePreprocInfo != NULL);
 
-            // if (filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
-               if (filePreprocInfo->getList().find(currentFilePtr->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
+            // DQ (12/1/2019): This fails for Fortran support.
+            // ROSE_ASSERT(filePreprocInfo != NULL);
+               if (filePreprocInfo != NULL)
                   {
+                 // if (filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
+                    if (filePreprocInfo->getList().find(currentFilePtr->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
+                       {
 #if 0
-                    printf ("Generating a new ROSEAttributesList (currentFilePtr->get_header_file_unparsing_optimization_header_file() == false) \n");
+                         printf ("Generating a new ROSEAttributesList (currentFilePtr->get_header_file_unparsing_optimization_header_file() == false) \n");
 #endif
-                    currentListOfAttributes = getListOfAttributes(currentFileNameId);
+                         currentListOfAttributes = getListOfAttributes(currentFileNameId);
 #if 0
-                    printf ("DONE: Generating a new ROSEAttributesList (currentFilePtr->get_header_file_unparsing_optimization_header_file() == false) \n");
+                         printf ("DONE: Generating a new ROSEAttributesList (currentFilePtr->get_header_file_unparsing_optimization_header_file() == false) \n");
 #endif
-                  }
-                 else
-                  {
+                       }
+                      else
+                       {
 #if 0
-                    printf ("Using the existing ROSEAttributesList (currentFilePtr->get_header_file_unparsing_optimization_header_file() == false) \n");
+                         printf ("Using the existing ROSEAttributesList (currentFilePtr->get_header_file_unparsing_optimization_header_file() == false) \n");
 #endif
-                 // currentListOfAttributes = filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()];
-                    currentListOfAttributes = filePreprocInfo->getList()[currentFilePtr->get_file_info()->get_filename()];
-                  }
+                      // currentListOfAttributes = filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()];
+                         currentListOfAttributes = filePreprocInfo->getList()[currentFilePtr->get_file_info()->get_filename()];
+                       }
 
-               ROSE_ASSERT(currentListOfAttributes != NULL);
+                    ROSE_ASSERT(currentListOfAttributes != NULL);
+                  }
 
 #if 0
                printf ("@@@@@@@@@@@@@@@@@@@@ DONE: Reading the comments and CPP directives from the current file: \n");

@@ -14796,6 +14796,20 @@ SageInterface::insertHeader(SgSourceFile * source_file, const string & header_fi
   // when multiple files are used on the command line.
      result->get_file_info()->setTransformation();
 
+  // DQ (11/21/2019): Need to set supportTokenUnparsing.
+     supportTokenUnparsing = source_file->get_unparse_tokens();
+     bool supportUnparseHeaders = source_file->get_unparseHeaderFiles();
+
+#if 0
+     printf ("supportTokenUnparsing = %s \n",supportTokenUnparsing ? "true" : "false");
+     printf ("source_file  = %p \n",source_file);
+     printf ("global_scope = %p \n",global_scope);
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
   // global_scope->addToAttachedPreprocessingInfo(result, position);
      if (supportTokenUnparsing == false)
         {
@@ -14805,6 +14819,21 @@ SageInterface::insertHeader(SgSourceFile * source_file, const string & header_fi
         {
        // global_scope->prepend_statement(null_statement);
           SgEmptyDeclaration* emptyDeclaration = buildEmptyDeclaration();
+
+          if (supportUnparseHeaders == true)
+              {
+             // In this case we need to set the physical_file_id to match the target file to be unparsed.
+                int physical_file_id = global_scope->get_startOfConstruct()->get_physical_file_id();
+#if 0
+                printf ("physical_file_id = %d \n",physical_file_id);
+#endif
+                emptyDeclaration->get_startOfConstruct()->set_physical_file_id(physical_file_id);
+                emptyDeclaration->get_endOfConstruct()->set_physical_file_id(physical_file_id);
+#if 0
+                printf ("Exiting as a test! \n");
+                ROSE_ASSERT(false);
+#endif
+              }
 
           emptyDeclaration->addToAttachedPreprocessingInfo(result, position);
 
@@ -14834,6 +14863,33 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
       content = "#include <" + filename + "> \n";
     else
       content = "#include \"" + filename + "\" \n";
+
+  // DQ (11/21/2019): Token based unparsing has an additional requirement, we need to mark that the 
+  // whitespace around the statement has been modified.  This will trigger the unparser to output 
+  // the comments and CPP directives when using the token-based unparsing. The insertion of a header 
+  // file requires this support else the original token stream will not have the added header file.
+
+  // DQ (11/21/2019): Need to set supportTokenUnparsing.
+     SgSourceFile* sourceFile = getEnclosingSourceFile(scope);
+     ROSE_ASSERT(sourceFile != NULL);
+
+     supportTokenUnparsing      = sourceFile->get_unparse_tokens();
+
+     bool supportUnparseHeaders = sourceFile->get_unparseHeaderFiles();
+
+#if 0
+     printf ("supportTokenUnparsing = %s \n",supportTokenUnparsing ? "true" : "false");
+     printf ("supportUnparseHeaders = %s \n",supportUnparseHeaders ? "true" : "false");
+     printf ("sourceFile  = %p \n",sourceFile);
+     printf ("globalScope = %p \n",globalScope);
+#endif
+#if 0
+     printf ("supportTokenUnparsing = %s \n",supportTokenUnparsing ? "true" : "false");
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
     SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
     if (stmtList.size() > 0) // the source file is not empty
@@ -14865,6 +14921,21 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
               {
              // global_scope->prepend_statement(null_statement);
                 SgEmptyDeclaration* emptyDeclaration = buildEmptyDeclaration();
+
+                if (supportUnparseHeaders == true)
+                   {
+                  // In this case we need to set the physical_file_id to match the target file to be unparsed.
+                     int physical_file_id = globalScope->get_startOfConstruct()->get_physical_file_id();
+#if 0
+                     printf ("physical_file_id = %d \n",physical_file_id);
+#endif
+                     emptyDeclaration->get_startOfConstruct()->set_physical_file_id(physical_file_id);
+                     emptyDeclaration->get_endOfConstruct()->set_physical_file_id(physical_file_id);
+#if 0
+                     printf ("Exiting as a test! \n");
+                     ROSE_ASSERT(false);
+#endif
+                   }
 
                 emptyDeclaration->addToAttachedPreprocessingInfo(result, position);
 
@@ -21809,7 +21880,7 @@ SageInterface::statementCanBeTransformed(SgStatement* stmt)
        // Need to look up the source file name, find the SgIncludeFile, and check if statements from this file can be transformed.
        // There could be at least one other file is this is a header file that was included twice, but it should have a different path.
           string source_filename = stmt->getFilenameString();
-#if 1
+#if 0
           printf ("In SageInterface::statementCanBeTransformed(): source_filename = %s \n",source_filename.c_str());
           printf (" --- Rose::includeFileMapForUnparsing.size()                   = %zu \n",Rose::includeFileMapForUnparsing.size());
 #endif
@@ -21821,12 +21892,12 @@ SageInterface::statementCanBeTransformed(SgStatement* stmt)
             // SgIncludeFile* include_file = Rose::includeFileMapForUnparsing[source_filename];
                SgIncludeFile* include_file = EDG_ROSE_Translation::edg_include_file_map[source_filename];
                ROSE_ASSERT(include_file != NULL);
-#if 1
+#if 0
                printf ("include_file->get_can_be_supported_using_token_based_unparsing() = %s \n",include_file->get_can_be_supported_using_token_based_unparsing() ? "true" : "false");
 #endif
                if (include_file->get_can_be_supported_using_token_based_unparsing() == false)
                   {
-#if 1
+#if 0
                     printf ("NOTE: Transformations of this statement cannot be supported using the header file unparsing with token unparsing options! \n");
 #endif
                     result = false;

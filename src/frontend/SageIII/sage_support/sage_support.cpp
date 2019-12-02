@@ -2576,10 +2576,39 @@ SgProject::parse()
         {
           CompilerOutputParser compilerOutputParser(this);
           const map<string, set<string> >& includedFilesMap = compilerOutputParser.collectIncludedFilesMap();
-
+#if 0
+          printf ("includedFilesMap.size() = %zu \n",includedFilesMap.size());
+          map<string, set<string> >::const_iterator i = includedFilesMap.begin();
+          while (i != includedFilesMap.end())
+            {
+              printf (" --- includedFilesMap: i.first = %s i.second.size() = %zu \n",i->first.c_str(),i->second.size());
+              set<string>::const_iterator ii = i->second.begin();
+              while (ii != i->second.end())
+                 {
+                   printf (" --- --- includedFilesMap: i.second element = %s \n",ii->c_str());
+                   ii++;
+                 }
+              i++;
+            }
+#endif
           IncludingPreprocessingInfosCollector includingPreprocessingInfosCollector(this, includedFilesMap);
           const map<string, set<PreprocessingInfo*> >& includingPreprocessingInfosMap = includingPreprocessingInfosCollector.collect();
-
+#if 0
+          printf ("includingPreprocessingInfosMap.size() = %zu \n",includingPreprocessingInfosMap.size());
+          map<string, set<PreprocessingInfo*> >::const_iterator j = includingPreprocessingInfosMap.begin();
+          while (j != includingPreprocessingInfosMap.end())
+            {
+              printf (" --- includingPreprocessingInfosMap: j.first = %s j.second.size() = %zu \n",j->first.c_str(),j->second.size());
+              set<PreprocessingInfo*>::const_iterator jj = j->second.begin();
+              while (jj != j->second.end())
+                 {
+                   ROSE_ASSERT(*jj != NULL);
+                   printf (" --- --- includingPreprocessingInfosMap: j.second element->get_string() = %s \n",(*jj)->getString().c_str());
+                   jj++;
+                 }
+              j++;
+            }
+#endif
           set_includingPreprocessingInfosMap(includingPreprocessingInfosMap);
 
           if (SgProject::get_verbose() >= 1)
