@@ -16389,14 +16389,89 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
           SgGlobal* fileBeingCopied_globalScope = sourceFileBeingCopied->get_globalScope();
           SgGlobal* result_globalScope          = sourceResult->get_globalScope();
-
+#if 0
+          printf ("fileBeingCopied_globalScope = %p \n",fileBeingCopied_globalScope);
+          printf ("result_globalScope          = %p \n",result_globalScope);
+#endif
           ROSE_ASSERT(fileBeingCopied_globalScope != NULL);
           ROSE_ASSERT(result_globalScope != NULL);
 
-          SgDeclarationStatementPtrList fileBeingCopied_declarationList    = fileBeingCopied_globalScope->get_declarations();
-          SgDeclarationStatementPtrList result_declarationList = result_globalScope->get_declarations();
+          SgDeclarationStatementPtrList fileBeingCopied_declarationList = fileBeingCopied_globalScope->get_declarations();
+          SgDeclarationStatementPtrList result_declarationList          = result_globalScope->get_declarations();
 
+#if 1
+       // DQ (11/22/2019): Use set intersection to compute the list to make be shared (this is a better implementation).
+       // This implementation is insensitive to transforamtions in the original AST for the file.
+          vector<SgDeclarationStatement*>::iterator it;
+          SgDeclarationStatementPtrList v(fileBeingCopied_declarationList.size());
+
+       // This is n log n in complexity, but likely OK.
+          std::sort(fileBeingCopied_declarationList.begin(),fileBeingCopied_declarationList.end());
+          std::sort(result_declarationList.begin(),result_declarationList.end());
+
+       // printf ("v.size() = %zu \n",v.size());
+
+          it = std::set_intersection(fileBeingCopied_declarationList.begin(),fileBeingCopied_declarationList.end(),result_declarationList.begin(),result_declarationList.end(),v.begin());
+
+          v.resize(it-v.begin());
+
+          int fileBeingCopied_file_id = fileBeingCopied->get_startOfConstruct()->get_physical_file_id();
+
+       // printf ("v.size() = %zu \n",v.size());
+          for (size_t i = 0; i < v.size(); i++)
+             {
+               SgDeclarationStatement* intersection_element = v[i];
+            // printf ("intersection_element = %p = %s \n",intersection_element,intersection_element->class_name().c_str());
+#if 0
+               printf ("  --- SageBuilder::buildFile() is sharing this node: %p %s \n",intersection_element,intersection_element->class_name().c_str());
+#endif
+            // DQ (11/10/2019): Need to recursively mark this as shared so that the unparser will be able to test each line?
+
+               fixupSharingSourcePosition(intersection_element,fileBeingCopied_file_id);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#else
+
+#error "DEAD CODE!"
+
+       // This is the older implementation that is sensitive to transforamtions in the original AST from the file.
+       // DQ (11/21/2019): Remove elements in the vector that are SgEmptyDeclarations which 
+       // are associated with some transformations (include header, for example).
+          std::vector<SgDeclarationStatementPtrList::iterator> removeList;
+          SgDeclarationStatementPtrList::iterator i = fileBeingCopied_declarationList.begin();
+          while (i != fileBeingCopied_declarationList.end())
+             {
+               SgEmptyDeclaration* emptyDeclaration = isSgEmptyDeclaration(*i);
+               if (emptyDeclaration != NULL)
+                  {
+                    removeList.push_back(i);
+                  }
+
+               i++;
+             }
+
+#error "DEAD CODE!"
+
+       // Need seperate list to avoid iterator invalidation.
+       // for (SgDeclarationStatementPtrList::iterator i = removeList.begin(); i != removeList.end(); i++)
+          for (std::vector<SgDeclarationStatementPtrList::iterator>::iterator i = removeList.begin(); i != removeList.end(); i++)
+             {
+               fileBeingCopied_declarationList.erase(*i);
+             }
+
+       // DQ (11/21/2019): These might be a different size if for example the file being 
+       // copied is being copied after some transformations to the AST from the original file.
+          if (fileBeingCopied_declarationList.size() != result_declarationList.size())
+             {
+               printf ("fileBeingCopied_declarationList.size() = %zu \n",fileBeingCopied_declarationList.size());
+               printf ("result_declarationList.size() = %zu \n",result_declarationList.size());
+             }
           ROSE_ASSERT(fileBeingCopied_declarationList.size() == result_declarationList.size());
+
+#error "DEAD CODE!"
 
 #if 0
           printf ("Statements from global scope (size = %zu): \n",fileBeingCopied_declarationList.size());
@@ -16415,6 +16490,8 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #endif
                  // DQ (11/10/2019): Need to recursively mark this as shared so that the unparser will be able to test each line?
 
+#error "DEAD CODE!"
+
                     int fileBeingCopied_file_id = fileBeingCopied->get_startOfConstruct()->get_physical_file_id();
                     fixupSharingSourcePosition(fileBeingCopied_decl,fileBeingCopied_file_id);
 #if 0
@@ -16423,6 +16500,10 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #endif
                   }
              }
+
+#error "DEAD CODE!"
+
+#endif
 
 #if 0
           printf ("exiting as a test! \n");

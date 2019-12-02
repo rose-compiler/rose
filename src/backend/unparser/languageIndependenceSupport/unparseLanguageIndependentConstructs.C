@@ -589,6 +589,8 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 #if 0
      printf ("Leaving statementFromFile(): stmt = %p = %s = %s statementInFile = %s sourceFilename = %s \n",
           stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false",sourceFilename.c_str());
+#endif
+#if 0
      if (isSgFunctionDeclaration(stmt) != NULL)
         {
           SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt);

@@ -88,6 +88,24 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 #endif
 
 #if 0
+     printf ("List allFiles list (size = %zu): \n",allFiles.size());
+     set<string>::iterator j = allFiles.begin();
+     size_t all_file_counter = 0;
+     while (j != allFiles.end())
+        {
+          printf ("   --- allFiles[%zu] = %s \n",all_file_counter,(*j).c_str());
+
+          j++;
+          all_file_counter++;
+        }
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+#if 0
   // DQ (10/23/2018): Output report of AST nodes marked as modified!
      SageInterface::reportModifiedStatements("In figureOutWhichFilesToUnparse()",projectNode);
 #endif
@@ -148,6 +166,142 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 #endif
 
 #if 0
+     printf ("Before initializeFilesToUnparse: newFilesToUnparse.size() = %zu \n",newFilesToUnparse.size());
+     printDiagnosticOutput();
+#endif
+
+#if 0
+     printf ("List allFiles list (size = %zu): \n",allFiles.size());
+     set<string>::iterator i = allFiles.begin();
+     size_t all_file_counter = 0;
+     while (i != allFiles.end())
+        {
+          printf ("   --- allFiles[%zu] = %s \n",all_file_counter,(*i).c_str());
+
+          i++;
+          all_file_counter++;
+        }
+#endif
+
+
+  // DQ (11/30/2019): Process the header files to include possilbe header files that only contained another header files 
+  // (and so are not supported within the traversal.  This addresses at least test11 in the UnparseHeadersTest directory.
+#if 0
+     printf ("List allFiles list: processing parent include files chain: (size = %zu): \n",allFiles.size());
+#endif
+     set<string>::iterator k = allFiles.begin();
+     size_t tmp_counter = 0;
+     while (k != allFiles.end())
+        {
+#if 0
+          printf ("   --- allFiles[%zu] = %s \n",tmp_counter,(*k).c_str());
+#endif
+          string filename = *k;
+
+       // Lookup the include file, so that we can traverse it's parents to a known file (in the allFiles list).
+
+       // The source file in oot in the include file list, so we can't support this assertion.
+       // ROSE_ASSERT (EDG_ROSE_Translation::edg_include_file_map.find(filename) != EDG_ROSE_Translation::edg_include_file_map.end());
+          if (EDG_ROSE_Translation::edg_include_file_map.find(filename) != EDG_ROSE_Translation::edg_include_file_map.end())
+             {
+               SgIncludeFile* include_file = EDG_ROSE_Translation::edg_include_file_map[filename];
+            // ROSE_ASSERT(include_file != NULL);
+               if (include_file != NULL)
+                  {
+#if 0
+                    printf ("include_file->get_filename() = %s \n",include_file->get_filename().str());
+#endif
+                    SgIncludeFile* parent_include_file = isSgIncludeFile(include_file->get_parent());
+
+                    while (parent_include_file != NULL)
+                       {
+                         string parent_filename = parent_include_file->get_filename().str();
+#if 0
+                         printf ("parent_include_file->get_filename() = %s \n",parent_include_file->get_filename().str());
+#endif
+                         if (allFiles.find(parent_filename) == allFiles.end())
+                            {
+                           // There may be an arbitraily long chain of parents include files that only include a 
+                           // nested include file. so this should be an iteration over the parent chain.
+#if 0
+                              printf ("parent_filename NOT in allFiles list \n");
+#endif
+                           // See test12 for exactly such a case!
+                           // printf ("NOTE: MUST ITERATE OVER THE CHAIN OF PARENTS \n");
+
+                              allFiles.insert(parent_filename);
+                            }
+                           else
+                            {
+#if 0
+                              printf ("parent_filename FOUND in allFiles list \n");
+#endif
+                            }
+
+                         include_file = EDG_ROSE_Translation::edg_include_file_map[parent_filename];
+#if 0
+                         printf ("include_file = %p \n",include_file);
+#endif
+                      // ROSE_ASSERT(include_file != NULL);
+                         if (include_file != NULL)
+                            {
+#if 0
+                              printf ("include_file->get_parent() = %p \n",include_file->get_parent());
+#endif
+                              parent_include_file = isSgIncludeFile(include_file->get_parent());
+                            }
+                           else
+                            {
+                              parent_include_file = NULL;
+                            }
+                       }
+                  }
+
+#if 0
+               while (SgIncludeFile* parent_include_file = isSgIncludeFile(include_file->get_parent()) && allFiles.find(parent_include_file->get_filename().str()) == allFiles.end()) { }
+#endif
+#if 0
+               SgIncludeFile* parent_include_file = isSgIncludeFile(include_file->get_parent());
+
+               if (parent_include_file != NULL)
+                  {
+                    string parent_filename = parent_include_file->get_filename().str();
+
+                    printf ("parent_include_file->get_filename() = %s \n",parent_include_file->get_filename().str());
+
+                 // Make sure this is in the allFile list (and if not add it).
+                    if (allFiles.find(parent_filename) == allFiles.end())
+                       {
+                      // There may be an arbitraily long chain of parents include files that only include a 
+                      // nested include file. so this should be an iteration over the parent chain.
+
+                      // See test12 for exactly such a case!
+                         printf ("NOTE: MUST ITERATE OVER THE CHAIN OF PARENTS \n");
+
+                         allFiles.insert(parent_filename);
+                       }
+                  }
+                 else
+                  {
+                    printf ("parent_include_file == NULL \n");
+                  }
+#endif
+             }
+
+          k++;
+          tmp_counter++;
+        }
+
+
+#if 0
+     printf ("List allFiles list (size = %zu): \n",allFiles.size());
+     for (set<string>::iterator i = allFiles.begin(); i != allFiles.end(); i++)
+        {
+          printf ("   --- allFiles = %s \n",(*i).c_str());
+        }
+#endif
+
+#if 0
      printf ("List modifiedFiles list (size = %zu): \n",modifiedFiles.size());
      set<string>::iterator j = modifiedFiles.begin();
      size_t modified_file_counter = 0;
@@ -168,6 +322,11 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
      initializeFilesToUnparse();
 
 #if 0
+     printf ("Before DO WHILE loop: newFilesToUnparse.size() = %zu \n",newFilesToUnparse.size());
+     printDiagnosticOutput();
+#endif
+
+#if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif
@@ -184,11 +343,18 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 #endif
           prepareForNewIteration();
 
+       // DQ (11/23/2019): Forse the false branch as part of testing.
        // DQ (11/19/2018): When using the token-based unpasing we don't modify include paths in the source or header files 
        // and so we don't need to unparse as large of a set of header files as when the unparse_tokens option is NOT used.
-          if (projectNode->get_unparse_tokens() == false)
+       // if (projectNode->get_unparse_tokens() == false)
+       // if (projectNode->get_unparse_tokens() == false && projectNode->get_unparseHeaderFiles() == false)
+          if (projectNode->get_unparse_tokens() == false && false)
              {
                collectAdditionalFilesToUnparse();
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
              }
             else
              {
@@ -239,8 +405,15 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
   // applyFunctionToIncludingPreprocessingInfos(allFiles, &IncludedFilesUnparser::updatePreprocessingInfoPaths);
      if (projectNode->get_unparse_tokens() == false)
         {
+#if 0
+          printf ("This feature can't be supported by the token unparsing (without more specific work) \n");
+#endif
           applyFunctionToIncludingPreprocessingInfos(allFiles, &IncludedFilesUnparser::updatePreprocessingInfoPaths);
         }
+#else
+#if 0
+     printf ("applyFunctionToIncludingPreprocessingInfos() can't be supported by the token unparsing (without more specific work) \n");
+#endif
 #endif
 
      for (list<pair<int, string> >::const_iterator it = includeCompilerPaths.begin(); it != includeCompilerPaths.end(); it++)
@@ -249,6 +422,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
         }
 
 #if 0
+  // printf ("Before leaving IncludedFilesUnparser::figureOutWhichFilesToUnparse(): \n");
      printDiagnosticOutput();
 #endif
 
@@ -265,6 +439,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
      ROSE_ASSERT(false);
 #endif
    }
+
 
 void
 IncludedFilesUnparser::printDiagnosticOutput()
@@ -323,6 +498,7 @@ void IncludedFilesUnparser::prepareForNewIteration()
      unparseMap.clear();
      unparsePaths.clear();
      includeCompilerPaths.clear();
+
   // The unparse root path is always included (though could be redundant if no included files need unparsing).
      addIncludeCompilerPath(0, unparseRootPath);
 
@@ -361,20 +537,28 @@ bool IncludedFilesUnparser::isInputFile(const string& absoluteFileName) {
     return false;
 }
 
-void IncludedFilesUnparser::collectNotUnparsedFilesThatRequireUnparsingToAvoidFileNameCollisions() {
-    newFilesToUnparse.clear();
-    for (set<PreprocessingInfo*>::const_iterator preprocessingInfoPtr = notUnparsedPreprocessingInfos.begin(); 
-            preprocessingInfoPtr != notUnparsedPreprocessingInfos.end(); preprocessingInfoPtr++) {
-        IncludeDirective includeDirective((*preprocessingInfoPtr) -> getString());
-        const string& includePath  = includeDirective.getIncludedPath();
-#if 1
-        printf ("In collectNotUnparsedFilesThatRequireUnparsingToAvoidFileNameCollisions(): includePath = %s \n",includePath.c_str());
+void IncludedFilesUnparser::collectNotUnparsedFilesThatRequireUnparsingToAvoidFileNameCollisions() 
+   {
+     newFilesToUnparse.clear();
+     for (set<PreprocessingInfo*>::const_iterator preprocessingInfoPtr = notUnparsedPreprocessingInfos.begin(); 
+             preprocessingInfoPtr != notUnparsedPreprocessingInfos.end(); preprocessingInfoPtr++)
+        {
+          IncludeDirective includeDirective((*preprocessingInfoPtr) -> getString());
+          const string& includePath  = includeDirective.getIncludedPath();
+#if 0
+          printf ("In collectNotUnparsedFilesThatRequireUnparsingToAvoidFileNameCollisions(): includePath = %s \n",includePath.c_str());
 #endif
-        if (isConflictingIncludePath(includePath)) {
-            newFilesToUnparse.insert(FileHelper::getNormalizedContainingFileName(*preprocessingInfoPtr));            
+          if (isConflictingIncludePath(includePath))
+             {
+               newFilesToUnparse.insert(FileHelper::getNormalizedContainingFileName(*preprocessingInfoPtr));            
+             }
         }
-    }
-}
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
 
 bool IncludedFilesUnparser::isConflictingIncludePath(const string& includePath) {
     for (list<pair<int, string> >::const_iterator includeCompilerPathsIterator = includeCompilerPaths.begin(); includeCompilerPathsIterator != includeCompilerPaths.end(); includeCompilerPathsIterator++) {
@@ -454,18 +638,18 @@ void IncludedFilesUnparser::updatePreprocessingInfoPaths(const string& includedF
    {
      ROSE_ASSERT(includingPreprocessingInfo != NULL);
 
-#if 1
+#if 0
      printf ("includedFile = %s \n",includedFile.c_str());
      printf ("includingPreprocessingInfo->getString() = %s \n",includingPreprocessingInfo->getString().c_str());
 #endif
 
      string normalizedIncludingFileName = FileHelper::getNormalizedContainingFileName(includingPreprocessingInfo);
 
-#if 1
+#if 0
      printf ("normalizedIncludingFileName = %s \n",normalizedIncludingFileName.c_str());
 #endif
 
-#if 1
+#if 0
      printf ("filesToUnparse: \n");
      set<string>::const_iterator fileToUnparsePtr = filesToUnparse.begin();
      while (fileToUnparsePtr != filesToUnparse.end())
@@ -479,7 +663,7 @@ void IncludedFilesUnparser::updatePreprocessingInfoPaths(const string& includedF
         {
        // update include paths only in the unparsed files
 
-#if 1
+#if 0
           printf ("unparseMap: \n");
           map<string, string>::const_iterator unparseMapPtr = unparseMap.begin();
           while (unparseMapPtr != unparseMap.end())
@@ -704,37 +888,46 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                     printf ("In initializeFilesToUnparse(): Looking for a SgIncludeFile: filename = %s \n",filename.c_str());
 #endif
                     SgIncludeFile* includeFile = EDG_ROSE_Translation::edg_include_file_map[filename];
-                    ROSE_ASSERT(includeFile != NULL);
-#if 0
-                    printf ("In initializeFilesToUnparse(): includeFile = %p \n",includeFile);
-#endif
-                 // SgSourceFile* sourceFile = includeFile->get_source_file();
-                    sourceFile = includeFile->get_source_file();
-
-                 // DQ (10/26/2019): When this is NULL we need to add it directly.
-                    if (sourceFile == NULL)
+                 // ROSE_ASSERT(includeFile != NULL);
+                    if (includeFile != NULL)
                        {
-                         printf ("When sourceFile == NULL we need to add it directly: filename = %s \n",filename.c_str());
-
-                         ROSE_ASSERT(projectNode != NULL);
-                         sourceFile = buildSourceFileForHeaderFile(projectNode,filename);
-
-                         ROSE_ASSERT(sourceFile != NULL);
-
-                         printf ("Calling includeFile->set_source_file(sourceFile): includeFile = %p filename = %s sourceFile = %p \n",includeFile,includeFile->get_filename().str(),sourceFile);
-
-                      // This is set in buildSourceFileForHeaderFile().
-                         ROSE_ASSERT(includeFile->get_source_file() != NULL);
-                      // includeFile->set_source_file(sourceFile);
-#if 1
-                         printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+#if 0
+                         printf ("In initializeFilesToUnparse(): includeFile = %p \n",includeFile);
 #endif
+                      // SgSourceFile* sourceFile = includeFile->get_source_file();
+                         sourceFile = includeFile->get_source_file();
+
+                      // DQ (10/26/2019): When this is NULL we need to add it directly.
+                         if (sourceFile == NULL)
+                            {
+                              printf ("When sourceFile == NULL we need to add it directly: filename = %s \n",filename.c_str());
+
+                              ROSE_ASSERT(projectNode != NULL);
+                              sourceFile = buildSourceFileForHeaderFile(projectNode,filename);
+
+                              ROSE_ASSERT(sourceFile != NULL);
+
+                              printf ("Calling includeFile->set_source_file(sourceFile): includeFile = %p filename = %s sourceFile = %p \n",includeFile,includeFile->get_filename().str(),sourceFile);
+
+                           // This is set in buildSourceFileForHeaderFile().
+                              ROSE_ASSERT(includeFile->get_source_file() != NULL);
+                           // includeFile->set_source_file(sourceFile);
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+                           else
+                            {
+#if 0
+                              printf ("sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
+#endif
+                            }
                        }
                       else
                        {
 #if 0
-                         printf ("sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
+                         printf ("EDG_ROSE_Translation::edg_include_file_map[filename] is NOT a SgIncludeFile \n");
 #endif
                        }
 
@@ -959,11 +1152,17 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #endif
    }
 
+
 void
 IncludedFilesUnparser::collectAdditionalFilesToUnparse()
    {
   // Recursively add to filesToUnparse set any file that includes using quotes (or an absolute path) at least one of the files that is already in filesToUnparse set.
      set<string> workingSet = filesToUnparse;
+
+#if 0
+     printf ("In collectAdditionalFilesToUnparse(): workingSet = filesToUnparse: workingSet.size() = %zu \n",workingSet.size());
+#endif
+
      while (!workingSet.empty())
         {
           newFilesToUnparse.clear();
@@ -995,6 +1194,11 @@ void IncludedFilesUnparser::collectNewFilesToUnparse(const string& includedFile,
 #if 0
      printf ("Leaving collectNewFilesToUnparse(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
 #endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 
@@ -1003,32 +1207,169 @@ IncludedFilesUnparser::collectAdditionalListOfHeaderFilesToCopy()
    {
   // Recursively add to filesToUnparse set any file that includes using quotes (or an absolute path) at least one of the files that is already in filesToUnparse set.
      set<string> workingSet = filesToUnparse;
+
+#if 0
+     printf ("In collectAdditionalListOfHeaderFilesToCopy(): workingSet = filesToUnparse: workingSet.size() = %zu \n",workingSet.size());
+#endif
+
+  // Using these input lists
+  // std::set<std::string> allFiles;
+  // std::set<std::string> filesToUnparse;
+
+  // Compute this set.
+  // std::set<std::string> filesToCopy;
+
+#if 0
+     printf ("In collectAdditionalListOfHeaderFilesToCopy(): allFiles.size() = %zu \n",allFiles.size());
+     set<string>::iterator i = allFiles.begin();
+     while (i != allFiles.end())
+        {
+          printf (" --- file = %s \n",i->c_str());
+          i++;
+        }
+#endif
+
+#if 0
+     printf ("In collectAdditionalListOfHeaderFilesToCopy(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
+     set<string>::iterator j = filesToUnparse.begin();
+     while (j != filesToUnparse.end())
+        {
+          printf (" --- file = %s \n",j->c_str());
+          j++;
+        }
+#endif
+
+     set<string> setOfPathsForFilesToUnparse;
+
+#if 0
+     printf ("Check if we need to copy files (part 2): \n");
+#endif
+     set<string>::iterator k = filesToUnparse.begin();
+     while (k != filesToUnparse.end())
+        {
+#if 0
+          printf (" --- maybe copy this file = %s \n",k->c_str());
+#endif
+          string path = Rose::getPathFromFileName(*k);
+
+          if (setOfPathsForFilesToUnparse.find(path) == setOfPathsForFilesToUnparse.end())
+             {
+               setOfPathsForFilesToUnparse.insert(path);
+             }
+
+          k++;
+        }
+
+  // We don't need set intersection because the filesToUnparse are a subset of allFiles.
+  // Perform set intersection of setOfPathsToAllFiles with setOfPathsForFilesToUnparse.
+
+#if 0
+     printf ("In collectAdditionalListOfHeaderFilesToCopy(): setOfPathsForFilesToUnparse.size() = %zu \n",setOfPathsForFilesToUnparse.size());
+     set<string>::iterator m = setOfPathsForFilesToUnparse.begin();
+     while (m != setOfPathsForFilesToUnparse.end())
+        {
+          printf (" --- file = %s \n",m->c_str());
+          m++;
+        }
+#endif
+
+#if 0
+  // std::string workingDirectory;
+  // std::string unparseRootPath;
+  // static const std::string defaultUnparseFolderName;
+     printf ("workingDirectory         = %s \n",workingDirectory.c_str());
+     printf ("unparseRootPath          = %s \n",unparseRootPath.c_str());
+     printf ("defaultUnparseFolderName = %s \n",defaultUnparseFolderName.c_str());
+#endif
+
+     ROSE_ASSERT(projectNode != NULL);
+     string applicationRootDirectory = projectNode->get_applicationRootDirectory();
+
+#if 0
+     printf ("applicationRootDirectory = %s \n",applicationRootDirectory.c_str());
+#endif
+
+     ROSE_ASSERT(filesToCopy.empty() == true);
+
+#if 0
+     printf ("\nCopy files in each directory to the directory where associated files are being unparsed \n");
+#endif
+     set<string>::iterator n = setOfPathsForFilesToUnparse.begin();
+     while (n != setOfPathsForFilesToUnparse.end())
+        {
+#if 0
+          printf (" --- path to search for files = %s \n",n->c_str());
+#endif
+          string path_n = *n;
+
+       // Find the subset of allFiles that are in each path and copy them to the unparseRootPath.
+#if 0
+          printf ("iterate through allFiles: allFiles.size() = %zu \n",allFiles.size());
+#endif
+          set<string>::iterator o = allFiles.begin();
+          while (o != allFiles.end())
+             {
+#if 0
+               printf (" --- file = %s \n",o->c_str());
+#endif
+               string path_o = Rose::getPathFromFileName(*o);
+
+               bool isUnparsed = (filesToUnparse.find(*o) != filesToUnparse.end());
+
+               if (isUnparsed == false && path_o == path_n)
+                  {
+#if 0
+                    printf ("Copy this file = %s \n",o->c_str());
+#endif
+                    filesToCopy.insert(*o);
+                  }
+
+               o++;
+             }
+
+       // Copy all header files from this path to the associated directory where file are being unparsed.
+
+          n++;
+        }
+
+#if 0
      while (!workingSet.empty())
         {
           newFilesToUnparse.clear();
           applyFunctionToIncludingPreprocessingInfos(workingSet, &IncludedFilesUnparser::collectNewFilesToCopy);
           workingSet = newFilesToUnparse;
         }
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 
 void IncludedFilesUnparser::collectNewFilesToCopy(const string& includedFile, PreprocessingInfo* includingPreprocessingInfo) 
    {
-#if 1
-     printf ("In collectNewFilesToCopy(): filesToCopy.size() = %zu \n",filesToCopy.size());
+#if 0
+     printf ("In collectNewFilesToCopy(): filesToCopy.size() = %zu includingPreprocessingInfo->getString() = %s \n",filesToCopy.size(),includingPreprocessingInfo->getString().c_str());
 #endif
 
-     IncludeDirective includeDirective(includingPreprocessingInfo -> getString());
+     IncludeDirective includeDirective(includingPreprocessingInfo->getString());
      if (includeDirective.isQuotedInclude() || FileHelper::isAbsolutePath(includeDirective.getIncludedPath())) 
         {
           string normalizedIncludingFileName = FileHelper::getNormalizedContainingFileName(includingPreprocessingInfo);
-#if 1
+#if 0
           printf ("In collectNewFilesToCopy(): normalizedIncludingFileName = %s \n",normalizedIncludingFileName.c_str());
 #endif
           if (filesToCopy.find(normalizedIncludingFileName) == filesToCopy.end()) 
              {
                filesToCopy.insert(normalizedIncludingFileName);
             // newFilesToUnparse.insert(normalizedIncludingFileName);
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
              }
         }
 
@@ -1036,12 +1377,12 @@ void IncludedFilesUnparser::collectNewFilesToCopy(const string& includedFile, Pr
      set<string>::iterator i = allFiles.begin();
      while (i != allFiles.end())
         {
-#if 1
+#if 0
           printf ("Checking allFiles: (*i) = %s \n",(*i).c_str());
 #endif
           if (modifiedFiles.find(*i) == modifiedFiles.end() && filesToCopy.find(*i) == filesToCopy.end())
              {
-#if 1
+#if 0
                printf ("In collectNewFilesToCopy(): adding remaining file to filesToCopy (*i) = %s \n",(*i).c_str());
 #endif
 
@@ -1049,7 +1390,7 @@ void IncludedFilesUnparser::collectNewFilesToCopy(const string& includedFile, Pr
             // filesToCopy.insert(*i);
             // string filenameWithOutPath = FileHelper::normalizePath(*i);
                string filenameWithOutPath = FileHelper::getFileName(*i);
-#if 1
+#if 0
                printf ("In collectNewFilesToCopy(): filtering ROSE preinclude file: filenameWithOutPath = %s \n",filenameWithOutPath.c_str());
 #endif
                if (filenameWithOutPath != "rose_edg_required_macros_and_functions.h")
@@ -1058,7 +1399,7 @@ void IncludedFilesUnparser::collectNewFilesToCopy(const string& includedFile, Pr
                   }
                  else
                   {
-#if 1
+#if 0
                     printf ("@@@@@@@@ Filtered file: *i = %s \n",(*i).c_str());
 #endif
                   }
@@ -1067,8 +1408,8 @@ void IncludedFilesUnparser::collectNewFilesToCopy(const string& includedFile, Pr
           i++;
         }
 
-#if 1
-     printf ("Leaving collectNewFilesToUnparse(): filesToCopy.size() = %zu \n",filesToCopy.size());
+#if 0
+     printf ("Leaving collectNewFilesToCopy(): filesToCopy.size() = %zu \n",filesToCopy.size());
 #endif
 
 #if 0
@@ -1084,6 +1425,28 @@ IncludedFilesUnparser::applyFunctionToIncludingPreprocessingInfos(
    const set<string>& includedFiles, 
    void (IncludedFilesUnparser::*funPtr)(const string& includedFile, PreprocessingInfo* includingPreprocessingInfo) ) 
    {
+#if 0
+     printf ("In applyFunctionToIncludingPreprocessingInfos(): includedFiles.size() = %zu \n",includedFiles.size());
+     set<string>::iterator i = includedFiles.begin();
+     while (i != includedFiles.end())
+        {
+          printf ("In applyFunctionToIncludingPreprocessingInfos(): includedFile = %s \n",(*i).c_str());
+          i++;
+        }
+#endif
+
+#if 0
+     const map<string, set<PreprocessingInfo*> > & temp_includingPreprocessingInfosMap = projectNode -> get_includingPreprocessingInfosMap();
+     printf ("In applyFunctionToIncludingPreprocessingInfos(): temp_includingPreprocessingInfosMap.size() = %zu \n",temp_includingPreprocessingInfosMap.size());
+     map<string, set<PreprocessingInfo*> >::const_iterator j = temp_includingPreprocessingInfosMap.begin();
+     while (j != temp_includingPreprocessingInfosMap.end())
+        {
+          printf ("In applyFunctionToIncludingPreprocessingInfos(): (*j)->first  = %s \n",j->first.c_str());
+          printf (" ------------------------------------------- set (*j)->size() = %zu \n",j->second.size());
+          j++;
+        }
+#endif
+
      for (set<string>::const_iterator includedFile = includedFiles.begin(); includedFile != includedFiles.end(); includedFile++) 
         {
 #if 0
@@ -1091,7 +1454,10 @@ IncludedFilesUnparser::applyFunctionToIncludingPreprocessingInfos(
 #endif
           const map<string, set<PreprocessingInfo*> >& includingPreprocessingInfosMap = projectNode -> get_includingPreprocessingInfosMap();
           map<string, set<PreprocessingInfo*> >::const_iterator mapEntry = includingPreprocessingInfosMap.find(*includedFile);
-
+#if 0
+          printf ("In IncludedFilesUnparser::applyFunctionToIncludingPreprocessingInfos(): mapEntry != includingPreprocessingInfosMap.end() = %s \n",
+               mapEntry != includingPreprocessingInfosMap.end() ? "true" : "false");
+#endif
           if (mapEntry != includingPreprocessingInfosMap.end())
              {
             // includedFile is really included, so look for all its including preprocessing infos.
@@ -1108,6 +1474,9 @@ IncludedFilesUnparser::applyFunctionToIncludingPreprocessingInfos(
              }
         }
 
+#if 0
+     printf ("Leaving applyFunctionToIncludingPreprocessingInfos(): includedFiles.size() = %zu \n",includedFiles.size());
+#endif
 #if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
