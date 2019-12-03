@@ -1,93 +1,93 @@
 0x08048060: sub    esp, 0x00000008
 registers:
-  esp    [writer=0x08048060] read-before-write = {defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])}
-  eip    [writer=0x08048060] write-only = {defs={0x08048060}, expr=0x08048066<134512742>[32]}
-  cf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[1] (extract[1] 0x00000020[32] 0x00000021[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])))}
-  pf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[1] (xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000001[32] 0x00000002[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000002[32] 0x00000003[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000003[32] 0x00000004[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000004[32] 0x00000005[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000005[32] 0x00000006[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000006[32] 0x00000007[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000007[32] 0x00000008[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32]))))}
-  af     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[1] (extract[1] 0x00000004[32] 0x00000005[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])))}
-  zf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(zerop[1] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32]))}
-  sf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32]))}
-  of     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(xor[1] (extract[1] 0x0000001f[32] 0x00000020[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])) (extract[1] 0x00000020[32] 0x00000021[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])))}
+  esp    [writer=0x08048060] read-before-write = {defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])}
+  eip    [writer=0x08048060] write-only = {defs={0x08048060}, expr=0x08048066<134512742>[u32]}
+  cf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])))}
+  pf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32]))))}
+  af     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])))}
+  zf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(zerop[u1] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32]))}
+  sf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(extract[u1] 0x0000001f[u32] 0x00000020[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32]))}
+  of     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(xor[u1] (extract[u1] 0x0000001f[u32] 0x00000020[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])) (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])))}
 memory:
 
 0x08048066: mov    dword ss:[esp], eax
 registers:
-  eax    read-before-write = eax_0[32]
-  esp    [writer=0x08048060] read-before-write = {defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])}
-  eip    [writer=0x08048066] write-only = {defs={0x08048066}, expr=0x08048069<134512745>[32]}
-  cf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[1] (extract[1] 0x00000020[32] 0x00000021[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])))}
-  pf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[1] (xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000001[32] 0x00000002[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000002[32] 0x00000003[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000003[32] 0x00000004[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000004[32] 0x00000005[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000005[32] 0x00000006[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000006[32] 0x00000007[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000007[32] 0x00000008[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32]))))}
-  af     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[1] (extract[1] 0x00000004[32] 0x00000005[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])))}
-  zf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(zerop[1] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32]))}
-  sf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32]))}
-  of     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(xor[1] (extract[1] 0x0000001f[32] 0x00000020[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])) (extract[1] 0x00000020[32] 0x00000021[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])))}
+  eax    read-before-write = eax_0[u32]
+  esp    [writer=0x08048060] read-before-write = {defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])}
+  eip    [writer=0x08048066] write-only = {defs={0x08048066}, expr=0x08048069<134512745>[u32]}
+  cf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])))}
+  pf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32]))))}
+  af     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])))}
+  zf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(zerop[u1] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32]))}
+  sf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(extract[u1] 0x0000001f[u32] 0x00000020[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32]))}
+  of     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(xor[u1] (extract[u1] 0x0000001f[u32] 0x00000020[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])) (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])))}
 memory:
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])} writer=0x08048066 write-only value=(extract[8] 0x00000018[32] 0x00000020[32] eax_0[32])
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])} writer=0x08048066 write-only value=(extract[8] 0x00000010[32] 0x00000018[32] eax_0[32])
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])} writer=0x08048066 write-only value=(extract[8] 0x00000008[32] 0x00000010[32] eax_0[32])
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])} writer=0x08048066 write-only value=(extract[8] 0x00000000[32] 0x00000008[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32])} writer=0x08048066 write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] eax_0[u32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffffa<4294967290,-6>[u32])} writer=0x08048066 write-only value=(extract[u8] 0x00000010[u32] 0x00000018[u32] eax_0[u32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffff9<4294967289,-7>[u32])} writer=0x08048066 write-only value=(extract[u8] 0x00000008[u32] 0x00000010[u32] eax_0[u32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])} writer=0x08048066 write-only value=(extract[u8] 0x00000000[u32] 0x00000008[u32] eax_0[u32])
 
 0x08048069: mov    ecx, dword ss:[esp]
 registers:
-  eax    read-before-write = eax_0[32]
-  ecx    [writer=0x08048069] write-only = eax_0[32]
-  esp    [writer=0x08048060] read-before-write = {defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])}
-  eip    [writer=0x08048069] write-only = {defs={0x08048069}, expr=0x0804806c<134512748>[32]}
-  cf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[1] (extract[1] 0x00000020[32] 0x00000021[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])))}
-  pf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[1] (xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000001[32] 0x00000002[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000002[32] 0x00000003[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000003[32] 0x00000004[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000004[32] 0x00000005[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000005[32] 0x00000006[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000006[32] 0x00000007[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000007[32] 0x00000008[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32]))))}
-  af     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[1] (extract[1] 0x00000004[32] 0x00000005[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])))}
-  zf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(zerop[1] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32]))}
-  sf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32]))}
-  of     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(xor[1] (extract[1] 0x0000001f[32] 0x00000020[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])) (extract[1] 0x00000020[32] 0x00000021[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])))}
+  eax    read-before-write = eax_0[u32]
+  ecx    [writer=0x08048069] write-only = eax_0[u32]
+  esp    [writer=0x08048060] read-before-write = {defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])}
+  eip    [writer=0x08048069] write-only = {defs={0x08048069}, expr=0x0804806c<134512748>[u32]}
+  cf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])))}
+  pf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32]))))}
+  af     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])))}
+  zf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(zerop[u1] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32]))}
+  sf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(extract[u1] 0x0000001f[u32] 0x00000020[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32]))}
+  of     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(xor[u1] (extract[u1] 0x0000001f[u32] 0x00000020[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])) (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])))}
 memory:
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])} writer=0x08048066 value=(extract[8] 0x00000018[32] 0x00000020[32] eax_0[32])
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])} writer=0x08048066 value=(extract[8] 0x00000010[32] 0x00000018[32] eax_0[32])
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])} writer=0x08048066 value=(extract[8] 0x00000008[32] 0x00000010[32] eax_0[32])
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])} writer=0x08048066 value=(extract[8] 0x00000000[32] 0x00000008[32] eax_0[32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32])} writer=0x08048066 value=(extract[u8] 0x00000018[u32] 0x00000020[u32] eax_0[u32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffffa<4294967290,-6>[u32])} writer=0x08048066 value=(extract[u8] 0x00000010[u32] 0x00000018[u32] eax_0[u32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffff9<4294967289,-7>[u32])} writer=0x08048066 value=(extract[u8] 0x00000008[u32] 0x00000010[u32] eax_0[u32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])} writer=0x08048066 value=(extract[u8] 0x00000000[u32] 0x00000008[u32] eax_0[u32])
 
 0x0804806c: mov    eax, dword ss:[esp + 0xfc<-4>]
 registers:
-  eax    [writer=0x0804806c] read-before-write = v2379[32]
-  ecx    [writer=0x08048069] write-only = eax_0[32]
-  esp    [writer=0x08048060] read-before-write = {defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])}
-  eip    [writer=0x0804806c] write-only = {defs={0x0804806c}, expr=0x08048070<134512752>[32]}
-  cf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[1] (extract[1] 0x00000020[32] 0x00000021[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])))}
-  pf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[1] (xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000001[32] 0x00000002[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000002[32] 0x00000003[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000003[32] 0x00000004[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000004[32] 0x00000005[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000005[32] 0x00000006[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000006[32] 0x00000007[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000007[32] 0x00000008[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32]))))}
-  af     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[1] (extract[1] 0x00000004[32] 0x00000005[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])))}
-  zf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(zerop[1] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32]))}
-  sf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32]))}
-  of     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(xor[1] (extract[1] 0x0000001f[32] 0x00000020[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])) (extract[1] 0x00000020[32] 0x00000021[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])))}
+  eax    [writer=0x0804806c] read-before-write = v2580[u32]
+  ecx    [writer=0x08048069] write-only = eax_0[u32]
+  esp    [writer=0x08048060] read-before-write = {defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])}
+  eip    [writer=0x0804806c] write-only = {defs={0x0804806c}, expr=0x08048070<134512752>[u32]}
+  cf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])))}
+  pf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32]))))}
+  af     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])))}
+  zf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(zerop[u1] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32]))}
+  sf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(extract[u1] 0x0000001f[u32] 0x00000020[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32]))}
+  of     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(xor[u1] (extract[u1] 0x0000001f[u32] 0x00000020[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])) (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])))}
 memory:
-  addr={defs={0x08048060,0x0804806c}, expr=(add[32] esp_0[32] 0xfffffff7<4294967287,-9>[32])} read-before-write value=(extract[8] 0x00000018[32] 0x00000020[32] v2379[32])
-  addr={defs={0x08048060,0x0804806c}, expr=(add[32] esp_0[32] 0xfffffff6<4294967286,-10>[32])} read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] v2379[32])
-  addr={defs={0x08048060,0x0804806c}, expr=(add[32] esp_0[32] 0xfffffff5<4294967285,-11>[32])} read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] v2379[32])
-  addr={defs={0x08048060,0x0804806c}, expr=(add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32])} read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] v2379[32])
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])} writer=0x08048066 value=(extract[8] 0x00000018[32] 0x00000020[32] eax_0[32])
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])} writer=0x08048066 value=(extract[8] 0x00000010[32] 0x00000018[32] eax_0[32])
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])} writer=0x08048066 value=(extract[8] 0x00000008[32] 0x00000010[32] eax_0[32])
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])} writer=0x08048066 value=(extract[8] 0x00000000[32] 0x00000008[32] eax_0[32])
+  addr={defs={0x08048060,0x0804806c}, expr=(add[u32] esp_0[u32] 0xfffffff7<4294967287,-9>[u32])} read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] v2580[u32])
+  addr={defs={0x08048060,0x0804806c}, expr=(add[u32] esp_0[u32] 0xfffffff6<4294967286,-10>[u32])} read-before-write value=(extract[u8] 0x00000010[u32] 0x00000018[u32] v2580[u32])
+  addr={defs={0x08048060,0x0804806c}, expr=(add[u32] esp_0[u32] 0xfffffff5<4294967285,-11>[u32])} read-before-write value=(extract[u8] 0x00000008[u32] 0x00000010[u32] v2580[u32])
+  addr={defs={0x08048060,0x0804806c}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])} read-before-write value=(extract[u8] 0x00000000[u32] 0x00000008[u32] v2580[u32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32])} writer=0x08048066 value=(extract[u8] 0x00000018[u32] 0x00000020[u32] eax_0[u32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffffa<4294967290,-6>[u32])} writer=0x08048066 value=(extract[u8] 0x00000010[u32] 0x00000018[u32] eax_0[u32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffff9<4294967289,-7>[u32])} writer=0x08048066 value=(extract[u8] 0x00000008[u32] 0x00000010[u32] eax_0[u32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])} writer=0x08048066 value=(extract[u8] 0x00000000[u32] 0x00000008[u32] eax_0[u32])
 
 0x08048070: mov    eax, 0x00000001
 registers:
-  eax    [writer=0x08048070] read-before-write = {defs={0x08048070}, expr=0x00000001[32]}
-  ecx    [writer=0x08048069] write-only = eax_0[32]
-  esp    [writer=0x08048060] read-before-write = {defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])}
-  eip    [writer=0x08048070] write-only = {defs={0x08048070}, expr=0x08048075<134512757>[32]}
-  cf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[1] (extract[1] 0x00000020[32] 0x00000021[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])))}
-  pf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[1] (xor[1] (extract[1] 0x00000000[32] 0x00000001[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000001[32] 0x00000002[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000002[32] 0x00000003[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000003[32] 0x00000004[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000004[32] 0x00000005[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000005[32] 0x00000006[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000006[32] 0x00000007[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])) (extract[1] 0x00000007[32] 0x00000008[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32]))))}
-  af     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[1] (extract[1] 0x00000004[32] 0x00000005[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])))}
-  zf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(zerop[1] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32]))}
-  sf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(extract[1] 0x0000001f[32] 0x00000020[32] (add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32]))}
-  of     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(xor[1] (extract[1] 0x0000001f[32] 0x00000020[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])) (extract[1] 0x00000020[32] 0x00000021[32] (xor[33] (add[33] (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff8<4294967288>[33]) (uextend[33] 0x00000021[32] esp_0[32]) 0x0fffffff7<4294967287>[33])))}
+  eax    [writer=0x08048070] read-before-write = {defs={0x08048070}, expr=0x00000001[u32]}
+  ecx    [writer=0x08048069] write-only = eax_0[u32]
+  esp    [writer=0x08048060] read-before-write = {defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])}
+  eip    [writer=0x08048070] write-only = {defs={0x08048070}, expr=0x08048075<134512757>[u32]}
+  cf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])))}
+  pf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32]))))}
+  af     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])))}
+  zf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(zerop[u1] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32]))}
+  sf     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(extract[u1] 0x0000001f[u32] 0x00000020[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32]))}
+  of     [writer=0x08048060] write-only = {defs={0x08048060}, expr=(xor[u1] (extract[u1] 0x0000001f[u32] 0x00000020[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])) (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x0fffffff7<4294967287>[u33])))}
 memory:
-  addr={defs={0x08048060,0x0804806c}, expr=(add[32] esp_0[32] 0xfffffff7<4294967287,-9>[32])} read-before-write value=(extract[8] 0x00000018[32] 0x00000020[32] v2379[32])
-  addr={defs={0x08048060,0x0804806c}, expr=(add[32] esp_0[32] 0xfffffff6<4294967286,-10>[32])} read-before-write value=(extract[8] 0x00000010[32] 0x00000018[32] v2379[32])
-  addr={defs={0x08048060,0x0804806c}, expr=(add[32] esp_0[32] 0xfffffff5<4294967285,-11>[32])} read-before-write value=(extract[8] 0x00000008[32] 0x00000010[32] v2379[32])
-  addr={defs={0x08048060,0x0804806c}, expr=(add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32])} read-before-write value=(extract[8] 0x00000000[32] 0x00000008[32] v2379[32])
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffffb<4294967291,-5>[32])} writer=0x08048066 value=(extract[8] 0x00000018[32] 0x00000020[32] eax_0[32])
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffffa<4294967290,-6>[32])} writer=0x08048066 value=(extract[8] 0x00000010[32] 0x00000018[32] eax_0[32])
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffff9<4294967289,-7>[32])} writer=0x08048066 value=(extract[8] 0x00000008[32] 0x00000010[32] eax_0[32])
-  addr={defs={0x08048060}, expr=(add[32] esp_0[32] 0xfffffff8<4294967288,-8>[32])} writer=0x08048066 value=(extract[8] 0x00000000[32] 0x00000008[32] eax_0[32])
+  addr={defs={0x08048060,0x0804806c}, expr=(add[u32] esp_0[u32] 0xfffffff7<4294967287,-9>[u32])} read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] v2580[u32])
+  addr={defs={0x08048060,0x0804806c}, expr=(add[u32] esp_0[u32] 0xfffffff6<4294967286,-10>[u32])} read-before-write value=(extract[u8] 0x00000010[u32] 0x00000018[u32] v2580[u32])
+  addr={defs={0x08048060,0x0804806c}, expr=(add[u32] esp_0[u32] 0xfffffff5<4294967285,-11>[u32])} read-before-write value=(extract[u8] 0x00000008[u32] 0x00000010[u32] v2580[u32])
+  addr={defs={0x08048060,0x0804806c}, expr=(add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])} read-before-write value=(extract[u8] 0x00000000[u32] 0x00000008[u32] v2580[u32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32])} writer=0x08048066 value=(extract[u8] 0x00000018[u32] 0x00000020[u32] eax_0[u32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffffa<4294967290,-6>[u32])} writer=0x08048066 value=(extract[u8] 0x00000010[u32] 0x00000018[u32] eax_0[u32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffff9<4294967289,-7>[u32])} writer=0x08048066 value=(extract[u8] 0x00000008[u32] 0x00000010[u32] eax_0[u32])
+  addr={defs={0x08048060}, expr=(add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])} writer=0x08048066 value=(extract[u8] 0x00000000[u32] 0x00000008[u32] eax_0[u32])
 
 0x08048075: int    0x80<-128>
 registers:
@@ -95,6 +95,6 @@ memory:
 
 0x08048077: hlt    
 registers:
-  eip    [writer=0x08048077] write-only = {defs={0x08048077}, expr=0x08048077<134512759>[32]}
+  eip    [writer=0x08048077] write-only = {defs={0x08048077}, expr=0x08048077<134512759>[u32]}
 memory:
 

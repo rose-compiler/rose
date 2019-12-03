@@ -126,16 +126,10 @@ public:
         return insn->get_kind();
     }
 
-    /** Update OV and SO bits of the XER register.
-     *
-     *  If called, it should be called before @ref updateCr0 since updateCr0 will copy some of the XER into the CR result.  The
-     *  arguments are the @p result of some addition-like operation and a @p carry out bit from that operation. An overflow is
-     *  deemed to have occurred if the result's sign bit is not equal to the carry bit. */
-    void updateXerOverflow(const BaseSemantics::SValuePtr &result, const BaseSemantics::SValuePtr &carry);
-
     /** Set the XER OV and SO bits as specified.
      *
-     *  The XER OV bit is assigned the argument, and the XER SO bit is set only if the argument is set. */
+     *  The XER OV bit is assigned the argument, and the XER SO bit is set only if the argument is set. This function should
+     *  be called before @ref updateCr0 since @ref updateCr0 will copy some of the XER into the CR result. */
     void setXerOverflow(const BaseSemantics::SValuePtr &hadOverflow);
 
     /** Write status flags for result. */

@@ -25,6 +25,6 @@ struct LoopInfo {
   std::string toString();
 };
 
-typedef vector< LoopInfo > LoopInfoSet;
+typedef std::vector< LoopInfo > LoopInfoSet;
 
 #endif

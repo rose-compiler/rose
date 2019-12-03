@@ -1402,7 +1402,10 @@ ATbool ATermToUntypedFortranTraversal::traverse_DerivedTypeDef(ATerm term, SgUnt
       // t_private, can this be added to the attr_list?
       // t_type_bound
 
-      struct_decl = new SgUntypedStructureDeclaration(label, struct_name, attr_list, dim_info, struct_def);
+      // neither a jovial block nor table (only one choice for Fortran, derived type)
+      int struct_type = General_Language_Translation::e_unknown;
+
+      struct_decl = new SgUntypedStructureDeclaration(label, struct_type, struct_name, attr_list, dim_info, struct_def);
       ROSE_ASSERT(struct_decl);
       setSourcePosition(struct_decl, term);
    }
@@ -1503,7 +1506,8 @@ ATbool ATermToUntypedFortranTraversal::traverse_TypeDeclarationStmt(ATerm term, 
 
    std::cerr << "...TODO... fully implement AttrSpecList in TypeDeclarationStmt: list is " << attr_list << std::endl;
 
-   variable_decl = new SgUntypedVariableDeclaration(label, declared_type, attr_list, var_name_list);
+   variable_decl = new SgUntypedVariableDeclaration(label, declared_type, /*base_type_decl*/NULL, false, attr_list, var_name_list);
+   ROSE_ASSERT(variable_decl != NULL);
    setSourcePositionExcludingTerm(variable_decl, term, term_eos);
 
    decl_list->get_decl_list().push_back(variable_decl);

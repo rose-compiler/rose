@@ -598,6 +598,10 @@ HEADER_STORAGE_MODIFIER_START
                e_cuda_pinned         = 22, /*!< CUDA, in device's texture memory (read only)  */
                e_cuda_texture        = 23, /*!< CUDA, in host's page-locked memory */
 
+            // Rasmussen (10/20/2019): Jovial storage modifiers
+               e_jovial_def          = 24, /*!< Jovial, specifies that variable is available (memory allocated) */
+               e_jovial_ref          = 25, /*!< Jovial, specifies that variable is available (no memory created) */
+
                e_last_modifier  /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -665,6 +669,14 @@ HEADER_STORAGE_MODIFIER_START
        // Rasmussen (02/06/2018): Fortran contiguous array storage attribute
           bool isContiguous() const;
           void setContiguous();
+
+       // Rasmussen (10/20/2019): Jovial storage modifiers
+       //
+          bool isJovialDef() const;
+          void setJovialDef();
+
+          bool isJovialRef() const;
+          void setJovialRef();
 
        // TV (04/08/2010): Support for CUDA storage modifiers
 
@@ -828,6 +840,9 @@ HEADER_FUNCTION_MODIFIER_START
                e_marked_default            = 38, /*!< marked using "= default" syntax (different from default enum value) */
                e_marked_delete             = 39, /*!< marked using "= delete" syntax */
 
+            // Rasmussen (10/26/2019): Jovial function modifier
+               e_reentrant                 = 40, /*!< re-entrant function */
+
                e_last_modifier     /*!< last value (upper bound on range of values, used in error checking) */
              };
              
@@ -888,6 +903,11 @@ HEADER_FUNCTION_MODIFIER_START
           bool isRecursive() const;
           void setRecursive();
           void unsetRecursive();
+
+       // Rasmussen (10/26/2019): support for Jovial reentrant attribute on functions
+          bool isReentrant() const;
+          void setReentrant();
+          void unsetReentrant();
 
        // DQ (1/3/2009): Added GNU specific attributes
           bool isGnuAttributeConstructor() const;
@@ -2425,6 +2445,14 @@ void $CLASSNAME::setPointerBased()      { p_modifier = e_pointer_based; }
 bool SgStorageModifier::isContiguous() const { return p_modifier == e_contiguous; }
 void SgStorageModifier::setContiguous()      {        p_modifier  = e_contiguous; }
 
+// Rasmussen (10/20/2019): Jovial storage modifiers
+//
+bool SgStorageModifier::isJovialDef() const { return p_modifier == e_jovial_def; }
+void SgStorageModifier::setJovialDef()      {        p_modifier  = e_jovial_def; }
+
+bool SgStorageModifier::isJovialRef() const { return p_modifier == e_jovial_ref; }
+void SgStorageModifier::setJovialRef()      {        p_modifier  = e_jovial_ref; }
+
 // TV (08/04/2010): Support for CUDA storage modifiers
 
 bool SgStorageModifier::isCudaGlobal() const { return p_modifier == e_cuda_global; }
@@ -2673,6 +2701,11 @@ bool SgFunctionModifier::isRecursive() const { return checkBit(e_recursive,p_mod
 void SgFunctionModifier::setRecursive()      { setBit(e_recursive,p_modifierVector); }
 void SgFunctionModifier::unsetRecursive()    { unsetBit(e_recursive,p_modifierVector); }
 
+// Rasmussen (10/26/2019): Added Jovial specific attribute
+bool SgFunctionModifier::isReentrant() const { return checkBit(e_reentrant,p_modifierVector); }
+void SgFunctionModifier::setReentrant()      { setBit(e_reentrant,p_modifierVector); }
+void SgFunctionModifier::unsetReentrant()    { unsetBit(e_reentrant,p_modifierVector); }
+
 // DQ (1/3/2009): Added GNU specific attributes
 bool SgFunctionModifier::isGnuAttributeConstructor() const { return checkBit(e_gnu_attribute__constructor__,p_modifierVector); }
 void SgFunctionModifier::setGnuAttributeConstructor()      { setBit(e_gnu_attribute__constructor__,p_modifierVector); }
@@ -2837,6 +2870,7 @@ SgFunctionModifier::displayString() const
   // DQ (2/26/2013): Bug report noticed that a set of these attributes were not properly support.
      s += std::string("isElemental() = ")                        + std::string(isElemental() ? "true " : "false ");
      s += std::string("isRecursive() = ")                        + std::string(isRecursive() ? "true " : "false ");
+     s += std::string("isReentrant() = ")                        + std::string(isReentrant() ? "true " : "false ");
      s += std::string("isGnuAttributeConstructor() = ")          + std::string(isGnuAttributeConstructor() ? "true " : "false ");
      s += std::string("isGnuAttributeDestructor() = ")           + std::string(isGnuAttributeDestructor() ? "true " : "false ");
      s += std::string("isGnuAttributePure() = ")                 + std::string(isGnuAttributePure() ? "true " : "false ");
@@ -2898,6 +2932,7 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isPure()      == rhs.isPure()     ) &&
 	       (lhs.isElemental() == rhs.isElemental()) &&
 	       (lhs.isRecursive() == rhs.isRecursive()) &&
+	       (lhs.isReentrant() == rhs.isReentrant()) &&
 	       // GNU specific
 	       (lhs.isGnuAttributeConstructor() == rhs.isGnuAttributeConstructor()) &&
 	       (lhs.isGnuAttributeDestructor()  == rhs.isGnuAttributeDestructor() ) &&
@@ -16895,7 +16930,7 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
 
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenMap = this->get_tokenSubsequenceMap();
 
-#if 1
+#if 0
      printf ("In SgSourceFile::set_tokenSubsequenceMap(): (before): tokenMap.size() = %zu \n",tokenMap.size());
 #endif
 
@@ -16934,7 +16969,7 @@ SgSourceFile::set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNode
           i++;
         }
 
-#if 1
+#if 0
      printf ("In SgSourceFile::set_tokenSubsequenceMap(): (after): tokenMap.size() = %zu \n",tokenMap.size());
 #endif
 
@@ -16995,7 +17030,7 @@ SgSourceFile::get_tokenSubsequenceMap()
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* result = Rose::tokenSubsequenceMapOfMaps[index];
      ROSE_ASSERT(result != NULL);
 
-#if 1
+#if 0
   // DQ (10/4/2018): Run a test each time this map is accessed: Output the tokenStreamSequenceMap:
 #if 0
      printf ("In SgSourceFile::get_tokenSubsequenceMap(): Output TokenStreamSequenceToNodeMapping \n");
@@ -17442,7 +17477,7 @@ SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement
 
      std::map<SgScopeStatement*,SgStatement*> & frontierMap = this->get_representativeWhitespaceStatementMap();
 
-#if 1
+#if 0
      printf ("In SgSourceFile::set_representativeWhitespaceStatementMap(): (before): frontierMap.size() = %zu \n",frontierMap.size());
 #endif
 
@@ -17484,7 +17519,7 @@ SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement
           i++;
         }
 
-#if 1
+#if 0
      printf ("In SgSourceFile::set_representativeWhitespaceStatementMap(): (after): frontierMap.size() = %zu \n",frontierMap.size());
 #endif
    }

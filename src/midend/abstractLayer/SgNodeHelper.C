@@ -1576,6 +1576,8 @@ string SgNodeHelper::nodeToString(SgNode* node) {
   * \date 2012.
  */
 string SgNodeHelper::getFunctionName(SgNode* node) {
+  if(!node)
+    return "";
   SgFunctionDeclaration* fundecl=0;
   if(SgFunctionDefinition* fundef=isSgFunctionDefinition(node)) {
     node=fundef->get_declaration();
@@ -1822,6 +1824,12 @@ SgNodeHelper::collectPragmaLines(string pragmaName,SgNode* root) {
   return l;
 }
 
+std::string SgNodeHelper::getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl) {
+  SgPragma* pragma=pragmaDecl->get_pragma();
+  ROSE_ASSERT(pragma);
+  return pragma->get_pragma();
+}
+
 void SgNodeHelper::replaceString(std::string& str, const std::string& from, const std::string& to) {
   if(from.empty())
     return;
@@ -1846,12 +1854,29 @@ bool SgNodeHelper::isLastChildOf(SgNode* elem, SgNode* parent) {
   return elem==children.back();
 }
 
-std::string SgNodeHelper::getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl) {
-  SgPragma* pragma=pragmaDecl->get_pragma();
-  ROSE_ASSERT(pragma);
-  return pragma->get_pragma();
+#if __cplusplus > 199711L
+bool SgNodeHelper::hasOmpNoWait(SgOmpClauseBodyStatement *ompNode) {
+  for (auto c : ompNode->get_clauses()) {
+    if (isSgOmpNowaitClause(c)) {
+      return true;
+    }
+  }
+  return false;
 }
 
+SgNodeHelper::OmpSectionList SgNodeHelper::getOmpSectionList(SgOmpSectionsStatement *sectionsStmt) {
+  auto bb = isSgBasicBlock(sectionsStmt->get_traversalSuccessorByIndex(0));
+  OmpSectionList l;
+  for (auto stmt : bb->get_statements()) {
+    if (auto s = isSgOmpSectionStatement(stmt)) {
+      l.push_back(s);
+    }
+  }
+  return l;
+}
+#endif
+
+#if __cplusplus > 199711L
 namespace SgNodeHelper {
 
 template <typename N>
@@ -1904,8 +1929,6 @@ bool node_can_be_changed<SgInitializedName>(SgInitializedName * iname) {
   return SgNodeHelper::node_can_be_changed<SgLocatedNodeSupport>(iname);
 }
 
-
-#if __cplusplus > 199711L
 bool nodeCanBeChanged(SgLocatedNode * lnode) {
   // TODO big switch statement...
   SgFunctionDeclaration * fdecl = isSgFunctionDeclaration(lnode);
@@ -1915,7 +1938,6 @@ bool nodeCanBeChanged(SgLocatedNode * lnode) {
     return SgNodeHelper::node_can_be_changed(lnode);
   }
 }
-#endif
 
 }
-
+#endif

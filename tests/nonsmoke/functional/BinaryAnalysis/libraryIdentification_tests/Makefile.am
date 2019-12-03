@@ -38,16 +38,6 @@ else
 TEST_TARGETS += libraryIdentificationTest_2.passed
 libraryIdentificationTest_2.passed: libraryIdentificationTest_obj.conf libraryIdentificationTest
 	@$(RTH_RUN) ARCHIVE=$(top_srcdir)/tests/nonsmoke/specimens/binary/libTest-amd64.a $< $@
-
-TEST_TARGETS += libraryIdentificationTest_3.passed
-libraryIdentificationTest_3.passed: libraryIdentificationTest.conf libraryIdentificationTest
-	@$(RTH_RUN) ARGS='-rose:verbose 0 -rose:read_executable_file_format_only' \
-		INPUT=$(top_srcdir)/tests/nonsmoke/specimens/binary/libTest-amd64.a $< $@
-
-TEST_TARGETS += libraryIdentificationTest_4.passed
-libraryIdentificationTest_4.passed: libraryIdentificationTest.conf libraryIdentificationTest
-	@$(RTH_RUN) ARGS='-rose:verbose 0' \
-		INPUT=$(top_srcdir)/tests/nonsmoke/specimens/binary/libTest-amd64.a $< $@
 endif
 
 # Conditionally link to SSL support since they disable use of Java (and so Fortran support in ROSE).

@@ -208,6 +208,8 @@ public:
 
     // FIXME[Robb Matzke 2019-08-12]: content is read-only, created by constructor. Therefore this member shouldn't be defined,
     // or at least should be private.
+    /** The setter helps to conveniently populate a Specimen's properties
+     *  from a database query. */
     void content(std::vector<uint8_t> binary_data);
 };
 
@@ -321,8 +323,8 @@ public:
 // Concrete executors and their results
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static const char* const tagConcreteExecutorResult = "ConcreteExecutorResult";
-static const char* const tagLinuxExecutorResult    = "LinuxExecutorResult";
+extern const char* const tagConcreteExecutorResult;
+extern const char* const tagLinuxExecutorResult;
 
 /** Base class for executing test cases concretely.
  *
@@ -587,13 +589,13 @@ public:
 // Databases
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// FIXME[Robb Matzke 2019-07-03]: All public classes and all their public members should be documented with doxygen comments.
+/** ID class for database objects. */
 template <class Tag>
-class ObjectId: public Sawyer::Optional<int> {
+class ObjectId: public Sawyer::Optional<size_t> {
 public:
-    typedef Sawyer::Optional<int> Super;
-    typedef int                   Value;                // FIXME[Robb Matzke 2019-07-03]: negative values are allowed?!
-    typedef Tag                   Object;               /**< Type of object to which this ID refers. */
+    typedef size_t                  Value;         /**< Type of ID. */
+    typedef Sawyer::Optional<Value> Super;         /**< Supertype of this class. */
+    typedef Tag                     Object;        /**< Type of object to which this ID refers. */
 
     ObjectId() {}
 
@@ -622,31 +624,33 @@ public:
         }
     }
 
+    /** Assignment operator to replace default generated one. */
     ObjectId<Tag>& operator=(const ObjectId<Tag>& lhs) {
         this->Super::operator=(lhs);
         return *this;
     }
 
+    /** Assignment overload to allow assignments of Value objects. */
     ObjectId<Tag>& operator=(const Value& v) {
         this->Super::operator=(v);
         return *this;
     }
 
+    /** external operator to define ordering. */
     template<class _Tag>
     friend
     bool operator<(const ObjectId<_Tag>& lhs, const ObjectId<_Tag>& rhs);
 };
 
+/** defines ordering of ObjectIds. */
 template<class Tag>
 inline
 bool operator<(const ObjectId<Tag>& lhs, const ObjectId<Tag>& rhs)
 {
-    static const int noid = -1;
+    if (!rhs) return false;
+    if (!lhs) return true;
 
-    const int lhsid = lhs.orElse(noid);
-    const int rhsid = rhs.orElse(noid);
-
-    return lhsid < rhsid;
+    return lhs.get() < rhs.get();
 }
 
 typedef ObjectId<TestSuite> TestSuiteId;                /**< Database ID for test suite objects. */

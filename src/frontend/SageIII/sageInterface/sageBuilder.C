@@ -1511,7 +1511,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
           printf ("In SageBuilder::buildVariableDeclaration_nfi(): variableSymbol == NULL: varDecl = %p: initializedName = %p = %s \n",varDecl,tmp_initializedName,tmp_initializedName->get_name().str());
           printf (" --- tmp_initializedName->get_initptr() = %p \n",tmp_initializedName->get_initptr());
 #endif
-       // DQ (6/25/2019): This ia new feature to input the builtFromUseOnly function optional parameter.
+       // DQ (6/25/2019): This is a new feature to input the builtFromUseOnly function optional parameter.
           if (builtFromUseOnly == true)
              {
 #if DEBUG_BUILD_VARIABLE_DECLARATION
@@ -3418,6 +3418,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           printf ("In buildNondefiningFunctionDeclaration_T(): isMemberFunction = %s scope == NULL resetting the scope = %p = %s \n",isMemberFunction ? "true" : "false",scope,scope->class_name().c_str());
 #endif
         }
+     ROSE_ASSERT (scope !=NULL);
 
 #if 0
      printf ("In buildNondefiningFunctionDeclaration_T(): scope = %p = %s templateArgumentsList = %p templateParameterList = %p \n",
@@ -4440,6 +4441,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
      printf ("Leaving buildNondefiningFunctionDeclaration_T(): func: unparseNameToString() = %s \n",func->unparseNameToString().c_str());
 #endif
 
+     ROSE_ASSERT(paralist->get_parent() != NULL); 
      return func;
    }
 
@@ -12354,9 +12356,10 @@ SgDerivedTypeStatement * SageBuilder::buildDerivedTypeStatement(const SgName& na
    }
 
 //! Build a Jovial table declaration statement.  A Jovial table is essentially a C struct with an optional struct size.
-SgJovialTableStatement * SageBuilder::buildJovialTableStatement(const SgName& name, SgScopeStatement* scope /*=NULL*/)
+SgJovialTableStatement * SageBuilder::buildJovialTableStatement(const SgName& name,
+                                                                SgClassDeclaration::class_types kind,
+                                                                SgScopeStatement* scope /*=NULL*/)
    {
-     SgClassDeclaration::class_types kind = SgClassDeclaration::e_jovial_table;
      SgJovialTableStatement* table_decl = buildClassDeclarationStatement_nfi <SgJovialTableStatement> (name, kind, scope);
 
      setOneSourcePositionForTransformation(table_decl);
@@ -12509,6 +12512,7 @@ SageBuilder::buildClassDeclarationStatement_nfi(const SgName & name, SgClassDecl
                        class_type = SgJavaParameterType::createType(nondefdecl);
                        break;
                     case SgClassDeclaration::e_jovial_table:
+                    case SgClassDeclaration::e_jovial_block:
                        class_type = SgJovialTableType::createType(nondefdecl);
                        break;
                     default:

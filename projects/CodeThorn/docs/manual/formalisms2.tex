@@ -1,0 +1,191 @@
+\usepackage{stmaryrd} %permits using bigsqcap
+
+\newcommand{\outcomment}[1]{}
+
+\newenvironment{formula}
+{%
+\begin{displaymath}%
+\begin{array}{rcl}%
+}%
+{%
+\end{array}%
+\end{displaymath}%
+}%
+
+\outcomment{
+\newenvironment{example}
+{%
+\textbf{Example}.%
+}%
+{%
+%
+}%
+
+\newenvironment{remark}
+{%
+\textbf{Remark}:%
+}%
+{%
+%
+}%
+
+\newenvironment{proof}
+{%
+\textbf{Proof}:%
+}%
+{%
+$\Box$%
+}%
+}
+
+
+\newcommand{\sourcefont}[0]{\ptsize{8}\ttfamily}
+\newcommand{\sourcetext}[1]{{\sourcefont {#1}}}
+
+\newenvironment{sourcecode}                          % Source Code Umgebung
+{
+\begin{minipage}[t]{40ex}%
+%\prologcode\progfont%
+\sourcefont
+\begin{quote}%
+\begin{tabbing}%
+\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}%
+\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\kill}%
+{\end{tabbing}%
+\end{quote}%
+\end{minipage}%
+}
+
+\newenvironment{sourcecodenofontsize}                          % Source Code Umgebung fuer Doppel Lines
+{
+\begin{minipage}[t]{0.4\textwidth}%
+%\prologcode\progfont%
+%\sourcefont
+%\begin{quote}%
+\begin{tabbing}%
+\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}%
+\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\=\hspace{3ex}\kill}%
+{\end{tabbing}%
+%\end{quote}%
+\end{minipage}%
+}
+
+
+%logic
+\newcommand{\logand}[0]{\land}
+\newcommand{\logor}[0]{\lor}
+\newcommand{\lognot}[0]{\lnot}
+\newcommand{\impl}[0]{\to}
+\newcommand{\dimpl}[0]{\impl} % double arrow
+\newcommand{\existsone}[0]{\exists!}
+\newcommand{\notexists}[0]{\not\!\!\:\exists}
+
+\newcommand{\ordner}[1]{ [Ordner {#1}]}
+
+\newcommand{\pe}[1]{[{#1}]}
+%sets
+\newcommand{\setunion}[0]{\cup}
+\newcommand{\bigsetunion}[0]{\bigcup}
+\newcommand{\setintersect}[0]{\cap}
+\newcommand{\bigsetintersect}[0]{\bigcap}
+\newcommand{\setdif}[0]{\backslash}
+\newcommand{\tuple}[1]{({#1})}
+\newcommand{\set}[1]{\{{#1}\}}
+\newcommand{\pair}[2]{({#1},{#2})}
+\newcommand{\tripel}[3]{({#1},{#2},{#3})}
+\newcommand{\triple}[3]{({#1},{#2},{#3})}
+\newcommand{\quadrupel}[4]{({#1},{#2},{#3},{#4})}
+
+\newcommand{\cnodedef}[0]{\pair{ \set{ \pair{*}{\epsilon} } }{.} }
+\newcommand{\cnodedia}[0]{\diamond}
+\newcommand{\cnodeset}[0]{\set{\diamond}}
+
+%\newcommand{\bottomelement}{\tuple{\emptyset,\emptyset}}
+\newcommand{\topelement}{\ensuremath{\top}}
+\newcommand{\bottomelement}{\ensuremath{\perp}}
+\newcommand{\dach} {\symbol{94}}
+\newcommand{\deref}[1]{{#1}\dach}
+\newcommand{\sname}[1]{[{#1}]}
+\newcommand{\lname}[2]{[{#1},{#2}]}
+\newcommand{\MSG}[0]{FSG }
+\newcommand{\MSGpoint}[0]{FSG}
+\newcommand{\MSGs}[0]{FSGs }
+\newcommand{\MSGspoint}[0]{FSGs}
+\newcommand{\MSGClass}[0]{\mathcal{\MSG}}
+\newcommand{\Fcal}[0]{\mathcal{F}} % set of Functions, written as mathcal{F}.
+\newcommand{\ffix}[0]{f.} % notation for fixpoint iteration
+\newcommand{\mc}[1]{\multicolumn{3}{l|}{{#1}}} % multicolumn macro used in tabs for graphs
+\newcommand{\kstring}[1]{\lceil {#1}]_k} % formal notation for k-truncated call strings (#1)
+\newcommand{\nl}[1]{\ensuremath{\#{#1}}}
+
+\newcommand{\edge}[1]{[{#1}]}
+
+%\newcommand{\PP}[1]{{\em {#1}}}
+\newcommand{\defeq}[0]{\stackrel{\mathrm{def}}{=}}
+
+\newcommand{\exclude}[1]{}
+\newcommand{\nsubset}{\not\subset}         %\\nsubset
+%\newcommand{\textflorin}{\textit{f}}       %\\textflorin
+\newcommand{\setB}{{\mathord{\mathbb B}}}  %\\setB
+\newcommand{\setC}{{\mathord{\mathbb C}}}  %\\setC
+\newcommand{\setN}{{\mathord{\mathbb N}}}  %\\setN
+\newcommand{\setQ}{{\mathord{\mathbb Q}}}  %\\setQ
+\newcommand{\setR}{{\mathord{\mathbb R}}}  %\\setR
+\newcommand{\setZ}{{\mathord{\mathbb Z}}}  %\\setZ
+\newcommand{\coloncolon}{\mathrel{::}}     %\\coloncolon
+\newcommand{\lsem}{\mathopen{\lbrack\mkern-3mu\lbrack}}  %\\lsemantics
+\newcommand{\rsem}{\mathclose{\rbrack\mkern-3mu\rbrack}} %\\rsemantics   
+\newcommand{\pow}[1]{\mathcal{P}({#1})} % powerset of #1
+
+\newcommand{\fullcirc}[0]{\bullet}
+\newcommand{\heap}[0]{\mathcal{H}} % H (used for elements of the heap)
+\newcommand{\nullref}[0]{\diamond} % box used as symbol for the reference value null
+\newcommand{\nullnode}[0]{\ensuremath{\diamond}}
+\newcommand{\recvar}[1]{\ensuremath{\bar{{#1}}}}
+\newcommand{\ip}[1]{\ensuremath{\widehat{{#1}}}}% Notation for interprocedural entities 
+
+\newcommand{\meetoperator}[0]{join operator }  % intraprocedural meet operator
+\newcommand{\meet}[0]{\ensuremath{\sqcup}}  % intraprocedural meet operator
+\newcommand{\imeet}[0]{\ip{\meet}}      % interprocedural meet operator
+\newcommand{\bigmeet}[0]{\bigsqcup}        % big intraprocedural meet operator
+\newcommand{\ibigmeet}[0]{\ip{\bigmeet}}% big interprocedural meet operator
+\newcommand{\biglub}[0]{\bigmeet} % big least upper bound operator
+\newcommand{\bigglb}[0]{\bigsqcap} % big greatest lower bound operator
+\newcommand{\glb}[0]{\sqcap} % greatest lower bound operator
+
+\newcommand{\ifelse}[3]{                % if-else array for function definitions (3 parameters)
+  \left\{\begin{array}{l@{\quad:\quad}l}%
+      {#1} & {#2} \\%
+      {#3} & \mbox{otherwise}%
+    \end{array}%
+  \right.}%
+
+\newcommand{\longifelse}[4]{                % if-else array for function definitions (3 parameters)
+  \left\{\begin{array}{l@{\quad:\quad}l}%
+      {#1} & {#2} \\%
+      {#3} & {#4} \\%
+    \end{array}%
+  \right.}%
+
+\newcommand{\longswitch}[6]{                % if-else array for function definitions (3 parameters)
+  \left\{\begin{array}{l@{\quad:\quad}l}%
+      {#1} & {#2} \\%
+      {#3} & {#4} \\%
+      {#5} & {#6} \\%
+    \end{array}%
+  \right.}%
+
+\newcommand{\progfont}[0]{\normalsize}     % Zeichensatz 2 der Prologbeispiele
+\newcommand{\mystring}[1]{"{#1}"}
+\newcommand{\PP}[1]{{\progfont#1}\normalsize}
+\newcommand{\ez}[0]{in }  % Das Elementzeichen
+\newcommand{\anypath}[2]{{#1} *\to {#2}}
+\newcommand{\nonnullpath}[2]{{#1} +\to {#2}}
+
+\newcommand{\pathCd}[2]{{#1}{#2}}
+\newcommand{\pathCa}[2]{{#1}{#2}}
+\newcommand{\pathJ}[2]{{#1}{#2}}
+\newcommand{\pathM}[2]{{#1}{#2}}
+\newcommand{\code}[1]{{\textup\texttt {#1}}}
+
+\newcommand{\ro}[0]{\ensuremath{\{\}}} % root in a graph

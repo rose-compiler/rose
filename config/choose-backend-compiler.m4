@@ -284,6 +284,19 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
                       AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR"])
                       ;;
               esac
+          elif test $XCODE_VERSION_MAJOR -eq 11; then
+              BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=8
+            # Rasmussen (11/18/2019): Added results for clang --version 11.0.0
+            # see https://en.wikipedia.org/wiki/Xcode#11.x_series
+            # NOTE that this is very tentative and don't know if it will work
+              case "$XCODE_VERSION_MINOR" in
+                  0|2)
+                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+                      ;;
+                  *)
+                      AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR"])
+                      ;;
+              esac
           else
               AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MAJOR = "$XCODE_VERSION_MAJOR"])
           fi

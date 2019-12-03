@@ -190,9 +190,19 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum, std::string name)
                                           is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
+             case SgUntypedType::e_char:
              case SgUntypedType::e_string:
                {
                  type = new SgUntypedType("C",type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
+                 break;
+               }
+             case SgUntypedType::e_block:
+               {
+                 is_user_defined = true;
+                 is_class = true;
+                 is_intrinsic = false;
+                 type = new SgUntypedType(name,type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
                                           is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
                  break;
                }
@@ -203,6 +213,17 @@ SgUntypedType* buildType(SgUntypedType::type_enum type_enum, std::string name)
                  is_intrinsic = false;
                  type = new SgUntypedType(name,type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
                                           is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
+                 break;
+               }
+             case SgUntypedType::e_user_defined:
+               {
+                 std::cerr << "WARNING UNIMPLEMENTED: UntypedBuilder::buildType - e_user_defined\n";
+#if 1
+                 is_user_defined = true;
+                 is_intrinsic = false;
+                 type = new SgUntypedType(name,type_kind,has_kind,is_literal,is_class,is_intrinsic,is_constant,
+                                          is_user_defined,char_length_expr,char_length,char_length_is_string,modifiers,type_enum);
+#endif
                  break;
                }
              default:
@@ -462,17 +483,95 @@ buildVariableDeclaration(const std::string & name, SgUntypedType* type, SgUntype
 
    std::string label = "";
 
+   bool has_base_type = false;
+   SgUntypedDeclarationStatement* base_type_decl = NULL;
+
    SgUntypedInitializedName* initialized_name = buildInitializedName(name, type, initializer);
    ROSE_ASSERT(initialized_name);
 
    SgUntypedInitializedNameList* var_name_list = buildInitializedNameList(initialized_name);
    ROSE_ASSERT(var_name_list);
 
-   SgUntypedVariableDeclaration* variable_decl = new SgUntypedVariableDeclaration(label, type, attr_list, var_name_list);
+   SgUntypedVariableDeclaration*
+   variable_decl = new SgUntypedVariableDeclaration(label, type, base_type_decl, has_base_type, attr_list, var_name_list);
    ROSE_ASSERT(variable_decl);
    SageInterface::setSourcePosition(variable_decl);
 
    return variable_decl;
+}
+
+SgUntypedVariableDeclaration*
+buildVariableDeclaration(const std::string & name, SgUntypedType* type, SgUntypedStructureDeclaration* base_type_decl, SgUntypedExprListExpression* attr_list, SgUntypedExpression* initializer)
+{
+   ROSE_ASSERT(type);
+   ROSE_ASSERT(base_type_decl);
+   ROSE_ASSERT(attr_list);
+
+   SgUntypedVariableDeclaration* variable_decl = buildVariableDeclaration(name, type, attr_list, initializer);
+   ROSE_ASSERT(variable_decl != NULL);
+
+   // Set the base-type declaration
+   variable_decl->set_has_base_type(true);
+   variable_decl->set_base_type_declaration(base_type_decl);
+
+   return variable_decl;
+}
+
+// Build an untyped StructureDeclaration. This version builds a contained StructureDefinition with a type name created
+// based on the declared variable name.
+SgUntypedStructureDeclaration* buildStructureDeclaration(const std::string struct_name)
+{
+   SgUntypedStructureDeclaration* struct_decl = NULL;
+   std::string struct_type_name = "";
+   bool has_body = true;
+
+   struct_decl = buildStructureDeclaration(struct_name, struct_type_name, has_body);
+   ROSE_ASSERT(struct_decl != NULL);
+
+   return struct_decl;
+}
+
+
+// Build an untyped StructureDeclaration.
+// If the has_body flag is true an untyped StructureDefinition is created.
+// Source position for the initializer and structure definition should be set after construction.
+SgUntypedStructureDeclaration* buildStructureDeclaration(const std::string struct_name,
+                                                         const std::string struct_type_name, bool has_body)
+{
+   SgUntypedStructureDeclaration* struct_decl = NULL;
+   SgUntypedStructureDefinition*  struct_def  = NULL;
+   SgUntypedExprListExpression*     modifiers = NULL;
+   SgUntypedExprListExpression*         shape = NULL;
+
+   std::string type_name = struct_type_name;
+
+   if (struct_type_name.length() < 1) {
+   // There should be a function created for this
+      type_name = "_anon_typeof_" + struct_type_name;
+   }
+
+   if (has_body) {
+      struct_def = buildStructureDefinition(type_name, has_body, /*scope*/NULL);
+      ROSE_ASSERT(struct_def != NULL);
+      SageInterface::setSourcePosition(struct_def);
+   }
+
+   modifiers = new SgUntypedExprListExpression(General_Language_Translation::e_struct_modifier_list);
+   ROSE_ASSERT(modifiers != NULL);
+   SageInterface::setSourcePosition(modifiers);
+
+// There may be a shape if a Jovial table
+   shape = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
+   ROSE_ASSERT(shape);
+   SageInterface::setSourcePosition(shape);
+
+   std::string label = "";
+   int stmt_enum = General_Language_Translation::e_unknown;
+   struct_decl = new SgUntypedStructureDeclaration(label, stmt_enum, type_name, modifiers, shape, struct_def);
+   ROSE_ASSERT(struct_decl);
+   SageInterface::setSourcePosition(struct_decl);
+
+   return struct_decl;
 }
 
 
@@ -571,7 +670,8 @@ SgUntypedStructureDeclaration* buildJovialTableDeclaration(std::string table_typ
    SageInterface::setSourcePosition(shape);
 
    std::string label = "";
-   table_decl = new SgUntypedStructureDeclaration(label, table_type_name, modifiers, shape, table_desc);
+   int stmt_enum = General_Language_Translation::e_unknown;
+   table_decl = new SgUntypedStructureDeclaration(label, stmt_enum, table_type_name, modifiers, shape, table_desc);
    ROSE_ASSERT(table_decl);
    SageInterface::setSourcePosition(table_decl);
 

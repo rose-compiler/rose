@@ -51,6 +51,10 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSe
     if (other->isBottom())
         return bottom_(get_width());
 
+    // If the values are different types then return bottom.
+    if (get_expression()->type() != other->get_expression()->type())
+        return bottom_(get_width());
+
     // Merge symbolic expressions. The merge of x and y is the set {x, y}. If the size of this set is greater than the set size
     // limit (or 1 if merger is null) then the result is bottom.  Normal set simplifcations happen first (e.g., {x, x} => {x}
     // => x).
@@ -60,7 +64,7 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSe
                              expr->isInteriorNode()->nChildren() : (size_t)1;
         size_t setSizeLimit = merger ? merger->setSizeLimit() : (size_t)1;
         if (exprSetSize > setSizeLimit) {
-            expr = SymbolicExpr::makeVariable(retval->get_width());
+            expr = SymbolicExpr::makeVariable(retval->get_expression()->type());
             mergedFlags |= SymbolicExpr::Node::BOTTOM;
         }
         retval->set_expression(expr);
@@ -90,7 +94,7 @@ SValue::get_number() const
 {
     LeafPtr leaf = expr->isLeafNode();
     ASSERT_not_null(leaf);
-    return leaf->toInt();
+    return leaf->toUnsigned().get();
 }
 
 SValuePtr
@@ -132,7 +136,7 @@ SValue::set_defining_instructions(SgAsmInstruction *insn)
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const 
+SValue::may_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
 {
     SValuePtr other = SValue::promote(other_);
     if (get_width() != other->get_width())
@@ -192,7 +196,7 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
 
     stream <<(*expr + expr_formatter) <<closing;
 }
-    
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -214,7 +218,7 @@ MemoryListState::CellCompressorMcCarthy::operator()(const SValuePtr &address, co
     DefinersMode valDefinersMode = valOpsSymbolic->computingDefiners();
 
     // FIXME: This makes no attempt to remove duplicate values [Robb Matzke 2013-03-01]
-    ExprPtr expr = SymbolicExpr::makeMemory(address->get_width(), dflt->get_width());
+    ExprPtr expr = SymbolicExpr::makeMemoryVariable(address->get_width(), dflt->get_width());
     InsnSet addrDefiners, valDefiners;
     for (CellList::const_reverse_iterator ci=cells.rbegin(); ci!=cells.rend(); ++ci) {
         SValuePtr cell_addr = SValue::promote((*ci)->get_address());
@@ -365,7 +369,7 @@ RiscOperators::filterResult(const BaseSemantics::SValuePtr &a_) {
     if (a->get_expression()->nNodes() <= trimThreshold_)
         return a_;
 
-    SymbolicExpr::Ptr expr = SymbolicExpr::makeVariable(a->get_width(),
+    SymbolicExpr::Ptr expr = SymbolicExpr::makeVariable(a->get_expression()->type(),
                                                         a->get_expression()->comment(),
                                                         a->get_expression()->flags());
     a->set_expression(expr);
@@ -410,7 +414,7 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
     ASSERT_require(a->get_width()==b->get_width());
     if (a->isBottom() || b->isBottom())
         return filterResult(bottom_(a->get_width()));
-    
+
     SValuePtr retval = svalue_expr(SymbolicExpr::makeOr(a->get_expression(), b->get_expression(), solver()));
 
     switch (computingDefiners_) {
@@ -458,7 +462,7 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
     }
     return filterResult(retval);
 }
-    
+
 BaseSemantics::SValuePtr
 RiscOperators::invert(const BaseSemantics::SValuePtr &a_)
 {
@@ -488,8 +492,8 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
     if (a->isBottom())
         return filterResult(bottom_(end_bit-begin_bit));
 
-    SymbolicExpr::Ptr beginExpr = SymbolicExpr::makeInteger(32, begin_bit);
-    SymbolicExpr::Ptr endExpr = SymbolicExpr::makeInteger(32, end_bit);
+    SymbolicExpr::Ptr beginExpr = SymbolicExpr::makeIntegerConstant(32, begin_bit);
+    SymbolicExpr::Ptr endExpr = SymbolicExpr::makeIntegerConstant(32, end_bit);
     SValuePtr retval = svalue_expr(SymbolicExpr::makeExtract(beginExpr, endExpr, a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
@@ -807,7 +811,7 @@ RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_wid
     if (a->isBottom())
         return filterResult(bottom_(new_width));
 
-    SValuePtr retval = svalue_expr(SymbolicExpr::makeExtend(SymbolicExpr::makeInteger(32, new_width),
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, new_width),
                                                             a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
@@ -1022,7 +1026,7 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
     if (a->isBottom())
         return filterResult(bottom_(new_width));
 
-    SValuePtr retval = svalue_expr(SymbolicExpr::makeSignExtend(SymbolicExpr::makeInteger(32, new_width),
+    SValuePtr retval = svalue_expr(SymbolicExpr::makeSignExtend(SymbolicExpr::makeIntegerConstant(32, new_width),
                                                                 a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
@@ -1037,8 +1041,81 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
     return filterResult(retval);
 }
 
+SgAsmFloatType*
+RiscOperators::sgIsIeee754(SgAsmType *sgType) {
+    ASSERT_not_null(sgType);
+    SgAsmFloatType *fpType = isSgAsmFloatType(sgType);
+    if (NULL == fpType)
+        return NULL;
+    if (fpType->significandBits().least() != 0)
+        return NULL;
+    if (fpType->significandBits().size() == 0)
+        return NULL;
+    if (fpType->exponentBits().least() != fpType->significandBits().greatest()+1)
+        return NULL;
+    if (fpType->exponentBits().size() < 2)
+        return NULL;
+    if (fpType->signBit() != fpType->exponentBits().greatest()+1)
+        return NULL;
+    if (fpType->signBit() != fpType->get_nBits() - 1)
+        return NULL;
+    if (fpType->exponentBias() != ((uint64_t)1 << (fpType->exponentBits().size() - 1)) - 1)
+        return NULL;
+    return fpType;
+}
+
+SymbolicExpr::Type
+RiscOperators::sgTypeToSymbolicType(SgAsmType *sgType) {
+    ASSERT_not_null(sgType);
+    if (SgAsmFloatType *fpType = sgIsIeee754(sgType)) {
+        return SymbolicExpr::Type::floatingPoint(fpType->exponentBits().size(), fpType->significandBits().size()+1/*implicit bit*/);
+    } else if (SgAsmIntegerType *iType = isSgAsmIntegerType(sgType)) {
+        return SymbolicExpr::Type::integer(iType->get_nBits());
+    } else {
+        throw Exception("cannot convert Sage type to symbolic type");
+    }
+}
+
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) 
+RiscOperators::fpConvert(const BaseSemantics::SValuePtr &a_, SgAsmFloatType *aType, SgAsmFloatType *retType) {
+    SValuePtr a = SValue::promote(a_);
+    ASSERT_not_null(a);
+    ASSERT_not_null(aType);
+    ASSERT_not_null(retType);
+
+    SymbolicExpr::Type srcType = sgTypeToSymbolicType(aType);
+    ASSERT_require(a->get_expression()->type() == srcType);
+    SymbolicExpr::Type dstType = sgTypeToSymbolicType(retType);
+
+    BaseSemantics::SValuePtr result;
+    if (srcType == dstType) {
+        result = a->copy();
+    } else {
+        result = svalue_expr(SymbolicExpr::makeConvert(a->get_expression(), dstType, solver()));
+    }
+    ASSERT_not_null(result);
+    return filterResult(result);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::reinterpret(const BaseSemantics::SValuePtr &a_, SgAsmType *retType) {
+    SValuePtr a = SValue::promote(a_);
+    ASSERT_not_null(a);
+    ASSERT_not_null(retType);
+    SymbolicExpr::Type srcType = a->get_expression()->type();
+    SymbolicExpr::Type dstType = sgTypeToSymbolicType(retType);
+    if (srcType.nBits() != dstType.nBits()) {
+        throw Exception("reinterpret type (" + dstType.toString() + ") is not the same size as the value type (" +
+                        srcType.toString() + ")");
+    }
+
+    BaseSemantics::SValuePtr result = svalue_expr(SymbolicExpr::makeReinterpret(a->get_expression(), dstType, solver()));
+    ASSERT_not_null(result);
+    return filterResult(result);
+}
+
+BaseSemantics::SValuePtr
+RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt)
 {
     PartialDisableUsedef du(this);
     SValuePtr result = SValue::promote(BaseSemantics::RiscOperators::readRegister(reg, dflt));
@@ -1126,7 +1203,7 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
                 byte_dflt = initialState()->peekMemory(byte_addr, byte_dflt, this, this);
             }
         }
-        
+
         // Read a byte from the current memory state. Adds the new value as a side effect if necessary.
         SValuePtr byte_value;
         if (allowSideEffects) {

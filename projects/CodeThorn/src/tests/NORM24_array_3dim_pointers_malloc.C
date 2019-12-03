@@ -22,6 +22,7 @@ int main() {
   *bp=*bp+1;
   *bp=*bp+1;
 
+  *ap=c[1][1][1];
   *((c[1][1])+1)=1000;
 
   //free(ap); seg-fault

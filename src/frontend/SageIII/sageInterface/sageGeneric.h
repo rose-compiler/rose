@@ -1,6 +1,6 @@
 #ifndef _SAGEGENERIC_H
 
-#define _SAGEGENERIC_H
+#define _SAGEGENERIC_H 1
 
 /// \file sageGeneric.h
 /// This file implements generic (template) sage query functions
@@ -12,6 +12,10 @@
 // note: the comments are right aligned to support code-blocks doxygen 1.3.X :)
 
 #include <stdexcept>
+
+#if __cplusplus >= 201103L
+#include <type_traits>
+#endif 
 
 #if !defined(NDEBUG)
 #include <typeinfo>
@@ -172,15 +176,21 @@ namespace sg
   template <class RoseVisitor>
   struct VisitDispatcher : ROSE_VisitorPatternDefaultBase
   {
+
+#if __cplusplus >= 201103L
+    // rvalue ctor
+    VisitDispatcher(RoseVisitor&& rosevisitor, std::false_type)
+    : rv(std::move(rosevisitor))
+    {}
+    
+    // lvalue ctor
+    VisitDispatcher(const RoseVisitor& rosevisitor, std::true_type)
+    : rv(rosevisitor)
+    {}
+#else
     explicit
     VisitDispatcher(const RoseVisitor& rosevisitor)
     : rv(rosevisitor)
-    {}
-
-#if __cplusplus >= 201103L
-    explicit
-    VisitDispatcher(RoseVisitor&& rosevisitor)
-    : rv(std::move(rosevisitor))
     {}
 #endif
 
@@ -861,6 +871,10 @@ namespace sg
     GEN_VISIT(SgQualifiedNameType)
    // DQ (4/5/2017): Added this case that shows up using GNU 6.1 and Boost 1.51 (or Boost 1.52).
     GEN_VISIT(SgDeclType)
+    GEN_VISIT(SgAutoType)
+    GEN_VISIT(SgTypeSigned128bitInteger)
+    GEN_VISIT(SgTypeUnsigned128bitInteger)
+    GEN_VISIT(SgTypeNullptr)
 
     // * token
     GEN_VISIT(SgToken)
@@ -870,6 +884,27 @@ namespace sg
 
 #undef GEN_VISIT
 
+  
+
+#if __cplusplus >= 201103L
+  template <class RoseVisitor>
+  inline
+  typename std::remove_const<typename std::remove_reference<RoseVisitor>::type>::type
+  _dispatch(RoseVisitor&& rv, SgNode* n)
+  {
+    typedef typename std::remove_reference<RoseVisitor>::type  RoseVisitorNoref;
+    typedef typename std::remove_const<RoseVisitorNoref>::type RoseHandler;
+     
+    ROSE_ASSERT(n);
+
+    VisitDispatcher<RoseHandler> vis( std::forward<RoseVisitor>(rv), 
+                                      std::is_lvalue_reference<RoseVisitor>()
+                                    );
+
+    n->accept(vis);
+    return std::move(vis).rv;
+  }
+#else  
   template <class RoseVisitor>
   inline
   RoseVisitor
@@ -881,21 +916,7 @@ namespace sg
 
     n->accept(vis);
     return vis.rv;
-  }
-
-#if __cplusplus >= 201103L
-  template <class RoseVisitor>
-  inline
-  RoseVisitor
-  _dispatch(RoseVisitor&& rv, SgNode* n)
-  {
-    ROSE_ASSERT(n);
-
-    VisitDispatcher<RoseVisitor> vis(std::move(rv));
-
-    n->accept(vis);
-    return std::move(vis).rv;
-  }
+  }  
 #endif
 
 
@@ -954,6 +975,7 @@ namespace sg
 ///     float ratio(float a, float b) { return a/b; }
 ///   };
 /// \endcode
+#if 0
 ///             Alternatively, the dispatch function takes a pointer to a
 ///             handler object. In this case, the counter object is passed
 ///             as pointer, and ctr is manipulated
@@ -964,6 +986,27 @@ namespace sg
 ///       sg::dispatch(&ctr, n);
 ///     }
 /// \endcode
+#endif
+
+#if __cplusplus >= 201103L
+  template <class RoseVisitor>
+  inline
+  typename std::remove_const<typename std::remove_reference<RoseVisitor>::type>::type
+  dispatch(RoseVisitor&& rv, SgNode* n)
+  {
+    //~ return std::move(rv);
+    return _dispatch(std::forward<RoseVisitor>(rv), n);
+  }
+
+  template <class RoseVisitor>
+  inline
+  typename std::remove_const<typename std::remove_reference<RoseVisitor>::type>::type
+  dispatch(RoseVisitor&& rv, const SgNode* n)
+  {
+    //~ return std::move(rv);
+    return _dispatch(std::forward<RoseVisitor>(rv), const_cast<SgNode*>(n));
+  }
+#else  
   template <class RoseVisitor>
   inline
   RoseVisitor
@@ -980,23 +1023,6 @@ namespace sg
   {
     return _dispatch(rv, const_cast<SgNode*>(n));
   }
-
-#if __cplusplus >= 201103L
-  template <class RoseVisitor>
-  inline
-  RoseVisitor
-  dispatch(RoseVisitor&& rv, SgNode* n)
-  {
-    return _dispatch(std::move(rv), n);
-  }
-
-  template <class RoseVisitor>
-  inline
-  RoseVisitor
-  dispatch(RoseVisitor&& rv, const SgNode* n)
-  {
-    return _dispatch(std::move(rv), const_cast<SgNode*>(n));
-  }
 #endif /* c++11 */
 
 /**
@@ -1004,7 +1030,7 @@ namespace sg
  *
  * Base class for @ref AncestorTypeFinder.  It was probably intended
  * to be a generic BaseClass for many RoseVisitor types, but it isn't
- * used by anything else, and isn't actually necessary.  
+ * used by anything else, and isn't actually necessary.
  * If any specific type is not handled by its
  * derived class, DefaultHandler provides the function to ignore it.
  **/
@@ -1119,16 +1145,16 @@ namespace sg
     {}
 
 #if __cplusplus >= 201103L
-    TypeRecoveryHandler() = delete;
-    TypeRecoveryHandler(const TypeRecoveryHandler&) = delete;
-    TypeRecoveryHandler& operator=(const TypeRecoveryHandler&) = delete;
-
     TypeRecoveryHandler(TypeRecoveryHandler&&) = default;
-    TypeRecoveryHandler& operator=(TypeRecoveryHandler&&) = delete;
+    
+    TypeRecoveryHandler()                                      = delete;
+    TypeRecoveryHandler(const TypeRecoveryHandler&)            = delete;
+    TypeRecoveryHandler& operator=(const TypeRecoveryHandler&) = delete;
+    TypeRecoveryHandler& operator=(TypeRecoveryHandler&&)      = delete;
 
     operator SageNode* ()&& { return res; }
 #else
-    operator SageNode* () { return res; }
+    operator SageNode* ()   { return res; }
 #endif /* C++ */
 
     void handle(SgBaseNode& n) { unexpected_node(n, loc, loc_ln); }
@@ -1321,15 +1347,15 @@ namespace sg
   template <class GVisitor>
   struct DispatchHelper
   {
-#if __cplusplus < 201103L
+#if __cplusplus >= 201103L
     explicit
     DispatchHelper(GVisitor gv, SgNode* p)
-    : gvisitor(gv), parent(p), cnt(0)
+    : gvisitor(std::move(gv)), parent(p), cnt(0)
     {}
 #else
     explicit
     DispatchHelper(GVisitor gv, SgNode* p)
-    : gvisitor(std::move(gv)), parent(p), cnt(0)
+    : gvisitor(gv), parent(p), cnt(0)
     {}
 #endif /* C++11 */
 
@@ -1345,17 +1371,17 @@ namespace sg
       }
 #endif
 
-#if __cplusplus < 201103L
-      if (n != NULL) gvisitor = sg::dispatch(gvisitor, n);
-#else
+#if __cplusplus >= 201103L
       if (n != NULL) gvisitor = sg::dispatch(std::move(gvisitor), n);
+#else
+      if (n != NULL) gvisitor = sg::dispatch(gvisitor, n);
 #endif /* C++11 */
     }
 
-#if __cplusplus < 201103L
-    operator GVisitor() { return gvisitor; }
-#else
+#if __cplusplus >= 201103L
     operator GVisitor()&& { return std::move(gvisitor); }
+#else
+    operator GVisitor() { return gvisitor; }
 #endif /* C++11 */
 
     GVisitor gvisitor;
@@ -1369,10 +1395,10 @@ namespace sg
   DispatchHelper<GVisitor>
   dispatchHelper(GVisitor gv, SgNode* parent = NULL)
   {
-#if __cplusplus < 201103L
-    return DispatchHelper<GVisitor>(gv, parent);
-#else
+#if __cplusplus >= 201103L
     return DispatchHelper<GVisitor>(std::move(gv), parent);
+#else
+    return DispatchHelper<GVisitor>(gv, parent);
 #endif /* C++11 */
   }
 
@@ -1383,10 +1409,10 @@ namespace sg
   {
     std::vector<SgNode*> successors = n.get_traversalSuccessorContainer();
 
-#if __cplusplus < 201103L
-    return std::for_each(successors.begin(), successors.end(), dispatchHelper(gv, &n));
-#else
+#if __cplusplus >= 201103L
     return std::for_each(successors.begin(), successors.end(), dispatchHelper(std::move(gv), &n));
+#else
+    return std::for_each(successors.begin(), successors.end(), dispatchHelper(gv, &n));
 #endif /* C++11 */
   }
 

@@ -64,8 +64,8 @@ namespace CodeThorn {
     void addToWorkList(const ParProEState* estate);
     bool isEmptyWorkList();
     const ParProEState* popWorkList();
-    void set_finished(vector<bool>& v, bool val);
-    bool all_false(vector<bool>& v);
+    void set_finished(std::vector<bool>& v, bool val);
+    bool all_false(std::vector<bool>& v);
 
     std::vector<Flow*> _cfas;
     boost::unordered_map<int, int> _cfgIdToStateIndex;
@@ -76,7 +76,7 @@ namespace CodeThorn {
     int _numberOfThreadsToUse;
     EdgeAnnotationMap _annotationToEdges;
     ComponentApproximation _approximation;
-    vector<Label> _artificalTerminationLabels;
+    std::vector<Label> _artificalTerminationLabels;
   };
 
 } // end of namespace CodeThorn

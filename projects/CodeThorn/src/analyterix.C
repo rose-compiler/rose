@@ -38,7 +38,7 @@
 
 #include "addressTakenAnalysis.h"
 #include "defUseQuery.h"
-#include "Timer.h"
+#include "TimeMeasurement.h"
 #include "AnalysisAbstractionLayer.h"
 #include "AliasAnalysis.h"
 

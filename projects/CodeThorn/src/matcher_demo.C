@@ -7,7 +7,7 @@
 #include "AstTerm.h"
 #include "AstMatching.h"
 
-#include "Timer.h"
+#include "TimeMeasurement.h"
 
 using namespace std;
 
@@ -112,21 +112,21 @@ int main( int argc, char * argv[] ) {
 #endif
 
 
-  Timer timer;
+  TimeMeasurement timer;
   timer.start();
   long num1=0,num2=0;
   for(RoseAst::iterator i=ast.begin().withNullValues();i!=ast.end();++i) {
     num1++;
   }
   timer.stop();
-  double iteratorMeasurementTime=timer.getElapsedTimeInMilliSec();
+  double iteratorMeasurementTime=timer.getTimeDuration().milliSeconds();
 
   timer.start();
   for(RoseAst::iterator i=ast.begin().withoutNullValues();i!=ast.end();++i) {
     num2++;
   }
   timer.stop();
-  double iteratorMeasurementTimeWithoutNull=timer.getElapsedTimeInMilliSec();
+  double iteratorMeasurementTimeWithoutNull=timer.getTimeDuration().milliSeconds();
 
   std::cout << "Iteration Length: with    null: " << num1 << std::endl;
   std::cout << "Iteration Length: without null: " << num2 << std::endl;
@@ -137,7 +137,7 @@ int main( int argc, char * argv[] ) {
     timer.start();
     MatchResult r=m.performMatching(matchexpression,root);
     timer.stop();
-    double matchingMeasurementTime=timer.getElapsedTimeInMilliSec();
+    double matchingMeasurementTime=timer.getTimeDuration().milliSeconds();
     // print result in readable form for demo purposes
     std::cout << "Number of matched patterns with bound variables: " << r.size() << std::endl;
     for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
@@ -163,14 +163,14 @@ int main( int argc, char * argv[] ) {
       timer.start();
       m.performMatching(measurement_matchexpressions[i],root);
       timer.stop();
-      measurementTimes[i]=timer.getElapsedTimeInMilliSec();
+      measurementTimes[i]=timer.getTimeDuration().milliSeconds();
     }
 
     TestTraversal tt;
     timer.start();
     tt.traverse(root, preorder);
     timer.stop();
-    double ttm=timer.getElapsedTimeInMilliSec();
+    double ttm=timer.getTimeDuration().milliSeconds();
     std::cout << "Measurement:\n";
     std::cout << "Trav:"<<ttm << ";";
     std::cout << "iter:"<<iteratorMeasurementTime << ";";

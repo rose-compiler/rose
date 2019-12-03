@@ -279,14 +279,14 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
                     "then entire expression is displayed. The default is " +
                     StringUtility::numberToString(settings.maxExprDepth) + "."));
 
-    out.insert(Switch("show-expr-width")
-               .intrinsicValue(true, settings.showExprWidth)
-               .doc("Show width in bits for symbolic expressions.  This is useful, but can make the expressions overly "
-                    "verbose and less readable.  The @s{no-show-expr-width} turns this off. The default is to " +
-                    std::string(settings.showExprWidth ? "" : "not ") + "show expression widths."));
-    out.insert(Switch("no-show-expr-width")
-               .key("show-expr-width")
-               .intrinsicValue(false, settings.showExprWidth)
+    out.insert(Switch("show-expr-type")
+               .intrinsicValue(true, settings.showExprType)
+               .doc("Show data types for symbolic expressions.  This is useful, but can make the expressions overly "
+                    "verbose and less readable.  The @s{no-show-expr-type} turns this off. The default is to " +
+                    std::string(settings.showExprType ? "" : "not ") + "show expression types."));
+    out.insert(Switch("no-show-expr-type")
+               .key("show-expr-type")
+               .intrinsicValue(false, settings.showExprType)
                .hidden(true));
 
     ParserResult cmdline = parser.with(cfg).with(pcond).with(out).parse(argc, argv).apply();
@@ -860,12 +860,12 @@ public:
         const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(token.lexeme());
         if (NULL == regp)
             return SymbolicExpr::Ptr();
-        if (token.width()!=0 && token.width()!=regp->nBits()) {
-            throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.width()) +
+        if (token.exprType().nBits() != 0 && token.exprType().nBits() != regp->nBits()) {
+            throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.exprType().nBits()) +
                                     ", actual=" + StringUtility::numberToString(regp->nBits()) + ")");
         }
-        if (token.width2() != 0)
-            throw token.syntaxError("register width must be scalar");
+        if (token.exprType().typeClass() == SymbolicExpr::Type::MEMORY)
+            throw token.syntaxError("register type must be scalar");
         BaseSemantics::SValuePtr regValue = regState->readRegister(*regp, ops_->undefined_(regp->nBits()), ops_.get());
         return SymbolicSemantics::SValue::promote(regValue)->get_expression();
     }
@@ -895,11 +895,11 @@ public:
         addr->set_expression(operands[0]);
         BaseSemantics::MemoryStatePtr memState = ops_->currentState()->memoryState();
         BaseSemantics::SValuePtr memValue = memState->readMemory(addr, ops_->undefined_(8), ops_.get(), ops_.get());
-        if (token.width() != 0 && memValue->get_width() !=token.width()) {
-            throw token.syntaxError("operator size mismatch (specified=" + StringUtility::numberToString(token.width()) +
+        if (token.exprType().nBits() != 0 && memValue->get_width() != token.exprType().nBits()) {
+            throw token.syntaxError("operator size mismatch (specified=" + StringUtility::numberToString(token.exprType().nBits()) +
                                     ", actual=" + StringUtility::numberToString(memValue->get_width()) + ")");
         }
-        if (token.width2() != 0)
+        if (token.exprType().typeClass() == SymbolicExpr::Type::MEMORY)
             throw token.syntaxError("memory operator width must be scalar");
         return SymbolicSemantics::SValue::promote(memValue)->get_expression();
     }
@@ -982,7 +982,7 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
                 return SmtSolver::SAT_NO;
             }
         } else if (hasVirtualAddress(pathEdge->target())) {
-            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), virtualAddress(pathEdge->target()));
+            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeIntegerConstant(ip->get_width(), virtualAddress(pathEdge->target()));
             SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
                                                                 SymbolicSemantics::SValue::promote(ip)->get_expression(),
                                                                 solver);
@@ -1339,7 +1339,7 @@ singleThreadBfsWorker(BfsContext *ctx) {
         // If this edge is not a number and we know the EIP at the end of this path edge, then we have a path constraint that
         // needs to be solved.
         if (!abandonPrefix && !ip->is_number() && pathsEdge->target()->value().type() != P2::V_INDETERMINATE) {
-            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), pathsEdge->target()->value().address());
+            SymbolicExpr::Ptr targetVa = SymbolicExpr::makeIntegerConstant(ip->get_width(), pathsEdge->target()->value().address());
             SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
                                                                 SymbolicSemantics::SValue::promote(ip)->get_expression(),
                                                                 solver);

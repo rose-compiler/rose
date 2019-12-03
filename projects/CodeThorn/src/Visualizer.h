@@ -10,7 +10,6 @@
 #include "Labeler.h"
 #include "CFAnalysis.h"
 #include "EState.h"
-#include "ParProTransitionGraph.h"
 #include "Analyzer.h"
 #include "CommandLineOptions.h"
 #include "ReadWriteData.h"
@@ -69,7 +68,6 @@ class Visualizer {
   std::string transitionGraphDotHtmlNode(CodeThorn::Label lab);
   std::string transitionGraphToDot();
   std::string transitionGraphWithIOToDot();
-  std::string parProTransitionGraphToDot(ParProTransitionGraph* parProTransitionGraph);
 #ifdef HAVE_SPOT
   std::string spotTgbaToDot(spot::tgba& tgba);
 #endif

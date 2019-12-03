@@ -1132,16 +1132,14 @@ bool isDbInitialized(SqlDatabase::ConnectionPtr dbconn)
 
   try
   {
-    DBTxGuard       dbtx(dbconn);
+    DBTxGuard dbtx(dbconn);
 
-    res  = sqlPrepare(dbtx.tx(), QY_DB_INITIALIZED)
-             ->execute_int();
+    res = sqlPrepare(dbtx.tx(), QY_DB_INITIALIZED)
+            ->execute_int();
 
     dbtx.commit();
   }
-  catch (SqlDatabase::Exception& ex)
-  {
-  }
+  catch (SqlDatabase::Exception& ex) {}
 
   return res >= 0;
 }
@@ -1157,7 +1155,6 @@ void initializeDB(SqlTransactionPtr tx)
   sqlPrepare(tx, QY_MK_ENVVARS)->execute();
   sqlPrepare(tx, QY_MK_TESTCASE_ARGS)->execute();
   sqlPrepare(tx, QY_MK_TESTCASE_EVAR)->execute();
-  //~ sqlPrepare(tx, QY_MK_TESTSUITE_TESTCASE)->execute();
   sqlPrepare(tx, QY_MK_RBA_FILES)->execute();
   sqlPrepare(tx, QY_MK_CONCRETE_RES)->execute();
 }
@@ -1247,7 +1244,7 @@ _object( Database& db,
   return res;
 }
 
-int sqlLastRowId(SqlTransactionPtr tx)
+size_t sqlLastRowId(SqlTransactionPtr tx)
 {
   return sqlPrepare(tx, QY_LAST_ROW_SQLITE3)
            ->execute_int();
@@ -1321,10 +1318,10 @@ void deleteTestCaseElems( SqlTransactionPtr tx, const SqlQueryInt& query, int tc
 struct CmdLineArgInserter
 {
   SqlTransactionPtr tx;
-  int               testcaseId;
-  int               num;
+  TestCaseId::Value testcaseId;
+  size_t            num;
 
-  CmdLineArgInserter(SqlTransactionPtr transx, int tcid)
+  CmdLineArgInserter(SqlTransactionPtr transx, TestCaseId::Value tcid)
   : tx(transx), testcaseId(tcid), num(0)
   {}
 
@@ -1356,13 +1353,13 @@ struct CmdLineArgInserter
 struct EnvVarInserter
 {
   SqlTransactionPtr tx;
-  int               testcaseId;
+  TestCaseId::Value testcaseId;
 
-  EnvVarInserter(SqlTransactionPtr transx, int tcid)
+  EnvVarInserter(SqlTransactionPtr transx, TestCaseId::Value tcid)
   : tx(transx), testcaseId(tcid)
   {}
 
-  int queryEnvVarId(const EnvValue& envvar)
+  size_t queryEnvVarId(const EnvValue& envvar)
   {
     SqlStatementPtr stmt = sqlPrepare(tx, QY_ENVVAR_ID, envvar.first, envvar.second);
     SqlIterator     iter = stmt->begin();
@@ -1378,14 +1375,14 @@ struct EnvVarInserter
 
   void operator()(const EnvValue& envvar)
   {
-    int             envvarId = queryEnvVarId(envvar);
+    size_t envvarId = queryEnvVarId(envvar);
 
     sqlPrepare(tx, QY_NEW_TESTCASE_EVAR, testcaseId, envvarId)
       ->execute();
   }
 };
 
-void dependentObjInsert(SqlTransactionPtr tx, int tcid, TestCase::Ptr obj)
+void dependentObjInsert(SqlTransactionPtr tx, TestCaseId::Value tcid, TestCase::Ptr obj)
 {
   std::vector<std::string> args = obj->args();
   std::vector<EnvValue>    envv = obj->env();
@@ -1394,7 +1391,7 @@ void dependentObjInsert(SqlTransactionPtr tx, int tcid, TestCase::Ptr obj)
   std::for_each(envv.begin(), envv.end(), EnvVarInserter(tx, tcid));
 }
 
-void dependentObjUpdate(SqlTransactionPtr tx, int tcid, TestCase::Ptr obj)
+void dependentObjUpdate(SqlTransactionPtr tx, TestCaseId::Value tcid, TestCase::Ptr obj)
 {
   deleteTestCaseElems(tx, QY_RM_TESTCASE_CARG, tcid);
   deleteTestCaseElems(tx, QY_RM_TESTCASE_EVAR, tcid);
@@ -1412,12 +1409,12 @@ insertDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj)
 {
   static const std::string exec = "linux";
 
-  const int       specimenId  = db.id_ns(tx, obj->specimen()).get();
+  const SpecimenId::Value specimenId  = db.id_ns(tx, obj->specimen()).get();
 
   sqlPrepare(tx, QY_NEW_TESTCASE, specimenId, obj->name(), exec)
     ->execute();
 
-  const int       testcaseId  = sqlLastRowId(tx);
+  const TestCaseId::Value testcaseId  = sqlLastRowId(tx);
 
   dependentObjInsert(tx, testcaseId, obj);
   return TestCaseId(testcaseId);
@@ -1442,10 +1439,9 @@ updateDBObject(Concolic::Database& db, SqlTransactionPtr tx, TestCase::Ptr obj, 
 {
   // Update::NO: updating the specimen object for every update to a
   //   testcase is excessive (i.e., copying the entire binary).
-  const int                specId       = db.id_ns(tx, obj->specimen(), Update::NO).get();
+  const SpecimenId::Value  specId       = db.id_ns(tx, obj->specimen(), Update::NO).get();
   Sawyer::Optional<double> concreteRank = obj->concreteRank();
 
-  // \todo use NO_CONCRETE_RANK, since queries cannot test for null
   const double             rank         = concreteRank ? concreteRank.get() : NO_CONCRETE_RANK;
   const bool               hasConc      = obj->hasConcolicTest();
 
@@ -1688,23 +1684,6 @@ struct GuardedStmt
     sqlite3_stmt*   stmt_;
 };
 
-//~ struct SqlLiteStringGuard
-//~ {
-  //~ explicit
-  //~ SqlLiteStringGuard(const char* s)
-  //~ : str(s)
-  //~ {}
-
-  //~ ~SqlLiteStringGuard()
-  //~ {
-    //~ if (str) sqlite3_free(const_cast<char*>(str));
-  //~ }
-
-  //~ operator const char*() { return str; }
-
-  //~ const char* const str;
-//~ };
-
 
 void GuardedDB::debug(GuardedStmt& sql)
 {
@@ -1858,7 +1837,7 @@ Database::hasUntested() const
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 template <class T>
 static
-std::string xml(const T& o)
+std::string xml(const T* o)
 {
   std::stringstream            stream;
   boost::archive::xml_oarchive oa(stream);
@@ -1869,7 +1848,7 @@ std::string xml(const T& o)
 
 template <class T>
 static
-std::string text(const T& o)
+std::string text(const T* o)
 {
   std::stringstream             stream;
   boost::archive::text_oarchive oa(stream);
@@ -1879,23 +1858,15 @@ std::string text(const T& o)
 }
 #endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
+
 void
 Database::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result& details)
 {
   std::string  detailtxt = "<error>requires BOOST serialization</error>";
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-  // was: detailtxt = xml(details);
-  //      BOOST serialization does not seem to pick up the polymorphic
-  //      type...
-  //      BOOST_CLASS_EXPORT_KEYs are defined in BinaryConcolic.h
-  //      BOOST_CLASS_EXPORT_IMPLEMENTs are defined in LinuxExecutor.C
-  const LinuxExecutor::Result* linuxres = dynamic_cast<const LinuxExecutor::Result*>(&details);
-
-  // \todo enable BOOST serialization polymorphism
-  detailtxt = linuxres ? xml(*linuxres) : xml(details);
+  detailtxt = xml(&details);
   //~ detailtxt = text(details);
-
   //~ std::cerr << "XML:" << detailtxt << std::endl;
 #else
   //~ Sawyer::Message::mlog[Sawyer::Message::INFO]
@@ -1927,7 +1898,6 @@ void writeDBSchema(std::ostream& os)
      << QY_MK_ENVVARS            << "\n\n"
      << QY_MK_TESTCASE_ARGS      << "\n\n"
      << QY_MK_TESTCASE_EVAR      << "\n\n"
-     //~ << QY_MK_TESTSUITE_TESTCASE << "\n\n"
      << QY_MK_RBA_FILES          << "\n\n"
      << QY_MK_CONCRETE_RES       ;
 }

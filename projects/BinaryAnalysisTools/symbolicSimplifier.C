@@ -103,7 +103,7 @@ main(int argc, char *argv[]) {
                 if (expr->nBits() == 1) {
                     assertion = expr;
                 } else {
-                    assertion = SymbolicExpr::makeEq(expr, SymbolicExpr::makeVariable(expr->nBits()));
+                    assertion = SymbolicExpr::makeEq(expr, SymbolicExpr::makeIntegerVariable(expr->nBits()));
                 }
                 std::cout <<"Checking satisfiability of " <<*assertion <<"\n";
                 switch (smtSolver->satisfiable(assertion)) {

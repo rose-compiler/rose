@@ -218,7 +218,7 @@ YicesSolver::evidenceForName(const std::string &name)
     Evidence::const_iterator found = evidence.find(name);
     if (found==evidence.end())
         return SymbolicExpr::Ptr(); // null
-    return SymbolicExpr::makeInteger(found->second.first/*nbits*/, found->second.second/*value*/);
+    return SymbolicExpr::makeIntegerConstant(found->second.first/*nbits*/, found->second.second/*value*/);
 }
 
 void
@@ -273,7 +273,7 @@ YicesSolver::out_define(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &e
             if (!seen.insert(getRawPointer(node)).second)
                 return SymbolicExpr::TRUNCATE;          // already processed this subexpression
             if (SymbolicExpr::LeafPtr leaf = node->isLeafNode()) {
-                if (leaf->isVariable()) {
+                if (leaf->isIntegerVariable()) {
                     if (defns->find(leaf->nameId())==defns->end()) {
                         defns->insert(leaf->nameId());
                         o <<"\n";
@@ -281,7 +281,7 @@ YicesSolver::out_define(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &e
                             o <<StringUtility::prefixLines(leaf->comment(), "; ") <<"\n";
                         o <<"(define v" <<leaf->nameId() <<"::" <<get_typename(leaf) <<")\n";
                     }
-                } else if (leaf->isMemory()) {
+                } else if (leaf->isMemoryVariable()) {
                     if (defns->find(leaf->nameId())==defns->end()) {
                         defns->insert(leaf->nameId());
                         o <<"\n";
@@ -293,7 +293,7 @@ YicesSolver::out_define(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &e
             } else if (SymbolicExpr::InteriorPtr inode = node->isInteriorNode()) {
                 if (inode->getOperator() == SymbolicExpr::OP_SET) {
                     // Sets are ultimately converted to ITEs and therefore each set needs a free variable
-                    SymbolicExpr::LeafPtr var = SymbolicExpr::makeVariable(32, "set")->isLeafNode();
+                    SymbolicExpr::LeafPtr var = SymbolicExpr::makeIntegerVariable(32, "set")->isLeafNode();
                     self->varForSet(inode, var);
                     defns->insert(var->nameId());
                     o <<"\n";
@@ -349,7 +349,7 @@ YicesSolver::out_comments(std::ostream &o, const std::vector<SymbolicExpr::Ptr> 
             if (!seen.insert(getRawPointer(node)).second)
                 return SymbolicExpr::TRUNCATE;          // already processed this subexpression
             if (SymbolicExpr::LeafPtr leaf = node->isLeafNode()) {
-                if ((leaf->isVariable() || leaf->isMemory()) && !leaf->comment().empty()) {
+                if (leaf->isVariable2() && !leaf->comment().empty()) {
                     if (!commented) {
                         o <<"\n"
                           <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
@@ -378,8 +378,8 @@ void
 YicesSolver::out_assert(std::ostream &o, const SymbolicExpr::Ptr &tn)
 {
     o <<"(assert ";
-    if (tn->isNumber() && 1==tn->nBits()) {
-        if (tn->toInt()) {
+    if (tn->isIntegerConstant() && 1==tn->nBits()) {
+        if (tn->toUnsigned().get()) {
             o <<"true";
         } else {
             o <<"false";
@@ -396,8 +396,8 @@ void
 YicesSolver::out_number(std::ostream &o, const SymbolicExpr::Ptr &tn)
 {
     SymbolicExpr::LeafPtr ln = tn->isLeafNode();
-    ASSERT_require(ln && ln->isNumber());
-    o <<ln->toInt();
+    ASSERT_require(ln && ln->isIntegerConstant());
+    o <<ln->toUnsigned().get();
 }
 
 SmtSolver::SExprTypePair
@@ -481,21 +481,21 @@ YicesSolver::out_expr(const SymbolicExpr::Ptr &tn) {
         return SExprTypePair(SExpr::instance(nameType.first), nameType.second);
         
     } else if (ln) {
-        if (ln->isNumber()) {
+        if (ln->isIntegerConstant()) {
             if (ln->nBits() <= 64) {
                 SExpr::Ptr e =
                     SExpr::instance(SExpr::instance("mk-bv"),
                                     SExpr::instance(ln->nBits()),
-                                    SExpr::instance(ln->toInt()));
+                                    SExpr::instance(ln->toUnsigned().get()));
                 return SExprTypePair(e, BIT_VECTOR);
             } else {
                 SExpr::Ptr e = SExpr::instance("0b" + ln->bits().toBinary());
                 return SExprTypePair(e, BIT_VECTOR);
             }
-        } else if (ln->isMemory()) {
+        } else if (ln->isMemoryVariable()) {
             return SExprTypePair(SExpr::instance(ln->toString()), MEM_STATE);
         } else {
-            ASSERT_require(ln->isVariable());
+            ASSERT_require(ln->isIntegerVariable());
             return SExprTypePair(SExpr::instance(ln->toString()), BIT_VECTOR);
         }
     } else {
@@ -545,7 +545,7 @@ YicesSolver::out_expr(const SymbolicExpr::Ptr &tn) {
                 return out_unary("bv-neg", child);
             }
             case SymbolicExpr::OP_NOOP:
-                return out_expr(SymbolicExpr::makeInteger(in->nBits(), 0));
+                return out_expr(SymbolicExpr::makeIntegerConstant(in->nBits(), 0));
             case SymbolicExpr::OP_OR: {
                 Etv children = out_exprs(in->children());
                 Type type = most_type(children);
@@ -720,11 +720,11 @@ YicesSolver::out_la(const char *opname, const std::vector<SExprTypePair> &childr
 SmtSolver::SExprTypePair
 YicesSolver::out_extract(const SymbolicExpr::InteriorPtr &in) {
     ASSERT_require(in && 3==in->nChildren());
-    ASSERT_require(in->child(0)->isNumber());
-    ASSERT_require(in->child(1)->isNumber());
-    ASSERT_require(in->child(0)->toInt() < in->child(1)->toInt());
-    size_t lo = in->child(0)->toInt();
-    size_t hi = in->child(1)->toInt() - 1;          /*inclusive*/
+    ASSERT_require(in->child(0)->isIntegerConstant());
+    ASSERT_require(in->child(1)->isIntegerConstant());
+    ASSERT_require(in->child(0)->toUnsigned().get() < in->child(1)->toUnsigned().get());
+    size_t lo = in->child(0)->toUnsigned().get();
+    size_t hi = in->child(1)->toUnsigned().get() - 1;   /*inclusive*/
 
     SExpr::Ptr e =
         SExpr::instance(SExpr::instance("bv-extract"),
@@ -741,9 +741,9 @@ YicesSolver::out_extract(const SymbolicExpr::InteriorPtr &in) {
 SmtSolver::SExprTypePair
 YicesSolver::out_sext(const SymbolicExpr::InteriorPtr &in) {
     ASSERT_require(in && 2==in->nChildren());
-    ASSERT_require(in->child(0)->isNumber()); /*Yices bv-sign-extend needs a number for the second operand*/
-    ASSERT_require(in->child(0)->toInt() > in->child(1)->nBits());
-    size_t extend_by = in->child(0)->toInt() - in->child(1)->nBits();
+    ASSERT_require(in->child(0)->isIntegerConstant()); /*Yices bv-sign-extend needs a number for the second operand*/
+    ASSERT_require(in->child(0)->toUnsigned().get() > in->child(1)->nBits());
+    size_t extend_by = in->child(0)->toUnsigned().get() - in->child(1)->nBits();
 
     SExpr::Ptr e =
         SExpr::instance(SExpr::instance("bv-sign-extend"),
@@ -760,9 +760,9 @@ YicesSolver::out_sext(const SymbolicExpr::InteriorPtr &in) {
 SmtSolver::SExprTypePair
 YicesSolver::out_uext(const SymbolicExpr::InteriorPtr &in) {
     ASSERT_require(in && 2==in->nChildren());
-    ASSERT_require(in->child(0)->isNumber()); /*Yices mk-bv needs a number for the size operand*/
-    ASSERT_require(in->child(0)->toInt() > in->child(1)->nBits());
-    size_t extend_by = in->child(0)->toInt() - in->child(1)->nBits();
+    ASSERT_require(in->child(0)->isIntegerConstant()); /*Yices mk-bv needs a number for the size operand*/
+    ASSERT_require(in->child(0)->toUnsigned().get() > in->child(1)->nBits());
+    size_t extend_by = in->child(0)->toUnsigned().get() - in->child(1)->nBits();
 
     SExpr::Ptr e =
         SExpr::instance(SExpr::instance("bv-concat"),
@@ -779,12 +779,12 @@ SmtSolver::SExprTypePair
 YicesSolver::out_shift(const char *opname, const SymbolicExpr::InteriorPtr &in, bool newbits) {
     ASSERT_require(opname && *opname);
     ASSERT_require(in && 2==in->nChildren());
-    ASSERT_require(in->child(0)->isNumber()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
+    ASSERT_require(in->child(0)->isIntegerConstant()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
 
     SExpr::Ptr e =
         SExpr::instance(SExpr::instance(std::string(opname) + (newbits ? "1" : "0")),
                         out_cast(out_expr(in->child(1)), BIT_VECTOR).first,
-                        SExpr::instance(in->child(0)->toInt()));
+                        SExpr::instance(in->child(0)->toUnsigned().get()));
 
     return SExprTypePair(e, BIT_VECTOR);
 }
@@ -803,8 +803,8 @@ YicesSolver::out_asr(const SymbolicExpr::InteriorPtr &in) {
     ASSERT_require(in && 2==in->nChildren());
     SymbolicExpr::Ptr vector = in->child(1);
     uint64_t vector_size = vector->nBits();
-    ASSERT_require(in->child(0)->isNumber());
-    uint64_t shift_amount = in->child(0)->toInt();
+    ASSERT_require(in->child(0)->isIntegerConstant());
+    uint64_t shift_amount = in->child(0)->toUnsigned().get();
 
     SExpr::Ptr e =
         SExpr::instance(SExpr::instance("ite"),
@@ -969,7 +969,7 @@ YicesSolver::ctx_common_subexpressions(const std::vector<SymbolicExpr::Ptr> &exp
 void
 YicesSolver::ctx_assert(const SymbolicExpr::Ptr &tn)
 {
-    if (tn->isNumber() && tn->nBits()==1) {
+    if (tn->isIntegerConstant() && tn->nBits()==1) {
         ASSERT_not_implemented("[Robb Matzke 2015-10-15]"); // see out_assert for similar code
     } else {
         yices_expr e = ctx_cast(ctx_expr(tn), BOOLEAN).first;
@@ -1023,7 +1023,7 @@ YicesSolver::ctx_expr(const SymbolicExpr::Ptr &tn) {
     if (termExprs.getOptional(tn).assignTo(found)) {
         return found;
     } else if (ln) {
-        if (ln->isNumber()) {
+        if (ln->isIntegerConstant()) {
             if (ln->nBits() <= 64) {
                 return YExprTypePair(yices_mk_bv_constant(context, ln->nBits(), ln->toInt()), BIT_VECTOR);
             } else {
@@ -1283,8 +1283,8 @@ YicesSolver::ctx_la(NaryAPI f, const std::vector<YExprTypePair> &operands, Type 
 YicesSolver::YExprTypePair
 YicesSolver::ctx_extract(const SymbolicExpr::InteriorPtr &in) {
     ASSERT_require(in && 3==in->nChildren());
-    ASSERT_require(in->child(0)->isNumber());
-    ASSERT_require(in->child(1)->isNumber());
+    ASSERT_require(in->child(0)->isIntegerConstant());
+    ASSERT_require(in->child(1)->isIntegerConstant());
     ASSERT_require(in->child(0)->toInt() < in->child(1)->toInt());
     size_t lo = in->child(0)->toInt();
     size_t hi = in->child(1)->toInt() - 1; /*inclusive*/
@@ -1301,7 +1301,7 @@ YicesSolver::ctx_extract(const SymbolicExpr::InteriorPtr &in) {
 YicesSolver::YExprTypePair
 YicesSolver::ctx_sext(const SymbolicExpr::InteriorPtr &in) {
     ASSERT_require(in && 2==in->nChildren());
-    ASSERT_require(in->child(0)->isNumber());
+    ASSERT_require(in->child(0)->isIntegerConstant());
     ASSERT_require(in->child(0)->toInt() > in->child(1)->nBits());
     unsigned extend_by = in->child(0)->toInt() - in->child(1)->nBits();
     yices_expr e = yices_mk_bv_sign_extend(context, ctx_cast(ctx_expr(in->child(1)), BIT_VECTOR).first, extend_by);
@@ -1318,7 +1318,7 @@ YicesSolver::ctx_sext(const SymbolicExpr::InteriorPtr &in) {
 YicesSolver::YExprTypePair
 YicesSolver::ctx_uext(const SymbolicExpr::InteriorPtr &in) {
     ASSERT_require(in && 2==in->nChildren());
-    ASSERT_require(in->child(0)->isNumber()); /*Yices mk-bv needs a number for the size operand*/
+    ASSERT_require(in->child(0)->isIntegerConstant()); /*Yices mk-bv needs a number for the size operand*/
     ASSERT_require(in->child(0)->toInt() > in->child(1)->nBits());
     size_t extend_by = in->child(0)->toInt() - in->child(1)->nBits();
     yices_expr e = yices_mk_bv_concat(context,
@@ -1334,7 +1334,7 @@ YicesSolver::ctx_uext(const SymbolicExpr::InteriorPtr &in) {
 YicesSolver::YExprTypePair
 YicesSolver::ctx_shift(ShiftAPI f, const SymbolicExpr::InteriorPtr &in) {
     ASSERT_require(in && 2==in->nChildren());
-    ASSERT_require(in->child(0)->isNumber()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
+    ASSERT_require(in->child(0)->isIntegerConstant()); /*Yices' bv-shift-* operators need a constant for the shift amount*/
     unsigned shift_amount = in->child(0)->toInt();
     yices_expr e = (f)(context, ctx_cast(ctx_expr(in->child(1)), BIT_VECTOR).first, shift_amount);
     ASSERT_not_null(e);
@@ -1357,7 +1357,7 @@ YicesSolver::ctx_asr(const SymbolicExpr::InteriorPtr &in) {
     ASSERT_require(in && 2==in->nChildren());
     SymbolicExpr::Ptr vector = in->child(1);
     unsigned vector_size = vector->nBits();
-    ASSERT_require(in->child(0)->isNumber());
+    ASSERT_require(in->child(0)->isIntegerConstant());
     unsigned shift_amount = in->child(0)->toInt();
     yices_expr e = yices_mk_ite(context, 
                                 yices_mk_eq(context, 

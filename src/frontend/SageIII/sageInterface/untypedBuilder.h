@@ -34,6 +34,12 @@ SgUntypedVariableDeclaration* buildVariableDeclaration(const std::string & name,
                                                        SgUntypedExprListExpression* attr_list,
                                                        SgUntypedExpression* initializer = NULL);
 
+ //! Build a variable declaration for only one variable with the given name and base-type declaration.
+SgUntypedVariableDeclaration* buildVariableDeclaration(const std::string & name, SgUntypedType* type,
+                                                       SgUntypedStructureDeclaration* base_type_decl,
+                                                       SgUntypedExprListExpression* attr_list,
+                                                       SgUntypedExpression* initializer = NULL);
+
 //! Build an untyped StructureDefinition. This version has a body and thus a scope.
 //! Source position for the initializer and modifier lists and table description should be set after construction.
 SgUntypedStructureDefinition* buildStructureDefinition();
@@ -42,6 +48,16 @@ SgUntypedStructureDefinition* buildStructureDefinition();
 //! If the has_body flag is true and the scope is NULL, a scope will be created.
 //! Source position for the initializer and table description should be set after construction.
 SgUntypedStructureDefinition* buildStructureDefinition(const std::string type_name, bool has_body=false, SgUntypedScope* scope=NULL);
+
+//! Build an untyped StructureDeclaration. This version builds a contained StructureDefinition with a type name created
+//! based on the declared variable name.
+SgUntypedStructureDeclaration* buildStructureDeclaration(const std::string struct_name);
+
+//! Build an untyped StructureDeclaration.
+//! If the has_body flag is true an untyped StructureDefinition is created.
+//! Source position for the initializer and structure definition should be set after construction.
+SgUntypedStructureDeclaration* buildStructureDeclaration(const std::string struct_name,
+                                                         const std::string struct_type_name, bool has_body=false);
 
 //! Build an untyped JovialTableDescription. This version has a body and thus a scope.
 //! Source position for the initializer and modifier lists and table description should be set after construction.
