@@ -2102,7 +2102,6 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
      ROSE_ASSERT(mangledName.find(':') == string::npos);
      ROSE_ASSERT(mangledName.find(';') == string::npos);
      ROSE_ASSERT(mangledName.find('\"') == string::npos);
-     ROSE_ASSERT(mangledName.find('\'') == string::npos);
      ROSE_ASSERT(mangledName.find('?') == string::npos);
      ROSE_ASSERT(mangledName.find('.') == string::npos);
      ROSE_ASSERT(mangledName.find('/') == string::npos);
@@ -2111,6 +2110,12 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
   // These are the most common cases that fail
      ROSE_ASSERT(mangledName.find('<') == string::npos);
      ROSE_ASSERT(mangledName.find('>') == string::npos);
+
+  // Jovial can have names like a'variable'name so don't disallow '\'' for Jovial [Rasmussen 2/10/2019]
+     if (!SageInterface::is_Jovial_language())
+        {
+           ROSE_ASSERT(mangledName.find('\'') == string::npos);
+        }
    }
 
 TestAstForProperlyMangledNames::TestAstForProperlyMangledNames()
@@ -4489,6 +4494,7 @@ TestMangledNames::visit ( SgNode* node )
 #if 0
           printf ("TestMangledNames::visit(): initializedName->get_scope() = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
 #endif
+          ROSE_ASSERT (initializedName->get_scope() != NULL);
           if (initializedName->get_scope()->class_name() == "SgNode")
              {
                isDeletedNode = true;

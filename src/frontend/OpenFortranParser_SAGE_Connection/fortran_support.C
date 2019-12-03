@@ -3172,7 +3172,8 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
              {
                printf ("Error: isSgGlobal(initializedName->get_scope()) != NULL *** initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
              }
-          ROSE_ASSERT(isSgGlobal(initializedName->get_scope()) == NULL);
+       // Pei-Hung (11/15/2019) comment this out
+       //   ROSE_ASSERT(isSgGlobal(initializedName->get_scope()) == NULL);
 
        // DQ (1/25/2011): Failing for test2011_33.f90 (because the variables being added to the function were first 
        // defined as function parameters.  This is I think an issue that the buildInterface tries to fix in the 

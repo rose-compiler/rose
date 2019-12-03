@@ -2095,6 +2095,7 @@ HEADER_CLASS_DECLARATION_STATEMENT_START
                e_java_interface,     /*!< A Java interface type declaration */
                e_java_enum,          /*!< A Java enum type declaration */
                e_java_parameter,     /*!< A Java parameter type declaration */
+               e_jovial_block,       /*!< A Jovial block type declaration */
                e_jovial_table        /*!< A Jovial table type declaration */
              };
 
@@ -10094,8 +10095,8 @@ SgDeclarationStatement::get_declaration_associated_with_symbol() const
                if (declarationAssociatedWithSymbol == NULL)
                   {
                  // DQ (6/30/2007): Test if the this pointer has an associated symbol.
-                    printf ("Error: problem this = %p = %s = %s \n",
-                         this,this->class_name().c_str(),SageInterface::get_name(this).c_str());
+                 // printf ("Error: problem this = %p = %s = %s \n",
+                 //      this,this->class_name().c_str(),SageInterface::get_name(this).c_str());
                     ROSE_ASSERT(this->get_symbol_from_symbol_table() == NULL);
                     this->get_startOfConstruct()->display("declarationAssociatedWithSymbol == NULL: debug");
 

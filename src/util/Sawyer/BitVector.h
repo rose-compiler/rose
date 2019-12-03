@@ -360,6 +360,35 @@ public:
         return *this;
     }
 
+    /** Checks whether two ranges are equal.
+     *
+     *  Returns true if the bits of the first range are equal to the bits in the second range. */
+    bool equalTo(const BitRange &range1, BitVector &other, const BitRange &range2) const {
+        checkRange(range1);
+        other.checkRange(range2);
+        return BitVectorSupport::equalTo(data(), range1, other.data(), range2);
+    }
+
+    /** Checks whether the bits of two ranges are equal.
+     *
+     *  Returns true if the bits contained in the first range match the bits contained in the second range. If the ranges are
+     *  different sizes then returns false. */
+    bool equalTo(const BitRange &range1, const BitRange &range2) const {
+        checkRange(range1);
+        checkRange(range2);
+        return BitVectorSupport::equalTo(data(), range1, data(), range2);
+    }
+
+    /** Checks whether the bits of one vector are equal to the bits of the other.
+     *
+     *  If the vectors are different sizes then they are considered to be unequal regardless of their content. See also, @ref
+     *  compare. */
+    bool equalTo(const BitVector &other) const {
+        if (size() != other.size())
+            return false;
+        return BitVectorSupport::equalTo(data(), hull(), other.data(), other.hull());
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Counting/searching
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1152,10 +1181,10 @@ public:
      *  the range is larger than 64 bits then only the low-order 64 bits are returned. */
     boost::int64_t toSignedInteger() const {
         if (size() <= 64)
-            return BitVectorSupport::toInteger(data(), size());
-        return BitVectorSupport::toInteger(data(), hull());
+            return BitVectorSupport::toSignedInteger(data(), size());
+        return BitVectorSupport::toSignedInteger(data(), hull());
     }
-    
+
     /** Convert to a hexadecimal string.
      *
      *  Returns a string which is the hexadecimal representation of the bits in the specified range.  The range must be valid

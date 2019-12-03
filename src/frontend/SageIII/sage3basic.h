@@ -121,7 +121,9 @@
 // whenever a use of that function or variable occurs.  Do not disable this macro; see ROSE_DEPRECATED_FUNCTION instead.
 // If you mark a function or variable as deprecated, then BE SURE TO FIX PLACES WHERE IT IS USED IN ROSE!!!  The WHY argument
 // should be a string literal (unevaluated) describing why it's deprecated or what to use instead.
-#if defined(__GNUC__)
+#if defined(__clang__)
+# define ROSE_DEPRECATED(WHY) __attribute__((deprecated(WHY)))
+#elif defined(__GNUC__)
 #   define ROSE_DEPRECATED(WHY) __attribute__((deprecated))
 #elif defined(_MSC_VER)
 #   define ROSE_DEPRECATED(WHY) /*deprecated*/
