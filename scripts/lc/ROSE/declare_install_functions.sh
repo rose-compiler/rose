@@ -283,45 +283,48 @@ use_latest_rose () {
 #   COMMON_BUILD_BASE
 #   ROSE_INSTALL_BASE
 #   ROSE_LATEST_INSTALL_VERSION
-set_main_vars
+  set_main_vars
 
 # Uses:
 #   ROSE_INSTALL_BASE
 #   ROSE_LATEST_INSTALL_VERSION
 # Sets:
 #   ROSE_INSTALL_BASE_VERSIONED
-use_latest_existing_install
+  use_latest_existing_install
 
 # Uses:
 #   ROSE_INSTALL_BASE_VERSIONED
 # Sets:
 #   ROSE_BACKEND_CXX
 #   ROSE_INSTALL_PATH
-if [ $1 == "gcc" ]
-then
-  setup_gcc_compiler
-elif [ $1 == "intel" ]
-then
-  setup_intel_compiler
-else
-  echo "use_latest_rose: ERROR: parm was \"$1\" not gcc or intel. Calling exit 1."
-  exit 1
-fi  
+  if [ $1 == "gcc" ]
+  then
+    setup_gcc_compiler
+  elif [ $1 == "gcc_profiling" ]
+  then
+    setup_gcc_compiler_with_profiling
+  elif [ $1 == "intel" ]
+  then
+    setup_intel_compiler
+  else
+    echo "use_latest_rose: ERROR: parm was \"$1\" not gcc or intel. Calling exit 1."
+    exit 1
+  fi  
 
 # Uses:
 #   ROSE_INSTALL_PATH
 # Sets:
 #   ROSE_HOME
 #   ROSE_LD_LIBRARY_PATH
-set_ROSE_HOME_ROSE_LD_LIBRARY_PATH
+  set_ROSE_HOME_ROSE_LD_LIBRARY_PATH
 
-export COMP_DB_MAP="${ROSE_COMPDB_SCRIPT_DIR}/comp_db_map.py"
-export RENDER_TEXT="${ROSE_COMPDB_SCRIPT_DIR}/render_text.py"
-export ROSE_TOOL="${ROSE_HOME}/bin/identityTranslator"
-print_rose_vars
+  export COMP_DB_MAP="${ROSE_COMPDB_SCRIPT_DIR}/comp_db_map.py"
+  export RENDER_TEXT="${ROSE_COMPDB_SCRIPT_DIR}/render_text.py"
+  export ROSE_TOOL="${ROSE_HOME}/bin/identityTranslator"
+  print_rose_vars
 }
 
-# Sets:
+# All "use_latest..." below set:
 #   COMMON_BUILD_BASE
 #   COMP_DB_MAP
 #   RENDER_TEXT
@@ -333,16 +336,9 @@ print_rose_vars
 use_latest_gcc_rose () {
   use_latest_rose "gcc"
 }
-
-# Sets:
-#   COMMON_BUILD_BASE
-#   COMP_DB_MAP
-#   RENDER_TEXT
-#   ROSE_BACKEND_CXX
-#   ROSE_HOME
-#   ROSE_LD_LIBRARY_PATH
-#   ROSE_TOOL
-# See set_main_vars for overridable vars.
+use_latest_gcc_rose_with_profiling () {
+  use_latest_rose "gcc_profiling"
+}
 use_latest_intel_rose () {
   use_latest_rose "intel"
 }
@@ -512,6 +508,13 @@ setup_gcc_compiler () {
   export ROSE_BUILD_PATH="${ROSE_REPO_PATH_VERSIONED}-${ROSE_COMPILER_PATH_PART}"
   export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE_VERSIONED}-${ROSE_COMPILER_PATH_PART}"
 }
+
+setup_gcc_compiler_with_profiling () {
+  setup_gcc_compiler
+  export ROSE_COMPILER_PATH_PART="${ROSE_COMPILER_VERSIONED}-gprof"
+  export ROSE_BUILD_PATH="${ROSE_REPO_PATH_VERSIONED}-${ROSE_COMPILER_PATH_PART}"
+  export ROSE_INSTALL_PATH="${ROSE_INSTALL_BASE_VERSIONED}-${ROSE_COMPILER_PATH_PART}"  
+}
 #======================================
 
 # Run after setup_xxx_compiler:
@@ -569,7 +572,8 @@ do_intel_configure () {
 #===============================================
 # FOR GCC 4.9.3 or 6.1.0 non-MPI (used by Kull):
 #===============================================
-do_gcc_configure () {
+do_gcc_configure_common () {
+# Optional parameters are added to the end of the configure parameters.
   run_or_not mkdir -p ${ROSE_BUILD_PATH}
   run_or_not cd ${ROSE_BUILD_PATH}
   turn_on_module
@@ -581,8 +585,8 @@ do_gcc_configure () {
   --without-java \
   --with-boost=${ROSE_BOOST_HOME} \
   --disable-boost-version-check \
-  --enable-edg_version=5.0
-  
+  --enable-edg_version=5.0 \
+  "$@"
  # Future:
  # --enable-lang (e.g. C)
  # --with-boost=${ROSE_BOOST_HOME} \
@@ -590,6 +594,19 @@ do_gcc_configure () {
  # no --disable-boost-version-check
  # no --enable-edg_version=5.0
  # 
+}
+
+do_gcc_configure () {
+  do_gcc_configure_common
+}
+
+do_gcc_configure_with_profiling () {
+  do_gcc_configure_common \
+  CFLAGS='-pg -g -O2 -Wall -Wstrict-prototypes -Wmissing-prototypes' \
+  CXXFLAGS='-pg -g -O2 -Wall'
+  # Original flags:
+  # CFLAGS='-g -O2 -O2 -Wall -Wstrict-prototypes -Wmissing-prototypes -Wall -Wstrict-prototypes -Wmissing-prototypes' 
+  # CXXFLAGS='-O2 -Wall -Wall'
 }
 #===============================================
 
