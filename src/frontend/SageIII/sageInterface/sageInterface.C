@@ -22440,11 +22440,63 @@ SageInterface::collectModifiedStatements( SgNode* node )
      return traversal.returnset;
    }
 
+
+void
+SageInterface::outputFileIds( SgNode* node )
+   {
+  // DQ (12/2/2019): This reports the file id values of all located nodes in the AST subtree represented by the input node.
+
+#if 1
+     printf ("In outputFileIds(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
+     class LocatedNodeTraversal : public AstSimpleProcessing
+        {
+          public:
+               LocatedNodeTraversal() {}
+               void visit (SgNode* node)
+                  {
+                    SgLocatedNode* locatedNode = isSgLocatedNode(node);
+                    if (locatedNode != NULL)
+                       {
+#if 1
+                         printf ("In outputFileIds(): isModified() == %s: locatedNode = %p = %s \n",locatedNode->get_isModified() ? "true" : "false",locatedNode,locatedNode->class_name().c_str());
+                         printf (" --- file id = %d physical_file_id = %d \n",node->get_file_info()->get_file_id(),node->get_file_info()->get_physical_file_id());
+#endif
+                       }
+                      else
+                       {
+                         SgInitializedName* initializedName = isSgInitializedName(node);
+                         if (initializedName != NULL)
+                            {
+                              printf ("In outputFileIds(): isModified() == %s: initializedName = %p = %s \n",initializedName->get_isModified() ? "true" : "false",initializedName,initializedName->class_name().c_str());
+                              printf (" --- file id = %d physical_file_id = %d \n",initializedName->get_file_info()->get_file_id(),initializedName->get_file_info()->get_physical_file_id());
+                            }
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the function definition.
+     LocatedNodeTraversal traversal;
+     traversal.traverse(node, preorder);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+
 std::set<SgLocatedNode*>
 SageInterface::collectModifiedLocatedNodes( SgNode* node )
    {
   // DQ (6/11/2015): This reports the statements that are marked as modified (isModified flag).
   // It is useful for debugging the token-based unparsing.
+
+#if 0
+     printf ("In collectModifiedLocatedNodes(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
 
      class LocatedNodeTraversal : public AstSimpleProcessing
         {
@@ -22488,6 +22540,9 @@ SageInterface::resetModifiedLocatedNodes(const std::set<SgLocatedNode*> & modifi
      while (i != modifiedNodeSet.end())
         {
           SgLocatedNode* node = *i;
+#if 0
+          printf ("Marking node = %p = %s as modified \n",node,node->class_name().c_str());
+#endif
           node->set_isModified(true);
 
           i++;
@@ -23970,7 +24025,8 @@ SageInterface::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node)
 void
 SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunctionDeclaration* functionDeclaration )
    {
-     SgFunctionDeclaration* nondefiningFunctionDeclaration = NULL;
+  // SgFunctionDeclaration* nondefiningFunctionDeclaration = NULL;
+     SgDeclarationStatement* nondefiningFunctionDeclaration = NULL;
 
 #if 0
      printf ("In SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(): functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
@@ -23993,6 +24049,10 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
              }
 #endif
         }
+
+  // DQ (12/2/2019): Need to support member functions which can't be declared when outside of their class.
+  // bool replaceWithEmptyDeclaration = false;
+  // SgDeclarationStatement* emptyDeclaration = NULL;
 
      SgName name                         = functionDeclaration->get_name();
      SgType* return_type                 = functionDeclaration->get_type()->get_return_type();
@@ -24116,29 +24176,60 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
             // Need to call:
             // unsigned int get_mfunc_specifier();
 
-               SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(original_memberFunctionDeclaration->get_type());
-               ROSE_ASSERT(memberFunctionType != NULL);
-
-               functionConstVolatileFlags = memberFunctionType->get_mfunc_specifier();
-
-               memberFunctionDeclaration = 
-                    buildNondefiningMemberFunctionDeclaration 
-                         ( name, return_type, param_list, scope, python_decoratorList, functionConstVolatileFlags, 
-                           buildTemplateInstantiation,templateArgumentsList );
-#if 0
-               printf ("ERROR: Member functions are not yet supported! \n");
-               ROSE_ASSERT(false);
-#endif
-               nondefiningFunctionDeclaration = memberFunctionDeclaration;
-
-               ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
-
-            // DQ (11/21/2019): Handle constructors.
-               if (isConstructor == true)
+            // DQ (12/2/2019): If it is defined outside of the class, then don't replace with member function prototype, 
+            // since they is not allowed to be declared outside of the class they are a member of.
+               if (original_memberFunctionDeclaration->get_parent() == original_memberFunctionDeclaration->get_scope())
                   {
-                    memberFunctionDeclaration->get_specialFunctionModifier().setConstructor();
+                    SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(original_memberFunctionDeclaration->get_type());
+                    ROSE_ASSERT(memberFunctionType != NULL);
+
+                    functionConstVolatileFlags = memberFunctionType->get_mfunc_specifier();
+
+                    memberFunctionDeclaration = 
+                         buildNondefiningMemberFunctionDeclaration 
+                              ( name, return_type, param_list, scope, python_decoratorList, functionConstVolatileFlags, 
+                                buildTemplateInstantiation,templateArgumentsList );
+#if 0
+                    printf ("ERROR: Member functions are not yet supported! \n");
+                    ROSE_ASSERT(false);
+#endif
+                 // DQ (11/21/2019): Handle constructors.  
+                    if (isConstructor == true)
+                       {
+                         memberFunctionDeclaration->get_specialFunctionModifier().setConstructor();
+                       }
+
+                    nondefiningFunctionDeclaration = memberFunctionDeclaration;
+
+                    ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+                  }
+                 else
+                  {
+                 // Case of member function defined outside of it's class.
+#if 0
+                    printf ("NOTE: Member functions defined outside of their class can not be output as member function prototypes (not allowed in C++) \n");
+#endif
+                 // We want to build a SgEmptyDeclaration using buildEmptyDeclaration() but this is not a function.
+                    nondefiningFunctionDeclaration = buildEmptyDeclaration();
+#if 0
+                    nondefiningFunctionDeclaration = NULL;
+
+                    replaceWithEmptyDeclaration = true;
+                    emptyDeclaration = buildEmptyDeclaration();
+                    ROSE_ASSERT(emptyDeclaration != NULL);
+#endif
+                    ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+
+                 // Since we din't build a member function we don't need the parameter list.
+                    delete param_list;
+                    param_list = NULL;
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
                   }
 
+               ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
                break;
              }
 
@@ -24151,10 +24242,13 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
              }
 
           default:
+
+
+
              {
             // Nothing to do, except delete the parameter list we built.
                delete param_list;
-               param_list = NULL;
+--               param_list = NULL;
              }
         }
 
@@ -24185,6 +24279,8 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
 #if 1
        // Likely we should build a new nondefining function declaration instead of reusing the existing non-defining declaration.
        // removeStatement(functionDeclaration);
+
+       // DQ (12/2/2019): Need to support member functions which can't be declared when outside of their class.
           replaceStatement(functionDeclaration,nondefiningFunctionDeclaration);
 #else
        // DQ (7/12/2019): Debugging test_17.cpp.

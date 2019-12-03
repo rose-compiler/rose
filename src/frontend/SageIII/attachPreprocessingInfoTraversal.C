@@ -1498,6 +1498,9 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
      ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
 
 #if 0
+     printf ("filePreprocInfo = %p \n",filePreprocInfo);
+     printf ("sourceFile = %p \n",sourceFile);
+     printf ("sourceFile->get_file_info() = %p \n",sourceFile->get_file_info());
      printf ("sourceFile->get_file_info()->get_filename() = %s \n",sourceFile->get_file_info()->get_filename());
 #endif
 

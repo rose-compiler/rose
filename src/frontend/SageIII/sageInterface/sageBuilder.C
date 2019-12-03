@@ -15898,7 +15898,7 @@ SageBuilder::fixupSharingSourcePosition(SgNode* subtreeRoot, int new_file_id)
 
 #if 0
      printf ("In SageBuilder::fixupSharingSourcePosition(): subtreeRoot = %p = %s \n",subtreeRoot,subtreeRoot->class_name().c_str());
-     printf ("In SageBuilder::fixupSharingSourcePosition(): new_file_id = %s \n",new_file_id);
+     printf ("In SageBuilder::fixupSharingSourcePosition(): new_file_id = %d \n",new_file_id);
 #endif
 
      class Traversal : public AstSimpleProcessing
@@ -15984,7 +15984,7 @@ SageBuilder::fixupSharingSourcePosition(SgNode* subtreeRoot, int new_file_id)
         }
        else
         {
-          printf ("Error: In SageBuilder::fixupSourcePositionFileSpecification(): subtree should be a SgFile or SgLocatedNode: subtreeRoot = %p = %s \n",subtreeRoot,subtreeRoot->class_name().c_str());
+          printf ("Error: In SageBuilder::fixupSharingSourcePosition(): subtree should be a SgFile or SgLocatedNode: subtreeRoot = %p = %s \n",subtreeRoot,subtreeRoot->class_name().c_str());
           ROSE_ASSERT(false);
         }
 
@@ -16177,6 +16177,14 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #endif
 
 #if 0
+     printf ("Calling outputFileIds() \n");
+
+     SageInterface::outputFileIds(result);
+
+     printf ("DONE: Calling outputFileIds() \n");
+#endif
+
+#if 0
   // DQ (9/18/2019): Adding debugging support.
      printf ("In SageBuilder::buildFile(): file = %p = %s result->get_header_file_unparsing_optimization() = %s \n",
           result,result->class_name().c_str(),result->get_header_file_unparsing_optimization() ? "true" : "false");
@@ -16315,6 +16323,14 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
 #if 0
      printf ("In SageBuilder::buildFile(): (after result->runFrontend()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+#endif
+
+#if 0
+     printf ("After result->runFrontend(): calling outputFileIds() \n");
+
+     SageInterface::outputFileIds(result);
+
+     printf ("DONE: After result->runFrontend(): calling outputFileIds() \n");
 #endif
 
 #if 0
@@ -16542,6 +16558,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #endif
    }
 
+
 //! Build a SgFile node
 SgSourceFile*
 SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* project)
@@ -16620,7 +16637,7 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
      printf ("sourceFile->get_header_file_unparsing_optimization_header_file() = %s \n",sourceFile->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
 #endif
 
-#if 1
+#if 0
   // ROSE_ASSERT(sourceFile->get_header_file_unparsing_optimization_header_file() == false);
 
   // DQ (9/18/2019): These are now set to true when the inputFileName matches a previously read file for which the optimizaton was turned on.

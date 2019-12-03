@@ -2089,6 +2089,9 @@ ROSE_DLL_API std::vector<SgC_PreprocessorDirectiveStatement*> translateStatement
 ROSE_DLL_API void printOutComments ( SgLocatedNode* locatedNode );
 ROSE_DLL_API bool skipTranslateToUseCppDeclaration( PreprocessingInfo* currentPreprocessingInfo );
 
+// DQ (12/2/2019): Debugging support.
+ROSE_DLL_API void outputFileIds( SgNode* node );
+
 
 //@}
 
