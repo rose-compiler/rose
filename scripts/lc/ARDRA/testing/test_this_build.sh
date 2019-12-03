@@ -44,7 +44,7 @@ source ${ROSE_ROSE_SCRIPT_DIR}/declare_install_functions.sh
 #   ROSE_HOME
 #   ROSE_LD_LIBRARY_PATH
 #   ROSE_TOOL
-use_latest_gcc_rose
+use_latest_intel_rose
 
 export SOURCE_HOME="${COMMON_BUILD_BASE}/ARDRA/ardra/transport3d"
 export BUILD_HOME="${COMMON_BUILD_BASE}/ARDRA/ardra/ardra-toss_3_x86_64_ib"
