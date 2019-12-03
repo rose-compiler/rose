@@ -151,6 +151,7 @@ class StmtVarAliasCollect
  public:
   StmtVarAliasCollect( FunctionAliasInterface* a = 0) 
     : funcanal(a), hasunknown(false), hasresult(false) {}
+  virtual void analyze(AstInterface& fa, const AstNodePtr& funcdefinition);
   void operator()( AstInterface& fa, const AstNodePtr& funcdefinition);
   bool may_alias(AstInterface& fa, const AstNodePtr& r1, 
                  const AstNodePtr& r2);
