@@ -63,7 +63,7 @@ ${SRUN_DO} -c36 \
 ${COMP_DB_MAP} \
 ${SOURCE_HOME} \
 ${BUILD_HOME} \
-${ROSE_TOOL} \
+/usr/bin/timeout \
 --database=${COMPILATION_DATABASE_PATH} \
 --report=${JSON_REPORT_FILE_NAME} \
 --start_at=${FIRST_UNIT} \
@@ -71,6 +71,8 @@ ${ROSE_TOOL} \
 --nprocs=36 \
 --filter f:-cxx=/usr/tce/packages/gcc/gcc-4.9.3/bin/g++ \
 -- \
+300s \
+${ROSE_TOOL} \
 -rose:no_optimize_flag_for_frontend \
 -rose:skipAstConsistancyTests \
 
