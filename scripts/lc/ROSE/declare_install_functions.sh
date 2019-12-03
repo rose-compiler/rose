@@ -1,35 +1,45 @@
 #!/bin/echo "ERROR: Do not execute this script! Source it from bash:"
-#
 # This script defines functions for use by ROSE installation scripts.
 # DEPENDENCIES: 
 #   ../bin/utility_functions.sh
 #   (Also see dependencies for set_main_vars, below.)
-# 
-# Defines: (* denotes internal)
+
+# Defines:
 #   (also see ../bin/utility_functions.sh)
 #   ROSE_ROSE_SCRIPT_DIR
 #   ROSE_BIN_SCRIPT_DIR
 #   RUN_AND_LOG
 #   SRUN_DO
-#  *turn_on_module
-#  *print_rose_vars
-#   set_main_vars
-#  *set_REPO_PATH_and_INSTALL_BASE_VERSIONED
+#   _do_preconfigure_no_latest_copy
+#   _print_rose_vars
+#   _set_REPO_PATH_and_INSTALL_BASE_VERSIONED
+#   _turn_on_module
 #   clone_latest_workspace
-#   use_existing_workspace
-#   use_latest_existing_workspace
-#  *do_preconfigure_no_latest_copy
-#   do_preconfigure
-#   setup_intel_compiler
-#   setup_intel_18_0_2_compiler_non_mpi
-#   setup_gcc_compiler
-#   setup_boost
-#   do_intel_configure
 #   do_gcc_configure
+#   do_gcc_configure_common
+#   do_gcc_configure_with_profiling
+#   do_intel_configure
+#   do_preconfigure
+#   echo_version_from_file
 #   make_and_install
 #   make_docs
+#   set_ROSE_HOME_ROSE_LD_LIBRARY_PATH
+#   set_ROSE_LATEST_INSTALL_VERSION
+#   set_main_vars
+#   setup_boost
+#   setup_gcc_compiler
+#   setup_gcc_compiler_with_profiling
+#   setup_intel_18_0_2_compiler_non_mpi
+#   setup_intel_compiler
+#   use_existing_workspace
+#   use_latest_existing_install
+#   use_latest_existing_workspace
+#   use_latest_gcc_rose
+#   use_latest_gcc_rose_with_profiling
+#   use_latest_intel_rose
+#   use_latest_rose
 #
-# Example uses:
+# Example users:
 #  clone_latest:
 #   set_main_vars
 #   clone_latest_workspace
@@ -57,10 +67,10 @@
 
 # Optional lines for client scripts:
 # Don't actually run:
-#export RUN_OR_NOT_EFFORT_ONLY=TRUE
+#   export RUN_OR_NOT_EFFORT_ONLY=TRUE
 #
 # For manual testing:
-#export ROSE_BUILD_BASE="${HOME}/code/ROSE"
+#   export ROSE_BUILD_BASE="${HOME}/code/ROSE"
 
 # Find ourselves:
 rel_enclosing_dir=`dirname ${BASH_SOURCE[0]}`
@@ -76,7 +86,7 @@ source ${ROSE_BIN_SCRIPT_DIR}/utility_functions.sh
 export RUN_AND_LOG=${ROSE_BIN_SCRIPT_DIR}/run_and_log
 export SRUN_DO=${ROSE_BIN_SCRIPT_DIR}/srun_do
 
-turn_on_module () {
+_turn_on_module () {
   ###############################################################################
   # This is  is an excerpt from /g/g17/charles/.profile.toss_3_x86_64_ib:
   ###############################################################################
@@ -100,7 +110,7 @@ turn_on_module () {
   ###############################################################################
 }
 
-print_rose_vars () {
+_print_rose_vars () {
   log_separator_1
   log "ROSE environment variables:"
   log "COMMON_BUILD_BASE=${COMMON_BUILD_BASE}"
@@ -158,7 +168,7 @@ set_main_vars () {
 # Sets:
 #   ROSE_INSTALL_BASE_VERSIONED
 #   ROSE_REPO_PATH_VERSIONED
-set_REPO_PATH_and_INSTALL_BASE_VERSIONED () {
+_set_REPO_PATH_and_INSTALL_BASE_VERSIONED () {
   rose_branch_version="rose-${ROSE_BRANCH_PATH_PART}-${ROSE_VERSION}"
   export ROSE_REPO_PATH_VERSIONED="${ROSE_BUILD_BASE}/${rose_branch_version}"
   export ROSE_INSTALL_BASE_VERSIONED="${ROSE_INSTALL_BASE}/${rose_branch_version}"
@@ -198,7 +208,7 @@ clone_latest_workspace () {
 # Sets:
 #   ROSE_INSTALL_BASE_VERSIONED
 #   ROSE_REPO_PATH_VERSIONED
-  set_REPO_PATH_and_INSTALL_BASE_VERSIONED
+  _set_REPO_PATH_and_INSTALL_BASE_VERSIONED
   run_or_not mv ${ROSE_REPO_PATH_CLONED} ${ROSE_REPO_PATH_VERSIONED}
 }
 
@@ -221,7 +231,7 @@ use_existing_workspace () {
 # Sets:
 #   ROSE_INSTALL_BASE_VERSIONED
 #   ROSE_REPO_PATH_VERSIONED
-  set_REPO_PATH_and_INSTALL_BASE_VERSIONED
+  _set_REPO_PATH_and_INSTALL_BASE_VERSIONED
 }
 
 # Uses:
@@ -321,7 +331,7 @@ use_latest_rose () {
   export COMP_DB_MAP="${ROSE_COMPDB_SCRIPT_DIR}/comp_db_map.py"
   export RENDER_TEXT="${ROSE_COMPDB_SCRIPT_DIR}/render_text.py"
   export ROSE_TOOL="${ROSE_HOME}/bin/identityTranslator"
-  print_rose_vars
+  _print_rose_vars
 }
 
 # All "use_latest..." below set:
@@ -347,7 +357,7 @@ use_latest_intel_rose () {
 
 # Uses:
 #   ROSE_REPO_PATH_VERSIONED
-do_preconfigure_no_latest_copy () {
+_do_preconfigure_no_latest_copy () {
   run_or_not cd ${ROSE_REPO_PATH_VERSIONED}
   run_or_not ${SRUN_DO} ${RUN_AND_LOG} ./build
 }
@@ -356,7 +366,7 @@ do_preconfigure_no_latest_copy () {
 #   ROSE_LATEST_WORKSPACE_VERSION_FILE
 #   ROSE_REPO_PATH_VERSIONED
 do_preconfigure () {
-  do_preconfigure_no_latest_copy
+  _do_preconfigure_no_latest_copy
   run_or_not cp ${ROSE_REPO_PATH_VERSIONED}/ROSE_VERSION ${ROSE_LATEST_WORKSPACE_VERSION_FILE}
 }
 
@@ -405,7 +415,7 @@ setup_intel_compiler () {
   set +u
   source ${ROSE_NON_MPI_COMPILER_HOME}/bin/compilervars.sh
   # Yes, you need gcc 4.9.3 or later for intel:
-  turn_on_module
+  _turn_on_module
   module load gcc/6.1.0
   pop_set_state
   #---------------------------------------
@@ -461,7 +471,7 @@ setup_intel_18_0_2_compiler_non_mpi () {
   set +u
   source ${ROSE_NON_MPI_COMPILER_HOME}/bin/compilervars.sh
   # Yes, you need gcc 4.9.3 or later for intel:
-  turn_on_module
+  _turn_on_module
   module load gcc/6.1.0
   pop_set_state
   #---------------------------------------
@@ -521,7 +531,7 @@ setup_gcc_compiler_with_profiling () {
 setup_boost () {
   # SELECT BOOST:
   export ROSE_BOOST_HOME="/usr/tce/packages/boost/boost-${ROSE_BOOST_VERSION}-${ROSE_MPI_KIND}-${ROSE_MPI_VERSION}-${ROSE_COMPILER_VERSIONED}"
-  print_rose_vars
+  _print_rose_vars
 }
 
 #=====================================
@@ -576,7 +586,7 @@ do_gcc_configure_common () {
 # Optional parameters are added to the end of the configure parameters.
   run_or_not mkdir -p ${ROSE_BUILD_PATH}
   run_or_not cd ${ROSE_BUILD_PATH}
-  turn_on_module
+  _turn_on_module
   module load ${ROSE_COMPILER}/${ROSE_COMPILER_VERSION}
   run_or_not ${SRUN_DO} \
   ${RUN_AND_LOG} \
