@@ -387,7 +387,13 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
             // if (sourceFile->getFileName() != stmt->get_file_info()->get_physical_filename())
             // if (sourceFile->get_file_info()->get_physical_file_id() != stmt->get_file_info()->get_physical_file_id())
             // if (sourceFile->get_file_info()->get_physical_file_id() != stmt->get_file_info()->get_physical_file_id())
-               if (sourceFile->get_file_info()->get_physical_file_id() != stmt->get_file_info()->get_physical_file_id() && sourceFile->get_unparseHeaderFiles() == true)
+            // if (sourceFile->get_file_info()->get_physical_file_id() != stmt->get_file_info()->get_physical_file_id() && sourceFile->get_unparseHeaderFiles() == true)
+               bool isCompilerGenerated = stmt->get_file_info()->isCompilerGenerated();
+#if 0
+               printf ("In statementFromFile(): stmt isCompilerGenerated = %s \n",isCompilerGenerated ? "true" : "false");
+#endif
+               if (sourceFile->get_file_info()->get_physical_file_id() != stmt->get_file_info()->get_physical_file_id() && 
+                   sourceFile->get_unparseHeaderFiles() == true && isCompilerGenerated == false)
                   {
                     isOutputInCodeGeneration   = false;
 

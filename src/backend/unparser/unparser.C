@@ -1319,6 +1319,16 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
         }
 #endif
 
+#if 0
+  // DQ (12/2/2019): Testing for predicate statements failing to be unparsed when sharing IR nodes.
+     printf ("In unparseFile(): unparsedFile->get_output_filename() = %s \n",file->get_unparse_output_filename().c_str());
+     if (file->get_unparse_output_filename() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/BAtest_32./rose_BAtest_32_lib.cpp")
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
   // Turn OFF the error checking which triggers an if the default SgUnparse_Info constructor is called
      SgUnparse_Info::set_forceDefaultConstructorToTriggerError(false);
    }
@@ -4124,10 +4134,11 @@ SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, string includedFi
   // ROSE_ASSERT(include_sourceFile->get_globalScope() != NULL);
      if (include_sourceFile->get_globalScope() != NULL)
         {
-          printf ("WARNING: global scope will be overwritten: calling set_globalScope() below \n");
-
+          printf ("WARNING: global scope pointer will be overwritten: calling set_globalScope() below \n");
+#if 0
           printf ("Exiting to support debugging this case! \n");
           ROSE_ASSERT(false);
+#endif
         }
 
 #if 0
