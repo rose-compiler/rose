@@ -11,7 +11,6 @@
 #   RUN_AND_LOG
 #   SRUN_DO
 #   _do_preconfigure_no_latest_copy
-#   _print_rose_vars
 #   _set_REPO_PATH_and_INSTALL_BASE_VERSIONED
 #   _turn_on_module
 #   clone_latest_workspace
@@ -23,6 +22,7 @@
 #   echo_version_from_file
 #   make_and_install
 #   make_docs
+#   print_rose_vars
 #   set_ROSE_HOME_ROSE_LD_LIBRARY_PATH
 #   set_ROSE_LATEST_INSTALL_VERSION
 #   set_main_vars
@@ -110,7 +110,7 @@ _turn_on_module () {
   ###############################################################################
 }
 
-_print_rose_vars () {
+print_rose_vars () {
   log_separator_1
   log "ROSE environment variables:"
   log "COMMON_BUILD_BASE=${COMMON_BUILD_BASE}"
@@ -331,7 +331,6 @@ use_latest_rose () {
   export COMP_DB_MAP="${ROSE_COMPDB_SCRIPT_DIR}/comp_db_map.py"
   export RENDER_TEXT="${ROSE_COMPDB_SCRIPT_DIR}/render_text.py"
   export ROSE_TOOL="${ROSE_HOME}/bin/identityTranslator"
-  _print_rose_vars
 }
 
 # All "use_latest..." below set:
@@ -531,7 +530,6 @@ setup_gcc_compiler_with_profiling () {
 setup_boost () {
   # SELECT BOOST:
   export ROSE_BOOST_HOME="/usr/tce/packages/boost/boost-${ROSE_BOOST_VERSION}-${ROSE_MPI_KIND}-${ROSE_MPI_VERSION}-${ROSE_COMPILER_VERSIONED}"
-  _print_rose_vars
 }
 
 #=====================================
@@ -643,4 +641,8 @@ make_docs () {
   run_or_not ${SRUN_DO} -c36 ${RUN_AND_LOG} --use_first_parm make docs -j36
 }
 #======================================
+
+_temp () {
+ module load vtune
+}
 
