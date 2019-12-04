@@ -6,6 +6,7 @@
 #include <boost/filesystem.hpp>
 #include <Disassembler.h>
 #include <Sawyer/BitVector.h>
+#include <Sawyer/Message.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -153,6 +154,9 @@ public:
         void print(std::ostream &out) const;
     };
 
+public:
+    static Sawyer::Message::Facility mlog;              /**< Diagnostic facility for debugger. */
+
 private:
     typedef Sawyer::Container::Map<RegisterDescriptor, size_t> UserRegDefs;
     enum RegPageStatus { REGPAGE_NONE, REGPAGE_REGS, REGPAGE_FPREGS };
@@ -297,6 +301,10 @@ public:
     
     /** Returns the last status from a call to waitpid. */
     int waitpidStatus() const { return wstat_; }
+
+public:
+    /**  Initialize diagnostic output. This is called automatically when ROSE is initialized.  */
+    static void initDiagnostics();
     
 private:
     // Initialize tables during construction

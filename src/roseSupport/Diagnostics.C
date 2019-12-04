@@ -8,6 +8,7 @@
 #include "BinaryBestMapAddress.h"                       // Rose::BinaryAnalysis::BestMapAddress
 #include "BinaryCodeInserter.h"                         // Rose::BinaryAnalysis::CodeInserter
 #include "BinaryDataFlow.h"                             // Rose::BinaryAnalysis::DataFlow
+#include "BinaryDebugger.h"                             // Rose::BinaryAnalysis::Debugger
 #include "BinaryFeasiblePath.h"                         // Rose::BinaryAnalysis::FeasiblePath
 #include "BinaryFunctionSimilarity.h"                   // Rose::BinaryAnalysis::FunctionSimilarity
 #include "BinaryHotPatch.h"                             // Rose::BinaryAnalysis::HotPatch
@@ -119,6 +120,7 @@ void initialize() {
         BinaryAnalysis::BinaryLoader::initDiagnostics();
         BinaryAnalysis::AsmUnparser::initDiagnostics();
         BinaryAnalysis::BestMapAddress::initDiagnostics();
+        BinaryAnalysis::Debugger::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
         BinaryAnalysis::CodeInserter::initDiagnostics();
         BinaryAnalysis::Concolic::initDiagnostics();

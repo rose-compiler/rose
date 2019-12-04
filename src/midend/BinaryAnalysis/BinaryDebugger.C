@@ -7,6 +7,7 @@
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/filesystem.hpp>
 #include <dirent.h>
+#include <Sawyer/Message.h>
 
 #include <boost/config.hpp>
 #ifdef BOOST_WINDOWS                                    // FIXME[Robb P. Matzke 2014-10-11]: not implemented on Windows
@@ -114,6 +115,7 @@ static int ptrace(__ptrace_request, int, void*, void*) {// Mac OSX dud
 
 #endif
 
+using namespace Sawyer::Message::Common;
 namespace bfs = boost::filesystem;
 
 namespace Rose {
@@ -176,6 +178,19 @@ std::ostream&
 operator<<(std::ostream &out, const Debugger::Specimen &specimen) {
     specimen.print(out);
     return out;
+}
+
+Sawyer::Message::Facility Debugger::mlog;
+
+// class method
+void
+Debugger::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Debugger");
+        mlog.comment("debugging other processes");
+    }
 }
 
 const RegisterDictionary*
