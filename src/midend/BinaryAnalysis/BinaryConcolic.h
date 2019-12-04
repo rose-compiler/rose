@@ -864,13 +864,13 @@ public:
     *
     * Thread safety: thread safe
     */
-   std::vector<Database::TestCaseId> needConcreteTesting(size_t);
+   std::vector<Database::TestCaseId> needConcreteTesting(size_t n = UNLIMITED);
 
    /** Returns @p n test cases without concolic results.
     *
     * Thread safety: thread safe
     */
-   std::vector<Database::TestCaseId> needConcolicTesting(size_t);
+   std::vector<Database::TestCaseId> needConcolicTesting(size_t n = UNLIMITED);
 
    /** Updates a test case and its results.
     *
@@ -926,7 +926,7 @@ public:
      *  concretely if it has no results from a previous concrete run.
      *
      * @{ */
-    virtual std::vector<Database::TestCaseId> pendingConcreteResults(size_t n = (size_t)(-1));
+    virtual std::vector<Database::TestCaseId> pendingConcreteResults(size_t n = UNLIMITED);
     Database::TestCaseId pendingConcreteResult() /*final*/;
     /** @} */
 
@@ -943,7 +943,7 @@ public:
      *  concolically if it is not marked as having completed the concolic run.
      *
      * @{ */
-    virtual std::vector<Database::TestCaseId> pendingConcolicResults(size_t n = (size_t)(-1));
+    virtual std::vector<Database::TestCaseId> pendingConcolicResults(size_t n = UNLIMITED);
     Database::TestCaseId pendingConcolicResult() /*final*/;
     /** @} */
 

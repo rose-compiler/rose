@@ -255,10 +255,10 @@ private:
         FeasiblePath::VarDetail retval;
         retval.registerName = RegisterNames(regs)(reg);
         retval.firstAccessMode = accessMode;
-        if (pathInsnIndex_ == (size_t)(-1) && currentInstruction() == NULL) {
+        if (pathInsnIndex_ == INVALID_INDEX && currentInstruction() == NULL) {
             // no path position (i.e., present in initial state)
         } else {
-            if (pathInsnIndex_ != (size_t)(-1))
+            if (pathInsnIndex_ != INVALID_INDEX)
                 retval.firstAccessIdx = pathInsnIndex_;
             retval.firstAccessInsn = currentInstruction();
         }
@@ -271,7 +271,7 @@ private:
                                               const std::string &accessMode, size_t byteNumber=0, size_t nBytes=0) const {
         FeasiblePath::VarDetail retval;
         retval.firstAccessMode = accessMode;
-        if (pathInsnIndex_ != (size_t)(-1))
+        if (pathInsnIndex_ != INVALID_INDEX)
             retval.firstAccessIdx = pathInsnIndex_;
         retval.firstAccessInsn = currentInstruction();
 
@@ -444,7 +444,8 @@ public:
                 ASSERT_not_null(path_);
                 BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
                 ASSERT_not_null(cpu);
-                pathProcessor_->nullDeref(*fpAnalyzer_, *path_, cpu, nullPtrSolver(), FeasiblePath::READ, addr, currentInstruction());
+                pathProcessor_->nullDeref(*fpAnalyzer_, *path_, currentInstruction(), cpu, nullPtrSolver(),
+                                          FeasiblePath::READ, addr);
             }
         }
         
@@ -500,7 +501,7 @@ public:
             SmtSolver::Transaction tx(s);
             BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
             ASSERT_not_null(cpu);
-            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, cpu, s, FeasiblePath::READ, addr, retval);
+            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, currentInstruction(), cpu, s, FeasiblePath::READ, addr, retval);
         }
 
         return retval;
@@ -523,7 +524,8 @@ public:
                 ASSERT_not_null(path_);
                 BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
                 ASSERT_not_null(cpu);
-                pathProcessor_->nullDeref(*fpAnalyzer_, *path_, cpu, nullPtrSolver(), FeasiblePath::WRITE, addr, currentInstruction());
+                pathProcessor_->nullDeref(*fpAnalyzer_, *path_, currentInstruction(), cpu, nullPtrSolver(),
+                                          FeasiblePath::WRITE, addr);
             }
         }
 
@@ -550,7 +552,7 @@ public:
             SmtSolver::Transaction tx(s);
             BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
             ASSERT_not_null(cpu);
-            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, cpu, s, FeasiblePath::WRITE, addr, value);
+            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, currentInstruction(), cpu, s, FeasiblePath::WRITE, addr, value);
         }
     }
 };
@@ -1281,7 +1283,7 @@ FeasiblePath::shouldInline(const P2::CfgPath &path, const P2::ControlFlowGraph::
         return false;
 
     // Don't let recursion get too deep
-    if (settings_.maxRecursionDepth < (size_t)(-1)) {
+    if (settings_.maxRecursionDepth < UNLIMITED) {
         ssize_t callDepth = path.callDepth(callee);
         ASSERT_require(callDepth >= 0);
         if ((size_t)callDepth >= settings_.maxRecursionDepth)

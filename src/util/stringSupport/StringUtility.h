@@ -8,6 +8,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <limits.h>
 #include <map>
+#include <rose_constants.h>
 #include <sstream>
 #include <stdint.h>
 #include <string>
@@ -88,10 +89,10 @@ ROSE_UTIL_API std::string escapeNewlineAndDoubleQuoteCharacters(const std::strin
  *  Perl's "split" operator.
  *
  * @{ */
-ROSE_UTIL_API std::vector<std::string> split(const std::string &separator, const std::string &str, size_t maxparts=(size_t)(-1),
-                                             bool trim_white_space=false);
-ROSE_UTIL_API std::vector<std::string> split(char separator, const std::string &str, size_t maxparts=(size_t)(-1),
-                                             bool trim_white_space=false);
+ROSE_UTIL_API std::vector<std::string> split(const std::string &separator, const std::string &str, size_t maxparts = UNLIMITED,
+                                             bool trim_white_space = false);
+ROSE_UTIL_API std::vector<std::string> split(char separator, const std::string &str, size_t maxparts = UNLIMITED,
+                                             bool trim_white_space = false);
 /** @} */
 
 /** Split a string into a list based on a separator character.

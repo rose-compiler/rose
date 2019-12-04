@@ -143,7 +143,7 @@ namespace ROSE_Callbacks {
          *
          *  Thread safety: This method is thread safe.  In fact, it is safe to modify the list while apply() is calling the
          *  functors on that list. */
-        List& after(CallbackType *relative_to, CallbackType *cb, size_t nreplacements=(size_t)(-1)) {
+        List& after(CallbackType *relative_to, CallbackType *cb, size_t nreplacements = UNLIMITED) {
             assert(cb!=NULL);
             boost::lock_guard<boost::mutex> lock(mutex_);
             for (typename CBList::iterator li=list.begin(); li!=list.end() && nreplacements>0; ++li) {
@@ -160,7 +160,7 @@ namespace ROSE_Callbacks {
          *
          *  Thread safety: This method is thread safe.  In fact, it is safe to modify the list while apply() is calling the
          *  functors on that list. */
-        List& before(CallbackType *relative_to, CallbackType *cb, size_t nreplacements=(size_t)(-1)) {
+        List& before(CallbackType *relative_to, CallbackType *cb, size_t nreplacements = UNLIMITED) {
             assert(cb!=NULL);
             boost::lock_guard<boost::mutex> lock(mutex_);
             for (typename CBList::iterator li=list.begin(); li!=list.end() && nreplacements>0; ++li) {
@@ -179,7 +179,7 @@ namespace ROSE_Callbacks {
          *
          *  Thread safety: This method is thread safe. In fact, it is safe to modify the list while apply() is calling the
          *  functors on that list. */
-        List& replace(CallbackType *old_cb, CallbackType *new_cb, size_t nreplacements=(size_t)(-1), Direction dir=FORWARD) {
+        List& replace(CallbackType *old_cb, CallbackType *new_cb, size_t nreplacements = UNLIMITED, Direction dir = FORWARD) {
             assert(new_cb!=NULL);
             boost::lock_guard<boost::mutex> lock(mutex_);
             if (FORWARD==dir) {
