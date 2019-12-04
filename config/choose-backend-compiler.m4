@@ -365,17 +365,31 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
 # gfortran --version | sed -n '1s/.*) //;1p'
   AC_MSG_NOTICE([BACKEND_FORTRAN_COMPILER = "$BACKEND_FORTRAN_COMPILER"])
 
-# DQ (9/15/2009): Normally we expect a string such as "GNU Fortran 95 (GCC) 4.1.2", but 
-# the GNU 4.0.x compiler's gfortran outputs a string such as "GNU Fortran 95 (GCC 4.0.2)"
-# So for this case we detect it explicitly and fill in the values directly!
-  BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f1`
-  BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f2`
+  if test x$BACKEND_FORTRAN_COMPILER == xpgfortran; then
 
-# Test if we computed the major and minor version numbers correctly...recompute if required
-  if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
-    AC_MSG_NOTICE([BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER = "$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER" (blank) so this is likely the GNU 4.0.x version (try again to get the version number)])
-    BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | sed s/"GNU Fortran 95 (GCC "//g | cut -f1 -d \) | cut -d\. -f1`
-    BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | sed s/"GNU Fortran 95 (GCC "//g | cut -f1 -d \) | cut -d\. -f2`
+    BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version 2>1 | grep pgfortran | cut -f2 -d\  | tr -d \  | cut -d\. -f1`
+    BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version 2>1 | grep pgfortran | cut -f2 -d\  | tr -d \  | cut -d\. -f2 | cut -d\- -f1`
+
+  else
+
+ # DQ (9/15/2009): Normally we expect a string such as "GNU Fortran 95 (GCC) 4.1.2", but 
+ # the GNU 4.0.x compiler's gfortran outputs a string such as "GNU Fortran 95 (GCC 4.0.2)"
+ # So for this case we detect it explicitly and fill in the values directly!
+    BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f1`
+    BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f2`
+ 
+ # Test if we computed the major and minor version numbers correctly...recompute if required
+    if test x$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == x; then
+      AC_MSG_NOTICE([BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER = "$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER" (blank) so this is likely the GNU 4.0.x version (try again to get the version number)])
+      BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | sed s/"GNU Fortran 95 (GCC "//g | cut -f1 -d \) | cut -d\. -f1`
+      BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | sed s/"GNU Fortran 95 (GCC "//g | cut -f1 -d \) | cut -d\. -f2`
+    fi
+  fi
+
+  if test "x$BACKEND_FORTRAN_COMPILER" = "xgfortran"; then
+     AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [1], [Mark that GFORTRAN is used in backend])
+  else
+     AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [0], [Mark that GFORTRAN is not used in backend ])
   fi
 
 # echo "back-end compiler for generated translators to use will be: $BACKEND_CXX_COMPILER"
