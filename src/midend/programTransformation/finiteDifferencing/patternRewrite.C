@@ -72,24 +72,24 @@ void replaceChild(SgNode* parent, SgNode* from, SgNode* to) {
   ROSE_ASSERT (from != to);
   ROSE_ASSERT (from != parent);
   ROSE_ASSERT (to != parent);
-  if (parent->get_childIndex(from) == (size_t)(-1)) {
+  if (parent->get_childIndex(from) == Rose::INVALID_INDEX) {
     cerr << "From not found: from is a " << from->class_name() << " and parent is a " << parent->class_name() << endl;
     ROSE_ASSERT (false);
   }
-  ROSE_ASSERT (parent->get_childIndex(to) == (size_t)(-1));
+  ROSE_ASSERT (parent->get_childIndex(to) == Rose::INVALID_INDEX);
   if (isSgExpression(parent) && isSgExpression(from) && isSgExpression(to)) {
     to->set_parent(parent);
     isSgExpression(parent)->replace_expression(
       isSgExpression(from), isSgExpression(to));
-    ROSE_ASSERT(parent->get_childIndex(from) == (size_t)(-1));
-    ROSE_ASSERT(parent->get_childIndex(to) != (size_t)(-1));
+    ROSE_ASSERT(parent->get_childIndex(from) == Rose::INVALID_INDEX);
+    ROSE_ASSERT(parent->get_childIndex(to) != Rose::INVALID_INDEX);
     return;
   }
   if (isSgExprStatement(parent) && isSgExpression(to)) {
     to->set_parent(parent);
     isSgExprStatement(parent)->set_expression(isSgExpression(to));
-    ROSE_ASSERT(parent->get_childIndex(from) == (size_t)(-1));
-    ROSE_ASSERT(parent->get_childIndex(to) != (size_t)(-1));
+    ROSE_ASSERT(parent->get_childIndex(from) == Rose::INVALID_INDEX);
+    ROSE_ASSERT(parent->get_childIndex(to) != Rose::INVALID_INDEX);
     return;
   }
   cout << parent->sage_class_name() << " " << from->sage_class_name() << " " << to->sage_class_name() << endl;

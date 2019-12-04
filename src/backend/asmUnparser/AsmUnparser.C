@@ -387,11 +387,11 @@ AsmUnparser::unparse_one_node(std::ostream &output, SgNode *node)
 {
     SgAsmInstruction *insn = isSgAsmInstruction(node);
     if (insn)
-        return unparse_insn(true, output, insn, (size_t)(-1));
+        return unparse_insn(true, output, insn, INVALID_INDEX);
 
     SgAsmStaticData *data = isSgAsmStaticData(node);
     if (data)
-        return unparse_staticdata(true, output, data, (size_t)(-1));
+        return unparse_staticdata(true, output, data, INVALID_INDEX);
 
     SgAsmBlock *block = isSgAsmBlock(node);
     if (block) {

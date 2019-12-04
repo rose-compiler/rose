@@ -407,7 +407,7 @@ unsigned int
 SgStatement::cfgFindChildIndex(SgNode* n) {
     // Default -- overridden in some cases
     size_t idx = this->getChildIndex(n);
-    ROSE_ASSERT (idx != (size_t)(-1)); // Not found
+    ROSE_ASSERT (idx != Rose::INVALID_INDEX); // Not found
     return idx;
   }
 
@@ -1243,7 +1243,7 @@ SgVariableDeclaration::cfgIndexForEnd() const {
 unsigned int
 SgVariableDeclaration::cfgFindChildIndex(SgNode* n) {
     size_t idx = this->get_childIndex(n);
-    ROSE_ASSERT (idx != (size_t)(-1)); // Not found
+    ROSE_ASSERT (idx != Rose::INVALID_INDEX); // Not found
     ROSE_ASSERT (idx != 0); // Not found
     return idx - 1;
   }
@@ -3523,7 +3523,7 @@ SgExpression::cfgFindChildIndex(SgNode* n) {
 
     // Default -- overridden in some cases
     size_t idx = this->get_childIndex(n);
-    ROSE_ASSERT (idx != (size_t)(-1)); // Not found
+    ROSE_ASSERT (idx != Rose::INVALID_INDEX); // Not found
     return idx;
   }
 
