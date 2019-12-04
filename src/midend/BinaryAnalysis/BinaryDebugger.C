@@ -1,4 +1,5 @@
 #include <sage3basic.h>
+#include <rosePublicConfig.h>
 #include <BinaryDebugger.h>
 #include <DisassemblerX86.h>
 #include <integerOps.h>
@@ -8,6 +9,10 @@
 #include <boost/filesystem.hpp>
 #include <dirent.h>
 #include <Sawyer/Message.h>
+
+#ifdef ROSE_HAVE_SYS_PERSONALITY_H
+#include <sys/personality.h>
+#endif
 
 #include <boost/config.hpp>
 #ifdef BOOST_WINDOWS                                    // FIXME[Robb P. Matzke 2014-10-11]: not implemented on Windows
@@ -160,6 +165,28 @@ setInstructionPointer(user_regs_struct &regs, rose_addr_t va) {
     regs.rip = va;
 }
 #endif
+
+bool
+Debugger::Specimen::randomizedAddresses() const {
+#ifdef ROSE_HAVE_SYS_PERSONALITY_H
+    return (persona_ & ADDR_NO_RANDOMIZE) == 0;
+#else
+    return false;
+#endif
+}
+
+void
+Debugger::Specimen::randomizedAddresses(bool b) {
+#ifdef ROSE_HAVE_SYS_PERSONALITY_H
+    if (b) {
+        persona_ &= ~ADDR_NO_RANDOMIZE;
+    } else {
+        persona_ |= ADDR_NO_RANDOMIZE;
+    }
+#else
+    // void
+#endif
+}
 
 void
 Debugger::Specimen::print(std::ostream &out) const {
@@ -444,6 +471,7 @@ Debugger::attach(const Specimen &specimen) {
                 _Exit(1);                                   // avoid calling C++ destructors from child
             }
 
+            setPersonality(specimen.persona());
             execv(argv[0], argv);
 
             // If failure, we must still call only async signal-safe functions.
@@ -730,6 +758,27 @@ Sawyer::Container::Trace<rose_addr_t>
 Debugger::trace() {
     DefaultTraceFilter filter;
     return trace(filter);
+}
+
+// class method
+unsigned long
+Debugger::getPersonality() {
+#ifdef ROSE_HAVE_SYS_PERSONALITY_H
+    return ::personality(0xffffffff);
+#else
+    return 0;
+#endif
+}
+
+// class method
+void
+Debugger::setPersonality(unsigned long bits) {
+#ifdef ROSE_HAVE_SYS_PERSONALITY_H
+    ::personality(bits);
+#else
+    if (bits != 0)
+        mlog[WARN] <<"unable to set process execution domain for this architecture\n";
+#endif
 }
 
 } // namespace

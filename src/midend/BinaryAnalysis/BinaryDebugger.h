@@ -46,6 +46,7 @@ public:
      *  A specimen can be either an executable program or a running process. */
     class Specimen {
         BitFlags<Flag> flags_;                          // operational flags
+        unsigned long persona_;                         // personality(2) flags
 
         // Members for running a program
         boost::filesystem::path program_;               // ;full path of executable program
@@ -58,23 +59,23 @@ public:
     public:
         /** Default construct an empty specimen descriptor. */
         Specimen()
-            : pid_(-1) {}
+            : persona_(getPersonality()), pid_(-1) {}
         
         /** Construct a specimen description for a process. */
         Specimen(int pid) /*implicit*/
-            : flags_(DEFAULT_FLAGS), pid_(pid) {}
+            : flags_(DEFAULT_FLAGS), persona_(getPersonality()), pid_(pid) {}
 
         /** Construct a specimen description for a program with no arguments. */
         Specimen(const boost::filesystem::path &name) /*implicit*/
-            : flags_(DEFAULT_FLAGS), program_(name), pid_(-1) {}
+            : flags_(DEFAULT_FLAGS), persona_(getPersonality()), program_(name), pid_(-1) {}
 
         /** Construct a specimen description for a program with arguments. */
         Specimen(const boost::filesystem::path &name, const std::vector<std::string> &args)
-            : flags_(DEFAULT_FLAGS), program_(name), arguments_(args), pid_(-1) {}
+            : flags_(DEFAULT_FLAGS), persona_(getPersonality()), program_(name), arguments_(args), pid_(-1) {}
 
         /** Construct a specimen description from combined program and arguments. */
         Specimen(const std::vector<std::string> &nameAndArgs) /*implicit*/
-            : flags_(DEFAULT_FLAGS), program_(nameAndArgs.front()),
+            : flags_(DEFAULT_FLAGS), persona_(getPersonality()), program_(nameAndArgs.front()),
               arguments_(nameAndArgs.begin()+1, nameAndArgs.end()), pid_(-1) {
         }
         
@@ -136,6 +137,33 @@ public:
         }
         /** @} */
 
+        /** Property: Personality flags.
+         *
+         *  These flags are identical to the bit flags used by the Linux @c personality function. For instance, to turn off
+         *  address space randomization, include sys/personality.h and pass @c ADDR_NO_RANDOMIZE. See also, @ref
+         *  randomizedAddresses property.
+         *
+         * @{ */
+        unsigned long persona() const {
+            return persona_;
+        }
+        void persona(unsigned long bits) {
+            persona_ = bits;
+        }
+        /** @} */
+
+        /** Property: Whether to randomize addresses of a process.
+         *
+         *  This is actually a @ref persona property, but it's used so commonly that we have a separate API for turning it
+         *  on and off. The alleviates the user from having to test what kind of machine he's compiling on and using conditional
+         *  compilation to include the correct files and use the correct constants.  If the host machine doesn't support adjusting
+         *  whether address space randomization is used, then setting this property is a no-op and false is always returned.
+         *
+         * @{ */
+        bool randomizedAddresses() const;
+        void randomizedAddresses(bool);
+        /** @} */
+        
         /** Property: Process ID.
          *
          *  This is the identification number for a specimen process to which the debugger should be attached. Setting
@@ -360,6 +388,10 @@ private:
     // Open /dev/null with the specified flags as the indicated file descriptor, closing what was previously on that
     // descriptor. If an error occurs, the targetFd is closed anyway.
     void devNullTo(int targetFd, int openFlags);
+
+    // Get/set personality in a portable way
+    static unsigned long getPersonality();
+    static void setPersonality(unsigned long);
 };
 
 std::ostream& operator<<(std::ostream&, const Debugger::Specimen&);
