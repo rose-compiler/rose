@@ -218,7 +218,7 @@ Partitioner::init(Disassembler *disassembler, const MemoryMap::Ptr &map) {
         instructionProvider_ = InstructionProvider::instance(disassembler, map);
         unparser_ = disassembler->unparser()->copy();
         insnUnparser_ = disassembler->unparser()->copy();
-        insnUnparser_->settings() = Unparser::Settings::minimal();
+        configureInsnUnparser(insnUnparser_);
     }
     undiscoveredVertex_ = cfg_.insertVertex(CfgVertex(V_UNDISCOVERED));
     indeterminateVertex_ = cfg_.insertVertex(CfgVertex(V_INDETERMINATE));
@@ -265,6 +265,17 @@ Partitioner::showStatistics() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Unparsing -- functions that deal with creating assembly listings
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// class method
+void
+Partitioner::configureInsnUnparser(const Unparser::Base::Ptr &unparser) const {
+    ASSERT_not_null(unparser);
+    unparser->settings() = Unparser::Settings::minimal();
+    unparser->settings().insn.address.showing = true;
+    unparser->settings().insn.address.fieldWidth = 1;
+    unparser->settings().insn.mnemonic.fieldWidth = 1;
+    unparser->settings().insn.operands.fieldWidth = 1;
+}
 
 Unparser::BasePtr
 Partitioner::unparser() const {
@@ -2307,7 +2318,7 @@ Partitioner::bblockAttached(const ControlFlowGraph::VertexIterator &newVertex) {
             } else {
                 debug <<"attached basic block:\n";
                 BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
-                    debug <<"  + " <<unparseInstructionWithAddress(insn) <<"\n";
+                    debug <<"  + " <<unparse(insn) <<"\n";
             }
         } else {
             debug <<"inserted basic block placeholder at " <<StringUtility::addrToString(startVa) <<"\n";
@@ -2333,7 +2344,7 @@ Partitioner::bblockDetached(rose_addr_t startVa, const BasicBlock::Ptr &bblock) 
             } else {
                 debug <<"detached basic block:\n";
                 BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
-                    debug <<"  - " <<unparseInstructionWithAddress(insn) <<"\n";
+                    debug <<"  - " <<unparse(insn) <<"\n";
             }
         } else {
             debug <<"erased basic block placeholder at " <<StringUtility::addrToString(startVa) <<"\n";
@@ -2945,7 +2956,7 @@ Partitioner::rebuildVertexIndices() {
         insnUnparser_ = instructionProvider().disassembler()->unparser()->copy();
     }
     if (insnUnparser_)
-        insnUnparser_->settings() = Unparser::Settings::minimal();
+        configureInsnUnparser(insnUnparser_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

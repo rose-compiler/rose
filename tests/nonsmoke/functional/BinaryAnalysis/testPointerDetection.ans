@@ -1,23 +1,23 @@
 
 Pointer detection analysis for function 0x0804839e "simple01"
   Instructions:
-    0x0804839e: push   ebp
-    0x0804839f: mov    ebp, esp
-    0x080483a1: mov    eax, dword ss:[ebp + 0x08]
-    0x080483a4: pop    ebp
-    0x080483a5: ret    
+    0x0804839e: push ebp
+    0x0804839f: mov ebp, esp
+    0x080483a1: mov eax, dword ss:[ebp + 8]
+    0x080483a4: pop ebp
+    0x080483a5: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
 
 Pointer detection analysis for function 0x080483a6 "simple02"
   Instructions:
-    0x080483a6: push   ebp
-    0x080483a7: mov    ebp, esp
-    0x080483a9: mov    eax, dword ss:[ebp + 0x08]
-    0x080483ac: mov    eax, dword ds:[eax]
-    0x080483ae: pop    ebp
-    0x080483af: ret    
+    0x080483a6: push ebp
+    0x080483a7: mov ebp, esp
+    0x080483a9: mov eax, dword ss:[ebp + 8]
+    0x080483ac: mov eax, dword ds:[eax]
+    0x080483ae: pop ebp
+    0x080483af: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
@@ -25,13 +25,13 @@ Pointer detection analysis for function 0x080483a6 "simple02"
 
 Pointer detection analysis for function 0x080483b0 "simple03"
   Instructions:
-    0x080483b0: push   ebp
-    0x080483b1: mov    ebp, esp
-    0x080483b3: mov    eax, dword ss:[ebp + 0x08]
-    0x080483b6: mov    eax, dword ds:[eax]
-    0x080483b8: mov    eax, dword ds:[eax]
-    0x080483ba: pop    ebp
-    0x080483bb: ret    
+    0x080483b0: push ebp
+    0x080483b1: mov ebp, esp
+    0x080483b3: mov eax, dword ss:[ebp + 8]
+    0x080483b6: mov eax, dword ds:[eax]
+    0x080483b8: mov eax, dword ds:[eax]
+    0x080483ba: pop ebp
+    0x080483bb: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
@@ -40,23 +40,23 @@ Pointer detection analysis for function 0x080483b0 "simple03"
 
 Pointer detection analysis for function 0x080483bc "simple04"
   Instructions:
-    0x080483bc: push   ebp
-    0x080483bd: mov    ebp, esp
-    0x080483bf: mov    eax, dword ds:[0x080497e8<(data)g1>]
-    0x080483c4: pop    ebp
-    0x080483c5: ret    
+    0x080483bc: push ebp
+    0x080483bd: mov ebp, esp
+    0x080483bf: mov eax, dword ds:[0x080497e8<(data)g1>]
+    0x080483c4: pop ebp
+    0x080483c5: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
 
 Pointer detection analysis for function 0x080483c6 "simple05"
   Instructions:
-    0x080483c6: push   ebp
-    0x080483c7: mov    ebp, esp
-    0x080483c9: mov    eax, dword ds:[0x080497ec<(data)g2>]
-    0x080483ce: mov    eax, dword ds:[eax]
-    0x080483d0: pop    ebp
-    0x080483d1: ret    
+    0x080483c6: push ebp
+    0x080483c7: mov ebp, esp
+    0x080483c9: mov eax, dword ds:[0x080497ec<(data)g2>]
+    0x080483ce: mov eax, dword ds:[eax]
+    0x080483d0: pop ebp
+    0x080483d1: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
@@ -64,13 +64,13 @@ Pointer detection analysis for function 0x080483c6 "simple05"
 
 Pointer detection analysis for function 0x080483d2 "simple06"
   Instructions:
-    0x080483d2: push   ebp
-    0x080483d3: mov    ebp, esp
-    0x080483d5: mov    eax, dword ds:[0x080497f0<(data)g3>]
-    0x080483da: mov    eax, dword ds:[eax]
-    0x080483dc: mov    eax, dword ds:[eax]
-    0x080483de: pop    ebp
-    0x080483df: ret    
+    0x080483d2: push ebp
+    0x080483d3: mov ebp, esp
+    0x080483d5: mov eax, dword ds:[0x080497f0<(data)g3>]
+    0x080483da: mov eax, dword ds:[eax]
+    0x080483dc: mov eax, dword ds:[eax]
+    0x080483de: pop ebp
+    0x080483df: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
@@ -79,23 +79,23 @@ Pointer detection analysis for function 0x080483d2 "simple06"
 
 Pointer detection analysis for function 0x080483e0 "simple07"
   Instructions:
-    0x080483e0: push   ebp
-    0x080483e1: mov    ebp, esp
-    0x080483e3: mov    eax, 0x080497e8<(data)g1>
-    0x080483e8: pop    ebp
-    0x080483e9: ret    
+    0x080483e0: push ebp
+    0x080483e1: mov ebp, esp
+    0x080483e3: mov eax, 0x080497e8<(data)g1>
+    0x080483e8: pop ebp
+    0x080483e9: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
 
 Pointer detection analysis for function 0x080483ea "simple08"
   Instructions:
-    0x080483ea: push   ebp
-    0x080483eb: mov    ebp, esp
-    0x080483ed: mov    eax, dword ds:[0x080497f0<(data)g3>]
-    0x080483f2: mov    eax, dword ds:[eax]
-    0x080483f4: pop    ebp
-    0x080483f5: ret    
+    0x080483ea: push ebp
+    0x080483eb: mov ebp, esp
+    0x080483ed: mov eax, dword ds:[0x080497f0<(data)g3>]
+    0x080483f2: mov eax, dword ds:[eax]
+    0x080483f4: pop ebp
+    0x080483f5: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
@@ -103,15 +103,15 @@ Pointer detection analysis for function 0x080483ea "simple08"
 
 Pointer detection analysis for function 0x080483f6 "simple09"
   Instructions:
-    0x080483f6: push   ebp
-    0x080483f7: mov    ebp, esp
-    0x080483f9: sub    esp, 0x10
-    0x080483fc: mov    eax, dword ds:[0x080497ec<(data)g2>]
-    0x08048401: mov    dword ss:[ebp + 0xfc<-4>], eax
-    0x08048404: mov    eax, dword ss:[ebp + 0xfc<-4>]
-    0x08048407: mov    eax, dword ds:[eax]
-    0x08048409: leave  
-    0x0804840a: ret    
+    0x080483f6: push ebp
+    0x080483f7: mov ebp, esp
+    0x080483f9: sub esp, 0x10<16>
+    0x080483fc: mov eax, dword ds:[0x080497ec<(data)g2>]
+    0x08048401: mov dword ss:[ebp + 0xfc<252,-4>], eax
+    0x08048404: mov eax, dword ss:[ebp + 0xfc<252,-4>]
+    0x08048407: mov eax, dword ds:[eax]
+    0x08048409: leave
+    0x0804840a: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
@@ -120,34 +120,34 @@ Pointer detection analysis for function 0x080483f6 "simple09"
 
 Pointer detection analysis for function 0x0804840b "simple10"
   Instructions:
-    0x0804840b: push   ebp
-    0x0804840c: mov    ebp, esp
-    0x0804840e: mov    eax, dword ds:[0x08049808<(data)g4>]
-    0x08048413: pop    ebp
-    0x08048414: ret    
+    0x0804840b: push ebp
+    0x0804840c: mov ebp, esp
+    0x0804840e: mov eax, dword ds:[0x08049808<(data)g4>]
+    0x08048413: pop ebp
+    0x08048414: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
 
 Pointer detection analysis for function 0x08048415 "simple11"
   Instructions:
-    0x08048415: push   ebp
-    0x08048416: mov    ebp, esp
-    0x08048418: mov    eax, dword ds:[0x08049810]
-    0x0804841d: pop    ebp
-    0x0804841e: ret    
+    0x08048415: push ebp
+    0x08048416: mov ebp, esp
+    0x08048418: mov eax, dword ds:[0x08049810]
+    0x0804841d: pop ebp
+    0x0804841e: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
 
 Pointer detection analysis for function 0x0804841f "simple12"
   Instructions:
-    0x0804841f: push   ebp
-    0x08048420: mov    ebp, esp
-    0x08048422: mov    eax, dword ss:[ebp + 0x08]
-    0x08048425: mov    eax, dword ds:[0x08049808<(data)g4> + eax*0x04]
-    0x0804842c: pop    ebp
-    0x0804842d: ret    
+    0x0804841f: push ebp
+    0x08048420: mov ebp, esp
+    0x08048422: mov eax, dword ss:[ebp + 8]
+    0x08048425: mov eax, dword ds:[0x08049808<(data)g4> + eax * 4]
+    0x0804842c: pop ebp
+    0x0804842d: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
@@ -155,23 +155,23 @@ Pointer detection analysis for function 0x0804841f "simple12"
 
 Pointer detection analysis for function 0x0804842e "simple13"
   Instructions:
-    0x0804842e: push   ebp
-    0x0804842f: mov    ebp, esp
-    0x08048431: mov    eax, dword ds:[0x080497f4<(data)e1>]
-    0x08048436: pop    ebp
-    0x08048437: ret    
+    0x0804842e: push ebp
+    0x0804842f: mov ebp, esp
+    0x08048431: mov eax, dword ds:[0x080497f4<(data)e1>]
+    0x08048436: pop ebp
+    0x08048437: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
 
 Pointer detection analysis for function 0x08048438 "simple14"
   Instructions:
-    0x08048438: push   ebp
-    0x08048439: mov    ebp, esp
-    0x0804843b: mov    eax, dword ds:[0x080497f8<(data)e2>]
-    0x08048440: mov    eax, dword ds:[eax]
-    0x08048442: pop    ebp
-    0x08048443: ret    
+    0x08048438: push ebp
+    0x08048439: mov ebp, esp
+    0x0804843b: mov eax, dword ds:[0x080497f8<(data)e2>]
+    0x08048440: mov eax, dword ds:[eax]
+    0x08048442: pop ebp
+    0x08048443: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
@@ -179,13 +179,13 @@ Pointer detection analysis for function 0x08048438 "simple14"
 
 Pointer detection analysis for function 0x08048444 "simple15"
   Instructions:
-    0x08048444: push   ebp
-    0x08048445: mov    ebp, esp
-    0x08048447: mov    eax, dword ds:[0x080497fc<(data)e3>]
-    0x0804844c: mov    eax, dword ds:[eax]
-    0x0804844e: mov    eax, dword ds:[eax]
-    0x08048450: pop    ebp
-    0x08048451: ret    
+    0x08048444: push ebp
+    0x08048445: mov ebp, esp
+    0x08048447: mov eax, dword ds:[0x080497fc<(data)e3>]
+    0x0804844c: mov eax, dword ds:[eax]
+    0x0804844e: mov eax, dword ds:[eax]
+    0x08048450: pop ebp
+    0x08048451: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
@@ -194,23 +194,23 @@ Pointer detection analysis for function 0x08048444 "simple15"
 
 Pointer detection analysis for function 0x08048452 "simple16"
   Instructions:
-    0x08048452: push   ebp
-    0x08048453: mov    ebp, esp
-    0x08048455: mov    eax, 0x080497f4<(data)e1>
-    0x0804845a: pop    ebp
-    0x0804845b: ret    
+    0x08048452: push ebp
+    0x08048453: mov ebp, esp
+    0x08048455: mov eax, 0x080497f4<(data)e1>
+    0x0804845a: pop ebp
+    0x0804845b: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
 
 Pointer detection analysis for function 0x0804845c "simple17"
   Instructions:
-    0x0804845c: push   ebp
-    0x0804845d: mov    ebp, esp
-    0x0804845f: mov    eax, dword ds:[0x080497fc<(data)e3>]
-    0x08048464: mov    eax, dword ds:[eax]
-    0x08048466: pop    ebp
-    0x08048467: ret    
+    0x0804845c: push ebp
+    0x0804845d: mov ebp, esp
+    0x0804845f: mov eax, dword ds:[0x080497fc<(data)e3>]
+    0x08048464: mov eax, dword ds:[eax]
+    0x08048466: pop ebp
+    0x08048467: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
@@ -218,15 +218,15 @@ Pointer detection analysis for function 0x0804845c "simple17"
 
 Pointer detection analysis for function 0x08048468 "simple18"
   Instructions:
-    0x08048468: push   ebp
-    0x08048469: mov    ebp, esp
-    0x0804846b: sub    esp, 0x10
-    0x0804846e: mov    eax, dword ds:[0x080497f8<(data)e2>]
-    0x08048473: mov    dword ss:[ebp + 0xfc<-4>], eax
-    0x08048476: mov    eax, dword ss:[ebp + 0xfc<-4>]
-    0x08048479: mov    eax, dword ds:[eax]
-    0x0804847b: leave  
-    0x0804847c: ret    
+    0x08048468: push ebp
+    0x08048469: mov ebp, esp
+    0x0804846b: sub esp, 0x10<16>
+    0x0804846e: mov eax, dword ds:[0x080497f8<(data)e2>]
+    0x08048473: mov dword ss:[ebp + 0xfc<252,-4>], eax
+    0x08048476: mov eax, dword ss:[ebp + 0xfc<252,-4>]
+    0x08048479: mov eax, dword ds:[eax]
+    0x0804847b: leave
+    0x0804847c: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
@@ -235,34 +235,34 @@ Pointer detection analysis for function 0x08048468 "simple18"
 
 Pointer detection analysis for function 0x0804847d "simple19"
   Instructions:
-    0x0804847d: push   ebp
-    0x0804847e: mov    ebp, esp
-    0x08048480: mov    eax, dword ds:[0x0804981c<(data)e4>]
-    0x08048485: pop    ebp
-    0x08048486: ret    
+    0x0804847d: push ebp
+    0x0804847e: mov ebp, esp
+    0x08048480: mov eax, dword ds:[0x0804981c<(data)e4>]
+    0x08048485: pop ebp
+    0x08048486: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
 
 Pointer detection analysis for function 0x08048487 "simple20"
   Instructions:
-    0x08048487: push   ebp
-    0x08048488: mov    ebp, esp
-    0x0804848a: mov    eax, dword ds:[0x08049824]
-    0x0804848f: pop    ebp
-    0x08048490: ret    
+    0x08048487: push ebp
+    0x08048488: mov ebp, esp
+    0x0804848a: mov eax, dword ds:[0x08049824]
+    0x0804848f: pop ebp
+    0x08048490: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
 
 Pointer detection analysis for function 0x08048491 "simple21"
   Instructions:
-    0x08048491: push   ebp
-    0x08048492: mov    ebp, esp
-    0x08048494: mov    eax, dword ss:[ebp + 0x08]
-    0x08048497: mov    eax, dword ds:[0x0804981c<(data)e4> + eax*0x04]
-    0x0804849e: pop    ebp
-    0x0804849f: ret    
+    0x08048491: push ebp
+    0x08048492: mov ebp, esp
+    0x08048494: mov eax, dword ss:[ebp + 8]
+    0x08048497: mov eax, dword ds:[0x0804981c<(data)e4> + eax * 4]
+    0x0804849e: pop ebp
+    0x0804849f: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
@@ -270,13 +270,13 @@ Pointer detection analysis for function 0x08048491 "simple21"
 
 Pointer detection analysis for function 0x080484a0 "simple22"
   Instructions:
-    0x080484a0: push   ebp
-    0x080484a1: mov    ebp, esp
-    0x080484a3: sub    esp, 0x08
-    0x080484a6: mov    eax, dword ss:[ebp + 0x08]
-    0x080484a9: call   eax
-    0x080484ab: leave  
-    0x080484ac: ret    
+    0x080484a0: push ebp
+    0x080484a1: mov ebp, esp
+    0x080484a3: sub esp, 8
+    0x080484a6: mov eax, dword ss:[ebp + 8]
+    0x080484a9: call eax
+    0x080484ab: leave
+    0x080484ac: ret
   Code pointers:
     32-bit pointer at (add[u32] esp_0[u32] 0x00000004[u32])
     32-bit pointer at esp_0[u32]
@@ -284,16 +284,16 @@ Pointer detection analysis for function 0x080484a0 "simple22"
 
 Pointer detection analysis for function 0x080484ad "simple23"
   Instructions:
-    0x080484ad: push   ebp
-    0x080484ae: mov    ebp, esp
-    0x080484b0: sub    esp, 0x28
-    0x080484b3: mov    dword ss:[ebp + 0xf4<-12>], 0x00000064
-    0x080484ba: lea    eax, [ebp + 0xf4<-12>]
-    0x080484bd: mov    dword ss:[esp], eax
-    0x080484c0: mov    eax, dword ss:[ebp + 0x08]
-    0x080484c3: call   eax
-    0x080484c5: leave  
-    0x080484c6: ret    
+    0x080484ad: push ebp
+    0x080484ae: mov ebp, esp
+    0x080484b0: sub esp, 0x28<40>
+    0x080484b3: mov dword ss:[ebp + 0xf4<244,-12>], 0x00000064<100>
+    0x080484ba: lea eax, ss:[ebp + 0xf4<244,-12>]
+    0x080484bd: mov dword ss:[esp], eax
+    0x080484c0: mov eax, dword ss:[ebp + 8]
+    0x080484c3: call eax
+    0x080484c5: leave
+    0x080484c6: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
     32-bit pointer at (add[u32] esp_0[u32] 0x00000004[u32])
@@ -301,15 +301,15 @@ Pointer detection analysis for function 0x080484ad "simple23"
 
 Pointer detection analysis for function 0x080484c7 "simple24"
   Instructions:
-    0x080484c7: push   ebp
-    0x080484c8: mov    ebp, esp
-    0x080484ca: sub    esp, 0x18
-    0x080484cd: mov    eax, dword ss:[ebp + 0x0c]
-    0x080484d0: mov    dword ss:[esp], eax
-    0x080484d3: mov    eax, dword ss:[ebp + 0x08]
-    0x080484d6: call   eax
-    0x080484d8: leave  
-    0x080484d9: ret    
+    0x080484c7: push ebp
+    0x080484c8: mov ebp, esp
+    0x080484ca: sub esp, 0x18<24>
+    0x080484cd: mov eax, dword ss:[ebp + 12]
+    0x080484d0: mov dword ss:[esp], eax
+    0x080484d3: mov eax, dword ss:[ebp + 8]
+    0x080484d6: call eax
+    0x080484d8: leave
+    0x080484d9: ret
   Code pointers:
     32-bit pointer at (add[u32] esp_0[u32] 0x00000004[u32])
     32-bit pointer at esp_0[u32]
@@ -317,16 +317,16 @@ Pointer detection analysis for function 0x080484c7 "simple24"
 
 Pointer detection analysis for function 0x080484da "simple25"
   Instructions:
-    0x080484da: push   ebp
-    0x080484db: mov    ebp, esp
-    0x080484dd: sub    esp, 0x18
-    0x080484e0: mov    eax, dword ss:[ebp + 0x0c]
-    0x080484e3: mov    eax, dword ds:[eax]
-    0x080484e5: mov    dword ss:[esp], eax
-    0x080484e8: mov    eax, dword ss:[ebp + 0x08]
-    0x080484eb: call   eax
-    0x080484ed: leave  
-    0x080484ee: ret    
+    0x080484da: push ebp
+    0x080484db: mov ebp, esp
+    0x080484dd: sub esp, 0x18<24>
+    0x080484e0: mov eax, dword ss:[ebp + 12]
+    0x080484e3: mov eax, dword ds:[eax]
+    0x080484e5: mov dword ss:[esp], eax
+    0x080484e8: mov eax, dword ss:[ebp + 8]
+    0x080484eb: call eax
+    0x080484ed: leave
+    0x080484ee: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
     32-bit pointer at (add[u32] esp_0[u32] 0x00000004[u32])
@@ -335,17 +335,17 @@ Pointer detection analysis for function 0x080484da "simple25"
 
 Pointer detection analysis for function 0x080484ef "flow01"
   Instructions:
-    0x080484ef: push   ebp
-    0x080484f0: mov    ebp, esp
-    0x080484f2: cmp    dword ss:[ebp + 0x08], 0x00
-    0x080484f6: je     0x080484ff
-    0x080484f8: mov    eax, dword ss:[ebp + 0x0c]
-    0x080484fb: mov    eax, dword ds:[eax]
-    0x080484fd: jmp    0x08048504
-    0x080484ff: mov    eax, dword ss:[ebp + 0x10]
-    0x08048502: mov    eax, dword ds:[eax]
-    0x08048504: pop    ebp
-    0x08048505: ret    
+    0x080484ef: push ebp
+    0x080484f0: mov ebp, esp
+    0x080484f2: cmp dword ss:[ebp + 8], 0
+    0x080484f6: je basic block 0x080484ff
+    0x080484f8: mov eax, dword ss:[ebp + 12]
+    0x080484fb: mov eax, dword ds:[eax]
+    0x080484fd: jmp basic block 0x08048504
+    0x080484ff: mov eax, dword ss:[ebp + 0x10<16>]
+    0x08048502: mov eax, dword ds:[eax]
+    0x08048504: pop ebp
+    0x08048505: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
@@ -354,17 +354,17 @@ Pointer detection analysis for function 0x080484ef "flow01"
 
 Pointer detection analysis for function 0x08048506 "flow02"
   Instructions:
-    0x08048506: push   ebp
-    0x08048507: mov    ebp, esp
-    0x08048509: cmp    dword ss:[ebp + 0x08], 0x00
-    0x0804850d: je     0x08048516
-    0x0804850f: mov    eax, dword ss:[ebp + 0x0c]
-    0x08048512: mov    eax, dword ds:[eax]
-    0x08048514: jmp    0x0804851b
-    0x08048516: mov    eax, dword ss:[ebp + 0x10]
-    0x08048519: mov    eax, dword ds:[eax]
-    0x0804851b: pop    ebp
-    0x0804851c: ret    
+    0x08048506: push ebp
+    0x08048507: mov ebp, esp
+    0x08048509: cmp dword ss:[ebp + 8], 0
+    0x0804850d: je basic block 0x08048516
+    0x0804850f: mov eax, dword ss:[ebp + 12]
+    0x08048512: mov eax, dword ds:[eax]
+    0x08048514: jmp basic block 0x0804851b
+    0x08048516: mov eax, dword ss:[ebp + 0x10<16>]
+    0x08048519: mov eax, dword ds:[eax]
+    0x0804851b: pop ebp
+    0x0804851c: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
@@ -373,19 +373,19 @@ Pointer detection analysis for function 0x08048506 "flow02"
 
 Pointer detection analysis for function 0x0804851d "flow03"
   Instructions:
-    0x0804851d: push   ebp
-    0x0804851e: mov    ebp, esp
-    0x08048520: sub    esp, 0x10
-    0x08048523: cmp    dword ss:[ebp + 0x08], 0x00
-    0x08048527: je     0x0804852e
-    0x08048529: mov    eax, dword ss:[ebp + 0x0c]
-    0x0804852c: jmp    0x08048531
-    0x0804852e: mov    eax, dword ss:[ebp + 0x10]
-    0x08048531: mov    dword ss:[ebp + 0xfc<-4>], eax
-    0x08048534: mov    eax, dword ss:[ebp + 0xfc<-4>]
-    0x08048537: mov    eax, dword ds:[eax]
-    0x08048539: leave  
-    0x0804853a: ret    
+    0x0804851d: push ebp
+    0x0804851e: mov ebp, esp
+    0x08048520: sub esp, 0x10<16>
+    0x08048523: cmp dword ss:[ebp + 8], 0
+    0x08048527: je basic block 0x0804852e
+    0x08048529: mov eax, dword ss:[ebp + 12]
+    0x0804852c: jmp basic block 0x08048531
+    0x0804852e: mov eax, dword ss:[ebp + 0x10<16>]
+    0x08048531: mov dword ss:[ebp + 0xfc<252,-4>], eax
+    0x08048534: mov eax, dword ss:[ebp + 0xfc<252,-4>]
+    0x08048537: mov eax, dword ds:[eax]
+    0x08048539: leave
+    0x0804853a: ret
   Code pointers:
     32-bit pointer at esp_0[u32]
   Data pointers:
@@ -393,22 +393,22 @@ Pointer detection analysis for function 0x0804851d "flow03"
 
 Pointer detection analysis for function 0x0804853b "flow04"
   Instructions:
-    0x0804853b: push   ebp
-    0x0804853c: mov    ebp, esp
-    0x0804853e: sub    esp, 0x10
-    0x08048541: mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
-    0x08048548: mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
-    0x0804854f: jmp    0x0804855d
-    0x08048551: mov    eax, dword ss:[ebp + 0x0c]
-    0x08048554: mov    eax, dword ds:[eax]
-    0x08048556: add    dword ss:[ebp + 0xfc<-4>], eax
-    0x08048559: add    dword ss:[ebp + 0xf8<-8>], 0x01
-    0x0804855d: mov    eax, dword ss:[ebp + 0xf8<-8>]
-    0x08048560: cmp    eax, dword ss:[ebp + 0x08]
-    0x08048563: jl     0x08048551
-    0x08048565: mov    eax, dword ss:[ebp + 0xfc<-4>]
-    0x08048568: leave  
-    0x08048569: ret    
+    0x0804853b: push ebp
+    0x0804853c: mov ebp, esp
+    0x0804853e: sub esp, 0x10<16>
+    0x08048541: mov dword ss:[ebp + 0xfc<252,-4>], 0
+    0x08048548: mov dword ss:[ebp + 0xf8<248,-8>], 0
+    0x0804854f: jmp basic block 0x0804855d
+    0x08048551: mov eax, dword ss:[ebp + 12]
+    0x08048554: mov eax, dword ds:[eax]
+    0x08048556: add dword ss:[ebp + 0xfc<252,-4>], eax
+    0x08048559: add dword ss:[ebp + 0xf8<248,-8>], 1
+    0x0804855d: mov eax, dword ss:[ebp + 0xf8<248,-8>]
+    0x08048560: cmp eax, dword ss:[ebp + 8]
+    0x08048563: jl basic block 0x08048551
+    0x08048565: mov eax, dword ss:[ebp + 0xfc<252,-4>]
+    0x08048568: leave
+    0x08048569: ret
   WARNING: Analysis did not converge; following info may be incomplete
   Code pointers:
     32-bit pointer at esp_0[u32]
@@ -417,29 +417,29 @@ Pointer detection analysis for function 0x0804853b "flow04"
 
 Pointer detection analysis for function 0x0804856a "flow05"
   Instructions:
-    0x0804856a: push   ebp
-    0x0804856b: mov    ebp, esp
-    0x0804856d: sub    esp, 0x10
-    0x08048570: mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
-    0x08048577: mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
-    0x0804857e: jmp    0x0804859d
-    0x08048580: mov    eax, dword ss:[ebp + 0xf8<-8>]
-    0x08048583: and    eax, 0x01
-    0x08048586: test   al, al
-    0x08048588: je     0x08048591
-    0x0804858a: mov    eax, dword ss:[ebp + 0x0c]
-    0x0804858d: mov    eax, dword ds:[eax]
-    0x0804858f: jmp    0x08048596
-    0x08048591: mov    eax, dword ss:[ebp + 0x10]
-    0x08048594: mov    eax, dword ds:[eax]
-    0x08048596: add    dword ss:[ebp + 0xfc<-4>], eax
-    0x08048599: add    dword ss:[ebp + 0xf8<-8>], 0x01
-    0x0804859d: mov    eax, dword ss:[ebp + 0xf8<-8>]
-    0x080485a0: cmp    eax, dword ss:[ebp + 0x08]
-    0x080485a3: jl     0x08048580
-    0x080485a5: mov    eax, dword ss:[ebp + 0xfc<-4>]
-    0x080485a8: leave  
-    0x080485a9: ret    
+    0x0804856a: push ebp
+    0x0804856b: mov ebp, esp
+    0x0804856d: sub esp, 0x10<16>
+    0x08048570: mov dword ss:[ebp + 0xfc<252,-4>], 0
+    0x08048577: mov dword ss:[ebp + 0xf8<248,-8>], 0
+    0x0804857e: jmp basic block 0x0804859d
+    0x08048580: mov eax, dword ss:[ebp + 0xf8<248,-8>]
+    0x08048583: and eax, 1
+    0x08048586: test al, al
+    0x08048588: je basic block 0x08048591
+    0x0804858a: mov eax, dword ss:[ebp + 12]
+    0x0804858d: mov eax, dword ds:[eax]
+    0x0804858f: jmp basic block 0x08048596
+    0x08048591: mov eax, dword ss:[ebp + 0x10<16>]
+    0x08048594: mov eax, dword ds:[eax]
+    0x08048596: add dword ss:[ebp + 0xfc<252,-4>], eax
+    0x08048599: add dword ss:[ebp + 0xf8<248,-8>], 1
+    0x0804859d: mov eax, dword ss:[ebp + 0xf8<248,-8>]
+    0x080485a0: cmp eax, dword ss:[ebp + 8]
+    0x080485a3: jl basic block 0x08048580
+    0x080485a5: mov eax, dword ss:[ebp + 0xfc<252,-4>]
+    0x080485a8: leave
+    0x080485a9: ret
   WARNING: Analysis did not converge; following info may be incomplete
   Code pointers:
     32-bit pointer at esp_0[u32]
@@ -449,30 +449,30 @@ Pointer detection analysis for function 0x0804856a "flow05"
 
 Pointer detection analysis for function 0x080485aa "flow06"
   Instructions:
-    0x080485aa: push   ebp
-    0x080485ab: mov    ebp, esp
-    0x080485ad: sub    esp, 0x10
-    0x080485b0: mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
-    0x080485b7: mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
-    0x080485be: jmp    0x080485e0
-    0x080485c0: mov    eax, dword ss:[ebp + 0xf8<-8>]
-    0x080485c3: and    eax, 0x01
-    0x080485c6: test   al, al
-    0x080485c8: je     0x080485d4
-    0x080485ca: mov    eax, dword ss:[ebp + 0x0c]
-    0x080485cd: mov    eax, dword ds:[eax]
-    0x080485cf: add    dword ss:[ebp + 0xfc<-4>], eax
-    0x080485d2: jmp    0x080485dc
-    0x080485d4: mov    eax, dword ss:[ebp + 0x10]
-    0x080485d7: mov    eax, dword ds:[eax]
-    0x080485d9: add    dword ss:[ebp + 0xfc<-4>], eax
-    0x080485dc: add    dword ss:[ebp + 0xf8<-8>], 0x01
-    0x080485e0: mov    eax, dword ss:[ebp + 0xf8<-8>]
-    0x080485e3: cmp    eax, dword ss:[ebp + 0x08]
-    0x080485e6: jl     0x080485c0
-    0x080485e8: mov    eax, dword ss:[ebp + 0xfc<-4>]
-    0x080485eb: leave  
-    0x080485ec: ret    
+    0x080485aa: push ebp
+    0x080485ab: mov ebp, esp
+    0x080485ad: sub esp, 0x10<16>
+    0x080485b0: mov dword ss:[ebp + 0xfc<252,-4>], 0
+    0x080485b7: mov dword ss:[ebp + 0xf8<248,-8>], 0
+    0x080485be: jmp basic block 0x080485e0
+    0x080485c0: mov eax, dword ss:[ebp + 0xf8<248,-8>]
+    0x080485c3: and eax, 1
+    0x080485c6: test al, al
+    0x080485c8: je basic block 0x080485d4
+    0x080485ca: mov eax, dword ss:[ebp + 12]
+    0x080485cd: mov eax, dword ds:[eax]
+    0x080485cf: add dword ss:[ebp + 0xfc<252,-4>], eax
+    0x080485d2: jmp basic block 0x080485dc
+    0x080485d4: mov eax, dword ss:[ebp + 0x10<16>]
+    0x080485d7: mov eax, dword ds:[eax]
+    0x080485d9: add dword ss:[ebp + 0xfc<252,-4>], eax
+    0x080485dc: add dword ss:[ebp + 0xf8<248,-8>], 1
+    0x080485e0: mov eax, dword ss:[ebp + 0xf8<248,-8>]
+    0x080485e3: cmp eax, dword ss:[ebp + 8]
+    0x080485e6: jl basic block 0x080485c0
+    0x080485e8: mov eax, dword ss:[ebp + 0xfc<252,-4>]
+    0x080485eb: leave
+    0x080485ec: ret
   WARNING: Analysis did not converge; following info may be incomplete
   Code pointers:
     32-bit pointer at esp_0[u32]

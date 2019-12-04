@@ -1054,7 +1054,7 @@ FeasiblePath::printPathVertex(std::ostream &out, const P2::ControlFlowGraph::Ver
         case P2::V_BASIC_BLOCK: {
             BOOST_FOREACH (SgAsmInstruction *insn, pathVertex.value().bblock()->instructions()) {
                 out <<"    #" <<std::setw(5) <<std::left <<insnIdx++
-                    <<" " <<unparseInstructionWithAddress(insn) <<"\n";
+                    <<" " <<partitioner_->unparse(insn) <<"\n";
             }
             break;
         }

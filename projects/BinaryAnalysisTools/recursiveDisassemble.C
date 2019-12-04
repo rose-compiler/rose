@@ -885,7 +885,7 @@ int main(int argc, char *argv[]) {
         } insnCounter;
         insnCounter.traverse(buildAst(engine, partitioner), preorder);
         BOOST_FOREACH (const InsnCounter::InsnCount::Node &node, insnCounter.insnCount.nodes())
-            std::cout <<node.value() <<"\t" <<unparseInstructionWithAddress(node.key()) <<"\n";
+            std::cout <<node.value() <<"\t" <<partitioner.unparse(node.key()) <<"\n";
     }
 
 #if 0 // [Robb P. Matzke 2015-08-06]: example of calling convention analysis

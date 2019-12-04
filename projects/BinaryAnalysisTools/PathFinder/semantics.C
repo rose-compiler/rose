@@ -75,7 +75,7 @@ RiscOperators::commentForVariable(RegisterDescriptor reg, const std::string &acc
         if (pathInsnIndex_ != INVALID_INDEX)
             varComment += " at path position #" + StringUtility::numberToString(pathInsnIndex_);
         if (SgAsmInstruction *insn = currentInstruction())
-            varComment += " by " + unparseInstructionWithAddress(insn);
+            varComment += " by " + partitioner_->unparse(insn);
     }
     return varComment;
 }
@@ -86,7 +86,7 @@ RiscOperators::commentForVariable(const BaseSemantics::SValuePtr &addr, const st
     std::string varComment = "first " + accessMode + " at ";
     if (pathInsnIndex_ != INVALID_INDEX)
         varComment += "path position #" + StringUtility::numberToString(pathInsnIndex_) + ", ";
-    varComment += "instruction " + unparseInstructionWithAddress(currentInstruction());
+    varComment += "instruction " + partitioner_->unparse(currentInstruction());
 
     // Sometimes we can save useful information about the address.
     if (nBytes != 1) {
@@ -136,7 +136,7 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
     if (mlog[DEBUG]) {
         SymbolicSemantics::Formatter fmt = symbolicFormat("      ");
         mlog[DEBUG] <<"  +-------------------------------------------------\n"
-                    <<"  | " <<unparseInstructionWithAddress(insn) <<"\n"
+                    <<"  | " <<partitioner_->unparse(insn) <<"\n"
                     <<"  +-------------------------------------------------\n"
                     <<"    state before instruction:\n"
                     <<(*currentState() + fmt);

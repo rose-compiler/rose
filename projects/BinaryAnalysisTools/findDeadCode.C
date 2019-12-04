@@ -722,7 +722,7 @@ int main(int argc, char *argv[]) {
             if (nShown > 0 && !insns.empty())
                 std::cout <<"\n";
             BOOST_FOREACH (SgAsmInstruction *insn, insns) {
-                std::cout <<"  " <<unparseInstructionWithAddress(insn) <<"\n";
+                std::cout <<"  " <<partitioner.unparse(insn) <<"\n";
                 ++nShown;
             }
         }

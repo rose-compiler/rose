@@ -174,7 +174,7 @@ main(int argc, char *argv[]) {
     // the main outputs of this demo. The "if" condition is constant time.
     BOOST_FOREACH (const InsnCfg::Vertex &vertex, insnCfg.vertices()) {
         if (!trace.exists(vertex.id()))
-            std::cout <<"not executed: " <<unparseInstructionWithAddress(vertex.value()) <<"\n";
+            std::cout <<"not executed: " <<partitioner.unparse(vertex.value()) <<"\n";
     }
 
     // Print list of addresses that were executed but did not appear in the CFG
@@ -187,8 +187,8 @@ main(int argc, char *argv[]) {
     for (size_t i = 0; i < trace.nLabels(); ++i) {
         if (insnCfg.findVertex(i)->nOutEdges() > 1 && trace.successors(i).size() == 1) {
             SgAsmInstruction *successor = insnCfg.findVertex(*trace.successorSet(i).begin())->value();
-            std::cout <<"single flow: " <<unparseInstructionWithAddress(insnCfg.findVertex(i)->value())
-                      <<" --> " <<unparseInstructionWithAddress(successor) <<"\n";
+            std::cout <<"single flow: " <<partitioner.unparse(insnCfg.findVertex(i)->value())
+                      <<" --> " <<partitioner.unparse(successor) <<"\n";
         }
     }
 
@@ -204,6 +204,6 @@ main(int argc, char *argv[]) {
     BOOST_FOREACH (const InsnTraceInfo &record, info) {
         Diagnostics::mfprintf(std::cout)("burstiness %6.2f%% %5zu hits at %s\n",
                                          100.0*record.burstiness, record.nHits,
-                                         unparseInstructionWithAddress(record.insn).c_str());
+                                         partitioner.unparse(record.insn).c_str());
     }
 }
