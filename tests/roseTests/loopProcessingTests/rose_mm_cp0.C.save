@@ -1,0 +1,31 @@
+#define N 50
+void printmatrix(double x[][50]);
+void initmatrix(double x[][50],double s);
+
+int main()
+{
+  int i;
+  int j;
+  int k;
+  double a[50][50];
+  double b[50][50];
+  double c[50][50];
+  double s;
+  double c_buf0;
+  s = 235.0;
+  initmatrix(a,s);
+  s = 321.0;
+  initmatrix(b,s);
+  printmatrix(a);
+  printmatrix(b);
+  for (i = 0; i <= 49; i += 1) {
+    for (j = 0; j <= 49; j += 1) {
+      c_buf0 = c[i][j];
+      for (k = 0; k <= 49; k += 1) {
+        c_buf0 = c_buf0 + a[i][k] * b[k][j];
+      }
+      c[i][j] = c_buf0;
+    }
+  }
+  printmatrix(c);
+}

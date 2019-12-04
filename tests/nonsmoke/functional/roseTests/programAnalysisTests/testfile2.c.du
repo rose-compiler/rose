@@ -1,12 +1,10 @@
 edge:definition:SgInitializedName:color:SgVariableDeclaration:int color = 0; ->use:SgVarRefExp:color:SgExprStatement:color;  : 
 edge:definition:SgInitializedName:a:SgVariableDeclaration:int a = 0; ->use:SgVarRefExp:a:SgExprStatement:a--;  : 
-edge:definition:SgInitializedName:a:SgVariableDeclaration:int a = 0; ->use:SgVarRefExp:a:SgExprStatement:c = a;  : 
 edge:definition:SgInitializedName:a:SgVariableDeclaration:int a = 0; ->use:SgVarRefExp:a:SgExprStatement:r = a - b;  : 
-edge:definition:SgVarRefExp:a:SgExprStatement:a--; ->use:SgVarRefExp:a:SgExprStatement:r = a - b;  : 
+edge:definition:SgVarRefExp:a:SgExprStatement:a--; 
 edge:definition:SgInitializedName:b:SgVariableDeclaration:int b = 0; ->use:SgVarRefExp:b:SgExprStatement:c = b;  : 
-edge:definition:SgInitializedName:b:SgVariableDeclaration:int b = 0; ->use:SgVarRefExp:b:SgExprStatement:b++;  : 
 edge:definition:SgInitializedName:b:SgVariableDeclaration:int b = 0; ->use:SgVarRefExp:b:SgExprStatement:r = a - b;  : 
-edge:definition:SgVarRefExp:b:SgExprStatement:b++; ->use:SgVarRefExp:b:SgExprStatement:r = a - b;  : 
+edge:definition:SgVarRefExp:b:SgExprStatement:b++; 
 edge:definition:SgInitializedName:c:SgVariableDeclaration:int c = 0; 
 edge:definition:SgVarRefExp:c:SgExprStatement:c = a; 
 edge:definition:SgVarRefExp:c:SgExprStatement:c = b; 
