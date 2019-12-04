@@ -833,8 +833,8 @@ void automataDotInput(Sawyer::Message::Facility logger) {
     write_file(filename, ltlFormulae);
     cout << "generated " << filename  <<"."<<endl;
   }
-
-  cout << "STATUS: done." << endl;
+  if(!args.count("quiet"))
+    cout << "STATUS: done." << endl;
 }
 
 void generateAutomata() {
@@ -2233,7 +2233,8 @@ int main( int argc, char * argv[] ) {
     }
 
     // reset terminal
-    cout<<color("normal")<<"done."<<endl;
+    if(!args.count("quiet"))
+      cout<<color("normal")<<"done."<<endl;
 
     // main function try-catch
   } catch(const CodeThorn::Exception& e) {

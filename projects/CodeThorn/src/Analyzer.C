@@ -2369,7 +2369,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
       // to callstring by external function call)
     } else {
       if(isFeasiblePathContext(cs,functionCallLabel)) {
-        cs.removeLastLabel();
+        cs.removeLastLabel(); 
       } else {
         if(cs.isEmpty()) {
           SAWYER_MESG(logger[WARN])<<"Empty context on non-feasable path at label "<<functionCallLabel.toString()<<endl;

@@ -12,12 +12,7 @@ BENCH_PASS=0
 BENCH_FAIL=0
 
 function NormalizationTests {
-    testNumbers1=`echo {01..23}`
-    #contain several 128 bit floating point (24-26)
-    testNumbers2=`echo {24..43}`
-    #testNumbers2=""
-    #128-bit float error
-    testNumbers="$testNumbers1 $testNumbers2"
+    testNumbers=`echo {01..43}`
     echo "Scheduled tests: $testNumbers"
     for testNumber in $testNumbers; do
         benchmarkprefix=$TESTDIR/NORM${testNumber};
@@ -30,7 +25,7 @@ function NormalizationTests {
                 echo -n "Testing C++ $benchmarkname: "
                 g++ $benchmark
             fi
-            ./codethorn $benchmark --normalize-all=yes --unparse=yes --quiet #> /dev/null
+            ./codethorn $benchmark --normalize-all=yes --unparse=yes --quiet --abstraction-mode=1 > /dev/null
             if [ ! $? -eq 0 ]
             then
 	            echo "FAIL"
