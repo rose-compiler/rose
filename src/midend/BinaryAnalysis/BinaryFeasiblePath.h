@@ -190,6 +190,11 @@ public:
          *  state of the model checker as it existed at the end of processing the vertex. These states should not be modified
          *  by this callback.
          *
+         *  The @p insn is the instruction during which the null dereference occurred and may be a null pointer in some
+         *  situations. For instance, the instruction will be null if the dereference occurs when popping the return address
+         *  from the stack for a function that was called but whose implementation is not present (such as when the
+         *  inter-procedural depth was too great, the function is a non-linked import, etc.)
+         *
          *  The @p cpu is the model checker's state immediately prior to the null dereference. This callback must not modify
          *  the state.
          *
@@ -201,16 +206,10 @@ public:
          *  The @p ioMode indicates whether the null address was read or written.
          *
          *  The @p addr is the address that was accessed.  Depending on the model checker's settings, this is either a constant
-         *  or a symbolic expression. In the latter case, the @p solver will have evidence that the expression can be zero.
-         *
-         *  The @p insn is the instruction during which the null dereference occurred and may be a null pointer in some
-         *  situations. For instance, the instruction will be null if the dereference occurs when popping the return address
-         *  from the stack for a function that was called but whose implementation is not present (such as when the
-         *  inter-procedural depth was too great, the function is a non-linked import, etc.) */
-        virtual void nullDeref(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
+         *  or a symbolic expression. In the latter case, the @p solver will have evidence that the expression can be zero. */
+        virtual void nullDeref(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path, SgAsmInstruction *insn,
                                const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
-                               IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-                               SgAsmInstruction *insn) {}
+                               IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr) {}
 
         /** Function invoked every time a memory reference occurs.
          *
@@ -223,6 +222,11 @@ public:
          *  of the path is a basic block or function summary. All but the last vertex will have a corresponding symbolic state
          *  of the model checker as it existed at the end of processing the vertex. These states should not be modified by this
          *  callback.
+         *
+         *  The @p insn is the instruction during which the memoryIo occurred and may be a null pointer in some
+         *  situations. For instance, the instruction will be null if the I/O occurs when popping the return address
+         *  from the stack for a function that was called but whose implementation is not present (such as when the
+         *  inter-procedural depth was too great, the function is a non-linked import, etc.)
          *
          *  The @p cpu is the model checker's state immediately prior to the memory I/O. This callback must not modify the
          *  state.
@@ -242,7 +246,7 @@ public:
          *  situations. For instance, the instruction will be null if the dereference occurs when popping the return address
          *  from the stack for a function that was called but whose implementation is not present (such as when the
          *  inter-procedural depth was too great, the function is a non-linked import, etc.) */
-        virtual void memoryIo(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
+        virtual void memoryIo(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path, SgAsmInstruction *insn,
                               const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
                               IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                               const InstructionSemantics2::BaseSemantics::SValuePtr &value) {}
