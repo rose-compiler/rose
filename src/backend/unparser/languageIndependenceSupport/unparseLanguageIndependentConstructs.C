@@ -701,7 +701,7 @@ UnparseLanguageIndependentConstructs::printOutComments ( SgLocatedNode* locatedN
                     ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
                     (*i)->getString().c_str());
                printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
-               curprint (string("/* Inside of printOutComments(): comments = ") +  (*i)->getString() + " */");
+            // curprint (string("/* Inside of printOutComments(): comments = ") +  (*i)->getString() + " */");
 
 #if 0
                (*i)->get_file_info()->display("comment/directive location");

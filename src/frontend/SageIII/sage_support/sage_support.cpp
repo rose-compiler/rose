@@ -955,7 +955,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 #endif
                       );
 
-#if 1
+#if 0
                printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to %s (test 1) \n",requires_C_preprocessor ? "true" : "false");
 #endif
                file->set_requires_C_preprocessor(requires_C_preprocessor);
@@ -4661,14 +4661,14 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           currentListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(sourceFileNameOutputFromCpp,ROSEAttributesList::e_C_language);
 #endif
 
-#if 1
+#if 0
           printf ("Secondary pass over Fortran source file = %s to comment comments and CPP directives (might still be referencing the original source file) \n",sourceFileNameOutputFromCpp.c_str());
           printf ("Calling attachPreprocessingInfo() \n");
 #endif
 
           attachPreprocessingInfo(this);
 
-#if 1
+#if 0
           printf ("DONE: calling attachPreprocessingInfo() \n");
 #endif
 

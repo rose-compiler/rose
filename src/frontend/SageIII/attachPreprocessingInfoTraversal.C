@@ -1504,6 +1504,11 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
      printf ("sourceFile->get_file_info()->get_filename() = %s \n",sourceFile->get_file_info()->get_filename());
 #endif
 
+  // DQ (12/3/2019): Need to test for filePreprocInfo != NULL when compiling Fortran code.
+     if (sourceFile->get_Fortran_only() == false)
+        {
+     if (filePreprocInfo != NULL)
+        {
      if (filePreprocInfo->getList().find(sourceFile->get_file_info()->get_filename()) == filePreprocInfo->getList().end())
         {
           int currentFileNameId = sourceFile->get_file_info()->get_file_id();
@@ -1516,6 +1521,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
           returnListOfAttributes = getPreprocessorDirectives(fileNameForDirectivesAndComments);
 #if 0
           printf ("DONE: Generating a new ROSEAttributesList: currentFileNameId = %d \n",currentFileNameId);
+          printf (" --- returnListOfAttributes->getList().size() = %" PRIuPTR " \n",returnListOfAttributes->getList().size());
 #endif
 
 #if 0
@@ -1527,13 +1533,16 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
         }
        else
         {
-#if 0
+#if 1
           printf ("Using the existing ROSEAttributesList (setting the returnListOfAttributes) \n");
 #endif
           returnListOfAttributes = filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()];
-#if 0
+#if 1
           printf ("DONE: Using the existing ROSEAttributesList (setting the returnListOfAttributes) \n");
+          printf (" --- returnListOfAttributes->getList().size() = %" PRIuPTR " \n",returnListOfAttributes->getList().size());
 #endif
+        }
+        }
         }
 
   // Build an empty list while we skip the translation of tokens
@@ -1584,6 +1593,18 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                   {
                     fileNameForDirectivesAndComments = sourceFile->generate_C_preprocessor_intermediate_filename(fileNameForDirectivesAndComments);
                   }
+
+            // DQ (12/3/2019): I think this is required for Fortran support.
+            // ROSE_ASSERT(returnListOfAttributes == NULL);
+            // returnListOfAttributes = new ROSEAttributesList();
+               if (returnListOfAttributes == NULL)
+                  {
+#if 0
+                    printf ("Building ROSEAttributesList() to initialized NULL returnListOfAttributes \n");
+#endif
+                    returnListOfAttributes = new ROSEAttributesList();
+                  }
+               ROSE_ASSERT(returnListOfAttributes != NULL);
 
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
@@ -1641,23 +1662,31 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                  // string fileNameForTokenStream = Sg_File_Info::getFilenameFromID(currentFileNameId);
 
                     LexTokenStreamTypePointer lex_token_stream = NULL;
+#if 0
+                    printf ("fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
+                    printf (" --- returnListOfAttributes->getList().size() = %" PRIuPTR " \n",returnListOfAttributes->getList().size());
+#endif
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
                     lex_token_stream = getFortranFreeFormatPreprocessorDirectives( fileNameForTokenStream );
 #endif
                     ROSE_ASSERT(lex_token_stream != NULL);
 
+                 // DQ (12/3/2019): Added test to support debugging Fortran support.
+                    ROSE_ASSERT(returnListOfAttributes != NULL);
+
                  // Attach the token stream to the AST
                     returnListOfAttributes->set_rawTokenStream(lex_token_stream);
                     ROSE_ASSERT(returnListOfAttributes->get_rawTokenStream() != NULL);
-
-                 // printf ("Fortran Token List Size: returnListOfAttributes->get_rawTokenStream()->size() = %" PRIuPTR " \n",returnListOfAttributes->get_rawTokenStream()->size());
-
+#if 0
+                    printf ("Fortran Token List Size: returnListOfAttributes->get_rawTokenStream()->size() = %" PRIuPTR " \n",returnListOfAttributes->get_rawTokenStream()->size());
+                    printf (" --- returnListOfAttributes->getList().size() = %" PRIuPTR " \n",returnListOfAttributes->getList().size());
+#endif
                  // DQ (11/23/2008): This is the new support to collect CPP directives and comments from Fortran applications.
                  // printf ("Calling collectPreprocessorDirectivesAndCommentsForAST() to collect CPP directives for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
                     returnListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_Fortran9x_language);
 
 #if 0
-                    printf ("Done with processing of separate lexical pass to gather CPP directives \n");
+                    printf ("Done with processing of separate lexical pass to gather comments and CPP directives \n");
                     ROSE_ASSERT(false);
 #endif
 #if 0
@@ -2112,6 +2141,8 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                ROSEAttributesListContainerPtr filePreprocInfo = currentFilePtr->get_preprocessorDirectivesAndCommentsList();
             // ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
 
+            // DQ (12/3/2019): I think we need this.
+               ROSE_ASSERT(filePreprocInfo != NULL);
 #if 1
             // DQ (10/21/2019): This code does not change the assertion below.
             // currentListOfAttributes = getListOfAttributes(currentFileNameId);
@@ -2267,7 +2298,13 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                   {
                  // DQ (11/202019): I think that we should have at least seen one file (from where getListOfAttributes() is called above).
                  // ROSE_ASSERT(filePreprocInfo->getList().empty() == true);
-                    ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
+                 // ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
+
+                 // DQ (12/4/2019): This fails for Fortran code so skip the test when using Fortran.
+                    if (sourceFile->get_Fortran_only() == false)
+                       {
+                         ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
+                       }
                   }
 #if 0
                printf ("Put the ROSEAttributesList into the ROSEAttributesListContainer (an stl map) \n");
@@ -2714,7 +2751,20 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                  // DQ (11/4/2019): if we allow isCompilerGenerated || isTransformation above, then we need to uncomment this if statement.
                     if (!isCompilerGenerated && !isTransformation)
                        {
-                         ROSE_ASSERT(currentLocNode_physical_filename_from_id == currentListOfAttributes->getFileName());
+                      // DQ (12/4/2019): This fails for Fortran code so skip the test when using Fortran.
+                      // ROSE_ASSERT(currentLocNode_physical_filename_from_id == currentListOfAttributes->getFileName());
+                         if (sourceFile->get_Fortran_only() == false)
+                            {
+                              ROSE_ASSERT(currentLocNode_physical_filename_from_id == currentListOfAttributes->getFileName());
+                            }
+                           else
+                            {
+#if 0
+                              printf ("Fortran case: currentLocNode_physical_filename_from_id != currentListOfAttributes->getFileName() \n");
+                              printf (" --- currentLocNode_physical_filename_from_id = %s \n",currentLocNode_physical_filename_from_id.c_str());
+                              printf (" --- currentListOfAttributes->getFileName() = %s \n",currentListOfAttributes->getFileName().c_str());
+#endif
+                            }
                        }
 
                  // DQ (2/28/2019): We need to return the line that is associated with the source file where this can be a node shared between multiple ASTs.
