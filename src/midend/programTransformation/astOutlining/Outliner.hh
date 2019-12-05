@@ -103,8 +103,8 @@ namespace Outliner
 
     // DQ (12/5/2019): Added ROSE_DLL_API prefix for Windows support (too all of these functions).
        ROSE_DLL_API DeferedTransformation();
-       ROSE_DLL_APIDeferedTransformation(SgClassDefinition* class_definition, SgDeclarationStatement* target_class_member, SgDeclarationStatement* new_function_prototype);
-       ROSE_DLL_APIDeferedTransformation (const DeferedTransformation& X); //! Copy constructor.
+       ROSE_DLL_API DeferedTransformation(SgClassDefinition* class_definition, SgDeclarationStatement* target_class_member, SgDeclarationStatement* new_function_prototype);
+       ROSE_DLL_API DeferedTransformation (const DeferedTransformation& X); //! Copy constructor.
        ROSE_DLL_API ~DeferedTransformation (void); //! Shallow; does not delete fields.
 
        ROSE_DLL_API DeferedTransformation & operator= (const DeferedTransformation& X); //! operator=()
@@ -138,7 +138,7 @@ namespace Outliner
  // Result (SgFunctionDeclaration *, SgStatement *, SgFile* file=NULL);
     ROSE_DLL_API Result (SgFunctionDeclaration *, SgStatement *, SgFile* file, DeferedTransformation deferedTransformation);
 
-    ROSE_DLL_APIResult (const Result&); //! Copy constructor.
+    ROSE_DLL_API Result (const Result&); //! Copy constructor.
     ROSE_DLL_API ~Result (void) {}; //! Shallow; does not delete fields.
     ROSE_DLL_API bool isValid (void) const; //! Returns true iff result is usable
   };
