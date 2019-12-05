@@ -99,7 +99,7 @@ namespace EDG_ROSE_Translation
      extern std::map<std::string, SgIncludeFile*> edg_include_file_map;
 #else
   // DQ (12/11/2018): Allow this to be the definition if C/C++ support is NOT defined.
-     std::map<std::string, SgIncludeFile*> edg_include_file_map;
+     extern std::map<std::string, SgIncludeFile*> edg_include_file_map;
 #endif
    }
 
