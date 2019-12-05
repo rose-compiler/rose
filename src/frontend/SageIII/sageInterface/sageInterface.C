@@ -24242,13 +24242,15 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
              }
 
           default:
-
-
-
              {
-            // Nothing to do, except delete the parameter list we built.
+            // DQ (12/4/2019): If this is any other case than that handled above, then we just return.
+            // These cases would be only template instantiations.
+
+            // Nothing to do, except delete the parameter list we built, and return.
                delete param_list;
---               param_list = NULL;
+               param_list = NULL;
+
+               return;
              }
         }
 
@@ -24256,6 +24258,22 @@ SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunct
   // SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
      if (templateInstantiationFunctionDecl == NULL)
         {
+#if 0
+          if (nondefiningFunctionDeclaration == NULL)
+             {
+               printf ("SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(); functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+               SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(functionDeclaration);
+               if (templateInstantiationMemberFunction != NULL)
+                  {
+                    printf (" --- templateInstantiationMemberFunction->get_name() = %s \n",templateInstantiationMemberFunction->get_name().str());
+
+                    delete param_list;
+                    param_list = NULL;
+
+                    return;
+                  }
+             }
+#endif
           ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
 
        // DQ (10/15/2019): Set the physical_file_id of the transformation to match that of the original defining declaration.
