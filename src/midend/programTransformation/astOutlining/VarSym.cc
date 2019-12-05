@@ -131,7 +131,9 @@ getVarSym_const (const SgNode* n)
       {
         cerr<<"Warning: astOutlining/VarSym.cc getVarSym_const() did not find symbol for:"<<
         n->unparseToString()<<endl;
-        ROSE_ASSERT(v_sym != NULL);
+        // Cannot find symbol for omp runtime functions in Fortran code right now
+        if (!SageInterface::is_Fortran_language ())
+           ROSE_ASSERT(v_sym != NULL);
         //GCC macros __FUNCTION__ and __PRETTY_FUNCTION__ have no symbols in ROSE for some reason
       } 
       else 
@@ -276,14 +278,22 @@ ASTtools::collectRefdVarSyms (const SgStatement* s, VarSymSet_t& syms)
 #endif  
    for (NodeList_t::iterator iter = var_refs.begin(); iter != var_refs.end(); iter++)
    {
-      SgVariableSymbol* symbol = getVarSym(*iter);
-      if (symbol)
-        syms.insert(symbol);
-      else
-      {
-	cerr<<"ASTtools::collectRefdVarSyms() finds NULL symbol for a SgVarRefExp:"<<*iter <<endl;
-        ROSE_ASSERT (symbol !=NULL);
-      }
+     // SageInterface::convertRefToInitializedName() will ignore builtin  functions, getVarSym() calls it internally.
+    // so we do builtin function ref check first, later we can safely assert symbol != NULL
+     string  vname = isSgVarRefExp(*iter)->get_symbol()->get_name().getString();
+
+     if  (vname =="__PRETTY_FUNCTION__" || vname =="__FUNCTION__" ||vname == "__func__")
+       continue; 
+
+
+     SgVariableSymbol* symbol = getVarSym(*iter);
+     if (symbol)
+       syms.insert(symbol);
+     else
+     {
+       cerr<<"ASTtools::collectRefdVarSyms() finds NULL symbol for a SgVarRefExp:"<<*iter <<endl;
+       ROSE_ASSERT (symbol !=NULL);
+     }
    }
 
 }
