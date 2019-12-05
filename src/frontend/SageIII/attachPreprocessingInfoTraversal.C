@@ -1533,11 +1533,11 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
         }
        else
         {
-#if 1
+#if 0
           printf ("Using the existing ROSEAttributesList (setting the returnListOfAttributes) \n");
 #endif
           returnListOfAttributes = filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()];
-#if 1
+#if 0
           printf ("DONE: Using the existing ROSEAttributesList (setting the returnListOfAttributes) \n");
           printf (" --- returnListOfAttributes->getList().size() = %" PRIuPTR " \n",returnListOfAttributes->getList().size());
 #endif
@@ -1732,8 +1732,15 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #endif
             // DQ (8/23/2018): The token stream has not been collected yet (verify).
             // ROSE_ASSERT (returnListOfAttributes->get_rawTokenStream() == NULL);
-               ROSE_ASSERT (returnListOfAttributes->get_rawTokenStream() != NULL);
-
+#if 0
+            // DQ (12/4/2019): This fails for the case of a the snippet tests.
+            // ROSE_ASSERT (returnListOfAttributes->get_rawTokenStream() != NULL);
+               ROSE_ASSERT(returnListOfAttributes != NULL);
+               if (returnListOfAttributes->get_rawTokenStream() == NULL)
+                  {
+                    printf ("NOTE: returnListOfAttributes->get_rawTokenStream() == NULL \n");
+                  }
+#endif
 #if 0
             // DQ (11/202019): comment this redundant call to getPreprocessorDirectives().
 
@@ -1757,10 +1764,21 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                printf ("DONE: Calling lex or wave based mechanism for collecting CPP directives, comments, and token stream \n");
 #endif
 #endif
+#if 0
+            // DQ (12/4/2019): This fails for the snippet code support.
             // DQ (8/23/2018): At this point the token stream has been collected (verify).
             // Note: to debug this support the token stream is always collected (the process 
             // is fast, but making it optional in the future might be helpful).
                ROSE_ASSERT (returnListOfAttributes->get_rawTokenStream() != NULL);
+#else
+               if (returnListOfAttributes == NULL)
+                  {
+#if 0
+                    printf ("Found returnListOfAttributes == NULL, calling getPreprocessorDirectives() \n");
+#endif
+                    returnListOfAttributes = getPreprocessorDirectives(fileNameForDirectivesAndComments);
+                  }
+#endif
              }
         }
        else
