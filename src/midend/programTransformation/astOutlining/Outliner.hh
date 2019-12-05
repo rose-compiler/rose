@@ -101,13 +101,13 @@ namespace Outliner
        typedef std::vector<SgFunctionDeclaration *> FuncDeclList_t;
        FuncDeclList_t targetFriends;
 
-       DeferedTransformation();
-       DeferedTransformation(SgClassDefinition* class_definition, SgDeclarationStatement* target_class_member, SgDeclarationStatement* new_function_prototype);
-       DeferedTransformation (const DeferedTransformation& X); //! Copy constructor.
-      ~DeferedTransformation (void); //! Shallow; does not delete fields.
+    // DQ (12/5/2019): Added ROSE_DLL_API prefix for Windows support (too all of these functions).
+       ROSE_DLL_API DeferedTransformation();
+       ROSE_DLL_APIDeferedTransformation(SgClassDefinition* class_definition, SgDeclarationStatement* target_class_member, SgDeclarationStatement* new_function_prototype);
+       ROSE_DLL_APIDeferedTransformation (const DeferedTransformation& X); //! Copy constructor.
+       ROSE_DLL_API ~DeferedTransformation (void); //! Shallow; does not delete fields.
 
-       DeferedTransformation & operator= (const DeferedTransformation& X); //! operator=()
-
+       ROSE_DLL_API DeferedTransformation & operator= (const DeferedTransformation& X); //! operator=()
      };
 
   //! Stores the main results of an outlining transformation.
@@ -131,15 +131,16 @@ namespace Outliner
  // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
     DeferedTransformation deferedTransformation;
 
-    Result (void); //! Sets all fields to 0
+ // DQ (12/5/2019): Added ROSE_DLL_API prefix for Windows support (too all of these functions).
+    ROSE_DLL_API Result (void); //! Sets all fields to 0
 
   // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
  // Result (SgFunctionDeclaration *, SgStatement *, SgFile* file=NULL);
-    Result (SgFunctionDeclaration *, SgStatement *, SgFile* file, DeferedTransformation deferedTransformation);
+    ROSE_DLL_API Result (SgFunctionDeclaration *, SgStatement *, SgFile* file, DeferedTransformation deferedTransformation);
 
-    Result (const Result&); //! Copy constructor.
-    ~Result (void) {}; //! Shallow; does not delete fields.
-    bool isValid (void) const; //! Returns true iff result is usable
+    ROSE_DLL_APIResult (const Result&); //! Copy constructor.
+    ROSE_DLL_API ~Result (void) {}; //! Shallow; does not delete fields.
+    ROSE_DLL_API bool isValid (void) const; //! Returns true iff result is usable
   };
 
   /** Description of outliner command-line.
