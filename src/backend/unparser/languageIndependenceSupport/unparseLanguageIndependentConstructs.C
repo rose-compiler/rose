@@ -1979,6 +1979,19 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           return;
         }
 
+#if 0
+  // DQ (12;5;2019): Use this here to ouly generate output for statements that weill be unparsed.
+  // DQ (10/30/2013): Debugging support for file info data for each IR node (added comment only)
+     curprint ( string("\n/* Unparse statement (" ) + StringUtility::numberToString(stmt) 
+         + "): class_name() = " + stmt->class_name() 
+                + " raw line (start) = " + tostring(stmt->get_startOfConstruct()->get_raw_line()) 
+                + " raw line (end) = " + tostring(stmt->get_endOfConstruct()->get_raw_line()) 
+         + " */ \n");
+     char buffer[100];
+     snprintf (buffer,100,"%p",stmt);
+     curprint ("\n/* Top of unparseStatement() " + stmt->class_name() + " at: " + buffer + " */ \n");
+#endif
+
   // curprint("/* Calling unparseAttachedPreprocessingInfo */ \n ");
 
   // Markus Kowarschik: This is the new code to unparse directives before the current statement
