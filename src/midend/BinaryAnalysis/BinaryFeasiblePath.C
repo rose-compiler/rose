@@ -325,48 +325,61 @@ private:
         return !varFinder.hasVariable;
     }
 
+    // Warning: Caller should create a nullPtrSolver transaction if necessary
     bool isNullDeref(const BaseSemantics::SValuePtr &addr) {
         SymbolicExpr::Ptr expr = SymbolicSemantics::SValue::promote(addr)->get_expression();
         return isNullDeref(expr);
     }
 
+    // Warning: Caller should create a nullPtrSolver transaction if necessary
     bool isNullDeref(const SymbolicExpr::Ptr &expr) {
         ASSERT_not_null(expr);
         Sawyer::Message::Stream debug(fpAnalyzer_->mlog[DEBUG]);
-        bool retval = false;
-        SmtSolver::Transaction transaction(nullPtrSolver());
+        SAWYER_MESG(debug) <<"          isNullDeref addr = " <<*expr <<"\n";
+        SmtSolver::Ptr solver = nullPtrSolver();
 
+        // Instead of using SymbolicExpr::mustEqual and SymbolicExpr::mayEqual, we always call the SMT solver. This is so that
+        // if a null pointer is found, the callback will be able to get the evidence from the solver. The problem with
+        // mustEqual and mayEqual is threefold: (1) these functions can sometimes make the determination themselves without
+        // invoking an SMT solver thus the solver would not be updated with evidence, (2) these functions might invoke a user-defined
+        // callback that does almost anything, (3) when these functions invoke an SMT solver they protect it with a transaction so
+        // the evidence would be gone by time we get control back.
+        bool retval = false;
         switch (fpAnalyzer_->settings().nullDeref.mode) {
             case FeasiblePath::MAY:
-                if (fpAnalyzer_->settings().nullDeref.constOnly) {
-                    SAWYER_MESG(debug) <<"          isNullDeref [may-mode, const-only] addr: " <<*expr <<"\n";
-                    retval = isConstExpr(expr) && expr->mayEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 0),
-                                                                 nullPtrSolver());
+                if (solver) {
+                    SymbolicExpr::Ptr assertion = SymbolicExpr::makeEq(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), 0));
+                    solver->insert(assertion);
+                    retval = SmtSolver::SAT_YES == solver->check();
                 } else {
-                    SAWYER_MESG(debug) <<"          isNullDeref [may-mode, non-const] addr: " <<*expr <<"\n";
-                    retval = expr->mayEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 0),
-                                            nullPtrSolver());
+                    retval = expr->mayEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 0));
                 }
                 break;
+
             case FeasiblePath::MUST:
-                if (fpAnalyzer_->settings().nullDeref.constOnly) {
-                    SAWYER_MESG(debug) <<"          isNullDeref [must-mode, const-only] addr: " <<*expr <<"\n";
-                    retval = isConstExpr(expr) && expr->mustEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 0),
-                                                                  nullPtrSolver());
+                // Check for constness of the address expression first since that doesn't involve an SMT solver and we might
+                // be able to return quickly.
+                if (!fpAnalyzer_->settings().nullDeref.constOnly ||  isConstExpr(expr)) {
+                    if (solver) {
+                        SymbolicExpr::Ptr assertion = SymbolicExpr::makeNe(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), 0));
+                        solver->insert(assertion);
+                        retval = SmtSolver::SAT_NO == solver->check();
+                    } else {
+                        retval = expr->mustEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 0));
+                    }
                 } else {
-                    SAWYER_MESG(debug) <<"          isNullDeref [must-mode, non-const] addr: " <<*expr <<"\n";
-                    retval = expr->mustEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 0),
-                                             nullPtrSolver());
+                    SAWYER_MESG(debug) <<"          isNullDeref address is not constant as required by settings\n";
                 }
                 break;
+
             default:
                 ASSERT_not_reachable("invalid null-dereference mode");
         }
 
         if (debug) {
             debug <<"          isNullDeref result = " <<(retval ? "is null" : "not null");
-            if (nullPtrSolver())
-                debug <<" using SMT solver \"" <<StringUtility::cEscape(nullPtrSolver()->name()) <<"\"";
+            if (solver)
+                debug <<" using SMT solver \"" <<StringUtility::cEscape(solver->name()) <<"\"";
             debug <<"\n";
         }
 
@@ -424,14 +437,17 @@ public:
             return dflt_;
 
         // Check for null pointer dereferences
-        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr)) {
-            ASSERT_not_null(fpAnalyzer_);
-            ASSERT_not_null(path_);
-            SmtSolver::Ptr s = solver();
-            SmtSolver::Transaction tx(s);
-            pathProcessor_->nullDeref(*fpAnalyzer_, *path_, s, FeasiblePath::READ, addr, currentInstruction());
+        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_) {
+            SmtSolver::Transaction transaction(nullPtrSolver());
+            if (isNullDeref(addr)) {
+                ASSERT_not_null(fpAnalyzer_);
+                ASSERT_not_null(path_);
+                BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
+                ASSERT_not_null(cpu);
+                pathProcessor_->nullDeref(*fpAnalyzer_, *path_, cpu, nullPtrSolver(), FeasiblePath::READ, addr, currentInstruction());
+            }
         }
-
+        
         // If we know the address and that memory exists, then read the memory to obtain the default value.
         uint8_t buf[8];
         if (addr->is_number() && nBytes < sizeof(buf) &&
@@ -480,9 +496,11 @@ public:
         if (pathProcessor_) {
             ASSERT_not_null(fpAnalyzer_);
             ASSERT_not_null(path_);
-            SmtSolver::Ptr s = solver();
+            SmtSolver::Ptr s = nullPtrSolver();
             SmtSolver::Transaction tx(s);
-            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, s, FeasiblePath::READ, addr, retval, shared_from_this());
+            BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
+            ASSERT_not_null(cpu);
+            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, cpu, s, FeasiblePath::READ, addr, retval);
         }
 
         return retval;
@@ -498,12 +516,15 @@ public:
         Super::writeMemory(segreg, addr, value, cond);
 
         // Check for null pointer dereferences
-        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr)) {
-            ASSERT_not_null(fpAnalyzer_);
-            ASSERT_not_null(path_);
-            SmtSolver::Ptr s = solver();
-            SmtSolver::Transaction tx(s);
-            pathProcessor_->nullDeref(*fpAnalyzer_, *path_, s, FeasiblePath::WRITE, addr, currentInstruction());
+        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_) {
+            SmtSolver::Transaction transaction(nullPtrSolver());
+            if (isNullDeref(addr)) {
+                ASSERT_not_null(fpAnalyzer_);
+                ASSERT_not_null(path_);
+                BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
+                ASSERT_not_null(cpu);
+                pathProcessor_->nullDeref(*fpAnalyzer_, *path_, cpu, nullPtrSolver(), FeasiblePath::WRITE, addr, currentInstruction());
+            }
         }
 
         // Save a description of the variable
@@ -525,9 +546,11 @@ public:
         if (pathProcessor_) {
             ASSERT_not_null(fpAnalyzer_);
             ASSERT_not_null(path_);
-            SmtSolver::Ptr s = solver();
+            SmtSolver::Ptr s = nullPtrSolver();
             SmtSolver::Transaction tx(s);
-            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, s, FeasiblePath::WRITE, addr, value, shared_from_this());
+            BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
+            ASSERT_not_null(cpu);
+            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, cpu, s, FeasiblePath::WRITE, addr, value);
         }
     }
 };
@@ -731,7 +754,9 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                    "The default is \"" + std::string(MAY==settings.nullDeref.mode?"may":"must") + "\"."));
 
     CommandLine::insertBooleanSwitch(sg, "null-const", settings.nullDeref.constOnly,
-                                     "Check for null dereferences only when a pointer is a constant or set of constants.");
+                                     "Check for null dereferences only when a pointer is a constant or set of constants. This "
+                                     "setting is ignored when the null-comparison mode is \"may\" since \"may\" implies that "
+                                     "you're interested in additional cases where the pointer is not a constant expression.");
 
     CommandLine::insertBooleanSwitch(sg, "ignore-semantic-failure", settings.ignoreSemanticFailure,
                                      "If set, then any instruction for which semantics are not implemented or for which the "

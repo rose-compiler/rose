@@ -1,6 +1,8 @@
 #include <sage3basic.h>
-#include <Diagnostics.h>
 #include <Partitioner2/CfgPath.h>
+
+#include <Combinatorics.h>
+#include <Diagnostics.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>
 
@@ -316,6 +318,73 @@ CfgPath::truncate(const ControlFlowGraph::ConstEdgeIterator &edge) {
     CfgConstEdgeSet toRemove;
     toRemove.insert(edge);
     return truncate(toRemove);
+}
+
+std::pair<size_t, size_t>
+CfgPath::lastInsnIndex(SgAsmInstruction *needle) const {
+    Sawyer::Optional<size_t> lastInsnIdx, lastVertexIdx;
+    Vertices verts = vertices();
+    for (size_t vertexIdx=0, insnIdx=0; vertexIdx < verts.size(); ++vertexIdx) {
+        ControlFlowGraph::ConstVertexIterator vertex = verts[vertexIdx];
+        if (vertex->value().type() == V_BASIC_BLOCK) {
+            BasicBlock::Ptr bb = vertex->value().bblock();
+            BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
+                if (insn->get_address() == needle->get_address()) {
+                    lastInsnIdx = insnIdx;
+                    lastVertexIdx = vertexIdx;
+                }
+                ++insnIdx;
+            }
+        } else {
+            ++insnIdx;
+        }
+    }
+    ASSERT_require(lastInsnIdx);
+    ASSERT_require(lastVertexIdx);
+    return std::make_pair(*lastVertexIdx, *lastInsnIdx);
+}
+
+uint64_t
+CfgPath::hash() const {
+    Combinatorics::HasherSha256Builtin hasher;
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vertices()) {
+        hasher.insert((uint64_t)vertex->value().type());
+        if (Sawyer::Optional<rose_addr_t> addr = vertex->value().optionalAddress())
+            hasher.insert(*addr);
+    }
+    uint64_t retval = 0;
+    BOOST_FOREACH (uint8_t byte, hasher.digest())
+        retval = ((retval << 8) | byte) ^ ((retval >> 56) & 0xff);
+    return retval;
+}
+
+uint64_t
+CfgPath::hash(SgAsmInstruction *lastInsn) const {
+    std::pair<size_t, size_t> lastIndices = lastInsnIndex(lastInsn);
+    size_t lastVertexIdx = lastIndices.first;
+    size_t lastInsnIdx = lastIndices.second;
+    Vertices verts = vertices();
+    ASSERT_require(lastVertexIdx < verts.size());
+    Combinatorics::HasherSha256Builtin hasher;
+    for (size_t vertIdx = 0, insnIdx = 0; vertIdx <= lastVertexIdx; ++vertIdx) {
+        hasher.insert((uint64_t)verts[vertIdx]->value().type());
+        if (verts[vertIdx]->value().type() == V_BASIC_BLOCK) {
+            BOOST_FOREACH (SgAsmInstruction *insn, verts[vertIdx]->value().bblock()->instructions()) {
+                if (insnIdx++ <= lastInsnIdx)
+                    hasher.insert(insn->get_address());
+            }
+        } else if (Sawyer::Optional<rose_addr_t> addr = verts[vertIdx]->value().optionalAddress()) {
+            hasher.insert(*addr);
+            ++insnIdx;
+        } else {
+            ++insnIdx;
+        }
+    }
+
+    uint64_t retval = 0;
+    BOOST_FOREACH (uint8_t byte, hasher.digest())
+        retval = ((retval << 8) | byte) ^ ((retval >> 56) & 0xff);
+    return retval;
 }
 
 void

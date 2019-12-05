@@ -1,0 +1,37 @@
+START
+PROGRAM tables'and'pointers;
+BEGIN
+
+TABLE table'1 (0:10,0:10) W 27;
+  BEGIN
+    ITEM item'B B 31 POS(0,21);
+    ITEM item'U U    POS(0,0);
+  END
+
+TYPE table'type'2 TABLE;
+  BEGIN
+    ITEM item'num   U;
+    ITEM item'chum  U;
+  END
+
+TABLE table'2a (3) table'type'2;
+TABLE table'2b     table'type'2;
+
+ITEM table'ptr P table'type'2 = LOC(table'2a(1));
+
+table'ptr = LOC(table'2b);
+
+FOR J : 1 BY 1 WHILE J <= 10;
+  BEGIN
+    IF (item'B (J,0) <> 4B'00000000');
+      ;
+    IF (item'U (J,1) = item'num @ table'ptr);
+      ;
+    IF (item'U (J,1) = item'num @ ( LOC(table'2a(1)) ));
+      ;
+
+  END
+
+END
+
+TERM

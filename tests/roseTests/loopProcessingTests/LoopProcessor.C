@@ -36,9 +36,16 @@ void PrintUsage( const string& name)
   std::cerr << name << " <options> " << "<program name>" << "\n";
   std::cerr << "-orig: copy non-modified statements from original file\n";
   std::cerr << "-splitloop: applying loop splitting to remove conditionals inside loops\n";
+  std::cerr << "-conserv: use conservative aliasing analysis instaed of assuming no aliasing\n";
+  std::cerr << "-very_conserv: use conservative aliasing analysis and assume pointer arrays can overlap\n";
   std::cerr << ReadAnnotation::get_inst()->OptionString() << std::endl;
 //  std::cerr << "-inline: applying loop inlining for annotated functions\n";
   LoopTransformInterface::PrintTransformUsage( std::cerr );
+}
+
+bool be_conservative() {
+  CmdOptions *p = CmdOptions::GetInstance();
+  return p->HasOption("-conserv") || p->HasOption("-very_conserv");
 }
 
 int
@@ -77,7 +84,10 @@ main ( int argc,  char * argv[] )
   }
 
   AssumeNoAlias aliasInfo;
-  LoopTransformInterface::set_aliasInfo(&aliasInfo);
+  if (be_conservative()) 
+     LoopTransformInterface::set_aliasInfo(&anal);
+  else 
+     LoopTransformInterface::set_aliasInfo(&aliasInfo);
 
   LoopTransformInterface::cmdline_configure(argvList);
 
@@ -116,11 +126,11 @@ main ( int argc,  char * argv[] )
       if (func == 0) continue;
       SgFunctionDefinition *defn = func->get_definition();
       if (defn == 0) continue;
+      AstNodePtrImpl head(defn);
+      AstInterfaceImpl scope(defn);
+      AstInterface fa(&scope);
+      if (be_conservative())  anal.analyze(fa, head);
       SgBasicBlock *stmts = defn->get_body();  
-      AstInterfaceImpl scope(stmts);
-
-   // DQ (11/19/2013): Added AST consistency tests.
-      AstTests::runAllTests(sageProject);
 
    // DQ (11/19/2013): Added AST consistency tests.
       AstTests::runAllTests(sageProject);

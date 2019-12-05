@@ -500,6 +500,12 @@ may_alias(AstInterface& fa, const AstNodePtr& r1,
 
 void StmtVarAliasCollect::
 operator()( AstInterface& fa, const AstNodePtr& funcdef)
+{ analyze(fa, funcdef); 
+  return; }
+
+
+void StmtVarAliasCollect::
+analyze( AstInterface& fa, const AstNodePtr& funcdef)
 {
   assert(!hasresult);
   hasresult = true;

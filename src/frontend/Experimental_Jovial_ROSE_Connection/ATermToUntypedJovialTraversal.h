@@ -33,9 +33,9 @@ ATbool traverse_NonNestedSubroutineList(ATerm term, SgUntypedScope* scope);
 ATbool traverse_SubroutineDefinitionList(ATerm term, SgUntypedFunctionDeclarationList* func_list);
 
 // 1.4 IMPLEMENTATION PARAMETERS
-//ATbool traverse_IntegerMachineParameter(ATerm term, SgUntypedExpression* & expr);
-//ATbool traverse_FloatingMachineParameter(ATerm term, SgUntypedExpression* & expr);
-//ATbool traverse_FixedMachineParameter(ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_IntegerMachineParameter (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_FloatingMachineParameter(ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_FixedMachineParameter   (ATerm term, SgUntypedExpression* & expr);
 
 // 2.0 DECLARATIONS
 ATbool traverse_Declaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
@@ -77,7 +77,7 @@ ATbool traverse_SpecifiedSublist      (ATerm term, SgUntypedInitializedNameList*
 
 // 2.1.1.7 POINTER TYPE DESCRIPTIONS
 ATbool traverse_PointerItemDescription (ATerm term, SgUntypedType* & type);
-ATbool traverse_OptTypeName            (ATerm term, std::string & name);
+ATbool traverse_OptTypeName            (ATerm term, SgUntypedType* & type, std::string & name);
 
 // 2.1.2 TABLE DECLARATION
 ATbool traverse_TableDeclaration       (ATerm term, SgUntypedDeclarationStatementList* decl_list);
@@ -128,6 +128,7 @@ ATbool traverse_OptAllocationSpecifier(ATerm term, SgUntypedExprListExpression* 
 // 2.1.6 INITIALIZATION OF DATA OBJECTS
 ATbool traverse_ItemPreset            (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_ItemPresetValue       (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_OptItemPresetValue    (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_TablePreset           (ATerm term, SgUntypedExprListExpression* & preset);
 ATbool traverse_TablePresetList       (ATerm term, SgUntypedExprListExpression* preset);
 ATbool traverse_DefaultPresetSublist  (ATerm term, SgUntypedExprListExpression* preset);
@@ -143,6 +144,7 @@ ATbool traverse_TableTypeSpecifier    (ATerm term, SgUntypedStructureDeclaration
 ATbool traverse_BlockTypeDeclaration  (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // 2.3 STATEMENT NAME DECLARATIONS
+ATbool traverse_StatementNameDeclaration (ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref = 0);
 
 // 2.4 DEFINE DECLARATIONS
 ATbool traverse_DefineDeclaration        (ATerm term, SgUntypedDeclarationStatementList* decl_list);
@@ -172,9 +174,9 @@ ATbool traverse_Spacer                (ATerm term, SgUntypedExpression* & expr);
 
 // 3.0 PROCEDURES AND FUNCTIONS
 ATbool traverse_ProcedureDefinition(ATerm term, SgUntypedFunctionDeclarationList* func_list);
-ATbool traverse_SubroutineAttribute(ATerm term, SgUntypedOtherExpression** attr_expr);
+ATbool traverse_SubroutineAttribute(ATerm term, SgUntypedOtherExpression* & attr_expr);
 ATbool traverse_ProcedureHeading   (ATerm term, std::string & name,
-                                    SgUntypedExprListExpression** attrs, SgUntypedInitializedNameList** params);
+                                    SgUntypedExprListExpression* & attrs, SgUntypedInitializedNameList* & params);
 ATbool traverse_SubroutineBody     (ATerm term, SgUntypedFunctionScope* & function_scope);
 
 // 3.1 PROCEDURES
@@ -184,14 +186,17 @@ ATbool traverse_ProcedureDeclaration(ATerm term, SgUntypedDeclarationStatementLi
 ATbool traverse_FunctionDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_FunctionDefinition (ATerm term, SgUntypedFunctionDeclarationList* func_list);
 ATbool traverse_FunctionHeading    (ATerm term, std::string & name, SgUntypedType* & type,
-                                    SgUntypedExprListExpression** attrs, SgUntypedInitializedNameList** params);
+                                    SgUntypedExprListExpression* & attrs, SgUntypedInitializedNameList* & params);
 
 // 3.3 PARAMETERS OF PROCEDURES AND FUNCTIONS
 ATbool traverse_FormalParameterList   (ATerm term, SgUntypedInitializedNameList* param_list);
 ATbool traverse_FormalInputParameter  (ATerm term, SgUntypedInitializedNameList* param_list);
 ATbool traverse_FormalOutputParameters(ATerm term, SgUntypedInitializedNameList* param_list);
 ATbool traverse_FormalOutputParameter (ATerm term, SgUntypedInitializedNameList* param_list);
-ATbool traverse_ParameterBinding      (ATerm term, SgUntypedOtherExpression** binding_expr);
+ATbool traverse_ParameterBinding      (ATerm term, SgUntypedOtherExpression* & binding_expr);
+
+// 3.4 INLINE DECLARATIONS
+ATbool traverse_InlineDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // 4.0 STATEMENTS
 ATbool traverse_Statement(ATerm term, SgUntypedStatementList* stmt_list);
@@ -261,7 +266,7 @@ ATbool traverse_NumericFactor  (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_NumericPrimary (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_OptSign        (ATerm term, General_Language_Translation::ExpressionKind & op_enum);
 ATbool traverse_ExponentiationOp(ATerm term, SgUntypedExpression* & expr);
-//ATbool traverse_NumericMachineParameter(ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_NumericMachineParameter(ATerm term, SgUntypedExpression* & expr);
 
 // 5.2 BIT FORMULAS
 ATbool traverse_BitFormula             (ATerm term, SgUntypedExpression* & expr);
@@ -311,10 +316,14 @@ ATbool traverse_LocFunction          (ATerm term, SgUntypedExpression* & expr);
 // 6.3.2 NEXT FUNCTION
 ATbool traverse_NextFunction         (ATerm term, SgUntypedExpression* & expr);
 
+// 6.3.4 BYTE FUNCTION
+ATbool traverse_ByteFunction(ATerm term, SgUntypedExpression* & expr);
+
 // 6.3.11 STATUS INVERSE FUNCTIONS
 ATbool traverse_StatusInverseFunction(ATerm term, SgUntypedExpression* & expr);
 
 // 7.0 TYPE MATCHING AND TYPE CONVERSIONS
+ATbool traverse_BitConversion        (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_IntegerConversion    (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_GeneralConversion    (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_FloatingConversion   (ATerm term, SgUntypedExpression* & expr);

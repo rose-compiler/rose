@@ -1982,7 +1982,7 @@ struct IP_stdux: P {
 struct IP_stfd: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[1], d->read(args[0], 64));
+        d->write(args[1], ops->reinterpret(d->read(args[0], 64), SageBuilderAsm::buildTypeU64()));
     }
 };
 
@@ -1993,7 +1993,7 @@ struct IP_stfs: P {
         SgAsmFloatType *srcType = SageBuilderAsm::buildIeee754Binary64();
         BaseSemantics::SValuePtr src = ops->reinterpret(d->read(args[0], 64), srcType);
         BaseSemantics::SValuePtr single = ops->fpConvert(src, srcType, SageBuilderAsm::buildIeee754Binary32());
-        d->write(args[1], single);
+        d->write(args[1], ops->reinterpret(single, SageBuilderAsm::buildTypeU32()));
     }
 };
 

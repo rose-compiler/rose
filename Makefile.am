@@ -137,10 +137,27 @@ check-smoke:
 check-nonsmoke:
 	$(MAKE) check -C $(top_builddir)/tests/nonsmoke/functional
 
+check-java:
+	$(MAKE) check -C $(top_builddir)/tests/nonsmoke/functional/CompileTests/Java_tests
+
+# The "check" target at this top makefile is what users will normally
+# run. This should only run tests that are portable and useful to
+# users.
+#
+# (Matzke: adding binary tests since they're portable and useful and
+# some of our users have come to expect them, and utility tests since
+# they're fundamental to ROSE operation).
 check:
 	$(MAKE) check-core
 	$(MAKE) check-smoke
+	$(MAKE) -C tests/nonsmoke/functional/BinaryAnalysis check
+	$(MAKE) -C tests/nonsmoke/functional/Utility check
 
+# The "check-hard" target is intended to run all tests for the ROSE
+# library proper, whether they are portable or not, but not tests for
+# things that are not the library (i.e., not project tests, tutorial
+# tests, tool tests, documentation tests). Ideally all tests are
+# portable but ROSE has a poor track record.
 check-hard:
 	$(MAKE) check-core
 	$(MAKE) check-smoke

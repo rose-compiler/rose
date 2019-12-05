@@ -1,3 +1,3 @@
-(add esp_0 (negate esp_0) 0xfffffffc) = 0xfffffffc<4294967292,-4>[32]
-(add esp_0 4 8 (negate esp_0)) = 0x0000000c[32]
-(add v1 4 8 (negate (add v1 4))) = 0x00000008[32]
+(add esp_0 (negate esp_0) 0xfffffffc) = 0xfffffffc<4294967292,-4>[u32]
+(add esp_0 4 8 (negate esp_0)) = 0x0000000c[u32]
+(add v1 4 8 (negate (add v1 4))) = 0x00000008[u32]

@@ -247,7 +247,8 @@ run $(test) cory009
 # Test symbolic semantics memory read-after-write
 ###############################################################################################################################
 run $(tool_compile_linkexe) testSymReadWrite.C
-run $(test) testSymReadWrite ./testSymReadWrite $(ROSE)/tests/nonsmoke/specimens/binary/memreadwrite
+run $(test) testSymReadWrite --answer=testSymReadWrite.ans \
+    ./testSymReadWrite $(ROSE)/tests/nonsmoke/specimens/binary/memreadwrite
 
 ###############################################################################################################################
 # Test the WorkList class

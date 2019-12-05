@@ -1,0 +1,16 @@
+START
+
+COMPOOL item'status'type;
+
+
+TYPE item'type STATUS
+  (
+      V(LOW),
+      V(HIGH),
+      V(NONE)
+  );
+
+DEF ITEM an'item item'type = V(LOW);
+
+
+TERM

@@ -1,0 +1,160 @@
+include opt.pi
+<code ArrayAccess match=FunctionCall#("ArrayAccess",((array subscript)))/>
+<trace target/>
+<input to=target syntax="Cfront.code" from=("rose_dgemm.C")/>
+<trace top_nest1,decl_top_nest1,nest1,nest3,nest2/>
+<eval decl_top_nest1 = "";
+      top_nest1 = (decl_top_nest1 nest1);
+      EraseTraceHandle[repl=top_nest1](nest1,target)/>
+
+
+<trace var_tile_nest1/>
+<eval var_clnup_top_nest1 = top_nest1/>
+<trace trace_include_files/>
+<eval trace_include_files = "";
+      target = (trace_include_files (ERASE(target)))/>
+<trace trace_private_top_nest1/>
+<eval trace_private_top_nest1 = ""/>
+<eval nest1_1_C_dim = ("ldc",1);
+      nest1_1_C = ArrayAccess#("C","j"*"ldc"+"i")/>
+<eval nest1_2_A_dim = ("lda",1);
+      nest1_2_A = ArrayAccess#("A","l"*"lda"+"i")/>
+<eval nest1_3_B_dim = ("ldb",1);
+      nest1_3_B = ArrayAccess#("B","j"*"ldb"+"l")/>
+
+<parameter pthread_nest1 type=1.._ default=1 message="number of threads to parallelize loop nest1"/>
+<parameter psize_nest1 type=1.._ default=256 message="number of loop iterations to run by different threads for nest1"/>
+<parameter bsize_nest1 type=(INT INT INT) default=(16 16 16) message="Blocking factor for loop nest nest1"/>
+<parameter copy1_config_C type=0..2 default=1 message="configuration for copy array C at loop nest1: 0-no opt; 1-copy; 2-strength reduction."/>
+<parameter copy2_config_A type=0..2 default=1 message="configuration for copy array A at loop nest1: 0-no opt; 1-copy; 2-strength reduction."/>
+<parameter copy3_config_B type=0..2 default=1 message="configuration for copy array B at loop nest1: 0-no opt; 1-copy; 2-strength reduction."/>
+<parameter ujsize_nest1 type=(INT INT) default=(2 2) message="Unroll and Jam factor for loop nest nest1"/>
+<parameter scalar1_config_C type=0..2 default=1 message="configuration for scalarRepl array C at loop nest1: 0-no opt; 1-scalarRepl; 2-strength reduction."/>
+<parameter scalar2_config_A type=0..2 default=1 message="configuration for scalarRepl array A at loop nest1: 0-no opt; 1-scalarRepl; 2-strength reduction."/>
+<parameter scalar3_config_B type=0..2 default=1 message="configuration for scalarRepl array B at loop nest1: 0-no opt; 1-scalarRepl; 2-strength reduction."/>
+<parameter usize_nest2 type=1.._ default=4 message="Unroll factor for loop nest2"/>
+
+<cond psize_nest1==1||(psize_nest1>=(HEAD(bsize_nest1))&&(psize_nest1%HEAD(bsize_nest1))==0)&&(HEAD(bsize_nest1))==1||((HEAD(ujsize_nest1))<=(HEAD(bsize_nest1))&&(HEAD(bsize_nest1)%HEAD(ujsize_nest1))==0)&&(HEAD(TAIL(bsize_nest1)))==1||((HEAD(ujsize_nest1))<=(HEAD(TAIL(bsize_nest1)))&&(HEAD(TAIL(bsize_nest1))%HEAD(ujsize_nest1))==0)&&usize_nest2<=(HEAD(TAIL(TAIL(bsize_nest1))))&&(HEAD(TAIL(TAIL(bsize_nest1)))%usize_nest2)==0/>
+
+<eval par_nest1 = DELAY{
+         trace_private_top_nest1 = ("j_par" "l" "i" "j");
+         AppendDecl[trace=decl_top_nest1](IntegerType,"j_par");
+         if (pthread_nest1!=1)  {
+            TRACE((nest1_3_B nest1_2_A nest1_1_C),BlockLoops[factor=BlockDim#("j","j_par",psize_nest1);cleanup=0;trace_mod=(nest1_3_B nest1_2_A nest1_1_C)](nest1[Nest.body],nest1));
+            ParallelizeLoop[trace=top_nest1;private=trace_private_top_nest1;trace_include=trace_include_files;threads=pthread_nest1](nest1);
+            ERASE(nest1,top_nest1);
+            nest1 = nest1[Nest.body];
+            REPLACE(ERASE(nest1),nest1,top_nest1);
+            MoveTraceHandle[trace=target](top_nest1,nest1)
+         }
+      }/>
+<eval block_nest1 = DELAY{
+         bdim_nest1 = (BlockDim#("j","j_bk",HEAD(bsize_nest1)) BlockDim#("i","i_bk",HEAD(TAIL(bsize_nest1))) BlockDim#("l","l_bk",HEAD(TAIL(TAIL(bsize_nest1)))));
+         var_tile_nest1 = COPY(nest1);
+         AppendDecl[trace=decl_top_nest1](IntegerType,(("l_bk" "i_bk" "j_bk")));
+         TRACE((nest1_3_B nest1_2_A nest1_1_C),BlockLoops[factor=bdim_nest1;cleanup=0;trace_innerNest=var_tile_nest1;trace_decl=decl_top_nest1;nonPerfect=NonPerfectLoops#("",nest2);trace_mod=(nest1_3_B nest1_2_A nest1_1_C)](nest2[Nest.body],nest1));
+         trace_private_top_nest1 = (("l_bk" "i_bk" "j_bk") (ERASE(trace_private_top_nest1)))
+      }/>
+<eval copy1_nest1 = DELAY{
+         if (copy1_config_C==1)  {
+            AppendDecl[trace=decl_top_nest1](IntegerType,(("nest1_1_C_cp0" "nest1_1_C_cp1")));
+            trace_private_top_nest1 = (("nest1_1_C_cp0" "nest1_1_C_cp1") (ERASE(trace_private_top_nest1)));
+            TRACE((nest1_3_B nest1_2_A nest1_1_C),CopyRepl[prefix="C_buf";data_type="double";scalar=0;init_loc=nest1;save_loc=nest1;delete_loc=nest1;trace=top_nest1;trace_decl=decl_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C);trace_vars=trace_private_top_nest1;cpBlock=(CopyBlock#("nest1_1_C_cp0","j_bk",HEAD(bdim_nest1)) CopyBlock#("nest1_1_C_cp1","i_bk",HEAD(TAIL(bdim_nest1))))](nest1_1_C,((CopyDim#("j",0,nest1[Nest.ctrl][Loop.stop],"ldc") CopyDim#("i",0,nest3[Nest.ctrl][Loop.stop],1))),nest1));
+            TRACE((nest1_3_B nest1_2_A nest1_1_C),FiniteDiff[exp_type=PtrType#"double";prefix="C_buf_fd";trace=top_nest1;scalar=0;trace_decl=decl_top_nest1;trace_newVars=trace_private_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C)](nest1_1_C[ArrayAccess.array],((ExpDim#(nest1,1,"nest1_1_C_cp1") ExpDim#(nest3,1,HEAD(TAIL(bsize_nest1))))),nest1));
+            nest1_1_C_dim = (HEAD(TAIL(bsize_nest1)),1)
+         }else {
+            if (copy1_config_C==2)  {
+               TRACE((nest1_3_B nest1_2_A nest1_1_C),FiniteDiff[exp_type=PtrType#"double";prefix="C_buf_fd";trace=top_nest1;scalar=0;trace_decl=decl_top_nest1;trace_newVars=trace_private_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C)](nest1_1_C[ArrayAccess.array],((ExpDim#(nest1,1,"ldc") ExpDim#(nest3,1,1))),nest1))
+            }
+         }
+      }/>
+
+<eval copy2_nest1 = DELAY{
+         if (copy2_config_A==1)  {
+            AppendDecl[trace=decl_top_nest1](IntegerType,(("nest1_2_A_cp0" "nest1_2_A_cp1")));
+            trace_private_top_nest1 = (("nest1_2_A_cp0" "nest1_2_A_cp1") (ERASE(trace_private_top_nest1)));
+            TRACE((nest1_3_B nest1_2_A nest1_1_C),CopyRepl[prefix="A_buf";data_type="double";scalar=0;init_loc=nest1;delete_loc=nest1;trace=top_nest1;trace_decl=decl_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C);trace_vars=trace_private_top_nest1;permute=(2 1);cpBlock=(CopyBlock#("nest1_2_A_cp0","i_bk",HEAD(TAIL(bdim_nest1))) CopyBlock#("nest1_2_A_cp1","l_bk",HEAD(TAIL(TAIL(bdim_nest1)))))](nest1_2_A,((CopyDim#("i",0,nest3[Nest.ctrl][Loop.stop],1) CopyDim#("l",0,nest2[Nest.ctrl][Loop.stop],"lda"))),nest1));
+            TRACE((nest1_3_B nest1_2_A nest1_1_C),FiniteDiff[exp_type=PtrType#"double";prefix="A_buf_fd";trace=top_nest1;scalar=0;trace_decl=decl_top_nest1;trace_newVars=trace_private_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C)](nest1_2_A[ArrayAccess.array],((ExpDim#(nest3,1,"nest1_2_A_cp1") ExpDim#(nest2,1,HEAD(TAIL(TAIL(bsize_nest1)))))),nest1));
+            nest1_2_A_dim = (1,HEAD(TAIL(bsize_nest1)))
+         }else {
+            if (copy2_config_A==2)  {
+               TRACE((nest1_3_B nest1_2_A nest1_1_C),FiniteDiff[exp_type=PtrType#"double";prefix="A_buf_fd";trace=top_nest1;scalar=0;trace_decl=decl_top_nest1;trace_newVars=trace_private_top_nest1;permute=(2 1);trace_mod=(nest1_3_B nest1_2_A nest1_1_C)](nest1_2_A[ArrayAccess.array],((ExpDim#(nest3,1,1) ExpDim#(nest2,1,"lda"))),nest1))
+            }
+         }
+      }/>
+
+<eval copy3_nest1 = DELAY{
+         if (copy3_config_B==1)  {
+            AppendDecl[trace=decl_top_nest1](IntegerType,(("nest1_3_B_cp0" "nest1_3_B_cp1")));
+            trace_private_top_nest1 = (("nest1_3_B_cp0" "nest1_3_B_cp1") (ERASE(trace_private_top_nest1)));
+            TRACE((nest1_3_B nest1_2_A nest1_1_C),CopyRepl[prefix="B_buf";data_type="double";scalar=0;init_loc=nest1;delete_loc=nest1;trace=top_nest1;trace_decl=decl_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C);trace_vars=trace_private_top_nest1;cpBlock=(CopyBlock#("nest1_3_B_cp0","j_bk",HEAD(bdim_nest1)) CopyBlock#("nest1_3_B_cp1","l_bk",HEAD(TAIL(TAIL(bdim_nest1)))))](nest1_3_B,((CopyDim#("j",0,nest1[Nest.ctrl][Loop.stop],"ldb") CopyDim#("l",0,nest2[Nest.ctrl][Loop.stop],1))),nest1));
+            TRACE((nest1_3_B nest1_2_A nest1_1_C),FiniteDiff[exp_type=PtrType#"double";prefix="B_buf_fd";trace=top_nest1;scalar=0;trace_decl=decl_top_nest1;trace_newVars=trace_private_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C)](nest1_3_B[ArrayAccess.array],((ExpDim#(nest1,1,"nest1_3_B_cp1") ExpDim#(nest2,1,HEAD(TAIL(TAIL(bsize_nest1)))))),nest1));
+            nest1_3_B_dim = (HEAD(TAIL(bsize_nest1)),1)
+         }else {
+            if (copy3_config_B==2)  {
+               TRACE((nest1_3_B nest1_2_A nest1_1_C),FiniteDiff[exp_type=PtrType#"double";prefix="B_buf_fd";trace=top_nest1;scalar=0;trace_decl=decl_top_nest1;trace_newVars=trace_private_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C)](nest1_3_B[ArrayAccess.array],((ExpDim#(nest1,1,"ldb") ExpDim#(nest2,1,1))),nest1))
+            }
+         }
+      }/>
+
+<eval unrolljam_nest1 = DELAY{
+         ERASE((nest1 nest3 nest2),top_nest1);
+         TraceNestedLoops[trace=top_nest1](((nest1 nest3 nest2)),ERASE(var_tile_nest1));
+         REPLACE(ERASE(var_tile_nest1),nest1,top_nest1);
+         UnrollJam[factor=((HEAD(ujsize_nest1)) (HEAD(TAIL(ujsize_nest1))));cleanup=0;trace=top_nest1](nest2,nest1)
+      }/>
+<eval scalar1_nest1 = DELAY{
+         if (scalar1_config_C==1)  {
+            TRACE((nest1_3_B nest1_2_A nest1_1_C),CopyRepl[prefix="C_1_scalar";data_type="double";scalar=1;init_loc=nest3[Nest.body];save_loc=nest3[Nest.body];trace=top_nest1;trace_decl=decl_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C);trace_vars=trace_private_top_nest1](nest1_1_C,((CopyDim#("j",nest1[Nest.ctrl][Loop.i],nest1[Nest.ctrl][Loop.step],nest1_1_C_dim[0]) CopyDim#("i",nest3[Nest.ctrl][Loop.i],nest3[Nest.ctrl][Loop.step],nest1_1_C_dim[1]))),nest3[Nest.body]));
+            TRACE((nest1_3_B nest1_2_A nest1_1_C),FiniteDiff[exp_type=PtrType#"double";prefix="C_1_scalar_fd";trace=top_nest1;scalar=0;trace_decl=decl_top_nest1;trace_newVars=trace_private_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C)](nest1_1_C[ArrayAccess.array],((ExpDim#(nest1,1,nest1_1_C_dim[0]) ExpDim#(nest3,1,nest1_1_C_dim[1]))),nest1));
+            nest1_1_C_dim = (HEAD(TAIL(bsize_nest1)),1)
+         }else {
+            if (scalar1_config_C==2)  {
+               TRACE((nest1_3_B nest1_2_A nest1_1_C),FiniteDiff[exp_type=PtrType#"double";prefix="C_1_scalar_fd";trace=top_nest1;scalar=0;trace_decl=decl_top_nest1;trace_newVars=trace_private_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C)](nest1_1_C[ArrayAccess.array],((ExpDim#(nest1,1,nest1_1_C_dim[0]) ExpDim#(nest3,1,nest1_1_C_dim[1]))),nest1))
+            }
+         }
+      }/>
+<eval scalar2_nest1 = DELAY{
+         if (scalar2_config_A==1)  {
+            TRACE((nest1_3_B nest1_2_A nest1_1_C),CopyRepl[prefix="A_2_scalar";data_type="double";scalar=1;init_loc=nest2[Nest.body];trace=top_nest1;trace_decl=decl_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C);trace_vars=trace_private_top_nest1;permute=(2 1)](nest1_2_A,((CopyDim#("l",nest2[Nest.ctrl][Loop.i],nest2[Nest.ctrl][Loop.step],nest1_2_A_dim[0]) CopyDim#("i",nest3[Nest.ctrl][Loop.i],nest3[Nest.ctrl][Loop.step],nest1_2_A_dim[1]))),nest2[Nest.body]));
+            TRACE((nest1_3_B nest1_2_A nest1_1_C),FiniteDiff[exp_type=PtrType#"double";prefix="A_2_scalar_fd";trace=top_nest1;scalar=0;trace_decl=decl_top_nest1;trace_newVars=trace_private_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C)](nest1_2_A[ArrayAccess.array],((ExpDim#(nest3,1,nest1_2_A_dim[1]) ExpDim#(nest2,1,nest1_2_A_dim[0]))),nest1));
+            nest1_2_A_dim = (1,HEAD(TAIL(bsize_nest1)))
+         }else {
+            if (scalar2_config_A==2)  {
+               TRACE((nest1_3_B nest1_2_A nest1_1_C),FiniteDiff[exp_type=PtrType#"double";prefix="A_2_scalar_fd";trace=top_nest1;scalar=0;trace_decl=decl_top_nest1;trace_newVars=trace_private_top_nest1;permute=(2 1);trace_mod=(nest1_3_B nest1_2_A nest1_1_C)](nest1_2_A[ArrayAccess.array],((ExpDim#(nest3,1,nest1_2_A_dim[1]) ExpDim#(nest2,1,nest1_2_A_dim[0]))),nest1))
+            }
+         }
+      }/>
+
+<eval scalar3_nest1 = DELAY{
+         if (scalar3_config_B==1)  {
+            TRACE((nest1_3_B nest1_2_A nest1_1_C),CopyRepl[prefix="B_3_scalar";data_type="double";scalar=1;init_loc=nest2[Nest.body];trace=top_nest1;trace_decl=decl_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C);trace_vars=trace_private_top_nest1](nest1_3_B,((CopyDim#("j",nest1[Nest.ctrl][Loop.i],nest1[Nest.ctrl][Loop.step],nest1_3_B_dim[0]) CopyDim#("l",nest2[Nest.ctrl][Loop.i],nest2[Nest.ctrl][Loop.step],nest1_3_B_dim[1]))),nest2[Nest.body]));
+            TRACE((nest1_3_B nest1_2_A nest1_1_C),FiniteDiff[exp_type=PtrType#"double";prefix="B_3_scalar_fd";trace=top_nest1;scalar=0;trace_decl=decl_top_nest1;trace_newVars=trace_private_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C)](nest1_3_B[ArrayAccess.array],((ExpDim#(nest1,1,nest1_3_B_dim[0]) ExpDim#(nest2,1,nest1_3_B_dim[1]))),nest1));
+            nest1_3_B_dim = (HEAD(TAIL(bsize_nest1)),1)
+         }else {
+            if (scalar3_config_B==2)  {
+               TRACE((nest1_3_B nest1_2_A nest1_1_C),FiniteDiff[exp_type=PtrType#"double";prefix="B_3_scalar_fd";trace=top_nest1;scalar=0;trace_decl=decl_top_nest1;trace_newVars=trace_private_top_nest1;trace_mod=(nest1_3_B nest1_2_A nest1_1_C)](nest1_3_B[ArrayAccess.array],((ExpDim#(nest1,1,nest1_3_B_dim[0]) ExpDim#(nest2,1,nest1_3_B_dim[1]))),nest1))
+            }
+         }
+      }/>
+
+<eval unroll_nest2 = DELAY{
+         UnrollLoops[factor=usize_nest2;cleanup=0](nest2[Nest.body],nest2)
+      }/>
+<eval cleanup_nest1 = DELAY{
+         CleanupBlockedNests[trace=top_nest1](var_clnup_top_nest1)
+      }/>
+
+
+<eval APPLY{par_nest1};
+      APPLY{block_nest1};
+      APPLY{copy1_nest1};
+      APPLY{copy2_nest1};
+      APPLY{copy3_nest1};
+      APPLY{unrolljam_nest1};
+      APPLY{scalar1_nest1};
+      APPLY{scalar2_nest1};
+      APPLY{scalar3_nest1};
+      APPLY{unroll_nest2};
+      APPLY{cleanup_nest1}/>
+<output from=(target) syntax=("Cfront.code")/>

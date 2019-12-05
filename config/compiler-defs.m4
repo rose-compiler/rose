@@ -23,6 +23,9 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
 
     case "$CXX_COMPILER_VENDOR" in
         clang)
+
+          # Rasmussen (11/19/2019): "grep -Po" not supported on Apple OSX
+          if test "x$OS_vendor" != xapple ; then
             CXX_VERSION_MAJOR=$($CXX_COMPILER_COMMAND --version 2>&1 |\
                 grep -Po '(?<=version )@<:@^ ;@:>@+' |\
                 cut -d. -f1 |\
@@ -35,6 +38,7 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                 grep -Po '(?<=version )@<:@^ ;@:>@+' |\
                 cut -d. -f3 |\
                 cut -d\( -f1)
+          fi
 
           # DQ (12/3/2016): These variables were previously set in the ROSE configuration.
             #echo "Get CXX Version info: OS_vendor = $OS_vendor"
@@ -116,7 +120,7 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                             CXX_VERSION_MINOR=0
                             ;;
                         *)
-                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR)])
+                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR")])
                             ;;
                     esac
                 elif test $XCODE_VERSION_MAJOR -eq 10; then
@@ -127,14 +131,27 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                   # NOTE that this is very tentative and don't know if it will work
                     case "$XCODE_VERSION_MINOR" in
                         0|1)
-                            BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+                            CXX_VERSION_MINOR=0
                             ;;
                         *)
-                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = $XCODE_VERSION_MINOR)])
+                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR")])
+                            ;;
+                    esac
+                elif test $XCODE_VERSION_MAJOR -eq 11; then
+                    CXX_VERSION_MAJOR=8
+                  # Rasmussen (11/19/2019): Added results for clang --version 11.0.0
+                  # see https://en.wikipedia.org/wiki/Xcode#11.x_series
+                  # NOTE that this is very tentative and don't know if it will work
+                    case "$XCODE_VERSION_MINOR" in
+                        0|2)
+                            CXX_VERSION_MINOR=0
+                            ;;
+                        *)
+                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR")])
                             ;;
                     esac
                 else
-                    AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MAJOR = $XCODE_VERSION_MAJOR)])
+                    AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MAJOR = "$XCODE_VERSION_MAJOR")])
                 fi
 
 #              # Note "build_os" is a variable determined by autoconf.

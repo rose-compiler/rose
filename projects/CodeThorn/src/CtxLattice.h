@@ -56,7 +56,7 @@ namespace
   BinaryOperator
   merge_keys(_Iterator1 aa1, _Iterator1 zz1, _Iterator2 aa2, _Iterator2 zz2, BinaryOperator binop)
   {
-    const unavailable_t unavail;
+    static constexpr unavailable_t unavail;
 
     while (aa1 != zz1 && aa2 != zz2)
     {
@@ -241,6 +241,7 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*>
     using context_map::insert;
     using context_map::lower_bound;
     using context_map::find;
+    using context_map::size;
     using context_map::operator[];
 
     explicit

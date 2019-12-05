@@ -79,6 +79,8 @@ namespace
   bool
   defaultIsValidReturn(Labeler& labeler, Label invlbl, Label retlbl)
   {
+    ROSE_ASSERT(Labeler::NO_LABEL != invlbl && Labeler::NO_LABEL != retlbl);
+
     return astNode(labeler, invlbl) == astNode(labeler, retlbl);
   }
 
@@ -108,27 +110,35 @@ namespace
   };
 
 
-  //! Compares relevant call string segments, relevant(@ref calltx) < @ref returnctx
+  //! Compares relevant call string segments, relevant(@ref callctx) < @ref returnctx
   //! \param callctx   the call string at the call site
   //! \param returnctx the already shortened string at the return site
   //! \details
   //!   On a call return, a call string is shortened. If the call string
   //!   was already at full capacity, we map the result on all substrings
   //!   that have the same postfix.
-  bool ltProjected(const FiniteContext& callctx, const FiniteContext& returnctx)
+  bool ltProjected(const FiniteCallString& callctx, const FiniteCallString& returnctx)
   {
     int dif = static_cast<int>(callctx.size()) - returnctx.size();
 
+    // if the call context is shorter, we still want to include it in the
+    //   set of candidates.
     if (dif < 0) dif = 0;
-    ROSE_ASSERT(dif < 2);
 
+    //~ ROSE_ASSERT(dif <= 1);
+    // the length difference can be greater than one
+    // (i.e., in recursive functions whose call context is initially very short.
+    // \todo \pp discuss with Markus whether we could have an additional
+    //           pseudo label min that we can use for filling the initial
+    //           call string.
     return std::lexicographical_compare( callctx.rbegin(),   callctx.rend()-dif,
                                          returnctx.rbegin(), returnctx.rend()
                                        );
   }
 
   //! extracts the call string from a lattice element and forwards it for comparison.
-  bool ltProjectedFull(const FiniteContext& lhs, const std::pair<const FiniteContext, Lattice*>& rhs)
+  //! \note ltProjectedFull is not overloaded to syntactically simplify taking its address
+  bool ltProjectedFull(const FiniteCallString& lhs, const std::pair<const FiniteCallString, Lattice*>& rhs)
   {
     return ltProjected(lhs, rhs.first);
   }
@@ -140,11 +150,11 @@ namespace
       : factory(propfact), lattice(lat)
       {}
 
-      template <class Ctx>
-      std::pair<const Ctx, Lattice*>
-      operator()(const std::pair<const Ctx, Lattice*>& entry)
+      template <class CallContext>
+      std::pair<const CallContext, Lattice*>
+      operator()(const std::pair<const CallContext, Lattice*>& callsite)
       {
-        return std::make_pair(entry.first, cloneLattice(factory, lattice));
+        return std::make_pair(callsite.first, cloneLattice(factory, lattice));
       }
 
     private:
@@ -152,13 +162,57 @@ namespace
       Lattice&              lattice;
   };
 
+  //! true if these string lengths indicate a caller/callee relationship
+  //! on FiniteCallString
+  bool callerCalleeLengths(size_t caller, size_t callee, size_t MAXLEN)
+  {
+    //~ std::cerr << caller << " / " << callee << " : " << MAXLEN << std::endl;
+
+    return (  ((caller == MAXLEN) && (callee == MAXLEN))
+           || ((caller <  MAXLEN) && (callee == caller+1))
+           );
+  }
+
+  //! tests if this is a prefix to target
+  //! \details
+  //!   tests a call string (sub-) range and determines
+  //!   whether target could be called from this.
+  bool callerCalleePrefix(const FiniteCallString& caller, const FiniteCallString& callee)
+  {
+    static const size_t MAX_OVERLAP = FiniteCallString::MAX_CTX_LENGTH-1;
+
+    // if all labels in the common subrange match
+    const size_t len     = caller.size();
+    const size_t overlap = std::min(len, MAX_OVERLAP);
+    const size_t ofs     = len-overlap;
+
+    ROSE_ASSERT(overlap+1 == callee.size());
+    return std::equal(caller.begin() + ofs, caller.end(), callee.begin());
+  }
+
+  struct IsCallerCallee
+  {
+    bool
+    operator()(const std::pair<const FiniteCallString, Lattice*>& callsite)
+    {
+      const FiniteCallString& caller    = callsite.first;
+
+      bool res1 = callerCalleeLengths(caller.size(), retctx.size(), FiniteCallString::MAX_CTX_LENGTH);
+      bool res2 = res1 && callerCalleePrefix(caller, retctx);
+
+      return res2;
+    }
+
+    FiniteCallString retctx;
+  };
+
   //! A functor that is invoked for every lattice flowing over a return edge.
   //! - Every valid return context is mapped onto every feasible context in the caller
   //! - A context is feasible if it has postfix(precall-context) == prefix(return-context)
   struct FiniteReturnHandler
   {
-      FiniteReturnHandler( const CtxLattice<FiniteContext>& prelat,
-                           CtxLattice<FiniteContext>& tgtlat,
+      FiniteReturnHandler( const CtxLattice<FiniteCallString>& prelat,
+                           CtxLattice<FiniteCallString>& tgtlat,
                            PropertyStateFactory& propfactory,
                            Labeler& labels,
                            Label lbl
@@ -166,13 +220,17 @@ namespace
       : pre(prelat), tgt(tgtlat), factory(propfactory), labeler(labels), label(lbl)
       {}
 
-      void operator()(const std::pair<const FiniteContext, Lattice*>& entry)
+      void operator()(const std::pair<const FiniteCallString, Lattice*>& entry)
       {
-        typedef CtxLattice<FiniteContext>::const_iterator const_iterator;
+        typedef CtxLattice<FiniteCallString>::const_iterator const_iterator;
 
-        if (!entry.first.isValidReturn(labeler, label)) return;
+        if (!entry.first.isValidReturn(labeler, label))
+        {
+          //~ std::cerr << "** INVALID RETURN *" << std::endl;
+          return;
+        }
 
-        FiniteContext retctx(entry.first);
+        FiniteCallString retctx(entry.first);
 
         retctx.callReturn(labeler, label);
 
@@ -182,15 +240,16 @@ namespace
                                                   ltProjectedFull
                                                 );
 
-        std::transform( prelow, prepos,
-                        std::inserter(tgt, tgt.end()),
-                        LatticeCloner(factory, sg::deref(entry.second))
-                      );
+        transform_if( prelow, prepos,
+                      std::inserter(tgt, tgt.end()),
+                      IsCallerCallee{entry.first},
+                      LatticeCloner(factory, sg::deref(entry.second))
+                    );
       }
 
     private:
-      const CtxLattice<FiniteContext>& pre;
-      CtxLattice<FiniteContext>&       tgt;
+      const CtxLattice<FiniteCallString>& pre;
+      CtxLattice<FiniteCallString>&       tgt;
       PropertyStateFactory&            factory;
       Labeler&                         labeler;
       Label                            label;
@@ -217,45 +276,66 @@ namespace
 
 
 //
-// InfiniteContext
+// InfiniteCallString
 
-bool InfiniteContext::isValidReturn(Labeler& labeler, Label retlbl) const
+bool InfiniteCallString::isValidReturn(Labeler& labeler, Label retlbl) const
 {
-  return defaultIsValidReturn(labeler, back(), retlbl);
+  // see comment in FiniteCallString::isValidReturn
+  return size() && defaultIsValidReturn(labeler, back(), retlbl);
 }
 
 
-void InfiniteContext::callInvoke(const Labeler&, Label lbl)
+void InfiniteCallString::callInvoke(const Labeler&, Label lbl)
 {
   push_back(lbl);
 }
 
 
-void InfiniteContext::callReturn(Labeler& labeler, Label lbl)
+bool InfiniteCallString::callerOf(const InfiniteCallString& target, Label callsite) const
+{
+  ROSE_ASSERT(target.size());
+
+  // target is invoked from this, if
+  // (1) the target's last label is callsite
+  // (2) this' call string is one label shorter than target's call string
+  // (3) if all labels in the common subrange match
+  return (  target.back() == callsite
+         && (this->size() + 1) == target.size()
+         && std::equal(begin(), end(), target.begin())
+         );
+}
+
+bool InfiniteCallString::operator==(const InfiniteCallString& that) const
+{
+  const context_string& self = *this;
+
+  return self == that;
+}
+
+
+void InfiniteCallString::callReturn(Labeler& labeler, Label lbl)
 {
   ROSE_ASSERT(isValidReturn(labeler, lbl));
   pop_back();
 }
 
 
-// static
-void InfiniteContext::callInvoke( const CtxLattice<InfiniteContext>& src,
-                                  CtxLattice<InfiniteContext>& tgt,
-                                  CtxAnalysis<InfiniteContext>&,
-                                  Labeler& labeler,
-                                  Label lbl
-                                )
+void allCallInvoke( const CtxLattice<InfiniteCallString>& src,
+                    CtxLattice<InfiniteCallString>& tgt,
+                    CtxAnalysis<InfiniteCallString>& /* not used */,
+                    Labeler& labeler,
+                    Label lbl
+               )
 {
   defaultCallInvoke(src, tgt, labeler, lbl);
 }
 
-// static
-void InfiniteContext::callReturn( const CtxLattice<InfiniteContext>& src,
-                                  CtxLattice<InfiniteContext>& tgt,
-                                  CtxAnalysis<InfiniteContext>&,
-                                  Labeler& labeler,
-                                  Label lbl
-                                )
+void allCallReturn( const CtxLattice<InfiniteCallString>& src,
+                    CtxLattice<InfiniteCallString>& tgt,
+                    CtxAnalysis<InfiniteCallString>& /* not used */,
+                    Labeler& labeler,
+                    Label lbl
+                  )
 {
   transform_if( src.begin(),
                 src.end(),
@@ -265,10 +345,10 @@ void InfiniteContext::callReturn( const CtxLattice<InfiniteContext>& src,
               );
 }
 
-bool operator<(const InfiniteContext& lhs, const InfiniteContext& rhs)
+bool operator<(const InfiniteCallString& lhs, const InfiniteCallString& rhs)
 {
-  typedef InfiniteContext::const_reverse_iterator rev_iterator;
-  typedef std::pair<rev_iterator, rev_iterator>   rev_terator_pair;
+  typedef InfiniteCallString::const_reverse_iterator rev_iterator;
+  typedef std::pair<rev_iterator, rev_iterator>      rev_terator_pair;
 
   const size_t     LHS    = lhs.size();
   const size_t     RHS    = rhs.size();
@@ -286,7 +366,7 @@ bool operator<(const InfiniteContext& lhs, const InfiniteContext& rhs)
 }
 
 
-std::ostream& operator<<(std::ostream& os, const InfiniteContext& el)
+std::ostream& operator<<(std::ostream& os, const InfiniteCallString& el)
 {
   for (size_t i = 0; i < el.size(); ++i)
     os << (i == 0 ? "'" : ", ") << el.at(i);
@@ -297,14 +377,23 @@ std::ostream& operator<<(std::ostream& os, const InfiniteContext& el)
 
 
 //
-// FiniteContext
+// FiniteCallString
 
-bool FiniteContext::isValidReturn(Labeler& labeler, Label retlbl) const
+bool FiniteCallString::isValidReturn(Labeler& labeler, Label retlbl) const
 {
-  return defaultIsValidReturn(labeler, back(), retlbl);
+  // an empty call-string cannot flow over a return label
+  // \example
+  //   int main(int argc, ...) {
+  //     if (argc==1) return 0; /* produces empty call string for 2 */
+  //     if (argc<2) return main(argc-1, ...);
+  //     return 0;
+  //   }
+  // \todo use pseudo context to model call to entry functions.
+  //       -> saves periodic calls to size.
+  return size() && defaultIsValidReturn(labeler, back(), retlbl);
 }
 
-void FiniteContext::callInvoke(const Labeler&, Label lbl)
+void FiniteCallString::callInvoke(const Labeler&, Label lbl)
 {
   if (size() == MAX_CTX_LENGTH)
     erase(begin());
@@ -313,46 +402,75 @@ void FiniteContext::callInvoke(const Labeler&, Label lbl)
   push_back(lbl);
 }
 
-void FiniteContext::callReturn(Labeler& labeler, CodeThorn::Label lbl)
+void FiniteCallString::callReturn(Labeler& labeler, CodeThorn::Label lbl)
 {
   ROSE_ASSERT(isValidReturn(labeler, lbl));
   pop_back();
 }
 
-// static
-void FiniteContext::callInvoke( const CtxLattice<FiniteContext>& src,
-                                CtxLattice<FiniteContext>& tgt,
-                                CtxAnalysis<FiniteContext>&,
-                                Labeler& labeler,
-                                Label lbl
-                              )
+
+bool FiniteCallString::callerOf(const FiniteCallString& target, Label callsite) const
+{
+  ROSE_ASSERT(MAX_CTX_LENGTH > 0 && target.size());
+
+  // target is invoked from this, if
+  // (1) the target's last label is callsite
+  // (2) the lengths of the call string match caller/callee lengths
+  // (3) if all labels in the common subrange match
+  return (  (target.back() == callsite)
+         && callerCalleeLengths(size(), target.size(), MAX_CTX_LENGTH)
+         && callerCalleePrefix(*this, target)
+         );
+}
+
+bool FiniteCallString::operator==(const FiniteCallString& that) const
+{
+  const context_string& self = *this;
+
+  return self == that;
+}
+
+void allCallInvoke( const CtxLattice<FiniteCallString>& src,
+                    CtxLattice<FiniteCallString>& tgt,
+                    CtxAnalysis<FiniteCallString>& /* not used */,
+                    Labeler& labeler,
+                    Label lbl
+                  )
 {
   defaultCallInvoke(src, tgt, labeler, lbl);
 }
 
-// static
-void FiniteContext::callReturn( const CtxLattice<FiniteContext>& src,
-                                CtxLattice<FiniteContext>& tgt,
-                                CtxAnalysis<FiniteContext>& analysis,
-                                Labeler& labeler,
-                                Label lbl
-                              )
+void allCallReturn( const CtxLattice<FiniteCallString>& src,
+                    CtxLattice<FiniteCallString>& tgt,
+                    const CtxLattice<FiniteCallString>& pre,
+                    Labeler& labeler,
+                    Label lbl
+                  )
 {
-  const CtxLattice<FiniteContext>& pre  = analysis.getCallSiteLattice(lbl);
-  PropertyStateFactory&            fact = tgt.componentFactory();
+  PropertyStateFactory&               fact = tgt.componentFactory();
 
   std::for_each( src.begin(), src.end(),
                  FiniteReturnHandler(pre, tgt, fact, labeler, lbl)
                );
 }
 
+void allCallReturn( const CtxLattice<FiniteCallString>& src,
+                    CtxLattice<FiniteCallString>& tgt,
+                    CtxAnalysis<FiniteCallString>& analysis,
+                    Labeler& labeler,
+                    Label lbl
+                  )
+{
+  allCallReturn(src, tgt, analysis.getCallSiteLattice(lbl), labeler, lbl);
+}
+
 //! full comparison of the call string
-bool operator<(const FiniteContext& lhs, const FiniteContext& rhs)
+bool operator<(const FiniteCallString& lhs, const FiniteCallString& rhs)
 {
   return std::lexicographical_compare(lhs.rbegin(), lhs.rend(), rhs.rbegin(), rhs.rend());
 }
 
-std::ostream& operator<<(std::ostream& os, const FiniteContext& el)
+std::ostream& operator<<(std::ostream& os, const FiniteCallString& el)
 {
   for (size_t i = 0; i < el.size(); ++i)
     os << (i == 0 ? "'" : ", ") << el.at(i);

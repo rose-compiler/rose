@@ -301,13 +301,19 @@ SmtSolver::checkTrivial() {
         return SAT_YES;
 
     // If any assertion is a constant zero, then NO
+    // If all assertions are non-zero integer constants, then YES
+    bool allTrue = true;
     BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs) {
         if (expr->isIntegerConstant()) {
             ASSERT_require(1 == expr->nBits());
             if (expr->toUnsigned().get() == 0)
                 return SAT_NO;
+        } else {
+            allTrue = false;
         }
     }
+    if (allTrue)
+        return SAT_YES;
 
     return SAT_UNKNOWN;
 }

@@ -1,0 +1,106 @@
+#!/bin/sh
+
+# Turn on error checking so that any error forces a failure of the script
+set -e
+
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 srcdir" 1>&2
+  exit 1
+fi
+
+srcdir=$1
+
+DIFF="diff"
+DIFFOPTIONS="-U5"
+
+echo ./steensgaardTest1 8
+./steensgaardTest1 8 > out
+echo "Calling: ${DIFF} ${DIFFOPTIONS} out $srcdir/steensgaardTest1.out"
+${DIFF} ${DIFFOPTIONS} out $srcdir/steensgaardTest1.out 
+rm out
+
+echo ./PtrAnalTest $srcdir/testPtr1.C
+./PtrAnalTest $srcdir/testPtr1.C  > out
+echo "Calling: ${DIFF} ${DIFFOPTIONS} out $srcdir/PtrAnalTest.out1"
+${DIFF} ${DIFFOPTIONS} out $srcdir/PtrAnalTest.out1 
+rm out
+
+echo ./PtrAnalTest $srcdir/testPtr2.C
+./PtrAnalTest $srcdir/testPtr2.C  > out
+echo "Calling: ${DIFF} ${DIFFOPTIONS} out $srcdir/PtrAnalTest.out2"
+${DIFF} ${DIFFOPTIONS} out $srcdir/PtrAnalTest.out2 
+rm out
+
+echo ./steensgaardTest2 $srcdir/testPtr1.C
+./steensgaardTest2 $srcdir/testPtr1.C  > out
+echo "Calling: ${DIFF} ${DIFFOPTIONS} out $srcdir/steensgaardTest2.out1"
+${DIFF} ${DIFFOPTIONS} out $srcdir/steensgaardTest2.out1 
+rm out
+
+echo ./steensgaardTest2 $srcdir/testPtr2.C
+./steensgaardTest2 $srcdir/testPtr2.C  > out
+echo "Calling: ${DIFF} ${DIFFOPTIONS} out $srcdir/steensgaardTest2.out2"
+${DIFF} ${DIFFOPTIONS} out $srcdir/steensgaardTest2.out2
+rm out
+# DQ (2/9/2008): This test fails on my 64-bit Red Hat system using the g++ version 3.4.6 compiler
+#echo "This test fails on my 64-bit Red Hat system using the g++ version 3.4.6 compiler..."
+
+echo ./CFGTest -I$srcdir $srcdir/testfile1.c
+./CFGTest -I$srcdir $srcdir/testfile1.c > testfile1.c.outx
+echo "Calling: ${DIFF} ${DIFFOPTIONS} testfile1.c.outx $srcdir/testfile1.c.cfg"
+${DIFF} ${DIFFOPTIONS} $srcdir/testfile1.c.cfg testfile1.c.outx
+rm testfile1.c.outx
+
+echo ./DataFlowTest -I$srcdir $srcdir/testfile1.c
+./DataFlowTest -I$srcdir $srcdir/testfile1.c > testfile1.c.outx
+echo "Calling: ${DIFF} ${DIFFOPTIONS} testfile1.c.outx $srcdir/testfile1.c.du"
+${DIFF} ${DIFFOPTIONS} $srcdir/testfile1.c.du testfile1.c.outx
+rm testfile1.c.outx
+
+echo ./StmtRefTest -I$srcdir $srcdir/testfile1.c
+./StmtRefTest -I$srcdir $srcdir/testfile1.c > testfile1.c.outx
+echo "${DIFF} ${DIFFOPTIONS} testfile1.c.outx $srcdir/testfile1.c.ref"
+${DIFF} ${DIFFOPTIONS} $srcdir/testfile1.c.ref testfile1.c.outx
+rm testfile1.c.outx
+
+echo ./CFGTest -I$srcdir $srcdir/testfile2.c
+./CFGTest -I$srcdir $srcdir/testfile2.c > testfile2.c.outx
+echo "${DIFF} ${DIFFOPTIONS} testfile2.c.outx $srcdir/testfile2.c.cfg"
+${DIFF} ${DIFFOPTIONS} $srcdir/testfile2.c.cfg testfile2.c.outx
+rm testfile2.c.outx
+
+echo ./DataFlowTest -I$srcdir $srcdir/testfile2.c
+./DataFlowTest -I$srcdir $srcdir/testfile2.c > testfile2.c.outx
+echo "${DIFF} ${DIFFOPTIONS} testfile2.c.outx $srcdir/testfile2.c.du"
+${DIFF} ${DIFFOPTIONS} $srcdir/testfile2.c.du testfile2.c.outx
+rm testfile2.c.outx
+
+echo ./StmtRefTest -I$srcdir $srcdir/testfile2.c
+./StmtRefTest -I$srcdir $srcdir/testfile2.c > testfile2.c.outx
+echo "${DIFF} ${DIFFOPTIONS} testfile2.c.outx $srcdir/testfile2.c.ref"
+${DIFF} ${DIFFOPTIONS} $srcdir/testfile2.c.ref testfile2.c.outx
+rm testfile2.c.outx
+
+echo ./CFGTest -I$srcdir $srcdir/testfile3.c
+./CFGTest -I$srcdir $srcdir/testfile3.c > testfile3.c.outx
+echo "${DIFF} ${DIFFOPTIONS} testfile3.c.outx $srcdir/testfile3.c.cfg"
+${DIFF} ${DIFFOPTIONS} $srcdir/testfile3.c.cfg testfile3.c.outx
+rm testfile3.c.outx
+
+echo ./DataFlowTest -I$srcdir $srcdir/testfile3.c
+./DataFlowTest -I$srcdir $srcdir/testfile3.c > testfile3.c.outx
+echo "${DIFF} ${DIFFOPTIONS} testfile3.c.outx $srcdir/testfile3.c.du"
+${DIFF} ${DIFFOPTIONS} $srcdir/testfile3.c.du testfile3.c.outx
+rm testfile3.c.outx
+
+echo ./StmtRefTest -I$srcdir $srcdir/testfile3.c
+./StmtRefTest -I$srcdir $srcdir/testfile3.c > testfile3.c.outx
+echo "${DIFF} ${DIFFOPTIONS} testfile3.c.outx $srcdir/testfile3.c.ref"
+${DIFF} ${DIFFOPTIONS} $srcdir/testfile3.c.ref testfile3.c.outx
+rm testfile3.c.outx
+
+echo ./DataFlowTest -I$srcdir $srcdir/testfile4.c
+./DataFlowTest -I$srcdir $srcdir/testfile4.c > testfile4.c.outx
+echo "${DIFF} ${DIFFOPTIONS} testfile4.c.outx $srcdir/testfile4.c.du"
+${DIFF} ${DIFFOPTIONS} $srcdir/testfile4.c.du testfile4.c.outx
+rm testfile4.c.outx

@@ -66,6 +66,7 @@ class NoFunctionAliasAnalysis : public FunctionAliasInterface
 class AliasAnalysisInterface
 {
  public:
+  virtual void analyze(AstInterface& fa, const AstNodePtr& f) {}
   virtual bool
      may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2) = 0;
   virtual ~AliasAnalysisInterface() {}

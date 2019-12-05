@@ -62,36 +62,32 @@ public:
         };
 
     private:
-        Type type_;
+        Type tokenType_;
         std::string lexeme_;                            // lexeme
-        size_t width_;                                  // width of value in bits, as in "[N]"
-        size_t width2_;                                 // second width, as M in "[N->M]"
+        SymbolicExpr::Type exprType_;                   // type for expression
         Sawyer::Container::BitVector bits_;             // bits representing constant terms
         unsigned lineNumber_, columnNumber_;            // for start of token
 
     public:
         /** Constructs an end-of-input token with no position information. */
         Token()
-            : type_(NONE), width_(0), width2_(0), lineNumber_(0), columnNumber_(0) {}
+            : tokenType_(NONE), lineNumber_(0), columnNumber_(0) {}
 
         /** Constructs a specific token from a string. Do not use this to construct numeric tokens. */
-        Token(Type type, size_t width, const std::string &lexeme, unsigned lineNumber, unsigned columnNumber)
-            : type_(type), lexeme_(lexeme), width_(width), width2_(0),
+        Token(Type tokenType, const SymbolicExpr::Type &exprType, const std::string &lexeme,
+              unsigned lineNumber, unsigned columnNumber)
+            : tokenType_(tokenType), lexeme_(lexeme), exprType_(exprType),
               lineNumber_(lineNumber), columnNumber_(columnNumber) {
-            ASSERT_forbid(BITVECTOR==type);
-        }
-
-        /** Constructs a specific token from a string. Do not use this to construct numeric tokens. */
-        Token(Type type, size_t width, size_t width2, const std::string &lexeme, unsigned lineNumber, unsigned columnNumber)
-            : type_(type), lexeme_(lexeme), width_(width), width2_(width2),
-              lineNumber_(lineNumber), columnNumber_(columnNumber) {
-            ASSERT_forbid(BITVECTOR==type);
+            ASSERT_forbid(BITVECTOR == tokenType);
         }
 
         /** Construct a token for a numeric constant. */
-        Token(const Sawyer::Container::BitVector &bv, const std::string &lexeme, unsigned lineNumber, unsigned columnNumber)
-            : type_(BITVECTOR), lexeme_(lexeme), width_(bv.size()), width2_(0), bits_(bv),
-              lineNumber_(lineNumber), columnNumber_(columnNumber) {}
+        Token(const Sawyer::Container::BitVector &bv, const SymbolicExpr::Type &exprType, const std::string &lexeme,
+              unsigned lineNumber, unsigned columnNumber)
+            : tokenType_(BITVECTOR), lexeme_(lexeme), exprType_(exprType), bits_(bv),
+              lineNumber_(lineNumber), columnNumber_(columnNumber) {
+            ASSERT_require(exprType.nBits() == bv.size());
+        }
 
         /** Creates a syntax error from a token plus message. */
         SymbolicExprParser::SyntaxError syntaxError(const std::string &mesg, const std::string &name="input") const {
@@ -99,16 +95,13 @@ public:
         }
 
         /** Token type. */
-        Type type() const { return type_; }
+        Type tokenType() const { return tokenType_; }
 
         /** Lexeme from which token was parsed. */
         const std::string &lexeme() const { return lexeme_; }
 
-        /** Width of expression in bits. */
-        size_t width() const { return width_; }
-
-        /** Width of domain (address) in bits for memory states. */
-        size_t width2() const { return width2_; }
+        /** Type of expression. */
+        SymbolicExpr::Type exprType() const { return exprType_; }
 
         /** Bit vector for numeric constants. The bit vector will be empty for non-numeric tokens. */
         const Sawyer::Container::BitVector& bits() const { return bits_; }
@@ -187,12 +180,11 @@ public:
          *  a backslash will cause it to become part of the symbol. */
         std::string consumeTerm();
 
-        /** Parse and consume a width specification. A width specification is a decimal number in square brackets. */
-        size_t consumeWidth();
-
-        /** Parse and consume a memory width specification. A memory with specification is enclosed in square brackets and
-         *  consists of a domain (address) width, followed by an arrow ("->"), followed by a range (value) width. */
-        size_t consumeWidth(size_t &width2 /*out*/);
+        /** Parse and consume a type specification.
+         *
+         *  A type specification is a type name in square brackets. If the square brackets contain only an integer then the
+         *  type is an integer type with the specified width. */
+        SymbolicExpr::Type consumeType();
 
         /** Parse and consume the next token. Parses and consumes the next token and return it. Returns the special NONE token
          * at end-of-input. */

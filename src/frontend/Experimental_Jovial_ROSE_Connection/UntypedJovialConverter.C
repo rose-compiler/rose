@@ -90,6 +90,9 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
    bool has_type_name = ut_table_def->get_has_type_name();
    bool has_base_type = (has_type_name == false && has_body == false);
 
+// TODO - need to find whether e_jovial_table or e_jovial_block
+   SgClassDeclaration::class_types struct_kind = SgClassDeclaration::e_jovial_table;
+
    SgType* sg_base_type = NULL;
    SgUntypedType* ut_base_type  = ut_table_def->get_base_type();
    if (has_base_type)
@@ -120,7 +123,7 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
 #endif
 
    // This function builds a class declaration and definition with both the defining and nondefining declarations as required
-      SgJovialTableStatement * table_decl = SageBuilder::buildJovialTableStatement(type_name, scope);
+      SgJovialTableStatement * table_decl = SageBuilder::buildJovialTableStatement(type_name, struct_kind, scope);
       ROSE_ASSERT(table_decl);
       setSourcePositionFrom(table_decl, ut_struct);
 
