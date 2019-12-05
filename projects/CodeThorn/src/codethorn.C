@@ -1421,6 +1421,7 @@ int main( int argc, char * argv[] ) {
 
     if(args.getBool("unparse")) {
       sageProject->unparse(0,0);
+      return 0;
     }
 
     if(!args.count("quiet")) {

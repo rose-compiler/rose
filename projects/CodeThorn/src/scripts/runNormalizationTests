@@ -12,7 +12,7 @@ BENCH_PASS=0
 BENCH_FAIL=0
 
 function NormalizationTests {
-    testNumbers=`echo {01..43}`
+    testNumbers=`echo {01..44}`
     echo "Scheduled tests: $testNumbers"
     for testNumber in $testNumbers; do
         benchmarkprefix=$TESTDIR/NORM${testNumber};
