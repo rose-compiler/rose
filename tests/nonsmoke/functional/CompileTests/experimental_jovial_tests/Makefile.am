@@ -8,6 +8,8 @@ LDADD    = $(ROSE_LIBS)
 
 JOVIAL_TESTCODES = \
  tiny.jov                               \
+ fixed_cast_J.jov                       \
+ tables_and_pointers.jov                \
  1_2_3_main-program-module_a.jov        \
  1_2_3_main-program-module_b.jov        \
  1_2_3_program-body_b.jov               \
@@ -17,6 +19,7 @@ JOVIAL_TESTCODES = \
  2_1_2_compound_table_var.jov           \
  2_1_2_1_table_dimension_list_a.jov     \
  2_1_2_1_table_dimension_list_b.jov     \
+ 2_1_2_3_packing_spec.jov               \
  2_4_define.jov                         \
  4_2_loop_stmt_while_a.jov              \
  4_2_loop_stmt_b1.jov                   \
@@ -41,14 +44,18 @@ JOVIAL_TESTCODES = \
  rose-issue-2143.jov
 
 COMPOOL_TESTCODES = \
+ define_dollar.cpl                      \
+ item_and_status_type_J.cpl             \
+ status_type.cpl                        \
+ table_and_status_type_J.cpl            \
+ table_preset_J.cpl                     \
  2_2_compound_block_type.cpl            \
  2_2_compound_table_type.cpl            \
  2_2_simple_block_type.cpl              \
  2_2_simple_table_type.cpl              \
  2_5_def_ref_item.cpl                   \
  3_0_rent_and_rec.cpl                   \
- define_dollar.cpl                      \
- status_type.cpl                        \
+ 5_1_fixed_or_float.cpl                 \
  rose-issue-1518.cpl                    \
  rose-issue-1520.cpl                    \
  rose-issue-2143.cpl                    \

@@ -1,0 +1,57 @@
+#!/bin/bash
+set -e
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 srcdir" 1>&2
+  exit 1
+fi
+srcdir=$1
+
+DIFF="diff -U5"
+ROSE_OPTIONS="--edg:no_warnings -w"
+exe="../LoopProcessor"
+
+function run {
+echo $1
+$1
+echo "${DIFF} rose_$2.C $srcdir/rose_$2$3.C.save "
+${DIFF} rose_$2.C $srcdir/rose_$2$3.C.save 
+rm rose_$2.C
+}
+  
+test1="$exe $ROSE_OPTIONS -c -bk1 -fs0 -I$srcdir $srcdir/mm.C"
+run "$test1" "mm"
+
+test2="$exe $ROSE_OPTIONS -c -bk1 -fs0 -annot $srcdir/funcs.annot -I$srcdir $srcdir/lufac.C"
+run "$test2" lufac
+
+test3="$exe $ROSE_OPTIONS -c -bk1 -fs0  -splitloop -annot $srcdir/funcs.annot -I$srcdir $srcdir/lufac.C"
+run "$test3" "lufac" "_split"
+
+test4="$exe $ROSE_OPTIONS -c -fs2 -ic1 -opt 1 $srcdir/tridvpk.C"
+run "$test4" "tridvpk" 
+
+test5="$exe $ROSE_OPTIONS -c -bs 60 -fs01 $srcdir/rmatmult3.C" 
+run "$test5" "rmatmult3"
+
+test6="$exe $ROSE_OPTIONS -c -bk1 -unroll -nvar 16 $srcdir/dgemm_test.C"
+run "$test6" "dgemm_test"
+
+test7="$exe $ROSE_OPTIONS -c -fs2  -I$srcdir $srcdir/fusiontest1.C"
+run "$test7" "fusiontest1"
+
+test8="$exe $ROSE_OPTIONS -c -cp 0  -I$srcdir $srcdir/mm.C"
+run "$test8" "mm" "_cp0"
+
+test10="$exe $ROSE_OPTIONS -c -cp 2 -bk3 -I$srcdir $srcdir/mm.C"
+run "$test10" "mm" "_cp2_bk3"
+
+test12="$exe $ROSE_OPTIONS -c -fs0 -I$srcdir $srcdir/lufac.C"
+run "$test12" "lufac" "_12"
+
+test12="$exe $ROSE_OPTIONS -c -fs01 -cp 0 -I$srcdir $srcdir/dgemvT.C"
+run "$test12" "dgemvT"
+
+test9="$exe $ROSE_OPTIONS -c -cp 0  -annot $srcdir/funcs.annot -I$srcdir $srcdir/lufac.C"
+run "$test9" "lufac" "_cp0"
+#echo "this is broken now (because of annotation, I believe) and needs to be fixed"
+

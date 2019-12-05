@@ -1,0 +1,103 @@
+
+int min2(int a0,int a1)
+{
+  return a0 < a1?a0 : a1;
+}
+
+int min3(int a0,int a1,int a2)
+{
+  int res = a0;
+  if (a1 < res) {
+    res = a1;
+  }
+   else {
+  }
+  if (a2 < res) {
+    res = a2;
+  }
+   else {
+  }
+  return res;
+}
+
+double abs(double x)
+{
+  if (x < 0) 
+    return -x;
+   else 
+    return x;
+}
+#define n 50
+void printmatrix(double x[][50]);
+void initmatrix(double x[][50],double s);
+
+int main(int argc,char *argv[])
+{
+  int p[50];
+  int i;
+  int j;
+  int k;
+  double a[50][50];
+  double mu;
+  double t;
+  int _var_0;
+  initmatrix(a,5.0);
+  printmatrix(a);
+  for (k = 0; k <= 48; k += 1) {
+    p[k] = k;
+  }
+  for (_var_0 = 0; _var_0 <= 48; _var_0 += 16) {
+    j = _var_0;
+    mu = abs(a[j][j]);
+    for (i = 1 + j; i <= 49; i += 1) {
+      if (mu < abs(a[i][j])) {
+        mu = abs(a[i][j]);
+        p[j] = i;
+      }
+       else {
+      }
+    }
+    t = a[j][j];
+    a[j][j] = a[p[j]][j];
+    a[p[j]][j] = t;
+    for (i = 1 + j; i <= 49; i += 1) {
+      a[i][j] = a[i][j] / a[j][j];
+    }
+    for (j = 1 + _var_0; j <= min2(48,_var_0 + 15); j += 1) {
+      for (k = _var_0; k <= min3(48,_var_0 + 15,-1 + j); k += 1) {
+        t = a[k][j];
+        a[k][j] = a[p[k]][j];
+        a[p[k]][j] = t;
+        for (i = 1 + k; i <= 49; i += 1) {
+          a[i][j] = a[i][j] - a[i][k] * a[k][j];
+        }
+      }
+      mu = abs(a[j][j]);
+      for (i = 1 + j; i <= 49; i += 1) {
+        if (mu < abs(a[i][j])) {
+          mu = abs(a[i][j]);
+          p[j] = i;
+        }
+         else {
+        }
+      }
+      t = a[j][j];
+      a[j][j] = a[p[j]][j];
+      a[p[j]][j] = t;
+      for (i = 1 + j; i <= 49; i += 1) {
+        a[i][j] = a[i][j] / a[j][j];
+      }
+    }
+    for (j = min2(49,_var_0 + 16); j <= 49; j += 1) {
+      for (k = _var_0; k <= min3(48,_var_0 + 15,-1 + j); k += 1) {
+        t = a[k][j];
+        a[k][j] = a[p[k]][j];
+        a[p[k]][j] = t;
+        for (i = 1 + k; i <= 49; i += 1) {
+          a[i][j] = a[i][j] - a[i][k] * a[k][j];
+        }
+      }
+    }
+  }
+  printmatrix(a);
+}

@@ -1,0 +1,139 @@
+/* Restrict macros for various compilers */
+#ifdef __GNUC__
+#define RESTRICT __restrict
+#elif defined __KCC
+#define RESTRICT restrict
+#else
+#define RESTRICT
+#endif
+#define LOOP_IMPLEMENTATION 2
+#define VALIDITY_CHECK 0
+#define PC(ii,jj,kk) \
+ii + (jj)*jp + (kk)*kp
+#define COEFF_POINTER_INCREMENT(i) \
+dbl +=i; dbc +=i; dbr +=i; dcl +=i; dcc +=i; dcr +=i; dfl +=i; dfc +=i; dfr +=i;\
+cbl +=i; cbc +=i; cbr +=i; ccl +=i; ccc +=i; ccr +=i; cfl +=i; cfc +=i; cfr +=i;\
+ubl +=i; ubc +=i; ubr +=i; ucl +=i; ucc +=i; ucr +=i; ufl +=i; ufc +=i; ufr +=i;
+#define POINTER_INCREMENT(i) \
+dbl +=i; dbc +=i; dbr +=i; dcl +=i; dcc +=i; dcr +=i; dfl +=i; dfc +=i; dfr +=i;\
+cbl +=i; cbc +=i; cbr +=i; ccl +=i; ccc +=i; ccr +=i; cfl +=i; cfc +=i; cfr +=i;\
+ubl +=i; ubc +=i; ubr +=i; ucl +=i; ucc +=i; ucr +=i; ufl +=i; ufc +=i; ufr +=i;\
+xdbl +=i; xdbc +=i; xdbr +=i; xdcl +=i; xdcc +=i; xdcr +=i; xdfl +=i; xdfc +=i; xdfr +=i;\
+xcbl +=i; xcbc +=i; xcbr +=i; xccl +=i; xccc +=i; xccr +=i; xcfl +=i; xcfc +=i; xcfr +=i;\
+xubl +=i; xubc +=i; xubr +=i; xucl +=i; xucc +=i; xucr +=i; xufl +=i; xufc +=i; xufr +=i; \
+lhs +=i;
+#define POINTER_INCREMENT_ONE \
+dbl++; dbc++; dbr++; dcl++; dcc++; dcr++; dfl++; dfc++; dfr++; cbl++; cbc++; \
+cbr++; ccl++; ccc++; ccr++; cfl++; cfc++; cfr++; ubl++; ubc++; ubr++; ucl++; \
+ucc++; ucr++; ufl++; ufc++; ufr++; xdbl++; xdbc++; xdbr++; xdcl++; xdcc++; xdcr++; \
+xdfl++; xdfc++; xdfr++; xcbl++; xcbc++; xcbr++; xccl++; xccc++; xccr++; xcfl++; xcfc++; \
+xcfr++; xubl++; xubc++; xubr++; xucl++; xucc++; xucr++; xufl++; xufc++; xufr++; lhs++;
+extern void perfometer();
+
+void rmatmult3(int imin,int imax,int jmin,int jmax,int kmin,int kmax,int jp,int kp,double *dbl,double *dbc,double *dbr,double *dcl,double *dcc,double *dcr,double *dfl,double *dfc,double *dfr,double *cbl,double *cbc,double *cbr,double *ccl,double *ccc,double *ccr,double *cfl,double *cfc,double *cfr,double *ubl,double *ubc,double *ubr,double *ucl,double *ucc,double *ucr,double *ufl,double *ufc,double *ufr,double *x,double *b)
+{
+  int m;
+  char *me = "rmatmult3";
+  int i;
+  int ii;
+  int jj;
+  int kk;
+  double *lhs = b;
+  double *xdbl = x - kp - jp - 1;
+  double *xdbc = x - kp - jp;
+  double *xdbr = x - kp - jp + 1;
+  double *xdcl = x - kp - 1;
+  double *xdcc = x - kp;
+  double *xdcr = x - kp + 1;
+  double *xdfl = x - kp + jp - 1;
+  double *xdfc = x - kp + jp;
+  double *xdfr = x - kp + jp + 1;
+  double *xcbl = x - jp - 1;
+  double *xcbc = x - jp;
+  double *xcbr = x - jp + 1;
+  double *xccl = x - 1;
+  double *xccc = x;
+  double *xccr = x + 1;
+  double *xcfl = x + jp - 1;
+  double *xcfc = x + jp;
+  double *xcfr = x + jp + 1;
+  double *xubl = x + kp - jp - 1;
+  double *xubc = x + kp - jp;
+  double *xubr = x + kp - jp + 1;
+  double *xucl = x + kp - 1;
+  double *xucc = x + kp;
+  double *xucr = x + kp + 1;
+  double *xufl = x + kp + jp - 1;
+  double *xufc = x + kp + jp;
+  double *xufr = x + kp + jp + 1;
+  double myflops = 0.0;
+  static int firstPass = 1;
+  register double temp;
+  for (kk = kmin; kk <= -1 + kmax; kk += 1) {
+    for (jj = jmin; jj <= -1 + jmax; jj += 1) {
+      for (ii = imin; ii <= -1 + imax; ii += 1) {
+        b[ii + jj * jp + kk * kp] = dbl[ii + jj * jp + kk * kp] * x[ii - 1 + (jj - 1) * jp + (kk - 1) * kp] + dbc[ii + jj * jp + kk * kp] * x[ii + (jj - 1) * jp + (kk - 1) * kp];
+      }
+      for (ii = imin; ii <= -1 + imax; ii += 1) {
+        b[ii + jj * jp + kk * kp] = b[ii + jj * jp + kk * kp] + dbr[ii + jj * jp + kk * kp] * x[ii + 1 + (jj - 1) * jp + (kk - 1) * kp] + dcl[ii + jj * jp + kk * kp] * x[ii - 1 + jj * jp + (kk - 1) * kp] + dcc[ii + jj * jp + kk * kp] * x[ii + jj * jp + (kk - 1) * kp] + dcr[ii + jj * jp + kk * kp] * x[ii + 1 + jj * jp + (kk - 1) * kp] + dfl[ii + jj * jp + kk * kp] * x[ii - 1 + (jj + 1) * jp + (kk - 1) * kp];
+      }
+      for (ii = imin; ii <= -1 + imax; ii += 1) {
+        b[ii + jj * jp + kk * kp] = b[ii + jj * jp + kk * kp] + dfc[ii + jj * jp + kk * kp] * x[ii + (jj + 1) * jp + (kk - 1) * kp] + dfr[ii + jj * jp + kk * kp] * x[ii + 1 + (jj + 1) * jp + (kk - 1) * kp] + cbl[ii + jj * jp + kk * kp] * x[ii - 1 + (jj - 1) * jp + kk * kp] + cbc[ii + jj * jp + kk * kp] * x[ii + (jj - 1) * jp + kk * kp] + cbr[ii + jj * jp + kk * kp] * x[ii + 1 + (jj - 1) * jp + kk * kp];
+      }
+      for (ii = imin; ii <= -1 + imax; ii += 1) {
+        b[ii + jj * jp + kk * kp] = b[ii + jj * jp + kk * kp] + ccl[ii + jj * jp + kk * kp] * x[ii - 1 + jj * jp + kk * kp] + ccc[ii + jj * jp + kk * kp] * x[ii + jj * jp + kk * kp] + ccr[ii + jj * jp + kk * kp] * x[ii + 1 + jj * jp + kk * kp] + cfl[ii + jj * jp + kk * kp] * x[ii - 1 + (jj + 1) * jp + kk * kp] + cfc[ii + jj * jp + kk * kp] * x[ii + (jj + 1) * jp + kk * kp];
+      }
+      for (ii = imin; ii <= -1 + imax; ii += 1) {
+        b[ii + jj * jp + kk * kp] = b[ii + jj * jp + kk * kp] + cfr[ii + jj * jp + kk * kp] * x[ii + 1 + (jj + 1) * jp + kk * kp] + ubl[ii + jj * jp + kk * kp] * x[ii - 1 + (jj - 1) * jp + (kk + 1) * kp] + ubc[ii + jj * jp + kk * kp] * x[ii + (jj - 1) * jp + (kk + 1) * kp] + ubr[ii + jj * jp + kk * kp] * x[ii + 1 + (jj - 1) * jp + (kk + 1) * kp] + ucl[ii + jj * jp + kk * kp] * x[ii - 1 + jj * jp + (kk + 1) * kp];
+      }
+      for (ii = imin; ii <= -1 + imax; ii += 1) {
+        b[ii + jj * jp + kk * kp] = b[ii + jj * jp + kk * kp] + ucc[ii + jj * jp + kk * kp] * x[ii + jj * jp + (kk + 1) * kp] + ucr[ii + jj * jp + kk * kp] * x[ii + 1 + jj * jp + (kk + 1) * kp] + ufl[ii + jj * jp + kk * kp] * x[ii - 1 + (jj + 1) * jp + (kk + 1) * kp] + ufc[ii + jj * jp + kk * kp] * x[ii + (jj + 1) * jp + (kk + 1) * kp] + ufr[ii + jj * jp + kk * kp] * x[ii + 1 + (jj + 1) * jp + (kk + 1) * kp];
+      }
+    }
+  }
+#if VALIDITY_CHECK == 1
+#endif
+#elif LOOP_IMPLEMENTATION == 3
+#if VALIDITY_CHECK == 1
+#endif /* end of VALIDITY_CHECK */
+/* end of ii loop */
+/* end of jj loop */
+/* end of kk loop */
+#if VALIDITY_CHECK == 1
+#endif  
+#elif LOOP_IMPLEMENTATION == 4
+#if VALIDITY_CHECK == 1
+#endif /* end of VALIDITY_CHECK */
+/* end of ii loop */
+/* end of jj loop */
+/* end of kk loop */
+#if VALIDITY_CHECK == 1
+#endif
+#elif LOOP_IMPLEMENTATION == 5
+#if VALIDITY_CHECK == 1
+#endif /* end of VALIDITY_CHECK */        
+/* shift xdbl back to where it started from +1 */
+/* end of ii loop */
+/* end of jj loop */
+/* end of kk loop */
+#if VALIDITY_CHECK == 1
+#endif  
+#elif LOOP_IMPLEMENTATION == 6
+#if VALIDITY_CHECK == 1
+#endif /* end of VALIDITY_CHECK */
+/* end of ii loop */
+/* end of jj loop */
+/* end of kk loop */
+#if VALIDITY_CHECK == 1
+#endif
+#elif LOOP_IMPLEMENTATION == 7
+#if VALIDITY_CHECK == 1
+#endif /* end of VALIDITY_CHECK */
+/* end of ii loop */
+/* end of jj loop */
+/* end of kk loop */
+#if VALIDITY_CHECK == 1
+#endif
+#endif
+  myflops += 53.0 * (imax - imin) * (jmax - jmin) * (kmax - kmin);
+}

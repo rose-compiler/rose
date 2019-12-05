@@ -105,7 +105,7 @@ endif
 install-core: core rosePublicConfig.h
 	$(MAKE) install-data-local
 	$(MAKE) install -C $(top_builddir)/src
-	cp rosePublicConfig.h $(pkgincludedir)
+	cp rosePublicConfig.h $(DESTDIR)/$(pkgincludedir)
 
 install-tools: install-core tools
 	$(MAKE) install -C $(top_builddir)/tools
@@ -192,7 +192,7 @@ install-compass: install-core
 install-rose-library: install-data-local install-testprojDATA
 	$(MAKE) -C $(top_builddir)/src install
 	$(MAKE) -C $(top_builddir)/LicenseInformation install
-	cp rosePublicConfig.h $(pkgincludedir)
+	cp rosePublicConfig.h $(DESTDIR)/$(pkgincludedir)
 	$(MAKE) -C $(top_builddir)/python install
 
 # Build a binary release of the ROSE library.  This assumes that you're running in the RMC-2 environment because it uses

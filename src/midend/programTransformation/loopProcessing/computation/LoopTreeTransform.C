@@ -408,9 +408,7 @@ class OptimizeLoopTreeImpl : public LoopTreeObserver
       }
   void UpdateSwapNode( const SwapNodeInfo &info)
      {
-#ifndef NDEBUG
        const LoopTreeNode *node = info.GetObserveNode();
-#endif
        LoopTreeNode *that = info.GetOtherNode();
        assert (cur == node); 
        if (info.GetDirection() < 0) {
