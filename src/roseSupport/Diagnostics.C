@@ -31,6 +31,7 @@ namespace BinaryAnalysis {
     namespace StackDelta { void initDiagnostics(); }
     namespace Strings { void initDiagnostics(); }
     namespace Unparser { void initDiagnostics(); }
+    namespace Variables { void initDiagnostics(); }
     void SerialIo_initDiagnostics();
 } // namespace
 } // namespace
@@ -140,6 +141,7 @@ void initialize() {
         BinaryAnalysis::TaintedFlow::initDiagnostics();
         BinaryAnalysis::BinaryToSource::initDiagnostics();
         BinaryAnalysis::Unparser::initDiagnostics();
+        BinaryAnalysis::Variables::initDiagnostics();
         SgAsmExecutableFileFormat::initDiagnostics();
 #endif
         EditDistance::initDiagnostics();

@@ -740,7 +740,7 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
     sg.insert(Switch("smt-solver")
                .argument("name", anyParser(settings.solverName))
                .doc("When analyzing paths for model checking, use this SMT solver.  This switch overrides the general, "
-                    "global SMT solver. Since an SMT solver is required for model checking, in the absense of any specified "
+                    "global SMT solver. Since an SMT solver is required for model checking, in the absence of any specified "
                     "solver the \"best\" solver is used.  The default solver is \"" + settings.solverName + "\"."));
 
     CommandLine::insertBooleanSwitch(sg, "null-derefs", settings.nullDeref.check,
