@@ -225,7 +225,7 @@ public:
  // ROSE_ASSERT(insert_point->get_scope() == scope);
     ROSE_ASSERT(find(scope->getDeclarationList().begin(),scope->getDeclarationList().end(),insert_point) != scope->getDeclarationList().end());
 
-#if 1
+#if 0
     printf ("GlobalProtoInserter::insertManually(): Inserting proto = %p = %s into scope = %p = %s \n",proto,proto->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
 
@@ -847,11 +847,17 @@ insertFriendDecls (SgFunctionDeclaration* func,
       deferedFriendTransformation.targetFriends = friends;
 #endif
 
+   // DQ (12/5/2019): This value can be greater than one, but it is not clear what the reproducer is that will cause this.
    // DQ (8/16/2019): After discussion with Liao, assert that this is zero or one, since 
    // we can't see how one outlined function could cause it to be a friend of two classes. 
    // At the very least an example of this is not clear, and we want this assertion to 
    // identify where this can happen.
-      ROSE_ASSERT(deferedFriendTransformation.targetClasses.size() < 2);
+   // ROSE_ASSERT(deferedFriendTransformation.targetClasses.size() < 2);
+      if (deferedFriendTransformation.targetClasses.size() >= 2)
+         {
+           printf ("NOTE: In insertFriendDecls(): deferedFriendTransformation.targetClasses.size() = %zu \n",deferedFriendTransformation.targetClasses.size());
+         }
+      ROSE_ASSERT(deferedFriendTransformation.targetClasses.size() <= 2);
    // ROSE_ASSERT(deferedFriendTransformation.targetFriends.size() < 2);
       ROSE_ASSERT(deferedFriendTransformation.targetFriends.size() == 0);
     }
@@ -1130,7 +1136,7 @@ Outliner::insert (SgFunctionDeclaration* func,
      // declaration), which specifies the linkage property of 'func'.
      // insertGlobalPrototype (func, protos, src_global, target_func);
 
-#if 1
+#if 0
      printf ("Calling insertGlobalPrototype(): func = %p name = %s src_global = %p \n",func,func->get_name().str(),src_global);
 #endif
 
@@ -1147,7 +1153,7 @@ Outliner::insert (SgFunctionDeclaration* func,
         }
 #endif
 
-#if 1
+#if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif
