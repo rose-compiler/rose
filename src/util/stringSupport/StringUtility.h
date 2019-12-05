@@ -479,39 +479,39 @@ ROSE_UTIL_API std::string appendAsmComment(const std::string &s, const std::stri
  *  received 2 values
  * @endcode
  *
- * This function uses a handful of grade-school rules for converting the supplied plural word to a singular word when
- * necessary.  If these are not enough, then the singular form can be supplied as the third argument.
+ * This function uses a handful of grade-school rules and common exceptions for converting the supplied plural word to a
+ * singular word when necessary.  If these are not enough, then the singular form can be supplied as the third argument.
  *
  * @code
  *  std::cout <<"graph contains " <<plural(nverts, "vertices", "vertex") <<"\n";
  * @endcode
  */
 template<typename T>
-std::string plural(T n, const std::string &plural_word, const std::string &singular_word="") {
-    assert(!plural_word.empty());
+std::string plural(T n, const std::string &plural_phrase, const std::string &singular_phrase="") {
+    assert(!plural_phrase.empty());
     std::string retval = numberToString(n) + " ";
     if (1==n) {
-        if (!singular_word.empty()) {
-            retval += singular_word;
-        } else if (boost::ends_with(plural_word, "vertices")) {
-            retval += boost::replace_tail_copy(plural_word, 8, "vertex");
-        } else if (boost::ends_with(plural_word, "indices")) {
-            retval += boost::replace_tail_copy(plural_word, 7, "index");
-        } else if (boost::ends_with(plural_word, "ies") && plural_word.size() > 3) {
+        if (!singular_phrase.empty()) {
+            retval += singular_phrase;
+        } else if (boost::ends_with(plural_phrase, "vertices")) {
+            retval += boost::replace_tail_copy(plural_phrase, 8, "vertex");
+        } else if (boost::ends_with(plural_phrase, "indices")) {
+            retval += boost::replace_tail_copy(plural_phrase, 7, "index");
+        } else if (boost::ends_with(plural_phrase, "ies") && plural_phrase.size() > 3) {
             // string ends with "ies", as in "parties", so emit "party" instead
-            retval += boost::replace_tail_copy(plural_word, 3, "y");
-        } else if (boost::ends_with(plural_word, "indexes")) {
+            retval += boost::replace_tail_copy(plural_phrase, 3, "y");
+        } else if (boost::ends_with(plural_phrase, "sses") || boost::ends_with(plural_phrase, "indexes")) {
             // Sometimes we need to drop an "es" rather than just the "s"
-            retval += boost::erase_tail_copy(plural_word, 2);
-        } else if (boost::ends_with(plural_word, "s") && plural_word.size() > 1) {
+            retval += boost::erase_tail_copy(plural_phrase, 2);
+        } else if (boost::ends_with(plural_phrase, "s") && plural_phrase.size() > 1) {
             // strings ends with "s", as in "runners", so drop the final "s" to get "runner"
-            retval += boost::erase_tail_copy(plural_word, 1);
+            retval += boost::erase_tail_copy(plural_phrase, 1);
         } else {
             // I give up.  Use the plural and risk being grammatically incorrect.
-            retval += plural_word;
+            retval += plural_phrase;
         }
     } else {
-        retval += plural_word;
+        retval += plural_phrase;
     }
     return retval;
 }
