@@ -7,14 +7,14 @@ extern bool DebugArrayAnnot();
 void ArrayInterface::
 initialize( AstInterface& fa, const AstNodePtr& h)
 {
-   aliasCollect(fa, h);
+   aliasCollect.analyze(fa, h);
    valueCollect.build( fa, h, *this, ArrayAnnotation::get_inst());
 }
 
 void ArrayInterface::
-AliasCollect( AstInterface& fa, const AstNodePtr& h)
+analyze( AstInterface& fa, const AstNodePtr& h)
 {
-    aliasCollect(fa, h);
+    aliasCollect.analyze(fa, h);
 }
 
 void ArrayInterface::observe( AstInterface& fa) 
