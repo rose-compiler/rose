@@ -1,4 +1,5 @@
 include_rules
+ifeq (@(ENABLE_TESTS),yes)
 
 ###############################################################################################################################
 # AstAttributeMechanism
@@ -51,3 +52,5 @@ run $(test) rangeMapTests --answer=rangeMapTests.ans
 
 run $(tool_compile_linkexe) testRangeMap.C
 run $(test) testRangeMap
+
+endif
