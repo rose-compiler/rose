@@ -35,7 +35,7 @@ fi
 dnl +--------------------------------------------------------------------------+
 dnl | ROSE versioning
 dnl +--------------------------------------------------------------------------+
-ROSE_CONFIGURE_SECTION([Configuring ${T_BM}ROSE${T_NM}, version ${T_BM}0.9.6a ${T_NM}])
+ROSE_CONFIGURE_SECTION([Configuring ${T_BM}ROSE${T_NM}])
 
 dnl +--------------------------------------------------------------------------+
 dnl | Autotools setup
