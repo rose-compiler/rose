@@ -15,32 +15,60 @@ namespace Concolic {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Describes where a symbolic variable came from. */
-struct VariableProvenance {
-    /** From whence a variable came. */
-    enum Whence {
-        INVALID,                                        /**< Provenance record is invalid (default constructed). */
-        REGISTER,                                       /**< Variable came from reading a register. */
-        MEMORY                                          /**< Variable came from reading a memory location. */
+class InputVariables {
+public:
+    struct Variable {
+        /** From whence a variable came. */
+        enum Whence {
+            INVALID,                                    /**< Provenance record is invalid (default constructed). */
+            PROGRAM_ARGUMENT_COUNT,                     /**< Number of program arguments. */
+            PROGRAM_ARGUMENT,                           /**< Variable is (part of) a program argument. */
+            ENVIRONMENT,                                /**< Variable is (part of) a program environment. */
+        };
+
+        Whence whence;                                  /**< Where did symbolic variable come from? */
+        size_t index1, index2;                          /**< Index for one- or two-dimensional arrays. */
+
+        Variable()
+            : whence(INVALID), index1(INVALID_INDEX), index2(INVALID_INDEX) {}
+        
+        void print(std::ostream&) const;                /**< Print the variable name. */
+
+        friend std::ostream& operator<<(std::ostream &out, const Variable &x) {
+            x.print(out);
+            return out;
+        }
     };
-    Whence whence;                                      /**< Where did symbolic variable come from? */
-    RegisterDescriptor reg;                             /**< The register where the variable was defined. */
-    InstructionSemantics2::BaseSemantics::SValuePtr addr; /**< Memory address where the variable was defined. */
 
-    /** Default constructor. */
-    VariableProvenance()
-        : whence(INVALID) {}
+private:
+    typedef Sawyer::Container::Map<uint64_t, Variable> Variables; // map symbolic variable ID to input Variable
+    Variables variables_;
 
-    /** Construct a register provenance record. */
-    explicit VariableProvenance(RegisterDescriptor reg)
-        : whence(REGISTER), reg(reg) {}
+public:
+    /** Insert a record describing the number of program arguments. */
+    void insertProgramArgumentCount(const SymbolicExpr::Ptr&);
+    
+    /** Insert a record for a program argument.
+     *
+     *  The @p i and @p j are the indexes for the <code>char *argv[]</code> argument of a C or C++ program's "main" function. */
+    void insertProgramArgument(size_t i, size_t j, const SymbolicExpr::Ptr&);
 
-    /** Construct a memory provenance record. */
-    explicit VariableProvenance(const InstructionSemantics2::BaseSemantics::SValuePtr &addr)
-        : whence(MEMORY), addr(addr) {}
+    /** Insert a record for an environment variable.
+     *
+     *  The @p i and @p j are the indexes for the <code>char *envp[]</code> argument of a C or C++ program's "main" function. */
+    void insertEnvironmentVariable(size_t i, size_t j, const SymbolicExpr::Ptr&);
+
+    /** Find a variable record when given a symbolic variable name. */
+    Variable get(const std::string &symbolicVarName) const;
+
+    /** Print all defined variables. */
+    void print(std::ostream&, const std::string &prefix = "") const;
+
+    friend std::ostream& operator<<(std::ostream &out, const InputVariables &x) {
+        x.print(out);
+        return out;
+    }
 };
-
-/** Mapping of symbolic variables to their provenance information. */
-typedef Sawyer::Container::Map<SymbolicExpr::LeafPtr, VariableProvenance> Variables;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Concolic emulation semantics.
@@ -49,6 +77,7 @@ typedef Sawyer::Container::Map<SymbolicExpr::LeafPtr, VariableProvenance> Variab
 /** Semantics for concolic execution. */
 namespace Emulation {
 
+typedef InstructionSemantics2::SymbolicSemantics::Formatter SValueFormatter; /**< How to format expressions when printing. */
 typedef InstructionSemantics2::SymbolicSemantics::SValuePtr SValuePtr; /**< Pointer to semantic values. */
 typedef InstructionSemantics2::SymbolicSemantics::SValue SValue; /**< Type of semantic values. */
 typedef InstructionSemantics2::SymbolicSemantics::RegisterStatePtr RegisterStatePtr; /**< Pointer to semantic registers. */
@@ -68,34 +97,42 @@ public:
     /** Special "path" Boolean register. */
     const RegisterDescriptor REG_PATH;
 
+    /** Settings for the emulation. */
+    struct Settings {
+        bool markingArgvAsInput;                        // whether to mark the characters of the argv strings as inputs
+        bool markingEnvpAsInput;                        // whether to mark the characters of the envp strings as inputs
+
+        Settings()
+            : markingArgvAsInput(true),                 // normally considered as input
+              markingEnvpAsInput(false)                 // not input for now since the DB doesn't store them
+            {}
+    };
+    
 private:
+    Settings settings_;                                 // emulation settings
     const Partitioner2::Partitioner &partitioner_;      // ROSE disassembly info about the specimen
     Debugger::Ptr process_;                             // subordinate process
-    Variables variables_;                               // where did symbolic variables come from?
+    InputVariables &inputVariables_;                    // where did symbolic variables come from?
 
 protected:
     /** Allocating constructor. */
-    RiscOperators(const Partitioner2::Partitioner &partitioner, const Debugger::Ptr &process,
-                  const InstructionSemantics2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver)
+    RiscOperators(const Settings &settings, const Partitioner2::Partitioner &partitioner, const Debugger::Ptr &process,
+                  InputVariables &inputVariables, const InstructionSemantics2::BaseSemantics::StatePtr &state,
+                  const SmtSolverPtr &solver)
         : Super(state, solver), REG_PATH(*state->registerState()->get_register_dictionary()->lookup("path")),
-          partitioner_(partitioner), process_(process) {
+          settings_(settings), partitioner_(partitioner), process_(process), inputVariables_(inputVariables) {
         name("Concolic-symbolic");
         (void) SValue::promote(state->protoval());
     }
 
 public:
     /** Allocating constructor. */
-    static RiscOperatorsPtr instance(const Partitioner2::Partitioner&, const DebuggerPtr&process,
-                                     const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+    static RiscOperatorsPtr instance(const Settings &settings, const Partitioner2::Partitioner&, const DebuggerPtr&process,
+                                     InputVariables&, const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
                                      const SmtSolverPtr &solver = SmtSolverPtr());
 
     /** Dynamic pointer downcast. */
     static RiscOperatorsPtr promote(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
-
-    /** Symbolic variables. */
-    const Variables& variables() const {
-        return variables_;
-    }
 
     // Overrides documented in base class
     virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
@@ -110,6 +147,13 @@ public:
     }
 
 public:
+    /** Property: Settings.
+     *
+     *  The settings are read-only, set when this object was created. */
+    const Settings& settings() const {
+        return settings_;
+    }
+    
     /** Property: Partitioner. */
     const Partitioner2::Partitioner& partitioner() const {
         return partitioner_;
@@ -128,6 +172,11 @@ public:
 
     /** Register definitions. */
     const RegisterDictionary* registerDictionary() const;
+
+    /** Print input variables.
+     *
+     *  Shows the mapping from input variables to their symbolic values. */
+    void printInputVariables(std::ostream&) const;
 
 public:
     virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
@@ -157,7 +206,7 @@ class Dispatcher: public InstructionSemantics2::DispatcherX86 {
 protected:
     /** Constructor. */
     explicit Dispatcher(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops)
-        : Super(ops, RiscOperators::promote(ops)->wordSizeBits(), RiscOperators::promote(ops)->registerDictionary()) {}
+        : Super(ops, unwrapEmulationOperators(ops)->wordSizeBits(), unwrapEmulationOperators(ops)->registerDictionary()) {}
 
 public:
     /** Allocating constructor. */
@@ -174,6 +223,15 @@ public:
      *  Once the subordinate process terminates no more instructions can be processed and no state information
      *  is available. */
     bool isTerminated() const;
+
+    /** Return the emulation RISC operators.
+     *
+     *  Returns the @ref Emulation::RiscOperators object even if this dispatcher's immediate RISC operators object is a
+     *  TraceSemantics::RiscOperators being used for debugging purposes. */
+    RiscOperatorsPtr emulationOperators() const;
+
+    /** Unrwap the RISC operators if tracing is enabled. */
+    static RiscOperatorsPtr unwrapEmulationOperators(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
 
 public:
     // overrides
@@ -200,10 +258,12 @@ public:
         Partitioner2::LoaderSettings loader;
         Partitioner2::DisassemblerSettings disassembler;
         Partitioner2::PartitionerSettings partitioner;
+        Emulation::RiscOperators::Settings emulationSettings;
     };
 
 private:
     Settings settings_;
+    InputVariables inputVariables_;
 
 protected:
     ConcolicExecutor() {}
@@ -238,12 +298,6 @@ public:
      *  Executes the test case to produce new test cases. */
     std::vector<TestCase::Ptr> execute(const DatabasePtr&, const TestCase::Ptr&);
 
-    /** Print information about symbolic variables.
-     *
-     *  This is mostly for debugging. It prints each symbolic variable and some information about where it came from in
-     *  the specimen. */
-    void printVariables(std::ostream&, const Emulation::StatePtr&) const;
-
 private:
     // Disassemble the specimen and cache the result in the database. If the specimen has previously been disassembled
     // then reconstitute the analysis results from the database.
@@ -253,7 +307,15 @@ private:
     Debugger::Ptr makeProcess(const DatabasePtr&, const TestCase::Ptr&, Sawyer::FileSystem::TemporaryDirectory&);
 
     // Run the execution
-    void run(const Emulation::DispatcherPtr&);
+    void run(const DatabasePtr&, const TestCase::Ptr&, const Emulation::DispatcherPtr&);
+
+    // Handle conditional branches
+    void handleBranch(const DatabasePtr&, const TestCase::Ptr&, const Emulation::DispatcherPtr&, SgAsmInstruction*,
+                      const SmtSolverPtr&);
+
+    // Generae a new test case. This must be called only after the SMT solver's assertions have been checked and found
+    // to be satisfiable.
+    void generateTestCase(const DatabasePtr&, const TestCase::Ptr&, const SmtSolverPtr&);
 
     // TODO: Lots of properties to control the finer aspects of executing a test case!
 };

@@ -282,6 +282,9 @@ public:
     /** @} */
 
     /** Command line arguments.
+     *
+     *  The arguments exclude <code>argv[0]</code> and <code>argv[argc]</code> and are just the elements in between.
+     *
      * @{ */
     std::vector<std::string> args() const;
     void args(std::vector<std::string> arguments);
