@@ -1537,7 +1537,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     }
 
     Stream debug(mlog[DEBUG]);
-    Stream info(mlog[INFO]);
+    Stream trace(mlog[TRACE]);
     std::string indent = debug ? "    " : "";
     if (paths_.isEmpty())
         return;
@@ -1773,10 +1773,12 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 P2::CfgConstEdgeSet callEdges = P2::findCallEdges(cfgBackVertex);
                 BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, callEdges.values()) {
                     if (shouldSummarizeCall(path.backVertex(), partitioner().cfg(), cfgCallEdge->target())) {
-                        info <<indent <<"summarizing function for edge " <<partitioner().edgeName(cfgCallEdge) <<"\n";
+                        SAWYER_MESG_OR(trace, debug) <<indent <<"summarizing function for edge "
+                                                     <<partitioner().edgeName(cfgCallEdge) <<"\n";
                         insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);
                     } else if (shouldInline(path, cfgCallEdge->target())) {
-                        info <<indent <<"inlining function call paths at vertex " <<partitioner().vertexName(backVertex) <<"\n";
+                        SAWYER_MESG_OR(trace, debug) <<indent <<"inlining function call paths at vertex "
+                                                     <<partitioner().vertexName(backVertex) <<"\n";
                         if (cfgCallEdge->target()->value().type() == P2::V_INDETERMINATE &&
                             cfgBackVertex->value().type() == P2::V_BASIC_BLOCK) {
                             // If the CFG has a vertex to an indeterminate function (e.g., from "call eax"), then instead of
@@ -1806,7 +1808,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                                                       cfgBackVertex, cfgEndAvoidVertices_, cfgAvoidEdges_);
                         }
                     } else {
-                        info <<indent <<"summarizing function for edge " <<partitioner().edgeName(cfgCallEdge) <<"\n";
+                        SAWYER_MESG_OR(trace, debug) <<indent <<"summarizing function for edge "
+                                                     <<partitioner().edgeName(cfgCallEdge) <<"\n";
                         insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);
                     }
                 }
@@ -1828,8 +1831,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 backVertex = path.backVertex();
                 cfgBackVertex = pathToCfg(backVertex);
 
-                info <<indent <<"paths graph has " <<StringUtility::plural(paths_.nVertices(), "vertices", "vertex")
-                     <<" and " <<StringUtility::plural(paths_.nEdges(), "edges") <<"\n";
+                SAWYER_MESG_OR(trace, debug) <<indent <<"paths graph has " <<StringUtility::plural(paths_.nVertices(), "vertices")
+                                             <<" and " <<StringUtility::plural(paths_.nEdges(), "edges") <<"\n";
                 SAWYER_MESG(debug) <<"    paths graph saved in " <<emitPathGraph(callId, ++graphId) <<"\n";
             }
 
