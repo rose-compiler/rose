@@ -49,6 +49,7 @@ COMPOOL_TESTCODES = \
  item_and_status_type_J.cpl             \
  status_type.cpl                        \
  simple_def_ambiguity_J.cpl             \
+ size_function_J.cpl                    \
  spec_table_decl_ambiguity_J.cpl        \
  spec_table_options_null_J.cpl          \
  table_and_status_type_J.cpl            \

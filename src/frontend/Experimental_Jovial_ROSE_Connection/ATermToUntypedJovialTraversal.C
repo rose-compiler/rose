@@ -6776,16 +6776,22 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntrinsicFunctionCall(ATerm term,
    }
    else if (traverse_ByteFunction(term, expr)) {
       // MATCHED ByteFunction
-   } else return ATfalse;
+   }
 
    //   BitFunction                 -> IntrinsicFunctionCall
    //   ShiftFunction               -> IntrinsicFunctionCall
    //   AbsFunction                 -> IntrinsicFunctionCall
    //   SignFunction                -> IntrinsicFunctionCall
-   //   SizeFunction                -> IntrinsicFunctionCall
+
+   else if (traverse_SizeFunction(term, expr)) {
+      // MATCHED SizeFunction
+   }
+
    //   BoundsFunction              -> IntrinsicFunctionCall
    //   NwdsenFunction              -> IntrinsicFunctionCall
    //   NentFunction                -> IntrinsicFunctionCall
+
+   else return ATfalse;
 
    return ATtrue;
 }
@@ -6873,6 +6879,41 @@ ATbool ATermToUntypedJovialTraversal::traverse_ByteFunction(ATerm term, SgUntype
          // MATCHED NumericFormula
       } else return ATfalse;
    } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 6.3.7 SIZE FUNCTIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_SizeFunction(ATerm term, SgUntypedExpression* & expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_SizeFunction: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_formula;
+   SgUntypedExpression* formula;
+
+   if (ATmatch(term, "SizeFunction(BITSIZE(),<term>)", &t_formula)) {
+      cerr << "WARNING UNIMPLEMENTED: SizeFunction - BITSIZE \n";
+      if (traverse_Formula(t_formula, formula)) {
+         // MATCHED Formula
+      } else return ATfalse;
+   }
+   else if (ATmatch(term, "SizeFunction(BYTESIZE(),<term>)", &t_formula)) {
+      cerr << "WARNING UNIMPLEMENTED: SizeFunction - BYTESIZE \n";
+      if (traverse_Formula(t_formula, formula)) {
+         // MATCHED Formula
+      } else return ATfalse;
+   }
+   else if (ATmatch(term, "SizeFunction(WORDSIZE(),<term>)", &t_formula)) {
+      cerr << "WARNING UNIMPLEMENTED: SizeFunction - WORDSIZE \n";
+      if (traverse_Formula(t_formula, formula)) {
+         // MATCHED Formula
+      } else return ATfalse;
+   }
+   else return ATfalse;
 
    return ATtrue;
 }
