@@ -14166,6 +14166,11 @@ Sg_File_Info::get_physical_file_id(int input_file_id) const
           return local_file_id;
         }
 
+#if 0
+     printf ("In Sg_File_Info::get_physical_file_id(int): physicalFileOK = %s \n",physicalFileOK ? "true" : "false");
+     printf (" --- local_file_id = %d \n",local_file_id);
+#endif
+
   // DQ (8/20/2018): Fix this to not report generic "transformed" for any statement marked as a transformation when querying the physical file id.
   // This is (I think) required support for the unparsing of header files.
      if (physicalFileOK == false && local_file_id < 0)
@@ -14176,7 +14181,7 @@ Sg_File_Info::get_physical_file_id(int input_file_id) const
         {
        // DQ (8/22/2018): Use the file_id for compiler generated nodes, because they don't have a valid source position.
 #if 0
-          printf ("In Sg_File_Info::get_physical_file_id(): isCompilerGenerated() = %s file_id = %d p_physical_file_id = %d \n",isCompilerGenerated() ? "true" : "false",file_id,p_physical_file_id);
+          printf ("In Sg_File_Info::get_physical_file_id(int): isCompilerGenerated() = %s local_file_id = %d p_physical_file_id = %d \n",isCompilerGenerated() ? "true" : "false",local_file_id,p_physical_file_id);
 #endif
           if (isCompilerGenerated() == true)
              {
@@ -14195,19 +14200,19 @@ Sg_File_Info::get_physical_file_id(int input_file_id) const
                     SgFileIdList::const_iterator pos = find(p_fileIDsToUnparse.begin(),p_fileIDsToUnparse.end(),input_file_id);
                     if (pos != p_fileIDsToUnparse.end())
                        {
-#if 0
+#if 1
                          printf ("Sg_File_Info::get_physical_file_id(int): input file is sharing this IR node: input_file_id = %d physical_file_id = %d \n",input_file_id,this->get_physical_file_id());
 #endif
                          ptrdiff_t index = pos - p_fileIDsToUnparse.begin();
                          ROSE_ASSERT(index >= 0);
                          ROSE_ASSERT(index < (ptrdiff_t)p_fileIDsToUnparse.size());
                          ROSE_ASSERT(p_fileLineNumbersToUnparse.size() == p_fileIDsToUnparse.size());
-#if 0
+#if 1
                          printf (" --- index = %d shared input file id = %d \n",(int)index,p_fileIDsToUnparse[index]);
 #endif
                          ROSE_ASSERT(input_file_id == p_fileIDsToUnparse[index]);
                          return_physical_file_id = p_fileIDsToUnparse[index];
-#if 0
+#if 1
                          printf (" --- returning return_physical_file_id = %d \n",return_physical_file_id);
 #endif
                        }
@@ -14221,6 +14226,10 @@ Sg_File_Info::get_physical_file_id(int input_file_id) const
                   }
              }
         }
+
+#if 0
+     printf ("Leaving Sg_File_Info::get_physical_file_id(int): p_physical_file_id = %d \n",p_physical_file_id);
+#endif
 
      return return_physical_file_id;
    }
@@ -16081,6 +16090,17 @@ X aggressive
      p_unparserErrorCode = 0;
      p_midendErrorCode= 0; // Liao, 4/26/2017 add midend error code
      p_backendCompilerErrorCode = 0;
+
+  // DQ (9/19/2019): Added these missing variable initializations.
+     p_edg_il_to_graphviz                      = false;
+     p_no_optimize_flag_for_frontend           = false;
+     p_unparse_edg_normalized_method_ROSE_1392 = false;
+
+  // DQ (9/19/2019): Support optimizations of header file unparsing (specifically restricting 
+  // the number of header files for which we collect comments and CPP directives).
+     p_header_file_unparsing_optimization             = false;
+     p_header_file_unparsing_optimization_source_file = false;
+     p_header_file_unparsing_optimization_header_file = false;
    }
 
 #if 0
@@ -18123,6 +18143,12 @@ SgProject::initialization()
   // DQ (9/15/2018): Added support for a report on the internal use of header file unparsing.
   // This is to support the header file unparsing when used with and without the token based unparsing.
      p_reportOnHeaderFileUnparsing = false;
+
+  // DQ (11/16/2019): this was not added previously.
+     p_usingApplicationRootDirectory = false;
+
+  // DQ (11/16/2019): this is a new data member just added.
+     p_usingDeferredTransformations = false;
    }
 
 

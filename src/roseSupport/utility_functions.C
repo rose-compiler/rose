@@ -777,6 +777,10 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
      int finalCombinedExitStatus = 0;
 
+#if 0
+     printf ("Inside of backend(SgProject*) (from utility_functions.C) \n");
+#endif
+
      if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
         {
           printf ("Inside of backend(SgProject*) \n");
@@ -832,7 +836,15 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
                printf ("Calling project->unparse() \n");
 
+#if 0
+          printf ("Calling project->unparse() \n");
+#endif
+
           project->unparse(unparseFormatHelp,unparseDelagate);
+
+#if 0
+          printf ("DONE: Calling project->unparse() \n");
+#endif
 
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
                cout << "source file(s) generated. (from AST)" << endl;
@@ -915,6 +927,11 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
   // Set the final error code to be returned to the user.
      project->set_backendErrorCode(finalCombinedExitStatus);
+
+#if 0
+     printf ("Leaving backend(SgProject*) (from utility_functions.C) \n");
+#endif
+
      return project->get_backendErrorCode();
    }
 

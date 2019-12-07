@@ -1933,6 +1933,23 @@ resetParentPointersInMemoryPool(SgNode* node)
             // If so then this function should be fixed to allow a SgFile to be used alternatively.
             // printf ("In resetParentPointersInMemoryPool(): This function can't be called using anything but the SgProject: node = %p = %s \n",node,node->class_name().c_str());
             // ROSE_ASSERT(false);
+
+            // DQ (8/6/2019): Alternatively, let's use the existing parent pointers to serach for the associated global scope.
+               bool includingSelf = true;
+               globalScope = SageInterface::getEnclosingNode<SgGlobal>(node,includingSelf);
+
+               if (globalScope == NULL)
+                  {
+                 // DQ (8/6/2019): Make it an error to not have found an associated global scope from the input node.
+                    printf ("Error: In resetParentPointersInMemoryPool(): Could not locate global scope in search upward through the AST from this node = %p = %s \n",node,node->class_name().c_str());
+                  }
+                 else
+                  {
+#if 0
+                    printf ("In resetParentPointersInMemoryPool(): Found global scope in search upward through the AST from this node = %p = %s \n",node,node->class_name().c_str());
+#endif
+                  }
+               ROSE_ASSERT(globalScope != NULL);
              }
         }
 
