@@ -2840,9 +2840,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedPresetSublist(ATerm term
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
          if (traverse_PresetValuesOption(head, expr)) {
-            // MATCHED PresetValuesOption
-            ROSE_ASSERT(expr);
-            preset->get_expressions().push_back(expr);
+            // MATCHED PresetValuesOption, optional so ok if nullptr
+            if (expr != NULL) {
+               preset->get_expressions().push_back(expr);
+            }
          } else return ATfalse;
       }
    }
@@ -6923,16 +6924,21 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitConversion(ATerm term, SgUntyp
    printf("... traverse_BitConversion: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_conv, t_formula;
+   ATerm t_conv, t_formula, t_bit_type_desc;
    SgUntypedExpression *formula;
-
+   std::string bit_type_name;
 
    if (ATmatch(term, "BitPrimaryConversion(<term>,<term>)", &t_conv, &t_formula)) {
       cerr << "WARNING UNIMPLEMENTED: BitPrimaryConversion\n";
-      if (ATmatch(t_conv, "BitTypeConversion()")) {
+      if (ATmatch(t_conv, "BitTypeConversion(<term>)", &t_bit_type_desc)) {
          // MATCHED BitTypeConversion
+         cerr << "WARNING UNIMPLEMENTED: BitTypeConversion\n";
       } else if (ATmatch(t_conv, "BitTypeConversionB()")) {
          // MATCHED BitTypeConversionB
+         cerr << "WARNING UNIMPLEMENTED: BitTypeConversion - B\n";
+      } else if (traverse_Name(t_conv, bit_type_name)) {
+         // MATCHED BitTypeName
+         cerr << "WARNING UNIMPLEMENTED: BitTypeConversion - BitTypeName \n";
       } else return ATfalse;
 
       if (traverse_Formula(t_formula, formula)) {
