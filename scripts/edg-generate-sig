@@ -1,5 +1,4 @@
 #!/bin/bash
-# NOTE: Eventually, we should remove the stuff marked by "DEPRECATED" [RPM 2012-10-05]
 
 # Run this script with "--help" to see nicely formatted info; or just read the perldoc here...
 :<<=cut
@@ -15,18 +14,13 @@ edg-generate-sig TOP_SRCDIR TOP_BLDDIR
 =head1 DESCRIPTION
 
 End users do not generally have licenses for EDG source code. Therefore, the ROSE team compiles an EDG binary library
-for most ROSE public releases.  EDG binary version numbers are SHA1 hashes that are generated from the parts of ROSE
-upon which the EDG library depends.
+for most ROSE public releases.  EDG binary version numbers are based upon the ROSE version number but only needs to be
+incremented when a change is made that will modify the binary file.
 
-=head1 BUGS
-
-Since the EDG binary version number is computed from a Git commit, the version number will not reflect changes that the user
-has not committed.  This applies to all files under the "util" and "src/ROSETTA" directories as well as the revision
-of the EDG source code.
-
-=head1 AUTHOR
+=head1 AUTHORS
 
 Robb Matzke.
+Nathan Pinnow.
 
 Copyright Lawrence Livermore National Security
 
@@ -94,64 +88,26 @@ check_directories() {
 }
 
 #------------------------------------------------------------------------------------------------------------------------
-# Concatenate all sources on which EDG depends.
-cat_edg_dependencies() {
-    local edg_hash=$(cd "$ROSE_SRC" &&
-			    git ls-tree --full-tree HEAD src/frontend/CxxFrontend/EDG 2>/dev/null |\
-				cut -d' ' -f3 |cut -c1-7)
-    [ "$edg_hash" = "" ] && \
-	edg_hash=$(head -n1 "$ROSE_BLD/src/frontend/CxxFrontend/EDG-submodule-sha1" |cut -c1-7)
-
-    if [ "$edg_hash" = "" ]; then
-	echo "$0: This is not a Git archive." >&2
-	echo "     You'll need to obtain the SHA1 for the src/frontend/CxxFrontend/EDG submodule and place" >&2
-	echo "     its first 7 characters in a file named src/frontend/CxxFrontend/EDG-submodule-sha1 in your" >&2
-	echo "     ROSE build tree. The best way to find this is to go to to /src/frontend/CxxFrontend/EDG at" >&2
-	echo "     github.com or where ever you downloaded this source tree and copy the 7-letter hash found there." >&2
-	exit 1
-    fi
-
-    echo $edg_hash
-    for f in "${EDG_GENERATED_DEPENDENCIES[@]}"; do
-	if [ ! -r "$f" ]; then
-	    echo "$myname: cannot read generated EDG dependency: $f" >&2
-	    exit 1
-	fi
-	grep -v '#line' "$f"
-    done
-}
-
-#------------------------------------------------------------------------------------------------------------------------
 # Generate the SHA1 hash by for the source files (some generated) on which EDG depends.
 generate_edg_hash() {
     local sha1sum_exe=`which sha1sum`
 
-    if [ -x "$sha1sum_exe" ]; then
-       local sha1=$(cat_edg_dependencies |$sha1sum_exe |cut -d' ' -f1)
+    if [ -f "$ROSE_SRC/src/frontend/CxxFrontend/EDG_VERSION" ] ; then
+        EDG_VERSION=$(cat "$ROSE_SRC/src/frontend/CxxFrontend/EDG_VERSION")
+        if [ "x$EDG_VERSION" == "x" ] ; then
+            echo "Error: EDG_VERSION file empty"
+            exit 1
+        fi
     else
-     # sha1sum doesn't exist natively on Mac OSX
-       local sha1=$(cat_edg_dependencies |openssl sha1 |cut -d' ' -f2)
+        echo "Error: $ROSE_SRC/src/frontend/CxxFrontend/EDG_VERSION does not exist"
+        exit 1
     fi
 
-    if [ "$sha1" = "" ]; then
-	echo "$0: Failed to find the sha1sum executable required to find an SHA1 hash value." >&2
-	echo "     You'll need to obtain the SHA1 for the src/frontend/CxxFrontend/EDG submodule and place" >&2
-	echo "     its first 7 characters in a file named src/frontend/CxxFrontend/EDG-submodule-sha1 in your" >&2
-	echo "     ROSE build tree. The best way to find this is to go to to /src/frontend/CxxFrontend/EDG at" >&2
-	echo "     github.com or where ever you downloaded this source tree and copy the 7-letter hash found there." >&2
-	exit 1
-    fi
-
-    echo "4.$sha1"		# this is version 4 of edg dependency hashing
+    echo "5.$EDG_VERSION"		# this is version 5 of edg dependency hashing
 }
 
 #------------------------------------------------------------------------------------------------------------------------
 
 check_directories
-
-if [ "$do_dump" != "" ]; then
-    cat_edg_dependencies
-else
-    generate_edg_hash
-fi
+generate_edg_hash
 exit 0
