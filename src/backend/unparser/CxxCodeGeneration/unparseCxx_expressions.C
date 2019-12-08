@@ -8206,7 +8206,17 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                   {
 #if DEBUG_CONSTRUCTOR_INITIALIZER
                     printf ("Found a SgInitializer, so don't output parenthesis due to unp->u_sage->printConstructorName(con_init) == true \n");
+                    printf ("expressionList->get_expressions().size() = %zu \n",expressionList->get_expressions().size());
 #endif
+
+                 // DQ (12/7/2019): If there are multiple arguments, then we need the parenthesis (see test2019_489.C).
+                    if (expressionList->get_expressions().size() >= 2)
+                       {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+                         printf ("Set outputParenthisis = true \n");
+#endif
+                         outputParenthisis = true;
+                       }
                   }
              }
         }
@@ -8220,6 +8230,11 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #endif
           outputParenthisis = false;
         }
+
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+     printf ("Output the opening parenthisis: con_init = %p \n",con_init);
+     curprint(string(" /* output the opening parenthisis: con_init = ") + StringUtility::numberToString(con_init) + " */ ");
+#endif
 
   // DQ (4/1/2005): sometimes con_init->get_args() is NULL (as in test2005_42.C)
      if (outputParenthisis == true)
@@ -8269,6 +8284,13 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                curprint("(");
              }
         }
+       else
+        {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+          printf ("Skip the output of the opening parenthisis: con_init = %p \n",con_init);
+          curprint(string(" /* Skip the output of the opening parenthisis: con_init = ") + StringUtility::numberToString(con_init) + " */ ");
+#endif
+        }
 
 #if DEBUG_CONSTRUCTOR_INITIALIZER
      printf ("output constructor arguments \n");
@@ -8292,8 +8314,8 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
           printf ("output each arg \n");
 #endif
 
-#if 0
-          printf ("current_constructor_initializer_is_for_initialization_list_member_function = %s \n",current_constructor_initializer_is_for_initialization_list_member_function ? "true" : "false");
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+          printf ("### current_constructor_initializer_is_for_initialization_list_member_function = %s \n",current_constructor_initializer_is_for_initialization_list_member_function ? "true" : "false");
 #endif
 
        // DQ (2/7/2016): The output of the arguments is also special when using the C++11 initializer list syntax.
@@ -8309,13 +8331,25 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
              }
             else
              {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+               printf ("Calling unparseExpression(): con_init = %p number of args = %zu \n",con_init,con_init->get_args()->get_expressions().size());
+#endif
                unparseExpression(con_init->get_args(), newinfo);
+
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+               printf ("DONE: Calling unparseExpression(): con_init = %p number of args = %zu \n",con_init,con_init->get_args()->get_expressions().size());
+#endif
              }
 
        // DQ (3/17/2005): Remove the parenthesis if we don't output the constructor name
        // if (con_init->get_is_explicit_cast() == true)
        //      curprint ( ")";
         }
+
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+     printf ("Output the closing parenthisis: con_init = %p \n",con_init);
+     curprint(string(" /* output the closing parenthisis: con_init = ") + StringUtility::numberToString(con_init) + " */ ");
+#endif
 
      if (outputParenthisis == true)
         {
@@ -8339,6 +8373,13 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
              {
                curprint(")");
              }
+        }
+       else
+        {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+          printf ("Skip the output of the closing parenthisis: con_init = %p \n",con_init);
+          curprint(string(" /* Skip the output of the closing parenthisis: con_init = ") + StringUtility::numberToString(con_init) + " */ ");
+#endif
         }
 
 #if 0
