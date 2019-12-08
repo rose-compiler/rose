@@ -15,6 +15,8 @@ namespace Namespace_1
     }
     ;
 
+ // Bug: name qualification should no be used here.
+ // Struct_1::Struct_1() : Namespace_1::common_name_1()
     Struct_1::Struct_1() : common_name_1()
     {
     }
