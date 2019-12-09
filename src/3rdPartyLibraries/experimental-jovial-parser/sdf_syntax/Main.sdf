@@ -1594,7 +1594,7 @@ context-free syntax
   NumericMachineParameter     -> NumericPrimary
   NumericVariable             -> NumericPrimary         {cons("NumericVariable")}
   NamedNumericConstant        -> NumericPrimary         {cons("NamedNumericConstant")}
-  NumericFunctionCall         -> NumericPrimary
+  NumericFunctionCall         -> NumericPrimary         {prefer} % prefer a function call to an array/table reference %
   '(' NumericFormula ')'      -> NumericPrimary         {cons("NumericPrimaryParens")}
   IntegerConversion
     '(' Formula ')'           -> NumericPrimary         {cons("NumericPrimary")}
