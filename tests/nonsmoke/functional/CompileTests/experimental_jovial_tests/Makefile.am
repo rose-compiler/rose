@@ -54,6 +54,7 @@ COMPOOL_TESTCODES = \
  spec_table_options_null_J.cpl          \
  table_and_status_type_J.cpl            \
  table_preset_J.cpl                     \
+ table_ref_formula_ambiguity_J.jov      \
  2_2_compound_block_type.cpl            \
  2_2_compound_table_type.cpl            \
  2_2_simple_block_type.cpl              \
