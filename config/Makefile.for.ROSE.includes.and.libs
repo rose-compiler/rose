@@ -20,7 +20,7 @@
 # AUTOMAKE = ${SHELL} $(top_srcdir)/config/missing --run automake
 
 # force ranlib to just call touch so that *.so (dynamic libraries) will not
-# be run with ranlib (which is a error).  This allows us to use dynamic 
+# be run with ranlib (which is a error).  This allows us to use dynamic
 # libraries as the default within ROSE.
 # JJW 7/25/2008: Do we really need this?
 ## RANLIB = touch
@@ -34,7 +34,7 @@ endif
 
 # DQ (12/22/2008): Specification of Boost path for use with "-isystem" option (may be GNU
 # specific).  We use this option only if the configuration of ROSE has detected a
-# previously installed version of Boost (which we do not want to use). 
+# previously installed version of Boost (which we do not want to use).
 # Note that only one of these will be non-empty makefile variables.
 ROSE_BOOST_PREINCLUDE_PATH        = @ROSE_BOOST_PREINCLUDE_PATH@
 ROSE_BOOST_NORMAL_INCLUDE_PATH    = @ROSE_BOOST_NORMAL_INCLUDE_PATH@
@@ -74,11 +74,11 @@ RT_LIBS = @RT_LIBS@
 
 VALGRIND_BINARY = @VALGRIND_BINARY@
 
-# Conditional support for Gabriel's QRose GUI Library 
+# Conditional support for Gabriel's QRose GUI Library
 if ROSE_USE_QT
 #  ROSE_GUI_INCLUDE =   -I${QROSE_PREFIX}/include
   ROSE_GUI_INCLUDE =  -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Framework -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Widgets -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Components/Common -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Components/QueryBox -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Components/TreeBox -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Components/QueryBox -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Components/SourceBox
- 
+
 # ROSE_GUI_LIBS = -lqrose
 #  ROSE_GUI_LIBS_WITH_PATH = -L${QROSE_PREFIX}/lib -lqrose
 #  ROSE_GUI_LIBS_WITH_PATH =  -L${top_builddir}/src/3rdPartyLibraries/qrose/QRoseLib/  -lqrose
@@ -176,7 +176,7 @@ if ROSE_USE_INTEL_PIN
 # To avoid additional LD_LIBRARY_PATH requirements, we do so using rpath.
 # To support this the libdwarf.so should be placed into $(INTEL_PIN_PATH)/intel64/lib-ext
 # and the static libdwarf.a moved out (renamed) so that it will not be used.
-# Note that this will also cause librose.so to use the shared library for 
+# Note that this will also cause librose.so to use the shared library for
 # dwarf when used with Intel Pin.
   ROSE_DWARF_LIBS_WITH_PATH = -L$(INTEL_PIN_PATH)/intel64/lib-ext -ldwarf -lelf
 # DQ (3/14/2009): This factors the lib paths.
@@ -260,7 +260,7 @@ if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
 # ROSE_ADA_INCLUDES = -I$(ada_path)/include_xxx
   ROSE_ADA_INCLUDES = -I$(ada_path)/include_xxx
   ROSE_ADA_LIBS = -ldot_asis
-  ROSE_ADA_LIBS_WITH_PATH = /home/quinlan1/ROSE/ADA/dot_asis/dot_asis_library/lib/libdot_asis.so
+#~   ROSE_ADA_LIBS_WITH_PATH = /export/home/pirkelbauer2/git/ada/dot_asis_library/lib/libdot_asis.so
 endif
 
 # RASMUSSEN (10/24/2017): Adding the GnuCOBOL parse-tree library support.
@@ -290,15 +290,15 @@ if USING_CLANG_COMPILER
 endif
 
 # DQ (3/6/2013): We need to build a SWIG path that can't include the isystem option.
-# Note use of "-isystem" option in ROSE_BOOST_PREINCLUDE_PATH to have the 
+# Note use of "-isystem" option in ROSE_BOOST_PREINCLUDE_PATH to have the
 # boost specified on the configure
 # command-line be used instead of the OS version of boost that is sometimes
 # installed with Linux (it is always a version too old to be used with ROSE).
 # This is used only when the ROSE configuration detects a previously installed
 # version of Boost (e.g /usr/include/boost) that we don't want to use.
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-# ROSE_INCLUDES = 
-#    $(ROSE_BOOST_PREINCLUDE_PATH) 
+# ROSE_INCLUDES =
+#    $(ROSE_BOOST_PREINCLUDE_PATH)
 ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_builddir)/src/roseSupport \
      -I$(top_builddir)/src/frontend/SageIII \
@@ -348,8 +348,8 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      $(ROSE_FLANG_INCLUDES) \
      $(ROSE_BOOST_NORMAL_INCLUDE_PATH)
 else
-# ROSE_INCLUDES = 
-#     $(ROSE_BOOST_PREINCLUDE_PATH) 
+# ROSE_INCLUDES =
+#     $(ROSE_BOOST_PREINCLUDE_PATH)
 ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_builddir)/src/roseSupport \
      -I$(top_builddir)/src/frontend/SageIII \
@@ -493,30 +493,30 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
 endif
 
 # DQ (10/23/2015): These paths have been replaces with the following variables.
-# These variable are empty for now (reflecting the default usage, and need to 
+# These variable are empty for now (reflecting the default usage, and need to
 # be set properly where ever Clang support is processed as a configure option.
-#    -I$(top_srcdir)/src/frontend/CxxFrontend/ClangFrontend 
-#    -I$(top_srcdir)/src/frontend/CxxFrontend/Clang 
-#    $(ROSE_CLANG_FRONTEND_INCLUDE) 
-#    $(ROSE_CLANG_INCLUDE) 
+#    -I$(top_srcdir)/src/frontend/CxxFrontend/ClangFrontend
+#    -I$(top_srcdir)/src/frontend/CxxFrontend/Clang
+#    $(ROSE_CLANG_FRONTEND_INCLUDE)
+#    $(ROSE_CLANG_INCLUDE)
 
 SWIG_ROSE_INCLUDES = $(ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH)
-ROSE_INCLUDES = $(ROSE_BOOST_PREINCLUDE_PATH) $(ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH) 
+ROSE_INCLUDES = $(ROSE_BOOST_PREINCLUDE_PATH) $(ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH)
 
 # DQ (8/15/2010): I have removed these directories from the include paths since it no longer exists.
 # I expect that the directories were removed and the include list not properly cleaned up.
-# -I$(top_srcdir)/src/midend/binaryAnalyses/graph 
+# -I$(top_srcdir)/src/midend/binaryAnalyses/graph
 # -I$(top_srcdir)/src/midend/programTransformation/runtimeTransformation
 # -I$(top_srcdir)/projects/dataBase
 
 # DQ (12/22/2008): Move Boost directory to front and used "-isystem" option so
-# that a system with a previous (older) installation of boost does not interfer 
+# that a system with a previous (older) installation of boost does not interfer
 # with the use of ROSE (and the version of boost specified using "--with-boost").
 # $(BOOST_CPPFLAGS)
 
-# DQ (10/28/2008): I think these should be included, I don't know why they 
+# DQ (10/28/2008): I think these should be included, I don't know why they
 # were removed (used with Microsoft Windows tests, and Yices tests).
-# DQ: Not used currently 
+# DQ: Not used currently
 #     $(ROSE_WINE_INCLUDES)
 
 # DQ (5/3/2007): Removed from ROSE
@@ -640,10 +640,10 @@ INTEL_COMPILER_RPATHS = $(shell $(top_srcdir)/scripts/intel-compiler-rpaths.sh)
 # JJW 7/25/2008: This should probably just be the same as ROSE_LIBS
 ROSE_SEPARATE_LIBS = $(ROSE_LIBS)
 
-# QY (11/2/04): removed -lastoutlining from ROSE_SEPARATE_LIBS 
+# QY (11/2/04): removed -lastoutlining from ROSE_SEPARATE_LIBS
 
-# DQ (10/22/2004): Removed when I could not get annotation work to compile properly 
-# with make distcheck rule 
+# DQ (10/22/2004): Removed when I could not get annotation work to compile properly
+# with make distcheck rule
 # -lannotationLanguageParser(appears after -lvaluePropagation)
 
 # Test harness variables. See "rth_run.pl --help" for more info.  The RTH_RUN_FLAGS is meant to be set on the
@@ -666,7 +666,7 @@ RTH_RUN=$(top_srcdir)/scripts/rth_run.pl $(RTH_RUN_FLAGS) \
 
 RTH_STATS=$(top_srcdir)/scripts/rth_stats.pl
 
-# DQ (9/27/2015): Added to support new use of AM_CPPFLAGS instead of INCLUDES 
+# DQ (9/27/2015): Added to support new use of AM_CPPFLAGS instead of INCLUDES
 # (depreicated in automake and for which many warnings are generated).
 CPPFLAGS = $(AM_CPPFLAGS)
 
