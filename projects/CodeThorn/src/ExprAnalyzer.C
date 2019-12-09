@@ -942,7 +942,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           SAWYER_MESG(logger[ERROR])<<"Error: Found string literal address, but data not present in state."<<endl;
           exit(1);
         } else {
-          cout<<estate.toString(_variableIdMapping)<<endl;
+          //cout<<estate.toString(_variableIdMapping)<<endl;
           SAWYER_MESG(logger[TRACE])<<"Program error detected: potential out of bounds access (P1) : array: "<<arrayPtrValue.toString(_variableIdMapping)<<", access: address: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
           //cout<<"DEBUG: array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
           //cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;

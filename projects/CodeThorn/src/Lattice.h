@@ -32,3 +32,4 @@ class Lattice {
 }
 
 #endif
+   

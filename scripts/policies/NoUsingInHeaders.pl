@@ -2,7 +2,7 @@
 # DO NOT DISABLE without first checking with a ROSE core developer
 
 # Please do not increase this limit! Only decrease it.
-my $allowedFailures = 16;
+my $allowedFailures = 15;
 
 my $desc = <<EOF;
 Header files should not have a "using namespace" directive in an outer scope
