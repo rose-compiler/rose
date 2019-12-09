@@ -3757,6 +3757,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 #if BACKEND_FORTRAN_IS_GNU_COMPILER
           fortran_C_preprocessor_commandLine.push_back("-E");
 #else
+     // Pei-Hung 12/09/2019 This is for PGI Fortran compiler, add others if necessary
           fortran_C_preprocessor_commandLine.push_back("-Mcpp");
 
 #endif
@@ -3794,10 +3795,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           if ( SgProject::get_verbose() > 0 )
                printf ("cpp command line = %s \n",CommandlineProcessing::generateStringFromArgList(fortran_C_preprocessor_commandLine,false,false).c_str());
 
-#if BACKEND_FORTRAN_IS_GNU_COMPILER
+       // Pei-Hung 12/09/2019 the preprocess command has to be executed by all Fortran compiler  
+//#if BACKEND_FORTRAN_IS_GNU_COMPILER
        // Some security checking here could be helpful!!!
           errorCode = systemFromVector (fortran_C_preprocessor_commandLine);
-#endif
+//#endif
 
        // DQ (10/1/2008): Added error checking on return value from CPP.
           if (errorCode != 0)
