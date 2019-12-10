@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_CallingConvention_H
 
 #include <BaseSemantics2.h>
-#include <BinaryStackVariable.h>
+#include <BinaryVariables.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Registers.h>
 #include <RegisterParts.h>
@@ -630,8 +630,8 @@ private:
     RegisterParts restoredRegisters_;                   // Registers accessed but restored
     RegisterParts inputRegisters_;                      // Registers that serve as possible input parameters
     RegisterParts outputRegisters_;                     // Registers that hold possible return values
-    StackVariables inputStackParameters_;               // Stack variables serving as function inputs
-    StackVariables outputStackParameters_;              // Stack variables serving as possible return values
+    Variables::StackVariables inputStackParameters_;    // Stack variables serving as function inputs
+    Variables::StackVariables outputStackParameters_;   // Stack variables serving as possible return values
     Sawyer::Optional<int64_t> stackDelta_;              // Change in stack across entire function
     // Don't forget to update clearResults() and serialize() if you add more.
 
@@ -755,12 +755,12 @@ public:
     /** Input stack parameters.
      *
      *  Locations for stack-based parameters that are used as inputs to the function. */
-    const StackVariables& inputStackParameters() const { return inputStackParameters_; }
+    const Variables::StackVariables& inputStackParameters() const { return inputStackParameters_; }
 
     /** Output stack parameters.
      *
      *  Locations for stack-based parameters that are used as outputs of the function. */
-    const StackVariables& outputStackParameters() const { return outputStackParameters_; }
+    const Variables::StackVariables& outputStackParameters() const { return outputStackParameters_; }
 
     /** Concrete stack delta.
      *
@@ -801,7 +801,8 @@ private:
     void updateOutputRegisters(const InstructionSemantics2::BaseSemantics::StatePtr &state);
 
     // Recompute the input and output stack variables
-    void updateStackParameters(const InstructionSemantics2::BaseSemantics::StatePtr &initialState,
+    void updateStackParameters(const Partitioner2::FunctionPtr &function,
+                               const InstructionSemantics2::BaseSemantics::StatePtr &initialState,
                                const InstructionSemantics2::BaseSemantics::StatePtr &finalState);
 
     // Recomputes the stack delta

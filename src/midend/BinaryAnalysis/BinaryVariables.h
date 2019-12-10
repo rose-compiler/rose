@@ -1,11 +1,15 @@
 #ifndef ROSE_BinaryAnalysis_Variables_H
 #define ROSE_BinaryAnalysis_Variables_H
 
+#include <BaseSemanticsTypes.h>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/split_member.hpp>
 #include <MemoryCellState.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Sawyer/IntervalMap.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Optional.h>
+#include <Sawyer/Set.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -18,7 +22,7 @@ namespace Variables {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Set of addresses. */
-typedef std::set<rose_addr_t> AddressSet;
+typedef Sawyer::Container::Set<rose_addr_t> AddressSet;
 
 /** Mapping from stack offsets to address sets. */
 typedef std::map<int64_t /*offset*/, AddressSet> OffsetToAddresses;
@@ -57,8 +61,22 @@ std::string sizeStr(uint64_t size);
 class BaseVariable {
     rose_addr_t maxSizeBytes_;                      // maximum possible size of this variable in bytes
     AddressSet insnVas_;                            // instructions where the variable was detected that reference the variable
+    InstructionSemantics2::BaseSemantics::InputOutputPropertySet ioProperties_; /**< Properties of a location. */
     std::string name_;                              // optional variable name
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(maxSizeBytes_);
+        s & BOOST_SERIALIZATION_NVP(insnVas_);
+        s & BOOST_SERIALIZATION_NVP(ioProperties_);
+        s & BOOST_SERIALIZATION_NVP(name_);
+    }
+#endif
+    
 protected:
     /** Default constructor.
      *
@@ -68,7 +86,10 @@ protected:
 
     /** Construct a variable with a given maximum size. */
     BaseVariable(size_t maxSizeBytes, const AddressSet &definingInstructionVas, const std::string &name)
-        : maxSizeBytes_(std::min(maxSizeBytes, rose_addr_t(0x7fffffff))), insnVas_(definingInstructionVas), name_(name) {}
+        // following arithmetic is to work around lack of SSIZE_MAX on windows. The maxSizeBytes should not be more than the
+        // maximum value of the signed type with the same conversion rank.
+        : maxSizeBytes_(std::min(maxSizeBytes, ((size_t)(1) << (8*sizeof(size_t)-1))-1)),
+          insnVas_(definingInstructionVas), name_(name) {}
 
 public:
     /** Property: Maximum variable size in bytes.
@@ -92,6 +113,16 @@ public:
     void definingInstructionVas(const AddressSet &vas) { insnVas_ = vas; }
     /** @} */
 
+    /** Property: I/O properties.
+     *
+     *  This property is a set of flags that describe how the variable is accessed.
+     *
+     * @{ */
+    const InstructionSemantics2::BaseSemantics::InputOutputPropertySet& ioProperties() const { return ioProperties_; }
+    InstructionSemantics2::BaseSemantics::InputOutputPropertySet& ioProperties() { return ioProperties_; }
+    void ioProperties(const InstructionSemantics2::BaseSemantics::InputOutputPropertySet &set) { ioProperties_ = set; }
+    /** @} */
+
     /** Property: Optional variable name.
      *
      *  There is no constraint on what the variable name may be. At this time it's used mainly for debugging. Therefore it
@@ -107,23 +138,34 @@ public:
 // Local variable descriptors
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Description of a local variable within a function. */
-class LocalVariable: public BaseVariable {
+/** Description of a local stack variable within a function. */
+class StackVariable: public BaseVariable {
     Partitioner2::FunctionPtr function_;            // function in which local variable exists
     int64_t frameOffset_;                           // offset where variable is located in the function's stack frame
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseVariable);
+        s & BOOST_SERIALIZATION_NVP(function_);
+        s & BOOST_SERIALIZATION_NVP(frameOffset_);
+    }
+#endif
+        
 public:
     /** Default constructor.
      *
      *  Creates an invalid (zero-sized) variable descriptor. */
-    LocalVariable()
-        : frameOffset_(0) {}
+    StackVariable();
 
     /** Construct a variable descriptor. */
-    LocalVariable(const Partitioner2::FunctionPtr&, int64_t frameOffset, rose_addr_t maxSizeBytes,
+    StackVariable(const Partitioner2::FunctionPtr&, int64_t frameOffset, rose_addr_t maxSizeBytes,
                   const AddressSet &definingInstructionVas = AddressSet(), const std::string &name = "");
 
-    ~LocalVariable();
+    ~StackVariable();
 
     /** Property: Function owning the variable.
      *
@@ -156,8 +198,8 @@ public:
      *  same maximum size or both are default constructed.
      *
      * @{ */
-    bool operator==(const LocalVariable &other) const;
-    bool operator!=(const LocalVariable &other) const;
+    bool operator==(const StackVariable &other) const;
+    bool operator!=(const StackVariable &other) const;
     /** @} */
 
     /** Location within the function stack frame. */
@@ -171,17 +213,17 @@ public:
     /** @} */
 
     /** Print local variable descriptor. */
-    friend std::ostream& operator<<(std::ostream&, const Rose::BinaryAnalysis::Variables::LocalVariable&);
+    friend std::ostream& operator<<(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&);
 };
 
 /** Collection of local variables. */
-typedef Sawyer::Container::IntervalMap<OffsetInterval, LocalVariable> LocalVariables;
+typedef Sawyer::Container::IntervalMap<OffsetInterval, StackVariable> StackVariables;
 
 /** Print info about multiple local variables.
  *
  *  This output includes such things as the function to which they belong and the defining instructions. The output is
  *  multi-line, intended for debugging. */
-void print(const LocalVariables&,const Partitioner2::Partitioner&, std::ostream &out, const std::string &prefix = "");
+void print(const StackVariables&,const Partitioner2::Partitioner&, std::ostream &out, const std::string &prefix = "");
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global variable descriptors
@@ -191,6 +233,17 @@ void print(const LocalVariables&,const Partitioner2::Partitioner&, std::ostream 
 class GlobalVariable: public BaseVariable {
     rose_addr_t address_;                               // starting (lowest) virtual address
 
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseVariable);
+        s & BOOST_SERIALIZATION_NVP(address_);
+    }
+#endif
+    
 public:
     /** Default constructor.
      *
@@ -282,8 +335,8 @@ public:
      *  exceptions.
      *
      * @{ */
-    LocalVariables findLocalVariables(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&);
-    LocalVariables findLocalVariables(const Partitioner2::Partitioner&, SgAsmInstruction*);
+    StackVariables findStackVariables(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&);
+    StackVariables findStackVariables(const Partitioner2::Partitioner&, SgAsmInstruction*);
     /** @} */
 
     /** Find global variables.
@@ -319,7 +372,7 @@ public:
 
     /** Test whether local variable information is cached.
      *
-     *  Returns true if @ref findLocalVariables has been run for the specified function and the results are currently
+     *  Returns true if @ref findStackVariables has been run for the specified function and the results are currently
      *  cached in that function. */
     bool isCached(const Partitioner2::FunctionPtr&);
 
@@ -338,7 +391,7 @@ public:
     /** Function that owns an instruction.
      *
      *  Given an instruction, return one of the owning functions chosen arbitrarily.  This is the method used by the version
-     *  of @ref findLocalVariables that takes an instruction argument. */
+     *  of @ref findStackVariables that takes an instruction argument. */
     Partitioner2::FunctionPtr functionForInstruction(const Partitioner2::Partitioner&, SgAsmInstruction*);
 
     /** Find global variable addresses.
@@ -391,10 +444,17 @@ public:
      *  Given a cell-based symbolic memory state, return all the memory addresses that appear in it. */
     std::set<SymbolicExpr::Ptr> getMemoryAddresses(const InstructionSemantics2::BaseSemantics::MemoryCellStatePtr&);
 
-    /** Find constants in memory.y
+    /** Find constants in memory.
      *
      *  Given an cell-based symbolic memory state, return all constants that appear in the cell addresses. */
     std::set<rose_addr_t> findAddressConstants(const InstructionSemantics2::BaseSemantics::MemoryCellStatePtr&);
+
+    /** Return symbolic address of stack variable.
+     *
+     *  Given a stack variable, return the symbolic address where the variable is located. */
+    InstructionSemantics2::BaseSemantics::SValuePtr
+    symbolicAddress(const Partitioner2::Partitioner&, const StackVariable&,
+                    const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
 };
 
 } // namespace

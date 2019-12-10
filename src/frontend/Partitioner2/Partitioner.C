@@ -2251,7 +2251,6 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
     const RegisterDescriptor SP = cpu->stackPointerRegister();
     const RegisterDescriptor memSegReg;
     BaseSemantics::SValuePtr initialStackPointer = ops->peekRegister(SP);
-    size_t wordSize = SP.nBits() >> 3;              // word size in bytes
 
     // Run the data flow
     try {
@@ -2266,7 +2265,6 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
         return retval;
     }
 
-
     // Scan all outgoing states and accumulate any concrete values we find.
     BOOST_FOREACH (StatePtr state, dfEngine.getFinalStates()) {
         if (state) {
@@ -2278,21 +2276,9 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
                     retval.insert(kv.value->get_number());
             }
 
-            BOOST_FOREACH (const StackVariable &var, DataFlow::findStackVariables(ops, initialStackPointer)) {
-                BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.location.address,
-                                                                 ops->undefined_(8*var.location.nBytes), ops->boolean_(true));
-                if (value->is_number() && value->get_width() <= SP.nBits())
-                    retval.insert(value->get_number());
-            }
-
-            BOOST_FOREACH (const AbstractLocation &var, DataFlow::findGlobalVariables(ops, wordSize)) {
-                if (var.isAddress()) {
-                    BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.getAddress(),
-                                                                     ops->undefined_(8*var.nBytes()), ops->boolean_(true));
-                    if (value->is_number() && value->get_width() <= SP.nBits())
-                        retval.insert(value->get_number());
-                }
-            }
+            BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
+            std::set<rose_addr_t> vas = Variables::VariableFinder().findAddressConstants(mem);
+            retval.insert(vas.begin(), vas.end());
         }
     }
     return retval;

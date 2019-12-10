@@ -22,7 +22,7 @@ namespace Variables {
 Sawyer::Message::Facility mlog;
 
 static Sawyer::Attribute::Id ATTR_FRAME_SIZE(-1);       // Key for storing uint64_t frame sizes in P2::Function objects.
-static Sawyer::Attribute::Id ATTR_LOCAL_VARS(-1);       // Key for storing LocalVariables in a P2::Function.
+static Sawyer::Attribute::Id ATTR_LOCAL_VARS(-1);       // Key for storing StackVariables in a P2::Function.
 static Sawyer::Attribute::Id ATTR_GLOBAL_VARS(-1);      // Key for storing GlobalVariables in a P2::Partitioner.
 
 // Called by Rose::Diagnostics::initialize before anything else in this namespace is initialized.
@@ -91,11 +91,11 @@ sizeStr(uint64_t n) {
 }
 
 void
-print(const LocalVariables &lvars, const P2::Partitioner &partitioner,
+print(const StackVariables &lvars, const P2::Partitioner &partitioner,
       std::ostream &out, const std::string &prefix) {
-    BOOST_FOREACH (const LocalVariable &lvar, lvars.values()) {
+    BOOST_FOREACH (const StackVariable &lvar, lvars.values()) {
         out <<prefix <<lvar <<"\n";
-        BOOST_FOREACH (rose_addr_t va, lvar.definingInstructionVas())
+        BOOST_FOREACH (rose_addr_t va, lvar.definingInstructionVas().values())
             out <<prefix <<"  at " <<partitioner.instructionProvider()[va]->toString() <<"\n";
     }
 }
@@ -105,8 +105,8 @@ print(const GlobalVariables &gvars, const P2::Partitioner &partitioner,
       std::ostream &out, const std::string &prefix) {
     BOOST_FOREACH (const GlobalVariable &gvar, gvars.values()) {
         out <<prefix <<gvar <<"\n";
-        BOOST_FOREACH (rose_addr_t va, gvar.definingInstructionVas())
-            out <<prefix <<"  at " <<partitioner.instructionProvider()[va]->toString() <<"\n";
+        BOOST_FOREACH (rose_addr_t va, gvar.definingInstructionVas().values())
+            out <<prefix <<"  detected at " <<partitioner.instructionProvider()[va]->toString() <<"\n";
     }
 }
 
@@ -122,28 +122,31 @@ BaseVariable::maxSizeBytes(rose_addr_t size) {
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// LocalVariable
+// StackVariable
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LocalVariable::LocalVariable(const P2::FunctionPtr &function, int64_t frameOffset, rose_addr_t maxSizeBytes,
+StackVariable::StackVariable()
+    : frameOffset_(0) {}
+
+StackVariable::StackVariable(const P2::FunctionPtr &function, int64_t frameOffset, rose_addr_t maxSizeBytes,
                              const AddressSet &definingInstructionVas, const std::string &name)
     : BaseVariable(maxSizeBytes, definingInstructionVas, name), function_(function), frameOffset_(frameOffset) {}
 
-LocalVariable::~LocalVariable() {}
+StackVariable::~StackVariable() {}
 
 P2::Function::Ptr
-LocalVariable::function() const {
+StackVariable::function() const {
     return function_;
 }
 
 void
-LocalVariable::function(const P2::Function::Ptr &f) {
+StackVariable::function(const P2::Function::Ptr &f) {
     ASSERT_not_null(f);
     function_ = f;
 }
 
 const std::string&
-LocalVariable::setDefaultName() {
+StackVariable::setDefaultName() {
     int64_t offset = frameOffset();
     std::string s;
 
@@ -175,7 +178,7 @@ LocalVariable::setDefaultName() {
 }
 
 bool
-LocalVariable::operator==(const LocalVariable &other) const {
+StackVariable::operator==(const StackVariable &other) const {
     if (!function_ || !other.function_) {
         return function_ == other.function_;
     } else {
@@ -186,17 +189,17 @@ LocalVariable::operator==(const LocalVariable &other) const {
 }
 
 bool
-LocalVariable::operator!=(const LocalVariable &other) const {
+StackVariable::operator!=(const StackVariable &other) const {
     return !(*this == other);
 }
 
 OffsetInterval
-LocalVariable::interval() const {
+StackVariable::interval() const {
     return OffsetInterval::baseSize(frameOffset(), maxSizeBytes());
 }
 
 void
-LocalVariable::print(std::ostream &out) const {
+StackVariable::print(std::ostream &out) const {
     out <<"local-variable";
     if (!name().empty())
         out <<" \"" <<StringUtility::cEscape(name()) <<"\"";
@@ -204,14 +207,14 @@ LocalVariable::print(std::ostream &out) const {
 }
 
 std::string
-LocalVariable::toString() const {
+StackVariable::toString() const {
     std::ostringstream ss;
     print(ss);
     return ss.str();
 }
 
 std::ostream&
-operator<<(std::ostream &out, const Rose::BinaryAnalysis::Variables::LocalVariable &x) {
+operator<<(std::ostream &out, const Rose::BinaryAnalysis::Variables::StackVariable &x) {
     x.print(out);
     return out;
 }
@@ -506,14 +509,14 @@ VariableFinder::findStackOffsets(const P2::Partitioner &partitioner, SgAsmInstru
     return visitor.offsets;
 }
 
-LocalVariables
-VariableFinder::findLocalVariables(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+StackVariables
+VariableFinder::findStackVariables(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     OffsetToAddresses stackOffsets;
 
     // Return cached local variable information
     if (function->attributeExists(ATTR_LOCAL_VARS))
-        return function->getAttribute<LocalVariables>(ATTR_LOCAL_VARS);
+        return function->getAttribute<StackVariables>(ATTR_LOCAL_VARS);
 
     // Try to figure out the function's stack frame size. It might not be possible.
     SAWYER_MESG(debug) <<"searching for local vars in " <<function->printableName() <<"\n";
@@ -554,7 +557,7 @@ VariableFinder::findLocalVariables(const P2::Partitioner &partitioner, const P2:
     }
 
     // Build the local variable objects to be returned
-    LocalVariables lvars;
+    StackVariables lvars;
     for (OffsetToAddresses::const_iterator iter = stackOffsets.begin(); iter != stackOffsets.end(); ++iter) {
         // Avoid crossing into the caller's stack frame
         if (frameSize && iter->first >= maxFrameOffset)
@@ -572,7 +575,7 @@ VariableFinder::findLocalVariables(const P2::Partitioner &partitioner, const P2:
             lastOffset = -1;
 
         OffsetInterval where = OffsetInterval::hull(iter->first, lastOffset);
-        LocalVariable lvar(function, iter->first, (lastOffset - iter->first)+1, iter->second);
+        StackVariable lvar(function, iter->first, (lastOffset - iter->first)+1, iter->second);
         if (lvar.maxSizeBytes() > 0) {
             lvar.setDefaultName();
             lvars.insert(where, lvar);
@@ -587,6 +590,17 @@ VariableFinder::findLocalVariables(const P2::Partitioner &partitioner, const P2:
     return lvars;
 }
 
+S2::BaseSemantics::SValuePtr
+VariableFinder::symbolicAddress(const P2::Partitioner &partitioner, const StackVariable &var,
+                                const S2::BaseSemantics::RiscOperatorsPtr &ops) {
+    ASSERT_not_null(ops);
+    RegisterDescriptor baseReg = frameOrStackPointer(partitioner);
+    S2::BaseSemantics::SValuePtr base = ops->peekRegister(baseReg, ops->undefined_(baseReg.nBits()));
+    ASSERT_require(sizeof(var.frameOffset()) == sizeof(uint64_t));
+    S2::BaseSemantics::SValuePtr offset = ops->number_(baseReg.nBits(), var.frameOffset());
+    return ops->add(base, offset);
+}
+
 P2::Function::Ptr
 VariableFinder::functionForInstruction(const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
@@ -599,13 +613,13 @@ VariableFinder::functionForInstruction(const P2::Partitioner &partitioner, SgAsm
     return functions[0];                                // arbitrarily choose the first one
 }
 
-LocalVariables
-VariableFinder::findLocalVariables(const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
+StackVariables
+VariableFinder::findStackVariables(const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
     if (P2::Function::Ptr function = functionForInstruction(partitioner, insn)) {
-        return findLocalVariables(partitioner, function);
+        return findStackVariables(partitioner, function);
     } else {
-        return LocalVariables();
+        return StackVariables();
     }
 }
 
