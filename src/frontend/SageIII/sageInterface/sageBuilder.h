@@ -1345,7 +1345,8 @@ ROSE_DLL_API SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const
 ROSE_DLL_API SgDerivedTypeStatement * buildDerivedTypeStatement (const SgName& name, SgScopeStatement* scope=NULL);
 
 //! Build a Jovial table declaration statement
-ROSE_DLL_API SgJovialTableStatement * buildJovialTableStatement (const SgName& name, SgScopeStatement* scope=NULL);
+ROSE_DLL_API SgJovialTableStatement * buildJovialTableStatement (const SgName& name,
+                                                                 SgClassDeclaration::class_types kind, SgScopeStatement* scope=NULL);
 
 //! Build a Jovial table type with required class definition and defining and nondefining declarations.
  ROSE_DLL_API SgJovialTableType * buildJovialTableType (const SgName& name, SgType* base_type, SgExprListExp* dim_info, SgScopeStatement* scope=NULL);
@@ -1508,6 +1509,15 @@ ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& outputFileName, Sg
 /*! The input file will be loaded if exists, or an empty one will be generated from scratch transparently. Output file name is used to specify the output file name of unparsing. The final SgFile will be inserted to project automatically. If not provided, a new SgProject will be generated internally. Using SgFile->get_project() to retrieve it in this case.
  */
 ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project);
+
+// DQ (11/8/2019): Support function for the new file (to support changing the file names in the source position info objects of each AST subtree node.
+//! Change the source file associated with the source position information in the AST.
+// ROSE_DLL_API void fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std::string& newFileName);
+ROSE_DLL_API void fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std::string& newFileName);
+
+// DQ (11/10/2019): Support for sharing IR nodes when buildFile() is applied to an existing file.
+//! Sharing IR nodes requires that the file id be added to the fileIDsToUnparse held in the Sg_File_Info object.
+ROSE_DLL_API void fixupSharingSourcePosition(SgNode* subtreeRoot, int new_file_id);
 
 //! Build and attach a comment, comment style is inferred from the language type of the target node if not provided. It is indeed a wrapper of SageInterface::attachComment().
 ROSE_DLL_API PreprocessingInfo* buildComment(SgLocatedNode* target, const std::string & content,

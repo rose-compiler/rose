@@ -108,14 +108,16 @@ DOCUMENTATION_should_never_be_defined;
 #define DECLARE_HEADERS(CLASS_WITHOUT_Sg) /*void*/
 #else
 #define DECLARE_HEADERS(CLASS_WITHOUT_Sg) \
-    CLASS_WITHOUT_Sg.setPredeclarationString("Sg" #CLASS_WITHOUT_Sg "_HEADERS", __FILE__)
+    CLASS_WITHOUT_Sg.setPredeclarationString("Sg" #CLASS_WITHOUT_Sg "_HEADERS", \
+                                             ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
 #define DECLARE_OTHERS(CLASS_WITHOUT_Sg) /*void*/
 #else
 #define DECLARE_OTHERS(CLASS_WITHOUT_Sg) \
-    CLASS_WITHOUT_Sg.setFunctionPrototype("Sg" #CLASS_WITHOUT_Sg "_OTHERS", __FILE__)
+    CLASS_WITHOUT_Sg.setFunctionPrototype("Sg" #CLASS_WITHOUT_Sg "_OTHERS", \
+                                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -772,12 +774,14 @@ void Grammar::setUpBinaryInstructions() {
         friend class boost::serialization::access;
 
         template<class S>
-        void serialize(S &s, const unsigned /*version*/) {
+        void serialize(S &s, const unsigned version) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
             s & BOOST_SERIALIZATION_NVP(p_mnemonic);
             s & BOOST_SERIALIZATION_NVP(p_raw_bytes);
             s & BOOST_SERIALIZATION_NVP(p_operandList);
             s & BOOST_SERIALIZATION_NVP(p_sources);
+            if (version >= 1)
+                s & BOOST_SERIALIZATION_NVP(semanticFailure_);
         }
 #endif
 
@@ -785,6 +789,15 @@ void Grammar::setUpBinaryInstructions() {
         struct SemanticFailure {
             size_t n;
             SemanticFailure(): n(0) {}
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+        private:
+            friend class boost::serialization::access;
+            template<class S>
+            void serialize(S &s, const unsigned /*version*/) {
+                s & BOOST_SERIALIZATION_NVP(n);
+            }
+#endif
         };
         SemanticFailure semanticFailure_;
 

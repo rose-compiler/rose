@@ -126,6 +126,9 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/Graph.h				\
 	Sawyer/GraphAlgorithm.h			\
 	Sawyer/GraphBoost.h			\
+	Sawyer/GraphIteratorBiMap.h		\
+	Sawyer/GraphIteratorMap.h		\
+	Sawyer/GraphIteratorSet.h		\
 	Sawyer/GraphTraversal.h			\
 	Sawyer/HashMap.h			\
 	Sawyer/IndexedList.h			\

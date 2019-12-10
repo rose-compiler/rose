@@ -263,8 +263,8 @@ SgClassDefinition* GetClassDefinition( SgNamedType *classtype)
          return GetClassDefinition(isSgNamedType(isSgTypedefType(classtype)->get_base_type()));
     }
     SgDeclarationStatement *decl = classtype->get_declaration();
-    // FIXME[Robb Matzke 2019-07-10]: The following line is buggy. The condition is always true.
-    if (decl->variantT() == V_SgClassDeclaration || V_SgTemplateClassDeclaration) 
+    if (decl->variantT() == V_SgClassDeclaration || 
+        decl->variantT() == V_SgTemplateClassDeclaration) 
         return GetClassDefn(isSgClassDeclaration(decl));
     else {
        cerr << "unexpected class declaration type: " << decl->sage_class_name() << endl;
@@ -2655,7 +2655,6 @@ IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
     break;
 
   case V_SgFortranDo:
-    // jichi (9/11/2009): Add in fortran loop recognition support
     // FIXME: increment/bound in fortran are not equivalent to incr/cond in Cxx.
     {
       SgFortranDo *f = isSgFortranDo(s.get_ptr());
@@ -2677,7 +2676,6 @@ IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
 }
 
 // The loop must be in the format: for (ivar=lb; ivar <= ub; ivar += step)
-// jichi (9/11/2009): Add in fortran loop recognition support.
 bool AstInterfaceImpl::IsFortranLoop( const SgNode* s, SgNode** ivar , SgNode** lb , SgNode** ub, SgNode** step, SgNode** body)
 { 
   switch (s->variantT()) {

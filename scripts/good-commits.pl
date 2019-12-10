@@ -138,7 +138,10 @@ sub showEachCommit {
     
 ####################################################################################################
 
-if (grep {$_ eq "--histogram"} @ARGV) {
+if (@ARGV == 0) {
+    my($author) = git("config", "user.email");
+    showEachCommit("--author=$author", "--no-merges", "--since", "1 month ago", "HEAD");
+} elsif (grep {$_ eq "--histogram"} @ARGV) {
     showHistogram grep {$_ ne "--histogram"} @ARGV;
 } else {
     showEachCommit @ARGV;

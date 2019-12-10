@@ -42,6 +42,8 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseCaseStmt               (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseDefaultStmt            (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseBreakStmt              (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseTypeDefStmt            (SgStatement* stmt, SgUnparse_Info& info);
+
 
           virtual void unparseStopOrPauseStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseReturnStmt             (SgStatement* stmt, SgUnparse_Info& info);
@@ -196,7 +198,6 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseContinueStmt     (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseAssertStmt       (SgStatement* stmt, SgUnparse_Info& info);
 
-          virtual void unparseTypeDefStmt      (SgStatement* stmt, SgUnparse_Info& info);
 
       //! DQ (10/12/2006): Support for qualified names (function names can't have global scope specifier in GNU, or so it seems).
           std::string trimGlobalScopeQualifier ( std::string qualifiedName );

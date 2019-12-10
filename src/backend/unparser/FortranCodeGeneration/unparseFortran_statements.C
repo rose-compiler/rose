@@ -2436,26 +2436,36 @@ FortranCodeGeneration_locatedNode::unparseDoConcurrentStatement(SgStatement* stm
      SgExprListExp* forAllHeader = forAllStatement->get_forall_header();
      ROSE_ASSERT(forAllHeader != NULL);
 
-     SgExpressionPtrList header = forAllHeader->get_expressions();
+#if 0
+  // This was redesigned for SDF parser using ATerms.  This was implemented incorrectly,
+  // it should use SgAssignOp expressions instead.  If this is ever resurrected it must
+  // be fixed [Rasmussen 2019.08.23].
 
   // The expressions in the forall header are in pairs (var, SgSubscriptExpression)
      ROSE_ASSERT( ( forAllHeader->get_expressions().size() % 2 ) == 0);
      int num_vars = forAllHeader->get_expressions().size() / 2;
+     for (int i = 0; i <= num_vars; i += 2)
+#endif
+
+     SgExpressionPtrList header = forAllHeader->get_expressions();
+     int num_vars = header.size();
 
      curprint("DO CONCURRENT (");
 
-     for (int i = 0; i <= num_vars; i += 2)
+     for (int i = 0; i < num_vars; i++)
         {
            if (i != 0) curprint(", ");
 
-        // variable
-           unparseExpression(header[i],  info);
+           SgAssignOp* assignOp = isSgAssignOp(header[i]);
+           ROSE_ASSERT(assignOp);
+
+           unparseExpression(assignOp->get_lhs_operand_i(), info);
            curprint("=");
-        // subscripts
-           unparseExpression(header[i+1],info);
+           unparseExpression(assignOp->get_rhs_operand_i(), info);
         }
 
      curprint(")");
+     unp->cur.insert_newline(1);
 
   // Unparse the body
      SgStatement* statement = NULL;

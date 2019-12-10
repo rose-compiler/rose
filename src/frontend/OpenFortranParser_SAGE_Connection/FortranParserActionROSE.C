@@ -3476,13 +3476,9 @@ void c_action_label(Token_t * lbl)
      *                      ( T_LBRACKET co_array_spec T_RBRACKET )?
      *                      ( T_ASTERISK char_length )? ( initialization )?
      */
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
     void c_action_entity_decl(Token_t * id, ofp_bool hasArraySpec,
             ofp_bool hasCoarraySpec, ofp_bool hasCharLength,
             ofp_bool hasInitialization)
-#else
-    void c_action_entity_decl(Token_t * id)
-#endif
     {
         // This function R504 R503-F2008 is similar to R442 R438-F2008
 
@@ -3499,7 +3495,6 @@ void c_action_label(Token_t * lbl)
         {
             // printf ("In R504 R503-F2008 c_action_entity_decl(): save variableName = %s \n",id->text);
             string current_filename = getCurrentFilename();
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
             printf(
                     "In R504 R503-F2008 c_action_entity_decl(): save variableName = %s file = %s hasArraySpec = %s hasCoarraySpec = %s hasCharLength = %s hasInitialization = %s \n",
                     id->text, current_filename.c_str(),
@@ -3507,9 +3502,6 @@ void c_action_label(Token_t * lbl)
                     hasCoarraySpec ? "true" : "false",
                     hasCharLength ? "true" : "false",
                     hasInitialization ? "true" : "false");
-#else
-            printf ("In R504 R503-F2008 c_action_entity_decl(): save variableName = %s file = %s \n",id->text,current_filename.c_str());
-#endif
         }
 
 #if 0
@@ -7919,7 +7911,9 @@ void c_action_label(Token_t * lbl)
         // done in R612 and very little can be done in R612.
 
         // DQ (12/14/2007): Make sure that we have added the implicit program function to the scope (see test2007_17.f90)
-        build_implicit_program_statement_if_required();
+       
+        // Pei-Hung (11/15/2019) implicit program should be built at statement, not expression
+        // build_implicit_program_statement_if_required();
 
         ROSE_ASSERT(id != NULL);
 
@@ -10386,7 +10380,6 @@ void c_action_label(Token_t * lbl)
     }
 
     /** R753
-     * forall_construct_stmt
      *
      * (T_IDENT T_COLON)? T_FORALL_CONSTRUCT_STMT T_FORALL forall_header T_EOS
      * @param label The label
@@ -10557,7 +10550,6 @@ void c_action_label(Token_t * lbl)
      * @param label The label.
      * @param id Optional identifier for the loop.
      */
-// void c_action_end_forall_stmt(Token_t * label, Token_t * id)
     void c_action_end_forall_stmt(Token_t *label, Token_t *endKeyword,
             Token_t *forallKeyword, Token_t *id, Token_t *eos)
     {
@@ -10601,9 +10593,6 @@ void c_action_label(Token_t * lbl)
         forAllStatement->set_parent(currentScope);
         forAllStatement->set_forall_statement_kind(SgForAllStatement::e_forall_statement);
 
-     // Rasmussen (1/8/2019): To be added in future
-     // forAllStatement->set_forall_statement_kind(SgForAllStatement::e_forall_statement);
-
         // Push the if scope (it is a scope in C/C++, even if not in Fortran)
         // treating it as a scope will allow it to be consistent across C,C++, and Fortran.
         astScopeStack.push_front(forAllStatement);
@@ -10613,7 +10602,6 @@ void c_action_label(Token_t * lbl)
 #endif
     }
 
-// void c_action_forall_stmt(Token_t * label)
     void c_action_forall_stmt(Token_t *label, Token_t *forallKeyword)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
@@ -10651,9 +10639,7 @@ void c_action_label(Token_t * lbl)
         ROSE_ASSERT(body != NULL);
         astScopeStack.pop_front();
 
-        // SgForAllStatement* forAllStatement = isSgForAllStatement(body->get_parent());
-        SgForAllStatement* forAllStatement = isSgForAllStatement(
-                astScopeStack.front());
+        SgForAllStatement* forAllStatement = isSgForAllStatement(astScopeStack.front());
         ROSE_ASSERT(forAllStatement != NULL);
         astScopeStack.pop_front();
 
@@ -11959,52 +11945,41 @@ void c_action_label(Token_t * lbl)
                     (eos != NULL) ? eos->text : "NULL");
         }
 
+        // This has to work for "DO i=1,100", "DO WHILE", and "DO CONCURRENT(i=1:100:2)
+
         // At this point for "DO I = 1, 100" the expressions for "I", "1", and "100" are on the astExpressionStack.
 
         bool buildWhileLoop = false;
+        bool buildDoConcurrentLoop = false;
 
         SgExpression* indexExpression = NULL;
         SgExpression* endingIndex = NULL;
         SgExpression* stride = NULL;
         SgExpression* predicate = NULL;
+        SgExprListExp* loopHeader = NULL;
+
         if (hasLoopControl == true)
         {
             // We have a "DO 123 I=1, 100, 4" style loop, where the digit string 123 and stride 4 are optional.
-
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
             if (astExpressionStack.size() == 3)
-#else
-            if (astExpressionStack.size() == 4)
-#endif
             {
                 // There is a stride expression on the top of the stack
                 stride = astExpressionStack.front();
                 astExpressionStack.pop_front();
             }
-            else
-            {
-                // stride = new SgNullExpression();
-                // setSourcePosition(stride);
-            }
 
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
             if (astExpressionStack.size() == 2)
-#else
-            if (astExpressionStack.size() == 3)
-#endif
             {
-                // There is a ending index, starting, index, and the index variable on the stack
+                // There are ending and starting indices on astExpressionStack and the index variable on astNameStack
                 endingIndex = astExpressionStack.front();
                 astExpressionStack.pop_front();
 
                 SgExpression* startingIndex = astExpressionStack.front();
                 astExpressionStack.pop_front();
 
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
                 Token_t* variableToken = astNameStack.front();
                 ROSE_ASSERT(astNameStack.empty() == false);
                 SgName variableName = variableToken->text;
-                // printf ("Generating reference for index variable name = %s \n",variableName.str());
                 astNameStack.pop_front();
 
                 // DQ (1/18/2011): This detects where we have used the semantics of implicitly building symbols for implicit variables.
@@ -12029,44 +12004,40 @@ void c_action_label(Token_t * lbl)
                 ROSE_ASSERT(variableSymbol != NULL);
                 SgExpression* index = new SgVarRefExp(variableSymbol);
                 setSourcePosition(index, variableToken);
-#else
-                ROSE_ASSERT(astExpressionStack.empty() == false);
-                SgExpression* index = astExpressionStack.front();
-                astExpressionStack.pop_front();
-#endif
+
                 // The index expression is the "I=1" part (which is built so that we can hand it to the SgFortranDo constructor)
                 indexExpression = new SgAssignOp(index, startingIndex, NULL);
 
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
-                // index->set_parent(indexExpression);
-#endif
                 // Note that the "=" does not exist as a token in OFP
                 // setSourcePosition(indexExpression);
                 ROSE_ASSERT(doKeyword != NULL);
                 setSourcePosition(indexExpression, doKeyword);
 
-                // DQ (11/16/2007): I think that stack should be empty now!
                 ROSE_ASSERT(astExpressionStack.empty() == true);
             }
             else
             {
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
                 if (astExpressionStack.size() == 1)
-#else
-                if (astExpressionStack.size() == 1)
-#endif
                 {
                     // This is the case of a "DO WHILE" loop, with the condition on the astExpressionStack...
                     buildWhileLoop = true;
                     predicate = astExpressionStack.front();
                     astExpressionStack.pop_front();
                 }
+                else if (astExpressionStack.size() == 0)
+                {
+                    // This is the case of a "DO CONCURRENT" loop, with the expression list astNodeStack...
+                    // Note that this may also apply to a "FORALL" loop but it has been make obsolete in the
+                    // standard so ignoring for now [Rasmussen 2019.08.23]
+                    buildDoConcurrentLoop = true;
+                    loopHeader = isSgExprListExp(astNodeStack.front());
+                    ROSE_ASSERT(loopHeader != NULL);
+                    astNodeStack.pop_front();
+                }
                 else
                 {
-#if 1
                     // Output debugging information about saved state (stack) information.
                     outputState("Error in R827 c_action_do_stmt()");
-#endif
                     printf(
                             "Error: astExpressionStack.size() incorrect for do_stmt astExpressionStack.size() = %" PRIuPTR " \n",
                             astExpressionStack.size());
@@ -12078,15 +12049,16 @@ void c_action_label(Token_t * lbl)
             // Output debugging information about saved state (stack) information.
             outputState("Middle of R827 c_action_do_stmt()");
 #endif
-            // DQ (11/16/2007): I think that stack should be empty now!
             ROSE_ASSERT(astExpressionStack.empty() == true);
         }
         else
         {
-            // The stack size in this case should be zero!
-            ROSE_ASSERT(astExpressionStack.empty() == true);
+            // No loop control case
+           ROSE_ASSERT(hasLoopControl == false);
 
             // We have a simpler "DO" style loop, there are no expressions on the stack to get
+            ROSE_ASSERT(astExpressionStack.empty() == true);
+
             indexExpression = new SgNullExpression();
             endingIndex = new SgNullExpression();
             stride = new SgNullExpression();
@@ -12107,7 +12079,6 @@ void c_action_label(Token_t * lbl)
         // SgStatement* loopStatement = NULL;
         SgScopeStatement* loopStatement = NULL;
 
-        // printf ("buildWhileLoop = %s \n",buildWhileLoop ? "true" : "false");
         if (buildWhileLoop == true)
         {
             ROSE_ASSERT(indexExpression == NULL);
@@ -12121,14 +12092,10 @@ void c_action_label(Token_t * lbl)
             setSourcePosition(expressionStatement);
             resetSourcePosition(expressionStatement, predicate);
 
-            SgWhileStmt* whileStatement =
-            new SgWhileStmt(expressionStatement, body);
+            SgWhileStmt* whileStatement = new SgWhileStmt(expressionStatement, body);
 
             // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
             whileStatement->setCaseInsensitive(true);
-
-            // ROSE_ASSERT(body->get_parent() == whileStatement);
-            body->set_parent(whileStatement);
 
             // DQ (11/17/2007): Added support for numeric labels
             setStatementNumericLabel(whileStatement, label);
@@ -12137,7 +12104,24 @@ void c_action_label(Token_t * lbl)
             setStatementStringLabel(whileStatement, id);
 
             setStatementEndNumericLabel(whileStatement, digitString);
+
+            whileStatement->set_has_end_statement(true);
+
             loopStatement = whileStatement;
+        }
+        else if (buildDoConcurrentLoop == true)
+        {
+           ROSE_ASSERT(loopHeader != NULL);
+
+           SgForAllStatement* doConcurrent = new SgForAllStatement(loopHeader, body);
+           ROSE_ASSERT(doConcurrent != NULL);
+
+           doConcurrent->set_forall_statement_kind(SgForAllStatement::e_do_concurrent_statement);
+           doConcurrent->setCaseInsensitive(true);
+
+           // labels are all set below (I believe)
+
+           loopStatement = doConcurrent;
         }
         else
         {
@@ -12150,15 +12134,10 @@ void c_action_label(Token_t * lbl)
                 setSourcePosition(stride);
             }
 
-            // SgFortranDo* fortranDo = new SgFortranDo(index,startingIndex,endingIndex,stride,body);
-            SgFortranDo* fortranDo = new SgFortranDo(indexExpression, endingIndex,
-                    stride, body);
+            SgFortranDo* fortranDo = new SgFortranDo(indexExpression, endingIndex, stride, body);
 
             // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
             fortranDo->setCaseInsensitive(true);
-
-            // ROSE_ASSERT(body->get_parent() == fortranDo);
-            body->set_parent(fortranDo);
 
             // DQ (12/26/2007): This field is depricated in favor of the has_end_statement boolean field used uniformally in several IR nodes).
             // DQ (12/24/2007): Default to true and then if we see the c_action_end_do_stmt we can set it to false.
@@ -12224,7 +12203,6 @@ void c_action_label(Token_t * lbl)
      * @param id Identifier for do construct name, if present. Otherwise, null.
      * @param hasLoopControl True if there is a loop control.
      */
-// void c_action_label_do_stmt(Token_t * label, Token_t * id, ofp_bool hasLoopControl)
     void c_action_label_do_stmt(Token_t *label, Token_t *id, Token_t *doKeyword,
             Token_t *digitString, Token_t *eos, ofp_bool hasLoopControl)
     {
@@ -12246,12 +12224,8 @@ void c_action_label(Token_t * lbl)
      * @param hasOptExpr Flag specifying if optional expression was given.
      * This only applies for alternative 2 of the rule.
      */
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
     void c_action_loop_control(Token_t * whileKeyword, int doConstructType,
             ofp_bool hasOptExpr)
-#else
-    void c_action_loop_control(Token_t * whileKeyword, ofp_bool hasOptExpr)
-#endif
     {
         // This is the case of a "DO WHILE" (this rule communicates the "WHILE" part)
         // However, we trigger the construction of a SgWhileStmt IR node instead of a
@@ -12261,15 +12235,11 @@ void c_action_label(Token_t * lbl)
 
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         {
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 0
             printf(
                     "In c_action_loop_control(): whileKeyword = %p = %s doConstructType = %d hasOptExpr = %s \n",
                     whileKeyword,
                     whileKeyword != NULL ? whileKeyword->text : "NULL",
                     doConstructType, hasOptExpr ? "true" : "false");
-#else
-            printf ("In c_action_loop_control(): whileKeyword = %p = %s hasOptExpr = %s \n",whileKeyword,whileKeyword != NULL ? whileKeyword->text : "NULL",hasOptExpr ? "true" : "false");
-#endif
         }
     }
 
@@ -12279,7 +12249,6 @@ void c_action_label(Token_t * lbl)
      * do_variable is scalar-int-variable-name
      *
      */
-#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 2
     void c_action_do_variable(Token_t *id)
     {
         // This identifies the do loop index variable, but at this point it is on the astExpressionStack already.
@@ -12291,14 +12260,6 @@ void c_action_label(Token_t * lbl)
         // variable in the implied-do-control loop. This is also used in the c_action_do_stmt.
         astNameStack.push_front(id);
     }
-#else
-    void c_action_do_variable()
-    {
-        // This identifies the do loop index variable, but at this point it is on the astExpressionStack already.
-        if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-        printf ("In c_action_do_variable() \n");
-    }
-#endif
 
     /**
      * R833

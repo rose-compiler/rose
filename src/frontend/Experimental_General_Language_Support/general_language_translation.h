@@ -23,6 +23,8 @@ namespace General_Language_Translation
           e_storage_modifier_external,
           e_storage_modifier_static,
           e_storage_modifier_location,
+          e_storage_modifier_jovial_def,     /* SimpleDef or CompoundDef */
+          e_storage_modifier_jovial_ref,     /* SimpleRef or CompoundRef */
 
        // Type modifiers
        // --------------

@@ -505,6 +505,22 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
+               case V_SgTemplateTypedefDeclaration:
+                  {
+                    const SgTemplateTypedefDeclaration* decl = isSgTemplateTypedefDeclaration(statement);
+                    key = decl->get_mangled_name();
+                    additionalSuffix = "__template_typedef_declaration";
+                    break;
+                  }
+
+               case V_SgTemplateInstantiationTypedefDeclaration:
+                  {
+                    const SgTemplateInstantiationTypedefDeclaration* decl = isSgTemplateInstantiationTypedefDeclaration(statement);
+                    key = decl->get_mangled_name();
+                    additionalSuffix = "__template_typedef_instantiation";
+                    break;
+                  }
+
                case V_SgEnumDeclaration:
                   {
                  // additionalSuffix = "__enum_declaration";
@@ -1666,17 +1682,16 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                       // DQ (7/11/2010): In astFileIO test test-read-large we demonstrate an example of this case.
                          case SgTemplateArgument::template_template_argument:
+                         case SgTemplateArgument::start_of_pack_expansion_argument:
                             {
                            // This will make sure the IR node is unshared
                               key += StringUtility::numberToString(node);
 #if 1
-                              printf ("Warning: SgTemplateArgument::template_template_argument reached (not implemented yet) \n");
-#else
-                              printf ("Error: SgTemplateArgument::template_template_argument reached (not implemented yet) \n");
-                              ROSE_ASSERT(false);
+                              printf ("[SageInterface::generateUniqueName] Warning: SgTemplateArgument::template_template_argument or SgTemplateArgument::start_of_pack_expansion_argument reached (not implemented yet)\n");
 #endif
                               break;
                             }
+
 
                          default:
                             {

@@ -343,23 +343,16 @@ ConstantFoldedValueReplacer::operator()(SgNode*& key, const SgName & debugString
                               ROSE_ASSERT(keyExpression->get_originalExpressionTree() != NULL);
                               key = keyExpression->get_originalExpressionTree();
                               ROSE_ASSERT(key != NULL);
-
-                           // Set the parent node
-                              ROSE_ASSERT(keyExpression->get_originalExpressionTree() != NULL);
-                              keyExpression->get_originalExpressionTree()->set_parent(targetNode->get_parent());
+                              key->set_parent(targetNode->get_parent());
+                              keyExpression->set_originalExpressionTree(NULL);
 
                               SgExpression* targetExpression = isSgExpression(targetNode);
-
-                           // Clear the originalExpressionTree
-                              targetExpression->set_originalExpressionTree(NULL);
-                              ROSE_ASSERT(targetExpression->get_originalExpressionTree() == NULL);
-
-                              targetExpression->set_parent(NULL);
-
-                           // DQ (9/24/2011): This can be an expression tree (more than just a single IR node (see test2011_140.C).
-                           // delete targetNode;
-                              SageInterface::deleteAST(targetExpression);
-
+                              while (targetExpression != NULL) {
+                                targetExpression->set_parent(NULL);
+                                SgExpression * e = targetExpression;
+                                targetExpression = targetExpression->get_originalExpressionTree();
+                                SageInterface::deleteAST(e);
+                              }
                            // Reset the pointer to avoid any dangling pointer problems.
                               targetNode = NULL;
                             }
