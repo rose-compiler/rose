@@ -80,6 +80,7 @@ C_TESTCODES_REQUIRED_TO_PASS =			\
 
 # This is not ready
 #         variables_in_header.c
+# template_function1.cpp
 
 CXX_TESTCODES_REQUIRED_TO_PASS =		\
 	array2.cpp				\
