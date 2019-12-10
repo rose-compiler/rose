@@ -21,7 +21,7 @@
 #include <boost/unordered_map.hpp>
 #include <unordered_map>
 
-#include "Timer.h"
+#include "TimeMeasurement.h"
 #include "AstTerm.h"
 #include "Labeler.h"
 #include "CFAnalysis.h"
@@ -40,24 +40,32 @@
 
 #include "VariableIdMapping.h"
 #include "FunctionIdMapping.h"
+#include "FunctionCallMapping.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
 #include "AstNodeInfo.h"
 #include "SgTypeSizeMapping.h"
+#include "CallString.h"
 
 namespace CodeThorn {
 
-/*!
-  * \author Markus Schordan
-  * \date 2012.
- */
   typedef std::list<const EState*> EStateWorkList;
   typedef std::pair<int, const EState*> FailedAssertion;
   typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
-  /* not used */ enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
+  enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
 
   class SpotConnection;
+
+  struct hash_pair { 
+    template <class T1, class T2> 
+      size_t operator()(const pair<T1, T2>& p) const
+    { 
+      auto hash1 = hash<T1>{}(p.first); 
+      auto hash2 = hash<T2>{}(p.second); 
+      return hash1 ^ hash2; 
+    } 
+  }; 
 
   /*!
    * \author Markus Schordan
@@ -148,6 +156,7 @@ namespace CodeThorn {
     // access  functions for computed information
     VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
     FunctionIdMapping* getFunctionIdMapping() { return &functionIdMapping; }
+    FunctionCallMapping* getFunctionCallMapping() { return &functionCallMapping; }
     CTIOLabeler* getLabeler() const;
     Flow* getFlow() { return &flow; }
     PStateSet* getPStateSet() { return &pstateSet; }
@@ -262,8 +271,8 @@ namespace CodeThorn {
     void reduceStg(function<bool(const EState*)> predicate);
 
     void initializeSummaryStates(const PState* initialPStateStored, const ConstraintSet* emptycsetstored);
-    const CodeThorn::EState* getSummaryState(CodeThorn::Label lab);
-    void setSummaryState(CodeThorn::Label lab, CodeThorn::EState const* estate);
+    const CodeThorn::EState* getSummaryState(CodeThorn::Label lab, CallString cs);
+    void setSummaryState(CodeThorn::Label lab, CallString cs, CodeThorn::EState const* estate);
     std::string programPositionInfo(CodeThorn::Label);
 
     bool isApproximatedBy(const EState* es1, const EState* es2);
@@ -271,6 +280,13 @@ namespace CodeThorn {
 
     void setOptionOutputWarnings(bool flag);
     bool getOptionOutputWarnings();
+
+    // first: list of new states (worklist), second: set of found existing states
+    typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
+    SubSolverResultType subSolver(const EState* currentEStatePtr);
+    void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
+    bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
+
   protected:
     static Sawyer::Message::Facility logger;
     void printStatusMessage(string s, bool newLineFlag);
@@ -373,6 +389,7 @@ namespace CodeThorn {
     ExprAnalyzer exprAnalyzer;
     VariableIdMapping variableIdMapping;
     FunctionIdMapping functionIdMapping;
+    FunctionCallMapping functionCallMapping;
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
     EStateWorkList* estateWorkListCurrent;
     EStateWorkList* estateWorkListNext;
@@ -424,7 +441,7 @@ namespace CodeThorn {
 
     std::string _stg_trace_filename;
 
-    Timer _analysisTimer;
+    TimeMeasurement _analysisTimer;
     bool _timerRunning = false;
 
     std::vector<string> _commandLineOptions;
@@ -434,8 +451,17 @@ namespace CodeThorn {
     // *current* summary state (more than one may be created to allow
     // to represent multiple summary states in the transition system)
     size_t getSummaryStateMapSize();
+    const EState* getBottomSummaryState(Label lab, CallString cs);
+
+    size_t _prevStateSetSizeDisplay = 0;
+    size_t _prevStateSetSizeResource = 0;
+    bool isLTLRelevantEState(const EState* estate);
+
   private:
-    boost::unordered_map<int,const EState*> _summaryStateMap;
+    //std::unordered_map<int,const EState*> _summaryStateMap;
+    std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;
+    const CodeThorn::PState* _initialPStateStored=0;
+    const CodeThorn::ConstraintSet* _emptycsetstored=0;
   }; // end of class Analyzer
 } // end of namespace CodeThorn
 

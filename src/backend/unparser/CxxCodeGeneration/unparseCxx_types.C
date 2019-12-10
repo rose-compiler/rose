@@ -235,7 +235,8 @@ string get_type_name(SgType* t)
 #if 1
                printf ("In get_type_name(): case T_MEMBER_POINTER: I think this is not called here! \n");
                printf ("Exting as a test! \n");
-               ROSE_ASSERT(false);
+// Liao 10/16/2019. We do see code reaches this point now.            
+//               ROSE_ASSERT(false);
 #endif
 
                if ( (ftype = isSgMemberFunctionType(btype)) != NULL)

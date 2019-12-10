@@ -19,6 +19,13 @@ AM_LDFLAGS = $(ROSE_RPATHS)
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
+# Tests are disabled if SQLite3 is not installed since that's the only database driver they currently support.
+if ROSE_USE_SQLITE_DATABASE
+DISABLED =
+else
+DISABLED = no supported database driver
+endif
+
 ########################################################################################################################
 # Tests
 ########################################################################################################################
@@ -26,15 +33,54 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 #------------------------------------------------------------------------------------------------------------------------
 # Test concolic database operations
 
-# a) sample program to load and store in DB
+#
+# utilities and sample codes
+
+# a.1) sample program to load and store in DB
 noinst_PROGRAMS += sampleExecutable
 sampleExecutable_SOURCES = sampleExecutable.C
 sampleExecutable_LDADD =
 
-# a) test compiled programs
+# a.2) sample program to test the execution monitor
+noinst_PROGRAMS += test-execution-monitor
+test_execution_monitor_SOURCES = test-execution-monitor.C
+test_execution_monitor_LDADD =
+
+# a.3) simplest execution monitor to count unique instruction
+noinst_PROGRAMS += rose-execution-monitor-zero
+rose_execution_monitor_zero_SOURCES = rose-execution-monitor-zero.C
+rose_execution_monitor_zero_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+
+# a.4) test compiled programs.
 noinst_PROGRAMS += testConcolicDB
 testConcolicDB_SOURCES = testConcolicDB.C configDB.h
 testConcolicDB_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+
+# a.5) execution wrapper for perf to intercept signals
+#~ noinst_PROGRAMS += rose-perf-execution-wrapper
+#~ rose_perf_execution_wrapper_SOURCES = rose-perf-execution-wrapper.c
+#~ rose_perf_execution_wrapper_LDADD =
+
+# a.6) reads perf-report output and computes unique instruction count
+#~ AM_YFLAGS = -d -t
+
+#~ noinst_PROGRAMS += rose-perf-analyzer
+#~ rose_perf_analyzer_SOURCES = PerfOutputAnalyzer/parser.ypp PerfOutputAnalyzer/lexer.lpp \
+#~                              PerfOutputAnalyzer/analyzer.cpp 
+#~ rose_perf_analyzer_CPPFLAGS = $(ROSE_INCLUDES)
+#~ rose_perf_analyzer_LDFLAGS = $(ROSE_RPATHS)
+#~ rose_perf_analyzer_LDADD = $(ROSE_LIBS)
+
+# a.7) the script that organizes perf's execution
+
+#~ noinst_SCRIPTS = rose-execmon-linux-perf-intel-x86-64.sh
+
+#~ rose-execmon-linux-perf-intel-x86-64.sh: $(srcdir)/rose-execution-monitor-linux-perf-intel-x86_64.sh rose-perf-analyzer
+#~ 	cp $< $@
+#~ 	chmod u+x $@
+	
+#	
+# targets	
 
 TEST_TARGETS += testConcolicDB.passed
 
@@ -43,6 +89,7 @@ testConcolicDB.passed: $(srcdir)/concolicDB.conf testConcolicDB
 		TITLE="concolic database [$@]" \
 		CMD="./testConcolicDB" \
 		ANS="no" \
+		DISABLED="$(DISABLED)" \
 		$< $@
 
 # b) test various executions
@@ -54,6 +101,7 @@ testOpenDB.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 		TITLE="concolic database openDB [$@]" \
 		CMD="./crsh/crsh $(srcdir)/openDB.crsh" \
 		ANS="no" \
+		DISABLED="$(DISABLED)" \
 		$< $@
 	rm -f openDB.db
 
@@ -64,6 +112,7 @@ testDefineTests.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 		TITLE="concolic database defineTests [$@]" \
 		CMD="./crsh/crsh $(srcdir)/defineTests.crsh" \
 		ANS="no" \
+		DISABLED="$(DISABLED)" \
 		$< $@
 	rm -f defineTests.db
 
@@ -74,6 +123,7 @@ testRun1.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 		TITLE="concolic database run1 [$@]" \
 		CMD="./crsh/crsh $(srcdir)/run1.crsh" \
 		ANS="no" \
+		DISABLED="$(DISABLED)" \
 		$< $@
 	rm -f run1.db
 
@@ -85,6 +135,7 @@ testRun10.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 		TITLE="concolic database run10 [$@]" \
 		CMD="./crsh/crsh $(srcdir)/run10.crsh" \
 		ANS="no" \
+		DISABLED="$(DISABLED)" \
 		$< $@
 	rm -f run10.db
 
@@ -96,6 +147,7 @@ testDefineFail.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 		TITLE="concolic database defineFail [$@]" \
 		CMD="./crsh/crsh $(srcdir)/defineFail.crsh" \
 		ANS="no" \
+		DISABLED="$(DISABLED)" \
 		$< $@
 	rm -f defineFail.db
 
@@ -106,6 +158,7 @@ testCombined.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 		TITLE="concolic database combined [$@]" \
 		CMD="./crsh/crsh $(srcdir)/combined.crsh" \
 		ANS="no" \
+		DISABLED="$(DISABLED)" \
 		$< $@
 	rm -f combined.db
 
@@ -116,9 +169,40 @@ testExport.passed: $(srcdir)/defaultcrsh.conf crsh/crsh sampleExecutable
 		TITLE="concolic database testExport [$@]" \
 		CMD="./crsh/crsh $(srcdir)/testExport.crsh" \
 		ANS="no" \
+		DISABLED="$(DISABLED)" \
 		$< $@
 	rm -f testExport.db
 
+
+TEST_TARGETS += testAddressRandomization.passed
+
+testAddressRandomization.passed: $(srcdir)/defaultcrsh.conf crsh/crsh sampleExecutable
+	@$(RTH_RUN) \
+		TITLE="concolic database testAddressRandomization [$@]" \
+		CMD="./crsh/crsh $(srcdir)/testAddressRandomization.crsh" \
+		ANS="no" \
+		DISABLED="$(DISABLED)" \
+		$< $@
+
+TEST_TARGETS += testExecutionMonitor.passed
+
+testExecutionMonitor.passed: $(srcdir)/defaultcrsh.conf crsh/crsh rose-execution-monitor-zero sampleExecutable test-execution-monitor
+	@$(RTH_RUN) \
+		TITLE="concolic database testExecutionMonitor [$@]" \
+		CMD="./crsh/crsh $(srcdir)/testExecutionMonitor.crsh" \
+		ANS="no" \
+		DISABLED="$(DISABLED)" \
+		$< $@
+
+#~ TEST_TARGETS += testPerfExecutionMonitor.passed
+
+#~ testPerfExecutionMonitor.passed: $(srcdir)/defaultcrsh.conf crsh/crsh rose-execmon-linux-perf-intel-x86-64.sh sampleExecutable test-execution-monitor
+#~ 	@$(RTH_RUN) \
+#~ 		TITLE="concolic database testPerfExecutionMonitor [$@]" \
+#~ 		CMD="./crsh/crsh $(srcdir)/testPerfExecutionMonitor.crsh" \
+#~ 		ANS="no" \
+#~		DISABLED="$(DISABLED)" \
+#~ 		$< $@
 
 TEST_TARGETS += testConnectNonExisting.passed
 
@@ -127,6 +211,7 @@ testConnectNonExisting.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 		TITLE="concolic database testConnectNonExisting [$@]" \
 		CMD="./crsh/crsh $(srcdir)/testConnectNonExisting.crsh" \
 		ANS="no" \
+		DISABLED="$(DISABLED)" \
 		$< $@
 
 TEST_TARGETS += testCreateOverwrites.passed
@@ -136,6 +221,7 @@ testCreateOverwrites.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 		TITLE="concolic database testCreateOverwrites [$@]" \
 		CMD="./crsh/crsh $(srcdir)/testCreateOverwrites.crsh" \
 		ANS="no" \
+		DISABLED="$(DISABLED)" \
 		$< $@
 
 TEST_TARGETS += testConnect.passed
@@ -145,9 +231,8 @@ testConnect.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 		TITLE="concolic database testConnect [$@]" \
 		CMD="./crsh/crsh $(srcdir)/testConnect.crsh" \
 		ANS="no" \
+		DISABLED="$(DISABLED)" \
 		$< $@
-
-
 
 #------------------------------------------------------------------------------------------------------------------------
 # Test concolic executor
@@ -156,7 +241,8 @@ noinst_PROGRAMS += testConcolicExecutor
 testConcolicExecutor_SOURCES = testConcolicExecutor.C
 testConcolicExecutor_LDADD = $(ROSE_SEPARATE_LIBS)
 testConcolicExecutor_specimen = $(top_srcdir)/tests/nonsmoke/specimens/binary/concolic-specimen-01
-testConcolicExecutor_flags = --log 'Rose::BinaryAnalysis::Concolic(debug)'
+testConcolicExecutor_flags = --log 'Rose::BinaryAnalysis::Concolic(debug)' --database 'testConcolicExecutor-1.db'
+MOSTLYCLEANFILES += testConcolicExecutor-1.db
 
 TEST_TARGETS += testConcolicExecutor.passed
 
@@ -164,6 +250,7 @@ testConcolicExecutor.passed: $(TEST_EXIT_STATUS) testConcolicExecutor $(testConc
 	@$(RTH_RUN)												\
 	    TITLE="concolic executor [$@]"									\
 	    CMD="$$(pwd)/testConcolicExecutor $(testConcolicExecutor_flags) $(testConcolicExecutor_specimen)"	\
+	    DISABLED="$(DISABLED)"										\
 	    $< $@
 
 ###############################################################################################################################

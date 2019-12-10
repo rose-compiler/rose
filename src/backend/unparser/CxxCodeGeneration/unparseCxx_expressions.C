@@ -385,24 +385,6 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
         }
      curprint("] ");
 
-  // DQ (1/24/2016): Before the function is output, we want to support an experimental "__device__" keyword.
-  // Find the associated function where this SgLambdaExp is a function argument.  Note that it might be 
-  // better to support this as a transformation instead of directly in the unparser.  But then I would have
-  // to explicitly mark the lambdaExp.
-#if 1
-     bool lambaFunctionMarkedAsDevice = lambdaExp->get_is_device();
-     if (lambaFunctionMarkedAsDevice == true)
-        {
-#if 0
-          printf ("Use the __device__ keyword in the unparsed code \n");
-#endif
-          curprint(" __device__ ");
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
-#endif
-        }
-#endif
      SgFunctionDeclaration* lambdaFunction =  lambdaExp->get_lambda_function();
      ROSE_ASSERT(lambdaFunction != NULL);
      ROSE_ASSERT(lambdaFunction->get_firstNondefiningDeclaration() != NULL);
@@ -413,6 +395,16 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
      printf ("lambdaFunction->get_firstNondefiningDeclaration() = %p = %s \n",lambdaFunction->get_firstNondefiningDeclaration(),lambdaFunction->get_firstNondefiningDeclaration()->class_name().c_str());
      printf ("lambdaFunction->get_definingDeclaration()         = %p = %s \n",lambdaFunction->get_definingDeclaration(),lambdaFunction->get_definingDeclaration()->class_name().c_str());
 #endif
+
+     if (lambdaFunction->get_functionModifier().isCudaHost()) {
+       curprint("__host__ ");
+     }
+     if (lambdaFunction->get_functionModifier().isCudaKernel()) {
+       curprint("__global__ ");
+     }
+     if (lambdaFunction->get_functionModifier().isCudaDevice()) {
+       curprint("__device__ ");
+     }
 
      if (lambdaExp->get_has_parameter_decl() == true)
         {
@@ -446,7 +438,7 @@ Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& in
 
      if (lambdaExp->get_explicit_return_type() == true)
         {
-#if 0
+#if 1
           curprint(" -> ");
 #else
        // DQ (7/5/2018): Debugging test2018_120.C.
@@ -958,9 +950,18 @@ void SgTemplateArgument::outputTemplateArgument(bool & skip_unparsing, bool & st
   if (this->get_argumentType() == SgTemplateArgument::type_argument) {
     SgClassType * xtype = isSgClassType(this->get_type());
     if (xtype != NULL) {
+#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
+      printf ("   - xtype = %p (%s) = %s \n", xtype, xtype->class_name().c_str(), xtype->unparseToString().c_str());
+#endif
       SgDeclarationStatement * xdecl = xtype->get_declaration();
       ROSE_ASSERT(xdecl != NULL);
+#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
+      printf ("   - xdecl = %p (%s)\n", xdecl, xdecl->class_name().c_str());
+#endif
       SgNode * pnode = xdecl->get_parent();
+#if DEBUG_OUTPUT_TEMPLATE_ARGUMENT
+      printf ("   - pnode = %p (%s)\n", pnode, pnode ? pnode->class_name().c_str() : "");
+#endif
       SgLambdaExp * lambda_exp = isSgLambdaExp(pnode);
       if (lambda_exp != NULL) {
         isAssociatedWithLambdaExp = true;
@@ -1061,10 +1062,19 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
           SgTemplateArgument * tplarg = *copy_iter;
           ROSE_ASSERT(tplarg != NULL);
 
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+          printf (" - tplarg = %s\n", tplarg->unparseToString().c_str());
+#endif
+
        // DQ (2/11/2019): Use simpler version of code now that logic has been refactored.
           bool skipTemplateArgument = false;
           bool stopTemplateArgument = false;
           tplarg->outputTemplateArgument(skipTemplateArgument, stopTemplateArgument);
+
+#if DEBUG_TEMPLATE_ARGUMENT_LIST
+          printf (" - skipTemplateArgument = %d\n", skipTemplateArgument);
+          printf (" - stopTemplateArgument = %d\n", stopTemplateArgument);
+#endif
 
           if (stopTemplateArgument) {
             break;
@@ -6145,6 +6155,9 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                  // check if the expression that we are casting is not a string
 
                  // DQ (7/26/2013): This should also be true (all of the source position info should be consistant).
+                    if (cast_op->get_file_info()->isCompilerGenerated()) {
+                      printf("[Unparse_ExprStmt::unparseCastOp] Fatal: cast_op->get_file_info()->isCompilerGenerated() but !cast_op->get_startOfConstruct()->isCompilerGenerated().\n");
+                    }
                     ROSE_ASSERT(cast_op->get_file_info()->isCompilerGenerated() == false);
 
                  // DQ (7/31/2013): This appears to happen for at least one test in projects/arrayOptimization.
@@ -6207,6 +6220,7 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                     curprint("/* case SgCastExp::e_C_style_cast: compiler generated cast not output */");
 #endif
                  // DQ (7/26/2013): This should also be true (all of the source position info should be consistant).
+                 //     -> FAILS when merging ASTs read from files (cast of a template parameter used as template argument of the parent class)
                     ROSE_ASSERT(cast_op->get_file_info()->isCompilerGenerated() == true);
                     ROSE_ASSERT(cast_op->get_endOfConstruct()->isCompilerGenerated() == true);
                   }
@@ -8192,7 +8206,17 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                   {
 #if DEBUG_CONSTRUCTOR_INITIALIZER
                     printf ("Found a SgInitializer, so don't output parenthesis due to unp->u_sage->printConstructorName(con_init) == true \n");
+                    printf ("expressionList->get_expressions().size() = %zu \n",expressionList->get_expressions().size());
 #endif
+
+                 // DQ (12/7/2019): If there are multiple arguments, then we need the parenthesis (see test2019_489.C).
+                    if (expressionList->get_expressions().size() >= 2)
+                       {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+                         printf ("Set outputParenthisis = true \n");
+#endif
+                         outputParenthisis = true;
+                       }
                   }
              }
         }
@@ -8206,6 +8230,11 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #endif
           outputParenthisis = false;
         }
+
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+     printf ("Output the opening parenthisis: con_init = %p \n",con_init);
+     curprint(string(" /* output the opening parenthisis: con_init = ") + StringUtility::numberToString(con_init) + " */ ");
+#endif
 
   // DQ (4/1/2005): sometimes con_init->get_args() is NULL (as in test2005_42.C)
      if (outputParenthisis == true)
@@ -8255,6 +8284,13 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                curprint("(");
              }
         }
+       else
+        {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+          printf ("Skip the output of the opening parenthisis: con_init = %p \n",con_init);
+          curprint(string(" /* Skip the output of the opening parenthisis: con_init = ") + StringUtility::numberToString(con_init) + " */ ");
+#endif
+        }
 
 #if DEBUG_CONSTRUCTOR_INITIALIZER
      printf ("output constructor arguments \n");
@@ -8278,6 +8314,10 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
           printf ("output each arg \n");
 #endif
 
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+          printf ("### current_constructor_initializer_is_for_initialization_list_member_function = %s \n",current_constructor_initializer_is_for_initialization_list_member_function ? "true" : "false");
+#endif
+
        // DQ (2/7/2016): The output of the arguments is also special when using the C++11 initializer list syntax.
        // unparseExpression(con_init->get_args(), newinfo);
           if (current_constructor_initializer_is_for_initialization_list_member_function == true)
@@ -8291,13 +8331,25 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
              }
             else
              {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+               printf ("Calling unparseExpression(): con_init = %p number of args = %zu \n",con_init,con_init->get_args()->get_expressions().size());
+#endif
                unparseExpression(con_init->get_args(), newinfo);
+
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+               printf ("DONE: Calling unparseExpression(): con_init = %p number of args = %zu \n",con_init,con_init->get_args()->get_expressions().size());
+#endif
              }
 
        // DQ (3/17/2005): Remove the parenthesis if we don't output the constructor name
        // if (con_init->get_is_explicit_cast() == true)
        //      curprint ( ")";
         }
+
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+     printf ("Output the closing parenthisis: con_init = %p \n",con_init);
+     curprint(string(" /* output the closing parenthisis: con_init = ") + StringUtility::numberToString(con_init) + " */ ");
+#endif
 
      if (outputParenthisis == true)
         {
@@ -8321,6 +8373,13 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
              {
                curprint(")");
              }
+        }
+       else
+        {
+#if DEBUG_CONSTRUCTOR_INITIALIZER
+          printf ("Skip the output of the closing parenthisis: con_init = %p \n",con_init);
+          curprint(string(" /* Skip the output of the closing parenthisis: con_init = ") + StringUtility::numberToString(con_init) + " */ ");
+#endif
         }
 
 #if 0

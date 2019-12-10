@@ -140,12 +140,12 @@ void Solver5::run() {
                   // performing merge
 #pragma omp critical(SUMMARY_STATES_MAP)
                   {
-                    const EState* summaryEState=_analyzer->getSummaryState(newEStatePtr->label());
+                    const EState* summaryEState=_analyzer->getSummaryState(newEStatePtr->label(),newEStatePtr->callString);
                     if(_analyzer->isApproximatedBy(newEStatePtr,summaryEState)) {
                       // this is not a memory leak. newEStatePtr is
                       // stored in EStateSet and will be collected
-                      // later. It may be an existing estate already
-                      // used in the state graph.
+                      // later. It may be already used in the state
+                      // graph as an existing estate.
                       newEStatePtr=summaryEState; 
                     } else {
                       EState newEState2=_analyzer->combine(summaryEState,const_cast<EState*>(newEStatePtr));
@@ -158,7 +158,7 @@ void Solver5::run() {
                         // nothing to do, EState already exists
                       }
                       ROSE_ASSERT(newEStatePtr);
-                      _analyzer->setSummaryState(newEStatePtr->label(),newEStatePtr);
+                      _analyzer->setSummaryState(newEStatePtr->label(),newEStatePtr->callString,newEStatePtr);
                     }
                   }
                   _analyzer->addToWorkList(newEStatePtr);  
@@ -237,7 +237,7 @@ void Solver5::run() {
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),tmpcomplete);
     _analyzer->printStatusMessage(true);
     _analyzer->transitionGraph.setIsComplete(tmpcomplete);
-    cout<< "analysis finished (worklist is empty)."<<endl;
+    cout<< "STATUS: analysis finished (worklist is empty)."<<endl;
   }
   _analyzer->transitionGraph.setIsPrecise(_analyzer->isPrecise());
 }

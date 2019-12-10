@@ -90,6 +90,9 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
    bool has_type_name = ut_table_def->get_has_type_name();
    bool has_base_type = (has_type_name == false && has_body == false);
 
+// TODO - need to find whether e_jovial_table or e_jovial_block
+   SgClassDeclaration::class_types struct_kind = SgClassDeclaration::e_jovial_table;
+
    SgType* sg_base_type = NULL;
    SgUntypedType* ut_base_type  = ut_table_def->get_base_type();
    if (has_base_type)
@@ -106,21 +109,33 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
       cout << "-x- has_type_name " << has_type_name << endl;
       cout << "-x- has_body " << has_body << endl;
       cout << "-x- has_base_type " << has_base_type << endl;
+      cout << "-x- structure type enum " << ut_struct->get_statement_enum() << endl;
 
       if (has_base_type) cout << "-x- ut_base_type " << ut_base_type << " : " << ut_base_type->class_name() << endl;
       if (has_base_type) cout << "-x- sg_base_type " << sg_base_type << " : " << sg_base_type->class_name() << endl;
+
+      cout << "-x-         modifier list is " << ut_table_def->get_modifiers() << endl;
+      ROSE_ASSERT(ut_table_def->get_modifiers() != NULL);
       cout << "-x- size of modifier list is " << ut_table_def->get_modifiers()->get_expressions().size() << endl;
 
       cout << "..........\n\n";
-      cout << "-x- creating SgClassDeclaration (or is this a variable) for name " << type_name << endl;
+      cout << "-x- creating SgClassDeclaration for name " << type_name << endl;
 #endif
 
    // This function builds a class declaration and definition with both the defining and nondefining declarations as required
-      SgJovialTableStatement * table_decl = SageBuilder::buildJovialTableStatement(type_name, scope);
+      SgJovialTableStatement * table_decl = SageBuilder::buildJovialTableStatement(type_name, struct_kind, scope);
       ROSE_ASSERT(table_decl);
       setSourcePositionFrom(table_decl, ut_struct);
 
-      cout << "-x- created SgClassDeclaration " << table_decl << endl;
+      int struct_type = ut_struct->get_statement_enum();
+      if (struct_type == Jovial_ROSE_Translation::e_block_type_declaration)
+         {
+            table_decl->set_class_type(SgClassDeclaration::e_jovial_block);
+         }
+      else if (struct_type == Jovial_ROSE_Translation::e_table_type_declaration)
+         {
+            table_decl->set_class_type(SgClassDeclaration::e_jovial_table);
+         }
 
       SgType* sg_type = table_decl->get_type();
       ROSE_ASSERT(sg_type);
@@ -141,14 +156,16 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
    // A Jovial table may have array dimensions, set this information in the type
 
 // delete this when possible after ROSETTA change (also delete in Fortran; or delete in parent destructor???)
-//    SgExprListExp* shape = convertSgUntypedExprListExpression(ut_struct->get_dim_info(),/*delete*/true);
-      SgExprListExp* shape = convertSgUntypedExprListExpression(ut_struct->get_dim_info(),/*delete*/false);
+//    SgExprListExp* shape = convertUntypedExprListExpression(ut_struct->get_dim_info(),/*delete*/true);
+      SgExprListExp* shape = convertUntypedExprListExpression(ut_struct->get_dim_info(),/*delete*/false);
       ROSE_ASSERT(shape);
 
       sg_table_type->set_dim_info(shape);
       sg_table_type->set_rank(shape->get_expressions().size());
 
+#if 0
       cout << "-x- has rank " << sg_table_type->get_rank() << endl;
+#endif
 
       if (ut_table_def->get_modifiers()->get_expressions().size() > 0)
          {
@@ -171,7 +188,7 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
 
             else if (words_per_entry->get_expression_enum() == Jovial_ROSE_Translation::e_words_per_entry_w)
                {
-                  SgExprListExp* sg_expr_list = convertSgUntypedExprListExpression(ut_table_def->get_modifiers(),/*delete*/false);
+                  SgExprListExp* sg_expr_list = convertUntypedExprListExpression(ut_table_def->get_modifiers(),/*delete*/false);
                   ROSE_ASSERT(sg_expr_list);
                   ROSE_ASSERT(sg_expr_list->get_expressions().size() == 1);
 
@@ -184,6 +201,7 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
       ROSE_ASSERT(table_def);
 
 // If there is a (base class) type name, a base class for inheritance needs to be created
+#if 0
    if (has_type_name)
       {
          std::string base_type_name = ut_table_def->get_type_name();
@@ -206,6 +224,7 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
          SgBaseClass* base_class = SageBuilder::buildBaseClass(base_class_decl, table_def, /*isVirtual*/false, /*isDirect*/true);
          ROSE_ASSERT(base_class);
       }
+#endif
 
    // Jovial is insensitive to case
    // TODO: src/midend/astDiagnostics/AstConsistencyTests.C, line 6406
@@ -215,28 +234,15 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
       SgScopeStatement* table_scope = table_def->get_scope();
       ROSE_ASSERT(table_scope);
 
-#if 1
-   // How to decide?  THIS IS NOT A VARIABLE DECLARATION!!!
-      cout << "--- TABLE: skipping variable declaration \n";
-      SageInterface::appendStatement(table_decl, scope);
-#else
-
-   // TODO: Need to create a variable for (possibly) anonymous type
-   // TODO: First make sure this isn't just a type declaration
-      SgVariableDeclaration* var_decl = SageBuilder::buildVariableDeclaration(type_name, table_type, NULL, scope);
-
-      SageInterface::setBaseTypeDefiningDeclaration(var_decl, table_decl);
-
-   // The type or variable declaration should be added (NEED TO DECIDE WHICH)
-   // SageInterface::appendStatement(table_decl, scope);
-      SageInterface::appendStatement(var_decl, scope);
-#endif
-
    // delete untyped structure members that aren't traversed
    //
       if (ut_table_def->get_modifiers()) delete ut_table_def->get_modifiers(); ut_table_def->set_modifiers(NULL);
 
-   // The table description (SgUntypedStructureDefinition) will be traversed and table items added to the table_scope
+      SageInterface::appendStatement(table_decl, scope);
+
+   // The table description (SgUntypedStructureDefinition) will be traversed and the table items
+   // need to be added to the table_scope.  Pushing the table definition allows the members
+   // to be added to the correct scope.
       SageBuilder::pushScopeStack(table_def);
 
 #if 0
@@ -251,6 +257,113 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
 #endif
 
       return table_decl;
+}
+
+// This has been cleaned up for Jovial (when finished it should be moved to UntypedConverter for Fortran)
+//
+SgVariableDeclaration* UntypedJovialConverter::
+convertUntypedVariableDeclaration (SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope)
+{
+   ROSE_ASSERT(ut_decl != NULL);
+   ROSE_ASSERT(scope   != NULL);
+
+   ROSE_ASSERT(scope->variantT() == V_SgBasicBlock || scope->variantT() == V_SgClassDefinition
+            || scope->variantT() == V_SgGlobal);  // global scope used for Jovial
+
+   SgUntypedType* ut_type = ut_decl->get_type();
+   ROSE_ASSERT(ut_type != NULL);
+
+   SgType* sg_type = convertUntypedType(ut_type, scope);
+   ROSE_ASSERT(sg_type != NULL);
+
+// There will be only one variable for Jovial
+   SgUntypedInitializedNamePtrList ut_vars = ut_decl->get_variables()->get_name_list();
+   SgUntypedInitializedName*  ut_init_name = ut_vars[0];
+
+   SgName var_name = ut_init_name->get_name();
+   SgInitializer* sg_initializer = convertUntypedInitializerOnly(ut_init_name);
+
+// The scope specifies the scope for the variable (SgInitializedName) not the variable declaration.
+   SgVariableDeclaration* sg_decl = SageBuilder::buildVariableDeclaration_nfi(var_name, sg_type, sg_initializer, scope);
+   ROSE_ASSERT(sg_decl != NULL);
+   setSourcePositionFrom(sg_decl, ut_decl);
+
+   setDeclarationModifiers(sg_decl, ut_decl->get_modifiers());
+
+#if 0
+   cout << "\n--- convertUntypedVariableDeclaration: JOVIAL converter subclass \n";
+   cout << "-x- convertUntypedVariableDeclaration:  ut_type enum is " << ut_type->get_type_enum_id() << ": e_table is " << SgUntypedType::e_table << endl;
+   cout << "--- convertUntypedVariableDeclaration: var name is " << ut_init_name->get_name() << endl;
+   cout << "--- convertUntypedVariableDeclaration: has init is " << ut_init_name->get_has_initializer() << endl;
+   cout << "--- convertUntypedVariableDeclaration:    initr is " << sg_initializer << endl;
+   cout << "--- convertUntypedVariableDeclaration:  ut_decl is " << ut_decl << ": " << ut_decl->class_name() << endl;
+   cout << "--- convertUntypedVariableDeclaration:  ut_type is " << ut_type << ": " << ut_type->class_name() << endl;
+   cout << "--- convertUntypedVariableDeclaration:  sg_type is " << sg_type << ": " << sg_type->class_name() << endl;
+#endif
+
+   SageInterface::appendStatement(sg_decl, scope);
+   convertLabel(ut_decl, sg_decl, scope);
+
+   return sg_decl;
+}
+
+// This function is traversed on the way back up the tree, therefore many member variables of the untyped nodes will
+// have been deleted and will not be available.  Thus the requirement for var_name, ...
+SgVariableDeclaration* UntypedJovialConverter::
+convertUntypedVariableDeclaration(SgUntypedVariableDeclaration* ut_decl, SgScopeStatement* scope,
+                                  std::string base_type_name, std::string var_name, SgInitializer* var_initializer)
+{
+   // 1. This is an anonymous type declaration, there should be a type in the symbol table, look it up
+   // 2. Get the declaration from the type
+   // 3. Convert the untyped variable decl using the base type declaration
+
+   SgClassSymbol* class_symbol = SageInterface::lookupClassSymbolInParentScopes(base_type_name, scope);
+   ROSE_ASSERT(class_symbol != NULL);
+
+   SgClassDeclaration* nondef_decl = class_symbol->get_declaration();
+   ROSE_ASSERT(nondef_decl != NULL);
+
+   SgDeclarationStatement* def_decl = nondef_decl->get_definingDeclaration();
+   ROSE_ASSERT(def_decl != NULL);
+
+   SgType* class_type = class_symbol->get_type();
+   ROSE_ASSERT(class_type != NULL);
+
+// The defining declaration of the anonymous struct for the variable has been created while traversing down the tree.
+// It should be removed and transfered to the variable declaration as the baseTypeDefiningDeclaration.
+   SageInterface::removeStatement(def_decl);
+
+// The scope specifies the scope for the variable (SgInitializedName) not the variable declaration.
+// TODO - figure out why the proper scope isn't on the stack, I think the current scope is the scope of the def_decl not its scope
+
+   SgScopeStatement* def_decl_scope = def_decl->get_scope();
+
+   SgVariableDeclaration* sg_decl = SageBuilder::buildVariableDeclaration_nfi(var_name, class_type, var_initializer, def_decl_scope);
+   ROSE_ASSERT(sg_decl != NULL);
+   setSourcePositionFrom(sg_decl, ut_decl);
+
+   sg_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
+   sg_decl->set_baseTypeDefiningDeclaration(def_decl);
+   def_decl->set_parent(sg_decl);
+   nondef_decl->set_parent(sg_decl);
+
+#if 0
+   cout << "\n-x- UntypedJovialConverter::convertUntypedVariableDeclaration (with base_type_name): IMPLEMENTING for " << base_type_name << endl;
+   cout << "--- found class symbol is " << class_symbol << ": " << class_symbol->class_name() << endl;
+   cout << "--- found nondef_decl is " << nondef_decl << ": " << nondef_decl->class_name() << endl;
+   cout << "--- found def_decl is " << def_decl << ": " << def_decl->class_name() << endl;
+   cout << "--- found class_type is " << class_type << ": " << class_type->class_name() << endl << endl;
+   cout << "--- removing def_decl is " << def_decl << ": " << def_decl->class_name() << endl << endl;
+   cout << "--- convertUntypedVariableDeclaration(up): probably a scope issue " << def_decl_scope << ": " << def_decl_scope->class_name() << endl;
+   cout << "--- convertUntypedVariableDeclaration(up): top of scope stack is " << SageBuilder::topScopeStack() << ": " << SageBuilder::topScopeStack()->class_name() << endl;
+   cout << "--- setting def_decl is " << def_decl << ": " << def_decl->class_name() << endl;
+   cout << "--- convertUntypedVariableDeclaration(up): var_name is " << var_name << endl;
+   cout << "--- convertUntypedVariableDeclaration(up): sg_decl is " << sg_decl << ": " << sg_decl->class_name() << endl;
+#endif
+
+   SageInterface::appendStatement(sg_decl, def_decl_scope);
+
+   return NULL;
 }
 
 SgStatement*

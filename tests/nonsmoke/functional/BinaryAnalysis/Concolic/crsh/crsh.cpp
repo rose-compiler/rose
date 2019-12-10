@@ -3,6 +3,8 @@
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
+#include <boost/lexical_cast.hpp>
+
 
 #if defined(__linux__)
   #include <unistd.h>
@@ -38,7 +40,9 @@ namespace bstfs = boost::filesystem;
 
 // stealing from LinuxExecutor.C
 namespace Rose { namespace BinaryAnalysis { namespace Concolic {
-  int executeBinary( const std::string& binary,
+  int executeBinary( const std::string& execmon,
+                     const std::vector<std::string>& execmonargs,
+                     const std::string& binary,
                      const std::string& logout,
                      const std::string& logerr,
                      LinuxExecutor::Persona persona,
@@ -54,31 +58,174 @@ namespace Rose { namespace BinaryAnalysis { namespace Concolic {
 
 struct InvocationDesc
 {
-  std::string specimen;
-  Arguments   arguments;
+  Crsh::annotation_desc notes;
+  std::string           specimen;
+  Arguments             arguments;
 
-  InvocationDesc(const std::string& sp, const Arguments& args)
-  : specimen(sp), arguments(args)
+  InvocationDesc(Crsh::annotation_desc usrnotes, const std::string& sp, const Arguments& args)
+  : notes(usrnotes), specimen(sp), arguments(args)
   {}
 };
 
-//
-// auxiliary functions
 
-std::string str(Crsh::expectation expct)
+//
+// Annotation handling
+
+std::string str(int val)
 {
+  if (val == Crsh::none) return "none";
+
   std::string res;
 
-  switch (expct)
+  if (val & Crsh::expect_success)   res += "success, ";
+  if (val & Crsh::expect_failure)   res += "failure, ";
+  if (val & Crsh::reuse_unique)     res += "unique, ";
+  if (val & Crsh::reuse_duplicate)  res += "duplicate, ";
+  if (val & Crsh::addr_randomize)   res += "ASLR, ";
+  if (val & Crsh::addr_norandomize) res += "noASLR, ";
+
+  ROSE_ASSERT(res.size() > 2);
+  return res.substr(0, res.size()-2);
+}
+
+Crsh::annotation_desc&
+operator|=(Crsh::annotation_desc& lhs, Crsh::annotation_desc rhs)
+{
+  lhs = static_cast<Crsh::annotation_desc>(lhs | rhs);
+  return lhs;
+}
+
+Crsh::annotation_desc
+operator|(Crsh::annotation_desc lhs, Crsh::annotation_desc rhs)
+{
+  return lhs |= rhs;
+}
+
+
+struct AnnotationHandler
+{
+    explicit
+    AnnotationHandler(std::vector<std::string>& unhandled_notes)
+    : unhandled(unhandled_notes), res(Crsh::none)
+    {}
+
+    void operator()(const std::string& note)
+    {
+      if      ("success"      == note) res |= Crsh::expect_success;
+      else if ("failure"      == note) res |= Crsh::expect_failure;
+      else if ("unique"       == note) res |= Crsh::reuse_unique;
+      else if ("duplicate"    == note) res |= Crsh::reuse_duplicate;
+      else if ("ASLR"         == note) res |= Crsh::addr_randomize;
+      else if ("noASLR"       == note) res |= Crsh::addr_norandomize;
+      else                             unhandled.push_back(note);
+    }
+
+    operator Crsh::annotation_desc() const { return res; }
+
+  private:
+    std::vector<std::string>& unhandled;
+    Crsh::annotation_desc     res;
+};
+
+Crsh::annotation_desc
+convAnnotations(Annotations* annotations, Crsh::annotation_desc enabled, std::vector<std::string>& unhandled)
+{
+  ASSERT_not_null(annotations);
+
+  return std::for_each( annotations->begin(), annotations->end(), AnnotationHandler(unhandled));
+}
+
+Crsh::annotation_desc
+convAnnotations(Annotations* annotations, Crsh::annotation_desc enabled = Crsh::all)
+{
+  std::vector<std::string> unhandled;
+  Crsh::annotation_desc    res = convAnnotations(annotations, enabled, unhandled);
+
+  if (unhandled.size())
   {
-    case Crsh::none:    res = "none";    break;
-    case Crsh::success: res = "success"; break;
-    case Crsh::failure: res = "failure"; break;
-    default: ROSE_ASSERT(false);
+    std::string err = "unknown annotations: ";
+
+    for (size_t i = 0; i < unhandled.size(); ++i) err += unhandled.at(i);
+
+    throw std::runtime_error(err);
   }
 
   return res;
 }
+
+#ifdef __GNUC__
+
+  static inline
+  size_t bitcount32(size_t n)
+  {
+    return __builtin_popcount(n);
+  }
+
+#else /* __GNUC__ */
+  #define BITCOUNT32(x) (((BX_(x)+(BX_(x)>>4)) & 0x0F0F0F0F) % 255)
+  #define BX_(x) ((x) - (((x)>>1)&0x77777777) - (((x)>>2)&0x33333333) - (((x)>>3)&0x11111111))
+
+  /// \brief  returns the number of bits set in an integer
+  /// \param  bnr size_t the integer value
+  /// \return the number of bits set in bnr
+  static inline
+  size_t bitcount32(size_t n)
+  {
+    return BITCOUNT32(n);
+  }
+
+  #undef BITCOUNT32
+  #undef BX_
+#endif /* __GNUC */
+
+
+inline
+void checkBitcount(unsigned int x)
+{
+  if (bitcount32(x) > 1)
+    throw std::runtime_error("conflicting options");
+}
+
+
+inline
+Crsh::annotation_desc subset( Crsh::annotation_desc notes,
+                              Crsh::annotation_desc group,
+                              Crsh::annotation_desc defaultvalue
+                            )
+{
+  Crsh::annotation_desc res = static_cast<Crsh::annotation_desc>(notes & group);
+
+  if (res == Crsh::none)
+    res = defaultvalue;
+  else
+    checkBitcount(res);
+
+  return res;
+}
+
+inline
+Crsh::annotation_desc
+expect(Crsh::annotation_desc notes)
+{
+  return subset(notes, Crsh::expect_all, Crsh::expect_default);
+}
+
+inline
+Crsh::annotation_desc
+reuse(Crsh::annotation_desc notes)
+{
+  return subset(notes, Crsh::reuse_all, Crsh::reuse_default);
+}
+
+inline
+Crsh::annotation_desc
+randomize_address_space(Crsh::annotation_desc notes)
+{
+  return subset(notes, Crsh::addr_randomize_all, Crsh::addr_randomize_default);
+}
+
+//
+// auxiliary functions
 
 std::ostream& operator<<(std::ostream& os, Crsh::TestCase& test)
 {
@@ -106,30 +253,12 @@ rtrim(const std::string& str, const std::string& chars = "\t\n\v\f\r ")
 static inline
 std::string conv(const char* str)
 {
+  ASSERT_not_null(str);
+
   std::string res(str);
 
   free(const_cast<char*>(str));
   return res;
-}
-
-template <class T>
-static
-typename T::Ptr
-byName( Crsh::Database::Ptr& db,
-        const std::string& s,
-        Rose::BinaryAnalysis::Concolic::ObjectId<T> id,
-        bool createMissingEntry = true
-      )
-{
-  if (id) return db->object(id);
-
-  if (!createMissingEntry) return typename T::Ptr();
-
-  // if not in the database already, create it from a file
-  typename T::Ptr obj = T::instance(s);
-
-  db->id(obj);
-  return obj;
 }
 
 //
@@ -245,10 +374,11 @@ void Crsh::closedb()
   db = Sawyer::Nothing();
 }
 
-void Crsh::connectdb(const char* dburl, expectation exp)
+void Crsh::connectdb(Annotations* usrnotes, const char* dburl)
 {
-  std::string url   = conv(dburl);
-  expectation state = success;
+  std::string url       = conv(dburl);
+  annotation_desc exp   = convAnnotations(usrnotes, expect_all);
+  int             state = execute_success;
 
   try
   {
@@ -256,16 +386,16 @@ void Crsh::connectdb(const char* dburl, expectation exp)
   }
   catch (...)
   {
-    state = failure;
+    state = execute_failure;
   }
 
-  if ((exp != none) && (exp != state))
+  if ((expect(exp) != none) && (expect(exp) != state))
   {
     err() << "error when connecting to database: " << url << '\n'
           << "  exited with " << str(state) << ", expected " << str(exp)
           << std::endl;
 
-    exit(1);
+    throw std::runtime_error("error connecting to DB");
   }
 }
 
@@ -285,7 +415,7 @@ void Crsh::createdb(const char* dburl, const char* testsuite)
 Crsh::TestSuite::Ptr
 Crsh::testSuite(const std::string& s, bool createMissingEntry)
 {
-  return byName(db, s, db->testSuite(s), createMissingEntry);
+    return db->findTestSuite(s);
 }
 
 Crsh::EnvValue*
@@ -306,43 +436,6 @@ Crsh::environment(Environment* env, const EnvValue* val) const
   return enlist(env, val);
 }
 
-
-std::string*
-Crsh::arg(const char* argument) const
-{
-  std::string tmp = conv(argument);
-
-  return new std::string(tmp);
-}
-
-/*
-void Crsh::echo_var(const char* id)
-{
-  std::string varid = conv(id);
-
-  if ("concolicdb" == varid)
-    Rose::BinaryAnalysis::Concolic::writeDBSchema(out());
-  else if ("concolicsql" == varid)
-    Rose::BinaryAnalysis::Concolic::writeSqlStmts(out());
-  else
-    out() << "unknown variable";
-
-  out() << std::endl;
-}
-*/
-
-Crsh::expectation
-Crsh::annotate(const char* expect)
-{
-  std::string note = conv(expect);
-
-  if ("success" == note) return success;
-  if ("failure" == note) return failure;
-
-  std::cerr << "unexpected note: " << note << std::endl;
-  exit(1);
-}
-
 char* Crsh::unquoteString(const char* str)
 {
   size_t len   = strlen(str)-1;
@@ -356,6 +449,21 @@ char* Crsh::unquoteString(const char* str)
   return clone;
 }
 
+std::string*
+Crsh::arg(const char* argument) const
+{
+  std::string tmp = conv(argument);
+
+  return new std::string(tmp);
+}
+
+std::string*
+Crsh::arg(int argument) const
+{
+  return new std::string(boost::lexical_cast<std::string>(argument));
+}
+
+
 Arguments*
 Crsh::args() const
 {
@@ -368,14 +476,44 @@ Crsh::args(Arguments* arglst, const std::string* argument) const
   return enlist(arglst, argument);
 }
 
-InvocationDesc*
-Crsh::invoke(const char* specimen, Arguments* args) const
+
+std::string*
+Crsh::annotation(const char* argument) const
 {
-  std::string              specimenname = conv(specimen);
+  std::string tmp = conv(argument);
+
+  return new std::string(tmp);
+}
+
+
+Annotations*
+Crsh::annotations() const
+{
+  return new Annotations();
+}
+
+Annotations*
+Crsh::annotations(Annotations* annotations, const std::string* note) const
+{
+  return enlist(annotations, note);
+}
+
+
+InvocationDesc*
+Crsh::invoke(Annotations* notes, const char* specimen, Arguments* args) const
+{
   std::auto_ptr<Arguments> arguments(args);
+  std::string              specimenname = conv(specimen);
+  annotation_desc          annotations  = convAnnotations(notes, reuse_all);
 
   specimenname = findExecutable(bstfs::path(specimenname)).native();
-  return new InvocationDesc(specimenname, *args);
+  return new InvocationDesc(annotations, specimenname, *arguments.get());
+}
+
+void
+Crsh::setMonitor(const char* str)
+{
+  execmon = conv(str);
 }
 
 template <class T>
@@ -387,81 +525,137 @@ std::vector<T> mkVector(const std::list<T>& lst)
 
 
 void
-Crsh::test(const char* ts, const char* tst, expectation exp, Environment* env, InvocationDesc* inv)
+Crsh::test(const char* ts, const char* tst, Annotations* usrnotes, Environment* env, InvocationDesc* inv)
 {
-  std::string                   suitename = conv(ts);
-  std::string                   testname  = conv(tst);
   std::auto_ptr<Environment>    envguard(env);
   std::auto_ptr<InvocationDesc> invguard(inv);
-  expectation                   state = success;
+  std::string                   suitename = conv(ts);
+  std::string                   testname  = conv(tst);
+  annotation_desc               expct     = convAnnotations(usrnotes, expect_all);
+  int                           state     = execute_success;
   std::string                   failureMessage;
 
   try
   {
     // get the object for the specimen's name
-    Specimen::Ptr               specobj = specimen(inv->specimen);
-    TestCase::Ptr               test    = TestCase::instance(specobj);
+    Specimen::Ptr               specObj   = specimen(inv->specimen, reuse(inv->notes));
+    TestCase::Ptr               testObj   = TestCase::instance(specObj);
 
-    test->name(testname);
-    test->args(mkVector(inv->arguments));
-    test->env(mkVector(*env));
+    testObj->name(testname);
+    testObj->args(mkVector(inv->arguments));
+    testObj->env(mkVector(*env));
 
-    TestCaseId                  id        = db->id(test);
-    TestSuite::Ptr              suite_obj = testSuite(suitename);
-    TestSuiteId                 suite_id  = db->id(suite_obj);
+    TestCaseId                  testId    = db->id(testObj);
+    TestSuite::Ptr              suiteObj  = testSuite(suitename);
+    if (!suiteObj) {
+        // if the test suite doesn't exist then create it. [Robb Matzke 2019-08-14]
+        suiteObj = TestSuite::instance(suitename);
+    }
+    ASSERT_not_null(suiteObj);
+    TestSuiteId                 suiteId  = db->id(suiteObj);
 
-    ROSE_ASSERT(id);
-    ROSE_ASSERT(suite_id);
+    ROSE_ASSERT(testId);
+    ROSE_ASSERT(suiteId);
 
-    db->assocTestCaseWithTestSuite(id, suite_id);
+    db->assocTestCaseWithTestSuite(testId, suiteId);
   }
   catch (const Rose::BinaryAnalysis::Concolic::Exception &e) {
     failureMessage = e.what();
-    state = failure;
+    state = execute_failure;
   }
-  catch (...)
-  {
-    state = failure;
+  catch (...) {
+    state = execute_failure;
   }
 
-  if ((exp != none) && (exp != state))
+  if ((expct != none) && (expct != state))
   {
     err() << "error in test: " << suitename << "::" << testname << '\n'
-          << "  exited with " << str(state) << ", expected " << str(exp)
+          << "  exited with " << str(state) << ", expected " << str(expct)
           << std::endl;
-    if (state == failure)
+
+    if (state == execute_failure)
         err() <<"  failure was: " <<(failureMessage.empty() ? "unknown" : failureMessage) <<"\n";
 
-    exit(1);
+    throw std::runtime_error("failed test");
   }
+}
+
+
+template <class T>
+static
+typename T::Ptr
+byName( Crsh::Database::Ptr& db,
+        const std::string& s,
+        Rose::BinaryAnalysis::Concolic::ObjectId<T> id,
+        bool createMissingEntry = true
+      )
+{
+  if (id) return db->object(id);
+
+  if (!createMissingEntry) return typename T::Ptr();
+
+  // if not in the database already, create it from a file
+  typename T::Ptr obj = T::instance(s);
+
+  db->id(obj);
+  return obj;
 }
 
 
 
 Crsh::Specimen::Ptr
-Crsh::specimen(const std::string& specimen_name)
+Crsh::specimen(const std::string& specimen_name, annotation_desc reuse)
 {
-  return byName(db, specimen_name, db->specimen(specimen_name));
+  if (reuse_duplicate == reuse)
+  {
+    Specimen::Ptr specimen = Specimen::instance(specimen_name);
+
+    db->id(specimen); // \todo \pp
+                      //   storing the object may be not necessary
+                      //   b/c it will be stored with the test case anyways.
+    return specimen;
+  }
+
+  ROSE_ASSERT(reuse_unique == reuse);
+  std::vector<SpecimenId> found = db->findSpecimensByName(specimen_name);
+
+  if (found.empty())
+  {
+    Specimen::Ptr specimen = Specimen::instance(specimen_name);
+    SpecimenId    specId = db->id(specimen); // \todo \pp see note above
+
+    return specimen;
+  }
+
+  if (found.size() > 1)
+    throw std::runtime_error("specimen name is not unique");
+
+  return db->object(found.at(0));
 }
 
 
 /** Runs the testcase @ref testcaseId.
  */
-void Crsh::runTestcase(TestCaseId testcaseId, expectation expct)
+void Crsh::runTestcase(TestCaseId testcaseId, annotation_desc allnotes)
 {
   using namespace Rose::BinaryAnalysis;
 
   typedef Concolic::LinuxExecutor::Result ExecutionResult;
   typedef std::auto_ptr<ExecutionResult>  ExecutionResultGuard;
 
-  expectation                state    = failure;
+  int                        state    = execute_failure;
   int                        processDisposition = 0; // disposition returned by waitpid
   Concolic::LinuxExecutorPtr exec     = Concolic::LinuxExecutor::instance();
   Concolic::TestCase::Ptr    testcase = db->object(testcaseId, Concolic::Update::YES);
+  annotation_desc            expct    = expect(allnotes);
+  const bool                 addrRandomize = (randomize_address_space(allnotes) == addr_randomize);
+
+  exec->useAddressRandomization(addrRandomize);
+  exec->executionMonitor(execmon);
 
   if (testcase.getRawPointer())
   {
-    ExecutionResultGuard result(dynamic_cast<ExecutionResult*>(exec->execute(testcase)));
+    ExecutionResultGuard result(exec->execute(testcase));
 
     processDisposition = result->exitStatus();
     db->insertConcreteResults(testcase, *result.get());
@@ -469,7 +663,7 @@ void Crsh::runTestcase(TestCaseId testcaseId, expectation expct)
     // exitValue is not the argument to the test's "exit" function, but rather the process disposition returned by
     // waitpid. Therefore, success should be measured as the test having normal termination with an exit status of zero.
     if (WIFEXITED(processDisposition) && WEXITSTATUS(processDisposition) == 0)
-        state = success;
+        state = execute_success;
   }
 
   if ((expct != none) && (expct != state))
@@ -487,7 +681,7 @@ void Crsh::runTestcase(TestCaseId testcaseId, expectation expct)
         err() <<"process resumed\n";
     }
 
-    exit(1);
+    throw std::runtime_error("failed test");
   }
 }
 
@@ -502,10 +696,14 @@ void Crsh::execute(InvocationDesc* invoc)
   std::auto_ptr<InvocationDesc> invguard(invoc);
   const std::string             noredirect;
   Persona                       nopersona;
+  std::string                   withoutExecMonitor;
+  std::vector<std::string>      monitorArgs;
   std::vector<std::string>      args = mkVector(invoc->arguments);
   std::vector<std::string>      envv = currentEnvironment();
 
-  int ec = Concolic::executeBinary( invoc->specimen,
+  int ec = Concolic::executeBinary( withoutExecMonitor,
+                                    monitorArgs,
+                                    invoc->specimen,
                                     noredirect,
                                     noredirect,
                                     nopersona,
@@ -522,24 +720,26 @@ void Crsh::execute(InvocationDesc* invoc)
  */
 struct TestCaseStarter
 {
-    TestCaseStarter(Crsh& crshobj, Crsh::expectation expct)
-    : crsh(crshobj), expect(expct)
+    TestCaseStarter(Crsh& crshobj, Crsh::annotation_desc usrnotes)
+    : crsh(crshobj), notes(usrnotes)
     {}
 
     void operator()(Crsh::TestCaseId id)
     {
-      crsh.runTestcase(id, expect);
+      crsh.runTestcase(id, notes);
     }
 
   private:
-    Crsh&             crsh;
-    Crsh::expectation expect;
+    Crsh&                 crsh;
+    Crsh::annotation_desc notes;
 };
 
-
-void Crsh::runTest(const char* testsuite, int num, expectation expct)
+void
+Crsh::runTest(Annotations* usrnotes, const char* testsuite, int num)
 {
-  TestSuite::Ptr suite;
+  TestSuite::Ptr  suite;
+  annotation_desc allnotes = convAnnotations(usrnotes, expect_all | addr_randomize_all);
+  annotation_desc expct    = expect(allnotes);
 
   if (num < 0) num = 1;
 
@@ -551,18 +751,19 @@ void Crsh::runTest(const char* testsuite, int num, expectation expct)
 
     if (!suite.getRawPointer())
     {
-      if (expct == failure) return;
+      if (expct == expect_failure) return;
 
       err() << "unable to find testsuite: " << tsname << '\n'
-            << "  exited with " << str(failure) << ", expected " << str(expct)
+            << "  exited with " << str(execute_failure) << ", expected " << str(expct)
             << std::endl;
+      throw std::runtime_error("unable to find testsuite " + tsname);
     }
   }
 
   db->testSuite(suite);
   std::vector<TestCaseId> tests = db->needConcreteTesting(num);
 
-  std::for_each(tests.begin(), tests.end(), TestCaseStarter(*this, expct));
+  std::for_each(tests.begin(), tests.end(), TestCaseStarter(*this, allnotes));
 }
 
 

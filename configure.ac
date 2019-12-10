@@ -1,10 +1,10 @@
 dnl DQ (1/11/2010): Consider handing configure options as specified at:
 dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 
-dnl The version number in the AC_INIT([ROSE], [0.9.11.95])
-dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.9.11.95])
+dnl The version number in the AC_INIT([ROSE], [0.9.12.39])
+dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.9.12.39])
 dnl shell variable.
-AC_INIT([ROSE], [0.9.11.95])
+AC_INIT([ROSE], [0.9.12.39])
 AC_PREREQ([2.59])
 
 test "$verbose" = "" && echo "Run configure with --verbose to see more output"
@@ -19,8 +19,8 @@ T_NM="$("$rose_shtool" echo -n -e %b)" dnl "terminal normal mode"
 dnl +--------------------------------------------------------------------------+
 dnl | Source tree build - disabled
 dnl +--------------------------------------------------------------------------+
-AC_CONFIG_SRCDIR([README])
-if test -e "README"; then
+AC_CONFIG_SRCDIR([README.md])
+if test -e "README.md"; then
   AC_MSG_FAILURE(
     [
       ROSE cannot be built in the source tree '$(dirname "$0")' yet.
@@ -112,6 +112,20 @@ ROSE_SUPPORT_ROSE_PART_1
 
 ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES
 CONFIGURE_POET
+
+# Rasmussen (11/19//2019): This is a strange bug. I can't figure out where
+# the bug actually occurs in the m4 macros. However the symptom is that
+# ECHO may not be set after this point but it is used. Thus setting ECHO
+# may be needed. This error was noticed after a new release of XCode (11.2.1)
+# was installed but probably is not related. It is more likely related to
+# libtools.m4. After talking with Robb we realized that the Mac version is
+# different from linux. I believe that somehow a portion of the libtool
+# code is copied when ./build is run (at least this is consistent with
+# the behavior.
+if test "x$ECHO" = x; then
+    ECHO=echo
+fi
+
 ROSE_SUPPORT_ROSE_PART_2
 ROSE_SUPPORT_ROSE_PART_3
 ROSE_SUPPORT_ROSE_PART_4

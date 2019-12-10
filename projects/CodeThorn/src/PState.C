@@ -8,10 +8,13 @@
 #include "CodeThornException.h"
 
 // only necessary for class VariableValueMonitor
-#include "Analyzer.h"
+//#include "Analyzer.h"
 
 using namespace std;
 using namespace CodeThorn;
+
+// static configuration variable
+bool PState::combineConsistencyCheck=false;
 
 PState::PState() {
 }
@@ -103,9 +106,6 @@ long PState::memorySize() const {
     mem+=sizeof(*i);
   }
   return mem+sizeof(*this);
-}
-long EState::memorySize() const {
-  return sizeof(*this);
 }
 
 /*! 
@@ -407,20 +407,20 @@ CodeThorn::PState PState::combine(CodeThorn::PState& p1, CodeThorn::PState& p2) 
       }
     }
   }
-#if 1
-  // consistency check: all elements of p1 and p2 must be represented in res
-  for(auto elem1:p1) {
-    if(res.find(elem1.first)==res.end()) {
-      cerr<<"Error: Element of PState1 "<<elem1.first.toString()<<" not in combined state."<<endl;
-      exit(1);
+  if(PState::combineConsistencyCheck) {
+    // consistency check: all elements of p1 and p2 must be represented in res
+    for(auto elem1:p1) {
+      if(res.find(elem1.first)==res.end()) {
+        cerr<<"Error: Element of PState1 "<<elem1.first.toString()<<" not in combined state."<<endl;
+        exit(1);
+      }
+    }
+    for(auto elem2:p2) {
+      if(res.find(elem2.first)==res.end()) {
+        cerr<<"Error: Element of PState2 "<<elem2.first.toString()<<" not in combined state."<<endl;
+        exit(1);
+      }
     }
   }
-  for(auto elem2:p2) {
-    if(res.find(elem2.first)==res.end()) {
-      cerr<<"Error: Element of PState2 "<<elem2.first.toString()<<" not in combined state."<<endl;
-      exit(1);
-    }
-  }
-#endif
   return res;
 }

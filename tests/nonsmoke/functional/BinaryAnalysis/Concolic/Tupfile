@@ -2,61 +2,133 @@ include_rules
 
 ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
 
+# Tests are disabled if SQLite3 is not available since the tests only support that one database driver.
+ifeq (@(WITH_SQLITE),no)
+    ENABLED = --disabled='no supported database driver'
+else
+    ENABLED = --enabled
+endif
+
+
 #------------------------------------------------------------------------------------------------------------------------
 # Database tests
 
-# a) sample program to load and store in DB
+#
+# utilities and sample codes
+
+# a.1) sample program to load and store in DB
 run $(support_compile_linkexe) sampleExecutable.C
 
-# a) test compiled programs
+# a.2) sample program to test the execution monitor
+run $(support_compile_linkexe) test-execution-monitor.C
+
+# a.3) execution monitor to produce quality score
+# run $(tool_compile_linkexe) rose-execution-monitor-zero.C
+
+# a.4) test compiled programs
 run $(tool_compile_linkexe) testConcolicDB.C
 run $(test) testConcolicDB
 
+# a.5) execution wrapper for perf to intercept signals
+# run $(support_compile_linkexe) rose-perf-execution-wrapper.c
+
+# TODO \PP use flex and bison to create rose-perf-analyzer
+# a.6) reads perf-report output and computes unique instruction count
+
+#: PerfOutputAnalyzer/parser.ypp \
+#|> ^ BISON %f^ $(ROSE)/config/ylwrap %f y.tab.c %o y.tab.h PerfOutputAnalyzer/parser.hpp -- bison -y -d -t \
+#|> parser.cpp | parser.hpp
+
+#: PerfOutputAnalyzer/lexer.lpp \
+#|> ^ FLEX %f^ $(ROSE)/config/ylwrap %f lex.yy.c %o -- flex \
+#|> lexer.cpp
+
+#run $(tool_compile_linkexe) -o rose-perf-analyzer --depend=parser.hpp parser.cpp lexer.cpp PerfOutputAnalyzer/analyzer.cpp 
+
+
+# TODO (1) \PP cp $(srcdir)/rose-execution-monitor-linux-perf-intel-x86_64.sh rose-execmon-linux-perf-intel-x86-64.sh
+# TODO (2) \PP create rose-perf-analyzer
+# a.7) the script that organizes perf's execution
+
+#noinst_SCRIPTS = rose-execmon-linux-perf-intel-x86-64.sh
+
+#rose-execmon-linux-perf-intel-x86-64.sh: $(srcdir)/rose-execution-monitor-linux-perf-intel-x86_64.sh rose-perf-analyzer
+#	cp $< $@
+#	chmod u+x $@
+
 # b) test various executions
 run $(test) ./crsh/crsh -o testOpenDB \
-    --extra=openDB.db \
+    --extra=openDB.db $(ENABLED) \
     ./crsh/crsh openDB.crsh
 
 run $(test) ./crsh/crsh -o testDefineTests \
-    --extra=defineTests.db \
+    --extra=defineTests.db $(ENABLED) \
     ./crsh/crsh defineTests.crsh
 
 run $(test) ./crsh/crsh -o testRun1 \
-    --extra=run1.db \
+    --extra=run1.db $(ENABLED) \
     ./crsh/crsh run1.crsh
 
 run $(test) ./crsh/crsh -o testRun10 \
-    --extra=run10.db \
+    --extra=run10.db $(ENABLED) \
     ./crsh/crsh run10.crsh
 
 run $(test) ./crsh/crsh -o testDefineFail \
-    --extra=defineFail.db \
+    --extra=defineFail.db $(ENABLED) \
     ./crsh/crsh defineFail.crsh
 
 run $(test) ./crsh/crsh -o testCombined \
-    --extra=combined.db \
+    --extra=combined.db $(ENABLED) \
     ./crsh/crsh combined.crsh
 
 run $(test) ./crsh/crsh -o testExport \
-    --input=sampleExecutable \
+    --input=sampleExecutable $(ENABLED) \
     --extra=testExport.db \
     ./crsh/crsh testExport.crsh
 
-run $(test) ./crsh/crsh -o testConnectNonExisting \
+run $(test) ./crsh/crsh -o testAddressRandomization \
+    --input=sampleExecutable $(ENABLED) \
+    ./crsh/crsh testAddressRandomization.crsh
+    
+#FIXME# Reported by Matzke 2019-09-23
+#FIXME# This rule has two problems: First, this rule and the testPerfExecutionMonitor test both create
+#FIXME# test-execution-monitor, which tup rightfully complains would be a race in a parallel build.
+#FIXME# Second, the test fails with this error:
+#FIXME#   test-execution-monitor sampleExecutable ./crsh/crsh testExecutionMonitor.crsh
+#FIXME#   /tmp/filewm1VzF: line 1: test-execution-monitor: command not found
+#FIXME# Therefore I'm commenting out this one until Peter can fix it.
+#FIXME#
+#FIXME# run $(test) ./crsh/crsh -o testExecutionMonitor $(ENABLED) \
+#FIXME#     --input=ExecutionMonitor test-execution-monitor sampleExecutable \
+#FIXME#     ./crsh/crsh testExecutionMonitor.crsh
+
+
+# Robb commented out the following test (testExecutionMonitor) because it depends on
+# rose-execution-monitor-zero, which Peter commented out above in the previous change to this file.
+#run $(test) ./crsh/crsh -o testExecutionMonitor $(ENABLED) \
+#    --input=rose-execution-monitor-zero test-execution-monitor sampleExecutable\
+#    ./crsh/crsh testExecutionMonitor.crsh
+
+#run $(test) ./crsh/crsh -o testPerfExecutionMonitor \
+#    --input=rose-execmon-linux-perf-intel-x86-64.sh rose-perf-execution-wrapper test-execution-monitor sampleExecutable\
+#    ./crsh/crsh testPerfExecutionMonitor.crsh
+
+run $(test) ./crsh/crsh -o testConnectNonExisting $(ENABLED) \
     ./crsh/crsh testConnectNonExisting.crsh
 
-run $(test) ./crsh/crsh -o testCreateOverwrites \
+run $(test) ./crsh/crsh -o testCreateOverwrites $(ENABLED) \
     ./crsh/crsh testCreateOverwrites.crsh
 
-run $(test) ./crsh/crsh -o testConnect \
+run $(test) ./crsh/crsh -o testConnect $(ENABLED) \
     ./crsh/crsh testConnect.crsh
 
 #------------------------------------------------------------------------------------------------------------------------
 # Concolic executor tests
 
 run $(tool_compile_linkexe) testConcolicExecutor.C
-run $(test) testConcolicExecutor \
-    ./testConcolicExecutor --log 'Rose::BinaryAnalysis::Concolic\(debug\)' \
+run $(test) testConcolicExecutor $(ENABLED) \
+    --extra testConcolicExecutor-1.db \
+    ./testConcolicExecutor --log 'Rose::BinaryAnalysis::Concolic\(debug\)' --database=testConcolicExecutor-1.db\
     $(ROSE)/tests/nonsmoke/specimens/binary/concolic-specimen-01
 
 endif

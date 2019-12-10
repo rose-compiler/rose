@@ -32,3 +32,5 @@ if(bash)
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMAND ${bash} ${CMAKE_SOURCE_DIR}/scripts/policies-checker.sh)
 endif()
+
+install(TARGETS testTranslator DESTINATION bin)

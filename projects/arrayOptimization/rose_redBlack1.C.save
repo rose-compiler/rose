@@ -1,0 +1,165 @@
+#include "simpleA++.h"
+
+void redBlackRelax3DNonFullyVariational(class floatArray &s,class floatArray &rhs)
+{
+  int rhs_length_3 = rhs . Array_Descriptor . Array_Domain .  getLength (2);
+  int rhs_length_2 = rhs . Array_Descriptor . Array_Domain .  getLength (1);
+  int rhs_length_1 = rhs . Array_Descriptor . Array_Domain .  getLength (0);
+  int rhs_stride_3 = rhs . Array_Descriptor . Array_Domain . Stride[2];
+  int rhs_stride_2 = rhs . Array_Descriptor . Array_Domain . Stride[1];
+  int rhs_stride_1 = rhs . Array_Descriptor . Array_Domain . Stride[0];
+  int rhs_size_3 = rhs . Array_Descriptor . Array_Domain . Size[2];
+  int rhs_size_2 = rhs . Array_Descriptor . Array_Domain . Size[1];
+  int rhs_size_1 = rhs . Array_Descriptor . Array_Domain . Size[0];
+  float *rhs_pointer = rhs .  getDataPointer ();
+  int s_length_3 = s . Array_Descriptor . Array_Domain .  getLength (2);
+  int s_length_2 = s . Array_Descriptor . Array_Domain .  getLength (1);
+  int s_length_1 = s . Array_Descriptor . Array_Domain .  getLength (0);
+  int s_stride_3 = s . Array_Descriptor . Array_Domain . Stride[2];
+  int s_stride_2 = s . Array_Descriptor . Array_Domain . Stride[1];
+  int s_stride_1 = s . Array_Descriptor . Array_Domain . Stride[0];
+  int s_size_3 = s . Array_Descriptor . Array_Domain . Size[2];
+  int s_size_2 = s . Array_Descriptor . Array_Domain . Size[1];
+  int s_size_1 = s . Array_Descriptor . Array_Domain . Size[0];
+  float *s_pointer = s .  getDataPointer ();
+  int gridSize = s .  length (0);
+  class Index Black_Odd(1,(gridSize - 1) / 2,2);
+  class Index Black_Even(2,(gridSize - 2) / 2,2);
+  class Index Red_Odd(1,(gridSize - 1) / 2,2);
+  class Index Red_Even(2,(gridSize - 2) / 2,2);
+  class Index Odd_Rows(1,(gridSize - 1) / 2,2);
+  class Index Even_Rows(2,(gridSize - 2) / 2,2);
+  double hSqr = 1.0 / ((double )(gridSize * gridSize));
+{
+    int s_tmp3_length_6 = s_tmp3 . Array_Descriptor . Array_Domain .  getLength (5);
+    int s_tmp3_length_5 = s_tmp3 . Array_Descriptor . Array_Domain .  getLength (4);
+    int s_tmp3_length_4 = s_tmp3 . Array_Descriptor . Array_Domain .  getLength (3);
+    int s_tmp3_length_3 = s_tmp3 . Array_Descriptor . Array_Domain .  getLength (2);
+    int s_tmp3_length_2 = s_tmp3 . Array_Descriptor . Array_Domain .  getLength (1);
+    int s_tmp3_length_1 = s_tmp3 . Array_Descriptor . Array_Domain .  getLength (0);
+    int s_tmp3_stride_6 = s_tmp3 . Array_Descriptor . Array_Domain . Stride[5];
+    int s_tmp3_stride_5 = s_tmp3 . Array_Descriptor . Array_Domain . Stride[4];
+    int s_tmp3_stride_4 = s_tmp3 . Array_Descriptor . Array_Domain . Stride[3];
+    int s_tmp3_stride_3 = s_tmp3 . Array_Descriptor . Array_Domain . Stride[2];
+    int s_tmp3_stride_2 = s_tmp3 . Array_Descriptor . Array_Domain . Stride[1];
+    int s_tmp3_stride_1 = s_tmp3 . Array_Descriptor . Array_Domain . Stride[0];
+    int s_tmp3_size_6 = s_tmp3 . Array_Descriptor . Array_Domain . Size[5];
+    int s_tmp3_size_5 = s_tmp3 . Array_Descriptor . Array_Domain . Size[4];
+    int s_tmp3_size_4 = s_tmp3 . Array_Descriptor . Array_Domain . Size[3];
+    int s_tmp3_size_3 = s_tmp3 . Array_Descriptor . Array_Domain . Size[2];
+    int s_tmp3_size_2 = s_tmp3 . Array_Descriptor . Array_Domain . Size[1];
+    int s_tmp3_size_1 = s_tmp3 . Array_Descriptor . Array_Domain . Size[0];
+    float *s_tmp3_pointer = s_tmp3 .  getDataPointer ();
+    class floatArray s_tmp3;
+    int _var_2;
+    int _var_1;
+    int _var_0;
+    s_tmp3 .  operator= (s);
+    for (_var_2 = 0; _var_2 <= -1 + Odd_Rows . length; _var_2 += 1) {
+      for (_var_1 = 0; _var_1 <= -1 + Odd_Rows . length; _var_1 += 1) {
+        for (_var_0 = 0; _var_0 <= -1 + Black_Odd . length; _var_0 += 1) {
+          s .  elem ((_var_0 * Black_Odd . stride + Black_Odd . base),(_var_1 * Odd_Rows . stride + Odd_Rows . base),(_var_2 * Odd_Rows . stride + Odd_Rows . base)) = (hSqr * rhs .  elem ((_var_0 * Black_Odd . stride + Black_Odd . base),(_var_1 * Odd_Rows . stride + Odd_Rows . base),(_var_2 * Odd_Rows . stride + Odd_Rows . base)) + s_tmp3 .  elem ((_var_0 * (Black_Odd+1) . stride + (Black_Odd+1) . base),(_var_1 * Odd_Rows . stride + Odd_Rows . base),(_var_2 * Odd_Rows . stride + Odd_Rows . base)) + s_tmp3 .  elem ((_var_0 * (Black_Odd-1) . stride + (Black_Odd-1) . base),(_var_1 * Odd_Rows . stride + Odd_Rows . base),(_var_2 * Odd_Rows . stride + Odd_Rows . base)) + s_tmp3 .  elem ((_var_0 * Black_Odd . stride + Black_Odd . base),(_var_1 * (Odd_Rows+1) . stride + (Odd_Rows+1) . base),(_var_2 * Odd_Rows . stride + Odd_Rows . base)) + s_tmp3 .  elem ((_var_0 * Black_Odd . stride + Black_Odd . base),(_var_1 * (Odd_Rows-1) . stride + (Odd_Rows-1) . base),(_var_2 * Odd_Rows . stride + Odd_Rows . base)) + s_tmp3 .  elem ((_var_0 * Black_Odd . stride + Black_Odd . base),(_var_1 * Odd_Rows . stride + Odd_Rows . base),(_var_2 * (Odd_Rows+1) . stride + (Odd_Rows+1) . base)) + s_tmp3 .  elem ((_var_0 * Black_Odd . stride + Black_Odd . base),(_var_1 * Odd_Rows . stride + Odd_Rows . base),(_var_2 * (Odd_Rows-1) . stride + (Odd_Rows-1) . base))) / 6.0;
+        }
+      }
+    }
+  }
+{
+    int s_tmp7_length_6 = s_tmp7 . Array_Descriptor . Array_Domain .  getLength (5);
+    int s_tmp7_length_5 = s_tmp7 . Array_Descriptor . Array_Domain .  getLength (4);
+    int s_tmp7_length_4 = s_tmp7 . Array_Descriptor . Array_Domain .  getLength (3);
+    int s_tmp7_length_3 = s_tmp7 . Array_Descriptor . Array_Domain .  getLength (2);
+    int s_tmp7_length_2 = s_tmp7 . Array_Descriptor . Array_Domain .  getLength (1);
+    int s_tmp7_length_1 = s_tmp7 . Array_Descriptor . Array_Domain .  getLength (0);
+    int s_tmp7_stride_6 = s_tmp7 . Array_Descriptor . Array_Domain . Stride[5];
+    int s_tmp7_stride_5 = s_tmp7 . Array_Descriptor . Array_Domain . Stride[4];
+    int s_tmp7_stride_4 = s_tmp7 . Array_Descriptor . Array_Domain . Stride[3];
+    int s_tmp7_stride_3 = s_tmp7 . Array_Descriptor . Array_Domain . Stride[2];
+    int s_tmp7_stride_2 = s_tmp7 . Array_Descriptor . Array_Domain . Stride[1];
+    int s_tmp7_stride_1 = s_tmp7 . Array_Descriptor . Array_Domain . Stride[0];
+    int s_tmp7_size_6 = s_tmp7 . Array_Descriptor . Array_Domain . Size[5];
+    int s_tmp7_size_5 = s_tmp7 . Array_Descriptor . Array_Domain . Size[4];
+    int s_tmp7_size_4 = s_tmp7 . Array_Descriptor . Array_Domain . Size[3];
+    int s_tmp7_size_3 = s_tmp7 . Array_Descriptor . Array_Domain . Size[2];
+    int s_tmp7_size_2 = s_tmp7 . Array_Descriptor . Array_Domain . Size[1];
+    int s_tmp7_size_1 = s_tmp7 . Array_Descriptor . Array_Domain . Size[0];
+    float *s_tmp7_pointer = s_tmp7 .  getDataPointer ();
+    class floatArray s_tmp7;
+    int _var_6;
+    int _var_5;
+    int _var_4;
+    s_tmp7 .  operator= (s);
+    for (_var_6 = 0; _var_6 <= -1 + Odd_Rows . length; _var_6 += 1) {
+      for (_var_5 = 0; _var_5 <= -1 + Even_Rows . length; _var_5 += 1) {
+        for (_var_4 = 0; _var_4 <= -1 + Black_Even . length; _var_4 += 1) {
+          s .  elem ((_var_4 * Black_Even . stride + Black_Even . base),(_var_5 * Even_Rows . stride + Even_Rows . base),(_var_6 * Odd_Rows . stride + Odd_Rows . base)) = (hSqr * rhs .  elem ((_var_4 * Black_Even . stride + Black_Even . base),(_var_5 * Even_Rows . stride + Even_Rows . base),(_var_6 * Odd_Rows . stride + Odd_Rows . base)) + s_tmp7 .  elem ((_var_4 * (Black_Even+1) . stride + (Black_Even+1) . base),(_var_5 * Even_Rows . stride + Even_Rows . base),(_var_6 * Odd_Rows . stride + Odd_Rows . base)) + s_tmp7 .  elem ((_var_4 * (Black_Even-1) . stride + (Black_Even-1) . base),(_var_5 * Even_Rows . stride + Even_Rows . base),(_var_6 * Odd_Rows . stride + Odd_Rows . base)) + s_tmp7 .  elem ((_var_4 * Black_Even . stride + Black_Even . base),(_var_5 * (Even_Rows+1) . stride + (Even_Rows+1) . base),(_var_6 * Odd_Rows . stride + Odd_Rows . base)) + s_tmp7 .  elem ((_var_4 * Black_Even . stride + Black_Even . base),(_var_5 * (Even_Rows-1) . stride + (Even_Rows-1) . base),(_var_6 * Odd_Rows . stride + Odd_Rows . base)) + s_tmp7 .  elem ((_var_4 * Black_Even . stride + Black_Even . base),(_var_5 * Even_Rows . stride + Even_Rows . base),(_var_6 * (Odd_Rows+1) . stride + (Odd_Rows+1) . base)) + s_tmp7 .  elem ((_var_4 * Black_Even . stride + Black_Even . base),(_var_5 * Even_Rows . stride + Even_Rows . base),(_var_6 * (Odd_Rows-1) . stride + (Odd_Rows-1) . base))) / 6.0;
+        }
+      }
+    }
+  }
+{
+    int s_tmp11_length_6 = s_tmp11 . Array_Descriptor . Array_Domain .  getLength (5);
+    int s_tmp11_length_5 = s_tmp11 . Array_Descriptor . Array_Domain .  getLength (4);
+    int s_tmp11_length_4 = s_tmp11 . Array_Descriptor . Array_Domain .  getLength (3);
+    int s_tmp11_length_3 = s_tmp11 . Array_Descriptor . Array_Domain .  getLength (2);
+    int s_tmp11_length_2 = s_tmp11 . Array_Descriptor . Array_Domain .  getLength (1);
+    int s_tmp11_length_1 = s_tmp11 . Array_Descriptor . Array_Domain .  getLength (0);
+    int s_tmp11_stride_6 = s_tmp11 . Array_Descriptor . Array_Domain . Stride[5];
+    int s_tmp11_stride_5 = s_tmp11 . Array_Descriptor . Array_Domain . Stride[4];
+    int s_tmp11_stride_4 = s_tmp11 . Array_Descriptor . Array_Domain . Stride[3];
+    int s_tmp11_stride_3 = s_tmp11 . Array_Descriptor . Array_Domain . Stride[2];
+    int s_tmp11_stride_2 = s_tmp11 . Array_Descriptor . Array_Domain . Stride[1];
+    int s_tmp11_stride_1 = s_tmp11 . Array_Descriptor . Array_Domain . Stride[0];
+    int s_tmp11_size_6 = s_tmp11 . Array_Descriptor . Array_Domain . Size[5];
+    int s_tmp11_size_5 = s_tmp11 . Array_Descriptor . Array_Domain . Size[4];
+    int s_tmp11_size_4 = s_tmp11 . Array_Descriptor . Array_Domain . Size[3];
+    int s_tmp11_size_3 = s_tmp11 . Array_Descriptor . Array_Domain . Size[2];
+    int s_tmp11_size_2 = s_tmp11 . Array_Descriptor . Array_Domain . Size[1];
+    int s_tmp11_size_1 = s_tmp11 . Array_Descriptor . Array_Domain . Size[0];
+    float *s_tmp11_pointer = s_tmp11 .  getDataPointer ();
+    class floatArray s_tmp11;
+    int _var_10;
+    int _var_9;
+    int _var_8;
+    s_tmp11 .  operator= (s);
+    for (_var_10 = 0; _var_10 <= -1 + Even_Rows . length; _var_10 += 1) {
+      for (_var_9 = 0; _var_9 <= -1 + Odd_Rows . length; _var_9 += 1) {
+        for (_var_8 = 0; _var_8 <= -1 + Black_Odd . length; _var_8 += 1) {
+          s .  elem ((_var_8 * Black_Odd . stride + Black_Odd . base),(_var_9 * Odd_Rows . stride + Odd_Rows . base),(_var_10 * Even_Rows . stride + Even_Rows . base)) = (hSqr * rhs .  elem ((_var_8 * Black_Odd . stride + Black_Odd . base),(_var_9 * Odd_Rows . stride + Odd_Rows . base),(_var_10 * Even_Rows . stride + Even_Rows . base)) + s_tmp11 .  elem ((_var_8 * (Black_Odd+1) . stride + (Black_Odd+1) . base),(_var_9 * Odd_Rows . stride + Odd_Rows . base),(_var_10 * Even_Rows . stride + Even_Rows . base)) + s_tmp11 .  elem ((_var_8 * (Black_Odd-1) . stride + (Black_Odd-1) . base),(_var_9 * Odd_Rows . stride + Odd_Rows . base),(_var_10 * Even_Rows . stride + Even_Rows . base)) + s_tmp11 .  elem ((_var_8 * Black_Odd . stride + Black_Odd . base),(_var_9 * (Odd_Rows+1) . stride + (Odd_Rows+1) . base),(_var_10 * Even_Rows . stride + Even_Rows . base)) + s_tmp11 .  elem ((_var_8 * Black_Odd . stride + Black_Odd . base),(_var_9 * (Odd_Rows-1) . stride + (Odd_Rows-1) . base),(_var_10 * Even_Rows . stride + Even_Rows . base)) + s_tmp11 .  elem ((_var_8 * Black_Odd . stride + Black_Odd . base),(_var_9 * Odd_Rows . stride + Odd_Rows . base),(_var_10 * (Even_Rows+1) . stride + (Even_Rows+1) . base)) + s_tmp11 .  elem ((_var_8 * Black_Odd . stride + Black_Odd . base),(_var_9 * Odd_Rows . stride + Odd_Rows . base),(_var_10 * (Even_Rows-1) . stride + (Even_Rows-1) . base))) / 6.0;
+        }
+      }
+    }
+  }
+{
+    int s_tmp15_length_6 = s_tmp15 . Array_Descriptor . Array_Domain .  getLength (5);
+    int s_tmp15_length_5 = s_tmp15 . Array_Descriptor . Array_Domain .  getLength (4);
+    int s_tmp15_length_4 = s_tmp15 . Array_Descriptor . Array_Domain .  getLength (3);
+    int s_tmp15_length_3 = s_tmp15 . Array_Descriptor . Array_Domain .  getLength (2);
+    int s_tmp15_length_2 = s_tmp15 . Array_Descriptor . Array_Domain .  getLength (1);
+    int s_tmp15_length_1 = s_tmp15 . Array_Descriptor . Array_Domain .  getLength (0);
+    int s_tmp15_stride_6 = s_tmp15 . Array_Descriptor . Array_Domain . Stride[5];
+    int s_tmp15_stride_5 = s_tmp15 . Array_Descriptor . Array_Domain . Stride[4];
+    int s_tmp15_stride_4 = s_tmp15 . Array_Descriptor . Array_Domain . Stride[3];
+    int s_tmp15_stride_3 = s_tmp15 . Array_Descriptor . Array_Domain . Stride[2];
+    int s_tmp15_stride_2 = s_tmp15 . Array_Descriptor . Array_Domain . Stride[1];
+    int s_tmp15_stride_1 = s_tmp15 . Array_Descriptor . Array_Domain . Stride[0];
+    int s_tmp15_size_6 = s_tmp15 . Array_Descriptor . Array_Domain . Size[5];
+    int s_tmp15_size_5 = s_tmp15 . Array_Descriptor . Array_Domain . Size[4];
+    int s_tmp15_size_4 = s_tmp15 . Array_Descriptor . Array_Domain . Size[3];
+    int s_tmp15_size_3 = s_tmp15 . Array_Descriptor . Array_Domain . Size[2];
+    int s_tmp15_size_2 = s_tmp15 . Array_Descriptor . Array_Domain . Size[1];
+    int s_tmp15_size_1 = s_tmp15 . Array_Descriptor . Array_Domain . Size[0];
+    float *s_tmp15_pointer = s_tmp15 .  getDataPointer ();
+    class floatArray s_tmp15;
+    int _var_14;
+    int _var_13;
+    int _var_12;
+    s_tmp15 .  operator= (s);
+    for (_var_14 = 0; _var_14 <= -1 + Even_Rows . length; _var_14 += 1) {
+      for (_var_13 = 0; _var_13 <= -1 + Even_Rows . length; _var_13 += 1) {
+        for (_var_12 = 0; _var_12 <= -1 + Black_Even . length; _var_12 += 1) {
+          s .  elem ((_var_12 * Black_Even . stride + Black_Even . base),(_var_13 * Even_Rows . stride + Even_Rows . base),(_var_14 * Even_Rows . stride + Even_Rows . base)) = (hSqr * rhs .  elem ((_var_12 * Black_Even . stride + Black_Even . base),(_var_13 * Even_Rows . stride + Even_Rows . base),(_var_14 * Even_Rows . stride + Even_Rows . base)) + s_tmp15 .  elem ((_var_12 * (Black_Even+1) . stride + (Black_Even+1) . base),(_var_13 * Even_Rows . stride + Even_Rows . base),(_var_14 * Even_Rows . stride + Even_Rows . base)) + s_tmp15 .  elem ((_var_12 * (Black_Even-1) . stride + (Black_Even-1) . base),(_var_13 * Even_Rows . stride + Even_Rows . base),(_var_14 * Even_Rows . stride + Even_Rows . base)) + s_tmp15 .  elem ((_var_12 * Black_Even . stride + Black_Even . base),(_var_13 * (Even_Rows+1) . stride + (Even_Rows+1) . base),(_var_14 * Even_Rows . stride + Even_Rows . base)) + s_tmp15 .  elem ((_var_12 * Black_Even . stride + Black_Even . base),(_var_13 * (Even_Rows-1) . stride + (Even_Rows-1) . base),(_var_14 * Even_Rows . stride + Even_Rows . base)) + s_tmp15 .  elem ((_var_12 * Black_Even . stride + Black_Even . base),(_var_13 * Even_Rows . stride + Even_Rows . base),(_var_14 * (Even_Rows+1) . stride + (Even_Rows+1) . base)) + s_tmp15 .  elem ((_var_12 * Black_Even . stride + Black_Even . base),(_var_13 * Even_Rows . stride + Even_Rows . base),(_var_14 * (Even_Rows-1) . stride + (Even_Rows-1) . base))) / 6.0;
+        }
+      }
+    }
+  }
+}

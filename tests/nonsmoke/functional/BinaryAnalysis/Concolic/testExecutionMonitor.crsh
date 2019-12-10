@@ -1,0 +1,42 @@
+create sqlite3://./testExecutionMonitor.db
+
+MONITOR = ./rose-execution-monitor-zero
+
+@ success
+test-exec :: t01
+{
+  ./test-execution-monitor 0 0 
+}
+
+@ success
+test-exec :: t02
+{
+  ./test-execution-monitor 1 5
+}
+
+@ success
+test-exit :: t03
+{
+  ./sampleExecutable --exit=17
+}
+
+@ success
+test-exit :: t04
+{
+  ./sampleExecutable --seg-fault
+}
+
+
+@ success
+test-exec :: run 2
+
+@ failure
+test-exit :: run 2
+
+close
+
+! rm ./testExecutionMonitor.db
+
+! echo ok.
+
+

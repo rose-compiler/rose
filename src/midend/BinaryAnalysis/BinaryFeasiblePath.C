@@ -279,15 +279,15 @@ private:
         if (nBytes != 1) {
             SymbolicExpr::Ptr addrExpr = SValue::promote(addr)->get_expression();
             if (SymbolicExpr::LeafPtr addrLeaf = addrExpr->isLeafNode()) {
-                if (addrLeaf->isNumber()) {
+                if (addrLeaf->isIntegerConstant()) {
                     retval.memSize = nBytes;
                     retval.memByteNumber = byteNumber;
                     retval.memAddress = addrExpr;
                 }
             } else if (SymbolicExpr::InteriorPtr addrINode = addrExpr->isInteriorNode()) {
                 if (addrINode->getOperator() == SymbolicExpr::OP_ADD && addrINode->nChildren() == 2 &&
-                    addrINode->child(0)->isLeafNode() && addrINode->child(0)->isLeafNode()->isVariable() &&
-                    addrINode->child(1)->isLeafNode() && addrINode->child(1)->isLeafNode()->isNumber()) {
+                    addrINode->child(0)->isLeafNode() && addrINode->child(0)->isLeafNode()->isIntegerVariable() &&
+                    addrINode->child(1)->isLeafNode() && addrINode->child(1)->isLeafNode()->isIntegerConstant()) {
                     SymbolicExpr::LeafPtr base = addrINode->child(0)->isLeafNode();
                     SymbolicExpr::LeafPtr offset = addrINode->child(1)->isLeafNode();
                     retval.memSize = nBytes;
@@ -309,7 +309,7 @@ private:
             VarFinder(): hasVariable(false) {}
 
             SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) ROSE_OVERRIDE {
-                if (node->isLeafNode() && !node->isLeafNode()->isNumber()) {
+                if (node->isLeafNode() && !node->isLeafNode()->isIntegerConstant()) {
                     hasVariable = true;
                     return SymbolicExpr::TERMINATE;
                 } else {
@@ -325,48 +325,61 @@ private:
         return !varFinder.hasVariable;
     }
 
+    // Warning: Caller should create a nullPtrSolver transaction if necessary
     bool isNullDeref(const BaseSemantics::SValuePtr &addr) {
         SymbolicExpr::Ptr expr = SymbolicSemantics::SValue::promote(addr)->get_expression();
         return isNullDeref(expr);
     }
 
+    // Warning: Caller should create a nullPtrSolver transaction if necessary
     bool isNullDeref(const SymbolicExpr::Ptr &expr) {
         ASSERT_not_null(expr);
         Sawyer::Message::Stream debug(fpAnalyzer_->mlog[DEBUG]);
-        bool retval = false;
-        SmtSolver::Transaction transaction(nullPtrSolver());
+        SAWYER_MESG(debug) <<"          isNullDeref addr = " <<*expr <<"\n";
+        SmtSolver::Ptr solver = nullPtrSolver();
 
+        // Instead of using SymbolicExpr::mustEqual and SymbolicExpr::mayEqual, we always call the SMT solver. This is so that
+        // if a null pointer is found, the callback will be able to get the evidence from the solver. The problem with
+        // mustEqual and mayEqual is threefold: (1) these functions can sometimes make the determination themselves without
+        // invoking an SMT solver thus the solver would not be updated with evidence, (2) these functions might invoke a user-defined
+        // callback that does almost anything, (3) when these functions invoke an SMT solver they protect it with a transaction so
+        // the evidence would be gone by time we get control back.
+        bool retval = false;
         switch (fpAnalyzer_->settings().nullDeref.mode) {
             case FeasiblePath::MAY:
-                if (fpAnalyzer_->settings().nullDeref.constOnly) {
-                    SAWYER_MESG(debug) <<"          isNullDeref [may-mode, const-only] addr: " <<*expr <<"\n";
-                    retval = isConstExpr(expr) && expr->mayEqual(SymbolicExpr::makeInteger(expr->nBits(), 0),
-                                                                 nullPtrSolver());
+                if (solver) {
+                    SymbolicExpr::Ptr assertion = SymbolicExpr::makeEq(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), 0));
+                    solver->insert(assertion);
+                    retval = SmtSolver::SAT_YES == solver->check();
                 } else {
-                    SAWYER_MESG(debug) <<"          isNullDeref [may-mode, non-const] addr: " <<*expr <<"\n";
-                    retval = expr->mayEqual(SymbolicExpr::makeInteger(expr->nBits(), 0),
-                                            nullPtrSolver());
+                    retval = expr->mayEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 0));
                 }
                 break;
+
             case FeasiblePath::MUST:
-                if (fpAnalyzer_->settings().nullDeref.constOnly) {
-                    SAWYER_MESG(debug) <<"          isNullDeref [must-mode, const-only] addr: " <<*expr <<"\n";
-                    retval = isConstExpr(expr) && expr->mustEqual(SymbolicExpr::makeInteger(expr->nBits(), 0),
-                                                                  nullPtrSolver());
+                // Check for constness of the address expression first since that doesn't involve an SMT solver and we might
+                // be able to return quickly.
+                if (!fpAnalyzer_->settings().nullDeref.constOnly ||  isConstExpr(expr)) {
+                    if (solver) {
+                        SymbolicExpr::Ptr assertion = SymbolicExpr::makeNe(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), 0));
+                        solver->insert(assertion);
+                        retval = SmtSolver::SAT_NO == solver->check();
+                    } else {
+                        retval = expr->mustEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 0));
+                    }
                 } else {
-                    SAWYER_MESG(debug) <<"          isNullDeref [must-mode, non-const] addr: " <<*expr <<"\n";
-                    retval = expr->mustEqual(SymbolicExpr::makeInteger(expr->nBits(), 0),
-                                             nullPtrSolver());
+                    SAWYER_MESG(debug) <<"          isNullDeref address is not constant as required by settings\n";
                 }
                 break;
+
             default:
                 ASSERT_not_reachable("invalid null-dereference mode");
         }
 
         if (debug) {
             debug <<"          isNullDeref result = " <<(retval ? "is null" : "not null");
-            if (nullPtrSolver())
-                debug <<" using SMT solver \"" <<StringUtility::cEscape(nullPtrSolver()->name()) <<"\"";
+            if (solver)
+                debug <<" using SMT solver \"" <<StringUtility::cEscape(solver->name()) <<"\"";
             debug <<"\n";
         }
 
@@ -424,14 +437,17 @@ public:
             return dflt_;
 
         // Check for null pointer dereferences
-        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr)) {
-            ASSERT_not_null(fpAnalyzer_);
-            ASSERT_not_null(path_);
-            SmtSolver::Ptr s = solver();
-            SmtSolver::Transaction tx(s);
-            pathProcessor_->nullDeref(*fpAnalyzer_, *path_, s, FeasiblePath::READ, addr, currentInstruction());
+        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_) {
+            SmtSolver::Transaction transaction(nullPtrSolver());
+            if (isNullDeref(addr)) {
+                ASSERT_not_null(fpAnalyzer_);
+                ASSERT_not_null(path_);
+                BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
+                ASSERT_not_null(cpu);
+                pathProcessor_->nullDeref(*fpAnalyzer_, *path_, cpu, nullPtrSolver(), FeasiblePath::READ, addr, currentInstruction());
+            }
         }
-
+        
         // If we know the address and that memory exists, then read the memory to obtain the default value.
         uint8_t buf[8];
         if (addr->is_number() && nBytes < sizeof(buf) &&
@@ -464,7 +480,7 @@ public:
 
         // Save a description of the variable
         SymbolicExpr::Ptr valExpr = SValue::promote(retval)->get_expression();
-        if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable())
+        if (valExpr->isLeafNode() && valExpr->isLeafNode()->isIntegerVariable())
             State::promote(currentState())->varDetail(valExpr->isLeafNode()->toString(), detailForVariable(addr, "read"));
 
         // Save a description for its addresses
@@ -477,8 +493,15 @@ public:
         }
 
         // Callback for the memory access
-        if (pathProcessor_)
-            pathProcessor_->memoryIo(*fpAnalyzer_, FeasiblePath::READ, addr, retval, shared_from_this());
+        if (pathProcessor_) {
+            ASSERT_not_null(fpAnalyzer_);
+            ASSERT_not_null(path_);
+            SmtSolver::Ptr s = nullPtrSolver();
+            SmtSolver::Transaction tx(s);
+            BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
+            ASSERT_not_null(cpu);
+            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, cpu, s, FeasiblePath::READ, addr, retval);
+        }
 
         return retval;
     }
@@ -493,17 +516,20 @@ public:
         Super::writeMemory(segreg, addr, value, cond);
 
         // Check for null pointer dereferences
-        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_ && isNullDeref(addr)) {
-            ASSERT_not_null(fpAnalyzer_);
-            ASSERT_not_null(path_);
-            SmtSolver::Ptr s = solver();
-            SmtSolver::Transaction tx(s);
-            pathProcessor_->nullDeref(*fpAnalyzer_, *path_, s, FeasiblePath::WRITE, addr, currentInstruction());
+        if (fpAnalyzer_->settings().nullDeref.check && pathProcessor_) {
+            SmtSolver::Transaction transaction(nullPtrSolver());
+            if (isNullDeref(addr)) {
+                ASSERT_not_null(fpAnalyzer_);
+                ASSERT_not_null(path_);
+                BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
+                ASSERT_not_null(cpu);
+                pathProcessor_->nullDeref(*fpAnalyzer_, *path_, cpu, nullPtrSolver(), FeasiblePath::WRITE, addr, currentInstruction());
+            }
         }
 
         // Save a description of the variable
         SymbolicExpr::Ptr valExpr = SValue::promote(value)->get_expression();
-        if (valExpr->isLeafNode() && valExpr->isLeafNode()->isVariable())
+        if (valExpr->isLeafNode() && valExpr->isLeafNode()->isIntegerVariable())
             State::promote(currentState())->varDetail(valExpr->isLeafNode()->toString(), detailForVariable(addr, "write"));
 
         // Save a description for its addresses
@@ -517,8 +543,15 @@ public:
         }
 
         // Callback for the memory access
-        if (pathProcessor_)
-            pathProcessor_->memoryIo(*fpAnalyzer_, FeasiblePath::WRITE, addr, value, shared_from_this());
+        if (pathProcessor_) {
+            ASSERT_not_null(fpAnalyzer_);
+            ASSERT_not_null(path_);
+            SmtSolver::Ptr s = nullPtrSolver();
+            SmtSolver::Transaction tx(s);
+            BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
+            ASSERT_not_null(cpu);
+            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, cpu, s, FeasiblePath::WRITE, addr, value);
+        }
     }
 };
 
@@ -721,7 +754,9 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                    "The default is \"" + std::string(MAY==settings.nullDeref.mode?"may":"must") + "\"."));
 
     CommandLine::insertBooleanSwitch(sg, "null-const", settings.nullDeref.constOnly,
-                                     "Check for null dereferences only when a pointer is a constant or set of constants.");
+                                     "Check for null dereferences only when a pointer is a constant or set of constants. This "
+                                     "setting is ignored when the null-comparison mode is \"may\" since \"may\" implies that "
+                                     "you're interested in additional cases where the pointer is not a constant expression.");
 
     CommandLine::insertBooleanSwitch(sg, "ignore-semantic-failure", settings.ignoreSemanticFailure,
                                      "If set, then any instruction for which semantics are not implemented or for which the "
@@ -749,6 +784,13 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                    std::string(LIST_BASED_MEMORY==settings.memoryParadigm?"list-based":
                                MAP_BASED_MEMORY==settings.memoryParadigm?"map-based":
                                "UNKNOWN") + " paradigm."));
+
+    sg.insert(Switch("ip-rewrite")
+              .argument("from", nonNegativeIntegerParser(settings.ipRewrite))
+              .argument("to", nonNegativeIntegerParser(settings.ipRewrite))
+              .whichValue(SAVE_ALL)
+              .doc("After each instruction, if the instruction pointer has the value @v{from} then change it to be @v{to}. "
+                   "This switch may appear multiple times."));
 
     return sg;
 }
@@ -791,6 +833,14 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, this, path, pathProcessor);
     ops->initialState(ops->currentState()->clone());
     ops->nullPtrSolver(solver);
+    for (size_t i = 0; i < settings().ipRewrite.size(); i += 2) {
+        const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
+        BaseSemantics::SValuePtr oldValue = ops->number_(REG_IP.nBits(), settings().ipRewrite[i+0]);
+        BaseSemantics::SValuePtr newValue = ops->number_(REG_IP.nBits(), settings().ipRewrite[i+1]);
+        SAWYER_MESG(mlog[DEBUG]) <<"ip-rewrite hot-patch from " <<*oldValue <<" to " <<*newValue <<"\n";
+        ops->hotPatch().append(HotPatch::Record(REG_IP, oldValue, newValue, HotPatch::Record::MATCH_BREAK));
+    }
+
     ASSERT_not_null(partitioner.instructionProvider().dispatcher());
     BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
     ASSERT_not_null(cpu);
@@ -802,6 +852,7 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
                               const P2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex) {
     ASSERT_not_null(cpu);
     ASSERT_forbid(REG_PATH.isEmpty());
+    checkSettings();
 
     // Create the new state from an existing state and make the new state current.
     BaseSemantics::StatePtr state = cpu->currentState()->clone();
@@ -837,6 +888,7 @@ void
 FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::DispatcherPtr &cpu,
                                 size_t pathInsnIndex) {
     ASSERT_not_null(bblock);
+    checkSettings();
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"      processing basic block " <<bblock->printableName() <<"\n";
 
@@ -870,7 +922,6 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
                 debug <<"          sp = " <<*sp <<"\n";
             }
         } catch (const BaseSemantics::Exception &e) {
-            insn->incrementSemanticFailure();
             if (settings_.ignoreSemanticFailure) {
                 SAWYER_MESG(mlog[WARN]) <<"semantics failed (instruction ignored): " <<e <<"\n";
             } else {
@@ -926,19 +977,31 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
         retval = SymbolicSemantics::SValue::promote(ops->undefined_(REG_RETURN_.nBits()));
         ops->writeRegister(REG_RETURN_, retval);
 
-        // Cause the function to return to the address stored at the top of the stack.
-        RegisterDescriptor SP = cpu->stackPointerRegister();
-        BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.nBits()));
-        BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
-                                                                ops->undefined_(stackPointer->get_width()), ops->boolean_(true));
-        ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
+        // Simulate function returning to caller
+        if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherPowerpc>(cpu)) {
+            // PowerPC calling convention stores the return address in the link register (LR)
+            const RegisterDescriptor LR = cpu->callReturnRegister();
+            ASSERT_forbid(LR.isEmpty());
+            BaseSemantics::SValuePtr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
+            ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 
-        // Pop some things from the stack.
-        int64_t sd = summary.stackDelta != SgAsmInstruction::INVALID_STACK_DELTA ?
-                     summary.stackDelta :
-                     returnTarget->get_width() / 8;
-        stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
-        ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
+        } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherX86>(cpu)) {
+            // x86 and amd64 store the return address at the top of the stack
+            const RegisterDescriptor SP = cpu->stackPointerRegister();
+            ASSERT_forbid(SP.isEmpty());
+            BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.nBits()));
+            BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
+                                                                    ops->undefined_(stackPointer->get_width()),
+                                                                    ops->boolean_(true));
+            ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
+
+            // Pop some things from the stack.
+            int64_t sd = summary.stackDelta != SgAsmInstruction::INVALID_STACK_DELTA ?
+                         summary.stackDelta :
+                         returnTarget->get_width() / 8;
+            stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
+            ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
+        }
     }
 
     if (retval) {
@@ -959,6 +1022,7 @@ void
 FeasiblePath::processVertex(const BaseSemantics::DispatcherPtr &cpu,
                             const P2::ControlFlowGraph::ConstVertexIterator &pathsVertex,
                             size_t &pathInsnIndex /*in,out*/) {
+    checkSettings();
     switch (pathsVertex->value().type()) {
         case P2::V_BASIC_BLOCK:
             processBasicBlock(pathsVertex->value().bblock(), cpu, pathInsnIndex);
@@ -1060,7 +1124,7 @@ FeasiblePath::pathEdgeConstraint(const P2::ControlFlowGraph::ConstEdgeIterator &
             return SymbolicExpr::Ptr();                 // trivially unfeasible
         }
     } else if (hasVirtualAddress(pathEdge->target())) {
-        SymbolicExpr::Ptr targetVa = SymbolicExpr::makeInteger(ip->get_width(), virtualAddress(pathEdge->target()));
+        SymbolicExpr::Ptr targetVa = SymbolicExpr::makeIntegerConstant(ip->get_width(), virtualAddress(pathEdge->target()));
         SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
                                                             SymbolicSemantics::SValue::promote(ip)->get_expression());
         constraint->comment("cfg edge " + partitioner().edgeName(pathEdge));
@@ -1070,7 +1134,7 @@ FeasiblePath::pathEdgeConstraint(const P2::ControlFlowGraph::ConstEdgeIterator &
     }
 
     SAWYER_MESG(mlog[DEBUG]) <<prefix <<"trivially feasible at edge " <<partitioner().edgeName(pathEdge) <<"\n";
-    return SymbolicExpr::makeBoolean(true);             // trivially feasible
+    return SymbolicExpr::makeBooleanConstant(true);     // trivially feasible
 }
 
 void
@@ -1096,11 +1160,11 @@ FeasiblePath::pathToCfg(const P2::ControlFlowGraph::ConstVertexIterator &pathVer
 }
 
 P2::CfgConstVertexSet
-FeasiblePath::cfgToPaths(const P2::CfgConstVertexSet &vertices) const {
+FeasiblePath::cfgToPaths(const P2::CfgConstVertexSet &vertexSet) const {
     P2::CfgConstVertexSet retval;
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, vertices) {
-        if (vmap_.forward().exists(vertex))
-            retval.insert(vmap_.forward()[vertex]);
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, vertexSet.values()) {
+        if (Sawyer::Optional<P2::ControlFlowGraph::ConstVertexIterator> found = vmap_.forward().find(vertex))
+            retval.insert(*found);
     }
     return retval;
 }
@@ -1129,7 +1193,7 @@ FeasiblePath::setSearchBoundary(const P2::Partitioner &partitioner,
     // mark the end of paths. We want paths that go all the way from the entry block of the called function to its returning
     // blocks.
     cfgEndAvoidVertices_ = cfgAvoidVertices;
-    cfgEndAvoidVertices_.insert(cfgEndVertices.begin(), cfgEndVertices.end());
+    cfgEndAvoidVertices_.insert(cfgEndVertices);
     cfgAvoidEdges_ = cfgAvoidEdges;
 }
 
@@ -1241,7 +1305,8 @@ FeasiblePath::insertCallSummary(const P2::ControlFlowGraph::ConstVertexIterator 
 
     P2::ControlFlowGraph::VertexIterator summaryVertex = paths_.insertVertex(P2::CfgVertex(P2::V_USER_DEFINED));
     paths_.insertEdge(pathsCallSite, summaryVertex, P2::CfgEdge(P2::E_FUNCTION_CALL));
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &callret, P2::findCallReturnEdges(pathsCallSite))
+    P2::CfgConstEdgeSet callReturnEdges = P2::findCallReturnEdges(pathsCallSite);
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &callret, callReturnEdges.values())
         paths_.insertEdge(summaryVertex, callret->target(), P2::CfgEdge(P2::E_FUNCTION_RETURN));
 
     int64_t stackDelta = function ? function->stackDeltaConcrete() : SgAsmInstruction::INVALID_STACK_DELTA;
@@ -1267,11 +1332,11 @@ FeasiblePath::emitPathGraph(size_t callId, size_t graphId) {
     emitter.showInstructions(true);
     emitter.selectWholeGraph();
 
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsBeginVertices_) {
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsBeginVertices_.values()) {
         emitter.vertexOrganization(v).attributes().insert("style", "filled");
         emitter.vertexOrganization(v).attributes().insert("fillcolor", "#faff7d");
     }
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsEndVertices_) {
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsEndVertices_.values()) {
         emitter.vertexOrganization(v).attributes().insert("style", "filled");
         emitter.vertexOrganization(v).attributes().insert("fillcolor", "#faff7d");
     }
@@ -1288,7 +1353,7 @@ FeasiblePath::isAnyEndpointReachable(const P2::ControlFlowGraph &cfg,
         return false;
     typedef Sawyer::Container::Algorithm::DepthFirstForwardVertexTraversal<const P2::ControlFlowGraph> Traversal;
     for (Traversal t(cfg, beginVertex); t; ++t) {
-        if (endVertices.find(t.vertex()) != endVertices.end())
+        if (endVertices.exists(t.vertex()))
             return true;
     }
     return false;
@@ -1376,7 +1441,7 @@ FeasiblePath::expandExpression(const Expression &expr, SymbolicExprParser &parse
     } else if (!expr.parsable.empty()) {
         ASSERT_not_reachable("string should have been parsed by now");
     } else {
-        return SymbolicExpr::makeBoolean(false);
+        return SymbolicExpr::makeBooleanConstant(false);
     }
 }
 
@@ -1479,9 +1544,9 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     if (debug) {
         debug <<"depthFirstSearch call #" <<callId <<":\n";
         debug <<"  paths graph saved in " <<emitPathGraph(callId, graphId) <<"\n";
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsBeginVertices_)
+        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsBeginVertices_.values())
             debug <<"  begin at vertex " <<partitioner().vertexName(v) <<"\n";
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsEndVertices_)
+        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsEndVertices_.values())
             debug <<"  end   at vertex " <<partitioner().vertexName(v) <<"\n";
     }
 
@@ -1501,7 +1566,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
         assertions.push_back(parseExpression(settings_.assertions[i], settings_.assertionLocations[i], exprParser));
 
     // Analyze each of the starting locations individually
-    BOOST_FOREACH (P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex, pathsBeginVertices_) {
+    BOOST_FOREACH (P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex, pathsBeginVertices_.values()) {
         // Create the SMT solver.  The solver will have one initial state, plus one additional state pushed for each edge of
         // the current path.
         SmtSolverPtr solver = SmtSolver::instance(settings_.solverName);
@@ -1558,7 +1623,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 markAsReached(backVertex);
 
             bool doBacktrack = false;
-            bool atEndOfPath = pathsEndVertices_.find(backVertex) != pathsEndVertices_.end();
+            bool atEndOfPath = pathsEndVertices_.exists(backVertex);
 
             // Process the second-to-last vertex of the path to obtain a new virtual machine state, and make that state
             // the RiscOperators current state.
@@ -1602,7 +1667,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             } else if (path.nEdges() == 0) {
                 ASSERT_require(path.nVertices() == 1);
                 ASSERT_require(solver->nLevels() == 1);
-                switch (solvePathConstraints(solver, path, SymbolicExpr::makeBoolean(true), assertions, atEndOfPath, exprParser)) {
+                switch (solvePathConstraints(solver, path, SymbolicExpr::makeBooleanConstant(true), assertions, atEndOfPath,
+                                             exprParser)) {
                     case SmtSolver::SAT_YES:
                         SAWYER_MESG(debug) <<" = is feasible\n";
                         pathIsFeasible = true;
@@ -1702,7 +1768,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             // insert- and erase-stable graph iterators is a huge help!
             if (!doBacktrack && pathEndsWithFunctionCall(path) && !P2::findCallReturnEdges(backVertex).empty()) {
                 ASSERT_require(partitioner().cfg().isValidVertex(cfgBackVertex));
-                BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, P2::findCallEdges(cfgBackVertex)) {
+                P2::CfgConstEdgeSet callEdges = P2::findCallEdges(cfgBackVertex);
+                BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, callEdges.values()) {
                     if (shouldSummarizeCall(path.backVertex(), partitioner().cfg(), cfgCallEdge->target())) {
                         info <<indent <<"summarizing function for edge " <<partitioner().edgeName(cfgCallEdge) <<"\n";
                         insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);
@@ -1841,6 +1908,20 @@ FeasiblePath::VarDetail::toString() const {
         ss <<" return from function " <<StringUtility::addrToString(*returnFrom);
 
     return boost::trim_copy(ss.str());
+}
+
+void
+FeasiblePath::checkSettings() const {
+    if (settings().maxVertexVisit <= 0)
+        throw Exception("setting \"maxVertexVisit\" must be positive");
+    if (settings().maxPathLength <= 0)
+        throw Exception("setting \"maxPathLength\" must be positive");
+    if (settings().maxCallDepth <= 0)
+        throw Exception("setting \"maxCallDepth\" must be positive");
+    if (settings().maxRecursionDepth <= 0)
+        throw Exception("setting \"maxRecursionDepth\" must be positive");
+    if (settings().ipRewrite.size() % 2 != 0)
+        throw Exception("settingss \"ipRewrite\" must have an even number of members");
 }
 
 } // namespace

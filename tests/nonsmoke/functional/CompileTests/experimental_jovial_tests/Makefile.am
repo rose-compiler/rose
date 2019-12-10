@@ -8,12 +8,19 @@ LDADD    = $(ROSE_LIBS)
 
 JOVIAL_TESTCODES = \
  tiny.jov                               \
+ fixed_cast_J.jov                       \
+ tables_and_pointers.jov                \
  1_2_3_main-program-module_a.jov        \
  1_2_3_main-program-module_b.jov        \
  1_2_3_program-body_b.jov               \
  1_2_3_program-body_c.jov               \
+ 2_1_1_5_char_item_desc.jov             \
+ 2_1_2_simple_table_var.jov             \
+ 2_1_2_compound_table_var.jov           \
  2_1_2_1_table_dimension_list_a.jov     \
  2_1_2_1_table_dimension_list_b.jov     \
+ 2_1_2_3_packing_spec.jov               \
+ 2_4_define.jov                         \
  4_2_loop_stmt_while_a.jov              \
  4_2_loop_stmt_b1.jov                   \
  4_2_loop_stmt_d1.jov                   \
@@ -37,14 +44,28 @@ JOVIAL_TESTCODES = \
  rose-issue-2143.jov
 
 COMPOOL_TESTCODES = \
- 1_2_1_compool_a.cpl                    \
+ bit_cast_J.cpl                         \
  define_dollar.cpl                      \
+ item_and_status_type_J.cpl             \
  status_type.cpl                        \
- table_type.cpl                         \
+ simple_def_ambiguity_J.cpl             \
+ size_function_J.cpl                    \
+ spec_table_decl_ambiguity_J.cpl        \
+ spec_table_options_null_J.cpl          \
+ table_and_status_type_J.cpl            \
+ table_preset_J.cpl                     \
+ table_ref_formula_ambiguity_J.jov      \
+ 2_2_compound_block_type.cpl            \
+ 2_2_compound_table_type.cpl            \
+ 2_2_simple_block_type.cpl              \
+ 2_2_simple_table_type.cpl              \
+ 2_5_def_ref_item.cpl                   \
+ 3_0_rent_and_rec.cpl                   \
+ 5_1_fixed_or_float.cpl                 \
  rose-issue-1518.cpl                    \
  rose-issue-1520.cpl                    \
  rose-issue-2143.cpl                    \
- rose-issue-2144.cpl
+ rose-issue-2286.cpl
 
 # should finish formulas next
 #
@@ -68,8 +89,9 @@ JOVIAL_TESTCODES_PASS_TRAVERSE = \
  5_5_pointer_formula_a.jov              \
  5_5_pointer_formula_b.jov              \
  5_5_pointer_formula_c.jov              \
- 5_5_pointer_formula_d.jov
-
+ 5_5_pointer_formula_d.jov              \
+ table_type.cpl                         \
+ rose-issue-2144.cpl
 
 JOVIAL_TESTCODES_WORKING_ON = \
  rose-issue-2100.jov                    \
@@ -120,8 +142,8 @@ TEST_JOVIAL_Sources  = ${JOVIAL_TESTCODES:.jov=.jov.passed}
 TEST_COMPOOL_Objects = ${COMPOOL_TESTCODES:.cpl=.aterm}
 TEST_COMPOOL_Sources = ${COMPOOL_TESTCODES:.cpl=.cpl.passed}
 
-#PASSING_TEST_Objects = $(TEST_JOVIAL_Objects) $(TEST_COMPOOL_Objects)
-PASSING_TEST_Objects = $(TEST_JOVIAL_Objects)
+PASSING_TEST_Objects = $(TEST_JOVIAL_Objects) $(TEST_COMPOOL_Objects)
+#PASSING_TEST_Objects = $(TEST_JOVIAL_Objects)
 PASSING_COMPOOL_TEST_Objects = $(TEST_COMPOOL_Objects)
 
 # Go back and build the translator we are using to test Jovial (in case make check
@@ -133,9 +155,10 @@ PASSING_COMPOOL_TEST_Objects = $(TEST_COMPOOL_Objects)
 testParser: ../../testParser
 
 $(TEST_JOVIAL_Objects): ../../testParser
-if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
 	../../testParser $(ROSE_FLAGS) -rose:jovial $(srcdir)/$(@:.aterm=.jov)
-endif
+
+$(TEST_COMPOOL_Objects): ../../testParser
+	../../testParser $(ROSE_FLAGS) -rose:jovial $(srcdir)/$(@:.aterm=.cpl)
 
 check-compool:
 	@echo $(TEST_COMPOOL_Objects)
@@ -151,13 +174,7 @@ clean-local:
 
 check-local:
 	@echo "Tests for experimental Jovial frontend."
-if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
 	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "***********************************************************************************************************************************"
-	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/experimental_jovial_tests: make check rule complete (terminated normally) ******"
-	@echo "***********************************************************************************************************************************"
-else
-	@echo "******************************************************************************************"
-	@echo "***** Skipping tests of experimental Jovial frontend (must be configured explicitly) *****"
-	@echo "******************************************************************************************"
-endif
+	@echo "***********************************************************************************************************************"
+	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/experimental_jovial_tests: make check terminated successfully ******"
+	@echo "***********************************************************************************************************************"

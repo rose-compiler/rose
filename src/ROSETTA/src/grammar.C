@@ -1192,6 +1192,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
   // Rasmussen (12/20/2017): Added SgUntypedExprListExpression
   // Rasmussen (11/20/2018): Added SgUntypedArrayReferenceExpression, SgUntypedForAllStatement, and SgJovialCompoolStatement
   // Rasmussen (05/22/2019): Moved scope from SgUntypedStructureDeclaration to SgUntypedStructureDefinition
+  // Rasmussen (09/30/2019): Added SgUntypedTypedefDeclaration
 
   // Except in the root class for the virtual access function.
      if ( (nodeName == "XXXPragma"                  && variableNameString == "startOfConstruct")  ||
@@ -1226,6 +1227,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "UntypedForAllStatement"     && variableNameString == "type")  ||
           (nodeName == "UntypedValueExpression"     && variableNameString == "type")  ||
           (nodeName == "UntypedVariableDeclaration" && variableNameString == "type")  ||
+          (nodeName == "UntypedTypedefDeclaration"  && variableNameString == "type")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "type")  ||
           (nodeName == "UntypedInitializedName"     && variableNameString == "type")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "type")  ||
@@ -1264,6 +1266,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "UntypedBlockDataDeclaration"&& variableNameString == "name")  ||
           (nodeName == "UntypedPackageDeclaration"  && variableNameString == "name")  ||
           (nodeName == "UntypedStructureDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedTypedefDeclaration"  && variableNameString == "name")  ||
           (nodeName == "UntypedTaskDeclaration"     && variableNameString == "name")  ||
           (nodeName == "UntypedUnitDeclaration"     && variableNameString == "name")  ||
           (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
@@ -1351,6 +1354,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "UntypedForAllStatement"     && variableNameString == "type")  ||
           (nodeName == "UntypedValueExpression"     && variableNameString == "type")  ||
           (nodeName == "UntypedVariableDeclaration" && variableNameString == "type")  ||
+          (nodeName == "UntypedTypedefDeclaration"  && variableNameString == "type")  ||
           (nodeName == "UntypedFunctionDeclaration" && variableNameString == "type")  ||
           (nodeName == "UntypedInitializedName"     && variableNameString == "type")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "type")  ||
@@ -1391,6 +1395,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "UntypedBlockDataDeclaration"&& variableNameString == "name")  ||
           (nodeName == "UntypedPackageDeclaration"  && variableNameString == "name")  ||
           (nodeName == "UntypedStructureDeclaration"&& variableNameString == "name")  ||
+          (nodeName == "UntypedTypedefDeclaration"  && variableNameString == "name")  ||
           (nodeName == "UntypedTaskDeclaration"     && variableNameString == "name")  ||
           (nodeName == "UntypedUnitDeclaration"     && variableNameString == "name")  ||
           (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
@@ -2409,8 +2414,6 @@ Grammar::buildVariantsStringDataBase ( StringUtility::FileWithLineNumbers & outp
      string openString      = "          {";
      string separatorString = ", \"";
      string closeString     = "\"}, \n";
-     vector<AstNodeClass *>::const_iterator  it;
-
      string middleString;
 
      vector<string> variantNames;

@@ -84,6 +84,32 @@ namespace Outliner
   const std::string FIND_FUNCP_DLOPEN="findFunctionUsingDlopen";
   const std::string DEFAULT_OUTPUT_PATH="/tmp";
 
+  struct DeferedTransformation
+     {
+    // DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes 
+    // into class declaration (when this is required to support the outlined function's access to protected or private data members).
+    // This is part of an optimization to support the optimization of header file unparsing (limiting the overhead of supporting any 
+    // header file to just focus on the few (typically one) header file that would have to be unparsed.
+
+       SgClassDefinition* class_definition;
+       SgDeclarationStatement* target_class_member;
+       SgDeclarationStatement* new_function_prototype;
+
+       typedef std::set<SgClassDefinition *> ClassDefSet_t;
+       ClassDefSet_t targetClasses;
+
+       typedef std::vector<SgFunctionDeclaration *> FuncDeclList_t;
+       FuncDeclList_t targetFriends;
+
+    // DQ (12/5/2019): Added ROSE_DLL_API prefix for Windows support (too all of these functions).
+       ROSE_DLL_API DeferedTransformation();
+       ROSE_DLL_API DeferedTransformation(SgClassDefinition* class_definition, SgDeclarationStatement* target_class_member, SgDeclarationStatement* new_function_prototype);
+       ROSE_DLL_API DeferedTransformation (const DeferedTransformation& X); //! Copy constructor.
+       ROSE_DLL_API ~DeferedTransformation (void); //! Shallow; does not delete fields.
+
+       ROSE_DLL_API DeferedTransformation & operator= (const DeferedTransformation& X); //! operator=()
+     };
+
   //! Stores the main results of an outlining transformation.
   struct Result
   {
@@ -97,11 +123,24 @@ namespace Outliner
     // outlined function if -rose:outline:new_file is specified (useNewFile==true)
     SgFile* file_;
 
-    Result (void); //! Sets all fields to 0
-    Result (SgFunctionDeclaration *, SgStatement *, SgFile* file=NULL);
-    Result (const Result&); //! Copy constructor.
-    ~Result (void) {}; //! Shallow; does not delete fields.
-    bool isValid (void) const; //! Returns true iff result is usable
+ // DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes 
+ // into class declaration (when this is required to support the outlined function's access to protected or private data members).
+    SgDeclarationStatement* target_class_member;
+    SgDeclarationStatement* new_function_prototype;
+
+ // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
+    DeferedTransformation deferedTransformation;
+
+ // DQ (12/5/2019): Added ROSE_DLL_API prefix for Windows support (too all of these functions).
+    ROSE_DLL_API Result (void); //! Sets all fields to 0
+
+  // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
+ // Result (SgFunctionDeclaration *, SgStatement *, SgFile* file=NULL);
+    ROSE_DLL_API Result (SgFunctionDeclaration *, SgStatement *, SgFile* file, DeferedTransformation deferedTransformation);
+
+    ROSE_DLL_API Result (const Result&); //! Copy constructor.
+    ROSE_DLL_API ~Result (void) {}; //! Shallow; does not delete fields.
+    ROSE_DLL_API bool isValid (void) const; //! Returns true iff result is usable
   };
 
   /** Description of outliner command-line.
@@ -233,14 +272,14 @@ ROSE_DLL_API Sawyer::CommandLine::SwitchGroup commandLineSwitches();
     ROSE_DLL_API SgSourceFile* getLibSourceFile(SgBasicBlock* target);
     
     // DQ (3/20/2019): This function operates on the new file used to support outlined function definitions.
-    /*!\brief XXX 
+    /* \brief XXX 
      * This function operates on the new file used to support outlined function definitions.
      * We use a copy of the file where the code will be outlined FROM, so that if there are references to
      * declarations in the outlined code we can support the outpiled code with those references.  This
      * approach has the added advantage of also supporting the same include file tree as the original 
      * file where the outlined code is being taken from.
      */
-    ROSE_DLL_API void convertFunctionDefinitionsToFunctionPrototypes(SgNode* node);
+    // ROSE_DLL_API void convertFunctionDefinitionsToFunctionPrototypes(SgNode* node);
     
     /*!\brief the lib source file's name convention is rose_input_lib.[c|cxx].
      * 
@@ -324,10 +363,9 @@ ROSE_DLL_API Sawyer::CommandLine::SwitchGroup commandLineSwitches();
      *  This information is used to insert the prototypes into the correct places in
      *  the AST.
      */
-    ROSE_DLL_API
-    void insert (SgFunctionDeclaration* func,
-                 SgGlobal* scope,
-                 SgBasicBlock* outlining_target );
+ // DQ (8/15/2019): Adding support to defer the transformations to header files.
+ // ROSE_DLL_API void insert (SgFunctionDeclaration* func, SgGlobal* scope, SgBasicBlock* target_outlined_code )
+    ROSE_DLL_API DeferedTransformation insert (SgFunctionDeclaration* func, SgGlobal* scope, SgBasicBlock* outlining_target );
 
     /*!
      *  \brief Generates a function call parameter list using a set of symbols

@@ -105,7 +105,7 @@ endif
 install-core: core rosePublicConfig.h
 	$(MAKE) install-data-local
 	$(MAKE) install -C $(top_builddir)/src
-	cp rosePublicConfig.h $(pkgincludedir)
+	cp rosePublicConfig.h $(DESTDIR)/$(pkgincludedir)
 
 install-tools: install-core tools
 	$(MAKE) install -C $(top_builddir)/tools
@@ -125,8 +125,43 @@ if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) install -C $(top_builddir)/tutorial
 endif
 
-check-core: core
+check-recursive:
+	@true
+
+check-core:
 	$(MAKE) check -C $(top_builddir)/src
+
+check-smoke:
+	$(MAKE) check -C $(top_builddir)/tests/smoke
+
+check-nonsmoke:
+	$(MAKE) check -C $(top_builddir)/tests/nonsmoke/functional
+
+check-java:
+	$(MAKE) check -C $(top_builddir)/tests/nonsmoke/functional/CompileTests/Java_tests
+
+# The "check" target at this top makefile is what users will normally
+# run. This should only run tests that are portable and useful to
+# users.
+#
+# (Matzke: adding binary tests since they're portable and useful and
+# some of our users have come to expect them, and utility tests since
+# they're fundamental to ROSE operation).
+check:
+	$(MAKE) check-core
+	$(MAKE) check-smoke
+	$(MAKE) -C tests/nonsmoke/functional/BinaryAnalysis check
+	$(MAKE) -C tests/nonsmoke/functional/Utility check
+
+# The "check-hard" target is intended to run all tests for the ROSE
+# library proper, whether they are portable or not, but not tests for
+# things that are not the library (i.e., not project tests, tutorial
+# tests, tool tests, documentation tests). Ideally all tests are
+# portable but ROSE has a poor track record.
+check-hard:
+	$(MAKE) check-core
+	$(MAKE) check-smoke
+	$(MAKE) check-nonsmoke
 
 check-tools: tools
 	$(MAKE) check -C $(top_builddir)/tools
@@ -157,7 +192,7 @@ install-compass: install-core
 install-rose-library: install-data-local install-testprojDATA
 	$(MAKE) -C $(top_builddir)/src install
 	$(MAKE) -C $(top_builddir)/LicenseInformation install
-	cp rosePublicConfig.h $(pkgincludedir)
+	cp rosePublicConfig.h $(DESTDIR)/$(pkgincludedir)
 	$(MAKE) -C $(top_builddir)/python install
 
 # Build a binary release of the ROSE library.  This assumes that you're running in the RMC-2 environment because it uses
@@ -258,7 +293,7 @@ check-policies: enforce_policies
 # EXTRA_DIST = cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in COPYRIGHT \
 #              LicenseInformation ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2 bincompat-sig
 EXTRA_DIST += cmake CMakeLists.txt rose_config.h.in.cmake stamp-h.in stamp-h1.in COPYRIGHT \
-             LicenseInformation ROSE_ResearchPapers build ChangeLog2
+             LicenseInformation build 
 
 # The bincompat-sig file contains the SHA1 part of the EDG binary tarball name and must be generated anew
 # each time we make a distribution because we don't want to distribute stale information.
@@ -302,10 +337,6 @@ pkginclude_HEADERS = rosePublicConfig.h
 # DQ (12/3/2007): Added rose_paths.h so that it would be copied to the install tree.
 # JJW (8/25/2008): Changed to a .c file
 include $(top_srcdir)/config/build_rose_paths.Makefile
-
-check-local: enforce_policies
-	@echo 'To run additional "non-smoke" tests, use this command:'
-	@echo "  $(MAKE) -C $$(pwd)/tests/nonsmoke check"
 
 install-exec-local:
 	@echo '*****************************************************************'

@@ -1,0 +1,56 @@
+
+double abs(double x)
+{
+  if (x < 0) 
+    return -x;
+   else 
+    return x;
+}
+#define n 50
+void printmatrix(double x[][50]);
+void initmatrix(double x[][50],double s);
+
+int main(int argc,char *argv[])
+{
+  int p[50];
+  int i;
+  int j;
+  int k;
+  double a[50][50];
+  double mu;
+  double t;
+  int p_buf0;
+  double a_buf1;
+  double a_buf2;
+  initmatrix(a,5.0);
+  printmatrix(a);
+  for (k = 0; k <= 48; k += 1) {
+    p_buf0 = k;
+    mu = abs(a[k][k]);
+    for (i = 1 + k; i <= 49; i += 1) {
+      if (mu < abs(a[i][k])) {
+        mu = abs(a[i][k]);
+        p_buf0 = i;
+      }
+       else {
+      }
+    }
+    for (j = k; j <= 49; j += 1) {
+      t = a[k][j];
+      a[k][j] = a[p_buf0][j];
+      a[p_buf0][j] = t;
+    }
+    p[k] = p_buf0;
+    a_buf1 = a[k][k];
+    for (i = 1 + k; i <= 49; i += 1) {
+      a[i][k] = a[i][k] / a_buf1;
+    }
+    for (j = 1 + k; j <= 49; j += 1) {
+      a_buf2 = a[k][j];
+      for (i = 1 + k; i <= 49; i += 1) {
+        a[i][j] = a[i][j] - a[i][k] * a_buf2;
+      }
+    }
+  }
+  printmatrix(a);
+}

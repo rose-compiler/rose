@@ -1291,7 +1291,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
                 ASSERT_not_null(successors[i].expr());
                 SymbolicExpr::Ptr expr = successors[i].expr()->get_expression();
 
-                if (targetVa && expr->isNumber() && expr->nBits() <= 64 && expr->toInt() == *targetVa) {
+                if (targetVa && expr->toUnsigned().isEqual(targetVa)) {
                     // Edge to concrete node
                     state.frontUnparser().emitLinePrefix(out, state);
                     out <<"\t;; successor: " <<edgeTypeName(successors[i].type()) <<" edge to ";
@@ -1301,7 +1301,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
                     emitted = true;
                     break;
 
-                } else if (!targetVa && !expr->isNumber()) {
+                } else if (!targetVa && !expr->isIntegerConstant()) {
                     // Edge to computed address
                     state.frontUnparser().emitLinePrefix(out, state);
                     out <<"\t;; successor: " <<edgeTypeName(successors[i].type()) <<" edge to " <<*expr <<"\n";
@@ -1328,11 +1328,11 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
         BOOST_FOREACH (const P2::BasicBlock::Successor &successor, successors) {
             ASSERT_not_null(successor.expr());
             SymbolicExpr::Ptr expr = successor.expr()->get_expression();
-            if (expr->isNumber() && expr->nBits() <= 64) {
+            if (expr->isIntegerConstant() && expr->nBits() <= 64) {
                 // Edge to concrete node
                 state.frontUnparser().emitLinePrefix(out, state);
                 out <<"\t;; successor: (not in CFG) " <<edgeTypeName(successor.type()) <<" edge to ";
-                state.frontUnparser().emitAddress(out, expr->toInt(), state);
+                state.frontUnparser().emitAddress(out, expr->toUnsigned().get(), state);
                 out <<"\n";
             } else if (expr->isLeafNode()) {
                 // What?

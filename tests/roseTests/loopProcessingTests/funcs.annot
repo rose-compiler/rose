@@ -1,0 +1,7 @@
+operator sqrt(double a) { modify none; read{a}; }
+operator fabs(double a) { modify none; read{a}; }
+operator dabs(double a) {modify none; read {a}; }
+operator abs(double a) {modify none; read {a}; }
+operator min( int a, int b)  { modify none; read {a,b}; }
+operator max( int a, int b)  { modify none; read {a,b}; }
+operator max( double a, double b)  { modify none; read {a,b}; }

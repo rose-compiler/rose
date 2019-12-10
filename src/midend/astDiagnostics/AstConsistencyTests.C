@@ -2102,7 +2102,6 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
      ROSE_ASSERT(mangledName.find(':') == string::npos);
      ROSE_ASSERT(mangledName.find(';') == string::npos);
      ROSE_ASSERT(mangledName.find('\"') == string::npos);
-     ROSE_ASSERT(mangledName.find('\'') == string::npos);
      ROSE_ASSERT(mangledName.find('?') == string::npos);
      ROSE_ASSERT(mangledName.find('.') == string::npos);
      ROSE_ASSERT(mangledName.find('/') == string::npos);
@@ -2111,6 +2110,12 @@ TestAstForProperlyMangledNames::visit ( SgNode* node )
   // These are the most common cases that fail
      ROSE_ASSERT(mangledName.find('<') == string::npos);
      ROSE_ASSERT(mangledName.find('>') == string::npos);
+
+  // Jovial can have names like a'variable'name so don't disallow '\'' for Jovial [Rasmussen 2/10/2019]
+     if (!SageInterface::is_Jovial_language())
+        {
+           ROSE_ASSERT(mangledName.find('\'') == string::npos);
+        }
    }
 
 TestAstForProperlyMangledNames::TestAstForProperlyMangledNames()
@@ -4489,6 +4494,7 @@ TestMangledNames::visit ( SgNode* node )
 #if 0
           printf ("TestMangledNames::visit(): initializedName->get_scope() = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
 #endif
+          ROSE_ASSERT (initializedName->get_scope() != NULL);
           if (initializedName->get_scope()->class_name() == "SgNode")
              {
                isDeletedNode = true;
@@ -5005,11 +5011,14 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
 
-          // DQ (6/3/2019): Added support for SgIncludeFile (parent is a SgIncludeDirectiveStatement).
-          // case V_SgIncludeDirectiveStatement:
-             case V_SgIncludeFile:
+            // DQ (6/3/2019): Added support for SgIncludeFile (parent is a SgIncludeDirectiveStatement).
+            // case V_SgIncludeDirectiveStatement:
+               case V_SgIncludeFile:
                   {
+                 // DQ (10/22/2019): Note that there is no parent pointer defined for this IR node, so no warning message really make sense, I think.
+#if 0
                     printf ("NOTE: In AST Consistancy tests: TestParentPointersInMemoryPool::visit(): case SgIncludeFile: parent == NULL \n");
+#endif
                  // ROSE_ASSERT(support->get_parent() != NULL);
                     break;
                   }
@@ -5332,12 +5341,17 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                                                // are assigned the class scope as a parent (independent of if they are first used in a function). So this 
                                                // case should not appear.
                                                // printf ("Error: non-defining memberFunctionDeclaration with parent not set to class scope \n");
+
+#if 0
+                                               // DQ (11/10/2019): Cleanup output spew for demo.
+
                                                   printf ("Note: non-defining memberFunctionDeclaration with parent not set to class scope \n");
                                                   printf ("     memberFunctionDeclaration = %p = %s = %s \n",memberFunctionDeclaration,memberFunctionDeclaration->class_name().c_str(),SageInterface::get_name(memberFunctionDeclaration).c_str());
                                                   SgNode* memberFunctionDeclarationParent = memberFunctionDeclaration->get_parent();
                                                   printf ("     memberFunctionDeclaration->get_parent() = %p = %s = %s \n",memberFunctionDeclarationParent,memberFunctionDeclarationParent->class_name().c_str(),SageInterface::get_name(memberFunctionDeclarationParent).c_str());
 
                                                   memberFunctionDeclaration->get_startOfConstruct()->display("Note: non-defining memberFunctionDeclaration with parent not set to class scope");
+#endif
                                                 }
                                            }
                                       }

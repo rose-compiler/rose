@@ -18,27 +18,20 @@ emit_cpp_warning() {
 
 # Download the latest version of the source code
 SAWYER_ROOT="sawyer-$(date +%Y%m%d)"
-if [ -d "$SAWYER_ROOT" ]; then
-    (
-        cd "$SAWYER_ROOT"
-        git fetch "$SAWYER_REPO" master
-        git merge FETCH_HEAD
-    )
-else
-    git clone "$SAWYER_REPO" "$SAWYER_ROOT"
-fi
+rm -rf "$SAWYER_ROOT"
+git clone "$SAWYER_REPO" "$SAWYER_ROOT"
 
 cp "$SAWYER_ROOT/LICENSE" LICENSE
         
 # Copy some of Sawyer's source files into the ROSE source tree. Don't worry about overwriting ROSE-local changes--they
 # should have been contributed back to the Sawyer project by now (besides, that's what Git is for)!
-for f in																\
-    Access AddressMap AddressSegment AllocatingBuffer Assert Attribute BiMap BitVector BitVectorSupport Buffer Cached			\
-    Callbacks Clexer CommandLine CommandLineBoost DefaultAllocator DenseIntegerSet DistinctList DocumentBaseMarkup DocumentMarkup	\
-    DocumentPodMarkup DocumentTextMarkup Exception FileSystem Graph GraphAlgorithm GraphBoost GraphTraversal IndexedList		\
-    Interval IntervalMap IntervalSet IntervalSetMap HashMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional		\
-    PoolAllocator ProgressBar Sawyer Set SharedObject SharedPointer SmallObject Stack StackAllocator StaticBuffer Stopwatch		\
-    Synchronization ThreadWorkers Trace Tracker Tree Type WarningsOff WarningsRestore
+for f in                                                                                                                                \
+    Access AddressMap AddressSegment AllocatingBuffer Assert Attribute BiMap BitVector BitVectorSupport Buffer Cached                   \
+    Callbacks Clexer CommandLine CommandLineBoost DefaultAllocator DenseIntegerSet DistinctList DocumentBaseMarkup DocumentMarkup       \
+    DocumentPodMarkup DocumentTextMarkup Exception FileSystem Graph GraphAlgorithm GraphBoost GraphIteratorBiMap GraphIteratorMap       \
+    GraphIteratorSet GraphTraversal IndexedList Interval IntervalMap IntervalSet IntervalSetMap HashMap Lexer LineVector Map            \
+    MappedBuffer Message NullBuffer Optional PoolAllocator ProgressBar Sawyer Set SharedObject SharedPointer SmallObject Stack          \
+    StackAllocator StaticBuffer Stopwatch Synchronization ThreadWorkers Trace Tracker Tree Type WarningsOff WarningsRestore;            \
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
     ( emit_cpp_warning; cat "$srcbase.h" ) > ./$f.h
@@ -54,28 +47,28 @@ do
 done
 
 # Copy some of Sawyer's unit tests into the ROSE source tree.
-for f in					\
-    CommandLine/cmdUnitTests.C			\
-    Container/addressMapUnitTests.C		\
-    Container/attributeUnitTests.C		\
-    Container/bitvecTests.C			\
-    Container/denseIntegerSetUnitTests.C	\
-    Container/distinctListUnitTests.C		\
-    Container/graphIsomorphismTests.C		\
-    Container/graphUnitTests.C			\
-    Container/indexedGraphDemo.C		\
-    Container/intervalSetMapUnitTests.C		\
-    Container/intervalUnitTests.C		\
+for f in                                        \
+    CommandLine/cmdUnitTests.C                  \
+    Container/addressMapUnitTests.C             \
+    Container/attributeUnitTests.C              \
+    Container/bitvecTests.C                     \
+    Container/denseIntegerSetUnitTests.C        \
+    Container/distinctListUnitTests.C           \
+    Container/graphIsomorphismTests.C           \
+    Container/graphUnitTests.C                  \
+    Container/indexedGraphDemo.C                \
+    Container/intervalSetMapUnitTests.C         \
+    Container/intervalUnitTests.C               \
     Container/hashMapUnitTests.C                \
-    Container/lineVectorUnitTests.C		\
-    Container/listUnitTests.C			\
-    Container/mapUnitTests.C			\
-    Container/optionalUnitTests.C		\
-    Container/setUnitTests.C			\
-    Container/traceUnitTests.C			\
-    Markup/markupUnitTests.C			\
-    Message/mesgUnitTests.C			\
-    Pointers/ptrUnitTests.C			\
+    Container/lineVectorUnitTests.C             \
+    Container/listUnitTests.C                   \
+    Container/mapUnitTests.C                    \
+    Container/optionalUnitTests.C               \
+    Container/setUnitTests.C                    \
+    Container/traceUnitTests.C                  \
+    Markup/markupUnitTests.C                    \
+    Message/mesgUnitTests.C                     \
+    Pointers/ptrUnitTests.C                     \
     Serialization/serializationUnitTests.C
 do
     srcbase="$SAWYER_ROOT/tests/$f";
@@ -91,3 +84,5 @@ done
 
 # Add a comment to the Message.h file
 sed --in-place -e '1i// See also Rose::Diagnostics in $ROSE/src/roseSupport/Diagnostics.h' Message.h
+
+rm -rf "$SAWYER_ROOT"

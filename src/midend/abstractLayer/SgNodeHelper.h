@@ -47,6 +47,7 @@ class SgCaseOptionStmt;
 class SgDefaultOptionStmt;
 
 class SgPragmaDeclaration;
+class SgOmpClauseBodyStatement;
 
 namespace SgNodeHelper {
 
@@ -83,6 +84,8 @@ namespace SgNodeHelper {
 
   //! returns filename followed by line:column in one string. Used for generating readable output.
   std::string sourceLineColumnToString(SgNode* node);
+  //! returns filename followed by line, separator, and column in one string. Used for generating readable output.
+  std::string sourceLineColumnToString(SgNode* node, std::string separator);
 
   //! returns line, column, and unparsed node in one string.
   std::string lineColumnNodeToString(SgNode* node);
@@ -156,8 +159,11 @@ namespace SgNodeHelper {
      information as present in the AST. If this information is not
      sufficient to determine the definition of a function it returns
      0. For a consistent AST this will find all definitions in the
-     same file. It does not find definitions in a other SgFile
-     subtrees.
+     same file, but not in a other SgFile. 
+
+     For an inter-procedural analysis a more elaborate mechanism is
+     required to perform a static function call lresolution (also
+     handling function pointers and virtual functions).
   */
   SgFunctionDefinition* determineFunctionDefinition(SgFunctionCallExp* fCall);
 
@@ -448,14 +454,22 @@ namespace SgNodeHelper {
   */
   std::string getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl);
 
-    // replace in string 'str' each string 'from' with string 'to'.
-    void replaceString(std::string& str, const std::string& from, const std::string& to);
+  // replace in string 'str' each string 'from' with string 'to'.
+  void replaceString(std::string& str, const std::string& from, const std::string& to);
 
-    // checks whether prefix 'prefix' is a prefix in string 's'.
-    bool isPrefix(const std::string& prefix, const std::string& s);
+  // checks whether prefix 'prefix' is a prefix in string 's'.
+  bool isPrefix(const std::string& prefix, const std::string& s);
 
-    // checks whether 'elem' is the last child (in traversal order) of node 'parent'.
-    bool isLastChildOf(SgNode* elem, SgNode* parent);
+  // checks whether 'elem' is the last child (in traversal order) of node 'parent'.
+  bool isLastChildOf(SgNode* elem, SgNode* parent);
+
+#if __cplusplus > 199711L
+  // Checks if an OpenMP construct is marked with a nowait clause
+  bool hasOmpNoWait(SgOmpClauseBodyStatement *ompNode);
+
+  typedef std::vector<SgOmpSectionStatement *> OmpSectionList;
+  OmpSectionList getOmpSectionList(SgOmpSectionsStatement *sectionsStmt);
+#endif
 
   //! Provides functions which match a certain AST pattern and return a pointer to a node of interest inside that pattern.
   namespace Pattern {

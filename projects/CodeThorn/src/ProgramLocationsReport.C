@@ -9,9 +9,33 @@ using namespace std;
 using namespace CodeThorn;
 using namespace CodeThorn;
 
+bool CodeThorn::ProgramLocationsReport::hasSourceLocation(SgStatement* stmt) {
+  ROSE_ASSERT(stmt);
+  Sg_File_Info* fi=stmt->get_file_info();
+  return fi->get_line()>0;
+}
+
 string CodeThorn::ProgramLocationsReport::programLocation(Labeler* labeler, Label lab) {
   SgNode* node=labeler->getNode(lab);
   ROSE_ASSERT(node);
+  // find non-transformation file info
+  SgNode* parent=node->get_parent();
+  // if node is inside expression, search for statement node
+  while(!isSgStatement(node)) {
+    node=node->get_parent();
+    if(node==nullptr)
+      return "[unresolved source location]";
+  }
+  SgStatement* stmt=isSgStatement(node);
+  ROSE_ASSERT(stmt);
+  while(!hasSourceLocation(stmt)) {
+    stmt=SageInterface::getPreviousStatement(stmt);
+    if(!stmt)
+      return "[unresolved source location]";
+  }
+  node=stmt;
+  ROSE_ASSERT(stmt);
+  // return fileinfo as formatted string
   return SgNodeHelper::sourceLineColumnToString(node)+","+SgNodeHelper::sourceFilenameToString(node);
 }
 
@@ -19,6 +43,19 @@ string CodeThorn::ProgramLocationsReport::sourceCodeAtProgramLocation(Labeler* l
   SgNode* node=labeler->getNode(lab);
   ROSE_ASSERT(node);
   return SgNodeHelper::doubleQuotedEscapedString(node->unparseToString());
+}
+
+void CodeThorn::ProgramLocationsReport::writeResultToStream(std::ostream& stream, CodeThorn::Labeler* labeler) {
+    for(auto lab : definitiveLocations) {
+      stream<<"definitive: "<<programLocation(labeler,lab);
+      stream<<": "<<sourceCodeAtProgramLocation(labeler,lab);
+      stream<<endl;
+    }
+    for(auto lab : potentialLocations) {
+      stream<<"potential: "<<programLocation(labeler,lab);
+      stream<<": "<<sourceCodeAtProgramLocation(labeler,lab);
+      stream<<endl;
+    }
 }
 
 void CodeThorn::ProgramLocationsReport::writeResultFile(string fileName, CodeThorn::Labeler* labeler) {
@@ -53,4 +90,7 @@ size_t ProgramLocationsReport::numDefinitiveLocations() {
 }
 size_t ProgramLocationsReport::numPotentialLocations() {
   return potentialLocations.size();
+}
+size_t ProgramLocationsReport::numTotalLocations() {
+  return definitiveLocations.size()+potentialLocations.size();
 }

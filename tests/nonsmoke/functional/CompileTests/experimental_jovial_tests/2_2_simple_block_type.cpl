@@ -1,0 +1,8 @@
+START
+
+COMPOOL simple'block'type;
+
+TYPE a'block'type BLOCK
+     ITEM avar F;
+
+TERM

@@ -1,25 +1,16 @@
-#include <vector>
-typedef int    Index_t ; 
+ template<typename T>
+ void swap(T& x, T& y)
+ {
+   T tmp = x;
+   x = y;
+   y = tmp;
+ }
 
-struct Domain
+int foo (int a, int b)
 {
-  public:
-    Index_t&  numNode()            { return m_numNode ; }
+   swap(a,b);
+}
 
-    void AllocateNodeElemIndexes()
-    {
-      Index_t numNode = this->numNode() ;
-    } 
-
-#if 0  // the best inline result should look like the following
-    void AllocateNodeElemIndexes_inlined()
-    {
-      Index_t numNode = m_numNode; // call site 1 inlined
-    } 
-#endif
-
-  private:
-    Index_t   m_numNode ;
-} domain; 
-
-
+int main()
+{
+}

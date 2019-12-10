@@ -1689,7 +1689,7 @@ MulticoreArray<T>::computeMemorySectionAndOffset(const int & i, const int & j, c
 #endif
 
                int size        = 0;
-               int sizePerCore = (arraySize[dim] / coreArraySize[dim]) + ((remainder != 0) ? 1 : 0);
+               int sizePerCore = (arraySize[dim] / coreArraySize[dim]) + ((remainder[dim] != 0) ? 1 : 0);
 #if 0
                printf ("sizePerCore = %d \n",sizePerCore);
 #endif

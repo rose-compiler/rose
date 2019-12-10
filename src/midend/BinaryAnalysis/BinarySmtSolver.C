@@ -32,13 +32,11 @@ bool
 CompareLeavesByName::operator()(const SymbolicExpr::LeafPtr &a, const SymbolicExpr::LeafPtr &b) const {
     if (!a || !b)
         return !a && b;                                 // null a is less than non-null b; other null combos return false
-    ASSERT_forbid(a->isNumber());                       // leaf comparison is only for variables, not constants
-    ASSERT_forbid(b->isNumber());                       // ditto
-    if (a->isVariable() && b->isVariable())
-        return a->nameId() < b->nameId();
-    if (a->isMemory() && b->isMemory())
-        return a->nameId() < b->nameId();
-    return a->isVariable() && b->isMemory();            // variables are less than memory
+    ASSERT_require(a->isVariable2() || a->isMemoryExpr());
+    ASSERT_require(b->isVariable2() || b->isMemoryExpr());
+    if (a->isMemoryExpr() != b->isMemoryExpr())
+        return !a->isMemoryExpr();                      // memory expressions come after other things
+    return a->nameId() < b->nameId();
 }
 
 // class method
@@ -303,13 +301,19 @@ SmtSolver::checkTrivial() {
         return SAT_YES;
 
     // If any assertion is a constant zero, then NO
+    // If all assertions are non-zero integer constants, then YES
+    bool allTrue = true;
     BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs) {
-        if (expr->isNumber()) {
+        if (expr->isIntegerConstant()) {
             ASSERT_require(1 == expr->nBits());
-            if (expr->toInt() == 0)
+            if (expr->toUnsigned().get() == 0)
                 return SAT_NO;
+        } else {
+            allTrue = false;
         }
     }
+    if (allTrue)
+        return SAT_YES;
 
     return SAT_UNKNOWN;
 }
@@ -737,20 +741,20 @@ SmtSolver::selfTest() {
     ASSERT_require(sexprs[4]->children()[1]->children()[0]->name() == "y");
 
     // Create some variables and constants
-    E a1 = makeVariable(1, "a1");
-    E a8 = makeVariable(8, "a8");
-    E a32 = makeVariable(32, "a32");
-    E a256 = makeVariable(256, "a256");
+    E a1 = makeIntegerVariable(1, "a1");
+    E a8 = makeIntegerVariable(8, "a8");
+    E a32 = makeIntegerVariable(32, "a32");
+    E a256 = makeIntegerVariable(256, "a256");
 
-    E z8 = makeInteger(8, 0);
-    E b1 = makeVariable(1, "b1");
-    E b4 = makeInteger(4, 10);
-    E b8 = makeInteger(8, 0xf0);
-    E c8 = makeVariable(8);
-    E z256 = makeInteger(256, 0xdeadbeef);
+    E z8 = makeIntegerConstant(8, 0);
+    E b1 = makeIntegerVariable(1, "b1");
+    E b4 = makeIntegerConstant(4, 10);
+    E b8 = makeIntegerConstant(8, 0xf0);
+    E c8 = makeIntegerVariable(8);
+    E z256 = makeIntegerConstant(256, 0xdeadbeef);
 
-    E bfalse = makeBoolean(false);
-    E btrue = makeBoolean(true);
+    E bfalse = makeBooleanConstant(false);
+    E btrue = makeBooleanConstant(true);
 
     // Comparisons
     std::vector<E> exprs;
@@ -777,26 +781,26 @@ SmtSolver::selfTest() {
 
     // Bit operations
     exprs.push_back(makeZerop(makeAnd(a8, b8), NO_SOLVER, "bit-wise conjunction"));
-    exprs.push_back(makeZerop(makeAsr(makeInteger(2, 3), a8), NO_SOLVER, "arithmetic shift right 3 bits"));
+    exprs.push_back(makeZerop(makeAsr(makeIntegerConstant(2, 3), a8), NO_SOLVER, "arithmetic shift right 3 bits"));
     exprs.push_back(makeZerop(makeOr(a8, b8), NO_SOLVER, "bit-wise disjunction"));
     exprs.push_back(makeZerop(makeXor(a8, b8), NO_SOLVER, "bit-wise exclusive disjunction"));
     exprs.push_back(makeZerop(makeConcat(a8, b8), NO_SOLVER, "concatenation"));
-    exprs.push_back(makeZerop(makeExtract(makeInteger(2, 3), makeInteger(4, 8), a8), NO_SOLVER,
+    exprs.push_back(makeZerop(makeExtract(makeIntegerConstant(2, 3), makeIntegerConstant(4, 8), a8), NO_SOLVER,
                               "extract bits [3..7]"));
     exprs.push_back(makeZerop(makeInvert(a8), NO_SOLVER, "bit-wise not"));
 #if 0 // FIXME[Robb Matzke 2017-10-24]: not implemented yet
     exprs.push_back(makeZerop(makeLssb(a8), NO_SOLVER, "least significant set bit"));
     exprs.push_back(makeZerop(makeMssb(a8), NO_SOLVER, "most significant set bit"));
 #endif
-    exprs.push_back(makeZerop(makeRol(makeInteger(2, 3), a8), NO_SOLVER, "rotate left three bits"));
-    exprs.push_back(makeZerop(makeRor(makeInteger(2, 3), a8), NO_SOLVER, "rotate right three bits"));
-    exprs.push_back(makeZerop(makeSignExtend(makeInteger(6, 32), a8), NO_SOLVER, "sign extend to 32 bits"));
-    exprs.push_back(makeZerop(makeShl0(makeInteger(2, 3), a8), NO_SOLVER, "shift left inserting three zeros"));
-    exprs.push_back(makeZerop(makeShl1(makeInteger(2, 3), a8), NO_SOLVER, "shift left inserting three ones"));
-    exprs.push_back(makeZerop(makeShr0(makeInteger(2, 3), a8), NO_SOLVER, "shift right inserting three zeros"));
-    exprs.push_back(makeZerop(makeShr1(makeInteger(2, 3), a8), NO_SOLVER, "shift right inserting three ones"));
-    exprs.push_back(makeZerop(makeExtend(makeInteger(2, 3), a8), NO_SOLVER, "truncate to three bits"));
-    exprs.push_back(makeZerop(makeExtend(makeInteger(6, 32), a8), NO_SOLVER, "extend to 32 bits"));
+    exprs.push_back(makeZerop(makeRol(makeIntegerConstant(2, 3), a8), NO_SOLVER, "rotate left three bits"));
+    exprs.push_back(makeZerop(makeRor(makeIntegerConstant(2, 3), a8), NO_SOLVER, "rotate right three bits"));
+    exprs.push_back(makeZerop(makeSignExtend(makeIntegerConstant(6, 32), a8), NO_SOLVER, "sign extend to 32 bits"));
+    exprs.push_back(makeZerop(makeShl0(makeIntegerConstant(2, 3), a8), NO_SOLVER, "shift left inserting three zeros"));
+    exprs.push_back(makeZerop(makeShl1(makeIntegerConstant(2, 3), a8), NO_SOLVER, "shift left inserting three ones"));
+    exprs.push_back(makeZerop(makeShr0(makeIntegerConstant(2, 3), a8), NO_SOLVER, "shift right inserting three zeros"));
+    exprs.push_back(makeZerop(makeShr1(makeIntegerConstant(2, 3), a8), NO_SOLVER, "shift right inserting three ones"));
+    exprs.push_back(makeZerop(makeExtend(makeIntegerConstant(2, 3), a8), NO_SOLVER, "truncate to three bits"));
+    exprs.push_back(makeZerop(makeExtend(makeIntegerConstant(6, 32), a8), NO_SOLVER, "extend to 32 bits"));
 
     // Arithmetic operations
     exprs.push_back(makeZerop(makeAdd(a8, b8), NO_SOLVER, "addition"));
@@ -811,8 +815,8 @@ SmtSolver::selfTest() {
     exprs.push_back(makeZerop(makeMul(a8, b4), NO_SOLVER, "unsigned multiply"));
 
     // Memory operations
-    E mem = makeMemory(32, 8, "memory");
-    E addr = makeInteger(32, 12345, "address");
+    E mem = makeMemoryVariable(32, 8, "memory");
+    E addr = makeIntegerConstant(32, 12345, "address");
     exprs.push_back(makeZerop(makeRead(mem, addr), NO_SOLVER, "read from memory"));
     exprs.push_back(makeEq(makeRead(makeWrite(mem, addr, a8), addr), a8, NO_SOLVER, "write to memory"));
 
@@ -830,9 +834,9 @@ SmtSolver::selfTest() {
     exprs.push_back(makeIte(a1, makeZerop(a1), b1));
 
     // Wide multiply
-    exprs.push_back(makeEq(makeExtract(makeInteger(8, 0), makeInteger(8, 128),
-                                       makeMul(makeVariable(128), makeInteger(128, 2))),
-                           makeInteger(128, 16)));
+    exprs.push_back(makeEq(makeExtract(makeIntegerConstant(8, 0), makeIntegerConstant(8, 128),
+                                       makeMul(makeIntegerVariable(128), makeIntegerConstant(128, 2))),
+                           makeIntegerConstant(128, 16)));
 
     // Run the solver
     for (size_t i=0; i<exprs.size(); ++i) {
@@ -868,11 +872,11 @@ SmtSolver::selfTest() {
 
     // Test that memoization works, including the ability to obtain the evidence afterward.
     if (memoization()) {
-        E var1 = makeVariable(8);
-        E var2 = makeVariable(8);
+        E var1 = makeIntegerVariable(8);
+        E var2 = makeIntegerVariable(8);
         ASSERT_always_forbid(var1->isEquivalentTo(var2));
-        E expr1 = makeEq(var1, makeInteger(8, 123));
-        E expr2 = makeEq(var2, makeInteger(8, 123));
+        E expr1 = makeEq(var1, makeIntegerConstant(8, 123));
+        E expr2 = makeEq(var2, makeIntegerConstant(8, 123));
         ASSERT_always_forbid(expr1->isEquivalentTo(expr2));
 
         Satisfiable sat = satisfiable(expr1);
@@ -883,8 +887,8 @@ SmtSolver::selfTest() {
         E evid1 = evidenceForName(evid1names[0]);
         ASSERT_always_not_null(evid1);
         ASSERT_always_require(evid1->isLeafNode());
-        ASSERT_always_require(evid1->isLeafNode()->isNumber());
-        ASSERT_always_require(evid1->isLeafNode()->toInt() == 123);
+        ASSERT_always_require(evid1->isLeafNode()->isIntegerConstant());
+        ASSERT_always_require(evid1->isLeafNode()->toUnsigned().get() == 123);
 
         sat = satisfiable(expr2);
         ASSERT_always_require(SAT_YES == sat);
@@ -894,8 +898,8 @@ SmtSolver::selfTest() {
         E evid2 = evidenceForName(evid2names[0]);
         ASSERT_always_not_null(evid2);
         ASSERT_always_require(evid2->isLeafNode());
-        ASSERT_always_require(evid2->isLeafNode()->isNumber());
-        ASSERT_always_require(evid2->isLeafNode()->toInt() == 123);
+        ASSERT_always_require(evid2->isLeafNode()->isIntegerConstant());
+        ASSERT_always_require(evid2->isLeafNode()->toUnsigned().get() == 123);
     }
 }
 

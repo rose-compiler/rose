@@ -35,58 +35,14 @@ Hasher::print(std::ostream &out) {
     out <<toString(digest());
 }
 
-boost::shared_ptr<Hasher> Hasher::createHasher(const std::string& inType) 
+Hasher::HasherFactory& Hasher::HasherFactory::Instance()
 {
-    std::string type;
-    std::transform(inType.begin(), inType.end(), back_inserter(type), ::toupper);
-    
-    if(type == "SHA256") {
-        HasherSha256Builtin* hasher = new HasherSha256Builtin;
-        boost::shared_ptr<Hasher> hashPtr(hasher);
-        return hashPtr;
-    }
-    if(type == "FNV") {
-        HasherFnv* hasher = new HasherFnv;
-        boost::shared_ptr<Hasher> hashPtr(hasher);
-        return hashPtr;
-    }
-#ifdef ROSE_HAVE_LIBGCRYPT
-    if(type == "MD5" || type == "GCRYPT_MD5") {
-        HasherMd5* hasher = new HasherMd5;
-        boost::shared_ptr<Hasher> hashPtr(hasher);
-        return hashPtr;
-    }
-    if(type == "SHA1" || type == "GCRYPT_SHA1") {
-        HasherSha1* hasher = new HasherSha1;
-        boost::shared_ptr<Hasher> hashPtr(hasher);
-        return hashPtr;
-    }
-    if(type == "GCRYPT_SHA256") {
-        HasherSha256* hasher = new HasherSha256;
-        boost::shared_ptr<Hasher> hashPtr(hasher);
-        return hashPtr;
-    }
-    if(type == "SHA384" || type == "GCRYPT_SHA384") {
-        HasherSha384* hasher = new HasherSha384;
-        boost::shared_ptr<Hasher> hashPtr(hasher);
-        return hashPtr;
-    }
-    if(type == "SHA512" || type == "GCRYPT_SHA512") {
-        HasherSha512* hasher = new HasherSha512;
-        boost::shared_ptr<Hasher> hashPtr(hasher);
-        return hashPtr;
-    }
-    if(type == "CRC_32"  || type == "GCRYPT_CRC32") {
-        HasherCrc32* hasher = new HasherCrc32;
-        boost::shared_ptr<Hasher> hashPtr(hasher);
-        return hashPtr;
-    }
-
-
-#endif
-    return boost::shared_ptr<Hasher>();
-    
+    // So called Meyers Singleton implementation,
+    // In C++ 11 this is in fact thread-safe
+    static HasherFactory factory;
+    return factory;
 }
+
 
 ROSE_DLL_API std::string digest_to_string(const uint8_t *data, size_t size) {
     std::vector<uint8_t> digest(data+0, data+size);
@@ -105,6 +61,50 @@ digest_to_string(const std::string &data) {
     return Hasher::toString(digest);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// HasherFactory function definitions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Hasher::HasherFactory::registerMaker(const std::string& hashType, 
+                                          Hasher::IHasherMaker* hasherMakerPtr)
+{
+    // Validate uniquness and add to the map
+    if (hashMakers.find(hashType) != hashMakers.end())
+    {
+        throw new Exception("Multiple makers for given key!");
+    }
+    hashMakers[hashType] = hasherMakerPtr;
+}
+
+boost::shared_ptr<Hasher> Hasher::HasherFactory::createHasher(const std::string& hashType) const
+{
+    // Look up the maker by nodes name
+    std::map<std::string, IHasherMaker* >::const_iterator hashItr = hashMakers.find(hashType);
+    if (hashItr == hashMakers.end())
+    {
+        std::ostringstream ss;
+        ss <<"createHasher: Unrecognized hasher type name: " << hashType;
+        if(strncmp(hashType.c_str(), "GCRYPT", 6) == 0) {
+            ss << ". A libgcrypt hasher was requested, are you sure ROSE was built with libgcrypt?";
+        }
+        throw new Exception(ss.str());
+    }
+    IHasherMaker* hashMaker = hashItr->second;
+    return hashMaker->create();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Register all GCRYPT hashing, iff ROSE was built with libgcrypt
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ROSE_HAVE_LIBGCRYPT
+/** Auto register Gcrypt hash functions with the HasherFactory' **/
+static Hasher::HasherMaker<HasherMd5> makerMd5("GCRYPT_MD5");
+static Hasher::HasherMaker<HasherSha1> makerSha1("GCRYPT_SHA1");
+static Hasher::HasherMaker<HasherSha256> makerSha256("GCRYPT_SHA256");
+static Hasher::HasherMaker<HasherSha384> makerSha384("GCRYPT_SHA384");
+static Hasher::HasherMaker<HasherSha512> makerSha512("GCRYPT_SHA512");
+static Hasher::HasherMaker<HasherCrc32> makerCrc32("GCRYPT_CRC32");
+#endif
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -136,6 +136,9 @@ sha1_digest(const uint8_t *data, size_t size) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Fowler-Noll-Vo hashing
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Auto register Fowler-Noll-Vo hashing with the Hasher Factory as 'FNV' **/
+static Hasher::HasherMaker<HasherFnv> makerFNV("FNV");
 
 const Hasher::Digest&
 HasherFnv::digest() {
@@ -185,6 +188,8 @@ fnv1a64_digest(const uint8_t *data, size_t size) {
 // Implementation based on FIPS PUB 180-4 "Federal Information Processing Standards Publication: Secure Hash Standard (SHS)"
 // found at [https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf]
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/** Auto register Built-in SHA256 with the HasherFactory as SHA256' **/
+static Hasher::HasherMaker<HasherSha256Builtin> makerSHA256("SHA256");
 
 // The first 32 bits of the fractional parts of the cube roots of the first 64 primes
 const uint32_t HasherSha256Builtin::roundConstants_[64] = {

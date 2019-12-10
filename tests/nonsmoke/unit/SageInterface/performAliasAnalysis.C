@@ -107,7 +107,7 @@ int main(int argc, char * argv[])
     ArrayAnnotation* annot = ArrayAnnotation::get_inst();
     ArrayInterface array_interface(*annot);
 
-    array_interface.AliasCollect (fa_body, AstNodePtrImpl(defn));
+    array_interface.analyze (fa_body, AstNodePtrImpl(defn));
     // array_interface.initialize(fa_body, AstNodePtrImpl(defn));
     // array_interface.observe(fa_body);
 

@@ -483,6 +483,7 @@ public:
                                               SgAsmFloatType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr fpSquareRoot(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr fpRoundTowardZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr reinterpret(const BaseSemantics::SValuePtr&, SgAsmType*) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
                                                   const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
     virtual BaseSemantics::SValuePtr peekRegister(RegisterDescriptor reg,

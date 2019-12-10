@@ -3,7 +3,6 @@
 
 #include <Partitioner2/AddressUsageMap.h>
 #include <Partitioner2/BasicBlock.h>
-#include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Function.h>
 
@@ -24,9 +23,6 @@ bool sortDataBlocks(const DataBlock::Ptr&, const DataBlock::Ptr&);
 bool sortFunctionsByAddress(const Function::Ptr&, const Function::Ptr&);
 bool sortFunctionNodesByAddress(const SgAsmFunction*, const SgAsmFunction*);
 bool sortByExpression(const BasicBlock::Successor&, const BasicBlock::Successor&);
-bool sortVerticesByAddress(const ControlFlowGraph::ConstVertexIterator&, const ControlFlowGraph::ConstVertexIterator&);
-bool sortEdgesBySrc(const ControlFlowGraph::ConstEdgeIterator&, const ControlFlowGraph::ConstEdgeIterator&);
-bool sortEdgesByDst(const ControlFlowGraph::ConstEdgeIterator&, const ControlFlowGraph::ConstEdgeIterator&);
 bool sortBlocksForAst(SgAsmBlock*, SgAsmBlock*);
 bool sortInstructionsByAddress(SgAsmInstruction*, SgAsmInstruction*);
 
@@ -149,8 +145,6 @@ isSupersetUnique(const Container &sup, const Container &sub, Comparator lessThan
 std::ostream& operator<<(std::ostream&, const AddressUser&);
 std::ostream& operator<<(std::ostream&, const AddressUsers&);
 std::ostream& operator<<(std::ostream&, const AddressUsageMap&);
-std::ostream& operator<<(std::ostream&, const ControlFlowGraph::Vertex&);
-std::ostream& operator<<(std::ostream&, const ControlFlowGraph::Edge&);
 
 /** Parse an address interval.
  *

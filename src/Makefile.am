@@ -38,6 +38,15 @@ else
    libroseOpenFortranParserlibraries =
 endif
 
+# Added support for Fortran front-end development using the flang (F18) compiler [Rasmussen 8/12/2019]
+if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
+   libroseExperimentalFlangParserlibraries = \
+        frontend/Experimental_Flang_ROSE_Connection/libexperimentalRoseFlang.la \
+        3rdPartyLibraries/flang-parser/libFlangParser.la
+else
+   libroseExperimentalFlangParserlibraries =
+endif
+
 # Rasmussen (01/21/2018): Adding general support for experimental languages
 # Rasmussen (05/29/2018): Moved parse tables for installation in $(prefix)/share/rose
 if ROSE_BUILD_ATERM_SUPPORT
@@ -189,11 +198,11 @@ libroseLibraries = \
 else
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
-   $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la \
    $(top_builddir)/src/backend/libbackend.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(libroseCxxlibraries) \
    $(libroseOpenFortranParserlibraries) \
+   $(libroseExperimentalFlangParserlibraries) \
    $(libroseExperimentalGeneralLanguagelibraries) \
    $(libroseExperimentalOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
@@ -218,6 +227,11 @@ libroseLibraries = \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
+
+if ROSE_WITH_LIBHARU
+libroseLibraries += \
+   $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la 
+endif
 
 # DQ (6/10/2017): Added libhpdf.la library and removed it from LIBADD rule.
 # This is being done to fix the "make install" rule (which failes for me).
@@ -297,7 +311,7 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
           $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
           $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) \
           $(OPT_SQLITE3_LDFLAGS) \
-          $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS) \
+          $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS) $(ROSE_FLANG_LIBS) \
           $(ROSE_COBOL_PT_LIBS_WITH_PATH)
 
 # DQ (6/9/2017): Removed because it failes for "make install" rule on my machine.
@@ -423,6 +437,7 @@ rose_config_installed_ldflags =			\
 	$(ROSE_ETHER_LIBS)			\
 	$(ROSE_INTEL_COMPILER_MATH_LIBS)	\
 	$(ROSE_ATERM_LIBS)			\
+	$(ROSE_FLANG_LIBS)			\
 	$(ROSE_COBOL_PT_LIBS_WITH_PATH)         \
 	$(ROSE_YAML_LIBS_WITH_PATH)		\
 	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\

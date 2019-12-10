@@ -1,14 +1,19 @@
 include_rules
 ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
 
-run $(librose_compile) BaseSemantics2.C ConcreteSemantics2.C DataFlowSemantics2.C DispatcherM68k.C DispatcherPowerpc.C \
-    DispatcherX86.C IntervalSemantics2.C LlvmSemantics2.C MemoryCell.C MemoryCellList.C MemoryCellMap.C MemoryCellState.C \
-    MultiSemantics2.C NullSemantics2.C PartialSymbolicSemantics2.C RegisterStateGeneric.C SourceAstSemantics2.C \
+run $(librose_compile) BaseSemantics2.C BaseSemanticsDispatcher.C BaseSemanticsException.C BaseSemanticsMemoryState.C \
+    BaseSemanticsMerger.C BaseSemanticsRegisterState.C BaseSemanticsRiscOperators.C BaseSemanticsState.C BaseSemanticsSValue.C \
+    ConcreteSemantics2.C DataFlowSemantics2.C DispatcherM68k.C DispatcherPowerpc.C DispatcherX86.C InstructionSemantics2.C \
+    IntervalSemantics2.C LlvmSemantics2.C MemoryCell.C MemoryCellList.C MemoryCellMap.C MemoryCellState.C MultiSemantics2.C \
+    NativeSemantics.C NullSemantics2.C PartialSymbolicSemantics2.C RegisterStateGeneric.C SourceAstSemantics2.C \
     StaticSemantics2.C SymbolicMemory2.C SymbolicSemantics2.C TraceSemantics2.C
 
 endif
 
-run $(public_header) BaseSemantics2.h ConcreteSemantics2.h DataFlowSemantics2.h DispatcherM68k.h DispatcherPowerpc.h \
-    DispatcherX86.h IntervalSemantics2.h LlvmSemantics2.h MemoryCell.h MemoryCellList.h MemoryCellMap.h MemoryCellState.h \
-    MultiSemantics2.h NullSemantics2.h PartialSymbolicSemantics2.h RegisterStateGeneric.h SourceAstSemantics2.h \
-    StaticSemantics2.h SymbolicMemory2.h SymbolicSemantics2.h TestSemantics2.h TraceSemantics2.h
+run $(public_header) BaseSemantics2.h BaseSemanticsDispatcher.h BaseSemanticsException.h BaseSemanticsFormatter.h \
+    BaseSemanticsMemoryState.h BaseSemanticsMerger.h BaseSemanticsRegisterState.h BaseSemanticsRiscOperators.h \
+    BaseSemanticsState.h BaseSemanticsSValue.h BaseSemanticsTypes.h ConcreteSemantics2.h DataFlowSemantics2.h \
+    DispatcherM68k.h DispatcherPowerpc.h DispatcherX86.h InstructionSemantics2.h IntervalSemantics2.h LlvmSemantics2.h \
+    MemoryCell.h MemoryCellList.h MemoryCellMap.h MemoryCellState.h MultiSemantics2.h NativeSemantics.h NullSemantics2.h \
+    PartialSymbolicSemantics2.h RegisterStateGeneric.h SourceAstSemantics2.h StaticSemantics2.h SymbolicMemory2.h \
+    SymbolicSemantics2.h TestSemantics2.h TraceSemantics2.h

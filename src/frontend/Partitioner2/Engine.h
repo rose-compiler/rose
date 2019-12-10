@@ -448,20 +448,40 @@ public:
     // top-level: parseCommandLine
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Command-line switches related to the loader. */
+    /** Command-line switches related to the loader.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup loaderSwitches();
+    static Sawyer::CommandLine::SwitchGroup loaderSwitches(LoaderSettings&);
+    /** @} */
 
-    /** Command-line switches related to the disassembler. */
+    /** Command-line switches related to the disassembler.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup disassemblerSwitches();
+    static Sawyer::CommandLine::SwitchGroup disassemblerSwitches(DisassemblerSettings&);
+    /** @} */
 
-    /** Command-line switches related to the partitioner. */
+    /** Command-line switches related to the partitioner.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup partitionerSwitches();
+    static Sawyer::CommandLine::SwitchGroup partitionerSwitches(PartitionerSettings&);
+    /** @} */
 
-    /** Command-line switches related to engine behavior. */
+    /** Command-line switches related to engine behavior.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup engineSwitches();
+    static Sawyer::CommandLine::SwitchGroup engineSwitches(EngineSettings&);
+    /** @} */
 
-    /** Command-line switches related to AST construction. */
+    /** Command-line switches related to AST construction.
+     *
+     * @{ */
     virtual Sawyer::CommandLine::SwitchGroup astConstructionSwitches();
+    static Sawyer::CommandLine::SwitchGroup astConstructionSwitches(AstConstructionSettings&);
+    /** @} */
 
     /** Documentation for specimen names. */
     static std::string specimenNameDocumentation();
@@ -1194,6 +1214,18 @@ public:
      * @{ */
     size_t maxBasicBlockSize() const /*final*/ { return settings_.partitioner.maxBasicBlockSize; }
     virtual void maxBasicBlockSize(size_t n) { settings_.partitioner.maxBasicBlockSize = n; }
+    /** @} */
+
+    /** Property: CFG edge rewrite pairs.
+     *
+     *  This property is a list of old/new instruction pointer pairs that describe how to rewrite edges of the global control
+     *  flow graph. Whenever an instruction has a successor whose address is an old address, it will be replaced with a successor
+     *  edge that points to the new address.  This list must have an even number of elements where element <code>2*i+0</code> is
+     *  and old address and element <code>2*i+1</code> is the corresponding new address.
+     *
+     * @{ */
+    const std::vector<rose_addr_t>& ipRewrites() const /*final*/ { return settings_.partitioner.ipRewrites; }
+    virtual void ipRewrites(const std::vector<rose_addr_t> &v) { settings_.partitioner.ipRewrites = v; }
     /** @} */
 
     /** Property: Whether to find function padding.

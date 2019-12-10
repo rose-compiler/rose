@@ -23,7 +23,7 @@ ATbool traverse_CompoolModule(ATerm term, SgUntypedScope* scope);
 // 1.2.2 PROCEDURE MODULES
 ATbool traverse_ProcedureModule(ATerm term, SgUntypedScope* scope);
 ATbool traverse_DeclarationList(ATerm term, SgUntypedDeclarationStatementList* decl_list);
-ATbool traverse_NullDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_NullDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref = 0);
 
 // 1.2.3 MAIN PROGRAM MODULES
 ATbool traverse_MainProgramModule(ATerm term, SgUntypedGlobalScope* global_scope);
@@ -33,18 +33,18 @@ ATbool traverse_NonNestedSubroutineList(ATerm term, SgUntypedScope* scope);
 ATbool traverse_SubroutineDefinitionList(ATerm term, SgUntypedFunctionDeclarationList* func_list);
 
 // 1.4 IMPLEMENTATION PARAMETERS
-//ATbool traverse_IntegerMachineParameter(ATerm term, SgUntypedExpression* & expr);
-//ATbool traverse_FloatingMachineParameter(ATerm term, SgUntypedExpression* & expr);
-//ATbool traverse_FixedMachineParameter(ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_IntegerMachineParameter (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_FloatingMachineParameter(ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_FixedMachineParameter   (ATerm term, SgUntypedExpression* & expr);
 
 // 2.0 DECLARATIONS
 ATbool traverse_Declaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // 2.1 DATA DECLARATIONS
-ATbool traverse_DataDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_DataDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref = 0);
 
 // 2.1.1 ITEM DECLARATION
-ATbool traverse_ItemDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_ItemDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref = 0);
 ATbool traverse_ItemTypeDescription(ATerm term, SgUntypedType* & type, SgUntypedExprListExpression* attr_list);
 
 // 2.1.1.1 INTEGER TYPE DESCRIPTIONS
@@ -77,7 +77,7 @@ ATbool traverse_SpecifiedSublist      (ATerm term, SgUntypedInitializedNameList*
 
 // 2.1.1.7 POINTER TYPE DESCRIPTIONS
 ATbool traverse_PointerItemDescription (ATerm term, SgUntypedType* & type);
-ATbool traverse_OptTypeName            (ATerm term, std::string & name);
+ATbool traverse_OptTypeName            (ATerm term, SgUntypedType* & type, std::string & name);
 
 // 2.1.2 TABLE DECLARATION
 ATbool traverse_TableDeclaration       (ATerm term, SgUntypedDeclarationStatementList* decl_list);
@@ -115,16 +115,26 @@ ATbool traverse_WordsPerEntry                 (ATerm term, SgUntypedExprListExpr
 // 2.1.3 CONSTANT DECLARATIONS
 ATbool traverse_ConstantDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
+// 2.1.4 BLOCK DECLARATION
+ATbool traverse_BlockDeclaration   (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_BlockBodyPart      (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_BlockPreset        (ATerm term, SgUntypedExprListExpression* preset_list);
+ATbool traverse_BlockPresetList    (ATerm term, SgUntypedExprListExpression* preset_list);
+ATbool traverse_OptBlockPresetList (ATerm term, SgUntypedExprListExpression* preset_list);
+
 // 2.1.5 ALLOCATION OF DATA OBJECTS
 ATbool traverse_OptAllocationSpecifier(ATerm term, SgUntypedExprListExpression* attr_list);
 
 // 2.1.6 INITIALIZATION OF DATA OBJECTS
-ATbool traverse_ItemPreset          (ATerm term, SgUntypedExpression* & expr);
-ATbool traverse_ItemPresetValue     (ATerm term, SgUntypedExpression* & expr);
-ATbool traverse_TablePreset         (ATerm term, SgUntypedExprListExpression* & preset);
-ATbool traverse_TablePresetList     (ATerm term, SgUntypedExprListExpression* preset);
-ATbool traverse_DefaultPresetSublist(ATerm term, SgUntypedExprListExpression* preset);
-ATbool traverse_PresetValuesOption  (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_ItemPreset            (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_ItemPresetValue       (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_OptItemPresetValue    (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_TablePreset           (ATerm term, SgUntypedExprListExpression* & preset);
+ATbool traverse_TablePresetList       (ATerm term, SgUntypedExprListExpression* preset);
+ATbool traverse_DefaultPresetSublist  (ATerm term, SgUntypedExprListExpression* preset);
+ATbool traverse_SpecifiedPresetSublist(ATerm term, SgUntypedExprListExpression* preset);
+ATbool traverse_PresetIndexSpecifier  (ATerm term, SgUntypedExprListExpression* preset);
+ATbool traverse_PresetValuesOption    (ATerm term, SgUntypedExpression* & expr);
 
 // 2.2 TYPE DECLARATIONS
 ATbool traverse_TypeDeclaration       (ATerm term, SgUntypedDeclarationStatementList* decl_list);
@@ -134,6 +144,7 @@ ATbool traverse_TableTypeSpecifier    (ATerm term, SgUntypedStructureDeclaration
 ATbool traverse_BlockTypeDeclaration  (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // 2.3 STATEMENT NAME DECLARATIONS
+ATbool traverse_StatementNameDeclaration (ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref = 0);
 
 // 2.4 DEFINE DECLARATIONS
 ATbool traverse_DefineDeclaration        (ATerm term, SgUntypedDeclarationStatementList* decl_list);
@@ -154,11 +165,18 @@ ATbool traverse_SimpleRef             (ATerm term, SgUntypedDeclarationStatement
 ATbool traverse_CompoundRef           (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_RefSpecificationChoice(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
+// 2.6 OVERLAY DECLARATIONS
+ATbool traverse_OverlayDeclaration    (ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_OverlayExpression     (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_OverlayString         (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_OverlayElement        (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_Spacer                (ATerm term, SgUntypedExpression* & expr);
+
 // 3.0 PROCEDURES AND FUNCTIONS
 ATbool traverse_ProcedureDefinition(ATerm term, SgUntypedFunctionDeclarationList* func_list);
-ATbool traverse_SubroutineAttribute(ATerm term, SgUntypedOtherExpression** attr_expr);
+ATbool traverse_SubroutineAttribute(ATerm term, SgUntypedOtherExpression* & attr_expr);
 ATbool traverse_ProcedureHeading   (ATerm term, std::string & name,
-                                    SgUntypedExprListExpression** attrs, SgUntypedInitializedNameList** params);
+                                    SgUntypedExprListExpression* & attrs, SgUntypedInitializedNameList* & params);
 ATbool traverse_SubroutineBody     (ATerm term, SgUntypedFunctionScope* & function_scope);
 
 // 3.1 PROCEDURES
@@ -166,15 +184,19 @@ ATbool traverse_ProcedureDeclaration(ATerm term, SgUntypedDeclarationStatementLi
 
 // 3.2 FUNCTIONS
 ATbool traverse_FunctionDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_FunctionDefinition (ATerm term, SgUntypedFunctionDeclarationList* func_list);
 ATbool traverse_FunctionHeading    (ATerm term, std::string & name, SgUntypedType* & type,
-                                    SgUntypedExprListExpression** attrs, SgUntypedInitializedNameList** params);
+                                    SgUntypedExprListExpression* & attrs, SgUntypedInitializedNameList* & params);
 
 // 3.3 PARAMETERS OF PROCEDURES AND FUNCTIONS
 ATbool traverse_FormalParameterList   (ATerm term, SgUntypedInitializedNameList* param_list);
 ATbool traverse_FormalInputParameter  (ATerm term, SgUntypedInitializedNameList* param_list);
 ATbool traverse_FormalOutputParameters(ATerm term, SgUntypedInitializedNameList* param_list);
 ATbool traverse_FormalOutputParameter (ATerm term, SgUntypedInitializedNameList* param_list);
-ATbool traverse_ParameterBinding      (ATerm term, SgUntypedOtherExpression** binding_expr);
+ATbool traverse_ParameterBinding      (ATerm term, SgUntypedOtherExpression* & binding_expr);
+
+// 3.4 INLINE DECLARATIONS
+ATbool traverse_InlineDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // 4.0 STATEMENTS
 ATbool traverse_Statement(ATerm term, SgUntypedStatementList* stmt_list);
@@ -244,7 +266,7 @@ ATbool traverse_NumericFactor  (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_NumericPrimary (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_OptSign        (ATerm term, General_Language_Translation::ExpressionKind & op_enum);
 ATbool traverse_ExponentiationOp(ATerm term, SgUntypedExpression* & expr);
-//ATbool traverse_NumericMachineParameter(ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_NumericMachineParameter(ATerm term, SgUntypedExpression* & expr);
 
 // 5.2 BIT FORMULAS
 ATbool traverse_BitFormula             (ATerm term, SgUntypedExpression* & expr);
@@ -277,11 +299,34 @@ ATbool traverse_Subscript        (ATerm term, std::vector<SgUntypedExpression*> 
 ATbool traverse_Index            (ATerm term, SgUntypedExpression* & formula);
 ATbool traverse_TableDereference (ATerm term, SgUntypedExpression* & formula);
 ATbool traverse_Dereference      (ATerm term, SgUntypedExpression* & formula);
+ATbool traverse_BitFunctionVariable  (ATerm term, SgUntypedExpression* & var);
+ATbool traverse_ByteFunctionVariable (ATerm term, SgUntypedExpression* & var);
 
 // 6.2 NAMED CONSTANTS
 ATbool traverse_NamedConstant        (ATerm term, SgUntypedExpression* & var);
 
+// 6.3 FUNCTION CALLS
+ATbool traverse_FunctionCall           (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_UserDefinedFunctionCall(ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_IntrinsicFunctionCall  (ATerm term, SgUntypedExpression* & expr);
+
+// 6.3.1 LOC FUNCTION
+ATbool traverse_LocFunction          (ATerm term, SgUntypedExpression* & expr);
+
+// 6.3.2 NEXT FUNCTION
+ATbool traverse_NextFunction         (ATerm term, SgUntypedExpression* & expr);
+
+// 6.3.4 BYTE FUNCTION
+ATbool traverse_ByteFunction(ATerm term, SgUntypedExpression* & expr);
+
+// 6.3.7 SIZE FUNCTION
+ATbool traverse_SizeFunction(ATerm term, SgUntypedExpression* & expr);
+
+// 6.3.11 STATUS INVERSE FUNCTIONS
+ATbool traverse_StatusInverseFunction(ATerm term, SgUntypedExpression* & expr);
+
 // 7.0 TYPE MATCHING AND TYPE CONVERSIONS
+ATbool traverse_BitConversion        (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_IntegerConversion    (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_GeneralConversion    (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_FloatingConversion   (ATerm term, SgUntypedExpression* & expr);
@@ -299,6 +344,9 @@ ATbool traverse_RelationalOperator (ATerm term, General_Language_Translation::Ex
 // 8.3.1 NUMERIC LITERAL
 ATbool traverse_FixedOrFloatingLiteral (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_Exponent               (ATerm term, std::string & opt_exp);
+
+// 8.3.2 BIT LITERAL
+ATbool traverse_BitLiteral     (ATerm term, SgUntypedExpression* & expr);
 
 // 8.3.3 BOOLEAN LITERAL
 ATbool traverse_BooleanLiteral (ATerm term, SgUntypedExpression* & expr);

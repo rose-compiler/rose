@@ -114,7 +114,8 @@ endif # ROSE_USE_EDG_VERSION_4_9
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 if !ROSE_USE_SANITIZER
-   SUBDIRS += Java_tests MicrosoftWindows_Java_tests
+#Switch Java_tests to seperate run due to issues with large number of processors
+   SUBDIRS += MicrosoftWindows_Java_tests
 endif
 endif
 

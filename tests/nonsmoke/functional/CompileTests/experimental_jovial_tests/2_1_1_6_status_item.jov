@@ -1,0 +1,21 @@
+START
+
+ITEM stat'var STATUS 4
+   (
+      1 V(LOW),
+      3 V(MED),
+      5 V(HIGH)
+   );
+
+ITEM ii U;
+
+PROGRAM main ;
+BEGIN
+
+  ii = 33;
+
+END
+
+
+
+TERM

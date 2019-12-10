@@ -40,6 +40,7 @@ ROSE_FLAGS =
 FORCE_TEST_CODES_TO_RUN:
 
 $(TEST_Objects): $(TESTCODES) FORCE_TEST_CODES_TO_RUN dotGenerator
+if ROSE_BUILD_C_LANGUAGE_SUPPORT
 	: remove this so that we can force the examples to be run
 	rm -f $(TEST_Objects)
 	./dotGenerator -I$(srcdir) $(ROSE_FLAGS) $(AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.C)
@@ -48,6 +49,7 @@ $(TEST_Objects): $(TESTCODES) FORCE_TEST_CODES_TO_RUN dotGenerator
 	./dotGeneratorWholeASTGraph -I$(srcdir) $(ROSE_FLAGS) $(AM_CPPFLAGS) -c $(srcdir)/$(@:.o=.C)
 	: remove this so that we can force the examples to be run
 	rm -f $(TEST_Objects)
+endif
 
 # DQ (1/4/2008): Required to cleanup for make distcheck
 distclean-local:

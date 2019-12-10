@@ -352,7 +352,10 @@
     // Apple OSX, iOS, Darwin
     //--------------------------
     #define SAWYER_EXPORT /*void*/
-    #define SAWYER_EXPORT_NORETURN _Noreturn
+
+    // This was changed from _Noreturn to compile with g++17. /*void*/ doesn't seem to cause problems for OSX [Rasmussen
+    // 2019.09.03]
+    #define SAWYER_EXPORT_NORETURN /*void*/
 #else
     //--------------------------
     // Other OS compilers

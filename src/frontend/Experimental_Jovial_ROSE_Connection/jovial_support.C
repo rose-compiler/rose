@@ -15,9 +15,10 @@
 #include "UntypedJovialTraversal.h"
 #include "UntypedJovialConverter.h"
 
+#define ATERM_TRAVERSAL_ONLY 1
 #define DEBUG_EXPERIMENTAL_JOVIAL 0
-#define OUTPUT_WHOLE_GRAPH_AST 1
-#define OUTPUT_DOT_FILE_AST 1
+#define OUTPUT_WHOLE_GRAPH_AST 0
+#define OUTPUT_DOT_FILE_AST 0
 
 #if OUTPUT_WHOLE_GRAPH_AST
 #  include "wholeAST_API.h"
@@ -107,7 +108,10 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
         }
 
 #if DEBUG_EXPERIMENTAL_JOVIAL
-     std::cout << "\nSUCCESSFULLY traversed Jovial parse-tree" << "\n\n";
+     std::cout << "SUCCESSFULLY traversed Jovial parse-tree" << "\n\n";
+#endif
+#if ATERM_TRAVERSAL_ONLY
+     return 0;
 #endif
 
 #if OUTPUT_DOT_FILE_AST

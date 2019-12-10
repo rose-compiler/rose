@@ -90,10 +90,18 @@ std::string SgNodeHelper::sourceFilenameToString(SgNode* node) {
   * \date 2012.
  */
 std::string SgNodeHelper::sourceLineColumnToString(SgNode* node) {
+  return sourceLineColumnToString(node, ":");
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2019.
+ */
+std::string SgNodeHelper::sourceLineColumnToString(SgNode* node, string separator) {
   std::stringstream ss;
   Sg_File_Info* fi=node->get_file_info();
   ss<<fi->get_line();
-  ss<<":";
+  ss<<separator;
   ss<<fi->get_col();
   return ss.str();
 }
@@ -798,33 +806,7 @@ SgFunctionDefinition* SgNodeHelper::determineFunctionDefinition(SgFunctionCallEx
         if(SgFunctionDefinition* funDef=funDecl2->get_definition()) {
           return funDef;
         } else {
-          //cout<<"INFO: no definition found for call: "<<funCall->unparseToString()<<endl;
           return 0;
-          // the following code is dead code: searching the AST is inefficient. This code will refactored and removed from here.
-          // forward declaration (we have not found the function definition yet)
-          // 1) use parent pointers and search for Root node (likely to be SgProject node)
-          SgNode* root=defFunDecl;
-          SgNode* parent=0;
-          while(!SgNodeHelper::isAstRoot(root)) {
-            parent=SgNodeHelper::getParent(root);
-            root=parent;
-          }
-          ROSE_ASSERT(root);
-          // 2) search in AST for the function's definition now
-          RoseAst ast(root);
-          for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-            if(SgFunctionDeclaration* funDecl2=isSgFunctionDeclaration(*i)) {
-              if(!SgNodeHelper::isForwardFunctionDeclaration(funDecl2)) {
-                SgSymbol* sym2=funDecl2->search_for_symbol_from_symbol_table();
-                SgSymbol* sym1=funDecl->search_for_symbol_from_symbol_table();
-                if(sym1!=0 && sym1==sym2) {
-                  SgFunctionDefinition* fundef2=funDecl2->get_definition();
-                  ROSE_ASSERT(fundef2);
-                  return fundef2;
-                }
-              }
-            }
-          }
         }
       }
     }
@@ -1594,6 +1576,8 @@ string SgNodeHelper::nodeToString(SgNode* node) {
   * \date 2012.
  */
 string SgNodeHelper::getFunctionName(SgNode* node) {
+  if(!node)
+    return "";
   SgFunctionDeclaration* fundecl=0;
   if(SgFunctionDefinition* fundef=isSgFunctionDefinition(node)) {
     node=fundef->get_declaration();
@@ -1840,6 +1824,12 @@ SgNodeHelper::collectPragmaLines(string pragmaName,SgNode* root) {
   return l;
 }
 
+std::string SgNodeHelper::getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl) {
+  SgPragma* pragma=pragmaDecl->get_pragma();
+  ROSE_ASSERT(pragma);
+  return pragma->get_pragma();
+}
+
 void SgNodeHelper::replaceString(std::string& str, const std::string& from, const std::string& to) {
   if(from.empty())
     return;
@@ -1864,12 +1854,29 @@ bool SgNodeHelper::isLastChildOf(SgNode* elem, SgNode* parent) {
   return elem==children.back();
 }
 
-std::string SgNodeHelper::getPragmaDeclarationString(SgPragmaDeclaration* pragmaDecl) {
-  SgPragma* pragma=pragmaDecl->get_pragma();
-  ROSE_ASSERT(pragma);
-  return pragma->get_pragma();
+#if __cplusplus > 199711L
+bool SgNodeHelper::hasOmpNoWait(SgOmpClauseBodyStatement *ompNode) {
+  for (auto c : ompNode->get_clauses()) {
+    if (isSgOmpNowaitClause(c)) {
+      return true;
+    }
+  }
+  return false;
 }
 
+SgNodeHelper::OmpSectionList SgNodeHelper::getOmpSectionList(SgOmpSectionsStatement *sectionsStmt) {
+  auto bb = isSgBasicBlock(sectionsStmt->get_traversalSuccessorByIndex(0));
+  OmpSectionList l;
+  for (auto stmt : bb->get_statements()) {
+    if (auto s = isSgOmpSectionStatement(stmt)) {
+      l.push_back(s);
+    }
+  }
+  return l;
+}
+#endif
+
+#if __cplusplus > 199711L
 namespace SgNodeHelper {
 
 template <typename N>
@@ -1922,8 +1929,6 @@ bool node_can_be_changed<SgInitializedName>(SgInitializedName * iname) {
   return SgNodeHelper::node_can_be_changed<SgLocatedNodeSupport>(iname);
 }
 
-
-#if __cplusplus > 199711L
 bool nodeCanBeChanged(SgLocatedNode * lnode) {
   // TODO big switch statement...
   SgFunctionDeclaration * fdecl = isSgFunctionDeclaration(lnode);
@@ -1933,7 +1938,6 @@ bool nodeCanBeChanged(SgLocatedNode * lnode) {
     return SgNodeHelper::node_can_be_changed(lnode);
   }
 }
-#endif
 
 }
-
+#endif

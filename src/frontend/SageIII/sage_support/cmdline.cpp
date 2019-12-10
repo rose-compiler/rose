@@ -340,6 +340,10 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:astMergeCommandFile" ||
           argument == "-rose:projectSpecificDatabaseFile" ||
 
+          // AST I/O
+          argument == "-rose:ast:read" ||
+          argument == "-rose:ast:write" ||
+
           // TOO1 (2/13/2014): Starting to refactor CLI handling into separate namespaces
           Rose::Cmdline::Unparser::OptionRequiresArgument(argument) ||
           Rose::Cmdline::Fortran::OptionRequiresArgument(argument) ||
@@ -1558,14 +1562,44 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           ROSE_ASSERT (get_suppressConstantFoldingPostProcessing() == true);
         }
 
-#if 1
+  // AST I/O
+
+     // `-rose:ast:read in0.ast,in2.ast` (extension does not matter)
+     std::string rose_ast_option_param;
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:", "(ast:read)", rose_ast_option_param, true) == true ) {
+       size_t pos = 0;
+       size_t prev = 0;
+       while (pos < rose_ast_option_param.size()) {
+         if (rose_ast_option_param[pos] == ',') {
+           std::string astfile = rose_ast_option_param.substr(prev, pos-prev);
+           p_astfiles_in.push_back(astfile);
+           pos++;
+           prev = pos;
+         } else {
+           pos++;
+         }
+       }
+     }
+
+     // `-rose:ast:write out.ast` (extension does not matter)
+     rose_ast_option_param = "";
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:", "(ast:write)", rose_ast_option_param, true) == true ) {
+       p_astfile_out = rose_ast_option_param;
+     }
+
+     // `-rose:ast:merge`
+     if (CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(ast:merge)",true) == true ) {
+       p_ast_merge = true;
+     }
+
+  // Verbose ?
+
      if ( get_verbose() > 1 )
         {
        // Find out what file we are doing transformations upon
           printf ("In SgProject::processCommandLine() (verbose mode ON): \n");
           display ("In SgProject::processCommandLine()");
         }
-#endif
 
 #if 0
      printf ("Leaving SgProject::processCommandLine() \n");
@@ -3277,6 +3311,19 @@ SgFile::usage ( int status )
 "                             ignore use of __builtin functions in frontend processing\n"
 "                             all optimization specified is still done on ROSE generated code\n"
 "\n"
+"AST I/O:\n"
+"     -rose:ast:read in1.ast,in2.ast\n"
+"                             Comma-separated list of input AST files (extension does *not* matter).\n"
+"                             Evaluated when the frontend finishes (before merge and plugins).\n"
+"     -rose:ast:write out.ast\n"
+"                             Output AST file (extension does *not* matter).\n"
+"                             Evaluated in the backend before any file unparsing or backend compiler calls.\n"
+"     -rose:ast:merge\n"
+"                             Boolean flag (default: false)\n"
+"                             Wether or not to minimize the AST with ROSE's merge algorithm.\n"
+"                             Useful when more than one source file is provided on the command line, or when ASTs are loaded from files.\n"
+"                             Occurs after the frontend and AST loading but before the plugin.\n"
+"\n"
 "Plugin Mode:\n"
 "     -rose:plugin_lib <shared_lib_filename>\n"
 "                             Specify the file path to a shared library built from plugin source files \n"
@@ -4983,6 +5030,16 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_experimental_fortran_frontend(true);
         }
 
+  // Added support the experimental fortran frontend using the Flang parser [Rasmussen 2019.08.30]
+     if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_flang_frontend",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 0 )
+             {
+               printf ("also: experimental Flang frontend (explicitly set: ON) \n");
+             }
+          set_experimental_flang_frontend(true);
+        }
+
   // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
      if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_cuda_fortran_frontend",true) == true )
         {
@@ -5006,7 +5063,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   // DQ (1/25/2016): we want to enforce that we only use F08 with the new experimental mode.
-     if (get_experimental_fortran_frontend() == false)
+     if (get_experimental_fortran_frontend() == false && get_experimental_flang_frontend() == false)
         {
        // We only want to allow Fortran 2008 mode to work with the new experimental fortran frontend.
           if (get_F2008_only() == true)
@@ -5512,6 +5569,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (6/8/2013): Added support for experimental fortran frontend.
      optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend)",1);
 
+  // Rasmussen (8/30/2019): Added support for experimental Flang parser for Fortran
+     optionCount = sla(argv, "-rose:", "($)", "(experimental_flang_frontend)",1);
+
   // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
      optionCount = sla(argv, "-rose:", "($)", "(experimental_cuda_fortran_frontend)",1);
 
@@ -5572,8 +5632,20 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // Rasmussen (11/17/2018): ROSE-1584: separated "++" into single characters [+][+] for regex handling.
      optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx)",1);
 
+  // AST I/O
+     optionCount = sla(argv, "-rose:ast:", "($)", "(read|write|merge)",1);
+
   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      ROSE_ASSERT(optionCount >= 0);
+
+  // DQ (10/26/2019): Remove outliner options.
+     optionCount = sla(argv, "-rose:outline:", "($)", "use_dlopen",1);
+     optionCount = sla(argv, "-rose:outline:", "($)", "copy_orig_file",1);
+     optionCount = sla(argv, "-rose:outline:", "($)", "temp_variable",1);
+     optionCount = sla(argv, "-rose:outline:", "($)", "exclude_headers",1);
+  // optionCount = sla(argv, "-rose:outline:", "($)", "output_path",1);
+     optionCount = sla(argv, "-rose:outline:", "($)^", "(output_path)", filename,1);
+
 
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
@@ -6233,7 +6305,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                commandLine.push_back(header_path + "/cuda_HEADERS/preinclude-cuda.h");
 
 #ifdef CUDA_INC_DIR
-               printf("Add --sys_include %s\n", CUDA_INC_DIR);
                commandLine.push_back(std::string("--sys_include"));
                commandLine.push_back(std::string(CUDA_INC_DIR));
 #endif
@@ -7414,8 +7485,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #if 0
                printf ("Error: SgFile::e_Fortran_language detected in SgFile::buildCompilerCommandLineOptions() \n");
 #endif
-               compilerNameString[0] = ROSE_GFORTRAN_PATH;
+               compilerNameString[0] = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
 
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
                if (get_backendCompileFormat() == e_fixed_form_output_format)
                   {
                  // If backend compilation is specificed to be fixed form, then allow any line length (to simplify code generation for now)
@@ -7432,13 +7504,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                       // compilerNameString += "-ffree-form ";
                       // compilerNameString += "-ffree-line-length-<n> "; // -ffree-line-length-<n>
                       // compilerNameString.push_back("-ffree-line-length-none");
-#if USE_GFORTRAN_IN_ROSE
+
                       // DQ (9/16/2009): This option is not available in gfortran version 4.0.x (wonderful).
                          if ((BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER >= 1))
                             {
                               compilerNameString.push_back("-ffree-line-length-none");
                             }
-#endif
                        }
                       else
                        {
@@ -7453,7 +7524,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                          compilerNameString.push_back("-ffixed-line-length-none");
                        }
                   }
-
+#endif
                break;
              }
 
