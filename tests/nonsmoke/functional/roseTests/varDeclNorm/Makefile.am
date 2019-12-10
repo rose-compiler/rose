@@ -23,6 +23,9 @@ PASSING_TEST_Sources = $(addsuffix .passed, $(TESTCODES))
 
 TEST_TRANSLATOR = ../../testTranslator
 
+../../testTranslator:
+	make -C ../.. testTranslator
+
 $(TEST_Sources): %.passed: $(srcdir)/% $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 if !ROSE_USE_INSURE
 	@$(RTH_RUN) \
