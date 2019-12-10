@@ -1305,6 +1305,8 @@ mangleExpression (const SgExpression* expr)
         case V_SgGreaterThanOp:    mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "GreaterThanOp");    break;
         case V_SgGreaterOrEqualOp: mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "GreaterOrEqualOp"); break;
         case V_SgAssignOp:         mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "AssignOp");         break;
+        case V_SgPlusAssignOp:     mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "PlusAssignOp");     break;
+        case V_SgMinusAssignOp:    mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "MinusAssignOp");    break;
         case V_SgAndAssignOp:      mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "AndAssignOp");      break;
         case V_SgXorAssignOp:      mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "XorAssignOp");      break;
         case V_SgIorAssignOp:      mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "IorAssignOp");      break;
