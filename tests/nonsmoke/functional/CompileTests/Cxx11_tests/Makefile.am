@@ -659,6 +659,9 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_485.C \
    test2019_486.C \
    test2019_487.C \
+   test2019_489.C \
+   test2019_490.C \
+   test2019_491.C \
    test2019_493.C \
    test2019_494.C \
    test2019_495.C \

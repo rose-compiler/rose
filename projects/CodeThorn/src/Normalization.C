@@ -787,13 +787,15 @@ add
       }
       // check if function has a return value
       SgType* functionReturnType=funCallExp->get_type();
-      SAWYER_MESG(logger[TRACE])<<"function call type: "<<SgNodeHelper::sourceLineColumnToString(funCallExp)<<":"<<functionReturnType->unparseToString()<<endl;
+      SAWYER_MESG(logger[TRACE])<<"function call type (*): "<<SgNodeHelper::sourceLineColumnToString(funCallExp)<<":"<<functionReturnType->unparseToString()<<endl;
 
       // generate tmp var only if return value exists and it is used (i.e. there exists an expression as parent).
       SgNode* parentNode=funCallExp->get_parent();
-      if(!isSgTypeVoid(functionReturnType)
-         &&  isSgExpression(parentNode)
-         && !isSgExpressionRoot(parentNode)) {
+      SAWYER_MESG(logger[TRACE])<<"Normalizing: funCall: stmt:"<<AstTerm::astTermWithNullValuesToString(stmt)<<endl;
+      SAWYER_MESG(logger[TRACE])<<"Normalizing: funCall: expr:"<<AstTerm::astTermWithNullValuesToString(expr)<<endl;
+      if((!isSgTypeVoid(functionReturnType)
+          &&  isSgExpression(parentNode)
+          && !isSgExpressionRoot(parentNode))||isSgReturnStmt(parentNode)) {
         mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,subExprTransformationList);
       } else {
         // generate function call, but without assignment to temporary
@@ -1277,6 +1279,12 @@ add
       initializer = SageBuilder::buildAssignInitializer(initExpression);
     }
     
+    /* special case: check if expression is a struct/class/union copied by value. If yes introduce a reference type for the tmp var (to avoid
+     copy semantics which would make assignments to the members of the struct not having any effect on the original data */
+    if(isSgClassType(variableType)) {
+      variableType = SageBuilder::buildReferenceType(variableType);
+    }
+
     SgVariableDeclaration* newVarDeclaration = SageBuilder::buildVariableDeclaration(name, variableType, initializer, scope);
     ROSE_ASSERT(newVarDeclaration);
     

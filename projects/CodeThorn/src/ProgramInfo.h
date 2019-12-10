@@ -30,6 +30,7 @@ class ProgramInfo {
   uint32_t numArrowOp=0;
   uint32_t numDerefOp=0;
   uint32_t numStructAccess=0;
+  uint32_t numArrayAccess=0;
   std::list<SgFunctionCallExp*> _functionCallNodes;
 };
 

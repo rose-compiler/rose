@@ -2172,6 +2172,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedTableBody(ATerm term, Sg
          tail = ATgetNext(tail);
          if (traverse_SpecifiedTableItemDeclaration(head, decl_list)) {
             // MATCHED SpecifiedTableItemDeclaration
+         }
+         else if (traverse_NullDeclaration(head, decl_list)) {
+            // MATCHED NullDeclaration
          } else return ATfalse;
       }
    }
@@ -2187,7 +2190,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATe
 
    ROSE_ASSERT(decl_list);
 
-   ATerm t_name, t_item_desc, t_preset;
+   ATerm t_spec_item_desc, t_amb, t_name, t_item_desc, t_preset;
    char* name;
 
    SgUntypedType* declared_type = NULL;
@@ -2195,7 +2198,17 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATe
    SgUntypedVariableDeclaration* variable_decl = NULL;
    SgUntypedExprListExpression*  attr_list     = NULL;
 
-   if (ATmatch(term, "SpecifiedTableItemDeclaration(<term>,<term>,<term>)", &t_name, &t_item_desc, &t_preset)) {
+   if (ATmatch(term, "SpecifiedTableItemDeclaration(<term>,<term>,<term>)", &t_name, &t_spec_item_desc, &t_preset)) {
+
+      // SpecifiedTableItemDeclaration can have an ambiguity if an SpecifiedItemDescription has a type name starting with "a"
+      if (ATmatch(t_spec_item_desc, "amb(<term>)", &t_amb)) {
+         // MATCHED an ambiguity, choose the first one
+         ATermList tail = (ATermList) ATmake("<term>", t_amb);
+         t_item_desc = ATgetFirst(tail);
+      }
+      else {
+         t_item_desc = t_spec_item_desc;
+      }
 
       if (ATmatch(t_name, "<str>", &name)) {
          // MATCHED TableItemName
@@ -2827,9 +2840,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_SpecifiedPresetSublist(ATerm term
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
          if (traverse_PresetValuesOption(head, expr)) {
-            // MATCHED PresetValuesOption
-            ROSE_ASSERT(expr);
-            preset->get_expressions().push_back(expr);
+            // MATCHED PresetValuesOption, optional so ok if nullptr
+            if (expr != NULL) {
+               preset->get_expressions().push_back(expr);
+            }
          } else return ATfalse;
       }
    }
@@ -3440,13 +3454,27 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleDef(ATerm term, SgUntypedDe
    printf("... traverse_SimpleDef: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_def;
+   ATerm t_simple_def, t_amb, t_def;
 
-   if (ATmatch(term, "SimpleDef(<term>)", &t_def)) {
-      if (traverse_DefSpecificationChoice(t_def, decl_list)) {
-         // MATCHED DefSpecificationChoice
-      } else return ATfalse;
-   } else return ATfalse;
+   if (ATmatch(term, "SimpleDef(<term>)", &t_simple_def)) {
+      // MATCHED SimpleDef
+
+      // SimpleDef can have an ambiguity if an ItemDescription has a type name starting with "a"
+      if (ATmatch(t_simple_def, "amb(<term>)", &t_amb)) {
+         // MATCHED an ambiguity, choose the first one
+         ATermList tail = (ATermList) ATmake("<term>", t_amb);
+         t_def = ATgetFirst(tail);
+      }
+      else {
+         t_def = t_simple_def;
+      }
+   }
+   else return ATfalse;
+
+   if (traverse_DefSpecificationChoice(t_def, decl_list)) {
+      // MATCHED DefSpecificationChoice
+   }
+   else return ATfalse;
 
    return ATtrue;
 }
@@ -4455,7 +4483,7 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
    printf("... traverse_SimpleStatement: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_labels, t_stmt, amb;
+   ATerm t_labels, t_stmt, t_amb;
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
@@ -4508,9 +4536,9 @@ ATbool ATermToUntypedJovialTraversal::traverse_SimpleStatement(ATerm term, SgUnt
       }
       else if (traverse_ProcedureCallStatement(t_stmt, stmt_list)) {
          // MATCHED ProcedureCallStatement
-      } else if (ATmatch(t_stmt, "amb(<term>)", &amb)) {
+      } else if (ATmatch(t_stmt, "amb(<term>)", &t_amb)) {
          // MATCHED amb
-         ATermList tail = (ATermList) ATmake("<term>", amb);
+         ATermList tail = (ATermList) ATmake("<term>", t_amb);
          ATerm head = ATgetFirst(tail);
          // chose first amb path, now traverse it
 
@@ -6748,16 +6776,22 @@ ATbool ATermToUntypedJovialTraversal::traverse_IntrinsicFunctionCall(ATerm term,
    }
    else if (traverse_ByteFunction(term, expr)) {
       // MATCHED ByteFunction
-   } else return ATfalse;
+   }
 
    //   BitFunction                 -> IntrinsicFunctionCall
    //   ShiftFunction               -> IntrinsicFunctionCall
    //   AbsFunction                 -> IntrinsicFunctionCall
    //   SignFunction                -> IntrinsicFunctionCall
-   //   SizeFunction                -> IntrinsicFunctionCall
+
+   else if (traverse_SizeFunction(term, expr)) {
+      // MATCHED SizeFunction
+   }
+
    //   BoundsFunction              -> IntrinsicFunctionCall
    //   NwdsenFunction              -> IntrinsicFunctionCall
    //   NentFunction                -> IntrinsicFunctionCall
+
+   else return ATfalse;
 
    return ATtrue;
 }
@@ -6850,6 +6884,41 @@ ATbool ATermToUntypedJovialTraversal::traverse_ByteFunction(ATerm term, SgUntype
 }
 
 //========================================================================================
+// 6.3.7 SIZE FUNCTIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToUntypedJovialTraversal::traverse_SizeFunction(ATerm term, SgUntypedExpression* & expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_SizeFunction: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_formula;
+   SgUntypedExpression* formula;
+
+   if (ATmatch(term, "SizeFunction(BITSIZE(),<term>)", &t_formula)) {
+      cerr << "WARNING UNIMPLEMENTED: SizeFunction - BITSIZE \n";
+      if (traverse_Formula(t_formula, formula)) {
+         // MATCHED Formula
+      } else return ATfalse;
+   }
+   else if (ATmatch(term, "SizeFunction(BYTESIZE(),<term>)", &t_formula)) {
+      cerr << "WARNING UNIMPLEMENTED: SizeFunction - BYTESIZE \n";
+      if (traverse_Formula(t_formula, formula)) {
+         // MATCHED Formula
+      } else return ATfalse;
+   }
+   else if (ATmatch(term, "SizeFunction(WORDSIZE(),<term>)", &t_formula)) {
+      cerr << "WARNING UNIMPLEMENTED: SizeFunction - WORDSIZE \n";
+      if (traverse_Formula(t_formula, formula)) {
+         // MATCHED Formula
+      } else return ATfalse;
+   }
+   else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
 // 6.3.11 STATUS INVERSE FUNCTIONS
 //----------------------------------------------------------------------------------------
 ATbool ATermToUntypedJovialTraversal::traverse_StatusInverseFunction(ATerm term, SgUntypedExpression* & expr)
@@ -6896,16 +6965,21 @@ ATbool ATermToUntypedJovialTraversal::traverse_BitConversion(ATerm term, SgUntyp
    printf("... traverse_BitConversion: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_conv, t_formula;
+   ATerm t_conv, t_formula, t_bit_type_desc;
    SgUntypedExpression *formula;
-
+   std::string bit_type_name;
 
    if (ATmatch(term, "BitPrimaryConversion(<term>,<term>)", &t_conv, &t_formula)) {
       cerr << "WARNING UNIMPLEMENTED: BitPrimaryConversion\n";
-      if (ATmatch(t_conv, "BitTypeConversion()")) {
+      if (ATmatch(t_conv, "BitTypeConversion(<term>)", &t_bit_type_desc)) {
          // MATCHED BitTypeConversion
+         cerr << "WARNING UNIMPLEMENTED: BitTypeConversion\n";
       } else if (ATmatch(t_conv, "BitTypeConversionB()")) {
          // MATCHED BitTypeConversionB
+         cerr << "WARNING UNIMPLEMENTED: BitTypeConversion - B\n";
+      } else if (traverse_Name(t_conv, bit_type_name)) {
+         // MATCHED BitTypeName
+         cerr << "WARNING UNIMPLEMENTED: BitTypeConversion - BitTypeName \n";
       } else return ATfalse;
 
       if (traverse_Formula(t_formula, formula)) {
