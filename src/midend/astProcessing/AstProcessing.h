@@ -474,8 +474,6 @@ traverseInputFiles(SgProject* projectNode,
    }
 
 
-
-
                 
 //////////////////////////////////////////////////////
 //// TOP DOWN BOTTOM UP PROCESSING IMPLEMENTATION ////
