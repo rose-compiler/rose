@@ -39,6 +39,9 @@ $(TESTCODE_CURRENTLY_FAILING)
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 ROSE_FLAGS = --edg:no_warnings -w --edg:restrict
 
+../../testTranslator:
+	make -C ../.. testTranslator
+
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
