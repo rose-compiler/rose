@@ -386,11 +386,14 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
     fi
   fi
 
-  if test "x$BACKEND_FORTRAN_COMPILER" = "xgfortran"; then
+  case "$BACKEND_FORTRAN_COMPILER" in
+  gfortran*)
      AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [1], [Mark that GFORTRAN is used in backend])
-  else
+     ;;
+  *)
      AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [0], [Mark that GFORTRAN is not used in backend ])
-  fi
+     ;;
+  esac
 
 # echo "back-end compiler for generated translators to use will be: $BACKEND_CXX_COMPILER"
   AC_MSG_NOTICE([Fortran back-end compiler major version number = "$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER"])
