@@ -302,6 +302,14 @@ target_link_libraries(rose-config ROSE_DLL ${link_with_libraries} ${edg_lib})
 install(TARGETS rose-config DESTINATION bin)
 
 ########################################################################################################################
+# The rose-compiler tool 
+########################################################################################################################
+
+add_executable(rose-compiler rose-compiler.C)
+target_link_libraries(rose-compiler ROSE_DLL ${link_with_libraries} ${edg_lib})
+install(TARGETS rose-compiler DESTINATION bin)
+
+########################################################################################################################
 # rose-config.cfg -- text file that contains various settings for user-level makefiles.
 ########################################################################################################################
 
