@@ -14,7 +14,7 @@ endif
 
 # This lists a large number of directories.  If "make install"
 # is run then we only need a single directory
-AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES) 
+AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES)
 
 
 # DQ (7/23/2008): New handling of EDG builds a single library instead of two.
@@ -72,7 +72,7 @@ endif
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 libroseJavaParserlibraries = frontend/ECJ_ROSE_Connection/libroseJava.la
 else
-libroseJavaParserlibraries = 
+libroseJavaParserlibraries =
 endif
 
 if ROSE_BUILD_PHP_LANGUAGE_SUPPORT
@@ -99,7 +99,8 @@ if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
    libroseAdalibraries = frontend/Experimental_Ada_ROSE_Connection/libexperimentalRoseAda.la
 
 # DQ (31/8/2017): This library needs to be provided at configure time.
-   dot_asis_lib_dir = /home/quinlan1/ROSE/ADA/dot_asis/dot_asis_library/lib
+   DOT_ASIS_LIB_DIR_ ?= /home/quinlan1/ROSE/ADA/dot_asis/dot_asis_library/lib
+   dot_asis_lib_dir := $(DOT_ASIS_LIB_DIR_)
 
 # DQ (31/8/2017): At least the Asis library needs to be provided built in to GNAT (atypical installation of GNAT).
 #  asis_lib_dir = @gnat_home@/lib/asis/asislib
@@ -166,7 +167,7 @@ if ROSE_USE_SQLITE_DATABASE
    OPT_SQLITE3_LDFLAGS       = $(SQLITE3_LDFLAGS)
 
 else
-   libroseSqlite3xConnection = 
+   libroseSqlite3xConnection =
    OPT_SQLITE3_LDFLAGS =
 endif
 
@@ -230,7 +231,7 @@ libroseLibraries = \
 
 if ROSE_WITH_LIBHARU
 libroseLibraries += \
-   $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la 
+   $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la
 endif
 
 # DQ (6/10/2017): Added libhpdf.la library and removed it from LIBADD rule.
@@ -244,7 +245,7 @@ endif
 # DQ (1/14/2017): Remove POET uniformally until it can be added to provide greater portability (working on Ubuntu systems).
 # if !OS_VENDOR_UBUNTU
 # if !OS_VENDOR_DEBIAN
-# # DQ (12/18/2016): make POET optional (skip on Debian and Ubuntu systems until the 
+# # DQ (12/18/2016): make POET optional (skip on Debian and Ubuntu systems until the
 # # build is better and can avoid linking issues for these operating systems.
 #    libroseLibraries += $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
 # endif
@@ -316,7 +317,7 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
 
 # DQ (6/9/2017): Removed because it failes for "make install" rule on my machine.
 # This was located after the BOOST_WAVE_LIB line in the librose_la_LIBADD rule above.
-#          -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf 
+#          -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf
 # Added this library to the libroseLibraries rule farther above in this file.
 endif
 
@@ -355,7 +356,7 @@ librose_la_DEPENDENCIES = $(libroseLibraries)
 
 # Build list of all required libraries so that they can be built in parallel
 # REQUIRED_LIBS = $(libdir)/libedg.la
-REQUIRED_LIBS = librose.la 
+REQUIRED_LIBS = librose.la
 
 
 # DQ (3/14/2009): In this file we have to overwrite existing values in LDFLAGS (to build librose.so).
@@ -365,9 +366,9 @@ if OS_MACOSX
 if ROSE_HAVE_LIBGCRYPT
 PORT_PATH = $(shell which port)
 PORT_HOME = $(shell dirname $(PORT_PATH))/..
-LDFLAGS += -L$(PORT_HOME)/lib -lgcrypt 
+LDFLAGS += -L$(PORT_HOME)/lib -lgcrypt
 else
-LDFLAGS += 
+LDFLAGS +=
 endif
 endif
 
@@ -492,7 +493,7 @@ ROSEBIN_LDADD        = $(ROSE_LIBS)
 ROSEBIN_LDFLAGS      = $(ROSE_RPATHS)
 ROSEBIN_DEPENDENCIES = $(REQUIRED_LIBS)
 if USING_CLANG_COMPILER
-  ROSEBIN_LDADD   += -lstdc++ 
+  ROSEBIN_LDADD   += -lstdc++
   ROSEBIN_LDFLAGS += -fno-rtti
 endif
 if OS_MACOSX
@@ -599,11 +600,11 @@ bin_SCRIPTS += ../libtool
 # DQ (1/10/2004): remove the librose.a and libedg.a files so that distclean will work cleanly
 # Do not remove libraries indiscriminately with wildcards [Matzke, 2017-06-19]
 clean-local:
-	rm -rf librose.a librose.so testSharedRoseLib testMultiRoseLib $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files 
+	rm -rf librose.a librose.so testSharedRoseLib testMultiRoseLib $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
 	rm -rf $(MOSTLYCLEANFILES)
 
 distclean-local:
-	rm -rf librose.a librose.so testSharedRoseLib testMultiRoseLib Templates.DB 
+	rm -rf librose.a librose.so testSharedRoseLib testMultiRoseLib Templates.DB
 
 cleanTest:
 	rm -rf *.lo testSharedRoseLib testMultiRoseLib

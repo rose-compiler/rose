@@ -20,6 +20,9 @@ EXTRA_DIST += $(SPECIMENS_all)
 # The test executable which runs some test (encoded in the executable) on each specimen.
 TRANSLATOR = ../../testTranslator
 
+../../testTranslator:
+	make -C ../.. testTranslator
+
 # Flags to use when running the tests.  Note that we need both the preinclude and normal include directories for
 # boost because the pre-include path might be empty in some configurations (e.g., when configuring with
 # --with-boost=NON_SYSTEM_DIRECTORY as of 2014-04-08).

@@ -317,4 +317,15 @@ void unparseDirectory   ( SgDirectory* directory, UnparseFormatHelp* unparseHelp
 //! Support for refactored handling directories of files.
 void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelegate = NULL);
 
+
+// DQ (10/1/2019): Adding support to generate SgSourceFile for individual header files on demand.
+// This is required for the optimization of the header files because in this optimization all the
+// header files will not be processed at one time in the operation to attach the CPP and comments to the AST.
+// Instead we defer the transformations on the header files and make a note of what header files will be 
+// transformed, and then prepare the individual header files that we will transform by collecint CPP 
+// directives and comments and weaving them into those subsequences of the AST and then perform the 
+// defered transforamtion, and then unparse the header files.  This is a moderately complex operation.
+SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, std::string originalFileName);
+
+
 #endif
