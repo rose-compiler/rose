@@ -161,7 +161,30 @@ UnparseLanguageIndependentConstructs::curprint (const std::string & str) const
           unp->cur.insert_newline(1);
      } 
 
-     unp->u_sage->curprint(str);
+     if (is_fortran90)
+     {  
+       if (str_len <= MAX_F90_LINE_LEN || str[0] == '#' || str[0] == '!')
+       {
+         unp->u_sage->curprint(str);
+       }
+       else
+       {
+         for (int stridx=0; stridx <str_len; stridx += MAX_F90_LINE_LEN)
+         {
+           std::string substring = str.substr(stridx, std::min(MAX_F90_LINE_LEN,str_len-stridx));
+           unp->u_sage->curprint(substring);
+           if (stridx + MAX_F90_LINE_LEN < str_len)
+           {
+             unp->u_sage->curprint("&");
+             unp->cur.insert_newline(1);
+           }
+         } 
+       }
+     }
+     else
+     {
+       unp->u_sage->curprint(str);
+     }
      
 #endif  // USE_RICE_FORTRAN_WRAPPING
 }

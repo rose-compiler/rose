@@ -19561,8 +19561,13 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
     {
         // New function to support Fortran include mechanism
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
+        {
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 3
+             printf("In c_action_start_of_file(%s) \n", filename);
+#endif
              printf("In c_action_start_of_file(%s) \n", filepath);
-
+        }
+ 
 #if 0
         // Output debugging information about saved state (stack) information.
         outputState("At TOP of c_action_start_of_file()");
@@ -19578,7 +19583,11 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
             // After the first time, ever call to this function is significant (represents use of the
             // Fortran include mechanism; not formally a part of the language grammar).
 
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 3
+            SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filename);
+#else
             SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filepath);
+#endif
 
             if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
             printf(
@@ -19638,7 +19647,11 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
             includeLine->set_firstNondefiningDeclaration(includeLine);
         }
 
+#if ROSE_OFP_MINOR_VERSION_NUMBER >= 8 & ROSE_OFP_PATCH_VERSION_NUMBER >= 3
+        astIncludeStack.push_back(filename);
+#else
         astIncludeStack.push_back(filepath);
+#endif
 
 #if 0
         // Output debugging information about saved state (stack) information.
