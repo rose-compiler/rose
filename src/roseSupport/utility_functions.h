@@ -16,12 +16,6 @@ std::string version_message();
 // returns a string containing the current version number
 std::string version_number();
 
-//! SCM version identifier for ROSE
-std::string rose_scm_version_id();
-
-//! SCM version date-identifier for ROSE (Unix timestamp)
-time_t rose_scm_version_date();
-
 //! Boost version identifier (numeric)
 unsigned int rose_boost_version_id();
 
