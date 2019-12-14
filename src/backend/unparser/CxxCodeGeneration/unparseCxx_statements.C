@@ -9019,8 +9019,6 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // print out inheritance
      SgBaseClassPtrList::iterator p = classdefn_stmt->get_inheritances().begin();
-  // int tmp_spec = 0;
-     SgClassDeclaration *tmp_decl;
      if (p != classdefn_stmt->get_inheritances().end())
         {
           curprint ( string(": "));
@@ -9028,34 +9026,24 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
        // DQ (5/9/2011): This loop structure should be rewritten...
           while(true)
              {
-            // DQ (4/25/2004): Use the new modifier interface
-            // tmp_spec = (*p).get_base_specifier();
-            // SgBaseClassModifier & baseClassModifier = (*p).get_baseClassModifier();
+               SgBaseClass * bcls = *p;
+               ROSE_ASSERT(bcls != NULL);
 
-            // DQ (1/21/2019): Moved to using ROSETTA generated access functions which return a pointer.
-            // SgBaseClassModifier & baseClassModifier = (*p)->get_baseClassModifier();
-               SgBaseClassModifier & baseClassModifier = *((*p)->get_baseClassModifier());
+               SgBaseClassModifier & baseClassModifier = *(bcls->get_baseClassModifier());
 
-            // tmp_decl = (*p).get_base_class();
-               tmp_decl = (*p)->get_base_class();
-            // specifier
-            // if (tmp_spec & SgDeclarationStatement::e_virtual)
-            // if (tmp_spec & SgDeclarationStatement::e_virtual)
                if (baseClassModifier.isVirtual())
                   {
                     curprint ( string("virtual "));
                   }
-            // if (tmp_spec & SgDeclarationStatement::e_public)
+
                if (baseClassModifier.get_accessModifier().isPublic())
                   {
                     curprint ( string("public "));
                   }
-            // if (tmp_spec & SgDeclarationStatement::e_private)
                if (baseClassModifier.get_accessModifier().isPrivate())
                   {
                     curprint ( string("private "));
                   }
-            // if (tmp_spec & SgDeclarationStatement::e_protected)
                if (baseClassModifier.get_accessModifier().isProtected())
                   {
                     curprint ( string("protected "));
@@ -9063,138 +9051,51 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
             // DQ (5/12/2011): This might have to be a qualified name...
                SgUnparse_Info tmp_ninfo(ninfo);
-               tmp_ninfo.set_name_qualification_length((*p)->get_name_qualification_length());
-               tmp_ninfo.set_global_qualification_required((*p)->get_global_qualification_required());
+               tmp_ninfo.set_name_qualification_length(bcls->get_name_qualification_length());
+               tmp_ninfo.set_global_qualification_required(bcls->get_global_qualification_required());
 
-               ROSE_ASSERT(tmp_decl != NULL);
+               SgName nameQualifier = bcls->get_qualified_name_prefix();
 
-            // SgName nameQualifier = unp->u_name->generateNameQualifier(tmp_decl,tmp_ninfo);
-               SgName nameQualifier = (*p)->get_qualified_name_prefix();
+               SgNonrealBaseClass * nr_bcls = isSgNonrealBaseClass(bcls);
+               if (nr_bcls != NULL) {
+                 SgNonrealDecl * nr_decl = nr_bcls->get_base_class_nonreal();
+                 ROSE_ASSERT(nr_decl != NULL);
 
-            // Debugging code.
-               if (tmp_ninfo.get_name_qualification_length() > 0 || tmp_ninfo.get_global_qualification_required() == true)
-                  {
-                 // printf ("In Unparse_ExprStmt::unparseClassDefnStmt(): nameQualifier = %s \n",nameQualifier.str());
-                  }
-
-            // DQ (4/12/2019): Supress the name qualification we are are using a previously generated string for the class name.
-            // curprint(nameQualifier.str());
-
-            // print the base class name
-            // DQ (8/20/2014): We need to output the template name when this is a templated base class.
-            // curprint(tmp_decl->get_name().str());
-               SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(tmp_decl);
-#if 0
-               printf ("In unparseClassDefnStmt(): base class output: tmp_decl = %p = %s \n",tmp_decl,tmp_decl->class_name().c_str());
-#endif
-               if (templateInstantiationDeclaration != NULL)
-                  {
-#if 0
-                    printf ("In unparseClassDefnStmt(): calling unparseTemplateName() \n");
-                    curprint ("/* calling unparseTemplateName */ ");
-#endif
-
-#if 1
-                 // DQ (4/12/2019): Support for output of generated string for type (used where name 
-                 // qualification is required for subtypes (e.g. template arguments)).
-                 // SgNode* nodeReferenceToClass = info.get_reference_node_for_qualification();
-                    SgNode* nodeReferenceToClass = *p;
-#if 0
-                    printf ("In unparseClassDefnStmt(): nodeReferenceToClass = %p \n",nodeReferenceToClass);
-#endif
-                    if (nodeReferenceToClass != NULL)
-                       {
-#if 0
-                         printf ("rrrrrrrrrrrr In unparseClassDefnStmt() output type generated name: nodeReferenceToClass = %p = %s SgNode::get_globalTypeNameMap().size() = %" PRIuPTR " \n",
-                              nodeReferenceToClass,nodeReferenceToClass->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
-#endif
-                         std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToClass);
-                         if (i != SgNode::get_globalTypeNameMap().end())
-                            {
-                           // I think this branch supports non-template member functions in template classes (called with explicit template arguments).
-                           // usingGeneratedNameQualifiedClassNameString = true;
-
-                              string classNameString = i->second.c_str();
-#if 0
-                              printf ("ssssssssssssssss Found type name in SgNode::get_globalTypeNameMap() typeNameString = %s for nodeReferenceToType = %p = %s \n",
-                                   classNameString.c_str(),nodeReferenceToClass,nodeReferenceToClass->class_name().c_str());
-#endif
-
-                              curprint(nameQualifier.str());
-
-                              curprint (classNameString);
-                            }
-                           else
-                            {
-                            // Note that the globalTypeNameMap is populated with entries only when name qualification is detected, so it is OK for entries not to be found there.
-#if 0
-                              printf ("Could not find saved name qualified class name in globalTypeNameMap: using key: nodeReferenceToClass = %p = %s \n",nodeReferenceToClass,nodeReferenceToClass->class_name().c_str());
-#endif
-
-                           // curprint ("/* Could not find properly saved name from name qualification */ ");
-
-#if 1
-                           // DQ (4/12/2019): We need to access any possible previously saved stringified version 
-                           // of the type name from the name qualificaiton.
-                              SgUnparse_Info ninfo2(ninfo);
-
-                              SgBaseClass* baseClass = *p;
-                              ROSE_ASSERT(baseClass != NULL);
-
-                           // Output the name qualification explicitly.
-                              curprint(nameQualifier.str());
-
-                           // We want to use the templateInstantiationDeclaration if is is not shared, but I think it is shared.  So use the SgBaseClass (*p).
-                              ninfo2.set_reference_node_for_qualification(baseClass);
-
-                           // unparseTemplateName(templateInstantiationDeclaration,info);
-                              unparseTemplateName(templateInstantiationDeclaration,ninfo2);
-#endif
-#if 0
-                              printf ("Error: there should have been a globalTypeNameMap entry! \n");
-                              ROSE_ASSERT(false);
-#endif
-                            }
-
-#if 0
-                         printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
-#endif
-                       }
-                      else
-                       {
-#if 1
-                      // DQ (4/12/2019): We need to access any possible previously saved stringified version 
-                      // of the type name from the name qualificaiton.
-                         SgUnparse_Info ninfo2(ninfo);
-
-                         SgBaseClass* baseClass = *p;
-                         ROSE_ASSERT(baseClass != NULL);
-
-                      // Output the name qualification explicitly.
-                         curprint(nameQualifier.str());
-
-                      // We want to use the templateInstantiationDeclaration if is is not shared, but I think it is shared.  So use the SgBaseClass (*p).
-                         ninfo2.set_reference_node_for_qualification(baseClass);
-
-                      // unparseTemplateName(templateInstantiationDeclaration,info);
-                         unparseTemplateName(templateInstantiationDeclaration,ninfo2);
-#endif
-                       }
-#endif
-#if 0
-                    printf ("In unparseClassDefnStmt(): DONE calling unparseTemplateName() \n");
-                    curprint ("/* DONE calling unparseTemplateName */ ");
-#endif
-                  }
-                 else
-                  {
-                 // DQ (4/12/2019): Use the name qualification if we are not using the previously generated string for the class name.
+                 curprint(nameQualifier.str());
+                 curprint(nr_decl->get_name().str());
+               } else {
+                 SgClassDeclaration * tmp_decl = bcls->get_base_class();
+                 ROSE_ASSERT(tmp_decl != NULL);
+                 SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(tmp_decl);
+                 if (templateInstantiationDeclaration != NULL) {
+                   SgNode* nodeReferenceToClass = *p;
+                   if (nodeReferenceToClass != NULL) {
+                     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToClass);
+                     if (i != SgNode::get_globalTypeNameMap().end()) {
+                       string classNameString = i->second.c_str();
+                       curprint(nameQualifier.str());
+                       curprint (classNameString);
+                     } else {
+                       SgUnparse_Info ninfo2(ninfo);
+                       SgBaseClass* baseClass = *p;
+                       ROSE_ASSERT(baseClass != NULL);
+                       curprint(nameQualifier.str());
+                       ninfo2.set_reference_node_for_qualification(baseClass);
+                       unparseTemplateName(templateInstantiationDeclaration,ninfo2);
+                     }
+                   } else {
+                     SgUnparse_Info ninfo2(ninfo);
+                     SgBaseClass* baseClass = *p;
+                     ROSE_ASSERT(baseClass != NULL);
+                     curprint(nameQualifier.str());
+                     ninfo2.set_reference_node_for_qualification(baseClass);
+                     unparseTemplateName(templateInstantiationDeclaration,ninfo2);
+                   }
+                  } else {
                     curprint(nameQualifier.str());
-
                     curprint(tmp_decl->get_name().str());
                   }
-
+               }
                p++;
 
                if (p != classdefn_stmt->get_inheritances().end())

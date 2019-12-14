@@ -10101,8 +10101,8 @@ SgDeclarationStatement::get_declaration_associated_with_symbol() const
                if (declarationAssociatedWithSymbol == NULL)
                   {
                  // DQ (6/30/2007): Test if the this pointer has an associated symbol.
-                    printf ("Error: problem this = %p = %s = %s \n",
-                         this,this->class_name().c_str(),SageInterface::get_name(this).c_str());
+                 // printf ("Error: problem this = %p = %s = %s \n",
+                 //      this,this->class_name().c_str(),SageInterface::get_name(this).c_str());
                     ROSE_ASSERT(this->get_symbol_from_symbol_table() == NULL);
                     this->get_startOfConstruct()->display("declarationAssociatedWithSymbol == NULL: debug");
 
