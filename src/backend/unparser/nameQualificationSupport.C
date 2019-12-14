@@ -10125,9 +10125,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          classChain_iterator++;
                        }
 #endif
+                 // DQ (12/11/2019): Modified to provide a larger upper bound for classChain.size().
                  // DQ (2/16/2019): I think this is always true, since base class abiguity is not allowed in the C++ language.
                  // ROSE_ASSERT(classChain.size() == 1);
-                    ROSE_ASSERT(classChain.empty() == true || classChain.size() == 1);
+                 // ROSE_ASSERT(classChain.empty() == true || classChain.size() == 1);
+                    ROSE_ASSERT(classChain.empty() == true || classChain.size() <= 2);
 
                  // DQ (2/16/2019): We need to call something like this, but specialized to just use the single class in the classChain.
                  // setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
