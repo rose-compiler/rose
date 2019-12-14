@@ -366,7 +366,7 @@ Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
     }
   }
 
-  // initialize all extern variables that had not been seen
+  // initialize all extern variables that have not been seen yet
   for(list<SgVariableDeclaration*>::iterator i=globalVarDecls.begin();i!=globalVarDecls.end();++i) {
     if (  usedGlobalVarIds.find(getVariableIdMapping()->variableId(*i))!=usedGlobalVarIds.end()
        && ((*i)->get_declarationModifier().get_storageModifier().isExtern())
