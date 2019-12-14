@@ -4494,19 +4494,26 @@ TestMangledNames::visit ( SgNode* node )
 #if 0
           printf ("TestMangledNames::visit(): initializedName->get_scope() = %p = %s \n",initializedName->get_scope(),initializedName->get_scope()->class_name().c_str());
 #endif
-          ROSE_ASSERT (initializedName->get_scope() != NULL);
-          if (initializedName->get_scope()->class_name() == "SgNode")
+       // ROSE_ASSERT (initializedName->get_scope() != NULL);
+          if (initializedName->get_scope() != NULL)
              {
-               isDeletedNode = true;
-             }
+               if (initializedName->get_scope()->class_name() == "SgNode")
+                  {
+                    isDeletedNode = true;
+                  }
 
-          if (isDeletedNode == false)
-             {
-               mangledName = initializedName->get_mangled_name().getString();
+               if (isDeletedNode == false)
+                  {
+                    mangledName = initializedName->get_mangled_name().getString();
+                  }
+                 else
+                  {
+                    printf ("WARNING: evaluation of the mangled name for a SgInitializedName in a scope = %p that has been deleted is being skipped! \n",initializedName->get_scope());
+                  }
              }
             else
              {
-               printf ("WARNING: evaluation of the mangled name for a SgInitializedName in a scope = %p that has been deleted is being skipped! \n",initializedName->get_scope());
+               printf ("NOTE: In TestMangledNames::visit(): initializedName->get_scope() == NULL: initializedName = %p name = %s \n",initializedName,initializedName->get_name().str());
              }
 
        // printf ("Test generated mangledName for node = %p = %s = %s \n",node,node->class_name().c_str(),mangledName.c_str());
