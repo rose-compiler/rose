@@ -1,11 +1,13 @@
 dnl DQ (1/11/2010): Consider handing configure options as specified at:
 dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 
-dnl The version number in the AC_INIT([ROSE], [0.9.12.25])
-dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.9.12.25])
+dnl The version number in the AC_INIT([ROSE], [0.9.12.50])
+dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.9.12.50])
 dnl shell variable.
-AC_INIT([ROSE], [0.9.12.25])
+AC_INIT([ROSE], [0.9.12.50])
 AC_PREREQ([2.59])
+
+AC_DEFINE_UNQUOTED([ROSE_SCM_VERSION_ID], ["$(cat $srcdir/ROSE_VERSION)"], [Set SCM version information to ROSE version.])
 
 test "$verbose" = "" && echo "Run configure with --verbose to see more output"
 
@@ -32,8 +34,7 @@ fi
 dnl +--------------------------------------------------------------------------+
 dnl | ROSE versioning
 dnl +--------------------------------------------------------------------------+
-ROSE_SUPPORT_GIT_VERSIONING
-ROSE_CONFIGURE_SECTION([Configuring ${T_BM}ROSE${T_NM}, version ${T_BM}0.9.6a ($GIT_HEAD_HASH)${T_NM}])
+ROSE_CONFIGURE_SECTION([Configuring ${T_BM}ROSE${T_NM}, version ${T_BM}0.9.6a ${T_NM}])
 
 dnl +--------------------------------------------------------------------------+
 dnl | Autotools setup
@@ -112,6 +113,20 @@ ROSE_SUPPORT_ROSE_PART_1
 
 ROSE_SUPPORT_ROSE_BUILD_INCLUDE_FILES
 CONFIGURE_POET
+
+# Rasmussen (11/19//2019): This is a strange bug. I can't figure out where
+# the bug actually occurs in the m4 macros. However the symptom is that
+# ECHO may not be set after this point but it is used. Thus setting ECHO
+# may be needed. This error was noticed after a new release of XCode (11.2.1)
+# was installed but probably is not related. It is more likely related to
+# libtools.m4. After talking with Robb we realized that the Mac version is
+# different from linux. I believe that somehow a portion of the libtool
+# code is copied when ./build is run (at least this is consistent with
+# the behavior.
+if test "x$ECHO" = x; then
+    ECHO=echo
+fi
+
 ROSE_SUPPORT_ROSE_PART_2
 ROSE_SUPPORT_ROSE_PART_3
 ROSE_SUPPORT_ROSE_PART_4

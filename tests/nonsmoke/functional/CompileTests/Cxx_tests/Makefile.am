@@ -427,7 +427,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2017_21.C \
    test2017_22.C \
    test2017_23.C \
-   test2017_25.C \
    test2017_26.C \
    test2017_27.C \
    test2017_28.C \
@@ -1092,8 +1091,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2016_39.C \
    test2016_58.C \
    restrict_template_parameter.C \
-   test2016_22.C \
-   test2016_23.C \
    test2016_24.C \
    test2017_05.C \
    test2017_06.C \
@@ -1101,10 +1098,8 @@ TESTCODE_CURRENTLY_FAILING = \
    test2017_08.C \
    test2017_20.C \
    test2017_24.C \
-   test2017_29.C \
    test2017_33.C \
    test2017_34.C \
-   test2017_59.C \
    test2017_67.C \
    test2017_99.C \
    test2017_85.C \

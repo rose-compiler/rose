@@ -56,7 +56,7 @@ namespace
   BinaryOperator
   merge_keys(_Iterator1 aa1, _Iterator1 zz1, _Iterator2 aa2, _Iterator2 zz2, BinaryOperator binop)
   {
-    const unavailable_t unavail;
+    static constexpr unavailable_t unavail;
 
     while (aa1 != zz1 && aa2 != zz2)
     {

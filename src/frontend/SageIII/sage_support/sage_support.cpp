@@ -3965,7 +3965,13 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              }
 
        // add option to specify preprocessing only
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
           fortran_C_preprocessor_commandLine.push_back("-E");
+#else
+     // Pei-Hung 12/09/2019 This is for PGI Fortran compiler, add others if necessary
+          fortran_C_preprocessor_commandLine.push_back("-Mcpp");
+
+#endif
 
        // add source file name
           string sourceFilename              = get_sourceFileNameWithPath();
@@ -4000,10 +4006,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           if ( SgProject::get_verbose() > 0 )
                printf ("cpp command line = %s \n",CommandlineProcessing::generateStringFromArgList(fortran_C_preprocessor_commandLine,false,false).c_str());
 
-#if USE_GFORTRAN_IN_ROSE
+       // Pei-Hung 12/09/2019 the preprocess command has to be executed by all Fortran compiler  
+//#if BACKEND_FORTRAN_IS_GNU_COMPILER
        // Some security checking here could be helpful!!!
           errorCode = systemFromVector (fortran_C_preprocessor_commandLine);
-#endif
+//#endif
 
        // DQ (10/1/2008): Added error checking on return value from CPP.
           if (errorCode != 0)
@@ -4084,7 +4091,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
               // DQ (2/1/2016): Make the behavior of ROSE independent of the exact name of the backend compiler (problem when packages name compilers such as "g++-4.8").
               // Note that this code assumes that if we are using the C/C++ GNU compiler then we are using the GNU Fortran comiler (we need a similar BACKEND_FORTRAN_IS_GNU_COMPILER macro).
               // usingGfortran = (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx");
-                 #if BACKEND_CXX_IS_GNU_COMPILER
+                 #if BACKEND_FORTRAN_IS_GNU_COMPILER
                     usingGfortran = true;
                  #endif
                #endif
@@ -4178,7 +4185,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              }
 
 // We need this #if since if gfortran is unavailable the macros for the major and minor version numbers will be empty strings (blank).
-#if USE_GFORTRAN_IN_ROSE
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
        // DQ (9/16/2009): This option is not available in gfortran version 4.0.x (wonderful).
        // DQ (5/20/2008): Need to select between fixed and free format
        // fortran_C_preprocessor_commandLine.push_back("-ffree-line-length-none");
@@ -4233,7 +4240,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              }
 
           int returnValueForSyntaxCheckUsingBackendCompiler = 0;
-#if USE_GFORTRAN_IN_ROSE
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
         returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (fortranCommandLine);
 #else
         printf ("backend fortran compiler (gfortran) unavailable ... (not an error) \n");
@@ -7506,7 +7513,7 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
   // if ((numberOfFiles() !=0) && (get_file(0).get_openmp_lowering())
   // Liao 6/29/2012. sometimes rose translator is used as a wrapper for linking
   // There will be no SgFile at all in this case but we still want to append relevant linking options for OpenMP
-     if (SageInterface::getProject()->get_openmp_linking())
+     if (SageInterface::getProject() != NULL && SageInterface::getProject()->get_openmp_linking())
         {
 // Sara Royuela 12/10/2012:  Add GCC version check
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY

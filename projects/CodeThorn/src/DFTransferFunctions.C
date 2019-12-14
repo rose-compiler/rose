@@ -345,14 +345,39 @@ Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
   this->initializeExtremalValue(*elem);
   //cout << "INIT: initial element: ";elem->toStream(cout,getVariableIdMapping());
   list<SgVariableDeclaration*> globalVarDecls=SgNodeHelper::listOfGlobalVars(root);
+
+  // set of already initialized variables
+  set<VariableId> varinit;
+
+  // initialize all non-extern variables
   for(list<SgVariableDeclaration*>::iterator i=globalVarDecls.begin();i!=globalVarDecls.end();++i) {
     if(usedGlobalVarIds.find(getVariableIdMapping()->variableId(*i))!=usedGlobalVarIds.end()) {
-      //cout<<"DEBUG: transfer for global var @"<<_labeler->getLabel(*i)<<" : "<<(*i)->unparseToString()<<endl;
-      transfer(getLabeler()->getLabel(*i),*elem);
+      // cout << "DEBUG: transfer for global var @" << getLabeler()->getLabel(*i) << " : " << (*i)->unparseToString() 
+      //     << "id = " << getVariableIdMapping()->variableId(*i).toString()
+      //     << endl;
+      // ->get_declarationModifier().get_storageModifier().isExtern()
+      if (!((*i)->get_declarationModifier().get_storageModifier().isExtern()))
+      {
+        varinit.insert(getVariableIdMapping()->variableId(*i));
+        transfer(getLabeler()->getLabel(*i),*elem);
+      }
     } else {
       cout<<"INFO: filtered from initial state: "<<(*i)->unparseToString()<<endl;
     }
   }
+
+  // initialize all extern variables that have not been seen yet
+  for(list<SgVariableDeclaration*>::iterator i=globalVarDecls.begin();i!=globalVarDecls.end();++i) {
+    if (  usedGlobalVarIds.find(getVariableIdMapping()->variableId(*i))!=usedGlobalVarIds.end()
+       && ((*i)->get_declarationModifier().get_storageModifier().isExtern())
+       && (varinit.find(getVariableIdMapping()->variableId(*i)) == varinit.end())
+       )
+    {
+      varinit.insert(getVariableIdMapping()->variableId(*i));
+      transfer(getLabeler()->getLabel(*i),*elem);
+    }
+  }
+  
   //cout << "INIT: initial state: ";
   //elem->toStream(cout,getVariableIdMapping());
   //cout<<endl;

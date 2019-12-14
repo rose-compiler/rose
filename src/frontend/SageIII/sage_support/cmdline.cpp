@@ -7485,8 +7485,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #if 0
                printf ("Error: SgFile::e_Fortran_language detected in SgFile::buildCompilerCommandLineOptions() \n");
 #endif
-               compilerNameString[0] = ROSE_GFORTRAN_PATH;
+               compilerNameString[0] = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
 
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
                if (get_backendCompileFormat() == e_fixed_form_output_format)
                   {
                  // If backend compilation is specificed to be fixed form, then allow any line length (to simplify code generation for now)
@@ -7503,13 +7504,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                       // compilerNameString += "-ffree-form ";
                       // compilerNameString += "-ffree-line-length-<n> "; // -ffree-line-length-<n>
                       // compilerNameString.push_back("-ffree-line-length-none");
-#if USE_GFORTRAN_IN_ROSE
+
                       // DQ (9/16/2009): This option is not available in gfortran version 4.0.x (wonderful).
                          if ((BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER >= 1))
                             {
                               compilerNameString.push_back("-ffree-line-length-none");
                             }
-#endif
                        }
                       else
                        {
@@ -7524,7 +7524,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                          compilerNameString.push_back("-ffixed-line-length-none");
                        }
                   }
-
+#endif
                break;
              }
 

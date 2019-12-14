@@ -42,6 +42,8 @@ void ProgramInfo::compute() {
       numDerefOp++;
     } else if(isSgDotExp(node)) {
       numStructAccess++;
+    } else if(SgNodeHelper::isArrayAccess(node)) {
+      numArrayAccess++;
     }
   }
 }
@@ -63,6 +65,7 @@ std::string ProgramInfo::toStringDetailed() {
   ss<<"Conditional ops : "<<numConditionalExp<<endl;
   ss<<"Arrow ops       : "<<numArrowOp<<endl;
   ss<<"Dereference ops : "<<numDerefOp<<endl;
+  ss<<"Array access ops: "<<numArrayAccess<<endl;
   ss<<"Dot ops         : "<<numStructAccess<<endl;
   return ss.str();
 }

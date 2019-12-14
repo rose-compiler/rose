@@ -128,6 +128,7 @@ ATbool traverse_OptAllocationSpecifier(ATerm term, SgUntypedExprListExpression* 
 // 2.1.6 INITIALIZATION OF DATA OBJECTS
 ATbool traverse_ItemPreset            (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_ItemPresetValue       (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_OptItemPresetValue    (ATerm term, SgUntypedExpression* & expr);
 ATbool traverse_TablePreset           (ATerm term, SgUntypedExprListExpression* & preset);
 ATbool traverse_TablePresetList       (ATerm term, SgUntypedExprListExpression* preset);
 ATbool traverse_DefaultPresetSublist  (ATerm term, SgUntypedExprListExpression* preset);
@@ -192,7 +193,7 @@ ATbool traverse_FormalParameterList   (ATerm term, SgUntypedInitializedNameList*
 ATbool traverse_FormalInputParameter  (ATerm term, SgUntypedInitializedNameList* param_list);
 ATbool traverse_FormalOutputParameters(ATerm term, SgUntypedInitializedNameList* param_list);
 ATbool traverse_FormalOutputParameter (ATerm term, SgUntypedInitializedNameList* param_list);
-ATbool traverse_ParameterBinding      (ATerm term, SgUntypedOtherExpression** binding_expr);
+ATbool traverse_ParameterBinding      (ATerm term, SgUntypedOtherExpression* & binding_expr);
 
 // 3.4 INLINE DECLARATIONS
 ATbool traverse_InlineDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
@@ -317,6 +318,9 @@ ATbool traverse_NextFunction         (ATerm term, SgUntypedExpression* & expr);
 
 // 6.3.4 BYTE FUNCTION
 ATbool traverse_ByteFunction(ATerm term, SgUntypedExpression* & expr);
+
+// 6.3.7 SIZE FUNCTION
+ATbool traverse_SizeFunction(ATerm term, SgUntypedExpression* & expr);
 
 // 6.3.11 STATUS INVERSE FUNCTIONS
 ATbool traverse_StatusInverseFunction(ATerm term, SgUntypedExpression* & expr);

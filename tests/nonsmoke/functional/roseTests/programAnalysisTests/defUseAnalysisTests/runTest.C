@@ -561,6 +561,15 @@ int main( int argc, char * argv[] )
       testOneFunction("::func",argvList, debug, 26, results,useresults);
     }
 
+    if (startNr<=25 && 25<=stopNr) {
+      std::cout <<"------------------------------ TESTCASE 25 -----------------------------------------\n";
+      argvList[1]=srcdir+"tests/test25.C";
+      results.clear();      useresults.clear();
+      results.insert(pair<string,int>("x", 16));
+      results.insert(pair<string,int>("y", 22));
+      useresults.insert(pair<string,int>("x", 21));    
+      testOneFunction("::foo",argvList, debug, 31, results,useresults);
+    }
   }
   
   argvList.clear();
