@@ -7,6 +7,7 @@
 #include <Disassembler.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Message.h>
+#include <Sawyer/Optional.h>
 #include <Sawyer/Trace.h>
 
 namespace Rose {
@@ -23,7 +24,7 @@ public:
     /** Shared-ownership pointer to @ref Debugger. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<Debugger> Ptr;
 
-    /** How to detach from a process when this object is destroyed. */
+    /** How to detach from a process when the debugger is destroyed. */
     enum DetachMode {
         KILL,                                           /**< Kill the process. */
         DETACH,                                         /**< Simply detach leaving process in current state. */
@@ -192,7 +193,7 @@ private:
 
     Specimen specimen_;                                 // description of specimen being debugged
     int child_;                                         // process being debugged (int, not pid_t, for Windows portability)
-    DetachMode howDetach_;                              // how to detach from the subordinate
+    DetachMode autoDetach_;                             // how to detach from the subordinate when deleting this debugger
     int wstat_;                                         // last status from waitpid
     AddressIntervalSet breakpoints_;                    // list of breakpoint addresses
     int sendSignal_;                                    // pending signal
@@ -208,14 +209,14 @@ private:
     //----------------------------------------
 protected:
     Debugger()
-        : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
+        : child_(0), autoDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
           disassembler_(NULL) {
         init();
     }
 
     /** Construct a debugger attached to a specimen. */
     explicit Debugger(const Specimen &specimen)
-        : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
+        : child_(0), autoDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
           disassembler_(NULL) {
         init();
         attach(specimen);
@@ -223,7 +224,7 @@ protected:
 
 public:
     ~Debugger() {
-        detach();
+        detach(autoDetach_);
     }
 
     //----------------------------------------
@@ -244,14 +245,24 @@ public:
     // Attaching to subordinate
     //----------------------------------------
 public:
-    /** Attach to a specimen. */
-    void attach(const Specimen&);
+    /** Attach to a specimen.
+     *
+     *  The @p onDelete argument specifies what to do with the subordinate process if this debugger object is deleted
+     *  while the subordinate is still attached. If @p onDelete is not specified, then a reasonable value is chosen: for
+     *  subordinates that existed prior to attaching (e.g., Linux process ID), the default detach mechanism is either @ref
+     *  DETACH or @ref NOTHING depending on whether the @ref Specimen ATTACH flag was set or clear. For subordniates that
+     *  are created by this @ref attach method (such as ELF executables), the detach mechanism is @ref KILL. */
+    void attach(const Specimen&, Sawyer::Optional<DetachMode> onDelete = Sawyer::Nothing());
+    /** @} */
 
     /** Returns true if attached to a subordinate.  Return value is the subordinate process ID. */
     int isAttached() { return child_; }
 
-    /** Detach from the subordinate. */
-    void detach();
+    /** Detach from the subordinate.
+     *
+     *  If a detach mode is specified then use that mechanism to detatch. Otherwise use whatever mechanism was chosen as
+     *  the default during the @ref attach operation. */
+    void detach(Sawyer::Optional<DetachMode> mode = Sawyer::Nothing());
 
     /** Terminate the subordinate. */
     void terminate();

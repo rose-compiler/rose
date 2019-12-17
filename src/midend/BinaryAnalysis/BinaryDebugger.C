@@ -387,9 +387,9 @@ Debugger::howTerminated() {
 }
 
 void
-Debugger::detach() {
+Debugger::detach(Sawyer::Optional<DetachMode> how) {
     if (child_ && !isTerminated()) {
-        switch (howDetach_) {
+        switch (how.orElse(autoDetach_)) {
             case NOTHING:
                 break;
             case CONTINUE:
@@ -403,23 +403,22 @@ Debugger::detach() {
                 waitForChild();
         }
     }
-    howDetach_ = NOTHING;
     child_ = 0;
     regsPageStatus_ = REGPAGE_NONE;
 }
 
 void
 Debugger::terminate() {
-    howDetach_ = KILL;
-    detach();
+    detach(KILL);
 }
 
 void
-Debugger::attach(const Specimen &specimen) {
+Debugger::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete) {
     if (!specimen.program().empty()) {
         // Attach to an executable program by running it.
-        detach();
+        detach(autoDetach_);
         specimen_ = specimen;
+        autoDetach_ = onDelete.orElse(KILL);
 
         // Create the child exec arguments before the fork because heap allocation is not async-signal-safe.
         char **argv = new char*[1 /*name*/ + specimen.arguments().size() + 1 /*null*/];
@@ -490,7 +489,6 @@ Debugger::attach(const Specimen &specimen) {
             free(argv[i]);
         delete[] argv;
 
-        howDetach_ = DETACH;
         waitForChild();
         if (isTerminated())
             throw std::runtime_error("Rose::BinaryAnalysis::Debugger::attach: subordinate " +
@@ -498,20 +496,19 @@ Debugger::attach(const Specimen &specimen) {
     } else {
         // Attach to an existing process.
         if (-1 == specimen.process()) {
-            detach();
+            detach(autoDetach_);
         } else if (specimen.process() == child_) {
             // do nothing
         } else if (specimen.flags().isSet(ATTACH)) {
             child_ = specimen.process();
-            howDetach_ = NOTHING;
             sendCommand(PTRACE_ATTACH, child_);
-            howDetach_ = DETACH;
+            autoDetach_ = onDelete.orElse(DETACH);
             waitForChild();
             if (SIGSTOP==sendSignal_)
                 sendSignal_ = 0;
         } else {
             child_ = specimen.process();
-            howDetach_ = NOTHING;
+            autoDetach_ = onDelete.orElse(NOTHING);
         }
         specimen_ = specimen;
     }
