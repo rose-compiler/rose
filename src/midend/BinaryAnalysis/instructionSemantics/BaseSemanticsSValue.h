@@ -236,6 +236,7 @@ public:
      * @{ */
     WithFormatter with_format(Formatter &fmt) { return WithFormatter(SValuePtr(this), fmt); }
     WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
+    WithFormatter operator+(const std::string &linePrefix);
     /** @} */
     
     /** Some subclasses support the ability to add comments to values. We define no-op versions of these methods here
