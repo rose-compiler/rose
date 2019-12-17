@@ -610,7 +610,12 @@ public:
      *  method has a "2" appended to its name. After a suitable period of deprecation for Leaf::isVariable, a new isVariable
      *  will be added to this class hiearchy and will have the same semantics as isVariable2, which will become deprecated. */
     virtual bool isVariable2() const = 0;
-    
+
+    /** Variable ID number.
+     *
+     *  If this expression is a variable then returns the variable ID number, otherwise nothing. */
+    Sawyer::Optional<uint64_t> variableId() const;
+
     /** True if this expression is an integer variable. */
     bool isIntegerVariable() const {
         return isIntegerExpr() && isVariable2();
