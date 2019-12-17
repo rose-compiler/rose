@@ -2065,7 +2065,8 @@ ExtractSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
             std::reverse(newChildren.begin(), newChildren.end());// high bits must be first
             return Interior::instance(OP_CONCAT, newChildren, solver, inode->comment());
         }
-        newChildren[0]->comment(inode->comment());
+        if (newChildren[0]->comment().empty())
+            newChildren[0]->comment(inode->comment());
         return newChildren[0];
     }
 

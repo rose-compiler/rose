@@ -1384,7 +1384,7 @@ LeafPtr makeVariable(const Type&, uint64_t id, const std::string &comment="", un
 LeafPtr makeConstant(const Type&, const Sawyer::Container::BitVector&, const std::string &comment="", unsigned flags=0);
 LeafPtr makeIntegerVariable(size_t nBits, const std::string &comment="", unsigned flags=0);
 LeafPtr makeIntegerVariable(size_t nBits, uint64_t id, const std::string &comment="", unsigned flags=0);
-LeafPtr makeIntegerConstant(size_t nBits, uint64_t n, const std::string &comment="", unsigned flags=0);
+LeafPtr makeIntegerConstant(size_t nBits, uint64_t value, const std::string &comment="", unsigned flags=0);
 LeafPtr makeIntegerConstant(const Sawyer::Container::BitVector&, const std::string &comment="", unsigned flags=0);
 LeafPtr makeBooleanConstant(bool, const std::string &comment="", unsigned flags=0);
 LeafPtr makeMemoryVariable(size_t addressWidth, size_t valueWidth, const std::string &comment="", unsigned flags=0);
