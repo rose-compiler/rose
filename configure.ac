@@ -7,7 +7,8 @@ dnl shell variable.
 AC_INIT([ROSE], [0.9.13.2])
 AC_PREREQ([2.59])
 
-AC_DEFINE_UNQUOTED([ROSE_SCM_VERSION_ID], ["$(cat $srcdir/ROSE_VERSION)"], [Set SCM version information to ROSE version.])
+AC_DEFINE_UNQUOTED([ROSE_SCM_VERSION_ID],         ["$(cat $srcdir/ROSE_VERSION)"],    [Set SCM version information to ROSE version.])
+AC_DEFINE_UNQUOTED([ROSE_SCM_VERSION__UNIX_DATE], ["$(cat $srcdir/config/SCM_DATE)"], [Set SCM numerical version information to ROSE version.])
 
 test "$verbose" = "" && echo "Run configure with --verbose to see more output"
 

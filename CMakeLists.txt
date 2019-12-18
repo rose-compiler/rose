@@ -114,71 +114,26 @@ set(ROSE_TOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 # ROSE version information
 ########################################################################################################################
 
-if(NOT IS_DIRECTORY ${PROJECT_SOURCE_DIR}/.git)
-  message(FATAL_ERROR "ROSE source code is only distributed as a Git repository; it cannot be built outside Git.")
-endif()
-
-find_package(Git)
-if(NOT GIT_FOUND)
-  string(REPLACE ":" "\n\t" ENV_PATH "$ENV{PATH}")
-  message(FATAL_ERROR "git not found in \$PATH\n" "PATH=${ENV_PATH}")
-endif()
-
-# Get the Git HEAD commit SHA1
-execute_process(
-  COMMAND             "${GIT_EXECUTABLE}" rev-parse HEAD
-  WORKING_DIRECTORY   ${PROJECT_SOURCE_DIR}
-  ERROR_VARIABLE      stderr
-  RESULT_VARIABLE     error_code
-  OUTPUT_VARIABLE     ROSE_SCM_VERSION_ID
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-if(NOT error_code EQUAL 0)
-  message(FATAL_ERROR "Failed to obtain the ROSE version hash: ${ROSE_SCM_VERSION_ID}${stderr}")
-endif()
-
-if(NOT "${ROSE_SCM_VERSION_ID}" MATCHES "^[0-9a-zA-Z]+$")
-  message(FATAL_ERROR "Git commit hash \"${ROSE_SCM_VERSION_ID}\" is malformed")
-endif()
-
-string(LENGTH ${ROSE_SCM_VERSION_ID} ROSE_SCM_VERSION_ID_LENGTH)
-if(NOT "${ROSE_SCM_VERSION_ID_LENGTH}" EQUAL "40")
-  message(FATAL_ERROR "Git commit hash \"${ROSE_SCM_VERSION_ID}\" is malformed")
-endif()
-
-# Author time (%at) of the HEAD commit
-execute_process(
-  COMMAND             "${GIT_EXECUTABLE}" log -1 --format=%at HEAD
-  WORKING_DIRECTORY   ${PROJECT_SOURCE_DIR}
-  ERROR_VARIABLE      stderr
-  RESULT_VARIABLE     error_code
-  OUTPUT_VARIABLE     ROSE_SCM_VERSION_UNIX_DATE
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-if(NOT error_code EQUAL 0)
-  message(FATAL_ERROR "Failed to obtain the ROSE version timestamp: ${ROSE_SCM_VERSION_UNIX_DATE}${stderr}")
-endif()
-
-if(NOT "${ROSE_SCM_VERSION_UNIX_DATE}" MATCHES "^[0-9]+$")
-  message(FATAL_ERROR "Git commit date \"${ROSE_SCM_VERSION_UNIX_DATE}\" is malformed")
-endif()
-
-string(LENGTH ${ROSE_SCM_VERSION_UNIX_DATE} ROSE_SCM_VERSION_UNIX_DATE_LENGTH)
-if("${ROSE_SCM_VERSION_UNIX_DATE_LENGTH}" LESS "10")
-  message(FATAL_ERROR "Git commit date \"${ROSE_SCM_VERSION_UNIX_DATE}\" is malformed")
-endif()
-
 # All distributions of ROSE also have a ROSE_VERSION file with a dotted version that's updated during the ROSE release
 # process.
 set(ROSE_SCM_VERSION_FILE "${PROJECT_SOURCE_DIR}/ROSE_VERSION")
 if(NOT EXISTS "${ROSE_SCM_VERSION_FILE}")
   message(FATAL_ERROR "ROSE version file not found: ${ROSE_SCM_VERSION_FILE}")
 endif()
+
+# All distributions of ROSE also have a config/SCM_DATE file with a numerical version that's updated during the ROSE release
+# process.
+set(ROSE_SCM_DATE_FILE "${PROJECT_SOURCE_DIR}/config/SCM_DATE")
+if(NOT EXISTS "${ROSE_SCM_DATE_FILE}")
+  message(FATAL_ERROR "ROSE SCM Date file not found: ${ROSE_SCM_DATE_FILE}")
+endif()
+
 file(STRINGS ${ROSE_SCM_VERSION_FILE} ROSE_PACKAGE_VERSION LIMIT_COUNT 1)
+file(STRINGS ${ROSE_SCM_VERSION_FILE} ROSE_SCM_VERSION_ID LIMIT_COUNT 1)
+file(READ ${ROSE_SCM_DATE_FILE} ROSE_SCM_VERSION_UNIX_DATE)
 
 # Results
-message(STATUS "The ROSE version hash is ${ROSE_SCM_VERSION_ID}")
-message(STATUS "The ROSE version timestamp is ${ROSE_SCM_VERSION_UNIX_DATE} (Unix time)")
+message(STATUS "The ROSE version timestamp is ${ROSE_SCM_VERSION_UNIX_DATE}")
 message(STATUS "The ROSE version is ${ROSE_PACKAGE_VERSION}")
 
 
