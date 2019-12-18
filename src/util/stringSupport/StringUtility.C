@@ -44,48 +44,65 @@ htmlEscape(const std::string& s) {
 }
 
 std::string
-cEscape(const std::string &s) {
+cEscape(char ch, char context) {
     std::string result;
-    BOOST_FOREACH (char ch, s) {
-        switch (ch) {
-            case '\a':
-                result += "\\a";
-                break;
-            case '\b':
-                result += "\\b";
-                break;
-            case '\t':
-                result += "\\t";
-                break;
-            case '\n':
-                result += "\\n";
-                break;
-            case '\v':
-                result += "\\v";
-                break;
-            case '\f':
-                result += "\\f";
-                break;
-            case '\r':
-                result += "\\r";
-                break;
-            case '\"':
+    switch (ch) {
+        case '\a':
+            result += "\\a";
+            break;
+        case '\b':
+            result += "\\b";
+            break;
+        case '\t':
+            result += "\\t";
+            break;
+        case '\n':
+            result += "\\n";
+            break;
+        case '\v':
+            result += "\\v";
+            break;
+        case '\f':
+            result += "\\f";
+            break;
+        case '\r':
+            result += "\\r";
+            break;
+        case '\"':
+            if ('"' == context) {
                 result += "\\\"";
-                break;
-            case '\\':
-                result += "\\\\";
-                break;
-            default:
-                if (isprint(ch)) {
-                    result += ch;
-                } else {
-                    char buf[8];
-                    sprintf(buf, "\\%03o", (unsigned)(unsigned char)ch);
-                    result += buf;
-                }
-                break;
-        }
+            } else {
+                result += ch;
+            }
+            break;
+        case '\'':
+            if ('\'' == context) {
+                result += "\\'";
+            } else {
+                result += ch;
+            }
+            break;
+        case '\\':
+            result += "\\\\";
+            break;
+        default:
+            if (isprint(ch)) {
+                result += ch;
+            } else {
+                char buf[8];
+                sprintf(buf, "\\%03o", (unsigned)(unsigned char)ch);
+                result += buf;
+            }
+            break;
     }
+    return result;
+}
+
+std::string
+cEscape(const std::string &s, char context) {
+    std::string result;
+    BOOST_FOREACH (char ch, s)
+        result += cEscape(ch, context);
     return result;
 }
 

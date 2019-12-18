@@ -42,10 +42,19 @@ ROSE_UTIL_API std::string htmlEscape(const std::string&);
 
 /** Escapes characters that are special to C/C++.
  *
- *  Replaces special characters in the input so that it is suitable for the contents of a C string literal. That is, things
+ *  Replaces special characters in the input so that it is suitable for the contents of a C string literal (if @p context is a
+ *  double quote character) or the contents of a C character constant (if @p context is a single quote). That is, things
  *  like double quotes, line-feeds, tabs, non-printables, etc. are replace by their C backslash escaped versions. Returns the
- *  resulting string. */
-ROSE_UTIL_API std::string cEscape(const std::string&);
+ *  resulting string.
+ *
+ *  Note that if the first argument is a string then the context defaults to string literals, and if the first argument is a
+ *  single character then the context defaults to character literals. Although this is usually what one wants, it's possible to
+ *  change the context in both situations.
+ *
+ * @{ */
+ROSE_UTIL_API std::string cEscape(const std::string&, char context = '"');
+ROSE_UTIL_API std::string cEscape(char, char context = '\'');
+/** @} */
 
 /**  Escapes characters that are special to the Bourne shell.
  *
