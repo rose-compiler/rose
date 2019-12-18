@@ -56,7 +56,7 @@ TEST_Objects = ${ALL_TESTCODES:.C=.o}
 
 # $(TEST_Objects): $(TEST_TRANSLATOR) $(srcdir)/$(@:.o=.C)
 $(TEST_Objects): $(TEST_TRANSLATOR)
-	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_WINE_INCLUDES)/msvcrt $(ROSE_WINE_INCLUDES) $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_WINE_INCLUDES)/msvcrt $(ROSE_WINE_INCLUDES) $(ROSE_WINE_INCLUDES)/wine/msvcrt $(ROSE_WINE_INCLUDES)/wine $(ROSE_WINE_INCLUDES)/wine/windows $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
