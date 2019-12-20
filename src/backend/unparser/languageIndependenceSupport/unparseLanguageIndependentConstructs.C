@@ -3190,6 +3190,8 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
      ROSE_ASSERT(expr != NULL);
      ROSE_ASSERT(expr->get_startOfConstruct() != NULL);
      ROSE_ASSERT(expr->get_file_info() != NULL);
+#define DEBUG_ROSE_2423 0
+#if DEBUG_ROSE_2423
      if (expr->get_file_info()->isCompilerGenerated() != expr->get_startOfConstruct()->isCompilerGenerated())
         {
           printf ("In unparseExpression(%p = %s): Detected error expr->get_file_info()->isCompilerGenerated() != expr->get_startOfConstruct()->isCompilerGenerated() \n",expr,expr->class_name().c_str());
@@ -3222,8 +3224,10 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
           ROSE_ASSERT(startOfConstructFileInfo != NULL);
           startOfConstructFileInfo->display("expr->get_startOfConstruct(): debug");
         }
+#endif
   // Fails when merging ASTs loaded from files
-     ROSE_ASSERT(expr->get_file_info()->isCompilerGenerated() == expr->get_startOfConstruct()->isCompilerGenerated());
+     bool ROSE_2423__bypass = ( expr->get_file_info() == expr->get_operatorPosition() );
+     ROSE_ASSERT(expr->get_file_info()->isCompilerGenerated() == expr->get_startOfConstruct()->isCompilerGenerated() || ROSE_2423__bypass);
 
 #if 0
      printf ("In unparseExpression(%p = %s) \n",expr,expr->class_name().c_str());
