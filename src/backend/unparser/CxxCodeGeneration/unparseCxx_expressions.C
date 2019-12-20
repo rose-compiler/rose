@@ -6213,17 +6213,6 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                             }
                        }
                   }
-                 else
-                  {
-#if 0
-                    printf ("case SgCastExp::e_C_style_cast: compiler generated cast not output \n");
-                    curprint("/* case SgCastExp::e_C_style_cast: compiler generated cast not output */");
-#endif
-                 // DQ (7/26/2013): This should also be true (all of the source position info should be consistant).
-                 //     -> FAILS when merging ASTs read from files (cast of a template parameter used as template argument of the parent class)
-                    ROSE_ASSERT(cast_op->get_file_info()->isCompilerGenerated() == true);
-                    ROSE_ASSERT(cast_op->get_endOfConstruct()->isCompilerGenerated() == true);
-                  }
                break; 
              }
 
