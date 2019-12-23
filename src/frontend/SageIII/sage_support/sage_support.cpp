@@ -2624,6 +2624,14 @@ SgProject::parse()
                     printf ("DONE: Generating a dot file of the secondaryPassOverSourceFile AST \n");
 #endif
 #if 0
+                 // Output an optional graph of the AST (just the tree, when active)
+                    printf ("Generating a dot file... (ROSE Release Note: turn off output of dot files before committing code) \n");
+                 // DQ (12/22/2019): Call multi-file version (instead of generateDOT() function).
+                 // generateAstGraph(project, 2000);
+                 // generateDOT ( *project );
+                    generateDOTforMultipleFile(*this);
+#endif
+#if 0
                     printf ("Exiting after test! \n");
                     ROSE_ASSERT(false);
 #endif
