@@ -14215,6 +14215,10 @@ Sg_File_Info::get_physical_file_id(int input_file_id) const
 #if 1
                          printf (" --- returning return_physical_file_id = %d \n",return_physical_file_id);
 #endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
                        }
                       else
                        {

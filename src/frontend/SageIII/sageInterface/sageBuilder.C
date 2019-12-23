@@ -13565,6 +13565,10 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 #endif
              }
 
+#if 0
+       // DQ (12/22/2019): This is the code that causes the class declarations between defining 
+       // class declarations across multiple translation units to be shared.
+
        // DQ (9/7/2012): I think this might be the root of a problem in the haskell tests (ROSE compiling ROSE).
           if (nondefdecl->get_definingDeclaration() != NULL)
              {
@@ -13600,6 +13604,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 #endif
                return defining_classDeclaration;
              }
+#endif
 
 #if 0
           nondefdecl->set_definingDeclaration(defdecl);
@@ -14100,6 +14105,11 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             else
              {
                defdecl = new SgClassDeclaration (nameWithoutTemplateArguments,kind,NULL,classDef);
+
+#if 0
+            // DQ (12/22/2019): Debugging the case of shared class declarations between multiple files referencing the same defining declaration.
+               printf ("In SageBuilder::buildClassDeclaration_nfi(): build a SgClassDeclaration: defdecl = %p \n",defdecl);
+#endif
 
             // DQ (2/27/2018): We should be able to enforce this, it should have always been true.
                ROSE_ASSERT(defdecl->get_type() == NULL);
