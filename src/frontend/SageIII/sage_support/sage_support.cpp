@@ -2223,7 +2223,8 @@ SgProject::RunFrontend()
 }//SgProject::RunFrontend
 
 
-
+#if 0
+// DQ (12/22/2019): unprde4red_map is not directly available in older compilers used for testing ROSE within Jenkins.
 // DQ (12/21/2019): Support for intersection of multiple sets.
 // unordered_map<int,SgNode*> umap;
 void compute_IR_node_pointers ( SgSourceFile* sourceFile, unordered_map < SgNode*, set <int> > & umap )
@@ -2313,7 +2314,7 @@ void compute_IR_node_pointers ( SgSourceFile* sourceFile, unordered_map < SgNode
 
      printf ("Leaving compute_IR_node_pointers(): umap.size() = %zu \n",umap.size());
    }
-
+#endif
 
 int
 SgProject::parse()
