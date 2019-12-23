@@ -14206,6 +14206,14 @@ Sg_File_Info::get_physical_file_id(int input_file_id) const
                          ptrdiff_t index = pos - p_fileIDsToUnparse.begin();
                          ROSE_ASSERT(index >= 0);
                          ROSE_ASSERT(index < (ptrdiff_t)p_fileIDsToUnparse.size());
+
+                      // DQ (12/23/2019): Added debugging info.
+                         if (p_fileLineNumbersToUnparse.size() != p_fileIDsToUnparse.size())
+                            {
+                              printf ("Error: p_fileLineNumbersToUnparse.size() != p_fileIDsToUnparse.size() \n");
+                              printf (" --- p_fileLineNumbersToUnparse.size() = %zu \n",p_fileLineNumbersToUnparse.size());
+                              printf (" --- p_fileIDsToUnparse.size()         = %zu \n",p_fileIDsToUnparse.size());
+                            }
                          ROSE_ASSERT(p_fileLineNumbersToUnparse.size() == p_fileIDsToUnparse.size());
 #if 1
                          printf (" --- index = %d shared input file id = %d \n",(int)index,p_fileIDsToUnparse[index]);
