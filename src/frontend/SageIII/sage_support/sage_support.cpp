@@ -34,8 +34,9 @@
 #include <boost/foreach.hpp>
 #include <Sawyer/FileSystem.h>
 
+// DQ (12/22/2019): I don't need this now, and it is an issue for some compilers (e.g. GNU 4.9.4).
 // DQ (12/21/2019): Require hash table support for determining the shared nodes in the ASTs.
-#include <unordered_map>
+// #include <unordered_map>
 
 
 #ifdef __INSURE__
