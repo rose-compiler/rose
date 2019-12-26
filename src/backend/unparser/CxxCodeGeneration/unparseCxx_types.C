@@ -2468,6 +2468,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
   // SgClassDeclaration *cdecl = isSgClassDeclaration(class_type->get_declaration());
      SgClassDeclaration *decl = isSgClassDeclaration(class_type->get_declaration());
      ROSE_ASSERT(decl != NULL);
+
      SgTemplateClassDeclaration *tpldecl = isSgTemplateClassDeclaration(decl);
 
   // DQ (7/28/2013): Added assertion.
@@ -2872,6 +2873,31 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                     ninfo.set_current_scope(classdefn_stmt);
 
                  // curprint ( "\n/* Unparsing class definition within unparseClassType */ \n";
+
+                 // DQ (12/26/2019): If we are supporting multiple files and named types using defining declaration 
+                 // in multiple translation units, then we need to use the defining declaration that is associated 
+                 // with the correct file (so that it can be unparsed).
+                    if (info.useAlternativeDefiningDeclaration() == true)
+                       {
+                         ROSE_ASSERT(info.get_declstatement_associated_with_type() != NULL);
+
+                         SgClassDeclaration* class_declstatement_associated_with_type = isSgClassDeclaration(info.get_declstatement_associated_with_type());
+                         ROSE_ASSERT(class_declstatement_associated_with_type != NULL);
+
+                      // This should be a defining declaration.
+                         ROSE_ASSERT(class_declstatement_associated_with_type->get_definition() != NULL);
+#if 0
+                         printf ("Reset the declaration to be used in unparsing the defining declaration (muti-file support): class_declstatement_associated_with_type = %p \n",class_declstatement_associated_with_type);
+#endif
+                      // decl = class_declstatement_associated_with_type;
+                      // cDefiningDecl = class_declstatement_associated_with_type;
+                         classdefn_stmt = class_declstatement_associated_with_type->get_definition();
+                         ROSE_ASSERT(classdefn_stmt != NULL);
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
 
                     ninfo.set_isUnsetAccess();
                     curprint("{");

@@ -7282,6 +7282,19 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
      printf ("In unparseVarDeclStmt(): vardecl_stmt = %p outputTypeDefinition = %s \n",vardecl_stmt,(outputTypeDefinition == true) ? "true" : "false");
 #endif
+#if 0
+  // DQ (12/26/2019): Adding support for definging declarations in types defined in multiple translation units.
+  // SgDeclarationStatement* associatedDefiningDeclaration = vardecl_stmt->compute_baseTypeDefiningDeclaration();
+     SgDeclarationStatement* associatedDefiningDeclaration = vardecl_stmt->get_baseTypeDefiningDeclaration();
+     if (associatedDefiningDeclaration != NULL)
+        {
+          printf (" --- vardecl_stmt->get_baseTypeDefiningDeclaration() = %p = %s \n",associatedDefiningDeclaration,associatedDefiningDeclaration->class_name().c_str());
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
 
   // if (p != vardecl_stmt->get_variables().end())
      SgInitializedNamePtrList::iterator p = vardecl_stmt->get_variables().begin();
@@ -7480,11 +7493,18 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                       // printf ("In unparseVarDeclStmt(): Use the defining declaration as a basis for the variable declaration \n");
                          ROSE_ASSERT(namedType->get_declaration() != NULL);
                          declStmt = namedType->get_declaration()->get_definingDeclaration();
+#if 0
+                         SgDeclarationStatement* tmp_associatedDefiningDeclaration = vardecl_stmt->get_baseTypeDefiningDeclaration();
+                         ROSE_ASSERT(tmp_associatedDefiningDeclaration != NULL);
+
+                      // DQ (12/26/2019): Use this declaration instead, since it is the one from the same source file.
+                      // declStmt = tmp_associatedDefiningDeclaration;
+#endif
                       // printf ("outputTypeDefinition == true: declStmt = %p \n",declStmt);
                          if (declStmt == NULL)
                             {
 #if 0
-                              printf ("namedType->get_declaration() = %p = %s \n",namedType->get_declaration(),namedType->get_declaration()->class_name().c_str());
+                              printf ("In unparseVarDeclStmt(): namedType->get_declaration() = %p = %s \n",namedType->get_declaration(),namedType->get_declaration()->class_name().c_str());
 #endif
                            // it is likely an enum declaration which does not yet use the defing vs. non-defining mechanisms
                            // so just set it to the currently available declaration (since for enums there is only one!)
@@ -7743,6 +7763,30 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     printf ("Exiting as a test! \n");
                     ROSE_ASSERT(false);
 #endif
+                  }
+
+            // DQ (12/26/2019): Adding support for unparsing of defining declarations in types used across multiple translation units (multiple files).
+            // See Cxx11_tests/test2019_518a.C and test2019_518b.C.
+               SgDeclarationStatement* tmp_associatedDefiningDeclaration = vardecl_stmt->get_baseTypeDefiningDeclaration();
+               if (tmp_associatedDefiningDeclaration != NULL)
+                  {
+                    ninfo_for_type.set_useAlternativeDefiningDeclaration();
+
+                 // Make sure this is not is use.
+                 // ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() == NULL);
+#if 0
+                 // DQ (12/26/2019): This appears to be non-null for Cxx_tests/test2003_26.C, test2006_54.C.
+                    if (ninfo_for_type.get_declstatement_associated_with_type() != NULL)
+                       {
+                         SgDeclarationStatement* declstatement_associated_with_type = ninfo_for_type.get_declstatement_associated_with_type();
+                         printf ("Note: In Unparse_ExprStmt::unparseVarDeclStmt(): ninfo_for_type.get_declstatement_associated_with_type() = %p = %s \n",
+                              declstatement_associated_with_type,declstatement_associated_with_type->class_name().c_str());
+                       }
+#endif
+                 // ROSE_ASSERT(ninfo_for_type.get_declstatement_associated_with_type() == NULL);
+                 // ninfo_for_type.set_declaration(tmp_associatedDefiningDeclaration);
+                 // ninfo_for_type.set_declstatement_ptr(tmp_associatedDefiningDeclaration);
+                    ninfo_for_type.set_declstatement_associated_with_type(tmp_associatedDefiningDeclaration);
                   }
 
             // printf ("After isNameOnly() test: ninfo2.SkipClassDefinition() = %s \n",(ninfo2.SkipClassDefinition() == true) ? "true" : "false");
