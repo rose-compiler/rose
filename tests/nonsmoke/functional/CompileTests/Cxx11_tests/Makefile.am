@@ -1023,6 +1023,9 @@ test2019_510_ab: ../../testTranslator
 test2019_517_ab: ../../testTranslator
 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_517a.C $(srcdir)/test2019_517b.C
 
+test2019_518_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_518a.C $(srcdir)/test2019_518b.C
+
 
 
 #########
