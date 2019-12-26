@@ -522,7 +522,9 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                   {
                     statementInFile = true;
                   }
-
+#if 0
+               printf ("In statementFromFile(): stmt->get_file_info()->isShared() = %s \n",stmt->get_file_info()->isShared() ? "true" : "false");
+#endif
             // DQ (11/10/2019): Details apply when nodes are shared across multiple files.
                if (stmt->get_file_info()->isShared() == true)
                   {
