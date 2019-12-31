@@ -2010,6 +2010,11 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
      SgNamedType* namedType = isSgNamedType(stripedBaseType);
      if (namedType != NULL)
         {
+       // DQ (12/28/2019): the problem with getting the base declaration from the type is that it forces sharing 
+       // of the base declaration when the typedef has a defining declaration for a base type in multiple files.
+#if 0
+          printf ("NOTE: Using the base declaration from the type forces sharing of the base declaration across multiple translation units \n");
+#endif
        // DQ (3/20/2012): Use this to set the value of base_decl (which was previously unset).
        // isSgNamedType(base_type)->get_declaration();
        // base_decl = isSgNamedType(base_type)->get_declaration();
@@ -2074,6 +2079,10 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
      printf ("In buildTypedefDeclaration_nfi(): parent_scope = %p \n",parent_scope);
 #endif
 
+#if 0
+     printf ("In buildTypedefDeclaration_nfi(): base_decl = %p \n",base_decl);
+#endif
+
   // SgTypedefDeclaration (Sg_File_Info *startOfConstruct, SgName name="", SgType *base_type=NULL, SgTypedefType *type=NULL, SgDeclarationStatement *declaration=NULL, SgSymbol *parent_scope=NULL)
   // SgTypedefDeclaration (SgName name="", SgType *base_type=NULL, SgTypedefType *type=NULL, SgDeclarationStatement *declaration=NULL, SgSymbol *parent_scope=NULL)
   //
@@ -2085,6 +2094,10 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
   // TV (08/17/2018): moved it before building type as SgTypedefType::createType uses SgTemplateTypedefDeclaration::get_mangled_name which requires the scope to be set (else name of the associated type might not be unique)
      type_decl->set_scope(scope);
      type_decl->set_parent(scope);
+
+#if 0
+     printf ("In buildTypedefDeclaration_nfi(): type_decl = %p type_decl->get_declaration() = %p \n",type_decl,type_decl->get_declaration());
+#endif
 
 #if 0
      printf ("In buildTypedefDeclaration_nfi(): calling SgTypedefType::createType() using this = %p = %s \n",type_decl,type_decl->class_name().c_str());
@@ -2179,6 +2192,10 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
   // DQ (1/2/2010): Set the defining declaration to itself. (BAD IDEA).
      if (type_decl->get_definingDeclaration() == NULL)
           type_decl->set_definingDeclaration(type_decl);
+#endif
+
+#if 0
+     printf ("Leaving buildTypedefDeclaration_nfi(): type_decl = %p type_decl->get_declaration() = %p \n",type_decl,type_decl->get_declaration());
 #endif
 
      return type_decl;
