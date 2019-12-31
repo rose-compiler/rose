@@ -11124,7 +11124,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
           if (declaration != NULL)
              {
 #if DEBUG_TYPEDEF_DECLARATIONS
-               printf ("Found declaration statment in typedef declaration (need to use it as reference node for qualification \n");
+               printf ("Found declaration statment in typedef declaration (need to use it as reference node for qualification) \n");
 #endif
                ninfo_for_type.set_reference_node_for_qualification(declaration);
 #if 0
@@ -11144,6 +11144,51 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
                ninfo_for_type.set_reference_node_for_qualification(typedef_stmt);
              }
 #endif
+
+
+       // DQ (12/27/2019): To support multiple files, we need to set the declartion to be used in unparsing 
+       // the definig declaration in the type (when it is present).
+       // DQ (12/26/2019): Adding support for unparsing of defining declarations in types used across multiple translation units (multiple files).
+       // See Cxx11_tests/test2019_520a.C and test2019_520b.C.
+          SgDeclarationStatement* tmp_associatedDefiningDeclaration = typedef_stmt->get_baseTypeDefiningDeclaration();
+          if (tmp_associatedDefiningDeclaration != NULL)
+             {
+               ninfo_for_type.set_useAlternativeDefiningDeclaration();
+
+               ROSE_ASSERT(declaration != NULL);
+#if 0
+               printf ("tmp_associatedDefiningDeclaration = %p = %s \n",tmp_associatedDefiningDeclaration,tmp_associatedDefiningDeclaration->class_name().c_str());
+               printf ("declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#endif
+            // Make sure this is not is use.
+            // ROSE_ASSERT(ninfo_for_type.get_declstatement_ptr() == NULL);
+#if 0
+            // DQ (12/26/2019): This appears to be non-null for Cxx_tests/test2003_26.C, test2006_54.C.
+               if (ninfo_for_type.get_declstatement_associated_with_type() != NULL)
+                  {
+                    SgDeclarationStatement* declstatement_associated_with_type = ninfo_for_type.get_declstatement_associated_with_type();
+                    printf ("Note: In Unparse_ExprStmt::unparseVarDeclStmt(): ninfo_for_type.get_declstatement_associated_with_type() = %p = %s \n",
+                         declstatement_associated_with_type,declstatement_associated_with_type->class_name().c_str());
+                  }
+#endif
+            // ROSE_ASSERT(ninfo_for_type.get_declstatement_associated_with_type() == NULL);
+            // ninfo_for_type.set_declaration(tmp_associatedDefiningDeclaration);
+            // ninfo_for_type.set_declstatement_ptr(tmp_associatedDefiningDeclaration);
+               ninfo_for_type.set_declstatement_associated_with_type(tmp_associatedDefiningDeclaration);
+#if 0
+               printf ("typedef_stmt->get_file_info()->get_filenameString() = %s \n",typedef_stmt->get_file_info()->get_filenameString().c_str());
+               if (typedef_stmt->get_file_info()->get_filenameString() == "/home/quinlan1/ROSE/git_rose_development/tests/nonsmoke/functional/CompileTests/Cxx11_tests/test2019_520b.C")
+                  {
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+                  }
+#endif
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+
        // Only pass the ninfo_for_type to support name qualification of the base type.
        // unp->u_type->unparseType(btype, ninfo);
           unp->u_type->unparseType(btype, ninfo_for_type);

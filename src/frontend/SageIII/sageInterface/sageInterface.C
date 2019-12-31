@@ -9013,10 +9013,18 @@ SageInterface::resetInternalMapsForTargetStatement(SgStatement* sourceStatement)
   // instead of the tokens representing the macro or some partial representation of the transformed 
   // statements and the macro call (worse).
 
+#if 0
+     printf ("In SageInterface::resetInternalMapsForTargetStatement(SgStatement*): sourceStatement = %p = %s \n",sourceStatement,sourceStatement->class_name().c_str());
+#endif
+
      SgSourceFile* sourceFile = getEnclosingSourceFile(sourceStatement);
 
   // NOTE: if the statment has not yet been added to the AST then it will not return a valid pointer.
   // ROSE_ASSERT(sourceFile != NULL);
+
+#if 0
+     printf ("In SageInterface::resetInternalMapsForTargetStatement(SgStatement*): sourceFile = %p \n",sourceFile);
+#endif
 
      if (sourceFile != NULL)
         {
@@ -9083,6 +9091,9 @@ SageInterface::resetInternalMapsForTargetStatement(SgStatement* sourceStatement)
 
         }
 
+#if 0
+     printf ("Leaving SageInterface::resetInternalMapsForTargetStatement(SgStatement*): sourceStatement = %p = %s \n",sourceStatement,sourceStatement->class_name().c_str());
+#endif
    }
 
 
@@ -12799,8 +12810,16 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
 void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
    {
      ROSE_ASSERT (stmt != NULL);
+
+#if 0
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p \n",stmt,stmt->class_name().c_str(),scope);
+#endif
+
      if (scope == NULL)
+        {
           scope = SageBuilder::topScopeStack();
+        }
+
      ROSE_ASSERT(scope != NULL);
   // TODO handle side effect like SageBuilder::appendStatement() does
 
@@ -12809,7 +12828,8 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
      fixStatement(stmt,scope);
 
 #if 0
-     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",
+          stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
 
   // DQ (12/1/2015): If this is a moved statement then cause it to update internal data structures 
@@ -12818,13 +12838,18 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
      resetInternalMapsForTargetStatement(stmt);
 
 #if 0
-     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: scope) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: scope) \n",
+          stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
 
   // DQ (12/1/2015): Also look at the statements on either side of the location where this statement 
   // is being inserted to make sure that they are not a part of a macro expansion. In the case of
   // prepend, we only need to look at the scope.
      resetInternalMapsForTargetStatement(scope);
+
+#if 0
+     printf ("Calling insertStatementInScope() \n");
+#endif
 
      scope->insertStatementInScope(stmt,true);
      stmt->set_parent(scope); // needed?
@@ -12842,7 +12867,11 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
           updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
         }
 
+#if 0
+     printf ("Leaving SageInterface::prependStatement() \n");
+#endif
    } // prependStatement()
+
 
 //! Prepend a statement to the beginning of SgForInitStatement
 void SageInterface::prependStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt)
