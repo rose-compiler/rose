@@ -790,7 +790,10 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_513.C \
    test2019_514.C \
    test2019_515.C \
-   test2019_516.C 
+   test2019_516.C \
+   test2019_523.C \
+   test2019_524.C \
+   test2020_01.C 
 
 # NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
 
@@ -1026,6 +1029,18 @@ test2019_517_ab: ../../testTranslator
 test2019_518_ab: ../../testTranslator
 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_518a.C $(srcdir)/test2019_518b.C
 
+test2019_519_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_519a.C $(srcdir)/test2019_519b.C
+
+test2019_520_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_520a.C $(srcdir)/test2019_520b.C
+
+test2019_521_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_521a.C $(srcdir)/test2019_521b.C
+
+test2019_522_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_522a.C $(srcdir)/test2019_522b.C
+
 
 
 #########
@@ -1033,7 +1048,7 @@ test2019_518_ab: ../../testTranslator
 
 # PASSING_TEST_Source_passed = ${TESTCODES:.C=.C.passed}
 
-MULTIFILE_TESTS = test2019_196_ab test2019_198_ab test2019_507_ab test2019_508_ab test2019_509_ab test2019_510_ab test2019_517_ab
+MULTIFILE_TESTS = test2019_196_ab test2019_198_ab test2019_507_ab test2019_508_ab test2019_509_ab test2019_510_ab test2019_517_ab test2019_518_ab test2019_519_ab test2019_521_ab test2019_522_ab
 
 PASSING_TEST_Source_passed = ${TESTCODES:.C=.C.passed} $(MULTIFILE_TESTS)
 

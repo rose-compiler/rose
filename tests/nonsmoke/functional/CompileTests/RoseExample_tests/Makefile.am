@@ -11,6 +11,7 @@ testRoseHeaders_00.C \
 testRoseHeaders_07.C \
 testRoseHeaders_08.C
 
+# DQ (1/1/2020): Test this using GNU 6.1.
 # DQ (3/11/2017): These can now work with at least the GNU 5.1 and older compilers.
 # DQ (1/19/2017): These are a problem for GNU 5.1 (but maybe just because __atomic_is_lock_free() is not correctly handled).
 if !ROSE_USING_GCC_VERSION_LATER_6_1
@@ -82,9 +83,10 @@ $(TEST_Sources): %.passed: $(TEST_TRANSLATOR) $(srcdir)/%
 		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)"	\
 		$(top_srcdir)/scripts/test_exit_status $@
 else
+# DQ (1/1/2020): Changed time out from 45 minutes to 60 minutes (testRoseHeaders_04.C timed out on hudson-rose-27).
 $(TEST_Sources): %.passed: $(TEST_TRANSLATOR) $(srcdir)/%
 	@$(RTH_RUN)														\
-		TIMEOUT=45m													\
+		TIMEOUT=60m													\
 		MEMORY=20GB													\
 		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)"	\
 		$(top_srcdir)/scripts/test_exit_status $@
