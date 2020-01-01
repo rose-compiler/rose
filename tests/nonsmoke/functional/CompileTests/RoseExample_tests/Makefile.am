@@ -83,7 +83,7 @@ $(TEST_Sources): %.passed: $(TEST_TRANSLATOR) $(srcdir)/%
 		CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(top_builddir) $(ROSE_INCLUDES) -c $(srcdir)/$(@:.C.passed=.C)"	\
 		$(top_srcdir)/scripts/test_exit_status $@
 else
-# DQ (1/1/2020): Changed time out from 45minutes to 60 minutes (testRoseHeaders_04.C timed out on hudson-rose-27).
+# DQ (1/1/2020): Changed time out from 45 minutes to 60 minutes (testRoseHeaders_04.C timed out on hudson-rose-27).
 $(TEST_Sources): %.passed: $(TEST_TRANSLATOR) $(srcdir)/%
 	@$(RTH_RUN)														\
 		TIMEOUT=60m													\
