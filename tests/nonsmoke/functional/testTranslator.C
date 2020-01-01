@@ -78,7 +78,7 @@ int main( int argc, char * argv[] )
      ROSE_ASSERT(false);
 #endif
 
-#if 1
+#if 0
   // Output an optional graph of the AST (just the tree, when active)
      printf ("Generating a dot file... (ROSE Release Note: turn off output of dot files before committing code) \n");
   // DQ (12/22/2019): Call multi-file version (instead of generateDOT() function).

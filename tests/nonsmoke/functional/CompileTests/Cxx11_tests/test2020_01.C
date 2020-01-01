@@ -24,7 +24,7 @@ struct Struct_1 {
   template <typename t_t_parm_4>
   static void func_1() {
  // Class_1<typename Struct_3<t_t_parm_4>::template Struct_2<t_parm_1 - 1>::type>::func_2();
-    Class_1<typename Struct_3<t_t_parm_4>::template Struct_2<t_parm_1 - 1>::type>::func_2();
+    Class_1<typename Struct_3<t_t_parm_4>::template Struct_2<t_parm_1>::type>::func_2();
   }
 };
 
