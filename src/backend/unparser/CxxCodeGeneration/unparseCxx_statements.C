@@ -11189,6 +11189,9 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
              }
 
+#if DEBUG_TYPEDEF_DECLARATIONS
+          curprint("\n/* Output base type (first part) */ \n");
+#endif
        // Only pass the ninfo_for_type to support name qualification of the base type.
        // unp->u_type->unparseType(btype, ninfo);
           unp->u_type->unparseType(btype, ninfo_for_type);
@@ -11197,7 +11200,10 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if DEBUG_TYPEDEF_DECLARATIONS
           curprint("\n/* Done: Output base type (first part) */ \n");
 #endif
-
+#if 0
+          printf ("In unparseTypeDefStmt(): after unparsing first part: info.inTypedefDecl() = %s \n",info.inTypedefDecl() ? "true" : "false");
+          printf ("In unparseTypeDefStmt(): after unparsing first part: info.inArgList()     = %s \n",info.inArgList() ? "true" : "false");
+#endif
           curprint(typedef_stmt->get_name().str());
 
        // Now unparse the second part of the typedef
@@ -11207,7 +11213,23 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 
           ninfo.set_isTypeSecondPart();
-          unp->u_type->unparseType(btype, ninfo);
+
+       // DQ (1/2/2020): We need to use settings for ( info.inTypedefDecl() and info.inArgList()) the same as used in unparsing the first part of the type. 
+       // unp->u_type->unparseType(btype, ninfo);
+          ninfo_for_type.set_isTypeSecondPart();
+
+       // DQ (1/2/2020): This is required since it is used in unparsing the first part of the 
+       // type and causes the "(" to be unparsed, and we require this to be set so that the 
+       // same logic will triger the ")" to be unparsed.
+          ninfo_for_type.set_inTypedefDecl();
+#if 0
+          printf ("In unparseTypeDefStmt(): for a function type or member function type: before unparsing second part: ninfo_for_type.inTypedefDecl() = %s \n",ninfo_for_type.inTypedefDecl() ? "true" : "false");
+          printf ("In unparseTypeDefStmt(): for a function type or member function type: before unparsing second part: ninfo_for_type.inArgList()     = %s \n",ninfo_for_type.inArgList() ? "true" : "false");
+#endif
+       // DQ (1/2/2020): I think we can assert this.
+          ROSE_ASSERT(ninfo_for_type.isTypeFirstPart() == false);
+
+          unp->u_type->unparseType(btype, ninfo_for_type);
 
 // #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
 #if DEBUG_TYPEDEF_DECLARATIONS
@@ -11324,6 +11346,13 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
           ninfo_for_type.set_global_qualification_required(typedef_stmt->get_global_qualification_required_for_base_type());
           ninfo_for_type.set_type_elaboration_required(typedef_stmt->get_type_elaboration_required_for_base_type());
 
+       // DQ (1/2/2020): Added to define symetry in handling.
+       // ninfo.set_inTypedefDecl();
+          ninfo_for_type.set_inTypedefDecl();
+#if 0
+          printf ("In unparseTypeDefStmt(): not a function type or member function type: before unparsing first part: ninfo_for_type.inTypedefDecl() = %s \n",ninfo_for_type.inTypedefDecl() ? "true" : "false");
+          printf ("In unparseTypeDefStmt(): not a function type or member function type: before unparsing first part: ninfo_for_type.inArgList()     = %s \n",ninfo_for_type.inArgList() ? "true" : "false");
+#endif
 #if 1
        // DQ (7/28/2012): This is similar to code in the variable declaration unparser function and so might be refactored.
        // DQ (7/28/2012): If this is a declaration associated with a declaration list from a previous (the last statement) typedef
@@ -11406,6 +11435,17 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if DEBUG_TYPEDEF_DECLARATIONS
           curprint("\n/* Output base type (second part) */ \n");
 #endif
+
+       // DQ (1/2/2020): This is required since it is used in unparsing the first part of the 
+       // type and causes the "(" to be unparsed, and we require this to be set so that the 
+       // same logic will triger the ")" to be unparsed.
+          ninfo.set_inTypedefDecl();
+#if 0
+          printf ("In unparseTypeDefStmt(): not a function type or member function type: before unparsing second part: ninfo.inTypedefDecl() = %s \n",ninfo.inTypedefDecl() ? "true" : "false");
+          printf ("In unparseTypeDefStmt(): not a function type or member function type: before unparsing second part: ninfo.inArgList()     = %s \n",ninfo.inArgList() ? "true" : "false");
+#endif
+       // DQ (1/2/2020): I think we can assert this.
+          ROSE_ASSERT(ninfo.isTypeFirstPart() == false);
 
           unp->u_type->unparseType(btype, ninfo);
        // unp->u_type->unparseType(btype, ninfo_for_type);
