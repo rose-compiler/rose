@@ -229,8 +229,8 @@ HasherSha256Builtin::messageByte(size_t index, const uint8_t *message, size_t me
     return message[index];
 }
 
-// Get the next 16 words from the big-endian message if possible, or save the message for later. Update message pointer and
-// size to reflect the number of bytes we just consumed or saved.
+// Get the next 16 32-bit words from the big-endian message if possible, or save the message for later. Update message pointer
+// and size to reflect the number of bytes we just consumed or saved.
 bool
 HasherSha256Builtin::getNextChunk(const uint8_t *&message /*in,out*/, size_t &messageSize /*in,out*/, uint32_t words[16] /*out*/) {
     ASSERT_require(leftoverBytes_.size() < 16 * 4);
@@ -334,7 +334,8 @@ HasherSha256Builtin::digest() {
         // Pad the message by appending an 0x80 followed by zero bytes, followed by the 8-byte big-endian message length so
         // that the total length (message length plus paddng) is a multiple of 64 bytes.
         const size_t messageSizeBytes = processedBytes_ + leftoverBytes_.size();
-        const size_t nZeroPadding = 64 - (messageSizeBytes + 1 /*0x80*/ + 8 /*length*/) % 64;
+        const size_t finalBlockSizeBytes = (messageSizeBytes + 1 /*0x80*/ + 8 /*length*/) % 64;
+        const size_t nZeroPadding = 0 == finalBlockSizeBytes ? 0 : 64 - finalBlockSizeBytes;
         ASSERT_require((messageSizeBytes + 1 + nZeroPadding + 8) % 64 == 0);
 
         // Create and hash the padding

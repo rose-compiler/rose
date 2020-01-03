@@ -88,6 +88,22 @@ using namespace Rose::Frontend::Java::Ecj;
 
 #endif
 
+
+// DQ (11/5/2019): Added to support SageInterface::statementCanBeTransformed().
+namespace EDG_ROSE_Translation
+   {
+  // DQ (9/18/2018): Declare this map so that we can use it for the unparse header files option.
+#if defined(ROSE_BUILD_CXX_LANGUAGE_SUPPORT) && !defined(ROSE_USE_CLANG_FRONTEND)
+  // DQ (12/11/2018): Use the definition in the EDG edgRose.C file if C/C++ support IS defined.
+     extern std::map<std::string, SgIncludeFile*> edg_include_file_map;
+#else
+  // DQ (12/11/2018): Allow this to be the definition if C/C++ support is NOT defined.
+     std::map<std::string, SgIncludeFile*> edg_include_file_map;
+#endif
+   }
+
+
+
 // DQ (12/1/2015): Added to support macro handling.
 #include "detectMacroOrIncludeFileExpansions.h"
 
@@ -1228,7 +1244,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 
                RoseVisitor(SgSymbol* symbol_parmeter) : counter(0), symbol(symbol_parmeter)
                  {
-#if 1
+#if 0
                    printf ("roseVisitor::visit: counter %4d node = %s \n",counter,symbol_parmeter->class_name().c_str());
 #endif
                    counter++;
@@ -8997,10 +9013,18 @@ SageInterface::resetInternalMapsForTargetStatement(SgStatement* sourceStatement)
   // instead of the tokens representing the macro or some partial representation of the transformed 
   // statements and the macro call (worse).
 
+#if 0
+     printf ("In SageInterface::resetInternalMapsForTargetStatement(SgStatement*): sourceStatement = %p = %s \n",sourceStatement,sourceStatement->class_name().c_str());
+#endif
+
      SgSourceFile* sourceFile = getEnclosingSourceFile(sourceStatement);
 
   // NOTE: if the statment has not yet been added to the AST then it will not return a valid pointer.
   // ROSE_ASSERT(sourceFile != NULL);
+
+#if 0
+     printf ("In SageInterface::resetInternalMapsForTargetStatement(SgStatement*): sourceFile = %p \n",sourceFile);
+#endif
 
      if (sourceFile != NULL)
         {
@@ -9067,6 +9091,9 @@ SageInterface::resetInternalMapsForTargetStatement(SgStatement* sourceStatement)
 
         }
 
+#if 0
+     printf ("Leaving SageInterface::resetInternalMapsForTargetStatement(SgStatement*): sourceStatement = %p = %s \n",sourceStatement,sourceStatement->class_name().c_str());
+#endif
    }
 
 
@@ -12783,8 +12810,16 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
 void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
    {
      ROSE_ASSERT (stmt != NULL);
+
+#if 0
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p \n",stmt,stmt->class_name().c_str(),scope);
+#endif
+
      if (scope == NULL)
+        {
           scope = SageBuilder::topScopeStack();
+        }
+
      ROSE_ASSERT(scope != NULL);
   // TODO handle side effect like SageBuilder::appendStatement() does
 
@@ -12793,7 +12828,8 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
      fixStatement(stmt,scope);
 
 #if 0
-     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",
+          stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
 
   // DQ (12/1/2015): If this is a moved statement then cause it to update internal data structures 
@@ -12802,13 +12838,18 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
      resetInternalMapsForTargetStatement(stmt);
 
 #if 0
-     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: scope) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: scope) \n",
+          stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
 
   // DQ (12/1/2015): Also look at the statements on either side of the location where this statement 
   // is being inserted to make sure that they are not a part of a macro expansion. In the case of
   // prepend, we only need to look at the scope.
      resetInternalMapsForTargetStatement(scope);
+
+#if 0
+     printf ("Calling insertStatementInScope() \n");
+#endif
 
      scope->insertStatementInScope(stmt,true);
      stmt->set_parent(scope); // needed?
@@ -12826,7 +12867,11 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
           updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
         }
 
+#if 0
+     printf ("Leaving SageInterface::prependStatement() \n");
+#endif
    } // prependStatement()
+
 
 //! Prepend a statement to the beginning of SgForInitStatement
 void SageInterface::prependStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt)
@@ -14780,6 +14825,20 @@ SageInterface::insertHeader(SgSourceFile * source_file, const string & header_fi
   // when multiple files are used on the command line.
      result->get_file_info()->setTransformation();
 
+  // DQ (11/21/2019): Need to set supportTokenUnparsing.
+     supportTokenUnparsing = source_file->get_unparse_tokens();
+     bool supportUnparseHeaders = source_file->get_unparseHeaderFiles();
+
+#if 0
+     printf ("supportTokenUnparsing = %s \n",supportTokenUnparsing ? "true" : "false");
+     printf ("source_file  = %p \n",source_file);
+     printf ("global_scope = %p \n",global_scope);
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
   // global_scope->addToAttachedPreprocessingInfo(result, position);
      if (supportTokenUnparsing == false)
         {
@@ -14789,6 +14848,21 @@ SageInterface::insertHeader(SgSourceFile * source_file, const string & header_fi
         {
        // global_scope->prepend_statement(null_statement);
           SgEmptyDeclaration* emptyDeclaration = buildEmptyDeclaration();
+
+          if (supportUnparseHeaders == true)
+              {
+             // In this case we need to set the physical_file_id to match the target file to be unparsed.
+                int physical_file_id = global_scope->get_startOfConstruct()->get_physical_file_id();
+#if 0
+                printf ("physical_file_id = %d \n",physical_file_id);
+#endif
+                emptyDeclaration->get_startOfConstruct()->set_physical_file_id(physical_file_id);
+                emptyDeclaration->get_endOfConstruct()->set_physical_file_id(physical_file_id);
+#if 0
+                printf ("Exiting as a test! \n");
+                ROSE_ASSERT(false);
+#endif
+              }
 
           emptyDeclaration->addToAttachedPreprocessingInfo(result, position);
 
@@ -14818,6 +14892,33 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
       content = "#include <" + filename + "> \n";
     else
       content = "#include \"" + filename + "\" \n";
+
+  // DQ (11/21/2019): Token based unparsing has an additional requirement, we need to mark that the 
+  // whitespace around the statement has been modified.  This will trigger the unparser to output 
+  // the comments and CPP directives when using the token-based unparsing. The insertion of a header 
+  // file requires this support else the original token stream will not have the added header file.
+
+  // DQ (11/21/2019): Need to set supportTokenUnparsing.
+     SgSourceFile* sourceFile = getEnclosingSourceFile(scope);
+     ROSE_ASSERT(sourceFile != NULL);
+
+     supportTokenUnparsing      = sourceFile->get_unparse_tokens();
+
+     bool supportUnparseHeaders = sourceFile->get_unparseHeaderFiles();
+
+#if 0
+     printf ("supportTokenUnparsing = %s \n",supportTokenUnparsing ? "true" : "false");
+     printf ("supportUnparseHeaders = %s \n",supportUnparseHeaders ? "true" : "false");
+     printf ("sourceFile  = %p \n",sourceFile);
+     printf ("globalScope = %p \n",globalScope);
+#endif
+#if 0
+     printf ("supportTokenUnparsing = %s \n",supportTokenUnparsing ? "true" : "false");
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
     SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
     if (stmtList.size() > 0) // the source file is not empty
@@ -14849,6 +14950,21 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
               {
              // global_scope->prepend_statement(null_statement);
                 SgEmptyDeclaration* emptyDeclaration = buildEmptyDeclaration();
+
+                if (supportUnparseHeaders == true)
+                   {
+                  // In this case we need to set the physical_file_id to match the target file to be unparsed.
+                     int physical_file_id = globalScope->get_startOfConstruct()->get_physical_file_id();
+#if 0
+                     printf ("physical_file_id = %d \n",physical_file_id);
+#endif
+                     emptyDeclaration->get_startOfConstruct()->set_physical_file_id(physical_file_id);
+                     emptyDeclaration->get_endOfConstruct()->set_physical_file_id(physical_file_id);
+#if 0
+                     printf ("Exiting as a test! \n");
+                     ROSE_ASSERT(false);
+#endif
+                   }
 
                 emptyDeclaration->addToAttachedPreprocessingInfo(result, position);
 
@@ -21826,10 +21942,15 @@ SageInterface::statementCanBeTransformed(SgStatement* stmt)
           string source_filename = stmt->getFilenameString();
 #if 0
           printf ("In SageInterface::statementCanBeTransformed(): source_filename = %s \n",source_filename.c_str());
+          printf (" --- Rose::includeFileMapForUnparsing.size()                   = %zu \n",Rose::includeFileMapForUnparsing.size());
 #endif
-          if (Rose::includeFileMapForUnparsing.find(source_filename) != Rose::includeFileMapForUnparsing.end())
+
+       // DQ (11/5/2019): Using the edg_include_file_map instead (constructed in EDG/ROSE translation).
+       // if (Rose::includeFileMapForUnparsing.find(source_filename) != Rose::includeFileMapForUnparsing.end())
+          if (EDG_ROSE_Translation::edg_include_file_map.find(source_filename) != EDG_ROSE_Translation::edg_include_file_map.end())
              {
-               SgIncludeFile* include_file = Rose::includeFileMapForUnparsing[source_filename];
+            // SgIncludeFile* include_file = Rose::includeFileMapForUnparsing[source_filename];
+               SgIncludeFile* include_file = EDG_ROSE_Translation::edg_include_file_map[source_filename];
                ROSE_ASSERT(include_file != NULL);
 #if 0
                printf ("include_file->get_can_be_supported_using_token_based_unparsing() = %s \n",include_file->get_can_be_supported_using_token_based_unparsing() ? "true" : "false");
@@ -22379,11 +22500,63 @@ SageInterface::collectModifiedStatements( SgNode* node )
      return traversal.returnset;
    }
 
+
+void
+SageInterface::outputFileIds( SgNode* node )
+   {
+  // DQ (12/2/2019): This reports the file id values of all located nodes in the AST subtree represented by the input node.
+
+#if 1
+     printf ("In outputFileIds(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
+     class LocatedNodeTraversal : public AstSimpleProcessing
+        {
+          public:
+               LocatedNodeTraversal() {}
+               void visit (SgNode* node)
+                  {
+                    SgLocatedNode* locatedNode = isSgLocatedNode(node);
+                    if (locatedNode != NULL)
+                       {
+#if 1
+                         printf ("In outputFileIds(): isModified() == %s: locatedNode = %p = %s \n",locatedNode->get_isModified() ? "true" : "false",locatedNode,locatedNode->class_name().c_str());
+                         printf (" --- file id = %d physical_file_id = %d \n",node->get_file_info()->get_file_id(),node->get_file_info()->get_physical_file_id());
+#endif
+                       }
+                      else
+                       {
+                         SgInitializedName* initializedName = isSgInitializedName(node);
+                         if (initializedName != NULL)
+                            {
+                              printf ("In outputFileIds(): isModified() == %s: initializedName = %p = %s \n",initializedName->get_isModified() ? "true" : "false",initializedName,initializedName->class_name().c_str());
+                              printf (" --- file id = %d physical_file_id = %d \n",initializedName->get_file_info()->get_file_id(),initializedName->get_file_info()->get_physical_file_id());
+                            }
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the function definition.
+     LocatedNodeTraversal traversal;
+     traversal.traverse(node, preorder);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+
 std::set<SgLocatedNode*>
 SageInterface::collectModifiedLocatedNodes( SgNode* node )
    {
   // DQ (6/11/2015): This reports the statements that are marked as modified (isModified flag).
   // It is useful for debugging the token-based unparsing.
+
+#if 0
+     printf ("In collectModifiedLocatedNodes(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
 
      class LocatedNodeTraversal : public AstSimpleProcessing
         {
@@ -22427,6 +22600,9 @@ SageInterface::resetModifiedLocatedNodes(const std::set<SgLocatedNode*> & modifi
      while (i != modifiedNodeSet.end())
         {
           SgLocatedNode* node = *i;
+#if 0
+          printf ("Marking node = %p = %s as modified \n",node,node->class_name().c_str());
+#endif
           node->set_isModified(true);
 
           i++;
@@ -22461,10 +22637,31 @@ SageInterface::reportModifiedStatements( const string & label, SgNode* node )
      ROSE_ASSERT(node != NULL);
      std::set<SgStatement*> collection = collectModifiedStatements(node);
 
+#if 1
+     printf ("In reportModifiedStatements(): collection.size() = %zu \n",collection.size());
+#endif
+
      std::set<SgStatement*>::iterator i = collection.begin();
      while (i != collection.end())
         {
-          printf ("   --- modified statement = %p = %s \n",(*i),(*i)->class_name().c_str());
+       // DQ (10/9/2019): Adding filename to debug output.
+          string filename = (*i)->get_file_info()->get_filename();
+
+       // DQ (10/14/2019): Get the best name possible.
+          if (filename == "transformation")
+             {
+#if 0
+               printf ("   --- filename == transformation: sourceFile = %p using physical filename \n",sourceFile);
+#endif
+            // filename = (*i)->get_file_info()->get_physical_filename();
+               SgSourceFile* sourceFile = TransformationSupport::getSourceFile(*i);
+               if (sourceFile != NULL)
+                  {
+                    filename = sourceFile->getFileName();
+                  }
+             }
+
+          printf ("   --- filename = %s modified statement = %p = %s \n",filename.c_str(),(*i),(*i)->class_name().c_str());
 
           i++;
         }
@@ -23763,6 +23960,8 @@ void SageInterface::detectCycleInType(SgType * type, const std::string & from) {
 }
 
 
+#if 0
+// DQ (11/10/2019): Older original version of the function.
 
 // DQ (6/6/2019): Move this to the SageInteface namespace.
 void
@@ -23878,3 +24077,446 @@ SageInterface::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node)
      ROSE_ASSERT(false);
 #endif
    }
+#endif
+
+
+
+
+void
+SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunctionDeclaration* functionDeclaration )
+   {
+  // SgFunctionDeclaration* nondefiningFunctionDeclaration = NULL;
+     SgDeclarationStatement* nondefiningFunctionDeclaration = NULL;
+
+#if 0
+     printf ("In SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(): functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+#endif
+
+  // DQ (10/15/2019): Find the file_id associated with the current file, and make the transformation with the same file_id value so that it will be unparsed.
+
+  // DQ (11/21/2019): Check if this is a constructor, this is a temporary fix.
+     bool isConstructor = false;
+     SgMemberFunctionDeclaration* tmp_memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
+     if (tmp_memberFunctionDeclaration != NULL)
+        {
+          isConstructor = tmp_memberFunctionDeclaration->get_specialFunctionModifier().isConstructor();
+
+#if 0
+          if (isConstructor == true)
+             {
+               printf ("Skipping case of constructors (in building prototype from defining function declaration) \n");
+               return;
+             }
+#endif
+        }
+
+  // DQ (12/2/2019): Need to support member functions which can't be declared when outside of their class.
+  // bool replaceWithEmptyDeclaration = false;
+  // SgDeclarationStatement* emptyDeclaration = NULL;
+
+     SgName name                         = functionDeclaration->get_name();
+     SgType* return_type                 = functionDeclaration->get_type()->get_return_type();
+
+  // DQ (9/26/2019): We need to avoid building SgFunctionParameterList IR nodes and then not attaching them to anything (parent pointers are checkes in AST consistancy testing).
+  // SgFunctionParameterList *param_list = functionDeclaration->get_parlist();
+     SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
+     SgFunctionParameterList* param_list = NULL;
+     if (templateInstantiationFunctionDecl == NULL)
+        {
+          param_list = buildFunctionParameterList( functionDeclaration->get_type()->get_argument_list());
+        }
+
+     SgScopeStatement* scope             = functionDeclaration->get_scope();
+  // SgTemplateParameterPtrList* templateParameterList = NULL; // functionDeclaration->get_templateParameterList();
+     SgExprListExp* python_decoratorList = NULL;
+     bool buildTemplateInstantiation     = false;
+     SgTemplateArgumentPtrList* templateArgumentsList = NULL;
+
+  // DQ (9/26/2019): Tracing down a null parent pointer.
+  // ROSE_ASSERT(param_list->get_parent() != NULL);
+  // ROSE_ASSERT(param_list->get_parent() == NULL);
+     ROSE_ASSERT(param_list == NULL || param_list->get_parent() == NULL);
+
+     switch (functionDeclaration->variantT())
+        {
+          case V_SgTemplateMemberFunctionDeclaration:
+             {
+#if 0
+               printf ("This function to replace the defining declaration with a non-defining declaration does not yet support template member functions \n");
+#endif
+               SgTemplateMemberFunctionDeclaration* original_templateMemberFunctionDeclaration = isSgTemplateMemberFunctionDeclaration(functionDeclaration);
+               ROSE_ASSERT(original_templateMemberFunctionDeclaration != NULL);
+
+               SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = NULL;
+
+               unsigned int functionConstVolatileFlags = 0;
+
+               ROSE_ASSERT(original_templateMemberFunctionDeclaration->get_type() != NULL);
+
+            // Need to call:
+            // unsigned int get_mfunc_specifier();
+
+               SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(original_templateMemberFunctionDeclaration->get_type());
+               ROSE_ASSERT(memberFunctionType != NULL);
+
+               functionConstVolatileFlags = memberFunctionType->get_mfunc_specifier();
+
+            // SgTemplateMemberFunctionDeclaration*
+            // buildNondefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, 
+            //      SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateParameterPtrList* templateParameterList );
+
+               SgTemplateParameterPtrList templateParameterList = original_templateMemberFunctionDeclaration->get_templateParameters();
+            // ROSE_ASSERT(templateParameterList != NULL);
+
+               templateMemberFunctionDeclaration = 
+                    buildNondefiningTemplateMemberFunctionDeclaration ( name, return_type, param_list, scope, python_decoratorList, functionConstVolatileFlags, &templateParameterList );
+#if 0
+               printf ("ERROR: Template functions are not yet supported! \n");
+               ROSE_ASSERT(false);
+#endif
+               nondefiningFunctionDeclaration = templateMemberFunctionDeclaration;
+
+               ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+
+            // DQ (11/21/2019): Handle constructors.
+               if (isConstructor == true)
+                  {
+                    templateMemberFunctionDeclaration->get_specialFunctionModifier().setConstructor();
+                  }
+
+               break;
+             }
+
+          case V_SgTemplateFunctionDeclaration:
+             {
+#if 0
+               printf ("This function to replace the defining declaration with a non-defining declaration does not yet support template functions \n");
+#endif
+               SgTemplateFunctionDeclaration* original_templateFunctionDeclaration = isSgTemplateFunctionDeclaration(functionDeclaration);
+               ROSE_ASSERT(original_templateFunctionDeclaration != NULL);
+
+               SgTemplateFunctionDeclaration* templateFunctionDeclaration = NULL; // isSgTemplateFunctionDeclaration(functionDeclaration);
+
+            // SgTemplateFunctionDeclaration*
+            // buildNondefiningTemplateFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, 
+            //      SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, SgTemplateParameterPtrList* templateParameterList = NULL);
+
+               SgTemplateParameterPtrList templateParameterList = original_templateFunctionDeclaration->get_templateParameters();
+
+               templateFunctionDeclaration = buildNondefiningTemplateFunctionDeclaration ( name, return_type, param_list, scope, python_decoratorList, &templateParameterList );
+#if 0
+               printf ("ERROR: Template functions are not yet supported! \n");
+               ROSE_ASSERT(false);
+#endif
+               nondefiningFunctionDeclaration = templateFunctionDeclaration;
+
+               ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+
+               break;
+             }
+
+          case V_SgMemberFunctionDeclaration:
+             {
+#if 0
+               printf ("This function to replace the defining declaration with a non-defining declaration does not yet support member functions \n");
+#endif
+               SgMemberFunctionDeclaration* original_memberFunctionDeclaration = isSgMemberFunctionDeclaration(functionDeclaration);
+               ROSE_ASSERT(original_memberFunctionDeclaration != NULL);
+
+               SgMemberFunctionDeclaration* memberFunctionDeclaration = NULL; // isSgMemberFunctionDeclaration(functionDeclaration);
+
+            // SgMemberFunctionDeclaration*
+            // buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, 
+            //      SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
+
+               unsigned int functionConstVolatileFlags = 0;
+
+               ROSE_ASSERT(original_memberFunctionDeclaration->get_type() != NULL);
+
+            // Need to call:
+            // unsigned int get_mfunc_specifier();
+
+            // DQ (12/2/2019): If it is defined outside of the class, then don't replace with member function prototype, 
+            // since they is not allowed to be declared outside of the class they are a member of.
+               if (original_memberFunctionDeclaration->get_parent() == original_memberFunctionDeclaration->get_scope())
+                  {
+                    SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(original_memberFunctionDeclaration->get_type());
+                    ROSE_ASSERT(memberFunctionType != NULL);
+
+                    functionConstVolatileFlags = memberFunctionType->get_mfunc_specifier();
+
+                    memberFunctionDeclaration = 
+                         buildNondefiningMemberFunctionDeclaration 
+                              ( name, return_type, param_list, scope, python_decoratorList, functionConstVolatileFlags, 
+                                buildTemplateInstantiation,templateArgumentsList );
+#if 0
+                    printf ("ERROR: Member functions are not yet supported! \n");
+                    ROSE_ASSERT(false);
+#endif
+                 // DQ (11/21/2019): Handle constructors.  
+                    if (isConstructor == true)
+                       {
+                         memberFunctionDeclaration->get_specialFunctionModifier().setConstructor();
+                       }
+
+                    nondefiningFunctionDeclaration = memberFunctionDeclaration;
+
+                    ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+                  }
+                 else
+                  {
+                 // Case of member function defined outside of it's class.
+#if 0
+                    printf ("NOTE: Member functions defined outside of their class can not be output as member function prototypes (not allowed in C++) \n");
+#endif
+                 // We want to build a SgEmptyDeclaration using buildEmptyDeclaration() but this is not a function.
+                    nondefiningFunctionDeclaration = buildEmptyDeclaration();
+#if 0
+                    nondefiningFunctionDeclaration = NULL;
+
+                    replaceWithEmptyDeclaration = true;
+                    emptyDeclaration = buildEmptyDeclaration();
+                    ROSE_ASSERT(emptyDeclaration != NULL);
+#endif
+                    ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+
+                 // Since we din't build a member function we don't need the parameter list.
+                    delete param_list;
+                    param_list = NULL;
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+               ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+               break;
+             }
+
+          case V_SgFunctionDeclaration:
+             {
+            // This is for a non-member non-template function declaration.
+               nondefiningFunctionDeclaration = buildNondefiningFunctionDeclaration (name, return_type, param_list, scope, python_decoratorList, buildTemplateInstantiation,templateArgumentsList);
+               ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+               break;
+             }
+
+          default:
+             {
+            // DQ (12/4/2019): If this is any other case than that handled above, then we just return.
+            // These cases would be only template instantiations.
+
+            // Nothing to do, except delete the parameter list we built, and return.
+               delete param_list;
+               param_list = NULL;
+
+               return;
+             }
+        }
+
+  // DQ (7/14/2019): I wonder if we want this code?
+  // SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(functionDeclaration);
+     if (templateInstantiationFunctionDecl == NULL)
+        {
+#if 0
+          if (nondefiningFunctionDeclaration == NULL)
+             {
+               printf ("SageInterface::replaceDefiningFunctionDeclarationWithFunctionPrototype(); functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+               SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(functionDeclaration);
+               if (templateInstantiationMemberFunction != NULL)
+                  {
+                    printf (" --- templateInstantiationMemberFunction->get_name() = %s \n",templateInstantiationMemberFunction->get_name().str());
+
+                    delete param_list;
+                    param_list = NULL;
+
+                    return;
+                  }
+             }
+#endif
+          ROSE_ASSERT(nondefiningFunctionDeclaration != NULL);
+
+       // DQ (10/15/2019): Set the physical_file_id of the transformation to match that of the original defining declaration.
+          int file_id = functionDeclaration->get_file_info()->get_physical_file_id();
+          nondefiningFunctionDeclaration->get_file_info()->set_physical_file_id(file_id);
+
+       // DQ (10/15/2019): Move any attached comments and CPP directives.
+          AttachedPreprocessingInfoType* comments = functionDeclaration->getAttachedPreprocessingInfo();
+          if (comments != NULL)
+             {
+            // attachedPreprocessingInfoPtr
+            // nondefiningFunctionDeclaration->setAttachedPreprocessingInfo(comments);
+               nondefiningFunctionDeclaration->set_attachedPreprocessingInfoPtr(comments);
+             }
+
+#if 0
+          printf (" --- Removing function declaration: functionDeclaration = %p = %s name = %s file_id = %d \n",
+                  functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str(),file_id);
+#endif
+
+#if 1
+       // Likely we should build a new nondefining function declaration instead of reusing the existing non-defining declaration.
+       // removeStatement(functionDeclaration);
+
+       // DQ (12/2/2019): Need to support member functions which can't be declared when outside of their class.
+          replaceStatement(functionDeclaration,nondefiningFunctionDeclaration);
+#else
+       // DQ (7/12/2019): Debugging test_17.cpp.
+          printf ("SKIPPING CALL TO REPLACE STATEMENT: functionDeclaration = %p nondefiningFunctionDeclaration = %p \n",functionDeclaration,nondefiningFunctionDeclaration);
+#endif
+        }
+       else
+        {
+       // DQ (7/12/2019): Template instantiations are not directly from the source code, so we don't have to move them.
+#if 0
+          printf ("Ignore template instantiations as functions \n");
+#endif
+        }
+
+  // DQ (9/26/2019): Tracing down a null parent pointer.
+     ROSE_ASSERT(param_list == NULL || param_list->get_parent() != NULL);
+   }
+
+
+
+
+std::vector<SgFunctionDeclaration*>
+SageInterface::generateFunctionDefinitionsList(SgNode* node) 
+   {
+  // DQ (3/20/2019): This function operates on the new file used to support outlined function definitions.
+  // We use a copy of the file where the code will be outlined FROM, so that if there are references to
+  // declarations in the outlined code we can support the outpiled code with those references.  This
+  // approach has the added advantage of also supporting the same include file tree as the original 
+  // file where the outlined code is being taken from.
+
+     class FunctionDefinitionsTraversal : public AstSimpleProcessing
+        {
+          public:
+               std::vector<SgFunctionDeclaration*> functionList;
+            // SgSourceFile* sourceFile;
+            // int sourceFileId;
+            // string filenameWithPath;
+
+          public:
+            // FunctionDefinitionsTraversal(): sourceFile(NULL), sourceFileId(-99) {}
+               FunctionDefinitionsTraversal() {}
+
+               void visit (SgNode* node)
+                  {
+#if 0
+                    printf ("In visit(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+#if 0
+                    SgSourceFile* temp_sourceFile = isSgSourceFile(node);
+                    if (temp_sourceFile != NULL)
+                       {
+                         sourceFile       = temp_sourceFile;
+                         sourceFileId     = sourceFile->get_file_info()->get_file_id();
+
+                      // The file_id is not sufficnet, not clear why, but the filenames match.
+                         filenameWithPath = sourceFile->get_sourceFileNameWithPath();
+
+                         printf ("Found source file: id = %d name = %s \n",sourceFileId,sourceFile->get_sourceFileNameWithPath().c_str());
+
+                       }
+#endif
+                    SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
+                    if (functionDeclaration != NULL)
+                       {
+                      // This should have been set already.
+                      // ROSE_ASSERT(sourceFile != NULL);
+
+                         SgFunctionDeclaration* definingFunctionDeclaration = isSgFunctionDeclaration(functionDeclaration->get_definingDeclaration());
+                         if (functionDeclaration == definingFunctionDeclaration)
+                            {
+#if 0
+                              printf ("Found a defining function declaration: functionDeclaration = %p = %s name = %s \n",
+                                   functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
+#if 0
+                              printf (" --- recorded source file: id = %d name = %s \n",sourceFileId,sourceFile->get_sourceFileNameWithPath().c_str());
+                              printf (" --- source file: file_info: id = %d name = %s \n",
+                                   functionDeclaration->get_file_info()->get_file_id(),functionDeclaration->get_file_info()->get_filenameString().c_str());
+#endif
+#if 0
+                           // DQ (3/20/2019): The file_id is not sufficent, using the filename with path to do string equality.
+                           // bool isInSourceFile = (sourceFileId == functionDeclaration->get_file_info()->get_file_id());
+                              bool isInSourceFile = (filenameWithPath == functionDeclaration->get_file_info()->get_filenameString());
+#if 0
+                              printf (" --- isInSourceFile = %s \n",isInSourceFile ? "true" : "false");
+#endif
+#endif
+                           // Remove the defining declaration as a test.
+                              SgScopeStatement* functionDeclarationScope = isSgScopeStatement(functionDeclaration->get_parent());
+                           // if (isInSourceFile == true && functionDeclarationScope != NULL)
+                              if (functionDeclarationScope != NULL)
+                                 {
+#if 0
+                                   printf (" --- Found a defining function declaration: functionDeclarationScope = %p = %s \n",
+                                        functionDeclarationScope,functionDeclarationScope->class_name().c_str());
+#endif
+                                // functionDeclarationScope->removeStatement(functionDeclaration);
+                                // removeStatement(functionDeclaration);
+                                   functionList.push_back(functionDeclaration);
+                                 }
+                            }
+                       }
+                  }
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+     FunctionDefinitionsTraversal traversal;
+
+#if 0
+     printf ("In (TOP) generateFunctionDefinitionsList(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
+  // traversal.traverse(node, preorder);
+     traversal.traverseWithinFile(node, preorder);
+
+     std::vector<SgFunctionDeclaration*> & functionList = traversal.functionList;
+
+#if 0
+     printf ("Leaving generateFunctionDefinitionsList(): functionList.size() = %zu \n",functionList.size());
+#endif
+
+     return functionList;
+   }
+
+
+void
+SageInterface::convertFunctionDefinitionsToFunctionPrototypes(SgNode* node) 
+   {
+     ROSE_ASSERT(node != NULL);
+
+     std::vector<SgFunctionDeclaration*> functionList = generateFunctionDefinitionsList(node);
+
+#if 0
+     printf ("In convertFunctionDefinitionsToFunctionPrototypes(): functionList.size() = %zu \n",functionList.size());
+#endif
+
+     std::vector<SgFunctionDeclaration*>::iterator i = functionList.begin();
+     while (i != functionList.end())
+        {
+          SgFunctionDeclaration* functionDeclaration = *i;
+          ROSE_ASSERT(functionDeclaration != NULL);
+#if 1
+       // Transform into prototype.
+          replaceDefiningFunctionDeclarationWithFunctionPrototype(functionDeclaration);
+#else
+       // DQ (10/15/2019): Testing unparsing without this function call.
+          printf ("Skipping replaceDefiningFunctionDeclarationWithFunctionPrototype() \n");
+#endif
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+          i++;
+        }
+
+#if 0
+     printf ("In convertFunctionDefinitionsToFunctionPrototypes(): exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+

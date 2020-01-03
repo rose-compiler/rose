@@ -50,7 +50,10 @@ int main(int argc, char** argv)
   // target_file[size+1] = '\0';
 
   // char *gnat_home   = "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux";
-     char *gnat_home   = "/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin";
+     char *gnat_home   = std::getenv("GNAT_HOME");
+
+     if (!gnat_home) gnat_home = "/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin";
+
   // struct List_Node_Struct *head_node = NULL;
   // List_Node_Struct *head_node = NULL;
      Nodes_Struct head_nodes;

@@ -3367,6 +3367,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                 // if (associatedFunctionDeclarationFromSymbol->get_name() == functionDeclarationFromSymbol->get_name())
                                    if (associatedFunctionDeclarationFromSymbol_mangled_name == functionDeclarationFromSymbol_mangled_name)
                                       {
+#if 0
+                                     // DQ (10/23/2019): This output is seen in the new tool_G.C, need to track this down, later.
                                         printf ("Note: we have two mangled names from two symbols in the same scope using the same mangled name (investigate this) \n");
                                         printf ("   --- functionDeclarationFromSymbol_mangled_name           = %s \n",functionDeclarationFromSymbol_mangled_name.str());
                                         printf ("   --- associatedFunctionDeclarationFromSymbol_mangled_name = %s \n",associatedFunctionDeclarationFromSymbol_mangled_name.str());
@@ -3379,7 +3381,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                              functionDeclarationFromSymbol->get_firstNondefiningDeclaration(),functionDeclarationFromSymbol->get_definingDeclaration());
                                         printf ("   --- associatedFunctionDeclarationFromSymbol = %p first non-defining = %p defining = %p \n",associatedFunctionDeclarationFromSymbol,
                                              associatedFunctionDeclarationFromSymbol->get_firstNondefiningDeclaration(),associatedFunctionDeclarationFromSymbol->get_definingDeclaration());
-
+#endif
 #if 0
                                         printf ("functionDeclarationFromSymbol->get_name() = %s \n",functionDeclarationFromSymbol->get_name().str());
                                         SgNode* parent_functionDeclarationFromSymbol = functionDeclarationFromSymbol->get_parent();
@@ -7654,6 +7656,19 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
        // DQ (4/28/2019): Trying to support the initializer here, so that we can support constructor 
        // preinitialization lists, rather than through the SgConstructor initializer.
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+          printf ("initializedName->get_preinitialization() = %zu \n",initializedName->get_preinitialization());
+#endif
+       // DQ (12/8/2019): If this is a simple data member then we don't need anme qualification on its type (which does not appear in the source code).
+          bool is_simple_data_member = false;
+          if (initializedName->get_preinitialization() == SgInitializedName::e_data_member)
+             {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+               printf ("Found a data member used in pre-initialization list \n");
+#endif
+               is_simple_data_member = true;
+             }
+
        // DQ (4/26/2019): The initializer should be processed as an expression to be name qualified seperately.
 #if DEBUG_INITIALIZED_NAME
           printf ("############################################# \n");
@@ -7661,7 +7676,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           printf ("############################################# \n");
 #endif
             // DQ (12/17/2013): Added support for name qualification of preinitialization list elements (see test codes: test2013_285-288.C).
-               if (initializedName->get_initptr() != NULL)
+            // if (initializedName->get_initptr() != NULL)
+               if (initializedName->get_initptr() != NULL && is_simple_data_member == false)
                   {
                  // DQ (2/7/2019): I think this can't be a SgPointerMemberType, so the code specific to this case does not go here.
                  // ROSE_ASSERT(isSgPointerMemberType(initializedName->get_type()) == NULL);
@@ -7694,21 +7710,23 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          printf ("Case SgInitializedName: (constructorInitializer != NULL) \n");
                          printf ("######################################################## \n");
 #endif
+                      // DQ (12/8/2019): Note that "type" is a variable declared above and we don't what to hide that variable.
                       // SgType* type = initializedName->get_type();
-                         SgType* type = constructorInitializer->get_type();
-                         ROSE_ASSERT(type != NULL);
+                      // SgType* type = constructorInitializer->get_type();
+                         SgType* constructorInitializer_type = constructorInitializer->get_type();
+                         ROSE_ASSERT(constructorInitializer_type != NULL);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          printf ("Test for special case of SgInitializedName used in SgCtorInitializerList: type = %p = %s \n",type,type->class_name().c_str());
 #endif
-                         SgFunctionType* functionType             = isSgFunctionType(type);
-                         SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(type);
+                         SgFunctionType*        constructorInitializer_functionType       = isSgFunctionType(constructorInitializer_type);
+                         SgMemberFunctionType*  constructorInitializer_memberFunctionType = isSgMemberFunctionType(constructorInitializer_type);
+                         SgCtorInitializerList* ctor                                      = isSgCtorInitializerList(currentStatement);
 
-                         SgCtorInitializerList* ctor = isSgCtorInitializerList(currentStatement);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-                         printf ("Test for special case of SgInitializedName used in SgCtorInitializerList: ctor = %p functionType = %p memberFunctionType = %p \n",ctor,functionType,memberFunctionType);
+                         printf ("Test for special case of SgInitializedName used in SgCtorInitializerList: ctor = %p functionType = %p memberFunctionType = %p \n",ctor,constructorInitializer_functionType,constructorInitializer_memberFunctionType);
 #endif
                       // if (ctor != NULL)
-                         if (ctor != NULL && (functionType != NULL || memberFunctionType != NULL))
+                         if (ctor != NULL && (constructorInitializer_functionType != NULL || constructorInitializer_memberFunctionType != NULL))
                             {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                               printf ("Calling setNameQualificationOnName() (operating DIRECTLY on the SgInitializedName) \n");
@@ -7764,8 +7782,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                                            }
                                       }
 
-                                   printf ("functionType                       = %p \n",functionType);
-                                   printf ("memberFunctionType                 = %p \n",memberFunctionType);
+                                   printf ("constructorInitializer_functionType       = %p \n",constructorInitializer_functionType);
+                                   printf ("constructorInitializer_memberFunctionType = %p \n",constructorInitializer_memberFunctionType);
 
                                    printf ("initializedName->get_name() = %s \n",initializedName->get_name().str());
                                    printf ("initializedName->get_name() = %s \n",initializedName->get_name().str());
@@ -10107,9 +10125,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                          classChain_iterator++;
                        }
 #endif
+                 // DQ (12/11/2019): Modified to provide a larger upper bound for classChain.size().
                  // DQ (2/16/2019): I think this is always true, since base class abiguity is not allowed in the C++ language.
                  // ROSE_ASSERT(classChain.size() == 1);
-                    ROSE_ASSERT(classChain.empty() == true || classChain.size() == 1);
+                 // ROSE_ASSERT(classChain.empty() == true || classChain.size() == 1);
+                    ROSE_ASSERT(classChain.empty() == true || classChain.size() <= 2);
 
                  // DQ (2/16/2019): We need to call something like this, but specialized to just use the single class in the classChain.
                  // setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
@@ -11243,8 +11263,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                if (currentStatement == NULL)
                   {
                  // This can be an expression in a type, in which case we don't have an associated scope.
+#if 0
                     printf ("Note: This can be an expression in a type, in which case we don't have an associated scope: expression = %p = %s originalExpressionTree = %p = %s \n",
                          expression,expression->class_name().c_str(),originalExpressionTree,originalExpressionTree->class_name().c_str());
+#endif
                   }
                  else
                   {
@@ -12999,14 +13021,20 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           string previousQualifier = i->second.c_str();
-          printf ("WARNING: test 8: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+          printf ("WARNING: In NameQualificationTraversal::setNameQualification(): test 8: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
 #endif
        // I think I can do this!
        // *i = std::pair<SgNode*,std::string>(templateArgument,qualifier);
           if (i->second != qualifier)
              {
-               i->second = qualifier;
+            // DQ (9/25/2019): Comment this out because it hides the error we are trying ti isolate.
+            // i->second = qualifier;
 
+#if 1
+               string tmp_previousQualifier = i->second.c_str();
+               printf ("WARNING: test 8: replacing previousQualifier = %s with new qualifier = %s \n",tmp_previousQualifier.c_str(),qualifier.c_str());
+               printf (" --- functionDeclaration = %p = %s name = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
 #if 1
             // DQ (3/31/2012): Commented out this assertion.
                printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
