@@ -674,6 +674,10 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_501.C \
    test2019_502.C \
    test2019_503.C \
+   test2019_512.C \
+   test2019_513.C \
+   test2019_514.C \
+   test2019_515.C \
    test2019_524.C \
    test2020_01.C 
 
@@ -788,10 +792,6 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_505.C \
    test2019_506.C \
    test2019_511.C \
-   test2019_512.C \
-   test2019_513.C \
-   test2019_514.C \
-   test2019_515.C \
    test2019_516.C \
    test2019_523.C 
 
