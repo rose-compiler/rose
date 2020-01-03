@@ -4633,7 +4633,7 @@ NameQualificationTraversal::outputNameQualificationMap( const std::map<SgNode*,s
 void
 NameQualificationTraversal::addToNameMap ( SgNode* nodeReference, string typeNameString )
    {
-#if 0
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
      printf ("In addToNameMap(): nodeReference = %p = %s typeNameString = %s \n",nodeReference,nodeReference->class_name().c_str(),typeNameString.c_str());
 #endif
 
