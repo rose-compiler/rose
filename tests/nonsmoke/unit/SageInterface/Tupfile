@@ -1,5 +1,6 @@
 include_rules
 
+ifeq (@(ENABLE_TESTS),yes)
 ifeq (@(ENABLE_CXX_ANALYSIS),yes)
 
 # Include various lists of test specimens
@@ -92,4 +93,5 @@ run for specimen in $(alias_analysis_tests_cpp); do \
             "./performAliasAnalysis -c tests/$specimen && cat $specimen.performAliasAnalysis.output"; \
     done
 
+endif
 endif

@@ -218,7 +218,7 @@ Partitioner::init(Disassembler *disassembler, const MemoryMap::Ptr &map) {
         instructionProvider_ = InstructionProvider::instance(disassembler, map);
         unparser_ = disassembler->unparser()->copy();
         insnUnparser_ = disassembler->unparser()->copy();
-        insnUnparser_->settings() = Unparser::Settings::minimal();
+        configureInsnUnparser(insnUnparser_);
     }
     undiscoveredVertex_ = cfg_.insertVertex(CfgVertex(V_UNDISCOVERED));
     indeterminateVertex_ = cfg_.insertVertex(CfgVertex(V_INDETERMINATE));
@@ -265,6 +265,17 @@ Partitioner::showStatistics() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Unparsing -- functions that deal with creating assembly listings
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// class method
+void
+Partitioner::configureInsnUnparser(const Unparser::Base::Ptr &unparser) const {
+    ASSERT_not_null(unparser);
+    unparser->settings() = Unparser::Settings::minimal();
+    unparser->settings().insn.address.showing = true;
+    unparser->settings().insn.address.fieldWidth = 1;
+    unparser->settings().insn.mnemonic.fieldWidth = 1;
+    unparser->settings().insn.operands.fieldWidth = 1;
+}
 
 Unparser::BasePtr
 Partitioner::unparser() const {
@@ -2240,7 +2251,6 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
     const RegisterDescriptor SP = cpu->stackPointerRegister();
     const RegisterDescriptor memSegReg;
     BaseSemantics::SValuePtr initialStackPointer = ops->peekRegister(SP);
-    size_t wordSize = SP.nBits() >> 3;              // word size in bytes
 
     // Run the data flow
     try {
@@ -2255,7 +2265,6 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
         return retval;
     }
 
-
     // Scan all outgoing states and accumulate any concrete values we find.
     BOOST_FOREACH (StatePtr state, dfEngine.getFinalStates()) {
         if (state) {
@@ -2267,21 +2276,9 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
                     retval.insert(kv.value->get_number());
             }
 
-            BOOST_FOREACH (const StackVariable &var, DataFlow::findStackVariables(ops, initialStackPointer)) {
-                BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.location.address,
-                                                                 ops->undefined_(8*var.location.nBytes), ops->boolean_(true));
-                if (value->is_number() && value->get_width() <= SP.nBits())
-                    retval.insert(value->get_number());
-            }
-
-            BOOST_FOREACH (const AbstractLocation &var, DataFlow::findGlobalVariables(ops, wordSize)) {
-                if (var.isAddress()) {
-                    BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.getAddress(),
-                                                                     ops->undefined_(8*var.nBytes()), ops->boolean_(true));
-                    if (value->is_number() && value->get_width() <= SP.nBits())
-                        retval.insert(value->get_number());
-                }
-            }
+            BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
+            std::set<rose_addr_t> vas = Variables::VariableFinder().findAddressConstants(mem);
+            retval.insert(vas.begin(), vas.end());
         }
     }
     return retval;
@@ -2307,7 +2304,7 @@ Partitioner::bblockAttached(const ControlFlowGraph::VertexIterator &newVertex) {
             } else {
                 debug <<"attached basic block:\n";
                 BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
-                    debug <<"  + " <<unparseInstructionWithAddress(insn) <<"\n";
+                    debug <<"  + " <<unparse(insn) <<"\n";
             }
         } else {
             debug <<"inserted basic block placeholder at " <<StringUtility::addrToString(startVa) <<"\n";
@@ -2333,7 +2330,7 @@ Partitioner::bblockDetached(rose_addr_t startVa, const BasicBlock::Ptr &bblock) 
             } else {
                 debug <<"detached basic block:\n";
                 BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
-                    debug <<"  - " <<unparseInstructionWithAddress(insn) <<"\n";
+                    debug <<"  - " <<unparse(insn) <<"\n";
             }
         } else {
             debug <<"erased basic block placeholder at " <<StringUtility::addrToString(startVa) <<"\n";
@@ -2945,7 +2942,7 @@ Partitioner::rebuildVertexIndices() {
         insnUnparser_ = instructionProvider().disassembler()->unparser()->copy();
     }
     if (insnUnparser_)
-        insnUnparser_->settings() = Unparser::Settings::minimal();
+        configureInsnUnparser(insnUnparser_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

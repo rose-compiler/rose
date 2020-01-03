@@ -1,7 +1,7 @@
 #include <rose.h>
 
-#include <BinaryStackVariable.h>                        // ROSE
 #include <BinarySymbolicExpr.h>                         // ROSE
+#include <BinaryVariables.h>                            // ROSE
 #include <bROwSE/FunctionUtil.h>
 #include <bROwSE/WSemantics.h>
 #include <bROwSE/WToggleButton.h>
@@ -114,27 +114,33 @@ public:
                     SValuePtr stackPtr = dfInfo.initialStates[0]->readRegister(SP, ops->undefined_(SP.nBits()), ops.get());
                     const RegisterDescriptor SS = ctx_.partitioner.instructionProvider().stackSegmentRegister();
 
+#if 0 // [Robb Matzke 2019-12-10]: API changes
                     // Function arguments
-                    BOOST_FOREACH (const StackVariable &var, P2::DataFlow::findFunctionArguments(ops, stackPtr)) {
+                    Variables::StackVariables vars = P2::DataFlow::findFunctionArguments(function, ops, stackPtr);
+                    BOOST_FOREACH (const Variables::StackVariable &var, vars.values()) {
                         char name[64];
-                        sprintf(name, "arg_%" PRIx64, var.location.offset);
-                        SValuePtr value = ops->undefined_(8*var.location.nBytes);
-                        value = ops->readMemory(SS, var.location.address, value, ops->boolean_(true));
+                        sprintf(name, "arg_%" PRIx64, var.frameOffset());
+                        SValuePtr addr = Variables::VariableFinder().symbolicAddress(ctx_.partitioner, var, ops);
+                        SValuePtr value = ops->undefined_(8*var.maxSizeBytes());
+                        value = ops->readMemory(SS, addr, value, ops->boolean_(true));
                         std::string valueStr = toString(value);
                         if (!valueStr.empty())
                             locValPairs_.push_back(LocationValue(name, valueStr));
                     }
 
                     // Function local variables
-                    BOOST_FOREACH (const StackVariable &var, P2::DataFlow::findLocalVariables(ops, stackPtr)) {
+                    vars = P2::DataFlow::findLocalVariables(function, ops, stackPtr);
+                    BOOST_FOREACH (const Variables::StackVariable &var, vars.values()) {
                         char name[64];
-                        sprintf(name, "var_%" PRIx64, -var.location.offset);
-                        SValuePtr value = ops->undefined_(8*var.location.nBytes);
-                        value = ops->readMemory(SS, var.location.address, value, ops->boolean_(true));
+                        sprintf(name, "var_%" PRIx64, -var.frameOffset());
+                        SValuePtr addr = Variables::VariableFinder().symbolicAddress(ctx_.partitioner, var, ops);
+                        SValuePtr value = ops->undefined_(8*var.maxSizeBytes());
+                        value = ops->readMemory(SS, addr, value, ops->boolean_(true));
                         std::string valueStr = toString(value);
                         if (!valueStr.empty())
                             locValPairs_.push_back(LocationValue(name, valueStr));
                     }
+#endif
 
                     // Global variables
                     ASSERT_require(SP.nBits() % 8 == 0);

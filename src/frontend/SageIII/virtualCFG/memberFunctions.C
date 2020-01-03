@@ -217,6 +217,33 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
     return CFGNode(parent, idx);
   }
 
+  // DQ (1/16/2018): Handle the case of where the parent is a SgLabelStatement.
+     SgLabelStatement* parentLabelStatement = isSgLabelStatement(parent);
+     if (parentLabelStatement != NULL)
+        {
+#if DEBUG_CALLGRAPH
+          printf ("In getNodeJustAfterInContainer(): found parent as SgLabelStatement: parentLabelStatement = %p = %s \n",parentLabelStatement,parentLabelStatement->class_name().c_str());
+#endif
+          parent = parentLabelStatement->get_parent();
+          unsigned int idx;
+#if 0
+          idx = parent->cfgFindNextChildIndex(parentLabelStatement);
+#else
+          // MS (12/9/2019 ) - handling sequences of labels
+          while(isSgLabelStatement(parent)) {
+            parentLabelStatement=isSgLabelStatement(parent);
+            parent=parent->get_parent();
+          }
+          idx = parent->cfgFindNextChildIndex(parentLabelStatement);
+#endif
+
+
+#if DEBUG_CALLGRAPH
+          printf ("In getNodeJustAfterInContainer(): found parent as SgLabelStatement: idx = %u \n",idx);
+#endif
+          return CFGNode(parent, idx);
+        }
+
   // DQ (1/16/2018): Handle the case of where the input node is a SgLabelStatement.
      SgLabelStatement* labelStatement = isSgLabelStatement(n);
 
@@ -224,16 +251,12 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
   // if (labelStatement != NULL)
      if (labelStatement != NULL && labelStatement->get_statement() != NULL)
         {
-       // unsigned int idx = parent->cfgFindNextChildIndex(n);
+          //unsigned int idx = parent->cfgFindNextChildIndex(n);
           unsigned int idx = 0;
 
 #if DEBUG_CALLGRAPH
           printf ("In getNodeJustAfterInContainer(): found SgLabelStatement: idx = %u \n",idx);
 #endif
-       // return CFGNode(parent, idx);
-       // return CFGNode(labelStatement, labelStatement->get_statement());
-       // return CFGNode(labelStatement, idx);
-
           ROSE_ASSERT(labelStatement->get_statement() != NULL);
           return CFGNode(labelStatement->get_statement(), idx);
         }
@@ -246,32 +269,6 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
                printf ("In getNodeJustAfterInContainer(): FORTRAN case: labelStatement->get_statement() == NULL: idx = %u \n",idx);
 #endif
              }
-        }
-
-  // DQ (1/16/2018): Handle the case of where the parent is a SgLabelStatement.
-     SgLabelStatement* parentLabelStatement = isSgLabelStatement(parent);
-     if (parentLabelStatement != NULL)
-        {
-#if DEBUG_CALLGRAPH
-          printf ("In getNodeJustAfterInContainer(): found parent as SgLabelStatement: parentLabelStatement = %p = %s \n",parentLabelStatement,parentLabelStatement->class_name().c_str());
-#endif
-          parent = parentLabelStatement->get_parent();
-
-       // unsigned int idx = parent->cfgFindNextChildIndex(n);
-       // unsigned int idx = 0;
-       // unsigned int idx = parentLabelStatement->cfgFindNextChildIndex(parent);
-          unsigned int idx = parent->cfgFindNextChildIndex(parentLabelStatement);
-#if DEBUG_CALLGRAPH
-          printf ("In getNodeJustAfterInContainer(): found parent as SgLabelStatement: idx = %u \n",idx);
-#endif
-       // return CFGNode(parent, idx);
-       // return CFGNode(labelStatement, labelStatement->get_statement());
-       // return CFGNode(labelStatement, idx);
-       // parent = parentLabelStatement->get_parent();
-       // ROSE_ASSERT(labelStatement->get_statement() != NULL);
-       // return CFGNode(labelStatement->get_statement(), idx);
-       // return CFGNode(parentLabelStatement, idx);
-          return CFGNode(parent, idx);
         }
 
 
@@ -410,7 +407,7 @@ unsigned int
 SgStatement::cfgFindChildIndex(SgNode* n) {
     // Default -- overridden in some cases
     size_t idx = this->getChildIndex(n);
-    ROSE_ASSERT (idx != (size_t)(-1)); // Not found
+    ROSE_ASSERT (idx != Rose::INVALID_INDEX); // Not found
     return idx;
   }
 
@@ -1246,7 +1243,7 @@ SgVariableDeclaration::cfgIndexForEnd() const {
 unsigned int
 SgVariableDeclaration::cfgFindChildIndex(SgNode* n) {
     size_t idx = this->get_childIndex(n);
-    ROSE_ASSERT (idx != (size_t)(-1)); // Not found
+    ROSE_ASSERT (idx != Rose::INVALID_INDEX); // Not found
     ROSE_ASSERT (idx != 0); // Not found
     return idx - 1;
   }
@@ -3526,7 +3523,7 @@ SgExpression::cfgFindChildIndex(SgNode* n) {
 
     // Default -- overridden in some cases
     size_t idx = this->get_childIndex(n);
-    ROSE_ASSERT (idx != (size_t)(-1)); // Not found
+    ROSE_ASSERT (idx != Rose::INVALID_INDEX); // Not found
     return idx;
   }
 

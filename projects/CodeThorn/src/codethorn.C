@@ -392,6 +392,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("null-pointer-analysis-file",po::value< string >(),"Perform null pointer analysis and write results to file [arg].")
     ("out-of-bounds-analysis-file",po::value< string >(),"Perform out-of-bounds analysis and write results to file [arg].")
     ("uninitialized-analysis-file",po::value< string >(),"Perform uninitialized analysis and write results to file [arg].")
+    ("program-stats-only",po::value< bool >()->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs and exit.")
     ("program-stats",po::value< bool >()->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs.")
     ("in-state-string-literals",po::value< bool >()->default_value(false)->implicit_value(true),"create string literals in initial state.")
     ("std-functions",po::value< bool >()->default_value(true)->implicit_value(true),"model std function semantics (malloc, memcpy, etc). Must be turned off explicitly.")
@@ -479,7 +480,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("help-data-race", "Show options for data race detection.")
     ("help-info", "Show options for program info.")
     ("start-function", po::value< string >(), "Name of function to start the analysis from.")
-    ("list-unknown-functions","show all functions in provided input-program for which the semantics are unknown (external functions).")
+    ("external-function-calls-file",po::value< string >(), "write a list of all function calls to external functions (functions for which no implementation exists) to a CSV file.")
     ("status", po::value< bool >()->default_value(false)->implicit_value(true), "Show status messages.")
     ("reduce-cfg", po::value< bool >()->default_value(true)->implicit_value(true), "Reduce CFG nodes that are irrelevant for the analysis.")
     ("internal-checks", "Run internal consistency checks (without input program).")
@@ -588,7 +589,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.11.0\n";
+    cout << "CodeThorn version 1.11.1\n";
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
@@ -832,8 +833,8 @@ void automataDotInput(Sawyer::Message::Facility logger) {
     write_file(filename, ltlFormulae);
     cout << "generated " << filename  <<"."<<endl;
   }
-
-  cout << "STATUS: done." << endl;
+  if(!args.count("quiet"))
+    cout << "STATUS: done." << endl;
 }
 
 void generateAutomata() {
@@ -1398,24 +1399,29 @@ int main( int argc, char * argv[] ) {
     }
 
     {
-      bool listUnknownFunctions=args.isUserProvided("list-unknown-functions");
+      bool unknownFunctionsFile=args.isUserProvided("unknown-functions-file");
       bool showProgramStats=args.getBool("program-stats");
-      bool showInfos=listUnknownFunctions||showProgramStats;
-      if(showInfos) {
+      bool showProgramStatsOnly=args.getBool("program-stats-only");
+      if(unknownFunctionsFile||showProgramStats||showProgramStatsOnly) {
         ProgramInfo programInfo(sageProject);
         programInfo.compute();
-        if(showProgramStats) {
-          programInfo.printDetailed();
+        if(unknownFunctionsFile) {
           ROSE_ASSERT(analyzer);
-          programInfo.writeFunctionCallNodesToFile("functionCalls.csv",0);
+          string unknownFunctionsFileName=args.getString("unknown-functions-file");
+          programInfo.writeFunctionCallNodesToFile(unknownFunctionsFileName);
         }
-        exit(0);
+        if(showProgramStats||showProgramStatsOnly) {
+          programInfo.printDetailed();
+        }
+        if(showProgramStatsOnly) {
+          exit(0);
+        }
       }
     }
 
     if(args.getBool("unparse")) {
       sageProject->unparse(0,0);
-      exit(0);
+      return 0;
     }
 
     if(!args.count("quiet")) {
@@ -2228,7 +2234,8 @@ int main( int argc, char * argv[] ) {
     }
 
     // reset terminal
-    cout<<color("normal")<<"done."<<endl;
+    if(!args.count("quiet"))
+      cout<<color("normal")<<"done."<<endl;
 
     // main function try-catch
   } catch(const CodeThorn::Exception& e) {

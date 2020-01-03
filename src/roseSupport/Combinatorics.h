@@ -52,9 +52,9 @@ ROSE_DLL_API bool flip_coin();
  *  second on a vector of 12 64-bit integers on Robb's machine (computing all 12! permutations in about 50 seconds). */
 template<typename T>
 static void
-permute(std::vector<T> &values/*in,out*/, uint64_t pn, size_t sz=(size_t)(-1))
+permute(std::vector<T> &values/*in,out*/, uint64_t pn, size_t sz = UNLIMITED)
 {
-    if ((size_t)(-1)==sz)
+    if (UNLIMITED == sz)
         sz = values.size();
     assert(sz<=values.size());
     assert(pn<factorial(sz));
@@ -73,7 +73,7 @@ permute(std::vector<T> &values/*in,out*/, uint64_t pn, size_t sz=(size_t)(-1))
  *  of the input @p vector. */
 template<typename T>
 void
-shuffle(std::vector<T> &vector, size_t nitems=(size_t)(-1), size_t limit=(size_t)(-1))
+shuffle(std::vector<T> &vector, size_t nitems = UNLIMITED, size_t limit = UNLIMITED)
 {
     nitems = std::min(nitems, vector.size());
     limit = std::min(limit, nitems);

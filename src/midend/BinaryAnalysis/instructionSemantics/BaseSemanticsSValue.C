@@ -25,6 +25,13 @@ SValue::print(std::ostream &stream) const {
     print(stream, fmt);
 }
 
+SValue::WithFormatter
+SValue::operator+(const std::string &linePrefix) {
+    static Formatter fmt;
+    fmt.set_line_prefix(linePrefix);
+    return with_format(fmt);
+}
+
 } // namespace
 } // namespace
 } // namespace

@@ -52,6 +52,13 @@ MemoryState::print(std::ostream &stream, const std::string prefix) const {
     fmt.set_line_prefix(prefix);
     print(stream, fmt);
 }
+
+MemoryState::WithFormatter
+MemoryState::operator+(const std::string &linePrefix) {
+    static Formatter fmt;
+    fmt.set_line_prefix(linePrefix);
+    return with_format(fmt);
+}
     
 } // namespace
 } // namespace

@@ -1,0 +1,9 @@
+START
+
+COMPOOL a'comp;
+
+  TYPE type'1 B(BITSIZE(a'name)) ;
+  TYPE type'2 B(BYTESIZE(1)) ;
+  TYPE type'3 B(WORDSIZE(type'name)) ;
+
+TERM

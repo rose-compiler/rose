@@ -1,5 +1,6 @@
 include_rules
 
+ifeq (@(ENABLE_TESTS),yes)
 ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
 
 ###############################################################################################################################
@@ -569,4 +570,5 @@ run $(test) testDisassembler -o ppc64b --input=testDisassembler-ppc64.txt --answ
 
 run $(tool_compile_linkexe) testNativeSemantics.C
 
+endif
 endif

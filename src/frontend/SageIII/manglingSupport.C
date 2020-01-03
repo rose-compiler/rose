@@ -1201,6 +1201,14 @@ mangleValueExp (const SgValueExp* expr)
     return replaceNonAlphaNum (mangled_name);
   }
 
+static void mangleUnaryOp(const SgUnaryOp * uop, std::ostringstream & mangled_name, std::string opname) {
+  mangled_name << "_b" << opname << "_" << mangleExpression (uop->get_operand_i()) << "_e" << opname << "_";
+}
+
+static void mangleBinaryOp(const SgBinaryOp * binop, std::ostringstream & mangled_name, std::string opname) {
+  mangled_name << "_b" << opname << "_" << mangleExpression (binop->get_lhs_operand_i()) << "__" << mangleExpression (binop->get_rhs_operand_i()) << "_e" << opname << "_";
+}
+
 string
 mangleExpression (const SgExpression* expr)
   {
@@ -1271,36 +1279,49 @@ mangleExpression (const SgExpression* expr)
           mangled_name << nrdecl->get_mangled_name().str();
           break;
         }
-        case V_SgCastExp: {
-          const SgCastExp* e = isSgCastExp (expr);
-          mangled_name << "_bCastExp_" << e->get_type()->get_mangled().getString() << "__" << mangleExpression (e->get_operand_i()) << "_eCastExp_";
-          break;
-        }
-        case V_SgNotOp: {
-          const SgNotOp* e = isSgNotOp (expr);
-          mangled_name << "_bNotOp_" << mangleExpression (e->get_operand_i()) << "_eNotOp_";
-          break;
-        }
-        case V_SgBitComplementOp: {
-          const SgBitComplementOp* e = isSgBitComplementOp (expr);
-          mangled_name << "_bBitComplementOp_" << mangleExpression (e->get_operand_i()) << "_eBitComplementOp_";
-          break;
-        }
-        case V_SgMinusOp: {
-          const SgMinusOp* e = isSgMinusOp (expr);
-          mangled_name << "_bMinusOp_" << mangleExpression (e->get_operand_i()) << "_eMinusOp_";
-          break;
-        }
-        case V_SgAddressOfOp: {
-          const SgAddressOfOp* e = isSgAddressOfOp (expr);
-          mangled_name << "_bAddressOfOp_" << mangleExpression (e->get_operand_i()) << "_eAddressOfOp_";
-          break;
-        }
-        case V_SgPointerDerefExp: {
-          const SgPointerDerefExp* e = isSgPointerDerefExp (expr);
-          mangled_name << "_bPointerDerefExp_" << mangleExpression (e->get_operand_i()) << "_ePointerDerefExp_";
-          break;
-        }
+
+        case V_SgCastExp:          mangleUnaryOp( (const SgUnaryOp *)expr, mangled_name, "CastExp");         break;
+        case V_SgNotOp:            mangleUnaryOp( (const SgUnaryOp *)expr, mangled_name, "NotOp");           break;
+        case V_SgBitComplementOp:  mangleUnaryOp( (const SgUnaryOp *)expr, mangled_name, "BitComplementOp"); break;
+        case V_SgMinusOp:          mangleUnaryOp( (const SgUnaryOp *)expr, mangled_name, "MinusOp");         break;
+        case V_SgAddressOfOp:      mangleUnaryOp( (const SgUnaryOp *)expr, mangled_name, "AddressOfOp");     break;
+        case V_SgPointerDerefExp:  mangleUnaryOp( (const SgUnaryOp *)expr, mangled_name, "PointerDerefExp"); break;
+
+        case V_SgAddOp:            mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "AddOp");            break;
+        case V_SgAndOp:            mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "AndOp");            break;
+        case V_SgBitAndOp:         mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "BitAndOp");         break;
+        case V_SgBitXorOp:         mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "BitXorOp");         break;
+        case V_SgBitOrOp:          mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "BitOrOp");          break;
+        case V_SgOrOp:             mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "OrOp");             break;
+        case V_SgMultiplyOp:       mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "MultiplyOp");       break;
+        case V_SgDivideOp:         mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "DivideOp");         break;
+        case V_SgEqualityOp:       mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "EqualityOp");       break;
+        case V_SgSubtractOp:       mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "SubtractOp");       break;
+        case V_SgDotExp:           mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "DotExp");           break;
+        case V_SgModOp:            mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "ModOp");            break;
+        case V_SgArrowExp:         mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "ArrowExp");         break;
+        case V_SgLessThanOp:       mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "LessThanOp");       break;
+        case V_SgLessOrEqualOp:    mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "LessOrEqualOp");    break;
+        case V_SgGreaterThanOp:    mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "GreaterThanOp");    break;
+        case V_SgGreaterOrEqualOp: mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "GreaterOrEqualOp"); break;
+        case V_SgAssignOp:         mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "AssignOp");         break;
+        case V_SgPlusAssignOp:     mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "PlusAssignOp");     break;
+        case V_SgMinusAssignOp:    mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "MinusAssignOp");    break;
+        case V_SgAndAssignOp:      mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "AndAssignOp");      break;
+        case V_SgXorAssignOp:      mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "XorAssignOp");      break;
+        case V_SgIorAssignOp:      mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "IorAssignOp");      break;
+        case V_SgMultAssignOp:     mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "MultAssignOp");     break;
+        case V_SgDivAssignOp:      mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "DivAssignOp");      break;
+        case V_SgLshiftAssignOp:   mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "LshiftAssignOp");   break;
+        case V_SgRshiftAssignOp:   mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "RshiftAssignOp");   break;
+        case V_SgModAssignOp:      mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "ModAssignOp");      break;
+        case V_SgNotEqualOp:       mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "NotEqualOp");       break;
+        case V_SgRshiftOp:         mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "RshiftOp");         break;
+        case V_SgLshiftOp:         mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "LshiftOp");         break;
+        case V_SgCommaOpExp:       mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "CommaOpExp");       break;
+        case V_SgDotStarOp:        mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "DotStarOp");        break;
+        case V_SgArrowStarOp:      mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "ArrowStarOp");      break;
+
         case V_SgNoexceptOp: {
           const SgNoexceptOp* e = isSgNoexceptOp (expr);
           mangled_name << "_bNoexceptOp_" << mangleExpression (e->get_operand_expr()) << "_eNoexceptOp_";
@@ -1332,126 +1353,7 @@ mangleExpression (const SgExpression* expr)
           mangled_name << "_eAlignOfOp_";
           break;
         }
-        case V_SgAddOp: {
-          const SgAddOp* e = isSgAddOp (expr);
-          mangled_name << "_bAddOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eAddOp_";
-          break;
-        }
-        case V_SgAndOp: {
-          const SgAndOp* e = isSgAndOp (expr);
-          mangled_name << "_bAndOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eAndOp_";
-          break;
-        }
-        case V_SgBitAndOp: {
-          const SgBitAndOp* e = isSgBitAndOp (expr);
-          mangled_name << "_bBitAndOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eBitAndOp_";
-          break;
-        }
-        case V_SgBitXorOp: {
-          const SgBitXorOp* e = isSgBitXorOp (expr);
-          mangled_name << "_bBitXorOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eBitXorOp_";
-          break;
-        }
-        case V_SgBitOrOp: {
-          const SgBitOrOp* e = isSgBitOrOp (expr);
-          mangled_name << "_bBitOrOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eBitOrOp_";
-          break;
-        }
-        case V_SgOrOp: {
-          const SgOrOp* e = isSgOrOp (expr);
-          mangled_name << "_bOrOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eOrOp_";
-          break;
-        }
-        case V_SgMultiplyOp: {
-          const SgMultiplyOp* e = isSgMultiplyOp (expr);
-          mangled_name << "_bMultiplyOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eMultiplyOp_";
-          break;
-        }
-        case V_SgDivideOp: {
-          const SgDivideOp* e = isSgDivideOp (expr);
-          mangled_name << "_bDivideOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eDivideOp_";
-          break;
-        }
-        case V_SgEqualityOp: {
-          const SgEqualityOp* e = isSgEqualityOp (expr);
-          mangled_name << "_bEqualityOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eEqualityOp_";
-          break;
-        }
-        case V_SgSubtractOp: {
-          const SgSubtractOp* e = isSgSubtractOp (expr);
-          mangled_name << "_bSubtractOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eSubtractOp_";
-          break;
-        }
-        case V_SgDotExp: {
-          const SgDotExp* e = isSgDotExp (expr);
-          mangled_name << "_bDotExp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eDotExp_";
-          break;
-        }
-        case V_SgModOp: {
-          const SgModOp* e = isSgModOp (expr);
-          mangled_name << "_bModOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eModOp_";
-          break;
-        }
-        case V_SgArrowExp: {
-          const SgArrowExp* e = isSgArrowExp (expr);
-          mangled_name << "_bArrowExp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eArrowExp_";
-          break;
-        }
-        case V_SgLessThanOp: {
-          const SgLessThanOp* e = isSgLessThanOp (expr);
-          mangled_name << "_bLessThanOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eLessThanOp_";
-          break;
-        }
-        case V_SgLessOrEqualOp: {
-          const SgLessOrEqualOp* e = isSgLessOrEqualOp (expr);
-          mangled_name << "_bLessOrEqualOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eLessOrEqualOp_";
-          break;
-        }
-        case V_SgGreaterThanOp: {
-          const SgGreaterThanOp* e = isSgGreaterThanOp (expr);
-          mangled_name << "_bGreaterThanOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eGreaterThanOp_";
-          break;
-        }
-        case V_SgGreaterOrEqualOp: {
-          const SgGreaterOrEqualOp* e = isSgGreaterOrEqualOp (expr);
-          mangled_name << "_bGreaterOrEqualOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eGreaterOrEqualOp_";
-          break;
-        }
-        case V_SgAssignOp: {
-          const SgAssignOp* e = isSgAssignOp (expr);
-          mangled_name << "_bAssignOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eAssignOp_";
-          break;
-        }
-        case V_SgNotEqualOp: {
-          const SgNotEqualOp* e = isSgNotEqualOp (expr);
-          mangled_name << "_bNotEqualOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eNotEqualOp_";
-          break;
-        }
-        case V_SgRshiftOp: {
-          const SgRshiftOp* e = isSgRshiftOp (expr);
-          mangled_name << "_bRshiftOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eRshiftOp_";
-          break;
-        }
-        case V_SgLshiftOp: {
-          const SgLshiftOp* e = isSgLshiftOp (expr);
-          mangled_name << "_bLshiftOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eLshiftOp_";
-          break;
-        }
-        case V_SgCommaOpExp: {
-          const SgCommaOpExp* e = isSgCommaOpExp (expr);
-          mangled_name << "_bCommaOpExp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eCommaOpExp_";
-          break;
-        }
-        case V_SgDotStarOp: {
-          const SgDotStarOp* e = isSgDotStarOp (expr);
-          mangled_name << "_bDotStarOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eDotStarOp_";
-          break;
-        }
-        case V_SgArrowStarOp: {
-          const SgArrowStarOp* e = isSgArrowStarOp (expr);
-          mangled_name << "_bArrowStarOp_" << mangleExpression (e->get_lhs_operand_i()) << "__" << mangleExpression (e->get_rhs_operand_i()) << "_eArrowStarOp_";
-          break;
-        }
+
         case V_SgConditionalExp: {
           const SgConditionalExp* e = isSgConditionalExp (expr);
           mangled_name << "_bConditionalExp_";

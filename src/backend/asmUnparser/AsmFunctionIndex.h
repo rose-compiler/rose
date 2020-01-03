@@ -501,7 +501,7 @@ protected:
     virtual void init();
 
     /** List of callbacks to be invoked when printing columns. */
-    ROSE_Callbacks::List<OutputCallback> output_callbacks;
+    Callbacks::List<OutputCallback> output_callbacks;
 };
 
 } // namespace

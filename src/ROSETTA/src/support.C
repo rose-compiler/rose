@@ -569,6 +569,12 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("bool","user_defined_literal","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (12/26/2019): When supporting multiple files, the defining declaration in a named type must refer to the 
+  // defining declaration associated with the appropriate file (to be unparsed correctly).
+     Unparse_Info.setDataPrototype("SgDeclarationStatement*", "declstatement_associated_with_type", "= NULL",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
      ExpBaseClass.setFunctionPrototype        ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
      NonrealBaseClass.setFunctionPrototype    ( "HEADER_NONREAL_BASE_CLASS", "../Grammar/Support.code");
@@ -858,6 +864,14 @@ Grammar::setUpSupport ()
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // SourceFile.setDataPrototype("bool", "usingApplicationRootDirectory", "= false",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/18/2019): Header file unparsing can depend on which SgGlobal (global scope) is used from which source file.
+  // Where the IR nodes are not shared across multiple files, getting the header file from the correct source file is important.
+  // When the CPP directives and comments are collected are added for a header file, the nodes that are not shared in global 
+  // scope will not have attached CPP directives and comments.  If those are the node in the global scope of the SgSourceFile
+  // that represents a header file then we don't unparse the header file correctly.
+     SourceFile.setDataPrototype   ( "bool", "processedToIncludeCppDirectivesAndComments", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UnknownFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1567,6 +1581,17 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "unparse_edg_normalized_method_ROSE_1392", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/19/2019): Adding support to optimize the performance of the header file unarsing.
+  // Specifically we want to limit the collection of comments and CPP dirctives to a set determined
+  // as part of the unparsing, after we know what parts of the AST have been modified, but 
+  // immediiately before the unparsing of each file.
+     File.setDataPrototype("bool", "header_file_unparsing_optimization", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype("bool", "header_file_unparsing_optimization_source_file", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype("bool", "header_file_unparsing_optimization_header_file", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // ******************************************************************************
   // ******************************************************************************
   //                             ROSE Graph IR Nodes
@@ -2240,6 +2265,11 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("bool", "usingApplicationRootDirectory", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/16/2019): When using deferred evaluation, the collection of comments and CPP directives is handled 
+  // by the transformation.  This is so far only used in a single tool, so support more broadly in ROSE may come soon.
+     Project.setDataPrototype("bool", "usingDeferredTransformations", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      Project.setDataPrototype("bool", "ast_merge", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("std::string", "astfile_out", "",
@@ -2250,7 +2280,7 @@ Grammar::setUpSupport ()
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-   //  Attribute.setAutomaticGenerationOfCopyFunction(false);
+  // Attribute.setAutomaticGenerationOfCopyFunction(false);
   // Attribute.setDataPrototype    ( "char*", "name"    , "= \"\"" );
 
      BitAttribute.setDataPrototype ( "unsigned long int"  , "bitflag", "= 0",

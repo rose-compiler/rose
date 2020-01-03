@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # DQ (8/23/2017): Use command line option to alternatively test the experimental fortran frontend.
 # ROSE_FLAGS = -rose:verbose 0 -rose:experimental_csharp_frontend -I$(srcdir)
-ROSE_FLAGS = -rose:verbose 0 -I$(srcdir)
+ROSE_FLAGS = -rose:verbose 0 -rose:skipfinalCompileStep -I$(srcdir)
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
@@ -20,8 +20,8 @@ VALGRIND =
 
 # PASSING_TEST_Objects = $(TEST_CSHARP_Objects)
 
-# Go back and build the translator we are using to test Fortran (in case make check 
-# is run directly in this directory before make has been run from the root of the 
+# Go back and build the translator we are using to test Fortran (in case make check
+# is run directly in this directory before make has been run from the root of the
 # ROSE directory structure).  This does not appear to work!
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
@@ -77,8 +77,8 @@ ORIGINAL_FILE_LIST = minimal.adb empty_package.ads ordinary_type_declaration.ads
    function_call.adb operator.adb selected_component.ads type_conversion.adb if_statement.adb accept_statement.adb entry_call.adb \
    loop_statement.adb procedure_call.adb raise_statement.adb
 
-TESTCODE_CURRENTLY_FAILING_abs = 
-TESTCODE_CURRENTLY_FAILING_adb = 
+TESTCODE_CURRENTLY_FAILING_abs =
+TESTCODE_CURRENTLY_FAILING_adb =
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES_ads = $(TESTCODES_REQUIRED_TO_PASS_ads)
@@ -105,15 +105,15 @@ print:
 
 $(PASSING_TEST_Objects_ads):
 #	echo "found reference to *.o ads file"
-	$(testTranslator) $(ROSE_FLAGS) -rose:ada -c $(srcdir)/$(@:.o=.ads) 
+	$(testTranslator) $(ROSE_FLAGS) -rose:ada -c $(srcdir)/$(@:.o=.ads)
 
 $(PASSING_TEST_Objects_adb):
 #	echo "found reference to *.o adb file"
-	$(testTranslator) $(ROSE_FLAGS) -rose:ada -c $(srcdir)/$(@:.o=.adb) 
+	$(testTranslator) $(ROSE_FLAGS) -rose:ada -c $(srcdir)/$(@:.o=.adb)
 
 #$(TEST_Source_passed): %.passed: $(testTranslator) $(top_srcdir)/scripts/test_exit_status
 #	$(RTH_RUN) CMD="$(testTranslator) $(ROSE_FLAGS) -rose:ada -c $(srcdir)/$(@:.ads.passed=.ads)" $(top_srcdir)/scripts/test_exit_status $@
-#	$(testTranslator) $(ROSE_FLAGS) -rose:ada -c $(srcdir)/$(@:.ads.passed=.ads) 
+#	$(testTranslator) $(ROSE_FLAGS) -rose:ada -c $(srcdir)/$(@:.ads.passed=.ads)
 
 #$(TEST_Exe_Objects): %.o: $(srcdir)/%.c $(testTranslator)
 #	$(testTranslator) $(ROSE_FLAGS) -c $<

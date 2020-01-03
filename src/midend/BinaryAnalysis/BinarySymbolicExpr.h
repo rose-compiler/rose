@@ -610,7 +610,12 @@ public:
      *  method has a "2" appended to its name. After a suitable period of deprecation for Leaf::isVariable, a new isVariable
      *  will be added to this class hiearchy and will have the same semantics as isVariable2, which will become deprecated. */
     virtual bool isVariable2() const = 0;
-    
+
+    /** Variable ID number.
+     *
+     *  If this expression is a variable then returns the variable ID number, otherwise nothing. */
+    Sawyer::Optional<uint64_t> variableId() const;
+
     /** True if this expression is an integer variable. */
     bool isIntegerVariable() const {
         return isIntegerExpr() && isVariable2();
@@ -1384,7 +1389,7 @@ LeafPtr makeVariable(const Type&, uint64_t id, const std::string &comment="", un
 LeafPtr makeConstant(const Type&, const Sawyer::Container::BitVector&, const std::string &comment="", unsigned flags=0);
 LeafPtr makeIntegerVariable(size_t nBits, const std::string &comment="", unsigned flags=0);
 LeafPtr makeIntegerVariable(size_t nBits, uint64_t id, const std::string &comment="", unsigned flags=0);
-LeafPtr makeIntegerConstant(size_t nBits, uint64_t n, const std::string &comment="", unsigned flags=0);
+LeafPtr makeIntegerConstant(size_t nBits, uint64_t value, const std::string &comment="", unsigned flags=0);
 LeafPtr makeIntegerConstant(const Sawyer::Container::BitVector&, const std::string &comment="", unsigned flags=0);
 LeafPtr makeBooleanConstant(bool, const std::string &comment="", unsigned flags=0);
 LeafPtr makeMemoryVariable(size_t addressWidth, size_t valueWidth, const std::string &comment="", unsigned flags=0);

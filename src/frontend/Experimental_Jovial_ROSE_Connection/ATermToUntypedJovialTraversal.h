@@ -319,6 +319,9 @@ ATbool traverse_NextFunction         (ATerm term, SgUntypedExpression* & expr);
 // 6.3.4 BYTE FUNCTION
 ATbool traverse_ByteFunction(ATerm term, SgUntypedExpression* & expr);
 
+// 6.3.7 SIZE FUNCTION
+ATbool traverse_SizeFunction(ATerm term, SgUntypedExpression* & expr);
+
 // 6.3.11 STATUS INVERSE FUNCTIONS
 ATbool traverse_StatusInverseFunction(ATerm term, SgUntypedExpression* & expr);
 

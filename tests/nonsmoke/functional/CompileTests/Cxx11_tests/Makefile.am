@@ -659,6 +659,10 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_485.C \
    test2019_486.C \
    test2019_487.C \
+   test2019_488.C \
+   test2019_489.C \
+   test2019_490.C \
+   test2019_491.C \
    test2019_493.C \
    test2019_494.C \
    test2019_495.C \
@@ -669,7 +673,13 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_500.C \
    test2019_501.C \
    test2019_502.C \
-   test2019_503.C 
+   test2019_503.C \
+   test2019_512.C \
+   test2019_513.C \
+   test2019_514.C \
+   test2019_515.C \
+   test2019_524.C \
+   test2020_01.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -777,11 +787,13 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_411.C \
    test2019_438.C \
    test2019_453.C \
-   test2019_488.C \
-   test2019_489.C \
-   test2019_490.C \
-   test2019_491.C \
-   test2019_492.C 
+   test2019_492.C \
+   test2019_504.C \
+   test2019_505.C \
+   test2019_506.C \
+   test2019_511.C \
+   test2019_516.C \
+   test2019_523.C 
 
 # NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
 
@@ -999,12 +1011,47 @@ test2019_198_ab: ../../testTranslator
 test2019_200_ab: ../../testTranslator
 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_200_a.C $(srcdir)/test2019_200_b.C
 
+test2019_507_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_507a.C $(srcdir)/test2019_507b.C
+
+test2019_508_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_508a.C $(srcdir)/test2019_508b.C
+
+test2019_509_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_509a.C $(srcdir)/test2019_509b.C
+
+test2019_510_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_510a.C $(srcdir)/test2019_510b.C
+
+test2019_517_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_517a.C $(srcdir)/test2019_517b.C
+
+test2019_518_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_518a.C $(srcdir)/test2019_518b.C
+
+test2019_519_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_519a.C $(srcdir)/test2019_519b.C
+
+test2019_520_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_520a.C $(srcdir)/test2019_520b.C
+
+test2019_521_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_521a.C $(srcdir)/test2019_521b.C
+
+test2019_522_ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_522a.C $(srcdir)/test2019_522b.C
+
 
 
 #########
 # Targets lists
 
-PASSING_TEST_Source_passed = ${TESTCODES:.C=.C.passed}
+# PASSING_TEST_Source_passed = ${TESTCODES:.C=.C.passed}
+
+MULTIFILE_TESTS = test2019_196_ab test2019_198_ab test2019_507_ab test2019_508_ab test2019_509_ab test2019_510_ab test2019_517_ab test2019_518_ab test2019_519_ab test2019_521_ab test2019_522_ab
+
+PASSING_TEST_Source_passed = ${TESTCODES:.C=.C.passed} $(MULTIFILE_TESTS)
+
 TEST_Source_passed = ${ALL_TESTCODES:.C=.C.passed}
 
 #########

@@ -2168,7 +2168,7 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
             if (debug) {
                 debug <<me <<bb->printableName() <<"\n";
                 BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
-                    debug <<me <<"  " <<unparseInstructionWithAddress(insn) <<"\n";
+                    debug <<me <<"  " <<partitioner.unparse(insn) <<"\n";
             }
             AddressIntervalSet bbVas = bb->insnAddresses();
             if (!bbVas.leastNonExistent(bb->address()).assignTo(startVa)) // address of first hole, or following address

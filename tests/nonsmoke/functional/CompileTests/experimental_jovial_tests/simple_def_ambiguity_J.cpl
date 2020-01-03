@@ -1,0 +1,8 @@
+START
+
+COMPOOL a'comp;
+
+DEF ITEM eyes'on'you aim'high = 3 ;
+DEF ITEM an'item ag'track ;
+
+TERM

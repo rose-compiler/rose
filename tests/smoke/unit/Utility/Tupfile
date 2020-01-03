@@ -1,4 +1,5 @@
 include_rules
+ifeq (@(ENABLE_TESTS),yes)
 
 ###############################################################################################################################
 # AstAttributeMechanism
@@ -29,6 +30,20 @@ run $(tool_compile_linkexe) testSort.C
 run $(test) testSort
 
 ###############################################################################################################################
+# tests for the built-in SHA-256 algorithm
+###############################################################################################################################
+
+run $(tool_compile_linkexe) testSha256Builtin.C
+
+# This tests a common empty input
+run $(test) testSha256Builtin -oempty --answer=testSha256Builtin-empty.ans \
+    ./testSha256Builtin hash 0
+
+# This test reported by Jim Leek had a buffer overflow.
+run $(test) testSha256Builtin -o9399 --answer=testSha256Builtin-9399.ans \
+    ./testSha256Builtin hash 9399
+
+###############################################################################################################################
 # tests the RangeMap class
 ###############################################################################################################################
 
@@ -37,3 +52,5 @@ run $(test) rangeMapTests --answer=rangeMapTests.ans
 
 run $(tool_compile_linkexe) testRangeMap.C
 run $(test) testRangeMap
+
+endif

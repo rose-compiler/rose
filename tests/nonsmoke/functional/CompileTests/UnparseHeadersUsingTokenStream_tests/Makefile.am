@@ -21,7 +21,15 @@ transformVariable_LDADD    = $(ROSE_LIBS)
 
 # Test specimens are actually directories, each of which contains a ROSE Test Harness "config" file.
 # TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13
+
+# DQ (11/5/2019): Currently failing tests: test9 test10 test11 test12 test13
+# TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16
+# TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test6 test7 test8 test14 test15 test16
+# TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16
+# TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test6 test14 test15 test16
+# TEST_SPECIMENS = test13
 TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 test12 test13 test14 test15 test16
+
 EXTRA_DIST += $(TEST_SPECIMENS) UnparseHeadersTransformVisitorUsingTokens.h
 
 # DQ (11/2/2018): Test with -rose:unparse_tokens

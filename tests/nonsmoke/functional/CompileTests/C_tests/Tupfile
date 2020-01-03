@@ -1,5 +1,6 @@
 include_rules
 
+ifeq (@(ENABLE_TESTS),yes)
 ifeq (@(ENABLE_CXX_ANALYSIS),yes)
 
 TESTCODES_REQUIRED_TO_PASS = \
@@ -677,4 +678,5 @@ run $(test) $(testTranslator) -o test_compile_and_link_with_NDEBUG \
 #    -x rose_test2015_162.c \
 #    $(testTranslator) -o test2015_162 test2015_162.c
 
+endif
 endif

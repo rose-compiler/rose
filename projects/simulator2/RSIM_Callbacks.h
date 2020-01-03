@@ -3,7 +3,7 @@
 
 #include "RSIM_SignalHandling.h"
 
-#include "callbacks.h" /* for ROSE_Callbacks namespace */
+#include "callbacks.h" /* for Rose::Callbacks namespace */
 
 /** Set of callbacks.  Callbacks are user-supplied objects whose operator() is invoked at particular points during a
  *  simulation.  The set of callbacks is organized into lists and all callbacks present on a list are invoked at the desired
@@ -45,9 +45,9 @@
  *      // Share a single callback among the simulator, the process, and all threads.
  *      virtual DisassembleAtOep *clone() { return this; }
  *
- *      // The actual callback. See ROSE_Callbacks::List (in the ROSE documentation)
+ *      // The actual callback. See Rose::Callbacks::List (in the ROSE documentation)
  *      // for why it's defined this way, particularly the Args argument.  The purpose
- *      // of the Boolean arg is described in ROSE_Callbacks::List::apply().
+ *      // of the Boolean arg is described in Rose::Callbacks::List::apply().
  *      virtual bool operator()(bool prev, const Args &args) {
  *          RSIM_Process *process = args.thread->get_process();
  *          if (process->get_ep_orig_va() == args.insn->get_address()) {
@@ -692,23 +692,23 @@ public:
      **************************************************************************************************************************/
 private:
     /* See init() if you add more vectors */
-    ROSE_Callbacks::List<InsnCallback> insn_pre;
-    ROSE_Callbacks::List<InsnCallback> insn_post;
+    Rose::Callbacks::List<InsnCallback> insn_pre;
+    Rose::Callbacks::List<InsnCallback> insn_post;
 
-    ROSE_Callbacks::List<MemoryCallback> memory_pre;
-    ROSE_Callbacks::List<MemoryCallback> memory_post;
+    Rose::Callbacks::List<MemoryCallback> memory_pre;
+    Rose::Callbacks::List<MemoryCallback> memory_post;
 
-    ROSE_Callbacks::List<SyscallCallback> syscall_pre;
-    ROSE_Callbacks::List<SyscallCallback> syscall_post;
+    Rose::Callbacks::List<SyscallCallback> syscall_pre;
+    Rose::Callbacks::List<SyscallCallback> syscall_post;
 
-    ROSE_Callbacks::List<SignalCallback> signal_pre;
-    ROSE_Callbacks::List<SignalCallback> signal_post;
+    Rose::Callbacks::List<SignalCallback> signal_pre;
+    Rose::Callbacks::List<SignalCallback> signal_post;
 
-    ROSE_Callbacks::List<ThreadCallback> thread_pre;
-    ROSE_Callbacks::List<ThreadCallback> thread_post;
+    Rose::Callbacks::List<ThreadCallback> thread_pre;
+    Rose::Callbacks::List<ThreadCallback> thread_post;
 
-    ROSE_Callbacks::List<ProcessCallback> process_pre;
-    ROSE_Callbacks::List<ProcessCallback> process_post;
+    Rose::Callbacks::List<ProcessCallback> process_pre;
+    Rose::Callbacks::List<ProcessCallback> process_post;
 };
 
 #endif /* ROSE_RSIM_Callbacks_H */

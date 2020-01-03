@@ -199,9 +199,9 @@ void CtxTransfer<CallContext>::transfer(Label lbl, ctx_lattice_t& lat)
   tmp.swap(lat);
 
   if (labeler.isFunctionCallLabel(lbl))
-    CallContext::callInvoke(tmp, lat, analysis, labeler, lbl);
+    allCallInvoke(tmp, lat, analysis, labeler, lbl);
   else
-    CallContext::callReturn(tmp, lat, analysis, labeler, lbl);
+    allCallReturn(tmp, lat, analysis, labeler, lbl);
 
   // Sub-lattices in tmp WILL BE DELETED !!!
 }

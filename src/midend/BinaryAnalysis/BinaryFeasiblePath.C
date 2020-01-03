@@ -255,10 +255,10 @@ private:
         FeasiblePath::VarDetail retval;
         retval.registerName = RegisterNames(regs)(reg);
         retval.firstAccessMode = accessMode;
-        if (pathInsnIndex_ == (size_t)(-1) && currentInstruction() == NULL) {
+        if (pathInsnIndex_ == INVALID_INDEX && currentInstruction() == NULL) {
             // no path position (i.e., present in initial state)
         } else {
-            if (pathInsnIndex_ != (size_t)(-1))
+            if (pathInsnIndex_ != INVALID_INDEX)
                 retval.firstAccessIdx = pathInsnIndex_;
             retval.firstAccessInsn = currentInstruction();
         }
@@ -271,7 +271,7 @@ private:
                                               const std::string &accessMode, size_t byteNumber=0, size_t nBytes=0) const {
         FeasiblePath::VarDetail retval;
         retval.firstAccessMode = accessMode;
-        if (pathInsnIndex_ != (size_t)(-1))
+        if (pathInsnIndex_ != INVALID_INDEX)
             retval.firstAccessIdx = pathInsnIndex_;
         retval.firstAccessInsn = currentInstruction();
 
@@ -444,7 +444,8 @@ public:
                 ASSERT_not_null(path_);
                 BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
                 ASSERT_not_null(cpu);
-                pathProcessor_->nullDeref(*fpAnalyzer_, *path_, cpu, nullPtrSolver(), FeasiblePath::READ, addr, currentInstruction());
+                pathProcessor_->nullDeref(*fpAnalyzer_, *path_, currentInstruction(), cpu, nullPtrSolver(),
+                                          FeasiblePath::READ, addr);
             }
         }
         
@@ -500,7 +501,7 @@ public:
             SmtSolver::Transaction tx(s);
             BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
             ASSERT_not_null(cpu);
-            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, cpu, s, FeasiblePath::READ, addr, retval);
+            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, currentInstruction(), cpu, s, FeasiblePath::READ, addr, retval);
         }
 
         return retval;
@@ -523,7 +524,8 @@ public:
                 ASSERT_not_null(path_);
                 BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
                 ASSERT_not_null(cpu);
-                pathProcessor_->nullDeref(*fpAnalyzer_, *path_, cpu, nullPtrSolver(), FeasiblePath::WRITE, addr, currentInstruction());
+                pathProcessor_->nullDeref(*fpAnalyzer_, *path_, currentInstruction(), cpu, nullPtrSolver(),
+                                          FeasiblePath::WRITE, addr);
             }
         }
 
@@ -550,7 +552,7 @@ public:
             SmtSolver::Transaction tx(s);
             BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
             ASSERT_not_null(cpu);
-            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, cpu, s, FeasiblePath::WRITE, addr, value);
+            pathProcessor_->memoryIo(*fpAnalyzer_, *path_, currentInstruction(), cpu, s, FeasiblePath::WRITE, addr, value);
         }
     }
 };
@@ -738,7 +740,7 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
     sg.insert(Switch("smt-solver")
                .argument("name", anyParser(settings.solverName))
                .doc("When analyzing paths for model checking, use this SMT solver.  This switch overrides the general, "
-                    "global SMT solver. Since an SMT solver is required for model checking, in the absense of any specified "
+                    "global SMT solver. Since an SMT solver is required for model checking, in the absence of any specified "
                     "solver the \"best\" solver is used.  The default solver is \"" + settings.solverName + "\"."));
 
     CommandLine::insertBooleanSwitch(sg, "null-derefs", settings.nullDeref.check,
@@ -1052,7 +1054,7 @@ FeasiblePath::printPathVertex(std::ostream &out, const P2::ControlFlowGraph::Ver
         case P2::V_BASIC_BLOCK: {
             BOOST_FOREACH (SgAsmInstruction *insn, pathVertex.value().bblock()->instructions()) {
                 out <<"    #" <<std::setw(5) <<std::left <<insnIdx++
-                    <<" " <<unparseInstructionWithAddress(insn) <<"\n";
+                    <<" " <<partitioner_->unparse(insn) <<"\n";
             }
             break;
         }
@@ -1281,7 +1283,7 @@ FeasiblePath::shouldInline(const P2::CfgPath &path, const P2::ControlFlowGraph::
         return false;
 
     // Don't let recursion get too deep
-    if (settings_.maxRecursionDepth < (size_t)(-1)) {
+    if (settings_.maxRecursionDepth < UNLIMITED) {
         ssize_t callDepth = path.callDepth(callee);
         ASSERT_require(callDepth >= 0);
         if ((size_t)callDepth >= settings_.maxRecursionDepth)
@@ -1535,7 +1537,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     }
 
     Stream debug(mlog[DEBUG]);
-    Stream info(mlog[INFO]);
+    Stream trace(mlog[TRACE]);
     std::string indent = debug ? "    " : "";
     if (paths_.isEmpty())
         return;
@@ -1771,10 +1773,12 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 P2::CfgConstEdgeSet callEdges = P2::findCallEdges(cfgBackVertex);
                 BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, callEdges.values()) {
                     if (shouldSummarizeCall(path.backVertex(), partitioner().cfg(), cfgCallEdge->target())) {
-                        info <<indent <<"summarizing function for edge " <<partitioner().edgeName(cfgCallEdge) <<"\n";
+                        SAWYER_MESG_OR(trace, debug) <<indent <<"summarizing function for edge "
+                                                     <<partitioner().edgeName(cfgCallEdge) <<"\n";
                         insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);
                     } else if (shouldInline(path, cfgCallEdge->target())) {
-                        info <<indent <<"inlining function call paths at vertex " <<partitioner().vertexName(backVertex) <<"\n";
+                        SAWYER_MESG_OR(trace, debug) <<indent <<"inlining function call paths at vertex "
+                                                     <<partitioner().vertexName(backVertex) <<"\n";
                         if (cfgCallEdge->target()->value().type() == P2::V_INDETERMINATE &&
                             cfgBackVertex->value().type() == P2::V_BASIC_BLOCK) {
                             // If the CFG has a vertex to an indeterminate function (e.g., from "call eax"), then instead of
@@ -1804,7 +1808,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                                                       cfgBackVertex, cfgEndAvoidVertices_, cfgAvoidEdges_);
                         }
                     } else {
-                        info <<indent <<"summarizing function for edge " <<partitioner().edgeName(cfgCallEdge) <<"\n";
+                        SAWYER_MESG_OR(trace, debug) <<indent <<"summarizing function for edge "
+                                                     <<partitioner().edgeName(cfgCallEdge) <<"\n";
                         insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);
                     }
                 }
@@ -1826,8 +1831,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 backVertex = path.backVertex();
                 cfgBackVertex = pathToCfg(backVertex);
 
-                info <<indent <<"paths graph has " <<StringUtility::plural(paths_.nVertices(), "vertices", "vertex")
-                     <<" and " <<StringUtility::plural(paths_.nEdges(), "edges") <<"\n";
+                SAWYER_MESG_OR(trace, debug) <<indent <<"paths graph has " <<StringUtility::plural(paths_.nVertices(), "vertices")
+                                             <<" and " <<StringUtility::plural(paths_.nEdges(), "edges") <<"\n";
                 SAWYER_MESG(debug) <<"    paths graph saved in " <<emitPathGraph(callId, ++graphId) <<"\n";
             }
 
