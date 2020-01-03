@@ -2482,6 +2482,23 @@ SageInterface::get_name ( const SgExpression* expr )
                break;
              }
 
+       // DQ (1/3/2020): Added support for SgThisExp.
+          case V_SgThisExp:
+             {
+               const SgThisExp* thisExp = isSgThisExp(expr);
+               ROSE_ASSERT(thisExp != NULL);
+
+               name = "_this_exp_for_";
+
+               SgClassSymbol* classSymbol = thisExp->get_class_symbol();
+               ROSE_ASSERT(classSymbol != NULL);
+            // name += get_name(classSymbol->get_name());
+            // string class_name = classSymbol->get_name();
+            // name += class_name;
+               name += classSymbol->get_name();
+               break;
+             }
+
           default:
              {
             // Nothing to do for other IR nodes
@@ -8213,7 +8230,7 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
                ROSE_ASSERT(baseType != NULL);
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
-               printf (" --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+               printf (" --- baseType = %p = %s name = %s \n",baseType,baseType->class_name().c_str(),get_name(baseType).c_str());
 #endif
                classType = isSgClassType(baseType);
              }
@@ -8222,7 +8239,7 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
           ROSE_ASSERT(temp_lhs != NULL);
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
-          printf (" --- temp_lhs = %p = %s \n",temp_lhs,temp_lhs->class_name().c_str());
+          printf (" --- temp_lhs = %p = %s name = %s \n",temp_lhs,temp_lhs->class_name().c_str(),get_name(temp_lhs).c_str());
 #endif
        // returnTypeChain.push_front(classType);
           if (classType != NULL)
@@ -8299,9 +8316,17 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
           ROSE_ASSERT(type != NULL);
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
-          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs type = %p = %s \n",type,type->class_name().c_str());
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs type = %p = %s name = %s \n",type,type->class_name().c_str(),get_name(type).c_str());
 #endif
-          SgClassType* classType = isSgClassType(type);
+
+       // DQ (1/3/2019): Need to strip the type to get to a possible SgClassType.
+          SgType* stripped_type = type->stripType(SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_MODIFIER_TYPE);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): stripped_type = %p = %s name = %s \n",stripped_type,stripped_type->class_name().c_str(),get_name(stripped_type).c_str());
+#endif
+       // SgClassType* classType = isSgClassType(type);
+          SgClassType* classType = isSgClassType(stripped_type);
        // returnTypeChain.push_front(classType);
           if (classType != NULL)
              {
