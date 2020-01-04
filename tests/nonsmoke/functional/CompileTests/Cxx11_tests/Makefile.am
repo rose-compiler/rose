@@ -679,7 +679,19 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_514.C \
    test2019_515.C \
    test2019_524.C \
-   test2020_01.C 
+   test2020_01.C \
+   test2020_02.C \
+   test2020_03.C \
+   test2020_04.C \
+   test2020_05.C \
+   test2020_06.C \
+   test2020_07.C \
+   test2020_08.C \
+   test2020_09.C \
+   test2020_10.C \
+   test2020_11.C \
+   test2020_12.C \
+   test2020_13.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
