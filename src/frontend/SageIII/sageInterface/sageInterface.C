@@ -19536,7 +19536,9 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
     }
 
      SgStatementPtrList & srcStmts = sourceBlock->get_statements();
+     std::vector <SgInitializedName*> initname_vec; 
 
+     SgSymbolTable* s_table = sourceBlock->get_symbol_table();
 //     cout<<"debug SageInterface::moveStatementsBetweenBlocks() number of stmts = "<< srcStmts.size() <<endl;
      for (SgStatementPtrList::iterator i = srcStmts.begin(); i != srcStmts.end(); i++)
         {
@@ -19590,20 +19592,24 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                            // its class, etc. I don't want to worry about those cases right now.
 
                            SgInitializedName * init_name = (*ii);
-//                         ROSE_ASSERT(init_name ->get_scope() == sourceBlock);
                            
-                           // Must also move the symbol into the new scope, Liao 2019/8/14
+//                         ROSE_ASSERT(init_name ->get_scope() == sourceBlock); // the sourceBlock is transformation generated basic block. the original scope of init_name is the one in the original scource code.
+//                           SgSymbol* symbol = s_table->find(init_name); // this will not return the right symbol
+ //                          ROSE_ASSERT (symbol != NULL);
+                           
+                           // Must also move the symbol into the source block, Liao 2019/8/14
                            SgVariableSymbol* var_sym = isSgVariableSymbol(init_name -> search_for_symbol_from_symbol_table ()) ;
                            ROSE_ASSERT (var_sym);
                            SgScopeStatement * old_scope = var_sym -> get_scope();
-                           if (old_scope != targetBlock)
+#if 1 // we will later move entire source symbol table to target scope,  so we move symbol to the sourceBlock first here.
+                           if (old_scope != sourceBlock)
                            {
                              old_scope->remove_symbol (var_sym);
-                             targetBlock ->insert_symbol(init_name->get_name(), var_sym);
+                             sourceBlock ->insert_symbol(init_name->get_name(), var_sym);
                            }
-
+#endif
                            init_name->set_scope(targetBlock);
-
+                           initname_vec.push_back(init_name);
                          }
                          break;
                        }
@@ -19635,6 +19641,15 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
 
   // Move the symbol table
      ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
+     // Liao, 11/26/2019 make sure the symbol table has symbols for init names before and after the move
+     for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
+     {
+       SgInitializedName* iname = *iter; 
+       SgSymbol* symbol = s_table->find(iname);
+       ROSE_ASSERT (symbol != NULL);
+     }
+
+
      targetBlock->set_symbol_table(sourceBlock->get_symbol_table());
 
      ROSE_ASSERT(sourceBlock != NULL);
@@ -19649,7 +19664,23 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
   // DQ (9/23/2011): Reset with a valid symbol table.
      sourceBlock->set_symbol_table(new SgSymbolTable());
      sourceBlock->get_symbol_table()->set_parent(sourceBlock);
+#if 1
+     ROSE_ASSERT (targetBlock->get_symbol_table() == s_table);
+     for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
+     {
+       SgInitializedName* iname = *iter; 
+       SgSymbol* symbol = s_table->find(iname);
+       ROSE_ASSERT (symbol != NULL);
+     }
 
+     // Liao, 11/26/2019 make sure init names have symbols after the move.
+     for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
+     {
+       SgInitializedName* iname = *iter; 
+       SgSymbol* symbol = iname->get_symbol_from_symbol_table();
+       ROSE_ASSERT (symbol != NULL);
+     }
+#endif
      // Liao 2/4/2009
      // Finally , move preprocessing information attached inside the source block to the target block
      // Outliner uses this function to move a code block to the outlined function.
