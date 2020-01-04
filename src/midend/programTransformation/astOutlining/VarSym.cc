@@ -127,6 +127,14 @@ getVarSym_const (const SgNode* n)
       //v_sym = getVarSymFromName_const (isSgInitializedName (n));
       SgSymbol* symbol = isSgInitializedName(n)->get_symbol_from_symbol_table();
       v_sym = isSgVariableSymbol(symbol);
+      // TODO: support references to enumerate types in a code block
+      SgEnumFieldSymbol * efs = isSgEnumFieldSymbol(symbol);
+      if (efs != NULL)
+      {
+        cerr<<"Warning: astOutlining/VarSym.cc getVarSym_const() found a SgEnumFieldSymbol, which is not yet supported!"<< endl;
+        return NULL;
+      }
+
       if (v_sym == NULL) 
       {
         cerr<<"Warning: astOutlining/VarSym.cc getVarSym_const() did not find symbol for:"<<
