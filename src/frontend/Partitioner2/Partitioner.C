@@ -686,7 +686,7 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
         if (insn==NULL)                                                 // case: no instruction available
             goto done;
         retval->append(*this, insn);
-        if (insn->isUnknown())                                          // case: "unknown" instruction
+        if (insn->isUnknown() && !settings_.ignoringUnknownInsns)       // case: "unknown" instruction
             goto done;
 
         // Give user chance to adjust basic block successors and/or pre-compute cached analysis results
@@ -956,7 +956,12 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level pr
 
     BasicBlockSemantics sem = bb->semantics();
     BaseSemantics::StatePtr state;
-    if (precision > Precision::LOW && (state = sem.finalState())) {
+    if (settings_.ignoringUnknownInsns && lastInsn->isUnknown()) {
+        // Special case for "unknown" instructions... the successor is assumed to be the fall-through address.
+        rose_addr_t va = lastInsn->get_address() + lastInsn->get_size();
+        BaseSemantics::RiscOperatorsPtr ops = newOperators();
+        successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->number_(REG_IP.nBits(), va))));
+    } else if (precision > Precision::LOW && (state = sem.finalState())) {
         // Use our own semantics if we have them.
         ASSERT_not_null(sem.dispatcher);
         ASSERT_not_null(sem.operators);
@@ -980,21 +985,11 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level pr
 
             successors.push_back(BasicBlock::Successor(pc));
         }
-
     } else {
-        // We don't have semantics, so delegate to the SgAsmInstruction subclass (which might try some other semantics).
+        // We don't have semantics, so naively look at just the last instruction.
         bool complete = true;
-#if 0 // [Robb P. Matzke 2014-08-16]
-        // Look at the entire basic block to try to figure out the successors.  We already did something very similar above, so
-        // if our try failed then this one probably will too.  In fact, this one will be even slower because it must reprocess
-        // the entire basic block each time it's called because it is stateless, whereas ours above only needed to process each
-        // instruction as it was appended to the block.
-        std::set<rose_addr_t> successorVas = lastInsn->getSuccessors(bb->instructions(), &complete, memoryMap_);
-#else
-        // Look only at the final instruction of the basic block.  This is probably quite fast compared to looking at a whole
-        // basic block.
         std::set<rose_addr_t> successorVas = lastInsn->getSuccessors(&complete);
-#endif
+
         BaseSemantics::RiscOperatorsPtr ops = newOperators();
         BOOST_FOREACH (rose_addr_t va, successorVas)
             successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->number_(REG_IP.nBits(), va))));

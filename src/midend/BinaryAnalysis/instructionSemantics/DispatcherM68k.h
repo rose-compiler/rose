@@ -123,6 +123,35 @@ public:
 
     virtual BaseSemantics::SValuePtr read(SgAsmExpression*, size_t value_nbits, size_t addr_nbits=0) ROSE_OVERRIDE;
 
+    /** Set or clear FPSR EXC INAN bit. */
+    void updateFpsrExcInan(const BaseSemantics::SValuePtr &a, SgAsmType *aType,
+                           const BaseSemantics::SValuePtr &b, SgAsmType *bType);
+
+    /** Set or clear FPSR EXC IDE bit. */
+    void updateFpsrExcIde(const BaseSemantics::SValuePtr &a, SgAsmType *aType,
+                          const BaseSemantics::SValuePtr &b, SgAsmType *bType);
+
+    /** Set or clear FPSR EXC OVFL bit.
+     *
+     *  Set if the destination is a floating-point data register or memory (@p dstType) and the intermediate result (@p
+     *  intermediate) has an exponent that is greater than or equal to the maximum exponent value of the selected rounding
+     *  precision (@p rounding) */
+    void updateFpsrExcOvfl(const BaseSemantics::SValuePtr &intermediate, SgAsmType *valueType,
+                           SgAsmType *rounding, SgAsmType *dstType);
+
+    /** Set or clear FPSR EXC UVFL bit.
+     *
+     *  Set if the intermediate result of an arithmetic instruction is too small to be represented as a normalized number in a
+     *  floating-point register or memory using the selected rounding precision, that is, when the intermediate result exponent
+     *  is less than or equal to the minimum exponent value of the selected rounding precision. Cleared otherwise. Underflow
+     *  can ony occur when the desitnation format is single or double precision. When the destination is byte, word, or
+     *  longword, the conversion ounderflows to zero without causing an underflow or an operand error. */
+    void updateFpsrExcUnfl(const BaseSemantics::SValuePtr &intermediate, SgAsmType *valueType,
+                           SgAsmType *rounding, SgAsmType *dstType);
+
+    /** Set or clear FPSR EXC INEX bit. */
+    void updateFpsrExcInex();
+
     /** Determines if an instruction should branch. */
     BaseSemantics::SValuePtr condition(M68kInstructionKind, BaseSemantics::RiscOperators*);
 

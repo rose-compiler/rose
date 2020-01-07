@@ -287,7 +287,9 @@ public:
      *  A floating point type describes an IEEE-754 style of value and is parameterized by two properties: the width of the
      *  exponent field, and the width of the significand field including the implied bit.  The actual storage size of the
      *  floating point value is the sum of these two widths since although the implied bit is not stored, a sign bit is
-     *  stored. */
+     *  stored. Due to limitations of SMT-LIB, ROSE's symbolic layer doesn't handle all IEEE-754 floating-point types. In
+     *  particular, the symbolic layer supports only binary formats and uses the implied bit convention for the integer part of
+     *  the significand. Gradual underflow capability (i.e., denormalized significands) is assumed. */
     static Type floatingPoint(size_t exponentWidth, size_t significandWidth) {
         return Type(FP, 1 /*sign bit*/ + exponentWidth + significandWidth - 1 /*implied bit*/, exponentWidth);
     }

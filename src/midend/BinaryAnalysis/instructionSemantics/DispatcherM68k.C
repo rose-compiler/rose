@@ -1263,38 +1263,46 @@ struct IP_fp_add: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         ASSERT_require(isSgAsmDirectRegisterExpression(args[1]));
-        SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type());
-        SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
-        SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
-        SValuePtr a;
-        if (rre && rre->get_descriptor().majorNumber() == m68k_regclass_fpr) {
-            // F{D,S}ADD.D FPx, FPy
-            a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
-        } else {
-            // F{D,S}ADD.{B,W,L,S,D} ea, FPy
-            if (srcType) {
-                a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
-            } else {
-                a = ops->fpFromInteger(d->read(args[0], args[0]->get_nBits()), dstType);
-            }
-        }
-        SValuePtr b = d->read(args[1], args[1]->get_nBits());
-        SValuePtr result = ops->fpAdd(a, b, dstType);
-        d->write(args[1], result);
-        d->adjustFpConditionCodes(result, dstType);
 
+        // The actual operation
+        SgAsmFloatType *opType = isSgAsmFloatType(args[1]->get_type());
+        ASSERT_not_null(opType);
+        SValuePtr a = ops->convert(d->read(args[0], args[0]->get_nBits()), args[0]->get_type(), opType);
+        SValuePtr b = ops->convert(d->read(args[1], args[1]->get_nBits()), args[1]->get_type(), opType);
+        SValuePtr result = ops->fpAdd(b, a, opType);
+
+        // Rounding
+        SgAsmFloatType *roundingType = NULL;
+        if (m68k_fssub == kind) {
+            roundingType = SageBuilderAsm::buildIeee754Binary32();
+        } else {
+            roundingType = opType;
+        }
+        SValuePtr rounded = ops->convert(result, opType, roundingType);
+
+        // Save result
+        SValuePtr dst = ops->convert(rounded, roundingType, args[1]->get_type());
+        if (kind != m68k_fcmp)
+            d->write(args[1], dst);
+
+        // Update status flags
         ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(result, dstType));
-        ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(result, dstType));
-        SValuePtr v1 = ops->fpSign(b, dstType);
-        SValuePtr v2 = ops->xor_(ops->fpSign(a, dstType), v1);
-        SValuePtr v3 = ops->and_(ops->fpIsInfinity(b, dstType), v2);
-        ops->writeRegister(d->REG_EXC_OPERR,            // if a and b are opposite signed infinities
-                           ops->and_(ops->fpIsInfinity(a, dstType), v3));
-        ops->writeRegister(d->REG_EXC_OVFL,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-04]
-        ops->writeRegister(d->REG_EXC_UNFL,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-04]
-        ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-03]
+        d->updateFpsrExcInan(a, opType, b, opType);
+        d->updateFpsrExcIde(a, opType, b, opType);
+        d->updateFpsrExcOvfl(result, opType, roundingType, args[1]->get_type());
+        d->updateFpsrExcUnfl(result, opType, roundingType, args[1]->get_type());
+        ops->writeRegister(d->REG_EXC_DZ, ops->boolean_(false));
+        d->updateFpsrExcInex();
+
+        SValuePtr aInf = ops->fpIsInfinity(a, opType);
+        SValuePtr bInf = ops->fpIsInfinity(b, opType);
+        SValuePtr aSign = ops->fpSign(a, opType);
+        SValuePtr bSign = ops->fpSign(b, opType);
+        SValuePtr bothInfinite = ops->and_(aInf, bInf);
+        SValuePtr opositeSign = ops->xor_(aSign, bSign);
+        ops->writeRegister(d->REG_EXC_OPERR, ops->and_(bothInfinite, opositeSign));
+
+        d->adjustFpConditionCodes(dst, isSgAsmFloatType(args[1]->get_type()));
         d->accumulateFpExceptions();
     }
 };
@@ -1706,26 +1714,36 @@ struct IP_fint: P {
 
 struct IP_fintrz: P {
     void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
-        ASSERT_not_null(dstType);
-        SValuePtr a;
-        if (SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type())) {
-            a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
+        SgAsmExpression *srcArg = args[0];
+        SgAsmExpression *dstArg = NULL;
+        if (args.size() == 2) {
+            assert_args(insn, args, 2);
+            dstArg = args[1];
         } else {
-            a = ops->fpFromInteger(d->read(args[0], args[0]->get_nBits()), dstType);
+            assert_args(insn, args, 1);
+            dstArg = args[0];
         }
-        SValuePtr result = ops->fpRoundTowardZero(a, dstType);
-        d->write(args[1], result);
-        d->adjustFpConditionCodes(result, dstType);
-        ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(result, dstType));
-        ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(result, dstType));
+
+        // The actual operation
+        SgAsmFloatType *opType = isSgAsmFloatType(dstArg->get_type());
+        ASSERT_not_null(opType);
+        SValuePtr a = ops->convert(d->read(srcArg, srcArg->get_nBits()), srcArg->get_type(), opType);
+        SValuePtr result = ops->fpRoundTowardZero(a, opType);
+
+        // Save result
+        d->write(dstArg, result);
+
+        // Update status flags
+        ops->writeRegister(d->REG_EXC_BSUN, ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_INAN, ops->fpIsNan(result, opType));
+        ops->writeRegister(d->REG_EXC_IDE, ops->fpIsDenormalized(result, opType));
         ops->writeRegister(d->REG_EXC_OPERR, ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_OVFL,  ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_UNFL,  ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-03]
+        ops->writeRegister(d->REG_EXC_OVFL, ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_UNFL, ops->boolean_(false));
+        ops->writeRegister(d->REG_EXC_DZ, ops->boolean_(false));
+        d->updateFpsrExcInex();
+        
+        d->adjustFpConditionCodes(result, opType);
         d->accumulateFpExceptions();
     }
 };
@@ -1737,61 +1755,49 @@ struct IP_fp_move: P {
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type());
-        size_t srcNBits = args[0]->get_nBits();         // null if src is not a floating-point value
-        SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
-        SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
-        SValuePtr result, src;
-        if (rre && rre->get_descriptor().majorNumber() == m68k_regclass_fpr) {
-            if (dstType) {
-                // F{D,S}MOVE.{D,S} FPx, FPy
-                // FMOVE.{D,S} FPx, ea
-                src = d->read(args[0], srcNBits);
-                result = ops->fpConvert(src, srcType, dstType);
-            } else {
-                // FMOVE.{B,W,L} FPx, ea
-                ASSERT_not_null(srcType);
-                SValuePtr dflt = ops->undefined_(args[1]->get_nBits());
-                result = ops->fpToInteger(d->read(args[0], srcNBits), srcType, dflt);
-            }
+        ASSERT_not_null(args[0]->get_type());
+        ASSERT_not_null(args[1]->get_type());
+
+        SValuePtr src = d->read(args[0], args[0]->get_nBits());
+
+        // The "format" type from the M68k documentation. For register-to-memory or memory-to-register instructions this is
+        // the type of the memory operand. For register-to-register instructions this is either the "D" or "S" type.
+        SgAsmType *format = NULL;
+        if (isSgAsmMemoryReferenceExpression(args[0])) {
+            format = args[0]->get_type();
+        } else if (isSgAsmMemoryReferenceExpression(args[1])) {
+            format = args[1]->get_type();
+        } else if (m68k_fsmove == kind) {
+            format = SageBuilderAsm::buildIeee754Binary32();
         } else {
-            ASSERT_require2(isSgAsmDirectRegisterExpression(args[1]), insn->toString());
-            if (!dstType)
-                dstType = SageBuilderAsm::buildIeee754Binary64();
-            if (srcType) {
-                // F{D,S}MOVE.{D,S} ea, FPy
-                // FMOVE.{D,S} ea, FPy
-                src = d->read(args[0], srcNBits);
-                result = ops->fpConvert(src, srcType, dstType);
-            } else {
-                // F{D,S}MOVE.{B,W,L} ea, FPy
-                // FMOVE.{B,W,L} ea, FPy
-                result = ops->fpFromInteger(d->read(args[0], srcNBits), dstType);
-            }
+            format = args[1]->get_type();
         }
 
-        d->write(args[1], result);
+        // Convert the source type using the format a.k.a., "rounding mode" of the instruction
+        SValuePtr intermediate = ops->convert(src, args[0]->get_type(), format);
 
-        if (dstType) {                                  // destination is D or S
-            ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
-            ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(result, dstType));
-            ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(result, dstType));
+        // Convert the intermediate value to the destination type and save it
+        SValuePtr dst = ops->convert(intermediate, format, args[1]->get_type());
+        d->write(args[1], dst);
+
+        // Update status flags
+        ops->writeRegister(d->REG_EXC_BSUN, ops->boolean_(false));
+        if (SgAsmFloatType *formatFp = isSgAsmFloatType(format)) {
+            ops->writeRegister(d->REG_EXC_INAN, ops->fpIsNan(intermediate, formatFp));
             ops->writeRegister(d->REG_EXC_OPERR, ops->boolean_(false));
-            ops->writeRegister(d->REG_EXC_OVFL,  ops->boolean_(false));
-            ops->writeRegister(d->REG_EXC_UNFL,  ops->boolean_(false));
-            ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
-            ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1)); // FIXME[Robb P. Matzke 2015-08-03]
-        } else if (src) {                                             // destination is B, W, or L
-            ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
-            ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(src, dstType));
-            ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(src, dstType));
-            ops->writeRegister(d->REG_EXC_OPERR, ops->boolean_(false));
-            ops->writeRegister(d->REG_EXC_OVFL,  ops->undefined_(1)); // FIXME[Robb P. Matzke 2015-08-05]
-            ops->writeRegister(d->REG_EXC_UNFL,  ops->undefined_(1)); // FIXME[Robb P. Matzke 2015-08-05]
-            ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
-            ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1)); // FIXME[Robb P. Matzke 2015-08-03]
+        } else {
+            ops->writeRegister(d->REG_EXC_INAN, ops->boolean_(false));
+            // FIXME[Robb Matzke 2020-01-03]: Unclear documentation says "Set if source operand is x or if destination size
+            // is exceeded after conversion and rounding; cleared otherwise."  What is "x" and by "size" do they mean the
+            // width of the data, magnitude of the floating point value, or what?
+            ops->writeRegister(d->REG_EXC_OPERR, ops->undefined_(1));
         }
-
+        d->updateFpsrExcIde(src, args[0]->get_type(), dst, args[1]->get_type());
+        d->updateFpsrExcOvfl(intermediate, format, format, args[1]->get_type());
+        d->updateFpsrExcUnfl(intermediate, format, format, args[1]->get_type());
+        ops->writeRegister(d->REG_EXC_DZ, ops->boolean_(false));
+        d->updateFpsrExcInex();
+        
         d->accumulateFpExceptions();
     }
 };
@@ -1818,45 +1824,47 @@ struct IP_fp_mul: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         ASSERT_require(isSgAsmDirectRegisterExpression(args[1]));
-        SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type());
-        SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
-        ASSERT_not_null(dstType);
-        SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
-        SValuePtr a;
-        if (rre && rre->get_descriptor().majorNumber() == m68k_regclass_fpr) {
-            // F{D,S}MUL.{D,S} FPx, FPy
-            a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
+
+        // The actual operation
+        SgAsmFloatType *opType = isSgAsmFloatType(args[1]->get_type());
+        ASSERT_not_null(opType);
+        SValuePtr a = ops->convert(d->read(args[0], args[0]->get_nBits()), args[0]->get_type(), opType);
+        SValuePtr b = ops->convert(d->read(args[1], args[1]->get_nBits()), args[1]->get_type(), opType);
+        SValuePtr result = ops->fpMultiply(b, a, opType);
+
+        // Rounding
+        SgAsmFloatType *roundingType = NULL;
+        if (m68k_fssub == kind) {
+            roundingType = SageBuilderAsm::buildIeee754Binary32();
         } else {
-            // F{D,S}MUL.{B,W,L,D,S} ea, FPy
-            if (srcType) {
-                a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
-            } else {
-                a = ops->fpFromInteger(d->read(args[0], args[0]->get_nBits()), dstType);
-            }
+            roundingType = opType;
         }
-        SValuePtr b = d->read(args[1], args[1]->get_nBits());
-        SValuePtr result = ops->fpMultiply(a, b, dstType);
-        d->write(args[1], result);
-        d->adjustFpConditionCodes(result, dstType);
+        SValuePtr rounded = ops->convert(result, opType, roundingType);
 
-        // Temporary exponent (without bias) wide enough to prevent overflow
-        ASSERT_require(dstType->exponentBits().size() < 64); // leave room for a sign bit
-        SValuePtr maxExponent = ops->number_(64, IntegerOps::genMask<uint64_t>(dstType->exponentBits().size()-1));
-        SValuePtr minExponent = ops->invert(maxExponent); //  -(2^exponentSize)
-        SValuePtr v1 = ops->signExtend(ops->fpEffectiveExponent(b, dstType), 64);
-        SValuePtr wideExponent = ops->add(ops->signExtend(ops->fpEffectiveExponent(a, dstType), 64), v1);
+        // Save result
+        SValuePtr dst = ops->convert(rounded, roundingType, args[1]->get_type());
+        d->write(args[1], dst);
 
+        // Update status flags
         ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(result, dstType));
-        ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(result, dstType));
-        SValuePtr v2 = ops->fpIsZero(b, dstType);
-        SValuePtr v3 = ops->and_(ops->fpIsInfinity(a, dstType), v2);
-        SValuePtr v4 = ops->fpIsInfinity(b, dstType);
-        ops->writeRegister(d->REG_EXC_OPERR, ops->or_(ops->and_(ops->fpIsZero(a, dstType), v4), v3));
-        ops->writeRegister(d->REG_EXC_OVFL,  ops->isSignedGreaterThanOrEqual(wideExponent, maxExponent));
-        ops->writeRegister(d->REG_EXC_UNFL,  ops->isSignedLessThanOrEqual(wideExponent, minExponent));
-        ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-03]
+        d->updateFpsrExcInan(a, opType, b, opType);
+        d->updateFpsrExcIde(a, opType, b, opType);
+        d->updateFpsrExcOvfl(result, opType, roundingType, args[1]->get_type());
+        d->updateFpsrExcUnfl(result, opType, roundingType, args[1]->get_type());
+        ops->writeRegister(d->REG_EXC_DZ, ops->boolean_(false));
+        d->updateFpsrExcInex();
+
+        // ColdFire documentation says "set for 0 x x; cleared otherwise" but I think they mean "set for zero times infinity or
+        // infinity times zero; cleared otherwise". [Robb Matzke 2020-01-03]
+        SValuePtr aIsZero = ops->fpIsZero(a, opType);
+        SValuePtr aIsInf = ops->fpIsInfinity(a, opType);
+        SValuePtr bIsZero = ops->fpIsZero(b, opType);
+        SValuePtr bIsInf = ops->fpIsInfinity(b, opType);
+        SValuePtr zeroInf = ops->and_(aIsZero, bIsInf);
+        SValuePtr infZero = ops->and_(aIsInf, bIsZero);
+        ops->writeRegister(d->REG_EXC_OPERR, ops->or_(zeroInf, infZero));
+
+        d->adjustFpConditionCodes(dst, isSgAsmFloatType(args[1]->get_type()));
         d->accumulateFpExceptions();
     }
 };
@@ -1925,39 +1933,46 @@ struct IP_fp_sub: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         ASSERT_require(isSgAsmDirectRegisterExpression(args[1]));
-        SgAsmFloatType *srcType = isSgAsmFloatType(args[0]->get_type());
-        SgAsmFloatType *dstType = isSgAsmFloatType(args[1]->get_type());
-        SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0]);
-        SValuePtr a;
-        if (rre && rre->get_descriptor().majorNumber() == m68k_regclass_fpr) {
-            // F{D,S}SUB.D FPx, FPy
-            a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
-        } else {
-            // F{D,S}SUB.{B,W,L,S,D} ea, FPy
-            if (srcType) {
-                a = ops->fpConvert(d->read(args[0], args[0]->get_nBits()), srcType, dstType);
-            } else {
-                a = ops->fpFromInteger(d->read(args[0], args[0]->get_nBits()), dstType);
-            }
-        }
-        SValuePtr b = d->read(args[1], args[1]->get_nBits());
-        SValuePtr result = ops->fpSubtract(b, a, dstType);
-        if (kind != m68k_fcmp)
-            d->write(args[1], result);
-        d->adjustFpConditionCodes(result, dstType);
 
+        // The actual operation
+        SgAsmFloatType *opType = isSgAsmFloatType(args[1]->get_type());
+        ASSERT_not_null(opType);
+        SValuePtr a = ops->convert(d->read(args[0], args[0]->get_nBits()), args[0]->get_type(), opType);
+        SValuePtr b = ops->convert(d->read(args[1], args[1]->get_nBits()), args[1]->get_type(), opType);
+        SValuePtr result = ops->fpSubtract(b, a, opType);
+
+        // Rounding
+        SgAsmFloatType *roundingType = NULL;
+        if (m68k_fssub == kind) {
+            roundingType = SageBuilderAsm::buildIeee754Binary32();
+        } else {
+            roundingType = opType;
+        }
+        SValuePtr rounded = ops->convert(result, opType, roundingType);
+
+        // Save result
+        SValuePtr dst = ops->convert(rounded, roundingType, args[1]->get_type());
+        if (kind != m68k_fcmp)
+            d->write(args[1], dst);
+
+        // Update status flags
         ops->writeRegister(d->REG_EXC_BSUN,  ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_INAN,  ops->fpIsNan(result, dstType));
-        ops->writeRegister(d->REG_EXC_IDE,   ops->fpIsDenormalized(result, dstType));
-        SValuePtr v1 = ops->fpSign(b, dstType);
-        SValuePtr v2 = ops->invert(ops->xor_(ops->fpSign(a, dstType), v1));
-        SValuePtr v3 = ops->and_(ops->fpIsInfinity(b, dstType), v2);
-        ops->writeRegister(d->REG_EXC_OPERR,            // if a and b are like signed infinities
-                           ops->and_(ops->fpIsInfinity(a, dstType), v3));
-        ops->writeRegister(d->REG_EXC_OVFL,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-04]
-        ops->writeRegister(d->REG_EXC_UNFL,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-04]
-        ops->writeRegister(d->REG_EXC_DZ,    ops->boolean_(false));
-        ops->writeRegister(d->REG_EXC_INEX,  ops->undefined_(1));// FIXME[Robb P. Matzke 2015-08-03]
+        d->updateFpsrExcInan(a, opType, b, opType);
+        d->updateFpsrExcIde(a, opType, b, opType);
+        d->updateFpsrExcOvfl(result, opType, roundingType, args[1]->get_type());
+        d->updateFpsrExcUnfl(result, opType, roundingType, args[1]->get_type());
+        ops->writeRegister(d->REG_EXC_DZ, ops->boolean_(false));
+        d->updateFpsrExcInex();
+        
+        SValuePtr aInf = ops->fpIsInfinity(a, opType);
+        SValuePtr bInf = ops->fpIsInfinity(b, opType);
+        SValuePtr aSign = ops->fpSign(a, opType);
+        SValuePtr bSign = ops->fpSign(b, opType);
+        SValuePtr bothInfinite = ops->and_(aInf, bInf);
+        SValuePtr sameSign = ops->invert(ops->xor_(aSign, bSign));
+        ops->writeRegister(d->REG_EXC_OPERR, ops->and_(bothInfinite, sameSign));
+
+        d->adjustFpConditionCodes(dst, isSgAsmFloatType(args[1]->get_type()));
         d->accumulateFpExceptions();
     }
 };
@@ -3890,6 +3905,131 @@ DispatcherM68k::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*
         }
     }
     return Dispatcher::read(e, value_nbits, addr_nbits);
+}
+
+
+void
+DispatcherM68k::updateFpsrExcInan(const SValuePtr &a, SgAsmType *aType, const SValuePtr &b, SgAsmType *bType) {
+    // Set FPSR EXC INAN bit if either argument is nan; cleared otherwise.
+    ASSERT_not_null(a);
+    ASSERT_not_null(aType);
+    ASSERT_require(a->get_width() == aType->get_nBits());
+    ASSERT_not_null(b);
+    ASSERT_not_null(bType);
+    ASSERT_require(b->get_width() == bType->get_nBits());
+
+
+    SValuePtr aIsNan;
+    if (SgAsmFloatType *aFpType = isSgAsmFloatType(aType)) {
+        aIsNan = operators->fpIsNan(a, aFpType);
+    } else {
+        aIsNan = operators->boolean_(false);
+    }
+
+    SValuePtr bIsNan;
+    if (SgAsmFloatType *bFpType = isSgAsmFloatType(bType)) {
+        bIsNan = operators->fpIsNan(b, bFpType);
+    } else {
+        bIsNan = operators->boolean_(false);
+    }
+
+    SValuePtr isNaN = operators->or_(aIsNan, bIsNan);
+    operators->writeRegister(REG_EXC_INAN, isNaN);
+}
+
+void
+DispatcherM68k::updateFpsrExcIde(const SValuePtr &a, SgAsmType *aType, const SValuePtr &b, SgAsmType *bType) {
+    // Set FPSR EXC IDE bit if either argument is denormalized; cleared otherwise.
+    ASSERT_not_null(a);
+    ASSERT_not_null(aType);
+    ASSERT_require(a->get_width() == aType->get_nBits());
+    ASSERT_not_null(b);
+    ASSERT_not_null(bType);
+    ASSERT_require(b->get_width() == bType->get_nBits());
+
+    SValuePtr aIsDenorm;
+    if (SgAsmFloatType *aFpType = isSgAsmFloatType(aType)) {
+        aIsDenorm = operators->fpIsDenormalized(a, aFpType);
+    } else {
+        aIsDenorm = operators->boolean_(false);
+    }
+
+    SValuePtr bIsDenorm;
+    if (SgAsmFloatType *bFpType = isSgAsmFloatType(bType)) {
+        bIsDenorm = operators->fpIsDenormalized(b, bFpType);
+    } else {
+        bIsDenorm = operators->boolean_(false);
+    }
+
+    SValuePtr isDenorm = operators->or_(aIsDenorm, bIsDenorm);
+    operators->writeRegister(REG_EXC_IDE, isDenorm);
+}
+
+void
+DispatcherM68k::updateFpsrExcOvfl(const SValuePtr &value, SgAsmType *valueType, SgAsmType *rounding, SgAsmType *dstType) {
+    ASSERT_not_null(value);
+    ASSERT_require(value->get_width() == valueType->get_nBits());
+    ASSERT_not_null(rounding);
+    ASSERT_not_null(dstType);
+
+    SgAsmFloatType *valueFpType = isSgAsmFloatType(valueType);
+    SgAsmFloatType *roundingFpType = isSgAsmFloatType(rounding);
+    SgAsmFloatType *dstFpType = isSgAsmFloatType(dstType);
+
+    if (!valueFpType || !roundingFpType || !dstFpType) {
+        operators->writeRegister(REG_EXC_OVFL, operators->boolean_(false));
+        return;
+    }
+
+    size_t nBits = std::max(valueFpType->exponentBits().size(), roundingFpType->exponentBits().size());
+
+    SValuePtr valueBias = operators->number_(nBits, valueFpType->exponentBias());
+    SValuePtr valueExp = operators->extract(value, valueFpType->exponentBits().least(), valueFpType->exponentBits().greatest()+1);
+    valueExp = operators->subtract(operators->unsignedExtend(valueExp, nBits), valueBias);
+
+    SValuePtr roundingExp =
+        operators->number_(nBits,
+                           IntegerOps::genMask<uint64_t>(roundingFpType->exponentBits().size()) - roundingFpType->exponentBias());
+
+    SValuePtr isOverflow = operators->isUnsignedGreaterThanOrEqual(valueExp, roundingExp);
+    operators->writeRegister(REG_EXC_OVFL, isOverflow);
+}
+
+void
+DispatcherM68k::updateFpsrExcUnfl(const SValuePtr &value, SgAsmType *valueType, SgAsmType *rounding, SgAsmType *dstType) {
+    ASSERT_not_null(value);
+    ASSERT_require(value->get_width() == valueType->get_nBits());
+    ASSERT_not_null(rounding);
+    ASSERT_not_null(dstType);
+
+    SgAsmFloatType *valueFpType = isSgAsmFloatType(valueType);
+    SgAsmFloatType *roundingFpType = isSgAsmFloatType(rounding);
+    SgAsmFloatType *dstFpType = isSgAsmFloatType(dstType);
+
+    if (!valueFpType || !roundingFpType || !dstFpType) {
+        operators->writeRegister(REG_EXC_UNFL, operators->boolean_(false));
+        return;
+    }
+
+    size_t nBits = std::max(valueFpType->exponentBits().size(), roundingFpType->exponentBits().size());
+
+    SValuePtr valueBias = operators->number_(nBits, valueFpType->exponentBias());
+    SValuePtr valueExp = operators->extract(value, valueFpType->exponentBits().least(), valueFpType->exponentBits().greatest()+1);
+    valueExp = operators->subtract(operators->unsignedExtend(valueExp, nBits), valueBias);
+
+    // Minimum exponent field is "1", therefore minimum exponent value is "1 - bias"
+    SValuePtr one = operators->number_(nBits, 1);
+    SValuePtr roundingBias = operators->number_(nBits, roundingFpType->exponentBias());
+    SValuePtr roundingExp = operators->subtract(one, roundingBias);
+    
+    SValuePtr isUnderflow = operators->isSignedLessThanOrEqual(valueExp, roundingExp);
+    operators->writeRegister(REG_EXC_UNFL, isUnderflow);
+}
+
+void
+DispatcherM68k::updateFpsrExcInex() {
+    // FIXME[Robb Matzke 2020-01-03]
+    operators->writeRegister(REG_EXC_INEX, operators->undefined_(1));
 }
 
 void

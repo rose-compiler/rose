@@ -189,8 +189,19 @@ test_escapes() {
     check(cEscape("\v") == "\\v");
     check(cEscape("\f") == "\\f");
     check(cEscape("\r") == "\\r");
-    check(cEscape("\"") == "\\\"");
     check(cEscape("\\") == "\\\\");
+
+    // cEscape quote escapes
+    check(cEscape("\"") == "\\\"");
+    check(cEscape("'") == "'");
+    check(cEscape('"') == "\"");
+    check(cEscape('\'') == "\\'");
+
+    check(cEscape("\"", '\'') == "\"");
+    check(cEscape("'", '\'') == "\\'");
+    check(cEscape('"', '"') == "\\\"");
+    check(cEscape('\'', '"') == "'");
+
     check(cEscape("\377") == "\\377");
 
     check(cEscape("-\t") == "-\\t");

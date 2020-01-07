@@ -310,6 +310,19 @@ Engine::partitionerSwitches(PartitionerSettings &settings) {
               .intrinsicValue(false, settings.base.usingSemantics)
               .hidden(true));
 
+    sg.insert(Switch("ignore-unknown")
+              .intrinsicValue(true, settings.base.ignoringUnknownInsns)
+              .doc("If set, then any machine instructions that cannot be decoded due to ROSE having an incomplete disassembler "
+                   "are treated as if they were no-ops for the purpose of extending a basic block. Although they will still show "
+                   "up as \"unknown\" in the assembly listing, they will not cause a basic block to be terminated. If this "
+                   "feature is disabled (@s{no-ignore-unknown}) then such instruvctions terminate a basic block. The default "
+                   "is that unknown instructions " +
+                   std::string(settings.base.ignoringUnknownInsns ? "are ignored." : "terminate basic blocks.")));
+    sg.insert(Switch("no-ignore-unknown")
+              .key("ignore-unknown")
+              .intrinsicValue(false, settings.base.ignoringUnknownInsns)
+              .hidden(true));
+
     sg.insert(Switch("semantic-memory")
               .argument("type", enumParser<SemanticMemoryParadigm>(settings.semanticMemoryParadigm)
                         ->with("list", LIST_BASED_MEMORY)
