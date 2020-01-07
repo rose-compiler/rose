@@ -1,5 +1,6 @@
 include_rules
 
+ifeq (@(ENABLE_TESTS),yes)
 ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
 
 # Tests are disabled if SQLite3 is not available since the tests only support that one database driver.
@@ -131,4 +132,5 @@ run $(test) testConcolicExecutor $(ENABLED) \
     ./testConcolicExecutor --log 'Rose::BinaryAnalysis::Concolic\(debug\)' --database=testConcolicExecutor-1.db\
     $(ROSE)/tests/nonsmoke/specimens/binary/concolic-specimen-01
 
+endif
 endif

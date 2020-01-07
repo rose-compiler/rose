@@ -204,6 +204,8 @@ namespace Sawyer {
  *  SAWYER_MESG(mlog[DEBUG]) <<"the result is " <<something_expensive() <<"\n";
  * @endcode
  *
+ *  The alternate spelling "SAWYER_MSG" is also allowed.
+ *
  * @subsection temp Temporary streams
  *
  *  Although <code>std::ostream</code> objects are not copyable, and not movable before c++11, Sawyer's message streams
@@ -1521,7 +1523,10 @@ public:
         
     // See Stream::bool()
     #define SAWYER_MESG(message_stream) (message_stream) && (message_stream)
+    #define SAWYER_MSG(message_stream)  (message_stream) && (message_stream)
     #define SAWYER_MESG_OR(s1, s2) ((s1) || (s2)) && ((s1) ? (s1) : (s2))
+    #define SAWYER_MSG_OR(s1, s2)  ((s1) || (s2)) && ((s1) ? (s1) : (s2))
+
 
     /** Enable or disable a stream.
      *

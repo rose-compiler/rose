@@ -7,6 +7,7 @@
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/filesystem.hpp>
 #include <dirent.h>
+#include <Sawyer/Message.h>
 
 #include <boost/config.hpp>
 #ifdef BOOST_WINDOWS                                    // FIXME[Robb P. Matzke 2014-10-11]: not implemented on Windows
@@ -114,6 +115,7 @@ static int ptrace(__ptrace_request, int, void*, void*) {// Mac OSX dud
 
 #endif
 
+using namespace Sawyer::Message::Common;
 namespace bfs = boost::filesystem;
 
 namespace Rose {
@@ -176,6 +178,19 @@ std::ostream&
 operator<<(std::ostream &out, const Debugger::Specimen &specimen) {
     specimen.print(out);
     return out;
+}
+
+Sawyer::Message::Facility Debugger::mlog;
+
+// class method
+void
+Debugger::initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Debugger");
+        mlog.comment("debugging other processes");
+    }
 }
 
 const RegisterDictionary*
@@ -612,6 +627,9 @@ Debugger::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
 size_t
 Debugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
 #ifdef __linux__
+    if (0 == nBytes)
+        return 0;
+
     struct T {
         int fd;
         T(): fd(-1) {}
@@ -657,6 +675,27 @@ Debugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
 #endif
 }
 
+std::string
+Debugger::readCString(rose_addr_t va, size_t maxBytes) {
+    std::string retval;
+    while (maxBytes > 0) {
+        uint8_t buf[32];
+        size_t nRead = readMemory(va, std::min(maxBytes, sizeof buf), buf);
+        if (0 == nRead)
+            break;
+        for (size_t i = 0; i < nRead; ++i) {
+            if (0 == buf[i]) {
+                return retval;                          // NUL terminated
+            } else {
+                retval += (char)buf[i];
+            }
+        }
+        maxBytes -= nRead;
+        va += nRead;
+    }
+    return retval;                                      // buffer overflow
+}
+
 void
 Debugger::runToBreakpoint() {
     if (breakpoints_.isEmpty()) {
@@ -679,6 +718,18 @@ void
 Debugger::runToSyscall() {
     sendCommandInt(PTRACE_SYSCALL, child_, 0, sendSignal_);
     waitForChild();
+}
+
+struct DefaultTraceFilter {
+    Debugger::FilterAction operator()(rose_addr_t) {
+        return Debugger::FilterAction();
+    }
+};
+
+Sawyer::Container::Trace<rose_addr_t>
+Debugger::trace() {
+    DefaultTraceFilter filter;
+    return trace(filter);
 }
 
 } // namespace

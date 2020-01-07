@@ -2,6 +2,7 @@ include Loops.incl
 
 <define VAR_DECL CODE.VarDecl/>
 <define stencil_index 0/>
+<define ARRAY_TYPES "MulticoreArray"/>
 
 <define STENCIL_REF CODE.FunctionCall|CODE.ArrayAccess/>
 <define STENCIL_old_array NULL/>

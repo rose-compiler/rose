@@ -512,7 +512,7 @@ void append(SgProject * project, std::list<std::string> const & astfiles) {
     // Insert all files into main project
     std::vector<SgFile *> const & files = lproject->get_files();
     for (std::vector<SgFile *>::const_iterator it = files.begin(); it != files.end(); ++it) {
-      project->get_files().push_back(*it);
+      project->get_fileList().push_back(*it);
     }
 
     // Load shared (static) fields from the AST being read
@@ -524,6 +524,9 @@ void append(SgProject * project, std::list<std::string> const & astfiles) {
     mergeFileIDs(Sg_File_Info::get_fileidtoname_map(), Sg_File_Info::get_nametofileid_map(), gf2n, gn2f, num_nodes);
 
     num_nodes = Sg_File_Info::numberOfNodes();
+
+//  delete lproject;
+//  delete ast;
   }
 
   // Restore shared (static) fields

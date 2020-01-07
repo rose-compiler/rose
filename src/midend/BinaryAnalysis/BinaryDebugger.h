@@ -6,6 +6,8 @@
 #include <boost/filesystem.hpp>
 #include <Disassembler.h>
 #include <Sawyer/BitVector.h>
+#include <Sawyer/Message.h>
+#include <Sawyer/Trace.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -153,6 +155,9 @@ public:
         void print(std::ostream &out) const;
     };
 
+public:
+    static Sawyer::Message::Facility mlog;              /**< Diagnostic facility for debugger. */
+
 private:
     typedef Sawyer::Container::Map<RegisterDescriptor, size_t> UserRegDefs;
     enum RegPageStatus { REGPAGE_NONE, REGPAGE_REGS, REGPAGE_FPREGS };
@@ -254,6 +259,42 @@ public:
      *  encountered a signal or terminated.  Execution does not stop at break points. */
     void runToSyscall();
 
+    /** Run the program and return an execution trace. */
+    Sawyer::Container::Trace<rose_addr_t> trace();
+
+    /** Action for trace filter callback. */
+    enum FilterActionFlags {
+        REJECT = 0x00000001,                          /**< Reject the current address, not appending it to the trace. */
+        STOP   = 0x00000002                           /**< Abort tracing, either appending or rejecting the current address. */
+    };
+
+    /** Return value for tracing.
+     *
+     *  The return value from the trace filter indicates whether the current address should be appended to the trace or
+     *  rejected, and whether the tracing operation should continue or stop.  A default constructed @ref FilterAction will
+     *  append the current address to the trace and continue tracing, which is normally what one wants. */
+    typedef BitFlags<FilterActionFlags> FilterAction;
+    
+    /** Run the program and return an execution trace.
+     *
+     *  At each step along the execution, the @p filter functor is invoked and passed the current execution address. The return
+     *  value of type @ref FilterAction from the filter functor controls whether the address is appended to the trace and whether the
+     *  tracing should continue. */
+    template<class Filter>
+    Sawyer::Container::Trace<rose_addr_t> trace(Filter &filter) {
+        Sawyer::Container::Trace<rose_addr_t> retval;
+        while (!isTerminated()) {
+            rose_addr_t va = executionAddress();
+            FilterAction action = filter(va);
+            if (action.isClear(REJECT))
+                retval.append(va);
+            if (action.isSet(STOP))
+                return retval;
+            singleStep();
+        }
+        return retval;
+    }
+
     /** Obtain and cache kernel's word size in bits.  The wordsize of the kernel is not necessarily the same as the word size
      * of the compiled version of this header. */
     size_t kernelWordSize();
@@ -281,6 +322,13 @@ public:
      *  sending PTRACE_PEEKDATA commands. This allows large areas of memory to be read efficiently. */
     size_t readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer);
 
+    /** Read C-style NUL-terminated string from subordinate.
+     *
+     *  Reads up to @p maxBytes bytes from the subordinate or until an ASCII NUL character is read, concatenates all the
+     *  characters (except the NUL) into a C++ string and returns it. The @p maxBytes includes the NUL terminator although the
+     *  NUL terminator is not returned as part of the string. */
+    std::string readCString(rose_addr_t va, size_t maxBytes = UNLIMITED);
+
     /** Returns true if the subordinate terminated. */
     bool isTerminated();
 
@@ -297,6 +345,10 @@ public:
     
     /** Returns the last status from a call to waitpid. */
     int waitpidStatus() const { return wstat_; }
+
+public:
+    /**  Initialize diagnostic output. This is called automatically when ROSE is initialized.  */
+    static void initDiagnostics();
     
 private:
     // Initialize tables during construction

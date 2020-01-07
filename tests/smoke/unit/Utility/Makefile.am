@@ -102,6 +102,29 @@ testRangeMap.passed: $(top_srcdir)/scripts/test_exit_status testRangeMap
 		CMD="./testRangeMap"		\
 		$< $@
 
+###############################################################################################################################
+# tests the builtin SHA-256 hash
+###############################################################################################################################
+
+noinst_PROGRAMS += testSha256Builtin
+testSha256Builtin_SOURCES = testSha256Builtin.C
+
+TEST_TARGETS += testSha256Builtin-9399.passed testSha256Builtin-empty.passed
+EXTRA_DIST += testSha256Builtin-9399.ans testSha256Builtin-empty.ans
+
+testSha256Builtin-9399.passed: $(top_srcdir)/scripts/test_with_answer testSha256Builtin testSha256Builtin-9399.passed
+	@$(RTH_RUN)						\
+		TITLE="SHA-256 builtin [$@]"			\
+		CMD="./testSha256Builtin hash 9399"		\
+		ANS="$(srcdir)/testSha256Builtin-9399.ans"	\
+		$< $@
+
+testSha256Builtin-empty.passed: $(top_srcdir)/scripts/test_with_answer testSha256Builtin testSha256Builtin-empty.passed
+	@$(RTH_RUN)						\
+		TITLE="SHA-256 builtin [$@]"			\
+		CMD="./testSha256Builtin hash 0"		\
+		ANS="$(srcdir)/testSha256Builtin-empty.ans"	\
+		$< $@
 
 ###############################################################################################################################
 # Boilerplate

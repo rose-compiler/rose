@@ -244,6 +244,11 @@ public:
      * @{ */
     WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
     WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
+    WithFormatter operator+(const std::string &linePrefix) {
+        static Formatter fmt;
+        fmt.set_line_prefix(linePrefix);
+        return with_format(fmt);
+    }
     /** @} */
 };
 

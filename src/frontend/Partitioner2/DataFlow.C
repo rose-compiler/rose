@@ -367,8 +367,23 @@ isStackAddress(const Rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
     return val;
 }
 
-StackVariables
-findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemantics::SValuePtr &initialStackPointer) {
+// Info about stack variables that is distributed across function frame offsets using a Sawyer::IntervalMap.
+struct StackVariableMeta {
+    InstructionSemantics2::BaseSemantics::MemoryCellList::AddressSet writers;
+    InstructionSemantics2::BaseSemantics::InputOutputPropertySet ioProperties;
+
+    StackVariableMeta(const InstructionSemantics2::BaseSemantics::MemoryCellList::AddressSet &writers,
+                      const InstructionSemantics2::BaseSemantics::InputOutputPropertySet &io)
+        : writers(writers), ioProperties(io) {}
+
+    bool operator==(const StackVariableMeta &other) const {
+        return writers == other.writers && ioProperties == other.ioProperties;
+    }
+};
+
+Variables::StackVariables
+findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOperatorsPtr &ops,
+                   const BaseSemantics::SValuePtr &initialStackPointer) {
     using namespace Rose::BinaryAnalysis::InstructionSemantics2;
     ASSERT_not_null(ops);
     ASSERT_not_null(initialStackPointer);
@@ -384,7 +399,7 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
 
     // Find groups of consecutive addresses that were written to by the same instruction(s) and which have the same I/O
     // properties. This is how we coalesce adjacent bytes into larger variables.
-    typedef Sawyer::Container::IntervalMap<StackVariableLocation::Interval, StackVariableMeta> CellCoalescer;
+    typedef Sawyer::Container::IntervalMap<Variables::OffsetInterval, StackVariableMeta> CellCoalescer;
     CellCoalescer cellCoalescer;
     typedef Sawyer::Container::Map<int64_t, BaseSemantics::SValuePtr> OffsetAddress; // full address per stack offset
     OffsetAddress offsetAddresses;
@@ -395,9 +410,9 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
         size_t nBytes = cell->get_value()->get_width() / 8;
         ASSERT_require(nBytes > 0);
         if (Sawyer::Optional<int64_t> stackOffset = isStackAddress(address->get_expression(), initialStackPointer, solver)) {
-            StackVariableLocation location(*stackOffset, nBytes, address);
+            Variables::OffsetInterval location = Variables::OffsetInterval::baseSize(*stackOffset, nBytes);
             StackVariableMeta meta(cell->getWriters(), cell->ioProperties());
-            cellCoalescer.insert(location.interval(), meta);
+            cellCoalescer.insert(location, meta);
             for (size_t i=0; i<nBytes; ++i) {
                 BaseSemantics::SValuePtr byteAddr = ops->add(address, ops->number_(address->get_width(), i));
                 offsetAddresses.insert(*stackOffset+i, byteAddr);
@@ -407,11 +422,11 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
 
     // The cellCoalescer has automatically organized the individual bytes into the largest possible intervals that have the
     // same set of writers and I/O properties.  We just need to pick them off in order to build the return value.
-    std::vector<StackVariable> retval;
-    BOOST_FOREACH (const StackVariableLocation::Interval &interval, cellCoalescer.intervals()) {
+    Variables::StackVariables retval;
+    BOOST_FOREACH (const Variables::OffsetInterval &interval, cellCoalescer.intervals()) {
         int64_t offset = interval.least();
         int64_t nRemaining = interval.size();
-        ASSERT_require2(nRemaining>0, "overflow");
+        ASSERT_require2(nRemaining > 0, "overflow");
         while (nRemaining > 0) {
             BaseSemantics::SValuePtr address = offsetAddresses[offset];
             int64_t nBytes = nRemaining;
@@ -424,12 +439,14 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
 
             // Never create a variable that's wider than the architecture's natural word size.
             nBytes = std::min(nBytes, wordNBytes);
-            ASSERT_require(nBytes>0 && nBytes<=nRemaining);
+            ASSERT_require(nBytes > 0 && nBytes <= nRemaining);
 
             // Create the stack variable.
-            StackVariableLocation location(offset, nBytes, address);
-            StackVariableMeta meta = cellCoalescer[offset];
-            retval.push_back(StackVariable(location, meta));
+            const StackVariableMeta &meta = cellCoalescer[offset];
+            Variables::StackVariable var(function, offset, nBytes, meta.writers);
+            var.ioProperties(meta.ioProperties);
+            var.setDefaultName();
+            retval.insert(var.interval(), var);
 
             // Advance to next chunk of bytes within this interval
             offset += nBytes;
@@ -439,24 +456,26 @@ findStackVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemanti
     return retval;
 }
 
-StackVariables
-findLocalVariables(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemantics::SValuePtr &initialStackPointer) {
-    StackVariables vars = findStackVariables(ops, initialStackPointer);
-    StackVariables retval;
-    BOOST_FOREACH (const StackVariable &var, vars) {
-        if (var.location.offset < 0)
-            retval.push_back(var);
+Variables::StackVariables
+findLocalVariables(const Function::Ptr &function, const BaseSemantics::RiscOperatorsPtr &ops,
+                   const BaseSemantics::SValuePtr &initialStackPointer) {
+    Variables::StackVariables vars = findStackVariables(function, ops, initialStackPointer);
+    Variables::StackVariables retval;
+    BOOST_FOREACH (const Variables::StackVariable &var, vars.values()) {
+        if (var.frameOffset() < 0)
+            retval.insert(var.interval(), var);
     }
     return retval;
 }
 
-StackVariables
-findFunctionArguments(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemantics::SValuePtr &initialStackPointer) {
-    StackVariables vars = findStackVariables(ops, initialStackPointer);
-    StackVariables retval;
-    BOOST_FOREACH (const StackVariable &var, vars) {
-        if (var.location.offset >= 0)
-            retval.push_back(var);
+Variables::StackVariables
+findFunctionArguments(const Function::Ptr &function, const BaseSemantics::RiscOperatorsPtr &ops,
+                      const BaseSemantics::SValuePtr &initialStackPointer) {
+    Variables::StackVariables vars = findStackVariables(function, ops, initialStackPointer);
+    Variables::StackVariables retval;
+    BOOST_FOREACH (const Variables::StackVariable &var, vars.values()) {
+        if (var.frameOffset() >= 0)
+            retval.insert(var.interval(), var);
     }
     return retval;
 }

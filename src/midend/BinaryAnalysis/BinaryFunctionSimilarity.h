@@ -242,7 +242,7 @@ public:
      * @{ */
     CategoryId declareCfgConnectivity(const std::string &categoryName);
     void measureCfgConnectivity(CategoryId, const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&,
-                                size_t maxPoints = (size_t)(-1));
+                                size_t maxPoints = UNLIMITED);
     /** @} */
 
     /** Function calls.

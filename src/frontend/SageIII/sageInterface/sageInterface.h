@@ -1462,7 +1462,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 
 #if 1
        // DQ (12/30/2019): This is added to support detection of infinite loops over parent pointers.
-          if (counter >= 50)
+          if (counter >= 500)
              {
                printf ("Exiting: In getEnclosingNode(): loop limit exceeded: counter = %d \n",counter);
                ROSE_ASSERT(false);

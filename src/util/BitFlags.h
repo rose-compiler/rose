@@ -108,6 +108,11 @@ public:
         return vector_ != 0;
     }
 
+    /** True if no bits are set. */
+    bool isEmpty() const {
+        return 0 == vector_;
+    }
+
     /** Test whether a bit is clear. */
     bool isClear(Enum e) const {
         return !isSet(e);
@@ -142,7 +147,7 @@ public:
         vector_ = Vector(0);
         return *this;
     }
-    
+
     /** Test whether a bit is set, then clear it. */
     bool testAndClear(Enum e) {
         bool retval = isSet(e);
@@ -196,7 +201,7 @@ public:
         return intersection(e);
     }
     /** @} */
-    
+
     /** Compare two vectors.
      *
      * @{ */
