@@ -1,26 +1,20 @@
-// Copyright (c) 2018-2019, NVIDIA CORPORATION.  All rights reserved.
+//===-- tools/f18/f18.cc --------------------------------------------------===//
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//----------------------------------------------------------------------------//
 
 // Fortran front end driver main program for ROSE scaffolding.
 
 #include "../../frontend/Experimental_Flang_ROSE_Connection/sage-build.h"
 
+#include "../../lib/common/Fortran-features.h"
 #include "../../lib/common/default-kinds.h"
 #include "../../lib/evaluate/expression.h"
 #include "../../lib/parser/characters.h"
 #include "../../lib/parser/dump-parse-tree.h"
-#include "../../lib/parser/features.h"
 #include "../../lib/parser/message.h"
 #include "../../lib/parser/parse-tree-visitor.h"
 #include "../../lib/parser/parse-tree.h"
@@ -78,6 +72,10 @@ void CleanUpAtExit() {
   }
 }
 
+struct GetDefinitionArgs {
+  int line, startColumn, endColumn;
+};
+
 struct DriverOptions {
   DriverOptions() {}
   bool verbose{false};  // -v
@@ -101,9 +99,12 @@ struct DriverOptions {
   bool debugSemantics{false};
   bool measureTree{false};
   bool unparseTypedExprsToPGF90{false};
-  bool externalBuilder{false};
   std::vector<std::string> pgf90Args;
   const char *prefix{nullptr};
+  bool getDefinition{false};
+  GetDefinitionArgs getDefinitionArgs{0, 0, 0};
+  bool getSymbolsSources{false};
+  bool externalBuilder{false};
 };
 
 bool ParentProcess() {
@@ -165,6 +166,22 @@ std::string RelocatableName(const DriverOptions &driver, std::string path) {
 
 int exitStatus{EXIT_SUCCESS};
 
+static Fortran::parser::AnalyzedObjectsAsFortran asFortran{
+    [](std::ostream &o, const Fortran::evaluate::GenericExprWrapper &x) {
+      if (x.v) {
+        x.v->AsFortran(o);
+      } else {
+        o << "(bad expression)";
+      }
+    },
+    [](std::ostream &o, const Fortran::evaluate::GenericAssignmentWrapper &x) {
+      x.v.AsFortran(o);
+    },
+    [](std::ostream &o, const Fortran::evaluate::ProcedureRef &x) {
+      x.AsFortran(o << "CALL ");
+    },
+};
+
 std::string CompileFortran(std::string path, Fortran::parser::Options options,
     DriverOptions &driver,
     const Fortran::common::IntrinsicTypeDefaultKinds &defaultKinds) {
@@ -218,7 +235,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   }
   if ((!parsing.messages().empty() &&
           (driver.warningsAreErrors || parsing.messages().AnyFatalError())) ||
-      !parsing.parseTree().has_value()) {
+      !parsing.parseTree()) {
     std::cerr << driver.prefix << "could not parse " << path << '\n';
     exitStatus = EXIT_FAILURE;
     return {};
@@ -227,21 +244,10 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   if (driver.measureTree) {
     MeasureParseTree(parseTree);
   }
-
-#if 1
-  Fortran::parser::TypedExprAsFortran unparseExpression{
-      [](std::ostream &o, const Fortran::evaluate::GenericExprWrapper &x) {
-        if (x.v.has_value()) {
-          o << *x.v;
-        } else {
-          o << "(bad expression)";
-        }
-      }};
-#endif
-
   // TODO: Change this predicate to just "if (!driver.debugNoSemantics)"
   if (driver.debugSemantics || driver.debugResolveNames || driver.dumpSymbols ||
-      driver.dumpUnparseWithSymbols || driver.externalBuilder) {
+      driver.dumpUnparseWithSymbols || driver.getDefinition ||
+      driver.getSymbolsSources || driver.externalBuilder) {
     Fortran::semantics::Semantics semantics{
         semanticsContext, parseTree, parsing.cooked()};
     semantics.Perform();
@@ -253,7 +259,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
       std::cerr << driver.prefix << "semantic errors in " << path << '\n';
       exitStatus = EXIT_FAILURE;
       if (driver.dumpParseTree) {
-        Fortran::parser::DumpTree(std::cout, parseTree);
+        Fortran::parser::DumpTree(std::cout, parseTree, &asFortran);
       }
       return {};
     }
@@ -262,32 +268,49 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
           std::cout, parseTree, driver.encoding);
       return {};
     }
-    else if (driver.externalBuilder) {
+    if (driver.getSymbolsSources) {
+      semantics.DumpSymbolsSources(std::cout);
+      return {};
+    }
+    if (driver.getDefinition) {
+      if (auto cb{parsing.cooked().GetCharBlockFromLineAndColumns(
+              driver.getDefinitionArgs.line,
+              driver.getDefinitionArgs.startColumn,
+              driver.getDefinitionArgs.endColumn)}) {
+        std::cerr << "String range: >" << cb->ToString() << "<\n";
+        if (auto symbol{semanticsContext.FindScope(*cb).FindSymbol(*cb)}) {
+          std::cerr << "Found symbol name: " << symbol->name().ToString()
+                    << "\n";
+          if (auto sourceInfo{
+                  parsing.cooked().GetSourcePositionRange(symbol->name())}) {
+            std::cout << symbol->name().ToString() << ": "
+                      << sourceInfo->first.file.path() << ", "
+                      << sourceInfo->first.line << ", "
+                      << sourceInfo->first.column << "-"
+                      << sourceInfo->second.column << "\n";
+            exitStatus = EXIT_SUCCESS;
+            return {};
+          }
+        }
+      }
+      std::cerr << "Symbol not found.\n";
+      exitStatus = EXIT_FAILURE;
+      return {};
+    }
+    if (driver.externalBuilder) {
       Rose::builder::Build(parseTree, nullptr);
       return {};
     }
   }
   if (driver.dumpParseTree) {
-    Fortran::parser::DumpTree(std::cout, parseTree);
+    Fortran::parser::DumpTree(std::cout, parseTree, &asFortran);
   }
-
-#if 0
-  Fortran::parser::TypedExprAsFortran unparseExpression{
-      [](std::ostream &o, const Fortran::evaluate::GenericExprWrapper &x) {
-        if (x.v.has_value()) {
-          o << *x.v;
-        } else {
-          o << "(bad expression)";
-        }
-      }};
-#endif
-
   if (driver.dumpUnparse) {
     std::cout << "--> will call Unparse \n";
     Unparse(std::cout, parseTree, driver.encoding, true /*capitalize*/,
         options.features.IsEnabled(
-            Fortran::parser::LanguageFeature::BackslashEscapes),
-        nullptr /* action before each statement */, &unparseExpression);
+            Fortran::common::LanguageFeature::BackslashEscapes),
+        nullptr /* action before each statement */, &asFortran);
     return {};
   }
   if (driver.parseOnly) {
@@ -305,9 +328,9 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     Fortran::evaluate::formatForPGF90 = true;
     Unparse(tmpSource, parseTree, driver.encoding, true /*capitalize*/,
         options.features.IsEnabled(
-            Fortran::parser::LanguageFeature::BackslashEscapes),
+            Fortran::common::LanguageFeature::BackslashEscapes),
         nullptr /* action before each statement */,
-        driver.unparseTypedExprsToPGF90 ? &unparseExpression : nullptr);
+        driver.unparseTypedExprsToPGF90 ? &asFortran : nullptr);
     Fortran::evaluate::formatForPGF90 = false;
   }
 
@@ -423,32 +446,41 @@ int flang_external_builder_main(int argc, char *const argv[])
       options.isFixedForm = false;
     } else if (arg == "-Mextend") {
       options.fixedFormColumns = 132;
+    } else if (arg == "-Munlimited") {
+      // For reparsing f18's -E output of fixed-form cooked character stream
+      options.fixedFormColumns = 1000000;
     } else if (arg == "-Mbackslash") {
       options.features.Enable(
-          Fortran::parser::LanguageFeature::BackslashEscapes, false);
+          Fortran::common::LanguageFeature::BackslashEscapes, false);
     } else if (arg == "-Mnobackslash") {
       options.features.Enable(
-          Fortran::parser::LanguageFeature::BackslashEscapes, true);
+          Fortran::common::LanguageFeature::BackslashEscapes, true);
     } else if (arg == "-Mstandard") {
       driver.warnOnNonstandardUsage = true;
     } else if (arg == "-fopenmp") {
-      options.features.Enable(Fortran::parser::LanguageFeature::OpenMP);
+      options.features.Enable(Fortran::common::LanguageFeature::OpenMP);
       options.predefinitions.emplace_back("_OPENMP", "201511");
     } else if (arg == "-Werror") {
       driver.warningsAreErrors = true;
     } else if (arg == "-ed") {
-      options.features.Enable(Fortran::parser::LanguageFeature::OldDebugLines);
+      options.features.Enable(Fortran::common::LanguageFeature::OldDebugLines);
     } else if (arg == "-E") {
       driver.dumpCookedChars = true;
     } else if (arg == "-fbackslash" || arg == "-fno-backslash") {
       options.features.Enable(
-          Fortran::parser::LanguageFeature::BackslashEscapes,
+          Fortran::common::LanguageFeature::BackslashEscapes,
           arg == "-fbackslash");
     } else if (arg == "-fxor-operator" || arg == "-fno-xor-operator") {
-      options.features.Enable(Fortran::parser::LanguageFeature::XOROperator,
+      options.features.Enable(Fortran::common::LanguageFeature::XOROperator,
           arg == "-fxor-operator");
+    } else if (arg == "-flogical-abbreviations" ||
+        arg == "-fno-logical-abbreviations") {
+      options.features.Enable(
+          Fortran::parser::LanguageFeature::LogicalAbbreviations,
+          arg == "-flogical-abbreviations");
     } else if (arg == "-fdebug-dump-provenance") {
       driver.dumpProvenance = true;
+      options.needProvenanceRangeToCharBlockMappings = true;
     } else if (arg == "-fdebug-dump-parse-tree") {
       driver.dumpParseTree = true;
     } else if (arg == "-fdebug-dump-symbols") {
@@ -492,6 +524,11 @@ int flang_external_builder_main(int argc, char *const argv[])
       defaultKinds.set_defaultRealKind(8);
     } else if (arg == "-i8" || arg == "-fdefault-integer-8") {
       defaultKinds.set_defaultIntegerKind(8);
+      defaultKinds.set_subscriptIntegerKind(8);
+    } else if (arg == "-Mlargearray") {
+      defaultKinds.set_subscriptIntegerKind(8);
+    } else if (arg == "-Mnolargearray") {
+      defaultKinds.set_subscriptIntegerKind(4);
     } else if (arg == "-module") {
       driver.moduleDirectory = args.front();
       args.pop_front();
@@ -505,6 +542,28 @@ int flang_external_builder_main(int argc, char *const argv[])
       driver.encoding = Fortran::parser::Encoding::UTF_8;
     } else if (arg == "-flatin") {
       driver.encoding = Fortran::parser::Encoding::LATIN_1;
+    } else if (arg == "-fget-definition") {
+      // Receives 3 arguments: line, startColumn, endColumn.
+      options.needProvenanceRangeToCharBlockMappings = true;
+      driver.getDefinition = true;
+      char *endptr;
+      int arguments[3];
+      for (int i = 0; i < 3; i++) {
+        if (args.empty()) {
+          std::cerr << "Must provide 3 arguments for -fget-definitions.\n";
+          return EXIT_FAILURE;
+        }
+        arguments[i] = std::strtol(args.front().c_str(), &endptr, 10);
+        if (*endptr != '\0') {
+          std::cerr << "Invalid argument to -fget-definitions: " << args.front()
+                    << '\n';
+          return EXIT_FAILURE;
+        }
+        args.pop_front();
+      }
+      driver.getDefinitionArgs = {arguments[0], arguments[1], arguments[2]};
+    } else if (arg == "-fget-symbols-sources") {
+      driver.getSymbolsSources = true;
     } else if (arg == "-help" || arg == "--help" || arg == "-?") {
       std::cerr
           << "f18 options:\n"
@@ -513,6 +572,8 @@ int flang_external_builder_main(int argc, char *const argv[])
           << "  -f[no-]backslash     enable[disable] \\escapes in literals\n"
           << "  -M[no]backslash      disable[enable] \\escapes in literals\n"
           << "  -Mstandard           enable conformance warnings\n"
+          << "  -fenable=<feature>   enable a language feature\n"
+          << "  -fdisable=<feature>  disable a language feature\n"
           << "  -r8 | -fdefault-real-8 | -i8 | -fdefault-integer-8  "
              "change default kinds of intrinsic types\n"
           << "  -Werror              treat warnings as errors\n"
@@ -532,6 +593,9 @@ int flang_external_builder_main(int argc, char *const argv[])
           << "  -fdebug-resolve-names\n"
           << "  -fdebug-instrumented-parse\n"
           << "  -fdebug-semantics    perform semantic checks\n"
+          << "  -fget-definition\n"
+          << "  -fget-symbols-sources\n"
+          << "  -fexternal-builder   perform external builder functionality\n"
           << "  -v -c -o -I -D -U    have their usual meanings\n"
           << "  -help                print this again\n"
           << "Other options are passed through to the compiler.\n";
@@ -556,17 +620,22 @@ int flang_external_builder_main(int argc, char *const argv[])
   if (driver.warnOnNonstandardUsage) {
     options.features.WarnOnAllNonstandard();
   }
-  if (options.features.IsEnabled(Fortran::parser::LanguageFeature::OpenMP)) {
+  if (options.features.IsEnabled(Fortran::common::LanguageFeature::OpenMP)) {
     driver.pgf90Args.push_back("-mp");
   }
   if (isPGF90) {
     if (!options.features.IsEnabled(
-            Fortran::parser::LanguageFeature::BackslashEscapes)) {
+            Fortran::common::LanguageFeature::BackslashEscapes)) {
       driver.pgf90Args.push_back(
           "-Mbackslash");  // yes, this *disables* them in pgf90
     }
+    Fortran::parser::useHexadecimalEscapeSequences = false;
   } else {
-    // TODO: equivalents for other Fortran compilers
+    if (options.features.IsEnabled(
+            Fortran::common::LanguageFeature::BackslashEscapes)) {
+      driver.pgf90Args.push_back("-fbackslash");
+    }
+    Fortran::parser::useHexadecimalEscapeSequences = true;
   }
 
   if (!anyFiles) {
