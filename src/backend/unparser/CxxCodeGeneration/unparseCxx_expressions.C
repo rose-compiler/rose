@@ -5558,8 +5558,14 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
 #if 1
        // DQ (10/17/2012): We have to separate these out if we want to output the defining declarations.
           newinfo.set_isTypeFirstPart();
+
+       // DQ (1/6/2020): The type will be an argument to the sizeof operator (see Cxx11_tests/test2020_14.C).
+          newinfo.set_inArgList();
 #if 0
-          printf ("In unparseSizeOfOp(): isTypeFirstPart: sizeof_op->get_operand_type() = %p = %s \n",sizeof_op->get_operand_type(),sizeof_op->get_operand_type()->class_name().c_str());
+          newinfo.display("In unparseSizeOfOp(): newinfo");
+#endif
+#if 0
+          printf ("In unparseSizeOfOp(): isTypeFirstPart:  sizeof_op->get_operand_type() = %p = %s \n",sizeof_op->get_operand_type(),sizeof_op->get_operand_type()->class_name().c_str());
           curprint ("/* In unparseSizeOfOp(): isTypeFirstPart \n */ ");
 #endif
           unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
@@ -5581,6 +5587,10 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
         }
 
      curprint(")");
+
+#if 0
+     printf ("Leaving unparseSizeOfOp(expr = %p): outputTypeDefinition = %s \n",expr,(outputTypeDefinition == true) ? "true" : "false");
+#endif
    }
 
 
