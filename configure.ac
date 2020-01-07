@@ -1,10 +1,10 @@
 dnl DQ (1/11/2010): Consider handing configure options as specified at:
 dnl    https://projects.coin-or.org/BuildTools/wiki/user-configure
 
-dnl The version number in the AC_INIT([ROSE], [0.9.13.17])
-dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.9.13.17])
+dnl The version number in the AC_INIT([ROSE], [0.9.13.18])
+dnl do the replacement here in the configure file because AC_INIT([ROSE], [0.9.13.18])
 dnl shell variable.
-AC_INIT([ROSE], [0.9.13.17])
+AC_INIT([ROSE], [0.9.13.18])
 AC_PREREQ([2.59])
 
 AC_DEFINE_UNQUOTED([ROSE_SCM_VERSION_ID],         ["$(cat $srcdir/ROSE_VERSION)"],    [Set SCM version information to ROSE version.])
