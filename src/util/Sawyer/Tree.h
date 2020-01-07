@@ -49,7 +49,7 @@ namespace Sawyer {
  *  class MyNode: public Tree::Node {
  *  public:
  *      // Define a tree edge called "first" that points to a user-defined type
- *      // "First" (define elsewhere) that derives from Tree::Node.
+ *      // "First" (defined elsewhere) that derives from Tree::Node.
  *      Tree::ChildEdge<First> first;
  *
  *      // Define a tree edge called "second" that points to another "MyNode" node.
@@ -60,7 +60,7 @@ namespace Sawyer {
  *
  *      // Initialize the nodes during construction. The first will point to a
  *      // specified node, and the other two will be initialized to null.
- *      explicit MyNode(const std::shared_ptr<First> first)
+ *      explicit MyNode(const std::shared_ptr<First> &first)
  *          : first(this, first), second(this), third(this) {}
  *  }
  * @endcode
@@ -186,8 +186,8 @@ public:
  *  It is also possible to give non-null values to the child ends of the edges during construction:
  *
  * @code
- *  Parent::Parent(const std::shared_ptr<ChildType1> &c1, const std::shared_ptr<ChildType2> &c2)
- *      : first(this, c1), second(this, c2) {}
+ *  Parent::Parent(const std::shared_ptr<ChildType1> &c1)
+ *      : first(this, c1), second(this, std::make_shared<ChildType2>()) {}
  * @endcode
  *
  *  The @ref ChildEdge members are used as if they were pointers:

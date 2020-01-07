@@ -28,6 +28,7 @@ if(enable-binary-analysis)
     BinarySystemCall.C
     BinaryTaintedFlow.C
     BinaryToSource.C
+    BinaryVariables.C
     BinaryYicesSolver.C
     BinaryZ3Solver.C
     Concolic/ConcolicExecutor.C
@@ -112,6 +113,7 @@ install(
     BinarySystemCall.h
     BinaryTaintedFlow.h
     BinaryToSource.h
+    BinaryVariables.h
     BinaryYicesSolver.h
     BinaryZ3Solver.h
     DwarfLineMapper.h

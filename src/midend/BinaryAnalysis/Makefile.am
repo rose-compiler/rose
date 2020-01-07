@@ -38,6 +38,7 @@ libbinaryMidend_la_SOURCES =					\
     BinarySystemCall.C						\
     BinaryTaintedFlow.C						\
     BinaryToSource.C						\
+    BinaryVariables.C						\
     BinaryYicesSolver.C						\
     BinaryZ3Solver.C						\
     Concolic/ConcolicExecutor.C					\
@@ -127,6 +128,7 @@ pkginclude_HEADERS =					\
     BinarySystemCall.h					\
     BinaryTaintedFlow.h					\
     BinaryToSource.h					\
+    BinaryVariables.h					\
     BinaryYicesSolver.h					\
     BinaryZ3Solver.h					\
     DwarfLineMapper.h					\

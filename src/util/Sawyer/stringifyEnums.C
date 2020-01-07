@@ -819,7 +819,7 @@ parseEnum(TokenStream &tokens, Scopes &scopes) {
     NameAndLocation firstLocation;
     if (emittedEnums.getOptional(enumName).assignTo(firstLocation)) {
         std::cerr <<where(tokens.fileName(), enumLocation) <<": error: enum '" <<enumName <<"' is already defined\n";
-        std::cerr <<where(firstLocation.fileName, firstLocation.location) <<"info: previous definition\n";
+        std::cerr <<where(firstLocation.fileName, firstLocation.location) <<": info: previous definition\n";
         return;
     }
     emittedEnums.insert(enumName, NameAndLocation(tokens.fileName(), enumLocation));
