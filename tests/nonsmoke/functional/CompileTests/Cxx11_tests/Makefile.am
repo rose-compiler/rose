@@ -691,7 +691,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2020_10.C \
    test2020_11.C \
    test2020_12.C \
-   test2020_13.C 
+   test2020_13.C \
+   test2020_14.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
