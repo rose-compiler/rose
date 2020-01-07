@@ -3136,9 +3136,18 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
 #endif
              }
 
+#if DEBUG_ENUM_TYPE
+     printf ("In unparseEnumType: info.inTypedefDecl() = %s \n",info.inTypedefDecl() ? "true" : "false");
+     printf ("In unparseEnumType: info.inArgList()     = %s \n",info.inArgList() ? "true" : "false");
+#endif
+
        // DQ (9/14/2013): For C language we need to output the "enum" keyword (see test2013_71.c).
           if ( (info.isTypeFirstPart() == false) && (info.SkipClassSpecifier() == false) && (SageInterface::is_C_language() == true || SageInterface::is_C99_language() == true) )
              {
+            // DQ (1/6/2020): When this is used as a argument we only want to unparse the name (e.g. sizeof opterator).
+            // Note: we need this for the C language support.
+            // if (info.inArgList() == false)
+            //    {
                curprint ("enum ");
 
             // DQ (2/14/2019): Adding support for C++11 scoped enums (syntax is "enum class ").
@@ -3146,6 +3155,7 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                   {
                     curprint ("class ");
                   }
+            //    }
              }
 #if 0
        // DQ (7/30/2014): Commented out to avoid compiler warning about not being used.
@@ -3248,14 +3258,18 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                   }
              }
 
-       // DQ (2/18/2019): Adding support for C++11 base type specification syntax.
-          if (edecl->get_field_type() != NULL)
+       // DQ (1/6/2020): When this is used as a argument we only want to unparse the name (e.g. sizeof opterator).
+          if (info.inArgList() == false)
              {
-               curprint(" : ");
+            // DQ (2/18/2019): Adding support for C++11 base type specification syntax.
+               if (edecl->get_field_type() != NULL)
+                  {
+                    curprint(" : ");
 
-            // Make a new SgUnparse_Info object.
-               SgUnparse_Info ninfo(info);
-               unp->u_type->unparseType(edecl->get_field_type(),ninfo);           
+                 // Make a new SgUnparse_Info object.
+                    SgUnparse_Info ninfo(info);
+                    unp->u_type->unparseType(edecl->get_field_type(),ninfo);           
+                  }
              }
         }
 
