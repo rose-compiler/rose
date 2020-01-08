@@ -6,9 +6,7 @@
 //
 //----------------------------------------------------------------------------//
 
-// Fortran front end driver main program for ROSE scaffolding.
-
-#include "../../frontend/Experimental_Flang_ROSE_Connection/sage-build.h"
+// Temporary Fortran front end driver main program for development scaffolding.
 
 #include "../../lib/common/Fortran-features.h"
 #include "../../lib/common/default-kinds.h"
@@ -104,7 +102,6 @@ struct DriverOptions {
   bool getDefinition{false};
   GetDefinitionArgs getDefinitionArgs{0, 0, 0};
   bool getSymbolsSources{false};
-  bool externalBuilder{false};
 };
 
 bool ParentProcess() {
@@ -247,7 +244,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   // TODO: Change this predicate to just "if (!driver.debugNoSemantics)"
   if (driver.debugSemantics || driver.debugResolveNames || driver.dumpSymbols ||
       driver.dumpUnparseWithSymbols || driver.getDefinition ||
-      driver.getSymbolsSources || driver.externalBuilder) {
+      driver.getSymbolsSources) {
     Fortran::semantics::Semantics semantics{
         semanticsContext, parseTree, parsing.cooked()};
     semantics.Perform();
@@ -297,16 +294,11 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
       exitStatus = EXIT_FAILURE;
       return {};
     }
-    if (driver.externalBuilder) {
-      Rose::builder::Build(parseTree, nullptr);
-      return {};
-    }
   }
   if (driver.dumpParseTree) {
     Fortran::parser::DumpTree(std::cout, parseTree, &asFortran);
   }
   if (driver.dumpUnparse) {
-    std::cout << "--> will call Unparse \n";
     Unparse(std::cout, parseTree, driver.encoding, true /*capitalize*/,
         options.features.IsEnabled(
             Fortran::common::LanguageFeature::BackslashEscapes),
@@ -375,12 +367,9 @@ void Link(std::vector<std::string> &relocatables, DriverOptions &driver) {
   }
 }
 
-int flang_external_builder_main(int argc, char *const argv[])
-{
-  atexit(CleanUpAtExit);
+int main(int argc, char *const argv[]) {
 
-  std::cout << "--> flang_external_builder_main: argc=" << argc << " argv=";
-  if (argc > 2) std::cout << argv[0] << argv[1] << argv[2] << std::endl;
+  atexit(CleanUpAtExit);
 
   DriverOptions driver;
   const char *pgf90{getenv("F18_FC")};
@@ -502,8 +491,6 @@ int flang_external_builder_main(int argc, char *const argv[])
       driver.unparseTypedExprsToPGF90 = true;
     } else if (arg == "-fparse-only") {
       driver.parseOnly = true;
-    } else if (arg == "-fexternal-builder") {
-      driver.externalBuilder = true;
     } else if (arg == "-c") {
       driver.compileOnly = true;
     } else if (arg == "-o") {
@@ -595,7 +582,6 @@ int flang_external_builder_main(int argc, char *const argv[])
           << "  -fdebug-semantics    perform semantic checks\n"
           << "  -fget-definition\n"
           << "  -fget-symbols-sources\n"
-          << "  -fexternal-builder   perform external builder functionality\n"
           << "  -v -c -o -I -D -U    have their usual meanings\n"
           << "  -help                print this again\n"
           << "Other options are passed through to the compiler.\n";
