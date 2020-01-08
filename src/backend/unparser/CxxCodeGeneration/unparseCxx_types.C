@@ -2951,6 +2951,12 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                     printf ("In unparseClassType(): Output class hierarchy here! \n");
                     curprint(" /* Output class hierarchy here! */ ");
 #endif
+
+                 // DQ (1/8/2020): Support for defining declarations with base classes (called from unparseClassDefnStmt() and unparseClassType() functions).
+                 // This supports Cxx_tests/test2020_24.C.
+                    ROSE_ASSERT(classdefn_stmt != NULL);
+                    unp->u_exprStmt->unparseClassInheritanceList (classdefn_stmt,info);
+
                     ninfo.set_isUnsetAccess();
                     curprint("{");
                     if (classdefn_stmt == NULL)
