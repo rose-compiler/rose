@@ -2946,7 +2946,11 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                          ROSE_ASSERT(false);
 #endif
                        }
-
+#if 0
+                 // DQ (1/8/2020): Identifying the location where we need to output the class hierarchy (see Cxx11_tests/test2020_26.C).
+                    printf ("In unparseClassType(): Output class hierarchy here! \n");
+                    curprint(" /* Output class hierarchy here! */ ");
+#endif
                     ninfo.set_isUnsetAccess();
                     curprint("{");
                     if (classdefn_stmt == NULL)

@@ -550,6 +550,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (1/30/2019): We need to call this from unparseOneElemConInit() in unparseCxxStatements.C.
           bool isAssociatedWithCxx11_initializationList( SgConstructorInitializer* con_init, SgUnparse_Info& info );
 
+       // DQ (1/8/2020): Refactors the output of base classes so that it can be supported in the unparseClassDefnStmt() and unparseClassType() functions.
+          void unparseClassInheritanceList ( SgClassDefinition* classdefn_stmt, SgUnparse_Info& ninfo );
+
    };
 
 #endif
