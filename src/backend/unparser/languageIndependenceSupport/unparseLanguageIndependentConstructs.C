@@ -8321,6 +8321,11 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                  // DQ (3/5/2017): Converted to use message logging, but the mechanism is not supported here yet.
                     mprintf ("WARNING: In getPrecedence(): case V_SgFunctionCallExp: If this is an overloaded operator then the precedence should be that of the operator being overloaded (not zero). \n");
                     mprintf ("   --- functionCallExp = %p functionCallExp->get_uses_operator_syntax() = %s \n",functionCallExp,functionCallExp->get_uses_operator_syntax() ? "true" : "false");
+#if 0
+                 // DQ (1/8/2020): Output a message that I can see for debugging.
+                    printf ("WARNING: In getPrecedence(): case V_SgFunctionCallExp: If this is an overloaded operator then the precedence should be that of the operator being overloaded (not zero). \n");
+                    printf ("   --- functionCallExp = %p functionCallExp->get_uses_operator_syntax() = %s \n",functionCallExp,functionCallExp->get_uses_operator_syntax() ? "true" : "false");
+#endif
                   }
 #endif
             // ROSE_ASSERT(functionCallExp->get_uses_operator_syntax() == false);
@@ -8663,6 +8668,11 @@ UnparseLanguageIndependentConstructs::getAssociativity(SgExpression* expr)
      curprint(string("\n/* In getAssociativity(): variant = ") + Cxx_GrammarTerminalNames[variant].name + " */ \n");
 #endif
 
+#if 0
+     printf ("Exiting as a test in getAssociativity() \n");
+     ROSE_ASSERT(false);
+#endif
+
      switch (variant)
         {
        // DQ (7/23/2013): Added cast operator.
@@ -8974,7 +8984,15 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #if DEBUG_PARENTHESIS_PLACEMENT
           printf ("     Special case of parentExpr == SgAssignInitializer (return false) \n");
 #endif
+
+
+#if 0
+       // DQ (1/8/2020): This is the original code.
           return false;
+#else
+       // DQ (1/8/2020): Output a message and go on ... see Cxx11_tests/test2020_34.C (this fix appears to work well).
+       // printf ("In requiresParentheses(): Skipping case of supression of parentheses when parent is SgAssignInitializer \n");
+#endif
         }
 
      switch (expr->variant())
@@ -9026,18 +9044,21 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
             // DQ (8/29/2014): If this is a user-defined operator (SgFunctionCallExp) nested in a user-defined 
             // operator (SgFunctionCallExp) then we need a more useful parent than the parent function's SgExprListExpr.
                SgExprListExp* parent_exprListExp = isSgExprListExp(parentExpr);
-#if 0
+
+#if DEBUG_PARENTHESIS_PLACEMENT
                printf ("parent_exprListExp = %p \n",parent_exprListExp);
 #endif
                if (parent_exprListExp != NULL)
                   {
                  // DQ (4/19/2018): This might be looking at the wrong node for the SgFunctionCallExp.
-#if 0
+
+#if DEBUG_PARENTHESIS_PLACEMENT
                     printf ("NOTE: Look at the parent of the SgExprListExp not the expr for the next SgFunctionCallExp \n");
 #endif
                  // SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(expr);
                     SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(expr);
-#if 0
+
+#if DEBUG_PARENTHESIS_PLACEMENT
                     printf ("   --- current expr functionCallExp = %p \n",functionCallExp);
 #endif
                     if (functionCallExp != NULL)
@@ -9046,7 +9067,8 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                          SgNode* local_parentExpr = parentExpr;
                          local_parentExpr = local_parentExpr->get_parent();
                          SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(local_parentExpr);
-#if 0
+
+#if DEBUG_PARENTHESIS_PLACEMENT
                          printf ("   --- --- functionCallExp = %p \n",functionCallExp);
 #endif
                          if (functionCallExp != NULL)
@@ -9060,13 +9082,14 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                       else
                        {
                       // DQ (4/19/2018): This is the case of both expressions in a binary operator not being overloaded.
-#if 0
+#if DEBUG_PARENTHESIS_PLACEMENT
                          printf ("parent_exprListExp->get_expressions().size() = %zu \n",parent_exprListExp->get_expressions().size());
 #endif
                       // Find a better parent node to use (reach to the parent SgFunctionCallExp).
                          SgNode* local_parentExpr = parentExpr;
                          ROSE_ASSERT(local_parentExpr != NULL);
-#if 0
+
+#if DEBUG_PARENTHESIS_PLACEMENT
                          printf ("local_parentExpr = parentExpr: local_parentExpr = %p \n",local_parentExpr);
                          if (local_parentExpr->get_parent() == NULL)
                             {
@@ -9074,20 +9097,23 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                             }
 #endif
                          local_parentExpr = local_parentExpr->get_parent();
-#if 0
+
+#if DEBUG_PARENTHESIS_PLACEMENT
                          printf ("local_parentExpr = local_parentExpr->get_parent(): local_parentExpr = %p \n",local_parentExpr);
 #endif
                       // ROSE_ASSERT(local_parentExpr != NULL);
 
                          SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(local_parentExpr);
-#if 0
+
+#if DEBUG_PARENTHESIS_PLACEMENT
                          printf ("   --- --- parent parent functionCallExp = %p \n",functionCallExp);
 #endif
                          SgFunctionRefExp*       functionRefExp       = NULL;
                          SgMemberFunctionRefExp* memberFunctionRefExp = NULL;
                          if (functionCallExp != NULL)
                             {
-#if 0
+
+#if DEBUG_PARENTHESIS_PLACEMENT
                               printf ("functionRefExp == NULL: local_parentExpr = %p = %s \n",local_parentExpr,local_parentExpr->class_name().c_str());
 #endif
                               functionRefExp       = isSgFunctionRefExp(functionCallExp->get_function());
@@ -9101,7 +9127,8 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                               SgFunctionSymbol* functionSymbol = NULL;
                               if (functionRefExp != NULL)
                                  {
-#if 0
+
+#if DEBUG_PARENTHESIS_PLACEMENT
                                    printf ("functionRefExp != NULL: functionCallExp->get_function() = %p = %s \n",functionCallExp->get_function(),functionCallExp->get_function()->class_name().c_str());
 #endif
                                    functionSymbol = functionRefExp->get_symbol();
@@ -9109,21 +9136,22 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                                 else
                                  {
                                    ROSE_ASSERT(memberFunctionRefExp != NULL);
-#if 0
+#if DEBUG_PARENTHESIS_PLACEMENT
                                    printf ("memberFunctionRefExp != NULL: functionCallExp->get_function() = %p = %s \n",functionCallExp->get_function(),functionCallExp->get_function()->class_name().c_str());
 #endif
                                    functionSymbol = memberFunctionRefExp->get_symbol();
                                  }
                               ROSE_ASSERT(functionSymbol != NULL);
                               SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
-#if 0
+
+#if DEBUG_PARENTHESIS_PLACEMENT
                               printf ("functionDeclaration->get_specialFunctionModifier().isOperator() = %s \n",functionDeclaration->get_specialFunctionModifier().isOperator() ? "true" : "false");
 #endif
                            // DQ (4/21/2018): We need to avoid puting out too many parenthesis.
                               bool isOperator = functionDeclaration->get_specialFunctionModifier().isOperator();
                               if (isOperator == false)
                                  {
-#if 0
+#if DEBUG_PARENTHESIS_PLACEMENT
                                    printf ("Detected that this was not an operator, so suppresss the parenthesis \n");
 #endif
                                    return false;
@@ -9179,7 +9207,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                     return true;
                   }
 
-#if 0
+#if DEBUG_PARENTHESIS_PLACEMENT
                printf ("Calling getPrecedence(): expr = %p = %s \n",expr,expr->class_name().c_str());
 #endif
             // int exprVariant = GetOperatorVariant(expr);
