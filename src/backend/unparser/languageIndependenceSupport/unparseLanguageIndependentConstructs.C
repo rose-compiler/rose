@@ -8992,6 +8992,57 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #else
        // DQ (1/8/2020): Output a message and go on ... see Cxx11_tests/test2020_34.C (this fix appears to work well).
        // printf ("In requiresParentheses(): Skipping case of supression of parentheses when parent is SgAssignInitializer \n");
+
+       // DQ (1/9/2020): Need to check the precedence more directly.
+       // If this is associated with an initialization of a variable, the we should assume the SgAssignInitializer has the 
+       // same precedence as the SgAssignOp (precedence value == 2). Then the question is what is the precedence of the current 
+       // expression relative to the SgAssignInitializer when it is used as an initializer for a variable declaration.
+          SgFunctionCallExp* rhs_FunctionCallExpr = isSgFunctionCallExp(expr);
+          if (rhs_FunctionCallExpr != NULL)
+             {
+               PrecedenceSpecifier SgAssignInitializer_precedence = 2;
+               SgInitializedName* initializedName = isSgInitializedName(parentExpr->get_parent());
+               if (initializedName == NULL)
+                  {
+#if 0
+                    printf ("In requiresParentheses(): not an initialization of a variable: expr = %p = %s \n",expr,expr->class_name().c_str());
+                    printf (" --- parentExpr->get_parent() = %p = %s \n",parentExpr->get_parent(),parentExpr->get_parent()->class_name().c_str());
+#endif
+                 // Other uses of the assignment initialization should have precedence value 0.
+                    SgAssignInitializer_precedence = 0;
+                  }
+#if 0
+               printf ("In requiresParentheses(): expr = %p = %s \n",expr,expr->class_name().c_str());
+#endif
+               SgFunctionDeclaration* functionDeclaration = SageInterface::getFunctionDeclaration(rhs_FunctionCallExpr);
+#if 0
+               printf ("In requiresParentheses(): calling getPrecedence(): functionDeclaration = %p = %s = %s \n",
+                    functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
+               PrecedenceSpecifier rhsPrecedenceValue = getPrecedence(expr);
+#if 0
+               printf (" --- rhsPrecedenceValue = %d \n",rhsPrecedenceValue);
+#endif
+               if (rhsPrecedenceValue >= SgAssignInitializer_precedence)
+                  {
+                 // Most common behavior.
+                    return false;
+                  }
+                 else
+                  {
+                 // This is the less common case of the comma operator (which has precedence value 1, less than initialization).
+                    return true;
+                  }
+#if 0
+               printf ("In requiresParentheses(): Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+            else
+             {
+            // DQ (1/9/2020): This is the original behavior.
+               return false;
+             }
 #endif
         }
 
