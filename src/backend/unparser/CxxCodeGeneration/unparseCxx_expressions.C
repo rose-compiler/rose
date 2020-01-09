@@ -6352,6 +6352,34 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      printf ("In unparseNewOp(): Calling unparseType(): new_op->get_specified_type() = %p = %s \n",new_op->get_specified_type(),new_op->get_specified_type()->class_name().c_str());
 #endif
 
+  // DQ (1/8/2020): When arguments are provided, we need to add parenthesis around the type.
+  // See Cxx11_tests/test2020_29.C for an example of where this is required.
+     bool add_parenthesis_around_type = false;
+     if (new_op->get_constructor_args() != NULL)
+        {
+#if DEBUG_NEW_OPERATOR
+          printf ("In unparseNewOp(): Calling unparseType(): new_op->get_constructor_args() = %p = %s \n",new_op->get_constructor_args(),new_op->get_constructor_args()->class_name().c_str());
+#endif
+          SgType* newOperatorSpecifiedType = new_op->get_specified_type();
+          ROSE_ASSERT(newOperatorSpecifiedType != NULL);
+
+#if DEBUG_NEW_OPERATOR || 0
+          printf ("In unparseNewOp(): newOperatorType = %p = %s \n",newOperatorSpecifiedType,newOperatorSpecifiedType->class_name().c_str());
+#endif
+          SgArrayType* newOperatorArrayType = isSgArrayType(newOperatorSpecifiedType);
+
+       // DQ (1/8/2020): If this is not an array type, then we will need additional parenthesizes.
+          if (newOperatorArrayType == NULL)
+             {
+               add_parenthesis_around_type = true;
+             }
+        }
+
+     if (add_parenthesis_around_type == true)
+        {
+          curprint ("( ");
+        }
+
   // DQ (4/16/2019): Added support for name qualification implementation.
   // newinfo.set_name_qualification_length(new_op->get_name_qualification_length());
   // newinfo.set_global_qualification_required(new_op->get_global_qualification_required());
@@ -6368,6 +6396,11 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      unp->u_type->unparseType(new_op->get_specified_type(), newinfo);
 
   // printf ("DONE: new_op->get_type()->class_name() = %s \n",new_op->get_type()->class_name().c_str());
+
+     if (add_parenthesis_around_type == true)
+        {
+          curprint (") ");
+        }
 
 #if DEBUG_NEW_OPERATOR
      curprint ("\n /* Output constructor args */ \n");
