@@ -7960,7 +7960,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                        {
                          if (decl_item->get_name_qualification_length() > 0)
                             {
-#if 1
+#if 0
                               printf ("Set reference_node_for_qualification = %p name = %s \n",decl_item,decl_item->get_name().str());
 #endif
                            // info.set_reference_node_for_qualification(decl_item);

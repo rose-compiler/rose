@@ -1461,8 +1461,13 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 #endif
 
 #if 1
+       // DQ (1/8/2020): ROSE-82 (on RZ) This limit needs to be larger and increasing it to 500 was enough 
+       // for a specific code with a long chain of if-then-else nesting, So to make this sufficent for more
+       // general code we have increased the lomit to 100,000.  Note that 50 was not enough for real code, 
+       // but was enough for our regression tests.
        // DQ (12/30/2019): This is added to support detection of infinite loops over parent pointers.
-          if (counter >= 500)
+       // if (counter >= 500)
+          if (counter >= 100000)
              {
                printf ("Exiting: In getEnclosingNode(): loop limit exceeded: counter = %d \n",counter);
                ROSE_ASSERT(false);
