@@ -6647,7 +6647,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
          break;
        }
        case e_c90_standard: {
-         inputCommandLine.push_back("--c90");
+         inputCommandLine.push_back("--c89");
          break;
        }
        case e_c99_standard: {
