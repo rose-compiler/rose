@@ -1284,10 +1284,10 @@ namespace AutoParallelization
                 if (enable_debug)
                   cout<<"Both source and sink reference are array references..."<<endl;
 
-                if ((info.GetDepType() & DEPTYPE_ANTI)||(info.GetDepType() & DEPTYPE_TRUE))
+                if ((info.GetDepType() & DEPTYPE_ANTI)||(info.GetDepType() & DEPTYPE_TRUE)||(info.GetDepType() & DEPTYPE_OUTPUT) )
                 {
                   if (enable_debug)
-                    cout<<"\t Dep type is TRUE_DEP or ANTI_DEP"<<endl;
+                    cout<<"\t Dep type is TRUE_DEP or ANTI_DEP or OUTPUT_DEP"<<endl;
                   if (AutoParallelization::no_aliasing) 
                   {
                     if (enable_debug)
