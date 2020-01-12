@@ -6967,6 +6967,18 @@ Unparse_ExprStmt::unparseTrailingFunctionModifiers(SgMemberFunctionDeclaration* 
 
             // curprint ( string(" restrict"));
              }
+
+       // DQ (1/11/2020): Adding support for lvalue reference member function modifiers.
+          if (mftype->isLvalueReferenceFunc())
+             {
+               curprint(" &");
+             }
+
+       // DQ (1/11/2020): Adding support for rvalue reference member function modifiers.
+          if (mftype->isRvalueReferenceFunc())
+             {
+               curprint(" &&");
+             }
         }
 
   // DQ (12/11/2012): Avoid redundant output of the restrict keyword.

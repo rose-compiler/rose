@@ -3038,7 +3038,17 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
      SgType*               typeInTable = fTable->lookup_function_type(typeName);
 
 #if 0
-     printf ("In buildMemberFunctionType(): fTable->lookup_function_type(typeName = %s) = %p \n",typeName.str(),typeInTable);
+     printf ("In buildMemberFunctionType(SgType*,SgFunctionParameterTypeList*,SgType*,int,int): fTable->lookup_function_type(typeName = %s) = %p \n",typeName.str(),typeInTable);
+     printf (" --- mfunc_specifier = %d ref_qualifiers = %d \n",mfunc_specifier,ref_qualifiers);
+#endif
+
+#if 1
+  // DQ (1/10/2020): I think that these qualifiers are contained in the mfunc_specifier.
+     if (ref_qualifiers > 0)
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
 #endif
 
      SgMemberFunctionType* funcType = NULL;
@@ -3049,6 +3059,8 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
           ROSE_ASSERT(partialFunctionType != NULL);
 #if 0
           printf ("Building a SgPartialFunctionType: partialFunctionType = %p \n",partialFunctionType);
+          printf (" --- partialFunctionType->isLvalueReferenceFunc() = %s \n",partialFunctionType->isLvalueReferenceFunc() ? "true" : "false");
+          printf (" --- partialFunctionType->isRvalueReferenceFunc() = %s \n",partialFunctionType->isRvalueReferenceFunc() ? "true" : "false");
 #endif
        // DQ (12/5/2012): We want to avoid overwriting an existing SgFunctionParameterTypeList. Could be related to failing tests for AST File I/O.
           if (partialFunctionType->get_argument_list() != NULL)
@@ -3114,9 +3126,11 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
           funcType = isSgMemberFunctionType(typeInTable);
           ROSE_ASSERT(funcType != NULL);
         }
+
 #if 0
      fTable->get_function_type_table()->print("In buildMemberFunctionType(): globalFunctionTypeTable AFTER");
 #endif
+
      return funcType;
    }
 
@@ -3146,12 +3160,32 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
      printf("  - struct_name = %p (%s)\n", struct_name, struct_name->class_name().c_str());
 #endif
 
+#if 0
+  // DQ (1/9/2020): Unclear why this function is not using the ref_qualifiers.
+     printf ("SageBuilder::buildMemberFunctionType(SgType*,SgFunctionParameterTypeList*,SgScopeStatement*,int,int): This function does not use the input ref_qualifiers = %x \n",ref_qualifiers);
+     printf (" --- mfunc_specifier = %d ref_qualifiers = %d \n",mfunc_specifier,ref_qualifiers);
+#endif
+
+#if 1
+     if (ref_qualifiers > 0)
+       {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+       }
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
      ROSE_ASSERT(struct_name->get_parent() != NULL);
   // ROSE_ASSERT(struct_name->get_declaration() != NULL);
 
 #if 0
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
-     printf ("In buildMemberFunctionType() return_type = %p typeList = %p struct_name = %p = %s = %s mfunc_specifier = %u \n",return_type,typeList,struct_name,struct_name->class_name().c_str(),struct_name->get_declaration()->get_name().str(),mfunc_specifier);
+     printf ("In buildMemberFunctionType() return_type = %p typeList = %p struct_name = %p = %s = %s mfunc_specifier = %u \n",
+          return_type,typeList,struct_name,struct_name->class_name().c_str(),struct_name->get_declaration()->get_name().str(),mfunc_specifier);
 #endif
 
   // SgDeclarationStatement* declaration = struct_name->get_declaration();
@@ -3544,7 +3578,27 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #endif
           SgFunctionParameterTypeList * typeList = buildFunctionParameterTypeList(paralist);
 
-          func_type = buildMemberFunctionType(return_type,typeList,scope, functionConstVolatileFlags);
+       // DQ (1/10/2020): This was a default argument that was initialized to zero, I would like to remove the 
+       // use of the default argument to better support debugging new regerence qualifiers for member functions.
+       // func_type = buildMemberFunctionType(return_type,typeList,scope, functionConstVolatileFlags);
+          unsigned int reference_modifiers = 0;
+          func_type = buildMemberFunctionType(return_type,typeList,scope, functionConstVolatileFlags,reference_modifiers);
+#if 0
+          printf ("Using zero as value for reference_modifiers for member function type = %p = %s \n",func_type,func_type->class_name().c_str());
+#endif
+#if 0
+       // DQ (1/11/2020): Debugging Cxx11_tests/test2020_27.C.
+          SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(func_type);
+          if (memberFunctionType != NULL)
+             {
+               printf (" --- memberFunctionType->isLvalueReferenceFunc() = %s \n",memberFunctionType->isLvalueReferenceFunc() ? "true" : "false");
+               printf (" --- memberFunctionType->isRvalueReferenceFunc() = %s \n",memberFunctionType->isRvalueReferenceFunc() ? "true" : "false");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#endif
 
        // printf ("Error: SgFunctionType built instead of SgMemberFunctionType \n");
        // ROSE_ASSERT(false);
