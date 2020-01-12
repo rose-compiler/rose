@@ -6942,6 +6942,10 @@ Unparse_ExprStmt::unparseTrailingFunctionModifiers(SgMemberFunctionDeclaration* 
      bool outputRestrictKeyword = false;
      SgMemberFunctionType *mftype = isSgMemberFunctionType(mfuncdecl_stmt->get_type());
 
+#if 0
+     printf ("In unparseTrailingFunctionModifiers: unparse const,volatile, const volatile, etc. from the SgMemberFunctionType \n");
+#endif
+
   // DQ (9/9/2014): Note this was using info where it was refactored from and ninfo is passed to this function.
      if (!info.SkipFunctionQualifier() && mftype )
         {
