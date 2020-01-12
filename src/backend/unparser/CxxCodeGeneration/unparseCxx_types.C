@@ -256,19 +256,23 @@ string get_type_name(SgType* t)
                          if (p != ftype->get_arguments().end()) { res = res + ","; }
                        }
 
-                       res = res + ")";
+                    res = res + ")";
 
-                       if (ftype->isConstFunc()) {
+#if 1
+                    printf ("In get_type_name(): ftype != NULL: after unparsing function arguments: unparse modifiers \n");
+#endif
+
+                    if (ftype->isConstFunc()) {
                          res = res + " const";
                        }
 
-                       if (ftype->get_ref_qualifiers() == 1) {
+                    if (ftype->get_ref_qualifiers() == 1) {
                          res = res + " &";
                        } else if (ftype->get_ref_qualifiers() == 2) {
                          res = res + " &&";
                        }
 
-                       return res;
+                    return res;
                   }
                  else
                   {
@@ -1982,17 +1986,39 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                  // curprint("\n/* In unparseMemberPointerType(): end of argument list */ \n";
 
                     unparseType(ftype->get_return_type(), info); // second part
-
+#if 0
+                    printf ("In unparseMemberPointerType(): after unparseType() second part: unparse modifiers \n");
+#endif
+#if 0
+                  // DQ (1/11/2020): This is the old code!
                      if (ftype->get_ref_qualifiers() == 1) {
                        curprint(" &");
                      } else if (ftype->get_ref_qualifiers() == 2) {
                        curprint(" &&");
                      }
-
+#endif
                  // Liao, 2/27/2009, add "const" specifier to fix bug 327
                     if (ftype->isConstFunc())
                        {
                          curprint(" const ");
+                       }
+
+                 // DQ (1/11/2020): Adding support for volatile.
+                    if (ftype->isVolatileFunc())
+                       {
+                         curprint(" volatile ");
+                       }
+
+                 // DQ (1/11/2020): Adding support for lvalue reference member function modifiers.
+                    if (ftype->isLvalueReferenceFunc())
+                       {
+                         curprint(" &");
+                       }
+
+                 // DQ (1/11/2020): Adding support for rvalue reference member function modifiers.
+                    if (ftype->isRvalueReferenceFunc())
+                       {
+                         curprint(" &&");
                        }
                   }
                  else
@@ -4202,6 +4228,7 @@ Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
 #if 0
      printf ("In unparseMemberFunctionType(type = %p (%s))\n", type, type ? type->class_name().c_str() : "");
 #endif
+
      SgMemberFunctionType* mfunc_type = isSgMemberFunctionType(type);
      ROSE_ASSERT(mfunc_type != NULL);
 
@@ -4284,16 +4311,39 @@ Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
                ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
                unparseType(mfunc_type->get_return_type(), info); // catch the 2nd part of the rtype
+#if 0
+               printf ("In unparseMemberFunctionType(): after unparseType() second part: unparse modifiers \n");
+#endif
 
                if (mfunc_type->isConstFunc()) {
                  curprint (" const");
                }
 
+            // DQ (1/11/2020): Adding missing support for volatile and const-volatile.
+               if (mfunc_type->isVolatileFunc()) 
+                  {
+                 // curprint (" /* adding volatile */ ");
+                    curprint (" volatile");
+                  }
+
+            // DQ (1/11/2020): Adding support for lvalue reference member function modifiers.
+               if (mfunc_type->isLvalueReferenceFunc())
+                  {
+                    curprint(" &");
+                  }
+
+            // DQ (1/11/2020): Adding support for rvalue reference member function modifiers.
+               if (mfunc_type->isRvalueReferenceFunc())
+                  {
+                    curprint(" &&");
+                  }
+#if 0
                if (mfunc_type->get_ref_qualifiers() == 1) {
                  curprint (" &");
                } else if (mfunc_type->get_ref_qualifiers() == 2) {
                  curprint (" &&");
                }
+#endif
              }
             else
              {
