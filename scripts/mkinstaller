@@ -10441,7 +10441,7 @@ EOF32
          |      #
          |      #---------------------------------------
          |
-         |      if ["X\${PREFIX}" = "X" ]
+         |      if [ "X\${PREFIX}" = "X" ]
          |      then
          |         PREFIX="\${DefaultPrefix}"
          |      fi
