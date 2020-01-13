@@ -496,7 +496,7 @@ Grammar::setUpExpressions ()
 
 #if 0
   // DQ (2/7/2011): Removed this data member since this general of a level of support for this concept is
-  // problematics.  We can't exclude it from SgExprListExp for example and we also want it to be defined 
+  // problematic.  We can't exclude it from SgExprListExp for example and we also want it to be defined 
   // as DEF_TRAVERSAL.
   // DQ (2/7/2011): Moved the originalExpressionTree data member to the SgExpression since it is required in
   // a wide range of IR nodes already (SgValueExp, SgCastExp, SgPntrArrRefExp, SgSubtractOp, SgVarRefExp, 
@@ -716,6 +716,11 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
      AddressOfOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                   "../Grammar/Expression.code" );
+
+  // DQ (1/12/2020): Adding support for the originalExpressionTree.
+     AddressOfOp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // DQ (1/20/2019): This should be a prefix operator and so it can't use the default  
   // automatically generated version of the post_construction_initialization function.
