@@ -1671,7 +1671,6 @@ PreprocessingInfo* EasyStorage<PreprocessingInfo*>::rebuildDataStoredInEasyStora
 
         // ROSE-1470
            Sg_File_Info * file_info = (Sg_File_Info*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex(fileInfoIndex));
-           file_info->check_file_id("EasyStorage<PreprocessingInfo*>::rebuildDataStoredInEasyStorageClass", false);
            returnInfo->set_file_info(file_info);
 #if 0
            printf ("Check the file Info object just read... \n");
