@@ -5386,7 +5386,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
           ROSE_ASSERT(info.get_nested_expression() != 0);
 #if DEBUG_BINARY_OPERATORS
           printf ("In unparseBinaryExpr() -- before output of RHS: info.get_nested_expression() = %d info.get_operator_name() = %s \n",info.get_nested_expression(),info.get_operator_name().c_str());
-          curprint ("\n /* unparseBinaryExpr(): Test 4.9  before unparseExpression() info.get_operator_name() = " + info.get_operator_name() + "*/ \n");
+          curprint ("\n /* unparseBinaryExpr(): Test 4.9  before unparseExpression() info.get_operator_name() = " + info.get_operator_name() + " */ \n");
 #endif
           SgExpression* rhs = binary_op->get_rhs_operand();
 
