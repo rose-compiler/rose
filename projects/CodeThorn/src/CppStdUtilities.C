@@ -44,6 +44,18 @@ namespace CppStdUtilities {
     }
   }
 
+  bool appendFile(std::string filename, std::string data) {
+    std::ofstream myfile;
+    myfile.open(filename.c_str(),std::ios::app);
+    if(myfile.good()) {
+      myfile << data;
+      myfile.close();
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   bool isPostfix(std::string const &postfix, std::string const &s) {
     if (s.length() >= postfix.length()) {
       return (0 == s.compare (s.length() - postfix.length(), postfix.length(), postfix));

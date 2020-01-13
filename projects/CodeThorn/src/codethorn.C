@@ -73,6 +73,7 @@
 
 #include "CodeThornLib.h"
 #include "LTLThornLib.h"
+#include "CppStdUtilities.h"
 
 //BOOST includes
 #include "boost/lexical_cast.hpp"
@@ -403,10 +404,11 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("context-sensitive",po::value< bool >()->default_value(false)->implicit_value(true),"Perform context sensitive analysis. Uses call strings with arbitrary length, recursion is not supported yet.")
     ("abstraction-mode",po::value< int >()->default_value(0),"Select abstraction mode (0: equality merge (explicit model checking), 1: approximating merge (abstract model checking).")
     ("interpretation-mode",po::value< int >()->default_value(0),"Select interpretation mode. 0: default, 1: execute stdout functions.")
-     //    ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
+    ("interpretation-mode-file",po::value< string >()->default_value(""),"Select interpretation mode output file (otherwise stdout is used).")
     ("print-warnings",po::value< bool >()->default_value(false)->implicit_value(true),"Print warnings on stdout during analysis (this can slow down the analysis significantly)")
     ("print-violations",po::value< bool >()->default_value(false)->implicit_value(true),"Print detected violations on stdout during analysis (this can slow down the analysis significantly)")
     ("options-set",po::value< int >()->default_value(0)->implicit_value(0),"Use a predefined set of default options (0..3).")
+//  ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ;
 
   rersOptions.add_options()
@@ -1211,8 +1213,6 @@ int main( int argc, char * argv[] ) {
       exit(1);
     }
 
-
-
     analyzer->optionStringLiteralsInState=args.getBool("in-state-string-literals");
     analyzer->setSkipSelectedFunctionCalls(args.getBool("ignore-unknown-functions"));
     analyzer->setIgnoreFunctionPointers(args.getBool("ignore-function-pointers"));
@@ -1227,7 +1227,11 @@ int main( int argc, char * argv[] ) {
       cerr<<"Unknown interpretation mode "<<mode<<" provided on command line (supported: 0..1)."<<endl;
       exit(1);
     }
-
+    string outFileName=args.getString("interpretation-mode-file");
+    if(outFileName!="") {
+      analyzer->setInterpretationModeOutputFileName(outFileName);
+      CppStdUtilities::writeFile(outFileName,""); // touch file
+    }
     {
       switch(int argVal=args.getInt("function-resolution-mode")) {
       case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
