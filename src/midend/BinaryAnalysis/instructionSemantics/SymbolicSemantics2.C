@@ -1162,15 +1162,6 @@ RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValueP
         regs->updateReadProperties(reg);
     }
 
-    switch (computingDefiners_) {
-        case TRACK_NO_DEFINERS:
-            break;
-        case TRACK_ALL_DEFINERS:
-        case TRACK_LATEST_DEFINER:
-            result->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
-            break;
-    }
-
     if (reinterpretRegisterReads_)
         result = SValue::promote(reinterpret(result, SageBuilderAsm::buildTypeU(result->get_width())));
     return filterResult(result);
