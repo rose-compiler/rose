@@ -1,3 +1,4 @@
+#include "DOM.h"
 int main() {
   bool x;
   int a=1;
@@ -17,4 +18,6 @@ int main() {
     a=a+2;
   }
   a=a+1;
+  printf("a:%d\n",a);
+  printf("*p:%d\n",*p);
 }

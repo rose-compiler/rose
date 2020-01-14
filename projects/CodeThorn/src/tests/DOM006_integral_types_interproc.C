@@ -1,3 +1,4 @@
+#include "DOM.h"
 void f() {
   {signed char            x='a';}
   {signed short     int   x=500; }
