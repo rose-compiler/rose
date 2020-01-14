@@ -3030,6 +3030,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
      printf ("   --- isTransformed (templateInstantiationFunctionDeclaration) = %s \n",isTransformed (templateInstantiationFunctionDeclaration) ? "true" : "false");
      printf ("   --- nondefining declaration = %p \n",templateInstantiationFunctionDeclaration->get_firstNondefiningDeclaration());
      printf ("   --- defining declaration    = %p \n",templateInstantiationFunctionDeclaration->get_definingDeclaration());
+     printf ("   --- isFriend                = %s \n",templateInstantiationFunctionDeclaration->get_declarationModifier().isFriend() ? "true" : "false");
      curprint("/* In Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt() */");
 #endif
 
@@ -3145,6 +3146,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
                  // We only look at the isOutputInCodeGeneration() if this is a compiler generated function.
                     if ( templateInstantiationFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true )
 #else
+#error "DEAD CODE!"
                     if ( true )
 #endif
                        {
@@ -4868,8 +4870,8 @@ fixupScopeInUnparseInfo ( SgUnparse_Info& ninfo , SgDeclarationStatement* declar
 
   // printf ("Set current scope (stored in ninfo): currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
    }
- 
- 
+
+
 void
 Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
@@ -5057,6 +5059,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
   // ninfo.set_forceQualifiedNames();
 
 #if 0
+     printf ("funcdecl_stmt->isFriend         = %s \n",funcdecl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
      printf ("funcdecl_stmt->isForward()      = %s \n",funcdecl_stmt->isForward() ? "true" : "false");
      printf ("funcdecl_stmt->get_definition() = %s \n",funcdecl_stmt->get_definition() ? "true" : "false");
      printf ("info.SkipFunctionDefinition()   = %s \n",info.SkipFunctionDefinition() ? "true" : "false");
@@ -5105,8 +5108,20 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
           SgClassDefinition *cdefn = isSgClassDefinition(funcdecl_stmt->get_parent());
 
+#if 1
+       // DQ (1/13/2020): Original code.
           if (cdefn && cdefn->get_declaration()->get_class_type() == SgClassDeclaration::e_class)
+#else
+       // DQ (1/13/2020): Member functions and data members and friend functions can be private in structs as well as classes.
+       // Unfortunately this also causes the output of "public:" is normal structs which is correct, but not ideal code generation.
+          if (cdefn && (cdefn->get_declaration()->get_class_type() == SgClassDeclaration::e_class || cdefn->get_declaration()->get_class_type() == SgClassDeclaration::e_struct) )
+#endif
+             {
+#if 0
+               printf ("Calling ninfo.set_CheckAccess() \n");
+#endif
                ninfo.set_CheckAccess();
+             }
 
        // printf ("Comment out call to get_suppress_atomic(funcdecl_stmt) \n");
 #if 0
