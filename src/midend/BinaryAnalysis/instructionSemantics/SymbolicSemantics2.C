@@ -1132,23 +1132,17 @@ RiscOperators::reinterpret(const BaseSemantics::SValuePtr &a_, SgAsmType *retTyp
     ASSERT_not_null(retType);
     SymbolicExpr::Type srcType = a->get_expression()->type();
     SymbolicExpr::Type dstType = sgTypeToSymbolicType(retType);
-    if (srcType.nBits() != dstType.nBits()) {
+    SValuePtr result;
+    if (srcType == dstType) {
+        result = a;
+    } else if (srcType.nBits() != dstType.nBits()) {
         throw Exception("reinterpret type (" + dstType.toString() + ") is not the same size as the value type (" +
                         srcType.toString() + ")");
+    } else {
+        result = svalue_expr(SymbolicExpr::makeReinterpret(a->get_expression(), dstType, solver()));
+        result->add_defining_instructions(a);           // reinterpret should have no effect on the definers.
     }
-
-    SValuePtr result = svalue_expr(SymbolicExpr::makeReinterpret(a->get_expression(), dstType, solver()));
     ASSERT_not_null(result);
-
-    switch (computingDefiners_) {
-        case TRACK_NO_DEFINERS:
-            break;
-        case TRACK_ALL_DEFINERS:
-            result->add_defining_instructions(a);       // fall through...
-        case TRACK_LATEST_DEFINER:
-            result->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
-            break;
-    }
     return filterResult(result);
 }
 
