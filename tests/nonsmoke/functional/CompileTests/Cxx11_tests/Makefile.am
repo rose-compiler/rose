@@ -719,7 +719,13 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2020_38.C \
    test2020_39.C \
    test2020_41.C \
-   test2020_42.C 
+   test2020_42.C \
+   test2020_43.C \
+   test2020_44.C \
+   test2020_45.C \
+   test2020_46.C \
+   test2020_47.C \
+   test2020_48.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
