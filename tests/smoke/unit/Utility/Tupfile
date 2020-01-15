@@ -33,15 +33,17 @@ run $(test) testSort
 # tests for the built-in SHA-256 algorithm
 ###############################################################################################################################
 
+# To generate a new answer file, run these commands:
+#     rm -f x-????????.dat
+#     ./testSha256Builtin -ox 0 9399
+#     for f in x-????????.dat; do sha256sum $f |cut -d' ' -f1; done >testSha256Builtin.ans
+#     rm -f x-????????.dat
+#
+# 9399 is magic -- it's a buffer size that caused a buffer overflow in the first implementation.
+
 run $(tool_compile_linkexe) testSha256Builtin.C
-
-# This tests a common empty input
-run $(test) testSha256Builtin -oempty --answer=testSha256Builtin-empty.ans \
-    ./testSha256Builtin hash 0
-
-# This test reported by Jim Leek had a buffer overflow.
-run $(test) testSha256Builtin -o9399 --answer=testSha256Builtin-9399.ans \
-    ./testSha256Builtin hash 9399
+run $(test) testSha256Builtin --answer=testSha256Builtin.ans \
+    ./testSha256Builtin 0 9399
 
 ###############################################################################################################################
 # tests the RangeMap class
