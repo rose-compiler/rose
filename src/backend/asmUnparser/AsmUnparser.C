@@ -27,14 +27,16 @@ Sawyer::Message::Facility AsmUnparser::mlog;
  * instruction is part of a selected no-op sequence.  Note that this algorithm does not necessarily maximize the number of
  * no-op instructions. */
 static std::vector<bool>
-build_noop_index(const std::vector <std::pair <size_t, size_t> > &noops)
-{
+build_noop_index(const std::vector <std::pair <size_t /*offset*/, size_t /*size*/> > &noops) {
+    typedef std::vector<std::pair<size_t /*offset*/, size_t /*size*/> > Unsorted;
+    typedef std::map<size_t/*size*/, std::vector <size_t/*offset*/> > Sorted;
+
     /* Sort subsequences into buckets by length */
     size_t retval_size = 0;
-    std::map<size_t/*size*/, std::vector <size_t/*offset*/> > sorted;
-    for (std::vector<std::pair<size_t, size_t> >::const_iterator ni=noops.begin(); ni!=noops.end(); ++ni) {
-        sorted[(*ni).second].push_back((*ni).first);
-        retval_size = std::max(retval_size, (*ni).first + (*ni).second);
+    Sorted sorted;
+    for (Unsorted::const_iterator ni = noops.begin(); ni != noops.end(); ++ni) {
+        sorted[ni->second /*size*/].push_back(ni->first /*offset*/);
+        retval_size = std::max(retval_size, ni->first /*offset*/ + ni->second /*size*/);
     }
     
     /* Allocate a return value */
@@ -45,11 +47,9 @@ build_noop_index(const std::vector <std::pair <size_t, size_t> > &noops)
     std::vector<bool> retval(retval_size, false);
 
     /* Process in order from largest to smallest */
-    for (std::map<size_t, std::vector<size_t> >::reverse_iterator szi=sorted.rbegin(); szi!=sorted.rend(); ++szi) {
-        size_t sz = (*szi).first;
-        for (std::vector<size_t>::const_iterator idxi=(*szi).second.begin(); idxi!=(*szi).second.end(); ++idxi) {
-            size_t idx = *idxi;
-            
+    for (Sorted::reverse_iterator szi = sorted.rbegin(); szi != sorted.rend(); ++szi) {
+        size_t sz = szi->first;
+        BOOST_FOREACH (size_t idx, szi->second) {
             /* Are any instructions in this range already marked as no-ops?  If so, then skip this one. */
             bool overlaps = false;
             for (size_t i=0; i<sz && !overlaps; ++i)
