@@ -13727,15 +13727,15 @@ Sg_File_Info::display( const std::string label ) const
   // if (isCompilerGenerated() == false)
      if (!isTransformation() && !isCompilerGenerated())
         {
-          printf ("     filename = %s \n",get_filename());
-          printf ("     line     = %d  column = %d \n",get_line(),get_col());
+          printf ("     (computed) filename = %s \n",get_filename());
+          printf ("     (computed) line     = %d  column = %d \n",get_line(),get_col());
         }
        else // Liao, 11/12/2012, more information for debugging
         {
-          printf("filename and line, column info should be invalid for transformation or compiler generated objects\n");
-          printf("we print their values anyway for your reference\n");
-          printf ("     filename = %s \n",get_filename());
-          printf ("     line     = %d  column = %d \n",get_line(),get_col());
+          printf ("     Filename and line, column info should be invalid for transformation or compiler generated objects\n");
+          printf ("     we print their values anyway for your reference\n");
+          printf ("     (computed) filename = %s \n",get_filename());
+          printf ("     (computed) line     = %d  column = %d \n",get_line(),get_col());
         }
 
   // DQ (6/17/2005): Way to get extra debugging information, if the
@@ -13743,16 +13743,16 @@ Sg_File_Info::display( const std::string label ) const
   // if (label == "debug")
      if (label.find("debug") != std::string::npos)
         {
-          printf ("     file_id  = %d \n",get_file_id());
-          printf ("     filename = %s \n",get_raw_filename().c_str());
-          printf ("     line     = %d  column   = %d \n",p_line,p_col);
+          printf ("     (internal) file_id   = %d \n",get_file_id());
+          printf ("     (internal) filename  = %s \n",get_raw_filename().c_str());
+          printf ("     (internal  line      = %d  column   = %d \n",p_line,p_col);
         }
 
-     printf ("     physical_file_id       = %d = %s \n",get_physical_file_id(),get_physical_filename().c_str());
-     printf ("     physical_line          = %d \n",p_physical_line);
+     printf ("     (computed) physical_file_id    = %d = %s \n",get_physical_file_id(),get_physical_filename().c_str());
+     printf ("     (computed) physical_line       = %d \n",p_physical_line);
 
   // DQ (1/23/2013): Added support for source sequence numbering information.
-     printf ("     source_sequence_number = %d \n",p_source_sequence_number);
+     printf ("     source_sequence_number         = %d \n",p_source_sequence_number);
 
   // DQ (5/16/2005): output these values, but I think they might be removed 
   // later since I don't see the point of storing this information!
