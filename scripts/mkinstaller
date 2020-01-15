@@ -22,21 +22,21 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "5";
-$mkinstaller_ver_build = "25";
-$mkinstaller_ver_patch = "2";
-$mkinstaller_ver_name  = "2.5.25.2";
-$mkinstaller_ver_time  = "13Dec2019,21:33:31z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.25.2 - 13Dec2019,21:33:31z";
+$mkinstaller_ver_build = "26";
+$mkinstaller_ver_patch = "";
+$mkinstaller_ver_name  = "2.5.26";
+$mkinstaller_ver_time  = "13Jan2020,22:17:43z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.5.26 - 13Jan2020,22:17:43z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
 $perl_library_ver_major = "1";
 $perl_library_ver_minor = "6";
-$perl_library_ver_build = "13";
+$perl_library_ver_build = "14";
 $perl_library_ver_patch = "";
-$perl_library_ver_name  = "1.6.13";
-$perl_library_ver_time  = "16Nov2019,20:13:34z";
-$perl_library_ver_id    = "@(#)perl_library 1.6.13 - 16Nov2019,20:13:34z";
+$perl_library_ver_name  = "1.6.14";
+$perl_library_ver_time  = " 4Jan2020,18:03:00z";
+$perl_library_ver_id    = "@(#)perl_library 1.6.14 -  4Jan2020,18:03:00z";
 
 #{------------------------------------------------------------------------------
 #
@@ -21390,7 +21390,7 @@ sub makePathNative {
 #
 #  see: totebag/src/perl-lib/makePathUNIXlike.psub
 #
-#  Dated: 30Oct2019 makePathUNIXlike
+#  Dated: 04Jan2020 makePathUNIXlike
 #
 #  NOTE: This function is known to be "hand included" in the following
 #        source files:
@@ -21457,7 +21457,7 @@ sub makePathUNIXlike {
       print DBGOUT "makePathUNIXlike: ...just path\n" if $debugging;
       $pathname = fixpath($pathname);
    }
-   print DBGOUT "makePathUNIXlike] ...done(=\"$result\")\n" if $debugging;
+   print DBGOUT "makePathUNIXlike] ...done(=\"$pathname\")\n" if $debugging;
    return $pathname;
 }
 
