@@ -44,6 +44,7 @@ main(int argc, char *argv[]) {
     const RegisterDescriptor EAX = *registers->lookup("eax");
     SmtSolverPtr solver;
     BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registers, solver);
+    ASSERT_always_not_null(ops);
     ops->currentState()->memoryState()->set_byteOrder(ByteOrder::ORDER_LSB);
 
     // Initialize the machine state with some writes and get the string representation.

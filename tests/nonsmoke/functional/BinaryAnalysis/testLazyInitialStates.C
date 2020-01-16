@@ -42,6 +42,7 @@ basicReadTest(const P2::Partitioner &partitioner) {
     const RegisterDescriptor REG = partitioner.instructionProvider().stackPointerRegister();
     const std::string REG_NAME = RegisterNames(regdict)(REG);
     BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
+    ASSERT_always_not_null(ops);
     ops->currentState()->memoryState()->set_byteOrder(partitioner.instructionProvider().defaultByteOrder());
     BaseSemantics::StatePtr initialState = ops->currentState()->clone();
     ops->initialState(initialState);                    // lazily evaluated initial state
