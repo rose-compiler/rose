@@ -305,6 +305,11 @@ if [[ ! -e src/frontend/CxxFrontend/EDG/Makefile.am ]]; then
         src/frontend/CxxFrontend/EDG/EDG_5.0/src/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_5.0/src/disp/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_5.0/lib/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_6.0/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_6.0/misc/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_6.0/src/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_6.0/src/disp/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_6.0/lib/Makefile.in \
         src/frontend/CxxFrontend/EDG/edgRose/Makefile.in
     do
         mkdir -p $(dirname $file)
