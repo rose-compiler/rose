@@ -10324,6 +10324,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("Case of SgVarRefExp: nameQualificationInducedFromPointerMemberType = %s \n",nameQualificationInducedFromPointerMemberType ? "true" : "false");
+          printf (" --- isDataMemberReference = %s isAddressTaken = %s \n",isDataMemberReference ? "true" : "false",isAddressTaken ? "true" : "false");
 #endif
 
           if (isDataMemberReference == false || isAddressTaken == true)
@@ -10816,6 +10817,66 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
 
             // DQ (2/16/2019): End of false branch for: if (isDataMemberReference == false)
+             }
+            else
+             {
+
+            // DQ (1/14/2020): To support Cxx11_tests/test2020_50.C, a variable in an un-named union we could just argue 
+            // that if the union is un-named then the variable declaration should not be considered to be a member 
+            // (then the name qualification could proceed using the branch above).
+#if 0
+               printf ("For the case of Cxx11_tests/test2020_50.C, conside the variable declaration in the un-named union to NOT be a data member (process as isDataMemberReference == false) \n");
+#endif
+#if 0
+            // DQ (1/14/2020): Added support for variableRefExp from un-named class (or union), see Cxx11_tests/test2020_50.C.
+            // (isDataMemberReference == true && isAddressTaken == false), example in Cxx11_tests/test2020_50.C.
+#if 0
+               printf ("Case of SgVarRefExp: isDataMemberReference = %s isAddressTaken = %s \n",isDataMemberReference ? "true" : "false",isAddressTaken ? "true" : "false");
+#endif
+               if (currentStatement != NULL)
+                  {
+                 // DQ (5/30/2011): Handle the case of test2011_58.C (index declaration in for loop construct).
+                 // SgScopeStatement* currentScope = currentStatement->get_scope();
+                    SgScopeStatement* currentScope = isSgScopeStatement(currentStatement);
+                    if (currentScope == NULL)
+                       {
+                         currentScope = currentStatement->get_scope();
+                       }
+                    ROSE_ASSERT(currentScope != NULL);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("Case SgVarRefExp: (could this be in an array type?) currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+#endif
+                    SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+                    ROSE_ASSERT(variableSymbol != NULL);
+                    SgInitializedName* initializedName = variableSymbol->get_declaration();
+                    ROSE_ASSERT(initializedName != NULL);
+
+                 // DQ (7/18/2012): Added test as part of debugging test2011_75.C.
+                    ROSE_ASSERT(initializedName->get_parent() != NULL);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                    printf ("Case of SgVarRefExp: varRefExp = %p : initializedName name = %s parent = %p = %s \n",
+                         varRefExp,initializedName->get_name().str(),initializedName->get_parent(),initializedName->get_parent()->class_name().c_str());
+#endif
+
+                 // SgNode* parent = initializedName->get_parent();
+                 // printf ("parent = %p = %s \n",parent,parent->class_name().c_str());
+
+                    SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
+                    ROSE_ASSERT(variableDeclaration != NULL);
+
+                    int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,currentScope,currentStatement);
+#if 0
+                    printf ("amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+                    setNameQualification(varRefExp,variableDeclaration,amountOfNameQualificationRequired);
+                  }
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+#endif
              }
         }
 
@@ -12412,6 +12473,12 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
                   {
                     possibleClassVarRefExp = isSgVarRefExp(possiblePntrArrRefExp->get_lhs_operand());
                   }
+                 else
+                  {
+#if 0
+                    printf ("dotExp->get_lhs_operand() = %p = %s \n",dotExp->get_lhs_operand(),dotExp->get_lhs_operand()->class_name().c_str());
+#endif
+                  }
              }
         }
 
@@ -12471,12 +12538,19 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
           printf ("In NameQualificationTraversal::setNameQualification(): classDeclaration = %p = %s \n",classDeclaration,classDeclaration->class_name().c_str());
 #endif
 
+#if 0
+          printf ("In NameQualificationTraversal::setNameQualification(): classDeclaration->get_definingDeclaration() = %p \n",classDeclaration->get_definingDeclaration());
+#endif
+
        // DQ (9/4/2012): I don't think that the defining declaration should have to exist.
        // However this was a previously passing test for all of the regression tests.
        // ROSE_ASSERT(classDeclaration->get_definingDeclaration() != NULL);
           if (classDeclaration->get_definingDeclaration() != NULL)
              {
                SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
+#if 0
+               printf ("In NameQualificationTraversal::setNameQualification(): definingClassDeclaration = %p \n",definingClassDeclaration);
+#endif
                if (definingClassDeclaration == NULL)
                   {
                     printf ("ERROR: definingClassDeclaration == NULL: classDeclaration->get_definingDeclaration() = %p = %s \n",classDeclaration->get_definingDeclaration(),classDeclaration->get_definingDeclaration()->class_name().c_str());
@@ -12502,6 +12576,10 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
 #endif
              }
         }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In NameQualificationTraversal::setNameQualification(): isAnUnamedConstructs = %s \n",isAnUnamedConstructs ? "true" : "false");
+#endif
 
   // DQ (7/31/2012): If this is an un-named construct then no qualifiaction can be used since there is no associated name.
      if (isAnUnamedConstructs == false)
@@ -12551,6 +12629,83 @@ NameQualificationTraversal::setNameQualification(SgVarRefExp* varRefExp, SgVaria
 #endif
                   }
              }
+        }
+       else
+        {
+#if 0
+       // DQ (1/14/2020): Adding support to ignore un-named classes.
+       // It might be that we need to check the name of the type of the variable instead of the name of the variable.
+
+          bool isVariableClassUnnamed = false;
+
+          SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+#if 0
+          printf ("variableSymbol->get_name() = %s \n",variableSymbol->get_name().str());
+#endif
+          string variable_name = variableSymbol->get_name().str();
+          if (variable_name.substr(0,14) == "__anonymous_0x")
+             {
+            // If this is an unnamed variable then do nothing.
+#if 0
+               printf ("Detected unnamed variable (from unnamed class and so we want to skip name qualification here) \n");
+#endif
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+            else
+             {
+#endif
+          SgScopeStatement * scope = traverseNonrealDeclForCorrectScope(variableDeclaration);
+          string qualifier = setNameQualificationSupport(scope,amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
+
+          varRefExp->set_global_qualification_required(outputGlobalQualification);
+          varRefExp->set_name_qualification_length(outputNameQualificationLength);
+
+       // There should be no type evaluation required for a variable reference, as I recall.
+          ROSE_ASSERT(outputTypeEvaluation == false);
+          varRefExp->set_type_elaboration_required(outputTypeEvaluation);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("In NameQualificationTraversal::setNameQualification(): varRefExp->get_name_qualification_length()     = %d \n",varRefExp->get_name_qualification_length());
+          printf ("In NameQualificationTraversal::setNameQualification(): varRefExp->get_type_elaboration_required()     = %s \n",varRefExp->get_type_elaboration_required() ? "true" : "false");
+          printf ("In NameQualificationTraversal::setNameQualification(): varRefExp->get_global_qualification_required() = %s \n",varRefExp->get_global_qualification_required() ? "true" : "false");
+#endif
+
+          if (qualifiedNameMapForNames.find(varRefExp) == qualifiedNameMapForNames.end())
+             {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               printf ("Inserting qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),varRefExp,varRefExp->class_name().c_str());
+#endif
+               qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(varRefExp,qualifier));
+             }
+            else
+             {
+            // DQ (6/20/2011): We see this case in test2011_87.C.
+            // If it already existes then overwrite the existing information.
+               std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(varRefExp);
+               ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+               string previousQualifier = i->second.c_str();
+               printf ("WARNING: test 2: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+#endif
+               if (i->second != qualifier)
+                  {
+                 // DQ (7/23/2011): Multiple uses of the SgVarRefExp expression in SgArrayType will cause
+                 // the name qualification to be reset each time.  This is OK since it is used to build
+                 // the type name that will be saved.
+                    i->second = qualifier;
+#if 0
+                    printf ("Note: name in qualifiedNameMapForNames already exists and is different... \n");
+#endif
+                  }
+             }
+#if 0
+       // DQ (1/14/2020): Adding support to ignore un-named classes.
+             }
+#endif
         }
    }
 
