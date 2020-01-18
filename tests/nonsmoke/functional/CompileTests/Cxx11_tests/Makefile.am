@@ -840,7 +840,14 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_511.C \
    test2019_516.C \
    test2019_523.C \
-   test2020_40.C
+   test2020_40.C \
+   test2020_49.C \
+   test2020_50.C \
+   test2020_51a.C \
+   test2020_51b.C \
+   test2020_52.C \
+   test2020_53.C \
+   test2020_54.C
 
 # NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
 
@@ -1087,6 +1094,9 @@ test2019_521_ab: ../../testTranslator
 
 test2019_522_ab: ../../testTranslator
 	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2019_522a.C $(srcdir)/test2019_522b.C
+
+test2020_51ab: ../../testTranslator
+	$(VALGRIND) $(TEST_TRANSLATOR) $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/test2020_51a.C $(srcdir)/test2020_51b.C
 
 
 
