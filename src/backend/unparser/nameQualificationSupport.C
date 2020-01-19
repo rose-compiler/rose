@@ -9500,6 +9500,88 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
         }
 
 
+#define PSEUDO_DESTRUCTOR_REF_SUPPORT 1
+
+#if PSEUDO_DESTRUCTOR_REF_SUPPORT
+  // DQ (1/18/2020): Adding support for SgPseudoDestructorRefExp (see C++11_tests/test2020_56.C).
+     SgPseudoDestructorRefExp* pseudoDestructorRefExp = isSgPseudoDestructorRefExp(n);
+     if (pseudoDestructorRefExp != NULL)
+        {
+
+#define DEBUG_PSEUDO_DESTRUCTOR_REF (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+
+#if DEBUG_PSEUDO_DESTRUCTOR_REF
+          printf ("Detected SgPseudoDestructorRefExp: pseudoDestructorRefExp = %p \n",pseudoDestructorRefExp);
+#endif
+          SgType* type = pseudoDestructorRefExp->get_object_type();
+          ROSE_ASSERT(type != NULL);
+
+          SgNamedType* namedType = isSgNamedType(type);
+          ROSE_ASSERT(namedType != NULL);
+
+          SgDeclarationStatement* declarationStatement = namedType->get_declaration();
+          ROSE_ASSERT(declarationStatement != NULL);
+
+       // if (memberFunctionDeclaration != NULL)
+          if (declarationStatement != NULL)
+             {
+            // DQ (2/17/2019): Adding support for pointers to member functions.
+            // if (isMemberFunctionMemberReference == false)
+            // if (isMemberFunctionMemberReference == false || isAddressTaken == true)
+
+            // DQ (2/23/2019): Except that this code works in all cases that I can see at the moment, I think that the 
+            // current scope should be taken from the type of the pointer being dereferenced instead of from the location 
+            // of the statement containing the memberFunctionRefExp.  But I can't build a counter example that fails.
+
+               SgStatement* currentStatement = TransformationSupport::getStatement(pseudoDestructorRefExp);
+
+#if DEBUG_PSEUDO_DESTRUCTOR_REF
+               printf ("Compute the currentStatement: currentStatement = %p \n",currentStatement);
+#endif
+               if (currentStatement == NULL)
+                  {
+                    printf ("Error: Location of where we can NOT associate the expression to a statement \n");
+                    pseudoDestructorRefExp->get_file_info()->display("Error: currentStatement == NULL: memberFunctionRefExp: debug");
+                    declarationStatement->get_file_info()  ->display("Error: currentStatement == NULL: memberFunctionDeclaration: debug");
+                  }
+               ROSE_ASSERT(currentStatement != NULL);
+
+#if DEBUG_PSEUDO_DESTRUCTOR_REF
+               printf ("case of SgPseudoDestructorRefExp: currentStatement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
+#endif
+               SgScopeStatement* currentScope = currentStatement->get_scope();
+               ROSE_ASSERT(currentScope != NULL);
+
+#if DEBUG_PSEUDO_DESTRUCTOR_REF
+               printf ("case of SgPseudoDestructorRefExp: currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+               printf ("***** case of SgPseudoDestructorRefExp: Calling nameQualificationDepth() ***** \n");
+#endif
+            // int amountOfNameQualificationRequired = nameQualificationDepth(memberFunctionDeclaration,currentScope,currentStatement);
+               int amountOfNameQualificationRequired = nameQualificationDepth(declarationStatement,currentScope,currentStatement);
+
+#if DEBUG_PSEUDO_DESTRUCTOR_REF
+               printf ("***** case of SgPseudoDestructorRefExp: DONE: Calling nameQualificationDepth() ***** \n");
+               printf ("SgPseudoDestructorRefExp's name: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
+#endif
+                 // setNameQualification(memberFunctionRefExp,memberFunctionDeclaration,amountOfNameQualificationRequired);
+                    setNameQualification(pseudoDestructorRefExp,declarationStatement,amountOfNameQualificationRequired);
+                 // DQ (2/17/2019): Case of xxx !(isDataMemberReference == true && isAddressTaken == true)
+             }
+            else
+             {
+#if DEBUG_PSEUDO_DESTRUCTOR_REF || 0
+               printf ("WARNING: declarationStatement == NULL in SgPseudoDestructorRefExp for name qualification support! \n");
+#endif
+             }
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+// #endif for #if PSEUDO_DESTRUCTOR_REF_SUPPORT
+#endif 
+
 
      SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(n);
      if (memberFunctionRefExp != NULL)
@@ -12978,6 +13060,77 @@ NameQualificationTraversal::setNameQualification(SgMemberFunctionRefExp* functio
 #endif
              }
         }
+   }
+
+
+void
+NameQualificationTraversal::setNameQualification(SgPseudoDestructorRefExp* pseudoDestructorRefExp, SgDeclarationStatement* declarationStatement, int amountOfNameQualificationRequired)
+   {
+  // This is where we hide the details of translating the intepretation of the amountOfNameQualificationRequired
+  // which can be greater than the number of nested scopes to a representation that is bounded by the number of 
+  // nested scopes and sets the global qualification to be true. If I decide I don't like this here, then we
+  // might find a way to handling this point more directly later. This at least gets it set properly in the AST.
+
+  // Setup call to refactored code.
+     int  outputNameQualificationLength = 0;
+     bool outputGlobalQualification     = false;
+     bool outputTypeEvaluation          = false;
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In setNameQualification(SgPseudoDestructorRefExp*) \n");
+#endif
+
+     SgScopeStatement * scope = traverseNonrealDeclForCorrectScope(declarationStatement);
+     string qualifier = setNameQualificationSupport(scope,amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
+
+     pseudoDestructorRefExp->set_global_qualification_required(outputGlobalQualification);
+     pseudoDestructorRefExp->set_name_qualification_length(outputNameQualificationLength);
+
+  // There should be no type evaluation required for a variable reference, as I recall.
+     ROSE_ASSERT(outputTypeEvaluation == false);
+     pseudoDestructorRefExp->set_type_elaboration_required(outputTypeEvaluation);
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     printf ("In NameQualificationTraversal::setNameQualification(): pseudoDestructorRefExp->get_name_qualification_length()     = %d \n",pseudoDestructorRefExp->get_name_qualification_length());
+     printf ("In NameQualificationTraversal::setNameQualification(): pseudoDestructorRefExp->get_type_elaboration_required()     = %s \n",pseudoDestructorRefExp->get_type_elaboration_required() ? "true" : "false");
+     printf ("In NameQualificationTraversal::setNameQualification(): pseudoDestructorRefExp->get_global_qualification_required() = %s \n",pseudoDestructorRefExp->get_global_qualification_required() ? "true" : "false");
+#endif
+     if (qualifiedNameMapForNames.find(pseudoDestructorRefExp) == qualifiedNameMapForNames.end())
+        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("Inserting (pseudoDestructorRefExp) qualifier for name = %s into list at IR node = %p = %s \n",qualifier.c_str(),pseudoDestructorRefExp,pseudoDestructorRefExp->class_name().c_str());
+#endif
+          qualifiedNameMapForNames.insert(std::pair<SgNode*,std::string>(pseudoDestructorRefExp,qualifier));
+        }
+       else
+        {
+       // If it already existes then overwrite the existing information.
+          std::map<SgNode*,std::string>::iterator i = qualifiedNameMapForNames.find(pseudoDestructorRefExp);
+          ROSE_ASSERT (i != qualifiedNameMapForNames.end());
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+          string previousQualifier = i->second.c_str();
+          printf ("WARNING: test 4.5: replacing previousQualifier = %s with new qualifier = %s \n",previousQualifier.c_str(),qualifier.c_str());
+#endif
+          if (i->second != qualifier)
+             {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+               printf ("NOTE: test 4.5: replacing previousQualifier = %s with new qualifier = %s \n",i->second.c_str(),qualifier.c_str());
+#endif
+               i->second = qualifier;
+#if 0
+               printf ("Error: name in qualifiedNameMapForNames already exists and is different... \n");
+               ROSE_ASSERT(false);
+#else
+               printf (" --- Name qualificaiton was previously and error: we may need to set it to something different: qualifier = %s \n",qualifier.c_str());
+#endif
+             }
+        }
+
+#if 0
+     printf ("Leaving NameQualificationTraversal::setNameQualification(SgPseudoDestructorRefExp* pseudoDestructorRefExp,,,): Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 
