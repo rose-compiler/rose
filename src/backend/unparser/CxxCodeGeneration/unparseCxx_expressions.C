@@ -9266,15 +9266,38 @@ Unparse_ExprStmt::unparsePseudoDtorRef(SgExpression* expr, SgUnparse_Info & info
 
      SgType *objt = pdre->get_object_type();
 
-  // printf ("In unparsePseudoDtorRef(): pdre->get_object_type() = %p = %s \n",objt,objt->class_name().c_str());
+#if 0
+     printf ("In unparsePseudoDtorRef(): pdre->get_object_type() = %p = %s \n",objt,objt->class_name().c_str());
+#endif
 
-     curprint("~");
+  // curprint("~");
 
   // if (SgNamedType *nt = isSgNamedType(objt))
      SgNamedType* namedType = isSgNamedType(objt);
      if (namedType != NULL)
         {
-       // printf ("Unparser will output SgPseudoDestructorRefExp using the class name only \n");
+
+       // DQ (1/18/2020): Adding support for name qualification (see Cxx11_tests/test2020_56.C).
+          SgName nameQualifier = pdre->get_qualified_name_prefix();
+#if 0
+          printf ("In unparsePseudoDtorRef(): nameQualifier = %s \n",nameQualifier.str());
+#endif
+          if (nameQualifier.is_null() == false)
+             {
+               SgName nameOfType = namedType->get_name();
+
+               SgName name = nameQualifier + nameOfType + "::";
+#if 0
+               printf ("In unparsePseudoDtorRef(): name = %s \n",name.str());
+#endif
+            // curprint(nameQualifier.str());
+               curprint(name.str());
+             }
+#if 0
+          printf ("Unparser will output SgPseudoDestructorRefExp using the class name only \n");
+#endif
+          curprint("~");
+
           curprint(namedType->get_name().str());
 
        // DQ (3/14/2012): Note that I had to add this for the case of EDG 4.3, but it was not required previously for EDG 3.3, something in ROSE has likely changed.
@@ -9282,13 +9305,20 @@ Unparse_ExprStmt::unparsePseudoDtorRef(SgExpression* expr, SgUnparse_Info & info
         }
        else
         {
+          curprint("~");
+
        // DQ (3/14/2012): This is the case of of a primative type (e.g. "~int"), which is allowed.
        // PC: I do not think this case will ever occur in practice.  If it does, the resulting
        // code will be invalid.  It may, however, appear in an implicit template instantiation.
        // printf ("WARNING: This case of unparsing in unparsePseudoDtorRef() using unparseType() may not work \n");
           unp->u_type->unparseType(objt, info);
         }
+
+#if 0
+     printf ("Leaving unparsePseudoDtorRef(): pdre->get_object_type() = %p = %s \n",objt,objt->class_name().c_str());
+#endif
    }
+
 
 // TV (05/06/2010): CUDA, Kernel call unparse
 void Unparse_ExprStmt::unparseCudaKernelCall(SgExpression* expr, SgUnparse_Info& info) {
