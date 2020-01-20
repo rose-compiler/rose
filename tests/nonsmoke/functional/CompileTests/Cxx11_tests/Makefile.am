@@ -725,7 +725,14 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2020_45.C \
    test2020_46.C \
    test2020_47.C \
-   test2020_48.C 
+   test2020_48.C \
+   test2020_49.C \
+   test2020_50.C \
+   test2020_52.C \
+   test2020_53.C \
+   test2020_57.C \
+   test2020_58.C \
+   test2020_59.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \
@@ -841,12 +848,8 @@ TESTCODE_CURRENTLY_FAILING = \
    test2019_516.C \
    test2019_523.C \
    test2020_40.C \
-   test2020_49.C \
-   test2020_50.C \
    test2020_51a.C \
    test2020_51b.C \
-   test2020_52.C \
-   test2020_53.C \
    test2020_54.C \
    test2020_55.C \
    test2020_56.C
@@ -1107,7 +1110,10 @@ test2020_51ab: ../../testTranslator
 
 # PASSING_TEST_Source_passed = ${TESTCODES:.C=.C.passed}
 
-MULTIFILE_TESTS = test2019_196_ab test2019_198_ab test2019_507_ab test2019_508_ab test2019_509_ab test2019_510_ab test2019_517_ab test2019_518_ab test2019_519_ab test2019_521_ab test2019_522_ab
+MULTIFILE_TESTS = \
+   test2019_196_ab test2019_198_ab test2019_507_ab test2019_508_ab test2019_509_ab \
+   test2019_510_ab test2019_517_ab test2019_518_ab test2019_519_ab test2019_521_ab \
+   test2019_522_ab test2020_51ab
 
 PASSING_TEST_Source_passed = ${TESTCODES:.C=.C.passed} $(MULTIFILE_TESTS)
 
