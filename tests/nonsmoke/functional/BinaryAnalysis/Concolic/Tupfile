@@ -123,6 +123,10 @@ run $(test) ./crsh/crsh -o testCreateOverwrites $(ENABLED) \
 run $(test) ./crsh/crsh -o testConnect $(ENABLED) \
     ./crsh/crsh testConnect.crsh
 
+# Tests that test cases can be created correctly
+run $(tool_compile_linkexe) testTestCase.C
+run $(test) testTestCase
+
 #------------------------------------------------------------------------------------------------------------------------
 # Concolic executor tests
 

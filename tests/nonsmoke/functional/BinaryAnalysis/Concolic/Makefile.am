@@ -78,7 +78,7 @@ testConcolicDB_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 #~ rose-execmon-linux-perf-intel-x86-64.sh: $(srcdir)/rose-execution-monitor-linux-perf-intel-x86_64.sh rose-perf-analyzer
 #~ 	cp $< $@
 #~ 	chmod u+x $@
-	
+
 #	
 # targets	
 
@@ -232,6 +232,18 @@ testConnect.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
 		CMD="./crsh/crsh $(srcdir)/testConnect.crsh" \
 		ANS="no" \
 		DISABLED="$(DISABLED)" \
+		$< $@
+
+noinst_PROGRAMS += testTestCase
+testTestCase_SOURCES = testTestCase.C
+testTestCase_LDADD = $(ROSE_SEPARATE_LIBS)
+MOSTLYCLEANFILES += testTestCase.db
+TEST_TARGETS += testTestCase.passed
+testTestCase.passed: $(TEST_EXIT_STATUS) testTestCase
+	@$(RTH_RUN)				\
+		TITLE="test test cases [$@]"	\
+		CMD="./testTestCase"		\
+		DISABLED="$(DISABLED)"		\
 		$< $@
 
 #------------------------------------------------------------------------------------------------------------------------
