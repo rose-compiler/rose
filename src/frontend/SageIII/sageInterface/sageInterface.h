@@ -2092,7 +2092,9 @@ ROSE_DLL_API void fixNamespaceDeclaration(SgNamespaceDeclarationStatement* struc
 ROSE_DLL_API void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
 
 //! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelRefExp are created transparently as needed.
-ROSE_DLL_API void setFortranNumericLabel(SgStatement* stmt, int label_value);
+ROSE_DLL_API void setFortranNumericLabel(SgStatement* stmt, int label_value,
+                                         SgLabelSymbol::label_type_enum label_type=SgLabelSymbol::e_start_label_type,
+                                         SgScopeStatement* label_scope=NULL);
 
 //! Suggest next usable (non-conflicting) numeric label value for a Fortran function definition scope
 ROSE_DLL_API int  suggestNextNumericLabel(SgFunctionDefinition* func_def);
