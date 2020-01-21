@@ -1094,7 +1094,7 @@ UntypedConverter::convertUntypedProgramHeaderDeclaration (SgUntypedProgramHeader
  // Add the program declaration to the global scope
    SgGlobal* globalScope = isSgGlobal(scope);
    ROSE_ASSERT(globalScope != NULL);
-   globalScope->append_statement(programDeclaration);
+   SageInterface::appendStatement(programDeclaration, globalScope);
 
 // A symbol using this name should not already exist
    ROSE_ASSERT(!globalScope->symbol_exists(programName));
