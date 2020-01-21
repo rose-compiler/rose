@@ -296,8 +296,12 @@ public:
     void env(std::vector<EnvValue> envvars);
     /** @} */
 
-    /** returns if the test has been run concollically. */
+    /** Property: Whether this test case has been run concolically.
+     *
+     * @{ */
     bool hasConcolicTest() const;
+    void hasConcolicTest(bool);
+    /** @} */
 
     /** sets the status of the concolic test to true. */
     void concolicTest(bool);

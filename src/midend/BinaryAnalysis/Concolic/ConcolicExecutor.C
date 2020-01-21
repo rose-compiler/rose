@@ -286,7 +286,7 @@ RiscOperators::markProgramArguments() {
     symbolicArgc->set_comment("argc");
     writeMemory(RegisterDescriptor(), number_(SP.nBits(), argcVa), symbolicArgc, boolean_(true));
     inputVariables_.insertProgramArgumentCount(symbolicArgc->get_expression());
-    
+
     SAWYER_MESG(debug) <<"  argc @" <<StringUtility::addrToString(argcVa) <<" = " <<argc
                        <<"; symbolic = " <<(*symbolicArgc + fmt) <<"\n";
 
@@ -345,7 +345,7 @@ RiscOperators::markProgramArguments() {
         }
     }
     SAWYER_MESG(debug) <<"  ]\n";
-    
+
     // auxv
     // Not marking these as inputs because the user that's running the program doesn't have much influence.
     rose_addr_t auxvVa = envpVa + (nEnvVars + 1) * wordSizeBytes;
@@ -527,7 +527,10 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
 #endif
 
     run(db, testCase, cpu);
-    
+    testCase->hasConcolicTest(true);
+    db->save(testCase);
+
+    // FIXME[Robb Matzke 2020-01-16]
     std::vector<TestCase::Ptr> newCases;
     return newCases;
 }
@@ -558,25 +561,26 @@ ConcolicExecutor::handleBranch(const Database::Ptr &db, const TestCase::Ptr &tes
         SymbolicExpr::Ptr actualTarget = SymbolicExpr::makeIntegerConstant(IP.nBits(), cpu->concreteInstructionPointer());
         SymbolicExpr::Ptr trueTarget = inode->child(1);  // true branch next va
         SymbolicExpr::Ptr falseTarget = inode->child(2); // false branch next va
-        SymbolicExpr::Ptr otherCond;                     // condition for branch not taken
+        SymbolicExpr::Ptr followedCond;                  // condition for the branch that is followed
         if (!trueTarget->isIntegerConstant()) {
             error <<"expected constant value for true branch target at " <<partitioner.unparse(insn) <<"\n";
         } else if (!falseTarget->isIntegerConstant()) {
             error <<"expected constant value for false branch target at " <<partitioner.unparse(insn) <<"\n";
         } else if (actualTarget->mustEqual(trueTarget)) {
-            otherCond = SymbolicExpr::makeInvert(inode->child(0)); // taking true branch; otherCond is for false branch
+            followedCond = inode->child(0);              // taking the true branch
         } else if (actualTarget->mustEqual(falseTarget)) {
-            otherCond = inode->child(0);                // taking false branch; otherCondi is for true branch
+            followedCond = SymbolicExpr::makeInvert(inode->child(0)); // taking false branch
         } else {
             error <<"unrecognized symbolic execution address after " <<partitioner.unparse(insn) <<"\n"
                   <<"  concrete = " <<*actualTarget <<"\n"
                   <<"  symbolic = " <<*ip <<"\n";
         }
+        SymbolicExpr::Ptr otherCond = SymbolicExpr::makeInvert(followedCond); // condition for branch not taken
 
-        // Solve condition in terms of input values
+        // Solve for branch not taken in terms of input values.
         if (otherCond) {
             SAWYER_MESG(debug) <<"condition for other path is " <<*otherCond <<"\n";
-            SmtSolver::Transaction transaction(solver);
+            SmtSolver::Transaction transaction(solver); // because we'll need to cancel in order to follow the correct branch
             solver->insert(otherCond);
             if (SmtSolver::SAT_YES == solver->check()) {
                 generateTestCase(db, testCase, solver);
@@ -593,6 +597,9 @@ ConcolicExecutor::handleBranch(const Database::Ptr &db, const TestCase::Ptr &tes
                 }
             }
         }
+
+        // Add the branch taken condition to the solver since all future assertions will also depend on having taken this branch.
+        solver->insert(followedCond);
     }
 }
 
@@ -647,13 +654,14 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
     args.insert(args.begin(), oldTestCase->specimen()->name());
     Sawyer::Optional<size_t> maxArgvAdjusted;           // max index of any adjusted argument
     Sawyer::Optional<size_t> adjustedArgc;                 // whether we have a new argc value from the solver
+    std::vector<EnvValue> env = oldTestCase->env();
     bool hadError = false;
-    
+
     BOOST_FOREACH (const std::string &solverVar, solver->evidenceNames()) {
         InputVariables::Variable inputVar = inputVariables_.get(solverVar);
         SymbolicExpr::Ptr value = solver->evidenceForName(solverVar);
         ASSERT_not_null(value);
-        
+
         switch (inputVar.whence) {
             case InputVariables::Variable::INVALID:
                 error <<"solver variable \"" <<solverVar <<"\" doesn't correspond to any input variable\n";
@@ -740,24 +748,61 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
     }
 
     // Create the new test case
+    TestCase::Ptr newTestCase;
     if (hadError) {
-        SAWYER_MESG(debug) <<"test case not created due to prior errors\n"; 
+        SAWYER_MESG(debug) <<"test case not created due to prior errors\n";
     } else {
-        TestCase::Ptr newTestCase = TestCase::instance(oldTestCase->specimen());
+        newTestCase = TestCase::instance(oldTestCase->specimen());
         ASSERT_forbid(args.empty());
         args.erase(args.begin()); // argv[0] is not to be included
         newTestCase->args(args);
-        newTestCase->env(oldTestCase->env());
-        db->id(newTestCase);
-        if (debug) {
-            debug <<"inserted into database: " <<newTestCase->printableName(db) <<"\n";
-            debug <<"  argv[0] = \"" <<StringUtility::cEscape(newTestCase->specimen()->name()) <<"\"\n";
-            for (size_t i = 0; i < args.size(); ++i)
-                debug <<"  argv[" <<(i+1) <<"] = \"" <<StringUtility::cEscape(args[i]) <<"\"\n";
+        newTestCase->env(env);
+    }
+
+    // Save the test case if the database doesn't already have one that's the same.
+    // FIXME[Robb Matzke 2020-01-16]: This could be much improved.
+    if (newTestCase) {
+        TestCase::Ptr similarTestCase;
+        BOOST_FOREACH (TestCaseId tid, db->testCases()) {
+            TestCase::Ptr otherTestCase = db->object(tid);
+            if (areSimilar(newTestCase, otherTestCase)) {
+                similarTestCase = otherTestCase;
+                break;
+            }
+        }
+
+        if (similarTestCase) {
+            debug <<"new test case not saved to DB because similar " <<similarTestCase->printableName(db) <<" already exists\n";
+        } else {
+            db->save(newTestCase);
+            if (debug) {
+                debug <<"inserted into database: " <<newTestCase->printableName(db) <<"\n";
+                debug <<"  argv[0] = \"" <<StringUtility::cEscape(newTestCase->specimen()->name()) <<"\"\n";
+                for (size_t i = 0; i < args.size(); ++i)
+                    debug <<"  argv[" <<(i+1) <<"] = \"" <<StringUtility::cEscape(args[i]) <<"\"\n";
+            }
         }
     }
 }
-        
+                
+bool
+ConcolicExecutor::areSimilar(const TestCase::Ptr &a, const TestCase::Ptr &b) const {
+    if (a->specimen() != b->specimen())
+        return false;
+
+    std::vector<std::string> aArgs = a->args();
+    std::vector<std::string> bArgs = b->args();
+    if (aArgs.size() != bArgs.size() || !std::equal(aArgs.begin(), aArgs.end(), bArgs.begin()))
+        return false;
+
+    std::vector<EnvValue> aEnv = a->env();
+    std::vector<EnvValue> bEnv = b->env();
+    if (aEnv.size() != bEnv.size() || !std::equal(aEnv.begin(), aEnv.end(), bEnv.begin()))
+        return false;
+
+    return true;
+}
+
 } // namespace
 } // namespace
 } // namespace
