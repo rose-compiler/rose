@@ -157,14 +157,14 @@ RiscOperators::systemCall() {
         if (ax->is_number()) {
             if (1 == ax->get_number() || 252 == ax->get_number()) {
                 const RegisterDescriptor REG_BX = *regdict->lookup("ebx");
-                IS::BaseSemantics::SValuePtr arg1 = peekRegister(REG_BX, undefined_(REG_BX.nBits()));
+                SValuePtr arg1 = SValue::promote(peekRegister(REG_BX, undefined_(REG_BX.nBits())));
                 if (arg1->is_number()) {
                     int exitValue = arg1->get_number();
                     mlog[ERROR] <<"specimen exiting with " <<exitValue <<"\n"; // FIXME[Robb Matzke 2019-12-18]
-                    exit(exitValue);
+                    throw Exit(arg1);
                 } else {
                     mlog[ERROR] <<"specimen exiting with unknown value\n"; // FIXME[Robb Matzke 2019-12-18]
-                    exit(1);
+                    throw Exit(arg1);
                 }
             } else {
                 mlog[ERROR] <<"unhandled system call number " <<ax->get_number() <<"\n";
@@ -179,14 +179,14 @@ RiscOperators::systemCall() {
         if (ax->is_number()) {
             if (60 == ax->get_number() || 231 == ax->get_number()) {
                 const RegisterDescriptor REG_DI = *regdict->lookup("edi");
-                IS::BaseSemantics::SValuePtr arg1 = peekRegister(REG_DI, undefined_(REG_DI.nBits()));
+                SValuePtr arg1 = SValue::promote(peekRegister(REG_DI, undefined_(REG_DI.nBits())));
                 if (arg1->is_number()) {
                     int exitValue = arg1->get_number();
                     mlog[ERROR] <<"specimen exiting with " <<exitValue <<"\n"; // FIXME[Robb Matzke 2019-12-18]
-                    exit(exitValue);
+                    throw Exit(arg1);
                 } else {
                     mlog[ERROR] <<"specimen exiting with unknown value\n"; // FIXME[Robb Matzke 2019-12-18]
-                    exit(1);
+                    throw Exit(arg1);
                 }
             } else {
                 mlog[ERROR] <<"unhandled system call number " <<ax->get_number() <<"\n";
@@ -211,6 +211,15 @@ RiscOperators::readRegister(RegisterDescriptor reg, const IS::BaseSemantics::SVa
 }
 
 IS::BaseSemantics::SValuePtr
+RiscOperators::peekRegister(RegisterDescriptor reg, const IS::BaseSemantics::SValuePtr &dfltUnused) {
+    // Return the register's symbolic value if it exists, else the concrete value.
+    SValuePtr dflt = SValue::promote(undefined_(dfltUnused->get_width()));
+    SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readRegister(reg));
+    dflt->set_expression(concrete);
+    return Super::peekRegister(reg, dflt);
+}
+
+IS::BaseSemantics::SValuePtr
 RiscOperators::readMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SValuePtr &addr,
                           const IS::BaseSemantics::SValuePtr &dfltUnused, const IS::BaseSemantics::SValuePtr &cond) {
     // Read the memory's value symbolically, and if we don't have a value then read it concretely and use the concrete value to
@@ -223,8 +232,24 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SV
         dflt->set_expression(concrete);
         return Super::readMemory(segreg, addr, dflt, cond);
     } else {
-        // Symbolic address
         return Super::readMemory(segreg, addr, dfltUnused, cond);
+    }
+}
+
+IS::BaseSemantics::SValuePtr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const IS::BaseSemantics::SValuePtr &addr,
+                          const IS::BaseSemantics::SValuePtr &dfltUnused) {
+    // Read the memory's symbolic value if it exists, else read the concrete value. We can't read concretely if the address is
+    // symbolic.
+    if (addr->is_number()) {
+        rose_addr_t va = addr->get_number();
+        size_t nBytes = dfltUnused->get_width() / 8;
+        SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readMemory(va, nBytes, ByteOrder::ORDER_LSB));
+        SValuePtr dflt = SValue::promote(undefined_(dfltUnused->get_width()));
+        dflt->set_expression(concrete);
+        return Super::peekMemory(segreg, addr, dflt);
+    } else {
+        return Super::peekMemory(segreg, addr, dfltUnused);
     }
 }
 
@@ -585,14 +610,19 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
     ops->printInputVariables(debug);
     const P2::Partitioner &partitioner = ops->partitioner();
     SmtSolver::Ptr solver = SmtSolver::instance("best");
-    
+
     // Process instructions in execution order starting at startVa
     rose_addr_t executionVa = cpu->concreteInstructionPointer();
     while (!cpu->isTerminated()) {
         SgAsmInstruction *insn = partitioner.instructionProvider()[executionVa];
         ASSERT_not_null2(insn, StringUtility::addrToString(executionVa) + " is not a valid execution address");
         SAWYER_MESG_OR(trace, debug) <<"executing " <<partitioner.unparse(insn) <<"\n";
-        cpu->processInstruction(insn);
+        try {
+            cpu->processInstruction(insn);
+        } catch (const Emulation::Exit &e) {
+            SAWYER_MESG_OR(trace, debug) <<"subordinate has exited with status " <<*e.status() <<"\n";
+            break;
+        }
         if (cpu->isTerminated()) {
             SAWYER_MESG_OR(trace, debug) <<"subordinate has terminated\n";
             break;

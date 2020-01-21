@@ -88,6 +88,22 @@ typedef InstructionSemantics2::SymbolicSemantics::StatePtr StatePtr; /**< Pointe
 typedef InstructionSemantics2::SymbolicSemantics::State State; /**< Semantic machine state. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr; /**< Pointer to semantic operations. */
 
+/** Values thrown when subordinate exits. */
+class Exit: public Exception {
+    const SValuePtr status_;
+
+public:
+    explicit Exit(const SValuePtr &status)
+        : Exception("subordinate exit"), status_(status) {}
+
+    ~Exit() throw () {}
+
+    /** Symbolic exit status. */
+    SValuePtr status() const {
+        return status_;
+    }
+};
+
 /** Semantic operations. */
 class RiscOperators: public InstructionSemantics2::SymbolicSemantics::RiscOperators {
 public:
@@ -185,9 +201,16 @@ public:
     readRegister(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    peekRegister(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
     readMemory(RegisterDescriptor segreg, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
                const InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    peekMemory(RegisterDescriptor segreg, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+               const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
 
 private:
     // Handles a Linux system call of the INT 0x80 variety.
@@ -317,6 +340,10 @@ private:
     // to be satisfiable.
     void generateTestCase(const DatabasePtr&, const TestCase::Ptr&, const SmtSolverPtr&);
 
+    // True if the two test cases are close enough that we only need to run one of them.
+    bool areSimilar(const TestCase::Ptr&, const TestCase::Ptr&) const;
+
+public:
     // TODO: Lots of properties to control the finer aspects of executing a test case!
 };
 
