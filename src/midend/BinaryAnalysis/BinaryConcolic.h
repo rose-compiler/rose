@@ -792,6 +792,15 @@ public:
     SpecimenId id(const Specimen::Ptr&, Update::Flag update = Update::YES);
     /** @} */
 
+    /** Saves an object.
+     *
+     *  This is a more self-documenting name for calling @ref id for the sole purpose of saving (creating or updating) an
+     *  object's database representation. */
+    template<class ObjectPointer>
+    void save(const ObjectPointer &obj) {
+        id(obj);
+    }
+
     /** Returns an ID number for an object, optionally writing to the database.
      *
      * The functions are executed in the context of some other transaction.
