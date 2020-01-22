@@ -1094,7 +1094,6 @@ UntypedConverter::convertUntypedProgramHeaderDeclaration (SgUntypedProgramHeader
  // Add the program declaration to the global scope
    SgGlobal* globalScope = isSgGlobal(scope);
    ROSE_ASSERT(globalScope != NULL);
-   SageInterface::appendStatement(programDeclaration, globalScope);
 
 // A symbol using this name should not already exist
    ROSE_ASSERT(!globalScope->symbol_exists(programName));
@@ -1102,6 +1101,9 @@ UntypedConverter::convertUntypedProgramHeaderDeclaration (SgUntypedProgramHeader
 // Add a symbol to the symbol table in global scope
    SgFunctionSymbol* symbol = new SgFunctionSymbol(programDeclaration);
    globalScope->insert_symbol(programName, symbol);
+
+// The program declaration symbol must be in the global scope before the declaration is appended
+   SageInterface::appendStatement(programDeclaration, globalScope);
 
    SgBasicBlock* programBody = new SgBasicBlock();
    SgFunctionDefinition* programDefinition = new SgFunctionDefinition(programDeclaration, programBody);
