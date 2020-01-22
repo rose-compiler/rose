@@ -104,14 +104,12 @@ string get_type_name(SgType* t)
             SgTypeTuple *typeTuple = isSgTypeTuple(t);
             SgTypePtrList typeList = typeTuple->get_types();
 
-            SgTypePtrList::iterator typeIterator;
+            SgTypePtrList::iterator typeIterator = typeList.begin();
               
             std::string typeString = "std::tuple<";
             if(typeList.size() != 0)
               {
-                typeIterator = typeList.begin();
                 typeString += get_type_name(*typeIterator);
-
                 ++typeIterator;
               }
             
