@@ -4811,6 +4811,7 @@ fixupScopeInUnparseInfo ( SgUnparse_Info& ninfo , SgDeclarationStatement* declar
                     case V_SgTemplateInstantiationDirectiveStatement:
                        {
                          SgTemplateInstantiationDirectiveStatement* directive = isSgTemplateInstantiationDirectiveStatement(parentOfFunctionDeclaration);
+                         ROSE_ASSERT(directive != NULL);
                       // currentScope = isSgScopeStatement(funcdecl_stmt->get_parent()->get_parent());
                          currentScope = directive->get_scope();
                          break;
@@ -4819,6 +4820,7 @@ fixupScopeInUnparseInfo ( SgUnparse_Info& ninfo , SgDeclarationStatement* declar
                     case V_SgVariableDeclaration:
                        {
                          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(parentOfFunctionDeclaration);
+                         ROSE_ASSERT(variableDeclaration != NULL);
                       // currentScope = isSgScopeStatement(funcdecl_stmt->get_parent()->get_parent());
                          currentScope = variableDeclaration->get_scope();
                          break;
@@ -4828,6 +4830,7 @@ fixupScopeInUnparseInfo ( SgUnparse_Info& ninfo , SgDeclarationStatement* declar
                     case V_SgForInitStatement:
                        {
                          SgForInitStatement* forInitDeclaration = isSgForInitStatement(parentOfFunctionDeclaration);
+                         ROSE_ASSERT(forInitDeclaration != NULL);
                       // currentScope = isSgScopeStatement(funcdecl_stmt->get_parent()->get_parent());
                          currentScope = forInitDeclaration->get_scope();
                          ROSE_ASSERT(currentScope != NULL);
@@ -4839,6 +4842,7 @@ fixupScopeInUnparseInfo ( SgUnparse_Info& ninfo , SgDeclarationStatement* declar
                     case V_SgTypedefDeclaration:
                        {
                          SgTypedefDeclaration* declaration = isSgTypedefDeclaration(parentOfFunctionDeclaration);
+                         ROSE_ASSERT(declaration != NULL);
                          currentScope = declaration->get_scope();
                          break;
                        }
@@ -4848,6 +4852,7 @@ fixupScopeInUnparseInfo ( SgUnparse_Info& ninfo , SgDeclarationStatement* declar
                          // This happens when calling unparseToString on the function declaration associated with a lambda
                          printf("WARNING: In fixupScopeInUnparseInfo: Case of a lambda expression !!!\n");
                          SgLambdaExp * lambda = isSgLambdaExp(parentOfFunctionDeclaration);
+                         ROSE_ASSERT(lambda != NULL);
                          currentScope = SageInterface::getEnclosingStatement(lambda)->get_scope();
                          break;
                        }
