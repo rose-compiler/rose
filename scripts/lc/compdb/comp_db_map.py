@@ -383,13 +383,13 @@ def cli_parse_args(argv):
 		},
 		'report' : args.report
 	}
-
-if __name__ == "__main__":
-
+        
+def main():
 	job = cli_parse_args(sys.argv[1:])
-
 	job = map_tool(job)
-
 	with open(job['report'], 'w') as F:
 		json.dump(job, F)
 
+
+if __name__ == "__main__":
+    main()

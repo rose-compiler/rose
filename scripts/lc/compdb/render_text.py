@@ -21,13 +21,6 @@ sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from support.local_logging import Logger
 
 
-def prefix_path(path, prefixes):
-    for (tag, prefix) in sorted(prefixes.iteritems(), key=lambda x: x[1], reverse=True):
-        if path.startswith(prefix):
-            return tag + path[len(prefix):]
-    return path
-
-
 class KeyValueMapSorted (object):
     """Key value map, sorted by Key
     """
@@ -48,7 +41,7 @@ class KeyValueMapSorted (object):
             self._keys.append(name)
             self._sort_needed = True
 
-    def _sort(self):
+    def _sort_if_needed(self):
         if self._sort_needed:
             self._keys.sort()
             self._values = list()
@@ -60,11 +53,11 @@ class KeyValueMapSorted (object):
         return self._key_value_map[name]
 
     def values_by_key(self):
-        self._sort()
+        self._sort_if_needed()
         return self._values
 
     def keys_sorted(self):
-        self._sort()
+        self._sort_if_needed()
         return self._keys
 
 
@@ -102,7 +95,7 @@ class KeyCountMapSorted(object):
             self._keys.append(key)
         self._sort_needed = True
 
-    def _sort(self):
+    def _sort_if_needed(self):
         if self._sort_needed:
             self._keys.sort()
             # Remove duplicates and sort:
@@ -114,7 +107,7 @@ class KeyCountMapSorted(object):
         """Return a list of (count, string) tuples sorted by count, then key.
         """
         result = list()
-        self._sort()
+        self._sort_if_needed()
         for count in self._counts:
             for key in self._keys:
                 if self._key_count_map[key] == count:

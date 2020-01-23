@@ -26,8 +26,11 @@ log_start
 #   ROSE_HOME
 #   ROSE_LD_LIBRARY_PATH
 #   ROSE_TOOL
-use_latest_gcc_rose
-#print_rose_vars
+#use_specific_intel_rose 0.9.13.17
+# use_latest_intel_rose
+use_latest_intel_19_0_4_rose
+#use_latest_gcc_rose_with_profiling
+print_rose_vars
 
 # Sets:
 #   source_path
@@ -64,7 +67,8 @@ show_sources () {
   log_separator_1
   log "Sources:"
   log_separator_1
-  for source in ${source_path} ${source_path_no_suffix}-*.[ch]*
+  # List the original, and any extra .h or other files:
+  for source in ${source_path_no_suffix}*.[ch]*
   do
     if [ -f ${source} ]
     then
@@ -105,7 +109,7 @@ run_tool () {
 #  log "MPICH_CXX=${MPICH_CXX}"
   run_it \
   log_then_run \
-  timeout 1m \
+  timeout 15m \
   ${ROSE_CXX} \
   ${ROSE_ARGS} \
   -c \
@@ -114,11 +118,26 @@ run_tool () {
   return ${status}
 }
 
+run_tool_with_valgrind () {
+  log "RUNNING ROSE TOOL WITH PROFILING"
+  run_it \
+  log_then_run \
+  valgrind --tool=callgrind \
+  ${ROSE_CXX} \
+  ${ROSE_ARGS} \
+  -c \
+  -o ${object_path} 
+  status=$?
+  return ${status}
+}
+
+# -H: print includes
 run_compiler () {
   log "RUNNING COMPILER BEFORE RUNNING TOOL"
   run_it \
   log_then_run \
   ${ROSE_BACKEND_CXX} \
+  -H \
   -c \
   -o ${object_path} 
   status=$?
@@ -157,7 +176,10 @@ show_sources
 count_preprocessed_lines
 log_preprocessed_line_count
 ##run_tool
-run_compiler && run_tool
+##run_tool_with_valgrind
+run_compiler && log_preprocessed_line_count && run_tool
+##run_compiler && run_tool_with_valgrind
+# Doesn't get called when run_tool exits witn an error:
 log_preprocessed_line_count
 
 exit ${last_err_status}

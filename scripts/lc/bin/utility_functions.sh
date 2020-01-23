@@ -86,6 +86,12 @@ set_strict
 # END bash strict mode setup
 ###############################################################################
 
+echo_maybe_not_set_var() {
+  # Echoes value in the variable named in $1, or "_not_set_" if it is not set.
+  # Does not throw an error if set -u is in effect.
+  (set +u; eval echo "\${$1:-$1__IS_NOT_SET}")
+}
+
 ###############################################################################
 # Functions to push and pop the current state of set.  
 
@@ -279,6 +285,12 @@ do_env () {
 script_file=`basename $0`
 log () {
   echo ${script_file}: "$*"
+}
+
+log_var() {
+  # Logs value of variable named in $1, or "<not set>" if it is not set.
+  # Does not throw an error if set -u is in effect.
+  eval log "$1=\${$1:-\<not set\>}"
 }
 
 log_w_time() {

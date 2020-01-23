@@ -57,7 +57,7 @@ export SOURCE_HOME="${COMMON_BUILD_BASE}/ARES/ares-develop-2019-03-14-build/ares
 export BUILD_HOME="${COMMON_BUILD_BASE}/ARES/ares-develop-2019-03-14-build/TOSS3/build"
 export COMPILATION_DATABASE_PATH="${BUILD_HOME}/compile_commands.json"
 
-export REPORT_FILE_NAME_ROOT="report_${FIRST_UNIT}_${LAST_UNIT}"
+export REPORT_FILE_NAME_ROOT="latest_rose_target_ares_report_${FIRST_UNIT}_${LAST_UNIT}"
 export JSON_REPORT_FILE_NAME="${REPORT_FILE_NAME_ROOT}.json"
 export TEXT_REPORT_FILE_NAME="${REPORT_FILE_NAME_ROOT}.txt"
 
@@ -76,6 +76,7 @@ ${ROSE_TOOL} \
 --start_at=${FIRST_UNIT} \
 --end_at=${LAST_UNIT} \
 --nprocs=36 \
+--filter r:-gxx-name=/usr/tce/packages/gcc/gcc-6.1.0/bin/g++:-gxx-name=/usr/tce/packages/gcc/gcc-4.9.3/bin/g++ \
 -- \
 -rose:no_optimize_flag_for_frontend \
 -rose:skipAstConsistancyTests \
