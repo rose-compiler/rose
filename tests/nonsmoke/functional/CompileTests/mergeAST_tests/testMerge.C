@@ -99,6 +99,15 @@ main ( int argc, char** argv )
 #endif
 
 #if 0
+  // Output an optional graph of the AST (just the tree, when active)
+     printf ("Generating a dot file... (ROSE Release Note: turn off output of dot files before committing code) \n");
+  // DQ (12/22/2019): Call multi-file version (instead of generateDOT() function).
+  // generateAstGraph(project, 2000);
+  // generateDOT ( *project );
+     generateDOTforMultipleFile(*project);
+#endif
+
+#if 0
   // DQ (6/14/2007): Added support for simpler function for generation of graph of whole AST.
      const int MAX_NUMBER_OF_IR_NODES = 10000;
      generateAstGraph( project, MAX_NUMBER_OF_IR_NODES, "_beforeMerge" );

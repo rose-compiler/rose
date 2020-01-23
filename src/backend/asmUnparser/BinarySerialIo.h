@@ -103,7 +103,7 @@ class Partitioner;
  *      loader->format(SerialIo::XML);
  *      loader->open(fileName);
  *      partitioner = loader->loadPartitioner();
- *      myVector = loader->loadObject<P2::Partitioner>(myVectorTypeId);
+ *      myVector = loader->loadObject<std::vector<double> >(myVectorTypeId);
  *      loader->close();
  *      loader->mlog[INFO] <<"; loaded\n";
  *  } catch (const SerialIo::Exception &e) {

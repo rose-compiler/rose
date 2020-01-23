@@ -391,79 +391,7 @@ insertReachableByImmediates(AddressIntervalSet &reachable /*in,out*/, const P2::
 // Run a data-flow analysis on a whole function to generate a list of concrete values that are stored in registers or memory.
 static std::set<rose_addr_t>
 findDataFlowValues(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
-    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
-
-    std::set<rose_addr_t> retval;
-    BaseSemantics::RiscOperatorsPtr ops = partitioner.newOperators();
-    BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(ops);
-    if (!cpu)
-        return retval;
-
-    // Build the data flow engine. We're using parts from a variety of locations.
-    typedef P2::DataFlow::DfCfg                 DfCfg;
-    typedef BaseSemantics::StatePtr             StatePtr;
-    typedef P2::DataFlow::TransferFunction      TransferFunction;
-    typedef DataFlow::SemanticsMerge            MergeFunction;
-    typedef DataFlow::Engine<DfCfg, StatePtr, TransferFunction, MergeFunction> Engine;
-
-    P2::ControlFlowGraph::ConstVertexIterator startVertex = partitioner.findPlaceholder(function->address());
-    ASSERT_require2(partitioner.cfg().isValidVertex(startVertex), "function does not exist in partitioner");
-    DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), startVertex); // not interprocedural
-    size_t dfCfgStartVertexId = 0; // dfCfg vertex corresponding to function's entry ponit.
-    TransferFunction xfer(cpu);
-    MergeFunction mergeFunction(cpu);
-    Engine engine(dfCfg, xfer, mergeFunction);
-    engine.maxIterations(2 * dfCfg.nVertices());        // arbitrary limit for non-convergent flow
-
-    StatePtr initialState = xfer.initialState();
-    const RegisterDescriptor SP = cpu->stackPointerRegister();
-    const RegisterDescriptor memSegReg;
-    BaseSemantics::SValuePtr initialStackPointer = ops->readRegister(SP);
-    size_t wordSize = SP.nBits() >> 3;              // word size in bytes
-
-    // Run the data flow
-    try {
-        engine.runToFixedPoint(dfCfgStartVertexId, initialState);
-    } catch (const BaseSemantics::Exception &e) {
-        ::mlog[ERROR] <<function->printableName() <<": " <<e <<"\n"; // probably missing semantics capability for an instruction
-        return retval;
-    } catch (const DataFlow::NotConverging &e) {
-        ::mlog[WARN] <<function->printableName() <<": " <<e.what() <<"\n";
-    } catch (const DataFlow::Exception &e) {
-        ::mlog[ERROR] <<function->printableName() <<": " <<e.what() <<"\n";
-        return retval;
-    }
-
-
-    // Scan all outgoing states and accumulate any concrete values we find.
-    BOOST_FOREACH (StatePtr state, engine.getFinalStates()) {
-        if (state) {
-            ops->currentState(state);
-            BaseSemantics::RegisterStateGenericPtr regs =
-                BaseSemantics::RegisterStateGeneric::promote(state->registerState());
-            BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &kv, regs->get_stored_registers()) {
-                if (kv.value->is_number() && kv.value->get_width() <= SP.nBits())
-                    retval.insert(kv.value->get_number());
-            }
-
-            BOOST_FOREACH (const StackVariable &var, P2::DataFlow::findStackVariables(ops, initialStackPointer)) {
-                BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.location.address,
-                                                                 ops->undefined_(8*var.location.nBytes), ops->boolean_(true));
-                if (value->is_number() && value->get_width() <= SP.nBits())
-                    retval.insert(value->get_number());
-            }
-
-            BOOST_FOREACH (const AbstractLocation &var, P2::DataFlow::findGlobalVariables(ops, wordSize)) {
-                if (var.isAddress()) {
-                    BaseSemantics::SValuePtr value = ops->readMemory(memSegReg, var.getAddress(),
-                                                                     ops->undefined_(8*var.nBytes()), ops->boolean_(true));
-                    if (value->is_number() && value->get_width() <= SP.nBits())
-                        retval.insert(value->get_number());
-                }
-            }
-        }
-    }
-    return retval;
+    return partitioner.functionDataFlowConstants(function);
 }
 
 // List of all functions whose entry address is reachable.
@@ -722,7 +650,7 @@ int main(int argc, char *argv[]) {
             if (nShown > 0 && !insns.empty())
                 std::cout <<"\n";
             BOOST_FOREACH (SgAsmInstruction *insn, insns) {
-                std::cout <<"  " <<unparseInstructionWithAddress(insn) <<"\n";
+                std::cout <<"  " <<partitioner.unparse(insn) <<"\n";
                 ++nShown;
             }
         }

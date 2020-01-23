@@ -159,6 +159,7 @@ static void calculateVariableRestorationSet(const ASTtools::VarSymSet_t& syms,
   for (ASTtools::VarSymSet_t::const_reverse_iterator i = syms.rbegin ();
       i != syms.rend (); ++i)
   {
+    ROSE_ASSERT (*i != NULL); 
     SgInitializedName* i_name = (*i)->get_declaration ();
     //conservatively consider them as all live out if no liveness analysis is enabled,
     bool isLiveOut = true;
@@ -227,6 +228,8 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // Also collect symbols which must use pointer dereferencing if replaced during outlining
   ASTtools::VarSymSet_t syms, pdSyms;
   collectVars (s, syms);
+  for (ASTtools::VarSymSet_t::iterator it = syms.begin(); it != syms.end(); it++ )
+    ROSE_ASSERT (*it!=NULL);
 
   // prepare necessary analysis to optimize the outlining 
   //-----------------------------------------------------------------

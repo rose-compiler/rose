@@ -151,8 +151,7 @@ sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/) {
     return fileName;
 }
 
- // Added ifdef to remove unused function warning [Rasmussen, 2019.01.28]
-#if defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)
+#ifdef ROSE_HAVE_LIBPQXX
 static std::string
 postgres_url_documentation() {
     return ("@named{PostgreSQL}{The uniform resource locator for PostgreSQL databases has the format "
@@ -249,14 +248,14 @@ size_t
 ConnectionImpl::conn_for_transaction()
 {
     // Find first driver connection that has a zero reference count, or allocate a fresh one
-    size_t retval = (size_t)(-1);
+    size_t retval = INVALID_INDEX;
     for (size_t i=0; i<driver_connections.size(); ++i) {
         if (0==driver_connections[i].nrefs) {
             retval = i;
             break;
         }
     }
-    if (retval==(size_t)(-1)) {
+    if (INVALID_INDEX == retval) {
         retval = driver_connections.size();
         driver_connections.resize(retval+10);
     }
@@ -766,7 +765,7 @@ void
 Transaction::init(const ConnectionPtr &conn, size_t drv_conn_idx)
 {
     assert(conn!=NULL);
-    assert(drv_conn_idx!=(size_t)(-1));
+    assert(drv_conn_idx != INVALID_INDEX);
     assert(conn->impl->driver_connections[drv_conn_idx].nrefs > 0);
     impl = new TransactionImpl(conn, drv_conn_idx);
 }

@@ -120,8 +120,8 @@ SgAsmIntegerType::get_isSigned() const {
 
 SgAsmFloatType::SgAsmFloatType(ByteOrder::Endianness sex, size_t nBits,
                                const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
-                               uint64_t exponentBias, unsigned flags)
-    : SgAsmScalarType(sex, nBits), p_signBitOffset(signBit), p_exponentBias(exponentBias), p_flags(flags) {
+                               uint64_t exponentBias, Flags flags)
+    : SgAsmScalarType(sex, nBits), p_signBitOffset(signBit), p_exponentBias(exponentBias), p_flags(flags.vector()) {
     ASSERT_forbid(significandBits.isEmpty());
     ASSERT_forbid(exponentBits.isEmpty());
     p_significandOffset = significandBits.least();
@@ -153,9 +153,9 @@ SgAsmFloatType::toString() const {
            <<"exponent=[" <<p_exponentOffset <<"+" <<p_exponentNBits <<"], "
            <<"bias=" <<StringUtility::toHex(p_exponentBias) <<", ";
     if (gradualUnderflow())
-        retval <<" gradualUnderflow, ";
-    if (normalizedSignificand())
-        retval <<" normalizedSignificand, ";
+        retval <<"gradual-underflow, ";
+    if (implicitBitConvention())
+        retval <<"implied-bit-convention, ";
     retval <<SgAsmScalarType::toString() <<")";
     return retval.str();
 };
@@ -180,19 +180,25 @@ SgAsmFloatType::exponentBias() const {
     return p_exponentBias;
 }
 
-unsigned
+// class method
+SgAsmFloatType::Flags
+SgAsmFloatType::ieeeFlags() {
+    return GRADUAL_UNDERFLOW | IMPLICIT_BIT_CONVENTION;
+}
+
+SgAsmFloatType::Flags
 SgAsmFloatType::flags() const {
-    return p_flags;
+    return Flags(p_flags);
 }
 
 bool
 SgAsmFloatType::gradualUnderflow() const {
-    return 0 != (p_flags & GRADUAL_UNDERFLOW);
+    return flags().isSet(GRADUAL_UNDERFLOW);
 }
 
 bool
-SgAsmFloatType::normalizedSignificand() const {
-    return 0 != (p_flags & NORMALIZED_SIGNIFICAND);
+SgAsmFloatType::implicitBitConvention() const {
+    return flags().isSet(IMPLICIT_BIT_CONVENTION);
 }
 
 

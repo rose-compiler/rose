@@ -8,6 +8,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <limits.h>
 #include <map>
+#include <rose_constants.h>
 #include <sstream>
 #include <stdint.h>
 #include <string>
@@ -41,10 +42,19 @@ ROSE_UTIL_API std::string htmlEscape(const std::string&);
 
 /** Escapes characters that are special to C/C++.
  *
- *  Replaces special characters in the input so that it is suitable for the contents of a C string literal. That is, things
+ *  Replaces special characters in the input so that it is suitable for the contents of a C string literal (if @p context is a
+ *  double quote character) or the contents of a C character constant (if @p context is a single quote). That is, things
  *  like double quotes, line-feeds, tabs, non-printables, etc. are replace by their C backslash escaped versions. Returns the
- *  resulting string. */
-ROSE_UTIL_API std::string cEscape(const std::string&);
+ *  resulting string.
+ *
+ *  Note that if the first argument is a string then the context defaults to string literals, and if the first argument is a
+ *  single character then the context defaults to character literals. Although this is usually what one wants, it's possible to
+ *  change the context in both situations.
+ *
+ * @{ */
+ROSE_UTIL_API std::string cEscape(const std::string&, char context = '"');
+ROSE_UTIL_API std::string cEscape(char, char context = '\'');
+/** @} */
 
 /**  Escapes characters that are special to the Bourne shell.
  *
@@ -88,10 +98,10 @@ ROSE_UTIL_API std::string escapeNewlineAndDoubleQuoteCharacters(const std::strin
  *  Perl's "split" operator.
  *
  * @{ */
-ROSE_UTIL_API std::vector<std::string> split(const std::string &separator, const std::string &str, size_t maxparts=(size_t)(-1),
-                                             bool trim_white_space=false);
-ROSE_UTIL_API std::vector<std::string> split(char separator, const std::string &str, size_t maxparts=(size_t)(-1),
-                                             bool trim_white_space=false);
+ROSE_UTIL_API std::vector<std::string> split(const std::string &separator, const std::string &str, size_t maxparts = UNLIMITED,
+                                             bool trim_white_space = false);
+ROSE_UTIL_API std::vector<std::string> split(char separator, const std::string &str, size_t maxparts = UNLIMITED,
+                                             bool trim_white_space = false);
 /** @} */
 
 /** Split a string into a list based on a separator character.
@@ -478,39 +488,39 @@ ROSE_UTIL_API std::string appendAsmComment(const std::string &s, const std::stri
  *  received 2 values
  * @endcode
  *
- * This function uses a handful of grade-school rules for converting the supplied plural word to a singular word when
- * necessary.  If these are not enough, then the singular form can be supplied as the third argument.
+ * This function uses a handful of grade-school rules and common exceptions for converting the supplied plural word to a
+ * singular word when necessary.  If these are not enough, then the singular form can be supplied as the third argument.
  *
  * @code
  *  std::cout <<"graph contains " <<plural(nverts, "vertices", "vertex") <<"\n";
  * @endcode
  */
 template<typename T>
-std::string plural(T n, const std::string &plural_word, const std::string &singular_word="") {
-    assert(!plural_word.empty());
+std::string plural(T n, const std::string &plural_phrase, const std::string &singular_phrase="") {
+    assert(!plural_phrase.empty());
     std::string retval = numberToString(n) + " ";
     if (1==n) {
-        if (!singular_word.empty()) {
-            retval += singular_word;
-        } else if (boost::ends_with(plural_word, "vertices")) {
-            retval += boost::replace_tail_copy(plural_word, 8, "vertex");
-        } else if (boost::ends_with(plural_word, "indices")) {
-            retval += boost::replace_tail_copy(plural_word, 7, "index");
-        } else if (boost::ends_with(plural_word, "ies") && plural_word.size() > 3) {
+        if (!singular_phrase.empty()) {
+            retval += singular_phrase;
+        } else if (boost::ends_with(plural_phrase, "vertices")) {
+            retval += boost::replace_tail_copy(plural_phrase, 8, "vertex");
+        } else if (boost::ends_with(plural_phrase, "indices")) {
+            retval += boost::replace_tail_copy(plural_phrase, 7, "index");
+        } else if (boost::ends_with(plural_phrase, "ies") && plural_phrase.size() > 3) {
             // string ends with "ies", as in "parties", so emit "party" instead
-            retval += boost::replace_tail_copy(plural_word, 3, "y");
-        } else if (boost::ends_with(plural_word, "indexes")) {
+            retval += boost::replace_tail_copy(plural_phrase, 3, "y");
+        } else if (boost::ends_with(plural_phrase, "sses") || boost::ends_with(plural_phrase, "indexes")) {
             // Sometimes we need to drop an "es" rather than just the "s"
-            retval += boost::erase_tail_copy(plural_word, 2);
-        } else if (boost::ends_with(plural_word, "s") && plural_word.size() > 1) {
+            retval += boost::erase_tail_copy(plural_phrase, 2);
+        } else if (boost::ends_with(plural_phrase, "s") && plural_phrase.size() > 1) {
             // strings ends with "s", as in "runners", so drop the final "s" to get "runner"
-            retval += boost::erase_tail_copy(plural_word, 1);
+            retval += boost::erase_tail_copy(plural_phrase, 1);
         } else {
             // I give up.  Use the plural and risk being grammatically incorrect.
-            retval += plural_word;
+            retval += plural_phrase;
         }
     } else {
-        retval += plural_word;
+        retval += plural_phrase;
     }
     return retval;
 }

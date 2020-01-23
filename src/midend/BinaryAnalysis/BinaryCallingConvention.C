@@ -818,7 +818,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     updateRestoredRegisters(initialState, finalState);
     updateInputRegisters(finalState);
     updateOutputRegisters(finalState);
-    updateStackParameters(initialState, finalState);
+    updateStackParameters(function, initialState, finalState);
     updateStackDelta(initialState, finalState);
     hasResults_ = true;
     didConverge_ = converged;
@@ -867,7 +867,7 @@ Analysis::updateOutputRegisters(const StatePtr &state) {
 }
 
 void
-Analysis::updateStackParameters(const StatePtr &initialState, const StatePtr &finalState) {
+Analysis::updateStackParameters(const P2::Function::Ptr &function, const StatePtr &initialState, const StatePtr &finalState) {
     inputStackParameters_.clear();
     outputStackParameters_.clear();
 
@@ -876,12 +876,12 @@ Analysis::updateStackParameters(const StatePtr &initialState, const StatePtr &fi
     RegisterDescriptor SP = cpu_->stackPointerRegister();
     SValuePtr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
     ops->currentState(finalState);
-    StackVariables vars = P2::DataFlow::findFunctionArguments(ops, initialStackPointer);
-    BOOST_FOREACH (const StackVariable &var, vars) {
-        if (var.meta.ioProperties.exists(IO_READ_BEFORE_WRITE)) {
-            inputStackParameters_.push_back(var);
-        } else if (var.meta.ioProperties.exists(IO_WRITE) && var.meta.ioProperties.exists(IO_READ_AFTER_WRITE)) {
-            outputStackParameters_.push_back(var);
+    Variables::StackVariables vars = P2::DataFlow::findFunctionArguments(function, ops, initialStackPointer);
+    BOOST_FOREACH (const Variables::StackVariable &var, vars.values()) {
+        if (var.ioProperties().exists(IO_READ_BEFORE_WRITE)) {
+            inputStackParameters_.insert(var.interval(), var);
+        } else if (var.ioProperties().exists(IO_WRITE) && var.ioProperties().exists(IO_READ_AFTER_WRITE)) {
+            outputStackParameters_.insert(var.interval(), var);
         }
     }
 }
@@ -906,29 +906,31 @@ Analysis::print(std::ostream &out, bool multiLine) const {
     RegisterNames regName(regDict_);
     std::string separator;
 
-    if (!inputRegisters_.isEmpty() || !inputStackParameters_.empty()) {
+    if (!inputRegisters_.isEmpty() || !inputStackParameters_.isEmpty()) {
         out <<separator <<"inputs={";
         if (!inputRegisters_.isEmpty()) {
             BOOST_FOREACH (RegisterDescriptor reg, inputRegisters_.listAll(regDict_))
                 out <<" " <<regName(reg);
         }
-        if (!inputStackParameters_.empty()) {
-            BOOST_FOREACH (const StackVariable &var, inputStackParameters())
-                out <<" stack[" <<var.location.offset <<"]+" <<var.location.nBytes;
+        if (!inputStackParameters_.isEmpty()) {
+            Variables::StackVariables vars = inputStackParameters();
+            BOOST_FOREACH (const Variables::StackVariable &var, vars.values())
+                out <<" stack[" <<var.frameOffset() <<"]+" <<var.maxSizeBytes();
         }
         out <<" }";
         separator = multiLine ? "\n" : ", ";
     }
 
-    if (!outputRegisters_.isEmpty() || !outputStackParameters_.empty()) {
+    if (!outputRegisters_.isEmpty() || !outputStackParameters_.isEmpty()) {
         out <<separator <<"outputs={";
         if (!outputRegisters_.isEmpty()) {
             BOOST_FOREACH (RegisterDescriptor reg, outputRegisters_.listAll(regDict_))
                 out <<" " <<regName(reg);
         }
-        if (!outputStackParameters_.empty()) {
-            BOOST_FOREACH (const StackVariable &var, outputStackParameters())
-                out <<" stack[" <<var.location.offset <<"]+" <<var.location.nBytes;
+        if (!outputStackParameters_.isEmpty()) {
+            Variables::StackVariables vars = outputStackParameters();
+            BOOST_FOREACH (const Variables::StackVariable &var, vars.values())
+                out <<" stack[" <<var.frameOffset() <<"]+" <<var.maxSizeBytes();
         }
         out <<" }";
         separator = multiLine ? "\n" : ", ";
@@ -1011,10 +1013,10 @@ Analysis::match(const Definition::Ptr &cc) const {
         // pop even unused arguments).
         if (cc->stackCleanup() == CLEANUP_BY_CALLEE) {
             int64_t normalizedEnd = 0; // one-past first-pushed argument normlized for downward-growing stack
-            BOOST_FOREACH (const StackVariable &var, inputStackParameters_)
-                normalizedEnd = std::max(normalizedEnd, (int64_t)(var.location.offset * normalization + var.location.nBytes));
-            BOOST_FOREACH (const StackVariable &var, outputStackParameters_)
-                normalizedEnd = std::max(normalizedEnd, (int64_t)(var.location.offset * normalization + var.location.nBytes));
+            BOOST_FOREACH (const Variables::StackVariable &var, inputStackParameters_.values())
+                normalizedEnd = std::max(normalizedEnd, (int64_t)(var.frameOffset() * normalization + var.maxSizeBytes()));
+            BOOST_FOREACH (const Variables::StackVariable &var, outputStackParameters_.values())
+                normalizedEnd = std::max(normalizedEnd, (int64_t)(var.frameOffset() * normalization + var.maxSizeBytes()));
             if (normalizedStackDelta < normalizedEnd) {
                 SAWYER_MESG(debug) <<"  mismatch: callee failed to pop callee-cleanup stack parameters\n";
                 return false;
@@ -1077,7 +1079,7 @@ Analysis::match(const Definition::Ptr &cc) const {
     }
 
     // If the analysis has stack inputs or outputs then the definition must have a valid stack parameter direction.
-    if ((!inputStackParameters().empty() || !outputStackParameters().empty()) &&
+    if ((!inputStackParameters().isEmpty() || !outputStackParameters().isEmpty()) &&
         cc->stackParameterOrder() == ORDER_UNSPECIFIED) {
         SAWYER_MESG(debug) <<"  mismatch: stack parameters detected but not allowed by definition\n";
         return false;

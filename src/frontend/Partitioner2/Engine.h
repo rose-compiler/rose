@@ -1172,6 +1172,18 @@ public:
     virtual void usingSemantics(bool b) { settings_.partitioner.base.usingSemantics = b; }
     /** @} */
 
+    /** Property: Whether unknown instructions are ignored.
+     *
+     *  If set, then instructions that cannot be disassembled are treated like no-ops for the purpose of building the global
+     *  control flow graph (otherwise they terminate a basic block). This is useful when working with fixed-width instruction
+     *  set architectures for which ROSE has an incomplete disassembler. For instance, PowerPC architectures that are augmented
+     *  with additional undocumented co-processor instructions.
+     *
+     * @{ */
+    bool ignoringUnknownInsns() const /*final*/ { return settings_.partitioner.base.ignoringUnknownInsns; }
+    virtual void ignoringUnknownInsns(bool b) { settings_.partitioner.base.ignoringUnknownInsns = b; }
+    /** @} */
+
     /** Property: Type of container for semantic memory.
      *
      *  Determines whether @ref Partitioner objects created by this engine will be configured to use list-based or map-based

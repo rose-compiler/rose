@@ -1,4 +1,5 @@
-#include "string.h"
+#include "DOM.h"
+#include <string.h>
 
 int main() {
   char* data;
@@ -6,7 +7,7 @@ int main() {
   //char dataBufferExp[10+1];
   data=dataBuffer;
   data[0]= '\0';
-  char* stringPtr = "0123456789";
+  const char* stringPtr = "0123456789";
   char source[11] = "0123456789";
   //char source[11] = {'0','1',0};
   int i;
@@ -18,5 +19,7 @@ int main() {
   int len1,len2;
   len1=strlen(source);
   len2=strlen(stringPtr);
+  printf("len1:%d\n",len1);
+  printf("len2:%d\n",len2);
   return 0;
 }

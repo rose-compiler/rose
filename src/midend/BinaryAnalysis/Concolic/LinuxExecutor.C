@@ -111,6 +111,8 @@ void redirectStream(const std::string& ofile, int num)
 {
   if (ofile.size() == 0) return;
 
+  // FIXME[Robb Matzke 2020-01-15]: possible bug. open returns -1 on failure, not zero. Should you
+  // close outstream before returning?
   int outstream = open(ofile.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 
   if (outstream) dup2(outstream, num);

@@ -228,9 +228,18 @@ public:
      *  Formatter fmt = ...;
      *  std::cout <<"The value is: " <<(*obj+fmt) <<"\n";
      * @endcode
+     *
+     * Since specifying a line prefix string for indentation purposes is such a common use case, the
+     * indentation can be given instead of a format, as in the following code that indents the
+     * prefixes each line of the expression with four spaces.
+     *
+     * @code
+     *  std::cout <<"Machine state:\n" <<*(obj + "    ");
+     * @code
      * @{ */
     WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
     WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
+    WithFormatter operator+(const std::string &linePrefix);
     /** @} */
 
     /** Property: Number of instructions processed.
@@ -693,13 +702,12 @@ public:
      *  State::readMemory "readMemory" method.
      *
      *  A MemoryState will implement storage for memory locations and might impose certain restrictions, such as "all memory
-     *  values must be eight bits".  However, the @ref readMemory should not have these constraints so that it can
-     *  be called from a variety of Dispatcher subclass (e.g., the DispatcherX86 class assumes that @ref readMemory
-     *  is capable of reading 32-bit values from little-endian memory). The designers of the MemoryState, State, and
-     *  RiscOperators should collaborate to decide which layer (RiscOperators, State, or MemoryState) is reponsible for
-     *  combining individual memory locations into larger values.  A RiscOperators object is passed along the chain of
-     *  delegations for this purpose. The RiscOperators might also contain other data that's import during the process, such as
-     *  an SMT solver.
+     *  values must be eight bits".  However, the @ref readMemory should not have these constraints so that it can be called
+     *  from a variety of Dispatcher subclass (e.g., the DispatcherX86 class assumes that @ref readMemory is capable of reading
+     *  32-bit values from little-endian memory). The designers of the MemoryState, State, and RiscOperators should collaborate
+     *  to decide which layer (RiscOperators, State, or MemoryState) is reponsible for combining individual memory locations
+     *  into larger values.  A RiscOperators object is passed along the chain of delegations for this purpose. The
+     *  RiscOperators might also contain other data that's important during the process, such as an SMT solver.
      *
      *  The @p segreg argument is an optional segment register. Most architectures have a flat virtual address space and will
      *  pass a default-constructed register descriptor whose is_valid() method returns false.

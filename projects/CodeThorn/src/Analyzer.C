@@ -298,6 +298,13 @@ CodeThorn::InterpretationMode CodeThorn::Analyzer::getInterpretationMode() {
   return exprAnalyzer.getInterpretationMode();
 }
 
+void CodeThorn::Analyzer::setInterpretationModeOutputFileName(string fileName) {
+  exprAnalyzer.setInterpretationModeFileName(fileName);
+}
+
+string CodeThorn::Analyzer::getInterpretationModeOutputFileName() {
+  return exprAnalyzer.getInterpretationModeFileName();
+}
 
 void CodeThorn::Analyzer::setOptionContextSensitiveAnalysis(bool flag) {
   _contextSensitiveAnalysis=flag;

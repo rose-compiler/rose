@@ -1579,17 +1579,14 @@ SgProject::processCommandLine(const vector<string>& input_argv)
            pos++;
          }
        }
+       std::string astfile = rose_ast_option_param.substr(prev, pos-prev);
+       p_astfiles_in.push_back(astfile);
      }
 
      // `-rose:ast:write out.ast` (extension does not matter)
      rose_ast_option_param = "";
      if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:", "(ast:write)", rose_ast_option_param, true) == true ) {
        p_astfile_out = rose_ast_option_param;
-     }
-
-     // `-rose:ast:merge`
-     if (CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(ast:merge)",true) == true ) {
-       p_ast_merge = true;
      }
 
   // Verbose ?
@@ -3318,11 +3315,6 @@ SgFile::usage ( int status )
 "     -rose:ast:write out.ast\n"
 "                             Output AST file (extension does *not* matter).\n"
 "                             Evaluated in the backend before any file unparsing or backend compiler calls.\n"
-"     -rose:ast:merge\n"
-"                             Boolean flag (default: false)\n"
-"                             Wether or not to minimize the AST with ROSE's merge algorithm.\n"
-"                             Useful when more than one source file is provided on the command line, or when ASTs are loaded from files.\n"
-"                             Occurs after the frontend and AST loading but before the plugin.\n"
 "\n"
 "Plugin Mode:\n"
 "     -rose:plugin_lib <shared_lib_filename>\n"
@@ -5633,7 +5625,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx)",1);
 
   // AST I/O
-     optionCount = sla(argv, "-rose:ast:", "($)", "(read|write|merge)",1);
+     optionCount = sla(argv, "-rose:ast:", "($)", "merge",1);
+     optionCount = sla(argv, "-rose:ast:", "($)^", "(read|write)",&integerOption,1);
 
   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      ROSE_ASSERT(optionCount >= 0);
@@ -6647,7 +6640,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
          break;
        }
        case e_c90_standard: {
-         inputCommandLine.push_back("--c90");
+         inputCommandLine.push_back("--c89");
          break;
        }
        case e_c99_standard: {

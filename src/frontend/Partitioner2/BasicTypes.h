@@ -281,20 +281,23 @@ struct BasePartitionerSettings {
                                                      *   of certain kinds of opaque predicates. */
     bool checkingCallBranch;                        /**< Check for situations where CALL is used as a branch. */
     bool basicBlockSemanticsAutoDrop;               /**< Conserve memory by dropping semantics for attached basic blocks. */
+    bool ignoringUnknownInsns;                      /**< Whether to ignore unkonwn insns when extending basic blocks. */
 
 private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
+    void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_NVP(usingSemantics);
         s & BOOST_SERIALIZATION_NVP(checkingCallBranch);
         s & BOOST_SERIALIZATION_NVP(basicBlockSemanticsAutoDrop);
+        if (version >= 1)
+            s & BOOST_SERIALIZATION_NVP(ignoringUnknownInsns);
     }
 
 public:
     BasePartitionerSettings()
-        : usingSemantics(false), checkingCallBranch(false), basicBlockSemanticsAutoDrop(true) {}
+        : usingSemantics(false), checkingCallBranch(false), basicBlockSemanticsAutoDrop(true), ignoringUnknownInsns(false) {}
 };
 
 /** Settings that control the engine partitioning.
@@ -473,5 +476,6 @@ typedef Sawyer::SharedPointer<ThunkPredicates> ThunkPredicatesPtr;
 
 // Class versions must be at global scope
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 6);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::BasePartitionerSettings, 1);
 
 #endif

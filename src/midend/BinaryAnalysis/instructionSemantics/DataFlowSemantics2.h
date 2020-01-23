@@ -39,7 +39,7 @@ struct DataFlowEdge {
 
     size_t sequence;                                    /**< Edge sequence number unique and constant within graph. */
     EdgeType edgeType;                                  /**< Whether edge resets or augments previous flows to target. */
-    DataFlowEdge(): sequence((size_t)(-1)), edgeType(CLOBBER) {}
+    DataFlowEdge(): sequence(INVALID_INDEX), edgeType(CLOBBER) {}
     DataFlowEdge(size_t sequence, EdgeType edgeType): sequence(sequence), edgeType(edgeType) {}
 };
 

@@ -416,17 +416,18 @@ public:
      *  Each system call implementation consists of three lists of callbacks. The first list, named "enter", contains callbacks
      *  that print the syscall entrance message when system call tracing is enabled; the @p body list does the real work of the
      *  system call; and the @p leave list print the system call return value(s).  For each list, the callbacks are invoked in
-     *  ROSE_Callbacks::FORWARD order. Any of the callbacks may throw an exception, in which case the subsequent callbacks on
-     *  that list and following lists are not invoked.  The reason for having three lists of callbacks rather than one callback
-     *  that does all three actions is to make it easier for users to augment an existing system call without having to
-     *  reimplement the enter/leave boilerplate, or to modify the boilerplate without having to reimplement the system call.
+     *  @ref Rose::Callbacks::FORWARD order. Any of the callbacks may throw an exception, in which case the subsequent
+     *  callbacks on that list and following lists are not invoked.  The reason for having three lists of callbacks rather than
+     *  one callback that does all three actions is to make it easier for users to augment an existing system call without
+     *  having to reimplement the enter/leave boilerplate, or to modify the boilerplate without having to reimplement the
+     *  system call.
      *
      *  The system call table, indexed by call number, contains SystemCall objects (allocated on the heap) which in turn
      *  contain the three lists of callbacks, named "enter", "body", and "leave".  These lists contain Callback (a virtual base
-     *  class) functors conforming to the requirements documented for ROSE_Callbacks in the ROSE Library Reference Manual. End
-     *  users may subclass Callback as necessary to implement a system call.  Operations on these lists are generally thread
-     *  safe, and a list can be modified even while its callbacks are executing (modifying the list doesn't immediately affect
-     *  which callbacks are invoked).
+     *  class) functors conforming to the requirements documented for @ref Rose::Callbacks in the ROSE Library Reference
+     *  Manual. End users may subclass Callback as necessary to implement a system call.  Operations on these lists are
+     *  generally thread safe, and a list can be modified even while its callbacks are executing (modifying the list doesn't
+     *  immediately affect which callbacks are invoked).
      *
      *  Functions to access the syscall table are:
      *  <ul>
@@ -437,7 +438,7 @@ public:
      *
      *  The RSIM_Simulator::syscall_define() deserves special mention.  It's often more convenient to implement or augment a
      *  system call using a function (or three, if you need to provide or modify enter/leave behavior). Unfortunately, ROSE's
-     *  ROSE_Callbacks mechanism only supports functors having specific calling conventions.  Therefore, we've defined a
+     *  @ref Rose::Callbacks mechanism only supports functors having specific calling conventions.  Therefore, we've defined a
      *  SystemCall::Function class (derived from SystemCall::Callback) whose constructor takes a function pointer and whose
      *  callback invokes that function.  Examples of this usage can be found throughout the simulator (e.g., see
      *  RSIM_Linux32::ctor()).
@@ -453,14 +454,14 @@ public:
      *      size_t ncalls, nbytes;
      *      IOCounter(): ncalls(0), nbytes(0) {}
      *
-     *      // The callback. Signature is dictated by ROSE_Callbacks. Args is a struct defined
+     *      // The callback. Signature is dictated by Rose::Callbacks. Args is a struct defined
      *      // in the base class and contains a thread pointer and the syscall number.
      *      bool operator()(bool b, const Args &args) {
      *          ncalls++;
      *          int32_t n = args.thread->syscall_arg(-1); // system call return value
      *          if (n>0)
      *              nbytes += (size_t)n;
-     *          return b; // per ROSE_Callbacks semantics
+     *          return b; // per Rose::Callbacks semantics
      *      }
      *  };
      *  @endcode
@@ -657,7 +658,7 @@ public:
     struct SystemCall {
 
         /** Base class for system call implementations.  System calls are implemented using user-defined callbacks as described
-         *  in the documentation for ROSE_Callbacks. */
+         *  in the documentation for @ref Rose::Callbacks. */
         struct Callback {
             struct Args {                                       /**< Arguments to pass to system call functors. */
                 Args(RSIM_Thread *thread, int callno)
@@ -682,9 +683,9 @@ public:
             }
         };
 
-        ROSE_Callbacks::List<Callback> enter;                   /**< Callbacks for entering a system call. */
-        ROSE_Callbacks::List<Callback> body;                    /**< Callbacks for system call body (the real work). */
-        ROSE_Callbacks::List<Callback> leave;                   /**< Callbacks for returning from a system call. */
+        Rose::Callbacks::List<Callback> enter;          /**< Callbacks for entering a system call. */
+        Rose::Callbacks::List<Callback> body;           /**< Callbacks for system call body (the real work). */
+        Rose::Callbacks::List<Callback> leave;          /**< Callbacks for returning from a system call. */
     };
 
     /** Returns true if the specified system call exists in the system call table and has at least one callback.

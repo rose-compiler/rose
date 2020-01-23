@@ -256,19 +256,23 @@ string get_type_name(SgType* t)
                          if (p != ftype->get_arguments().end()) { res = res + ","; }
                        }
 
-                       res = res + ")";
+                    res = res + ")";
 
-                       if (ftype->isConstFunc()) {
+#if 1
+                    printf ("In get_type_name(): ftype != NULL: after unparsing function arguments: unparse modifiers \n");
+#endif
+
+                    if (ftype->isConstFunc()) {
                          res = res + " const";
                        }
 
-                       if (ftype->get_ref_qualifiers() == 1) {
+                    if (ftype->get_ref_qualifiers() == 1) {
                          res = res + " &";
                        } else if (ftype->get_ref_qualifiers() == 2) {
                          res = res + " &&";
                        }
 
-                       return res;
+                    return res;
                   }
                  else
                   {
@@ -1599,8 +1603,13 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
 #define DEBUG_MEMBER_POINTER_TYPE 0
 #define CURPRINT_MEMBER_POINTER_TYPE 0
 
-#if DEBUG_MEMBER_POINTER_TYPE
+#if DEBUG_MEMBER_POINTER_TYPE || 0
      printf ("In unparseMemberPointerType: mpointer_type = %p \n",mpointer_type);
+#endif
+
+#if 0
+     printf ("In unparseMemberPointerType: info.inTypedefDecl() = %s \n",info.inTypedefDecl() ? "true" : "false");
+     printf ("In unparseMemberPointerType: info.inArgList()     = %s \n",info.inArgList() ? "true" : "false");
 #endif
 
   // plain type :  int (P::*)
@@ -1616,7 +1625,12 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
      curprint("\n/* In unparseMemberPointerType() */ \n");
 #endif
 
-     if ( (ftype = isSgMemberFunctionType(btype)) != NULL)
+  // if ( (ftype = isSgMemberFunctionType(btype)) != NULL)
+     ftype = isSgMemberFunctionType(btype);
+#if 0
+     printf ("In unparseMemberPointerType(): ftype = %p \n",ftype);
+#endif
+     if (ftype != NULL)
         {
        // pointer to member function data
 #if DEBUG_MEMBER_POINTER_TYPE
@@ -1683,12 +1697,13 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
             // Not clear yet where this was required in the first place.
 #if 1
             // DQ (4/27/2019): I think we always need this syntax for pointer to member functions.
-               curprint ( "(");
+               curprint ("(");
 #else
             // if ( info.inTypedefDecl() == true)
                if ( info.inTypedefDecl() == true || info.inArgList() == true)
                   {
-                    curprint(" /* leading paren */ ");
+#error "DEAD CODE!"
+                 // curprint(" /* leading paren */ ");
                     curprint ("(");
                   }
                  else
@@ -1721,6 +1736,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                  //    6) SgCastExp
                  //    7) SgInitializedName
 
+#error "DEAD CODE!"
                     SgName nameQualifier;
                     SgNode* referenceNode = info.get_reference_node_for_qualification();
                     ROSE_ASSERT(referenceNode != NULL);
@@ -1750,6 +1766,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                               break;
                             }
 
+#error "DEAD CODE!"
                          case V_SgTypeIdOp:
                             {
                               SgTypeIdOp* xxx = isSgTypeIdOp(referenceNode);
@@ -1782,20 +1799,23 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                               break;
                             }
 
+#error "DEAD CODE!"
                          default:
                             {
                            // DQ (4/11/2019): NOTE: In the testRoseHeaders_03.C this can be a SgCastExp.
                            // And in testRoseHeaders_05.C this can be a SgCastExp, SgTemplateFunctionDeclaration, or SgTemplateMemberFunctionDeclaration
-#if 1
+#if 0
                               printf ("NOTE: In unparseMemberPointerType(): default case reached: info.get_reference_node_for_qualification() = %p = %s \n",
                                    info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
 #endif
-#if 1
+#if 0
                               printf ("Exiting as a test! \n");
                               ROSE_ASSERT(false);
 #endif
                             }
                        }
+#error "DEAD CODE!"
+
 #if 0
                  // DQ (4/10/2019): Handling pointer to member types.
                  // SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
@@ -1814,7 +1834,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                       // DQ (4/10/2019): In test2019_326.C this is a SgTypedefDeclaration.
                          SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(info.get_reference_node_for_qualification());
                          ROSE_ASSERT(typedefDeclaration != NULL);
-
+#error "DEAD CODE!"
                          nameQualifier = typedefDeclaration->get_qualified_name_prefix();
 #if 0
                          printf ("ERROR: not a SgInitializedName: info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
@@ -1827,6 +1847,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                       // ROSE_ASSERT(typedefDeclaration != NULL);
                          if (typedefDeclaration != NULL)
                             {
+#error "DEAD CODE!"
                               ROSE_ASSERT(typedefDeclaration != NULL);
                               nameQualifier = typedefDeclaration->get_qualified_name_prefix();
                             }
@@ -1837,6 +1858,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                               if (templateArgument != NULL)
                                  {
                                    nameQualifier = templateArgument->get_qualified_name_prefix();
+#error "DEAD CODE!"
                                  }
                                 else
                                  {
@@ -1847,6 +1869,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                                       }
                                      else
                                       {
+#error "DEAD CODE!"
                                      // DQ (4/11/2019): NOTE: In the testRoseHeaders_03.C this can be a SgCastExp.
                                      // And in testRoseHeaders_05.C this can be a SgCastExp, SgTemplateFunctionDeclaration, or SgTemplateMemberFunctionDeclaration
 #if 1
@@ -1963,17 +1986,39 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                  // curprint("\n/* In unparseMemberPointerType(): end of argument list */ \n";
 
                     unparseType(ftype->get_return_type(), info); // second part
-
+#if 0
+                    printf ("In unparseMemberPointerType(): after unparseType() second part: unparse modifiers \n");
+#endif
+#if 0
+                  // DQ (1/11/2020): This is the old code!
                      if (ftype->get_ref_qualifiers() == 1) {
                        curprint(" &");
                      } else if (ftype->get_ref_qualifiers() == 2) {
                        curprint(" &&");
                      }
-
+#endif
                  // Liao, 2/27/2009, add "const" specifier to fix bug 327
                     if (ftype->isConstFunc())
                        {
                          curprint(" const ");
+                       }
+
+                 // DQ (1/11/2020): Adding support for volatile.
+                    if (ftype->isVolatileFunc())
+                       {
+                         curprint(" volatile ");
+                       }
+
+                 // DQ (1/11/2020): Adding support for lvalue reference member function modifiers.
+                    if (ftype->isLvalueReferenceFunc())
+                       {
+                         curprint(" &");
+                       }
+
+                 // DQ (1/11/2020): Adding support for rvalue reference member function modifiers.
+                    if (ftype->isRvalueReferenceFunc())
+                       {
+                         curprint(" &&");
                        }
                   }
                  else
@@ -1994,12 +2039,12 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
        else
         {
        /* pointer to member data */
-#if DEBUG_MEMBER_POINTER_TYPE
+#if DEBUG_MEMBER_POINTER_TYPE || 0
           printf ("In unparseMemberPointerType(): pointer to member data \n");
 #endif
           if (info.isTypeFirstPart())
              {
-#if DEBUG_MEMBER_POINTER_TYPE
+#if DEBUG_MEMBER_POINTER_TYPE || 0
                printf ("In unparseMemberPointerType(): pointer to member data: first part of type \n");
 #endif
             // DQ (9/16/2004): This appears to be an error, btype should not be unparsed here (of maybe btype is not set properly)!
@@ -2051,8 +2096,8 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                curprint ( "\n/* end of btype */ \n");
 #endif
 #if 0
-               printf ("Leading paren: info.inTypedefDecl() = %s \n",info.inArgList() ? "true" : "false");
-               printf ("Leading paren: info.inArgList() = %s \n",info.inArgList() ? "true" : "false");
+               printf ("Leading paren: info.inTypedefDecl() = %s \n",info.inTypedefDecl() ? "true" : "false");
+               printf ("Leading paren: info.inArgList()     = %s \n",info.inArgList() ? "true" : "false");
 #endif
             // DQ (2/3/2019): Suppress parenthesis (see Cxx11_tests/test2019_76.C)
             // Not clear yet where this was required in the first place.
@@ -2060,7 +2105,9 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
             // if ( info.inTypedefDecl() == true)
                if ( info.inTypedefDecl() == true || info.inArgList() == true)
                   {
-                 // curprint(" /* leading paren */ ");
+#if 0
+                    curprint(" /* leading paren */ ");
+#endif
                     curprint ("(");
                   }
 
@@ -2079,6 +2126,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                     printf ("info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
 #endif
 
+#error "DEAD CODE!"
 
                  // DQ (4/16/2019): The reference node can be only either:
                  //    1) SgTypedefDeclaration
@@ -2110,6 +2158,8 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                               break;
                             }
 
+#error "DEAD CODE!"
+
                          case V_SgTemplateArgument:
                             {
                               SgTemplateArgument* xxx = isSgTemplateArgument(referenceNode);
@@ -2135,6 +2185,8 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                               break;
                             }
 
+#error "DEAD CODE!"
+
                          case V_SgSizeOfOp:
                             {
                               SgSizeOfOp* xxx = isSgSizeOfOp(referenceNode);
@@ -2151,6 +2203,8 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                               break;
                             }
 
+#error "DEAD CODE!"
+
                       // DQ (4/18/2019): Now the we have to traverse chains of types where there can
                       // be SgPointerMemberType types, we have to handle this as a rererenceNode.
                          case V_SgPointerMemberType:
@@ -2161,15 +2215,17 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                               break;
                             }
 
+#error "DEAD CODE!"
+
                          default:
                             {
                            // DQ (4/11/2019): NOTE: In the testRoseHeaders_03.C this can be a SgCastExp.
                            // And in testRoseHeaders_05.C this can be a SgCastExp, SgTemplateFunctionDeclaration, or SgTemplateMemberFunctionDeclaration
-#if 1
+#if 0
                               printf ("NOTE: In unparseMemberPointerType(): default case reached: info.get_reference_node_for_qualification() = %p = %s \n",
                                    info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
 #endif
-#if 1
+#if 0
                               printf ("Exiting as a test! \n");
                               ROSE_ASSERT(false);
 #endif
@@ -2196,6 +2252,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                             {
                               ROSE_ASSERT(typedefDeclaration != NULL);
                               nameQualifier = typedefDeclaration->get_qualified_name_prefix();
+#error "DEAD CODE!"
                             }
                            else
                             {
@@ -2214,7 +2271,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                                       }
                                      else
                                       {
-#if 1
+#if 0
                                         printf ("NOTE: In unparseMemberPointerType(): not a SgInitializedName, SgTypedefDeclaration, SgTemplateArgument, or SgTypeIdOp: info.get_reference_node_for_qualification() = %p = %s \n",
                                              info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
 #endif
@@ -2232,6 +2289,8 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
 #endif
                        }
 #endif
+
+#error "DEAD CODE!"
 
 #if DEBUG_UNPARSE_POINTER_MEMBER_TYPE
                     printf ("nameQualifier (from xxx->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
@@ -2256,12 +2315,12 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                curprint(nameQualifier.str());
 #endif
 
-#if 1
+#if 0
                curprint ( "\n/* calling get_type_name */ \n");
 #endif
                curprint ( get_type_name(mpointer_type->get_class_type()) );
                curprint ( "::*");
-#if 1
+#if 0
                curprint ( "\n/* DONE: calling get_type_name */ \n");
 #endif
              }
@@ -2269,7 +2328,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
              {
                if (info.isTypeSecondPart())
                   {
-#if DEBUG_MEMBER_POINTER_TYPE
+#if DEBUG_MEMBER_POINTER_TYPE || 0
                 //  printf ("In unparseMemberPointerType(): Handling the second part \n");
                     printf ("In unparseMemberPointerType(): pointer to member data: second part of type \n");
 #endif
@@ -2277,16 +2336,25 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                     curprint ( "\n/* start of second type part processing */ \n");
 #endif
 #if 0
-                    printf ("Trailing paren: info.inTypedefDecl() = %s \n",info.inArgList() ? "true" : "false");
+                    printf ("Trailing paren: info.inTypedefDecl() = %s \n",info.inTypedefDecl() ? "true" : "false");
                     printf ("Trailing paren: info.inArgList() = %s \n",info.inArgList() ? "true" : "false");
 #endif
                 // DQ (2/3/2019): Suppress parenthesis (see Cxx11_tests/test2019_76.C)
                  // curprint(")");
                  // if ( info.inTypedefDecl() == true)
+                 // if ( info.inTypedefDecl() == true || info.inArgList() == true)
                     if ( info.inTypedefDecl() == true || info.inArgList() == true)
                        {
-                      // curprint(" /* trailing paren */ ");
+#if 0
+                         curprint(" /* trailing paren */ ");
+#endif
                          curprint(")");
+                       }
+                      else
+                       {
+#if 0
+                         curprint(" /* skip output of trailing paren */ ");
+#endif
                        }
 
                  // DQ (8/19/2014): Handle array types (see test2014_129.C).
@@ -2305,6 +2373,12 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                  else
                   {
                  // printf ("What is this 3rd case of neither 1st part nor 2nd part \n");
+#if 0
+                    printf ("What is this 3rd case! \n");
+#endif
+#if 0
+                    curprint ( "\n/* What is this 3rd case! */ \n");
+#endif
                     SgUnparse_Info ninfo(info);
                     ninfo.set_isTypeFirstPart();
                     unparseType(mpointer_type, ninfo);
@@ -2314,7 +2388,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
              }
         }
 
-#if DEBUG_MEMBER_POINTER_TYPE || CURPRINT_MEMBER_POINTER_TYPE
+#if DEBUG_MEMBER_POINTER_TYPE || CURPRINT_MEMBER_POINTER_TYPE || 0
      printf ("Leaving unparseMemberPointerType() \n");
      curprint("\n/* Leaving unparseMemberPointerType() */ \n");
 #endif
@@ -2468,6 +2542,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
   // SgClassDeclaration *cdecl = isSgClassDeclaration(class_type->get_declaration());
      SgClassDeclaration *decl = isSgClassDeclaration(class_type->get_declaration());
      ROSE_ASSERT(decl != NULL);
+
      SgTemplateClassDeclaration *tpldecl = isSgTemplateClassDeclaration(decl);
 
   // DQ (7/28/2013): Added assertion.
@@ -2873,6 +2948,41 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
 
                  // curprint ( "\n/* Unparsing class definition within unparseClassType */ \n";
 
+                 // DQ (12/26/2019): If we are supporting multiple files and named types using defining declaration 
+                 // in multiple translation units, then we need to use the defining declaration that is associated 
+                 // with the correct file (so that it can be unparsed).
+                    if (info.useAlternativeDefiningDeclaration() == true)
+                       {
+                         ROSE_ASSERT(info.get_declstatement_associated_with_type() != NULL);
+
+                         SgClassDeclaration* class_declstatement_associated_with_type = isSgClassDeclaration(info.get_declstatement_associated_with_type());
+                         ROSE_ASSERT(class_declstatement_associated_with_type != NULL);
+
+                      // This should be a defining declaration.
+                         ROSE_ASSERT(class_declstatement_associated_with_type->get_definition() != NULL);
+#if 0
+                         printf ("Reset the declaration to be used in unparsing the defining declaration (muti-file support): class_declstatement_associated_with_type = %p \n",class_declstatement_associated_with_type);
+#endif
+                      // decl = class_declstatement_associated_with_type;
+                      // cDefiningDecl = class_declstatement_associated_with_type;
+                         classdefn_stmt = class_declstatement_associated_with_type->get_definition();
+                         ROSE_ASSERT(classdefn_stmt != NULL);
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+#if 0
+                 // DQ (1/8/2020): Identifying the location where we need to output the class hierarchy (see Cxx11_tests/test2020_26.C).
+                    printf ("In unparseClassType(): Output class hierarchy here! \n");
+                    curprint(" /* Output class hierarchy here! */ ");
+#endif
+
+                 // DQ (1/8/2020): Support for defining declarations with base classes (called from unparseClassDefnStmt() and unparseClassType() functions).
+                 // This supports Cxx_tests/test2020_24.C.
+                    ROSE_ASSERT(classdefn_stmt != NULL);
+                    unp->u_exprStmt->unparseClassInheritanceList (classdefn_stmt,info);
+
                     ninfo.set_isUnsetAccess();
                     curprint("{");
                     if (classdefn_stmt == NULL)
@@ -3062,9 +3172,18 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
 #endif
              }
 
+#if DEBUG_ENUM_TYPE
+     printf ("In unparseEnumType: info.inTypedefDecl() = %s \n",info.inTypedefDecl() ? "true" : "false");
+     printf ("In unparseEnumType: info.inArgList()     = %s \n",info.inArgList() ? "true" : "false");
+#endif
+
        // DQ (9/14/2013): For C language we need to output the "enum" keyword (see test2013_71.c).
           if ( (info.isTypeFirstPart() == false) && (info.SkipClassSpecifier() == false) && (SageInterface::is_C_language() == true || SageInterface::is_C99_language() == true) )
              {
+            // DQ (1/6/2020): When this is used as a argument we only want to unparse the name (e.g. sizeof opterator).
+            // Note: we need this for the C language support.
+            // if (info.inArgList() == false)
+            //    {
                curprint ("enum ");
 
             // DQ (2/14/2019): Adding support for C++11 scoped enums (syntax is "enum class ").
@@ -3072,6 +3191,7 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                   {
                     curprint ("class ");
                   }
+            //    }
              }
 #if 0
        // DQ (7/30/2014): Commented out to avoid compiler warning about not being used.
@@ -3174,14 +3294,18 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                   }
              }
 
-       // DQ (2/18/2019): Adding support for C++11 base type specification syntax.
-          if (edecl->get_field_type() != NULL)
+       // DQ (1/6/2020): When this is used as a argument we only want to unparse the name (e.g. sizeof opterator).
+          if (info.inArgList() == false)
              {
-               curprint(" : ");
+            // DQ (2/18/2019): Adding support for C++11 base type specification syntax.
+               if (edecl->get_field_type() != NULL)
+                  {
+                    curprint(" : ");
 
-            // Make a new SgUnparse_Info object.
-               SgUnparse_Info ninfo(info);
-               unp->u_type->unparseType(edecl->get_field_type(),ninfo);           
+                 // Make a new SgUnparse_Info object.
+                    SgUnparse_Info ninfo(info);
+                    unp->u_type->unparseType(edecl->get_field_type(),ninfo);           
+                  }
              }
         }
 
@@ -4104,6 +4228,7 @@ Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
 #if 0
      printf ("In unparseMemberFunctionType(type = %p (%s))\n", type, type ? type->class_name().c_str() : "");
 #endif
+
      SgMemberFunctionType* mfunc_type = isSgMemberFunctionType(type);
      ROSE_ASSERT(mfunc_type != NULL);
 
@@ -4186,16 +4311,39 @@ Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
                ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
                unparseType(mfunc_type->get_return_type(), info); // catch the 2nd part of the rtype
+#if 0
+               printf ("In unparseMemberFunctionType(): after unparseType() second part: unparse modifiers \n");
+#endif
 
                if (mfunc_type->isConstFunc()) {
                  curprint (" const");
                }
 
+            // DQ (1/11/2020): Adding missing support for volatile and const-volatile.
+               if (mfunc_type->isVolatileFunc()) 
+                  {
+                 // curprint (" /* adding volatile */ ");
+                    curprint (" volatile");
+                  }
+
+            // DQ (1/11/2020): Adding support for lvalue reference member function modifiers.
+               if (mfunc_type->isLvalueReferenceFunc())
+                  {
+                    curprint(" &");
+                  }
+
+            // DQ (1/11/2020): Adding support for rvalue reference member function modifiers.
+               if (mfunc_type->isRvalueReferenceFunc())
+                  {
+                    curprint(" &&");
+                  }
+#if 0
                if (mfunc_type->get_ref_qualifiers() == 1) {
                  curprint (" &");
                } else if (mfunc_type->get_ref_qualifiers() == 2) {
                  curprint (" &&");
                }
+#endif
              }
             else
              {
