@@ -220,6 +220,9 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
           void setNameQualification ( SgFunctionRefExp* functionRefExp, SgFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired );
           void setNameQualification ( SgMemberFunctionRefExp* functionRefExp, SgMemberFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired );
 
+       // DQ (1/18/2020): Adding name qualification support for SgPsuedoDestructorRefExp.
+          void setNameQualification ( SgPseudoDestructorRefExp* psuedoDestructorRefExp, SgDeclarationStatement* declarationStatement, int amountOfNameQualificationRequired);
+
        // DQ (6/4/2011): This handles the case of both the declaration being a SgMemberFunctionDeclaration and a SgClassDeclaration.
        // void setNameQualification ( SgConstructorInitializer* constructorInitializer, SgMemberFunctionDeclaration* functionDeclaration, int amountOfNameQualificationRequired);
           void setNameQualification ( SgConstructorInitializer* constructorInitializer, SgDeclarationStatement* declaration, int amountOfNameQualificationRequired);

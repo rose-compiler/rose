@@ -502,7 +502,7 @@ void Grammar::setUpBinaryInstructions() {
          *  Given an instruction size of 32 or 64 return the register dictionary that describes the PowerPC architecture with
          *  the specified word size. */
         static const Rose::BinaryAnalysis::RegisterDictionary* registersForWidth(size_t);
-        
+
         // Overrides are documented in the base class
         virtual std::string description() const $ROSE_OVERRIDE;
         virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
@@ -1144,7 +1144,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     /**************************************************************************************************************************
      *                                  Instruction Expressions
      * Related functions and documentation can be found in src/frontend/Disassemblers/Expressions.C
@@ -2914,6 +2914,7 @@ void Grammar::setUpBinaryInstructions() {
     DECLARE_HEADERS(AsmFloatType);
 #if defined(SgAsmFloatType_HEADERS) || defined(DOCUMENTATION)
     #include <Sawyer/BitVector.h>
+    #include <BitFlags.h>
 #endif // SgAsmFloatType_HEADERS
 
 #ifdef DOCUMENTATION
@@ -2960,17 +2961,22 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
-        enum {
-            GRADUAL_UNDERFLOW      = 0x00000001,
-            NORMALIZED_SIGNIFICAND = 0x00000002
+        /** Individual bit flags for this floating-point type. */
+        enum Flag {
+            GRADUAL_UNDERFLOW           = 0x00000001,   /**< De-normalized signifand when exponent field is clear. */
+            IMPLICIT_BIT_CONVENTION     = 0x00000002    /**< Use IEEE 754 implicit bit convention for signicand. */
         };
 
+        /** Collective bit flags for this floating-point type. */
+        typedef Rose::BitFlags<Flag> Flags;
+
+        /** Range of bits used for various purposes within the values of this type. */
         typedef Sawyer::Container::BitVector::BitRange BitRange;
 
         /** Construct a new floating-point type. */
         SgAsmFloatType(ByteOrder::Endianness, size_t nBits,
                        const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
-                       uint64_t exponentBias, unsigned flags);
+                       uint64_t exponentBias, Flags flags);
 
         /** Property: Offset to significand least significant bit. */
         BitRange significandBits() const;
@@ -2985,13 +2991,31 @@ void Grammar::setUpBinaryInstructions() {
         uint64_t exponentBias() const;
 
         /** Property: Bit vector of all boolean properties. */
-        unsigned flags() const;
+        Flags flags() const;
 
-        /** Property: Whether type has gradual underflow. */
+        /** Default IEEE 754 flags.
+         *
+         *  These flags are the most common types and include the implicit bit convention for the significand and the
+         *  gradual underflow capability. */
+        static Flags ieeeFlags();
+
+        /** Property: Whether type has gradual underflow.
+         *
+         *  If the type supports gradual underflow, then when the exponent field's bits are all clear then the integer part (a
+         *  single bit implied or explicit depending on @ref implicitBitConvention) of the significand is zero instead of
+         *  one. */
         bool gradualUnderflow() const;
 
-        /** Property: Whether type has normalized significand. */
-        bool normalizedSignificand() const;
+        /** Property: Whether the type follows the IEEE 754 significand implicit bit convention.
+         *
+         *  If true, then the leading set bit of the significand is not stored but rather an implied. If the exponent field
+         *  contains any non-zero bits then the integer part of the significand is one, otherwise when the exponent field
+         *  is all clear the integer part is zero.
+         *
+         * @{ */
+        bool implicitBitConvention() const;
+
+        /** @} */
 
         // Overrides documented in base class
         virtual void check() const $ROSE_OVERRIDE;
@@ -4704,8 +4728,8 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
-        /** Enum for the @ref get_e_type "e_type" property. */ 
-        enum ObjectType { 
+        /** Enum for the @ref get_e_type "e_type" property. */
+        enum ObjectType {
             ET_NONE         = 0                         /**< No file type */
             ,ET_REL          = 1                        /**< Relocatable file */
             ,ET_EXEC         = 2                        /**< Executable file */
@@ -4926,7 +4950,7 @@ void Grammar::setUpBinaryInstructions() {
         virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
 
     private:
-        void ctor();    
+        void ctor();
 #endif // SgAsmElfSectionTable_OTHERS
 
 #ifdef DOCUMENTATION
@@ -5265,7 +5289,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Represents an ELF segment table.
-     * 
+     *
      * The ELF Segment Table is an ELF Section that has entries describing the various segments of the ELF file.  Each segment
      * is also an SgAsmElfSection and the entries of the ELF Segment Table are associated with the SgAsmElfSection they
      * describe.  The ELF Segment Table can be reconstructed by traversing the AST and finding the SgAsmElfSegmentTableEntry
@@ -5305,7 +5329,7 @@ void Grammar::setUpBinaryInstructions() {
          *  SgAsmElfSegmentTable). This method complements @ref SgAsmElfSection::init_from_segment_table. This method
          *  initializes the segment table from the segment while init_from_segment_table initializes the segment from the
          *  segment table.
-         *  
+         *
          *  ELF Segments are represented by @ref SgAsmElfSection objects since ELF Segments and ELF Sections overlap very much
          *  in their features and thus should share an interface. An @ref SgAsmElfSection can appear in the ELF Section Table
          *  and/or the ELF Segment Table and you can determine where it was located by calling @ref get_section_entry and
@@ -5745,9 +5769,9 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  Now that the section table has been read and all non-synthesized sections have been created, we can update
          *  pointers to other things.
-         * 
+         *
          *  The st_shndx is the index (ID) of the section to which the symbol is bound. Special values are:
-         *  
+         *
          *  @li 0x0000: no section (section table entry zero should be all zeros anyway)
          *  @li 0xff00-0xffff: reserved values, not an index
          *  @li 0xff00-0xff1f: processor specific values
@@ -6263,7 +6287,7 @@ void Grammar::setUpBinaryInstructions() {
         }
 
         /** Initializes this ELF SymverDefined Section by parsing a file.
-         *  
+         *
          *  The structure is nominally the following (where n is from DT_VERDEFNUM - 1 in .dynamic)
          *
          *  @code
@@ -6274,7 +6298,7 @@ void Grammar::setUpBinaryInstructions() {
          *      [0]       ElfSymverDefinedAux_disk <------+  |
          *                  vda_next -----------------+      |
          *      [1]       ElfSymverDefinedAux_disk <--+      |
-         *         ...                                       | 
+         *         ...                                       |
          *      [vd_cnt-1]ElfSymverDefinedAux_disk           |
          *                  vda_next = 0 <== null term       |
          *   [1]ElfSymverDefinedEntry_disk <-----------------+
@@ -6296,34 +6320,34 @@ void Grammar::setUpBinaryInstructions() {
          *    [0]ElfSymverDefinedEntry_disk ---+---+
          *    [1]ElfSymverDefinedEntry_disk <--+   |
          *    ...                                  |
-         *    [n]ElfSymverDefinedEntry_disk -------|---+ 
+         *    [n]ElfSymverDefinedEntry_disk -------|---+
          *                                         |   |
          *    [0]ElfSymverDefinedAux_disk   <------+   |
          *    ...                                      |
          *    [x]ElfSymverDefinedAux_disk   <----------+
          *    [.]ElfSymverDefinedAux_disk
          *  @endcode
-         *  
+         *
          *  There is also nothing in particular that says Aux entries need to be next to each other.  So, the code handles the
          *  most rigidly compliant case, which is to use only the offsets and make no assumptions about layouts.
-         *                              
+         *
          *  Also note the number of entries is specified in two ways -- via null termination on the "linked list", as well as
          *  the number from the .dynamic section [DT_VERDEFNUM].  For now, we'll support the null terminator, restricted by
          *  ensuring we don't exceed the size of the section (to keep from running away on a bad file).
-         *  
+         *
          *  We have a similar problem with the number of Aux's per Entry (vd_cnt versus vda_aux=0). However, in this case, we
          *  respect the min of the two (i.e. we assume cnt is right, but if vda_aux is zero earlier than expected, we stop).
          *  This is necessary because the spec allows two or more entries to point into (possibly different places) of a shared
          *  aux array.  This parser creates a new @ref SgAsmElfSymverDefinedAux object every time an element of the aux array
          *  is read from disk, ensuring that each @ref SgAsmElfSymverDefinedEntry points to its own copies.
-         *  
+         *
          *  All offsets are relative to the start of the struct they were specified in. I.e.,
          *
          *  @code
          *    Entry* entry=(0x0100);
          *    Aux* firstAux=(0x100 + entry->vd_aux)
          *    Aux* secondAux=(0x100 + entry->vd_aux + firstAux->vda_next)
-         *  
+         *
          *    Entry* secondEntry=(0x0100 + entry->vd_next);
          *  @endcode
          *
@@ -6501,7 +6525,7 @@ void Grammar::setUpBinaryInstructions() {
 # pragma pack (1)
 #endif
         /** Disk format. 32- and 64-bit formats are both the same. */
-        struct ElfSymverDefinedEntry_disk { 
+        struct ElfSymverDefinedEntry_disk {
             uint16_t      vd_version;                   /**< version of this struct: This field shall be set to 1 */
             uint16_t      vd_flags;                     /**< Version information flag bitmask */
             uint16_t      vd_ndx;                       /**< Version index of this entry */
@@ -6595,7 +6619,7 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmAsmElfSymverDefinedAux: public SgAsmExecutableFileFormat {
     public:
 #endif
-        
+
 #ifdef DOCUMENTATION
         /** Property: Name.
          *
@@ -6627,7 +6651,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
         /** Disk format. The format is the same for 32bit and 64bit. */
-        struct ElfSymverDefinedAux_disk { 
+        struct ElfSymverDefinedAux_disk {
             uint32_t      vda_name;                     /**< Offset (in bytes) to strings table to name string */
             uint32_t      vda_next;                     /**< Offset (in bytes) to next verdaux entry */
         }
@@ -6648,7 +6672,7 @@ void Grammar::setUpBinaryInstructions() {
             : p_name(NULL) {
             ctor(symver_def_entry,symver_def_sec);
         }
-        
+
         /** Initialize this object with data parsed from a file. */
         void parse(ByteOrder::Endianness, const SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*);
 
@@ -6768,7 +6792,7 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmElfSymverNeededEntryList: public SgAsmExecutableFileFormat {
     public:
 #endif
-        
+
 #ifdef DOCUMENTATION
         /** Property: List of entries.
          *
@@ -6873,7 +6897,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
         /** Disk format. Same for 32bit and 64bit. */
-        struct ElfSymverNeededEntry_disk { 
+        struct ElfSymverNeededEntry_disk {
             uint16_t      vn_version;                   /**< version of this struct: This field shall be set to 1 */
             uint16_t      vn_cnt;                       /**< Number of vernaux entries @see SgAsmElfSymverNeededAux */
             uint32_t      vn_file;                      /**< Offset (in bytes) to strings table to file string */
@@ -7044,7 +7068,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
         /** Disk format. Same for 32bit and 64bit. */
-        struct ElfSymverNeededAux_disk { 
+        struct ElfSymverNeededAux_disk {
             uint32_t      vna_hash;                     /**< Hash of version name */
             uint16_t      vna_flags;                    /**< Version information flag bitmask */
             uint16_t      vna_other;                    /**< Version index of this entry (bit 15 is special) */
@@ -7574,7 +7598,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmElfDynamicEntryList);
     IS_SERIALIZABLE(AsmElfDynamicEntryList);
 
@@ -7586,7 +7610,7 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmElfDynamicEntryList: public SgAsmExecutableFileFormat {
     public:
 #endif
-        
+
 #ifdef DOCUMENTATION
         /** Property: List of entries.
          *
@@ -7619,7 +7643,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmElfDynamicEntry);
     IS_SERIALIZABLE(AsmElfDynamicEntry);
 
@@ -7728,7 +7752,7 @@ void Grammar::setUpBinaryInstructions() {
             DT_PREINIT_ARRAY = 32,  /* pointer optional   ?         Array with addrs of preinit fct (aka DT_ENCODING)*/
             DT_PREINIT_ARRAYSZ = 33,/* value   optional   ?         size in bytes of DT_PREINIT_ARRAY */
             DT_NUM      = 34,       /* ?       ?          ?         "number used"? */
-            
+
             DT_GNU_PRELINKED =0x6ffffdf5,/*value ?          ?         Prelinking time stamp */
             DT_GNU_CONFLICTSZ=0x6ffffdf6,/*value ?          ?         Size of conflict section */
             DT_GNU_LIBLISTSZ=0x6ffffdf7,/*value  ?          ?         Size of library list */
@@ -7740,7 +7764,7 @@ void Grammar::setUpBinaryInstructions() {
             DT_POSFLAG_1= 0x6ffffdfd, /* value   ?          ?         Flag for DT_* entries affecting next entry */
             DT_SYMINSZ  = 0x6ffffdfe, /* value   ?          ?         Size of syminfo table in bytes */
             DT_SYMINENT = 0x6ffffdff, /* value   ?          ?         Size of each syminfo table entry */
-            
+
             DT_GNU_HASH = 0x6ffffef5, /* pointer ?          ?         GNU-style hash table */
             DT_TLSDESC_PLT=0x6ffffef6,/* pointer ?          ?         ? */
             DT_TLSDESC_GOT=0x6ffffef7,/* pointer ?          ?         ? */
@@ -7761,7 +7785,7 @@ void Grammar::setUpBinaryInstructions() {
             DT_VERDEFNUM= 0x6ffffffd, /* value   ?          ?         Sun number of version definitions */
             DT_VERNEED  = 0x6ffffffe, /* pointer ?          ?         Sun needed versions table */
             DT_VERNEEDNUM=0x6fffffff, /* value   ?          ?         Sun number of needed versions */
-            
+
             DT_AUXILIARY= 0x7ffffffd, /* pointer ?          ?         Sun shared obj to load before self */
             DT_FILTER   = 0x7fffffff  /* pointer ?          ?         Shared object ot get values from */
         };
@@ -8012,7 +8036,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     /*************************************************************************************************************************
      *                                         ELF Notes
      *************************************************************************************************************************/
@@ -8234,7 +8258,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     /*************************************************************************************************************************
      *                                         ELF Exception Handling
      *************************************************************************************************************************/
@@ -8315,7 +8339,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        
+
     DECLARE_LEAF_CLASS(AsmElfEHFrameEntryCIList);
     IS_SERIALIZABLE(AsmElfEHFrameEntryCIList);
 
@@ -8621,7 +8645,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmElfEHFrameEntryFDList);
     IS_SERIALIZABLE(AsmElfEHFrameEntryFDList);
 
@@ -8854,7 +8878,7 @@ void Grammar::setUpBinaryInstructions() {
               p_segment_entry(NULL) {
             ctor();
         }
-        
+
         /** Initializes the section from data parsed from the ELF Section Table.
          *
          *  This includes the section name, offset, size, memory mapping, and alignments. The @p id is the index into the
@@ -8882,7 +8906,7 @@ void Grammar::setUpBinaryInstructions() {
          *  @li @p optional is the size of the optional (trailing) part of each entry. If the section has been parsed then
          *  the optional size will be calculated from the entry with the largest "extra" (aka, optional) data. Otherwise this
          *  is calculated as the difference between the @p entsize" and the @p required" sizes.
-         *   
+         *
          *  @li entcount is the total number of entries in this section. If the section has been parsed then this is the
          *  actual number of parsed entries, otherwise its the section size divided by the @p entsize.
          *
@@ -8906,7 +8930,7 @@ void Grammar::setUpBinaryInstructions() {
          *  @li @p optional is zero.
          *
          *  @li @p entcount is the number of entries, each of size entsize, that can fit in the section.
-         *  
+         *
          *  The return size is the product of @p entsize and @p entcount, which, if this section is a table (nonzero
          *  sh_entsize), could be smaller than the total size of the section. */
         virtual rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
@@ -8963,7 +8987,7 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmDOSFileHeader: public SgAsmGenericHeader {
     public:
 #endif
-        
+
 #ifdef DOCUMENTATION
         /** Property: Last page size.
          *
@@ -9220,7 +9244,7 @@ void Grammar::setUpBinaryInstructions() {
         struct DOSFileHeader_disk {
             unsigned char e_magic[2];                /**< 0x00 "MZ" */
             uint16_t      e_last_page_size;          /**< 0x02 bytes used on last page of file (1 page == 512 bytes);
-                                                      *        zero implies if last page is full. */ // 
+                                                      *        zero implies if last page is full. */ //
             uint16_t      e_total_pages;             /**< 0x04 number of pages (inc. last possibly partial page) in file. */
             uint16_t      e_nrelocs;                 /**< 0x06 number of relocation entries stored after this header. */
             uint16_t      e_header_paragraphs;       /**< 0x08 header size in paragraphs (16-byte blocks) inc. relocations. */
@@ -9304,7 +9328,7 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmDOSExtendedHeader: public SgAsmGenericSection {
     public:
 #endif
-        
+
 #ifdef DOCUMENTATION
         /** Property: Rerserved area 1.
          *
@@ -9318,7 +9342,7 @@ void Grammar::setUpBinaryInstructions() {
         AsmDOSExtendedHeader.setDataPrototype("unsigned", "e_res1", "= 0",
                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-        
+
 #ifdef DOCUMENTATION
         /** Property: OEM ID.
          *
@@ -10291,7 +10315,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     DECLARE_LEAF_CLASS(AsmPERVASizePairList);
     IS_SERIALIZABLE(AsmPERVASizePairList);
 
@@ -11134,7 +11158,7 @@ void Grammar::setUpBinaryInstructions() {
      *     }
      *  };
      * @endcode
-     * 
+     *
      * @sa
      *      SgAsmPEImportDirectory
      *      SgAsmPEImportItem
@@ -11142,7 +11166,7 @@ void Grammar::setUpBinaryInstructions() {
     class SgAsmPEImportSection: public SgAsmPESection {
     public:
 #endif
-        
+
 
 #ifdef DOCUMENTATION
         /** Property: List of import directories.
@@ -12194,7 +12218,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     NEW_TERMINAL_MACRO(AsmCoffSymbolList, "AsmCoffSymbolList", "AsmCoffSymbolListTag");
     AsmCoffSymbolList.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmCoffSymbolList);
@@ -12351,7 +12375,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_aux_data);
         }
 #endif
-        
+
     public:
 
         static const unsigned int COFFSymbol_disk_size = 18;
@@ -12385,7 +12409,7 @@ void Grammar::setUpBinaryInstructions() {
         SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
         void *encode(SgAsmCoffSymbol::COFFSymbol_disk*) const;
         virtual void dump(FILE *f, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
-    
+
     private:
         void ctor(SgAsmPEFileHeader*, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
 #endif // SgAsmCoffSymbol_OTHERS
@@ -12419,7 +12443,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericStrtab);
         }
 #endif
-        
+
     public:
         explicit SgAsmCoffStrtab(class SgAsmPESection *containing_section)
             : SgAsmGenericStrtab(containing_section) {}
@@ -13376,7 +13400,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
     };
 #endif
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmBasicString);
@@ -13522,7 +13546,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
     };
 #endif
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_NONTERMINAL_MACRO(AsmGenericString,
@@ -13577,7 +13601,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     /*************************************************************************************************************************
      *                                         Generic Binary IR Nodes
      * These are mostly base classes for the container-specific nodes defined above.
@@ -13914,7 +13938,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     NEW_NONTERMINAL_MACRO(AsmGenericSymbol,
                           AsmCoffSymbol | AsmElfSymbol,
                           "AsmGenericSymbol", "AsmGenericSymbolTag", false);
@@ -14063,7 +14087,7 @@ void Grammar::setUpBinaryInstructions() {
               p_bound(NULL), p_name(NULL) {
             ctor();
         }
-        
+
         /** Print some debugging info. */
         virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
@@ -14088,7 +14112,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     NEW_NONTERMINAL_MACRO(AsmGenericStrtab,
                           AsmElfStrtab | AsmCoffStrtab,
                           "AsmGenericStrtab", "AsmGenericStrtabTag", false);
@@ -14285,7 +14309,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     NEW_NONTERMINAL_MACRO(AsmGenericSection,
                           AsmGenericHeader | AsmElfSection | AsmElfSectionTable | AsmElfSegmentTable | AsmPESection |
                           AsmPESectionTable | AsmDOSExtendedHeader | AsmCoffSymbolTable | AsmNESection | AsmNESectionTable |
@@ -14522,7 +14546,7 @@ void Grammar::setUpBinaryInstructions() {
          *  The actual mapping is sometimes different than the preferred mapping indicated in the section table due to file
          *  and/or memory alignment constraints or conflicts with other sections.  The only place values are assigned to this
          *  data member is in the @ref BinaryLoader class and subclasses thereof.
-         *  
+         *
          *  The address corresponds to the latest call into the @ref BinaryLoader classes.  Depending on the loader employed,
          *  it's possible for a section to be mapped, this @c mapped_actual_va value to be set, and then some other section to
          *  be mapped over the top of all or part of the first section. In that case, the @c mapped_actual_va of the first
@@ -14884,7 +14908,7 @@ void Grammar::setUpBinaryInstructions() {
         SgAsmGenericString *get_name() const;
         void set_name(SgAsmGenericString *s);
         /** @} */
-            
+
         /** Property: Abbreviated name.
          *
          *  Some sections have long names like "Import Address Table" that are cumbersome when they appear in assembly
@@ -14973,7 +14997,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
     };
 #endif
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DECLARE_LEAF_CLASS(AsmGenericDLL);
@@ -15233,7 +15257,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
 
     DECLARE_LEAF_CLASS(AsmGenericFile);
     IS_SERIALIZABLE(AsmGenericFile);
@@ -15445,7 +15469,7 @@ void Grammar::setUpBinaryInstructions() {
 
         /** Destructor deletes children and unmaps/closes file. */
         virtual ~SgAsmGenericFile();
-        
+
         /** Loads file contents into memory. */
         SgAsmGenericFile* parse(std::string file_name);
 
@@ -15638,7 +15662,7 @@ void Grammar::setUpBinaryInstructions() {
          *  @li Section: part of an address space that is referenced by an SgAsmGenericSection other than a "hole" section.
          *  @li Hole:    part of an address space that is referenced only by a "hole" section.
          *  @li Unref:   part of an address space that is not used by any section, including any "hole" section.
-         * 
+         *
          *  The last two categories define parts of the address space that can be optionally elastic--they expand or contract
          *  to take up slack or provide space for neighboring sections. This is controlled by the "elasticity" argument.
          *
@@ -15825,7 +15849,7 @@ void Grammar::setUpBinaryInstructions() {
 
         /** Information about the file in the filesystem. */
         typedef struct stat fileDetails;
-        
+
         /** Architecture family. */
         enum ExecFamily {
             FAMILY_UNSPECIFIED,                         /**< Unspecified family. */

@@ -37,7 +37,8 @@ use strict;
 # Produce output only for the following symbols:
 my @symbols = (qw/HAVE_PTHREAD_H HAVE_DWARF_H HAVE_LIBDWARF HAVE_SQLITE3 HAVE_LIBPQXX
                   PACKAGE_VERSION SIZEOF_INT SIZEOF_LONG
-                  USE_ROSE_ATERM_SUPPORT HAVE_LIBREADLINE HAVE_BOOST_SERIALIZATION_LIB USE_CMAKE/,
+                  USE_ROSE_ATERM_SUPPORT HAVE_LIBREADLINE HAVE_BOOST_SERIALIZATION_LIB USE_CMAKE
+	          HAVE_SYS_PERSONALITY_H/,
 	       @ARGV);
 
 my @paragraphs = map {"$_\n"} split /\n[ \t]*\n/, join "", <STDIN>;

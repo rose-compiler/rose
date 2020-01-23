@@ -238,6 +238,10 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
   // DQ (9/9/2016): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
+#if 0
+     printf ("Leaving C/C++ Unparse_ExprStmt::unparseLanguageSpecificExpression ( expr = %p = %s ) language = %s \n",expr,expr->class_name().c_str(),languageName().c_str());
+     curprint(string("\n /* Leaving unparseLanguageSpecificExpression(): class name  = ") + expr->class_name().c_str() + " */ \n");
+#endif
    }
 
 
@@ -2330,7 +2334,8 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
 
 #if 0
      printf ("In unparseBinaryOperator(): expr = %p op = %s \n",expr,op);
-     curprint ( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
+     curprint ( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + 
+                " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
 #endif
 
 #if 0
@@ -2343,7 +2348,8 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
 
 #if 0
      printf ("In unparseBinaryOperator(): info.skipCompilerGeneratedSubExpressions()  = %s \n",(info.skipCompilerGeneratedSubExpressions() == true) ? "true" : "false");
-     curprint ( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " info.skipCompilerGeneratedSubExpressions() = " + (info.skipCompilerGeneratedSubExpressions() ? "true" : "false") + " */ \n");
+     curprint ( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + 
+              " info.skipCompilerGeneratedSubExpressions() = " + (info.skipCompilerGeneratedSubExpressions() ? "true" : "false") + " */ \n");
 #endif
 
      if (info.skipCompilerGeneratedSubExpressions() == true)
@@ -2362,6 +2368,9 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
           if (lhs->isCompilerGenerated() == true)
              {
             // Then only unparse the rhs.
+#if 0
+               curprint( string("\n /* Inside of unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) : COMPILER GENERATED: calling unparseExpression(rhs, newinfo) (only unparse the rhs) */ \n");
+#endif
                unparseExpression(rhs, newinfo);
              }
             else
@@ -2387,6 +2396,7 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
         }
 
 #if 0
+     printf ("Leaving unparseBinaryOperator(): expr = %p op = %s \n",expr,op);
      curprint ( string("\n /* Leaving unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
 #endif
    }
@@ -5558,8 +5568,14 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
 #if 1
        // DQ (10/17/2012): We have to separate these out if we want to output the defining declarations.
           newinfo.set_isTypeFirstPart();
+
+       // DQ (1/6/2020): The type will be an argument to the sizeof operator (see Cxx11_tests/test2020_14.C).
+          newinfo.set_inArgList();
 #if 0
-          printf ("In unparseSizeOfOp(): isTypeFirstPart: sizeof_op->get_operand_type() = %p = %s \n",sizeof_op->get_operand_type(),sizeof_op->get_operand_type()->class_name().c_str());
+          newinfo.display("In unparseSizeOfOp(): newinfo");
+#endif
+#if 0
+          printf ("In unparseSizeOfOp(): isTypeFirstPart:  sizeof_op->get_operand_type() = %p = %s \n",sizeof_op->get_operand_type(),sizeof_op->get_operand_type()->class_name().c_str());
           curprint ("/* In unparseSizeOfOp(): isTypeFirstPart \n */ ");
 #endif
           unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
@@ -5581,6 +5597,10 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
         }
 
      curprint(")");
+
+#if 0
+     printf ("Leaving unparseSizeOfOp(expr = %p): outputTypeDefinition = %s \n",expr,(outputTypeDefinition == true) ? "true" : "false");
+#endif
    }
 
 
@@ -6213,17 +6233,6 @@ Unparse_ExprStmt::unparseCastOp(SgExpression* expr, SgUnparse_Info& info)
                             }
                        }
                   }
-                 else
-                  {
-#if 0
-                    printf ("case SgCastExp::e_C_style_cast: compiler generated cast not output \n");
-                    curprint("/* case SgCastExp::e_C_style_cast: compiler generated cast not output */");
-#endif
-                 // DQ (7/26/2013): This should also be true (all of the source position info should be consistant).
-                 //     -> FAILS when merging ASTs read from files (cast of a template parameter used as template argument of the parent class)
-                    ROSE_ASSERT(cast_op->get_file_info()->isCompilerGenerated() == true);
-                    ROSE_ASSERT(cast_op->get_endOfConstruct()->isCompilerGenerated() == true);
-                  }
                break; 
              }
 
@@ -6353,6 +6362,34 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      printf ("In unparseNewOp(): Calling unparseType(): new_op->get_specified_type() = %p = %s \n",new_op->get_specified_type(),new_op->get_specified_type()->class_name().c_str());
 #endif
 
+  // DQ (1/8/2020): When arguments are provided, we need to add parenthesis around the type.
+  // See Cxx11_tests/test2020_29.C for an example of where this is required.
+     bool add_parenthesis_around_type = false;
+     if (new_op->get_constructor_args() != NULL)
+        {
+#if DEBUG_NEW_OPERATOR
+          printf ("In unparseNewOp(): Calling unparseType(): new_op->get_constructor_args() = %p = %s \n",new_op->get_constructor_args(),new_op->get_constructor_args()->class_name().c_str());
+#endif
+          SgType* newOperatorSpecifiedType = new_op->get_specified_type();
+          ROSE_ASSERT(newOperatorSpecifiedType != NULL);
+
+#if DEBUG_NEW_OPERATOR || 0
+          printf ("In unparseNewOp(): newOperatorType = %p = %s \n",newOperatorSpecifiedType,newOperatorSpecifiedType->class_name().c_str());
+#endif
+          SgArrayType* newOperatorArrayType = isSgArrayType(newOperatorSpecifiedType);
+
+       // DQ (1/8/2020): If this is not an array type, then we will need additional parenthesizes.
+          if (newOperatorArrayType == NULL)
+             {
+               add_parenthesis_around_type = true;
+             }
+        }
+
+     if (add_parenthesis_around_type == true)
+        {
+          curprint ("( ");
+        }
+
   // DQ (4/16/2019): Added support for name qualification implementation.
   // newinfo.set_name_qualification_length(new_op->get_name_qualification_length());
   // newinfo.set_global_qualification_required(new_op->get_global_qualification_required());
@@ -6369,6 +6406,11 @@ Unparse_ExprStmt::unparseNewOp(SgExpression* expr, SgUnparse_Info& info)
      unp->u_type->unparseType(new_op->get_specified_type(), newinfo);
 
   // printf ("DONE: new_op->get_type()->class_name() = %s \n",new_op->get_type()->class_name().c_str());
+
+     if (add_parenthesis_around_type == true)
+        {
+          curprint (") ");
+        }
 
 #if DEBUG_NEW_OPERATOR
      curprint ("\n /* Output constructor args */ \n");
@@ -9224,15 +9266,38 @@ Unparse_ExprStmt::unparsePseudoDtorRef(SgExpression* expr, SgUnparse_Info & info
 
      SgType *objt = pdre->get_object_type();
 
-  // printf ("In unparsePseudoDtorRef(): pdre->get_object_type() = %p = %s \n",objt,objt->class_name().c_str());
+#if 0
+     printf ("In unparsePseudoDtorRef(): pdre->get_object_type() = %p = %s \n",objt,objt->class_name().c_str());
+#endif
 
-     curprint("~");
+  // curprint("~");
 
   // if (SgNamedType *nt = isSgNamedType(objt))
      SgNamedType* namedType = isSgNamedType(objt);
      if (namedType != NULL)
         {
-       // printf ("Unparser will output SgPseudoDestructorRefExp using the class name only \n");
+
+       // DQ (1/18/2020): Adding support for name qualification (see Cxx11_tests/test2020_56.C).
+          SgName nameQualifier = pdre->get_qualified_name_prefix();
+#if 0
+          printf ("In unparsePseudoDtorRef(): nameQualifier = %s \n",nameQualifier.str());
+#endif
+          if (nameQualifier.is_null() == false)
+             {
+               SgName nameOfType = namedType->get_name();
+
+               SgName name = nameQualifier + nameOfType + "::";
+#if 0
+               printf ("In unparsePseudoDtorRef(): name = %s \n",name.str());
+#endif
+            // curprint(nameQualifier.str());
+               curprint(name.str());
+             }
+#if 0
+          printf ("Unparser will output SgPseudoDestructorRefExp using the class name only \n");
+#endif
+          curprint("~");
+
           curprint(namedType->get_name().str());
 
        // DQ (3/14/2012): Note that I had to add this for the case of EDG 4.3, but it was not required previously for EDG 3.3, something in ROSE has likely changed.
@@ -9240,13 +9305,20 @@ Unparse_ExprStmt::unparsePseudoDtorRef(SgExpression* expr, SgUnparse_Info & info
         }
        else
         {
+          curprint("~");
+
        // DQ (3/14/2012): This is the case of of a primative type (e.g. "~int"), which is allowed.
        // PC: I do not think this case will ever occur in practice.  If it does, the resulting
        // code will be invalid.  It may, however, appear in an implicit template instantiation.
        // printf ("WARNING: This case of unparsing in unparsePseudoDtorRef() using unparseType() may not work \n");
           unp->u_type->unparseType(objt, info);
         }
+
+#if 0
+     printf ("Leaving unparsePseudoDtorRef(): pdre->get_object_type() = %p = %s \n",objt,objt->class_name().c_str());
+#endif
    }
+
 
 // TV (05/06/2010): CUDA, Kernel call unparse
 void Unparse_ExprStmt::unparseCudaKernelCall(SgExpression* expr, SgUnparse_Info& info) {

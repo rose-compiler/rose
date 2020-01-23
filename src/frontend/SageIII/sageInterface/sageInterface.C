@@ -2482,6 +2482,23 @@ SageInterface::get_name ( const SgExpression* expr )
                break;
              }
 
+       // DQ (1/3/2020): Added support for SgThisExp.
+          case V_SgThisExp:
+             {
+               const SgThisExp* thisExp = isSgThisExp(expr);
+               ROSE_ASSERT(thisExp != NULL);
+
+               name = "_this_exp_for_";
+
+               SgClassSymbol* classSymbol = thisExp->get_class_symbol();
+               ROSE_ASSERT(classSymbol != NULL);
+            // name += get_name(classSymbol->get_name());
+            // string class_name = classSymbol->get_name();
+            // name += class_name;
+               name += classSymbol->get_name();
+               break;
+             }
+
           default:
              {
             // Nothing to do for other IR nodes
@@ -8213,7 +8230,7 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
                ROSE_ASSERT(baseType != NULL);
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
-               printf (" --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
+               printf (" --- baseType = %p = %s name = %s \n",baseType,baseType->class_name().c_str(),get_name(baseType).c_str());
 #endif
                classType = isSgClassType(baseType);
              }
@@ -8222,7 +8239,7 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
           ROSE_ASSERT(temp_lhs != NULL);
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
-          printf (" --- temp_lhs = %p = %s \n",temp_lhs,temp_lhs->class_name().c_str());
+          printf (" --- temp_lhs = %p = %s name = %s \n",temp_lhs,temp_lhs->class_name().c_str(),get_name(temp_lhs).c_str());
 #endif
        // returnTypeChain.push_front(classType);
           if (classType != NULL)
@@ -8299,9 +8316,17 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
           ROSE_ASSERT(type != NULL);
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
-          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs type = %p = %s \n",type,type->class_name().c_str());
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): lhs type = %p = %s name = %s \n",type,type->class_name().c_str(),get_name(type).c_str());
 #endif
-          SgClassType* classType = isSgClassType(type);
+
+       // DQ (1/3/2019): Need to strip the type to get to a possible SgClassType.
+          SgType* stripped_type = type->stripType(SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_MODIFIER_TYPE);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("In SageInterface::getClassTypeChainForDataMemberReference(): stripped_type = %p = %s name = %s \n",stripped_type,stripped_type->class_name().c_str(),get_name(stripped_type).c_str());
+#endif
+       // SgClassType* classType = isSgClassType(type);
+          SgClassType* classType = isSgClassType(stripped_type);
        // returnTypeChain.push_front(classType);
           if (classType != NULL)
              {
@@ -9013,10 +9038,18 @@ SageInterface::resetInternalMapsForTargetStatement(SgStatement* sourceStatement)
   // instead of the tokens representing the macro or some partial representation of the transformed 
   // statements and the macro call (worse).
 
+#if 0
+     printf ("In SageInterface::resetInternalMapsForTargetStatement(SgStatement*): sourceStatement = %p = %s \n",sourceStatement,sourceStatement->class_name().c_str());
+#endif
+
      SgSourceFile* sourceFile = getEnclosingSourceFile(sourceStatement);
 
   // NOTE: if the statment has not yet been added to the AST then it will not return a valid pointer.
   // ROSE_ASSERT(sourceFile != NULL);
+
+#if 0
+     printf ("In SageInterface::resetInternalMapsForTargetStatement(SgStatement*): sourceFile = %p \n",sourceFile);
+#endif
 
      if (sourceFile != NULL)
         {
@@ -9083,6 +9116,9 @@ SageInterface::resetInternalMapsForTargetStatement(SgStatement* sourceStatement)
 
         }
 
+#if 0
+     printf ("Leaving SageInterface::resetInternalMapsForTargetStatement(SgStatement*): sourceStatement = %p = %s \n",sourceStatement,sourceStatement->class_name().c_str());
+#endif
    }
 
 
@@ -12799,8 +12835,16 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
 void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
    {
      ROSE_ASSERT (stmt != NULL);
+
+#if 0
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p \n",stmt,stmt->class_name().c_str(),scope);
+#endif
+
      if (scope == NULL)
+        {
           scope = SageBuilder::topScopeStack();
+        }
+
      ROSE_ASSERT(scope != NULL);
   // TODO handle side effect like SageBuilder::appendStatement() does
 
@@ -12809,7 +12853,8 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
      fixStatement(stmt,scope);
 
 #if 0
-     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",
+          stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
 
   // DQ (12/1/2015): If this is a moved statement then cause it to update internal data structures 
@@ -12818,13 +12863,18 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
      resetInternalMapsForTargetStatement(stmt);
 
 #if 0
-     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: scope) \n",stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
+     printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: scope) \n",
+          stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
 
   // DQ (12/1/2015): Also look at the statements on either side of the location where this statement 
   // is being inserted to make sure that they are not a part of a macro expansion. In the case of
   // prepend, we only need to look at the scope.
      resetInternalMapsForTargetStatement(scope);
+
+#if 0
+     printf ("Calling insertStatementInScope() \n");
+#endif
 
      scope->insertStatementInScope(stmt,true);
      stmt->set_parent(scope); // needed?
@@ -12842,7 +12892,11 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
           updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
         }
 
+#if 0
+     printf ("Leaving SageInterface::prependStatement() \n");
+#endif
    } // prependStatement()
+
 
 //! Prepend a statement to the beginning of SgForInitStatement
 void SageInterface::prependStatement(SgStatement *stmt, SgForInitStatement* for_init_stmt)
@@ -14138,12 +14192,17 @@ void SageInterface::fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* 
 
 //! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelR
 //efExp are created transparently as needed.
-void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value)
+void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value,
+                                           SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope)
    {
      ROSE_ASSERT (stmt != NULL);
      ROSE_ASSERT (label_value >0 && label_value <=99999); //five digits for Fortran label
 
-     SgScopeStatement* label_scope = getEnclosingFunctionDefinition(stmt);
+  // Added optional label_type and label_scope [Rasmussen 2019.01.20]
+     if (label_scope == NULL)
+        {
+           label_scope = getEnclosingFunctionDefinition(stmt);
+        }
      ROSE_ASSERT (label_scope != NULL);
      SgName label_name(StringUtility::numberToString(label_value));
      SgLabelSymbol * symbol = label_scope->lookup_label_symbol (label_name);
@@ -14166,8 +14225,27 @@ void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value)
 
   // SgLabelRefExp
      SgLabelRefExp* ref_exp = buildLabelRefExp(symbol);
-     stmt->set_numeric_label(ref_exp);
      ref_exp->set_parent(stmt);
+
+     switch(label_type)
+       {
+         case SgLabelSymbol::e_start_label_type:
+            {
+              stmt->set_numeric_label(ref_exp);
+              break;
+            }
+         case SgLabelSymbol::e_end_label_type:
+            {
+              stmt->set_end_numeric_label(ref_exp);
+              break;
+            }
+         default:
+            {
+               std::cerr << "SageInterface::setFortranNumericLabel: unimplemented for label_type " << label_type << "\n";
+               ROSE_ASSERT(0);  // NOT IMPLEMENTED
+            }
+       }
+
    }
 
 
@@ -14226,11 +14304,13 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
 
   // Liao 4/23/2010,  Fix function symbol
   // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
+  // Added SgProgramHeaderStatement [Rasmussen, 2020.01.19]
      SgFunctionDeclaration               * func         = isSgFunctionDeclaration(stmt);
      SgMemberFunctionDeclaration         * mfunc        = isSgMemberFunctionDeclaration(stmt);
      SgTemplateFunctionDeclaration       * tfunc        = isSgTemplateFunctionDeclaration(stmt);
      SgTemplateMemberFunctionDeclaration * tmfunc       = isSgTemplateMemberFunctionDeclaration(stmt);
      SgProcedureHeaderStatement          * procfunc     = isSgProcedureHeaderStatement(stmt);
+     SgProgramHeaderStatement            * progfunc     = isSgProgramHeaderStatement(stmt);
 
      if (tmfunc != NULL)
        assert(tmfunc->variantT() == V_SgTemplateMemberFunctionDeclaration);
@@ -14240,6 +14320,8 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
        assert(tfunc->variantT() == V_SgTemplateFunctionDeclaration);
      else if (procfunc != NULL)
         assert(procfunc->variantT() == V_SgProcedureHeaderStatement);
+     else if (progfunc != NULL)
+        assert(progfunc->variantT() == V_SgProgramHeaderStatement);
      else if (func != NULL)
        assert(func->variantT() == V_SgFunctionDeclaration || func->variantT() == V_SgTemplateInstantiationFunctionDecl);
      else assert(false);
@@ -14294,6 +14376,11 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
             printf ("In SageInterface::fixStatement(): procfunc->get_name() = %s calling lookup_function_symbol() \n",procfunc->get_name().str());
 #endif
             func_symbol = scope->lookup_function_symbol (procfunc->get_name(), procfunc->get_type());
+            assert(func_symbol != NULL);
+          }
+          else if (progfunc != NULL)
+          {
+            func_symbol = scope->lookup_function_symbol (progfunc->get_name(), progfunc->get_type());
             assert(func_symbol != NULL);
           }
           else if (func != NULL)
@@ -19482,7 +19569,9 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
     }
 
      SgStatementPtrList & srcStmts = sourceBlock->get_statements();
+     std::vector <SgInitializedName*> initname_vec; 
 
+     SgSymbolTable* s_table = sourceBlock->get_symbol_table();
 //     cout<<"debug SageInterface::moveStatementsBetweenBlocks() number of stmts = "<< srcStmts.size() <<endl;
      for (SgStatementPtrList::iterator i = srcStmts.begin(); i != srcStmts.end(); i++)
         {
@@ -19536,20 +19625,24 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                            // its class, etc. I don't want to worry about those cases right now.
 
                            SgInitializedName * init_name = (*ii);
-//                         ROSE_ASSERT(init_name ->get_scope() == sourceBlock);
                            
-                           // Must also move the symbol into the new scope, Liao 2019/8/14
+//                         ROSE_ASSERT(init_name ->get_scope() == sourceBlock); // the sourceBlock is transformation generated basic block. the original scope of init_name is the one in the original scource code.
+//                           SgSymbol* symbol = s_table->find(init_name); // this will not return the right symbol
+ //                          ROSE_ASSERT (symbol != NULL);
+                           
+                           // Must also move the symbol into the source block, Liao 2019/8/14
                            SgVariableSymbol* var_sym = isSgVariableSymbol(init_name -> search_for_symbol_from_symbol_table ()) ;
                            ROSE_ASSERT (var_sym);
                            SgScopeStatement * old_scope = var_sym -> get_scope();
-                           if (old_scope != targetBlock)
+#if 1 // we will later move entire source symbol table to target scope,  so we move symbol to the sourceBlock first here.
+                           if (old_scope != sourceBlock)
                            {
                              old_scope->remove_symbol (var_sym);
-                             targetBlock ->insert_symbol(init_name->get_name(), var_sym);
+                             sourceBlock ->insert_symbol(init_name->get_name(), var_sym);
                            }
-
+#endif
                            init_name->set_scope(targetBlock);
-
+                           initname_vec.push_back(init_name);
                          }
                          break;
                        }
@@ -19581,6 +19674,15 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
 
   // Move the symbol table
      ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
+     // Liao, 11/26/2019 make sure the symbol table has symbols for init names before and after the move
+     for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
+     {
+       SgInitializedName* iname = *iter; 
+       SgSymbol* symbol = s_table->find(iname);
+       ROSE_ASSERT (symbol != NULL);
+     }
+
+
      targetBlock->set_symbol_table(sourceBlock->get_symbol_table());
 
      ROSE_ASSERT(sourceBlock != NULL);
@@ -19595,7 +19697,23 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
   // DQ (9/23/2011): Reset with a valid symbol table.
      sourceBlock->set_symbol_table(new SgSymbolTable());
      sourceBlock->get_symbol_table()->set_parent(sourceBlock);
+#if 1
+     ROSE_ASSERT (targetBlock->get_symbol_table() == s_table);
+     for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
+     {
+       SgInitializedName* iname = *iter; 
+       SgSymbol* symbol = s_table->find(iname);
+       ROSE_ASSERT (symbol != NULL);
+     }
 
+     // Liao, 11/26/2019 make sure init names have symbols after the move.
+     for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
+     {
+       SgInitializedName* iname = *iter; 
+       SgSymbol* symbol = iname->get_symbol_from_symbol_table();
+       ROSE_ASSERT (symbol != NULL);
+     }
+#endif
      // Liao 2/4/2009
      // Finally , move preprocessing information attached inside the source block to the target block
      // Outliner uses this function to move a code block to the outlined function.
@@ -21814,7 +21932,12 @@ SgMemberFunctionDeclaration *SageInterface::findJavaMain(SgClassDefinition *clas
     SgArrayType *string_array_type = getUniqueJavaArrayType(Rose::Frontend::Java::StringClassType, 1);
     ROSE_ASSERT(string_array_type);
     type_list -> append_argument(string_array_type);
-    SgFunctionType *member_function_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), type_list, class_definition, 0); // mfunc_specifier);
+
+ // DQ (1/11/2020): Fixing support for C++11 l-value and r-value reference modifiers for member functions.
+ // SgFunctionType *member_function_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), type_list, class_definition, 0); // mfunc_specifier);
+    unsigned int ref_modifiers = 0;
+    SgFunctionType *member_function_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), type_list, class_definition, /* mfunc_specifier */ 0 , ref_modifiers);
+
     SgFunctionSymbol *method_symbol = class_definition -> lookup_function_symbol("main", member_function_type);
     delete type_list;
     return (method_symbol == NULL ? NULL : isSgMemberFunctionDeclaration(method_symbol -> get_declaration()));

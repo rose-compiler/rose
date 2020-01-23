@@ -1,13 +1,21 @@
-// ROSE is a tool for building preprocessors, this file is an example preprocessor built with ROSE.
-
 #include "rose.h"
 
-int
-main( int argc, char* argv[] ) {
-  // DQ (4/6/2017): This will not fail if we skip calling ROSE_INITIALIZE (but
-  // any warning message using the message looging feature in ROSE will fail).
+int main( int argc, char* argv[] ) {
   ROSE_INITIALIZE;
+  std::vector<std::string> argvList(argv, argv + argc);
 
-  CppToDotTranslator c;
-  return c.translate(argc,argv);
-}  
+  SgProject* project = frontend(argvList);
+  ROSE_ASSERT (project != NULL);
+
+  std::string filename = SageInterface::generateProjectName(project);
+
+  if (project->get_verbose() > 0) {
+    printf ("Generating AST tree (%d nodes) in file %s.dot.\n", numberOfNodes(), filename.c_str());
+  }
+
+  AstDOTGeneration astdotgen;
+//TransformationTracking::registerAstSubtreeIds(project);
+  astdotgen.generateInputFiles(project);
+
+  return 0;
+}

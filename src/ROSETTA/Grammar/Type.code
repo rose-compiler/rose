@@ -843,7 +843,11 @@ HEADER_MEMBER_FUNCTION_TYPE_START
              {
                e_const     =     0x00000001,
                e_volatile  =     0x00000002,
-               e_restrict  =     0x00000004
+               e_restrict  =     0x00000004,
+
+            // DQ (1/9/2020): Added reference qualifiers (C++11 feature).
+               e_ref_qualifier_lvalue = 0x00000008,
+               e_ref_qualifier_rvalue = 0x00000010
              };
 
        // static SgMemberFunctionType* createType(SgPartialFunctionType *);
@@ -873,6 +877,17 @@ HEADER_MEMBER_FUNCTION_TYPE_START
           void setRestrictFunc();
           void unsetRestrictFunc();
 #endif
+
+       // DQ (1/9/2020): Enabled the use of reference qualification recorded in the function type.
+      //! L-value reference access/set/unset member functions and member function type
+          bool isLvalueReferenceFunc() const;
+          void setLvalueReferenceFunc();
+          void unsetLvalueReferenceFunc();
+
+      //! R-value reference access/set/unset member functions and member function type
+          bool isRvalueReferenceFunc() const;
+          void setRvalueReferenceFunc();
+          void unsetRvalueReferenceFunc();
 #endif
 
        // void set_mfunc_specifier(unsigned long i);
@@ -899,9 +914,11 @@ HEADER_MEMBER_FUNCTION_TYPE_START
 
 HEADER_MEMBER_FUNCTION_TYPE_END
 
+
 HEADER_PARTIAL_FUNCTION_TYPE_START
           void post_construction_initialization () $ROSE_OVERRIDE;
 HEADER_PARTIAL_FUNCTION_TYPE_END
+
 
 HEADER_TYPEDEF_TYPE_START
 
@@ -5547,9 +5564,11 @@ SgMemberFunctionType::post_construction_initialization()
           printf ("In SgMemberFunctionType::post_construction_initialization(): p_mfunc_specifier = %u isVolatileFunc() = %s \n",p_mfunc_specifier,isVolatileFunc() ? "true" : "false");
           printf ("In SgMemberFunctionType::post_construction_initialization(): p_mfunc_specifier = %u isRestrictFunc() = %s \n",p_mfunc_specifier,isRestrictFunc() ? "true" : "false");
 #endif
+       // DQ (1/9/2020): Adding support for reference qualification.
        // ROSE_ASSERT(partialFunctionType->isConstFunc() == true || partialFunctionType->isVolatileFunc() == true);
        // ROSE_ASSERT(isConstFunc() == true || isVolatileFunc() == true || isRestrictFunc() == true);
-          ROSE_ASSERT( (isConstFunc() == true) || (isVolatileFunc() == true) || (isRestrictFunc() == true) );
+       // ROSE_ASSERT( (isConstFunc() == true) || (isVolatileFunc() == true) || (isRestrictFunc() == true) );
+          ROSE_ASSERT( (isConstFunc() == true) || (isVolatileFunc() == true) || (isRestrictFunc() == true) || (isLvalueReferenceFunc() == true) || (isRvalueReferenceFunc() == true));
         }
    }
 
@@ -5594,6 +5613,35 @@ SgMemberFunctionType::setRestrictFunc()
 void
 SgMemberFunctionType::unsetRestrictFunc()
    { p_mfunc_specifier &= ~e_restrict; }
+
+// DQ (1/9/2020): Enabled the use of reference qualification recorded in the function type.
+// L-value reference access/set/unset member functions and member function type
+bool
+SgMemberFunctionType::isLvalueReferenceFunc() const
+   { return (p_mfunc_specifier & e_ref_qualifier_lvalue); }
+
+void
+SgMemberFunctionType::setLvalueReferenceFunc()
+   { p_mfunc_specifier |= e_ref_qualifier_lvalue; }
+
+void
+SgMemberFunctionType::unsetLvalueReferenceFunc()
+   { p_mfunc_specifier &= ~e_ref_qualifier_lvalue; }
+
+
+// DQ (1/9/2020): Enabled the use of reference qualification recorded in the function type.
+// R-value reference access/set/unset member functions and member function type
+bool
+SgMemberFunctionType::isRvalueReferenceFunc() const
+   { return (p_mfunc_specifier & e_ref_qualifier_rvalue); }
+
+void
+SgMemberFunctionType::setRvalueReferenceFunc()
+   { p_mfunc_specifier |= e_ref_qualifier_rvalue; }
+
+void
+SgMemberFunctionType::unsetRvalueReferenceFunc()
+   { p_mfunc_specifier &= ~e_ref_qualifier_rvalue; }
 
 
 
@@ -5673,6 +5721,18 @@ SgName SgMemberFunctionType::get_mangled(SgType* ret_type, SgFunctionParameterTy
         {
        // Mark as restrict
           mangled_cls_tag << "_rf";
+        }
+
+     if (mfunc_specifier & SgMemberFunctionType::e_ref_qualifier_lvalue)
+        {
+       // Mark as restrict
+          mangled_cls_tag << "_lvf";
+        }
+
+     if (mfunc_specifier & SgMemberFunctionType::e_ref_qualifier_rvalue)
+        {
+       // Mark as restrict
+          mangled_cls_tag << "_rvf";
         }
 
   // DQ (12/6/2012): Now use the static function taking extra parameters.
@@ -8752,6 +8812,61 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
        else
         {
        // TV (07/13/2018): At the very least they should have the same stripped type... (it would happen if the base types have colliding mangled name)
+       // ROSE_ASSERT(t->stripType() == result->stripType());
+          if (t->stripType() != result->stripType())
+             {
+               printf ("insertModifierTypeIntoTypeTable(): result is modifier type to base_type = %p = %s name = %s \n",result->get_base_type(),result->get_base_type()->class_name().c_str(),name.str());
+               printf ("t      = %p = %s \n",t,t->class_name().c_str());
+               printf ("result = %p = %s \n",result,result->class_name().c_str());
+               SgType* t_stripped      = t->stripType();
+               SgType* result_stripped = result->stripType();
+               printf ("t_stripped           = %p = %s \n",t_stripped,t_stripped->class_name().c_str());
+               printf ("result_stripped      = %p = %s \n",result_stripped,result_stripped->class_name().c_str());
+
+               SgName t_name      = t->get_mangled();
+               SgName result_name = result->get_mangled();
+
+               printf ("t_name      = %s \n",t_name.str());
+               printf ("result_name = %s \n",result_name.str());
+
+               bool t_isTypeEquivalent          = t->isEquivalentType(result);
+               bool t_stripped_isTypeEquivalent = t_stripped->isEquivalentType(result_stripped);
+
+               printf ("t_isTypeEquivalent          = %s \n",t_isTypeEquivalent ? "true" : "false");
+               printf ("t_stripped_isTypeEquivalent = %s \n",t_stripped_isTypeEquivalent ? "true" : "false");
+
+               SgNamedType* t_namedType      = isSgNamedType(t_stripped);
+               SgNamedType* result_namedType = isSgNamedType(result_stripped);
+               if (t_namedType != NULL && result_namedType != NULL)
+                  {
+                    SgDeclarationStatement* t_declaration = isSgDeclarationStatement(t_namedType->get_declaration());
+                    ROSE_ASSERT(t_declaration != NULL);
+                    SgDeclarationStatement* result_declaration = isSgDeclarationStatement(result_namedType->get_declaration());
+                    ROSE_ASSERT(result_declaration != NULL);
+
+                    printf ("t_declaration      = %p = %s \n",t_declaration,t_declaration->class_name().c_str());
+                    printf ("result_declaration = %p = %s \n",result_declaration,result_declaration->class_name().c_str());
+
+                    printf ("t_namedType->get_name()      = %s \n",t_namedType->get_name().str());
+                    printf ("result_namedType->get_name() = %s \n",result_namedType->get_name().str());
+
+                    SgName t_stripped_name      = t_stripped->get_mangled();
+                    SgName result_stripped_name = result_stripped->get_mangled();
+
+                    printf ("t_stripped_name      = %s \n",t_stripped_name.str());
+                    printf ("result_stripped_name = %s \n",result_stripped_name.str());
+
+                    SgNonrealDecl* t_nonreal_declaration      = isSgNonrealDecl(t_declaration);
+                    SgNonrealDecl* result_nonreal_declaration = isSgNonrealDecl(result_declaration);
+
+                    if (t_nonreal_declaration != NULL && result_nonreal_declaration != NULL)
+                       {
+                         printf ("t_nonreal_declaration->get_name()      = %s \n",t_nonreal_declaration->get_name().str());
+                         printf ("result_nonreal_declaration->get_name() = %s \n",result_nonreal_declaration->get_name().str());
+                       }
+                  }
+             }
+       // DQ (12/15/2019): Comment out as a test!
           ROSE_ASSERT(t->stripType() == result->stripType());
 
        // This should be only a pointer to a SgModifierType (e.g. a pointer to a const base_type) NOT TRUE.
@@ -8763,12 +8878,12 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
 
        // If it is already present in the type table then delete the type (so that it will remain unique).
 #if 0
-           printf ("insertModifierTypeIntoTypeTable(): Mangled type name for SgModifierType = %s t = %p = %s (already exists in type table) \n",name.str(),t,t->class_name().c_str());
-           printf ("insertModifierTypeIntoTypeTable(): t = %p result = %p \n",t,result);
+          printf ("insertModifierTypeIntoTypeTable(): Mangled type name for SgModifierType = %s t = %p = %s (already exists in type table) \n",name.str(),t,t->class_name().c_str());
+          printf ("insertModifierTypeIntoTypeTable(): t = %p result = %p \n",t,result);
 #endif
 
 #if 0
-           if (t != result)
+          if (t != result)
              {
             // Never delete the input type!
             // delete result;
@@ -8777,17 +8892,16 @@ SgModifierType::insertModifierTypeIntoTypeTable( SgModifierType* result )
                result = isSgModifierType(t);
              }
 #else
-        // DQ (7/30/2010): Because SageBuilder::buildModifierType(SgType*) can be still
-        // called by mistake, we have to handle the case of where the type in the table is
-        // not a SgModifierType.
-           if (isSgModifierType(t) != NULL)
+       // DQ (7/30/2010): Because SageBuilder::buildModifierType(SgType*) can be still
+       // called by mistake, we have to handle the case of where the type in the table is
+       // not a SgModifierType.
+          if (isSgModifierType(t) != NULL)
              {
 #if 0
                printf ("insertModifierTypeIntoTypeTable(): Reset result (the return variabel) to be the SgModifier found in the type table (t = %p) \n",t);
 #endif
                result = isSgModifierType(t);
              }
-
 #if 0
        // DQ (8/27/2010): There is no problem with t not being a SgModifierType.
             else

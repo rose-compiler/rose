@@ -282,7 +282,9 @@ ROSE_DLL_API SgFunctionType* buildFunctionType(SgType* return_type, SgFunctionPa
 //! Build function type from return type and parameter list
 ROSE_DLL_API SgFunctionType* buildFunctionType(SgType* return_type, SgFunctionParameterList * argList=NULL);
 
+// DQ (1/10/2020): removed the default argument since we need to make sure it is used.
 //! DQ (1/16/2009): Added to support member function in C++ (for new interface)
+// ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgScopeStatement *struct_name, unsigned int mfunc_specifier, unsigned int ref_qualifiers = 0);
 ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgScopeStatement *struct_name, unsigned int mfunc_specifier, unsigned int ref_qualifiers = 0);
 
 // DQ (3/20/2017): This function is not used (so let's see if we can remove it).
