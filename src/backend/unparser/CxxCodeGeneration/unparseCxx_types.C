@@ -228,11 +228,11 @@ string get_type_name(SgType* t)
                SgType *btype = mpointer_type->get_base_type();
                SgMemberFunctionType *ftype = NULL;
 
-#if 1
+#if 0
                printf ("In get_type_name(): case T_MEMBER_POINTER: output name: btype = %p = %s \n",btype,btype->class_name().c_str());
             // unp->u_sage->curprint ("/* In get_type_name(): output name */ \n ");
 #endif
-#if 1
+#if 0
                printf ("In get_type_name(): case T_MEMBER_POINTER: I think this is not called here! \n");
                printf ("Exting as a test! \n");
 // Liao 10/16/2019. We do see code reaches this point now.            
@@ -241,7 +241,7 @@ string get_type_name(SgType* t)
 
                if ( (ftype = isSgMemberFunctionType(btype)) != NULL)
                   {
-#if 1
+#if 0
                      printf ("In get_type_name(): ftype != NULL: output name: btype = %p = %s \n",btype,btype->class_name().c_str());
                   // unp->u_sage->curprint ("/* In get_type_name(): ftype != NULL: output name */ \n ");
 #endif
