@@ -347,6 +347,7 @@ if USING_CLANG_COMPILER
 librose_la_LIBADD += -lstdc++
 librose_la_LDFLAGS += -fno-rtti
 endif
+librose_la_LDFLAGS += -fno-rtti
 
 librose_la_DEPENDENCIES = $(libroseLibraries)
 
@@ -391,6 +392,7 @@ if USING_CLANG_COMPILER
 rose_config_LDADD += -lstdc++
 rose_config_LDFLAGS += -fno-rtti
 endif
+rose_config_LDFLAGS += -fno-rtti
 
 rose_config_installed_cppflags =		\
 	-I@includedir@/rose			\
@@ -496,6 +498,7 @@ if USING_CLANG_COMPILER
   ROSEBIN_LDADD   += -lstdc++
   ROSEBIN_LDFLAGS += -fno-rtti
 endif
+  ROSEBIN_LDFLAGS += -fno-rtti
 if OS_MACOSX
   ROSEBIN_LDFLAGS = -Xlinker -rpath $(JAVA_JVM_PATH)
 endif
