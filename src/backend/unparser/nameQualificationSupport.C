@@ -10353,8 +10353,31 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 
                     if (classChain.empty() == false)
                        {
+                      // DQ (1/19/2020): Might need to recursively call the name qualification on the classChain_first 
+                      // since it can be a class that required name qualificaiton to resolve an ambiguity.
+#if 0
+                         printf ("Might need a recursive call to resolve the possible ambiguity of this class defined by classChain_first \n");
+#endif
+
+#if 1
                          std::list<SgClassType*>::iterator classChain_first = classChain.begin();
+#if 0
+                         printf ("(*classChain_first)->get_name().str() = %s \n",(*classChain_first)->get_name().str());
+#endif
                          std::string qualifier = std::string((*classChain_first)->get_name().str()) + "::";
+#else
+                      // DQ (1/20/2020): Accumulate the list of names from the classChain list.
+                         std::list<SgClassType*>::iterator i = classChain.begin();
+                         std::string qualifier;
+                         while (i != classChain.end())
+                            {
+#if 0
+                              printf ("(*i)->get_name().str() = %s \n",(*i)->get_name().str());
+#endif
+                              qualifier += std::string((*i)->get_name().str()) + "::";
+                              i++;
+                            }
+#endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          printf ("data member qualifier = %s \n",qualifier.c_str());
@@ -10395,6 +10418,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
                                  }
                             }
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
                        }
 
 #if 0
