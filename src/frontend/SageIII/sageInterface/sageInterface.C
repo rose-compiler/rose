@@ -8218,6 +8218,9 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
           cast = isSgCastExp(temp_lhs);
           temp_lhs = cast->get_operand();
 
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("Top of loop: processing cast = %p temp_lhs = %p = %s \n",cast,temp_lhs,temp_lhs->class_name().c_str());
+#endif
           ROSE_ASSERT(cast->get_type() != NULL);
           SgClassType* classType = isSgClassType(cast->get_type());
           if (classType == NULL)
@@ -8241,11 +8244,101 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
           printf (" --- temp_lhs = %p = %s name = %s \n",temp_lhs,temp_lhs->class_name().c_str(),get_name(temp_lhs).c_str());
 #endif
+
+#if 1
+       // DQ (1/20/2020): This (original) code works fine.
        // returnTypeChain.push_front(classType);
           if (classType != NULL)
              {
                classChain.push_front(classType);
              }
+#else
+       // DQ (1/20/2020): This (new) code works for Cxx11_tests/test2020_61.C.
+          if (classType != NULL)
+             {
+            // DQ (1/20/2020): We might want to fully resolve the class types associated with this cast here directly
+            // (see Cxx11_tests/test2020_61.C). The point is that we need a qualified name that will reflect all of 
+            // the class declarations from the temp_lhs to the declarations associated with the classType.
+            // The steps are:
+            //    1) Get the target class definition for the type represented by the temp_lhs.
+            //    2) Get the source class definition for the classType.
+            //    3) Iterate from the source class definition to the target class definition, and save the associated 
+            //       types associated with the class declarations associated with the scopes visited.
+               SgType* target_type = temp_lhs->get_type();
+               ROSE_ASSERT(target_type != NULL);
+               SgClassType* target_classType = isSgClassType(target_type);
+            // ROSE_ASSERT(target_classType != NULL);
+               if (target_classType != NULL)
+                  {
+                    SgDeclarationStatement* target_declaration = target_classType->get_declaration();
+                    ROSE_ASSERT(target_declaration != NULL);
+                    SgClassDeclaration* target_classDeclaration = isSgClassDeclaration(target_declaration);
+                    ROSE_ASSERT(target_classDeclaration != NULL);
+                    SgClassDeclaration* target_definingClassDeclaration = isSgClassDeclaration(target_classDeclaration->get_definingDeclaration());
+                    ROSE_ASSERT(target_definingClassDeclaration != NULL);
+                    SgScopeStatement* target_scope = target_definingClassDeclaration->get_definition();
+                    ROSE_ASSERT(target_scope != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+                    printf ("target_classDeclaration = %p = %s name = %s target_scope = %p = %s \n",
+                            target_classDeclaration,target_classDeclaration->class_name().c_str(),target_classDeclaration->get_name().str(),target_scope,target_scope->class_name().c_str());
+#endif
+                    SgClassType* source_classType = classType;
+                    ROSE_ASSERT(source_classType != NULL);
+                    SgDeclarationStatement* source_declaration = source_classType->get_declaration();
+                    ROSE_ASSERT(source_declaration != NULL);
+                    SgClassDeclaration* source_classDeclaration = isSgClassDeclaration(source_declaration);
+                    ROSE_ASSERT(source_classDeclaration != NULL);
+                    SgClassDeclaration* source_definingClassDeclaration = isSgClassDeclaration(source_classDeclaration->get_definingDeclaration());
+                    ROSE_ASSERT(source_definingClassDeclaration != NULL);
+                    SgScopeStatement* source_scope = source_definingClassDeclaration->get_definition();
+                    ROSE_ASSERT(source_scope != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+                    printf ("source_classDeclaration = %p = %s name = %s source_scope = %p = %s \n",
+                            source_classDeclaration,source_classDeclaration->class_name().c_str(),source_classDeclaration->get_name().str(),source_scope,source_scope->class_name().c_str());
+#endif
+                    SgScopeStatement* tmp_scope = source_scope;
+                    while (tmp_scope != NULL && tmp_scope != target_scope)
+                       {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+                         printf ("tmp_scope = %p = %s \n",tmp_scope,tmp_scope->class_name().c_str());
+#endif
+                         SgClassDefinition* tmp_classDefinition = isSgClassDefinition(tmp_scope);
+                         ROSE_ASSERT(tmp_classDefinition != NULL);
+                         SgClassDeclaration* tmp_classDeclaration = tmp_classDefinition->get_declaration();
+                         ROSE_ASSERT(tmp_classDeclaration != NULL);
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+                         SgName scope_name = tmp_classDeclaration->get_name();
+                         printf ("scope_name = %s \n",scope_name.str());
+#endif
+                         SgClassType* tmp_classType = tmp_classDeclaration->get_type();
+                         ROSE_ASSERT(tmp_classType != NULL);
+
+                      // classChain.push_front(tmp_classDefinition);
+                         classChain.push_front(tmp_classType);
+
+                         tmp_scope = tmp_scope->get_scope();
+
+                         if (isSgGlobal(tmp_scope) != NULL)
+                            {
+                              tmp_scope = NULL;
+                            }
+                       }
+                  }
+                 else
+                  {
+#if 1
+                    printf ("In loop processing cast: target_type = %p = %s \n",target_type,target_type->class_name().c_str());
+#endif
+                  }
+             }
+#endif
+
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+          printf ("Bottom of loop: processing cast = %p temp_lhs = %p = %s \n",cast,temp_lhs,temp_lhs->class_name().c_str());
+#endif
         }
 
   // We also need to include the first class where we are referencing the variable or function because that is where the first ambiguity may happen.
@@ -8466,6 +8559,9 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
   // If we have an abiguity at i then we want to save i++, so define save_iter to be the next in the class type list.
      save_iter++;
 
+  // DQ (1/19/2020): Add support for more complex nested base classes, see Cxx11_tests/test2020_61.C.
+     bool ambiguityDetectedSoSaveWholeChain = false;
+
      while(i != classChain.end())
         {
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN || 0
@@ -8477,24 +8573,44 @@ SageInterface::getClassTypeChainForMemberReference(SgExpression* refExp)
           SgDeclarationStatement* declarationStatement = (*i)->get_declaration();
           ROSE_ASSERT(declarationStatement != NULL);
           SgDeclarationStatement* definingDeclarationStatement = declarationStatement->get_definingDeclaration();
-          if (definingDeclarationStatement != NULL) {
-            SgClassDeclaration* classDeclaration = isSgClassDeclaration(definingDeclarationStatement);
-            ROSE_ASSERT(classDeclaration != NULL);
-            SgClassDefinition* classDefinition =  classDeclaration->get_definition();
-
-         // This works for any SgName and SgSymbol, so it need not be specific to variables.
-            ambiguityDetected = classDefinition->hasAmbiguity(symbolName,referenceSymbol);
+          if (definingDeclarationStatement != NULL) 
+             {
+               SgClassDeclaration* classDeclaration = isSgClassDeclaration(definingDeclarationStatement);
+               ROSE_ASSERT(classDeclaration != NULL);
+               SgClassDefinition* classDefinition =  classDeclaration->get_definition();
 
 #if DEBUG_DATA_MEMBER_TYPE_CHAIN
-            printf ("ambiguityDetected = %s \n",ambiguityDetected ? "true" : "false");
+               printf (" --- classDeclaration = %p = %s name = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+               printf (" --- classDefinition = %p = %s \n",classDefinition,classDefinition->class_name().c_str());
 #endif
-          }
+            // This works for any SgName and SgSymbol, so it need not be specific to variables.
+               ambiguityDetected = classDefinition->hasAmbiguity(symbolName,referenceSymbol);
 
-          if (ambiguityDetected == true)
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+               printf (" --- ambiguityDetected = %s \n",ambiguityDetected ? "true" : "false");
+#endif
+             }
+
+       // DQ (1/19/2020): Add support for more complex nested base classes, see Cxx11_tests/test2020_61.C.
+       // if (ambiguityDetected == true)
+       // if (ambiguityDetected == true || ambiguityDetectedSoSaveWholeChain == true)
+       // if (ambiguityDetected == true)
+          if (ambiguityDetected == true || ambiguityDetectedSoSaveWholeChain == true)
              {
+               ambiguityDetectedSoSaveWholeChain = true;
+
                if (save_iter != classChain.end())
                   {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+                    printf (" --- add to saveList: *save_iter = %p \n",*save_iter);
+#endif
                     saveList.push_back(*save_iter);
+                  }
+                 else
+                  {
+#if DEBUG_DATA_MEMBER_TYPE_CHAIN
+                    printf (" --- save_iter == classChain.end() \n");
+#endif
                   }
              }
 
