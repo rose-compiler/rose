@@ -28,6 +28,7 @@ typedef std::vector<SgFunctionDeclaration *> FuncDeclList_t;
 using namespace std;
 using namespace SageBuilder;
 using namespace SageInterface;
+using namespace Outliner;
 
 // =====================================================================
 
@@ -103,6 +104,21 @@ SgFunctionDeclaration *
 generateFriendPrototype (const SgFunctionDeclaration* full_decl, SgScopeStatement* scope, SgScopeStatement* class_scope)
    {
      ROSE_ASSERT (class_scope != NULL);
+
+     if (enable_debug)  
+     {
+       cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
+       cout<<"\t source func decl is:"<< full_decl <<endl;
+       full_decl->get_file_info()->display();
+
+
+       cout<<"\t target class definition is:"<< scope<<endl;
+       scope->get_file_info()->display();
+
+       cout<<"\t target class declaration's scope is:"<< class_scope<<endl;
+       class_scope->get_file_info()->display();
+     }
+
      SgFunctionDeclaration* proto = generatePrototype (full_decl,scope);
      ROSE_ASSERT (proto != NULL);
 
@@ -396,7 +412,7 @@ class FindMatchingDefiningClassDeclarationTraversal : public SgSimpleProcessing
           SgClassDeclaration* pattern;
           std::string pattern_class_name;
           SgClassDeclaration* matchingClassDeclaration;
-
+          // target is actually the source pattern we want to find a match for it.
           FindMatchingDefiningClassDeclarationTraversal(SgClassDeclaration* target);
 
           void visit(SgNode* astNode);
@@ -409,7 +425,7 @@ FindMatchingDefiningClassDeclarationTraversal::FindMatchingDefiningClassDeclarat
      pattern_class_name = pattern->get_mangled_name();
      matchingClassDeclaration = NULL;
    }
-
+//! Check if a node is a defining class declaration and its mangled name match a given pattern class name.
 void
 FindMatchingDefiningClassDeclarationTraversal::visit(SgNode* astNode)
    {
@@ -423,9 +439,12 @@ FindMatchingDefiningClassDeclarationTraversal::visit(SgNode* astNode)
           string target_class_name = target->get_mangled_name();
           if (target_class_name == pattern_class_name)
              {
-#if 0
-               printf ("Found matching name! target_class_name = %s \n",target_class_name.c_str());
-#endif
+               if (enable_debug)
+               {
+                 printf ("Found a matching name! target_class_name = %s \n",target_class_name.c_str());
+                 target->get_file_info()->display();
+               }
+
                matchingClassDeclaration = target;
              }
         }
@@ -440,6 +459,11 @@ findMatchingDefiningClassDeclaration(SgSourceFile* targetFile, SgClassDeclaratio
   // and thus appears in the generated "_lib.C" file as well.  Since we no long share class 
   // declarations, we need to insert the friend function into all possible defining class 
   // declarations across all files.
+     if (enable_debug)  
+     {
+       cout<<"Entering "<< __PRETTY_FUNCTION__ << " for the following pattern class declaration: "<<endl;
+       target->get_file_info()->display();
+     }
 
      FindMatchingDefiningClassDeclarationTraversal t(target);
 
@@ -462,14 +486,14 @@ findMatchingDefiningClassDeclaration(SgSourceFile* targetFile, SgClassDeclaratio
 static
 SgFunctionDeclaration *
 insertFriendDecl (const SgFunctionDeclaration* func,
-                  SgGlobal* scope,
-                  SgClassDefinition* cls_def)
+                  SgGlobal* scope, // the relevant class's scope
+                  SgClassDefinition* cls_def)  // the class definition in which we insert friend declarations
 {
   SgFunctionDeclaration* friend_proto = 0;
 
-#if 0
-  printf ("In insertFriendDecl(): func = %p \n",func);
-#endif
+  if (enable_debug)
+    printf ("Entering insertFriendDecl(): func = %p \n",func);
+
 
   if (func && scope && cls_def)
     {
@@ -477,21 +501,22 @@ insertFriendDecl (const SgFunctionDeclaration* func,
       SgDeclarationStatementPtrList& mems = cls_def->get_members ();
       SgDeclarationStatementPtrList::iterator i = mems.begin ();
 
-      // Create the friend declaration.
+      // Create the friend declaration.  cls_def: the class definition ,  scope: the corresponding class's scope
       friend_proto = generateFriendPrototype (func,cls_def, scope);
       ROSE_ASSERT (friend_proto != NULL);
       ROSE_ASSERT(friend_proto->get_definingDeclaration() == NULL);
 
-#if 0
+    if (enable_debug)
+    {
       printf ("In insertFriendDecl(): Built SgFunctionDeclaration: friend_proto = %p = %s name = %s \n",friend_proto,friend_proto->class_name().c_str(),friend_proto->get_name().str());
-        {
-          bool isExtern         = friend_proto->get_declarationModifier().get_storageModifier().isExtern();
-          bool linkageSpecified = (friend_proto->get_linkage().empty() == false);
-          bool isFriend         = friend_proto->get_declarationModifier().isFriend();
+      {
+        bool isExtern         = friend_proto->get_declarationModifier().get_storageModifier().isExtern();
+        bool linkageSpecified = (friend_proto->get_linkage().empty() == false);
+        bool isFriend         = friend_proto->get_declarationModifier().isFriend();
 
-          printf (" --- isExtern = %s linkageSpecified = %s isFriend = %s \n",isExtern ? "true" : "false",linkageSpecified ? "true" : "false",isFriend ? "true" : "false");
-        }
-#endif
+        printf (" --- isExtern = %s linkageSpecified = %s isFriend = %s \n",isExtern ? "true" : "false",linkageSpecified ? "true" : "false",isFriend ? "true" : "false");
+      }
+    }
 
       // Insert it into the class.
       if (i != mems.end ())
@@ -523,10 +548,11 @@ insertFriendDecl (const SgFunctionDeclaration* func,
       SgSourceFile* sourceFile = SageInterface::getEnclosingNode<SgSourceFile>(cls_def,includingSelf);
       ROSE_ASSERT(sourceFile != NULL);
 
-#if 0
-      printf ("In insertFriendDecl(): sourceFile->get_unparseHeaderFiles() = %s \n",sourceFile->get_unparseHeaderFiles() ? "true" : "false");
-      printf ("In insertFriendDecl(): Outliner::useNewFile                 = %s \n",Outliner::useNewFile  ? "true" : "false");
-#endif
+      if (enable_debug)
+      {
+        printf ("In insertFriendDecl(): sourceFile->get_unparseHeaderFiles() = %s \n",sourceFile->get_unparseHeaderFiles() ? "true" : "false");
+        printf ("In insertFriendDecl(): Outliner::useNewFile                 = %s \n",Outliner::useNewFile  ? "true" : "false");
+      }
 
    // DQ (1/17/2020): This should be a predict specific to if we are outlineing code to a seperate file.
    // Also, what we do here might depende more of if the class definition is in the source file or not.
@@ -549,12 +575,13 @@ insertFriendDecl (const SgFunctionDeclaration* func,
            ROSE_ASSERT(*i != NULL);
            ROSE_ASSERT(i != mems.end());
 
-#if 0
-        // DQ (10/8/2019): Output when function declarations are being inserted.
-           printf ("#################################################### \n");
-           printf ("Inserting friend_proto = %p into cls_def = %p (this should have been defered) \n",friend_proto,cls_def);
-           printf ("#################################################### \n");
-#endif
+           if (enable_debug)
+           {
+             // DQ (10/8/2019): Output when function declarations are being inserted.
+             printf ("#################################################### \n");
+             printf ("Inserting friend_proto = %p into cls_def = %p (this should have been defered) \n",friend_proto,cls_def);
+             printf ("#################################################### \n");
+           }
 #if 0
         // DQ (8/7/2019): This form of the use of insert_statement requires that we test to make sure that we have a valid set of member statements.
         // But even then it does not work (not sure why).
@@ -593,47 +620,54 @@ insertFriendDecl (const SgFunctionDeclaration* func,
            bool filename_matches_source_file = (filename == sourceFileOfClassDeclaration->getFileName());
            if (filename_matches_source_file == true)
               {
-#if 0
-                printf ("Look for other matching class definitions in the associated file where the outlined functions are put \n");
-#endif
+                if (enable_debug)
+                  printf ("Look for other matching class definitions in the associated file where the outlined functions are put \n");
+
 #if 1
                 SgProject* project = getEnclosingNode<SgProject>(sourceFileOfClassDeclaration,includingSelf);
 
              // DQ (1/16/2020): Check for the possability of a second class if this class was in the source file that was copied.
                 SgFileList* fileListNode = project->get_fileList_ptr();
                 SgFilePtrList & fileList = fileListNode->get_listOfFiles();
-#if 0
-                printf ("#################### fileList.size() = %zu \n",fileList.size());
-#endif
+                if (enable_debug)
+                  printf ("#################### fileList.size() = %zu \n",fileList.size());
+
                 for (size_t i = 0; i < fileList.size(); i++)
                    {
                      SgSourceFile* alternativeSourceFile = isSgSourceFile(fileList[i]);
                      ROSE_ASSERT(alternativeSourceFile != NULL);
-#if 0
-                     printf ("alternativeSourceFile = %p = %s \n",alternativeSourceFile,alternativeSourceFile->getFileName().c_str());
-#endif
+                     if (enable_debug)
+                       printf ("alternativeSourceFile = %p = %s \n",alternativeSourceFile,alternativeSourceFile->getFileName().c_str());
+
                      if (alternativeSourceFile != sourceFileOfClassDeclaration)
                         {
                        // Search for defining class declaration matching sourceFileOfClassDeclaration.
-#if 0
-                          printf ("Search for class name = %s in file = %s \n",targetClassDeclaration->get_name().str(),alternativeSourceFile->getFileName().c_str());
-#endif
+                          if (enable_debug)
+                            printf ("Search for class name = %s in file = %s \n",targetClassDeclaration->get_name().str(),alternativeSourceFile->getFileName().c_str());
+
                        // Search in file for additional defining declaration matching targetClassDeclaration.
                           SgClassDeclaration* matchingClassDeclaration = findMatchingDefiningClassDeclaration(alternativeSourceFile,targetClassDeclaration);
                           if (matchingClassDeclaration != NULL)
                              {
-                            // insert a copy of the friend function declaration into the matchingClassDeclaration.
-#if 0
-                               printf (" --- insert a copy of the friend function declaration into the matchingClassDeclaration \n");
-#endif
+
                                SgClassDefinition* matchingClassDefinition = matchingClassDeclaration->get_definition();
                                ROSE_ASSERT(matchingClassDefinition != NULL);
 
-                               SgDeclarationStatementPtrList::iterator i = matchingClassDefinition->get_members().begin();
-                               ROSE_ASSERT(i != matchingClassDefinition->get_members().end());
+                            // insert a copy of the friend function declaration into the matchingClassDeclaration.
+                               size_t orig_count=matchingClassDefinition->get_members().size();
+                               if (enable_debug)
+                               {
+                                 printf (" --- insert a copy of the friend function declaration into the matchingClassDeclaration's definition: members size=%lu\n",matchingClassDefinition->get_members().size());
+                                 matchingClassDefinition->get_file_info()->display();
+                               }
+
+
+                               SgDeclarationStatementPtrList::iterator i2 = matchingClassDefinition->get_members().begin();
+                               ROSE_ASSERT(i2 != matchingClassDefinition->get_members().end());
 
                             // Initially we can test this by making a copy of the pointer, but later it should be deep copy.
-                               SgFunctionDeclaration* friendFunction = friend_proto;
+                               //SgFunctionDeclaration* friendFunction = friend_proto;
+                               SgFunctionDeclaration* friendFunction = generateFriendPrototype (func, matchingClassDefinition , matchingClassDeclaration->get_scope());;
 #if 0
                                printf ("************************************************************ \n");
                                printf ("TOP of insertFriendDecls(): friendFunction = %p = %s name = %s \n",friendFunction,friendFunction->class_name().c_str(),friendFunction->get_name().str());
@@ -651,12 +685,25 @@ insertFriendDecl (const SgFunctionDeclaration* func,
                                printf ("************************************************************ \n");
 #endif
 #if 1
-                               matchingClassDefinition->get_members().insert(i, friendFunction);
+
+                               matchingClassDefinition->get_members().insert(i2, friendFunction);
 
                             // Also mark the class definition as transformed.
                                matchingClassDefinition->set_isModified(true);
+                               ROSE_ASSERT (orig_count+1 == matchingClassDefinition->get_members().size()); 
+                               friendFunction->set_parent(matchingClassDefinition);
+                               friendFunction->set_scope(matchingClassDeclaration->get_scope());
+                               friendFunction->get_startOfConstruct()->set_physical_filename(alternativeSourceFile->getFileName().c_str());
+                               friendFunction->get_endOfConstruct()->set_physical_filename(alternativeSourceFile->getFileName().c_str());
+                               friendFunction->set_isModified(true); 
+                               if (enable_debug)
+                               {
+                                 cout<<"after insertion, checking the matching class definition for the result,  members size="<< matchingClassDefinition->get_members().size()<<endl;
+                                 matchingClassDeclaration->unparseToString();
+                               }
 #else
-                               printf ("Skipping insertion since this is not the friend function: friendFunction = %p \n",friendFunction);
+                               if (enable_debug)
+                                 printf ("Skipping insertion since this is not the friend function: friendFunction = %p \n",friendFunction);
 #endif
 
 #if 0
@@ -665,7 +712,7 @@ insertFriendDecl (const SgFunctionDeclaration* func,
 #endif
                              }
                         }
-                   }
+                   } // end for (fileLIst)
 #endif
 
 #if 0
@@ -675,7 +722,8 @@ insertFriendDecl (const SgFunctionDeclaration* func,
               }
              else
               {
-             // The class definition is in a header file (not the input file), so we should not have to worry about any repeated definition.
+                if (enable_debug)
+                  cout<<"The class definition is in a header file (not the input file), so we should not have to worry about any repeated definition."<<endl;
               }
 
 #if 0
@@ -689,12 +737,14 @@ insertFriendDecl (const SgFunctionDeclaration* func,
         // are in the original source file (*.C input file) and which would be duplicated in the 
         // copy of the original source file when we outline to a seperate file.
 
-#if 0
-        // DQ (10/8/2019): Output when function declarations are being inserted.
-           printf ("#################################################### \n");
-           printf ("Inserting friend_proto = %p into cls_def = %p (this should have been defered) \n",friend_proto,cls_def);
-           printf ("#################################################### \n");
-#endif
+           if (enable_debug)
+           {
+             // DQ (10/8/2019): Output when function declarations are being inserted.
+             printf ("#################################################### \n");
+             printf ("Inserting friend_proto = %p into cls_def = %p (this should have been defered) \n",friend_proto,cls_def);
+             printf ("#################################################### \n");
+           }
+
 
         // DQ (8/6/2019): This is the normal (original) behavior.
            cls_def->get_members().insert(i, friend_proto);
@@ -756,9 +806,9 @@ insertFriendDecl (const SgFunctionDeclaration* func,
 //  has not yet been inserted. So it has no declaration associated with a symbol
 //  cout<<friend_proto->unparseToString()<<endl; 
 
-#if 0
-  printf ("Leaving insertFriendDecl(): func = %p friend_proto = %p friend_proto->isFriend = %s \n",func,friend_proto,friend_proto->get_declarationModifier().isFriend() ? "true" : "false");
-#endif
+  if (enable_debug)
+    printf ("Exiting insertFriendDecl(): func = %p friend_proto = %p friend_proto->isFriend = %s \n",func,friend_proto,friend_proto->get_declarationModifier().isFriend() ? "true" : "false");
+
 
   return friend_proto;
 }
@@ -937,30 +987,30 @@ insertFriendDecls (SgFunctionDeclaration* func,
                    SgGlobal* scope,
                    FuncDeclList_t& friends)
 {
-#if 0
-     printf ("************************************************************ \n");
-     printf ("TOP of insertFriendDecls(): func = %p = %s \n",func,func->class_name().c_str());
-     bool isExtern         = (func->get_declarationModifier().get_storageModifier().isExtern() == true);
-     bool linkageSpecified = (func->get_linkage().empty() == false);
-     bool isFriend         = (func->get_declarationModifier().isFriend() == true);
-     bool isDefiningDeclaration = (func->get_definition() != NULL);
-     printf (" --- isExtern = %s linkageSpecified = %s isFriend = %s isDefiningDeclaration = %s \n",
-          isExtern ? "true" : "false",linkageSpecified ? "true" : "false",isFriend ? "true" : "false",isDefiningDeclaration ? "true" : "false");
+  if (enable_debug)
+  {
+    printf ("************************************************************ \n");
+    printf ("TOP of insertFriendDecls(): func = %p = %s \n",func,func->class_name().c_str());
+    bool isExtern         = (func->get_declarationModifier().get_storageModifier().isExtern() == true);
+    bool linkageSpecified = (func->get_linkage().empty() == false);
+    bool isFriend         = (func->get_declarationModifier().isFriend() == true);
+    bool isDefiningDeclaration = (func->get_definition() != NULL);
+    printf (" --- isExtern = %s linkageSpecified = %s isFriend = %s isDefiningDeclaration = %s \n",
+        isExtern ? "true" : "false",linkageSpecified ? "true" : "false",isFriend ? "true" : "false",isDefiningDeclaration ? "true" : "false");
 
-  // printf ("In insertFriendDecls(): func = %p = %s name = %s \n",func,func->class_name().c_str(),func->get_name().str());
-     printf (" --- scope = %p = %s \n",scope,scope->class_name().c_str());
-     printf (" --- friends list size = %" PRIuPTR " \n",friends.size());
-     printf ("************************************************************ \n");
-#endif
+    // printf ("In insertFriendDecls(): func = %p = %s name = %s \n",func,func->class_name().c_str(),func->get_name().str());
+    printf (" --- scope = %p = %s \n",scope,scope->class_name().c_str());
+    printf (" --- friends list size = %" PRIuPTR " \n",friends.size());
+    printf ("************************************************************ \n");
+  }
 
 // DQ (8/13/2019): Adding return value, used when header file unparsing is active.
   Outliner::DeferedTransformation deferedFriendTransformation;
 
   if (func && scope)
     {
-#if 0
-      printf ("In insertFriendDecls(): friends list size = %" PRIuPTR " \n",friends.size());
-#endif
+      if (enable_debug)
+        printf ("In insertFriendDecls(): friends list size = %" PRIuPTR " \n",friends.size());
 
    // Collect a list of all classes that need a 'friend' decl.
    // The outlining target has accesses to those classes' private/protected members 
@@ -974,38 +1024,37 @@ insertFriendDecls (SgFunctionDeclaration* func,
         {
           SgVarRefExp* v_ref = isSgVarRefExp (*v);
           SgClassDefinition* cl_def = isProtPrivMember (v_ref);
-#if 0
-          printf ("In insertFriendDecls(): after isProtPrivMember(): cl_def = %p \n",cl_def);
-#endif
-#if 0
-          SgVariableSymbol* variableSymbol = v_ref->get_symbol();
-          ROSE_ASSERT(variableSymbol != NULL);
-          SgInitializedName* initializedName = variableSymbol->get_declaration();
-          ROSE_ASSERT(initializedName != NULL);
-          printf ("In insertFriendDecls(): v_ref = %p = %s initializedName name = %s \n",v_ref,v_ref->class_name().c_str(), initializedName->get_name().str());
-          printf ("In insertFriendDecls(): cl_def = %p \n",cl_def);
-#endif
+
+          if (enable_debug)
+          {
+            printf ("In insertFriendDecls(): after isProtPrivMember(): cl_def = %p \n",cl_def);
+            SgVariableSymbol* variableSymbol = v_ref->get_symbol();
+            ROSE_ASSERT(variableSymbol != NULL);
+            SgInitializedName* initializedName = variableSymbol->get_declaration();
+            ROSE_ASSERT(initializedName != NULL);
+            printf ("In insertFriendDecls(): v_ref = %p = %s initializedName name = %s \n",v_ref,v_ref->class_name().c_str(), initializedName->get_name().str());
+            printf ("In insertFriendDecls(): cl_def = %p \n",cl_def);
+          }
        // if (!cl_def)
           if (cl_def == NULL)
-             {
-#if 0
-               ROSE_ASSERT(v_ref->get_type() != NULL);
-               printf ("Calling isProtPrivType(): v_ref->get_type() = %p = %s \n",v_ref->get_type(),v_ref->get_type()->class_name().c_str());
-#endif
-               cl_def = isProtPrivType (v_ref->get_type());
-#if 0
-               printf ("In insertFriendDecls(): after isProtPrivType(): cl_def = %p \n",cl_def);
-#endif
-             }
+          {
+            if (enable_debug)
+            {
+              ROSE_ASSERT(v_ref->get_type() != NULL);
+              printf ("Calling isProtPrivType(): v_ref->get_type() = %p = %s \n",v_ref->get_type(),v_ref->get_type()->class_name().c_str());
+            }
+            cl_def = isProtPrivType (v_ref->get_type());
+            if (enable_debug)
+              printf ("In insertFriendDecls(): after isProtPrivType(): cl_def = %p \n",cl_def);
+          }
 
        // if (cl_def)
           if (cl_def != NULL)
-             {
-#if 0
-               printf ("Calling classes.insert(): variables: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
-#endif
-               classes.insert (cl_def);
-             }
+          {
+            if (enable_debug)
+              printf ("Calling classes.insert(): variables: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
+            classes.insert (cl_def);
+          }
         }
       
    // Get a list of all function reference expressions.
@@ -1016,40 +1065,43 @@ insertFriendDecls (SgFunctionDeclaration* func,
           SgMemberFunctionRefExp* f_ref = isSgMemberFunctionRefExp (*f);
           SgClassDefinition* cl_def = isProtPrivMember (f_ref);
           if (cl_def)
-             {
-#if 0
-               printf ("Calling classes.insert(): member functions: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
-#endif
-               classes.insert (cl_def);
-             }
+          {
+            if (enable_debug)
+              printf ("Calling classes.insert(): member functions: cl_def = %p = %s \n",cl_def,cl_def->class_name().c_str());
+            classes.insert (cl_def);
+          }
         }
 
    // DQ (8/13/2019): Set the target classes.
-#if 0
-      printf ("Set the targetClasses: (disabled): deferedFriendTransformation.targetClasses = classes \n");
-#endif
+      if (enable_debug)
+        printf ("Set the targetClasses: (disabled): deferedFriendTransformation.targetClasses = classes \n");
       deferedFriendTransformation.targetClasses = classes;
 
    // Insert 'em
       for (ClassDefSet_t::iterator c = classes.begin (); c != classes.end (); ++c)
         {
           ROSE_ASSERT (*c);
-#if 0
-          SgClassDefinition* classDefinition = *c;
-          SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
-          printf ("Building friend function for classDeclaration = %p = %s name = %s \n", classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
-#endif
+          if (enable_debug)
+          {
+            SgClassDefinition* classDefinition = *c;
+            SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+            if (enable_debug)
+              printf ("Building friend function for classDeclaration = %p = %s name = %s \n", classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
+          }
+          // scope: the global scope in which the symbols should be inserted
+          // class definition: the scope in which we insert friend declarations
           SgFunctionDeclaration* friend_decl = insertFriendDecl (func, scope, *c);
           ROSE_ASSERT (friend_decl != NULL);
-#if 0
-          printf ("+++++++++++++++++++ friend_decl = %p = %s \n",friend_decl,friend_decl->class_name().c_str());
-          bool isExtern              = (friend_decl->get_declarationModifier().get_storageModifier().isExtern() == true);
-          bool linkageSpecified      = (friend_decl->get_linkage().empty() == false);
-          bool isFriend              = (friend_decl->get_declarationModifier().isFriend() == true);
-          bool isDefiningDeclaration = (friend_decl->get_definition() != NULL);
-          printf (" --- isExtern = %s linkageSpecified = %s isFriend = %s isDefiningDeclaration = %s \n",
-               isExtern ? "true" : "false",linkageSpecified ? "true" : "false",isFriend ? "true" : "false",isDefiningDeclaration ? "true" : "false");
-#endif
+          if (enable_debug)
+          {
+            printf ("+++++++++++++++++++ friend_decl = %p = %s \n",friend_decl,friend_decl->class_name().c_str());
+            bool isExtern              = (friend_decl->get_declarationModifier().get_storageModifier().isExtern() == true);
+            bool linkageSpecified      = (friend_decl->get_linkage().empty() == false);
+            bool isFriend              = (friend_decl->get_declarationModifier().isFriend() == true);
+            bool isDefiningDeclaration = (friend_decl->get_definition() != NULL);
+            printf (" --- isExtern = %s linkageSpecified = %s isFriend = %s isDefiningDeclaration = %s \n",
+                isExtern ? "true" : "false",linkageSpecified ? "true" : "false",isFriend ? "true" : "false",isDefiningDeclaration ? "true" : "false");
+          }
        // DQ (2/23/2009): Added assertion.
           ROSE_ASSERT(friend_decl->get_definingDeclaration() == NULL);
 
@@ -1059,15 +1111,13 @@ insertFriendDecls (SgFunctionDeclaration* func,
        // a reference to the defining declaration which will be moved to the different file 
        // (violates file consistency rules that are not well enforced).
           ROSE_ASSERT(friend_decl->get_definingDeclaration() == NULL);
-#if 0
-          printf ("friend_decl = %p friend_decl->get_definingDeclaration() = %p friends list size = %zu \n",friend_decl,friend_decl->get_definingDeclaration(),friends.size());
-#endif
+          if (enable_debug)
+            printf ("friend_decl = %p friend_decl->get_definingDeclaration() = %p friends list size = %zu \n",friend_decl,friend_decl->get_definingDeclaration(),friends.size());
           friends.push_back (friend_decl);
         }
 
-#if 0
-      printf ("friends list size = %zu \n",friends.size());
-#endif
+      if (enable_debug)
+        printf ("friends list size = %zu \n",friends.size());
 #if 0
    // DQ (9/26/2019): This is the wrong function prototype (this one is used in the global scope), 
    // we need to deffer the use of the one used in the class definition (or perhaps both).
@@ -1116,11 +1166,13 @@ insertFriendDecls (SgFunctionDeclaration* func,
         }
     }
 
-#if 0
-  printf ("******************************************************** \n");
-  printf ("Leaving insertFriendDecls(): friends list size = %" PRIuPTR " \n",friends.size());
-  printf ("******************************************************** \n");
-#endif
+  if (enable_debug)
+  {
+    printf ("******************************************************** \n");
+    printf ("Leaving insertFriendDecls(): friends list size = %" PRIuPTR " \n",friends.size());
+    printf ("******************************************************** \n");
+  }
+
 
   return deferedFriendTransformation;
 }
