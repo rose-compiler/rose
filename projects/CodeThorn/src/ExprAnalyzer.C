@@ -1857,13 +1857,20 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     for(int i=0;i<3;i++) {
       SAWYER_MESG(logger[TRACE])<<"memcpy argument "<<i<<": "<<memcpyArgs[i].toString(_variableIdMapping)<<endl;
     }
+    if(memcpyArgs[0].isTop()||memcpyArgs[1].isTop()||memcpyArgs[2].isTop()) {
+      if(getPrintDetectedViolations()) {
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<" : potential out of bounds access (at least one of the three arguments of function cpymem can be of any value)."<<endl;
+      }  
+      recordPotentialOutOfBoundsAccessLocation(estate.label());
+      return listify(res); // returns top
+    }
     int memRegionSizeTarget=getMemoryRegionNumElements(memcpyArgs[0]);
-    int memRegionSizeSource=getMemoryRegionNumElements(memcpyArgs[1]);
     int copyRegionElementSizeTarget=getMemoryRegionElementSize(memcpyArgs[0]);
+    int memRegionSizeSource=getMemoryRegionNumElements(memcpyArgs[1]);
     int copyRegionElementSizeSource=getMemoryRegionElementSize(memcpyArgs[1]);
-    
-    SAWYER_MESG(logger[TRACE])<<"memcpy: memRegionNumElements target:"<<memRegionSizeTarget<<" with ElementSize:"<<memRegionSizeTarget<<endl;
-    SAWYER_MESG(logger[TRACE])<<"memcpy: memRegionNumElements source:"<<memRegionSizeSource<<" with ElementSize:"<<memRegionSizeSource<<endl;
+
+    SAWYER_MESG(logger[TRACE])<<"memcpy: memRegionNumElements source:"<<memRegionSizeSource<<" with ElementSize:"<<copyRegionElementSizeSource<<endl;
+    SAWYER_MESG(logger[TRACE])<<"memcpy: memRegionNumElements target:"<<memRegionSizeTarget<<" with ElementSize:"<<copyRegionElementSizeTarget<<endl;
 
     int copyRegionElementSize=0; // TODO: use AbstractValue for all sizes
     // check if size to copy is either top
@@ -1874,15 +1881,25 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
       recordPotentialOutOfBoundsAccessLocation(estate.label());
       return listify(res);
     } else if(memRegionSizeTarget!=memRegionSizeSource) {
-      // check if the element size of the to regions is different (=> conservative analysis result; will be modelled in future)
+      // check if the element size of the two regions is different (=> conservative analysis result; will be modelled in future)
       if(getPrintDetectedViolations()) {
         cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<" : potential out of bounds access (CodeThorn conservative case: source and target element size are different)."<<endl;
       }  
       recordPotentialOutOfBoundsAccessLocation(estate.label());
       return listify(res);
     } else {
-      ROSE_ASSERT(copyRegionElementSizeTarget==copyRegionElementSizeSource);
-      copyRegionElementSize=copyRegionElementSizeTarget; 
+      if(copyRegionElementSizeTarget!=copyRegionElementSizeSource) {
+        SAWYER_MESG(logger[WARN])<<"memcpy: copyRegionElementSizeTarget!=copyRegionElementSizeSource : "<<copyRegionElementSizeTarget<<"!="<<copyRegionElementSizeSource<<endl;
+        if(copyRegionElementSizeTarget!=0)
+          copyRegionElementSize=copyRegionElementSizeTarget;
+        else if(copyRegionElementSizeSource!=0)
+          copyRegionElementSize=copyRegionElementSizeSource;
+        else
+          copyRegionElementSize=std::max(copyRegionElementSizeSource,copyRegionElementSizeTarget);
+        ROSE_ASSERT(copyRegionElementSize!=0);
+      } else {
+        copyRegionElementSize=copyRegionElementSizeTarget;
+      }
     }
 
     bool errorDetected=false;
