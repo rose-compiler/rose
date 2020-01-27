@@ -10,6 +10,38 @@ using std::cout;
 namespace Rose {
 namespace builder {
 
+SgGlobal* initialize_global_scope(SgSourceFile* file)
+{
+ // First we have to get the global scope initialized (and pushed onto the stack).
+
+ // Set the default for source position generation to be consistent with other languages (e.g. C/C++).
+    SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
+ // TODO      SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionCompilerGenerated);
+
+    SgGlobal* globalScope = file->get_globalScope();
+    ROSE_ASSERT(globalScope != NULL);
+    ROSE_ASSERT(globalScope->get_parent() != NULL);
+
+ // Fortran is case insensitive
+    globalScope->setCaseInsensitive(true);
+
+ // DQ (8/21/2008): endOfConstruct is not set to be consistent with startOfConstruct.
+    ROSE_ASSERT(globalScope->get_endOfConstruct()   != NULL);
+    ROSE_ASSERT(globalScope->get_startOfConstruct() != NULL);
+
+ // DQ (10/10/2010): Set the start position of global scope to "1".
+    globalScope->get_startOfConstruct()->set_line(1);
+
+ // DQ (10/10/2010): Set this position to the same value so that if we increment
+ // by "1" the start and end will not be the same value.
+    globalScope->get_endOfConstruct()->set_line(1);
+
+    ROSE_ASSERT(SageBuilder::emptyScopeStack() == true);
+    SageBuilder::pushScopeStack(globalScope);
+
+    return globalScope;
+}
+
 void
 SageTreeBuilder::setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end)
 {
@@ -35,7 +67,7 @@ SageTreeBuilder::setSourcePosition(SgLocatedNode* node, const SourcePosition &st
    node->set_startOfConstruct(new Sg_File_Info(start.path, start.line, start.column));
    node->get_startOfConstruct()->set_parent(node);
 
-   node->set_endOfConstruct(new Sg_File_Info(end.path, end.line, end.column-1)); // ROSE endis inclusive
+   node->set_endOfConstruct(new Sg_File_Info(end.path, end.line, end.column-1)); // ROSE end is inclusive
    node->get_endOfConstruct()->set_parent(node);
 
    SageInterface::setSourcePosition(node);
@@ -161,6 +193,80 @@ setFortranEndProgramStmt(SgProgramHeaderStatement* program_decl,
       }
 }
 
+void SageTreeBuilder::
+Enter(SgDerivedTypeStatement* & derived_type_stmt, const std::string & name)
+{
+   cout << "SageTreeBuilder::Enter(SgDerivedTypeStatement* &, ...) \n";
+
+   derived_type_stmt = SageBuilder::buildDerivedTypeStatement(name, SageBuilder::topScopeStack());
+
+   SgClassDefinition* class_defn = derived_type_stmt->get_definition();
+   ROSE_ASSERT(class_defn);
+   SageBuilder::pushScopeStack(class_defn);
+}
+
+void SageTreeBuilder::
+Leave(SgDerivedTypeStatement* derived_type_stmt)
+{
+   cout << "SageTreeBuilder::Leave(SgDerivedTypeStatement*) \n";
+
+   SageBuilder::popScopeStack();  // class definition
+   SageInterface::appendStatement(derived_type_stmt, SageBuilder::topScopeStack());
+}
+
+// Jovial specific nodes
+//
+
+void SageTreeBuilder::
+Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const SourcePositionPair &positions)
+{
+   cout << "SageTreeBuilder::Enter(SgJovialCompoolStatement* &, ...) \n";
+
+   compool_decl = new SgJovialCompoolStatement(name);
+   SageInterface::setSourcePosition(compool_decl);
+
+   compool_decl->set_definingDeclaration(compool_decl);
+   compool_decl->set_firstNondefiningDeclaration(compool_decl);
+
+   SageInterface::appendStatement(compool_decl, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgJovialTableStatement* &table_decl,
+      const std::string &name, const SourcePositionPair &positions, bool is_block)
+{
+   cout << "SageTreeBuilder::Enter(SgJovialTableStatement* &, ...) \n";
+
+   cout << "--> TYPE " << name << " TABLE;\n";
+
+   SgName type_name = name;
+   SgClassDeclaration::class_types struct_kind = SgClassDeclaration::e_jovial_table;
+   if (is_block) struct_kind = SgClassDeclaration::e_jovial_block;
+
+   // This function builds a class declaration and definition with both the defining and nondefining declarations as required
+   table_decl = SageBuilder::buildJovialTableStatement(type_name, struct_kind, SageBuilder::topScopeStack());
+   ROSE_ASSERT(table_decl);
+   SageInterface::setSourcePosition(table_decl);
+
+   SgClassDefinition* table_def = table_decl->get_definition();
+   ROSE_ASSERT(table_def);
+
+   if (SageInterface::is_Fortran_language() || SageInterface::is_Jovial_language())
+      {
+         table_def->setCaseInsensitive(true);
+      }
+
+   SageBuilder::pushScopeStack(table_def);
+}
+
+void SageTreeBuilder::
+Leave(SgJovialTableStatement* table_type_stmt)
+{
+   cout << "SageTreeBuilder::Leave(SgJovialTableStatement*) \n";
+
+   SageBuilder::popScopeStack();  // class definition
+   SageInterface::appendStatement(table_type_stmt, SageBuilder::topScopeStack());
+}
 
 } // namespace builder
 } // namespace Rose

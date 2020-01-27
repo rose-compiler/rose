@@ -774,6 +774,7 @@ UntypedConverter::convertUntypedGlobalScope (SgUntypedGlobalScope* ut_scope, SgS
 
    SgGlobal* sg_scope = isSgGlobal(scope);
    ROSE_ASSERT(sg_scope == SageBuilder::getGlobalScopeFromScopeStack());
+   sg_scope->setCaseInsensitive(pCaseInsensitive);
 
    return sg_scope;
 }
@@ -984,7 +985,7 @@ UntypedConverter::convertUntypedModuleDeclaration (SgUntypedModuleDeclaration* u
 
      setSourcePositionFrom(classDefinition, ut_module);
 
-  // May be case insensitive (Fortran)
+  // May be case insensitive (Fortran and Jovial)
      classDefinition->setCaseInsensitive(pCaseInsensitive);
 
   // This is the defining declaration for the class (with a reference to the class definition)
@@ -1108,7 +1109,7 @@ UntypedConverter::convertUntypedProgramHeaderDeclaration (SgUntypedProgramHeader
    SgBasicBlock* programBody = new SgBasicBlock();
    SgFunctionDefinition* programDefinition = new SgFunctionDefinition(programDeclaration, programBody);
 
-// May be case insensitive (Fortran)
+// May be case insensitive (Fortran and Jovial)
    programBody->setCaseInsensitive(pCaseInsensitive);
    programDefinition->setCaseInsensitive(pCaseInsensitive);
 
@@ -2268,7 +2269,7 @@ UntypedConverter::convertUntypedIfStatement (SgUntypedIfStatement* ut_stmt, SgNo
    {
       ROSE_ASSERT(children.size() == 3);
 
-#if 0
+#if 1
       cout << "-x- convert if: conditional is " << ut_stmt->get_conditional() << " " << ut_stmt->get_conditional()->class_name() << endl;
       cout << "-x- convert if:   true_body is " << ut_stmt->get_true_body() << " "   << ut_stmt->get_true_body()->class_name()   << endl;
       cout << "-x- convert if:  false_body is " << ut_stmt->get_false_body() << "\n";
@@ -2278,11 +2279,20 @@ UntypedConverter::convertUntypedIfStatement (SgUntypedIfStatement* ut_stmt, SgNo
       ROSE_ASSERT(conditional != NULL);
 
       SgStatement* true_body = isSgStatement(children[1]);
-      ROSE_ASSERT(true_body != NULL);
+      SgNode* sg_node{children[1]};
 
-   // This needs to be removed because statements are appended to a scope
-   // True and false bodies will be replaced by the containing if statement
-      SageInterface::removeStatement(true_body, scope);
+      if (true_body != NULL) {
+      // This needs to be removed because statements are appended to a scope
+      // True and false bodies will be replaced by the containing if statement
+         SageInterface::removeStatement(true_body, scope);
+      }
+      else {
+         // create a basic block
+         // WARNING this needs to be tested, particularly in unparsing
+         true_body = SageBuilder::buildBasicBlock();
+         ROSE_ASSERT(true_body);
+         cout << "... BUILDING basic block for true_body (WARNING: check unparsed output) \n";
+      }
 
    // The false body has been appended to the scope at this point. Because it
    // will be contained by the SgIfStmt it needs to be removed from the scope.
@@ -2300,7 +2310,8 @@ UntypedConverter::convertUntypedIfStatement (SgUntypedIfStatement* ut_stmt, SgNo
          else_if_stmt->set_has_end_statement(false);
       }
 
-      SgIfStmt* sg_stmt = SageBuilder::buildIfStmt(conditional, true_body, false_body);
+      SgStatement* conditional_stmt{SageBuilder::buildExprStatement(conditional)};
+      SgIfStmt* sg_stmt = SageBuilder::buildIfStmt_nfi(conditional_stmt, true_body, false_body);
 
       ROSE_ASSERT(sg_stmt != NULL);
       setSourcePositionFrom(sg_stmt, ut_stmt);
@@ -3017,7 +3028,12 @@ UntypedConverter::convertUntypedValueExpression (SgUntypedValueExpression* ut_ex
 
          case SgUntypedType::e_bit:
             {
-               cerr << "WARNING UNIMPLEMENTED: convertSgUntypedValueExpression: BitFormula\n";
+               const std::string &constant_text = ut_expr->get_value_string();
+               cerr << "WARNING UNIMPLEMENTED: convertSgUntypedValueExpression: BitFormula not handled: "
+                    << constant_text << endl;
+
+               sg_expr = SageBuilder::buildIntVal_nfi(0, constant_text);
+               setSourcePositionFrom(sg_expr, ut_expr);
                break;
             }
 
@@ -3486,7 +3502,7 @@ UntypedConverter::initialize_global_scope(SgSourceFile* file)
     ROSE_ASSERT(globalScope != NULL);
     ROSE_ASSERT(globalScope->get_parent() != NULL);
 
- // May be case insensitive (Fortran)
+ // May be case insensitive (Fortran and Jovial)
     globalScope->setCaseInsensitive(pCaseInsensitive);
 
  // DQ (8/21/2008): endOfConstruct is not set to be consistent with startOfConstruct.
@@ -3652,7 +3668,7 @@ UntypedConverter::buildProcedureSupport (SgUntypedFunctionDeclaration* ut_functi
 
      ROSE_ASSERT(procedureDeclaration->get_definition() != NULL);
 
-  // May be case insensitive (Fortran)
+  // May be case insensitive (Fortran and Jovial)
      procedureBody->setCaseInsensitive(pCaseInsensitive);
      procedureDefinition->setCaseInsensitive(pCaseInsensitive);
      procedureDeclaration->set_scope (currentScopeOfFunctionDeclaration);

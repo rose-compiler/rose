@@ -7,9 +7,16 @@
 // WARNING: This file has been designed to compile with -std=c++17
 // This limits the use of ROSE header files at the moment.
 //
+class SgDerivedTypeStatement;
+class SgGlobal;
 class SgLocatedNode;
 class SgScopeStatement;
+class SgSourceFile;
 class SgProgramHeaderStatement;
+
+// Jovial specific classes
+class SgJovialCompoolStatement;
+class SgJovialTableStatement;
 
 namespace Rose {
 namespace builder {
@@ -20,7 +27,21 @@ struct SourcePosition {
    int line, column;
 };
 
-using SourcePositions = boost::tuple<SourcePosition, SourcePosition, SourcePosition>;
+using SourcePositionPair = boost::tuple<SourcePosition, SourcePosition>;
+using SourcePositions    = boost::tuple<SourcePosition, SourcePosition, SourcePosition>;
+
+// The global must be initialized before using the SageTreeBuilder class
+// Consider creating a constructor (may not work well with interface for F18/Flang)
+SgGlobal* initialize_global_scope(SgSourceFile* file);
+
+// Create a builder class that does nothing
+class SageTreeBuilderNull {
+public:
+   // Default action for a sage tree node is to do nothing.
+   template<typename T, typename... Options> void Enter(T* &, Options...) {}
+   template<typename T>                      void Leave(T*) {}
+};
+
 
 class SageTreeBuilder {
 public:
@@ -39,6 +60,16 @@ public:
                                  const boost::optional<std::string> &,
                                  const boost::optional<std::string> &);
 
+   void Enter(SgDerivedTypeStatement* &, const std::string &);
+   void Leave(SgDerivedTypeStatement*);
+
+// Jovial specific nodes
+//
+   void Enter(SgJovialCompoolStatement* &,
+              const std::string &, const SourcePositionPair &);
+   void Enter(SgJovialTableStatement* &,
+              const std::string &, const SourcePositionPair &, bool is_block=false);
+   void Leave(SgJovialTableStatement*);
 
 private:
 
