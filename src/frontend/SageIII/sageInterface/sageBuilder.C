@@ -8942,7 +8942,7 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
      if (false_body) false_body->set_parent(ifstmt);
      return ifstmt;
 #else
-  // DQ (2/13/2012): This allows us to separate teh construction from the initialization (see note below).
+  // DQ (2/13/2012): This allows us to separate the construction from the initialization (see note below).
      initializeIfStmt(ifstmt,conditional,true_body,false_body);
      return ifstmt;
 #endif
