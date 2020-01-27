@@ -707,7 +707,7 @@ AbstractValue AbstractValue::operatorAdd(AbstractValue& a,AbstractValue& b) {
     val.intValue+=a.intValue;
     return val;
   } else if(a.isPtr() && b.isPtr()) {
-    throw CodeThorn::Exception("Error: invalid operands of type pointer to binary ‘operator+’.");
+    throw CodeThorn::Exception("Error: invalid operands of type pointer to binary ‘operator+’"+a.toString()+"+"+b.toString());
   } else if(a.isConstInt() && b.isConstInt()) {
     return a.getIntValue()+b.getIntValue();
   } else {
