@@ -111,6 +111,7 @@ main(int argc, char *argv[]) {
         exit(1);
     }
     Debugger::Specimen specimen(args);
+    specimen.randomizedAddresses(false);
     specimen.flags().set(Debugger::CLOSE_FILES);
 
     // Trace output goes to either std::cout or some file.

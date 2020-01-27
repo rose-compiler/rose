@@ -18,7 +18,7 @@ using std::endl;
 #   include "wholeAST_API.h"
 #endif
 
-SgScopeStatement* initialize_global_scope(SgSourceFile* file)
+SgGlobal* initialize_global_scope(SgSourceFile* file)
 {
  // First we have to get the global scope initialized (and pushed onto the stack).
 
@@ -74,11 +74,12 @@ experimental_fortran_main(int argc, char* argv[], SgSourceFile* sg_source_file)
 
       int status = 0;
 
-      SgScopeStatement* global_scope = initialize_global_scope(sg_source_file);
+      SgGlobal* global_scope = initialize_global_scope(sg_source_file);
 
       status = flang_external_builder_main(argc, argv);
 
       cout << "\n";
+      cout << "FINISHED parsing...\n\n";
 
       return status;
   }

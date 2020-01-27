@@ -1,16 +1,106 @@
 #include "sage-build.h"
+#include "sage-tree-builder.h"
+#include <boost/optional.hpp>
 #include <iostream>
+
+// Helps with find source position information
+enum class Order { begin, end };
 
 namespace Rose::builder {
 
 using namespace Fortran;
 
+// The Build functions need to be turned into a class (global variable used for now)
+//
+   SageTreeBuilder builder{};
+// TODO: change this to a reference
+   parser::CookedSource* cooked_{nullptr};
+
+template<typename T> SourcePosition BuildSourcePosition(const Fortran::parser::Statement<T> &x, Order from)
+{
+   std::optional<SourcePosition> pos{std::nullopt};
+
+   if (auto sourceInfo{cooked_->GetSourcePositionRange(x.source)}) {
+      if (from == Order::begin)
+         pos.emplace(SourcePosition{sourceInfo->first.file.path(), sourceInfo->first.line, sourceInfo->first.column});
+      else
+         pos.emplace(SourcePosition{sourceInfo->second.file.path(), sourceInfo->second.line, sourceInfo->second.column});
+   }
+   else {
+      pos.emplace(SourcePosition{});
+   }
+
+   return pos.value();
+}
+
+template<typename T>
+std::optional<SourcePosition> BuildSourcePosition(const std::optional<Fortran::parser::Statement<T>> &opt, Order from)
+{
+   std::optional<SourcePosition> pos{std::nullopt};
+
+   if (opt) pos.emplace(BuildSourcePosition(*opt, from));
+
+   return pos;
+}
+
+template<typename T>
+std::optional<SourcePosition> BuildSourcePosition(const std::variant<T> &u, Order from)
+{
+   // TODO
+   return std::nullopt;
+}
+
+std::optional<SourcePosition> FirstSourcePosition(const parser::SpecificationPart &x)
+{
+   const auto & omp_stmts{std::get<0>(x.t)};
+   if (omp_stmts.size() > 0) {
+#if 0
+      return std::optional<SourcePosition>{BuildSourcePosition(omp_stmts.front(), Order::begin)};
+#endif
+   }
+
+   const auto & use_stmts{std::get<1>(x.t)};
+   if (use_stmts.size() > 0) {
+      return std::optional<SourcePosition>{BuildSourcePosition(use_stmts.front(), Order::begin)};
+   }
+
+   const auto & import_stmts{std::get<2>(x.t)};
+   if (import_stmts.size() > 0) {
+      return std::optional<SourcePosition>{BuildSourcePosition(import_stmts.front(), Order::begin)};
+   }
+
+   const auto & implicit_part_stmts{std::get<3>(x.t).v};
+   if (implicit_part_stmts.size() > 0) {
+      std::cout << "... implicit_part_stmts list count is " << implicit_part_stmts.size() << "\n";
+      //      const auto & implicit_part_stmt
+#if 0 // TODO
+      return std::optional<SourcePosition>{BuildSourcePosition(implicit_part_stmts.front(), Order::begin)};
+#endif
+   }
+
+   const auto & decl_stmts{std::get<4>(x.t)};
+   if (decl_stmts.size() > 0) {
+#if 0 // TODO
+      return std::optional<SourcePosition>{BuildSourcePosition(decl_stmts.front(), Order::begin)};
+#endif
+   }
+
+   return std::optional<SourcePosition>{std::nullopt};
+}
+
 // Converts parsed program to ROSE Sage nodes
-void Build(const parser::Program &x, SgScopeStatement* scope)
+void Build(const parser::Program &x, parser::CookedSource &cooked)
 {
    std::cout << "\n";
    std::cout << "Rose::builder::Build(Program) \n";
+
+   SgScopeStatement* scope{nullptr};
+
+   cooked_ = &cooked;
+
+   builder.Enter(scope);
    Build(x.v, scope);
+   builder.Leave(scope);
 }
 
 template<typename T>
@@ -26,41 +116,77 @@ void Build(const parser::MainProgram &x, T* scope)
 {
    std::cout << "Rose::builder::Build(MainProgram) \n";
 
-   std::string program_name;
+   const auto & program_stmt{std::get<0>(x.t)};
+
+   const auto & spec_part{std::get<1>(x.t)};
+   const auto & exec_part{std::get<2>(x.t)};
+   const auto & prog_part{std::get<3>(x.t)};
+
+   const auto & end_program_stmt{std::get<4>(x.t)};
+
+   std::list<std::string> labels{};
+   std::optional<SourcePosition> srcPosBody{std::nullopt};
+   std::optional<SourcePosition> srcPosBegin{BuildSourcePosition(program_stmt, Order::begin)};
+   SourcePosition srcPosEnd{BuildSourcePosition(end_program_stmt, Order::end)};
+
+   std::optional<std::string> program_name{std::nullopt};
 
 // ProgramStmt is optional
-   if (std::get<0>(x.t)) {
-      const auto & stmt = std::get<0>(x.t).value();
-      program_name = stmt.statement.v.ToString();
-      std::cout << "--> PROGRAM " << program_name << std::endl;
+   if (program_stmt) {
+      program_name.emplace(program_stmt.value().statement.v.ToString());
+   }
+   if (program_stmt && program_stmt->label) {
+      labels.push_back(std::to_string(program_stmt->label.value()));
    }
 
-// Build Sage nodes
+   if (auto pos{FirstSourcePosition(spec_part)}) {
+      srcPosBody.emplace(*pos);
+   }
+
+// Fortran only needs an end statement so check for no beginning source position
+   if (!srcPosBody) {
+      srcPosBody.emplace(srcPosEnd);
+   }
+
+   // If there is no ProgramStmt the source begins at the body of the program
+   if (!srcPosBegin) {
+      srcPosBegin.emplace(*srcPosBody);
+   }
+
+// Build the SgProgramHeaderStatement node
 //
+   SgProgramHeaderStatement* program_decl{nullptr};
+   boost::optional<std::string> boost_name{*program_name};
+
+   builder.Enter(program_decl, boost_name, labels, SourcePositions{*srcPosBegin,*srcPosBody,srcPosEnd});
+
    SgScopeStatement* function_scope{nullptr};
 
 // SpecificationPart
-   const auto & spec_part = std::get<1>(x.t);
    Build(spec_part, function_scope);
 
 // ExecutionPart
-   const auto & exec_part = std::get<2>(x.t);
    Build(exec_part, function_scope);
 
 // InternalSubprogramPart is optional
-   if (std::get<3>(x.t)) {
-      const auto & prog_part = std::get<3>(x.t).value();
-      Build(prog_part, function_scope);
+   if (prog_part) {
+      Build(prog_part.value(), function_scope);
    }
 
 // EndProgramStmt
-   const auto & end_program_stmt = std::get<4>(x.t).statement;
-   std::cout << "--> END PROGRAM";
-   if (end_program_stmt.v) {
-      std::cout << " " << end_program_stmt.v.value().ToString();
+   boost::optional<std::string> end_name {boost::none};
+   boost::optional<std::string> end_label{boost::none};
+   if (end_program_stmt.statement.v) {
+      end_name = end_program_stmt.statement.v.value().ToString();
    }
-   std::cout << std::endl;
-   
+   if (end_program_stmt.label) {
+      end_label = std::to_string(end_program_stmt.label.value());
+   }
+
+// Fortran specific functionality
+   builder.setFortranEndProgramStmt(program_decl, end_name, end_label);
+
+   builder.Leave(program_decl);
 }
 
 template<typename T>

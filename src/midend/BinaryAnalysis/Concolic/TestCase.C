@@ -92,7 +92,11 @@ TestCase::hasConcolicTest() const
   return concolically_tested; 
 }
 
-    
+void
+TestCase::hasConcolicTest(bool b) {
+    concolically_tested = b;
+}
+
 void 
 TestCase::concolicTest(bool hastest)
 {

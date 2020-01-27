@@ -4513,7 +4513,10 @@ TestMangledNames::visit ( SgNode* node )
              }
             else
              {
+#if 0
+            // DQ (1/25/2020): Output spew when using tool_G on target applications.
                printf ("NOTE: In TestMangledNames::visit(): initializedName->get_scope() == NULL: initializedName = %p name = %s \n",initializedName,initializedName->get_name().str());
+#endif
              }
 
        // printf ("Test generated mangledName for node = %p = %s = %s \n",node,node->class_name().c_str(),mangledName.c_str());

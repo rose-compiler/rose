@@ -298,7 +298,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
       return {};
     }
     if (driver.externalBuilder) {
-      Rose::builder::Build(parseTree, nullptr);
+      Rose::builder::Build(parseTree, parsing.cooked());
       return {};
     }
   }
