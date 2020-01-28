@@ -27,8 +27,15 @@ struct SourcePosition {
    int line, column;
 };
 
-using SourcePositionPair = boost::tuple<SourcePosition, SourcePosition>;
-using SourcePositions    = boost::tuple<SourcePosition, SourcePosition, SourcePosition>;
+// Need std=c++11
+//
+#ifndef nullptr
+#define nullptr NULL
+#endif
+//using SourcePositionPair = boost::tuple<SourcePosition, SourcePosition>;
+//using SourcePositions    = boost::tuple<SourcePosition, SourcePosition, SourcePosition>;
+typedef boost::tuple<SourcePosition, SourcePosition> SourcePositionPair;
+typedef boost::tuple<SourcePosition, SourcePosition, SourcePosition> SourcePositions;
 
 // The global must be initialized before using the SageTreeBuilder class
 // Consider creating a constructor (may not work well with interface for F18/Flang)
