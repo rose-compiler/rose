@@ -1,6 +1,6 @@
 #include "DOM.h"
 int main() {
-  bool x;
+  bool x=true;
   int a=1;
   int b=3;
   int* p;
