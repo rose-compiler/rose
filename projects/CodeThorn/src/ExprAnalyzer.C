@@ -600,7 +600,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalAddOp(SgAddOp* node,
   list<SingleEvalResultConstInt> resultList;
   SingleEvalResultConstInt res;
   res.estate=estate;
-  cout<<"DEBUG: evalAddOp: "<<lhsResult.result.toString(_variableIdMapping)<<" + "<<rhsResult.result.toString(_variableIdMapping)<<endl;
   res.result=(lhsResult.result+rhsResult.result);
   resultList.push_back(res);
   return resultList;
