@@ -61,9 +61,11 @@ AC_DEFUN([ROSE_SUPPORT_BLACKLIST],[
         # Boost versions 1.69.0 and later are not compatible with the edg binaries generated as of January 2020. 
         # Any bost 1.69.0 and later need to build ROSE from edg source.
         if test "$rose_boost_version" -ge 106900; then
-            if test "$has_edg_source" = "no"; then
-                prohibited="boost-1.69.0 and later are not compatible with EDG binary"
-                break
+            if test "$support_c_frontend" = "yes" -o "$support_cxx_frontend" = "yes"; then
+                if test "$has_edg_source" = "no"; then
+                    prohibited="boost-1.69.0 and later are not compatible with EDG binary"
+                    break
+                fi
             fi
         fi
 
