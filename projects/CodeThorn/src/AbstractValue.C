@@ -383,7 +383,19 @@ AbstractValue AbstractValue::operatorLess(AbstractValue other) const {
     return other;
   if(other.isBot())
     return *this;
-  assert(isConstInt()&&other.isConstInt());
+  if(isPtr() && other.isPtr()) {
+    // check is same memory region
+    if(variableId==other.variableId) {
+      return AbstractValue(intValue<other.intValue && getValueSize()==other.getValueSize());
+    } else {
+      // incompatible pointer comparison (can be true or false)
+      return AbstractValue::createTop();
+    }
+  }
+  if(!(isConstInt()&&other.isConstInt())) {
+    cerr<<"WARNING: operatorLess: "<<toString()<<" < "<<other.toString()<<" - assuming arbitrary result."<<endl;
+    return AbstractValue::createTop();
+  }
   return getIntValue()<other.getIntValue();
 }
 
