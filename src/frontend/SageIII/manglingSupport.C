@@ -1280,12 +1280,24 @@ mangleExpression (const SgExpression* expr)
           break;
         }
 
-        case V_SgCastExp:          mangleUnaryOp( (const SgUnaryOp *)expr, mangled_name, "CastExp");         break;
+        case V_SgCastExp: {
+          const SgCastExp * cast = isSgCastExp(expr);
+          SgType * cast_type = cast->get_type();
+          ROSE_ASSERT(cast_type != NULL);
+          SgExpression * op = cast->get_operand_i();
+          ROSE_ASSERT(op != NULL);
+          mangled_name << "_bCastExp_" << mangleExpression(op) << "_totype_" << cast_type->get_mangled().str() << "_eCastExp_";
+          break;
+        }
+
         case V_SgNotOp:            mangleUnaryOp( (const SgUnaryOp *)expr, mangled_name, "NotOp");           break;
         case V_SgBitComplementOp:  mangleUnaryOp( (const SgUnaryOp *)expr, mangled_name, "BitComplementOp"); break;
         case V_SgMinusOp:          mangleUnaryOp( (const SgUnaryOp *)expr, mangled_name, "MinusOp");         break;
+        case V_SgUnaryAddOp:       mangleUnaryOp( (const SgUnaryOp *)expr, mangled_name, "UnaryAddOp");      break;
         case V_SgAddressOfOp:      mangleUnaryOp( (const SgUnaryOp *)expr, mangled_name, "AddressOfOp");     break;
         case V_SgPointerDerefExp:  mangleUnaryOp( (const SgUnaryOp *)expr, mangled_name, "PointerDerefExp"); break;
+        case V_SgPlusPlusOp:       mangleUnaryOp( (const SgUnaryOp *)expr, mangled_name, "PlusPlusOp");      break;
+        case V_SgMinusMinusOp:     mangleUnaryOp( (const SgUnaryOp *)expr, mangled_name, "MinusMinusOp");    break;
 
         case V_SgAddOp:            mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "AddOp");            break;
         case V_SgAndOp:            mangleBinaryOp( (const SgBinaryOp *)expr, mangled_name, "AndOp");            break;
