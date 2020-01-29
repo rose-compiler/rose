@@ -268,6 +268,16 @@ join(const std::string &separator, const char *strings[], size_t nstrings) {
 }
 
 std::string
+join(char separator, char *strings[], size_t nstrings) {
+    return join_range(std::string(1, separator), strings, strings+nstrings);
+}
+
+std::string
+join(char separator, const char *strings[], size_t nstrings) {
+    return join_range(std::string(1, separator), strings, strings+nstrings);
+}
+
+std::string
 joinEnglish(const std::vector<std::string> &phrases, const std::string &separator, const std::string &finalIntro) {
     if (phrases.empty())
         return "";

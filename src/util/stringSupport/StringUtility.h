@@ -130,8 +130,16 @@ std::string join(const std::string &separator, const Container &container) {
     return join_range(separator, container.begin(), container.end());
 }
 
+template<class Container>
+std::string join(char separator, const Container &container) {
+    return join_range(std::string(1, separator), container.begin(), container.end());
+}
+
 ROSE_UTIL_API std::string join(const std::string &separator, char *strings[], size_t nstrings);
 ROSE_UTIL_API std::string join(const std::string &separator, const char *strings[], size_t nstrings);
+ROSE_UTIL_API std::string join(char separator, char *strings[], size_t nstrings);
+ROSE_UTIL_API std::string join(char separator, const char *strings[], size_t nstrings);
+
 /** @} */
 
 /** Join strings as if they were English prose.
