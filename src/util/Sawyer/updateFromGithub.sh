@@ -27,11 +27,12 @@ cp "$SAWYER_ROOT/LICENSE" LICENSE
 # should have been contributed back to the Sawyer project by now (besides, that's what Git is for)!
 for f in                                                                                                                                \
     Access AddressMap AddressSegment AllocatingBuffer Assert Attribute BiMap BitVector BitVectorSupport Buffer Cached                   \
-    Callbacks Clexer CommandLine CommandLineBoost DefaultAllocator DenseIntegerSet DistinctList DocumentBaseMarkup DocumentMarkup       \
-    DocumentPodMarkup DocumentTextMarkup Exception FileSystem Graph GraphAlgorithm GraphBoost GraphIteratorBiMap GraphIteratorMap       \
-    GraphIteratorSet GraphTraversal IndexedList Interval IntervalMap IntervalSet IntervalSetMap HashMap Lexer LineVector Map            \
-    MappedBuffer Message NullBuffer Optional PoolAllocator ProgressBar Sawyer Set SharedObject SharedPointer SmallObject Stack          \
-    StackAllocator StaticBuffer Stopwatch Synchronization ThreadWorkers Trace Tracker Tree Type WarningsOff WarningsRestore;            \
+    Callbacks Clexer CommandLine CommandLineBoost Database DatabasePostgresql DatabaseSqlite DefaultAllocator DenseIntegerSet           \
+    DistinctList DocumentBaseMarkup DocumentMarkup DocumentPodMarkup DocumentTextMarkup Exception FileSystem Graph GraphAlgorithm       \
+    GraphBoost GraphIteratorBiMap GraphIteratorMap GraphIteratorSet GraphTraversal IndexedList Interval IntervalMap IntervalSet         \
+    IntervalSetMap HashMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional PoolAllocator ProgressBar Sawyer Set           \
+    SharedObject SharedPointer SmallObject Stack StackAllocator StaticBuffer Stopwatch Synchronization ThreadWorkers Trace Tracker      \
+    Tree Type WarningsOff WarningsRestore;                                                                                              \
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
     ( emit_cpp_warning; cat "$srcbase.h" ) > ./$f.h
@@ -66,6 +67,7 @@ for f in                                        \
     Container/optionalUnitTests.C               \
     Container/setUnitTests.C                    \
     Container/traceUnitTests.C                  \
+    Database/databaseUnitTests.C                \
     Markup/markupUnitTests.C                    \
     Message/mesgUnitTests.C                     \
     Pointers/ptrUnitTests.C                     \
