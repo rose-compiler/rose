@@ -21,6 +21,8 @@
 // =====================================================================
 
 using namespace std;
+using namespace Outliner;
+using namespace SageInterface;
 
 // =====================================================================
 
@@ -61,6 +63,8 @@ createThisShadowDecl (const string& name,
                       SgFunctionDefinition* func_def /*The enclosing class member function*/)
 //                      SgScopeStatement* scope)
 {
+  if (enable_debug)  
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
   SgVariableDeclaration* decl = NULL;
   ROSE_ASSERT (sym && func_def);
 
@@ -118,7 +122,25 @@ createThisShadowDecl (const string& name,
   SageBuilder::buildComment(decl, "//A declaration for this pointer"); 
 
   // We insert it to the enclosing member function definition
+  if (enable_debug)
+  {
+    cout<<"prepending a statement declaring this__ptr into a function body:"<<func_body<<endl;
+    cout<<"The function body's file info is:"<<endl;
+    func_body->get_file_info()->display();
+    func_body->unparseToString();
+  }
+
   SageInterface::prependStatement(decl, func_body);
+  // Liao (1/i28/2020): When used in conjunction with header file unparsing we need to set the physical file id on entirety of the subtree being inserted.
+  int physical_file_id = func_body->get_startOfConstruct()->get_physical_file_id();
+  string physical_filename_from_id = Sg_File_Info::getFilenameFromID(physical_file_id);
+  if (enable_debug)
+  {
+    printf ("scope for function call transformation: physical_filename_from_id = %s \n",physical_filename_from_id.c_str());
+  }
+
+  SageBuilder::fixupSourcePositionFileSpecification(decl,physical_filename_from_id);
+  //decl->set_isModified(true);
   return decl;
 }
 
@@ -243,12 +265,24 @@ replaceThisExprs (ASTtools::ThisExprSet_t& this_exprs,
 SgBasicBlock *
 Outliner::Preprocess::transformThisExprs (SgBasicBlock* b)
 {
+  if (enable_debug)  
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
+
   // Find all 'this' expressions.
   ASTtools::ThisExprSet_t this_exprs;
   ASTtools::collectThisExpressions (b, this_exprs);
   if (this_exprs.empty ()) // No transformation required.
+  {
+    if (enable_debug)  
+      cout<<"empty this expression set, exiting "<< __PRETTY_FUNCTION__ <<" without create this shadow declaration. " <<endl;
     return b;
-//cout<<"Debug Outliner::Preprocess::transformThisExprs() input BB is"<<b<<endl;
+  }
+
+  if (enable_debug)  
+  {
+    cout<<"The input BB is:"<<b<<endl;
+    b->get_file_info()->display();
+  }
   // Get the class symbol for the set of 'this' expressions.
   SgClassSymbol* sym = getClassSymAndVerify (this_exprs);
   ROSE_ASSERT (sym);
@@ -284,8 +318,12 @@ Outliner::Preprocess::transformThisExprs (SgBasicBlock* b)
 
   // Replace instances of SgThisExp with the shadow variable.
   replaceThisExprs (this_exprs, decl);
+  if (enable_debug) 
+  {
+    cout<<"Debug Outliner::Preprocess::transformThisExprs() output BB is:"<<b<<endl;
+    b->unparseToString();
+  }
 
-//cout<<"Debug Outliner::Preprocess::transformThisExprs() output BB is"<<b_this<<endl;
   //return b_this;
   return b;
 }

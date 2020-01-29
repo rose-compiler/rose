@@ -116,6 +116,8 @@ Outliner::generateFuncArgName (const SgStatement* stmt)
 Outliner::Result
 Outliner::outline (SgStatement* s)
 {
+  if (enable_debug)  
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
   string func_name = generateFuncName (s);
   return outline (s, func_name);
 }
@@ -422,6 +424,8 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 SgBasicBlock *
 Outliner::preprocess (SgStatement* s)
 {
+  if (enable_debug)  
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
   // bool b = isOutlineable (s, enable_debug);
   bool b = isOutlineable (s, SgProject::get_verbose () >= 1);
   if (b!= true)
