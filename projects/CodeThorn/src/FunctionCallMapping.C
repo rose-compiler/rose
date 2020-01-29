@@ -16,7 +16,11 @@ using namespace CodeThorn;
 Sawyer::Message::Facility CodeThorn::FunctionCallMapping::logger;
 
 void FunctionCallInfo::print() {
-  cout<<"NAME: "<<funCallName<<" TYPE: "<<funCallType<<":"<<funCallType->unparseToString()<<" MANGLEDFUNCALLTYPE: "<<mangledFunCallTypeName<<endl;
+  if(funCallType) {
+    cout<<"NAME: "<<funCallName<<" TYPE: "<<funCallType<<":"<<funCallType->unparseToString()<<" MANGLEDFUNCALLTYPE: "<<mangledFunCallTypeName<<endl;
+  } else {
+    cout<<"NAME: "<<funCallName<<" TYPE: unknown"<<endl;
+  }
 }
 
 bool FunctionCallInfo::isFunctionPointerCall() {
@@ -46,8 +50,10 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
       fcInfo.funCallType=funCallType;
       fcInfo.mangledFunCallTypeName=funCallType->get_mangled();
     } else {
-      SAWYER_MESG(logger[ERROR])<<"UNKNOWN FUNCTION CALL EXP."<<endl;
-      exit(1);
+      // provide information for error reporting
+      fcInfo.funCallName=fc->unparseToString();
+      fcInfo.funCallType=nullptr; // indicates unknown type
+      cout<<"WARNING: FunctionCallMapping: unknown function call exp: "<<fc->unparseToString()<<endl;
     }
     return fcInfo;
 }
@@ -86,30 +92,35 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
   int n=0;
   for (auto fc : funCallList) {
     FunctionCallInfo fcInfo=determineFunctionCallInfo(fc);
-    for (auto fd : funDefList) {
-      FunctionCallTarget fcTarget(fd);
-      bool matching;
-      switch(_matchMode) {
-      case 1:
+    if(fcInfo.funCallType!=nullptr) {
+      for (auto fd : funDefList) {
+        FunctionCallTarget fcTarget(fd);
+        bool matching;
+        switch(_matchMode) {
+        case 1:
         // this one should be working (but has a bug)
-        matching=fcInfo.funCallType==fcTarget.getFunctionType();break;
-      case 2:
-        // this one should be working (but has a bug)
-        matching=fcInfo.mangledFunCallTypeName==fcTarget.getMangledFunctionTypeName();break;
-      case 3:
-        // this one works as workaround
-        matching=fcInfo.funCallType->unparseToString()==fcTarget.getFunctionType()->unparseToString();break;
-      default:
-        cerr<<"Error: unknown matchmode "<<_matchMode<<endl;
-        exit(1);
-      }
-      if(matching) {
-        if(fcInfo.isFunctionPointerCall()) {
-          mapping[fc].insert(fcTarget);n++;
-        } else if(fcInfo.funCallName==fcTarget.getFunctionName()) {
-          mapping[fc].insert(fcTarget);n++;
+          matching=fcInfo.funCallType==fcTarget.getFunctionType();break;
+        case 2:
+          // this one should be working (but has a bug)
+          matching=fcInfo.mangledFunCallTypeName==fcTarget.getMangledFunctionTypeName();break;
+        case 3:
+          // this one works as workaround
+          matching=fcInfo.funCallType->unparseToString()==fcTarget.getFunctionType()->unparseToString();break;
+        default:
+          cerr<<"Error: FunctionCallMapping: unknown function matchmode "<<_matchMode<<endl;
+          exit(1);
+        }
+        if(matching) {
+          if(fcInfo.isFunctionPointerCall()) {
+            mapping[fc].insert(fcTarget);n++;
+          } else if(fcInfo.funCallName==fcTarget.getFunctionName()) {
+            mapping[fc].insert(fcTarget);n++;
+          }
         }
       }
+    } else {
+      // unknown function call
+      // do not enter in mapping
     }
   }
   SAWYER_MESG(logger[INFO])<<"Resolved "<<n<<" function calls."<<endl;
