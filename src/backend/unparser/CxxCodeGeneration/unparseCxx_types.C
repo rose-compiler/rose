@@ -258,7 +258,7 @@ string get_type_name(SgType* t)
 
                     res = res + ")";
 
-#if 1
+#if 0
                     printf ("In get_type_name(): ftype != NULL: after unparsing function arguments: unparse modifiers \n");
 #endif
 
@@ -276,7 +276,7 @@ string get_type_name(SgType* t)
                   }
                  else
                   {
-#if 1
+#if 0
                     printf ("In get_type_name(): ftype == NULL: output name: btype = %p = %s \n",btype,btype->class_name().c_str());
                  // unp->u_sage->curprint ("/* In get_type_name(): ftype == NULL: output name */ \n ");
 #endif
