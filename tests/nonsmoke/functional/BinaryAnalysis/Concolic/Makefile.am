@@ -1,8 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/tests/nonsmoke/specimens/binary/SpecimenSets.inc
 
-SUBDIRS = crsh
-
 EXTRA_DIST =
 
 # Forward declarations
@@ -84,7 +82,7 @@ testConcolicDB_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testConcolicDB.passed
 
-testConcolicDB.passed: $(srcdir)/concolicDB.conf testConcolicDB
+testConcolicDB.passed: $(TEST_EXIT_STATUS) testConcolicDB
 	@$(RTH_RUN) \
 		TITLE="concolic database [$@]" \
 		CMD="./testConcolicDB" \
@@ -94,108 +92,108 @@ testConcolicDB.passed: $(srcdir)/concolicDB.conf testConcolicDB
 
 # b) test various executions
 
-TEST_TARGETS += testOpenDB.passed
-
-testOpenDB.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+noinst_PROGRAMS += testOpenDb
+testOpenDb_SOURCES = testOpenDb.C
+testOpenDb_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testOpenDb.passed
+testOpenDb.passed: $(TEST_EXIT_STATUS) testOpenDb
 	@$(RTH_RUN) \
 		TITLE="concolic database openDB [$@]" \
-		CMD="./crsh/crsh $(srcdir)/openDB.crsh" \
-		ANS="no" \
+		CMD="./testOpenDb" \
 		DISABLED="$(DISABLED)" \
 		$< $@
-	rm -f openDB.db
 
+noinst_PROGRAMS += testDefineTests
+testDefineTests_SOURCES = testDefineTests.C
+testDefineTests_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testDefineTests.passed
-
-testDefineTests.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+testDefineTests.passed: $(TEST_EXIT_STATUS) testDefineTests
 	@$(RTH_RUN) \
 		TITLE="concolic database defineTests [$@]" \
-		CMD="./crsh/crsh $(srcdir)/defineTests.crsh" \
-		ANS="no" \
+		CMD="./testDefineTests" \
 		DISABLED="$(DISABLED)" \
 		$< $@
-	rm -f defineTests.db
 
+
+noinst_PROGRAMS += testRun1
+testRun1_SOURCES = testRun1.C
+testRun1_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testRun1.passed
-
-testRun1.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+testRun1.passed: $(TEST_EXIT_STATUS) testRun1
 	@$(RTH_RUN) \
 		TITLE="concolic database run1 [$@]" \
-		CMD="./crsh/crsh $(srcdir)/run1.crsh" \
-		ANS="no" \
+		CMD="./testRun1" \
 		DISABLED="$(DISABLED)" \
 		$< $@
-	rm -f run1.db
 
-
+noinst_PROGRAMS += testRun10
+testRun10_SOURCES = testRun10.C
+testRun10_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testRun10.passed
-
-testRun10.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+testRun10.passed: $(TEST_EXIT_STATUS) testRun10
 	@$(RTH_RUN) \
 		TITLE="concolic database run10 [$@]" \
-		CMD="./crsh/crsh $(srcdir)/run10.crsh" \
-		ANS="no" \
+		CMD="./testRun10" \
 		DISABLED="$(DISABLED)" \
 		$< $@
-	rm -f run10.db
 
-
+noinst_PROGRAMS += testDefineFail
+testDefineFail_SOURCES = testDefineFail.C
+testDefineFail_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testDefineFail.passed
-
-testDefineFail.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+testDefineFail.passed: $(TEST_EXIT_STATUS) testDefineFail
 	@$(RTH_RUN) \
 		TITLE="concolic database defineFail [$@]" \
-		CMD="./crsh/crsh $(srcdir)/defineFail.crsh" \
-		ANS="no" \
+		CMD="./testDefineFail" \
 		DISABLED="$(DISABLED)" \
 		$< $@
-	rm -f defineFail.db
 
+noinst_PROGRAMS += testCombined
+testCombined_SOURCES = testCombined.C
+testCombined_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testCombined.passed
-
-testCombined.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+testCombined.passed: $(TEST_EXIT_STATUS) testCombined
 	@$(RTH_RUN) \
 		TITLE="concolic database combined [$@]" \
-		CMD="./crsh/crsh $(srcdir)/combined.crsh" \
-		ANS="no" \
+		CMD="./testCombined" \
 		DISABLED="$(DISABLED)" \
 		$< $@
-	rm -f combined.db
 
+noinst_PROGRAMS += testExport
+testExport_SOURCES = testExport.C
+testExport_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testExport.passed
-
-testExport.passed: $(srcdir)/defaultcrsh.conf crsh/crsh sampleExecutable
+testExport.passed: $(TEST_EXIT_STATUS) testExport sampleExecutable
 	@$(RTH_RUN) \
 		TITLE="concolic database testExport [$@]" \
-		CMD="./crsh/crsh $(srcdir)/testExport.crsh" \
-		ANS="no" \
+		CMD="./testExport" \
 		DISABLED="$(DISABLED)" \
 		$< $@
-	rm -f testExport.db
 
-
+noinst_PROGRAMS += testAddressRandomization
+testAddressRandomization_SOURCES = testAddressRandomization.C
+testAddressRandomization_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testAddressRandomization.passed
-
-testAddressRandomization.passed: $(srcdir)/defaultcrsh.conf crsh/crsh sampleExecutable
+testAddressRandomization.passed: $(TEST_EXIT_STATUS) testAddressRandomization sampleExecutable
 	@$(RTH_RUN) \
 		TITLE="concolic database testAddressRandomization [$@]" \
-		CMD="./crsh/crsh $(srcdir)/testAddressRandomization.crsh" \
-		ANS="no" \
+		CMD="./testAddressRandomization" \
 		DISABLED="$(DISABLED)" \
 		$< $@
 
-TEST_TARGETS += testExecutionMonitor.passed
-
-testExecutionMonitor.passed: $(srcdir)/defaultcrsh.conf crsh/crsh rose-execution-monitor-zero sampleExecutable test-execution-monitor
-	@$(RTH_RUN) \
-		TITLE="concolic database testExecutionMonitor [$@]" \
-		CMD="./crsh/crsh $(srcdir)/testExecutionMonitor.crsh" \
-		ANS="no" \
-		DISABLED="$(DISABLED)" \
-		$< $@
-
+# This test has a problem: both this test and testPerfExecutionMonitor create test-execution-manager, which is a parallel race.
+# Commenting out both in order to consistent with the Tup build.
+#TEST_TARGETS += testExecutionMonitor.passed
+#testExecutionMonitor.passed: $(srcdir)/defaultcrsh.conf crsh/crsh rose-execution-monitor-zero sampleExecutable test-execution-monitor
+#	@$(RTH_RUN) \
+#		TITLE="concolic database testExecutionMonitor [$@]" \
+#		CMD="./crsh/crsh $(srcdir)/testExecutionMonitor.crsh" \
+#		ANS="no" \
+#		DISABLED="$(DISABLED)" \
+#		$< $@
+#
 #~ TEST_TARGETS += testPerfExecutionMonitor.passed
-
+#
 #~ testPerfExecutionMonitor.passed: $(srcdir)/defaultcrsh.conf crsh/crsh rose-execmon-linux-perf-intel-x86-64.sh sampleExecutable test-execution-monitor
 #~ 	@$(RTH_RUN) \
 #~ 		TITLE="concolic database testPerfExecutionMonitor [$@]" \
@@ -204,33 +202,36 @@ testExecutionMonitor.passed: $(srcdir)/defaultcrsh.conf crsh/crsh rose-execution
 #~		DISABLED="$(DISABLED)" \
 #~ 		$< $@
 
+noinst_PROGRAMS += testConnectNonExisting
+testConnectNonExisting_SOURCES = testConnectNonExisting.C
+testConnectNonExisting_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testConnectNonExisting.passed
-
-testConnectNonExisting.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+testConnectNonExisting.passed: $(TEST_EXIT_STATUS) testConnectNonExisting
 	@$(RTH_RUN) \
 		TITLE="concolic database testConnectNonExisting [$@]" \
-		CMD="./crsh/crsh $(srcdir)/testConnectNonExisting.crsh" \
-		ANS="no" \
+		CMD="./testConnectNonExisting" \
 		DISABLED="$(DISABLED)" \
 		$< $@
 
+noinst_PROGRAMS += testCreateOverwrites
+testCreateOverwrites_SOURCES = testCreateOverwrites.C
+testCreateOverwrites_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testCreateOverwrites.passed
-
-testCreateOverwrites.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+testCreateOverwrites.passed: $(TEST_EXIT_STATUS) testCreateOverwrites
 	@$(RTH_RUN) \
 		TITLE="concolic database testCreateOverwrites [$@]" \
-		CMD="./crsh/crsh $(srcdir)/testCreateOverwrites.crsh" \
-		ANS="no" \
+		CMD="./testCreateOverwrites" \
 		DISABLED="$(DISABLED)" \
 		$< $@
 
+noinst_PROGRAMS += testConnect
+testConnect_SOURCES = testConnect.C
+testConnect_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testConnect.passed
-
-testConnect.passed: $(srcdir)/defaultcrsh.conf crsh/crsh
+testConnect.passed: $(TEST_EXIT_STATUS) testConnect
 	@$(RTH_RUN) \
 		TITLE="concolic database testConnect [$@]" \
-		CMD="./crsh/crsh $(srcdir)/testConnect.crsh" \
-		ANS="no" \
+		CMD="./testConnect" \
 		DISABLED="$(DISABLED)" \
 		$< $@
 
