@@ -1,13 +1,24 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_H
 #define ROSE_BinaryAnalysis_Concolic_H
 
+// Which database implementation should be used
+// Version 1 was implemented as part of ROSE in 2019 and supports only SQLite
+// Version 2 is from Sawyer and supports SQLite and PostgreSQL
+#ifndef ROSE_CONCOLIC_DB_VERSION
+#define ROSE_CONCOLIC_DB_VERSION 1
+#endif
+
 // ROSE headers
 #include <Diagnostics.h>
 #include <Partitioner2/BasicTypes.h>
 #include <rose_isnan.h>
 #include <rose_strtoull.h>
 #include <RoseException.h>
-#include <SqlDatabase.h>
+#if ROSE_CONCOLIC_DB_VERSION == 1
+    #include <SqlDatabase.h>
+#else
+    #include <Sawyer/Database.h>
+#endif
 
 // Non-ROSE headers
 #include <boost/filesystem.hpp>
@@ -125,9 +136,10 @@ public:
     /** Referenc-counting pointer to a @ref Specimen. */
     typedef Sawyer::SharedPointer<Specimen> Ptr;
 
-private:
+    /** Binary data, such as for the specimen content. */
     typedef std::vector<uint8_t> BinaryData;
 
+private:
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;          // protects the following data members
     std::string  name_;                                  // name of specimen (e.g., for debugging)
     BinaryData   content_;                               // content of the binary executable file
@@ -146,8 +158,8 @@ private:
 
 protected:
     Specimen()
-    : mutex_(), name_(), content_(), read_only_(false), empty_(false)
-    {}
+        : read_only_(false), empty_(false)
+        {}
 
 public:
     /** Allocating constructor.
@@ -174,7 +186,7 @@ public:
 
     /** Test whether this object is empty.
      *
-     *  Returns true if a binary executable is associated with this specimen, false otherwise. See also, @ref open and @ref close.
+     *  Returns true if no binary executable is associated with this specimen, false otherwise. See also, @ref open and @ref close.
      *
      *  Thread safety: This method is thread-safe. */
     bool isEmpty() const;
@@ -233,11 +245,10 @@ private:
     std::string name_;                                  // name for debugging
     std::string executor_;                              // name of execution environment
     Specimen::Ptr specimen_;                            // the thing to run
-
     std::vector<std::string> args_;                     // command line arguments
     std::vector<EnvValue>    env_;                      // environment variables
-    Sawyer::Optional<double> concrete_rank_;            // rank after testing
-    bool                     concolically_tested;       // true if test was run concolically
+    Sawyer::Optional<size_t> concolicResult_;           // non-empty if concolically tested
+    Sawyer::Optional<double> concreteRank_;             // rank after testing
 
 protected:
     TestCase() {}
@@ -296,28 +307,44 @@ public:
     void env(std::vector<EnvValue> envvars);
     /** @} */
 
-    /** Property: Whether this test case has been run concolically.
+    /** Property: Result of concolic testing.
+     *
+     *  At this time, the result is meaningless and only used to indicate whether concolic testing has been performed.
      *
      * @{ */
-    bool hasConcolicTest() const;
-    void hasConcolicTest(bool);
+    Sawyer::Optional<size_t> concolicResult() const {
+        return concolicResult_;
+    }
+    void concolicResult(const Sawyer::Optional<size_t> &x) {
+        concolicResult_ = x;
+    }
     /** @} */
 
-    /** sets the status of the concolic test to true. */
-    void concolicTest(bool);
+    /** Predicate testing whether this test case has been run concolically. */
+    bool hasConcolicTest() const;
 
-    /** returns if the test has been run concretely. */
+    /** Property: Sorting rank resulting from concrete test.
+     *
+     * @{ */
+    Sawyer::Optional<double> concreteRank() const;
+    void concreteRank(Sawyer::Optional<double> val);
+    /** @} */
+
+    /** Predicate testing whether this test case has been run concretely. */
     bool hasConcreteTest() const;
 
-    /** returns the concrete rank. */
-    Sawyer::Optional<double> concreteRank() const;
-
-    /** sets the concrete rank. */
-    void concreteRank(Sawyer::Optional<double> val);
+    /** Property: Name of execution environment.
+     *
+     * @{ */
+    const std::string& executor() const {
+        return executor_;
+    }
+    void executor(const std::string &x) {
+        executor_ = x;
+    }
+    /** @} */
 
     // We'll need to add additional information about how to run the specimen:
-    //   1. Command-line arguments (argc, argv)
-    //   2. Environment varaibles (envp)
     //   3. Auxilliary vector (auxv)
     //   4. System calls that provide input (e.g., virtual file system, network, etc.)
     // Some of this information might need to be separated into subclasses that support different architectures since the
@@ -546,7 +573,7 @@ namespace Concolic {
 
 /** Test suite.
  *
- *  A <em>test suite</em> is a coherent collection of test cases. The test suite usuall starts with a single "seed" test case
+ *  A <em>test suite</em> is a coherent collection of test cases. The test suite usually starts with a single "seed" test case
  *  and contains additional test cases generated by the concolic executor. All test cases within a test suite use the same
  *  concrete executor and measure the same user-defined execution properties. For example, the database might contain one test
  *  suite based on "/bin/grep" and another test suite running "/bin/cat".  Or it might have two test suites both running
@@ -613,6 +640,9 @@ public:
     ObjectId(const ObjectId& rhs)
         : Super(rhs) {}
 
+    explicit ObjectId(const Sawyer::Optional<size_t> &id)
+        : Super(id) {}
+
     /** Construct by parsing a string.
      *
      * This constructor creates an object ID by parsing it from a string. The string should consist of optional white space,
@@ -670,13 +700,13 @@ typedef ObjectId<TestCase>  TestCaseId;                 /**< Database ID for tes
  *  object is always connected to exactly one database and limits the scope of its operations to exactly one test suite (except
  *  where noted).
  *
- *  A @ref Database object refers to persistent storage through a URL using ROSE's @ref SqlDatabase layer. This supports both
- *  PostgreSQL databases and SQLite3 databases and the the possibility of adding other RDMSs later.
+ *  A @ref Database object refers to persistent storage and supports both PostgreSQL databases and SQLite3 databases and the
+ *  the possibility of adding other RDMSs later.
  *
  *  Objects within a database have an ID number, and these ID numbers are type-specific. When an object is inserted (copied)
  *  into a database a new ID number is returned. The @ref Database object memoizes the association between object IDs and
  *  objects. */
-class Database: public Sawyer::SharedObject, boost::noncopyable {
+class Database: public Sawyer::SharedObject, public Sawyer::SharedFromThis<Database>, boost::noncopyable {
 public:
     /** Reference counting pointer to @ref Database. */
     typedef Sawyer::SharedPointer<Database> Ptr;
@@ -686,12 +716,11 @@ public:
     typedef ::Rose::BinaryAnalysis::Concolic::TestCaseId  TestCaseId;
 
 private:
-    SqlDatabase::ConnectionPtr                            dbconn_; // holds connection to database
-
-    // The lock protects the following concurrent accesses
-    //   - memoized data
-    //   - testSuiteId_
-    //~ mutable SAWYER_THREAD_TRAITS::Mutex                   mutex_;
+#if ROSE_CONCOLIC_DB_VERSION == 1
+    SqlDatabase::ConnectionPtr dbconn_;                 // connection to database
+#else
+    Sawyer::Database::Connection connection_;
+#endif
 
     // Memoization of ID to object mappings
     Sawyer::Container::BiMap<SpecimenId, Specimen::Ptr>   specimens_;
@@ -701,15 +730,27 @@ private:
     TestSuiteId testSuiteId_;                           // database scope is restricted to this single test suite
 
 protected:
-    Database()
-    : dbconn_(),  specimens_(), testCases_(), testSuites_(), testSuiteId_()
-    {}
+    Database() {}
 
 public:
     /** Open an existing database.
      *
+     *  The database's current test suite is set to the latest created test suite. It can be reset to no test suite if desired by setting
+     *  the @ref testSuite property to nothing.
+     *
      *  Throws an @ref Exception if the database does not exist. */
     static Ptr instance(const std::string &url);
+
+    /** Low-level database connection. */
+#if ROSE_CONCOLIC_DB_VERSION == 1
+    SqlDatabase::ConnectionPtr connection() {
+        return dbconn_;
+    }
+#else
+    Sawyer::Database::Connection connection() {
+        return connection_;
+    }
+#endif
 
     /** Create a new database and test suite.
      *
@@ -772,7 +813,7 @@ public:
     /** Reconstitute a object from a database ID.
      *
      *  The association between object and ID is memoized. If @p update is yes and a memoized object is being returned, then
-     *  also updates the object with the current values from the database.
+     *  also updates the object with the current values from the database. If the ID is invalid then an exception is thrown.
      *
      * @{ */
     TestSuite::Ptr object(TestSuiteId, Update::Flag update = Update::YES);
@@ -780,11 +821,13 @@ public:
     Specimen::Ptr object(SpecimenId, Update::Flag update = Update::YES);
     /** @} */
 
+#if ROSE_CONCOLIC_DB_VERSION == 1
     /** Reconstitute an object from a database ID as part of a subquery.
      *
      *  Thread safety: not thread safe (assumes that it is called from a thread-safe context)
      */
     Specimen::Ptr object_ns(SqlDatabase::TransactionPtr tx, SpecimenId id);
+#endif
 
     /** Returns an ID number for an object, optionally writing to the database.
      *
@@ -808,6 +851,7 @@ public:
         id(obj);
     }
 
+#if ROSE_CONCOLIC_DB_VERSION == 1
     /** Returns an ID number for an object, optionally writing to the database.
      *
      * The functions are executed in the context of some other transaction.
@@ -817,6 +861,7 @@ public:
     TestSuiteId id_ns(SqlDatabase::TransactionPtr, const TestSuite::Ptr&, Update::Flag update = Update::YES);
     TestCaseId id_ns(SqlDatabase::TransactionPtr,  const TestCase::Ptr&, Update::Flag update = Update::YES);
     SpecimenId id_ns(SqlDatabase::TransactionPtr,  const Specimen::Ptr&, Update::Flag update = Update::YES);
+#endif
 
     /** Finds a test suite by name or ID.
      *
@@ -856,9 +901,10 @@ public:
 
     /** Extract RBA data from the database into a file.
      *
-     *  The ROSE Binary Analysis (RBA) data associated with the indicated specimen is copied from the database into the specified
-     *  file. The is created if it doesn't exist, or truncated if it does exist. If the specimen does not have associated RBA data
-     *  or if any data could not be copied to the file, then an @ref Exception is thrown. The specimen ID must be valid.
+     *  The ROSE Binary Analysis (RBA) data associated with the indicated specimen is copied from the database into the
+     *  specified file. The file is created if it doesn't exist, or truncated if it does exist. If the specimen does not have
+     *  associated RBA data or if any data could not be copied to the file, then an @ref Exception is thrown. The specimen ID
+     *  must be valid.
      *
      *  Thread safety: Not thread safe. */
     void extractRbaFile(const boost::filesystem::path&, SpecimenId);
@@ -870,23 +916,27 @@ public:
      *  Thread safety: Not thread safe. */
     void eraseRba(SpecimenId);
 
-    /** Associate TestCase w/ TestSuite
+    /** Associate TestCase w/ TestSuite.
+     *
+     *  Normally a test case is associated with a test suite when the test case is created in the database by virtue of the
+     *  database being scoped to a current test suite.  However, this function can be used to assign the test case to a
+     *  different test suite. Both IDs must be valid.
      *
      * Thread safety: thread safe
      */
-   void assocTestCaseWithTestSuite(TestCaseId testcase, TestSuiteId testsuite);
+   void assocTestCaseWithTestSuite(TestCaseId, TestSuiteId);
 
    /** Returns @p n test cases without concrete results.
     *
     * Thread safety: thread safe
     */
-   std::vector<Database::TestCaseId> needConcreteTesting(size_t n = UNLIMITED);
+   std::vector<TestCaseId> needConcreteTesting(size_t n = UNLIMITED);
 
    /** Returns @p n test cases without concolic results.
     *
     * Thread safety: thread safe
     */
-   std::vector<Database::TestCaseId> needConcolicTesting(size_t n = UNLIMITED);
+   std::vector<TestCaseId> needConcolicTesting(size_t n = UNLIMITED);
 
    /** Updates a test case and its results.
     *
@@ -897,11 +947,16 @@ public:
     */
    void insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutor::Result& details);
 
-   /** Tests if there are more test cases that require testing.
+   /** Tests if there are more test cases that require concrete testing.
     *
     * Thread safety: thread safe
     */
-   bool hasUntested() const;
+   bool hasUntested();
+
+private:
+#if ROSE_CONCOLIC_DB_VERSION == 2
+    static Ptr create(const std::string &url, const Sawyer::Optional<std::string> &testSuiteName);
+#endif
 };
 
 

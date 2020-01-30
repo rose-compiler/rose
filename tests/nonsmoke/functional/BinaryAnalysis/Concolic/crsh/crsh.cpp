@@ -526,61 +526,56 @@ std::vector<T> mkVector(const std::list<T>& lst)
   return std::vector<T>(lst.begin(), lst.end());
 }
 
-
+// Avoid "catch" in order to more easily debug
 void
-Crsh::test(const char* ts, const char* tst, Annotations* usrnotes, Environment* env, InvocationDesc* inv)
-{
-  std::auto_ptr<Environment>    envguard(env);
-  std::auto_ptr<InvocationDesc> invguard(inv);
-  std::string                   suitename = conv(ts);
-  std::string                   testname  = conv(tst);
-  annotation_desc               expct     = convAnnotations(usrnotes, expect_all);
-  int                           state     = execute_success;
-  std::string                   failureMessage;
-
-  try
-  {
-    // get the object for the specimen's name
-    Specimen::Ptr               specObj   = specimen(inv->specimen, reuse(inv->notes));
-    TestCase::Ptr               testObj   = TestCase::instance(specObj);
+Crsh::testNoCatch(const std::string &suitename, const std::string &testname, Annotations *usrnotes, Environment *env, InvocationDesc *inv) {
+    Specimen::Ptr specObj = specimen(inv->specimen, reuse(inv->notes));
+    TestCase::Ptr testObj = TestCase::instance(specObj);
 
     testObj->name(testname);
     testObj->args(mkVector(inv->arguments));
     testObj->env(mkVector(*env));
 
-    TestCaseId                  testId    = db->id(testObj);
-    TestSuite::Ptr              suiteObj  = testSuite(suitename);
-    if (!suiteObj) {
-        // if the test suite doesn't exist then create it. [Robb Matzke 2019-08-14]
+    TestCaseId testId = db->id(testObj);
+    TestSuite::Ptr suiteObj = testSuite(suitename);
+    if (!suiteObj)
         suiteObj = TestSuite::instance(suitename);
-    }
-    ASSERT_not_null(suiteObj);
-    TestSuiteId                 suiteId  = db->id(suiteObj);
+    ASSERT_always_not_null(suiteObj);
+    TestSuiteId suiteId = db->id(suiteObj);
 
-    ROSE_ASSERT(testId);
-    ROSE_ASSERT(suiteId);
+    ASSERT_always_require(testId);
+    ASSERT_always_require(suiteId);
 
     db->assocTestCaseWithTestSuite(testId, suiteId);
-  }
-  catch (const Rose::BinaryAnalysis::Concolic::Exception &e) {
-    failureMessage = e.what();
-    state = execute_failure;
-  }
-  catch (...) {
-    state = execute_failure;
-  }
+}
 
-  if ((expct != none) && (expct != state))
-  {
-    err() << "error in test: " << suitename << "::" << testname << '\n'
-          << "  exited with " << str(state) << ", expected " << str(expct)
-          << std::endl;
+static void
+emitFailure(const std::string &suiteName, const std::string &specimenName, const std::string &message) {
+    std::cerr <<"error in test suite \"" <<Rose::StringUtility::cEscape(suiteName) <<"\""
+              <<" specimen \"" <<Rose::StringUtility::cEscape(specimenName) <<"\n";
+    if (!message.empty())
+        std::cerr <<"  " <<message <<"\n";
+}
 
-    if (state == execute_failure)
-        err() <<"  failure was: " <<(failureMessage.empty() ? "unknown" : failureMessage) <<"\n";
+void
+Crsh::test(const char *ts, const char *tst, Annotations *usrnotes, Environment *env, InvocationDesc *inv) {
+    std::auto_ptr<Environment> envguard(env);
+    std::auto_ptr<InvocationDesc> invguard(inv);
+    std::string suitename = conv(ts);
+    std::string testname  = conv(tst);
+    annotation_desc expectedResult = convAnnotations(usrnotes, expect_all);
 
-    throw std::runtime_error("failed test");
-  }
+    if (expectedResult == execute_success) {
+        testNoCatch(suitename, testname, usrnotes, env, inv);
+    } else {
+        try {
+            testNoCatch(suitename, testname, usrnotes, env, inv);
+            emitFailure(suitename, testname, "expected failure but succeeded");
+            ASSERT_not_reachable("should have failed; see previous output");
+        } catch (...) {
+            // we expected this failure, so it's not actually a failure
+        }
+    }
 }
 
 
@@ -650,7 +645,7 @@ void Crsh::runTestcase(TestCaseId testcaseId, annotation_desc allnotes)
   int                        processDisposition = 0; // disposition returned by waitpid
   Concolic::LinuxExecutorPtr exec     = Concolic::LinuxExecutor::instance();
   Concolic::TestCase::Ptr    testcase = db->object(testcaseId, Concolic::Update::YES);
-  annotation_desc            expct    = expect(allnotes);
+  annotation_desc            expectedResult    = expect(allnotes);
   const bool                 addrRandomize = (randomize_address_space(allnotes) == addr_randomize);
 
   exec->useAddressRandomization(addrRandomize);
@@ -669,10 +664,10 @@ void Crsh::runTestcase(TestCaseId testcaseId, annotation_desc allnotes)
         state = execute_success;
   }
 
-  if ((expct != none) && (expct != state))
+  if ((expectedResult != none) && (expectedResult != state))
   {
     err() << "error in runTestcase: " << testcase->name() << '\n'
-          << "  exited with " << str(state) << ", expected " << str(expct) << '\n'
+          << "  exited with " << str(state) << ", expected " << str(expectedResult) << '\n'
           << "  process disposition: ";
     if (WIFEXITED(processDisposition)) {
         err() <<"exit value " <<WEXITSTATUS(processDisposition) <<"\n";
@@ -742,7 +737,7 @@ Crsh::runTest(Annotations* usrnotes, const char* testsuite, int num)
 {
   TestSuite::Ptr  suite;
   annotation_desc allnotes = convAnnotations(usrnotes, expect_all | addr_randomize_all);
-  annotation_desc expct    = expect(allnotes);
+  annotation_desc expectedResult    = expect(allnotes);
 
   if (num < 0) num = 1;
 
@@ -754,10 +749,10 @@ Crsh::runTest(Annotations* usrnotes, const char* testsuite, int num)
 
     if (!suite.getRawPointer())
     {
-      if (expct == expect_failure) return;
+      if (expectedResult == expect_failure) return;
 
       err() << "unable to find testsuite: " << tsname << '\n'
-            << "  exited with " << str(execute_failure) << ", expected " << str(expct)
+            << "  exited with " << str(execute_failure) << ", expected " << str(expectedResult)
             << std::endl;
       throw std::runtime_error("unable to find testsuite " + tsname);
     }

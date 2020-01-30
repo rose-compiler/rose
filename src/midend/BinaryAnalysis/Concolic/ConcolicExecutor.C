@@ -527,7 +527,7 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
 #endif
 
     run(db, testCase, cpu);
-    testCase->hasConcolicTest(true);
+    testCase->concolicResult(1);
     db->save(testCase);
 
     // FIXME[Robb Matzke 2020-01-16]

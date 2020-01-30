@@ -85,24 +85,9 @@ TestCase::args(std::vector<std::string> cmdlineargs)
 }
 
 bool 
-TestCase::hasConcolicTest() const 
-{ 
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
-  return concolically_tested; 
-}
-
-void
-TestCase::hasConcolicTest(bool b) {
-    concolically_tested = b;
-}
-
-void 
-TestCase::concolicTest(bool hastest)
-{
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
-  concolically_tested = hastest;
+TestCase::hasConcolicTest() const { 
+    //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return concolicResult_;
 }
 
 bool 
@@ -112,21 +97,16 @@ TestCase::hasConcreteTest() const
 }
 
 Sawyer::Optional<double> 
-TestCase::concreteRank() const
-{
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
-  return concrete_rank_;
+TestCase::concreteRank() const {
+    //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return concreteRank_;
 }
 
 void
-TestCase::concreteRank(Sawyer::Optional<double> val) 
-{
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
-  concrete_rank_ = val;
+TestCase::concreteRank(Sawyer::Optional<double> val) {
+    //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    concreteRank_ = val;
 }
-
 
 } // namespace
 } // namespace

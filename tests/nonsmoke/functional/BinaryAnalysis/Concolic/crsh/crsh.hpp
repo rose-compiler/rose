@@ -97,13 +97,9 @@ struct Crsh
     // set the execution monitor
     void setMonitor(const char* str);
 
-    // test definition
-    void test( const char*     suite,
-               const char*     test,
-               Annotations*    expct,
-               Environment*    envp,
-               InvocationDesc* invocation
-             );
+    // run the individual steps for a test
+    void test(const char *suite, const char *test, Annotations *expct, Environment *envp, InvocationDesc *invocation);
+    void testNoCatch(const std::string &suite, const std::string &test, Annotations *expct, Environment *envp, InvocationDesc *invocation);
 
     void runTestcase(TestCaseId testcaseId, annotation_desc);
     void runTest(Annotations*, const char* testsuitename, int cnt);

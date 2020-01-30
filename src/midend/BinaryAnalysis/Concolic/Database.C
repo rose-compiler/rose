@@ -2,6 +2,8 @@
 #include <rosePublicConfig.h>
 #include <BinaryConcolic.h>
 
+#if ROSE_CONCOLIC_DB_VERSION == 1
+
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -790,7 +792,7 @@ namespace BinaryAnalysis {
                                           : Double_opt()
                                                   );
       obj.concreteRank(concreteTest_opt);
-      obj.concolicTest(it.get_i32(3));
+      obj.concolicResult(it.get_i32(3));
     }
     // @}
 
@@ -1820,9 +1822,8 @@ Database::needConcolicTesting(size_t num)
 }
 
 bool
-Database::hasUntested() const
-{
-  return queryIds<TestCase>(dbconn_, testSuiteId_, QY_ALL_NEED_CONCRETE, QY_NEED_CONCRETE, 1).size();
+Database::hasUntested() {
+    return queryIds<TestCase>(dbconn_, testSuiteId_, QY_ALL_NEED_CONCRETE, QY_NEED_CONCRETE, 1).size();
 }
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -1941,3 +1942,5 @@ void writeSqlStmts(std::ostream& os)
 } // namespace
 } // namespace
 } // namespace
+
+#endif
