@@ -1,5 +1,6 @@
 #include <rose.h>
 #include <BinaryConcolic.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 using namespace Rose::BinaryAnalysis::Concolic;
 
@@ -38,3 +39,12 @@ main() {
     TestCaseId testCaseId = createDatabase(dbUrl);
     checkDatabase(dbUrl, testCaseId);
 }
+
+#else
+
+#include <iostream>
+int main() {
+    std::cerr <<"concolic testing is not enabled\n";
+}
+
+#endif

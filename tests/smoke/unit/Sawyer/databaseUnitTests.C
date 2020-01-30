@@ -205,7 +205,7 @@ int main() {
 
 #else
 
-#include <iostram>
+#include <iostream>
 int main() {
     std::cerr <<"not tested; needs C++11 or later\n";
 }

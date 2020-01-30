@@ -2,9 +2,8 @@
 // The schema is not identical to that of the first implementation.
 
 #include <sage3basic.h>
-#include <rosePublicConfig.h>
 #include <BinaryConcolic.h>
-
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #if ROSE_CONCOLIC_DB_VERSION == 2
 
 #include <MemoryMap.h>
@@ -19,9 +18,15 @@
 #include <boost/archive/xml_oarchive.hpp>
 #include <ctime>
 #include <fstream>
+
+#ifdef ROSE_HAVE_SQLITE3
 #include <Sawyer/DatabaseSqlite.h>
-#if 0 // DEBUGGING [Robb Matzke 2020-01-24]
+#endif
+
+#ifdef ROSE_HAVE_LIBPQXX
+#if 0 // [Robb Matzke 2020-02-03]: not officially supported yet
 #include <Sawyer/DatabasePostgresql.h>
+#endif
 #endif
 
 namespace Rose {
@@ -567,4 +572,5 @@ Database::hasUntested() {
 } // namespace
 } // namespace
 
+#endif
 #endif

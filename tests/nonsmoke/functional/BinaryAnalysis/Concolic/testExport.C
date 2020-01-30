@@ -1,5 +1,6 @@
 #include <rose.h>
 #include <BinaryConcolic.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <boost/process/search_path.hpp>
 
@@ -80,3 +81,12 @@ int main() {
         db->insertConcreteResults(testCase, *result);
     }
 }
+
+#else
+
+#include <iostream>
+int main() {
+    std::cerr <<"concolic testing is not enabled\n";
+}
+
+#endif

@@ -1,15 +1,14 @@
 #include <rose.h>
 #include <BinaryConcolic.h>
-
-#include <boost/process/search_path.hpp>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #ifndef DB_URL
 #define DB_URL "sqlite://testAddressRandomization.db"
 #endif
 
-using namespace Rose::BinaryAnalysis::Concolic;
 
 int main() {
+    using namespace Rose::BinaryAnalysis::Concolic;
     auto db = Database::create(DB_URL, "withAslr");
     auto withAslr = db->testSuite();
     auto specimen = Specimen::instance("./sampleExecutable");
@@ -38,3 +37,12 @@ int main() {
         ASSERT_always_require(WIFEXITED(status) && WEXITSTATUS(status) == 0);
     }
 }
+
+#else
+
+#include <iostream>
+int main() {
+    std::cerr <<"concolic testing is not enabled\n";
+}
+
+#endif

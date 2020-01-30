@@ -1,5 +1,6 @@
 #include <rose.h>
 #include <BinaryConcolic.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <boost/process/search_path.hpp>
 
@@ -41,3 +42,12 @@ int main() {
         ASSERT_always_require2(testSuite->name() == "tail-family", testSuite->name());
     }
 }
+
+#else
+
+#include <iostream>
+int main() {
+    std::cerr <<"concolic testing is not enabled\n";
+}
+
+#endif

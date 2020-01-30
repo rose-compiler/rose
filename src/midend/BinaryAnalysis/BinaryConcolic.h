@@ -1,5 +1,25 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_H
 #define ROSE_BinaryAnalysis_Concolic_H
+#include <rosePublicConfig.h>
+
+// When should concolic testing be enabled (ROSE_ENABLE_CONCOLIC_TESTING)
+//
+//   1. If the user specifically asks for it by defining ROSE_ENABLE_CONCOLIC_TESTING then enable it even it it won't
+//      compile. This is mainly for testing; users shouldn't normally explicitly enable concolic testing.
+//
+//   2. Otherwise, concolic testing should be enabled if all the following are satisfied:
+//
+//      a. The compiler is C++11 or later.
+//
+//      b. Either or both of SQLite and PostgreSQL are available.
+//
+#if !defined(ROSE_ENABLE_CONCOLIC_TESTING) && __cplusplus >= 201103L && (defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX))
+#define ROSE_ENABLE_CONCOLIC_TESTING
+#endif
+
+// The concolic testing headers and source files are empty unless concolic tsting is enabled.
+
+#ifdef  ROSE_ENABLE_CONCOLIC_TESTING
 
 // Which database implementation should be used
 // Version 1 was implemented as part of ROSE in 2019 and supports only SQLite
@@ -83,7 +103,11 @@ enum Flag { NO, YES };
 // Exceptions, errors, etc.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Diagnostic facility for concolic testing. */
 extern Sawyer::Message::Facility mlog;
+
+// Internal: called by Rose::Diagnostics::initialize
+void initDiagnostics();
 
 /** Base class for exceptions for concolic testing. */
 class Exception: public Rose::Exception {
@@ -1098,4 +1122,5 @@ BOOST_CLASS_EXPORT_KEY2( Rose::BinaryAnalysis::Concolic::LinuxExecutor::Result,
                        )
 #endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
+#endif
 #endif

@@ -1,5 +1,6 @@
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <boost/lexical_cast.hpp>
 #include "io-utility.h"
@@ -90,3 +91,5 @@ Specimen::content() const {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

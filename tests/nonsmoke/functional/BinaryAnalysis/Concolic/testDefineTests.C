@@ -1,5 +1,6 @@
 #include <rose.h>
 #include <BinaryConcolic.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <boost/process/search_path.hpp>
 
@@ -24,3 +25,12 @@ int main() {
     t02->args(std::vector<std::string>{"-l", "--author"});
     db->save(t02);
 }
+
+#else
+
+#include <iostream>
+int main() {
+    std::cerr <<"concolic testing is not enabled\n";
+}
+
+#endif

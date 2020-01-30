@@ -17,22 +17,13 @@ AM_LDFLAGS = $(ROSE_RPATHS)
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
-# Tests are disabled if SQLite3 is not installed since that's the only database driver they currently support.
-if ROSE_USE_SQLITE_DATABASE
-DISABLED =
-else
-DISABLED = no supported database driver
-endif
+# All tests are always compiled and run, even if concolic testing is disabled.  The tests themselves check
+# whether they should test anything or trivially succeed. This approach uses only one mechanism for making that
+# determination (#ifdef ROSE_ENABLE_CONCOLIC_TESTING) rather than one mechanism for each build system.
 
 ########################################################################################################################
-# Tests
+# Utilities and sample codes
 ########################################################################################################################
-
-#------------------------------------------------------------------------------------------------------------------------
-# Test concolic database operations
-
-#
-# utilities and sample codes
 
 # a.1) sample program to load and store in DB
 noinst_PROGRAMS += sampleExecutable
@@ -53,6 +44,13 @@ rose_execution_monitor_zero_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 noinst_PROGRAMS += testConcolicDB
 testConcolicDB_SOURCES = testConcolicDB.C configDB.h
 testConcolicDB_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testConcolicDB.passed
+testConcolicDB.passed: $(TEST_EXIT_STATUS) testConcolicDB
+	@$(RTH_RUN) \
+		TITLE="concolic database [$@]" \
+		CMD="./testConcolicDB" \
+		ANS="no" \
+		$< $@
 
 # a.5) execution wrapper for perf to intercept signals
 #~ noinst_PROGRAMS += rose-perf-execution-wrapper
@@ -78,19 +76,11 @@ testConcolicDB_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 #~ 	chmod u+x $@
 
 #	
-# targets	
+# targets
 
-TEST_TARGETS += testConcolicDB.passed
-
-testConcolicDB.passed: $(TEST_EXIT_STATUS) testConcolicDB
-	@$(RTH_RUN) \
-		TITLE="concolic database [$@]" \
-		CMD="./testConcolicDB" \
-		ANS="no" \
-		DISABLED="$(DISABLED)" \
-		$< $@
-
-# b) test various executions
+########################################################################################################################
+# Other tests, all run concurrently
+########################################################################################################################
 
 noinst_PROGRAMS += testOpenDb
 testOpenDb_SOURCES = testOpenDb.C
@@ -100,7 +90,6 @@ testOpenDb.passed: $(TEST_EXIT_STATUS) testOpenDb
 	@$(RTH_RUN) \
 		TITLE="concolic database openDB [$@]" \
 		CMD="./testOpenDb" \
-		DISABLED="$(DISABLED)" \
 		$< $@
 
 noinst_PROGRAMS += testDefineTests
@@ -111,7 +100,6 @@ testDefineTests.passed: $(TEST_EXIT_STATUS) testDefineTests
 	@$(RTH_RUN) \
 		TITLE="concolic database defineTests [$@]" \
 		CMD="./testDefineTests" \
-		DISABLED="$(DISABLED)" \
 		$< $@
 
 
@@ -123,7 +111,6 @@ testRun1.passed: $(TEST_EXIT_STATUS) testRun1
 	@$(RTH_RUN) \
 		TITLE="concolic database run1 [$@]" \
 		CMD="./testRun1" \
-		DISABLED="$(DISABLED)" \
 		$< $@
 
 noinst_PROGRAMS += testRun10
@@ -134,7 +121,6 @@ testRun10.passed: $(TEST_EXIT_STATUS) testRun10
 	@$(RTH_RUN) \
 		TITLE="concolic database run10 [$@]" \
 		CMD="./testRun10" \
-		DISABLED="$(DISABLED)" \
 		$< $@
 
 noinst_PROGRAMS += testDefineFail
@@ -145,7 +131,6 @@ testDefineFail.passed: $(TEST_EXIT_STATUS) testDefineFail
 	@$(RTH_RUN) \
 		TITLE="concolic database defineFail [$@]" \
 		CMD="./testDefineFail" \
-		DISABLED="$(DISABLED)" \
 		$< $@
 
 noinst_PROGRAMS += testCombined
@@ -156,7 +141,6 @@ testCombined.passed: $(TEST_EXIT_STATUS) testCombined
 	@$(RTH_RUN) \
 		TITLE="concolic database combined [$@]" \
 		CMD="./testCombined" \
-		DISABLED="$(DISABLED)" \
 		$< $@
 
 noinst_PROGRAMS += testExport
@@ -167,7 +151,6 @@ testExport.passed: $(TEST_EXIT_STATUS) testExport sampleExecutable
 	@$(RTH_RUN) \
 		TITLE="concolic database testExport [$@]" \
 		CMD="./testExport" \
-		DISABLED="$(DISABLED)" \
 		$< $@
 
 noinst_PROGRAMS += testAddressRandomization
@@ -178,7 +161,6 @@ testAddressRandomization.passed: $(TEST_EXIT_STATUS) testAddressRandomization sa
 	@$(RTH_RUN) \
 		TITLE="concolic database testAddressRandomization [$@]" \
 		CMD="./testAddressRandomization" \
-		DISABLED="$(DISABLED)" \
 		$< $@
 
 # This test has a problem: both this test and testPerfExecutionMonitor create test-execution-manager, which is a parallel race.
@@ -189,7 +171,6 @@ testAddressRandomization.passed: $(TEST_EXIT_STATUS) testAddressRandomization sa
 #		TITLE="concolic database testExecutionMonitor [$@]" \
 #		CMD="./crsh/crsh $(srcdir)/testExecutionMonitor.crsh" \
 #		ANS="no" \
-#		DISABLED="$(DISABLED)" \
 #		$< $@
 #
 #~ TEST_TARGETS += testPerfExecutionMonitor.passed
@@ -199,7 +180,6 @@ testAddressRandomization.passed: $(TEST_EXIT_STATUS) testAddressRandomization sa
 #~ 		TITLE="concolic database testPerfExecutionMonitor [$@]" \
 #~ 		CMD="./crsh/crsh $(srcdir)/testPerfExecutionMonitor.crsh" \
 #~ 		ANS="no" \
-#~		DISABLED="$(DISABLED)" \
 #~ 		$< $@
 
 noinst_PROGRAMS += testConnectNonExisting
@@ -210,7 +190,6 @@ testConnectNonExisting.passed: $(TEST_EXIT_STATUS) testConnectNonExisting
 	@$(RTH_RUN) \
 		TITLE="concolic database testConnectNonExisting [$@]" \
 		CMD="./testConnectNonExisting" \
-		DISABLED="$(DISABLED)" \
 		$< $@
 
 noinst_PROGRAMS += testCreateOverwrites
@@ -221,7 +200,6 @@ testCreateOverwrites.passed: $(TEST_EXIT_STATUS) testCreateOverwrites
 	@$(RTH_RUN) \
 		TITLE="concolic database testCreateOverwrites [$@]" \
 		CMD="./testCreateOverwrites" \
-		DISABLED="$(DISABLED)" \
 		$< $@
 
 noinst_PROGRAMS += testConnect
@@ -232,7 +210,6 @@ testConnect.passed: $(TEST_EXIT_STATUS) testConnect
 	@$(RTH_RUN) \
 		TITLE="concolic database testConnect [$@]" \
 		CMD="./testConnect" \
-		DISABLED="$(DISABLED)" \
 		$< $@
 
 noinst_PROGRAMS += testTestCase
@@ -244,7 +221,6 @@ testTestCase.passed: $(TEST_EXIT_STATUS) testTestCase
 	@$(RTH_RUN)				\
 		TITLE="test test cases [$@]"	\
 		CMD="./testTestCase"		\
-		DISABLED="$(DISABLED)"		\
 		$< $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -263,7 +239,6 @@ testConcolicExecutor.passed: $(TEST_EXIT_STATUS) testConcolicExecutor $(testConc
 	@$(RTH_RUN)												\
 	    TITLE="concolic executor [$@]"									\
 	    CMD="$$(pwd)/testConcolicExecutor $(testConcolicExecutor_flags) $(testConcolicExecutor_specimen)"	\
-	    DISABLED="$(DISABLED)"										\
 	    $< $@
 
 ###############################################################################################################################

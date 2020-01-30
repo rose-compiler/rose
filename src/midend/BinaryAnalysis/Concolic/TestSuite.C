@@ -1,5 +1,6 @@
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -42,3 +43,5 @@ TestSuite::printableName(const Database::Ptr &db) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

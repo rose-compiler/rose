@@ -1,7 +1,7 @@
 #include <sage3basic.h>
-#include <rosePublicConfig.h>
 #include <BinaryConcolic.h>
 
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #if ROSE_CONCOLIC_DB_VERSION == 1
 
 #include <boost/iostreams/device/mapped_file.hpp>
@@ -1943,4 +1943,5 @@ void writeSqlStmts(std::ostream& os)
 } // namespace
 } // namespace
 
+#endif
 #endif

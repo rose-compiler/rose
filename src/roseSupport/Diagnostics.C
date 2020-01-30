@@ -7,6 +7,7 @@
 #include "AsmUnparser.h"                                // Rose::BinaryAnalysis::AsmUnparser
 #include "BinaryBestMapAddress.h"                       // Rose::BinaryAnalysis::BestMapAddress
 #include "BinaryCodeInserter.h"                         // Rose::BinaryAnalysis::CodeInserter
+#include "BinaryConcolic.h"                             // Rose::BinaryAnalysis::Concolic
 #include "BinaryDataFlow.h"                             // Rose::BinaryAnalysis::DataFlow
 #include "BinaryDebugger.h"                             // Rose::BinaryAnalysis::Debugger
 #include "BinaryFeasiblePath.h"                         // Rose::BinaryAnalysis::FeasiblePath
@@ -24,7 +25,6 @@
 namespace Rose {
 namespace BinaryAnalysis {
     namespace CallingConvention { void initDiagnostics(); }
-    namespace Concolic { void initDiagnostics(); }
     namespace InstructionSemantics2 { void initDiagnostics(); }
     namespace Partitioner2 { void initDiagnostics(); }
     namespace PointerDetection { void initDiagnostics(); }
@@ -123,7 +123,9 @@ void initialize() {
         BinaryAnalysis::Debugger::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
         BinaryAnalysis::CodeInserter::initDiagnostics();
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING                     // conditionally defined in BinaryConcolic.h
         BinaryAnalysis::Concolic::initDiagnostics();
+#endif
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::Disassembler::initDiagnostics();
         BinaryAnalysis::FeasiblePath::initDiagnostics();

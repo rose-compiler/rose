@@ -1,5 +1,6 @@
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <boost/lexical_cast.hpp>
 
@@ -111,3 +112,5 @@ TestCase::concreteRank(Sawyer::Optional<double> val) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif
