@@ -5,7 +5,7 @@
 // Version 1 was implemented as part of ROSE in 2019 and supports only SQLite
 // Version 2 is from Sawyer and supports SQLite and PostgreSQL
 #ifndef ROSE_CONCOLIC_DB_VERSION
-#define ROSE_CONCOLIC_DB_VERSION 1
+#define ROSE_CONCOLIC_DB_VERSION 2
 #endif
 
 // ROSE headers
