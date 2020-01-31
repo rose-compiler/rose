@@ -132,14 +132,18 @@ createThisShadowDecl (const string& name,
 
   SageInterface::prependStatement(decl, func_body);
   // Liao (1/i28/2020): When used in conjunction with header file unparsing we need to set the physical file id on entirety of the subtree being inserted.
-  int physical_file_id = func_body->get_startOfConstruct()->get_physical_file_id();
-  string physical_filename_from_id = Sg_File_Info::getFilenameFromID(physical_file_id);
-  if (enable_debug)
+  SgSourceFile* sfile = getEnclosingSourceFile (func_body);
+  if (sfile->get_unparseHeaderFiles())
   {
-    printf ("scope for function call transformation: physical_filename_from_id = %s \n",physical_filename_from_id.c_str());
-  }
+    int physical_file_id = func_body->get_startOfConstruct()->get_physical_file_id();
+    string physical_filename_from_id = Sg_File_Info::getFilenameFromID(physical_file_id);
+    if (enable_debug)
+    {
+      printf ("scope for function call transformation: physical_filename_from_id = %s \n",physical_filename_from_id.c_str());
+    }
 
-  SageBuilder::fixupSourcePositionFileSpecification(decl,physical_filename_from_id);
+    SageBuilder::fixupSourcePositionFileSpecification(decl,physical_filename_from_id);
+  }
   //decl->set_isModified(true);
   return decl;
 }
