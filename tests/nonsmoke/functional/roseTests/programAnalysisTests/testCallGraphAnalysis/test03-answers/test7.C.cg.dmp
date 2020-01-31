@@ -8,5 +8,5 @@ B::f3 ->
 B::f4 ->
 B::f5 -> A::f3 B::f1 B::f2 B::f3
 foo1 -> B::B foo1 k
-k -> A::f3 B::f2 B::f3 foo1
+k -> A::f3 B::f1 B::f2 B::f3 foo1
 main -> B::B k
