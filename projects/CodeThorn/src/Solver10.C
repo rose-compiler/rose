@@ -33,6 +33,7 @@ void Solver10::run() {
     logger[ERROR]<< "solver 10 is only compatible with the hybrid analyzer." << endl;
     exit(1);
   }
+
   // display initial information
   int maxInputVal = *( std::max_element(_analyzer->_inputVarValues.begin(), _analyzer->_inputVarValues.end()) ); //required for parsing to characters
   _analyzer->reachabilityResults.init(_analyzer->getNumberOfErrorLabels()); // set all reachability results to unknown

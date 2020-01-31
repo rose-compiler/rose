@@ -48,10 +48,12 @@ all: RERS_BINARY
 %.o: %.C
 	$(CXX) $(ROSE_INCLUDE_OPTIONS) -I$(ROSE_BUILD_DIR) $(CXXFLAGS)  $(CPPFLAGS) -I$(BOOST_HOME)/include -I$(SPOT_PREFIX)/include -I$(SPOT_PREFIX)/include/spot $< $(BOOST_CPPFLAGS) -c 
 
+# ROSE_INLCUDE_OPTIONS necessary because rose_config.h is included
 # Create a specialized hybrid analyzer for the given RERS problem.
 # Called by "generate_rers_hybrid_analyzer" script.
-$(TOOLNAME3)_$(PROBLEM): $(OBJECT_FILES_REMOTE) $(HYBRID_DIR)/$(PROBLEM)_copy_functions.o 
-	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS) $(CPPFLAGS) $(OBJECT_FILES_REMOTE) $(PROBLEM)_copy_functions.o $(ROSE_LIBS_OPTIONS) $(BOOST_CPPFLAGS) -L$(BOOST_HOME)/lib -lcodethorn -lcodethornltl -lbdd -lspot -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM) $(Z3_LINK_OPTIONS)
+$(TOOLNAME3)_$(PROBLEM): $(OBJECT_FILES_REMOTE) $(HYBRID_DIR)/$(PROBLEM)_copy_functions.o
+	rm -f codethorn.o
+	$(CXX) $(ROSE_INCLUDE_OPTIONS) -DRERS_SPECIALIZATION $(CXXFLAGS) $(CPPFLAGS) $(OBJECT_FILES_REMOTE) $(PROBLEM)_copy_functions.o $(ROSE_SRC_DIR)/projects/CodeThorn/src/codethorn.C $(ROSE_LIBS_OPTIONS) $(BOOST_CPPFLAGS) -L$(BOOST_HOME)/lib -lcodethorn -lltlthorn -lbdd -lspot -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM) $(Z3_LINK_OPTIONS)
 	@echo "Linked hybrid analyzer $(TOOLNAME3)_$(PROBLEM)."
 
 # -L $(Z3_PREFIX)/lib
