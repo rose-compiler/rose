@@ -65,6 +65,17 @@ esac
 #     satisfying the -c restriction.
 # -l: Prepend task number to lines of stdout/err
 #     CAUTION: -l causes long lines to be wrapped with an extra newline
+# --mpibind=<on|off|v>
+#     2020-01-30 - Now defaults to "on" onRZGenie, RZAlastor, and Catalyst. 
+#     From Ryan Day, LC Hotline: We have rolled out a new version of LC's 
+#     affinity and binding scripts (mpibind) on RZGenie, RZAlastor, and Catalyst...
+#     ...mpibind is turned on by default for jobs that request whole nodes with 
+#     either --exclusive or by requesting 36 tasks per node. Mpibind will 
+#     continue to be off by default for jobs that do not request full nodes. 
+#     Users can also still explicitly turn mpibind on or off with 'srun 
+#     --mpibind=on' or 'srun --mpibind=off'. You can also see details of 
+#     how the binding script is setting task affinity and binding with 'srun 
+#     --mpibind=v'. 
 # -N, --nodes=<minnodes[-maxnodes]>
 #     Request that a minimum of minnodes nodes be allocated to this job. A 
 #     maximum node count may also be specified with maxnodes. If only one 
@@ -122,8 +133,8 @@ esac
 # $ srun_do -c [cores/node] [mycommand]
 
 unset_strict
-log_then_run srun -n 1 -p pdebug -t ${max_srun_time} "$@"
-#log_then_run srun -N 1 -n 1 -p pdebug -t ${max_srun_time} "$@"
+log_then_run srun --mpibind=off -n 1 -p pdebug -t ${max_srun_time} "$@"
+#log_then_run srun --mpibind=off -N 1 -n 1 -p pdebug -t ${max_srun_time} "$@"
 srun_status=$?
 set_strict
 
