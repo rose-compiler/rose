@@ -997,11 +997,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
   SgType* operandType=node->get_operand_type();
   if(operandType) {
     CodeThorn::TypeSize typeSize=AbstractValue::getTypeSizeMapping()->determineTypeSize(operandType);
+    AbstractValue sizeValue;
     if(typeSize==0) {
-      logger[WARN]<<"sizeof: could not determine size (= zero) of argument "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
+      logger[WARN]<<"sizeof: could not determine size (= zero) of argument, assuming top "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
+      sizeValue=AbstractValue::createTop();
+    } else {
+      SAWYER_MESG(logger[TRACE])<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizeof("<<typeSize<<")"<<endl;
+      sizeValue=AbstractValue(typeSize); 
+      SAWYER_MESG(logger[TRACE])<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizevalue of sizeof("<<typeSize<<"):"<<sizeValue.toString()<<endl;
     }
-    SAWYER_MESG(logger[TRACE])<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizeof("<<typeSize<<")"<<endl;
-    AbstractValue sizeValue=AbstractValue(typeSize); 
     SingleEvalResultConstInt res;
     res.init(estate,sizeValue);
     return listify(res);
@@ -1458,7 +1462,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode) {
-  SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<endl;
+  SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
@@ -1530,9 +1534,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallArguments(SgFunctio
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp* funCall, EState estate) {
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(CodeThorn::Top()));
-  //  SAWYER_MESG(logger[TRACE])<<"Evaluating function call: "<<funCall->unparseToString()<<endl;
-  cout<<"Evaluating function call: "<<funCall->unparseToString()<<endl;
-  cout<<"AST function call: "<<AstTerm::astTermWithNullValuesToString(funCall)<<endl;
+  SAWYER_MESG(logger[TRACE])<<"Evaluating function call: "<<funCall->unparseToString()<<endl;
+  SAWYER_MESG(logger[TRACE])<<"AST function call: "<<AstTerm::astTermWithNullValuesToString(funCall)<<endl;
   if(getStdFunctionSemantics()) {
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="malloc") {
@@ -1852,13 +1855,20 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     for(int i=0;i<3;i++) {
       SAWYER_MESG(logger[TRACE])<<"memcpy argument "<<i<<": "<<memcpyArgs[i].toString(_variableIdMapping)<<endl;
     }
+    if(memcpyArgs[0].isTop()||memcpyArgs[1].isTop()||memcpyArgs[2].isTop()) {
+      if(getPrintDetectedViolations()) {
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<" : potential out of bounds access (at least one of the three arguments of function cpymem can be of any value)."<<endl;
+      }  
+      recordPotentialOutOfBoundsAccessLocation(estate.label());
+      return listify(res); // returns top
+    }
     int memRegionSizeTarget=getMemoryRegionNumElements(memcpyArgs[0]);
-    int memRegionSizeSource=getMemoryRegionNumElements(memcpyArgs[1]);
     int copyRegionElementSizeTarget=getMemoryRegionElementSize(memcpyArgs[0]);
+    int memRegionSizeSource=getMemoryRegionNumElements(memcpyArgs[1]);
     int copyRegionElementSizeSource=getMemoryRegionElementSize(memcpyArgs[1]);
-    
-    SAWYER_MESG(logger[TRACE])<<"memcpy: memRegionNumElements target:"<<memRegionSizeTarget<<" with ElementSize:"<<memRegionSizeTarget<<endl;
-    SAWYER_MESG(logger[TRACE])<<"memcpy: memRegionNumElements source:"<<memRegionSizeSource<<" with ElementSize:"<<memRegionSizeSource<<endl;
+
+    SAWYER_MESG(logger[TRACE])<<"memcpy: memRegionNumElements source:"<<memRegionSizeSource<<" with ElementSize:"<<copyRegionElementSizeSource<<endl;
+    SAWYER_MESG(logger[TRACE])<<"memcpy: memRegionNumElements target:"<<memRegionSizeTarget<<" with ElementSize:"<<copyRegionElementSizeTarget<<endl;
 
     int copyRegionElementSize=0; // TODO: use AbstractValue for all sizes
     // check if size to copy is either top
@@ -1869,15 +1879,25 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
       recordPotentialOutOfBoundsAccessLocation(estate.label());
       return listify(res);
     } else if(memRegionSizeTarget!=memRegionSizeSource) {
-      // check if the element size of the to regions is different (=> conservative analysis result; will be modelled in future)
+      // check if the element size of the two regions is different (=> conservative analysis result; will be modelled in future)
       if(getPrintDetectedViolations()) {
         cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<" : potential out of bounds access (CodeThorn conservative case: source and target element size are different)."<<endl;
       }  
       recordPotentialOutOfBoundsAccessLocation(estate.label());
       return listify(res);
     } else {
-      ROSE_ASSERT(copyRegionElementSizeTarget==copyRegionElementSizeSource);
-      copyRegionElementSize=copyRegionElementSizeTarget; 
+      if(copyRegionElementSizeTarget!=copyRegionElementSizeSource) {
+        SAWYER_MESG(logger[WARN])<<"memcpy: copyRegionElementSizeTarget!=copyRegionElementSizeSource : "<<copyRegionElementSizeTarget<<"!="<<copyRegionElementSizeSource<<endl;
+        if(copyRegionElementSizeTarget!=0)
+          copyRegionElementSize=copyRegionElementSizeTarget;
+        else if(copyRegionElementSizeSource!=0)
+          copyRegionElementSize=copyRegionElementSizeSource;
+        else
+          copyRegionElementSize=std::max(copyRegionElementSizeSource,copyRegionElementSizeTarget);
+        ROSE_ASSERT(copyRegionElementSize!=0);
+      } else {
+        copyRegionElementSize=copyRegionElementSizeTarget;
+      }
     }
 
     bool errorDetected=false;
@@ -1980,6 +2000,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCa
       AbstractValue AbstractPos=AbstractValue(pos);
       AbstractValue currentPos=(stringPtr+AbstractPos);
       SAWYER_MESG(logger[DEBUG])<<"DEBUG: currentPos "<<currentPos.toString(_variableIdMapping)<<endl;
+      if(currentPos.isTop()) {
+        SAWYER_MESG(logger[DEBUG])<<"DEBUG: recording potential out of bounds access because currentPos is top. break. "<<endl;
+        recordPotentialOutOfBoundsAccessLocation(estate.label());
+        break;
+      }
 #if 0
       // TODO: not working yet because the memory region of strings are not properly registered with size yet
       // check bounds of string's memory region
