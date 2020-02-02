@@ -2052,6 +2052,7 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
   // parent rather then the scope. But as I recall there was a special corner of C++ that
   // required this sort of support.
      SgSymbol* parent_scope = NULL;
+#ifndef ROSE_USE_CLANG_FRONTEND
      if (scope != NULL)
         {
 #if 0
@@ -2074,6 +2075,7 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
                ROSE_ASSERT(parent_scope != NULL);
              }
         }
+#endif
 
 #if 0
      printf ("In buildTypedefDeclaration_nfi(): parent_scope = %p \n",parent_scope);

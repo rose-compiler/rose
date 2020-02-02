@@ -423,6 +423,54 @@ namespace IO {
 typedef std::map<int, std::string> f2n_t;
 typedef std::map<std::string, int> n2f_t;
 
+class PatchDeclStmt : public ROSE_VisitTraversal {
+  private:
+    std::map<std::string, std::vector<SgDeclarationStatement *> > declstmt_map;
+
+  public:
+    PatchDeclStmt() :
+      declstmt_map()
+    {}
+
+    virtual ~PatchDeclStmt() {};
+
+    void visit(SgNode * node) {
+      SgDeclarationStatement * declstmt = isSgDeclarationStatement(node);
+//    if (declstmt != NULL && declstmt->get_firstNondefiningDeclaration() == declstmt) {
+      if (declstmt != NULL) {
+        std::string mangled_name = declstmt->get_mangled_name();
+        declstmt_map[mangled_name].push_back(declstmt);
+      }
+    }
+
+    void apply() {
+      std::map<std::string, std::vector<SgDeclarationStatement *> >::iterator it_declvect;
+      for (it_declvect = declstmt_map.begin(); it_declvect != declstmt_map.end(); it_declvect++) {
+
+//      printf (" -> mangled_name = %s \n", it_declvect->first);
+
+        std::set<SgDeclarationStatement *> defdecls;
+        std::vector<SgDeclarationStatement *>::iterator it_declstmt;
+        for (it_declstmt = it_declvect->second.begin(); it_declstmt != it_declvect->second.end(); it_declstmt++) {
+          SgDeclarationStatement * defdecl = (*it_declstmt)->get_definingDeclaration();
+          if (defdecl != NULL) {
+            defdecls.insert(defdecl);
+          }
+        }
+        if (defdecls.size() > 0) {
+          SgDeclarationStatement * defdecl = *(defdecls.begin());
+          if (defdecls.size() > 1) {
+            printf("Warning: Found %d defining declarations for declarations with mangled name: %s (%s)\n", defdecls.size(), it_declvect->first.c_str(), defdecl->class_name().c_str());
+//          ROSE_ASSERT(false);
+          }
+          for (it_declstmt = it_declvect->second.begin(); it_declstmt != it_declvect->second.end(); it_declstmt++) {
+            (*it_declstmt)->set_definingDeclaration(defdecl);
+          }
+        }
+      }
+    }
+};
+
 void mergeFileIDs(f2n_t const & f2n, n2f_t const & n2f, f2n_t & gf2n, n2f_t & gn2f, size_t start_node) {
   std::map<int, int> idxmap;
 
@@ -560,6 +608,10 @@ void append(SgProject * project, std::list<std::string> const & astfiles) {
 //generateWholeGraphOfAST("loaded", NULL);
 
   mergeAST(project, /* skipFrontendSpecificIRnodes = */false);
+
+  PatchDeclStmt patch_declstmt;
+  patch_declstmt.traverseMemoryPool();
+  patch_declstmt.apply();
 
   AST_FILE_IO::reset();
 

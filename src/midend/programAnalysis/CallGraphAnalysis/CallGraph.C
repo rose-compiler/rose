@@ -1102,7 +1102,13 @@ CallGraphBuilder::buildCallGraph (){
   buildCallGraph(dummyFilter());
 }
 
-
+SgGraphNode * CallGraphBuilder::getGraphNodeFor(SgFunctionDeclaration * fdecl) const {
+  std::string fname = fdecl->get_mangled_name();
+  for (GraphNodes::const_iterator it = graphNodes.begin(); it != graphNodes.end(); ++it )
+    if (it->first->get_mangled_name() == fname)
+      return it->second;
+  return NULL;
+}
 
   GetOneFuncDeclarationPerFunction::result_type 
 GetOneFuncDeclarationPerFunction::operator()(SgNode* node )
