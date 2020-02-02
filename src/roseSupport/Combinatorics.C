@@ -334,12 +334,12 @@ HasherSha256Builtin::digest() {
         // Pad the message by appending an 0x80 followed by zero bytes, followed by the 8-byte big-endian message length so
         // that the total length (message length plus paddng) is a multiple of 64 bytes.
         const size_t messageSizeBytes = processedBytes_ + leftoverBytes_.size();
-        const size_t finalBlockSizeBytes = (messageSizeBytes + 1 /*0x80*/ + 8 /*length*/) % 64;
-        const size_t nZeroPadding = 0 == finalBlockSizeBytes ? 0 : 64 - finalBlockSizeBytes;
-        ASSERT_require((messageSizeBytes + 1 + nZeroPadding + 8) % 64 == 0);
+        const size_t finalBlockSizeBytes = (messageSizeBytes + 1 /*0x80*/ + 8 /*length*/) % 64; // w/out zero padding [0,63]
+        const size_t nZeroPadding = 0 == finalBlockSizeBytes ? 0 : 64 - finalBlockSizeBytes;    // bytes of zero needed [0,63]
+        ASSERT_require((messageSizeBytes + 1 + nZeroPadding + 8) % 64 == 0); // suffix wil padd message to multiple of 64 bytes
 
         // Create and hash the padding
-        uint8_t padding[64];
+        uint8_t padding[64 + 9];                        // big enough for the 0x80 and 8-byte length, plus zero padding
         padding[0] = 0x80;
         memset(padding+1, 0, nZeroPadding);
         const uint64_t messageSizeBits = 8 * messageSizeBytes;
@@ -350,7 +350,7 @@ HasherSha256Builtin::digest() {
         padding[1 + nZeroPadding + 4] = messageSizeBits >> 24;
         padding[1 + nZeroPadding + 5] = messageSizeBits >> 16;
         padding[1 + nZeroPadding + 6] = messageSizeBits >> 8;
-        padding[1 + nZeroPadding + 7] = messageSizeBits;
+        padding[1 + nZeroPadding + 7] = messageSizeBits; // max index is 1 + 63 + 7 = 73
         append(padding, 1 + nZeroPadding + 8);
         ASSERT_require(leftoverBytes_.size() == 0);
 

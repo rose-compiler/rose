@@ -282,6 +282,9 @@ public:
     /** @} */
 
     /** Command line arguments.
+     *
+     *  The arguments exclude <code>argv[0]</code> and <code>argv[argc]</code> and are just the elements in between.
+     *
      * @{ */
     std::vector<std::string> args() const;
     void args(std::vector<std::string> arguments);
@@ -293,8 +296,12 @@ public:
     void env(std::vector<EnvValue> envvars);
     /** @} */
 
-    /** returns if the test has been run concollically. */
+    /** Property: Whether this test case has been run concolically.
+     *
+     * @{ */
     bool hasConcolicTest() const;
+    void hasConcolicTest(bool);
+    /** @} */
 
     /** sets the status of the concolic test to true. */
     void concolicTest(bool);
@@ -791,6 +798,15 @@ public:
     TestCaseId id(const TestCase::Ptr&, Update::Flag update = Update::YES);
     SpecimenId id(const Specimen::Ptr&, Update::Flag update = Update::YES);
     /** @} */
+
+    /** Saves an object.
+     *
+     *  This is a more self-documenting name for calling @ref id for the sole purpose of saving (creating or updating) an
+     *  object's database representation. */
+    template<class ObjectPointer>
+    void save(const ObjectPointer &obj) {
+        id(obj);
+    }
 
     /** Returns an ID number for an object, optionally writing to the database.
      *

@@ -803,6 +803,11 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
 SgSourceFile* 
 Outliner::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
 {
+  if (enable_debug)  
+  {
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
+  }
+ 
   SgSourceFile* new_file = NULL;
   SgProject * project = getEnclosingNode<SgProject> (s);
   ROSE_ASSERT(project != NULL);
@@ -824,15 +829,15 @@ Outliner::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
   // remove pre-existing file with the same name
   remove (new_file_name.c_str());
 
-#if 0
-      printf ("In Outliner::generateNewSourceFile(): Calling buildFile(): new_file_name = %s \n",new_file_name.c_str());
-#endif
+  if (enable_debug)
+    printf ("In Outliner::generateNewSourceFile(): Calling buildFile(): new_file_name = %s \n",new_file_name.c_str());
+
   // par1: input file, par 2: output file name, par 3: the project to attach the new file
   new_file = isSgSourceFile(buildFile(new_file_name, new_file_name,project));
 
-#if 0
-      printf ("DONE: In Outliner::generateNewSourceFile(): Calling buildFile(): new_file_name = %s \n",new_file_name.c_str());
-#endif
+
+  if (enable_debug)
+    printf ("DONE: In Outliner::generateNewSourceFile(): Calling buildFile(): new_file_name = %s \n",new_file_name.c_str());
 
   //new_file = isSgSourceFile(buildFile(new_file_name, new_file_name));
   ROSE_ASSERT(new_file != NULL);
@@ -845,6 +850,10 @@ Outliner::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
  * 
  */
 std::string Outliner::generateLibSourceFileName(SgBasicBlock* target) {
+  if (enable_debug)  
+  {
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
+  }
     std::string lib_file_name;
  
     // s could be transformation generated, so use the root SgFile for file name
@@ -861,6 +870,10 @@ std::string Outliner::generateLibSourceFileName(SgBasicBlock* target) {
         lib_file_name = output_path + "/" + lib_file_name;
     }
     
+    if (enable_debug)  
+    {
+      cout<<"lib_file_name="<< lib_file_name <<endl;
+    }
     return lib_file_name; 
 }
 
@@ -870,7 +883,10 @@ std::string Outliner::generateLibSourceFileName(SgBasicBlock* target) {
  * the lib source file's name convention is rose_input_lib.[c|cxx] by default. Or overrided by file_name.  
  */
 SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
-
+  if (enable_debug)  
+  {
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
+  }
     SgSourceFile* new_file = NULL;
     SgProject * project = getEnclosingNode<SgProject> (target);
     ROSE_ASSERT(project != NULL);
@@ -881,16 +897,14 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
 
     std::string new_file_name =   generateLibSourceFileName (target);
 
-#if 0
-    printf ("Before strip path: new_file_name = %s \n",new_file_name.c_str());
-#endif
+    if (enable_debug) 
+      printf ("Before strip path: new_file_name = %s \n",new_file_name.c_str());
 
     new_file_name = Rose::utility_stripPathFromFileName(new_file_name);
 
-#if 0
-    printf ("After strip path: new_file_name = %s \n",new_file_name.c_str());
-#endif
-    
+    if (enable_debug) 
+      printf ("After strip path: new_file_name = %s \n",new_file_name.c_str());
+
     // Search if the lib file already exists. 
     SgFilePtrList file_list = project->get_files();
     SgFilePtrList::iterator iter;
@@ -924,15 +938,14 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
       }        
     } // end for SgFile
 
-#if 0
-    printf ("In Outliner::getLibSourceFile(): new_file = %p \n",new_file);
-#endif
+    if (enable_debug) 
+      printf ("In Outliner::getLibSourceFile(): new_file = %p \n",new_file);
     
     if (new_file == NULL)
     {
-#if 0
-      printf ("In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
-#endif
+      if (enable_debug)
+        printf ("In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",  input_file_name.c_str());
+
       // par1: input file, par 2: output file name, par 3: the project to attach the new file
         // to simplify the lib file generation, we copy entire original source file to it, then later append outlined functions
       new_file = isSgSourceFile(buildSourceFile(input_file_name, new_file_name, project));
@@ -941,6 +954,9 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
       printf ("DONE: In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
       printf (" --- new_file_name = %s \n",new_file_name.c_str());
 #endif
+
+      if (enable_debug)
+        printf ("DONE: In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
 
       // buildFile() will set filename to be input file name by default. 
       // we have to rename the input file to be output file name. This is used to avoid duplicated creation later on
@@ -962,6 +978,12 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
 #endif
 
     }
+
+    if (enable_debug)  
+    {
+      cout<<"Exiting "<< __PRETTY_FUNCTION__ <<endl;
+    }
+
     //new_file = isSgSourceFile(buildFile(new_file_name, new_file_name));
     ROSE_ASSERT(new_file != NULL);
     return new_file;

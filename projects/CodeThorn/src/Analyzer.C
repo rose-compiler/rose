@@ -141,7 +141,7 @@ CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const Co
 	    }
 	    deferedWorkList.push_back(newEStatePtr);
 	    if(isVerificationErrorEState(&newEState)) {
-	      logger[TRACE]<<"STATUS: detected verification error state ... terminating early"<<endl;
+	      SAWYER_MESG(logger[TRACE])<<"STATUS: detected verification error state ... terminating early"<<endl;
 	      // set flag for terminating early
 	      reachabilityResults.reachable(0);
 	      _firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
@@ -201,9 +201,9 @@ EState CodeThorn::Analyzer::combine(const EState* es1, const EState* es2) {
   ROSE_ASSERT(es1->constraints()==es2->constraints()); // pointer equality
   if(es1->callString!=es2->callString) {
     if(getOptionOutputWarnings()) {
-      logger[WARN]<<"combining estates with different callstrings at label:"<<es1->label().toString()<<endl;
-      logger[WARN]<<"cs1: "<<es1->callString.toString()<<endl;
-      logger[WARN]<<"cs2: "<<es2->callString.toString()<<endl;
+      SAWYER_MESG(logger[WARN])<<"combining estates with different callstrings at label:"<<es1->label().toString()<<endl;
+      SAWYER_MESG(logger[WARN])<<"cs1: "<<es1->callString.toString()<<endl;
+      SAWYER_MESG(logger[WARN])<<"cs2: "<<es2->callString.toString()<<endl;
     }
   }
   PState ps1=*es1->pstate();
@@ -576,7 +576,7 @@ CodeThorn::Analyzer::VariableDeclarationList CodeThorn::Analyzer::computeUsedGlo
     }
     return usedGlobalVariableDeclarationList;
   } else {
-    logger[ERROR] << "no global scope.";
+    SAWYER_MESG(logger[ERROR]) << "no global scope.";
     exit(1);
   }
 }
@@ -673,7 +673,7 @@ void CodeThorn::Analyzer::addToWorkList(const EState* estate) {
 #pragma omp critical(ESTATEWL)
   {
     if(!estate) {
-      logger[ERROR]<<"INTERNAL: null pointer added to work list."<<endl;
+      SAWYER_MESG(logger[ERROR])<<"INTERNAL: null pointer added to work list."<<endl;
       exit(1);
     }
     switch(_explorationMode) {
@@ -709,7 +709,7 @@ void CodeThorn::Analyzer::addToWorkList(const EState* estate) {
       break;
     }
     default:
-      logger[ERROR]<<"unknown exploration mode."<<endl;
+      SAWYER_MESG(logger[ERROR])<<"unknown exploration mode."<<endl;
       exit(1);
     }
   }
@@ -1002,8 +1002,8 @@ PState CodeThorn::Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVar
     SgExpression* exp=*i;
     SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
     if(assignInit==nullptr) {
-      logger[WARN]<<"expected assign initializer but found "<<exp->unparseToString();
-      logger[WARN]<<"AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+      SAWYER_MESG(logger[WARN])<<"expected assign initializer but found "<<exp->unparseToString();
+      SAWYER_MESG(logger[WARN])<<"AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
       AbstractValue newVal=AbstractValue::createTop();
       newPState.writeToMemoryLocation(arrayElemId,newVal);
     } else {
@@ -1108,6 +1108,12 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
           PState newPState=*currentEState.pstate();
           return createEState(targetLabel,cs,newPState,cset);
         }
+        if(getVariableIdMapping()->hasReferenceType(initDeclVarId)) {
+          // TODO: initialization of references not supported yet
+          SAWYER_MESG(logger[WARN])<<"initialization of references not supported yet (not added to state) "<<decl->unparseToString()<<endl;
+          PState newPState=*currentEState.pstate();
+          return createEState(targetLabel,cs,newPState,cset);
+        }
         // has aggregate initializer
         if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
           SgArrayType* arrayType=isSgArrayType(aggregateInitializer->get_type());
@@ -1185,7 +1191,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
           ConstraintSet cset=*estate.constraints();
           return createEState(targetLabel,cs,newPState,cset);
         } else {
-          logger[WARN] << "unsupported initializer in declaration: "<<decl->unparseToString()<<" not adding to state (assuming arbitrary value)"<<endl;
+          SAWYER_MESG(logger[WARN]) << "unsupported initializer in declaration: "<<decl->unparseToString()<<" not adding to state (assuming arbitrary value)"<<endl;
           PState newPState=*currentEState.pstate();
           return createEState(targetLabel,cs,newPState,cset);
         }
@@ -1201,7 +1207,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
             SAWYER_MESG(logger[TRACE])<<"Number of elements in array is 0 (from variableIdMapping) - evaluating expression"<<endl;
             std::vector<SgExpression*> arrayDimExps=SageInterface::get_C_array_dimensions(*arrayType);
             if(arrayDimExps.size()>1) {
-              logger[WARN]<<"multi-dimensional arrays not supported yet. Only linear arrays are supported. Not added to state (assuming arbitrary value)."<<endl;
+              SAWYER_MESG(logger[WARN])<<"multi-dimensional arrays not supported yet. Only linear arrays are supported. Not added to state (assuming arbitrary value)."<<endl;
               // not adding it to state. Will be used as unknown.
               PState newPState=*currentEState.pstate();
               return createEState(targetLabel,cs,newPState,cset);
@@ -1725,7 +1731,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
 
   if(args.getBool("rers-binary")) {
     //initialize the global variable arrays in the linked binary version of the RERS problem
-    logger[DEBUG]<< "init of globals with arrays for "<< _numberOfThreadsToUse << " threads. " << endl;
+    SAWYER_MESG(logger[DEBUG])<< "init of globals with arrays for "<< _numberOfThreadsToUse << " threads. " << endl;
     RERS_Problem::rersGlobalVarsArrayInitFP(_numberOfThreadsToUse);
     RERS_Problem::createGlobalVarAddressMapsFP(this);
   }
@@ -1777,7 +1783,7 @@ PState CodeThorn::Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhs
         ROSE_ASSERT(rhsVarId.isValid());
         rhsIntVal=rhsVarId.getIdCode();
       } else {
-        logger[WARN]<< "access to variable "<<variableIdMapping.uniqueVariableName(rhsVarId)<< " id:"<<rhsVarId.toString()<<" on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
+        SAWYER_MESG(logger[WARN])<< "access to variable "<<variableIdMapping.uniqueVariableName(rhsVarId)<< " id:"<<rhsVarId.toString()<<" on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
         rhsIntVal=CodeThorn::Top();
         isRhsIntVal=true; 
       }
@@ -3128,8 +3134,14 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
           // skip write access, just create new state (no effect)
           estateList.push_back(createEState(edge.target(),cs,pstate2,*(estate->constraints())));
         } else {
-          cerr<<"Error: not a pointer value (or top) in dereference operator: lhs-value:"<<lhsPointerValue.toLhsString(getVariableIdMapping())<<" lhs: "<<lhs->unparseToString()<<endl;
-          exit(1);
+          SAWYER_MESG(logger[WARN])<<"Error: not a pointer value (or top) in dereference operator: lhs-value:"<<lhsPointerValue.toLhsString(getVariableIdMapping())<<" lhs: "<<lhs->unparseToString()<<" : assuming change of any memory location."<<endl;
+          getExprAnalyzer()->recordPotentialNullPointerDereferenceLocation(estate->label());
+          // specific case a pointer expr evaluates to top. Dereference operation
+          // potentially modifies any memory location in the state.
+          PState pstate2=*(estate->pstate());
+          // iterate over all elements of the state and merge with rhs value
+          pstate2.combineValueAtAllMemoryLocations((*i).result);
+          estateList.push_back(createEState(edge.target(),cs,pstate2,*(estate->constraints())));
         }
       } else {
         //cout<<"DEBUG: lhsPointerValue:"<<lhsPointerValue.toString(getVariableIdMapping())<<endl;

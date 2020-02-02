@@ -7,6 +7,7 @@
 #include <Disassembler.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Message.h>
+#include <Sawyer/Optional.h>
 #include <Sawyer/Trace.h>
 
 namespace Rose {
@@ -23,7 +24,7 @@ public:
     /** Shared-ownership pointer to @ref Debugger. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<Debugger> Ptr;
 
-    /** How to detach from a process when this object is destroyed. */
+    /** How to detach from a process when the debugger is destroyed. */
     enum DetachMode {
         KILL,                                           /**< Kill the process. */
         DETACH,                                         /**< Simply detach leaving process in current state. */
@@ -46,6 +47,7 @@ public:
      *  A specimen can be either an executable program or a running process. */
     class Specimen {
         BitFlags<Flag> flags_;                          // operational flags
+        unsigned long persona_;                         // personality(2) flags
 
         // Members for running a program
         boost::filesystem::path program_;               // ;full path of executable program
@@ -58,23 +60,23 @@ public:
     public:
         /** Default construct an empty specimen descriptor. */
         Specimen()
-            : pid_(-1) {}
+            : persona_(getPersonality()), pid_(-1) {}
         
         /** Construct a specimen description for a process. */
         Specimen(int pid) /*implicit*/
-            : flags_(DEFAULT_FLAGS), pid_(pid) {}
+            : flags_(DEFAULT_FLAGS), persona_(getPersonality()), pid_(pid) {}
 
         /** Construct a specimen description for a program with no arguments. */
         Specimen(const boost::filesystem::path &name) /*implicit*/
-            : flags_(DEFAULT_FLAGS), program_(name), pid_(-1) {}
+            : flags_(DEFAULT_FLAGS), persona_(getPersonality()), program_(name), pid_(-1) {}
 
         /** Construct a specimen description for a program with arguments. */
         Specimen(const boost::filesystem::path &name, const std::vector<std::string> &args)
-            : flags_(DEFAULT_FLAGS), program_(name), arguments_(args), pid_(-1) {}
+            : flags_(DEFAULT_FLAGS), persona_(getPersonality()), program_(name), arguments_(args), pid_(-1) {}
 
         /** Construct a specimen description from combined program and arguments. */
         Specimen(const std::vector<std::string> &nameAndArgs) /*implicit*/
-            : flags_(DEFAULT_FLAGS), program_(nameAndArgs.front()),
+            : flags_(DEFAULT_FLAGS), persona_(getPersonality()), program_(nameAndArgs.front()),
               arguments_(nameAndArgs.begin()+1, nameAndArgs.end()), pid_(-1) {
         }
         
@@ -136,6 +138,33 @@ public:
         }
         /** @} */
 
+        /** Property: Personality flags.
+         *
+         *  These flags are identical to the bit flags used by the Linux @c personality function. For instance, to turn off
+         *  address space randomization, include sys/personality.h and pass @c ADDR_NO_RANDOMIZE. See also, @ref
+         *  randomizedAddresses property.
+         *
+         * @{ */
+        unsigned long persona() const {
+            return persona_;
+        }
+        void persona(unsigned long bits) {
+            persona_ = bits;
+        }
+        /** @} */
+
+        /** Property: Whether to randomize addresses of a process.
+         *
+         *  This is actually a @ref persona property, but it's used so commonly that we have a separate API for turning it
+         *  on and off. The alleviates the user from having to test what kind of machine he's compiling on and using conditional
+         *  compilation to include the correct files and use the correct constants.  If the host machine doesn't support adjusting
+         *  whether address space randomization is used, then setting this property is a no-op and false is always returned.
+         *
+         * @{ */
+        bool randomizedAddresses() const;
+        void randomizedAddresses(bool);
+        /** @} */
+        
         /** Property: Process ID.
          *
          *  This is the identification number for a specimen process to which the debugger should be attached. Setting
@@ -164,7 +193,7 @@ private:
 
     Specimen specimen_;                                 // description of specimen being debugged
     int child_;                                         // process being debugged (int, not pid_t, for Windows portability)
-    DetachMode howDetach_;                              // how to detach from the subordinate
+    DetachMode autoDetach_;                             // how to detach from the subordinate when deleting this debugger
     int wstat_;                                         // last status from waitpid
     AddressIntervalSet breakpoints_;                    // list of breakpoint addresses
     int sendSignal_;                                    // pending signal
@@ -180,14 +209,14 @@ private:
     //----------------------------------------
 protected:
     Debugger()
-        : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
+        : child_(0), autoDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
           disassembler_(NULL) {
         init();
     }
 
     /** Construct a debugger attached to a specimen. */
     explicit Debugger(const Specimen &specimen)
-        : child_(0), howDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
+        : child_(0), autoDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
           disassembler_(NULL) {
         init();
         attach(specimen);
@@ -195,7 +224,7 @@ protected:
 
 public:
     ~Debugger() {
-        detach();
+        detach(autoDetach_);
     }
 
     //----------------------------------------
@@ -216,14 +245,24 @@ public:
     // Attaching to subordinate
     //----------------------------------------
 public:
-    /** Attach to a specimen. */
-    void attach(const Specimen&);
+    /** Attach to a specimen.
+     *
+     *  The @p onDelete argument specifies what to do with the subordinate process if this debugger object is deleted
+     *  while the subordinate is still attached. If @p onDelete is not specified, then a reasonable value is chosen: for
+     *  subordinates that existed prior to attaching (e.g., Linux process ID), the default detach mechanism is either @ref
+     *  DETACH or @ref NOTHING depending on whether the @ref Specimen ATTACH flag was set or clear. For subordniates that
+     *  are created by this @ref attach method (such as ELF executables), the detach mechanism is @ref KILL. */
+    void attach(const Specimen&, Sawyer::Optional<DetachMode> onDelete = Sawyer::Nothing());
+    /** @} */
 
     /** Returns true if attached to a subordinate.  Return value is the subordinate process ID. */
     int isAttached() { return child_; }
 
-    /** Detach from the subordinate. */
-    void detach();
+    /** Detach from the subordinate.
+     *
+     *  If a detach mode is specified then use that mechanism to detatch. Otherwise use whatever mechanism was chosen as
+     *  the default during the @ref attach operation. */
+    void detach(Sawyer::Optional<DetachMode> mode = Sawyer::Nothing());
 
     /** Terminate the subordinate. */
     void terminate();
@@ -360,6 +399,10 @@ private:
     // Open /dev/null with the specified flags as the indicated file descriptor, closing what was previously on that
     // descriptor. If an error occurs, the targetFd is closed anyway.
     void devNullTo(int targetFd, int openFlags);
+
+    // Get/set personality in a portable way
+    static unsigned long getPersonality();
+    static void setPersonality(unsigned long);
 };
 
 std::ostream& operator<<(std::ostream&, const Debugger::Specimen&);

@@ -123,7 +123,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     std::string rose_include_path;
     bool in_install_tree = roseInstallPrefix(rose_include_path);
     if (in_install_tree) {
-        rose_include_path += "/include-staging/";
+        rose_include_path += "/include/";
     }
     else {
         rose_include_path = std::string(ROSE_AUTOMAKE_TOP_BUILDDIR) + "/include-staging/";
@@ -297,7 +297,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
     finishSageAST(translator);
 
-    return 1;
+    return 0;
 }
 
 void finishSageAST(ClangToSageTranslator & translator) {

@@ -14308,12 +14308,17 @@ void SageInterface::fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* 
 
 //! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelR
 //efExp are created transparently as needed.
-void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value)
+void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value,
+                                           SgLabelSymbol::label_type_enum label_type, SgScopeStatement* label_scope)
    {
      ROSE_ASSERT (stmt != NULL);
      ROSE_ASSERT (label_value >0 && label_value <=99999); //five digits for Fortran label
 
-     SgScopeStatement* label_scope = getEnclosingFunctionDefinition(stmt);
+  // Added optional label_type and label_scope [Rasmussen 2019.01.20]
+     if (label_scope == NULL)
+        {
+           label_scope = getEnclosingFunctionDefinition(stmt);
+        }
      ROSE_ASSERT (label_scope != NULL);
      SgName label_name(StringUtility::numberToString(label_value));
      SgLabelSymbol * symbol = label_scope->lookup_label_symbol (label_name);
@@ -14336,8 +14341,27 @@ void SageInterface::setFortranNumericLabel(SgStatement* stmt, int label_value)
 
   // SgLabelRefExp
      SgLabelRefExp* ref_exp = buildLabelRefExp(symbol);
-     stmt->set_numeric_label(ref_exp);
      ref_exp->set_parent(stmt);
+
+     switch(label_type)
+       {
+         case SgLabelSymbol::e_start_label_type:
+            {
+              stmt->set_numeric_label(ref_exp);
+              break;
+            }
+         case SgLabelSymbol::e_end_label_type:
+            {
+              stmt->set_end_numeric_label(ref_exp);
+              break;
+            }
+         default:
+            {
+               std::cerr << "SageInterface::setFortranNumericLabel: unimplemented for label_type " << label_type << "\n";
+               ROSE_ASSERT(0);  // NOT IMPLEMENTED
+            }
+       }
+
    }
 
 
@@ -14396,11 +14420,13 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
 
   // Liao 4/23/2010,  Fix function symbol
   // This could happen when users copy a function, then rename it (func->set_name()), and finally insert it to a scope
+  // Added SgProgramHeaderStatement [Rasmussen, 2020.01.19]
      SgFunctionDeclaration               * func         = isSgFunctionDeclaration(stmt);
      SgMemberFunctionDeclaration         * mfunc        = isSgMemberFunctionDeclaration(stmt);
      SgTemplateFunctionDeclaration       * tfunc        = isSgTemplateFunctionDeclaration(stmt);
      SgTemplateMemberFunctionDeclaration * tmfunc       = isSgTemplateMemberFunctionDeclaration(stmt);
      SgProcedureHeaderStatement          * procfunc     = isSgProcedureHeaderStatement(stmt);
+     SgProgramHeaderStatement            * progfunc     = isSgProgramHeaderStatement(stmt);
 
      if (tmfunc != NULL)
        assert(tmfunc->variantT() == V_SgTemplateMemberFunctionDeclaration);
@@ -14410,6 +14436,8 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
        assert(tfunc->variantT() == V_SgTemplateFunctionDeclaration);
      else if (procfunc != NULL)
         assert(procfunc->variantT() == V_SgProcedureHeaderStatement);
+     else if (progfunc != NULL)
+        assert(progfunc->variantT() == V_SgProgramHeaderStatement);
      else if (func != NULL)
        assert(func->variantT() == V_SgFunctionDeclaration || func->variantT() == V_SgTemplateInstantiationFunctionDecl);
      else assert(false);
@@ -14464,6 +14492,11 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
             printf ("In SageInterface::fixStatement(): procfunc->get_name() = %s calling lookup_function_symbol() \n",procfunc->get_name().str());
 #endif
             func_symbol = scope->lookup_function_symbol (procfunc->get_name(), procfunc->get_type());
+            assert(func_symbol != NULL);
+          }
+          else if (progfunc != NULL)
+          {
+            func_symbol = scope->lookup_function_symbol (progfunc->get_name(), progfunc->get_type());
             assert(func_symbol != NULL);
           }
           else if (func != NULL)
