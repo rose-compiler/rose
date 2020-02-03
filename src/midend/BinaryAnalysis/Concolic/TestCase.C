@@ -32,7 +32,7 @@ TestCase::name(const std::string& tcname) {
 
 std::string
 TestCase::printableName(const Database::Ptr &db) {
-    std::string retval = "test case";
+    std::string retval = "testcase";                    // no white space
     if (db) {
         if (TestCaseId id = db->id(sharedFromThis(), Update::NO))
             retval += " " + boost::lexical_cast<std::string>(*id);

@@ -30,7 +30,7 @@ TestSuite::name(const std::string& tsname) {
 
 std::string
 TestSuite::printableName(const Database::Ptr &db) {
-    std::string retval = "test suite";
+    std::string retval = "testsuite";                   // no white space
     if (db) {
         if (TestSuiteId id = db->id(sharedFromThis(), Update::NO))
             retval += " " + boost::lexical_cast<std::string>(*id);
