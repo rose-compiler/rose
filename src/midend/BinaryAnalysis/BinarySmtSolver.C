@@ -413,7 +413,7 @@ SmtSolver::check() {
         latestMemoizationId_ = h;
     }
 
-    if (SAT_YES == retval)
+    if (SAT_YES == retval && !wasTrivial)
         parseEvidence();
     return retval;
 }

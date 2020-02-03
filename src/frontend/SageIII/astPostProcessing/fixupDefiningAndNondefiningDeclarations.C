@@ -368,10 +368,12 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                               printf ("Resetting the parent of the templateClassInstantiation = %p = %s to its SgClassType \n",
                                    templateClassInstantiation,templateClassInstantiation->get_name().str());
 #endif
+#if 0
+                           // DQ (12/22/2019): Comment out output spew from multiple files on the command line seeing the same class definitions (no longer shared across files).
                               printf ("In FixupAstDefiningAndNondefiningDeclarations::visit() templateClassInstantiation->get_parent() = %p \n",templateClassInstantiation->get_parent());
                               if (templateClassInstantiation->get_parent() != NULL)
                                    printf ("In FixupAstDefiningAndNondefiningDeclarations::visit() templateClassInstantiation->get_parent() = %s \n",templateClassInstantiation->get_parent()->class_name().c_str());
-
+#endif
                            // templateClassInstantiation->set_parent(classType);
                               if (templateClassInstantiation->get_parent() == NULL)
                                  {
@@ -381,7 +383,10 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                                  }
                                 else
                                  {
+#if 0
+                                // DQ (12/22/2019): Comment out output spew from multiple files on the command line seeing the same class definitions (no longer shared across files).
                                    printf ("templateClassInstantiation parent is already set, skip resetting it to SgClassType \n");
+#endif
                                  }
 
                               lookForDeclarationInAssociatedScope = false;

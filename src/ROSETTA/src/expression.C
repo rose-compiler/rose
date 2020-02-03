@@ -496,7 +496,7 @@ Grammar::setUpExpressions ()
 
 #if 0
   // DQ (2/7/2011): Removed this data member since this general of a level of support for this concept is
-  // problematics.  We can't exclude it from SgExprListExp for example and we also want it to be defined 
+  // problematic.  We can't exclude it from SgExprListExp for example and we also want it to be defined 
   // as DEF_TRAVERSAL.
   // DQ (2/7/2011): Moved the originalExpressionTree data member to the SgExpression since it is required in
   // a wide range of IR nodes already (SgValueExp, SgCastExp, SgPntrArrRefExp, SgSubtractOp, SgVarRefExp, 
@@ -716,6 +716,11 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
      AddressOfOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                   "../Grammar/Expression.code" );
+
+  // DQ (1/12/2020): Adding support for the originalExpressionTree.
+     AddressOfOp.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // DQ (1/20/2019): This should be a prefix operator and so it can't use the default  
   // automatically generated version of the post_construction_initialization function.
@@ -2761,11 +2766,25 @@ Grammar::setUpExpressions ()
      UnknownArrayOrFunctionReference.setDataPrototype ( "SgExprListExp*", "expression_list", "= NULL",
            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+
      PseudoDestructorRefExp.setFunctionPrototype ( "HEADER_PSEUDO_DESTRUCTOR_REF", "../Grammar/Expression.code" );
      PseudoDestructorRefExp.setDataPrototype ( "SgType*", "object_type", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      PseudoDestructorRefExp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/18/2020): Adding support for name qualification (see Cxx11_tests/test2020_56.C).
+     PseudoDestructorRefExp.setDataPrototype ( "int", "name_qualification_length", "= 0",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/18/2020): Adding support for name qualification (see Cxx11_tests/test2020_56.C).
+     PseudoDestructorRefExp.setDataPrototype("bool","type_elaboration_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/18/2020): Adding support for name qualification (see Cxx11_tests/test2020_56.C).
+     PseudoDestructorRefExp.setDataPrototype("bool","global_qualification_required","= false",
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // DQ (12/31/2007): Support for named actual arguments to functions (fortran specific).
      ActualArgumentExpression.setFunctionPrototype ( "HEADER_ACTUAL_ARGUMENT_EXPRESSION", "../Grammar/Expression.code" );

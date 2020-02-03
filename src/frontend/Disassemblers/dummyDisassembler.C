@@ -173,9 +173,9 @@ SgAsmFloatType::BitRange SgAsmFloatType::significandBits() const { return BitRan
 SgAsmFloatType::BitRange SgAsmFloatType::exponentBits() const { return BitRange(); }
 size_t SgAsmFloatType::signBit() const { return 0; }
 uint64_t SgAsmFloatType::exponentBias() const { return 0; }
-unsigned SgAsmFloatType::flags() const { return 0; }
+SgAsmFloatType::Flags SgAsmFloatType::flags() const { return 0; }
 bool SgAsmFloatType::gradualUnderflow() const { return false; }
-bool SgAsmFloatType::normalizedSignificand() const { return false; }
+bool SgAsmFloatType::implicitBitConvention() const { return false; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmVectorType

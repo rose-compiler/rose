@@ -2088,7 +2088,9 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
           string cppIndentifier = line.substr(positionOfFirstCharacterOfCppIdentifier,cppIdentifierLength);
 
        // Some names will convert to integer values
-       // long integerValue = -1;
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+          long integerValue = -1;
+#endif
           if (spaceAfterHash == true)
              {
             // This is likely going to be a number but test2005_92.C demonstrates a case where this is not true.
@@ -2306,6 +2308,9 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
      printf ("In ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST: Opening file %s for reading comments and CPP directives \n",filename.c_str());
 #endif
+#if 0
+     printf (" --- attributeList.size() = %" PRIuPTR " \n",attributeList.size());
+#endif
 
      ifstream targetFile (filename.c_str());
      if (targetFile.is_open())
@@ -2317,7 +2322,10 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
           while ( targetFile.eof() == false )
              {
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
-               printf ("At top of loop over lines in the file ... lineCounter = %d \n",lineCounter);
+               printf ("\nAt top of loop over lines in the file ... lineCounter = %d \n",lineCounter);
+#endif
+#if 0
+               printf (" --- attributeList.size() = %" PRIuPTR " \n",attributeList.size());
 #endif
                getline (targetFile,line);
 
@@ -2391,11 +2399,16 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                               ROSE_ASSERT(false);
                             }
                        }
+#if 0
+                    printf ("line = %s \n",line.c_str());
+#endif
 
                  // bool isComment = isFortran90Comment(line);
                     if (isComment == true)
                        {
-                      // printf ("This is a comment, set to PreprocessingInfo::FortranStyleComment \n");
+#if 0
+                         printf ("This is a comment, set to PreprocessingInfo::FortranStyleComment \n");
+#endif
                          cppDeclarationKind = PreprocessingInfo::FortranStyleComment;
                        }
                   }
@@ -2547,7 +2560,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
 
             // printf ("increment lineCounter = %d \n",lineCounter);
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
-               printf ("At bottom of loop over lines in the file ... incremented lineCounter = %d attributeList.size() = %" PRIuPTR " \n",lineCounter,attributeList.size());
+               printf ("At bottom of loop over lines in the file ... incremented lineCounter = %d attributeList.size() = %" PRIuPTR " \n\n",lineCounter,attributeList.size());
 #endif
              }
 

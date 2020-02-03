@@ -1,61 +1,64 @@
 include_rules
 
-run $(tool_compile_linkexe) attributeUnitTests.C
-run $(test) attributeUnitTests
+ifeq (@(ENABLE_TESTS),yes)
 
-run $(tool_compile_linkexe) optionalUnitTests.C
-run $(test) optionalUnitTests
+    run $(tool_compile_linkexe) attributeUnitTests.C
+    run $(test) attributeUnitTests
 
-run $(tool_compile_linkexe) listUnitTests.C
-run $(test) listUnitTests
+    run $(tool_compile_linkexe) optionalUnitTests.C
+    run $(test) optionalUnitTests
 
-run $(tool_compile_linkexe) mapUnitTests.C
-run $(test) mapUnitTests
+    run $(tool_compile_linkexe) listUnitTests.C
+    run $(test) listUnitTests
 
-run $(tool_compile_linkexe) setUnitTests.C
-run $(test) setUnitTests
+    run $(tool_compile_linkexe) mapUnitTests.C
+    run $(test) mapUnitTests
 
-run $(tool_compile_linkexe) distinctListUnitTests.C
-run $(test) distinctListUnitTests
+    run $(tool_compile_linkexe) setUnitTests.C
+    run $(test) setUnitTests
 
-run $(tool_compile_linkexe) intervalUnitTests.C
-run $(test) intervalUnitTests
+    run $(tool_compile_linkexe) distinctListUnitTests.C
+    run $(test) distinctListUnitTests
 
-run $(tool_compile_linkexe) bitvecTests.C
-run $(test) bitvecTests
+    run $(tool_compile_linkexe) intervalUnitTests.C
+    run $(test) intervalUnitTests
 
-run $(tool_compile_linkexe) denseIntegerSetUnitTests.C
-run $(test) denseIntegerSetUnitTests
+    run $(tool_compile_linkexe) bitvecTests.C
+    run $(test) bitvecTests
 
-run $(tool_compile_linkexe) addressMapUnitTests.C
-run $(test) addressMapUnitTests
+    run $(tool_compile_linkexe) denseIntegerSetUnitTests.C
+    run $(test) denseIntegerSetUnitTests
 
-run $(tool_compile_linkexe) graphUnitTests.C
-run $(test) graphUnitTests
+    run $(tool_compile_linkexe) addressMapUnitTests.C
+    run $(test) addressMapUnitTests
 
-run $(tool_compile_linkexe) indexedGraphDemo.C
-run $(test) indexedGraphDemo
+    run $(tool_compile_linkexe) graphUnitTests.C
+    run $(test) graphUnitTests
 
-run $(tool_compile_linkexe) graphIsomorphismTests.C
-run $(test) graphIsomorphismTests
+    run $(tool_compile_linkexe) indexedGraphDemo.C
+    run $(test) indexedGraphDemo
 
-run $(tool_compile_linkexe) intervalSetMapUnitTests.C
-run $(test) intervalSetMapUnitTests
+    run $(tool_compile_linkexe) graphIsomorphismTests.C
+    run $(test) graphIsomorphismTests
 
-run $(tool_compile_linkexe) traceUnitTests.C
-run $(test) traceUnitTests
+    run $(tool_compile_linkexe) intervalSetMapUnitTests.C
+    run $(test) intervalSetMapUnitTests
 
-run $(tool_compile_linkexe) ptrUnitTests.C
-run $(test) ptrUnitTests
+    run $(tool_compile_linkexe) traceUnitTests.C
+    run $(test) traceUnitTests
 
-run $(tool_compile_linkexe) mesgUnitTests.C
-run $(test) mesgUnitTests
+    run $(tool_compile_linkexe) ptrUnitTests.C
+    run $(test) ptrUnitTests
 
-run $(tool_compile_linkexe) markupUnitTests.C
-run $(test) markupUnitTests
+    run $(tool_compile_linkexe) mesgUnitTests.C
+    run $(test) mesgUnitTests
 
-run $(tool_compile_linkexe) cmdUnitTests.C
-run $(test) cmdUnitTests
+    run $(tool_compile_linkexe) markupUnitTests.C
+    run $(test) markupUnitTests
 
-run $(tool_compile_linkexe) serializationUnitTests.C
-run $(test) serializationUnitTests
+    run $(tool_compile_linkexe) cmdUnitTests.C
+    run $(test) cmdUnitTests
+
+    run $(tool_compile_linkexe) serializationUnitTests.C
+    run $(test) serializationUnitTests
+endif

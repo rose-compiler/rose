@@ -74,7 +74,7 @@ main(int argc, char *argv[]) {
         for (size_t i=0; i<insns.size(); ++i) {
             std::cout <<"    [" <<std::setw(2) <<i <<"] "
                       <<(isNoop[i] ? " X " : "   ")
-                      <<unparseInstructionWithAddress(insns[i]) <<"\n";
+                      <<partitioner.unparse(insns[i]) <<"\n";
         }
 
         if (allSequences.size() > 1) {

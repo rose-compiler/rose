@@ -116,6 +116,8 @@ Outliner::generateFuncArgName (const SgStatement* stmt)
 Outliner::Result
 Outliner::outline (SgStatement* s)
 {
+  if (enable_debug)  
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
   string func_name = generateFuncName (s);
   return outline (s, func_name);
 }
@@ -154,7 +156,15 @@ Outliner::outline (SgStatement* s, const std::string& func_name)
   {
  // return Transform::outlineBlock (s_post, func_name);
 
+#if 0
+    printf ("Calling outline block(): func_name = %s \n",func_name.c_str());
+#endif
+
     Outliner::Result returnResult = outlineBlock (s_post, func_name);
+
+#if 0
+    printf ("DONE: Calling outline block(): func_name = %s \n",func_name.c_str());
+#endif
 
 #if 0
 // This is now done in ASTtools::replaceStatement().
@@ -414,6 +424,8 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 SgBasicBlock *
 Outliner::preprocess (SgStatement* s)
 {
+  if (enable_debug)  
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
   // bool b = isOutlineable (s, enable_debug);
   bool b = isOutlineable (s, SgProject::get_verbose () >= 1);
   if (b!= true)
@@ -431,25 +443,92 @@ Outliner::preprocess (SgStatement* s)
  *  Container to store the results of one outlining transformation.
  */
 
+// DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes.
 Outliner::Result::Result (void)
-  : decl_ (0), call_ (0)
+  : decl_ (0), call_ (0),target_class_member(NULL),new_function_prototype(NULL) 
 {
 }
 
+#if 0
+// DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes.
 Outliner::Result::Result (SgFunctionDeclaration* decl,
                              SgStatement* call, SgFile* file/*=NULL*/)
-  : decl_ (decl), call_ (call), file_(file)
+  : decl_ (decl), call_ (call), file_(file),target_class_member(NULL),new_function_prototype(NULL)
 {
 }
+#else
+  // DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
+Outliner::Result::Result (SgFunctionDeclaration* decl,
+                          SgStatement* call, SgFile* file/*=NULL*/, DeferedTransformation input_deferedTransformation)
+  : decl_ (decl), call_ (call), file_(file),target_class_member(NULL),new_function_prototype(NULL),deferedTransformation(input_deferedTransformation)
+{
+}
+#endif
 
+#if 0
+// DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes.
 Outliner::Result::Result (const Result& b)
-  : decl_ (b.decl_), call_ (b.call_)
+  : decl_ (b.decl_), call_ (b.call_),target_class_member(b.target_class_member),new_function_prototype(b.target_class_member)
 {
 }
+#else
+// DQ (8/15/2019): Adding support to defere the transformations in header files (a performance improvement).
+// DQ (8/7/2019): Store data required to support defering the transformation to insert the outlined function prototypes.
+Outliner::Result::Result (const Result& b)
+  : decl_ (b.decl_), call_ (b.call_),target_class_member(b.target_class_member),new_function_prototype(b.target_class_member),deferedTransformation(b.deferedTransformation)
+{
+}
+#endif
+
 
 bool
 Outliner::Result::isValid (void) const
 {
   return decl_ && call_;
 }
+
+
+/* =====================================================================
+ *  Container to store the support for defering the transformations to later (on header files that we will want to unparse).
+ */
+
+Outliner::DeferedTransformation::DeferedTransformation()
+   : class_definition(NULL),
+     target_class_member(NULL),
+     new_function_prototype(NULL)
+   {
+   }
+
+Outliner::DeferedTransformation::DeferedTransformation(
+   SgClassDefinition* input_class_definition, 
+   SgDeclarationStatement* input_target_class_member, 
+   SgDeclarationStatement* input_new_function_prototype)
+   : class_definition(input_class_definition),
+     target_class_member(input_target_class_member),
+     new_function_prototype(input_new_function_prototype)
+   {
+   }
+
+Outliner::DeferedTransformation::DeferedTransformation (const DeferedTransformation& X)
+   : class_definition(X.class_definition),
+     target_class_member(X.target_class_member),
+     new_function_prototype(X.new_function_prototype),
+     targetFriends(X.targetFriends),
+     targetClasses(X.targetClasses)
+   {
+   }
+
+Outliner::DeferedTransformation & Outliner::DeferedTransformation::operator= (const DeferedTransformation& X)
+   {
+#if 0
+     printf ("Inside of Outliner::DeferedTransformation::operator= (const DeferedTransformation& X) \n");
+#endif
+
+     targetFriends = X.targetFriends;
+     targetClasses = X.targetClasses;
+   }
+
+
+Outliner::DeferedTransformation::~DeferedTransformation (void) {}; //! Shallow; does not delete fields.
+
 // eof

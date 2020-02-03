@@ -282,7 +282,9 @@ ROSE_DLL_API SgFunctionType* buildFunctionType(SgType* return_type, SgFunctionPa
 //! Build function type from return type and parameter list
 ROSE_DLL_API SgFunctionType* buildFunctionType(SgType* return_type, SgFunctionParameterList * argList=NULL);
 
+// DQ (1/10/2020): removed the default argument since we need to make sure it is used.
 //! DQ (1/16/2009): Added to support member function in C++ (for new interface)
+// ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgScopeStatement *struct_name, unsigned int mfunc_specifier, unsigned int ref_qualifiers = 0);
 ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgScopeStatement *struct_name, unsigned int mfunc_specifier, unsigned int ref_qualifiers = 0);
 
 // DQ (3/20/2017): This function is not used (so let's see if we can remove it).
@@ -1509,6 +1511,15 @@ ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& outputFileName, Sg
 /*! The input file will be loaded if exists, or an empty one will be generated from scratch transparently. Output file name is used to specify the output file name of unparsing. The final SgFile will be inserted to project automatically. If not provided, a new SgProject will be generated internally. Using SgFile->get_project() to retrieve it in this case.
  */
 ROSE_DLL_API SgSourceFile* buildSourceFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project);
+
+// DQ (11/8/2019): Support function for the new file (to support changing the file names in the source position info objects of each AST subtree node.
+//! Change the source file associated with the source position information in the AST.
+// ROSE_DLL_API void fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std::string& newFileName);
+ROSE_DLL_API void fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std::string& newFileName);
+
+// DQ (11/10/2019): Support for sharing IR nodes when buildFile() is applied to an existing file.
+//! Sharing IR nodes requires that the file id be added to the fileIDsToUnparse held in the Sg_File_Info object.
+ROSE_DLL_API void fixupSharingSourcePosition(SgNode* subtreeRoot, int new_file_id);
 
 //! Build and attach a comment, comment style is inferred from the language type of the target node if not provided. It is indeed a wrapper of SageInterface::attachComment().
 ROSE_DLL_API PreprocessingInfo* buildComment(SgLocatedNode* target, const std::string & content,

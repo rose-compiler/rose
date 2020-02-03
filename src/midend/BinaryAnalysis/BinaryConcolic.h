@@ -282,6 +282,9 @@ public:
     /** @} */
 
     /** Command line arguments.
+     *
+     *  The arguments exclude <code>argv[0]</code> and <code>argv[argc]</code> and are just the elements in between.
+     *
      * @{ */
     std::vector<std::string> args() const;
     void args(std::vector<std::string> arguments);
@@ -293,8 +296,12 @@ public:
     void env(std::vector<EnvValue> envvars);
     /** @} */
 
-    /** returns if the test has been run concollically. */
+    /** Property: Whether this test case has been run concolically.
+     *
+     * @{ */
     bool hasConcolicTest() const;
+    void hasConcolicTest(bool);
+    /** @} */
 
     /** sets the status of the concolic test to true. */
     void concolicTest(bool);
@@ -792,6 +799,15 @@ public:
     SpecimenId id(const Specimen::Ptr&, Update::Flag update = Update::YES);
     /** @} */
 
+    /** Saves an object.
+     *
+     *  This is a more self-documenting name for calling @ref id for the sole purpose of saving (creating or updating) an
+     *  object's database representation. */
+    template<class ObjectPointer>
+    void save(const ObjectPointer &obj) {
+        id(obj);
+    }
+
     /** Returns an ID number for an object, optionally writing to the database.
      *
      * The functions are executed in the context of some other transaction.
@@ -864,13 +880,13 @@ public:
     *
     * Thread safety: thread safe
     */
-   std::vector<Database::TestCaseId> needConcreteTesting(size_t);
+   std::vector<Database::TestCaseId> needConcreteTesting(size_t n = UNLIMITED);
 
    /** Returns @p n test cases without concolic results.
     *
     * Thread safety: thread safe
     */
-   std::vector<Database::TestCaseId> needConcolicTesting(size_t);
+   std::vector<Database::TestCaseId> needConcolicTesting(size_t n = UNLIMITED);
 
    /** Updates a test case and its results.
     *
@@ -926,7 +942,7 @@ public:
      *  concretely if it has no results from a previous concrete run.
      *
      * @{ */
-    virtual std::vector<Database::TestCaseId> pendingConcreteResults(size_t n = (size_t)(-1));
+    virtual std::vector<Database::TestCaseId> pendingConcreteResults(size_t n = UNLIMITED);
     Database::TestCaseId pendingConcreteResult() /*final*/;
     /** @} */
 
@@ -943,7 +959,7 @@ public:
      *  concolically if it is not marked as having completed the concolic run.
      *
      * @{ */
-    virtual std::vector<Database::TestCaseId> pendingConcolicResults(size_t n = (size_t)(-1));
+    virtual std::vector<Database::TestCaseId> pendingConcolicResults(size_t n = UNLIMITED);
     Database::TestCaseId pendingConcolicResult() /*final*/;
     /** @} */
 

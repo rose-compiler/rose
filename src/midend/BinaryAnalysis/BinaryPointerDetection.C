@@ -225,7 +225,7 @@ Analysis::printInstructionsForDebugging(const P2::Partitioner &partitioner, cons
         BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
             if (P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bbVa)) {
                 BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
-                    mlog[DEBUG] <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
+                    mlog[DEBUG] <<"    " <<partitioner.unparse(insn) <<"\n";
                 }
             }
         }

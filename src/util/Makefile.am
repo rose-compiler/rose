@@ -64,8 +64,9 @@ pkginclude_HEADERS =				\
 	processSupport.h			\
 	Progress.h				\
 	RecursionCounter.h			\
-	rose_isnan.h				\
+	rose_constants.h			\
 	rose_getline.h				\
+	rose_isnan.h				\
 	rose_override.h				\
 	rose_paths.h				\
 	rose_strtoull.h				\

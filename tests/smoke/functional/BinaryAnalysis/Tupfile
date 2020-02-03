@@ -1,17 +1,17 @@
 include_rules
 
-ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+ifeq (@(ENABLE_TESTS),yes)
+    ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+	run $(tool_compile_linkexe) testPartitioner2.C
+	testPartitioner2_INPUT = $(ROSE)/tests/smoke/specimens/binary/x86-elf-exe
+	testPartitioner2_ANSWER = testPartitioner2_x86-elf-exe.ans
+	run $(test) testPartitioner2 --answer=$(testPartitioner2_ANSWER) ./testPartitioner2 $(testPartitioner2_INPUT)
 
-run $(tool_compile_linkexe) testPartitioner2.C
-testPartitioner2_INPUT = $(ROSE)/tests/smoke/specimens/binary/x86-elf-exe
-testPartitioner2_ANSWER = testPartitioner2_x86-elf-exe.ans
-run $(test) testPartitioner2 --answer=$(testPartitioner2_ANSWER) ./testPartitioner2 $(testPartitioner2_INPUT)
-
-run $(tool_compile_linkexe) testSemanticSValue.C
-run $(tool_compile_linkexe) testSemanticRegisterState.C
-run $(tool_compile_linkexe) testSemanticMemoryState.C
-run $(tool_compile_linkexe) testSemanticState.C
-run $(tool_compile_linkexe) testSemanticRiscOperators.C
-run $(tool_compile_linkexe) testSemanticDispatcher.C
-
+	run $(tool_compile_linkexe) testSemanticSValue.C
+	run $(tool_compile_linkexe) testSemanticRegisterState.C
+	run $(tool_compile_linkexe) testSemanticMemoryState.C
+	run $(tool_compile_linkexe) testSemanticState.C
+	run $(tool_compile_linkexe) testSemanticRiscOperators.C
+	run $(tool_compile_linkexe) testSemanticDispatcher.C
+    endif
 endif

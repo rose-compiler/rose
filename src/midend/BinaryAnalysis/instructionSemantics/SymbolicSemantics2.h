@@ -54,6 +54,14 @@ typedef SymbolicExpr::Node ExprNode;
 typedef SymbolicExpr::Ptr ExprPtr;
 typedef std::set<SgAsmInstruction*> InsnSet;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Boolean flags
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Boolean for allowing side effects. */
+namespace AllowSideEffects {
+    enum Flag {NO, YES};
+}
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,7 +132,7 @@ public:
  *  An SValue points to an expression composed of the ExprNode types defined in BinarySymbolicExpr.h, and also stores the set of
  *  instructions that were used to define the value.  This provides a framework for some simple forms of value-based def-use
  *  analysis. See get_defining_instructions() for details.
- * 
+ *
  *  @section symbolic_semantics_unknown Unknown versus Uninitialized Values
  *
  *  One sometimes needs to distinguish between registers (or other named storage locations) that contain an
@@ -210,7 +218,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(defs);
     }
 #endif
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
@@ -252,7 +260,7 @@ public:
     static SValuePtr instance_integer(size_t nbits, uint64_t value) {
         return SValuePtr(new SValue(SymbolicExpr::makeIntegerConstant(nbits, value)));
     }
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors
 public:
@@ -460,7 +468,7 @@ public:
                                      BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
                                      const MemoryCellList::CellList &cells) = 0;
     };
-    
+
     /** Functor for handling a memory read whose address matches more than one memory cell.  This functor returns a symbolic
      * expression that consists of a read operation on a memory state.  The returned expression is essentially a McCarthy
      * expression that encodes this if-then-else structure:
@@ -580,7 +588,7 @@ public:
         ASSERT_not_null(retval);
         return retval;
     }
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited
 public:
@@ -609,7 +617,7 @@ protected:
                                               const BaseSemantics::SValuePtr &dflt,
                                               BaseSemantics::RiscOperators *addrOps,
                                               BaseSemantics::RiscOperators *valOps,
-                                              bool allowSideEffects);
+                                              AllowSideEffects::Flag allowSideEffects);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared in this class
@@ -724,7 +732,7 @@ public:
         ASSERT_not_null(retval);
         return retval;
     }
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we override from the super class (documented in the super class)
 public:
@@ -801,6 +809,9 @@ protected:
     WritersMode computingMemoryWriters_;                // whether to track writers (instruction VAs) to memory.
     WritersMode computingRegisterWriters_;              // whether to track writers (instruction VAs) to registers.
     size_t trimThreshold_;                              // max size of expressions (zero means no maximimum)
+    bool reinterpretMemoryReads_;                       // cast data to unsigned integer when reading from memory
+    bool reinterpretRegisterReads_;                     // cast data to unsigned integer when reading from registers
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
@@ -824,11 +835,13 @@ private:
 protected:
     RiscOperators()                                     // for serialization
         : omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS), computingMemoryWriters_(TRACK_LATEST_WRITER),
-          computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {}
+          computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0), reinterpretMemoryReads_(true),
+          reinterpretRegisterReads_(true) {}
 
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
         : BaseSemantics::RiscOperators(protoval, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
-          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
+          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0),
+          reinterpretMemoryReads_(true), reinterpretRegisterReads_(true) {
         name("Symbolic");
         ASSERT_always_not_null(protoval);
         ASSERT_always_not_null2(protoval.dynamicCast<SValue>(),
@@ -837,7 +850,8 @@ protected:
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
         : BaseSemantics::RiscOperators(state, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
-          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0) {
+          computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0),
+          reinterpretMemoryReads_(true), reinterpretRegisterReads_(true) {
         name("Symbolic");
         ASSERT_always_not_null(state);
         ASSERT_always_not_null(state->registerState());
@@ -1030,6 +1044,19 @@ public:
     size_t trimThreshold() const { return trimThreshold_; }
     /** @} */
 
+    /** Property: Reinterpret data as unsigned integers when reading from memory or registers.
+     *
+     *  If this property is set, then a call to @ref reinterpret is used to convert the return value to an unsigned integer if
+     *  necessary.  This property should normally be enabled because many of the older parts of ROSE assume that memory only
+     *  contains integers.
+     *
+     * @{ */
+    bool reinterpretMemoryReads() const { return reinterpretMemoryReads_; }
+    void reinterpretMemoryReads(bool b) { reinterpretMemoryReads_ = b; }
+    bool reinterpretRegisterReads() const { return reinterpretRegisterReads_; }
+    void reinterpretRegisterReads(bool b) { reinterpretRegisterReads_ = b; }
+    /** @} */
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first defined at this level of the class hierarchy
 public:
@@ -1065,7 +1092,7 @@ public:
      *
      * Then replacing the lhs (esp_0) with the rhs (stack_frame + 4) in the machine state causes the expressions to be
      * rewritten in terms of stack_frame instead of esp_0:
-     * 
+     *
      * @code
      *  registers:
      *    esp    = stack_frame[32]
@@ -1111,7 +1138,7 @@ public:
     /** Convert a SgAsmType to a symbolic type.
      *
      *  If the @ref SgAsmType cannot be converted to a @ref SymbolicExpr::Type then throws @ref Exception. */
-    static SymbolicExpr::Type sgTypeToSymbolicType(SgAsmType*);
+    virtual SymbolicExpr::Type sgTypeToSymbolicType(SgAsmType*);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
@@ -1185,11 +1212,11 @@ public:
                              const BaseSemantics::SValuePtr &data,
                              const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
 
-protected:
+public:
     BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg,
                                               const BaseSemantics::SValuePtr &addr,
                                               const BaseSemantics::SValuePtr &dflt,
-                                              bool allowSideEffects);
+                                              AllowSideEffects::Flag);
 };
 
 } // namespace

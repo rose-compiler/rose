@@ -14,6 +14,7 @@ main() {
 
     const RegisterDictionary *regdict = RegisterDictionary::dictionary_amd64();
     RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
+    ASSERT_always_not_null(ops);
     RegisterStateGenericPtr registers = RegisterStateGeneric::promote(ops->currentState()->registerState());
 
     // Store some things in the register state

@@ -1675,7 +1675,10 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
                          SgTemplateInstantiationFunctionDecl* nondefiningTemplateInstantiationFunctionDecl = isSgTemplateInstantiationFunctionDecl(decl_stmt->get_firstNondefiningDeclaration());
                          if (nondefiningTemplateInstantiationFunctionDecl != NULL)
                             {
-                              if (nondefiningTemplateInstantiationFunctionDecl->get_declarationModifier().isFriend() == true)
+                           // DQ (1/13/2020): The firstNondefiningDeclaration might not be the friend declaration 
+                           // (it might be another nondefining declaration (see Cxx11_tests/test2020_47.C)).
+                           // if (nondefiningTemplateInstantiationFunctionDecl->get_declarationModifier().isFriend() == true)
+                              if (decl_stmt->get_declarationModifier().isFriend() == true)
                                  {
 #if DEBUG_TEMPLATE_SPECIALIZATION
                                    printf ("Supress the output of the template<> syntax \n");
@@ -1739,7 +1742,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
      // DQ (1/3/2016): We need to include SgTemplateVariableDeclarations as well.
   // if (isSgTemplateInstantiationFunctionDecl(decl_stmt) == NULL && isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) == NULL)
      if (isSgTemplateInstantiationFunctionDecl(decl_stmt) == NULL && isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) == NULL && isSgTemplateVariableDeclaration(decl_stmt) == NULL)
+        {
           outputExternLinkageSpecifier(decl_stmt);
+        }
    #else
      outputExternLinkageSpecifier(decl_stmt);
    #endif

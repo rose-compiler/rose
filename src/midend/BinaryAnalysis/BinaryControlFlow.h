@@ -940,7 +940,7 @@ ControlFlow::FlowOrder<ControlFlowGraph>::compute(const ControlFlowGraph &g, Ver
     std::reverse(forward_order->begin(), forward_order->end());
     if (reverse_order) {
         reverse_order->clear();
-        reverse_order->resize(boost::num_vertices(g), (size_t)(-1));
+        reverse_order->resize(boost::num_vertices(g), INVALID_INDEX);
         for (size_t i=0; i<forward_order->size(); i++)
             (*reverse_order)[(*forward_order)[i]] = i;
     }

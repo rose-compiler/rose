@@ -44,11 +44,17 @@ JOVIAL_TESTCODES = \
  rose-issue-2143.jov
 
 COMPOOL_TESTCODES = \
+ bit_cast_J.cpl                         \
  define_dollar.cpl                      \
  item_and_status_type_J.cpl             \
  status_type.cpl                        \
+ simple_def_ambiguity_J.cpl             \
+ size_function_J.cpl                    \
+ spec_table_decl_ambiguity_J.cpl        \
+ spec_table_options_null_J.cpl          \
  table_and_status_type_J.cpl            \
  table_preset_J.cpl                     \
+ table_ref_formula_ambiguity_J.jov      \
  2_2_compound_block_type.cpl            \
  2_2_compound_table_type.cpl            \
  2_2_simple_block_type.cpl              \

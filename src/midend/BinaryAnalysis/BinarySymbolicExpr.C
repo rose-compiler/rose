@@ -314,11 +314,7 @@ struct MultiSubstituter {
 
 bool
 Type::operator<(const Type &other) const {
-    if (typeClass_ != other.typeClass_)
-        return typeClass_ < other.typeClass_;
-    if (totalWidth_ != other.totalWidth_)
-        return totalWidth_ < other.totalWidth_;
-    return secondaryWidth_ < other.secondaryWidth_;
+    return fields_ < other.fields_;
 }
 
 void
@@ -597,6 +593,15 @@ Node::matchAddVariableConstant(LeafPtr &variable/*out*/, LeafPtr &constant/*out*
         }
     }
     return false;
+}
+
+Sawyer::Optional<uint64_t>
+Node::variableId() const {
+    if (isVariable2()) {
+        return isLeafNode()->nameId();
+    } else {
+        return Sawyer::Nothing();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2065,7 +2070,8 @@ ExtractSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
             std::reverse(newChildren.begin(), newChildren.end());// high bits must be first
             return Interior::instance(OP_CONCAT, newChildren, solver, inode->comment());
         }
-        newChildren[0]->comment(inode->comment());
+        if (newChildren[0]->comment().empty())
+            newChildren[0]->comment(inode->comment());
         return newChildren[0];
     }
 

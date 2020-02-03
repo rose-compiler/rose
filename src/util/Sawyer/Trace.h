@@ -14,6 +14,7 @@
 #include <Sawyer/Sawyer.h>
 #include <Sawyer/Set.h>
 #include <boost/foreach.hpp>
+#include <boost/iterator.hpp>
 #include <set>
 #include <vector>
 
@@ -257,6 +258,14 @@ struct TraceIndexTraits<Label, Value, TraceVectorIndexTag> {
  *  @endcode */
 template<class T, class IndexTag = TraceMapIndexTag>
 class Trace {
+private:
+    struct Decompression {
+        size_t n;                                       // label visitation sequence number (starts at zero for each label)
+        size_t succIdx;                                 // index into a Successors list;
+
+        Decompression(): n(0), succIdx(0) {}
+    };
+
 public:
     /** Label type.
      *
@@ -277,23 +286,120 @@ public:
     /** Successors for a label. */
     typedef std::vector<Successor> Successors;
 
-private:
-    struct Decompression {
-        size_t n;                                       // label visitation sequence number (starts at zero for each label)
-        size_t succIdx;                                 // index into a Successors list;
+    /** Forward iterator.
+     *
+     *  This iterator traverses the elements of the trace in the order they were inserted, returning a label at each step. */
+    class ConstIterator: public boost::iterator_facade<ConstIterator, const Label, boost::forward_traversal_tag, Label> {
+        friend class boost::iterator_core_access;
+        const Trace *trace_;
+        Sawyer::Optional<Label> label_;
+        size_t position_;
+        typename TraceIndexTraits<Label, Trace::Decompression, IndexTag>::Index decompressionState_;
 
-        Decompression(): n(0), succIdx(0) {}
+    public:
+        /** Construct iterator point to end of any trace. */
+        ConstIterator()
+            : trace_(NULL), position_(0) {}
+
+        /** Construct iterator pointing to first element of the trace, if any. */
+        explicit ConstIterator(const Trace &trace)
+            : trace_(&trace), position_(0) {
+            if (!trace_->isEmpty())
+                label_ = trace_->front();
+        }
+
+        /** Copy constructor. */
+        ConstIterator(const ConstIterator &other)
+            : trace_(other.trace_), label_(other.label_), position_(other.position_),
+              decompressionState_(other.decompressionState_) {}
+
+        /** Test whether iterator is at the end. */
+        bool isEnd() const {
+            return !label_;
+        }
+
+        /** Position of iterator within trace.
+         *
+         *  The position starts at zero and is incremented each time this iterator is incremented. */
+        size_t position() const {
+            return position_;
+        }
+
+    private:
+        // core operation from iterator_facade needed for readable iterator concept
+        Label dereference() const {
+            ASSERT_forbid(isEnd());
+            return *label_;
+        }
+
+        // core operation from iterator_facade needed for single pass iterator concept
+        bool equal(const ConstIterator &other) const {
+            if (isEnd() || other.isEnd())
+                return isEnd() == other.isEnd();
+            return trace_ == other.trace_ && position() == other.position();
+        }
+            
+        // core operation from iterator_facade needed for incrementable iterator concept
+        void increment() {
+            ASSERT_forbid(isEnd());
+            const Successors &successors = trace_->index_[*label_];
+            Decompression &dcomp = decompressionState_[*label_];
+            if (dcomp.succIdx >= successors.size()) {
+                label_ = Nothing();
+            } else {
+                const Successor &successor = successors[dcomp.succIdx];
+                if (dcomp.n < successor.end) {
+                    label_ = successor.next;
+                    ++dcomp.n;
+                } else {
+                    ++dcomp.succIdx;
+                    if (dcomp.succIdx >= successors.size()) {
+                        label_ = Nothing();
+                    } else {
+                        label_ = successors[dcomp.succIdx].next;
+                        ++dcomp.n;
+                    }
+                }
+            }
+            ++position_;
+        }
     };
-
+    
+private:
     typedef typename TraceIndexTraits<Label, Successors, IndexTag>::Index Index;
     Index index_;                                       // encoded sequence of labels
     size_t size_;                                       // total length of sequence
     size_t nLabels_;                                    // number of distinct labels in sequence
     Optional<Label> front_, back_;                      // first and last labels in the sequence if size_ > 0
+
 public:
     /** Default constructor. */
     Trace(): size_(0), nLabels_(0) {}
 
+    /** Returns a forward iterator pointing to first element of this trace. */
+    ConstIterator begin() const {
+        return ConstIterator(*this);
+    }
+
+    /** Returns a forward iterator pointing past the end of this trace. */
+    ConstIterator end() const {
+        return ConstIterator();
+    }
+
+    /** Returns the first item in the trace.
+     *
+     *  The trace must not be empty.  Returns a copy of the item. */
+    Label front() const {
+        return *front_;
+    }
+
+    /** Returns the last item in the trace.
+     *
+     *  The trace must not be empty. Returns a copy of the item. */
+    Label back() const {
+        return *back_;
+    }
+    
     /** Clears the recorded trace.
      *
      *  This @ref Trace is reset to its default-constructed state. */

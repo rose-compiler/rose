@@ -86,7 +86,7 @@ test_svalues() {
 
     BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(SymbolicSemantics::SValue::instance(),
                                                                                      SmtSolverPtr());
-
+    ASSERT_always_not_null(ops);
     BaseSemantics::SValuePtr a1 = ops->undefined_(32);                 // v1
     BaseSemantics::SValuePtr a2 = ops->add(a1, ops->number_(32, 4));   // (add v1 4)
     BaseSemantics::SValuePtr a3 = ops->add(a2, ops->number_(32, 8));   // (add v1 12)

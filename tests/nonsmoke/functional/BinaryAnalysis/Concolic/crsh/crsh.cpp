@@ -332,7 +332,9 @@ findExecutable(bstfs::path p)
   }
 
   // finds executable in path
-  return findExecutable(p, getenv("PATH"));
+  const char *envPath = getenv("PATH");
+  ASSERT_always_not_null(envPath);
+  return findExecutable(p, envPath);
 }
 
 std::string
@@ -442,6 +444,7 @@ char* Crsh::unquoteString(const char* str)
   ROSE_ASSERT(len > 0 && str[0] == '\"' && str[len] == '\"');
 
   char*  clone = static_cast<char*>(malloc(len));
+  ASSERT_always_not_null(clone);
   strncpy(clone, str+1, len-1);
   clone[len-1] = 0;
 
@@ -823,6 +826,7 @@ void readEvalPrint(std::istream& input)
 void parse_file(const char* filename)
 {
   yyin = fopen(filename, "r");
+  ASSERT_always_not_null(yyin);
 
   //~ int token;
   //~ while ((token = yylex()) != 0)

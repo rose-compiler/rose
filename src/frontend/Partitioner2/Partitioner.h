@@ -557,6 +557,9 @@ public:
     void insnUnparser(const Unparser::BasePtr&) /*final*/;
     /** @} */
 
+    /** Configure the single-instruction unparser. */
+    void configureInsnUnparser(const Unparser::BasePtr&) const /*final*/;
+
     /** Unparse some entity.
      *
      *  Unparses an instruction, basic block, data block, function, or all functions using the unparser returned by @ref

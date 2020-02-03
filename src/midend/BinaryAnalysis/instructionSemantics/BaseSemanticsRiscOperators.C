@@ -465,6 +465,13 @@ RiscOperators::print(std::ostream &stream, Formatter &fmt) const {
     currentState_->print(stream, fmt);
 }
 
+RiscOperators::WithFormatter
+RiscOperators::operator+(const std::string &linePrefix) {
+    static Formatter fmt;
+    fmt.set_line_prefix(linePrefix);
+    return with_format(fmt);
+}
+
 } // namespace
 } // namespace
 } // namespace

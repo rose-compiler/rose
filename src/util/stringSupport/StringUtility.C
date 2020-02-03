@@ -9,6 +9,7 @@
 #include "rose_msvc.h"                                  // DQ (3/22/2009): Added MSVS support for ROSE.
 
 // Other includes
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <cstring>
@@ -44,76 +45,95 @@ htmlEscape(const std::string& s) {
 }
 
 std::string
-cEscape(const std::string &s) {
+cEscape(char ch, char context) {
     std::string result;
-    BOOST_FOREACH (char ch, s) {
-        switch (ch) {
-            case '\a':
-                result += "\\a";
-                break;
-            case '\b':
-                result += "\\b";
-                break;
-            case '\t':
-                result += "\\t";
-                break;
-            case '\n':
-                result += "\\n";
-                break;
-            case '\v':
-                result += "\\v";
-                break;
-            case '\f':
-                result += "\\f";
-                break;
-            case '\r':
-                result += "\\r";
-                break;
-            case '\"':
+    switch (ch) {
+        case '\a':
+            result += "\\a";
+            break;
+        case '\b':
+            result += "\\b";
+            break;
+        case '\t':
+            result += "\\t";
+            break;
+        case '\n':
+            result += "\\n";
+            break;
+        case '\v':
+            result += "\\v";
+            break;
+        case '\f':
+            result += "\\f";
+            break;
+        case '\r':
+            result += "\\r";
+            break;
+        case '\"':
+            if ('"' == context) {
                 result += "\\\"";
-                break;
-            case '\\':
-                result += "\\\\";
-                break;
-            default:
-                if (isprint(ch)) {
-                    result += ch;
-                } else {
-                    char buf[8];
-                    sprintf(buf, "\\%03o", (unsigned)(unsigned char)ch);
-                    result += buf;
-                }
-                break;
-        }
+            } else {
+                result += ch;
+            }
+            break;
+        case '\'':
+            if ('\'' == context) {
+                result += "\\'";
+            } else {
+                result += ch;
+            }
+            break;
+        case '\\':
+            result += "\\\\";
+            break;
+        default:
+            if (isprint(ch)) {
+                result += ch;
+            } else {
+                char buf[8];
+                sprintf(buf, "\\%03o", (unsigned)(unsigned char)ch);
+                result += buf;
+            }
+            break;
     }
     return result;
 }
 
 std::string
-bourneEscape(const std::string &s) {
+cEscape(const std::string &s, char context) {
     std::string result;
-    bool quoted = false;
-
-    BOOST_FOREACH (char ch, s) {
-        if (isalnum(ch) || strchr("_-+./", ch)) {
-            result += ch;
-
-        } else {
-            if (!quoted) {
-                result = "'" + result;
-                quoted = true;
-            }
-
-            if (ch == '\\' || ch == '\'') {
-                result += std::string("\\") + ch;
-            } else {
-                result += ch;
-            }
-        }
-    }
-    if (quoted)
-        result += "'";
+    BOOST_FOREACH (char ch, s)
+        result += cEscape(ch, context);
     return result;
+}
+
+// Escaping special characters in shells is difficult. There are many classes of characters:
+//
+//   1. Characters that can appear unescaped and outside quotes (bare). They can also appear unescaped inside single or
+//      double quotes.  Most characters fall into this category.
+//
+//   2. Characters that must be escaped when outside quotes or (not escaped) inside double or single quotes.  These are
+//      characters like "*", "?", "=", "{", "}", "[", "]", etc. and consist of most printable non-alphanumeric characters.
+//
+//   3. Characters that cannot be escaped by some shells. These are things like non-printable control characters
+//      and characters above 0177. The Bash shell has a special syntax for escaping these in a C-like manner.
+std::string
+bourneEscape(const std::string &s) {
+    // The presence of non-printing characters trumps all others and requires C-style quoting
+    BOOST_FOREACH (char ch, s) {
+        if (!::isprint(ch))
+            return "$'" + cEscape(s, '\'') + "'";
+    }
+
+    // If the string contains any shell meta characters that must be quoted then single-quote the entire string and
+    // handle additional single quotes and backslashes specially.
+    BOOST_FOREACH (char ch, s) {
+        if (!::isalnum(ch) && s.find_first_of("_-+./") == std::string::npos)
+            return "'" + boost::replace_all_copy(boost::replace_all_copy(s, "\\", "\\\\"), "'", "'\"'\"'");
+    }
+
+    // No quoting or escaping necessary
+    return s;
 }
 
 // [Robb P Matzke 2016-06-15]: deprecated
