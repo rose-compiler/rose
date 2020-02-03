@@ -454,15 +454,33 @@ isCovariantType(SgType* derived, SgType* base, ClassHierarchyWrapper* chw)
 } 
 
 
+/// returns @derived is an overriding type of @base
+/// \param derived a function type of an overrider candidate
+/// \param base    a function type
+/// \param chw     a class hierarchy
+/// \pre derived != NULL && base != NULL
+/// \details
+///    isOverridingType checks if derived overrides base, meaning
+///    @derived's arguments must equal @base's argument, and @derived's
+///    return type may be covariabt with respect to @base's return type.
 static
-bool isOverridingType(SgFunctionType* derived, SgFunctionType* base, ClassHierarchyWrapper* chw)
+bool 
+isOverridingType( SgMemberFunctionType* derived, 
+                  SgMemberFunctionType* base, 
+                  ClassHierarchyWrapper* chw
+                )
 {
   ROSE_ASSERT(derived && base);
   
   if (derived == base) return true;
   
-  if (derived->get_has_ellipses() != base->get_has_ellipses())
+  if (  derived->get_mfunc_specifier() != base->get_mfunc_specifier()
+     || derived->get_ref_qualifiers()  != base->get_ref_qualifiers()
+     || derived->get_has_ellipses()    != base->get_has_ellipses()
+     )
+  {
     return false;
+  }
 
   if (!isCovariantType(derived->get_return_type(), base->get_return_type(), chw))
     return false;
@@ -482,47 +500,63 @@ bool isOverridingType(SgFunctionType* derived, SgFunctionType* base, ClassHierar
                       ).first == derived_end;      
 } 
 
+/// tests if derived overrides base
+static
+bool isOverridingFunction( SgMemberFunctionDeclaration* derived,   
+                           SgMemberFunctionDeclaration* base,
+                           ClassHierarchyWrapper*       chw
+                         )
+{
+  ROSE_ASSERT(derived && base);
+  
+  return isOverridingType( isSgMemberFunctionType(derived->get_type()),
+                           isSgMemberFunctionType(base->get_type()),
+                           chw
+                         );
+}
 
-SgFunctionDeclaration * is_function_exists(SgClassDefinition *cls, SgMemberFunctionDeclaration *memberFunctionDeclaration) {
+SgFunctionDeclaration* 
+is_function_exists(SgClassDefinition *cls, SgMemberFunctionDeclaration *memberFunctionDeclaration) 
+{      
+  SgFunctionDeclaration *resultDecl = NULL;
+  string f1 = memberFunctionDeclaration->get_name().getString();
+  string f2;
+  
+  SgDeclarationStatementPtrList &clsMembers = cls->get_members();
+  for ( SgDeclarationStatementPtrList::iterator it_cls_mb = clsMembers.begin(); it_cls_mb != clsMembers.end(); it_cls_mb++ )
+  {
+    SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration( *it_cls_mb );
+    if (cls_mb_decl == NULL) continue;
+
+    ROSE_ASSERT(cls_mb_decl != NULL);
+    SgMemberFunctionType* funcType1 = isSgMemberFunctionType(memberFunctionDeclaration->get_type());
+    SgMemberFunctionType* funcType2 = isSgMemberFunctionType(cls_mb_decl->get_type());
+    f2 = cls_mb_decl->get_name().getString();
+    
+    if(f1 != f2) continue;
+    if (funcType1 == NULL || funcType2 == NULL) continue;
+    if ( is_functions_types_equal(funcType1, funcType2) )
+    {
+      SgMemberFunctionDeclaration *nonDefDecl =
+        isSgMemberFunctionDeclaration( cls_mb_decl->get_firstNondefiningDeclaration() );
+      SgMemberFunctionDeclaration *defDecl =
+        isSgMemberFunctionDeclaration( cls_mb_decl->get_definingDeclaration() );
+
+      // ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
       
-      SgFunctionDeclaration *resultDecl = NULL;
-      string f1 = memberFunctionDeclaration->get_name().getString();
-      string f2;
-      
-      SgDeclarationStatementPtrList &clsMembers = cls->get_members();
-      for ( SgDeclarationStatementPtrList::iterator it_cls_mb = clsMembers.begin(); it_cls_mb != clsMembers.end(); it_cls_mb++ )
+      resultDecl = (nonDefDecl) ? nonDefDecl : defDecl;
+      ROSE_ASSERT ( resultDecl );
+      if ( !( resultDecl->get_functionModifier().isPureVirtual() ) )
       {
-        SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration( *it_cls_mb );
-        if (cls_mb_decl == NULL) continue;
-
-        ROSE_ASSERT(cls_mb_decl != NULL);
-        SgMemberFunctionType* funcType1 = isSgMemberFunctionType(memberFunctionDeclaration->get_type());
-        SgMemberFunctionType* funcType2 = isSgMemberFunctionType(cls_mb_decl->get_type());
-        f2 = cls_mb_decl->get_name().getString();
-        
-        if(f1 != f2) continue;
-        if (funcType1 == NULL || funcType2 == NULL) continue;
-        if ( is_functions_types_equal(funcType1, funcType2) )
-        {
-          SgMemberFunctionDeclaration *nonDefDecl =
-            isSgMemberFunctionDeclaration( cls_mb_decl->get_firstNondefiningDeclaration() );
-          SgMemberFunctionDeclaration *defDecl =
-            isSgMemberFunctionDeclaration( cls_mb_decl->get_definingDeclaration() );
-
-          // ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
-          
-          resultDecl = (nonDefDecl) ? nonDefDecl : defDecl;
-          ROSE_ASSERT ( resultDecl );
-          if ( !( resultDecl->get_functionModifier().isPureVirtual() ) )
-          {
-              return resultDecl;
-            //resultDecl = functionDeclarationInClass;
-            //functionList.push_back( functionDeclarationInClass );
-          }
-        }
+          return resultDecl;
+        //resultDecl = functionDeclarationInClass;
+        //functionList.push_back( functionDeclarationInClass );
       }
-    assert(!isSgTemplateFunctionDeclaration(resultDecl));
-    return resultDecl;
+    }
+  }
+    
+  ROSE_ASSERT(!isSgTemplateFunctionDeclaration(resultDecl));
+  return resultDecl;
 }
 
 bool 
@@ -864,9 +898,9 @@ CallTargetSet::solveMemberFunctionCall(SgClassType *crtClass, ClassHierarchyWrap
                 if (isDestructor1 && isDestructor2) {
                     keep = true;
                 } else if (memberFunctionDeclaration->get_name()==cls_mb_decl->get_name()) {
-                    SgMemberFunctionType* baseType = isSgMemberFunctionType(memberFunctionDeclaration->get_type());
-                    SgMemberFunctionType* candType = isSgMemberFunctionType(cls_mb_decl->get_type());
-                    keep = baseType && candType && isOverridingType(candType, baseType, classHierarchy);
+                  keep = isOverridingFunction(cls_mb_decl, memberFunctionDeclaration, classHierarchy);
+                  
+                  std::cerr << cls_mb_decl->unparseToString() << " " << keep << std::endl;
                 }
                 if (keep) {
                     SgMemberFunctionDeclaration *nonDefDecl =
