@@ -1006,7 +1006,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                  // u_exprStmt->unparseStatement(unparseScope, ninfo);
 #else
 
-#if 1
+#if 0
                     printf ("Exiting as a test before unparsing statements from global scope! \n");
                     ROSE_ASSERT(false);
 #endif
@@ -4538,7 +4538,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                          printf ("File already exists: file = %s \n",newFileNamePath.c_str());
 #endif
                        }
-#if 1
+#if 0
                     printf ("Exiting as a test! \n");
                     ROSE_ASSERT(false);
 #endif
