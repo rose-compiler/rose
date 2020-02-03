@@ -111,6 +111,36 @@ HEADER_START
           void setFrontendSpecific ();
           void unsetFrontendSpecific ();
 
+       // DQ (12/21/2019): Added interface function to simplify code.
+      /*! \brief Simple test for if this is a frontend specific IR node.
+
+          This is a simpler interface to check the settings of this associated flag in the multiple Sg_File_Info objects.
+
+          \internal This function also checks the consistancy of the setting in the different Sg_File_Info objects.
+       */
+          bool isFrontendSpecific () const;
+
+      /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as shared.
+
+          Since the flag for isShared is stored in the Sg_File_Info, and because there
+          are up to three of these for the source position information to be comprehensive, this 
+          function permits a mechanism to have them be set uniformally.  Warnings are issued if
+          they are not set uniformally.
+
+          \internal This function marks the Sg_File_Info objects that must already be present.
+       */
+          void setShared();
+          void unsetShared();
+
+       // DQ (12/21/2019): Added interface function to simplify code.
+      /*! \brief Simple test for if this is a shared IR node.
+
+          This is a simpler interface to check the settings of this associated flag in the multiple Sg_File_Info objects.
+
+          \internal This function also checks the consistancy of the setting in the different Sg_File_Info objects.
+       */
+          bool isShared () const;
+
       /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as to when the information was unavilable in the front-end (even if it typically is there are special cases).
 
           Since the flag for isSourcePositionUnavailableInFrontend is stored in the Sg_File_Info, and because there
@@ -1159,6 +1189,91 @@ SgLocatedNode::isTransformation () const
    }
 
 
+// DQ (12/21/2019): These function are part of a move to lift the interface for
+// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
+void
+SgLocatedNode::setShared ()
+   {
+  // DQ (12/21/2019): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
+     ROSE_ASSERT(get_startOfConstruct() != NULL);
+     ROSE_ASSERT(get_endOfConstruct() != NULL);
+     get_startOfConstruct()->setShared();
+     get_endOfConstruct()->setShared();
+
+     SgExpression* expression = isSgExpression(this);
+     if (expression != NULL && expression->get_operatorPosition() != NULL)
+        {
+          expression->get_operatorPosition()->setShared();
+        }
+   }
+
+// DQ (12/21/2019): These function are part of a move to lift the interface for
+// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
+void
+SgLocatedNode::unsetShared()
+   {
+  // DQ (12/21/2019): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
+     ROSE_ASSERT(get_startOfConstruct() != NULL);
+     ROSE_ASSERT(get_endOfConstruct() != NULL);
+     get_startOfConstruct()->unsetShared();
+     get_endOfConstruct()->unsetShared();
+
+     SgExpression* expression = isSgExpression(this);
+     if (expression != NULL && expression->get_operatorPosition() != NULL)
+        {
+          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
+          expression->get_operatorPosition()->unsetShared();
+        }
+   }
+
+bool
+SgLocatedNode::isShared () const
+   {
+  // DQ (12/21/2019): Added function to define a simple API.
+
+  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
+     ROSE_ASSERT(get_startOfConstruct() != NULL);
+
+     bool result = get_startOfConstruct()->isShared();
+
+  // DQ (4/6/2015): Allow this to work even when the endOfConstruct is not yet set (required for inlining).
+  // ROSE_ASSERT(get_endOfConstruct() != NULL);
+     if (get_endOfConstruct() != NULL)
+        {
+          ROSE_ASSERT(result == get_endOfConstruct()->isShared());
+        }
+       else
+        {
+          printf ("WARNING: In SgLocatedNode::isShared(): this = %p = %s testing: get_endOfConstruct() != NULL (failed) \n",this,this->class_name().c_str());
+        }
+
+     const SgExpression* expression = isSgExpression(this);
+     if (expression != NULL && expression->get_operatorPosition() != NULL)
+        {
+#if 0
+          printf ("NOTE: this = %p = %s testing: result != expression->get_operatorPosition()->isShared() \n",this,this->class_name().c_str());
+#endif
+          if (result != expression->get_operatorPosition()->isShared())
+             {
+               printf ("Warning: this = %p = %s result != expression->get_operatorPosition()->isShared() \n",this,this->class_name().c_str());
+               printf ("   --- Suggest calling the set shared on the SgLocated node directly, instead of on the SgFileInfo objects seperately. \n");
+             }
+       // DQ (12/13/2018): This is difficult to enforce and causes an error in the outlining tests for Fortran in roseTests/astOutliningTests.
+       // When we eliminate the alternative interface to set this in each Sg_FileInfo object then it will be easier to enforce. So for now
+       // just issue the warning.
+       // ROSE_ASSERT(result == expression->get_operatorPosition()->isShared());
+        }
+
+     return result;
+   }
+
+
 // DQ (12/22/2006): These function are part of a move to lift the interface for
 // IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
 void
@@ -1193,6 +1308,51 @@ SgLocatedNode::unsetFrontendSpecific()
           expression->get_operatorPosition()->unsetFrontendSpecific();
         }
    }
+
+bool
+SgLocatedNode::isFrontendSpecific () const
+   {
+  // DQ (12/21/2019): Added function to define a simple API.
+
+  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
+     ROSE_ASSERT(get_startOfConstruct() != NULL);
+
+     bool result = get_startOfConstruct()->isFrontendSpecific();
+
+  // DQ (4/6/2015): Allow this to work even when the endOfConstruct is not yet set (required for inlining).
+  // ROSE_ASSERT(get_endOfConstruct() != NULL);
+     if (get_endOfConstruct() != NULL)
+        {
+          ROSE_ASSERT(result == get_endOfConstruct()->isFrontendSpecific());
+        }
+       else
+        {
+          printf ("WARNING: In SgLocatedNode::isFrontendSpecific(): this = %p = %s testing: get_endOfConstruct() != NULL (failed) \n",this,this->class_name().c_str());
+        }
+
+     const SgExpression* expression = isSgExpression(this);
+     if (expression != NULL && expression->get_operatorPosition() != NULL)
+        {
+#if 0
+          printf ("NOTE: this = %p = %s testing: result != expression->get_operatorPosition()->isFrontendSpecific() \n",this,this->class_name().c_str());
+#endif
+          if (result != expression->get_operatorPosition()->isFrontendSpecific())
+             {
+               printf ("Warning: this = %p = %s result != expression->get_operatorPosition()->isFrontendSpecific() \n",this,this->class_name().c_str());
+               printf ("   --- Suggest calling the set shared on the SgLocated node directly, instead of on the SgFileInfo objects seperately. \n");
+             }
+       // DQ (12/13/2018): This is difficult to enforce and causes an error in the outlining tests for Fortran in roseTests/astOutliningTests.
+       // When we eliminate the alternative interface to set this in each Sg_FileInfo object then it will be easier to enforce. So for now
+       // just issue the warning.
+       // ROSE_ASSERT(result == expression->get_operatorPosition()->isFrontendSpecific());
+        }
+
+     return result;
+   }
+
+
 
 // DQ (12/22/2006): These function are part of a move to lift the interface for
 // IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).

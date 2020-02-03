@@ -1417,7 +1417,12 @@ T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* sc
 template <typename NodeType>
 NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = false)
    {
+#define DEBUG_GET_ENCLOSING_NODE 0
+
 #if 1
+  // DQ (12/31/2019): This version does not detect a cycle that Robb's version detects in processing Cxx11_tests/test2016_23.C.
+  // This will have to be investigated seperately from the issue I am working on currently.
+
   // DQ (10/20/2012): This is the older version of this implementation.  Until I am sure that
   // the newer version (below) is what we want to use I will resolve this conflict by keeping
   // the previous version in place.
@@ -1440,11 +1445,33 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   // DQ (3/5/2012): Check for loops that will cause infinite loops.
      SgNode* previouslySeenParent = parent;
      bool foundCycle = false;
+     int counter = 0;
+
+#if DEBUG_GET_ENCLOSING_NODE
+     printf ("In getEnclosingNode(): previouslySeenParent = %p = %s \n",previouslySeenParent,previouslySeenParent->class_name().c_str());
+#endif
+
      while ( (foundCycle == false) && (parent != NULL) && (!dynamic_cast<const NodeType*>(parent)) )
         {
           ROSE_ASSERT(parent->get_parent() != parent);
-#if 0
-          printf ("In getEnclosingNode(): parent = %p = %s \n",parent,parent->class_name().c_str());
+
+#if DEBUG_GET_ENCLOSING_NODE
+          printf (" --- parent = %p = %s \n",parent,parent->class_name().c_str());
+          printf (" --- --- parent->get_parent() = %p = %s \n",parent->get_parent(),parent->get_parent()->class_name().c_str());
+#endif
+
+#if 1
+       // DQ (1/8/2020): ROSE-82 (on RZ) This limit needs to be larger and increasing it to 500 was enough 
+       // for a specific code with a long chain of if-then-else nesting, So to make this sufficent for more
+       // general code we have increased the lomit to 100,000.  Note that 50 was not enough for real code, 
+       // but was enough for our regression tests.
+       // DQ (12/30/2019): This is added to support detection of infinite loops over parent pointers.
+       // if (counter >= 500)
+          if (counter >= 100000)
+             {
+               printf ("Exiting: In getEnclosingNode(): loop limit exceeded: counter = %d \n",counter);
+               ROSE_ASSERT(false);
+             }
 #endif
           parent = parent->get_parent();
 
@@ -1454,9 +1481,11 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
              {
                foundCycle = true;
              }
+          counter++;
+
         }
 
-#if 0
+#if DEBUG_GET_ENCLOSING_NODE
      printf ("previouslySeenParent = %p = %s \n",previouslySeenParent,previouslySeenParent->class_name().c_str());
 #endif
 
@@ -1521,7 +1550,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
                SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(parent);
                if (declarationStatement != NULL)
                   {
-#if 0
+#if DEBUG_GET_ENCLOSING_NODE
                     printf ("Found a SgDeclarationStatement \n");
 #endif
                     SgDeclarationStatement* definingDeclaration         = declarationStatement->get_definingDeclaration();
@@ -1573,8 +1602,23 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
            if (NodeType *found = dynamic_cast<NodeType*>(node))
                return found;
 
-           // FIXME: Cycle detection could be moved elsewhere so we don't need to do it on every call. [RPM 2012-10-09]
-           ROSE_ASSERT(seen.insert(node).second);
+        // FIXME: Cycle detection could be moved elsewhere so we don't need to do it on every call. [RPM 2012-10-09]
+        // DQ (12/30/2019): Provide more detail in error message.
+           if (seen.insert(node).second == false)
+             {
+               printf ("Error: node is already in set and defines a cycle: node = %p = %s \n",node,node->class_name().c_str());
+               std::set<const SgNode*>::const_iterator i = seen.begin();
+               while (i != seen.end())
+                 {
+                   const SgNode* element = *i;
+                   printf (" --- seen element: element = %p = %s \n",element,element->class_name().c_str()); 
+                   i++;
+                 }
+
+               printf ("Exiting after error! \n");
+               ROSE_ASSERT(false);
+             }
+           // ROSE_ASSERT(seen.insert(node).second);
 
            // Traverse to parent (declaration statements are a special case)
            if (SgDeclarationStatement *declarationStatement = isSgDeclarationStatement(node)) {
@@ -1996,7 +2040,18 @@ ROSE_DLL_API void resetInternalMapsForTargetStatement(SgStatement* sourceStateme
 
 // DQ (6/7/2019): Add support for transforming function definitions to function prototypes in a subtree.
 // We might have to make this specific to a file (only traversing the functions in that file).
+/*!\brief XXX 
+ * This function operates on the new file used to support outlined function definitions.
+ * We use a copy of the file where the code will be outlined FROM, so that if there are references to
+ * declarations in the outlined code we can support the outpiled code with those references.  This
+ * approach has the added advantage of also supporting the same include file tree as the original 
+ * file where the outlined code is being taken from.
+ */
 ROSE_DLL_API void convertFunctionDefinitionsToFunctionPrototypes(SgNode* node);
+
+// DQ (11/10/2019): Lower level support for convertFunctionDefinitionsToFunctionPrototypes().
+ROSE_DLL_API void replaceDefiningFunctionDeclarationWithFunctionPrototype ( SgFunctionDeclaration* functionDeclaration );
+ROSE_DLL_API std::vector<SgFunctionDeclaration*> generateFunctionDefinitionsList(SgNode* node);
 
 
 //@}
@@ -2037,7 +2092,9 @@ ROSE_DLL_API void fixNamespaceDeclaration(SgNamespaceDeclarationStatement* struc
 ROSE_DLL_API void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
 
 //! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelRefExp are created transparently as needed.
-ROSE_DLL_API void setFortranNumericLabel(SgStatement* stmt, int label_value);
+ROSE_DLL_API void setFortranNumericLabel(SgStatement* stmt, int label_value,
+                                         SgLabelSymbol::label_type_enum label_type=SgLabelSymbol::e_start_label_type,
+                                         SgScopeStatement* label_scope=NULL);
 
 //! Suggest next usable (non-conflicting) numeric label value for a Fortran function definition scope
 ROSE_DLL_API int  suggestNextNumericLabel(SgFunctionDefinition* func_def);
@@ -2077,6 +2134,9 @@ ROSE_DLL_API void translateScopeToUseCppDeclarations( SgScopeStatement* scope );
 ROSE_DLL_API std::vector<SgC_PreprocessorDirectiveStatement*> translateStatementToUseCppDeclarations( SgStatement* statement, SgScopeStatement* scope);
 ROSE_DLL_API void printOutComments ( SgLocatedNode* locatedNode );
 ROSE_DLL_API bool skipTranslateToUseCppDeclaration( PreprocessingInfo* currentPreprocessingInfo );
+
+// DQ (12/2/2019): Debugging support.
+ROSE_DLL_API void outputFileIds( SgNode* node );
 
 
 //@}
