@@ -421,50 +421,58 @@ namespace CodeThorn {
     if(isSgExprStatement(condNode)) {
       condNode=SgNodeHelper::getExprStmtChild(condNode);
     }
-    SgExpression* condExpr=isSgExpression(condNode);
     
-#if BAND_AID_FIX    
-    // temporary "fix" 
-    
-    if (!condExpr && isSgIfStmt(stmt)) {
-      // PP (03/02/20) handle variable declarations in conditions
-      SgVariableDeclaration* condVar = isSgVariableDeclaration(condNode);
-      
-      if (!condVar)
-        std::cerr << typeid(*condNode).name() << "\n" << stmt->unparseToString() << std::endl;
-        
-      ROSE_ASSERT(condVar);
-      
-      // \todo do we also have to fix up the symbol scope?
-      
-      SgVarRefExp*           condRef = SageBuilder::buildVarRefExp(condVar);
-      SgExprStatement*       refStmt = SageBuilder::buildExprStatement(condRef);
-      
-      SageInterface::replaceStatement(condVar, refStmt, true /* movePreprocessingInfo */);
-      SageInterface::insertStatementBefore(stmt, condVar);
-      return;
-    }
-    
-    if (!condExpr)
-        std::cerr << typeid(*condNode).name() << "\n" << stmt->unparseToString() << std::endl;
-#endif /* BAND_AID_FIX */
-    
-    ROSE_ASSERT(condExpr);
     if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)) {
-      // (i) build tmp var with cond as initializer
-      SgScopeStatement* scope=stmt->get_scope();
-      auto tmpVarDeclaration=buildVariableDeclarationWithInitializerForExpression(condExpr, scope);
-      tmpVarDeclaration->set_parent(scope);
-      auto tmpVarReference=buildVarRefExpForVariableDeclaration(tmpVarDeclaration);
-      ROSE_ASSERT(tmpVarDeclaration!= 0);
+      if(SgExpression* condExpr=isSgExpression(condNode)) {
+        // (i) build tmp var with cond as initializer
+        SgScopeStatement* scope=stmt->get_scope();
+        auto tmpVarDeclaration=buildVariableDeclarationWithInitializerForExpression(condExpr, scope);
+        tmpVarDeclaration->set_parent(scope);
+        auto tmpVarReference=buildVarRefExpForVariableDeclaration(tmpVarDeclaration);
+        ROSE_ASSERT(tmpVarDeclaration!= 0);
       
-      // (ii) replace cond with new tmp-varref
-      bool deleteReplacedExpression=false;
-      SgNodeHelper::replaceExpression(condExpr,tmpVarReference,deleteReplacedExpression);
+        // (ii) replace cond with new tmp-varref
+        bool deleteReplacedExpression=false;
+        SgNodeHelper::replaceExpression(condExpr,tmpVarReference,deleteReplacedExpression);
       
-      // (iii) insert declaration with initializer before stmt
-      // cases if and switch
-      SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
+        // (iii) insert declaration with initializer before stmt
+        // cases if and switch
+        SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
+      } else if(SgVariableDeclaration* condVarDecl=isSgVariableDeclaration(condNode)) {
+        cerr<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(stmt)<<endl;
+        cerr<<"Error: Normalization: Variable declaration in condition of if statement. Not supported yet."<<endl;
+        exit(1);
+        
+        // temporary "fix" 
+    
+        //if (!condExpr && isSgIfStmt(stmt)) {
+          // PP (03/02/20) handle variable declarations in conditions
+        //  SgVariableDeclaration* condVar = isSgVariableDeclaration(condNode);
+          
+        //  if (!condVar)
+        //    std::cerr << typeid(*condNode).name() << "\n" << stmt->unparseToString() << std::endl;
+          
+        //  ROSE_ASSERT(condVar);
+          
+          // \todo do we also have to fix up the symbol scope?
+          
+        //  SgVarRefExp*           condRef = SageBuilder::buildVarRefExp(condVar);
+        //  SgExprStatement*       refStmt = SageBuilder::buildExprStatement(condRef);
+          
+        //  SageInterface::replaceStatement(condVar, refStmt, true /* movePreprocessingInfo */);
+        //  SageInterface::insertStatementBefore(stmt, condVar);
+        //  return;
+        //}
+  
+        //if (!condExpr)
+        //  std::cerr << typeid(*condNode).name() << "\n" << stmt->unparseToString() << std::endl;
+        
+      } else {
+        cerr<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(stmt)<<endl;
+        cerr<<"Error: Normalization: Unknown language construct in condition of if statement. Not supported."<<endl;
+        exit(1);
+        
+      }
       
     } else if(isSgWhileStmt(stmt)||isSgDoWhileStmt(stmt)) {
       // transformation: while(C) {...} ==> while(1) { T t=C;if(t) break; ...} (implemented)
@@ -474,6 +482,11 @@ namespace CodeThorn {
 
       // (i) replace while-condition with constant 1 condition
       SgStatement* oldWhileCond=isSgStatement(SgNodeHelper::getCond(stmt));
+      if(isSgVariableDeclaration(oldWhileCond)) {
+        cerr<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(stmt)<<endl;
+        cerr<<"Error: Normalization: Variable declaration in condition of while or do-while statement. Not supported yet."<<endl;
+        exit(1);
+      }
       SgExprStatement* exprStmt=SageBuilder::buildExprStatement(SageBuilder::buildIntValHex(1));
       SgNodeHelper::setCond(stmt,exprStmt);
       exprStmt->set_parent(stmt);
@@ -758,10 +771,9 @@ add
   // stmt is only used to detetermined scope, which is used when generating the tmp-variable.
   Normalization::TmpVarNrType Normalization::registerSubExpressionTempVars(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList,bool insideExprToBeEliminated) {
     ROSE_ASSERT(stmt);
-    std::cerr << stmt->unparseToString() << std::endl;
     ROSE_ASSERT(expr);
-    Normalization::TmpVarNrType mostRecentTmpVarNr=0;
     SAWYER_MESG(logger[TRACE])<<"registerSubExpressionTempVars@"<<":"<<SgNodeHelper::sourceLineColumnToString(expr)<<expr->class_name()<<endl;
+    Normalization::TmpVarNrType mostRecentTmpVarNr=0;
     /*if(SgCastExp* castExp=isSgCastExp(expr)) {
       registerSubExpressionTempVars(stmt,castExp->get_operand(),subExprTransformationList);
       } else*/ 
