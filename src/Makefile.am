@@ -386,6 +386,9 @@ rose_config_LDFLAGS = $(ROSE_RPATHS)
 rose_config_DEPENDENCIES = $(REQUIRED_LIBS)
 rose_config_CPPFLAGS = -DLIBDIR='"$(libdir)"'
 rose_config_LDADD = $(ROSE_LIBS)
+if OS_MACOSX
+  rose_config_LDFLAGS += -Xlinker -rpath -Xlinker $(JAVA_JVM_PATH)
+endif
 
 # DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
 if USING_CLANG_COMPILER
@@ -500,7 +503,7 @@ if USING_CLANG_COMPILER
 endif
   ROSEBIN_LDFLAGS += -fno-rtti
 if OS_MACOSX
-  ROSEBIN_LDFLAGS = -Xlinker -rpath $(JAVA_JVM_PATH)
+  ROSEBIN_LDFLAGS += -Xlinker -rpath -Xlinker $(JAVA_JVM_PATH)
 endif
 
 rose_compiler_SOURCES      = rose-compiler.C
@@ -548,15 +551,27 @@ check-config:
 	./rose-config --version
 
 if ROSE_BUILD_C_LANGUAGE_SUPPORT
-check-hello-c:
+if OS_MACOSX
+check-hello-c: $(eval SHELL:=/bin/bash)
 	@echo "  TEST     ROSE C compiler [rose-cc]"
 	${AM_V_at}echo "#include <stdio.h>"                     >  hello-world.c
 	${AM_V_at}echo "int main() {"                           >> hello-world.c
-	${AM_V_at}echo "   printf(\"Hello World from C!\\n\");" >> hello-world.c
+	${AM_V_at}echo "   printf(\"Hello World from C\\n\");" >> hello-world.c
 	${AM_V_at}echo "   return 0;"                           >> hello-world.c
 	${AM_V_at}echo "}"                                      >> hello-world.c
 	${AM_V_at}./rose-cc hello-world.c -o hello-world-c
 	${AM_V_at}./hello-world-c
+else
+check-hello-c:
+	@echo "  TEST     ROSE C compiler [rose-cc]"
+	${AM_V_at}echo "#include <stdio.h>"                     >  hello-world.c
+	${AM_V_at}echo "int main() {"                           >> hello-world.c
+	${AM_V_at}echo "   printf(\"Hello World from C\\n\");" >> hello-world.c
+	${AM_V_at}echo "   return 0;"                           >> hello-world.c
+	${AM_V_at}echo "}"                                      >> hello-world.c
+	${AM_V_at}./rose-cc hello-world.c -o hello-world-c
+	${AM_V_at}./hello-world-c
+endif
 endif
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 check-hello-cxx:
