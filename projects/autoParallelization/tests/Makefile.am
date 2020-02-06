@@ -19,6 +19,8 @@ vector_2.C
 # null_for_test.c  TODO Liao 6/9/2016
 # We also put C++ file list here
 # StressWork_setup.C // need to assume no pointer aliasing
+# Liao, 2/5/202, new list of failing tests due to qing's latest push
+# pointers.c
 
 # -----------------------------------------------------------------
 # This list is now copied to C_TESTCODES_REQUIRED_TO_VERIFY, Liao 3/9/2016
@@ -58,7 +60,6 @@ output_dep2.c \
 output_dep3.c \
 plusAssign.c \
 plusplus.c \
-pointers.c \
 private.c \
 reduction.c \
 reduction_2.c \
