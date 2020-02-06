@@ -3230,7 +3230,11 @@ Grammar::setUpExpressions ()
 
      UnsignedShortVal.setFunctionSource       ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      IntVal.setFunctionSource                 ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
-     EnumVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+
+  // DQ (2/5/2020): I think this should be a TypeEnum, so fixing this now.
+  // I think we require a seperate get_type() function so that we can pass in the required SgEnumDeclaration.
+  // EnumVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+
      UnsignedIntVal.setFunctionSource         ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      LongIntVal.setFunctionSource             ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      LongLongIntVal.setFunctionSource         ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
@@ -3276,8 +3280,12 @@ Grammar::setUpExpressions ()
      UnsignedShortVal.editSubstitute       ( "GENERIC_TYPE", "SgTypeUnsignedShort" );
      IntVal.editSubstitute                 ( "GENERIC_TYPE", "SgTypeInt" );
 
+  // DQ (2/5/2020): I think this should be a TypeEnum, so fixing this now.
+  // I think we require a seperate get_type() function so that we can pass in the required SgEnumDeclaration.
   // Shouldn't this be using the TypeEnum?
-     EnumVal.editSubstitute                ( "GENERIC_TYPE", "SgTypeInt" );
+  // EnumVal.editSubstitute                ( "GENERIC_TYPE", "SgTypeInt" );
+  // EnumVal.editSubstitute                ( "GENERIC_TYPE", "SgEnumType" );
+
      UnsignedIntVal.editSubstitute         ( "GENERIC_TYPE", "SgTypeUnsignedInt" );
      LongIntVal.editSubstitute             ( "GENERIC_TYPE", "SgTypeLong" );
 
