@@ -740,7 +740,8 @@ Engine::engineSwitches(EngineSettings &settings) {
               .whichValue(SAVE_ALL)
               .doc("Directories containing configuration files, or configuration files themselves.  A directory is searched "
                    "recursively searched for files whose names that end with \".json\" or \".yaml\".  Each file is parsed and "
-                   "used to configure the partitioner.\n\n" + Configuration::fileFormatDoc()));
+                   "used to configure the partitioner. This switch may appear more than once and/or a comma-separated list of "
+                   "names can be specified.\n\n" + Configuration::fileFormatDoc()));
     return sg;
 }
 
@@ -1592,7 +1593,7 @@ Engine::runPartitionerInit(Partitioner &partitioner) {
     Sawyer::Message::Stream where(mlog[WHERE]);
 
     SAWYER_MESG(where) <<"labeling addresses\n";
-    labelAddresses(partitioner);
+    labelAddresses(partitioner, partitioner.configuration());
 
     SAWYER_MESG(where) <<"marking configured basic blocks\n";
     makeConfiguredDataBlocks(partitioner, partitioner.configuration());
@@ -1796,8 +1797,13 @@ Engine::loadPartitioner(const boost::filesystem::path &name, SerialIo::Format fm
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-Engine::labelAddresses(Partitioner &partitioner) {
+Engine::labelAddresses(Partitioner &partitioner, const Configuration &configuration) {
     Modules::labelSymbolAddresses(partitioner, interp_);
+
+    BOOST_FOREACH (const AddressConfig &c, configuration.addresses().values()) {
+        if (!c.name().empty())
+            partitioner.addressName(c.address(), c.name());
+    }
 }
 
 std::vector<DataBlock::Ptr>
