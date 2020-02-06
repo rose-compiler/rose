@@ -107,6 +107,81 @@ cEscape(const std::string &s, char context) {
     return result;
 }
 
+std::string
+cUnescape(const std::string &s) {
+    std::string result;
+    for (size_t i = 0; i < s.size(); ++i) {
+        if ('\\' == s[i] && i+1 < s.size()) {
+            ++i;
+            switch (s[i]) {
+                case '?':
+                    result += '?';
+                    break;
+                case '"':
+                    result += '"';
+                    break;
+                case '\'':
+                    result += '\'';
+                    break;
+                case 'a':
+                    result += '\a';
+                    break;
+                case 'b':
+                    result += '\b';
+                    break;
+                case 'f':
+                    result += '\f';
+                    break;
+                case 'n':
+                    result += '\n';
+                    break;
+                case 'r':
+                    result += '\r';
+                    break;
+                case 't':
+                    result += '\t';
+                    break;
+                case 'u':
+                    result += "\\u";                    // Unicode is not supported; leave it escaped
+                    break;
+                case 'U':
+                    result += "\\U";                    // Unicode is not supported; leave it escaped
+                    break;
+                case 'v':
+                    result += '\v';
+                    break;
+                case 'x': {
+                    unsigned byte = 0;
+                    while (i+1 < s.size() && isxdigit(s[i+1]))
+                        byte = ((16*byte) + hexadecimalToInt(s[++i])) & 0xff;
+                    result += (char)byte;
+                    break;
+                }
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7': {
+                    unsigned byte = 0, nchars = 0;
+                    --i;
+                    while (i+1 < s.size() && nchars++ < 3 && strchr("01234567", s[i+1]))
+                        byte = 8*byte + s[++i] - '0';
+                    result += (char)byte;
+                    break;
+                }
+                default:
+                    result += std::string("\\") + s[i];
+            }
+        } else {
+            result += s[i];
+        }
+    }
+    return result;
+}
+
 // Escaping special characters in shells is difficult. There are many classes of characters:
 //
 //   1. Characters that can appear unescaped and outside quotes (bare). They can also appear unescaped inside single or
