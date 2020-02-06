@@ -349,6 +349,19 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // insert (func, glob_scope, s); //Outliner::insert() 
      DeferedTransformation headerFileTransformation = insert (func, glob_scope, s); //Outliner::insert() 
 
+  // Liao 2/4/2020   
+  // Some comments and #include directives may be attached after the global scope for an otherwise empty input file.
+  // We must move them to be attached to the first prototype's before location. 
+  // Otherwise, the #include directive will show up in the end of the resulting file.
+     SgStatement* firstStmt = getFirstStatement(glob_scope);
+     SgFunctionDeclaration* first_func_decl = isSgFunctionDeclaration(firstStmt);
+     if (first_func_decl!=NULL) // we expect that the first statement is a prototype func of an outlined function.
+     {
+       AttachedPreprocessingInfoType save_buf; 
+       cutPreprocessingInfo ( glob_scope, PreprocessingInfo::after, save_buf);
+       pastePreprocessingInfo(first_func_decl, PreprocessingInfo::before, save_buf);
+     }
+
 #if 0
      printf ("DONE: Calling insert() (func = %p to global scope) \n",func);
 #endif
