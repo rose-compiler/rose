@@ -5,6 +5,7 @@
 #include <Partitioner2/Function.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>
+#include <SourceLocation.h>
 #include <set>
 #include <string>
 
@@ -18,6 +19,7 @@ class BasicBlockConfig {
     std::string comment_;
     Sawyer::Optional<rose_addr_t> finalInsnVa_;
     std::set<rose_addr_t> successorVas_;
+    SourceLocation sourceLocation_;
 
 public:
     // default constructor needed by some STL containers
@@ -38,6 +40,13 @@ public:
      * @{ */
     const std::string& comment() const { return comment_; }
     BasicBlockConfig& comment(const std::string &s) { comment_ = s; return *this; }
+    /** @} */
+
+    /** Property: location of basic block in source code.
+     *
+     * @{ */
+    const SourceLocation& sourceLocation() const { return sourceLocation_; }
+    BasicBlockConfig& sourceLocation(const SourceLocation &loc) { sourceLocation_ = loc; return *this; }
     /** @} */
 
     /** Property: last instruction.
@@ -72,6 +81,7 @@ class DataBlockConfig {
     rose_addr_t address_;
     std::string name_;
     std::string comment_;
+    SourceLocation sourceLocation_;
 
 public:
     // Default constructor needed by some STL containers
@@ -102,6 +112,13 @@ public:
     const std::string& comment() const { return comment_; }
     DataBlockConfig& comment(const std::string &s) { comment_ = s; return *this; }
     /** @} */
+
+    /** Property: Location of data block in source code.
+     *
+     * @{ */
+    const SourceLocation& sourceLocation() const { return sourceLocation_; }
+    DataBlockConfig& sourceLocation(const SourceLocation &loc) { sourceLocation_ = loc; return *this; }
+    /** @} */
 };
 
 
@@ -111,6 +128,7 @@ class FunctionConfig {
     std::string name_, defaultName_, comment_;
     Sawyer::Optional<int64_t> stackDelta_;
     Sawyer::Optional<bool> mayReturn_;
+    SourceLocation sourceLocation_;
 
 public:
     // default constructor needed by some STL containers
@@ -171,6 +189,13 @@ public:
     FunctionConfig& comment(const std::string &s) { comment_ = s; return *this; }
     /** @} */
 
+    /** Property: Location of function in source code.
+     *
+     * @{ */
+    const SourceLocation& sourceLocation() const { return sourceLocation_; }
+    FunctionConfig& sourceLocation(const SourceLocation &loc) { sourceLocation_ = loc; return *this; }
+    /** @} */
+
     /** Property: stack delta.
      *
      *  The stack delta is a numeric value that indicates the net effect this function has on the stack pointer.  If a stack
@@ -190,7 +215,7 @@ public:
     FunctionConfig& stackDelta(const Sawyer::Optional<int64_t> &n) { stackDelta_ = n; return *this; }
     /** @} */
 
-    /** Property may-return.
+    /** Property: may-return.
      *
      *  This property specifies whether the function might return to its caller.  If the function might return, the value
      *  should be true; if the function cannot possibly return then the value is false; indeterminate values indicate that a
@@ -206,6 +231,50 @@ public:
     /** @} */
 };
 
+/** Configuration for individual addresses.
+ *
+ *  If the address is the start of a function, basic block, or data block, then use one of those configuration objects instead. */
+class AddressConfig {
+    rose_addr_t address_;
+    std::string name_;
+    std::string comment_;
+    SourceLocation sourceLocation_;
+
+public:
+    // Default constructor needed by STL containers
+    AddressConfig() {}
+
+    /** Construct a new address configuration object. */
+    explicit AddressConfig(rose_addr_t va)
+        : address_(va) {}
+
+    /** Property: address.
+     *
+     *  The address property is read-only, set by the constructor. */
+    rose_addr_t address() const { return address_; }
+
+    /** Property: name.
+     *
+     * @{ */
+    const std::string &name() const { return name_; }
+    AddressConfig& name(const std::string &s) { name_ = s; return *this; }
+    /** @} */
+    
+    /** Property: comment string.
+     *
+     * @{ */
+    const std::string &comment() const { return comment_; }
+    AddressConfig& comment(const std::string &s) { comment_ = s; return *this; }
+    /** @} */
+
+    /** Property: Location of address within source code.
+     *
+     * @{ */
+    const SourceLocation& sourceLocation() const { return sourceLocation_; }
+    AddressConfig& sourceLocation(const SourceLocation &loc) { sourceLocation_ = loc; return *this; }
+    /** @} */
+};
+
 /** Holds configuration information. */
 class Configuration {
 public:
@@ -213,14 +282,19 @@ public:
     typedef Sawyer::Container::Map<rose_addr_t, DataBlockConfig> DataBlockConfigs;
     typedef Sawyer::Container::Map<rose_addr_t, FunctionConfig> FunctionConfigsByAddress;
     typedef Sawyer::Container::Map<std::string, FunctionConfig> FunctionConfigsByName;
+    typedef Sawyer::Container::Map<rose_addr_t, AddressConfig> AddressConfigs;
 
 private:
     BasicBlockConfigs bblockConfigs_;
     DataBlockConfigs dblockConfigs_;
     FunctionConfigsByAddress functionConfigsByAddress_;
     FunctionConfigsByName functionConfigsByName_;
+    AddressConfigs addressConfigs_;
 
 public:
+    /** Documentation string describing the file format. */
+    static std::string fileFormatDoc();
+
     /** Loads configuration from a file. */
     void loadFromFile(const FileSystem::Path &fileName);
 
@@ -231,12 +305,24 @@ public:
     BasicBlockConfigs& basicBlocks() { return bblockConfigs_; }
     /** @} */
 
+    /** Configuration for a particular basic block.
+     *
+     *  If no configuration exists for a basic block starting at the specified address, then a reference to an empty
+     *  configuration record is returned. */
+    const BasicBlockConfig& basicBlock(rose_addr_t) const;
+
     /** All data block configuration details.
      *
      * @{ */
     const DataBlockConfigs& dataBlocks() const { return dblockConfigs_; }
     DataBlockConfigs& dataBlocks() { return dblockConfigs_; }
     /** @} */
+
+    /** Configuration for a particular data block.
+     *
+     *  If no configuration exists for a data block starting at the specified address, then a reference to an empty
+     *  configuration record is returned. */
+    const DataBlockConfig& dataBlock(rose_addr_t) const;
 
     /** All function configuration details for function configs that have addresses.
      *
@@ -251,6 +337,28 @@ public:
     const FunctionConfigsByName& functionConfigsByName() const { return functionConfigsByName_; }
     FunctionConfigsByName& functionConfigsByName() { return functionConfigsByName_; }
     /** @} */
+
+    /** Configuration for a particular function.
+     *
+     *  If no configuration exists for a function block starting at the specified address or having the specified name, then a
+     *  reference to an empty configuration record is returned.
+     *
+     * @{ */
+    const FunctionConfig& function(rose_addr_t) const;
+    const FunctionConfig& function(const std::string &name) const;
+    /** @} */
+
+    /** All address configuration details.
+     *
+     * @{ */
+    const AddressConfigs& addresses() const { return addressConfigs_; }
+    AddressConfigs& addresses() { return addressConfigs_; }
+    /** @} */
+
+    /** Configuration for a particular address.
+     *
+     *  If no configuration exists for the specified address, then a reference to an empty configuration record is returned. */
+    const AddressConfig& address(rose_addr_t) const;
 
     /** Lookup or insert a basic block.
      *
@@ -271,6 +379,11 @@ public:
     FunctionConfig& insertMaybeFunction(const std::string &name);
     /** @} */
 
+    /** Lookup or insert address details.
+     *
+     *  If the address exists then return a reference to its configuration, otherwise create a new configuration for it. */
+    AddressConfig& insertMaybeAddress(rose_addr_t va);
+
     /** Insert basic block configuration information.
      *
      *  Inserts basic block configuration information, overwriting any config information that was already present for the same
@@ -289,9 +402,17 @@ public:
      *  address or name. Returns true if information was inserted rather than overwritten. */
     bool insertConfiguration(const FunctionConfig&);
 
+    /** Insert address configuration information.
+     *
+     *  Inserts address configuration information, overwriting any config information that was already present at the same
+     *  address.  Returns true if information was inserted rather than overwritten. */
+    bool insertConfiguration(const AddressConfig&);
+
     /** Basic block comment.
      *
-     *  Returns the comment configured for the basic block at the specified address, or an empty string. */
+     *  Returns the comment configured for the basic block at the specified address, or an empty string.
+     *
+     *  See also, @ref comment. */
     std::string basicBlockComment(rose_addr_t bblockVa) const;
 
     /** Basic block final instruction address.
@@ -313,7 +434,9 @@ public:
 
     /** Data block comment.
      *
-     *  Returns the comment configured for the data block at the specified address, or an empty string. */
+     *  Returns the comment configured for the data block at the specified address, or an empty string.
+     *
+     *  See also, @ref comment. */
     std::string dataBlockComment(rose_addr_t dblockVa) const;
 
     /** Function name.
@@ -335,6 +458,8 @@ public:
      *  Returns the configured comment for a function at the specified address or having the specified name.  Function
      *  configuration is looked up by address or name-only (i.e., asking for config information for function "main" will not
      *  return anything if "main" has an address in the configuration).
+     *
+     *  See also, @ref comment.
      *
      * @{ */
     std::string functionComment(rose_addr_t functionVa) const;
@@ -369,6 +494,20 @@ public:
     Sawyer::Optional<bool> functionMayReturn(const std::string &functionName) const;
     Sawyer::Optional<bool> functionMayReturn(const Function::Ptr&) const;
     /** @} */
+
+    /** Address comment.
+     *
+     *  Returns the comment associated with the details for the specified address, if any.
+     *
+     *  See also, @ref comment. */
+    std::string addressComment(rose_addr_t va) const;
+
+    /** Address comment.
+     *
+     *  Returns the comment for the specified address by search first within the address details, then basic block details,
+     *  then data block details, and finally function details. Returns the first non-empty comment that's found, or the empty
+     *  string. */
+    std::string comment(rose_addr_t va) const;
 
     /** Generate a YAML file. */
     void print(std::ostream&) const;
