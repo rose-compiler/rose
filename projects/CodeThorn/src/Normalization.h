@@ -108,11 +108,15 @@ namespace CodeThorn {
     // type for tmp var counter
     typedef uint32_t TmpVarNrType;
 
+    // normalize all expressions (and perform all implied
+    // normlizations; 
+    void normalizeAst(SgNode* root);
+
     // applies normalization on entire AST with normalization level 0-3.
     // level 0: no normalization
-    // level 1: all expressions with a function call (and all implied normalizations)
+    // (experimental: level 1: normalize only expressions with a function call (and all implied normalizations))
     // level 2: all expressions (and all implied normalizations)
-    // level 3: all expresisons and lowering of all control constructs (only if+gotos remain)
+    // (experimental: level 3: all expresisons and lowering of all control constructs (only if+gotos remain))
     void normalizeAst(SgNode* root, unsigned int normalizationLevel);
 
     static void setLabelPrefix(std::string prefix);
@@ -140,7 +144,7 @@ namespace CodeThorn {
 
   protected:
     // assumes correctly configured options (invoked by normalizeAst(root,level))
-    void normalizeAst(SgNode* root);
+    void normalizeAstPhaseByPhase(SgNode* root);
 
     /* normalize all label stmts in AST. Every label is attached to an
      * empty statement (instead to S). Inserting a statement before S
@@ -163,6 +167,11 @@ namespace CodeThorn {
     // requires: normalizeSingleStatementsToBlocks()
 
   private:
+    // used to exclude templates from normalization (not excluding template instantiations!)
+    bool isTemplateInstantiationNode(SgNode* node);
+    SgClassDeclaration* isSpecialization(SgNode* node);
+    bool isTemplateNode(SgNode* node);
+
     /* normalize all Expressions in AST. The original variables remain
      * in the program and are assign the last value of the sequence of
      * operations of an expression. */
