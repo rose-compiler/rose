@@ -889,7 +889,7 @@ std::string Outliner::generateLibSourceFileName(SgBasicBlock* target) {
     }
     return lib_file_name; 
 }
-    
+
 /*!\brief Obtain the file handle to the separated source file storing outlined functions.  
  * This file will be compiled to .so dynamically loadable library.
  * target is the input code block for outlining. It provides SgProject and input file name info. 
@@ -963,9 +963,13 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
         // to simplify the lib file generation, we copy entire original source file to it, then later append outlined functions
       new_file = isSgSourceFile(buildSourceFile(input_file_name, new_file_name, project));
 
+#if 0
+      printf ("DONE: In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
+      printf (" --- new_file_name = %s \n",new_file_name.c_str());
+#endif
+
       if (enable_debug)
         printf ("DONE: In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
-
 
       // buildFile() will set filename to be input file name by default. 
       // we have to rename the input file to be output file name. This is used to avoid duplicated creation later on

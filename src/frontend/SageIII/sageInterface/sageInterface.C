@@ -7561,6 +7561,21 @@ void SageInterface::moveForStatementIncrementIntoBody(SgForStatement* f) {
   ne->set_parent(f);
 }
 
+static
+bool hasEmptyCondition(SgForStatement* f)
+{
+  ROSE_ASSERT(f);
+  
+  SgStatement* condstmt = f->get_test();
+  ROSE_ASSERT(condstmt);
+  
+  if (isSgNullStatement(condstmt)) return true;
+  
+  SgExprStatement* exprStmt = isSgExprStatement(condstmt);
+  
+  return isSgNullExpression(exprStmt->get_expression());
+}
+
 void SageInterface::convertForToWhile(SgForStatement* f) {
   moveForStatementIncrementIntoBody(f);
   SgBasicBlock* bb = SageBuilder::buildBasicBlock();
@@ -7571,17 +7586,12 @@ void SageInterface::convertForToWhile(SgForStatement* f) {
   for (size_t i = 0; i < bbStmts.size(); ++i) {
     bbStmts[i]->set_parent(bb);
   }
-  bool testIsNull =
-    isSgExprStatement(f->get_test()) &&
-    isSgNullExpression(isSgExprStatement(f->get_test())->get_expression());
-  SgStatement* test =
-    testIsNull ?
-    SageBuilder::buildExprStatement(
-        SageBuilder::buildBoolValExp(true)) :
-    f->get_test();
-  SgWhileStmt* ws = SageBuilder::buildWhileStmt(
-      test,
-      f->get_loop_body());
+  
+  const bool testIsNull = hasEmptyCondition(f);
+  SgStatement* test = testIsNull ? SageBuilder::buildExprStatement(SageBuilder::buildBoolValExp(true)) 
+                                 : f->get_test();
+  SgWhileStmt* ws = SageBuilder::buildWhileStmt(test, f->get_loop_body());
+  
   appendStatement(ws, bb);
   isSgStatement(f->get_parent())->replace_statement(f, bb);
 }
