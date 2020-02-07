@@ -8,6 +8,8 @@
 
 #include "CallGraph.h"
 
+#include "sageGeneric.h"
+
 #ifndef _MSC_VER
 #include <err.h>
 #endif
@@ -20,45 +22,77 @@ using namespace Rose;
 /***************************************************
  * Get the vector of base types for the current type
  **************************************************/
+ 
+static
+SgType*
+skipTypeAliases(SgType* ty)
+{
+  ROSE_ASSERT(ty);
+  
+  return ty->stripType( SgType::STRIP_TYPEDEF_TYPE );
+} 
+
+namespace
+{
+  template <class SageNode> 
+  SgType* genericUnderType(SageNode* ty)
+  {
+    ROSE_ASSERT(ty);
+    
+    return ty->get_base_type();
+  } 
+  
+  SgType* getUnderType(SgType* ty)                { return NULL /* base case */; }
+  SgType* getUnderType(SgModifierType* ty)        { return genericUnderType(ty); }
+  SgType* getUnderType(SgPointerType* ty)         { return genericUnderType(ty); }
+  SgType* getUnderType(SgReferenceType* ty)       { return genericUnderType(ty); }
+  SgType* getUnderType(SgRvalueReferenceType* ty) { return genericUnderType(ty); }
+  SgType* getUnderType(SgArrayType* ty)           { return genericUnderType(ty); }
+  SgType* getUnderType(SgTypedefType* ty)         { return genericUnderType(ty); }
+}  
+  
+static
 std::vector<SgType*>
 get_type_vector(SgType* currentType )
 {
   std::vector<SgType*> returnVector;
-  currentType = currentType->stripType( SgType::STRIP_TYPEDEF_TYPE );
-
-  SgModifierType*  modType     = NULL;
-  SgPointerType*   pointType   = NULL;
-  SgReferenceType* refType     = NULL;
-  SgArrayType*     arrayType   = NULL;
-  SgTypedefType*   typedefType = NULL;
-
+  
   while (true)
   {
+    ROSE_ASSERT(currentType);
+    
     returnVector.push_back(currentType);
 
-    if ( (modType = isSgModifierType(currentType)) )
+    if (SgModifierType* modType = isSgModifierType(currentType))
     {
-      currentType = modType->get_base_type();
+      currentType = getUnderType(modType);
     }
-    else if ( (refType = isSgReferenceType(currentType)) )
+    else if (SgReferenceType* refType = isSgReferenceType(currentType))
     {
-      currentType = refType->get_base_type();
+      currentType = getUnderType(refType);
     }
-    else if ( (pointType = isSgPointerType(currentType)) )
+    else if (SgRvalueReferenceType* rvRefType = isSgRvalueReferenceType(currentType))
     {
-      currentType = pointType->get_base_type();
+      currentType = getUnderType(rvRefType);
     }
-    else if ( (arrayType = isSgArrayType(currentType)) )
+    else if (SgPointerType* pointType = isSgPointerType(currentType))
     {
-      currentType = arrayType->get_base_type();
+      currentType = getUnderType(pointType);
     }
-    else if ( (typedefType = isSgTypedefType(currentType)) )
+    else if (SgArrayType* arrayType = isSgArrayType(currentType))
+    {
+      currentType = getUnderType(arrayType);
+    }
+    else if (SgTypedefType* typedefType = isSgTypedefType(currentType))
     {
       // DQ (6/21/2005): Added support for typedef types to be uncovered by findBaseType()
 
-      currentType = typedefType->get_base_type();
+      currentType = getUnderType(typedefType);
+      returnVector.pop_back(); // PP (29/01/20) typedef types should be used for comparisons
     }
     else {
+      // \todo PP: templated types, using aliases
+      
       // Exit the while(true){} loop!
       break;
     }
@@ -66,14 +100,73 @@ get_type_vector(SgType* currentType )
                
   return returnVector;
 };
+
+static
 bool is_functions_types_equal(SgFunctionType* f1, SgFunctionType* f2);
 
+
+static 
+bool typeEquality(SgType*, SgType*)
+{
+  return true;
+}
+
+static 
+bool typeEquality(SgNamedType* type1, SgNamedType* type2)
+{
+  ROSE_ASSERT(type1 && type2);
+  
+  SgDeclarationStatement& decl1 = SG_DEREF(type1->get_declaration());
+  SgDeclarationStatement& decl2 = SG_DEREF(type2->get_declaration());
+  
+  return decl1.get_firstNondefiningDeclaration() == decl2.get_firstNondefiningDeclaration();
+}
+
+static 
+bool typeEquality(SgFunctionType* type1, SgFunctionType* type2)
+{
+  ROSE_ASSERT(type1 && type2);
+  
+  return is_functions_types_equal(type1, type2);
+}
+
+static 
+bool typeEquality(SgModifierType* type1, SgModifierType* type2)
+{
+  ROSE_ASSERT(type1 && type2);
+  
+  bool            types_are_equal = true; 
+  SgTypeModifier& typeModifier1 = type1->get_typeModifier();
+  SgTypeModifier& typeModifier2 = type1->get_typeModifier();
+  
+  if( typeModifier1.get_modifierVector () != typeModifier2.get_modifierVector ()   )
+    types_are_equal = false;
+  
+  if( typeModifier1.get_upcModifier().get_modifier () !=
+      typeModifier2.get_upcModifier().get_modifier () 
+    )
+    types_are_equal = false;
+  
+  if( typeModifier1.get_constVolatileModifier().get_modifier () !=
+      typeModifier2.get_constVolatileModifier().get_modifier () 
+    )
+    types_are_equal = false;
+  
+  if( typeModifier1.get_elaboratedTypeModifier().get_modifier () !=
+      typeModifier2.get_elaboratedTypeModifier().get_modifier () 
+    )
+    types_are_equal = false;
+    
+  return types_are_equal;
+}
+
+static
 bool is_types_equal( SgType* t1, SgType* t2 )
 {
-  bool types_are_equal = true;
   if( t1 == t2 )
     return true;
 
+  bool types_are_equal = true;
   std::vector<SgType*> f1_vec = get_type_vector( t1  );
   std::vector<SgType*> f2_vec = get_type_vector( t2  );
 
@@ -84,45 +177,24 @@ bool is_types_equal( SgType* t1, SgType* t2 )
       if( f1_vec[i]->variantT() == f2_vec[i]->variantT() )
       {
         //The named types do not point to the same declaration
-        if( isSgNamedType(f1_vec[i]) != NULL && 
-            ( isSgNamedType(f1_vec[i])->get_declaration()->get_firstNondefiningDeclaration() != 
-              isSgNamedType(f2_vec[i])->get_declaration()->get_firstNondefiningDeclaration()    
-            )
-          )
-          types_are_equal = false;
-
-        if(  isSgModifierType( f1_vec[i] ) != NULL  )
-        {
-          SgTypeModifier& typeModifier1   = isSgModifierType( f1_vec[i] )->get_typeModifier();
-          SgTypeModifier& typeModifier2   = isSgModifierType( f2_vec[i] )->get_typeModifier();
-
-          if( typeModifier1.get_modifierVector () != typeModifier2.get_modifierVector ()   )
-            types_are_equal = false;
-
-          if( typeModifier1.get_upcModifier().get_modifier () !=
-              typeModifier2.get_upcModifier().get_modifier () 
-            )
-            types_are_equal = false;
-
-          if( typeModifier1.get_constVolatileModifier().get_modifier () !=
-              typeModifier2.get_constVolatileModifier().get_modifier () 
-            )
-            types_are_equal = false;
-
-          if( typeModifier1.get_elaboratedTypeModifier().get_modifier () !=
-              typeModifier2.get_elaboratedTypeModifier().get_modifier () 
-            )
+        if( isSgNamedType(f1_vec[i]) != NULL )
+        { 
+          if ( !typeEquality(isSgNamedType(f1_vec[i]), isSgNamedType(f2_vec[i])) )
             types_are_equal = false;
         }
 
+        if(  isSgModifierType( f1_vec[i] ) != NULL  )
+        {          
+          if (!typeEquality(isSgModifierType( f1_vec[i] ), isSgModifierType( f2_vec[i] )))
+            types_are_equal = false;
+        }
 
         //Function types are not the same
-        if( isSgFunctionType( f1_vec[i] ) != NULL &&
-            is_functions_types_equal(isSgFunctionType( f1_vec[i]), isSgFunctionType( f2_vec[i]))
-          )
-          types_are_equal = false;
-
-      
+        if( isSgFunctionType( f1_vec[i] ) != NULL )
+        {
+          if ( !typeEquality(isSgFunctionType(f1_vec[i]), isSgFunctionType(f2_vec[i])) )
+            types_are_equal = false;
+        }
       }else{
         //Variant is different
         types_are_equal = false;
@@ -141,6 +213,7 @@ bool is_types_equal( SgType* t1, SgType* t2 )
   return types_are_equal;
 };
 
+static
 bool is_functions_types_equal(SgFunctionType* f1, SgFunctionType* f2)
 {
   bool functions_are_equal = false;
@@ -177,48 +250,313 @@ bool is_functions_types_equal(SgFunctionType* f1, SgFunctionType* f2)
   //std::cout << "is_functions_types_equal: " << f1->unparseToString() << " " << f2->unparseToString() <<  ( functions_are_equal == true ? " true " : " false " ) << std::endl;
 
   return functions_are_equal;
+}
+
+
+struct CovarianceChecker : sg::DispatchHandler<bool>
+{
+    explicit
+    CovarianceChecker(SgType& baseType, ClassHierarchyWrapper* hierarchy = NULL)
+    : base(&baseType), chw(hierarchy)
+    {}
+  
+    template <class T>
+    static
+    bool typeChk(T& derived, T& base, ClassHierarchyWrapper* chw)
+    {
+      return ::typeEquality(&derived, &base);
+    }
+    
+    static
+    bool typeChk(SgNamedType& derived, SgNamedType& base, ClassHierarchyWrapper* chw)
+    {
+      typedef ClassHierarchyWrapper::ClassDefSet ClassDefSet;
+      
+      const bool         sameTypes = ::typeEquality(&derived, &base);
+      if (!chw || sameTypes) return sameTypes;
+      
+      SgClassType*       derivedClass = isSgClassType(&derived);
+      if (!derivedClass) return false;
+      
+      SgClassType*       baseClass = isSgClassType(&base);
+      if (!baseClass) return false;
+
+      SgClassDeclaration& derivedDcl0 = SG_ASSERT_TYPE(SgClassDeclaration, SG_DEREF(derivedClass->get_declaration())); 
+      SgClassDeclaration& baseDcl0    = SG_ASSERT_TYPE(SgClassDeclaration, SG_DEREF(baseClass->get_declaration()));
+      SgClassDeclaration* derivedDcl  = isSgClassDeclaration(derivedDcl0.get_definingDeclaration());
+      SgClassDeclaration* baseDcl     = isSgClassDeclaration(baseDcl0.get_definingDeclaration());
+      if (!derivedDcl || !baseDcl) return false;
+      
+      SgClassDefinition*  derivedDef  = derivedDcl->get_definition(); 
+      SgClassDefinition*  baseDef     = baseDcl->get_definition(); 
+      const ClassDefSet& ancestors    = chw->getAncestorClasses(derivedDef);
+      
+      return ancestors.find(baseDef) != ancestors.end();
+    }
+    
+    template <class T>
+    static
+    bool underChk(T& derived, T& base, ClassHierarchyWrapper* chw)
+    {
+      SgType* derived_base = getUnderType(&derived);
+      
+      // if there is no underlying type and everything matched up to
+      //   here, we have found a winner.
+      if (!derived_base) return true;
+      
+      return isCovariantType(derived_base, &base, chw);
+    }
+    
+    ReturnType 
+    descend(SgType* ty) const
+    {
+      return sg::dispatch(*this, ty);
+    }
+    
+    /// generic template routine to check for covariance
+    /// if @chw is null, the check tests for strict equality
+    template <class T>
+    bool check(T& derivedTy, ClassHierarchyWrapper* nextChw = NULL)
+    {
+      base = skipTypeAliases(base);
+      
+      // symmetric check for strict type equality
+      if (typeid(derivedTy) != typeid(*base))
+        return false;
+      
+      T& baseTy = SG_ASSERT_TYPE(T, *base);
+      
+      if (&derivedTy == &baseTy) 
+        return true;
+        
+      return (  typeChk(derivedTy, baseTy, nextChw)
+             && underChk(derivedTy, baseTy, nextChw)
+             );
+    }
+    
+    void handle(SgNode& derived)                  { SG_UNEXPECTED_NODE(derived); }
+    
+    void handle(SgType& derived)                  { res = check(derived); }
+
+    // skip typedefs
+    void handle(SgTypedefType& derived)           { res = descend(getUnderType(&derived)); }    
+    
+    // check equality of underlying types
+    // @{
+    void handle(SgPointerType& derived)           { res = check(derived); }
+    void handle(SgArrayType& derived)             { res = check(derived); }
+    // @}
+
+    // covariance is only maintained through classes and modifiers
+    // @{
+    void handle(SgNamedType& derived)             { res = check(derived, chw); }
+    void handle(SgModifierType& derived)          { res = check(derived, chw); }
+    // @}
+
+    // should have been removed by PolymorphicRootsFinder
+    // @{ 
+    void handle(SgReferenceType& derived)         { SG_UNEXPECTED_NODE(derived); }
+    void handle(SgRvalueReferenceType& derived)   { SG_UNEXPECTED_NODE(derived); }
+    // @}
+
+  private:
+    SgType*                base;
+    ClassHierarchyWrapper* chw;
 };
 
-SgFunctionDeclaration * is_function_exists(SgClassDefinition *cls, SgMemberFunctionDeclaration *memberFunctionDeclaration) {
+struct PolymorphicRootsFinder : sg::DispatchHandler< std::pair<SgType*, SgType*> >
+{
+    explicit
+    PolymorphicRootsFinder(SgType& baseType)
+    : base(&baseType)
+    {}
+  
+    static
+    bool typeChk(SgType& derived, SgType& base)
+    {
+      return true;
+    }
+  
+    static
+    bool typeChk(SgModifierType& derived, SgModifierType& base)
+    {
+      return ::typeEquality(&derived, &base);
+    }
+    
+    ReturnType 
+    descend(SgType* ty) const
+    {
+      return sg::dispatch(*this, ty);
+    }
+    
+    /// generic template routine to check for covariance
+    /// if @chw is null, the check tests for strict equality
+    template <class T>
+    ReturnType
+    check(T& derivedTy)
+    {
+      ReturnType res(NULL, NULL);
       
-      SgFunctionDeclaration *resultDecl = NULL;
-      string f1 = memberFunctionDeclaration->get_name().getString();
-      string f2;
+      base = skipTypeAliases(base);
       
-      SgDeclarationStatementPtrList &clsMembers = cls->get_members();
-      for ( SgDeclarationStatementPtrList::iterator it_cls_mb = clsMembers.begin(); it_cls_mb != clsMembers.end(); it_cls_mb++ )
+      // symmetric check for strict type equality
+      if (typeid(derivedTy) != typeid(*base))
+        return res;
+      
+      T& baseTy = SG_ASSERT_TYPE(T, *base);
+      
+      if (typeChk(derivedTy, baseTy))
       {
-        SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration( *it_cls_mb );
-        if (cls_mb_decl == NULL) continue;
-
-        ROSE_ASSERT(cls_mb_decl != NULL);
-        SgMemberFunctionType* funcType1 = isSgMemberFunctionType(memberFunctionDeclaration->get_type());
-        SgMemberFunctionType* funcType2 = isSgMemberFunctionType(cls_mb_decl->get_type());
-        f2 = cls_mb_decl->get_name().getString();
-        
-        if(f1 != f2) continue;
-        if (funcType1 == NULL || funcType2 == NULL) continue;
-        if ( is_functions_types_equal(funcType1, funcType2) )
-        {
-          SgMemberFunctionDeclaration *nonDefDecl =
-            isSgMemberFunctionDeclaration( cls_mb_decl->get_firstNondefiningDeclaration() );
-          SgMemberFunctionDeclaration *defDecl =
-            isSgMemberFunctionDeclaration( cls_mb_decl->get_definingDeclaration() );
-
-          // ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
-          
-          resultDecl = (nonDefDecl) ? nonDefDecl : defDecl;
-          ROSE_ASSERT ( resultDecl );
-          if ( !( resultDecl->get_functionModifier().isPureVirtual() ) )
-          {
-              return resultDecl;
-            //resultDecl = functionDeclarationInClass;
-            //functionList.push_back( functionDeclarationInClass );
-          }
-        }
+        res = ReturnType(getUnderType(&derivedTy), getUnderType(&baseTy));
       }
-    assert(!isSgTemplateFunctionDeclaration(resultDecl));
-    return resultDecl;
+             
+      return res;
+    }
+    
+    void handle(SgNode& derived)                  { SG_UNEXPECTED_NODE(derived); }
+                
+    void handle(SgType& derived)                  {}
+    
+    // skip typedefs
+    void handle(SgTypedefType& derived)           { res = descend(getUnderType(&derived)); }    
+                
+    // the modifiers must equal
+    void handle(SgModifierType& derived)          { res = check(derived); }
+                    
+    // polymorphic root types (must also equal)
+    // @{
+    void handle(SgReferenceType& derived)         { res = check(derived); }
+    void handle(SgRvalueReferenceType& derived)   { res = check(derived); }
+    void handle(SgPointerType& derived)           { res = check(derived); }
+    // @}
+  private:
+    SgType* base;
+};
+
+
+/// tests if @derived is a covariant type of @base
+/// \param derived a non-null type
+/// \param base    a non-null type
+/// \param chw     the "unrolled" class hierarchy information
+/// \brief if chw is NULL, strict type equality is checked                    
+static
+bool 
+isCovariantType(SgType* derived, SgType* base, ClassHierarchyWrapper* chw)
+{
+  // find polymorphic root (e.g., reference, pointer)
+  std::pair<SgType*, SgType*> rootTypes = sg::dispatch(PolymorphicRootsFinder(SG_DEREF(base)), derived);
+  
+  if (!rootTypes.first) 
+    return sg::dispatch(CovarianceChecker(SG_DEREF(base)), derived);
+  
+  // test if the roots are covariant 
+  return sg::dispatch(CovarianceChecker(SG_DEREF(rootTypes.second), chw), rootTypes.first);
+} 
+
+
+/// returns @derived is an overriding type of @base
+/// \param derived a function type of an overrider candidate
+/// \param base    a function type
+/// \param chw     a class hierarchy
+/// \pre derived != NULL && base != NULL
+/// \details
+///    isOverridingType checks if derived overrides base, meaning
+///    @derived's arguments must equal @base's argument, and @derived's
+///    return type may be covariabt with respect to @base's return type.
+static
+bool 
+isOverridingType( SgMemberFunctionType* derived, 
+                  SgMemberFunctionType* base, 
+                  ClassHierarchyWrapper* chw
+                )
+{
+  ROSE_ASSERT(derived && base);
+  
+  if (derived == base) return true;
+  
+  if (  derived->get_mfunc_specifier() != base->get_mfunc_specifier()
+     || derived->get_ref_qualifiers()  != base->get_ref_qualifiers()
+     || derived->get_has_ellipses()    != base->get_has_ellipses()
+     )
+  {
+    return false;
+  }
+
+  if (!isCovariantType(derived->get_return_type(), base->get_return_type(), chw))
+    return false;
+        
+  SgTypePtrList& args_derived = derived->get_arguments();
+  SgTypePtrList& args_base    = base->get_arguments();
+
+  // See if the arguments match
+  if (args_derived.size() != args_base.size())
+    return false;
+  
+  SgTypePtrList::iterator derived_end = args_derived.end();
+    
+  return std::mismatch( args_derived.begin(), derived_end,
+                        args_base.begin(),
+                        is_types_equal
+                      ).first == derived_end;      
+} 
+
+/// tests if derived overrides base
+static
+bool isOverridingFunction( SgMemberFunctionDeclaration* derived,   
+                           SgMemberFunctionDeclaration* base,
+                           ClassHierarchyWrapper*       chw
+                         )
+{
+  ROSE_ASSERT(derived && base);
+  
+  return isOverridingType( isSgMemberFunctionType(derived->get_type()),
+                           isSgMemberFunctionType(base->get_type()),
+                           chw
+                         );
+}
+
+SgFunctionDeclaration* 
+is_function_exists(SgClassDefinition *cls, SgMemberFunctionDeclaration *memberFunctionDeclaration) 
+{      
+  SgFunctionDeclaration *resultDecl = NULL;
+  string f1 = memberFunctionDeclaration->get_name().getString();
+  string f2;
+  
+  SgDeclarationStatementPtrList &clsMembers = cls->get_members();
+  for ( SgDeclarationStatementPtrList::iterator it_cls_mb = clsMembers.begin(); it_cls_mb != clsMembers.end(); it_cls_mb++ )
+  {
+    SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration( *it_cls_mb );
+    if (cls_mb_decl == NULL) continue;
+
+    ROSE_ASSERT(cls_mb_decl != NULL);
+    SgMemberFunctionType* funcType1 = isSgMemberFunctionType(memberFunctionDeclaration->get_type());
+    SgMemberFunctionType* funcType2 = isSgMemberFunctionType(cls_mb_decl->get_type());
+    f2 = cls_mb_decl->get_name().getString();
+    
+    if(f1 != f2) continue;
+    if (funcType1 == NULL || funcType2 == NULL) continue;
+    if ( is_functions_types_equal(funcType1, funcType2) )
+    {
+      SgMemberFunctionDeclaration *nonDefDecl =
+        isSgMemberFunctionDeclaration( cls_mb_decl->get_firstNondefiningDeclaration() );
+      SgMemberFunctionDeclaration *defDecl =
+        isSgMemberFunctionDeclaration( cls_mb_decl->get_definingDeclaration() );
+
+      // ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
+      
+      resultDecl = (nonDefDecl) ? nonDefDecl : defDecl;
+      ROSE_ASSERT ( resultDecl );
+      if ( !( resultDecl->get_functionModifier().isPureVirtual() ) )
+      {
+          return resultDecl;
+        //resultDecl = functionDeclarationInClass;
+        //functionList.push_back( functionDeclarationInClass );
+      }
+    }
+  }
+    
+  ROSE_ASSERT(!isSgTemplateFunctionDeclaration(resultDecl));
+  return resultDecl;
 }
 
 bool 
@@ -560,9 +898,9 @@ CallTargetSet::solveMemberFunctionCall(SgClassType *crtClass, ClassHierarchyWrap
                 if (isDestructor1 && isDestructor2) {
                     keep = true;
                 } else if (memberFunctionDeclaration->get_name()==cls_mb_decl->get_name()) {
-                    SgMemberFunctionType* funcType1 = isSgMemberFunctionType(memberFunctionDeclaration->get_type());
-                    SgMemberFunctionType* funcType2 = isSgMemberFunctionType(cls_mb_decl->get_type());
-                    keep = funcType1 && funcType2 && is_functions_types_equal(funcType1, funcType2);
+                  keep = isOverridingFunction(cls_mb_decl, memberFunctionDeclaration, classHierarchy);
+                  
+                  std::cerr << cls_mb_decl->unparseToString() << " " << keep << std::endl;
                 }
                 if (keep) {
                     SgMemberFunctionDeclaration *nonDefDecl =
@@ -726,13 +1064,12 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
 
         case V_SgDotExp:
         case V_SgArrowExp: {
-            SgMemberFunctionDeclaration *memberFunctionDeclaration = NULL;
-            SgClassType *crtClass = NULL;
             ROSE_ASSERT(isSgBinaryOp(functionExp));
 
-            SgExpression *leftSide = isSgBinaryOp(functionExp)->get_lhs_operand();
-            SgType *leftType = leftSide->get_type()->findBaseType();
-            crtClass = isSgClassType(leftType);
+            SgExpression* leftSide = isSgBinaryOp(functionExp)->get_lhs_operand();
+            SgType* const receiverType = leftSide->get_type();
+            SgType* const leftType = receiverType->findBaseType();
+            SgClassType*  crtClass = isSgClassType(leftType);
 
             if (SgMemberFunctionRefExp * memberFunctionRefExp =
                 isSgMemberFunctionRefExp(isSgBinaryOp(functionExp)->get_rhs_operand())) {
@@ -786,7 +1123,7 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
                   break; // FIXME ROSE-1487
                 }
 
-                memberFunctionDeclaration =
+                SgMemberFunctionDeclaration* memberFunctionDeclaration =
                     isSgMemberFunctionDeclaration(memberFunctionRefExp->get_symbol()->get_declaration());
                 ROSE_ASSERT(memberFunctionDeclaration && crtClass);
 
@@ -796,14 +1133,44 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
                 if (nonDefDecl)
                     memberFunctionDeclaration = nonDefDecl;
 
+#if 0
+                // PP (01/28/20): virtual function calls
+                //   * all calls to virtual functions are polymorphic.
+                //       e.g., x() or this->x() are both virtual (assuming x() is a member function call)
+                //   * exceptions include:
+                //     - suppressed virtual calls: A::x() always calls x in A
+                //     - calls from a constructor or destructor (also indirectly
+                //       by other functions while ctor/dtor are active) are non-virtual.
+                //       (HANDLING REQUIRES CALLGRAPH INFO).
+                //   * in addition:
+                //     - if the receiver object is not a pointer, reference, or rvalue-reference
+                //       the call can be statically dispatched.
+
+                // was:
                 // returns the list of all in-class declarations of functions potentially called
                 // ( may be several because of polymorphism )
-                bool polymorphic = false;
-                if (!isSgThisExp(leftSide))
-                    polymorphic = true;
-
+                //~ bool polymorphic = false;
+                //~ if (!isSgThisExp(leftSide))
+                    //~ polymorphic = true;
+#endif
+                // test if the memberFunctionRefExp is scope qualified 
+                //   in which case the vcall is suppressed.
+                // \note to handle constructors correctly, we would need the assumed call stack.
+                
+                
+                SgType* const receiverBaseType = receiverType->stripTypedefsAndModifiers();
+                const bool    polymorphicType  = (  isSgPointerType(receiverBaseType)
+                                                 || isSgReferenceType(receiverBaseType)
+                                                 || isSgRvalueReferenceType(receiverBaseType)
+                                                 || isSgArrayType(receiverBaseType)
+                                                 );
+                 
+                const bool    polymorphicCall  = (  polymorphicType 
+                                                 && (memberFunctionRefExp->get_need_qualifier() == 0)
+                                                 );
+                
                 std::vector<SgFunctionDeclaration*> fD =
-                    CallTargetSet::solveMemberFunctionCall(crtClass, classHierarchy, memberFunctionDeclaration, polymorphic,
+                    CallTargetSet::solveMemberFunctionCall(crtClass, classHierarchy, memberFunctionDeclaration, polymorphicCall,
                                                            includePureVirtualFunc);
                 functionList.insert(functionList.end(), fD.begin(), fD.end());
             }

@@ -422,6 +422,33 @@ namespace CodeThorn {
       condNode=SgNodeHelper::getExprStmtChild(condNode);
     }
     SgExpression* condExpr=isSgExpression(condNode);
+    
+#if BAND_AID_FIX    
+    // temporary "fix" 
+    
+    if (!condExpr && isSgIfStmt(stmt)) {
+      // PP (03/02/20) handle variable declarations in conditions
+      SgVariableDeclaration* condVar = isSgVariableDeclaration(condNode);
+      
+      if (!condVar)
+        std::cerr << typeid(*condNode).name() << "\n" << stmt->unparseToString() << std::endl;
+        
+      ROSE_ASSERT(condVar);
+      
+      // \todo do we also have to fix up the symbol scope?
+      
+      SgVarRefExp*           condRef = SageBuilder::buildVarRefExp(condVar);
+      SgExprStatement*       refStmt = SageBuilder::buildExprStatement(condRef);
+      
+      SageInterface::replaceStatement(condVar, refStmt, true /* movePreprocessingInfo */);
+      SageInterface::insertStatementBefore(stmt, condVar);
+      return;
+    }
+    
+    if (!condExpr)
+        std::cerr << typeid(*condNode).name() << "\n" << stmt->unparseToString() << std::endl;
+#endif /* BAND_AID_FIX */
+    
     ROSE_ASSERT(condExpr);
     if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)) {
       // (i) build tmp var with cond as initializer
@@ -720,9 +747,18 @@ add
   }
 #endif
 
+  static
+  bool isNullThrow(SgExpression* expr)
+  {
+    SgThrowOp* throwexpr = isSgThrowOp(expr);
+    
+    return throwexpr && (throwexpr->get_operand() == NULL);
+  }
+
   // stmt is only used to detetermined scope, which is used when generating the tmp-variable.
   Normalization::TmpVarNrType Normalization::registerSubExpressionTempVars(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList,bool insideExprToBeEliminated) {
     ROSE_ASSERT(stmt);
+    std::cerr << stmt->unparseToString() << std::endl;
     ROSE_ASSERT(expr);
     Normalization::TmpVarNrType mostRecentTmpVarNr=0;
     SAWYER_MESG(logger[TRACE])<<"registerSubExpressionTempVars@"<<":"<<SgNodeHelper::sourceLineColumnToString(expr)<<expr->class_name()<<endl;
@@ -901,6 +937,8 @@ add
       Normalization::TmpVarNrType rhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
       Normalization::TmpVarNrType lhsResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getLhs(expr)),subExprTransformationList,insideExprToBeEliminated);
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,lhsResultTmpVarNr,rhsResultTmpVarNr,subExprTransformationList);
+    } else if (isNullThrow(expr)) {
+      mostRecentTmpVarNr=0; // PP correct?
     } else if(isSgUnaryOp(expr)) {
       // general case: unary operator
       Normalization::TmpVarNrType unaryResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)),subExprTransformationList,insideExprToBeEliminated);
