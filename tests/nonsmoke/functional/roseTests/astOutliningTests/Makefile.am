@@ -88,6 +88,10 @@ CXX_TESTCODES_REQUIRED_TO_PASS =		\
 	moreTest7.cpp				\
 	reference.cpp
 
+# Add a few tool_G's regression tests
+CXX2_TESTCODES_REQUIRED_TO_PASS =                \
+	test_20_2019.cpp
+
 # DQ (11/14/2017): This is failing and I need to learn the depth of what is the problem for the outlining tests.
 # I think I need to work with Liao on this when he is back from vacation.
 #	moreTest2.cpp				
@@ -189,7 +193,7 @@ $(failing_test_targets): failing_%.passed: %
 include $(srcdir)/Makefile-pass.inc
 
 TEST_DIR = $(abs_top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests
-TEST_INCLUDES = -I$(TEST_DIR) -I$(top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code
+TEST_INCLUDES = -I$(TEST_DIR) -I$(abs_top_srcdir)/tests/nonsmoke/functional/CompileTests/A++Code -I$(abs_top_srcdir)/tests/nonsmoke/functional/roseTests/astOutliningTests 
 TEST_CXXFLAGS = $(TEST_INCLUDES) -rose:verbose 0 -rose:outline:seq 7 -rose:outline:parameter_wrapper 
 
 if ROSE_USE_LONG_MAKE_CHECK_RULE
@@ -224,7 +228,7 @@ $(classic_test_targets): classic_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outline classic $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outline$(EXEEXT) -rose:outline:enable_classic -c $(abspath $<)" \
+		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) -rose:outline:enable_classic -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -237,7 +241,7 @@ $(inplace_test_targets): inplace_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outline in-place $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outline$(EXEEXT) -rose:outline:temp_variable -c $(abspath $<)" \
+		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) -rose:outline:temp_variable -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -250,7 +254,7 @@ $(tofile_test_targets): tofile_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outline new-file $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outline$(EXEEXT) -rose:outline:new_file -rose:outline:temp_variable -c $(abspath $<)" \
+		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) -rose:outline:new_file -rose:outline:temp_variable -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 # shortcut to test new_file
@@ -272,7 +276,7 @@ $(dlopen_test_targets): dlopen_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outine dlopen $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outline$(EXEEXT) $(dlopen_test_flags) -c $(abspath $<)" \
+		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen_test_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 # Liao, 2019/1/31
 # test the new option  -rose:outline:copy_orig_file , which copies input file into a lib source file and append all outlined functions to the single lib source file. This eliminates the need to copy dependent headers and prototypes into the lib source file. 
@@ -289,11 +293,31 @@ $(dlopen2_test_targets): dlopen2_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outine dlopen2 $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outline$(EXEEXT) $(dlopen2_test_flags) -c $(abspath $<)" \
+		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen2_test_flags) -c $(abspath $<)" \
+		$(TEST_EXIT_STATUS) $@
+
+# Liao, 2020//25
+# test the new option  -rose:outline:copy_orig_file , which copies input file into a lib source file and append all outlined functions to the single lib source file. This eliminates the need to copy dependent headers and prototypes into the lib source file. 
+# combined with -rose:unparseHeaderFiles -rose:unparseHeaderFilesRootFolder
+dlopen3_test_targets = $(addprefix dlopen3_,  $(addsuffix .passed, $(CXX2_TESTCODES_REQUIRED_TO_PASS)))
+TEST_TARGETS += $(dlopen3_test_targets)
+dlopen3_test_flags =				\
+	-rose:outline:use_dlopen		\
+	-rose:outline:copy_orig_file		\
+	-I$(abs_top_srcdir)/projects/autoTuning	\
+	-rose:outline:exclude_headers -rose:unparseHeaderFiles -rose:unparseHeaderFilesRootFolder unparseHeaderRoot_test_20_2019
+
+$(dlopen3_test_targets): dlopen3_%.passed: % outline
+	@$(RTH_RUN) \
+		TITLE="outine dlopen3 $(notdir $<) [$@]" \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen3_test_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 # shortcut to test the dlopen feature
-test_dlopen: $(dlopen_test_targets) $(dlopen2_test_targets)
+test_dlopen: $(dlopen_test_targets) $(dlopen2_test_targets) $(dlopen3_test_targets)
+test_dlopen3: $(dlopen3_test_targets)
+
 
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining with default $(OUTLINE_FLAGS) switches
@@ -305,7 +329,7 @@ $(default_test_targets): default_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outline default $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outline$(EXEEXT) $(OUTLINE_FLAGS) -c $(abspath $<)" \
+		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) $(OUTLINE_FLAGS) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -323,7 +347,7 @@ $(noswitch_test_targets): noswitch_%.passed: % outline
 	@$(RTH_RUN) \
 		TITLE="outline $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outline$(EXEEXT) $(noswitch_test_args) -c $(abspath $<)" \
+		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) $(noswitch_test_args) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -337,7 +361,7 @@ $(seq7a_test_targets): seq7a_%.passed: $(TEST_DIR)/% outlineSelection
 	@$(RTH_RUN) \
 		TITLE="outlineSelection seq7 $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outlineSelection$(EXEEXT) $(seq7a_test_flags) -c $(abspath $<)" \
+		CMD="$$(pwd)/outlineSelection$(EXEEXT) $(TEST_INCLUDES) $(seq7a_test_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -355,7 +379,7 @@ $(seq7b_test_targets): seq7b_%.passed: % outlineSelection
 	@$(RTH_RUN) \
 		TITLE="outlineSelection seq7 $(notdir $<) [$@]" \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outlineSelection$(EXEEXT) $(seq7b_test_flags) -c $(abspath $<)" \
+		CMD="$$(pwd)/outlineSelection$(EXEEXT) $(TEST_INCLUDES) $(seq7b_test_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -371,7 +395,7 @@ TEST_TARGETS += complexStruct.passed
 complexStruct.passed: complexStruct.c outline
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
-		CMD="$$(pwd)/outline $(complexStruct_flags) -c $(abspath $<)" \
+		CMD="$$(pwd)/outline $(TEST_INCLUDES) $(complexStruct_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
 
 EXTRA_DIST += complexStruct.c
@@ -397,3 +421,4 @@ check-local: $(TEST_TARGETS)
 clean-local:
 	rm -f $(TEST_TARGETS)
 	rm -f $(TEST_TARGETS:.passed=.failed)
+	rm -rf unparseHeaderRoot_test_20_2019
