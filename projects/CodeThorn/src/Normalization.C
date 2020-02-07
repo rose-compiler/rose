@@ -477,8 +477,8 @@ namespace CodeThorn {
     } else if(isSgWhileStmt(stmt)||isSgDoWhileStmt(stmt)) {
       // transformation: while(C) {...} ==> while(1) { T t=C;if(t) break; ...} (implemented)
       // alternative: while(C) {...} ==> T t=C; while(t) { ...; t=C; } (duplicates condition, not implemented)
-      // transformation: do {...} whilte (C) ==> do {...; T t=C; if(t) break; } (implemented)
-      // note: do {...} while (C) ==> do {...; T t=C;} while(t) (not possible because of C/C++ scoping rules)
+      // transformation: do {...} while (C) ==> do {...; T t=C; if(t) break; } (implemented)
+      // alternative: do {...} while (C) ==> do {...; T t=C; } while(t); (not possible because of C/C++ scoping rules)
 
       // (i) replace while-condition with constant 1 condition
       SgStatement* oldWhileCond=isSgStatement(SgNodeHelper::getCond(stmt));

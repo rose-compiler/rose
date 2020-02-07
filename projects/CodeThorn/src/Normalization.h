@@ -64,6 +64,10 @@ namespace CodeThorn {
       const bool eliminateConditionalExpressionOp=false;
 
       // if(Cond) S; => { T t=Cond; if(t) S } where T has type of Cond.
+      // do {...} while (Cond); => do {...; T t=Cond; if(t) break; } where T has type of Cond.
+      // alternative: while(C) {...} ==> T t=C; while(t) { ...; t=C; } (not implemented because it duplicates condition)
+      // while(Cond) {...} => while(1) { T t=Cond; if(t) break; ...} where T has type of Cond.
+      // alternative: do {...} while (C) ==> do {...; T t=C; } while(t); (not implemented because it violates C/C++ scoping rules)
       bool hoistConditionExpressions=true;
 
       // normalize expressions such that for every interemdiate result
