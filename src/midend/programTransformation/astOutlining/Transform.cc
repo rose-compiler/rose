@@ -566,7 +566,17 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 #endif
   }
 
+#if 0
+  // DQ (2/7/2020): Added debugging support.
+     printf ("In Outliner::outlineBlock(): Generate the dot output of the SAGE III AST \n");
+     SgProject* project = SageInterface::getProject();
+  // generateDOT ( *project );
+     generateDOTforMultipleFile ( *project );
+     printf ("DONE: In Outliner::outlineBlock(): Generate the dot output of the SAGE III AST \n");
+#endif
+
 #if 1
+  // DQ (2/7/2020): Disable call to AstPostProcessing so that I can call it in tool_G.C as part of debugging).
   // DQ (2/26/2009): Moved (here) to as late as possible so that all transformations are complete before running AstPostProcessing()
 
   // This fails for moreTest3.cpp
