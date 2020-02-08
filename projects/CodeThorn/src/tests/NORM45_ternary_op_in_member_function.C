@@ -1,9 +1,9 @@
 class A {
 public:
   typedef long size_type;
-  //  int f() {
-  //  return __testoff?__off :(this) -> size() - __pos;
-  //}
+  int f() {
+    return __testoff?__off :(this) -> size() - __pos;
+  }
   size_type
   _M_limit(size_type __pos, size_type __off) const noexcept {
     const bool __testoff = __off < this->size() - __pos;
@@ -20,6 +20,6 @@ int main() {
   a.__testoff=1;
   a.__off=2;
   a.__pos=3;
-  //a.f();
+  a.f();
   return 0;
 }

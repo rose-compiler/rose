@@ -12,10 +12,9 @@ BENCH_PASS=0
 BENCH_FAIL=0
 
 function NormalizationTests {
-    testNumbers=`echo {01..44}`
+    testNumbers=`echo {01..45}`
     # 90 fails because of public/private type scopes
     # 91-92 fail because of declaration in condition
-    # 93 fails because of some case in a C++ header file. Needs to be investigated more.
     echo "Scheduled tests: $testNumbers"
     for testNumber in $testNumbers; do
         benchmarkprefix=$TESTDIR/NORM${testNumber};

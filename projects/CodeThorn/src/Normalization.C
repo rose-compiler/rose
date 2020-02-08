@@ -946,7 +946,7 @@ add
       SgExpression* cond=conditionalExp->get_conditional_exp();
       Normalization::TmpVarNrType condResultTempVarNr=registerSubExpressionTempVars(stmt,cond,subExprTransformationList,insideExprToBeEliminated);
       SAWYER_MESG(logger[TRACE])<<"condResultTempVarNr: "<<condResultTempVarNr<<endl;
-      // handle both branches
+      // handle both branches xxx
       SgBasicBlock* thenBlock=SageBuilder::buildBasicBlock();
       SgBasicBlock* elseBlock=SageBuilder::buildBasicBlock();
       registerCondOpIfElseStmt(stmt,cond,condResultTempVarNr,thenBlock,elseBlock,subExprTransformationList);
@@ -1010,7 +1010,7 @@ add
       // to ensure logop (and/or)s can operate on registered tmp vars
       // (NORM41)
       SgNode* p=expr->get_parent();
-      if(isSgAndOp(p)||isSgOrOp(p)) {
+      if(isSgAndOp(p)||isSgOrOp(p)||isSgConditionalExp(p)) {
         mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,subExprTransformationList);
       } else {
         mostRecentTmpVarNr=0;
