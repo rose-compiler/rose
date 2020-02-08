@@ -349,6 +349,19 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // insert (func, glob_scope, s); //Outliner::insert() 
      DeferedTransformation headerFileTransformation = insert (func, glob_scope, s); //Outliner::insert() 
 
+  // Liao 2/4/2020   
+  // Some comments and #include directives may be attached after the global scope for an otherwise empty input file.
+  // We must move them to be attached to the first prototype's before location. 
+  // Otherwise, the #include directive will show up in the end of the resulting file.
+     SgStatement* firstStmt = getFirstStatement(glob_scope);
+     SgFunctionDeclaration* first_func_decl = isSgFunctionDeclaration(firstStmt);
+     if (first_func_decl!=NULL) // we expect that the first statement is a prototype func of an outlined function.
+     {
+       AttachedPreprocessingInfoType save_buf; 
+       cutPreprocessingInfo ( glob_scope, PreprocessingInfo::after, save_buf);
+       pastePreprocessingInfo(first_func_decl, PreprocessingInfo::before, save_buf);
+     }
+
 #if 0
      printf ("DONE: Calling insert() (func = %p to global scope) \n",func);
 #endif
@@ -435,6 +448,16 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     // e.g. (*OUT__2__8888__p)(__out_argv2__1527__);
     SgExprListExp* exp_list_exp = SageBuilder::buildExprListExp();
     wrapper_exp= buildVarRefExp(wrapper_name,p_scope);
+    // Check if the reference is associated to a found symbol or not, by checking its type
+    SgVariableSymbol* sym = wrapper_exp->get_symbol();
+    ROSE_ASSERT (sym != NULL);
+    SgType * stype = sym->get_declaration()->get_type();
+    if  (stype == SgTypeUnknown::createType())
+    {
+      printf("Error: outliner builds a reference to a wrapper variable which cannot be found in AST!\n");
+      ROSE_ASSERT (stype!= SgTypeUnknown::createType());
+    }
+
     appendExpression(exp_list_exp, wrapper_exp);
     func_call = buildFunctionCallStmt(buildPointerDerefExp(buildVarRefExp(func_name_str+"p",p_scope)), exp_list_exp);   
   }
@@ -718,9 +741,9 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
   int var_count = syms.size();
   int counter=0;
   string wrapper_name= generateFuncArgName(target); //"__out_argv";
-
-  if (var_count==0) 
-    return wrapper_name;
+// We still need to generate the declaration for the wrapper variable.
+//  if (var_count==0) 
+//    return wrapper_name;
   SgScopeStatement* cur_scope = target->get_scope();
   ROSE_ASSERT( cur_scope != NULL);
 

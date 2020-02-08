@@ -1,4 +1,6 @@
 #include <sage3basic.h>
+#include <BinaryConcolic.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #if 0 /* __cplusplus >= 201103L */
 #include <boost/process.hpp>
@@ -13,7 +15,6 @@
 // nothing
 #endif
 
-#include <BinaryConcolic.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -343,3 +344,5 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
 } // namespace
 } // namespace
 } // namespace
+
+#endif

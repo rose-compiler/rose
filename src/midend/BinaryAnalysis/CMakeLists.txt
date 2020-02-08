@@ -33,6 +33,7 @@ if(enable-binary-analysis)
     BinaryZ3Solver.C
     Concolic/ConcolicExecutor.C
     Concolic/Database.C
+    Concolic/Database2.C
     Concolic/ExecutionManager.C
     Concolic/LinuxExecutor.C
     Concolic/LinuxExitStatus.C

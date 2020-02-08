@@ -831,8 +831,12 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
                                " already holds a different basic block");
     }
 
-    if (!config_.basicBlockComment(bblock->address()).empty())
-        bblock->comment(config_.basicBlockComment(bblock->address()));
+    // Adjust the basic block according to configuration information
+    const BasicBlockConfig &c = config_.basicBlock(bblock->address());
+    if (!c.comment().empty())
+        bblock->comment(c.comment());
+    if (!c.sourceLocation().isEmpty())
+        bblock->sourceLocation(c.sourceLocation());
 
     bblock->freeze();
 
@@ -1739,15 +1743,18 @@ Partitioner::attachFunction(const Function::Ptr &function) {
             throw FunctionError(function, functionName(function) + " is already attached with a different function pointer");
         ASSERT_require(function->isFrozen());
     } else {
-        // Give the function a name and comment.
-        if (!config_.functionName(function->address()).empty())
-            function->name(config_.functionName(function->address()));          // forced name from configuration
+        // Give the function a name and comment and make other adjustments according to user configuration files.
+        const FunctionConfig &c = config_.function(function->address());
+        if (!c.name().empty())
+            function->name(c.name());                   // forced name from configuration
         if (function->name().empty())
-            function->name(config_.functionDefaultName(function->address()));   // default name if function has none
+            function->name(c.defaultName());            // default name if function has none
         if (function->name().empty())
-            function->name(addressName(function->address()));                   // use address name if nothing else
-        if (function->comment().empty())
-            function->comment(config_.functionComment(function));
+            function->name(addressName(function->address())); // use address name if nothing else
+        if (c.comment().empty())
+            function->comment(c.comment());
+        if (!c.sourceLocation().isEmpty())
+            function->sourceLocation(c.sourceLocation());
 
         // Insert function into the table, and make sure all its basic blocks see that they're owned by the function.
         functions_.insert(function->address(), function);
