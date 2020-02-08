@@ -21,11 +21,11 @@ tool_name=run_asis_tool_2
 target_dir=${base_dir}/../test_units
 #target_units="minimal.adb"
 #target_units="unit_2.ads"
-target_units="unit_2.adb"
+#target_units="unit_2.adb"
 #target_units="variable_declaration.ads"
 #target_units="if_statement.adb"
 #target_units="ordinary_type_declaration.ads"
-#target_units=`(cd ${target_dir}; ls *.ad[bs])`
+target_units=`(cd ${target_dir}; ls *.ad[bs])`
 
 check_for_gnat () {
   log_separator_1
@@ -45,7 +45,7 @@ build_asis_tool () {
   -p \
   -P ${base_dir}/dot_asis.gpr \
   -XLIBRARY_TYPE=static \
-  -XASIS_BUILD=default \
+  -XASIS_BUILD=static \
   ${tool_name} || exit $?
 }
 
@@ -54,16 +54,19 @@ process_units () {
   status=0  
   log_separator_1
   log "Processing specified files in ${target_dir} with ${tool_name}"
+  gpr_build_path=`which gprbuild`
+  gnat_bin=`dirname ${gpr_build_path}`
+  gnat_home=`dirname ${gnat_bin}`
   for target_unit in ${target_units}
   do
     log "Processing ${target_unit}"
-    # -f - Input file name (required)
-    # -g - GNAT home directory (required)
-    # -o - Output directory (optional)
+    # -f, --file - Input file name (required)
+    # -g, --gnat_home - GNAT home directory (required)
+    # -o, --output_dir - Output directory (optional)
     log_then_run ${obj_dir}/${tool_name} \
-       -f ${target_dir}/${target_unit} \
-       -g /usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux \
-       -o `pwd` \
+       --file=${target_dir}/${target_unit} \
+       --gnat_home=${gnat_home} \
+       --output_dir=`pwd` \
        "$@" || status=1
   done
   return ${status}
