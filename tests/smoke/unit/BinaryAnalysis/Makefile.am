@@ -44,6 +44,18 @@ peekPoke.passed: $(top_srcdir)/scripts/test_exit_status peekPoke
 		CMD="./peekPoke"			\
 		$< $@
 
+########################################################################################################################
+
+noinst_PROGRAMS += testSourceLocations
+testSourceLocations_SOURCES = testSourceLocations.C
+
+TEST_TARGETS += testSourceLocations.passed
+testSourceLocations.passed: $(top_srcdir)/scripts/test_exit_status testSourceLocations
+	@$(RTH_RUN)					\
+		TITLE="source to address mapping [$@]"	\
+		CMD="./testSourceLocations"		\
+		$< $@
+
 ###############################################################################################################################
 # Boilerplate
 ###############################################################################################################################
