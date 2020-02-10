@@ -15,6 +15,10 @@ base_dir=`(cd ${rel_base_dir}; pwd)`
 # Defines log, log_and_run, etc.:
 source ${base_dir}/../utility_functions.sh
 
+gprbuild_path=`which gprbuild` || exit -1
+gnat_bin=`dirname ${gprbuild_path}`
+gnat_home=`dirname ${gnat_bin}`
+
 obj_dir=${base_dir}/obj
 
 tool_name=run_asis_tool_2
@@ -27,10 +31,10 @@ target_dir=${base_dir}/../test_units
 #target_units="ordinary_type_declaration.ads"
 target_units=`(cd ${target_dir}; ls *.ad[bs])`
 
-check_for_gnat () {
+show_compiler_version () {
   log_separator_1
-  log "Checking GNAT gprbuild version"
-  gprbuild --version || exit -1
+  log "Compiler version:"
+  gnat --version || exit -1
 }
 
 build_asis_tool () {
@@ -54,9 +58,6 @@ process_units () {
   status=0  
   log_separator_1
   log "Processing specified files in ${target_dir} with ${tool_name}"
-  gpr_build_path=`which gprbuild`
-  gnat_bin=`dirname ${gpr_build_path}`
-  gnat_home=`dirname ${gnat_bin}`
   for target_unit in ${target_units}
   do
     log "Processing ${target_unit}"
@@ -75,7 +76,7 @@ process_units () {
 log_start
 log_invocation "$@"
 
-check_for_gnat
+show_compiler_version
 build_asis_tool
 process_units "$@" || exit $?
 
