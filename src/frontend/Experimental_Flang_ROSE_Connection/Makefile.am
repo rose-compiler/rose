@@ -17,7 +17,6 @@ noinst_LTLIBRARIES = libexperimentalRoseFlang.la
 if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
   libexperimentalRoseFlang_la_SOURCES = \
       fortran_flang_support.C           \
-      sage-tree-builder.C               \
       sage-build.cc
 endif
 

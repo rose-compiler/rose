@@ -10,14 +10,20 @@
 #include <iostream>
 #include <string>
 
-#include "jovial_support.h"
+#define USE_SAGE_TREE_BUILDER 1
+
+#if USE_SAGE_TREE_BUILDER
+#include "ATermToSageJovialTraversal.h"
+#else
 #include "ATermToUntypedJovialTraversal.h"
+#endif
+
+#include "jovial_support.h"
 #include "UntypedJovialTraversal.h"
 #include "UntypedJovialConverter.h"
 
 #define ATERM_TRAVERSAL_ONLY 0
-#define USE_SAGE_TREE_BUILDER 0
-#define DEBUG_EXPERIMENTAL_JOVIAL 0
+#define DEBUG_EXPERIMENTAL_JOVIAL 1
 #define OUTPUT_WHOLE_GRAPH_AST 0
 #define OUTPUT_DOT_FILE_AST 0
 
@@ -105,7 +111,7 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
            return status;
         }
 
-  // Step 2 - Traverse the ATerm parse tree and convert into Untyped nodes
+  // Step 2 - Traverse the ATerm parse tree and convert into Sage nodes
   // ------
 
   // Initialize the ATerm library
@@ -133,15 +139,17 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
      std::cout << "SUCCESSFULLY read ATerm parse-tree file " << "\n";
 #endif
 
-     ATermSupport::ATermToUntypedJovialTraversal* aterm_traversal = NULL;
-
+#if USE_SAGE_TREE_BUILDER
   // Initialize the global scope and put it on the SageInterface scope stack
   // for usage by the sage tree builder during the ATerm traversal.
-#if USE_SAGE_TREE_BUILDER
      initialize_global_scope(sg_source_file);
-#endif
 
+     ATermSupport::ATermToSageJovialTraversal* aterm_traversal;
+     aterm_traversal = new ATermSupport::ATermToSageJovialTraversal(sg_source_file);
+#else
+     ATermSupport::ATermToUntypedJovialTraversal* aterm_traversal;
      aterm_traversal = new ATermSupport::ATermToUntypedJovialTraversal(sg_source_file);
+#endif
 
      if (aterm_traversal->traverse_Module(module_term) != ATtrue)
         {
@@ -164,6 +172,7 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 
   // Step 3 - Traverse the SgUntypedFile object and convert to regular sage nodes
   // ------
+#if ! USE_SAGE_TREE_BUILDER
 
   // Create the ATerm traversal object
 
@@ -173,6 +182,7 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 
   // Traverse the untyped tree and convert to sage nodes
      sg_traversal.traverse(aterm_traversal->get_file(),scope);
+#endif
 
 #if OUTPUT_DOT_FILE_AST
   // Generate dot file for Sage nodes.

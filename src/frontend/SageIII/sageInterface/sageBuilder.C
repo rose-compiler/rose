@@ -6654,6 +6654,11 @@ SgIntVal* SageBuilder::buildIntVal_nfi(int value, const string& str)
      return intValue;
    }
 
+SgIntVal* SageBuilder::buildIntVal_nfi(const string& str)
+   {
+     return buildIntVal_nfi(std::stoi(str), str);
+   }
+
 SgLongIntVal* SageBuilder::buildLongIntVal(long value)
 {
   SgLongIntVal* intValue= new SgLongIntVal(value,"");
@@ -7981,6 +7986,34 @@ SgExprListExp * SageBuilder::buildExprListExp_nfi(const std::vector<SgExpression
      testAstForUniqueNodes(expList);
 
      return expList;
+   }
+
+SgSubscriptExpression*
+SageBuilder::buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride)
+   {
+      if (lower_bound == NULL)
+         {
+            lower_bound = SageBuilder::buildNullExpression_nfi();
+         }
+      if (stride == NULL)
+         {
+            stride = SageBuilder::buildNullExpression_nfi();
+         }
+
+      ROSE_ASSERT(lower_bound);
+      ROSE_ASSERT(upper_bound);
+      ROSE_ASSERT(stride);
+
+      SgSubscriptExpression* subscript = new SgSubscriptExpression(lower_bound, upper_bound, stride);
+      ROSE_ASSERT(subscript);
+      SageInterface::setSourcePosition(subscript);
+
+      // Set the parents of all the parts of the SgSubscriptExpression
+      lower_bound->set_parent(subscript);
+      upper_bound->set_parent(subscript);
+      stride     ->set_parent(subscript);
+
+      return subscript;
    }
 
 SgVarRefExp*
@@ -12354,11 +12387,37 @@ SageBuilder::buildStmtDeclarationStatement(SgStatement* stmt) {
     return result;
 }
 
+SgJovialDefineDeclaration*
+SageBuilder::buildJovialDefineDeclaration_nfi(const SgName& name, const std::string& params,
+                                              const std::string& def_string, SgScopeStatement* scope)
+  {
+     std::string directive_string(name);
+
+     if (scope == NULL)
+        scope = SageBuilder::topScopeStack();
+     ROSE_ASSERT(scope);
+
+     if (params.length() > 0)
+        directive_string += " " + params;
+
+     directive_string += " " + def_string;
+
+     SgJovialDefineDeclaration* define_decl = new SgJovialDefineDeclaration(directive_string);
+     ROSE_ASSERT(define_decl);
+     SageInterface::setSourcePosition(define_decl);
+
+  // The first nondefining declaration must be set
+     define_decl->set_firstNondefiningDeclaration(define_decl);
+     define_decl->set_parent(scope);
+
+     return define_decl;
+  }
 
 // This should take a SgClassDeclaration::class_types kind parameter!
 SgClassDeclaration * SageBuilder::buildStructDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
    {
 #if 0
+
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
 
@@ -12467,6 +12526,7 @@ SgJovialTableType * SageBuilder::buildJovialTableType (const SgName& name, SgTyp
      table_type->set_dim_info(dim_info);
      table_type->set_rank(dim_info->get_expressions().size());
 
+     dim_info->set_parent(table_type);
      nondef_decl->set_type(table_type);
 
      return table_type;

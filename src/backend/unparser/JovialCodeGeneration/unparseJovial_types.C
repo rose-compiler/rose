@@ -95,11 +95,17 @@ Unparse_Jovial::unparseTableType(SgType* type, SgUnparse_Info& info)
            unparseDimInfo(dim_info, info);
         }
 
+#if 0 // perhaps can unparse base type directly when necessary, for var-decl need name or body (if anonymous)?
      SgType* base_type = table_type->get_base_type();
-
      if (base_type != NULL)
         {
            unparseType(base_type, info);
+        }
+#endif
+        {
+        // WARNING: TODO: this may be anonymous, so if there is a body don't do this
+           std::string type_name = table_type->get_name();
+           curprint(type_name);
         }
   }
 
