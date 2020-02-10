@@ -427,6 +427,8 @@ ROSE_DLL_API SgFloatVal* buildFloatVal_nfi(float value, const std::string& str);
 ROSE_DLL_API SgIntVal* buildIntVal(int value = 0);
 ROSE_DLL_API SgIntVal* buildIntValHex(int value = 0);
 ROSE_DLL_API SgIntVal* buildIntVal_nfi(int value, const std::string& str);
+//! Build an integer value expression by converting the string
+ROSE_DLL_API SgIntVal* buildIntVal_nfi(const std::string& str);
 
 //! Build a long integer value expression
 ROSE_DLL_API SgLongIntVal* buildLongIntVal(long value = 0);
@@ -672,6 +674,9 @@ ROSE_DLL_API SgExprListExp * buildExprListExp(SgExpression * expr1 = NULL, SgExp
 ROSE_DLL_API SgExprListExp * buildExprListExp(const std::vector<SgExpression*>& exprs);
 SgExprListExp * buildExprListExp_nfi();
 SgExprListExp * buildExprListExp_nfi(const std::vector<SgExpression*>& exprs);
+
+//! Build a SgSubscriptExpression, used for array shape expressions.  The lower bound and stride may be nullptrs
+SgSubscriptExpression * buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride);
 
 //! Build a SgTupleExp
 ROSE_DLL_API SgTupleExp * buildTupleExp(SgExpression * expr1 = NULL, SgExpression* expr2 = NULL, SgExpression* expr3 = NULL, SgExpression* expr4 = NULL, SgExpression* expr5 = NULL, SgExpression* expr6 = NULL, SgExpression* expr7 = NULL, SgExpression* expr8 = NULL, SgExpression* expr9 = NULL, SgExpression* expr10 = NULL);
@@ -1341,6 +1346,10 @@ ROSE_DLL_API SgClassDeclaration* buildClassDeclaration_nfi(const SgName& name, S
 // SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl );
 ROSE_DLL_API SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl,
                                                                            SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList );
+
+//! Build a Jovial define directive declaration statement
+ROSE_DLL_API SgJovialDefineDeclaration * buildJovialDefineDeclaration_nfi (const SgName& name, const std::string& params,
+                                                                           const std::string& def_string, SgScopeStatement* scope=NULL);
 
 //! Build an SgDerivedTypeStatement Fortran derived type declaration with a
 //! class declaration and definition (creating both the defining and nondefining declarations as required).

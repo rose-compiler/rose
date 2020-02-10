@@ -705,6 +705,8 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
+  // This unparses a table type declaration not a table variable declaration
+  //
      SgJovialTableStatement* table_decl = isSgJovialTableStatement(stmt);
      ROSE_ASSERT(table_decl != NULL);
 
