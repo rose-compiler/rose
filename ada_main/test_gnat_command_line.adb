@@ -25,12 +25,13 @@ begin
 
    begin
       GCL.Getopt (Options.Config);
+      ATI.Put_Line ("Debug        => " & Options.Debug'Img);
+      ATI.Put_Line ("File         => """ & Options.File_Name.all & """");
    exception
-      when X : GNAT.Command_Line.Exit_From_Command_Line =>
-         ATI.Put_Line ("GCL raised Exit_From_Command_Line.  Program should exit now.");
+      when X : GCL.Exit_From_Command_Line =>
+         ATI.Put_Line ("GCL raised Exit_From_Command_Line.  No problem, but program should exit now (e.g. -h).");
+      when X : GCL.Invalid_Switch =>
+         ATI.Put_Line ("GCL raised Invalid_Switch. ");
    end;
-
-   ATI.Put_Line ("Debug        => " & Options.Debug'Img);
-   ATI.Put_Line ("File         => """ & Options.File_Name.all & """");
 
 end Test_GNAT_Command_Line;
