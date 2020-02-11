@@ -3,13 +3,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 AM_CPPFLAGS =  $(ROSE_INCLUDES)
 
-bin_PROGRAMS = scalarizer
-scalarizer_SOURCES = scalarizer.cpp 
+bin_PROGRAMS = rose-scalarizer
+rose_scalarizer_SOURCES = scalarizer.cpp 
 
-scalarizer_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+rose_scalarizer_LDFLAGS = $(ROSE_RPATHS) 
+rose_scalarizer_LDADD = $(ROSE_LIBS) 
 
 include_HEADERS = scalarizer.h
 
 clean:
-	rm -rf rose_*.cpp *.o scalarizer
+	rm -rf rose_*.cpp *.o rose-scalarizer
 

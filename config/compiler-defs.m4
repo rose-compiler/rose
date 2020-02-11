@@ -254,6 +254,7 @@ AC_DEFUN([GET_CXX_VERSION_MACROS],[
         AC_MSG_ERROR([compiler command failed: $CXX -E -dM $tmp_input])
     fi
 
+    if test "$CXX_COMPILER_VENDOR" = "gnu"; then
     CXX_VERSION_MACROS=
     for symbol in __GNUG__ __GNUC__ __GNUC_MINOR__ __GNUC_PATCHLEVEL__; do
         value="$(sed -ne "s/#define $symbol //p" <$tmp_output)"
@@ -265,8 +266,25 @@ AC_DEFUN([GET_CXX_VERSION_MACROS],[
             fi
         fi
     done
+    
+    rm -f $tmp_input $tmp_output
+    fi
+
+    if test "$CXX_COMPILER_VENDOR" = clang; then
+    CXX_VERSION_MACROS=
+    for symbol in __clang__ __clang_major__ __clang_minor__ __clang_patchlevel__; do
+        value="$(sed -ne "s/#define $symbol //p" <$tmp_output)"
+        if test "$value" != ""; then
+            if test "$CXX_VERSION_MACROS" = ""; then
+                CXX_VERSION_MACROS="-D$symbol=$value"
+            else
+                CXX_VERSION_MACROS="$CXX_VERSION_MACROS -D$symbol=$value"
+            fi
+        fi
+    done
 
     rm -f $tmp_input $tmp_output
+    fi    
 ])
 
 dnl ========================================================================================================================
