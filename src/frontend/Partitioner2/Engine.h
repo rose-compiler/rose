@@ -532,6 +532,12 @@ public:
      *  with the same file names will have no effect. */
     virtual bool areContainersParsed() const;
 
+    /** Parses a vxcore specification and initializes memory.
+     *
+     *  Parses a VxWorks core dump in the format defined by Jim Leek and loads the data into ROSE's analysis memory. The argument
+     *  should be everything after the first colon in the URL "vxcore:[MEMORY_ATTRS]:[FILE_ATTRS]:FILE_NAME". */
+    virtual void loadVxCore(const std::string &spec);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Load specimens
     //
