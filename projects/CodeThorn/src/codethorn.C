@@ -1442,6 +1442,26 @@ int main( int argc, char * argv[] ) {
       return 0;
     }
 
+    if(args.isUserProvided("ast-stats-print")||args.isUserProvided("ast-stats-csv")) {
+      // from: src/midend/astDiagnostics/AstStatistics.C
+      if(args.getBool("ast-stats-print")) {
+        ROSE_Statistics::AstNodeTraversalStatistics astStats;
+        string s=astStats.toString(sageProject);
+        cout<<s; // output includes newline at the end
+      }
+      if(args.isUserProvided("ast-stats-csv")) {
+        ROSE_Statistics::AstNodeTraversalCSVStatistics astCSVStats;
+        string fileName=args.getString("ast-stats-csv");
+        astCSVStats.setMinCountToShow(1); // default value is 1
+        if(!CppStdUtilities::writeFile(fileName, astCSVStats.toString(sageProject))) {
+          cerr<<"Error: cannot write AST node statistics to CSV file "<<fileName<<endl;
+          exit(1);
+        }
+      }
+      // ast statistics exits
+      exit(0);
+    }
+
     if(!args.count("quiet")) {
       cout<<"STATUS: analysis started."<<endl;
     }
@@ -1452,34 +1472,6 @@ int main( int argc, char * argv[] ) {
     if(args.getBool("print-variable-id-mapping")) {
       analyzer->getVariableIdMapping()->toStream(cout);
     }
-
-    if(args.isUserProvided("ast-stats-print")||args.isUserProvided("ast-stats-csv")) {
-      // from: src/midend/astDiagnostics/AstStatistics.C
-      AstNodeStatistics astStats;
-      if(args.getBool("ast-stats-print")) {
-        string s=astStats.traversalStatistics(sageProject);
-        cout<<s<<endl;
-      }
-      if(args.isUserProvided("ast-stats-csv")) {
-#if 0
-        string fileName=args.getString("ast-stats-csv");
-        stringstream ss;
-        astStats.traverse(node,preorder);
-        AstNodeTraversalStatistics::StatisticsContainerType nodeCounts=astStats.getStatisticsData();
-        ss<<getVariantName(VariantT(i)) <<","<<nodeCounts[i]<<endl;
-        if(!CppStdUtilities::writeFile(fileName, ss.str())) {
-          cerr<<"Error: cannot write AST node statistics to CSV file "<<fileName<<endl;
-          exit(1);
-        }
-#else
-        cout<<"ast-stats-csv option not implemented yet."<<endl;
-        exit(1);
-#endif
-      }
-      // ast statistics exits
-      exit(0);
-    }
-
   
     if(args.count("run-rose-tests")) {
       cout << "ROSE tests started."<<endl;
