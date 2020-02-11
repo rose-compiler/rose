@@ -63,8 +63,10 @@ createThisShadowDecl (const string& name,
                       SgFunctionDefinition* func_def /*The enclosing class member function*/)
 //                      SgScopeStatement* scope)
 {
+#ifdef __linux__
   if (enable_debug)  
     cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
+#endif
   SgVariableDeclaration* decl = NULL;
   ROSE_ASSERT (sym && func_def);
 
@@ -270,16 +272,19 @@ replaceThisExprs (ASTtools::ThisExprSet_t& this_exprs,
 SgBasicBlock *
 Outliner::Preprocess::transformThisExprs (SgBasicBlock* b)
 {
+#ifdef __linux__
   if (enable_debug)  
     cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
-
+#endif
   // Find all 'this' expressions.
   ASTtools::ThisExprSet_t this_exprs;
   ASTtools::collectThisExpressions (b, this_exprs);
   if (this_exprs.empty ()) // No transformation required.
   {
+#ifdef __linux__
     if (enable_debug)  
       cout<<"empty this expression set, exiting "<< __PRETTY_FUNCTION__ <<" without create this shadow declaration. " <<endl;
+#endif
     return b;
   }
 
