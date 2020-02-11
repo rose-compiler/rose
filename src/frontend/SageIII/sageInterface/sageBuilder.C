@@ -10814,9 +10814,10 @@ SgModifierType* SageBuilder::buildModifierType(SgType * base_type /*= NULL*/)
    }
 #endif
 
-SgTypeBool * SageBuilder::buildBoolType() {
-  SgTypeBool * result =SgTypeBool::createType();
+SgTypeBool * SageBuilder::buildBoolType(SgExpression* kind_expr) {
+  SgTypeBool * result = SgTypeBool::createType(kind_expr);
   ROSE_ASSERT(result);
+  if (kind_expr != NULL) kind_expr->set_parent(result);
   return result;
 }
 
@@ -10898,10 +10899,11 @@ SgTypeUnsignedLong * SageBuilder::buildUnsignedLongType()
   return result;
 }
 
-SgTypeUnsignedInt * SageBuilder::buildUnsignedIntType()
+SgTypeUnsignedInt * SageBuilder::buildUnsignedIntType(SgExpression* kind_expr)
 {
-  SgTypeUnsignedInt * result = SgTypeUnsignedInt::createType();
+  SgTypeUnsignedInt * result = SgTypeUnsignedInt::createType(kind_expr);
   ROSE_ASSERT(result);
+  if (kind_expr != NULL) kind_expr->set_parent(result);
   return result;
 }
 
@@ -11065,9 +11067,18 @@ SgTypeString * SageBuilder::buildStringType( SgExpression* stringLengthExpressio
      return result;
    }
 
-SgTypeInt * SageBuilder::buildIntType()
+SgTypeInt * SageBuilder::buildIntType(SgExpression* kind_expr)
 {
-  SgTypeInt * result =SgTypeInt::createType();
+  SgTypeInt * result;
+  if (kind_expr != NULL)
+     {
+       result = SgTypeInt::createType(0, kind_expr);
+       kind_expr->set_parent(result);
+     }
+  else
+     {
+       result = SgTypeInt::createType();
+     }
   ROSE_ASSERT(result);
   return result;
 }
@@ -16009,7 +16020,7 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
 
      ROSE_ASSERT(new_file_id >= 0);
 
-  // Now buid the traveral object and call the traversal (preorder) on the function definition.
+  // Now build the traveral object and call the traversal (preorder) on the function definition.
      Traversal traversal (newFileName,new_file_id,originalFileId);
 
   // traversal.traverse(subtreeRoot, preorder);
