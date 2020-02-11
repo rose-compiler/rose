@@ -27,6 +27,8 @@
 #include <Partitioner2/ModulesX86.h>
 #include <Partitioner2/Semantics.h>
 #include <Partitioner2/Utility.h>
+#include <rose_getline.h>
+#include <rose_strtoull.h>
 #include <Sawyer/FileSystem.h>
 #include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/GraphTraversal.h>
@@ -1307,7 +1309,7 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             SRecord::load(srecs, map_, true /*create*/, perms);
         } else if (boost::starts_with(fileName, "vxcore:")) {
             // format is "vxcore:[MEMORY_ATTRS]:[FILE_ATTRS]:FILE_NAME
-            loadVxCore(fileName.substr(7));
+            loadVxCore(fileName.substr(7));             // the part after "vxcore:"
         }
     }
 }
