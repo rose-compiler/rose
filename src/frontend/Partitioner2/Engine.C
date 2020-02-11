@@ -1690,7 +1690,11 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
         SAWYER_MESG(where) <<"demangling names\n";
         Modules::demangleFunctionNames(partitioner);
     }
-
+    if (SgBinaryComposite *bc = SageInterface::getEnclosingNode<SgBinaryComposite>(interp_)) {
+        // [Robb Matzke 2020-02-11]: This only works if ROSE was configured with external DWARF and ELF libraries.
+        SAWYER_MESG(where) <<"mapping source locations\n";
+        partitioner.sourceLocations().insertFromDebug(bc);
+    }
     if (libcStartMain_)
         libcStartMain_->nameMainFunction(partitioner);
 }

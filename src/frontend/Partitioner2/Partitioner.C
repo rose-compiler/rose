@@ -90,6 +90,7 @@ Partitioner::operator=(BOOST_RV_REF(Partitioner) other) {
     vertexIndex_.clear();                               // initialized by init(other)
     functions_ = other.functions_;
     addressNames_ = other.addressNames_;
+    sourceLocations_ = other.sourceLocations_;
 
     // FIXME[Robb Matzke 2019-06-21]: faked move semantics and no way to clear the source
     cfgAdjustmentCallbacks_ = other.cfgAdjustmentCallbacks_;
@@ -136,6 +137,7 @@ Partitioner::operator=(BOOST_RV_REF(Partitioner) other) {
     other.aum_ = AddressUsageMap();
     other.functions_ = Functions();
     other.addressNames_ = AddressNameMap();
+    other.sourceLocations_ = SourceLocations();
     
     return *this;
 }
@@ -170,6 +172,7 @@ Partitioner::operator=(const Partitioner &other) {
     vertexIndex_.clear();                               // initialized by init(other)
     functions_ = other.functions_;
     addressNames_ = other.addressNames_;
+    sourceLocations_ = other.sourceLocations_;
 
     cfgAdjustmentCallbacks_ = other.cfgAdjustmentCallbacks_;
     basicBlockCallbacks_ = other.basicBlockCallbacks_;
@@ -831,7 +834,10 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
                                " already holds a different basic block");
     }
 
-    // Adjust the basic block according to configuration information
+    if (bblock->sourceLocation().isEmpty())
+        bblock->sourceLocation(sourceLocations_(bblock->address()));
+
+    // Adjust the basic block according to configuration information. Configuration overrides automatically-detected values.
     const BasicBlockConfig &c = config_.basicBlock(bblock->address());
     if (!c.comment().empty())
         bblock->comment(c.comment());
@@ -1753,8 +1759,11 @@ Partitioner::attachFunction(const Function::Ptr &function) {
             function->name(addressName(function->address())); // use address name if nothing else
         if (c.comment().empty())
             function->comment(c.comment());
-        if (!c.sourceLocation().isEmpty())
+        if (!c.sourceLocation().isEmpty()) {
             function->sourceLocation(c.sourceLocation());
+        } else if (function->sourceLocation().isEmpty()) {
+            function->sourceLocation(sourceLocations_(function->address()));
+        }
 
         // Insert function into the table, and make sure all its basic blocks see that they're owned by the function.
         functions_.insert(function->address(), function);
