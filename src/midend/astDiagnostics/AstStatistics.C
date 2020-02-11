@@ -39,6 +39,27 @@ AstNodeTraversalStatistics::AstNodeTraversalStatistics( const AstNodeTraversalSt
      ROSE_ASSERT(false);
    }
 
+AstNodeTraversalCSVStatistics::AstNodeTraversalCSVStatistics():minCountToShow(1) {
+}
+
+void AstNodeTraversalCSVStatistics::setMinCountToShow(int minValue) {
+  minCountToShow=minValue;
+}
+
+int AstNodeTraversalCSVStatistics::getMinCountToShow() {
+  return minCountToShow;
+}
+
+std::string AstNodeTraversalCSVStatistics::toString(SgNode* node) {
+  std::stringstream ss;
+  traverse(node,preorder); // traverse input files and all included files
+  for(size_t i=0;i!=numNodeTypes.size();++i) {
+    if(numNodeTypes[i]>=(size_t)getMinCountToShow())
+      ss<<getVariantName(VariantT(i)) <<","<<numNodeTypes[i]<<endl;
+  }
+  return ss.str();
+}
+
 string
 AstNodeTraversalStatistics::toString(SgNode* node)
    {
@@ -46,7 +67,7 @@ AstNodeTraversalStatistics::toString(SgNode* node)
      traverse(node,preorder); // traverse input files and all included files
      SgProject* n=dynamic_cast<SgProject*>(node);
      if (n != NULL)
-        {
+       {
           AstNodeTraversalStatistics stat2;
           stat2.traverseInputFiles(n,preorder); // only traverse .C files specified on the command line
           s = stat2.cmpStatistics(*this); // comparison of the size of the AST including and excluding header files
@@ -73,21 +94,17 @@ AstNodeTraversalStatistics::getStatisticsData()
    }
 
 string
-AstNodeTraversalStatistics::singleStatistics()
-   {
+AstNodeTraversalStatistics::singleStatistics() {
   // we possibly will want to overload << 
-     ostringstream ss;
-     for (unsigned int i=0; i != numNodeTypes.size(); i++)
-        {
-          if (numNodeTypes[i] > 0)
-             {
-               if ( SgProject::get_verbose() >= 2 )
-                    ss << "AST Traversal Statistics: " << setw(8) << numNodeTypes[i] << ": " << getVariantName(VariantT(i)) << endl;
-             }
-        }
-
-     return ss.str();
-   }
+  ostringstream ss;
+  for (size_t i=0; i != numNodeTypes.size(); i++) {
+    if (numNodeTypes[i] > 0) {
+      if ( SgProject::get_verbose() >= 2 )
+        ss << "AST Traversal Statistics: " << setw(8) << numNodeTypes[i] << ": " << getVariantName(VariantT(i)) << endl;
+    }
+  }
+  return ss.str();
+}
 
 string
 AstNodeTraversalStatistics::cmpStatistics( AstNodeTraversalStatistics & q )
@@ -95,9 +112,9 @@ AstNodeTraversalStatistics::cmpStatistics( AstNodeTraversalStatistics & q )
      ostringstream ss;
      StatisticsContainerType numNodeTypes2 = q.getStatisticsData();
      ElementType sum1 = 0, sum2 = 0;
-     ss << "****************************************************************************************************************\n";
+     ss << "********************************************************************************************************************\n";
      ss << "AST Traversal Statistics (traversed in current file) : (total in AST) : (percent of total traversed in current file)\n";
-     ss << "****************************************************************************************************************\n";
+     ss << "********************************************************************************************************************\n";
      for(unsigned int i=0; i != numNodeTypes.size(); i++)
         {
           if (numNodeTypes[i]>0 || numNodeTypes2[i]>0)
@@ -110,7 +127,7 @@ AstNodeTraversalStatistics::cmpStatistics( AstNodeTraversalStatistics & q )
         }
 
      ss << generateCMPStatisticsValueString("TOTAL", sum1, sum2);
-     ss << "**************************************************************************************************************** \n";
+     ss << "********************************************************************************************************************\n";
 
      return ss.str();
    }

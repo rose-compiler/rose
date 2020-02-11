@@ -41,7 +41,7 @@ class AstNodeTraversalStatistics : public SgSimpleProcessing
 
           AstNodeTraversalStatistics();
           virtual ~AstNodeTraversalStatistics();
-          virtual std::string toString(SgNode* node); // to become obsolete
+          virtual std::string toString(SgNode* node);
 
      protected:
           virtual void visit(SgNode* node);
@@ -49,14 +49,30 @@ class AstNodeTraversalStatistics : public SgSimpleProcessing
           std::string cmpStatistics(AstNodeTraversalStatistics& q);
           std::string generateCMPStatisticsValueString(std::string name, ElementType v1, ElementType v2);
           StatisticsContainerType getStatisticsData();
-
-     private:
           StatisticsContainerType& numNodeTypes;
 
+     private:
        // DQ (9/13/2011): This copy constructor was built because static analysis tools (made it private to force compile time error if used).
           AstNodeTraversalStatistics( const AstNodeTraversalStatistics & X);
 
    };
+
+// MS 2020: ROSE-2529
+ class AstNodeTraversalCSVStatistics : public AstNodeTraversalStatistics {
+ public:
+   AstNodeTraversalCSVStatistics();
+
+   // generate CSV format for each entry (2 columns): <AST Node Name>, <Node Count>
+   virtual std::string toString(SgNode* node) ROSE_OVERRIDE;
+
+   // set minimum node count to show in CSV file (default is 1)
+   // example: when setting it to 0, all entries (including those with count 0) are shown.
+   void setMinCountToShow(int minValue);
+   int getMinCountToShow();
+
+ private:
+   int minCountToShow;
+ };
 
 #if 0
 class AstNodeMemoryPoolStatistics : public ROSE_VisitTraversal
