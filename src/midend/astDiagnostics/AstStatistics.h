@@ -33,30 +33,26 @@
 
 namespace ROSE_Statistics
 {
-class AstNodeTraversalStatistics : public SgSimpleProcessing
-   {
-     public:
-          typedef unsigned int ElementType;
-          typedef std::vector<ElementType> StatisticsContainerType;
-
-          AstNodeTraversalStatistics();
-          virtual ~AstNodeTraversalStatistics();
-          virtual std::string toString(SgNode* node);
-
-     protected:
-          virtual void visit(SgNode* node);
-          std::string singleStatistics();
-          std::string cmpStatistics(AstNodeTraversalStatistics& q);
-          std::string generateCMPStatisticsValueString(std::string name, ElementType v1, ElementType v2);
-          StatisticsContainerType getStatisticsData();
-          StatisticsContainerType& numNodeTypes;
-
-     private:
-       // DQ (9/13/2011): This copy constructor was built because static analysis tools (made it private to force compile time error if used).
-          AstNodeTraversalStatistics( const AstNodeTraversalStatistics & X);
-
-   };
-
+  class AstNodeTraversalStatistics : public SgSimpleProcessing {
+  public:
+    typedef unsigned int ElementType;
+    typedef std::vector<ElementType> StatisticsContainerType;
+    
+    AstNodeTraversalStatistics();
+    virtual ~AstNodeTraversalStatistics();
+    virtual std::string toString(SgNode* node);
+    
+  protected:
+    virtual void visit(SgNode* node);
+    std::string singleStatistics();
+    std::string cmpStatistics(AstNodeTraversalStatistics& q);
+    std::string generateCMPStatisticsValueString(std::string name, ElementType v1, ElementType v2);
+    StatisticsContainerType getStatisticsData();
+    StatisticsContainerType numNodeTypes; // MS 2020-02-11: changed data representation
+  
+  private:
+  };
+ 
 // MS 2020: ROSE-2529
  class AstNodeTraversalCSVStatistics : public AstNodeTraversalStatistics {
  public:
@@ -68,10 +64,10 @@ class AstNodeTraversalStatistics : public SgSimpleProcessing
    // set minimum node count to show in CSV file (default is 1)
    // example: when setting it to 0, all entries (including those with count 0) are shown.
    void setMinCountToShow(int minValue);
-   int getMinCountToShow();
+   unsigned int getMinCountToShow();
 
  private:
-   int minCountToShow;
+   unsigned int minCountToShow;
  };
 
 #if 0
