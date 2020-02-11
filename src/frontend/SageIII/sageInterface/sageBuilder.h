@@ -177,12 +177,12 @@ SgName unparseTemplateArgumentToString (SgTemplateArgument* templateArgument);
 */
 
 //! Built in simple types
-ROSE_DLL_API SgTypeBool *  buildBoolType();
+ROSE_DLL_API SgTypeBool *  buildBoolType(SgExpression* kind_expr=NULL);
 ROSE_DLL_API SgTypeNullptr* buildNullptrType();
 ROSE_DLL_API SgTypeChar *  buildCharType();
 ROSE_DLL_API SgTypeDouble* buildDoubleType();
 ROSE_DLL_API SgTypeFloat*  buildFloatType();
-ROSE_DLL_API SgTypeInt *   buildIntType();
+ROSE_DLL_API SgTypeInt *   buildIntType(SgExpression* kind_expr=NULL);
 ROSE_DLL_API SgTypeLong*    buildLongType();
 ROSE_DLL_API SgTypeLongDouble* buildLongDoubleType();
 ROSE_DLL_API SgTypeLongLong * buildLongLongType();
@@ -214,7 +214,7 @@ ROSE_DLL_API SgTypeUnsigned128bitInteger* buildUnsigned128bitIntegerType();
 #endif
 
 ROSE_DLL_API SgTypeUnsignedChar* buildUnsignedCharType();
-ROSE_DLL_API SgTypeUnsignedInt* buildUnsignedIntType();
+ROSE_DLL_API SgTypeUnsignedInt* buildUnsignedIntType(SgExpression* kind_expr=NULL);
 ROSE_DLL_API SgTypeUnsignedLong*    buildUnsignedLongType();
 ROSE_DLL_API SgTypeUnsignedLongLong*    buildUnsignedLongLongType();
 ROSE_DLL_API SgTypeUnsignedShort*    buildUnsignedShortType();
