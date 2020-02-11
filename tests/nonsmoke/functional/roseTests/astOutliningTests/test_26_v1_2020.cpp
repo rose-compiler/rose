@@ -1,17 +1,14 @@
 // test outlining a code block with zero variables referenced.
 //
-class A {
+void noop()
+{}
 
-  public:
-   A ()
-   { 
+void A ()
+{ 
 #pragma rose_outline
-     { 
-       noop();
-     }
-   }
-  
-   void noop()
-    {}
+  { 
+    noop();
+  }
+}
 
-};
+
