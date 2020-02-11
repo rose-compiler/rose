@@ -51,6 +51,7 @@
 #include "CodeThornException.h"
 #include "ProgramInfo.h"
 #include "FunctionCallMapping.h"
+#include "AstStatistics.h"
 
 #include "DataRaceDetection.h"
 #include "AstTermRepresentation.h"
@@ -510,6 +511,8 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
   infoOptions.add_options()
     ("print-variable-id-mapping",po::value< bool >()->default_value(false)->implicit_value(true),"Print variable-id-mapping on stdout.")
     ("print-function-id-mapping",po::value< bool >()->default_value(false)->implicit_value(true),"Print function-id-mapping on stdout.")
+    ("ast-stats-print",po::value< bool >()->default_value(false)->implicit_value(true),"Print ast node statistics on stdout.")
+    ("ast-stats-csv",po::value< string >(),"Write ast node statistics to CSV file [arg].")
     ;
 
   po::options_description all("All supported options");
@@ -1449,6 +1452,34 @@ int main( int argc, char * argv[] ) {
     if(args.getBool("print-variable-id-mapping")) {
       analyzer->getVariableIdMapping()->toStream(cout);
     }
+
+    if(args.isUserProvided("ast-stats-print")||args.isUserProvided("ast-stats-csv")) {
+      // from: src/midend/astDiagnostics/AstStatistics.C
+      AstNodeStatistics astStats;
+      if(args.getBool("ast-stats-print")) {
+        string s=astStats.traversalStatistics(sageProject);
+        cout<<s<<endl;
+      }
+      if(args.isUserProvided("ast-stats-csv")) {
+#if 0
+        string fileName=args.getString("ast-stats-csv");
+        stringstream ss;
+        astStats.traverse(node,preorder);
+        AstNodeTraversalStatistics::StatisticsContainerType nodeCounts=astStats.getStatisticsData();
+        ss<<getVariantName(VariantT(i)) <<","<<nodeCounts[i]<<endl;
+        if(!CppStdUtilities::writeFile(fileName, ss.str())) {
+          cerr<<"Error: cannot write AST node statistics to CSV file "<<fileName<<endl;
+          exit(1);
+        }
+#else
+        cout<<"ast-stats-csv option not implemented yet."<<endl;
+        exit(1);
+#endif
+      }
+      // ast statistics exits
+      exit(0);
+    }
+
   
     if(args.count("run-rose-tests")) {
       cout << "ROSE tests started."<<endl;

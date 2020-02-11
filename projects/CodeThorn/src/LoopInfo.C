@@ -83,7 +83,7 @@ void LoopInfo::computeLoopLabelSet(Labeler* labeler) {
   ROSE_ASSERT(forStmt);
   RoseAst ast(forStmt);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(labeler->isLabelRelevantNode(*i)) {
+    if(labeler->numberOfAssociatedLabels(*i)) {
       // use getLabelSet to also include callreturn nodes
       loopLabelSet.insert(labeler->getLabel(*i));
     }
