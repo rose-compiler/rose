@@ -231,19 +231,29 @@ public:
     };
 
 private:
-    TypeClass typeClass_;
-    size_t totalWidth_;
-    size_t secondaryWidth_;
+    // We use a 32-bit data member and pack into it the totalWidth (15 bits: 0 through 14), the secondaryWidth (15 bits: 15 through 29),
+    // and the type class (2 bits: 30 and 31).
+    uint32_t fields_;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_NVP(typeClass_);
-        s & BOOST_SERIALIZATION_NVP(totalWidth_);
-        s & BOOST_SERIALIZATION_NVP(secondaryWidth_);
+    void serialize(S &s, const unsigned version) {
+        if (version >= 1) {
+            s & BOOST_SERIALIZATION_NVP(fields_);
+        } else {
+            TypeClass t = typeClass();
+            size_t z1 = nBits();
+            size_t z2 = secondaryWidth();
+            s & boost::serialization::make_nvp("typeClass_", t);
+            s & boost::serialization::make_nvp("totalWidth_", z1);
+            s & boost::serialization::make_nvp("secondaryWidth_", z2);
+            typeClass(t);
+            nBits(z1);
+            secondaryWidth(z2);
+        }
     }
 #endif
 
@@ -251,12 +261,18 @@ private:
      *
      *  This is used mainly for default arguments. */
 public:
-    Type()
-        : typeClass_(INVALID), totalWidth_(0), secondaryWidth_(0) {}
+    Type() {
+        typeClass(INVALID);
+        nBits(0);
+        secondaryWidth(0);
+    }
 
 private:
-    Type(TypeClass tc, size_t w1, size_t w2)
-        : typeClass_(tc), totalWidth_(w1), secondaryWidth_(w2) {}
+    Type(TypeClass tc, size_t w1, size_t w2) {
+        typeClass(tc);
+        nBits(w1);
+        secondaryWidth(w2);
+    }
 
 public:
     /** Create no type.
@@ -265,7 +281,7 @@ public:
     static Type none() {
         return Type();
     }
-    
+
     /** Create a new integer type.
      *
      *  This is an integer type whose size is specified in bits. Whether an integer is signed is determined by the context in
@@ -287,7 +303,9 @@ public:
      *  A floating point type describes an IEEE-754 style of value and is parameterized by two properties: the width of the
      *  exponent field, and the width of the significand field including the implied bit.  The actual storage size of the
      *  floating point value is the sum of these two widths since although the implied bit is not stored, a sign bit is
-     *  stored. */
+     *  stored. Due to limitations of SMT-LIB, ROSE's symbolic layer doesn't handle all IEEE-754 floating-point types. In
+     *  particular, the symbolic layer supports only binary formats and uses the implied bit convention for the integer part of
+     *  the significand. Gradual underflow capability (i.e., denormalized significands) is assumed. */
     static Type floatingPoint(size_t exponentWidth, size_t significandWidth) {
         return Type(FP, 1 /*sign bit*/ + exponentWidth + significandWidth - 1 /*implied bit*/, exponentWidth);
     }
@@ -296,14 +314,14 @@ public:
      *
      *  A default constructed type is invalid. */
     bool isValid() const {
-        return typeClass_ != INVALID;
+        return typeClass() != INVALID;
     }
-    
+
     /** Property: Type class.
      *
      *  The type class specifies whether this is an integer type, a floating-point type, or a memory type. */
     TypeClass typeClass() const {
-        return typeClass_;
+        return (TypeClass)((fields_ >> 30) & 0x3);
     }
 
     /** Property: Total width of values.
@@ -311,7 +329,7 @@ public:
      *  This is the total width in bits of the values represented by this type. For memory types, it's the width of the value
      *  stored at each address. */
     size_t nBits() const {
-        return totalWidth_;
+        return fields_ & 0x7fff;
     }
 
     /** Property: Width of memory addresses.
@@ -319,8 +337,8 @@ public:
      *  Returns the width in bits of each memory address for a memory type. This should only be invoked on types for which @ref
      *  typeClass returns @ref MEMORY. */
     size_t addressWidth() const {
-        ASSERT_require(MEMORY == typeClass_);
-        return secondaryWidth_;
+        ASSERT_require(MEMORY == typeClass());
+        return secondaryWidth();
     }
 
     /** Property: Exponent width.
@@ -328,8 +346,8 @@ public:
      *  Returns the width in bits of the exponent for floating-point types. This should only be invoked on types for which @ref
      *  typeClass returns @ref FP. */
     size_t exponentWidth() const {
-        ASSERT_require(FP == typeClass_);
-        return secondaryWidth_;
+        ASSERT_require(FP == typeClass());
+        return secondaryWidth();
     }
 
     /** Property: Significand width.
@@ -338,8 +356,9 @@ public:
      *  actual storage size of the significand is one bit fewer. This should only be invoked on types for which @ref typeClass
      *  returns FP. */
     size_t significandWidth() const {
-        ASSERT_require(FP == typeClass_);
-        return totalWidth_ - (1 /* sign bit */ + exponentWidth() - 1 /*implied bit*/);
+        ASSERT_require(FP == typeClass());
+        ASSERT_require(nBits() > 1  /*sign bit*/ + exponentWidth() - 1 /*implied bit*/);
+        return nBits() - (1 /*sign bit*/ + exponentWidth() - 1 /*implied bit*/);
     }
 
     /** Type equality.
@@ -348,7 +367,7 @@ public:
      *
      * @{ */
     bool operator==(const Type &other) const {
-        return typeClass_ == other.typeClass_ && totalWidth_ == other.totalWidth_ && secondaryWidth_ == other.secondaryWidth_;
+        return fields_ == other.fields_;
     }
     bool operator!=(const Type &other) const {
         return !(*this == other);
@@ -363,10 +382,36 @@ public:
 
     /** Print the type to a string. */
     std::string toString(TypeStyle::Flag style = TypeStyle::FULL) const;
+
+private:
+    // mutators are all private
+    void typeClass(TypeClass tc) {
+        unsigned n = tc;
+        ASSERT_require(n <= 3);
+        fields_ = (fields_ & 0x3fffffff) | (n << 30);
+    }
+
+    // mutators are all private
+    void nBits(size_t n) {
+        if (n > 0x7fff)
+            throw Exception("type width is out of range");
+        fields_ = (fields_ & 0xffff8000) | n;
+    }
+
+    // mutators are all private
+    void secondaryWidth(size_t n) {
+        if (n > 0x7fff)
+            throw Exception("second width is out of range");
+        fields_ = (fields_ & 0xc0007fff) | (n << 15);
+    }
+
+    size_t secondaryWidth() const {
+        return (fields_ >> 15) & 0x7fff;
+    }
 };
 
-    
-    
+
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -476,7 +521,7 @@ public:
      * as it normally would.  This user-defined function is invoked by @ref mayEqual after trivial situations are checked
      * and before any calls to an SMT solver. The SMT solver argument is optional (may be null). */
     static boost::logic::tribool (*mayEqualCallback)(const Ptr &a, const Ptr &b, const SmtSolverPtr&);
-    
+
     /** Returns true if two expressions must be equal (cannot be unequal).
      *
      *  If an SMT solver is specified then that solver is used to answer this question, otherwise equality is established by
@@ -580,7 +625,7 @@ public:
     bool isScalarExpr() const {
         return isIntegerExpr() || isFloatingPointExpr();
     }
-    
+
     /** True if this expression is a constant. */
     virtual bool isConstant() const = 0;
 
@@ -600,7 +645,7 @@ public:
     bool isScalarConstant() const {
         return isIntegerConstant() || isFloatingPointConstant();
     }
-    
+
     /** True if this expression is a floating-point NaN constant. */
     bool isFloatingPointNan() const;
 
@@ -637,7 +682,7 @@ public:
     bool isScalarVariable() const {
         return isIntegerVariable() || isFloatingPointVariable();
     }
-    
+
     /** Property: Comment.
      *
      *  Comments can be changed after a node has been created since the comment is not intended to be used for anything but
@@ -776,7 +821,7 @@ public:
      *  std::cout <<"method 1: "; expression->print(std::cout, fmt); std::cout <<"\n";
      *  std::cout <<"method 2: " <<expression->withFormat(fmt) <<"\n";
      *  std::cout <<"method 3: " <<*expression+fmt <<"\n";
-     * 
+     *
      * @endcode
      * @{ */
     WithFormatter withFormat(Formatter &fmt) { return WithFormatter(sharedFromThis(), fmt); }
@@ -1298,7 +1343,7 @@ public:
     bool isMemoryVariable() const {
         return type().typeClass() == Type::MEMORY && !isConstant();
     }
-    
+
     /** Returns the name ID of a free variable.
      *
      *  The output functions print variables as "vN" where N is an integer. It is this N that this method returns.  It should
@@ -1330,23 +1375,23 @@ public:
         ROSE_DEPRECATED("use createVariable with type or makeIntegerVariable, etc.") {
         return createVariable(Type::integer(nBits), comment, flags);
     }
-    
+
     // Deprecated [Robb Matzke 2019-09-27]
     static LeafPtr createExistingVariable(size_t nBits, uint64_t id, const std::string &comment="", unsigned flags=0)
         ROSE_DEPRECATED("use createVariable or makeIntegerVariable, etc.") {
         return createVariable(Type::integer(nBits), id, comment, flags);
     }
-    
+
     // Deprecated [Robb Matzke 2019-09-27]
     static LeafPtr createInteger(size_t nBits, uint64_t value, const std::string &comment="", unsigned flags=0)
         ROSE_DEPRECATED("use createConstant or makeIntegerConstant, etc.");
-    
+
     // Deprecated [Robb Matzke 2019-09-27]
     static LeafPtr createConstant(const Sawyer::Container::BitVector &bits, const std::string &comment="", unsigned flags=0)
         ROSE_DEPRECATED("use createConstant with type or makeIntegerConstant, etc.") {
         return createConstant(Type::integer(bits.size()), bits, comment, flags);
     }
-    
+
     // Deprecated [Robb Matzke 2019-09-27]
     static LeafPtr createBoolean(bool b, const std::string &comment="", unsigned flags=0)
         ROSE_DEPRECATED("use createConstant or makeBooleanConstant");
@@ -1356,7 +1401,7 @@ public:
         ROSE_DEPRECATED("use createVariable with type or makeMemoryVariable") {
         return createVariable(Type::memory(addressWidth, valueWidth), comment, flags);
     }
-    
+
     // Deprecated [Robb Matzke 2019-09-27]
     static LeafPtr createExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const std::string &comment="",
                                         unsigned flags=0)
@@ -1699,6 +1744,7 @@ Ptr substitute(const Ptr &src, Substitution &subber, const SmtSolverPtr &solver 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::SymbolicExpr::Interior);
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::SymbolicExpr::Leaf);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::SymbolicExpr::Type, 1);
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::SymbolicExpr::Node, 1);
 #endif
 

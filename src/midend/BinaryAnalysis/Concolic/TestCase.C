@@ -1,5 +1,6 @@
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <boost/lexical_cast.hpp>
 
@@ -31,7 +32,7 @@ TestCase::name(const std::string& tcname) {
 
 std::string
 TestCase::printableName(const Database::Ptr &db) {
-    std::string retval = "test case";
+    std::string retval = "testcase";                    // no white space
     if (db) {
         if (TestCaseId id = db->id(sharedFromThis(), Update::NO))
             retval += " " + boost::lexical_cast<std::string>(*id);
@@ -85,20 +86,9 @@ TestCase::args(std::vector<std::string> cmdlineargs)
 }
 
 bool 
-TestCase::hasConcolicTest() const 
-{ 
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
-  return concolically_tested; 
-}
-
-    
-void 
-TestCase::concolicTest(bool hastest)
-{
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
-  concolically_tested = hastest;
+TestCase::hasConcolicTest() const { 
+    //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return concolicResult_;
 }
 
 bool 
@@ -108,22 +98,19 @@ TestCase::hasConcreteTest() const
 }
 
 Sawyer::Optional<double> 
-TestCase::concreteRank() const
-{
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
-  return concrete_rank_;
+TestCase::concreteRank() const {
+    //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return concreteRank_;
 }
 
 void
-TestCase::concreteRank(Sawyer::Optional<double> val) 
-{
-  //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-  
-  concrete_rank_ = val;
+TestCase::concreteRank(Sawyer::Optional<double> val) {
+    //~ SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    concreteRank_ = val;
 }
 
+} // namespace
+} // namespace
+} // namespace
 
-} // namespace
-} // namespace
-} // namespace
+#endif

@@ -104,14 +104,12 @@ string get_type_name(SgType* t)
             SgTypeTuple *typeTuple = isSgTypeTuple(t);
             SgTypePtrList typeList = typeTuple->get_types();
 
-            SgTypePtrList::iterator typeIterator;
+            SgTypePtrList::iterator typeIterator = typeList.begin();
               
             std::string typeString = "std::tuple<";
             if(typeList.size() != 0)
               {
-                typeIterator = typeList.begin();
                 typeString += get_type_name(*typeIterator);
-
                 ++typeIterator;
               }
             
@@ -228,11 +226,11 @@ string get_type_name(SgType* t)
                SgType *btype = mpointer_type->get_base_type();
                SgMemberFunctionType *ftype = NULL;
 
-#if 1
+#if 0
                printf ("In get_type_name(): case T_MEMBER_POINTER: output name: btype = %p = %s \n",btype,btype->class_name().c_str());
             // unp->u_sage->curprint ("/* In get_type_name(): output name */ \n ");
 #endif
-#if 1
+#if 0
                printf ("In get_type_name(): case T_MEMBER_POINTER: I think this is not called here! \n");
                printf ("Exting as a test! \n");
 // Liao 10/16/2019. We do see code reaches this point now.            
@@ -241,7 +239,7 @@ string get_type_name(SgType* t)
 
                if ( (ftype = isSgMemberFunctionType(btype)) != NULL)
                   {
-#if 1
+#if 0
                      printf ("In get_type_name(): ftype != NULL: output name: btype = %p = %s \n",btype,btype->class_name().c_str());
                   // unp->u_sage->curprint ("/* In get_type_name(): ftype != NULL: output name */ \n ");
 #endif
@@ -256,23 +254,27 @@ string get_type_name(SgType* t)
                          if (p != ftype->get_arguments().end()) { res = res + ","; }
                        }
 
-                       res = res + ")";
+                    res = res + ")";
 
-                       if (ftype->isConstFunc()) {
+#if 0
+                    printf ("In get_type_name(): ftype != NULL: after unparsing function arguments: unparse modifiers \n");
+#endif
+
+                    if (ftype->isConstFunc()) {
                          res = res + " const";
                        }
 
-                       if (ftype->get_ref_qualifiers() == 1) {
+                    if (ftype->get_ref_qualifiers() == 1) {
                          res = res + " &";
                        } else if (ftype->get_ref_qualifiers() == 2) {
                          res = res + " &&";
                        }
 
-                       return res;
+                    return res;
                   }
                  else
                   {
-#if 1
+#if 0
                     printf ("In get_type_name(): ftype == NULL: output name: btype = %p = %s \n",btype,btype->class_name().c_str());
                  // unp->u_sage->curprint ("/* In get_type_name(): ftype == NULL: output name */ \n ");
 #endif
@@ -1982,17 +1984,39 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                  // curprint("\n/* In unparseMemberPointerType(): end of argument list */ \n";
 
                     unparseType(ftype->get_return_type(), info); // second part
-
+#if 0
+                    printf ("In unparseMemberPointerType(): after unparseType() second part: unparse modifiers \n");
+#endif
+#if 0
+                  // DQ (1/11/2020): This is the old code!
                      if (ftype->get_ref_qualifiers() == 1) {
                        curprint(" &");
                      } else if (ftype->get_ref_qualifiers() == 2) {
                        curprint(" &&");
                      }
-
+#endif
                  // Liao, 2/27/2009, add "const" specifier to fix bug 327
                     if (ftype->isConstFunc())
                        {
                          curprint(" const ");
+                       }
+
+                 // DQ (1/11/2020): Adding support for volatile.
+                    if (ftype->isVolatileFunc())
+                       {
+                         curprint(" volatile ");
+                       }
+
+                 // DQ (1/11/2020): Adding support for lvalue reference member function modifiers.
+                    if (ftype->isLvalueReferenceFunc())
+                       {
+                         curprint(" &");
+                       }
+
+                 // DQ (1/11/2020): Adding support for rvalue reference member function modifiers.
+                    if (ftype->isRvalueReferenceFunc())
+                       {
+                         curprint(" &&");
                        }
                   }
                  else
@@ -2946,6 +2970,16 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                          ROSE_ASSERT(false);
 #endif
                        }
+#if 0
+                 // DQ (1/8/2020): Identifying the location where we need to output the class hierarchy (see Cxx11_tests/test2020_26.C).
+                    printf ("In unparseClassType(): Output class hierarchy here! \n");
+                    curprint(" /* Output class hierarchy here! */ ");
+#endif
+
+                 // DQ (1/8/2020): Support for defining declarations with base classes (called from unparseClassDefnStmt() and unparseClassType() functions).
+                 // This supports Cxx_tests/test2020_24.C.
+                    ROSE_ASSERT(classdefn_stmt != NULL);
+                    unp->u_exprStmt->unparseClassInheritanceList (classdefn_stmt,info);
 
                     ninfo.set_isUnsetAccess();
                     curprint("{");
@@ -4192,6 +4226,7 @@ Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
 #if 0
      printf ("In unparseMemberFunctionType(type = %p (%s))\n", type, type ? type->class_name().c_str() : "");
 #endif
+
      SgMemberFunctionType* mfunc_type = isSgMemberFunctionType(type);
      ROSE_ASSERT(mfunc_type != NULL);
 
@@ -4274,16 +4309,39 @@ Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
                ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
                unparseType(mfunc_type->get_return_type(), info); // catch the 2nd part of the rtype
+#if 0
+               printf ("In unparseMemberFunctionType(): after unparseType() second part: unparse modifiers \n");
+#endif
 
                if (mfunc_type->isConstFunc()) {
                  curprint (" const");
                }
 
+            // DQ (1/11/2020): Adding missing support for volatile and const-volatile.
+               if (mfunc_type->isVolatileFunc()) 
+                  {
+                 // curprint (" /* adding volatile */ ");
+                    curprint (" volatile");
+                  }
+
+            // DQ (1/11/2020): Adding support for lvalue reference member function modifiers.
+               if (mfunc_type->isLvalueReferenceFunc())
+                  {
+                    curprint(" &");
+                  }
+
+            // DQ (1/11/2020): Adding support for rvalue reference member function modifiers.
+               if (mfunc_type->isRvalueReferenceFunc())
+                  {
+                    curprint(" &&");
+                  }
+#if 0
                if (mfunc_type->get_ref_qualifiers() == 1) {
                  curprint (" &");
                } else if (mfunc_type->get_ref_qualifiers() == 2) {
                  curprint (" &&");
                }
+#endif
              }
             else
              {

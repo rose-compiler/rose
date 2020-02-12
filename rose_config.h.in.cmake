@@ -18,7 +18,7 @@
 #cmakedefine ROSE_SCM_VERSION_ID "@ROSE_SCM_VERSION_ID@"
 
 /* Git SCM version information for ROSE: commit date (Unix timestamp). */
-#cmakedefine ROSE_SCM_VERSION_UNIX_DATE @ROSE_SCM_VERSION_UNIX_DATE@
+#cmakedefine ROSE_VERSION @ROSE_VERSION@
 
 /* Define user-friendly ROSE version */
 #cmakedefine ROSE_PACKAGE_VERSION "@ROSE_PACKAGE_VERSION@"

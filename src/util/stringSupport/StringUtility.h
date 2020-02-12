@@ -42,10 +42,29 @@ ROSE_UTIL_API std::string htmlEscape(const std::string&);
 
 /** Escapes characters that are special to C/C++.
  *
- *  Replaces special characters in the input so that it is suitable for the contents of a C string literal. That is, things
+ *  Replaces special characters in the input so that it is suitable for the contents of a C string literal (if @p context is a
+ *  double quote character) or the contents of a C character constant (if @p context is a single quote). That is, things
  *  like double quotes, line-feeds, tabs, non-printables, etc. are replace by their C backslash escaped versions. Returns the
- *  resulting string. */
-ROSE_UTIL_API std::string cEscape(const std::string&);
+ *  resulting string.
+ *
+ *  Note that if the first argument is a string then the context defaults to string literals, and if the first argument is a
+ *  single character then the context defaults to character literals. Although this is usually what one wants, it's possible to
+ *  change the context in both situations.
+ *
+ * @{ */
+ROSE_UTIL_API std::string cEscape(const std::string&, char context = '"');
+ROSE_UTIL_API std::string cEscape(char, char context = '\'');
+/** @} */
+
+/** Unescapes C++ string literals.
+ *
+ *  When given a C++ string literals content, the part between the enclosing quotes, this function will look for escape sequences,
+ *  parse them, and replace them in the return value with the actual characters they represent.  For instance, passing in
+ *  <code>std::string{"hello\\nworld\\00hidden"}</code> that contains 20 characters including two backslashes, the function replaces
+ *  the first backslash+"n" pair with a line feed, and the second backslash+"0"+"0" with a NUL to result in
+ *  <code>std::string{"hello\nworld\0hidden"}</code> (18 characters including the LF and NUL). Unicode escapes are not supported
+ *  and will be left escaped in the return value. */
+ROSE_UTIL_API std::string cUnescape(const std::string&);
 
 /**  Escapes characters that are special to the Bourne shell.
  *
@@ -121,8 +140,16 @@ std::string join(const std::string &separator, const Container &container) {
     return join_range(separator, container.begin(), container.end());
 }
 
+template<class Container>
+std::string join(char separator, const Container &container) {
+    return join_range(std::string(1, separator), container.begin(), container.end());
+}
+
 ROSE_UTIL_API std::string join(const std::string &separator, char *strings[], size_t nstrings);
 ROSE_UTIL_API std::string join(const std::string &separator, const char *strings[], size_t nstrings);
+ROSE_UTIL_API std::string join(char separator, char *strings[], size_t nstrings);
+ROSE_UTIL_API std::string join(char separator, const char *strings[], size_t nstrings);
+
 /** @} */
 
 /** Join strings as if they were English prose.

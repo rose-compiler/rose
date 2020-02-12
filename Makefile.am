@@ -345,9 +345,14 @@ install-exec-local:
 
 install-data-local: uninstall-local
 	-mkdir -p $(DESTDIR)$(includedir)
+if ROSE_USE_CLANG_FRONTEND
+	mkdir -p "$(DESTDIR)$(includedir)/clang"
+	cp -R $(top_builddir)/include-staging/* "$(DESTDIR)$(includedir)/clang"
+else
 #	DQ (11/1/2011): The EDG 4.x support does not require a separate include-staging directory.
 	mkdir -p "$(DESTDIR)$(includedir)/edg"
 	cp -R $(top_builddir)/include-staging/* "$(DESTDIR)$(includedir)/edg"
+endif
 #	endif
 	@echo '*****************************************************************'
 	@echo '***** make install-data rule complete (terminated normally) *****'

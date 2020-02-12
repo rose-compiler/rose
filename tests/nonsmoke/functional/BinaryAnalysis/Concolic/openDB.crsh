@@ -1,3 +1,0 @@
-create sqlite3://./openDB.db
-
-! echo ok.

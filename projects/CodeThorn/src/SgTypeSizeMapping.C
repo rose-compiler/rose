@@ -17,7 +17,7 @@ namespace CodeThorn {
     case V_SgTypeChar:
     case V_SgTypeSignedChar:
       return getTypeSize(BITYPE_SCHAR);
-    case V_SgTypeUnsignedChar:
+    case V_SgTypeUnsignedChar: 
       return getTypeSize(BITYPE_UCHAR);
 
     case V_SgTypeShort:
@@ -64,7 +64,7 @@ namespace CodeThorn {
       DataMemberPointers dataMemPtrs=isSgClassType(sgType)->returnDataMemberPointers();
       // returnDataMemberPointers includes all declarations (methods need to be filtered)
       for(DataMemberPointers::iterator i=dataMemPtrs.begin();i!=dataMemPtrs.end();++i) {
-        SgNode* node=(*i).first;
+        SgNode* node=(*i).first; 
         if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
           sum+=determineTypeSize(varDecl->get_type());
         }

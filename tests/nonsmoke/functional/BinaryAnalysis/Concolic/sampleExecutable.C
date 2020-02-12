@@ -1,4 +1,4 @@
-
+#include <csignal>
 #include <cstdlib>
 #include <sstream>
 #include <iostream>
@@ -59,11 +59,13 @@ bool addressRandomization()
 #endif /* __linux__ */
 }
 
-void segFault()
-{
+void segFault() {
+#if 0 // [Robb Matzke 2020-01-15]: this is C++ undefined behavior and might not do what you expect.
   void (*fun)() = NULL;
-  
-  fun(); 
+  fun();
+#else
+  raise(SIGSEGV);
+#endif
 }
 
 void check(std::string arg)

@@ -1,4 +1,5 @@
-
+#include <cstdio>
+#include "DOM.h"
 int f(int a) {
   return a+1;
 }
@@ -6,8 +7,9 @@ int f(int a) {
 int main() {
   int x;
   x=sizeof(int);
+  printf("%d\n",x);
   x=x+sizeof(x);
-  x=f(x);
+  printf("%d\n",x);
   return 0;
 }
   

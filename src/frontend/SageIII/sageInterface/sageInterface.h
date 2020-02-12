@@ -1461,8 +1461,13 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 #endif
 
 #if 1
+       // DQ (1/8/2020): ROSE-82 (on RZ) This limit needs to be larger and increasing it to 500 was enough 
+       // for a specific code with a long chain of if-then-else nesting, So to make this sufficent for more
+       // general code we have increased the lomit to 100,000.  Note that 50 was not enough for real code, 
+       // but was enough for our regression tests.
        // DQ (12/30/2019): This is added to support detection of infinite loops over parent pointers.
-          if (counter >= 500)
+       // if (counter >= 500)
+          if (counter >= 100000)
              {
                printf ("Exiting: In getEnclosingNode(): loop limit exceeded: counter = %d \n",counter);
                ROSE_ASSERT(false);
@@ -2087,7 +2092,9 @@ ROSE_DLL_API void fixNamespaceDeclaration(SgNamespaceDeclarationStatement* struc
 ROSE_DLL_API void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
 
 //! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelRefExp are created transparently as needed.
-ROSE_DLL_API void setFortranNumericLabel(SgStatement* stmt, int label_value);
+ROSE_DLL_API void setFortranNumericLabel(SgStatement* stmt, int label_value,
+                                         SgLabelSymbol::label_type_enum label_type=SgLabelSymbol::e_start_label_type,
+                                         SgScopeStatement* label_scope=NULL);
 
 //! Suggest next usable (non-conflicting) numeric label value for a Fortran function definition scope
 ROSE_DLL_API int  suggestNextNumericLabel(SgFunctionDefinition* func_def);

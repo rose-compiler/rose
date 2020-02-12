@@ -314,11 +314,7 @@ struct MultiSubstituter {
 
 bool
 Type::operator<(const Type &other) const {
-    if (typeClass_ != other.typeClass_)
-        return typeClass_ < other.typeClass_;
-    if (totalWidth_ != other.totalWidth_)
-        return totalWidth_ < other.totalWidth_;
-    return secondaryWidth_ < other.secondaryWidth_;
+    return fields_ < other.fields_;
 }
 
 void

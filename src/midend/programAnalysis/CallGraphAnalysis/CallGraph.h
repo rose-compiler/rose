@@ -133,6 +133,9 @@ class ROSE_DLL_API CallGraphBuilder
     //We map each function to the corresponding graph node
     boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*>& getGraphNodesMapping(){ return graphNodes; }
 
+    //! Retrieve the node matching a function declaration (using mangled name to resolve accross translation units)
+    SgGraphNode * getGraphNodeFor(SgFunctionDeclaration * fdecl) const;
+
   private:
     SgProject *project;
     SgIncidenceDirectedGraph *graph;
@@ -190,7 +193,7 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
         printf ("In buildCallGraph(): loop over functions from memory pool: fdecl  = %p = %s name = %s \n",fdecl,fdecl->class_name().c_str(),fdecl->get_name().str());
         printf ("In buildCallGraph(): loop over functions from memory pool: unique = %p = %s name = %s \n",unique,unique->class_name().c_str(),unique->get_name().str());
 #endif
-        if (isSelected(pred)(unique) && graphNodes.find(unique)==graphNodes.end()) 
+        if (isSelected(pred)(unique) && getGraphNodeFor(unique) == NULL)
            {
 #if 0
             printf ("Collect function calls in unique function: unique = %p \n",unique);
@@ -215,13 +218,13 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
 
     // Add edges to the graph
     BOOST_FOREACH(FunctionData &currentFunction, callGraphData) {
-        SgGraphNode *srcNode = graphNodes.find(currentFunction.functionDeclaration)->second; // we inserted it above
-        std::vector<SgFunctionDeclaration*> &callees = currentFunction.functionList;
-        BOOST_FOREACH(SgFunctionDeclaration *callee, callees) {
+        SgGraphNode * srcNode = getGraphNodeFor(currentFunction.functionDeclaration);
+        ROSE_ASSERT(srcNode != NULL);
+        std::vector<SgFunctionDeclaration*> & callees = currentFunction.functionList;
+        BOOST_FOREACH(SgFunctionDeclaration * callee, callees) {
             if (isSelected(pred)(callee)) {
-                GraphNodes::iterator dstNodeFound = graphNodes.find(callee);
-                assert(dstNodeFound!=graphNodes.end()); // should have been added above
-                SgGraphNode *dstNode = dstNodeFound->second;
+                SgGraphNode * dstNode = getGraphNodeFor(callee);
+                ROSE_ASSERT(dstNode != NULL);
                 if (graph->checkIfDirectedGraphEdgeExists(srcNode, dstNode) == false)
                     graph->addDirectedEdge(srcNode, dstNode);
             }

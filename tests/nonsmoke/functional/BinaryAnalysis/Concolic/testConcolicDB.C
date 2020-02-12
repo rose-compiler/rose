@@ -1,7 +1,10 @@
 #include <rose.h>
 #include <BinaryConcolic.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
+
 #include <Sawyer/CommandLine.h>
 #include <boost/filesystem.hpp>
+#include <SqlDatabase.h>
 
 #include "configDB.h"
 
@@ -410,3 +413,12 @@ int main(int argc, char** argv)
 
   return 0;
 }
+
+#else
+
+#include <iostream>
+int main() {
+    std::cerr <<"concolic testing is not enabled\n";
+}
+
+#endif

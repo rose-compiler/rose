@@ -4,6 +4,7 @@
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Semantics.h>
+#include <SourceLocation.h>
 
 #include <Sawyer/Attribute.h>
 #include <Sawyer/Cached.h>
@@ -185,6 +186,7 @@ private:
     std::vector<SgAsmInstruction*> insns_;              // Instructions in the order they're executed
     BasicBlockSemantics semantics_;                     // All semantics-related information
     std::vector<DataBlock::Ptr> dblocks_;               // Data blocks owned by this basic block, sorted
+    SourceLocation sourceLocation_;                     // Optional location of basic block in source code
 
     // When a basic block gets lots of instructions some operations become slow due to the linear nature of the instruction
     // list. Therefore, we also keep a mapping from instruction address to position in the list. The mapping is only used when
@@ -253,6 +255,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(mayReturn_);
         if (version >= 1)
             s & BOOST_SERIALIZATION_NVP(popsStack_);
+        if (version >= 2)
+            s & BOOST_SERIALIZATION_NVP(sourceLocation_);
     }
 #endif
 
@@ -325,6 +329,13 @@ public:
      * @{ */
     const std::string& comment() const { return comment_; }
     void comment(const std::string &s) { comment_ = s; }
+    /** @} */
+
+    /** Optional location in source code.
+     *
+     * @{ */
+    const SourceLocation& sourceLocation() const { return sourceLocation_; }
+    void sourceLocation(const SourceLocation &loc) { sourceLocation_ = loc; }
     /** @} */
 
 
@@ -646,6 +657,6 @@ private:
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::BasicBlock, 1);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::BasicBlock, 2);
 
 #endif

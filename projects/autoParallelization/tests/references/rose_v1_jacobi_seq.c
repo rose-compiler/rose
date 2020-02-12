@@ -151,11 +151,7 @@ void jacobi()
         }
       }
 //#pragma omp for private(i,j,resid) reduction(+:error) nowait
-      
-#pragma omp parallel for private (resid,i,j) reduction (+:error)
       for (i = 1; i <= n - 1 - 1; i += 1) {
-        
-#pragma omp parallel for private (resid,j) reduction (+:error) firstprivate (omega,ax,ay,b)
         for (j = 1; j <= m - 1 - 1; j += 1) {
           resid = (ax * (uold[i - 1][j] + uold[i + 1][j]) + ay * (uold[i][j - 1] + uold[i][j + 1]) + b * uold[i][j] - f[i][j]) / b;
           u[i][j] = uold[i][j] - omega * resid;

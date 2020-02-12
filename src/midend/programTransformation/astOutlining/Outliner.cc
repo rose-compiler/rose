@@ -116,6 +116,8 @@ Outliner::generateFuncArgName (const SgStatement* stmt)
 Outliner::Result
 Outliner::outline (SgStatement* s)
 {
+  if (enable_debug)  
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
   string func_name = generateFuncName (s);
   return outline (s, func_name);
 }
@@ -185,6 +187,10 @@ Sawyer::CommandLine::SwitchGroup
 Outliner::commandLineSwitches() {
     using namespace Sawyer::CommandLine;
 
+#if 0
+    printf ("In Outliner::commandLineSwitches(): Processing the outliner output_path \n");
+#endif
+
     SwitchGroup switches("Outliner switches");
     switches.doc("These switches control ROSE's outliner. ");
     switches.name("rose:outline");
@@ -244,15 +250,34 @@ Outliner::commandLineSwitches() {
 //! Validate outliner settings. This should be called after outliner settings are adjusted (directly or by command-line
 //  parsing) and before the outliner is used to outline source code.
 void
-Outliner::validateSettings() {
+Outliner::validateSettings() 
+   {
+#if 0
+     printf ("In Outliner::validateSettings(): before building output_path directory: output_path = %s \n",output_path.c_str());
+#endif
+
     if (!output_path.empty()) {
         // remove trailing '/'
         while (output_path[output_path.size()-1]=='/')
             output_path.erase(output_path.end()-1);
         // Create such path if not exists
+
+#if 0
+        printf ("After erasing directoriies in output_path: output_path = %s \n",output_path.c_str());
+#endif
         bfs::path my_path(output_path);
         if (!bfs::exists(my_path))
+          {
+#if 0
+            printf ("Before bfs::create_directory(): my_path.string() = %s \n",my_path.string().c_str());
+#endif
             bfs::create_directory(my_path);
+#if 0
+            printf ("Exiting as a test! \n");
+            ROSE_ASSERT(false);
+#endif
+          }
+
         if (!bfs::is_directory(my_path)) {
             cerr<<"output_path:"<<output_path<<" is not a path!"<<endl;
             ROSE_ASSERT(false);
@@ -281,6 +306,10 @@ Outliner::validateSettings() {
 //! Set internal options based on command line options
 void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 {
+#if 0
+    printf ("In Outliner::commandLineProcessing(): Processing the outliner output_path \n");
+#endif
+
   if (CommandlineProcessing::isOption (argvList,"-rose:outline:","enable_debug",true))
   {
     cout<<"Enabling debugging mode for outlined functions..."<<endl;
@@ -422,6 +451,8 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 SgBasicBlock *
 Outliner::preprocess (SgStatement* s)
 {
+  if (enable_debug)  
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
   // bool b = isOutlineable (s, enable_debug);
   bool b = isOutlineable (s, SgProject::get_verbose () >= 1);
   if (b!= true)

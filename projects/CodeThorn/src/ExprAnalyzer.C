@@ -8,6 +8,7 @@
 #include "ExprAnalyzer.h"
 #include "CodeThornException.h"
 #include "Analyzer.h" // dependency on process-functions
+#include "CppStdUtilities.h"
 
 using namespace CodeThorn;
 using namespace CodeThorn;
@@ -38,6 +39,13 @@ CodeThorn::InterpretationMode ExprAnalyzer::getInterpretationMode() {
 }
 void ExprAnalyzer::setInterpretationMode(CodeThorn::InterpretationMode im) {
   _interpretationMode=im;
+}
+
+string ExprAnalyzer::getInterpretationModeFileName() {
+  return _interpretationModeFileName;
+}
+void ExprAnalyzer::setInterpretationModeFileName(string imFileName) {
+  _interpretationModeFileName=imFileName;
 }
 
 void ExprAnalyzer::initializeStructureAccessLookup(SgProject* node) {
@@ -989,11 +997,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
   SgType* operandType=node->get_operand_type();
   if(operandType) {
     CodeThorn::TypeSize typeSize=AbstractValue::getTypeSizeMapping()->determineTypeSize(operandType);
+    AbstractValue sizeValue;
     if(typeSize==0) {
-      logger[WARN]<<"sizeof: could not determine size (= zero) of argument "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
+      logger[WARN]<<"sizeof: could not determine size (= zero) of argument, assuming top "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
+      sizeValue=AbstractValue::createTop();
+    } else {
+      SAWYER_MESG(logger[TRACE])<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizeof("<<typeSize<<")"<<endl;
+      sizeValue=AbstractValue(typeSize); 
+      SAWYER_MESG(logger[TRACE])<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizevalue of sizeof("<<typeSize<<"):"<<sizeValue.toString()<<endl;
     }
-    SAWYER_MESG(logger[TRACE])<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizeof("<<typeSize<<")"<<endl;
-    AbstractValue sizeValue=AbstractValue(typeSize); 
     SingleEvalResultConstInt res;
     res.init(estate,sizeValue);
     return listify(res);
@@ -1450,7 +1462,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode) {
-  SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<endl;
+  SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
@@ -1523,6 +1535,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(CodeThorn::Top()));
   SAWYER_MESG(logger[TRACE])<<"Evaluating function call: "<<funCall->unparseToString()<<endl;
+  SAWYER_MESG(logger[TRACE])<<"AST function call: "<<AstTerm::astTermWithNullValuesToString(funCall)<<endl;
   if(getStdFunctionSemantics()) {
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="malloc") {
@@ -1550,8 +1563,14 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       // call fprint function in mode CONCRETE and generate output
       // (1) obtain arguments from estate
       // (2) marshall arguments
-      // (3) perform function call (causing side effect on stdout)
+      // (3) perform function call (causing side effect on stdout (or written to provided file))
       return execFunctionCallPrintf(funCall,estate);
+    } else if(funName=="scanf" && (getInterpretationMode()==IM_CONCRETE)) {
+      // call scanf function in mode CONCRETE and generate output
+      // (1) obtain arguments from estate
+      // (2) marshall arguments
+      // (3) perform function call (causing side effect on stdin)
+      return execFunctionCallScanf(funCall,estate);
     } else {
       if(getSkipSelectedFunctionCalls()) {
         return evalFunctionCallArguments(funCall,estate);
@@ -1570,22 +1589,17 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::execFunctionCallPrintf(SgFunctionCallExp* funCall, EState estate) {
+  cout<<"DEBUG: ExprAnalyzer::execFunctionCallPrintf"<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(Top())); // default value for void function call
   ROSE_ASSERT(_variableIdMapping);
   SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   auto iter=argsList.begin();
   ROSE_ASSERT(iter!=argsList.end());
-  SgExpression* formatStringExp=*iter++;
-  list<SingleEvalResultConstInt> resFormatStringList=evaluateExpression(formatStringExp,estate);
-  string formatString;
-  if(resFormatStringList.size()!=1) {
-    cerr<<"Error: conditional control-flow in printf format string not supported. Expression normalization required."<<endl;
-    exit(1);
-  } else {
-    //AbstractValue av=(*resFormatStringList.begin()).value();
-    formatString="formatStringHere:";
-  }
+  SgStringVal* formatStringVal=isSgStringVal(*iter++);
+  ROSE_ASSERT(formatStringVal);
+  string formatString=formatStringVal->get_value();
+  vector<string> avStringVector;
   for(size_t i=1;i<argsList.size();i++) {
     SgExpression* arg=*iter++;
     list<SingleEvalResultConstInt> argResList=evaluateExpression(arg,estate);
@@ -1594,18 +1608,120 @@ list<SingleEvalResultConstInt> ExprAnalyzer::execFunctionCallPrintf(SgFunctionCa
         exit(1);
     } else {
       AbstractValue av=(*argResList.begin()).value();
-      if(av.isConstInt()) {
-        printf("%d",av.getIntValue());
-      } else if(av.isTop()) {
-        printf("top");
-      } else if(av.isBot()) {
-        printf("bot");
-      } else if(av.isPtr()) {
-        printf("pointer");
-      } else {
-        printf("?");
+      avStringVector.push_back(av.toString(_variableIdMapping));
+    }
+  }
+  // replace all uses of %? with respective AVString
+  string concAVString;
+  size_t j=0;
+  for(size_t i=0;i<formatString.size();++i) {
+    if(formatString[i]=='%') {
+      i++; // skip next character
+      if(j>=avStringVector.size()) {
+        // number of arguments and uses of '%' don't match in input
+        // program. This could be reported as program error.  For now
+        // we just do not produce an output (as the original program
+        // does not either)
+        // TODO: report input program error
+        continue; // continue to print other characters
       }
-      printf("\n");
+      concAVString+=avStringVector[j++];
+    } else if(formatString[i]=='\\') {
+      if(i+1<=formatString.size()-1 && formatString[i+1]=='%') {
+        i+=1; // process additional character '%'
+        concAVString+="\%";
+      } else if(i+1<=formatString.size()-1 && formatString[i+1]=='n') {
+        concAVString+='\n'; // this generates a proper newline
+        i+=1; // process additional character 'n'
+      } else {
+        concAVString+='\\';
+      }
+    } else {
+      // any other character
+      concAVString+=formatString[i];
+    }
+  }
+  string fileName=getInterpretationModeFileName();
+  if(fileName!="") {
+    bool ok=CppStdUtilities::appendFile(fileName,concAVString);
+    if(!ok) {
+      cerr<<"Error: could not open output file "<<fileName<<endl;
+      exit(1);
+    }
+  } else {
+    cout<<concAVString;
+  }
+  return listify(res);
+}
+
+list<SingleEvalResultConstInt> ExprAnalyzer::execFunctionCallScanf(SgFunctionCallExp* funCall, EState estate) {
+  cout<<"DEBUG: ExprAnalyzer::execFunctionCallScanf"<<endl;
+  SingleEvalResultConstInt res;
+  res.init(estate,AbstractValue(Top())); // default value for void function call
+  ROSE_ASSERT(_variableIdMapping);
+  SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+  auto iter=argsList.begin();
+  ROSE_ASSERT(iter!=argsList.end());
+  SgStringVal* formatStringVal=isSgStringVal(*iter++);
+  ROSE_ASSERT(formatStringVal);
+  string formatString=formatStringVal->get_value();
+  vector<string> avStringVector;
+  for(size_t i=1;i<argsList.size();i++) {
+    SgExpression* arg=*iter++;
+    list<SingleEvalResultConstInt> argResList=evaluateExpression(arg,estate);
+    if(argResList.size()!=1) {
+      cerr<<"Error: conditional control-flow in printf argument not supported. Expression normalization required."<<endl;
+        exit(1);
+    } else {
+      AbstractValue av=(*argResList.begin()).value();
+      avStringVector.push_back(av.toString(_variableIdMapping));
+    }
+  }
+  // replace all uses of %? with respective AVString
+  string concAVString;
+  size_t j=0;
+  for(size_t i=0;i<formatString.size();++i) {
+    if(formatString[i]=='%') {
+      char controlChar=formatString[i];
+      i++; // skip next character
+      if(j>=avStringVector.size()) {
+        // number of arguments and uses of '%' don't match in input
+        // program. This could be reported as program error.  For now
+        // we just do not produce an output (as the original program
+        // does not either)
+        // TODO: report input program error
+        continue; // continue to print other characters
+      }
+      switch(controlChar) {
+      case 'd': {
+        int val;
+        scanf("%d",&val); // read integer from stdin
+        // write val into state at address argsList[j]
+        AbstractValue av=argsList[j];
+        if(av.isPtr()) {
+          PState pstate=*estate.pstate();
+          pstate.writeToMemoryLocation(av,val); 
+          // TODO: pstate is not used yet, because estate is only read but not returned (hence this is a noop and not an update)
+          cout<<"Warning: interpreter mode: scanf: memory location "<<av.toString(_variableIdMapping)<<" not updated (not implemented yet)."<<endl;
+        } else {
+          cerr<<"Warning: interpreter mode: scanf writing to non-address value (ignored)"<<endl;
+        }
+        break;
+      }
+      default:
+        cerr<<"Warning: interpreter mode: scanf using unknown type "<<endl;
+      }
+    } else if(formatString[i]=='\\') {
+      if(i+1<=formatString.size()-1 && formatString[i+1]=='%') {
+        i+=1; // process additional character '%'
+        concAVString+="\%";
+      } else if(i+1<=formatString.size()-1 && formatString[i+1]=='n') {
+        i+=1; // process additional character 'n'
+      } else {
+        // nothing to do (do not match)
+      }
+    } else {
+      // any other character
     }
   }
   return listify(res);
@@ -1739,13 +1855,20 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
     for(int i=0;i<3;i++) {
       SAWYER_MESG(logger[TRACE])<<"memcpy argument "<<i<<": "<<memcpyArgs[i].toString(_variableIdMapping)<<endl;
     }
+    if(memcpyArgs[0].isTop()||memcpyArgs[1].isTop()||memcpyArgs[2].isTop()) {
+      if(getPrintDetectedViolations()) {
+        cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<" : potential out of bounds access (at least one of the three arguments of function cpymem can be of any value)."<<endl;
+      }  
+      recordPotentialOutOfBoundsAccessLocation(estate.label());
+      return listify(res); // returns top
+    }
     int memRegionSizeTarget=getMemoryRegionNumElements(memcpyArgs[0]);
-    int memRegionSizeSource=getMemoryRegionNumElements(memcpyArgs[1]);
     int copyRegionElementSizeTarget=getMemoryRegionElementSize(memcpyArgs[0]);
+    int memRegionSizeSource=getMemoryRegionNumElements(memcpyArgs[1]);
     int copyRegionElementSizeSource=getMemoryRegionElementSize(memcpyArgs[1]);
-    
-    SAWYER_MESG(logger[TRACE])<<"memcpy: memRegionNumElements target:"<<memRegionSizeTarget<<" with ElementSize:"<<memRegionSizeTarget<<endl;
-    SAWYER_MESG(logger[TRACE])<<"memcpy: memRegionNumElements source:"<<memRegionSizeSource<<" with ElementSize:"<<memRegionSizeSource<<endl;
+
+    SAWYER_MESG(logger[TRACE])<<"memcpy: memRegionNumElements source:"<<memRegionSizeSource<<" with ElementSize:"<<copyRegionElementSizeSource<<endl;
+    SAWYER_MESG(logger[TRACE])<<"memcpy: memRegionNumElements target:"<<memRegionSizeTarget<<" with ElementSize:"<<copyRegionElementSizeTarget<<endl;
 
     int copyRegionElementSize=0; // TODO: use AbstractValue for all sizes
     // check if size to copy is either top
@@ -1756,15 +1879,25 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
       recordPotentialOutOfBoundsAccessLocation(estate.label());
       return listify(res);
     } else if(memRegionSizeTarget!=memRegionSizeSource) {
-      // check if the element size of the to regions is different (=> conservative analysis result; will be modelled in future)
+      // check if the element size of the two regions is different (=> conservative analysis result; will be modelled in future)
       if(getPrintDetectedViolations()) {
         cout<<"Program error detected at line "<<SgNodeHelper::sourceLineColumnToString(funCall)<<funCall->unparseToString()<<" : potential out of bounds access (CodeThorn conservative case: source and target element size are different)."<<endl;
       }  
       recordPotentialOutOfBoundsAccessLocation(estate.label());
       return listify(res);
     } else {
-      ROSE_ASSERT(copyRegionElementSizeTarget==copyRegionElementSizeSource);
-      copyRegionElementSize=copyRegionElementSizeTarget; 
+      if(copyRegionElementSizeTarget!=copyRegionElementSizeSource) {
+        SAWYER_MESG(logger[WARN])<<"memcpy: copyRegionElementSizeTarget!=copyRegionElementSizeSource : "<<copyRegionElementSizeTarget<<"!="<<copyRegionElementSizeSource<<endl;
+        if(copyRegionElementSizeTarget!=0)
+          copyRegionElementSize=copyRegionElementSizeTarget;
+        else if(copyRegionElementSizeSource!=0)
+          copyRegionElementSize=copyRegionElementSizeSource;
+        else
+          copyRegionElementSize=std::max(copyRegionElementSizeSource,copyRegionElementSizeTarget);
+        ROSE_ASSERT(copyRegionElementSize!=0);
+      } else {
+        copyRegionElementSize=copyRegionElementSizeTarget;
+      }
     }
 
     bool errorDetected=false;
@@ -1867,6 +2000,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCa
       AbstractValue AbstractPos=AbstractValue(pos);
       AbstractValue currentPos=(stringPtr+AbstractPos);
       SAWYER_MESG(logger[DEBUG])<<"DEBUG: currentPos "<<currentPos.toString(_variableIdMapping)<<endl;
+      if(currentPos.isTop()) {
+        SAWYER_MESG(logger[DEBUG])<<"DEBUG: recording potential out of bounds access because currentPos is top. break. "<<endl;
+        recordPotentialOutOfBoundsAccessLocation(estate.label());
+        break;
+      }
 #if 0
       // TODO: not working yet because the memory region of strings are not properly registered with size yet
       // check bounds of string's memory region

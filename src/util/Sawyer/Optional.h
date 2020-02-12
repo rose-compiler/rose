@@ -177,6 +177,11 @@ public:
         return *this;
     }
 
+    /** Reset as if default-constructed. */
+    void reset() {
+        *this = Nothing();
+    }
+
     /** Dereference to obtain value.
      *
      *  If this optional contains a value then a reference to that value is returned. Otherwise an

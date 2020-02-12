@@ -349,6 +349,19 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // insert (func, glob_scope, s); //Outliner::insert() 
      DeferedTransformation headerFileTransformation = insert (func, glob_scope, s); //Outliner::insert() 
 
+  // Liao 2/4/2020   
+  // Some comments and #include directives may be attached after the global scope for an otherwise empty input file.
+  // We must move them to be attached to the first prototype's before location. 
+  // Otherwise, the #include directive will show up in the end of the resulting file.
+     SgStatement* firstStmt = getFirstStatement(glob_scope);
+     SgFunctionDeclaration* first_func_decl = isSgFunctionDeclaration(firstStmt);
+     if (first_func_decl!=NULL) // we expect that the first statement is a prototype func of an outlined function.
+     {
+       AttachedPreprocessingInfoType save_buf; 
+       cutPreprocessingInfo ( glob_scope, PreprocessingInfo::after, save_buf);
+       pastePreprocessingInfo(first_func_decl, PreprocessingInfo::before, save_buf);
+     }
+
 #if 0
      printf ("DONE: Calling insert() (func = %p to global scope) \n",func);
 #endif
@@ -389,6 +402,7 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // Generate packing statements, insert them into the beginning of the target s
   std::string wrapper_name;
   // two ways to pack parameters: an array of pointers v.s. A structure
+  int sym_count = syms.size(); // using symbol count to decide if we need to pass parameters at all
   if (useParameterWrapper || useStructureWrapper)
     {
       wrapper_name= generatePackingStatements(s,syms,pdSyms, struct_decl );
@@ -426,7 +440,8 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     else 
         lib_name = output_path+"/"+func_name_str+".so"; 
     // the new option copy_origFile will ask the outliner to generate rose_input_lib.c/cxx and compile to a .so later
-    
+//e.g.
+// OUT_1_test_26_2020_0p = findFunctionUsingDlopen("OUT_1_test_26_2020_0","test_26_2020/rose_test_26_2020_lib.so");  
     SgExprListExp* arg_list = buildExprListExp(buildStringVal(func_name_str), buildStringVal(lib_name)); 
     SgFunctionCallExp* dlopen_call = buildFunctionCallExp(SgName(FIND_FUNCP_DLOPEN),ftype_return,arg_list, p_scope);
     SgExprStatement * assign_stmt = buildAssignStatement(buildVarRefExp(func_name_str+"p",p_scope),dlopen_call);
@@ -434,8 +449,21 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     // Generate a function call using the func pointer
     // e.g. (*OUT__2__8888__p)(__out_argv2__1527__);
     SgExprListExp* exp_list_exp = SageBuilder::buildExprListExp();
-    wrapper_exp= buildVarRefExp(wrapper_name,p_scope);
-    appendExpression(exp_list_exp, wrapper_exp);
+    if (sym_count>0) // passing wrapper parameter only if non-zero variables are used in the outlined function
+    {
+      wrapper_exp= buildVarRefExp(wrapper_name,p_scope);
+      // Check if the reference is associated to a found symbol or not, by checking its type
+      SgVariableSymbol* sym = wrapper_exp->get_symbol();
+      ROSE_ASSERT (sym != NULL);
+      SgType * stype = sym->get_declaration()->get_type();
+      if  (stype == SgTypeUnknown::createType())
+      {
+        printf("Error: outliner builds a reference to a wrapper variable which cannot be found in AST!\n");
+        ROSE_ASSERT (stype!= SgTypeUnknown::createType());
+      }
+
+      appendExpression(exp_list_exp, wrapper_exp);
+    }
     func_call = buildFunctionCallStmt(buildPointerDerefExp(buildVarRefExp(func_name_str+"p",p_scope)), exp_list_exp);   
   }
   else  // regular function call for other cases
@@ -708,7 +736,7 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
   int var_count = syms.size();
   int counter=0;
   string wrapper_name= generateFuncArgName(target); //"__out_argv";
-
+// We still need to generate the declaration for the wrapper variable.
   if (var_count==0) 
     return wrapper_name;
   SgScopeStatement* cur_scope = target->get_scope();
@@ -803,6 +831,11 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
 SgSourceFile* 
 Outliner::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
 {
+  if (enable_debug)  
+  {
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
+  }
+ 
   SgSourceFile* new_file = NULL;
   SgProject * project = getEnclosingNode<SgProject> (s);
   ROSE_ASSERT(project != NULL);
@@ -824,15 +857,15 @@ Outliner::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
   // remove pre-existing file with the same name
   remove (new_file_name.c_str());
 
-#if 0
-      printf ("In Outliner::generateNewSourceFile(): Calling buildFile(): new_file_name = %s \n",new_file_name.c_str());
-#endif
+  if (enable_debug)
+    printf ("In Outliner::generateNewSourceFile(): Calling buildFile(): new_file_name = %s \n",new_file_name.c_str());
+
   // par1: input file, par 2: output file name, par 3: the project to attach the new file
   new_file = isSgSourceFile(buildFile(new_file_name, new_file_name,project));
 
-#if 0
-      printf ("DONE: In Outliner::generateNewSourceFile(): Calling buildFile(): new_file_name = %s \n",new_file_name.c_str());
-#endif
+
+  if (enable_debug)
+    printf ("DONE: In Outliner::generateNewSourceFile(): Calling buildFile(): new_file_name = %s \n",new_file_name.c_str());
 
   //new_file = isSgSourceFile(buildFile(new_file_name, new_file_name));
   ROSE_ASSERT(new_file != NULL);
@@ -845,6 +878,10 @@ Outliner::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
  * 
  */
 std::string Outliner::generateLibSourceFileName(SgBasicBlock* target) {
+  if (enable_debug)  
+  {
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
+  }
     std::string lib_file_name;
  
     // s could be transformation generated, so use the root SgFile for file name
@@ -861,16 +898,23 @@ std::string Outliner::generateLibSourceFileName(SgBasicBlock* target) {
         lib_file_name = output_path + "/" + lib_file_name;
     }
     
+    if (enable_debug)  
+    {
+      cout<<"lib_file_name="<< lib_file_name <<endl;
+    }
     return lib_file_name; 
 }
-    
+
 /*!\brief Obtain the file handle to the separated source file storing outlined functions.  
  * This file will be compiled to .so dynamically loadable library.
  * target is the input code block for outlining. It provides SgProject and input file name info. 
  * the lib source file's name convention is rose_input_lib.[c|cxx] by default. Or overrided by file_name.  
  */
 SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
-
+  if (enable_debug)  
+  {
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
+  }
     SgSourceFile* new_file = NULL;
     SgProject * project = getEnclosingNode<SgProject> (target);
     ROSE_ASSERT(project != NULL);
@@ -881,16 +925,14 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
 
     std::string new_file_name =   generateLibSourceFileName (target);
 
-#if 0
-    printf ("Before strip path: new_file_name = %s \n",new_file_name.c_str());
-#endif
+    if (enable_debug) 
+      printf ("Before strip path: new_file_name = %s \n",new_file_name.c_str());
 
     new_file_name = Rose::utility_stripPathFromFileName(new_file_name);
 
-#if 0
-    printf ("After strip path: new_file_name = %s \n",new_file_name.c_str());
-#endif
-    
+    if (enable_debug) 
+      printf ("After strip path: new_file_name = %s \n",new_file_name.c_str());
+
     // Search if the lib file already exists. 
     SgFilePtrList file_list = project->get_files();
     SgFilePtrList::iterator iter;
@@ -924,22 +966,25 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
       }        
     } // end for SgFile
 
-#if 0
-    printf ("In Outliner::getLibSourceFile(): new_file = %p \n",new_file);
-#endif
+    if (enable_debug) 
+      printf ("In Outliner::getLibSourceFile(): new_file = %p \n",new_file);
     
     if (new_file == NULL)
     {
-#if 0
-      printf ("In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
-#endif
+      if (enable_debug)
+        printf ("In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",  input_file_name.c_str());
+
       // par1: input file, par 2: output file name, par 3: the project to attach the new file
         // to simplify the lib file generation, we copy entire original source file to it, then later append outlined functions
       new_file = isSgSourceFile(buildSourceFile(input_file_name, new_file_name, project));
 
 #if 0
       printf ("DONE: In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
+      printf (" --- new_file_name = %s \n",new_file_name.c_str());
 #endif
+
+      if (enable_debug)
+        printf ("DONE: In Outliner::getLibSourceFile(): Calling buildSourceFile(): input_file_name = %s \n",input_file_name.c_str());
 
       // buildFile() will set filename to be input file name by default. 
       // we have to rename the input file to be output file name. This is used to avoid duplicated creation later on
@@ -961,6 +1006,12 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
 #endif
 
     }
+
+    if (enable_debug)  
+    {
+      cout<<"Exiting "<< __PRETTY_FUNCTION__ <<endl;
+    }
+
     //new_file = isSgSourceFile(buildFile(new_file_name, new_file_name));
     ROSE_ASSERT(new_file != NULL);
     return new_file;
