@@ -268,5 +268,28 @@ Leave(SgJovialTableStatement* table_type_stmt)
    SageInterface::appendStatement(table_type_stmt, SageBuilder::topScopeStack());
 }
 
+void SageTreeBuilder::
+Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, SgExpression* init_expr)
+{
+   cout << "SageTreeBuilder::Enter(SgVariableDeclaration* &, ...) \n";
+
+   SgName var_name = name;
+   SgInitializer* var_init = nullptr;
+
+   if (init_expr)
+      {
+         var_init = new SgAssignInitializer(init_expr, init_expr->get_type());
+         ROSE_ASSERT(var_init);
+         SageInterface::setSourcePosition(var_init);
+      }
+
+   ROSE_ASSERT(type != nullptr);
+
+   var_decl = SageBuilder::buildVariableDeclaration_nfi(var_name, type, var_init, SageBuilder::topScopeStack());
+   ROSE_ASSERT(var_decl != nullptr);
+
+   SageInterface::appendStatement(var_decl, SageBuilder::topScopeStack());
+}
+
 } // namespace builder
 } // namespace Rose

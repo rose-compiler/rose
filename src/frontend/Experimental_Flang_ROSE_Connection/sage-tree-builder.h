@@ -13,6 +13,7 @@ class SgLocatedNode;
 class SgScopeStatement;
 class SgSourceFile;
 class SgProgramHeaderStatement;
+class SgVariableDeclaration;
 
 // Jovial specific classes
 class SgJovialCompoolStatement;
@@ -26,6 +27,10 @@ struct SourcePosition {
    std::string path;  // replaces Fortran::parser::SourceFile
    int line, column;
 };
+
+ struct TraversalContext {
+    SgType* type;
+ };
 
 // Need std=c++11
 //
@@ -70,6 +75,8 @@ public:
    void Enter(SgDerivedTypeStatement* &, const std::string &);
    void Leave(SgDerivedTypeStatement*);
 
+   void Enter(SgVariableDeclaration* &, const std::string &, SgType*, SgExpression*);
+
 // Jovial specific nodes
 //
    void Enter(SgJovialCompoolStatement* &,
@@ -79,8 +86,13 @@ public:
    void Leave(SgJovialTableStatement*);
 
 private:
+   TraversalContext context_;
 
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
+
+public:
+   const TraversalContext & Context(void) {return context_;}
+   void setContext(SgType* type) {context_.type = type;}
 };
 
 } // namespace builder

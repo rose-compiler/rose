@@ -819,6 +819,15 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgInitializer* init = initializedName->get_initializer();
      ROSE_ASSERT(type);
 
+     info.set_inVarDecl();
+
+     bool type_has_base_type = false;
+     SgJovialTableType* table_type = isSgJovialTableType(type);
+     if (table_type)
+        {
+           if (table_type->get_base_type()) type_has_base_type = true;
+        }
+
      SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
      ROSE_ASSERT(variableDeclaration != NULL);
 
@@ -882,7 +891,7 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         }
 
   // Unparse anonymous type declaration body if present
-     if (variableDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
+     if (!type_has_base_type && variableDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
            SgDeclarationStatement* def_decl = variableDeclaration->get_baseTypeDefiningDeclaration();
            ROSE_ASSERT(def_decl);
@@ -914,6 +923,8 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         {
            curprint(";\n");
         }
+
+     info.unset_inVarDecl();
    }
 
 void
