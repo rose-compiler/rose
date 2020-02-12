@@ -86,8 +86,11 @@ Unparse_Jovial::unparseTableType(SgType* type, SgUnparse_Info& info)
      SgJovialTableType* table_type = isSgJovialTableType(type);
      ROSE_ASSERT(table_type != NULL);
 
-     SgDeclarationStatement* type_decl = type->getAssociatedDeclaration();
-     ROSE_ASSERT(type_decl);
+     SgType* base_type = table_type->get_base_type();
+     std::string type_name = table_type->get_name();
+
+  // TODO: There is a better way to do this by seeing if variableDeclarationContainsBaseTypeDefineingDeclaration (need function)
+     bool is_anonymous = (type_name.find("_anon_typeof_") != std::string::npos);
 
      SgExprListExp* dim_info = table_type->get_dim_info();
      if (dim_info != NULL)
@@ -95,17 +98,14 @@ Unparse_Jovial::unparseTableType(SgType* type, SgUnparse_Info& info)
            unparseDimInfo(dim_info, info);
         }
 
-#if 0 // perhaps can unparse base type directly when necessary, for var-decl need name or body (if anonymous)?
-     SgType* base_type = table_type->get_base_type();
-     if (base_type != NULL)
+     if (info.inVarDecl() && is_anonymous == false)
         {
-           unparseType(base_type, info);
-        }
-#endif
-        {
-        // WARNING: TODO: this may be anonymous, so if there is a body don't do this
-           std::string type_name = table_type->get_name();
            curprint(type_name);
+        }
+     else if (base_type != NULL)
+        {
+        // Unparse base type directly if present and not in a variable declaration context
+           unparseType(base_type, info);
         }
   }
 

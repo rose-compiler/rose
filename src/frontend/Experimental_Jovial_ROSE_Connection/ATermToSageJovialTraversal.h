@@ -94,10 +94,10 @@ ATbool traverse_OptTypeName            (ATerm term, SgUntypedType* & type, std::
 
 // 2.1.2 TABLE DECLARATION
 ATbool traverse_TableDeclaration       (ATerm term, int def_or_ref = 0);
-ATbool traverse_TableDescription       (ATerm term, SgJovialTableStatement* sg_table_decl, SgUntypedStructureDefinition* & table_desc);
-ATbool traverse_TableDescriptionName   (ATerm term, std::string & type_name, SgType* &sg_type, SgInitializer* &preset);
+ATbool traverse_TableDescriptionName   (ATerm term, std::string &type_name, SgType* &sg_type, SgInitializer* &preset);
+ATbool traverse_TableDescriptionType   (ATerm term,                         SgType* &base_type, SgInitializer* &preset);
+ATbool traverse_TableDescriptionBody   (ATerm term, std::string &type_name, SgJovialTableStatement* &sg_table_decl, SgUntypedStructureDefinition* & table_desc);
 ATbool traverse_EntrySpecifierBody     (ATerm term, SgJovialTableStatement* sg_table_decl, SgUntypedStructureDefinition*   table_desc);
-ATbool traverse_TableDescriptionType   (ATerm term, SgType* &base_type, SgInitializer* &preset);
 ATbool traverse_EntrySpecifierType     (ATerm term, SgType* &base_type, SgInitializer* &preset);
 ATbool traverse_EntrySpecifier         (ATerm term, SgJovialTableStatement* sg_table_decl,
                                                     SgUntypedType* & type, SgUntypedExprListExpression* attr_list, SgUntypedExprListExpression* &preset);

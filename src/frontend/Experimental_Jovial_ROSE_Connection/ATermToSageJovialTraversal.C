@@ -1416,7 +1416,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 #endif
 
    ATerm t_name, t_alloc, t_dim_list, t_table_desc;
-   char* table_name;
+   char* name;
 
 // A TableDeclaration is a variable declaration.  However, it may also (usually) define a type
 // as well, in which case the type will be anonymous, unless only a table type name if given.
@@ -1436,16 +1436,20 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    SgType* sg_type = nullptr;
    SgExprListExp* sg_dim_info = nullptr;
    SgInitializer* sg_preset = nullptr;
-   std::string table_type_name;
+   std::string table_var_name, table_type_name, anon_type_name;
+   bool is_type_inherited = false;
 
    if (ATmatch(term, "TableDeclaration(<term>,<term>,<term>,<term>)", &t_name,&t_alloc,&t_dim_list,&t_table_desc)) {
       std::string label = "";
 
       sg_dim_info = new SgExprListExp();
 
-      if (ATmatch(t_name, "<str>", &table_name)) {
+      if (ATmatch(t_name, "<str>", &name)) {
          // MATCHED TableName
       } else return ATfalse;
+
+      table_var_name = std::string(name);
+      anon_type_name = std::string("_anon_typeof_") + table_var_name;
 
       if (traverse_OptAllocationSpecifier(t_alloc, attr_list)) {
          // MATCHED OptAllocationSpecifier
@@ -1458,138 +1462,49 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    // Look for a type name first (type will have already been declared by this point).
    // The type name is the name of the base type (this declaration inherits from the base/parent class)
       if (traverse_TableDescriptionName(t_table_desc, table_type_name, sg_type, sg_preset)) {
-         // MATCHED TableDescriptionName
          ROSE_ASSERT(sg_type);
-         std::cout << ".x. found table type name " << table_type_name << std::endl;
+         is_type_inherited = true;
+
+         std::cout << ".x. found inherited type, type name is " << table_type_name << std::endl;
          std::cout << ".x. found table type " << sg_type->class_name() << std::endl;
       }
+
+   // Look for a base type (this is not inheritance, rather it is similar to the base type of an array type).
+   // The base type is the table description and there will be no body.
       else if (traverse_TableDescriptionType(t_table_desc, sg_base_type, sg_preset)) {
          ROSE_ASSERT(sg_base_type);
-      // Found a base type (this is not inheritance, rather it is similar to the base type of an array type).
-      // The base type is the table description and there is no body.
 
          std::cout << ".x. found table base type " << sg_base_type->class_name() << std::endl;
-
-      // This must be anonymous as there is no explicit name for the type.
-         table_type_name = "_anon_";
-         table_type_name += table_name;
-         SgName sg_name(table_type_name);
-
          std::cout << ".x. will create type for table type name " << table_type_name << std::endl;
 
-         sg_type = SageBuilder::buildJovialTableType(sg_name, sg_base_type, sg_dim_info, /*scope*/nullptr);
-         ROSE_ASSERT(sg_type);
+      // This must be anonymous as there is no explicit name for the type.
+         SgName sg_name(anon_type_name);
 
-         std::cout << ".x. created table type name " << table_type_name << std::endl;
-         std::cout << ".x. created table base type " << sg_base_type->class_name() << std::endl;
+         sg_type = SageBuilder::buildJovialTableType(sg_name, sg_base_type, sg_dim_info, SageBuilder::topScopeStack());
+         ROSE_ASSERT(sg_type);
       }
 
-   // There is no inheritance via the name of a TableDescription.  
-
-   // TODO - need to figure out what to do with this (seems it does not have a body but has a primitive type)
-   // The first form looks like an array as it doesn't have a table/structure body
-   // This may be named wrong, this one will have a primitive type (base_type) but not a named type (user defined)
-   // Will already have captured table_type_name and sg_type if only TableDescriptionName
-
-      else if (traverse_TableDescription(t_table_desc, sg_table_decl, table_desc)) {
+   // Finally check for a table description body. This will need to create a table declaration
+   // with a body for the table definition member variables. The declaration will be anonymous
+   // and associated with the variable declaration (via baseTypeDefiningDeclaration).
+      else if (traverse_TableDescriptionBody(t_table_desc, anon_type_name, sg_table_decl, table_desc)) {
          // MATCHED TableDescription with a structure body
-         ROSE_ASSERT(table_desc);
+         ROSE_ASSERT(sg_table_decl);
+
+         std::cout << ".x. created table decl " << sg_table_decl << std::endl;
+
+         sg_type = isSgJovialTableType(sg_table_decl->get_type());
+         ROSE_ASSERT(sg_type);
       }
       else return ATfalse;
    }
    else return ATfalse;
 
-   if (table_desc != NULL) {
-   // There is a body so this variable declaration has an anonymous type
-      ROSE_ASSERT(table_type_name.length() > 0);
-
-      std::string label = "";
-
-      table_type_name = "_anon_typeof_" + std::string(table_name);
-
-      int struct_type = Jovial_ROSE_Translation::e_table_type_declaration;
-
-      table_decl = new SgUntypedStructureDeclaration(label, struct_type, table_type_name, attr_list, dim_info, table_desc);
-      ROSE_ASSERT(table_decl);
-      setSourcePosition(table_decl, term);
-
-      SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_table, table_type_name);
-
-      if (type == NULL) {
-         cerr << "WARNING UNIMPLEMENTED: TableDeclaration - type is null \n";
-         return ATtrue;
-      }
-
-      // Create the variable for the declaration
-      variable_decl = UntypedBuilder::buildVariableDeclaration(table_name, type, table_decl, attr_list, preset);
-      ROSE_ASSERT(variable_decl);
-      setSourcePosition(variable_decl, term);
-   }
-   else if (sg_base_type != NULL) {
-#if 0
-      ROSE_ASSERT(dim_info != NULL);
-
-      if (base_type->get_is_intrinsic() == false) {
-         cerr << "WARNING UNIMPLEMENTED: TableDescription - before buildJovialTableType\n";
-         return ATtrue;
-      }
-
-      // There is no table_desc thus no table body containing structure components
-      table_type = UntypedBuilder::buildJovialTableType("", base_type, dim_info, /*is_anonymous*/true);
-      ROSE_ASSERT(table_type != NULL);
-
-      if (table_type == NULL) {
-         cerr << "WARNING UNIMPLEMENTED: TableDeclaration - type is null \n";
-         return ATtrue;
-      }
-
-      // Create the variable for the declaration
-      variable_decl = UntypedBuilder::buildVariableDeclaration(table_name, table_type, attr_list, preset);
-      ROSE_ASSERT(variable_decl);
-      setSourcePosition(variable_decl, term);
-
-      cout << ".x.     dim_info is " << dim_info << ": " << dim_info->class_name() << endl;
-      Sg_File_Info* start = dim_info->get_startOfConstruct();
-      Sg_File_Info*   end = dim_info->get_endOfConstruct();
-      cout << ".x.   start:end are " << start << ": " << end << endl;
-#endif
-   }
-
-#if 0 // DELETE Untyped System
-// We must have a variable declaration; TableDeclaration is a variable declaration not a type declaration
-   ROSE_ASSERT(variable_decl);
-
-// Set source position for variable list and the initialized name for the variable created earlier
-//
-   SgUntypedInitializedNameList* var_name_list = variable_decl->get_variables();
-   ROSE_ASSERT(var_name_list);
-   setSourcePosition(var_name_list, t_name);
-
-// There will be only one variable declared in Jovial
-   SgUntypedInitializedName* initialized_name = var_name_list->get_name_list().front();
-   ROSE_ASSERT(initialized_name);
-   setSourcePosition(initialized_name, t_name);
-
-#if 0
-   std::cout << "TABLE DECLARATION " << table_name << ", rank is " << dim_info->get_expressions().size() << endl;
-   std::cout << "TABLE DECLARATION attr_list: " << attr_list << " dim_info: " << dim_info << endl;
-   std::cout << "TABLE DECLARATION pushing onto list " << decl_list << " : " << decl_list->class_name() << endl;
-#endif
-#if 0
-   ROSE_ASSERT(table_type != NULL);
-   std::cout << "TABLE DECLARATION     base_type: " << base_type << " : " << base_type->class_name() << endl;
-   std::cout << "TABLE DECLARATION     type name: " << base_type->get_type_name() << endl;
-   std::cout << "TABLE DECLARATION name and enum: " << table_type->get_type_name() << " : " << table_type->get_type_enum_id() << endl;
-#endif
-
-   decl_list->get_decl_list().push_back(variable_decl);
-
-#endif
-
 // Begin SageTreeBuilder
    SgVariableDeclaration* sg_var_decl = nullptr;
-   std::cout << "TABLE DECLARATION " << table_name << table_name << endl << endl;
-   sage_tree_builder.Enter(sg_var_decl, std::string(table_name), sg_type, sg_preset);
+   std::cout << ".x. TABLE DECLARATION for variable " << table_var_name << endl << endl;
+
+   sage_tree_builder.Enter(sg_var_decl, table_var_name, sg_type, sg_preset);
    setSourcePosition(sg_var_decl, term);
 
 // Begin language specific constructs
@@ -1600,6 +1515,40 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    else if (def_or_ref == General_Language_Translation::e_storage_modifier_jovial_ref) {
       sg_var_decl->get_declarationModifier().get_storageModifier().setJovialRef();
    }
+
+// TODO: The scope for the table definition needs to be case insensitive but this should be done
+//       somewhere else (e.g., the builder function)
+   SgJovialTableType* type = isSgJovialTableType(sg_type);
+   ROSE_ASSERT(type);
+   SgJovialTableStatement* decl = isSgJovialTableStatement(type->get_declaration());
+   ROSE_ASSERT(decl);
+   SgJovialTableStatement* def_decl = isSgJovialTableStatement(decl->get_definingDeclaration());
+   ROSE_ASSERT(def_decl);
+
+   if (is_type_inherited == false) {
+      SageInterface::setBaseTypeDefiningDeclaration(sg_var_decl, def_decl);
+   }
+
+   SgClassDefinition* def = def_decl->get_definition();
+   ROSE_ASSERT(def);
+// TODO: This should be set someplace else
+   def->setCaseInsensitive(true);
+
+#if 0
+   //   def_decl->get_scope()->setCaseInsensitive(true);
+   //   sg_var_decl->get_scope()->setCaseInsensitive(true);
+   cout << ".x. def scope sensitivity is " << def->isCaseInsensitive() << endl;
+   def->setCaseInsensitive(true);
+   cout << ".x. def scope sensitivity is " << def->isCaseInsensitive() << endl;
+
+   cout << ".x. type is " << type << ": " << type->class_name() << endl;
+   cout << ".x. decl is " << decl << ": " << decl->class_name() << endl;
+   cout << ".x. def_decl is " << def_decl << ": " << def_decl->class_name() << endl;
+   cout << ".x. def is " << def << ": " << def->class_name() << endl;
+   cout << ".x. def_decl scope is " << def_decl->get_scope() << ": " << def_decl->get_scope()->isCaseInsensitive() << endl;
+   cout << ".x. sg_var_decl scope is " << sg_var_decl->get_scope() << ": " << sg_var_decl->get_scope()->isCaseInsensitive() << endl;
+   cout << ".x. def scope sensitivity is " << def->isCaseInsensitive() << endl;
+#endif
 
    sage_tree_builder.Leave(sg_var_decl);
 
@@ -1678,21 +1627,25 @@ traverse_TableDescriptionType(ATerm term, SgType* &sg_type, SgInitializer* &sg_p
 }
 
 ATbool ATermToSageJovialTraversal::
-traverse_TableDescription(ATerm term, SgJovialTableStatement* sg_table_decl, SgUntypedStructureDefinition* & table_desc)
+traverse_TableDescriptionBody(ATerm term, std::string &type_name, SgJovialTableStatement* &sg_table_decl, SgUntypedStructureDefinition* &table_desc)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_TableDescription: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_struct_spec, t_entry_spec, t_name, t_preset;
-   std::string type_name;
    SgUntypedType* type = NULL;
    SgUntypedExprListExpression* preset = NULL;
    SgUntypedExprListExpression* attr_list = NULL;
 
    table_desc = NULL;
+   sg_table_decl = nullptr;
 
    if (ATmatch(term, "TableDescription(<term>,<term>)", &t_struct_spec, &t_entry_spec)) {
+
+   // Begin SageTreeBuilder
+      Rose::builder::SourcePositionPair sources;
+      sage_tree_builder.Enter(sg_table_decl, type_name, sources);
 
       table_desc = UntypedBuilder::buildJovialTableDescription();
       ROSE_ASSERT(table_desc);
@@ -1707,37 +1660,16 @@ traverse_TableDescription(ATerm term, SgJovialTableStatement* sg_table_decl, SgU
       } else return ATfalse;
 
       if (traverse_EntrySpecifier(t_entry_spec, sg_table_decl, type, attr_list, preset)) {
-         // MATCHED EntrySpecifier
+         // I believe this is covered by TableDescriptionType
+         ROSE_ASSERT(false);
       }
       else if (traverse_EntrySpecifierBody(t_entry_spec, sg_table_decl, table_desc)){
          // MATCHED EntrySpecifierBody
       } else return ATfalse;
    }
-   else if (ATmatch(term, "TableDescriptionName(<term>,<term>)", &t_name, &t_preset)) {
-
-      // This is now handled elsewhere
-      ROSE_ASSERT(false);
-
-      if (traverse_Name(t_name, type_name)) {
-         // MATCHED Name
-      } else return ATfalse;
-
-#if 0
-      cout << "\n.x. traverse_TableDescription with type name " << type_name << endl;
-#endif
-
-      table_desc = UntypedBuilder::buildJovialTableDescription(type_name);
-      ROSE_ASSERT(table_desc);
-      setSourcePosition(table_desc, term);
-
-      if (traverse_TablePreset(t_preset, preset)) {
-         // MATCHED TablePreset
-      } else return ATfalse;
-   }
    else return ATfalse;
 
    ROSE_ASSERT(table_desc);
-
    table_desc->set_initializer(preset);
 
 #if 0
@@ -1745,6 +1677,11 @@ traverse_TableDescription(ATerm term, SgJovialTableStatement* sg_table_decl, SgU
    std::cout << "TABLE DESCRIPTION scope: " << table_desc->get_scope() << endl;
    std::cout << "TABLE DESCRIPTION scope decl list: " << table_desc->get_scope()->get_declaration_list() << endl;
 #endif
+
+   ROSE_ASSERT(sg_table_decl);
+
+// End SageTreeBuilder
+   sage_tree_builder.Leave(sg_table_decl);
 
    return ATtrue;
 }
@@ -2219,6 +2156,8 @@ ATbool ATermToSageJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATerm t
 
    decl_list->get_decl_list().push_back(variable_decl);
 
+// Seems like we should call sage_tree_builder.Leave(sg_var_decl)
+
    return ATtrue;
 }
 
@@ -2288,7 +2227,7 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedEntrySpecifierType(ATerm te
    ROSE_ASSERT(type);
 #endif
 
-   ROSE_ASSERT(false);
+   return ATfalse;
 
    return ATtrue;
 }
