@@ -152,10 +152,10 @@ $CLASSNAME_resetValidFreepointers( )
                        }
                     else
                        {
-                         printf ("In $CLASSNAME_resetValidFreepointers(): Resetting the freepointer of %p = %s from %p to %p \n",pointerOfLinkedList,pointer[i].class_name().c_str(),pointer[i].get_freepointer(),&(pointer[i]));
+                      // printf ("In $CLASSNAME_resetValidFreepointers(): Resetting the freepointer of %p = %s from %p to %p \n",pointerOfLinkedList,pointer[i].class_name().c_str(),pointer[i].get_freepointer(),&(pointer[i]));
                          pointerOfLinkedList->set_freepointer(&(pointer[i]));
                       // DQ (6/6/2010): Temporary debugging...
-                         ROSE_ASSERT(false);
+                      //   ROSE_ASSERT(false);
                        }
                     pointerOfLinkedList = &(pointer[i]);
                   }
@@ -164,10 +164,10 @@ $CLASSNAME_resetValidFreepointers( )
 
      if ( pointerOfLinkedList != NULL )
         {
-          printf ("In $CLASSNAME_resetValidFreepointers(): Resetting the freepointer of %p = %s from %p to %p \n",pointerOfLinkedList,pointerOfLinkedList->class_name().c_str(),pointerOfLinkedList->get_freepointer(),(void*)NULL);
+       // printf ("In $CLASSNAME_resetValidFreepointers(): Resetting the freepointer of %p = %s from %p to %p \n",pointerOfLinkedList,pointerOfLinkedList->class_name().c_str(),pointerOfLinkedList->get_freepointer(),(void*)NULL);
           pointerOfLinkedList->set_freepointer(NULL);
        // DQ (6/6/2010): Temporary debugging...
-          ROSE_ASSERT(false);
+       //   ROSE_ASSERT(false);
         }
 
      return ;

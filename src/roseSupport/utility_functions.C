@@ -423,6 +423,54 @@ namespace IO {
 typedef std::map<int, std::string> f2n_t;
 typedef std::map<std::string, int> n2f_t;
 
+class PatchDeclStmt : public ROSE_VisitTraversal {
+  private:
+    std::map<std::string, std::vector<SgDeclarationStatement *> > declstmt_map;
+
+  public:
+    PatchDeclStmt() :
+      declstmt_map()
+    {}
+
+    virtual ~PatchDeclStmt() {};
+
+    void visit(SgNode * node) {
+      SgDeclarationStatement * declstmt = isSgDeclarationStatement(node);
+//    if (declstmt != NULL && declstmt->get_firstNondefiningDeclaration() == declstmt) {
+      if (declstmt != NULL) {
+        std::string mangled_name = declstmt->get_mangled_name();
+        declstmt_map[mangled_name].push_back(declstmt);
+      }
+    }
+
+    void apply() {
+      std::map<std::string, std::vector<SgDeclarationStatement *> >::iterator it_declvect;
+      for (it_declvect = declstmt_map.begin(); it_declvect != declstmt_map.end(); it_declvect++) {
+
+//      printf (" -> mangled_name = %s \n", it_declvect->first);
+
+        std::set<SgDeclarationStatement *> defdecls;
+        std::vector<SgDeclarationStatement *>::iterator it_declstmt;
+        for (it_declstmt = it_declvect->second.begin(); it_declstmt != it_declvect->second.end(); it_declstmt++) {
+          SgDeclarationStatement * defdecl = (*it_declstmt)->get_definingDeclaration();
+          if (defdecl != NULL) {
+            defdecls.insert(defdecl);
+          }
+        }
+        if (defdecls.size() > 0) {
+          SgDeclarationStatement * defdecl = *(defdecls.begin());
+          if (defdecls.size() > 1) {
+            printf("Warning: Found %d defining declarations for declarations with mangled name: %s (%s)\n", defdecls.size(), it_declvect->first.c_str(), defdecl->class_name().c_str());
+//          ROSE_ASSERT(false);
+          }
+          for (it_declstmt = it_declvect->second.begin(); it_declstmt != it_declvect->second.end(); it_declstmt++) {
+            (*it_declstmt)->set_definingDeclaration(defdecl);
+          }
+        }
+      }
+    }
+};
+
 void mergeFileIDs(f2n_t const & f2n, n2f_t const & n2f, f2n_t & gf2n, n2f_t & gn2f, size_t start_node) {
   std::map<int, int> idxmap;
 
@@ -435,6 +483,7 @@ void mergeFileIDs(f2n_t const & f2n, n2f_t const & n2f, f2n_t & gf2n, n2f_t & gn
       idxmap[i->first] = idx;
     }
   }
+
   unsigned num_nodes = Sg_File_Info::numberOfNodes();
   for (unsigned long i = start_node; i < num_nodes; i++) {
     // Compute the postion of the indexed Sg_File_Info object in the memory pool.
@@ -490,6 +539,9 @@ void mergeFunctionTypeSymbolTable(SgFunctionTypeTable * gftt, SgFunctionTypeTabl
 void append(SgProject * project, std::list<std::string> const & astfiles) {
   size_t num_nodes = Sg_File_Info::numberOfNodes();
 
+  AST_FILE_IO::startUp(project);
+  AST_FILE_IO::resetValidAstAfterWriting();
+
   // Save shared (static) fields, TODO:
   //   - global scope accross project
   //   - name mangling caches?
@@ -498,42 +550,72 @@ void append(SgProject * project, std::list<std::string> const & astfiles) {
   f2n_t gf2n = Sg_File_Info::get_fileidtoname_map();
   n2f_t gn2f = Sg_File_Info::get_nametofileid_map();
 
+//printf("project = %p\n", project);
+//printf("gtt     = %p\n", gtt);
+//printf("gftt    = %p\n", gftt);
+
+//generateWholeGraphOfAST("init", NULL);
+
   std::list<std::string>::const_iterator astfile = astfiles.begin();
-  size_t cnt = 0;
+  size_t cnt = 1;
   while (astfile != astfiles.end()) {
     // Note the postfix increment in the following two lines
-    AST_FILE_IO::readASTFromFile(*(astfile++));
+    std::string astfile_ = *(astfile++);
+
+    AST_FILE_IO::readASTFromFile(astfile_);
     AstData * ast = AST_FILE_IO::getAst(cnt++);
 
     // Check that the root of the read AST is valid
     SgProject * lproject = ast->getRootOfAst();
+//  printf("lproject = %p\n", lproject);
     ROSE_ASSERT(lproject->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
 
     // Insert all files into main project
     std::vector<SgFile *> const & files = lproject->get_files();
     for (std::vector<SgFile *>::const_iterator it = files.begin(); it != files.end(); ++it) {
       project->get_fileList().push_back(*it);
+      (*it)->set_parent(project->get_fileList_ptr());
     }
+    lproject->get_fileList_ptr()->get_listOfFiles().clear();
 
     // Load shared (static) fields from the AST being read
     AST_FILE_IO::setStaticDataOfAst(ast);
 
     // Merge static fields
-    mergeTypeSymbolTable(gtt, SgNode::get_globalTypeTable());
-    mergeFunctionTypeSymbolTable(gftt, SgNode::get_globalFunctionTypeTable());
+
+    SgTypeTable *         lgtt = SgNode::get_globalTypeTable();
+//  printf("lgtt     = %p\n", lgtt);
+    mergeTypeSymbolTable(gtt, lgtt);
+
+    SgFunctionTypeTable * lgftt = SgNode::get_globalFunctionTypeTable();
+//  printf("lgftt    = %p\n", lgftt);
+    mergeFunctionTypeSymbolTable(gftt, lgftt);
+
     mergeFileIDs(Sg_File_Info::get_fileidtoname_map(), Sg_File_Info::get_nametofileid_map(), gf2n, gn2f, num_nodes);
+
+    // Restore shared (static) fields
+
+    SgNode::set_globalTypeTable(gtt);
+    SgNode::set_globalFunctionTypeTable(gftt);
+    Sg_File_Info::set_fileidtoname_map(gf2n);
+    Sg_File_Info::set_nametofileid_map(gn2f);
 
     num_nodes = Sg_File_Info::numberOfNodes();
 
-//  delete lproject;
-//  delete ast;
+//  generateWholeGraphOfAST(astfile_, NULL);
   }
 
-  // Restore shared (static) fields
-  SgNode::set_globalTypeTable(gtt);
-  SgNode::set_globalFunctionTypeTable(gftt);
-  Sg_File_Info::set_fileidtoname_map(gf2n);
-  Sg_File_Info::set_nametofileid_map(gn2f);
+//generateWholeGraphOfAST("loaded", NULL);
+
+  mergeAST(project, /* skipFrontendSpecificIRnodes = */false);
+
+  PatchDeclStmt patch_declstmt;
+  patch_declstmt.traverseMemoryPool();
+  patch_declstmt.apply();
+
+  AST_FILE_IO::reset();
+
+//generateWholeGraphOfAST("merged", NULL);
 }
 
 } // IO
@@ -615,10 +697,6 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
      std::list<std::string> const & astfiles = project->get_astfiles_in();
      if (astfiles.size() > 0) {
        Rose::AST::IO::append(project, astfiles);
-     }
-
-     if (project->get_ast_merge()) {
-       mergeAST(project, /* skipFrontendSpecificIRnodes = */false);
      }
    
   // Set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
@@ -761,9 +839,13 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
 
      std::string const & astfile_out = project->get_astfile_out();
      if (astfile_out != "") {
+       std::list<std::string> empty_file_list;
+       project->set_astfiles_in(empty_file_list);
+       project->get_astfile_out() == "";
        AST_FILE_IO::reset();
        AST_FILE_IO::startUp(project);
        AST_FILE_IO::writeASTToFile(astfile_out);
+       AST_FILE_IO::resetValidAstAfterWriting();
      }
 
 #if 0
