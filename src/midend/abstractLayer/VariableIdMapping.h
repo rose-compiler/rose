@@ -142,6 +142,11 @@ class VariableIdMapping {
   static bool isAnonymousBitfield(SgInitializedName* initName);
 
  private:
+  struct VariableIdInfo {
+    size_t numberOfElements;
+    size_t elementSize; // in bytes
+    size_t offset;      // in bytes, only for member variables
+  };
   std::map<SgStringVal*,VariableId> sgStringValueToVariableIdMapping;
   std::map<VariableId, SgStringVal*> variableIdToSgStringValueMapping;
 
@@ -155,9 +160,10 @@ class VariableIdMapping {
 
   // used for mapping in both directions
   std::vector<SgSymbol*> mappingVarIdToSym;
+  std::map<SgSymbol*,size_t> mappingSymToVarId;
   std::map<size_t,size_t> mappingVarIdToNumberOfElements;
   std::map<size_t,size_t> mappingVarIdToElementSize;
-  std::map<SgSymbol*,size_t> mappingSymToVarId;
+  std::map<VariableId,VariableIdInfo> varIdInfo; // not used yet
   bool modeVariableIdForEachArrayElement;
 }; // end of class VariableIdMapping
 
