@@ -6,6 +6,7 @@
 #include <BinaryStackDelta.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/DataBlock.h>
+#include <SourceLocation.h>
 
 #include <Sawyer/Attribute.h>
 #include <Sawyer/Cached.h>
@@ -61,6 +62,7 @@ private:
     CallingConvention::Definition::Ptr ccDefinition_;   // best definition or null
     StackDelta::Analysis stackDeltaAnalysis_;           // analysis computing stack deltas for each block and whole function
     InstructionSemantics2::BaseSemantics::SValuePtr stackDeltaOverride_; // special value to override stack delta analysis
+    SourceLocation sourceLocation_;                     // corresponding location of function in source code if known
 
     // The following members are caches either because their value is seldom needed and expensive to compute, or because the
     // value is best computed at a higher layer (e.g., in the partitioner) yet it makes the most sense to store it here. Make
@@ -90,8 +92,10 @@ private:
         s & BOOST_SERIALIZATION_NVP(ccDefinition_);
         s & BOOST_SERIALIZATION_NVP(stackDeltaAnalysis_);
         s & BOOST_SERIALIZATION_NVP(stackDeltaOverride_);
-        if (version > 0)
+        if (version >= 1)
             s & BOOST_SERIALIZATION_NVP(reasonComment_);
+        if (version >= 2)
+            s & BOOST_SERIALIZATION_NVP(sourceLocation_);
     }
 #endif
     
@@ -150,6 +154,13 @@ public:
      * @{ */
     const std::string& comment() const { return comment_; }
     void comment(const std::string &s) { comment_ = s; }
+    /** @} */
+
+    /** Property: Location of function definition in source code, if known.
+     *
+     * @{ */
+    const SourceLocation& sourceLocation() const { return sourceLocation_; }
+    void sourceLocation(const SourceLocation &loc) { sourceLocation_ = loc; }
     /** @} */
 
     /** Property: Bit vector of function reasons.  These are SgAsmFunction::FunctionReason bits.
@@ -372,6 +383,6 @@ typedef Sawyer::Container::Set<Function::Ptr> FunctionSet;
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Function, 1);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Function, 2);
 
 #endif

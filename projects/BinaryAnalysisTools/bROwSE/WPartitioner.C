@@ -507,7 +507,7 @@ WPartitioner::partitionSpecimen() {
     // Create the partitioner
     P2::Partitioner &p = ctx_.partitioner = ctx_.engine.createPartitioner();
     p.stackDeltaInterproceduralLimit(wStackDeltaDepth_->value());
-    ctx_.engine.labelAddresses(p);
+    ctx_.engine.labelAddresses(p, p.configuration());
     if (interruptVector()) {
         try {
             ctx_.engine.makeInterruptVectorFunctions(p, interruptVectorVa());

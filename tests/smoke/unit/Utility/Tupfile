@@ -55,4 +55,11 @@ run $(test) rangeMapTests --answer=rangeMapTests.ans
 run $(tool_compile_linkexe) testRangeMap.C
 run $(test) testRangeMap
 
+########################################################################################################################
+# Source location
+########################################################################################################################
+
+run $(tool_compile_linkexe) testSourceLocation.C
+run $(test) testSourceLocation
+
 endif

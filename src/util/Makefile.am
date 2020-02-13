@@ -115,6 +115,9 @@ nobase_pkginclude_HEADERS   =			\
 	Sawyer/Clexer.h				\
 	Sawyer/CommandLine.h			\
 	Sawyer/CommandLineBoost.h		\
+	Sawyer/Database.h			\
+	Sawyer/DatabasePostgresql.h		\
+	Sawyer/DatabaseSqlite.h			\
 	Sawyer/DefaultAllocator.h		\
 	Sawyer/DenseIntegerSet.h		\
 	Sawyer/DistinctList.h			\

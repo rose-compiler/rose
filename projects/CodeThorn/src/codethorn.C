@@ -6,7 +6,7 @@
 
 #include "rose.h"
 
-#include "rose_config.h"
+//#include "rose_config.h"
 
 #include "codethorn.h"
 #include "SgNodeHelper.h"
@@ -591,7 +591,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.11.1\n";
+    cout << "CodeThorn version 1.11.2\n";
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
@@ -1091,6 +1091,17 @@ int main( int argc, char * argv[] ) {
 
   Sawyer::Message::Facility logger;
   Rose::Diagnostics::initAndRegister(&logger, "CodeThorn");
+
+#ifdef RERS_SPECIALIZATION
+  // only included in hybrid RERS analyzers.
+  // Init external function pointers for generated property state
+  // marshalling functions (5 function pointers named:
+  // RERS_Problem::...FP, are initialized in the following external
+  // function.
+  // An implementation of this function is linked with the hybrid analyzer
+  extern void RERS_Problem_FunctionPointerInit();
+  RERS_Problem_FunctionPointerInit();
+#endif
 
   try {
     TimeMeasurement timer;

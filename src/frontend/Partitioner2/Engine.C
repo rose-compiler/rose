@@ -739,12 +739,9 @@ Engine::engineSwitches(EngineSettings &settings) {
               .explosiveLists(true)
               .whichValue(SAVE_ALL)
               .doc("Directories containing configuration files, or configuration files themselves.  A directory is searched "
-                   "recursively searched for files whose names end with \".json\" or and each file is parsed and used to "
-                   "to configure the partitioner.  The JSON file contents is defined by the Carnegie Mellon University "
-                   "Software Engineering Institute. It should have a top-level \"config.exports\" table whose keys are "
-                   "function names and whose values are have a \"function.delta\" integer. The delta does not include "
-                   "popping the return address from the stack in the final RET instruction.  Function names of the form "
-                   "\"lib:func\" are translated to the ROSE format \"func@@lib\"."));
+                   "recursively searched for files whose names that end with \".json\" or \".yaml\".  Each file is parsed and "
+                   "used to configure the partitioner. This switch may appear more than once and/or a comma-separated list of "
+                   "names can be specified.\n\n" + Configuration::fileFormatDoc()));
     return sg;
 }
 
@@ -1018,17 +1015,7 @@ Engine::parseContainers(const std::vector<std::string> &fileNames) {
 
         // Process through ROSE's frontend()
         if (!containerFiles.empty()) {
-#if 0 // [Robb Matzke 2019-01-29]: old method calling ::frontend
-            std::vector<std::string> frontendArgs;
-            frontendArgs.push_back("/proc/self/exe");       // I don't think frontend actually uses this
-            frontendArgs.push_back("-rose:binary");
-            frontendArgs.push_back("-rose:read_executable_file_format_only");
-            BOOST_FOREACH (const boost::filesystem::path &file, containerFiles)
-                frontendArgs.push_back(file.native());
-            SgProject *project = ::frontend(frontendArgs);
-#else // [Robb Matzke 2019-01-29]: new method calling Engine::roseFrontendReplacement
             SgProject *project = roseFrontendReplacement(containerFiles);
-#endif
             ASSERT_not_null(project);                       // an exception should have been thrown
 
             std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
@@ -1606,7 +1593,7 @@ Engine::runPartitionerInit(Partitioner &partitioner) {
     Sawyer::Message::Stream where(mlog[WHERE]);
 
     SAWYER_MESG(where) <<"labeling addresses\n";
-    labelAddresses(partitioner);
+    labelAddresses(partitioner, partitioner.configuration());
 
     SAWYER_MESG(where) <<"marking configured basic blocks\n";
     makeConfiguredDataBlocks(partitioner, partitioner.configuration());
@@ -1810,8 +1797,13 @@ Engine::loadPartitioner(const boost::filesystem::path &name, SerialIo::Format fm
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-Engine::labelAddresses(Partitioner &partitioner) {
+Engine::labelAddresses(Partitioner &partitioner, const Configuration &configuration) {
     Modules::labelSymbolAddresses(partitioner, interp_);
+
+    BOOST_FOREACH (const AddressConfig &c, configuration.addresses().values()) {
+        if (!c.name().empty())
+            partitioner.addressName(c.address(), c.name());
+    }
 }
 
 std::vector<DataBlock::Ptr>

@@ -1,11 +1,12 @@
+#include <rose.h>
+#include <BinaryConcolic.h>                             // rose
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
+
 static const char *purpose = "tests concolic testing";
 static const char *description =
     "To be written. This program is currently only for testing some of the concolic testing framework and is not useful "
     "to users at this time.";
 
-#include <rose.h>
-
-#include <BinaryConcolic.h>                             // rose
 #include <CommandLine.h>                                // rose
 #include <Partitioner2/Engine.h>                        // rose
 #include <Sawyer/CommandLine.h>
@@ -74,3 +75,12 @@ main(int argc, char *argv[]) {
     Concolic::ConcolicExecutor::Ptr executor = Concolic::ConcolicExecutor::instance();
     executor->execute(db, testCase);
 }
+
+#else
+
+#include <iostream>
+int main() {
+    std::cerr <<"concolic testing is not enabled\n";
+}
+
+#endif
