@@ -48,6 +48,12 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
                 unparseType(func_type->get_return_type(), info);
                 break;
              }
+        case V_SgModifierType:
+           {
+              cout << "WARNING UNIMPLEMENTED: Unparse_Jovial::unparseType SgModifierType\n";
+              curprint("[WARNING UNIMPLEMENTED: SgModifierType]");
+              break;
+           }
 
           default:
                cout << "Unparse_Jovial::unparseType for type " << type->class_name() << " is unimplemented." << endl;
