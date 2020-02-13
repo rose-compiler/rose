@@ -132,11 +132,11 @@ ATbool traverse_WordsPerEntry                 (ATerm term, SgJovialTableStatemen
 ATbool traverse_ConstantDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // 2.1.4 BLOCK DECLARATION
-ATbool traverse_BlockDeclaration   (ATerm term, SgUntypedDeclarationStatementList* decl_list);
-ATbool traverse_BlockBodyPart      (ATerm term, SgUntypedDeclarationStatementList* decl_list);
-ATbool traverse_BlockPreset        (ATerm term, SgUntypedExprListExpression* preset_list);
-ATbool traverse_BlockPresetList    (ATerm term, SgUntypedExprListExpression* preset_list);
-ATbool traverse_OptBlockPresetList (ATerm term, SgUntypedExprListExpression* preset_list);
+ATbool traverse_BlockDeclaration   (ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref = 0);
+ATbool traverse_BlockBodyPart      (ATerm term, SgJovialTableStatement* sg_block_decl, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_BlockPreset        (ATerm term, SgUntypedExprListExpression* preset_list, SgInitializer* &sg_preset);
+ATbool traverse_BlockPresetList    (ATerm term, SgUntypedExprListExpression* preset_list, SgInitializer* &sg_preset);
+ATbool traverse_OptBlockPresetList (ATerm term, SgUntypedExprListExpression* preset_list, SgInitializer* &sg_preset);
 
 // 2.1.5 ALLOCATION OF DATA OBJECTS
 ATbool traverse_OptAllocationSpecifier(ATerm term, SgUntypedExprListExpression* attr_list);
@@ -176,6 +176,7 @@ ATbool traverse_ExternalDeclaration   (ATerm term, SgUntypedDeclarationStatement
 ATbool traverse_SimpleDef             (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_CompoundDef           (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_DefSpecificationChoice(ATerm term, SgUntypedDeclarationStatementList* decl_list);
+ATbool traverse_DefBlockInstantiation (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 
 // 2.5.2 REF SPECIFICATIONS
 ATbool traverse_SimpleRef             (ATerm term, SgUntypedDeclarationStatementList* decl_list);

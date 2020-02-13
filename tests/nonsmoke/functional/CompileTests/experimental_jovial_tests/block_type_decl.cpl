@@ -1,0 +1,12 @@
+START
+
+COMPOOL COMPOOL'BLOCK;
+
+TYPE block'type'1 BLOCK
+  BEGIN
+    CONSTANT ITEM an'item U 3 = 3;
+    ITEM an'item U 3 = 3;
+    ITEM an'item U;
+  END
+ 
+TERM

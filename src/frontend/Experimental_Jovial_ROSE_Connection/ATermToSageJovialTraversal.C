@@ -695,7 +695,7 @@ ATbool ATermToSageJovialTraversal::traverse_DataDeclaration(ATerm term, SgUntype
    else if (traverse_ConstantDeclaration(term, decl_list)) {
       // MATCHED ConstantDeclaration
    }
-   else if (traverse_BlockDeclaration(term, decl_list)) {
+   else if (traverse_BlockDeclaration(term, decl_list, def_or_ref)) {
       // MATCHED BlockDeclaration
    }
    else return ATfalse;
@@ -2647,7 +2647,7 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, SgUn
 //========================================================================================
 // 2.1.4 BLOCK DECLARATION
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BlockDeclaration: %s\n", ATwriteToString(term));
@@ -2655,10 +2655,17 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUntyp
 
    ATerm t_name, t_alloc, t_body, t_type_name, t_preset;
    std::string block_name, block_type_name;
+   bool is_anon = false;
 
    SgUntypedExprListExpression* preset = NULL;
    SgUntypedStructureDeclaration* block_decl = NULL;
    SgUntypedVariableDeclaration* var_decl = NULL;
+
+   // Begin SageTreeBuilder
+   SgJovialTableStatement* sg_block_decl = nullptr;
+   SgType* sg_type = nullptr;
+   SgInitializer* sg_preset = nullptr;
+   std::string type_name;
 
    if (ATmatch(term, "BlockDeclarationBodyPart(<term>,<term>,<term>)", &t_name, &t_alloc, &t_body)) {
       // TODO list
@@ -2667,6 +2674,8 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUntyp
       // 3. need source position information
       // 4. make sure STATIC works
 
+      is_anon = true;
+
       if (traverse_Name(t_name, block_name)) {
          // MATCHED BlockName
       } else return ATfalse;
@@ -2674,8 +2683,12 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUntyp
       // TODO: function to create anaonymous name
       block_type_name = "_anon_typeof_" + block_name;
 
-      std::string type_name = block_type_name;
+      type_name = block_type_name;
       int struct_type = Jovial_ROSE_Translation::e_block_type_declaration;
+
+      Rose::builder::SourcePositionPair sources;
+      sage_tree_builder.Enter(sg_block_decl, type_name, sources, /*is_block*/ true);
+
 
 // This portion could be moved to UntypedBuilder::
 //--------------------------------------------------
@@ -2720,9 +2733,12 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUntyp
          // MATCHED OptAllocationSpecifier
       } else return ATfalse;
 
-      if (traverse_BlockBodyPart(t_body, block_decl_list)) {
+      if (traverse_BlockBodyPart(t_body, sg_block_decl, block_decl_list)) {
          // MATCHED BlockBodyPart
       } else return ATfalse;
+
+      sg_type = isSgJovialTableType(sg_block_decl->get_type());
+      sage_tree_builder.Leave(sg_block_decl);
    }
 
    else if (ATmatch(term, "BlockDeclarationTypeName(<term>,<term>,<term>,<term>)", &t_name, &t_alloc, &t_type_name, &t_preset)) {
@@ -2735,10 +2751,23 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUntyp
          // MATCHED BlockTypeName
       } else return ATfalse;
 
-      cout << "WARNING UNIMPLEMENTED: BlockDeclarationTypeName\n";
-      return ATtrue;
+//DONE: cerr << "WARNING UNIMPLEMENTED: BlockDeclarationTypeName\n";
 
-      SgUntypedExprListExpression* modifiers = block_decl->get_modifiers();
+      ROSE_ASSERT(block_type_name.length() > 0);
+
+      // This type should have already been created by a type declaration statement
+      SgClassSymbol* class_symbol = SageInterface::lookupClassSymbolInParentScopes(block_type_name, SageBuilder::topScopeStack());
+      if (class_symbol != NULL) {
+         sg_type = class_symbol->get_type();
+      }
+      ROSE_ASSERT(sg_type != nullptr);
+
+      //      SgUntypedExprListExpression* modifiers = block_decl->get_modifiers();
+      //      ROSE_ASSERT(modifiers != NULL);
+      //      SageInterface::setSourcePosition(modifiers);
+
+      // copied from other BlockDeclaration above
+      SgUntypedExprListExpression* modifiers = new SgUntypedExprListExpression(General_Language_Translation::e_struct_modifier_list);
       ROSE_ASSERT(modifiers != NULL);
       SageInterface::setSourcePosition(modifiers);
 
@@ -2746,14 +2775,14 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUntyp
          // MATCHED OptAllocationSpecifier
       } else return ATfalse;
 
-      if (traverse_BlockPreset(t_preset, preset)) {
+      if (traverse_BlockPreset(t_preset, preset, sg_preset)) {
          // MATCHED BlockPreset
       } else return ATfalse;
    }
    else return ATfalse;
 
-
-   cout << "WARNING UNIMPLEMENTED: BlockDeclarationBodyPart __implementing__ \n";
+#if 0
+//DONE: cerr << "WARNING UNIMPLEMENTED: BlockDeclarationBodyPart __implementing__ \n";
 
    // we have the type declaration, now we need a variable declaration
    ROSE_ASSERT(block_decl);
@@ -2776,11 +2805,36 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, SgUntyp
    // TODO: it seems like the block type should have a pointer to the block_decl?
    decl_list->get_decl_list().push_back(block_decl);
    decl_list->get_decl_list().push_back(var_decl);
+#endif
+
+   // Begin SageTreeBuilder
+   SgVariableDeclaration* sg_var_decl = nullptr;
+   std::cout << "BLOCK DECLARATION TYPE NAME" << block_name << " " << block_type_name << endl;
+   sage_tree_builder.Enter(sg_var_decl, std::string(block_name), sg_type, sg_preset);
+   setSourcePosition(sg_var_decl, term);
+
+   // Begin language specific constructs
+   // TODO: CREATE a function for this
+   if (def_or_ref == General_Language_Translation::e_storage_modifier_jovial_def) {
+      sg_var_decl->get_declarationModifier().get_storageModifier().setJovialDef();
+   }
+   else if (def_or_ref == General_Language_Translation::e_storage_modifier_jovial_ref) {
+      sg_var_decl->get_declarationModifier().get_storageModifier().setJovialRef();
+   }
+
+   if (is_anon) {
+      SgJovialTableStatement* def_decl = isSgJovialTableStatement(sg_block_decl->get_definingDeclaration());
+      ROSE_ASSERT(def_decl);
+
+      SageInterface::setBaseTypeDefiningDeclaration(sg_var_decl, def_decl);
+   }
+
+   sage_tree_builder.Leave(sg_var_decl);
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_BlockBodyPart(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+ATbool ATermToSageJovialTraversal::traverse_BlockBodyPart(ATerm term, SgJovialTableStatement* sg_block_decl, SgUntypedDeclarationStatementList* decl_list)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BlockBodyPart: %s\n", ATwriteToString(term));
@@ -2819,7 +2873,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockBodyPart(ATerm term, SgUntypedD
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_BlockPreset(ATerm term, SgUntypedExprListExpression* preset_list)
+ATbool ATermToSageJovialTraversal::traverse_BlockPreset(ATerm term, SgUntypedExprListExpression* preset_list, SgInitializer* &sg_preset)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BlockPreset: %s\n", ATwriteToString(term));
@@ -2831,7 +2885,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockPreset(ATerm term, SgUntypedExp
       // MATCHED no-block-preset
    }
    else if (ATmatch(term, "BlockPreset(<term>)", &t_block_preset)) {
-      if (traverse_BlockPresetList(t_block_preset, preset_list)) {
+      if (traverse_BlockPresetList(t_block_preset, preset_list, sg_preset)) {
          // MATCHED BlockPresetList
       } else return ATfalse;
    }
@@ -2840,26 +2894,26 @@ ATbool ATermToSageJovialTraversal::traverse_BlockPreset(ATerm term, SgUntypedExp
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_BlockPresetList(ATerm term, SgUntypedExprListExpression* preset_list)
+ATbool ATermToSageJovialTraversal::traverse_BlockPresetList(ATerm term, SgUntypedExprListExpression* preset_list, SgInitializer* &sg_preset)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BlockPresetList: %s\n", ATwriteToString(term));
 #endif
 
    SgUntypedExpression* preset;
-   SgExpression* sg_preset;
+   SgExpression* sg_preset_expr;
 
    ATermList tail = (ATermList) ATmake("<term>", term);
    while (! ATisEmpty(tail)) {
       ATerm head = ATgetFirst(tail);
       tail = ATgetNext(tail);
-      if (traverse_PresetValuesOption(head, sg_preset, preset)) {
+      if (traverse_PresetValuesOption(head, sg_preset_expr, preset)) {
          // MATCHED PresetValuesOption
       }
       else if (traverse_TablePresetList(head, preset_list)) {
          // MATCHED TablePresetList
       }
-      else if (traverse_OptBlockPresetList(head, preset_list)) {
+      else if (traverse_OptBlockPresetList(head, preset_list, sg_preset)) {
          // MATCHED OptBlockPresetList
       }
       else return ATfalse;
@@ -2868,7 +2922,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockPresetList(ATerm term, SgUntype
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_OptBlockPresetList(ATerm term, SgUntypedExprListExpression* preset_list)
+ATbool ATermToSageJovialTraversal::traverse_OptBlockPresetList(ATerm term, SgUntypedExprListExpression* preset_list, SgInitializer* &sg_preset)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptBlockPresetList: %s\n", ATwriteToString(term));
@@ -2880,7 +2934,7 @@ ATbool ATermToSageJovialTraversal::traverse_OptBlockPresetList(ATerm term, SgUnt
       // MATCHED no-block-preset-list
    }
    else if (ATmatch(term, "OptBlockPresetlist(<term>)", &t_list)) {
-      if (traverse_BlockPresetList(t_list, preset_list)) {
+      if (traverse_BlockPresetList(t_list, preset_list, sg_preset)) {
          //   '(' BlockPresetList ')'         -> OptBlockPresetList    {cons("OptBlockPresetlist")}
       } else return ATfalse;
    }
@@ -3495,6 +3549,10 @@ ATbool ATermToSageJovialTraversal::traverse_BlockTypeDeclaration(ATerm term, SgU
          // MATCHED BlockTypeName
       } else return ATfalse;
 
+      // Begin SageTreeBuilder
+      Rose::builder::SourcePositionPair sources;
+      sage_tree_builder.Enter(sg_block_decl, type_name, sources, /*is_block*/ true);
+
       int struct_type = Jovial_ROSE_Translation::e_block_type_declaration;
 
 // This portion could be moved to UntypedBuilder::
@@ -3531,7 +3589,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockTypeDeclaration(ATerm term, SgU
       SgUntypedDeclarationStatementList* block_decl_list = block_scope->get_declaration_list();
       ROSE_ASSERT(block_decl_list);
 
-      if (traverse_BlockBodyPart(t_type_desc, block_decl_list)) {
+      if (traverse_BlockBodyPart(t_type_desc, sg_block_decl, block_decl_list)) {
          // MATCHED BlockBodyPart
       }
       else if (traverse_DataDeclaration(t_type_desc, block_decl_list)) {
@@ -3549,6 +3607,9 @@ ATbool ATermToSageJovialTraversal::traverse_BlockTypeDeclaration(ATerm term, SgU
    setSourcePosition(struct_decl, term);
 
    decl_list->get_decl_list().push_back(struct_decl);
+
+   // End SageTreeBuilder
+   sage_tree_builder.Leave(sg_block_decl);
 
    return ATtrue;
 }
@@ -3840,9 +3901,30 @@ ATbool ATermToSageJovialTraversal::traverse_DefSpecificationChoice(ATerm term, S
       // MATCHED DataDeclaration
    } else if (traverse_StatementNameDeclaration(term, decl_list, def_spec)) {
       // MATCHED StatementNameDeclaration
+   } else if (traverse_DefBlockInstantiation(term, decl_list)) {
+      // MATCHED DefBlockInstantiation
    } else return ATfalse;
 
-   //  DefBlockInstantiation           -> DefSpecificationChoice
+   return ATtrue;
+}
+
+ATbool ATermToSageJovialTraversal::traverse_DefBlockInstantiation(ATerm term, SgUntypedDeclarationStatementList* decl_list)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_DefBlockInstantiation: %s\n", ATwriteToString(term));
+#endif
+
+   //   'BLOCK' 'INSTANCE'
+   //    BlockName ';'                 -> DefBlockInstantiation   {cons("DefBlockInstantiation")}
+
+   ATerm t_name;
+   std::string name;
+
+   if (ATmatch(term, "DefBlockInstantiation(<term>)", &t_name)) {
+      if (traverse_Name(t_name, name)) {
+         // MATCHED Name
+      } else return ATfalse;
+   } else return ATfalse;
 
    return ATtrue;
 }

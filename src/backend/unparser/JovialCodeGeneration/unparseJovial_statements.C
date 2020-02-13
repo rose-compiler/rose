@@ -821,6 +821,12 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
 
      info.set_inVarDecl();
 
+     bool is_block = false;
+     SgClassDeclaration* type_decl = isSgClassDeclaration(type->getAssociatedDeclaration());
+     if (type_decl) {
+        is_block = (type_decl->get_class_type() == SgClassDeclaration::e_jovial_block);
+     }
+
      bool type_has_base_type = false;
      SgJovialTableType* table_type = isSgJovialTableType(type);
      if (table_type)
@@ -853,7 +859,11 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      switch (type->variantT())
         {
           case V_SgJovialTableType:
-             curprint("TABLE ");
+             if (is_block) {
+                curprint("BLOCK ");
+             } else {
+                curprint("TABLE ");
+             }
              curprint(name.str());
              curprint(" ");
              break;
