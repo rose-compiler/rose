@@ -25,16 +25,16 @@ C_TEST_OUTPUTS = $(C_TESTCODES_REQUIRED_TO_PASS:.c=)
 FORTRAN_COMPARE_OUTPUTS = $(COMPARE_CODES:.f90=)
 C_COMPARE_OUTPUTS = $(COMPARE_CODES:.c=)
 
-../src/scalarizer:
+../src/rose-scalarizer:
 	$(MAKE) -C $(top_builddir)/projects/scalarization/src
 
 .PHONY: $(FORTRAN_TEST_OUTPUTS) $(C_TEST_OUTPUTS)
 
-$(FORTRAN_TEST_OUTPUTS): ../src/scalarizer
-	../src/scalarizer $(srcdir)/$(@:=.f90)
+$(FORTRAN_TEST_OUTPUTS): ../src/rose-scalarizer
+	../src/rose-scalarizer $(srcdir)/$(@:=.f90)
 
-$(C_TEST_OUTPUTS): ../src/scalarizer
-	../src/scalarizer $(srcdir)/$(@:=.c)
+$(C_TEST_OUTPUTS): ../src/rose-scalarizer
+	../src/rose-scalarizer $(srcdir)/$(@:=.c)
 
 $(FORTRAN_COMPARE_OUTPUTS): 
 	if $(DIFF) $(srcdir)/references/$(@:=.f90) $(@:=.f90) > $@; then echo "$@ Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
