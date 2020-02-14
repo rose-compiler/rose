@@ -33,6 +33,7 @@ bool StructureAccessLookup::isUnionDeclaration(SgNode* node) {
   }
   return false;
 }
+
 void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMapping, SgProject* root) {
   ROSE_ASSERT(variableIdMapping);
   ROSE_ASSERT(root);
@@ -53,7 +54,7 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
         if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(dataMember)) {
           SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
           if(VariableIdMapping::isAnonymousBitfield(initName)) {
-            // ROSE AST BUG WORKAROUND (ROSE-1867)
+            // ROSE AST BUG WORKAROUND (ROSE-1867): anonymous bitfields are assigned the same SgSymbol
             continue;
           }
           //cout<<"DEBUG: struct data member decl: "<<dataMember->unparseToString()<<" : ";

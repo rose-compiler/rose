@@ -18,6 +18,7 @@ namespace CodeThorn {
 
     // returns the size of the type pointed to.
     CodeThorn::TypeSize determineTypeSizePointedTo(SgPointerType* sgType);
+    std::string toString();
   };
 } // end of namespace CodeThorn
 
