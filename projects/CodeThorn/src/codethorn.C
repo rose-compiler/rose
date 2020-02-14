@@ -513,6 +513,8 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("print-function-id-mapping",po::value< bool >()->default_value(false)->implicit_value(true),"Print function-id-mapping on stdout.")
     ("ast-stats-print",po::value< bool >()->default_value(false)->implicit_value(true),"Print ast node statistics on stdout.")
     ("ast-stats-csv",po::value< string >(),"Write ast node statistics to CSV file [arg].")
+    ("type-size-mapping-print",po::value< bool >()->default_value(false)->implicit_value(true),"Print type-size mapping on stdout.")
+    ("type-size-mapping-csv",po::value< bool >()->default_value(false)->implicit_value(true),"Write type-size mapping to CSV file [arg].")
     ;
 
   po::options_description all("All supported options");
@@ -594,7 +596,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.11.2\n";
+    cout << "CodeThorn version 1.11.3\n";
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
@@ -1369,12 +1371,16 @@ int main( int argc, char * argv[] ) {
     timer.stop();
     timer.start();
 
-    vector<string> argvList(argv,argv+argc);
+    SgProject* sageProject = 0;
     if(args.getBool("omp-ast")||args.getBool("data-race")) {
+      vector<string> argvList(argv,argv+argc);
       SAWYER_MESG(logger[TRACE])<<"selected OpenMP AST."<<endl;
       argvList.push_back("-rose:OpenMP:ast_only");
+      sageProject=frontend(argvList);
+    } else {
+      sageProject=frontend(argc,argv,true);
     }
-    SgProject* sageProject = frontend(argvList);
+    
     if(!args.count("quiet")) {
       cout << "STATUS: Parsing and creating AST finished."<<endl;
     }
@@ -1458,8 +1464,6 @@ int main( int argc, char * argv[] ) {
           exit(1);
         }
       }
-      // ast statistics exits
-      exit(0);
     }
 
     if(!args.count("quiet")) {
@@ -1473,6 +1477,23 @@ int main( int argc, char * argv[] ) {
       analyzer->getVariableIdMapping()->toStream(cout);
     }
   
+    if(args.isUserProvided("type-size-mapping-print")||args.isUserProvided("type-size-mapping-csv")) {
+      // from: src/midend/astDiagnostics/AstStatistics.C
+      TypeSizeMapping* tsm=analyzer->getTypeSizeMapping();
+      string s=tsm->toString();
+      if(args.getBool("type-size-mapping-print")) {
+        cout<<"Type size mapping:"<<endl;
+        cout<<s; // output includes newline at the end
+      }
+      if(args.isUserProvided("type-size-mapping-csv")) {
+        string fileName=args.getString("type-size-mapping-csv");
+        if(!CppStdUtilities::writeFile(fileName, s)) {
+          cerr<<"Error: cannot write type-size mapping to CSV file "<<fileName<<endl;
+          exit(1);
+        }
+      }
+    }
+    
     if(args.count("run-rose-tests")) {
       cout << "ROSE tests started."<<endl;
       // Run internal consistency tests on AST
@@ -1492,10 +1513,13 @@ int main( int argc, char * argv[] ) {
         }
         delete evaluator;
       }
-      cout << "ROSE tests finished."<<endl;
+      cout << "ROSE tests finished."<<endl; 
       mfacilities.shutdown();
       return 0;
     }
+
+    // TODO: exit here if no analysis option is selected
+    // exit(0);
 
     SgNode* root=sageProject;
     ROSE_ASSERT(root);

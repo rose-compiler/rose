@@ -1,10 +1,14 @@
 #include "sage3basic.h"
 #include "SgTypeSizeMapping.h"
+#include <sstream>
 
 namespace CodeThorn {
   CodeThorn::TypeSize SgTypeSizeMapping::determineTypeSize(SgType* sgType) {
     ROSE_ASSERT(_mapping.size()!=0);
     ROSE_ASSERT(sgType);
+    if(_typeToSizeMapping.find(sgType)!=_typeToSizeMapping.end()) {
+      return _typeToSizeMapping[sgType];
+    }
     switch (sgType->variantT()) {
 
     case V_SgPointerType:
@@ -55,8 +59,10 @@ namespace CodeThorn {
     case V_SgArrayType: {
       CodeThorn::TypeSize elementTypeSize=determineElementTypeSize(isSgArrayType(sgType));
       // TODO determine size of the array and multiply it with element type size.
-      CodeThorn::TypeSize numberOfElements=1;
-      return numberOfElements*elementTypeSize;
+      CodeThorn::TypeSize numberOfElements=1; // TODO
+      unsigned int totalSize=numberOfElements*elementTypeSize;
+      _typeToSizeMapping[sgType]=totalSize; // cache result
+      return totalSize;
     }
     case V_SgClassType: {
       typedef std::vector< std::pair< SgNode*, std::string > > DataMemberPointers;
@@ -69,12 +75,14 @@ namespace CodeThorn {
           sum+=determineTypeSize(varDecl->get_type());
         }
       }
+      _typeToSizeMapping[sgType]=sum;
       return sum;
     }
       //case V_SgFunctionType:
       //case V_SgTypeComplex:
 
     default:
+      // to investigate
       return 0;
     }
   }
@@ -89,6 +97,14 @@ namespace CodeThorn {
     ROSE_ASSERT(_mapping.size()!=0);
     SgType* typePointedTo=sgType->get_base_type();
     return determineTypeSize(typePointedTo);
+  }
+
+  std::string SgTypeSizeMapping::toString() {
+    std::ostringstream ss;
+    for(auto entry : _typeToSizeMapping ) {
+      ss<<entry.first->unparseToString()<<":"<<entry.second<<std::endl;
+    }
+    return ss.str();
   }
 
 } // end of namespace CodeThorn

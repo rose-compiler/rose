@@ -1116,19 +1116,25 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         }
         // has aggregate initializer
         if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
-          SgArrayType* arrayType=isSgArrayType(aggregateInitializer->get_type());
-          // must be an array type, since structs are checked above
-          ROSE_ASSERT(arrayType);
-          SgType* arrayElementType=arrayType->get_base_type();
-          setElementSize(initDeclVarId,arrayElementType);
-          // only set size from aggregate initializer if not known from type
-          if(variableIdMapping.getNumberOfElements(initDeclVarId)==0) {
-            // TODO: requires a sizeof computation of an aggregate initializer (e.g. {{1,2},{1,2}} == 4)
-            variableIdMapping.setNumberOfElements(initDeclVarId, computeNumberOfElements(decl));
+          if(SgArrayType* arrayType=isSgArrayType(aggregateInitializer->get_type())) {
+            SgType* arrayElementType=arrayType->get_base_type();
+            setElementSize(initDeclVarId,arrayElementType);
+            // only set size from aggregate initializer if not known from type
+            if(variableIdMapping.getNumberOfElements(initDeclVarId)==0) {
+              // TODO: requires a sizeof computation of an aggregate initializer (e.g. {{1,2},{1,2}} == 4)
+               variableIdMapping.setNumberOfElements(initDeclVarId, computeNumberOfElements(decl));
+            }
+            PState newPState=*currentEState.pstate();
+            newPState=analyzeSgAggregateInitializer(initDeclVarId, aggregateInitializer,newPState, currentEState);
+            return createEState(targetLabel,cs,newPState,cset);
+          } else {
+            // type not supported yet
+            SAWYER_MESG(logger[WARN])<<"aggregate initializer: unsupported type: "<<aggregateInitializer->get_type()->unparseToString()<<endl;
+            // do not modify state. Value remains top.
+            PState newPState=*currentEState.pstate();
+            ConstraintSet cset=*currentEState.constraints();
+            return createEState(targetLabel,cs,newPState,cset);
           }
-          PState newPState=*currentEState.pstate();
-          newPState=analyzeSgAggregateInitializer(initDeclVarId, aggregateInitializer,newPState, currentEState);
-          return createEState(targetLabel,cs,newPState,cset);
         } else if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
           SgExpression* rhs=assignInitializer->get_operand_i();
           ROSE_ASSERT(rhs);
@@ -1508,7 +1514,15 @@ void CodeThorn::Analyzer::initializeStringLiteralsInState(PState& initialPState)
 void CodeThorn::Analyzer::initializeVariableIdMapping(SgProject* project) {
   variableIdMapping.computeVariableSymbolMapping(project);
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
-  AbstractValue::setTypeSizeMapping(&_typeSizeMapping);
+  setTypeSizeMapping(&_typeSizeMapping);
+  // compute size for all variables
+  VariableIdSet varIdSet=getVariableIdMapping()->getVariableIdSet();
+  for(auto vid : varIdSet) {
+    SgType* varType=getVariableIdMapping()->getType(vid);
+    if(varType) {
+      _typeSizeMapping.determineTypeSize(getVariableIdMapping()->getType(vid));
+    }
+  }
   SAWYER_MESG(logger[TRACE])<<"initializeStructureAccessLookup started."<<endl;
   exprAnalyzer.initializeStructureAccessLookup(project);
   SAWYER_MESG(logger[TRACE])<<"initializeStructureAccessLookup finished."<<endl;
