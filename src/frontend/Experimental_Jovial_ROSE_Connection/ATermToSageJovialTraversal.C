@@ -5,7 +5,7 @@
 #include "Jovial_to_ROSE_translation.h"
 #include <iostream>
 
-#define PRINT_ATERM_TRAVERSAL 0
+#define PRINT_ATERM_TRAVERSAL 1
 #define PRINT_SOURCE_POSITION 0
 
 using namespace ATermSupport;
@@ -2592,13 +2592,8 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, SgUn
    ATerm t_name, t_type, t_preset, t_dim_list, t_table_desc;
    char* name;
 
-   SgUntypedType* declared_type = NULL;
    SgType* sg_declared_type = nullptr;
-   SgUntypedExpression* preset = NULL;
    SgExpression* sg_preset = nullptr;
-
-   SgUntypedVariableDeclaration* variable_decl = NULL;
-   SgUntypedExprListExpression*      attr_list = NULL;
 
 // For StatusItemDescription
    bool has_size;
@@ -2611,6 +2606,11 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, SgUn
       if (ATmatch(t_name, "<str>", &name)) {
          // MATCHED ItemName
       } else return ATfalse;
+
+   // DELETE_ME
+      SgUntypedType* declared_type = NULL;
+      SgUntypedExprListExpression* attr_list = NULL;
+      SgUntypedExpression* preset = NULL;
 
       attr_list = new SgUntypedExprListExpression(General_Language_Translation::e_type_modifier_list);
       ROSE_ASSERT(attr_list);
@@ -2646,9 +2646,9 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, SgUn
    }
    else return ATfalse;
 
-   if (declared_type == NULL) {
+   if (sg_declared_type == nullptr) {
       cerr << "WARNING UNIMPLEMENTED: ConstantDeclaration - type is null \n";
-      return ATtrue;
+      ROSE_ASSERT(false);
    }
 
 // Begin SageTreeBuilder
@@ -2658,28 +2658,6 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, SgUn
 
 // This is a ConstanItemDeclaration
    sg_var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
-
-   variable_decl = UntypedBuilder::buildVariableDeclaration(name, declared_type, attr_list, preset);
-   ROSE_ASSERT(variable_decl);
-   setSourcePosition(variable_decl, term);
-
-// Set the source positions
-//
-   SgUntypedInitializedNameList* var_name_list = variable_decl->get_variables();
-   ROSE_ASSERT(var_name_list);
-   setSourcePosition(var_name_list, t_name);
-
-// There will be only one variable declared in Jovial
-   SgUntypedInitializedName* initialized_name = var_name_list->get_name_list()[0];
-   ROSE_ASSERT(initialized_name);
-   setSourcePosition(initialized_name, t_name);
-
-   SgUntypedOtherExpression* attr = new SgUntypedOtherExpression(General_Language_Translation::e_type_modifier_const);
-   ROSE_ASSERT(attr);
-   setSourcePositionUnknown(attr);
-
-   attr_list->get_expressions().push_back(attr);
-   decl_list->get_decl_list().push_back(variable_decl);
 
 // End SageTreeBuilder
    sage_tree_builder.Leave(sg_var_decl);
@@ -3025,7 +3003,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemPreset(ATerm term, SgExpression*
 
    ATerm t_preset_value;
 
-   sg_preset = NULL;
+   sg_preset = nullptr;
 
    if (ATmatch(term, "no-item-preset()")) {
       // MATCHED no-item-preset
