@@ -1447,11 +1447,15 @@ Outliner::insert (SgFunctionDeclaration* func,
    // insert it into the original global scope
    if (use_dlopen) 
    {
-    // void (*OUT_xxx__p) (void**);
+    // void (*OUT_xxx__p) (void**); // this parameter type depends on the number of variables. If zero variables, empty parameter.
      SgFunctionParameterTypeList * tlist = buildFunctionParameterTypeList();
-     (tlist->get_arguments()).push_back(buildPointerType(buildPointerType(buildVoidType())));
+     // Only if func's argument list is not emtpy
+     SgFunctionParameterTypeList* func_para_type_list = func->get_type()->get_argument_list();
+     if (func_para_type_list->get_arguments().size()>0)
+       (tlist->get_arguments()).push_back(buildPointerType(buildPointerType(buildVoidType())));
 
-     SgFunctionType *ftype = buildFunctionType(buildVoidType(), tlist);//func->get_type();
+    SgFunctionType *ftype = buildFunctionType(buildVoidType(), tlist);//func->get_type();
+//     SgFunctionType *ftype = deepCopy(func->get_type()); // why not just use the function type directly? deepCopy does not yet at this stage.
      string var_name = func->get_name().getString()+"p";
   // SgVariableDeclaration * ptofunc = buildVariableDeclaration(var_name,buildPointerType(ftype), NULL, src_global);
   // prependStatement(ptofunc,src_global);
