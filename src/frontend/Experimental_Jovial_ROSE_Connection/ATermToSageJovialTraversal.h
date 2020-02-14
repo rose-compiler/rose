@@ -61,7 +61,7 @@ ATbool traverse_ItemDeclaration(ATerm term, SgUntypedDeclarationStatementList* d
 ATbool traverse_ItemTypeDescription(ATerm term, SgType* &sg_type, SgUntypedType* &type, SgUntypedExprListExpression* attr_list);
 
 // 2.1.1.1 INTEGER TYPE DESCRIPTIONS
-ATbool traverse_IntegerItemDescription(ATerm term, SgType* &sg_type, SgUntypedType* &type, SgUntypedExprListExpression* attr_list);
+ATbool traverse_IntegerItemDescription(ATerm term, SgType* &sg_type, SgUntypedExprListExpression* attr_list);
 ATbool traverse_OptItemSize(ATerm term, bool & has_size, SgExpression* &sg_size, SgUntypedExpression* &size);
 
 // 2.1.1.2 FLOATING TYPE DESCRIPTIONS
@@ -97,15 +97,19 @@ ATbool traverse_TableDeclaration       (ATerm term, int def_or_ref = 0);
 ATbool traverse_TableDescriptionName   (ATerm term, std::string &type_name, SgType* &sg_type, SgInitializer* &preset);
 ATbool traverse_TableDescriptionType   (ATerm term,                         SgType* &base_type, SgInitializer* &preset);
 ATbool traverse_TableDescriptionBody   (ATerm term, std::string &type_name, SgJovialTableStatement* &sg_table_decl, SgUntypedStructureDefinition* & table_desc);
-ATbool traverse_EntrySpecifierBody     (ATerm term, SgJovialTableStatement* sg_table_decl, SgUntypedStructureDefinition*   table_desc);
 ATbool traverse_EntrySpecifierType     (ATerm term, SgType* &base_type, SgInitializer* &preset);
+ATbool traverse_EntrySpecifierBody     (ATerm term, SgJovialTableStatement* sg_table_decl, SgUntypedStructureDefinition* table_desc);
+#if 0 //DELETE_ME
 ATbool traverse_EntrySpecifier         (ATerm term, SgJovialTableStatement* sg_table_decl,
                                                     SgUntypedType* & type, SgUntypedExprListExpression* attr_list, SgUntypedExprListExpression* &preset);
+#endif
 
 // 2.1.2.3 ORDINARY TABLE ENTRIES
 ATbool traverse_OrdinaryEntrySpecifierType   (ATerm term, SgType* &type, SgInitializer* &preset);
+#if 0 //DELETE_ME
 ATbool traverse_OrdinaryEntrySpecifier       (ATerm term, SgJovialTableStatement* sg_table_decl,
                                                           SgUntypedType* & type, SgUntypedExprListExpression* attr_list, SgUntypedExprListExpression* & preset);
+#endif
 ATbool traverse_OrdinaryEntrySpecifierBody   (ATerm term,  SgJovialTableStatement* sg_table_decl, SgUntypedStructureDefinition* table_desc);
 ATbool traverse_OrdinaryTableBody            (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_OrdinaryTableItemDeclaration (ATerm term, SgUntypedDeclarationStatementList* decl_list);
@@ -120,8 +124,10 @@ ATbool traverse_OptStructureSpecifier(ATerm term, SgUntypedExprListExpression* a
 
 // 2.1.2.4 SPECIFIED TABLE ENTRIES
 ATbool traverse_SpecifiedEntrySpecifierType   (ATerm term, SgType* &type, SgInitializer* &preset);
+#if 0 //DELETE_ME
 ATbool traverse_SpecifiedEntrySpecifier       (ATerm term, SgJovialTableStatement* sg_table_decl, SgUntypedType* & type,
                                                            SgUntypedExprListExpression* attr_list, SgUntypedExprListExpression* & preset);
+#endif
 ATbool traverse_SpecifiedEntrySpecifierBody   (ATerm term, SgJovialTableStatement* sg_table_decl, SgUntypedStructureDefinition* table_desc);
 ATbool traverse_SpecifiedTableBody            (ATerm term, SgUntypedDeclarationStatementList* decl_list);
 ATbool traverse_SpecifiedTableItemDeclaration (ATerm term, SgUntypedDeclarationStatementList* decl_list);
@@ -134,9 +140,9 @@ ATbool traverse_ConstantDeclaration(ATerm term, SgUntypedDeclarationStatementLis
 // 2.1.4 BLOCK DECLARATION
 ATbool traverse_BlockDeclaration   (ATerm term, SgUntypedDeclarationStatementList* decl_list, int def_or_ref = 0);
 ATbool traverse_BlockBodyPart      (ATerm term, SgJovialTableStatement* sg_block_decl, SgUntypedDeclarationStatementList* decl_list);
-ATbool traverse_BlockPreset        (ATerm term, SgUntypedExprListExpression* preset_list, SgInitializer* &sg_preset);
-ATbool traverse_BlockPresetList    (ATerm term, SgUntypedExprListExpression* preset_list, SgInitializer* &sg_preset);
-ATbool traverse_OptBlockPresetList (ATerm term, SgUntypedExprListExpression* preset_list, SgInitializer* &sg_preset);
+ATbool traverse_BlockPreset        (ATerm term, SgExprListExp* preset_list);
+ATbool traverse_BlockPresetList    (ATerm term, SgExprListExp* preset_list);
+ATbool traverse_OptBlockPresetList (ATerm term, SgExprListExp* preset_list);
 
 // 2.1.5 ALLOCATION OF DATA OBJECTS
 ATbool traverse_OptAllocationSpecifier(ATerm term, SgUntypedExprListExpression* attr_list);
@@ -145,12 +151,14 @@ ATbool traverse_OptAllocationSpecifier(ATerm term, SgUntypedExprListExpression* 
 ATbool traverse_ItemPreset            (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
 ATbool traverse_ItemPresetValue       (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
 ATbool traverse_OptItemPresetValue    (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
-ATbool traverse_TablePreset           (ATerm term, SgInitializer* &preset);
+ATbool traverse_TablePreset           (ATerm term, SgExprListExp* &preset_list);
+#if 0 //DELETE_ME
 ATbool traverse_TablePreset           (ATerm term, SgUntypedExprListExpression* & preset);
-ATbool traverse_TablePresetList       (ATerm term, SgUntypedExprListExpression* preset);
-ATbool traverse_DefaultPresetSublist  (ATerm term, SgUntypedExprListExpression* preset);
-ATbool traverse_SpecifiedPresetSublist(ATerm term, SgUntypedExprListExpression* preset);
-ATbool traverse_PresetIndexSpecifier  (ATerm term, SgUntypedExprListExpression* preset);
+#endif
+ATbool traverse_TablePresetList       (ATerm term, SgExprListExp* preset_list);
+ATbool traverse_DefaultPresetSublist  (ATerm term, SgExprListExp* preset_list);
+ATbool traverse_SpecifiedPresetSublist(ATerm term, SgExprListExp* preset_list);
+ATbool traverse_PresetIndexSpecifier  (ATerm term, SgInitializer* preset_list);
 ATbool traverse_PresetValuesOption    (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
 
 // 2.2 TYPE DECLARATIONS

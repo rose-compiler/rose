@@ -50,8 +50,16 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
              }
         case V_SgModifierType:
            {
+           // This appears when an ItemTypeDescription has an initializer. I'm not sure why
+           // SgModifiertype appears as the typeptr of an initialized name.  The base_ptr is
+           // the correct type so it is unparsed here as a HACK!  Perhaps the modifier type
+           // is inserted after the parsing phase because I can't find the problem there.
               cout << "WARNING UNIMPLEMENTED: Unparse_Jovial::unparseType SgModifierType\n";
-              curprint("[WARNING UNIMPLEMENTED: SgModifierType]");
+              SgModifierType* modifier_type = isSgModifierType(type);
+              ROSE_ASSERT(modifier_type);
+              SgType* base_type = modifier_type->get_base_type();
+              ROSE_ASSERT(base_type);
+              unparseType(base_type, info);
               break;
            }
 

@@ -7587,7 +7587,7 @@ SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand
      return result;
    }
 
-SgAssignInitializer * SageBuilder::buildAssignInitializer_nfi(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = UNLL */)
+SgAssignInitializer * SageBuilder::buildAssignInitializer_nfi(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = NULL */)
    {
      SgAssignInitializer* result = new SgAssignInitializer(operand_i, expression_type);
      ROSE_ASSERT(result);
