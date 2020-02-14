@@ -692,7 +692,7 @@ public:
      *
      *  Labels addresses according to symbols, etc.  Address labels are used for things like giving an unnamed function a name
      *  when it's attached to the partitioner's CFG/AUM. */
-    virtual void labelAddresses(Partitioner&);
+    virtual void labelAddresses(Partitioner&, const Configuration&);
 
     /** Make data blocks based on configuration.
      *

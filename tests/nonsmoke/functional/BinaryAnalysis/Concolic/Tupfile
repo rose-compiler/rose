@@ -3,16 +3,12 @@ include_rules
 ifeq (@(ENABLE_TESTS),yes)
 ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
 
-# Tests are disabled if SQLite3 is not available since the tests only support that one database driver.
-ifeq (@(WITH_SQLITE),no)
-    ENABLED = --disabled='no supported database driver'
-else
-    ENABLED = --enabled
-endif
-
-
 #------------------------------------------------------------------------------------------------------------------------
 # Database tests
+
+# The extra "touch foo.db" commands are because the tests sometimes don't do anything (such as when the C++ compiler
+# is earlier than C++11) and Tup will emit a failure if the main test command doesn't write to the database like we
+# said it should.
 
 #
 # utilities and sample codes
@@ -30,66 +26,37 @@ run $(support_compile_linkexe) test-execution-monitor.C
 run $(tool_compile_linkexe) testConcolicDB.C
 run $(test) testConcolicDB
 
-# a.5) execution wrapper for perf to intercept signals
-# run $(support_compile_linkexe) rose-perf-execution-wrapper.c
+run $(tool_compile_linkexe) testOpenDb.C
+run $(test) --extra=testOpenDb.db testOpenDb \
+    './testOpenDb && touch testOpenDb.db'
 
-# TODO \PP use flex and bison to create rose-perf-analyzer
-# a.6) reads perf-report output and computes unique instruction count
+run $(tool_compile_linkexe) testDefineTests.C
+run $(test) --extra=testDefineTests.db testDefineTests \
+    './testDefineTests && touch testDefineTests.db'
 
-#: PerfOutputAnalyzer/parser.ypp \
-#|> ^ BISON %f^ $(ROSE)/config/ylwrap %f y.tab.c %o y.tab.h PerfOutputAnalyzer/parser.hpp -- bison -y -d -t \
-#|> parser.cpp | parser.hpp
+run $(tool_compile_linkexe) testRun1.C
+run $(test) --extra=testRun1.db testRun1 \
+    './testRun1 && touch testRun1.db'
 
-#: PerfOutputAnalyzer/lexer.lpp \
-#|> ^ FLEX %f^ $(ROSE)/config/ylwrap %f lex.yy.c %o -- flex \
-#|> lexer.cpp
+run $(tool_compile_linkexe) testRun10.C
+run $(test) --extra=testRun10.db testRun10 \
+    './testRun10 && touch testRun10.db'
 
-#run $(tool_compile_linkexe) -o rose-perf-analyzer --depend=parser.hpp parser.cpp lexer.cpp PerfOutputAnalyzer/analyzer.cpp 
+run $(tool_compile_linkexe) testDefineFail.C
+run $(test) --extra=testDefineFail.db testDefineFail \
+    './testDefineFail && touch testDefineFail.db'
 
+run $(tool_compile_linkexe) testCombined.C
+run $(test) --extra=testCombined.db ./testCombined \
+    './testCombined && touch testCombined.db'
 
-# TODO (1) \PP cp $(srcdir)/rose-execution-monitor-linux-perf-intel-x86_64.sh rose-execmon-linux-perf-intel-x86-64.sh
-# TODO (2) \PP create rose-perf-analyzer
-# a.7) the script that organizes perf's execution
+run $(tool_compile_linkexe) testExport.C
+run $(test) --input=sampleExecutable --extra=testExport.db testExport \
+    './testExport && touch testExport.db'
 
-#noinst_SCRIPTS = rose-execmon-linux-perf-intel-x86-64.sh
-
-#rose-execmon-linux-perf-intel-x86-64.sh: $(srcdir)/rose-execution-monitor-linux-perf-intel-x86_64.sh rose-perf-analyzer
-#	cp $< $@
-#	chmod u+x $@
-
-# b) test various executions
-run $(test) ./crsh/crsh -o testOpenDB \
-    --extra=openDB.db $(ENABLED) \
-    ./crsh/crsh openDB.crsh
-
-run $(test) ./crsh/crsh -o testDefineTests \
-    --extra=defineTests.db $(ENABLED) \
-    ./crsh/crsh defineTests.crsh
-
-run $(test) ./crsh/crsh -o testRun1 \
-    --extra=run1.db $(ENABLED) \
-    ./crsh/crsh run1.crsh
-
-run $(test) ./crsh/crsh -o testRun10 \
-    --extra=run10.db $(ENABLED) \
-    ./crsh/crsh run10.crsh
-
-run $(test) ./crsh/crsh -o testDefineFail \
-    --extra=defineFail.db $(ENABLED) \
-    ./crsh/crsh defineFail.crsh
-
-run $(test) ./crsh/crsh -o testCombined \
-    --extra=combined.db $(ENABLED) \
-    ./crsh/crsh combined.crsh
-
-run $(test) ./crsh/crsh -o testExport \
-    --input=sampleExecutable $(ENABLED) \
-    --extra=testExport.db \
-    ./crsh/crsh testExport.crsh
-
-run $(test) ./crsh/crsh -o testAddressRandomization \
-    --input=sampleExecutable $(ENABLED) \
-    ./crsh/crsh testAddressRandomization.crsh
+run $(tool_compile_linkexe) testAddressRandomization.C
+run $(test) --input=sampleExecutable --extra=testAddressRandomization.db testAddressRandomization \
+    './testAddressRandomization && touch testAddressRandomization.db'
     
 #FIXME# Reported by Matzke 2019-09-23
 #FIXME# This rule has two problems: First, this rule and the testPerfExecutionMonitor test both create
@@ -114,23 +81,29 @@ run $(test) ./crsh/crsh -o testAddressRandomization \
 #    --input=rose-execmon-linux-perf-intel-x86-64.sh rose-perf-execution-wrapper test-execution-monitor sampleExecutable\
 #    ./crsh/crsh testPerfExecutionMonitor.crsh
 
-run $(test) ./crsh/crsh -o testConnectNonExisting $(ENABLED) \
-    ./crsh/crsh testConnectNonExisting.crsh
+run $(tool_compile_linkexe) testConnectNonExisting.C
+run $(test) testConnectNonExisting
 
-run $(test) ./crsh/crsh -o testCreateOverwrites $(ENABLED) \
-    ./crsh/crsh testCreateOverwrites.crsh
+run $(tool_compile_linkexe) testCreateOverwrites.C
+run $(test) --extra=testCreateOverwrites.db testCreateOverwrites \
+    './testCreateOverwrites && touch testCreateOverwrites.db'
 
-run $(test) ./crsh/crsh -o testConnect $(ENABLED) \
-    ./crsh/crsh testConnect.crsh
+run $(tool_compile_linkexe) testConnect.C
+run $(test) --extra=testConnect.db testConnect \
+    './testConnect && touch testConnect.db'
+
+# Tests that test cases can be created correctly
+run $(tool_compile_linkexe) testTestCase.C
+run $(test) --extra testTestCase.db testTestCase \
+    './testTestCase && touch testTestCase.db'
 
 #------------------------------------------------------------------------------------------------------------------------
 # Concolic executor tests
 
 run $(tool_compile_linkexe) testConcolicExecutor.C
-run $(test) testConcolicExecutor $(ENABLED) \
+run $(test) testConcolicExecutor \
     --extra testConcolicExecutor-1.db \
-    ./testConcolicExecutor --log 'Rose::BinaryAnalysis::Concolic\(debug\)' --database=testConcolicExecutor-1.db\
-    $(ROSE)/tests/nonsmoke/specimens/binary/concolic-specimen-01
+    './testConcolicExecutor --log "Rose::BinaryAnalysis::Concolic(debug)" --database=testConcolicExecutor-1.db $(ROSE)/tests/nonsmoke/specimens/binary/concolic-specimen-01 && touch testConcolicExecutor-1.db'
 
 endif
 endif

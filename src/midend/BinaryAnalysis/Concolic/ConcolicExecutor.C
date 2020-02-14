@@ -1,5 +1,6 @@
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
+#ifdef  ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <boost/format.hpp>
 #include <CommandLine.h>
@@ -527,7 +528,7 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
 #endif
 
     run(db, testCase, cpu);
-    testCase->hasConcolicTest(true);
+    testCase->concolicResult(1);
     db->save(testCase);
 
     // FIXME[Robb Matzke 2020-01-16]
@@ -806,3 +807,5 @@ ConcolicExecutor::areSimilar(const TestCase::Ptr &a, const TestCase::Ptr &b) con
 } // namespace
 } // namespace
 } // namespace
+
+#endif
