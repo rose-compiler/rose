@@ -26,6 +26,7 @@ namespace CodeThorn {
   class TypeSizeMapping {
   public:
     TypeSizeMapping();
+    virtual ~TypeSizeMapping();
     // sets sizes of all types (same as reported by sizeof on respective architecture)
     void setMapping(std::vector<CodeThorn::TypeSize> mapping);
     // sets size of one type (same as reported by sizeof on respective architecture)

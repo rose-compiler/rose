@@ -8,6 +8,9 @@ namespace CodeThorn {
     // TODO: set vector with default values
   }
 
+  TypeSizeMapping::~TypeSizeMapping() {
+  }
+
   void TypeSizeMapping::setMapping(std::vector<CodeThorn::TypeSize> mapping) {
     if(_mapping.size()==0 || mapping.size()==_mapping.size()) {
       _mapping=mapping;
