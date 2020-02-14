@@ -78,6 +78,7 @@ public:
    void Leave(SgDerivedTypeStatement*);
 
    void Enter(SgVariableDeclaration* &, const std::string &, SgType*, SgExpression*);
+   void Leave(SgVariableDeclaration*);
 
 // Jovial specific nodes
 //

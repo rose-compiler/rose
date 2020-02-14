@@ -1,12 +1,12 @@
 START
 
-COMPOOL COMPOOL'BLOCK;
+COMPOOL block'type'decl;
 
-TYPE block'type'1 BLOCK
+TYPE block'type BLOCK
   BEGIN
-    CONSTANT ITEM an'item U 3 = 3;
-    ITEM an'item U 3 = 3;
-    ITEM an'item U;
+    CONSTANT ITEM item'1 U 3 = 3;
+    ITEM item'2 U 3 = 3;
+    ITEM item'3 U;
   END
  
 TERM
