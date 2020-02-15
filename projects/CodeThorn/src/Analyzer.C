@@ -21,6 +21,7 @@
 
 #include "TimeMeasurement.h"
 #include "CollectionOperators.h"
+#include "RersSpecialization.h"
 #include "RERS_empty_specialization.h"
 
 using namespace std;
@@ -28,12 +29,62 @@ using namespace Sawyer::Message;
 
 Sawyer::Message::Facility CodeThorn::Analyzer::logger;
 
-bool Analyzer::isLTLRelevantEState(const EState* estate) {
-  ROSE_ASSERT(estate);
-  return ((estate)->io.isStdInIO()
-          || (estate)->io.isStdOutIO()
-          || (estate)->io.isStdErrIO()
-          || (estate)->io.isFailedAssertIO());
+CodeThorn::Analyzer::Analyzer():
+  startFunRoot(0),
+  cfanalyzer(0),
+  _globalTopifyMode(GTM_IO),
+  _stgReducer(&estateSet, &transitionGraph),
+  _counterexampleGenerator(&transitionGraph),
+  _displayDiff(10000),
+  _resourceLimitDiff(10000),
+  _numberOfThreadsToUse(1),
+  _solver(nullptr),
+  _analyzerMode(AM_ALL_STATES),
+  _maxTransitions(-1),
+  _maxIterations(-1),
+  _maxBytes(-1),
+  _maxSeconds(-1),
+  _maxTransitionsForcedTop(-1),
+  _maxIterationsForcedTop(-1),
+  _maxBytesForcedTop(-1),
+  _maxSecondsForcedTop(-1),
+  _treatStdErrLikeFailedAssert(false),
+  _skipSelectedFunctionCalls(false),
+  _explorationMode(EXPL_BREADTH_FIRST),
+  _topifyModeActive(false),
+  _iterations(0),
+  _approximated_iterations(0),
+  _curr_iteration_cnt(0),
+  _next_iteration_cnt(0),
+  _svCompFunctionSemantics(false),
+  _contextSensitiveAnalysis(false)
+{
+  initDiagnostics();
+  _analysisTimer.start();
+  _analysisTimer.stop();
+  variableIdMapping=new VariableIdMappingExtended();
+  variableIdMapping->setModeVariableIdForEachArrayElement(true);
+  for(int i=0;i<100;i++) {
+    binaryBindingAssert.push_back(false);
+  }
+  estateWorkListCurrent = &estateWorkListOne;
+  estateWorkListNext = &estateWorkListTwo;
+  estateSet.max_load_factor(0.7);
+  pstateSet.max_load_factor(0.7);
+  constraintSetMaintainer.max_load_factor(0.7);
+  resetInputSequenceIterator();
+  exprAnalyzer.setAnalyzer(this);
+ }
+
+CodeThorn::Analyzer::~Analyzer() {
+  if(cfanalyzer) {
+    if(FunctionIdMapping* fim=cfanalyzer->getFunctionIdMapping()) {
+      delete fim;
+    }
+    delete cfanalyzer;
+  }
+  if(variableIdMapping)
+    delete variableIdMapping;
 }
 
 CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const CodeThorn::EState* currentEStatePtr) {
@@ -383,7 +434,7 @@ bool CodeThorn::Analyzer::isFunctionCallWithAssignment(Label lab,VariableId* var
     std::pair<SgVarRefExp*,SgFunctionCallExp*> p=SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp2(node);
     if(p.first) {
       if(varIdPtr) {
-        *varIdPtr=variableIdMapping.variableId(p.first);
+        *varIdPtr=variableIdMapping->variableId(p.first);
       }
       return true;
     }
@@ -406,60 +457,6 @@ void CodeThorn::Analyzer::writeWitnessToFile(string filename) {
   }
 }
 
-CodeThorn::Analyzer::Analyzer():
-  startFunRoot(0),
-  cfanalyzer(0),
-  _globalTopifyMode(GTM_IO),
-  _stgReducer(&estateSet, &transitionGraph),
-  _counterexampleGenerator(&transitionGraph),
-  _displayDiff(10000),
-  _resourceLimitDiff(10000),
-  _numberOfThreadsToUse(1),
-  _solver(nullptr),
-  _analyzerMode(AM_ALL_STATES),
-  _maxTransitions(-1),
-  _maxIterations(-1),
-  _maxBytes(-1),
-  _maxSeconds(-1),
-  _maxTransitionsForcedTop(-1),
-  _maxIterationsForcedTop(-1),
-  _maxBytesForcedTop(-1),
-  _maxSecondsForcedTop(-1),
-  _treatStdErrLikeFailedAssert(false),
-  _skipSelectedFunctionCalls(false),
-  _explorationMode(EXPL_BREADTH_FIRST),
-  _topifyModeActive(false),
-  _iterations(0),
-  _approximated_iterations(0),
-  _curr_iteration_cnt(0),
-  _next_iteration_cnt(0),
-  _svCompFunctionSemantics(false),
-  _contextSensitiveAnalysis(false)
-{
-  initDiagnostics();
-  _analysisTimer.start();
-  _analysisTimer.stop();
-  variableIdMapping.setModeVariableIdForEachArrayElement(true);
-  for(int i=0;i<100;i++) {
-    binaryBindingAssert.push_back(false);
-  }
-  estateWorkListCurrent = &estateWorkListOne;
-  estateWorkListNext = &estateWorkListTwo;
-  estateSet.max_load_factor(0.7);
-  pstateSet.max_load_factor(0.7);
-  constraintSetMaintainer.max_load_factor(0.7);
-  resetInputSequenceIterator();
-  exprAnalyzer.setAnalyzer(this);
- }
-
-CodeThorn::Analyzer::~Analyzer() {
-  if(cfanalyzer) {
-    if(FunctionIdMapping* fim=cfanalyzer->getFunctionIdMapping()) {
-      delete fim;
-    }
-    delete cfanalyzer;
-  }
-}
 
 size_t CodeThorn::Analyzer::getNumberOfErrorLabels() {
   return _assertNodes.size();
@@ -557,7 +554,7 @@ CodeThorn::Analyzer::VariableDeclarationList CodeThorn::Analyzer::computeUsedGlo
 #endif
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-      VariableId globalVarId=variableIdMapping.variableId(*i);
+      VariableId globalVarId=variableIdMapping->variableId(*i);
       // do not filter
       usedGlobalVariableDeclarationList.push_back(*i);
 #ifdef DO_NOT_FILTER_VARS
@@ -958,7 +955,7 @@ const EState* CodeThorn::Analyzer::addToWorkListIfNew(EState estate) {
 void CodeThorn::Analyzer::setElementSize(VariableId variableId, SgType* elementType) {
   int typeSize=getTypeSizeMapping()->determineTypeSize(elementType);
   //cout<<"DEBUG: setElementSize: variableId name: "<<variableIdMapping.variableName(variableId)<<" typeSize: "<<typeSize<<" of "<<elementType->unparseToString()<<endl;
-  variableIdMapping.setElementSize(variableId,typeSize);
+  variableIdMapping->setElementSize(variableId,typeSize);
 }
 
 // for arrays: number of elements (nested arrays not implemented yet)
@@ -1070,7 +1067,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         return createEState(targetLabel,cs,newPState,cset);
       }
       
-      if(variableIdMapping.hasArrayType(initDeclVarId) && args.getBool("explicit-arrays")==false) {
+      if(variableIdMapping->hasArrayType(initDeclVarId) && args.getBool("explicit-arrays")==false) {
         // in case of a constant array the array (and its members) are not added to the state.
         // they are considered to be determined from the initializer without representing them
         // in the state
@@ -1120,9 +1117,9 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
             SgType* arrayElementType=arrayType->get_base_type();
             setElementSize(initDeclVarId,arrayElementType);
             // only set size from aggregate initializer if not known from type
-            if(variableIdMapping.getNumberOfElements(initDeclVarId)==0) {
+            if(variableIdMapping->getNumberOfElements(initDeclVarId)==0) {
               // TODO: requires a sizeof computation of an aggregate initializer (e.g. {{1,2},{1,2}} == 4)
-               variableIdMapping.setNumberOfElements(initDeclVarId, computeNumberOfElements(decl));
+               variableIdMapping->setNumberOfElements(initDeclVarId, computeNumberOfElements(decl));
             }
             PState newPState=*currentEState.pstate();
             newPState=analyzeSgAggregateInitializer(initDeclVarId, aggregateInitializer,newPState, currentEState);
@@ -1150,13 +1147,13 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
               PState newPState=*currentEState.pstate();
               initializeStringLiteralInState(newPState,stringValNode,initDeclVarId);
               //size_t stringLen=stringValNode->get_value().size();
-              if(variableIdMapping.getNumberOfElements(initDeclVarId)==0) {
+              if(variableIdMapping->getNumberOfElements(initDeclVarId)==0) {
                 VariableId stringLiteralId=getVariableIdMapping()->getStringLiteralVariableId(stringValNode);
                 size_t stringLiteralMemoryRegionSize=getVariableIdMapping()->getNumberOfElements(stringLiteralId);
-                variableIdMapping.setNumberOfElements(initDeclVarId,stringLiteralMemoryRegionSize);
+                variableIdMapping->setNumberOfElements(initDeclVarId,stringLiteralMemoryRegionSize);
                 SAWYER_MESG(logger[TRACE])<<"Determined size of array from literal string memory region size: "<<stringLiteralMemoryRegionSize<<endl;
               } else {
-                SAWYER_MESG(logger[TRACE])<<"Determined size of array from array variable (containing string memory region) size: "<<variableIdMapping.getNumberOfElements(initDeclVarId)<<endl;
+                SAWYER_MESG(logger[TRACE])<<"Determined size of array from array variable (containing string memory region) size: "<<variableIdMapping->getNumberOfElements(initDeclVarId)<<endl;
               }
               SgType* variableType=initializer->get_type(); // for char and wchar
               setElementSize(initDeclVarId,variableType);
@@ -1165,7 +1162,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
             }
           }
           // set type info for initDeclVarId
-          variableIdMapping.setNumberOfElements(initDeclVarId,1); // single variable
+          variableIdMapping->setNumberOfElements(initDeclVarId,1); // single variable
           SgType* variableType=initializer->get_type();
           setElementSize(initDeclVarId,variableType);
           
@@ -1208,7 +1205,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         if(arrayType) {
           SgType* arrayElementType=arrayType->get_base_type();
           setElementSize(initDeclVarId,arrayElementType);
-          int numElements=variableIdMapping.getArrayElementCount(arrayType);
+          int numElements=variableIdMapping->getArrayElementCount(arrayType);
           if(numElements==0) {
             SAWYER_MESG(logger[TRACE])<<"Number of elements in array is 0 (from variableIdMapping) - evaluating expression"<<endl;
             std::vector<SgExpression*> arrayDimExps=SageInterface::get_C_array_dimensions(*arrayType);
@@ -1228,31 +1225,31 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
             SAWYER_MESG(logger[TRACE])<<"Computed array dimension: "<<arrayDimAVal.toString()<<endl;
             if(arrayDimAVal.isConstInt()) {
               numElements=arrayDimAVal.getIntValue();
-              variableIdMapping.setNumberOfElements(initDeclVarId,numElements);
+              variableIdMapping->setNumberOfElements(initDeclVarId,numElements);
             } else {
               // TODO: size of array remains 1?
             }
           } else {
-            variableIdMapping.setNumberOfElements(initDeclVarId,numElements);
+            variableIdMapping->setNumberOfElements(initDeclVarId,numElements);
           }
         } else {
           // set type info for initDeclVarId
-          variableIdMapping.setNumberOfElements(initDeclVarId,1); // single variable
+          variableIdMapping->setNumberOfElements(initDeclVarId,1); // single variable
           SgType* variableType=initName->get_type();
           setElementSize(initDeclVarId,variableType);
         }
         
         PState newPState=*currentEState.pstate();
-        if(variableIdMapping.hasArrayType(initDeclVarId)) {
+        if(variableIdMapping->hasArrayType(initDeclVarId)) {
           // add default array elements to PState
-          size_t length=variableIdMapping.getNumberOfElements(initDeclVarId);
+          size_t length=variableIdMapping->getNumberOfElements(initDeclVarId);
           for(size_t elemIndex=0;elemIndex<length;elemIndex++) {
             AbstractValue newArrayElementId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
             // set default init value
             newPState.writeTopToMemoryLocation(newArrayElementId);
           }
 
-        } else if(variableIdMapping.hasClassType(initDeclVarId)) {
+        } else if(variableIdMapping->hasClassType(initDeclVarId)) {
           // create only address start address of struct (on the
           // stack) alternatively addresses for all member variables
           // can be created; however, a member var can only be
@@ -1261,9 +1258,9 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
           // value is actually uninitialized and therefore is
           // implicitly bot.
           AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
-          SAWYER_MESG(logger[TRACE])<<"declaration of struct: "<<variableIdMapping.getVariableDeclaration(initDeclVarId)->unparseToString()<<" : "<<pointerVal.toString(getVariableIdMapping())<<endl;
+          SAWYER_MESG(logger[TRACE])<<"declaration of struct: "<<variableIdMapping->getVariableDeclaration(initDeclVarId)->unparseToString()<<" : "<<pointerVal.toString(getVariableIdMapping())<<endl;
           newPState.writeTopToMemoryLocation(pointerVal);
-        } else if(variableIdMapping.hasPointerType(initDeclVarId)) {
+        } else if(variableIdMapping->hasPointerType(initDeclVarId)) {
           // create pointer value and set it to top (=any value possible (uninitialized pointer variable declaration))
           AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
           newPState.writeTopToMemoryLocation(pointerVal);
@@ -1271,7 +1268,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
           // set it to top (=any value possible (uninitialized)) for
           // all remaining cases. It will become an error-path once
           // all cases are addressed explicitly above.
-          SAWYER_MESG(logger[TRACE])<<"declaration of variable (other): "<<variableIdMapping.getVariableDeclaration(initDeclVarId)->unparseToString()<<endl;
+          SAWYER_MESG(logger[TRACE])<<"declaration of variable (other): "<<variableIdMapping->getVariableDeclaration(initDeclVarId)->unparseToString()<<endl;
           newPState.writeTopToMemoryLocation(initDeclVarId);
         }
         return createEState(targetLabel,cs,newPState,cset);
@@ -1512,7 +1509,8 @@ void CodeThorn::Analyzer::initializeStringLiteralsInState(PState& initialPState)
 }
 
 void CodeThorn::Analyzer::initializeVariableIdMapping(SgProject* project) {
-  variableIdMapping.computeVariableSymbolMapping(project);
+  variableIdMapping->computeVariableSymbolMapping(project);
+  variableIdMapping->computeTypeSizes();
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   setTypeSizeMapping(&_typeSizeMapping);
   // compute size for all variables
@@ -1540,7 +1538,7 @@ void CodeThorn::Analyzer::initializeCommandLineArgumentsInState(PState& initialP
   VariableId argvVarId;
   size_t mainFunArgNr=0;
   for(SgInitializedNamePtrList::iterator i=initNamePtrList.begin();i!=initNamePtrList.end();++i) {
-    VariableId varId=variableIdMapping.variableId(*i);
+    VariableId varId=variableIdMapping->variableId(*i);
     if(functionName=="main" && initNamePtrList.size()==2) {
       //string varName=getVariableIdMapping()->variableName(varId)) {
       switch(mainFunArgNr) {
@@ -1568,19 +1566,19 @@ void CodeThorn::Analyzer::initializeCommandLineArgumentsInState(PState& initialP
     if(_commandLineOptions.size()>0) {
       // create command line option array argv and argc in initial pstate if argv and argc exist in the program
       int argc=0;
-      VariableId argvArrayMemoryId=variableIdMapping.createAndRegisterNewMemoryRegion("$argvmem",(int)_commandLineOptions.size());
+      VariableId argvArrayMemoryId=variableIdMapping->createAndRegisterNewMemoryRegion("$argvmem",(int)_commandLineOptions.size());
       AbstractValue argvAddress=AbstractValue::createAddressOfArray(argvArrayMemoryId);
       initialPState.writeToMemoryLocation(argvVarId,argvAddress);
       for (auto argvElem:_commandLineOptions) {
 	SAWYER_MESG(logger[TRACE])<<"INIT: Initial state: "
-		     <<variableIdMapping.variableName(argvVarId)<<"["<<argc+1<<"]: "
+		     <<variableIdMapping->variableName(argvVarId)<<"["<<argc+1<<"]: "
 		     <<argvElem<<endl;
 	int regionSize=(int)string(argvElem).size();
 	SAWYER_MESG(logger[TRACE])<<"argv["<<argc+1<<"] size: "<<regionSize<<endl;
 	
 	stringstream memRegionName;
 	memRegionName<<"$argv"<<argc<<"mem";
-	VariableId argvElemArrayMemoryId=variableIdMapping.createAndRegisterNewMemoryRegion(memRegionName.str(),regionSize);
+	VariableId argvElemArrayMemoryId=variableIdMapping->createAndRegisterNewMemoryRegion(memRegionName.str(),regionSize);
 	AbstractValue argvElemAddress=AbstractValue::createAddressOfArray(argvElemArrayMemoryId);
 	initialPState.writeToMemoryLocation(AbstractValue::createAddressOfArrayElement(argvVarId,argc),argvElemAddress);
 	
@@ -1707,20 +1705,20 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
     SAWYER_MESG(logger[TRACE])<< globalVars.size()<<endl;
 
 #if 1
-    // do not use usedVariablesInsideFunctions(project,&variableIdMapping); (on full C)
+    // do not use usedVariablesInsideFunctions(project,variableIdMapping->; (on full C)
     // this will not filter any variables
     VariableIdSet setOfUsedVars;
 #else
-    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
+    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,variableIdMapping);
 #endif
     SAWYER_MESG(logger[TRACE])<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-      VariableId globalVarId=variableIdMapping.variableId(*i);
+      VariableId globalVarId=variableIdMapping->variableId(*i);
       // TODO: investigate why array variables get filtered (but should not)
       if(true || (setOfUsedVars.find(globalVarId)!=setOfUsedVars.end() && _variablesToIgnore.find(globalVarId)==_variablesToIgnore.end())) {
-        globalVarName2VarIdMapping[variableIdMapping.variableName(variableIdMapping.variableId(*i))]=variableIdMapping.variableId(*i);
+        globalVarName2VarIdMapping[variableIdMapping->variableName(variableIdMapping->variableId(*i))]=variableIdMapping->variableId(*i);
         estate=analyzeVariableDeclaration(*i,estate,estate.label());
       } else {
         filteredVars++;
@@ -1738,7 +1736,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   ROSE_ASSERT(initialEState);
   variableValueMonitor.init(initialEState);
   addToWorkList(initialEState);
-  SAWYER_MESG(logger[TRACE]) << "INIT: start state (extremal value): "<<initialEState->toString(&variableIdMapping)<<endl;
+  SAWYER_MESG(logger[TRACE]) << "INIT: start state (extremal value): "<<initialEState->toString(variableIdMapping)<<endl;
 
   // initialize summary states map for abstract model checking mode
   initializeSummaryStates(initialPStateStored,emptycsetstored);
@@ -1792,12 +1790,12 @@ PState CodeThorn::Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhs
     if(currentPState.varExists(rhsVarId)) {
       rhsIntVal=currentPState.readFromMemoryLocation(rhsVarId);
     } else {
-      if(variableIdMapping.hasArrayType(rhsVarId) && args.getBool("explicit-arrays")==false) {
+      if(variableIdMapping->hasArrayType(rhsVarId) && args.getBool("explicit-arrays")==false) {
         // in case of an array the id itself is the pointer value
         ROSE_ASSERT(rhsVarId.isValid());
         rhsIntVal=rhsVarId.getIdCode();
       } else {
-        SAWYER_MESG(logger[WARN])<< "access to variable "<<variableIdMapping.uniqueVariableName(rhsVarId)<< " id:"<<rhsVarId.toString()<<" on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
+        SAWYER_MESG(logger[WARN])<< "access to variable "<<variableIdMapping->uniqueVariableName(rhsVarId)<< " id:"<<rhsVarId.toString()<<" on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
         rhsIntVal=CodeThorn::Top();
         isRhsIntVal=true; 
       }
@@ -1806,12 +1804,12 @@ PState CodeThorn::Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhs
   PState newPState=currentPState;
 
   // handle pointer assignment
-  if(variableIdMapping.hasPointerType(lhsVar)) {
+  if(variableIdMapping->hasPointerType(lhsVar)) {
     //cout<<"DEBUG: "<<lhsVar.toString()<<" = "<<rhs->unparseToString()<<" : "<<astTermWithNullValuesToString(rhs)<<" : ";
     //cout<<"LHS: pointer variable :: "<<lhsVar.toString()<<endl;
     if(SgVarRefExp* rhsVarExp=isSgVarRefExp(rhs)) {
-      VariableId rhsVarId=variableIdMapping.variableId(rhsVarExp);
-      if(variableIdMapping.hasArrayType(rhsVarId)) {
+      VariableId rhsVarId=variableIdMapping->variableId(rhsVarExp);
+      if(variableIdMapping->hasArrayType(rhsVarId)) {
         //cout<<" of array type.";
         // we use the id-code as int-value (points-to info)
         int idCode=rhsVarId.getIdCode();
@@ -2209,9 +2207,9 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
     SgInitializedName* formalParameterName=*i;
     ROSE_ASSERT(formalParameterName);
     // test formal parameter (instead of argument type) to allow for expressions in arguments
-    VariableId formalParameterVarId=variableIdMapping.variableId(formalParameterName);
+    VariableId formalParameterVarId=variableIdMapping->variableId(formalParameterName);
     AbstractValue evalResultValue;
-    if(variableIdMapping.hasClassType(formalParameterVarId)) {
+    if(variableIdMapping->hasClassType(formalParameterVarId)) {
       if(getOptionOutputWarnings()) {
         cout<<"Warning: imprecision: "<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of class/Struct/Union types per value as function parameters (assuming top)."<<endl;
       }
@@ -2364,7 +2362,7 @@ std::list<EState> CodeThorn::Analyzer::transferReturnStmt(Edge edge, const EStat
     VariableId returnVarId;
 #pragma omp critical(VAR_ID_MAPPING)
     {
-      returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+      returnVarId=variableIdMapping->createUniqueTemporaryVariableId(string("$return"));
     }
     PState newPState=analyzeAssignRhs(currentPState,
                                       returnVarId,
@@ -2440,7 +2438,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
     VariableId returnVarId;
 #pragma omp critical(VAR_ID_MAPPING)
     {
-      returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+      returnVarId=variableIdMapping->createUniqueTemporaryVariableId(string("$return"));
     }
 
     if(newPState.varExists(returnVarId)) {
@@ -2479,7 +2477,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
     VariableId returnVarId;
 #pragma omp critical(VAR_ID_MAPPING)
     {
-      returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+      returnVarId=variableIdMapping->createUniqueTemporaryVariableId(string("$return"));
     }
 
     if(newPState.varExists(returnVarId)) {
@@ -2505,7 +2503,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
     VariableId returnVarId;
 #pragma omp critical(VAR_ID_MAPPING)
     {
-      returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+      returnVarId=variableIdMapping->createUniqueTemporaryVariableId(string("$return"));
     }
     // no effect if $return does not exist
     newPState.deleteVar(returnVarId);
@@ -2530,9 +2528,9 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionExit(Edge edge, const ESt
     // ad 2)
     ConstraintSet cset=*currentEState.constraints();
     PState newPState=*(currentEState.pstate());
-    VariableIdMapping::VariableIdSet localVars=variableIdMapping.determineVariableIdsOfVariableDeclarations(varDecls);
+    VariableIdMapping::VariableIdSet localVars=variableIdMapping->determineVariableIdsOfVariableDeclarations(varDecls);
     SgInitializedNamePtrList& formalParamInitNames=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
-    VariableIdMapping::VariableIdSet formalParams=variableIdMapping.determineVariableIdsOfSgInitializedNames(formalParamInitNames);
+    VariableIdMapping::VariableIdSet formalParams=variableIdMapping->determineVariableIdsOfSgInitializedNames(formalParamInitNames);
     VariableIdMapping::VariableIdSet vars=localVars+formalParams;
     set<string> names=variableIdsToVariableNames(vars);
 
@@ -2744,7 +2742,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallExternal(Edge edge, c
       VariableId returnVarId;
 #pragma omp critical(VAR_ID_MAPPING)
       {
-        returnVarId=variableIdMapping.createUniqueTemporaryVariableId(string("$return"));
+        returnVarId=variableIdMapping->createUniqueTemporaryVariableId(string("$return"));
       }
       newPState.writeToMemoryLocation(returnVarId,evalResult2.result);
       //estate2.setLabel(edge.target());
@@ -2952,23 +2950,23 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
       EState estate=(*i).estate;
       PState newPState=*estate.pstate();
       ConstraintSet cset=*estate.constraints();
-      if(variableIdMapping.hasClassType(lhsVar)) {
+      if(variableIdMapping->hasClassType(lhsVar)) {
         // assignments to struct variables are not supported yet (this test does not detect s1.s2 (where s2 is a struct, see below)).
         logger[WARN]<<"assignment of structs (copy constructor) is not supported yet. Target update ignored! (unsound)"<<endl;
-      } else if(variableIdMapping.hasIntegerType(lhsVar)) {
+      } else if(variableIdMapping->hasIntegerType(lhsVar)) {
         newPState.writeToMemoryLocation(lhsVar,(*i).result);
-      } else if(variableIdMapping.hasFloatingPointType(lhsVar)) {
+      } else if(variableIdMapping->hasFloatingPointType(lhsVar)) {
         newPState.writeToMemoryLocation(lhsVar,(*i).result);
-      } else if(variableIdMapping.hasBoolType(lhsVar)) {
+      } else if(variableIdMapping->hasBoolType(lhsVar)) {
         newPState.writeToMemoryLocation(lhsVar,(*i).result);
-      } else if(variableIdMapping.hasPointerType(lhsVar)) {
+      } else if(variableIdMapping->hasPointerType(lhsVar)) {
         // we assume here that only arrays (pointers to arrays) are assigned
         //newPState[lhsVar]=(*i).result;
         newPState.writeToMemoryLocation(lhsVar,(*i).result);
       } else {
         logger[ERROR]<<SgNodeHelper::lineColumnNodeToString(nextNodeToAnalyze2)<<endl;
-        logger[ERROR]<<"Unknown type on LHS side of assignment: TYPE: "<<variableIdMapping.getType(lhsVar)->unparseToString()<<endl;
-        logger[ERROR]<<"TYPE SGNODE: "<<variableIdMapping.getType(lhsVar)->class_name()<<endl;
+        logger[ERROR]<<"Unknown type on LHS side of assignment: TYPE: "<<variableIdMapping->getType(lhsVar)->unparseToString()<<endl;
+        logger[ERROR]<<"TYPE SGNODE: "<<variableIdMapping->getType(lhsVar)->class_name()<<endl;
         exit(1);
       }
 #if 0
@@ -3006,7 +3004,7 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
       // TODO: assignments in index computations of ignored array ref
       // see ExprAnalyzer.C: case V_SgPntrArrRefExp:
       // since nothing can change (because of being ignored) state remains the same
-      VariableIdMapping* _variableIdMapping=&variableIdMapping;
+      VariableIdMapping* _variableIdMapping=variableIdMapping;
       EState estate=(*i).estate;
       PState oldPState=*estate.pstate();
       ConstraintSet oldcset=*estate.constraints();
@@ -3264,6 +3262,19 @@ list<EState> CodeThorn::Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyz
   return newEStateList;
 }
 
+void CodeThorn::Analyzer::setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
+CodeThorn::CFAnalysis* CodeThorn::Analyzer::getCFAnalyzer() const { return cfanalyzer; }
+
+VariableIdMappingExtended* CodeThorn::Analyzer::getVariableIdMapping() { return variableIdMapping; }
+CodeThorn::FunctionIdMapping* CodeThorn::Analyzer::getFunctionIdMapping() { return &functionIdMapping; }
+CodeThorn::FunctionCallMapping* CodeThorn::Analyzer::getFunctionCallMapping() { return &functionCallMapping; }
+CodeThorn::Flow* CodeThorn::Analyzer::getFlow() { return &flow; }
+CodeThorn::EStateSet* CodeThorn::Analyzer::getEStateSet() { return &estateSet; }
+CodeThorn::PStateSet* CodeThorn::Analyzer::getPStateSet() { return &pstateSet; }
+TransitionGraph* CodeThorn::Analyzer::getTransitionGraph() { return &transitionGraph; }
+ConstraintSetMaintainer* CodeThorn::Analyzer::getConstraintSetMaintainer() { return &constraintSetMaintainer; }
+std::list<FailedAssertion> CodeThorn::Analyzer::getFirstAssertionOccurences(){return _firstAssertionOccurences;}
+
 void CodeThorn::Analyzer::setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping) {
   AbstractValue::setTypeSizeMapping(typeSizeMapping);
 }
@@ -3276,45 +3287,11 @@ void CodeThorn::Analyzer::setCommandLineOptions(vector<string> clOptions) {
   _commandLineOptions=clOptions;
 }
 
-#if 0
-list<SgNode*> CodeThorn::Analyzer::listOfAssertNodes(SgProject* root) {
-  list<SgNode*> assertNodes;
-  list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(root);
-  for(list<SgFunctionDefinition*>::iterator i=funDefs.begin();
-      i!=funDefs.end();
-      ++i) {
-    RoseAst ast(*i);
-    for(RoseAst::iterator j=ast.begin();j!=ast.end();++j) {
-      if(SgNodeHelper::Pattern::matchAssertExpr(*j)) {
-        assertNodes.push_back(*j);
-      }
-    }
-  }
-  return assertNodes;
+bool CodeThorn::Analyzer::isLTLRelevantEState(const EState* estate) {
+  ROSE_ASSERT(estate);
+  return ((estate)->io.isStdInIO()
+          || (estate)->io.isStdOutIO()
+          || (estate)->io.isStdErrIO()
+          || (estate)->io.isFailedAssertIO());
 }
 
-size_t CodeThorn::Analyzer::memorySizeContentEStateWorkLists() {
-  size_t mem = 0;
-#pragma omp critical(ESTATEWL)
-  {
-    for (EStateWorkList::iterator i=estateWorkListOne.begin(); i!=estateWorkListOne.end(); ++i) {
-      mem+=sizeof(*i);
-    }
-    for (EStateWorkList::iterator i=estateWorkListTwo.begin(); i!=estateWorkListTwo.end(); ++i) {
-      mem+=sizeof(*i);
-    }
-  }
-  return mem;
-}
-
-set<const EState*> CodeThorn::Analyzer::transitionSourceEStateSetOfLabel(Label lab) {
-  set<const EState*> estateSet;
-  for(TransitionGraph::iterator j=transitionGraph.begin();j!=transitionGraph.end();++j) {
-    if((*j)->source->label()==lab)
-      estateSet.insert((*j)->source);
-  }
-  return estateSet;
-}
-
-
-#endif
