@@ -265,7 +265,20 @@ AC_DEFUN([GET_CXX_VERSION_MACROS],[
             fi
         fi
     done
+    
+    if test "$CXX_COMPILER_VENDOR" = clang; then
+    for symbol in __clang__ __clang_major__ __clang_minor__ __clang_patchlevel__; do
+        value="$(sed -ne "s/#define $symbol //p" <$tmp_output)"
+        if test "$value" != ""; then
+            if test "$CXX_VERSION_MACROS" = ""; then
+                CXX_VERSION_MACROS="-D$symbol=$value"
+            else
+                CXX_VERSION_MACROS="$CXX_VERSION_MACROS -D$symbol=$value"
+            fi
+        fi
+    done
 
+    fi    
     rm -f $tmp_input $tmp_output
 ])
 

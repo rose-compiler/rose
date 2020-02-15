@@ -368,7 +368,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_80.c \
      test2014_81.c \
      test2014_82.c \
-     test2014_83.c \
      test2014_84.c \
      test2014_85.c \
      test2014_86.c \
@@ -377,7 +376,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_89.c \
      test2014_91.c \
      test2014_92.c \
-     test2014_93.c \
      test2014_94.c \
      test2014_95.c \
      test2014_100.c \
@@ -891,6 +889,8 @@ if !OS_MACOSX
       test2013_113.c \
       test2014_12.c \
       test2014_13.c \
+      test2014_83.c \
+      test2014_93.c \
       test2015_34.c \
       test2012_09.c
 else
@@ -910,6 +910,8 @@ else
       test2013_113.c \
       test2014_12.c \
       test2014_13.c \
+      test2014_83.c \
+      test2014_93.c \
       test2015_34.c \
       test2012_09.c
 endif
@@ -1208,8 +1210,10 @@ print:
 check-local: check-pthread.passed
 	@echo "Tests for C."
 	@$(MAKE) $(PASSING_TEST_Source_passed)
+if !OS_MACOSX
 	@$(MAKE) test_link_using_asm_symbol_injection
 	@$(MAKE) test_link_using_alias_attribute
+endif
 	@$(MAKE) test_build_generated_file_in_same_directory_as_input_file.passed
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed

@@ -32,24 +32,54 @@ namespace CodeThorn {
       //          (normalized programs has only if-goto constructs as control
       //          statements) - not fully supported yet)
       void configureLevel(unsigned int level);
+
       // allows to turn off all normalizations (at once)
       bool normalization=true;
+
       // only normalize expressions with function calls
       bool restrictToFunCallExpressions=true;
+
       // transforms single statements in if/while/do-while into blocks with one statement
+      // transformation: if(Cond) S; => if(Cond) { S }
       bool normalizeSingleStatements=true;
+
       // transforms all labels into separate statements
+      // each label becomes a separate statement (attached to an empty statement)
+      // Lab: S; => Lab:; S; 
       bool normalizeLabels=true;
+
       // replace for-stmt with while-stmt
+      // for(Init;Cond;Inc) S; => { Init; while(Cond) { S; Inc; } } 
       bool eliminateForStatements=true;
+
       // replace while with if/goto
-      bool eliminateWhileStatements=false; 
-      // eliminate operators '||', '&&' (not supported yet)
+      bool eliminateWhileStatements=false; // currently not used
+
+      // eliminate operators '||', '&&'
+      // logical binary operators are transformed into nested if-statements with temporary variable for boolean result
       bool eliminateShortCircuitOperators=false;
-      // eliminate operator '?' (not supported yet)
+
+      // eliminate operator '?'
+      // transformed into if-statement with result variable
       const bool eliminateConditionalExpressionOp=false;
+      
+      // if (InitStmt; expr;) S; => { InitStmt; if (expr) S; }
+      // switch (InitStmt; expr;) { S; } => { InitStmt; switch (expr) { S; } }
+      const bool hoistBranchInitStatements=true;
+
+      // if(Cond) S; => { T t=Cond; if(t) S } where T has type of Cond.
+      // do {...} while (Cond); => do {...; T t=Cond; if(t) break; } where T has type of Cond.
+      // alternative: while(C) {...} ==> T t=C; while(t) { ...; t=C; } (not implemented because it duplicates condition)
+      // while(Cond) {...} => while(1) { T t=Cond; if(t) break; ...} where T has type of Cond.
+      // alternative: do {...} while (C) ==> do {...; T t=C; } while(t); (not implemented because it violates C/C++ scoping rules)
       bool hoistConditionExpressions=true;
+
+      // normalize expressions such that for every interemdiate result
+      // a temporary variable is declared and its initializer is the
+      // expression (operating on temporaries representing the results
+      // of subexpressions).
       bool normalizeExpressions=true;
+
       bool normalizeVariableDeclarations=false;
       bool normalizeVariableDeclarationsWithFunctionCalls=true;
 
@@ -58,6 +88,7 @@ namespace CodeThorn {
       // last initialization (or assignment) of the normalized
       // expression.
       // requires: normalizeVariableDeclarations==true
+      // E => { normalized(E) }
       bool encapsulateNormalizedExpressionsInBlocks=true;
 
       // transforms break in switch to gotos. This can cause unparsed
@@ -81,11 +112,15 @@ namespace CodeThorn {
     // type for tmp var counter
     typedef uint32_t TmpVarNrType;
 
+    // normalize all expressions (and perform all implied
+    // normlizations; 
+    void normalizeAst(SgNode* root);
+
     // applies normalization on entire AST with normalization level 0-3.
     // level 0: no normalization
-    // level 1: all expressions with a function call (and all implied normalizations)
+    // (experimental: level 1: normalize only expressions with a function call (and all implied normalizations))
     // level 2: all expressions (and all implied normalizations)
-    // level 3: all expresisons and lowering of all control constructs (only if+gotos remain)
+    // (experimental: level 3: all expresisons and lowering of all control constructs (only if+gotos remain))
     void normalizeAst(SgNode* root, unsigned int normalizationLevel);
 
     static void setLabelPrefix(std::string prefix);
@@ -113,7 +148,7 @@ namespace CodeThorn {
 
   protected:
     // assumes correctly configured options (invoked by normalizeAst(root,level))
-    void normalizeAst(SgNode* root);
+    void normalizeAstPhaseByPhase(SgNode* root);
 
     /* normalize all label stmts in AST. Every label is attached to an
      * empty statement (instead to S). Inserting a statement before S
@@ -136,11 +171,21 @@ namespace CodeThorn {
     // requires: normalizeSingleStatementsToBlocks()
 
   private:
+    // used to exclude templates from normalization (not excluding template instantiations!)
+    bool isTemplateInstantiationNode(SgNode* node);
+    SgClassDeclaration* isSpecialization(SgNode* node);
+    bool isTemplateNode(SgNode* node);
+
     /* normalize all Expressions in AST. The original variables remain
      * in the program and are assign the last value of the sequence of
      * operations of an expression. */
     void normalizeExpressionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions=false);
 
+
+    // moves variable declarations (TODO: and C++17 InitStatements) out of
+    //   branch (i.e., if and switch) conditions.
+    void hoistBranchInitStatementsInAst(SgNode* node);
+    
     // moves conditions out of if and switch constructs
     void hoistConditionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions=false);
     // moves conditions out of if and switch constructs. Declares new
