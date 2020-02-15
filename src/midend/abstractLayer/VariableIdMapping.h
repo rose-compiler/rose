@@ -61,7 +61,7 @@ class VariableIdMapping {
     
     // overrides inherited get_name (we do not use a declaration)
     SgName get_name() const;
-  private:
+  protected:
     std::string _tmpName;
   };
 
@@ -141,7 +141,7 @@ class VariableIdMapping {
   // special case.
   static bool isAnonymousBitfield(SgInitializedName* initName);
 
- private:
+ protected:
   struct VariableIdInfo {
     size_t numberOfElements;
     size_t elementSize; // in bytes
