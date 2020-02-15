@@ -5,7 +5,7 @@
 #include "Jovial_to_ROSE_translation.h"
 #include <iostream>
 
-#define PRINT_ATERM_TRAVERSAL 1
+#define PRINT_ATERM_TRAVERSAL 0
 #define PRINT_SOURCE_POSITION 0
 
 using namespace ATermSupport;
@@ -719,7 +719,6 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUntype
    SgExpression* sg_preset = nullptr;
 
    SgUntypedType* declared_type = NULL;
-   SgUntypedExpression*  preset = NULL;
    SgUntypedVariableDeclaration* variable_decl = NULL;
    SgUntypedInitializedNameList* var_name_list = NULL;
    SgUntypedInitializedName*  initialized_name = NULL;
@@ -775,7 +774,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, SgUntype
          decl_list->get_decl_list().push_back(enum_decl);
       } else return ATfalse;
 
-      if (traverse_ItemPreset(t_preset, sg_preset, preset)) {
+      if (traverse_ItemPreset(t_preset, sg_preset)) {
          // MATCHED ItemPreset
       } else return ATfalse;
    }
@@ -2610,7 +2609,6 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, SgUn
    // DELETE_ME
       SgUntypedType* declared_type = NULL;
       SgUntypedExprListExpression* attr_list = NULL;
-      SgUntypedExpression* preset = NULL;
 
       attr_list = new SgUntypedExprListExpression(General_Language_Translation::e_type_modifier_list);
       ROSE_ASSERT(attr_list);
@@ -2635,7 +2633,7 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, SgUn
          decl_list->get_decl_list().push_back(enum_decl);
       } else return ATfalse;
 
-      if (traverse_ItemPreset(t_preset, sg_preset, preset)) {
+      if (traverse_ItemPreset(t_preset, sg_preset)) {
          // MATCHED ItemPreset
       } else return ATfalse;
    }
@@ -2995,26 +2993,22 @@ ATbool ATermToSageJovialTraversal::traverse_OptAllocationSpecifier(ATerm term, S
 //========================================================================================
 // 2.1.6 INITIALIZATION OF DATA OBJECTS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_ItemPreset(ATerm term, SgExpression* &sg_preset, SgUntypedExpression* &preset)
+ATbool ATermToSageJovialTraversal::traverse_ItemPreset(ATerm term, SgExpression* &preset)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ItemPreset: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_preset_value;
-
-   sg_preset = nullptr;
+   preset = nullptr;
 
    if (ATmatch(term, "no-item-preset()")) {
       // MATCHED no-item-preset
    }
    else if (ATmatch(term, "ItemPreset(<term>)", &t_preset_value)) {
-      if (traverse_ItemPresetValue(t_preset_value, sg_preset, preset)) {
+      if (traverse_ItemPresetValue(t_preset_value, preset)) {
          // MATCHED ItemPresetValue
-         if (!preset) {
-            cerr << "WARNING UNIMPLEMENTED: ItemPresetValue \n";
-            return ATtrue;
-         }
+         //DONE cerr << "WARNING UNIMPLEMENTED: ItemPresetValue \n";
          ROSE_ASSERT(preset);
       } else return ATfalse;
    }
@@ -3023,7 +3017,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemPreset(ATerm term, SgExpression*
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_OptItemPresetValue(ATerm term, SgExpression* &sg_preset, SgUntypedExpression* &preset)
+ATbool ATermToSageJovialTraversal::traverse_OptItemPresetValue(ATerm term, SgExpression* &preset)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptItemPresetValue: %s\n", ATwriteToString(term));
@@ -3032,7 +3026,7 @@ ATbool ATermToSageJovialTraversal::traverse_OptItemPresetValue(ATerm term, SgExp
    if (ATmatch(term, "no-item-preset-value()")) {
       // MATCHED no-item-preset-value
    }
-   else if (traverse_ItemPresetValue(term, sg_preset, preset)) {
+   else if (traverse_ItemPresetValue(term, preset)) {
       // MATCHED ItemPresetValue
    }
    else return ATfalse;
@@ -3040,18 +3034,21 @@ ATbool ATermToSageJovialTraversal::traverse_OptItemPresetValue(ATerm term, SgExp
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_ItemPresetValue(ATerm term, SgExpression* &sg_preset, SgUntypedExpression* &preset)
+ATbool ATermToSageJovialTraversal::traverse_ItemPresetValue(ATerm term, SgExpression* &preset)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ItemPresetValue: %s\n", ATwriteToString(term));
 #endif
 
+//DELETE_ME
+   SgUntypedExpression* ut_preset = nullptr;
+
    // CompileTimeFormula -> ItemPresetValue
-   if (traverse_Formula(term, sg_preset, preset)) {
+   if (traverse_Formula(term, preset, ut_preset)) {
       // MATCHED CompileTimeFormula
    }
    // LocFunction -> ItemPresetValue
-   else if (traverse_LocFunction(term, sg_preset, preset)) {
+   else if (traverse_LocFunction(term, preset, ut_preset)) {
       // MATCHED LocFunction
    }
    else return ATfalse;
@@ -3274,8 +3271,11 @@ ATbool ATermToSageJovialTraversal::traverse_PresetValuesOption(ATerm term, SgExp
 
    ATerm t_rep_count, t_item_preset_value;
 
+   expr = NULL;
+   sg_expr = nullptr;
+
    if (ATmatch(term, "PresetValuesOption(<term>)", &t_item_preset_value)) {
-      if (traverse_OptItemPresetValue(t_item_preset_value, sg_expr, expr)) {
+      if (traverse_OptItemPresetValue(t_item_preset_value, sg_expr)) {
          // MATCHED OptItemPresetValue
       } else return ATfalse;
    }
@@ -6211,12 +6211,13 @@ ATbool ATermToSageJovialTraversal::traverse_NumericFormula(ATerm term, SgExpress
          // MATCHED NumericTerm
       } else return ATfalse;
       if (op_enum == General_Language_Translation::e_operator_unary_minus) {
-        expr = new SgUntypedUnaryOperator(op_enum, "-", expr);
-        setSourcePosition(expr, t_sign);
+        sg_expr = SageBuilder::buildMinusOp_nfi(sg_expr, SgUnaryOp::prefix);
+        setSourcePosition(sg_expr, term);
       }
       else if (op_enum == General_Language_Translation::e_operator_unary_plus) {
-        expr = new SgUntypedUnaryOperator(op_enum, "+", expr);
-        setSourcePosition(expr, t_sign);
+        sg_expr = new SgUnaryAddOp(sg_expr, nullptr);
+        ROSE_ASSERT(sg_expr != nullptr);
+        setSourcePosition(sg_expr, term);
       }
    }
 
@@ -6275,18 +6276,12 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
    sg_expr = nullptr;
 
    if (ATmatch(term, "IntegerLiteral(<str>)", &literal)) {
-      type = UntypedBuilder::buildType(SgUntypedType::e_int);
-      expr_enum = Jovial_ROSE_Translation::e_literalExpression;
-      expr = new SgUntypedValueExpression(expr_enum,literal,type);
-      ROSE_ASSERT(expr);
-      setSourcePosition(expr, term);
-
-   // Begin SageTreeBuilder
       sg_expr = SageBuilder::buildIntVal_nfi(std::string(literal));
+      setSourcePosition(sg_expr, term);
    }
 
-   else if (traverse_FixedOrFloatingLiteral(term, sg_expr, expr)) {
-         //FixedOrFloatingLiteral
+   else if (traverse_FixedOrFloatingLiteral(term, sg_expr)) {
+         // MATCHED FixedOrFloatingLiteral
    }
 
    else if (traverse_NumericMachineParameter(term, sg_expr, expr)) {
@@ -6386,16 +6381,18 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
 
    else return ATfalse;
 
-// TODO FIXME (temporarily return integer literal expression "13")
-   if (expr == NULL) {
+// DELETE_ME (temporarily return integer literal expression "54321")
+   if (sg_expr == nullptr) {
       cerr << "WARNING UNIMPLEMENTED: NumericPrimary - expr is null \n";
+#if 0
       SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_int);
       Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_literalExpression;
-      expr = new SgUntypedValueExpression(expr_enum,"13",type);
+      expr = new SgUntypedValueExpression(expr_enum,"54321",type);
       setSourcePosition(expr, term);
+#endif
    }
 
-   ROSE_ASSERT(expr);
+   ROSE_ASSERT(sg_expr);
 
    return ATtrue;
 }
@@ -6474,6 +6471,9 @@ ATbool ATermToSageJovialTraversal::traverse_NumericFactor(ATerm term, SgExpressi
 
    else return ATfalse;
 
+// DELETE_ME
+   expr = nullptr;
+
    return ATtrue;
 }
 
@@ -6509,6 +6509,10 @@ ATbool ATermToSageJovialTraversal::traverse_ExponentiationOp(ATerm term, SgExpre
    //   }
 
    else return ATfalse;
+
+// DELETE_ME
+   expr = nullptr;
+   ROSE_ASSERT(sg_expr != nullptr);
 
    return ATtrue;
 }
@@ -6546,6 +6550,8 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
    SgExpression* sg_continuation = nullptr;
 
    expr = NULL;
+   sg_expr = nullptr;
+
    if (ATmatch(term, "BitFormula(<term>,<term>)", &t_operand, &t_continuation)) {
       if (ATmatch(t_operand, "amb(<term>)", &t_amb)) {
          ATermList tail = (ATermList) ATmake("<term>", t_amb);
@@ -6579,12 +6585,12 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
       } else return ATfalse;
    } else return ATfalse;
 
-   if (!expr) {
+   if (sg_expr == nullptr) {
       cerr << "WARNING UNIMPLEMENTED: BitFormula - BitPrimaryConversion or Dereference\n";
       return ATtrue;
    }
 
-   ROSE_ASSERT(expr != NULL);
+   ROSE_ASSERT(sg_expr != NULL);
 
    return ATtrue;
 }
@@ -6652,7 +6658,7 @@ ATbool ATermToSageJovialTraversal::traverse_LogicalOperand(ATerm term, SgExpress
    expr = NULL;
    if (traverse_BitPrimary(term, sg_expr, expr)) {
       // MATCHED BitPrimary
-      if (!expr) {
+      if (sg_expr == nullptr) {
          cerr << "WARNING UNIMPLEMENTED: LogicalOperand - BitPrimary - probably BitPrimaryConversion\n";
          return ATtrue;
       }
@@ -6662,7 +6668,7 @@ ATbool ATermToSageJovialTraversal::traverse_LogicalOperand(ATerm term, SgExpress
       // MATCHED RelationalExpression
    } else return ATfalse;
 
-   ROSE_ASSERT(expr != NULL);
+   ROSE_ASSERT(sg_expr != NULL);
 
    return ATtrue;
 }
@@ -6676,7 +6682,9 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
    ATerm t_bit;
 
    expr = NULL;
-   if (traverse_BooleanLiteral(term, sg_expr, expr)) {
+   sg_expr = nullptr;
+
+   if (traverse_BooleanLiteral(term, sg_expr)) {
       // MATCHED BooleanLiteral
    }
    else if (ATmatch(term,"BitPrimaryParens(<term>)", &t_bit)) {
@@ -6686,7 +6694,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
       // MATCHED '(' BitFormula ')'
       } else return ATfalse;
    }
-   else if (traverse_BitLiteral(term, sg_expr, expr)) {
+   else if (traverse_BitLiteral(term, sg_expr)) {
       // MATCHED BitLiteral
    }
    else if (traverse_BitConversion(term, sg_expr, expr)) {
@@ -6702,12 +6710,12 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
       // NamedBitConstant              -> BitPrimary {cons("NamedBitConstant")} (rejected in grammar)
       // BitFunctionCall               -> BitPrimary (no cons)
 
-   if (!expr) {
+   if (!sg_expr) {
       cerr << "WARNING UNIMPLEMENTED: BitPrimary - possibly Dereference\n";
       return ATtrue;
    }
 
-   ROSE_ASSERT(expr != NULL);
+   ROSE_ASSERT(sg_expr != NULL);
 
    return ATtrue;
 }
@@ -7826,7 +7834,7 @@ ATbool ATermToSageJovialTraversal::traverse_RelationalOperator(ATerm term, Gener
 // 8.3.1 NUMERIC LITERAL
 //----------------------------------------------------------------------------------------
 
-ATbool ATermToSageJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term, SgExpression* &sg_expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_FixedOrFloatingLiteral: %s\n", ATwriteToString(term));
@@ -7836,8 +7844,7 @@ ATbool ATermToSageJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term, S
    std::string literal, opt_exp;
    char* number;
 
-   SgUntypedType* type;
-   Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_literalExpression;
+   sg_expr = nullptr;
 
 // FractionalForm OptExponent -> RealLiteral
    if (ATmatch(term, "RealLiteralFF(<term>,<term>)", &t_frac_form, &t_opt_exp)) {
@@ -7846,11 +7853,6 @@ ATbool ATermToSageJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term, S
 
          // NOTE: reconstruct the integer, ".", fractional part, exponent into one string
 
-         // TODO - fix this
-         cerr << "WARNING UNIMPLEMENTED: FixedOrFloatingLiteral, RealLiteralFF \n";
-         literal = "13.13";
-
-#if 0
          // integer part
          if (ATmatch(t_num1, "no-number()")) {
             // no integer part
@@ -7879,20 +7881,9 @@ ATbool ATermToSageJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term, S
          else if (traverse_Exponent(t_opt_exp, opt_exp)) {
             literal += opt_exp;
          }
-#endif
 
       }
-
-      if (literal == ".") {
-         cerr << "ERROR in traverse_FixedOrFloatingLiteral, no literal, contains only: " << literal << endl;
-         return ATfalse;
-      }
-
-      type = UntypedBuilder::buildType(SgUntypedType::e_float);
-      expr = new SgUntypedValueExpression(expr_enum,literal,type);
-      setSourcePosition(expr, term);
    }
-
    else if (ATmatch(term, "RealLiteralIE(<term>,<term>)", &t_num1, &t_opt_exp)) {
       if (ATmatch(t_num1, "<str>", &number)) {
          literal += number;
@@ -7901,14 +7892,17 @@ ATbool ATermToSageJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term, S
       if (traverse_Exponent(t_opt_exp, opt_exp)) {
          literal += opt_exp;
       } else return ATfalse;
+   }
+   else return ATfalse;
 
-      type = UntypedBuilder::buildType(SgUntypedType::e_float);
-      expr_enum = Jovial_ROSE_Translation::e_literalExpression;
-      expr = new SgUntypedValueExpression(expr_enum,literal,type);
-      setSourcePosition(expr, term);
+   if (literal == "." || literal.size() < 1) {
+      cerr << "ERROR in traverse_FixedOrFloatingLiteral, no float literal, contains only: " << literal << endl;
+      ROSE_ASSERT(false);
+      return ATfalse;
    }
 
-   else return ATfalse;
+   sg_expr = SageBuilder::buildFloatVal_nfi(literal);
+   setSourcePosition(sg_expr, term);
 
    return ATtrue;
 }
@@ -7954,7 +7948,7 @@ ATbool ATermToSageJovialTraversal::traverse_Exponent(ATerm term, std::string & o
 //========================================================================================
 // 8.3.2 BIT LITERAL
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_BitLiteral(ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_BitLiteral(ATerm term, SgExpression* &expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BitLiteral: %s\n", ATwriteToString(term));
@@ -7969,6 +7963,8 @@ ATbool ATermToSageJovialTraversal::traverse_BitLiteral(ATerm term, SgExpression*
    ATerm t_bead_size, t_bead;
    char * bead_size, *bead;
    std::string literal = "";
+
+   expr = nullptr;
 
    if (ATmatch(term, "BitLiteral(<term>,<term>)", &t_bead_size, &t_bead)) {
       if (ATmatch(t_bead_size, "<str>", &bead_size)) {
@@ -7989,11 +7985,9 @@ ATbool ATermToSageJovialTraversal::traverse_BitLiteral(ATerm term, SgExpression*
       }
 
       literal += "'";
-      SgUntypedType *type = UntypedBuilder::buildType(SgUntypedType::e_bit);
-      Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_literalExpression;
-      expr = new SgUntypedValueExpression(expr_enum, literal, type);
-      setSourcePosition(expr, term);
 
+      expr = SageBuilder::buildIntVal_nfi(0, literal);
+      setSourcePosition(expr, term);
    } else return ATfalse;
 
    ROSE_ASSERT(expr);
@@ -8004,30 +7998,21 @@ ATbool ATermToSageJovialTraversal::traverse_BitLiteral(ATerm term, SgExpression*
 //========================================================================================
 // 8.3.3 BOOLEAN LITERAL
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_BooleanLiteral(ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_BooleanLiteral(ATerm term, SgExpression* &expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BooleanLiteral: %s\n", ATwriteToString(term));
 #endif
 
-   std::string value;
-
-   expr = NULL;
-   sg_expr = nullptr;
+   expr = nullptr;
 
    if (ATmatch(term, "True()")) {
-      // MATCHED TRUE
-      value += "TRUE";
+      expr = SageBuilder::buildBoolValExp(1);
    } else if (ATmatch(term, "False()")) {
-      // MATCHED FALSE
-      value += "FALSE";
+      expr = SageBuilder::buildBoolValExp(0);
    } else return ATfalse;
 
-   int expression_enum = General_Language_Translation::e_literalExpression;
-   SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_bool);
-
-   expr = new SgUntypedValueExpression(expression_enum, value, type);
-   ROSE_ASSERT(expr != NULL);
+   ROSE_ASSERT(expr != nullptr);
    setSourcePosition(expr, term);
 
    return ATtrue;

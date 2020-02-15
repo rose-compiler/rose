@@ -148,9 +148,9 @@ ATbool traverse_OptBlockPresetList (ATerm term, SgExprListExp* preset_list);
 ATbool traverse_OptAllocationSpecifier(ATerm term, SgUntypedExprListExpression* attr_list);
 
 // 2.1.6 INITIALIZATION OF DATA OBJECTS
-ATbool traverse_ItemPreset            (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
-ATbool traverse_ItemPresetValue       (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
-ATbool traverse_OptItemPresetValue    (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
+ATbool traverse_ItemPreset            (ATerm term, SgExpression* &preset);
+ATbool traverse_ItemPresetValue       (ATerm term, SgExpression* &preset);
+ATbool traverse_OptItemPresetValue    (ATerm term, SgExpression* &preset);
 ATbool traverse_TablePreset           (ATerm term, SgExprListExp* &preset_list);
 #if 0 //DELETE_ME
 ATbool traverse_TablePreset           (ATerm term, SgUntypedExprListExpression* & preset);
@@ -368,14 +368,14 @@ ATbool traverse_MultiplyDivideOrMod(ATerm term, General_Language_Translation::Ex
 ATbool traverse_RelationalOperator (ATerm term, General_Language_Translation::ExpressionKind & op_enum, std::string & op_name);
 
 // 8.3.1 NUMERIC LITERAL
-ATbool traverse_FixedOrFloatingLiteral (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
+ATbool traverse_FixedOrFloatingLiteral (ATerm term, SgExpression* &expr);
 ATbool traverse_Exponent               (ATerm term, std::string & opt_exp);
 
 // 8.3.2 BIT LITERAL
-ATbool traverse_BitLiteral     (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
+ATbool traverse_BitLiteral     (ATerm term, SgExpression* &expr);
 
 // 8.3.3 BOOLEAN LITERAL
-ATbool traverse_BooleanLiteral (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
+ATbool traverse_BooleanLiteral (ATerm term, SgExpression* &expr);
 
 // 8.3.4 POINTER LITERAL
 ATbool traverse_PointerLiteral (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);

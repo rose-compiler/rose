@@ -6615,6 +6615,11 @@ SgFloatVal* SageBuilder::buildFloatVal_nfi(float value, const string& str)
   return result;
 }
 
+SgFloatVal* SageBuilder::buildFloatVal_nfi(const string& str)
+{
+  return buildFloatVal_nfi(std::stof(str), str);
+}
+
 SgIntVal* SageBuilder::buildIntVal(int value)
    {
      SgIntVal* intValue= new SgIntVal(value,"");
