@@ -200,8 +200,8 @@ AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) 
   } else if(SgUnsignedLongVal* exp=isSgUnsignedLongVal(valueExp)) {
     unsigned long int val=exp->get_value();
     return AbstractValue(val);
-  } else if(SgUnsignedLongVal* exp=isSgUnsignedLongVal(valueExp)) {
-    unsigned long int val=exp->get_value();
+  } else if(SgUnsignedLongLongIntVal* exp=isSgUnsignedLongLongIntVal(valueExp)) {
+    unsigned long long int val=exp->get_value();
     return AbstractValue(val);
   } else if(SgCharVal* exp=isSgCharVal(valueExp)) {
     unsigned char val=(unsigned char)(signed char)exp->get_value();
@@ -1695,9 +1695,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::execFunctionCallScanf(SgFunctionCal
       switch(controlChar) {
       case 'd': {
         int val;
-        scanf("%d",&val); // read integer from stdin
+        int numParsed=scanf("%d",&val); // read integer from stdin
+        AbstractValue av=((numParsed==1)?argsList[j]:AbstractValue::createTop()); // assume any value in case of error
         // write val into state at address argsList[j]
-        AbstractValue av=argsList[j];
         if(av.isPtr()) {
           PState pstate=*estate.pstate();
           pstate.writeToMemoryLocation(av,val); 
