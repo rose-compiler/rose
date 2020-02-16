@@ -1479,8 +1479,7 @@ int main( int argc, char * argv[] ) {
   
     if(args.isUserProvided("type-size-mapping-print")||args.isUserProvided("type-size-mapping-csv")) {
       // from: src/midend/astDiagnostics/AstStatistics.C
-      TypeSizeMapping* tsm=analyzer->getTypeSizeMapping();
-      string s=tsm->toString();
+      string s=analyzer->typeSizeMappingToString();
       if(args.getBool("type-size-mapping-print")) {
         cout<<"Type size mapping:"<<endl;
         cout<<s; // output includes newline at the end

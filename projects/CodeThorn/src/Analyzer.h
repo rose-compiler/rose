@@ -248,7 +248,6 @@ namespace CodeThorn {
     // TODO: move to flow analyzer (reports label,init,final sets)
     static std::string astNodeInfoAttributeAndNodeToString(SgNode* node);
 
-    // public member variables
     SgNode* startFunRoot;
     PropertyValueTable reachabilityResults;
     boost::unordered_map <std::string,int*> mapGlobalVarAddress;
@@ -287,6 +286,7 @@ namespace CodeThorn {
     // first: list of new states (worklist), second: set of found existing states
     typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
     SubSolverResultType subSolver(const EState* currentEStatePtr);
+    std::string typeSizeMappingToString();
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
 

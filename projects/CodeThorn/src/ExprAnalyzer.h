@@ -78,7 +78,7 @@ namespace CodeThorn {
     //! one of the variables was bound to top and branching constructs
     //! are inside the expression.
     list<SingleEvalResultConstInt> evaluateExpression(SgNode* node,EState estate, EvalMode mode=MODE_VALUE);
-    void setVariableIdMapping(VariableIdMapping* variableIdMapping);
+    void setVariableIdMapping(VariableIdMappingExtended* variableIdMapping);
     void setSkipSelectedFunctionCalls(bool skip);
     bool getSkipSelectedFunctionCalls();
     void setSkipArrayAccesses(bool skip);
@@ -319,7 +319,7 @@ namespace CodeThorn {
     int getMemoryRegionElementSize(CodeThorn::AbstractValue);
 
   private:
-    VariableIdMapping* _variableIdMapping=nullptr;
+    VariableIdMappingExtended* _variableIdMapping=nullptr;
     ProgramLocationsReport _nullPointerDereferenceLocations;
     ProgramLocationsReport _outOfBoundsAccessLocations;
     ProgramLocationsReport _uninitializedAccessLocations;

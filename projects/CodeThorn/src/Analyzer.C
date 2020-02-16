@@ -953,7 +953,7 @@ const EState* CodeThorn::Analyzer::addToWorkListIfNew(EState estate) {
 
 // set the size of an element determined by this type
 void CodeThorn::Analyzer::setElementSize(VariableId variableId, SgType* elementType) {
-  int typeSize=getTypeSizeMapping()->determineTypeSize(elementType);
+  unsigned int typeSize=getVariableIdMapping()->getTypeSize(variableId);
   //cout<<"DEBUG: setElementSize: variableId name: "<<variableIdMapping.variableName(variableId)<<" typeSize: "<<typeSize<<" of "<<elementType->unparseToString()<<endl;
   variableIdMapping->setElementSize(variableId,typeSize);
 }
@@ -1510,17 +1510,9 @@ void CodeThorn::Analyzer::initializeStringLiteralsInState(PState& initialPState)
 
 void CodeThorn::Analyzer::initializeVariableIdMapping(SgProject* project) {
   variableIdMapping->computeVariableSymbolMapping(project);
-  variableIdMapping->computeTypeSizes();
+  variableIdMapping->computeTypeSizes(); // only available in extended VIM
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
-  setTypeSizeMapping(&_typeSizeMapping);
-  // compute size for all variables
-  VariableIdSet varIdSet=getVariableIdMapping()->getVariableIdSet();
-  for(auto vid : varIdSet) {
-    SgType* varType=getVariableIdMapping()->getType(vid);
-    if(varType) {
-      _typeSizeMapping.determineTypeSize(getVariableIdMapping()->getType(vid));
-    }
-  }
+  AbstractValue::setVariableIdMapping(getVariableIdMapping());
   SAWYER_MESG(logger[TRACE])<<"initializeStructureAccessLookup started."<<endl;
   exprAnalyzer.initializeStructureAccessLookup(project);
   SAWYER_MESG(logger[TRACE])<<"initializeStructureAccessLookup finished."<<endl;
@@ -3275,14 +3267,6 @@ TransitionGraph* CodeThorn::Analyzer::getTransitionGraph() { return &transitionG
 ConstraintSetMaintainer* CodeThorn::Analyzer::getConstraintSetMaintainer() { return &constraintSetMaintainer; }
 std::list<FailedAssertion> CodeThorn::Analyzer::getFirstAssertionOccurences(){return _firstAssertionOccurences;}
 
-void CodeThorn::Analyzer::setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping) {
-  AbstractValue::setTypeSizeMapping(typeSizeMapping);
-}
-
-SgTypeSizeMapping* CodeThorn::Analyzer::getTypeSizeMapping() {
-  return AbstractValue::getTypeSizeMapping();
-}
-
 void CodeThorn::Analyzer::setCommandLineOptions(vector<string> clOptions) {
   _commandLineOptions=clOptions;
 }
@@ -3295,3 +3279,6 @@ bool CodeThorn::Analyzer::isLTLRelevantEState(const EState* estate) {
           || (estate)->io.isFailedAssertIO());
 }
 
+std::string CodeThorn::Analyzer::typeSizeMappingToString() {
+  return variableIdMapping->typeSizeMappingToString();
+}

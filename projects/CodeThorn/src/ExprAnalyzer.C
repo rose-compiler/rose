@@ -20,7 +20,7 @@ ExprAnalyzer::ExprAnalyzer() {
   initDiagnostics();
 }
 
-void ExprAnalyzer::setVariableIdMapping(VariableIdMapping* variableIdMapping) {
+void ExprAnalyzer::setVariableIdMapping(VariableIdMappingExtended* variableIdMapping) {
   _variableIdMapping=variableIdMapping; 
 }
 
@@ -996,7 +996,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
                                                               EState estate, EvalMode mode) {
   SgType* operandType=node->get_operand_type();
   if(operandType) {
-    CodeThorn::TypeSize typeSize=AbstractValue::getTypeSizeMapping()->determineTypeSize(operandType);
+    CodeThorn::TypeSize typeSize=_variableIdMapping->getTypeSize(operandType);
     AbstractValue sizeValue;
     if(typeSize==0) {
       logger[WARN]<<"sizeof: could not determine size (= zero) of argument, assuming top "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
