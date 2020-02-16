@@ -13,7 +13,8 @@
 #include "BoolLattice.h"
 #include "VariableIdMapping.h"
 #include <cstdint>
-#include "SgTypeSizeMapping.h"
+#include "VariableIdMappingExtended.h"
+#include "TypeSizeMapping.h"
 
 using std::string;
 using std::istream;
@@ -140,12 +141,9 @@ class AbstractValue {
   long hash() const;
   std::string valueTypeToString() const;
 
-  // deprecated (use getTypeSize() instead)
-  TypeSize getValueSize() const; 
   TypeSize getTypeSize() const;
   void setTypeSize(TypeSize valueSize);
-  static void setTypeSizeMapping(CodeThorn::SgTypeSizeMapping* typeSizeMapping);
-  static CodeThorn::SgTypeSizeMapping* getTypeSizeMapping();
+  static void setVariableIdMapping(CodeThorn::VariableIdMappingExtended* varIdMapping);
   static bool approximatedBy(AbstractValue val1, AbstractValue val2);
   static AbstractValue combine(AbstractValue val1, AbstractValue val2);
  private:
@@ -156,7 +154,7 @@ class AbstractValue {
   long double floatValue=0.0;
 
   TypeSize typeSize=0;
-  static CodeThorn::SgTypeSizeMapping* _typeSizeMapping;
+  static CodeThorn::VariableIdMappingExtended* _variableIdMapping;
 };
 
 // arithmetic operators

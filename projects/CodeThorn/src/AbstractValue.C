@@ -15,13 +15,12 @@
 #include "Miscellaneous2.h"
 #include "CodeThornException.h"
 #include "VariableIdMapping.h"
-#include "TypeSizeMapping.h"
 
 using namespace std;
 using namespace CodeThorn;
 using namespace CodeThorn;
 
-SgTypeSizeMapping* AbstractValue::_typeSizeMapping=nullptr;
+VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
 
 istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   value.fromStream(is);
@@ -48,22 +47,13 @@ AbstractValue::AbstractValue(bool val) {
   }
 }
 
-void AbstractValue::setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping) {
-#if 0
-  if(AbstractValue::_typeSizeMapping!=nullptr) {
-    delete _typeSizeMapping;
-  }
-#endif
-  AbstractValue::_typeSizeMapping=typeSizeMapping;
-}
-
-SgTypeSizeMapping* AbstractValue::getTypeSizeMapping() {
-  return  _typeSizeMapping;
+void AbstractValue::setVariableIdMapping(VariableIdMappingExtended* varIdMapping) {
+  AbstractValue::_variableIdMapping=varIdMapping;
 }
 
 AbstractValue::TypeSize AbstractValue::calculateTypeSize(CodeThorn::BuiltInType btype) {
-  ROSE_ASSERT(AbstractValue::_typeSizeMapping);
-  return AbstractValue::_typeSizeMapping->getTypeSize(btype);
+  ROSE_ASSERT(AbstractValue::_variableIdMapping);
+  return AbstractValue::_variableIdMapping->getTypeSize(btype);
 }
 
 void AbstractValue::setValue(long long int val) {
@@ -303,7 +293,7 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
         if(c1.getIntValue()!=c2.getIntValue()) {
           return c1.getIntValue()<c2.getIntValue();
         } else {
-          return c1.getValueSize()<c2.getValueSize();
+          return c1.getTypeSize()<c2.getTypeSize();
         }
       }
     } else if (c1.isBot()==c2.isBot()) {
@@ -319,9 +309,9 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
 bool CodeThorn::strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2) {
   if(c1.getValueType()==c2.getValueType()) {
     if(c1.isConstInt() && c2.isConstInt())
-      return c1.getIntValue()==c2.getIntValue() && c1.getValueSize()==c2.getValueSize();
+      return c1.getIntValue()==c2.getIntValue() && c1.getTypeSize()==c2.getTypeSize();
     else if(c1.isPtr() && c2.isPtr()) {
-      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue() && c1.getValueSize()==c2.getValueSize();
+      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue() && c1.getTypeSize()==c2.getTypeSize();
     } else {
       ROSE_ASSERT((c1.isTop()&&c2.isTop()) || (c1.isBot()&&c2.isBot()));
       return true;
@@ -364,9 +354,9 @@ AbstractValue AbstractValue::operatorEq(AbstractValue other) const {
   } else if(other.valueType==BOT) { 
     return *this;
   } else if(isPtr() && other.isPtr()) {
-    return AbstractValue(variableId==other.variableId && intValue==other.intValue && getValueSize()==other.getValueSize());
+    return AbstractValue(variableId==other.variableId && intValue==other.intValue && getTypeSize()==other.getTypeSize());
   } else if(isConstInt() && other.isConstInt()) {
-    return AbstractValue(intValue==other.intValue && getValueSize()==other.getValueSize());
+    return AbstractValue(intValue==other.intValue && getTypeSize()==other.getTypeSize());
   } else {
     return AbstractValue(Top()); // all other cases can be true or false
   }
@@ -386,7 +376,7 @@ AbstractValue AbstractValue::operatorLess(AbstractValue other) const {
   if(isPtr() && other.isPtr()) {
     // check is same memory region
     if(variableId==other.variableId) {
-      return AbstractValue(intValue<other.intValue && getValueSize()==other.getValueSize());
+      return AbstractValue(intValue<other.intValue && getTypeSize()==other.getTypeSize());
     } else {
       // incompatible pointer comparison (can be true or false)
       return AbstractValue::createTop();
@@ -627,11 +617,6 @@ AbstractValue::ValueType AbstractValue::getValueType() const {
 
 AbstractValue::TypeSize AbstractValue::getTypeSize() const {
   return typeSize;
-}
-
-// deprecated
-AbstractValue::TypeSize AbstractValue::getValueSize() const {
-  return getTypeSize();
 }
 
 void AbstractValue::setTypeSize(AbstractValue::TypeSize typeSize) {

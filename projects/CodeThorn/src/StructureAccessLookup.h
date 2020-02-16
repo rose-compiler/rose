@@ -3,7 +3,7 @@
 
 #include <list>
 #include <map>
-#include "VariableIdMapping.h"
+#include "VariableIdMappingExtended.h"
 #include "SgTypeSizeMapping.h"
 
 class SgNode;
@@ -13,7 +13,7 @@ class SgVariableDeclaration;
 class StructureAccessLookup {
  public:
 
-  void initializeOffsets(CodeThorn::VariableIdMapping* variableIdMapping, SgProject* root);
+  void initializeOffsets(CodeThorn::VariableIdMappingExtended* variableIdMapping, SgProject* root);
   std::list<SgVariableDeclaration*> getDataMembers(SgClassDefinition* classDef);
   int getOffset(CodeThorn::VariableId varId);
   // returns true if the variable is a member of a struct/class/union.
