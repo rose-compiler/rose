@@ -103,12 +103,11 @@ namespace CodeThorn {
     ROSE_ASSERT(t);
     size_t result=0; 
     SgExpression * indexExp =  t->get_index();
-
+    
     // assume dimension default to 1 if not specified ,such as a[] 
-    if((indexExp == nullptr) || isSgNullExpression(indexExp))
+    if((indexExp == nullptr) || isSgNullExpression(indexExp)) {
       result = 0;
-    else 
-    { 
+    } else { 
       //Take advantage of the fact that the value expression is always SgUnsignedLongVal in AST
       SgUnsignedLongVal * valExp = isSgUnsignedLongVal(indexExp);
       SgIntVal * valExpInt = isSgIntVal(indexExp);
@@ -123,15 +122,13 @@ namespace CodeThorn {
           result = valExpInt->get_value();
       }
     }
-
     // consider multi dimensional case 
     SgArrayType* arraybase = isSgArrayType(t->get_base_type());
     if (arraybase)
       result = result * determineNumberOfElements(arraybase);
-
     return result;
   }
-
+  
   CodeThorn::TypeSize SgTypeSizeMapping::determineTypeSizePointedTo(SgPointerType* sgType) {
     SgType* typePointedTo=sgType->get_base_type();
     return determineTypeSize(typePointedTo);
