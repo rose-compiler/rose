@@ -121,16 +121,16 @@ bool VariableIdMapping::hasClassType(VariableId varId) {
   * \date 2012.
  */
 void VariableIdMapping::toStream(ostream& os) {
-  for(size_t i=0;i<mappingVarIdToSym.size();++i) {
+  for(size_t i=0;i<mappingVarIdToInfo.size();++i) {
     VariableId varId=variableIdFromCode(i);
     os<<i
       <<","<<varId.toString(this)
-      //<<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])  
-      <<","<<mappingVarIdToSym[variableIdFromCode(i)]
+      //<<","<<SgNodeHelper::symbolToString(mappingVarIdToInfo[i].sym)  
+      <<","<<mappingVarIdToInfo[variableIdFromCode(i)].sym
       <<","<<getNumberOfElements(varId)
       <<","<<getElementSize(varId)
       <<endl;
-    ROSE_ASSERT(modeVariableIdForEachArrayElement?true:mappingSymToVarId[mappingVarIdToSym[variableIdFromCode(i)]]==i);
+    ROSE_ASSERT(modeVariableIdForEachArrayElement?true:mappingSymToVarId[mappingVarIdToInfo[variableIdFromCode(i)].sym]==i);
   }
 }
 
@@ -219,10 +219,10 @@ void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
   myfile<<"rankdir=LR"<<endl;
 
   // nodes
-  for(size_t i=0;i<mappingVarIdToSym.size();++i) {
-    myfile<<generateDotSgSymbol(mappingVarIdToSym[variableIdFromCode(i)])<<" [label=\""<<generateDotSgSymbol(mappingVarIdToSym[variableIdFromCode(i)])<<"\\n"
+  for(size_t i=0;i<mappingVarIdToInfo.size();++i) {
+    myfile<<generateDotSgSymbol(mappingVarIdToInfo[variableIdFromCode(i)].sym)<<" [label=\""<<generateDotSgSymbol(mappingVarIdToInfo[variableIdFromCode(i)].sym)<<"\\n"
           <<"\\\""
-          <<SgNodeHelper::symbolToString(mappingVarIdToSym[variableIdFromCode(i)])
+          <<SgNodeHelper::symbolToString(mappingVarIdToInfo[variableIdFromCode(i)].sym)
           <<"\\\""
           <<"\""
           <<"]"
@@ -230,8 +230,8 @@ void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
   }
   myfile<<endl;
   // edges : sym->vid
-  for(size_t i=0;i<mappingVarIdToSym.size();++i) {
-    myfile<<"_"<<mappingVarIdToSym[variableIdFromCode(i)]
+  for(size_t i=0;i<mappingVarIdToInfo.size();++i) {
+    myfile<<"_"<<mappingVarIdToInfo[variableIdFromCode(i)].sym
           <<"->"
           <<variableIdFromCode(i).toString()
           <<endl;
@@ -303,8 +303,8 @@ VariableId VariableIdMapping::variableId(SgSymbol* sym) {
  */
 SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
   ROSE_ASSERT(varid.isValid());
-  ROSE_ASSERT(((size_t)varid._id)<mappingVarIdToSym.size());
-  return mappingVarIdToSym[varid];
+  ROSE_ASSERT(((size_t)varid._id)<mappingVarIdToInfo.size());
+  return mappingVarIdToInfo[varid].sym;
 }
 
 void VariableIdMapping::setNumberOfElements(VariableId variableId, size_t size) {
@@ -563,7 +563,7 @@ bool VariableIdMapping::isTemporaryVariableId(VariableId varId) {
 }
 
 bool VariableIdMapping::isVariableIdValid(VariableId varId) {
-  return varId.isValid() && ((size_t)varId._id) < mappingVarIdToSym.size() && varId._id >= 0;
+  return varId.isValid() && ((size_t)varId._id) < mappingVarIdToInfo.size() && varId._id >= 0;
 }
 
 /*! 
@@ -613,22 +613,22 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
   ROSE_ASSERT(arraySize>0);
   if(mappingSymToVarId.find(sym)==mappingSymToVarId.end()) {
     // map symbol to var-id of array variable symbol
-    size_t newVariableIdCode=mappingVarIdToSym.size();
+    size_t newVariableIdCode=mappingVarIdToInfo.size();
     mappingSymToVarId[sym]=newVariableIdCode;
     VariableId tmpVarId=variableIdFromCode(newVariableIdCode);
 
     if(getModeVariableIdForEachArrayElement()) {
       // assign one var-id for each array element (in addition to the variable id of the array itself!)
       for(int i=0;i<arraySize;i++) {
-        size_t newArrayElemVariableIdCode=mappingVarIdToSym.size();
+        size_t newArrayElemVariableIdCode=mappingVarIdToInfo.size();
         VariableId newArrayElemVarId=variableIdFromCode(newArrayElemVariableIdCode);
-        mappingVarIdToSym[newArrayElemVarId]=sym;
+        mappingVarIdToInfo[newArrayElemVarId].sym=sym;
       }
     } else {
       // assign one vari-id for entire array
-      mappingVarIdToSym[tmpVarId]=sym;
+      mappingVarIdToInfo[tmpVarId].sym=sym;
     }
-    // size needs to be set *after* mappingVarIdToSym has been updated
+    // size needs to be set *after* mappingVarIdToInfo[].sym has been updated
     setNumberOfElements(tmpVarId,arraySize);
   } else {
     stringstream ss;
@@ -644,22 +644,22 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
     //  for each array element but only one symbol for the whole array)
     //  but there can not be multiple symbols for one id. The symbol count
     //  therefore must be less than or equal to the id count:
-    ROSE_ASSERT(mappingSymToVarId.size() <= mappingVarIdToSym.size());
+    ROSE_ASSERT(mappingSymToVarId.size() <= mappingVarIdToInfo.size());
     // If one of the sizes is zero, the other size have to be zero too:
-    ROSE_ASSERT(mappingSymToVarId.size() == 0 ? mappingVarIdToSym.size() == 0 : true);
-    ROSE_ASSERT(mappingVarIdToSym.size() == 0 ? mappingSymToVarId.size() == 0 : true);
+    ROSE_ASSERT(mappingSymToVarId.size() == 0 ? mappingVarIdToInfo.size() == 0 : true);
+    ROSE_ASSERT(mappingVarIdToInfo.size() == 0 ? mappingSymToVarId.size() == 0 : true);
 
     // Create new mapping entry:
-    size_t newIdCode = mappingVarIdToSym.size();
+    size_t newIdCode = mappingVarIdToInfo.size();
     mappingSymToVarId[sym] = newIdCode;
-    mappingVarIdToSym[variableIdFromCode(newIdCode)]=sym;
+    mappingVarIdToInfo[variableIdFromCode(newIdCode)].sym=sym;
     // set size to 1 (to compute bytes, multiply by size of type)
     VariableId newVarId;
     newVarId.setIdCode(newIdCode);
     setNumberOfElements(newVarId,0); // MS 3/11/2019: changed default from 1 to 0.
     // Mapping in both directions must be possible:
-    ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToSym[variableIdFromCode(newIdCode)]) == newIdCode);
-    ROSE_ASSERT(mappingVarIdToSym[variableIdFromCode(mappingSymToVarId.at(sym))] == sym);
+    ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToInfo[variableIdFromCode(newIdCode)].sym) == newIdCode);
+    ROSE_ASSERT(mappingVarIdToInfo[variableIdFromCode(mappingSymToVarId.at(sym))].sym == sym);
   } else {
     stringstream ss;
     ss<< "Error: attempt to register existing symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym);
@@ -895,7 +895,7 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
 }
 
 void VariableIdMapping::setModeVariableIdForEachArrayElement(bool active) {
-  ROSE_ASSERT(mappingVarIdToSym.size()==0); 
+  ROSE_ASSERT(mappingVarIdToInfo.size()==0); 
   modeVariableIdForEachArrayElement=active;
 }
 

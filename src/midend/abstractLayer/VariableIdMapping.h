@@ -164,7 +164,6 @@ class VariableIdMapping {
   VariableId addNewSymbol(SgSymbol* sym);
 
   // used for mapping in both directions
-  std::map<VariableId,SgSymbol*> mappingVarIdToSym;
   std::map<SgSymbol*,size_t> mappingSymToVarId;
   std::map<VariableId,VariableIdInfo> mappingVarIdToInfo;
   bool modeVariableIdForEachArrayElement;
