@@ -126,11 +126,11 @@ void VariableIdMapping::toStream(ostream& os) {
     os<<i
       <<","<<varId.toString(this)
       //<<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])  
-      <<","<<mappingVarIdToSym[i]
+      <<","<<mappingVarIdToSym[variableIdFromCode(i)]
       <<","<<getNumberOfElements(varId)
       <<","<<getElementSize(varId)
       <<endl;
-    ROSE_ASSERT(modeVariableIdForEachArrayElement?true:mappingSymToVarId[mappingVarIdToSym[i]]==i);
+    ROSE_ASSERT(modeVariableIdForEachArrayElement?true:mappingSymToVarId[mappingVarIdToSym[variableIdFromCode(i)]]==i);
   }
 }
 
@@ -220,9 +220,9 @@ void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
 
   // nodes
   for(size_t i=0;i<mappingVarIdToSym.size();++i) {
-    myfile<<generateDotSgSymbol(mappingVarIdToSym[i])<<" [label=\""<<generateDotSgSymbol(mappingVarIdToSym[i])<<"\\n"
+    myfile<<generateDotSgSymbol(mappingVarIdToSym[variableIdFromCode(i)])<<" [label=\""<<generateDotSgSymbol(mappingVarIdToSym[variableIdFromCode(i)])<<"\\n"
           <<"\\\""
-          <<SgNodeHelper::symbolToString(mappingVarIdToSym[i])
+          <<SgNodeHelper::symbolToString(mappingVarIdToSym[variableIdFromCode(i)])
           <<"\\\""
           <<"\""
           <<"]"
@@ -231,7 +231,7 @@ void VariableIdMapping::generateDot(string filename, SgNode* astRoot) {
   myfile<<endl;
   // edges : sym->vid
   for(size_t i=0;i<mappingVarIdToSym.size();++i) {
-    myfile<<"_"<<mappingVarIdToSym[i]
+    myfile<<"_"<<mappingVarIdToSym[variableIdFromCode(i)]
           <<"->"
           <<variableIdFromCode(i).toString()
           <<endl;
@@ -304,7 +304,7 @@ VariableId VariableIdMapping::variableId(SgSymbol* sym) {
 SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
   ROSE_ASSERT(varid.isValid());
   ROSE_ASSERT(((size_t)varid._id)<mappingVarIdToSym.size());
-  return mappingVarIdToSym[varid._id];
+  return mappingVarIdToSym[varid];
 }
 
 void VariableIdMapping::setNumberOfElements(VariableId variableId, size_t size) {
@@ -616,14 +616,17 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
     size_t newVariableIdCode=mappingVarIdToSym.size();
     mappingSymToVarId[sym]=newVariableIdCode;
     VariableId tmpVarId=variableIdFromCode(newVariableIdCode);
+
     if(getModeVariableIdForEachArrayElement()) {
-      // assign one var-id for each array element
+      // assign one var-id for each array element (in addition to the variable id of the array itself!)
       for(int i=0;i<arraySize;i++) {
-        mappingVarIdToSym.push_back(sym);
+        size_t newArrayElemVariableIdCode=mappingVarIdToSym.size();
+        VariableId newArrayElemVarId=variableIdFromCode(newArrayElemVariableIdCode);
+        mappingVarIdToSym[newArrayElemVarId]=sym;
       }
     } else {
       // assign one vari-id for entire array
-      mappingVarIdToSym.push_back(sym);
+      mappingVarIdToSym[tmpVarId]=sym;
     }
     // size needs to be set *after* mappingVarIdToSym has been updated
     setNumberOfElements(tmpVarId,arraySize);
@@ -649,14 +652,14 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
     // Create new mapping entry:
     size_t newIdCode = mappingVarIdToSym.size();
     mappingSymToVarId[sym] = newIdCode;
-    mappingVarIdToSym.push_back(sym);
+    mappingVarIdToSym[variableIdFromCode(newIdCode)]=sym;
     // set size to 1 (to compute bytes, multiply by size of type)
     VariableId newVarId;
     newVarId.setIdCode(newIdCode);
     setNumberOfElements(newVarId,0); // MS 3/11/2019: changed default from 1 to 0.
     // Mapping in both directions must be possible:
-    ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToSym[newIdCode]) == newIdCode);
-    ROSE_ASSERT(mappingVarIdToSym[mappingSymToVarId.at(sym)] == sym);
+    ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToSym[variableIdFromCode(newIdCode)]) == newIdCode);
+    ROSE_ASSERT(mappingVarIdToSym[variableIdFromCode(mappingSymToVarId.at(sym))] == sym);
   } else {
     stringstream ss;
     ss<< "Error: attempt to register existing symbol "<<sym<<":"<<SgNodeHelper::symbolToString(sym);
