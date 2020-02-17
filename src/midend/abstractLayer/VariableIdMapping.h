@@ -120,6 +120,7 @@ class VariableIdMapping {
   */
   void setModeVariableIdForEachArrayElement(bool active);
   bool getModeVariableIdForEachArrayElement();
+
   SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar);
   size_t getArrayDimensions(SgArrayType* t, std::vector<size_t> *dimensions = NULL);
   size_t getArrayElementCount(SgArrayType* t);
@@ -131,9 +132,11 @@ class VariableIdMapping {
   void registerStringLiterals(SgNode* root);
   int numberOfRegisteredStringLiterals();
   bool isStringLiteralAddress(VariableId stringVarId);
+
   // returns true if the variable is a formal parameter in a function definition
   bool isFunctionParameter(VariableId varId);
   std::map<SgStringVal*,VariableId>* getStringLiteralsToVariableIdMapping();
+
   // determines for struct/class/union's data member if its
   // SgInitializeName defines an anonymous bitfield (e.g. struct S {
   // int :0; }). Anonymous bitfields in the same struct are mapped
@@ -143,9 +146,11 @@ class VariableIdMapping {
 
  protected:
   struct VariableIdInfo {
+    VariableIdInfo();
     size_t numberOfElements;
     size_t elementSize; // in bytes
     size_t offset;      // in bytes, only for member variables
+    SgSymbol* sym;
   };
   std::map<SgStringVal*,VariableId> sgStringValueToVariableIdMapping;
   std::map<VariableId, SgStringVal*> variableIdToSgStringValueMapping;
@@ -161,9 +166,7 @@ class VariableIdMapping {
   // used for mapping in both directions
   std::vector<SgSymbol*> mappingVarIdToSym;
   std::map<SgSymbol*,size_t> mappingSymToVarId;
-  std::map<size_t,size_t> mappingVarIdToNumberOfElements;
-  std::map<size_t,size_t> mappingVarIdToElementSize;
-  std::map<VariableId,VariableIdInfo> varIdInfo; // not used yet
+  std::map<VariableId,VariableIdInfo> mappingVarIdToInfo;
   bool modeVariableIdForEachArrayElement;
 }; // end of class VariableIdMapping
 
