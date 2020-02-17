@@ -310,22 +310,22 @@ SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
 void VariableIdMapping::setNumberOfElements(VariableId variableId, size_t size) {
   ROSE_ASSERT(variableId.isValid());
   //cout<<"DEBUG: VariableIdMapping::setNumberOfElements: "<<variableName(variableId)<<" size: "<<size<<endl;
-  mappingVarIdToNumberOfElements[variableId._id]=size;
+  mappingVarIdToInfo[variableId].numberOfElements=size;
 }
 
 size_t VariableIdMapping::getNumberOfElements(VariableId variableId) {
   ROSE_ASSERT(variableId.isValid());
-  return mappingVarIdToNumberOfElements[variableId._id];
+  return mappingVarIdToInfo[variableId].numberOfElements;
 }
 
 void VariableIdMapping::setElementSize(VariableId variableId, size_t size) {
   ROSE_ASSERT(variableId.isValid());
-  mappingVarIdToElementSize[variableId._id]=size;
+  mappingVarIdToInfo[variableId].elementSize=size;
 }
 
 size_t VariableIdMapping::getElementSize(VariableId variableId) {
   ROSE_ASSERT(variableId.isValid());
-  return mappingVarIdToElementSize[variableId._id];
+  return mappingVarIdToInfo[variableId].elementSize;
 }
 
 bool VariableIdMapping::isAnonymousBitfield(SgInitializedName* initName) {
@@ -694,14 +694,19 @@ SgName VariableIdMapping::UniqueTemporaryVariableSymbol::get_name() const {
   return SgName(_tmpName);
 }
 
+VariableIdMapping::VariableIdInfo::VariableIdInfo():
+  numberOfElements(0),
+  elementSize(0),
+  offset(0),
+  sym(0) {
+}
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
 VariableId::VariableId():_id(-1){
 }
-//VariableId::VariableId(int id):_id(id){
-//}
 
 const char * const VariableId::idKindIndicator = "V";
 
