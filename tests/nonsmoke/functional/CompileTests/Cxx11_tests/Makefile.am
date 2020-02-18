@@ -732,7 +732,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2020_53.C \
    test2020_57.C \
    test2020_58.C \
-   test2020_59.C 
+   test2020_59.C \
+   test2020_66.C 
 
 TESTCODE_CURRENTLY_FAILING = \
    test2012_10.C \

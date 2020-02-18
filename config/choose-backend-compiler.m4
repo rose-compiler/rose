@@ -201,7 +201,7 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
       #
       # Tnerefore, grep -Po usage has been replaced by shell scripts.
 
-      IS_APPLE_GCC=`g++ --version | grep -ci "Apple Clang"`
+      IS_APPLE_GCC=`g++ --version | grep -ci "Apple clang"`
       AC_MSG_NOTICE([IS_APPLE_GCC = "$IS_APPLE_GCC"])
       if test $IS_APPLE_GCC -ne 0; then
         BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMajorVersionNumber.sh`
