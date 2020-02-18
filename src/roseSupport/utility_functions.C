@@ -957,6 +957,11 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
             // finalCombinedExitStatus = project->link("gcc");
                finalCombinedExitStatus = project->link(BACKEND_C_COMPILER_NAME_WITH_PATH);
              }
+            else if (project->get_Fortran_only() == true)
+             {
+               printf ("Link using the Fortran language linker (when handling Fortran programs) = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
+               finalCombinedExitStatus = project->link(BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
+             }
             else
              {
             // Use the default name for C++ compiler (defined at configure time)
