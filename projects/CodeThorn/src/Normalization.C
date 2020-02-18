@@ -13,6 +13,8 @@
 #include "astPostProcessing.h"
 
 #include "Diagnostics.h"
+#include "sageGeneric.h"
+
 using namespace Sawyer::Message;
 
 // Author: Markus Schordan, 2018
@@ -144,6 +146,9 @@ namespace CodeThorn {
       // transforms while and do-while loops
       createLoweringSequence(root);
       applyLoweringSequence();
+    }
+    if(options.hoistBranchInitStatements) {
+      hoistBranchInitStatementsInAst(root);
     }
     if(options.hoistConditionExpressions) {
       hoistConditionsInAst(root,options.restrictToFunCallExpressions);
@@ -412,7 +417,81 @@ namespace CodeThorn {
       || isSgTemplateVariableDeclaration(node)
       ;
   }
+  
+  /***************************************************************************
+   * HOISTING OF INIT STATEMENTS (if, switch)
+   **************************************************************************/
 
+struct InitStatementSelector
+{
+    typedef std::pair<SgVariableDeclaration*, SgScopeStatement*> matched_node;
+    typedef std::vector<matched_node>                            container;
+    
+    explicit
+    InitStatementSelector(container& results)
+    : res(results)
+    {}
+    
+    void handleInitStatement(SgStatement& init, SgScopeStatement& branch);
+    
+    void handle(SgNode&) {}
+    
+    void handle(SgIfStmt& n) 
+    {
+      handleInitStatement(SG_DEREF(n.get_conditional()), n);
+    }
+    
+    void handle(SgSwitchStatement& n) 
+    {
+      handleInitStatement(SG_DEREF(n.get_item_selector()), n);
+    }  
+    
+  private:
+    container& res;
+};   
+
+void InitStatementSelector::handleInitStatement(SgStatement& init, SgScopeStatement& branch)
+{
+  SgVariableDeclaration* var = isSgVariableDeclaration(&init);
+  
+  // \todo handle C++17 init statements
+  if (var == nullptr) return;
+  
+  res.push_back(std::make_pair(var, &branch));
+}
+
+static
+void hoistBranchInitStatement(InitStatementSelector::matched_node n)
+{
+  SgBasicBlock* block = SageBuilder::buildBasicBlock();
+  
+  SageInterface::replaceStatement(n.second /*branch*/, block);
+  block->append_statement(n.second);
+  SageInterface::moveVariableDeclaration(n.first /*var decl*/, block);
+}
+   
+void Normalization::hoistBranchInitStatementsInAst(SgNode* node) 
+{
+    InitStatementSelector::container hoistingTransformationList;
+    
+    RoseAst ast(node);
+    // build list of stmts to transform
+    for (auto i=ast.begin();i!=ast.end();++i) {
+      // TEMPLATESKIP this will skip all templates that are found (mostly in header files). This could also be integrated into the iterator itself.
+      if(isTemplateNode(*i)) {
+        i.skipChildrenOnForward();
+        continue;
+      }
+      
+      sg::dispatch(InitStatementSelector(hoistingTransformationList), *i);
+    }
+    
+    // transform stmts
+    for (auto match: hoistingTransformationList) {
+      hoistBranchInitStatement(match);
+    }
+  }
+  
   /***************************************************************************
    * HOISTING OF CONDITION EXPRESSIONS (if, switch, do, do-while)
    **************************************************************************/
@@ -465,20 +544,20 @@ namespace CodeThorn {
     
     if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)) {
       if(SgExpression* condExpr=isSgExpression(condNode)) {
-        // (i) build tmp var with cond as initializer
-        SgScopeStatement* scope=stmt->get_scope();
-        auto tmpVarDeclaration=buildVariableDeclarationWithInitializerForExpression(condExpr, scope);
-        tmpVarDeclaration->set_parent(scope);
-        auto tmpVarReference=buildVarRefExpForVariableDeclaration(tmpVarDeclaration);
-        ROSE_ASSERT(tmpVarDeclaration!= 0);
+      // (i) build tmp var with cond as initializer
+      SgScopeStatement* scope=stmt->get_scope();
+      auto tmpVarDeclaration=buildVariableDeclarationWithInitializerForExpression(condExpr, scope);
+      tmpVarDeclaration->set_parent(scope);
+      auto tmpVarReference=buildVarRefExpForVariableDeclaration(tmpVarDeclaration);
+      ROSE_ASSERT(tmpVarDeclaration!= 0);
       
-        // (ii) replace cond with new tmp-varref
-        bool deleteReplacedExpression=false;
-        SgNodeHelper::replaceExpression(condExpr,tmpVarReference,deleteReplacedExpression);
+      // (ii) replace cond with new tmp-varref
+      bool deleteReplacedExpression=false;
+      SgNodeHelper::replaceExpression(condExpr,tmpVarReference,deleteReplacedExpression);
       
-        // (iii) insert declaration with initializer before stmt
-        // cases if and switch
-        SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
+      // (iii) insert declaration with initializer before stmt
+      // cases if and switch
+      SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
       } else if(SgVariableDeclaration* condVarDecl=isSgVariableDeclaration(condNode)) {
         cerr<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(stmt)<<endl;
         cerr<<"Error: Normalization: Variable declaration in condition of if statement. Not supported yet."<<endl;
