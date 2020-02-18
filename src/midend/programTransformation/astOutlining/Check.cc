@@ -256,7 +256,7 @@ Outliner::isOutlineable (const SgStatement* s, bool verbose)
       cerr << "*** Can't outline template instantiations yet. ***" << endl;
     return false;
   }
-
+#if 0
   // Liao 12/20/2012. New EDG 4.4 version has better template support. We store original template declarations instead of instantiations in AST now
   if (isSgTemplateFunctionDeclaration(decl)
       || isSgTemplateMemberFunctionDeclaration(decl))
@@ -266,7 +266,7 @@ Outliner::isOutlineable (const SgStatement* s, bool verbose)
       cerr << "*** Can't outline things within templates yet. ***" << endl;
     return false;
   }
-
+#endif
 
   if (isSgDeclarationStatement (s) && !isSgVariableDeclaration (s))
   {
