@@ -113,7 +113,7 @@ namespace CodeThorn {
       SgIntVal * valExpInt = isSgIntVal(indexExp);
       if(!(valExp || valExpInt)) {
         //SAWYER_MESG(logger[WARN])
-        cerr<<"Warning: Unexpected value: determineNumberOfElements: "<<indexExp->class_name()<<endl;
+        //cerr<<"Warning: Unexpected value: determineNumberOfElements: "<<indexExp->class_name()<<endl;
         result=0;
       } else {
         if (valExp)

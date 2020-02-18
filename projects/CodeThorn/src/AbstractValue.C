@@ -87,9 +87,9 @@ void AbstractValue::initFloat(CodeThorn::BuiltInType btype, long double fval) {
 }
 
 // type conversion
-AbstractValue::AbstractValue(Top e) {valueType=AbstractValue::TOP;intValue=0;}
+AbstractValue::AbstractValue(Top e) {valueType=AbstractValue::TOP;intValue=0;} // intValue=0 superfluous
 // type conversion
-AbstractValue::AbstractValue(Bot e) {valueType=AbstractValue::BOT;intValue=0;}
+AbstractValue::AbstractValue(Bot e) {valueType=AbstractValue::BOT;intValue=0;} // intValue=0 superfluous
 
 AbstractValue::AbstractValue(unsigned char x) {
   initInteger(BITYPE_UCHAR,x);
@@ -169,6 +169,7 @@ AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId
 std::string AbstractValue::valueTypeToString() const {
   switch(valueType) {
   case TOP: return "top";
+  case UNDEFINED: return "undefined";
   case INTEGER: return "constint";
   case FLOAT: return "float";
   case PTR: return "ptr";
@@ -181,9 +182,8 @@ std::string AbstractValue::valueTypeToString() const {
 
 // currently maps to isTop(); in preparation for explicit handling of
 // undefined values.
-bool AbstractValue::isUndefined() const {return isTop();}
-
-bool AbstractValue::isTop() const {return valueType==AbstractValue::TOP;}
+bool AbstractValue::isUndefined() const {return valueType==AbstractValue::UNDEFINED;}
+bool AbstractValue::isTop() const {return valueType==AbstractValue::TOP||isUndefined();}
 bool AbstractValue::isTrue() const {return valueType==AbstractValue::INTEGER && intValue!=0;}
 bool AbstractValue::isFalse() const {return valueType==AbstractValue::INTEGER && intValue==0;}
 bool AbstractValue::isBot() const {return valueType==AbstractValue::BOT;}
@@ -488,6 +488,7 @@ string AbstractValue::toLhsString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
+  case UNDEFINED: return "undefined";
   case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
@@ -511,6 +512,7 @@ string AbstractValue::toRhsString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
+  case UNDEFINED: return "undefined";
   case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
@@ -547,6 +549,7 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
+  case UNDEFINED: return "undefined";
   case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
@@ -577,6 +580,7 @@ string AbstractValue::toString() const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
+  case UNDEFINED: return "undefined";
   case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
@@ -780,6 +784,10 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
   if(val1.isBot()||val2.isTop()) {
     // bot <= x, x <= top
     return true;
+  } else if(val1.isTop() && val2.isTop()) {
+    // this case is necessary because TOP and UNDEFINED need to be treated the same
+    // and isTop also includes isUndefined (in its definition).
+    return true;
   } else if(val1.valueType==val2.valueType) {
     switch(val1.valueType) {
     case BOT: return true;
@@ -787,7 +795,11 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
     case FLOAT: return (val1.floatValue==val2.floatValue);
     case PTR: return (val1.getVariableId()==val2.getVariableId());
     case REF: return (val1.getVariableId()==val2.getVariableId());
-    case TOP: return true;
+    case TOP:
+    case UNDEFINED:
+      // special cases of above if-conditions
+      // TODO: enfore non-reachable here
+      return true;
     }
   }
   return false;
@@ -795,8 +807,15 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
 
 // static function, two arguments
 AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
-  if(val1.isTop()||val2.isTop()) {
-    return createTop();
+  if(val1.isUndefined()||val2.isUndefined()) {
+    // keep it undefined if at least one of the two is undefined (taint analysis)
+    // any undefined value is treated like top everywhere else
+    if(val1.isUndefined())
+      return val1;
+    else
+      return val2;
+  } else if(val1.isTop()||val2.isTop()) {
+    return createTop(); // create top when any of the two is top (all undefined-cases already handled above)
   } else if(val1.isBot()) {
     return val2;
   } else if(val2.isBot()) {
@@ -804,7 +823,8 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
   } else if(val1.valueType==val2.valueType) {
     switch(val1.valueType) {
     case BOT: return val2;
-    case TOP: return val1;
+    case TOP: return val1; // special case of above if-conds (TODO: enforce not reachable)
+    case UNDEFINED: return val1; // special case of above if-cond (TODO: enforce not reachable)
     case INTEGER: {
       if(val1.intValue==val2.intValue) {
         return val1;
@@ -835,6 +855,11 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
 AbstractValue AbstractValue::createTop() {
   CodeThorn::Top top;
   return AbstractValue(top);
+}
+AbstractValue AbstractValue::createUndefined() {
+  AbstractValue newValue;
+  newValue.valueType=AbstractValue::UNDEFINED;
+  return newValue;
 }
 
 AbstractValue CodeThorn::operator+(AbstractValue& a,AbstractValue& b) {

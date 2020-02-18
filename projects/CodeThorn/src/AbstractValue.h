@@ -38,7 +38,7 @@ class AbstractValue {
   typedef uint16_t TypeSize;
   friend bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
   friend bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
-  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, TOP};
+  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, TOP, UNDEFINED };
   AbstractValue();
   AbstractValue(bool val);
   // type conversion
@@ -108,6 +108,7 @@ class AbstractValue {
   static AbstractValue createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, AbstractValue Index);
   static AbstractValue createNullPtr();
   static AbstractValue createTop();
+  static AbstractValue createUndefined(); // used to model values of uninitialized variables/memory locations
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
   //  bool operator==(AbstractValue other) const;

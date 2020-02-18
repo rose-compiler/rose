@@ -146,6 +146,10 @@ namespace CodeThorn {
     std::string getInterpretationModeFileName();
     void setInterpretationModeFileName(std::string);
 
+    AbstractValue readFromMemoryLocation(const PState* pstate, AbstractValue memLoc);
+    void writeToMemoryLocation(PState* pstate, AbstractValue memLoc, AbstractValue newValue);
+    void writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc);
+    
   protected:
     static void initDiagnostics();
     static Sawyer::Message::Facility logger;
