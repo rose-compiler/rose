@@ -6,7 +6,7 @@
 #include "fixupDefiningAndNondefiningDeclarations.h"
 
 // required for rprintf
-using namespace Sawyer::Message;
+using namespace Rose::Diagnostics;
 
 void fixupAstDefiningAndNondefiningDeclarations( SgNode* node )
    {
@@ -29,7 +29,7 @@ void fixupAstDefiningAndNondefiningDeclarations( SgNode* node )
   // DQ (3/4/2007): temp debugging code to check where defining and non-defining declarations were being set equal!
      extern SgDeclarationStatement* saved_declaration;
      ROSE_ASSERT(saved_declaration != NULL);
-     mprintf ("saved_declaration = %p saved_declaration->get_definingDeclaration() = %p saved_declaration->get_firstNondefiningDeclaration() = %p \n",
+     mfprintf(mlog[WARN]) ("saved_declaration = %p saved_declaration->get_definingDeclaration() = %p saved_declaration->get_firstNondefiningDeclaration() = %p \n",
           saved_declaration,saved_declaration->get_definingDeclaration(),saved_declaration->get_firstNondefiningDeclaration());
      ROSE_ASSERT(saved_declaration->get_definingDeclaration() != saved_declaration->get_firstNondefiningDeclaration());
 #endif
@@ -40,7 +40,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
    {
   // DQ (6/24/2005): Fixup of defining and non-defining declaration pointers for each SgDeclarationStatement
 #if 0
-      mprintf ("In FixupAstDefiningAndNondefiningDeclarations::visit(node = %p = %s) \n",node,node->class_name().c_str());
+      mfprintf(mlog[WARN]) ("In FixupAstDefiningAndNondefiningDeclarations::visit(node = %p = %s) \n",node,node->class_name().c_str());
 #endif
 
   // DQ (2/21/2007): Modified to force SgVariableDeclaration IR nodes to follow the rules.
@@ -48,7 +48,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
   // if ( isSgFunctionParameterList(node) != NULL || isSgVariableDeclaration(node) != NULL || isSgVariableDefinition(node) != NULL)
      if ( isSgFunctionParameterList(node) != NULL || isSgVariableDefinition(node) != NULL)
         {
-       // mprintf ("Skipping case of SgFunctionParameterList or SgVariableDeclaration in FixupAstDefiningAndNondefiningDeclarations::visit() node = %p = %s \n",node,node->class_name().c_str());
+       // mfprintf(mlog[WARN]) ("Skipping case of SgFunctionParameterList or SgVariableDeclaration in FixupAstDefiningAndNondefiningDeclarations::visit() node = %p = %s \n",node,node->class_name().c_str());
           return;
         }
 
@@ -58,12 +58,12 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
      if (declaration != NULL)
         {
           ROSE_ASSERT(declaration != NULL);
-       // mprintf ("This is a declaration statement (node = %p = %s = %s) \n",declaration,declaration->sage_class_name(),SageInterface::get_name(declaration).c_str());
+       // mfprintf(mlog[WARN]) ("This is a declaration statement (node = %p = %s = %s) \n",declaration,declaration->sage_class_name(),SageInterface::get_name(declaration).c_str());
 
           definingDeclaration         = declaration->get_definingDeclaration();
           firstNondefiningDeclaration = declaration->get_firstNondefiningDeclaration();
 #if 0
-          mprintf ("In FixupAstDefiningAndNondefiningDeclarations: node = %p = %s definingDeclaration = %p firstNondefiningDeclaration = %p \n",
+          mfprintf(mlog[WARN])("In FixupAstDefiningAndNondefiningDeclarations: node = %p = %s definingDeclaration = %p firstNondefiningDeclaration = %p \n",
                node,node->class_name().c_str(),definingDeclaration,firstNondefiningDeclaration);
 #endif
 
@@ -72,8 +72,8 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
        // FMZ (6/8/2008): caused core dump when read in a .rmod file
           if (definingDeclaration == NULL && firstNondefiningDeclaration == NULL)  
              {
-               mprintf ("Error: declaration = %p = %s definingDeclaration         = %p \n",declaration,declaration->sage_class_name(),definingDeclaration);
-               mprintf ("Error: declaration = %p = %s firstNondefiningDeclaration = %p \n",declaration,declaration->sage_class_name(),firstNondefiningDeclaration);
+               mfprintf(mlog[WARN]) ("Error: declaration = %p = %s definingDeclaration         = %p \n",declaration,declaration->sage_class_name(),definingDeclaration);
+               mfprintf(mlog[WARN]) ("Error: declaration = %p = %s firstNondefiningDeclaration = %p \n",declaration,declaration->sage_class_name(),firstNondefiningDeclaration);
              }
        // DQ (4/18/18): This can't be used for Fortran code.
           ROSE_ASSERT(definingDeclaration != NULL || firstNondefiningDeclaration != NULL);
@@ -82,9 +82,9 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 
 
 #if 0
-          mprintf ("In FixupAstDefiningAndNondefiningDeclarations: declaration            = %p = %s get_name() = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
-          mprintf ("                                               definingDeclaration    = %p get_name() = %s \n",definingDeclaration,(definingDeclaration != NULL) ? SageInterface::get_name(definingDeclaration).c_str() : "empty name");
-          mprintf ("                                               nondefiningDeclaration = %p get_name() = %s \n",firstNondefiningDeclaration,(firstNondefiningDeclaration != NULL) ? SageInterface::get_name(firstNondefiningDeclaration).c_str() : "empty name");
+          mfprintf(mlog[WARN]) ("In FixupAstDefiningAndNondefiningDeclarations: declaration            = %p = %s get_name() = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
+          mfprintf(mlog[WARN]) ("                                               definingDeclaration    = %p get_name() = %s \n",definingDeclaration,(definingDeclaration != NULL) ? SageInterface::get_name(definingDeclaration).c_str() : "empty name");
+          mfprintf(mlog[WARN]) ("                                               nondefiningDeclaration = %p get_name() = %s \n",firstNondefiningDeclaration,(firstNondefiningDeclaration != NULL) ? SageInterface::get_name(firstNondefiningDeclaration).c_str() : "empty name");
 #endif
 
        // DQ (10/10/2006): Also set defining declaration of declarations that 
@@ -96,14 +96,14 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                if ( (firstNondefiningClassDeclaration != NULL) && (firstNondefiningClassDeclaration->get_definingDeclaration() != NULL) )
                   {
                   // DQ (10/10/2006): This should have already been setup (it could have been a declaration built for a SgClassType and it was missed)!
-                  // mprintf ("In FixupAstDefiningAndNondefiningDeclarations: fixup a non-defining class declaration with a NULL pointer, to its defining declaration, indirectly through its valid firstNondefiningDeclaration! \n");
+                  // mfprintf(mlog[WARN]) ("In FixupAstDefiningAndNondefiningDeclarations: fixup a non-defining class declaration with a NULL pointer, to its defining declaration, indirectly through its valid firstNondefiningDeclaration! \n");
                   // ROSE_ASSERT(false);
 
                      definingDeclaration = firstNondefiningClassDeclaration->get_definingDeclaration();
                      ROSE_ASSERT(definingDeclaration != NULL);
                      declaration->set_definingDeclaration(definingDeclaration);
 
-                  // mprintf ("In FixupAstDefiningAndNondefiningDeclarations::visit(): declaration = %p firstNondefiningClassDeclaration->get_definingDeclaration() = %p \n",declaration,firstNondefiningClassDeclaration->get_definingDeclaration());
+                  // mfprintf(mlog[WARN]) ("In FixupAstDefiningAndNondefiningDeclarations::visit(): declaration = %p firstNondefiningClassDeclaration->get_definingDeclaration() = %p \n",declaration,firstNondefiningClassDeclaration->get_definingDeclaration());
                   }
 
             // DQ (4/10/2016): Fixing bug pointed out by Tim at UCLA.
@@ -116,7 +116,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                        {
                       // We have identified an inconsistantcy where the defining function pointer has not be uniformally setup.
 #if 0
-                         mprintf ("We have identified an inconsistantcy where the defining function pointer has not be uniformally setup \n");
+                         mfprintf(mlog[WARN]) ("We have identified an inconsistantcy where the defining function pointer has not be uniformally setup \n");
 #endif
                          declaration->set_definingDeclaration(firstNondefiningDeclaration->get_definingDeclaration());
                        }
@@ -127,16 +127,16 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                   {
 #if 0
                  // DQ (11/5/2016): Comment this out to avoid output spew in Fortran test codes (see Fortran_tests/mpi_f08_interfaces_test.f03, I think).
-                    mprintf ("Warning: declaration exists with firstNondefiningDeclaration == NULL: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+                    mfprintf(mlog[WARN]) ("Warning: declaration exists with firstNondefiningDeclaration == NULL: declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 #endif
                   }
             // ROSE_ASSERT(firstNondefiningDeclaration != NULL);
-            // if (firstNondefiningDeclaration->get_definingDeclaration() != NULL && declaration->get_definingDeclaration() == NULL)
+            // if (firstNondefiningDeclaration    ->get_definingDeclaration() != NULL && declaration->get_definingDeclaration() == NULL)
                if (firstNondefiningDeclaration != NULL && firstNondefiningDeclaration->get_definingDeclaration() != NULL && declaration->get_definingDeclaration() == NULL)
                   {
                  // We have identified an inconsistantcy where the defining function pointer has not be uniformally setup.
 #if 0
-                    mprintf ("Warning: Fixup defining declarations: We have identified an inconsistantcy where the defining declaration has not be uniformally setup \n");
+                    mfprintf(mlog[WARN]) ("Warning: Fixup defining declarations: We have identified an inconsistantcy where the defining declaration has not be uniformally setup \n");
 #endif
                     declaration->set_definingDeclaration(firstNondefiningDeclaration->get_definingDeclaration());
                   }
@@ -157,7 +157,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                   {
                     if (nondefiningClassDeclaration->get_fixupScope() == true)
                        {
-                         mprintf ("Error: nondefiningClassDeclaration = %p = %s = %s \n",
+                         mfprintf(mlog[WARN])("nondefiningClassDeclaration = %p = %s = %s \n",
                               nondefiningClassDeclaration,
                               nondefiningClassDeclaration->class_name().c_str(),
                               SageInterface::get_name(nondefiningClassDeclaration).c_str());
@@ -167,7 +167,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 
                     if (nondefiningClassDeclaration->get_fixupScope() == true)
                        {
-                         mprintf ("Error: nondefiningClassDeclaration = %p = %s get_fixupScope() == false \n",nondefiningClassDeclaration,nondefiningClassDeclaration->get_name().str());
+                         mfprintf(mlog[WARN]) ("Error: nondefiningClassDeclaration = %p = %s get_fixupScope() == false \n",nondefiningClassDeclaration,nondefiningClassDeclaration->get_name().str());
                        }
                     ROSE_ASSERT(nondefiningClassDeclaration->get_fixupScope() == false);
                   }
@@ -194,19 +194,19 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                       // can have many different scopes) that we don't need to output any special information 
                       // about this case!
 #if 0
-                         mprintf ("AST Fixup: setting the scope of the nondefining declaration to scope of the defining declaration! \n");
-                         mprintf ("definingDeclaration = %s get_scope() = %p = %s name = %s \n",
+                         mfprintf(mlog[WARN]) ("AST Fixup: setting the scope of the nondefining declaration to scope of the defining declaration! \n");
+                         mfprintf(mlog[WARN]) ("definingDeclaration = %s get_scope() = %p = %s name = %s \n",
                               SageInterface::get_name(definingDeclaration).c_str(),
                               definingDeclaration->get_scope(),definingDeclaration->get_scope()->class_name().c_str(),
                               SageInterface::get_name(definingDeclaration->get_scope()).c_str());
-                         mprintf ("firstNondefiningDeclaration = %s get_scope() = %p = %s = %s \n",
+                         mfprintf(mlog[WARN]) ("firstNondefiningDeclaration = %s get_scope() = %p = %s = %s \n",
                               SageInterface::get_name(firstNondefiningDeclaration).c_str(),
                               firstNondefiningDeclaration->get_scope(),firstNondefiningDeclaration->get_scope()->class_name().c_str(),
                               SageInterface::get_name(firstNondefiningDeclaration->get_scope()).c_str());
 #endif
                        }
 #if 0
-                    mprintf ("Resetting scope of firstNondefiningDeclaration = %p = %s old scope = %p = %s new scope = %p = %s \n",
+                    mfprintf(mlog[WARN]) ("Resetting scope of firstNondefiningDeclaration = %p = %s old scope = %p = %s new scope = %p = %s \n",
                          firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),
                          firstNondefiningDeclaration->get_scope(),firstNondefiningDeclaration->get_scope()->class_name().c_str(),
                          definingDeclaration->get_scope(),definingDeclaration->get_scope()->class_name().c_str());
@@ -225,9 +225,9 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                     if (symbolToMove != NULL)
                        {
 #if 0
-                         mprintf ("Found a symbol to move as we reset the scope of firstNondefiningDeclaration = %p = %s to definingScope = %p \n",
+                         mfprintf(mlog[WARN]) ("Found a symbol to move as we reset the scope of firstNondefiningDeclaration = %p = %s to definingScope = %p \n",
                               firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),definingScope);
-                         mprintf ("Removing symbol = %p from scope = %p \n",symbolToMove,nondefiningScope);
+                         mfprintf(mlog[WARN]) ("Removing symbol = %p from scope = %p \n",symbolToMove,nondefiningScope);
 #endif
                       // DQ (4/18/2018): Modified to avoid removing the symbol if it is not present.  This might be 
                       // related to a bug fix to support symbols in namespaces and record them in both the namespace 
@@ -240,7 +240,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                            else
                             {
 #if 0
-                              mprintf ("AST Fixup: this symbol does not exist \n");
+                              mfprintf(mlog[WARN]) ("AST Fixup: this symbol does not exist \n");
 #endif
                             }
 
@@ -254,7 +254,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                          if (definingScope->symbol_exists(symbolToMove->get_name(),symbolToMove) == false)
                             {
 #if 0
-                              mprintf ("calling insert symbolToMove = %p = %s = %s into newScope = %p \n",
+                              mfprintf(mlog[WARN]) ("calling insert symbolToMove = %p = %s = %s into newScope = %p \n",
                                    symbolToMove,symbolToMove->class_name().c_str(),symbolToMove->get_name().str(),definingScope);
 #endif
                            // DQ (2/25/2007): It is OK for the name to exist (e.g. overloader functions of a struct 
@@ -265,7 +265,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                               if (definingScope->symbol_exists(symbolToMove) == false)
                                  {
 #if 0
-                                   mprintf ("After existence tesst: calling insert symbolToMove = %p = %s = %s into newScope = %p = %s \n",
+                                   mfprintf(mlog[WARN]) ("After existence tesst: calling insert symbolToMove = %p = %s = %s into newScope = %p = %s \n",
                                         symbolToMove,symbolToMove->class_name().c_str(),symbolToMove->get_name().str(),definingScope,definingScope->class_name().c_str());
 #endif
                                    definingScope->insert_symbol(symbolToMove->get_name(),symbolToMove);
@@ -281,7 +281,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                                  {
 #if PRINT_DEVELOPER_WARNINGS
                                 // Not sure if this is an error or not.
-                                   mprintf ("Warning: skipped insert of symbolToMove = %p = %s = %s into newScope = %p (symbolToMove already exists) \n",
+                                   mfprintf(mlog[WARN]) ("Warning: skipped insert of symbolToMove = %p = %s = %s into newScope = %p (symbolToMove already exists) \n",
                                         symbolToMove,symbolToMove->class_name().c_str(),symbolToMove->get_name().str(),definingScope);
 #endif
                                 // DQ (3/5/2007): Note that it is OK to have multiple references to a symbol, but
@@ -292,7 +292,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                                    if (symbolToMove->get_parent() != definingScope->get_symbol_table())
                                       {
 #if 0
-                                        mprintf ("Resetting the parent of the symbolToMove = %p = %s = %s from %p = %s to %p (symbol table) \n",
+                                        mfprintf(mlog[WARN]) ("Resetting the parent of the symbolToMove = %p = %s = %s from %p = %s to %p (symbol table) \n",
                                              symbolToMove,symbolToMove->class_name().c_str(),SageInterface::get_name(symbolToMove).c_str(),
                                              symbolToMove->get_parent(),symbolToMove->get_parent()->class_name().c_str(),definingScope->get_symbol_table());
 #endif
@@ -308,7 +308,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 
                  // DQ (2/25/2007): Now reset the scope to the new scope (the symbol has been transfered if it existed).
 #if 0
-                    mprintf ("Resetting the scope of firstNondefiningDeclaration = %p = %s from %p = %s to %p = %s \n",
+                    mfprintf(mlog[WARN]) ("Resetting the scope of firstNondefiningDeclaration = %p = %s from %p = %s to %p = %s \n",
                             firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),
                             firstNondefiningDeclaration->get_scope(),firstNondefiningDeclaration->get_scope()->class_name().c_str(),
                             definingScope,definingScope->class_name().c_str());
@@ -319,13 +319,13 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                  // DEBUG_SAGE_ACCESS_FUNCTIONS_ASSERTION in sage3.h indicate this is required.
                     if (firstNondefiningDeclaration->get_scope() != NULL)
                        {
-                         mprintf ("Note in FixupAstDefiningAndNondefiningDeclarations::visit(): overwriting firstNondefiningDeclaration = %p firstNondefiningDeclaration->get_scope() = %p with NULL before assignment to definingScope = %p \n",
+                         mfprintf(mlog[WARN]) ("Note in FixupAstDefiningAndNondefiningDeclarations::visit(): overwriting firstNondefiningDeclaration = %p firstNondefiningDeclaration->get_scope() = %p with NULL before assignment to definingScope = %p \n",
                               firstNondefiningDeclaration,firstNondefiningDeclaration->get_scope(),definingScope);
                          firstNondefiningDeclaration->set_scope(NULL);
                        }
 #endif
 #if 0
-                    mprintf ("Calling set_scope: firstNondefiningDeclaration = %p = %s = %s to definingScope = %p = %s = %s \n",
+                    mfprintf(mlog[WARN]) ("Calling set_scope: firstNondefiningDeclaration = %p = %s = %s to definingScope = %p = %s = %s \n",
                             firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),SageInterface::get_name(firstNondefiningDeclaration).c_str(),
                             definingScope,definingScope->class_name().c_str(),SageInterface::get_name(definingScope).c_str());
 #endif
@@ -340,17 +340,17 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                       // Only report this if it is not someting defined in a typedef.
                          if (typedefDeclaration == NULL)
                             {
-                              mprintf ("Error: firstNondefiningDeclaration->get_parent() = %p \n",firstNondefiningDeclaration->get_parent());
-                              mprintf ("     firstNondefiningDeclaration = %p = %s \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+                              mfprintf(mlog[WARN]) ("Error: firstNondefiningDeclaration->get_parent() = %p \n",firstNondefiningDeclaration->get_parent());
+                              mfprintf(mlog[WARN]) ("     firstNondefiningDeclaration = %p = %s \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
                               if (firstNondefiningDeclaration->get_parent() != NULL)
                                  {
-                                   mprintf ("     firstNondefiningDeclaration->get_parent() = %s \n",firstNondefiningDeclaration->get_parent()->class_name().c_str());
+                                   mfprintf(mlog[WARN]) ("     firstNondefiningDeclaration->get_parent() = %s \n",firstNondefiningDeclaration->get_parent()->class_name().c_str());
                                  }
                               firstNondefiningDeclaration->get_startOfConstruct()->display("firstNondefiningDeclarationScope == NULL: debug");
 
                            // DQ (3/4/2009): This test fails for the AST copy mechanism on test2005_163.C
-                              mprintf ("Warning: failing test: firstNondefiningDeclarationScope != NULL \n");
-                              mprintf ("This test fails for the AST copy mechanism on test2005_163.C \n");
+                              mfprintf(mlog[WARN]) ("Warning: failing test: firstNondefiningDeclarationScope != NULL \n");
+                              mfprintf(mlog[WARN]) ("This test fails for the AST copy mechanism on test2005_163.C \n");
                             }
                        }
                  // ROSE_ASSERT(firstNondefiningDeclarationScope != NULL);
@@ -369,19 +369,19 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                            // reset the parent to be the SgClassType.
 // #if PRINT_DEVELOPER_WARNINGS
 #if 0
-                              mprintf ("Resetting the parent of the templateClassInstantiation = %p = %s to its SgClassType \n",
+                              mfprintf(mlog[WARN]) ("Resetting the parent of the templateClassInstantiation = %p = %s to its SgClassType \n",
                                    templateClassInstantiation,templateClassInstantiation->get_name().str());
 #endif
 #if 0
                            // DQ (12/22/2019): Comment out output spew from multiple files on the command line seeing the same class definitions (no longer shared across files).
-                              mprintf ("In FixupAstDefiningAndNondefiningDeclarations::visit() templateClassInstantiation->get_parent() = %p \n",templateClassInstantiation->get_parent());
+                              mfprintf(mlog[WARN]) ("In FixupAstDefiningAndNondefiningDeclarations::visit() templateClassInstantiation->get_parent() = %p \n",templateClassInstantiation->get_parent());
                               if (templateClassInstantiation->get_parent() != NULL)
-                                   mprintf ("In FixupAstDefiningAndNondefiningDeclarations::visit() templateClassInstantiation->get_parent() = %s \n",templateClassInstantiation->get_parent()->class_name().c_str());
+                                   mfprintf(mlog[WARN]) ("In FixupAstDefiningAndNondefiningDeclarations::visit() templateClassInstantiation->get_parent() = %s \n",templateClassInstantiation->get_parent()->class_name().c_str());
 #endif
                            // templateClassInstantiation->set_parent(classType);
                               if (templateClassInstantiation->get_parent() == NULL)
                                  {
-                                   mprintf ("Resetting the parent of the templateClassInstantiation = %p = %s to its SgClassType \n",
+                                   mfprintf(mlog[WARN]) ("Resetting the parent of the templateClassInstantiation = %p = %s to its SgClassType \n",
                                         templateClassInstantiation,templateClassInstantiation->get_name().str());
                                    templateClassInstantiation->set_parent(classType);
                                  }
@@ -389,7 +389,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                                  {
 #if 0
                                 // DQ (12/22/2019): Comment out output spew from multiple files on the command line seeing the same class definitions (no longer shared across files).
-                                   mprintf ("templateClassInstantiation parent is already set, skip resetting it to SgClassType \n");
+                                   mfprintf(mlog[WARN]) ("templateClassInstantiation parent is already set, skip resetting it to SgClassType \n");
 #endif
                                  }
 
@@ -430,13 +430,13 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                       // Make sure that the statement is in the list...
                          if (std::find(statementList.begin(),statementList.end(),firstNondefiningDeclaration) == statementList.end())
                             {
-                              mprintf ("##### WARNING: in FixupAstDefiningAndNondefiningDeclarations::visit() statement = %p = %s not in child list of scope = %p = %s \n",
+                              mfprintf(mlog[WARN]) ("##### WARNING: in FixupAstDefiningAndNondefiningDeclarations::visit() statement = %p = %s not in child list of scope = %p = %s \n",
                                    firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),
                                    firstNondefiningDeclarationScope,firstNondefiningDeclarationScope->class_name().c_str());
                               SgClassDeclaration* classDeclaration = isSgClassDeclaration(firstNondefiningDeclaration);
                               if (classDeclaration != NULL)
                                  {
-                                   mprintf (" --- classDeclaration = %p name = %s \n",classDeclaration,classDeclaration->get_name().str());
+                                   mfprintf(mlog[WARN]) (" --- classDeclaration = %p name = %s \n",classDeclaration,classDeclaration->get_name().str());
                                  }
 #if 0
                               firstNondefiningDeclaration->get_startOfConstruct()->display("declaration: firstNondefiningDeclaration: debug");
@@ -447,9 +447,9 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                  // ROSE_ASSERT(find(statementList.begin(),statementList.end(),firstNondefiningDeclaration) != statementList.end());
                   }
 #if 0
-               mprintf ("Testing associated scope of declaration statment (node = %p = %s = %s) \n",
+               mfprintf(mlog[WARN]) ("Testing associated scope of declaration statment (node = %p = %s = %s) \n",
                     declaration,declaration->sage_class_name(),SageInterface::get_name(declaration).c_str());
-               mprintf ("definingDeclaration->get_scope() = %p firstNondefiningDeclaration->get_scope() = %p \n",
+               mfprintf(mlog[WARN]) ("definingDeclaration->get_scope() = %p firstNondefiningDeclaration->get_scope() = %p \n",
                     definingDeclaration->get_scope(),firstNondefiningDeclaration->get_scope());
 #endif
                ROSE_ASSERT(definingDeclaration->get_scope() == firstNondefiningDeclaration->get_scope());
@@ -467,10 +467,10 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // DQ (4/22/2007): However this is a common compiler extension 
             // for nearly all C compilers, except GNU, so we have tried to support it.
             // ROSE_ASSERT(declaration == definingDeclaration);
-            // mprintf ("In FixupAstDefiningAndNondefiningDeclarations::visit(): declaration = %p definingDeclaration = %p \n",declaration,definingDeclaration);
+            // mfprintf(mlog[WARN]) ("In FixupAstDefiningAndNondefiningDeclarations::visit(): declaration = %p definingDeclaration = %p \n",declaration,definingDeclaration);
                if (declaration != definingDeclaration)
                   {
-                 // mprintf ("Note: in FixupAstDefiningAndNondefiningDeclarations::visit(), enum declaration not a defining declaration \n");
+                 // mfprintf(mlog[WARN]) ("Note: in FixupAstDefiningAndNondefiningDeclarations::visit(), enum declaration not a defining declaration \n");
                  // declaration->get_startOfConstruct()->display("declaration != definingDeclaration for enum declaration");
                   }
                break;
@@ -507,19 +507,19 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // build a special non-defining declaration for these declarations.
 
 #if 0
-               mprintf ("In AST Fixup: declaration %p = %s definingDeclaration = %p \n",declaration,declaration->class_name().c_str(),definingDeclaration);
+               mfprintf(mlog[WARN]) ("In AST Fixup: declaration %p = %s definingDeclaration = %p \n",declaration,declaration->class_name().c_str(),definingDeclaration);
 #endif
                if (declaration != definingDeclaration)
                   {
 #if 0
-                    mprintf ("Warning in AST Fixup: declaration %p = %s used to set definingDeclaration = %p \n",
+                    mfprintf(mlog[WARN]) ("Warning in AST Fixup: declaration %p = %s used to set definingDeclaration = %p \n",
                          declaration,declaration->class_name().c_str(),definingDeclaration);
 #endif
                  // Make sure it was never previously set
                     ROSE_ASSERT(definingDeclaration == NULL);
 
                  // fix the problem here!
-                 // mprintf ("In FixupAstDefiningAndNondefiningDeclarations: set_definingDeclaration of %p to %p \n",declaration,declaration);
+                 // mfprintf(mlog[WARN]) ("In FixupAstDefiningAndNondefiningDeclarations: set_definingDeclaration of %p to %p \n",declaration,declaration);
                     declaration->set_definingDeclaration(declaration);
 
                  // reset the definingDeclaration
@@ -557,7 +557,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                   }
                  else
                   {
-                 // mprintf ("Calling declaration->get_startOfConstruct()->display() declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+                 // mfprintf(mlog[WARN]) ("Calling declaration->get_startOfConstruct()->display() declaration = %p = %s \n",declaration,declaration->class_name().c_str());
                  // declaration->get_startOfConstruct()->display("declaration location: debug");
                  // declarationScope = declaration->get_scope();
 #if 0
@@ -569,7 +569,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 #endif
                   }
 #if 0
-               mprintf ("declaration = %p definingDeclaration = %p \n",declaration,definingDeclaration);
+               mfprintf(mlog[WARN]) ("declaration = %p definingDeclaration = %p \n",declaration,definingDeclaration);
 #endif
 
             // DQ (9/12/2011): Static analysis wants an assertion here.
@@ -578,22 +578,22 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // if (declaration->get_scope() != definingDeclaration->get_scope())
                if (declaration->hasExplicitScope() == true && declaration->get_scope() != definingDeclaration->get_scope())
                   {
-                    mprintf ("declaration         = %p = %s \n",declaration,SageInterface::get_name(declaration).c_str());
-                    mprintf ("definingDeclaration = %p = %s \n",definingDeclaration,SageInterface::get_name(definingDeclaration).c_str());
-                    mprintf ("Error: declaration->get_scope() = %p definingDeclaration->get_scope() = %p \n",declaration->get_scope(),definingDeclaration->get_scope());
+                    mfprintf(mlog[WARN]) ("declaration         = %p = %s \n",declaration,SageInterface::get_name(declaration).c_str());
+                    mfprintf(mlog[WARN]) ("definingDeclaration = %p = %s \n",definingDeclaration,SageInterface::get_name(definingDeclaration).c_str());
+                    mfprintf(mlog[WARN]) ("Error: declaration->get_scope() = %p definingDeclaration->get_scope() = %p \n",declaration->get_scope(),definingDeclaration->get_scope());
                     if (declaration->get_scope() != NULL)
-                         mprintf ("declaration->get_scope() = %s \n",declaration->get_scope()->class_name().c_str());
+                         mfprintf(mlog[WARN]) ("declaration->get_scope() = %s \n",declaration->get_scope()->class_name().c_str());
                     if (definingDeclaration->get_scope() != NULL)
-                         mprintf ("definingDeclaration->get_scope() = %s \n",definingDeclaration->get_scope()->class_name().c_str());
+                         mfprintf(mlog[WARN]) ("definingDeclaration->get_scope() = %s \n",definingDeclaration->get_scope()->class_name().c_str());
                   }
                ROSE_ASSERT(declaration->hasExplicitScope() == false || declaration->get_scope() == definingDeclaration->get_scope());
 
                if (firstNondefiningDeclaration != NULL)
                   {
 #if 0
-                    mprintf ("declaration->get_scope() = %s = %p (parent = %p) firstNondefiningDeclaration->get_scope() = %p \n",
+                    mfprintf(mlog[WARN]) ("declaration->get_scope() = %s = %p (parent = %p) firstNondefiningDeclaration->get_scope() = %p \n",
                          declaration->class_name().c_str(),declaration->get_scope(),declaration->get_parent(),firstNondefiningDeclaration->get_scope());
-                    mprintf ("declaration->get_parent() = %p = %s \n",declaration->get_parent(),declaration->get_parent()->class_name().c_str());
+                    mfprintf(mlog[WARN]) ("declaration->get_parent() = %p = %s \n",declaration->get_parent(),declaration->get_parent()->class_name().c_str());
 #endif
 #if 0
                     declaration->get_file_info()->display("declaration");
@@ -608,7 +608,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                     if (declaration->hasExplicitScope() == true)
                        {
 #if 1
-                         mprintf ("Resetting scope (declaration->hasExplicitScope() == true) of declaration = %p = %s old scope = %p = %s new scope = %p = %s \n",
+                         mfprintf(mlog[WARN]) ("Resetting scope (declaration->hasExplicitScope() == true) of declaration = %p = %s old scope = %p = %s new scope = %p = %s \n",
                               declaration,declaration->class_name().c_str(),
                               declaration->get_scope(),declaration->get_scope()->class_name().c_str(),
                               firstNondefiningDeclaration->get_scope(),firstNondefiningDeclaration->get_scope()->class_name().c_str());
@@ -616,12 +616,12 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                          declaration->set_scope(firstNondefiningDeclaration->get_scope());
                        }
 #if 0
-                    mprintf ("declaration->get_scope() = %p firstNondefiningDeclaration->get_scope() = %p \n",
+                    mfprintf(mlog[WARN]) ("declaration->get_scope() = %p firstNondefiningDeclaration->get_scope() = %p \n",
                          declaration->get_scope(),firstNondefiningDeclaration->get_scope());
 #endif
                  // Note that the get_scope() funcion does not return a consistant scope
                  // for a defining and non-defining SgFunctionParameterList.
-                 // mprintf ("WARNING: Fundamental problem in get_scope function! \n");
+                 // mfprintf(mlog[WARN]) ("WARNING: Fundamental problem in get_scope function! \n");
                  // ROSE_ASSERT(declaration->get_scope() == firstNondefiningDeclaration->get_scope());
                     ROSE_ASSERT(declaration->hasExplicitScope() == false || declaration->get_scope() == firstNondefiningDeclaration->get_scope());
                  // firstNondefiningDeclaration->set_scope();
@@ -682,7 +682,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                if (firstNondefiningDeclaration != NULL)
                   {
                  // It is OK for the firstNondefiningDeclaration to be NULL, it means that there was no previous forward declaration.
-                 // mprintf ("Warning: declaration %p = %s has no firstNondefiningDeclaration = %p \n",
+                 // mfprintf(mlog[WARN]) ("Warning: declaration %p = %s has no firstNondefiningDeclaration = %p \n",
                  //      declaration,declaration->sage_class_name(),firstNondefiningDeclaration);
                   }
             // ROSE_ASSERT(firstNondefiningDeclaration != NULL);
@@ -693,7 +693,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                if (firstNondefiningDeclaration != NULL && firstNondefiningDeclaration == definingDeclaration)
                   {
 #if 0
-                    mprintf ("AST Fixup: declaration = %p = %s firstNondefiningDeclaration == definingDeclaration at: \n",
+                    mfprintf(mlog[WARN]) ("AST Fixup: declaration = %p = %s firstNondefiningDeclaration == definingDeclaration at: \n",
                          declaration,declaration->sage_class_name());
                     declaration->get_file_info()->display("firstNondefiningDeclaration == definingDeclaration");
 #endif
@@ -722,7 +722,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                  // DQ (3/4/2007): This can cause the defining and non-defining declarations to be the same, which is an violation of AST consistancy rules.
                     if (templateDeclaration->get_definingDeclaration() == NULL)
                        {
-                         mprintf ("Setting previously unset definingDeclaration on SgTemplateDeclaration to itself  templateDeclaration = %p \n",templateDeclaration);
+                         mfprintf(mlog[WARN]) ("Setting previously unset definingDeclaration on SgTemplateDeclaration to itself  templateDeclaration = %p \n",templateDeclaration);
                          templateDeclaration->set_definingDeclaration(templateDeclaration);
                        }
                     ROSE_ASSERT(templateDeclaration->get_definingDeclaration() != NULL);
@@ -731,7 +731,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                  // template declaration to not be present (since it can be nested in another outer template class declaration).
                     if (templateDeclaration->get_definingDeclaration() == NULL && templateDeclaration->get_firstNondefiningDeclaration() == NULL)
                        {
-                         mprintf ("Error: there should be at least a defining or non-defining template declaration available templateDeclaration = %p \n",templateDeclaration);
+                         mfprintf(mlog[WARN]) ("Error: there should be at least a defining or non-defining template declaration available templateDeclaration = %p \n",templateDeclaration);
                        }
                     ROSE_ASSERT(templateDeclaration->get_definingDeclaration() != NULL || templateDeclaration->get_firstNondefiningDeclaration() != NULL);
 
@@ -747,7 +747,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                       // DQ (5/3/2012): Make it a warning to detect templateDeclaration == NULL.
 // #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
 #if 0
-                         mprintf ("WARNING: In FixupAstDefiningAndNondefiningDeclarations: templateDeclaration == NULL (this is a recent EDG 4.3 issue). \n");
+                         mfprintf(mlog[WARN]) ("WARNING: In FixupAstDefiningAndNondefiningDeclarations: templateDeclaration == NULL (this is a recent EDG 4.3 issue). \n");
 #endif
                        }
                   }
@@ -757,10 +757,10 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                if ( (memberFunctionDeclaration != NULL) && (memberFunctionDeclaration->get_associatedClassDeclaration() == NULL) )
                   {
 #if 0
-                    mprintf ("Error: memberFunctionDeclaration->get_associatedClassDeclaration() == NULL for memberFunctionDeclaration = %p = %s \n",
+                    mfprintf(mlog[WARN]) ("Error: memberFunctionDeclaration->get_associatedClassDeclaration() == NULL for memberFunctionDeclaration = %p = %s \n",
                          memberFunctionDeclaration,memberFunctionDeclaration->class_name().c_str());
 #endif
-                 // mprintf ("Error: memberFunctionDeclaration->get_associatedClassDeclaration() == NULL for memberFunctionDeclaration = %p = %s = %s \n",
+                 // mfprintf(mlog[WARN]) ("Error: memberFunctionDeclaration->get_associatedClassDeclaration() == NULL for memberFunctionDeclaration = %p = %s = %s \n",
                  //      memberFunctionDeclaration,memberFunctionDeclaration->class_name().c_str(),SageInterface::get_name(memberFunctionDeclaration).c_str());
                  // ROSE_ASSERT(false);
                   }
@@ -779,7 +779,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 #if 0
      if (declaration != NULL)
         {
-          mprintf ("Leaving FixupAstDefiningAndNondefiningDeclarations: node = %p = %s definingDeclaration = %p firstNondefiningDeclaration = %p \n",
+          mfprintf(mlog[WARN]) ("Leaving FixupAstDefiningAndNondefiningDeclarations: node = %p = %s definingDeclaration = %p firstNondefiningDeclaration = %p \n",
                node,node->class_name().c_str(),definingDeclaration,firstNondefiningDeclaration);
 
 #if 0
@@ -787,7 +787,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
           extern SgDeclarationStatement* saved_declaration;
           if (declaration == (SgDeclarationStatement*)(0x2a96f96480))
              {
-               mprintf ("Setting the saved_declaration to %p \n",declaration);
+               mfprintf(mlog[WARN]) ("Setting the saved_declaration to %p \n",declaration);
                saved_declaration = declaration;
              }
 #endif
