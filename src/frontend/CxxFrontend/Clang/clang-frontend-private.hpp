@@ -45,7 +45,9 @@
 
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/DiagnosticOptions.h"
+
+#include "clang/Basic/DiagnosticOptions.h"
+
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 
@@ -58,8 +60,9 @@
 #include "clang/Sema/Sema.h"
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 
 #include "llvm/Support/Host.h"
 #include "llvm/Support/raw_ostream.h"
@@ -77,10 +80,10 @@
 #    define DEBUG_VISIT_TYPE DEBUG_VISITOR
 #  endif
 #else
-#  define DEBUG_VISITOR    0
-#  define DEBUG_VISIT_STMT 0
-#  define DEBUG_VISIT_DECL 0
-#  define DEBUG_VISIT_TYPE 0
+#  define DEBUG_VISITOR    1
+#  define DEBUG_VISIT_STMT 1
+#  define DEBUG_VISIT_DECL 1
+#  define DEBUG_VISIT_TYPE 1
 #endif
 
 // Print results of traversal of the nodes: "already done?" and "generated Sage ptr"
@@ -95,25 +98,25 @@
 #    define DEBUG_TRAVERSE_TYPE DEBUG_TRAVERSAL
 #  endif
 #else
-#  define DEBUG_TRAVERSAL     0
-#  define DEBUG_TRAVERSE_STMT 0
-#  define DEBUG_TRAVERSE_DECL 0
-#  define DEBUG_TRAVERSE_TYPE 0
+#  define DEBUG_TRAVERSAL     1
+#  define DEBUG_TRAVERSE_STMT 1
+#  define DEBUG_TRAVERSE_DECL 1
+#  define DEBUG_TRAVERSE_TYPE 1
 #endif
 
 // Print debug info when attaching source location
 #ifndef DEBUG_SOURCE_LOCATION
-#  define DEBUG_SOURCE_LOCATION 0
+#  define DEBUG_SOURCE_LOCATION 1
 #endif
 
 // Display symbol lookup process
 #ifndef DEBUG_SYMBOL_TABLE_LOOKUP
-#  define DEBUG_SYMBOL_TABLE_LOOKUP 0
+#  define DEBUG_SYMBOL_TABLE_LOOKUP 1
 #endif
 
 // Print args receive by clang_main
 #ifndef DEBUG_ARGS
-#  define DEBUG_ARGS 0
+#  define DEBUG_ARGS 1
 #endif
 
 // Fail when a FIXME is reach
@@ -410,7 +413,7 @@ class SagePreprocessorRecord : public clang::PPCallbacks {
     void PragmaMessage(clang::SourceLocation Loc, llvm::StringRef Str);
     void PragmaDiagnosticPush(clang::SourceLocation Loc, llvm::StringRef Namespace);
     void PragmaDiagnosticPop(clang::SourceLocation Loc, llvm::StringRef Namespace);
-    void PragmaDiagnostic(clang::SourceLocation Loc, llvm::StringRef Namespace, clang::diag::Mapping mapping, llvm::StringRef Str);
+    void PragmaDiagnostic(clang::SourceLocation Loc, llvm::StringRef Namespace, clang::diag::Severity Severity, llvm::StringRef Str);
     void MacroExpands(const clang::Token & MacroNameTok, const clang::MacroInfo * MI, clang::SourceRange Range);
     void MacroDefined(const clang::Token & MacroNameTok, const clang::MacroInfo * MI);
     void MacroUndefined(const clang::Token & MacroNameTok, const clang::MacroInfo * MI);

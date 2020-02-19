@@ -13,7 +13,14 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
     bool ret_status = false;
 
     switch (stmt->getStmtClass()) {
-        case clang::Stmt::AsmStmtClass:
+// no longer available in Clang 9
+//        case clang::Stmt::AsmStmtClass:
+//    //      ret_status = VisitAsmStmt((clang::AsmStmt *)stmt, &result);
+//            break;
+        case clang::Stmt::GCCAsmStmtClass:
+    //      ret_status = VisitAsmStmt((clang::AsmStmt *)stmt, &result);
+            break;
+        case clang::Stmt::MSAsmStmtClass:
     //      ret_status = VisitAsmStmt((clang::AsmStmt *)stmt, &result);
             break;
         case clang::Stmt::BreakStmtClass:
@@ -67,12 +74,13 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
         case clang::Stmt::CompoundAssignOperatorClass:
     //      ret_status = VisitCompoundAssignOperator((clang::CompoundAssignOperator *)stmt, &result);
             break;
-        case clang::Stmt::BinaryTypeTraitExprClass:
-    //      ret_status = VisitBinaryTypeTraitExpr((clang::BinaryTypeTraitExpr *)stmt, &result);
+// BinaryTypeTraitExpr is replaced by TypeTraitExprClass
+        case clang::Stmt::TypeTraitExprClass:
+    //      ret_status = VisitTypeTraitExpr((clang::BinaryTypeTraitExpr *)stmt, &result);
             break;
-        case clang::Stmt::BlockDeclRefExprClass:
-    //      ret_status = VisitBlockDeclRefExpr((clang::BlockDeclRefExpr *)stmt, &result);
-            break;
+//        case clang::Stmt::BlockDeclRefExprClass:
+//    //      ret_status = VisitBlockDeclRefExpr((clang::BlockDeclRefExpr *)stmt, &result);
+//            break;
         case clang::Stmt::BlockExprClass:
     //      ret_status = VisitBlockExpr((clang::BlockExpr * )stmt, &result);
             break;
@@ -256,9 +264,9 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
         case clang::Stmt::UnaryOperatorClass:
             ret_status = VisitUnaryOperator((clang::UnaryOperator *)stmt, &result);
             break;
-        case clang::Stmt::UnaryTypeTraitExprClass:
-    //      ret_status = VisitUnaryTypeTraitExpr((clang::UnaryTypeTraitExpr *)stmt, &result);
-            break;
+//        case clang::Stmt::UnaryTypeTraitExprClass:
+//    //      ret_status = VisitUnaryTypeTraitExpr((clang::UnaryTypeTraitExpr *)stmt, &result);
+//            break;
         case clang::Stmt::VAArgExprClass:
             ret_status = VisitVAArgExpr((clang::VAArgExpr *)stmt, &result);
             break;
@@ -632,7 +640,7 @@ bool ClangToSageTranslator::VisitBinaryOperator(clang::BinaryOperator * binary_o
         case clang::BO_OrAssign:  *node = SageBuilder::buildIorAssignOp(lhs, rhs); break;
         case clang::BO_Comma:     *node = SageBuilder::buildCommaOpExp(lhs, rhs); break;
         default:
-            std::cerr << "Unknown opcode for binary operator: " << binary_operator->getOpcodeStr() << std::endl;
+            std::cerr << "Unknown opcode for binary operator: " << binary_operator->getOpcodeStr().str() << std::endl;
             res = false;
     }
 
@@ -888,22 +896,23 @@ bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * 
     }
 
     SgExprListExp * expr_list_exp = SageBuilder::buildExprListExp_nfi();
-    clang::DesignatedInitExpr::designators_iterator it;
-    for (it = designated_init_expr->designators_begin(); it != designated_init_expr->designators_end(); it++) {
+    auto designatorSize = designated_init_expr->size();
+    for (auto it=0; it < designatorSize; it++) {
         SgExpression * expr = NULL;
-        if (it->isFieldDesignator()) {
-            SgSymbol * symbol = GetSymbolFromSymbolTable(it->getField());
+	clang::DesignatedInitExpr::Designator * D = designated_init_expr->getDesignator(it);
+        if (D->isFieldDesignator()) {
+            SgSymbol * symbol = GetSymbolFromSymbolTable(D->getField());
             SgVariableSymbol * var_sym = isSgVariableSymbol(symbol);
             ROSE_ASSERT(var_sym != NULL);
             expr = SageBuilder::buildVarRefExp_nfi(var_sym);
-            applySourceRange(expr, it->getSourceRange());
+            applySourceRange(expr, D->getSourceRange());
         }
-        else if (it->isArrayDesignator()) {
-            SgNode * tmp_expr = Traverse(designated_init_expr->getArrayIndex(*it));
+        else if (D->isArrayDesignator()) {
+            SgNode * tmp_expr = Traverse(designated_init_expr->getArrayIndex(*D));
             expr = isSgExpression(tmp_expr);
             ROSE_ASSERT(expr != NULL);
         }
-        else if (it->isArrayRangeDesignator()) {
+        else if (D->isArrayRangeDesignator()) {
             ROSE_ASSERT(!"I don't believe range designator initializer are supported by ROSE...");    
         }
         else ROSE_ASSERT(false);
@@ -1143,7 +1152,8 @@ bool ClangToSageTranslator::VisitPredefinedExpr(clang::PredefinedExpr * predefin
 
     SgName name;
 
-    switch (predefined_expr->getIdentType()) {
+ // (01/29/2020) Pei-Hung: change to getIndentKind.  And this list is incomplete for Clang 9   
+    switch (predefined_expr->getIdentKind()) {
         case clang::PredefinedExpr::Func:
             name = "__func__";
             break;
