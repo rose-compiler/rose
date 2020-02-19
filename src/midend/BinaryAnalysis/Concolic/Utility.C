@@ -1,6 +1,6 @@
 #include <sage3basic.h>
-
 #include <BinaryConcolic.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -22,3 +22,5 @@ initDiagnostics() {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

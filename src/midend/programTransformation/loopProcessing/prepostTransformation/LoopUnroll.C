@@ -29,6 +29,8 @@ cmdline_configure(const std::vector<std::string>& argv,
         opt = (LoopUnrolling::UnrollOpt)(opt | LoopUnrolling::COND_LEFTOVER);
         ++index;
      }
+     else if (index < argv.size() && argv[index] == "-lo_skip") { ++index; } 
+     else opt = (LoopUnrolling::UnrollOpt)(opt | LoopUnrolling::COND_LEFTOVER);
      if (index < argv.size() && argv[index] == "-nvar") {
         opt = (LoopUnrolling::UnrollOpt)(opt | LoopUnrolling::USE_NEWVAR);
         ++index;
@@ -85,7 +87,8 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
           int stepnum=0, loopnum = 0;
           SymbolicVal loopval = ubval - lbval + 1;
           if (stepval.isConstInt(stepnum) && loopval.isConstInt(loopnum) 
-               && !(loopnum % stepnum)) {
+               && !(loopnum % (stepnum * unrollsize))) {
+std::cerr << "loop val = " << loopnum << "; step: " << stepnum * unrollsize << "\n";
              hasleft = false; 
           }
           else {
@@ -137,7 +140,7 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
               if (hasleft && (opt & COND_LEFTOVER)) {
                  AstNodePtr cond = 
                       fa.CreateBinaryOP( AstInterface::BOP_LE, ivar.CodeGen(fa), (ubval-(i-1)).CodeGen(fa));
-                 AstNodePtr body1 = fa.CopyAstTree(bodylist[i-1]);
+                 AstNodePtr body1 = fa.CopyAstTree(bodylist[i]);
                  AstNodePtr ifstmt =  fa.CreateIf( cond, body1);
                  fa.BlockAppendStmt( leftbody, ifstmt);
                  leftbody = body1;

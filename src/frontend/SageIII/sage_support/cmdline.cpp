@@ -1579,17 +1579,14 @@ SgProject::processCommandLine(const vector<string>& input_argv)
            pos++;
          }
        }
+       std::string astfile = rose_ast_option_param.substr(prev, pos-prev);
+       p_astfiles_in.push_back(astfile);
      }
 
      // `-rose:ast:write out.ast` (extension does not matter)
      rose_ast_option_param = "";
      if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:", "(ast:write)", rose_ast_option_param, true) == true ) {
        p_astfile_out = rose_ast_option_param;
-     }
-
-     // `-rose:ast:merge`
-     if (CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(ast:merge)",true) == true ) {
-       p_ast_merge = true;
      }
 
   // Verbose ?
@@ -3318,11 +3315,6 @@ SgFile::usage ( int status )
 "     -rose:ast:write out.ast\n"
 "                             Output AST file (extension does *not* matter).\n"
 "                             Evaluated in the backend before any file unparsing or backend compiler calls.\n"
-"     -rose:ast:merge\n"
-"                             Boolean flag (default: false)\n"
-"                             Wether or not to minimize the AST with ROSE's merge algorithm.\n"
-"                             Useful when more than one source file is provided on the command line, or when ASTs are loaded from files.\n"
-"                             Occurs after the frontend and AST loading but before the plugin.\n"
 "\n"
 "Plugin Mode:\n"
 "     -rose:plugin_lib <shared_lib_filename>\n"
@@ -3573,6 +3565,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // Strip out the rose specific command line options
   // then search for all filenames (options without the "-" prefix)
   // the assume all other arguments are to be passed onto the C or C++ compiler
+
+#if 0
+     printf ("In SgFile::processRoseCommandLineOptions(): Processing the commandline argv.size() = %zu \n",argv.size());
+#endif
 
   // int optionCount = 0;
   // int i = 0;
@@ -5427,7 +5423,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(relax_syntax_check)",1);
 
   // DQ (8/11/2007): Support for Fortran and its different flavors
-     optionCount = sla(argv, "-rose:", "($)", "(f|F|Fortran)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(f|F|fortran)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f77|F77|Fortran77)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f90|F90|Fortran90)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f95|F95|Fortran95)",1);
@@ -5633,7 +5629,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-std=", "($)", "(c|c[+][+]|gnu|gnu[+][+]|fortran|upc|upcxx)",1);
 
   // AST I/O
-     optionCount = sla(argv, "-rose:ast:", "($)", "(read|write|merge)",1);
+     optionCount = sla(argv, "-rose:ast:", "($)", "merge",1);
+     optionCount = sla(argv, "-rose:ast:", "($)^", "(read|write)",&integerOption,1);
 
   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      ROSE_ASSERT(optionCount >= 0);
@@ -6647,7 +6644,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
          break;
        }
        case e_c90_standard: {
-         inputCommandLine.push_back("--c90");
+         inputCommandLine.push_back("--c89");
          break;
        }
        case e_c99_standard: {
@@ -7353,8 +7350,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
 #define DEBUG_COMPILER_COMMAND_LINE 0
 
-#if DEBUG_COMPILER_COMMAND_LINE
-          printf ("In buildCompilerCommandLineOptions(): compilerName = %s \n",compilerName.c_str());
+#if DEBUG_COMPILER_COMMAND_LINE || 0
+     printf ("In buildCompilerCommandLineOptions(): compilerName = %s \n",compilerName.c_str());
 #endif
 
      if ( SgProject::get_verbose() > 0 )
@@ -7835,13 +7832,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
         }
 
-#if DEBUG_COMPILER_COMMAND_LINE
+#if DEBUG_COMPILER_COMMAND_LINE || 0
      printf ("Selected compilerNameString.size() = %" PRIuPTR " compilerNameString = %s \n",compilerNameString.size(),StringUtility::listToString(compilerNameString).c_str());
 #endif
 
   // Since we need to do this often, support is provided in the utility_functions.C
   // and we can simplify this code.
      std::string currentDirectory = getWorkingDirectory();
+
+#if 0
+     printf ("DONE: calling getWorkingDirectory(): currentDirectory = %s \n",currentDirectory.c_str());
+#endif
 
   // printf ("In buildCompilerCommandLineOptions(): currentDirectory = %s \n",currentDirectory);
 

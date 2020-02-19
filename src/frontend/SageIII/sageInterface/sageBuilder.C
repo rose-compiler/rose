@@ -2010,6 +2010,11 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
      SgNamedType* namedType = isSgNamedType(stripedBaseType);
      if (namedType != NULL)
         {
+       // DQ (12/28/2019): the problem with getting the base declaration from the type is that it forces sharing 
+       // of the base declaration when the typedef has a defining declaration for a base type in multiple files.
+#if 0
+          printf ("NOTE: Using the base declaration from the type forces sharing of the base declaration across multiple translation units \n");
+#endif
        // DQ (3/20/2012): Use this to set the value of base_decl (which was previously unset).
        // isSgNamedType(base_type)->get_declaration();
        // base_decl = isSgNamedType(base_type)->get_declaration();
@@ -2076,6 +2081,10 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
      printf ("In buildTypedefDeclaration_nfi(): parent_scope = %p \n",parent_scope);
 #endif
 
+#if 0
+     printf ("In buildTypedefDeclaration_nfi(): base_decl = %p \n",base_decl);
+#endif
+
   // SgTypedefDeclaration (Sg_File_Info *startOfConstruct, SgName name="", SgType *base_type=NULL, SgTypedefType *type=NULL, SgDeclarationStatement *declaration=NULL, SgSymbol *parent_scope=NULL)
   // SgTypedefDeclaration (SgName name="", SgType *base_type=NULL, SgTypedefType *type=NULL, SgDeclarationStatement *declaration=NULL, SgSymbol *parent_scope=NULL)
   //
@@ -2087,6 +2096,10 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
   // TV (08/17/2018): moved it before building type as SgTypedefType::createType uses SgTemplateTypedefDeclaration::get_mangled_name which requires the scope to be set (else name of the associated type might not be unique)
      type_decl->set_scope(scope);
      type_decl->set_parent(scope);
+
+#if 0
+     printf ("In buildTypedefDeclaration_nfi(): type_decl = %p type_decl->get_declaration() = %p \n",type_decl,type_decl->get_declaration());
+#endif
 
 #if 0
      printf ("In buildTypedefDeclaration_nfi(): calling SgTypedefType::createType() using this = %p = %s \n",type_decl,type_decl->class_name().c_str());
@@ -2181,6 +2194,10 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
   // DQ (1/2/2010): Set the defining declaration to itself. (BAD IDEA).
      if (type_decl->get_definingDeclaration() == NULL)
           type_decl->set_definingDeclaration(type_decl);
+#endif
+
+#if 0
+     printf ("Leaving buildTypedefDeclaration_nfi(): type_decl = %p type_decl->get_declaration() = %p \n",type_decl,type_decl->get_declaration());
 #endif
 
      return type_decl;
@@ -3023,7 +3040,17 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
      SgType*               typeInTable = fTable->lookup_function_type(typeName);
 
 #if 0
-     printf ("In buildMemberFunctionType(): fTable->lookup_function_type(typeName = %s) = %p \n",typeName.str(),typeInTable);
+     printf ("In buildMemberFunctionType(SgType*,SgFunctionParameterTypeList*,SgType*,int,int): fTable->lookup_function_type(typeName = %s) = %p \n",typeName.str(),typeInTable);
+     printf (" --- mfunc_specifier = %d ref_qualifiers = %d \n",mfunc_specifier,ref_qualifiers);
+#endif
+
+#if 1
+  // DQ (1/10/2020): I think that these qualifiers are contained in the mfunc_specifier.
+     if (ref_qualifiers > 0)
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
 #endif
 
      SgMemberFunctionType* funcType = NULL;
@@ -3034,6 +3061,8 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
           ROSE_ASSERT(partialFunctionType != NULL);
 #if 0
           printf ("Building a SgPartialFunctionType: partialFunctionType = %p \n",partialFunctionType);
+          printf (" --- partialFunctionType->isLvalueReferenceFunc() = %s \n",partialFunctionType->isLvalueReferenceFunc() ? "true" : "false");
+          printf (" --- partialFunctionType->isRvalueReferenceFunc() = %s \n",partialFunctionType->isRvalueReferenceFunc() ? "true" : "false");
 #endif
        // DQ (12/5/2012): We want to avoid overwriting an existing SgFunctionParameterTypeList. Could be related to failing tests for AST File I/O.
           if (partialFunctionType->get_argument_list() != NULL)
@@ -3099,9 +3128,11 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
           funcType = isSgMemberFunctionType(typeInTable);
           ROSE_ASSERT(funcType != NULL);
         }
+
 #if 0
      fTable->get_function_type_table()->print("In buildMemberFunctionType(): globalFunctionTypeTable AFTER");
 #endif
+
      return funcType;
    }
 
@@ -3131,12 +3162,32 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
      printf("  - struct_name = %p (%s)\n", struct_name, struct_name->class_name().c_str());
 #endif
 
+#if 0
+  // DQ (1/9/2020): Unclear why this function is not using the ref_qualifiers.
+     printf ("SageBuilder::buildMemberFunctionType(SgType*,SgFunctionParameterTypeList*,SgScopeStatement*,int,int): This function does not use the input ref_qualifiers = %x \n",ref_qualifiers);
+     printf (" --- mfunc_specifier = %d ref_qualifiers = %d \n",mfunc_specifier,ref_qualifiers);
+#endif
+
+#if 1
+     if (ref_qualifiers > 0)
+       {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+       }
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
      ROSE_ASSERT(struct_name->get_parent() != NULL);
   // ROSE_ASSERT(struct_name->get_declaration() != NULL);
 
 #if 0
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
-     printf ("In buildMemberFunctionType() return_type = %p typeList = %p struct_name = %p = %s = %s mfunc_specifier = %u \n",return_type,typeList,struct_name,struct_name->class_name().c_str(),struct_name->get_declaration()->get_name().str(),mfunc_specifier);
+     printf ("In buildMemberFunctionType() return_type = %p typeList = %p struct_name = %p = %s = %s mfunc_specifier = %u \n",
+          return_type,typeList,struct_name,struct_name->class_name().c_str(),struct_name->get_declaration()->get_name().str(),mfunc_specifier);
 #endif
 
   // SgDeclarationStatement* declaration = struct_name->get_declaration();
@@ -3529,7 +3580,27 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
 #endif
           SgFunctionParameterTypeList * typeList = buildFunctionParameterTypeList(paralist);
 
-          func_type = buildMemberFunctionType(return_type,typeList,scope, functionConstVolatileFlags);
+       // DQ (1/10/2020): This was a default argument that was initialized to zero, I would like to remove the 
+       // use of the default argument to better support debugging new regerence qualifiers for member functions.
+       // func_type = buildMemberFunctionType(return_type,typeList,scope, functionConstVolatileFlags);
+          unsigned int reference_modifiers = 0;
+          func_type = buildMemberFunctionType(return_type,typeList,scope, functionConstVolatileFlags,reference_modifiers);
+#if 0
+          printf ("Using zero as value for reference_modifiers for member function type = %p = %s \n",func_type,func_type->class_name().c_str());
+#endif
+#if 0
+       // DQ (1/11/2020): Debugging Cxx11_tests/test2020_27.C.
+          SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(func_type);
+          if (memberFunctionType != NULL)
+             {
+               printf (" --- memberFunctionType->isLvalueReferenceFunc() = %s \n",memberFunctionType->isLvalueReferenceFunc() ? "true" : "false");
+               printf (" --- memberFunctionType->isRvalueReferenceFunc() = %s \n",memberFunctionType->isRvalueReferenceFunc() ? "true" : "false");
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#endif
 
        // printf ("Error: SgFunctionType built instead of SgMemberFunctionType \n");
        // ROSE_ASSERT(false);
@@ -13567,6 +13638,10 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 #endif
              }
 
+#if 0
+       // DQ (12/22/2019): This is the code that causes the class declarations between defining 
+       // class declarations across multiple translation units to be shared.
+
        // DQ (9/7/2012): I think this might be the root of a problem in the haskell tests (ROSE compiling ROSE).
           if (nondefdecl->get_definingDeclaration() != NULL)
              {
@@ -13602,6 +13677,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
 #endif
                return defining_classDeclaration;
              }
+#endif
 
 #if 0
           nondefdecl->set_definingDeclaration(defdecl);
@@ -14102,6 +14178,11 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
             else
              {
                defdecl = new SgClassDeclaration (nameWithoutTemplateArguments,kind,NULL,classDef);
+
+#if 0
+            // DQ (12/22/2019): Debugging the case of shared class declarations between multiple files referencing the same defining declaration.
+               printf ("In SageBuilder::buildClassDeclaration_nfi(): build a SgClassDeclaration: defdecl = %p \n",defdecl);
+#endif
 
             // DQ (2/27/2018): We should be able to enforce this, it should have always been true.
                ROSE_ASSERT(defdecl->get_type() == NULL);

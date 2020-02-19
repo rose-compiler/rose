@@ -114,72 +114,27 @@ set(ROSE_TOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 # ROSE version information
 ########################################################################################################################
 
-if(NOT IS_DIRECTORY ${PROJECT_SOURCE_DIR}/.git)
-  message(FATAL_ERROR "ROSE source code is only distributed as a Git repository; it cannot be built outside Git.")
-endif()
-
-find_package(Git)
-if(NOT GIT_FOUND)
-  string(REPLACE ":" "\n\t" ENV_PATH "$ENV{PATH}")
-  message(FATAL_ERROR "git not found in \$PATH\n" "PATH=${ENV_PATH}")
-endif()
-
-# Get the Git HEAD commit SHA1
-execute_process(
-  COMMAND             "${GIT_EXECUTABLE}" rev-parse HEAD
-  WORKING_DIRECTORY   ${PROJECT_SOURCE_DIR}
-  ERROR_VARIABLE      stderr
-  RESULT_VARIABLE     error_code
-  OUTPUT_VARIABLE     ROSE_SCM_VERSION_ID
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-if(NOT error_code EQUAL 0)
-  message(FATAL_ERROR "Failed to obtain the ROSE version hash: ${ROSE_SCM_VERSION_ID}${stderr}")
-endif()
-
-if(NOT "${ROSE_SCM_VERSION_ID}" MATCHES "^[0-9a-zA-Z]+$")
-  message(FATAL_ERROR "Git commit hash \"${ROSE_SCM_VERSION_ID}\" is malformed")
-endif()
-
-string(LENGTH ${ROSE_SCM_VERSION_ID} ROSE_SCM_VERSION_ID_LENGTH)
-if(NOT "${ROSE_SCM_VERSION_ID_LENGTH}" EQUAL "40")
-  message(FATAL_ERROR "Git commit hash \"${ROSE_SCM_VERSION_ID}\" is malformed")
-endif()
-
-# Author time (%at) of the HEAD commit
-execute_process(
-  COMMAND             "${GIT_EXECUTABLE}" log -1 --format=%at HEAD
-  WORKING_DIRECTORY   ${PROJECT_SOURCE_DIR}
-  ERROR_VARIABLE      stderr
-  RESULT_VARIABLE     error_code
-  OUTPUT_VARIABLE     ROSE_SCM_VERSION_UNIX_DATE
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-if(NOT error_code EQUAL 0)
-  message(FATAL_ERROR "Failed to obtain the ROSE version timestamp: ${ROSE_SCM_VERSION_UNIX_DATE}${stderr}")
-endif()
-
-if(NOT "${ROSE_SCM_VERSION_UNIX_DATE}" MATCHES "^[0-9]+$")
-  message(FATAL_ERROR "Git commit date \"${ROSE_SCM_VERSION_UNIX_DATE}\" is malformed")
-endif()
-
-string(LENGTH ${ROSE_SCM_VERSION_UNIX_DATE} ROSE_SCM_VERSION_UNIX_DATE_LENGTH)
-if("${ROSE_SCM_VERSION_UNIX_DATE_LENGTH}" LESS "10")
-  message(FATAL_ERROR "Git commit date \"${ROSE_SCM_VERSION_UNIX_DATE}\" is malformed")
-endif()
-
 # All distributions of ROSE also have a ROSE_VERSION file with a dotted version that's updated during the ROSE release
 # process.
 set(ROSE_SCM_VERSION_FILE "${PROJECT_SOURCE_DIR}/ROSE_VERSION")
 if(NOT EXISTS "${ROSE_SCM_VERSION_FILE}")
   message(FATAL_ERROR "ROSE version file not found: ${ROSE_SCM_VERSION_FILE}")
 endif()
+
+# All distributions of ROSE also have a config/SCM_DATE file with a numerical version that's updated during the ROSE release
+# process.
+set(ROSE_SCM_DATE_FILE "${PROJECT_SOURCE_DIR}/config/SCM_DATE")
+if(NOT EXISTS "${ROSE_SCM_DATE_FILE}")
+  message(FATAL_ERROR "ROSE SCM Date file not found: ${ROSE_SCM_DATE_FILE}")
+endif()
+
 file(STRINGS ${ROSE_SCM_VERSION_FILE} ROSE_PACKAGE_VERSION LIMIT_COUNT 1)
+file(STRINGS ${ROSE_SCM_VERSION_FILE} ROSE_SCM_VERSION_ID LIMIT_COUNT 1)
+file(READ ${ROSE_SCM_DATE_FILE} ROSE_VERSION)
 
 # Results
-message(STATUS "The ROSE version hash is ${ROSE_SCM_VERSION_ID}")
-message(STATUS "The ROSE version timestamp is ${ROSE_SCM_VERSION_UNIX_DATE} (Unix time)")
-message(STATUS "The ROSE version is ${ROSE_PACKAGE_VERSION}")
+message(STATUS "The ROSE version integer is ${ROSE_VERSION}")
+message(STATUS "The ROSE version string is ${ROSE_PACKAGE_VERSION}")
 
 
 
@@ -241,11 +196,25 @@ endif(WIN32)
 
 # FIXME: 1.47 is no longer supported by ROSE, but is what's installed on Jenkins' CMake test machine. This should
 #        be changed to the actual minimum supported version once Pei-Hung upgrades the machine. [Matzke 2019-01-21]
-find_package(Boost 1.47.0 COMPONENTS chrono date_time filesystem iostreams program_options random regex system wave thread REQUIRED)
+#
+# First look for the Boost libraries that are required in order to compile ROSE, then additionally look for any optional
+# libraries that are useful to ROSE but not required. From a user: "The find_package() change is required for boost
+# 1.70 or above on any system when using a recent enough version of cmake.  Without it, serialization support will not
+# be used.  Before boost 1.70, the findBoost() in cmake is used directly, and it will look for boost components that are
+# not in the find_package clause.  Since 1.70, cmake will load the findBoost() provided by the boost package itself.
+# Unfortunately, that findBoost() will only check for components in the find_package() clause.  This means that
+# serialization is considered not to exist, even if it is there.  My change calls find_package again without the
+# REQUIRED clause after the first one has succeeded.  That way the first clause checks for requires components, and the
+# second can check again including optional components.  If the version of cmake is high enough you can use an
+# OPTIONAL_COMPONENTS clause instead, but that wasn't introduced until 3.11."
+find_package(Boost 1.47.0
+  COMPONENTS chrono date_time filesystem iostreams program_options random regex system wave thread
+  REQUIRED)
 if(NOT Boost_FOUND)
   message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
 endif()
-
+find_package(Boost 1.47.0
+  COMPONENTS chrono date_time filesystem iostreams program_options random regex system wave thread serialization)
 include_directories(${Boost_INCLUDE_DIRS})
 set(ROSE_CONFIG_TOKEN "${ROSE_CONFIG_TOKEN} boost-${Boost_VERSION}")
 
@@ -1185,7 +1154,7 @@ set(origin "$ORIGIN")
 if(APPLE)
   set(origin "@executable_path")
 endif()
-set(CMAKE_INSTALL_RPATH "${origin}/../lib:${origin}/")
+set(CMAKE_INSTALL_RPATH "${origin}/../lib;${origin}/")
 
 
 ########################################################################################################################

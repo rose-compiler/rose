@@ -116,8 +116,8 @@ public:
 #ifdef ROSE_HAVE_SQLITE3
 static std::string
 sqlite3_url_documentation() {
-    return ("@named{SQLite3}{The uniform resource locator for SQLite3 databases has the format "
-            "\"sqlite3://@v{filename}[?@v{param1}[=@v{value1}][&@v{additional_parameters}...]]\" "
+    return ("@named{SQLite}{The uniform resource locator for SQLite databases has the format "
+            "\"sqlite://@v{filename}[?@v{param1}[=@v{value1}][&@v{additional_parameters}...]]\" "
             "where @v{filename} is the name of a file in the local filesystem (use a third slash if the name "
             "is an absolute name from the root of the filesystem). The file name can be followed by zero or "
             "parameters separated from the file name by a question mark and from each other by an ampersand. "
@@ -126,14 +126,14 @@ sqlite3_url_documentation() {
 }
 #endif
 
-// Parse an sqlite3 URL of the form:
-//    sqlite3://FILENAME[?PARAM1[=VALUE1]&...]
+// Parse an sqlite URL of the form:
+//    sqlite://FILENAME[?PARAM1[=VALUE1]&...]
 // The only parameter that's currently understood is "debug", which turns on the debug property for the connection.
 static std::string
 sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/) {
     Connection::ParsedUrl parsed = Connection::parseUrl(src);
     if (parsed.driver != SqlDatabase::SQLITE3)
-        throw Exception("malformed SQLite3 connection URL: missing \"sqlite3://\"");
+        throw Exception("malformed SQLite connection URL: missing \"sqlite://\"");
     if (!parsed.error.empty())
         throw Exception(parsed.error);
 
@@ -144,15 +144,14 @@ sqlite3_parse_url(const std::string &src, bool *has_debug/*in,out*/) {
             if (has_debug)
                 *has_debug = true;
         } else {
-            throw Exception("invalid SQLite3 parameter \"" + StringUtility::cEscape(param.first) + "\"");
+            throw Exception("invalid SQLite parameter \"" + StringUtility::cEscape(param.first) + "\"");
         }
     }
 
     return fileName;
 }
 
- // Added ifdef to remove unused function warning [Rasmussen, 2019.01.28]
-#if defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)
+#ifdef ROSE_HAVE_LIBPQXX
 static std::string
 postgres_url_documentation() {
     return ("@named{PostgreSQL}{The uniform resource locator for PostgreSQL databases has the format "
@@ -249,14 +248,14 @@ size_t
 ConnectionImpl::conn_for_transaction()
 {
     // Find first driver connection that has a zero reference count, or allocate a fresh one
-    size_t retval = (size_t)(-1);
+    size_t retval = INVALID_INDEX;
     for (size_t i=0; i<driver_connections.size(); ++i) {
         if (0==driver_connections[i].nrefs) {
             retval = i;
             break;
         }
     }
-    if (retval==(size_t)(-1)) {
+    if (INVALID_INDEX == retval) {
         retval = driver_connections.size();
         driver_connections.resize(retval+10);
     }
@@ -271,13 +270,13 @@ ConnectionImpl::conn_for_transaction()
         case SQLITE3: {
             if (dconn.sqlite3_connection==NULL) {
                 bool has_debug_param = false;
-                std::string specs = 0==open_spec.substr(0, 10).compare("sqlite3://") ?
+                std::string specs = "sqlite3://" == open_spec.substr(0, 10) || "sqlite://" == open_spec.substr(0, 9) ?
                                     sqlite3_parse_url(open_spec, &has_debug_param) :
                                     open_spec;
                 if (has_debug_param && debug==NULL)
                     debug = stderr;
                 if (debug && 0==retval)
-                    fprintf(debug, "SqlDatabase::Connection: SQLite3 open spec: %s\n", specs.c_str());
+                    fprintf(debug, "SqlDatabase::Connection: SQLite open spec: %s\n", specs.c_str());
                 dconn.sqlite3_connection = new sqlite3x::sqlite3_connection(specs.c_str());
             }
             break;
@@ -387,7 +386,7 @@ Connection::parseUrl(std::string url) {
     size_t next = url.find("://");
     if (next != std::string::npos) {
         std::string driverName = url.substr(0, next);
-        if ("sqlite3" == driverName) {
+        if ("sqlite3" == driverName || "sqlite" == driverName) {
             retval.driver = SQLITE3;
         } else if ("postgresql" == driverName) {
             retval.driver = POSTGRESQL;
@@ -433,7 +432,7 @@ Connection::guess_driver(const std::string &open_spec)
     if (0==open_spec.substr(0, 13).compare("postgresql://"))
         return POSTGRESQL;
 
-    if (0==open_spec.substr(0, 10).compare("sqlite3://"))
+    if ("sqlite3://" == open_spec.substr(0, 10) || "sqlite://" == open_spec.substr(0, 9))
         return SQLITE3;
 
     // If it looks like a file name ending with ".db" then it's probably an SQLite3 database.
@@ -766,7 +765,7 @@ void
 Transaction::init(const ConnectionPtr &conn, size_t drv_conn_idx)
 {
     assert(conn!=NULL);
-    assert(drv_conn_idx!=(size_t)(-1));
+    assert(drv_conn_idx != INVALID_INDEX);
     assert(conn->impl->driver_connections[drv_conn_idx].nrefs > 0);
     impl = new TransactionImpl(conn, drv_conn_idx);
 }

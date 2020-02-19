@@ -1,5 +1,7 @@
 include_rules
 
+ifeq (@(ENABLE_TESTS),yes)
+
 ########################################################################################################################
 # Check boost linkage consistency
 ########################################################################################################################
@@ -20,3 +22,5 @@ run $(test) testBoostRegex
 
 run $(support_compile_linkexe) testBoostThreads.C
 run $(test) testBoostThreads
+
+endif

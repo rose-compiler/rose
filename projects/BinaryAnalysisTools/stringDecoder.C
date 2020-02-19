@@ -120,7 +120,7 @@ public:
             if (!insn)
                 throw std::runtime_error("no instruction at " + StringUtility::addrToString(ip));
             if (settings.traceInsns && ::mlog[TRACE])
-                ::mlog[TRACE] <<unparseInstructionWithAddress(insn) <<"\n";
+                ::mlog[TRACE] <<partitioner.unparse(insn) <<"\n";
             cpu_->processInstruction(insn);
         }
         throw std::runtime_error("execution limit exceeded ("+StringUtility::plural(settings.insnLimit, "instructions")+")");

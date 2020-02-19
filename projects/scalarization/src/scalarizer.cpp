@@ -36,7 +36,7 @@ parseCommandLine(int argc, char *argv[]) {
                     .doc("Show this documentation."));
 
     standard.insert(Switch("version", 'V')
-                    .action(showVersionAndExit("1.2.3", 0))
+                    .action(showVersionAndExit("0.2", 0))
                     .doc("Show version number."));
     //! [parseCommandLine helpversion]
     
@@ -61,6 +61,7 @@ parseCommandLine(int argc, char *argv[]) {
     //! [parseCommandLine parser]
 
     //! [parseCommandLine parse]
+    parser.skippingUnknownSwitches(true);
     return parser.with(standard).with(scalarizer).parse(argc, argv).apply();
 }
 //! [parseCommandLine parse]
@@ -328,7 +329,7 @@ int main(int argc, char** argv)
     generateDOT(*project);
 
   // Output preprocessed source file.
-  unparseProject(project);
-  return 0;
+  int status = backend (project);
+  return status;
 }
 

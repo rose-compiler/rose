@@ -201,7 +201,7 @@ AC_MSG_NOTICE([build_vendor = "$build_vendor"])
          # echo "ERROR: Could not identify the EDG minor version number."
          # exit 1
    else
-     if test "x$edg_major_version_number" = "x5"; then
+     if test "x$edg_major_version_number" = "x5" || test "x$edg_major_version_number" = "x6"; then
        AC_MSG_NOTICE([building EDG 5.0 (and later) specific version of rose_generated_builtin_functions.h (same as EDG 4.12)])
        ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
 
@@ -211,7 +211,7 @@ AC_MSG_NOTICE([build_vendor = "$build_vendor"])
          sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
        fi
      else
-        AC_MSG_NOTICE([future versions of EDG 6.x and later version builtins maybe determined using a new mechanism that is more complete than older versions (so we don't require our ROSE specific built-in mechanism)])
+        AC_MSG_FAILURE([future versions of EDG 7.x and later version builtins maybe determined using a new mechanism that is more complete than older versions (so we don't require our ROSE specific built-in mechanism)])
      fi
    fi
 

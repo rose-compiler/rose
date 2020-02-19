@@ -409,8 +409,10 @@ listRiscOperators() {
 static BaseSemantics::RiscOperatorsPtr
 makeRiscOperators(const Settings &settings, const P2::Partitioner &partitioner) {
     const std::string &className = settings.opsClassName;
-    if (className.empty())
-        throw std::runtime_error("--semantics switch is required");
+    if (className.empty()) {
+        ::mlog[FATAL] <<"--semantics switch is required\n";
+        exit(1);
+    }
     
     SmtSolverPtr solver = makeSolver(settings);
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();

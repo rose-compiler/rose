@@ -1,6 +1,8 @@
 #include <sage3basic.h>
-#include <rosePublicConfig.h>
 #include <BinaryConcolic.h>
+
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
+#if ROSE_CONCOLIC_DB_VERSION == 1
 
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/algorithm/string/erase.hpp>
@@ -790,7 +792,7 @@ namespace BinaryAnalysis {
                                           : Double_opt()
                                                   );
       obj.concreteRank(concreteTest_opt);
-      obj.concolicTest(it.get_i32(3));
+      obj.concolicResult(it.get_i32(3));
     }
     // @}
 
@@ -1164,36 +1166,22 @@ void initializeDB(SqlTransactionPtr tx)
 // Object Queries
 
 // Reconstitutes an object from a database ID.
-template <class IdTag, class BiMap>
-static
-typename BiMap::Forward::Value
-queryDBObject( Concolic::Database& db,
-               SqlTransactionPtr tx,
-               ObjectId<IdTag> id,
-               BiMap& objmap
-             )
-{
-  typedef typename BiMap::Forward::Value Ptr;
-  typedef typename Ptr::Pointee          ObjType;
+template <class IdTag, class ObjectPointer>
+static ObjectPointer
+queryDBObject(Concolic::Database& db, SqlTransactionPtr tx, ObjectId<IdTag> id, const ObjectPointer &obj) {
+    ASSERT_require(id);
+    ASSERT_not_null(obj);
 
-  Ptr             obj;
+    SqlStatementPtr stmt = sqlPrepare(tx, objQueryString(id), id.get());
+    SqlIterator     it   = stmt->begin();
 
-  if (!id) return obj;
+    if (it.at_eof())
+        return ObjectPointer();                         // invalid object ID
 
-  SqlStatementPtr stmt = sqlPrepare(tx, objQueryString(id), id.get());
-  SqlIterator     it   = stmt->begin();
-
-  if (it.at_eof()) return obj;
-
-  obj  = ObjType::instance();
-
-  populateObjFromQuery(it, *obj);
-  dependentObjQuery(db, tx, id, *obj);
-  objmap.insert(id, obj);
-
-  return obj;
+    populateObjFromQuery(it, *obj);
+    dependentObjQuery(db, tx, id, *obj);
+    return obj;
 }
-
 
 template <class IdTag, class BidirectionalMap>
 static
@@ -1211,17 +1199,22 @@ _object( Database& db,
   if (!id)
     return ResultType();
 
-  if (Update::YES == update)
-    return queryDBObject(db, tx, id, objmap);
+  // If the object is memoized, then return it (after possibly updating below).
+  ResultType retval = objmap.forward().getOrDefault(id);
+  bool isMemoized = retval != NULL;
 
-  const ForwardMap&                      map = objmap.forward();
-  typename ForwardMap::ConstNodeIterator pos = map.find(id);
-
-  if (pos == map.nodes().end())
-    return queryDBObject(db, tx, id, objmap);
-
-  ResultType res = pos.base()->second;
-  return res;
+  // Update the object from the database. If the object wasn't memoized yet then the call to queryDBObject is absolutely
+  // necessary.
+  if (!isMemoized || Update::YES == update) {
+      if (!retval)
+          retval = ResultType::Pointee::instance();
+      retval = queryDBObject(db, tx, id, retval);
+  }
+  
+  // Memoize the results
+  if (!isMemoized && retval)
+      objmap.insert(id, retval);
+  return retval;
 }
 
 
@@ -1829,9 +1822,8 @@ Database::needConcolicTesting(size_t num)
 }
 
 bool
-Database::hasUntested() const
-{
-  return queryIds<TestCase>(dbconn_, testSuiteId_, QY_ALL_NEED_CONCRETE, QY_NEED_CONCRETE, 1).size();
+Database::hasUntested() {
+    return queryIds<TestCase>(dbconn_, testSuiteId_, QY_ALL_NEED_CONCRETE, QY_NEED_CONCRETE, 1).size();
 }
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -1950,3 +1942,6 @@ void writeSqlStmts(std::ostream& os)
 } // namespace
 } // namespace
 } // namespace
+
+#endif
+#endif

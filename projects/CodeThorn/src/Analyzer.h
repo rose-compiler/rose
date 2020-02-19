@@ -198,6 +198,8 @@ namespace CodeThorn {
     int getAbstractionMode() { return _abstractionMode; }
     void setInterpretationMode(CodeThorn::InterpretationMode mode);
     CodeThorn::InterpretationMode getInterpretationMode();
+    void setInterpretationModeOutputFileName(string);
+    string getInterpretationModeOutputFileName();
 
     bool getPrintDetectedViolations();
     void setPrintDetectedViolations(bool flag);

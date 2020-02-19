@@ -801,7 +801,7 @@ printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pat
                 if (pathVertex->value().type() == P2::V_BASIC_BLOCK) {
                     BOOST_FOREACH (SgAsmInstruction *insn, pathVertex->value().bblock()->instructions()) {
                         std::cout <<"      #" <<std::setw(5) <<std::left <<insnIdx++
-                                  <<" " <<unparseInstructionWithAddress(insn) <<"\n";
+                                  <<" " <<partitioner.unparse(insn) <<"\n";
                     }
                 } else if (pathVertex->value().type() == P2::V_USER_DEFINED) {
                     ASSERT_require(functionSummaries.exists(pathVertex->value().address()));

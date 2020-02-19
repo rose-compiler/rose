@@ -21,6 +21,7 @@ if(enable-binary-analysis)
     BinarySmtCommandLine.C
     BinarySmtSolver.C
     BinarySmtlibSolver.C
+    BinarySourceLocations.C
     BinaryStackDelta.C
     BinaryString.C
     BinarySymbolicExpr.C
@@ -28,10 +29,12 @@ if(enable-binary-analysis)
     BinarySystemCall.C
     BinaryTaintedFlow.C
     BinaryToSource.C
+    BinaryVariables.C
     BinaryYicesSolver.C
     BinaryZ3Solver.C
     Concolic/ConcolicExecutor.C
     Concolic/Database.C
+    Concolic/Database2.C
     Concolic/ExecutionManager.C
     Concolic/LinuxExecutor.C
     Concolic/LinuxExitStatus.C
@@ -104,6 +107,7 @@ install(
     BinarySmtCommandLine.h
     BinarySmtSolver.h
     BinarySmtlibSolver.h
+    BinarySourceLocations.h
     BinaryStackDelta.h
     BinaryStackVariable.h
     BinaryString.h
@@ -112,6 +116,7 @@ install(
     BinarySystemCall.h
     BinaryTaintedFlow.h
     BinaryToSource.h
+    BinaryVariables.h
     BinaryYicesSolver.h
     BinaryZ3Solver.h
     DwarfLineMapper.h

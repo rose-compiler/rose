@@ -1,7 +1,9 @@
-#include "sage3basic.h"
-#include "MemoryCellList.h"
-#include "SymbolicSemantics2.h"
-#include "integerOps.h"
+#include <sage3basic.h>
+#include <SymbolicSemantics2.h>
+
+#include <integerOps.h>
+#include <MemoryCellList.h>
+#include <SageBuilderAsm.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -258,7 +260,7 @@ MemoryListState::CellCompressorChoice::operator()(const SValuePtr &address, cons
 BaseSemantics::SValuePtr
 MemoryListState::readOrPeekMemory(const BaseSemantics::SValuePtr &address_, const BaseSemantics::SValuePtr &dflt,
                                   BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
-                                  bool allowSideEffects) {
+                                  AllowSideEffects::Flag allowSideEffects) {
     size_t nBits = dflt->get_width();
     SValuePtr address = SValue::promote(address_);
     ASSERT_require(8==nBits); // SymbolicSemantics::MemoryListState assumes that memory cells contain only 8-bit data
@@ -269,7 +271,7 @@ MemoryListState::readOrPeekMemory(const BaseSemantics::SValuePtr &address_, cons
     // If we fell off the end of the list then the read could be reading from a memory location for which no cell exists. If
     // side effects are allowed, we should add a new cell to the return value.
     if (cursor == get_cells().end()) {
-        if (allowSideEffects) {
+        if (AllowSideEffects::YES == allowSideEffects) {
             BaseSemantics::MemoryCellPtr newCell = insertReadCell(address, dflt);
             cells.push_back(newCell);
         } else {
@@ -282,7 +284,7 @@ MemoryListState::readOrPeekMemory(const BaseSemantics::SValuePtr &address_, cons
     // read. Since the "cells" vector is pointers that haven't been deep-copied, this is a side effect on the memory
     // state. But even if it weren't a side effect, we don't want the returned value to be marked as having been actually
     // read when we're only peeking.
-    if (allowSideEffects)
+    if (AllowSideEffects::YES == allowSideEffects)
         updateReadProperties(cells);
 
     SValuePtr retval = get_cell_compressor()->operator()(address, dflt, addrOps, valOps, cells);
@@ -293,13 +295,13 @@ MemoryListState::readOrPeekMemory(const BaseSemantics::SValuePtr &address_, cons
 BaseSemantics::SValuePtr
 MemoryListState::readMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
-    return readOrPeekMemory(address, dflt, addrOps, valOps, true /*allow side effects*/);
+    return readOrPeekMemory(address, dflt, addrOps, valOps, AllowSideEffects::YES);
 }
 
 BaseSemantics::SValuePtr
 MemoryListState::peekMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
-    return readOrPeekMemory(address, dflt, addrOps, valOps, false /*no side effects allowed*/);
+    return readOrPeekMemory(address, dflt, addrOps, valOps, AllowSideEffects::NO);
 }
 
 void
@@ -1051,16 +1053,22 @@ RiscOperators::sgIsIeee754(SgAsmType *sgType) {
         return NULL;
     if (fpType->significandBits().size() == 0)
         return NULL;
-    if (fpType->exponentBits().least() != fpType->significandBits().greatest()+1)
-        return NULL;
     if (fpType->exponentBits().size() < 2)
-        return NULL;
-    if (fpType->signBit() != fpType->exponentBits().greatest()+1)
-        return NULL;
-    if (fpType->signBit() != fpType->get_nBits() - 1)
         return NULL;
     if (fpType->exponentBias() != ((uint64_t)1 << (fpType->exponentBits().size() - 1)) - 1)
         return NULL;
+
+    // The sign, exponent, and significand regions must not overlap, although IEEE 754 allows unused regions. For instance, the
+    // Motorola 68000 family has an "extended real" type that's 96 bits but 17 bits are unused (the format is 63-bit
+    // significand, a bit that's always set (i.e., the explicit leading one bit for the significand), 16 bits that are always
+    // clear, a 15-bit exponent, and a sign bit).
+    if (fpType->significandBits().isOverlapping(fpType->exponentBits()))
+        return NULL;
+    if (fpType->significandBits().isOverlapping(fpType->signBit()))
+        return NULL;
+    if (fpType->exponentBits().isOverlapping(fpType->signBit()))
+        return NULL;
+
     return fpType;
 }
 
@@ -1068,11 +1076,21 @@ SymbolicExpr::Type
 RiscOperators::sgTypeToSymbolicType(SgAsmType *sgType) {
     ASSERT_not_null(sgType);
     if (SgAsmFloatType *fpType = sgIsIeee754(sgType)) {
+        if (!fpType->implicitBitConvention())
+            throw BaseSemantics::Exception("cannot convert Sage type to symbolic type: "
+                                           "IEEE-754 implicit bit convention is required",
+                                           currentInstruction());
+        if (!fpType->gradualUnderflow())
+            throw BaseSemantics::Exception("cannot convert Sage type to symbolic type: "
+                                           "IEEE-754 gradual underflow capability is required",
+                                           currentInstruction());
         return SymbolicExpr::Type::floatingPoint(fpType->exponentBits().size(), fpType->significandBits().size()+1/*implicit bit*/);
     } else if (SgAsmIntegerType *iType = isSgAsmIntegerType(sgType)) {
         return SymbolicExpr::Type::integer(iType->get_nBits());
     } else {
-        throw Exception("cannot convert Sage type to symbolic type");
+        throw BaseSemantics::Exception("cannot convert Sage type to symbolic type: "
+                                       "not an integer or IEEE-754 type",
+                                       currentInstruction());
     }
 }
 
@@ -1087,13 +1105,23 @@ RiscOperators::fpConvert(const BaseSemantics::SValuePtr &a_, SgAsmFloatType *aTy
     ASSERT_require(a->get_expression()->type() == srcType);
     SymbolicExpr::Type dstType = sgTypeToSymbolicType(retType);
 
-    BaseSemantics::SValuePtr result;
+    SValuePtr result;
     if (srcType == dstType) {
-        result = a->copy();
+        result = SValue::promote(a->copy());
     } else {
         result = svalue_expr(SymbolicExpr::makeConvert(a->get_expression(), dstType, solver()));
     }
     ASSERT_not_null(result);
+
+    switch (computingDefiners_) {
+        case TRACK_NO_DEFINERS:
+            break;
+        case TRACK_ALL_DEFINERS:
+            result->add_defining_instructions(a);       // fall through...
+        case TRACK_LATEST_DEFINER:
+            result->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            break;
+    }
     return filterResult(result);
 }
 
@@ -1104,19 +1132,22 @@ RiscOperators::reinterpret(const BaseSemantics::SValuePtr &a_, SgAsmType *retTyp
     ASSERT_not_null(retType);
     SymbolicExpr::Type srcType = a->get_expression()->type();
     SymbolicExpr::Type dstType = sgTypeToSymbolicType(retType);
-    if (srcType.nBits() != dstType.nBits()) {
+    SValuePtr result;
+    if (srcType == dstType) {
+        result = a;
+    } else if (srcType.nBits() != dstType.nBits()) {
         throw Exception("reinterpret type (" + dstType.toString() + ") is not the same size as the value type (" +
                         srcType.toString() + ")");
+    } else {
+        result = svalue_expr(SymbolicExpr::makeReinterpret(a->get_expression(), dstType, solver()));
+        result->add_defining_instructions(a);           // reinterpret should have no effect on the definers.
     }
-
-    BaseSemantics::SValuePtr result = svalue_expr(SymbolicExpr::makeReinterpret(a->get_expression(), dstType, solver()));
     ASSERT_not_null(result);
     return filterResult(result);
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt)
-{
+RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
     PartialDisableUsedef du(this);
     SValuePtr result = SValue::promote(BaseSemantics::RiscOperators::readRegister(reg, dflt));
 
@@ -1125,15 +1156,8 @@ RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValueP
         regs->updateReadProperties(reg);
     }
 
-    switch (computingDefiners_) {
-        case TRACK_NO_DEFINERS:
-            break;
-        case TRACK_ALL_DEFINERS:
-        case TRACK_LATEST_DEFINER:
-            result->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
-            break;
-    }
-
+    if (reinterpretRegisterReads_)
+        result = SValue::promote(reinterpret(result, SageBuilderAsm::buildTypeU(result->get_width())));
     return filterResult(result);
 }
 
@@ -1142,12 +1166,13 @@ RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValueP
     PartialDisableUsedef du(this);
     BaseSemantics::SValuePtr result = BaseSemantics::RiscOperators::peekRegister(reg, dflt);
     ASSERT_require(result!=NULL && result->get_width() == reg.nBits());
+    if (reinterpretRegisterReads_)
+        result = reinterpret(result, SageBuilderAsm::buildTypeU(result->get_width()));
     return filterResult(result);
 }
 
 void
-RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a_)
-{
+RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a_) {
     SValuePtr a = SValue::promote(a_->copy());
     PartialDisableUsedef du(this);
     BaseSemantics::RiscOperators::writeRegister(reg, a);
@@ -1174,17 +1199,21 @@ BaseSemantics::SValuePtr
 RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
                                 const BaseSemantics::SValuePtr &address,
                                 const BaseSemantics::SValuePtr &dflt,
-                                bool allowSideEffects) {
+                                AllowSideEffects::Flag allowSideEffects) {
     size_t nbits = dflt->get_width();
     ASSERT_require(0 == nbits % 8);
-    if (address->isBottom())
-        return filterResult(bottom_(dflt->get_width()));
+    SValuePtr retval;
+    if (address->isBottom()) {
+        retval = SValue::promote(bottom_(dflt->get_width()));
+        if (reinterpretMemoryReads_)
+            retval = SValue::promote(reinterpret(retval, SageBuilderAsm::buildTypeU(retval->get_width())));
+        return retval;
+    }
 
     PartialDisableUsedef du(this);
 
     // Read the bytes and concatenate them together. SymbolicExpr will simplify the expression so that reading after
     // writing a multi-byte value will return the original value written rather than a concatenation of byte extractions.
-    SValuePtr retval;
     InsnSet allDefiners;
     size_t nbytes = nbits/8;
     BaseSemantics::MemoryStatePtr currentMem = currentState()->memoryState();
@@ -1197,7 +1226,7 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
         // state if the address is not present in the current memory state. As a side effect, if this value is not in the
         // initial memory it will be added.
         if (initialState()) {
-            if (allowSideEffects) {
+            if (AllowSideEffects::YES == allowSideEffects) {
                 byte_dflt = initialState()->readMemory(byte_addr, byte_dflt, this, this);
             } else {
                 byte_dflt = initialState()->peekMemory(byte_addr, byte_dflt, this, this);
@@ -1206,7 +1235,7 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
 
         // Read a byte from the current memory state. Adds the new value as a side effect if necessary.
         SValuePtr byte_value;
-        if (allowSideEffects) {
+        if (AllowSideEffects::YES == allowSideEffects) {
             byte_value = SValue::promote(currentState()->readMemory(byte_addr, byte_dflt, this, this));
         } else {
             byte_value = SValue::promote(currentState()->peekMemory(byte_addr, byte_dflt, this, this));
@@ -1242,6 +1271,10 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
             retval->add_defining_instructions(allDefiners);
             break;
     }
+
+    if (reinterpretMemoryReads_)
+        retval = SValue::promote(reinterpret(retval, SageBuilderAsm::buildTypeU(retval->get_width())));
+
     return filterResult(retval);
 }
 
@@ -1254,14 +1287,14 @@ RiscOperators::readMemory(RegisterDescriptor segreg,
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
     if (condition->is_number() && !condition->get_number())
         return filterResult(dflt);
-    return readOrPeekMemory(segreg, address, dflt, true /*allow side effects*/);
+    return readOrPeekMemory(segreg, address, dflt, AllowSideEffects::YES);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::peekMemory(RegisterDescriptor segreg,
                           const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &dflt) {
-    return readOrPeekMemory(segreg, address, dflt, false /*no side effects allowed*/);
+    return readOrPeekMemory(segreg, address, dflt, AllowSideEffects::NO);
 }
 
 void

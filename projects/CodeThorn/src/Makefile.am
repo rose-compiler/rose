@@ -73,6 +73,7 @@ CODETHORN_HEADER_FILES=\
   CounterexampleGenerator.h \
   CPAstAttribute.h \
   CppExprEvaluator.h \
+  CppStdUtilities.h \
   CTIOLabeler.h \
   CtxCallStrings.h \
   DataDependenceVisualizer.h \
@@ -167,6 +168,7 @@ CODETHORN_SOURCE_FILES=\
   CounterexampleGenerator.C \
   CPAstAttribute.C \
   CppExprEvaluator.C \
+  CppStdUtilities.C \
   CTIOLabeler.C \
   CtxCallStrings.C \
   DataDependenceVisualizer.C \
@@ -420,8 +422,6 @@ analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
 endif
 analyterix_CXXFLAGS = -fopenmp -Wall -O3
 analyterix_SOURCES = \
-  CppStdUtilities.C \
-  CppStdUtilities.h \
   DeadCodeAnalysis.C \
   DeadCodeAnalysis.h \
   DFAstAttributeConversion.h DFAstAttributeConversion.C \
@@ -712,6 +712,7 @@ clean-local:
 	rm -f *.cfg.dot # runParCfgTests
 	rm -f a.out
 	rm -rf ../docs/doxygen
+	rm -f *.imout
 
 distclean-local: clean
 	rm -f *.tgz

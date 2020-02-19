@@ -34,6 +34,10 @@
 #include <boost/foreach.hpp>
 #include <Sawyer/FileSystem.h>
 
+// DQ (12/22/2019): I don't need this now, and it is an issue for some compilers (e.g. GNU 4.9.4).
+// DQ (12/21/2019): Require hash table support for determining the shared nodes in the ASTs.
+// #include <unordered_map>
+
 
 #ifdef __INSURE__
 // Provide a dummy function definition to support linking with Insure++.
@@ -2107,6 +2111,7 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
      this->p_class_list = NULL;
      this->p_associated_include_file = NULL;
      this->p_headerFileReport = NULL;
+     this->p_processedToIncludeCppDirectivesAndComments = false;
 
      set_globalScope(NULL);
 
@@ -2218,6 +2223,100 @@ SgProject::RunFrontend()
   return status_of_function;
 }//SgProject::RunFrontend
 
+
+#if 0
+// DQ (12/22/2019): unprde4red_map is not directly available in older compilers used for testing ROSE within Jenkins.
+// DQ (12/21/2019): Support for intersection of multiple sets.
+// unordered_map<int,SgNode*> umap;
+void compute_IR_node_pointers ( SgSourceFile* sourceFile, unordered_map < SgNode*, set <int> > & umap )
+   {
+  // This function traverses each translation unit (called for each one) and traverses the associated AST
+  // and adds each IR node to the hash table or addes to the set of file IDs over which the IR node is 
+  // shared if it is shared.  The complexity should be in the number of IR nodes over all of the ASTs of
+  // the translation units (shared nodes count the number of times that they are shared).
+
+     class Visitor: public AstSimpleProcessing 
+        {
+          public:
+               SgSourceFile* sourceFile;
+               unordered_map < SgNode*, set <int> > & local_umap;
+
+               Visitor(SgSourceFile* tmp_sourceFile, unordered_map < SgNode*, set <int> > & tmp_umap) 
+                  : sourceFile(tmp_sourceFile), local_umap(tmp_umap) 
+                  {
+                  }
+
+               void visit(SgNode* n) 
+                  {
+                    ROSE_ASSERT( n != NULL);
+#if 0
+                    printf ("n = %p = %s \n",n,n->class_name().c_str());
+#endif
+                    SgLocatedNode* locatedNode = isSgLocatedNode(n);
+                    if (locatedNode != NULL)
+                       {
+                      // int file_id = locatedNode->get_file_info()->get_file_id();
+                         int file_id = sourceFile->get_startOfConstruct()->get_file_id();
+#if 0
+                         printf ("file_id = %d \n",file_id);
+#endif
+                         bool isInHashTable = (local_umap.find(n) != local_umap.end());
+#if 1
+                         if (isInHashTable == true)
+                            {
+                              printf ("n = %p = %s \n",n,n->class_name().c_str());
+                              printf ("file_id = %d \n",file_id);
+                              printf ("(local_umap.find(n) == local_umap.end()) = %s \n",(local_umap.find(n) == local_umap.end()) ? "true" : "false");
+                            }
+#endif
+                         local_umap[n].insert(file_id);
+
+#if 1
+                         printf ("local_umap[n].size() = %zu \n",local_umap[n].size());
+#endif
+                         ROSE_ASSERT(local_umap[n].size() >= 1);
+
+                         if (isInHashTable == true)
+                            {
+                           // We can now mark the IR node as shared.
+#if 1
+                              printf ("Need function to support this at the SgLocatedNode level... (and for operators in expressions) \n");
+#endif
+                           // locatedNode->get_startOfConstruct()->setShared();
+                           // locatedNode->get_endOfConstruct()->setShared();
+                              locatedNode->setShared();
+
+                           // Fill in the set of file id's where this node is shared.
+#if 1
+                              set<int> & s = local_umap[n];
+                              set<int>::iterator i = s.begin();
+                              printf ("umap[n=%p=%s]: \n",n,n->class_name().c_str());
+                              while (i != s.end())
+                                 {
+                                   int entry = *i;
+                                   printf (" %d",entry);
+
+                                   i++;
+                                 }
+                              printf ("\n");
+#endif
+                            }
+                       }
+                  }
+        };
+
+     printf ("In compute_IR_node_pointers(): umap.size() = %zu \n",umap.size());
+
+     Visitor traversal(sourceFile,umap);
+
+     printf ("Calling the traversal over the AST for a single file \n");
+
+     traversal.traverse(sourceFile, preorder);
+
+     printf ("Leaving compute_IR_node_pointers(): umap.size() = %zu \n",umap.size());
+   }
+#endif
+
 int
 SgProject::parse()
    {
@@ -2248,6 +2347,8 @@ SgProject::parse()
   // We don't want such a design, thus we now build all of the SgFile IR nodes first, and then iterate
   // over them to call the frontend on each of them (this could likely be done in parallel as well).
 
+#error "DEAD CODE!"
+
      while (nameIterator != p_sourceFileNameList.end())
         {
           int nextErrorCode = 0;
@@ -2255,6 +2356,8 @@ SgProject::parse()
        // DQ (4/20/2006): Exclude other files from list in argc and argv
           vector<string> argv = get_originalCommandLineArgumentList();
           string currentFileName = *nameIterator;
+
+#error "DEAD CODE!"
 
           CommandlineProcessing::removeAllFileNamesExcept(argv,p_sourceFileNameList,currentFileName);
 
@@ -2266,6 +2369,8 @@ SgProject::parse()
           ROSE_ASSERT (newFile->get_startOfConstruct() != NULL);
           ROSE_ASSERT (newFile->get_parent() != NULL);
 
+#error "DEAD CODE!"
+
        // This just adds the new file to the list of files stored internally
           set_file ( *newFile );
 
@@ -2274,6 +2379,9 @@ SgProject::parse()
           nameIterator++;
           i++;
         }
+
+#error "DEAD CODE!"
+
 #else
   // The goal in this version of the code is to seperate the construction of the SgFile objects
   // from the invocation of the frontend on each of the SgFile objects.  In general this allows
@@ -2359,7 +2467,51 @@ SgProject::parse()
           ROSE_ASSERT(file == vectorOfFiles[i]);
         }
 
-  // printf ("Inside of SgProject::parse() before AstPostProcessing() \n");
+#if 0
+  // DQ (12/21/2019): Adding support to detect and mark all shared IR nodes across multiple translation units.
+     if (vectorOfFiles.size() > 1)
+        {
+#if 0
+          printf ("Need to detect and mark all shared IR nodes in the ASTs of multiple translation units: vectorOfFiles.size() = %zu \n",vectorOfFiles.size());
+#endif
+
+       // We need to collect all of the IR nodes from each file's translation unit and perform an intersection.
+
+       // unordered_map<int,SgNode*> umap;
+          unordered_map < SgNode*, set <int> > umap;
+
+          for (size_t i = 0; i < vectorOfFiles.size(); i++)
+             {
+               string filename = vectorOfFiles[i]->get_sourceFileNameWithPath();
+               SgFile* file = this->operator[](filename);
+
+            // Form a hash table of the pointers to all of the IR nodes in the first translation unit.
+
+               int file_id = file->get_startOfConstruct()->get_file_id();
+#if 0
+               printf ("filename = %s file_id = %d \n",filename.c_str(),file_id);
+#endif
+            // umap[file_id] = file;
+               SgSourceFile* sourceFile = isSgSourceFile(file);
+               ROSE_ASSERT(sourceFile != NULL);
+
+               compute_IR_node_pointers(sourceFile, umap);
+             }
+
+#if 0
+          printf ("Exiting as a test after detecting and marking shared IR nodes from multiple files \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#else
+#if 0
+     printf ("In SgProject::parse(): Skipping computation of shared nodes! \n");
+#endif
+#endif
+
+#if 0
+     printf ("In SgProject::parse() before AstPostProcessing() \n");
+#endif
 
   // GB (8/19/2009): Moved the AstPostProcessing call from
   // SgFile::callFrontEnd to this point. Thus, it is only called once for
@@ -2471,6 +2623,14 @@ SgProject::parse()
                     printf ("\n\nGenerating a dot file of the secondaryPassOverSourceFile AST (could be very large) \n");
                     generateDOT_withIncludes ( *this, "before_secondaryPassOverSourceFileAST" );
                     printf ("DONE: Generating a dot file of the secondaryPassOverSourceFile AST \n");
+#endif
+#if 0
+                 // Output an optional graph of the AST (just the tree, when active)
+                    printf ("Generating a dot file... (ROSE Release Note: turn off output of dot files before committing code) \n");
+                 // DQ (12/22/2019): Call multi-file version (instead of generateDOT() function).
+                 // generateAstGraph(project, 2000);
+                 // generateDOT ( *project );
+                    generateDOTforMultipleFile(*this);
 #endif
 #if 0
                     printf ("Exiting after test! \n");
@@ -3328,13 +3488,16 @@ SgFile::secondaryPassOverSourceFile()
 
   // To support initial testing we will call one phase immediately after the other.  Late we will call the second phase, header 
   // file processing, from within the unparser when we know what header files are intended to be unparsed.
-     bool header_file_unparsing_optimization             = false;
-     bool header_file_unparsing_optimization_source_file = false;
+
+  // DQ (12/21/2019): Two of these three are not used and generate a compiler warning.
+  // bool header_file_unparsing_optimization             = false;
+  // bool header_file_unparsing_optimization_source_file = false;
      bool header_file_unparsing_optimization_header_file = false;
 
      if (this->get_header_file_unparsing_optimization() == true)
         {
-          header_file_unparsing_optimization = true;
+       // DQ (12/21/2019): This not used and generates a compiler warning.
+       // header_file_unparsing_optimization = true;
 
           if (this->get_header_file_unparsing_optimization_source_file() == true)
              {
@@ -3356,7 +3519,8 @@ SgFile::secondaryPassOverSourceFile()
 #if 0
                printf ("In SgFile::secondaryPassOverSourceFile(): Optimize the collection of comments and CPP directives to seperate handling of the source file from the header files \n");
 #endif
-               header_file_unparsing_optimization_source_file = true;
+            // DQ (12/21/2019): This not used and generates a compiler warning.
+            // header_file_unparsing_optimization_source_file = true;
              }
             else
              {
@@ -3490,9 +3654,9 @@ SgFile::secondaryPassOverSourceFile()
                if (requiresCPP == false)
                   {
                  // DQ (10/21/2019): This will be tested below, in attachPreprocessingInfo(), if it is not in place then we need to do it here.
-                    ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
+                 // ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
 #if 0
-                    printf ("In SgFile::secondaryPassOverSourceFile(): filePreprocInfo->getList().empty() = %s \n",filePreprocInfo->getList().empty() ? "true" : "false");
+                 // printf ("In SgFile::secondaryPassOverSourceFile(): filePreprocInfo->getList().empty() = %s \n",filePreprocInfo->getList().empty() ? "true" : "false");
 #endif
                  // ROSE_ASSERT(filePreprocInfo->getList().empty() == false);
 
@@ -7513,7 +7677,7 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
   // if ((numberOfFiles() !=0) && (get_file(0).get_openmp_lowering())
   // Liao 6/29/2012. sometimes rose translator is used as a wrapper for linking
   // There will be no SgFile at all in this case but we still want to append relevant linking options for OpenMP
-     if (SageInterface::getProject() != NULL && SageInterface::getProject()->get_openmp_linking())
+     if (get_openmp_linking())
         {
 // Sara Royuela 12/10/2012:  Add GCC version check
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY

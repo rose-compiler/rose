@@ -1,14 +1,14 @@
 basic block 0x080480a0:
   Instructions:
-    [ 0]  X 0x080480a0: jmp    0x080480f8<main>
-    [ 1]    0x080480f8: call   0x080480a5<test1>
+    [ 0]  X 0x080480a0: jmp 0x080480f8<main>
+    [ 1]    0x080480f8: call function 0x080480a5 "test1"<test1>
 basic block 0x080480a5:
   Instructions:
-    [ 0]  X 0x080480a5: nop    
-    [ 1]    0x080480a6: mov    eax, 0x00000000
-    [ 2]  X 0x080480ab: nop    
-    [ 3]  X 0x080480ac: nop    
-    [ 4]    0x080480ad: ret    
+    [ 0]  X 0x080480a5: nop
+    [ 1]    0x080480a6: mov eax, 0
+    [ 2]  X 0x080480ab: nop
+    [ 3]  X 0x080480ac: nop
+    [ 4]    0x080480ad: ret
   All no-op sequences:
     0
     2
@@ -16,15 +16,15 @@ basic block 0x080480a5:
     3
 basic block 0x080480ae:
   Instructions:
-    [ 0]  X 0x080480ae: xchg   ebx, eax
-    [ 1]  X 0x080480af: xchg   ebx, eax
-    [ 2]    0x080480b0: ret    
+    [ 0]  X 0x080480ae: xchg ebx, eax
+    [ 1]  X 0x080480af: xchg ebx, eax
+    [ 2]    0x080480b0: ret
 basic block 0x080480b1:
   Instructions:
-    [ 0]  X 0x080480b1: jmp    0x080480bb<test3.b>
-    [ 1]  X 0x080480bb: jmp    0x080480b6<test3.a>
-    [ 2]  X 0x080480b6: jmp    0x080480c0<test3.c>
-    [ 3]    0x080480c0: ret    
+    [ 0]  X 0x080480b1: jmp 0x080480bb<test3.b>
+    [ 1]  X 0x080480bb: jmp 0x080480b6<test3.a>
+    [ 2]  X 0x080480b6: jmp 0x080480c0<test3.c>
+    [ 3]    0x080480c0: ret
   All no-op sequences:
     0
     0 .. 1
@@ -34,33 +34,33 @@ basic block 0x080480b1:
     2
 basic block 0x080480c1:
   Instructions:
-    [ 0]    0x080480c1: mov    eax, 0x00000000
-    [ 1]    0x080480c6: test   eax, eax
-    [ 2]  X 0x080480c8: je     0x080480cf<test4a.a>
-    [ 3]    0x080480cf: ret    
+    [ 0]    0x080480c1: mov eax, 0
+    [ 1]    0x080480c6: test eax, eax
+    [ 2]  X 0x080480c8: je 0x080480cf<test4a.a>
+    [ 3]    0x080480cf: ret
 basic block 0x080480d0:
   Instructions:
-    [ 0]    0x080480d0: mov    eax, dword ss:[esp + 0x64]
-    [ 1]    0x080480d4: test   eax, eax
-    [ 2]    0x080480d6: je     0x080480dd<test4b.a>
+    [ 0]    0x080480d0: mov eax, dword ss:[esp + 0x64<100>]
+    [ 1]    0x080480d4: test eax, eax
+    [ 2]    0x080480d6: je basic block 0x080480dd<test4b.a>
 basic block 0x080480d8:
   Instructions:
-    [ 0]    0x080480d8: mov    eax, 0x00000001
+    [ 0]    0x080480d8: mov eax, 1
 basic block 0x080480dd:
   Instructions:
-    [ 0]    0x080480dd: ret    
+    [ 0]    0x080480dd: ret
 basic block 0x080480de:
   Instructions:
-    [ 0]  X 0x080480de: push   eax
-    [ 1]  X 0x080480df: pop    eax
-    [ 2]    0x080480e0: ret    
+    [ 0]  X 0x080480de: push eax
+    [ 1]  X 0x080480df: pop eax
+    [ 2]    0x080480e0: ret
 basic block 0x080480e1:
   Instructions:
-    [ 0]  X 0x080480e1: push   eax
-    [ 1]  X 0x080480e2: pop    eax
-    [ 2]  X 0x080480e3: push   eax
-    [ 3]  X 0x080480e4: pop    eax
-    [ 4]    0x080480e5: ret    
+    [ 0]  X 0x080480e1: push eax
+    [ 1]  X 0x080480e2: pop eax
+    [ 2]  X 0x080480e3: push eax
+    [ 3]  X 0x080480e4: pop eax
+    [ 4]    0x080480e5: ret
   All no-op sequences:
     0 .. 1
     0 .. 3
@@ -68,43 +68,43 @@ basic block 0x080480e1:
     2 .. 3
 basic block 0x080480e6:
   Instructions:
-    [ 0]    0x080480e6: pushfd 
-    [ 1]    0x080480e7: popfd  
-    [ 2]    0x080480e8: ret    
+    [ 0]    0x080480e6: pushfd
+    [ 1]    0x080480e7: popfd
+    [ 2]    0x080480e8: ret
 basic block 0x080480e9:
   Instructions:
-    [ 0]  X 0x080480e9: pushad 
-    [ 1]  X 0x080480ea: mov    ebx, eax
-    [ 2]  X 0x080480ec: jmp    0x080480f6<test8.a>
-    [ 3]  X 0x080480f6: popad  
-    [ 4]    0x080480f7: ret    
+    [ 0]  X 0x080480e9: pushad
+    [ 1]  X 0x080480ea: mov ebx, eax
+    [ 2]  X 0x080480ec: jmp 0x080480f6<test8.a>
+    [ 3]  X 0x080480f6: popad
+    [ 4]    0x080480f7: ret
   All no-op sequences:
     0 .. 3
     2
 basic block 0x080480fd:
   Instructions:
-    [ 0]    0x080480fd: call   0x080480ae<test2>
+    [ 0]    0x080480fd: call function 0x080480ae "test2"<test2>
 basic block 0x08048102:
   Instructions:
-    [ 0]    0x08048102: call   0x080480b1<test3>
+    [ 0]    0x08048102: call function 0x080480b1 "test3"<test3>
 basic block 0x08048107:
   Instructions:
-    [ 0]    0x08048107: call   0x080480c1<test4a>
+    [ 0]    0x08048107: call function 0x080480c1 "test4a"<test4a>
 basic block 0x0804810c:
   Instructions:
-    [ 0]    0x0804810c: call   0x080480d0<test4b>
+    [ 0]    0x0804810c: call function 0x080480d0 "test4b"<test4b>
 basic block 0x08048111:
   Instructions:
-    [ 0]    0x08048111: call   0x080480de<test5>
+    [ 0]    0x08048111: call function 0x080480de "test5"<test5>
 basic block 0x08048116:
   Instructions:
-    [ 0]    0x08048116: call   0x080480e1<test6>
+    [ 0]    0x08048116: call function 0x080480e1 "test6"<test6>
 basic block 0x0804811b:
   Instructions:
-    [ 0]    0x0804811b: call   0x080480e6<test7>
+    [ 0]    0x0804811b: call function 0x080480e6 "test7"<test7>
 basic block 0x08048120:
   Instructions:
-    [ 0]    0x08048120: call   0x080480e9<test8>
+    [ 0]    0x08048120: call function 0x080480e9 "test8"<test8>
 basic block 0x08048125:
   Instructions:
-    [ 0]  X 0x08048125: hlt    
+    [ 0]  X 0x08048125: hlt

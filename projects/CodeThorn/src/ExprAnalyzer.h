@@ -143,6 +143,8 @@ namespace CodeThorn {
 
     enum InterpretationMode getInterpretationMode();
     void setInterpretationMode(enum InterpretationMode);
+    std::string getInterpretationModeFileName();
+    void setInterpretationModeFileName(std::string);
 
   protected:
     static void initDiagnostics();
@@ -310,6 +312,7 @@ namespace CodeThorn {
 
     // supported functions to be executed (interpreter mode)
     list<SingleEvalResultConstInt> execFunctionCallPrintf(SgFunctionCallExp* funCall, EState estate);
+    list<SingleEvalResultConstInt> execFunctionCallScanf(SgFunctionCallExp* funCall, EState estate);
 
     // utilify functions
     int getMemoryRegionNumElements(CodeThorn::AbstractValue ptrToRegion);
@@ -331,6 +334,7 @@ namespace CodeThorn {
     Analyzer* _analyzer;
     bool _printDetectedViolations=false;
     enum InterpretationMode _interpretationMode=IM_ABSTRACT;
+    std::string _interpretationModeFileName;
     bool _optionOutputWarnings=false;
   public:
     StructureAccessLookup structureAccessLookup;

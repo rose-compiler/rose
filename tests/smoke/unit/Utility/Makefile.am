@@ -98,10 +98,40 @@ testRangeMap_SOURCES = testRangeMap.C
 TEST_TARGETS += testRangeMap.passed
 testRangeMap.passed: $(top_srcdir)/scripts/test_exit_status testRangeMap
 	@$(RTH_RUN)				\
-		TITLE="more RangeMap"		\
+		TITLE="more RangeMap [$@]"	\
 		CMD="./testRangeMap"		\
 		$< $@
 
+###############################################################################################################################
+# tests the builtin SHA-256 hash
+###############################################################################################################################
+
+noinst_PROGRAMS += testSha256Builtin
+testSha256Builtin_SOURCES = testSha256Builtin.C
+
+TEST_TARGETS += testSha256Builtin.passed
+EXTRA_DIST += testSha256Builtin.ans
+
+testSha256Builtin.passed: $(top_srcdir)/scripts/test_with_answer testSha256Builtin testSha256Builtin.passed
+	@$(RTH_RUN)						\
+		TITLE="SHA-256 builtin [$@]"			\
+		CMD="./testSha256Builtin 0 9399"		\
+		ANS="$(srcdir)/testSha256Builtin.ans"		\
+		$< $@
+
+########################################################################################################################
+# SourceLocation
+########################################################################################################################
+
+noinst_PROGRAMS += testSourceLocation
+testSourceLocation_SOURCES = testSourceLocation.C
+
+TEST_TARGETS += testSourceLocation.passed
+testSourceLocation.passed: $(top_srcdir)/scripts/test_exit_status testSourceLocation
+	@$(RTH_RUN)					\
+		TITLE="test SourceLocation [$@]"	\
+		CMD="./testSourceLocation"		\
+		$< $@
 
 ###############################################################################################################################
 # Boilerplate

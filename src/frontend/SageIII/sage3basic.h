@@ -31,8 +31,8 @@
 #endif
 #include <inttypes.h>
 
-#include "rose_override.h"                              // defines ROSE_OVERRIDE as "override" if C++11 is present
-
+#include "rose_override.h"                              // defines ROSE_OVERRIDE, ROSE_FINAL, etc for C++11 or later
+#include "rose_constants.h"                             // defines things like Rose::UNLIMITED, Rose::INVALID_INDEX, etc.
 
 #include <semaphore.h>
 #include "fileoffsetbits.h"
@@ -43,6 +43,27 @@
   #define snprintf _snprintf
 # endif
 #endif
+
+// The boost::filesystem::path class has no serialization function, and boost::serialization doesn't provide a non-intrusive
+// implementation. Therefore ROSE needs to define one. This code must occur before including any headers that serialize
+// boost::filesystem::path, and specifically before Cxx_Grammar.h.
+#include <boost/filesystem.hpp>
+#include <boost/serialization/nvp.hpp>
+namespace boost {
+    namespace serialization {
+        template<class Archive>
+        void serialize(Archive &ar, boost::filesystem::path &path, const unsigned version) {
+            if (Archive::is_saving::value) {
+                std::string nativePath = path.native();
+                ar & BOOST_SERIALIZATION_NVP(nativePath);
+            } else {
+                std::string nativePath;
+                ar & BOOST_SERIALIZATION_NVP(nativePath);
+                path = nativePath;
+            }
+        }
+    }
+}
 
 // George Vulov (Aug. 23, 2010): This macro is not available in OS X by default
 #ifndef TEMP_FAILURE_RETRY

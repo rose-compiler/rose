@@ -599,21 +599,23 @@ DisassemblerM68k::makeMacAccumulatorRegister(unsigned accumIndex)
 SgAsmRegisterReferenceExpression *
 DisassemblerM68k::makeFPRegister(unsigned regnum)
 {
-    size_t registerNBits = 0;
     M68kDataFormat fmt = floatingFormatForFamily(family);
+    SgAsmType *type = NULL;
     switch (fmt) {
         case m68k_fmt_f64:
-            registerNBits = 64;
+            type = makeType(fmt);
             break;
         case m68k_fmt_f96:
-            registerNBits = 80;                         // 16-bits for X format are always zero
+            // The Motorola 68xxx 96-bit "extended real" type has 16 bits of zeros smack in the middle. The floating-point
+            // registers don't store the zeros and are therefore only 80 bits wide.
+            type = SageBuilderAsm::buildTypeM68kFloat80();
             break;
         default:
             ASSERT_not_reachable("invalid default floating-point format: " + stringifyBinaryAnalysisM68kDataFormat(fmt));
     }
-    RegisterDescriptor desc(m68k_regclass_fpr, regnum, 0, registerNBits);
+    RegisterDescriptor desc(m68k_regclass_fpr, regnum, 0, type->get_nBits());
     SgAsmRegisterReferenceExpression *expr = new SgAsmDirectRegisterExpression(desc);
-    expr->set_type(makeType(fmt));
+    expr->set_type(type);
     return expr;
 }
 

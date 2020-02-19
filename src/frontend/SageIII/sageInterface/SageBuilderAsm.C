@@ -294,7 +294,7 @@ buildIeee754Binary32() {
                                                     SgAsmFloatType::BitRange::baseSize(23, 8), // exponent
                                                     31,                                        // sign bit
                                                     127,                                       // exponent bias
-                                                    SgAsmFloatType::NORMALIZED_SIGNIFICAND|SgAsmFloatType::GRADUAL_UNDERFLOW);
+                                                    SgAsmFloatType::ieeeFlags());
         cached = SgAsmType::registerOrDelete(fpType);
     }
     return cached;
@@ -312,25 +312,7 @@ buildIeee754Binary64() {
                                                     SgAsmFloatType::BitRange::baseSize(52, 11), // exponent
                                                     63,                                         // sign bit
                                                     1023,                                       // exponent bias
-                                                    SgAsmFloatType::NORMALIZED_SIGNIFICAND|SgAsmFloatType::GRADUAL_UNDERFLOW);
-        cached = SgAsmType::registerOrDelete(fpType);
-    }
-    return cached;
-}
-
-SgAsmFloatType*
-buildIeee754Binary80() {
-    static SgAsmFloatType *cached = NULL;
-    static SAWYER_THREAD_TRAITS::Mutex mutex;
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-
-    if (!cached) {
-        SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 80,
-                                                    SgAsmFloatType::BitRange::baseSize(0, 64),  // significand
-                                                    SgAsmFloatType::BitRange::baseSize(64, 15), // exponent
-                                                    79,                                         // sign bit
-                                                    16383,                                      // exponent bias
-                                                    SgAsmFloatType::NORMALIZED_SIGNIFICAND|SgAsmFloatType::GRADUAL_UNDERFLOW);
+                                                    SgAsmFloatType::ieeeFlags());
         cached = SgAsmType::registerOrDelete(fpType);
     }
     return cached;
@@ -373,7 +355,21 @@ buildTypeX86Float64() {
 
 SgAsmFloatType*
 buildTypeX86Float80() {
-    return buildIeee754Binary80();
+    static SgAsmFloatType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
+    if (!cached) {
+        SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 80,
+                                                    SgAsmFloatType::BitRange::baseSize(0, 64),  // significand
+                                                    SgAsmFloatType::BitRange::baseSize(64, 15), // exponent
+                                                    79,                                         // sign bit
+                                                    16383,                                      // exponent bias
+                                                    SgAsmFloatType::ieeeFlags()
+                                                        .clear(SgAsmFloatType::IMPLICIT_BIT_CONVENTION));
+        cached = SgAsmType::registerOrDelete(fpType);
+    }
+    return cached;
 }
 
 // M68k 96-bit "extended-precision real format"
@@ -385,12 +381,43 @@ buildTypeM68kFloat96() {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
     if (!cached) {
+        // From the Motorola 68000 documentation, "For all three [binary floating-point] precisions, a normalized mantissa is
+        // always in the range (1.0...2.0). The extended-precision data format represents the entire mantissa, including the
+        // explicit integer part bit. Single- and double-precision data formats represent only a fractional portion of the
+        // mantissa (the fraction) and always imply the integer part as one". The documentation states that for
+        // extended-precision types, the term "matissa" is equivalent to IEEE 754 "significand" since the integer part of the
+        // significand is always stored.
+        //
+        // A table subsequently describes that the significand is denormalized when the exponent field's bits are all clear,
+        // implying that gradual underflow capability is present.
         SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 96,
-                                                    SgAsmFloatType::BitRange::baseSize(0, 64),  // significand
+                                                    SgAsmFloatType::BitRange::baseSize(0, 64),  // significand w/explicit integer bit
                                                     SgAsmFloatType::BitRange::baseSize(80, 15), // exponent
                                                     95,                                         // sign bit
-                                                    16383,                                      // exponent bias
-                                                    SgAsmFloatType::NORMALIZED_SIGNIFICAND|SgAsmFloatType::GRADUAL_UNDERFLOW);
+                                                    0x3fff,                                     // exponent bias
+                                                    SgAsmFloatType::ieeeFlags()
+                                                        .clear(SgAsmFloatType::IMPLICIT_BIT_CONVENTION));
+        cached = SgAsmType::registerOrDelete(fpType);
+    }
+    return cached;
+}
+
+// M68k 80-bit floating-point type. Same as the 96 bit "extended-precision real" type but without the 16 bits field that's
+// always zero. This is the type actually stored in the floating-point registers for Motorola (but not ColdFire) processors.
+SgAsmFloatType*
+buildTypeM68kFloat80() {
+    static SgAsmFloatType *cached = NULL;
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
+    if (!cached) {
+        SgAsmFloatType *fpType = new SgAsmFloatType(ByteOrder::ORDER_LSB, 80,
+                                                    SgAsmFloatType::BitRange::baseSize(0, 64),  // significand w/explicit integer bit
+                                                    SgAsmFloatType::BitRange::baseSize(64, 15), // exponent
+                                                    79,                                         // sign bit
+                                                    0x3fff,                                     // exponent bias
+                                                    SgAsmFloatType::ieeeFlags()
+                                                        .clear(SgAsmFloatType::IMPLICIT_BIT_CONVENTION));
         cached = SgAsmType::registerOrDelete(fpType);
     }
     return cached;

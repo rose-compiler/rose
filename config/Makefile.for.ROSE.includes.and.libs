@@ -259,8 +259,9 @@ endif
 if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
 # ROSE_ADA_INCLUDES = -I$(ada_path)/include_xxx
   ROSE_ADA_INCLUDES = -I$(ada_path)/include_xxx
+  DOT_ASIS_LIB_DIR_ ?= /home/quinlan1/ROSE/ADA/dot_asis/dot_asis_library/lib
   ROSE_ADA_LIBS = -ldot_asis
-#~   ROSE_ADA_LIBS_WITH_PATH = /export/home/pirkelbauer2/git/ada/dot_asis_library/lib/libdot_asis.so
+  ROSE_ADA_LIBS_WITH_PATH = $(DOT_ASIS_LIB_DIR_)/libdot_asis.so
 endif
 
 # RASMUSSEN (10/24/2017): Adding the GnuCOBOL parse-tree library support.
@@ -612,7 +613,7 @@ ROSE_RPATHS =                                                                   
 
 # Rasmussen (3/23/2018): Added ROSE_LINK_RPATHS to enable linking on Mac OSX with ROSE installation
 if OS_MACOSX
-ROSE_LINK_RPATHS = $(addprefix -Xlinker -rpath , $(filter-out -R , $(ROSE_RPATHS)))
+ROSE_LINK_RPATHS = $(addprefix -Xlinker -rpath -Xlinker , $(filter-out -R , $(ROSE_RPATHS)))
 else
 comma = ,
 ROSE_LINK_RPATHS = $(addprefix -Wl$(comma)-rpath , $(filter-out -R , $(ROSE_RPATHS)))

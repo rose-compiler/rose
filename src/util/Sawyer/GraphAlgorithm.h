@@ -1158,7 +1158,7 @@ std::vector<typename GraphTraits<Graph>::VertexIterator>
 graphDirectedDominators(Graph &g, typename GraphTraits<Graph>::VertexIterator root) {
     typedef typename GraphTraits<Graph>::VertexIterator VertexIterator;
     typedef typename GraphTraits<Graph>::EdgeIterator EdgeIterator;
-    typedef typename GraphTraits<Graph>::Edge Edge;
+    //typedef typename GraphTraits<Graph>::Edge Edge;
     static const size_t NO_ID = (size_t)(-1);
 
     ASSERT_require(g.isValidVertex(root));

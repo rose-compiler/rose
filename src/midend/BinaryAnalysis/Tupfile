@@ -5,8 +5,9 @@ ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
         BinaryControlFlow.C BinaryDataFlow.C BinaryDebugger.C BinaryDemangler.C BinaryDominance.C BinaryFeasiblePath.C \
 	BinaryFunctionCall.C BinaryFunctionSimilarity.C BinaryHotPatch.C BinaryMagic.C BinaryNoOperation.C \
 	BinaryPointerDetection.C BinaryReachability.C BinaryReturnValueUsed.C BinarySmtCommandLine.C BinarySmtSolver.C \
-	BinarySmtlibSolver.C BinaryStackDelta.C BinaryString.C BinarySymbolicExpr.C BinarySymbolicExprParser.C BinarySystemCall.C \
-	BinaryTaintedFlow.C BinaryToSource.C BinaryYicesSolver.C BinaryZ3Solver.C DwarfLineMapper.C
+	BinarySmtlibSolver.C BinarySourceLocations.C BinaryStackDelta.C BinaryString.C BinarySymbolicExpr.C \
+	BinarySymbolicExprParser.C BinarySystemCall.C BinaryTaintedFlow.C BinaryToSource.C BinaryVariables.C BinaryYicesSolver.C \
+	BinaryZ3Solver.C DwarfLineMapper.C
 else
     SOURCES = dummyBinaryMidend.C
 endif
@@ -17,6 +18,6 @@ run $(public_header) AbstractLocation.h BinaryAstHash.h BinaryAnalysisUtils.h Bi
     BinaryCallingConvention.h BinaryCodeInserter.h BinaryConcolic.h BinaryControlFlow.h BinaryDataFlow.h BinaryDebugger.h \
     BinaryDemangler.h BinaryDominance.h BinaryFeasiblePath.h BinaryFunctionCall.h BinaryFunctionSimilarity.h BinaryHotPatch.h \
     BinaryMagic.h BinaryMatrix.h BinaryNoOperation.h BinaryPointerDetection.h BinaryReachability.h BinaryReturnValueUsed.h \
-    BinarySmtCommandLine.h BinarySmtSolver.h BinarySmtlibSolver.h BinaryStackDelta.h BinaryStackVariable.h BinaryString.h \
-    BinarySymbolicExpr.h BinarySymbolicExprParser.h BinarySystemCall.h BinaryTaintedFlow.h BinaryToSource.h \
-    BinaryYicesSolver.h BinaryZ3Solver.h DwarfLineMapper.h ether.h
+    BinarySmtCommandLine.h BinarySmtSolver.h BinarySmtlibSolver.h BinarySourceLocations.h BinaryStackDelta.h BinaryStackVariable.h \
+    BinaryString.h BinarySymbolicExpr.h BinarySymbolicExprParser.h BinarySystemCall.h BinaryTaintedFlow.h BinaryToSource.h \
+    BinaryVariables.h BinaryYicesSolver.h BinaryZ3Solver.h DwarfLineMapper.h ether.h

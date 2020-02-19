@@ -1,3 +1,4 @@
+#include "DOM.h"
 int globalReturnsTrue() 
 {
     return 1;
@@ -20,6 +21,6 @@ int main() {
   } else {
     x+=1;
   }
-  bool res=(x==3);
-  return !res;
+  printf("x:%d",x);
+  return 0;
 }

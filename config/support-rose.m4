@@ -1951,6 +1951,11 @@ src/frontend/CxxFrontend/EDG/EDG_5.0/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.0/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.0/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.0/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.0/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.0/lib/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
 
@@ -2310,7 +2315,6 @@ tests/nonsmoke/functional/BinaryAnalysis/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/Pin_tests/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/libraryIdentification_tests/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/Concolic/Makefile
-tests/nonsmoke/functional/BinaryAnalysis/Concolic/crsh/Makefile
 tests/nonsmoke/functional/CompileTests/A++Code/Makefile
 tests/nonsmoke/functional/CompileTests/A++Tests/Makefile
 tests/nonsmoke/functional/CompileTests/C_tests/Makefile

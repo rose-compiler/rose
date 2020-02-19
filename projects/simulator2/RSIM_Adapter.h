@@ -251,7 +251,7 @@ namespace RSIM_Adapter {
          *  value or to do some other system call.
          *
          *  Thread safety: This method is thread safe and most methods on the returned object are also thread safe. */
-        ROSE_Callbacks::List<RSIM_Simulator::SystemCall::Callback> &get_callbacks() {
+        Rose::Callbacks::List<RSIM_Simulator::SystemCall::Callback> &get_callbacks() {
             return cblist;
         }
 
@@ -271,7 +271,7 @@ namespace RSIM_Adapter {
         /* Non mutex-protected data members */
         SyscallCB *syscall_cb;
         mutable SAWYER_THREAD_TRAITS::RecursiveMutex mutex;
-        ROSE_Callbacks::List<RSIM_Simulator::SystemCall::Callback> cblist;
+        Rose::Callbacks::List<RSIM_Simulator::SystemCall::Callback> cblist;
         
         /* Mutex-protected data members */
         bool dflt_state;

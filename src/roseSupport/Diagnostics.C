@@ -7,7 +7,9 @@
 #include "AsmUnparser.h"                                // Rose::BinaryAnalysis::AsmUnparser
 #include "BinaryBestMapAddress.h"                       // Rose::BinaryAnalysis::BestMapAddress
 #include "BinaryCodeInserter.h"                         // Rose::BinaryAnalysis::CodeInserter
+#include "BinaryConcolic.h"                             // Rose::BinaryAnalysis::Concolic
 #include "BinaryDataFlow.h"                             // Rose::BinaryAnalysis::DataFlow
+#include "BinaryDebugger.h"                             // Rose::BinaryAnalysis::Debugger
 #include "BinaryFeasiblePath.h"                         // Rose::BinaryAnalysis::FeasiblePath
 #include "BinaryFunctionSimilarity.h"                   // Rose::BinaryAnalysis::FunctionSimilarity
 #include "BinaryHotPatch.h"                             // Rose::BinaryAnalysis::HotPatch
@@ -18,12 +20,12 @@
 #include "BinarySymbolicExprParser.h"                   // Rose::BinaryAnalysis::SymbolicExprParser
 #include "BinaryTaintedFlow.h"                          // Rose::BinaryAnalysis::TaintedFlow
 #include "BinaryToSource.h"                             // Rose::BinaryAnalysis::BinaryToSource
+#include "BinaryVxcoreParser.h"                         // Rose::BinaryAnalysis::VxcoreParser
 #include "Disassembler.h"                               // Rose::BinaryAnalysis::Disassembler
 
 namespace Rose {
 namespace BinaryAnalysis {
     namespace CallingConvention { void initDiagnostics(); }
-    namespace Concolic { void initDiagnostics(); }
     namespace InstructionSemantics2 { void initDiagnostics(); }
     namespace Partitioner2 { void initDiagnostics(); }
     namespace PointerDetection { void initDiagnostics(); }
@@ -31,6 +33,7 @@ namespace BinaryAnalysis {
     namespace StackDelta { void initDiagnostics(); }
     namespace Strings { void initDiagnostics(); }
     namespace Unparser { void initDiagnostics(); }
+    namespace Variables { void initDiagnostics(); }
     void SerialIo_initDiagnostics();
 } // namespace
 } // namespace
@@ -118,9 +121,12 @@ void initialize() {
         BinaryAnalysis::BinaryLoader::initDiagnostics();
         BinaryAnalysis::AsmUnparser::initDiagnostics();
         BinaryAnalysis::BestMapAddress::initDiagnostics();
+        BinaryAnalysis::Debugger::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
         BinaryAnalysis::CodeInserter::initDiagnostics();
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING                     // conditionally defined in BinaryConcolic.h
         BinaryAnalysis::Concolic::initDiagnostics();
+#endif
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::Disassembler::initDiagnostics();
         BinaryAnalysis::FeasiblePath::initDiagnostics();
@@ -140,6 +146,8 @@ void initialize() {
         BinaryAnalysis::TaintedFlow::initDiagnostics();
         BinaryAnalysis::BinaryToSource::initDiagnostics();
         BinaryAnalysis::Unparser::initDiagnostics();
+        BinaryAnalysis::Variables::initDiagnostics();
+        BinaryAnalysis::VxcoreParser::initDiagnostics();
         SgAsmExecutableFileFormat::initDiagnostics();
 #endif
         EditDistance::initDiagnostics();

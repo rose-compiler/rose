@@ -1,13 +1,19 @@
 include_rules
-ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
 
-run $(tool_compile_linkexe) registerDescriptor.C
-run $(test) registerDescriptor
+ifeq (@(ENABLE_TESTS),yes)
+    ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
 
-run $(tool_compile_linkexe) smtSolver.C
-run $(test) smtSolver
+	run $(tool_compile_linkexe) registerDescriptor.C
+	run $(test) registerDescriptor
 
-run $(tool_compile_linkexe) peekPoke.C
-run $(test) peekPoke
+	run $(tool_compile_linkexe) smtSolver.C
+	run $(test) smtSolver
 
+	run $(tool_compile_linkexe) peekPoke.C
+	run $(test) peekPoke
+
+	run $(tool_compile_linkexe) testSourceLocations.C
+	run $(test) testSourceLocations
+
+    endif
 endif

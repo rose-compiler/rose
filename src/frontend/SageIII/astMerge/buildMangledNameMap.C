@@ -460,50 +460,8 @@ MangledNameMapTraversal::visit ( SgNode* node)
                  // of unique names for the AST merge.
                  // string key = generateUniqueName(node,false);
                     bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations = false;
-                    string key = SageInterface::generateUniqueName(node,ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
+                    string key = SageInterface::generateUniqueName(node, ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
                     ROSE_ASSERT(key.empty() == false);
-#if 1
-                    SgDeclarationStatement* declaration = isSgDeclarationStatement(node);
-                    if (declaration != NULL)
-                       {
-                      // ROSE_ASSERT(declaration->get_symbol_from_symbol_table() != NULL);
-
-                      // DQ (7/4/2007): Some SgDeclarationStatement IR nodes don't have a representation 
-                      // in the symbol table (the list of SgInitializedName object have them instead).
-                         if (isSgVariableDeclaration(declaration) == NULL && 
-                             isSgVariableDefinition(declaration) == NULL && 
-                             isSgUsingDeclarationStatement(declaration) == NULL && 
-                             isSgUsingDirectiveStatement(declaration) == NULL && 
-                             isSgTemplateInstantiationDirectiveStatement(declaration) == NULL && 
-                             isSgPragmaDeclaration(declaration) == NULL)
-                            {
-                           // DQ (6/8/2010): Only do this test for non compiler generated variable...(e.g. __default_member_function_pointer_name 
-                           // is compiler generated to handle function pointers where no member function id specified).
-                              if (declaration->get_startOfConstruct()->isCompilerGenerated() == false)
-                                 {
-                                   SgSymbol* symbol = declaration->search_for_symbol_from_symbol_table();
-                                   if (symbol == NULL)
-                                      {
-                                     // Output more information to support debugging!
-                                        printf ("declaration = %p = %s = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());
-                                        SgScopeStatement* scope = declaration->get_scope();
-                                        ROSE_ASSERT(scope != NULL);
-                                        printf ("     scope = %p = %s = %s \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
-                                        declaration->get_startOfConstruct()->display("declaration->search_for_symbol_from_symbol_table() == NULL");
-                                      }
-                                   ROSE_ASSERT(symbol != NULL);
-                                 }
-                            }
-#if 0
-                      // DQ (6/23/2010): Added the base type of the typedef
-                         SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(declaration);
-                         if (typedefDeclaration != NULL)
-                            {
-                            }
-#endif 
-                       }
-#endif
-
                     addToMap(key,node);
 
                  // Keep track of the number of IR nodes that were evaluated for mangled name matching

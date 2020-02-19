@@ -126,6 +126,7 @@ main(int argc, char *argv[])
 
     BaseSemantics::RiscOperatorsPtr operators = make_ops();
     BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(operators, 32);
+    ASSERT_always_not_null(dispatcher);
 
     struct sigaction sa;
     sa.sa_handler = alarm_handler;
