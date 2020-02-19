@@ -36,6 +36,7 @@ namespace Outliner {
   bool enable_debug=false; // 
   bool exclude_headers=false;
   bool use_dlopen=false; // Outlining the target to a separated file and calling it using a dlopen() scheme. It turns on useNewFile.
+  bool enable_template=false; // Outlining code blocks inside C++ templates
   std::string output_path=""; // default output path is the original file's directory
   std::vector<std::string> handles; //  abstract handles of outlining targets, given by command line option -rose:outline:abstract_handle for each
 
@@ -231,6 +232,10 @@ Outliner::commandLineSwitches() {
                     .intrinsicValue(true, use_dlopen)
                     .doc("Use @man{dlopen}(3) to find an outlined function saved into a new source file."));
 
+    switches.insert(Switch("enable_template")
+                    .intrinsicValue(true, enable_template)
+                    .doc("Enable outlining code blocks inside C++ templates."));
+
     switches.insert(Switch("abstract_handle")
                     .argument("handle", anyParser(handles))
                     .whichValue(SAVE_ALL)               // if switch appears more than once, save all values not just last
@@ -376,7 +381,13 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
   }
   //  else
   //    enable_classic = false;
-
+  if (CommandlineProcessing::isOption (argvList,"-rose:outline:","enable_template",true))
+  {
+    if (enable_debug)
+      cout<<"Enabling outlining code blocks inside C++ templates..."<<endl;
+    enable_template= true;
+  }
+ 
   if (CommandlineProcessing::isOption (argvList,"-rose:outline:","temp_variable",true))
   {
     if (enable_debug)
@@ -440,6 +451,7 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
     cout<<"\t-rose:outline:exclude_headers                  do not include any headers in the new file for outlined functions"<<endl;
     cout<<"\t-rose:outline:use_dlopen                       use dlopen() to find the outlined functions saved in new files.It will turn on new_file and parameter_wrapper flags internally"<<endl;
     cout<<"\t-rose:outline:copy_orig_file                   used with dlopen(): single lib source file copied from the entire original input file. All generated outlined functions are appended to the lib source file"<<endl;
+    cout<<"\t-rose:outline:enable_template                  support outlining code blocks inside C++ templates (experimental)"<<endl;
     cout<<"\t-rose:outline:enable_debug                     run outliner in a debugging mode"<<endl;
     cout <<"---------------------------------------------------------------"<<endl;
   }

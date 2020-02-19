@@ -71,6 +71,8 @@ namespace Outliner
   ROSE_DLL_API extern bool exclude_headers; // exclude headers from the new file containing outlined functions
   ROSE_DLL_API extern bool enable_liveness; // enable liveness analysis to reduce restoring statements when temp variables are used
   ROSE_DLL_API extern bool use_dlopen; // Outlining the target to a separated file and calling it using a dlopen() scheme. It turns on useNewFile.
+
+  ROSE_DLL_API extern bool enable_template;  // Enabling outlining code blocks inside template functions
   
   ROSE_DLL_API extern std::string output_path; // where to save the new file containing the outlined function
 

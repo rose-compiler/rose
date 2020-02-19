@@ -31,12 +31,13 @@ noinst_PROGRAMS = \
 	testPragmaInBody \
 	querySubTree \
 	testCopyAndDelete \
-   testTraversalOfTemplateInstantiations \
+        testTraversalOfTemplateInstantiations \
 	testTranslator2013_01 \
 	testTranslator2013_02 \
 	testTranslator2018_01 \
 	testTranslator2018_02 \
-	testPlugins
+	testPlugins \
+	github_83_outline
 #
 # a better alternative to identityTranslator
 # Liao 1/29/2009
@@ -73,7 +74,7 @@ testTranslator2013_01_SOURCES = testTranslator2013_01.C
 testTranslator2013_02_SOURCES = testTranslator2013_02.C
 testTranslator2018_01_SOURCES = testTranslator2018_01.C
 testTranslator2018_02_SOURCES = testTranslator2018_02.C
-
+github_83_outline_SOURCES = github_83_outline.C
 # LDADD = $(ROSE_SEPARATE_LIBS)
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
@@ -163,6 +164,8 @@ input_testTranslator2018_01.o: testTranslator2018_01
 input_testTranslator2018_02.o: testTranslator2018_02
 	./testTranslator2018_02 -rose:verbose 0 -c $(srcdir)/input_testTranslator2018_02.C && touch $@
 
+input_github_83_outline.o: github_83_outline
+	./github_83_outline -rose:verbose 0  --rose:openmp:ast_only -c $(srcdir)/input_github_83_outline.C && touch $@
 
 EXTRA_DIST = \
    CMakeLists.txt \
@@ -174,9 +177,11 @@ EXTRA_DIST = \
    input_testTranslator2012_01a.C \
    input_testTranslator2012_01a.C \
    input_testPragmaInBody.c \
-   input_querySubTree.C
+   input_querySubTree.C \
+   input_github_83_outline.C
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+# input_github_83_outline.o, 2/18/2020
 check-cxx: \
 	test125.pdf \
 	jacobi.o \
@@ -186,7 +191,7 @@ check-cxx: \
 	input_testTranslator2010_2.o \
 	input_testTranslator2010_3.o \
 	input_label_stmt_file_info_translator.o \
-	input_querySubTree.o
+	input_querySubTree.o 
 # TODO: FIX the following tests
 #Currently_Failing_Cxx_tests =
 #	dataMemberOfConst.o 
