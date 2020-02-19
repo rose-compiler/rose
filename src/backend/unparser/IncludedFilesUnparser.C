@@ -422,7 +422,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
         }
 
 #if 0
-  // printf ("Before leaving IncludedFilesUnparser::figureOutWhichFilesToUnparse(): \n");
+     printf ("Before leaving IncludedFilesUnparser::figureOutWhichFilesToUnparse(): \n");
      printDiagnosticOutput();
 #endif
 
@@ -476,6 +476,11 @@ IncludedFilesUnparser::printDiagnosticOutput()
 
           printf ("################################################## \n");
           printf ("Leaving IncludedFilesUnparser::printDiagnosticOutput(): Output internal data \n");
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
         }    
    }
 
@@ -580,77 +585,123 @@ bool IncludedFilesUnparser::isConflictingIncludePath(const string& includePath) 
 
 //TODO: Probably this would not handle correctly cases like #include <../subdir/../A.h> because the normalized representation would be
 // <../A.h> and thus, "subdir" would not be created and the file would not be found by the preprocessor. Check and fix, if needed.
-void IncludedFilesUnparser::collectIncludeCompilerPaths() {
-    for (map<string, set<string> >::const_iterator mapEntry = includingPathsMap.begin(); mapEntry != includingPathsMap.end(); mapEntry++) {
-        string fileToUnparse = mapEntry -> first;
-        map<string, string>::const_iterator unparseMapEntry = unparseMap.find(fileToUnparse);
-        ROSE_ASSERT(unparseMapEntry != unparseMap.end());
-        string commonPath = unparseMapEntry -> second;
-        const set<string>& includingPaths = mapEntry -> second;
-        for (set<string>::const_iterator includingPathPtr = includingPaths.begin(); includingPathPtr != includingPaths.end(); includingPathPtr++) {
-            string textualPathPart = FileHelper::getTextualPart(*includingPathPtr);
-            size_t startPos = commonPath.rfind(textualPathPart);
-            ROSE_ASSERT(startPos != string::npos);
-            if (startPos != 0) {
-                startPos--; //If did not match the whole commonPath, consider that path delimiter should also be removed
-            }
-            string includeCompilerPath = commonPath.substr(0, startPos);
-            int upFolderCount = FileHelper::countUpsToParentFolder(*includingPathPtr);
-            for (int i = 0; i < upFolderCount; i++) {
-                includeCompilerPath = FileHelper::concatenatePaths(includeCompilerPath, defaultUnparseFolderName);
-            }
-            addIncludeCompilerPath(upFolderCount, FileHelper::concatenatePaths(unparseRootPath, includeCompilerPath));
-        }
-    }
-}
+void IncludedFilesUnparser::collectIncludeCompilerPaths() 
+   {
+#if 0
+     printf ("In IncludedFilesUnparser::collectIncludeCompilerPaths(): includingPathsMap.size() = %zu \n",includingPathsMap.size());
+#endif
 
-void IncludedFilesUnparser::addIncludeCompilerPath(int upFolderCount, const string& includeCompilerPath) {
-    list<pair<int, string> >::iterator includeCompilerPathsIterator;
-    //First, check if this include path is already present
-    for (includeCompilerPathsIterator = includeCompilerPaths.begin(); includeCompilerPathsIterator != includeCompilerPaths.end(); includeCompilerPathsIterator++) {
-        if (includeCompilerPath.compare(includeCompilerPathsIterator -> second) == 0) {
-            if (includeCompilerPathsIterator -> first >= upFolderCount) {
-                return; //This path is present with an equal or greater priority, nothing to do
-            } else {
-                //This path is present with a lower priority, so remove it and proceed in a regular way.
-                includeCompilerPaths.erase(includeCompilerPathsIterator);
-                break;
-            }
+     for (map<string, set<string> >::const_iterator mapEntry = includingPathsMap.begin(); mapEntry != includingPathsMap.end(); mapEntry++) 
+        {
+          string fileToUnparse = mapEntry -> first;
+#if 0
+          printf (" --- In loop over includingPathsMap: fileToUnparse = %s \n",fileToUnparse.c_str());
+#endif
+          map<string, string>::const_iterator unparseMapEntry = unparseMap.find(fileToUnparse);
+          ROSE_ASSERT(unparseMapEntry != unparseMap.end());
+          string commonPath = unparseMapEntry -> second;
+#if 0
+          printf (" --- In loop over includingPathsMap: commonPath = %s \n",commonPath.c_str());
+#endif
+          const set<string>& includingPaths = mapEntry -> second;
+#if 0
+          printf (" --- In loop over includingPathsMap: includingPaths.size() = %zu \n",includingPaths.size());
+#endif
+          for (set<string>::const_iterator includingPathPtr = includingPaths.begin(); includingPathPtr != includingPaths.end(); includingPathPtr++) 
+             {
+               string textualPathPart = FileHelper::getTextualPart(*includingPathPtr);
+#if 0
+               printf (" ---- ---- In loop over includingPaths: textualPathPart = %s \n",textualPathPart.c_str());
+#endif
+               size_t startPos = commonPath.rfind(textualPathPart);
+               ROSE_ASSERT(startPos != string::npos);
+               if (startPos != 0) 
+                  {
+                    startPos--; //If did not match the whole commonPath, consider that path delimiter should also be removed
+                  }
+               string includeCompilerPath = commonPath.substr(0, startPos);
+#if 0
+               printf (" ---- ---- In loop over includingPaths: includeCompilerPath = %s \n",includeCompilerPath.c_str());
+#endif
+               int upFolderCount = FileHelper::countUpsToParentFolder(*includingPathPtr);
+               for (int i = 0; i < upFolderCount; i++) 
+                  {
+                    includeCompilerPath = FileHelper::concatenatePaths(includeCompilerPath, defaultUnparseFolderName);
+#if 0
+                    printf (" ---- ---- --- In loop over includingPaths: in loop: includeCompilerPath = %s \n",includeCompilerPath.c_str());
+#endif
+                  }
+#if 0
+               printf (" ---- ---- before calling addIncludeCompilerPath(): unparseRootPath     = %s \n",unparseRootPath.c_str());
+               printf (" ---- ---- before calling addIncludeCompilerPath(): includeCompilerPath = %s \n",includeCompilerPath.c_str());
+#endif
+               addIncludeCompilerPath(upFolderCount, FileHelper::concatenatePaths(unparseRootPath, includeCompilerPath));
+#if 0
+            // printf (" ---- ---- after adding to addIncludeCompilerPath(): addIncludeCompilerPath.size() = %zu \n",addIncludeCompilerPath.size());
+#endif
+             }
         }
-    }
-    //If the path is not already present with a sufficiently high priority, insert it at a position corresponding to its priority.
-    pair<int, string> newIncludeCompilerPathsEntry(upFolderCount, includeCompilerPath);
-    includeCompilerPathsIterator = includeCompilerPaths.begin();
-    while (includeCompilerPathsIterator != includeCompilerPaths.end()) {
-        if (includeCompilerPathsIterator -> first <= upFolderCount) {
-            includeCompilerPaths.insert(includeCompilerPathsIterator, newIncludeCompilerPathsEntry);
-            break;
+   }
+
+void IncludedFilesUnparser::addIncludeCompilerPath(int upFolderCount, const string& includeCompilerPath) 
+   {
+     list<pair<int, string> >::iterator includeCompilerPathsIterator;
+  // First, check if this include path is already present
+     for (includeCompilerPathsIterator = includeCompilerPaths.begin(); includeCompilerPathsIterator != includeCompilerPaths.end(); includeCompilerPathsIterator++) 
+        {
+          if (includeCompilerPath.compare(includeCompilerPathsIterator -> second) == 0) 
+             {
+               if (includeCompilerPathsIterator -> first >= upFolderCount) 
+                  {
+                    return; //This path is present with an equal or greater priority, nothing to do
+                  } 
+                 else 
+                  {
+                 // This path is present with a lower priority, so remove it and proceed in a regular way.
+                    includeCompilerPaths.erase(includeCompilerPathsIterator);
+                    break;
+                  }
+             }
         }
-        includeCompilerPathsIterator++;
-    }
-    if (includeCompilerPathsIterator == includeCompilerPaths.end()) {
-        //Iterated till the end, which means that the right place to insert was not found, therefore append to the end.
-        includeCompilerPaths.push_back(newIncludeCompilerPathsEntry);
-    }
-}
+
+  // If the path is not already present with a sufficiently high priority, insert it at a position corresponding to its priority.
+     pair<int, string> newIncludeCompilerPathsEntry(upFolderCount, includeCompilerPath);
+     includeCompilerPathsIterator = includeCompilerPaths.begin();
+     while (includeCompilerPathsIterator != includeCompilerPaths.end()) 
+        {
+          if (includeCompilerPathsIterator -> first <= upFolderCount) 
+             {
+               includeCompilerPaths.insert(includeCompilerPathsIterator, newIncludeCompilerPathsEntry);
+               break;
+             }
+          includeCompilerPathsIterator++;
+        }
+
+     if (includeCompilerPathsIterator == includeCompilerPaths.end()) 
+        {
+       // Iterated till the end, which means that the right place to insert was not found, therefore append to the end.
+          includeCompilerPaths.push_back(newIncludeCompilerPathsEntry);
+        }
+   }
+
 
 void IncludedFilesUnparser::updatePreprocessingInfoPaths(const string& includedFile, PreprocessingInfo* includingPreprocessingInfo) 
    {
      ROSE_ASSERT(includingPreprocessingInfo != NULL);
 
 #if 0
-     printf ("includedFile = %s \n",includedFile.c_str());
-     printf ("includingPreprocessingInfo->getString() = %s \n",includingPreprocessingInfo->getString().c_str());
+     printf ("In updatePreprocessingInfoPaths(): includedFile = %s \n",includedFile.c_str());
+     printf (" --- includingPreprocessingInfo->getString() = %s \n",includingPreprocessingInfo->getString().c_str());
 #endif
 
      string normalizedIncludingFileName = FileHelper::getNormalizedContainingFileName(includingPreprocessingInfo);
 
 #if 0
-     printf ("normalizedIncludingFileName = %s \n",normalizedIncludingFileName.c_str());
+     printf ("In updatePreprocessingInfoPaths(): normalizedIncludingFileName = %s \n",normalizedIncludingFileName.c_str());
 #endif
 
 #if 0
-     printf ("filesToUnparse: \n");
+     printf ("In updatePreprocessingInfoPaths(): filesToUnparse: \n");
      set<string>::const_iterator fileToUnparsePtr = filesToUnparse.begin();
      while (fileToUnparsePtr != filesToUnparse.end())
         {
@@ -664,7 +715,7 @@ void IncludedFilesUnparser::updatePreprocessingInfoPaths(const string& includedF
        // update include paths only in the unparsed files
 
 #if 0
-          printf ("unparseMap: \n");
+          printf ("In updatePreprocessingInfoPaths(): unparseMap: \n");
           map<string, string>::const_iterator unparseMapPtr = unparseMap.begin();
           while (unparseMapPtr != unparseMap.end())
              {
@@ -718,7 +769,15 @@ void IncludedFilesUnparser::updatePreprocessingInfoPaths(const string& includedF
              {
                cout << "Updated include string:" << includingPreprocessingInfo -> getString() << endl;
              }
+#if 0
+          printf ("replacementIncludeString = %s \n",replacementIncludeString.c_str());
+#endif
         }
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 
@@ -1111,7 +1170,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #if 0
           printf ("NOTE: When this is the generate _lib.cpp file it appears this is the second time it is processed for comments and CPP directives \n");
 #endif
-#if 1
+#if 0
           printf ("Exiting after test! processed second phase of collecting comments and CPP directives for header files) \n");
           ROSE_ASSERT(false);
 #endif
@@ -1149,6 +1208,10 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 
 #if 0
      printf ("Leaving initializeFilesToUnparse(): filesToUnparse.size() = %zu \n",filesToUnparse.size());
+#endif
+#if 0
+     printf ("Exiting after test! \n");
+     ROSE_ASSERT(false);
 #endif
    }
 

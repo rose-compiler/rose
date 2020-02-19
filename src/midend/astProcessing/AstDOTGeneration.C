@@ -503,6 +503,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           string name = "unknown";
           if (variableSymbol != NULL)
              {
+            // printf ("Commented out call to variableSymbol->get_name() \n");
                name = variableSymbol->get_name();
              }
           nodelabel += string("\\n name = ") + name;

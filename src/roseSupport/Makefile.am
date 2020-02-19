@@ -34,6 +34,7 @@ libroseSupport_la_SOURCES =			\
 	optionDeclaration.C			\
 	rangemap.C				\
 	roseTranslators.C			\
+	SourceLocation.C			\
 	sourceLocationInheritedAttribute.C	\
 	stringify.C				\
 	transformationSupport.C			\
@@ -51,6 +52,7 @@ pkginclude_HEADERS =				\
 	optionDeclaration.h			\
 	rangemap.h				\
 	roseTranslators.h			\
+	SourceLocation.h			\
 	sourceLocationInheritedAttribute.h	\
 	stringify.h				\
 	transformationSupport.h			\

@@ -569,6 +569,12 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("bool","user_defined_literal","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (12/26/2019): When supporting multiple files, the defining declaration in a named type must refer to the 
+  // defining declaration associated with the appropriate file (to be unparsed correctly).
+     Unparse_Info.setDataPrototype("SgDeclarationStatement*", "declstatement_associated_with_type", "= NULL",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
      ExpBaseClass.setFunctionPrototype        ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
      NonrealBaseClass.setFunctionPrototype    ( "HEADER_NONREAL_BASE_CLASS", "../Grammar/Support.code");
@@ -2264,8 +2270,6 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("bool", "usingDeferredTransformations", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     Project.setDataPrototype("bool", "ast_merge", "= false",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("std::string", "astfile_out", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("std::list<std::string>", "astfiles_in", "",
