@@ -4,19 +4,34 @@
 namespace Jovial_ROSE_Translation
    {
 
+      struct LocationSpecifier {
+         LocationSpecifier() : start_bit(nullptr), start_word(nullptr) {}
+         LocationSpecifier(SgExpression* sbit, SgExpression* sword) : start_bit(sbit), start_word(sword) {}
+         SgExpression* start_bit;
+         SgExpression* start_word;
+      };
+
+      struct StructureSpecifier {
+         StructureSpecifier()                  : bits_per_entry(nullptr), is_parallel(false) {}
+         StructureSpecifier(SgExpression* bpe) : bits_per_entry(bpe),     is_parallel(false) {}
+         StructureSpecifier(bool isp)          : bits_per_entry(nullptr), is_parallel(isp)   {}
+         SgExpression* bits_per_entry;
+         bool is_parallel;
+      };
+
   // TODO - split out the StatementEnums?
 
   // Enum for different types of expressions (used with untyped IR nodes).
   //
      enum ExpressionKind
         {
-          e_unknown,
+           e_unknown = 0,
 
        // Operators
        // ---------
 
        // Arithmetic operators
-          e_exponentiateOperator,
+          e_exponentiateOperator = 9999, // offset a little from enums in general_language_translation.h
           e_plusOperator,
           e_minusOperator,
           e_modOperator,
