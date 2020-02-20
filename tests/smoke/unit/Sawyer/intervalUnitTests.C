@@ -861,7 +861,7 @@ static void set_union_tests() {
     std::cerr <<"set union\n";
 
     typedef Sawyer::Container::IntervalSet<Interval> Set;
-    typedef typename Set::ConstIntervalIterator Iter;
+    //typedef typename Set::ConstIntervalIterator Iter;
 
     Set a;
     a.insert(Interval::hull(3, 6));

@@ -3566,6 +3566,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // then search for all filenames (options without the "-" prefix)
   // the assume all other arguments are to be passed onto the C or C++ compiler
 
+#if 0
+     printf ("In SgFile::processRoseCommandLineOptions(): Processing the commandline argv.size() = %zu \n",argv.size());
+#endif
+
   // int optionCount = 0;
   // int i = 0;
 
@@ -5419,7 +5423,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(relax_syntax_check)",1);
 
   // DQ (8/11/2007): Support for Fortran and its different flavors
-     optionCount = sla(argv, "-rose:", "($)", "(f|F|Fortran)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(f|F|fortran)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f77|F77|Fortran77)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f90|F90|Fortran90)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f95|F95|Fortran95)",1);
@@ -7346,8 +7350,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
 #define DEBUG_COMPILER_COMMAND_LINE 0
 
-#if DEBUG_COMPILER_COMMAND_LINE
-          printf ("In buildCompilerCommandLineOptions(): compilerName = %s \n",compilerName.c_str());
+#if DEBUG_COMPILER_COMMAND_LINE || 0
+     printf ("In buildCompilerCommandLineOptions(): compilerName = %s \n",compilerName.c_str());
 #endif
 
      if ( SgProject::get_verbose() > 0 )
@@ -7828,13 +7832,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
         }
 
-#if DEBUG_COMPILER_COMMAND_LINE
+#if DEBUG_COMPILER_COMMAND_LINE || 0
      printf ("Selected compilerNameString.size() = %" PRIuPTR " compilerNameString = %s \n",compilerNameString.size(),StringUtility::listToString(compilerNameString).c_str());
 #endif
 
   // Since we need to do this often, support is provided in the utility_functions.C
   // and we can simplify this code.
      std::string currentDirectory = getWorkingDirectory();
+
+#if 0
+     printf ("DONE: calling getWorkingDirectory(): currentDirectory = %s \n",currentDirectory.c_str());
+#endif
 
   // printf ("In buildCompilerCommandLineOptions(): currentDirectory = %s \n",currentDirectory);
 

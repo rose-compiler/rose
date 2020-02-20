@@ -208,6 +208,32 @@ test_escapes() {
     check(cEscape("\t-") == "\\t-");
     check(cEscape("\t\t") == "\\t\\t");
     check(cEscape("-\t-") == "-\\t-");
+
+    // C++ unescape
+    check(cUnescape("") == "");
+    check(cUnescape("a") == "a");
+    check(cUnescape("a\\0") == std::string("a") + '\0');
+    check(cUnescape("a\\0b") == std::string("a") + '\0' + "b");
+    check(cUnescape("a\\00b") == std::string("a") + '\0' + "b");
+    check(cUnescape("a\\000b") == std::string("a") + '\0' + "b");
+    check(cUnescape("a\\0000b") == std::string("a") + '\0' + "0b");
+    check(cUnescape("a\\'b") == "a'b");
+    check(cUnescape("a\\\"b") == "a\"b");
+    check(cUnescape("a\\?b") == "a?b");
+    check(cUnescape("a\\ab") == "a\ab");
+    check(cUnescape("a\\bb") == "a\bb");
+    check(cUnescape("a\\fb") == "a\fb");
+    check(cUnescape("a\\nb") == "a\nb");
+    check(cUnescape("a\\rb") == "a\rb");
+    check(cUnescape("a\\tb") == "a\tb");
+    check(cUnescape("a\\vb") == "a\vb");
+    check(cUnescape("a\\x1b") == "a\033");
+    check(cUnescape("a\\x01b") == "a\033");
+    check(cUnescape("a\\x00000000001b") == "a\033");
+    check(cUnescape("a\\x00000000001B") == "a\033");
+    check(cUnescape("a\\x00000000000g") == std::string("a") + '\0' + "g");
+    check(cUnescape("a\\u1234b") == "a\\u1234b");         // unicode not implemented
+    check(cUnescape("a\\U12345678b") == "a\\U12345678b"); // unicode not implemented
 }
 
 static void

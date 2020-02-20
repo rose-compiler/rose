@@ -613,7 +613,7 @@ ROSE_RPATHS =                                                                   
 
 # Rasmussen (3/23/2018): Added ROSE_LINK_RPATHS to enable linking on Mac OSX with ROSE installation
 if OS_MACOSX
-ROSE_LINK_RPATHS = $(addprefix -Xlinker -rpath , $(filter-out -R , $(ROSE_RPATHS)))
+ROSE_LINK_RPATHS = $(addprefix -Xlinker -rpath -Xlinker , $(filter-out -R , $(ROSE_RPATHS)))
 else
 comma = ,
 ROSE_LINK_RPATHS = $(addprefix -Wl$(comma)-rpath , $(filter-out -R , $(ROSE_RPATHS)))

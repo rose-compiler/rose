@@ -41,6 +41,9 @@ void Outliner::Preprocess::checkAndPatchUpOptions()
 SgBasicBlock *
 Outliner::Preprocess::preprocessOutlineTarget (SgStatement* s)
 {
+  if (enable_debug)  
+    cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
+
   checkAndPatchUpOptions();
 
   // insert a header to support outlining for auto tuning

@@ -56,6 +56,16 @@ ROSE_UTIL_API std::string cEscape(const std::string&, char context = '"');
 ROSE_UTIL_API std::string cEscape(char, char context = '\'');
 /** @} */
 
+/** Unescapes C++ string literals.
+ *
+ *  When given a C++ string literals content, the part between the enclosing quotes, this function will look for escape sequences,
+ *  parse them, and replace them in the return value with the actual characters they represent.  For instance, passing in
+ *  <code>std::string{"hello\\nworld\\00hidden"}</code> that contains 20 characters including two backslashes, the function replaces
+ *  the first backslash+"n" pair with a line feed, and the second backslash+"0"+"0" with a NUL to result in
+ *  <code>std::string{"hello\nworld\0hidden"}</code> (18 characters including the LF and NUL). Unicode escapes are not supported
+ *  and will be left escaped in the return value. */
+ROSE_UTIL_API std::string cUnescape(const std::string&);
+
 /**  Escapes characters that are special to the Bourne shell.
  *
  *   Assumes that the context is outside of any quoting and possibly adds quotes. */
@@ -130,8 +140,16 @@ std::string join(const std::string &separator, const Container &container) {
     return join_range(separator, container.begin(), container.end());
 }
 
+template<class Container>
+std::string join(char separator, const Container &container) {
+    return join_range(std::string(1, separator), container.begin(), container.end());
+}
+
 ROSE_UTIL_API std::string join(const std::string &separator, char *strings[], size_t nstrings);
 ROSE_UTIL_API std::string join(const std::string &separator, const char *strings[], size_t nstrings);
+ROSE_UTIL_API std::string join(char separator, char *strings[], size_t nstrings);
+ROSE_UTIL_API std::string join(char separator, const char *strings[], size_t nstrings);
+
 /** @} */
 
 /** Join strings as if they were English prose.
