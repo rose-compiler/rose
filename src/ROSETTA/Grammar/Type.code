@@ -1032,6 +1032,11 @@ HEADER_ARRAY_TYPE_START
 
 HEADER_ARRAY_TYPE_END
 
+// Rasmussen (2/19/2020): Added SgTypedFixed for Jovial. Don't really know what to do here.
+HEADER_TYPE_FIXED_TYPE_START
+      // SgName get_name() const;
+HEADER_TYPE_FIXED_TYPE_END
+
 
 // #########################################################
 // #########################################################
@@ -8551,6 +8556,67 @@ SgArrayType::createType ( SgType* base_type, SgExpression* idx, SgExpression* op
    }
 
 SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_END
+
+
+// Rasmussen (2/19/2020): Added SgTypedFixed (primitive type in Jovial)
+SOURCE_CREATE_TYPE_FOR_TYPE_FIXED_START
+
+SgTypeFixed*
+SgTypeFixed::createType ( SgExpression* scale, SgExpression* fraction, SgExpression* optional_fortran_type_kind )
+   {
+#if 0
+     printf ("In SgTypeFixed::createType() \n");
+#endif
+
+  // There is size (equivalent to Fortran kind) parameter for Jovial fixed type
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     SgTypeFixed* returnType = new SgTypeFixed(scale, fraction);
+     ROSE_ASSERT(returnType != NULL);
+
+     SgName name = returnType->get_mangled();
+
+  // Only look for pointers to type in the global type table.
+     SgType* t = get_globalTypeTable()->lookup_type(name);
+
+#if 0
+     printf ("In SgTypeFixed::createType(): After get_globalTypeTable()->lookup_type(%s) t = %p \n",name.str(),t);
+#endif
+
+     if (t == NULL)
+        {
+#if 0
+           printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+#endif
+           get_globalTypeTable()->insert_type(name,returnType);
+        }
+       else
+        {
+       // If it is already present in the type table then delete the type (so that it will remain unique).
+#if 0
+          printf ("Mangled type name for SgTypeFixed = %s (already exists in type table) t = %p returnType = %p \n",name.str(),t,returnType);
+#endif
+          ROSE_ASSERT(t != returnType);
+
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+       // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+       // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+       // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
+          delete returnType;
+#endif
+          returnType = NULL;
+
+          returnType = isSgTypeFixed(t);
+        }
+
+#if 0
+     printf ("In SgTypeFixed::createType(): idx = %p \n",idx);
+#endif
+
+     return returnType;
+   }
+
+SOURCE_CREATE_TYPE_FOR_TYPE_FIXED_END
 
 
 SOURCE_CREATE_TYPE_FOR_STRING_TYPE_START

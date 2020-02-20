@@ -703,6 +703,7 @@ SgTypeExpression
 SgTypeLabel
 SgTypeDouble
 SgTypeEllipse
+SgTypeFixed
 SgTypeFloat
 SgTypeFloat128
 SgTypeFloat80

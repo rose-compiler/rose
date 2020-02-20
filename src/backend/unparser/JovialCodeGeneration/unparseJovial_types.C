@@ -37,6 +37,8 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgTypeString:      curprint("C"); unparseTypeSize(type, info);  break;
           case V_SgTypeVoid:                                                     break;
 
+          case V_SgTypeFixed:          unparseTypeFixed(type, info);             break;
+
           case V_SgJovialTableType:    unparseTableType(type, info);             break;
           case V_SgArrayType:          unparseArrayType(type, info);             break;
 
@@ -68,6 +70,25 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
                ROSE_ASSERT(false);
                break;
         }
+   }
+
+void
+Unparse_Jovial::unparseTypeFixed(SgType* type, SgUnparse_Info& info)
+   {
+      SgTypeFixed* fixed_type = isSgTypeFixed(type);
+      ROSE_ASSERT(fixed_type != NULL);
+
+      curprint("A ");
+
+      SgExpression* scale    = fixed_type->get_scale();
+      SgExpression* fraction = fixed_type->get_fraction();
+
+      ROSE_ASSERT(scale != NULL);
+      ROSE_ASSERT(fraction != NULL);
+
+      unparseExpression(scale, info);
+      curprint(",");
+      unparseExpression(fraction, info);
    }
 
 void

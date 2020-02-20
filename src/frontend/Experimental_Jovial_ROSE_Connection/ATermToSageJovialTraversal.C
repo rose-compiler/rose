@@ -23,6 +23,24 @@ ATermToSageJovialTraversal::~ATermToSageJovialTraversal()
 {
 }
 
+void ATermToSageJovialTraversal::setLocationSpecifier(SgVariableDeclaration* var_decl, const LocationSpecifier &loc_spec)
+{
+// The bitfield will contain both the start_bit and start_word as an expression list
+   SgExprListExp* location_specifier = SageBuilder::buildExprListExp();
+
+   SgExpression* start_bit  = loc_spec.start_bit;
+   SgExpression* start_word = loc_spec.start_word;
+
+   start_bit ->set_parent(location_specifier);
+   start_word->set_parent(location_specifier);
+
+   location_specifier->get_expressions().push_back(start_bit);
+   location_specifier->get_expressions().push_back(start_word);
+
+   var_decl->set_bitfield(location_specifier);
+   location_specifier->set_parent(var_decl);
+}
+
 //========================================================================================
 // 1.1 Module
 //----------------------------------------------------------------------------------------
@@ -182,7 +200,8 @@ ATbool ATermToSageJovialTraversal::traverse_MainProgramModule(ATerm term)
 #endif
 
    if (ATmatch(term, "MainProgramModule(<term>,<term>,<term>,<term>,<term>)", &t_dirs, &t_decls,&t_name,&t_body,&t_funcs)) {
-      cerr << "WARNING UNIMPLEMENTED: FixedItemDescription \n";
+   // TODO_MODULES - remove untyped system and hook up to tree-sage-builder
+      cerr << "WARNING UNIMPLEMENTED: MainProgramModule \n";
       ROSE_ASSERT(false);
 
 #if 0
@@ -1019,7 +1038,7 @@ ATbool ATermToSageJovialTraversal::traverse_FixedItemDescription(ATerm term, SgT
 
    if (ATmatch(term, "FixedItemDescription (<term>,<term>,<term>)", &t_round_or_truncate,&t_scale,&t_fraction)) {
       // MATCHED FixedItemDescription
-      cerr << "WARNING UNIMPLEMENTED: FixedItemDescription \n";
+      // DONE: cerr << "WARNING UNIMPLEMENTED: FixedItemDescription \n";
    }
    else return ATfalse;
 
@@ -1040,7 +1059,7 @@ ATbool ATermToSageJovialTraversal::traverse_FixedItemDescription(ATerm term, SgT
    } else return ATfalse;
 
    if (ATmatch(t_scale, "ScaleSpecifier(<term>)", &t_scale_spec)) {
-      cerr << "WARNING UNIMPLEMENTED: FixedItemDescription - ScaleSpecifier \n";
+      // DONE: cerr << "WARNING UNIMPLEMENTED: FixedItemDescription - ScaleSpecifier \n";
       if (traverse_NumericFormula(t_scale_spec, scale, ut_scale)) {
          // MATCHED NumericFormula
       } else return ATfalse;
@@ -1051,14 +1070,15 @@ ATbool ATermToSageJovialTraversal::traverse_FixedItemDescription(ATerm term, SgT
    }
    else if (ATmatch(t_fraction, "OptFractionSpecifier(<term>)", &t_frac_spec)) {
       if (traverse_FractionSpecifier(t_frac_spec, fraction)) {
-         cerr << "WARNING UNIMPLEMENTED: FixedItemDescription - FractionSpecifier \n";
+         // DONE: cerr << "WARNING UNIMPLEMENTED: FixedItemDescription - FractionSpecifier \n";
       } else return ATfalse;
    }
    else return ATfalse;
 
-// TODO - create SgFixedType in Rosetta
-// type = SageBuilder::buildFixedType(scale, fraction, type_modifier);
-   type = SageBuilder::buildFloatType();
+// TODO - for some reason this SageBuilder function fails in linker stage
+// type = SageBuilder::buildFixedType(scale, fraction);
+   type = SgTypeFixed::createType(scale, fraction);
+   ROSE_ASSERT(type);
 
    return ATtrue;
 }
@@ -2232,16 +2252,8 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATerm 
    sage_tree_builder.Enter(var_decl, std::string(name), item_type, preset);
    setSourcePosition(var_decl, term);
 
-// The bitfield will contain both the start_bit and start_word as an expression list
-   SgExprListExp* location_specifier = SageBuilder::buildExprListExp();
-   loc_spec.start_bit ->set_parent(location_specifier);
-   loc_spec.start_word->set_parent(location_specifier);
-
-   location_specifier->get_expressions().push_back(loc_spec.start_bit);
-   location_specifier->get_expressions().push_back(loc_spec.start_word);
-
-   var_decl->set_bitfield(location_specifier);
-   location_specifier->set_parent(var_decl);
+// The bitfield is used to contain both the start_bit and start_word as an expression list
+   setLocationSpecifier(var_decl, loc_spec);
 
 // End SageTreeBuilder
    sage_tree_builder.Leave(var_decl);
@@ -3148,7 +3160,7 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
 
    // TODO
       StructureSpecifier struct_spec;
-      LocationSpecifier location_spec;
+      LocationSpecifier loc_spec;
 
    // Structure specifier
       if (traverse_OptStructureSpecifier(t_struct_spec, struct_spec)) {
@@ -3177,7 +3189,7 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
       SgExprListExp* attr_list = nullptr;
 
    // Entry specifier without a body
-      if (traverse_EntrySpecifierType(t_entry_spec, base_type, location_spec, preset, attr_list)) {
+      if (traverse_EntrySpecifierType(t_entry_spec, base_type, loc_spec, preset, attr_list)) {
          // MATCHED EntrySpecifier
       }
    // Entry specifier with a body
