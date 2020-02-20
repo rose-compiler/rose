@@ -16,7 +16,7 @@ namespace CodeThorn {
     unsigned int getOffset(VariableId varId);
     std::string typeSizeMappingToString();
   private:
-    std::unique_ptr<SgTypeSizeMapping> typeSizeMapping=std::make_unique<SgTypeSizeMapping>();
+    std::shared_ptr<SgTypeSizeMapping> typeSizeMapping=std::make_shared<SgTypeSizeMapping>();
   };
 }
 
