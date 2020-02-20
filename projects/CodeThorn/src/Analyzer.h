@@ -39,6 +39,7 @@
 #include "CounterexampleGenerator.h"
 
 #include "VariableIdMapping.h"
+#include "VariableIdMappingExtended.h"
 #include "FunctionIdMapping.h"
 #include "FunctionCallMapping.h"
 
@@ -83,10 +84,10 @@ namespace CodeThorn {
     friend class VariableValueMonitor;
 
   public:
+    static void initDiagnostics();
     Analyzer();
     virtual ~Analyzer();
 
-    static void initDiagnostics();
     void initAstNodeInfo(SgNode* node);
     virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initLabeledAssertNodes(SgProject* root);
@@ -148,22 +149,22 @@ namespace CodeThorn {
     bool checkTransitionGraph();
 
     //! The analyzer requires a CFAnalysis to obtain the ICFG.
-    void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
-    CFAnalysis* getCFAnalyzer() const { return cfanalyzer; }
+    void setCFAnalyzer(CFAnalysis* cf);
+    CFAnalysis* getCFAnalyzer() const;
 
     ExprAnalyzer* getExprAnalyzer();
 
     // access  functions for computed information
-    VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
-    FunctionIdMapping* getFunctionIdMapping() { return &functionIdMapping; }
-    FunctionCallMapping* getFunctionCallMapping() { return &functionCallMapping; }
+    VariableIdMappingExtended* getVariableIdMapping();
+    FunctionIdMapping* getFunctionIdMapping();
+    FunctionCallMapping* getFunctionCallMapping();
     CTIOLabeler* getLabeler() const;
-    Flow* getFlow() { return &flow; }
-    PStateSet* getPStateSet() { return &pstateSet; }
-    EStateSet* getEStateSet() { return &estateSet; }
-    TransitionGraph* getTransitionGraph() { return &transitionGraph; }
-    ConstraintSetMaintainer* getConstraintSetMaintainer() { return &constraintSetMaintainer; }
-    std::list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
+    Flow* getFlow();
+    CodeThorn::PStateSet* getPStateSet();
+    EStateSet* getEStateSet();
+    TransitionGraph* getTransitionGraph();
+    ConstraintSetMaintainer* getConstraintSetMaintainer();
+    std::list<FailedAssertion> getFirstAssertionOccurences();
 
     void setSkipSelectedFunctionCalls(bool defer);
     void setSkipArrayAccesses(bool skip);
@@ -247,7 +248,6 @@ namespace CodeThorn {
     // TODO: move to flow analyzer (reports label,init,final sets)
     static std::string astNodeInfoAttributeAndNodeToString(SgNode* node);
 
-    // public member variables
     SgNode* startFunRoot;
     PropertyValueTable reachabilityResults;
     boost::unordered_map <std::string,int*> mapGlobalVarAddress;
@@ -286,6 +286,7 @@ namespace CodeThorn {
     // first: list of new states (worklist), second: set of found existing states
     typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
     SubSolverResultType subSolver(const EState* currentEStatePtr);
+    std::string typeSizeMappingToString();
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
 
@@ -389,7 +390,7 @@ namespace CodeThorn {
     std::list<int> _inputSequence;
     std::list<int>::iterator _inputSequenceIterator;
     ExprAnalyzer exprAnalyzer;
-    VariableIdMapping variableIdMapping;
+    VariableIdMappingExtended* variableIdMapping;
     FunctionIdMapping functionIdMapping;
     FunctionCallMapping functionCallMapping;
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
@@ -454,10 +455,10 @@ namespace CodeThorn {
     // to represent multiple summary states in the transition system)
     size_t getSummaryStateMapSize();
     const EState* getBottomSummaryState(Label lab, CallString cs);
+    bool isLTLRelevantEState(const EState* estate);
 
     size_t _prevStateSetSizeDisplay = 0;
     size_t _prevStateSetSizeResource = 0;
-    bool isLTLRelevantEState(const EState* estate);
 
   private:
     //std::unordered_map<int,const EState*> _summaryStateMap;

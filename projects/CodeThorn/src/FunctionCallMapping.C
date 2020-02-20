@@ -53,7 +53,7 @@ FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallEx
       // provide information for error reporting
       fcInfo.funCallName=fc->unparseToString();
       fcInfo.funCallType=nullptr; // indicates unknown type
-      cout<<"WARNING: FunctionCallMapping: unknown function call exp: "<<fc->unparseToString()<<endl;
+      cout<<"WARNING: FunctionCallMapping: unknown function call exp: "<<fc->unparseToString()<<":"<<exp->class_name()<<endl;
     }
     return fcInfo;
 }

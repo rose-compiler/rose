@@ -205,10 +205,9 @@ int main(int argc, char* argv[]) {
     logger[TRACE] <<"STATUS: Lowering finished."<<endl;
   }
 
-  VariableIdMapping variableIdMapping;
+  VariableIdMappingExtended variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(root);
-  SgTypeSizeMapping _typeSizeMapping;
-  AbstractValue::setTypeSizeMapping(&_typeSizeMapping);
+  variableIdMapping.computeTypeSizes();
   
   logger[TRACE]<<"STATUS: variable id mapping generated."<<endl;
   
