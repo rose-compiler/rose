@@ -464,12 +464,6 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ;
 
   visibleOptions.add_options()            
-    ("config,c", po::value< string >(), "Use the configuration specified in file <arg>.")
-    ("colors", po::value< bool >()->default_value(true)->implicit_value(true),"Use colors in output.")
-    ("csv-stats",po::value< string >(),"Output statistics into a CSV file <arg>.")
-    ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
-    ("exploration-mode",po::value< string >(), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync)")
-    ("quiet", "Produce no output on screen.")
     ("help,h", "Produce this help message.")
     ("help-cegpra", "Show options for CEGRPA.")
     ("help-eq", "Show options for program equivalence checking.")
@@ -482,7 +476,13 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("help-vis", "Show options for visualization output files.")
     ("help-data-race", "Show options for data race detection.")
     ("help-info", "Show options for program info.")
+    ("quiet", "Produce no output on screen.")
+    ("config,c", po::value< string >(), "Use the configuration specified in file <arg>.")
+    ("csv-stats",po::value< string >(),"Output statistics into a CSV file <arg>.")
+    ("colors", po::value< bool >()->default_value(true)->implicit_value(true),"Use colors in output.")
     ("start-function", po::value< string >(), "Name of function to start the analysis from.")
+    ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
+    ("exploration-mode",po::value< string >(), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync)")
     ("external-function-calls-file",po::value< string >(), "write a list of all function calls to external functions (functions for which no implementation exists) to a CSV file.")
     ("status", po::value< bool >()->default_value(false)->implicit_value(true), "Show status messages.")
     ("reduce-cfg", po::value< bool >()->default_value(true)->implicit_value(true), "Reduce CFG nodes that are irrelevant for the analysis.")
@@ -1368,9 +1368,9 @@ int main( int argc, char * argv[] ) {
     if(!args.count("quiet")) {
       cout<< "STATUS: Parsing and creating AST started."<<endl;
     }
+
     timer.stop();
     timer.start();
-
     SgProject* sageProject = 0;
     vector<string> argvList(argv,argv+argc);
     string turnOffRoseLoggerWarnings="-rose:log none";
