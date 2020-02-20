@@ -9322,10 +9322,12 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                              break;
                                            }
 
-
                                      // DQ (8/29/2009): Added SgArrayType to eliminate error message about 
                                      // default being reached (missed including this type previously).
                                         case V_SgArrayType:
+
+                                     // Rasmussen (2/18/2020): Added SgTypeFixed (primitive type in Jovial)
+                                        case V_SgTypeFixed:
 
                                      // DQ (2/28/2005): List of types used in compiling Kull
                                         case V_SgTypeChar:

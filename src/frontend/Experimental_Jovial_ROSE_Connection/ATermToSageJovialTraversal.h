@@ -1,5 +1,5 @@
 #ifndef ATERM_TO_SAGE_JOVIAL_TRAVERSAL_H_
-#define ATERM_TO_SAGE_JOVIAL_TRAVERSAL_H
+#define ATERM_TO_SAGE_JOVIAL_TRAVERSAL_H_
 
 #include "ATerm/ATermToUntypedTraversal.h"
 #include "general_language_translation.h"
@@ -27,6 +27,8 @@ class ATermToSageJovialTraversal : public ATermToUntypedTraversal
  public:
    ATermToSageJovialTraversal(SgSourceFile* source);
    virtual ~ATermToSageJovialTraversal();
+
+   void setLocationSpecifier(SgVariableDeclaration* var_decl, const LocationSpecifier &loc_spec);
 
  public:
 // 1.1
