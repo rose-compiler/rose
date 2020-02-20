@@ -1372,15 +1372,15 @@ int main( int argc, char * argv[] ) {
     timer.start();
 
     SgProject* sageProject = 0;
+    vector<string> argvList(argv,argv+argc);
+    string turnOffRoseLoggerWarnings="-rose:log none";
+    //    argvList.push_back(turnOffRoseLoggerWarnings);
     if(args.getBool("omp-ast")||args.getBool("data-race")) {
-      vector<string> argvList(argv,argv+argc);
       SAWYER_MESG(logger[TRACE])<<"selected OpenMP AST."<<endl;
       argvList.push_back("-rose:OpenMP:ast_only");
-      sageProject=frontend(argvList);
-    } else {
-      sageProject=frontend(argc,argv,true);
     }
-    
+    sageProject=frontend(argvList);
+
     if(!args.count("quiet")) {
       cout << "STATUS: Parsing and creating AST finished."<<endl;
     }
