@@ -31,6 +31,7 @@ libbinaryMidend_la_SOURCES =					\
     BinarySmtCommandLine.C					\
     BinarySmtSolver.C						\
     BinarySmtlibSolver.C					\
+    BinarySourceLocations.C					\
     BinaryStackDelta.C						\
     BinaryString.C						\
     BinarySymbolicExpr.C					\
@@ -43,6 +44,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryZ3Solver.C						\
     Concolic/ConcolicExecutor.C					\
     Concolic/Database.C						\
+    Concolic/Database2.C					\
     Concolic/ExecutionManager.C					\
     Concolic/LinuxExecutor.C					\
     Concolic/LinuxExitStatus.C					\
@@ -120,6 +122,7 @@ pkginclude_HEADERS =					\
     BinarySmtCommandLine.h				\
     BinarySmtSolver.h					\
     BinarySmtlibSolver.h				\
+    BinarySourceLocations.h				\
     BinaryStackDelta.h					\
     BinaryStackVariable.h				\
     BinaryString.h					\
