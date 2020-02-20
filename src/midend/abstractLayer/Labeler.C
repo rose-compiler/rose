@@ -219,7 +219,7 @@ Labeler::Labeler(SgNode* start) {
 Labeler::~Labeler(){}
 
 // returns number of labels to be associated with node
-int Labeler::isLabelRelevantNode(SgNode* node) {
+int Labeler::numberOfAssociatedLabels(SgNode* node) {
   if(node==0) 
     return 0;
 
@@ -321,7 +321,7 @@ void Labeler::registerLabel(LabelProperty lp) {
 void Labeler::createLabels(SgNode* root) {
   RoseAst ast(root);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-    if(int num=isLabelRelevantNode(*i)) {
+    if(int num=numberOfAssociatedLabels(*i)) {
       if(SgNodeHelper::Pattern::matchFunctionCall(*i)) {
         if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(*i)) {
           assert(num==3);
