@@ -14,6 +14,7 @@ LDADD  = $(ROSE_LIBS)
 
 # most test translators should not be installed (noinst)
 # The bug numbers come from ROSE's SciDAC bug trackers
+#github_83_outline, this test uses C++11, we have better regression test for this bug. Disable it for now.
 noinst_PROGRAMS = \
 	bug125 \
 	qualifiedName \
@@ -36,8 +37,7 @@ noinst_PROGRAMS = \
 	testTranslator2013_02 \
 	testTranslator2018_01 \
 	testTranslator2018_02 \
-	testPlugins \
-	github_83_outline
+	testPlugins
 #
 # a better alternative to identityTranslator
 # Liao 1/29/2009
@@ -74,7 +74,7 @@ testTranslator2013_01_SOURCES = testTranslator2013_01.C
 testTranslator2013_02_SOURCES = testTranslator2013_02.C
 testTranslator2018_01_SOURCES = testTranslator2018_01.C
 testTranslator2018_02_SOURCES = testTranslator2018_02.C
-github_83_outline_SOURCES = github_83_outline.C
+#github_83_outline_SOURCES = github_83_outline.C
 # LDADD = $(ROSE_SEPARATE_LIBS)
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
@@ -164,8 +164,8 @@ input_testTranslator2018_01.o: testTranslator2018_01
 input_testTranslator2018_02.o: testTranslator2018_02
 	./testTranslator2018_02 -rose:verbose 0 -c $(srcdir)/input_testTranslator2018_02.C && touch $@
 
-input_github_83_outline.o: github_83_outline
-	./github_83_outline -rose:verbose 0  --rose:openmp:ast_only -c $(srcdir)/input_github_83_outline.C && touch $@
+#input_github_83_outline.o: github_83_outline
+#	./github_83_outline -rose:verbose 0  --rose:openmp:ast_only -c $(srcdir)/input_github_83_outline.C && touch $@
 
 EXTRA_DIST = \
    CMakeLists.txt \
