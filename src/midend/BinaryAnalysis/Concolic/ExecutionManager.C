@@ -1,5 +1,6 @@
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -47,28 +48,12 @@ ExecutionManager::pendingConcolicResult() {
   return res.front();
 }
 
-struct DBInserter
-{
-    explicit
-    DBInserter(Database::Ptr dbase)
-    : db(dbase)
-    {}
-    
-    void operator()(TestCase::Ptr tc)
-    {
-      db->id(tc, Update::YES);
-    }
-  
-  private:
-    Database::Ptr db;
-};
-
 void
-ExecutionManager::insertConcolicResults(const TestCase::Ptr& original, const std::vector<TestCase::Ptr> &newCases) 
-{
-  original->concolicTest(true);
+ExecutionManager::insertConcolicResults(const TestCase::Ptr& original, const std::vector<TestCase::Ptr> &newCases) {
+  original->concolicResult(1);
   database_->id(original, Update::YES);
-  std::for_each(newCases.begin(), newCases.end(), DBInserter(database_));   
+  BOOST_FOREACH (const TestCase::Ptr &tc, newCases)
+      database_->save(tc);
 }
 
 bool
@@ -79,3 +64,5 @@ ExecutionManager::isFinished() const {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

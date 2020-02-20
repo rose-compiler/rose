@@ -1173,39 +1173,31 @@ namespace sg
 ///   SgStatement* stmt = assert_sage_type<SgStatement>(expr.get_parent());
 ///   ROSE_ASSERT(stmt);
 /// \endcode
+/// @{
   template <class SageNode>
   SageNode* assert_sage_type(SgNode* n, const char* f = 0, size_t ln = 0)
   {
     return sg::dispatch(TypeRecoveryHandler<SageNode>(f, ln), n);
   }
 
-/// \overload
   template <class SageNode>
   const SageNode* assert_sage_type(const SgNode* n, const char* f = 0, size_t ln = 0)
   {
     return sg::dispatch(TypeRecoveryHandler<const SageNode>(f, ln), n);
   }
 
-/// \brief   asserts that n has type SageNode
-/// \details the ROSE assert in the following example holds b/c assert_sage_type
-///          aborts if the input node is not a SgStatement
-/// \code
-///   SgStatement* stmt = assert_sage_type<SgStatement>(expr.get_parent());
-///   ROSE_ASSERT(stmt);
-/// \endcode
   template <class SageNode>
   SageNode& assert_sage_type(SgNode& n, const char* f = 0, size_t ln = 0)
   {
     return *sg::dispatch(TypeRecoveryHandler<SageNode>(f, ln), &n);
   }
 
-/// \overload
   template <class SageNode>
   const SageNode& assert_sage_type(const SgNode& n, const char* f = 0, size_t ln = 0)
   {
     return *sg::dispatch(TypeRecoveryHandler<const SageNode>(f, ln), &n);
   }
-
+/// @}
 
 /// \brief swaps the parent pointer of two nodes
 /// \note  internal use

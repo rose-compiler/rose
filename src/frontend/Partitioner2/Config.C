@@ -22,6 +22,73 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
+// class method
+std::string
+Configuration::fileFormatDoc() {
+    return "The configuration file is either YAML or JSON format. This documentation uses YAML syntax since it is more user "
+        "oriented than JSON.  Configuration files can only be parsed if ROSE was configured with YAML support."
+        "The top-level object in the file is named \"rose\", within which all other objects will appear. This allows a "
+        "configuration file to contain other data that won't be interpreted by the ROSE library. The following objects "
+        "may appear within the \"rose\" object:"
+
+        "@named{functions}{The \"functions\" object holds a list of settings, one per function. For each function, the "
+        "following settings are recognized (others are ignored):"
+        "@named{address}{The virtual address where the function starts.}"
+        "@named{name}{The name of the function.}"
+        "@named{default_name}{A default name to give the function if a name is not obtained from any other source.}"
+        "@named{comment}{A comment to associated with the whole function.}"
+        "@named{stack_delta}{A signed integer that describes the net change to the stack pointer caused by this function.}"
+        "@named{may_return}{A boolean value (\"true\", \"yes\", \"t\", \"y\", \"1\" for true; other for false) that indicates "
+        "whether this function could return. Functions like \"abort\" would have a false value since they can never return.}"
+        "@named{source_location}{A string describing the file, line number, and column where this function is defined in the "
+        "source code. The line and column are each introduced by a colon. The column or both the line and column are optional. "
+        "The bytes before the line and column, if present, are a file name. If the file name is surrounded by double quotes then "
+        "it is parsed like a C string literal, otherwise the name is used as-is.}"
+        "}"
+
+        "@named{bblocks}{The \"bblocks\" object holds a list of settings, one per basic block. Each basic block has the "
+        "following settings:"
+        "@named{address}{The required virtual address for the start of the basic block.}"
+        "@named{comment}{An optional comment for the basic block.}"
+        "@named{final_instruction}{The address of the final instruction. If the basic block reaches this address then that "
+        "instruction is the last instruction of the basic block even if such an instruction would not normally terminate a "
+        "basic block.}"
+        "@named{source_location}{A string describing the file, line number, and column where this basic block is defined in the "
+        "source code. The line and column are each introduced by a colon. The column or both the line and column are optional. "
+        "The bytes before the line and column, if present, are a file name. If the file name is surrounded by double quotes then "
+        "it is parsed like a C string literal, otherwise the name is used as-is.}"
+        "}"
+
+        "@named{dblocks}{The \"dblocks\" object holds a list of settings, one per data block. Each data block has the following "
+        "settings:"
+        "@named{address}{The required virtual address for the start of the data block.}"
+        "@named{name}{The name to use for the data block.}"
+        "@named{comment}{A comment to associate with the data block.}"
+        "@named{source_location}{A string describing the file, line number, and column where this data block is defined in the "
+        "source code. The line and column are each introduced by a colon. The column or both the line and column are optional. "
+        "The bytes before the line and column, if present, are a file name. If the file name is surrounded by double quotes then "
+        "it is parsed like a C string literal, otherwise the name is used as-is.}"
+        "}"
+
+        "@named{addresses}{The \"addresses\" object holds a list of settings, one per address. These settings are intended for "
+        "addresses that aren't associated with the start of a function, basic block, or data block. Each address has the following "
+        "settings:"
+        "@named{address}{The required address to be configured.}"
+        "@named{name}{A name associated with this address.}"
+        "@named{comment}{A comment to associate with the address.}"
+        "@named{source_location}{A string describing the file, line number, and column where this address is defined in the "
+        "source code. The line and column are each introduced by a colon. The column or both the line and column are optional. "
+        "The bytes before the line and column, if present, are a file name. If the file name is surrounded by double quotes then "
+        "it is parsed like a C string literal, otherwise the name is used as-is.}"
+        "}"
+
+        "In addition to the top-level \"rose\" object, a schema defined by the Softawre Engineering Institute is also recognized. "
+        "That schema consists of a top-level \"config\" object with a child \"exports\" object that contains a list of \"function\" "
+        "objects.  Each \"function\" object has a single field named \"delta\" which is a signed integer that describes how the "
+        "function adjusts the stack pointer, not counting the return address that gets popped by the RET instruction. Function "
+        "names of the form \"@v{lib}:@v{func}\" are translated to the ROSE names \"@v{func}@@@v{lib}\".";
+}
+
 FunctionConfig&
 FunctionConfig::name(const std::string &s) {
     if (!address()) {
@@ -89,6 +156,8 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                             config.stackDelta(false);
                         }
                     }
+                    if (function["source_location"])
+                        config.sourceLocation(SourceLocation::parse(function["source_location"].as<std::string>()));
                     if (!insertConfiguration(config)) {
                         SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for function "
                                                 <<(addr?StringUtility::addrToString(*addr)+" ":std::string())
@@ -112,6 +181,8 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         BOOST_FOREACH (const YAML::Node &successor, successors)
                             config.successorVas().insert(successor.as<rose_addr_t>());
                     }
+                    if (bblock["source_location"])
+                        config.sourceLocation(SourceLocation::parse(bblock["source_location"].as<std::string>()));
                     if (!insertConfiguration(config)) {
                         SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for basic block "
                                                 <<StringUtility::addrToString(addr) <<"\n";
@@ -130,12 +201,35 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         config.name(dblock["name"].as<std::string>());
                     if (dblock["comment"])
                         config.comment(dblock["comment"].as<std::string>());
+                    if (dblock["source_location"])
+                        config.sourceLocation(SourceLocation::parse(dblock["source_location"].as<std::string>()));
                     if (!insertConfiguration(config)) {
                         SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for data block "
                                                 <<StringUtility::addrToString(addr) <<"\n";
                     }
                 }
             }
+            if (YAML::Node addrs = configFile["rose"]["addresses"]) {
+                BOOST_FOREACH (const YAML::Node &detail, addrs) {
+                    if (!detail["address"]) {
+                        SAWYER_MESG(mlog[ERROR]) <<"missing address for address configuration record\n";
+                        continue;
+                    }
+                    rose_addr_t addr = detail["address"].as<rose_addr_t>();
+                    AddressConfig config(addr);
+                    if (detail["name"])
+                        config.name(detail["name"].as<std::string>());
+                    if (detail["comment"])
+                        config.comment(detail["comment"].as<std::string>());
+                    if (detail["source_location"])
+                        config.sourceLocation(SourceLocation::parse(detail["source_location"].as<std::string>()));
+                    if (!insertConfiguration(config)) {
+                        SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for address "
+                                                <<StringUtility::addrToString(addr) <<"\n";
+                    }
+                }
+            }
+
         } else {
             SAWYER_MESG(mlog[ERROR]) <<"not a valid configuration file: \"" <<StringUtility::cEscape(fileName.string()) <<"\"\n";
         }
@@ -159,6 +253,8 @@ printFunctionConfig(YAML::Emitter &out, const FunctionConfig &config) {
         out <<YAML::Key <<"stack_delta" <<YAML::Value <<*config.stackDelta();
     if (config.mayReturn())
         out <<YAML::Key <<"may_return" <<YAML::Value <<(*config.mayReturn()?"yes":"no");
+    if (!config.sourceLocation().isEmpty())
+        out <<YAML::Key <<"source_location" <<YAML::Value <<config.sourceLocation().printableName();
     out <<YAML::EndMap;
 }
 
@@ -176,6 +272,8 @@ printBasicBlockConfig(YAML::Emitter &out, const BasicBlockConfig &config) {
             out <<StringUtility::addrToString(va);
         out <<YAML::EndSeq;
     }
+    if (!config.sourceLocation().isEmpty())
+        out <<YAML::Key <<"source_location" <<YAML::Value <<config.sourceLocation().printableName();
     out <<YAML::EndMap;
 }
 
@@ -187,7 +285,22 @@ printDataBlockConfig(YAML::Emitter &out, const DataBlockConfig &config) {
         out <<YAML::Key <<"name" <<YAML::Value <<config.name();
     if (!config.comment().empty())
         out <<YAML::Key <<"comment" <<YAML::Value <<config.comment();
+    if (!config.sourceLocation().isEmpty())
+        out <<YAML::Key <<"source_location" <<YAML::Value <<config.sourceLocation().printableName();
     out <<YAML::EndMap;
+}
+
+static void
+printAddressConfig(YAML::Emitter &out, const AddressConfig &config) {
+    out <<YAML::BeginMap;
+    out <<YAML::Key <<"address" <<YAML::Value <<StringUtility::addrToString(config.address());
+    if (!config.name().empty())
+        out <<YAML::Key <<"name" <<YAML::Value <<config.name();
+    if (!config.comment().empty())
+        out <<YAML::Key <<"comment" <<YAML::Value <<config.comment();
+    if (!config.sourceLocation().isEmpty())
+        out <<YAML::Key <<"source_location" <<YAML::Value <<config.sourceLocation().printableName();
+    out<<YAML::EndMap;
 }
 #endif
 
@@ -226,6 +339,13 @@ Configuration::print(std::ostream &out) const {
             printDataBlockConfig(emitter, config);
         emitter <<YAML::EndSeq;
     }
+    if (!addressConfigs_.isEmpty()) {
+        emitter <<YAML::Key <<"addresses" <<YAML::Value;
+        emitter <<YAML::BeginSeq;
+        BOOST_FOREACH (const AddressConfig &config, addressConfigs_.values())
+            printAddressConfig(emitter, config);
+        emitter <<YAML::EndSeq;
+    }
 
     emitter <<YAML::EndMap;                             // end of "rose" map
     emitter <<YAML::EndMap;                             // end of document containing "rose"
@@ -254,6 +374,36 @@ Configuration::insertMaybeFunction(const std::string &name) {
     return functionConfigsByName_.insertMaybe(name, FunctionConfig(name));
 }
 
+AddressConfig&
+Configuration::insertMaybeAddress(rose_addr_t va) {
+    return addressConfigs_.insertMaybe(va, AddressConfig(va));
+}
+
+const BasicBlockConfig&
+Configuration::basicBlock(rose_addr_t va) const {
+    return bblockConfigs_.getOrDefault(va);
+}
+
+const DataBlockConfig&
+Configuration::dataBlock(rose_addr_t va) const {
+    return dblockConfigs_.getOrDefault(va);
+}
+
+const AddressConfig&
+Configuration::address(rose_addr_t va) const {
+    return addressConfigs_.getOrDefault(va);
+}
+
+const FunctionConfig&
+Configuration::function(rose_addr_t va) const {
+    return functionConfigsByAddress_.getOrDefault(va);
+}
+
+const FunctionConfig&
+Configuration::function(const std::string &name) const {
+    return functionConfigsByName_.getOrDefault(name);
+}
+
 bool
 Configuration::insertConfiguration(const BasicBlockConfig &config) {
     bool retval = !bblockConfigs_.exists(config.address());
@@ -279,6 +429,13 @@ Configuration::insertConfiguration(const FunctionConfig &config) {
         functionConfigsByName_.insert(config.name(), config);
         return retval;
     }
+}
+
+bool
+Configuration::insertConfiguration(const AddressConfig &config) {
+    bool retval = !addressConfigs_.exists(config.address());
+    addressConfigs_.insert(config.address(), config);
+    return retval;
 }
 
 std::string
@@ -373,6 +530,25 @@ Configuration::functionMayReturn(const Function::Ptr &function) const {
     if (Sawyer::Optional<bool> retval = functionMayReturn(function->address()))
         return retval;
     return functionMayReturn(function->name());
+}
+
+std::string
+Configuration::addressComment(rose_addr_t va) const {
+    return addressConfigs_.getOptional(va).orDefault().comment();
+}
+
+std::string
+Configuration::comment(rose_addr_t va) const {
+    std::string s = addressComment(va);
+    if (!s.empty())
+        return s;
+    s = basicBlockComment(va);
+    if (!s.empty())
+        return s;
+    s = dataBlockComment(va);
+    if (!s.empty())
+        return s;
+    return functionComment(va);
 }
 
 } // namespace

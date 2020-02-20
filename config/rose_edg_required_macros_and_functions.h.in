@@ -801,6 +801,12 @@ ROSE_CONSTEXPR int __builtin_clzll(unsigned long long int) __attribute__((nothro
 ROSE_CONSTEXPR int __builtin_signbitf(float) __attribute__((nothrow, const));
 ROSE_CONSTEXPR int __builtin_signbitl(long double) __attribute__((nothrow, const));
 
+ROSE_CONSTEXPR unsigned short  __builtin_bswap16                (unsigned short x) __attribute__((nothrow, const));
+
+#if __cplusplus
+ROSE_CONSTEXPR bool            __builtin_is_constant_evaluated  ()                 __attribute__((nothrow, const));
+#endif
+
 // DQ (4/26/2019): Only use the __attribute__() featur for non-ansi code use. Might also 
 // need to combine this with turning off the optimization flag that triggers use of builtins.
 // endif for __STRICT_ANSI__

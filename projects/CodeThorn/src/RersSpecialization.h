@@ -1,5 +1,5 @@
-#ifndef RERS_SPECIALIZATION
-#define RERS_SPECIALIZATION
+#ifndef RERS_SPECIALIZATION_H
+#define RERS_SPECIALIZATION_H
 
 // RERS-binary-binding-specific declarations
 #define STR_VALUE(arg) #arg

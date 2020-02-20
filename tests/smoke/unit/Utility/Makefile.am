@@ -98,7 +98,7 @@ testRangeMap_SOURCES = testRangeMap.C
 TEST_TARGETS += testRangeMap.passed
 testRangeMap.passed: $(top_srcdir)/scripts/test_exit_status testRangeMap
 	@$(RTH_RUN)				\
-		TITLE="more RangeMap"		\
+		TITLE="more RangeMap [$@]"	\
 		CMD="./testRangeMap"		\
 		$< $@
 
@@ -117,6 +117,20 @@ testSha256Builtin.passed: $(top_srcdir)/scripts/test_with_answer testSha256Built
 		TITLE="SHA-256 builtin [$@]"			\
 		CMD="./testSha256Builtin 0 9399"		\
 		ANS="$(srcdir)/testSha256Builtin.ans"		\
+		$< $@
+
+########################################################################################################################
+# SourceLocation
+########################################################################################################################
+
+noinst_PROGRAMS += testSourceLocation
+testSourceLocation_SOURCES = testSourceLocation.C
+
+TEST_TARGETS += testSourceLocation.passed
+testSourceLocation.passed: $(top_srcdir)/scripts/test_exit_status testSourceLocation
+	@$(RTH_RUN)					\
+		TITLE="test SourceLocation [$@]"	\
+		CMD="./testSourceLocation"		\
 		$< $@
 
 ###############################################################################################################################

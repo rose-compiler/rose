@@ -5,6 +5,7 @@
 #include <BinaryDebugger.h>
 #include <BinaryLoader.h>
 #include <BinarySerialIo.h>
+#include <BinaryVxcoreParser.h>
 #include <CommandLine.h>
 #include <Diagnostics.h>
 #include <DisassemblerM68k.h>
@@ -13,6 +14,9 @@
 #include <SRecord.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/format.hpp>
+#include <boost/regex.hpp>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/ModulesElf.h>
@@ -739,12 +743,9 @@ Engine::engineSwitches(EngineSettings &settings) {
               .explosiveLists(true)
               .whichValue(SAVE_ALL)
               .doc("Directories containing configuration files, or configuration files themselves.  A directory is searched "
-                   "recursively searched for files whose names end with \".json\" or and each file is parsed and used to "
-                   "to configure the partitioner.  The JSON file contents is defined by the Carnegie Mellon University "
-                   "Software Engineering Institute. It should have a top-level \"config.exports\" table whose keys are "
-                   "function names and whose values are have a \"function.delta\" integer. The delta does not include "
-                   "popping the return address from the stack in the final RET instruction.  Function names of the form "
-                   "\"lib:func\" are translated to the ROSE format \"func@@lib\"."));
+                   "recursively searched for files whose names that end with \".json\" or \".yaml\".  Each file is parsed and "
+                   "used to configure the partitioner. This switch may appear more than once and/or a comma-separated list of "
+                   "names can be specified.\n\n" + Configuration::fileFormatDoc()));
     return sg;
 }
 
@@ -855,6 +856,14 @@ Engine::specimenNameDocumentation() {
             "execute permissions. If no letters are present after the equal sign, then the memory has no permissions; "
             "if the equal sign itself is also missing then the segments are given read, write, and execute permission.}"
 
+            "@bullet{If the name begins with the string \"vxcore:\" then it is treated as a special VxWorks core dump "
+            "in a format defined by ROSE. The complete specification has the syntax \"vxcore:[@v{memory_attributes}]"
+            ":[@v{file_attributes}]:@v{file_name}\". The parts in square brackets are optional. The only memory attribute "
+            "recognized at this time is an equal sign (\"=\") followed by zero of more of the letters \"r\" (read), "
+            "\"w\" (write), and \"x\" (execute) to specify the mapping permissions. The default mapping permission if "
+            "no equal sign is specified is read, write, and execute.  The only file attribute recognized at this time is "
+            "\"version=@v{v}\" where @v{v} is a version number, and ROSE currently supports only version 1.}"
+
             "@bullet{If the name ends with \".srec\" and doesn't match the previous list of prefixes then it is assumed "
             "to be a text file containing Motorola S-Records and will be parsed as such and loaded into the memory map "
             "with read, write, and execute permissions.}"
@@ -933,6 +942,7 @@ Engine::isNonContainer(const std::string &name) {
             boost::starts_with(name, "run:")  ||        // run a process in a debugger, then map into MemoryMap
             boost::starts_with(name, "srec:") ||        // Motorola S-Record format
             boost::ends_with(name, ".srec")   ||        // Motorola S-Record format
+            boost::starts_with(name, "vxcore:") ||      // Jim Lee's format of a VxWorks core dump
             isRbaFile(name));                           // ROSE Binary Analysis file
 }
 
@@ -1018,17 +1028,7 @@ Engine::parseContainers(const std::vector<std::string> &fileNames) {
 
         // Process through ROSE's frontend()
         if (!containerFiles.empty()) {
-#if 0 // [Robb Matzke 2019-01-29]: old method calling ::frontend
-            std::vector<std::string> frontendArgs;
-            frontendArgs.push_back("/proc/self/exe");       // I don't think frontend actually uses this
-            frontendArgs.push_back("-rose:binary");
-            frontendArgs.push_back("-rose:read_executable_file_format_only");
-            BOOST_FOREACH (const boost::filesystem::path &file, containerFiles)
-                frontendArgs.push_back(file.native());
-            SgProject *project = ::frontend(frontendArgs);
-#else // [Robb Matzke 2019-01-29]: new method calling Engine::roseFrontendReplacement
             SgProject *project = roseFrontendReplacement(containerFiles);
-#endif
             ASSERT_not_null(project);                       // an exception should have been thrown
 
             std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
@@ -1305,8 +1305,20 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
                     mlog[ERROR] <<resource <<":" <<(i+1) <<": S-Record: " <<srecs[i].error() <<"\n";
             }
             SRecord::load(srecs, map_, true /*create*/, perms);
+        } else if (boost::starts_with(fileName, "vxcore:")) {
+            // format is "vxcore:[MEMORY_ATTRS]:[FILE_ATTRS]:FILE_NAME
+            loadVxCore(fileName.substr(7));
         }
     }
+}
+
+void
+Engine::loadVxCore(const std::string &spec) {
+    VxcoreParser parser;
+    boost::filesystem::path fileName = parser.parseUrl(spec);
+    parser.parse(fileName, map_);
+    if (settings_.disassembler.isaName.empty())
+        settings_.disassembler.isaName = parser.isaName();
 }
 
 void
@@ -1606,7 +1618,7 @@ Engine::runPartitionerInit(Partitioner &partitioner) {
     Sawyer::Message::Stream where(mlog[WHERE]);
 
     SAWYER_MESG(where) <<"labeling addresses\n";
-    labelAddresses(partitioner);
+    labelAddresses(partitioner, partitioner.configuration());
 
     SAWYER_MESG(where) <<"marking configured basic blocks\n";
     makeConfiguredDataBlocks(partitioner, partitioner.configuration());
@@ -1703,7 +1715,11 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
         SAWYER_MESG(where) <<"demangling names\n";
         Modules::demangleFunctionNames(partitioner);
     }
-
+    if (SgBinaryComposite *bc = SageInterface::getEnclosingNode<SgBinaryComposite>(interp_)) {
+        // [Robb Matzke 2020-02-11]: This only works if ROSE was configured with external DWARF and ELF libraries.
+        SAWYER_MESG(where) <<"mapping source locations\n";
+        partitioner.sourceLocations().insertFromDebug(bc);
+    }
     if (libcStartMain_)
         libcStartMain_->nameMainFunction(partitioner);
 }
@@ -1810,8 +1826,13 @@ Engine::loadPartitioner(const boost::filesystem::path &name, SerialIo::Format fm
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-Engine::labelAddresses(Partitioner &partitioner) {
+Engine::labelAddresses(Partitioner &partitioner, const Configuration &configuration) {
     Modules::labelSymbolAddresses(partitioner, interp_);
+
+    BOOST_FOREACH (const AddressConfig &c, configuration.addresses().values()) {
+        if (!c.name().empty())
+            partitioner.addressName(c.address(), c.name());
+    }
 }
 
 std::vector<DataBlock::Ptr>

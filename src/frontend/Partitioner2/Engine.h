@@ -532,6 +532,12 @@ public:
      *  with the same file names will have no effect. */
     virtual bool areContainersParsed() const;
 
+    /** Parses a vxcore specification and initializes memory.
+     *
+     *  Parses a VxWorks core dump in the format defined by Jim Leek and loads the data into ROSE's analysis memory. The argument
+     *  should be everything after the first colon in the URL "vxcore:[MEMORY_ATTRS]:[FILE_ATTRS]:FILE_NAME". */
+    virtual void loadVxCore(const std::string &spec);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Load specimens
     //
@@ -692,7 +698,7 @@ public:
      *
      *  Labels addresses according to symbols, etc.  Address labels are used for things like giving an unnamed function a name
      *  when it's attached to the partitioner's CFG/AUM. */
-    virtual void labelAddresses(Partitioner&);
+    virtual void labelAddresses(Partitioner&, const Configuration&);
 
     /** Make data blocks based on configuration.
      *
