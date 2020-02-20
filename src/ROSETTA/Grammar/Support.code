@@ -14064,7 +14064,6 @@ Sg_File_Info::get_file_id () const
                  printf("  BYPASSED: seen for a SgCtorInitializerList of foo1 in Cxx_tests/test2003_01.C (the SgCtorInitializerList is implicit).\n");
                  ROSE_ASSERT(false);
                }
-               // TODO case of COMPILER_GENERATED_FILE_ID seen from "make check" in Projects/typeforge
 #endif
             // ROSE-1499: check that p_file_id is valid
                ROSE_ASSERT(p_file_id == NULL_FILE_ID || p_file_id == COMPILER_GENERATED_FILE_ID || p_fileidtoname_map.count(p_file_id) > 0);
