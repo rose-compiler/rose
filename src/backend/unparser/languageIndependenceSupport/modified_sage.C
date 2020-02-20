@@ -1855,7 +1855,14 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
                SgClassDefinition* classDefinition = isSgClassDefinition(functionDeclaration->get_parent());
                if (classDefinition != NULL)
                   {
-                    curprint("virtual ");
+                 // DQ (2/15/2020): It is an error to output "friend virtual" as code. (error: "virtual functions cannot be friends").
+                 // See Cxx11_tests/test2020_66.C for an example of where this is currently generated (incorrectly).
+                 // curprint("virtual ");
+                    bool isFriend = ( (decl_stmt->get_declarationModifier().isFriend() == true) && (isDeclarationOfTemplateSpecialization == false) );
+                    if (isFriend == false)
+                       {
+                         curprint("virtual ");
+                       }
                   }
              }
 
