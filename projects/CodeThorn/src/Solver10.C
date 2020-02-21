@@ -3,6 +3,7 @@
 #include "IOAnalyzer.h"
 #include "SpotConnection.h"
 #include "RERS_empty_specialization.h"
+#include "RersSpecialization.h"
 
 using namespace CodeThorn;
 using namespace std;

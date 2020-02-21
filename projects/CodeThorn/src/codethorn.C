@@ -51,6 +51,7 @@
 #include "CodeThornException.h"
 #include "ProgramInfo.h"
 #include "FunctionCallMapping.h"
+#include "AstStatistics.h"
 
 #include "DataRaceDetection.h"
 #include "AstTermRepresentation.h"
@@ -463,12 +464,6 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ;
 
   visibleOptions.add_options()            
-    ("config,c", po::value< string >(), "Use the configuration specified in file <arg>.")
-    ("colors", po::value< bool >()->default_value(true)->implicit_value(true),"Use colors in output.")
-    ("csv-stats",po::value< string >(),"Output statistics into a CSV file <arg>.")
-    ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
-    ("exploration-mode",po::value< string >(), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync)")
-    ("quiet", "Produce no output on screen.")
     ("help,h", "Produce this help message.")
     ("help-cegpra", "Show options for CEGRPA.")
     ("help-eq", "Show options for program equivalence checking.")
@@ -481,7 +476,13 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("help-vis", "Show options for visualization output files.")
     ("help-data-race", "Show options for data race detection.")
     ("help-info", "Show options for program info.")
+    ("quiet", "Produce no output on screen.")
+    ("config,c", po::value< string >(), "Use the configuration specified in file <arg>.")
+    ("csv-stats",po::value< string >(),"Output statistics into a CSV file <arg>.")
+    ("colors", po::value< bool >()->default_value(true)->implicit_value(true),"Use colors in output.")
     ("start-function", po::value< string >(), "Name of function to start the analysis from.")
+    ("display-diff",po::value< int >(),"Print statistics every <arg> computed estates.")
+    ("exploration-mode",po::value< string >(), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync)")
     ("external-function-calls-file",po::value< string >(), "write a list of all function calls to external functions (functions for which no implementation exists) to a CSV file.")
     ("status", po::value< bool >()->default_value(false)->implicit_value(true), "Show status messages.")
     ("reduce-cfg", po::value< bool >()->default_value(true)->implicit_value(true), "Reduce CFG nodes that are irrelevant for the analysis.")
@@ -510,6 +511,10 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
   infoOptions.add_options()
     ("print-variable-id-mapping",po::value< bool >()->default_value(false)->implicit_value(true),"Print variable-id-mapping on stdout.")
     ("print-function-id-mapping",po::value< bool >()->default_value(false)->implicit_value(true),"Print function-id-mapping on stdout.")
+    ("ast-stats-print",po::value< bool >()->default_value(false)->implicit_value(true),"Print ast node statistics on stdout.")
+    ("ast-stats-csv",po::value< string >(),"Write ast node statistics to CSV file [arg].")
+    ("type-size-mapping-print",po::value< bool >()->default_value(false)->implicit_value(true),"Print type-size mapping on stdout.")
+    ("type-size-mapping-csv",po::value< bool >()->default_value(false)->implicit_value(true),"Write type-size mapping to CSV file [arg].")
     ;
 
   po::options_description all("All supported options");
@@ -591,7 +596,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.11.2\n";
+    cout << "CodeThorn version 1.11.4\n";
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
@@ -1363,15 +1368,19 @@ int main( int argc, char * argv[] ) {
     if(!args.count("quiet")) {
       cout<< "STATUS: Parsing and creating AST started."<<endl;
     }
+
     timer.stop();
     timer.start();
-
+    SgProject* sageProject = 0;
     vector<string> argvList(argv,argv+argc);
+    string turnOffRoseLoggerWarnings="-rose:log none";
+    //    argvList.push_back(turnOffRoseLoggerWarnings);
     if(args.getBool("omp-ast")||args.getBool("data-race")) {
       SAWYER_MESG(logger[TRACE])<<"selected OpenMP AST."<<endl;
       argvList.push_back("-rose:OpenMP:ast_only");
     }
-    SgProject* sageProject = frontend(argvList);
+    sageProject=frontend(argvList);
+
     if(!args.count("quiet")) {
       cout << "STATUS: Parsing and creating AST finished."<<endl;
     }
@@ -1439,6 +1448,24 @@ int main( int argc, char * argv[] ) {
       return 0;
     }
 
+    if(args.isUserProvided("ast-stats-print")||args.isUserProvided("ast-stats-csv")) {
+      // from: src/midend/astDiagnostics/AstStatistics.C
+      if(args.getBool("ast-stats-print")) {
+        ROSE_Statistics::AstNodeTraversalStatistics astStats;
+        string s=astStats.toString(sageProject);
+        cout<<s; // output includes newline at the end
+      }
+      if(args.isUserProvided("ast-stats-csv")) {
+        ROSE_Statistics::AstNodeTraversalCSVStatistics astCSVStats;
+        string fileName=args.getString("ast-stats-csv");
+        astCSVStats.setMinCountToShow(1); // default value is 1
+        if(!CppStdUtilities::writeFile(fileName, astCSVStats.toString(sageProject))) {
+          cerr<<"Error: cannot write AST node statistics to CSV file "<<fileName<<endl;
+          exit(1);
+        }
+      }
+    }
+
     if(!args.count("quiet")) {
       cout<<"STATUS: analysis started."<<endl;
     }
@@ -1450,6 +1477,22 @@ int main( int argc, char * argv[] ) {
       analyzer->getVariableIdMapping()->toStream(cout);
     }
   
+    if(args.isUserProvided("type-size-mapping-print")||args.isUserProvided("type-size-mapping-csv")) {
+      // from: src/midend/astDiagnostics/AstStatistics.C
+      string s=analyzer->typeSizeMappingToString();
+      if(args.getBool("type-size-mapping-print")) {
+        cout<<"Type size mapping:"<<endl;
+        cout<<s; // output includes newline at the end
+      }
+      if(args.isUserProvided("type-size-mapping-csv")) {
+        string fileName=args.getString("type-size-mapping-csv");
+        if(!CppStdUtilities::writeFile(fileName, s)) {
+          cerr<<"Error: cannot write type-size mapping to CSV file "<<fileName<<endl;
+          exit(1);
+        }
+      }
+    }
+    
     if(args.count("run-rose-tests")) {
       cout << "ROSE tests started."<<endl;
       // Run internal consistency tests on AST
@@ -1469,10 +1512,13 @@ int main( int argc, char * argv[] ) {
         }
         delete evaluator;
       }
-      cout << "ROSE tests finished."<<endl;
+      cout << "ROSE tests finished."<<endl; 
       mfacilities.shutdown();
       return 0;
     }
+
+    // TODO: exit here if no analysis option is selected
+    // exit(0);
 
     SgNode* root=sageProject;
     ROSE_ASSERT(root);
