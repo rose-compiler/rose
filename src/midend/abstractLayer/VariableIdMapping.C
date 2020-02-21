@@ -82,14 +82,14 @@ SgType* VariableIdMapping::getType(VariableId varId) {
   return type;
 }
 
-bool VariableIdMapping::hasReferenceType(VariableId varId) {
-  SgType* type=getType(varId);
-  return isSgReferenceType(type);
-}
-
 bool VariableIdMapping::hasBoolType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgTypeBool(type);
+}
+
+bool VariableIdMapping::hasCharType(VariableId varId) {
+  SgType* type=getType(varId);
+  return isSgTypeChar(type)||isSgTypeSignedChar(type)||isSgTypeUnsignedChar(type)||isSgTypeChar16(type)||isSgTypeChar32(type);
 }
 
 bool VariableIdMapping::hasIntegerType(VariableId varId) {
@@ -99,19 +99,27 @@ bool VariableIdMapping::hasIntegerType(VariableId varId) {
 
 bool VariableIdMapping::hasFloatingPointType(VariableId varId) {
   SgType* type=getType(varId);
-  return isSgTypeFloat(type)||isSgTypeDouble(type)||isSgTypeLongDouble(type);
+  return isSgTypeFloat(type)||isSgTypeDouble(type)||isSgTypeLongDouble(type)||isSgTypeFloat80(type)||isSgTypeFloat128(type);
 }
+
 bool VariableIdMapping::hasPointerType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgPointerType(type)!=0;
 }
-bool VariableIdMapping::hasArrayType(VariableId varId) {
+
+bool VariableIdMapping::hasReferenceType(VariableId varId) {
   SgType* type=getType(varId);
-  return isSgArrayType(type)!=0;
+  return isSgReferenceType(type);
 }
+
 bool VariableIdMapping::hasClassType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgClassType(type)!=0;
+}
+
+bool VariableIdMapping::hasArrayType(VariableId varId) {
+  SgType* type=getType(varId);
+  return isSgArrayType(type)!=0;
 }
 
 /*! 
