@@ -22,6 +22,7 @@
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/SharedPointer.h>
 
+#include <BinarySourceLocations.h>
 #include <BinaryUnparser.h>
 #include <Progress.h>
 
@@ -29,6 +30,7 @@
 #include <boost/move/utility_core.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/split_member.hpp>
+#include <boost/serialization/version.hpp>
 
 #include <ostream>
 #include <set>
@@ -348,6 +350,7 @@ private:
     bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
     size_t stackDeltaInterproceduralLimit_;             // Max depth of call stack when computing stack deltas
     AddressNameMap addressNames_;                       // Names for various addresses
+    SourceLocations sourceLocations_;                   // Mapping between source locations and addresses
     SemanticMemoryParadigm semanticMemoryParadigm_;     // Slow and precise, or fast and imprecise?
     Unparser::BasePtr unparser_;                        // For unparsing things to pseudo-assembly
     Unparser::BasePtr insnUnparser_;                    // For unparsing single instructions in diagnostics
@@ -382,7 +385,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serializeCommon(S &s, const unsigned /*version*/) {
+    void serializeCommon(S &s, const unsigned version) {
         s.template register_type<InstructionSemantics2::SymbolicSemantics::SValue>();
         s.template register_type<InstructionSemantics2::SymbolicSemantics::RiscOperators>();
         s.template register_type<InstructionSemantics2::DispatcherX86>();
@@ -411,6 +414,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(assumeFunctionsReturn_);
         s & BOOST_SERIALIZATION_NVP(stackDeltaInterproceduralLimit_);
         s & BOOST_SERIALIZATION_NVP(addressNames_);
+        if (version >= 1)
+            s & BOOST_SERIALIZATION_NVP(sourceLocations_);
         s & BOOST_SERIALIZATION_NVP(semanticMemoryParadigm_);
         // s & unparser_;                       -- not saved; restored from disassembler
         // s & cfgAdjustmentCallbacks_;         -- not saved/restored
@@ -2410,6 +2415,16 @@ public:
     const AddressNameMap& addressNames() const /*final*/ { return addressNames_; }
     /** @} */
 
+    /** Property: Source locations.
+     *
+     *  The partitioner stores a mapping from source locations to virtual addresses and vice versa.
+     *
+     * @{ */
+    const SourceLocations& sourceLocations() const /*final*/ { return sourceLocations_; }
+    SourceLocations& sourceLocations() /*final*/ { return sourceLocations_; }
+    void sourceLocations(const SourceLocations &locs) { sourceLocations_ = locs; }
+    /** @} */
+
     /** Property: Whether to look for function calls used as branches.
      *
      *  If this property is set, then function call instructions are not automatically assumed to be actual function calls.
@@ -2533,5 +2548,8 @@ private:
 } // namespace
 } // namespace
 } // namespace
+
+// Class versions must be at global scope
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Partitioner, 1);
 
 #endif

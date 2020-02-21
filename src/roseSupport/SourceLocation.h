@@ -186,6 +186,20 @@ public:
      *  The format is the same as the @ref toString method. */
     void print(std::ostream&) const;
 
+    // The following trickery is to allow things like "if (x)" to work but without having an implicit
+    // conversion to bool which would cause no end of other problems. This is fixed in C++11.
+private:
+    typedef void(SourceLocation::*unspecified_bool)() const;
+    void this_type_does_not_support_comparisons() const {}
+public:
+    /** Type for Boolean context.
+     *
+     *  Implicit conversion to a type that can be used in a boolean context such as an <code>if</code> or <code>while</code>
+     *  statement. The value in Boolean context is the inverse of what @ref isEmpty would return. */
+    operator unspecified_bool() const {
+        return isEmpty() ? 0 : &SourceLocation::this_type_does_not_support_comparisons;;
+    }
+
 private:
     // When reconstituting an object from a serialization, we need to make sure the file name is an element of the shared index.
     // It doesn't hurt to call this on any object at any time.

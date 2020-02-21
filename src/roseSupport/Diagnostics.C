@@ -20,6 +20,7 @@
 #include "BinarySymbolicExprParser.h"                   // Rose::BinaryAnalysis::SymbolicExprParser
 #include "BinaryTaintedFlow.h"                          // Rose::BinaryAnalysis::TaintedFlow
 #include "BinaryToSource.h"                             // Rose::BinaryAnalysis::BinaryToSource
+#include "BinaryVxcoreParser.h"                         // Rose::BinaryAnalysis::VxcoreParser
 #include "Disassembler.h"                               // Rose::BinaryAnalysis::Disassembler
 
 namespace Rose {
@@ -146,6 +147,7 @@ void initialize() {
         BinaryAnalysis::BinaryToSource::initDiagnostics();
         BinaryAnalysis::Unparser::initDiagnostics();
         BinaryAnalysis::Variables::initDiagnostics();
+        BinaryAnalysis::VxcoreParser::initDiagnostics();
         SgAsmExecutableFileFormat::initDiagnostics();
 #endif
         EditDistance::initDiagnostics();
