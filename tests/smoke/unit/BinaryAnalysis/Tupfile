@@ -12,5 +12,8 @@ ifeq (@(ENABLE_TESTS),yes)
 	run $(tool_compile_linkexe) peekPoke.C
 	run $(test) peekPoke
 
+	run $(tool_compile_linkexe) testSourceLocations.C
+	run $(test) testSourceLocations
+
     endif
 endif

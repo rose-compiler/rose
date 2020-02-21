@@ -494,17 +494,25 @@ SgName
 $CLASSNAME::get_name() const
    {
 #if 0
-   // (original note from Sage II) this is less efficient but it does avoid a bug in Sun C++
+   // DQ (2/7/2020): Use this code since we are debugging a case when get_declaration() == NULL.
+
+      printf ("Debugging long form of get_name(): this = %p = %s \n",this,this->class_name().c_str());
+      printf ("Debugging long form of get_name(): get_declaration() = %p \n",this->get_declaration());
+
       SgName theName;
 
       if (get_declaration() != NULL) 
          {
+           printf ("Debugging long form of get_name(): get_declaration() != NULL: get_declaration() = %p = %s \n",this->get_declaration(),this->get_declaration()->class_name().c_str());
            theName = get_declaration()->get_name();
          } 
         else 
          {
+           printf ("Debugging long form of get_name(): get_declaration() == NULL \n");
            theName = SgName("undefined");
          }
+
+      printf ("Debugging long form of get_name(): theName = %s \n",theName.str());
 
       return theName;
 #else

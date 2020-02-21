@@ -9,6 +9,7 @@ if (enable-binary-analysis)
     MemoryMap.C
     Rva.C
     SRecord.C
+    BinaryVxcoreParser.C
 
     ### Generic Base Classes ###
     GenericDynamicLinking.C
@@ -55,5 +56,5 @@ add_dependencies(roseBinaryFormats rosetta_generated)
 
 install(
   FILES  DataConversion.h IntelPinSupport.h MemoryMap.h ByteOrder.h
-         SRecord.h WorkLists.h SgSharedVector.h StatSerializer.h
+         SRecord.h WorkLists.h SgSharedVector.h StatSerializer.h BinaryVxcoreParser.h
   DESTINATION ${INCLUDE_INSTALL_DIR})

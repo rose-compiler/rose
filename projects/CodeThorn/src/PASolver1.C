@@ -139,6 +139,7 @@ CodeThorn::PASolver1::runSolver() {
     delete info;
   }
   cout<<"INFO: solver 1 finished after " << static_cast<unsigned long>(solverTimer.getTimeDuration().milliSeconds()) << "ms."<<endl;
+  solverTimer.stop();
 }
 
 #endif

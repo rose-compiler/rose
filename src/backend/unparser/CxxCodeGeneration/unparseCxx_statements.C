@@ -6703,6 +6703,10 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
        // DQ (9/9/2014): Refactored support for function modifiers.
           unparseTrailingFunctionModifiers(mfuncdecl_stmt,info);
+#if 0
+          printf ("In Unparse_ExprStmt::unparseMFuncDeclStmt(): DONE: calling unparseTrailingFunctionModifiers() \n");
+          curprint ("\n/* In Unparse_ExprStmt::unparseMFuncDeclStmt: DONE: calling unparseTrailingFunctionModifiers() */ \n"); 
+#endif
 #else
 
 #error "DEAD CODE!"
@@ -9221,6 +9225,8 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
           curprint ( string(": "));
 
+#error "DEAD CODE!"
+
        // DQ (5/9/2011): This loop structure should be rewritten...
           while(true)
              {
@@ -9247,6 +9253,8 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
                     curprint ( string("protected "));
                   }
 
+#error "DEAD CODE!"
+
             // DQ (5/12/2011): This might have to be a qualified name...
                SgUnparse_Info tmp_ninfo(ninfo);
                tmp_ninfo.set_name_qualification_length(bcls->get_name_qualification_length());
@@ -9258,6 +9266,8 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
                if (nr_bcls != NULL) {
                  SgNonrealDecl * nr_decl = nr_bcls->get_base_class_nonreal();
                  ROSE_ASSERT(nr_decl != NULL);
+
+#error "DEAD CODE!"
 
                  curprint(nameQualifier.str());
                  curprint(nr_decl->get_name().str());
@@ -9295,6 +9305,8 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
                }
                p++;
+
+#error "DEAD CODE!"
 
                if (p != classdefn_stmt->get_inheritances().end())
                   {

@@ -31,6 +31,7 @@ libbinaryMidend_la_SOURCES =					\
     BinarySmtCommandLine.C					\
     BinarySmtSolver.C						\
     BinarySmtlibSolver.C					\
+    BinarySourceLocations.C					\
     BinaryStackDelta.C						\
     BinaryString.C						\
     BinarySymbolicExpr.C					\
@@ -121,6 +122,7 @@ pkginclude_HEADERS =					\
     BinarySmtCommandLine.h				\
     BinarySmtSolver.h					\
     BinarySmtlibSolver.h				\
+    BinarySourceLocations.h				\
     BinaryStackDelta.h					\
     BinaryStackVariable.h				\
     BinaryString.h					\

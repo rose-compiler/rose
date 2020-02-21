@@ -62,6 +62,10 @@ namespace CodeThorn {
       // eliminate operator '?'
       // transformed into if-statement with result variable
       const bool eliminateConditionalExpressionOp=false;
+      
+      // if (InitStmt; expr;) S; => { InitStmt; if (expr) S; }
+      // switch (InitStmt; expr;) { S; } => { InitStmt; switch (expr) { S; } }
+      const bool hoistBranchInitStatements=true;
 
       // if(Cond) S; => { T t=Cond; if(t) S } where T has type of Cond.
       // do {...} while (Cond); => do {...; T t=Cond; if(t) break; } where T has type of Cond.
@@ -177,6 +181,11 @@ namespace CodeThorn {
      * operations of an expression. */
     void normalizeExpressionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions=false);
 
+
+    // moves variable declarations (TODO: and C++17 InitStatements) out of
+    //   branch (i.e., if and switch) conditions.
+    void hoistBranchInitStatementsInAst(SgNode* node);
+    
     // moves conditions out of if and switch constructs
     void hoistConditionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions=false);
     // moves conditions out of if and switch constructs. Declares new

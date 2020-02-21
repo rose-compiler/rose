@@ -1,9 +1,9 @@
 #define BOOST_FILESYSTEM_VERSION 3
 
-#include "rose.h"
+#include <rose.h>
 
-#include "SRecord.h"
-
+#include <SRecord.h>
+#include <BinaryVxcoreParser.h>
 #include <Partitioner2/Engine.h>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -23,11 +23,12 @@ struct Settings {
     bool showAsHex;                                     // show memory in hexdump format
     Sawyer::Optional<SRecord::Syntax> showAsSRecords;   // show memory in Motorola S-Record format
     bool showAsBinary;                                  // show memory as raw bytes (output prefix required)
+    bool showAsVxcore;                                  // Jim Leek's vxcore format
     bool showMap;                                       // show memory mapping information
     std::string outputPrefix;                           // file name prefix for output, or send it to standard output
     std::vector<AddressInterval> where;                 // addresses that should be dumped
     Settings()
-        : showAsHex(false), showAsBinary(false), showMap(false) {}
+        : showAsHex(false), showAsBinary(false), showAsVxcore(false), showMap(false) {}
 };
 
 static std::vector<std::string>
@@ -80,6 +81,11 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
                     "\"<@v{prefix}>.load\" file is created that can be used to load the raw files back into another ROSE "
                     "command, usualyl by specifying \"@v{prefix}.load\" at the end of its command-line."));
 
+    fmt.insert(Switch("vxcore")
+               .intrinsicValue(true, settings.showAsVxcore)
+               .doc("Dump the specimen memory using a ROSE-specific format. The output name is specified with the @s{prefix} "
+                    "switch."));
+
     SwitchGroup out("Output switches");
     out.name("out");
 
@@ -88,7 +94,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
                .doc("Show information about the memory map on standard output.  If no output formats are specified then the "
                     "memory map is displayed regardless of whether the @s{map} switch is present."));
 
-    out.insert(Switch("prefix")
+    out.insert(Switch("prefix", 'o')
                .argument("string", anyParser(settings.outputPrefix))
                .doc("Causes output to be emitted to a set of files whose names all begin with the specified @v{string}. "
                     "When this switch is absent or the @v{string} is empty then output will be sent to standard output, but "
@@ -104,7 +110,10 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/
                      P2::AddressIntervalParser::docString() + "  The specified interval may include addresses "
                      "that aren't mapped and which are silently ignored. This switch may appear more than once."));
 
-    return parser.with(fmt).with(out).with(misc).parse(argc, argv).apply().unreachedArgs();
+    std::vector<std::string> args = parser.with(fmt).with(out).with(misc).parse(argc, argv).apply().unreachedArgs();
+    if (settings.where.empty())
+        settings.where.push_back(AddressInterval::whole());
+    return args;
 }
 
 class Dumper {
@@ -197,7 +206,7 @@ main(int argc, char *argv[]) {
     P2::Engine engine;
     Settings settings;
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
-    if (!settings.showAsHex && !settings.showAsSRecords && !settings.showAsBinary) {
+    if (!settings.showAsHex && !settings.showAsSRecords && !settings.showAsBinary && !settings.showAsVxcore) {
         mlog[WARN] <<"no output format selected; see --help\n";
         settings.showMap = true;
     }
@@ -218,9 +227,22 @@ main(int argc, char *argv[]) {
         }
     }
 
+    if (settings.showAsVxcore) {
+        if (settings.outputPrefix.empty()) {
+            mlog[FATAL] <<"an output file must be specified for binary output formats\n";
+            exit(1);
+        }
+        std::string outputName = settings.outputPrefix;
+        std::ofstream output(outputName.c_str(), std::ios_base::binary);
+        if (!output.good())
+            throw std::runtime_error("cannot create \"" + outputName);
+        VxcoreParser parser;
+        BOOST_FOREACH (AddressInterval where, settings.where)
+            parser.unparse(output, map, where, "output");
+        exit(0);
+    }
+
     // Dump the output
-    if (settings.where.empty())
-        settings.where.push_back(AddressInterval::whole());
     BOOST_FOREACH (AddressInterval where, settings.where) {
         rose_addr_t va = where.least();
         while (AddressInterval interval = map->atOrAfter(va).singleSegment().available()) {
@@ -239,7 +261,10 @@ main(int argc, char *argv[]) {
                     if (SRecord::SREC_INTEL == *settings.showAsSRecords)
                         std::cout <<SRecord(SRecord::SREC_I_END, 0, std::vector<uint8_t>()) <<"\n";
                 }
-                ASSERT_forbid2(settings.showAsBinary, "binary output is never emitted to standard output");
+                if (settings.showAsBinary || settings.showAsVxcore) {
+                    mlog[FATAL] <<"an output file name must be specified for binary output formats\n";
+                    exit(1);
+                }
             } else {
                 std::string outputName = settings.outputPrefix + StringUtility::addrToString(interval.least()).substr(2);
                 if (settings.showAsHex) {
