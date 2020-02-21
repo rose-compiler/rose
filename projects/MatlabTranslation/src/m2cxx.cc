@@ -4,12 +4,14 @@
 #include <boost/filesystem.hpp>
 
 #include "rose.h"
+#include "sageGeneric.h"
 
 #include "MatlabParser.h"
 #include "MatlabUnparser.h"
 #include "transformations/MatlabToCpp.h"
 #include "typeInference/MatlabTypeInference.h"
 #include "transformations/armadillo/ArmaOptimizer.h"
+#include "utility/dotify.h"
 
 #define WITH_ARMA 1
 #define UNPARSE_TO_MATLAB 0
@@ -26,19 +28,20 @@ int main(int argc, char* argv[])
 
   if (UNPARSE_TO_MATLAB)
     MatlabUnparser::backend(p);
-  // convert IR to SSA form
-  //  MatlabAnalysis::convertToSSA(p);
 
   // preprocess and normalize (to some extent) the intermediate
   //   Matlab AST.
   MatlabAnalysis::loadMatlabBuiltins(xcute.remove_filename().string());
   MatlabAnalysis::makeFunFromUnrealVars(p);
 
+  // convert IR to SSA form
+  // MatlabAnalysis::convertToSSA(p);
+
   // deduce types
   MatlabAnalysis::typeAnalysis(p);
 
   // convert IR from SSA to "normal" form
-  // MatlabAnalysis::convertToSSA(p);
+  // MatlabAnalysis::convertFromSSA(p);
 
   // transform code to C++
   MatlabToCpp::transform(p);
@@ -47,9 +50,11 @@ int main(int argc, char* argv[])
   if (WITH_ARMA)
     ArmaOpt::optimize(p);
 
+  dotify::save_dot("matlab.dot", SG_DEREF(p));
+
+  AstTests::runAllTests(p);
+
   // print C++ code
   backend(p);
-
-  //AstTests::runAllTests(p);
   return 0;
 }

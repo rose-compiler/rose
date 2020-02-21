@@ -44,47 +44,66 @@ SgScopeStatement* varPlacementScope(SgVarRefExp* varRef)
 
 struct VariableDeclInserter
 {
-  explicit
-  VariableDeclInserter(SgFunctionDeclaration* functionDecl)
-  : insertedVars(), fundecl(functionDecl)
-  {}
+    typedef std::map<std::string, SgVariableDeclaration*> InsertedDeclContainer;
 
-  void operator()(SgNode* n)
-  {
-    SgVarRefExp* varref = isSgVarRefExp(n);
-    ROSE_ASSERT(varref);
+    explicit
+    VariableDeclInserter(SgFunctionDeclaration* functionDecl)
+    : insertedDecls(), fundecl(functionDecl)
+    {}
 
-    std::string  varname = ru::nameOf(varref);
-
-    const bool ignore = (  isSgMatlabForStatement(varref->get_parent())
-                        || isSgFunctionCallExp(varref->get_parent())
-                        || FastNumericsRoseSupport::isParameter(varref, fundecl)
-                        || varname == "nargin"
-                        || insertedVars.find(varname) != insertedVars.end()
-                        );
-
-    if (ignore) return;
-
-    insertedVars.insert(varname);
-
-    SgType* vartype = FastNumericsRoseSupport::getInferredType(varref);
-
-    if (!vartype)
+    void createVarDecl(SgVarRefExp* varref)
     {
-      std::cerr << " >" << varref->unparseToString() << " has no type"
-                << std::endl;
-      ROSE_ASSERT(false);
+      ROSE_ASSERT(varref);
+
+      std::string varname = ru::nameOf(varref);
+      const bool  ignore = (  isSgMatlabForStatement(varref->get_parent())
+                           || isSgFunctionCallExp(varref->get_parent())
+                           || FastNumericsRoseSupport::isParameter(varref, fundecl)
+                           || varname == "nargin"
+                           );
+
+      std::cerr << "**** " << varname << " ";
+      if (ignore) { std::cerr << "~" << std::endl; return; }
+
+      InsertedDeclContainer::iterator pos = insertedDecls.find(varname);
+
+      if (pos == insertedDecls.end())
+      {
+        std::cerr << "!";
+        SgType* vartype = FastNumericsRoseSupport::getInferredType(varref);
+
+        if (!vartype)
+        {
+          std::cerr << " >" << varref->unparseToString() << " has no type"
+                    << std::endl;
+          ROSE_ASSERT(false);
+        }
+
+        SgScopeStatement*      scope   = varPlacementScope(varref);
+        SgVariableDeclaration* vardecl = sb::buildVariableDeclaration(varname, vartype, NULL, scope);
+        ROSE_ASSERT(vardecl);
+
+        si::prependStatement(vardecl, scope);
+
+        auto ins = insertedDecls.insert(std::make_pair(varname, vardecl));
+        ROSE_ASSERT(ins.second);
+
+        pos = ins.first;
+      }
+
+      SgVariableDeclaration* dclnode = pos->second;
+      SgVarRefExp*           refnode = sb::buildVarRefExp(dclnode);
+      ROSE_ASSERT(refnode);
+
+      si::replaceExpression(varref, refnode, false /* keep old expr */);
+      std::cerr << std::endl;
     }
 
-    SgScopeStatement*      scope = varPlacementScope(varref); // si::getEnclosingFunctionDefinition(n)->get_body();
-    SgVariableDeclaration* vardecl = sb::buildVariableDeclaration(varname, vartype, NULL, scope);
-    ROSE_ASSERT(vardecl != NULL);
+    void operator()(SgNode* n) { createVarDecl(isSgVarRefExp(n)); }
 
-    si::prependStatement(vardecl, scope);
-  }
-
-  std::set<std::string>  insertedVars;
-  SgFunctionDeclaration* fundecl;
+  private:
+    InsertedDeclContainer  insertedDecls;
+    SgFunctionDeclaration* fundecl;
 };
 
 namespace MatlabAnalysis
