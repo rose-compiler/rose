@@ -185,20 +185,6 @@ void CodeThornLanguageRestrictor::initialize() {
 
 }
 
-#ifdef POLYOPT_CHECK
-typedef std::list<SgFunctionDefinition*,SgFunctionDefinition> PolyOptFunctionPairList;
-typedef std::list<SgFunctionDefinition*> FunctionList;
-PolyOptFunctionPairList findPolyOptGeneratedFunctions(SgProject* project) {
-  PolyOptFunctionPairList funPairlist;
-  FunctionList funList;
-  std::list<SgFunctionDefinition*> allFunDefs=SgNodeHelper::listOfFunctionDefinitions(project);
-  for(auto funDef : allFunDefs) {
-    // TODO
-  }
-  return list;
-}
-#endif
-
 static IOAnalyzer* global_analyzer=0;
 
 set<AbstractValue> determineSetOfCompoundIncVars(VariableIdMapping* vim, SgNode* root) {
@@ -445,10 +431,8 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("specialize-fun-const", po::value< vector<int> >(), "Constant <arg>, the param is to be specialized to.")
     ("specialize-fun-varinit", po::value< vector<string> >(), "Variable name of which the initialization is to be specialized (overrides any initializer expression).")
     ("specialize-fun-varinit-const", po::value< vector<int> >(), "Constant <arg>, the variable initialization is to be specialized to.")
-#ifdef POLYOPT_CHECK
-    ("check-polyopt-variants", po::value< bool >()->default_value(false)->implicit_value(true), "Select equivalence checking for generated polyopt variants (named '*_orig' and '*_transfo'). Function pairs are automatically detected.")
-#endif
     ;
+
   patternSearchOptions.add_options()
     ("pattern-search-max-depth", po::value< int >()->default_value(10), "Maximum input depth that is searched for cyclic I/O patterns.")
     ("pattern-search-repetitions", po::value< int >()->default_value(100), "Number of unrolled iterations of cyclic I/O patterns.")
@@ -1982,19 +1966,10 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-#ifdef POLYOPT_CHECK
-    if(args.getBool("check-polyopt-variants")) {
-      cout<<"STATUS: checking polyopt variants."<<endl;
-      analyzer->setSkipSelectedFunctionCalls(true);
-      analyzer->setSkipArrayAccesses(true);
-      args.setOption("explicit-arrays",false);
-      PolyOptFunctionPairList list=findPolyOptGeneratedFunctions();
-    }
-#endif
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
       SAR_MODE sarMode=SAR_SSA;
       if(args.getBool("rewrite-ssa")) {
-	sarMode=SAR_SUBSTITUTE;
+        sarMode=SAR_SUBSTITUTE;
       }
       Specialization speci;
       ArrayUpdatesSequence arrayUpdates;

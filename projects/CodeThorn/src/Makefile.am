@@ -68,6 +68,7 @@ CODETHORN_HEADER_FILES=\
   CallString.h \
   CFAnalysis.h \
   CommandLineOptions.h \
+  CodeThornCommandLineOptions.h \
   ConstraintRepresentation.h \
   ContNodeAttribute.h \
   CounterexampleGenerator.h \
@@ -164,6 +165,7 @@ CODETHORN_SOURCE_FILES=\
   CallString.C \
   CFAnalysis.C \
   CommandLineOptions.C \
+  CodeThornCommandLineOptions.C \
   ConstraintRepresentation.C \
   ContNodeAttribute.C \
   CounterexampleGenerator.C \
