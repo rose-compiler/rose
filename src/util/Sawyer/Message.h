@@ -1498,7 +1498,7 @@ public:
      *      (mlog[TRACE] ? mlog[TRACE] : mlog[DEBUG]) <<"got here\n";
      *     
      *  SAWYER_MESG_OR(mlog[TRACE], mlog[DEBUG]) <<"got here\n";
-     * @code
+     * @endcode
      *
      * Thread safety: This method is thread-safe.
      *

@@ -28,7 +28,7 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
       PeImportSection.C PeRvaSizePair.C PeSection.C PeStringTable.C PeSymbolTable.C					\
       ElfDynamicLinking.C ElfErrorFrame.C ElfFileHeader.C ElfNote.C ElfRelocation.C ElfSection.C ElfSectionTable.C	\
       ElfSegmentTable.C ElfStringTable.C ElfSymbolTable.C ElfSymbolVersion.C						\
-      ExecDOS.C ExecNE.C ExecLE.C ExecGeneric.C PeSectionTable.C SRecord.C
+      ExecDOS.C ExecNE.C ExecLE.C ExecGeneric.C PeSectionTable.C SRecord.C BinaryVxcoreParser.C
 else
    libroseBinaryFormats_la_SOURCES = dummyFunctions.C
    libroseBinaryFormats_la_DEPENDENCIES += dummyFunctions.C
@@ -36,7 +36,7 @@ endif
 
 pkginclude_HEADERS =												\
 	ByteOrder.h DataConversion.h IntelPinSupport.h MemoryMap.h SRecord.h WorkLists.h SgSharedVector.h	\
-	StatSerializer.h
+	StatSerializer.h BinaryVxcoreParser.h
 
 
 # Make sure that this is distributed even if ROSE was not configured using: -with-IntelPin=<path>

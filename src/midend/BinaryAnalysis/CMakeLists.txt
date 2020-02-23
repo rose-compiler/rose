@@ -21,6 +21,7 @@ if(enable-binary-analysis)
     BinarySmtCommandLine.C
     BinarySmtSolver.C
     BinarySmtlibSolver.C
+    BinarySourceLocations.C
     BinaryStackDelta.C
     BinaryString.C
     BinarySymbolicExpr.C
@@ -106,6 +107,7 @@ install(
     BinarySmtCommandLine.h
     BinarySmtSolver.h
     BinarySmtlibSolver.h
+    BinarySourceLocations.h
     BinaryStackDelta.h
     BinaryStackVariable.h
     BinaryString.h
