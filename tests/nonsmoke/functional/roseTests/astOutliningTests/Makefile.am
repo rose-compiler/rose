@@ -92,7 +92,8 @@ CXX_TESTCODES_REQUIRED_TO_PASS =		\
 # 	test_26_v2_2020.cpp  this is not ready, not sure what happened for preprocessing
 CXX2_TESTCODES_REQUIRED_TO_PASS =                \
 	test_20_2019.cpp \
-	test_26_v1_2020.cpp
+	test_26_v1_2020.cpp \
+	test_37_2020.cpp
 
 # DQ (11/14/2017): This is failing and I need to learn the depth of what is the problem for the outlining tests.
 # I think I need to work with Liao on this when he is back from vacation.

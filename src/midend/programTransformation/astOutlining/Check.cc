@@ -248,25 +248,28 @@ Outliner::isOutlineable (const SgStatement* s, bool verbose)
     return false;
   }
 
-  if (isSgTemplateInstantiationFunctionDecl (decl)
-      || isSgTemplateInstantiationMemberFunctionDecl (decl))
+  // New option: C++ template is enabled or not for outlining.
+  if (!enable_template)
   {
-    // \todo Fix the template instantiation case (see Cxx_tests/test2004_75.C)
-    if (verbose)
-      cerr << "*** Can't outline template instantiations yet. ***" << endl;
-    return false;
-  }
+    if (isSgTemplateInstantiationFunctionDecl (decl)
+        || isSgTemplateInstantiationMemberFunctionDecl (decl))
+    {
+      // \todo Fix the template instantiation case (see Cxx_tests/test2004_75.C)
+      if (verbose)
+        cerr << "*** Can't outline template instantiations yet. ***" << endl;
+      return false;
+    }
+    // Liao 12/20/2012. New EDG 4.4 version has better template support. We store original template declarations instead of instantiations in AST now
 
-  // Liao 12/20/2012. New EDG 4.4 version has better template support. We store original template declarations instead of instantiations in AST now
-  if (isSgTemplateFunctionDeclaration(decl)
-      || isSgTemplateMemberFunctionDeclaration(decl))
-  {
-    // \todo Fix the template case (see Cxx_tests/test2004_75.C)
-    if (verbose)
-      cerr << "*** Can't outline things within templates yet. ***" << endl;
-    return false;
+    if (isSgTemplateFunctionDeclaration(decl)
+        || isSgTemplateMemberFunctionDeclaration(decl))
+    {
+      // \todo Fix the template case (see Cxx_tests/test2004_75.C)
+      if (verbose)
+        cerr << "*** Can't outline things within templates yet. ***" << endl;
+      return false;
+    }
   }
-
 
   if (isSgDeclarationStatement (s) && !isSgVariableDeclaration (s))
   {
