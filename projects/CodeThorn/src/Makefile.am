@@ -68,7 +68,6 @@ CODETHORN_HEADER_FILES=\
   CallString.h \
   CFAnalysis.h \
   CommandLineOptions.h \
-  CodeThornCommandLineOptions.h \
   ConstraintRepresentation.h \
   ContNodeAttribute.h \
   CounterexampleGenerator.h \
@@ -165,7 +164,6 @@ CODETHORN_SOURCE_FILES=\
   CallString.C \
   CFAnalysis.C \
   CommandLineOptions.C \
-  CodeThornCommandLineOptions.C \
   ConstraintRepresentation.C \
   ContNodeAttribute.C \
   CounterexampleGenerator.C \
@@ -372,12 +370,14 @@ codethorndir=.
 # only informative
 codethorn_xHEADERS = \
   CommandLineOptions.h \
+  CodeThornCommandLineOptions.h \
   codethorn.h \
   LTL.h
 
 # codethorn sources in addition to libcodethorn and libltlthorn
 codethorn_SOURCES = \
   LTLParser.y++ \
+  CodeThornCommandLineOptions.C \
   codethorn.C
 
 ##############################################################

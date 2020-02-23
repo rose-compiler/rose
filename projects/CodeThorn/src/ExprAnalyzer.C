@@ -9,6 +9,8 @@
 #include "CodeThornException.h"
 #include "Analyzer.h" // dependency on process-functions
 #include "CppStdUtilities.h"
+#include "CodeThornCommandLineOptions.h"
+#include "CodeThornLib.h"
 
 using namespace CodeThorn;
 using namespace CodeThorn;

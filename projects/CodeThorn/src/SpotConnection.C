@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "SpotConnection.h"
+#include "CodeThornCommandLineOptions.h"
 
 using namespace CodeThorn;
 using namespace std;
