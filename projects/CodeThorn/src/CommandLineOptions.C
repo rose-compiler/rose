@@ -10,8 +10,6 @@ using namespace std;
 // Command line processing global options
 /////////////////////////////////////////////////
 
-CodeThorn::CommandLineOptions args;
-
 namespace CodeThorn {
 
   /////////////////////////////////////////////////
