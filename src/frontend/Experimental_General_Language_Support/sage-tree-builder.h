@@ -1,6 +1,7 @@
 #ifndef ROSE_SAGE_TREE_BUILDER_H_
 #define ROSE_SAGE_TREE_BUILDER_H_
 
+#include "general_language_translation.h"
 #include <boost/optional.hpp>
 #include <boost/tuple/tuple.hpp>
 
@@ -9,6 +10,7 @@
 //
 class SgDerivedTypeStatement;
 class SgExpression;
+class SgFunctionDeclaration;
 class SgGlobal;
 class SgLocatedNode;
 class SgProgramHeaderStatement;
@@ -73,6 +75,17 @@ public:
    void setFortranEndProgramStmt(SgProgramHeaderStatement*,
                                  const boost::optional<std::string> &,
                                  const boost::optional<std::string> &);
+
+   void Enter(SgFunctionParameterScope* &);
+   void Leave(SgFunctionParameterScope*);
+
+   void Enter(SgFunctionDeclaration* &, const std::string &,
+                                        const std::list<General_Language_Translation::FormalParameter> &,
+                                        const General_Language_Translation::SubroutineAttribute &);
+   void Leave(SgFunctionDeclaration*);
+
+   void Enter(SgFunctionDefinition* &);
+   void Leave(SgFunctionDefinition*);
 
    void Enter(SgDerivedTypeStatement* &, const std::string &);
    void Leave(SgDerivedTypeStatement*);

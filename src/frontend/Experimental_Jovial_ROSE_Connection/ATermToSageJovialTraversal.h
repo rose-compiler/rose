@@ -10,7 +10,7 @@
 
 namespace ATermSupport {
 
-   using namespace Jovial_ROSE_Translation;
+   using namespace General_Language_Translation;
 
 class ATermToSageJovialTraversal : public ATermToUntypedTraversal
 {
@@ -40,7 +40,7 @@ ATbool traverse_CompoolModule(ATerm term);
 // 1.2.2 PROCEDURE MODULES
 ATbool traverse_ProcedureModule(ATerm term);
 ATbool traverse_DeclarationList(ATerm term);
-ATbool traverse_NullDeclaration(ATerm term, int def_or_ref = 0);
+ATbool traverse_NullDeclaration(ATerm term);
 
 // 1.2.3 MAIN PROGRAM MODULES
 ATbool traverse_MainProgramModule(ATerm term);
@@ -50,9 +50,9 @@ ATbool traverse_NonNestedSubroutineList(ATerm term);
 ATbool traverse_SubroutineDefinitionList(ATerm term);
 
 // 1.4 IMPLEMENTATION PARAMETERS
-ATbool traverse_IntegerMachineParameter (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
-ATbool traverse_FloatingMachineParameter(ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
-ATbool traverse_FixedMachineParameter   (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
+ATbool traverse_IntegerMachineParameter (ATerm term, SgExpression* &expr);
+ATbool traverse_FloatingMachineParameter(ATerm term, SgExpression* &expr);
+ATbool traverse_FixedMachineParameter   (ATerm term, SgExpression* &expr);
 
 // 2.0 DECLARATIONS
 ATbool traverse_Declaration(ATerm term);
@@ -188,9 +188,9 @@ ATbool traverse_Spacer                (ATerm term, SgUntypedExpression* & expr);
 
 // 3.0 PROCEDURES AND FUNCTIONS
 ATbool traverse_ProcedureDefinition(ATerm term);
-ATbool traverse_SubroutineAttribute(ATerm term, SgUntypedOtherExpression* & attr_expr);
-ATbool traverse_ProcedureHeading   (ATerm term, std::string & name,
-                                    SgUntypedExprListExpression* & attrs, SgUntypedInitializedNameList* & params);
+ATbool traverse_SubroutineAttribute(ATerm term, General_Language_Translation::SubroutineAttribute &attr);
+ATbool traverse_ProcedureHeading   (ATerm term, std::string & name, std::list<FormalParameter> &param_list,
+                                                General_Language_Translation::SubroutineAttribute &attr);
 ATbool traverse_SubroutineBody     (ATerm term);
 
 // 3.1 PROCEDURES
@@ -203,11 +203,11 @@ ATbool traverse_FunctionHeading    (ATerm term, std::string & name, SgUntypedTyp
                                     SgUntypedExprListExpression* & attrs, SgUntypedInitializedNameList* & params);
 
 // 3.3 PARAMETERS OF PROCEDURES AND FUNCTIONS
-ATbool traverse_FormalParameterList   (ATerm term, SgUntypedInitializedNameList* param_list);
-ATbool traverse_FormalInputParameter  (ATerm term, SgUntypedInitializedNameList* param_list);
-ATbool traverse_FormalOutputParameters(ATerm term, SgUntypedInitializedNameList* param_list);
-ATbool traverse_FormalOutputParameter (ATerm term, SgUntypedInitializedNameList* param_list);
-ATbool traverse_ParameterBinding      (ATerm term, Sawyer::Optional<General_Language_Translation::ExpressionKind> &modifier_enum);
+ATbool traverse_FormalParameterList   (ATerm term, std::list<FormalParameter> &param_list);
+ATbool traverse_FormalInputParameter  (ATerm term, std::list<FormalParameter> &param_list);
+ATbool traverse_FormalOutputParameters(ATerm term, std::list<FormalParameter> &param_list);
+ATbool traverse_FormalOutputParameter (ATerm term, std::list<FormalParameter> &param_list);
+ATbool traverse_ParameterBinding      (ATerm term, General_Language_Translation::ExpressionKind &binding);
 
 // 3.4 INLINE DECLARATIONS
 ATbool traverse_InlineDeclaration(ATerm term);
@@ -280,7 +280,7 @@ ATbool traverse_NumericFactor  (ATerm term, SgExpression* &sg_expr, SgUntypedExp
 ATbool traverse_NumericPrimary (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);
 ATbool traverse_OptSign        (ATerm term, General_Language_Translation::ExpressionKind & op_enum);
 ATbool traverse_ExponentiationOp(ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);
-ATbool traverse_NumericMachineParameter(ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);
+ATbool traverse_NumericMachineParameter(ATerm term, SgExpression* &expr);
 
 // 5.2 BIT FORMULAS
 ATbool traverse_BitFormula             (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);

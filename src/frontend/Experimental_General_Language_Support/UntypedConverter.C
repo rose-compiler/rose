@@ -369,11 +369,13 @@ UntypedConverter::setDeclarationModifiers(SgDeclarationStatement* decl, SgUntype
                decl->get_declarationModifier().get_typeModifier().setTarget();
                break;
             }
+#if 0 // pass by value should not be a type modifier yes?
           case e_type_modifier_value:
             {
                decl->get_declarationModifier().get_typeModifier().setValue();
                break;
             }
+#endif
           case e_type_modifier_volatile:
             {
                decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setVolatile();

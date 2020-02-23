@@ -4,28 +4,13 @@
 namespace Jovial_ROSE_Translation
    {
 
-      struct LocationSpecifier {
-         LocationSpecifier() : start_bit(nullptr), start_word(nullptr) {}
-         LocationSpecifier(SgExpression* sbit, SgExpression* sword) : start_bit(sbit), start_word(sword) {}
-         SgExpression* start_bit;
-         SgExpression* start_word;
-      };
-
-      struct StructureSpecifier {
-         StructureSpecifier()                  : bits_per_entry(nullptr), is_parallel(false) {}
-         StructureSpecifier(SgExpression* bpe) : bits_per_entry(bpe),     is_parallel(false) {}
-         StructureSpecifier(bool isp)          : bits_per_entry(nullptr), is_parallel(isp)   {}
-         SgExpression* bits_per_entry;
-         bool is_parallel;
-      };
-
   // TODO - split out the StatementEnums?
 
   // Enum for different types of expressions (used with untyped IR nodes).
   //
      enum ExpressionKind
         {
-           e_unknown = 0,
+           e_unknown = 1,
 
        // Operators
        // ---------
@@ -70,7 +55,6 @@ namespace Jovial_ROSE_Translation
 
        // Expressions
        // -----------
-
           e_literalExpression,
           e_referenceExpression,
 
@@ -95,10 +79,8 @@ namespace Jovial_ROSE_Translation
           e_for_by_while_stmt,
           e_for_then_while_stmt,
 
-
        // Declarations
        // ------------
-
           e_simple_block_type_declaration,
           e_block_type_declaration,
           e_simple_table_type_declaration,
