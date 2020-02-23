@@ -4,6 +4,7 @@
 #include "CollectionOperators.h"
 #include "CodeThornException.h"
 #include "DataRaceDetection.h"
+#include "CodeThornCommandLineOptions.h"
 
 #include <omp.h>
 

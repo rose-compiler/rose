@@ -7,7 +7,7 @@
 #include "sage3basic.h"
 #include "Labeler.h"
 #include "Analyzer.h"
-#include "CommandLineOptions.h"
+#include "CodeThornCommandLineOptions.h"
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
 #include "AnalysisAbstractionLayer.h"
@@ -23,6 +23,7 @@
 #include "CollectionOperators.h"
 #include "RersSpecialization.h"
 #include "RERS_empty_specialization.h"
+#include "CodeThornLib.h"
 
 using namespace std;
 using namespace Sawyer::Message;
@@ -98,7 +99,7 @@ CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const Co
   bool earlyTermination = false;
   int threadNum = 0; //subSolver currently does not support multiple threads.
   // print status message if required
-  if (args.getBool("status") && _displayDiff) {
+  if (CodeThorn::args.getBool("status") && _displayDiff) {
 #pragma omp critical(HASHSET)
     {
       estateSetSize = estateSet.size();
@@ -129,7 +130,7 @@ CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const Co
   EStateWorkList deferedWorkList;
   std::set<const EState*> existingEStateSet;
   if (earlyTermination) {
-    if(args.getBool("status")) {
+    if(CodeThorn::args.getBool("status")) {
       cout << "STATUS: Early termination within subSolver (resource limit reached)." << endl;
     }
     transitionGraph.setForceQuitExploration(true);
@@ -202,7 +203,7 @@ CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const Co
 	    } else if(isFailedAssertEState(&newEState)) {
 	      // record failed assert
 	      int assertCode;
-	      if(args.getBool("rers-binary")) {
+	      if(CodeThorn::args.getBool("rers-binary")) {
 		assertCode=reachabilityAssertCode(newEStatePtr);
 	      } else {
 		assertCode=reachabilityAssertCode(currentEStatePtr);
@@ -213,7 +214,7 @@ CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const Co
 	      */
 	      if(!getModeLTLDriven()) {
 		if(assertCode>=0) {
-		  if(args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
+		  if(CodeThorn::args.getBool("with-counterexamples") || CodeThorn::args.getBool("with-assert-counterexamples")) {
 		    //if this particular assertion was never reached before, compute and update counterexample
 		    if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
 		      _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
@@ -368,7 +369,7 @@ bool CodeThorn::Analyzer::getOptionContextSensitiveAnalysis() {
 void CodeThorn::Analyzer::printStatusMessage(string s, bool newLineFlag) {
 #pragma omp critical (STATUS_MESSAGES)
   {
-    if(args.getBool("status")) {
+    if(CodeThorn::args.getBool("status")) {
       cout<<s;
       if(newLineFlag) {
         cout<<endl; // status output
@@ -488,7 +489,7 @@ bool CodeThorn::Analyzer::isPrecise() {
   if (isActiveGlobalTopify()) {
     return false;
   }
-  if (args.getBool("explicit-arrays")==false && !args.getBool("rers-binary")) {
+  if (CodeThorn::args.getBool("explicit-arrays")==false && !CodeThorn::args.getBool("rers-binary")) {
     return false;
   }
   return true;
@@ -636,7 +637,7 @@ string CodeThorn::Analyzer::analyzerStateToString() {
   ss<<" ";
   ss<<"TopMode:"<<_globalTopifyMode;
   ss<<" ";
-  ss<<"RBin:"<<args.getBool("rers-binary");
+  ss<<"RBin:"<<CodeThorn::args.getBool("rers-binary");
   ss<<" ";
   ss<<"incSTGReady:"<<isIncompleteSTGReady();
   return ss.str();
@@ -727,7 +728,7 @@ bool CodeThorn::Analyzer::isActiveGlobalTopify() {
       if (!_topifyModeActive) {
         _topifyModeActive=true;
         eventGlobalTopifyTurnedOn();
-        args.setOption("rers-binary",false);
+        CodeThorn::args.setOption("rers-binary",false);
       }
     }
     return true;
@@ -804,7 +805,7 @@ AbstractValueSet vset=variableValueMonitor.getVariables();
     nt++;
   }
 
-  if(args.getBool("status")) {
+  if(CodeThorn::args.getBool("status")) {
     cout << "switched to static analysis (approximating "<<n<<" of "<<nt<<" variables with top-conversion)."<<endl;
   }
   //switch to the counter for approximated loop iterations if currently in a mode that counts iterations
@@ -1068,7 +1069,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         return createEState(targetLabel,cs,newPState,cset);
       }
       
-      if(variableIdMapping->hasArrayType(initDeclVarId) && args.getBool("explicit-arrays")==false) {
+      if(variableIdMapping->hasArrayType(initDeclVarId) && CodeThorn::args.getBool("explicit-arrays")==false) {
         // in case of a constant array the array (and its members) are not added to the state.
         // they are considered to be determined from the initializer without representing them
         // in the state
@@ -1644,12 +1645,12 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
 
   // Runs consistency checks on the fork / join and workshare / barrier nodes in the parallel CFG
   // If the --omp-ast flag is not selected by the user, the parallel nodes are not inserted into the CFG
-  if (args.getBool("omp-ast")) {
+  if (CodeThorn::args.getBool("omp-ast")) {
     cfanalyzer->forkJoinConsistencyChecks(flow);
   }
 
   SAWYER_MESG(logger[TRACE])<< "STATUS: Building CFGs finished."<<endl;
-  if(args.getBool("reduce-cfg")) {
+  if(CodeThorn::args.getBool("reduce-cfg")) {
     int cnt=cfanalyzer->optimizeFlow(flow);
     SAWYER_MESG(logger[TRACE])<< "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
   }
@@ -1663,7 +1664,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   SAWYER_MESG(logger[TRACE])<< "INIT: ICFG OK. (size: " << flow.size() << " edges)"<<endl;
 
 #if 0
-  if(args.getBool("reduce-cfg")) {
+  if(CodeThorn::args.getBool("reduce-cfg")) {
     int cnt=cfanalyzer->inlineTrivialFunctions(flow);
     cout << "INIT: CFG reduction OK. (inlined "<<cnt<<" functions; eliminated "<<cnt*4<<" nodes)"<<endl;
   }
@@ -1674,7 +1675,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   initializeCommandLineArgumentsInState(initialPState);
   if(optionStringLiteralsInState) {
     initializeStringLiteralsInState(initialPState);
-    if(args.getBool("status")) {
+    if(CodeThorn::args.getBool("status")) {
       cout<<"STATUS: created "<<getVariableIdMapping()->numberOfRegisteredStringLiterals()<<" string literals in initial state."<<endl;
     }
   }
@@ -1733,7 +1734,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   // initialize summary states map for abstract model checking mode
   initializeSummaryStates(initialPStateStored,emptycsetstored);
 
-  if(args.getBool("rers-binary")) {
+  if(CodeThorn::args.getBool("rers-binary")) {
     //initialize the global variable arrays in the linked binary version of the RERS problem
     SAWYER_MESG(logger[DEBUG])<< "init of globals with arrays for "<< _numberOfThreadsToUse << " threads. " << endl;
     RERS_Problem::rersGlobalVarsArrayInitFP(_numberOfThreadsToUse);
@@ -1782,7 +1783,7 @@ PState CodeThorn::Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhs
     if(currentPState.varExists(rhsVarId)) {
       rhsIntVal=getExprAnalyzer()->readFromMemoryLocation(&currentPState,rhsVarId);
     } else {
-      if(variableIdMapping->hasArrayType(rhsVarId) && args.getBool("explicit-arrays")==false) {
+      if(variableIdMapping->hasArrayType(rhsVarId) && CodeThorn::args.getBool("explicit-arrays")==false) {
         // in case of an array the id itself is the pointer value
         ROSE_ASSERT(rhsVarId.isValid());
         rhsIntVal=rhsVarId.getIdCode();
@@ -2074,7 +2075,7 @@ void CodeThorn::Analyzer::reduceStgToInOutAssertWorklistStates() {
 }
 
 int CodeThorn::Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
-  if(args.getBool("rers-binary")) {
+  if(CodeThorn::args.getBool("rers-binary")) {
     int outputVal = getExprAnalyzer()->readFromMemoryLocation(currentEStatePtr->pstate(),globalVarIdByName("output")).getIntValue();
     if (outputVal > -100) {  //either not a failing assertion or a stderr output treated as a failing assertion)
       return -1;
@@ -2176,7 +2177,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
   SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(getLabeler()->getNode(edge.source()));
   ROSE_ASSERT(funCall);
 
-  if(args.getBool("rers-binary")) {
+  if(CodeThorn::args.getBool("rers-binary")) {
     // if rers-binary function call is selected then we skip the static analysis for this function (specific to rers)
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="calculate_outputFP") {
@@ -2262,7 +2263,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallLocalEdge(Edge edge, 
   EState currentEState=*estate;
   PState currentPState=*currentEState.pstate();
   ConstraintSet cset=*currentEState.constraints();
-  if(args.getBool("rers-binary")) {
+  if(CodeThorn::args.getBool("rers-binary")) {
     // logger[DEBUG]<<"ESTATE: "<<estate->toString(&variableIdMapping)<<endl;
     SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source());
     if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
@@ -2410,7 +2411,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
     return elistify(newEState);
   } else if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nextNodeToAnalyze1)) {
     // case 2a: x=f(); bind variable x to value of $return
-    if(args.getBool("rers-binary")) {
+    if(CodeThorn::args.getBool("rers-binary")) {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         string funName=SgNodeHelper::getFunctionName(funCall);
         if(funName=="calculate_outputFP") {
@@ -2447,7 +2448,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
     }
   } else if(SgNodeHelper::Pattern::matchFunctionCallExpInVariableDeclaration(nextNodeToAnalyze1)) {
     // case 2b: Type x=f(); bind variable x to value of $return for function call in declaration
-    if(args.getBool("rers-binary")) {
+    if(CodeThorn::args.getBool("rers-binary")) {
       if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
         string funName=SgNodeHelper::getFunctionName(funCall);
         if(funName=="calculate_outputFP") {
@@ -2598,7 +2599,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallExternal(Edge edge, c
       } else {
         return resList; // return no state (this ends the analysis)
       }
-      if(args.getBool("input-values-as-constraints")) {
+      if(CodeThorn::args.getBool("input-values-as-constraints")) {
         cerr<<"Option input-values-as-constraints no longer supported."<<endl;
         exit(1);
         //newCSet.removeAllConstraintsOfVar(varId);
@@ -2625,7 +2626,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallExternal(Edge edge, c
         list<EState> resList;
         for(set<int>::iterator i=_inputVarValues.begin();i!=_inputVarValues.end();++i) {
           PState newPState=*currentEState.pstate();
-          if(args.getBool("input-values-as-constraints")) {
+          if(CodeThorn::args.getBool("input-values-as-constraints")) {
             cerr<<"Option input-values-as-constraints no longer supported."<<endl;
             exit(1);
             //newCSet.removeAllConstraintsOfVar(varId);
