@@ -283,6 +283,14 @@ Unparse_Jovial::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
            // There still needs to be at least a BEGIN and END
            curprint("  BEGIN\n");
+           BOOST_FOREACH(SgInitializedName* arg, args)
+              {
+                 curprint("    ITEM ");
+                 curprint(arg->get_name());
+                 curprint(" ");
+                 unparseType(arg->get_type(), ninfo);
+                 curprint(" ;\n");
+              }
            curprint("  END\n");
         }
    }

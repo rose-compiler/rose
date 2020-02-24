@@ -196,22 +196,47 @@ setFortranEndProgramStmt(SgProgramHeaderStatement* program_decl,
 }
 
 void SageTreeBuilder::
-Enter(SgFunctionParameterScope* &function_def)
+Enter(SgFunctionParameterScope* &function_param_scope)
 {
    cout << "SageTreeBuilder::Enter(SgFunctionParameterScope*) \n";
 
-   function_def = new SgFunctionParameterScope();
-   ROSE_ASSERT(function_def != nullptr);
-   SageInterface::setSourcePosition(function_def);
+// SgFunctionParameterScope isn't really implemented in ROSE and is not useful
+// other than as a placeholder for location in the tree building process.
+// An SgBasicBlock for temporary storage of variable declarations.
 
-   SageBuilder::pushScopeStack(function_def);
+// Probably don't want to use a builder function as this won't be part of
+// the Sage tree; it will be deleted in the Leave function.
+// But I think it may be attached as I don't seem to be able to delete it.
+// TODO - THINK ABOUT THIS
+
+   SgBasicBlock* param_scope = new SgBasicBlock();
+   ROSE_ASSERT(param_scope != nullptr);
+   SageInterface::setSourcePosition(param_scope);
+
+   setActualFunctionParameterScope(param_scope);
+
+   ROSE_ASSERT(param_scope->get_parent() == nullptr);
+   param_scope->set_parent(nullptr);  // make sure this node is unattached
+
+   SageBuilder::pushScopeStack(param_scope);
+
+// This shall be deleted in the leave function
+   function_param_scope = new SgFunctionParameterScope();
+   ROSE_ASSERT(function_param_scope);
 }
 
 void SageTreeBuilder::
-Leave(SgFunctionParameterScope* function_def)
+Leave(SgFunctionParameterScope* function_param_scope)
 {
    cout << "SageTreeBuilder::Leave(SgFunctionParameterScope*) \n";
-// don't pop the scope stack here as the function declaration will need it on enter
+
+// SgFunctionParameterScope isn't really implemented in ROSE (see Enter function above)
+// and is not really useful other than as a placeholder for location in the tree building
+// process. Delete the object here.
+   if (function_param_scope != nullptr)
+      {
+         delete function_param_scope;
+      }
 }
 
 void SageTreeBuilder::
@@ -249,13 +274,19 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name,
 //   4. Transfer statements to the function definition body (actually perhaps could push a FunctionDefinition on the stack, then create declaration stuff)?
 
    SgScopeStatement* scope = SageBuilder::topScopeStack();
-   SgFunctionDefinition* function_def = isSgFunctionDefinition(scope);
-   SgFunctionParameterScope* param_scope = isSgFunctionParameterScope(scope);
+   SgFunctionDefinition* function_def = isSgFunctionDefinition(scope);             // nullptr expected for awhile
+   SgFunctionParameterScope* param_scope = isSgFunctionParameterScope(scope);      // nullptr expected unfortunately, DELETE_ME
+   SgBasicBlock* actual_param_scope = isSgBasicBlock(scope);                       // using basic block to hold variable declarations
 
-// TODO: for now assume it is a function parameter scope (a nondefining declaraion only)
-   ROSE_ASSERT(param_scope != nullptr);
+// TODO: for now assume it is a function parameter scope (a nondefining declaration only)
+// TODO - PUTBACK
+#if 1
+   ROSE_ASSERT(actual_param_scope != nullptr);
+   ROSE_ASSERT(actual_param_scope == get_context().actual_function_param_scope);
+   setActualFunctionParameterScope(nullptr);
 
-   SageBuilder::popScopeStack();
+   SageBuilder::popScopeStack();  // back to global scope
+#endif
 
    SgScopeStatement* global_scope = SageBuilder::topScopeStack();
    ROSE_ASSERT(global_scope);
@@ -268,25 +299,52 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name,
 //  3. create an initialized name for the formal parameter
 //  4. insert it in the SgFunctionParameterList
 
-   // Try buildNondefiningDeclaration
-   //function_decl = SageBuilder::buildNondefiningFunctionDeclaration (name, SgType *return_type, SgFunctionParameterList *parameter_list, global_scope, SgExprListExp *decoratorList=NULL)
-
-   SgType* return_type = SageBuilder::buildVoidType();
+   SgType* return_type = SageBuilder::buildVoidType();   // seems like this should be a function type (see MainProgram)
    SgFunctionParameterList* sg_param_list = SageBuilder::buildFunctionParameterList_nfi();
 
    function_decl = nullptr;
 
+#if 0
    std::cout << "\nHACK ATTACK............ building function declaration for " << name << std::endl;
    std::cout << ".x. FormalParameter list size is " << param_list.size() << std::endl;
    std::cout << ".x. SubroutineAttribute is " << attr << std::endl;
+#endif
 
    BOOST_FOREACH(const General_Language_Translation::FormalParameter &param, param_list)
       {
-         std::cout << ".x. FormalParameter " << param.name << std::endl;
+         SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(param.name, actual_param_scope);
+         ROSE_ASSERT(symbol != nullptr);
+
+         SgInitializedName* init_name = symbol->get_declaration();
+
+         if (param.output)
+            {
+               init_name->get_storageModifier().setMutable();
+            }
+
+         sg_param_list->append_arg(init_name);
+#if 0
+         std::cout << "--> FormalParameter is " << param.name << std::endl;
+         std::cout << "--> symbol is " << symbol << ": " << symbol->class_name() << std::endl;
+         std::cout << "--> declared variable name is " << init_name->get_name() << std::endl;
+         std::cout << "--> is output variable is " << param.output << std::endl;
+#endif
       }
 
+// NOTE: in future must decide whether to build nondefining or defining declaration
    function_decl = SageBuilder::buildNondefiningFunctionDeclaration(name, return_type, sg_param_list, SageBuilder::topScopeStack());
    SageInterface::setSourcePosition(function_decl);
+
+   if      (attr ==  General_Language_Translation::e_subroutine_attr_rec ) function_decl->get_functionModifier().setRecursive();
+   else if (attr ==  General_Language_Translation::e_subroutine_attr_rent) function_decl->get_functionModifier().setReentrant();
+
+// TODO - FIXME
+// WARNING: evaluation of the mangled name for a declaration in a scope = 0x111882000 that has been deleted is being skipped! 
+// Error: isSgStatement(stmt ->get_parent()) == NULL (statement = 0x110f60ab8 = SgVariableDeclaration) (numeric_label = 0x0) 
+// Perhaps not the correct scope to delete (see delete function_param_scope above)
+#if 0
+   if (actual_param_scope != nullptr)  delete actual_param_scope;
+#endif
 
    return;
 //------------------------------------------------------------
@@ -295,14 +353,12 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name,
    SgType* return_type = SageBuilder::buildVoidType();
    SgFunctionParameterList* param_list = SageBuilder::buildFunctionParameterList_nfi();
 
-
 // TODO - for now
    bool isDefiningDeclaration = false;
 
    if (isDefiningDeclaration == false)
       {
          function_decl = SageBuilder::buildNondefiningFunctionDeclaration(name, return_type, param_list, scope);
-         cout << "\nHACK ATTACK................\n\n";
       // setSourcePosition(function_decl, source);
       }
    else
@@ -382,17 +438,12 @@ Leave(SgFunctionDeclaration* function_decl)
 {
    cout << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
 
-   ROSE_ASSERT(false);
-
-   std::cout << "---  : Will pop scope(s) (maybe)\n ";
-   SageBuilder::popScopeStack();
-   SageBuilder::popScopeStack();
-
-   return;
-//-------------------------------------------------------
-
-// TODO - only if a defining declaration!
+#if 0
+// TODO - check this out for defining and nondefining declarations
 //   SageBuilder::popScopeStack();
+   SageBuilder::popScopeStack();
+   SageBuilder::popScopeStack();
+#endif
 
    SageInterface::appendStatement(function_decl, SageBuilder::topScopeStack());
 }

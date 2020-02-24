@@ -26,6 +26,12 @@ class SgJovialTableStatement;
 namespace Rose {
 namespace builder {
 
+// Need std=c++11
+//
+#ifndef nullptr
+#define nullptr NULL
+#endif
+
 // This is similar to F18 Fortran::parser::SourcePosition
 struct SourcePosition {
    std::string path;  // replaces Fortran::parser::SourceFile
@@ -33,14 +39,11 @@ struct SourcePosition {
 };
 
  struct TraversalContext {
+    TraversalContext() : type(nullptr), actual_function_param_scope(nullptr) {}
     SgType* type;
+    SgScopeStatement* actual_function_param_scope;
  };
 
-// Need std=c++11
-//
-#ifndef nullptr
-#define nullptr NULL
-#endif
 //using SourcePositionPair = boost::tuple<SourcePosition, SourcePosition>;
 //using SourcePositions    = boost::tuple<SourcePosition, SourcePosition, SourcePosition>;
 typedef boost::tuple<SourcePosition, SourcePosition> SourcePositionPair;
@@ -110,8 +113,9 @@ private:
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
 
 public:
-   const TraversalContext & Context(void) {return context_;}
+   const TraversalContext & get_context(void) {return context_;}
    void setContext(SgType* type) {context_.type = type;}
+   void setActualFunctionParameterScope(SgBasicBlock* scope) {context_.actual_function_param_scope = scope;}
 };
 
 } // namespace builder

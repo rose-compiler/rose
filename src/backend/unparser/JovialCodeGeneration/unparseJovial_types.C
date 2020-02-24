@@ -65,6 +65,15 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
               break;
            }
 
+        case V_SgEnumType:
+           {
+           // TODO - create function for this
+              SgEnumType* enum_type = isSgEnumType(type);
+           // TODO - for now only unparse the name
+              curprint(enum_type->get_name());
+              break;
+           }
+
           default:
                cout << "Unparse_Jovial::unparseType for type " << type->class_name() << " is unimplemented." << endl;
                ROSE_ASSERT(false);
