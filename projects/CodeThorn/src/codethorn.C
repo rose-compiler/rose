@@ -674,6 +674,7 @@ int main( int argc, char * argv[] ) {
   Rose::Diagnostics::mprefix->showProgramName(false);
   Rose::Diagnostics::mprefix->showThreadId(false);
   Rose::Diagnostics::mprefix->showElapsedTime(false);
+  Rose::Diagnostics::mfacilities.control("none,"); 
 
   Rose::global_options.set_frontend_notes(false);
   Rose::global_options.set_frontend_warnings(false);
@@ -960,7 +961,7 @@ int main( int argc, char * argv[] ) {
     timer.start();
     SgProject* sageProject = 0;
     vector<string> argvList(argv,argv+argc);
-    string turnOffRoseLoggerWarnings="-rose:log none";
+    //string turnOffRoseLoggerWarnings="-rose:log none";
     //    argvList.push_back(turnOffRoseLoggerWarnings);
     if(args.getBool("omp-ast")||args.getBool("data-race")) {
       SAWYER_MESG(logger[TRACE])<<"selected OpenMP AST."<<endl;
