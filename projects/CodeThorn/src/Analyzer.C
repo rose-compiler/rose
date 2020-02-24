@@ -1421,7 +1421,10 @@ list<EState> CodeThorn::Analyzer::evaluateFunctionCallArguments(Edge edge, SgFun
 }
 
 void CodeThorn::Analyzer::recordAnalyzedFunction(SgFunctionDefinition* funDef) {
-  analyzedFunctions.insert(funDef);
+#pragma omp critical(functionrecording)
+  {
+    analyzedFunctions.insert(funDef);
+  }
 }
 
 std::string CodeThorn::Analyzer::analyzedFunctionsToString() {
@@ -1458,7 +1461,10 @@ std::string CodeThorn::Analyzer::externalFunctionsToString() {
 }
 
 void CodeThorn::Analyzer::recordExternalFunctionCall(SgFunctionCallExp* funCall) {
-  externalFunctions.insert(funCall);
+#pragma omp critical(funcallrecording)
+  {
+    externalFunctions.insert(funCall);
+  }
 }
 
 list<EState> CodeThorn::Analyzer::transferEdgeEState(Edge edge, const EState* estate) {
@@ -2233,7 +2239,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
   SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   // ad 2)
   SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.target()));
-  //recordAnalyzedFunction(funDef); // TODORECORDING
+  recordAnalyzedFunction(funDef);
   SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
   ROSE_ASSERT(funDef);
   // ad 3)
@@ -2619,7 +2625,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallExternal(Edge edge, c
   bool isFunctionCallWithAssignmentFlag=isFunctionCallWithAssignment(lab,&varId);
 
   SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1);
-  //recordExternalFunctionCall(funCall); // TODORECORDING
+  recordExternalFunctionCall(funCall);
   evaluateFunctionCallArguments(edge,funCall,*estate,false);
 
   // TODO: check whether the following test is superfluous meanwhile, since isStdInLabel does take NonDetX functions into account
