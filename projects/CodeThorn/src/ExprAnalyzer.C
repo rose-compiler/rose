@@ -1181,7 +1181,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPreComputationOp(EState estate,
   AbstractValue newValue=oldValue+change;
   CallString cs=estate.callString;
   PState newPState=*estate.pstate();
-  writeToMemoryLocation(&newPState,address,newValue);
+  writeToMemoryLocation(estate.label(),&newPState,address,newValue);
   ConstraintSet cset; // use empty cset (in prep to remove it)
   ROSE_ASSERT(_analyzer);
   res.init(_analyzer->createEState(estate.label(),cs,newPState,cset),newValue);
@@ -1195,7 +1195,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPostComputationOp(EState estate
   AbstractValue newValue=oldValue+change;
   CallString cs=estate.callString;
   PState newPState=*estate.pstate();
-  writeToMemoryLocation(&newPState,address,newValue);
+  writeToMemoryLocation(estate.label(),&newPState,address,newValue);
   ConstraintSet cset; // use empty cset (in prep to remove it)
   ROSE_ASSERT(_analyzer);
   res.init(_analyzer->createEState(estate.label(),cs,newPState,cset),oldValue);
@@ -1697,7 +1697,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::execFunctionCallScanf(SgFunctionCal
         // write val into state at address argsList[j]
         if(av.isPtr()) {
           PState pstate=*estate.pstate();
-          writeToMemoryLocation(&pstate,av,val); 
+          writeToMemoryLocation(estate.label(),&pstate,av,val); 
           // TODO: pstate is not used yet, because estate is only read but not returned (hence this is a noop and not an update)
           cout<<"Warning: interpreter mode: scanf: memory location "<<av.toString(_variableIdMapping)<<" not updated (not implemented yet)."<<endl;
         } else {
@@ -1954,7 +1954,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
       AbstractValue one=CodeThorn::AbstractValue(1);
       SAWYER_MESG(logger[TRACE])<<"TODO: copying "<<copyRegionNumElements<<" elements from "<<sourcePtr.toString(_variableIdMapping)<<" to "<<targetPtr.toString(_variableIdMapping)<<endl;
       for(int i=0;i<copyRegionNumElements;i++) {
-        writeToMemoryLocation(&newPState,targetPtr,readFromMemoryLocation(estate.label(),&newPState,sourcePtr));
+        writeToMemoryLocation(estate.label(),&newPState,targetPtr,readFromMemoryLocation(estate.label(),&newPState,sourcePtr));
         targetPtr=AbstractValue::operatorAdd(targetPtr,one); // targetPtr++;
         sourcePtr=AbstractValue::operatorAdd(sourcePtr,one); // sourcePtr++;
       }
@@ -2075,8 +2075,7 @@ enum MemoryAccessBounds ExprAnalyzer::checkMemoryAccessBounds(AbstractValue addr
           return ACCESS_DEFINITELY_OUTSIDE_BOUNDS;
         }
       } else {
-        cerr<<"Internal error: unknown memory region offset: "<<offset.toString()<<endl;
-        exit(1);
+        return ACCESS_POTENTIALLY_OUTSIDE_BOUNDS;
       }
     }
   }
@@ -2169,7 +2168,7 @@ AbstractValue ExprAnalyzer::readFromMemoryLocation(Label lab, const PState* psta
   return val;
 }
 
-void ExprAnalyzer::writeToMemoryLocation(PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
+void ExprAnalyzer::writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
   // inspect everything here
   pstate->writeToMemoryLocation(memLoc,newValue);
 }
