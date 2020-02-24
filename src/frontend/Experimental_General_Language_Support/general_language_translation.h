@@ -228,10 +228,11 @@ namespace General_Language_Translation
       struct FormalParameter
         {
            FormalParameter()
-             : name(std::string("")), binding(General_Language_Translation::e_none) {} // want to use C++11 = delete
-           FormalParameter(const std::string &param_name, const ExpressionKind &param_binding)
-             : name(param_name), binding(param_binding) {}
+             : name(std::string("")), output(false), binding(General_Language_Translation::e_none) {} // want to use C++11 = delete
+           FormalParameter(const std::string &param_name, bool out, const ExpressionKind &param_binding)
+             : name(param_name), output(out), binding(param_binding) {}
            std::string name;
+           bool output;
            ExpressionKind binding;
         };
 

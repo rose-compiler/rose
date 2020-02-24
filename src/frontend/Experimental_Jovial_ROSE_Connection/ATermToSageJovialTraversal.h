@@ -85,7 +85,7 @@ ATbool traverse_CharacterLiteral          (ATerm term, SgExpression* &expr);
 
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
 ATbool traverse_StatusItemDescription (ATerm term, std::list<SgInitializedName*> &status_list, Sawyer::Optional<SgExpression*> &status_size);
-ATbool traverse_StatusConstant        (ATerm term, SgInitializedName* &init_name, SgUntypedInitializedName* & ut_init_name, bool has_initializer, int enum_val = 0);
+ATbool traverse_StatusConstant        (ATerm term, SgInitializedName* &init_name, SgExpression* init_expr=nullptr);
 ATbool traverse_DefaultSublist        (ATerm term, std::list<SgInitializedName*> &status_list);
 ATbool traverse_OptDefaultSublist     (ATerm term, std::list<SgInitializedName*> &status_list);
 ATbool traverse_StatusList            (ATerm term, std::list<SgInitializedName*> &status_list);
