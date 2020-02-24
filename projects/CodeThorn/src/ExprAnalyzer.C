@@ -9,6 +9,8 @@
 #include "CodeThornException.h"
 #include "Analyzer.h" // dependency on process-functions
 #include "CppStdUtilities.h"
+#include "CodeThornCommandLineOptions.h"
+#include "CodeThornLib.h"
 
 using namespace CodeThorn;
 using namespace CodeThorn;
@@ -486,7 +488,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
     }
   }
   default:
-    throw CodeThorn::Exception("Error: evaluateExpression::unknown node in expression ("+string(node->sage_class_name())+")");
+    throw CodeThorn::Exception("Error: evaluateExpression::unknown node in expression: "+string(node->sage_class_name())+" at "+SgNodeHelper::sourceFilenameToString(node)+" in file "+SgNodeHelper::sourceFilenameToString(node));
   } // end of switch
   throw CodeThorn::Exception("Error: evaluateExpression failed.");
 }
@@ -992,32 +994,35 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalUnaryMinusOp(SgMinusOp* node,
 list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node, 
                                                               EState estate, EvalMode mode) {
   SgType* operandType=node->get_operand_type();
+  CodeThorn::TypeSize typeSize=0; // remains zero if no size can be determined
+  AbstractValue sizeValue=AbstractValue::createTop();
+
   if(operandType) {
-    CodeThorn::TypeSize typeSize=_variableIdMapping->getTypeSize(operandType);
-    AbstractValue sizeValue;
-    if(typeSize==0) {
-      logger[WARN]<<"sizeof: could not determine size (= zero) of argument, assuming top "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
-      sizeValue=AbstractValue::createTop();
+    typeSize=_variableIdMapping->getTypeSize(operandType);
+  } else if(SgExpression* exp=node->get_operand_expr()) {
+    if(SgVarRefExp* varRefExp=isSgVarRefExp(exp)) {
+      typeSize=_variableIdMapping->getTypeSize(_variableIdMapping->variableId(varRefExp));
+    } else if(SgType* expType=exp->get_type()) {
+      typeSize=_variableIdMapping->getTypeSize(expType);
     } else {
-      SAWYER_MESG(logger[TRACE])<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizeof("<<typeSize<<")"<<endl;
-      sizeValue=AbstractValue(typeSize); 
-      SAWYER_MESG(logger[TRACE])<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizevalue of sizeof("<<typeSize<<"):"<<sizeValue.toString()<<endl;
+      logger[WARN] <<"sizeof: could not determine any type of sizeof argument and unsupported argument expression: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl<<AstTerm::astTermWithNullValuesToDot(exp)<<endl;
     }
-    SingleEvalResultConstInt res;
-    res.init(estate,sizeValue);
-    return listify(res);
   } else {
-    if(SgExpression* exp=node->get_operand_expr()) {
-      logger[WARN] <<"sizeof: could not determine any type of sizeof argument and unsupported argument expression: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl;
-    } else {
-      logger[WARN] <<"sizeof: could not determine any type of sizeof argument and no expression found either: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl;
-    }
-    // assume any size
-    AbstractValue sizeValue=AbstractValue::createTop();
-    SingleEvalResultConstInt res;
-    res.init(estate,sizeValue);
-    return listify(res);
+    logger[WARN] <<"sizeof: could not determine any type of sizeof argument and no expression found either: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl;
   }
+
+  // determines sizeValue based on typesize
+  if(typeSize==0) {
+    logger[WARN]<<"sizeof: could not determine size (= zero) of argument, assuming top "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
+    sizeValue=AbstractValue::createTop();
+  } else {
+    SAWYER_MESG(logger[TRACE])<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizeof("<<typeSize<<")"<<endl;
+    sizeValue=AbstractValue(typeSize); 
+    SAWYER_MESG(logger[TRACE])<<"DEBUG: @"<<SgNodeHelper::sourceLineColumnToString(node)<<": sizevalue of sizeof("<<typeSize<<"):"<<sizeValue.toString()<<endl;
+  }
+  SingleEvalResultConstInt res;
+  res.init(estate,sizeValue);
+  return listify(res);
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalCastOp(SgCastExp* node, 
@@ -1179,7 +1184,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPreComputationOp(EState estate,
   AbstractValue newValue=oldValue+change;
   CallString cs=estate.callString;
   PState newPState=*estate.pstate();
-  writeToMemoryLocation(&newPState,address,newValue);
+  writeToMemoryLocation(estate.label(),&newPState,address,newValue);
   ConstraintSet cset; // use empty cset (in prep to remove it)
   ROSE_ASSERT(_analyzer);
   res.init(_analyzer->createEState(estate.label(),cs,newPState,cset),newValue);
@@ -1193,7 +1198,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPostComputationOp(EState estate
   AbstractValue newValue=oldValue+change;
   CallString cs=estate.callString;
   PState newPState=*estate.pstate();
-  writeToMemoryLocation(&newPState,address,newValue);
+  writeToMemoryLocation(estate.label(),&newPState,address,newValue);
   ConstraintSet cset; // use empty cset (in prep to remove it)
   ROSE_ASSERT(_analyzer);
   res.init(_analyzer->createEState(estate.label(),cs,newPState,cset),oldValue);
@@ -1695,7 +1700,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::execFunctionCallScanf(SgFunctionCal
         // write val into state at address argsList[j]
         if(av.isPtr()) {
           PState pstate=*estate.pstate();
-          writeToMemoryLocation(&pstate,av,val); 
+          writeToMemoryLocation(estate.label(),&pstate,av,val); 
           // TODO: pstate is not used yet, because estate is only read but not returned (hence this is a noop and not an update)
           cout<<"Warning: interpreter mode: scanf: memory location "<<av.toString(_variableIdMapping)<<" not updated (not implemented yet)."<<endl;
         } else {
@@ -1952,7 +1957,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
       AbstractValue one=CodeThorn::AbstractValue(1);
       SAWYER_MESG(logger[TRACE])<<"TODO: copying "<<copyRegionNumElements<<" elements from "<<sourcePtr.toString(_variableIdMapping)<<" to "<<targetPtr.toString(_variableIdMapping)<<endl;
       for(int i=0;i<copyRegionNumElements;i++) {
-        writeToMemoryLocation(&newPState,targetPtr,readFromMemoryLocation(estate.label(),&newPState,sourcePtr));
+        writeToMemoryLocation(estate.label(),&newPState,targetPtr,readFromMemoryLocation(estate.label(),&newPState,sourcePtr));
         targetPtr=AbstractValue::operatorAdd(targetPtr,one); // targetPtr++;
         sourcePtr=AbstractValue::operatorAdd(sourcePtr,one); // sourcePtr++;
       }
@@ -2073,8 +2078,7 @@ enum MemoryAccessBounds ExprAnalyzer::checkMemoryAccessBounds(AbstractValue addr
           return ACCESS_DEFINITELY_OUTSIDE_BOUNDS;
         }
       } else {
-        cerr<<"Internal error: unknown memory region offset: "<<offset.toString()<<endl;
-        exit(1);
+        return ACCESS_POTENTIALLY_OUTSIDE_BOUNDS;
       }
     }
   }
@@ -2158,22 +2162,38 @@ bool ExprAnalyzer::potentialErrorDetected() {
 }
 
 AbstractValue ExprAnalyzer::readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc) {
+  // inspect memory location here
+  if(memLoc.isNullPtr()) {
+    recordDefinitiveNullPointerDereferenceLocation(lab);
+    return AbstractValue::createBot();
+  }
+  if(memLoc.isTop()) {
+    recordPotentialNullPointerDereferenceLocation(lab);
+    recordPotentialOutOfBoundsAccessLocation(lab);
+    recordPotentialUninitializedAccessLocation(lab);
+  } else if(!pstate->memLocExists(memLoc)) {
+    recordPotentialOutOfBoundsAccessLocation(lab);
+    recordPotentialUninitializedAccessLocation(lab);
+  }
   AbstractValue val=pstate->readFromMemoryLocation(memLoc);
-  // inspect everything here
+  // investigate value here
   if(val.isUndefined()) {
-    //Label lab=estate.label();
     recordPotentialUninitializedAccessLocation(lab);
   }
   return val;
 }
 
-void ExprAnalyzer::writeToMemoryLocation(PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
+void ExprAnalyzer::writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
   // inspect everything here
+  if(memLoc.isTop()) {
+    recordPotentialOutOfBoundsAccessLocation(lab);
+  } else if(!pstate->memLocExists(memLoc)) {
+    recordDefinitiveOutOfBoundsAccessLocation(lab);
+  }
   pstate->writeToMemoryLocation(memLoc,newValue);
 }
 
 void ExprAnalyzer::writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc) {
-  // inspect everything here
   AbstractValue undefValue=AbstractValue::createUndefined();
   pstate->writeToMemoryLocation(memLoc,undefValue);
 }

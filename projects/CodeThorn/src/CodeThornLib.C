@@ -9,7 +9,6 @@
 #include "CodeThornLib.h"
 
 using namespace Sawyer::Message;
-using namespace CodeThorn;
 
 void CodeThorn::initDiagnostics() {
   Rose::Diagnostics::initialize();

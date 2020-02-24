@@ -107,8 +107,9 @@ class AbstractValue {
   static AbstractValue createAddressOfArray(CodeThorn::VariableId arrayVariableId);
   static AbstractValue createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, AbstractValue Index);
   static AbstractValue createNullPtr();
-  static AbstractValue createTop();
   static AbstractValue createUndefined(); // used to model values of uninitialized variables/memory locations
+  static AbstractValue createTop();
+  static AbstractValue createBot();
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
   //  bool operator==(AbstractValue other) const;
