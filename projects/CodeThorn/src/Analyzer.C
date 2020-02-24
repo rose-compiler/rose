@@ -1744,7 +1744,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
 }
 
 // TODO: this function should be implemented with a call of ExprCodeThorn::Analyzer::evaluateExpression
-PState CodeThorn::Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
+PState CodeThorn::Analyzer::analyzeAssignRhs(Label lab, PState currentPState, VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
   ROSE_ASSERT(isSgExpression(rhs));
   AbstractValue rhsIntVal=CodeThorn::Top();
   bool isRhsIntVal=false;
@@ -1780,7 +1780,7 @@ PState CodeThorn::Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhs
     //cset.addEqVarVar(lhsVar, rhsVarId);
 
     if(currentPState.varExists(rhsVarId)) {
-      rhsIntVal=getExprAnalyzer()->readFromMemoryLocation(&currentPState,rhsVarId);
+      rhsIntVal=getExprAnalyzer()->readFromMemoryLocation(lab,&currentPState,rhsVarId);
     } else {
       if(variableIdMapping->hasArrayType(rhsVarId) && args.getBool("explicit-arrays")==false) {
         // in case of an array the id itself is the pointer value
@@ -1828,7 +1828,7 @@ PState CodeThorn::Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhs
     }
     // we are using AbstractValue here (and  operator== is overloaded for AbstractValue==AbstractValue)
     // for this comparison isTrue() is also false if any of the two operands is CodeThorn::Top()
-    if( (getExprAnalyzer()->readFromMemoryLocation(&newPState,lhsVar).operatorEq(rhsIntVal)).isTrue() ) {
+    if( (getExprAnalyzer()->readFromMemoryLocation(lab,&newPState,lhsVar).operatorEq(rhsIntVal)).isTrue() ) {
       // update of existing variable with same value
       // => no state change
       return newPState;
@@ -2075,7 +2075,7 @@ void CodeThorn::Analyzer::reduceStgToInOutAssertWorklistStates() {
 
 int CodeThorn::Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) {
   if(args.getBool("rers-binary")) {
-    int outputVal = getExprAnalyzer()->readFromMemoryLocation(currentEStatePtr->pstate(),globalVarIdByName("output")).getIntValue();
+    int outputVal = getExprAnalyzer()->readFromMemoryLocation(currentEStatePtr->label(),currentEStatePtr->pstate(),globalVarIdByName("output")).getIntValue();
     if (outputVal > -100) {  //either not a failing assertion or a stderr output treated as a failing assertion)
       return -1;
     }
@@ -2356,7 +2356,7 @@ std::list<EState> CodeThorn::Analyzer::transferReturnStmt(Edge edge, const EStat
     {
       returnVarId=variableIdMapping->createUniqueTemporaryVariableId(string("$return"));
     }
-    PState newPState=analyzeAssignRhs(currentPState,
+    PState newPState=analyzeAssignRhs(currentEState.label(),currentPState,
                                       returnVarId,
                                       expr,
                                       cset);
@@ -2434,7 +2434,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
     }
 
     if(newPState.varExists(returnVarId)) {
-      AbstractValue evalResult=getExprAnalyzer()->readFromMemoryLocation(&newPState,returnVarId);
+      AbstractValue evalResult=getExprAnalyzer()->readFromMemoryLocation(currentEState.label(),&newPState,returnVarId);
       getExprAnalyzer()->writeToMemoryLocation(&newPState,lhsVarId,evalResult);
       newPState.deleteVar(returnVarId); // remove $return from state
       return elistify(createEState(edge.target(),cs,newPState,cset));
@@ -2473,7 +2473,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
     }
 
     if(newPState.varExists(returnVarId)) {
-      AbstractValue evalResult=getExprAnalyzer()->readFromMemoryLocation(&newPState,returnVarId);
+      AbstractValue evalResult=getExprAnalyzer()->readFromMemoryLocation(currentEState.label(),&newPState,returnVarId);
       getExprAnalyzer()->writeToMemoryLocation(&newPState,lhsVarId,evalResult);
       newPState.deleteVar(returnVarId); // remove $return from state
       SAWYER_MESG(logger[TRACE])<<"transferFunctionCallReturn(initialization): LHSVAR:"<<getVariableIdMapping()->variableName(lhsVarId)<<" value: "<<evalResult.toString()<<endl;
@@ -2896,7 +2896,7 @@ list<EState> CodeThorn::Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, E
     PState newPState=*estate.pstate();
     ConstraintSet cset=*estate.constraints();
 
-    AbstractValue oldVarVal=getExprAnalyzer()->readFromMemoryLocation(&newPState,var);
+    AbstractValue oldVarVal=getExprAnalyzer()->readFromMemoryLocation(estate.label(),&newPState,var);
     AbstractValue newVarVal;
     AbstractValue const1=1;
     switch(nextNodeToAnalyze2->variantT()) {
@@ -2946,6 +2946,8 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
       if(variableIdMapping->hasClassType(lhsVar)) {
         // assignments to struct variables are not supported yet (this test does not detect s1.s2 (where s2 is a struct, see below)).
         logger[WARN]<<"assignment of structs (copy constructor) is not supported yet. Target update ignored! (unsound)"<<endl;
+      } else if(variableIdMapping->hasCharType(lhsVar)) {
+        getExprAnalyzer()->writeToMemoryLocation(&newPState,lhsVar,(*i).result);
       } else if(variableIdMapping->hasIntegerType(lhsVar)) {
         getExprAnalyzer()->writeToMemoryLocation(&newPState,lhsVar,(*i).result);
       } else if(variableIdMapping->hasFloatingPointType(lhsVar)) {
@@ -2957,9 +2959,12 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
         //newPState[lhsVar]=(*i).result;
         getExprAnalyzer()->writeToMemoryLocation(&newPState,lhsVar,(*i).result);
       } else {
-        logger[ERROR]<<SgNodeHelper::lineColumnNodeToString(nextNodeToAnalyze2)<<endl;
-        logger[ERROR]<<"Unknown type on LHS side of assignment: TYPE: "<<variableIdMapping->getType(lhsVar)->unparseToString()<<endl;
-        logger[ERROR]<<"TYPE SGNODE: "<<variableIdMapping->getType(lhsVar)->class_name()<<endl;
+        cerr<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(nextNodeToAnalyze2)<<endl;
+        cerr<<"Unsupported type on LHS side of assignment: "
+            <<"type: '"<<variableIdMapping->getType(lhsVar)->unparseToString()<<"'"
+            <<", "
+            <<"AST type node: "<<variableIdMapping->getType(lhsVar)->class_name()
+            <<endl;
         exit(1);
       }
 #if 0
@@ -3020,7 +3025,7 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
             AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
             if(pstate2.varExists(ptr)) {
               //cout<<"DEBUG: pointer exists (OK): "<<ptr.toString(_variableIdMapping)<<endl;
-              arrayPtrValue=getExprAnalyzer()->readFromMemoryLocation(&pstate2,ptr);
+              arrayPtrValue=getExprAnalyzer()->readFromMemoryLocation(estate.label(),&pstate2,ptr);
               //cout<<"DEBUG: arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
               // convert integer to VariableId
               if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {

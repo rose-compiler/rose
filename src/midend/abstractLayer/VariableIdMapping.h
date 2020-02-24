@@ -73,17 +73,21 @@ namespace CodeThorn {
     VariableId variableIdOfArrayElement(VariableId arrayVar, int elemIndex);
     SgSymbol* getSymbol(VariableId varId);
     SgType* getType(VariableId varId);
-    // schroder3 (2016-07-05): Returns whether the given variable is a reference variable
-    bool hasReferenceType(VariableId varId);
-    // returns true if this variable has any signed or unsigned integer type (short,int,long,longlong)
-    bool hasIntegerType(VariableId varId);
+
     // returns true if this variable has type bool. This also includes the C type _Bool.
     bool hasBoolType(VariableId varId);
-    // returns true if this variable has any floating-point type (float,double,longdouble)
+    // returns true if this variable has any signed or unsigned char type (char,char16,char32)
+    bool hasCharType(VariableId varId);
+    // returns true if this variable has any signed or unsigned integer type (short,int,long,longlong)
+    bool hasIntegerType(VariableId varId);
+    // returns true if this variable has any floating-point type (float,double,longdouble,float80,float128))
     bool hasFloatingPointType(VariableId varId);
     bool hasPointerType(VariableId varId);
-    bool hasArrayType(VariableId varId);
+    // schroder3 (2016-07-05): Returns whether the given variable is a reference variable
+    bool hasReferenceType(VariableId varId);
     bool hasClassType(VariableId varId);
+    bool hasArrayType(VariableId varId);
+
     SgVariableDeclaration* getVariableDeclaration(VariableId varId);
     // schroder3 (2016-07-05): Returns whether the given variable is valid in this mapping
     bool isVariableIdValid(VariableId varId);

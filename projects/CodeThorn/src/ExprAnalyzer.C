@@ -813,7 +813,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       if(_variableIdMapping->hasArrayType(arrayVarId)) {
         if(_variableIdMapping->isFunctionParameter(arrayVarId)) {
           // function parameter of array type contains a pointer value in C/C++
-          arrayPtrValue=readFromMemoryLocation(&pstate2,arrayVarId); // pointer value of array function paramter only (without index)
+          arrayPtrValue=readFromMemoryLocation(estate.label(),&pstate2,arrayVarId); // pointer value of array function paramter only (without index)
           SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
         } else {
           arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
@@ -823,7 +823,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         // in case it is a pointer retrieve pointer value
         SAWYER_MESG(logger[DEBUG])<<"pointer-array access."<<endl;
         if(pstate2.varExists(arrayVarId)) {
-          arrayPtrValue=readFromMemoryLocation(&pstate2,arrayVarId); // pointer value (without index)
+          arrayPtrValue=readFromMemoryLocation(estate.label(),&pstate2,arrayVarId); // pointer value (without index)
           SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue read from memory, arrayPtrValue:"<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
             logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<": value not a pointer value: "<<arrayPtrValue.toString()<<endl;
@@ -891,7 +891,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         // address of denoted memory location
         switch(mode) {
         case MODE_VALUE:
-          res.result=readFromMemoryLocation(&pstate2,arrayPtrPlusIndexValue);
+          res.result=readFromMemoryLocation(estate.label(),&pstate2,arrayPtrPlusIndexValue);
           SAWYER_MESG(logger[DEBUG])<<"retrieved array element value:"<<res.result<<endl;
           return listify(res);
         case MODE_ADDRESS:
@@ -1067,7 +1067,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalArrowOp(SgArrowExp* node,
     switch(mode) {
     case MODE_VALUE:
     SAWYER_MESG(logger[TRACE])<<"Arrow op: reading value from arrowop-struct location."<<denotedAddress.toString(_variableIdMapping)<<endl;
-    res.result=readFromMemoryLocation(estate.pstate(),denotedAddress);
+    res.result=readFromMemoryLocation(estate.label(),estate.pstate(),denotedAddress);
     break;
     case MODE_ADDRESS:
       res.result=denotedAddress;
@@ -1099,7 +1099,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDotOp(SgDotExp* node,
     switch(mode) {
     case MODE_VALUE:
       SAWYER_MESG(logger[TRACE])<<"Dot op: reading from struct location."<<address.toString(_variableIdMapping)<<endl;
-      res.result=readFromMemoryLocation(estate.pstate(),address);
+      res.result=readFromMemoryLocation(estate.label(),estate.pstate(),address);
       break;
     case MODE_ADDRESS:
       res.result=address;
@@ -1155,7 +1155,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::semanticEvalDereferenceOp(SingleEva
   // null pointer check
   bool continueExec=checkAndRecordNullPointer(derefOperandValue, estate.label());
   if(continueExec) {
-    res.result=readFromMemoryLocation(estate.pstate(),derefOperandValue);
+    res.result=readFromMemoryLocation(estate.label(),estate.pstate(),derefOperandValue);
     return listify(res);
   } else {
     // Alternative to above null pointer dereference recording: build
@@ -1175,7 +1175,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDereferenceOp(SgPointerDerefExp
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPreComputationOp(EState estate, AbstractValue address, AbstractValue change) {
   SingleEvalResultConstInt res;
-  AbstractValue oldValue=readFromMemoryLocation(estate.pstate(),address);
+  AbstractValue oldValue=readFromMemoryLocation(estate.label(),estate.pstate(),address);
   AbstractValue newValue=oldValue+change;
   CallString cs=estate.callString;
   PState newPState=*estate.pstate();
@@ -1189,7 +1189,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalPreComputationOp(EState estate,
 list<SingleEvalResultConstInt> ExprAnalyzer::evalPostComputationOp(EState estate, AbstractValue address, AbstractValue change) {
   // TODO change from precomp to postcomp
   SingleEvalResultConstInt res;
-  AbstractValue oldValue=readFromMemoryLocation(estate.pstate(),address);
+  AbstractValue oldValue=readFromMemoryLocation(estate.label(),estate.pstate(),address);
   AbstractValue newValue=oldValue+change;
   CallString cs=estate.callString;
   PState newPState=*estate.pstate();
@@ -1353,7 +1353,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
         AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
         if(pstate2.varExists(ptr)) {
           SAWYER_MESG(logger[DEBUG])<<"pointer exists (OK): "<<ptr.toString(_variableIdMapping)<<endl;
-          arrayPtrValue=readFromMemoryLocation(&pstate2,ptr);
+          arrayPtrValue=readFromMemoryLocation(estate.label(),&pstate2,ptr);
           SAWYER_MESG(logger[DEBUG])<<"arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           // convert integer to VariableId
           if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
@@ -1480,7 +1480,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
     if(_variableIdMapping->hasArrayType(varId)) {
       res.result=AbstractValue::createAddressOfArray(varId);
     } else {
-      res.result=readFromMemoryLocation(pstate,varId);
+      res.result=readFromMemoryLocation(estate.label(),pstate,varId);
     }
     return listify(res);
   } else {
@@ -1952,7 +1952,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCa
       AbstractValue one=CodeThorn::AbstractValue(1);
       SAWYER_MESG(logger[TRACE])<<"TODO: copying "<<copyRegionNumElements<<" elements from "<<sourcePtr.toString(_variableIdMapping)<<" to "<<targetPtr.toString(_variableIdMapping)<<endl;
       for(int i=0;i<copyRegionNumElements;i++) {
-        writeToMemoryLocation(&newPState,targetPtr,readFromMemoryLocation(&newPState,sourcePtr));
+        writeToMemoryLocation(&newPState,targetPtr,readFromMemoryLocation(estate.label(),&newPState,sourcePtr));
         targetPtr=AbstractValue::operatorAdd(targetPtr,one); // targetPtr++;
         sourcePtr=AbstractValue::operatorAdd(sourcePtr,one); // sourcePtr++;
       }
@@ -2008,7 +2008,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCa
         break;
       }
 #endif
-      AbstractValue currentPosValue=readFromMemoryLocation(estate.pstate(),currentPos);
+      AbstractValue currentPosValue=readFromMemoryLocation(estate.label(),estate.pstate(),currentPos);
       SAWYER_MESG(logger[DEBUG])<<"currentPosValue: "<<currentPosValue.toString(_variableIdMapping)<<endl;
       // if the memory location that is read, does not exist, it is an out-of-bounds access
       if(currentPosValue.isBot()) {
@@ -2157,12 +2157,11 @@ bool ExprAnalyzer::potentialErrorDetected() {
   return _uninitializedAccessLocations.numPotentialLocations()>0 || _outOfBoundsAccessLocations.numPotentialLocations()>0 || _nullPointerDereferenceLocations.numPotentialLocations()>0;
 }
 
-AbstractValue ExprAnalyzer::readFromMemoryLocation(const PState* pstate, AbstractValue memLoc) {
+AbstractValue ExprAnalyzer::readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc) {
   AbstractValue val=pstate->readFromMemoryLocation(memLoc);
   // inspect everything here
   if(val.isUndefined()) {
     //Label lab=estate.label();
-    Label lab(1); // dummy label, label cannot be determined yet
     recordPotentialUninitializedAccessLocation(lab);
   }
   return val;

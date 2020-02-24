@@ -24,7 +24,7 @@ BENCH_PASS=0
 BENCH_FAIL=0
 
 function DomainTests {
-testNumbers=`echo {001..023}`
+testNumbers=`echo {001..024}`
 #testNumbers=`echo 024`
 echo "Scheduled tests: $testNumbers"
 for testNumber in $testNumbers; do
