@@ -266,29 +266,27 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name,
 //  1. iterate through FormalParameter list
 //  2. search for param name in param_scope
 //  3. create an initialized name for the formal parameter
-//  4. insert it in the
+//  4. insert it in the SgFunctionParameterList
 
    // Try buildNondefiningDeclaration
    //function_decl = SageBuilder::buildNondefiningFunctionDeclaration (name, SgType *return_type, SgFunctionParameterList *parameter_list, global_scope, SgExprListExp *decoratorList=NULL)
 
-   SgBasicBlock* function_body = nullptr;
-
-   SgName function_name(name);
+   SgType* return_type = SageBuilder::buildVoidType();
+   SgFunctionParameterList* sg_param_list = SageBuilder::buildFunctionParameterList_nfi();
 
    function_decl = nullptr;
 
    std::cout << "\nHACK ATTACK............ building function declaration for " << name << std::endl;
-   ROSE_ASSERT(false);
+   std::cout << ".x. FormalParameter list size is " << param_list.size() << std::endl;
+   std::cout << ".x. SubroutineAttribute is " << attr << std::endl;
 
-#if 0
-   SgFunctionParameterScope* param_scope = new SgFunctionParameterScope();
-   ROSE_ASSERT(param_scope != nullptr);
-   SageInterface::setSourcePosition(param_scope);
+   BOOST_FOREACH(const General_Language_Translation::FormalParameter &param, param_list)
+      {
+         std::cout << ".x. FormalParameter " << param.name << std::endl;
+      }
 
-   SageBuilder::pushScopeStack(param_scope);
-#endif
-
-   ROSE_ASSERT(false);
+   function_decl = SageBuilder::buildNondefiningFunctionDeclaration(name, return_type, sg_param_list, SageBuilder::topScopeStack());
+   SageInterface::setSourcePosition(function_decl);
 
    return;
 //------------------------------------------------------------
@@ -533,6 +531,28 @@ Leave(SgVariableDeclaration* var_decl)
       }
    else   std::cout << "--> NOT CONSTANT \n";
 #endif
+}
+
+void SageTreeBuilder::
+Enter(SgEnumDeclaration* &enum_decl, const std::string &name, std::list<SgInitializedName*> &status_list)
+{
+   cout << "SageTreeBuilder::Enter(SgEnumDeclaration* &, ...) \n";
+
+   enum_decl = SageBuilder::buildEnumDeclaration_nfi(name, SageBuilder::topScopeStack());
+   ROSE_ASSERT(enum_decl);
+
+   BOOST_FOREACH(SgInitializedName *status_constant, status_list) {
+      enum_decl->append_enumerator(status_constant);
+      status_constant->set_scope(enum_decl->get_scope());
+   }
+}
+
+void SageTreeBuilder::
+Leave(SgEnumDeclaration* enum_decl)
+{
+   cout << "SageTreeBuilder::Leave(SgEnumDeclaration*) \n";
+
+   SageInterface::appendStatement(enum_decl, SageBuilder::topScopeStack());
 }
 
 } // namespace builder

@@ -84,12 +84,12 @@ ATbool traverse_CharacterItemDescription  (ATerm term, SgType* & type);
 ATbool traverse_CharacterLiteral          (ATerm term, SgExpression* &expr);
 
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
-ATbool traverse_StatusItemDescription (ATerm term, SgUntypedInitializedNameList* & status_list, Sawyer::Optional<SgExpression*> &status_size);
-ATbool traverse_StatusConstant        (ATerm term, SgUntypedInitializedName* & init_name);
-ATbool traverse_DefaultSublist        (ATerm term, SgUntypedInitializedNameList* status_list);
-ATbool traverse_OptDefaultSublist     (ATerm term, SgUntypedInitializedNameList* status_list);
-ATbool traverse_StatusList            (ATerm term, SgUntypedInitializedNameList* status_list);
-ATbool traverse_SpecifiedSublist      (ATerm term, SgUntypedInitializedNameList* status_list);
+ATbool traverse_StatusItemDescription (ATerm term, std::list<SgInitializedName*> &status_list, Sawyer::Optional<SgExpression*> &status_size);
+ATbool traverse_StatusConstant        (ATerm term, SgInitializedName* &init_name, SgUntypedInitializedName* & ut_init_name, bool has_initializer, int enum_val = 0);
+ATbool traverse_DefaultSublist        (ATerm term, std::list<SgInitializedName*> &status_list);
+ATbool traverse_OptDefaultSublist     (ATerm term, std::list<SgInitializedName*> &status_list);
+ATbool traverse_StatusList            (ATerm term, std::list<SgInitializedName*> &status_list);
+ATbool traverse_SpecifiedSublist      (ATerm term, std::list<SgInitializedName*> &status_list);
 
 // 2.1.1.7 POINTER TYPE DESCRIPTIONS
 ATbool traverse_PointerItemDescription (ATerm term, SgType* & type);
@@ -181,10 +181,10 @@ ATbool traverse_RefSpecificationChoice(ATerm term);
 
 // 2.6 OVERLAY DECLARATIONS
 ATbool traverse_OverlayDeclaration    (ATerm term);
-ATbool traverse_OverlayExpression     (ATerm term, SgUntypedExpression* & expr);
-ATbool traverse_OverlayString         (ATerm term, SgUntypedExpression* & expr);
-ATbool traverse_OverlayElement        (ATerm term, SgUntypedExpression* & expr);
-ATbool traverse_Spacer                (ATerm term, SgUntypedExpression* & expr);
+ATbool traverse_OverlayExpression     (ATerm term, SgExpression* & expr);
+ATbool traverse_OverlayString         (ATerm term, SgExpression* & expr);
+ATbool traverse_OverlayElement        (ATerm term, SgExpression* & expr);
+ATbool traverse_Spacer                (ATerm term, SgExpression* & expr);
 
 // 3.0 PROCEDURES AND FUNCTIONS
 ATbool traverse_ProcedureDefinition(ATerm term);
@@ -271,50 +271,50 @@ ATbool traverse_StopStatement   (ATerm term);
 ATbool traverse_AbortStatement  (ATerm term);
 
 // 5.0 FORMULAS
-ATbool traverse_Formula(ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);
+ATbool traverse_Formula(ATerm term, SgExpression* &expr);
 
 // 5.1 NUMERIC FORMULAS
-ATbool traverse_NumericFormula (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);
-ATbool traverse_NumericTerm    (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);
-ATbool traverse_NumericFactor  (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);
-ATbool traverse_NumericPrimary (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);
+ATbool traverse_NumericFormula (ATerm term, SgExpression* &expr);
+ATbool traverse_NumericTerm    (ATerm term, SgExpression* &expr);
+ATbool traverse_NumericFactor  (ATerm term, SgExpression* &expr);
+ATbool traverse_NumericPrimary (ATerm term, SgExpression* &expr);
 ATbool traverse_OptSign        (ATerm term, General_Language_Translation::ExpressionKind & op_enum);
-ATbool traverse_ExponentiationOp(ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);
+ATbool traverse_ExponentiationOp(ATerm term, SgExpression* &expr);
 ATbool traverse_NumericMachineParameter(ATerm term, SgExpression* &expr);
 
 // 5.2 BIT FORMULAS
-ATbool traverse_BitFormula             (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);
-ATbool traverse_OptLogicalContinuation (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);
-ATbool traverse_LogicalContinuation    (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);
-ATbool traverse_LogicalComponent       (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);
-ATbool traverse_LogicalOperand         (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);
-ATbool traverse_BitPrimary             (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &ut_expr);
+ATbool traverse_BitFormula             (ATerm term, SgExpression* &expr);
+ATbool traverse_OptLogicalContinuation (ATerm term, SgExpression* &expr);
+ATbool traverse_LogicalContinuation    (ATerm term, SgExpression* &expr);
+ATbool traverse_LogicalComponent       (ATerm term, SgExpression* &expr);
+ATbool traverse_LogicalOperand         (ATerm term, SgExpression* &expr);
+ATbool traverse_BitPrimary             (ATerm term, SgExpression* &expr);
 
 // 5.2.1 RELATIONAL EXPRESSIONS
-ATbool traverse_RelationalExpression   (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
+ATbool traverse_RelationalExpression   (ATerm term, SgExpression* &expr);
 
 // 5.3.0 GENERAL FORMULAS
-ATbool traverse_GeneralFormula   (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
+ATbool traverse_GeneralFormula   (ATerm term, SgExpression* &expr);
 
 // 5.3 CHARACTER FORMULAS
-ATbool traverse_CharacterFormula (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
+ATbool traverse_CharacterFormula (ATerm term, SgExpression* &expr);
 
 // 5.4 STATUS FORMULAS
-ATbool traverse_StatusFormula    (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
+ATbool traverse_StatusFormula    (ATerm term, SgExpression* &expr);
 
 // 5.5 POINTER FORMULAS
-ATbool traverse_PointerFormula   (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &expr);
+ATbool traverse_PointerFormula   (ATerm term, SgExpression* &expr);
 
 // 6.1 VARIABLE AND BLOCK REFERENCES
-ATbool traverse_Variable         (ATerm term, SgExpression* &sg_var, SgUntypedExpression* &var);
-ATbool traverse_VariableList     (ATerm term, std::vector<SgExpression*> &sg_vars, std::vector<SgUntypedExpression*> &vars);
-ATbool traverse_TableItem        (ATerm term, SgExpression* &sg_var, SgUntypedExpression* &var);
-ATbool traverse_Subscript        (ATerm term, std::vector<SgUntypedExpression*> & indexes);
-ATbool traverse_Index            (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &formula);
-ATbool traverse_TableDereference (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &formula);
-ATbool traverse_Dereference      (ATerm term, SgExpression* &sg_expr, SgUntypedExpression* &formula);
-ATbool traverse_BitFunctionVariable  (ATerm term, SgExpression* &sg_var, SgUntypedExpression* &var);
-ATbool traverse_ByteFunctionVariable (ATerm term, SgExpression* &sg_var, SgUntypedExpression* &var);
+ATbool traverse_Variable         (ATerm term, SgExpression* &var);
+ATbool traverse_VariableList     (ATerm term, std::vector<SgExpression*> &vars);
+ATbool traverse_TableItem        (ATerm term, SgExpression* &var);
+ATbool traverse_Subscript        (ATerm term, std::vector<SgExpression*> & indexes);
+ATbool traverse_Index            (ATerm term, SgExpression* &expr);
+ATbool traverse_TableDereference (ATerm term, SgExpression* &expr);
+ATbool traverse_Dereference      (ATerm term, SgExpression* &expr);
+ATbool traverse_BitFunctionVariable  (ATerm term, SgExpression* &var);
+ATbool traverse_ByteFunctionVariable (ATerm term, SgExpression* &var);
 
 // 6.2 NAMED CONSTANTS
 ATbool traverse_NamedConstant        (ATerm term, SgExpression* &var);

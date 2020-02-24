@@ -93,6 +93,9 @@ public:
    void Enter(SgVariableDeclaration* &, const std::string &, SgType*, SgExpression*);
    void Leave(SgVariableDeclaration*);
 
+   void Enter(SgEnumDeclaration* &, const std::string &, std::list<SgInitializedName*> &);
+   void Leave(SgEnumDeclaration*);
+
 // Jovial specific nodes
 //
    void Enter(SgJovialCompoolStatement* &,
