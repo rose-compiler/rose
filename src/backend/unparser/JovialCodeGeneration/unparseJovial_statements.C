@@ -680,20 +680,32 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      int n = enum_decl->get_enumerators().size();
      BOOST_FOREACH(SgInitializedName* init_name, enum_decl->get_enumerators())
          {
+            bool has_initializer = false;
+            SgExpression* expr = nullptr;
             SgName name = init_name->get_name();
 
             SgInitializer* init_expr = init_name->get_initializer();
-            ROSE_ASSERT(init_expr);
-            SgAssignInitializer* assign_expr = isSgAssignInitializer(init_expr);
-            ROSE_ASSERT(assign_expr);
-            SgExpression* expr = assign_expr->get_operand();
-            ROSE_ASSERT(expr);
+
+            if (init_expr) {
+               has_initializer = true;
+
+               ROSE_ASSERT(init_expr);
+               SgAssignInitializer* assign_expr = isSgAssignInitializer(init_expr);
+               ROSE_ASSERT(assign_expr);
+               expr = assign_expr->get_operand();
+               ROSE_ASSERT(expr);
+            }
 
             curprint("  ");
-            unparseExpression(expr, info);
-            curprint(" V(");
+
+            if (has_initializer) {
+               unparseExpression(expr, info);
+            }
+
+            // added V(...) to name during traversal
+            //            curprint(" V(");
             curprint(name.str());
-            curprint(")");
+            //            curprint(")");
             if (--n > 0) curprint(",");
             unp->cur.insert_newline(1);
          }
