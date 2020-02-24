@@ -4,8 +4,11 @@
 #include "FunctionIdMapping.h"
 #include "RoseAst.h"
 
+#include "CallGraph.h"
+
 #include "CodeThornException.h"
 #include "FunctionCallMapping.h"
+
 #include <sstream>
 #include "AstTerm.h"
 
@@ -29,7 +32,6 @@ bool FunctionCallInfo::isFunctionPointerCall() {
 
 FunctionCallInfo FunctionCallMapping::determineFunctionCallInfo(SgFunctionCallExp* fc) {
     SgExpression* exp=fc->get_function();
-    SgExprListExp* funCallArgs=fc->get_args();
     FunctionCallInfo fcInfo;
     if(SgFunctionRefExp* functionRef=isSgFunctionRefExp(exp)) {
       // direct function call
@@ -119,6 +121,19 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
         }
       }
     } else {
+      SAWYER_MESG(logger[INFO]) << "unresolved call " << fcInfo.funCallType->unparseToString()
+                                << std::endl;
+
+      std::vector<SgFunctionDeclaration*> targets;
+
+      CallTargetSet::getPropertiesForExpression(fc, classHierarchy, targets);
+
+      for (SgFunctionDeclaration* fdcl : targets) {
+        if (SgFunctionDeclaration* defdcl = isSgFunctionDeclaration(fdcl->get_definingDeclaration())) {
+          mapping[fc].insert(FunctionCallTarget(defdcl->get_definition())); ++n;
+        }
+      }
+
       // unknown function call
       // do not enter in mapping
     }

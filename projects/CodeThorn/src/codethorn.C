@@ -284,7 +284,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("counterexamples-with-output", po::value< bool >()->default_value(false)->implicit_value(true), "Reported counterexamples for LTL or reachability properties also include output values.")
     ("inf-paths-only", po::value< bool >()->default_value(false)->implicit_value(true), "Recursively prune the transition graph so that only infinite paths remain when checking LTL properties.")
     ("io-reduction", po::value< int >(), "(work in progress) Reduce the transition system to only input/output/worklist states after every <arg> computed EStates.")
-    ("keep-error-states",  po::value< bool >()->default_value(false)->implicit_value(true), "Do not reduce error states for the LTL analysis.")      
+    ("keep-error-states",  po::value< bool >()->default_value(false)->implicit_value(true), "Do not reduce error states for the LTL analysis.")
     ("ltl-in-alphabet",po::value< string >(),"Specify an input alphabet used by the LTL formulae. (e.g. \"{1,2,3}\")")
     ("ltl-out-alphabet",po::value< string >(),"Specify an output alphabet used by the LTL formulae. (e.g. \"{19,20,21,22,23,24,25,26}\")")
     ("ltl-driven", po::value< bool >()->default_value(false)->implicit_value(true), "Select mode to verify LTLs driven by SPOT's access to the state transitions.")
@@ -322,9 +322,9 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ;
 
   visualizationOptions.add_options()
-    ("rw-clusters", po::value< bool >()->default_value(false)->implicit_value(true), "Draw boxes around data elements from the same array (read/write-set graphs).")      
-    ("rw-data", po::value< bool >()->default_value(false)->implicit_value(true), "Display names of data elements (read/write-set graphs).") 
-    ("rw-highlight-races", po::value< bool >()->default_value(false)->implicit_value(true), "Highlight data races as large red dots (read/write-set graphs).") 
+    ("rw-clusters", po::value< bool >()->default_value(false)->implicit_value(true), "Draw boxes around data elements from the same array (read/write-set graphs).")
+    ("rw-data", po::value< bool >()->default_value(false)->implicit_value(true), "Display names of data elements (read/write-set graphs).")
+    ("rw-highlight-races", po::value< bool >()->default_value(false)->implicit_value(true), "Highlight data races as large red dots (read/write-set graphs).")
     ("dot-io-stg", po::value< string >(), "Output STG with explicit I/O node information in dot file <arg>.")
     ("dot-io-stg-forced-top", po::value< string >(), "Output STG with explicit I/O node information in dot file <arg>. Groups abstract states together.")
     ("tg1-estate-address", po::value< bool >()->default_value(false)->implicit_value(true), "Transition graph 1: Visualize address.")
@@ -384,7 +384,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("precision-exact-constraints", po::value< bool >()->default_value(false)->implicit_value(true),"Use precise constraint extraction.")
     ("stg-trace-file", po::value< string >(), "Generate STG computation trace and write to file <arg>.")
     ("explicit-arrays", po::value< bool >()->default_value(true)->implicit_value(true),"Represent all arrays explicitly in every state.")
-    ("z3", "RERS specific reachability analysis using z3.")	
+    ("z3", "RERS specific reachability analysis using z3.")
     ("rers-upper-input-bound", po::value< int >(), "RERS specific parameter for z3.")
     ("rers-verifier-error-number",po::value< int >(), "RERS specific parameter for z3.")
     ("ssa",  po::value< bool >()->default_value(false)->implicit_value(true), "Generate SSA form (only works for programs without function calls, loops, jumps, pointers and returns).")
@@ -463,7 +463,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ("data-race-fail", po::value< bool >()->default_value(false)->implicit_value(true), "Perform data race detection and fail on error (codethorn exit status 1). For use in regression verification. Implicitly enables data race detection.")
     ;
 
-  visibleOptions.add_options()            
+  visibleOptions.add_options()
     ("help,h", "Produce this help message.")
     ("help-cegpra", "Show options for CEGRPA.")
     ("help-eq", "Show options for program equivalence checking.")
@@ -557,7 +557,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
     ifstream configStream(args.getString("config").c_str());
     po::store(po::parse_config_file(configStream, configOptions), args);
     po::notify(args);
-  } 
+  }
 
   if (args.count("help")) {
     cout << visibleOptions << "\n";
@@ -616,9 +616,9 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
   for (int i=1; i < argc; ++i) {
     string currentArg(argv[i]);
     if (currentArg[0] != '-' ){
-      continue;  // not an option      
+      continue;  // not an option
     }
-    // explicitly keep options relevant to the ROSE frontend (white list) 
+    // explicitly keep options relevant to the ROSE frontend (white list)
     else if (currentArg == "-I") {
       assert(i+1<argc);
       ++i;
@@ -639,7 +639,7 @@ CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Fa
 	continue;
       }
     }
-    // No match with elements in the white list above. 
+    // No match with elements in the white list above.
     // Must be a CodeThorn option, therefore remove it from argv.
     argv[i] = strdup("");
   }
@@ -694,7 +694,7 @@ void automataDotInput(Sawyer::Message::Facility logger) {
     if (verificationEngine == "ltsmin") {
       explorer.setUseLtsMin(true);
     }
-  } 
+  }
   if (args.getBool("keep-systems")) {
     explorer.setStoreComputedSystems(true);
   } else {
@@ -799,7 +799,7 @@ void automataDotInput(Sawyer::Message::Facility logger) {
   if (!args.getBool("promela-output-only")) {
     explorer.explore();
   }
-  
+
   if (args.count("check-ltl")) {
     PropertyValueTable* ltlResults=nullptr;
     if (args.getBool("promela-output-only")) { // just read the properties into a PropertyValueTable
@@ -891,7 +891,7 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
   if(args.getBool("explicit-arrays")==false) {
     analyzer->setSkipArrayAccesses(true);
   }
-  
+
   // this must be set early, as subsequent initialization depends on this flag
   if (args.getBool("ltl-driven")) {
     analyzer->setModeLTLDriven(true);
@@ -1056,22 +1056,22 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
   }
   // solver "factory"
   switch(solverId) {
-  case 5 :  {  
+  case 5 :  {
     solver = new Solver5(); break;
   }
-  case 8 :  {  
+  case 8 :  {
     solver = new Solver8(); break;
   }
-  case 10 :  {  
+  case 10 :  {
     solver = new Solver10(); break;
   }
-  case 11 :  {  
+  case 11 :  {
     solver = new Solver11(); break;
   }
-  case 12 :  {  
+  case 12 :  {
     solver = new Solver12(); break;
   }
-  default :  { 
+  default :  {
     logger[ERROR] <<"Unknown solver ID: "<<solverId<<endl;
     exit(1);
   }
@@ -1149,7 +1149,7 @@ int main( int argc, char * argv[] ) {
       cerr << "Error: Options selected that require the Z3 library, however Z3 was not selected during configuration." << endl;
       exit(1);
     }
-#endif	
+#endif
 
     // Start execution
     mfacilities.control(args["log-level"].as<string>());
@@ -1254,7 +1254,7 @@ int main( int argc, char * argv[] ) {
       case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
       case 3: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_ID_MAPPING;break;
       case 4: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;break;
-      default: 
+      default:
         cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
         exit(1);
       }
@@ -1476,7 +1476,7 @@ int main( int argc, char * argv[] ) {
     if(args.getBool("print-variable-id-mapping")) {
       analyzer->getVariableIdMapping()->toStream(cout);
     }
-  
+
     if(args.isUserProvided("type-size-mapping-print")||args.isUserProvided("type-size-mapping-csv")) {
       // from: src/midend/astDiagnostics/AstStatistics.C
       string s=analyzer->typeSizeMappingToString();
@@ -1492,7 +1492,7 @@ int main( int argc, char * argv[] ) {
         }
       }
     }
-    
+
     if(args.count("run-rose-tests")) {
       cout << "ROSE tests started."<<endl;
       // Run internal consistency tests on AST
@@ -1512,7 +1512,7 @@ int main( int argc, char * argv[] ) {
         }
         delete evaluator;
       }
-      cout << "ROSE tests finished."<<endl; 
+      cout << "ROSE tests finished."<<endl;
       mfacilities.shutdown();
       return 0;
     }
@@ -1717,17 +1717,17 @@ int main( int argc, char * argv[] ) {
 #ifdef HAVE_Z3
     if(args.count("z3"))
     {
-	assert(args.count("rers-upper-input-bound") != 0 &&  args.count("rers-verifier-error-number") != 0);	
+	assert(args.count("rers-upper-input-bound") != 0 &&  args.count("rers-verifier-error-number") != 0);
 	int RERSUpperBoundForInput = args["rers-upper-input-bound"].as<int>();
 	int RERSVerifierErrorNumber = args["rers-verifier-error-number"].as<int>();
 	cout << "generateSSAForm()" << endl;
-	ReachabilityAnalyzerZ3* reachAnalyzer = new ReachabilityAnalyzerZ3(RERSUpperBoundForInput, RERSVerifierErrorNumber, analyzer, &logger);	
+	ReachabilityAnalyzerZ3* reachAnalyzer = new ReachabilityAnalyzerZ3(RERSUpperBoundForInput, RERSVerifierErrorNumber, analyzer, &logger);
 	cout << "checkReachability()" << endl;
 	reachAnalyzer->checkReachability();
 
 	exit(0);
     }
-#endif	
+#endif
 
     if(args.getBool("ssa")) {
       SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
@@ -1814,7 +1814,7 @@ int main( int argc, char * argv[] ) {
       transitionGraphSizeInf = analyzer->getTransitionGraph()->size();
       eStateSetSizeStgInf = (analyzer->getTransitionGraph())->estateSet().size();
     }
-    
+
     if(args.getBool("std-io-only")) {
       SAWYER_MESG(logger[TRACE]) << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
       timer.start();
@@ -2003,7 +2003,7 @@ int main( int argc, char * argv[] ) {
 
       bool useRuleConstSubstitution=args.getBool("rule-const-subst");
       bool useRuleCommutativeSort=args.getBool("rule-commutative-sort");
-      
+
       timer.start();
       speci.extractArrayUpdateOperations(analyzer,
           arrayUpdates,
