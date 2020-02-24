@@ -1420,6 +1420,47 @@ list<EState> CodeThorn::Analyzer::evaluateFunctionCallArguments(Edge edge, SgFun
   return elistify(createEState(edge.target(),cs,newPState,cset));
 }
 
+void CodeThorn::Analyzer::recordAnalyzedFunction(SgFunctionDefinition* funDef) {
+  analyzedFunctions.insert(funDef);
+}
+
+std::string CodeThorn::Analyzer::analyzedFunctionsToString() {
+  ostringstream ss;
+  for (auto funDef : analyzedFunctions)  {
+    ss<<SgNodeHelper::getFunctionName(funDef)
+      <<","
+      <<SgNodeHelper::sourceLineColumnToString(funDef)
+      <<","
+      <<SgNodeHelper::sourceFilenameToString(funDef)
+      <<endl;
+  }
+  return ss.str();
+}
+
+std::string CodeThorn::Analyzer::analyzedFilesToString() {
+  unordered_set<string> fileNameSet;
+  for (auto funDef : analyzedFunctions)  {
+    fileNameSet.insert(SgNodeHelper::sourceFilenameToString(funDef));
+  }
+  ostringstream ss;
+  for (auto fn : fileNameSet)  {
+    ss<<fn<<endl;
+  }
+  return ss.str();
+}
+
+std::string CodeThorn::Analyzer::externalFunctionsToString() {
+  ostringstream ss;
+  for (auto funCall : externalFunctions)  {
+    ss<<SgNodeHelper::getFunctionName(funCall)<<endl;
+  }
+  return ss.str();
+}
+
+void CodeThorn::Analyzer::recordExternalFunctionCall(SgFunctionCallExp* funCall) {
+  externalFunctions.insert(funCall);
+}
+
 list<EState> CodeThorn::Analyzer::transferEdgeEState(Edge edge, const EState* estate) {
   ROSE_ASSERT(edge.source()==estate->label());
   //cout<<"ESTATE: "<<estate->toString(getVariableIdMapping())<<endl;
@@ -2192,6 +2233,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
   SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   // ad 2)
   SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.target()));
+  //recordAnalyzedFunction(funDef); // TODORECORDING
   SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
   ROSE_ASSERT(funDef);
   // ad 3)
@@ -2577,6 +2619,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallExternal(Edge edge, c
   bool isFunctionCallWithAssignmentFlag=isFunctionCallWithAssignment(lab,&varId);
 
   SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1);
+  //recordExternalFunctionCall(funCall); // TODORECORDING
   evaluateFunctionCallArguments(edge,funCall,*estate,false);
 
   // TODO: check whether the following test is superfluous meanwhile, since isStdInLabel does take NonDetX functions into account
@@ -3054,11 +3097,11 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
           AbstractValue arrayElementId;
           //AbstractValue aValue=(*i).value();
           list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(indexExp,currentEState);
-          ROSE_ASSERT(res.size()==1); // TODO: temporary restriction
+          ROSE_ASSERT(res.size()==1); // this should always hold for normalized ASTs
           AbstractValue indexValue=(*(res.begin())).value();
           AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
           //cout<<"DEBUG: arrayPtrPlusIndexValue: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
-
+          /*
           {
             //VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
             MemoryAccessBounds boundsCheckResult=exprAnalyzer.checkMemoryAccessBounds(arrayPtrPlusIndexValue);
@@ -3099,23 +3142,18 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
               exit(1);
             }
           }
+          */
           arrayElementId=arrayPtrPlusIndexValue;
           //cout<<"DEBUG: arrayElementId: "<<arrayElementId.toString(_variableIdMapping)<<endl;
           //SAWYER_MESG(logger[TRACE])<<"arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
-          ROSE_ASSERT(!arrayElementId.isBot());
+          if(arrayElementId.isBot()) {
+            // inaccessible memory location, return empty estate list
+            return estateList;
+          }
           // read value of variable var id (same as for VarRefExp - TODO: reuse)
           // TODO: check whether arrayElementId (or array) is a constant array (arrayVarId)
-          if(pstate2.varExists(arrayElementId)) {
-            // TODO: handle constraints
-            getExprAnalyzer()->writeToMemoryLocation(label,&pstate2,arrayElementId,(*i).value()); // *i is assignment-rhs evaluation result
-            estateList.push_back(createEState(edge.target(),cs,pstate2,oldcset));
-          } else {
-            // check that array is constant array (it is therefore ok that it is not in the state)
-            //SAWYER_MESG(logger[TRACE]) <<"lhs array-access index does not exist in state (creating it now). Array element id:"<<arrayElementId.toString(_variableIdMapping)<<" PState size:"<<pstate2.size()<<endl;
-            //SAWYER_MESG(logger[TRACE])<<"PState:"<<pstate2.toString(getVariableIdMapping())<<endl;
-            getExprAnalyzer()->writeToMemoryLocation(label,&pstate2,arrayElementId,(*i).value()); // *i is assignment-rhs evaluation result
-            estateList.push_back(createEState(edge.target(),cs,pstate2,oldcset));
-          }
+          getExprAnalyzer()->writeToMemoryLocation(label,&pstate2,arrayElementId,(*i).value()); // *i is assignment-rhs evaluation result
+          estateList.push_back(createEState(edge.target(),cs,pstate2,oldcset));
         } else {
           logger[ERROR] <<"array-access uses expr for denoting the array. Normalization missing."<<endl;
           logger[ERROR] <<"expr: "<<lhs->unparseToString()<<endl;

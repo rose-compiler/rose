@@ -864,6 +864,10 @@ AbstractValue AbstractValue::createUndefined() {
   newValue.valueType=AbstractValue::UNDEFINED;
   return newValue;
 }
+AbstractValue AbstractValue::createBot() {
+  CodeThorn::Bot bot;
+  return AbstractValue(bot);
+}
 
 AbstractValue CodeThorn::operator+(AbstractValue& a,AbstractValue& b) {
   return AbstractValue::operatorAdd(a,b);

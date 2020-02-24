@@ -1350,6 +1350,33 @@ int main( int argc, char * argv[] ) {
       }
     }
 
+    if(args.isUserProvided("analyzed-functions-csv")) {
+      string fileName=args.getString("analyzed-functions-csv");
+      cout<<"Writing list of analyzed functions to file "<<fileName<<endl;
+      string s=analyzer->analyzedFunctionsToString();
+      if(!CppStdUtilities::writeFile(fileName, s)) {
+        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
+      }
+    }
+
+    if(args.isUserProvided("analyzed-files-csv")) {
+      string fileName=args.getString("analyzed-files-csv");
+      cout<<"Writing list of analyzed files to file "<<fileName<<endl;
+      string s=analyzer->analyzedFilesToString();
+      if(!CppStdUtilities::writeFile(fileName, s)) {
+        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
+      }
+    }
+
+    if(args.isUserProvided("external-functions-csv")) {
+      string fileName=args.getString("external-functions-csv");
+      cout<<"Writing list of external functions to file "<<fileName<<endl;
+      string s=analyzer->externalFunctionsToString();
+      if(!CppStdUtilities::writeFile(fileName, s)) {
+        logger[ERROR]<<"Cannot create file "<<fileName<<endl;
+      }
+    }
+
     long pstateSetSize=analyzer->getPStateSet()->size();
     long pstateSetBytes=analyzer->getPStateSet()->memorySize();
     long pstateSetMaxCollisions=analyzer->getPStateSet()->maxCollisions();
