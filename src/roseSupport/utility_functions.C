@@ -317,6 +317,11 @@ std::string version_message()
      string backend_C_compiler_without_path   = BACKEND_C_COMPILER_NAME_WITH_PATH;
      string backend_C_compiler_with_path      = BACKEND_C_COMPILER_NAME_WITH_PATH;
      string backend_Cxx_compiler_version      = StringUtility::numberToString(BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER);
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+     string backend_Fortran_compiler_with_path= BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
+     string backend_Fortran_compiler_version  = StringUtility::numberToString(BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER);
+     string backend_Fortran_compiler_without_path = BACKEND_FORTRAN_COMPILER_NAME_WITHOUT_PATH;
+#endif
 
 #ifdef USE_CMAKE
      string build_tree_path                   = "CMake does not set: ROSE_COMPILE_TREE_PATH";
@@ -336,6 +341,10 @@ std::string version_message()
           "\n  --- using backend C compiler path (as specified at configure time): " + backend_C_compiler_with_path +
           "\n  --- using backend C++ compiler: " + backend_Cxx_compiler_without_path + " version: " + backend_Cxx_compiler_version +
           "\n  --- using backend C++ compiler path (as specified at configure time): " + backend_Cxx_compiler_with_path +
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+          "\n  --- using backend Fortran compiler: " + backend_Fortran_compiler_without_path + " version: " + backend_Fortran_compiler_version +
+          "\n  --- using backend Fortran compiler path (as specified at configure time): " + backend_Fortran_compiler_with_path +
+#endif
           "\n  --- using original build tree path: " + build_tree_path +
           "\n  --- using instalation path: " + install_path +
           "\n  --- using GNU readline version: " + readlineVersionString() +
