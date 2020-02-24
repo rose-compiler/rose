@@ -13,8 +13,8 @@
 #include "transformations/armadillo/ArmaOptimizer.h"
 #include "utility/dotify.h"
 
-#define WITH_ARMA 1
-#define UNPARSE_TO_MATLAB 0
+static constexpr int WITH_ARMA=1;
+static constexpr int UNPARSE_TO_MATLAB=0;
 
 int main(int argc, char* argv[])
 {
@@ -37,6 +37,8 @@ int main(int argc, char* argv[])
   // convert IR to SSA form
   // MatlabAnalysis::convertToSSA(p);
 
+  dotify::save_dot("matlab.dot", SG_DEREF(p));
+
   // deduce types
   MatlabAnalysis::typeAnalysis(p);
 
@@ -49,8 +51,6 @@ int main(int argc, char* argv[])
   // Armadillo library specific optimizations
   if (WITH_ARMA)
     ArmaOpt::optimize(p);
-
-  dotify::save_dot("matlab.dot", SG_DEREF(p));
 
   AstTests::runAllTests(p);
 

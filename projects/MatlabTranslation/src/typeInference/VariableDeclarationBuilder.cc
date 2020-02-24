@@ -8,6 +8,7 @@
 #include "sageGeneric.h"
 
 #include "utility/utils.h"
+#include "transformations/MatlabSimpleTransformer.h"
 #include "FastNumericsRoseSupport.h"
 #include "TypeAttribute.h"
 
@@ -41,10 +42,16 @@ SgScopeStatement* varPlacementScope(SgVarRefExp* varRef)
   return varPlacementScope(sg::ancestor<SgScopeStatement>(varRef));
 }
 
+static inline
+bool
+fakeFunctionReference(SgVarRefExp* varref)
+{
+  return isSgFunctionCallExp(varref->get_parent());
+}
 
 struct VariableDeclInserter
 {
-    typedef std::map<std::string, SgVariableDeclaration*> InsertedDeclContainer;
+    typedef std::map<std::string, SgInitializedName*> InsertedDeclContainer;
 
     explicit
     VariableDeclInserter(SgFunctionDeclaration* functionDecl)
@@ -56,47 +63,54 @@ struct VariableDeclInserter
       ROSE_ASSERT(varref);
 
       std::string varname = ru::nameOf(varref);
-      const bool  ignore = (  isSgMatlabForStatement(varref->get_parent())
-                           || isSgFunctionCallExp(varref->get_parent())
+
+      const bool  ignore = (  MatlabToCpp::forLoopIterationVariable(varref, varname)
+                           || fakeFunctionReference(varref)
                            || FastNumericsRoseSupport::isParameter(varref, fundecl)
                            || varname == "nargin"
                            );
 
-      std::cerr << "**** " << varname << " ";
-      if (ignore) { std::cerr << "~" << std::endl; return; }
+      if (ignore) { return; }
 
       InsertedDeclContainer::iterator pos = insertedDecls.find(varname);
 
       if (pos == insertedDecls.end())
       {
-        std::cerr << "!";
         SgType* vartype = FastNumericsRoseSupport::getInferredType(varref);
-
-        if (!vartype)
-        {
-          std::cerr << " >" << varref->unparseToString() << " has no type"
-                    << std::endl;
-          ROSE_ASSERT(false);
-        }
+        ROSE_ASSERT(vartype);
 
         SgScopeStatement*      scope   = varPlacementScope(varref);
         SgVariableDeclaration* vardecl = sb::buildVariableDeclaration(varname, vartype, NULL, scope);
         ROSE_ASSERT(vardecl);
 
+        SgInitializedName* 	   ininame = vardecl->get_decl_item(varname);
+        ROSE_ASSERT(ininame);
+
+        SgVariableSymbol*      varsym  = isSgVariableSymbol(ininame->search_for_symbol_from_symbol_table());
+        ROSE_ASSERT(varsym);
+
+        /// >>>> why is this needed?
+        ininame = varsym->get_declaration();
+        ROSE_ASSERT(ininame);
+
+        vardecl->get_variables().at(0) = ininame;
+        ininame->set_parent(vardecl);
+        /// <<<< ???
+
         si::prependStatement(vardecl, scope);
 
-        auto ins = insertedDecls.insert(std::make_pair(varname, vardecl));
+        auto ins = insertedDecls.insert(std::make_pair(varname, ininame));
         ROSE_ASSERT(ins.second);
 
         pos = ins.first;
       }
 
-      SgVariableDeclaration* dclnode = pos->second;
-      SgVarRefExp*           refnode = sb::buildVarRefExp(dclnode);
+      SgInitializedName*     varinit = pos->second;
+      SgScopeStatement*      ascope  = sg::ancestor<SgScopeStatement>(varref);
+      SgVarRefExp*           refnode = sb::buildVarRefExp(varinit, ascope /* not used */);
       ROSE_ASSERT(refnode);
 
       si::replaceExpression(varref, refnode, false /* keep old expr */);
-      std::cerr << std::endl;
     }
 
     void operator()(SgNode* n) { createVarDecl(isSgVarRefExp(n)); }
