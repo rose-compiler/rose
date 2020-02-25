@@ -51,6 +51,7 @@
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 using namespace Rose;
+using namespace Rose::Diagnostics;
 
 // global variable for turning on and off internal debugging
 int ROSE_DEBUG = 0;
@@ -468,10 +469,13 @@ class PatchDeclStmt : public ROSE_VisitTraversal {
         }
         if (defdecls.size() > 0) {
           SgDeclarationStatement * defdecl = *(defdecls.begin());
+#define DEBUG_MULTIPLE_DEFINING_DECLARATIONS 0
+#if DEBUG_MULTIPLE_DEFINING_DECLARATIONS
           if (defdecls.size() > 1) {
-            printf("Warning: Found %d defining declarations for declarations with mangled name: %s (%s)\n", defdecls.size(), it_declvect->first.c_str(), defdecl->class_name().c_str());
+            mfprintf(mlog [ WARN ] )("Warning: Found %d defining declarations for declarations with mangled name: %s (%s)\n", defdecls.size(), it_declvect->first.c_str(), defdecl->class_name().c_str());
 //          ROSE_ASSERT(false);
           }
+#endif
           for (it_declstmt = it_declvect->second.begin(); it_declstmt != it_declvect->second.end(); it_declstmt++) {
             (*it_declstmt)->set_definingDeclaration(defdecl);
           }
@@ -584,6 +588,8 @@ void append(SgProject * project, std::list<std::string> const & astfiles) {
     for (std::vector<SgFile *>::const_iterator it = files.begin(); it != files.end(); ++it) {
       project->get_fileList().push_back(*it);
       (*it)->set_parent(project->get_fileList_ptr());
+      (*it)->set_skipfinalCompileStep(true); // FIXME SgProject::get_skipfinalCompileStep returns conjunction of SgFile::get_skipfinalCompileStep which default to false. It would then always be false.
+      (*it)->set_skipfinalCompileStep(project->get_skipfinalCompileStep());
     }
     lproject->get_fileList_ptr()->get_listOfFiles().clear();
 

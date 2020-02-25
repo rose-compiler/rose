@@ -146,7 +146,7 @@ namespace CodeThorn {
     std::string getInterpretationModeFileName();
     void setInterpretationModeFileName(std::string);
 
-    AbstractValue readFromMemoryLocation(const PState* pstate, AbstractValue memLoc);
+    AbstractValue readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
     void writeToMemoryLocation(PState* pstate, AbstractValue memLoc, AbstractValue newValue);
     void writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc);
     

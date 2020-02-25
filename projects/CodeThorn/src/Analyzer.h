@@ -129,10 +129,10 @@ namespace CodeThorn {
 
     int computeNumberOfElements(SgVariableDeclaration* decl);
     // modifies PState with written initializers
-    PState analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pState, EState currentEState);
+    PState analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer, PState pState, EState currentEState);
     // modifies PState with written initializers
-    EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
-    PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
+    EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1, EState currentEState, Label targetLabel);
+    PState analyzeAssignRhs(Label lab, PState currentPState, VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
 
     // thread save; only prints if option status messages is enabled.
     void printStatusMessage(bool);
