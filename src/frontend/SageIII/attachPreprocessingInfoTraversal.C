@@ -2738,7 +2738,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
             // if ( isCompilerGenerated || isTransformation || currentFileNameId == fileIdForOriginOfCurrentLocatedNode )
             // if ( isCompilerGenerated || isTransformation || source_file_id == fileIdForOriginOfCurrentLocatedNode )
             // if ( source_file_id == fileIdForOriginOfCurrentLocatedNode )
-               if ( source_file_id == currentLocNode_physical_file_id )
+               if ( ((sourceFile->get_requires_C_preprocessor() == true) ? currentFileNameId:source_file_id) == currentLocNode_physical_file_id )
                   {
                  // DQ (11/3/2019): Check that the comment or CPP directive is from the same file as the locatedNode.
                  // A variation of this test might be required later, though we should only be attacheing comments and 
