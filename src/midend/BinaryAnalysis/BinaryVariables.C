@@ -3,6 +3,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/integer_traits.hpp>
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/Attribute.h>
@@ -195,7 +196,24 @@ StackVariable::operator!=(const StackVariable &other) const {
 
 OffsetInterval
 StackVariable::interval() const {
-    return OffsetInterval::baseSize(frameOffset(), maxSizeBytes());
+    // We need to watch for overflows.  The return type, OffsetInterval, has int64_t least and greatest values. The frame
+    // offset is also int64_t. The maximum size in bytes however is uint64_t (i.e., rose_addr_t).  We may need to reduce the
+    // maximum size in order to fit it into the interval return value.
+    int64_t least = frameOffset_;
+    int64_t maxSizeSigned = maxSizeBytes() > boost::numeric_cast<uint64_t>(boost::integer_traits<int64_t>::const_max)
+                            ? boost::integer_traits<int64_t>::const_max
+                            : boost::numeric_cast<int64_t>(maxSizeBytes());
+    if (least >= 0) {
+        int64_t headroom = boost::integer_traits<int64_t>::const_max - maxSizeSigned;
+        if (least > headroom) {
+            // overflow would occur, so we must reduce the maxSizeS appropriately
+            return OffsetInterval::hull(least, boost::integer_traits<int64_t>::max());
+        } else {
+            return OffsetInterval::baseSize(least, maxSizeSigned);
+        }
+    } else {
+        return OffsetInterval::baseSize(least, maxSizeSigned);
+    }
 }
 
 void
