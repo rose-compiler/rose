@@ -290,6 +290,12 @@ namespace CodeThorn {
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
 
+    void recordAnalyzedFunction(SgFunctionDefinition* funDef);
+    std::string analyzedFunctionsToString();
+    std::string analyzedFilesToString();
+    void recordExternalFunctionCall(SgFunctionCallExp* funCall);
+    std::string externalFunctionsToString();
+
   protected:
     static Sawyer::Message::Facility logger;
     void printStatusMessage(string s, bool newLineFlag);
@@ -460,6 +466,11 @@ namespace CodeThorn {
     size_t _prevStateSetSizeDisplay = 0;
     size_t _prevStateSetSizeResource = 0;
 
+    typedef std::unordered_set<SgFunctionDefinition*> AnalyzedFunctionsContainerType;
+    AnalyzedFunctionsContainerType analyzedFunctions;
+    typedef std::unordered_set<SgFunctionCallExp*> ExternalFunctionsContainerType;
+    ExternalFunctionsContainerType externalFunctions;
+    
   private:
     //std::unordered_map<int,const EState*> _summaryStateMap;
     std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;

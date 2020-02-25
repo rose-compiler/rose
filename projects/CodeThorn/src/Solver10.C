@@ -4,6 +4,7 @@
 #include "SpotConnection.h"
 #include "RERS_empty_specialization.h"
 #include "RersSpecialization.h"
+#include "CodeThornCommandLineOptions.h"
 
 using namespace CodeThorn;
 using namespace std;
