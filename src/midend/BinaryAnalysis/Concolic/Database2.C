@@ -14,6 +14,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
+#include <boost/regex.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/archive/xml_oarchive.hpp>
 #include <ctime>
@@ -24,9 +25,7 @@
 #endif
 
 #ifdef ROSE_HAVE_LIBPQXX
-#if 0 // [Robb Matzke 2020-02-03]: not officially supported yet
 #include <Sawyer/DatabasePostgresql.h>
-#endif
 #endif
 
 namespace Rose {
@@ -36,10 +35,14 @@ namespace Concolic {
 // Return the file name part of an SQLite connection URL
 static boost::filesystem::path
 sqliteFileName(const std::string &url) {
-    if (boost::starts_with(url, "sqlite://")) {
-        return url.substr(9);
-    } else if (boost::starts_with(url, "sqlite3://")) {
-        return url.substr(10);
+    boost::regex re("(\\w*)://(.+)");
+    boost::smatch matched;
+    if (boost::regex_match(url, matched, re)) {
+        if (matched.str(1) == "sqlite" || matched.str(1) == "sqlite3") {
+            return matched.str(2);
+        } else {
+            return boost::filesystem::path();
+        }
     } else {
         return url;
     }
@@ -291,19 +294,28 @@ idHelper(const Database::Ptr &db, const typename IdObjMap::Target &obj, Update::
 Database::Ptr
 Database::instance(const std::string &url) {
     Ptr db(new Database);
-#if 0 // DEBUGGING [Robb Matzke 2020-01-24]
+
     if (boost::starts_with(url, "postgresql://") || boost::starts_with(url, "postgres://")) {
-        db->connection_ = Sawyer::Database::Posgtresql(url);
-    }
+#ifdef ROSE_HAVE_LIBPQXX
+#if 0 // [Robb Matzke 2020-02-21]: not ready to use yet
+        db->connection_ = Sawyer::Database::Postgresql(url);
 #else
-    if (false) {
-    }
+        ASSERT_not_implemented("[Robb Matzke 2020-02-21]");
 #endif
-    else {
-     boost::filesystem::path fileName = sqliteFileName(url);
+#else
+        throw Exception("ROSE was not configured with PostgreSQL");
+#endif
+    }
+
+    boost::filesystem::path fileName = sqliteFileName(url);
+    if (!fileName.empty()) {
+#ifdef ROSE_HAVE_SQLITE3
         if (!boost::filesystem::exists(fileName))
             throw Exception("sqlite database " + boost::lexical_cast<std::string>(fileName) + " does not exist");
         db->connection_ = Sawyer::Database::Sqlite(fileName);
+#else
+        throw Exception("ROSE was not configured with SQLite");
+#endif
     }
 
     initTestSuite(db);
@@ -314,21 +326,26 @@ Database::instance(const std::string &url) {
 Database::Ptr
 Database::create(const std::string &url, const Sawyer::Optional<std::string> &testSuiteName) {
     Ptr db;
-#if 0 // DEBUGGING [Robb Matzke 2020-01-24]
+
     if (boost::starts_with(url, "postgresql://") || boost::starts_with(url, "postgres://")) {
+#ifdef ROSE_HAVE_LIBPQXX
         throw Exception("cannot create a PostgreSQL database; use external tools to do that, then open the database");
-    }
 #else
-    if (false) {
-    }
+        throw Exception("ROSE was not configured with PostgreSQL");
 #endif
-    else {
+    }
+
+    boost::filesystem::path fileName = sqliteFileName(url);
+    if (!fileName.empty()) {
+#ifdef ROSE_HAVE_SQLITE3
         db = Ptr(new Database);
-        boost::filesystem::path fileName = sqliteFileName(url);
         boost::system::error_code ec;
         boost::filesystem::remove(fileName, ec);
         db->connection_ = Sawyer::Database::Sqlite(fileName);
         initSchema(db->connection_);
+#else
+        throw Exception("ROSE was not configured with SQLite");
+#endif
     }
 
     if (testSuiteName) {
