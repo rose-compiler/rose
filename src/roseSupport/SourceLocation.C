@@ -17,7 +17,7 @@ size_t
 SourceLocation::NameHasher::operator()(const NamePtr &fileName) const {
     ASSERT_not_null(fileName);
     Combinatorics::HasherFnv hasher;
-    hasher.insert(fileName->native());
+    hasher.insert(fileName->string());
     return hasher.partial();
 }
 
@@ -125,7 +125,7 @@ SourceLocation::toString() const {
     // No lock necessary since fileName() is used to access the only shared state.
     if (isEmpty())
         return "";
-    std::string s = fileName().native() + ":" + boost::lexical_cast<std::string>(line_);
+    std::string s = fileName().string() + ":" + boost::lexical_cast<std::string>(line_);
     if (column_)
         s += ":" + boost::lexical_cast<std::string>(*column_);
     return s;
