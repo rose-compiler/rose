@@ -370,12 +370,14 @@ codethorndir=.
 # only informative
 codethorn_xHEADERS = \
   CommandLineOptions.h \
+  CodeThornCommandLineOptions.h \
   codethorn.h \
   LTL.h
 
 # codethorn sources in addition to libcodethorn and libltlthorn
 codethorn_SOURCES = \
   LTLParser.y++ \
+  CodeThornCommandLineOptions.C \
   codethorn.C
 
 ##############################################################

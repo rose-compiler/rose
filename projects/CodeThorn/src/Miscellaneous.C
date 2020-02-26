@@ -7,7 +7,8 @@
 #include "sage3basic.h" // included for the ROSE_ASSERT macro
 
 #include "Miscellaneous.h"
-#include "CommandLineOptions.h"
+#include "CodeThornCommandLineOptions.h"
+#include "CodeThornLib.h"
 #include <cctype>
 #include <iomanip>
 #include "CodeThornException.h"

@@ -44,8 +44,10 @@ namespace CodeThorn {
     friend bool CodeThorn::operator!=(const PState& c1, const PState& c2);
     friend bool CodeThorn::operator<(const PState& s1, const PState& s2);
     PState();
-    bool varExists(AbstractValue varId) const;
     bool varIsConst(AbstractValue varId) const;
+    // deprecated
+    bool varExists(AbstractValue varId) const;
+    bool memLocExists(AbstractValue memLoc) const;
     bool varIsTop(AbstractValue varId) const;
     CodeThorn::AbstractValue varValue(AbstractValue varId) const;
     string varValueToString(AbstractValue varId) const;

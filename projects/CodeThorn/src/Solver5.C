@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "Solver5.h"
 #include "Analyzer.h"
+#include "CodeThornCommandLineOptions.h"
 
 using namespace std;
 using namespace CodeThorn;
