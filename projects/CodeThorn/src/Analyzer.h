@@ -195,6 +195,7 @@ namespace CodeThorn {
     void setStgTraceFileName(std::string filename);
 
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; } // not used
+    // 0: concrete, 1: abstract, 2: strict abstract (does not try to approximate all non-supported operators, rejects program instead)
     void setAbstractionMode(int mode) { _abstractionMode=mode; }
     int getAbstractionMode() { return _abstractionMode; }
     void setInterpreterMode(CodeThorn::InterpreterMode mode);

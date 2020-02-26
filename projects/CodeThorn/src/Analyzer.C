@@ -1103,7 +1103,11 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         //cout<<"DEBUG: lhs type: "<<getVariableIdMapping()->getType(initDeclVarId)->unparseToString()<<endl;
         if(getVariableIdMapping()->hasClassType(initDeclVarId)) {
           // TODO: initialization of structs not supported yet
-          SAWYER_MESG(logger[WARN])<<"initialization of structs not supported yet (not added to state) "<<decl->unparseToString()<<endl;
+          if(getAbstractionMode()==3) {
+            throw CodeThorn::Exception("initialization of structs not supported: "+SgNodeHelper::sourceFilenameLineColumnToString(decl));
+          } else {
+            SAWYER_MESG(logger[WARN])<<"initialization of structs not supported yet (not added to state) "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
+          };
           //AbstractValue arrayAddress=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex))
           //getExprAnalyzer()->writeToMemoryLocation(label,&newPState,arrayAddress,CodeThorn::Top());
           PState newPState=*currentEState.pstate();
@@ -1111,7 +1115,11 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         }
         if(getVariableIdMapping()->hasReferenceType(initDeclVarId)) {
           // TODO: initialization of references not supported yet
-          SAWYER_MESG(logger[WARN])<<"initialization of references not supported yet (not added to state) "<<decl->unparseToString()<<endl;
+          if(getAbstractionMode()==3) {
+            throw CodeThorn::Exception("initialization of references not supported: "+SgNodeHelper::sourceFilenameLineColumnToString(decl));
+          } else {
+            SAWYER_MESG(logger[WARN])<<"initialization of references not supported yet (not added to state) "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
+        }
           PState newPState=*currentEState.pstate();
           return createEState(targetLabel,cs,newPState,cset);
         }
@@ -1129,8 +1137,12 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
             newPState=analyzeSgAggregateInitializer(initDeclVarId, aggregateInitializer,newPState, currentEState);
             return createEState(targetLabel,cs,newPState,cset);
           } else {
+            if(getAbstractionMode()==3) {
+              throw CodeThorn::Exception("aggregate initializer: unsupported type at: "+SgNodeHelper::sourceFilenameLineColumnToString(decl));
+            } else {
             // type not supported yet
-            SAWYER_MESG(logger[WARN])<<"aggregate initializer: unsupported type: "<<aggregateInitializer->get_type()->unparseToString()<<endl;
+              SAWYER_MESG(logger[WARN])<<"aggregate initializer: unsupported type at: "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<" : "<<aggregateInitializer->get_type()->unparseToString()<<endl;
+            }
             // do not modify state. Value remains top.
             PState newPState=*currentEState.pstate();
             ConstraintSet cset=*currentEState.constraints();
@@ -1214,7 +1226,11 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
             SAWYER_MESG(logger[TRACE])<<"Number of elements in array is 0 (from variableIdMapping) - evaluating expression"<<endl;
             std::vector<SgExpression*> arrayDimExps=SageInterface::get_C_array_dimensions(*arrayType);
             if(arrayDimExps.size()>1) {
-              SAWYER_MESG(logger[WARN])<<"multi-dimensional arrays not supported yet. Only linear arrays are supported. Not added to state (assuming arbitrary value)."<<endl;
+              if(getAbstractionMode()==3) {
+                CodeThorn::Exception("multi-dimensional arrays not supported yet.");
+              } else {
+                SAWYER_MESG(logger[WARN])<<"multi-dimensional arrays not supported yet. Only linear arrays are supported. Not added to state (assuming arbitrary value)."<<endl;
+              }
               // not adding it to state. Will be used as unknown.
               PState newPState=*currentEState.pstate();
               return createEState(targetLabel,cs,newPState,cset);
@@ -1231,6 +1247,9 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
               numElements=arrayDimAVal.getIntValue();
               variableIdMapping->setNumberOfElements(initDeclVarId,numElements);
             } else {
+              if(getAbstractionMode()==3) {
+                CodeThorn::Exception("Could not determine size of array (non-const size).");
+              }
               // TODO: size of array remains 1?
             }
           } else {
