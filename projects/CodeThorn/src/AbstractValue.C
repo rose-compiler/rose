@@ -32,7 +32,7 @@ istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
 AbstractValue::AbstractValue():valueType(AbstractValue::BOT),intValue(0) {}
 
 // type conversion
-// TODO: represent value 'unitialized' here
+// TODO: represent value 'undefined' here
 AbstractValue::AbstractValue(VariableId varId):valueType(AbstractValue::PTR),variableId(varId),intValue(0) {
 }
 
@@ -217,8 +217,11 @@ AbstractValue AbstractValue::operatorNot() {
     break;
   case AbstractValue::TOP: tmp=Top();break;
   case AbstractValue::BOT: tmp=Bot();break;
+  case AbstractValue::UNDEFINED: tmp=*this;break;
   default:
-    throw CodeThorn::Exception("Error: AbstractValue operation '!' failed.");
+    // other cases should not appear because there must be a proper cast
+    // TODO: logger[WARN]<<"AbstractValue::operatorNot: unhandled abstract value "<<tmp.toString()<<". Assuming any value as result."<<endl;
+    tmp=Top();
   }
   return tmp;
 }
@@ -860,6 +863,10 @@ AbstractValue AbstractValue::createUndefined() {
   AbstractValue newValue;
   newValue.valueType=AbstractValue::UNDEFINED;
   return newValue;
+}
+AbstractValue AbstractValue::createBot() {
+  CodeThorn::Bot bot;
+  return AbstractValue(bot);
 }
 
 AbstractValue CodeThorn::operator+(AbstractValue& a,AbstractValue& b) {

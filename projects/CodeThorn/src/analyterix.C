@@ -64,6 +64,7 @@
 #include "CodeThornException.h"
 #include "DeadCodeAnalysis.h"
 #include "Normalization.h"
+#include "CodeThornLib.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -99,10 +100,6 @@ bool option_normalize=false;
 bool option_show_source_code=false;
 bool option_show_path=true;
 //boost::program_options::variables_map args;
-
-void myInitDiagnostics() {
-  Normalization::initDiagnostics();
-}
 
 void writeFile(std::string filename, std::string data) {
   std::ofstream myfile;
@@ -687,7 +684,8 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 int main(int argc, char* argv[]) {
   // required for Sawyer logger streams
   ROSE_INITIALIZE;
-  myInitDiagnostics();
+  CodeThorn::initDiagnostics();
+  CodeThorn::CommandLineOptions args;
 
   try {
     if(argc==1) {

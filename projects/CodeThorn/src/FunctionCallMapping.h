@@ -6,6 +6,9 @@
 #include <unordered_map>
 #include "Labeler.h"
 #include "FunctionCallTarget.h"
+#include "ClassHierarchyGraph.h"
+
+struct ClassHierarchyWrapper;
 
 namespace CodeThorn {
   /*!
@@ -28,11 +31,19 @@ namespace CodeThorn {
     static void initDiagnostics();
     FunctionCallInfo determineFunctionCallInfo(SgFunctionCallExp* fc);
 
+    /** access the class hierarchy for analyzing member function calls.
+     *  @{
+     */
+    void setClassHierarchy(ClassHierarchyWrapper* ch) { classHierarchy = ch; }
+    ClassHierarchyWrapper* getClassHierarchy() const { return classHierarchy; }
+    /** @} */
+
   protected:
     static Sawyer::Message::Facility logger;
     std::unordered_map<SgFunctionCallExp*,FunctionCallTargetSet> mapping;
   private:
     unsigned int _matchMode=3; // workaround mode
+    ClassHierarchyWrapper* classHierarchy = nullptr;
   };
 
 } // end of namespace CodeThorn

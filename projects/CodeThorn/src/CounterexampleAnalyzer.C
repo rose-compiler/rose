@@ -1,6 +1,7 @@
 // Author: Marc Jasper, 2014, 2015.
 
 #include "CounterexampleAnalyzer.h"
+#include "CodeThornCommandLineOptions.h"
 
 using namespace CodeThorn;
 using namespace std;

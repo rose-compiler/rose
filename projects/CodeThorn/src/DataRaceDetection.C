@@ -6,6 +6,7 @@
 #include "EquivalenceChecking.h"
 #include "AstTerm.h"
 #include "OmpSupport.h"
+#include "CodeThornCommandLineOptions.h"
 
 using namespace std;
 using namespace CodeThorn;

@@ -6,6 +6,7 @@
 #include "RersCounterexample.h"
 #include "CodeThornException.h"
 #include "TimeMeasurement.h"
+#include "CodeThornCommandLineOptions.h"
 
 #include <unordered_set>
 
