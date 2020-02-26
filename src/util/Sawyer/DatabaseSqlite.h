@@ -13,9 +13,16 @@
 #include <Sawyer/Database.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
 #include <Sawyer/Optional.h>
 #include <sqlite3.h>
 #include <string>
+
+#if SQLITE_VERSION_NUMBER < 3007015
+std::string sqlite3_errstr(int status) {
+    return "sqlite3 error " + boost::lexical_cast<std::string>(status);
+}
+#endif
 
 namespace Sawyer {
 namespace Database {
