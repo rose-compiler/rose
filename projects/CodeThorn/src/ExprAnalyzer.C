@@ -36,18 +36,18 @@ void ExprAnalyzer::initDiagnostics() {
   }
 }
 
-CodeThorn::InterpretationMode ExprAnalyzer::getInterpretationMode() {
-  return _interpretationMode;
+CodeThorn::InterpreterMode ExprAnalyzer::getInterpreterMode() {
+  return _interpreterMode;
 }
-void ExprAnalyzer::setInterpretationMode(CodeThorn::InterpretationMode im) {
-  _interpretationMode=im;
+void ExprAnalyzer::setInterpreterMode(CodeThorn::InterpreterMode im) {
+  _interpreterMode=im;
 }
 
-string ExprAnalyzer::getInterpretationModeFileName() {
-  return _interpretationModeFileName;
+string ExprAnalyzer::getInterpreterModeFileName() {
+  return _interpreterModeFileName;
 }
-void ExprAnalyzer::setInterpretationModeFileName(string imFileName) {
-  _interpretationModeFileName=imFileName;
+void ExprAnalyzer::setInterpreterModeFileName(string imFileName) {
+  _interpreterModeFileName=imFileName;
 }
 
 void ExprAnalyzer::initializeStructureAccessLookup(SgProject* node) {
@@ -1559,13 +1559,13 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       evalFunctionCallArguments(funCall,estate);
       estate.io.recordVerificationError();
       return listify(res);
-    } else if(funName=="printf" && (getInterpretationMode()==IM_CONCRETE)) {
+    } else if(funName=="printf" && (getInterpreterMode()==IM_CONCRETE)) {
       // call fprint function in mode CONCRETE and generate output
       // (1) obtain arguments from estate
       // (2) marshall arguments
       // (3) perform function call (causing side effect on stdout (or written to provided file))
       return execFunctionCallPrintf(funCall,estate);
-    } else if(funName=="scanf" && (getInterpretationMode()==IM_CONCRETE)) {
+    } else if(funName=="scanf" && (getInterpreterMode()==IM_CONCRETE)) {
       // call scanf function in mode CONCRETE and generate output
       // (1) obtain arguments from estate
       // (2) marshall arguments
@@ -1641,7 +1641,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::execFunctionCallPrintf(SgFunctionCa
       concAVString+=formatString[i];
     }
   }
-  string fileName=getInterpretationModeFileName();
+  string fileName=getInterpreterModeFileName();
   if(fileName!="") {
     bool ok=CppStdUtilities::appendFile(fileName,concAVString);
     if(!ok) {

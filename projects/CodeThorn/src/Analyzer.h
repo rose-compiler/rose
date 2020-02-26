@@ -197,10 +197,10 @@ namespace CodeThorn {
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; } // not used
     void setAbstractionMode(int mode) { _abstractionMode=mode; }
     int getAbstractionMode() { return _abstractionMode; }
-    void setInterpretationMode(CodeThorn::InterpretationMode mode);
-    CodeThorn::InterpretationMode getInterpretationMode();
-    void setInterpretationModeOutputFileName(string);
-    string getInterpretationModeOutputFileName();
+    void setInterpreterMode(CodeThorn::InterpreterMode mode);
+    CodeThorn::InterpreterMode getInterpreterMode();
+    void setInterpreterModeOutputFileName(string);
+    string getInterpreterModeOutputFileName();
 
     bool getPrintDetectedViolations();
     void setPrintDetectedViolations(bool flag);

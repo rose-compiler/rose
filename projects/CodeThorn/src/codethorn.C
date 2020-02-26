@@ -824,16 +824,16 @@ int main( int argc, char * argv[] ) {
 
     analyzerSetup(analyzer, logger);
 
-    switch(int mode=args.getInt("interpretation-mode")) {
-    case 0: analyzer->setInterpretationMode(IM_ABSTRACT); break;
-    case 1: analyzer->setInterpretationMode(IM_CONCRETE); break;
+    switch(int mode=args.getInt("interpreter-mode")) {
+    case 0: analyzer->setInterpreterMode(IM_ABSTRACT); break;
+    case 1: analyzer->setInterpreterMode(IM_CONCRETE); break;
     default:
-      cerr<<"Unknown interpretation mode "<<mode<<" provided on command line (supported: 0..1)."<<endl;
+      cerr<<"Unknown interpreter mode "<<mode<<" provided on command line (supported: 0..1)."<<endl;
       exit(1);
     }
-    string outFileName=args.getString("interpretation-mode-file");
+    string outFileName=args.getString("interpreter-mode-file");
     if(outFileName!="") {
-      analyzer->setInterpretationModeOutputFileName(outFileName);
+      analyzer->setInterpreterModeOutputFileName(outFileName);
       CppStdUtilities::writeFile(outFileName,""); // touch file
     }
     {

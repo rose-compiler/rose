@@ -342,20 +342,20 @@ bool CodeThorn::Analyzer::getIgnoreFunctionPointers() {
   return exprAnalyzer.getIgnoreFunctionPointers();
 }
 
-void CodeThorn::Analyzer::setInterpretationMode(CodeThorn::InterpretationMode mode) {
-  exprAnalyzer.setInterpretationMode(mode);
+void CodeThorn::Analyzer::setInterpreterMode(CodeThorn::InterpreterMode mode) {
+  exprAnalyzer.setInterpreterMode(mode);
 }
 
-CodeThorn::InterpretationMode CodeThorn::Analyzer::getInterpretationMode() {
-  return exprAnalyzer.getInterpretationMode();
+CodeThorn::InterpreterMode CodeThorn::Analyzer::getInterpreterMode() {
+  return exprAnalyzer.getInterpreterMode();
 }
 
-void CodeThorn::Analyzer::setInterpretationModeOutputFileName(string fileName) {
-  exprAnalyzer.setInterpretationModeFileName(fileName);
+void CodeThorn::Analyzer::setInterpreterModeOutputFileName(string fileName) {
+  exprAnalyzer.setInterpreterModeFileName(fileName);
 }
 
-string CodeThorn::Analyzer::getInterpretationModeOutputFileName() {
-  return exprAnalyzer.getInterpretationModeFileName();
+string CodeThorn::Analyzer::getInterpreterModeOutputFileName() {
+  return exprAnalyzer.getInterpreterModeFileName();
 }
 
 void CodeThorn::Analyzer::setOptionContextSensitiveAnalysis(bool flag) {
@@ -2717,7 +2717,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallExternal(Edge edge, c
     }
   }
 
-  if(getInterpretationMode()!=IM_CONCRETE) {
+  if(getInterpreterMode()!=IM_CONCRETE) {
     int constvalue=0;
     if(getLabeler()->isStdOutVarLabel(lab,&varId)) {
       newio.recordVariable(InputOutput::STDOUT_VAR,varId);
