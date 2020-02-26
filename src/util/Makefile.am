@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_PROGRAMS =
 
-SUBDIRS = stringSupport commandlineProcessing support graphs
+SUBDIRS = stringSupport commandlineProcessing support graphs Sawyer
 
 # AUTOMAKE_OPTIONS = subdir-objects
 
@@ -75,108 +75,6 @@ pkginclude_HEADERS =				\
 
 EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
 
-########################################################################################################################
-# rules for the Sawyer subdirectory
-
-noinst_LTLIBRARIES += libroseSawyer.la
-libroseSawyer_la_CPPFLAGS = $(ROSE_INCLUDES) -DCOMPILING_ROSE
-libroseSawyer_la_SOURCES =			\
-	Sawyer/Assert.C				\
-	Sawyer/Attribute.C			\
-	Sawyer/Clexer.C				\
-	Sawyer/CommandLine.C			\
-	Sawyer/CommandLineBoost.C		\
-	Sawyer/DocumentBaseMarkup.C		\
-	Sawyer/DocumentMarkup.C			\
-	Sawyer/DocumentPodMarkup.C		\
-	Sawyer/DocumentTextMarkup.C		\
-	Sawyer/GraphTraversal.C			\
-	Sawyer/LineVector.C			\
-	Sawyer/Message.C			\
-	Sawyer/ProgressBar.C			\
-	Sawyer/Sawyer.C				\
-	Sawyer/SmallObject.C			\
-	Sawyer/Stopwatch.C			\
-	Sawyer/Synchronization.C		\
-	Sawyer/useHeaders.C
-nobase_pkginclude_HEADERS   =			\
-	Sawyer/Access.h				\
-	Sawyer/AddressMap.h			\
-	Sawyer/AddressSegment.h			\
-	Sawyer/AllocatingBuffer.h		\
-	Sawyer/Assert.h				\
-	Sawyer/Attribute.h			\
-	Sawyer/BiMap.h				\
-	Sawyer/BitVector.h			\
-	Sawyer/BitVectorSupport.h		\
-	Sawyer/Buffer.h				\
-	Sawyer/Cached.h				\
-	Sawyer/Callbacks.h			\
-	Sawyer/Clexer.h				\
-	Sawyer/CommandLine.h			\
-	Sawyer/CommandLineBoost.h		\
-	Sawyer/Database.h			\
-	Sawyer/DatabasePostgresql.h		\
-	Sawyer/DatabaseSqlite.h			\
-	Sawyer/DefaultAllocator.h		\
-	Sawyer/DenseIntegerSet.h		\
-	Sawyer/DistinctList.h			\
-	Sawyer/DocumentBaseMarkup.h		\
-	Sawyer/DocumentMarkup.h			\
-	Sawyer/DocumentPodMarkup.h		\
-	Sawyer/DocumentTextMarkup.h		\
-	Sawyer/Exception.h			\
-	Sawyer/FileSystem.h			\
-	Sawyer/Graph.h				\
-	Sawyer/GraphAlgorithm.h			\
-	Sawyer/GraphBoost.h			\
-	Sawyer/GraphIteratorBiMap.h		\
-	Sawyer/GraphIteratorMap.h		\
-	Sawyer/GraphIteratorSet.h		\
-	Sawyer/GraphTraversal.h			\
-	Sawyer/HashMap.h			\
-	Sawyer/IndexedList.h			\
-	Sawyer/Interval.h			\
-	Sawyer/IntervalMap.h			\
-	Sawyer/IntervalSet.h			\
-	Sawyer/IntervalSetMap.h			\
-	Sawyer/Lexer.h				\
-	Sawyer/LineVector.h			\
-	Sawyer/Map.h				\
-	Sawyer/MappedBuffer.h			\
-	Sawyer/Message.h			\
-	Sawyer/NullBuffer.h			\
-	Sawyer/Optional.h			\
-	Sawyer/PoolAllocator.h			\
-	Sawyer/ProgressBar.h			\
-	Sawyer/Sawyer.h				\
-	Sawyer/Set.h				\
-	Sawyer/SharedObject.h			\
-	Sawyer/SharedPointer.h			\
-	Sawyer/SmallObject.h			\
-	Sawyer/Stack.h				\
-	Sawyer/StackAllocator.h			\
-	Sawyer/StaticBuffer.h			\
-	Sawyer/Stopwatch.h			\
-	Sawyer/Synchronization.h		\
-	Sawyer/ThreadWorkers.h			\
-	Sawyer/Trace.h				\
-	Sawyer/Tracker.h			\
-	Sawyer/Tree.h				\
-	Sawyer/Type.h				\
-	Sawyer/WarningsOff.h			\
-	Sawyer/WarningsRestore.h
-
-EXTRA_DIST += Sawyer/CMakeLists.txt
-
-# These are used in the doxygen documentation examples
-EXTRA_DIST += Sawyer/docs/examples/commandLineEx1.C Sawyer/docs/examples/graphIso.C
-
-# # This rule should really be in the subdirectory's makefile, but if we place it there
-# # it won't work because the library on which the tool depends is built in this directory.
-# bin_PROGRAMS += stringify-enums
-# stringify_enums_SOURCES = Sawyer/stringifyEnums.C
-# stringify_enums_LDFLAGS = libroseSawyer.la $(filter-out %/librose.la, $(ROSE_LIBS))
 
 ########################################################################################################################
 # automake boilerplate
