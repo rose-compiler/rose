@@ -5423,7 +5423,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(relax_syntax_check)",1);
 
   // DQ (8/11/2007): Support for Fortran and its different flavors
-     optionCount = sla(argv, "-rose:", "($)", "(f|F|fortran)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(f|F|Fortran)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f77|F77|Fortran77)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f90|F90|Fortran90)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f95|F95|Fortran95)",1);
@@ -7263,13 +7263,18 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      //Liao, 5/15/2009
      //the file name already has absolute path, the following code may be redundant.
      sourceFile = StringUtility::stripPathFromFileName(sourceFile);
+#ifndef _MSC_VER
      if(sourceFilePath == "" )
         sourceFilePath = "./";
      sourceFilePath = StringUtility::getAbsolutePathFromRelativePath(sourceFilePath);
-#ifndef _MSC_VER
      fileList.push_back(sourceFilePath+"/"+sourceFile);
 #else
-     fileList.push_back(sourceFilePath+"\\"+sourceFile);
+     //TODO get absolute file path on windows
+     //if(sourceFilePath == "" )
+     //   sourceFilePath = ".\\";
+     //sourceFilePath = StringUtility::getAbsolutePathFromRelativePath(sourceFilePath);
+     //fileList.push_back(sourceFilePath+"\\"+sourceFile);
+     fileList.push_back(sourceFile);
 #endif
      CommandlineProcessing::addListToCommandLine(inputCommandLine,"",fileList);
 
@@ -7376,8 +7381,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
         {
        // Search dir for header files, after all directories specified by -I but
        // before the standard system directories.
+#ifndef _MSC_VER
           compilerNameString.push_back("-isystem");
           compilerNameString.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+#endif
         }
 #endif
 
@@ -8402,7 +8409,11 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // where only a minimum configuration options are used and not all macros are defined. 
 #ifdef ROSE_INSTALLATION_PATH 
        string include_path(ROSE_INSTALLATION_PATH);
+#ifndef _MSC_VER
        include_path += "/include/rose"; 
+#else
+       include_path += "\\include\\rose"; 
+#endif
        compilerNameString.insert(iter_last_inc, "-I"+include_path); 
 #endif
      }
@@ -8446,8 +8457,15 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                if (objectNameSpecified == false)
                   {
                  // cout<<"making object file explicit for compilation only mode without -o options"<<endl;
-                    compilerNameString.push_back("-o");
-                    compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+
+
+#ifndef _MSC_VER
+                     compilerNameString.push_back("-o");
+                     compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+#else
+                     compilerNameString.push_back("/Fo" + currentDirectory + "\\" + objectFileName);
+#endif
+
                   }
                  else
                   {
@@ -8461,8 +8479,15 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                       // For multi-file handling we have to build a output (object file) using the name of the source file.
                          compilerNameString.push_back("-c");
                          std::string objectFileName = generateOutputFileName();
+
+#ifndef _MSC_VER
                          compilerNameString.push_back("-o");
                          compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+#else
+                         compilerNameString.push_back("/Fo" + currentDirectory + "\\" + objectFileName);
+#endif
+
+
                        }
                       else
                        {
@@ -8496,8 +8521,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                  // For multi-file handling we have to build a output (object file) using the name of the source file.
                     compilerNameString.push_back("-c");
                     std::string objectFileName = generateOutputFileName();
-                    compilerNameString.push_back("-o");
-                    compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+                    compilerNameString.push_back("/Fo");
+                    compilerNameString.push_back(currentDirectory + "\" + objectFileName);
 #else
                  // DQ (4/13/2015): Only output a -c and -o option to specify the executable if one has not already been specified.
                  // Liao 5/1/2015: for the case of doing both compiling and linking, and with multiple files, 
@@ -8515,23 +8540,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                          compilerNameString.push_back(currentDirectory + "/" + objectFileName);
                        }
 #endif
-#if 0
-                 // OLD CODE
-                 // DQ (4/13/2015): If the compilation only is not specified, then never output an explicit -o option to specify the output file.
-#error "DEAD CODE!"
-                 // DQ (4/13/2015): Only output a -c and -o option to specify the executable if one has not already been specified.
-                    if (objectNameSpecified == false)
-                       {
-                      // cout<<"turn on compilation only at the file compilation level"<<endl;
-                         compilerNameString.push_back("-c");
-                      // For compile+link mode, -o is used for the final executable, if it exists
-                      // We make -o objectfile explicit 
-                         std::string objectFileName = generateOutputFileName();
 
-                         compilerNameString.push_back("-o");
-                         compilerNameString.push_back(currentDirectory + "/" + objectFileName);
-                       }
-#endif
                   }
 #endif
 
@@ -8544,9 +8553,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                  compilerNameString.push_back("-c");
               // compilation step of the two (compile + link) steps
                  std::string objectFileName = generateOutputFileName();
-
+#ifndef _MSC_VER
                  compilerNameString.push_back("-o");
                  compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+#else
+                 compilerNameString.push_back("/Fo" + currentDirectory + "\\" + objectFileName);
+#endif
              }
         }
 
