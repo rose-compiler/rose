@@ -54,9 +54,13 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
            {
            // This appears when an ItemTypeDescription has an initializer. I'm not sure why
            // SgModifiertype appears as the typeptr of an initialized name.  The base_ptr is
-           // the correct type so it is unparsed here as a HACK!  Perhaps the modifier type
-           // is inserted after the parsing phase because I can't find the problem there.
-              cout << "WARNING UNIMPLEMENTED: Unparse_Jovial::unparseType SgModifierType\n";
+           // the correct type so it is unparsed here as a HACK!  The modifier type appears to
+           // inserted after the parsing phase and I assume it is because the presence of an
+           // initializer causes the type to be wrapped with an SgModifierType with isConst
+           // and isStatic set. This required the creation of isJovialStatic to correctly
+           // unparse when the Jovial source actually has the STATIC keyword.
+
+           // TODO - move this to a function
               SgModifierType* modifier_type = isSgModifierType(type);
               ROSE_ASSERT(modifier_type);
               SgType* base_type = modifier_type->get_base_type();

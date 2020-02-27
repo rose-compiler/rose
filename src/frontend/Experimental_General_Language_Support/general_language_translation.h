@@ -237,16 +237,16 @@ namespace General_Language_Translation
         };
 
       struct LocationSpecifier {
-         LocationSpecifier() : start_bit(nullptr), start_word(nullptr) {}
+         LocationSpecifier() : start_bit(NULL), start_word(NULL) {}
          LocationSpecifier(SgExpression* sbit, SgExpression* sword) : start_bit(sbit), start_word(sword) {}
          SgExpression* start_bit;
          SgExpression* start_word;
       };
 
       struct StructureSpecifier {
-         StructureSpecifier()                  : bits_per_entry(nullptr), is_parallel(false) {}
-         StructureSpecifier(SgExpression* bpe) : bits_per_entry(bpe),     is_parallel(false) {}
-         StructureSpecifier(bool isp)          : bits_per_entry(nullptr), is_parallel(isp)   {}
+         StructureSpecifier()                  : bits_per_entry(NULL), is_parallel(false) {}
+         StructureSpecifier(SgExpression* bpe) : bits_per_entry(bpe),  is_parallel(false) {}
+         StructureSpecifier(bool isp)          : bits_per_entry(NULL), is_parallel(isp)   {}
          SgExpression* bits_per_entry;
          bool is_parallel;
       };

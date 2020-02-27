@@ -23,7 +23,7 @@
 #include "UntypedJovialConverter.h"
 
 #define ATERM_TRAVERSAL_ONLY 0
-#define DEBUG_EXPERIMENTAL_JOVIAL 1
+#define DEBUG_EXPERIMENTAL_JOVIAL 0
 #define OUTPUT_WHOLE_GRAPH_AST 0
 #define OUTPUT_DOT_FILE_AST 0
 
