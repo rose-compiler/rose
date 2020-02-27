@@ -1954,8 +1954,6 @@ ATbool ATermToSageJovialTraversal::traverse_OptPackingSpecifier(ATerm term, Sawy
 ATbool ATermToSageJovialTraversal::
 traverse_SpecifiedEntrySpecifierType(ATerm term, SgType* &type, LocationSpecifier &loc_spec, SgExpression* &preset, SgExprListExp* attr_list)
 {
-   cout << endl;
-
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SpecifiedEntrySpecifierType: %s\n", ATwriteToString(term));
 #endif

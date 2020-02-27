@@ -5,11 +5,10 @@
 #include <boost/optional/optional_io.hpp>
 #include <iostream>
 
-using std::cout;
-
 namespace Rose {
 namespace builder {
 
+using namespace Rose::Diagnostics;
 using namespace General_Language_Translation;
 
 SgGlobal* initialize_global_scope(SgSourceFile* file)
@@ -59,8 +58,8 @@ SageTreeBuilder::setSourcePosition(SgLocatedNode* node, const SourcePosition &st
       node->set_endOfConstruct(NULL);
    }
 
-#if 1
-   cout << "SageTreeBuilder::setSourcePosition: for node: "
+#if 0
+   std::cout << "SageTreeBuilder::setSourcePosition: for node: "
         << node << " "
         << ":" << start.line << ":" << start.column
         << "-" <<   end.line << ":" <<   end.column << "\n";
@@ -77,7 +76,7 @@ SageTreeBuilder::setSourcePosition(SgLocatedNode* node, const SourcePosition &st
 
 void SageTreeBuilder::Leave(SgScopeStatement* & scope)
 {
-   cout << "SageTreeBuilder::Enter(SgScopeStatement* &) \n";
+   mlog[INFO] << "SageTreeBuilder::Enter(SgScopeStatement* &) \n";
 
    scope = SageBuilder::getGlobalScopeFromScopeStack();
    ROSE_ASSERT(scope);
@@ -87,7 +86,7 @@ void SageTreeBuilder::
 Enter(SgProgramHeaderStatement* &program_decl,
       const boost::optional<std::string> &name, const std::list<std::string> &labels, const SourcePositions &sources)
 {
-   cout << "SageTreeBuilder::Enter(SgProgramHeaderStatement* &, ...) \n";
+   mlog[INFO] << "SageTreeBuilder::Enter(SgProgramHeaderStatement* &, ...) \n";
 
    SgScopeStatement* scope = SageBuilder::topScopeStack();
 
@@ -150,7 +149,7 @@ void SageTreeBuilder::Leave(SgProgramHeaderStatement* program_decl)
 // properly connected, cleaned up the scope stack, resolved symbols, and
 // inserted the declaration into its scope.
 
-   cout << "SageTreeBuilder::Leave(SgProgramHeaderStatement*) \n";
+   mlog[INFO] << "SageTreeBuilder::Leave(SgProgramHeaderStatement*) \n";
 
    SageBuilder::popScopeStack();  // program body
    SageBuilder::popScopeStack();  // program definition
@@ -198,7 +197,7 @@ setFortranEndProgramStmt(SgProgramHeaderStatement* program_decl,
 void SageTreeBuilder::
 Enter(SgFunctionParameterScope* &function_param_scope)
 {
-   cout << "SageTreeBuilder::Enter(SgFunctionParameterScope*) \n";
+   mlog[INFO] << "SageTreeBuilder::Enter(SgFunctionParameterScope*) \n";
 
 // SgFunctionParameterScope isn't really implemented in ROSE and is not useful
 // other than as a placeholder for location in the tree building process.
@@ -228,7 +227,7 @@ Enter(SgFunctionParameterScope* &function_param_scope)
 void SageTreeBuilder::
 Leave(SgFunctionParameterScope* function_param_scope)
 {
-   cout << "SageTreeBuilder::Leave(SgFunctionParameterScope*) \n";
+   mlog[INFO] << "SageTreeBuilder::Leave(SgFunctionParameterScope*) \n";
 
 // SgFunctionParameterScope isn't really implemented in ROSE (see Enter function above)
 // and is not really useful other than as a placeholder for location in the tree building
@@ -242,7 +241,7 @@ Leave(SgFunctionParameterScope* function_param_scope)
 void SageTreeBuilder::
 Enter(SgFunctionDefinition* &function_def)
 {
-   cout << "SageTreeBuilder::Enter(SgFunctionDefinition*) \n";
+   mlog[INFO] << "SageTreeBuilder::Enter(SgFunctionDefinition*) \n";
 
    SgBasicBlock* block = SageBuilder::buildBasicBlock_nfi();
 
@@ -256,7 +255,7 @@ Enter(SgFunctionDefinition* &function_def)
 void SageTreeBuilder::
 Leave(SgFunctionDefinition* function_def)
 {
-   cout << "SageTreeBuilder::Leave(SgFunctionDefinition*) \n";
+   mlog[INFO] << "SageTreeBuilder::Leave(SgFunctionDefinition*) \n";
 // don't pop the scope stack here as the function declaration will need it on enter
 }
 
@@ -265,7 +264,7 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name,
                                              const std::list<General_Language_Translation::FormalParameter> &param_list,
                                              const General_Language_Translation::SubroutineAttribute &attr)
 {
-   cout << "SageTreeBuilder::Enter(SgFunctionDeclaration* &, ...) \n";
+   mlog[INFO] << "SageTreeBuilder::Enter(SgFunctionDeclaration* &, ...) \n";
 
 // Lots to do!
 //   1. Get formal parameter types (based on input FormalParameter list) from the declarations
@@ -436,7 +435,7 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name,
 void SageTreeBuilder::
 Leave(SgFunctionDeclaration* function_decl)
 {
-   cout << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
+   mlog[INFO] << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
 
 #if 0
 // TODO - check this out for defining and nondefining declarations
@@ -451,7 +450,7 @@ Leave(SgFunctionDeclaration* function_decl)
 void SageTreeBuilder::
 Enter(SgDerivedTypeStatement* & derived_type_stmt, const std::string & name)
 {
-   cout << "SageTreeBuilder::Enter(SgDerivedTypeStatement* &, ...) \n";
+   mlog[INFO] << "SageTreeBuilder::Enter(SgDerivedTypeStatement* &, ...) \n";
 
    derived_type_stmt = SageBuilder::buildDerivedTypeStatement(name, SageBuilder::topScopeStack());
 
@@ -463,7 +462,7 @@ Enter(SgDerivedTypeStatement* & derived_type_stmt, const std::string & name)
 void SageTreeBuilder::
 Leave(SgDerivedTypeStatement* derived_type_stmt)
 {
-   cout << "SageTreeBuilder::Leave(SgDerivedTypeStatement*) \n";
+   mlog[INFO] << "SageTreeBuilder::Leave(SgDerivedTypeStatement*) \n";
 
    SageBuilder::popScopeStack();  // class definition
    SageInterface::appendStatement(derived_type_stmt, SageBuilder::topScopeStack());
@@ -475,7 +474,7 @@ Leave(SgDerivedTypeStatement* derived_type_stmt)
 void SageTreeBuilder::
 Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const SourcePositionPair &positions)
 {
-   cout << "SageTreeBuilder::Enter(SgJovialCompoolStatement* &, ...) \n";
+   mlog[INFO] << "SageTreeBuilder::Enter(SgJovialCompoolStatement* &, ...) \n";
 
    compool_decl = new SgJovialCompoolStatement(name);
    SageInterface::setSourcePosition(compool_decl);
@@ -490,7 +489,7 @@ void SageTreeBuilder::
 Enter(SgJovialTableStatement* &table_decl,
       const std::string &name, const SourcePositionPair &positions, bool is_block)
 {
-   cout << "SageTreeBuilder::Enter(SgJovialTableStatement* &, ...) \n";
+   mlog[INFO] << "SageTreeBuilder::Enter(SgJovialTableStatement* &, ...) \n";
 
    SgName type_name = name;
    SgClassDeclaration::class_types struct_kind = SgClassDeclaration::e_jovial_table;
@@ -527,7 +526,7 @@ Enter(SgJovialTableStatement* &table_decl,
 void SageTreeBuilder::
 Leave(SgJovialTableStatement* table_type_stmt)
 {
-   cout << "SageTreeBuilder::Leave(SgJovialTableStatement*) \n";
+   mlog[INFO] << "SageTreeBuilder::Leave(SgJovialTableStatement*) \n";
 
    SageBuilder::popScopeStack();  // class definition
    SageInterface::appendStatement(table_type_stmt, SageBuilder::topScopeStack());
@@ -536,7 +535,7 @@ Leave(SgJovialTableStatement* table_type_stmt)
 void SageTreeBuilder::
 Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, SgExpression* init_expr)
 {
-   cout << "SageTreeBuilder::Enter(SgVariableDeclaration* &, ...) \n";
+   mlog[INFO] << "SageTreeBuilder::Enter(SgVariableDeclaration* &, ...) \n";
 
    ROSE_ASSERT(type != nullptr);
 
@@ -557,13 +556,13 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
 void SageTreeBuilder::
 Leave(SgVariableDeclaration* var_decl)
 {
-   cout << "SageTreeBuilder::Leave(SgVariableDeclaration*) \n";
+   mlog[INFO] << "SageTreeBuilder::Leave(SgVariableDeclaration*) \n";
 }
 
 void SageTreeBuilder::
 Enter(SgEnumDeclaration* &enum_decl, const std::string &name, std::list<SgInitializedName*> &status_list)
 {
-   cout << "SageTreeBuilder::Enter(SgEnumDeclaration* &, ...) \n";
+   mlog[INFO] << "SageTreeBuilder::Enter(SgEnumDeclaration* &, ...) \n";
 
    enum_decl = SageBuilder::buildEnumDeclaration_nfi(name, SageBuilder::topScopeStack());
    ROSE_ASSERT(enum_decl);
@@ -577,7 +576,7 @@ Enter(SgEnumDeclaration* &enum_decl, const std::string &name, std::list<SgInitia
 void SageTreeBuilder::
 Leave(SgEnumDeclaration* enum_decl)
 {
-   cout << "SageTreeBuilder::Leave(SgEnumDeclaration*) \n";
+   mlog[INFO] << "SageTreeBuilder::Leave(SgEnumDeclaration*) \n";
 
    SageInterface::appendStatement(enum_decl, SageBuilder::topScopeStack());
 }
