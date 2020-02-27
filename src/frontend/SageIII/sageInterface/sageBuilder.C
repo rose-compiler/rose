@@ -6617,7 +6617,9 @@ SgFloatVal* SageBuilder::buildFloatVal_nfi(float value, const string& str)
 
 SgFloatVal* SageBuilder::buildFloatVal_nfi(const string& str)
 {
-  return buildFloatVal_nfi(std::stof(str), str);
+  // C++11 please [Rasmussen 2020.02.25]
+  // return buildFloatVal_nfi(std::stof(str), str);
+     return buildFloatVal_nfi(atof(str.c_str()), str);
 }
 
 SgIntVal* SageBuilder::buildIntVal(int value)
@@ -6661,7 +6663,9 @@ SgIntVal* SageBuilder::buildIntVal_nfi(int value, const string& str)
 
 SgIntVal* SageBuilder::buildIntVal_nfi(const string& str)
    {
-     return buildIntVal_nfi(std::stoi(str), str);
+  // C++11 please [Rasmussen 2020.02.25]
+  // return buildIntVal_nfi(std::stoi(str), str);
+     return buildIntVal_nfi(atoi(str.c_str()), str);
    }
 
 SgLongIntVal* SageBuilder::buildLongIntVal(long value)

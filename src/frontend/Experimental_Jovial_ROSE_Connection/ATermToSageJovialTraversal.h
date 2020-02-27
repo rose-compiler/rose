@@ -23,6 +23,7 @@ class ATermToSageJovialTraversal : public ATermToUntypedTraversal
 
  protected:
    void setSourcePositions(ATerm term, Rose::builder::SourcePosition &start, Rose::builder::SourcePosition &end);
+   void setDeclarationModifier(SgVariableDeclaration* var_decl, int def_or_ref);
 
  public:
    ATermToSageJovialTraversal(SgSourceFile* source);

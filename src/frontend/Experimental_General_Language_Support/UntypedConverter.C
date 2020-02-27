@@ -291,12 +291,12 @@ UntypedConverter::setDeclarationModifiers(SgDeclarationStatement* decl, SgUntype
             }
           case e_storage_modifier_jovial_def:
             {
-               decl->get_declarationModifier().get_storageModifier().setJovialDef();
+               decl->get_declarationModifier().setJovialDef();
                break;
             }
           case e_storage_modifier_jovial_ref:
             {
-               decl->get_declarationModifier().get_storageModifier().setJovialRef();
+               decl->get_declarationModifier().setJovialRef();
                break;
             }
           case e_storage_modifier_static:

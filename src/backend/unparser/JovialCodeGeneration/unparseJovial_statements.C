@@ -854,27 +854,21 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
            if (table_type->get_base_type()) type_has_base_type = true;
         }
 
-     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
-     ROSE_ASSERT(variableDeclaration != NULL);
+     SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt);
+     ROSE_ASSERT(var_decl != NULL);
 
-     if (variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst())
+     if (var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst())
         {
            curprint("CONSTANT ");
         }
-     if (variableDeclaration->get_declarationModifier().get_storageModifier().isJovialDef())
+     if (var_decl->get_declarationModifier().isJovialDef())
         {
            curprint("DEF ");
         }
-     if (variableDeclaration->get_declarationModifier().get_storageModifier().isJovialRef())
+     if (var_decl->get_declarationModifier().isJovialRef())
         {
            curprint("REF ");
         }
-#if 0
-     if (variableDeclaration->get_declarationModifier().get_typeModifier().isStatic())
-        {
-           curprint("STATIC ");
-        }
-#endif
 
      switch (type->variantT())
         {
@@ -893,12 +887,18 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
              curprint(" ");
         }
 
+  // OptAllocationSpecifier
+     if (var_decl->get_declarationModifier().isJovialStatic())
+        {
+           curprint("STATIC ");
+        }
+
      unparseType(type, info);
 
   // Unparse the LocationSpecifier if present
-     if (variableDeclaration->get_bitfield() != NULL)
+     if (var_decl->get_bitfield() != NULL)
         {
-           SgExpression* bitfield = variableDeclaration->get_bitfield();
+           SgExpression* bitfield = var_decl->get_bitfield();
            SgExprListExp* sg_location_specifier = isSgExprListExp(bitfield);
            ROSE_ASSERT(sg_location_specifier);
 
@@ -921,9 +921,9 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         }
 
   // Unparse anonymous type declaration body if present
-     if (!type_has_base_type && variableDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
+     if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
-           SgDeclarationStatement* def_decl = variableDeclaration->get_baseTypeDefiningDeclaration();
+           SgDeclarationStatement* def_decl = var_decl->get_baseTypeDefiningDeclaration();
            ROSE_ASSERT(def_decl);
 
            SgJovialTableStatement* table_decl = dynamic_cast<SgJovialTableStatement*>(def_decl);

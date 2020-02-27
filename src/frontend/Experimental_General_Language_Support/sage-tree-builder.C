@@ -546,8 +546,6 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
    if (init_expr)
       {
          var_init = SageBuilder::buildAssignInitializer_nfi(init_expr, type);
-         ROSE_ASSERT(var_init);
-         SageInterface::setSourcePosition(var_init);
       }
 
    var_decl = SageBuilder::buildVariableDeclaration_nfi(var_name, type, var_init, SageBuilder::topScopeStack());
@@ -560,28 +558,6 @@ void SageTreeBuilder::
 Leave(SgVariableDeclaration* var_decl)
 {
    cout << "SageTreeBuilder::Leave(SgVariableDeclaration*) \n";
-
-#if 0
-// There is a problem when the variable declaration has an initializer.  The typeptr for the initialized name
-// is SgModifierType with a base_type of the correct type.  I wonder if this is a problem with SageBuilder?
-// The problem is seen in the unparser and in a dot file but not below when searched.
-   SgInitializedName* init_name = SageInterface::getFirstInitializedName(var_decl);
-   SgInitializer* var_init = init_name->get_initializer();
-   SgName var_name = init_name->get_name();
-   SgType* type = init_name->get_type();
-   SgType* typeptr = init_name->get_typeptr();
-
-   std::cout << "--> seeking SgModifierType: type     is " << type << ": " << type->class_name() << std::endl;
-   std::cout << "--> seeking SgModifierType: typeptr  is " << typeptr << ": " << typeptr->class_name() << ": " << var_name << std::endl;
-   if (var_init)
-   std::cout << "--> seeking SgModifierType: var_init is " << var_init << ": " << var_init->class_name() << std::endl;
-
-   if (var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst())
-      {
-         std::cout << "--> CONSTANT \n";
-      }
-   else   std::cout << "--> NOT CONSTANT \n";
-#endif
 }
 
 void SageTreeBuilder::
