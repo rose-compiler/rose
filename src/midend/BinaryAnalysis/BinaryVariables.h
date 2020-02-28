@@ -382,6 +382,15 @@ public:
     /** The register typically used as local variable base address. */
     RegisterDescriptor frameOrStackPointer(const Partitioner2::Partitioner&);
 
+    /** Find frame location for address.
+     *
+     *  Given a symbolic address and size in bytes (presumabely from a memory read or write), calculate the part of the stack
+     *  frame that's referenced, if any.  Returns the part of the frame that's referenced, or an empty interval if the address
+     *  is outside the frame. */
+    OffsetInterval referencedFrameArea(const Partitioner2::Partitioner&,
+                                       const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+                                       const SymbolicExpr::Ptr &address, size_t nBytes);
+
     /** Find stack variable addresses.
      *
      *  Given an instruction, look for operand subexpressions that reference memory based from a stack frame pointer, such as

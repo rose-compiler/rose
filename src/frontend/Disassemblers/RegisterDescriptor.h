@@ -157,6 +157,13 @@ public:
         return 0 == nBits();
     }
 
+    /** Predicate returns true if width is non-zero.
+     *
+     *  Default-constructed register descriptors have an initial width of zero. */
+    bool isValid() const {
+        return nBits() != 0;
+    }
+
     /** Compare two descriptors.
      *
      *  Descriptors are sorted by major and minor numbers. If two descriptors have the same major and minor numbers then this
