@@ -99,8 +99,19 @@ public:
    void Enter(SgEnumDeclaration* &, const std::string &, std::list<SgInitializedName*> &);
    void Leave(SgEnumDeclaration*);
 
+// Statements
+//
+   void Enter(SgExprStatement* &, const std::vector<SgExpression*> &, SgExpression*, const std::string&);
+   void Leave(SgExprStatement*);
+
 // Jovial specific nodes
 //
+   void Enter(SgJovialDefineDeclaration* &, const std::string &define_string);
+   void Leave(SgJovialDefineDeclaration*);
+
+   void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, SgJovialDirectiveStatement::directive_types);
+   void Leave(SgJovialDirectiveStatement*);
+
    void Enter(SgJovialCompoolStatement* &,
               const std::string &, const SourcePositionPair &);
    void Enter(SgJovialTableStatement* &,

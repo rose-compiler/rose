@@ -2,6 +2,7 @@
 #include "rose_config.h"
 
 #include "sage-tree-builder.h"
+#include "Jovial_to_ROSE_translation.h"
 #include <boost/optional/optional_io.hpp>
 #include <iostream>
 
@@ -105,6 +106,7 @@ Enter(SgProgramHeaderStatement* &program_decl,
 
    program_decl->set_scope(scope);
    program_decl->set_parent(scope);
+   param_list  ->set_parent(program_decl);
 
    SgBasicBlock* program_body = new SgBasicBlock();
    SgFunctionDefinition* program_def = new SgFunctionDefinition(program_decl, program_body);
@@ -129,7 +131,7 @@ Enter(SgProgramHeaderStatement* &program_decl,
 // set labels
    if (SageInterface::is_Fortran_language() && labels.size() == 1)
       {
-         SageInterface::setFortranNumericLabel(program_decl, std::stoi(labels.front()),
+         SageInterface::setFortranNumericLabel(program_decl, atoi(labels.front().c_str()),
                                                SgLabelSymbol::e_start_label_type, /*label_scope=*/ program_def);
       }
 
@@ -184,7 +186,7 @@ setFortranEndProgramStmt(SgProgramHeaderStatement* program_decl,
 
    if (label)
       {
-         SageInterface::setFortranNumericLabel(program_decl, std::stoi(*label),
+         SageInterface::setFortranNumericLabel(program_decl, atoi(label->c_str()),
                                                SgLabelSymbol::e_end_label_type, /*label_scope=*/ program_def);
       }
 
@@ -312,6 +314,11 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name,
    BOOST_FOREACH(const General_Language_Translation::FormalParameter &param, param_list)
       {
          SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(param.name, actual_param_scope);
+
+         if (symbol == nullptr) {
+            std::cerr << "WARNING UNIMPLEMENTED: SageTreeBuilder::Enter(SgFunctionDeclaration*) - symbol lookup failed for name " << param.name << "\n";
+            return;
+         }
          ROSE_ASSERT(symbol != nullptr);
 
          SgInitializedName* init_name = symbol->get_declaration();
@@ -463,13 +470,83 @@ void SageTreeBuilder::
 Leave(SgDerivedTypeStatement* derived_type_stmt)
 {
    mlog[INFO] << "SageTreeBuilder::Leave(SgDerivedTypeStatement*) \n";
+   ROSE_ASSERT(derived_type_stmt != nullptr);
 
    SageBuilder::popScopeStack();  // class definition
    SageInterface::appendStatement(derived_type_stmt, SageBuilder::topScopeStack());
 }
 
+// Statements
+//
+
+void SageTreeBuilder::
+Enter(SgExprStatement* &assign_stmt, const std::vector<SgExpression*> &vars, SgExpression* rhs, const std::string& label)
+{
+   mlog[INFO] << "SageTreeBuilder::Enter(SgExprStatement* &, ...) \n";
+
+   SgAssignOp* assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(vars[0], rhs);
+   assign_stmt = SageBuilder::buildExprStatement_nfi(assign_op);
+}
+
+void SageTreeBuilder::
+Leave(SgExprStatement* assign_stmt)
+{
+   mlog[INFO] << "SageTreeBuilder::Leave(SgExprStatement*) \n";
+   ROSE_ASSERT(assign_stmt != nullptr);
+
+   SageInterface::appendStatement(assign_stmt, SageBuilder::topScopeStack());
+}
+
 // Jovial specific nodes
 //
+
+void SageTreeBuilder::
+Enter(SgJovialDefineDeclaration* &define_decl, const std::string &define_string)
+{
+   mlog[INFO] << "SageTreeBuilder::Enter(SgJovialDefineDeclaration* &, ...) \n";
+
+   define_decl = new SgJovialDefineDeclaration(define_string);
+   ROSE_ASSERT(define_decl != nullptr);
+   SageInterface::setSourcePosition(define_decl);
+
+// The first nondefining declaration must be set
+   define_decl->set_firstNondefiningDeclaration(define_decl);
+}
+
+void SageTreeBuilder::
+Leave(SgJovialDefineDeclaration* define_decl)
+{
+   mlog[INFO] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement*) \n";
+
+   ROSE_ASSERT(define_decl != nullptr);
+
+   SageInterface::appendStatement(define_decl, SageBuilder::topScopeStack());
+   ROSE_ASSERT(define_decl->get_parent() == SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgJovialDirectiveStatement* &directive, const std::string &directive_string, SgJovialDirectiveStatement::directive_types directive_type)
+{
+   mlog[INFO] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement* &, ...) \n";
+
+   directive = new SgJovialDirectiveStatement(directive_string, directive_type);
+   ROSE_ASSERT(directive);
+   SageInterface::setSourcePosition(directive);
+
+// The first nondefining declaration must be set
+   directive->set_firstNondefiningDeclaration(directive);
+}
+
+void SageTreeBuilder::
+Leave(SgJovialDirectiveStatement* directive)
+{
+   mlog[INFO] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement*) \n";
+
+   ROSE_ASSERT(directive != nullptr);
+
+   SageInterface::appendStatement(directive, SageBuilder::topScopeStack());
+   ROSE_ASSERT(directive->get_parent() == SageBuilder::topScopeStack());
+}
 
 void SageTreeBuilder::
 Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const SourcePositionPair &positions)

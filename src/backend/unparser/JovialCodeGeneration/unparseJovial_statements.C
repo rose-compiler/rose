@@ -21,10 +21,6 @@
 
 #define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
 
-using namespace std;
-using std::cerr;
-using std::endl;
-
 #include "sage_support.h"
 
 
@@ -689,7 +685,7 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      BOOST_FOREACH(SgInitializedName* init_name, enum_decl->get_enumerators())
          {
             bool has_initializer = false;
-            SgExpression* expr = nullptr;
+            SgExpression* expr = NULL;
             SgName name = init_name->get_name();
 
             SgInitializer* init_expr = init_name->get_initializer();
