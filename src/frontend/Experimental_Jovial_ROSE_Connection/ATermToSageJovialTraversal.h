@@ -223,7 +223,7 @@ ATbool traverse_NullBlockStatement(ATerm term);
 ATbool traverse_LabelList(ATerm term, std::vector<std::string> & labels, std::vector<PosInfo> & locations);
 
 // 4.1 ASSIGNMENT STATEMENTS
-ATbool traverse_AssignmentStatement(ATerm term, std::vector<std::string> & labels);
+ATbool traverse_AssignmentStatement(ATerm term);
 
 // 4.2 LOOP STATEMENTS
 ATbool traverse_WhileStatement  (ATerm term);
