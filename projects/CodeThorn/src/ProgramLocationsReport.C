@@ -79,10 +79,16 @@ void CodeThorn::ProgramLocationsReport::writeResultFile(string fileName, CodeTho
 }
 
 void ProgramLocationsReport::recordDefinitiveLocation(CodeThorn::Label lab) {
+#pragma omp critical(definitiveproglocrecording)
+  {
   definitiveLocations.insert(lab);
+  }
 }
 void ProgramLocationsReport::recordPotentialLocation(CodeThorn::Label lab) {
+#pragma omp critical(potentialproglocrecording)
+  {
   potentialLocations.insert(lab);
+  }
 }
 
 size_t ProgramLocationsReport::numDefinitiveLocations() {

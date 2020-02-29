@@ -51,6 +51,7 @@
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 using namespace Rose;
+using namespace Rose::Diagnostics;
 
 // global variable for turning on and off internal debugging
 int ROSE_DEBUG = 0;
@@ -316,6 +317,11 @@ std::string version_message()
      string backend_C_compiler_without_path   = BACKEND_C_COMPILER_NAME_WITH_PATH;
      string backend_C_compiler_with_path      = BACKEND_C_COMPILER_NAME_WITH_PATH;
      string backend_Cxx_compiler_version      = StringUtility::numberToString(BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER);
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+     string backend_Fortran_compiler_with_path= BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
+     string backend_Fortran_compiler_version  = StringUtility::numberToString(BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER);
+     string backend_Fortran_compiler_without_path = BACKEND_FORTRAN_COMPILER_NAME_WITHOUT_PATH;
+#endif
 
 #ifdef USE_CMAKE
      string build_tree_path                   = "CMake does not set: ROSE_COMPILE_TREE_PATH";
@@ -335,6 +341,10 @@ std::string version_message()
           "\n  --- using backend C compiler path (as specified at configure time): " + backend_C_compiler_with_path +
           "\n  --- using backend C++ compiler: " + backend_Cxx_compiler_without_path + " version: " + backend_Cxx_compiler_version +
           "\n  --- using backend C++ compiler path (as specified at configure time): " + backend_Cxx_compiler_with_path +
+#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+          "\n  --- using backend Fortran compiler: " + backend_Fortran_compiler_without_path + " version: " + backend_Fortran_compiler_version +
+          "\n  --- using backend Fortran compiler path (as specified at configure time): " + backend_Fortran_compiler_with_path +
+#endif
           "\n  --- using original build tree path: " + build_tree_path +
           "\n  --- using instalation path: " + install_path +
           "\n  --- using GNU readline version: " + readlineVersionString() +
@@ -459,10 +469,13 @@ class PatchDeclStmt : public ROSE_VisitTraversal {
         }
         if (defdecls.size() > 0) {
           SgDeclarationStatement * defdecl = *(defdecls.begin());
+#define DEBUG_MULTIPLE_DEFINING_DECLARATIONS 0
+#if DEBUG_MULTIPLE_DEFINING_DECLARATIONS
           if (defdecls.size() > 1) {
-            printf("Warning: Found %d defining declarations for declarations with mangled name: %s (%s)\n", defdecls.size(), it_declvect->first.c_str(), defdecl->class_name().c_str());
+            mfprintf(mlog [ WARN ] )("Warning: Found %d defining declarations for declarations with mangled name: %s (%s)\n", defdecls.size(), it_declvect->first.c_str(), defdecl->class_name().c_str());
 //          ROSE_ASSERT(false);
           }
+#endif
           for (it_declstmt = it_declvect->second.begin(); it_declstmt != it_declvect->second.end(); it_declstmt++) {
             (*it_declstmt)->set_definingDeclaration(defdecl);
           }
@@ -575,6 +588,8 @@ void append(SgProject * project, std::list<std::string> const & astfiles) {
     for (std::vector<SgFile *>::const_iterator it = files.begin(); it != files.end(); ++it) {
       project->get_fileList().push_back(*it);
       (*it)->set_parent(project->get_fileList_ptr());
+      (*it)->set_skipfinalCompileStep(true); // FIXME SgProject::get_skipfinalCompileStep returns conjunction of SgFile::get_skipfinalCompileStep which default to false. It would then always be false.
+      (*it)->set_skipfinalCompileStep(project->get_skipfinalCompileStep());
     }
     lproject->get_fileList_ptr()->get_listOfFiles().clear();
 

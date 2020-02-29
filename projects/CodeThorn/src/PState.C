@@ -135,6 +135,15 @@ bool PState::varExists(AbstractValue varId) const {
   * \author Markus Schordan
   * \date 2012.
  */
+bool PState::memLocExists(AbstractValue memLoc) const {
+  PState::const_iterator i=find(memLoc);
+  return !(i==end());
+}
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012.
+ */
 bool PState::varIsConst(AbstractValue varId) const {
   PState::const_iterator i=find(varId);
   if(i!=end()) {

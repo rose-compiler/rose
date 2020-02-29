@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "Solver5.h"
 #include "Analyzer.h"
+#include "CodeThornCommandLineOptions.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -114,11 +115,11 @@ void Solver5::run() {
               {
                 fout.open(_analyzer->_stg_trace_filename.c_str(),ios::app);    // open file for appending
                 assert (!fout.fail( ));
-                fout<<"ESTATE-IN :"<<currentEStatePtr->toString(&(_analyzer->variableIdMapping));
+                fout<<"ESTATE-IN :"<<currentEStatePtr->toString(_analyzer->getVariableIdMapping());
                 string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
                 if(sourceString.size()==60) sourceString+="...";
                 fout<<"\n==>"<<"TRANSFER:"<<sourceString;
-                fout<<"==>\n"<<"ESTATE-OUT:"<<newEState.toString(&(_analyzer->variableIdMapping));
+                fout<<"==>\n"<<"ESTATE-OUT:"<<newEState.toString(_analyzer->getVariableIdMapping());
                 fout<<endl;
                 fout<<endl;
                 fout.close();

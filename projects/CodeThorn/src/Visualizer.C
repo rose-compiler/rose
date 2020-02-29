@@ -5,7 +5,7 @@
  *************************************************************/
 
 #include "sage3basic.h"
-
+#include "CodeThornCommandLineOptions.h"
 #include "Visualizer.h"
 #include "SgNodeHelper.h"
 #include "CommandLineOptions.h"
