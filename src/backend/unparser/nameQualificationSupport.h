@@ -155,7 +155,7 @@ class NameQualificationTraversal : public AstTopDownBottomUpProcessing<NameQuali
 
      public:
        // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
-          static Sawyer::Message::Facility mlog;
+//        static Sawyer::Message::Facility mlog;
           static void initDiagnostics();
 
      public:

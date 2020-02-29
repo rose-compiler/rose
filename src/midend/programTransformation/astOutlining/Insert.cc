@@ -107,10 +107,11 @@ generateFriendPrototype (const SgFunctionDeclaration* full_decl, SgScopeStatemen
 
      if (enable_debug)  
      {
+#ifdef __linux__
        cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
        cout<<"\t source func decl is:"<< full_decl <<endl;
        full_decl->get_file_info()->display();
-
+#endif
 
        cout<<"\t target class definition is:"<< scope<<endl;
        scope->get_file_info()->display();
@@ -461,7 +462,9 @@ findMatchingDefiningClassDeclaration(SgSourceFile* targetFile, SgClassDeclaratio
   // declarations across all files.
      if (enable_debug)  
      {
+#ifdef __linux__
        cout<<"Entering "<< __PRETTY_FUNCTION__ << " for the following pattern class declaration: "<<endl;
+#endif
        target->get_file_info()->display();
      }
 

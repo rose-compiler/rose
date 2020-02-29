@@ -147,7 +147,11 @@ getVarSym_const (const SgNode* n)
       else 
       { // Liao, 12/18/2012. We should ignore built in variables since they should not be passed (by value/ref) into the outlined functions
         string name = v_sym->get_name().getString();
+#ifdef __linux__
+        if  (name =="__FUNCTION__" ||name == "__func__") 
+#else
         if  (name =="__PRETTY_FUNCTION__" || name =="__FUNCTION__" ||name == "__func__") 
+#endif
           v_sym = NULL;
       }
       break;
@@ -189,7 +193,11 @@ getVarSyms (SgNode* n, ASTtools::VarSymSet_t* p_syms)
         SgVariableSymbol* v_sym = isSgVariableSymbol (n);
         ROSE_ASSERT (v_sym);
         string name = v_sym->get_name().getString();
+#ifdef __linux__
         if  (name !="__PRETTY_FUNCTION__" && name !="__FUNCTION__" && name != "__func__")
+#else
+        if  (name !="__FUNCTION__" && name != "__func__")
+#endif
         {
           // cout<<"debug: L181 inserting "<<v_sym->get_name() <<endl;
           syms.insert (v_sym);
@@ -221,7 +229,11 @@ getVarSyms (SgNode* n, ASTtools::VarSymSet_t* p_syms)
          if (v_sym)
          {
           string name = v_sym->get_name().getString();
+#ifdef __linux__
           if  (name !="__PRETTY_FUNCTION__" && name !="__FUNCTION__" && name != "__func__")
+#else
+          if  (name !="__FUNCTION__" && name != "__func__")
+#endif
           {
            //cout<<"debug: L209 inserting "<<v_sym->get_name() <<endl;
            syms.insert (v_sym);
@@ -290,7 +302,11 @@ ASTtools::collectRefdVarSyms (const SgStatement* s, VarSymSet_t& syms)
     // so we do builtin function ref check first, later we can safely assert symbol != NULL
      string  vname = isSgVarRefExp(*iter)->get_symbol()->get_name().getString();
 
+#ifdef __linux__
      if  (vname =="__PRETTY_FUNCTION__" || vname =="__FUNCTION__" ||vname == "__func__")
+#else
+     if  (vname =="__FUNCTION__" ||vname == "__func__")
+#endif
        continue; 
 
 
