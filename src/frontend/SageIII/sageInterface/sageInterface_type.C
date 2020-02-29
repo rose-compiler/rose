@@ -320,7 +320,7 @@ bool isPointerToNonConstType(SgType* type)
     }
 
     // assume dimension default to 1 if not specified ,such as a[] 
-    if (indexExp == NULL) 
+    if ((indexExp == NULL) || isSgNullExpression(indexExp)) 
       result = 1;
     else 
     { 
@@ -2125,7 +2125,7 @@ if (!sgClassType) { \
         
         //same access control (private, protected, public) for all its non-static data members
         bool first = true;
-        SgAccessModifier::access_modifier_enum prevModifier;
+        SgAccessModifier::access_modifier_enum prevModifier=SgAccessModifier::e_unknown;
         foreach(SgDeclarationStatement* memberDeclaration, classDef->get_members()) {
             //has no non-static data members with brace- or equal- initializers.
             if (SgVariableDeclaration* memberVariable = isSgVariableDeclaration(memberDeclaration)) {

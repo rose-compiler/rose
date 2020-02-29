@@ -95,9 +95,6 @@ tools:
 	$(MAKE) -C $(top_builddir)/projects/pragmaParsing
 	$(MAKE) -C $(top_builddir)/projects/UpcTranslation
 	$(MAKE) -C $(top_builddir)/projects/ArithmeticMeasureTool
-if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
-	$(MAKE) -C $(top_builddir)/projects/typeforge
-endif
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) -C $(top_builddir)/tutorial
 endif
@@ -118,9 +115,6 @@ install-tools: install-core tools
 	$(MAKE) install -C $(top_builddir)/projects/pragmaParsing
 	$(MAKE) install -C $(top_builddir)/projects/UpcTranslation
 	$(MAKE) install -C $(top_builddir)/projects/ArithmeticMeasureTool
-if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
-	$(MAKE) install -C $(top_builddir)/projects/typeforge
-endif
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) install -C $(top_builddir)/tutorial
 endif
@@ -174,9 +168,6 @@ check-tools: tools
 	$(MAKE) check -C $(top_builddir)/projects/pragmaParsing
 	$(MAKE) check -C $(top_builddir)/projects/UpcTranslation
 	$(MAKE) check -C $(top_builddir)/projects/ArithmeticMeasureTool
-if ROSE_FRONTEND_COMPILER_DEFAULT_IS_CXX11
-	$(MAKE) check -C $(top_builddir)/projects/typeforge
-endif
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) check -C $(top_builddir)/tutorial
 endif

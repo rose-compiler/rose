@@ -841,10 +841,12 @@ std::string Outliner::generatePackingStatements(SgStatement* target, ASTtools::V
 SgSourceFile* 
 Outliner::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
 {
+#ifdef __linux__
   if (enable_debug)  
   {
     cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
   }
+#endif
  
   SgSourceFile* new_file = NULL;
   SgProject * project = getEnclosingNode<SgProject> (s);
@@ -888,10 +890,12 @@ Outliner::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
  * 
  */
 std::string Outliner::generateLibSourceFileName(SgBasicBlock* target) {
+#ifdef __linux__
   if (enable_debug)  
   {
     cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
   }
+#endif
     std::string lib_file_name;
  
     // s could be transformation generated, so use the root SgFile for file name
@@ -921,10 +925,12 @@ std::string Outliner::generateLibSourceFileName(SgBasicBlock* target) {
  * the lib source file's name convention is rose_input_lib.[c|cxx] by default. Or overrided by file_name.  
  */
 SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
+#ifdef __linux__
   if (enable_debug)  
   {
     cout<<"Entering "<< __PRETTY_FUNCTION__ <<endl;
   }
+#endif
     SgSourceFile* new_file = NULL;
     SgProject * project = getEnclosingNode<SgProject> (target);
     ROSE_ASSERT(project != NULL);
@@ -1017,10 +1023,12 @@ SgSourceFile* Outliner::getLibSourceFile(SgBasicBlock* target) {
 
     }
 
+#ifdef __linux__
     if (enable_debug)  
     {
       cout<<"Exiting "<< __PRETTY_FUNCTION__ <<endl;
     }
+#endif
 
     //new_file = isSgSourceFile(buildFile(new_file_name, new_file_name));
     ROSE_ASSERT(new_file != NULL);

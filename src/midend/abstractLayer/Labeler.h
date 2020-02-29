@@ -150,7 +150,7 @@ class Labeler {
   static Label NO_LABEL; // default initialized label (used to check for non-existing labels)
   Labeler(SgNode* start);
   static std::string labelToString(Label lab);
-  int isLabelRelevantNode(SgNode* node);
+  int numberOfAssociatedLabels(SgNode* node);
   virtual void createLabels(SgNode* node);
 
   /** Labels are numbered 0..n-1 where n is the number of labels
