@@ -16,7 +16,7 @@
 
 namespace CodeThorn {
 
-/*! 
+/*!
  *  \brief Constructing the (interprocedural) control-flow graph based on the algorithm presented in [1].
  *
  *  It is fully based on labels for relevant nodes that are determined as the initial step.
@@ -32,7 +32,7 @@ namespace CodeThorn {
  *         Exceptions are when creating fork/join and workshare/barrier nodes in the parallel CFG. Here, the final labels of the enclosed for loop need to be connected to the final label, i.e., the barrier, of the enclosing OpenMP for statement. In a similar fashion need the final labels of the enclosed structured block be connected to the final label of the enclosing OpenMP parallel statement.
  *    3.2) Construct the flow between (AST) nodes, e.g., within a basic block (see flow(SgNode *n1, SgNode *n2))
  *
- * [1] Nielson, F. and Nielson, H. and Hankin, C.: Principles of Program Analysis. 1999, Springer-Verlag Berlin Heidelberg. ISBN: 978-3-642-08474-4. 
+ * [1] Nielson, F. and Nielson, H. and Hankin, C.: Principles of Program Analysis. 1999, Springer-Verlag Berlin Heidelberg. ISBN: 978-3-642-08474-4.
  *
  * \author Markus Schordan, Jan-Patrick Lehr
  * \date 2012.
@@ -66,7 +66,7 @@ class CFAnalysis {
   LabelSetSet functionLabelSetSets(Flow& flow);
   LabelSet functionLabelSet(Label entryLabel, Flow& flow);
   LabelSet setOfInitialLabelsOfStmtsInBlock(SgNode* node);
-  /** 
+  /**
    * \brief Computes the control flow for an AST subtree rooted at node.
    */
   Flow flow(SgNode* node);
@@ -76,10 +76,8 @@ class CFAnalysis {
   Flow flow(SgNode* s1, SgNode* s2);
   CodeThorn::Labeler* getLabeler();
 
-  // determine mapping between function calls and function definitions (also resolves function pointers)
-  void computeFunctionCallMapping(SgProject* project);
   // computes from existing intra-procedural flow graph(s) the inter-procedural call information
-  InterFlow interFlow(Flow& flow); 
+  InterFlow interFlow(Flow& flow);
   void intraInterFlow(Flow&, InterFlow&);
   // Function for setting a pre-computed function-id
   // mapping. Required for function call resolution across multiple
@@ -115,7 +113,7 @@ class CFAnalysis {
    */
   bool forkJoinConsistencyChecks(Flow &flow) const;
 
-  /*! 
+  /*!
    * This function performs inlining on the ICFG by reducing
    * call/entry/exit/callreturn-nodes, if the function being called is
    * a "trivial" function. A "trivial" function has no formal parameters and
@@ -145,7 +143,7 @@ class CFAnalysis {
   FunctionIdMapping* _functionIdMapping=nullptr;
   FunctionCallMapping* _functionCallMapping=nullptr;
 
-};    
+};
 
 } // end of namespace CodeThorn
 

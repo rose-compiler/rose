@@ -18,8 +18,7 @@ using namespace CodeThorn;
 using namespace std;
 using namespace Sawyer::Message;
 
-CFAnalysis::FunctionResolutionMode CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;
-//CFAnalysis::FunctionResolutionMode CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;
+CFAnalysis::FunctionResolutionMode CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;
 
 Sawyer::Message::Facility CFAnalysis::logger;
 void CFAnalysis::initDiagnostics() {
@@ -292,11 +291,11 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   if(SgNodeHelper::Pattern::matchFunctionCall(node))
     return labeler->getLabel(node);
 
-  if(!labeler->isLabelRelevantNode(node)) {
+  if(!labeler->numberOfAssociatedLabels(node)) {
     cerr << "Error: icfg construction: not label relevant node "<<node->sage_class_name()<<endl;
     exit(1);
   }
-  ROSE_ASSERT(labeler->isLabelRelevantNode(node));
+  ROSE_ASSERT(labeler->numberOfAssociatedLabels(node));
   switch (node->variantT()) {
   case V_SgFunctionDeclaration:
     cerr<<"Error: icfg construction: function declarations are not associated with a label."<<endl;
@@ -412,7 +411,7 @@ SgStatement* CFAnalysis::getCaseOrDefaultBodyStmt(SgNode* node) {
 
 LabelSet CFAnalysis::finalLabels(SgNode* node) {
   ROSE_ASSERT(node);
-  ROSE_ASSERT(labeler->isLabelRelevantNode(node));
+  ROSE_ASSERT(labeler->numberOfAssociatedLabels(node));
   LabelSet finalSet;
 
   // special case of incExpr in SgForStatement

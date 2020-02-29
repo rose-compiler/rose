@@ -50,12 +50,14 @@ template<typename T>
   }
   const_cast<boost::program_options::variable_value&>(operator[](option)) = 
     boost::program_options::variable_value(boost::any(value), false);
-}
+ }
+ 
+// TODO: move to CodeThornCommandLineOptions, once all args
+// references are removed from codethorn library.
+ extern CommandLineOptions args;
 
 } // end of namespace CodeThorn
 
-extern CodeThorn::CommandLineOptions args; // defined in CommandLineOptions.C
-extern int option_debug_mode;
 
 #endif
 

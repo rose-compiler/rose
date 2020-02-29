@@ -16,7 +16,7 @@
 
 namespace CodeThorn {
 
-/*! 
+/*!
   * \author Simon Schroder (based on Markus Schordan's VariableIdMapping)
   * \date 2016.
  */
@@ -121,6 +121,7 @@ public:
   // logger support
   static Sawyer::Message::Facility logger;
 
+  // determine mapping between function calls and function definitions
   void computeFunctionCallMapping(SgProject* project);
 
   static void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node, FunctionId id);

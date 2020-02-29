@@ -1416,6 +1416,13 @@ testMPItypes:
 testMultipleFortranFiles: $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90
 	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90 || cat $(srcdir)/test2010_79.f90 rose_test2010_79.f90
 
+# Pei-Hung (2/25/2020) test if output still contains comment after preprocessor
+REFERENCE_PATH=$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Fortran_tests/referenceResults
+testPreprocessedOutput: $(srcdir)/test2007_suffixTest_07.F90
+	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2007_suffixTest_07.F90 
+	bash -c "diff <(tail -n 6 rose_test2007_suffixTest_07.F90) <(tail -n 6 $(REFERENCE_PATH)/rose_test2007_suffixTest_07.F90.output)" 
+	
+
 # DQ (11/5/2010): This bug causes the unparsed second file to include a Fortran "include" statement (magically).
 # Note that the compilation will generate an error not caught by make since the use of "cat" will succeed.
 riceBug1: $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90
@@ -1445,7 +1452,7 @@ crayPointerTest: testTranslator test2011_imperial_crayPointers.f90
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:skip_syntax_check -rose:skipfinalCompileStep -c $(srcdir)/test2011_imperial_crayPointers.f90
 
 # DQ (4/9/2011): Let's at least run these in parallel (more important for the Insure++ tests).
-extra_tests: $(PASSING_MODULE_TEST_Objects) testCPP_Defines testMPItypes testMultipleFortranFiles
+extra_tests: $(PASSING_MODULE_TEST_Objects) testCPP_Defines testMPItypes testMultipleFortranFiles testPreprocessedOutput
 
 # DQ (2/2/2011): We are now enforcing the module names are unique so that we can always run the 
 # test code in parallel and avoid name conflicts with *.mod (gfortran) and *.rmod (rose) files.

@@ -2,6 +2,7 @@
 #define TYPE_SIZE_MAPPING_H
 
 #include <vector>
+#include <unordered_map>
 
 namespace CodeThorn {
 
@@ -19,11 +20,14 @@ namespace CodeThorn {
     BITYPE_SLONG_LONG, BITYPE_ULONG_LONG,
     BITYPE_FLOAT, BITYPE_DOUBLE, BITYPE_LONG_DOUBLE,
     BITYPE_POINTER,
-    BITYPE_REFERENCE
+    BITYPE_REFERENCE,
+    BITYPE_SIZE
   };
   
   class TypeSizeMapping {
   public:
+    TypeSizeMapping();
+    virtual ~TypeSizeMapping();
     // sets sizes of all types (same as reported by sizeof on respective architecture)
     void setMapping(std::vector<CodeThorn::TypeSize> mapping);
     // sets size of one type (same as reported by sizeof on respective architecture)
@@ -31,6 +35,7 @@ namespace CodeThorn {
     CodeThorn::TypeSize getTypeSize(CodeThorn::BuiltInType bitype);
     std::size_t sizeOfOp(BuiltInType bitype);
     bool isCpp11StandardCompliant();
+    virtual std::string toString()=0;
   protected:
     // default setting LP64 data model
     std::vector<CodeThorn::TypeSize> _mapping={1,
@@ -40,6 +45,7 @@ namespace CodeThorn {
                                            8,
                                            8,
     };
+    std::unordered_map<SgType*,unsigned int> _typeToSizeMapping;
   };
 }
 

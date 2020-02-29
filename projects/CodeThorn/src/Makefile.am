@@ -146,6 +146,7 @@ CODETHORN_HEADER_FILES=\
   TypeSizeMapping.h \
   UDAstAttribute.h \
   VariableIdUtils.h \
+  VariableIdMappingExtended.h \
   VariableValueMonitor.h \
   Visualizer.h
 
@@ -241,6 +242,7 @@ CODETHORN_SOURCE_FILES=\
   TypeSizeMapping.C \
   UDAstAttribute.C \
   VariableIdUtils.C \
+  VariableIdMappingExtended.C \
   VariableValueMonitor.C \
   Visualizer.C
 
@@ -368,12 +370,14 @@ codethorndir=.
 # only informative
 codethorn_xHEADERS = \
   CommandLineOptions.h \
+  CodeThornCommandLineOptions.h \
   codethorn.h \
   LTL.h
 
 # codethorn sources in addition to libcodethorn and libltlthorn
 codethorn_SOURCES = \
   LTLParser.y++ \
+  CodeThornCommandLineOptions.C \
   codethorn.C
 
 ##############################################################
@@ -713,6 +717,9 @@ clean-local:
 	rm -f a.out
 	rm -rf ../docs/doxygen
 	rm -f *.imout
+	rm -f *.exe
+	rm -f *.imout.check
+	rm -Rf make_check_log_*
 
 distclean-local: clean
 	rm -f *.tgz

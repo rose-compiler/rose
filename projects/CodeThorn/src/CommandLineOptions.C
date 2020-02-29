@@ -10,8 +10,6 @@ using namespace std;
 // Command line processing global options
 /////////////////////////////////////////////////
 
-CodeThorn::CommandLineOptions args;
-
 namespace CodeThorn {
 
   /////////////////////////////////////////////////
@@ -64,5 +62,8 @@ namespace CodeThorn {
       throw CodeThorn::Exception("Command line option \"" + option + "\" accessed as string value, but has different type.");
     }
   }
-
 }
+// TODO: move to CodeThornCommandLineOptions, once all args
+// references are removed from codethorn library.
+CodeThorn::CommandLineOptions CodeThorn::args;
+
