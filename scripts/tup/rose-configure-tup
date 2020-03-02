@@ -282,6 +282,7 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
     C_CXX_MISC="-pthread" \
     C_MISC="$CFLAGS" \
     CXX_MISC="$CXXFLAGS" \
+    LD_MISC="-fuse-ld=gold -pthread" \
     EDG_VERSION="$(value_or_no "$(edg_version)")" \
     INSTALLATION_PREFIX="$(value_of --prefix "$@")" \
     $(language_vars "$@") \
