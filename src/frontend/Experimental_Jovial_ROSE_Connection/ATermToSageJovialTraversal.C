@@ -780,18 +780,6 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerItemDescription(ATerm term, S
 
    if (traverse_OptRoundOrTruncate(t_round_or_truncate, modifier_enum)) {
       // MATCHED OptRoundOrTruncate
-      if (modifier_enum) {
-         if (*modifier_enum == General_Language_Translation::e_type_modifier_round) {
-            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_round in IntegerItemDescription \n";
-         }
-         else if (*modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
-            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_truncate in IntegerItemDescription \n";
-         }
-         else if (*modifier_enum == General_Language_Translation::e_type_modifier_z) {
-            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_z in IntegerItemDescription \n";
-         }
-         else ROSE_ASSERT(false);
-      }
    } else return ATfalse;
 
    if (traverse_OptItemSize(t_size, opt_size)) {
@@ -806,6 +794,24 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerItemDescription(ATerm term, S
       type = SageBuilder::buildUnsignedIntType(kind);
    }
    ROSE_ASSERT(type);
+
+   if (modifier_enum) {
+      SgModifierType* mod_type = SageBuilder::buildModifierType(type);
+
+      if (*modifier_enum == General_Language_Translation::e_type_modifier_round) {
+         mod_type->get_typeModifier().setRound();
+      }
+      else if (*modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
+         mod_type->get_typeModifier().setTruncate();
+      }
+      else if (*modifier_enum == General_Language_Translation::e_type_modifier_z) {
+         mod_type->get_typeModifier().setTruncateTowardsZero();
+      }
+      else ROSE_ASSERT(false);
+
+      type = mod_type;
+   }
+   ROSE_ASSERT(type != nullptr);
 
    return ATtrue;
 }
@@ -854,21 +860,8 @@ ATbool ATermToSageJovialTraversal::traverse_FloatingItemDescription(ATerm term, 
 // rounding or truncate mode
    if (traverse_OptRoundOrTruncate(t_round_or_truncate, modifier_enum)) {
       // MATCHED OptRoundOrTruncate
-      if (modifier_enum) {
-         if (*modifier_enum == General_Language_Translation::e_type_modifier_round) {
-            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_round in FloatingItemDescription \n";
-         }
-         else if (*modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
-            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_truncate in FloatingItemDescription \n";
-         }
-         else if (*modifier_enum == General_Language_Translation::e_type_modifier_z) {
-            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_z in FloatingItemDescription \n";
-         }
-         else ROSE_ASSERT(false);
-      }
    }
    else return ATfalse;
-
 
 // precision
    if (ATmatch(t_precision, "no-precision()")) {
@@ -880,6 +873,24 @@ ATbool ATermToSageJovialTraversal::traverse_FloatingItemDescription(ATerm term, 
    else return ATfalse;
 
    type = SgTypeFloat::createType(precision);
+
+   if (modifier_enum) {
+      SgModifierType* mod_type = SageBuilder::buildModifierType(type);
+
+      if (*modifier_enum == General_Language_Translation::e_type_modifier_round) {
+         mod_type->get_typeModifier().setRound();
+      }
+      else if (*modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
+         mod_type->get_typeModifier().setTruncate();
+      }
+      else if (*modifier_enum == General_Language_Translation::e_type_modifier_z) {
+         mod_type->get_typeModifier().setTruncateTowardsZero();
+      }
+      else ROSE_ASSERT(false);
+
+      type = mod_type;
+   }
+   ROSE_ASSERT(type != nullptr);
 
    return ATtrue;
 }
@@ -930,18 +941,6 @@ ATbool ATermToSageJovialTraversal::traverse_FixedItemDescription(ATerm term, SgT
 
    if (traverse_OptRoundOrTruncate(t_round_or_truncate, modifier_enum)) {
       // MATCHED OptRoundOrTruncate
-      if (modifier_enum) {
-         if (*modifier_enum == General_Language_Translation::e_type_modifier_round) {
-            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_round in FixedItemDescription \n";
-         }
-         else if (*modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
-            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_truncate in FixedItemDescription \n";
-         }
-         else if (*modifier_enum == General_Language_Translation::e_type_modifier_z) {
-            cerr << "WARNING UNIMPLEMENTED: OptRoundOrTruncate - e_type_modifier_z in FixedItemDescription \n";
-         }
-         else ROSE_ASSERT(false);
-      }
    } else return ATfalse;
 
    if (ATmatch(t_scale, "ScaleSpecifier(<term>)", &t_scale_spec)) {
@@ -965,6 +964,24 @@ ATbool ATermToSageJovialTraversal::traverse_FixedItemDescription(ATerm term, SgT
 // type = SageBuilder::buildFixedType(scale, fraction);
    type = SgTypeFixed::createType(scale, fraction);
    ROSE_ASSERT(type);
+
+   if (modifier_enum) {
+      SgModifierType* mod_type = SageBuilder::buildModifierType(type);
+
+      if (*modifier_enum == General_Language_Translation::e_type_modifier_round) {
+         mod_type->get_typeModifier().setRound();
+      }
+      else if (*modifier_enum == General_Language_Translation::e_type_modifier_truncate) {
+         mod_type->get_typeModifier().setTruncate();
+      }
+      else if (*modifier_enum == General_Language_Translation::e_type_modifier_z) {
+         mod_type->get_typeModifier().setTruncateTowardsZero();
+      }
+      else ROSE_ASSERT(false);
+
+      type = mod_type;
+   }
+   ROSE_ASSERT(type != nullptr);
 
    return ATtrue;
 }
@@ -3524,8 +3541,8 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDeclaration(ATerm term)
    std::list<FormalParameter> param_list;
    General_Language_Translation::SubroutineAttribute subroutine_attr;
 
-   SgFunctionDeclaration* function_decl;
-   SgFunctionParameterScope* param_scope;
+   SgFunctionDeclaration* function_decl = nullptr;
+   SgFunctionParameterScope* param_scope = nullptr;
 
    if (ATmatch(term, "ProcedureDeclaration(<term>,<term>)", &t_proc_heading, &t_decl)) {
 
@@ -3548,7 +3565,7 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDeclaration(ATerm term)
    else return ATfalse;
 
 // Enter SageTreeBuilder for SgFunctionDeclaration or SgFunctionParameterScope
-// TODO: this will depend on if is a REF or DEF (assume REF for now)
+// TODO: this will depend on if it is a REF or DEF (assume REF for now)
    sage_tree_builder.Enter(function_decl, name, param_list, subroutine_attr);
 
 // Leave SageTreeBuilder for SgFunctionDeclaration
@@ -3558,7 +3575,6 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDeclaration(ATerm term)
 #if 0
 
 // DELETE_ME
-   SgUntypedFunctionScope* function_scope = NULL;
    SgUntypedFunctionDeclaration* function_decl = NULL;
 
 // "body" portion of the procedure declaration so that we can pick up parameter declaration
@@ -3572,10 +3588,6 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDeclaration(ATerm term)
    func_list = new SgUntypedFunctionDeclarationList();
    ROSE_ASSERT(func_list);
    setSourcePositionUnknown(func_list);
-
-   function_scope = UntypedBuilder::buildScope<SgUntypedFunctionScope>(label);
-   ROSE_ASSERT(function_scope);
-   setSourcePosition(function_scope, t_decl);
 
    int stmt_enum = General_Language_Translation::e_end_proc_ref_stmt;
    SgUntypedNamedStatement* end_proc_stmt = new SgUntypedNamedStatement(label, stmt_enum, "");

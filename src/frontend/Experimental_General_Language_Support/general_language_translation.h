@@ -1,9 +1,10 @@
 #ifndef GENERAL_LANGUAGE_TRANSLATION_H
 #define GENERAL_LANGUAGE_TRANSLATION_H
 
+class SgExpression;
+
 namespace General_Language_Translation
    {
-
   // Forward declarations
      struct FormalParameter;
      struct LocationSpecifier;
