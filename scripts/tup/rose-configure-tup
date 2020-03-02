@@ -88,6 +88,14 @@ makefile_value() {
     sed -n "/^${variable}[ \t]*=/ { s/^${variable}[ \t]*=[ \t]*//p; q }" <"$makefile"
 }
 
+# Given the NAME of a variable, return the value from the specified file (or rose_config.h). Returns nothing if the value is
+# not defined.
+cpp_defined() {
+    local variable="$1" file="$2"
+    [ -n "$file" ] || file="rose_config.h"
+    sed -n "/^#define[ \t][ \t]*${variable}[ \t]/ { s/^#define[ \t]*${variable}[ \t]*//p; q }" <"$file"
+}
+
 # Given a C preprocessor include search path argument of the form "-Ifoo/include" return "foo".
 prefix_from_include() {
     echo "$1" |\
@@ -201,6 +209,12 @@ prefix() {
     fi
 }
 
+# Remove zero or one set of single or double that enclose the entire value
+remove_outer_quotes() {
+    local value="$1"
+    echo "$value" |sed 's/\(["'"'"']\)\(.*\)\1/\2/'
+}
+
 # Given the name of an executable, such as "binwalk", return the installation directory. If the executable is not
 # found, then return nothing.
 exe_prefix() {
@@ -280,10 +294,10 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
     WITH_DWARF="$(value_or_no "$(config_switch --with-dwarf "$@")")" \
     WITH_ELF="$(value_or_no "$(config_switch --with-elf "$@")")" \
     WITH_GCRYPT="$(value_or_no "$(config_switch --with-gcrypt "$@")")" \
-    WITH_GPG_ERROR="$(value_or_else "$LIBGPG_ERROR_ROOT" "$(value_ite "$(config_switch --with-gcrypt "$@")" system no)")" \
+    WITH_GPG_ERROR="$(value_or_else "$LIBGPG_ERROR_ROOT" "$(value_ite "$(config_switch --with-gcrypt "$@")" system)")" \
     WITH_GRAPHICSMAGICK="$(value_or_no "$LIBGRAPHICSMAGICK_ROOT")" \
     WITH_JPEG="$(value_or_no "$LIBJPEG_ROOT")" \
-    WITH_JQ="$(value_or_no "$(makefile_value ROSE_USE_JQ Makefile)")" \
+    WITH_JQ="$(value_or_no "$(remove_outer_quotes "$(cpp_defined ROSE_JQ_EXE rose_config.h)")")" \
     WITH_LCMS="$(value_or_no "$LIBLCMS_ROOT")" \
     WITH_LZMA="$(value_or_no "$LIBLZMA_ROOT")" \
     WITH_MAGIC="$(value_or_no "$(config_switch --with-magic "$@")")" \

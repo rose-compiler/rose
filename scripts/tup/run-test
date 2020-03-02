@@ -97,6 +97,97 @@ tempfile() {
 }
 
 ########################################################################################################################
+TIMEOUT_CAPABILITIES=
+portable_timeout() {
+    # Figure out what timeout command we have
+    if [ "$TIMEOUT_CAPABILITIES" = "" ]; then
+	local ver="$(timeout --version 2>/dev/null |sed -n '1 s/[^0-9]*\([0-9]\+\.[0-9]\+\).*/\1/p')"
+	[ -n "$ver" ] || ver="0.0";
+	local vermaj="$(echo "$ver" |cut -d. -f1)"
+	local vermin="$(echo "$ver" |cut -d. -f2)"
+	if [ $vermaj -lt 8 ]; then
+	    TIMEOUT_CAPABILITIES=none
+	    echo "$arg0: warning: no timeout on this system" >&2
+	elif [ $vermaj -eq 8 -a $vermin -le 4 ]; then
+	    # For some reason tup has problems running timeout 8.4, which is the version on CentOS-6 and probably
+	    # Red Hat 6. The error we get is "Operation not permitted".
+	    TIMEOUT_CAPABILITIES=none
+	elif [ $vermaj -eq 8 -a $vermin -lt 25 ]; then
+	    TIMEOUT_CAPABILITIES=some
+	else
+	    TIMEOUT_CAPABILITIES=all
+	fi
+    fi
+
+    local cmd=()
+    case "$TIMEOUT_CAPABILITIES" in
+	none)
+	    : no command
+	    ;;
+	some|all)
+	    cmd=("timeout")
+	    ;;
+    esac
+
+    # Parse command-line
+    while [ "$#" -gt 0 ]; do
+	case "$1" in
+	    --foreground|--kill-after=*)
+		case "$TIMEOUT_CAPABILITIES" in
+		    none|some)
+			: ignored
+			;;
+		    all)
+			cmd=("${cmd[@]}" "$1")
+			;;
+		esac
+		shift
+		;;
+	    -*)
+		echo "$arg0: portable_timeout: unrecognized command-line argument: $1" >&2
+		exit 1
+		;;
+	    *)
+		local timeout="$1"; shift
+		case "$TIMEOUT_CAPABILITIES" in
+		    none)
+			: ignored
+			;;
+		    some)
+			case "$timeout" in
+			    *s)
+				cmd=("${cmd[@]}" "${timeout%s}")
+				;;
+			    *m)
+				local t="${timeout%m}"
+				t=$[t * 60]
+				cmd=("${cmd[@]}" "$t")
+				;;
+			    *h)
+				local t="${timeout%h}"
+				t=$[t * 3600]
+				cmd=("${cmd[@]}" "$t")
+				;;
+			    *)
+				cmd=("${cmd[@]}" "$timeout")
+				;;
+			esac
+			;;
+		    all)
+			cmd=("${cmd[@]}" "$timeout")
+			;;
+		esac
+		break
+		;;
+	esac
+    done
+    cmd=("${cmd[@]}" "$@")
+
+    # Run the command
+    "${cmd[@]}"
+}
+
+########################################################################################################################
 # Parse command-line
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -238,7 +329,7 @@ start_time=$(date '+%s')
 set +e
 (
     echo "+" "$@" >&2
-    timeout --foreground --kill-after=1m "$timeout" bash $temp_cmd |$filter
+    portable_timeout --foreground --kill-after=1m "$timeout" bash $temp_cmd |$filter
     exit ${PIPESTATUS[0]}
 ) >"$temp_stdout" 2>"$temp_stderr"
 exit_status=$?
