@@ -2281,7 +2281,7 @@ UntypedConverter::convertUntypedIfStatement (SgUntypedIfStatement* ut_stmt, SgNo
       ROSE_ASSERT(conditional != NULL);
 
       SgStatement* true_body = isSgStatement(children[1]);
-      SgNode* sg_node{children[1]};
+   // SgNode* sg_node{children[1]};
 
       if (true_body != NULL) {
       // This needs to be removed because statements are appended to a scope

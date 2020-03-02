@@ -1523,6 +1523,11 @@ HEADER_TYPE_MODIFIER_START
             // keyword, so I am trying to capture it as an attribute.
                e_gnu_attribute__device__             = 34,/*!< Using GNU support for general attributes in the contect of parameter type (ROSE extension using GNU attribute extension) */
 
+            // Rasmussen (3/1/2020): numeric type specifiers for Jovial
+               e_round                               = 35,/*!< Jovial rounding specifier */
+               e_truncate                            = 36,/*!< Jovial truncation specifier */
+               e_truncate_towards_zero               = 37,/*!< Jovial truncation towards zero specifier */
+
             // Last attribute enum (used for internal bounds checking)
                e_last_modifier /*!< last value (upper bound on range of values, used in error checking) */
              };
@@ -1769,6 +1774,21 @@ HEADER_TYPE_MODIFIER_START
           bool isGnuAttributeDevice() const;
           void setGnuAttributeDevice();
           void unsetGnuAttributeDevice();
+
+       // Jovial specific attribute
+          bool isRound() const;
+          void setRound();
+          void unsetRound();
+
+       // Jovial specific attribute
+          bool isTruncate() const;
+          void setTruncate();
+          void unsetTruncate();
+
+       // Jovial specific attribute
+          bool isTruncateTowardsZero() const;
+          void setTruncateTowardsZero();
+          void unsetTruncateTowardsZero();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -3722,6 +3742,18 @@ bool SgTypeModifier::isGnuAttributeDevice() const  { return checkBit(e_gnu_attri
 void SgTypeModifier::setGnuAttributeDevice()       { setBit(e_gnu_attribute__device__,p_modifierVector); }
 void SgTypeModifier::unsetGnuAttributeDevice()     { unsetBit(e_gnu_attribute__device__,p_modifierVector); }
 
+// Rasmussen (3/1/2020): numeric type specifiers for Jovial
+bool SgTypeModifier::isRound() const  { return checkBit(e_round,p_modifierVector); }
+void SgTypeModifier::setRound()       { setBit(e_round,p_modifierVector); }
+void SgTypeModifier::unsetRound()     { unsetBit(e_round,p_modifierVector); }
+
+bool SgTypeModifier::isTruncate() const  { return checkBit(e_truncate,p_modifierVector); }
+void SgTypeModifier::setTruncate()       { setBit(e_truncate,p_modifierVector); }
+void SgTypeModifier::unsetTruncate()     { unsetBit(e_truncate,p_modifierVector); }
+
+bool SgTypeModifier::isTruncateTowardsZero() const  { return checkBit(e_truncate_towards_zero,p_modifierVector); }
+void SgTypeModifier::setTruncateTowardsZero()       { setBit(e_truncate_towards_zero,p_modifierVector); }
+void SgTypeModifier::unsetTruncateTowardsZero()     { unsetBit(e_truncate_towards_zero,p_modifierVector); }
 
 string
 $CLASSNAME::displayString() const

@@ -9,9 +9,16 @@
 // This limits the use of ROSE header files at the moment.
 //
 class SgDerivedTypeStatement;
+class SgEnumDeclaration;
 class SgExpression;
+class SgExprStatement;
 class SgFunctionDeclaration;
+class SgFunctionDefinition;
+class SgFunctionParameterScope;
 class SgGlobal;
+class SgInitializedName;
+class SgJovialDefineDeclaration;
+class SgJovialDirectiveStatement;
 class SgLocatedNode;
 class SgProgramHeaderStatement;
 class SgScopeStatement;
@@ -22,6 +29,7 @@ class SgVariableDeclaration;
 // Jovial specific classes
 class SgJovialCompoolStatement;
 class SgJovialTableStatement;
+
 
 namespace Rose {
 namespace builder {
@@ -126,7 +134,7 @@ private:
 public:
    const TraversalContext & get_context(void) {return context_;}
    void setContext(SgType* type) {context_.type = type;}
-   void setActualFunctionParameterScope(SgBasicBlock* scope) {context_.actual_function_param_scope = scope;}
+   void setActualFunctionParameterScope(SgScopeStatement* scope) {context_.actual_function_param_scope = scope;}
 };
 
 } // namespace builder
