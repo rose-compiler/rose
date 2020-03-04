@@ -380,7 +380,7 @@ public:
     Sawyer::Optional<uint64_t> functionFrameSize(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&);
 
     /** The register typically used as local variable base address. */
-    RegisterDescriptor frameOrStackPointer(const Partitioner2::Partitioner&);
+    static RegisterDescriptor frameOrStackPointer(const Partitioner2::Partitioner&);
 
     /** Find frame location for address.
      *

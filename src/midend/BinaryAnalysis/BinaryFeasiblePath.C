@@ -883,6 +883,8 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
     // Direction flag (DF) is always set
     if (const RegisterDescriptor *REG_DF = cpu->get_register_dictionary()->lookup("df"))
         ops->writeRegister(*REG_DF, ops->boolean_(true));
+
+    initialState_ = ops->currentState()->clone();
 }
 
 /** Process instructions for one basic block on the specified virtual CPU. */
@@ -1359,6 +1361,11 @@ FeasiblePath::isAnyEndpointReachable(const P2::ControlFlowGraph &cfg,
             return true;
     }
     return false;
+}
+
+BaseSemantics::StatePtr
+FeasiblePath::initialState() const {
+    return initialState_;
 }
 
 BaseSemantics::StatePtr

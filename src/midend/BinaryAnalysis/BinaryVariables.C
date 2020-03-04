@@ -468,6 +468,7 @@ VariableFinder::functionFrameSize(const P2::Partitioner &partitioner, const P2::
     return Sawyer::Nothing();
 }
 
+// class method
 RegisterDescriptor
 VariableFinder::frameOrStackPointer(const P2::Partitioner &partitioner) {
     if (boost::dynamic_pointer_cast<S2::DispatcherPowerpc>(partitioner.instructionProvider().dispatcher())) {
