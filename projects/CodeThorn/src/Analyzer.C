@@ -1049,8 +1049,9 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
   const SgInitializedNamePtrList& initNameList=decl->get_variables();
   SgNode* initName0;
   if(initNameList.size()>1) {
-    cerr<<"Error: variable declaration contains more than one variable. Normalization required."<<endl;
-    cerr<<"Error: "<<decl->unparseToString()<<endl;
+    SAWYER_MESG(logger[ERROR])<<"Error: variable declaration contains more than one variable. Normalization required."<<endl;
+    SAWYER_MESG(logger[ERROR])<<"Error: "<<decl->unparseToString()<<endl;
+
     exit(1);
   } else {
     //SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
@@ -1187,8 +1188,8 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
           list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(rhs,currentEState);
           if(res.size()!=1) {
             if(res.size()>1) {
-              cerr<<"Error: multiple results in rhs evaluation."<<endl;
-              cerr<<"expr: "<<SgNodeHelper::sourceLineColumnToString(decl)<<": "<<decl->unparseToString()<<endl;
+              SAWYER_MESG(logger[ERROR])<<"Error: multiple results in rhs evaluation."<<endl;
+              SAWYER_MESG(logger[ERROR])<<"expr: "<<SgNodeHelper::sourceLineColumnToString(decl)<<": "<<decl->unparseToString()<<endl;
               exit(1);
             } else {
               ROSE_ASSERT(res.size()==0);
@@ -1524,8 +1525,8 @@ list<EState> CodeThorn::Analyzer::transferEdgeEState(Edge edge, const EState* es
     //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze1->unparseToString()<<endl;
     // this case cannot happen for normalized code
     logger[ERROR]<<"Function call detected (not represented in ICFG). Normalization required:"<<SgNodeHelper::sourceLineColumnToString(funCall)<<":"<<funCall->unparseToString()<<endl;
-    //bool useConstraints=false;
     exit(1);
+    //bool useConstraints=false
     //return evaluateFunctionCallArguments(edge,funCall,*estate,useConstraints);
   } else {
       ROSE_ASSERT(!edge.isType(EDGE_EXTERNAL));
@@ -1677,7 +1678,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   RoseAst completeast(root);
   startFunRoot=completeast.findFunctionByName(funtofind);
   if(startFunRoot==0) {
-    std::cout << "Function '"<<funtofind<<"' not found.\n";
+    SAWYER_MESG(logger[ERROR]) << "Function '"<<funtofind<<"' not found.\n";
     exit(1);
   } else {
     SAWYER_MESG(logger[TRACE])<< "INFO: starting at function '"<<funtofind<<"'."<<endl;
@@ -2293,15 +2294,15 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
       // general case: the actual argument is an arbitrary expression (including a single variable)
       list<SingleEvalResultConstInt> evalResultList=exprAnalyzer.evaluateExpression(actualParameterExpr,currentEState);
       if(evalResultList.size()==0) {
-        cerr<<"Internal error: no state computed for argument evaluation at: "<<SgNodeHelper::sourceLineColumnToString(getLabeler()->getNode(edge.source()))<<endl;
-        cerr<<"Argument expression: "<<actualParameterExpr->unparseToString()<<endl;
-        cerr<<"EState: "<<currentEState.toString(getVariableIdMapping())<<endl;
+        SAWYER_MESG(logger[FATAL])<<"Internal error: no state computed for argument evaluation at: "<<SgNodeHelper::sourceLineColumnToString(getLabeler()->getNode(edge.source()))<<endl;
+        SAWYER_MESG(logger[FATAL])<<"Argument expression: "<<actualParameterExpr->unparseToString()<<endl;
+        SAWYER_MESG(logger[FATAL])<<"EState: "<<currentEState.toString(getVariableIdMapping())<<endl;
         exit(1);
       }
       list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
       SingleEvalResultConstInt evalResult=*resultListIter;
       if(evalResultList.size()>1) {
-        logger[ERROR] <<"multi-state generating operators in function call parameters not supported."<<endl;
+        SAWYER_MESG(logger[ERROR]) <<"multi-state generating operators in function call parameters not supported."<<endl;
         exit(1);
       }
       evalResultValue=evalResult.value();
@@ -2672,7 +2673,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallExternal(Edge edge, c
         return resList; // return no state (this ends the analysis)
       }
       if(CodeThorn::args.getBool("input-values-as-constraints")) {
-        cerr<<"Option input-values-as-constraints no longer supported."<<endl;
+        SAWYER_MESG(logger[FATAL])<<"Option input-values-as-constraints no longer supported."<<endl;
         exit(1);
         //newCSet.removeAllConstraintsOfVar(varId);
         //newPState[varId]=CodeThorn::Top();
@@ -2699,7 +2700,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallExternal(Edge edge, c
         for(set<int>::iterator i=_inputVarValues.begin();i!=_inputVarValues.end();++i) {
           PState newPState=*currentEState.pstate();
           if(CodeThorn::args.getBool("input-values-as-constraints")) {
-            cerr<<"Option input-values-as-constraints no longer supported."<<endl;
+            SAWYER_MESG(logger[FATAL])<<"Option input-values-as-constraints no longer supported."<<endl;
             exit(1);
             //newCSet.removeAllConstraintsOfVar(varId);
             //newPState[varId]=CodeThorn::Top();
@@ -2858,7 +2859,7 @@ std::list<EState> CodeThorn::Analyzer::transferDefaultOptionStmt(SgDefaultOption
     SgExpression* caseExpr=caseStmt->get_key();
     SgExpression* caseExprOptionalRangeEnd=caseStmt->get_key_range_end();
     if(caseExprOptionalRangeEnd) {
-      cerr<<"Error: GNU extension range in case statement not supported."<<endl;
+      SAWYER_MESG(logger[ERROR])<<"Error: GNU extension range in case statement not supported."<<endl;
       exit(1);
     }
     // value of constant case value
@@ -2901,7 +2902,7 @@ std::list<EState> CodeThorn::Analyzer::transferCaseOptionStmt(SgCaseOptionStmt* 
   SgExpression* caseExpr=caseStmt->get_key();
   SgExpression* caseExprOptionalRangeEnd=caseStmt->get_key_range_end();
   if(caseExprOptionalRangeEnd) {
-    cerr<<"Error: GNU extension range in case statement not supported."<<endl;
+    SAWYER_MESG(logger[ERROR])<<"Error: GNU extension range in case statement not supported."<<endl;
     exit(1);
   }
   // value of constant case value
@@ -3033,8 +3034,8 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
         //newPState[lhsVar]=(*i).result;
         getExprAnalyzer()->writeToMemoryLocation(currentLabel,&newPState,lhsVar,(*i).result);
       } else {
-        cerr<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(nextNodeToAnalyze2)<<endl;
-        cerr<<"Unsupported type on LHS side of assignment: "
+        SAWYER_MESG(logger[ERROR])<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(nextNodeToAnalyze2)<<endl;
+        SAWYER_MESG(logger[ERROR])<<"Unsupported type on LHS side of assignment: "
             <<"type: '"<<variableIdMapping->getType(lhsVar)->unparseToString()<<"'"
             <<", "
             <<"AST type node: "<<variableIdMapping->getType(lhsVar)->class_name()
@@ -3293,8 +3294,8 @@ list<EState> CodeThorn::Analyzer::transferTrueFalseEdge(SgNode* nextNodeToAnalyz
       ++i) {
     SingleEvalResultConstInt evalResult=*i;
     if(evalResult.isBot()) {
-      cerr<<"PSTATE: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
-      cerr<<"Error: CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
+      SAWYER_MESG(logger[ERROR])<<"PSTATE: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
+      SAWYER_MESG(logger[ERROR])<<"Error: CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
       exit(1);
     }
     if((evalResult.isTrue() && edge.isType(EDGE_TRUE)) || (evalResult.isFalse() && edge.isType(EDGE_FALSE)) || evalResult.isTop()) {

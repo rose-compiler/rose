@@ -674,7 +674,7 @@ int main( int argc, char * argv[] ) {
   Rose::Diagnostics::mprefix->showProgramName(false);
   Rose::Diagnostics::mprefix->showThreadId(false);
   Rose::Diagnostics::mprefix->showElapsedTime(false);
-  Rose::Diagnostics::mfacilities.control("none,"); 
+  //Rose::Diagnostics::mfacilities.control("error,fatal"); ???
 
   Rose::global_options.set_frontend_notes(false);
   Rose::global_options.set_frontend_warnings(false);
