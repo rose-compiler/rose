@@ -334,13 +334,11 @@ F90_TESTCODES_REQUIRED_TO_PASS =  \
      test2019_multi_associate.f90 \
      test2019_accessibility_attribute.f90 \
      test2019_accessibility_attribute2.f90 \
+     test2020_use_iso_c_binding.f90 \
      rose-issue-par-39.f90 \
-     canonicalExample.f90 
-
-# Rasmussen(1/9/2019): rose-1612.f90 uses the module in rose_iso_c_binding.f90 which runs afoul of a
-# naming conflict policy.  Need to figure out how to get around this and have the module build first.
-#    rose_iso_c_binding.f90
-#    rose-1612.f90
+     canonicalExample.f90 \
+     fCaller.f90 \
+     rose-1612.f90
 
 # DQ (11/11/2014): These test fail due to changes to support C++11 work (need to look into this separately).
 #    test2010_154.f90
@@ -905,7 +903,6 @@ F90_TESTCODES_CURRENTLY_FAILING += \
      test2011_Rice_B-cant-assert-keyword-nonnull.f90 \
      test2011_Rice_C-cant-assert-keyword-nonnull.f90 \
      test2011_Rice_lost-func-return-type.f90 \
-     fCaller.f90 \
      triangle.f90 \
      X-comment-in-wrong-place.f90 \
      X-enddo-plus-label.f90  \
