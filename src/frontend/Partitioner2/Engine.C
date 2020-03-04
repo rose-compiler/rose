@@ -998,9 +998,9 @@ Engine::parseContainers(const std::vector<std::string> &fileNames) {
             }
             if (!filesToLink.empty()) {
                 linkerOutput.stream().close();          // will be written by linker command
-                if (ModulesElf::tryLink(settings_.loader.linker, linkerOutput.name().native(), filesToLink, mlog[WARN])) {
+                if (ModulesElf::tryLink(settings_.loader.linker, linkerOutput.name().string(), filesToLink, mlog[WARN])) {
                     containerFiles = nonLinkedFiles;
-                    containerFiles.push_back(linkerOutput.name().native());
+                    containerFiles.push_back(linkerOutput.name().string());
                 } else {
                     mlog[ERROR] <<"linking objects and/or archives failed; falling back to internal (incomplete) linker\n";
                     filesToLink.clear();
@@ -1018,9 +1018,9 @@ Engine::parseContainers(const std::vector<std::string> &fileNames) {
                 if (ModulesElf::isStaticArchive(file)) {
                     std::vector<boost::filesystem::path> objects = ModulesElf::extractStaticArchive(tempDir.name(), file);
                     if (objects.empty())
-                        mlog[WARN] <<"empty static archive \"" <<StringUtility::cEscape(file.native()) <<"\"\n";
+                        mlog[WARN] <<"empty static archive \"" <<StringUtility::cEscape(file.string()) <<"\"\n";
                     BOOST_FOREACH (const boost::filesystem::path &objectFile, objects)
-                        expandedList.push_back(objectFile.native());
+                        expandedList.push_back(objectFile.string());
                 } else {
                     expandedList.push_back(file);
                 }
@@ -1065,7 +1065,7 @@ Engine::roseFrontendReplacement(const std::vector<boost::filesystem::path> &file
     SgAsmGenericFileList *fileList = new SgAsmGenericFileList;
     BOOST_FOREACH (const boost::filesystem::path &fileName, fileNames) {
         SAWYER_MESG(mlog[TRACE]) <<"parsing " <<fileName <<"\n";
-        SgAsmGenericFile *file = SgAsmExecutableFileFormat::parseBinaryFormat(fileName.native().c_str());
+        SgAsmGenericFile *file = SgAsmExecutableFileFormat::parseBinaryFormat(fileName.string().c_str());
         ASSERT_not_null(file);
 #ifdef ROSE_HAVE_LIBDWARF
         readDwarf(file);
@@ -1088,10 +1088,10 @@ Engine::roseFrontendReplacement(const std::vector<boost::filesystem::path> &file
     binaryComposite->set_binary_only(true);
     binaryComposite->set_requires_C_preprocessor(false);
     //binaryComposite->set_isObjectFile(???) -- makes no sense since the composite can be multiple files of different types
-    binaryComposite->set_sourceFileNameWithPath(boost::filesystem::absolute(fileNames[0]).native()); // best we can do
-    binaryComposite->set_sourceFileNameWithoutPath(fileNames[0].filename().native());                // best we can do
-    binaryComposite->initializeSourcePosition(fileNames[0].native());                                // best we can do
-    binaryComposite->set_originalCommandLineArgumentList(std::vector<std::string>(1, fileNames[0].native())); // best we can do
+    binaryComposite->set_sourceFileNameWithPath(boost::filesystem::absolute(fileNames[0]).string()); // best we can do
+    binaryComposite->set_sourceFileNameWithoutPath(fileNames[0].filename().string());                // best we can do
+    binaryComposite->initializeSourcePosition(fileNames[0].string());                                // best we can do
+    binaryComposite->set_originalCommandLineArgumentList(std::vector<std::string>(1, fileNames[0].string())); // best we can do
     ASSERT_not_null(binaryComposite->get_file_info());
 
     // Create one or more SgAsmInterpretation nodes. If all the SgAsmGenericFile objects are ELF files, then there's one

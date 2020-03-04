@@ -34,7 +34,7 @@ main() {
     boost::filesystem::path dbName = "testTestCase.db";
     boost::system::error_code ec;
     boost::filesystem::remove(dbName, ec);
-    std::string dbUrl = "sqlite3://" + dbName.native();
+    std::string dbUrl = "sqlite3://" + dbName.string();
 
     TestCaseId testCaseId = createDatabase(dbUrl);
     checkDatabase(dbUrl, testCaseId);

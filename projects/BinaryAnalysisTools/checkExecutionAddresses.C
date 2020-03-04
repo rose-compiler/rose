@@ -205,7 +205,7 @@ main(int argc, char *argv[]) {
     // Get memory map.
     MemoryMap::Ptr map;
     if (MAP_ROSE==settings.mapSource) {
-        map = engine.loadSpecimens(specimen.program().native());
+        map = engine.loadSpecimens(specimen.program().string());
     } else {
         map = MemoryMap::instance();
         map->insertProcess(pid, MemoryMap::Attach::NO);

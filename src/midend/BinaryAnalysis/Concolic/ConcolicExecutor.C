@@ -447,14 +447,14 @@ ConcolicExecutor::partition(const Database::Ptr &db, const Specimen::Ptr &specim
         // Extract the specimen into a temporary file in order to parse it
         Sawyer::FileSystem::TemporaryDirectory tempDir;
         boost::filesystem::path specimenFileName = tempDir.name() / "specimen";
-        std::ofstream specimenFile(specimenFileName.native().c_str());
+        std::ofstream specimenFile(specimenFileName.string().c_str());
         ASSERT_forbid(specimen->content().empty()); // &std::vector<T>::operator[](0) is UB if empty; "data" is C++11
         specimenFile.write((const char*)&specimen->content()[0], specimen->content().size());
         specimenFile.close();
         boost::filesystem::permissions(specimenFileName, boost::filesystem::owner_all);
 
         // Use the "run:" scheme to load the simulated virtual memory in order to get all the shared libraries.
-        partitioner = engine.partition("run:replace:" + specimenFileName.native());
+        partitioner = engine.partition("run:replace:" + specimenFileName.string());
 
         // Cache the results in the database.
         boost::filesystem::path rbaFileName = tempDir.name() / "specimen.rba";
@@ -481,7 +481,7 @@ ConcolicExecutor::makeProcess(const Database::Ptr &db, const TestCase::Ptr &test
         exeName = "a.out";
     exeName = tempDir.name() / exeName;
     {
-        std::ofstream executable(exeName.native().c_str(), std::ios_base::binary | std::ios_base::trunc);
+        std::ofstream executable(exeName.string().c_str(), std::ios_base::binary | std::ios_base::trunc);
         if (!executable)
             mlog[ERROR] <<"cannot write to " <<exeName <<"\n";
         if (!testCase->specimen()->content().empty()) {

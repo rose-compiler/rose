@@ -192,11 +192,11 @@ int executeBinary( const boost::filesystem::path&  execmon,
                    TestCase::Ptr                   tc
                  )
 {
-  return executeBinary( execmon.native(),
+  return executeBinary( execmon.string(),
                         execmonargs,
-                        binary.native(),
-                        logout.native(),
-                        logerr.native(),
+                        binary.string(),
+                        logout.string(),
+                        logerr.string(),
                         persona,
                         tc->args(),
                         convToStringVector(tc->env())
@@ -289,9 +289,9 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
     // execution monitor was set
     execmonArgs.reserve(5);
 
-    execmonArgs.push_back(executionMonitor().native());
+    execmonArgs.push_back(executionMonitor().string());
     execmonArgs.push_back("-o");
-    execmonArgs.push_back(qualScore.native());
+    execmonArgs.push_back(qualScore.string());
     // execmonArgs.push_back("--no-disassembler");
   }
 

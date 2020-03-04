@@ -137,7 +137,7 @@ functionCfgImage(const P2::Partitioner &partitioner, const P2::Function::Ptr &fu
         // inputs since we've already run the time-consuming layout algorithms, and they're small (compared to JPEG) for
         // efficient transport from server to browser.
         imageName = uniquePath(".svg");
-        std::string dotCmd = "dot -Tsvg -o" + imageName.string() + " " + srcName.native();
+        std::string dotCmd = "dot -Tsvg -o" + imageName.string() + " " + srcName.string();
         if (0!=system(dotCmd.c_str())) {
             mlog[ERROR] <<"command failed: " <<dotCmd <<"\n";
 
@@ -145,7 +145,7 @@ functionCfgImage(const P2::Partitioner &partitioner, const P2::Function::Ptr &fu
             // have a large number of instructions.  So if that fails, try generating a JPEG file instead.  The unfortunate
             // thing with this is that they might get scaled so small as to be unusable.
             imageName = uniquePath(".jpg");
-            std::string dotCmd = "dot -Tjpg -o" + imageName.string() + " " + srcName.native();
+            std::string dotCmd = "dot -Tjpg -o" + imageName.string() + " " + srcName.string();
             if (0!=system(dotCmd.c_str())) {
                 mlog[ERROR] <<"command failed: " <<dotCmd <<"\n";
                 return boost::filesystem::path();

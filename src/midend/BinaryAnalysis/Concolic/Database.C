@@ -1636,7 +1636,7 @@ struct GuardedDB
     {
       std::pair<boost::filesystem::path, bool> properties = dbProperties(url);
 
-      sqlite3_open(properties.first.native().c_str(), &db_);
+      sqlite3_open(properties.first.string().c_str(), &db_);
       dbg_ = properties.second;
     }
 
