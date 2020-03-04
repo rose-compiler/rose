@@ -674,7 +674,13 @@ int main( int argc, char * argv[] ) {
   Rose::Diagnostics::mprefix->showProgramName(false);
   Rose::Diagnostics::mprefix->showThreadId(false);
   Rose::Diagnostics::mprefix->showElapsedTime(false);
-  //Rose::Diagnostics::mfacilities.control("error,fatal"); ???
+
+  string turnOffRoseWarnings=string("Rose(none,>=error),Rose::EditDistance(none,>=error),Rose::FixupAstDeclarationScope(none,>=error),")
+    +"Rose::FixupAstSymbolTablesToSupportAliasedSymbols(none,>=error),Rose::NameQualificationTraversal(none,>=error),"
+    +"Rose::NameQualificationTraversal(none,>=error),Rose::EditDistance(none,>=error),"
+    +"Rose::TestChildPointersInMemoryPool(none,>=error),Rose::UnparseLanguageIndependentConstructs(none,>=error),"
+    +"rose_ir_node(none,>=error)";
+  Rose::Diagnostics::mfacilities.control(turnOffRoseWarnings); 
 
   Rose::global_options.set_frontend_notes(false);
   Rose::global_options.set_frontend_warnings(false);
