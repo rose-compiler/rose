@@ -40,7 +40,9 @@ libroseSawyer_la_SOURCES =			\
 	Stopwatch.C				\
 	Synchronization.C			\
 	useHeaders.C
-nobase_pkginclude_HEADERS   =			\
+
+sawyerincludedir = $(includedir)/rose/Sawyer
+sawyerinclude_HEADERS =				\
 	Access.h				\
 	AddressMap.h				\
 	AddressSegment.h			\
