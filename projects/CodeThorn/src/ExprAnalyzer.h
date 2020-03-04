@@ -55,7 +55,7 @@ namespace CodeThorn {
     bool isBot() {return result.isBot();}
   };
   
-  enum InterpretationMode { IM_ABSTRACT, IM_CONCRETE };
+  enum InterpreterMode { IM_ABSTRACT, IM_CONCRETE };
   // ACCESS_ERROR is null pointer dereference is detected. ACCESS_NON_EXISTING if pointer is lattice bottom element.
   enum MemoryAccessBounds {ACCESS_ERROR,ACCESS_DEFINITELY_NP, ACCESS_DEFINITELY_INSIDE_BOUNDS, ACCESS_POTENTIALLY_OUTSIDE_BOUNDS, ACCESS_DEFINITELY_OUTSIDE_BOUNDS, ACCESS_NON_EXISTING};
   enum AnalysisSelector { ANALYSIS_NULL_POINTER, ANALYSIS_OUT_OF_BOUNDS, ANALYSIS_UNINITIALIZED };
@@ -141,10 +141,10 @@ namespace CodeThorn {
     // returns true if execution may continue, false if execution definitely does not continue.
     bool checkAndRecordNullPointer(AbstractValue value, Label label);
 
-    enum InterpretationMode getInterpretationMode();
-    void setInterpretationMode(enum InterpretationMode);
-    std::string getInterpretationModeFileName();
-    void setInterpretationModeFileName(std::string);
+    enum InterpreterMode getInterpreterMode();
+    void setInterpreterMode(enum InterpreterMode);
+    std::string getInterpreterModeFileName();
+    void setInterpreterModeFileName(std::string);
 
     AbstractValue readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
     void writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
@@ -337,8 +337,8 @@ namespace CodeThorn {
     bool _ignoreFunctionPointers=false;
     Analyzer* _analyzer;
     bool _printDetectedViolations=false;
-    enum InterpretationMode _interpretationMode=IM_ABSTRACT;
-    std::string _interpretationModeFileName;
+    enum InterpreterMode _interpreterMode=IM_ABSTRACT;
+    std::string _interpreterModeFileName;
     bool _optionOutputWarnings=false;
   public:
     StructureAccessLookup structureAccessLookup;

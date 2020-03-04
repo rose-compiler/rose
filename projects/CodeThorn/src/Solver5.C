@@ -137,7 +137,9 @@ void Solver5::run() {
                   //cout<<"DEBUG: Adding estate to worklist."<<endl;
                   _analyzer->addToWorkList(newEStatePtr);
                   break;
-                case 1: {
+                case 1:
+                case 3:
+                  {
                   // performing merge
 #pragma omp critical(SUMMARY_STATES_MAP)
                   {
