@@ -1444,6 +1444,8 @@ Facility::operator=(const Facility &other) {
 SAWYER_EXPORT Facility&
 Facility::initialize(const std::string &name) {
     assert(isConstructed());
+    if (!name.empty() && !isValidName(name))
+        throw std::runtime_error("invalid facility name \"" + name + "\"");
     constructed_ = CONSTRUCTED_MAGIC;
     name_ = name;
     initStreams(FdSink::instance(2));
@@ -1453,6 +1455,8 @@ Facility::initialize(const std::string &name) {
 SAWYER_EXPORT Facility&
 Facility::initialize(const std::string &name, const DestinationPtr &destination) {
     assert(isConstructed());
+    if (!name.empty() && !isValidName(name))
+        throw std::runtime_error("invalid facility name \"" + name + "\"");
     constructed_ = CONSTRUCTED_MAGIC;
     name_ = name;
     initStreams(destination);
@@ -1532,6 +1536,41 @@ Facility::get(Importance imp) {
     }
 
     return *streams_[imp];
+}
+
+// class method, thread-safe
+SAWYER_EXPORT bool
+Facility::isValidName(const std::string &name) {
+    return !parseName(name).empty();
+}
+
+// class method, thread-safe
+SAWYER_EXPORT std::vector<std::string>
+Facility::parseName(const std::string &name) {
+    static const std::vector<std::string> nothing;
+    std::vector<std::string> components;
+    const char *s = name.c_str();
+    while (*s) {
+        // Look for a component
+        const char *compStart = s;
+        while (::isalnum(*s) || '_' == *s)
+            ++s;
+        if (s == compStart)
+            return nothing;                             // expected a component
+        components.push_back(std::string(compStart, s));
+
+        // Look for a separator or end of string.
+        if (*s) {
+            if (':' == s[0] && ':' == s[1]) {
+                s += 2;
+            } else if ('.' == *s || ':' == *s || '-' == *s) {
+                ++s;
+            }
+            if (!*s)
+                return nothing;                         // separator cannot be at end of string
+        }
+    }
+    return components;
 }
 
 // thread-safe
@@ -1635,9 +1674,8 @@ Facilities::insertNS(Facility &facility, std::string name) {
         name = facility.name();
     if (name.empty())
         throw std::logic_error("facility name is empty and no name was supplied");
-    const char *s = name.c_str();
-    if (0!=name.compare(parseFacilityName(s)))
-        throw std::logic_error("name '"+name+"' is not valid for the Facilities::control language");
+    if (!Facility::isValidName(name))
+        throw std::logic_error("name '"+name+"' is not valid");
     FacilityMap::NodeIterator found = facilities_.find(name);
     if (found!=facilities_.nodes().end()) {
         if (found->value()!= &facility)
@@ -1795,40 +1833,51 @@ Facilities::enable(bool b) {
     return *this;
 }
 
-std::string
-Facilities::ControlTerm::toString() const {
-    std::string s = enable ? "enable" : "disable";
-    if (lo==hi) {
-        s += " level " + stringifyImportance(lo);
-    } else {
-        s += " levels " + stringifyImportance(lo) + " through " + stringifyImportance(hi);
-    }
-    s += " for " + (facilityName.empty() ? "all registered facilities" : facilityName);
-    return s;
-}
-
 // class method; thread-safe
-// Matches the Perl regular expression /^\s*([a-zA-Z]\w*((\.|::)[a-zA-Z]\w*)*/
-// On match, returns $1 and str points to the next character after the regular expression
-// When not matched, returns "" and str is unchanged
-SAWYER_EXPORT std::string
-Facilities::parseFacilityName(const char *&str) {
-    std::string name;
-    const char *s = str;
-    while (isspace(*s)) ++s;
-    while (isalpha(*s)) {
-        while (isalnum(*s) || '_'==*s) name += *s++;
-        if ('.'==s[0] && (isalpha(s[1]) || '_'==s[1])) {
-            name += ".";
-            ++s;
-        } else if (':'==s[0] && ':'==s[1] && (isalpha(s[2]) || '_'==s[2])) {
-            name += "::";
-            s += 2;
+SAWYER_EXPORT boost::regex
+Facilities::parseFacilityNamePattern(const char *&str) {
+#if 0 // strict: '*' can only be a complete name component
+    boost::regex firstComponent("^(\\w+|\\*)");
+    boost::regex nextComponent("^(\\.|::?)(\\w+|\\*)");
+    boost::cmatch matched;
+    std::string re;
+
+    if (boost::regex_search(str, matched, firstComponent)) {
+        if (matched.str() == "*") {
+            re = ".*";
+        } else {
+            re = matched.str();
         }
     }
-    if (!name.empty())
-        str = s;
-    return name;
+    str += matched.length();
+
+    while (boost::regex_search(str, matched, nextComponent)) {
+        std::string separator = matched.str(0);
+        std::string component = matched.str(1);
+        if ("." == separator) {
+            re += "\\.";
+        } else {
+            re += separator;
+        }
+        if ("*" == component) {
+            re += ".*";
+        } else {
+            re += component;
+        }
+        str += matched.length();
+    }
+#else // relaxed: '*' can appear anywhere
+    std::string re;
+    for (/*void*/; isalnum(*str) || strchr("_.:*", *str); ++str) {
+        if ('*' == *str) {
+            re += ".*";
+        } else {
+            re += *str;
+        }
+    }
+#endif
+
+    return boost::regex(re);
 }
 
 // class method; thread-safe
@@ -1910,7 +1959,7 @@ Facilities::importanceFromString(const std::string &str) {
 // Parses a StreamControlList. On success, returns a non-empty vector and adjust 'str' to point to the next character after the
 // list.  On failure, throw a ControlError.
 SAWYER_EXPORT std::list<Facilities::ControlTerm>
-Facilities::parseImportanceList(const std::string &facilityName, const char *&str, bool isGlobal) {
+Facilities::parseImportanceList(const boost::regex &facilityNamePattern, const char *&str, bool isGlobal) {
     const char *s = str;
     std::list<ControlTerm> retval;
 
@@ -1945,7 +1994,7 @@ Facilities::parseImportanceList(const std::string &facilityName, const char *&st
             break;
         }
 
-        ControlTerm term(facilityName, enablement.compare("!")!=0);
+        ControlTerm term(facilityNamePattern, enablement.compare("!")!=0);
         if (boost::iequals(importance, "all") || boost::iequals(importance, "none")) {
             if (!enablement.empty())
                 throw ControlError("'"+importance+"' cannot be preceded by '"+enablement+"'", enablementStart);
@@ -1986,6 +2035,16 @@ Facilities::parseImportanceList(const std::string &facilityName, const char *&st
     return retval;
 }
 
+std::vector<Facility*>
+Facilities::matchingFacilitiesNS(const boost::regex &namePattern) const {
+    std::vector<Facility*> retval;
+    BOOST_FOREACH (const FacilityMap::Node &node, facilities_.nodes()) {
+        if (boost::regex_match(node.key(), namePattern))
+            retval.push_back(node.value());
+    }
+    return retval;
+}
+
 // thread-safe
 SAWYER_EXPORT std::string
 Facilities::control(const std::string &ss) {
@@ -1997,23 +2056,24 @@ Facilities::control(const std::string &ss) {
 
     try {
         while (1) {
-            std::list<ControlTerm> t2 = parseImportanceList("", s, true);
+            std::list<ControlTerm> t2 = parseImportanceList(boost::regex(), s, true);
             if (t2.empty()) {
                 // facility name
                 while (isspace(*s)) ++s;
                 const char *facilityNameStart = s;
-                std::string facilityName = parseFacilityName(s);
-                if (facilityName.empty())
+                boost::regex facilityNamePattern = parseFacilityNamePattern(s);
+                if (facilityNamePattern.empty())
                     break;
-                if (!facilities_.exists(facilityName))
-                    throw ControlError("no such message facility '"+facilityName+"'", facilityNameStart);
+                std::string facilityName(facilityNameStart, s);
+                if (matchingFacilitiesNS(facilityNamePattern).empty())
+                    throw ControlError("no facility matching '"+facilityName+"'", facilityNameStart);
 
                 // stream control list in parentheses
                 while (isspace(*s)) ++s;
                 if ('('!=*s)
                     throw ControlError("expected '(' after message facility name '"+facilityName+"'", s);
                 ++s;
-                t2 = parseImportanceList(facilityName, s, false);
+                t2 = parseImportanceList(facilityNamePattern, s, false);
                 if (t2.empty())
                     throw ControlError("expected stream control list after '('", s);
                 while (isspace(*s)) ++s;
@@ -2033,9 +2093,9 @@ Facilities::control(const std::string &ss) {
         if (*s) {
             if (terms.empty())
                 throw ControlError("syntax error", s);
-            if (terms.back().facilityName.empty())
+            if (terms.back().facilityNamePattern.empty())
                 throw ControlError("syntax error in global list", s);
-            throw ControlError("syntax error after '"+terms.back().facilityName+"' list", s);
+            throw ControlError("syntax error", s);
         }
     } catch (const ControlError &error) {
         std::string s = error.mesg + "\n";
@@ -2049,14 +2109,16 @@ Facilities::control(const std::string &ss) {
 
     for (std::list<ControlTerm>::iterator ti=terms.begin(); ti!=terms.end(); ++ti) {
         const ControlTerm &term = *ti;
-        if (term.facilityName.empty()) {
+        if (term.facilityNamePattern.empty()) {
             for (Importance imp=term.lo; imp<=term.hi; imp=(Importance)(imp+1))
                 enableNS(imp, term.enable);
         } else {
-            FacilityMap::NodeIterator found = facilities_.find(term.facilityName);
-            assert(found!=facilities_.nodes().end() && found->value()!=NULL);
-            for (Importance imp=term.lo; imp<=term.hi; imp=(Importance)(imp+1))
-                found->value()->get(imp).enable(term.enable);
+            std::vector<Facility*> found = matchingFacilitiesNS(term.facilityNamePattern);
+            ASSERT_forbid(found.empty());
+            BOOST_FOREACH (Facility *facility, found) {
+                for (Importance imp = term.lo; imp <= term.hi; imp = (Importance)(imp+1))
+                    facility->get(imp).enable(term.enable);
+            }
         }
     }
 
