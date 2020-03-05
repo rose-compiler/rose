@@ -468,6 +468,7 @@ VariableFinder::functionFrameSize(const P2::Partitioner &partitioner, const P2::
     return Sawyer::Nothing();
 }
 
+// class method
 RegisterDescriptor
 VariableFinder::frameOrStackPointer(const P2::Partitioner &partitioner) {
     if (boost::dynamic_pointer_cast<S2::DispatcherPowerpc>(partitioner.instructionProvider().dispatcher())) {
@@ -483,6 +484,39 @@ VariableFinder::frameOrStackPointer(const P2::Partitioner &partitioner) {
             reg = partitioner.instructionProvider().stackPointerRegister();
         return reg;
     }
+}
+
+OffsetInterval
+VariableFinder::referencedFrameArea(const Partitioner2::Partitioner &partitioner, const S2::BaseSemantics::RiscOperatorsPtr &ops,
+                                    const SymbolicExpr::Ptr &address, size_t nBytes) {
+    // Return an empty interval if any information is missing
+    ASSERT_not_null(ops);
+    ASSERT_not_null(address);
+    static const OffsetInterval nothing;
+    if (0 == nBytes)
+        return nothing;
+    const RegisterDescriptor FRAME_PTR = frameOrStackPointer(partitioner);
+    if (FRAME_PTR.isEmpty())
+        return nothing;
+
+    // Calculate the address as an offset from the frame pointer.
+    S2::BaseSemantics::SValuePtr framePtrSval = ops->peekRegister(FRAME_PTR, ops->undefined_(FRAME_PTR.nBits()));
+    SymbolicExpr::Ptr framePtr = S2::SymbolicSemantics::SValue::promote(framePtrSval)->get_expression();
+    SymbolicExpr::Ptr diff = SymbolicExpr::makeAdd(SymbolicExpr::makeNegate(framePtr), address);
+
+    // The returned interval is in terms of the frame pointer offset and the size of the I/O operation.
+    Variables::OffsetInterval where;
+    if (Sawyer::Optional<int64_t> offset = diff->toSigned()) {
+        where = Variables::OffsetInterval::baseSize(*offset, nBytes);
+    } else if (diff->getOperator() == SymbolicExpr::OP_ADD) {
+        BOOST_FOREACH (SymbolicExpr::Ptr child, diff->children()) {
+            if ((offset = child->toSigned())) {
+                where = Variables::OffsetInterval::baseSize(*offset, nBytes);
+                break;
+            }
+        }
+    }
+    return where;
 }
 
 std::set<int64_t>

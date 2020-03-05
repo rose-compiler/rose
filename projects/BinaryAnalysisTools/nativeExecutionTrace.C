@@ -117,7 +117,7 @@ main(int argc, char *argv[]) {
     // Trace output goes to either std::cout or some file.
     std::filebuf fb;
     if (!outputFileName.empty())
-        fb.open(outputFileName.native().c_str(), std::ios::out);
+        fb.open(outputFileName.string().c_str(), std::ios::out);
     std::ostream traceOutput(outputFileName.empty() ? std::cout.rdbuf() : &fb);
 
     // Load specimen into ROSE's simulated memory

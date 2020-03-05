@@ -68,9 +68,9 @@ public:
 private:
     void open(const boost::filesystem::path &filename) {
         close();
-        if (strlen(filename.native().c_str()) != filename.native().size())
+        if (strlen(filename.string().c_str()) != filename.string().size())
             throw Exception("invalid database name: internal NUL character");
-        int status = sqlite3_open(filename.native().c_str(), &connection);
+        int status = sqlite3_open(filename.string().c_str(), &connection);
         if (SQLITE_OK != status)
             throw Exception(sqlite3_errstr(status));
         sqlite3_busy_timeout(connection, 1000 /*ms*/);

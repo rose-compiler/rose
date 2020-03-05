@@ -130,7 +130,7 @@ titleForFile(const std::string &fileName, const Settings &settings) {
     using namespace Rose::FileSystem;
     if (!settings.title.empty())
         return settings.title;
-    return Path(fileName).filename().native();
+    return Path(fileName).filename().string();
 }
 
 int

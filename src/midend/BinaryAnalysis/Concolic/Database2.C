@@ -485,9 +485,9 @@ Database::rbaExists(SpecimenId id) {
 
 void
 Database::saveRbaFile(const boost::filesystem::path &fileName, SpecimenId id) {
-    std::ifstream in(fileName.native().c_str(), std::ios_base::binary);
+    std::ifstream in(fileName.string().c_str(), std::ios_base::binary);
     if (!in)
-        throw Exception("cannot read file \"" + StringUtility::cEscape(fileName.native()) + "\"");
+        throw Exception("cannot read file \"" + StringUtility::cEscape(fileName.string()) + "\"");
     using Iter = std::istreambuf_iterator<char>;
     std::vector<uint8_t> rba;
     rba.reserve(boost::filesystem::file_size(fileName));
@@ -500,9 +500,9 @@ Database::saveRbaFile(const boost::filesystem::path &fileName, SpecimenId id) {
 
 void
 Database::extractRbaFile(const boost::filesystem::path &fileName, SpecimenId id) {
-    std::ofstream out(fileName.native().c_str(), std::ios_base::binary);
+    std::ofstream out(fileName.string().c_str(), std::ios_base::binary);
     if (!out)
-        throw Exception("cannot create or truncate file \"" + StringUtility::cEscape(fileName.native()) + "\"");
+        throw Exception("cannot create or truncate file \"" + StringUtility::cEscape(fileName.string()) + "\"");
     auto rba = connection().stmt("select rba from specimens where id = ?id").bind("id", *id).get<std::vector<uint8_t>>();
     if (!rba)
         throw Exception("no RBA data associated with specimen " + boost::lexical_cast<std::string>(*id));
