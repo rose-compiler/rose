@@ -1,16 +1,32 @@
 #ifndef GENERAL_LANGUAGE_TRANSLATION_H
 #define GENERAL_LANGUAGE_TRANSLATION_H
 
+class SgExpression;
+
 namespace General_Language_Translation
    {
+  // Forward declarations
+     struct FormalParameter;
+     struct LocationSpecifier;
+     struct StructureSpecifier;
 
-  // TODO - split out the StatementEnums?
+     enum SubroutineAttribute
+        {
+           e_subroutine_attr_none = 0,
+
+        // Jovial
+           e_subroutine_attr_rent,
+           e_subroutine_attr_rec,
+
+           e_subroutine_attr_last
+        };
 
   // Enum for different types of expressions (used with untyped IR nodes).
   //
      enum ExpressionKind
         {
-          e_unknown = 0,
+          e_none = 0,
+          e_unknown = 1,
 
        // Access modifiers
        // --------------
@@ -37,15 +53,15 @@ namespace General_Language_Translation
           e_type_modifier_intent_inout,
           e_type_modifier_intrinsic,
           e_type_modifier_optional,
+          e_type_modifier_packing_d,
+          e_type_modifier_packing_m,
+          e_type_modifier_packing_n,
           e_type_modifier_pointer,
           e_type_modifier_protected,
           e_type_modifier_round,
           e_type_modifier_save,
           e_type_modifier_target,
           e_type_modifier_truncate,
-          e_type_modifier_value,
-          e_type_modifier_reference,
-          e_type_modifier_result,
           e_type_modifier_volatile,
           e_type_modifier_z,
 
@@ -59,6 +75,12 @@ namespace General_Language_Translation
           e_function_modifier_pure,
           e_function_modifier_recursive,
           e_function_modifier_reentrant,
+
+       // Function formal parameters
+       // --------------------------
+          e_param_binding_value,
+          e_param_binding_reference,
+          e_param_binding_result,
 
        // Structure modifiers
           e_struct_modifier_list,
@@ -203,6 +225,32 @@ namespace General_Language_Translation
 
           e_last
         };
+
+      struct FormalParameter
+        {
+           FormalParameter()
+             : name(std::string("")), output(false), binding(General_Language_Translation::e_none) {} // want to use C++11 = delete
+           FormalParameter(const std::string &param_name, bool out, const ExpressionKind &param_binding)
+             : name(param_name), output(out), binding(param_binding) {}
+           std::string name;
+           bool output;
+           ExpressionKind binding;
+        };
+
+      struct LocationSpecifier {
+         LocationSpecifier() : start_bit(NULL), start_word(NULL) {}
+         LocationSpecifier(SgExpression* sbit, SgExpression* sword) : start_bit(sbit), start_word(sword) {}
+         SgExpression* start_bit;
+         SgExpression* start_word;
+      };
+
+      struct StructureSpecifier {
+         StructureSpecifier()                  : bits_per_entry(NULL), is_parallel(false) {}
+         StructureSpecifier(SgExpression* bpe) : bits_per_entry(bpe),  is_parallel(false) {}
+         StructureSpecifier(bool isp)          : bits_per_entry(NULL), is_parallel(isp)   {}
+         SgExpression* bits_per_entry;
+         bool is_parallel;
+      };
 
    } // namespace General_Language_Translation 
 
