@@ -541,6 +541,7 @@ AsmUnparser::InsnFuncEntry::operator()(bool enabled, const InsnArgs &args)
 {
     if (enabled && ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
         SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(args.insn);
+        ROSE_ASSERT (func != NULL);
         if (func->get_entry_va()==args.insn->get_address())
             args.unparser->unparse_function(true, args.output, func);
     }
