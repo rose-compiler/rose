@@ -685,11 +685,12 @@ void
 FortranCodeGeneration_locatedNode::unparseImportStatement (SgStatement* stmt, SgUnparse_Info& info)
    {
      SgImportStatement* importStatement = isSgImportStatement(stmt);
-
-     curprint("import :: ");
-
      SgExpressionPtrList & importList = importStatement->get_import_list();
      SgExpressionPtrList::iterator i = importList.begin();
+
+     curprint("import ");
+     if (importList.size() > 0) curprint(":: ");
+
      while (i != importList.end())
         {
           unparseExpression(*i,info);

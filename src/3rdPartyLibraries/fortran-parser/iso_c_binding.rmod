@@ -1,0 +1,27 @@
+
+! =================================================================================== 
+! <<Automatically generated for Rose Fortran Separate Compilation, DO NOT MODIFY IT>> 
+! =================================================================================== 
+
+MODULE iso_c_binding
+INTEGER, PARAMETER :: c_int8_t = 1, c_int16_t = 2, c_int32_t = 4, c_int64_t = 8, c_int128_t = 16
+INTEGER, PARAMETER :: c_int = c_int32_t, c_short = c_int16_t, c_long = c_int64_t, c_long_long = c_int64_t, c_signed_char = c_int8_t&
+, c_size_t = c_long_long, c_intmax_t = c_int128_t, c_intptr_t = c_size_t, c_ptrdiff_t = c_size_t
+INTEGER, PARAMETER :: c_int_least8_t = c_int8_t, c_int_fast8_t = c_int8_t, c_int_least16_t = c_int16_t, c_int_fast16_t = c_int16_t, &
+c_int_least32_t = c_int32_t, c_int_fast32_t = c_int32_t, c_int_least64_t = c_int64_t, c_int_fast64_t = c_int64_t, c_int_least128_t&
+ = c_int128_t, c_int_fast128_t = c_int128_t
+INTEGER, PARAMETER :: c_float = 4, c_double = 8, c_long_double = 10
+INTEGER, PARAMETER :: c_float_complex = c_float, c_double_complex = c_double, c_long_double_complex = c_long_double
+INTEGER, PARAMETER :: c_bool = 1
+INTEGER, PARAMETER :: c_char = 1
+CHARACTER(len=1,kind=c_char), PARAMETER :: c_null_char = achar(0)
+CHARACTER(len=1,kind=c_char), PARAMETER :: c_alert = achar(7)
+CHARACTER(len=1,kind=c_char), PARAMETER :: c_backspace = achar(8)
+CHARACTER(len=1,kind=c_char), PARAMETER :: c_form_feed = achar(12)
+CHARACTER(len=1,kind=c_char), PARAMETER :: c_new_line = achar(10)
+CHARACTER(len=1,kind=c_char), PARAMETER :: c_carriage_return = achar(13)
+CHARACTER(len=1,kind=c_char), PARAMETER :: c_horizontal_tab = achar(9)
+CHARACTER(len=1,kind=c_char), PARAMETER :: c_vertical_tab = achar(11)
+CONTAINS
+END MODULE iso_c_binding
+
