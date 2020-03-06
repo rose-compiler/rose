@@ -175,7 +175,7 @@ AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) 
     else if(val==1)
       return AbstractValue(true);
     else {
-      cerr<<"Error: unknown bool value (not 0 or 1): SgBoolExp::get_value()=="<<val<<endl;
+      logger[ERROR]<<"Error: unknown bool value (not 0 or 1): SgBoolExp::get_value()=="<<val<<endl;
       exit(1);
     }
   } else if(SgShortVal* exp=isSgShortVal(valueExp)) {
@@ -700,10 +700,6 @@ ExprAnalyzer::evalGreaterOrEqualOp(SgGreaterOrEqualOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorMoreOrEq(rhsResult.result));
-  if(args.getBool("relop-constraints")) {
-    if(res.result.isTop())
-      throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
-  }
   resultList.push_back(res);
   return resultList;
 }
@@ -717,10 +713,6 @@ ExprAnalyzer::evalGreaterThanOp(SgGreaterThanOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorMore(rhsResult.result));
-  if(args.getBool("relop-constraints")) {
-    if(res.result.isTop())
-      throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
-  }
   resultList.push_back(res);
   return resultList;
 }
@@ -734,10 +726,6 @@ ExprAnalyzer::evalLessOrEqualOp(SgLessOrEqualOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorLessOrEq(rhsResult.result));
-  if(args.getBool("relop-constraints")) {
-    if(res.result.isTop())
-      throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
-  }
   resultList.push_back(res);
   return resultList;
 }
@@ -751,10 +739,6 @@ ExprAnalyzer::evalLessThanOp(SgLessThanOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorLess(rhsResult.result));
-  if(args.getBool("relop-constraints")) {
-    if(res.result.isTop())
-      throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
-  }
   resultList.push_back(res);
   return resultList;
 }
@@ -829,7 +813,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue read from memory, arrayPtrValue:"<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
             logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<": value not a pointer value: "<<arrayPtrValue.toString()<<endl;
-            cerr<<estate.toString(_variableIdMapping)<<endl;
+            logger[ERROR]<<estate.toString(_variableIdMapping)<<endl;
             exit(1);
           }
         } else {
@@ -873,6 +857,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           resultList.push_back(res);
           return resultList;
         } else {
+          /*
           logger[ERROR]<<estate.toString(_variableIdMapping)<<endl;
           logger[ERROR]<<estate.toString()<<endl;
           logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<": ";
@@ -880,10 +865,11 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           logger[ERROR]<<"array pointer value: "<<arrayPtrValue.toString(_variableIdMapping)<<"::"<<arrayPtrValue.toString()<<endl;
           logger[ERROR]<<"access out of allocated memory bounds."<<endl;
           logger[ERROR]<<"member check: "<<pstate2.varExists(arrayPtrValue)<<endl;
-          Label lab=estate.label();
+          */
+          //          Label lab=estate.label();
           res.result=CodeThorn::Top();
-          recordPotentialNullPointerDereferenceLocation(lab);
-          if(_analyzer->getAbstractionMode()!=3) recordPotentialOutOfBoundsAccessLocation(lab);
+          //recordPotentialNullPointerDereferenceLocation(lab);
+          //if(_analyzer->getAbstractionMode()!=3) recordPotentialOutOfBoundsAccessLocation(lab);
           resultList.push_back(res);
           return resultList;
         }
@@ -908,7 +894,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         SAWYER_MESG(logger[WARN])<<"evalArrayReferenceOp:"<<pstate2.toString(_variableIdMapping)<<endl;
 
         if(mode==MODE_ADDRESS) {
-          cerr<<"Internal error: ExprAnalyzer::evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
+          SAWYER_MESG(logger[FATAL])<<"Internal error: ExprAnalyzer::evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
           exit(1);
         }
         // array variable NOT in state. Special space optimization case for constant array.
@@ -932,13 +918,13 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
                   return listify(res);
                 }
               } else {
-                SAWYER_MESG(logger[WARN])<<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+                SAWYER_MESG(logger[WARN])<<"unsupported array initializer value (assuming any value):"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
                 AbstractValue val=AbstractValue::createTop();
                 res.result=val;
                 return listify(res);
               }
             } else {
-              SAWYER_MESG(logger[ERROR])<<"no assign initialize:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+              SAWYER_MESG(logger[FATAL])<<"no assign initialize:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
               exit(1);
             }
             elemIndex++;
@@ -1367,8 +1353,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
           }
           // SAWYER_MESG(logger[DEBUG])<<"defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
         } else {
-          if(getOptionOutputWarnings())
-            cout<<"Warning: lhs array access: pointer variable does not exist in PState:"<<ptr.toString()<<endl;
+          SAWYER_MESG(logger[WARN])<<"Warning: lhs array access: pointer variable does not exist in PState:"<<ptr.toString()<<endl;
           arrayPtrValue=AbstractValue::createTop();
         }
           } else {
@@ -1381,20 +1366,20 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
       ROSE_ASSERT(resIntermediate.size()==1); // TODO: temporary restriction
       AbstractValue indexValue=(*(resIntermediate.begin())).value();
       AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
-      SAWYER_MESG(logger[TRACE])<<"DEBUG: arrayPtrPlusIndexValue: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+      SAWYER_MESG(logger[TRACE])<<"arrayPtrPlusIndexValue: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
       
       // TODO: rewrite to use AbstractValue only
       {
-        if(arrayPtrPlusIndexValue.isTop()) {
-            if(_analyzer->getAbstractionMode()!=3) recordPotentialOutOfBoundsAccessLocation(estate.label());
-        } else {
-          VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
-          int index2=arrayPtrPlusIndexValue.getIndexIntValue();
-          if(!accessIsWithinArrayBounds(arrayVarId2,index2)) {
-            if(_analyzer->getAbstractionMode()!=3) recordDefinitiveOutOfBoundsAccessLocation(estate.label());
+        //if(arrayPtrPlusIndexValue.isTop()) {
+        //    if(_analyzer->getAbstractionMode()!=3) recordPotentialOutOfBoundsAccessLocation(estate.label());
+        //} else {
+          //VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
+          //int index2=arrayPtrPlusIndexValue.getIndexIntValue();
+          //if(!accessIsWithinArrayBounds(arrayVarId2,index2)) {
+            //if(_analyzer->getAbstractionMode()!=3) recordDefinitiveOutOfBoundsAccessLocation(estate.label());
             //cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(node)<<" : write access out of bounds."<<endl;
-          }
-        }
+          //}
+        //}
       }
 
       arrayElementAddress=arrayPtrPlusIndexValue;
@@ -1403,10 +1388,10 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
       ROSE_ASSERT(!arrayElementAddress.isBot());
       // read value of variable var id (same as for VarRefExp - TODO: reuse)
       // TODO: check whether arrayElementAddress (or array) is a constant array (arrayVarId)
-      if(!pstate2.varExists(arrayElementAddress)) {
+      //if(!pstate2.varExists(arrayElementAddress)) {
         // check that array is constant array (it is therefore ok that it is not in the state)
         //SAWYER_MESG(logger[TRACE]) <<"lhs array-access index does not exist in state (creating it as address now). Array element id:"<<arrayElementAddress.toString(_variableIdMapping)<<" PState size:"<<pstate2.size()<<endl;
-      }
+      //}
       res.result=arrayElementAddress;
       return listify(res);
     } else {
