@@ -118,10 +118,11 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
    }
 
 void
-Unparse_Jovial::unparseStringVal (SgExpression* expr, SgUnparse_Info& info)
+Unparse_Jovial::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
   {
-     cerr << "Unparse_Jovial::unparseStringVal(): not implemented! \n";
-     ROSE_ASSERT(false);
+     SgStringVal* string_val = isSgStringVal(expr);
+     ROSE_ASSERT(string_val != NULL);
+     curprint(string_val->get_value());
   }
 
 void
@@ -168,11 +169,8 @@ Unparse_Jovial::unparseSubscriptExpr(SgExpression* expr, SgUnparse_Info& info)
 
      if (isSgNullExpression(sub_expr->get_lowerBound()) == NULL)
         {
+       // Since the lower bound is not an SgNullExpression, there is a lower bound
           unparseExpression(sub_expr->get_lowerBound(), info);
-          curprint(":");
-        }
-       else
-        {
           curprint(":");
         }
 

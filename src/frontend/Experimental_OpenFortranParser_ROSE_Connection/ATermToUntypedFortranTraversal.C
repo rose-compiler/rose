@@ -1593,7 +1593,7 @@ ATbool ATermToUntypedFortranTraversal::traverse_OptAttrSpecList(ATerm term, SgUn
            attr = new SgUntypedOtherExpression(e_type_modifier_target);
         }
         else if (ATmatch(head, "VALUE()")) {
-           attr = new SgUntypedOtherExpression(e_type_modifier_value);
+           attr = new SgUntypedOtherExpression(e_param_binding_value);
         }
         else if (ATmatch(head, "VOLATILE()")) {
            attr = new SgUntypedOtherExpression(e_type_modifier_volatile);

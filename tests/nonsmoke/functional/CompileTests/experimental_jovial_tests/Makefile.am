@@ -45,6 +45,7 @@ JOVIAL_TESTCODES = \
 
 COMPOOL_TESTCODES = \
  bit_cast_J.cpl                         \
+ constant_item_presets.cpl              \
  define_dollar.cpl                      \
  item_and_status_type_J.cpl             \
  status_type.cpl                        \

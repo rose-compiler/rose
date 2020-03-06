@@ -57,14 +57,25 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseExprStmt               (SgStatement* stmt, SgUnparse_Info& info);
 
        // Types
-          virtual void unparseType        (SgType* type,  SgUnparse_Info& info);
-          virtual void unparseTypeSize    (SgType* expr,  SgUnparse_Info& info);
-          virtual void unparseArrayType   (SgType* type,  SgUnparse_Info& info);
-          virtual void unparseTableType   (SgType* type,  SgUnparse_Info& info);
+       //
+          virtual void unparseType (SgType* type,  SgUnparse_Info& info);
+
+          template <class T>
+          void unparseJovialType (T* type, SgUnparse_Info& info);
+
+          void unparseJovialType (SgArrayType*       type, SgUnparse_Info& info);
+          void unparseJovialType (SgEnumType*        type, SgUnparse_Info& info);
+          void unparseJovialType (SgFunctionType*    type, SgUnparse_Info& info);
+          void unparseJovialType (SgModifierType*    type, SgUnparse_Info& info);
+          void unparseJovialType (SgJovialTableType* type, SgUnparse_Info& info);
+
+          void unparseTypeDesc (SgType* type, SgUnparse_Info& info);
+
+          void unparseTypeSize (SgType* type,       SgUnparse_Info& info);
+          void unparseTypeSize (SgTypeFixed* type,  SgUnparse_Info& info);
+          void unparseTypeSize (SgTypeString* type, SgUnparse_Info& info);
 
 #if 0
-          virtual void unparseTypeVoid(SgTypeVoid* type, SgUnparse_Info& info);
-
           virtual void unparseBaseClass(SgBaseClass* base, SgUnparse_Info& info);
           virtual void unparseParameterType(SgType *bound_type, SgUnparse_Info& info);
 

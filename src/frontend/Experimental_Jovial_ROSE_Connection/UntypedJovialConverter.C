@@ -227,8 +227,7 @@ UntypedJovialConverter::convertUntypedStructureDeclaration(SgUntypedStructureDec
 #endif
 
    // Jovial is insensitive to case
-   // TODO: src/midend/astDiagnostics/AstConsistencyTests.C, line 6406
-   // table_def->setCaseInsensitive(true);
+      table_def->setCaseInsensitive(true);
 
    // Perhaps don't need this
       SgScopeStatement* table_scope = table_def->get_scope();
@@ -437,13 +436,19 @@ UntypedJovialConverter::convertUntypedForStatement (SgUntypedForStatement* ut_st
              ROSE_ASSERT (block_body);
 
           // TODO: create a SageBuilder function for this
-             sg_stmt = new SgJovialForThenStatement(init_expr, incr_expr, test_expr, block_body);
+             SgJovialForThenStatement*
+             for_stmt = new SgJovialForThenStatement(init_expr, incr_expr, test_expr, block_body);
 
-             SageInterface::setSourcePosition(sg_stmt);
-             init_expr->set_parent(sg_stmt);
-             incr_expr->set_parent(sg_stmt);
-             test_expr->set_parent(sg_stmt);
-             block_body->set_parent(sg_stmt);
+             ROSE_ASSERT(for_stmt != NULL);
+             for_stmt->setCaseInsensitive(pCaseInsensitive);
+             SageInterface::setSourcePosition(for_stmt);
+
+             init_expr->set_parent(for_stmt);
+             incr_expr->set_parent(for_stmt);
+             test_expr->set_parent(for_stmt);
+             block_body->set_parent(for_stmt);
+
+             sg_stmt = for_stmt;
 
              break;
           }

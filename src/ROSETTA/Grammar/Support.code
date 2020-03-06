@@ -598,10 +598,6 @@ HEADER_STORAGE_MODIFIER_START
                e_cuda_pinned         = 22, /*!< CUDA, in device's texture memory (read only)  */
                e_cuda_texture        = 23, /*!< CUDA, in host's page-locked memory */
 
-            // Rasmussen (10/20/2019): Jovial storage modifiers
-               e_jovial_def          = 24, /*!< Jovial, specifies that variable is available (memory allocated) */
-               e_jovial_ref          = 25, /*!< Jovial, specifies that variable is available (no memory created) */
-
                e_last_modifier  /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -669,14 +665,6 @@ HEADER_STORAGE_MODIFIER_START
        // Rasmussen (02/06/2018): Fortran contiguous array storage attribute
           bool isContiguous() const;
           void setContiguous();
-
-       // Rasmussen (10/20/2019): Jovial storage modifiers
-       //
-          bool isJovialDef() const;
-          void setJovialDef();
-
-          bool isJovialRef() const;
-          void setJovialRef();
 
        // TV (04/08/2010): Support for CUDA storage modifiers
 
@@ -1213,27 +1201,32 @@ HEADER_DECLARATION_MODIFIER_START
             // DQ (8/11/2011): Added support for Java "abstract" declaration modifier.
                e_java_abstract = 9,  /*!< abstract keyword for Java functions, classes and interfaces */
 
-               e_ms_declspec_align        = 10, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_allocate     = 11, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_appdomain    = 12, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_code_seg     = 13, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_deprecated   = 14, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_dllimport    = 15, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_dllexport    = 16, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_jitintrinsic = 17, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_naked        = 18, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_noalias      = 19, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_noinline     = 20, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_noreturn     = 21, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_nothrow      = 22, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_novtable     = 23, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_process      = 24, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_property     = 25, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_restrict     = 26, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_safebuffers  = 27, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_selectany    = 28, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_thread       = 29, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_uuid         = 30, /*!< Microsoft declspec() attributes */
+            // Rasmussen (2/26/2020): Added support for Jovial modifiers
+               e_jovial_def = 10,         /*!< Definition specification for Jovial declarations */
+               e_jovial_ref = 11,         /*!< Reference specification for Jovial declarations */
+               e_jovial_static = 12,      /*!< Explicitly marked as STATIC in Jovial */
+
+               e_ms_declspec_align        = 13, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_allocate     = 14, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_appdomain    = 15, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_code_seg     = 16, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_deprecated   = 17, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_dllimport    = 18, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_dllexport    = 19, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_jitintrinsic = 20, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_naked        = 21, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_noalias      = 22, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_noinline     = 23, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_noreturn     = 24, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_nothrow      = 25, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_novtable     = 26, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_process      = 27, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_property     = 28, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_restrict     = 29, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_safebuffers  = 30, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_selectany    = 31, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_thread       = 32, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_uuid         = 33, /*!< Microsoft declspec() attributes */
 
                e_last_modifier       /*!< last modifier value (upper bound on range of values, used in error checking) */
              };
@@ -1315,6 +1308,19 @@ HEADER_DECLARATION_MODIFIER_START
           bool isJavaAbstract() const;
           void setJavaAbstract();
           void unsetJavaAbstract();
+
+       // Rasmussen (2/26/2020): Added Jovial Def and Ref specifications plus an explicitly static attribute
+          bool isJovialDef() const;
+          void setJovialDef();
+          void unsetJovialDef();
+
+          bool isJovialRef() const;
+          void setJovialRef();
+          void unsetJovialRef();
+
+          bool isJovialStatic() const;
+          void setJovialStatic();
+          void unsetJovialStatic();
 
        // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
           bool is_ms_declspec_align() const;
@@ -1516,6 +1522,11 @@ HEADER_TYPE_MODIFIER_START
             // I am not certain that it should not already exist, but we don't have it implemented in ROSE.  EDG appears to drop the "__device__"
             // keyword, so I am trying to capture it as an attribute.
                e_gnu_attribute__device__             = 34,/*!< Using GNU support for general attributes in the contect of parameter type (ROSE extension using GNU attribute extension) */
+
+            // Rasmussen (3/1/2020): numeric type specifiers for Jovial
+               e_round                               = 35,/*!< Jovial rounding specifier */
+               e_truncate                            = 36,/*!< Jovial truncation specifier */
+               e_truncate_towards_zero               = 37,/*!< Jovial truncation towards zero specifier */
 
             // Last attribute enum (used for internal bounds checking)
                e_last_modifier /*!< last value (upper bound on range of values, used in error checking) */
@@ -1763,6 +1774,21 @@ HEADER_TYPE_MODIFIER_START
           bool isGnuAttributeDevice() const;
           void setGnuAttributeDevice();
           void unsetGnuAttributeDevice();
+
+       // Jovial specific attribute
+          bool isRound() const;
+          void setRound();
+          void unsetRound();
+
+       // Jovial specific attribute
+          bool isTruncate() const;
+          void setTruncate();
+          void unsetTruncate();
+
+       // Jovial specific attribute
+          bool isTruncateTowardsZero() const;
+          void setTruncateTowardsZero();
+          void unsetTruncateTowardsZero();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -2444,14 +2470,6 @@ void $CLASSNAME::setPointerBased()      { p_modifier = e_pointer_based; }
 // Rasmussen (02/04/2018): Fortran contiguous array storage attribute
 bool SgStorageModifier::isContiguous() const { return p_modifier == e_contiguous; }
 void SgStorageModifier::setContiguous()      {        p_modifier  = e_contiguous; }
-
-// Rasmussen (10/20/2019): Jovial storage modifiers
-//
-bool SgStorageModifier::isJovialDef() const { return p_modifier == e_jovial_def; }
-void SgStorageModifier::setJovialDef()      {        p_modifier  = e_jovial_def; }
-
-bool SgStorageModifier::isJovialRef() const { return p_modifier == e_jovial_ref; }
-void SgStorageModifier::setJovialRef()      {        p_modifier  = e_jovial_ref; }
 
 // TV (08/04/2010): Support for CUDA storage modifiers
 
@@ -3261,6 +3279,19 @@ bool SgDeclarationModifier::isJavaAbstract() const { return checkBit(e_java_abst
 void SgDeclarationModifier::setJavaAbstract()      { setBit(e_java_abstract,p_modifierVector); }
 void SgDeclarationModifier::unsetJavaAbstract()    { unsetBit(e_java_abstract,p_modifierVector); }
 
+// Rasmussen (2/26/2020): Added support for Jovial modifiers
+bool SgDeclarationModifier::isJovialDef() const { return checkBit(e_jovial_def,p_modifierVector); }
+void SgDeclarationModifier::setJovialDef()      { setBit(e_jovial_def,p_modifierVector); }
+void SgDeclarationModifier::unsetJovialDef()    { unsetBit(e_jovial_def,p_modifierVector); }
+
+bool SgDeclarationModifier::isJovialRef() const { return checkBit(e_jovial_ref,p_modifierVector); }
+void SgDeclarationModifier::setJovialRef()      { setBit(e_jovial_ref,p_modifierVector); }
+void SgDeclarationModifier::unsetJovialRef()    { unsetBit(e_jovial_ref,p_modifierVector); }
+
+bool SgDeclarationModifier::isJovialStatic() const { return checkBit(e_jovial_static,p_modifierVector); }
+void SgDeclarationModifier::setJovialStatic()      { setBit(e_jovial_static,p_modifierVector); }
+void SgDeclarationModifier::unsetJovialStatic()    { unsetBit(e_jovial_static,p_modifierVector); }
+
 // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
 bool SgDeclarationModifier::is_ms_declspec_align() const { return checkBit(e_ms_declspec_align,p_modifierVector); }
 void SgDeclarationModifier::set_ms_declspec_align()      { setBit(e_ms_declspec_align,p_modifierVector); }
@@ -3384,6 +3415,9 @@ SgDeclarationModifier::displayString() const
      s += std::string("isBind() = ")         + std::string(isBind()         ? "true " : "false ");
      s += std::string("isFinal() = ")        + std::string(isFinal()        ? "true " : "false ");
      s += std::string("isJavaAbstract() = ") + std::string(isJavaAbstract() ? "true " : "false ");
+     s += std::string("isJovialDef() = ")    + std::string(isJovialDef()    ? "true " : "false ");
+     s += std::string("isJovialRef() = ")    + std::string(isJovialRef()    ? "true " : "false ");
+     s += std::string("isJovialStatic() = ") + std::string(isJovialStatic() ? "true " : "false ");
      s += std::string("\n     ") + get_typeModifier().displayString()   + " ";
      s += std::string("\n     ") + get_accessModifier().displayString() + " ";
      s += std::string("\n     ") + get_storageModifier().displayString();
@@ -3419,6 +3453,9 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 	       (lhs.isBind()              == rhs.isBind()   ) &&
 	       (lhs.isFinal()             == rhs.isFinal()  ) &&
 	       (lhs.isJavaAbstract()      == rhs.isJavaAbstract() ) &&
+	       (lhs.isJovialDef()         == rhs.isJovialDef() ) &&
+	       (lhs.isJovialRef()         == rhs.isJovialRef() ) &&
+	       (lhs.isJovialStatic()      == rhs.isJovialStatic() ) &&
           true;
    }
 
@@ -3705,6 +3742,18 @@ bool SgTypeModifier::isGnuAttributeDevice() const  { return checkBit(e_gnu_attri
 void SgTypeModifier::setGnuAttributeDevice()       { setBit(e_gnu_attribute__device__,p_modifierVector); }
 void SgTypeModifier::unsetGnuAttributeDevice()     { unsetBit(e_gnu_attribute__device__,p_modifierVector); }
 
+// Rasmussen (3/1/2020): numeric type specifiers for Jovial
+bool SgTypeModifier::isRound() const  { return checkBit(e_round,p_modifierVector); }
+void SgTypeModifier::setRound()       { setBit(e_round,p_modifierVector); }
+void SgTypeModifier::unsetRound()     { unsetBit(e_round,p_modifierVector); }
+
+bool SgTypeModifier::isTruncate() const  { return checkBit(e_truncate,p_modifierVector); }
+void SgTypeModifier::setTruncate()       { setBit(e_truncate,p_modifierVector); }
+void SgTypeModifier::unsetTruncate()     { unsetBit(e_truncate,p_modifierVector); }
+
+bool SgTypeModifier::isTruncateTowardsZero() const  { return checkBit(e_truncate_towards_zero,p_modifierVector); }
+void SgTypeModifier::setTruncateTowardsZero()       { setBit(e_truncate_towards_zero,p_modifierVector); }
+void SgTypeModifier::unsetTruncateTowardsZero()     { unsetBit(e_truncate_towards_zero,p_modifierVector); }
 
 string
 $CLASSNAME::displayString() const
