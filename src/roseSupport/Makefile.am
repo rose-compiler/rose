@@ -13,7 +13,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # Ubuntu 14.04 it takes >12 hours.
 .PHONY: rebuild-stringify
 rebuild-stringify:
-	$(top_srcdir)/scripts/restringify $(top_srcdir) $(top_blddir)
+	$(top_srcdir)/scripts/restringify $(top_srcdir) $(top_builddir)
 
 noinst_LTLIBRARIES = libroseSupport.la
 

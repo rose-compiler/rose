@@ -62,6 +62,13 @@ FortranModuleInfo::set_inputDirs(SgProject* project) {
   vector<string> args = project->get_originalCommandLineArgumentList();
   string  rmodDir;
 
+  // Add path to iso_c_binding.rmod. The intrinsic modules have been placed in the
+  // 3rdPartyLibraries because they could be compiler dependent. If placed there we could
+  // reasonable have multiple versions at some point.
+  //
+  std::string intrinsic_mod_path = findRoseSupportPathFromSource("src/3rdPartyLibraries/fortran-parser", "share/rose");
+  inputDirs.push_back(intrinsic_mod_path);
+
   int sizeArgs = args.size();
 
   for (int i = 0; i< sizeArgs; i++) {
@@ -150,8 +157,6 @@ FortranModuleInfo::getModule(string modName)
 
      if (SgProject::get_verbose() > 1)
           printf ("In FortranModuleInfo::getModule(%s): nameWithPath = %s \n",modName.c_str(),nameWithPath.c_str());
-
-  // if (createSgSourceFile(nameWithPath) == NULL )
 
 #if 0
      printf ("********* BUILD NEW MODULE FILE IF NOT ALREADY BUILT **************** \n");
