@@ -104,12 +104,14 @@ Unparse_Jovial::unparseTypeSize(SgTypeFixed* fixed_type, SgUnparse_Info& info)
       SgExpression* fraction = fixed_type->get_fraction();
 
       ROSE_ASSERT(scale != NULL);
-      ROSE_ASSERT(fraction != NULL);
 
       curprint(" ");
       unparseExpression(scale, info);
-      curprint(",");
-      unparseExpression(fraction, info);
+      if (fraction != NULL)
+         {
+            curprint(",");
+            unparseExpression(fraction, info);
+         }
    }
 
 void
