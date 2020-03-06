@@ -1412,7 +1412,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                            BinaryAnalysis::Partitioner2::ModulesElf::extractStaticArchive(tmpDirectory,
                                                                                                           archiveName);
                                        BOOST_FOREACH (const boost::filesystem::path &memberName, memberNames)
-                                           binary->get_libraryArchiveObjectFileNameList().push_back(memberName.native());
+                                           binary->get_libraryArchiveObjectFileNameList().push_back(memberName.string());
                                    }
 #endif // ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
                                }

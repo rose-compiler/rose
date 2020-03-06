@@ -1,4 +1,4 @@
-################################################################################################ -*- cmake -*- #########
+﻿################################################################################################ -*- cmake -*- #########
 # General warnings, instructions, and style guide.
 ########################################################################################################################
 
@@ -306,6 +306,7 @@ endif()
 # Set ROSE_SHLIBPATH_VAR.  For Visual Studio, this is PATH.  Otherwise, it is just LD_LIBRARY_PATH.
 if(MSVC)
   set(ROSE_SHLIBPATH_VAR "PATH")
+  add_definitions("-D__STDC_LIMIT_MACROS")
 else()
   set(ROSE_SHLIBPATH_VAR "LD_LIBRARY_PATH")
 endif()

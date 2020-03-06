@@ -58,7 +58,7 @@ public:
 
         /** Render this exception as a string. */
         std::string toString() const {
-            return StringUtility::cEscape(fileName_.native()) + ":" + boost::lexical_cast<std::string>(offset_) + ": " + what();
+            return StringUtility::cEscape(fileName_.string()) + ":" + boost::lexical_cast<std::string>(offset_) + ": " + what();
         }
 
         /** Emit this exception to a stream.

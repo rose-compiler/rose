@@ -173,7 +173,7 @@ int main() {
     boost::filesystem::path dbName = "test" + boost::lexical_cast<std::string>(DRIVER) + ".db";
     boost::system::error_code ec;
     boost::filesystem::remove(dbName, ec);
-    Sqlite db(dbName.native());
+    Sqlite db(dbName.string());
 #elif DRIVER == 2
     // Set up the test with these commands:
     //   sudo su postgres

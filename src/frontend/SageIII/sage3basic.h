@@ -54,7 +54,7 @@ namespace boost {
         template<class Archive>
         void serialize(Archive &ar, boost::filesystem::path &path, const unsigned version) {
             if (Archive::is_saving::value) {
-                std::string nativePath = path.native();
+                std::string nativePath = path.string();
                 ar & BOOST_SERIALIZATION_NVP(nativePath);
             } else {
                 std::string nativePath;

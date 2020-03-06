@@ -83,8 +83,8 @@ VxcoreParser::parse(const boost::filesystem::path &fileName, const BaseSemantics
 void
 VxcoreParser::parse(const boost::filesystem::path &fileName, const MemoryMap::Ptr &memory,
                     const BaseSemantics::RegisterStatePtr &registers, const BaseSemantics::RiscOperatorsPtr &ops) {
-    std::ifstream input(fileName.native().c_str(), std::ios::binary);
-    parse(input, memory, registers, ops, fileName.native());
+    std::ifstream input(fileName.string().c_str(), std::ios::binary);
+    parse(input, memory, registers, ops, fileName.string());
 }
 
 void

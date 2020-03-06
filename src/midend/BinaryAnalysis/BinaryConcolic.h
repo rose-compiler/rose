@@ -13,7 +13,10 @@
 //
 //      b. Either or both of SQLite and PostgreSQL are available.
 //
-#if !defined(ROSE_ENABLE_CONCOLIC_TESTING) && __cplusplus >= 201103L && (defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX))
+#if !defined(ROSE_ENABLE_CONCOLIC_TESTING) && \
+    __cplusplus >= 201103L && \
+    (defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)) && \
+    BOOST_VERSION >= 106400
 #define ROSE_ENABLE_CONCOLIC_TESTING
 #endif
 

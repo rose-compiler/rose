@@ -422,7 +422,7 @@ Debugger::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete
 
         // Create the child exec arguments before the fork because heap allocation is not async-signal-safe.
         char **argv = new char*[1 /*name*/ + specimen.arguments().size() + 1 /*null*/];
-        argv[0] = strdup(specimen.program().native().c_str());
+        argv[0] = strdup(specimen.program().string().c_str());
         for (size_t i = 0; i < specimen.arguments().size(); ++i)
             argv[i+1] = strdup(specimen.arguments()[i].c_str());
         argv[1 + specimen.arguments().size()] = NULL;

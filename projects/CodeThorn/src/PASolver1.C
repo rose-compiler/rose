@@ -104,7 +104,7 @@ CodeThorn::PASolver1::runSolver() {
         info->toStream(cout,0);
         cout<<endl;
       }
-      
+
       // schroder3 (2016-08-05): Check whether the combine below will change something.
       bool isApproximatedBy=(info->*approximatedByMemFunc)(*_analyzerDataPreInfo[lab1.getId()]);
       if(!isApproximatedBy) {
@@ -118,16 +118,16 @@ CodeThorn::PASolver1::runSolver() {
         }
 
         (_analyzerDataPreInfo[lab1.getId()]->*combineMemFunc)(*info);
-        
+
         if(_trace) {
           cout<<"TRACE: new df value : "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout,0);
           cout<<endl;
         }
-        
+
         Flow outEdges=_flow.outEdges(lab1);
-	for (Flow::iterator i=outEdges.begin(); i!=outEdges.end(); ++i) {
-	  _workList.add(*i);
-	}
+        for (Flow::iterator i=outEdges.begin(); i!=outEdges.end(); ++i) {
+          _workList.add(*i);
+        }
         if(_trace)
           cout<<"TRACE: adding to worklist: "<<outEdges.toString()<<endl;
       } else {
@@ -139,7 +139,7 @@ CodeThorn::PASolver1::runSolver() {
     delete info;
   }
   cout<<"INFO: solver 1 finished after " << static_cast<unsigned long>(solverTimer.getTimeDuration().milliSeconds()) << "ms."<<endl;
-  solverTimer.stop();
+  // solverTimer.stop(); (PP 02/27/20) getTimeDuration calls stop
 }
 
 #endif

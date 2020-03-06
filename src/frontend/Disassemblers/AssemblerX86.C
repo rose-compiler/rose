@@ -1791,16 +1791,16 @@ AssemblerX86::assembleProgram(const std::string &source)
 
     /* Write source code to a temporary file */
     r.srcFileName = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path(FileSystem::tempNamePattern);
-    std::ofstream out(r.srcFileName.native().c_str());
+    std::ofstream out(r.srcFileName.string().c_str());
     out <<"BITS 32\n" << source;
     if (!out.good())
-        throw Exception("failed to write assembly source to temporary file: " + r.srcFileName.native());
+        throw Exception("failed to write assembly source to temporary file: " + r.srcFileName.string());
     out.close();
 
 #ifndef _MSC_VER
     /* Run the assembler, capturing its stdout (and combined stderr) */
     r.dstFileName = boost::filesystem::temp_directory_path() / boost::filesystem::unique_path(FileSystem::tempNamePattern);
-    std::string nasmCmd = "nasm -s -f bin -o '" + r.dstFileName.native() + "' '" + r.srcFileName.native() + "' 2>&1";
+    std::string nasmCmd = "nasm -s -f bin -o '" + r.dstFileName.string() + "' '" + r.srcFileName.string() + "' 2>&1";
     r.nasmOutput = popen(nasmCmd.c_str(), "r");
     if (!r.nasmOutput)
         throw Exception("could not execute command: " + nasmCmd);
@@ -1819,9 +1819,9 @@ AssemblerX86::assembleProgram(const std::string &source)
 
     /* Read the raw assembly */
     Sawyer::Container::Buffer<size_t, unsigned char>::Ptr buf =
-        Sawyer::Container::MappedBuffer<size_t, unsigned char>::instance(r.dstFileName.native());
+        Sawyer::Container::MappedBuffer<size_t, unsigned char>::instance(r.dstFileName.string());
     if (!buf || buf->size() == 0)
-        throw Exception("nasm didn't produce output in " + r.dstFileName.native());
+        throw Exception("nasm didn't produce output in " + r.dstFileName.string());
     ASSERT_not_null(buf->data());
     return SgUnsignedCharList(buf->data(), buf->data() + buf->size());
 #endif

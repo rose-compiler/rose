@@ -108,7 +108,7 @@ static KeyValuePairs
 parseFile(const boost::filesystem::path &fileName, const DependencyNames &depnames) {
     KeyValuePairs retval;
 
-    std::ifstream in(fileName.native().c_str());
+    std::ifstream in(fileName.string().c_str());
     if (!in.good()) {
         mlog[FATAL] <<"cannot open " <<fileName <<"\n";
         exit(1);
@@ -122,24 +122,24 @@ parseFile(const boost::filesystem::path &fileName, const DependencyNames &depnam
 
         size_t eq = line.find('=');
         if (eq == std::string::npos) {
-            mlog[FATAL] <<StringUtility::cEscape(fileName.native()) <<":" <<lineNumber <<": "
+            mlog[FATAL] <<StringUtility::cEscape(fileName.string()) <<":" <<lineNumber <<": "
                         <<"not a key=value pair: \"" <<StringUtility::cEscape(line) <<"\"\n";
             exit(1);
         }
         std::string key = boost::trim_copy(line.substr(0, eq));
         std::string val = boost::trim_copy(line.substr(eq+1));
         if (key.empty() || val.empty()) {
-            mlog[FATAL] <<StringUtility::cEscape(fileName.native()) <<":" <<lineNumber <<": "
+            mlog[FATAL] <<StringUtility::cEscape(fileName.string()) <<":" <<lineNumber <<": "
                         <<"key and value must be non-empty: \"" <<StringUtility::cEscape(line) <<"\"\n";
             exit(1);
         }
         if (!depnames.exists(key)) {
-            mlog[FATAL] <<StringUtility::cEscape(fileName.native()) <<":" <<lineNumber <<": "
+            mlog[FATAL] <<StringUtility::cEscape(fileName.string()) <<":" <<lineNumber <<": "
                         <<"key \"" <<StringUtility::cEscape(key) <<"\" is not recognized\n";
             exit(1);
         }
         if (retval.exists(depnames[key])) {
-            mlog[WARN] <<StringUtility::cEscape(fileName.native()) <<":" <<lineNumber <<": "
+            mlog[WARN] <<StringUtility::cEscape(fileName.string()) <<":" <<lineNumber <<": "
                        <<"key \"" <<StringUtility::cEscape(key) <<"\" specified more than once\n";
             exit(1);
         }
