@@ -82,8 +82,6 @@ ifeq (@(ENABLE_ADA_ANALYSIS),yes)
     error Ada is not supported by the tup ROSE build system yet
 endif
 
-# @(ENABLE_BINARY_ANALYSIS) is supported
-
 ifeq (@(ENABLE_COBOL_ANALYSIS),yes)
     error COBOL is not supported by the tup ROSE build system yet
 endif
@@ -95,8 +93,6 @@ endif
 ifeq (@(ENABLE_CUDA_ANALYSIS),yes)
     error CUDA is not supported by the tup ROSE build system yet
 endif
-
-# @(ENABLE_CXX_ANALYSIS) is supported
 
 ifeq (@(ENABLE_FORTRAN_ANALYSIS),yes)
     error Fortran is not supported by the tup ROSE build system yet
@@ -128,6 +124,13 @@ endif
 
 ifeq (@(ENABLE_PYTHON_ANALYSIS),yes)
     error Python is not supported by the tup ROSE build system yet
+endif
+
+# The C preprocessor is supported automatically if C, C++, or Fortran is enabled
+ifeq (@(ENABLE_CXX_ANALYSIS)-@(ENABLE_FORTRAN_ANALYSIS),no-no)
+    ENABLE_CPP_ANALYSIS=no
+else
+    ENABLE_CPP_ANALYSIS=yes
 endif
 
 ########################################################################################################################

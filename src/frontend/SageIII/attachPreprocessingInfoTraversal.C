@@ -1516,9 +1516,11 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
           printf ("Generating a new ROSEAttributesList: currentFileNameId = %d \n",currentFileNameId);
 #endif
 
+#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
        // DQ (11/2/2019): A call to getListOfAttributes() will generate infinite recursion.
        // returnListOfAttributes = getListOfAttributes(currentFileNameId);
           returnListOfAttributes = getPreprocessorDirectives(fileNameForDirectivesAndComments);
+#endif
 #if 0
           printf ("DONE: Generating a new ROSEAttributesList: currentFileNameId = %d \n",currentFileNameId);
           printf (" --- returnListOfAttributes->getList().size() = %" PRIuPTR " \n",returnListOfAttributes->getList().size());
@@ -1776,7 +1778,9 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #if 0
                     printf ("Found returnListOfAttributes == NULL, calling getPreprocessorDirectives() \n");
 #endif
+#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
                     returnListOfAttributes = getPreprocessorDirectives(fileNameForDirectivesAndComments);
+#endif
                   }
 #endif
              }

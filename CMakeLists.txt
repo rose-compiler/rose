@@ -422,6 +422,11 @@ if(enable-jovial)
   set(ROSE_BUILD_JOVIAL_LANGUAGE_SUPPORT 1)
 endif()
 
+# The C preprocessor is enabled automatically if C, C++, or Fortran is enabled
+if(enable-c OR enable-fortran)
+  set(enable-cpp ON)
+  set(ROSE_BUILD_CPP_LANGUAGE_SUPPORT 1)
+endif()
 
 
 ########################################################################################################################
@@ -453,16 +458,12 @@ endif()
 # Check whether we have the EDG source code. Even if we have it, we might pretend (for testing) that we don't.
 option(EDG_COMPILE "Compile EDG source code if available" TRUE)
 if(EXISTS "${PROJECT_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/CMakeLists.txt")
-  message(STATUS "ROBB: EDG/CMakeLists.txt is found")
   if(EDG_COMPILE)
-    message(STATUS "ROBB: EDG_COMPILE is true")
     set(have_EDG_source TRUE)
   else()
-    message(STATUS "ROBB: EDG_COMPILE is false")
     set(have_EDG_source FALSE)
   endif()
 else()
-  message(STATUS "ROBB: EDG/CMakeLists.txt is absent")
   set(have_EDG_source FALSE)
   set(EDG_COMPILE FALSE)
 endif()
