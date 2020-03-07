@@ -274,7 +274,9 @@ FunctionCall::build_cg_from_cfg(const ControlFlowGraph &cfg, FunctionCallGraph &
         CFG_Vertex cfg_a = boost::source(*ei, cfg);
         CFG_Vertex cfg_b = boost::target(*ei, cfg);
         SgAsmBlock *block_a = SageInterface::getEnclosingNode<SgAsmBlock>(get_ast_node(cfg, cfg_a), true/* inc. self */);
+        ROSE_ASSERT( block_a != NULL );
         SgAsmBlock *block_b = SageInterface::getEnclosingNode<SgAsmBlock>(get_ast_node(cfg, cfg_b), true/* inc. self */);
+        ROSE_ASSERT( block_b != NULL );
         SgAsmFunction *func_a = block_a->get_enclosing_function();
         SgAsmFunction *func_b = block_b->get_enclosing_function();
         if (func_a && func_b && block_b==func_b->get_entry_block() && !is_edge_filtered(func_a, func_b)) {
