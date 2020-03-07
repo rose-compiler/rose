@@ -371,6 +371,7 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
           case V_SgTypeDefault:
           case V_SgTypeDouble:
           case V_SgTypeEllipse:
+          case V_SgTypeFixed:
           case V_SgTypeFloat:
           case V_SgTypeGlobalVoid:
           case V_SgTypeImaginary:

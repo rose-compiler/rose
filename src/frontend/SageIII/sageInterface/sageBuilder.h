@@ -228,6 +228,7 @@ ROSE_DLL_API SgTypeUnknown * buildUnknownType();
 //! Builder functions for primitive types with type size (kind) expressions
 ROSE_DLL_API SgTypeBool * buildBoolType(SgExpression* kind_expr);
 ROSE_DLL_API SgTypeInt * buildIntType(SgExpression* kind_expr);
+ROSE_DLL_API SgTypeFloat * buildFloatType(SgExpression* kind_expr);
 ROSE_DLL_API SgTypeUnsignedInt* buildUnsignedIntType(SgExpression* kind_expr);
 
 //! Build a type based on Fortran's implicit typing rules.

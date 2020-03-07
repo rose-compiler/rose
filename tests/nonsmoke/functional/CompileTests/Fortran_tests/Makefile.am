@@ -21,7 +21,11 @@ endif
 endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-   SUBDIRS += experimental_frontend_tests
+# Rasmussen (3/7/2020): Removed testing of the experimental (ATerm based) Fortran. It is now obsolete because
+# it is being replaced by experimental_flang_frontend
+#
+#   SUBDIRS += experimental_frontend_tests
+#
 endif
 
 
