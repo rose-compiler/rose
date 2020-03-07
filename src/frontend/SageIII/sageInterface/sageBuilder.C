@@ -11113,6 +11113,22 @@ SgTypeDouble * SageBuilder::buildDoubleType()
   return result;
 }
 
+// Rasmussen (3/6/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
+SgTypeFloat * SageBuilder::buildFloatType(SgExpression* kind_expr)
+{
+  SgTypeFloat * result;
+  if (kind_expr != NULL)
+     {
+       result = SgTypeFloat::createType(kind_expr);
+       kind_expr->set_parent(result);
+     }
+  else
+     {
+       result = SgTypeFloat::createType();
+     }
+  ROSE_ASSERT(result);
+  return result;
+}
 SgTypeFloat * SageBuilder::buildFloatType()
 {
   SgTypeFloat * result =SgTypeFloat::createType();
@@ -11125,6 +11141,10 @@ SgTypeFixed* buildFixedType(SgExpression* fraction, SgExpression* scale)
 {
   SgTypeFixed * result = SgTypeFixed::createType(scale, fraction);
   ROSE_ASSERT(result);
+
+   if (scale) scale->set_parent(result);
+   if (fraction) fraction->set_parent(result);
+
   return result;
 }
 

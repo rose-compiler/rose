@@ -384,6 +384,8 @@ Grammar::setUpTypes ()
   // Rasmussen (2/18/2020): Added TypeFixed for Jovial
      TypeFixed.excludeFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      TypeFixed.excludeFunctionSource        ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     TypeFixed.excludeFunctionSource        ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     TypeFixed.setFunctionSource            ( "SOURCE_GET_MANGLED_TYPE_FIXED", "../Grammar/Type.code");
 
   // DQ (8/2/2014): Adding support for C++11 decltype().
      DeclType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
