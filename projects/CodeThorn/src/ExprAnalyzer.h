@@ -58,7 +58,7 @@ namespace CodeThorn {
   enum InterpreterMode { IM_ABSTRACT, IM_CONCRETE };
   // ACCESS_ERROR is null pointer dereference is detected. ACCESS_NON_EXISTING if pointer is lattice bottom element.
   enum MemoryAccessBounds {ACCESS_ERROR,ACCESS_DEFINITELY_NP, ACCESS_DEFINITELY_INSIDE_BOUNDS, ACCESS_POTENTIALLY_OUTSIDE_BOUNDS, ACCESS_DEFINITELY_OUTSIDE_BOUNDS, ACCESS_NON_EXISTING};
-  enum AnalysisSelector { ANALYSIS_NULL_POINTER, ANALYSIS_OUT_OF_BOUNDS, ANALYSIS_UNINITIALIZED };
+  enum AnalysisSelector { ANALYSIS_NULL_POINTER, ANALYSIS_OUT_OF_BOUNDS, ANALYSIS_UNINITIALIZED, ANALYSIS_NUM };
   
   /*! 
    * \author Markus Schordan
@@ -108,18 +108,17 @@ namespace CodeThorn {
 
     // record detected errors in programs
     ProgramLocationsReport getViolatingLocations(enum AnalysisSelector analysisSelector);
+    void recordDefinitiveViolatingLocation(enum AnalysisSelector analysisSelector, Label lab);
+    void recordPotentialViolatingLocation(enum AnalysisSelector analysisSelector, Label lab);
+    std::string analysisSelectorToString(AnalysisSelector sel);
     
+    // deprecated
     void recordDefinitiveNullPointerDereferenceLocation(Label lab);
     void recordPotentialNullPointerDereferenceLocation(Label lab);
-    ProgramLocationsReport getNullPointerDereferenceLocations();
-
     void recordDefinitiveOutOfBoundsAccessLocation(Label lab);
     void recordPotentialOutOfBoundsAccessLocation(Label lab);
-    ProgramLocationsReport getOutOfBoundsAccessLocations();
-
     void recordDefinitiveUninitializedAccessLocation(Label lab);
     void recordPotentialUninitializedAccessLocation(Label lab);
-    ProgramLocationsReport getUninitializedAccessLocations();
 
     bool definitiveErrorDetected();
     bool potentialErrorDetected();
@@ -323,11 +322,9 @@ namespace CodeThorn {
     int getMemoryRegionElementSize(CodeThorn::AbstractValue);
 
   private:
+    void initViolatingLocations();
     VariableIdMappingExtended* _variableIdMapping=nullptr;
-    ProgramLocationsReport _nullPointerDereferenceLocations;
-    ProgramLocationsReport _outOfBoundsAccessLocations;
-    ProgramLocationsReport _uninitializedAccessLocations;
-   
+    std::vector<ProgramLocationsReport> _violatingLocations;
     // Options
     bool _skipSelectedFunctionCalls=false;
     bool _skipArrayAccesses=false;
