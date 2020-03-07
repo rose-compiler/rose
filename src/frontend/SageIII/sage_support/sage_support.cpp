@@ -3681,8 +3681,10 @@ SgFile::secondaryPassOverSourceFile()
 #endif
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-            // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
+#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
+               // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
                processOpenMP(sourceFile);
+#endif
 #endif
                // Liao, 1/29/2014, handle failsafe pragmas for resilience work
                if (sourceFile->get_failsafe())
