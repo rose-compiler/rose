@@ -10,12 +10,15 @@
 #include "AstMatching.h"
 #include "AstTerm.h"
 #include <Sawyer/CommandLine.h>
+#include "Diagnostics.h"
 
 #include "scalarizer.h"
 
 using namespace std;
 using namespace SageInterface;
 using namespace scalarizer;
+using namespace Sawyer::Message::Common; // if you want unqualified DEBUG, WARN, ERROR, FATAL, etc.
+Sawyer::Message::Facility mlog; // a.k.a., Rose::Diagnostics::Facility
 
 
 //! [parseCommandLine decl]
@@ -155,8 +158,7 @@ vector<string> scalarizer::getFortranTargetnameList(SgNode* root)
            string buffer = pinfo->getString();
            if(is_directive_sentinels(buffer.c_str(), *i))
            {
-             if(enable_debug)
-               cout << "found matched pragma" << endl;
+             mlog[DEBUG] << "found matched pragma" << endl;
              SgVariableDeclaration* varDeclStmt = isSgVariableDeclaration(*i);
              ROSE_ASSERT(varDeclStmt);
              SgInitializedNamePtrList varList = varDeclStmt->get_variables();
@@ -195,8 +197,7 @@ vector<string> scalarizer::getTargetnameList(SgNode* root)
     string srcString = pragma->get_pragma();
     if(srcString.compare(0,26,"pragma rose scalarization") == 0)
     {
-      if(enable_debug)
-        cout << "found pragma" << endl;
+      mlog[DEBUG] << "found pragma" << "\n";
       SgVariableDeclaration* varDeclStmt = isSgVariableDeclaration(*it);
       ROSE_ASSERT(varDeclStmt);
       SgInitializedNamePtrList varList = varDeclStmt->get_variables();
@@ -230,25 +231,42 @@ void scalarizer::transformArrayType(SgBasicBlock* funcBody, SgVariableSymbol* sy
   AstMatching m;
   MatchResult r=m.performMatching(matchexpression,funcBody);
   for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
-    if(enable_debug)
-      std::cout << "MATCH-LHS: \n"; 
+    mlog[DEBUG] << "MATCH-LHS: \n"; 
     //SgNode* n=(*i)["X"];
     for(SingleMatchVarBindings::iterator vars_iter=(*i).begin();vars_iter!=(*i).end();++vars_iter) {
       SgNode* matchedTerm=(*vars_iter).second;
-      if(enable_debug)
-        std::cout << "  VAR: " << (*vars_iter).first << "=" << AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
+      mlog[DEBUG] << "  VAR: " << (*vars_iter).first << "=" << AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
     }
     SgNode* root=(*i)["$Root"];
     SgPntrArrRefExp* arrayRef = isSgPntrArrRefExp(root);
     if((*i)["$ARR"]) {
       SgVarRefExp* lhsVarRef = isSgVarRefExp((*i)["$ARR"]);
       ROSE_ASSERT(lhsVarRef);
+      SgExprListExp*  arraySubscript = isSgExprListExp((*i)["$IDX1"]);
+      ROSE_ASSERT(arraySubscript);
+      SgExpressionPtrList dimExprList = arraySubscript->get_expressions();
+
       SgVariableSymbol* arrayNameSymbol = lhsVarRef->get_symbol();
       if(arrayNameSymbol==sym) {
-        SgNodeHelper::replaceExpression(arrayRef,lhsVarRef,false);
+        if(dimExprList.size() == 1)
+        {
+          mlog[DEBUG] << "DEBUG: replacing array variable reference to scalar variable reference" << "\n";
+          SgNodeHelper::replaceExpression(arrayRef,lhsVarRef,false);
+        }
+        else
+        {
+          mlog[DEBUG] << "replacing n dimensional array to (n-1) dimensional array" << "\n";
+          SgExpressionPtrList newDimExprList;
+          for(SgExpressionPtrList::iterator i=dimExprList.begin()+1;i!=dimExprList.end();++i) {
+            SgExpression* dimInfoExpr = *i;
+            ROSE_ASSERT(dimInfoExpr);
+            newDimExprList.push_back(dimInfoExpr);
+          }
+          SgExprListExp* newArraySubscript = SageBuilder::buildExprListExp(newDimExprList);
+          SgNodeHelper::replaceExpression(arraySubscript,newArraySubscript,false);
+        }
       } else {
-        if(enable_debug)
-          cout<<"DEBUG: lhs-matches, but symbol does not. skipping."<<arrayNameSymbol->get_name()<<"!="<<sym->get_name()<<endl;
+        mlog[DEBUG]<<"lhs-matches, but symbol does not. skipping."<<arrayNameSymbol->get_name()<<"!="<<sym->get_name()<<"\n";
         continue;
       }
     }
@@ -257,6 +275,9 @@ void scalarizer::transformArrayType(SgBasicBlock* funcBody, SgVariableSymbol* sy
 
 int main(int argc, char** argv)
 {
+  ROSE_INITIALIZE;
+  Rose::Diagnostics::initAndRegister(&mlog, "Scalarizer");
+
   Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv);
   std::vector<std::string> positionalArgs = cmdline.unreachedArgs();
 
@@ -298,24 +319,44 @@ int main(int argc, char** argv)
       // Process each variable name and perform the transformation
       for(vector<string>::iterator it=namelist.begin(); it != namelist.end(); it++)
       {
-        if(enable_debug)
-          cout << "Processing name: " << *it << endl;
+        mlog[DEBUG] << "Processing name: " << *it << "\n";
         SgVariableSymbol* sym = lookupVariableSymbolInParentScopes(*it, funcBody);
         ROSE_ASSERT(sym);
         SgArrayType* symType = isSgArrayType(sym->get_type());
         if(symType == NULL)
         {
-          if(enable_debug)
-            cout << "Not a variable with array type" << endl;
+          mlog[DEBUG] << "Not a variable with array type" << "\n";
           break;
         }
-        //  Assuming single dimension array only
-        SgType* baseType = symType->get_base_type();
-        // Change type in variable declartion
-        transformType(sym, baseType);
+        SgExprListExp* dimInfo = symType->get_dim_info();
+        SgExpressionPtrList dimExprList = dimInfo->get_expressions();
+        mlog[DEBUG] << "original dim size = " << dimExprList.size() << "\n";
+        int dimSize = dimExprList.size();
+        //  single dimension array only
+        if(dimSize == 1)
+        {
+          SgType* baseType = symType->get_base_type();
+          // Change type in variable declartion
+          transformType(sym, baseType);
 
-        // Follow the design in typeForge by Markus
-        transformArrayType(funcBody, sym, baseType);
+          // Follow the design in typeForge by Markus
+          transformArrayType(funcBody, sym, baseType);
+        }
+        //  multi-dimension array only
+        else
+        {
+          SgExpressionPtrList newDimExprList;
+          for(SgExpressionPtrList::iterator i=dimExprList.begin()+1;i!=dimExprList.end();++i) {
+            SgExpression* dimInfoExpr = *i;
+            ROSE_ASSERT(dimInfoExpr);
+            newDimExprList.push_back(dimInfoExpr);
+          }
+          mlog[DEBUG] << "new dim size = " << newDimExprList.size() << "\n";
+          SgExprListExp* newDimInfo = SageBuilder::buildExprListExp(newDimExprList);
+          SgArrayType* newArrayType = SageBuilder::buildArrayType(symType->get_base_type(), newDimInfo);
+          transformType(sym, dynamic_cast<SgType*>(newArrayType));
+          transformArrayType(funcBody, sym, newArrayType);
+        }
 
       } 
     }
