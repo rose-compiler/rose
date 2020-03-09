@@ -35,9 +35,6 @@ parseCommandLine(int argc, char *argv[]) {
                     .action(showHelpAndExit(0))
                     .doc("Show this documentation."));
 
-    standard.insert(Switch("version", 'V')
-                    .action(showVersionAndExit("0.2", 0))
-                    .doc("Show version number."));
     //! [parseCommandLine helpversion]
     
 
@@ -94,7 +91,7 @@ static bool scalarizer::isFixedSourceForm(SgNode* c_sgnode)
 
 static bool scalarizer::is_directive_sentinels(const char* str, SgNode* c_sgnode)
 {
-  static const char* c_char = str;
+  const char* c_char = str;
   bool result = false;
   // two additional case for fixed form
   if (isFixedSourceForm(c_sgnode))
