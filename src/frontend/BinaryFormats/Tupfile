@@ -4,18 +4,14 @@ ifneq (@(WITH_INTEL_PIN),no)
     SOURCES += IntelPinSupport.C
 endif
 
-ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
-    SOURCES += \
-        ByteOrder.C DataConversion.C ExtentMap.C Hexdump.C MemoryMap.C Rva.C                                            \
-        GenericDynamicLinking.C GenericFile.C GenericFormat.C GenericHeader.C GenericSection.C GenericString.C          \
-        PeExport.C PeFileHeader.C PeImportDirectory.C PeImportItem.C                                                    \
-        PeImportSection.C PeRvaSizePair.C PeSection.C PeStringTable.C PeSymbolTable.C                                   \
-        ElfDynamicLinking.C ElfErrorFrame.C ElfFileHeader.C ElfNote.C ElfRelocation.C ElfSection.C ElfSectionTable.C    \
-        ElfSegmentTable.C ElfStringTable.C ElfSymbolTable.C ElfSymbolVersion.C                                          \
-        ExecDOS.C ExecNE.C ExecLE.C ExecGeneric.C PeSectionTable.C SRecord.C BinaryVxcoreParser.C
-else
-    SOURCES += dummyFunctions.C
-endif
+SOURCES += \
+    ByteOrder.C DataConversion.C ExtentMap.C Hexdump.C MemoryMap.C Rva.C                                            \
+    GenericDynamicLinking.C GenericFile.C GenericFormat.C GenericHeader.C GenericSection.C GenericString.C          \
+    PeExport.C PeFileHeader.C PeImportDirectory.C PeImportItem.C                                                    \
+    PeImportSection.C PeRvaSizePair.C PeSection.C PeStringTable.C PeSymbolTable.C                                   \
+    ElfDynamicLinking.C ElfErrorFrame.C ElfFileHeader.C ElfNote.C ElfRelocation.C ElfSection.C ElfSectionTable.C    \
+    ElfSegmentTable.C ElfStringTable.C ElfSymbolTable.C ElfSymbolVersion.C                                          \
+    ExecDOS.C ExecNE.C ExecLE.C ExecGeneric.C PeSectionTable.C SRecord.C BinaryVxcoreParser.C
 
 run $(librose_compile) $(SOURCES)
 

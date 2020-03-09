@@ -4370,6 +4370,7 @@ void EasyStorage <rose_graph_integerpair_edge_hash_multimap> :: readFromFile (st
    ****************************************************************************************
 */
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 template <class TYPE>
 void EasyStorage <SgSharedVector<TYPE> > :: storeDataInEasyStorageClass(const SgSharedVector<TYPE>& data_)
 {
@@ -4424,6 +4425,7 @@ SgSharedVector<TYPE> EasyStorage <SgSharedVector<TYPE> > :: rebuildDataStoredInE
 
     return SgSharedVector<TYPE>();
 }
+#endif
 
 /*
    ****************************************************************************************

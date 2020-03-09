@@ -1471,7 +1471,9 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
             // case V_SgFile:
                case V_SgSourceFile:
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
                case V_SgBinaryComposite:
+#endif
                   {
                     key = "__sourceFile_file_id_";
 

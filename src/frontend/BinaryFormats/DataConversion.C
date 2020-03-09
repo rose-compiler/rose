@@ -1,4 +1,6 @@
 /* Functions for data conversion. Functions such as byte swapping, etc. */
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 uint8_t *
@@ -16,3 +18,5 @@ Rot13::decode(uint8_t* buffer, size_t* nbytes)
         buffer[i] -= 13;
     return buffer;
 }
+
+#endif

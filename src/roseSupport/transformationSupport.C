@@ -2016,6 +2016,7 @@ TransformationSupport::getSourceFile( const SgNode* astNode )
      return const_cast<SgSourceFile*>(file);
    }
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 // DQ (9/3/2008): This used to use SgFile and was switched to use SgBinaryComposite.
 SgBinaryComposite*
 TransformationSupport::getBinaryFile( const SgNode* astNode )
@@ -2058,6 +2059,7 @@ TransformationSupport::getBinaryFile( const SgNode* astNode )
   // return file;
      return const_cast<SgBinaryComposite*>(file);
    }
+#endif
 
 SgGlobal*
 TransformationSupport::getGlobalScope( const SgNode* astNode )

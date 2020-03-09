@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinaryVxcoreParser.h>
 
@@ -273,3 +275,5 @@ VxcoreParser::unparse(std::ostream &out, const MemoryMap::Ptr &memory, const Add
 
 } // namespace
 } // namespace
+
+#endif

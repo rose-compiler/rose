@@ -19,8 +19,7 @@ noinst_LTLIBRARIES = libroseBinaryFormats.la
 
 libroseBinaryFormats_la_DEPENDENCIES =
 
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   libroseBinaryFormats_la_SOURCES =											\
+libroseBinaryFormats_la_SOURCES =											\
       $(INTEL_PIN_SUPPORT)												\
       ByteOrder.C DataConversion.C ExtentMap.C Hexdump.C MemoryMap.C Rva.C						\
       GenericDynamicLinking.C GenericFile.C GenericFormat.C GenericHeader.C GenericSection.C GenericString.C		\
@@ -29,10 +28,6 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
       ElfDynamicLinking.C ElfErrorFrame.C ElfFileHeader.C ElfNote.C ElfRelocation.C ElfSection.C ElfSectionTable.C	\
       ElfSegmentTable.C ElfStringTable.C ElfSymbolTable.C ElfSymbolVersion.C						\
       ExecDOS.C ExecNE.C ExecLE.C ExecGeneric.C PeSectionTable.C SRecord.C BinaryVxcoreParser.C
-else
-   libroseBinaryFormats_la_SOURCES = dummyFunctions.C
-   libroseBinaryFormats_la_DEPENDENCIES += dummyFunctions.C
-endif
 
 pkginclude_HEADERS =												\
 	ByteOrder.h DataConversion.h IntelPinSupport.h MemoryMap.h SRecord.h WorkLists.h SgSharedVector.h	\

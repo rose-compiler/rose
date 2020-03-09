@@ -5,6 +5,7 @@ HEADER_NODE_PREDECLARATION_START
 
 // tps (01/27/10): Added essential files..
 //#include "sage3basic.h"
+#include <rosePublicConfig.h>
 #include "setup.h"
 #include "rangemap.h"
 #include "Map.h"
@@ -42,6 +43,7 @@ class AstAttributeMechanism;
 // DQ (6/14/2008): Include the Exec format support.
 // #include "ExecGeneric.h"
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 // This is all documented in Rva.C since doxygen can't pick of documentation from this file.
 class ROSE_DLL_API rose_rva_t {
 	public:
@@ -76,10 +78,12 @@ class ROSE_DLL_API rose_rva_t {
                 }
 #endif
 };
+#endif
 
 // #ifndef ROSE_USE_SWIG_SUPPORT
 #ifndef SWIG
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 std::ostream &operator<<(std::ostream&, const rose_rva_t&);
 
 rose_addr_t operator-(const rose_rva_t &a1, const rose_rva_t &a2);
@@ -91,6 +95,7 @@ bool operator> (const rose_rva_t &a1, const rose_rva_t &a2);
 bool operator>=(const rose_rva_t &a1, const rose_rva_t &a2);
 bool operator==(const rose_rva_t &a1, const rose_rva_t &a2);
 bool operator!=(const rose_rva_t &a1, const rose_rva_t &a2);
+#endif
 
 #endif
 
@@ -160,9 +165,10 @@ struct HexdumpFormat {
 
 #include <RegisterDescriptor.h>
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 /** Mapping from instruction virtual address to instruction. */
 typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
-
+#endif
 
 // DQ (8/21/2008): these are from the GenericExec.h (from before we used Robb's work in the new IR nodes).
 #define NELMTS(X)       (sizeof(X)/sizeof((X)[0]))      /* number of elements in a static-sized array */
@@ -250,6 +256,7 @@ typedef Rose_STL_Container<SgDeclarationStatement*> SgDeclarationStatementPtrLis
  */
 typedef SgDeclarationStatementPtrList*              SgDeclarationStatementPtrListPtr;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 // tps (8/20/2007): Added support for binaries.
 /** \typedef SgAsmBlockPtrList
     This is socumentation for the following typedef 
@@ -297,6 +304,7 @@ typedef SgAsmCoffSymbolPtrList*              SgAsmCoffSymbolPtrListPtr;
 // DQ (8/8/2008): Added to support new exec format IR nodes
 typedef Rose_STL_Container<SgAsmGenericSymbol*> SgAsmGenericSymbolPtrList;
 typedef SgAsmGenericSymbolPtrList*              SgAsmGenericSymbolPtrListPtr;
+#endif
 
 class SgStatement;
 typedef Rose_STL_Container<SgStatement*>    SgStatementPtrList;
@@ -432,6 +440,7 @@ typedef SgBasicBlock*                       SgBasicBlockPtr;
 typedef std::vector<SgBasicBlockPtr>        SgBasicBlockPtrList;
 typedef SgBasicBlockPtrList*                SgBasicBlockPtrListPtr;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 // DQ (3/15/2007): Added support for binaries.
 typedef Rose_STL_Container<SgAsmStatement*> SgAsmStatementPtrList;
 typedef SgAsmStatementPtrList*              SgAsmStatementPtrListPtr;
@@ -451,6 +460,7 @@ typedef SgAsmSynthesizedDeclarationPtrList*              SgAsmSynthesizedDeclara
 typedef Rose_STL_Container<SgAsmX86Instruction*> SgAsmX86InstructionPtrList;
 // JJW (3/21/2008): Added support for containers of Arm instructions
 typedef Rose_STL_Container<SgAsmArmInstruction*> SgAsmArmInstructionPtrList;
+#endif
 
 // DQ (11/19/2007): Added support for Fortran namelist statement.
 typedef Rose_STL_Container<SgNameGroup*>           SgNameGroupPtrList;
@@ -484,8 +494,6 @@ typedef SgLabelSymbolPtrList*                  SgLabelSymbolPtrListPtr;
 typedef Rose_STL_Container<SgFormatItem*>      SgFormatItemPtrList;
 typedef SgFormatItemPtrList*                   SgFormatItemPtrListPtr;
 
-// #ifndef ROSE_USE_SWIG_SUPPORT
-
 // DQ (8/21/2008): Use the reference built for rose_addr_t instead.
 // DQ (8/21/2008): Moved this from Node.code to make it local since 
 // we can't reference the nested addr_t directly from glogal scope.
@@ -493,14 +501,13 @@ typedef SgFormatItemPtrList*                   SgFormatItemPtrListPtr;
 typedef Rose_STL_Container<rose_addr_t>  SgAddressList;
 typedef SgAddressList*                   SgAddressListPtr;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 typedef Rose_STL_Container<rose_rva_t>         SgRVAList;
 typedef SgRVAList*                             SgRVAListPtr;
 
-// endif for ifndef ROSE_USE_SWIG_SUPPORT
-// #endif
-
 typedef Rose_STL_Container<SgAsmPEExportEntry*> SgAsmPEExportEntryPtrList;
 typedef SgAsmPEExportEntryPtrList*		SgAsmPEExportEntryPtrListPtr;
+#endif
 
 typedef Rose_STL_Container<unsigned>           SgUnsignedList;
 typedef SgUnsignedList*                        SgUnsignedListPtr;
@@ -509,6 +516,7 @@ typedef SgUnsignedList*                        SgUnsignedListPtr;
 typedef Rose_STL_Container<size_t>             SgSizeTList;
 typedef SgSizeTList*                           SgSizeTListPtr;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 typedef Rose_STL_Container<SgAsmNEEntryPoint*> SgAsmNEEntryPointPtrList;
 typedef SgAsmNEEntryPointPtrList*              SgAsmNEEntryPointPtrListPtr;
 
@@ -531,6 +539,7 @@ typedef SgAsmGenericHeaderPtrList*              SgAsmGenericHeaderPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmGenericDLL*> SgAsmGenericDLLPtrList;
 typedef SgAsmGenericDLLPtrList*              SgAsmGenericDLLPtrListPtr;
+#endif
 
 typedef Rose_STL_Container<unsigned char>    SgUnsignedCharList;
 typedef SgUnsignedCharList*                  SgUnsignedCharListPtr;
@@ -558,6 +567,7 @@ typedef SgRenamePairPtrList*              SgRenamePairPtrListPtr;
 typedef Rose_STL_Container<SgInterfaceBody*> SgInterfaceBodyPtrList;
 typedef SgInterfaceBodyPtrList*              SgInterfaceBodyPtrListPtr;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 // DQ (11/5/2008): Addes as part of general Dwarf support in the AST for binary executables.
 typedef Rose_STL_Container<SgAsmDwarfLine*> SgAsmDwarfLinePtrList;
 typedef SgAsmDwarfLinePtrList*              SgAsmDwarfLinePtrListPtr;
@@ -570,6 +580,7 @@ typedef SgAsmDwarfConstructPtrList*              SgAsmDwarfConstructPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmDwarfCompilationUnit*> SgAsmDwarfCompilationUnitPtrList;
 typedef SgAsmDwarfCompilationUnitPtrList*              SgAsmDwarfCompilationUnitPtrListPtr;
+#endif
 
 // DQ (11/28/2008): Added support for list of integers (used for flag list in SgLinemarkerDirectiveStatement).
 // typedef std::vector<int>                     SgIntegerList;
@@ -618,9 +629,11 @@ class SgUntypedFunctionDeclaration;
 typedef Rose_STL_Container<SgUntypedFunctionDeclaration*> SgUntypedFunctionDeclarationPtrList;
 typedef SgUntypedFunctionDeclarationPtrList*              SgUntypedFunctionDeclarationPtrListPtr;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 class SgAsmRegisterReferenceExpression;
 typedef Rose_STL_Container<SgAsmRegisterReferenceExpression*> SgAsmRegisterReferenceExpressionPtrList;
 typedef SgAsmRegisterReferenceExpressionPtrList* SgAsmRegisterReferenceExpressionPtrListPtr;
+#endif
 
 // DQ (9/3/2014): Added support for C++11 Lambda expressions.
 typedef Rose_STL_Container<SgLambdaCapture*>     SgLambdaCapturePtrList;
@@ -645,6 +658,7 @@ class PreviousAndNextNodeData;
 // DQ (11/30/2015): Added support for mapping of the AST to macro expansions.
 class MacroExpansion;
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <SgSharedVector.h>
 
 typedef SgSharedVector<unsigned char>             SgFileContentList;
@@ -683,11 +697,9 @@ typedef SgAsmElfSymverNeededEntryPtrList*              SgAsmElfSymverNeededEntry
 typedef Rose_STL_Container<SgAsmElfSymverNeededAux*> SgAsmElfSymverNeededAuxPtrList;
 typedef SgAsmElfSymverNeededAuxPtrList*              SgAsmElfSymverNeededAuxPtrListPtr;
 
-
-
 typedef Rose_STL_Container<SgAsmPERVASizePair*> SgAsmPERVASizePairPtrList;
 typedef SgAsmPERVASizePairPtrList* SgAsmPERVASizePairPtrListPtr;
-
+#endif
 
 // DQ (11/20/2010): Added type for SgToken list
 // Build a type for the SgToken list.
@@ -1543,8 +1555,10 @@ namespace VirtualCFG
    }
 #endif
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 // DQ (3/15/2007): Added support for binaries
 std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<SgAsmStatement*> & l );
+#endif
 
 // DQ (5/8/2007): Added support for type elaboration lists, hidden type lists, and hidden declaration lists.
 std::ostream & operator<< ( std::ostream & os, const std::set<SgSymbol*> & l );
@@ -1555,8 +1569,10 @@ std::ostream & operator<< ( std::ostream & os, const std::set<SgSymbol*> & l );
 // tps (8/13/2007): working on binary cfg mechanism.
 //#include "virtualBinCFG.h"
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 // Version numbers for SgAsm* nodes. Used for backward compatibility. */
 BOOST_CLASS_VERSION(SgAsmInstruction, 1);
+#endif
 
 HEADER_NODE_PREDECLARATION_END
 
