@@ -12,7 +12,8 @@
  *    SgAsmElfSymverEntry   -- A single entry in an SgAsmElfSymverSection, usually an index into one of the other
  *                             version tables, but some special values are also defined.
  */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 /*========================================================================================================================
@@ -745,3 +746,5 @@ SgAsmElfSymverNeededSection::dump(FILE *f, const char *prefix, ssize_t idx) cons
     if (variantT() == V_SgAsmElfSymverNeededSection) /*unless a base class*/
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
+
+#endif

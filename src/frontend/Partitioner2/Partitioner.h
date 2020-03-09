@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_Partitioner_H
 #define ROSE_Partitioner2_Partitioner_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/AddressUsageMap.h>
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/BasicTypes.h>
@@ -2552,4 +2555,5 @@ private:
 // Class versions must be at global scope
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Partitioner, 1);
 
+#endif
 #endif

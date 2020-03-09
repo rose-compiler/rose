@@ -1,6 +1,5 @@
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
-
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #if ROSE_CONCOLIC_DB_VERSION == 1
 

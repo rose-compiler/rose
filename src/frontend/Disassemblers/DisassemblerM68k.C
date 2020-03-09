@@ -1,7 +1,9 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+#include "DisassemblerM68k.h"
 
 #include "Diagnostics.h"
-#include "DisassemblerM68k.h"
 #include "integerOps.h"
 #include "stringify.h"
 #include "SageBuilderAsm.h"
@@ -5073,4 +5075,6 @@ DisassemblerM68k::init()
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::DisassemblerM68k);
+#endif
+
 #endif

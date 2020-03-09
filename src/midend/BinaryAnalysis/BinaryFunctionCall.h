@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_FunctionCall_H
 #define ROSE_BinaryAnalysis_FunctionCall_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include "BinaryControlFlow.h"
 
 class SgAsmFunction;
@@ -421,4 +424,5 @@ FunctionCall::copy(const FunctionCallGraph &src)
 } // namespace
 } // namespace
 
+#endif
 #endif

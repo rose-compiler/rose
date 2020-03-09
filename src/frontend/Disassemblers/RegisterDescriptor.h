@@ -1,6 +1,9 @@
 #ifndef Rose_BinaryAnalysis_RegisterDescriptor_H
 #define Rose_BinaryAnalysis_RegisterDescriptor_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <boost/serialization/access.hpp>
 
 namespace Rose {
@@ -243,4 +246,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

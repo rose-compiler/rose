@@ -1,7 +1,8 @@
-#include <sage3basic.h>
-
 #include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <sage3basic.h>
 #include <BinarySmtlibSolver.h>
+
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
 #include <Diagnostics.h>
@@ -1308,3 +1309,5 @@ SmtlibSolver::evidenceNames() {
 
 } // namespace
 } // namespace
+
+#endif

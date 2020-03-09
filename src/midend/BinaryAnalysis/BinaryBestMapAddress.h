@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_BestMapAddress
 #define ROSE_BinaryAnalysis_BestMapAddress
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Diagnostics.h>
 #include <Partitioner2/Engine.h>
 #include <Progress.h>
@@ -182,4 +185,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

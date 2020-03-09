@@ -1,6 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
-
 #include "SRecord.h"
+
 #include "Diagnostics.h"
 #include "StringUtility.h"
 #include "integerOps.h"
@@ -612,3 +614,5 @@ SRecord::print(std::ostream &out) const {
 
 } // namespace
 } // namespace
+
+#endif

@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_RiscOperators_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_RiscOperators_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemanticsTypes.h>
 #include <BinaryHotPatch.h>
@@ -751,4 +753,5 @@ std::ostream& operator<<(std::ostream&, const RiscOperators::WithFormatter&);
 // Class versions must be at global scope
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperators, 1);
 
+#endif
 #endif

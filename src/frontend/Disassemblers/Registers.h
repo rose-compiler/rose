@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_Registers_H
 #define ROSE_BinaryAnalysis_Registers_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include "RegisterParts.h"
 
 #include <boost/serialization/access.hpp>
@@ -422,4 +425,5 @@ RegisterDictionary::filter_nonoverlapping(RegisterDescriptors desc, Compare orde
 } // namespace
 } // namespace
 
+#endif
 #endif

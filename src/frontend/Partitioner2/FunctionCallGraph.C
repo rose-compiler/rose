@@ -1,6 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
-
 #include <Partitioner2/FunctionCallGraph.h>
+
 #include <Partitioner2/Utility.h>
 
 namespace Rose {
@@ -180,3 +182,5 @@ FunctionCallGraph::nCalls(const Graph::ConstVertexIterator &source, const Graph:
 } // namespace
 } // namespace
 } // namespace
+
+#endif

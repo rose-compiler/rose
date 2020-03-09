@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCellList_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCellList_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 #include <MemoryCellState.h>
@@ -268,4 +270,5 @@ protected:
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCellList);
 #endif
 
+#endif
 #endif

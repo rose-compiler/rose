@@ -1,5 +1,6 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
-
 #include <Partitioner2/Reference.h>
 
 namespace Rose {
@@ -53,3 +54,5 @@ Reference::operator<(const Reference &other) const {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

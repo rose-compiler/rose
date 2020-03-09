@@ -9,6 +9,9 @@
 #ifndef ROSE_DISASSEMBLER_X86_INIT_H
 #define ROSE_DISASSEMBLER_X86_INIT_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 namespace Rose {
 namespace BinaryAnalysis {
 
@@ -693,6 +696,7 @@ enum X86InstructionKind
 } // namespace
 } // namespace
 
+#endif
 #endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include <Partitioner2/AddressUsageMap.h>
 #include <Partitioner2/Utility.h>
 #include "AsmUnparser_compat.h"
@@ -788,3 +791,5 @@ AddressUsageMap::dataBlockExists(const DataBlock::Ptr &dblock) const {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

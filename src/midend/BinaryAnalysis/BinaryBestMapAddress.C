@@ -1,6 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
-
 #include <BinaryBestMapAddress.h>
+
 #include <CommandLine.h>
 #include <integerOps.h>
 #include <Sawyer/Graph.h>
@@ -268,5 +270,8 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
     }
     return retval;
 }
+
 } // namespace
 } // namespace
+
+#endif

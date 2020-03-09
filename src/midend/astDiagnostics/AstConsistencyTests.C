@@ -967,7 +967,11 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
   // if ( !isSgFile(node) && !isSgProject(node) )
   // if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node))
   // if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node) && !isSgFileList(node) && !isSgDirectory(node))
-     if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node) && !isSgFileList(node) && !isSgDirectory(node) && !isSgJavaImportStatementList(node) && !isSgJavaClassDeclarationList(node) )
+     bool isFileNode = isSgFile(node) || isSgProject(node) || isSgFileList(node) || isSgDirectory(node) || isSgJavaImportStatementList(node) || isSgJavaClassDeclarationList(node);
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     isFileNode = isFileNode || isSgAsmNode(node);
+#endif
+     if (!isFileNode)
         {
           Sg_File_Info* fileInfo = node->get_file_info();
           if ( fileInfo == NULL )
@@ -4800,7 +4804,9 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                case V_SgSymbolTable:
             // case V_SgFile:
                case V_SgSourceFile:
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
                case V_SgBinaryComposite:
+#endif
                case V_SgUnknownFile:
                case V_SgTypedefSeq:
                case V_SgFunctionParameterTypeList:

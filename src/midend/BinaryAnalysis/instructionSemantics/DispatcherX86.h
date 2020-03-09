@@ -1,5 +1,7 @@
 #ifndef ROSE_DispatcherX86_H
 #define ROSE_DispatcherX86_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 #include <Registers.h>
@@ -312,4 +314,5 @@ public:
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherX86);
 #endif
 
+#endif
 #endif

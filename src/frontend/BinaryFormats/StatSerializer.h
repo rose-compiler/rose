@@ -1,6 +1,9 @@
 #ifndef ROSE_StatSerializer_H
 #define ROSE_StatSerializer_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 #include <boost/serialization/access.hpp>
@@ -32,5 +35,6 @@ void serialize(S & s, struct stat &x, const unsigned /*version*/) {
 } // namespace
 } // namespace
 
+#endif
 #endif
 #endif

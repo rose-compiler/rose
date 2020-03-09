@@ -1,5 +1,7 @@
 #ifndef FUNCTION_ID_DATABASE_INTERFACE_H
 #define FUNCTION_ID_DATABASE_INTERFACE_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "sqlite3x.h"
 #include "LibraryInfo.h"
@@ -126,6 +128,5 @@ namespace LibraryIdentification
     };   
 }
 
-
 #endif
-
+#endif

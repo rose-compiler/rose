@@ -1,5 +1,7 @@
 #ifndef FUNCTION_INFO_H
 #define FUNCTION_INFO_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BinaryAstHash.h>
 #include "Combinatorics.h"
@@ -194,6 +196,5 @@ namespace LibraryIdentification
     
 }
 
-
-
-#endif //FUNCTION_INFO
+#endif
+#endif

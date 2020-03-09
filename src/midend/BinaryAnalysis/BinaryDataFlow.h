@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_DataFlow_H
 #define ROSE_BinaryAnalysis_DataFlow_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include "DataFlowSemantics2.h"
 #include "Diagnostics.h"
 #include "RoseException.h"
@@ -485,4 +488,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

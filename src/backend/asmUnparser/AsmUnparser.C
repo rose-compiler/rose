@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "AsmUnparser.h"
+
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 #include "Disassembler.h"
 
@@ -1275,3 +1278,5 @@ AsmUnparser::InterpBody::operator()(bool enabled, const InterpretationArgs &args
 
 } // namespace
 } // namespace
+
+#endif

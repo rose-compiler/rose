@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_UnparserPowerpc_H
 
 #include <BinaryUnparserBase.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -41,4 +42,4 @@ private:
 } // namespace
 
 #endif
-
+#endif

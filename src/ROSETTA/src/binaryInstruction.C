@@ -1,3 +1,6 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 /******************************************************************************************************************************
  * NOTE:  For any given IR class, please keep all its parts as close together as possible.  Its bad enough that we're
  *        defining classes in a non-C-like language -- and it's painful when a definition is scattered all over this file. We
@@ -16183,4 +16186,6 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifndef DOCUMENTATION
 }
+#endif
+
 #endif

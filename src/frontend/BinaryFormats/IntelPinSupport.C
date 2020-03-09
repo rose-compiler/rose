@@ -1,7 +1,9 @@
 // This file includes support for handling Intel Pin data types and and
 // other required code to support Intel Pin within ROSE.
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 // #include "IntelPinSupport.h"
 
 // Later we can sue ROSE_ASSERT if appropriate.
@@ -79,6 +81,4 @@ string output (SEC_TYPE section_type)
      return s;
    }
 
-
-
-
+#endif

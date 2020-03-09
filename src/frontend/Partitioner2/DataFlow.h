@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_DataFlow_H
 #define ROSE_Partitioner2_DataFlow_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <BinaryDataFlow.h>
 #include <BinaryStackVariable.h>
 #include <Partitioner2/BasicBlock.h>
@@ -272,4 +275,5 @@ std::vector<AbstractLocation> findGlobalVariables(const BaseSemantics::RiscOpera
 } // namespace
 } // namespace
 
+#endif
 #endif

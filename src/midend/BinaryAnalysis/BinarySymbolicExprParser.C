@@ -1,6 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
-
 #include <BinarySymbolicExprParser.h>
+
 #include <BinarySmtSolver.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Map.h>
@@ -1340,3 +1342,5 @@ SymbolicExprParser::symbolicExprParser() {
 
 } // namespace
 } // namespace
+
+#endif

@@ -2,6 +2,9 @@
 #ifndef ROSE_BinaryAnalysis_Unparser_H
 #define ROSE_BinaryAnalysis_Unparser_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Sawyer/CommandLine.h>
 #include <BaseSemantics2.h>
 #include <BinaryEdgeArrows.h>
@@ -121,4 +124,5 @@ Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings &settings);
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -1,5 +1,8 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "checkIsModifiedFlag.h"
 #include <algorithm>
 #include <fstream>
@@ -264,3 +267,5 @@ SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::ExecPurpose purp
 
     return "unknown exec purpose (" + StringUtility::unsignedToHex(purpose) + ")";
 }
+
+#endif

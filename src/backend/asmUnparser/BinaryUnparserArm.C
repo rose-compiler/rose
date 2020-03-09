@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinaryUnparserArm.h>
+
 #include <stringify.h>
 
 namespace Rose {
@@ -218,3 +221,5 @@ Arm::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) con
 } // namespace
 } // namespace
 } // namespace
+
+#endif

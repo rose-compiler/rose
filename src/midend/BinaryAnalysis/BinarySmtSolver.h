@@ -1,5 +1,7 @@
 #ifndef Rose_BinaryAnalysis_SmtSolver_H
 #define Rose_BinaryAnalysis_SmtSolver_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -663,4 +665,5 @@ typedef SmtSolver SMTSolver;
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BaseSemanticsRiscOperators.h>
 
@@ -476,3 +478,5 @@ RiscOperators::operator+(const std::string &linePrefix) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

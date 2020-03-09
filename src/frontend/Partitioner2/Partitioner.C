@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include <Partitioner2/Partitioner.h>
 
@@ -2980,3 +2982,5 @@ Partitioner::pythonUnparse() const {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

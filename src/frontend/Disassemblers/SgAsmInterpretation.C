@@ -1,6 +1,7 @@
 /* SgAsmInterpretation member definitions. Do not move them to src/ROSETTA/Grammar/BinaryInstructions.code (or any *.code
  * file) because then they won't get indexed/formatted/etc. by C-aware tools. */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 using namespace Rose::BinaryAnalysis;
@@ -82,3 +83,5 @@ SgAsmInterpretation::set_instruction_map(const InstructionMap &imap)
 {
     instruction_map = imap;
 }
+
+#endif
