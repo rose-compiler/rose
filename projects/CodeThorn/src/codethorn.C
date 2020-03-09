@@ -90,6 +90,8 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
+const std::string versionString="1.11.7";
+
 // handler for generating backtrace
 void handler(int sig) {
   void *array[10];
@@ -706,7 +708,7 @@ int main( int argc, char * argv[] ) {
     TimeMeasurement timer;
     timer.start();
 
-    parseCommandLine(argc, argv, logger);
+    parseCommandLine(argc, argv, logger,versionString);
 
     // Check if chosen options are available
 #ifndef HAVE_SPOT

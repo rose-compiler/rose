@@ -11,7 +11,7 @@ using namespace Sawyer::Message;
 using namespace std;
 using namespace CodeThorn;
 
-CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger) {
+CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger, std::string version) {
   // Command line option handling.
   po::options_description visibleOptions("Supported options");
   po::options_description hiddenOptions("Hidden options");
@@ -348,7 +348,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     cout << infoOptions << "\n";
     exit(0);
   } else if (args.count("version")) {
-    cout << "CodeThorn version 1.11.6\n";
+    cout << "CodeThorn version "<<version<<endl;
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
   }
