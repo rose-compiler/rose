@@ -471,6 +471,16 @@ __builtin_va_list & __builtin_next_arg(char const *format);
 /* typedef __SIZE_TYPE__ size_t; */
 #define size_t __SIZE_TYPE__
 
+/*Pei-Hung (02/07/2020) added builtin for Clang*/
+#if defined(__clang__)
+//  #define wchar_t __WCHAR_TYPE__
+  typedef __WCHAR_TYPE__ wchar_t;
+  const char * __builtin_char_memchr ( const void * ptr, int value, size_t num );
+  int __builtin_wmemcmp ( const void * ptr1, const void * ptr2, size_t num );
+  size_t __builtin_wcslen ( const wchar_t * str );
+  const wchar_t * __builtin_wmemchr ( const void * ptr, int value, size_t num );
+#endif
+
 /* DQ (9/2/2016): This is part of what is required using the new automated support for builtin functions. */
 #if (ROSE_LANGUAGE_MODE == ROSE_CXX_LANGUAGE_MODE)
 /* C++ case is different because the header files will define a complex type (see hdrs1/complex) */

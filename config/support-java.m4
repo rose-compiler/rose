@@ -57,7 +57,7 @@ elif test "x$javasetting" = xyes || test "x$javasetting" = xtry; then
 	  fi
       
     # echo "After setting value: JAVA_PATH = ${JAVA_PATH}"
-    elif "x$javasetting" = "xyes"; then
+    elif test "x$javasetting" == "xyes"; then
       AC_MSG_ERROR([--with-java was given but "java" is not in PATH and JAVA_HOME was not set])
     else # $javasetting is "try", so it is not an error for Java to not be found
     # echo 'FALSE case: x$javasetting = xyes;'
