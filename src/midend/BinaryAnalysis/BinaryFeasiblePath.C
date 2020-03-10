@@ -1579,6 +1579,9 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
 
     // Analyze each of the starting locations individually
     BOOST_FOREACH (P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex, pathsBeginVertices_.values()) {
+        Sawyer::ProgressBar<size_t> progress(std::min(settings_.maxPathLength, (size_t)5000 /*arbitrary*/), mlog[MARCH], "path");
+        progress.suffix(" vertices");
+
         // Create the SMT solver.  The solver will have one initial state, plus one additional state pushed for each edge of
         // the current path.
         SmtSolverPtr solver = SmtSolver::instance(settings_.solverName);
@@ -1605,6 +1608,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
 
         while (!path.isEmpty()) {
             size_t pathNInsns = pathLength(path);
+            progress.value(pathNInsns);
 
             if (debug) {
                 debug <<"  path vertices (" <<path.nVertices() <<"):";
