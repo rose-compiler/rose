@@ -252,7 +252,9 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     compiler_instance->createSourceManager(compiler_instance->getFileManager());
 
     const clang::FileEntry * input_file_entry = compiler_instance->getFileManager().getFile(input_file);
-    compiler_instance->getSourceManager().createFileID(input_file_entry, clang::SourceLocation(), compiler_instance->getSourceManager().getFileCharacteristic(clang::SourceLocation()));
+    clang::FileID mainFileID = compiler_instance->getSourceManager().createFileID(input_file_entry, clang::SourceLocation(), compiler_instance->getSourceManager().getFileCharacteristic(clang::SourceLocation()));
+
+    compiler_instance->getSourceManager().setMainFileID(mainFileID);
 
     if (!compiler_instance->hasPreprocessor()) compiler_instance->createPreprocessor(clang::TU_Complete);
 
