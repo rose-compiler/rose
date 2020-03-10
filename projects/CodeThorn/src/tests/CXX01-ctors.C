@@ -24,6 +24,10 @@ struct A
   : id(defs::a)
   {}
 
+  A(int)
+  : id(defs::a)
+  {}
+
   virtual ~A() {}
 
   defs::ID id;
@@ -64,7 +68,7 @@ struct D : B, C
 };
 
 
-A& createObject(int i)
+A* createObject(int i)
 {
   A* res = nullptr;
 
@@ -100,17 +104,18 @@ A& createObject(int i)
   }
 
   assert(res);
-  return *res;
+  return res;
 }
 
 int main(int argc, char** argv)
 {
-  A  a;
-  A* willLeak = &a;
+  //~ A  a_default;
+  A  a(2);
+  A* mayLeak = &a;
 
   for (int i = argc; i >= 0; --i)
   {
-    willLeak = &createObject(i);
+    mayLeak = createObject(i);
   }
 }
 

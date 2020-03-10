@@ -7,11 +7,16 @@
 
 #include "Labeler.h"
 #include "SgNodeHelper.h"
+#include "sageInterface.h"
+#include "sageGeneric.h"
+
 //#include "AstTerm.h"
 #include <sstream>
 
 using namespace std;
 using namespace CodeThorn;
+
+namespace si = SageInterface;
 
 Label Labeler::NO_LABEL;
 
@@ -100,7 +105,7 @@ LabelProperty::LabelProperty(SgNode* node, VariableIdMapping* variableIdMapping)
   assert(_isValid);
 }
 LabelProperty::LabelProperty(SgNode* node, LabelType labelType, VariableIdMapping* variableIdMapping):_isValid(false),_node(node),_labelType(labelType),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false),_isExternalFunctionCallLabel(false) {
-  initializeIO(variableIdMapping); 
+  initializeIO(variableIdMapping);
   assert(_isValid);
 }
 void LabelProperty::initializeIO(VariableIdMapping* variableIdMapping) {
@@ -218,9 +223,73 @@ Labeler::Labeler(SgNode* start) {
 
 Labeler::~Labeler(){}
 
+static
+SgInitializedName* getOnlyInitializedName(SgVariableDeclaration* decl)
+{
+  ROSE_ASSERT(decl);
+
+  SgInitializedNamePtrList& vars = decl->get_variables();
+  ROSE_ASSERT(vars.size() == 1);
+
+  return vars[0];
+}
+
+static
+bool hasUserDefinedDefaultCtor(SgClassDeclaration* def)
+{
+  return si::getDefaultConstructor(def) != NULL;
+}
+
+static
+SgClassDeclaration* getDefiningClassDecl(SgType* ty)
+{
+  // \todo skip using declarations
+  // \todo handle arrays
+  SgType*                 under = ty->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE);
+  SgClassType*            clazz = isSgClassType(under);
+  if (!clazz) return NULL;
+
+  SgDeclarationStatement* cldcl = clazz->get_declaration();
+  ROSE_ASSERT(cldcl);
+
+  SgClassDeclaration*     dfdcl = isSgClassDeclaration(cldcl->get_definingDeclaration());
+  ROSE_ASSERT(dfdcl);
+  return dfdcl;
+}
+
+
+struct CtorAnalyzer : sg::DispatchHandler<bool>
+{
+  void handle(const SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
+
+  void handle(const SgInitializer& n)            { res = false; }
+  void handle(const SgConstructorInitializer& n) { res = true; }
+};
+
+static
+bool matchVariableDeclWithCtorCall(SgNode* n)
+{
+  SgVariableDeclaration* decl = isSgVariableDeclaration(n);
+  if (!decl) return false;
+
+  SgInitializedName* var = getOnlyInitializedName(decl);
+
+  // \todo handle array types
+  SgClassDeclaration* clz = getDefiningClassDecl(var->get_type());
+
+  if (!clz) return false;
+
+  SgInitializer*     ini = var->get_initializer();
+
+  if (!ini) return hasUserDefinedDefaultCtor(clz);
+
+  return sg::dispatch(CtorAnalyzer(), ini);
+}
+
+
 // returns number of labels to be associated with node
 int Labeler::numberOfAssociatedLabels(SgNode* node) {
-  if(node==0) 
+  if(node==0)
     return 0;
 
   /* special case: the incExpr in a SgForStatement is a raw SgExpression
@@ -274,6 +343,10 @@ int Labeler::numberOfAssociatedLabels(SgNode* node) {
 
     // declarations
   case V_SgVariableDeclaration:
+    if (matchVariableDeclWithCtorCall(node))
+      return 2;
+    /* fallthrough */
+    // C++17 [[fallthrough]];
   case V_SgClassDeclaration:
   case V_SgEnumDeclaration:
   case V_SgTypedefDeclaration:
@@ -293,12 +366,12 @@ int Labeler::numberOfAssociatedLabels(SgNode* node) {
   case V_SgOmpCriticalStatement:
   case V_SgOmpAtomicStatement:
   case V_SgOmpDoStatement:
-  case V_SgOmpFlushStatement:   
+  case V_SgOmpFlushStatement:
   case V_SgOmpMasterStatement:
   case V_SgOmpOrderedStatement:
   case V_SgOmpSectionStatement:
   case V_SgOmpSingleStatement:
-  case V_SgOmpTargetDataStatement:      
+  case V_SgOmpTargetDataStatement:
   case V_SgOmpTargetStatement:
   case V_SgOmpTaskStatement:
   case V_SgOmpTaskwaitStatement:
@@ -317,6 +390,7 @@ void Labeler::registerLabel(LabelProperty lp) {
   mappingLabelToLabelProperty.push_back(lp);
   _isValidMappingNodeToLabel=false;
 }
+
 
 void Labeler::createLabels(SgNode* root) {
   RoseAst ast(root);
@@ -345,7 +419,7 @@ void Labeler::createLabels(SgNode* root) {
         assert(num == 2);
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_FORK));
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_JOIN));
-      } else if(isSgOmpForStatement(*i) || isSgOmpSectionsStatement(*i) 
+      } else if(isSgOmpForStatement(*i) || isSgOmpSectionsStatement(*i)
                   || isSgOmpSimdStatement(*i) || isSgOmpForSimdStatement(*i)) {
         assert(num == 2);
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_WORKSHARE));
@@ -353,6 +427,10 @@ void Labeler::createLabels(SgNode* root) {
       } else if(isSgOmpBarrierStatement(*i)) {
         assert(num == 1);
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_BARRIER));
+      } else if(matchVariableDeclWithCtorCall(*i)) {
+        assert(num==2);
+        registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALL));
+        registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALLRETURN));
       } else {
         // all other cases
         for(int j=0;j<num;j++) {
@@ -436,7 +514,7 @@ void Labeler::computeNodeToLabelMapping() {
 
 Label Labeler::getLabel(SgNode* node) {
   assert(node);
-  if(!node) 
+  if(!node)
     return Label();
   if(_isValidMappingNodeToLabel) {
     if(mappingNodeToLabel.count(node)==0) {
@@ -461,14 +539,15 @@ Label Labeler::functionCallLabel(SgNode* node) {
 }
 
 Label Labeler::functionCallReturnLabel(SgNode* node) {
-  ROSE_ASSERT(SgNodeHelper::Pattern::matchFunctionCall(node));
+  // PP disable assert, since it does not hold for constructors
+  // ROSE_ASSERT(SgNodeHelper::Pattern::matchFunctionCall(node));
   // in its current implementation it is guaranteed that labels associated with the same node
   // are associated as an increasing sequence of labels
   Label lab=getLabel(node);
-  if(lab==NO_LABEL) 
+  if(lab==NO_LABEL)
     return NO_LABEL;
   else
-    return lab+1; 
+    return lab+1;
 }
 Label Labeler::blockBeginLabel(SgNode* node) {
   ROSE_ASSERT(isSgBasicBlock(node));
@@ -477,10 +556,10 @@ Label Labeler::blockBeginLabel(SgNode* node) {
 Label Labeler::blockEndLabel(SgNode* node) {
   ROSE_ASSERT(isSgBasicBlock(node));
   Label lab=getLabel(node);
-  if(lab==NO_LABEL) 
+  if(lab==NO_LABEL)
     return NO_LABEL;
   else
-    return lab+1; 
+    return lab+1;
 }
 Label Labeler::functionEntryLabel(SgNode* node) {
   ROSE_ASSERT(isSgFunctionDefinition(node));
@@ -489,10 +568,10 @@ Label Labeler::functionEntryLabel(SgNode* node) {
 Label Labeler::functionExitLabel(SgNode* node) {
   ROSE_ASSERT(isSgFunctionDefinition(node));
   Label lab=getLabel(node);
-  if(lab==NO_LABEL) 
+  if(lab==NO_LABEL)
     return NO_LABEL;
   else
-    return lab+1; 
+    return lab+1;
 }
 
 Label Labeler::forkLabel(SgNode *node) {
@@ -508,7 +587,7 @@ Label Labeler::joinLabel(SgNode *node) {
 }
 
 Label Labeler::workshareLabel(SgNode *node) {
-  ROSE_ASSERT(isSgOmpForStatement(node) || isSgOmpSectionsStatement(node) 
+  ROSE_ASSERT(isSgOmpForStatement(node) || isSgOmpSectionsStatement(node)
                 || isSgOmpSimdStatement(node) || isSgOmpForSimdStatement(node));
   Label lab = getLabel(node);
   return lab;
@@ -519,7 +598,7 @@ Label Labeler::barrierLabel(SgNode *node) {
     Label lab = getLabel(node);
     return lab;
   }
-  ROSE_ASSERT(isSgOmpForStatement(node) || isSgOmpSectionsStatement(node) 
+  ROSE_ASSERT(isSgOmpForStatement(node) || isSgOmpSectionsStatement(node)
                 || isSgOmpSimdStatement(node) || isSgOmpForSimdStatement(node));
   Label lab = getLabel(node);
   return lab+1;
@@ -653,17 +732,17 @@ Labeler::iterator::iterator():_currentLabel(0),_numLabels(0) {
 Labeler::iterator::iterator(Label start, size_t numLabels):_currentLabel(start),_numLabels(numLabels) {
 }
 
-bool Labeler::iterator::operator==(const iterator& x) const { 
+bool Labeler::iterator::operator==(const iterator& x) const {
   return (is_past_the_end() && x.is_past_the_end())
     || (_numLabels==x._numLabels && _currentLabel==x._currentLabel)
     ;
 }
 
-bool Labeler::iterator::operator!=(const iterator& x) const { 
+bool Labeler::iterator::operator!=(const iterator& x) const {
   return !(*this==x);
 }
 
-Label Labeler::iterator::operator*() const { 
+Label Labeler::iterator::operator*() const {
   return _currentLabel;
 }
 
