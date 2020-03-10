@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BaseSemanticsMemoryState.h>
+
 #include <BaseSemanticsFormatter.h>
 #include <BaseSemanticsMerger.h>
 #include <BaseSemanticsSValue.h>
@@ -64,3 +67,5 @@ MemoryState::operator+(const std::string &linePrefix) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

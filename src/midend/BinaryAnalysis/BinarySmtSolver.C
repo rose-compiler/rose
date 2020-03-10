@@ -1,8 +1,9 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
-#include "rosePublicConfig.h"
+#include "BinarySmtSolver.h"
 
 #include "rose_getline.h"
-#include "BinarySmtSolver.h"
 #include "BinarySmtlibSolver.h"
 #include "BinaryYicesSolver.h"
 #include "BinaryZ3Solver.h"
@@ -994,7 +995,7 @@ SmtSolver::trivially_satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs) {
     return triviallySatisfiable(exprs);
 }
 
-
-
 } // namespace
 } // namespace
+
+#endif

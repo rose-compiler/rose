@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_Exception_H
 #define ROSE_Partitioner2_Exception_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Function.h>
@@ -66,4 +69,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -1,6 +1,9 @@
 #ifndef ROSE_AsmUnparser_H
 #define ROSE_AsmUnparser_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <ostream>
 
 #include "callbacks.h"                                  // Needed for Rose::Callbacks::List<>
@@ -1037,4 +1040,5 @@ protected:
 } // namespace
 } // namespace
 
+#endif
 #endif

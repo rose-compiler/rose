@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include <Partitioner2/ModulesElf.h>
+
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
 #include <rose_getline.h>
@@ -503,3 +506,5 @@ buildMayReturnLists(Partitioner &p) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

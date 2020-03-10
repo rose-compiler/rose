@@ -1,6 +1,8 @@
 // Turn instruction semantics into part of the AST
 #ifndef Rose_StaticSemantics2_H
 #define Rose_StaticSemantics2_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "Disassembler.h"
 #include "NullSemantics2.h"
@@ -443,4 +445,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

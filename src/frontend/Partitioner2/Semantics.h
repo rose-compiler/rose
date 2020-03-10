@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_Partitioner_Semantics_H
 #define ROSE_BinaryAnalysis_Partitioner_Semantics_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/BasicTypes.h>
 #include "SymbolicSemantics2.h"
 
@@ -416,4 +419,5 @@ BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::MemoryMapS
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Partitioner2::Semantics::RiscOperators);
 #endif
 
+#endif
 #endif

@@ -431,6 +431,11 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
        // TOO1 (5/14/2015): Add support for GCC --param, e.g. "--param inline-unit-growth=900" found in Valgrind
           argument == "--param" ||    // --param variable=value
 
+       // Peihung (03/09/2020): Add support for ifort v.19
+          argument == "-warn"  ||
+          argument == "-check"  ||
+          argument == "-debug"  ||
+          argument == "-debug-parameters"  ||
           false)
         {
           result = true;

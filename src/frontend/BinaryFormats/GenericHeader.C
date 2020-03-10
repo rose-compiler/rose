@@ -1,8 +1,10 @@
 /* Generic File Headers (SgAsmGenericHeader and related classes).  Describes a binary file header. Most binary files have at
  * least one header that serves as sort of a superblock for describing the rest of the file.  Many formats have more than one
  * header (e.g., Microsoft Windows files have both a DOS header and a PE header). */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "stringify.h"
 
 using namespace Rose;
@@ -347,3 +349,4 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         p_dlls->get_dlls()[i]->dump(f, p, i);
 }
 
+#endif

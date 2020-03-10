@@ -1,7 +1,10 @@
 /* Disassembly specific to the ARM architecture. */
-
 #ifndef ROSE_DISASSEMBLER_ARM_H
 #define ROSE_DISASSEMBLER_ARM_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
+#include <Disassembler.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -88,4 +91,5 @@ private:
 } // namespace
 } // namespace
 
+#endif
 #endif

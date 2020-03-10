@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinaryVariables.h>
 
@@ -880,3 +882,5 @@ VariableFinder::findGlobalVariables(const P2::Partitioner &partitioner) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

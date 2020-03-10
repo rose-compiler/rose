@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 
 #include <boost/algorithm/string/replace.hpp>
@@ -457,3 +459,5 @@ BinaryToSource::generateSource(const P2::Partitioner &partitioner, std::ostream 
 
 } // namespace
 } // namespace
+
+#endif

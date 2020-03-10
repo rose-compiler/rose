@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_SymbolicExpr_H
 #define ROSE_BinaryAnalysis_SymbolicExpr_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -1748,4 +1750,5 @@ BOOST_CLASS_VERSION(Rose::BinaryAnalysis::SymbolicExpr::Type, 1);
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::SymbolicExpr::Node, 1);
 #endif
 
+#endif
 #endif

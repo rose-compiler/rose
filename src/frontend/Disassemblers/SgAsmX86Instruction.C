@@ -1,6 +1,7 @@
 /* SgAsmX86Instruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code file)
  * because then they won't get indexed/formatted/etc. by C-aware tools. */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
@@ -444,3 +445,5 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
 
     return successors;
 }
+
+#endif

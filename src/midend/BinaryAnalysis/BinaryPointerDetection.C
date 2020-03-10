@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinaryPointerDetection.h>
 
@@ -387,3 +389,5 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
 } // namespace
 } // namespace
 } // namespace
+
+#endif

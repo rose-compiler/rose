@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_ControlFlow_H
 #define ROSE_BinaryAnalysis_ControlFlow_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include "Map.h"
 #include "WorkLists.h"
 #include "SageBuilderAsm.h"
@@ -1084,4 +1087,5 @@ ControlFlow::write_graphviz(std::ostream &out, const CFG &cfg,
 } // namespace
 } // namespace
 
+#endif
 #endif

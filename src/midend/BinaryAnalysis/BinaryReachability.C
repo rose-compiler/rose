@@ -1,6 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
-
 #include <BinaryReachability.h>
+
 #include <BinaryDataFlow.h>
 #include <CommandLine.h>
 #include <Partitioner2/Partitioner.h>
@@ -808,3 +810,5 @@ Reachability::iterate(const P2::Partitioner &partitioner) {
 
 } // namespace
 } // namespace
+
+#endif

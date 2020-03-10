@@ -1,6 +1,9 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
-#include <rose_isnan.h>
 #include "ConcreteSemantics2.h"
+
+#include <rose_isnan.h>
 #include "integerOps.h"
 #include "SageBuilderAsm.h"
 #include <Sawyer/BitVectorSupport.h>
@@ -739,3 +742,5 @@ RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatTy
 } // namespace
 } // namespace
 } // namespace
+
+#endif

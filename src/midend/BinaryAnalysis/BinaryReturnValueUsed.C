@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
+
 #include <CommandLine.h>
 #include <BinaryReturnValueUsed.h>
 #include <Partitioner2/DataFlow.h>
@@ -438,3 +441,5 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
 } // namespace
 } // namespace
 } // namespace
+
+#endif

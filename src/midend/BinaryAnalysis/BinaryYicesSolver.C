@@ -1,5 +1,6 @@
-#include "sage3basic.h"
 #include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include "sage3basic.h"
 
 #include "rose_strtoull.h"
 #include "BinaryYicesSolver.h"
@@ -1447,4 +1448,6 @@ YicesSolver::ctx_read(const SymbolicExpr::InteriorPtr &in) {
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::YicesSolver);
+#endif
+
 #endif

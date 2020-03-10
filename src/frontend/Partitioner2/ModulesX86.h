@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_ModulesX86_H
 #define ROSE_Partitioner2_ModulesX86_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Thunk.h>
 
@@ -162,4 +165,5 @@ Sawyer::Optional<rose_addr_t> findTableBase(SgAsmExpression*);
 } // namespace
 } // namespace
 
+#endif
 #endif

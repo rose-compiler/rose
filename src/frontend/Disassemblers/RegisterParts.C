@@ -1,6 +1,9 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
-#include "Registers.h"
 #include "RegisterParts.h"
+
+#include "Registers.h"
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -111,3 +114,5 @@ RegisterParts::listNamed(const RegisterDictionary *regDict) const {
 
 } // namespace
 } // namespace
+
+#endif

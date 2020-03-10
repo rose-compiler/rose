@@ -2054,7 +2054,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgWhereStatement:
           case V_SgElseWhereStatement:
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           case V_SgAsmStmt:
+#endif
           case V_SgNamespaceAliasDeclarationStatement:
        // case V_SgTemplateInstantiationDecl:
 
@@ -2234,7 +2236,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgProject:
        // case V_SgFile:
           case V_SgSourceFile:
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           case V_SgBinaryComposite:
+#endif
           case V_SgUnknownFile:
           case V_SgSymbolTable:
           case V_SgFunctionTypeTable:

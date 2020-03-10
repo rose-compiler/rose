@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_SourceLocations_H
 #define ROSE_BinaryAnalysis_SourceLocations_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <SourceLocation.h>
 
@@ -161,4 +163,5 @@ std::ostream& operator<<(std::ostream&, const SourceLocations&);
 } // namespace
 } // namespace
 
+#endif
 #endif

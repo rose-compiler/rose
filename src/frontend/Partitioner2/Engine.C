@@ -1,5 +1,6 @@
-#include <sage3basic.h>
 #include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <sage3basic.h>
 
 #include <AsmUnparser_compat.h>
 #include <BinaryDebugger.h>
@@ -3053,3 +3054,5 @@ Engine::pythonParseSingle(const std::string &specimen, const std::string &purpos
 } // namespace
 } // namespace
 } // namespace
+
+#endif

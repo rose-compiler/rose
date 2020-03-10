@@ -1,6 +1,8 @@
 // Perform basic sanity checks on instruction semantics
 #ifndef Rose_TestSemantics2_H
 #define Rose_TestSemantics2_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "BaseSemantics2.h"
 #include "CommandLine.h"
@@ -513,4 +515,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

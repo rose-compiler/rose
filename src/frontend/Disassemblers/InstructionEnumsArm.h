@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_InstructionEnumsArm_H
 #define ROSE_BinaryAnalysis_InstructionEnumsArm_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <string>
 
 namespace Rose {
@@ -147,4 +150,5 @@ enum ArmInstructionCondition {
 } // namespace
 } // namespace
 
+#endif
 #endif

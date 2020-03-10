@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "BinaryDominance.h"
 
@@ -51,3 +53,5 @@ Dominance::is_consistent(SgNode *ast, std::set<SgAsmBlock*> *bad_blocks/*=NULL*/
 
 } // namespace
 } // namespace
+
+#endif

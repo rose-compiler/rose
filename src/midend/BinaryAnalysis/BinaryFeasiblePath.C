@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
+
 #include <AsmUnparser_compat.h>
 #include <BaseSemantics2.h>
 #include <BinaryFeasiblePath.h>
@@ -1944,3 +1947,5 @@ std::ostream& operator<<(std::ostream &out, const Rose::BinaryAnalysis::Feasible
     expr.print(out);
     return out;
 }
+
+#endif

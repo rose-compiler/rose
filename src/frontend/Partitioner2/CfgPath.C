@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <Partitioner2/CfgPath.h>
 
@@ -855,3 +857,5 @@ Inliner::inlinePaths(const Partitioner &partitioner, const CfgConstVertexSet &cf
 } // namespace
 } // namespace
 } // namespace
+
+#endif

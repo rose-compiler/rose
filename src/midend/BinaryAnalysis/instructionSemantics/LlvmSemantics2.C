@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 #include "Diagnostics.h"
@@ -1632,3 +1634,5 @@ Transcoder::transcodeInterpretation(SgAsmInterpretation *interp)
 } // namespace
 } // namespace
 } // namespace
+
+#endif

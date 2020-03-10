@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_CfgPath_H
 #define ROSE_Partitioner2_CfgPath_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/ControlFlowGraph.h>
 
 namespace Rose {
@@ -526,4 +529,5 @@ std::ostream& operator<<(std::ostream &out, const CfgPath &path);
 } // namespace
 } // namespace
 
+#endif
 #endif

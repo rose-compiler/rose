@@ -34,6 +34,7 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
     echo "    Binaries                         ${support_binaries_frontend:-no}"
     echo "    C                                ${support_c_frontend:-no}"
     echo "    C++                              ${support_cxx_frontend:-no}"
+    echo "    C preprocessor                   ${support_cpp_frontend:-no}"
     echo "    Cuda                             ${support_cuda_frontend:-no}"
     echo "    Fortran                          ${support_fortran_frontend:-no}"
     echo "    Java                             ${support_java_frontend:-no}"

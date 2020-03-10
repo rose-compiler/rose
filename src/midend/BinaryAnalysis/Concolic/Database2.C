@@ -1,6 +1,5 @@
 // Second implementation of Concolic::Database that works for both SQLite and PostgreSQL
 // The schema is not identical to that of the first implementation.
-
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING

@@ -4,6 +4,8 @@
 #define ROSE_DISASSEMBLER_X86_H
 
 #include "Disassembler.h"
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include "InstructionEnumsX86.h"
 #include "Cxx_GrammarSerialization.h"
 
@@ -464,4 +466,5 @@ private:
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::DisassemblerX86);
 #endif
 
+#endif
 #endif

@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "BinaryLoaderElfObj.h"
 #include "MemoryMap.h"
 
@@ -93,3 +96,5 @@ BinaryLoaderElfObj::alignValues(SgAsmGenericSection *section, const MemoryMap::P
 
 } // namespace
 } // namespace
+
+#endif

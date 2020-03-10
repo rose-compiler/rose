@@ -1,6 +1,8 @@
-#include <sage3basic.h>
 #include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <sage3basic.h>
 #include <BinaryDebugger.h>
+
 #include <DisassemblerX86.h>
 #include <integerOps.h>
 #include <Registers.h>
@@ -780,3 +782,5 @@ Debugger::setPersonality(unsigned long bits) {
 
 } // namespace
 } // namespace
+
+#endif

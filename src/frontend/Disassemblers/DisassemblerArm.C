@@ -1,10 +1,12 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
-#include "Assembler.h"
+#include "DisassemblerArm.h"
+
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
 #include "Disassembler.h"
 #include "SageBuilderAsm.h"
-#include "DisassemblerArm.h"
 #include "Diagnostics.h"
 #include "BinaryUnparserArm.h"
 
@@ -622,3 +624,5 @@ DisassemblerArm::disassemble()
 
 } // namespace
 } // namespace
+
+#endif

@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_GraphViz_H
 #define ROSE_Partitioner2_GraphViz_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <ostream>
 #include <BinaryNoOperation.h>
 #include <boost/regex.hpp>
@@ -1012,4 +1015,5 @@ BaseEmitter<G>::deselectParallelEdges() {
 } // namespace
 } // namespace
 
+#endif
 #endif

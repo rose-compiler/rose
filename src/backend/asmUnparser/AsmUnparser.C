@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "AsmUnparser.h"
+
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 #include "Disassembler.h"
 
@@ -541,7 +544,7 @@ AsmUnparser::InsnFuncEntry::operator()(bool enabled, const InsnArgs &args)
 {
     if (enabled && ORGANIZED_BY_ADDRESS==args.unparser->get_organization()) {
         SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(args.insn);
-        ROSE_ASSERT (func != NULL);
+        ASSERT_not_null(func);
         if (func->get_entry_va()==args.insn->get_address())
             args.unparser->unparse_function(true, args.output, func);
     }
@@ -1275,3 +1278,5 @@ AsmUnparser::InterpBody::operator()(bool enabled, const InterpretationArgs &args
 
 } // namespace
 } // namespace
+
+#endif
