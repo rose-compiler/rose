@@ -11,6 +11,7 @@
  */
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
+#include <rosePublicConfig.h>
 #include <iostream>
 #include <sstream>
 #include <list>
@@ -245,7 +246,9 @@ ASTtools::isC99 (const SgNode* n)
         break;
    // case V_SgFile:
       case V_SgSourceFile:
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
       case V_SgBinaryComposite:
+#endif
         {
           const SgFile* file = isSgFile (n);
           ROSE_ASSERT (file);

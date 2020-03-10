@@ -1,6 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
-
 #include "SageBuilderAsm.h"
+
 #include "InstructionEnumsX86.h"
 #include "BinaryLoader.h"
 
@@ -757,3 +759,5 @@ buildFunction(rose_addr_t entryVa, const std::vector<SgAsmBlock*> &blocks) {
 
 } // namespace
 } // namespace
+
+#endif

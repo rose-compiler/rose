@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "stringify.h"
 
 using namespace Rose;
@@ -244,3 +247,5 @@ SgAsmType *
 SgAsmVectorType::get_elmtType() const {
     return p_elmtType;
 }
+
+#endif

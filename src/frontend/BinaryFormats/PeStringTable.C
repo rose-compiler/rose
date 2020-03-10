@@ -1,6 +1,8 @@
 /* String Tables (SgAsmPEStringSection and SgAsmCoffStrtab and related classes) */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "Diagnostics.h"
 
 using namespace Rose;
@@ -192,3 +194,5 @@ SgAsmCoffStrtab::unparse(std::ostream &f) const
     BOOST_FOREACH (const AddressInterval &interval, get_freelist().intervals())
         container->write(f, interval.least(), std::string(interval.size(), '\0'));
 }
+
+#endif

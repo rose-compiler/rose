@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 void
@@ -43,3 +45,4 @@ SgAsmPERVASizePair::get_section() const
     return p_section;
 }
 
+#endif

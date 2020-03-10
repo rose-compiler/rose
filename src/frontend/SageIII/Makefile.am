@@ -91,10 +91,14 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # This will hopefull avoid a linking problem where multiple files
 # are called preproc.o (from here and from EDG).
 # Rasmussen (04/17/2019): Support for ATerms has been deprecated (atermSupport.h removed)
-EXTRA_DIST = CMakeLists.txt preproc-c.ll docs rtiHelpers.h attributeListMap.h \
+EXTRA_DIST = CMakeLists.txt docs rtiHelpers.h attributeListMap.h \
              advanced_preprocessing_hooks.h rose_attributes_list.h dwarfSupport.h \
-             omplexer.cc ompparser.cc ompparser.h sage3basic.hhh fileoffsetbits.h rosedll.h \
-	     ompAstConstruction.h PolicyControl.txt Utf8.h
+             sage3basic.hhh fileoffsetbits.h rosedll.h \
+	     PolicyControl.txt Utf8.h
+if ROSE_BUILD_CPP_LANGUAGE_SUPPORT
+EXTRA_DIST += preproc-c.ll omplexer.cc ompparser.cc ompparser.h ompAstConstruction.h
+endif
+
 CLEANFILES = haveRosettaGeneratedSource
 
 DISTCLEANFILES = preproc-c.cc ompparser.cc ompparser.h omplexer.cc
@@ -192,12 +196,15 @@ libsage3Sources = \
    fixupCopy_symbols.C \
    fixupCopy_references.C \
    rtiHelpers.C \
-   OmpAttribute.C \
-   ompFortranParser.C \
-   ompAstConstruction.cpp \
    dwarfSupport.C \
    rose_graph_support.C \
    $(fSageSupport_la_sources)
+if ROSE_BUILD_CPP_LANGUAGE_SUPPORT
+libsage3Sources += \
+   OmpAttribute.C \
+   ompFortranParser.C \
+   ompAstConstruction.cpp
+endif
 endif
 
 # DQ (2/15/2010): This fails in Hudson tests of ROSE compiling ROSE for code generation, but I can't 
@@ -224,11 +231,16 @@ noinst_LTLIBRARIES = libsage3.la
 
 # libsage3_la_SOURCES = $(libsage3Sources) preproc.ll rose_paths.h omplexer.ll ompparser.yy
 # libsage3_la_SOURCES = $(libsage3Sources) preproc.ll omplexer.ll ompparser.yy
+libsage3_la_SOURCES = $(libsage3Sources)
+
+if ROSE_BUILD_CPP_LANGUAGE_SUPPORT
+libsage3_la_SOURCES += preproc-c.ll
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-libsage3_la_SOURCES = $(libsage3Sources) preproc-c.ll
 else
-libsage3_la_SOURCES = $(libsage3Sources) preproc-c.ll omplexer.ll ompparser.yy
+libsage3_la_SOURCES += omplexer.ll ompparser.yy
 endif
+endif
+
 
 # DQ (3/8/2009): I think that the dependence upon $(top_builddir)/rose_config.h 
 # is what was forcing a lot of files to be compiled after reruning configure.
@@ -342,10 +354,12 @@ nodist_pkginclude_HEADERS = \
    AstQueryMemoryPool.h \
    astFileIO/AstSpecificDataManagingClass.h
 
-if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 BUILT_SOURCES = $(GENERATED_SOURCE)
+if ROSE_BUILD_CPP_LANGUAGE_SUPPORT
+if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 else
-BUILT_SOURCES = $(GENERATED_SOURCE) ompparser.cc ompparser.h omplexer.cc
+BUILT_SOURCES += ompparser.cc ompparser.h omplexer.cc
+endif
 endif
 
 # DQ (9/9/2007): Put C++_include_files.h back into place
@@ -374,15 +388,3 @@ removeHashLineDirectivesFromGeneratedCode:
 	cp Cxx_Grammar.h  Cxx_Grammar.h.withLineDirectives
 	grep -v "#line" Cxx_Grammar.h > Cxx_Grammar.h.withoutLineDirectives
 	cp Cxx_Grammar.h.withoutLineDirectives Cxx_Grammar.h
-
-
-
-
-
-
-
-
-
-
-
-

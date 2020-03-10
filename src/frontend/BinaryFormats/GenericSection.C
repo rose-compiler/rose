@@ -1,7 +1,9 @@
 /* Generic Sections. SgAsmGenericSection serves as a base class for all binary file formats that divide a file into contiguous
  * parts.  The SgAsmGenericSection class describes such a part. Most binary formats will subclass this. */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "stringify.h"
 #include "MemoryMap.h"
 #include "Diagnostics.h"
@@ -709,3 +711,5 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         hexdump(f, 0, std::string(p)+"data at ", p_data);
     }
 }
+
+#endif

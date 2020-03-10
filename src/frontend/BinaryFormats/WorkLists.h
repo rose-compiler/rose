@@ -1,3 +1,5 @@
+// FIXME[Robb Matzke 2020-03-08]: this is generic support stuff and should be moved to roseSupport directory.
+
 #ifndef ROSE_WorkLists_H
 #define ROSE_WorkLists_H
 

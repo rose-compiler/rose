@@ -1,9 +1,9 @@
-
 // Support for writing a FLIRT data base from an existing AST.
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"                                 // every librose .C file must start with this
-
 #include <libraryIdentification.h>
+
 #include <BinaryDemangler.h>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/GraphViz.h>
@@ -177,4 +177,4 @@ void LibraryIdentification::insertFunctionToMap(LibraryIdentification::LibToFunc
         }
 }
 
-
+#endif

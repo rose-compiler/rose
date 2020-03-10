@@ -1,5 +1,6 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -393,3 +394,5 @@ SgAsmDOSExtendedHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (variantT() == V_SgAsmDOSExtendedHeader) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
+
+#endif

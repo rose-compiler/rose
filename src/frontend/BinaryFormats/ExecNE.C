@@ -1,6 +1,8 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "Diagnostics.h"
 
 using namespace Rose::Diagnostics;
@@ -1388,3 +1390,5 @@ SgAsmNEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
     
     return ne_header;
 }
+
+#endif

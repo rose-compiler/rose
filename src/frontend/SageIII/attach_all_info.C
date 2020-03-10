@@ -288,6 +288,7 @@ AttachAllPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, Atta
 
           if ( (excludePath == false) && (includePath == true) )
              {
+#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
             // This scans the file and collects the token stream...
                printf ("AttachAllPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): Calling getPreprocessorDirectives for file = %s \n",file_name_str.c_str());
 
@@ -299,6 +300,7 @@ AttachAllPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, Atta
             // For Fortran use: returnListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_Fortran9x_language);
             // or: returnListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_Fortran77_language);
                save_data.currentListOfAttributes = getPreprocessorDirectives(file_name_str);
+#endif
              }
             else
              {

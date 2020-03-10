@@ -1075,21 +1075,25 @@ CustomMemoryPoolDOTGeneration::symbolFilter(SgNode* node)
 void
 CustomMemoryPoolDOTGeneration::asmFileFormatFilter(SgNode* node)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   // DQ (10/18/2009): Added support to skip output of binary file format in generation of AST visualization.
      if (isSgAsmExecutableFileFormat(node) != NULL)
         {
           skipNode(node);
         }
+#endif
    }
 
 void
 CustomMemoryPoolDOTGeneration::asmTypeFilter(SgNode* node)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   // DQ (10/18/2009): Added support to skip output of binary expression type information in generation of AST visualization.
      if (isSgAsmType(node) != NULL)
         {
           skipNode(node);
         }
+#endif
    }
 
 void
@@ -2096,7 +2100,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
             // case V_SgFile:
                case V_SgSourceFile:
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
                case V_SgBinaryComposite:
+#endif
                   {
                     SgFile* file = isSgFile(node);
                     additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";
@@ -2380,6 +2386,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 #endif
         }
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      if (isSgAsmType(node) != NULL)
         {
           string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=3,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
@@ -2400,10 +2407,11 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
+#endif
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      if (isSgAsmNode(node) != NULL)
         {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
        // Color selection for the binary file format and binary instruction IR nodes.
 
           string additionalNodeOptions;
@@ -2516,11 +2524,8 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
-#else
-          printf ("Warning: In wholeAST.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
-#endif
         }
-
+#endif
 
 #if 0
   // DQ (3/5/2007): Mark the parent edge in a different color, this does not appear to work!!!!
