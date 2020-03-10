@@ -321,24 +321,24 @@ ATbool traverse_ByteFunctionVariable (ATerm term, SgExpression* &var);
 ATbool traverse_NamedConstant        (ATerm term, SgExpression* &var);
 
 // 6.3 FUNCTION CALLS
-ATbool traverse_FunctionCall           (ATerm term, SgExpression* &expr);
-ATbool traverse_UserDefinedFunctionCall(ATerm term, SgExpression* &expr);
-ATbool traverse_IntrinsicFunctionCall  (ATerm term, SgExpression* &expr);
+ATbool traverse_FunctionCall           (ATerm term, SgFunctionCallExp* &func_call);
+ATbool traverse_UserDefinedFunctionCall(ATerm term, SgFunctionCallExp* &func_call);
+ATbool traverse_IntrinsicFunctionCall  (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.1 LOC FUNCTION
-ATbool traverse_LocFunction          (ATerm term, SgExpression* &expr);
+ATbool traverse_LocFunction          (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.2 NEXT FUNCTION
-ATbool traverse_NextFunction         (ATerm term, SgExpression* &expr);
+ATbool traverse_NextFunction         (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.4 BYTE FUNCTION
-ATbool traverse_ByteFunction(ATerm term, SgExpression* &expr);
+ATbool traverse_ByteFunction(ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.7 SIZE FUNCTION
-ATbool traverse_SizeFunction(ATerm term, SgExpression* &expr);
+ATbool traverse_SizeFunction(ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.11 STATUS INVERSE FUNCTIONS
-ATbool traverse_StatusInverseFunction(ATerm term, SgExpression* &expr);
+ATbool traverse_StatusInverseFunction(ATerm term, SgFunctionCallExp* &func_call);
 
 // 7.0 TYPE MATCHING AND TYPE CONVERSIONS
 ATbool traverse_BitConversion        (ATerm term, SgExpression* &expr);

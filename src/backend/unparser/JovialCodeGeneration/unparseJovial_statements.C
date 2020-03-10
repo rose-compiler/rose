@@ -799,14 +799,18 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // Unparse body if present
      if (table_def->get_members().size() > 0)
- //  if (has_base_type == false && has_base_class == false)
         {
            curprint("BEGIN");
            unp->cur.insert_newline(1);
 
            BOOST_FOREACH(SgDeclarationStatement* item_decl, table_def->get_members())
               {
-                 unparseVarDeclStmt(item_decl, info);
+                 SgVariableDeclaration* vardecl = isSgVariableDeclaration(item_decl);
+                 if (vardecl)
+                    {
+                       unparseVarDeclStmt(item_decl, info);
+                    }
+                 else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
               }
 
            unp->cur.insert_newline(1);
@@ -937,7 +941,12 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
 
                  BOOST_FOREACH(SgDeclarationStatement* item_decl, table_def->get_members())
                     {
-                       unparseVarDeclStmt(item_decl, info);
+                       SgVariableDeclaration* vardecl = isSgVariableDeclaration(item_decl);
+                       if (vardecl)
+                          {
+                             unparseVarDeclStmt(item_decl, info);
+                          }
+                       else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
                     }
 
                  unp->cur.insert_newline(1);

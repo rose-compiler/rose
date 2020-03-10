@@ -40,12 +40,12 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgTypeChar:        unparseJovialType(isSgTypeChar(type), info);         break;
           case V_SgTypeString:      unparseJovialType(isSgTypeString(type), info);       break;
 
-
           case V_SgModifierType:     unparseJovialType(isSgModifierType(type), info);    break;
           case V_SgJovialTableType:  unparseJovialType(isSgJovialTableType(type), info); break;
           case V_SgArrayType:        unparseJovialType(isSgArrayType(type), info);       break;
           case V_SgEnumType:         unparseJovialType(isSgEnumType(type), info);        break;
           case V_SgFunctionType:     unparseJovialType(isSgFunctionType(type), info);    break;
+          case V_SgPointerType:      unparseJovialType(isSgPointerType(type), info);     break;
 
           default:
                cout << "Unparse_Jovial::unparseType for type " << type->class_name() << " is unimplemented." << endl;
@@ -68,6 +68,7 @@ Unparse_Jovial::unparseTypeDesc(SgType* type, SgUnparse_Info& info)
           case V_SgTypeBool:        curprint("B");       break;
           case V_SgTypeChar:        curprint("C");       break;
           case V_SgTypeString:      curprint("C");       break;
+          case V_SgPointerType:     curprint("P");       break;
           default:
              std::cerr << "Unparse_Jovial::unparseTypeDesc for type " << type->class_name() << " case default reached \n";
              ROSE_ASSERT(false);
@@ -145,6 +146,21 @@ Unparse_Jovial::unparseJovialType(SgArrayType* array_type, SgUnparse_Info& info)
      curprint(") ");
 
      unparseType(array_type->get_base_type(), info);
+  }
+
+void
+Unparse_Jovial::unparseJovialType(SgPointerType* pointer_type, SgUnparse_Info& info)
+  {
+     ROSE_ASSERT(pointer_type != NULL);
+     unparseTypeDesc(pointer_type, info);
+     curprint(" ");
+
+     SgNamedType* named_type = isSgNamedType(pointer_type->get_base_type());
+     if (named_type != NULL)
+        {
+           curprint(named_type->get_name());
+        }
+     else  std::cerr << "WARNING UNIMPLEMENTED: unparseJovialType - named_type is NULL\n";
   }
 
 void

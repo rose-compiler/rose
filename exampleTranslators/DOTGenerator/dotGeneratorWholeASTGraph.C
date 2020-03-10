@@ -2,6 +2,8 @@
 #include "wholeAST.h"
 #include <vector>
 
+using namespace Rose::Diagnostics;
+
 int main( int argc, char* argv[] ) {
   ROSE_INITIALIZE;
   std::vector<std::string> argvList(argv, argv + argc);
@@ -12,7 +14,7 @@ int main( int argc, char* argv[] ) {
   std::string filename = SageInterface::generateProjectName(project);
 
   if (project->get_verbose() > 0) {
-    printf ("Generating AST graph (%d nodes) in file %s.dot.\n", numberOfNodes(), filename.c_str());
+    mlog[INFO] << "Generating AST tree (" << numberOfNodes() << " nodes) in file " << filename << ".dot.\n";
   }
 
   generateWholeGraphOfAST(filename, new CustomMemoryPoolDOTGeneration::s_Filter_Flags(argvList));
