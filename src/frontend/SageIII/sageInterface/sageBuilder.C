@@ -8100,7 +8100,7 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
        // symbol = lookupSymbolInParentScopes(name,scope);
           symbol = lookupVariableSymbolInParentScopes(name,scope);
 #else
-#error "DAED CODE!"
+#error "DEAD CODE!"
           symbol = scope->lookup_variable_symbol(name);
 #endif
 #if 0

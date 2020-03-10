@@ -10,17 +10,8 @@
 #include <iostream>
 #include <string>
 
-#define USE_SAGE_TREE_BUILDER 1
-
-#if USE_SAGE_TREE_BUILDER
 #include "ATermToSageJovialTraversal.h"
-#else
-#include "ATermToUntypedJovialTraversal.h"
-#endif
-
 #include "jovial_support.h"
-#include "UntypedJovialTraversal.h"
-#include "UntypedJovialConverter.h"
 
 #define ATERM_TRAVERSAL_ONLY 0
 #define DEBUG_EXPERIMENTAL_JOVIAL 0
@@ -139,17 +130,12 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
      std::cout << "SUCCESSFULLY read ATerm parse-tree file " << "\n";
 #endif
 
-#if USE_SAGE_TREE_BUILDER
   // Initialize the global scope and put it on the SageInterface scope stack
   // for usage by the sage tree builder during the ATerm traversal.
      initialize_global_scope(sg_source_file);
 
      ATermSupport::ATermToSageJovialTraversal* aterm_traversal;
      aterm_traversal = new ATermSupport::ATermToSageJovialTraversal(sg_source_file);
-#else
-     ATermSupport::ATermToUntypedJovialTraversal* aterm_traversal;
-     aterm_traversal = new ATermSupport::ATermToUntypedJovialTraversal(sg_source_file);
-#endif
 
      if (aterm_traversal->traverse_Module(module_term) != ATtrue)
         {
@@ -162,26 +148,6 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 #endif
 #if ATERM_TRAVERSAL_ONLY
      return 0;
-#endif
-
-#if OUTPUT_DOT_FILE_AST
-  // Generate dot file for untyped nodes.
-     SgUntypedGlobalScope* global_scope = aterm_traversal->get_scope();
-     generateDOT(global_scope, filenameWithoutPath + ".ut");
-#endif
-
-  // Step 3 - Traverse the SgUntypedFile object and convert to regular sage nodes
-  // ------
-#if ! USE_SAGE_TREE_BUILDER
-
-  // Create the ATerm traversal object
-
-     Untyped::UntypedJovialConverter sg_converter;
-     Untyped::UntypedJovialTraversal sg_traversal(sg_source_file, &sg_converter);
-     Untyped::InheritedAttribute scope = NULL;
-
-  // Traverse the untyped tree and convert to sage nodes
-     sg_traversal.traverse(aterm_traversal->get_file(),scope);
 #endif
 
 #if OUTPUT_DOT_FILE_AST

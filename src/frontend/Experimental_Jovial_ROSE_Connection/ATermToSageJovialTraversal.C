@@ -749,6 +749,8 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDescription(ATerm term, SgTy
    }
    else return ATfalse;
 
+   ROSE_ASSERT(type);
+
    return ATtrue;
 }
 
@@ -872,7 +874,7 @@ ATbool ATermToSageJovialTraversal::traverse_FloatingItemDescription(ATerm term, 
    }
    else return ATfalse;
 
-   type = SgTypeFloat::createType(precision);
+   type = SageBuilder::buildFloatType(precision);
 
    if (modifier_enum) {
       SgModifierType* mod_type = SageBuilder::buildModifierType(type);
@@ -935,7 +937,6 @@ ATbool ATermToSageJovialTraversal::traverse_FixedItemDescription(ATerm term, SgT
 
    if (ATmatch(term, "FixedItemDescription (<term>,<term>,<term>)", &t_round_or_truncate,&t_scale,&t_fraction)) {
       // MATCHED FixedItemDescription
-      // DONE: cerr << "WARNING UNIMPLEMENTED: FixedItemDescription \n";
    }
    else return ATfalse;
 
@@ -944,7 +945,6 @@ ATbool ATermToSageJovialTraversal::traverse_FixedItemDescription(ATerm term, SgT
    } else return ATfalse;
 
    if (ATmatch(t_scale, "ScaleSpecifier(<term>)", &t_scale_spec)) {
-      // DONE: cerr << "WARNING UNIMPLEMENTED: FixedItemDescription - ScaleSpecifier \n";
       if (traverse_NumericFormula(t_scale_spec, scale)) {
          // MATCHED NumericFormula
       } else return ATfalse;
@@ -955,15 +955,20 @@ ATbool ATermToSageJovialTraversal::traverse_FixedItemDescription(ATerm term, SgT
    }
    else if (ATmatch(t_fraction, "OptFractionSpecifier(<term>)", &t_frac_spec)) {
       if (traverse_FractionSpecifier(t_frac_spec, fraction)) {
-         // DONE: cerr << "WARNING UNIMPLEMENTED: FixedItemDescription - FractionSpecifier \n";
       } else return ATfalse;
    }
    else return ATfalse;
 
+// FIXME SageBuilder
+#if 0
 // TODO - for some reason this SageBuilder function fails in linker stage
-// type = SageBuilder::buildFixedType(scale, fraction);
+   type = SageBuilder::buildFixedType(scale, fraction);
+#else
    type = SgTypeFixed::createType(scale, fraction);
    ROSE_ASSERT(type);
+   if (scale)    scale   ->set_parent(type);
+   if (fraction) fraction->set_parent(type);
+#endif
 
    if (modifier_enum) {
       SgModifierType* mod_type = SageBuilder::buildModifierType(type);
@@ -1258,17 +1263,25 @@ ATbool ATermToSageJovialTraversal::traverse_PointerItemDescription(ATerm term, S
    ATerm t_type_name;
    std::string type_name;
 
+   type = nullptr;
+
    if (ATmatch(term, "PointerItemDescription(<str>,<term>)", &pntr, &t_type_name)) {
 
       if (traverse_OptTypeName(t_type_name, type, type_name)) {
          // MATCHED OptTypeName
       } else return ATfalse;
-   } else return ATfalse;
+   }
+   else return ATfalse;
+
+   SgPointerType* pointer_type = SageBuilder::buildPointerType(type);
+   ROSE_ASSERT(pointer_type);
+
+   type = pointer_type;
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_OptTypeName(ATerm term, SgType* & type, std::string & name)
+ATbool ATermToSageJovialTraversal::traverse_OptTypeName(ATerm term, SgType* & type, std::string & type_name)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptTypeName: %s\n", ATwriteToString(term));
@@ -1276,19 +1289,23 @@ ATbool ATermToSageJovialTraversal::traverse_OptTypeName(ATerm term, SgType* & ty
 
    ATerm t_type_name;
 
+   type = nullptr;
+
    if (ATmatch(term, "no-type-name()")) {
       // MATCHED no-type-name
    } else if (ATmatch(term, "TypeName(<term>)", &t_type_name)) {
-      if (traverse_Name(t_type_name, name)) {
-         cerr << "WARNING UNIMPLEMENTED: TypeName \n";
+      if (traverse_Name(t_type_name, type_name)) {
          // MATCHED TypeName
-//TODO_TYPE
-#if 0
-         type = UntypedBuilder::buildType(SgUntypedType::e_user_defined, name);
-         ROSE_ASSERT(type);
-#endif
       } else return ATfalse;
    } else return ATfalse;
+
+   type = SageInterface::lookupNamedTypeInParentScopes(type_name, SageBuilder::topScopeStack());
+
+   if (type == nullptr) {
+      cerr << "WARNING UNIMPLEMENTED: OptTypeName for name: " << type_name << endl;
+      return ATtrue;
+   }
+   ROSE_ASSERT(type != nullptr);
 
    return ATtrue;
 }
@@ -1310,11 +1327,11 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 
 // Begin SageTreeBuilder
    SgJovialTableStatement* table_decl = nullptr;
-   SgType* sg_base_type = nullptr;
-   SgType* sg_type = nullptr;
-   SgExprListExp* sg_attr_list = nullptr;
+   SgType* base_type = nullptr;
+   SgType* type = nullptr;
+   SgExprListExp* attr_list = nullptr;
    SgExprListExp* dim_info = nullptr;
-   SgExpression* sg_preset = nullptr;
+   SgExpression* preset = nullptr;
    std::string table_var_name, table_type_name, anon_type_name;
    bool is_type_inherited = false;
 
@@ -1340,35 +1357,41 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
          // MATCHED OptDimensionList
       } else return ATfalse;
 
-   // Look for a type name first (type will have already been declared by this point).
-   // The type name is the name of the base type (this declaration inherits from the base/parent class)
-      if (traverse_TableDescriptionName(t_table_desc, table_type_name, sg_type, sg_preset)) {
-         if (sg_type == nullptr) {
+// 1. Look for a type name first (type will have already been declared by this point).
+//    The type name is the name of the base type (this declaration inherits from the base/parent class)
+//
+      if (traverse_TableDescriptionName(t_table_desc, table_type_name, type, preset)) {
+         SgJovialTableType* table_type = isSgJovialTableType(type);
+         if (table_type == nullptr) {
             cerr << "WARNING UNIMPLEMENTED: TableDeclaration - TableDescriptionName returns NULL type for name " << table_type_name << "\n";
          // TODO_COMPOOL
-         // ROSE_ASSERT(sg_type);
+         // ROSE_ASSERT(type);
             return ATtrue;
          }
+         type = SageBuilder::buildJovialTableType(table_type_name, table_type->get_base_type(), dim_info, SageBuilder::topScopeStack());
+         ROSE_ASSERT(type);
 
          is_type_inherited = true;
       }
 
-   // Look for a base type (this is not inheritance, rather it is similar to the base type of an array type).
-   // The base type is the table description and there will be no body.
-      else if (traverse_TableDescriptionType(t_table_desc, sg_base_type, sg_preset, sg_attr_list)) {
-         ROSE_ASSERT(sg_base_type);
+// 2. Otherwise look for a base type (this is not inheritance, rather it is similar to the base type of an array type).
+//    The base type is the table description and there will be no body.
+//
+      else if (traverse_TableDescriptionType(t_table_desc, base_type, preset, attr_list)) {
+         ROSE_ASSERT(base_type);
 
       // This must be anonymous as there is no explicit name for the type.
-         SgName sg_name(anon_type_name);
+         SgName name(anon_type_name);
 
-         sg_type = SageBuilder::buildJovialTableType(sg_name, sg_base_type, dim_info, SageBuilder::topScopeStack());
-         ROSE_ASSERT(sg_type);
+         type = SageBuilder::buildJovialTableType(name, base_type, dim_info, SageBuilder::topScopeStack());
+         ROSE_ASSERT(type);
       }
 
-   // Finally check for a table description body. This will need to create a table declaration
-   // with a body for the table definition member variables. The declaration will be anonymous
-   // and associated with the variable declaration (via baseTypeDefiningDeclaration).
-      else if (traverse_TableDescriptionBody(t_table_desc, anon_type_name, table_decl, sg_preset)) {
+// 3. Finally check for a table description body. This will need to create a table declaration
+//    with a body for the table definition member variables. The declaration will be anonymous
+//    and associated with the variable declaration (via baseTypeDefiningDeclaration).
+//
+      else if (traverse_TableDescriptionBody(t_table_desc, anon_type_name, table_decl, preset)) {
          ROSE_ASSERT(table_decl);
 
          SgJovialTableType* table_type = isSgJovialTableType(table_decl->get_type());
@@ -1378,32 +1401,32 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
             table_type->set_dim_info(dim_info);
             dim_info->set_parent(table_type);
          }
-         sg_type = table_type;
+         type = table_type;
       }
       else return ATfalse;
    }
    else return ATfalse;
 
 // Begin SageTreeBuilder
-   SgVariableDeclaration* sg_var_decl = nullptr;
+   SgVariableDeclaration* var_decl = nullptr;
 
-   sage_tree_builder.Enter(sg_var_decl, table_var_name, sg_type, sg_preset);
-   setSourcePosition(sg_var_decl, term);
+   sage_tree_builder.Enter(var_decl, table_var_name, type, preset);
+   setSourcePosition(var_decl, term);
 
 // Begin language specific constructs
-   setDeclarationModifier(sg_var_decl, def_or_ref);
+   setDeclarationModifier(var_decl, def_or_ref);
 
 // TODO: The scope for the table definition needs to be case insensitive but this should be done
 //       somewhere else (e.g., the builder function)
-   SgJovialTableType* type = isSgJovialTableType(sg_type);
-   ROSE_ASSERT(type);
-   SgJovialTableStatement* decl = isSgJovialTableStatement(type->get_declaration());
+   SgJovialTableType* table_type = isSgJovialTableType(type);
+   ROSE_ASSERT(table_type);
+   SgJovialTableStatement* decl = isSgJovialTableStatement(table_type->get_declaration());
    ROSE_ASSERT(decl);
    SgJovialTableStatement* def_decl = isSgJovialTableStatement(decl->get_definingDeclaration());
    ROSE_ASSERT(def_decl);
 
    if (is_type_inherited == false) {
-      SageInterface::setBaseTypeDefiningDeclaration(sg_var_decl, def_decl);
+      SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
    }
 
    SgClassDefinition* def = def_decl->get_definition();
@@ -1413,7 +1436,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 
 #if 0
    //   def_decl->get_scope()->setCaseInsensitive(true);
-   //   sg_var_decl->get_scope()->setCaseInsensitive(true);
+   //   var_decl->get_scope()->setCaseInsensitive(true);
    cout << ".x. def scope sensitivity is " << def->isCaseInsensitive() << endl;
    def->setCaseInsensitive(true);
    cout << ".x. def scope sensitivity is " << def->isCaseInsensitive() << endl;
@@ -1423,11 +1446,11 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    cout << ".x. def_decl is " << def_decl << ": " << def_decl->class_name() << endl;
    cout << ".x. def is " << def << ": " << def->class_name() << endl;
    cout << ".x. def_decl scope is " << def_decl->get_scope() << ": " << def_decl->get_scope()->isCaseInsensitive() << endl;
-   cout << ".x. sg_var_decl scope is " << sg_var_decl->get_scope() << ": " << sg_var_decl->get_scope()->isCaseInsensitive() << endl;
+   cout << ".x. var_decl scope is " << var_decl->get_scope() << ": " << var_decl->get_scope()->isCaseInsensitive() << endl;
    cout << ".x. def scope sensitivity is " << def->isCaseInsensitive() << endl;
 #endif
 
-   sage_tree_builder.Leave(sg_var_decl);
+   sage_tree_builder.Leave(var_decl);
 
    return ATtrue;
 }
@@ -2504,23 +2527,25 @@ ATbool ATermToSageJovialTraversal::traverse_ItemPresetValue(ATerm term, SgExpres
 #endif
 
    preset = nullptr;
+   SgFunctionCallExp* func_call = nullptr;
 
    // CompileTimeFormula -> ItemPresetValue
    if (traverse_Formula(term, preset)) {
       // MATCHED CompileTimeFormula
    }
    // LocFunction -> ItemPresetValue
-   else if (traverse_LocFunction(term, preset)) {
+   else if (traverse_LocFunction(term, func_call)) {
       // MATCHED LocFunction
-      if (preset == nullptr) {
-      // DELETE_ME - perhaps this is the LOC function
-         cerr << "WARNING UNIMPLEMENTED: ItemPresetValue \n";
-         return ATtrue;
-      }
+      preset = func_call;
    }
    else return ATfalse;
 
-   ROSE_ASSERT(preset);
+ // DELETE_ME - perhaps this is the LOC function
+   if (preset == nullptr) {
+      cerr << "WARNING UNIMPLEMENTED: ItemPresetValue \n";
+      return ATtrue;
+   }
+ // ROSE_ASSERT(preset);
 
    return ATtrue;
 }
@@ -5564,7 +5589,9 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
 
    ATerm t_num_var, t_formula, t_factor, t_num_term, t_conversion;
    char *literal=nullptr, *var_name=nullptr;
+
    SgExpression *sg_conv = nullptr, *sg_num_term = nullptr, *sg_factor = nullptr;
+   SgFunctionCallExp* func_call = nullptr;
 
    expr = nullptr;
 
@@ -5644,11 +5671,12 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
 
    }
 
-   else if (traverse_FunctionCall(term, expr)) {
+   else if (traverse_FunctionCall(term, func_call)) {
       // MATCHED FunctionCall
-      if (!expr) {
+      if (!func_call) {
          cerr << "WARNING UNIMPLEMENTED: NumericPrimary - FunctionCall\n";
       }
+      expr = func_call;
    }
 
 // Lastly handle names (variable identifiers)
@@ -6041,6 +6069,8 @@ ATbool ATermToSageJovialTraversal::traverse_GeneralFormula(ATerm term, SgExpress
    ATerm t_func_const_or_var;
    char* variable;
 
+   SgFunctionCallExp* func_call = nullptr;
+
    if (ATmatch(term, "GeneralFormula(<str>)", &variable)) {
 #if 0
       expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
@@ -6048,8 +6078,9 @@ ATbool ATermToSageJovialTraversal::traverse_GeneralFormula(ATerm term, SgExpress
       setSourcePosition(expr, term);
 #endif
    } else if (ATmatch(term, "GeneralFormula(<term>)", &t_func_const_or_var)) {
-      if (traverse_FunctionCall(t_func_const_or_var, expr)) {
+      if (traverse_FunctionCall(t_func_const_or_var, func_call)) {
          // MATCHED FunctionCall
+         expr = func_call;
       } else if (traverse_NamedConstant(t_func_const_or_var, expr)) {
          // MATCHED NamedConstant
       } else if (traverse_Variable(t_func_const_or_var, expr)) {
@@ -6200,11 +6231,6 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
 
    if (ATmatch(term, "<str>" , &name)) {
       // MATCHED NamedVariable
-#if 0
-      Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
-      var = new SgUntypedReferenceExpression(expr_enum, name);
-      setSourcePosition(var, term);
-#endif
       // SageTreeBuilder
       var = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
       setSourcePosition(var, term);
@@ -6260,53 +6286,37 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
    char* name;
    std::vector<SgExpression*> subscript;
 
+   SgVarRefExp* var_ref = nullptr;
+   SgPntrArrRefExp* array_ref = nullptr;
+   SgExprListExp* array_subscripts = nullptr;
+
+   var = nullptr;
+
    if (ATmatch(term, "TableItem(<term>,<term>,<term>)" , &t_name, &t_subscript, &t_tblderef)) {
+   // Shall have a name
       if (ATmatch(t_name, "<str>" , &name)) {
-         // MATCHED TableItemName
-      // need reference expression
+         var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+         ROSE_ASSERT(var_ref);
+         setSourcePosition(var_ref, t_name);
       } else return ATfalse;
 
+   // May have a subscript
       if (traverse_Subscript(t_subscript, subscript)) {
-         // MATCHED Subscript
+         array_subscripts = SageBuilder::buildExprListExp_nfi();
+         setSourcePosition(array_subscripts, t_subscript);
 
-#if 0
          if (subscript.size() > 1) {
             cerr << "WARNING UNIMPLEMENTED: TableItem - subscript.size() > 1 not fully implemented\n";
+            cerr << "--->    TableItem: name is " << name << endl;
+            cerr << "--->    found subscript # is " << subscript.size() << ": subscript[0] is " << subscript[0] << endl;
          }
-
-         if (subscript.size() > 0) {
-         // TODO - convert to SgUntypedExprListExpression
-         ROSE_ASSERT(subscript.size() > 0);
-         //         ROSE_ASSERT(subscript.size() == 1);
-         ROSE_ASSERT(subscript[0]);
-
-         array_subscripts = new SgUntypedExprListExpression(General_Language_Translation::e_array_subscripts);
-         ROSE_ASSERT(array_subscripts);
-         setSourcePosition(array_subscripts, term);
 
          array_subscripts->get_expressions().push_back(subscript[0]);
 
-#if 0
-         cout << ".x. found subscript # is " << subscript.size() << ": subscript is " << subscript[0] << endl;
-#endif
-
-         }
-         else {
-            cerr << "WARNING UNIMPLEMENTED: TableItem - has a subscript with size " << subscript.size() << std::endl;
-            SgUntypedExpression* array_subscripts = UntypedBuilder::buildUntypedNullExpression();
-            ROSE_ASSERT(array_subscripts);
-         }
-
-         SgUntypedExpression* coarray_subscripts = UntypedBuilder::buildUntypedNullExpression();
-         ROSE_ASSERT(coarray_subscripts);
-
-         int expr_enum = General_Language_Translation::e_array_reference;
-         var = new SgUntypedArrayReferenceExpression(expr_enum, name, array_subscripts, coarray_subscripts);
-         ROSE_ASSERT(var);
-         setSourcePosition(var, term);
-#endif
-
-      } else return ATfalse;
+      }
+      else {
+         cerr << "WARNING UNIMPLEMENTED: TableItem - has a subscript with size (probably 0?) " << subscript.size() << std::endl;
+      }
 
       if (traverse_TableDereference(t_tblderef, var)) {
          // MATCHED TableDereference
@@ -6314,7 +6324,14 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
 
    } else return ATfalse;
 
-   ROSE_ASSERT(var);
+   ROSE_ASSERT(var_ref);
+   ROSE_ASSERT(array_subscripts);
+
+   array_ref = SageBuilder::buildPntrArrRefExp(var_ref, array_subscripts);
+   ROSE_ASSERT(array_ref);
+   setSourcePosition(array_ref, term);
+
+   var = array_ref;
 
    return ATtrue;
 }
@@ -6501,16 +6518,18 @@ ATbool ATermToSageJovialTraversal::traverse_NamedConstant(ATerm term, SgExpressi
 //========================================================================================
 // 6.3 FUNCTION CALLS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_FunctionCall(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_FunctionCall(ATerm term, SgFunctionCallExp* &func_call)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_FunctionCall: %s\n", ATwriteToString(term));
 #endif
 
-   if (traverse_UserDefinedFunctionCall(term, expr)) {
+   func_call = nullptr;
+
+   if (traverse_UserDefinedFunctionCall(term, func_call)) {
       // MATCHED UserDefinedFunctionCall
    }
-   else if (traverse_IntrinsicFunctionCall(term, expr)) {
+   else if (traverse_IntrinsicFunctionCall(term, func_call)) {
       // MATCHED IntrinsicFunctionCall
    } else return ATfalse;
 
@@ -6519,7 +6538,7 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionCall(ATerm term, SgExpressio
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, SgFunctionCallExp* &func_call)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_UserDefinedFunctionCall: %s\n", ATwriteToString(term));
@@ -6527,14 +6546,17 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
 
    ATerm t_name, t_arg_list;
    std::string name;
-   SgUntypedExprListExpression* arg_list = NULL;
+
+   func_call = nullptr;
 
    if (ATmatch(term, "UserDefinedFunctionCall(<term>,<term>)", &t_name, &t_arg_list)) {
-      cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall\n";
       if (traverse_Name(t_name, name)) {
          // MATCHED FunctionName
       } else return ATfalse;
+      cerr << "WARNING UNIMPLEMENTED: UserDefinedFunctionCall for function " << name << endl;
 
+#if 0
+      SgUntypedExprListExpression* arg_list = NULL;
       arg_list = new SgUntypedExprListExpression(General_Language_Translation::e_argument_list);
       ROSE_ASSERT(arg_list);
       setSourcePosition(arg_list, t_arg_list);
@@ -6542,27 +6564,30 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
       if (traverse_ActualParameterList(t_arg_list, arg_list)) {
          // MATCHED ActualParameterList
       } else return ATfalse;
+#endif
    } else return ATfalse;
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_IntrinsicFunctionCall(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_IntrinsicFunctionCall(ATerm term, SgFunctionCallExp* &func_call)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_IntrinsicFunctionCall: %s\n", ATwriteToString(term));
 #endif
 
-   if (traverse_StatusInverseFunction(term, expr)) {
+   func_call = nullptr;
+
+   if (traverse_StatusInverseFunction(term, func_call)) {
       // MATCHED StatusInverseFunction
    }
-   else if (traverse_LocFunction(term, expr)) {
+   else if (traverse_LocFunction(term, func_call)) {
       // MATCHED LocFunction
    }
-   else if (traverse_NextFunction(term, expr)) {
+   else if (traverse_NextFunction(term, func_call)) {
       // MATCHED NextFunction
    }
-   else if (traverse_ByteFunction(term, expr)) {
+   else if (traverse_ByteFunction(term, func_call)) {
       // MATCHED ByteFunction
    }
 
@@ -6571,7 +6596,7 @@ ATbool ATermToSageJovialTraversal::traverse_IntrinsicFunctionCall(ATerm term, Sg
    //   AbsFunction                 -> IntrinsicFunctionCall
    //   SignFunction                -> IntrinsicFunctionCall
 
-   else if (traverse_SizeFunction(term, expr)) {
+   else if (traverse_SizeFunction(term, func_call)) {
       // MATCHED SizeFunction
    }
 
@@ -6587,7 +6612,7 @@ ATbool ATermToSageJovialTraversal::traverse_IntrinsicFunctionCall(ATerm term, Sg
 //========================================================================================
 // 6.3.1 LOC FUNCTIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCallExp* &func_call)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_LocFunction: %s\n", ATwriteToString(term));
@@ -6595,19 +6620,40 @@ ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgExpression
 
    ATerm t_argument;
    std::string loc_arg_str;
-   SgExpression* loc_arg_expr;
+   SgExpression* loc_arg_expr = nullptr;
+
+   func_call = nullptr;
 
    if (ATmatch(term, "LocFunction(<term>)", &t_argument)) {
-      cerr << "WARNING UNIMPLEMENTED: LocFunction\n";
       if (traverse_Name(t_argument, loc_arg_str)) {
-         // MATCHED LocArgument
+         loc_arg_expr = SageBuilder::buildVarRefExp(loc_arg_str, SageBuilder::topScopeStack());
+         ROSE_ASSERT(loc_arg_expr);
       }
       else if (traverse_Variable(t_argument, loc_arg_expr)) {
          // MATCHED NamedVariable -> Variable
       } else return ATfalse;
    } else return ATfalse;
 
-   //  BlockReference              -> LocArgument
+   // BlockReference              -> LocArgument
+   // TODO
+   // cerr << "WARNING UNIMPLEMENTED: LocFunction - BlockReference argument needs reproducer \n";
+
+   ROSE_ASSERT(loc_arg_expr);
+
+   // build the parameter list
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   params->append_expression(loc_arg_expr);
+
+   SgType* return_type = SageBuilder::buildPointerType(SgTypeUnknown::createType());
+   // TODO - this should be fixed in post processing, following is a comment in SageBuilder::buildVarRefExp
+       // if not found: put fake init name and symbol here and
+       // waiting for a postProcessing phase to clean it up
+       // two features: no scope and unknown type for initializedName
+   // cerr << "WARNING UNIMPLEMENTED: LocFunction - return type is pointer to SgTypeUnknown \n";
+
+   func_call = SageBuilder::buildFunctionCallExp("LOC", return_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
+   setSourcePosition(func_call, term);
 
    return ATtrue;
 }
@@ -6615,7 +6661,7 @@ ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgExpression
 //========================================================================================
 // 6.3.2 NEXT FUNCTIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_NextFunction(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_NextFunction(ATerm term, SgFunctionCallExp* &func_call)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_NextFunction: %s\n", ATwriteToString(term));
@@ -6623,6 +6669,8 @@ ATbool ATermToSageJovialTraversal::traverse_NextFunction(ATerm term, SgExpressio
 
    ATerm t_argument, t_increment;
    SgExpression * sg_next_arg, * sg_increment;
+
+   func_call = nullptr;
 
    if (ATmatch(term, "NextFunction(<term>, <term>)", &t_argument, &t_increment)) {
       cerr << "WARNING UNIMPLEMENTED: NextFunction\n";
@@ -6644,7 +6692,7 @@ ATbool ATermToSageJovialTraversal::traverse_NextFunction(ATerm term, SgExpressio
 //========================================================================================
 // 6.3.4 BYTE FUNCTIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionCallExp* &func_call)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ByteFunction: %s\n", ATwriteToString(term));
@@ -6652,6 +6700,8 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgExpressio
 
    ATerm t_formula, t_fbyte, t_nbyte;
    SgExpression * sg_formula, * sg_fbyte, * sg_nbyte;
+
+   func_call = nullptr;
 
    if (ATmatch(term, "ByteFunction(<term>, <term>,<term>)", &t_formula, &t_fbyte, &t_nbyte)) {
       cerr << "WARNING UNIMPLEMENTED: ByteFunction\n";
@@ -6674,7 +6724,7 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgExpressio
 //========================================================================================
 // 6.3.7 SIZE FUNCTIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_SizeFunction(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_SizeFunction(ATerm term, SgFunctionCallExp* &func_call)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SizeFunction: %s\n", ATwriteToString(term));
@@ -6682,6 +6732,8 @@ ATbool ATermToSageJovialTraversal::traverse_SizeFunction(ATerm term, SgExpressio
 
    ATerm t_formula;
    SgExpression* sg_formula;
+
+   func_call = nullptr;
 
    if (ATmatch(term, "SizeFunction(BITSIZE(),<term>)", &t_formula)) {
       cerr << "WARNING UNIMPLEMENTED: SizeFunction - BITSIZE \n";
@@ -6709,7 +6761,7 @@ ATbool ATermToSageJovialTraversal::traverse_SizeFunction(ATerm term, SgExpressio
 //========================================================================================
 // 6.3.11 STATUS INVERSE FUNCTIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_StatusInverseFunction(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_StatusInverseFunction(ATerm term, SgFunctionCallExp* &func_call)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_StatusInverseFunction: %s\n", ATwriteToString(term));
@@ -6720,7 +6772,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusInverseFunction(ATerm term, Sg
    std::string function_name;
    std::string var_name;
 
-   expr = nullptr;
+   func_call = nullptr;
 
    if (ATmatch(term, "StatusInverseFunctionFIRST(<term>)", &t_argument)) {
       //DONE: cerr << "WARNING UNIMPLEMENTED: StatusInverseFunctionFIRST\n";
@@ -6753,10 +6805,9 @@ ATbool ATermToSageJovialTraversal::traverse_StatusInverseFunction(ATerm term, Sg
 
    SgType* return_type = SageBuilder::buildIntType();
 
-   SgFunctionCallExp* func_call = SageBuilder::buildFunctionCallExp(function_name, return_type, params, SageBuilder::topScopeStack());
+   func_call = SageBuilder::buildFunctionCallExp(function_name, return_type, params, SageBuilder::topScopeStack());
 
-   expr = func_call;
-   ROSE_ASSERT(expr);
+   ROSE_ASSERT(func_call);
 
 #if 0
    cout << ".x. Function argument name is " << var_name << endl;

@@ -68,6 +68,7 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           void unparseJovialType (SgFunctionType*    type, SgUnparse_Info& info);
           void unparseJovialType (SgModifierType*    type, SgUnparse_Info& info);
           void unparseJovialType (SgJovialTableType* type, SgUnparse_Info& info);
+          void unparseJovialType (SgPointerType*     type, SgUnparse_Info& info);
 
           void unparseTypeDesc (SgType* type, SgUnparse_Info& info);
 
