@@ -76,7 +76,7 @@ class DFAnalysisBase {
   // optional: allows to set a pointer analysis (if not set the default behavior is used (everything is modified through any pointer)).
   void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pa);
   CodeThorn::PointerAnalysisInterface* getPointerAnalysis();
-  void setSkipSelectedFunctionCalls(bool defer);
+  void setSkipUnknownFunctionCalls(bool defer);
   ProgramAbstractionLayer* getProgramAbstractionLayer() { return _programAbstractionLayer; }
 
  protected:

@@ -19,8 +19,8 @@ class CppExprEvaluator {
   void setShowWarnings(bool warnings);
   void setPointerAnalysis(CodeThorn::PointerAnalysisInterface* pointerAnalysisInterface);
   void setSoundness(bool s);
-  void setSkipSelectedFunctionCalls(bool flag);
-  bool getSkipSelectedFunctionCalls();
+  void setSkipUnknownFunctionCalls(bool flag);
+  bool getSkipUnknownFunctionCalls();
  private:
   // takes the expression of SgSizeOfOp(Exp) and determines its size
   int computeSize(SgSizeOfOp* node);
