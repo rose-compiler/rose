@@ -1051,6 +1051,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                case V_SgContinueStmt:
                case V_SgBasicBlock:
                case V_SgForStatement:
+               case V_SgRangeBasedForStatement:
                case V_SgForInitStatement:
                case V_SgIfStmt:
                case V_SgWhileStmt:
@@ -1069,6 +1070,14 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     key = key + generateUniqueName(pragmaDeclaration->get_pragma(),ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
                     break;
                   }
+
+               case V_SgStaticAssertionDeclaration:
+                  {
+                    key = "__static_assert_declaration_";
+                    key = key + StringUtility::numberToString(node);
+                    break;
+                  }
+
 #if 0
                case V_SgDefaultOptionStmt:
                   {
