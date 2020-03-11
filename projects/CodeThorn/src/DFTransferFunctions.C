@@ -98,7 +98,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
         return;
       }
     } else {
-      if(getSkipSelectedFunctionCalls()) {
+      if(getSkipUnknownFunctionCalls()) {
         // ignore unknown function call (requires command line option --ignore-unknown-functions)
       } else {
         cerr<<"Error: function-call-return unhandled function call."<<endl;
@@ -305,11 +305,11 @@ VariableId DFTransferFunctions::getResultVariableId() {
   return resultVariableId;
 }
 
-void DFTransferFunctions::setSkipSelectedFunctionCalls(bool flag) {
+void DFTransferFunctions::setSkipUnknownFunctionCalls(bool flag) {
   _skipSelectedFunctionCalls=flag;
 }
 
-bool DFTransferFunctions::getSkipSelectedFunctionCalls() {
+bool DFTransferFunctions::getSkipUnknownFunctionCalls() {
   return _skipSelectedFunctionCalls;
 }
 

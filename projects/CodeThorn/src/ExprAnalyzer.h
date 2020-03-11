@@ -79,8 +79,8 @@ namespace CodeThorn {
     //! are inside the expression.
     list<SingleEvalResultConstInt> evaluateExpression(SgNode* node,EState estate, EvalMode mode=MODE_VALUE);
     void setVariableIdMapping(VariableIdMappingExtended* variableIdMapping);
-    void setSkipSelectedFunctionCalls(bool skip);
-    bool getSkipSelectedFunctionCalls();
+    void setSkipUnknownFunctionCalls(bool skip);
+    bool getSkipUnknownFunctionCalls();
     void setSkipArrayAccesses(bool skip);
     bool getSkipArrayAccesses();
     void setIgnoreUndefinedDereference(bool skip);

@@ -78,7 +78,7 @@ size_t PragmaHandler::extractAndParsePragmas(SgNode* root, CodeThorn::Analyzer* 
 
     //option_specialize_fun_param_list.push_back(1);
     //option_specialize_fun_const_list.push_back(16);
-    analyzer->setSkipSelectedFunctionCalls(true);
+    analyzer->setSkipUnknownFunctionCalls(true);
     analyzer->setSkipArrayAccesses(true);
     return numPragmas;
   }

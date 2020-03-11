@@ -62,11 +62,11 @@ void ExprAnalyzer::setAnalyzer(Analyzer* analyzer) {
   _analyzer=analyzer;
 }
 
-void ExprAnalyzer::setSkipSelectedFunctionCalls(bool skip) {
+void ExprAnalyzer::setSkipUnknownFunctionCalls(bool skip) {
   _skipSelectedFunctionCalls=skip;
 }
 
-bool ExprAnalyzer::getSkipSelectedFunctionCalls() {
+bool ExprAnalyzer::getSkipUnknownFunctionCalls() {
   return _skipSelectedFunctionCalls;
 }
 
@@ -1476,12 +1476,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       // (2) marshall arguments
       // (3) perform function call (causing side effect on stdin)
       return execFunctionCallScanf(funCall,estate);
-    } else {
-      logger[ERROR]<<"function call with unknown semantics detected: "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<endl;
-      exit(1);
     }
   }
-  if(getSkipSelectedFunctionCalls()) {
+  if(getSkipUnknownFunctionCalls()) {
     return evalFunctionCallArguments(funCall,estate);
   } else {
     string s=funCall->unparseToString();

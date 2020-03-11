@@ -669,42 +669,48 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
 }
 
 int main( int argc, char * argv[] ) {
-  ROSE_INITIALIZE;
-  CodeThorn::initDiagnostics();
-  CodeThorn::initDiagnosticsLTL();
+  try {
+    ROSE_INITIALIZE;
+    CodeThorn::initDiagnostics();
+    CodeThorn::initDiagnosticsLTL();
 
-  Rose::Diagnostics::mprefix->showProgramName(false);
-  Rose::Diagnostics::mprefix->showThreadId(false);
-  Rose::Diagnostics::mprefix->showElapsedTime(false);
+    Rose::Diagnostics::mprefix->showProgramName(false);
+    Rose::Diagnostics::mprefix->showThreadId(false);
+    Rose::Diagnostics::mprefix->showElapsedTime(false);
 
-  string turnOffRoseWarnings=string("Rose(none,>=error),Rose::EditDistance(none,>=error),Rose::FixupAstDeclarationScope(none,>=error),")
-    +"Rose::FixupAstSymbolTablesToSupportAliasedSymbols(none,>=error),Rose::NameQualificationTraversal(none,>=error),"
-    +"Rose::NameQualificationTraversal(none,>=error),Rose::EditDistance(none,>=error),"
-    +"Rose::TestChildPointersInMemoryPool(none,>=error),Rose::UnparseLanguageIndependentConstructs(none,>=error),"
-    +"rose_ir_node(none,>=error)";
-  Rose::Diagnostics::mfacilities.control(turnOffRoseWarnings); 
+    string turnOffRoseWarnings=string("Rose(none,>=error),Rose::EditDistance(none,>=error),Rose::FixupAstDeclarationScope(none,>=error),")
+      +"Rose::FixupAstSymbolTablesToSupportAliasedSymbols(none,>=error),"
+      +"Rose::EditDistance(none,>=error),"
+      +"Rose::TestChildPointersInMemoryPool(none,>=error),Rose::UnparseLanguageIndependentConstructs(none,>=error),"
+      +"rose_ir_node(none,>=error)";
+    // result string must be checked
+    string result=Rose::Diagnostics::mfacilities.control(turnOffRoseWarnings); 
+    if(result!="") {
+      cerr<<result<<endl;
+      cerr<<"Error in logger initialization."<<endl;
+      exit(1);
+    }
 
-  Rose::global_options.set_frontend_notes(false);
-  Rose::global_options.set_frontend_warnings(false);
-  Rose::global_options.set_backend_warnings(false);
+    Rose::global_options.set_frontend_notes(false);
+    Rose::global_options.set_frontend_warnings(false);
+    Rose::global_options.set_backend_warnings(false);
 
-  signal(SIGSEGV, handler);   // install handler for backtrace
+    signal(SIGSEGV, handler);   // install handler for backtrace
 
-  Sawyer::Message::Facility logger;
-  Rose::Diagnostics::initAndRegister(&logger, "CodeThorn");
+    Sawyer::Message::Facility logger;
+    Rose::Diagnostics::initAndRegister(&logger, "CodeThorn");
 
 #ifdef RERS_SPECIALIZATION
-  // only included in hybrid RERS analyzers.
-  // Init external function pointers for generated property state
-  // marshalling functions (5 function pointers named:
-  // RERS_Problem::...FP, are initialized in the following external
-  // function.
-  // An implementation of this function is linked with the hybrid analyzer
-  extern void RERS_Problem_FunctionPointerInit();
-  RERS_Problem_FunctionPointerInit();
+    // only included in hybrid RERS analyzers.
+    // Init external function pointers for generated property state
+    // marshalling functions (5 function pointers named:
+    // RERS_Problem::...FP, are initialized in the following external
+    // function.
+    // An implementation of this function is linked with the hybrid analyzer
+    extern void RERS_Problem_FunctionPointerInit();
+    RERS_Problem_FunctionPointerInit();
 #endif
 
-  try {
     TimeMeasurement timer;
     timer.start();
 
@@ -826,7 +832,7 @@ int main( int argc, char * argv[] ) {
     }
 
     analyzer->optionStringLiteralsInState=args.getBool("in-state-string-literals");
-    analyzer->setSkipSelectedFunctionCalls(args.getBool("ignore-unknown-functions"));
+    analyzer->setSkipUnknownFunctionCalls(args.getBool("ignore-unknown-functions"));
     analyzer->setIgnoreFunctionPointers(args.getBool("ignore-function-pointers"));
     analyzer->setStdFunctionSemantics(args.getBool("std-functions"));
 
@@ -923,7 +929,7 @@ int main( int argc, char * argv[] ) {
       analyzer->setIgnoreUndefinedDereference(true);
     }
     if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0 || args.count("equivalence-check")>0) {
-      analyzer->setSkipSelectedFunctionCalls(true);
+      analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
       args.setOption("explicit-arrays",false);
       if(analyzer->getNumberOfThreadsToUse()>1) {
@@ -1131,7 +1137,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: handling pragmas finished."<<endl;
     } else {
       // do specialization and setup data structures
-      analyzer->setSkipSelectedFunctionCalls(true);
+      analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
       args.setOption("explicit-arrays",false);
 
