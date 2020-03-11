@@ -113,7 +113,8 @@ portable_timeout() {
 	    # Red Hat 6. The error we get is "Operation not permitted".
 	    TIMEOUT_CAPABILITIES=none
 	elif [ $vermaj -eq 8 -a $vermin -lt 25 ]; then
-	    TIMEOUT_CAPABILITIES=some
+	    # Turns out even this recent a version of "timeout" fails miserably on CentOS-7 when run from inside Tup.
+	    TIMEOUT_CAPABILITIES=none
 	else
 	    TIMEOUT_CAPABILITIES=all
 	fi
