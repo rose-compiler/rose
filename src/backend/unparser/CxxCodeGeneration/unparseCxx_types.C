@@ -3013,6 +3013,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                  // preprocessing info. Putting the "inside" info right here is just a wild guess as to where it might
                  // really belong. Some of the preprocessing info may be in the SgClassDefinition and some in the
                  // SgClassDeclaration, so unparse both.
+		    ASSERT_not_null(cDefiningDecl);
                     if (cDefiningDecl->get_definition() != NULL)
                        {
                          unp->u_exprStmt->unparseAttachedPreprocessingInfo(cDefiningDecl->get_definition(), info, PreprocessingInfo::inside);
