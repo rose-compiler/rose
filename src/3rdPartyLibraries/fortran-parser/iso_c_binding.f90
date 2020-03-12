@@ -12,13 +12,14 @@
 
 module iso_c_binding
 
-  use __Fortran_builtins, only: &
-    c_f_pointer => __builtin_c_f_pointer, &
-    c_ptr => __builtin_c_ptr, &
-    c_funptr => __builtin_c_funptr
-
-  type(c_ptr), parameter :: c_null_ptr = c_ptr()
-  type(c_funptr), parameter :: c_null_funptr = c_funptr()
+!! ROSE: Replaced F18 builtins
+!  use __Fortran_builtins, only: &
+!    c_f_pointer => __builtin_c_f_pointer, &
+!    c_ptr => __builtin_c_ptr, &
+!    c_funptr => __builtin_c_funptr
+!
+!  type(c_ptr), parameter :: c_null_ptr = c_ptr()
+!  type(c_funptr), parameter :: c_null_funptr = c_funptr()
 
   ! Table 18.2 (in clause 18.3.1)
   ! TODO: Specialize (via macros?) for alternative targets
@@ -53,11 +54,13 @@ module iso_c_binding
   integer, parameter :: &
     c_float = 4, &
     c_double = 8, &
-#if __x86_64__
+!! ROSE picked __x86_64__
+!
+!#if __x86_64__
     c_long_double = 10
-#else
-    c_long_double = 16
-#endif
+!#else
+!    c_long_double = 16
+!#endif
 
   integer, parameter :: &
     c_float_complex = c_float, &
@@ -77,24 +80,50 @@ module iso_c_binding
   character(kind=c_char, len=1), parameter :: c_horizontal_tab = achar(9)
   character(kind=c_char, len=1), parameter :: c_vertical_tab =  achar(11)
 
+!! ROSE added c_ptr
+!
+  type c_ptr
+     integer(c_intptr_t) :: place_holder_
+  end type c_ptr
+
+!! ROSE added c_funptr
+!
+  type c_funptr
+     integer(c_intptr_t) :: place_holder_
+  end type c_funptr
+
+!! ROSE added c_null_ptr and c_null_funptr
+!
+! TODO (should probably use/link to C static global variable or maybe Fortran module works, check it out)
+!
+!type(c_ptr), parameter :: c_null_ptr = 0
+!type(c_funptr), parameter :: c_null_funptr = 0
+
  contains
 
+!! ROSE changed implementation to return false
+!
   logical function c_associated(c_ptr_1, c_ptr_2)
     type(c_ptr), intent(in) :: c_ptr_1
     type(c_ptr), intent(in), optional :: c_ptr_2
-    if (c_ptr_1%__address == c_null_ptr%__address) then
-      c_associated = .false.
-    else if (present(c_ptr_2)) then
-      c_associated = c_ptr_1%__address == c_ptr_2%__address
-    else
-      c_associated = .true.
-    end if
+!    if (c_ptr_1%__address == c_null_ptr%__address) then
+!      c_associated = .false.
+!    else if (present(c_ptr_2)) then
+!      c_associated = c_ptr_1%__address == c_ptr_2%__address
+!    else
+!      c_associated = .true.
+!    end if
+
+    c_associated = .true.
+
   end function c_associated
 
+!! ROSE changed implementation to NOT return defined value
+!
   function c_loc(x)
     type(c_ptr) :: c_loc
-    type(*), intent(in) :: x
-    c_loc = c_ptr(loc(x))
+!    type(*), intent(in) :: x
+!    c_loc = c_ptr(loc(x))
   end function c_loc
 
   function c_funloc(x)
