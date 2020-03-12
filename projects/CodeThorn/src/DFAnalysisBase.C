@@ -440,10 +440,10 @@ void DFAnalysisBase::attachOutInfoToAst(string attributeName) {
   * \date 2018.
  */
 
-void DFAnalysisBase::setSkipSelectedFunctionCalls(bool defer) {
+void DFAnalysisBase::setSkipUnknownFunctionCalls(bool defer) {
   _skipSelectedFunctionCalls=defer;
   if(_transferFunctions) {
-    _transferFunctions->setSkipSelectedFunctionCalls(defer);
+    _transferFunctions->setSkipUnknownFunctionCalls(defer);
   }
 }
 
