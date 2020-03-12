@@ -339,6 +339,7 @@ F90_TESTCODES_REQUIRED_TO_PASS =  \
      test2019_accessibility_attribute.f90 \
      test2019_accessibility_attribute2.f90 \
      test2020_use_iso_c_binding.f90 \
+     test2020_use_iso_c_binding_2.f90 \
      rose-issue-par-39.f90 \
      canonicalExample.f90 \
      fCaller.f90 \
