@@ -279,9 +279,9 @@ void CodeThorn::IntervalTransferFunctions::setCppExprEvaluator(CodeThorn::CppExp
   _cppExprEvaluator=expEval;
 }
 
-void CodeThorn::IntervalTransferFunctions::setSkipSelectedFunctionCalls(bool flag) {
+void CodeThorn::IntervalTransferFunctions::setSkipUnknownFunctionCalls(bool flag) {
   ROSE_ASSERT(getCppExprEvaluator());
-  getCppExprEvaluator()->setSkipSelectedFunctionCalls(flag);
+  getCppExprEvaluator()->setSkipUnknownFunctionCalls(flag);
 }
 
 void CodeThorn::IntervalTransferFunctions::initializeExtremalValue(Lattice& element) {
