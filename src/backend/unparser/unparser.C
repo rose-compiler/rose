@@ -3622,6 +3622,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
           SgSourceFile* source_file = isSgSourceFile(file);
           if (source_file != NULL)
              {
+               ASSERT_not_null(project);
                if (project->get_unparser__clobber_input_file())
                   {
                  // TOO1 (3/20/2014): Clobber the original input source file X_X
