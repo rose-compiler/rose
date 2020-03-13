@@ -1,0 +1,27 @@
+!$acc data present(c1,c2,c3,c4,c5,c6,c7,c8,f1,f2) create(t1,t2,t3,t4)
+!$acc parallel loop async
+!$acc parallel loop async
+!$acc parallel loop async
+!$acc end data
+!$acc data present(c1,c2,c3,c4,c5,c6,c7,c8,f1,f2) create(t5,t6)
+!$acc parallel loop async
+!$acc parallel loop async
+!$acc parallel loop async
+!$acc parallel loop async
+!$acc end data
+!$acc data present(c1,c2,c3,c4,c5,c6,c7,c8,f1,f2) create(t1,t2,t3,t4,t5,t6)
+!$acc parallel loop async
+!$acc parallel loop async
+!$acc parallel loop async
+!$acc parallel loop async
+!$acc parallel loop async
+!$acc parallel loop async
+!$acc parallel loop async
+!$acc end data
+!$acc data present(c1,c2,c3,c4,c5,c6,c7,c8,f1,f2) create(t1,t2,t3,t4,t5,t6)
+!$acc parallel loop async
+!$acc end data
+!$acc data present(c1,c2,c3,c4,c5,c6,c7,c8,f1,f2)
+!$acc parallel loop private(t1,t2,t3,t4,t5,t6) async
+!$acc end data
+!$acc enter data copyin(c1,c2,c3,c4,c5,c6,c7,c8,f1,f2)
