@@ -2355,6 +2355,8 @@ tests/nonsmoke/functional/CompileTests/MicrosoftWindows_Cxx_tests/Makefile
 tests/nonsmoke/functional/CompileTests/MicrosoftWindows_Java_tests/Makefile
 tests/nonsmoke/functional/CompileTests/MicrosoftWindows_tests/Makefile
 tests/nonsmoke/functional/CompileTests/OpenClTests/Makefile
+tests/nonsmoke/functional/CompileTests/OpenACC_tests/Makefile
+tests/nonsmoke/functional/CompileTests/OpenACC_tests/fortran/Makefile
 tests/nonsmoke/functional/CompileTests/OpenMP_tests/Makefile
 tests/nonsmoke/functional/CompileTests/OpenMP_tests/cvalidation/Makefile
 tests/nonsmoke/functional/CompileTests/OpenMP_tests/fortran/Makefile
