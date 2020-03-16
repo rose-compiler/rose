@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinaryUnparserPowerpc.h>
 
@@ -55,3 +57,5 @@ Powerpc::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state)
 } // namespace
 } // namespace
 } // namespace
+
+#endif

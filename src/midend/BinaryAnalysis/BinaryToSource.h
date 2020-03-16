@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_BinaryToSource_H
 #define ROSE_BinaryAnalysis_BinaryToSource_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <Diagnostics.h>
 #include <Partitioner2/Partitioner.h>
@@ -149,4 +151,5 @@ private:
 } // namespace
 } // namespace
 
+#endif
 #endif

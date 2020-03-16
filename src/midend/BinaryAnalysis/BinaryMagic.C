@@ -1,7 +1,8 @@
-#include <sage3basic.h>
 #include <rosePublicConfig.h>
-
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <sage3basic.h>
 #include <BinaryMagic.h>
+
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/config.hpp>
 #include <Diagnostics.h>
@@ -90,3 +91,5 @@ MagicNumber::identify(const MemoryMap::Ptr &map, rose_addr_t va) const {
 
 } // namespace
 } // namespace
+
+#endif

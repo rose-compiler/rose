@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_FunctionCall_H
 #define ROSE_BinaryAnalysis_FunctionCall_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include "BinaryControlFlow.h"
 
 class SgAsmFunction;
@@ -274,7 +277,9 @@ FunctionCall::build_cg_from_cfg(const ControlFlowGraph &cfg, FunctionCallGraph &
         CFG_Vertex cfg_a = boost::source(*ei, cfg);
         CFG_Vertex cfg_b = boost::target(*ei, cfg);
         SgAsmBlock *block_a = SageInterface::getEnclosingNode<SgAsmBlock>(get_ast_node(cfg, cfg_a), true/* inc. self */);
+        ASSERT_not_null(block_a);
         SgAsmBlock *block_b = SageInterface::getEnclosingNode<SgAsmBlock>(get_ast_node(cfg, cfg_b), true/* inc. self */);
+        ASSERT_not_null(block_b);
         SgAsmFunction *func_a = block_a->get_enclosing_function();
         SgAsmFunction *func_b = block_b->get_enclosing_function();
         if (func_a && func_b && block_b==func_b->get_entry_block() && !is_edge_filtered(func_a, func_b)) {
@@ -419,4 +424,5 @@ FunctionCall::copy(const FunctionCallGraph &src)
 } // namespace
 } // namespace
 
+#endif
 #endif

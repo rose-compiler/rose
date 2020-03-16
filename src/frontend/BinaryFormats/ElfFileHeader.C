@@ -1,6 +1,8 @@
 /* ELF File Header (SgAsmElfFileHeader and related classes) */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "Diagnostics.h"
 
 using namespace Rose::Diagnostics;
@@ -585,3 +587,5 @@ const char *
 SgAsmElfFileHeader::format_name() const {
     return "ELF";
 }
+
+#endif

@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_Utility_H
 #define ROSE_Partitioner2_Utility_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/AddressUsageMap.h>
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/DataBlock.h>
@@ -258,4 +261,5 @@ size_t serialNumber();
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -461,6 +461,7 @@ void $CLASSNAME::accept (ROSE_VisitorPattern & visitor) {
 $CLASSNAME*
 $CLASSNAME::addRegExpAttribute(std::string s, AstRegExAttribute* a)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   // This function is currently only supported for the AST used the represent Binary executables.
      if (isSgAsmNode(this) != NULL)
         {
@@ -468,6 +469,7 @@ $CLASSNAME::addRegExpAttribute(std::string s, AstRegExAttribute* a)
           std::string prefixCode = "REGEX:";
           addNewAttribute(prefixCode + s,a);
         }
+#endif
 
   /* Return "this" so that it can be used with the build function interface to add regex attributes. */
      return this;

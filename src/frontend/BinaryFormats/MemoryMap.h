@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_MemoryMap_H
 #define ROSE_BinaryAnalysis_MemoryMap_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <ByteOrder.h>
 #include <Combinatorics.h>
 #include <RoseException.h>
@@ -540,5 +543,5 @@ BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::MemoryMap::NullBuffer);
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::MemoryMap::StaticBuffer);
 #endif
 
-
+#endif
 #endif

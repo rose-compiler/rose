@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_FeasiblePath_H
 #define ROSE_BinaryAnalysis_FeasiblePath_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 #include <BinarySmtSolver.h>
@@ -318,6 +320,7 @@ private:
     Partitioner2::CfgConstVertexSet cfgEndAvoidVertices_;// CFG end-of-path and other avoidance vertices
     FunctionSummarizer::Ptr functionSummarizer_;        // user-defined function for handling function summaries
     AddressSet reachedBlockVas_;                        // basic block addresses reached during analysis
+    InstructionSemantics2::BaseSemantics::StatePtr initialState_; // set by setInitialState.
     static Sawyer::Attribute::Id POST_STATE;            // stores semantic state after executing the insns for a vertex
     static Sawyer::Attribute::Id POST_INSN_LENGTH;      // path length in instructions at end of vertex
     static Sawyer::Attribute::Id EFFECTIVE_K;           // (double) effective maximimum path length
@@ -550,6 +553,9 @@ public:
     /** Details about all variables by name. */
     const VarDetails& varDetails(const InstructionSemantics2::BaseSemantics::StatePtr&) const;
 
+    /** Get the initial state before the first path vertex. */
+    InstructionSemantics2::BaseSemantics::StatePtr initialState() const;
+
     /** Get the state at the end of the specified vertex. */
     static InstructionSemantics2::BaseSemantics::StatePtr pathPostState(const Partitioner2::CfgPath&, size_t vertexIdx);
 
@@ -646,4 +652,5 @@ namespace Sawyer {
     }
 }
 
+#endif
 #endif

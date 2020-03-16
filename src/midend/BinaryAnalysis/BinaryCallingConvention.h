@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_CallingConvention_H
 #define ROSE_BinaryAnalysis_CallingConvention_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <BaseSemantics2.h>
 #include <BinaryVariables.h>
 #include <Partitioner2/BasicTypes.h>
@@ -821,4 +824,5 @@ std::ostream& operator<<(std::ostream&, const Analysis&);
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -98,7 +98,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
         return;
       }
     } else {
-      if(getSkipSelectedFunctionCalls()) {
+      if(getSkipUnknownFunctionCalls()) {
         // ignore unknown function call (requires command line option --ignore-unknown-functions)
       } else {
         cerr<<"Error: function-call-return unhandled function call."<<endl;
@@ -305,11 +305,11 @@ VariableId DFTransferFunctions::getResultVariableId() {
   return resultVariableId;
 }
 
-void DFTransferFunctions::setSkipSelectedFunctionCalls(bool flag) {
+void DFTransferFunctions::setSkipUnknownFunctionCalls(bool flag) {
   _skipSelectedFunctionCalls=flag;
 }
 
-bool DFTransferFunctions::getSkipSelectedFunctionCalls() {
+bool DFTransferFunctions::getSkipUnknownFunctionCalls() {
   return _skipSelectedFunctionCalls;
 }
 
@@ -329,6 +329,76 @@ void DFTransferFunctions::initializeExtremalValue(Lattice& element) {
   // default empty function
 }
 
+static
+SgInitializer*
+getVariableInitializer(SgVariableDeclaration* vd)
+{
+  ROSE_ASSERT(vd);
+
+  SgInitializedNamePtrList& lst = vd->get_variables();
+
+  if (lst.size() == 0)
+    return nullptr;
+
+  ROSE_ASSERT(lst.size() == 1 && lst[0]);
+  return lst.front()->get_initptr();
+}
+
+static
+SgVariableDeclaration*
+chooseInitializer(SgVariableDeclaration* one, SgVariableDeclaration* two)
+{
+  ROSE_ASSERT(one || two);
+
+  // eliminate nullptr
+  if (!one) return two;
+  if (!two) return one;
+
+  // compare extern modifier
+  const bool     oneext = one->get_declarationModifier().get_storageModifier().isExtern();
+  const bool     twoext = two->get_declarationModifier().get_storageModifier().isExtern();
+
+  if (oneext && !twoext) return two;
+  if (twoext && !oneext) return one;
+
+  // compare initialization
+  SgInitializer* oneini = getVariableInitializer(one);
+  SgInitializer* twoini = getVariableInitializer(two);
+
+  // assume equally good
+  //  \todo add comparison that oneini and twoini are different
+  if (oneini && twoini) return nullptr;
+
+  // oneini is not set -> choose two
+  if (twoini) return two;
+
+  // twoini is not set -> choose one
+  return one;
+}
+
+
+typedef std::map<VariableId, SgVariableDeclaration*> VariableInitialzationMap;
+
+static
+void storeIfBetter( std::map<VariableId, SgVariableDeclaration*>& initmap,
+                    std::pair<VariableId, SgVariableDeclaration*> cand
+                  )
+{
+  VariableInitialzationMap::mapped_type& curr   = initmap[cand.first];
+  VariableInitialzationMap::mapped_type  choice = chooseInitializer(cand.second, curr);
+
+  if (!choice)
+  {
+    std::cerr << "WARN: two equally good initializers found\n"
+              << "      " << cand.second->unparseToString() << " [chosen]\n"
+              << "      " << curr->unparseToString() << " [ignored]\n";
+  }
+  else if (curr != choice)
+  {
+    curr = choice;
+  }
+}
+
 Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
   ROSE_ASSERT(root);
   cout << "INFO: Initializing property state with global variables."<<endl;
@@ -346,38 +416,30 @@ Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
   //cout << "INIT: initial element: ";elem->toStream(cout,getVariableIdMapping());
   list<SgVariableDeclaration*> globalVarDecls=SgNodeHelper::listOfGlobalVars(root);
 
-  // set of already initialized variables
-  set<VariableId> varinit;
+  // map from VariableIds to the best initializer
+  VariableInitialzationMap varinit;
 
-  // initialize all non-extern variables
-  for(list<SgVariableDeclaration*>::iterator i=globalVarDecls.begin();i!=globalVarDecls.end();++i) {
-    if(usedGlobalVarIds.find(getVariableIdMapping()->variableId(*i))!=usedGlobalVarIds.end()) {
-      // cout << "DEBUG: transfer for global var @" << getLabeler()->getLabel(*i) << " : " << (*i)->unparseToString() 
+  // collects "best" initializers for global variables
+  for(SgVariableDeclaration* var : globalVarDecls) {
+    VariableId varid = getVariableIdMapping()->variableId(var);
+
+    if (usedGlobalVarIds.find(varid) != usedGlobalVarIds.end()) {
+      // cout << "DEBUG: transfer for global var @" << getLabeler()->getLabel(*i) << " : " << (*i)->unparseToString()
       //     << "id = " << getVariableIdMapping()->variableId(*i).toString()
       //     << endl;
       // ->get_declarationModifier().get_storageModifier().isExtern()
-      if (!((*i)->get_declarationModifier().get_storageModifier().isExtern()))
-      {
-        varinit.insert(getVariableIdMapping()->variableId(*i));
-        transfer(getLabeler()->getLabel(*i),*elem);
-      }
+      storeIfBetter(varinit, std::make_pair(varid, var));
     } else {
-      cout<<"INFO: filtered from initial state: "<<(*i)->unparseToString()<<endl;
+      cout<<"INFO: filtered from initial state: "<< var->unparseToString() << endl;
     }
   }
 
-  // initialize all extern variables that have not been seen yet
-  for(list<SgVariableDeclaration*>::iterator i=globalVarDecls.begin();i!=globalVarDecls.end();++i) {
-    if (  usedGlobalVarIds.find(getVariableIdMapping()->variableId(*i))!=usedGlobalVarIds.end()
-       && ((*i)->get_declarationModifier().get_storageModifier().isExtern())
-       && (varinit.find(getVariableIdMapping()->variableId(*i)) == varinit.end())
-       )
-    {
-      varinit.insert(getVariableIdMapping()->variableId(*i));
-      transfer(getLabeler()->getLabel(*i),*elem);
-    }
+  for (VariableInitialzationMap::value_type& init : varinit) {
+    ROSE_ASSERT(init.second);
+
+    transfer(getLabeler()->getLabel(init.second), *elem);
   }
-  
+
   //cout << "INIT: initial state: ";
   //elem->toStream(cout,getVariableIdMapping());
   //cout<<endl;

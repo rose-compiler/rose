@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_Reachability_H
 #define ROSE_BinaryAnalysis_Reachability_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BitFlags.h>
 #include <boost/serialization/access.hpp>
@@ -401,4 +403,5 @@ private:
 // Class versions must be at global scope
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Reachability, 1);
 
+#endif
 #endif

@@ -81,7 +81,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 # DQ (2/19/2017): Added the more complex logic to control this for different compilers, and versions of EDG.
 if ROSE_USE_EDG_VERSION_4_9
 if USING_GNU_COMPILER
-SUBDIRS += OpenMP_tests FailSafe_tests
+SUBDIRS += OpenMP_tests OpenACC_tests FailSafe_tests
 else # NOT USING_GNU_COMPILER
 if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
@@ -97,14 +97,14 @@ endif # USING_CLANG_COMPILER
 endif # USING_GNU_COMPILER
 else # NOT ROSE_USE_EDG_VERSION_4_9
 if USING_GNU_COMPILER
-SUBDIRS += OpenMP_tests FailSafe_tests
+SUBDIRS += OpenMP_tests OpenACC_tests FailSafe_tests
 else # NOT USING_GNU_COMPILER
 if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
 else # NOT USING_CLANG_COMPILER
 if USING_INTEL_COMPILER
 # Exclude this list of files in the case of Intel compiler.
-SUBDIRS += OpenMP_tests FailSafe_tests
+SUBDIRS += OpenMP_tests OpenACC_tests FailSafe_tests
 else # NOT USING_INTEL_COMPILER
 # This is an unknown compiler.
 endif # USING_INTEL_COMPILER

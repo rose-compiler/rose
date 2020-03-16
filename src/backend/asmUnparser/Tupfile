@@ -1,12 +1,8 @@
 include_rules
 
-ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
-    SOURCES = BinaryEdgeArrows.C BinarySerialIo.C BinaryUnparserArm.C BinaryUnparserBase.C BinaryUnparserM68k.C \
-              BinaryUnparserMips.C BinaryUnparserPowerpc.C BinaryUnparserX86.C AsmUnparser.C AsmUnparser_compat.C \
-	      AsmFunctionIndex.C unparseX86Asm.C unparseArmAsm.C unparsePowerpcAsm.C unparseM68kAsm.C unparseMipsAsm.C
-else
-    SOURCES = dummyAsmUnparser.C
-endif
+SOURCES = BinaryEdgeArrows.C BinarySerialIo.C BinaryUnparserArm.C BinaryUnparserBase.C BinaryUnparserM68k.C \
+    BinaryUnparserMips.C BinaryUnparserPowerpc.C BinaryUnparserX86.C AsmUnparser.C AsmUnparser_compat.C \
+    AsmFunctionIndex.C unparseX86Asm.C unparseArmAsm.C unparsePowerpcAsm.C unparseM68kAsm.C unparseMipsAsm.C
 
 run $(librose_compile) $(SOURCES)
 

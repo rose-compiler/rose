@@ -44,8 +44,8 @@ public:
   //protected:
  public:
   CodeThorn::PointerAnalysisInterface* _pointerAnalysisInterface;
-  virtual void setSkipSelectedFunctionCalls(bool flag);
-  virtual bool getSkipSelectedFunctionCalls();
+  virtual void setSkipUnknownFunctionCalls(bool flag);
+  virtual bool getSkipUnknownFunctionCalls();
   virtual void initializeExtremalValue(Lattice& element);
   virtual Lattice* initializeGlobalVariables(SgProject* root);
   void setInitialElementFactory(PropertyStateFactory*);

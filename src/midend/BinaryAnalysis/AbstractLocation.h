@@ -1,5 +1,7 @@
 #ifndef Rose_BinaryAnalysis_AbstractLocation_H
 #define Rose_BinaryAnalysis_AbstractLocation_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "BaseSemantics2.h"
 
@@ -142,4 +144,5 @@ std::ostream& operator<<(std::ostream&, const AbstractLocation&);
 } // namespace
 } // namespace
 
+#endif
 #endif

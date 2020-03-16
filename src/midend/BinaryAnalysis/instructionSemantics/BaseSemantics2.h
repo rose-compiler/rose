@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_H 
 #define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 // This legacy header file includes all the other stuff we typically need
 #include <InstructionSemantics2.h>
@@ -14,4 +16,5 @@
 #include <BaseSemanticsRiscOperators.h>
 #include <BaseSemanticsDispatcher.h>
 
+#endif
 #endif

@@ -1,5 +1,6 @@
 // Support for reading a binary and comparing its functions to a database.
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"                                 // every librose .C file must start with this
 
 #include <libraryIdentification.h>
@@ -34,3 +35,5 @@ LibraryIdentification::matchAgainstLibraryIdentificationDataBase( string databas
 
      libraryIdentificationDataBaseSupport( databaseName, project, /* generate_database */ false);
    }
+
+#endif

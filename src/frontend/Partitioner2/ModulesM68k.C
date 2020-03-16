@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include <Partitioner2/ModulesM68k.h>
+
 #include <Partitioner2/Utility.h>
 #include <SageBuilderAsm.h>
 #include <boost/foreach.hpp>
@@ -289,3 +292,5 @@ findInterruptFunctions(const Partitioner &partitioner, rose_addr_t vectorVa) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

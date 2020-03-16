@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_VxcoreParser_H
 #define ROSE_BinaryAnalysis_VxcoreParser_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <BaseSemanticsRegisterState.h>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
@@ -58,7 +61,7 @@ public:
 
         /** Render this exception as a string. */
         std::string toString() const {
-            return StringUtility::cEscape(fileName_.native()) + ":" + boost::lexical_cast<std::string>(offset_) + ": " + what();
+            return StringUtility::cEscape(fileName_.string()) + ":" + boost::lexical_cast<std::string>(offset_) + ": " + what();
         }
 
         /** Emit this exception to a stream.
@@ -165,5 +168,4 @@ private:
 } // namespace
 
 #endif
-
-    
+#endif

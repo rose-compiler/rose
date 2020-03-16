@@ -1,6 +1,9 @@
 #ifndef ROSE_DISASSEMBLER_H
 #define ROSE_DISASSEMBLER_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include "BinaryCallingConvention.h"
 #include "BinaryUnparser.h"
 #include "Diagnostics.h"                                // Rose::Diagnostics
@@ -365,4 +368,5 @@ private:
 // Class versions must be at global scope
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Disassembler, 1);
 
+#endif
 #endif

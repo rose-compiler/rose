@@ -1,16 +1,24 @@
 include_rules
 
-: ompparser.yy |> bison -d -o %o %f && mv ompparser.hh ompparser.h |> ompparser.cc | ompparser.h
-: omplexer.ll  |> flex --stdout %f > %o |> omplexer.cc
-: preproc-c.ll |> flex --stdout %f > %o |> preproc-c.cc
+GENERATED_HEADERS =
+GENERATED_SOURCES =
 
-# Rasmussen (04/17/2019): Support for ATerms has been deprecated (atermSupport.C atermSupport.h
-# and nodeBuildFunctionsForAterms.C have been removed.
-
-run $(librose_compile) --depend=ompparser.h Utf8.C rose_attributes_list.C attachPreprocessingInfo.C \
+SOURCES = Utf8.C rose_attributes_list.C attachPreprocessingInfo.C \
     attachPreprocessingInfoTraversal.C attributeListMap.C manglingSupport.C fixupCopy_scopes.C fixupCopy_symbols.C \
-    fixupCopy_references.C rtiHelpers.C OmpAttribute.C ompFortranParser.C ompAstConstruction.cpp dwarfSupport.C \
-    rose_graph_support.C preproc-c.cc ompparser.cc omplexer.cc
+    fixupCopy_references.C rtiHelpers.C dwarfSupport.C \
+    rose_graph_support.C
+
+# Stuff specific to the C preprocessor
+ifeq ($(ENABLE_CPP_ANALYSIS),yes)
+    : preproc-c.ll |> flex --stdout %f > %o |> preproc-c.cc
+    : ompparser.yy |> bison -d -o %o %f && mv ompparser.hh ompparser.h |> ompparser.cc | ompparser.h
+    : omplexer.ll  |> flex --stdout %f > %o |> omplexer.cc
+    GENERATED_HEADERS += --depend=ompparser.h
+    GENERATED_SOURCES += preproc-c.cc ompparser.cc omplexer.cc
+    SOURCES += OmpAttribute.C ompFortranParser.C ompAstConstruction.cpp
+endif
+
+run $(librose_compile) $(GENERATED_HEADERS) $(SOURCES) $(GENERATED_SOURCES)
 
 run $(public_header) sage3.h sage3basic.h rose_attributes_list.h attachPreprocessingInfo.h \
     attachPreprocessingInfoTraversal.h attach_all_info.h manglingSupport.h C++_include_files.h fixupCopy.h \

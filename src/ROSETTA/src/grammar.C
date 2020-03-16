@@ -133,8 +133,10 @@ Grammar::Grammar ( const string& inputGrammarName,
      setUpExpressions();
      setUpSymbols();
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   // DQ (3/15/2007): Added support for binaries
      setUpBinaryInstructions();
+#endif
 
   // Setup of Node requires previous definition of types,
   // expressions, statements, symbols within the grammar
@@ -3362,8 +3364,10 @@ Grammar::buildCode ()
   // DQ (3/15/2007): Added output function for STL list objects
   // ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const std::set<SgAsmStatement*>&);\n\n";
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgAsmStatement*>&);\n\n";
      ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgAsmExpression*>&);\n\n";
+#endif
 
   // DQ (11/20/2007): Part of support for the Fortran data statement
      ROSE_ArrayGrammarHeaderFile << "std::ostream& operator<<(std::ostream&, const Rose_STL_Container<SgDataStatementObject*>&);\n\n";

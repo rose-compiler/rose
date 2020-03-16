@@ -12,7 +12,7 @@ BENCH_PASS=0
 BENCH_FAIL=0
 
 function NormalizationTests {
-    testNumbers=`echo {01..45}`
+    testNumbers=`echo {01..46}`
     # 90 fails because of public/private type scopes
     # 91-92 fail because of declaration in condition
     echo "Scheduled tests: $testNumbers"

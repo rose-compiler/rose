@@ -3,8 +3,10 @@
 // C++ runtime code that parses this section.  Here are some other sources:
 //      http://refspecs.linuxfoundation.org/LSB_3.0.0/LSB-Core-generic/LSB-Core-generic/ehframechpt.html
 //      http://www.airs.com/blog/archives/460
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "Diagnostics.h"
 
 using namespace Rose;
@@ -594,3 +596,5 @@ SgAsmElfEHFrameSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         cie->dump(f, p, i);
     }
 }
+
+#endif

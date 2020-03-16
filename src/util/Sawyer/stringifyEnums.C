@@ -137,7 +137,7 @@ static NamespaceLatticeRoots namespaceLatticeRoots;
 static std::string
 where(const boost::filesystem::path &filename, const std::pair<size_t, size_t> &location) {
     std::ostringstream ss;
-    ss <<filename.native() <<":" <<(location.first+1) <<"." <<(location.second+1);
+    ss <<filename.string() <<":" <<(location.first+1) <<"." <<(location.second+1);
     return ss.str();
 }
 
@@ -958,18 +958,18 @@ main(int argc, char *argv[]) {
     // Declarations or implementations
     BOOST_FOREACH (const boost::filesystem::path &inputName, inputNames) {
         if (!boost::filesystem::exists(inputName)) {
-            std::cerr <<inputName.native() <<":0.0: error: no such file\n";
+            std::cerr <<inputName.string() <<":0.0: error: no such file\n";
             continue;
         }
         if (!boost::filesystem::is_regular_file(inputName)) {
-            std::cerr <<inputName.native() <<":0.0: error: not a regular file\n";
+            std::cerr <<inputName.string() <<":0.0: error: not a regular file\n";
             continue;
         }
         if (boost::filesystem::file_size(inputName) == 0)
             continue;
 
         Scopes scopes;
-        TokenStream tokens(inputName.native());
+        TokenStream tokens(inputName.string());
         while (tokens[0].type() != TOK_EOF) {
 #if 0 // DEBUGGING [Robb Matzke 2018-09-13]
             std::cerr <<where(inputName, tokens.location(tokens[0])) <<": here\n";

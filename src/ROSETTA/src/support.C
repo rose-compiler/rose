@@ -98,12 +98,18 @@ Grammar::setUpSupport ()
   // can be related to a source file (and many source files).  The mapping is left
   // to an analysis phase to define and not defined in the structure of the AST.
      NEW_TERMINAL_MACRO (SourceFile, "SourceFile", "SourceFileTag" );
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      NEW_TERMINAL_MACRO (BinaryComposite, "BinaryComposite", "BinaryCompositeTag" );
      BinaryComposite.isBoostSerializable(true);
+#endif
      NEW_TERMINAL_MACRO (UnknownFile, "UnknownFile", "UnknownFileTag" );
 
   // Mark this as being able to be an IR node for now and later make it false.
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      NEW_NONTERMINAL_MACRO (File, SourceFile | BinaryComposite | UnknownFile , "File", "FileTag", false);
+#else
+     NEW_NONTERMINAL_MACRO (File, SourceFile |                   UnknownFile , "File", "FileTag", false);
+#endif
 #endif
      NEW_TERMINAL_MACRO (FileList, "FileList", "FileListTag" );
      NEW_TERMINAL_MACRO (Directory, "Directory", "DirectoryTag" );
@@ -399,7 +405,9 @@ Grammar::setUpSupport ()
      SourceFile.setFunctionPrototype          ( "HEADER_APPLICATION_SOURCE_FILE", "../Grammar/Support.code");
   // SourceFile.setAutomaticGenerationOfConstructor(false);
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      BinaryComposite.setFunctionPrototype          ( "HEADER_APPLICATION_BINARY_FILE", "../Grammar/Support.code");
+#endif
 
      UnknownFile.setFunctionPrototype          ( "HEADER_APPLICATION_UNKNOWN_FILE", "../Grammar/Support.code");
 
@@ -1109,6 +1117,14 @@ Grammar::setUpSupport ()
   // Lowering OpenMP directives to code with explicit runtime calls
      File.setDataPrototype         ( "bool", "openmp_lowering", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // Liao, 3/12/2020: options to support OpenACC
+     File.setDataPrototype         ( "bool", "openacc", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "openacc_parse_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "openacc_ast_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+ 
      File.setDataPrototype         ( "bool", "cray_pointer_support", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1432,6 +1448,7 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "experimental_fortran_frontend_OFP_test", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   // To be consistent with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
   // functions so that we can support the more common (previous) interface where there was only a single
   // SgAsmFile pointers called "binaryFile".
@@ -1439,6 +1456,7 @@ Grammar::setUpSupport ()
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      BinaryComposite.setDataPrototype("SgAsmInterpretationList*","interpretations","= NULL",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
 
   // DQ (11/5/2008): This should maybe be added to the SgAsmGenericFile instead of the SgBinaryFile, if so
   // we will move it.  For now we can't add it to SgAsmGenericFile becuase we could not traverse both a
@@ -2852,7 +2870,9 @@ Specifiers that can have only one value (implemented with a protected enum varia
      DirectoryList.setFunctionSource   ( "SOURCE_APPLICATION_DIRECTORY_LIST", "../Grammar/Support.code");
      File.setFunctionSource            ( "SOURCE_APPLICATION_FILE", "../Grammar/Support.code");
      SourceFile.setFunctionSource      ( "SOURCE_APPLICATION_SOURCE_FILE", "../Grammar/Support.code");
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      BinaryComposite.setFunctionSource ( "SOURCE_APPLICATION_BINARY_FILE", "../Grammar/Support.code");
+#endif
      FileList.setFunctionSource        ( "SOURCE_APPLICATION_FILE_LIST", "../Grammar/Support.code");
      UnknownFile.setFunctionSource     ( "SOURCE_APPLICATION_UNKNOWN_FILE", "../Grammar/Support.code");
 

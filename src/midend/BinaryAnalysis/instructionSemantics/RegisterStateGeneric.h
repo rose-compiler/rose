@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_RegisterStateGeneric_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_RegisterStateGeneric_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 
@@ -625,4 +627,5 @@ protected:
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric);
 #endif
 
+#endif
 #endif

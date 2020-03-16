@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinaryCallingConvention.h>
 
@@ -1108,3 +1110,5 @@ operator<<(std::ostream &out, const Analysis &x) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

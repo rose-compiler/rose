@@ -55,10 +55,10 @@ namespace CodeThorn {
     bool isBot() {return result.isBot();}
   };
   
-  enum InterpretationMode { IM_ABSTRACT, IM_CONCRETE };
+  enum InterpreterMode { IM_ABSTRACT, IM_CONCRETE };
   // ACCESS_ERROR is null pointer dereference is detected. ACCESS_NON_EXISTING if pointer is lattice bottom element.
   enum MemoryAccessBounds {ACCESS_ERROR,ACCESS_DEFINITELY_NP, ACCESS_DEFINITELY_INSIDE_BOUNDS, ACCESS_POTENTIALLY_OUTSIDE_BOUNDS, ACCESS_DEFINITELY_OUTSIDE_BOUNDS, ACCESS_NON_EXISTING};
-  enum AnalysisSelector { ANALYSIS_NULL_POINTER, ANALYSIS_OUT_OF_BOUNDS, ANALYSIS_UNINITIALIZED };
+  enum AnalysisSelector { ANALYSIS_NULL_POINTER, ANALYSIS_OUT_OF_BOUNDS, ANALYSIS_UNINITIALIZED, ANALYSIS_NUM };
   
   /*! 
    * \author Markus Schordan
@@ -78,9 +78,9 @@ namespace CodeThorn {
     //! one of the variables was bound to top and branching constructs
     //! are inside the expression.
     list<SingleEvalResultConstInt> evaluateExpression(SgNode* node,EState estate, EvalMode mode=MODE_VALUE);
-    void setVariableIdMapping(VariableIdMapping* variableIdMapping);
-    void setSkipSelectedFunctionCalls(bool skip);
-    bool getSkipSelectedFunctionCalls();
+    void setVariableIdMapping(VariableIdMappingExtended* variableIdMapping);
+    void setSkipUnknownFunctionCalls(bool skip);
+    bool getSkipUnknownFunctionCalls();
     void setSkipArrayAccesses(bool skip);
     bool getSkipArrayAccesses();
     void setIgnoreUndefinedDereference(bool skip);
@@ -108,18 +108,17 @@ namespace CodeThorn {
 
     // record detected errors in programs
     ProgramLocationsReport getViolatingLocations(enum AnalysisSelector analysisSelector);
+    void recordDefinitiveViolatingLocation(enum AnalysisSelector analysisSelector, Label lab);
+    void recordPotentialViolatingLocation(enum AnalysisSelector analysisSelector, Label lab);
+    std::string analysisSelectorToString(AnalysisSelector sel);
     
+    // deprecated
     void recordDefinitiveNullPointerDereferenceLocation(Label lab);
     void recordPotentialNullPointerDereferenceLocation(Label lab);
-    ProgramLocationsReport getNullPointerDereferenceLocations();
-
     void recordDefinitiveOutOfBoundsAccessLocation(Label lab);
     void recordPotentialOutOfBoundsAccessLocation(Label lab);
-    ProgramLocationsReport getOutOfBoundsAccessLocations();
-
     void recordDefinitiveUninitializedAccessLocation(Label lab);
     void recordPotentialUninitializedAccessLocation(Label lab);
-    ProgramLocationsReport getUninitializedAccessLocations();
 
     bool definitiveErrorDetected();
     bool potentialErrorDetected();
@@ -141,11 +140,15 @@ namespace CodeThorn {
     // returns true if execution may continue, false if execution definitely does not continue.
     bool checkAndRecordNullPointer(AbstractValue value, Label label);
 
-    enum InterpretationMode getInterpretationMode();
-    void setInterpretationMode(enum InterpretationMode);
-    std::string getInterpretationModeFileName();
-    void setInterpretationModeFileName(std::string);
+    enum InterpreterMode getInterpreterMode();
+    void setInterpreterMode(enum InterpreterMode);
+    std::string getInterpreterModeFileName();
+    void setInterpreterModeFileName(std::string);
 
+    AbstractValue readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
+    void writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
+    void writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc);
+    
   protected:
     static void initDiagnostics();
     static Sawyer::Message::Facility logger;
@@ -319,11 +322,9 @@ namespace CodeThorn {
     int getMemoryRegionElementSize(CodeThorn::AbstractValue);
 
   private:
-    VariableIdMapping* _variableIdMapping=nullptr;
-    ProgramLocationsReport _nullPointerDereferenceLocations;
-    ProgramLocationsReport _outOfBoundsAccessLocations;
-    ProgramLocationsReport _uninitializedAccessLocations;
-   
+    void initViolatingLocations();
+    VariableIdMappingExtended* _variableIdMapping=nullptr;
+    std::vector<ProgramLocationsReport> _violatingLocations;
     // Options
     bool _skipSelectedFunctionCalls=false;
     bool _skipArrayAccesses=false;
@@ -333,8 +334,8 @@ namespace CodeThorn {
     bool _ignoreFunctionPointers=false;
     Analyzer* _analyzer;
     bool _printDetectedViolations=false;
-    enum InterpretationMode _interpretationMode=IM_ABSTRACT;
-    std::string _interpretationModeFileName;
+    enum InterpreterMode _interpreterMode=IM_ABSTRACT;
+    std::string _interpreterModeFileName;
     bool _optionOutputWarnings=false;
   public:
     StructureAccessLookup structureAccessLookup;

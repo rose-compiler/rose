@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
+
 #include <AsmUnparser_compat.h>
 #include <BaseSemantics2.h>
 #include <BinaryFeasiblePath.h>
@@ -883,6 +886,8 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
     // Direction flag (DF) is always set
     if (const RegisterDescriptor *REG_DF = cpu->get_register_dictionary()->lookup("df"))
         ops->writeRegister(*REG_DF, ops->boolean_(true));
+
+    initialState_ = ops->currentState()->clone();
 }
 
 /** Process instructions for one basic block on the specified virtual CPU. */
@@ -1359,6 +1364,11 @@ FeasiblePath::isAnyEndpointReachable(const P2::ControlFlowGraph &cfg,
             return true;
     }
     return false;
+}
+
+BaseSemantics::StatePtr
+FeasiblePath::initialState() const {
+    return initialState_;
 }
 
 BaseSemantics::StatePtr
@@ -1937,3 +1947,5 @@ std::ostream& operator<<(std::ostream &out, const Rose::BinaryAnalysis::Feasible
     expr.print(out);
     return out;
 }
+
+#endif

@@ -3,6 +3,8 @@
 #define ROSE_DisassemblerM68k_H
 
 #include "Disassembler.h"
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include "InstructionEnumsM68k.h"
 #include "BitPattern.h"
 
@@ -244,4 +246,5 @@ private:
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::DisassemblerM68k);
 #endif
 
+#endif
 #endif

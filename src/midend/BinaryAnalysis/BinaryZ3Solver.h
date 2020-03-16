@@ -1,7 +1,8 @@
 #ifndef Rose_BinaryAnalysis_Z3Solver_H
 #define Rose_BinaryAnalysis_Z3Solver_H
-
 #include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <BinarySmtlibSolver.h>
 #ifdef ROSE_HAVE_Z3
 #include <z3++.h>
@@ -199,4 +200,5 @@ protected:
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Z3Solver);
 #endif
 
+#endif
 #endif

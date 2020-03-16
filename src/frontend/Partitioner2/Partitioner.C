@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include <Partitioner2/Partitioner.h>
 
@@ -70,7 +72,10 @@ Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // move constructor
-Partitioner::Partitioner(BOOST_RV_REF(Partitioner) other) {
+Partitioner::Partitioner(BOOST_RV_REF(Partitioner) other)
+    : solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)), autoAddCallReturnEdges_(false),
+      assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+      progress_(Progress::instance()), cfgProgressTotal_(0) {
     *this = boost::move(other);
 }
 
@@ -154,7 +159,10 @@ Partitioner::~Partitioner() {
 // Copy construction, assignment, destructor when move semantics are absent
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Partitioner::Partitioner(const Partitioner &other) {
+Partitioner::Partitioner(const Partitioner &other)
+    : solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)), autoAddCallReturnEdges_(false),
+      assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+      progress_(Progress::instance()), cfgProgressTotal_(0) {
     // WARNING: This is a dangerous operation. Both partitioners will now be pointing to the same data and confusion is likely.
     // The only safe thing to do with the other partitioner is to delete it.
     *this = other;
@@ -2974,3 +2982,5 @@ Partitioner::pythonUnparse() const {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

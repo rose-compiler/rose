@@ -1,10 +1,18 @@
 #include "sage3basic.h"
 #include "SgTypeSizeMapping.h"
+#include <sstream>
+#include <iostream>
+
+using namespace std;
 
 namespace CodeThorn {
+  
   CodeThorn::TypeSize SgTypeSizeMapping::determineTypeSize(SgType* sgType) {
     ROSE_ASSERT(_mapping.size()!=0);
     ROSE_ASSERT(sgType);
+    if(_typeToSizeMapping.find(sgType)!=_typeToSizeMapping.end()) {
+      return _typeToSizeMapping[sgType];
+    }
     switch (sgType->variantT()) {
 
     case V_SgPointerType:
@@ -53,10 +61,12 @@ namespace CodeThorn {
     case V_SgReferenceType:
       return getTypeSize(BITYPE_REFERENCE);
     case V_SgArrayType: {
-      CodeThorn::TypeSize elementTypeSize=determineElementTypeSize(isSgArrayType(sgType));
-      // TODO determine size of the array and multiply it with element type size.
-      CodeThorn::TypeSize numberOfElements=1;
-      return numberOfElements*elementTypeSize;
+      SgArrayType* arrayType=isSgArrayType(sgType);
+      CodeThorn::TypeSize elementTypeSize=determineElementTypeSize(arrayType);
+      CodeThorn::TypeSize numberOfElements=determineNumberOfElements(arrayType);
+      unsigned int totalSize=numberOfElements*elementTypeSize;
+      _typeToSizeMapping[sgType]=totalSize; // cache result
+      return totalSize;
     }
     case V_SgClassType: {
       typedef std::vector< std::pair< SgNode*, std::string > > DataMemberPointers;
@@ -69,26 +79,67 @@ namespace CodeThorn {
           sum+=determineTypeSize(varDecl->get_type());
         }
       }
+      _typeToSizeMapping[sgType]=sum;
       return sum;
     }
       //case V_SgFunctionType:
       //case V_SgTypeComplex:
 
     default:
+      // to investigate
       return 0;
     }
   }
 
   CodeThorn::TypeSize SgTypeSizeMapping::determineElementTypeSize(SgArrayType* sgType) {
-    ROSE_ASSERT(_mapping.size()!=0);
-    SgType* elementType=sgType->get_base_type();
+    //SgType* elementType=sgType->get_base_type();
+    SgType* elementType=SageInterface::getArrayElementType(sgType);
     return determineTypeSize(elementType);
   }
 
+  //! Calculate the number of elements of an array type
+  unsigned int SgTypeSizeMapping::determineNumberOfElements(SgArrayType* t) {
+    //return SageInterface::getArrayElementCount(sgType);
+    ROSE_ASSERT(t);
+    size_t result=0; 
+    SgExpression * indexExp =  t->get_index();
+    
+    // assume dimension default to 1 if not specified ,such as a[] 
+    if((indexExp == nullptr) || isSgNullExpression(indexExp)) {
+      result = 0;
+    } else { 
+      //Take advantage of the fact that the value expression is always SgUnsignedLongVal in AST
+      SgUnsignedLongVal * valExp = isSgUnsignedLongVal(indexExp);
+      SgIntVal * valExpInt = isSgIntVal(indexExp);
+      if(!(valExp || valExpInt)) {
+        //SAWYER_MESG(logger[WARN])
+        //cerr<<"Warning: Unexpected value: determineNumberOfElements: "<<indexExp->class_name()<<endl;
+        result=0;
+      } else {
+        if (valExp)
+          result = valExp->get_value(); 
+        else 
+          result = valExpInt->get_value();
+      }
+    }
+    // consider multi dimensional case 
+    SgArrayType* arraybase = isSgArrayType(t->get_base_type());
+    if (arraybase)
+      result = result * determineNumberOfElements(arraybase);
+    return result;
+  }
+  
   CodeThorn::TypeSize SgTypeSizeMapping::determineTypeSizePointedTo(SgPointerType* sgType) {
-    ROSE_ASSERT(_mapping.size()!=0);
     SgType* typePointedTo=sgType->get_base_type();
     return determineTypeSize(typePointedTo);
+  }
+
+  std::string SgTypeSizeMapping::toString() {
+    std::ostringstream ss;
+    for(auto entry : _typeToSizeMapping ) {
+      ss<<entry.first->unparseToString()<<":"<<entry.second<<std::endl;
+    }
+    return ss.str();
   }
 
 } // end of namespace CodeThorn

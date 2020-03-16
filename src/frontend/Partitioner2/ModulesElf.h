@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_ModulesElf_H
 #define ROSE_Partitioner2_ModulesElf_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Modules.h>
@@ -131,4 +134,5 @@ void buildMayReturnLists(Partitioner&);
 } // namespace
 } // namespace
 
+#endif
 #endif

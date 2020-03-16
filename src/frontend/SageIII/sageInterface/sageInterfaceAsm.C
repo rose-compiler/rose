@@ -1,6 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
-
 #include "sageInterfaceAsm.h"
+
 #include "AsmUnparser_compat.h"
 
 // These function in this file are expected to become a part of the 
@@ -621,3 +623,4 @@ SageInterface::removeInstruction(SgAsmStatement* instruction)
      l.erase(i);
    }
 
+#endif

@@ -146,6 +146,7 @@ CODETHORN_HEADER_FILES=\
   TypeSizeMapping.h \
   UDAstAttribute.h \
   VariableIdUtils.h \
+  VariableIdMappingExtended.h \
   VariableValueMonitor.h \
   Visualizer.h
 
@@ -241,6 +242,7 @@ CODETHORN_SOURCE_FILES=\
   TypeSizeMapping.C \
   UDAstAttribute.C \
   VariableIdUtils.C \
+  VariableIdMappingExtended.C \
   VariableValueMonitor.C \
   Visualizer.C
 
@@ -368,12 +370,14 @@ codethorndir=.
 # only informative
 codethorn_xHEADERS = \
   CommandLineOptions.h \
+  CodeThornCommandLineOptions.h \
   codethorn.h \
   LTL.h
 
 # codethorn sources in addition to libcodethorn and libltlthorn
 codethorn_SOURCES = \
   LTLParser.y++ \
+  CodeThornCommandLineOptions.C \
   codethorn.C
 
 ##############################################################
@@ -669,7 +673,7 @@ check-equivalence:
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
-	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump --rule-commutative-sort=no
+	@./codethorn --edg:no_warnings --normalize-all=off $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump --rule-commutative-sort=no --abstraction-mode=0
 #	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
 	@cat tmp.nsdump
 	@rm -f tmp.nsdump
@@ -713,6 +717,9 @@ clean-local:
 	rm -f a.out
 	rm -rf ../docs/doxygen
 	rm -f *.imout
+	rm -f *.exe
+	rm -f *.imout.check
+	rm -Rf make_check_log_*
 
 distclean-local: clean
 	rm -f *.tgz

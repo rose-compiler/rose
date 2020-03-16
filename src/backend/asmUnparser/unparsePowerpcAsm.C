@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "AsmUnparser.h"
 
@@ -117,3 +119,5 @@ std::string unparsePowerpcExpression(SgAsmExpression *expr, const AsmUnparser::L
                             expr==insn->operand(2)));
     return unparsePowerpcExpression(expr, labels, registers, isBranchTarget);
 }
+
+#endif

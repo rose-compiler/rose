@@ -1,5 +1,7 @@
 #ifndef Rose_BinaryAnalysis_NativeSemantics_H
 #define Rose_BinaryAnalysis_NativeSemantics_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BinaryDebugger.h>
 #include <ConcreteSemantics2.h>
@@ -450,4 +452,5 @@ private:
 } // namespace
 } // namespace
 
+#endif
 #endif

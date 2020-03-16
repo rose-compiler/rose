@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_Function_H
 #define ROSE_Partitioner2_Function_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <BaseSemantics2.h>
 #include <BinaryCallingConvention.h>
 #include <BinaryStackDelta.h>
@@ -385,4 +388,5 @@ typedef Sawyer::Container::Set<Function::Ptr> FunctionSet;
 // Class versions must be at global scope
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Function, 2);
 
+#endif
 #endif

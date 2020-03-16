@@ -1,6 +1,9 @@
 /* These are backward compatibility functions now implemented in terms of AsmUnparser */
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
+
 #include "BinaryControlFlow.h"
 #include "Diagnostics.h"
 #include "Disassembler.h"
@@ -159,3 +162,5 @@ unparseAsmStatementToFile(const std::string& filename, SgAsmStatement* stmt)
     std::ofstream of(filename.c_str());
     of << unparseAsmStatement(stmt);
 }
+
+#endif

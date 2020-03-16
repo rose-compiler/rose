@@ -26,7 +26,7 @@ public:
   //private:
   CppExprEvaluator* getCppExprEvaluator();
   void setCppExprEvaluator(CodeThorn::CppExprEvaluator* expEval);
-  void setSkipSelectedFunctionCalls(bool);
+  void setSkipUnknownFunctionCalls(bool);
   void initializeExtremalValue(Lattice& element);
 
 private:

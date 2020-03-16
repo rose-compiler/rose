@@ -64,6 +64,7 @@
 #include "CodeThornException.h"
 #include "DeadCodeAnalysis.h"
 #include "Normalization.h"
+#include "CodeThornLib.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -99,10 +100,6 @@ bool option_normalize=false;
 bool option_show_source_code=false;
 bool option_show_path=true;
 //boost::program_options::variables_map args;
-
-void myInitDiagnostics() {
-  Normalization::initDiagnostics();
-}
 
 void writeFile(std::string filename, std::string data) {
   std::ofstream myfile;
@@ -497,7 +494,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     cout << "STATUS: initializing interval global variables."<<endl;
     intervalAnalyzer->initializeGlobalVariables(root);
       
-    intervalAnalyzer->setSkipSelectedFunctionCalls(option_ignore_unknown_functions);
+    intervalAnalyzer->setSkipUnknownFunctionCalls(option_ignore_unknown_functions);
 
     intervalAnalyzer->setSolverTrace(option_trace);
     std::string funtofind=option_start_function;
@@ -550,7 +547,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     cout << "generating icfg_backward.dot."<<endl;
     write_file("icfg_backward.dot", lvAnalysis->getFlow()->toDot(lvAnalysis->getLabeler()));
 
-    lvAnalysis->setSkipSelectedFunctionCalls(option_ignore_unknown_functions);
+    lvAnalysis->setSkipUnknownFunctionCalls(option_ignore_unknown_functions);
 
     lvAnalysis->determineExtremalLabels(startFunRoot);
     lvAnalysis->run();
@@ -595,7 +592,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       std::string funtofind=option_start_function;
       RoseAst completeast(root);
       SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
-      rdAnalysis->setSkipSelectedFunctionCalls(option_ignore_unknown_functions);
+      rdAnalysis->setSkipUnknownFunctionCalls(option_ignore_unknown_functions);
       rdAnalysis->determineExtremalLabels(startFunRoot);
       rdAnalysis->run();
     
@@ -687,7 +684,8 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 int main(int argc, char* argv[]) {
   // required for Sawyer logger streams
   ROSE_INITIALIZE;
-  myInitDiagnostics();
+  CodeThorn::initDiagnostics();
+  CodeThorn::CommandLineOptions args;
 
   try {
     if(argc==1) {

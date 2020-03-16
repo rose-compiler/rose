@@ -6,6 +6,7 @@
 #include "EquivalenceChecking.h"
 #include "AstTerm.h"
 #include "OmpSupport.h"
+#include "CodeThornCommandLineOptions.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -104,7 +105,7 @@ bool DataRaceDetection::run(Analyzer& analyzer) {
       int verifyUpdateSequenceRaceConditionsTotalLoopNum=-1;
       int verifyUpdateSequenceRaceConditionsParLoopNum=-1;
       
-      analyzer.setSkipSelectedFunctionCalls(true);
+      analyzer.setSkipUnknownFunctionCalls(true);
       analyzer.setSkipArrayAccesses(true);
 
       // perform data race detection

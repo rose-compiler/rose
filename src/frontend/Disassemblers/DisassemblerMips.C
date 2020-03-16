@@ -1,6 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
-
 #include "DisassemblerMips.h"
+
 #include "integerOps.h"
 #include "Diagnostics.h"
 #include "BinaryUnparserMips.h"
@@ -3884,3 +3886,5 @@ DisassemblerMips::init(ByteOrder::Endianness sex)
 
 } // namespace
 } // namespace
+
+#endif

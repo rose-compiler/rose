@@ -3,6 +3,7 @@
 #include "TransitionGraph.h"
 #include "Analyzer.h"
 #include "CodeThornException.h"
+#include "CodeThornCommandLineOptions.h"
 
 using namespace CodeThorn;
 

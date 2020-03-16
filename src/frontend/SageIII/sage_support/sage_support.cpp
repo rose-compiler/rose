@@ -1412,7 +1412,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                            BinaryAnalysis::Partitioner2::ModulesElf::extractStaticArchive(tmpDirectory,
                                                                                                           archiveName);
                                        BOOST_FOREACH (const boost::filesystem::path &memberName, memberNames)
-                                           binary->get_libraryArchiveObjectFileNameList().push_back(memberName.native());
+                                           binary->get_libraryArchiveObjectFileNameList().push_back(memberName.string());
                                    }
 #endif // ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
                                }
@@ -2162,6 +2162,7 @@ SgSourceFile::callFrontEnd()
      return frontendErrorLevel;
    }
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 int
 SgBinaryComposite::callFrontEnd()
    {
@@ -2169,6 +2170,7 @@ SgBinaryComposite::callFrontEnd()
   // DQ (1/21/2008): This must be set for all languages
      return frontendErrorLevel;
    }
+#endif
 
 int
 SgUnknownFile::callFrontEnd()
@@ -2180,6 +2182,7 @@ SgUnknownFile::callFrontEnd()
      return 0;
    }
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* project )
     : p_genericFileList(NULL), p_interpretations(NULL)
 {
@@ -2205,6 +2208,7 @@ SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* proje
      ROSE_ASSERT(false);
 #endif
 }
+#endif
 
 int
 SgProject::RunFrontend()
@@ -2983,11 +2987,13 @@ SgSourceFile::doSetupForConstructor(const vector<string>& argv, SgProject* proje
      SgFile::doSetupForConstructor(argv, project);
    }
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 void
 SgBinaryComposite::doSetupForConstructor(const vector<string>& argv, SgProject* project)
    {
      SgFile::doSetupForConstructor(argv, project);
    }
+#endif
 
 void
 SgUnknownFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
@@ -3378,12 +3384,14 @@ SgFile::callFrontEnd()
                          break;
                        }
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
                     case V_SgBinaryComposite:
                        {
                          SgBinaryComposite* binary = const_cast<SgBinaryComposite*>(isSgBinaryComposite(this));
                          frontendErrorLevel = binary->buildAST(localCopy_argv, inputCommandLine);
                          break;
                        }
+#endif
 
                     case V_SgUnknownFile:
                        {
@@ -3681,9 +3689,14 @@ SgFile::secondaryPassOverSourceFile()
 #endif
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-            // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
+#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
+               // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
                processOpenMP(sourceFile);
 #endif
+#endif
+
+               if (sourceFile->get_openacc())
+                 printf ("OpenACC support is turned on\n");
                // Liao, 1/29/2014, handle failsafe pragmas for resilience work
                if (sourceFile->get_failsafe())
                  FailSafe::process_fail_safe_directives (sourceFile);
@@ -6070,6 +6083,7 @@ SgSourceFile::build_Cobol_AST( vector<string> argv, vector<string> inputCommandL
    }
 
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 /* Parses a single binary file and adds a SgAsmGenericFile node under this SgBinaryComposite node. */
 void
 SgBinaryComposite::buildAsmAST(string executableFileName)
@@ -6225,6 +6239,7 @@ SgBinaryFile::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLin
     int frontendErrorLevel = 0;
     return frontendErrorLevel;
 }
+#endif
 #endif
 
 int

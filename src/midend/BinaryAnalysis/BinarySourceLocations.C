@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinarySourceLocations.h>
 
@@ -258,3 +260,5 @@ operator<<(std::ostream &out, const SourceLocations &x) {
 
 } // namespace
 } // namespace
+
+#endif

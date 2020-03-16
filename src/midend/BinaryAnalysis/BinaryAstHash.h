@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_AstHash_H
 #define ROSE_BinaryAnalysis_AstHash_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <MemoryMap.h>
 #include <Partitioner2/BasicBlock.h>
@@ -61,4 +63,5 @@ namespace BinaryAnalysis {
 } // namespace
 } // namespace
 
+#endif
 #endif

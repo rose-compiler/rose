@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "Solver12.h"
 #include "Analyzer.h"
+#include "CodeThornCommandLineOptions.h"
 
 using namespace CodeThorn;
 using namespace std;
@@ -159,11 +160,11 @@ void Solver12::run() {
               {
                 fout.open(_analyzer->_stg_trace_filename.c_str(),ios::app);    // open file for appending
                 assert (!fout.fail( ));
-                fout<<"PSTATE-IN:"<<currentEStatePtr->pstate()->toString(&(_analyzer->variableIdMapping));
+                fout<<"PSTATE-IN:"<<currentEStatePtr->pstate()->toString(_analyzer->getVariableIdMapping());
                 string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,20);
                 if(sourceString.size()==20) sourceString+="...";
                 fout<<" ==>"<<"TRANSFER:"<<sourceString;
-                fout<<"==> "<<"PSTATE-OUT:"<<newEState.pstate()->toString(&(_analyzer->variableIdMapping));
+                fout<<"==> "<<"PSTATE-OUT:"<<newEState.pstate()->toString(_analyzer->getVariableIdMapping());
                 fout<<endl;
                 fout.close();
                 // logger[DEBUG]<<"generate STG-edge:"<<"ICFG-EDGE:"<<e.toString()<<endl;

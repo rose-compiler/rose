@@ -1,6 +1,8 @@
-#include <sage3basic.h>
 #include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <sage3basic.h>
 #include <BinaryDebugger.h>
+
 #include <DisassemblerX86.h>
 #include <integerOps.h>
 #include <Registers.h>
@@ -422,7 +424,7 @@ Debugger::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete
 
         // Create the child exec arguments before the fork because heap allocation is not async-signal-safe.
         char **argv = new char*[1 /*name*/ + specimen.arguments().size() + 1 /*null*/];
-        argv[0] = strdup(specimen.program().native().c_str());
+        argv[0] = strdup(specimen.program().string().c_str());
         for (size_t i = 0; i < specimen.arguments().size(); ++i)
             argv[i+1] = strdup(specimen.arguments()[i].c_str());
         argv[1 + specimen.arguments().size()] = NULL;
@@ -780,3 +782,5 @@ Debugger::setPersonality(unsigned long bits) {
 
 } // namespace
 } // namespace
+
+#endif

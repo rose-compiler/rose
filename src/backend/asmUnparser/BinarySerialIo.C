@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinarySerialIo.h>
+
 #include <Partitioner2/Partitioner.h>
 #include <BaseSemantics2.h>
 #include <Registers.h>
@@ -139,8 +142,8 @@ SerialOutput::open(const boost::filesystem::path &fileName) {
     // Open, create, or truncate the output file
     if (fileName == "-") {
         fd_ = 1; // standard output on Unix-like systems
-    } else if ((fd_ = ::open(fileName.native().c_str(), O_RDWR|O_TRUNC|O_CREAT, 0666)) == -1) {
-        throw Exception("cannot create or truncate file \"" + StringUtility::cEscape(fileName.native()) + "\"");
+    } else if ((fd_ = ::open(fileName.string().c_str(), O_RDWR|O_TRUNC|O_CREAT, 0666)) == -1) {
+        throw Exception("cannot create or truncate file \"" + StringUtility::cEscape(fileName.string()) + "\"");
     }
 
     // Wrap the file descriptor in an std::ostream interface and then a boost::archive.
@@ -148,7 +151,7 @@ SerialOutput::open(const boost::filesystem::path &fileName) {
         device_.open(fd_, boost::iostreams::never_close_handle);
         file_.open(device_);
         if (!file_.is_open())
-            throw Exception("failed to open boost stream for file \"" + StringUtility::cEscape(fileName.native()) + "\"");
+            throw Exception("failed to open boost stream for file \"" + StringUtility::cEscape(fileName.string()) + "\"");
 
         switch (format()) {
             case BINARY:
@@ -171,7 +174,7 @@ SerialOutput::open(const boost::filesystem::path &fileName) {
     } catch (const Exception &e) {
         throw;
     } catch (...) {
-        throw Exception("failed to open for writing: file \"" + StringUtility::cEscape(fileName.native()) + "\"");
+        throw Exception("failed to open for writing: file \"" + StringUtility::cEscape(fileName.string()) + "\"");
     }
 #endif
 }
@@ -264,8 +267,8 @@ SerialInput::open(const boost::filesystem::path &fileName) {
     // Open low-level file for read-only
     if (fileName == "-") {
         fd_ = 0; // standard input on Unix-like systems
-    } else if ((fd_ = ::open(fileName.native().c_str(), O_RDONLY)) == -1) {
-        throw Exception("cannot open for reading file \"" + StringUtility::cEscape(fileName.native()) + "\"");
+    } else if ((fd_ = ::open(fileName.string().c_str(), O_RDONLY)) == -1) {
+        throw Exception("cannot open for reading file \"" + StringUtility::cEscape(fileName.string()) + "\"");
     }
 
     // File size is for progress reporting, so it's okay if we don't have a size
@@ -278,7 +281,7 @@ SerialInput::open(const boost::filesystem::path &fileName) {
         device_.open(fd_, boost::iostreams::never_close_handle);
         file_.open(device_);
         if (!file_.is_open())
-            throw Exception("failed to open boost stream for file \"" + StringUtility::cEscape(fileName.native()) + "\"");
+            throw Exception("failed to open boost stream for file \"" + StringUtility::cEscape(fileName.string()) + "\"");
 
         switch (format()) {
             case BINARY:
@@ -301,7 +304,7 @@ SerialInput::open(const boost::filesystem::path &fileName) {
     } catch (const Exception &e) {
         throw;
     } catch (...) {
-        throw Exception("failed to open for reading: file \"" + StringUtility::cEscape(fileName.native()) + "\"");
+        throw Exception("failed to open for reading: file \"" + StringUtility::cEscape(fileName.string()) + "\"");
     }
 #endif
 }
@@ -368,3 +371,5 @@ SerialInput::close() {
 
 } // namespace
 } // namespace
+
+#endif

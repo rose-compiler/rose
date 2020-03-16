@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_Engine_H
 #define ROSE_Partitioner2_Engine_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <BinaryLoader.h>
 #include <BinarySerialIo.h>
 #include <boost/noncopyable.hpp>
@@ -1667,4 +1670,5 @@ private:
 } // namespace
 } // namespace
 
+#endif
 #endif

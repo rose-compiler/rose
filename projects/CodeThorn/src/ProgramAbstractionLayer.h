@@ -9,6 +9,7 @@
 #include "Flow.h"
 
 class SgProject;
+class ClassHierarchyWrapper;
 
 namespace CodeThorn {
 
@@ -21,6 +22,8 @@ namespace CodeThorn {
     Labeler* getLabeler();
     VariableIdMapping* getVariableIdMapping();
     FunctionIdMapping* getFunctionIdMapping();
+    FunctionCallMapping* getFunctionCallMapping();
+    ClassHierarchyWrapper* getClassHierarchy();
     void setModeArrayElementVariableId(bool val);
     bool getModeArrayElementVariableId();
     void setNormalizationLevel(unsigned int level);
@@ -34,6 +37,9 @@ namespace CodeThorn {
     Labeler* _labeler=nullptr;
     VariableIdMapping* _variableIdMapping=nullptr;
     FunctionIdMapping* _functionIdMapping=nullptr;
+    FunctionCallMapping* _functionCallMapping=nullptr;
+    ClassHierarchyWrapper* _classHierarchy=nullptr;
+
     unsigned int _normalizationLevel=2;
     bool _inliningOption=false;
     SgProject* _root=nullptr;

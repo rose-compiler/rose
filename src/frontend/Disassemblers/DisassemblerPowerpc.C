@@ -1,10 +1,13 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+#include "DisassemblerPowerpc.h"
+
 #include "Assembler.h"
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
 #include "Disassembler.h"
 #include "SageBuilderAsm.h"
-#include "DisassemblerPowerpc.h"
 #include "BinaryUnparserPowerpc.h"
 #include "DispatcherPowerpc.h"
 
@@ -969,3 +972,5 @@ DisassemblerPowerpc::decode_MDS_formInstruction() {
 
 } // namespace
 } // namespace
+
+#endif
