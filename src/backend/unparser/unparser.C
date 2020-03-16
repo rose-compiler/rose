@@ -1662,10 +1662,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 #endif
    }
 
-
-
-
-
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 /** Unparses a single physical, binary file.
  *
  *  Recreates the original binary file from the container representation under the SgAsmGenericFile node. This does not
@@ -1684,7 +1681,6 @@ Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
      if ( SgProject::get_verbose() > 0 )
           printf ("In Unparser::unparseAsmFile... file = %p = %s \n",file,file->class_name().c_str());
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     ROSE_ASSERT(file!=NULL);
 
     /* Genenerate an ASCII dump of the entire file contents.  Generate the dump before unparsing because unparsing may perform
@@ -1705,7 +1701,6 @@ Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
 
     /* Unparse the file to create a new executable */
     SgAsmExecutableFileFormat::unparseBinaryFormat(output_name, file);
-#endif
 }
 
 void
@@ -1716,7 +1711,6 @@ Unparser::unparseFile(SgBinaryComposite *binary, SgUnparse_Info &info)
           printf ("In Unparser::unparseFile(SgBinaryComposite *binary, SgUnparse_Info &info): file = %p = %s \n",binary,binary->class_name().c_str());
         }
 
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     ROSE_ASSERT(binary != NULL);
     ROSE_ASSERT(binary->get_binary_only()) ;
 
@@ -1780,9 +1774,8 @@ Unparser::unparseFile(SgBinaryComposite *binary, SgUnparse_Info &info)
                fclose(asm_file);
              }
         }
-#endif
 }
-
+#endif
 
 string
 unparseStatementWithoutBasicBlockToString ( SgStatement* statement )
@@ -3871,6 +3864,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                     break;
                   }
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
                case V_SgBinaryComposite:
                   {
                     SgBinaryComposite* binary = isSgBinaryComposite(file);
@@ -3883,6 +3877,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 #endif
                     break;
                   }
+#endif
 
                case V_SgUnknownFile:
                   {

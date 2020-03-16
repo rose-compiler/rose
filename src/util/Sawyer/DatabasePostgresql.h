@@ -99,8 +99,8 @@ private:
         if (!where.database.empty())
             uri += "/" + uriEscape(where.database);
 
-        connection = std::make_unique<pqxx::connection>(uri);
-        transaction = std::make_unique<pqxx::work>(*connection);
+        connection = std::unique_ptr<pqxx::connection>(new pqxx::connection(uri));
+        transaction = std::unique_ptr<pqxx::work>(new pqxx::work(*connection));
     }
 
     void close() {

@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_Assembler_H
 #define ROSE_BinaryAnalysis_Assembler_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <RoseException.h>
 
 namespace Rose {
@@ -151,4 +154,5 @@ protected:
 } // namespace
 } // namespace
 
+#endif
 #endif

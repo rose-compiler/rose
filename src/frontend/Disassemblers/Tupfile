@@ -1,19 +1,15 @@
 include_rules
 
-ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
-    SOURCES = \
-        SgAsmBlock.C SgAsmFunction.C                                                                                    \
-        SgAsmInstruction.C SgAsmArmInstruction.C SgAsmPowerpcInstruction.C SgAsmX86Instruction.C SgAsmMipsInstruction.C \
-        SgAsmM68kInstruction.C SgAsmExecutableFileFormat.C x86InstructionProperties.C                                   \
-        SgAsmInterpretation.C SgAsmIntegerValueExpression.C SgAsmFloatValueExpression.C SgAsmExpression.C SgAsmType.C   \
-        Registers.C RegisterDescriptor.C		                                                                \
-        Disassembler.C DisassemblerArm.C DisassemblerMips.C DisassemblerM68k.C DisassemblerPowerpc.C DisassemblerX86.C  \
-        Assembler.C AssemblerX86.C AssemblerX86Init.C RegisterParts.C                                                   \
-        AssemblerX86Init1.C AssemblerX86Init2.C AssemblerX86Init3.C AssemblerX86Init4.C AssemblerX86Init5.C             \
-        AssemblerX86Init6.C AssemblerX86Init7.C AssemblerX86Init8.C AssemblerX86Init9.C
-else
-    SOURCES = dummyDisassembler.C
-endif
+SOURCES = \
+    SgAsmBlock.C SgAsmFunction.C                                                                                    \
+    SgAsmInstruction.C SgAsmArmInstruction.C SgAsmPowerpcInstruction.C SgAsmX86Instruction.C SgAsmMipsInstruction.C \
+    SgAsmM68kInstruction.C SgAsmExecutableFileFormat.C x86InstructionProperties.C                                   \
+    SgAsmInterpretation.C SgAsmIntegerValueExpression.C SgAsmFloatValueExpression.C SgAsmExpression.C SgAsmType.C   \
+    Registers.C RegisterDescriptor.C		                                                                \
+    Disassembler.C DisassemblerArm.C DisassemblerMips.C DisassemblerM68k.C DisassemblerPowerpc.C DisassemblerX86.C  \
+    Assembler.C AssemblerX86.C AssemblerX86Init.C RegisterParts.C                                                   \
+    AssemblerX86Init1.C AssemblerX86Init2.C AssemblerX86Init3.C AssemblerX86Init4.C AssemblerX86Init5.C             \
+    AssemblerX86Init6.C AssemblerX86Init7.C AssemblerX86Init8.C AssemblerX86Init9.C
 
 run $(librose_compile) $(SOURCES)
 

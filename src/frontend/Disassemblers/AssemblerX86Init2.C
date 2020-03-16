@@ -6,6 +6,8 @@
 // assembler with information about how to encode each x86 instruction.                                             //
 //                                                                                                                  //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "AssemblerX86.h"
 
@@ -1264,6 +1266,8 @@ void AssemblerX86::initAssemblyRules_part2() {
 
 } // namespace
 } // namespace
+
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                       D O   N O T   E D I T                                                      //

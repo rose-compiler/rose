@@ -5,7 +5,8 @@
 // library used for reading and writing dwarf sections).  In ROSE we read the
 // Dwarf information and build special IR nodes into the AST.  This work effects
 // only AST for binary executable files (the ROSE Binary AST).
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 // DONE: Dwarf support handles sections: .debug_info, .debug_line
 // TODO: Add support for sections: .debug_pubnames, .debug_pubtypes, and .debug_macinfo
@@ -15,14 +16,7 @@
 // linking of dwarf within ROSE and optional packages used with ROSE (e.g. Intel Pin).
 #define TEST_DEBUG_DWARF_LINKING 0
 
-
-// tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
-
-// DQ (10/14/2010):  This should only be included by source files that require it.
-// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
-#include "rose_config.h"
-
 
 // Allow "string" and "pair" to be used (whether or not ROSE_HAVE_LIBDWARF id defined to be true).
 using namespace std;
@@ -3285,7 +3279,4 @@ SgAsmDwarfLineList::display( const string & label )
         }
    }
 
-
-
-
-
+#endif

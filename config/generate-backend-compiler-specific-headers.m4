@@ -290,7 +290,13 @@ compilerNameCxx="`basename ${BACKEND_CXX_COMPILER}`"
  # echo "space"
 
    includeString="{\"${compilerNameCxx}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameCxx}_HEADERS"`, $compilerHeaderDirs"
-   includeString="$includeString \"/usr/include\"}"
+
+   if test "x$build_vendor" = "xapple"; then
+     xcodeSDKPath=`xcrun --show-sdk-path`
+     includeString="$includeString \"$xcodeSDKPath/usr/include\"}"
+   else
+     includeString="$includeString \"/usr/include\"}"
+   fi
 
    AC_MSG_NOTICE([includeString = "$includeString"])
    AC_DEFINE_UNQUOTED([CXX_INCLUDE_STRING],$includeString,[Include path for backend C++ compiler.])
@@ -441,7 +447,12 @@ compilerNameC="`basename $BACKEND_C_COMPILER`"
  # echo "\n\n"
 
    includeString="{\"${compilerNameC}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameC}_HEADERS"`, $compilerHeaderDirs"
-   includeString="$includeString \"/usr/include\"}"
+   if test "x$build_vendor" = "xapple"; then
+     xcodeSDKPath=`xcrun --show-sdk-path`
+     includeString="$includeString \"$xcodeSDKPath/usr/include\"}"
+   else
+     includeString="$includeString \"/usr/include\"}"
+   fi
 
    AC_MSG_NOTICE([includeString = "$includeString"])
    AC_DEFINE_UNQUOTED([C_INCLUDE_STRING],$includeString,[Include path for backend C compiler.])

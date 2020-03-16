@@ -17,14 +17,10 @@ libsageInterface_la_SOURCES      = \
      sageBuilder_fortran.C \
      abiStuff.C \
      sageBuilder_untypedNodes.C \
-     untypedBuilder.C 
-
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   libsageInterface_la_SOURCES += \
+     untypedBuilder.C  \
      sageInterfaceAsm.C \
      sageInterface_asm.C \
      SageBuilderAsm.C
-endif
 
 libsageInterface_la_LIBADD       =
 libsageInterface_la_DEPENDENCIES =

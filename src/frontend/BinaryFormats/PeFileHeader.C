@@ -1,5 +1,8 @@
 /* Windows PE file header (SgAsmPEFileHeader and related classes) */
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "MemoryMap.h"
 #include "Diagnostics.h"
 
@@ -941,3 +944,5 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         fprintf(f, "%s%-*s = not defined\n", p, w, "loader_map");
     }
 }
+
+#endif

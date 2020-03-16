@@ -16577,12 +16577,10 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
      * @param hasRenameList True if has a rename list.
      * @param hasOnly True if has an only statement, regardless of whether a list is present.
      */
-// void c_action_use_stmt(Token_t * label, ofp_bool hasModuleNature, ofp_bool hasRenameList, ofp_bool hasOnly)
     void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id,
             Token_t *onlyKeyword, Token_t *eos, ofp_bool hasModuleNature,
             ofp_bool hasRenameList, ofp_bool hasOnly)
     {
-        // DQ (9/14/2010): I want to track the calling of use statements for debugging
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         {
             printf(

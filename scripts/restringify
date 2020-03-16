@@ -11,7 +11,26 @@ dir0="${0%/*}"
 top_srcdir="$(readlink -f "$1")"
 top_blddir="$(readlink -f "$2")"
 
-stringifier="$top_blddir/src/util/Sawyer/stringify-enums"
+if [ -e "$top_blddir/src/util/Sawyer/stringify-enums" ]; then
+    # The correct location
+    stringifier="$top_blddir/src/util/Sawyer/stringify-enums"
+else
+    (
+	cat <<EOF
+$arg0: no stringify-enums tool. Follow these steps:
+$arg0: (1) Configure ROSE like normal
+$arg0: (2a) If you're building with Tup:
+$arg0:      (1) run "tup $ROSE_BUILD/src/util/Sawyer/stringify-enums"
+$arg0: (2b) If you're building with GNU Autotools:
+$arg0:      (1) run "make -C \$ROSE_BUILD clean" since dependencies are incomplete
+$arg0:      (2) run "make -C \$ROSE_BUILD/src/util/Sawyer"
+$arg0: (2c) If you're building with CMake:
+$arg0:      This script is not supported in CMake
+$arg0: (3) Continue to build ROSE like normal
+EOF
+    ) >&2
+    exit 1
+fi
 
 if [ ! -d "$top_srcdir" -o ! -d "$top_blddir" ]; then
     echo "$arg0: specify the top of the ROSE source tree and build tree as arguments to this script" >&2
