@@ -899,7 +899,7 @@ bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * 
     auto designatorSize = designated_init_expr->size();
     for (auto it=0; it < designatorSize; it++) {
         SgExpression * expr = NULL;
-	clang::DesignatedInitExpr::Designator * D = designated_init_expr->getDesignator(it);
+        clang::DesignatedInitExpr::Designator * D = designated_init_expr->getDesignator(it);
         if (D->isFieldDesignator()) {
             SgSymbol * symbol = GetSymbolFromSymbolTable(D->getField());
             SgVariableSymbol * var_sym = isSgVariableSymbol(symbol);
