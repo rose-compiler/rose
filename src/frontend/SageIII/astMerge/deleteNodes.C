@@ -5,51 +5,125 @@
 #include "merge_support.h"
 using namespace std;
 
+#define ROSE_MERGE_DELETE_VERBOSE 0
+#define ROSE_MERGE_DELETE_DETAILS 0
+
 void preDeleteTests ( set<SgNode*> & listToDelete );
 
+struct AncestorSort {
+  std::vector<SgNode *> roots;
+  std::map< SgNode *, std::vector<SgNode *> > descendants; // direct descendants
+
+  AncestorSort(std::vector<SgNode*> const & nodes) :
+    roots(), descendants()
+  {
+    std::vector<SgNode *>::const_iterator i;
+    for (i = nodes.begin(); i != nodes.end(); ++i) {
+      SgNode * ni = *i;
+      descendants.insert(std::pair< SgNode *, std::vector<SgNode *> >(ni, std::vector<SgNode *>()));
+    }
+    for (i = nodes.begin(); i != nodes.end(); ++i) {
+      SgNode * ni = *i;
+      SgNode * pi = ni->get_parent();
+      std::map< SgNode *, std::vector<SgNode *> >::iterator d = descendants.find(pi);
+      if (d != descendants.end()) {
+        d->second.push_back(ni);
+      } else {
+        roots.push_back(ni);
+      }
+    }
+  }
+
+  void sort(std::vector<SgNode*> & nodes) {
+    while (roots.size() > 0) {
+      std::vector<SgNode *> next;
+      for (std::vector<SgNode *>::const_iterator i = roots.begin(); i != roots.end(); ++i) {
+        SgNode * r = *i;
+
+        nodes.push_back(r);
+
+        std::map< SgNode *, std::vector<SgNode *> >::const_iterator d = descendants.find(r);
+        if (d != descendants.end()) {
+          next.insert(next.end(), d->second.begin(), d->second.end());
+        }
+      }
+      roots.clear();
+      roots.insert(roots.end(), next.begin(), next.end());
+    }
+  }
+};
+
 void
-deleteNodes ( set<SgNode*> & listToDelete )
+deleteNodes ( std::set<SgNode*> & listToDelete )
    {
   // DQ (2/2/2007): Introduce tracking of performance of within AST merge
      TimingPerformance timer ("Delete the IR nodes that are replaced with shared IR nodes:");
 
-     preDeleteTests (listToDelete);
+     std::vector<SgNode*> nodes(listToDelete.begin(), listToDelete.end());
 
-     set<SgNode*>::iterator i = listToDelete.begin();
-     while ( i != listToDelete.end())
-        {
-#if 0
-          Sg_File_Info* fileInfo = (*i)->get_file_info();
-       // printf ("In deleteNodes(): listToDelete result: i = %p = %s = %s at file = %s \n",
-       //      *i,(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),(fileInfo != NULL) ? fileInfo->get_raw_filename().c_str() : "NULL");
-          printf ("In deleteNodes(): listToDelete result: i = %p = %s at file = %s \n",
-               *i,(*i)->class_name().c_str(),(fileInfo != NULL) ? fileInfo->get_raw_filename().c_str() : "NULL");
+#if ROSE_MERGE_DELETE_VERBOSE
+     std::clock_t start = std::clock();
+     printf ("Enter deleteNodes():\n");
+     printf ("  * nodes.size() = %zi\n", nodes.size());
 #endif
 
-#if 1
-         delete *i;
+     AncestorSort sorter(nodes);
+
+#if ROSE_MERGE_DELETE_VERBOSE
+     printf ("Before sorting: [%fs]\n", ( std::clock() - start ) / (double) CLOCKS_PER_SEC);
+#if ROSE_MERGE_DELETE_DETAILS
+     for (std::vector<SgNode *>::const_iterator i = nodes.begin(); i != nodes.end(); ++i) {
+       printf ("  * %p (%s): %p %p\n", *i, (*i)->class_name().c_str(), (*i)->get_freepointer(), (*i)->get_parent());
+     }
+     printf("\n");
 #endif
-          i++;
-        }
+#endif
+
+     nodes.clear();
+     sorter.sort(nodes);
+
+#if ROSE_MERGE_DELETE_VERBOSE
+     printf ("After sorting: [%fs]\n", ( std::clock() - start ) / (double) CLOCKS_PER_SEC);
+#if ROSE_MERGE_DELETE_DETAILS
+     for (std::vector<SgNode *>::const_iterator i = nodes.begin(); i != nodes.end(); ++i) {
+       printf ("  * %p (%s): %p %p\n", *i, (*i)->class_name().c_str(), (*i)->get_freepointer(), (*i)->get_parent());
+     }
+     printf("\n");
+#endif
+#endif
+
+//   preDeleteTests (listToDelete);
+
+     for (std::vector<SgNode *>::iterator it = nodes.begin(); it != nodes.end(); ++it) {
+#if ROSE_MERGE_DELETE_DETAILS
+       printf ("> %p: %p\n", *it, (*it)->get_freepointer());
+#endif
+       if ((*it)->get_freepointer() == AST_FileIO::IS_VALID_POINTER()) {
+         delete *it;
+       }
+     }
+#if ROSE_MERGE_DELETE_VERBOSE
+     printf ("Leave deleteNodes() [%fs]\n", ( std::clock() - start ) / (double) CLOCKS_PER_SEC);
+#endif
    }
 
 void
-preDeleteTests ( set<SgNode*> & listToDelete )
+preDeleteTests ( std::set<SgNode*> & listToDelete )
    {
   // DQ (2/2/2007): Introduce tracking of performance of within AST merge
      TimingPerformance timer ("Delete the IR nodes that are replaced with shared IR nodes:");
 
   // displaySet(listToDelete,"Called from preDeleteTests");
 
-     set<SgNode*>::iterator i = listToDelete.begin();
+     std::set<SgNode*>::iterator i = listToDelete.begin();
      while ( i != listToDelete.end())
         {
-#if 0
+#if ROSE_MERGE_DELETE_TRACE
           Sg_File_Info* fileInfo = (*i)->get_file_info();
           printf ("In preDeleteTests(): listToDelete result: i = %p = %s = %s at file = %s \n",
                *i,(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),(fileInfo != NULL) ? fileInfo->get_raw_filename().c_str() : "NULL");
 #endif
-
+#if 0
        // DQ (2/8/2007): Make sure that for a class declaration the type is in the delete list if we remove the associated declaration!
           SgClassDeclaration* classDeclaration = isSgClassDeclaration(*i);
           if (classDeclaration != NULL)
@@ -88,6 +162,7 @@ preDeleteTests ( set<SgNode*> & listToDelete )
             // DQ (7/4/2010): Make this a warning since it happens for an odd corner of C++ (un-named PADDING_VARIABLE declarations in classes).
             // ROSE_ASSERT(listToDelete.find(classType->get_declaration()) == listToDelete.end());
             }
+#endif
 
           i++;
         }
@@ -95,7 +170,7 @@ preDeleteTests ( set<SgNode*> & listToDelete )
 
 
 void
-deleteSetErrorCheck( SgProject* project, const set<SgNode*> & listToDelete )
+deleteSetErrorCheck( SgProject* project, const std::set<SgNode*> & listToDelete )
    {
   // DQ (2/15/2007): Error checking on the finalDeleteSet
 
@@ -118,7 +193,7 @@ deleteSetErrorCheck( SgProject* project, const set<SgNode*> & listToDelete )
           displaySet(intersectionSet,"intersectionSet");
         }
 
-     set<SgNode*>::iterator i = intersectionSet.begin();
+     std::set<SgNode*>::iterator i = intersectionSet.begin();
      while ( i != intersectionSet.end())
         {
 #if 1

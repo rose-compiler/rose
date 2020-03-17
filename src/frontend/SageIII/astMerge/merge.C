@@ -1037,6 +1037,34 @@ accumulateDeleteSet ( SgProject* project, const set<SgNode*> & saveSet )
 
                void visit (SgNode* node)
                   {
+
+                    if (isSgTypeUnknown(node)) return;
+                    if (isSgTypeChar(node)) return;
+                    if (isSgTypeSignedChar(node)) return;
+                    if (isSgTypeUnsignedChar(node)) return;
+                    if (isSgTypeShort(node)) return;
+                    if (isSgTypeSignedShort(node)) return;
+                    if (isSgTypeUnsignedShort(node)) return;
+                    if (isSgTypeInt(node)) return;
+                    if (isSgTypeSignedInt(node)) return;
+                    if (isSgTypeUnsignedInt(node)) return;
+                    if (isSgTypeLong(node)) return;
+                    if (isSgTypeSignedLong(node)) return;
+                    if (isSgTypeUnsignedLong(node)) return;
+                    if (isSgTypeVoid(node)) return;
+                    if (isSgTypeGlobalVoid(node)) return;
+                    if (isSgTypeWchar(node)) return;
+                    if (isSgTypeFloat(node)) return;
+                    if (isSgTypeDouble(node)) return;
+                    if (isSgTypeLongLong(node)) return;
+                    if (isSgTypeSignedLongLong(node)) return;
+                    if (isSgTypeUnsignedLongLong(node)) return;
+                    if (isSgTypeLongDouble(node)) return;
+                    if (isSgTypeBool(node)) return;
+                    if (isSgNamedType(node)) return;
+                    if (isSgPartialFunctionModifierType(node)) return;
+                    if (isSgTypeEllipse(node)) return;
+                    if (isSgTypeDefault(node)) return;
                     if (saveSet.find(node) == saveSet.end())
                        {
 #if 0
