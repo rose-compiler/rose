@@ -554,7 +554,7 @@ ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm $(JAVA_JVM_LINK) \
   $(ROSE_YAML_LIBS_WITH_PATH) $(ROSE_LIBMAGIC_LIBS_WITH_PATH) $(ROSE_READLINE_LIBS_WITH_PATH) \
   $(ROSE_DLIB_LIBS_WITH_PATH) $(ROSE_GCRYPT_LIBS_WITH_PATH) $(ROSE_LIBPQXX_LIBS_WITH_PATH) \
   $(ROSE_ADA_LIBS_WITH_PATH) $(ROSE_COBOL_PT_LIBS_WITH_PATH) $(ROSE_PYTHON_LIBS_WITH_PATH) \
-  $(ROSE_QUAD_FLOAT_MATH) $(CLANG_LDFLAGS) -ltinfo
+  $(ROSE_QUAD_FLOAT_MATH) $(CLANG_LDFLAGS)
 
 #========================================================================================================================
 # These are the "-R directory" switches that need to be passed to libtool running in link mode to make sure that ROSE
