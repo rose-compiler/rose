@@ -6,7 +6,7 @@ AC_DEFUN([ROSE_SUPPORT_EDG], [
     ###############################################################################################################################
 
     AC_ARG_ENABLE([edg-version],
-                  [AC_HELP_STRING([--with-edg-version=VERSION],
+                  [AC_HELP_STRING([--enable-edg-version=VERSION],
                                   [Specifies the version of EDG to use as the parser for C/C++ when ROSE is configured
                                    to be able to analyze C and C++. Specifying a version number with this switch causes
                                    that version of the EDG library to be used by either compiling it from source code
