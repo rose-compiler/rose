@@ -17,7 +17,7 @@ SgType * ClangToSageTranslator::buildTypeFromQualifiedType(const clang::QualType
         if (qualifier.hasRestrict()) sg_modifer.setRestrict();
         
         if (qualifier.hasAddressSpace()) {
-            unsigned addrspace = qualifier.getAddressSpace();
+            clang::LangAS addrspace = qualifier.getAddressSpace();
             switch (addrspace) {
                 case clang::LangAS::opencl_global:
                     sg_modifer.setOpenclGlobal();
@@ -30,7 +30,7 @@ SgType * ClangToSageTranslator::buildTypeFromQualifiedType(const clang::QualType
                     break;
                 default:
                     sg_modifer.setAddressSpace();
-                    sg_modifer.set_address_space_value(addrspace);
+                    sg_modifer.set_address_space_value(static_cast<unsigned int>(addrspace));
             }
         }
         modified_type = SgModifierType::insertModifierTypeIntoTypeTable(modified_type);
@@ -255,6 +255,8 @@ bool ClangToSageTranslator::VisitAttributedType(clang::AttributedType * attribut
     SgModifierType * modified_type = SgModifierType::createType(type);
     SgTypeModifier & sg_modifer = modified_type->get_typeModifier();
 
+//(01/29/2020) Pei-Hung needs to revisit this part.
+/*
     switch (attributed_type->getAttrKind()) {
         case clang::AttributedType::attr_noreturn:             sg_modifer.setGnuAttributeNoReturn();      break;
         case clang::AttributedType::attr_cdecl:                sg_modifer.setGnuAttributeCdecl();         break;
@@ -285,7 +287,7 @@ bool ClangToSageTranslator::VisitAttributedType(clang::AttributedType * attribut
         default:
             std::cerr << "Unknown attribute" << std::endl; ROSE_ASSERT(false);
     } 
-
+*/
     *node = SgModifierType::insertModifierTypeIntoTypeTable(modified_type);;
 
     return VisitType(attributed_type, node);
@@ -340,7 +342,7 @@ bool ClangToSageTranslator::VisitBuiltinType(clang::BuiltinType * builtin_type, 
         case clang::BuiltinType::BoundMember:
         case clang::BuiltinType::UnknownAny:
         default:
-            std::cerr << "Unknown builtin type: " << builtin_type->getName(p_compiler_instance->getLangOpts()) << " !" << std::endl;
+            std::cerr << "Unknown builtin type: " << builtin_type->getName(p_compiler_instance->getLangOpts()).str() << " !" << std::endl;
             exit(-1);
     }
 
@@ -385,7 +387,7 @@ bool ClangToSageTranslator::VisitFunctionNoProtoType(clang::FunctionNoProtoType 
 
     SgFunctionParameterTypeList * param_type_list = new SgFunctionParameterTypeList();
 
-    SgType * ret_type = buildTypeFromQualifiedType(function_no_proto_type->getResultType()); 
+    SgType * ret_type = buildTypeFromQualifiedType(function_no_proto_type->getReturnType()); 
 
     *node = SageBuilder::buildFunctionType(ret_type, param_type_list);
 
@@ -399,8 +401,8 @@ bool ClangToSageTranslator::VisitFunctionProtoType(clang::FunctionProtoType * fu
 
     bool res = true;
     SgFunctionParameterTypeList * param_type_list = new SgFunctionParameterTypeList();
-    for (unsigned i = 0; i < function_proto_type->getNumArgs(); i++) {
-        SgType * param_type = buildTypeFromQualifiedType(function_proto_type->getArgType(i));
+    for (unsigned i = 0; i < function_proto_type->getNumParams(); i++) {
+        SgType * param_type = buildTypeFromQualifiedType(function_proto_type->getParamType(i));
 
         param_type_list->append_argument(param_type);
     }
@@ -409,7 +411,7 @@ bool ClangToSageTranslator::VisitFunctionProtoType(clang::FunctionProtoType * fu
         param_type_list->append_argument(SgTypeEllipse::createType());
     }
 
-    SgType * ret_type = buildTypeFromQualifiedType(function_proto_type->getResultType());
+    SgType * ret_type = buildTypeFromQualifiedType(function_proto_type->getReturnType());
 
     SgFunctionType * func_type = SageBuilder::buildFunctionType(ret_type, param_type_list);
     if (function_proto_type->isVariadic()) func_type->set_has_ellipses(1);
