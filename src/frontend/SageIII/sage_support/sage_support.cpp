@@ -3694,6 +3694,9 @@ SgFile::secondaryPassOverSourceFile()
                processOpenMP(sourceFile);
 #endif
 #endif
+
+               if (sourceFile->get_openacc())
+                 printf ("OpenACC support is turned on\n");
                // Liao, 1/29/2014, handle failsafe pragmas for resilience work
                if (sourceFile->get_failsafe())
                  FailSafe::process_fail_safe_directives (sourceFile);

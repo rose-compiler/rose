@@ -2820,6 +2820,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
              {
             // Handle different specific cases derived from SgSupport 
             // (e.g. template parameters and template arguments).
+               ASSERT_not_null(astNode);
                switch (astNode->variantT())
                   {
 #if 0
@@ -3621,6 +3622,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
           SgSourceFile* source_file = isSgSourceFile(file);
           if (source_file != NULL)
              {
+               ASSERT_not_null(project);
                if (project->get_unparser__clobber_input_file())
                   {
                  // TOO1 (3/20/2014): Clobber the original input source file X_X

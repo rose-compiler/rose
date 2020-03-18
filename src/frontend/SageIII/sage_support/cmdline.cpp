@@ -3209,6 +3209,12 @@ SgFile::usage ( int status )
 "     -rose:OpenMP:lowering, -rose:openmp:lowering\n"
 "                             on top of -rose:openmp:ast_only, transform AST with OpenMP nodes into multithreaded code \n"
 "                             targeting GCC GOMP runtime library\n"
+"     -rose:OpenACC, -rose:openacc\n"
+"                             follow OpenACC 3.0 specification for Fortran, perform one of the following actions:\n"
+"     -rose:OpenACC:parse_only, -rose:openacc:parse_only\n"
+"                             parse OpenACC directives to OmpAccAttributes, no further actions (default behavior now)\n"
+"     -rose:OpenACC:ast_only, -rose:openacc:ast_only\n"
+"                             on top of -rose:openacc:parse_only, build OpenACC AST nodes from OmpAccAttributes, no further actions\n"
 "     -rose:UPC_only, -rose:UPC\n"
 "                             follow Unified Parallel C 1.2 specification\n"
 "     -rose:UPCxx_only, -rose:UPCxx\n"
@@ -4635,6 +4641,71 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              }
         }
 
+  // Liao 3/12/2020: handle options for OpenACC support
+  // Allows handling of OpenACC "!$omp" directives in free form and "c$omp", *$omp and "!$omp" directives in fixed form, enables "!$" conditional
+  // compilation sentinels in free form and "c$", "*$" and "!$" sentinels in fixed form and when linking arranges for the OpenMP runtime library
+  // to be linked in. (Not implemented yet).
+     set_openacc(false);
+     //string ompmacro="-D_OPENMP="+ boost::to_string(OMPVERSION); // Mac OS complains this function does not exist!
+     string ompacc_macro="-D_OPENACC="+ StringUtility::numberToString(3); 
+     ROSE_ASSERT (get_openacc() == false);
+     ROSE_ASSERT (get_openacc_parse_only() == false); 
+     ROSE_ASSERT (get_openacc_ast_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(OpenACC|openacc)",true) == true 
+         ||CommandlineProcessing::isOption(argv,"-","(openacc|fopenacc)",true) == true
+         )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("OpenACC option specified \n");
+          set_openacc(true);
+          set_openacc_parse_only(true); // default is parse_only for now
+        //side effect for enabling OpenACC, define the macro as required
+         //This new option does not reach the backend compiler
+         //But it is enough to reach EDG only.
+         //We can later on back end option to turn on their OpenMP handling flags,
+         //like -fopenacc for GCC, depending on the version of gcc
+         //which will define this macro for GCC
+          argv.push_back(ompacc_macro);
+        }
+
+     // Process sub-options 
+     // We want to turn on OpenACC if any of its suboptions is used. 
+     if ( CommandlineProcessing::isOption(argv,"-rose:OpenACC:","parse_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"-rose:openacc:","parse_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"--rose:OpenACC:","parse_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"--rose:openacc:","parse_only",true) == true
+         )
+     {
+       if ( SgProject::get_verbose() >= 1 )
+         printf ("OpenACC sub option for parsing specified \n");
+       set_openacc_parse_only(true);
+       // turn on OpenMP if not set explicitly by standalone -rose:OpenMP
+       if (!get_openacc())
+       {
+         set_openacc(true);
+         argv.push_back(ompacc_macro);
+       }
+     }
+
+     if ( CommandlineProcessing::isOption(argv,"-rose:OpenACC:","ast_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"-rose:openacc:","ast_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"--rose:openacc:","ast_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"--rose:OpenACC:","ast_only",true) == true
+         )
+     {
+       if ( SgProject::get_verbose() >= 1 )
+         printf ("OpenACC option for AST construction specified \n");
+       set_openacc_ast_only(true);
+       // we don't want to stop after parsing  if we want to proceed to ast creation before stopping
+       set_openacc_parse_only(false);
+       if (!get_openacc())
+       {
+         set_openacc(true);
+         argv.push_back(ompacc_macro);
+       }
+     }
+
+
   // Liao 10/28/2008: I changed it to a more generic flag to indicate support for either Fortran or C/C++
   // DQ (8/19/2007): I have added the option here so that we can start to support OpenMP for Fortran.
   // Allows handling of OpenMP "!$omp" directives in free form and "c$omp", *$omp and "!$omp" directives in fixed form, enables "!$" conditional
@@ -5381,6 +5452,14 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)^", "(upc_threads)", &integerOption, 1);
      optionCount = sla(argv, "-rose:", "($)", "(C|C_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(UPC|UPC_only)",1);
+
+     optionCount = sla(argv, "-rose:", "($)", "(OpenACC|openacc)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(openacc:parse_only|OpenACC:parse_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(openacc:ast_only|OpenACC:ast_only)",1);
+     // support --rose:openacc variants
+     optionCount = sla(argv, "--rose:", "($)", "(openacc:parse_only|OpenACC:parse_only)",1);
+     optionCount = sla(argv, "--rose:", "($)", "(openacc:ast_only|OpenACC:ast_only)",1);
+
      optionCount = sla(argv, "-rose:", "($)", "(OpenMP|openmp)",1);
      optionCount = sla(argv, "-rose:", "($)", "(openmp:parse_only|OpenMP:parse_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(openmp:ast_only|OpenMP:ast_only)",1);

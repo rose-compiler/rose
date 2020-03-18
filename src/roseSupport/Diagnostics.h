@@ -271,6 +271,21 @@ namespace Rose {
  *  done by adjusting the @ref Rose::Diagnostics::mprefix, which is a pointer to a @ref Sawyer::Message::Prefix object. The
  *  adjustments should be done after the ROSE library is initialized (e.g., via ROSE_INITIALIZE, normally the first thing
  *  in "main").
+ *
+ * @section diagnostics_destinations Sending output to other locations
+ *
+ *  Diagnostic output always goes to standard error by default in ROSE and ROSE-based tools.  If you want to send your tool's
+ *  output to a file instead, you can do something like follows instead of the usual call to @ref Rose::Diagnostics::initAndRegister.
+ *
+ * @code
+ *  std::ofstream output("tool-errors.txt"); // must remain open for duration of run
+ *  Sawyer::Message::DestinationPtr destination = Sawyer::Message::StreamSink::instance(output, Rose::Diagnostics::mprefix);
+ *  mlog = Facility("tool", destination); // your tool's global diagnostic facility
+ *  Sawyer::Message::mfacilities.insertAndAdjust(mlog); // so it can be controled by ROSE's command-line processing
+ * @endcode
+ *
+ *  Be sure to flush the file by closing it explicitly or implicitly since we didn't configure it to be unbuffered or line
+ *  buffered. Failure to do any of these steps could result in your file not actually getting any diagnostic messages.
  */
 namespace Diagnostics {
 
