@@ -684,32 +684,18 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      int n = enum_decl->get_enumerators().size();
      BOOST_FOREACH(SgInitializedName* init_name, enum_decl->get_enumerators())
          {
-            bool has_initializer = false;
-            SgExpression* expr = NULL;
-            SgName name = init_name->get_name();
+            std::string name = init_name->get_name().str();
+            name.replace(0, 3, "V(");
+            name.append(")");
 
-            SgInitializer* init_expr = init_name->get_initializer();
-
-            if (init_expr) {
-               has_initializer = true;
-
-               ROSE_ASSERT(init_expr);
-               SgAssignInitializer* assign_expr = isSgAssignInitializer(init_expr);
-               ROSE_ASSERT(assign_expr);
-               expr = assign_expr->get_operand();
-               ROSE_ASSERT(expr);
-            }
+            SgAssignInitializer* assign_expr = isSgAssignInitializer(init_name->get_initializer());
+            ROSE_ASSERT(assign_expr);
+            SgEnumVal* enum_val = isSgEnumVal(assign_expr->get_operand());
+            ROSE_ASSERT(enum_val);
 
             curprint("  ");
-
-            if (has_initializer) {
-               unparseExpression(expr, info);
-            }
-
-            // added V(...) to name during traversal
-            //            curprint(" V(");
-            curprint(name.str());
-            //            curprint(")");
+            curprint(std::to_string(enum_val->get_value()));
+            curprint(name);
             if (--n > 0) curprint(",");
             unp->cur.insert_newline(1);
          }

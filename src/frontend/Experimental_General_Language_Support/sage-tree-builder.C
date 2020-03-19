@@ -480,12 +480,48 @@ Leave(SgDerivedTypeStatement* derived_type_stmt)
 //
 
 void SageTreeBuilder::
-Enter(SgExprStatement* &assign_stmt, const std::vector<SgExpression*> &vars, SgExpression* rhs, const std::string& label)
+Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExpression*> &vars, const std::string& label)
 {
    mlog[INFO] << "SageTreeBuilder::Enter(SgExprStatement* &, ...) \n";
 
+   SgEnumVal* old_val = isSgEnumVal(rhs);
+
+   if (old_val && old_val->get_value() == -1) {
+      SgEnumType* enum_type = isSgEnumType(vars[0]->get_type());
+      ROSE_ASSERT(enum_type);
+      SgEnumVal* enum_val = ReplaceEnumVal(enum_type, old_val->get_name());
+
+      rhs = enum_val;
+      delete old_val;
+   }
+
    SgAssignOp* assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(vars[0], rhs);
    assign_stmt = SageBuilder::buildExprStatement_nfi(assign_op);
+}
+
+SgEnumVal* SageTreeBuilder::
+ReplaceEnumVal(SgEnumType* enum_type, SgName name)
+{
+   SgEnumDeclaration* enum_decl = isSgEnumDeclaration(enum_type->get_declaration());
+   ROSE_ASSERT(enum_decl);
+
+   SgInitializedNamePtrList &enum_list = enum_decl->get_enumerators();
+   SgInitializedName* init_name = nullptr;
+
+   BOOST_FOREACH(SgInitializedName* status_constant, enum_list) {
+      if (status_constant->get_name() == name) {
+         init_name = status_constant;
+      }
+   }
+
+   ROSE_ASSERT(init_name);
+   SgEnumFieldSymbol* enum_symbol = isSgEnumFieldSymbol(init_name->get_symbol_from_symbol_table());
+   ROSE_ASSERT(enum_symbol);
+
+   SgEnumVal* enum_val = SageBuilder::buildEnumVal(enum_symbol);
+   ROSE_ASSERT(enum_val);
+
+   return enum_val;
 }
 
 void SageTreeBuilder::
@@ -644,9 +680,27 @@ Enter(SgEnumDeclaration* &enum_decl, const std::string &name, std::list<SgInitia
    enum_decl = SageBuilder::buildEnumDeclaration_nfi(name, SageBuilder::topScopeStack());
    ROSE_ASSERT(enum_decl);
 
-   BOOST_FOREACH(SgInitializedName *status_constant, status_list) {
+   BOOST_FOREACH(SgInitializedName* status_constant, status_list) {
       enum_decl->append_enumerator(status_constant);
       status_constant->set_scope(enum_decl->get_scope());
+
+      SgEnumType* enum_type = isSgEnumType(status_constant->get_typeptr());
+      ROSE_ASSERT(enum_type);
+      enum_type->set_declaration(enum_decl);
+
+      SgEnumFieldSymbol* enum_field_symbol = new SgEnumFieldSymbol(status_constant);
+      ROSE_ASSERT(enum_field_symbol);
+      enum_decl->get_scope()->insert_symbol(status_constant->get_name(), enum_field_symbol);
+
+      SgAssignInitializer* assign_init = isSgAssignInitializer(status_constant->get_initializer());
+      ROSE_ASSERT(assign_init);
+      SgIntVal* intval = isSgIntVal(assign_init->get_operand_i());
+      ROSE_ASSERT(intval);
+
+      SgEnumVal* new_operand = SageBuilder::buildEnumVal(intval->get_value(), enum_decl,
+                                                         status_constant->get_name());
+      assign_init->set_operand_i(new_operand);
+      delete intval;
    }
 }
 

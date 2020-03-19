@@ -1093,25 +1093,58 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgInitial
 
 // NOTE: Name -> StatusConstant , Letter -> StatusConstant, ReservedWord -> StatusConstant
    char* name;
-   SgAssignInitializer* initializer = nullptr;
+
+   init_name = nullptr;
 
    if (ATmatch(term, "StatusConstant(<str>)", &name)) {
       std::string constant_name = name;
+      constant_name.insert(0, "_V_");
 
-      constant_name.insert(0, "V(");
-      constant_name.append(")");
+      // This is an enumerator that is part of TypeDeclaration (SgEnumDeclaration).
+      // The init_expr parameter will be the initialized value for the enumerator.
+      ROSE_ASSERT(init_expr);
 
-      SgType* type = SageBuilder::buildIntType();
+      SgType* enum_type = new SgEnumType();
+      ROSE_ASSERT(enum_type);
 
-      if (init_expr) {
-         initializer = SageBuilder::buildAssignInitializer_nfi(init_expr, type);
-         ROSE_ASSERT(initializer);
-         //      setSourcePosition(init_name, term);
-      }
-
-      init_name = SageBuilder::buildInitializedName_nfi(constant_name, type, initializer);
-
+      SgAssignInitializer* initializer = SageBuilder::buildAssignInitializer_nfi(init_expr, enum_type);
+      init_name = SageBuilder::buildInitializedName_nfi(constant_name, enum_type, initializer);
    } else return ATfalse;
+
+   ROSE_ASSERT(init_name);
+   setSourcePosition(init_name, term);
+
+   return ATtrue;
+}
+
+ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgExpression* &expr)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_StatusConstant: %s\n", ATwriteToString(term));
+#endif
+
+// NOTE: Name -> StatusConstant , Letter -> StatusConstant, ReservedWord -> StatusConstant
+   char* name;
+   SgEnumVal* enum_val;
+
+   expr = nullptr;
+
+   if (ATmatch(term, "StatusConstant(<str>)", &name)) {
+      std::string constant_name = name;
+      constant_name.insert(0, "_V_");
+
+      // An enumerator in Jovial is scoped! Therefore we have to worry about finding the correct one.
+      // Build temporary EnumVal with no SgEnumDeclaration pointer to avoid name clashes with another SgEnumType.
+      // The correct SgEnumVal will be built by SageTreeBuilder once we know the correct type.
+      // In this case an expression is returned (for example the rhs of an assignment).
+
+      enum_val = SageBuilder::buildEnumVal(-1, nullptr, constant_name);
+   } else return ATfalse;
+
+   ROSE_ASSERT(enum_val);
+   setSourcePosition(enum_val term);
+
+   expr = enum_val;
 
    return ATtrue;
 }
@@ -1151,13 +1184,22 @@ ATbool ATermToSageJovialTraversal::traverse_DefaultSublist(ATerm term, std::list
 
    ATerm t_sublist;
    SgInitializedName* init_name;
+   SgExpression* init_expr = nullptr;
+   int value = 0;
 
    if (ATmatch(term, "DefaultSublist(<term>)", &t_sublist)) {
       ATermList tail = (ATermList) ATmake("<term>", t_sublist);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
-         if (traverse_StatusConstant(head, init_name)) {
+
+         init_expr = SageBuilder::buildIntVal(value);
+         ROSE_ASSERT(init_expr);
+         SageInterface::setSourcePosition(init_expr);
+
+         ++value;
+
+         if (traverse_StatusConstant(head, init_name, init_expr)) {
             status_list.push_back(init_name);
          } else return ATfalse;
       }
@@ -2660,7 +2702,6 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedPresetSublist(ATerm term, S
    // TODO_COMPOOL
       SgInitializer* sg_preset = nullptr;
       cerr << "WARNING UNIMPLEMENTED: SpecifiedPresetSublist\n";
-      return ATtrue;
 
       if (traverse_PresetIndexSpecifier(t_preset_index_spec, sg_preset)) {
          // MATCHED PresetIndexSpecifier
@@ -4484,7 +4525,7 @@ ATbool ATermToSageJovialTraversal::traverse_AssignmentStatement(ATerm term)
       }
 
    // Begin SageTreeBuilder
-      sage_tree_builder.Enter(assign_stmt, vars, rhs, std::string());
+      sage_tree_builder.Enter(assign_stmt, rhs, vars, std::string());
 
    } else return ATfalse;
    ROSE_ASSERT(assign_stmt != nullptr);
@@ -6151,13 +6192,8 @@ ATbool ATermToSageJovialTraversal::traverse_StatusFormula(ATerm term, SgExpressi
    SgInitializedName* init_name = nullptr;
 
    if (ATmatch(term, "StatusFormula(<term>)", &t_next)) {
-      if (traverse_StatusConstant(t_next, init_name)) {
-         // StatusConstant -> StatusFormula
+      if (traverse_StatusConstant(t_next, expr)) {
          // MATCHED StatusConstant
-
-      // TODO - WARNING: FIXME: don't know what to do with this
-         //         return ATfalse;
-         cerr << "WARNING UNIMPLEMENTED: StatusFormula - StatusConstant\n";
       } else return ATfalse;
 
    } else if (ATmatch(term, "StatusFormulaParens(<term>)", &t_next)) {

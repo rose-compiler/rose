@@ -109,8 +109,10 @@ public:
 
 // Statements
 //
-   void Enter(SgExprStatement* &, const std::vector<SgExpression*> &, SgExpression*, const std::string&);
+   void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &, const std::string &);
    void Leave(SgExprStatement*);
+
+   SgEnumVal* ReplaceEnumVal(SgEnumType*, SgName);
 
 // Jovial specific nodes
 //
