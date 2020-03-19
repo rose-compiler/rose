@@ -2257,16 +2257,6 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("bool", "suppressConstantFoldingPostProcessing", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
-  // (instead of from a saved string available from the EDG frontend). This option is false
-  // by default until we verifiy the we can support unparsing templates from the AST.  When
-  // true, this option permits transforamtions on the AST representing template declarations 
-  // to be output in the generated source code from ROSE.  Until thenm user defined transformations 
-  // of AST representing the template declarations can be done, howevr only the original (as 
-  // normalized by EDG) string representation of the template will be unparsed by ROSE.
-     Project.setDataPrototype("bool", "unparseTemplateDeclarationsFromAST", "= false",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // Pei-Hung (8/6/2014): This option -rose:appendPID appends PID into the temporary output name to avoid issues in parallel compilation. 
      Project.setDataPrototype("bool", "appendPID", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
