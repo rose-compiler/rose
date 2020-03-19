@@ -1085,7 +1085,7 @@ ATbool ATermToSageJovialTraversal::traverse_CharacterItemDescription(ATerm term,
 //========================================================================================
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgInitializedName* &init_name, SgExpression* init_expr)
+ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgInitializedName* &init_name, SgType* &enum_type, SgExpression* init_expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_StatusConstant: %s\n", ATwriteToString(term));
@@ -1104,8 +1104,11 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgInitial
       // The init_expr parameter will be the initialized value for the enumerator.
       ROSE_ASSERT(init_expr);
 
-      SgType* enum_type = new SgEnumType();
-      ROSE_ASSERT(enum_type);
+      // Only one SgEnumType should be created and shared between all enumerators
+      if (!enum_type) {
+         enum_type = new SgEnumType();
+         ROSE_ASSERT(enum_type);
+      }
 
       SgAssignInitializer* initializer = SageBuilder::buildAssignInitializer_nfi(init_expr, enum_type);
       init_name = SageBuilder::buildInitializedName_nfi(constant_name, enum_type, initializer);
@@ -1142,7 +1145,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgExpress
    } else return ATfalse;
 
    ROSE_ASSERT(enum_val);
-   setSourcePosition(enum_val term);
+   setSourcePosition(enum_val, term);
 
    expr = enum_val;
 
@@ -1157,16 +1160,17 @@ traverse_StatusItemDescription(ATerm term, std::list<SgInitializedName*> &status
 #endif
 
    ATerm t_size, t_sublist;
+   SgType* enum_type = nullptr;
 
    if (ATmatch(term, "StatusItemDescription(<term>,<term>)", &t_size, &t_sublist)) {
       if (traverse_OptItemSize(t_size, status_size)) {
          // MATCHED OptItemSize
       } else return ATfalse;
 
-      if (traverse_DefaultSublist(t_sublist, status_list)) {
+      if (traverse_DefaultSublist(t_sublist, status_list, enum_type)) {
          // MATCHED DefaultSublist
       }
-      else if (traverse_StatusList(t_sublist, status_list)) {
+      else if (traverse_StatusList(t_sublist, status_list, enum_type)) {
          // MATCHED StatusList
       }
       else return ATfalse;
@@ -1176,7 +1180,7 @@ traverse_StatusItemDescription(ATerm term, std::list<SgInitializedName*> &status
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_DefaultSublist(ATerm term, std::list<SgInitializedName*> &status_list)
+ATbool ATermToSageJovialTraversal::traverse_DefaultSublist(ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_DefaultSublist: %s\n", ATwriteToString(term));
@@ -1199,7 +1203,7 @@ ATbool ATermToSageJovialTraversal::traverse_DefaultSublist(ATerm term, std::list
 
          ++value;
 
-         if (traverse_StatusConstant(head, init_name, init_expr)) {
+         if (traverse_StatusConstant(head, init_name, enum_type, init_expr)) {
             status_list.push_back(init_name);
          } else return ATfalse;
       }
@@ -1208,7 +1212,7 @@ ATbool ATermToSageJovialTraversal::traverse_DefaultSublist(ATerm term, std::list
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_OptDefaultSublist(ATerm term, std::list<SgInitializedName*> &status_list)
+ATbool ATermToSageJovialTraversal::traverse_OptDefaultSublist(ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptDefaultSublist: %s\n", ATwriteToString(term));
@@ -1220,7 +1224,7 @@ ATbool ATermToSageJovialTraversal::traverse_OptDefaultSublist(ATerm term, std::l
       // MATCHED no default sublist
    }
    else if (ATmatch(term, "OptDefaultSublist(<term>)", &t_sublist)) {
-      if (traverse_DefaultSublist(t_sublist, status_list)) {
+      if (traverse_DefaultSublist(t_sublist, status_list, enum_type)) {
          // MATCHED DefaultSublist
       } else return ATfalse;
    }
@@ -1229,7 +1233,7 @@ ATbool ATermToSageJovialTraversal::traverse_OptDefaultSublist(ATerm term, std::l
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_StatusList(ATerm term, std::list<SgInitializedName*> &status_list)
+ATbool ATermToSageJovialTraversal::traverse_StatusList(ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_StatusList: %s\n", ATwriteToString(term));
@@ -1243,7 +1247,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusList(ATerm term, std::list<SgI
    // WARNING: do not create multiple lists !!!
 
    if (ATmatch(term, "StatusList(<term>,<term>)", &t_sublist, &t_specified)) {
-      if (traverse_OptDefaultSublist(t_sublist, status_list)) {
+      if (traverse_OptDefaultSublist(t_sublist, status_list, enum_type)) {
          // MATCHED OptDefaultSublist
       } else return ATfalse;
 
@@ -1251,7 +1255,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusList(ATerm term, std::list<SgI
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
-         if (traverse_SpecifiedSublist(head, status_list)) {
+         if (traverse_SpecifiedSublist(head, status_list, enum_type)) {
            // MATCHED SpecifiedSublist
          } else return ATfalse;
       }
@@ -1260,7 +1264,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusList(ATerm term, std::list<SgI
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_SpecifiedSublist(ATerm term, std::list<SgInitializedName*> &status_list)
+ATbool ATermToSageJovialTraversal::traverse_SpecifiedSublist(ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SpecifiedSublist: %s\n", ATwriteToString(term));
@@ -1277,12 +1281,28 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedSublist(ATerm term, std::li
          // MATCHED NumericFormula
       } else return ATfalse;
 
+      ROSE_ASSERT(init_expr);
+      int pass = 1;
+      int value;
+
       ATermList tail = (ATermList) ATmake("<term>", t_constant);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
-         if (traverse_StatusConstant(head, init_name, init_expr)) {
+         if (pass == 2) {
+            SgIntVal* intval = isSgIntVal(init_expr);
+            ROSE_ASSERT(intval);
+            value = intval->get_value();
+
+            init_expr = SageBuilder::buildIntVal(++value);
+         }
+         if (pass > 2) {
+            init_expr = SageBuilder::buildIntVal(++value);
+         }
+
+         if (traverse_StatusConstant(head, init_name, enum_type, init_expr)) {
             status_list.push_back(init_name);
+            ++pass;
          }
          else return ATfalse;
       }
@@ -5588,8 +5608,6 @@ ATbool ATermToSageJovialTraversal::traverse_NumericFormula(ATerm term, SgExpress
    // NumericFormula PlusOrMinus NumericTerm -> NumericFormula
    //
    else if (ATmatch(term, "NumericFormula(<term>,<term>,<term>)", &t_lhs,&t_op,&t_rhs)) {
-      std::string op_name;
-      General_Language_Translation::ExpressionKind op_enum;
       SgExpression * sg_lhs = nullptr, * sg_rhs = nullptr;
 
       if (traverse_NumericFormula(t_lhs, sg_lhs)) {
@@ -5601,17 +5619,11 @@ ATbool ATermToSageJovialTraversal::traverse_NumericFormula(ATerm term, SgExpress
       } else return ATfalse;
 
       if (ATmatch(t_op, "AddOp()")) {
-         op_enum = General_Language_Translation::e_operator_add;
-         op_name = "+";
-
          expr = new SgAddOp(sg_lhs, sg_rhs, NULL);
          ROSE_ASSERT(expr != nullptr);
          setSourcePosition(expr, term);
       }
       else if (ATmatch(t_op, "SubtractOp()")) {
-         op_enum = General_Language_Translation::e_operator_subtract;
-         op_name = "-";
-
          expr = new SgSubtractOp(sg_lhs, sg_rhs, NULL);
          ROSE_ASSERT(expr != nullptr);
          setSourcePosition(expr, term);
@@ -5778,23 +5790,32 @@ ATbool ATermToSageJovialTraversal::traverse_NumericTerm(ATerm term, SgExpression
 #endif
 
    ATerm t_lhs, t_op, t_rhs;
-   std::string op_name;
-   General_Language_Translation::ExpressionKind op_enum;
    SgExpression *lhs = nullptr, *rhs = nullptr;
-
 
    if (ATmatch(term, "NumericTerm(<term>,<term>,<term>)", &t_lhs, &t_op, &t_rhs)) {
       if (traverse_NumericTerm(t_lhs, lhs)) {
          // MATCHED NumericTerm
       } else return ATfalse;
 
-      if (traverse_MultiplyDivideOrMod(t_op, op_enum, op_name)) {
-         // MATCHED MultiplyDivideOrMod
-      } else return ATfalse;
-
       if (traverse_NumericFactor(t_rhs, rhs)) {
          // MATCHED NumericFactor
       } else return ATfalse;
+
+      ROSE_ASSERT(lhs && rhs);
+
+      if (ATmatch(t_op, "MultiplyOp()")) {
+         expr = new SgMultiplyOp(lhs, rhs, NULL);
+      }
+      else if (ATmatch(t_op, "DivideOp()")) {
+         expr = new SgDivideOp(lhs, rhs, NULL);
+      }
+      else if (ATmatch(t_op, "ModOp()")) {
+         expr = new SgModOp(lhs, rhs, NULL);
+      }
+      else return ATfalse;
+
+      ROSE_ASSERT(expr);
+      setSourcePosition(expr, term);
    }
    else if (traverse_NumericFactor(term, expr)) {
          // MATCHED NumericFactor
@@ -6060,40 +6081,45 @@ ATbool ATermToSageJovialTraversal::traverse_RelationalExpression(ATerm term, SgE
    printf("... traverse_RelationalExpression: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_formula, t_operator, t_formula2;
-   std::string op_name;
-   General_Language_Translation::ExpressionKind op_enum;
+   ATerm t_lhs, t_operator, t_rhs;
 
 // Begin SageTreeBuilder
-   SgExpression *expr1 = nullptr, *expr2 = nullptr;
+   SgExpression *lhs = nullptr, *rhs = nullptr;
 
-   if (ATmatch(term, "RelationalExpression(<term>,<term>,<term>)", &t_formula, &t_operator, &t_formula2)) {
-      if (traverse_Formula(t_formula, expr1)) {
+   if (ATmatch(term, "RelationalExpression(<term>,<term>,<term>)", &t_lhs, &t_operator, &t_rhs)) {
+      if (traverse_Formula(t_lhs, lhs)) {
          // MATCHED Formula
       } else return ATfalse;
 
-      if (traverse_RelationalOperator(t_operator, op_enum, op_name)) {
-         // MATCHED RelationalOperator
-      } else return ATfalse;
-
-      if (traverse_Formula(t_formula2, expr2)) {
+      if (traverse_Formula(t_rhs, rhs)) {
          // MATCHED Formula
       } else return ATfalse;
+
+      ROSE_ASSERT(lhs && rhs);
+
+      if (ATmatch(t_operator, "LessThanOp()")) {
+         expr = new SgLessThanOp(lhs, rhs, NULL);
+      }
+      else if (ATmatch(t_operator, "GreaterThanOp()")) {
+         expr = new SgGreaterThanOp(lhs, rhs, NULL);
+      }
+      else if (ATmatch(t_operator, "LessOrEqualOp()")) {
+         expr = new SgLessOrEqualOp(lhs, rhs, NULL);
+      }
+      else if (ATmatch(t_operator, "GreaterOrEqualOp()")) {
+         expr = new SgGreaterOrEqualOp(lhs, rhs, NULL);
+      }
+      else if (ATmatch(t_operator, "EqualityOp()")) {
+         expr = new SgEqualityOp(lhs, rhs, NULL);
+      }
+      else if (ATmatch(t_operator, "NotEqualOp()")) {
+         expr = new SgNotEqualOp(lhs, rhs, NULL);
+      } else return ATfalse;
+
    } else return ATfalse;
 
-#if 0
-   ROSE_ASSERT(expr1);
-   if (!expr2) {
-      cerr << "WARNING UNIMPLEMENTED: RelationalExpression - expr2 - maybe StatusConstant\n";
-   }
-   else {
-      ROSE_ASSERT(expr2);   // will want to keep this assert after implementation is complete
-   }
-
-   expr = new SgUntypedBinaryOperator(op_enum, op_name, expr1, expr2);
    ROSE_ASSERT(expr);
    setSourcePosition(expr, term);
-#endif
 
    return ATtrue;
 }
@@ -6189,7 +6215,6 @@ ATbool ATermToSageJovialTraversal::traverse_StatusFormula(ATerm term, SgExpressi
 #endif
 
    ATerm t_next , t_formula;
-   SgInitializedName* init_name = nullptr;
 
    if (ATmatch(term, "StatusFormula(<term>)", &t_next)) {
       if (traverse_StatusConstant(t_next, expr)) {
@@ -7103,73 +7128,6 @@ ATbool ATermToSageJovialTraversal::traverse_PointerConversionP(ATerm term, SgExp
    if (ATmatch(term, "PointerConversionP()")) {
      std::cout << "Matched PointerConversionP" << endl;
      // MATCHED PointerConversionP
-   } else return ATfalse;
-
-   return ATtrue;
-}
-
-
-//========================================================================================
-// 8.2.3 OPERATORS
-//----------------------------------------------------------------------------------------
-
-ATbool
-ATermToSageJovialTraversal::traverse_MultiplyDivideOrMod(ATerm term, General_Language_Translation::ExpressionKind & op_enum, std::string & op_name)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_MultiplyDivideOrMod: %s\n", ATwriteToString(term));
-#endif
-
-   if (ATmatch(term, "MultiplyOp()")) {
-      op_enum = General_Language_Translation::e_operator_multiply;
-      op_name = "*";
-   }
-   else if (ATmatch(term, "DivideOp()")) {
-      op_enum = General_Language_Translation::e_operator_divide;
-      op_name = "/";
-   }
-   else if (ATmatch(term, "ModOp()")) {
-      op_enum = General_Language_Translation::e_operator_mod;
-      op_name = "MOD";
-   }
-   else {
-      op_enum = General_Language_Translation::e_unknown;
-      op_name = "Jovial_operator_unknown";
-      return ATfalse;
-   }
-
-   return ATtrue;
-}
-
-ATbool ATermToSageJovialTraversal::traverse_RelationalOperator(ATerm term, General_Language_Translation::ExpressionKind & op_enum, std::string & op_name)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_RelationalOperator: %s\n", ATwriteToString(term));
-#endif
-
-   if (ATmatch(term, "LessThanOp()")) {
-      op_enum = General_Language_Translation::e_operator_less_than;
-      op_name = "<";
-   }
-   else if (ATmatch(term, "GreaterThanOp()")) {
-      op_enum = General_Language_Translation::e_operator_greater_than;
-      op_name = ">";
-   }
-   else if (ATmatch(term, "LessOrEqualOp()")) {
-      op_enum = General_Language_Translation::e_operator_less_than_or_equal;
-      op_name = "<=";
-   }
-   else if (ATmatch(term, "GreaterOrEqualOp()")) {
-      op_enum = General_Language_Translation::e_operator_greater_than_or_equal;
-      op_name = ">=";
-   }
-   else if (ATmatch(term, "EqualityOp()")) {
-      op_enum = General_Language_Translation::e_operator_equality;
-      op_name = "=";
-   }
-   else if (ATmatch(term, "NotEqualOp()")) {
-      op_enum = General_Language_Translation::e_operator_not_equal;
-      op_name = "<>";
    } else return ATfalse;
 
    return ATtrue;
