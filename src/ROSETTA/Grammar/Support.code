@@ -18203,9 +18203,6 @@ SgProject::initialization()
   // This option only makes a perfromance difference on a handful of files in the (large) wireshark application (2.5 million line application).
      p_suppressConstantFoldingPostProcessing = false;
 
-  // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
-     p_unparseTemplateDeclarationsFromAST = false;
-
   // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
      p_appendPID = false;
 
@@ -19301,9 +19298,6 @@ SgProject::display ( const std::string & label ) const
 
   // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
      mprintf ("   p_appendPID = %s \n",(p_appendPID == true) ? "true" : "false");
-
-  // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
-     mprintf ("   p_unparseTemplateDeclarationsFromAST = %s \n",(p_unparseTemplateDeclarationsFromAST == true) ? "true" : "false");
 
      mprintf ("In this project: numberOfFiles() = %d \n",numberOfFiles());
      for (int i = 0; i < numberOfFiles(); i++)

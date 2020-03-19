@@ -783,6 +783,11 @@ void __noop(...) ROSE_GNUATTR((nothrow));
 #endif
 #endif
 
+//Builtin Function Call support
+void* __builtin_apply_args();
+void* __builtin_apply(void (*function)(), void *arguments, size_t size);
+void  __builtin_return(void* result);
+
 #if defined(__INTEL_COMPILER) && (__cplusplus >= 201400L)
 // DQ (2/21/2017): Debugging C++14 support specific to the Intel compiler.
 extern "C" char* gets (char* __s) ROSE_GNUATTR((deprecated));
