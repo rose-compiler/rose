@@ -86,12 +86,12 @@ ATbool traverse_CharacterLiteral          (ATerm term, SgExpression* &expr);
 
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
 ATbool traverse_StatusItemDescription (ATerm term, std::list<SgInitializedName*> &status_list, Sawyer::Optional<SgExpression*> &status_size);
-ATbool traverse_StatusConstant        (ATerm term, SgInitializedName* &init_name, SgExpression* init_expr);
+ATbool traverse_StatusConstant        (ATerm term, SgInitializedName* &init_name, SgType* &enum_type, SgExpression* init_expr);
 ATbool traverse_StatusConstant        (ATerm term, SgExpression* &expr);
-ATbool traverse_DefaultSublist        (ATerm term, std::list<SgInitializedName*> &status_list);
-ATbool traverse_OptDefaultSublist     (ATerm term, std::list<SgInitializedName*> &status_list);
-ATbool traverse_StatusList            (ATerm term, std::list<SgInitializedName*> &status_list);
-ATbool traverse_SpecifiedSublist      (ATerm term, std::list<SgInitializedName*> &status_list);
+ATbool traverse_DefaultSublist        (ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type);
+ATbool traverse_OptDefaultSublist     (ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type);
+ATbool traverse_StatusList            (ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type);
+ATbool traverse_SpecifiedSublist      (ATerm term, std::list<SgInitializedName*> &status_list, SgType* &enum_type);
 
 // 2.1.1.7 POINTER TYPE DESCRIPTIONS
 ATbool traverse_PointerItemDescription (ATerm term, SgType* & type);
@@ -352,10 +352,6 @@ ATbool traverse_CharacterConversionC (ATerm term, SgExpression* &expr);
 ATbool traverse_StatusConversion     (ATerm term, SgExpression* &expr);
 ATbool traverse_PointerConversion    (ATerm term, SgExpression* &expr);
 ATbool traverse_PointerConversionP   (ATerm term, SgExpression* &expr);
-
-// 8.2.3 OPERATORS
-ATbool traverse_MultiplyDivideOrMod(ATerm term, General_Language_Translation::ExpressionKind & op_enum, std::string & op_name);
-ATbool traverse_RelationalOperator (ATerm term, General_Language_Translation::ExpressionKind & op_enum, std::string & op_name);
 
 // 8.3.1 NUMERIC LITERAL
 ATbool traverse_FixedOrFloatingLiteral (ATerm term, SgExpression* &expr);
