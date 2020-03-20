@@ -96,6 +96,7 @@ CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const Co
   if (!_timerRunning) {
     _analysisTimer.start();
     _timerRunning=true;
+    cout<<"INFO: subsolver timer started."<<endl;
   }
   // first, check size of global EStateSet and print status or switch to topify/terminate analysis accordingly.
   unsigned long estateSetSize;
@@ -124,6 +125,7 @@ CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const Co
 #pragma omp critical(ESTATEWL)
 	{
 	  earlyTermination = true;
+      cout<<"Info: early termination: true"<<endl;
 	}	  
       }
       isActiveGlobalTopify(); // Checks if a switch to topify is necessary. If yes, it changes the analyzer state.
@@ -508,8 +510,9 @@ bool CodeThorn::Analyzer::isIncompleteSTGReady() {
     return true;
   if ((_maxBytes!=-1) && ((long int) getPhysicalMemorySize() > _maxBytes))
     return true;
-  if ((_maxSeconds!=-1) && ((long int) analysisRunTimeInSeconds() > _maxSeconds))
+  if ((_maxSeconds!=-1) && ((long int) analysisRunTimeInSeconds() > _maxSeconds)) {
     return true;
+  }
   // at least one maximum mode is active, but the corresponding limit has not yet been reached
   return false;
 }
@@ -616,7 +619,7 @@ void CodeThorn::Analyzer::printStatusMessage(bool forceDisplay) {
     {
       estateWorkListCurrentSize = estateWorkListCurrent->size();
     }
-    ss <<color("white")<<"Number of pstates/estates/trans/csets/wl/iter: ";
+    ss <<color("white")<<"Number of pstates/estates/trans/csets/wl/iter/time: ";
     ss <<color("magenta")<<pstateSetSize
        <<color("white")<<"/"
        <<color("cyan")<<estateSetSize
@@ -627,6 +630,7 @@ void CodeThorn::Analyzer::printStatusMessage(bool forceDisplay) {
        <<color("white")<<"/"
        <<estateWorkListCurrentSize
        <<"/"<<getIterations()<<"-"<<getApproximatedIterations()
+       <<" "<<analysisRunTimeInSeconds()<<" secs"
       ;
     ss<<" "<<color("normal")<<analyzerStateToString();
     ss<<endl;
@@ -2237,7 +2241,7 @@ long CodeThorn::Analyzer::analysisRunTimeInSeconds() {
   long result;
 #pragma omp critical(TIMER)
   {
-    result = (long) (_analysisTimer.getTimeDuration().seconds());
+    result = (long) (_analysisTimer.getTimeDurationAndKeepRunning().seconds());
   }
   return result;
 }

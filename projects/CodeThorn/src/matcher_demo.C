@@ -119,14 +119,14 @@ int main( int argc, char * argv[] ) {
     num1++;
   }
   timer.stop();
-  double iteratorMeasurementTime=timer.getTimeDuration().milliSeconds();
+  double iteratorMeasurementTime=timer.getTimeDurationAndStop().milliSeconds();
 
   timer.start();
   for(RoseAst::iterator i=ast.begin().withoutNullValues();i!=ast.end();++i) {
     num2++;
   }
   timer.stop();
-  double iteratorMeasurementTimeWithoutNull=timer.getTimeDuration().milliSeconds();
+  double iteratorMeasurementTimeWithoutNull=timer.getTimeDurationAndStop().milliSeconds();
 
   std::cout << "Iteration Length: with    null: " << num1 << std::endl;
   std::cout << "Iteration Length: without null: " << num2 << std::endl;
@@ -137,7 +137,7 @@ int main( int argc, char * argv[] ) {
     timer.start();
     MatchResult r=m.performMatching(matchexpression,root);
     timer.stop();
-    double matchingMeasurementTime=timer.getTimeDuration().milliSeconds();
+    double matchingMeasurementTime=timer.getTimeDurationAndStop().milliSeconds();
     // print result in readable form for demo purposes
     std::cout << "Number of matched patterns with bound variables: " << r.size() << std::endl;
     for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
@@ -163,14 +163,14 @@ int main( int argc, char * argv[] ) {
       timer.start();
       m.performMatching(measurement_matchexpressions[i],root);
       timer.stop();
-      measurementTimes[i]=timer.getTimeDuration().milliSeconds();
+      measurementTimes[i]=timer.getTimeDurationAndStop().milliSeconds();
     }
 
     TestTraversal tt;
     timer.start();
     tt.traverse(root, preorder);
     timer.stop();
-    double ttm=timer.getTimeDuration().milliSeconds();
+    double ttm=timer.getTimeDurationAndStop().milliSeconds();
     std::cout << "Measurement:\n";
     std::cout << "Trav:"<<ttm << ";";
     std::cout << "iter:"<<iteratorMeasurementTime << ";";

@@ -986,7 +986,7 @@ int main( int argc, char * argv[] ) {
     if(!args.count("quiet")) {
       cout << "STATUS: Parsing and creating AST finished."<<endl;
     }
-    double frontEndRunTime=timer.getTimeDuration().milliSeconds();
+    double frontEndRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
     /* perform inlining before variable ids are computed, because
        variables are duplicated by inlining. */
@@ -1267,14 +1267,14 @@ int main( int argc, char * argv[] ) {
       analyzer->setStartPState(*analyzer->popWorkList()->pstate());
     }
 
-    double initRunTime=timer.getTimeDuration().milliSeconds();
+    double initRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
     timer.start();
     analyzer->printStatusMessageLine("==============================================================");
     if(!analyzer->getModeLTLDriven() && args.count("z3") == 0 && !args.getBool("ssa")) {
       analyzer->runSolver();
     }
-    double analysisRunTime=timer.getTimeDuration().milliSeconds();
+    double analysisRunTime=timer.getTimeDurationAndStop().milliSeconds();
     analyzer->printStatusMessageLine("==============================================================");
 
     if (args.getBool("svcomp-mode") && args.isDefined("witness-file")) {
@@ -1286,7 +1286,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE]) << "STATUS: extracting assertion traces (this may take some time)"<<endl;
       timer.start();
       analyzer->extractRersIOAssertionTraces();
-      extractAssertionTracesTime = timer.getTimeDuration().milliSeconds();
+      extractAssertionTracesTime = timer.getTimeDurationAndStop().milliSeconds();
     }
 
     double determinePrefixDepthTime= 0; // MJ: Determination of prefix depth currently deactivated.
@@ -1437,7 +1437,7 @@ int main( int argc, char * argv[] ) {
       assert (!args.getBool("keep-error-states"));
       cout << "recursively removing all leaves (1)."<<endl;
       timer.start();
-      infPathsOnlyTime = timer.getTimeDuration().milliSeconds();
+      infPathsOnlyTime = timer.getTimeDurationAndStop().milliSeconds();
       pstateSetSizeInf=analyzer->getPStateSet()->size();
       eStateSetSizeInf = analyzer->getEStateSet()->size();
       transitionGraphSizeInf = analyzer->getTransitionGraph()->size();
@@ -1455,7 +1455,7 @@ int main( int argc, char * argv[] ) {
       if(args.getBool("inf-paths-only")) {
         analyzer->pruneLeaves();
       }
-      stdIoOnlyTime = timer.getTimeDuration().milliSeconds();
+      stdIoOnlyTime = timer.getTimeDurationAndStop().milliSeconds();
     }
 
     long eStateSetSizeIoOnly = 0;
@@ -1473,7 +1473,7 @@ int main( int argc, char * argv[] ) {
           cout<< "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
           timer.start();
           analyzer->pruneLeaves();
-          infPathsOnlyTime = timer.getTimeDuration().milliSeconds();
+          infPathsOnlyTime = timer.getTimeDurationAndStop().milliSeconds();
 
           pstateSetSizeInf=analyzer->getPStateSet()->size();
           eStateSetSizeInf = analyzer->getEStateSet()->size();
@@ -1489,7 +1489,7 @@ int main( int argc, char * argv[] ) {
           } else {
             analyzer->reduceStgToInOutStates();
           }
-          stdIoOnlyTime = timer.getTimeDuration().milliSeconds();
+          stdIoOnlyTime = timer.getTimeDurationAndStop().milliSeconds();
           printStgSize(analyzer->getTransitionGraph(), "after reducing non-I/O states");
         }
       }
@@ -1533,7 +1533,7 @@ int main( int argc, char * argv[] ) {
       } else {
 	spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
       }
-      spotLtlAnalysisTime=timer.getTimeDuration().milliSeconds();
+      spotLtlAnalysisTime=timer.getTimeDurationAndStop().milliSeconds();
       SAWYER_MESG(logger[TRACE]) << "LTL: get results from spot connection."<<endl;
       ltlResults = spotConnection.getLtlResults();
       SAWYER_MESG(logger[TRACE]) << "LTL: results computed."<<endl;
@@ -1638,7 +1638,7 @@ int main( int argc, char * argv[] ) {
       rewriteSystem.setRuleCommutativeSort(useRuleCommutativeSort); // commutative sort only used in substituteArrayRefs
       //cout<<"DEBUG: Rewrite3:"<<rewriteSystem.getStatistics().toString()<<endl;
       speci.substituteArrayRefs(arrayUpdates, analyzer->getVariableIdMapping(), sarMode, rewriteSystem);
-      arrayUpdateExtractionRunTime=timer.getTimeDuration().milliSeconds();
+      arrayUpdateExtractionRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
       if(args.getBool("print-update-infos")) {
         speci.printUpdateInfos(arrayUpdates,analyzer->getVariableIdMapping());
@@ -1646,7 +1646,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE]) <<"STATUS: establishing array-element SSA numbering."<<endl;
       timer.start();
       speci.createSsaNumbering(arrayUpdates, analyzer->getVariableIdMapping());
-      arrayUpdateSsaNumberingRunTime=timer.getTimeDuration().milliSeconds();
+      arrayUpdateSsaNumberingRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
       if(args.count("dump-non-sorted")) {
         string filename=args["dump-non-sorted"].as<string>();
@@ -1656,7 +1656,7 @@ int main( int argc, char * argv[] ) {
         timer.start();
         string filename=args["dump-sorted"].as<string>();
         speci.writeArrayUpdatesToFile(arrayUpdates, filename, sarMode, true);
-        sortingAndIORunTime=timer.getTimeDuration().milliSeconds();
+        sortingAndIORunTime=timer.getTimeDurationAndStop().milliSeconds();
       }
       totalRunTime+=arrayUpdateExtractionRunTime+verifyUpdateSequenceRaceConditionRunTime+arrayUpdateSsaNumberingRunTime+sortingAndIORunTime;
     }

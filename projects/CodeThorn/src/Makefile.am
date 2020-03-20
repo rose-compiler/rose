@@ -603,13 +603,13 @@ check-par-cfg:
 check-ltl-old: check-ltl-rers-different-versions
 
 # failing tests
-#check-failing: check-ltl-rers-timeout 
+#check-failing: 
 
 # failing tests due to changes in domain
 #check-ltl-failing: check-ltl-rers-array
 
 # current tests all passing
-check-ltl: check-ltl-start check-ltl-rers-arithmetic check-ltl-rers-loop-aware-sync check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array
+check-ltl: check-ltl-start check-ltl-rers-timeout check-ltl-rers-arithmetic check-ltl-rers-loop-aware-sync check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array
 
 check-ltl-start:
 	@echo ================================================================

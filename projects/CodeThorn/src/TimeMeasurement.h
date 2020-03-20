@@ -7,15 +7,22 @@
    using the linux system function gettimeofday. The measurement can
    be started with 'start()' and stopped with 'stop()'. The start and
    stop operations must match exactly, otherwise the functions throw a
-   std::runtime_error exception. The function getTimeDuration only
-   succeeds if the time measurement has been stopped (with stop()) before or
-   was never started, otherwise is throws a std::runtime_error
-   exception. By default the time duration is 0. The measured time
-   duration is reported as type TimeDuration.
+   std::runtime_error exception. The function getTimeDurationAndStop
+   only succeeds if the time measurement is already running, otherwise
+   is throws a std::runtime_error exception. By default the time
+   duration is 0. The measured time duration is reported as type
+   TimeDuration.
 
    example: TimeMeasurement tm; 
-            tm.start(); ... ; tm.stop(); 
-            TimeDuration d=tm.getTimeDuration();
+            tm.start(); ... ;
+            TimeDuration d=tm.getTimeDurationAndStop();
+   or:
+            tm.start(); ... ;
+            TimeDuration d1=tm.getRunningTimeDuration();
+            TimeDuration d2=tm.getRunningTimeDuration();
+            tm.stop(); 
+            TimeDuration d3=tm.getTimeDuration();
+
 
    The class TimeDuration stores time in micro seconds and provides
    conversion functions to return time in milli seconds, seconds,
@@ -25,8 +32,8 @@
    the TimeDuration type. Therefore one can convert also only the
    final result of a time calculation (e.g. when printed).
 
-   example: TimeDuration phase1=tm1.getTimeDuration();
-            TimeDuration phase2=tm2.getTimeDuration();
+   example: TimeDuration phase1=tm1.getTimeDurationAndStop();
+            TimeDuration phase2=tm2.getTimeDurationAndStop();
             std::cout<<"Measured time: "<<(d1+d2).milliSeconds()<<" ms."<<std::endl;
             std::cout<<"Measured time: "<<(d1+d2).seconds()<<" s."<<std::endl;
 
@@ -47,7 +54,9 @@ class TimeDuration {
   double minutes();
   double hours();
   TimeDuration operator+(const TimeDuration &other);
+  TimeDuration operator-(const TimeDuration &other);
   TimeDuration& operator+=(const TimeDuration& rhs);
+  TimeDuration& operator-=(const TimeDuration& rhs);
  private:
   double _timeDuration;
 };
@@ -59,12 +68,12 @@ class TimeMeasurement {
   TimeMeasurement();
   virtual void start();
   virtual void stop();
-  virtual TimeDuration getTimeDuration();
- protected:
-  TimeMeasurementState state;
+  virtual TimeDuration getTimeDuration(); // must be stopped
+  virtual TimeDuration getTimeDurationAndStop(); // must be running
+  // must be running
+  virtual TimeDuration getTimeDurationAndKeepRunning();
  private:
-  double startTimeInMicroSeconds;
-  double endTimeInMicroSeconds;
+  TimeMeasurementState state;
   timeval startCount;
   timeval endCount;
 };

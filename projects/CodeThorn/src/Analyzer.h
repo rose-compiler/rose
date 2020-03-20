@@ -108,8 +108,6 @@ namespace CodeThorn {
     //load previous backup of the transitionGraph, storing the current version as a backup instead
     void swapStgWithBackup();
 
-    long analysisRunTimeInSeconds();
-
     // reductions based on a nested BFS from the STG's start state
     void reduceStgToInOutStates();
     void reduceStgToInOutAssertStates();
@@ -298,6 +296,10 @@ namespace CodeThorn {
     std::string externalFunctionsToString();
 
   protected:
+    // this function is protected to ensure it is not used from outside. It is supposed to be used
+    // only for internal timing managing the max-time option resource.
+    long analysisRunTimeInSeconds();
+
     static Sawyer::Message::Facility logger;
     void printStatusMessage(string s, bool newLineFlag);
 

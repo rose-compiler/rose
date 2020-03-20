@@ -51,14 +51,14 @@ int main( int argc, char * argv[] ) {
     num1++;
   }
   timer.stop();
-  double iteratorMeasurementTime=timer.getTimeDuration().milliSeconds();
+  double iteratorMeasurementTime=timer.getTimeDurationAndStop().milliSeconds();
 
   timer.start();
   for(RoseAst::iterator i=ast.begin().withoutNullValues();i!=ast.end();++i) {
     num2++;
   }
   timer.stop();
-  double iteratorMeasurementTimeWithoutNull=timer.getTimeDuration().milliSeconds();
+  double iteratorMeasurementTimeWithoutNull=timer.getTimeDurationAndStop().milliSeconds();
 
 #if 0
   timer.start();
@@ -66,7 +66,7 @@ int main( int argc, char * argv[] ) {
     num3++;
   }
   timer.stop();
-  double fastiteratorMeasurementTimeWithoutNull=timer.getTimeDuration().milliSeconds();
+  double fastiteratorMeasurementTimeWithoutNull=timer.getTimeDurationAndStop().milliSeconds();
 #endif
 
   std::cout << "Iteration Length: with    null: " << num1 << std::endl;
@@ -79,7 +79,7 @@ int main( int argc, char * argv[] ) {
   timer.start();
   tt.traverse(root, preorder);
   timer.stop();
-  double ttm=timer.getTimeDuration().milliSeconds();
+  double ttm=timer.getTimeDurationAndStop().milliSeconds();
 
   write_file("iterator_test.dot", astTermToDot(ast.begin().withNullValues(),ast.end()));
 
