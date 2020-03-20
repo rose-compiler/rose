@@ -16575,7 +16575,7 @@ SgFile::generateOutputFileName() const
    }
 
 
-// Moved to sage_support.cpp: string SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameIndex, const string& compilerName )
+// Moved to cmdline.cpp: string SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameIndex, const string& compilerName )
 
 
 // Forward declarations of classes used to control and tailor the code generation.
