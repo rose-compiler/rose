@@ -824,12 +824,14 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 #endif
    {
      SgFile* file = NULL;
+
 #if 0
      printf("In determineFileType():\n");
      size_t cnt = 0;
-     for ( std::vector<std::string>::iterator i = argv.begin(); i != argv.end(); i++) {
-       printf("  argv[%zd] = %s\n", cnt++, i->c_str());
-     }
+     for ( std::vector<std::string>::iterator i = argv.begin(); i != argv.end(); i++) 
+        {
+          printf("  argv[%zd] = %s\n", cnt++, i->c_str());
+        }
 #endif
 
   // DQ (2/4/2009): The specification of "-rose:binary" causes filenames to be interpreted
@@ -2945,6 +2947,10 @@ SgProject::parse()
           printf ("In SgProject::parse() (verbose mode ON): \n");
           display ("In SgProject::parse()");
         }
+
+#if 0
+     printf ("Leaving SgProject::parse(): errorCode = %d \n",errorCode);
+#endif
 
      return errorCode;
    } // end parse(;
@@ -6455,6 +6461,11 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
      printf ("Inside of SgFile::compileOutput() \n");
 #endif
 
+#if 0
+     printf ("In SgFile::compileOutput(): Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
 #define DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS 0
 
 #if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS
@@ -6652,6 +6663,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
      vector<string> compilerCmdLine = buildCompilerCommandLineOptions (argv,fileNameIndex, compilerName );
 
 #if 0
+  // DQ (3/15/2020): There are only two places where this is called (here and in the CompilerOutputParser::processFile() function).
      printf ("In SgFile::compileOutput(): After buildCompilerCommandLineOptions(): compilerCmdLine.size() = %" PRIuPTR " compilerCmdLine = %s \n",compilerCmdLine.size(),StringUtility::listToString(compilerCmdLine).c_str());
 #endif
 
@@ -6950,10 +6962,16 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
           finalCompiledExitStatus = (finalCompiledExitStatus == 0) ? /* error */ 1 : /* success */ 0;
         }
 
-  // printf ("Program Terminated Normally (exit status = %d)! \n\n\n\n",finalCompiledExitStatus);
-   // Liao, 4/26/2017. KeepGoingTranslator should keep going no mater what.
-    if (Rose::KeepGoing::g_keep_going)
-      finalCompiledExitStatus = 0;
+#if 0
+     printf ("Program Terminated Normally (exit status = %d)! \n\n\n\n",finalCompiledExitStatus);
+#endif
+
+  // Liao, 4/26/2017. KeepGoingTranslator should keep going no mater what.
+     if (Rose::KeepGoing::g_keep_going)
+        {
+          finalCompiledExitStatus = 0;
+        }
+
      return finalCompiledExitStatus;
    }
 

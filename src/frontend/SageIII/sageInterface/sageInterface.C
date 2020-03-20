@@ -19930,6 +19930,7 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
   SgInitializedName* name = NULL;
   SgExpression* nameExp = NULL;
   ROSE_ASSERT(current != NULL);
+
   if (isSgInitializedName(current))
   {
     name = isSgInitializedName(current);

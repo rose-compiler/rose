@@ -1379,63 +1379,63 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
         // TOO1 (11/23/2013):
         // (Darwin linker) -dylib_file <library_name.dylib>:<library_name.dylib>
-        if (argv[i].compare("-dylib_file") == 0)
-        {
-            if (SgProject::get_verbose() > 1)
-            {
-                std::cout << "[INFO] [Cmdline] "
-                          << "Processing -dylib_file"
-                          << std::endl;
-            }
-
-            if (argv.size() == (i+1))
-            {
-                throw std::runtime_error("Missing required argument to -dylib_file");
-            }
-            else
-            {
-                // TODO: Save library argument; for now just skip over the argument
-                ++i;
-                if (SgProject::get_verbose() > 1)
-                {
+          if (argv[i].compare("-dylib_file") == 0)
+             {
+               if (SgProject::get_verbose() > 1)
+                  {
                     std::cout << "[INFO] [Cmdline] "
-                              << "Processing -dylib_file: argument="
-                              << "'" << argv[i] << "'"
+                              << "Processing -dylib_file"
                               << std::endl;
-                }
-                ROSE_ASSERT(! "Not implemented yet");
-            }
-        }
+                  }
+
+               if (argv.size() == (i+1))
+                  {
+                    throw std::runtime_error("Missing required argument to -dylib_file");
+                  }
+                 else
+                  {
+                 // TODO: Save library argument; for now just skip over the argument
+                    ++i;
+                    if (SgProject::get_verbose() > 1)
+                       {
+                         std::cout << "[INFO] [Cmdline] "
+                                   << "Processing -dylib_file: argument="
+                                   << "'" << argv[i] << "'"
+                                   << std::endl;
+                       }
+                    ROSE_ASSERT(! "Not implemented yet");
+                  }
+             }
 
         // TOO1 (01/22/2014):
         // (Darwin linker) -framework dir
-        if (argv[i].compare("-framework") == 0)
-        {
-            if (SgProject::get_verbose() > 1)
-            {
-                std::cout << "[INFO] [Cmdline] "
-                          << "Processing -framework"
-                          << std::endl;
-            }
-
-            if (argv.size() == (i+1))
-            {
-                throw std::runtime_error("Missing required argument to -framework");
-            }
-            else
-            {
-                // TODO: Save framework argument; for now just skip over the argument
-                ++i;
-                if (SgProject::get_verbose() > 1)
-                {
+          if (argv[i].compare("-framework") == 0)
+             {
+               if (SgProject::get_verbose() > 1)
+                  {
                     std::cout << "[INFO] [Cmdline] "
-                              << "Processing -framework argument="
-                              << "'" << argv[i] << "'"
+                              << "Processing -framework"
                               << std::endl;
-                }
-                ROSE_ASSERT(! "Not implemented yet");
-            }
-        }
+                  }
+
+               if (argv.size() == (i+1))
+                  {
+                    throw std::runtime_error("Missing required argument to -framework");
+                  }
+                 else
+                  {
+                 // TODO: Save framework argument; for now just skip over the argument
+                    ++i;
+                    if (SgProject::get_verbose() > 1)
+                       {
+                         std::cout << "[INFO] [Cmdline] "
+                                   << "Processing -framework argument="
+                                   << "'" << argv[i] << "'"
+                                   << std::endl;
+                       }
+                    ROSE_ASSERT(! "Not implemented yet");
+                  }
+             }
 
        // look only for -l library files (library files)
           if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'l') )
@@ -1457,38 +1457,39 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
        // look only for -I include directories (directories where #include<filename> will be found)
           if ((length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'I'))
-          {
-              std::string include_path = argv[i].substr(2);
-              {
-                  include_path =
-                      StringUtility::getAbsolutePathFromRelativePath(include_path);
-              }
+             {
+               std::string include_path = argv[i].substr(2);
+            // {
+                 include_path = StringUtility::getAbsolutePathFromRelativePath(include_path);
+            // }
 
-              p_includeDirectorySpecifierList.push_back("-I" + include_path);
+               p_includeDirectorySpecifierList.push_back("-I" + include_path);
 
-              std::string include_path_no_quotes =
-                  boost::replace_all_copy(include_path, "\"", "");
-              try {
-                  bool is_directory = boost::filesystem::is_directory(include_path_no_quotes);
-                  if (false == is_directory)
+               std::string include_path_no_quotes = boost::replace_all_copy(include_path, "\"", "");
+               try 
                   {
-                 // DQ (3/15/2017): Fixed to use mlog message logging.
-                    if (Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
+                    bool is_directory = boost::filesystem::is_directory(include_path_no_quotes);
+                    if (false == is_directory)
                        {
-                         std::cout  << "[WARN] "
-                              << "Invalid argument to -I; path does not exist: "
-                              << "'" << include_path_no_quotes << "'"
-                              << std::endl;
+                      // DQ (3/15/2017): Fixed to use mlog message logging.
+                         if (Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
+                            {
+                              std::cout  << "[WARN] "
+                                         << "Invalid argument to -I; path does not exist: "
+                                         << "'" << include_path_no_quotes << "'"
+                                         << std::endl;
+                            }
                        }
+                  } 
+               catch (const boost::filesystem::filesystem_error& ex) 
+                  {
+                    std::cout  << "[ERROR] "
+                               << "Exception processing argument to -I: "
+                               << "'" << include_path_no_quotes << "'"
+                               << std::endl;
+                    std::cout << ex.what() << std::endl;
                   }
-              } catch (const boost::filesystem::filesystem_error& ex) {
-                  std::cout  << "[ERROR] "
-                          << "Exception processing argument to -I: "
-                          << "'" << include_path_no_quotes << "'"
-                          << std::endl;
-                  std::cout << ex.what() << std::endl;
-               }
-          }
+             }
 
        // DQ (10/18/2010): Added support to collect "-D" options (assume no space between the "-D" and the option (e.g. "-DmyMacro=8").
        // Note that we want to collect these because we have to process "-D" options more explicitly for Fortran (they are not required
@@ -7426,6 +7427,33 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
    }
 
 
+int
+findIndexForFirstIncludeDirectiveInArgumentList(vector<string> & argv, string firstInclude )
+   {
+  // DQ (3/15/2020): Added support to find the index of the first include directive in the command line argument list.
+
+     int returnValue = -1;
+
+     ROSE_ASSERT(argv.size() > 0);
+
+     size_t i = 0;
+     while (i < argv.size() && argv[i] != firstInclude)
+        {
+          i++;
+        }
+
+     if (i < argv.size())
+       {
+         returnValue = i;
+       }
+      else
+       {
+         returnValue = argv.size()-1;
+       }
+
+     return returnValue;
+   }
+
 vector<string>
 SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameIndex, const string& compilerName )
    {
@@ -7983,12 +8011,14 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("In buildCompilerCommandLineOptions: After initialization: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
 #endif
 
+#define DEBUG_INCLUDE_PATHS 0
+
   // DQ (11/7/2018): I need to add some additional include directories to the generate backed compiler command line.
   // This is to support where #include "../file.h" are used and we need to specify the directory of the original source 
   // file (is we don't unparse the header file) or the directory where we are putting the generated source file, if we 
   // are unparsing the header file.  Not that nested header file using a similar specification may require the output of 
   // additional include file specifications (is this true?  If so then we need an example of this).
-#if 0
+#if DEBUG_INCLUDE_PATHS
      printf ("get_project()->get_includeDirectorySpecifierList().size() = %zu \n",get_project()->get_includeDirectorySpecifierList().size());
 #endif
 
@@ -7999,13 +8029,76 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // ROSE_ASSERT(sourceFile != NULL);
      if (sourceFile != NULL)
         {
+       // DQ (3/12/20202): the extraIncludeDirectorySpecifierList from the SgProject is used to support extra directory paths required as 
+       // part of header file transformations that are projects wide instead of source file specific.
+          SgProject* project = TransformationSupport::getProject(sourceFile);
+          ROSE_ASSERT(project != NULL);
+
+#if DEBUG_INCLUDE_PATHS
+       // ROSE_ASSERT(sourceFile->get_project() != NULL);
+          printf ("Output includeDirectorySpecifierList for unparsedFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
+       // printf ("Calling unparsedFile->get_project()->get_includeDirectorySpecifierList().size() \n");
+          printf ("project->get_includeDirectorySpecifierList().size() = %zu \n",project->get_includeDirectorySpecifierList().size());
+          for (size_t i = 0; i < project->get_includeDirectorySpecifierList().size(); i++)
+             {
+               printf ("project->get_includeDirectorySpecifierList()[%zu] = %s \n",i,project->get_includeDirectorySpecifierList()[i].c_str());
+             }
+
+          printf ("Output extraIncludeDirectorySpecifierList for sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
+       // printf ("Calling sourceFile->get_project()->get_extraIncludeDirectorySpecifierList().size() \n");
+          printf ("(added for source file) sourceFile->get_extraIncludeDirectorySpecifierList().size() = %zu \n",sourceFile->get_extraIncludeDirectorySpecifierList().size());
+          for (size_t i = 0; i < sourceFile->get_extraIncludeDirectorySpecifierList().size(); i++)
+             {
+               printf ("sourceFile->get_extraIncludeDirectorySpecifierList()[%zu] = %s \n",i,sourceFile->get_extraIncludeDirectorySpecifierList()[i].c_str());
+             }
+
+       // DQ (3/14/2020): Added output of the extraIncludeDirectorySpecifierList held on the SgProject node.
+          ROSE_ASSERT(project != NULL);
+          printf ("(added for source file) project->get_extraIncludeDirectorySpecifierList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierList().size());
+          for (size_t i = 0; i < project->get_extraIncludeDirectorySpecifierList().size(); i++)
+             {
+               printf ("project->get_extraIncludeDirectorySpecifierList()[%zu] = %s \n",i,project->get_extraIncludeDirectorySpecifierList()[i].c_str());
+             }
+#endif
+
+#if 0
+          printf ("project->get_extraIncludeDirectorySpecifierList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierList().size());
+#endif
+          argcArgvList.reserve(argcArgvList.size()+project->get_extraIncludeDirectorySpecifierList().size());
+
+       // DQ (3/16/2020): Need to change the locations in the argcArgvList where we insert the added 
+       // include paths (must be added before those specified on the original command line).
+       // argcArgvList.insert(argcArgvList.end(),project->get_extraIncludeDirectorySpecifierList().begin(),project->get_extraIncludeDirectorySpecifierList().end());
+          std::vector<string>::iterator positionForIncludes = argcArgvList.begin();
+          ROSE_ASSERT(positionForIncludes != argcArgvList.end());
+          ROSE_ASSERT(project->get_includeDirectorySpecifierList().size() > 0);
+          string firstInclude = project->get_includeDirectorySpecifierList()[0];
+          int indexOfFirstIncludeDirective = findIndexForFirstIncludeDirectiveInArgumentList(argcArgvList, firstInclude );
+#if 0
+          printf ("indexOfFirstIncludeDirective = %d \n",indexOfFirstIncludeDirective);
+#endif
+          int index = 0;
+          while (index < indexOfFirstIncludeDirective && positionForIncludes != argcArgvList.end())
+             {
+               index++;
+               positionForIncludes++;
+             }
+#if 0
+          printf ("index = %d \n",index);
+          printf ("*positionForIncludes = %s \n",(*positionForIncludes).c_str());
+#endif
+          ROSE_ASSERT(positionForIncludes != argcArgvList.end());
+          argcArgvList.insert(positionForIncludes,project->get_extraIncludeDirectorySpecifierList().begin(),project->get_extraIncludeDirectorySpecifierList().end());
+#if 0
 #if 0
           printf ("sourceFile->get_extraIncludeDirectorySpecifierList().size() = %zu \n",sourceFile->get_extraIncludeDirectorySpecifierList().size());
 #endif
-
           argcArgvList.reserve(argcArgvList.size()+sourceFile->get_extraIncludeDirectorySpecifierList().size());
        // argcArgvList = sourceFile->get_extraIncludeDirectorySpecifierList();
           argcArgvList.insert(argcArgvList.end(),sourceFile->get_extraIncludeDirectorySpecifierList().begin(),sourceFile->get_extraIncludeDirectorySpecifierList().end());
+#else
+          printf ("In buildCompilerCommandLineOptions: Skipping addition of the sourceFile->get_extraIncludeDirectorySpecifierList() \n");
+#endif
         }
 
 #if 0
@@ -8646,11 +8739,11 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
         }
 
-#if DEBUG_COMPILER_COMMAND_LINE || 0
-     printf ("\n\nAt base of buildCompilerCommandLineOptions: test 6: compilerNameString = \n\n%s\n\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+#if DEBUG_COMPILER_COMMAND_LINE || 1
+     printf ("At base of buildCompilerCommandLineOptions: test 6: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
 #if 0
-     printf ("\n\nExiting at base of buildCompilerCommandLineOptions() ... \n");
+     printf ("Exiting at base of buildCompilerCommandLineOptions() ... \n");
      ROSE_ASSERT (false);
 #endif
 
