@@ -847,7 +847,7 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 #endif
   // DQ (11/8/2018): These are added include directories that will be used in the generation of the backend compiler 
-  // command line (after all other include directives have been output). This option supports the unparsing of header 
+  // command line (before all other include directives have been output). This option supports the unparsing of header 
   // files which requires source files to be positioned a locations relative to an application root file position, 
   // and header fils to be included using additional include paths. This is required to handled header files using 
   // "../" prefixes, and different include paths are required depending upon if they are transformed.
@@ -2275,6 +2275,12 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("std::list<std::string>", "astfiles_in", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (3/12/2020): Added additional list to support extra paths to support directories where modified header files
+  // are unparsed. This list is added to support extra directories added to support transformed header files.
+  // And additional extraIncludeDirectorySpecifierList is available on the SgSourceFile IR node to support 
+  // header file directories that are source file specific.
+     Project.setDataPrototype("SgStringList","extraIncludeDirectorySpecifierList", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
