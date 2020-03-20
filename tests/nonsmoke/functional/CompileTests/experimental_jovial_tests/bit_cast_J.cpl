@@ -1,8 +1,0 @@
-START
-
-COMPOOL a'comp;
-
-DEF TABLE a'table(1) a'table'type
-   = POS(0,4): ((*B 16*)(1)) ;
-
-TERM

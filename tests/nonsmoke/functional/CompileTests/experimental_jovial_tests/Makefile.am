@@ -7,8 +7,10 @@ AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD    = $(ROSE_LIBS)
 
 JOVIAL_TESTCODES = \
- tiny.jov                               \
- fixed_cast_J.jov                       \
+ tiny.jov
+
+JOVIAL_PARSER_TESTCODES = \
+ fixed_cast.jov                         \
  tables_and_pointers.jov                \
  1_2_3_main-program-module_a.jov        \
  1_2_3_main-program-module_b.jov        \
@@ -44,7 +46,9 @@ JOVIAL_TESTCODES = \
  rose-issue-2143.jov
 
 COMPOOL_TESTCODES = \
- bit_cast_J.cpl                         \
+ bit_cast.cpl
+
+COMPOOL_PARSER_TESTCODES = \
  constant_item_presets.cpl              \
  define_dollar.cpl                      \
  item_and_status_type_J.cpl             \
@@ -137,6 +141,14 @@ JOVIAL_TESTCODES_WORKING_ON = \
  5_1_1_integer-factor.jov               \
  5_1_1_integer-formula.jov
 
+## TODO: Don't seem to be able to run just parser tests
+#
+TEST_JOVIAL_PARSER_Objects  = ${JOVIAL_PARSER_TESTCODES:.jov=.aterm}
+TEST_JOVIAL_PARSER_Sources  = ${JOVIAL_PARSER_TESTCODES:.jov=.jov.passed}
+
+TEST_COMPOOL_PARSER_Objects = ${COMPOOL_PARSER_TESTCODES:.cpl=.aterm}
+TEST_COMPOOL_PARSER_Sources = ${COMPOOL_PARSER_TESTCODES:.cpl=.cpl.passed}
+
 TEST_JOVIAL_Objects  = ${JOVIAL_TESTCODES:.jov=.aterm}
 TEST_JOVIAL_Sources  = ${JOVIAL_TESTCODES:.jov=.jov.passed}
 
@@ -147,19 +159,25 @@ PASSING_TEST_Objects = $(TEST_JOVIAL_Objects) $(TEST_COMPOOL_Objects)
 #PASSING_TEST_Objects = $(TEST_JOVIAL_Objects)
 PASSING_COMPOOL_TEST_Objects = $(TEST_COMPOOL_Objects)
 
-# Go back and build the translator we are using to test Jovial (in case make check
+# Go back and build the translators we are using to test Jovial (in case make check
 # is run directly in this directory before make has been run from the root of the 
 # ROSE directory structure).
 ../../testParser:
 	cd ../..; $(MAKE) testParser
+../../testTranslator:
+	cd ../..; $(MAKE) testTranslator
 
-testParser: ../../testParser
-
-$(TEST_JOVIAL_Objects): ../../testParser
+$(TEST_JOVIAL_PARSER_Objects): ../../testParser
 	../../testParser $(ROSE_FLAGS) -rose:jovial $(srcdir)/$(@:.aterm=.jov)
 
-$(TEST_COMPOOL_Objects): ../../testParser
+$(TEST_COMPOOL_PARSER_Objects): ../../testParser
 	../../testParser $(ROSE_FLAGS) -rose:jovial $(srcdir)/$(@:.aterm=.cpl)
+
+$(TEST_JOVIAL_Objects): ../../testTranslator
+	../../testTranslator -rose:jovial $(srcdir)/$(@:.aterm=.jov)
+
+$(TEST_COMPOOL_Objects): ../../testTranslator
+	../../testTranslator -rose:jovial $(srcdir)/$(@:.aterm=.cpl)
 
 check-compool:
 	@echo $(TEST_COMPOOL_Objects)

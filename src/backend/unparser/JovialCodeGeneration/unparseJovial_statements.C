@@ -694,7 +694,7 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             ROSE_ASSERT(enum_val);
 
             curprint("  ");
-            curprint(std::to_string(enum_val->get_value()));
+            curprint(tostring(enum_val->get_value()));
             curprint(name);
             if (--n > 0) curprint(",");
             unp->cur.insert_newline(1);
