@@ -3,29 +3,29 @@ CFG dominators for function 0x004005d8:
   function 0x004005d8 dominator of 0x004005e1<1> is 0x004005d8<0>
   function 0x004005d8 dominator of 0x004005e6<2> is 0x004005e1<1>
   function 0x004005d8 dominator of 0x004005eb<3> is 0x004005e6<2>
-CFG dominators for function 0x004005f0 "DYNAMIC_LINKER_TRAMPOLINE":
+CFG dominators for function 0x004005f0:
   function 0x004005f0 dominator of 0x004005f0<0> is none
-CFG dominators for function 0x00400600 "geteuid@plt":
+CFG dominators for function 0x00400600:
   function 0x00400600 dominator of 0x00400600<0> is none
-CFG dominators for function 0x00400610 "__libc_start_main@plt":
+CFG dominators for function 0x00400610:
   function 0x00400610 dominator of 0x00400610<0> is none
-CFG dominators for function 0x00400620 "reboot@plt":
+CFG dominators for function 0x00400620:
   function 0x00400620 dominator of 0x00400620<0> is none
-CFG dominators for function 0x00400630 "fprintf@plt":
+CFG dominators for function 0x00400630:
   function 0x00400630 dominator of 0x00400630<0> is none
-CFG dominators for function 0x00400640 "perror@plt":
+CFG dominators for function 0x00400640:
   function 0x00400640 dominator of 0x00400640<0> is none
-CFG dominators for function 0x00400650 "setlocale@plt":
+CFG dominators for function 0x00400650:
   function 0x00400650 dominator of 0x00400650<0> is none
-CFG dominators for function 0x00400660 "textdomain@plt":
+CFG dominators for function 0x00400660:
   function 0x00400660 dominator of 0x00400660<0> is none
-CFG dominators for function 0x00400670 "dcgettext@plt":
+CFG dominators for function 0x00400670:
   function 0x00400670 dominator of 0x00400670<0> is none
-CFG dominators for function 0x00400680 "exit@plt":
+CFG dominators for function 0x00400680:
   function 0x00400680 dominator of 0x00400680<0> is none
-CFG dominators for function 0x00400690 "bindtextdomain@plt":
+CFG dominators for function 0x00400690:
   function 0x00400690 dominator of 0x00400690<0> is none
-CFG dominators for function 0x004006a0 "_start":
+CFG dominators for function 0x004006a0:
   function 0x004006a0 dominator of 0x004006ca<0> is 0x004006a0<1>
   function 0x004006a0 dominator of 0x004006a0<1> is none
 CFG dominators for function 0x004006cc:
@@ -49,7 +49,7 @@ CFG dominators for function 0x00400730:
   function 0x00400730 dominator of 0x00400754<3> is 0x00400730<1>
 CFG dominators for function 0x00400830:
   function 0x00400830 dominator of 0x00400830<0> is none
-CFG dominators for function 0x00400840 "main":
+CFG dominators for function 0x00400840:
   function 0x00400840 dominator of 0x00400874<0> is 0x00400861<2>
   function 0x00400840 dominator of 0x0040087b<1> is 0x00400877<4>
   function 0x00400840 dominator of 0x00400861<2> is 0x00400840<3>

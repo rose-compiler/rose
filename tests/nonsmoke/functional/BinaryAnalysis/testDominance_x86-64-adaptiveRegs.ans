@@ -1,4 +1,4 @@
-CFG dominators for function 0x004000e0 "_start":
+CFG dominators for function 0x004000e0:
   function 0x004000e0 dominator of 0x004000e0<0> is none
 CFG dominators for function 0x004000e1:
   function 0x004000e1 dominator of 0x004000e1<0> is none

@@ -1,4 +1,4 @@
-CFG dominators for function 0x080480a0 "_start":
+CFG dominators for function 0x080480a0:
   function 0x080480a0 dominator of 0x080480c0<0> is 0x080480b9<1>
   function 0x080480a0 dominator of 0x080480b9<1> is 0x080480b4<6>
   function 0x080480a0 dominator of 0x080480a5<2> is 0x080480a0<3>
@@ -6,25 +6,25 @@ CFG dominators for function 0x080480a0 "_start":
   function 0x080480a0 dominator of 0x080480af<4> is 0x080480aa<5>
   function 0x080480a0 dominator of 0x080480aa<5> is 0x080480a5<2>
   function 0x080480a0 dominator of 0x080480b4<6> is 0x080480af<4>
-CFG dominators for function 0x080480c1 "T1":
+CFG dominators for function 0x080480c1:
   function 0x080480c1 dominator of 0x080480c1<0> is none
   function 0x080480c1 dominator of 0x080480c6<1> is 0x080480c1<0>
-CFG dominators for function 0x080480c7 "T2":
+CFG dominators for function 0x080480c7:
   function 0x080480c7 dominator of 0x080480c7<0> is none
-CFG dominators for function 0x080480d2 "T3":
+CFG dominators for function 0x080480d2:
   function 0x080480d2 dominator of 0x080480d2<0> is none
-CFG dominators for function 0x080480d8 "T4":
+CFG dominators for function 0x080480d8:
   function 0x080480d8 dominator of 0x080480d8<0> is none
-CFG dominators for function 0x080480f9 "T5":
+CFG dominators for function 0x080480f9:
   function 0x080480f9 dominator of 0x08048103<0> is 0x080480fe<3>
   function 0x080480f9 dominator of 0x080480f9<1> is none
   function 0x080480f9 dominator of 0x08048108<2> is 0x08048103<0>
   function 0x080480f9 dominator of 0x080480fe<3> is 0x080480f9<1>
-CFG dominators for function 0x08048109 "T5_1":
+CFG dominators for function 0x08048109:
   function 0x08048109 dominator of 0x08048109<0> is none
-CFG dominators for function 0x0804810e "T5_2":
+CFG dominators for function 0x0804810e:
   function 0x0804810e dominator of 0x0804810e<0> is none
-CFG dominators for function 0x08048113 "T5_3":
+CFG dominators for function 0x08048113:
   function 0x08048113 dominator of 0x08048113<0> is none
-CFG dominators for function 0x08048118 "callee":
+CFG dominators for function 0x08048118:
   function 0x08048118 dominator of 0x08048118<0> is none
