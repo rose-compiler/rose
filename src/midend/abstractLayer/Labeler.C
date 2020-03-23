@@ -223,70 +223,6 @@ Labeler::Labeler(SgNode* start) {
 
 Labeler::~Labeler(){}
 
-static
-SgInitializedName* getOnlyInitializedName(SgVariableDeclaration* decl)
-{
-  ROSE_ASSERT(decl);
-
-  SgInitializedNamePtrList& vars = decl->get_variables();
-  ROSE_ASSERT(vars.size() == 1);
-
-  return vars[0];
-}
-
-static
-bool hasUserDefinedDefaultCtor(SgClassDeclaration* def)
-{
-  return si::getDefaultConstructor(def) != NULL;
-}
-
-static
-SgClassDeclaration* getDefiningClassDecl(SgType* ty)
-{
-  // \todo skip using declarations
-  // \todo handle arrays
-  SgType*                 under = ty->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE);
-  SgClassType*            clazz = isSgClassType(under);
-  if (!clazz) return NULL;
-
-  SgDeclarationStatement* cldcl = clazz->get_declaration();
-  ROSE_ASSERT(cldcl);
-
-  SgClassDeclaration*     dfdcl = isSgClassDeclaration(cldcl->get_definingDeclaration());
-  ROSE_ASSERT(dfdcl);
-  return dfdcl;
-}
-
-
-struct CtorAnalyzer : sg::DispatchHandler<bool>
-{
-  void handle(const SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
-
-  void handle(const SgInitializer& n)            { res = false; }
-  void handle(const SgConstructorInitializer& n) { res = true; }
-};
-
-static
-bool matchVariableDeclWithCtorCall(SgNode* n)
-{
-  SgVariableDeclaration* decl = isSgVariableDeclaration(n);
-  if (!decl) return false;
-
-  SgInitializedName* var = getOnlyInitializedName(decl);
-
-  // \todo handle array types
-  SgClassDeclaration* clz = getDefiningClassDecl(var->get_type());
-
-  if (!clz) return false;
-
-  SgInitializer*     ini = var->get_initializer();
-
-  if (!ini) return hasUserDefinedDefaultCtor(clz);
-
-  return sg::dispatch(CtorAnalyzer(), ini);
-}
-
-
 // returns number of labels to be associated with node
 int Labeler::numberOfAssociatedLabels(SgNode* node) {
   if(node==0)
@@ -319,7 +255,7 @@ int Labeler::numberOfAssociatedLabels(SgNode* node) {
     return 2;
   case V_SgExprStatement:
     //special case of FunctionCall inside expression
-    if(SgNodeHelper::Pattern::matchFunctionCall(node)) {
+    if(SgNodeHelper::matchExtendedNormalizedCall(node) || SgNodeHelper::Pattern::matchFunctionCall(node)) {
       //cout << "DEBUG: Labeler: assigning 2 labels for SgFunctionCallExp"<<endl;
       return 2;
     }
@@ -343,7 +279,7 @@ int Labeler::numberOfAssociatedLabels(SgNode* node) {
 
     // declarations
   case V_SgVariableDeclaration:
-    if (matchVariableDeclWithCtorCall(node))
+    if (SgNodeHelper::matchExtendedNormalizedCall(node))
       return 2;
     /* fallthrough */
     // C++17 [[fallthrough]];
@@ -427,7 +363,7 @@ void Labeler::createLabels(SgNode* root) {
       } else if(isSgOmpBarrierStatement(*i)) {
         assert(num == 1);
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_BARRIER));
-      } else if(matchVariableDeclWithCtorCall(*i)) {
+      } else if(SgNodeHelper::matchExtendedNormalizedCall(*i)) {
         assert(num==2);
         registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALL));
         registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALLRETURN));
