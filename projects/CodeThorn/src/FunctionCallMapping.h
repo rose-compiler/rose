@@ -8,6 +8,8 @@
 #include "FunctionCallTarget.h"
 #include "ClassHierarchyGraph.h"
 
+#include "FunctionCallMapping2.h"
+
 struct ClassHierarchyWrapper;
 
 namespace CodeThorn {

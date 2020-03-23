@@ -158,6 +158,7 @@ namespace CodeThorn {
     VariableIdMappingExtended* getVariableIdMapping();
     FunctionIdMapping* getFunctionIdMapping();
     FunctionCallMapping* getFunctionCallMapping();
+    FunctionCallMapping2* getFunctionCallMapping2();
     CTIOLabeler* getLabeler() const;
     Flow* getFlow();
     CodeThorn::PStateSet* getPStateSet();
@@ -400,6 +401,7 @@ namespace CodeThorn {
     VariableIdMappingExtended* variableIdMapping;
     FunctionIdMapping functionIdMapping;
     FunctionCallMapping functionCallMapping;
+    FunctionCallMapping2 functionCallMapping2;
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
     EStateWorkList* estateWorkListCurrent;
     EStateWorkList* estateWorkListNext;

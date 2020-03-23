@@ -23,6 +23,7 @@ namespace CodeThorn {
     VariableIdMapping* getVariableIdMapping();
     FunctionIdMapping* getFunctionIdMapping();
     FunctionCallMapping* getFunctionCallMapping();
+    FunctionCallMapping2* getFunctionCallMapping2();
     ClassHierarchyWrapper* getClassHierarchy();
     void setModeArrayElementVariableId(bool val);
     bool getModeArrayElementVariableId();
@@ -38,6 +39,7 @@ namespace CodeThorn {
     VariableIdMapping* _variableIdMapping=nullptr;
     FunctionIdMapping* _functionIdMapping=nullptr;
     FunctionCallMapping* _functionCallMapping=nullptr;
+    FunctionCallMapping2* _functionCallMapping2=nullptr;
     ClassHierarchyWrapper* _classHierarchy=nullptr;
 
     unsigned int _normalizationLevel=2;

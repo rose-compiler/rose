@@ -87,6 +87,7 @@ CODETHORN_HEADER_FILES=\
   FIConstAnalysis.h \
   Flow.h \
   FunctionCallMapping.h \
+  FunctionCallMapping2.h \
   FunctionCallTarget.h \
   FunctionId.h \
   FunctionIdMapping.h \
@@ -183,6 +184,7 @@ CODETHORN_SOURCE_FILES=\
   FIConstAnalysis.C \
   Flow.C \
   FunctionCallMapping.C \
+  FunctionCallMapping2.C \
   FunctionCallTarget.C \
   FunctionId.C \
   FunctionIdMapping.C \
