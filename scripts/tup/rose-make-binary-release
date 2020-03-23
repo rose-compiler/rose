@@ -1,0 +1,332 @@
+#!/bin/bash
+set -e
+arg0="${0##*/}"
+source tup-scripts/rose_tool
+
+# Command-line defaults
+PROJECT=rose
+PROJECT_VERSION=
+VERBOSE=
+MKINSTALLER=
+OSNAME=
+
+help() {
+    (
+	echo -n "$arg0" |tr a-z A-Z; echo "(1)"
+	echo
+	#-------------------------------------------------------------------------------
+	cat <<EOF |expand |cut -c9-
+	NAME
+
+	     $arg0 - build a binary release of ROSE-related software
+
+	SYNOPSIS
+
+	     usaage: $arg0 [SWITCHES] [OUTPUT_NAME]
+
+	DESCRIPTION
+
+	     Builds a binary release of all the files under the ROSE installation
+	     prefix, herein called \$ROSE_ROOT. The binary release will also include
+	     copies of various ROSE dependencies as identified by the ROSE Meta
+	     Configuration system.
+
+	     The resulting binary release is named OUTPUT_NAME. If no name is specified
+	     then a name is created based on the project name (see --project), the
+	     current date, the ROSE version number (see --version), and the operating
+	     system name (see --os).
+
+	COMMAND-LINE SWITCHES
+
+	     The following command-line switches are understood:
+
+		 --help | -h
+		     Prints this documentation.
+
+		 --mkinstaller=PATH
+		     Specifies the name of the "mkinstaller" tool that actually creates
+		     the installation script.
+
+		 --os=NAME
+		     If no OUTPUT_NAME is specified, then use this NAME as the operating
+		     system component of the generated OUTPUT_NAME.  The default is to
+		     obtain the OS name from the ROSE Meta Configuration system.
+
+		 --project=NAME
+		     Name of the project. This defaults to "$PROJECT". The project name
+		     forms the first part of the resulting script's name if no
+		     OUTPUT_NAME is specified on the command-line.
+
+		 --verbose
+		     Prints some of the underlying commands that are run, mainly the
+		     command that creates the actual binary release file.
+
+		 --version=STRING
+		     If no OUTPUT_NAME is specified, then use STRING as the version
+		     component of the generated output name.  The default is to try to
+		     use an abbreviated Git commit hash.
+
+EOF
+	#-------------------------------------------------------------------------------
+    ) | "${PAGER-less}"
+}
+
+
+
+
+die() {
+    echo "$arg0: error:" "$@" >&2
+    exit 1
+}
+
+# Parse the command-line and adjust global (upper-case) variables.
+parse_command_line() {
+    while [ "$#" -gt 0 ]; do
+	case "$1" in
+	    --)
+		shift
+		break
+		;;
+	    -h|--help)
+		help
+		exit 0
+		;;
+	    --mkinstaller=*)
+		MKINSTALLER="${1#--mkinstaller=}"
+		shift
+		;;
+	    --os=*)
+		OSNAME="${1#--os=}"
+		shift
+		;;
+	    --project=*)
+		PROJECT="${1#--project=}"
+		shift
+		;;
+	    --version=*)
+		PROJECT_VERSION="${1#--version=}"
+		shift
+		;;
+	    --verbose)
+		VERBOSE=yes
+		shift
+		;;
+	    -*)
+		die "unknown command-line switch: $1" >&2
+		exit 1
+		;;
+	    *)
+		OUTPUT_NAME="$1"
+		shift
+		break
+		;;
+	esac
+    done
+    [ "$#" -ne 0 ] && die "incorrect usage"
+    return 0
+}
+
+# Retrieve a variable from the rose.cfg file that was copied into this project's source tree.
+rose_config() {
+    local var="$1"
+    [ -r rose.cfg ] || die "no rose.cfg file; see README.md"
+    sed -nr '/^ROSE_'"$var"'[ \t]*=/ s/^.*?=[ \t]*(.*?)[ \t]*$/\1/p' rose.cfg
+}
+
+# Obtain a project version number if possible, otherwise the word "unknown".
+project_version() {
+    case "$PROJECT_VERSION" in
+	"")
+	    rose_config VERSION
+	    ;;
+	*)
+	    echo "$PROJECT_VERSION"
+	    ;;
+    esac
+}
+
+os_name() {
+    case "$OSNAME" in
+	"")
+	    spock-shell bash -c '$SPOCK_SCRIPTS/spock-os-name --short' |tr -d '\n' |tr -c a-zA-Z0-9 _
+	    ;;
+	*)
+	    echo "$OSNAME"
+	    ;;
+    esac
+}
+
+# Name of the installer script that's output by this tool. The name is CWD-independent.
+output_name() {
+    case "$OUTPUT_NAME" in
+	"")
+	    echo "$(pwd)/${PROJECT}-$(project_version)-$(date '+%Y%m%d')-$(os_name)"
+	    ;;
+	/*)
+	    echo "$OUTPUT_NAME"
+	    ;;
+	*)
+	    echo "$(pwd)/$OUTPUT_NAME"
+	    ;;
+    esac
+}
+
+# Name of the mkinstaller script. Either the name specified with a command-line switch, a hard-coded default name, or
+# the mkinstaller that was installed as part of ROSE. The returned name is CWD-independent
+mkinstaller_name() {
+    case "$MKINSTALLER" in
+	"")
+            # Use the mkinstaller installed with ROSE
+            mkinstaller=$(rose_config PREFIX)/bin/mkinstaller
+            [ -x "$mkinstaller" ] || die "cannot find ROSE mkinstaller"
+	    echo "$mkinstaller"
+	    ;;
+	/*)
+	    echo "$MKINSTALLER"
+	    ;;
+	*)
+	    echo "$(pwd)/$OUTPUT_NAME"
+	    ;;
+    esac
+}
+
+# ROSE prerequisite directories that need to be packaged up.
+libdirs() {
+    for arg in $(rose_config LDFLAGS); do
+        case "$arg" in
+            -L*)
+                local libdir="${arg#-L}"
+                echo $libdir
+                ;;
+        esac
+    done
+}
+
+# Plugin directory for Qt
+qt5plugins() {
+    QT_ROOT=$(rose_tool/qt_prefix)
+    [ -n "$QT_ROOT" ] && echo "$QT_ROOT/plugins"
+}
+    
+# Remove duplicated words from the list
+dedup() {
+    declare -A seen
+    local i=0
+    for arg in "$@"; do
+        if [ "${seen[$arg]}" = "" ]; then
+            seen[$arg]=y
+            [ $i -gt 0 ] && echo -n " "
+            echo -n $arg
+            i=$[ i + 1 ]
+        fi
+    done
+    [ $i -gt 0 ] && echo
+    return 0
+}
+
+# Run the specified command, possibly in a subdirectory, and possibly printing the command to standard error.
+run_and_print() {
+    local subdir=
+    if [ "$1" = "-C" ]; then
+        subdir="$2"
+        shift 2
+    fi
+    (
+        set -e
+        [ -n "$subdir" ] && cd "$subdir"
+        [ -n "$VERBOSE" ] && echo "+" "$@" >&2
+        "$@"
+    )
+}
+
+# Return the name of the system's temporary directory abiding by ISO/IEC 9945.
+temp_directory_path() {
+    if [ -n "$TMPDIR" ]; then
+        echo "$TMPDIR"
+    elif [ -n "$TMP" ]; then
+        echo "$TMP"
+    elif [ -n "$TEMP" ]; then
+        echo "$TEMP"
+    elif [ -n "$TEMPDIR" ]; then
+        echo "$TEMPDIR";
+    else
+        echo "/tmp"
+    fi
+}
+
+# Return the "usual" name of the C or C++ compiler based on the actual C or C++ compiler's vendor.
+compiler_usual_name() {
+    local language="${1-c}"
+    case "$language" in
+	c)
+	    case "$(rose_config CC_INFO |cut -d: -f1)" in
+		gnu)
+		    echo "gcc"
+		    ;;
+		llvm)
+		    echo "clang"
+		    ;;
+		intel)
+		    echo "icc"
+		    ;;
+		*)
+		    echo "cc"
+		    ;;
+	    esac
+	    ;;
+	c++)
+	    case "$(rose_config CXX_INFO |cut -d: -f1)" in
+		gnu)
+		    echo "g++"
+		    ;;
+		llvm)
+		    echo "clang++"
+		    ;;
+		intel)
+		    echo "icpc"
+		    ;;
+		*)
+		    echo "c++"
+		    ;;
+	    esac
+	    ;;
+	*)
+	    die "invalid compiler \"$1\""
+	    ;;
+    esac
+}
+
+# Run the mkinstaller. This is complicated by the fact that mkinstaller needs to run in an empty directory
+# or else it complains and possibly misbehaves.
+create_installer() {
+    local output="$1"
+    [ -n "$output" ] || die "no output name"
+
+    echo "$arg0: creating installer script $output"
+    local mkinstaller="$(mkinstaller_name)"
+    local project_version=$(date '+%Y.%m.%d')
+
+    # Argggg. mkinstaller needs to run in an empty directory
+    tmp="$(temp_directory_path)/mkinstaller-$RANDOM$RANDOM$RANDOM$RANDOM"
+    rm -rf "$tmp"
+    mkdir "$tmp"
+    trap "rm -rf '$tmp'" EXIT
+
+    # All paths in the following command need to be CWD independent
+    run_and_print -C "$tmp" $mkinstaller \
+		  --create=partial-installer \
+		  --project-name=bat \
+		  --project-version=$project_version \
+		  --postinstall-bin="$(pwd)/post-install-script" \
+		  --CC="[$(rose_config CC),$(compiler_usual_name c)]" \
+		  --CXX="[$(rose_config CXX),$(compiler_usual_name c++)]" \
+		  $(dedup $(rose_config PREFIX)/* $(libdirs) $(qt5plugins))
+
+    # We don't get here if run_and_print failed.
+    mv "$tmp/partial-installer" "$output"
+}
+    
+########################################################################################################################
+
+parse_command_line "$@"
+create_installer "$(output_name)"
