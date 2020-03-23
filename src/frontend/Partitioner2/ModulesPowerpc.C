@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <DisassemblerPowerpc.h>
+
 #include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/ModulesPowerpc.h>
 #include <Partitioner2/Partitioner.h>
@@ -224,3 +227,5 @@ isFunctionReturn(const Partitioner &partitioner, const BasicBlock::Ptr &bb) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

@@ -1,9 +1,12 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+#include "Disassembler.h"
+
 #include "Assembler.h"
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
 #include "Diagnostics.h"
-#include "Disassembler.h"
 #include "DisassemblerPowerpc.h"
 #include "DisassemblerArm.h"
 #include "DisassemblerM68k.h"
@@ -339,3 +342,5 @@ Disassembler::get_block_successors(const InstructionMap& insns, bool *complete)
 
 } // namespace
 } // namespace
+
+#endif

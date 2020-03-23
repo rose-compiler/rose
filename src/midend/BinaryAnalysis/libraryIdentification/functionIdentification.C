@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"                                 // every librose .C file must start with this
 
 #include "libraryIdentification.h"
@@ -235,3 +237,4 @@ FunctionIdentification::get_function_match( library_handle & handle, const SgUns
      return const_cast<FunctionIdentification*>(this)->get_function_match( handle, (const unsigned char*) &(*(opcode_vector.begin())) , opcode_vector.size() );
    }
 
+#endif

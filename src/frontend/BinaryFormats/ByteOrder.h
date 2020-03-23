@@ -1,6 +1,9 @@
 #ifndef ROSE_ByteOrder_H
 #define ROSE_ByteOrder_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 namespace ByteOrder {
 
 // Caution: the symbols LITTLE_ENDIAN and BIG_ENDIAN are already defined on some systems, so we use other names in ROSE.
@@ -104,4 +107,6 @@ void host_to_disk(Endianness sex, int64_t h, int64_t *np);
 /** @} */
 
 } // namespace
+
+#endif
 #endif

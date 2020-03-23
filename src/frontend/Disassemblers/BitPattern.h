@@ -1,6 +1,9 @@
 #ifndef ROSE_BitPattern_H
 #define ROSE_BitPattern_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include "integerOps.h"
 #include "StringUtility.h"
 
@@ -454,4 +457,5 @@ std::ostream& operator<<(std::ostream &o, const Rose::BitPattern<T> &bp)
     return o;
 }
 
+#endif
 #endif

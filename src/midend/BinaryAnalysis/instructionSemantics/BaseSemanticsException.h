@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_Exception_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_Exception_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemanticsTypes.h>
 #include <RoseException.h>
@@ -34,4 +36,5 @@ std::ostream& operator<<(std::ostream&, const Exception&);
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -1,5 +1,7 @@
 #ifndef ROSE_DwarfLineMapper_H
 #define ROSE_DwarfLineMapper_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -133,4 +135,5 @@ std::ostream& operator<<(std::ostream&, const DwarfLineMapper&);
 } // namespace
 } // namespace
 
+#endif
 #endif

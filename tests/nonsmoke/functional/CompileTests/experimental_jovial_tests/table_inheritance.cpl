@@ -1,0 +1,13 @@
+START
+
+COMPOOL table'inheritance;
+
+TYPE table'base'type TABLE;
+  BEGIN
+    ITEM bit'part B 16;
+    ITEM num'part U 32;
+  END
+
+TYPE table'array'type TABLE (1:10) table'base'type;
+
+TERM

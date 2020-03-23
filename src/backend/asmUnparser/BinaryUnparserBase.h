@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_UnparserBase_H
 #define ROSE_BinaryAnalysis_UnparserBase_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <BinaryEdgeArrows.h>
 #include <BinaryReachability.h>
 #include <BinaryUnparser.h>
@@ -577,4 +580,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

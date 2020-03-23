@@ -2,6 +2,7 @@
 #define ROSE_Partitioner2_ModulesLinux_H
 
 #include <Partitioner2/Modules.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BinarySystemCall.h>
 
@@ -61,4 +62,4 @@ void nameSystemCalls(const Partitioner&, const boost::filesystem::path &syscallH
 } // namespace
 
 #endif
-
+#endif

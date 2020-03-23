@@ -771,6 +771,9 @@
 /* Build ROSE to support the C langauge */
 #cmakedefine ROSE_BUILD_C_LANGUAGE_SUPPORT
 
+/* Build ROSE to support the C preprocessor. */
+#cmakedefine ROSE_BUILD_CPP_LANGUAGE_SUPPORT
+
 /* Build ROSE to support the Fortran langauge */
 #cmakedefine ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 

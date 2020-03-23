@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_FeasiblePath_H
 #define ROSE_BinaryAnalysis_FeasiblePath_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 #include <BinarySmtSolver.h>
@@ -116,6 +118,17 @@ public:
               maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true), solverName("best"),
               memoryParadigm(LIST_BASED_MEMORY), processFinalVertex(false), ignoreSemanticFailure(false),
               kCycleCoefficient(0.0), edgeVisitOrder(VISIT_NATURAL), trackingCodeCoverage(true) {}
+    };
+
+    /** Statistics from path searching. */
+    struct Statistics {
+        size_t maxVertexVisitHits;                      /**< Number of times settings.maxVertexVisit was hit. */
+        size_t maxPathLengthHits;                       /**< Number of times settings.maxPathLength was hit (effective K). */
+        size_t maxCallDepthHits;                        /**< Number of times settings.maxCallDepth was hit. */
+        size_t maxRecursionDepthHits;                   /**< Number of times settings.maxRecursionDepth was hit. */
+
+        Statistics()
+            : maxVertexVisitHits(0), maxPathLengthHits(0), maxCallDepthHits(0), maxRecursionDepthHits(0) {}
     };
 
     /** Diagnostic output. */
@@ -319,6 +332,7 @@ private:
     FunctionSummarizer::Ptr functionSummarizer_;        // user-defined function for handling function summaries
     AddressSet reachedBlockVas_;                        // basic block addresses reached during analysis
     InstructionSemantics2::BaseSemantics::StatePtr initialState_; // set by setInitialState.
+    Statistics stats_;                                  // statistical results of the analysis
     static Sawyer::Attribute::Id POST_STATE;            // stores semantic state after executing the insns for a vertex
     static Sawyer::Attribute::Id POST_INSN_LENGTH;      // path length in instructions at end of vertex
     static Sawyer::Attribute::Id EFFECTIVE_K;           // (double) effective maximimum path length
@@ -347,6 +361,12 @@ public:
         cfgAvoidEdges_.clear();
         cfgEndAvoidVertices_.clear();
         reachedBlockVas_.clear();
+        resetStatistics();
+    }
+
+    /** Reset only statistics. */
+    void resetStatistics() {
+        stats_ = Statistics();
     }
 
     /** Initialize diagnostic output. This is called automatically when ROSE is initialized. */
@@ -572,6 +592,13 @@ public:
      *  model checking. */
     static size_t pathLength(const Partitioner2::CfgPath&);
 
+    /** Cumulative statistics about prior analyses.
+     *
+     *  These statistics accumulate across all analysis calls and can be reset by either @ref reset or @ref resetStatistics. */
+    Statistics statistics() const {
+        return stats_;
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Functions for code coverage
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -650,4 +677,5 @@ namespace Sawyer {
     }
 }
 
+#endif
 #endif

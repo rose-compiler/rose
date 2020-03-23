@@ -7,6 +7,7 @@ using namespace std;
 
 int main(int argc, char * argv[])
 {
+#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
   // Initialize and check compatibility. See Rose::initialize
   ROSE_INITIALIZE;
 
@@ -37,5 +38,8 @@ int main(int argc, char * argv[])
   }
 
   return backend(project);
+#else
+  std::cerr <<"C preprocessor is not supported in this version of ROSE\n";
+#endif
 }
 

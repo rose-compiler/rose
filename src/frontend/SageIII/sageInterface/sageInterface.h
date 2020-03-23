@@ -106,14 +106,16 @@ namespace SageInterface
 //! An internal counter for generating unique SgName
 ROSE_DLL_API extern int gensym_counter;
 
-// tps : 28 Oct 2008 - support for finding the main interpretation
- SgAsmInterpretation* getMainInterpretation(SgAsmGenericFile* file);
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+//! Find the main interpretation.
+SgAsmInterpretation* getMainInterpretation(SgAsmGenericFile* file);
 
 //! Get the unsigned value of a disassembled constant.
 uint64_t getAsmConstant(SgAsmValueExpression* e);
 
 //! Get the signed value of a disassembled constant.
 int64_t getAsmSignedConstant(SgAsmValueExpression *e);
+#endif
 
 //! Function to add "C" style comment to statement.
  void addMessageStatement( SgStatement* stmt, std::string message );
@@ -761,10 +763,6 @@ PreprocessingInfo* attachComment(
    ROSE_DLL_API PreprocessingInfo* attachComment(SgLocatedNode* target, const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
                PreprocessingInfo::DirectiveType dtype= PreprocessingInfo::CpreprocessorUnknownDeclaration);
-
-// DQ (11/25/2009): Added matching support for adding comments to SgAsm nodes.
-// Build and attach comment
-// void attachComment(SgAsmStatement* target, const std::string & content );
 
 // DQ (7/20/2008): I am not clear were I should put this function, candidates include: SgLocatedNode or SgInterface
 //! Add a string to be unparsed to support code generation for back-end specific tools or compilers.

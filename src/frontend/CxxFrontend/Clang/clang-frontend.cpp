@@ -207,12 +207,14 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
     clang::CompilerInstance * compiler_instance = new clang::CompilerInstance();
 
-    clang::TextDiagnosticPrinter * diag_printer = new clang::TextDiagnosticPrinter(llvm::errs(), clang::DiagnosticOptions());
-    compiler_instance->createDiagnostics(argc, argv, diag_printer, true, false);
+    llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> DiagOpts = new clang::DiagnosticOptions();
+    clang::TextDiagnosticPrinter * diag_printer = new clang::TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
+    compiler_instance->createDiagnostics(diag_printer, true);
 
     clang::CompilerInvocation * invocation = new clang::CompilerInvocation();
+    std::shared_ptr<clang::CompilerInvocation> invocation_shptr(std::move(invocation));
     clang::CompilerInvocation::CreateFromArgs(*invocation, args, &(args[cnt]), compiler_instance->getDiagnostics());
-    compiler_instance->setInvocation(invocation);
+    compiler_instance->setInvocation(invocation_shptr);
 
     clang::LangOptions & lang_opts = compiler_instance->getLangOpts();
 
@@ -241,22 +243,25 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     }
 
     clang::TargetOptions target_options;
-    target_options.Triple = llvm::sys::getHostTriple();
-    clang::TargetInfo * target_info = clang::TargetInfo::CreateTargetInfo(compiler_instance->getDiagnostics(), target_options);
+    target_options.Triple = llvm::sys::getDefaultTargetTriple();
+    std::shared_ptr<clang::TargetOptions> targetOption_shptr = std::make_shared<clang::TargetOptions>(target_options);
+    clang::TargetInfo * target_info = clang::TargetInfo::CreateTargetInfo(compiler_instance->getDiagnostics(), targetOption_shptr);
     compiler_instance->setTarget(target_info);
 
     compiler_instance->createFileManager();
     compiler_instance->createSourceManager(compiler_instance->getFileManager());
 
     const clang::FileEntry * input_file_entry = compiler_instance->getFileManager().getFile(input_file);
-    compiler_instance->getSourceManager().createMainFileID(input_file_entry);
+    clang::FileID mainFileID = compiler_instance->getSourceManager().createFileID(input_file_entry, clang::SourceLocation(), compiler_instance->getSourceManager().getFileCharacteristic(clang::SourceLocation()));
 
-    if (!compiler_instance->hasPreprocessor()) compiler_instance->createPreprocessor();
+    compiler_instance->getSourceManager().setMainFileID(mainFileID);
+
+    if (!compiler_instance->hasPreprocessor()) compiler_instance->createPreprocessor(clang::TU_Complete);
 
     if (!compiler_instance->hasASTContext()) compiler_instance->createASTContext();
 
     ClangToSageTranslator translator(compiler_instance, language);
-    compiler_instance->setASTConsumer(&translator);   
+    compiler_instance->setASTConsumer(std::move(std::unique_ptr<clang::ASTConsumer>(&translator)));
 
     if (!compiler_instance->hasSema()) compiler_instance->createSema(clang::TU_Complete, NULL);
 
@@ -625,7 +630,7 @@ void SagePreprocessorRecord::PragmaDiagnosticPop(clang::SourceLocation Loc, llvm
     ROSE_ASSERT(false);
 }
 
-void SagePreprocessorRecord::PragmaDiagnostic(clang::SourceLocation Loc, llvm::StringRef Namespace, clang::diag::Mapping mapping, llvm::StringRef Str) {
+void SagePreprocessorRecord::PragmaDiagnostic(clang::SourceLocation Loc, llvm::StringRef Namespace, clang::diag::Severity Severity, llvm::StringRef Str) {
     std::cerr << "PragmaDiagnostic" << std::endl;
     ROSE_ASSERT(false);
 }

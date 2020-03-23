@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
+
 #include <BaseSemantics2.h>
 #include <BinaryReachability.h>
 #include <BinaryUnparserBase.h>
@@ -2059,3 +2062,5 @@ Base::orderedBlockSuccessors(const P2::Partitioner &partitioner, const P2::Basic
 } // namespace
 } // namespace
 } // namespace
+
+#endif

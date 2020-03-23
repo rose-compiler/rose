@@ -11,21 +11,27 @@ using std::endl;
 
 ATermToUntypedTraversal::ATermToUntypedTraversal(SgSourceFile* source)
 {
-   SgUntypedGlobalScope* global_scope = UntypedBuilder::buildScope<SgUntypedGlobalScope>();
-
    pSourceFile = source;
    ROSE_ASSERT(pSourceFile != NULL);
+
+   pUntypedFile = NULL;
+
+#if 0
+   SgUntypedGlobalScope* global_scope = UntypedBuilder::buildScope<SgUntypedGlobalScope>();
 
    pUntypedFile = new SgUntypedFile(global_scope);
    ROSE_ASSERT(pUntypedFile != NULL);
 
 // DQ (2/25/2013): Set the default for source position generation to be consistent with other languages (e.g. C/C++).
    SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
+#endif
 }
 
 ATermToUntypedTraversal::~ATermToUntypedTraversal()
 {
-   delete pUntypedFile;
+   if (pUntypedFile) {
+      delete pUntypedFile;
+   }
 }
 
 

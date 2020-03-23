@@ -6,7 +6,9 @@ REFERENCE_PATH=$(srcdir)/tests/references
 FORTRAN_TESTCODES_REQUIRED_TO_PASS = \
 	Ftest1.f90 \
 	Ftest2.f90 \
-	Ftest3.f90 
+	Ftest3.f90 \
+	Ftest4.f90 \
+	Ftest5.f90 
 
 C_TESTCODES_REQUIRED_TO_PASS = \
 	Ctest1.c \
@@ -17,13 +19,15 @@ COMPARE_CODES = \
 	rose_Ftest1.f90 \
 	rose_Ftest2.f90 \
 	rose_Ftest3.f90 \
+	rose_Ftest4.f90 \
+	rose_Ftest5.f90 \
 	rose_Ctest1.c \
 	rose_Ctest2.c 
 
 FORTRAN_TEST_OUTPUTS = $(FORTRAN_TESTCODES_REQUIRED_TO_PASS:.f90=)
 C_TEST_OUTPUTS = $(C_TESTCODES_REQUIRED_TO_PASS:.c=)
-FORTRAN_COMPARE_OUTPUTS = $(COMPARE_CODES:.f90=)
-C_COMPARE_OUTPUTS = $(COMPARE_CODES:.c=)
+FORTRAN_COMPARE_OUTPUTS = $(COMPARE_FORTRAN_CODES:.f90=)
+C_COMPARE_OUTPUTS = $(COMPARE_C_CODES:.c=)
 
 ../src/rose-scalarizer:
 	$(MAKE) -C $(top_builddir)/projects/scalarization/src
@@ -43,13 +47,17 @@ $(C_COMPARE_OUTPUTS):
 	if $(DIFF) $(srcdir)/references/$(@:=.c) $(@:=.c) > $@; then echo "$@ Test Passed" ; else echo "Files differ; test falied"; cat $@; rm -rf $@; exit 1; fi
 
 check-local:
-if ROSE_BUILD_C_LANGUAGE_SUPPORT
+if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 	@$(MAKE) $(FORTRAN_TEST_OUTPUTS)
-	@$(MAKE) $(C_TEST_OUTPUTS)
 	@$(MAKE) $(FORTRAN_COMPARE_OUTPUTS)
+else
+	@echo "Skipping Fortran tests"
+endif
+if ROSE_BUILD_C_LANGUAGE_SUPPORT
+	@$(MAKE) $(C_TEST_OUTPUTS)
 	@$(MAKE) $(C_COMPARE_OUTPUTS)
 else
-	@echo "Skipping tests"
+	@echo "Skipping C tests"
 endif
 	@echo "***********************************************************************************************"
 	@echo "*** ROSE/projects/scalarization/tests: make check rule complete (terminated normally)"

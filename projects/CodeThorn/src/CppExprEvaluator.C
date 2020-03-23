@@ -399,7 +399,7 @@ CodeThorn::NumberIntervalLattice CodeThorn::CppExprEvaluator::evaluate(SgNode* n
       if(funName=="__assert_fail") {
         return NumberIntervalLattice::bot();
       } else {
-        if(getSkipSelectedFunctionCalls()) {
+        if(getSkipUnknownFunctionCalls()) {
           //cout<<"Warning: unknown function call inside expression: "<<node->unparseToString()<<". Assuming function is side-effect free."<<endl;
           return NumberIntervalLattice::top();
         } else {
@@ -464,11 +464,11 @@ SgNode* CodeThorn::CppExprEvaluator::findExprRootNode(SgNode* node) {
   }
 }
 
-void CodeThorn::CppExprEvaluator::setSkipSelectedFunctionCalls(bool flag) {
+void CodeThorn::CppExprEvaluator::setSkipUnknownFunctionCalls(bool flag) {
   _skipSelectedFunctionCalls=flag;
 }
 
-bool CodeThorn::CppExprEvaluator::getSkipSelectedFunctionCalls() {
+bool CodeThorn::CppExprEvaluator::getSkipUnknownFunctionCalls() {
   return _skipSelectedFunctionCalls;
 }
 

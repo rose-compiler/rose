@@ -1,5 +1,7 @@
 #ifndef Rose_BinaryAnalysis_SmtlibSolver_H
 #define Rose_BinaryAnalysis_SmtlibSolver_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BinarySmtSolver.h>
 #include <boost/filesystem.hpp>
@@ -172,4 +174,5 @@ protected:
 } // namespace
 } // namespace
 
+#endif
 #endif

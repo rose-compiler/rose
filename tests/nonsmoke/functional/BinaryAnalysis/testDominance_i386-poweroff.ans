@@ -3,93 +3,93 @@ CFG dominators for function 0x08048954:
   function 0x08048954 dominator of 0x08048969<1> is 0x08048964<2>
   function 0x08048954 dominator of 0x08048964<2> is 0x0804895f<3>
   function 0x08048954 dominator of 0x0804895f<3> is 0x08048954<0>
-CFG dominators for function 0x0804896c "DYNAMIC_LINKER_TRAMPOLINE":
+CFG dominators for function 0x0804896c:
   function 0x0804896c dominator of 0x0804896c<0> is none
-CFG dominators for function 0x0804897c "strchr@plt":
+CFG dominators for function 0x0804897c:
   function 0x0804897c dominator of 0x0804897c<0> is none
-CFG dominators for function 0x0804898c "updwtmp@plt":
+CFG dominators for function 0x0804898c:
   function 0x0804898c dominator of 0x0804898c<0> is none
-CFG dominators for function 0x0804899c "pututline@plt":
+CFG dominators for function 0x0804899c:
   function 0x0804899c dominator of 0x0804899c<0> is none
-CFG dominators for function 0x080489ac "close@plt":
+CFG dominators for function 0x080489ac:
   function 0x080489ac dominator of 0x080489ac<0> is none
-CFG dominators for function 0x080489bc "getutid@plt":
+CFG dominators for function 0x080489bc:
   function 0x080489bc dominator of 0x080489bc<0> is none
-CFG dominators for function 0x080489cc "perror@plt":
+CFG dominators for function 0x080489cc:
   function 0x080489cc dominator of 0x080489cc<0> is none
-CFG dominators for function 0x080489dc "fprintf@plt":
+CFG dominators for function 0x080489dc:
   function 0x080489dc dominator of 0x080489dc<0> is none
-CFG dominators for function 0x080489ec "getenv@plt":
+CFG dominators for function 0x080489ec:
   function 0x080489ec dominator of 0x080489ec<0> is none
-CFG dominators for function 0x080489fc "reboot@plt":
+CFG dominators for function 0x080489fc:
   function 0x080489fc dominator of 0x080489fc<0> is none
-CFG dominators for function 0x08048a0c "access@plt":
+CFG dominators for function 0x08048a0c:
   function 0x08048a0c dominator of 0x08048a0c<0> is none
-CFG dominators for function 0x08048a1c "malloc@plt":
+CFG dominators for function 0x08048a1c:
   function 0x08048a1c dominator of 0x08048a1c<0> is none
-CFG dominators for function 0x08048a2c "execv@plt":
+CFG dominators for function 0x08048a2c:
   function 0x08048a2c dominator of 0x08048a2c<0> is none
-CFG dominators for function 0x08048a3c "getopt@plt":
+CFG dominators for function 0x08048a3c:
   function 0x08048a3c dominator of 0x08048a3c<0> is none
-CFG dominators for function 0x08048a4c "fgets@plt":
+CFG dominators for function 0x08048a4c:
   function 0x08048a4c dominator of 0x08048a4c<0> is none
-CFG dominators for function 0x08048a5c "chdir@plt":
+CFG dominators for function 0x08048a5c:
   function 0x08048a5c dominator of 0x08048a5c<0> is none
-CFG dominators for function 0x08048a6c "sleep@plt":
+CFG dominators for function 0x08048a6c:
   function 0x08048a6c dominator of 0x08048a6c<0> is none
-CFG dominators for function 0x08048a7c "uname@plt":
+CFG dominators for function 0x08048a7c:
   function 0x08048a7c dominator of 0x08048a7c<0> is none
-CFG dominators for function 0x08048a8c "setutent@plt":
+CFG dominators for function 0x08048a8c:
   function 0x08048a8c dominator of 0x08048a8c<0> is none
-CFG dominators for function 0x08048a9c "__libc_start_main@plt":
+CFG dominators for function 0x08048a9c:
   function 0x08048a9c dominator of 0x08048a9c<0> is none
-CFG dominators for function 0x08048aac "endutent@plt":
+CFG dominators for function 0x08048aac:
   function 0x08048aac dominator of 0x08048aac<0> is none
-CFG dominators for function 0x08048abc "getutent@plt":
+CFG dominators for function 0x08048abc:
   function 0x08048abc dominator of 0x08048abc<0> is none
-CFG dominators for function 0x08048acc "memcpy@plt":
+CFG dominators for function 0x08048acc:
   function 0x08048acc dominator of 0x08048acc<0> is none
-CFG dominators for function 0x08048adc "fclose@plt":
+CFG dominators for function 0x08048adc:
   function 0x08048adc dominator of 0x08048adc<0> is none
-CFG dominators for function 0x08048aec "strrchr@plt":
+CFG dominators for function 0x08048aec:
   function 0x08048aec dominator of 0x08048aec<0> is none
-CFG dominators for function 0x08048afc "__strdup@plt":
+CFG dominators for function 0x08048afc:
   function 0x08048afc dominator of 0x08048afc<0> is none
-CFG dominators for function 0x08048b0c "closedir@plt":
+CFG dominators for function 0x08048b0c:
   function 0x08048b0c dominator of 0x08048b0c<0> is none
-CFG dominators for function 0x08048b1c "gettimeofday@plt":
+CFG dominators for function 0x08048b1c:
   function 0x08048b1c dominator of 0x08048b1c<0> is none
-CFG dominators for function 0x08048b2c "opendir@plt":
+CFG dominators for function 0x08048b2c:
   function 0x08048b2c dominator of 0x08048b2c<0> is none
-CFG dominators for function 0x08048b3c "snprintf@plt":
+CFG dominators for function 0x08048b3c:
   function 0x08048b3c dominator of 0x08048b3c<0> is none
-CFG dominators for function 0x08048b4c "open@plt":
+CFG dominators for function 0x08048b4c:
   function 0x08048b4c dominator of 0x08048b4c<0> is none
-CFG dominators for function 0x08048b5c "exit@plt":
+CFG dominators for function 0x08048b5c:
   function 0x08048b5c dominator of 0x08048b5c<0> is none
-CFG dominators for function 0x08048b6c "free@plt":
+CFG dominators for function 0x08048b6c:
   function 0x08048b6c dominator of 0x08048b6c<0> is none
-CFG dominators for function 0x08048b7c "ioctl@plt":
+CFG dominators for function 0x08048b7c:
   function 0x08048b7c dominator of 0x08048b7c<0> is none
-CFG dominators for function 0x08048b8c "memset@plt":
+CFG dominators for function 0x08048b8c:
   function 0x08048b8c dominator of 0x08048b8c<0> is none
-CFG dominators for function 0x08048b9c "strncpy@plt":
+CFG dominators for function 0x08048b9c:
   function 0x08048b9c dominator of 0x08048b9c<0> is none
-CFG dominators for function 0x08048bac "fopen@plt":
+CFG dominators for function 0x08048bac:
   function 0x08048bac dominator of 0x08048bac<0> is none
-CFG dominators for function 0x08048bbc "kill@plt":
+CFG dominators for function 0x08048bbc:
   function 0x08048bbc dominator of 0x08048bbc<0> is none
-CFG dominators for function 0x08048bcc "fwrite@plt":
+CFG dominators for function 0x08048bcc:
   function 0x08048bcc dominator of 0x08048bcc<0> is none
-CFG dominators for function 0x08048bdc "socket@plt":
+CFG dominators for function 0x08048bdc:
   function 0x08048bdc dominator of 0x08048bdc<0> is none
-CFG dominators for function 0x08048bec "readdir@plt":
+CFG dominators for function 0x08048bec:
   function 0x08048bec dominator of 0x08048bec<0> is none
-CFG dominators for function 0x08048bfc "geteuid@plt":
+CFG dominators for function 0x08048bfc:
   function 0x08048bfc dominator of 0x08048bfc<0> is none
-CFG dominators for function 0x08048c0c "sync@plt":
+CFG dominators for function 0x08048c0c:
   function 0x08048c0c dominator of 0x08048c0c<0> is none
-CFG dominators for function 0x08048c1c "_start":
+CFG dominators for function 0x08048c1c:
   function 0x08048c1c dominator of 0x08048c3d<0> is 0x08048c1c<1>
   function 0x08048c1c dominator of 0x08048c1c<1> is none
 CFG dominators for function 0x08048c40:
@@ -142,7 +142,7 @@ CFG dominators for function 0x08048dec:
   function 0x08048dec dominator of 0x08048e46<4> is 0x08048e39<3>
   function 0x08048dec dominator of 0x08048e53<5> is 0x08048e46<4>
   function 0x08048dec dominator of 0x08048e5f<6> is 0x08048e53<5>
-CFG dominators for function 0x08048e6c "main":
+CFG dominators for function 0x08048e6c:
   function 0x08048e6c dominator of 0x08048fd7<0> is none
   function 0x08048e6c dominator of 0x08048f56<1> is none
   function 0x08048e6c dominator of 0x08048f7b<2> is 0x08048f6e<63>

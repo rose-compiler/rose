@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "IntervalSemantics2.h"
 
@@ -835,3 +837,5 @@ RiscOperators::writeMemory(RegisterDescriptor segreg,
 } // namespace
 } // namespace
 } // namespace
+
+#endif

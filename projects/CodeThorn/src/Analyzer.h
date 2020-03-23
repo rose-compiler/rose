@@ -167,7 +167,7 @@ namespace CodeThorn {
     ConstraintSetMaintainer* getConstraintSetMaintainer();
     std::list<FailedAssertion> getFirstAssertionOccurences();
 
-    void setSkipSelectedFunctionCalls(bool defer);
+    void setSkipUnknownFunctionCalls(bool defer);
     void setSkipArrayAccesses(bool skip);
     bool getSkipArrayAccesses();
     void setIgnoreUndefinedDereference(bool);

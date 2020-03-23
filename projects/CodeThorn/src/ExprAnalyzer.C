@@ -20,12 +20,12 @@ Sawyer::Message::Facility ExprAnalyzer::logger;
 
 ExprAnalyzer::ExprAnalyzer() {
   initDiagnostics();
+  initViolatingLocations();
 }
 
 void ExprAnalyzer::setVariableIdMapping(VariableIdMappingExtended* variableIdMapping) {
   _variableIdMapping=variableIdMapping;
 }
-
 
 void ExprAnalyzer::initDiagnostics() {
   static bool initialized = false;
@@ -54,7 +54,7 @@ void ExprAnalyzer::initializeStructureAccessLookup(SgProject* node) {
   ROSE_ASSERT(node);
   ROSE_ASSERT(_variableIdMapping);
   structureAccessLookup.initializeOffsets(_variableIdMapping,node);
-  logger[INFO]<<"Structure access lookup num of members: "<<structureAccessLookup.numOfStoredMembers()<<endl;
+  SAWYER_MESG(logger[INFO])<<"Structure access lookup num of members: "<<structureAccessLookup.numOfStoredMembers()<<endl;
 }
 
 void ExprAnalyzer::setAnalyzer(Analyzer* analyzer) {
@@ -62,11 +62,11 @@ void ExprAnalyzer::setAnalyzer(Analyzer* analyzer) {
   _analyzer=analyzer;
 }
 
-void ExprAnalyzer::setSkipSelectedFunctionCalls(bool skip) {
+void ExprAnalyzer::setSkipUnknownFunctionCalls(bool skip) {
   _skipSelectedFunctionCalls=skip;
 }
 
-bool ExprAnalyzer::getSkipSelectedFunctionCalls() {
+bool ExprAnalyzer::getSkipUnknownFunctionCalls() {
   return _skipSelectedFunctionCalls;
 }
 
@@ -175,7 +175,7 @@ AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp) 
     else if(val==1)
       return AbstractValue(true);
     else {
-      cerr<<"Error: unknown bool value (not 0 or 1): SgBoolExp::get_value()=="<<val<<endl;
+      logger[ERROR]<<"Error: unknown bool value (not 0 or 1): SgBoolExp::get_value()=="<<val<<endl;
       exit(1);
     }
   } else if(SgShortVal* exp=isSgShortVal(valueExp)) {
@@ -480,7 +480,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
       return resultList;
     } else {
       // use of function addresses as values. Not implemented yet.
-      SAWYER_MESG(logger[WARN])<<"Imprecision: evaluating SgFunctionRefExp as top: "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
+      SAWYER_MESG(logger[WARN])<<"Imprecision: function pointer value: evaluating SgFunctionRefExp as top: "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
       list<SingleEvalResultConstInt> resultList;
       res.result=AbstractValue::createTop();
       resultList.push_front(res);
@@ -524,7 +524,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConditionalExpr(SgConditionalEx
     ++i;
     SingleEvalResultConstInt singleResult2=*i;
     if((singleResult1.value().operatorEq(singleResult2.value())).isTrue()) {
-      logger[INFO]<<"evaluating condition of conditional operator gives two equal results"<<endl;
+      SAWYER_MESG(logger[WARN])<<"evaluating condition of conditional operator gives two equal results"<<endl;
     }
   }
   if(condResultList.size()>1) {
@@ -712,10 +712,6 @@ ExprAnalyzer::evalGreaterOrEqualOp(SgGreaterOrEqualOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorMoreOrEq(rhsResult.result));
-  if(args.getBool("relop-constraints")) {
-    if(res.result.isTop())
-      throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
-  }
   resultList.push_back(res);
   return resultList;
 }
@@ -729,10 +725,6 @@ ExprAnalyzer::evalGreaterThanOp(SgGreaterThanOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorMore(rhsResult.result));
-  if(args.getBool("relop-constraints")) {
-    if(res.result.isTop())
-      throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
-  }
   resultList.push_back(res);
   return resultList;
 }
@@ -746,10 +738,6 @@ ExprAnalyzer::evalLessOrEqualOp(SgLessOrEqualOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorLessOrEq(rhsResult.result));
-  if(args.getBool("relop-constraints")) {
-    if(res.result.isTop())
-      throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
-  }
   resultList.push_back(res);
   return resultList;
 }
@@ -763,10 +751,6 @@ ExprAnalyzer::evalLessThanOp(SgLessThanOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=(lhsResult.result.operatorLess(rhsResult.result));
-  if(args.getBool("relop-constraints")) {
-    if(res.result.isTop())
-      throw CodeThorn::Exception("Error: Top found in relational operator (not supported yet).");
-  }
   resultList.push_back(res);
   return resultList;
 }
@@ -841,7 +825,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue read from memory, arrayPtrValue:"<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
             logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<": value not a pointer value: "<<arrayPtrValue.toString()<<endl;
-            cerr<<estate.toString(_variableIdMapping)<<endl;
+            logger[ERROR]<<estate.toString(_variableIdMapping)<<endl;
             exit(1);
           }
         } else {
@@ -850,8 +834,6 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           // variable may have been not written because abstraction is too coarse (subsummed in write to top)
           // => reading from anywhere, returning any value
           res.result=CodeThorn::Top();
-          recordPotentialNullPointerDereferenceLocation(estate.label());
-          if(_analyzer->getAbstractionMode()!=3) recordPotentialOutOfBoundsAccessLocation(estate.label());
           resultList.push_back(res);
           return resultList;
         }
@@ -862,7 +844,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       AbstractValue indexExprResultValue=indexExprResult.value();
       AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue);
       if(arrayPtrPlusIndexValue.isNullPtr()) {
-        _nullPointerDereferenceLocations.recordDefinitiveLocation(estate.label());
+        recordDefinitiveViolatingLocation(ANALYSIS_NULL_POINTER,estate.label());
         // there is no state following a definitive null pointer
         // dereference. An error-state recording this property is
         // created to allow analysis of errors on the programs
@@ -885,17 +867,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           resultList.push_back(res);
           return resultList;
         } else {
-          logger[ERROR]<<estate.toString(_variableIdMapping)<<endl;
-          logger[ERROR]<<estate.toString()<<endl;
-          logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<": ";
-          logger[ERROR]<<"evalArrayReferenceOp: array pointer value NOT in state."<<endl;
-          logger[ERROR]<<"array pointer value: "<<arrayPtrValue.toString(_variableIdMapping)<<"::"<<arrayPtrValue.toString()<<endl;
-          logger[ERROR]<<"access out of allocated memory bounds."<<endl;
-          logger[ERROR]<<"member check: "<<pstate2.varExists(arrayPtrValue)<<endl;
-          Label lab=estate.label();
           res.result=CodeThorn::Top();
-          recordPotentialNullPointerDereferenceLocation(lab);
-          if(_analyzer->getAbstractionMode()!=3) recordPotentialOutOfBoundsAccessLocation(lab);
           resultList.push_back(res);
           return resultList;
         }
@@ -920,7 +892,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         SAWYER_MESG(logger[WARN])<<"evalArrayReferenceOp:"<<pstate2.toString(_variableIdMapping)<<endl;
 
         if(mode==MODE_ADDRESS) {
-          cerr<<"Internal error: ExprAnalyzer::evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
+          SAWYER_MESG(logger[FATAL])<<"Internal error: ExprAnalyzer::evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
           exit(1);
         }
         // array variable NOT in state. Special space optimization case for constant array.
@@ -944,13 +916,13 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
                   return listify(res);
                 }
               } else {
-                SAWYER_MESG(logger[WARN])<<"unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+                SAWYER_MESG(logger[WARN])<<"unsupported array initializer value (assuming any value):"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
                 AbstractValue val=AbstractValue::createTop();
                 res.result=val;
                 return listify(res);
               }
             } else {
-              SAWYER_MESG(logger[ERROR])<<"no assign initialize:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+              SAWYER_MESG(logger[FATAL])<<"no assign initialize:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
               exit(1);
             }
             elemIndex++;
@@ -967,7 +939,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           //cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
           //cerr<<"AST: "<<node->unparseToString()<<endl;
           //cerr<<"explicit arrays flag: "<<args.getBool("explicit-arrays")<<endl;
-          _nullPointerDereferenceLocations.recordPotentialLocation(estate.label());
+          recordPotentialViolatingLocation(ANALYSIS_NULL_POINTER,estate.label());
           // continue after potential out-of-bounds access (assume any value can have been read)
           AbstractValue val=AbstractValue::createTop();
           res.result=val;
@@ -991,7 +963,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalNotOp(SgNotOp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   res.result=operandResult.result.operatorNot();
-  // do *not* invert the constraints, instead negate the operand result (TODO: investigate)
   return listify(res);
 }
 list<SingleEvalResultConstInt> ExprAnalyzer::evalUnaryMinusOp(SgMinusOp* node,
@@ -1041,10 +1012,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalCastOp(SgCastExp* node,
                                                         SingleEvalResultConstInt operandResult,
                                                         EState estate, EvalMode mode) {
   SingleEvalResultConstInt res;
-  // TODO: model effect of cast when sub language is extended
-  //SgCastExp* castExp=isSgCastExp(node);
-  //res.estate=estate;
-  //res.result=operandResult.result;
   res.init(estate,operandResult.result);
   return listify(res);
 }
@@ -1107,27 +1074,33 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDotOp(SgDotExp* node,
   res.estate=estate;
   // L.R : L evaluates to address, R evaluates to offset value (a struct member always evaluates to an offset)
   SAWYER_MESG(logger[DEBUG])<<"DotOp: lhs:"<<lhsResult.result.toString(_variableIdMapping)<<" rhs: "<<rhsResult.result.toString(_variableIdMapping)<<endl;
-  checkAndRecordNullPointer(lhsResult.result, estate.label()); // source of dot-op cannot be null.
-  AbstractValue address=AbstractValue::operatorAdd(lhsResult.result,rhsResult.result);
-  // only if rhs is *not* a dot-operator, needs the value be
-  // read. Otherwise this is not the end of the access path and only the address is computed.
-  if(!isSgDotExp(SgNodeHelper::getRhs(node))) {
-    // reached end of dot sequence (a.b.<here>c)
-    switch(mode) {
-    case MODE_VALUE:
-      SAWYER_MESG(logger[TRACE])<<"Dot op: reading from struct location."<<address.toString(_variableIdMapping)<<endl;
-      res.result=readFromMemoryLocation(estate.label(),estate.pstate(),address);
-      break;
-    case MODE_ADDRESS:
+  // lhs of dot-op should never be 0 (except if uninitialized memory is used)
+  bool continueExec=checkAndRecordNullPointer(lhsResult.result, estate.label());
+  if(continueExec) {
+    AbstractValue address=AbstractValue::operatorAdd(lhsResult.result,rhsResult.result);
+    // only if rhs is *not* a dot-operator, needs the value be
+    // read. Otherwise this is not the end of the access path and only the address is computed.
+    if(!isSgDotExp(SgNodeHelper::getRhs(node))) {
+      // reached end of dot sequence (a.b.<here>c)
+      switch(mode) {
+      case MODE_VALUE:
+        SAWYER_MESG(logger[TRACE])<<"Dot op: reading from struct location."<<address.toString(_variableIdMapping)<<endl;
+        res.result=readFromMemoryLocation(estate.label(),estate.pstate(),address);
+        break;
+      case MODE_ADDRESS:
+        res.result=address;
+        break;
+      } 
+    } else {
+      // evaluation of dot sequence (a.<here>b.c)
       res.result=address;
-      break;
     }
+    resultList.push_back(res);
+    return resultList;
   } else {
-    // evaluation of dot sequence (a.<here>b.c)
-    res.result=address;
+    list<SingleEvalResultConstInt> empty;
+    return empty;
   }
-  resultList.push_back(res);
-  return resultList;
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalAddressOfOp(SgAddressOfOp* node,
@@ -1179,6 +1152,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::semanticEvalDereferenceOp(SingleEva
     // proper error state and check error state in solver.  once this
     // is added above null pointer recording should be adapated to use
     // the generated error state.
+    // TODO: create null-pointer deref error state
     list<SingleEvalResultConstInt> empty;
     return empty;
   }
@@ -1354,79 +1328,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValuePntrArrRefExp(SgPntrArrRe
         resultList.splice(resultList.end(), intermediateResultList);
       }
     }
-    return resultList;
-
-    // dead code from here on
-    if(SgVarRefExp* varRefExp=isSgVarRefExp(arrExp)) {
-      PState pstate2=oldPState;
-      VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
-      AbstractValue arrayPtrValue;
-      // two cases
-      if(_variableIdMapping->hasArrayType(arrayVarId)) {
-        // create array element 0 (in preparation to have index added, or, if not index is used, it is already the correct index (=0).
-        arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
-      } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
-        // in case it is a pointer retrieve pointer value
-        AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
-        if(pstate2.varExists(ptr)) {
-          SAWYER_MESG(logger[DEBUG])<<"pointer exists (OK): "<<ptr.toString(_variableIdMapping)<<endl;
-          arrayPtrValue=readFromMemoryLocation(estate.label(),&pstate2,ptr);
-          SAWYER_MESG(logger[DEBUG])<<"arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
-          // convert integer to VariableId
-          if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
-            if(getOptionOutputWarnings())
-              cout <<"Warning: array index is top or bot:"<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<arrayPtrValue.toString(_variableIdMapping)<<"."<<endl;
-          }
-          // SAWYER_MESG(logger[DEBUG])<<"defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
-        } else {
-          if(getOptionOutputWarnings())
-            cout<<"Warning: lhs array access: pointer variable does not exist in PState:"<<ptr.toString()<<endl;
-          arrayPtrValue=AbstractValue::createTop();
-        }
-          } else {
-        logger[ERROR] <<"lhs array access: unknown type of array or pointer."<<endl;
-        exit(1);
-      }
-      AbstractValue arrayElementAddress;
-      //AbstractValue aValue=(*i).value();
-      list<SingleEvalResultConstInt> resIntermediate=evaluateExpression(indexExp,estate);
-      ROSE_ASSERT(resIntermediate.size()==1); // TODO: temporary restriction
-      AbstractValue indexValue=(*(resIntermediate.begin())).value();
-      AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
-      SAWYER_MESG(logger[TRACE])<<"DEBUG: arrayPtrPlusIndexValue: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
-
-      // TODO: rewrite to use AbstractValue only
-      {
-        if(arrayPtrPlusIndexValue.isTop()) {
-            if(_analyzer->getAbstractionMode()!=3) recordPotentialOutOfBoundsAccessLocation(estate.label());
-        } else {
-          VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
-          int index2=arrayPtrPlusIndexValue.getIndexIntValue();
-          if(!accessIsWithinArrayBounds(arrayVarId2,index2)) {
-            if(_analyzer->getAbstractionMode()!=3) recordDefinitiveOutOfBoundsAccessLocation(estate.label());
-            //cerr<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(node)<<" : write access out of bounds."<<endl;
-          }
-        }
-      }
-
-      arrayElementAddress=arrayPtrPlusIndexValue;
-      //cout<<"DEBUG: arrayElementAddress: "<<arrayElementAddress.toString(_variableIdMapping)<<endl;
-      //SAWYER_MESG(logger[TRACE])<<"arrayElementVarId:"<<arrayElementAddress.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
-      ROSE_ASSERT(!arrayElementAddress.isBot());
-      // read value of variable var id (same as for VarRefExp - TODO: reuse)
-      // TODO: check whether arrayElementAddress (or array) is a constant array (arrayVarId)
-      if(!pstate2.varExists(arrayElementAddress)) {
-        // check that array is constant array (it is therefore ok that it is not in the state)
-        //SAWYER_MESG(logger[TRACE]) <<"lhs array-access index does not exist in state (creating it as address now). Array element id:"<<arrayElementAddress.toString(_variableIdMapping)<<" PState size:"<<pstate2.size()<<endl;
-      }
-      res.result=arrayElementAddress;
-      return listify(res);
-    } else {
-      logger[ERROR] <<"array-access uses expr for denoting the array. Normalization missing."<<endl;
-      logger[ERROR] <<"expr: "<<node->unparseToString()<<endl;
-      logger[ERROR] <<"arraySkip: "<<getSkipArrayAccesses()<<endl;
-      exit(1);
-    }
+    return resultList;  
   }
   // unreachable
   ROSE_ASSERT(false);
@@ -1516,7 +1418,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
       res.result=CodeThorn::Top();
       //cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
       Label lab=estate.label();
-      logger[WARN] << "at label "<<lab<<": "<<(_analyzer->getLabeler()->getNode(lab)->unparseToString())<<": variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
+      SAWYER_MESG(logger[WARN]) << "at label "<<lab<<": "<<(_analyzer->getLabeler()->getNode(lab)->unparseToString())<<": variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
 
       return listify(res);
     }
@@ -1555,12 +1457,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
     string funName=SgNodeHelper::getFunctionName(funCall);
     if(funName=="malloc") {
       return evalFunctionCallMalloc(funCall,estate);
-    } else if(funName=="memcpy") {
-      return evalFunctionCallMemCpy(funCall,estate);
     } else if(funName=="free") {
       return evalFunctionCallFree(funCall,estate);
     } else if(funName=="strlen") {
       return evalFunctionCallStrLen(funCall,estate);
+    } else if(funName=="memcpy") {
+      return evalFunctionCallMemCpy(funCall,estate);
     } else if(funName=="fflush") {
       // ignoring fflush
       // res initialized above
@@ -1586,16 +1488,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
       // (2) marshall arguments
       // (3) perform function call (causing side effect on stdin)
       return execFunctionCallScanf(funCall,estate);
-    } else {
-      if(getSkipSelectedFunctionCalls()) {
-        return evalFunctionCallArguments(funCall,estate);
-      } else {
-        logger[ERROR]<<"function call with unknown semantics detected: "<<SgNodeHelper::sourceLineColumnToString(funCall)<<": "<<funCall->unparseToString()<<endl;
-        exit(1);
-      }
     }
   }
-  if(getSkipSelectedFunctionCalls()) {
+  if(getSkipUnknownFunctionCalls()) {
     return evalFunctionCallArguments(funCall,estate);
   } else {
     string s=funCall->unparseToString();
@@ -1845,6 +1740,189 @@ int ExprAnalyzer::getMemoryRegionElementSize(CodeThorn::AbstractValue ptrToRegio
   return size;
 }
 
+
+// true if access is correct. false if out-of-bounds access.
+// TODO: rewrite using new abstract values with array address references
+bool ExprAnalyzer::accessIsWithinArrayBounds(VariableId arrayVarId,int accessIndex) {
+  // check array bounds
+  int arraySize=_variableIdMapping->getNumberOfElements(arrayVarId);
+  return !(accessIndex<0||accessIndex>=arraySize);
+}
+
+enum MemoryAccessBounds ExprAnalyzer::checkMemoryAccessBounds(AbstractValue address) {
+  if(address.isTop()) {
+    return ACCESS_POTENTIALLY_OUTSIDE_BOUNDS;
+  } if(address.isBot()) {
+    return ACCESS_NON_EXISTING;
+  } if(address.isNullPtr()) {
+    return ACCESS_DEFINITELY_NP;
+  } else {
+    AbstractValue offset=address.getIndexValue();
+    if(offset.isTop()) {
+      return ACCESS_POTENTIALLY_OUTSIDE_BOUNDS;
+    } else if(offset.isBot()) {
+      return ACCESS_NON_EXISTING;
+    } else {
+      VariableId memId=address.getVariableId();
+      // this must be the only remaining case
+      if(offset.isConstInt()) {
+        // check array bounds
+        int memRegionSize=_variableIdMapping->getNumberOfElements(memId);
+        int accessIndex=offset.getIntValue();
+        if(!(accessIndex<0||accessIndex>=memRegionSize)) {
+          return ACCESS_DEFINITELY_INSIDE_BOUNDS;
+        } else {
+          return ACCESS_DEFINITELY_OUTSIDE_BOUNDS;
+        }
+      } else {
+        return ACCESS_POTENTIALLY_OUTSIDE_BOUNDS;
+      }
+    }
+  }
+}    
+
+ProgramLocationsReport ExprAnalyzer::getViolatingLocations(enum AnalysisSelector analysisSelector) {
+  ProgramLocationsReport report;
+#pragma omp critical(VIOLATIONRECORDING)
+  report=_violatingLocations.at(analysisSelector);
+  return report;
+}
+
+void ExprAnalyzer::initViolatingLocations() {
+  for(int i=ANALYSIS_NULL_POINTER;i<ANALYSIS_NUM;i++) {
+    _violatingLocations.push_back(ProgramLocationsReport());
+  }
+}
+std::string ExprAnalyzer::analysisSelectorToString(AnalysisSelector sel) {
+  switch(sel) {
+  case ANALYSIS_NULL_POINTER: return "null-pointer";
+  case ANALYSIS_OUT_OF_BOUNDS: return "out-of-bounds";
+  case ANALYSIS_UNINITIALIZED: return "unitialized-value";
+  default:
+    SAWYER_MESG(logger[FATAL])<<"ExprAnalyzer::analysisSelectorToString: unknown selector."<<endl;
+    exit(1);
+  }
+}
+
+void ExprAnalyzer::recordDefinitiveViolatingLocation(enum AnalysisSelector analysisSelector, Label label) {
+#pragma omp critical(VIOLATIONRECORDING)
+  {
+  _violatingLocations.at(analysisSelector).recordDefinitiveLocation(label);
+  if(_printDetectedViolations)
+    cout<<analysisSelectorToString(analysisSelector)<<": definitive violation at label "<<label.toString()<<endl;
+  }
+}
+
+void ExprAnalyzer::recordPotentialViolatingLocation(enum AnalysisSelector analysisSelector, Label label) {
+#pragma omp critical(VIOLATIONRECORDING)
+  {
+    _violatingLocations.at(analysisSelector).recordPotentialLocation(label);
+    if(_printDetectedViolations)
+      cout<<analysisSelectorToString(analysisSelector)<<": potential violation at label "<<label.toString()<<endl;
+  }
+}
+
+void ExprAnalyzer::recordDefinitiveNullPointerDereferenceLocation(Label label) {
+  recordDefinitiveViolatingLocation(ANALYSIS_NULL_POINTER,label);
+}
+
+void ExprAnalyzer::recordPotentialNullPointerDereferenceLocation(Label label) {
+  recordPotentialViolatingLocation(ANALYSIS_NULL_POINTER,label);
+}
+
+void ExprAnalyzer::recordDefinitiveOutOfBoundsAccessLocation(Label label) {
+  recordDefinitiveViolatingLocation(ANALYSIS_OUT_OF_BOUNDS,label);
+  if(_printDetectedViolations)
+    cout<<"Violation detected: definitive out of bounds access at label "<<label.toString()<<endl;
+}
+
+void ExprAnalyzer::recordPotentialOutOfBoundsAccessLocation(Label label) {
+  recordPotentialViolatingLocation(ANALYSIS_OUT_OF_BOUNDS,label);
+  if(_printDetectedViolations)
+    cout<<"Violation detected: potential out of bounds access at label "<<label.toString()<<endl;
+}
+
+void ExprAnalyzer::recordDefinitiveUninitializedAccessLocation(Label label) {
+  recordDefinitiveViolatingLocation(ANALYSIS_UNINITIALIZED,label);
+  if(_printDetectedViolations)
+    cout<<"Violation detected: definitive uninitialized value read at label "<<label.toString()<<endl;
+}
+
+void ExprAnalyzer::recordPotentialUninitializedAccessLocation(Label label) {
+  recordPotentialViolatingLocation(ANALYSIS_UNINITIALIZED,label);
+  if(_printDetectedViolations)
+    cout<<"Violation detected: potential uninitialized value read at label "<<label.toString()<<endl;
+}
+
+bool ExprAnalyzer::getPrintDetectedViolations() {
+  return _printDetectedViolations;
+}
+void ExprAnalyzer::setPrintDetectedViolations(bool flag) {
+  _printDetectedViolations=flag;
+}
+
+bool ExprAnalyzer::isStructMember(CodeThorn::VariableId varId) {
+  return structureAccessLookup.isStructMember(varId);
+}
+
+bool ExprAnalyzer::definitiveErrorDetected() {
+  for(int i=ANALYSIS_NULL_POINTER;i<ANALYSIS_NUM;i++) {
+    if(_violatingLocations.at(i).numDefinitiveLocations()>0)
+      return true;
+  }
+  return false;
+}
+
+bool ExprAnalyzer::potentialErrorDetected() {
+  for(int i=ANALYSIS_NULL_POINTER;i<ANALYSIS_NUM;i++) {
+    if(_violatingLocations.at(i).numPotentialLocations()>0)
+      return true;
+  }
+  return false;
+}
+
+AbstractValue ExprAnalyzer::readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc) {
+  // inspect memory location here
+  if(memLoc.isNullPtr()) {
+    recordDefinitiveNullPointerDereferenceLocation(lab);
+    return AbstractValue::createBot();
+  }
+  if(memLoc.isTop()) {
+    recordPotentialNullPointerDereferenceLocation(lab);
+    if(_analyzer->getAbstractionMode()!=3)
+      recordPotentialOutOfBoundsAccessLocation(lab);
+    recordPotentialUninitializedAccessLocation(lab);
+  } else if(!pstate->memLocExists(memLoc)) {
+    if(_analyzer->getAbstractionMode()!=3)
+      recordPotentialOutOfBoundsAccessLocation(lab);
+    
+    recordPotentialUninitializedAccessLocation(lab);
+  }
+  AbstractValue val=pstate->readFromMemoryLocation(memLoc);
+  // investigate value here
+  if(val.isUndefined()) {
+    recordPotentialUninitializedAccessLocation(lab);
+  }
+  return val;
+}
+
+void ExprAnalyzer::writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
+  // inspect everything here
+  if(_analyzer->getAbstractionMode()!=3) {
+    if(memLoc.isTop()) {
+      recordPotentialOutOfBoundsAccessLocation(lab);
+    } else if(!pstate->memLocExists(memLoc)) {
+      recordDefinitiveOutOfBoundsAccessLocation(lab);
+    }
+  }
+  pstate->writeToMemoryLocation(memLoc,newValue);
+}
+
+void ExprAnalyzer::writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc) {
+  AbstractValue undefValue=AbstractValue::createUndefined();
+  pstate->writeToMemoryLocation(memLoc,undefValue);
+}
+
 /* TODO: in case an error is detected the target region remains unmodified. Change to invalidating all elements of target region */
 list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate) {
   //cout<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
@@ -2057,164 +2135,5 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallStrLen(SgFunctionCa
   SAWYER_MESG(logger[TRACE])<<"evaluating semantic function for strlen - no result, assuming top: "<<funCall->unparseToString()<<endl;
   res.init(estate,AbstractValue(CodeThorn::Top()));
   return listify(res);
-}
-
-// true if access is correct. false if out-of-bounds access.
-// TODO: rewrite using new abstract values with array address references
-bool ExprAnalyzer::accessIsWithinArrayBounds(VariableId arrayVarId,int accessIndex) {
-  // check array bounds
-  int arraySize=_variableIdMapping->getNumberOfElements(arrayVarId);
-  return !(accessIndex<0||accessIndex>=arraySize);
-}
-
-enum MemoryAccessBounds ExprAnalyzer::checkMemoryAccessBounds(AbstractValue address) {
-  if(address.isTop()) {
-    return ACCESS_POTENTIALLY_OUTSIDE_BOUNDS;
-  } if(address.isBot()) {
-    return ACCESS_NON_EXISTING;
-  } if(address.isNullPtr()) {
-    return ACCESS_DEFINITELY_NP;
-  } else {
-    AbstractValue offset=address.getIndexValue();
-    if(offset.isTop()) {
-      return ACCESS_POTENTIALLY_OUTSIDE_BOUNDS;
-    } else if(offset.isBot()) {
-      return ACCESS_NON_EXISTING;
-    } else {
-      VariableId memId=address.getVariableId();
-      // this must be the only remaining case
-      if(offset.isConstInt()) {
-        // check array bounds
-        int memRegionSize=_variableIdMapping->getNumberOfElements(memId);
-        int accessIndex=offset.getIntValue();
-        if(!(accessIndex<0||accessIndex>=memRegionSize)) {
-          return ACCESS_DEFINITELY_INSIDE_BOUNDS;
-        } else {
-          return ACCESS_DEFINITELY_OUTSIDE_BOUNDS;
-        }
-      } else {
-        return ACCESS_POTENTIALLY_OUTSIDE_BOUNDS;
-      }
-    }
-  }
-}
-
-ProgramLocationsReport ExprAnalyzer::getViolatingLocations(enum AnalysisSelector analysisSelector) {
-  switch(analysisSelector) {
-  case ANALYSIS_NULL_POINTER:
-    return getNullPointerDereferenceLocations();
-  case ANALYSIS_OUT_OF_BOUNDS:
-    return getOutOfBoundsAccessLocations();
-  case ANALYSIS_UNINITIALIZED:
-    return getUninitializedAccessLocations();
-  default:
-    cerr<<"Error: ProgramLocationsReport: Unknown analysisSelector: "<<analysisSelector<<endl;
-    exit(1);
-  }
-}
-
-ProgramLocationsReport ExprAnalyzer::getNullPointerDereferenceLocations() {
-  return _nullPointerDereferenceLocations;
-}
-
-void ExprAnalyzer::recordDefinitiveNullPointerDereferenceLocation(Label label) {
-  _nullPointerDereferenceLocations.recordDefinitiveLocation(label);
-}
-
-void ExprAnalyzer::recordPotentialNullPointerDereferenceLocation(Label label) {
-  _nullPointerDereferenceLocations.recordPotentialLocation(label);
-}
-
-ProgramLocationsReport ExprAnalyzer::getOutOfBoundsAccessLocations() {
-  return _outOfBoundsAccessLocations;
-}
-
-void ExprAnalyzer::recordDefinitiveOutOfBoundsAccessLocation(Label label) {
-  _outOfBoundsAccessLocations.recordDefinitiveLocation(label);
-  if(_printDetectedViolations)
-    cout<<"Violation detected: definitive out of bounds access at label "<<label.toString()<<endl;
-}
-
-void ExprAnalyzer::recordPotentialOutOfBoundsAccessLocation(Label label) {
-  _outOfBoundsAccessLocations.recordPotentialLocation(label);
-  if(_printDetectedViolations)
-    cout<<"Violation detected: potential out of bounds access at label "<<label.toString()<<endl;
-}
-
-ProgramLocationsReport ExprAnalyzer::getUninitializedAccessLocations() {
-  return _uninitializedAccessLocations;
-}
-
-void ExprAnalyzer::recordDefinitiveUninitializedAccessLocation(Label label) {
-  _uninitializedAccessLocations.recordDefinitiveLocation(label);
-  if(_printDetectedViolations)
-    cout<<"Violation detected: definitive out of bounds access at label "<<label.toString()<<endl;
-}
-
-void ExprAnalyzer::recordPotentialUninitializedAccessLocation(Label label) {
-  _uninitializedAccessLocations.recordPotentialLocation(label);
-  if(_printDetectedViolations)
-    cout<<"Violation detected: potential out of bounds access at label "<<label.toString()<<endl;
-}
-
-bool ExprAnalyzer::getPrintDetectedViolations() {
-  return _printDetectedViolations;
-}
-void ExprAnalyzer::setPrintDetectedViolations(bool flag) {
-  _printDetectedViolations=flag;
-}
-
-bool ExprAnalyzer::isStructMember(CodeThorn::VariableId varId) {
-  return structureAccessLookup.isStructMember(varId);
-}
-
-bool ExprAnalyzer::definitiveErrorDetected() {
-  return _uninitializedAccessLocations.numDefinitiveLocations()>0 || _outOfBoundsAccessLocations.numDefinitiveLocations()>0 || _nullPointerDereferenceLocations.numDefinitiveLocations()>0;
-}
-
-bool ExprAnalyzer::potentialErrorDetected() {
-  return _uninitializedAccessLocations.numPotentialLocations()>0 || _outOfBoundsAccessLocations.numPotentialLocations()>0 || _nullPointerDereferenceLocations.numPotentialLocations()>0;
-}
-
-AbstractValue ExprAnalyzer::readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc) {
-  // inspect memory location here
-  if(memLoc.isNullPtr()) {
-    recordDefinitiveNullPointerDereferenceLocation(lab);
-    return AbstractValue::createBot();
-  }
-  if(memLoc.isTop()) {
-    recordPotentialNullPointerDereferenceLocation(lab);
-    if(_analyzer->getAbstractionMode()!=3)
-      recordPotentialOutOfBoundsAccessLocation(lab);
-    recordPotentialUninitializedAccessLocation(lab);
-  } else if(!pstate->memLocExists(memLoc)) {
-    if(_analyzer->getAbstractionMode()!=3)
-      recordPotentialOutOfBoundsAccessLocation(lab);
-
-    recordPotentialUninitializedAccessLocation(lab);
-  }
-  AbstractValue val=pstate->readFromMemoryLocation(memLoc);
-  // investigate value here
-  if(val.isUndefined()) {
-    recordPotentialUninitializedAccessLocation(lab);
-  }
-  return val;
-}
-
-void ExprAnalyzer::writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
-  // inspect everything here
-  if(_analyzer->getAbstractionMode()!=3) {
-    if(memLoc.isTop()) {
-      recordPotentialOutOfBoundsAccessLocation(lab);
-    } else if(!pstate->memLocExists(memLoc)) {
-      recordDefinitiveOutOfBoundsAccessLocation(lab);
-    }
-  }
-  pstate->writeToMemoryLocation(memLoc,newValue);
-}
-
-void ExprAnalyzer::writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc) {
-  AbstractValue undefValue=AbstractValue::createUndefined();
-  pstate->writeToMemoryLocation(memLoc,undefValue);
 }
 

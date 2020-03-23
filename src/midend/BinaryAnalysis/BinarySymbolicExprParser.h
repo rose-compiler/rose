@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_SymbolicExprParser_H
 #define ROSE_BinaryAnalysis_SymbolicExprParser_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 #include <BinarySymbolicExpr.h>
@@ -559,4 +561,5 @@ std::ostream& operator<<(std::ostream&, const SymbolicExprParser::SubstitutionEr
 } // namespace
 } // namespace
 
+#endif
 #endif

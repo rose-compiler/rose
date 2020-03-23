@@ -371,6 +371,7 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
           case V_SgTypeDefault:
           case V_SgTypeDouble:
           case V_SgTypeEllipse:
+          case V_SgTypeFixed:
           case V_SgTypeFloat:
           case V_SgTypeGlobalVoid:
           case V_SgTypeImaginary:
@@ -2053,7 +2054,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgWhereStatement:
           case V_SgElseWhereStatement:
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           case V_SgAsmStmt:
+#endif
           case V_SgNamespaceAliasDeclarationStatement:
        // case V_SgTemplateInstantiationDecl:
 
@@ -2233,7 +2236,9 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgProject:
        // case V_SgFile:
           case V_SgSourceFile:
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           case V_SgBinaryComposite:
+#endif
           case V_SgUnknownFile:
           case V_SgSymbolTable:
           case V_SgFunctionTypeTable:
@@ -2416,13 +2421,21 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // type resolution has been done.
           case V_SgUntypedProgramHeaderDeclaration:
           case V_SgUntypedDeclarationStatementList:
-          case V_SgUntypedFunctionDeclarationList:
           case V_SgUntypedExprListExpression:
+          case V_SgUntypedFunctionDeclarationList:
+          case V_SgUntypedGlobalScope:
+          case V_SgUntypedInitializedName:
+          case V_SgUntypedInitializedNameList:
+          case V_SgUntypedName:
+          case V_SgUntypedNameList:
+          case V_SgUntypedNameListDeclaration:
           case V_SgUntypedNullDeclaration:
           case V_SgUntypedNullExpression:
           case V_SgUntypedOtherExpression:
+          case V_SgUntypedReferenceExpression:
           case V_SgUntypedScope:
           case V_SgUntypedStatementList:
+          case V_SgUntypedStructureDeclaration:
           case V_SgUntypedStructureDefinition:
           case V_SgUntypedSubscriptExpression:
           case V_SgUntypedValueExpression:

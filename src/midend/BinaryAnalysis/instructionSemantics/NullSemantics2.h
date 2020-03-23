@@ -1,5 +1,7 @@
 #ifndef Rose_NullSemantics2_H
 #define Rose_NullSemantics2_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "BaseSemantics2.h"
 
@@ -408,4 +410,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

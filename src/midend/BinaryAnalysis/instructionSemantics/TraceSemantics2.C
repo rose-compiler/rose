@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "TraceSemantics2.h"
+
 #include "AsmUnparser_compat.h"
 
 namespace Rose {
@@ -1259,3 +1262,5 @@ RiscOperators::writeMemory(RegisterDescriptor a, const BaseSemantics::SValuePtr 
 } // namespace
 } // namespace
 } // namespace
+
+#endif

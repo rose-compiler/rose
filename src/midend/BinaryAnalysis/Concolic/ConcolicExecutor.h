@@ -1,6 +1,5 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_ConcolicExecutor_H
 #define ROSE_BinaryAnalysis_Concolic_ConcolicExecutor_H
-
 #include <BinaryConcolic.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 

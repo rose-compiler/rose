@@ -1,6 +1,9 @@
 #ifndef Rose_BinaryAnalysis_SerialIo_H
 #define Rose_BinaryAnalysis_SerialIo_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Progress.h>
 #include <RoseException.h>
 #include <boost/filesystem.hpp>
@@ -590,4 +593,5 @@ protected:
 } // namespace
 } // namespace
 
+#endif
 #endif

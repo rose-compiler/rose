@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "stringify.h"
 #include "AsmUnparser_compat.h"
 #include "Registers.h"
@@ -261,3 +264,5 @@ std::string unparseArmExpression(SgAsmExpression *expr, const AsmUnparser::Label
         return unparseArmExpression(expr, labels, registers, arm_sign_none);
     }
 }
+
+#endif

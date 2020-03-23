@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_RegisterParts_H
 #define ROSE_BinaryAnalysis_RegisterParts_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Sawyer/IntervalSet.h>
 #include <Sawyer/Map.h>
 #include <boost/serialization/access.hpp>
@@ -206,4 +209,5 @@ private:
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_Partitioner2_Thunk_H
 #define ROSE_BinaryAnalysis_Partitioner2_Thunk_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/BasicTypes.h>
 #include <Sawyer/SharedObject.h>
 
@@ -135,4 +138,5 @@ void splitThunkFunctions(Partitioner&, const ThunkPredicates::Ptr&);
 } // namespace
 } // namespace
 
+#endif
 #endif

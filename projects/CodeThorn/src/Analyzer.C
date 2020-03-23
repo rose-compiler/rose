@@ -2190,9 +2190,12 @@ int CodeThorn::Analyzer::reachabilityAssertCode(const EState* currentEStatePtr) 
   return num;
 }
 
-void CodeThorn::Analyzer::setSkipSelectedFunctionCalls(bool flag) {
-  _skipSelectedFunctionCalls=flag;
-  exprAnalyzer.setSkipSelectedFunctionCalls(flag);
+void CodeThorn::Analyzer::setSkipUnknownFunctionCalls(bool flag) {
+  _skipSelectedFunctionCalls=flag; 
+  exprAnalyzer.setSkipUnknownFunctionCalls(flag);
+}
+
+void CodeThorn::Analyzer::setSkipArrayAccesses(bool skip) {
 }
 
 void CodeThorn::Analyzer::setSkipArrayAccesses(bool skip) {

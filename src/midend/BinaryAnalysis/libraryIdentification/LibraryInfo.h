@@ -1,5 +1,7 @@
 #ifndef LIBRARY_INFO_H
 #define LIBRARY_INFO_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BinaryAstHash.h>
 #include <time.h>
@@ -159,6 +161,5 @@ namespace LibraryIdentification
     
 }
 
-
-
-#endif //LIBRARY_INFO
+#endif
+#endif

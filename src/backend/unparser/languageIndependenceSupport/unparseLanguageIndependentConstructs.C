@@ -538,6 +538,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                          printf ("  fileIdList[%zu] = %d \n",i,fileIdList[i]);
                        }
 #endif
+                    ASSERT_not_null(sourceFile);
                     SgFileIdList::const_iterator pos = find(fileIdList.begin(),fileIdList.end(),sourceFile->get_file_info()->get_physical_file_id());
                     if (pos != fileIdList.end())
                        {

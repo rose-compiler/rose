@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "Registers.h"
 
@@ -1331,3 +1333,5 @@ RegisterDictionary::dictionary_coldfire_emac() {
     }
     return regs;
 }
+
+#endif

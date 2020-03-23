@@ -15,9 +15,11 @@ class UntypedConverter
   {
     public:
 
-      UntypedConverter(bool isCaseInsensitive = false)
+      UntypedConverter(bool isCaseInsensitive = true)
          {
+         // Defaults to Fortran and Jovial case insensitivity
             pCaseInsensitive = isCaseInsensitive;
+            SageBuilder::symbol_table_case_insensitive_semantics = isCaseInsensitive;
 
          // not currently converting a function declaration
             isConvertingFunctionDecl = false;

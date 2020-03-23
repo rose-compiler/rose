@@ -1,6 +1,9 @@
 // tps (01/14/2010) : Switching from rose.h to sage3.
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "Assembler.h"
+
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
 
@@ -68,3 +71,5 @@ Assembler::assembleBlock(const std::vector<SgAsmInstruction*> &insns, rose_addr_
 
 } // namespace
 } // namespace
+
+#endif

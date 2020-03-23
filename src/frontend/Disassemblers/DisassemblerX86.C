@@ -1,16 +1,13 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
-
-// DQ (10/14/2010): This should only be included by source files that require it.
-// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
-// Interestingly it must be at the top of the list of include files.
-#include "rose_config.h"
+#include "DisassemblerX86.h"
 
 #include "Assembler.h"
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
 #include "Disassembler.h"
 #include "SageBuilderAsm.h"
-#include "DisassemblerX86.h"
 #include "integerOps.h"
 #include "stringify.h"
 #include "DispatcherX86.h"
@@ -5951,4 +5948,6 @@ DisassemblerX86::decodeGroupP()
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::DisassemblerX86);
+#endif
+
 #endif
