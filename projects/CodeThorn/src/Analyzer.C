@@ -2196,9 +2196,6 @@ void CodeThorn::Analyzer::setSkipUnknownFunctionCalls(bool flag) {
 }
 
 void CodeThorn::Analyzer::setSkipArrayAccesses(bool skip) {
-}
-
-void CodeThorn::Analyzer::setSkipArrayAccesses(bool skip) {
   exprAnalyzer.setSkipArrayAccesses(skip);
 }
 

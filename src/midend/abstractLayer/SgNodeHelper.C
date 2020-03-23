@@ -1985,7 +1985,7 @@ namespace
   SgInitializedName&
   onlyDecl(const SgVariableDeclaration& n)
   {
-    const SgInitializedNamePtrList& vars = n.get_variables(); 	
+    const SgInitializedNamePtrList& vars = n.get_variables();   
     
     ROSE_ASSERT(vars.size() == 1);
     return SG_DEREF(vars[0]);
