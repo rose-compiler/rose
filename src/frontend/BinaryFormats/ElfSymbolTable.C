@@ -1,5 +1,8 @@
 /* ELF Symbol Tables (SgAsmElfSymbolSection and related classes) */
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "stringify.h"
 
 using namespace Rose;
@@ -349,3 +352,5 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (variantT() == V_SgAsmElfSymbolSection) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
+
+#endif

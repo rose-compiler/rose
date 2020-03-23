@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_X86InstructionProperties_H
 #define ROSE_BinaryAnalysis_X86InstructionProperties_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <vector>
 #include <stdint.h>
 
@@ -31,4 +34,5 @@ const char* flagToString(X86Flag n);
 } // namespace
 } // namespace
 
+#endif
 #endif

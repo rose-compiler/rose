@@ -17,59 +17,7 @@ if(NOT enable-internalFrontendDevelopment)
   add_subdirectory(includeDirectivesProcessing)
 endif()
 
-########### next target ###############
-
-# GENERATING THE ROSE PREPROCESSOR
-add_custom_command(
-  OUTPUT ${CMAKE_BINARY_DIR}/src/frontend/SageIII/lex.yy.C
-  COMMAND ${FLEX_EXECUTABLE} -t
-    ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/preproc-c.ll > ${CMAKE_BINARY_DIR}/src/frontend/SageIII/lex.yy.C
-  DEPENDS  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/preproc-c.ll)
-
-add_custom_target( ROSE_PREPROCESSOR ALL DEPENDS
-  ${CMAKE_BINARY_DIR}/src/frontend/SageIII/lex.yy.C COMMENT "Generating files for preprocessor" )
-
-########### next target ###############
-
-#GENERATING the OpenMP parser
-add_custom_command(
-  OUTPUT ${CMAKE_BINARY_DIR}/src/frontend/SageIII/omp-lex.yy.C
-  COMMAND ${FLEX_EXECUTABLE} -t
-    ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/omplexer.ll > ${CMAKE_BINARY_DIR}/src/frontend/SageIII/omp-lex.yy.C
-  DEPENDS  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/omplexer.ll)
-
-add_custom_command(
-  OUTPUT ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C
-  COMMAND ${BISON_EXECUTABLE}
-    ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/ompparser.yy -o
-    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C
-  DEPENDS  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/ompparser.yy)
-
-#BISON generates a ompparser.H file and we need a ompparser.h file
-add_custom_command(
-  OUTPUT ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.h
-  COMMAND ${CMAKE_COMMAND} -E rename
-    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.H ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.h
-  DEPENDS ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C)
-
-add_custom_target(OMPPARSER ALL DEPENDS
-  ${CMAKE_BINARY_DIR}/src/frontend/SageIII/omp-lex.yy.C
-  ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C 
-  ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.h
-  COMMENT "Generating files for the omp parser")
-
-#Mark these files as generated
-#SET_SOURCE_FILES_PROPERTIES(
-#    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/lex.yy.C
-#    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C
-#    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.h
-#    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/omp-lex.yy.C
-#    PROPERTIES GENERATED 1
-#    )
-
-
-########### next target ###############
-add_library(sage3 OBJECT
+set(SAGE3_SOURCES
   rose_attributes_list.C
   attachPreprocessingInfo.C
   attachPreprocessingInfoTraversal.C
@@ -82,23 +30,72 @@ add_library(sage3 OBJECT
   fixupCopy_symbols.C
   fixupCopy_references.C
   rtiHelpers.C
-  OmpAttribute.C
-  ompAstConstruction.cpp
-  ompFortranParser.C
   dwarfSupport.C
   rose_graph_support.C
-  #omplexer.ll
-  #ompparser.yy
-  Utf8.C
-  ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.C
-  ${CMAKE_CURRENT_BINARY_DIR}/ompparser.C
-  ${CMAKE_CURRENT_BINARY_DIR}/omp-lex.yy.C)
+  Utf8.C)
+
+########################################################################################################################
+if(enable-cpp)
+  # GENERATING THE ROSE PREPROCESSOR
+  add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/src/frontend/SageIII/lex.yy.C
+    COMMAND ${FLEX_EXECUTABLE} -t
+      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/preproc-c.ll > ${CMAKE_BINARY_DIR}/src/frontend/SageIII/lex.yy.C
+    DEPENDS  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/preproc-c.ll)
+
+  add_custom_target(ROSE_PREPROCESSOR ALL DEPENDS
+    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/lex.yy.C COMMENT "Generating files for preprocessor" )
+
+  # GENERATING the OpenMP parser
+  add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/src/frontend/SageIII/omp-lex.yy.C
+    COMMAND ${FLEX_EXECUTABLE} -t
+      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/omplexer.ll > ${CMAKE_BINARY_DIR}/src/frontend/SageIII/omp-lex.yy.C
+    DEPENDS  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/omplexer.ll)
+
+  add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C
+    COMMAND ${BISON_EXECUTABLE}
+      ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/ompparser.yy -o
+      ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C
+    DEPENDS  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/ompparser.yy)
+
+  #BISON generates a ompparser.H file and we need a ompparser.h file
+  add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.h
+    COMMAND ${CMAKE_COMMAND} -E rename
+      ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.H ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.h
+    DEPENDS ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C)
+
+  add_custom_target(OMPPARSER ALL DEPENDS
+    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/omp-lex.yy.C
+    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C
+    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.h
+    COMMENT "Generating files for the omp parser")
+
+  #Mark these files as generated
+  #SET_SOURCE_FILES_PROPERTIES(
+  #    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/lex.yy.C
+  #    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C
+  #    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.h
+  #    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/omp-lex.yy.C
+  #    PROPERTIES GENERATED 1
+  #    )
+
+  set(SAGE3_SOURCES ${SAGE3_SOURCES}
+    OmpAttribute.C ompAstConstruction.cpp ompFortranParser.C
+    ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.C
+    ${CMAKE_CURRENT_BINARY_DIR}/ompparser.C
+    ${CMAKE_CURRENT_BINARY_DIR}/omp-lex.yy.C)
+
+endif()
+
+########### next target ###############
+add_library(sage3 OBJECT ${SAGE3_SOURCES})
 add_dependencies(sage3 rosetta_generated)
 
 
 ########### install files ###############
-
-# Rasmussen (04/17/2019): Support for ATerms has been deprecated (atermSupport.h removed)
 
 install(
   FILES

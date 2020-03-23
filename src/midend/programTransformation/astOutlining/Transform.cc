@@ -388,8 +388,10 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   if (loops.size()>0)
   {
     Rose_STL_Container <SgNode*>::iterator liter =loops.begin();
-    SgForStatement* firstloop = isSgForStatement(*liter); 
+    SgForStatement* firstloop = isSgForStatement(*liter);
+#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
     OmpSupport::generatePragmaFromOmpAttribute(firstloop);
+#endif
   }
 
   //-----------Step 4. Replace the outlining target with a function call-------------

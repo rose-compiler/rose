@@ -1,5 +1,8 @@
 /* PE Import Directory. A PE Import Section is a list of PE Import Directories. */
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "MemoryMap.h"
 #include "Diagnostics.h"
 
@@ -611,3 +614,5 @@ SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
         import->dump(f, p, i);
     }
 }
+
+#endif

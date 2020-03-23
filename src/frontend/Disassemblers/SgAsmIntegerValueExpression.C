@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "integerOps.h"
 #include "stringify.h"
 #include "Diagnostics.h"
@@ -246,3 +249,5 @@ SgAsmIntegerValueExpression::set_relativeValue(int64_t v, size_t nbits)
 
     p_bitVector.resize(nbits).fromInteger(v);
 }
+
+#endif

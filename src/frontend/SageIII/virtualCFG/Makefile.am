@@ -20,11 +20,8 @@ libvirtualCFG_la_SOURCES      = \
      memberFunctions.C \
      staticCFG.C \
      customFilteredCFG.C \
-     interproceduralCFG.C
-endif
-
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-     libvirtualCFG_la_SOURCES += virtualBinCFG.C
+     interproceduralCFG.C \
+     virtualBinCFG.C
 endif
 
 libvirtualCFG_la_LIBADD       = 
