@@ -1,14 +1,8 @@
 include_rules
 
-SOURCES = sageInterface.C sageInterface_type.C generateUniqueName.C sageBuilder.C sageBuilder_fortran.C \
-    abiStuff.C sageBuilder_untypedNodes.C untypedBuilder.C 
-HEADERS = sageInterface.h sageBuilder.h sageGeneric.h sageFunctors.h integerOps.h untypedBuilder.h abiStuff.h
+run $(librose_compile) sageInterface.C sageInterface_type.C generateUniqueName.C sageBuilder.C sageBuilder_fortran.C \
+    abiStuff.C sageBuilder_untypedNodes.C untypedBuilder.C sageInterfaceAsm.C sageInterface_asm.C SageBuilderAsm.C
 
-ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
-    SOURCES += sageInterfaceAsm.C sageInterface_asm.C SageBuilderAsm.C
-    HEADERS += sageInterfaceAsm.h SageBuilderAsm.h
-endif
-
-run $(librose_compile) $(SOURCES)
-run $(public_header) $(HEADERS)
+run $(public_header) sageInterface.h sageBuilder.h sageGeneric.h sageFunctors.h integerOps.h untypedBuilder.h abiStuff.h \
+    sageInterfaceAsm.h SageBuilderAsm.h
 

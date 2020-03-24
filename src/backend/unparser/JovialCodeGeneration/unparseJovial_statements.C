@@ -21,10 +21,6 @@
 
 #define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
 
-using namespace std;
-using std::cerr;
-using std::endl;
-
 #include "sage_support.h"
 
 
@@ -283,6 +279,14 @@ Unparse_Jovial::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
            // There still needs to be at least a BEGIN and END
            curprint("  BEGIN\n");
+           BOOST_FOREACH(SgInitializedName* arg, args)
+              {
+                 curprint("    ITEM ");
+                 curprint(arg->get_name());
+                 curprint(" ");
+                 unparseType(arg->get_type(), ninfo);
+                 curprint(" ;\n");
+              }
            curprint("  END\n");
         }
    }
@@ -680,20 +684,18 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      int n = enum_decl->get_enumerators().size();
      BOOST_FOREACH(SgInitializedName* init_name, enum_decl->get_enumerators())
          {
-            SgName name = init_name->get_name();
+            std::string name = init_name->get_name().str();
+            name.replace(0, 3, "V(");
+            name.append(")");
 
-            SgInitializer* init_expr = init_name->get_initializer();
-            ROSE_ASSERT(init_expr);
-            SgAssignInitializer* assign_expr = isSgAssignInitializer(init_expr);
+            SgAssignInitializer* assign_expr = isSgAssignInitializer(init_name->get_initializer());
             ROSE_ASSERT(assign_expr);
-            SgExpression* expr = assign_expr->get_operand();
-            ROSE_ASSERT(expr);
+            SgEnumVal* enum_val = isSgEnumVal(assign_expr->get_operand());
+            ROSE_ASSERT(enum_val);
 
             curprint("  ");
-            unparseExpression(expr, info);
-            curprint(" V(");
-            curprint(name.str());
-            curprint(")");
+            curprint(tostring(enum_val->get_value()));
+            curprint(name);
             if (--n > 0) curprint(",");
             unp->cur.insert_newline(1);
          }
@@ -705,6 +707,8 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
+  // This unparses a table type declaration not a table variable declaration
+  //
      SgJovialTableStatement* table_decl = isSgJovialTableStatement(stmt);
      ROSE_ASSERT(table_decl != NULL);
 
@@ -781,14 +785,18 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // Unparse body if present
      if (table_def->get_members().size() > 0)
- //  if (has_base_type == false && has_base_class == false)
         {
            curprint("BEGIN");
            unp->cur.insert_newline(1);
 
            BOOST_FOREACH(SgDeclarationStatement* item_decl, table_def->get_members())
               {
-                 unparseVarDeclStmt(item_decl, info);
+                 SgVariableDeclaration* vardecl = isSgVariableDeclaration(item_decl);
+                 if (vardecl)
+                    {
+                       unparseVarDeclStmt(item_decl, info);
+                    }
+                 else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
               }
 
            unp->cur.insert_newline(1);
@@ -817,32 +825,45 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgInitializer* init = initializedName->get_initializer();
      ROSE_ASSERT(type);
 
-     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
-     ROSE_ASSERT(variableDeclaration != NULL);
+     info.set_inVarDecl();
 
-     if (variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst())
+     bool is_block = false;
+     SgClassDeclaration* type_decl = isSgClassDeclaration(type->getAssociatedDeclaration());
+     if (type_decl) {
+        is_block = (type_decl->get_class_type() == SgClassDeclaration::e_jovial_block);
+     }
+
+     bool type_has_base_type = false;
+     SgJovialTableType* table_type = isSgJovialTableType(type);
+     if (table_type)
+        {
+           if (table_type->get_base_type()) type_has_base_type = true;
+        }
+
+     SgVariableDeclaration* var_decl = isSgVariableDeclaration(stmt);
+     ROSE_ASSERT(var_decl != NULL);
+
+     if (var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst())
         {
            curprint("CONSTANT ");
         }
-     if (variableDeclaration->get_declarationModifier().get_storageModifier().isJovialDef())
+     if (var_decl->get_declarationModifier().isJovialDef())
         {
            curprint("DEF ");
         }
-     if (variableDeclaration->get_declarationModifier().get_storageModifier().isJovialRef())
+     if (var_decl->get_declarationModifier().isJovialRef())
         {
            curprint("REF ");
         }
-#if 0
-     if (variableDeclaration->get_declarationModifier().get_typeModifier().isStatic())
-        {
-           curprint("STATIC ");
-        }
-#endif
 
      switch (type->variantT())
         {
           case V_SgJovialTableType:
-             curprint("TABLE ");
+             if (is_block) {
+                curprint("BLOCK ");
+             } else {
+                curprint("TABLE ");
+             }
              curprint(name.str());
              curprint(" ");
              break;
@@ -852,12 +873,18 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
              curprint(" ");
         }
 
+  // OptAllocationSpecifier
+     if (var_decl->get_declarationModifier().isJovialStatic())
+        {
+           curprint("STATIC ");
+        }
+
      unparseType(type, info);
 
   // Unparse the LocationSpecifier if present
-     if (variableDeclaration->get_bitfield() != NULL)
+     if (var_decl->get_bitfield() != NULL)
         {
-           SgExpression* bitfield = variableDeclaration->get_bitfield();
+           SgExpression* bitfield = var_decl->get_bitfield();
            SgExprListExp* sg_location_specifier = isSgExprListExp(bitfield);
            ROSE_ASSERT(sg_location_specifier);
 
@@ -880,9 +907,9 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         }
 
   // Unparse anonymous type declaration body if present
-     if (variableDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
+     if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
-           SgDeclarationStatement* def_decl = variableDeclaration->get_baseTypeDefiningDeclaration();
+           SgDeclarationStatement* def_decl = var_decl->get_baseTypeDefiningDeclaration();
            ROSE_ASSERT(def_decl);
 
            SgJovialTableStatement* table_decl = dynamic_cast<SgJovialTableStatement*>(def_decl);
@@ -900,7 +927,12 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
 
                  BOOST_FOREACH(SgDeclarationStatement* item_decl, table_def->get_members())
                     {
-                       unparseVarDeclStmt(item_decl, info);
+                       SgVariableDeclaration* vardecl = isSgVariableDeclaration(item_decl);
+                       if (vardecl)
+                          {
+                             unparseVarDeclStmt(item_decl, info);
+                          }
+                       else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
                     }
 
                  unp->cur.insert_newline(1);
@@ -912,6 +944,8 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         {
            curprint(";\n");
         }
+
+     info.unset_inVarDecl();
    }
 
 void

@@ -3213,6 +3213,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                switch (n->variantT())
                   {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
                  // SgBinaryComposite need not be in the switch since we don't attach CPP directives or comments to it.
                     case V_SgBinaryComposite:
                         {
@@ -3220,6 +3221,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                           ROSE_ASSERT(false);
                           break;
                         }
+#endif
 
                  // I wanted to leave the SgFile case in the switch statement rather 
                  // than separating it out in a conditional statement at the top of the file.
