@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_DistanceMatrix_H
 #define ROSE_BinaryAnalysis_DistanceMatrix_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #ifdef ROSE_HAVE_DLIB
 #include <dlib/matrix.h>
@@ -122,4 +124,5 @@ private:
 } // namespace
 } // namespace
 
+#endif
 #endif

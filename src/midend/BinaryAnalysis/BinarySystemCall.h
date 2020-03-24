@@ -1,5 +1,7 @@
 #ifndef Rose_BinaryAnalysis_LinuxSyscall_H
 #define Rose_BinaryAnalysis_LinuxSyscall_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <AbstractLocation.h>
 #include <BinarySmtSolver.h>
@@ -114,4 +116,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

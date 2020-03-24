@@ -2,6 +2,9 @@
 #ifndef ROSE_BinaryAnalysis_InstructionEnumsMips_H
 #define ROSE_BinaryAnalysis_InstructionEnumsMips_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 namespace Rose {
 namespace BinaryAnalysis {
 
@@ -352,4 +355,5 @@ enum MipsInstructionKind {
 } // namespace
 } // namespace
 
+#endif
 #endif

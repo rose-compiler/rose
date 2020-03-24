@@ -1,6 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_H
 #define ROSE_BinaryAnalysis_Concolic_H
 #include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 // When should concolic testing be enabled (ROSE_ENABLE_CONCOLIC_TESTING)
 //
@@ -1125,5 +1126,6 @@ BOOST_CLASS_EXPORT_KEY2( Rose::BinaryAnalysis::Concolic::LinuxExecutor::Result,
                        )
 #endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
+#endif
 #endif
 #endif

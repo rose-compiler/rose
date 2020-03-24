@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_Debugger_H
 #define ROSE_BinaryAnalysis_Debugger_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <BitFlags.h>
 #include <boost/noncopyable.hpp>
 #include <boost/filesystem.hpp>
@@ -410,4 +413,5 @@ std::ostream& operator<<(std::ostream&, const Debugger::Specimen&);
 } // namespace
 } // namespace
 
+#endif
 #endif

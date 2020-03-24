@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_PointerDetection_H
 #define ROSE_BinaryAnalysis_PointerDetection_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 #include <MemoryCellList.h>
@@ -295,4 +297,5 @@ private:
 } // namespace
 } // namespace
 
+#endif
 #endif

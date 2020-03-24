@@ -7,7 +7,6 @@ AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES) -I$(srcdir)/graph -I$(srcdir)/libra
 noinst_LTLIBRARIES = libbinaryMidend.la
 libbinaryMidend_la_DEPENDENCIES =
 
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 libbinaryMidend_la_SOURCES =					\
     AbstractLocation.C						\
     BinaryAstHash.C						\
@@ -90,11 +89,6 @@ libbinaryMidend_la_SOURCES +=					\
     libraryIdentification/FunctionIdDatabaseInterface.C         \
     libraryIdentification/libraryIdentification.C
 endif
-
-else
-libbinaryMidend_la_SOURCES = dummyBinaryMidend.C
-endif
-
 
 pkginclude_HEADERS =					\
     AbstractLocation.h					\

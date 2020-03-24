@@ -1,5 +1,7 @@
 #ifndef Rose_TraceSemantics2_H
 #define Rose_TraceSemantics2_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "BaseSemantics2.h"
 #include "Diagnostics.h"
@@ -379,4 +381,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

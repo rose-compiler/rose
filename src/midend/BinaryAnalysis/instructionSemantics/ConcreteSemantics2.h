@@ -1,5 +1,7 @@
 #ifndef Rose_ConcreteSemantics2_H
 #define Rose_ConcreteSemantics2_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -506,4 +508,5 @@ protected:
 } // namespace
 } // namespace
 
+#endif
 #endif

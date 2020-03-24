@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinarySmtCommandLine.h>
+
 #include <BinarySmtSolver.h>
 
 namespace Rose {
@@ -113,3 +116,5 @@ SmtSolverValidator::operator()(const Sawyer::CommandLine::ParserResult &cmdline)
     
 } // namespace
 } // namespace
+
+#endif

@@ -1,10 +1,10 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
-
 #include <BinaryAstHash.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
-    
     /**  HashAST::visit
      *  
      * Called by traverse.  Gets the whatever data is of interest and puts
@@ -51,7 +51,6 @@ namespace BinaryAnalysis {
         }    
     }
 
-
     /**  HashAST::appendBasicBlock
      *  
      * Making a binary hash from the Paritioner interface.  So, this
@@ -71,8 +70,8 @@ namespace BinaryAnalysis {
                 this->traverse((SgNode*) *instIt, preorder);
             }
     }
-    
-
 
 } // namespace
 } // namespace
+
+#endif

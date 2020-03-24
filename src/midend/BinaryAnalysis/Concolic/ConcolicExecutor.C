@@ -1,6 +1,6 @@
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
-#ifdef  ROSE_ENABLE_CONCOLIC_TESTING
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <boost/format.hpp>
 #include <CommandLine.h>

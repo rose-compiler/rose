@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_ModulesPe_H
 #define ROSE_Partitioner2_ModulesPe_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Modules.h>
 #include <Sawyer/Map.h>
@@ -171,4 +174,5 @@ private:
 } // namespace
 } // namespace
 
+#endif
 #endif

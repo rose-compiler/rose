@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_BinaryNoOperation_H
 #define ROSE_BinaryAnalysis_BinaryNoOperation_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 #include <Sawyer/Message.h>
@@ -152,4 +154,5 @@ protected:
 } // namespace
 } // namespace
 
+#endif
 #endif

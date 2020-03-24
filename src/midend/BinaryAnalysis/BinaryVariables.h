@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_Variables_H
 #define ROSE_BinaryAnalysis_Variables_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemanticsTypes.h>
 #include <boost/serialization/access.hpp>
@@ -470,4 +472,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

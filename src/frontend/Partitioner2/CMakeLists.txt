@@ -1,4 +1,3 @@
-if (enable-binary-analysis)
 add_library(rosePartitioner2 OBJECT
   AddressUsageMap.C BasicBlock.C CfgPath.C Config.C
   ControlFlowGraph.C DataBlock.C DataFlow.C Engine.C Exception.C
@@ -6,11 +5,6 @@ add_library(rosePartitioner2 OBJECT
   MayReturnAnalysis.C Modules.C ModulesElf.C ModulesLinux.C ModulesM68k.C ModulesPe.C
   ModulesPowerpc.C ModulesX86.C Partitioner.C Reference.C Semantics.C
   StackDeltaAnalysis.C Thunk.C Utility.C)
-else()
-add_library(rosePartitioner2 OBJECT
-  dummyPartitioner2.C
-)
-endif()
 
 add_dependencies(rosePartitioner2 rosetta_generated)
 

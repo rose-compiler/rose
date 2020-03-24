@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinarySerialIo.h>
+
 #include <Partitioner2/Partitioner.h>
 #include <BaseSemantics2.h>
 #include <Registers.h>
@@ -368,3 +371,5 @@ SerialInput::close() {
 
 } // namespace
 } // namespace
+
+#endif

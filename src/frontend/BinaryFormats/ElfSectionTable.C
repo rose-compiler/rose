@@ -1,5 +1,8 @@
 /* ELF Section Tables (SgAsmElfSectionTable and related classes) */
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "Diagnostics.h"
 #include "stringify.h"
 
@@ -675,3 +678,4 @@ SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
+#endif

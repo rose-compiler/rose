@@ -1,6 +1,6 @@
 #include <rose.h>
 #include <BinaryConcolic.h>
-#ifdef ROSE_ENABLE_CONCOLIC_TESTING
+#if defined(ROSE_ENABLE_CONCOLIC_TESTING) && defined(ROSE_HAVE_SQLITE3)
 
 #ifndef DB_URL
 #define DB_URL "sqlite://testOpenDb.db"

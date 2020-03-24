@@ -84,6 +84,18 @@ in the passed or failed files.
 
 If a test fails, rather than emitting its output, just emit a line that indicates that it failed.
 
+=item --no-stdout
+
+Consider any output on standard output to be an error.
+
+=item --no-stderr
+
+Consider any output on standard error to be an error.
+
+=item --no-output
+
+Consider any output to be an error. This is equivalent to saying both --no-stdout and --no-stderr.
+
 =back
 
 =head1 CONFIGURATION
@@ -403,23 +415,61 @@ sub load_config {
   return %conf;
 }
 
+# Produce a temporary name for files, directories, etc. without creating a file. We need a name that is unlikely to
+# be in use or left over from a previous run that didn't clean up, so use Perl's rand() to create one. This not
+# cryptographically strong, but at least we're unlikely to have conflicts.
+sub tempname {
+    my @chars = (qw/a b c d e f g h i j k l m n o p q r s t u v w x y z
+                    A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+                    0 1 2 3 4 5 6 7 8 9 _ +/);
+    my $prefix = ($ENV{TMPDIR} && -d $ENV{TMPDIR} && -w _ ? $ENV{TMPDIR} : "/tmp") . "/rose";
+    while (1) {
+	my $retval = $prefix;
+	$retval .= $chars[int rand 64] for 0 .. 15;
+	return $retval unless -e $retval;
+    }
+}
+
 # Runs the specified commands one by one until they've all been run, one exits with non-zero status, or a timeout
 # occurs. The command's standard output and error are redirected to the already-opened CMD_STDOUT and CMD_STDERR
-# streams. This function returns the exit status, or a negative value on error; zero on success.  We have to do this the
-# hard way in order to send SIGKILL to the child after a timeout (we don't want a Hudson node filling up with timed-out
-# tests that continue to suck up resources).
+# streams. This function returns the exit status and the number of bytes written by the command(s) to standard error. We
+# have to do this the hard way in order to send SIGKILL to the child after a timeout (we don't want a testing host
+# filling up with timed-out tests that continue to suck up resources).
 sub run_command {
   my($timelimit,$subdir,@commands) = @_;
-  defined (my $pid = fork) or return "fork: $!";
+  defined (my $pid = fork) or return (255, 0);
+  my($stats_file) = tempname();
+
   if (!$pid) {
-    open STDOUT, ">&CMD_STDOUT" or return 255;
-    open STDERR, ">&CMD_STDERR" or return 254;
+    open STDOUT, ">&CMD_STDOUT" or exit(255);
+    open STDERR, ">&CMD_STDERR" or exit(254);
     setpgrp; # so we can kill the whole group on a timeout
     my $status = 0;
+    my $nerror_bytes = 0;
+
     for my $cmd (@commands) {
+      # Open a temporary file for only this command's standard error, separate from the standard error for this
+      # whole testing output because we need to be able to count how many bytes were output to standard error by just
+      # the command. We'll later copy the command's standard error output into the final error output file.
+      my($tmp) = tempname();
+      open SINGLE_CMD_ERRORS, ">", $tmp or exit(253);
+      open STDERR, ">&SINGLE_CMD_ERRORS" or exit(254);
+
       $cmd = "cd '$subdir'; $cmd" if $subdir;
-      print STDERR "+ $cmd\n";
+      print CMD_STDERR "+ $cmd\n";
       $status = system $cmd;
+
+      # Count amount of standard error from this single command and copy it to the combined error output file.
+      open STDERR, ">&CMD_STDERR";
+      close SINGLE_CMD_ERRORS;
+      open SINGLE_CMD_ERRORS, "<", $tmp;
+      while (<SINGLE_CMD_ERRORS>) {
+	$nerror_bytes += length($_);
+	print STDERR $_;
+      }
+      close SINGLE_CMD_ERRORS;
+      unlink $tmp;
+
       # The shell usually prints messages about signals, so we'll take over that job since there's no shell.  In fact, we'll
       # also print the exit status if it's other than zero.
       if (-1 == $status) {
@@ -435,6 +485,11 @@ sub run_command {
         last;
       }
     }
+
+    # This is a child process. Any values that we want to return need to be stored in the filesystem and read by the parent.
+    open STATS_FILE, ">", "$stats_file";
+    print STATS_FILE $nerror_bytes;
+    close STATS_FILE;
     exit($status!=0 ? 1 : 0);
   }
 
@@ -451,23 +506,10 @@ sub run_command {
     $status = $? if $pid == waitpid $pid, 0;
     print CMD_STDERR "\nterminated after $timelimit seconds\n";
   }
-  return $status;
-}
 
-
-# Produce a temporary name for files, directories, etc. without creating a file. We need a name that is unlikely to
-# be in use or left over from a previous run that didn't clean up, so use Perl's rand() to create one. This not
-# cryptographically strong, but at least we're unlikely to have conflicts.
-sub tempname {
-    my @chars = (qw/a b c d e f g h i j k l m n o p q r s t u v w x y z
-                    A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
-                    0 1 2 3 4 5 6 7 8 9 _ +/);
-    my $prefix = ($ENV{TMPDIR} && -d $ENV{TMPDIR} && -w _ ? $ENV{TMPDIR} : "/tmp") . "/rose";
-    while (1) {
-	my $retval = $prefix;
-	$retval .= $chars[int rand 64] for 0 .. 15;
-	return $retval unless -e $retval;
-    }
+  # Read variables set by the child process
+  my($nerror_bytes) = `cat $stats_file`;
+  return ($status, $nerror_bytes);
 }
 
 # Returns true if a test should be promoted.  The argument is the value of the "promote" property.
@@ -510,7 +552,7 @@ my %variables;
 $variables{"TEMP_FILE_$_"} = tempname for 0 .. 9;
 
 # Parse command-line switches and arguments
-my($do_cleanup,$quiet_failure,$immediate_output,$config_file,$target,$target_pass,$target_fail) = (1);
+my($do_cleanup,$quiet_failure,$immediate_output,$config_file,$target,$target_pass,$target_fail,$no_stdout,$no_stderr) = (1);
 while (@ARGV) {
   local($_) = shift @ARGV;
   /^--$/ and last;
@@ -518,6 +560,9 @@ while (@ARGV) {
   /^--no-cleanup$/ and do {$do_cleanup=0; next};
   /^--cleanup$/ and do {$do_cleanup=1; next};
   /^--immediate-output$/ and do {$immediate_output=1; next};
+  /^--no-stdout$/ and do {$no_stdout=1; next};
+  /^--no-stderr$/ and do {$no_stderr=1; next};
+  /^--no-output$/ and do {$no_stderr=$no_stdout=1; next};
   /^--quiet-failure$/ and do {$quiet_failure=1; next};
   /^-/ and die "$0: unknown command line switch: $_\n";
   /^(\w+)=(.*)/ and do {$variables{$1} = $2; next};
@@ -587,13 +632,18 @@ if (!$immediate_output) {
     open CMD_STDERR, "|tee $cmd_stderr_file |sed 's/^/$target [err]: /' >&2" or die "tee $cmd_stderr_file: $!\n";
 }
 my($starttime) = time;
-my($status) = run_command($config{timeout}, $subdir, @{$config{cmd}});
+my($status,$nerror_bytes) = run_command($config{timeout}, $subdir, @{$config{cmd}});
+open CMD_STDOUT, ">&CMD_STDERR";
+if (!$status && $no_stdout && -s $cmd_stdout_file) {
+    print CMD_STDERR "\nERROR: command(s) produced unexpected output on stdout\n";
+    $status = 1;
+}
+if (!$status && $no_stderr && $nerror_bytes > 0) {
+    print CMD_STDERR "\nERROR: command(s) produced unexpected output on stderr\n";
+    $status = 1;
+}
 my($elapsed_time) = time - $starttime;
 print CMD_STDERR "ELAPSED_TIME $elapsed_time\n";
-
-# Close the CMD_STDOUT before we start comparing it with an answer.  All subsequent command stdout will
-# be redirected to CMD_STDERR instead.
-open CMD_STDOUT, ">&CMD_STDERR";
 
 # Should we compare the test's standard output with a predetermined answer?
 if (!$status && $config{answer} ne 'no') {
@@ -609,8 +659,8 @@ if (!$status && $config{answer} ne 'no') {
     print CMD_STDERR "Running filters:\n";
     my($a1,$a2,$b1,$b2) = ($answer, tempname, $cmd_stdout_file, tempname);
     foreach my $filter (@{$config{filter}}) {
-	$status ||= run_command($config{timeout}, undef, "(set -x; $filter) <$a1 >$a2");
-	$status ||= run_command($config{timeout}, undef, "(set -x; $filter) <$b1 >$b2");
+	$status ||= (run_command($config{timeout}, undef, "(set -x; $filter) <$a1 >$a2"))[0];
+	$status ||= (run_command($config{timeout}, undef, "(set -x; $filter) <$b1 >$b2"))[0];
 	$a1 = tempname if $a1 eq $answer;
 	$b1 = tempname if $b1 eq $cmd_stdout_file;
 	($a1,$a2) = ($a2,$a1);
@@ -619,12 +669,12 @@ if (!$status && $config{answer} ne 'no') {
     }
     if (!$status) {
 	print CMD_STDERR "Comparing filter output with filtered answer\n";
-	$status ||= run_command($config{timeout}, undef, "(set -x; $config{diff} $a1 $b1) >&2");
+	$status ||= (run_command($config{timeout}, undef, "(set -x; $config{diff} $a1 $b1) >&2"))[0];
     }
     unlink $a1, $a2, $b1, $b2;
   } else {
     print CMD_STDERR "Comparing output with answer\n";
-    $status ||= run_command($config{timeout}, undef, "(set -x; $config{diff} $answer $cmd_stdout_file) >&2");
+    $status ||= (run_command($config{timeout}, undef, "(set -x; $config{diff} $answer $cmd_stdout_file) >&2"))[0];
   }
 }
 

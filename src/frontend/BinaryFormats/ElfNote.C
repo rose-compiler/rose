@@ -1,5 +1,6 @@
 /* ELF Note Sections (SgAsmElfNoteSection and related classes) */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 void
@@ -234,3 +235,5 @@ SgAsmElfNoteSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         ent->dump(f, p, i);
     }
 }
+
+#endif

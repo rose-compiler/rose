@@ -158,6 +158,7 @@ namespace CodeThorn {
     VariableIdMappingExtended* getVariableIdMapping();
     FunctionIdMapping* getFunctionIdMapping();
     FunctionCallMapping* getFunctionCallMapping();
+    FunctionCallMapping2* getFunctionCallMapping2();
     CTIOLabeler* getLabeler() const;
     Flow* getFlow();
     CodeThorn::PStateSet* getPStateSet();
@@ -166,7 +167,7 @@ namespace CodeThorn {
     ConstraintSetMaintainer* getConstraintSetMaintainer();
     std::list<FailedAssertion> getFirstAssertionOccurences();
 
-    void setSkipSelectedFunctionCalls(bool defer);
+    void setSkipUnknownFunctionCalls(bool defer);
     void setSkipArrayAccesses(bool skip);
     bool getSkipArrayAccesses();
     void setIgnoreUndefinedDereference(bool);
@@ -400,6 +401,7 @@ namespace CodeThorn {
     VariableIdMappingExtended* variableIdMapping;
     FunctionIdMapping functionIdMapping;
     FunctionCallMapping functionCallMapping;
+    FunctionCallMapping2 functionCallMapping2;
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
     EStateWorkList* estateWorkListCurrent;
     EStateWorkList* estateWorkListNext;

@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 
 #include <BaseSemanticsRiscOperators.h>
@@ -67,3 +69,5 @@ HotPatch::apply(const RiscOperatorsPtr &ops) const {
 
 } // namespace
 } // namespace
+
+#endif

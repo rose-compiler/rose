@@ -1,5 +1,7 @@
 #ifndef Rose_LlvmSemantics2_H
 #define Rose_LlvmSemantics2_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "SymbolicSemantics2.h"
 #include "CommandLine.h"
@@ -454,4 +456,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <MemoryCellMap.h>
 
@@ -205,4 +207,6 @@ MemoryCellMap::getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscO
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCellMap);
+#endif
+
 #endif

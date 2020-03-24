@@ -2,6 +2,7 @@
 #define ROSE_Partitioner2_ModulesPowerpc_H
 
 #include <Partitioner2/Modules.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <boost/logic/tribool.hpp>
 
@@ -42,4 +43,5 @@ boost::logic::tribool isFunctionReturn(const Partitioner&, const BasicBlock::Ptr
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -1,8 +1,9 @@
 /* Documentation is in AssemblerX86.h */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
-#include "Assembler.h"
 #include "AssemblerX86.h"
+
 #include "AsmUnparser_compat.h"
 #include "rose_getline.h"
 #include "FileSystem.h"
@@ -1829,3 +1830,5 @@ AssemblerX86::assembleProgram(const std::string &source)
 
 } // namespace
 } // namespace
+
+#endif

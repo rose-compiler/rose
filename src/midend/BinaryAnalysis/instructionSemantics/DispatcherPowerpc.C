@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
+
 #include <BaseSemantics2.h>
 #include <Diagnostics.h>
 #include <DispatcherPowerpc.h>
@@ -2837,4 +2840,6 @@ DispatcherPowerpc::writeAndUpdate(BaseSemantics::RiscOperators *ops, SgAsmExpres
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherPowerpc);
+#endif
+
 #endif

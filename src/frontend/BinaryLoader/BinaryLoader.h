@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_BinaryLoader_H
 #define ROSE_BinaryAnalysis_BinaryLoader_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <RoseException.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/SharedObject.h>
@@ -533,4 +536,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

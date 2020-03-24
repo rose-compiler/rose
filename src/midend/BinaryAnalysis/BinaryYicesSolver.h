@@ -1,7 +1,8 @@
 #ifndef Rose_BinaryAnalysis_YicesSolver_H
 #define Rose_BinaryAnalysis_YicesSolver_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
-#include "rosePublicConfig.h"
 #include "BinarySmtSolver.h"
 #include <Sawyer/Map.h>
 #include <boost/serialization/access.hpp>
@@ -195,4 +196,5 @@ private:
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::YicesSolver);
 #endif
 
+#endif
 #endif

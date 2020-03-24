@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCell_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_MemoryCell_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 #include <Sawyer/Set.h>
@@ -261,4 +263,5 @@ std::ostream& operator<<(std::ostream&, const MemoryCell::WithFormatter&);
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -46,12 +46,18 @@ void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
   getFunctionCallMapping()->setClassHierarchy(getClassHierarchy());
   getFunctionCallMapping()->computeFunctionCallMapping(root);
 
+  _functionCallMapping2=new FunctionCallMapping2();
+  getFunctionCallMapping2()->setLabeler(_labeler);
+  getFunctionCallMapping2()->setClassHierarchy(getClassHierarchy());
+  getFunctionCallMapping2()->computeFunctionCallMapping(root);
+
   // PP (07/15/19) moved flow generation from DFAnalysisBase class
   _cfanalyzer = new CFAnalysis(_labeler);
 
   // PP (02/17/20) sets id and call mappings
   _cfanalyzer->setFunctionIdMapping(getFunctionIdMapping());
   _cfanalyzer->setFunctionCallMapping(getFunctionCallMapping());
+  _cfanalyzer->setFunctionCallMapping2(getFunctionCallMapping2());
 
   //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   cout << "INIT: Building CFG for each function."<<endl;
@@ -97,6 +103,11 @@ CodeThorn::FunctionIdMapping* CodeThorn::ProgramAbstractionLayer::getFunctionIdM
 CodeThorn::FunctionCallMapping* CodeThorn::ProgramAbstractionLayer::getFunctionCallMapping(){
   ROSE_ASSERT(_functionCallMapping!=0);
   return _functionCallMapping;
+}
+
+CodeThorn::FunctionCallMapping2* CodeThorn::ProgramAbstractionLayer::getFunctionCallMapping2(){
+  ROSE_ASSERT(_functionCallMapping2!=0);
+  return _functionCallMapping2;
 }
 
 ClassHierarchyWrapper* CodeThorn::ProgramAbstractionLayer::getClassHierarchy(){

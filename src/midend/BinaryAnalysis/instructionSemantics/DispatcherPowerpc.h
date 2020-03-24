@@ -5,9 +5,10 @@
 // The ROSE style guide indicates that PowerPC, when used as part of a symbol in ROSE source code,
 // should be capitalized as "Powerpc" (e.g., "DispatcherPowerpc", the same rule that consistently
 // capitializes x86 as "DispatcherX86").
-
 #ifndef ROSE_DispatcherPpc_H
 #define ROSE_DispatcherPpc_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "BaseSemantics2.h"
 
@@ -153,4 +154,5 @@ public:
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherPowerpc);
 #endif
 
+#endif
 #endif

@@ -22,6 +22,26 @@ CHARACTER(len=1,kind=c_char), PARAMETER :: c_new_line = achar(10)
 CHARACTER(len=1,kind=c_char), PARAMETER :: c_carriage_return = achar(13)
 CHARACTER(len=1,kind=c_char), PARAMETER :: c_horizontal_tab = achar(9)
 CHARACTER(len=1,kind=c_char), PARAMETER :: c_vertical_tab = achar(11)
+TYPE  :: c_ptr
+INTEGER(kind=c_intptr_t) :: place_holder_
+END TYPE c_ptr
+TYPE  :: c_funptr
+INTEGER(kind=c_intptr_t) :: place_holder_
+END TYPE c_funptr
 CONTAINS
+LOGICAL FUNCTION c_associated(c_ptr_1,c_ptr_2)
+TYPE ( c_ptr ) , INTENT(IN) :: c_ptr_1
+TYPE ( c_ptr ) , INTENT(IN), OPTIONAL :: c_ptr_2
+END  FUNCTION c_associated
+
+ FUNCTION c_loc(x)
+TYPE ( c_ptr )  :: c_loc
+END  FUNCTION c_loc
+
+ FUNCTION c_funloc(x)
+TYPE ( c_funptr )  :: c_funloc
+external :: x
+END  FUNCTION c_funloc
+
 END MODULE iso_c_binding
 

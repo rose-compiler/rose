@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_Modules_H 
 #define ROSE_Partitioner2_Modules_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/ControlFlowGraph.h>
@@ -544,4 +547,5 @@ void fixupAstCallingConventions(const Partitioner&, SgNode *ast);
 } // namespace
 } // namespace
 
+#endif
 #endif

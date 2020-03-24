@@ -87,6 +87,7 @@ CODETHORN_HEADER_FILES=\
   FIConstAnalysis.h \
   Flow.h \
   FunctionCallMapping.h \
+  FunctionCallMapping2.h \
   FunctionCallTarget.h \
   FunctionId.h \
   FunctionIdMapping.h \
@@ -183,6 +184,7 @@ CODETHORN_SOURCE_FILES=\
   FIConstAnalysis.C \
   Flow.C \
   FunctionCallMapping.C \
+  FunctionCallMapping2.C \
   FunctionCallTarget.C \
   FunctionId.C \
   FunctionIdMapping.C \
@@ -673,7 +675,7 @@ check-equivalence:
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
-	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump --rule-commutative-sort=no
+	@./codethorn --edg:no_warnings --normalize-all=off $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump --rule-commutative-sort=no --abstraction-mode=0
 #	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
 	@cat tmp.nsdump
 	@rm -f tmp.nsdump

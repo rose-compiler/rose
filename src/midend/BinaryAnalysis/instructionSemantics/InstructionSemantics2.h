@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <Sawyer/Message.h>
 
@@ -285,4 +287,5 @@ void initDiagnostics();
 } // namespace
 } // namespace
 
+#endif
 #endif
