@@ -583,3 +583,24 @@ Transition TransitionGraph::getStartTransition() {
     throw CodeThorn::Exception("TransitionGraph: no start transition found.");
   }
 }
+void TransitionGraph::printStgSize(std::string optionalComment) {
+  long inStates = numberOfObservableStates(true, false, false);
+  long outStates = numberOfObservableStates(false, true, false);
+  long errStates = numberOfObservableStates(false, false, true);
+  cout << "STATUS: STG size ";
+  if (optionalComment != "") {
+    cout << "(" << optionalComment << "): ";
+  }
+  cout << "#transitions: " << size();
+  cout << ", #states: " << estateSet().size()
+       << " (" << inStates << " in / " << outStates << " out / " << errStates << " err)"
+       << endl;
+}
+
+void TransitionGraph::csvToStream(std::stringstream& csvOutput) {
+  long inStates = numberOfObservableStates(true, false, false);
+  long outStates = numberOfObservableStates(false, true, false);
+  long errStates = numberOfObservableStates(false, false, true);
+  csvOutput << size() <<","<< estateSet().size() <<","<< inStates <<","<< outStates <<","<< errStates;
+}
+

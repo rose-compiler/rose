@@ -277,6 +277,7 @@ LTLTHORN_HEADER_FILES=\
   IOSolver.h \
   LtsminConnection.h \
   ParallelAutomataGenerator.h \
+  ParProAutomata.h \
   ParProAnalyzer.h \
   ParProEState.h \
   ParProExplorer.h \
@@ -308,6 +309,7 @@ LTLTHORN_SOURCE_FILES=\
   IOSolver.C \
   LtsminConnection.C \
   ParallelAutomataGenerator.C \
+  ParProAutomata.C \
   ParProAnalyzer.C \
   ParProEState.C \
   ParProExplorer.C \

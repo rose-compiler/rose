@@ -3376,3 +3376,5 @@ bool CodeThorn::Analyzer::isLTLRelevantEState(const EState* estate) {
 std::string CodeThorn::Analyzer::typeSizeMappingToString() {
   return variableIdMapping->typeSizeMappingToString();
 }
+
+
