@@ -480,7 +480,7 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
 
   // Find previous declaration
 
-    clang::RecordDecl * prev_record_decl = record_decl->getPreviousDeclaration();
+    clang::RecordDecl * prev_record_decl = record_decl->getPreviousDecl();
     SgClassSymbol * sg_prev_class_sym = isSgClassSymbol(GetSymbolFromSymbolTable(prev_record_decl));
     SgClassDeclaration * sg_prev_class_decl = sg_prev_class_sym == NULL ? NULL : isSgClassDeclaration(sg_prev_class_sym->get_declaration());
 
@@ -674,7 +674,7 @@ bool ClangToSageTranslator::VisitEnumDecl(clang::EnumDecl * enum_decl, SgNode **
     SgName name(enum_decl->getNameAsString());
 
 
-    clang::EnumDecl * prev_enum_decl = enum_decl->getPreviousDeclaration();
+    clang::EnumDecl * prev_enum_decl = enum_decl->getPreviousDecl();
     SgEnumSymbol * sg_prev_enum_sym = isSgEnumSymbol(GetSymbolFromSymbolTable(prev_enum_decl));
     SgEnumDeclaration * sg_prev_enum_decl = sg_prev_enum_sym == NULL ? NULL : isSgEnumDeclaration(sg_prev_enum_sym->get_declaration());
     sg_prev_enum_decl = sg_prev_enum_decl == NULL ? NULL : isSgEnumDeclaration(sg_prev_enum_decl->get_definingDeclaration());
@@ -872,7 +872,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
     SgName name(function_decl->getNameAsString());
 
-    SgType * ret_type = buildTypeFromQualifiedType(function_decl->getResultType());
+    SgType * ret_type = buildTypeFromQualifiedType(function_decl->getReturnType());
 
     SgFunctionParameterList * param_list = SageBuilder::buildFunctionParameterList_nfi();
       applySourceRange(param_list, function_decl->getSourceRange()); // FIXME find the good SourceRange (should be stored by Clang...)
@@ -950,7 +950,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
         function_definition->set_parent(sg_function_decl);
 
         SgFunctionDeclaration * first_decl;
-        if (function_decl->getFirstDeclaration() == function_decl) {
+        if (function_decl->getFirstDecl() == function_decl) {
             SgFunctionParameterList * param_list_ = SageBuilder::buildFunctionParameterList_nfi();
               setCompilerGeneratedFileInfo(param_list_);
             SgInitializedNamePtrList & init_names = param_list->get_args();
@@ -968,7 +968,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
             if (function_decl->isVariadic()) first_decl->hasEllipses();
         }
         else {
-            SgSymbol * tmp_symbol = GetSymbolFromSymbolTable(function_decl->getFirstDeclaration());
+            SgSymbol * tmp_symbol = GetSymbolFromSymbolTable(function_decl->getFirstDecl());
             SgFunctionSymbol * symbol = isSgFunctionSymbol(tmp_symbol);
             if (tmp_symbol != NULL && symbol == NULL) {
                 std::cerr << "Runtime error: tmp_symbol != NULL && symbol == NULL" << std::endl;
@@ -992,8 +992,8 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
              (*it)->set_scope(SageBuilder::topScopeStack());
         }
 
-        if (function_decl->getFirstDeclaration() != function_decl) {
-            SgSymbol * tmp_symbol = GetSymbolFromSymbolTable(function_decl->getFirstDeclaration());
+        if (function_decl->getFirstDecl() != function_decl) {
+            SgSymbol * tmp_symbol = GetSymbolFromSymbolTable(function_decl->getFirstDecl());
             SgFunctionSymbol * symbol = isSgFunctionSymbol(tmp_symbol);
             if (tmp_symbol != NULL && symbol == NULL) {
                 std::cerr << "Runtime error: tmp_symbol != NULL && symbol == NULL" << std::endl;
@@ -1005,7 +1005,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
             }
             else {
                 // FIXME Is it correct?
-                SgNode * tmp_first_decl = Traverse(function_decl->getFirstDeclaration());
+                SgNode * tmp_first_decl = Traverse(function_decl->getFirstDecl());
                 first_decl = isSgFunctionDeclaration(tmp_first_decl);
                 ROSE_ASSERT(first_decl != NULL);
                 // ROSE_ASSERT(!"We should have see the first declaration already");
