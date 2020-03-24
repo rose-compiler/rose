@@ -18,7 +18,8 @@ TYPE STATUS'2 STATUS
    V(TWO),
   3V(THREE),
   5V(FIVE),
-   V(SIX)
+   V(SIX),
+   V(SEVEN)
 );
 
 TERM

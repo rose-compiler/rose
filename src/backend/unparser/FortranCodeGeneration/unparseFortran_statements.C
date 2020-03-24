@@ -4057,6 +4057,7 @@ void FortranCodeGeneration_locatedNode::unparseArrayAttr(SgArrayType* type, SgUn
 {
     if (!oneVarOnly)
     {
+      ASSERT_not_null(type);
       curprint(type->get_isCoArray()? "[": "(");
       unparseExpression(type->get_dim_info(), info);
       curprint(type->get_isCoArray()? "]": ")");

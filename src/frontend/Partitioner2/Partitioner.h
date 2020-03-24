@@ -2299,6 +2299,12 @@ public:
      *  Thread safety: Not thread safe. */
     static std::string functionName(const Function::Ptr&) /*final*/;
 
+    /** Expands indeterminate function calls.
+     *
+     *  Modifies the control flow graph so that any function call to the indeterminate vertex is replaced by function calls to
+     *  every possible function. */
+    void expandIndeterminateCalls();
+
     /** Property: How to report progress.
      *
      *  Partitioning progress is reported in two ways:

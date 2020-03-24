@@ -3,21 +3,21 @@ CFG dominators for function 0x08048304:
   function 0x08048304 dominator of 0x08048319<1> is 0x08048314<0>
   function 0x08048304 dominator of 0x08048304<2> is none
   function 0x08048304 dominator of 0x0804830f<3> is 0x08048304<2>
-CFG dominators for function 0x0804831c "DYNAMIC_LINKER_TRAMPOLINE":
+CFG dominators for function 0x0804831c:
   function 0x0804831c dominator of 0x0804831c<0> is none
-CFG dominators for function 0x0804832c "write@plt":
+CFG dominators for function 0x0804832c:
   function 0x0804832c dominator of 0x0804832c<0> is none
-CFG dominators for function 0x0804833c "close@plt":
+CFG dominators for function 0x0804833c:
   function 0x0804833c dominator of 0x0804833c<0> is none
-CFG dominators for function 0x0804834c "__libc_start_main@plt":
+CFG dominators for function 0x0804834c:
   function 0x0804834c dominator of 0x0804834c<0> is none
-CFG dominators for function 0x0804835c "open@plt":
+CFG dominators for function 0x0804835c:
   function 0x0804835c dominator of 0x0804835c<0> is none
-CFG dominators for function 0x0804836c "exit@plt":
+CFG dominators for function 0x0804836c:
   function 0x0804836c dominator of 0x0804836c<0> is none
-CFG dominators for function 0x0804837c "read@plt":
+CFG dominators for function 0x0804837c:
   function 0x0804837c dominator of 0x0804837c<0> is none
-CFG dominators for function 0x08048390 "_start":
+CFG dominators for function 0x08048390:
   function 0x08048390 dominator of 0x080483b1<0> is 0x08048390<1>
   function 0x08048390 dominator of 0x08048390<1> is none
 CFG dominators for function 0x080483b4:
@@ -38,7 +38,7 @@ CFG dominators for function 0x0804840c:
   function 0x0804840c dominator of 0x0804840c<2> is none
   function 0x0804840c dominator of 0x0804841b<3> is 0x0804840c<2>
   function 0x0804840c dominator of 0x0804842e<4> is 0x08048424<1>
-CFG dominators for function 0x08048440 "main":
+CFG dominators for function 0x08048440:
   function 0x08048440 dominator of 0x080484cf<0> is 0x080484c7<8>
   function 0x08048440 dominator of 0x08048440<1> is none
   function 0x08048440 dominator of 0x08048465<2> is 0x08048440<1>

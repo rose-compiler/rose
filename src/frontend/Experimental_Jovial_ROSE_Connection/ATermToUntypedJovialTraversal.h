@@ -4,11 +4,21 @@
 #include "ATerm/ATermToUntypedTraversal.h"
 #include "general_language_translation.h"
 #include "Jovial_to_ROSE_translation.h"
+#include "../Experimental_Flang_ROSE_Connection/sage-tree-builder.h"
+
+#define USE_SAGE_TREE_BUILDER 0
 
 namespace ATermSupport {
 
 class ATermToUntypedJovialTraversal : public ATermToUntypedTraversal
 {
+ private:
+   // Rose::builder::SageTreeBuilder sage_tree_builder;
+   Rose::builder::SageTreeBuilderNull sage_tree_builder;
+
+ protected:
+   void setSourcePositions(ATerm term, Rose::builder::SourcePosition &start, Rose::builder::SourcePosition &end);
+
  public:
    ATermToUntypedJovialTraversal(SgSourceFile* source);
    virtual ~ATermToUntypedJovialTraversal();

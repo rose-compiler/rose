@@ -2,6 +2,15 @@ START
 
 COMPOOL fixed'or'float;
 
+  DEF ITEM float'4 F 4;
+  DEF ITEM float'8 F 8;
+
+  DEF ITEM no'fraction A 1;
+  DEF ITEM scale'0 A 0,32;
+
+  DEF ITEM scale'1 A 1,32;
+  DEF ITEM fraction'33 A 1,33;
+
   CONSTANT ITEM an'item
   A 0,31
   = (*A 0,31 *) (3.3/360.0);
