@@ -7,7 +7,8 @@ AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD    = $(ROSE_LIBS)
 
 JOVIAL_TESTCODES = \
- tiny.jov
+ tiny.jov                               \
+ status_enumval.jov
 
 JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \
@@ -46,13 +47,14 @@ JOVIAL_PARSER_TESTCODES = \
  rose-issue-2143.jov
 
 COMPOOL_TESTCODES = \
- bit_cast.cpl
+ bit_cast.cpl                           \
+ proc_refs.cpl                          \
+ status_type.cpl
 
 COMPOOL_PARSER_TESTCODES = \
  constant_item_presets.cpl              \
  define_dollar.cpl                      \
  item_and_status_type_J.cpl             \
- status_type.cpl                        \
  simple_def_ambiguity_J.cpl             \
  size_function_J.cpl                    \
  spec_table_decl_ambiguity_J.cpl        \

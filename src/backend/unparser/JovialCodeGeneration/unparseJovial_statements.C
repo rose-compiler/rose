@@ -61,6 +61,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
        // module support
           case V_SgJovialCompoolStatement:     unparseCompoolStmt (stmt, info);     break;
           case V_SgProgramHeaderStatement:     unparseProgHdrStmt (stmt, info);     break;
+          case V_SgProcedureHeaderStatement:   unparseProcDeclStmt(stmt, info);     break;
           case V_SgFunctionDeclaration:        unparseFuncDeclStmt(stmt, info);     break;
           case V_SgFunctionDefinition:         unparseFuncDefnStmt(stmt, info);     break;
 
@@ -212,6 +213,90 @@ Unparse_Jovial::unparseProgHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
  //  unparseStatementNumbersSupport(mod->get_end_numeric_label(),info);
 
   // TODO - unparse non-nested-subroutines
+   }
+
+void
+Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUnparse_Info ninfo(info);
+
+     SgProcedureHeaderStatement* func = isSgProcedureHeaderStatement(stmt);
+     ROSE_ASSERT(func);
+
+     bool isDefiningDeclaration = (func->get_declarationModifier().isJovialDef());
+
+  // This will likely need to be changed.  It may work for compool files but likely not for jovial files.
+     if (isDefiningDeclaration)  curprint("DEF PROC ");
+     else                        curprint("REF PROC ");
+
+     curprint(func->get_name());
+
+  // unparse the function modifiers
+     if      (func->get_functionModifier().isRecursive())    curprint(" REC");
+     else if (func->get_functionModifier().isReentrant())    curprint(" RENT");
+
+  // unparse function arguments
+     SgFunctionParameterList* params = func->get_parameterList();
+     SgInitializedNamePtrList & args = params->get_args();
+
+     if (args.size() > 0)
+        {
+           bool firstOutParam = false;
+           bool foundOutParam = false;
+
+           curprint("(");
+
+           int i = 0;
+           BOOST_FOREACH(SgInitializedName* arg, args)
+              {
+              // TODO - Change temporary hack of using storage modifier isMutable to represent an out parameter
+                 if (arg->get_storageModifier().isMutable() && foundOutParam == false)
+                    {
+                       firstOutParam = true;
+                       foundOutParam = true;
+                       curprint(" : ");
+                    }
+
+              // Don't output comma if this is the first out parameter
+                 if (i++ > 0 && firstOutParam == false) curprint(",");
+                 firstOutParam = false;
+
+                 curprint(arg->get_name());
+              }
+           curprint(")");
+        }
+
+  // unparse function type
+     SgType* type = func->get_type();
+     unparseType(type, ninfo);
+
+     curprint(";\n");
+
+     if (isDefiningDeclaration)
+        {
+           unparseStatement(func->get_definition(), ninfo);
+        }
+     else
+        {
+           // There still needs to be at least a BEGIN and END
+           info.inc_nestingLevel();
+           curprint_indented("BEGIN\n", info);
+
+           info.inc_nestingLevel();
+           BOOST_FOREACH(SgInitializedName* arg, args)
+              {
+                 curprint( ws_prefix(info.get_nestingLevel()) );
+                 curprint("ITEM ");
+                 curprint(arg->get_name());
+                 curprint(" ");
+                 unparseType(arg->get_type(), ninfo);
+                 curprint(" ;\n");
+              }
+           info.dec_nestingLevel();
+
+           curprint_indented("END\n", info);
+           info.dec_nestingLevel();
+        }
    }
 
 void

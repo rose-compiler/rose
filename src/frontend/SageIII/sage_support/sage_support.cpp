@@ -753,7 +753,9 @@ SgSourceFile::initializeGlobalScope()
      get_temp_holding_scope()->set_parent(this);
 #endif
 
-     if (SageBuilder::symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (SageBuilder::symbol_table_case_insensitive_semantics == true)
+     if (SageInterface::is_language_case_insensitive())
         {
           get_globalScope()->setCaseInsensitive(true);
         }
@@ -938,7 +940,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
             // DQ (11/30/2010): This variable activates scopes built within the SageBuilder
             // interface to be built to use case insensitive symbol table handling.
-               SageBuilder::symbol_table_case_insensitive_semantics = true;
+            // Rasmussen (3/22/2020): Setting this variable to properly reflect language properties
+            // was removed in 2017. I therefore removed it from SageBuilder.
+            // SageBuilder::symbol_table_case_insensitive_semantics = true;
 
             // determine whether to run this file through the C preprocessor
                bool requires_C_preprocessor =
@@ -1054,7 +1058,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                // case_insensitive_semantics.  But this only sets it to the last
                // file created.  During AST construction, it will need to be
                // reset for each language.
-               SageBuilder::symbol_table_case_insensitive_semantics = false;
+               // Rasmussen (3/22/2020): Setting this variable to properly reflect language properties
+               // was removed in 2017. I therefore removed it from SageBuilder.
+               // SageBuilder::symbol_table_case_insensitive_semantics = false;
 
                if (CommandlineProcessing::isPHPFileNameSuffix(filenameExtension) == true)
                   {
@@ -4082,7 +4088,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
      // SG (7/9/2015) In case of a mixed language project, force case
      // insensitivity here.
-     SageBuilder::symbol_table_case_insensitive_semantics = true;
+     // Rasmussen (3/22/2020): Setting this variable to properly reflect language properties
+     // was removed in 2017. I therefore removed it from SageBuilder.
+     // SageBuilder::symbol_table_case_insensitive_semantics = true;
 
      bool using_rice_caf = false;
      vector<string> ArgTmp = get_project()->get_originalCommandLineArgumentList();
@@ -5255,7 +5263,9 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
 
      // SG (7/9/2015) In case of a mixed language project, force case
      // sensitivity here.
-     SageBuilder::symbol_table_case_insensitive_semantics = false;
+     // Rasmussen (3/22/2020): Setting this variable to properly reflect language properties
+     // was removed in 2017. I therefore removed it from SageBuilder.
+     // SageBuilder::symbol_table_case_insensitive_semantics = false;
 
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
      ROSE_ASSERT(get_requires_C_preprocessor() == false);
@@ -5526,7 +5536,9 @@ SgSourceFile::build_X10_AST(const vector<string>& p_argv)
 
     // SG (7/9/2015) In case of a mixed language project, force case
     // sensitivity here.
-    SageBuilder::symbol_table_case_insensitive_semantics = false;
+    // Rasmussen (3/22/2020): Setting this variable to properly reflect language properties
+    // was removed in 2017. I therefore removed it from SageBuilder.
+    // SageBuilder::symbol_table_case_insensitive_semantics = false;
 
     ROSE_ASSERT(get_requires_C_preprocessor() == false);
 
@@ -5752,7 +5764,9 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
    {
      // SG (7/9/2015) In case of a mixed language project, force case
      // sensitivity here.
-     SageBuilder::symbol_table_case_insensitive_semantics = false;
+     // Rasmussen (3/22/2020): Setting this variable to properly reflect language properties
+     // was removed in 2017. I therefore removed it from SageBuilder.
+     // SageBuilder::symbol_table_case_insensitive_semantics = false;
 
      std::string frontEndCommandLineString;
      frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
@@ -5852,7 +5866,9 @@ SgSourceFile::build_PHP_AST()
 #ifdef ROSE_BUILD_PHP_LANGUAGE_SUPPORT
      // SG (7/9/2015) In case of a mixed language project, force case
      // sensitivity here.
-     SageBuilder::symbol_table_case_insensitive_semantics = false;
+     // Rasmussen (3/22/2020): Setting this variable to properly reflect language properties
+     // was removed in 2017. I therefore removed it from SageBuilder.
+     // SageBuilder::symbol_table_case_insensitive_semantics = false;
      int frontendErrorLevel = php_main(phpFileName, this);
 #else
   // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
@@ -5872,7 +5888,9 @@ SgSourceFile::build_Python_AST()
 #ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
      // SG (7/9/2015) In case of a mixed language project, force case
      // sensitivity here.
-     SageBuilder::symbol_table_case_insensitive_semantics = false;
+     // Rasmussen (3/22/2020): Setting this variable to properly reflect language properties
+     // was removed in 2017. I therefore removed it from SageBuilder.
+     // SageBuilder::symbol_table_case_insensitive_semantics = false;
      int frontendErrorLevel = python_main(pythonFileName, this);
 #else
   // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
@@ -5888,7 +5906,9 @@ int
 SgSourceFile::build_Csharp_AST( vector<string> argv, vector<string> inputCommandLine )
    {
   // DQ (28/8/2017) In case of a mixed language project, force case sensitivity here.
-     SageBuilder::symbol_table_case_insensitive_semantics = false;
+  // Rasmussen (3/22/2020): Setting this variable to properly reflect language properties
+  // was removed in 2017. I therefore removed it from SageBuilder.
+  // SageBuilder::symbol_table_case_insensitive_semantics = false;
 
      std::string frontEndCommandLineString;
      frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
@@ -5943,7 +5963,9 @@ SgSourceFile::build_Ada_AST( vector<string> argv, vector<string> inputCommandLin
   // Note that to avoid the const_cast we could pass in a pointer to the SgSourceFile.
 
   // DQ (28/8/2017) In case of a mixed language project, force case sensitivity here.
-     SageBuilder::symbol_table_case_insensitive_semantics = false;
+  // Rasmussen (3/22/2020): Setting this variable to properly reflect language properties
+  // was removed in 2017. I therefore removed it from SageBuilder.
+  // SageBuilder::symbol_table_case_insensitive_semantics = false;
 
      std::string frontEndCommandLineString;
      frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
@@ -5989,7 +6011,9 @@ int
 SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommandLine )
    {
   // DQ (28/8/2017) In case of a mixed language project, force case sensitivity here.
-     SageBuilder::symbol_table_case_insensitive_semantics = false;
+  // Rasmussen (3/22/2020): Setting this variable to properly reflect language properties
+  // was removed in 2017. I therefore removed it from SageBuilder.
+  // SageBuilder::symbol_table_case_insensitive_semantics = false;
 
      std::string frontEndCommandLineString;
      frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
@@ -6039,7 +6063,9 @@ int
 SgSourceFile::build_Cobol_AST( vector<string> argv, vector<string> inputCommandLine )
    {
   // DQ (28/8/2017) In case of a mixed language project, force case sensitivity here.
-     SageBuilder::symbol_table_case_insensitive_semantics = false;
+  // Rasmussen (3/22/2020): Setting this variable to properly reflect language properties
+  // was removed in 2017. I therefore removed it from SageBuilder.
+  // SageBuilder::symbol_table_case_insensitive_semantics = false;
 
      std::string frontEndCommandLineString;
      frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);

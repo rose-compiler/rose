@@ -15,6 +15,8 @@ namespace General_Language_Translation
            e_subroutine_attr_none = 0,
 
         // Jovial
+           e_subroutine_def,
+           e_subroutine_ref,
            e_subroutine_attr_rent,
            e_subroutine_attr_rec,
 

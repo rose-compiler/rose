@@ -28,6 +28,7 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
 
           virtual void unparseCompoolStmt            (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseProgHdrStmt            (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseProcDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseFuncDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseFuncDefnStmt           (SgStatement* stmt, SgUnparse_Info& info);
 
@@ -265,6 +266,22 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
 
           void unparseEnumBody(SgClassDefinition *, SgUnparse_Info& info);
 #endif
+
+     private:
+          std::string ws_prefix(int nesting_level)
+             {
+                std::stringstream code;
+                for(int i = 0; i < nesting_level; i++)
+                   code << "  ";
+                return code.str();
+             }
+
+          void curprint_indented(std::string txt, SgUnparse_Info& info)
+             {
+                curprint( ws_prefix(info.get_nestingLevel()) );
+                curprint( txt );
+             }
+
    };
 
 #endif

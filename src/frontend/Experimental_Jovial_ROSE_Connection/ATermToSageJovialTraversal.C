@@ -171,9 +171,10 @@ ATbool ATermToSageJovialTraversal::traverse_NullDeclaration(ATerm term)
 
    if (ATmatch(term, "NullDeclaration()")) {
 
+#if 0
    // If this is a function parameter scope do not append the null declaration to it. It's
    // primarily in the grammar for decoration if there are no function formal parameters
-   // and will fail when tried to insert in the parameter scope because it SgFunctionParamterScope
+   // and will fail when tried to insert in the parameter scope because it SgFunctionParameterScope
    // only contains declarations.
 
    // Conclusion: only append the null declaration (SgNullStatement) if scope is NOT SgFunctionParameterScope
@@ -183,6 +184,11 @@ ATbool ATermToSageJovialTraversal::traverse_NullDeclaration(ATerm term)
          setSourcePosition(null_decl, term);
          SageInterface::appendStatement(null_decl, SageBuilder::topScopeStack());
       }
+#else
+      SgNullStatement* null_decl = SageBuilder::buildNullStatement();
+      setSourcePosition(null_decl, term);
+      SageInterface::appendStatement(null_decl, SageBuilder::topScopeStack());
+#endif
    }
    else return ATfalse;
 
@@ -225,7 +231,7 @@ ATbool ATermToSageJovialTraversal::traverse_MainProgramModule(ATerm term)
       setSourcePositions(term,   prog_start, prog_end);
       setSourcePositions(t_dirs, dirs_start, dirs_end);
 
-   // Begin SageTreeBuilder
+   // Enter SageTreeBuilder for SgProgramHeaderStatement
       Rose::builder::SourcePositions sources(prog_start, dirs_start, prog_end);
       sage_tree_builder.Enter(program_decl, boost::optional<std::string>(name), labels, sources);
 
@@ -233,15 +239,14 @@ ATbool ATermToSageJovialTraversal::traverse_MainProgramModule(ATerm term)
          // MATCHED ProgramBody
       } else return ATfalse;
 
+   // Leave SageTreeBuilder for SgProgramHeaderStatement
+      sage_tree_builder.Leave(program_decl);
+
       if (traverse_NonNestedSubroutineList(t_funcs)) {
          // MATCHED NonNestedSubroutineList
       } else return ATfalse;
    }
    else return ATfalse;
-
-   ROSE_ASSERT(program_decl != nullptr);
-
-   sage_tree_builder.Leave(program_decl);
 
    return ATtrue;
 }
@@ -310,29 +315,33 @@ ATbool ATermToSageJovialTraversal::traverse_NonNestedSubroutineList(ATerm term)
    printf("... traverse_NonNestedSubroutineList: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_procs;
+   ATerm t_subroutine_list, t_proc;
+   General_Language_Translation::SubroutineAttribute def_or_ref = General_Language_Translation::e_subroutine_attr_none;
 
-   if (ATmatch(term, "NonNestedSubroutineList(<term>)", &t_procs)) {
+   if (ATmatch(term, "NonNestedSubroutineList(<term>)", &t_subroutine_list)) {
       cerr << "WARNING UNIMPLEMENTED: NonNestedSubroutineList \n";
-   // DELETE_ME
-      return ATtrue;
-
-#if 0
-      ATermList tail = (ATermList) ATmake("<term>", t_procs);
+      ATermList tail = (ATermList) ATmake("<term>", t_subroutine_list);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
-      // TODO - Probably will need a NonNestedSubroutineDef term
+
          if (ATmatch(head, "NonNestedSubroutine(<term>)", &t_proc)) {
-            if (traverse_ProcedureDefinition(t_proc)) {
-               // MATCHED ProcedureDefinition
-            }
-            else if (traverse_FunctionDefinition(t_proc)) {
-               // MATCHED FunctionDefinition
-            } else return ATfalse;
-         } else return ATfalse;
+            def_or_ref = General_Language_Translation::e_subroutine_attr_none;
+         }
+         else if (ATmatch(head, "NonNestedSubroutineDEF(<term>)", &t_proc)) {
+            def_or_ref = General_Language_Translation::e_subroutine_def;
+         }
+         else return ATfalse;
+
+         if (traverse_ProcedureDefinition(t_proc, def_or_ref)) {
+            // MATCHED ProcedureDefinition
+         }
+         else if (traverse_FunctionDefinition(t_proc, def_or_ref)) {
+            // MATCHED FunctionDefinition
+         }
+         else return ATfalse;
+
       }
-#endif
    }
    else return ATfalse;
 
@@ -344,6 +353,8 @@ ATbool ATermToSageJovialTraversal::traverse_SubroutineDefinitionList(ATerm term)
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_SubroutineDefinitionList: %s\n", ATwriteToString(term));
 #endif
+
+   General_Language_Translation::SubroutineAttribute def_or_ref = General_Language_Translation::e_subroutine_attr_none;
 
    if (ATmatch(term, "[]")) {
    // Matched an empty list
@@ -360,9 +371,9 @@ ATbool ATermToSageJovialTraversal::traverse_SubroutineDefinitionList(ATerm term)
    while (! ATisEmpty(tail)) {
       ATerm head = ATgetFirst(tail);
       tail = ATgetNext(tail);
-      if (traverse_ProcedureDefinition(head)) {
+      if (traverse_ProcedureDefinition(head, def_or_ref)) {
          // MATCHED ProcedureDefinition
-      } else if (traverse_FunctionDefinition(head)) {
+      } else if (traverse_FunctionDefinition(head, def_or_ref)) {
          // MATCHED FunctionDefinition
       } else return ATfalse;
    }
@@ -1478,8 +1489,6 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 // Begin language specific constructs
    setDeclarationModifier(var_decl, def_or_ref);
 
-// TODO: The scope for the table definition needs to be case insensitive but this should be done
-//       somewhere else (e.g., the builder function)
    SgJovialTableType* table_type = isSgJovialTableType(type);
    ROSE_ASSERT(table_type);
    SgJovialTableStatement* decl = isSgJovialTableStatement(table_type->get_declaration());
@@ -1493,8 +1502,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 
    SgClassDefinition* def = def_decl->get_definition();
    ROSE_ASSERT(def);
-// TODO: This should be set someplace else
-   def->setCaseInsensitive(true);
+   ROSE_ASSERT(def->isCaseInsensitive());
 
 #if 0
    //   def_decl->get_scope()->setCaseInsensitive(true);
@@ -3376,7 +3384,7 @@ ATbool ATermToSageJovialTraversal::traverse_DefSpecificationChoice(ATerm term)
    printf("... traverse_DefSpecificationChoice: %s\n", ATwriteToString(term));
 #endif
 
-   // This is an 'DEF' declaration
+   // This is a 'DEF' declaration
    int def_spec = General_Language_Translation::e_storage_modifier_jovial_def;
 
    if (traverse_NullDeclaration(term)) {
@@ -3623,82 +3631,43 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDeclaration(ATerm term)
 
    ATerm t_proc_heading, t_decl;
 
-   std::string label, name;
-   std::list<FormalParameter> param_list;
+   std::string name;
+   std::list<FormalParameter> param_name_list;
    General_Language_Translation::SubroutineAttribute subroutine_attr;
 
    SgFunctionDeclaration* function_decl = nullptr;
-   SgFunctionParameterScope* param_scope = nullptr;
+   SgFunctionParameterList* param_list = nullptr;
+   SgBasicBlock* param_scope = nullptr;
 
    if (ATmatch(term, "ProcedureDeclaration(<term>,<term>)", &t_proc_heading, &t_decl)) {
 
-      if (traverse_ProcedureHeading(t_proc_heading, name, param_list, subroutine_attr)) {
+      if (traverse_ProcedureHeading(t_proc_heading, name, param_name_list, subroutine_attr)) {
          // MATCHED ProcedureHeading
       } else return ATfalse;
 
-   // Enter SageTreeBuilder for SgFunctionDefinition or SgFunctionParameterScope
-   // TODO: this will depend on if is a REF or DEF (assume REF for now)
-      sage_tree_builder.Enter(param_scope);
+   // Enter SageTreeBuilder for SgFunctionParameterList
+      sage_tree_builder.Enter(param_list, param_scope);
 
-   // These declarations will be picked by the function definition scope
+   // These declarations will stored in the function parameter scope
       if (traverse_Declaration(t_decl)) {
          // MATCHED Declaration
       } else return ATfalse;
 
-   // Leave SageTreeBuilder for SgFunctionDefiniti
-      sage_tree_builder.Leave(param_scope);
+   // Leave SageTreeBuilder for SgFunctionParameterList
+      sage_tree_builder.Leave(param_list, param_scope, param_name_list);
    }
    else return ATfalse;
 
-// Enter SageTreeBuilder for SgFunctionDeclaration or SgFunctionParameterScope
-// TODO: this will depend on if it is a REF or DEF (assume REF for now)
-   sage_tree_builder.Enter(function_decl, name, param_list, subroutine_attr);
+// Enter SageTreeBuilder for SgFunctionDeclaration
+   sage_tree_builder.Enter(function_decl, name, /*return_type*/nullptr, param_list, subroutine_attr, /*isDefiningDeclaration*/false);
 
 // Leave SageTreeBuilder for SgFunctionDeclaration
-   sage_tree_builder.Leave(function_decl);
-
-//TODO_STATEMENTS
-#if 0
-
-// DELETE_ME
-   SgUntypedFunctionDeclaration* function_decl = NULL;
-
-// "body" portion of the procedure declaration so that we can pick up parameter declaration
-   SgUntypedStatementList*            stmt_list = NULL;
-   SgUntypedFunctionDeclarationList*  func_list = NULL;
-
-   stmt_list = new SgUntypedStatementList();
-   ROSE_ASSERT(stmt_list);
-   setSourcePositionUnknown(stmt_list);
-
-   func_list = new SgUntypedFunctionDeclarationList();
-   ROSE_ASSERT(func_list);
-   setSourcePositionUnknown(func_list);
-
-   int stmt_enum = General_Language_Translation::e_end_proc_ref_stmt;
-   SgUntypedNamedStatement* end_proc_stmt = new SgUntypedNamedStatement(label, stmt_enum, "");
-   ROSE_ASSERT(end_proc_stmt);
-   setSourcePositionUnknown(end_proc_stmt);
-
-// void type OK here because is not a function declaration
-   SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_void);
-   ROSE_ASSERT(type);
-
-   ROSE_ASSERT(modifiers);
-
-// create the function definition
-   function_decl = new SgUntypedFunctionDeclaration(label, name, param_list, type,
-                                                    function_scope, modifiers, end_proc_stmt);
-   ROSE_ASSERT(function_decl);
-   setSourcePosition(function_decl, term);
-
-   decl_list->get_decl_list().push_back(function_decl);
-#endif
+   sage_tree_builder.Leave(function_decl, param_scope, /*isDefiningDeclaration*/false);
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term)
+ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term, General_Language_Translation::SubroutineAttribute def_or_ref)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ProcedureDefinition: %s\n", ATwriteToString(term));
@@ -3706,9 +3675,12 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term)
 
    ATerm t_proc_heading, t_proc_body;
 
-   std::string label, name;
+   std::string name;
    std::list<FormalParameter> param_list;
    General_Language_Translation::SubroutineAttribute subroutine_attr;
+   bool isDef = (def_or_ref != General_Language_Translation::e_subroutine_ref);
+
+   SgFunctionDeclaration* function_decl = nullptr;
 
    if (ATmatch(term, "ProcedureDefinition(<term>,<term>)", &t_proc_heading, &t_proc_body)) {
 
@@ -3716,34 +3688,22 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term)
          // MATCHED ProcedureHeading
       } else return ATfalse;
 
+      ROSE_ASSERT(false);
+
+#if 0
+   // Enter SageTreeBuilder for SgFunctionDeclaration (or SgFunctionParameterScope)
+   // TODO: this will depend on if it is a REF or DEF (assume REF for now)
+      sage_tree_builder.Enter(function_decl, name, param_list, subroutine_attr, isDef);
+
       if (traverse_SubroutineBody(t_proc_body)) {
          // MATCHED ProcedureBody (the production is actually a SubroutineBody)
       } else return ATfalse;
 
+   // Leave SageTreeBuilder for SgFunctionDeclaration
+      sage_tree_builder.Leave(function_decl);
+#endif
    }
    else return ATfalse;
-
-//TODO_STATEMENTS
-#if 0
-   int stmt_enum = General_Language_Translation::e_end_proc_def_stmt;
-   SgUntypedNamedStatement* end_proc_stmt = new SgUntypedNamedStatement(label, stmt_enum, "");
-   ROSE_ASSERT(end_proc_stmt);
-   setSourcePositionUnknown(end_proc_stmt);
-
-// void type OK here because is not a function definition
-   SgUntypedType* type = UntypedBuilder::buildType(SgUntypedType::e_void);
-   ROSE_ASSERT(type);
-
-   ROSE_ASSERT(modifiers);
-
-// create the function definition
-   function_decl = new SgUntypedFunctionDeclaration(label, name, param_list, type,
-                                                    function_scope, modifiers, end_proc_stmt);
-   ROSE_ASSERT(function_decl);
-   setSourcePosition(function_decl, term);
-
-   func_list->get_func_list().push_back(function_decl);
-#endif
 
    return ATtrue;
 }
@@ -3813,71 +3773,30 @@ ATbool ATermToSageJovialTraversal::traverse_SubroutineBody(ATerm term)
    std::vector<PosInfo> locations;
    std::string temp_label = "";
 
+   SgFunctionDefinition* function_def = nullptr;
+
    if (ATmatch(term, "SubroutineSimpleBody(<term>)", &t_stmt)) {
-      cerr << "WARNING UNIMPLEMENTED: SubroutineSimpleBody \n";
-      ROSE_ASSERT(false);
-
-#if 0
-      function_scope = UntypedBuilder::buildScope<SgUntypedFunctionScope>(temp_label);
-      ROSE_ASSERT(function_scope);
-      setSourcePosition(function_scope, term);
-
-      stmt_list = function_scope->get_statement_list();
-      ROSE_ASSERT(stmt_list);
-
       if (traverse_Statement(t_stmt)) {
          // MATCHED Statement
       } else return ATfalse;
-#endif
    }
 
    else if (ATmatch(term, "SubroutineBody(<term>,<term>,<term>,<term>)", &t_decls,&t_stmts,&t_funcs,&t_labels)) {
-      cerr << "WARNING UNIMPLEMENTED: SubroutineSimpleBody \n";
-      ROSE_ASSERT(false);
-
-#if 0
-      function_scope = UntypedBuilder::buildScope<SgUntypedFunctionScope>(temp_label);
-      ROSE_ASSERT(function_scope);
-      setSourcePosition(function_scope, term);
-
-      decl_list = function_scope->get_declaration_list();
-      ROSE_ASSERT(decl_list);
-
       if (traverse_DeclarationList(t_decls)) {
          // MATCHED DeclarationList
       } else return ATfalse;
-
-      stmt_list = function_scope->get_statement_list();
-      ROSE_ASSERT(stmt_list);
 
       if (traverse_StatementList(t_stmts)) {
          // MATCHED StatementList
       } else return ATfalse;
 
-      func_list = function_scope->get_function_list();
-      ROSE_ASSERT(func_list);
-
-      if (traverse_SubroutineDefinitionList(t_funcs, func_list)) {
+      if (traverse_SubroutineDefinitionList(t_funcs)) {
          // MATCHED SubroutineDefinitionList
       } else return ATfalse;
 
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
-#endif
-
-#if 0
-      std::cout << "SUBROUTINE BODY\n";
-      std::cout << "  # decls = " << decl_list->get_decl_list().size() << "\n";
-      std::cout << "  # stmts = " << stmt_list->get_stmt_list().size() << "\n";
-      std::cout << "  # funcs = " << func_list->get_func_list().size() << "\n";
-      std::cout << "  #labels = " << labels.size() << "\n\n";
-#endif
-
-   // TODO - need list for labels in untyped IR
-   //        can labels be on procedure definitions?
-      assert(labels.size() <= 1);
-      if (labels.size() == 1) temp_label = labels[0];
    }
    else return ATfalse;
 
@@ -3896,57 +3815,47 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDeclaration(ATerm term)
 
    ATerm t_func_heading, t_dirs, t_decl;
 
-   std::string label, name;
-   SgUntypedType* function_type = NULL;
-   SgUntypedExprListExpression* modifiers = NULL;
-   SgUntypedInitializedNameList* param_list = NULL;
+   std::string name;
+   SgType* return_type = NULL;
+   std::list<FormalParameter> param_name_list;
+   General_Language_Translation::SubroutineAttribute subroutine_attr;
+
+   SgFunctionDeclaration* function_decl = nullptr;
+   SgFunctionParameterList* param_list = nullptr;
+   SgBasicBlock* param_scope = nullptr;
 
    if (ATmatch(term, "FunctionDeclaration(<term>,<term>,<term>)", &t_func_heading, &t_dirs, &t_decl)) {
 
-      if (traverse_FunctionHeading(t_func_heading, name, function_type, modifiers, param_list)) {
+      if (traverse_FunctionHeading(t_func_heading, name, return_type, param_name_list, subroutine_attr)) {
          // MATCHED FunctionHeading
       } else return ATfalse;
 
+   // Enter SageTreeBuilder for SgFunctionParameterList
+      sage_tree_builder.Enter(param_list, param_scope);
+
       if (traverse_DirectiveList(t_dirs)) {
-         // MATCHED ReducibleDirective*
-         cerr << "WARNING UNIMPLEMENTED: ReducibleDirective* in FunctionDeclaration\n";
+         // MATCHED DirectiveList (grammar is ReducibleDirective*)
       } else return ATfalse;
 
       if (traverse_Declaration(t_decl)) {
          // MATCHED Declaration
       } else return ATfalse;
 
+   // Leave SageTreeBuilder for SgFunctionParameterList
+      sage_tree_builder.Leave(param_list, param_scope, param_name_list);
    }
    else return ATfalse;
 
-// TODO_STATEMENTS
-#if 0
-   function_scope = UntypedBuilder::buildScope<SgUntypedFunctionScope>(label);
-   ROSE_ASSERT(function_scope);
-   setSourcePosition(function_scope, t_decl);
+// Enter SageTreeBuilder for SgFunctionDeclaration
+   sage_tree_builder.Enter(function_decl, name, return_type, param_list, subroutine_attr, /*isDefiningDeclaration*/false);
 
-   int stmt_enum = General_Language_Translation::e_end_proc_ref_stmt;
-   SgUntypedNamedStatement* end_proc_stmt = new SgUntypedNamedStatement(label, stmt_enum, "");
-   ROSE_ASSERT(end_proc_stmt);
-   setSourcePositionUnknown(end_proc_stmt);
-
-   ROSE_ASSERT(function_type);
-
-   ROSE_ASSERT(modifiers);
-
-// create the function definition
-   function_decl = new SgUntypedFunctionDeclaration(label, name, param_list, function_type,
-                                                    function_scope, modifiers, end_proc_stmt);
-   ROSE_ASSERT(function_decl);
-   setSourcePosition(function_decl, term);
-
-   decl_list->get_decl_list().push_back(function_decl);
-#endif
+// Leave SageTreeBuilder for SgFunctionDeclaration
+   sage_tree_builder.Leave(function_decl, param_scope, /*isDefiningDeclaration*/false);
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term)
+ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, General_Language_Translation::SubroutineAttribute def_or_ref)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_FunctionDefinition: %s\n", ATwriteToString(term));
@@ -3954,15 +3863,16 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term)
 
    ATerm t_func_heading, t_dirs, t_proc_body;
 
-   std::string label, name;
-   SgUntypedType* function_type = NULL;
-   SgUntypedExprListExpression* modifiers = NULL;
-   SgUntypedInitializedNameList* param_list = NULL;
+   std::string name;
+   SgType* return_type = NULL;
+   std::list<FormalParameter> param_list;
+   General_Language_Translation::SubroutineAttribute subroutine_attr;
 
    if (ATmatch(term, "FunctionDefinition(<term>,<term>,<term>)", &t_func_heading, &t_dirs, &t_proc_body)) {
       cerr << "WARNING UNIMPLEMENTED: FunctionDefinition\n";
+      ROSE_ASSERT(false);
 
-      if (traverse_FunctionHeading(t_func_heading, name, function_type, modifiers, param_list)) {
+      if (traverse_FunctionHeading(t_func_heading, name, return_type, param_list, subroutine_attr)) {
          // MATCHED FunctionHeading
       } else return ATfalse;
 
@@ -3983,87 +3893,49 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term)
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_FunctionHeading(ATerm term, std::string & name, SgUntypedType* & type,
-                                                               SgUntypedExprListExpression* & attrs, SgUntypedInitializedNameList* & params)
+ATbool ATermToSageJovialTraversal::
+traverse_FunctionHeading(ATerm term, std::string &name, SgType* &type, std::list<FormalParameter> &param_list,
+                                     General_Language_Translation::SubroutineAttribute &attr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_FunctionHeading: %s\n", ATwriteToString(term));
 #endif
 
    using namespace General_Language_Translation;
-
    ATerm t_name, t_type, t_attr, t_params;
-
-   attrs  = NULL;
-   params = NULL;
 
 // For StatusItemDescription
    Sawyer::Optional<SgExpression*> status_size;
+   std::list<SgInitializedName*> status_list;
 
-   std::string label = "";
+   type = nullptr;
 
    if (ATmatch(term, "FunctionHeading(<term>,<term>,<term>,<term>)", &t_name, &t_attr, &t_params, &t_type)) {
-
-      cerr << "WARNING UNIMPLEMENTED: FunctionHeading \n";
-      return ATtrue;
-
-#if 0 //TODO_FUNCTIONS
-
       if (traverse_Name(t_name, name)) {
          // MATCHED Name
       } else return ATfalse;
 
-      if (traverse_SubroutineAttribute(t_attr, function_modifier)) {
+      if (traverse_SubroutineAttribute(t_attr, attr)) {
          // MATCHED SubroutineAttribute
       } else return ATfalse;
 
-      function_modifier_list = SageBuilder::buildExprListExp();
-      ROSE_ASSERT(function_modifier_list);
-      setSourcePosition(function_modifier_list, t_attr);
-
-      if (function_modifier != NULL) {
-         function_modifier_list->get_expressions().push_back(function_modifier);
-      }
-
-      function_param_list = new SgUntypedInitializedNameList();
-      ROSE_ASSERT(function_param_list);
-      setSourcePosition(function_param_list, t_params);
-
-      if (traverse_FormalParameterList(t_params, function_param_list)) {
+      if (traverse_FormalParameterList(t_params, param_list)) {
          // MATCHED FormalParameterList
       } else return ATfalse;
 
-   // function type attributes (ItemType) are added to the function_modifier_list and will have to be sorted out later
-      if (traverse_ItemTypeDescription(t_type, sg_type, function_modifier_list)) {
+      if (traverse_ItemTypeDescription(t_type, type)) {
          // MATCHED ItemTypeDescription
       }
       else if (traverse_StatusItemDescription(t_type, status_list, status_size)) {
          // MATCHED StatusItemDescription
 
          // status item declarations have to be handled differently than other ItemTypeDescription terms
-
-         // also assume an int is sufficient for status_size for now
-
          cerr << "WARNING UNIMPLEMENTED: FunctionHeading - StatusItemDescription\n";
-     } else return ATfalse;
-
-#endif //TODO_FUNCTIONS
-   } else return ATfalse;
-
-#if 0
-   if (function_modifier_list->get_expressions().size() != 0) {
-      cerr << "WARNING UNIMPLEMENTED: ProcedureHeading - with function modifiers\n";
-      //      return ATtrue;
+         ROSE_ASSERT(false);
+      }
+      else return ATfalse;
    }
-// not handling function modifiers for now
-//   ROSE_ASSERT(function_modifier_list->get_expressions().size() == 0);
-
-   attrs  = function_modifier_list;
-   params = function_param_list;
-
-   ROSE_ASSERT(attrs);
-   ROSE_ASSERT(params);
-#endif
+   else return ATfalse;
 
    return ATtrue;
 }

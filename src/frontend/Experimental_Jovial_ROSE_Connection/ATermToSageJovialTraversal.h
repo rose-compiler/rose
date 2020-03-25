@@ -189,7 +189,7 @@ ATbool traverse_OverlayElement        (ATerm term, SgExpression* & expr);
 ATbool traverse_Spacer                (ATerm term, SgExpression* & expr);
 
 // 3.0 PROCEDURES AND FUNCTIONS
-ATbool traverse_ProcedureDefinition(ATerm term);
+ATbool traverse_ProcedureDefinition(ATerm term, General_Language_Translation::SubroutineAttribute def_or_ref);
 ATbool traverse_SubroutineAttribute(ATerm term, General_Language_Translation::SubroutineAttribute &attr);
 ATbool traverse_ProcedureHeading   (ATerm term, std::string & name, std::list<FormalParameter> &param_list,
                                                 General_Language_Translation::SubroutineAttribute &attr);
@@ -200,9 +200,9 @@ ATbool traverse_ProcedureDeclaration(ATerm term);
 
 // 3.2 FUNCTIONS
 ATbool traverse_FunctionDeclaration(ATerm term);
-ATbool traverse_FunctionDefinition (ATerm term);
-ATbool traverse_FunctionHeading    (ATerm term, std::string & name, SgUntypedType* & type,
-                                    SgUntypedExprListExpression* & attrs, SgUntypedInitializedNameList* & params);
+ATbool traverse_FunctionDefinition (ATerm term, General_Language_Translation::SubroutineAttribute def_or_ref);
+ATbool traverse_FunctionHeading    (ATerm term, std::string & name, SgType* &type, std::list<FormalParameter> &param_list,
+                                                General_Language_Translation::SubroutineAttribute &attr);
 
 // 3.3 PARAMETERS OF PROCEDURES AND FUNCTIONS
 ATbool traverse_FormalParameterList   (ATerm term, std::list<FormalParameter> &param_list);

@@ -87,13 +87,12 @@ public:
                                  const boost::optional<std::string> &,
                                  const boost::optional<std::string> &);
 
-   void Enter(SgFunctionParameterScope* &);
-   void Leave(SgFunctionParameterScope*);
+   void Enter(SgFunctionParameterList* &, SgBasicBlock* &);
+   void Leave(SgFunctionParameterList*, SgBasicBlock*, const std::list<General_Language_Translation::FormalParameter> &);
 
-   void Enter(SgFunctionDeclaration* &, const std::string &,
-                                        const std::list<General_Language_Translation::FormalParameter> &,
-                                        const General_Language_Translation::SubroutineAttribute &);
-   void Leave(SgFunctionDeclaration*);
+   void Enter(SgFunctionDeclaration* &, const std::string &, SgType*, SgFunctionParameterList*,
+                                        const General_Language_Translation::SubroutineAttribute &, bool isDefinition);
+   void Leave(SgFunctionDeclaration*, SgBasicBlock*, bool isDefinition);
 
    void Enter(SgFunctionDefinition* &);
    void Leave(SgFunctionDefinition*);
