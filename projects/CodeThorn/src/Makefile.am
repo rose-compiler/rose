@@ -278,7 +278,7 @@ LTLTHORN_HEADER_FILES=\
   IOAnalyzer.h \
   IOSolver.h \
   LtsminConnection.h \
-  ParallelAutomataGenerator.h \
+  ParProAutomataGenerator.h \
   ParProAutomata.h \
   ParProAnalyzer.h \
   ParProEState.h \
@@ -310,7 +310,7 @@ LTLTHORN_SOURCE_FILES=\
   IOAnalyzer.C \
   IOSolver.C \
   LtsminConnection.C \
-  ParallelAutomataGenerator.C \
+  ParProAutomataGenerator.C \
   ParProAutomata.C \
   ParProAnalyzer.C \
   ParProEState.C \

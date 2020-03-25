@@ -6,7 +6,7 @@
 #include "PromelaCodeGenerator.h"
 #include "ParProLtlMiner.h"
 #include "ParProExplorer.h"
-#include "ParallelAutomataGenerator.h"
+#include "ParProAutomataGenerator.h"
 // required for Parse::* functions
 #include "Miscellaneous2.h"
 
@@ -19,11 +19,11 @@ using namespace std;
 namespace CodeThorn {
   bool ParProAutomata::handleCommandLineArguments(CommandLineOptions& args,Sawyer::Message::Facility& logger) {
     // ParPro command line options
-    if (args.count("generate-automata")) {
+    if (args.isDefined("generate-automata")) {
       CodeThorn::ParProAutomata::generateAutomata();
       return true;
     }
-    if (args.count("automata-dot-input")) {
+    if (args.isDefined("automata-dot-input")) {
       CodeThorn::ParProAutomata::automataDotInput(logger);
       return true;
     }
@@ -31,19 +31,19 @@ namespace CodeThorn {
   }
 
   void ParProAutomata::automataDotInput(Sawyer::Message::Facility logger) {
-    if (args.count("seed")) {
-      srand(args["seed"].as<int>());
+    if (args.isDefined("seed")) {
+      srand(args.getInt("seed"));
     } else {
       srand(time(NULL));
     }
     DotGraphCfgFrontend dotGraphCfgFrontend;
-    string filename = args["automata-dot-input"].as<string>();
+    string filename = args.getString("automata-dot-input");
     CfgsAndAnnotationMap cfgsAndMap = dotGraphCfgFrontend.parseDotCfgs(filename);
     list<Flow> cfgs = cfgsAndMap.first;
     EdgeAnnotationMap edgeAnnotationMap = cfgsAndMap.second;
 
     string promelaCode;
-    if (args.count("promela-output")) {
+    if (args.isDefined("promela-output")) {
       cout << "STATUS: generating PROMELA code (parallel processes based on CFG automata)..." << endl;
       PromelaCodeGenerator codeGenerator;
       promelaCode = codeGenerator.generateCode(cfgsAndMap);
@@ -72,8 +72,8 @@ namespace CodeThorn {
     }
 
     ParProExplorer explorer(cfgsAsVector, edgeAnnotationMap);
-    if (args.count("verification-engine")) {
-      string verificationEngine = args["verification-engine"].as<string>();
+    if (args.isDefined("verification-engine")) {
+      string verificationEngine = args.getString("verification-engine");
       if (verificationEngine == "ltsmin") {
         explorer.setUseLtsMin(true);
       }
@@ -88,12 +88,12 @@ namespace CodeThorn {
     } else {
       explorer.setStoreComputedSystems(false);
     }
-    if (args.count("use-components")) {
-      string componentSelection = args["use-components"].as<string>();
+    if (args.isDefined("use-components")) {
+      string componentSelection = args.getString("use-components");
       if (componentSelection == "all") {
         explorer.setComponentSelection(PAR_PRO_COMPONENTS_ALL);
-        if (args.count("ltl-mode")) {
-          string ltlMode= args["ltl-mode"].as<string>();
+        if (args.isDefined("ltl-mode")) {
+          string ltlMode= args.getString("ltl-mode");
           if (ltlMode == "mine") {
             explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_INFINITE);
           }
@@ -101,8 +101,8 @@ namespace CodeThorn {
       } else if (componentSelection == "subsets-fixed") {
         explorer.setComponentSelection(PAR_PRO_COMPONENTS_SUBSET_FIXED);
         explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_FINITE);
-        if (args.count("fixed-subsets")) {
-          string setsstring=args["fixed-subsets"].as<string>();
+        if (args.isDefined("fixed-subsets")) {
+          string setsstring=args.getString("fixed-subsets");
           list<set<int> > intSets=Parse::integerSetList(setsstring);
           explorer.setFixedComponentSubsets(intSets);
         } else {
@@ -111,59 +111,59 @@ namespace CodeThorn {
         }
       } else if (componentSelection == "subsets-random") {
         explorer.setComponentSelection(PAR_PRO_COMPONENTS_SUBSET_RANDOM);
-        if (args.count("num-random-components")) {
-          explorer.setNumberRandomComponents(args["num-random-components"].as<int>());
+        if (args.isDefined("num-random-components")) {
+          explorer.setNumberRandomComponents(args.getInt("num-random-components"));
         } else {
           explorer.setNumberRandomComponents(std::min(3, (int) cfgsAsVector.size()));
         }
-        if (args.count("different-component-subsets")) {
+        if (args.isDefined("different-component-subsets")) {
           explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_FINITE);
-          explorer.setNumberDifferentComponentSubsets(args["different-component-subsets"].as<int>());
+          explorer.setNumberDifferentComponentSubsets(args.getInt("different-component-subsets"));
         } else {
           explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_INFINITE);
         }
       }
     } else {
       explorer.setComponentSelection(PAR_PRO_COMPONENTS_ALL);
-      if (args.count("ltl-mode")) {
-        string ltlMode= args["ltl-mode"].as<string>();
+      if (args.isDefined("ltl-mode")) {
+        string ltlMode= args.getString("ltl-mode");
         if (ltlMode == "mine") {
           explorer.setRandomSubsetMode(PAR_PRO_NUM_SUBSETS_INFINITE);
         }
       }
     }
 
-    if ( args.count("check-ltl") ) {
+    if ( args.isDefined("check-ltl") ) {
       explorer.setLtlMode(PAR_PRO_LTL_MODE_CHECK);
-      explorer.setLtlInputFilename(args["check-ltl"].as<string>());
+      explorer.setLtlInputFilename(args.getString("check-ltl"));
     } else {
-      if ( args.count("ltl-mode") ) {
-        string ltlMode= args["ltl-mode"].as<string>();
+      if ( args.isDefined("ltl-mode") ) {
+        string ltlMode= args.getString("ltl-mode");
         if (ltlMode == "check") {
           logger[ERROR] << "ltl mode \"check\" selected but option \"--check-ltl=<filename>\" not used. Please provide LTL property file." << endl;
           ROSE_ASSERT(0);
         } else if (ltlMode == "mine") {
           explorer.setLtlMode(PAR_PRO_LTL_MODE_MINE);
-          if (args.count("num-components-ltl")) {
-            explorer.setNumberOfComponentsForLtlAnnotations(args["num-components-ltl"].as<int>());
+          if (args.isDefined("num-components-ltl")) {
+            explorer.setNumberOfComponentsForLtlAnnotations(args.getInt("num-components-ltl"));
           } else {
             explorer.setNumberOfComponentsForLtlAnnotations(std::min(3, (int) cfgsAsVector.size()));
           }
-          if (args.count("minimum-components")) {
-            explorer.setMinNumComponents(args["minimum-components"].as<int>());
+          if (args.isDefined("minimum-components")) {
+            explorer.setMinNumComponents(args.getInt("minimum-components"));
           }
-          if (args.count("mine-num-verifiable")) {
-            explorer.setNumRequiredVerifiable(args["mine-num-verifiable"].as<int>());
+          if (args.isDefined("mine-num-verifiable")) {
+            explorer.setNumRequiredVerifiable(args.getInt("mine-num-verifiable"));
           } else {
             explorer.setNumRequiredVerifiable(10);
           }
-          if (args.count("mine-num-falsifiable")) {
-            explorer.setNumRequiredFalsifiable(args["mine-num-falsifiable"].as<int>());
+          if (args.isDefined("mine-num-falsifiable")) {
+            explorer.setNumRequiredFalsifiable(args.getInt("mine-num-falsifiable"));
           } else {
             explorer.setNumRequiredFalsifiable(10);
           }
-          if (args.count("minings-per-subsets")) {
-            explorer.setNumMiningsPerSubset(args["minings-per-subsets"].as<int>());
+          if (args.isDefined("minings-per-subsets")) {
+            explorer.setNumMiningsPerSubset(args.getInt("minings-per-subsets"));
           } else {
             explorer.setNumMiningsPerSubset(50);
           }
@@ -183,10 +183,10 @@ namespace CodeThorn {
       explorer.explore();
     }
   
-    if (args.count("check-ltl")) {
+    if (args.isDefined("check-ltl")) {
       PropertyValueTable* ltlResults=nullptr;
       if (args.getBool("promela-output-only")) { // just read the properties into a PropertyValueTable
-        SpotConnection spotConnection(args["check-ltl"].as<string>());
+        SpotConnection spotConnection(args.getString("check-ltl"));
         ltlResults = spotConnection.getLtlResults();
       } else {
         ltlResults = explorer.propertyValueTable();
@@ -201,10 +201,10 @@ namespace CodeThorn {
     bool withResults = args.getBool("output-with-results");
     bool withAnnotations = args.getBool("output-with-annotations");
 #ifdef HAVE_SPOT
-    if (args.count("promela-output")) {
+    if (args.isDefined("promela-output")) {
       PropertyValueTable* ltlResults;
       if (args.getBool("promela-output-only")) { // just read the properties into a PropertyValueTable
-        SpotConnection spotConnection(args["check-ltl"].as<string>());
+        SpotConnection spotConnection(args.getString("check-ltl"));
         ltlResults = spotConnection.getLtlResults();
       } else {
         ltlResults = explorer.propertyValueTable();
@@ -212,47 +212,47 @@ namespace CodeThorn {
       // uses SpotMiscellaneous::spinSyntax as callback to avoid static dependency of ltlResults on SpotMisc.
       string promelaLtlFormulae = ltlResults->getLtlsAsPromelaCode(withResults, withAnnotations,&SpotMiscellaneous::spinSyntax);
       promelaCode += "\n" + promelaLtlFormulae;
-      string filename = args["promela-output"].as<string>();
+      string filename = args.getString("promela-output");
       write_file(filename, promelaCode);
       cout << "generated " << filename  <<"."<<endl;
     }
 #endif
-    if (args.count("ltl-properties-output")) {
+    if (args.isDefined("ltl-properties-output")) {
       string ltlFormulae = explorer.propertyValueTable()->getLtlsRersFormat(withResults, withAnnotations);
-      string filename = args["ltl-properties-output"].as<string>();
+      string filename = args.getString("ltl-properties-output");
       write_file(filename, ltlFormulae);
       cout << "generated " << filename  <<"."<<endl;
     }
-    if(!args.count("quiet"))
+    if(!args.isDefined("quiet"))
       cout << "STATUS: done." << endl;
   }
 
   void ParProAutomata::generateAutomata() {
-    if (args.count("seed")) {
-      srand(args["seed"].as<int>());
+    if (args.isDefined("seed")) {
+      srand(args.getInt("seed"));
     } else {
       srand(time(NULL));
     }
-    ParallelAutomataGenerator automataGenerator;
+    ParProAutomataGenerator automataGenerator;
     int numberOfAutomata = 10;
-    if (args.count("num-automata")) {
-      numberOfAutomata = args["num-automata"].as<int>();
+    if (args.isDefined("num-automata")) {
+      numberOfAutomata = args.getInt("num-automata");
     }
     pair<int, int> numberOfSyncsRange = pair<int, int>(9, 18);
-    if (args.count("num-syncs-range")) {
-      numberOfSyncsRange = parseCsvIntPair(args["num-syncs-range"].as<string>());
+    if (args.isDefined("num-syncs-range")) {
+      numberOfSyncsRange = parseCsvIntPair(args.getString("num-syncs-range"));
     }
     pair<int, int> numberOfCirclesPerAutomatonRange = pair<int, int>(2, 4);
-    if (args.count("num-circles-range")) {
-      numberOfCirclesPerAutomatonRange = parseCsvIntPair(args["num-circles-range"].as<string>());
+    if (args.isDefined("num-circles-range")) {
+      numberOfCirclesPerAutomatonRange = parseCsvIntPair(args.getString("num-circles-range"));
     }
     pair<int, int> circleLengthRange = pair<int, int>(5, 8);
-    if (args.count("circle-length-range")) {
-      circleLengthRange = parseCsvIntPair(args["circle-length-range"].as<string>());
+    if (args.isDefined("circle-length-range")) {
+      circleLengthRange = parseCsvIntPair(args.getString("circle-length-range"));
     }
     pair<int, int> numIntersectionsOtherCirclesRange = pair<int, int>(1, 2);
-    if (args.count("num-intersections-range")) {
-      numIntersectionsOtherCirclesRange = parseCsvIntPair(args["num-intersections-range"].as<string>());
+    if (args.isDefined("num-intersections-range")) {
+      numIntersectionsOtherCirclesRange = parseCsvIntPair(args.getString("num-intersections-range"));
     }
     vector<Flow*> automata = automataGenerator.randomlySyncedCircleAutomata(
                                                                             numberOfAutomata,
@@ -262,7 +262,7 @@ namespace CodeThorn {
                                                                             numIntersectionsOtherCirclesRange);
     Visualizer visualizer;
     string dotCfas = visualizer.cfasToDotSubgraphs(automata);
-    string outputFilename = args["generate-automata"].as<string>();
+    string outputFilename = args.getString("generate-automata");
     write_file(outputFilename, dotCfas);
     cout << "generated " << outputFilename <<"."<<endl;
   }

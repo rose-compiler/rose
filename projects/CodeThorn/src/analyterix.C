@@ -745,99 +745,102 @@ int main(int argc, char* argv[]) {
       ;
   //    ("int-option",po::value< int >(),"option info")
 
+#if 0
     po::store(po::command_line_parser(argc, argv).options(desc).allow_unregistered().run(), args);
     po::notify(args);
-
-    if (args.count("help")) {
+#else
+    args.parse(argc,argv,desc);
+#endif
+    if (args.isDefined("help")) {
       cout << "analyterix <filename> [OPTIONS]"<<endl;
       cout << desc << "\n";
       return 0;
     }
-    if (args.count("version")) {
+    if (args.isDefined("version")) {
       cout << "analyterix version 0.1\n";
       cout << "Written by Markus Schordan 2014\n";
       return 0;
     }
-    if (args.count("rose-help")) {
+    if (args.isDefined("rose-help")) {
       argv[1] = strdup("--help");
     }
-    if (args.count("prefix")) {
-      option_prefix=args["prefix"].as<string>().c_str();
+    if (args.isDefined("prefix")) {
+      option_prefix=args.getString("prefix").c_str();
     }
 
-    if (args.count("optimize-icfg")) {
+    if (args.isDefined("optimize-icfg")) {
       option_optimize_icfg=true;
     }
-    if (args.count("no-optimize-icfg")) {
+    if (args.isDefined("no-optimize-icfg")) {
       option_optimize_icfg=false;
     }
-    if (args.count("trace")) {
+    if (args.isDefined("trace")) {
       option_trace=true;
     }
-    if(args.count("stats")) {
+    if(args.isDefined("stats")) {
       option_stats=true;
     }
-    if(args.count("start-function")) {
-      option_start_function = args["start-function"].as<string>();
+    if(args.isDefined("start-function")) {
+      option_start_function = args.getString("start-function");
     }
-    if(args.count("rd-analysis")) {
+    if(args.isDefined("rd-analysis")) {
       option_rd_analysis=true;
     }
-    if(args.count("lv-analysis")) {
+    if(args.isDefined("lv-analysis")) {
       option_lv_analysis=true;
     }
-    if(args.count("interval-analysis")) {
+    if(args.isDefined("interval-analysis")) {
       option_interval_analysis=true;
     }
-    if(args.count("annotate")) {
+    if(args.isDefined("annotate")) {
       option_annotate_source_code=true;
     }
-    if(args.count("csv-deadcode-unreachable")) {
+    if(args.isDefined("csv-deadcode-unreachable")) {
       option_interval_analysis = true;
-      csvDeadCodeUnreachableFileName = args["csv-deadcode-unreachable"].as<string>().c_str();
+      csvDeadCodeUnreachableFileName = args.getString("csv-deadcode-unreachable").c_str();
     }
-    if(args.count("csv-deadcode-deadstore")) {
+    if(args.isDefined("csv-deadcode-deadstore")) {
       option_lv_analysis = true;
-      csvDeadCodeDeadStoreFileName = args["csv-deadcode-deadstore"].as<string>().c_str();
+      csvDeadCodeDeadStoreFileName = args.getString("csv-deadcode-deadstore").c_str();
     }
-    if(args.count("check-static-array-bounds")) {
+    if(args.isDefined("check-static-array-bounds")) {
       option_interval_analysis=true;
       option_check_static_array_bounds=true;
     }
-    if(args.count("ud-analysis")) {
+    if(args.isDefined("ud-analysis")) {
       option_rd_analysis=true; // required
       option_ud_analysis=true;
     }
-    if(args.count("rose-rd-analysis")) {
+    if(args.isDefined("rose-rd-analysis")) {
       option_rose_rd_analysis=true;
     }
-    if(args.count("fi-constanalysis")) {
+    if(args.isDefined("fi-constanalysis")) {
       option_fi_constanalysis=true;
     }
-    if (args.count("csv-fi-constanalysis")) {
-      csvConstResultFileName=args["csv-fi-constanalysis"].as<string>().c_str();
+    if (args.isDefined("csv-fi-constanalysis")) {
+      csvConstResultFileName=args.getString("csv-fi-constanalysis").c_str();
       option_fi_constanalysis=true;
     }
-    if(args.count("at-analysis")) {
+    if(args.isDefined("at-analysis")) {
       option_at_analysis=true;
     }
-    if (args.count("csv-at-analysis")) {
-      csvAddressTakenResultFileName=args["csv-at-analysis"].as<string>().c_str();
+    if (args.isDefined("csv-at-analysis")) {
+      csvAddressTakenResultFileName=args.getString("csv-at-analysis").c_str();
       option_at_analysis=true;
     }
-    if (args.count("csv-stable")) {
+    if (args.isDefined("csv-stable")) {
       option_csv_stable=true;
     }
-    if (args.count("no-topological-sort")) {
+    if (args.isDefined("no-topological-sort")) {
       option_no_topological_sort=true;
     }
-    if (args.count("ignore-unknown-functions")) {
+    if (args.isDefined("ignore-unknown-functions")) {
       option_ignore_unknown_functions=true;
     }
-    if (args.count("report-source-code")) {
+    if (args.isDefined("report-source-code")) {
       option_show_source_code=true;
     }
-    if (args.count("report-only-file-name")) {
+    if (args.isDefined("report-only-file-name")) {
       option_show_path=false;
     }
 
@@ -870,13 +873,13 @@ int main(int argc, char* argv[]) {
 
   cout<<"STATUS: computing variableid mapping"<<endl;
   ProgramAbstractionLayer* programAbstractionLayer=new ProgramAbstractionLayer();
-  if(args.count("inline")) {
+  if(args.isDefined("inline")) {
     programAbstractionLayer->setInliningOption(true);
   }
-  if(args.count("normalize-fcalls")) {
+  if(args.isDefined("normalize-fcalls")) {
     programAbstractionLayer->setNormalizationLevel(1);
   }
-  if(args.count("normalize-all")) {
+  if(args.isDefined("normalize-all")) {
     programAbstractionLayer->setNormalizationLevel(2);
   }
   if(programAbstractionLayer->getInliningOption() && programAbstractionLayer->getNormalizationLevel()==0) {
@@ -884,7 +887,7 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
   programAbstractionLayer->initialize(root);
-  if (args.count("print-varid-mapping-array")) {
+  if (args.isDefined("print-varid-mapping-array")) {
     programAbstractionLayer->getVariableIdMapping()->setModeVariableIdForEachArrayElement(true);
   }
 
@@ -893,17 +896,17 @@ int main(int argc, char* argv[]) {
   //cout<<"IOLabelling:\n"<<iolabeler->toString()<<endl;
 #endif
 
-  if (args.count("print-varid-mapping")||args.count("print-varid-mapping-array")) {
+  if (args.isDefined("print-varid-mapping")||args.isDefined("print-varid-mapping-array")) {
     programAbstractionLayer->getVariableIdMapping()->toStream(cout);
     return 0;
   }
 
-  if(args.count("print-label-mapping")) {
+  if(args.isDefined("print-label-mapping")) {
     cout<<(programAbstractionLayer->getLabeler()->toString());
     return 0;
   }
 
-  if(args.count("print-inter-flow")) {
+  if(args.isDefined("print-inter-flow")) {
     CFAnalysis* cfAnalysis=new CFAnalysis(programAbstractionLayer->getLabeler());
     Flow flow=cfAnalysis->flow(root);
     if(option_optimize_icfg) {
@@ -914,7 +917,7 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  if(args.count("icfg-dot")) {
+  if(args.isDefined("icfg-dot")) {
     CFAnalysis* cfAnalysis=new CFAnalysis(programAbstractionLayer->getLabeler());
     Flow flow=cfAnalysis->flow(root);
     if(option_optimize_icfg) {
@@ -936,7 +939,7 @@ int main(int argc, char* argv[]) {
   }
   runAnalyses(root, programAbstractionLayer->getLabeler(), programAbstractionLayer->getVariableIdMapping());
 
-  if(args.count("unparse")) {
+  if(args.isDefined("unparse")) {
     cout << "INFO: generating source code from internal representation."<<endl;
     root->unparse(0,0);
   }

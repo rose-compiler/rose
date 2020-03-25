@@ -45,9 +45,9 @@ void Solver5::run() {
   bool ioReductionActive = false;
   unsigned int ioReductionThreshold = 0;
   unsigned int estatesLastReduction = 0;
-  if(args.count("io-reduction")) {
+  if(args.isDefined("io-reduction")) {
     ioReductionActive = true;
-    ioReductionThreshold = args["io-reduction"].as<int>();
+    ioReductionThreshold = args.getInt("io-reduction");
   }
 
   SAWYER_MESG(logger[TRACE])<<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;

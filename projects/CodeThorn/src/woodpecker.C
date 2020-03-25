@@ -135,37 +135,40 @@ int main(int argc, char* argv[]) {
     ;
   //    ("int-option",po::value< int >(),"option info")
 
-
+#if 0
   po::store(po::command_line_parser(argc, argv).
             options(desc).allow_unregistered().run(), args);
   po::notify(args);
-
-  if (args.count("help")) {
+#else
+  // this this not allow unregistered
+  args.parse(argc,argv,desc);
+#endif
+  if (args.isDefined("help")) {
     cout << "woodpecker <filename> [OPTIONS]"<<endl;
     cout << desc << "\n";
     exit(0);
   }
-  if (args.count("rose-help")) {
+  if (args.isDefined("rose-help")) {
     argv[1] = strdup("--help");
   }
 
-  if (args.count("version")) {
+  if (args.isDefined("version")) {
     cout << "Woodpecker version 0.1\n";
     cout << "Written by Markus Schordan 2013\n";
     exit(0);
   }
-  if (args.count("csv-assert")) {
-    csvAssertFileName=args["csv-assert"].as<string>().c_str();
+  if (args.isDefined("csv-assert")) {
+    csvAssertFileName=args.getString("csv-assert").c_str();
   }
-  if (args.count("csv-const-result")) {
-    csvConstResultFileName=args["csv-const-result"].as<string>().c_str();
+  if (args.isDefined("csv-const-result")) {
+    csvConstResultFileName=args.getString("csv-const-result").c_str();
   }
 
   if(args.getBool("verbose"))
     detailedOutput=1;
 
-  mfacilities.control(args["log-level"].as<string>());
-  logger[TRACE] << "Log level is " << args["log-level"].as<string>() << endl;
+  mfacilities.control(args.getString("log-level"));
+  logger[TRACE] << "Log level is " << args.getString("log-level") << endl;
 
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
@@ -214,7 +217,7 @@ int main(int argc, char* argv[]) {
   
   logger[TRACE]<<"STATUS: variable id mapping generated."<<endl;
   
-  if(args.count("transform-thread-variable")) {
+  if(args.isDefined("transform-thread-variable")) {
     Threadification* threadTransformation=new Threadification(&variableIdMapping);
     threadTransformation->transform(root);
     root->unparse(0,0);
@@ -308,7 +311,7 @@ int main(int argc, char* argv[]) {
     fiConstAnalysis.writeCvsConstResult(variableIdMapping, string(csvConstResultFileName));
   }
 
-  if(args.count("generate-conversion-functions")) {
+  if(args.isDefined("generate-conversion-functions")) {
     ConversionFunctionsGenerator gen;
     gen.generateFile(root,"conversionFunctions.C");
     return 0;
@@ -337,7 +340,7 @@ int main(int argc, char* argv[]) {
     root->unparse(0,0);
   }
 
-  if(args.count("stats")) {
+  if(args.isDefined("stats")) {
     printCodeStatistics(root);
   }
 
