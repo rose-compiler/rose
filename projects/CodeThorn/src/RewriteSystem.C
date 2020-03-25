@@ -62,12 +62,12 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root, VariableIdMapp
     //cout<<"INFO: normalizing compound assign op "<<assignOpNr<<" of "<<assignOpNum<<endl;
     timer.start();
     SgExpression* newRoot=isSgExpression(buildRewriteCompoundAssignment(*i,variableIdMapping));
-    buildTime+=timer.getTimeDuration().milliSeconds();
+    buildTime+=timer.getTimeDurationAndStop().milliSeconds();
 
     if(newRoot) {
       timer.start();
       SgNodeHelper::replaceExpression(*i,newRoot);
-      replaceTime+=timer.getTimeDuration().milliSeconds();
+      replaceTime+=timer.getTimeDurationAndStop().milliSeconds();
       assignOpNr++;
     } else {
       logger[WARN]<<"not an expression. transformation not applied: "<<(*i)->class_name()<<":"<<(*i)->unparseToString()<<endl;
