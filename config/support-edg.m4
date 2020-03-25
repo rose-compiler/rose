@@ -25,10 +25,7 @@ AC_DEFUN([ROSE_SUPPORT_EDG], [
 
     # Only certain versions of EDG are valid
     if test "$edg_major_version_number" = "4"; then
-        if test "$edg_minor_version_number" = "9"; then
-            enable_edg_version49=yes
-            AC_DEFINE([ROSE_USE_EDG_VERSION_4_9], [], [Whether to use the new EDG version 4.9])
-        elif test "$edg_minor_version_number" = "12"; then
+        if test "$edg_minor_version_number" = "12"; then
             enable_edg_version412=yes
             AC_DEFINE([ROSE_USE_EDG_VERSION_4_12], [], [Whether to use the new EDG version 4.12])
         else
@@ -64,7 +61,6 @@ AC_DEFUN([ROSE_SUPPORT_EDG], [
 
     # DQ (2/3/2010): I would like to not have to use these and use the new
     # ROSE_EDG_MAJOR_VERSION_NUMBER and ROSE_EDG_MINOR_VERSION_NUMBER instead.
-    AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_9,  [test "x$enable_edg_version49" = xyes])
     AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_12, [test "x$enable_edg_version412" = xyes])
     AM_CONDITIONAL(ROSE_USE_EDG_VERSION_5_0,  [test "x$enable_edg_version50" = xyes])
     AM_CONDITIONAL(ROSE_USE_EDG_VERSION_6_0,  [test "x$enable_edg_version60" = xyes])

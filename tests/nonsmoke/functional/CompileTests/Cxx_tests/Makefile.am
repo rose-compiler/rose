@@ -1105,36 +1105,15 @@ TESTCODE_CURRENTLY_FAILING = \
    test2017_85.C \
    test2017_86.C \
    test2017_99.C \
-   test2019_25.C 
-
-if ROSE_USE_EDG_VERSION_4_9
-  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-     test2014_65.C \
-     test2014_66.C \
-     test2014_69.C
-  TESTCODE_CURRENTLY_FAILING += \
-     test2016_52.C \
-     test2017_12.C
-else
-  TESTCODE_CURRENTLY_FAILING += \
-     test2014_65.C \
-     test2014_66.C \
-     test2014_69.C
-  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-     test2016_52.C 
-
-# DQ (2/2/2019): EDG 5.0 fails for this use of __Float128, but Tristan is fixing it.
-if ROSE_USE_EDG_VERSION_5_0
-  TESTCODE_CURRENTLY_FAILING += \
-     test2017_12.C
-else
-  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-     test2017_12.C
-endif
-endif
-
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2019_25.C \
+   test2016_52.C \
+   test2017_12.C \
    test2012_68.C
+
+TESTCODE_CURRENTLY_FAILING += \
+   test2014_65.C \
+   test2014_66.C \
+   test2014_69.C
 
 if ROSE_USING_GCC_VERSION_LATER_4_4
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
@@ -1623,47 +1602,14 @@ hpctoolkit:
 	hpcprof hpctoolkit-lt-testTranslator-measurements/lt-testTranslator-000000-000-0f802c45-3676-0.hpcrun
 #	hpcviewer /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc-debug_mode_off/tests/nonsmoke/functional/CompileTests/Cxx_tests/hpctoolkit-lt-testTranslator-database-11205 &
 
-check-local: 
-if ROSE_USE_EDG_VERSION_4_9
-	@echo "Using EDG 4.9"
-# if ROSE_USING_GCC_VERSION_LATER_4_9
-if USING_GNU_COMPILER
-	@echo "Using GNU compiler"
-if ROSE_USING_GCC_VERSION_LATER_4_9
-	@echo "Using EDG 4.9 and GNU version later then 4.9 (skipping C++ tests: reconfigure with EDG 4.12 to run C++ tests)"
-else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
-	@echo "Using GNU compiler (version up to 4.8)"
+check-local:
 	@$(MAKE) $(PASSING_TEST_Source_passed)
 	@$(MAKE) test_pdf_generation
-endif #  ROSE_USING_GCC_VERSION_LATER_4_9
-else  # NOT USING_GNU_COMPILER
-	@echo "NOT Using GNU compiler"
-if USING_CLANG_COMPILER
-	@echo "Using EDG 4.9 and CLANG compiler (skipping C++ tests: reconfigure with EDG 4.12 to run C++ tests)"
-else  # NOT USING_CLANG_COMPILER
-if USING_INTEL_COMPILER
-	@echo "Using EDG 4.9 and INTEL compiler (skipping C++ tests: reconfigure with EDG 4.12 to run C++ tests)"
-else  # NOT USING_INTEL_COMPILER
-	@echo "Using EDG 4.9 and GNU version 4.8 or earlier (ROSE supports running C++ tests with this configuration)"
-	@$(MAKE) $(PASSING_TEST_Source_passed)
-	@$(MAKE) test_pdf_generation
-endif # USING_INTEL_COMPILER
-endif # USING_CLANG_COMPILER
-endif # USING_GNU_COMPILER
-else  # NOT ROSE_USE_EDG_VERSION_4_9
-	@echo "Using EDG 4.12"
-	@echo "Using EDG version later than 4.9 (ROSE supports running all C++ tests across all compilers)"
-	@$(MAKE) $(PASSING_TEST_Source_passed)
-	@$(MAKE) test_pdf_generation
-endif # ROSE_USE_EDG_VERSION_4_9
 #	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed
-# DQ (2/27/2017): Adding additional restrictions for EDG 4.9 (fails for Clang and Boost 1.55).
-if !ROSE_USE_EDG_VERSION_4_9
 	@$(MAKE) test_common_configure_test_with_link_part_1.passed
 	@$(MAKE) test_common_configure_test_with_link_part_2.passed
-endif
 #	DQ (9/22/2013): I think this failes on later versions of GNU (e.g. gnu 4.4.5).
 #	@$(MAKE) test_common_configure_test_with_link_part_3
 	@$(MAKE) testTemplateExample
