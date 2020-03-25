@@ -72,10 +72,8 @@ rajaChecker_diff: $(Checker_Output_Diff_Files)
 # C++ 11 features need GCC 4.9  and EDG 4.12 and later
 # Liao 4/10/2017
 if USING_GNU_COMPILER
-if ROSE_USE_EDG_VERSION_4_12
 if ROSE_USING_GCC_VERSION_LATER_4_9
 check: $(Checker_Output_Diff_Files)
-endif
 endif
 endif
 
