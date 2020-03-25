@@ -1,5 +1,8 @@
 SgAccessModifier
 SgActualArgumentExpression
+SgAdaExitStmt
+SgAdaLoopStmt
+SgAdaAccessType
 SgAddOp
 SgAddressOfOp
 SgAggregateInitializer
