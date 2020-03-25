@@ -18,6 +18,8 @@ namespace Ada_ROSE_Translation
    {
   // Data Members
      MapType untypedNodeMap;
+
+
    }
 #else
 // Ada_ROSE_Translation::MapType Ada_ROSE_Translation::untypedNodeMap;
@@ -28,6 +30,11 @@ Ada_ROSE_Translation::ASIS_element_id_to_ASIS_MapType Ada_ROSE_Translation::asis
 // Unit_Struct*   Ada_ROSE_Translation::globalUnit        = NULL;
 SgUntypedFile* Ada_ROSE_Translation::globalUntypedFile = NULL;
 #endif
+
+namespace Ada_ROSE_Translation
+{
+  void secondConversion(Nodes_Struct& head_nodes, SgSourceFile* file);
+}
 
 // Attribute constructor.
 Ada_ROSE_Translation::ASIS_Attribute::ASIS_Attribute (int element_id)
@@ -130,6 +137,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
             // This code treats duplicate entries as a warning and skips the redundant entry.
                if (asisMap.find(element_id) == asisMap.end())
                   {
+                    std::cerr << "***** adding element " << element_id << std::endl;
                     asisMap[element_id] = &element;
                   }
                  else
@@ -157,6 +165,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 #if 0
      printf ("current_unit = %p \n",current_unit);
 #endif
+     std::cerr << "***** adding units (element) MAX: " << MAX_NUMBER_OF_UNITS << std::endl;
 
      while (current_unit != NULL)
         {
@@ -180,6 +189,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
                if (asisMap.find(unit_id) == asisMap.end())
                   {
+                    std::cerr << "***** adding unit (element) " << unit_id << std::endl;
                     asisMap[unit_id] = (Element_Struct*) (&unit);
                   }
                  else
@@ -276,6 +286,9 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
        // untypedNode = 0x7facf6247010 = SgUntypedInitializedName
        // untypedNode = 0x7fc9f5aa3010 = SgUntypedFunctionDeclaration
        // untypedNode = 0x7facf6272010 = SgUntypedNamedStatement
+
+          if (untypedNode == NULL) continue;
+
           switch (untypedNode->variantT())
              {
                case V_SgUntypedFile:
@@ -581,8 +594,8 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                          int statement_id = visiblePartDeclarativeItems.IDs[i];
                          printf ("i = %d statement_id = %d \n",i,statement_id);
 #if 1
-                         ROSE_ASSERT(untypedNodeMap.find(statement_id) != untypedNodeMap.end());
-
+                         if (untypedNodeMap.find(statement_id) != untypedNodeMap.end())
+                         {
                          SgUntypedNode* visiblePart_untypedNode = untypedNodeMap[statement_id];
                          ROSE_ASSERT(visiblePart_untypedNode != NULL);
 
@@ -595,6 +608,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
                       // untypedStatementList->get_stmt_list().insert(untypedStatementList->get_stmt_list().end(),untypedStatement);
                          stmtList.insert(stmtList.end(),untypedStatement);
+                        }
 #endif
                          printf ("untypedStatementList->get_stmt_list().size() = %zu \n",untypedStatementList->get_stmt_list().size());
                        }
@@ -827,7 +841,8 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                       // Declaration_Struct & statement_declarationStruct = statement_element_union.Declaration;
 
                          SgUntypedNode* tmp_untypedNode = untypedNodeMap[id];
-                         ROSE_ASSERT(tmp_untypedNode != NULL);
+                         if (tmp_untypedNode != NULL)
+                         {
 
                          SgUntypedStatement* statement_untypedNode = isSgUntypedStatement(tmp_untypedNode);
                          ROSE_ASSERT(statement_untypedNode != NULL);
@@ -835,6 +850,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                          printf ("   --- --- statement_untypedNode = %p = %s \n",statement_untypedNode,statement_untypedNode->class_name().c_str());
 
                          untypedFunctionScope->get_statement_list()->get_stmt_list().push_back(statement_untypedNode);
+                         }
                        }
 
 #if 0
@@ -1107,7 +1123,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
                default:
                   {
                     printf ("Error: default reached in switch: untypedNode in untypedNodeMap is: %p %s \n",untypedNode,untypedNode->class_name().c_str());
-                    ROSE_ASSERT(false);
+                    //~ ROSE_ASSERT(false);
                   }
              }
 
@@ -1121,7 +1137,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
      printf ("Test traversal over untyped AST \n");
 #endif
 
-     testTraversal();
+     //~ testTraversal();
 
 #if 1
      printf ("DONE: Test traversal over untyped AST \n");
@@ -1142,7 +1158,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
   // void generate(SgNode* node,  std::string filename, traversalType tt = TOPDOWNBOTTOMUP,std::string filenamePostfix = "");
   // astdotgen.generate(globalUntypedFile, "untypedAdaAST");
   // astdotgen.generate(globalUntypedFile, "ada",AstDOTGeneration::TOPDOWNBOTTOMUP,"untypedAst");
-     generateDOT(globalUntypedFile,"adaUntypedAst");
+     //~ generateDOT(globalUntypedFile,"adaUntypedAst");
 
 #if 1
      printf ("DONE: Test traversal over untyped AST \n");
@@ -1157,6 +1173,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
 #endif
 
+     secondConversion(head_nodes, file);
    }
 
 
@@ -1362,7 +1379,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processDiscreteSubtypeDefinition(definition.The_Union.The_Discrete_Subtype_Definition);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -1372,7 +1389,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processDiscreteRange(definition.The_Union.The_Discrete_Range);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               // ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -1454,7 +1471,7 @@ Ada_ROSE_Translation::populateChildrenFromDefinition( SgUntypedStatementList* st
             // processOthersChoice(definition.The_Union.The_Others_Choice);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               // ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -2323,7 +2340,7 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
                printf ("Case_Expression = %d \n",statement.Case_Expression);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               // ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -2397,6 +2414,7 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
                break;
              }
 
+          case An_Exit_Statement: // \todo
           case A_Null_Statement:
              {
             // Nothing to do for this case.
@@ -3005,7 +3023,7 @@ void
                printf ("initializationExpression = %d \n",initializationExpression);
 
                ROSE_ASSERT(names.Length > 0);
-               ROSE_ASSERT(names.Length == 1);
+               //~ ROSE_ASSERT(names.Length == 1);
                int name_id = names.IDs[0];
 
                printf ("name_id = %d \n",name_id);
@@ -3183,7 +3201,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -3644,7 +3662,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -5839,7 +5857,7 @@ void
                printf ("     shortCircuitOperationRightExpression = %d \n",shortCircuitOperationRightExpression);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -6510,7 +6528,7 @@ Ada_ROSE_Translation::processTypeDefinition ( Type_Definition_Struct & x, int el
                printf ("   realRangeConstraint = %d \n",realRangeConstraint);
 #if 1
                printf ("Not implemented! \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
 #endif
                break;
              }
@@ -6902,7 +6920,7 @@ Ada_ROSE_Translation::processDiscreteSubtypeDefinition ( Discrete_Subtype_Defini
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     //~ ROSE_ASSERT(false);
 #endif
    }
 
@@ -6915,7 +6933,7 @@ Ada_ROSE_Translation::processDiscreteRange ( Discrete_Range_Struct & x, int elem
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     // ROSE_ASSERT(false);
 #endif
    }
 
@@ -7029,7 +7047,7 @@ Ada_ROSE_Translation::processOthersChoice ( Others_Choice_Struct & x, int elemen
 
 #if 1
      printf ("ERROR: not implemented! \n");
-     ROSE_ASSERT(false);
+     // ROSE_ASSERT(false);
 #endif
    }
 
@@ -7977,7 +7995,7 @@ enum Path_Kinds {
 
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               // ROSE_ASSERT(false);
 #endif
                break;
              }
