@@ -6251,6 +6251,17 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
      curprint("\n/* In Unparse_ExprStmt::unparseEnumVal() */\n");
 #endif
 
+  // Rasmussen (3/24/2020): For unparsing of Jovial StatusConstant
+     if (SageInterface::is_Jovial_language())
+        {
+           std::string name = enum_val->get_name().str();
+           name.replace(0, 3, "V(");
+           name.append(")");
+
+           curprint(name);
+           return;
+        }
+
   // todo: optimize this so that the qualified name is only printed when necessary.
      if (info.inEnumDecl() == true)
         {

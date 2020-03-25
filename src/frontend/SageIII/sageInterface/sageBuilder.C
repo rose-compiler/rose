@@ -46,6 +46,7 @@
 using namespace std;
 using namespace Rose;
 using namespace SageInterface;
+using namespace Rose::Diagnostics;
 
 
 namespace EDG_ROSE_Translation
@@ -109,7 +110,9 @@ std::list<SgScopeStatement*> SageBuilder::ScopeStack(0);
 
 
 // DQ (11/30/2010): Added support for building Fortran case insensitive symbol table handling.
-//! Support for construction of case sensitive/insensitive symbol table handling in scopes.
+// Support for construction of case sensitive/insensitive symbol table handling in scopes.
+// Rasmussen (3/22/2020): Setting this variable to properly reflect language properties
+// was removed in 2017. I would like to remove it from SageBuilder.
 bool SageBuilder::symbol_table_case_insensitive_semantics = false;
 
 
@@ -5232,8 +5235,9 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemb
   SgFunctionDefinition * func_def = new SgFunctionDefinition(func,func_body);
   ROSE_ASSERT(func_def);
 
-  // DQ (11/28/2010): Added specification of case insensitivity (e.g. Fortran).
-  if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (symbol_table_case_insensitive_semantics == true)
+  if (SageInterface::is_language_case_insensitive())
      {
        func_def->setCaseInsensitive(true);
        func_body->setCaseInsensitive(true);
@@ -5860,8 +5864,9 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
 #endif
      ROSE_ASSERT(func_def);
 
-  // DQ (11/28/2010): Added specification of case insensitivity (e.g. Fortran).
-     if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (symbol_table_case_insensitive_semantics == true)
+   if (SageInterface::is_language_case_insensitive())
         {
           func_def->setCaseInsensitive(true);
           func_body->setCaseInsensitive(true);
@@ -6278,7 +6283,6 @@ SageBuilder::buildProcedureHeaderStatement(const SgName& name, SgType* return_ty
           scope = SageBuilder::topScopeStack();
         }
 
-  // SgProcedureHeaderStatement* nondefiningDeclaration = NULL;
      SgFunctionDeclaration* nondefiningDeclaration = NULL;
 
      SgFunctionType* func_type = buildFunctionType(return_type,parameter_list);
@@ -6289,7 +6293,10 @@ SageBuilder::buildProcedureHeaderStatement(const SgName& name, SgType* return_ty
         }
        else
         {
-          nondefiningDeclaration = buildNondefiningFunctionDeclaration(name,return_type,parameter_list,scope,NULL);
+       // Rasmussen (3/25/2020): Replaced call to builder function with templated version.
+          nondefiningDeclaration = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>
+                                                 ( name, return_type, parameter_list, /*isMemberFunction*/false, scope,
+                                                   /*decoratorList*/NULL, /*functionConstVolatileFlags*/0, NULL, NULL  );
         }
 
   // DQ (8/23/2013): Added assertions.
@@ -6297,19 +6304,11 @@ SageBuilder::buildProcedureHeaderStatement(const SgName& name, SgType* return_ty
      assert(nondefiningDeclaration->get_firstNondefiningDeclaration() != NULL);
      assert(nondefiningDeclaration->get_firstNondefiningDeclaration() == nondefiningDeclaration);
 
-#if 0
-  // Function prototype: buildNondefiningFunctionDeclaration_T (
-  //      const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList,
-  //      unsigned int functionConstVolatileFlags, SgTemplateArgumentPtrList* templateArgumentsList, SgTemplateParameterPtrList* templateParameterList);
+  // Rasmussen (3/25/2020): Added following variable to allow assertion to check for pointer status.
+     SgProcedureHeaderStatement* proc_header_stmt = isSgProcedureHeaderStatement(nondefiningDeclaration);
+     ROSE_ASSERT(proc_header_stmt);
 
-  // DQ (8/21/2013): Fixed number of parameters in buildNondefiningFunctionDeclaration_T() function call.
-  // SgProcedureHeaderStatement* non_def_decl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement> (name,return_type,parameter_list, /* isMemberFunction = */ false, scope, NULL, false, NULL);
-     SgProcedureHeaderStatement* non_def_decl = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement> (name,return_type,parameter_list, /* isMemberFunction = */ false, scope, NULL, 0, NULL, NULL);
-#endif
-
-  // return buildProcedureHeaderStatement(name.str(),return_type,parameter_list,kind,scope,NULL);
-  // return buildProcedureHeaderStatement(name.str(),return_type,parameter_list,kind,scope, non_def_decl);
-     return buildProcedureHeaderStatement(name.str(),return_type,parameter_list,kind,scope, isSgProcedureHeaderStatement(nondefiningDeclaration));
+     return buildProcedureHeaderStatement(name.str(), return_type, parameter_list, kind, scope, proc_header_stmt);
    }
 
 
@@ -6334,7 +6333,7 @@ SageBuilder::buildProcedureHeaderStatement( const char* name, SgType* return_typ
         {
           if (kind != SgProcedureHeaderStatement::e_function_subprogram_kind)
              {
-               cerr << "unhandled subprogram kind for Fortran function unit:" << kind << endl;
+               mlog[ERROR] << "unhandled subprogram kind for Fortran (or Jovial) function declaration:" << kind << endl;
                ROSE_ASSERT(false);
              }
         }
@@ -8942,8 +8941,9 @@ SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgStatement * true
   SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
   ROSE_ASSERT(ifstmt);
 
- // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-  if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (symbol_table_case_insensitive_semantics == true)
+  if (SageInterface::is_language_case_insensitive())
        ifstmt->setCaseInsensitive(true);
 
   setOneSourcePositionForTransformation(ifstmt);
@@ -8974,8 +8974,9 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
      SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
      ROSE_ASSERT(ifstmt);
 #if 0
-  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-     if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (symbol_table_case_insensitive_semantics == true)
+     if (SageInterface::is_language_case_insensitive())
           ifstmt->setCaseInsensitive(true);
 
      setOneSourcePositionNull(ifstmt);
@@ -9011,8 +9012,9 @@ SgFortranDo * SageBuilder::buildFortranDo(SgExpression* initialization, SgExpres
      SgFortranDo * result = new SgFortranDo(initialization, bound, increment, loop_body);
      ROSE_ASSERT(result);
 
-  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-     if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (symbol_table_case_insensitive_semantics == true)
+     if (SageInterface::is_language_case_insensitive())
         result->setCaseInsensitive(true);
 
      setOneSourcePositionForTransformation(result);
@@ -9093,8 +9095,9 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
      SgForStatement * result = new SgForStatement(test,increment, loop_body);
      ROSE_ASSERT(result);
 
-  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-     if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (symbol_table_case_insensitive_semantics == true)
+     if (SageInterface::is_language_case_insensitive())
           result->setCaseInsensitive(true);
 
      setOneSourcePositionForTransformation(result);
@@ -9172,8 +9175,9 @@ SageBuilder::buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement * t
      SgForStatement * result = new SgForStatement(test, increment, loop_body);
      ROSE_ASSERT(result);
 
-  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-     if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (symbol_table_case_insensitive_semantics == true)
+     if (SageInterface::is_language_case_insensitive())
           result->setCaseInsensitive(true);
 
      setOneSourcePositionNull(result);
@@ -9306,8 +9310,9 @@ SageBuilder::buildForStatement_nfi(SgForStatement* result, SgForInitStatement * 
      result->set_increment(increment);
      result->set_loop_body(loop_body);
 
-  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-     if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (symbol_table_case_insensitive_semantics == true)
+     if (SageInterface::is_language_case_insensitive())
           result->setCaseInsensitive(true);
 
      setOneSourcePositionNull(result);
@@ -9430,8 +9435,9 @@ SgUpcForAllStatement * SageBuilder::buildUpcForAllStatement_nfi(SgForInitStateme
   SgUpcForAllStatement * result = new SgUpcForAllStatement(init_stmt, test, increment, affinity, loop_body);
   ROSE_ASSERT(result);
 
- // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-  if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (symbol_table_case_insensitive_semantics == true)
+  if (SageInterface::is_language_case_insensitive())
        result->setCaseInsensitive(true);
 
   setOneSourcePositionNull(result);
@@ -9507,8 +9513,9 @@ SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement 
   SgWhileStmt * result = new SgWhileStmt(condition,body);
   ROSE_ASSERT(result);
 
- // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-  if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (symbol_table_case_insensitive_semantics == true)
+  if (SageInterface::is_language_case_insensitive())
        result->setCaseInsensitive(true);
 
   setOneSourcePositionForTransformation(result);
@@ -9972,8 +9979,9 @@ SgBasicBlock * SageBuilder::buildBasicBlock(SgStatement * stmt1, SgStatement* st
   SgBasicBlock* result = new SgBasicBlock();
   ROSE_ASSERT(result);
 
-// DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-  if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (symbol_table_case_insensitive_semantics == true)
+  if (SageInterface::is_language_case_insensitive())
        result->setCaseInsensitive(true);
 
   setOneSourcePositionForTransformation(result);
@@ -9996,8 +10004,9 @@ SgBasicBlock * SageBuilder::buildBasicBlock_nfi()
      SgBasicBlock* result = new SgBasicBlock();
      ROSE_ASSERT(result);
 
-  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-     if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (symbol_table_case_insensitive_semantics == true)
+     if (SageInterface::is_language_case_insensitive())
         {
           result->setCaseInsensitive(true);
         }
@@ -10151,8 +10160,9 @@ SgSwitchStatement* SageBuilder::buildSwitchStatement(SgStatement *item_selector,
   SgSwitchStatement* result = new SgSwitchStatement(item_selector,body);
   ROSE_ASSERT(result);
 
- // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-  if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (symbol_table_case_insensitive_semantics == true)
+  if (SageInterface::is_language_case_insensitive())
        result->setCaseInsensitive(true);
 
   setOneSourcePositionForTransformation(result);
@@ -11937,8 +11947,9 @@ SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NULL*/, bool buildTem
 
      ROSE_ASSERT(result);
 
- // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-     if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (symbol_table_case_insensitive_semantics == true)
+     if (SageInterface::is_language_case_insensitive())
         {
           result->setCaseInsensitive(true);
         }
@@ -11969,8 +11980,9 @@ SageBuilder::buildClassDefinition_nfi(SgClassDeclaration *d/*= NULL*/, bool buil
 
      ROSE_ASSERT(result);
 
-  // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-     if (symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (symbol_table_case_insensitive_semantics == true)
+     if (SageInterface::is_language_case_insensitive())
           result->setCaseInsensitive(true);
 
      setOneSourcePositionNull(result);
@@ -14680,8 +14692,9 @@ SageBuilder::buildTemplateClassDefinition(SgTemplateClassDeclaration *d /*= NULL
 
     ROSE_ASSERT(result);
 
- // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-    if (symbol_table_case_insensitive_semantics == true)
+ // Rasmussen (3/22/2020): Fixed setting case insensitivity
+ // if (symbol_table_case_insensitive_semantics == true)
+    if (SageInterface::is_language_case_insensitive())
          result->setCaseInsensitive(true);
 
     setOneSourcePositionForTransformation(result);

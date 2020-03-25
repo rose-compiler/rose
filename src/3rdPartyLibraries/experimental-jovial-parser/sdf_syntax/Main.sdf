@@ -494,7 +494,7 @@ context-free syntax
     NonNestedSubroutineList
   'TERM'                     -> ProcedureModule       {cons("ProcedureModule")}
   
-  'DEF' SubroutineDefinition -> NonNestedSubroutine   {cons("NonNestedSubroutine")}
+  'DEF' SubroutineDefinition -> NonNestedSubroutine   {cons("NonNestedSubroutineDEF")}
         SubroutineDefinition -> NonNestedSubroutine   {cons("NonNestedSubroutine")}
 
   Declaration*               -> DeclarationList          {cons("DeclarationList")}
