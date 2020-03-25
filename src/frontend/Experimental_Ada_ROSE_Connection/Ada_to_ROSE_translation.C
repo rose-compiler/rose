@@ -3760,7 +3760,7 @@ void
 
 #if DEBUG_UNTYPED_NODE_GENERATION
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
 #endif
                break;
              }

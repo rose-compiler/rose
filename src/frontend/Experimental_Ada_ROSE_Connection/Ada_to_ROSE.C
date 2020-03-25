@@ -64,10 +64,9 @@ namespace // local declarations
   std::map<int, SgStatement*>            asisLoops; ///< stores a mapping from element id
                                                     ///  to constructed loops (needed for exit statements).
 
+  std::map<std::string, SgType*>         adaTypes;  ///< stores a mapping from a name to an ADA standard type
+                                                    ///  e.g., Integer.
 
-  //~ template <class KeyT, class DclT>
-  //~ void
-  //~ recordDcl(std::map<KeyT, DclT*>& m, KeyT key, typename std::remove_pointer< typename std::map<KeyT, DclT*>::mapped_type>::type& val)
   template <class KeyT, class DclT, class ValT>
   void
   recordDcl(std::map<KeyT, DclT*>& m, KeyT key, ValT& val)
@@ -785,16 +784,17 @@ namespace // local declarations
 
     if (SgDeclarationStatement* dcl = findFirst(asisTypes, typeEx.Corresponding_Name_Definition))
       return mkTyperef(*dcl);
+      
+    SgType* ty = findFirst(adaTypes, std::string(typeEx.Name_Image));
+    
+    if (!ty)
+    {
+      logWarn() << "unknown type: " << typeEx.Name_Image << std::endl;
+      
+      ROSE_ASSERT(false);
+    }
 
-    if (std::string(typeEx.Name_Image) == std::string("Integer"))
-      return SG_DEREF(sb::buildIntType());
-
-    if (std::string(typeEx.Name_Image) == std::string("Character"))
-      return SG_DEREF(sb::buildCharType());
-
-    logWarn() << "unknown type: " << typeEx.Name_Image << std::endl;
-    ROSE_ASSERT(false);
-    return SG_DEREF(sb::buildVoidType());
+    return SG_DEREF(ty);
   }
 
   SgType&
@@ -1226,8 +1226,8 @@ namespace // local declarations
 
       case A_Selected_Component:                      // 4.1.3
         {
-          SgExpression&           prefix   = getExprID(expr.Prefix, ctx);
-          SgExpression&           selector = getExprID(expr.Selector, ctx);
+          SgExpression& prefix   = getExprID(expr.Prefix, ctx);
+          SgExpression& selector = getExprID(expr.Selector, ctx);
 
           res = &mkSelectedComponent(prefix, selector);
           /* unused fields: (Expression_Struct)
@@ -1237,8 +1237,8 @@ namespace // local declarations
 
       case An_And_Then_Short_Circuit:                 // 4.4
         {
-          SgExpression&           lhs = getExprID(expr.Short_Circuit_Operation_Left_Expression, ctx);
-          SgExpression&           rhs = getExprID(expr.Short_Circuit_Operation_Right_Expression, ctx);
+          SgExpression& lhs = getExprID(expr.Short_Circuit_Operation_Left_Expression, ctx);
+          SgExpression& rhs = getExprID(expr.Short_Circuit_Operation_Right_Expression, ctx);
 
           res = sb::buildAndOp(&lhs, &rhs);
           /* unused fields: (Expression_Struct)
@@ -1248,8 +1248,8 @@ namespace // local declarations
 
       case An_Or_Else_Short_Circuit:                  // 4.4
         {
-          SgExpression&           lhs = getExprID(expr.Short_Circuit_Operation_Left_Expression, ctx);
-          SgExpression&           rhs = getExprID(expr.Short_Circuit_Operation_Right_Expression, ctx);
+          SgExpression& lhs = getExprID(expr.Short_Circuit_Operation_Left_Expression, ctx);
+          SgExpression& rhs = getExprID(expr.Short_Circuit_Operation_Right_Expression, ctx);
 
           res = sb::buildOrOp(&lhs, &rhs);
           /* unused fields: (Expression_Struct)
@@ -1263,6 +1263,17 @@ namespace // local declarations
 
           res = &getExprID(expr.Expression_Parenthesized, ctx);
           /* unused fields: (Expression_Struct)
+          */
+          break;
+        }
+      case A_Type_Conversion:                         // 4.6
+        {
+          SgExpression& exp = getExprID(expr.Converted_Or_Qualified_Expression, ctx);
+          SgType&       ty  = getDeclTypeID(expr.Converted_Or_Qualified_Subtype_Mark, ctx);
+          
+          res = sb::buildCastExp(&exp, &ty);
+          /* unused fields: (Expression_Struct)
+               Expression_ID         Predicate;
           */
           break;
         }
@@ -1286,7 +1297,6 @@ namespace // local declarations
       case A_Null_Literal:                            // 4.4
       case A_Raise_Expression:                        // 4.4 Ada 2012 (AI12-0022-1)
 
-      case A_Type_Conversion:                         // 4.6
       case A_Qualified_Expression:                    // 4.7
       case An_Allocation_From_Subtype:                // 4.8
       case An_Allocation_From_Qualified_Expression:   // 4.8
@@ -1646,8 +1656,6 @@ namespace // local declarations
           logInfo() << "  name: " << names.front().first
                     << std::endl;
 
-
-
           /* unused fields
                     bool                           Has_Abstract;
                     bool                           Has_Limited;
@@ -1661,6 +1669,17 @@ namespace // local declarations
           break;
         }
 
+      case A_Subtype_Declaration:                    // 3.2.2(2)
+        {
+          
+          /* unused fields:
+                Declaration_ID                 Corresponding_First_Subtype;
+                Declaration_ID                 Corresponding_Last_Constraint;
+                Declaration_ID                 Corresponding_Last_Subtype;
+          */
+          break;
+        }
+        
       case A_Variable_Declaration:                   // 3.3.1(2) -> Trait_Kinds
         {
           handleVarCstDecl(decl, ctx, tyIdentity);
@@ -1670,6 +1689,15 @@ namespace // local declarations
           break;
         }
 
+      case An_Integer_Number_Declaration:            // 3.3.2(2)
+        {
+          handleNumberDecl(decl, ctx, SG_DEREF(sb::buildIntType()));
+
+          /* unused fields:
+          */
+          break;
+        }
+      
       case A_Constant_Declaration:
         {
           handleVarCstDecl(decl, ctx, tyConstify);
@@ -1678,22 +1706,13 @@ namespace // local declarations
           */
           break;
         }
-
+      
       case A_Real_Number_Declaration:                // 3.5.6(2)
         {
           handleNumberDecl(decl, ctx, SG_DEREF(sb::buildFloatType()));
 
           /* unused fields:
            */
-          break;
-        }
-
-      case An_Integer_Number_Declaration:            // 3.3.2(2)
-        {
-          handleNumberDecl(decl, ctx, SG_DEREF(sb::buildIntType()));
-
-          /* unused fields:
-          */
           break;
         }
 
@@ -1732,7 +1751,6 @@ namespace // local declarations
       case A_Tagged_Incomplete_Type_Declaration:     //  3.10.1(2)
       case A_Private_Type_Declaration:               // 3.2.1(2):7.3(2) -> Trait_Kinds
       case A_Private_Extension_Declaration:          // 3.2.1(2):7.3(3) -> Trait_Kinds
-      case A_Subtype_Declaration:                    // 3.2.2(2)
       case A_Deferred_Constant_Declaration:          // 3.3.1(6):7.4(2) -> Trait_Kinds
       case A_Single_Task_Declaration:                // 3.3.1(2):9.1(3)
       case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
@@ -2293,11 +2311,25 @@ namespace // local declarations
         //~ ROSE_ASSERT(false);
     }
   }
+  
+  void initializeAdaTypes()
+  {
+    adaTypes[std::string("Integer")]   = sb::buildIntType();  
+    adaTypes[std::string("Character")] = sb::buildCharType();  
+    
+    // \todo items
+    adaTypes[std::string("Float")]     = sb::buildFloatType();  // Float is a subtype of Real
+    adaTypes[std::string("Positive")]  = sb::buildIntType();    // Positive is a subtype of int  
+    adaTypes[std::string("Natural")]   = sb::buildIntType();    // Natural is a subtype of int  
+    adaTypes[std::string("Boolean")]   = sb::buildBoolType();   // Boolean is an enumeration of True and False  
+  }
 }
 
 void secondConversion(Nodes_Struct& headNodes, SgSourceFile* file)
 {
   ROSE_ASSERT(file);
+
+  initializeAdaTypes();
 
   Unit_Struct_List_Struct* adaLimit = 0;
   Unit_Struct_List_Struct* adaUnit  = headNodes.Units;
