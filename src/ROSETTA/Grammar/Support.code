@@ -1040,7 +1040,6 @@ HEADER_FUNCTION_MODIFIER_START
 
 HEADER_FUNCTION_MODIFIER_END
 
-
 HEADER_UPC_ACCESS_MODIFIER_START
 
        // UPC access specifiers (unspecified, shared, strict, relaxed)
@@ -1969,6 +1968,25 @@ HEADER_BASECLASS_MODIFIER_START
 
 HEADER_BASECLASS_MODIFIER_END
 
+// *****************************************************
+// ************ Support for ADA Constraints ************
+// *****************************************************
+HEADER_ADA_TYPE_CONSTRAINT_START
+          SgAdaTypeConstraint (const SgAdaTypeConstraint& X);
+          SgAdaTypeConstraint& operator= (const SgAdaTypeConstraint& X);
+          virtual std::string displayString() const { ROSE_ASSERT(false); };
+HEADER_ADA_TYPE_CONSTRAINT_END
+
+
+HEADER_ADA_RANGE_CONSTRAINT_START
+  void post_construction_initialization() $ROSE_OVERRIDE;
+  std::string displayString() const $ROSE_OVERRIDE;
+  void display ( std::string label ) const;
+  friend std::ostream & operator<< ( std::ostream& os, const SgAdaRangeConstraint& c);
+  //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+HEADER_ADA_RANGE_CONSTRAINT_END
+
+
 
 HEADER_ATTRIBUTE_SUPPORT_START
 
@@ -2233,6 +2251,22 @@ SgModifier::unsetBit ( unsigned int bit, SgBitVector & bitVector ) const
    }
 
 SOURCE_MODIFIER_END
+
+SOURCE_ADA_TYPE_CONSTRAINT_START
+
+SgAdaTypeConstraint::SgAdaTypeConstraint ( const SgAdaTypeConstraint & X )
+   : SgSupport()
+   { 
+     /* see comment in SgModifier */ 
+   }
+
+SgAdaTypeConstraint& 
+SgAdaTypeConstraint::operator= ( const SgAdaTypeConstraint& X )
+   {
+     return *this;
+   }
+
+SOURCE_ADA_TYPE_CONSTRAINT_END
 
 
 SOURCE_MODIFIER_NODES_START
@@ -3007,6 +3041,41 @@ void SgFunctionModifier::reset()
    }
    
 SOURCE_FUNCTION_MODIFIER_END
+
+SOURCE_ADA_RANGE_CONSTRAINT_START
+void SgAdaRangeConstraint::post_construction_initialization() {};
+
+std::string SgAdaRangeConstraint::displayString() const
+{
+  ROSE_ASSERT(get_range());
+  
+  SgExpression* lb = get_range()->get_start();
+  SgExpression* ub = get_range()->get_end();
+  
+  ROSE_ASSERT(lb && ub);
+  
+  std::string res(lb->unparseToString());
+  
+  res += "..";
+  res += ub->unparseToString();
+  
+  return res;
+}
+
+void SgAdaRangeConstraint::display ( std::string label ) const
+{
+  mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
+  mprintf ("%s \n",displayString().c_str());
+}
+              
+          
+std::ostream & operator<< ( std::ostream& os, const SgAdaRangeConstraint& c)
+{
+  return os << c.displayString();
+}
+
+SOURCE_ADA_RANGE_CONSTRAINT_END
+
 
 
 SOURCE_UPS_ACCESS_MODIFIER_START
