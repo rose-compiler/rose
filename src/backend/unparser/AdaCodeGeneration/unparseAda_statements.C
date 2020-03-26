@@ -57,7 +57,7 @@ Unparse_Ada::unparseAdaFile(SgSourceFile *sourcefile, SgUnparse_Info& info)
    {
 
      SgGlobal* globalScope = sourcefile->get_globalScope();
-     ROSE_ASSERT(globalScope != NULL);
+     ASSERT_not_null(globalScope);
 
      unparseStatement(globalScope, info);
 
@@ -73,7 +73,7 @@ Unparse_Ada::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info&
    {
   // This function unparses the language specific parse not handled by the base class unparseStatement() member function
 
-     ROSE_ASSERT(stmt != NULL);
+     ASSERT_not_null(stmt);
 
   // curprint_indented("", info);
 
