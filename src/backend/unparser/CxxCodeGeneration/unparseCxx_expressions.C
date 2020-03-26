@@ -7638,9 +7638,13 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
   // string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
 
      bool usingGxx = false;
+     bool usingClang = false;
      #ifdef USE_CMAKE
        #ifdef CMAKE_COMPILER_IS_GNUCXX
          usingGxx = true;
+       #endif
+       #ifdef CMAKE_COMPILER_IS_CLANG
+         usingClang = true;
        #endif
      #else
     // DQ (2/1/2016): Make the behavior of ROSE independent of the exact name of the backend compiler (problem when packages name compilers such as "g++-4.8").
@@ -7648,12 +7652,16 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
        #if BACKEND_CXX_IS_GNU_COMPILER
           usingGxx = true;
        #endif
+       #if BACKEND_CXX_IS_CLANG_COMPILER
+          usingClang = true;
+       #endif
      #endif
-
-     if (usingGxx)
+/*Pei-Hung (03/25/2020) Adding Clang support and tested with Clang 8.x.  We might lower the clang version checking */
+     //if (usingGxx)
         {
        // Now check the version of the identified GNU g++ compiler.
-          if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 5) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4))
+          if ((usingGxx && ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 5) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4)))
+             || (usingClang && (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 7)))
              {
             // If this is the GNU g++ 4.5 version compiler (or greater) then we have to use "X::A()"
             // as a constructor name instead of "X::A::A()" which was previously accepted by GNU g++.
