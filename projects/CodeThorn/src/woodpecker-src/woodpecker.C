@@ -3,13 +3,14 @@
 #include "rose.h"
 
 #include "inliner.h"
-
 #include <iostream>
 #include "VariableIdMapping.h"
+
+#include "shared-src/ProgramStats.h"
+
 #include "Labeler.h"
 #include "AstAnnotator.h"
 #include "Miscellaneous.h"
-#include "ProgramStats.h"
 #include "CommandLineOptions.h"
 #include "AnalysisAbstractionLayer.h"
 #include "AbstractValue.h"

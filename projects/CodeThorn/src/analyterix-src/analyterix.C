@@ -9,9 +9,12 @@
 #include <boost/program_options.hpp>
 #endif
 
-#include "inliner.h"
 #include <iostream>
+#include "inliner.h"
 #include "VariableIdMapping.h"
+
+#include "shared-src/ProgramStats.h"
+
 #include "Labeler.h"
 #include "WorkList.h"
 #include "CFAnalysis.h"
@@ -27,7 +30,6 @@
 #include "DataDependenceVisualizer.h"
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
-#include "ProgramStats.h"
 #include "AnalysisAbstractionLayer.h"
 #include "AbstractValue.h"
 #include "SgNodeHelper.h"

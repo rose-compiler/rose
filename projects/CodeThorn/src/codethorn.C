@@ -25,8 +25,8 @@
 #include "AbstractValue.h"
 #include "AstMatching.h"
 #include "RewriteSystem.h"
-#include "SpotConnection.h"
-#include "CounterexampleAnalyzer.h"
+#include "ltlthorn-lib/SpotConnection.h"
+#include "ltlthorn-lib/CounterexampleAnalyzer.h"
 #include "AnalysisAbstractionLayer.h"
 #include "ArrayElementAccessData.h"
 #include "PragmaHandler.h"
@@ -36,9 +36,9 @@
 #include "EquivalenceChecking.h"
 #include "Solver5.h"
 #include "Solver8.h"
-#include "Solver10.h"
-#include "Solver11.h"
-#include "Solver12.h"
+#include "ltlthorn-lib/Solver10.h"
+#include "ltlthorn-lib/Solver11.h"
+#include "ltlthorn-lib/Solver12.h"
 #include "ReadWriteAnalyzer.h"
 #include "AnalysisParameters.h"
 #include "CodeThornException.h"
@@ -54,11 +54,11 @@
 #include "Evaluator.h" // CppConstExprEvaluator
 
 // Z3-based analyser / SSA 
-#include "SSAGenerator.h"
-#include "ReachabilityAnalyzerZ3.h"
+#include "z3-prover-connection/SSAGenerator.h"
+#include "z3-prover-connection/ReachabilityAnalyzerZ3.h"
 
 // ParProAutomata
-#include "ParProAutomata.h"
+#include "ltlthorn-lib/ParProAutomata.h"
 
 #if defined(__unix__) || defined(__unix) || defined(unix)
 #include <sys/resource.h>
