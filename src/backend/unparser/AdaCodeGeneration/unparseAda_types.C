@@ -25,7 +25,7 @@ void
 Unparse_Ada::unparseType(SgType* type, SgUnparse_Info& info)
    {
 
-     ROSE_ASSERT(type != NULL);
+     ASSERT_not_null(type);
 
      switch (type->variantT())
         {
