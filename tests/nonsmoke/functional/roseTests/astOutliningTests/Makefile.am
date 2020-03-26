@@ -72,6 +72,7 @@ outlineSelection_LDADD = $(ROSE_LIBS)
 C_TESTCODES_REQUIRED_TO_PASS =			\
 	 array1.c				\
 	 arrayParameter.c			\
+	 arrayRef.c \
 	 jacobi.c                               \
 	 moreTest0.c				\
 	 moreTest1.c				\

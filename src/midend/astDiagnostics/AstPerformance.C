@@ -330,10 +330,16 @@ double time_stamp()
      struct timeval t;
      double time;
 
+#ifdef _MSC_VER 
+     LARGE_INTEGER ticks, ticksPerSec;
+     QueryPerformanceFrequency(&ticksPerSec); 
+     QueryPerformanceCounter(&ticks);    
+     time = ticks.QuadPart / (double) ticksPerSec.QuadPart;
+#else
      gettimeofday(&t, NULL);
 
      time = (double)(t.tv_sec + (1.0e-6*t.tv_usec));
-
+#endif
   // printf ("In AstPerformance: time_stamp(): time = %f \n",time);
 
      return time;

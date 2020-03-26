@@ -206,7 +206,7 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
         // of a loop).  Recursive calls (other than optimized tail recursion) should be fine.
         bool hasIntraFunctionEdge = false;
         BOOST_FOREACH (const ControlFlowGraph::Edge &edge, entryVertex->inEdges()) {
-            if (edge.value().type() == E_NORMAL) {
+            if (partitioner.isEdgeIntraProcedural(edge, candidate)) {
                 hasIntraFunctionEdge = true;
                 break;
             }

@@ -26,7 +26,7 @@ namespace CodeThorn {
     // overwritten or extended analyzer functions
     virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void resetAnalysis();
-
+    void printAnalyzerStatistics(double totalRunTime, string title = "state transition system computed");
     // only used in LTL-driven mode
     void setSpotConnection(SpotConnection* connection) { _spotConnection = connection; }
     void setStartEState(const EState* estate);

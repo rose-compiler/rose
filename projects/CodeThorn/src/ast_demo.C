@@ -35,14 +35,14 @@ int main( int argc, char * argv[] ) {
   // Build the AST used by ROSE
   timer.start();
   SgProject* sageProject = frontend(argc,argv);
-  double measurementFrontend=timer.getTimeDuration().milliSeconds();
+  double measurementFrontend=timer.getTimeDurationAndStop().milliSeconds();
   timer.stop();
 
   // Run internal consistency tests on AST
   timer.start();
   AstTests::runAllTests(sageProject);
   timer.stop();
-  double measurementAstChecks=timer.getTimeDuration().milliSeconds();
+  double measurementAstChecks=timer.getTimeDurationAndStop().milliSeconds();
 
   // default ROSE dot-file generation
   AstDOTGeneration dotGen;
@@ -77,7 +77,7 @@ int main( int argc, char * argv[] ) {
     num1++;
   }
   timer.stop();
-  double iteratorMeasurementTimeWithNull=timer.getTimeDuration().milliSeconds();
+  double iteratorMeasurementTimeWithNull=timer.getTimeDurationAndStop().milliSeconds();
 
   // measure iterator without null value
   timer.start();
@@ -85,12 +85,12 @@ int main( int argc, char * argv[] ) {
     num2++;
   }
   timer.stop();
-  double iteratorMeasurementTimeWithoutNull=timer.getTimeDuration().milliSeconds();
+  double iteratorMeasurementTimeWithoutNull=timer.getTimeDurationAndStop().milliSeconds();
 
   cout << "Iteration Length: with null   : " << num1 << " nodes."<<endl;
   cout << "Iteration Length: without null: " << num2 << " nodes."<<endl;
   cout<<endl;
-  //double ttm=timer.getTimeDuration().milliSeconds();
+  //double ttm=timer.getTimeDurationAndStop().milliSeconds();
   cout << "Measurement:"<<endl;
   //cout << "Trav:"<<ttm << ";";
   cout << "ROSE Frontend    : " << measurementFrontend << " ms"<<endl;

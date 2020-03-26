@@ -101,7 +101,11 @@ namespace CodeThorn {
     Analyzer* getAnalyzer() {
       return _analyzer;
     }
- private:
+    // prints #transitions and details about states on stdout
+    void printStgSize(std::string optionalComment);
+    // generates info about #transitions and details about states in CSV format
+    void csvToStream(std::stringstream& csvStream);
+  private:
     Label _startLabel;
     int _numberOfNodes; // not used yet
     std::map<const EState*,TransitionPtrSet > _inEdges;
