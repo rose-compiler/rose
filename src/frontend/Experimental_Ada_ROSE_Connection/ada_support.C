@@ -50,7 +50,7 @@ int main(int argc, char** argv)
   // target_file[size+1] = '\0';
 
   // char *gnat_home   = "/usr/workspace/wsb/charles/bin/adacore/gnat-gpl-2017-x86_64-linux";
-     char *gnat_home   = std::getenv("GNAT_HOME");
+     const char *gnat_home   = std::getenv("GNAT_HOME");
 
      if (!gnat_home) gnat_home = "/home/quinlan1/ROSE/ADA/x86_64-linux/adagpl-2017/gnatgpl/gnat-gpl-2017-x86_64-linux-bin";
 
@@ -62,11 +62,11 @@ int main(int argc, char** argv)
 
 #if 1
   // DQ (9/15/2017): Updated to include output directory.
-     char* outputDirectory = "";
+     const char* outputDirectory = "";
 
   // DQ (31/8/2017): Definitions of these functions still need to be provided to via libraries to be able to link ROSE.
      dot_asisinit();
-     head_nodes = tool_2_wrapper (target_file, gnat_home,outputDirectory);
+     head_nodes = tool_2_wrapper (target_file, const_cast<char*>(gnat_home),const_cast<char*>(outputDirectory));
 
      if (head_nodes.Elements == NULL) {
         printf ("%s:  tool_2_wrapper returned NO elements.\n", prefix);
