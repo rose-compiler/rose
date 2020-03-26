@@ -8,7 +8,11 @@ LDADD    = $(ROSE_LIBS)
 
 JOVIAL_TESTCODES = \
  tiny.jov                               \
- status_enumval.jov
+ int_conversion.jov                     \
+ item_desc_conversion.jov               \
+ status_enumval.jov                     \
+ typename_conv.jov
+
 
 JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \

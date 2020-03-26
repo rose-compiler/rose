@@ -342,16 +342,14 @@ ATbool traverse_SizeFunction(ATerm term, SgFunctionCallExp* &func_call);
 ATbool traverse_StatusInverseFunction(ATerm term, SgFunctionCallExp* &func_call);
 
 // 7.0 TYPE MATCHING AND TYPE CONVERSIONS
-ATbool traverse_BitConversion        (ATerm term, SgExpression* &expr);
-ATbool traverse_IntegerConversion    (ATerm term, SgExpression* &expr);
-ATbool traverse_GeneralConversion    (ATerm term, SgExpression* &expr);
-ATbool traverse_FloatingConversion   (ATerm term, SgExpression* &expr);
-ATbool traverse_FixedConversion      (ATerm term, SgExpression* &expr);
-ATbool traverse_CharacterConversion  (ATerm term, SgExpression* &expr);
-ATbool traverse_CharacterConversionC (ATerm term, SgExpression* &expr);
-ATbool traverse_StatusConversion     (ATerm term, SgExpression* &expr);
-ATbool traverse_PointerConversion    (ATerm term, SgExpression* &expr);
-ATbool traverse_PointerConversionP   (ATerm term, SgExpression* &expr);
+ATbool traverse_BitConversion        (ATerm term, SgType* &type);
+ATbool traverse_IntegerConversion    (ATerm term, SgType* &type);
+ATbool traverse_TypeNameConversion   (ATerm term, SgType* &type);
+ATbool traverse_FloatingConversion   (ATerm term, SgType* &type);
+ATbool traverse_FixedConversion      (ATerm term, SgType* &type);
+ATbool traverse_CharacterConversion  (ATerm term, SgType* &type);
+ATbool traverse_StatusConversion     (ATerm term, SgType* &type);
+ATbool traverse_PointerConversion    (ATerm term, SgType* &type);
 
 // 8.3.1 NUMERIC LITERAL
 ATbool traverse_FixedOrFloatingLiteral (ATerm term, SgExpression* &expr);

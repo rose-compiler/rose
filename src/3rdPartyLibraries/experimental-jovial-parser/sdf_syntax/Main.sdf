@@ -2116,7 +2116,7 @@ context-free syntax
                          '*)' -> IntegerConversion    {cons("IntegerConversion")}
   '(*'
     IntegerTypeName
-                         '*)' -> IntegerConversion    {cons("GeneralConversion")}
+                         '*)' -> IntegerConversion    {cons("TypeNameConversion")}
   IntegerTypeName             -> IntegerConversion
   'S'                         -> IntegerConversion    {cons("IntegerConversionS")}
   'U'                         -> IntegerConversion    {cons("IntegerConversionU")}

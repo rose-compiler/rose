@@ -46,6 +46,7 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgEnumType:         unparseJovialType(isSgEnumType(type), info);        break;
           case V_SgFunctionType:     unparseJovialType(isSgFunctionType(type), info);    break;
           case V_SgPointerType:      unparseJovialType(isSgPointerType(type), info);     break;
+          case V_SgTypedefType:      unparseJovialType(isSgTypedefType(type), info);     break;
 
           default:
                cout << "Unparse_Jovial::unparseType for type " << type->class_name() << " is unimplemented." << endl;
@@ -228,4 +229,11 @@ Unparse_Jovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info&
         // Unparse base type directly if present and not in a variable declaration context
            unparseType(base_type, info);
         }
+  }
+
+void
+Unparse_Jovial::unparseJovialType(SgTypedefType* type_def, SgUnparse_Info& info)
+  {
+     ROSE_ASSERT(type_def);
+     curprint(type_def->get_name());
   }

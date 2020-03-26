@@ -686,5 +686,21 @@ Leave(SgEnumDeclaration* enum_decl)
    SageInterface::appendStatement(enum_decl, SageBuilder::topScopeStack());
 }
 
+void SageTreeBuilder::
+Enter(SgTypedefDeclaration* &type_def, const std::string &name, SgType* type)
+{
+   mlog[INFO] << "SageTreeBuilder::Enter(SgTypedefDeclaration*) \n";
+
+   type_def = SageBuilder::buildTypedefDeclaration(name, type, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Leave(SgTypedefDeclaration* type_def)
+{
+   mlog[INFO] << "SageTreeBuilder::Leave(SgTypedefDeclaration*) \n";
+
+   SageInterface::appendStatement(type_def, SageBuilder::topScopeStack());
+}
+
 } // namespace builder
 } // namespace Rose

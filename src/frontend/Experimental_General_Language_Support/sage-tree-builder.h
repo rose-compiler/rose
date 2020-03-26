@@ -106,6 +106,9 @@ public:
    void Enter(SgEnumDeclaration* &, const std::string &, std::list<SgInitializedName*> &);
    void Leave(SgEnumDeclaration*);
 
+   void Enter(SgTypedefDeclaration* &, const std::string &, SgType*);
+   void Leave(SgTypedefDeclaration*);
+
 // Statements
 //
    void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &, const std::string &);
