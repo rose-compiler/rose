@@ -52,6 +52,8 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
        // operators
           case V_SgUnaryOp:             unparseUnaryExpr  (expr, info);          break;
           case V_SgBinaryOp:            unparseBinaryExpr (expr, info);          break;
+          case V_SgCastExp:             unparseCastExp    (expr, info);          break;
+
           case V_SgAssignOp:            unparseAssignOp   (expr, info);          break;
 
           case V_SgAddOp:               unparseBinaryOperator(expr, "+", info);  break;
@@ -151,6 +153,63 @@ Unparse_Jovial::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnpar
      SgUnparse_Info ninfo(info);
      ninfo.set_operator_name(op);
      unparseUnaryExpr(expr, ninfo);
+   }
+
+//----------------------------------------------------------------------------
+//  cast expr
+//----------------------------------------------------------------------------
+void
+Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgCastExp* cast_expr = isSgCastExp(expr);
+     ROSE_ASSERT(cast_expr != NULL);
+
+     SgType* type = cast_expr->get_type();
+     ROSE_ASSERT(type);
+
+     SgExpression* size = type->get_type_kind();
+
+  // If there is a size it won't be SgModifierType or SgTypedefType
+     if (size) {
+        curprint("(* ");
+     }
+
+     switch(type->variantT())
+        {
+     // Note fall through
+        case V_SgTypeInt:
+        case V_SgTypeUnsignedInt:
+        case V_SgTypeChar:
+        case V_SgTypeFloat:
+        case V_SgPointerType:
+           unparseType(type, info);
+           break;
+
+        case V_SgModifierType:
+           curprint("(* ");
+           unparseType(type, info);
+           curprint(" *)");
+           break;
+        case V_SgTypedefType:
+           curprint("(* ");
+           unparseJovialType(isSgTypedefType(type), info);
+           curprint(" *)");
+           break;
+        default:
+           cout << "error: unparseCastExp() is unimplemented for " << type->class_name() << endl;
+           ROSE_ASSERT(false);
+           break;
+        }
+
+     if (size) {
+        curprint(" *)");
+     }
+
+     SgExpression* operand_i = cast_expr->get_operand_i();
+     ROSE_ASSERT(operand_i);
+     curprint("(");
+     unparseExpression(operand_i, info);
+     curprint(")");
    }
 
 //----------------------------------------------------------------------------

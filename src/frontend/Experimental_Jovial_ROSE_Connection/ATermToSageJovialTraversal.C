@@ -2872,6 +2872,14 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDeclaration(ATerm term)
          // DELETE_ME
             return ATtrue;
          }
+
+      // Begin SageTreeBuilder
+         SgTypedefDeclaration* type_def = nullptr;
+         sage_tree_builder.Enter(type_def, name, declared_type);
+         setSourcePosition(type_def, term);
+
+      // End SageTreeBuilder
+         sage_tree_builder.Leave(type_def);
       }
       else if (traverse_StatusItemDescription(t_type_desc, status_list, status_size)) {
          // MATCHED StatusItemDescription
@@ -2889,6 +2897,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDeclaration(ATerm term)
       // Begin SageTreeBuilder
          SgEnumDeclaration* enum_decl = nullptr;
          sage_tree_builder.Enter(enum_decl, name, status_list);
+         setSourcePosition(enum_decl, term);
 
       // End SageTreeBuilder
          sage_tree_builder.Leave(enum_decl);
@@ -5515,8 +5524,9 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
    ATerm t_num_var, t_formula, t_factor, t_num_term, t_conversion;
    char *literal=nullptr, *var_name=nullptr;
 
-   SgExpression *sg_conv = nullptr, *sg_num_term = nullptr, *sg_factor = nullptr;
+   SgExpression *sg_num_term = nullptr, *sg_factor = nullptr, *cast_formula = nullptr;
    SgFunctionCallExp* func_call = nullptr;
+   SgType* conv_type = nullptr;
 
    expr = nullptr;
 
@@ -5568,26 +5578,32 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
 
    else if (ATmatch(term, "NumericPrimary(<term>,<term>)", &t_conversion, &t_formula)) {
 
-      if (traverse_IntegerConversion(t_conversion, sg_conv)) {
-         //  IntegerConversion '(' Formula ')' -> IntegerPrimary  {cons("IntegerPrimary")}
+      if (traverse_IntegerConversion(t_conversion, conv_type)) {
          // MATCHED IntegerConversion
-      } else if (traverse_GeneralConversion(t_conversion, sg_conv)) {
-         // MATCHED GeneralConversion
-      } else if (traverse_FloatingConversion(t_conversion, sg_conv)) {
+      } else if (traverse_TypeNameConversion(t_conversion, conv_type)) {
+         // MATCHED TypeNameConversion
+      } else if (traverse_FloatingConversion(t_conversion, conv_type)) {
          // MATCHED FloatingConversion
-      } else if (traverse_FixedConversion(t_conversion, sg_conv)) {
+      } else if (traverse_FixedConversion(t_conversion, conv_type)) {
          // MATCHED FixedConversion
       } else return ATfalse;
 
-      if (traverse_Formula(t_formula, expr)) {
+      if (traverse_Formula(t_formula, cast_formula)) {
          // MATCHED Formula
       } else return ATfalse;
 
+      ROSE_ASSERT(conv_type);
+      ROSE_ASSERT(cast_formula);
+      //                                                      cast_enum? default? ctype? static? dynamic?
+      SgCastExp* cast_expr = SageBuilder::buildCastExp_nfi(cast_formula, conv_type, SgCastExp::e_default);
+      ROSE_ASSERT(cast_expr);
+      setSourcePosition(cast_expr, term);
+      expr = cast_expr;
    }
 
    else if (ATmatch(term, "NumericPrimary(<term>,<term>,<term>)", &t_conversion, &t_num_term, &t_factor)) {
 
-      if (traverse_FixedConversion(t_conversion, sg_conv)) {
+      if (traverse_FixedConversion(t_conversion, conv_type)) {
       } else return ATfalse;
       if (traverse_NumericTerm(t_num_term, sg_num_term)) {
       } else return ATfalse;
@@ -5909,6 +5925,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
    ATerm t_bit;
 
    expr = nullptr;
+   SgType* type = nullptr;
 
    if (traverse_BooleanLiteral(term, expr)) {
       // MATCHED BooleanLiteral
@@ -5923,7 +5940,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
    else if (traverse_BitLiteral(term, expr)) {
       // MATCHED BitLiteral
    }
-   else if (traverse_BitConversion(term, expr)) {
+   else if (traverse_BitConversion(term, type)) {
       // MATCHED BitPrimaryConversion
       cerr << "WARNING UNIMPLEMENTED: BitPrimary - BitPrimaryConversion\n";
       return ATtrue;
@@ -6045,34 +6062,44 @@ ATbool ATermToSageJovialTraversal::traverse_CharacterFormula(ATerm term, SgExpre
    printf("... traverse_CharacterFormula: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_next , t_formula;
+   ATerm t_literal, t_formula, t_conv_type;
+
+   SgExpression* cast_formula = nullptr;
+   SgType* conv_type = nullptr;
 
    expr = nullptr;
 
-   if (ATmatch(term, "CharacterFormula(<term>)", &t_next)) {
-      if (traverse_CharacterLiteral(t_next, expr)) {
+   if (ATmatch(term, "CharacterFormula(<term>)", &t_literal)) {
+      if (traverse_CharacterLiteral(t_literal, expr)) {
          // CharacterLiteral -> CharacterFormula
          // MATCHED CharacterLiteral
       } else return ATfalse;
 
-   } else if (ATmatch(term, "CharacterFormulaParens(<term>)", &t_next)) {
+   } else if (ATmatch(term, "CharacterFormulaParens(<term>)", &t_formula)) {
       // '(' CharacterFormula ')' -> CharacterFormula
-      if (traverse_CharacterFormula(t_next, expr)) {
+      if (traverse_CharacterFormula(t_formula, expr)) {
          // MATCHED CharacterFormula
       } else return ATfalse;
 
-   } else if (ATmatch(term, "CharacterFormulaConversion(<term>,<term>)", &t_next, &t_formula)) {
-      if (traverse_CharacterConversion(t_next, expr)) {
-         // CharacterConversion '(' Formula ')'  ->  CharacterFormula
+   } else if (ATmatch(term, "CharacterFormulaConversion(<term>,<term>)", &t_conv_type, &t_formula)) {
+      if (traverse_CharacterConversion(t_conv_type, conv_type)) {
          // MATCHED CharacterConversion
-      } else if (traverse_CharacterConversionC(t_next, expr)) {
-         // MATCHED CharacterConversionC
       } else return ATfalse;
 
-      if (traverse_Formula(t_formula, expr)) {
+      if (traverse_Formula(t_formula, cast_formula)) {
          // MATCHED Formula
       }
+
+      ROSE_ASSERT(conv_type);
+      ROSE_ASSERT(cast_formula);
+      //                                      cast_enum? default? ctype? static? dynamic?
+      SgCastExp* cast_expr = SageBuilder::buildCastExp(cast_formula, conv_type, SgCastExp::e_default);
+      ROSE_ASSERT(cast_expr);
+      setSourcePosition(cast_expr, term);
+      expr = cast_expr;
    } else return ATfalse;
+
+   ROSE_ASSERT(expr);
 
    return ATtrue;
 }
@@ -6086,28 +6113,42 @@ ATbool ATermToSageJovialTraversal::traverse_StatusFormula(ATerm term, SgExpressi
    printf("... traverse_StatusFormula: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_next , t_formula;
+   ATerm t_expr, t_conv, t_formula;
 
-   if (ATmatch(term, "StatusFormula(<term>)", &t_next)) {
-      if (traverse_StatusConstant(t_next, expr)) {
+   SgExpression* cast_formula = nullptr;
+   SgType* conv_type = nullptr;
+
+   if (ATmatch(term, "StatusFormula(<term>)", &t_expr)) {
+      if (traverse_StatusConstant(t_expr, expr)) {
          // MATCHED StatusConstant
       } else return ATfalse;
 
-   } else if (ATmatch(term, "StatusFormulaParens(<term>)", &t_next)) {
+   } else if (ATmatch(term, "StatusFormulaParens(<term>)", &t_expr)) {
       // '(' StatusFormula ')' -> StatusFormula
-      if (traverse_StatusFormula(t_next, expr)) {
+      if (traverse_StatusFormula(t_expr, expr)) {
          // MATCHED StatusFormula
       } else return ATfalse;
 
-   } else if (ATmatch(term, "StatusFormula(<term>,<term>)", &t_next, &t_formula)) {
-      if (traverse_StatusConversion(t_next, expr)) {
+   } else if (ATmatch(term, "StatusFormula(<term>,<term>)", &t_conv, &t_formula)) {
+      if (traverse_StatusConversion(t_conv, conv_type)) {
          // StatusConversion '(' Formula ')'  ->  StatusFormula
          // MATCHED StatusConversion
-      }
-      if (traverse_Formula(t_formula, expr)) {
+      } else return ATfalse;
+
+      if (traverse_Formula(t_formula, cast_formula)) {
          // MATCHED Formula
-      }
+      } else return ATfalse;
+
+      ROSE_ASSERT(conv_type);
+      ROSE_ASSERT(cast_formula);
+      //                                      cast_enum? default? ctype? static? dynamic?
+      SgCastExp* cast_expr = SageBuilder::buildCastExp(cast_formula, conv_type, SgCastExp::e_default);
+      ROSE_ASSERT(cast_expr);
+      setSourcePosition(cast_expr, term);
+      expr = cast_expr;
    } else return ATfalse;
+
+   ROSE_ASSERT(expr);
 
    return ATtrue;
 }
@@ -6121,31 +6162,39 @@ ATbool ATermToSageJovialTraversal::traverse_PointerFormula(ATerm term, SgExpress
    printf("... traverse_PointerFormula: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_next, t_formula;
+   ATerm t_literal, t_formula, t_conv_type;
 
-   if (ATmatch(term, "PointerFormula(<term>)", &t_next)) {
-      if (traverse_PointerLiteral(t_next, expr)) {
+   SgExpression* cast_formula = nullptr;
+   SgType* conv_type = nullptr;
+
+   if (ATmatch(term, "PointerFormula(<term>)", &t_literal)) {
+      if (traverse_PointerLiteral(t_literal, expr)) {
          // PointerLiteral -> PointerFormula
          // MATCHED PointerLiteral
       } else return ATfalse;
 
-   } else if (ATmatch(term, "PointerFormulaParens(<term>)", &t_next)) {
+   } else if (ATmatch(term, "PointerFormulaParens(<term>)", &t_formula)) {
       // '(' PointerFormula ')' -> PointerFormula
-      if (traverse_PointerFormula(t_next, expr)) {
+      if (traverse_PointerFormula(t_formula, expr)) {
          // MATCHED PointerFormula
       } else return ATfalse;
 
-   } else if (ATmatch(term, "PointerFormulaConversion(<term>,<term>)", &t_next, &t_formula)) {
-      if (traverse_PointerConversion(t_next, expr)) {
-         // PointerConversion '(' Formula ')'  -> PointerFormula
+   } else if (ATmatch(term, "PointerFormulaConversion(<term>,<term>)", &t_conv_type, &t_formula)) {
+      if (traverse_PointerConversion(t_conv_type, conv_type)) {
          // MATCHED PointerConversion
-      } else if (traverse_PointerConversionP(t_next, expr)) {
-         // MATCHED PointerConversionP
       } else return ATfalse;
 
-      if (traverse_Formula(t_formula, expr)) {
+      if (traverse_Formula(t_formula, cast_formula)) {
          // MATCHED Formula
-      }
+      } else return ATfalse;
+
+      ROSE_ASSERT(conv_type);
+      ROSE_ASSERT(cast_formula);
+      //                                      cast_enum? default? ctype? static? dynamic?
+      SgCastExp* cast_expr = SageBuilder::buildCastExp(cast_formula, conv_type, SgCastExp::e_default);
+      ROSE_ASSERT(cast_expr);
+      setSourcePosition(cast_expr, term);
+      expr = cast_expr;
    } else return ATfalse;
 
    return ATtrue;
@@ -6756,7 +6805,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusInverseFunction(ATerm term, Sg
 //========================================================================================
 // 7.0 TYPE MATCHING AND TYPE CONVERSIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_BitConversion(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_BitConversion(ATerm term, SgType* &type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BitConversion: %s\n", ATwriteToString(term));
@@ -6787,57 +6836,50 @@ ATbool ATermToSageJovialTraversal::traverse_BitConversion(ATerm term, SgExpressi
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_IntegerConversion(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_IntegerConversion(ATerm term, SgType* &type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_IntegerConversion: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_next;
-   SgType* type = nullptr;
+   ATerm t_type;
    std::string type_name;
 
-   expr = nullptr;
+   type = nullptr;
 
-   if (ATmatch(term, "IntegerConversion(<term>)", &t_next)) {
-      cerr << "WARNING UNIMPLEMENTED: IntegerConversion \n";
-
-      if (traverse_IntegerItemDescription(t_next, type)) {
+   if (ATmatch(term, "IntegerConversion(<term>)", &t_type)) {
+      if (traverse_IntegerItemDescription(t_type, type)) {
          // MATCHED IntegerItemDescription
       } else return ATfalse;
 
-#if 0
-      // Should be IntegerTypeDescription
-      // No traversal of this yet
-      // In Main.sdf, prefer on IntegerItemDescription -> IntegerTypeDescription
-      if (traverse_IntegerTypeDescription(t_next, type)) {
-         // MATCHED IntegerTypeDescription
-      } else return ATfalse;
-#endif
    } else if (ATmatch(term, "IntegerConversionS()")) {
       // MATCHED IntegerConversionS
+      type = SageBuilder::buildIntType();
    } else if (ATmatch(term, "IntegerConversionU()")) {
       // MATCHED IntegerConversionU
+      type = SageBuilder::buildUnsignedIntType();
    } else return ATfalse;
+
+   ROSE_ASSERT(type);
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_GeneralConversion(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_TypeNameConversion(ATerm term, SgType* &type)
 {
 #if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_GeneralConversion: %s\n", ATwriteToString(term));
+   printf("... traverse_TypeNameConversion: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_next;
+   ATerm t_type_name;
    std::string type_name;
-   SgType* type;
+   type = nullptr;
 
-   if (ATmatch(term, "GeneralConversion(<term>)", &t_next)) {
-      cerr << "WARNING UNIMPLEMENTED: GeneralConversion\n";
-      // MATCHED GeneralConversion
-      if (traverse_OptTypeName(t_next, type, type_name)) {
+   if (ATmatch(term, "TypeNameConversion(<term>)", &t_type_name)) {
+      // MATCHED TypeNameConversion
+      if (traverse_OptTypeName(t_type_name, type, type_name)) {
          // MATCHED TypeName
+         ROSE_ASSERT(type);
       } else return ATfalse;
    }
    else return ATfalse;
@@ -6845,122 +6887,87 @@ ATbool ATermToSageJovialTraversal::traverse_GeneralConversion(ATerm term, SgExpr
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_FloatingConversion(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_FloatingConversion(ATerm term, SgType* &type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_FloatingConversion: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_next;
-   SgType* type = nullptr;
+   ATerm t_type;
+   type = nullptr;
 
-   if (ATmatch(term, "FloatingConversion(<term>)", &t_next)) {
-      cerr << "WARNING UNIMPLEMENTED: FloatingConversion \n";
+   if (ATmatch(term, "FloatingConversion(<term>)", &t_type)) {
 
-      if (traverse_FloatingItemDescription(t_next, type)) {
+      if (traverse_FloatingItemDescription(t_type, type)) {
          // MATCHED FloatingItemDescription
       } else return ATfalse;
 
-#if 0
-      // Should be FloatingTypeDescription
-      // No traversal of this yet
-      // In Main.sdf, prefer on FloatingItemDescription -> FloatingTypeDescription
-      if (traverse_FloatingTypeDescription(t_next, type)) {
-         // MATCHED FloatingTypeDescription
-      } else return ATfalse;
-#endif
-
    } else if (ATmatch(term, "FloatingConversionF()")) {
       // MATCHED FloatingConversionF
+      type = SageBuilder::buildFloatType();
    } else return ATfalse;
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_FixedConversion(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_FixedConversion(ATerm term, SgType* &type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_FixedConversion: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_next;
-   SgType* type;
+   ATerm t_type;
 
-   expr = nullptr;
+   type = nullptr;
 
-   if (ATmatch(term, "FixedConversion(<term>)", &t_next)) {
+   if (ATmatch(term, "FixedConversion(<term>)", &t_type)) {
       cerr << "WARNING UNIMPLEMENTED: FixedConversion \n";
-      if (traverse_FixedItemDescription(t_next, type)) {
+      if (traverse_FixedItemDescription(t_type, type)) {
          // MATCHED FixedItemDescription
       } else return ATfalse;
    } else return ATfalse;
 
-// TODO_NOW (type system)
-#if 0
-      // Should be FixedTypeDescription
-      // No traversal of this yet
-      // In Main.sdf, prefer on FixedItemDescription -> FixedTypeDescription
-      if (traverse_FixedTypeDescription(t_next, sg_type)) {
-         // MATCHED FixedTypeDescription
-      } else return ATfalse;
-#endif
-
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_CharacterConversion(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_CharacterConversion(ATerm term, SgType* &type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_CharacterConversion: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_next;
-   SgType* type;
+   ATerm t_type;
 
-   expr = nullptr;
+   type = nullptr;
 
-   if (ATmatch(term, "CharacterConversion(<term>)", &t_next)) {
-      cerr << "WARNING UNIMPLEMENTED: CharacterConversion \n";
-      if (traverse_CharacterItemDescription(t_next, type)) {
+   if (ATmatch(term, "CharacterConversion(<term>)", &t_type)) {
+      if (traverse_CharacterItemDescription(t_type, type)) {
          // MATCHED CharacterItemDescription
       } else return ATfalse;
-   } else return ATfalse;
-
-   return ATtrue;
-}
-
-ATbool ATermToSageJovialTraversal::traverse_CharacterConversionC(ATerm term, SgExpression* &expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_CharacterConversionC: %s\n", ATwriteToString(term));
-#endif
-
-   expr = nullptr;
-
-   if (ATmatch(term, "CharacterConversionC()")) {
-      cerr << "WARNING UNIMPLEMENTED: CharacterConversionC \n";
+   } else if (ATmatch(term, "CharacterConversionC()")) {
      // MATCHED CharacterConversionC
+      type = SageBuilder::buildCharType();
    } else return ATfalse;
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_StatusConversion(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_StatusConversion(ATerm term, SgType* &type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_StatusConversion: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_next;
+   ATerm t_type;
    Sawyer::Optional<SgExpression*> status_size;
    std::list<SgInitializedName*> status_list;
 
-   expr = nullptr;
+   type = nullptr;
 
-   if (ATmatch(term, "StatusConversion(<term>)", &t_next)) {
+   if (ATmatch(term, "StatusConversion(<term>)", &t_type)) {
       cerr << "WARNING UNIMPLEMENTED: StatusConversion \n";
 
-      if (traverse_StatusItemDescription(t_next, status_list, status_size)) {
+      if (traverse_StatusItemDescription(t_type, status_list, status_size)) {
          // MATCHED StatusItemDescription
       } else return ATfalse;
 
@@ -6969,36 +6976,21 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConversion(ATerm term, SgExpre
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_PointerConversion(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_PointerConversion(ATerm term, SgType* &type)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_PointerConversion: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_next;
-   SgType* type; // TODO - QUICK DO SOMETHING!
+   ATerm t_type;
 
-   expr = nullptr;
+   type = nullptr;
 
-   if (ATmatch(term, "PointerConversion(<term>)", &t_next)) {
-      if (traverse_PointerItemDescription(t_next, type)) {
+   if (ATmatch(term, "PointerConversion(<term>)", &t_type)) {
+      if (traverse_PointerItemDescription(t_type, type)) {
          // MATCHED PointerItemDescription
       } else return ATfalse;
-   } else return ATfalse;
-
-   return ATtrue;
-}
-
-ATbool ATermToSageJovialTraversal::traverse_PointerConversionP(ATerm term, SgExpression* &expr)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_PointerConversionP: %s\n", ATwriteToString(term));
-#endif
-
-   expr = nullptr;
-
-   if (ATmatch(term, "PointerConversionP()")) {
-     std::cout << "Matched PointerConversionP" << endl;
+   } else if (ATmatch(term, "PointerConversionP()")) {
      // MATCHED PointerConversionP
    } else return ATfalse;
 

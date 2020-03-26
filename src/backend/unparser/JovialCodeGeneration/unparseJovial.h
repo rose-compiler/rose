@@ -70,6 +70,7 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           void unparseJovialType (SgModifierType*    type, SgUnparse_Info& info);
           void unparseJovialType (SgJovialTableType* type, SgUnparse_Info& info);
           void unparseJovialType (SgPointerType*     type, SgUnparse_Info& info);
+          void unparseJovialType (SgTypedefType*     type, SgUnparse_Info& info);
 
           void unparseTypeDesc (SgType* type, SgUnparse_Info& info);
 
@@ -90,6 +91,7 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
        // Expressions
           virtual void unparseUnaryOperator  (SgExpression* expr, const char* op, SgUnparse_Info& info);
           virtual void unparseBinaryOperator (SgExpression* expr, const char* op, SgUnparse_Info& info);
+          virtual void unparseCastExp        (SgExpression* expr, SgUnparse_Info& info);
 
           virtual void unparseSubscriptExpr     (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseArrayOp           (SgExpression* expr, SgUnparse_Info& info);

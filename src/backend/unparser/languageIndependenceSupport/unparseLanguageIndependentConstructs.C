@@ -8900,6 +8900,14 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
    {
      ROSE_ASSERT(expr != NULL);
 
+  // Rasmussen (3/25/2020): For unparsing of Jovial Conversion operators (casts)
+     if (SageInterface::is_Jovial_language())
+        {
+           if (SgCastExp* cast_expr = isSgCastExp(expr)) {
+              return false;
+           }
+        }
+
 #if 0
      if (isSgSubscriptExpression(expr) != NULL || isSgDotExp(expr) || isSgCAFCoExpression(expr) || isSgPntrArrRefExp(expr) )
         {
