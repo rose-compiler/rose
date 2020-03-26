@@ -6216,7 +6216,7 @@ TestForProperLanguageAndSymbolTableCaseSensitivity::evaluateInheritedAttribute(S
        // printf ("Found SgSourceFile for %s get_Fortran_only() = %s \n",sourceFile->getFileName().c_str(),sourceFile->get_Fortran_only() ? "true" : "false");
 
           return_inheritedAttribute.sourceFile = sourceFile;
-          if (sourceFile->get_Fortran_only() == true)
+          if (sourceFile->get_Fortran_only() == true || sourceFile->get_Jovial_only() == true)
              {
                return_inheritedAttribute.caseInsensitive = true;
              }
@@ -6234,9 +6234,9 @@ TestForProperLanguageAndSymbolTableCaseSensitivity::evaluateInheritedAttribute(S
                scope->get_startOfConstruct()->display("scope->isCaseInsensitive() incorrectly set");
                ROSE_ASSERT(return_inheritedAttribute.sourceFile != NULL);
                SgSourceFile* sourceFile = inheritedAttribute.sourceFile;
-               if (sourceFile->get_Fortran_only() == true)
+               if (sourceFile->get_Fortran_only() == true || sourceFile->get_Jovial_only() == true)
                   {
-                    printf ("Fortran file %s should have an AST with scopes marked as case insensitive \n",sourceFile->getFileName().c_str());
+                    printf ("Fortran (or Jovial) file %s should have an AST with scopes marked as case insensitive \n",sourceFile->getFileName().c_str());
                   }
                  else
                   {

@@ -20,31 +20,31 @@ echo "created directory for temporary files: <CodeThorn build dir>/src/${TEMP_DI
 
 #check problem specific ltl formulae and generate the results. Use 4 threads
 for i in 7 ; do
-   ./codethorn $SRCDIR/tests/rers/Problem1403_opt.c --solver=12 --exploration-mode=loop-aware-sync --edg:no_warnings --rers-binary=no --rersmode=yes --with-ltl-counterexamples=no --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --max-iterations=${i} --check-ltl=$SRCDIR/tests/rers/constraints-RERS14-5.txt --csv-spot-ltl="${2}/${TEMP_DIR}/Problem1403_ltl_results_maxiterations_${i}_n_las${MAKE_CHECK}.csv" --csv-assert="${2}/${TEMP_DIR}/Problem1403_assert_results_maxiterations_${i}_n_las${MAKE_CHECK}.csv" --threads=4 --display-diff=100000
-   if [ ! $? -eq 0 ] 
-   then 
-       eval echo "ERROR: codethorn failed in runRersLoopAwareSyncTest (iteration $i)."
-       exit 1 
-   fi
+    ./codethorn $SRCDIR/tests/rers/Problem1403_opt.c --solver=12 --exploration-mode=loop-aware-sync --edg:no_warnings --rers-binary=no --rersmode=yes --with-ltl-counterexamples=no --input-values="{1,2,3,4,5}" --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --max-iterations=${i} --check-ltl=$SRCDIR/tests/rers/constraints-RERS14-5.txt --csv-spot-ltl="${2}/${TEMP_DIR}/Problem1403_ltl_results_maxiterations_${i}_n_las${MAKE_CHECK}.csv" --csv-assert="${2}/${TEMP_DIR}/Problem1403_assert_results_maxiterations_${i}_n_las${MAKE_CHECK}.csv" --threads=4 --display-diff=100000
+    if [ ! $? -eq 0 ] 
+    then 
+        eval echo "ERROR: codethorn failed in runRersLoopAwareSyncTest (iteration $i)."
+        exit 1 
+    fi
 
     #compare with regression data
     eval diff ${2}/${TEMP_DIR}/Problem1403_assert_results_maxiterations_${i}_n_las${MAKE_CHECK}.csv $SRCDIR/regressiondata2/Problem1403_assert_results_maxiterations_${i}_n_las.csv >/dev/null 2>&1
     if [ ! $? -eq 0 ] 
     then 
-	eval echo "ERROR: RERS assertion regression data could not be correctly reproduced. Mismatch in array problem 1403, loop-aware syncronized, depth ${i}."
-	echo "(Please look at directory ${2}/${TEMP_DIR} for files that could not be matched)"
-	exit 1 
+	    eval echo "ERROR: RERS assertion regression data could not be correctly reproduced. Mismatch in array problem 1403, loop-aware syncronized, depth ${i}."
+	    echo "(Please look at directory ${2}/${TEMP_DIR} for files that could not be matched)"
+	    exit 1 
     else
-	eval echo "Problem1403_assert_results_maxiterations_${i}_n_las succesfully verified."
+	    eval echo "Problem1403_assert_results_maxiterations_${i}_n_las succesfully verified."
     fi
     eval diff ${2}/${TEMP_DIR}/Problem1403_ltl_results_maxiterations_${i}_n_las${MAKE_CHECK}.csv $SRCDIR/regressiondata2/Problem1403_ltl_results_maxiterations_${i}_n_las.csv >/dev/null 2>&1
     if [ ! $? -eq 0 ] 
     then 
-	eval echo "ERROR: RERS ltl regression data could not be correctly reproduced. Mismatch in array problem 1403, loop-aware syncronized, depth ${i}."
-	echo "(Please look at directory ${2}/${TEMP_DIR} for files that could not be matched)"
-	exit 1 
+	    eval echo "ERROR: RERS ltl regression data could not be correctly reproduced. Mismatch in array problem 1403, loop-aware syncronized, depth ${i}."
+	    echo "(Please look at directory ${2}/${TEMP_DIR} for files that could not be matched)"
+	    exit 1 
     else
-	eval echo "Problem1403_ltl_results_maxiterations_${i}_n_las succesfully verified."
+	    eval echo "Problem1403_ltl_results_maxiterations_${i}_n_las succesfully verified."
     fi
     
     #remove all temporary files generated for the tests
@@ -55,7 +55,7 @@ done
 #remove temp directory
 rm -rf ${2}/${TEMP_DIR}
 echo "removed directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
-    
+
 echo ".==============================================================."
 echo "| loop-aware-sync tests successful (solver 12, ISoLA'16 paper) |"
 echo "*==============================================================*"

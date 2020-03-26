@@ -14,6 +14,8 @@ filter=cat
 map_srcroot=
 map_bldroot=
 extra_outputs=()
+prohibit_stdout=
+prohibit_stderr=
 
 ########################################################################################################################
 usage() {
@@ -50,6 +52,11 @@ usage() {
     echo "        name of the top of the source tree, and BLDROOT is the value of the tup"
     echo "        \$(TUP_CWD) directory, i.e., a relative name upward from the current working"
     echo "        directory to the root of the build tree."
+    echo
+    echo "    --no-stdout | --no-stderr | --no-output"
+    echo "        Consider the test to have failed if it produces any output on standard"
+    echo "        output, standard error, or either (respectively) even if it has a zero"
+    echo "        exit status."
     echo
     echo "    -o OUTPUT | --output=OUTPUT"
     echo "        The result of running COMMAND... is stored in the specified file. If"
@@ -113,7 +120,8 @@ portable_timeout() {
 	    # Red Hat 6. The error we get is "Operation not permitted".
 	    TIMEOUT_CAPABILITIES=none
 	elif [ $vermaj -eq 8 -a $vermin -lt 25 ]; then
-	    TIMEOUT_CAPABILITIES=some
+	    # Turns out even this recent a version of "timeout" fails miserably on CentOS-7 when run from inside Tup.
+	    TIMEOUT_CAPABILITIES=none
 	else
 	    TIMEOUT_CAPABILITIES=all
 	fi
@@ -254,6 +262,19 @@ while [ "$#" -gt 0 ]; do
 	    map_blddir=$(echo "${1#--map=}" |cut -d, -f2 -s)
 	    shift
 	    ;;
+	--no-output)
+	    prohibit_stdout=yes
+	    prohibit_stderr=yes
+	    shift
+	    ;;
+	--no-stderr)
+	    prohibit_stderr=yes
+	    shift
+	    ;;
+	--no-stdout)
+	    prohibit_stdout=yes
+	    shift
+	    ;;
 	-o|--output)
 	    [ "$#" -gt 1 ] || die "\"$1\" switch expects an argument"
 	    output_file="$2"
@@ -328,7 +349,6 @@ echo "$@" >"$temp_cmd"
 start_time=$(date '+%s')
 set +e
 (
-    echo "+" "$@" >&2
     portable_timeout --foreground --kill-after=1m "$timeout" bash $temp_cmd |$filter
     exit ${PIPESTATUS[0]}
 ) >"$temp_stdout" 2>"$temp_stderr"
@@ -339,17 +359,26 @@ set -e
 (
     cat "$temp_stdout"
     echo "======== CUT ========"
+    echo "+" "$@"
     cat "$temp_stderr"
     echo "ELAPSED_TIME" $[ end_time - start_time ]
 ) > "$output_file"
 
-# If an answer file was supplied, compare the command standard output with the answer.
+# Check for various errors
 error=
 if [ "$exit_status" -eq 124 ]; then
     error="command timed out after $timeout"
 elif [ "$exit_status" -ne 0 ]; then
     error="command failed with exit status $exit_status"
     [ "$exit_status" -ge 124 ] && exit_status=127
+elif [ -n "$prohibit_stdout" -a -s "$temp_stdout" ]; then
+    error="command produced prohibited output on stdout"
+    echo "ERROR: $error" >>"$output_file"
+    [ $exit_status -eq 0 ] && exit_status=124
+elif [ -n "$prohibit_stderr" -a -s "$temp_stderr" ]; then
+    error="command produced prohibited output on stderr"
+    echo "ERROR: $error" >>"$output_file"
+    [ $exit_status -eq 0 ] && exit_status=123
 elif [ -n "$answer_file" ]; then
     temp_answer=$(tempfile)
     $filter <"$answer_file" >"$temp_answer"

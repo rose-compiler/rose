@@ -87,6 +87,7 @@ CODETHORN_HEADER_FILES=\
   FIConstAnalysis.h \
   Flow.h \
   FunctionCallMapping.h \
+  FunctionCallMapping2.h \
   FunctionCallTarget.h \
   FunctionId.h \
   FunctionIdMapping.h \
@@ -183,6 +184,7 @@ CODETHORN_SOURCE_FILES=\
   FIConstAnalysis.C \
   Flow.C \
   FunctionCallMapping.C \
+  FunctionCallMapping2.C \
   FunctionCallTarget.C \
   FunctionId.C \
   FunctionIdMapping.C \
@@ -277,6 +279,7 @@ LTLTHORN_HEADER_FILES=\
   IOSolver.h \
   LtsminConnection.h \
   ParallelAutomataGenerator.h \
+  ParProAutomata.h \
   ParProAnalyzer.h \
   ParProEState.h \
   ParProExplorer.h \
@@ -308,6 +311,7 @@ LTLTHORN_SOURCE_FILES=\
   IOSolver.C \
   LtsminConnection.C \
   ParallelAutomataGenerator.C \
+  ParProAutomata.C \
   ParProAnalyzer.C \
   ParProEState.C \
   ParProExplorer.C \
@@ -603,13 +607,13 @@ check-par-cfg:
 check-ltl-old: check-ltl-rers-different-versions
 
 # failing tests
-#check-failing: check-ltl-rers-timeout 
+#check-failing: 
 
 # failing tests due to changes in domain
 #check-ltl-failing: check-ltl-rers-array
 
 # current tests all passing
-check-ltl: check-ltl-start check-ltl-rers-arithmetic check-ltl-rers-loop-aware-sync check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array
+check-ltl: check-ltl-start check-ltl-rers-timeout check-ltl-rers-arithmetic check-ltl-rers-loop-aware-sync check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array
 
 check-ltl-start:
 	@echo ================================================================

@@ -1,0 +1,12 @@
+START
+PROGRAM bit'item ;
+BEGIN
+
+ITEM bit'var B 16 ;
+
+bit'var = 1B'0' ;
+bit'var = (*B 16*) ((2*(16 - 1)) - 1) ;
+
+END
+TERM
+

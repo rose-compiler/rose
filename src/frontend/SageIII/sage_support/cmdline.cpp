@@ -43,11 +43,22 @@ makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<st
      printf ("In makeSysIncludeList(): top: argString_result_top = %s \n",argString_result_top.c_str());
 #endif
 
+#ifdef _MSC_VER
+     string includeBase = findRoseSupportPathFromBuild("include-staging", "include\\edg");
+     // NP (3/18/2020) Need to switch the slash direction
+     for(int i = 0; i < includeBase.length(); ++i) if(includeBase[i] == '/') includeBase[i] = '\\';
+#else
      string includeBase = findRoseSupportPathFromBuild("include-staging", "include/edg");
+#endif
      for (Rose_STL_Container<string>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
         {
           ROSE_ASSERT (!i->empty());
+#ifdef _MSC_VER
+          string fullPath = (*i)[1] == ':' ? *i : (includeBase + "\\" + *i);
+#else
           string fullPath = (*i)[0] == '/' ? *i : (includeBase + "/" + *i);
+#endif
+
 #if 1
        // DQ (11/8/2011): We want to exclude the /usr/include directory since it will be search automatically by EDG.
        // If we include it here it will become part of the -sys_include directories and that will cause it to 
@@ -1002,18 +1013,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           printf ("detected use of appendPID mode \n");
 #endif
           set_appendPID(true);
-        }
-
-  // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
-  //
-  // unparseTemplateDeclarationsFromAST
-  //
-     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","unparseTemplateDeclarationsFromAST",false) == true )
-        {
-#if 1
-          printf ("detected use of unparseTemplateDeclarationsFromAST mode \n");
-#endif
-          p_unparseTemplateDeclarationsFromAST = true;
         }
 
   //
@@ -3508,9 +3507,6 @@ SgFile::usage ( int status )
 "                             files should be identical, and the same as the input file. \n"
 "     -rose:unparse_template_ast\n"
 "                             unparse C++ templates from their AST, not from strings stored by EDG. \n"
-"     -rose:unparseTemplateDeclarationsFromAST\n"
-"                             (experimental) option to permit unparsing template declarations \n"
-"                             from the AST (default: false). \n"
 "\n"
 "Debugging options:\n"
 "     -rose:detect_dangling_pointers LEVEL \n"
@@ -5681,9 +5677,6 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
      optionCount = sla(argv, "-rose:", "($)", "appendPID",1);
 
-  // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
-     optionCount = sla(argv, "-rose:", "($)", "unparseTemplateDeclarationsFromAST",1);
-
   // DQ (30/8/2017): Removing option to specify Csharp language support.
      optionCount = sla(argv, "-rose:", "($)", "(cs|cs_only)",1);
 
@@ -6300,6 +6293,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           commandLine.push_back("--preinclude");
           commandLine.push_back(*i);
         }
+
+#ifdef _MSC_VER
+     //Properly process some header files on windows
+     commandLine.push_back("-DRC_INVOKED");
+#endif
 
   // DQ (12/2/2006): Both GNU and EDG determine the language mode from the source file name extension.
   // In ROSE we also require that C files be explicitly specified to use the C language mode. Thus

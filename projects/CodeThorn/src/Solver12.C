@@ -224,7 +224,7 @@ void Solver12::run() {
       } // conditional: test if work is available
     } // while
   } // omp parallel
-  _analyzer->_analysisTimer.stop();
+  //_analyzer->_analysisTimer.stop(); 2020-03-20: stopped when time is requested
   const bool isComplete=true;
   if (!_analyzer->isPrecise()) {
     _analyzer->_firstAssertionOccurences = list<FailedAssertion>(); //ignore found assertions if the STG is not precise

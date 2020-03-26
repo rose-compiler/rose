@@ -10,7 +10,7 @@ CFG dominators for function 0x000000c4:
   function 0x000000c4 dominator of 0x000000ef<6> is 0x000000ea<4>
   function 0x000000c4 dominator of 0x000000cc<7> is 0x000000c4<0>
   function 0x000000c4 dominator of 0x000000f6<8> is 0x000000ef<6>
-CFG dominators for function 0x00000100 "_start":
+CFG dominators for function 0x00000100:
   function 0x00000100 dominator of 0x000000d9<0> is 0x000000d3<10>
   function 0x00000100 dominator of 0x000000ea<1> is 0x000000e8<11>
   function 0x00000100 dominator of 0x000000ef<2> is 0x000000ea<1>

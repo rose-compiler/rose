@@ -21,7 +21,11 @@ endif
 endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-   SUBDIRS += experimental_frontend_tests
+# Rasmussen (3/7/2020): Removed testing of the experimental (ATerm based) Fortran. It is now obsolete because
+# it is being replaced by experimental_flang_frontend
+#
+#   SUBDIRS += experimental_frontend_tests
+#
 endif
 
 
@@ -335,6 +339,7 @@ F90_TESTCODES_REQUIRED_TO_PASS =  \
      test2019_accessibility_attribute.f90 \
      test2019_accessibility_attribute2.f90 \
      test2020_use_iso_c_binding.f90 \
+     test2020_use_iso_c_binding_2.f90 \
      test2020_select_case.f90 \
      rose-issue-par-39.f90 \
      canonicalExample.f90 \
