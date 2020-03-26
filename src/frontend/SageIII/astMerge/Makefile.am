@@ -21,7 +21,7 @@ libastMerge_la_DEPENDENCIES = $(GENERATED_SOURCE)
 
 pkginclude_HEADERS = \
      buildMangledNameMap.h  buildReplacementMap.h  collectAssociateNodes.h  deleteOrphanNodes.h \
-     fixupTraversal.h  merge.h  merge_support.h  nullifyAST.h  test_support.h requiredNodes.h astMergeAPI.h AstFixParentTraversal.h
+     fixupTraversal.h  merge.h  merge_support.h  nullifyAST.h  test_support.h requiredNodes.h AstFixParentTraversal.h
 
 
 EXTRA_DIST = CMakeLists.txt

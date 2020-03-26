@@ -6,5 +6,5 @@ run $(librose_compile) merge_support.C test_support.C buildMangledNameMap.C buil
      normalizeTypes.C requiredNodes.C merge.C AstFixParentTraversal.C
 
 run $(public_header) buildMangledNameMap.h  buildReplacementMap.h  collectAssociateNodes.h  deleteOrphanNodes.h \
-    fixupTraversal.h  merge.h  merge_support.h  nullifyAST.h  test_support.h requiredNodes.h astMergeAPI.h \
+    fixupTraversal.h  merge.h  merge_support.h  nullifyAST.h  test_support.h requiredNodes.h \
     AstFixParentTraversal.h

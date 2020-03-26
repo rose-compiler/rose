@@ -402,20 +402,8 @@ main ( int argc, char * argv[] )
   // normalizeTypedefSequenceLists();
   // printf ("DONE: Normalize the SgTypedefSeq IR nodes to be consistant across the union of ASTs. \n");
 
-#if 1
-  // DQ (6/7/2010): Now call the AST merge that will detect redundant (or repeated) parts 
-  // of the AST and force sharing of these pieces and delete the redundany copies.
-     printf ("\n\nCalling AstMergeSupport() \n");
-  // int mergeErrorCode = AstMergeSupport(globalProject);
-  // bool skipFrontendSpecificIRnodes = true;
-  // SgProject::set_verbose(3);
      bool skipFrontendSpecificIRnodes = false;
      mergeAST(globalProject,skipFrontendSpecificIRnodes);
-  // ROSE_ASSERT(mergeErrorCode == 0);
-  // SgProject::set_verbose(0);
-#else
-     printf ("Skipping call to mergeAST() \n");
-#endif
 
      printf ("Size of AST (after final merge to eliminate redundancy) = %zu \n",numberOfNodes());
 

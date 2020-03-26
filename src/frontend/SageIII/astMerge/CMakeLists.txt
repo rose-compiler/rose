@@ -11,5 +11,5 @@ add_dependencies(astMerge rosetta_generated)
 install(FILES
   buildMangledNameMap.h buildReplacementMap.h collectAssociateNodes.h
   deleteOrphanNodes.h fixupTraversal.h merge.h merge_support.h nullifyAST.h
-  test_support.h requiredNodes.h astMergeAPI.h AstFixParentTraversal.h
+  test_support.h requiredNodes.h AstFixParentTraversal.h
   DESTINATION ${INCLUDE_INSTALL_DIR})
