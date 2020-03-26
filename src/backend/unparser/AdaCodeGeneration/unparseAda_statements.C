@@ -162,6 +162,13 @@ Unparse_Ada::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info&
           case V_SgJavaImportStatement:                unparseImportDeclarationStatement(stmt, info); break;
 #endif
 
+          case V_SgNamespaceDeclarationStatement:
+          case V_SgFunctionDeclaration:
+             {
+               // currently ignored
+               std::cerr << "skip " << stmt->class_name() << " in ADA unparser" << std::endl; 
+               break;
+             }
           default:
              {
                printf("Unparse_Ada::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->class_name().c_str(), stmt->variantT());

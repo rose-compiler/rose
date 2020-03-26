@@ -1,5 +1,8 @@
 SgAccessModifier
 SgActualArgumentExpression
+SgAdaExitStmt
+SgAdaLoopStmt
+SgAdaAccessType
 SgAddOp
 SgAddressOfOp
 SgAggregateInitializer
@@ -703,6 +706,7 @@ SgTypeExpression
 SgTypeLabel
 SgTypeDouble
 SgTypeEllipse
+SgTypeFixed
 SgTypeFloat
 SgTypeFloat128
 SgTypeFloat80
