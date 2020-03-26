@@ -62,12 +62,14 @@ TESTCODES_REQUIRED_TO_PASS_ads = unit_3.ads empty_package.ads ordinary_type_decl
    procedure_declaration.ads function_declaration.ads \
    parameter_declaration.ads entry_declaration.ads exception_declaration.ads \
    tagged_definition.ads derived_record.ads simple_expression_range.ads \
-   selected_component.ads nested_package.ads component_declaration.ads all_modes.ads unit_2.ads
+   selected_component.ads nested_package.ads component_declaration.ads all_modes.ads unit_2.ads \
+   case_function.ads constants.ads for_loop.adb loop_exit.adb real_typedecl.ads recursive_call.adb \
+   short_circuit.adb some_modes.ads     
 
 TESTCODES_REQUIRED_TO_PASS_adb = unit_1.adb minimal.adb procedure_declaration.adb function_declaration.adb \
    package_with_body.adb task_with_body.adb choice_parameter_specification.adb function_call.adb \
    operator.adb type_conversion.adb if_statement.adb accept_statement.adb entry_call.adb \
-   loop_statement.adb procedure_call.adb raise_statement.adb unit_2.adb
+   loop_statement.adb procedure_call.adb raise_statement.adb unit_2.adb case_function.adb
 
 # Use these files to initialize TESTCODES_REQUIRED_TO_PASS
 ORIGINAL_FILE_LIST = minimal.adb empty_package.ads ordinary_type_declaration.ads task_type_declaration.ads variable_declaration.ads \

@@ -1032,6 +1032,16 @@ HEADER_ARRAY_TYPE_START
 
 HEADER_ARRAY_TYPE_END
 
+HEADER_ADA_ACCESS_TYPE_START
+
+       // DQ (3/22/2017): I would like to remove this function if possible.
+       // DQ (3/22/2017): Added the get_name() function prototype directly so that 
+       // it could be differentiated from where it is a virtual function.
+          SgName get_name() const;
+
+HEADER_ADA_ACCESS_TYPE_END
+
+
 // Rasmussen (2/19/2020): Added SgTypedFixed for Jovial. Don't really know what to do here.
 HEADER_TYPE_FIXED_TYPE_START
       // SgName get_name() const;
@@ -6656,6 +6666,45 @@ SgArrayType::get_mangled(void) const
 
 SOURCE_ARRAY_TYPE_END
 
+SOURCE_ADA_ACCESS_TYPE_START
+
+#if 0
+SgName
+SgAdaAccessType::get_name(void) const {
+    SgType* under_type = p_base_type;
+
+    string name("access ");
+    
+    name.append(under_type->get_name());
+    return SgName(name);
+}
+
+SgName
+SgAdaAccessType::get_qualified_name(void) const {
+    SgType* under_type = p_base_type;
+
+    string name("access ");
+    
+    name.append(under_type->get_qualified_name());
+    return SgName(name);
+}
+#endif
+
+// RV (1/31/2006): Changed the form of the mangled name to include begin/end tags.
+SgName
+SgAdaAccessType::get_mangled(void) const {
+    const SgType* under_type = get_base_type();
+     
+    string name("a'");
+    
+    name.append(under_type->get_mangled());
+    return SgName(name);
+}
+     
+SOURCE_ADA_ACCESS_TYPE_END
+
+
+
 SOURCE_TYPE_ELLIPSE_TYPE_START
 SgName
 $CLASSNAME::get_mangled (void) const
@@ -8619,6 +8668,27 @@ SgArrayType::createType ( SgType* base_type, SgExpression* idx, SgExpression* op
    }
 
 SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_END
+
+SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE_START
+
+SgAdaAccessType*
+SgAdaAccessType::createType (SgType* base_type, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgAdaAccessType  proto(base_type); // \pp not sure if stack allocation works
+  SgName           name = proto.get_mangled();
+  SgType*          ty = get_globalTypeTable()->lookup_type(name);
+  
+  if (SgAdaAccessType* unified = isSgAdaAccessType(ty))
+    return unified;
+   
+  ROSE_ASSERT(ty == NULL); 
+  SgAdaAccessType* res = new SgAdaAccessType(base_type);
+  
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+
+SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE_END
 
 
 // Rasmussen (2/19/2020): Added SgTypedFixed (primitive type in Jovial)
