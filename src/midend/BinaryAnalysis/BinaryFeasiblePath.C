@@ -701,8 +701,9 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
               .argument("coefficent", realNumberParser(settings.kCycleCoefficient))
               .doc("When the algorithm encounters a vertex which has already been visited by the current path, then the "
                    "effective k value is adjusted. The amount of adjustment is the size of the vertex (e.g., number of "
-                   "instructions) multiplied by the @v{coefficient} specified here. Both positive and negative coefficients "
-                   "are permitted. The default is " + boost::lexical_cast<std::string>(settings.kCycleCoefficient) + "."));
+                   "instructions) multiplied by the floating-point @v{coefficient} specified here. Both positive and "
+                   "negative coefficients are permitted. The default is " +
+                   boost::lexical_cast<std::string>(settings.kCycleCoefficient) + "."));
 
     sg.insert(Switch("max-call-depth")
               .argument("n", nonNegativeIntegerParser(settings.maxCallDepth))
@@ -1757,7 +1758,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             // If we've visited a vertex too many times (e.g., because of a loop or recursion), then don't go any further.
             size_t nVertexVisits = path.nVisits(backVertex);
             if (nVertexVisits > settings_.maxVertexVisit) {
-                SAWYER_MESG(mlog[WARN]) <<indent <<"max visits (" <<settings_.maxVertexVisit <<") reached"
+                SAWYER_MESG(mlog[TRACE]) <<indent <<"max visits (" <<settings_.maxVertexVisit <<") reached"
                                         <<" for vertex " <<partitioner().vertexName(backVertex) <<"\n";
                 ++stats_.maxVertexVisitHits;
                 doBacktrack = true;
@@ -1775,10 +1776,10 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             // Limit path length (in terms of number of instructions)
             if (!doBacktrack) {
                 if ((double)pathNInsns > effectiveMaxPathLength) {
-                    SAWYER_MESG(mlog[WARN]) <<indent <<"maximum path length exceeded:"
-                                            <<" path length is " <<StringUtility::plural(pathNInsns, "instructions")
-                                            <<", effective limit is " <<effectiveMaxPathLength
-                                            <<" at vertex " <<partitioner().vertexName(backVertex) <<"\n";
+                    SAWYER_MESG(trace) <<indent <<"maximum path length exceeded:"
+                                       <<" path length is " <<StringUtility::plural(pathNInsns, "instructions")
+                                       <<", effective limit is " <<effectiveMaxPathLength
+                                       <<" at vertex " <<partitioner().vertexName(backVertex) <<"\n";
                     ++stats_.maxPathLengthHits;
                     doBacktrack = true;
                 }
