@@ -428,7 +428,7 @@ outputPredefinedMacros()
 
 namespace Rose {
 namespace AST {
-namespace IO {
+namespace Merge {
 
 typedef std::map<int, std::string> f2n_t;
 typedef std::map<std::string, int> n2f_t;
@@ -549,6 +549,9 @@ void mergeFunctionTypeSymbolTable(SgFunctionTypeTable * gftt, SgFunctionTypeTabl
   mergeSymbolTable(gfst, fst);
 }
 
+}
+namespace IO {
+
 void append(SgProject * project, std::list<std::string> const & astfiles) {
   size_t num_nodes = Sg_File_Info::numberOfNodes();
 
@@ -600,13 +603,13 @@ void append(SgProject * project, std::list<std::string> const & astfiles) {
 
     SgTypeTable *         lgtt = SgNode::get_globalTypeTable();
 //  printf("lgtt     = %p\n", lgtt);
-    mergeTypeSymbolTable(gtt, lgtt);
+    Rose::AST::Merge::mergeTypeSymbolTable(gtt, lgtt);
 
     SgFunctionTypeTable * lgftt = SgNode::get_globalFunctionTypeTable();
 //  printf("lgftt    = %p\n", lgftt);
-    mergeFunctionTypeSymbolTable(gftt, lgftt);
+    Rose::AST::Merge::mergeFunctionTypeSymbolTable(gftt, lgftt);
 
-    mergeFileIDs(Sg_File_Info::get_fileidtoname_map(), Sg_File_Info::get_nametofileid_map(), gf2n, gn2f, num_nodes);
+    Rose::AST::Merge::mergeFileIDs(Sg_File_Info::get_fileidtoname_map(), Sg_File_Info::get_nametofileid_map(), gf2n, gn2f, num_nodes);
 
     // Restore shared (static) fields
 
@@ -621,12 +624,6 @@ void append(SgProject * project, std::list<std::string> const & astfiles) {
   }
 
 //generateWholeGraphOfAST("loaded", NULL);
-
-  mergeAST(project, /* skipFrontendSpecificIRnodes = */false);
-
-  PatchDeclStmt patch_declstmt;
-  patch_declstmt.traverseMemoryPool();
-  patch_declstmt.apply();
 
   AST_FILE_IO::reset();
 
@@ -692,28 +689,23 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
      SgProject* project = new SgProject (argv2,frontendConstantFolding);
      ROSE_ASSERT (project != NULL);
 
-  // DQ (9/6/2005): I have abandoned this form or prelinking (AT&T C Front style).
-  // To be honest I find this level of technology within ROSE to be embarassing...
-  // We not handle prelinking by generating all required template instantiations
-  // as static functions.  A more global based prelinker will be built at some
-  // point and will likely utilize the SGLite database or some other auxiliary file
-  // mechansism.
-  // DQ (3/31/2004): If there are templates used then we need to modify the *.ti file build by EDG.
-  // buildTemplateInstantiationSupportFile ( project );
-
-  // DQ (4/16/2015): This is replaced with a better implementation.
-  // Make sure the isModified boolean is clear for all newly-parsed nodes.
-  // checkIsModifiedFlag(project);
-
   // DQ (1/27/2017): Comment this out so that we can generate the dot graph to debug symbol with null basis.
      unsetNodesMarkedAsModified(project);
-  // printf ("ERROR: In frontend(const std::vector<std::string>& argv): commented out unsetNodesMarkedAsModified() \n");
 
      std::list<std::string> const & astfiles = project->get_astfiles_in();
      if (astfiles.size() > 0) {
        Rose::AST::IO::append(project, astfiles);
+       ROSE_ASSERT(project->get_ast_merge());
      }
-   
+
+     if (project->get_ast_merge()) {
+       mergeAST(project, /* skipFrontendSpecificIRnodes = */false);
+
+       Rose::AST::Merge::PatchDeclStmt patch_declstmt;
+       patch_declstmt.traverseMemoryPool();
+       patch_declstmt.apply();
+     }
+
   // Set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
   // Removed semicolon at end of if conditional to allow it to have a body [Rasmussen 2019.01.29]
      if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction)

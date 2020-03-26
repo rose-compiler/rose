@@ -2035,10 +2035,7 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/7/2005): Added to support AST merging (specified using several parameters).
-  // A specified file records the working directory and the commandline for later execution.
-     Project.setDataPrototype("bool","astMerge", "= false",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Project.setDataPrototype("std::string","astMergeCommandFile", "= \"\"",
+     Project.setDataPrototype("bool","ast_merge", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Milind Chabbi (9/9/2013): Added a commandline option to use a file to generate persistent id for files

@@ -17957,8 +17957,7 @@ SgProject::initialization()
 
      p_prelink                             = false;
      p_template_instantiation_mode         = e_unknown;
-     p_astMerge                            = false;
-     p_astMergeCommandFile                 = "";
+     p_ast_merge                            = false;
      p_projectSpecificDatabaseFile         = "";
      p_compilationPerformanceFile          = "";
      p_C_PreprocessorOnly                  = false;
