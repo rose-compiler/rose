@@ -11,16 +11,24 @@ JOVIAL_TESTCODES = \
  int_conversion.jov                     \
  item_desc_conversion.jov               \
  status_enumval.jov                     \
- typename_conv.jov
+ typename_conv.jov                      \
+ 1_2_2_non-nested-subroutine_a.jov      \
+ 1_2_2_non-nested-subroutine_b.jov      \
+ 1_2_2_procedure-module_a.jov           \
+ 1_2_2_procedure-module_b.jov           \
+ 1_2_2_procedure-module_e.jov           \
+ 1_2_2_procedure-module_f.jov           \
+ 1_2_3_main-program-module_a.jov        \
+ 1_2_3_main-program-module_d.jov        \
+ 1_2_3_program-body_a.jov               \
+ 1_2_3_program-body_b.jov               \
+ 1_2_3_program-body_c.jov
 
 
 JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \
  tables_and_pointers.jov                \
- 1_2_3_main-program-module_a.jov        \
  1_2_3_main-program-module_b.jov        \
- 1_2_3_program-body_b.jov               \
- 1_2_3_program-body_c.jov               \
  2_1_1_5_char_item_desc.jov             \
  2_1_2_simple_table_var.jov             \
  2_1_2_compound_table_var.jov           \
@@ -118,19 +126,11 @@ JOVIAL_TESTCODES_WORKING_ON = \
  rose-issue-2148.jov                    \
  rose-issue-2149.jov                    \
  rose-issue-2150.jov                    \
- 1_2_2_non-nested-subroutine_a.jov      \
- 1_2_2_non-nested-subroutine_b.jov      \
- 1_2_2_procedure-module_a.jov           \
- 1_2_2_procedure-module_b.jov           \
  1_2_2_procedure_module_c.jov           \
  1_2_2_procedure_module_d.jov           \
- 1_2_2_procedure_module_e.jov           \
- 1_2_2_procedure_module_f.jov           \
  1_2_2_procedure_module_g.jov           \
  1_2_3_main-program-module_b.jov        \
  1_2_3_main-program-module_c.jov        \
- 1_2_3_main-program-module_d.jov        \
- 1_2_3_program-body_a.jov               \
  1_2_3_program-body_d.jov               \
  1_2_3_program-body_e.jov               \
  1_2_3_program-body_f.jov               \
