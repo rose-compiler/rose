@@ -29,7 +29,7 @@ int main( int argc, char* argv[] )
           set<SgNode*> emptySet;
           generateWholeGraphOfAST(filename+"_WholeAST_with_builtin_functions",emptySet);
 
-          set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();
+          set<SgNode*> skippedNodeSet = SageInterface::getFrontendSpecificNodes();
           generateWholeGraphOfAST(filename+"_WholeAST_skipped_nodes",skippedNodeSet);
         }
        else

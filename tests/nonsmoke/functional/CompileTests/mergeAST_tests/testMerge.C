@@ -8,10 +8,6 @@
 using namespace std;
 using namespace Rose;
 
-// Global variable that functions can use to make sure that there IR nodes were not deleted!
-// This is used for debugging only (tests in assertions).
-// set<SgNode*> finalDeleteSet;
-
 // Supporting function to process the commandline
 void commandLineProcessing (int & argc, char** & argv, bool & skipFrontendSpecificIRnodes)
    {
@@ -43,17 +39,6 @@ void commandLineProcessing (int & argc, char** & argv, bool & skipFrontendSpecif
 int
 main ( int argc, char** argv )
    {
-#if 0
-  // DQ (11/1/2016): Use line buffering to force the capture of all output (stdout) when redirecting output to a file.
-  // Note that this can significantly slow down the execution with output.
-     setlinebuf(stdout);
-#endif
-
-#if 0
-     printf ("Exiting at top of main() \n");
-     ROSE_ASSERT(false);
-#endif
-
   // ****************************************************************************
   // **************************  Command line Processing  ***********************
   // ****************************************************************************
@@ -66,19 +51,8 @@ main ( int argc, char** argv )
   // ****************************************************************************
   // **************************      Build the AST    ***************************
   // ****************************************************************************
-#if 1
-  // DQ (9/24/2011): Both mergeTest_90.C and mergeTest_124.C fail using the default (original expression trees).
      SgProject* project = frontend (argc, argv);
-#else
-  // DQ (9/24/2011): The merge passes both mergeTest_90.C and mergeTest_124.C if we use the constant folding option.
-     SgProject* project = frontend (argc, argv,true);
-#endif
      ROSE_ASSERT(project != NULL);
-
-#if 0
-     printf ("Exiting after building the pre-merged AST \n");
-     ROSE_ASSERT(false);
-#endif
 
 #if 1
   // Run AST tests (takes a while on large ASTs, so we sometime skip this for some phases of development on AST merge)
@@ -113,26 +87,15 @@ main ( int argc, char** argv )
      generateAstGraph( project, MAX_NUMBER_OF_IR_NODES, "_beforeMerge" );
 #endif
 
-  // DQ (5/30/2007): This is no longer required since we use the command line option to 
-  // ROSE "-rose:mergeAST" to merge ASTs of multiple files specified on the command line.
-  // mergeAST(project,skipFrontendSpecificIRnodes);
-
 #if 0
   // Output performance information for ROSE plus performance information for AST Merge
      AstPerformance::generateReport();
 #endif
 
-     int errorCode = 0;
-
-#if 0
-     errorCode = backend(project);
-#endif
-
-  // End of AST Merge
      if (SgProject::get_verbose() > 0)
           printf ("Program Terminated Normally! \n");
 
-     return errorCode;
+     return 0;
    }
 
 

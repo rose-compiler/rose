@@ -402,8 +402,7 @@ main ( int argc, char * argv[] )
   // normalizeTypedefSequenceLists();
   // printf ("DONE: Normalize the SgTypedefSeq IR nodes to be consistant across the union of ASTs. \n");
 
-     bool skipFrontendSpecificIRnodes = false;
-     mergeAST(globalProject,skipFrontendSpecificIRnodes);
+     Rose::AST::merge(globalProject);
 
      printf ("Size of AST (after final merge to eliminate redundancy) = %zu \n",numberOfNodes());
 

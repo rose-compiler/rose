@@ -19099,8 +19099,7 @@ SgProject::display ( const std::string & label ) const
 
      mprintf ("   p_template_instantiation_mode             = %d \n",p_template_instantiation_mode);
 
-     mprintf ("   p_astMerge                                = %s \n",(p_astMerge == true) ? "true" : "false");
-     mprintf ("   p_astMergeCommandFile                     = %s \n",p_astMergeCommandFile.c_str());
+     mprintf ("   p_ast_merge                               = %s \n",(p_ast_merge == true) ? "true" : "false");
      mprintf ("   p_projectSpecificDatabaseFile             = %s \n",p_projectSpecificDatabaseFile.c_str());
      mprintf ("   p_compilationPerformanceFile              = %s \n",p_compilationPerformanceFile.c_str());
 

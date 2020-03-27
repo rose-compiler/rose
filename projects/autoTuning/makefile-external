@@ -29,6 +29,5 @@ ROSE_FLAGS+=-rose:hpct:eqpath .=/home/liao6/svnrepos/projects/empirical-tuning/r
 
 test: a.out
 	./a.out -c  $(ROSE_FLAGS) $(INPUT_CODE) 
-#	./a.out -c  -rose:astMerge -rose:verbose 0 -g3 $(INPUT_CODE) 
 clean:
 	rm -rf a.out *.o rose_* *.dot

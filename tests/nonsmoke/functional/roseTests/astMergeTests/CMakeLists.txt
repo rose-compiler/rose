@@ -4,7 +4,7 @@ install(TARGETS testMerge DESTINATION bin)
 
 add_test(
   NAME testMerge_test1
-  COMMAND testMerge -rose:verbose 0 -rose:astMerge
+  COMMAND testMerge -rose:verbose 0 -rose:ast:merge
           -c ${CMAKE_CURRENT_SOURCE_DIR}/mangleTest.C
           ${CMAKE_CURRENT_SOURCE_DIR}/mangleTwo.C
 )
@@ -19,7 +19,7 @@ add_test(
 
 add_test(
   NAME testMerge_test3
-  COMMAND testMerge -rose:verbose 0 -rose:astMerge
+  COMMAND testMerge -rose:verbose 0 -rose:ast:merge
           -c ${CMAKE_CURRENT_SOURCE_DIR}/mangleTest.C
           ${CMAKE_CURRENT_SOURCE_DIR}/mangleTwo.C
           ${CMAKE_CURRENT_SOURCE_DIR}/mangleThree.C
