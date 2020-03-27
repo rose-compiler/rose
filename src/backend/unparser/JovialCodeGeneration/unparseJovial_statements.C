@@ -56,13 +56,11 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
      switch (stmt->variantT())
         {
-       // case V_SgGlobal:                     cout << "Got it !!!" << endl; /* unparseGlobalStmt (stmt, info); */ break;
-
        // module support
           case V_SgJovialCompoolStatement:     unparseCompoolStmt (stmt, info);     break;
           case V_SgProgramHeaderStatement:     unparseProgHdrStmt (stmt, info);     break;
           case V_SgProcedureHeaderStatement:   unparseProcDeclStmt(stmt, info);     break;
-          case V_SgFunctionDeclaration:        unparseFuncDeclStmt(stmt, info);     break;
+       // case V_SgFunctionDeclaration:        unparseFuncDeclStmt(stmt, info);     break;  /* replaced by SgProcedureHeaderStatement */
           case V_SgFunctionDefinition:         unparseFuncDefnStmt(stmt, info);     break;
 
        // directives, define
@@ -223,9 +221,9 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgProcedureHeaderStatement* func = isSgProcedureHeaderStatement(stmt);
      ROSE_ASSERT(func);
 
+  // This needs to be fixed so that a DEF or REF is not required
      bool isDefiningDeclaration = (func->get_declarationModifier().isJovialDef());
 
-  // This will likely need to be changed.  It may work for compool files but likely not for jovial files.
      if (isDefiningDeclaration)  curprint("DEF PROC ");
      else                        curprint("REF PROC ");
 
@@ -397,27 +395,39 @@ Unparse_Jovial::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-     SgBasicBlock* basic_stmt = isSgBasicBlock(stmt);
-     ROSE_ASSERT(basic_stmt != NULL);
+     SgBasicBlock* block = isSgBasicBlock(stmt);
+     ROSE_ASSERT(block != NULL);
 
 #if 0
   // DQ (10/6/2008): Adding space here is required to get "else if" blocks formatted correctly (at least).
-     unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK1);
+     unp->cur.format(block, info, FORMAT_BEFORE_BASIC_BLOCK1);
 #endif
 
-     curprint("BEGIN\n");
+     int block_size = block->get_statements().size();
 
-     SgStatementPtrList::iterator p = basic_stmt->get_statements().begin();
-     for ( ; p != basic_stmt->get_statements().end(); ++p)
-     {
-          unparseStatement((*p), info);
-     }
+  // allow one declaration to be unparsed without BEGIN and END
+     if (block_size > 1)
+        {
+           info.inc_nestingLevel();
+           curprint_indented("BEGIN\n", info);
+        }
 
-     curprint("END\n");
+     info.inc_nestingLevel();
+     BOOST_FOREACH(SgStatement* block_stmt, block->get_statements())
+        {
+           unparseStatement(block_stmt, info);
+        }
+     info.dec_nestingLevel();
+
+     if (block_size > 1)
+        {
+           curprint_indented("END\n", info);
+           info.dec_nestingLevel();
+        }
 
 #if 0
   // DQ (10/6/2008): This does not appear to be required (passes all tests).
-     unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
+     unp->cur.format(block, info, FORMAT_AFTER_BASIC_BLOCK1);
 #endif
    }
 

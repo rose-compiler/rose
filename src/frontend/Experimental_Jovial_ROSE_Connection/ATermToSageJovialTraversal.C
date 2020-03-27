@@ -319,7 +319,6 @@ ATbool ATermToSageJovialTraversal::traverse_NonNestedSubroutineList(ATerm term)
    General_Language_Translation::SubroutineAttribute def_or_ref = General_Language_Translation::e_subroutine_attr_none;
 
    if (ATmatch(term, "NonNestedSubroutineList(<term>)", &t_subroutine_list)) {
-      cerr << "WARNING UNIMPLEMENTED: NonNestedSubroutineList \n";
       ATermList tail = (ATermList) ATmake("<term>", t_subroutine_list);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
@@ -3685,34 +3684,39 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term, Gene
    ATerm t_proc_heading, t_proc_body;
 
    std::string name;
-   std::list<FormalParameter> param_list;
+   std::list<FormalParameter> param_name_list;
    General_Language_Translation::SubroutineAttribute subroutine_attr;
    bool isDef = (def_or_ref != General_Language_Translation::e_subroutine_ref);
 
    SgFunctionDeclaration* function_decl = nullptr;
+   SgFunctionParameterList* param_list = nullptr;
+   SgBasicBlock* param_scope = nullptr;
 
    if (ATmatch(term, "ProcedureDefinition(<term>,<term>)", &t_proc_heading, &t_proc_body)) {
 
-      if (traverse_ProcedureHeading(t_proc_heading, name, param_list, subroutine_attr)) {
+      if (traverse_ProcedureHeading(t_proc_heading, name, param_name_list, subroutine_attr)) {
          // MATCHED ProcedureHeading
       } else return ATfalse;
 
-      ROSE_ASSERT(false);
+   // Enter SageTreeBuilder for SgFunctionParameterList
+      sage_tree_builder.Enter(param_list, param_scope);
 
-#if 0
-   // Enter SageTreeBuilder for SgFunctionDeclaration (or SgFunctionParameterScope)
-   // TODO: this will depend on if it is a REF or DEF (assume REF for now)
-      sage_tree_builder.Enter(function_decl, name, param_list, subroutine_attr, isDef);
-
+   // These declarations will stored in the function parameter scope
       if (traverse_SubroutineBody(t_proc_body)) {
          // MATCHED ProcedureBody (the production is actually a SubroutineBody)
       } else return ATfalse;
 
-   // Leave SageTreeBuilder for SgFunctionDeclaration
-      sage_tree_builder.Leave(function_decl);
-#endif
+   // Leave SageTreeBuilder for SgFunctionParameterList
+      sage_tree_builder.Leave(param_list, param_scope, param_name_list);
+
    }
    else return ATfalse;
+
+// Enter SageTreeBuilder for SgFunctionDeclaration
+   sage_tree_builder.Enter(function_decl, name, /*return_type*/nullptr, param_list, subroutine_attr, isDef);
+
+// Leave SageTreeBuilder for SgFunctionDeclaration
+   sage_tree_builder.Leave(function_decl, param_scope, isDef);
 
    return ATtrue;
 }
