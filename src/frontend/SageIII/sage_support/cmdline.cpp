@@ -43,11 +43,22 @@ makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<st
      printf ("In makeSysIncludeList(): top: argString_result_top = %s \n",argString_result_top.c_str());
 #endif
 
+#ifdef _MSC_VER
+     string includeBase = findRoseSupportPathFromBuild("include-staging", "include\\edg");
+     // NP (3/18/2020) Need to switch the slash direction
+     for(int i = 0; i < includeBase.length(); ++i) if(includeBase[i] == '/') includeBase[i] = '\\';
+#else
      string includeBase = findRoseSupportPathFromBuild("include-staging", "include/edg");
+#endif
      for (Rose_STL_Container<string>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
         {
           ROSE_ASSERT (!i->empty());
+#ifdef _MSC_VER
+          string fullPath = (*i)[1] == ':' ? *i : (includeBase + "\\" + *i);
+#else
           string fullPath = (*i)[0] == '/' ? *i : (includeBase + "/" + *i);
+#endif
+
 #if 1
        // DQ (11/8/2011): We want to exclude the /usr/include directory since it will be search automatically by EDG.
        // If we include it here it will become part of the -sys_include directories and that will cause it to 
@@ -6282,6 +6293,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           commandLine.push_back("--preinclude");
           commandLine.push_back(*i);
         }
+
+#ifdef _MSC_VER
+     //Properly process some header files on windows
+     commandLine.push_back("-DRC_INVOKED");
+#endif
 
   // DQ (12/2/2006): Both GNU and EDG determine the language mode from the source file name extension.
   // In ROSE we also require that C files be explicitly specified to use the C language mode. Thus

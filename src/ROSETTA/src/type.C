@@ -121,6 +121,7 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( PartialFunctionModifierType, "PartialFunctionModifierType", "T_PARTIAL_FUNCTION_MODIFIER" );
      NEW_TERMINAL_MACRO ( ArrayType           , "ArrayType",            "T_ARRAY" );
      NEW_TERMINAL_MACRO ( TypeEllipse         , "TypeEllipse",          "T_ELLIPSE" );
+     NEW_TERMINAL_MACRO ( AdaAccessType       , "AdaAccessType",        "T_ADA_ACCESS" );
 
   // FMZ (4/8/2009): Added for Cray Pointer
      NEW_TERMINAL_MACRO ( TypeCrayPointer           , "TypeCrayPointer",            "T_CRAY_POINTER" );
@@ -211,7 +212,7 @@ Grammar::setUpTypes ()
           TypeCrayPointer      | TypeLabel               | JavaUnionType             | RvalueReferenceType  | 
           TypeNullptr          | DeclType                | TypeOfType                | TypeMatrix           |
           TypeTuple            | TypeChar16              | TypeChar32                | TypeFloat128         |
-          TypeFixed            | AutoType,
+          TypeFixed            | AutoType                | AdaAccessType,
         "Type","TypeTag", false);
 
      //SK(08/20/2015): TypeMatrix and TypeTuple for Matlab
@@ -380,6 +381,10 @@ Grammar::setUpTypes ()
      PointerType.excludeFunctionSource      ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      ArrayType.excludeFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      ArrayType.excludeFunctionSource        ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     
+  // PP (3/24/20): Adding ADA types
+     AdaAccessType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     AdaAccessType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
   // Rasmussen (2/18/2020): Added TypeFixed for Jovial
      TypeFixed.excludeFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
@@ -646,6 +651,11 @@ Grammar::setUpTypes ()
             "SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE",
             "SgType* type = NULL, SgExpression* expr = NULL");
 
+  // PP (3/24/20): Adding ADA types          
+     CUSTOM_CREATE_TYPE_MACRO(AdaAccessType,
+            "SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE",
+            "SgType* type = NULL");
+     
   // Rasmussen (2/18/2020): Added support for the create function for Jovial TypeFixed
      CUSTOM_CREATE_TYPE_MACRO(TypeFixed,
             "SOURCE_CREATE_TYPE_FOR_TYPE_FIXED",
@@ -1031,6 +1041,15 @@ Grammar::setUpTypes ()
      ArrayType.setDataPrototype ("bool", "is_variable_length_array" , "= false",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // PP (3/24/20): Adding ADA types
+     AdaAccessType.setFunctionPrototype ("HEADER_ADA_ACCESS_TYPE", "../Grammar/Type.code" );
+
+     AdaAccessType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
+
+     AdaAccessType.setDataPrototype ("SgType*"      , "base_type", "= NULL",
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
   // Rasmussen (2/18/2020): Added TypeFixed for Jovial
      TypeFixed.setFunctionPrototype ("HEADER_TYPE_FIXED_TYPE", "../Grammar/Type.code" );
      TypeFixed.setDataPrototype ("SgExpression*", "scale", "= NULL",
@@ -1123,6 +1142,7 @@ Grammar::setUpTypes ()
      ArrayType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
   // ArrayType.setFunctionSource ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
 
+     AdaAccessType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
   // We require a special function here which is included directly
      FunctionType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
@@ -1292,6 +1312,7 @@ Grammar::setUpTypes ()
      TypeLabel.excludeFunctionSource     ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      TypeLabel.setFunctionSource         ( "SOURCE_TYPE_LABEL_TYPE", "../Grammar/Type.code");
 
+     AdaAccessType.setFunctionSource     ( "SOURCE_ADA_ACCESS_TYPE", "../Grammar/Type.code");
 #endif
    }
 
