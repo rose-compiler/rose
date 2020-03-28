@@ -7,7 +7,7 @@
 // CodeThorn includes
 #include "Flow.h"
 #include "ParProEState.h"
-#include "ParallelAutomataGenerator.h"
+#include "ParProAutomataGenerator.h"
 
 // CodeThorn includes
 
