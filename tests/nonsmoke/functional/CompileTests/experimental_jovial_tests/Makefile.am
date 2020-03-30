@@ -60,8 +60,10 @@ JOVIAL_PARSER_TESTCODES = \
 
 COMPOOL_TESTCODES = \
  bit_cast.cpl                           \
- proc_refs.cpl                          \
  status_type.cpl
+
+# proc_refs.cpl                          
+
 
 COMPOOL_PARSER_TESTCODES = \
  constant_item_presets.cpl              \

@@ -556,17 +556,17 @@ SgUntypedStructureDeclaration* buildStructureDeclaration(const std::string struc
       SageInterface::setSourcePosition(struct_def);
    }
 
-   modifiers = new SgUntypedExprListExpression(General_Language_Translation::e_struct_modifier_list);
+   modifiers = new SgUntypedExprListExpression(LanguageTranslation::e_struct_modifier_list);
    ROSE_ASSERT(modifiers != NULL);
    SageInterface::setSourcePosition(modifiers);
 
 // There may be a shape if a Jovial table
-   shape = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
+   shape = new SgUntypedExprListExpression(LanguageTranslation::e_array_shape);
    ROSE_ASSERT(shape);
    SageInterface::setSourcePosition(shape);
 
    std::string label = "";
-   int stmt_enum = General_Language_Translation::e_unknown;
+   int stmt_enum = LanguageTranslation::e_unknown;
    struct_decl = new SgUntypedStructureDeclaration(label, stmt_enum, type_name, modifiers, shape, struct_def);
    ROSE_ASSERT(struct_decl);
    SageInterface::setSourcePosition(struct_decl);
@@ -609,12 +609,12 @@ SgUntypedStructureDefinition* buildStructureDefinition(const std::string type_na
          ROSE_ASSERT(scope != NULL);
       }
 
-   expr_enum = General_Language_Translation::e_struct_modifier_list;
+   expr_enum = LanguageTranslation::e_struct_modifier_list;
    SgUntypedExprListExpression* modifier_list = new SgUntypedExprListExpression(expr_enum);
    ROSE_ASSERT(modifier_list);
    SageInterface::setSourcePosition(modifier_list);
 
-   expr_enum = General_Language_Translation::e_struct_initializer;
+   expr_enum = LanguageTranslation::e_struct_initializer;
    SgUntypedExprListExpression* struct_init = new SgUntypedExprListExpression(expr_enum);
    ROSE_ASSERT(struct_init);
    SageInterface::setSourcePosition(struct_init);
@@ -661,16 +661,16 @@ SgUntypedStructureDeclaration* buildJovialTableDeclaration(std::string table_typ
    ROSE_ASSERT(table_desc);
    SageInterface::setSourcePosition(table_desc);
 
-   modifiers = new SgUntypedExprListExpression(General_Language_Translation::e_struct_modifier_list);
+   modifiers = new SgUntypedExprListExpression(LanguageTranslation::e_struct_modifier_list);
    ROSE_ASSERT(modifiers);
    SageInterface::setSourcePosition(modifiers);
 
-   shape = new SgUntypedExprListExpression(General_Language_Translation::e_array_shape);
+   shape = new SgUntypedExprListExpression(LanguageTranslation::e_array_shape);
    ROSE_ASSERT(shape);
    SageInterface::setSourcePosition(shape);
 
    std::string label = "";
-   int stmt_enum = General_Language_Translation::e_unknown;
+   int stmt_enum = LanguageTranslation::e_unknown;
    table_decl = new SgUntypedStructureDeclaration(label, stmt_enum, table_type_name, modifiers, shape, table_desc);
    ROSE_ASSERT(table_decl);
    SageInterface::setSourcePosition(table_decl);
@@ -682,7 +682,7 @@ SgUntypedStructureDeclaration* buildJovialTableDeclaration(std::string table_typ
 // Build an untyped directive declaration statement (SgUntypedDirectiveDeclaration)
 SgUntypedDirectiveDeclaration* buildDirectiveDeclaration(std::string directive_string)
 {
-   int statement_enum = General_Language_Translation::e_define_directive_stmt;
+   int statement_enum = LanguageTranslation::e_define_directive_stmt;
 
    SgUntypedDirectiveDeclaration* define_decl = new SgUntypedDirectiveDeclaration(statement_enum, directive_string);
    ROSE_ASSERT(define_decl);
