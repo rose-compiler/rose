@@ -52,7 +52,7 @@ main (int argc, char* argv[]) {
   }
 
   // inlining only, without any post processing of AST
-  if (CommandlineProcessing::isOption (argvList,"-skip-postprocessing","",false))
+  if (CommandlineProcessing::isOption (argvList,"-skip-postprocessing","", true))
   {
     cout<<"Skip postprocessing which cleans up the code...."<<endl;
     e_inline_only = true ;
@@ -61,7 +61,7 @@ main (int argc, char* argv[]) {
     e_inline_only = false;
 
   // skip calls within headers or not
-  if (CommandlineProcessing::isOption (argvList,"-process-headers","",false))
+  if (CommandlineProcessing::isOption (argvList,"-process-headers","", true))
   {
     Inliner::skipHeaders = false;
     cout<<"Processing calls within header files ...."<<endl;

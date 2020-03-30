@@ -1,0 +1,108 @@
+START
+
+COMPOOL table'types;
+
+%
+Three variants for table variable declarations:
+1. table-type name (table type obtained from symbol table)
+      a. parent type name (need to check how inheritance works in C++)
+      b. primitive type (has base type)
+      c. structure type (has body but no base type)
+2. primitive type (table type will have to be created)
+      a. has base type
+      b. no body
+      c. is not anonymous
+3. structure type (table type will have to be created)
+      a. no base type
+      b. has body
+      c. is anonymous
+
+Unparse:
+1. table-type name
+      a. problem with because unparsing base type results in primitive type not name
+      b. unparses structure type name (why not entire structure with body?)
+2. primitive type
+      a. unparse base type is ok
+3. structure type
+      a. unparse structure body is ok
+
+Conclusion:
+1. Creation
+      a. table-type name: requires only type name with type obtained from symbol
+      b. primitive type:  requires SgJovialTableType creation
+      b. structure type:  requires SgJovialTableType creation
+
+2. Unparse table type declaration
+      a. table-type name: unparse type name and then "parent" type name (forgot about this case)
+      b. primitive type:  unparse type name then base type spec
+      b. structure type:  unparse type name then structure type body
+
+3. Unparse table variable declaration
+      a. table-type name: unparse class name
+      b. primitive type:  unparse class name then base type spec
+      b. structure type:  unparse class name then structure type body
+
+4. Looks like unparsing of type is context dependent
+      a. type declaration context: unparse type variant (parent-type name, base type, or structure type)
+           1. parent-type name
+           2. base type
+           3. structure type
+      b. variable declaration context:
+           1. unparse class name
+           2. unparse base type
+           3. unparse structure body
+%
+
+%
+  This declares a table type with a type name with a primitive base type
+%
+TYPE table'prim'type TABLE U 16;
+
+%
+  This declares a table type with a type name, array dimensions for a primitive base type
+%
+TYPE table'prim'array'type TABLE (1:10) S 16;
+
+%
+  This declares a table type with a type name and a body
+%
+TYPE table'body'type TABLE;
+  BEGIN
+    ITEM bit'part B 16;
+    ITEM num'part U 16;
+  END
+
+%
+  This declares a table type with a type name, array dimensions, and a body
+%
+TYPE table'body'array'type TABLE (10,20);
+  BEGIN
+    ITEM number U 16;
+    ITEM count  U 32;
+  END
+
+%
+  This declares a table type with a type name and a parent class name
+%
+TYPE table'array'type TABLE (1:10) table'body'type;
+
+%
+  Two variable declarations from a type name (with and without bodies)
+%
+DEF TABLE table'prim'var table'prim'type;
+DEF TABLE table'body'var table'body'type;
+
+%
+  This declares a table variable of specified primitive type (type is not anonymous but has base type)
+%
+DEF TABLE table'prim'base'var U 16;
+
+%
+  This declares a table variable with a body (type is anonymous)
+%
+DEF TABLE table'body'var;
+  BEGIN
+    ITEM item'1 S 16;
+  END
+
+TERM

@@ -290,11 +290,6 @@ sed -i~ -e '/^AC_INIT(/ s/^\(AC_INIT *(\[.*\], *\[\).*\(\] *).*\)/\1'"$rose_vers
 if [[ ! -e src/frontend/CxxFrontend/EDG/Makefile.am ]]; then
     for file in \
         src/frontend/CxxFrontend/EDG/Makefile.in \
-        src/frontend/CxxFrontend/EDG/EDG_4.9/Makefile.in \
-        src/frontend/CxxFrontend/EDG/EDG_4.9/misc/Makefile.in \
-        src/frontend/CxxFrontend/EDG/EDG_4.9/src/Makefile.in \
-        src/frontend/CxxFrontend/EDG/EDG_4.9/src/disp/Makefile.in \
-        src/frontend/CxxFrontend/EDG/EDG_4.9/lib/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_4.12/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_4.12/misc/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_4.12/src/Makefile.in \

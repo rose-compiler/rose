@@ -102,85 +102,13 @@ test_boost_include_ordering:
 # check-local: $(TEST_TARGETS)
 check-local: 
 	@echo "Tests for boot specific regresstion tests operation."
-# DQ (2/18/2017): More specific logic required for portability.
-if ROSE_USE_EDG_VERSION_4_9
-	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
-if USING_GNU_COMPILER
-	@echo "USING_GCC_COMPILER == true"
-if ROSE_USING_GCC_VERSION_LATER_4_9
-	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
-# Exclude these tests on GNU 4.9 and later compilers).
-else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
-# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
-	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
-	@$(MAKE) $(TEST_TARGETS)
-endif # ROSE_USING_GCC_VERSION_LATER_4_9
-else  # NOT USING_GNU_COMPILER
-	@echo "USING_GCC_COMPILER == false"
-if USING_CLANG_COMPILER
-# Exclude this list of files in the case of CLANG compiler.
-	@echo "USING_CLANG_COMPILER == true"
-else # NOT USING_CLANG_COMPILER
-	@echo "USING_CLANG_COMPILER == false"
-if USING_INTEL_COMPILER
-# Exclude this list of files in the case of Intel compiler.
-	@echo "USING_INTEL_COMPILER == true"
-else # NOT USING_INTEL_COMPILER
-# This is an unknown compiler.
-	@echo "USING_INTEL_COMPILER == false"
-endif # USING_INTEL_COMPILER
-endif # USING_CLANG_COMPILER
-endif # USING_GNU_COMPILER
-else  # NOT ROSE_USE_EDG_VERSION_4_9
-# Using EDG 4.12 or later (run all tests independent of the compiler).
-	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
-#	@$(MAKE) $(TEST_TARGETS)
 if USING_GNU_COMPILER
 	@echo "USING_GCC_COMPILER == true"
 	@$(MAKE) $(TEST_TARGETS)
-else
-if USING_CLANG_COMPILER
-# Exclude this list of files in the case of CLANG compiler.
-	@echo "USING_CLANG_COMPILER == true"
-else # NOT USING_CLANG_COMPILER
-	@echo "USING_CLANG_COMPILER == false"
-if USING_INTEL_COMPILER
-# Exclude this list of files in the case of Intel compiler.
-	@echo "USING_INTEL_COMPILER == true"
-else # NOT USING_INTEL_COMPILER
-# This is an unknown compiler.
-	@echo "USING_INTEL_COMPILER == false"
-endif # USING_INTEL_COMPILER
-endif # USING_CLANG_COMPILER
 endif
-endif # ROSE_USE_EDG_VERSION_4_9
 	@echo "*********************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/boost_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************************"
-
-
-old_rule:
-# DQ (2/18/2017): More specific logic required for portability.
-if ROSE_USE_EDG_VERSION_4_9
-if !ROSE_USING_GCC_VERSION_LATER_4_9
-if USING_CLANG_COMPILER
-# Exclude this list of files in the case of CLANG compiler.
-else
-if USING_INTEL_COMPILER
-# Exclude this list of files in the case of Intel compiler.
-else
-# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
-	@$(MAKE) $(TEST_TARGETS)
-else
-# This is the GNU 6.1 or later compiler (so skip this list of files).
-endif
-endif
-endif
-else
-# Using EDG 4.12 or later (independent of the compiler).
-	@$(MAKE) $(TEST_TARGETS)
-endif
-
 
 clean-local:
 	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)

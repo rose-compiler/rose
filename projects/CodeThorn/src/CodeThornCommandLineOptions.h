@@ -5,10 +5,4 @@
 
 CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger, std::string version);
 
-#ifdef USE_SAWYER_COMMANDLINE
-namespace po = Sawyer::CommandLine::Boost;
-#else
-namespace po = boost::program_options;
-#endif
-
 #endif

@@ -35,6 +35,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_Module(ATerm term)
    SgUntypedGlobalScope* global_scope = get_scope();
 
    if (ATmatch(term, "Module(<term>)", &module)) {
+
+      SgScopeStatement* sage_tree_scope{nullptr};
+      sage_tree_builder.Enter(sage_tree_scope);
+
       if (traverse_CompoolModule(module, global_scope)) {
          // MATCHED CompoolModule
       }
@@ -44,6 +48,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_Module(ATerm term)
       else if (traverse_MainProgramModule(module, global_scope)) {
          // MATCHED MainProgramModule
       } else return ATfalse;
+
+      sage_tree_builder.Leave(sage_tree_scope);
 
    } else return ATfalse;
 
@@ -93,6 +99,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_CompoolModule(ATerm term, SgUntyp
 
    // Add the compool module before the compool declarations
       decls->get_decl_list().push_back(compool_decl);
+
+      SgJovialCompoolStatement* compool_stmt = NULL;
+      Rose::builder::SourcePositionPair sources;
+      sage_tree_builder.Enter(compool_stmt, name, sources);
+
+      sage_tree_builder.Leave(compool_stmt);
 
       if (traverse_DeclarationList(t_decls, decls)) {
          // MATCHED DeclarationList and CompoolDeclarationList
@@ -228,8 +240,8 @@ ATbool ATermToUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgU
       SageInterface::setSourcePosition(end_program_stmt);
 
    // create the program
-      main_program   = new SgUntypedProgramHeaderDeclaration(label, name, param_list, type,
-                                                             function_scope, prefix_list, end_program_stmt);
+      main_program = new SgUntypedProgramHeaderDeclaration(label, name, param_list, type,
+                                                           function_scope, prefix_list, end_program_stmt);
 
    // This could probably be improved to as it includes decls and funcs in global scope
       setSourcePosition(main_program, term);
@@ -242,6 +254,32 @@ ATbool ATermToUntypedJovialTraversal::traverse_MainProgramModule(ATerm term, SgU
       if (traverse_NonNestedSubroutineList(t_funcs, global_scope)) {
          // MATCHED NonNestedSubroutineList
       } else return ATfalse;
+
+      // Need
+      // 1. program_decl pointer
+      // 2. progran_name (optional)
+      // 3. labels list
+      // 4. source positions
+
+      SgProgramHeaderStatement* program_decl;
+      boost::optional<std::string> program_name = name;
+      if (name.length() == 0) program_name = boost::none;
+      std::cout << "--> program_name is " << program_name.value() << "\n";
+
+      std::list<std::string> labels;
+      if (label.length() > 0) labels.push_back(label);
+      if (labels.size() > 0) std::cout << "--> label is " << label << "\n";
+
+      Rose::builder::SourcePosition prog_start, prog_end;  // start and end of program
+      Rose::builder::SourcePosition dirs_start, dirs_end;  // start and end of directives
+      setSourcePositions(term,   prog_start, prog_end);
+      setSourcePositions(t_dirs, dirs_start, dirs_end);
+
+      Rose::builder::SourcePositions sources(prog_start, dirs_start, prog_end);
+
+      sage_tree_builder.Enter(program_decl, program_name, labels, sources);
+
+      sage_tree_builder.Leave(program_decl);
 
    } else return ATfalse;
 
@@ -3013,6 +3051,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_TableTypeDeclaration(ATerm term, 
          // MATCHED TableTypeName
       } else return ATfalse;
 
+      SgJovialTableStatement* table_decl = NULL;
+      Rose::builder::SourcePositionPair sources;
+      sage_tree_builder.Enter(table_decl, type_name, sources, /*is_table*/true);
+
+      sage_tree_builder.Leave(table_decl);
+
       int struct_type = Jovial_ROSE_Translation::e_table_type_declaration;
 
 // This portion could be moved to UntypedBuilder::
@@ -5765,10 +5809,12 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericPrimary(ATerm term, SgUnty
 #endif
 
    ATerm t_num_var, t_formula, t_factor, t_num_term, t_conversion;
-   char *literal, *name, *variable, *letter;
+   char *literal, *name, *variable;
    SgUntypedType* type;
    SgUntypedExpression *conv, *num_term, *factor;
    Jovial_ROSE_Translation::ExpressionKind expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
+
+   expr = NULL;
 
    if (ATmatch(term, "IntegerLiteral(<str>)", &literal)) {
       type = UntypedBuilder::buildType(SgUntypedType::e_int);
@@ -5871,11 +5917,10 @@ ATbool ATermToUntypedJovialTraversal::traverse_NumericPrimary(ATerm term, SgUnty
       }
    }
 
-   else if (ATmatch(term, "ControlLetter(<str>)" , &letter)) {
-      // MATCHED special case of ControlLetter -> NumericPrimary
-      if (!expr) {
-         cerr << "WARNING UNIMPLEMENTED: NumericPrimary - ControlLetter " << letter << endl;
-      }
+   else if (ATmatch(term, "ControlLetter(<str>)", &variable)) {
+      expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
+      expr = new SgUntypedReferenceExpression(expr_enum, variable);
+      setSourcePosition(expr, term);
    }
 
    else return ATfalse;
@@ -7699,4 +7744,18 @@ ATbool ATermToUntypedJovialTraversal::traverse_OrderDirective(ATerm term, SgUnty
    decl_list->get_decl_list().push_back(order_directive);
 
    return ATtrue;
+}
+
+void ATermToUntypedJovialTraversal::
+setSourcePositions(ATerm term, Rose::builder::SourcePosition &start, Rose::builder::SourcePosition &end)
+{
+   PosInfo pos = getLocation(term);
+
+   start.path   = getCurrentFilename();
+   start.line   = pos.getStartLine();
+   start.column = pos.getStartCol();
+
+   end.path   = getCurrentFilename();
+   end.line   = pos.getStartLine();
+   end.column = pos.getStartCol();
 }

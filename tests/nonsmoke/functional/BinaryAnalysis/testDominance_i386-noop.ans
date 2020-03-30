@@ -1,4 +1,4 @@
-CFG dominators for function 0x080480a0 "_start":
+CFG dominators for function 0x080480a0:
   function 0x080480a0 dominator of 0x0804811b<0> is 0x08048116<4>
   function 0x080480a0 dominator of 0x08048111<1> is 0x0804810c<8>
   function 0x080480a0 dominator of 0x08048125<2> is 0x08048120<6>
@@ -9,27 +9,27 @@ CFG dominators for function 0x080480a0 "_start":
   function 0x080480a0 dominator of 0x08048102<7> is 0x080480fd<5>
   function 0x080480a0 dominator of 0x0804810c<8> is 0x08048107<9>
   function 0x080480a0 dominator of 0x08048107<9> is 0x08048102<7>
-CFG dominators for function 0x080480a5 "test1":
+CFG dominators for function 0x080480a5:
   function 0x080480a5 dominator of 0x080480a5<0> is none
-CFG dominators for function 0x080480ae "test2":
+CFG dominators for function 0x080480ae:
   function 0x080480ae dominator of 0x080480ae<0> is none
-CFG dominators for function 0x080480b1 "test3":
+CFG dominators for function 0x080480b1:
   function 0x080480b1 dominator of 0x080480b1<0> is none
-CFG dominators for function 0x080480c1 "test4a":
+CFG dominators for function 0x080480c1:
   function 0x080480c1 dominator of 0x080480cf<0> is 0x080480c1<1>
   function 0x080480c1 dominator of 0x080480c1<1> is none
   function 0x080480c1 dominator of 0x080480ca<2> is 0x080480c1<1>
-CFG dominators for function 0x080480d0 "test4b":
+CFG dominators for function 0x080480d0:
   function 0x080480d0 dominator of 0x080480d8<0> is 0x080480d0<1>
   function 0x080480d0 dominator of 0x080480d0<1> is none
   function 0x080480d0 dominator of 0x080480dd<2> is 0x080480d0<1>
-CFG dominators for function 0x080480de "test5":
+CFG dominators for function 0x080480de:
   function 0x080480de dominator of 0x080480de<0> is none
-CFG dominators for function 0x080480e1 "test6":
+CFG dominators for function 0x080480e1:
   function 0x080480e1 dominator of 0x080480e1<0> is none
-CFG dominators for function 0x080480e6 "test7":
+CFG dominators for function 0x080480e6:
   function 0x080480e6 dominator of 0x080480e6<0> is none
-CFG dominators for function 0x080480e9 "test8":
+CFG dominators for function 0x080480e9:
   function 0x080480e9 dominator of 0x080480f6<0> is 0x080480e9<2>
   function 0x080480e9 dominator of 0x080480f1<1> is none
   function 0x080480e9 dominator of 0x080480e9<2> is none

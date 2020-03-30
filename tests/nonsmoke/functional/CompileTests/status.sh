@@ -7,7 +7,7 @@ DIRS="C_tests C89_std_c89_tests C99_tests C11_tests Cxx_tests Cxx11_tests Cxx14_
 target=$1
 [ -z $target ] && target="translator"
 
-[ $target == "compiler" ]    && MAKE_OPTIONS="TEST_TRANSLATOR=testCompiler ROSE_FLAGS="
+[ $target == "compiler" ]    && MAKE_OPTIONS="TEST_TRANSLATOR=./testCompiler ROSE_FLAGS="
 [ $target == "backend" ]     && MAKE_OPTIONS="TEST_TRANSLATOR=../../testBackend"
 [ $target == "translator" ]  && MAKE_OPTIONS=""
 
@@ -52,6 +52,5 @@ done
 
 echo "[STATUS:$target:summary] ALL $anp $anf"
 
-cat $fname.csv | sed 's/^/[STATUS:'$target':details]/'
 tar czf $fname.tgz $files &> /dev/null
 

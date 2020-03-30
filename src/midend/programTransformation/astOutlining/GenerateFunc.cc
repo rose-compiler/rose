@@ -818,27 +818,39 @@ recordSymRemap (const SgVariableSymbol* orig_sym,
                 VarSymRemap_t& sym_remap)
 {
   if (orig_sym && name_new)
-    { //TODO use the existing symbol associated with name_new!
-   // DQ (2/24/2009): Added assertion.
-      ROSE_ASSERT(name_new->get_name().is_null() == false);
+  { 
+    ROSE_ASSERT(name_new->get_name().is_null() == false);
 
-      SgVariableSymbol* sym_new = new SgVariableSymbol (name_new);
-      ROSE_ASSERT (sym_new);
-      sym_remap.insert (VarSymRemap_t::value_type (orig_sym, sym_new));
+    //Liao, 3/24/2020: use the existing symbol associated with name_new.
+    // otherwise redundant symbol will be inserted into the scope. 
+    SgVariableSymbol* sym_new = isSgVariableSymbol( name_new->search_for_symbol_from_symbol_table()); 
+    // DQ (2/24/2009): Added assertion.
+    if (sym_new == NULL)  
+    {
+      sym_new = new SgVariableSymbol (name_new);
 
       if (scope)
-        {
-          scope->insert_symbol (name_new->get_name (), sym_new);
-          name_new->set_scope (scope);
-        }
+      {
+        scope->insert_symbol (name_new->get_name (), sym_new);
+        name_new->set_scope (scope);
+      }
     }
+    ROSE_ASSERT (sym_new);
+    sym_remap.insert (VarSymRemap_t::value_type (orig_sym, sym_new));
+  }
 }
 
 /*!
  *  \brief Records a mapping between variable symbols.
- *
+ *    Used when generating unpacking statements from parameters.
+ *    A mapping is a mapping between 
+ *       1. original variable in the program, to be passed as a parameter
+ *       2. locally declared variable in the outlined function, accepting the value of the parameter
  *  \pre The variable declaration must contain only 1 initialized
- *  name.
+ *  name.   
+ *  orig_sym: the original variable to be passed into the outlined function
+ *  new_decl: locally declared variable in the outlined function
+ *  scope: the function body scope of the outlined function, also the scope of new_decl
  */
 static
 void
@@ -849,6 +861,7 @@ recordSymRemap (const SgVariableSymbol* orig_sym,
 {
   if (orig_sym && new_decl)
     {
+ //     ROSE_ASSERT (new_decl->get_scope == scope);
       SgInitializedNamePtrList& vars = new_decl->get_variables ();
       ROSE_ASSERT (vars.size () == 1);
       for (SgInitializedNamePtrList::iterator i = vars.begin ();

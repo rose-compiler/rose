@@ -53,8 +53,10 @@ class ATermToUntypedTraversal
    ATermToUntypedTraversal(SgSourceFile* source);
    virtual ~ATermToUntypedTraversal();
 
+#if 0
    SgUntypedFile*        get_file()  { return pUntypedFile; }
    SgUntypedGlobalScope* get_scope() { return pUntypedFile->get_scope(); }
+#endif
 
    std::string getCurrentFilename()
       {

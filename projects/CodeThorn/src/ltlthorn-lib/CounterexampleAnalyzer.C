@@ -251,8 +251,8 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
   Visualizer visualizer(_analyzer->getLabeler(),_analyzer->getVariableIdMapping(),
                           _analyzer->getFlow(),_analyzer->getPStateSet(),_analyzer->getEStateSet(),_analyzer->getTransitionGraph());
   string vizFilenamePrefix = "";
-  if(args.count("viz-cegpra-detailed")) {
-    vizFilenamePrefix=args["viz-cegpra-detailed"].as<string>();
+  if(args.isDefined("viz-cegpra-detailed")) {
+    vizFilenamePrefix=args.getString("viz-cegpra-detailed");
     string filename = vizFilenamePrefix + "_cegpra_init.dot";
     writeDotGraphToDisk(filename, visualizer);
   }
@@ -316,7 +316,7 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
        }
     }
     model->setIsPrecise(true);
-    if(args.count("viz-cegpra-detailed")) {
+    if(args.isDefined("viz-cegpra-detailed")) {
       stringstream filenameStream;
       filenameStream << vizFilenamePrefix << "cegpra_afterDisconnect_i" << loopCount << ".dot";
       writeDotGraphToDisk(filenameStream.str(), visualizer);
@@ -339,7 +339,7 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
     } else {
       assert(0);  //counterexample analysis not successfully completed
     }
-    if(args.count("viz-cegpra-detailed")) {
+    if(args.isDefined("viz-cegpra-detailed")) {
       stringstream filenameStream;
       filenameStream << vizFilenamePrefix << "cegpra_afterCECheck_i" << loopCount << ".dot";
       writeDotGraphToDisk(filenameStream.str(), visualizer);
@@ -364,7 +364,7 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
       }
     }
     model->setIsComplete(true);
-    if(args.count("viz-cegpra-detailed")) {
+    if(args.isDefined("viz-cegpra-detailed")) {
       stringstream filenameStream;
       filenameStream << vizFilenamePrefix << "cegpra_afterReconnect_i" << loopCount << ".dot";
       writeDotGraphToDisk(filenameStream.str(), visualizer);

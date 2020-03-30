@@ -1,0 +1,16 @@
+START
+
+COMPOOL block'var'decl;
+
+DEF BLOCK block'var STATIC;
+  BEGIN
+    CONSTANT ITEM block'item'var F = 1.0;
+    ITEM var'1 F;
+    ITEM var'2 F = 3.14;
+    TABLE block'table'var (1:10);
+      BEGIN
+        ITEM block'table'var'item  U 4;
+      END      
+  END
+
+TERM

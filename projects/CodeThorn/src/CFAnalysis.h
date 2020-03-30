@@ -78,6 +78,8 @@ class CFAnalysis {
 
   // computes from existing intra-procedural flow graph(s) the inter-procedural call information
   InterFlow interFlow(Flow& flow);
+  // experimental
+  InterFlow interFlow2(Flow& flow);
   void intraInterFlow(Flow&, InterFlow&);
   // Function for setting a pre-computed function-id
   // mapping. Required for function call resolution across multiple
@@ -86,7 +88,9 @@ class CFAnalysis {
   void setFunctionIdMapping(FunctionIdMapping*);
   FunctionIdMapping* getFunctionIdMapping();
   void setFunctionCallMapping(FunctionCallMapping* fcm);
+  void setFunctionCallMapping2(FunctionCallMapping2* fcm);
   FunctionCallMapping* getFunctionCallMapping();
+  FunctionCallMapping2* getFunctionCallMapping2();
 
   Flow controlDependenceGraph(Flow& controlFlow);
   int reduceNode(Flow& flow, Label lab);
@@ -132,6 +136,7 @@ class CFAnalysis {
   SgFunctionDefinition* determineFunctionDefinition2(SgFunctionCallExp* funCall);
   SgFunctionDefinition* determineFunctionDefinition3(SgFunctionCallExp* funCall);
   FunctionCallTargetSet determineFunctionDefinition4(SgFunctionCallExp* funCall);
+  FunctionCallTargetSet determineFunctionDefinition5(Label lbl, SgLocatedNode* astnode);
   static void initDiagnostics();
   static Sawyer::Message::Facility logger;
  private:
@@ -142,7 +147,7 @@ class CFAnalysis {
   SgNode* correspondingLoopConstruct(SgNode* node);
   FunctionIdMapping* _functionIdMapping=nullptr;
   FunctionCallMapping* _functionCallMapping=nullptr;
-
+  FunctionCallMapping2* _functionCallMapping2=nullptr;
 };
 
 } // end of namespace CodeThorn

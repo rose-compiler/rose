@@ -1,6 +1,6 @@
 // Author: Marc Jasper, 2016.
 
-#include "ParallelAutomataGenerator.h"
+#include "ParProAutomataGenerator.h"
 #include "Miscellaneous2.h"
 
 using namespace CodeThorn;
@@ -21,7 +21,7 @@ string CfaAnnotationGenerator::next() {
   return ss.str();
 }
 
-Flow* ParallelAutomataGenerator::randomCircleAutomaton(int numCircles, 
+Flow* ParProAutomataGenerator::randomCircleAutomaton(int numCircles, 
 						       pair<int,int> lengthBounds, pair<int,int> numIntersectionsBounds, 
 						       NumberGenerator& labelIds, CfaAnnotationGenerator& annotations) {
   Flow* result = new Flow();
@@ -69,7 +69,7 @@ Flow* ParallelAutomataGenerator::randomCircleAutomaton(int numCircles,
   return result;
 }
 
-Edge ParallelAutomataGenerator::chooseRandomEdge(Flow* cfa) {
+Edge ParProAutomataGenerator::chooseRandomEdge(Flow* cfa) {
   int finalIteratorIndex = randomIntInRange(pair<int, int>(0, (cfa->size() - 1)));
   Flow::iterator iter = cfa->begin();
   for (int i = 0; i < finalIteratorIndex; ++i) {
@@ -78,11 +78,11 @@ Edge ParallelAutomataGenerator::chooseRandomEdge(Flow* cfa) {
   return (*iter);
 }
 
-Label ParallelAutomataGenerator::chooseRandomNode(Flow* cfa) {
+Label ParProAutomataGenerator::chooseRandomNode(Flow* cfa) {
   return chooseRandomEdge(cfa).source();
 }
 
-vector<Flow*> ParallelAutomataGenerator::randomlySyncedCircleAutomata(int numAutomata, pair<int,int> numSyncsBounds, 
+vector<Flow*> ParProAutomataGenerator::randomlySyncedCircleAutomata(int numAutomata, pair<int,int> numSyncsBounds, 
 					   pair<int,int> numCirclesBounds, pair<int,int> lengthBounds, 
 					   pair<int,int> numIntersectionsBounds) {
   vector<Flow*> result = vector<Flow*>(numAutomata);
@@ -98,7 +98,7 @@ vector<Flow*> ParallelAutomataGenerator::randomlySyncedCircleAutomata(int numAut
   return result;
 }
 
-void ParallelAutomataGenerator::randomlySynchronizeAutomata(vector<Flow*> automata, pair<int,int> numSyncBounds) {
+void ParProAutomataGenerator::randomlySynchronizeAutomata(vector<Flow*> automata, pair<int,int> numSyncBounds) {
   int numSynchronizations = randomIntInRange(numSyncBounds);
   unsigned int totalNumberOfEdges = 0;
   vector<unsigned int> numSyncedTransitions(automata.size());
