@@ -5500,9 +5500,10 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
   // DQ (12/3/2011): Added more checking.
      ROSE_ASSERT(paralist != NULL);
 
-     if (SageInterface::is_Python_language() == false)
+// Rasmussen (3/28/2020): Changed to call a function to support multiple languages
+     if (SageInterface::language_may_contain_nondeclarations_in_scope() == false)
         {
-          ROSE_ASSERT(scope->containsOnlyDeclarations());
+           ROSE_ASSERT(scope->containsOnlyDeclarations());
         }
 
   // actualFunction* firstNondefiningFunctionDeclaration = NULL;

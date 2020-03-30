@@ -221,17 +221,18 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgProcedureHeaderStatement* func = isSgProcedureHeaderStatement(stmt);
      ROSE_ASSERT(func);
 
-  // This needs to be fixed so that a DEF or REF is not required
-     bool isDefiningDeclaration = (func->get_declarationModifier().isJovialDef());
+     bool isDefiningDeclaration = (func->get_declarationModifier().isJovialRef() == false);
 
-     if (isDefiningDeclaration)  curprint("DEF PROC ");
-     else                        curprint("REF PROC ");
+  // unparse the declaration modifiers
+     if (func->get_declarationModifier().isJovialDef())   curprint("DEF ");
+     if (func->get_declarationModifier().isJovialRef())   curprint("REF ");
 
+     curprint("PROC ");
      curprint(func->get_name());
 
   // unparse the function modifiers
-     if      (func->get_functionModifier().isRecursive())    curprint(" REC");
-     else if (func->get_functionModifier().isReentrant())    curprint(" RENT");
+     if (func->get_functionModifier().isRecursive())   curprint(" REC");
+     if (func->get_functionModifier().isReentrant())   curprint(" RENT");
 
   // unparse function arguments
      SgFunctionParameterList* params = func->get_parameterList();
@@ -272,7 +273,11 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      if (isDefiningDeclaration)
         {
+           ROSE_ASSERT(func->get_definition());
+
+           info.inc_nestingLevel();
            unparseStatement(func->get_definition(), ninfo);
+           info.dec_nestingLevel();
         }
      else
         {
@@ -297,6 +302,8 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
    }
 
+// Deprecated (Jovial will always have a function body so SgProcedureHeaderStatement)
+#if 0
 void
 Unparse_Jovial::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
@@ -364,6 +371,10 @@ Unparse_Jovial::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
            curprint("  BEGIN\n");
            BOOST_FOREACH(SgInitializedName* arg, args)
               {
+              // TODO: at some point a table type will need to be unparsed here
+                 SgJovialTableType* table_type = isSgJovialTableType(type);
+                 ROSE_ASSERT(table_type == NULL);
+
                  curprint("    ITEM ");
                  curprint(arg->get_name());
                  curprint(" ");
@@ -373,6 +384,7 @@ Unparse_Jovial::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
            curprint("  END\n");
         }
    }
+#endif
 
 void
 Unparse_Jovial::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
