@@ -8071,22 +8071,25 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // argcArgvList.insert(argcArgvList.end(),project->get_extraIncludeDirectorySpecifierList().begin(),project->get_extraIncludeDirectorySpecifierList().end());
           std::vector<string>::iterator positionForIncludes = argcArgvList.begin();
           ROSE_ASSERT(positionForIncludes != argcArgvList.end());
-          ROSE_ASSERT(project->get_includeDirectorySpecifierList().size() > 0);
-          string firstInclude = project->get_includeDirectorySpecifierList()[0];
-          int indexOfFirstIncludeDirective = findIndexForFirstIncludeDirectiveInArgumentList(argcArgvList, firstInclude );
-#if 0
-          printf ("indexOfFirstIncludeDirective = %d \n",indexOfFirstIncludeDirective);
-#endif
-          int index = 0;
-          while (index < indexOfFirstIncludeDirective && positionForIncludes != argcArgvList.end())
+          if (project->get_includeDirectorySpecifierList().size() > 0)
              {
-               index++;
-               positionForIncludes++;
-             }
+               string firstInclude = project->get_includeDirectorySpecifierList()[0];
+               int indexOfFirstIncludeDirective = findIndexForFirstIncludeDirectiveInArgumentList(argcArgvList, firstInclude );
 #if 0
-          printf ("index = %d \n",index);
-          printf ("*positionForIncludes = %s \n",(*positionForIncludes).c_str());
+               printf ("indexOfFirstIncludeDirective = %d \n",indexOfFirstIncludeDirective);
 #endif
+               int index = 0;
+               while (index < indexOfFirstIncludeDirective && positionForIncludes != argcArgvList.end())
+                  {
+                    index++;
+                    positionForIncludes++;
+                  }
+#if 0
+               printf ("index = %d \n",index);
+               printf ("*positionForIncludes = %s \n",(*positionForIncludes).c_str());
+#endif
+             }
+
           ROSE_ASSERT(positionForIncludes != argcArgvList.end());
           argcArgvList.insert(positionForIncludes,project->get_extraIncludeDirectorySpecifierList().begin(),project->get_extraIncludeDirectorySpecifierList().end());
 #if 0

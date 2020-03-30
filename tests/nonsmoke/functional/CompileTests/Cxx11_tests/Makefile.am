@@ -1221,9 +1221,11 @@ else
 if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
 	@echo "USING_CLANG_COMPILER == true"
-	@echo "C++11 tests using EDG 4.9: Clang backend compiler using EDG 4.12 frontend."
+	@echo "C++11 tests not allowed with EDG 4.9: Clang backend compiler using EDG 4.12 or greater frontend."
+# DQ (3/22/2020): Builtins are now mostly supported, allowing tests so that we can debug Mac support during COVID-19 work at home.
 # DQ (2/21/2017): Too many failing files due to builtin functions that are missing.
 #	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Source_passed)
 else # NOT USING_CLANG_COMPILER
 	@echo "USING_CLANG_COMPILER == false"
 if USING_INTEL_COMPILER
