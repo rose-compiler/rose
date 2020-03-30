@@ -46,9 +46,9 @@ void Solver12::run() {
   bool ioReductionActive = false;
   unsigned int ioReductionThreshold = 0;
   unsigned int estatesLastReduction = 0;
-  if(args.count("io-reduction")) {
+  if(args.isDefined("io-reduction")) {
     ioReductionActive = true;
-    ioReductionThreshold = args["io-reduction"].as<int>();
+    ioReductionThreshold = args.getInt("io-reduction");
   }
 
   logger[TRACE]<<"STATUS: Running parallel solver 12 with "<<workers<<" threads."<<endl;

@@ -473,8 +473,9 @@ __builtin_va_list & __builtin_next_arg(char const *format);
 
 /*Pei-Hung (02/07/2020) added builtin for Clang*/
 #if defined(__clang__)
-//  #define wchar_t __WCHAR_TYPE__
+#if (ROSE_LANGUAGE_MODE == ROSE_C_LANGUAGE_MODE)
   typedef __WCHAR_TYPE__ wchar_t;
+#endif
   const char * __builtin_char_memchr ( const void * ptr, int value, size_t num );
   int __builtin_wmemcmp ( const void * ptr1, const void * ptr2, size_t num );
   size_t __builtin_wcslen ( const wchar_t * str );
