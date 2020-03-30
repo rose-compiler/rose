@@ -10,7 +10,7 @@
 
 namespace ATermSupport {
 
-   using namespace General_Language_Translation;
+   using namespace LanguageTranslation;
 
 class ATermToSageJovialTraversal : public ATermToUntypedTraversal
 {
@@ -71,7 +71,7 @@ ATbool traverse_OptItemSize(ATerm term, Sawyer::Optional<SgExpression*> &size);
 
 // 2.1.1.2 FLOATING TYPE DESCRIPTIONS
 ATbool traverse_FloatingItemDescription(ATerm term, SgType* &type);
-ATbool traverse_OptRoundOrTruncate(ATerm term, Sawyer::Optional<General_Language_Translation::ExpressionKind> &modifier_enum);
+ATbool traverse_OptRoundOrTruncate(ATerm term, Sawyer::Optional<LanguageTranslation::ExpressionKind> &modifier_enum);
 
 // 2.1.1.3 FIXED TYPE DESCRIPTIONS
 ATbool traverse_FixedItemDescription(ATerm term, SgType* &type);
@@ -110,7 +110,7 @@ ATbool traverse_OrdinaryEntrySpecifierType   (ATerm term, SgType* &type, SgExpre
 ATbool traverse_OrdinaryEntrySpecifierBody   (ATerm term, SgExpression* &preset);
 ATbool traverse_OrdinaryTableBody            (ATerm term);
 ATbool traverse_OrdinaryTableItemDeclaration (ATerm term);
-ATbool traverse_OptPackingSpecifier          (ATerm term, Sawyer::Optional<General_Language_Translation::ExpressionKind> &modifier_enum);
+ATbool traverse_OptPackingSpecifier          (ATerm term, Sawyer::Optional<LanguageTranslation::ExpressionKind> &modifier_enum);
 
 // 2.1.2.1 TABLE DIMENSION LISTS
 ATbool traverse_OptDimensionList (ATerm term, SgExprListExp* sg_shape);
@@ -138,7 +138,7 @@ ATbool traverse_BlockPresetList    (ATerm term, SgExprListExp* preset_list);
 ATbool traverse_OptBlockPresetList (ATerm term, SgExprListExp* preset_list);
 
 // 2.1.5 ALLOCATION OF DATA OBJECTS
-ATbool traverse_OptAllocationSpecifier(ATerm term, Sawyer::Optional<General_Language_Translation::ExpressionKind> &modifier_enum);
+ATbool traverse_OptAllocationSpecifier(ATerm term, Sawyer::Optional<LanguageTranslation::ExpressionKind> &modifier_enum);
 
 // 2.1.6 INITIALIZATION OF DATA OBJECTS
 ATbool traverse_ItemPreset            (ATerm term, SgExpression* &preset);
@@ -189,27 +189,27 @@ ATbool traverse_OverlayElement        (ATerm term, SgExpression* & expr);
 ATbool traverse_Spacer                (ATerm term, SgExpression* & expr);
 
 // 3.0 PROCEDURES AND FUNCTIONS
-ATbool traverse_ProcedureDefinition(ATerm term, General_Language_Translation::SubroutineAttribute def_or_ref);
-ATbool traverse_SubroutineAttribute(ATerm term, General_Language_Translation::SubroutineAttribute &attr);
+ATbool traverse_ProcedureDefinition(ATerm term, LanguageTranslation::FunctionModifierList &modifiers);
+ATbool traverse_SubroutineAttribute(ATerm term, LanguageTranslation::FunctionModifierList &modifiers);
 ATbool traverse_ProcedureHeading   (ATerm term, std::string & name, std::list<FormalParameter> &param_list,
-                                                General_Language_Translation::SubroutineAttribute &attr);
+                                                LanguageTranslation::FunctionModifierList &modifiers);
 ATbool traverse_SubroutineBody     (ATerm term);
 
 // 3.1 PROCEDURES
-ATbool traverse_ProcedureDeclaration(ATerm term);
+ATbool traverse_ProcedureDeclaration(ATerm term, LanguageTranslation::FunctionModifierList &modifiers);
 
 // 3.2 FUNCTIONS
-ATbool traverse_FunctionDeclaration(ATerm term);
-ATbool traverse_FunctionDefinition (ATerm term, General_Language_Translation::SubroutineAttribute def_or_ref);
+ATbool traverse_FunctionDeclaration(ATerm term, LanguageTranslation::FunctionModifierList &modifiers);
+ATbool traverse_FunctionDefinition (ATerm term, LanguageTranslation::FunctionModifierList &modifiers);
 ATbool traverse_FunctionHeading    (ATerm term, std::string & name, SgType* &type, std::list<FormalParameter> &param_list,
-                                                General_Language_Translation::SubroutineAttribute &attr);
+                                                LanguageTranslation::FunctionModifierList &modifiers);
 
 // 3.3 PARAMETERS OF PROCEDURES AND FUNCTIONS
 ATbool traverse_FormalParameterList   (ATerm term, std::list<FormalParameter> &param_list);
 ATbool traverse_FormalInputParameter  (ATerm term, std::list<FormalParameter> &param_list);
 ATbool traverse_FormalOutputParameters(ATerm term, std::list<FormalParameter> &param_list);
 ATbool traverse_FormalOutputParameter (ATerm term, std::list<FormalParameter> &param_list);
-ATbool traverse_ParameterBinding      (ATerm term, General_Language_Translation::ExpressionKind &binding);
+ATbool traverse_ParameterBinding      (ATerm term, LanguageTranslation::ExpressionKind &binding);
 
 // 3.4 INLINE DECLARATIONS
 ATbool traverse_InlineDeclaration(ATerm term);
@@ -280,7 +280,7 @@ ATbool traverse_NumericFormula (ATerm term, SgExpression* &expr);
 ATbool traverse_NumericTerm    (ATerm term, SgExpression* &expr);
 ATbool traverse_NumericFactor  (ATerm term, SgExpression* &expr);
 ATbool traverse_NumericPrimary (ATerm term, SgExpression* &expr);
-ATbool traverse_OptSign        (ATerm term, General_Language_Translation::ExpressionKind & op_enum);
+ATbool traverse_OptSign        (ATerm term, LanguageTranslation::ExpressionKind & op_enum);
 ATbool traverse_ExponentiationOp(ATerm term, SgExpression* &expr);
 ATbool traverse_NumericMachineParameter(ATerm term, SgExpression* &expr);
 

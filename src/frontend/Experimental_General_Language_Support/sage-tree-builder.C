@@ -10,7 +10,7 @@ namespace Rose {
 namespace builder {
 
 using namespace Rose::Diagnostics;
-using namespace General_Language_Translation;
+using namespace LanguageTranslation;
 
 SgGlobal* initialize_global_scope(SgSourceFile* file)
 {
@@ -299,7 +299,7 @@ Leave(SgFunctionDefinition* function_def)
 
 void SageTreeBuilder::
 Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* return_type, SgFunctionParameterList* param_list,
-                                             const General_Language_Translation::SubroutineAttribute &attr, bool isDefiningDecl)
+                                             const LanguageTranslation::FunctionModifierList &modifiers)
 {
    mlog[INFO] << "SageTreeBuilder::Enter(SgFunctionDeclaration* &, ...) \n";
 
@@ -309,10 +309,8 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* re
 
    function_decl = nullptr;
 
-   SgScopeStatement* global_scope = SageBuilder::topScopeStack();
-   ROSE_ASSERT(global_scope);
-// TODO - true except for nonNestedSubroutine
-   ROSE_ASSERT(global_scope->variantT() == V_SgGlobal);
+   SgScopeStatement* scope = SageBuilder::topScopeStack();
+   ROSE_ASSERT(scope);
 
    if (return_type == nullptr)
       {
@@ -328,13 +326,12 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* re
    std::cout << "\nHACK ATTACK............ building function declaration for " << name << std::endl;
    std::cout << "--- parameter list size is " << param_list->get_args().size() << std::endl;
    std::cout << "--- SubroutineAttribute is " << attr << std::endl;
-   std::cout << "--- isDefiningDecl " << isDefiningDecl << std::endl;
 #endif
 
    SgName sg_name(name);
 
    SgProcedureHeaderStatement*
-   proc_header = SageBuilder::buildProcedureHeaderStatement(sg_name, return_type, param_list, subprogram_kind, global_scope);
+   proc_header = SageBuilder::buildProcedureHeaderStatement(sg_name, return_type, param_list, subprogram_kind, scope);
 
    function_decl = proc_header;
    ROSE_ASSERT(function_decl);
@@ -345,25 +342,19 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* re
    ROSE_ASSERT(function_def);
    ROSE_ASSERT(function_body);
 
-   if      (attr ==  General_Language_Translation::e_subroutine_attr_rec ) function_decl->get_functionModifier().setRecursive();
-   else if (attr ==  General_Language_Translation::e_subroutine_attr_rent) function_decl->get_functionModifier().setReentrant();
+   if (list_contains(modifiers, e_function_modifier_definition))  function_decl->get_declarationModifier().setJovialDef();
+   if (list_contains(modifiers, e_function_modifier_reference ))  function_decl->get_declarationModifier().setJovialRef();
 
-   if (isDefiningDecl) function_decl->get_declarationModifier().setJovialDef();
-   else                function_decl->get_declarationModifier().setJovialRef();
-
-#if 0
-   if (SageInterface::is_language_case_insensitive())
-      {
-         function_body->setCaseInsensitive(true);
-         function_def ->setCaseInsensitive(true);//TODO - THIS MAY FAIL
-      }
-#endif
+   if (list_contains(modifiers, e_function_modifier_recursive))   function_decl->get_functionModifier().setRecursive();
+   if (list_contains(modifiers, e_function_modifier_reentrant))   function_decl->get_functionModifier().setReentrant();
 
 #if 0
    std::cout << "---   : function_decl "  << function_decl << ": " << function_decl->class_name() << std::endl;
    std::cout << "---   : function_def  "  << function_def << std::endl;
    std::cout << "---   : function_def  "  << function_decl->get_definition() << std::endl;
    std::cout << "---   : function_body " << function_body << std::endl;
+   ROSE_ASSERT(function_body->isCaseInsensitive());
+   ROSE_ASSERT(function_def ->isCaseInsensitive());
 #endif
 #if 0
    setSourcePosition(function_decl, sources.get<0>(), sources.get<2>());
@@ -373,12 +364,11 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* re
 #endif
 
    SageBuilder::pushScopeStack(function_def);
-   ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive()); //TEMPORARY
    SageBuilder::pushScopeStack(function_body);
 }
 
 void SageTreeBuilder::
-Leave(SgFunctionDeclaration* function_decl, SgBasicBlock* param_scope, bool isDefiningDeclaration)
+Leave(SgFunctionDeclaration* function_decl, SgBasicBlock* param_scope)
 {
    mlog[INFO] << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
 

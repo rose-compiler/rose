@@ -88,11 +88,11 @@ public:
                                  const boost::optional<std::string> &);
 
    void Enter(SgFunctionParameterList* &, SgBasicBlock* &);
-   void Leave(SgFunctionParameterList*, SgBasicBlock*, const std::list<General_Language_Translation::FormalParameter> &);
+   void Leave(SgFunctionParameterList*, SgBasicBlock*, const std::list<LanguageTranslation::FormalParameter> &);
 
    void Enter(SgFunctionDeclaration* &, const std::string &, SgType*, SgFunctionParameterList*,
-                                        const General_Language_Translation::SubroutineAttribute &, bool isDefinition);
-   void Leave(SgFunctionDeclaration*, SgBasicBlock*, bool isDefinition);
+                                        const LanguageTranslation::FunctionModifierList &);
+   void Leave(SgFunctionDeclaration*, SgBasicBlock*);
 
    void Enter(SgFunctionDefinition* &);
    void Leave(SgFunctionDefinition*);
@@ -139,6 +139,13 @@ public:
    const TraversalContext & get_context(void) {return context_;}
    void setContext(SgType* type) {context_.type = type;}
    void setActualFunctionParameterScope(SgScopeStatement* scope) {context_.actual_function_param_scope = scope;}
+
+// Helper function
+   bool list_contains(const std::list<LanguageTranslation::FunctionModifier>& lst, const LanguageTranslation::FunctionModifier& item)
+     {
+        return (std::find(lst.begin(), lst.end(), item) != lst.end());
+     }
+
 };
 
 } // namespace builder

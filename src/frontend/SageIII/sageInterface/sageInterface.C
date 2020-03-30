@@ -5187,7 +5187,14 @@ bool SageInterface::is_language_case_insensitive()
       return is_Fortran_language() || is_Jovial_language();
    }
 
-// #endif
+// Rasmussen (3/28/2020): Collecting all languages that may have scopes that contain
+// statements that are not only declarations here. For Fortran (at least), function
+// definitions may be declared at the end of other procedures.
+bool SageInterface::language_may_contain_nondeclarations_in_scope()
+   {
+      return is_Fortran_language() || is_Python_language();
+   }
+
 
 // DQ (10/5/2006): Added support for faster (non-quadratic) computation of unique
 // labels for scopes in a function (as required for name mangling).

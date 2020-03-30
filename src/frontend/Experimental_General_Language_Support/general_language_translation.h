@@ -3,24 +3,33 @@
 
 class SgExpression;
 
-namespace General_Language_Translation
+namespace LanguageTranslation
    {
   // Forward declarations
      struct FormalParameter;
      struct LocationSpecifier;
      struct StructureSpecifier;
 
-     enum SubroutineAttribute
+
+     enum FunctionModifier
         {
-           e_subroutine_attr_none = 0,
+           e_function_modifier_none = 0,
+
+           e_function_modifier_reentrant,
+           e_function_modifier_recursive,
 
         // Jovial
-           e_subroutine_def,
-           e_subroutine_ref,
-           e_subroutine_attr_rent,
-           e_subroutine_attr_rec,
+           e_function_modifier_definition,
+           e_function_modifier_reference,
 
-           e_subroutine_attr_last
+        // Fortran
+        // e_function_modifier_list,
+           e_function_modifier_elemental,
+           e_function_modifier_impure,
+           e_function_modifier_module,
+           e_function_modifier_pure,
+
+           e_function_modifier_last
         };
 
   // Enum for different types of expressions (used with untyped IR nodes).
@@ -66,17 +75,6 @@ namespace General_Language_Translation
           e_type_modifier_truncate,
           e_type_modifier_volatile,
           e_type_modifier_z,
-
-       // Function modifiers
-       // ------------------
-          e_function_modifier_list,
-          e_function_modifier_none,
-          e_function_modifier_elemental,
-          e_function_modifier_impure,
-          e_function_modifier_module,
-          e_function_modifier_pure,
-          e_function_modifier_recursive,
-          e_function_modifier_reentrant,
 
        // Function formal parameters
        // --------------------------
@@ -231,7 +229,7 @@ namespace General_Language_Translation
       struct FormalParameter
         {
            FormalParameter()
-             : name(std::string("")), output(false), binding(General_Language_Translation::e_none) {} // want to use C++11 = delete
+             : name(std::string("")), output(false), binding(LanguageTranslation::e_none) {} // want to use C++11 = delete
            FormalParameter(const std::string &param_name, bool out, const ExpressionKind &param_binding)
              : name(param_name), output(out), binding(param_binding) {}
            std::string name;
@@ -254,6 +252,8 @@ namespace General_Language_Translation
          bool is_parallel;
       };
 
-   } // namespace General_Language_Translation 
+     typedef std::list<LanguageTranslation::FunctionModifier> FunctionModifierList;
+
+   } // namespace LanguageTranslation
 
 #endif
