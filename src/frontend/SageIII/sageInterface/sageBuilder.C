@@ -6615,6 +6615,13 @@ SgFloatVal* SageBuilder::buildFloatVal_nfi(float value, const string& str)
   return result;
 }
 
+SgFloatVal* SageBuilder::buildFloatVal_nfi(const string& str)
+{
+  // C++11 please [Rasmussen 2020.02.25]
+  // return buildFloatVal_nfi(std::stof(str), str);
+     return buildFloatVal_nfi(atof(str.c_str()), str);
+}
+
 SgIntVal* SageBuilder::buildIntVal(int value)
    {
      SgIntVal* intValue= new SgIntVal(value,"");
@@ -6652,6 +6659,13 @@ SgIntVal* SageBuilder::buildIntVal_nfi(int value, const string& str)
 #endif
 
      return intValue;
+   }
+
+SgIntVal* SageBuilder::buildIntVal_nfi(const string& str)
+   {
+  // C++11 please [Rasmussen 2020.02.25]
+  // return buildIntVal_nfi(std::stoi(str), str);
+     return buildIntVal_nfi(atoi(str.c_str()), str);
    }
 
 SgLongIntVal* SageBuilder::buildLongIntVal(long value)
@@ -7582,7 +7596,7 @@ SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand
      return result;
    }
 
-SgAssignInitializer * SageBuilder::buildAssignInitializer_nfi(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = UNLL */)
+SgAssignInitializer * SageBuilder::buildAssignInitializer_nfi(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = NULL */)
    {
      SgAssignInitializer* result = new SgAssignInitializer(operand_i, expression_type);
      ROSE_ASSERT(result);
@@ -7983,6 +7997,34 @@ SgExprListExp * SageBuilder::buildExprListExp_nfi(const std::vector<SgExpression
      return expList;
    }
 
+SgSubscriptExpression*
+SageBuilder::buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride)
+   {
+      if (lower_bound == NULL)
+         {
+            lower_bound = SageBuilder::buildNullExpression_nfi();
+         }
+      if (stride == NULL)
+         {
+            stride = SageBuilder::buildNullExpression_nfi();
+         }
+
+      ROSE_ASSERT(lower_bound);
+      ROSE_ASSERT(upper_bound);
+      ROSE_ASSERT(stride);
+
+      SgSubscriptExpression* subscript = new SgSubscriptExpression(lower_bound, upper_bound, stride);
+      ROSE_ASSERT(subscript);
+      SageInterface::setSourcePosition(subscript);
+
+      // Set the parents of all the parts of the SgSubscriptExpression
+      lower_bound->set_parent(subscript);
+      upper_bound->set_parent(subscript);
+      stride     ->set_parent(subscript);
+
+      return subscript;
+   }
+
 SgVarRefExp*
 SageBuilder::buildVarRefExp(SgInitializedName* initname, SgScopeStatement* scope)
    {
@@ -8058,7 +8100,7 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
        // symbol = lookupSymbolInParentScopes(name,scope);
           symbol = lookupVariableSymbolInParentScopes(name,scope);
 #else
-#error "DAED CODE!"
+#error "DEAD CODE!"
           symbol = scope->lookup_variable_symbol(name);
 #endif
 #if 0
@@ -8942,7 +8984,7 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
      if (false_body) false_body->set_parent(ifstmt);
      return ifstmt;
 #else
-  // DQ (2/13/2012): This allows us to separate teh construction from the initialization (see note below).
+  // DQ (2/13/2012): This allows us to separate the construction from the initialization (see note below).
      initializeIfStmt(ifstmt,conditional,true_body,false_body);
      return ifstmt;
 #endif
@@ -10781,10 +10823,15 @@ SgModifierType* SageBuilder::buildModifierType(SgType * base_type /*= NULL*/)
    }
 #endif
 
-SgTypeBool * SageBuilder::buildBoolType() {
-  SgTypeBool * result =SgTypeBool::createType();
+// Rasmussen (2/20/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
+SgTypeBool * SageBuilder::buildBoolType(SgExpression* kind_expr) {
+  SgTypeBool * result = SgTypeBool::createType(kind_expr);
   ROSE_ASSERT(result);
+  if (kind_expr != NULL) kind_expr->set_parent(result);
   return result;
+}
+SgTypeBool * SageBuilder::buildBoolType() {
+  return buildBoolType(NULL);
 }
 
 SgTypeNullptr* SageBuilder::buildNullptrType()
@@ -10865,11 +10912,17 @@ SgTypeUnsignedLong * SageBuilder::buildUnsignedLongType()
   return result;
 }
 
+// Rasmussen (2/20/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
+SgTypeUnsignedInt * SageBuilder::buildUnsignedIntType(SgExpression* kind_expr)
+{
+  SgTypeUnsignedInt * result = SgTypeUnsignedInt::createType(kind_expr);
+  ROSE_ASSERT(result);
+  if (kind_expr != NULL) kind_expr->set_parent(result);
+  return result;
+}
 SgTypeUnsignedInt * SageBuilder::buildUnsignedIntType()
 {
-  SgTypeUnsignedInt * result = SgTypeUnsignedInt::createType();
-  ROSE_ASSERT(result);
-  return result;
+  return buildUnsignedIntType(NULL);
 }
 
 SgTypeSignedShort * SageBuilder::buildSignedShortType()
@@ -11032,15 +11085,47 @@ SgTypeString * SageBuilder::buildStringType( SgExpression* stringLengthExpressio
      return result;
    }
 
-SgTypeInt * SageBuilder::buildIntType()
+// Rasmussen (2/20/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
+SgTypeInt * SageBuilder::buildIntType(SgExpression* kind_expr)
 {
-  SgTypeInt * result =SgTypeInt::createType();
+  SgTypeInt * result;
+  if (kind_expr != NULL)
+     {
+       result = SgTypeInt::createType(0, kind_expr);
+       kind_expr->set_parent(result);
+     }
+  else
+     {
+       result = SgTypeInt::createType();
+     }
   ROSE_ASSERT(result);
   return result;
 }
+SgTypeInt * SageBuilder::buildIntType()
+{
+  return buildIntType(NULL);
+}
+
 SgTypeDouble * SageBuilder::buildDoubleType()
 {
   SgTypeDouble * result =SgTypeDouble::createType();
+  ROSE_ASSERT(result);
+  return result;
+}
+
+// Rasmussen (3/6/2020): Added builder functions for type size (kind) expressions for Fortran and Jovial
+SgTypeFloat * SageBuilder::buildFloatType(SgExpression* kind_expr)
+{
+  SgTypeFloat * result;
+  if (kind_expr != NULL)
+     {
+       result = SgTypeFloat::createType(kind_expr);
+       kind_expr->set_parent(result);
+     }
+  else
+     {
+       result = SgTypeFloat::createType();
+     }
   ROSE_ASSERT(result);
   return result;
 }
@@ -11048,6 +11133,18 @@ SgTypeFloat * SageBuilder::buildFloatType()
 {
   SgTypeFloat * result =SgTypeFloat::createType();
   ROSE_ASSERT(result);
+  return result;
+}
+
+// Rasmussen (2/20/2020): Added builder for Jovial fixed type
+SgTypeFixed* buildFixedType(SgExpression* fraction, SgExpression* scale)
+{
+  SgTypeFixed * result = SgTypeFixed::createType(scale, fraction);
+  ROSE_ASSERT(result);
+
+   if (scale) scale->set_parent(result);
+   if (fraction) fraction->set_parent(result);
+
   return result;
 }
 
@@ -12354,11 +12451,37 @@ SageBuilder::buildStmtDeclarationStatement(SgStatement* stmt) {
     return result;
 }
 
+SgJovialDefineDeclaration*
+SageBuilder::buildJovialDefineDeclaration_nfi(const SgName& name, const std::string& params,
+                                              const std::string& def_string, SgScopeStatement* scope)
+  {
+     std::string directive_string(name);
+
+     if (scope == NULL)
+        scope = SageBuilder::topScopeStack();
+     ROSE_ASSERT(scope);
+
+     if (params.length() > 0)
+        directive_string += " " + params;
+
+     directive_string += " " + def_string;
+
+     SgJovialDefineDeclaration* define_decl = new SgJovialDefineDeclaration(directive_string);
+     ROSE_ASSERT(define_decl);
+     SageInterface::setSourcePosition(define_decl);
+
+  // The first nondefining declaration must be set
+     define_decl->set_firstNondefiningDeclaration(define_decl);
+     define_decl->set_parent(scope);
+
+     return define_decl;
+  }
 
 // This should take a SgClassDeclaration::class_types kind parameter!
 SgClassDeclaration * SageBuilder::buildStructDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
    {
 #if 0
+
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
 
@@ -12467,6 +12590,7 @@ SgJovialTableType * SageBuilder::buildJovialTableType (const SgName& name, SgTyp
      table_type->set_dim_info(dim_info);
      table_type->set_rank(dim_info->get_expressions().size());
 
+     dim_info->set_parent(table_type);
      nondef_decl->set_type(table_type);
 
      return table_type;
@@ -15951,7 +16075,7 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
 
      ROSE_ASSERT(new_file_id >= 0);
 
-  // Now buid the traveral object and call the traversal (preorder) on the function definition.
+  // Now build the traveral object and call the traversal (preorder) on the function definition.
      Traversal traversal (newFileName,new_file_id,originalFileId);
 
   // traversal.traverse(subtreeRoot, preorder);

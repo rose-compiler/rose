@@ -2676,6 +2676,61 @@ HEADER_GOTO_STATEMENT_START
 
 HEADER_GOTO_STATEMENT_END
 
+HEADER_ADA_EXIT_STATEMENT_START
+       // void post_construction_initialization();
+
+        protected:
+          virtual bool replace_child(SgStatement*, SgStatement*, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+          int replace_expression(SgExpression * original_expression, SgExpression * new_expression ) $ROSE_OVERRIDE;
+
+        public:
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+
+#if ALT_FIXUP_COPY
+       // DQ (11/7/2007): These need to be called separately (see documentation)
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+#else
+       // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
+          virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
+#endif
+
+HEADER_ADA_EXIT_STATEMENT_END
+
+HEADER_ADA_LOOP_STATEMENT_START
+       // void post_construction_initialization();
+
+        protected:
+          virtual bool replace_child(SgStatement*, SgStatement*, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+          
+        public:
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+
+#if ALT_FIXUP_COPY
+       // DQ (11/7/2007): These need to be called separately (see documentation)
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+#else
+       // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
+          virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
+#endif
+
+HEADER_ADA_LOOP_STATEMENT_END
+
 HEADER_PYTHON_GLOBAL_STMT_START
 HEADER_LIST_DECLARATIONS
 HEADER_PYTHON_GLOBAL_STMT_END
@@ -9322,10 +9377,12 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                              break;
                                            }
 
-
                                      // DQ (8/29/2009): Added SgArrayType to eliminate error message about 
                                      // default being reached (missed including this type previously).
                                         case V_SgArrayType:
+
+                                     // Rasmussen (2/18/2020): Added SgTypeFixed (primitive type in Jovial)
+                                        case V_SgTypeFixed:
 
                                      // DQ (2/28/2005): List of types used in compiling Kull
                                         case V_SgTypeChar:
@@ -16936,6 +16993,62 @@ SgGotoStatement::replace_child(SgStatement *target,SgStatement *newstmt, bool ex
    }
 
 SOURCE_GOTO_STATEMENT_END
+
+SOURCE_ADA_EXIT_STATEMENT_START
+
+void
+SgAdaExitStmt::post_construction_initialization()
+   {
+     ROSE_ASSERT(get_loop() && get_condition());
+#ifndef REMOVE_SET_PARENT_FUNCTION
+      get_loop()->set_parent(this);
+      get_condition()->set_parent(this);
+#endif
+   }
+
+bool
+SgAdaExitStmt::replace_child(SgStatement *target,SgStatement *newstmt, bool /*extractBasicBlock*/)
+{
+  return StatementReplace(this, p_loop, target, newstmt);
+}
+
+int
+SgAdaExitStmt::replace_expression(SgExpression* original_expression, SgExpression* new_expression)
+{
+  ROSE_ASSERT(original_expression && new_expression);  
+  ROSE_ASSERT(original_expression == get_condition());
+  
+  set_condition(new_expression);
+  
+  new_expression->set_parent(this);
+  
+  // Let this leak for now
+  // delete original_expression;
+  return 0;
+}
+
+
+SOURCE_ADA_EXIT_STATEMENT_END
+
+SOURCE_ADA_LOOP_STATEMENT_START
+
+void
+SgAdaLoopStmt::post_construction_initialization()
+   {
+     ROSE_ASSERT(get_body());
+#ifndef REMOVE_SET_PARENT_FUNCTION
+     get_body()->set_parent(this);
+#endif
+   }
+
+bool
+SgAdaLoopStmt::replace_child(SgStatement *target,SgStatement *newstmt, bool extractBasicBlock)
+   {
+     return StatementReplace(this, p_body, target, newstmt);
+   }
+
+
+SOURCE_ADA_LOOP_STATEMENT_END
 
 SOURCE_PYTHON_PRINT_STMT_START
 

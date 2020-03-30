@@ -231,10 +231,6 @@ void postProcessingSupport (SgNode* node)
           printf ("In postProcessingSupport: Test 1: Calling postProcessingTestFunctionCallArguments() \n");
           postProcessingTestFunctionCallArguments(node);
 #endif
-#ifndef ROSE_USE_CLANG_FRONTEND
-       // DQ (10/31/2012): Added fixup for EDG bug which drops variable declarations of some source sequence lists.
-          fixupEdgBugDuplicateVariablesInAST();
-#endif
 
 #if DEBUG_TYPEDEF_CYCLES
           printf ("Calling TestAstForCyclesInTypedefs() \n");

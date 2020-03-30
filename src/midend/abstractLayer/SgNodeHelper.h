@@ -50,6 +50,9 @@ class SgPragmaDeclaration;
 class SgOmpClauseBodyStatement;
 
 namespace SgNodeHelper {
+  
+  /// defines if extended normalized call matching (functions+ctors) is enabled
+  extern const bool WITH_EXTENDED_NORMALIZED_CALL;
 
 /*! \brief Functions for simplifying access to SgNode information
 
@@ -93,9 +96,9 @@ namespace SgNodeHelper {
   //! determines all VarRefExp in the subtree of 'node'. The order in the vector corresponds to the traversal order on the AST.
   std::vector<SgVarRefExp*> determineVariablesInSubtree(SgNode* node);
 
-  /*! computes a list representing the nesting structure of classes (including structs and unions). 
+  /*! computes a list representing the nesting structure of classes (including structs and unions).
     It traverses the AST upwards and collects SgClassDeclaration(s) only. This covers nested classes, nested structs, and nested unions,
-    and combinations of those. 
+    and combinations of those.
   */
   std::list<SgClassDeclaration*> classDeclarationNestingSequence(SgDeclarationStatement*);
 
@@ -139,7 +142,7 @@ namespace SgNodeHelper {
 
   //! returns the root node representing the AST of the loop body of While, DoWhile, For.
   SgNode* getLoopBody(SgNode* node);
-  
+
   //! returns the first Statement of SgBasicBlock (throws exception if numChildren==0)
   SgNode* getFirstOfBlock(SgNode* node);
 
@@ -159,7 +162,7 @@ namespace SgNodeHelper {
      information as present in the AST. If this information is not
      sufficient to determine the definition of a function it returns
      0. For a consistent AST this will find all definitions in the
-     same file, but not in a other SgFile. 
+     same file, but not in a other SgFile.
 
      For an inter-procedural analysis a more elaborate mechanism is
      required to perform a static function call lresolution (also
@@ -168,7 +171,7 @@ namespace SgNodeHelper {
   SgFunctionDefinition* determineFunctionDefinition(SgFunctionCallExp* fCall);
 
   //! Determines whether a provided function declaration is a forward declaration
-  bool isForwardFunctionDeclaration(SgNode* declaration);  
+  bool isForwardFunctionDeclaration(SgNode* declaration);
 
   /*! this function should only be called for a node in the subtree of
      a SgFunctionDefinition node. For a given 'node' it determines the
@@ -232,15 +235,15 @@ namespace SgNodeHelper {
 
      If node is not one of those two types an exception is thrown
      The long variable name consists $functionName$scopeLevel$varName
-     In case of global scope functionName is empty, giving a string: $$scopeLevel$varName 
+     In case of global scope functionName is empty, giving a string: $$scopeLevel$varName
      Note: this function only considers C-functions. Classes are recognized.
   */
   std::string uniqueLongVariableName(SgNode* node);
 
   /*! \brief returns a set of SgNode where each node is a break node, but
-     properly excludes all nested loops. 
+     properly excludes all nested loops.
 
-     @param [in] node can point directly to the AST construct (e.g. SgIfStatement) or a basic block of the respective loop construct. 
+     @param [in] node can point directly to the AST construct (e.g. SgIfStatement) or a basic block of the respective loop construct.
 
      The only property this function maintains during traversal of the
      AST is that it does not collect break nodes from nested loops but
@@ -329,9 +332,9 @@ namespace SgNodeHelper {
 
   //! return rhs of a binary node (if it is not a binary node it throws an exception)
   SgNode* getRhs(SgNode* node);
-  
+
   /*! returns the parent of a node. Essentially a wrapper function of the ROSE get_parent() function, but throws
-     an exception if no parent exists. For SgProject node  no exception is thrown if no parent exists because it is the root node of a ROSE AST. 
+     an exception if no parent exists. For SgProject node  no exception is thrown if no parent exists because it is the root node of a ROSE AST.
   */
   SgNode* getParent(SgNode* node);
 
@@ -514,7 +517,7 @@ namespace SgNodeHelper {
     };
     OutputTarget matchSingleVarOrValuePrintf(SgNode* node);
 
- 
+
   } // end of namespace Pattern
 
 #if __cplusplus > 199711L
@@ -522,6 +525,29 @@ namespace SgNodeHelper {
   bool nodeCanBeChanged(SgLocatedNode * lnode);
 #endif
 
+  struct ExtendedCallInfo
+  {
+      ExtendedCallInfo()
+      : rep(NULL)
+      {}   
+    
+      ExtendedCallInfo(SgLocatedNode& callnode)
+      : rep(&callnode)
+      {}   
+    
+      SgLocatedNode*            representativeNode() const;
+      SgCallExpression*         callExpression()     const;              
+      SgConstructorInitializer* ctorInitializer()    const;              
+      SgPointerDerefExp*        functionPointer()    const; 
+      
+      operator bool() const { return rep != NULL; }
+      
+    private:
+      SgLocatedNode* rep;
+  };
+  
+  ExtendedCallInfo
+  matchExtendedNormalizedCall(SgNode*);
 } // end of namespace SgNodeHelper
 
 #endif
