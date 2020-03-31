@@ -2249,6 +2249,38 @@ package body Asis_Tool_2.Element is
             Result.Corresponding_Entry := ID;
          end;
 
+         procedure Add_Corresponding_Loop_Exited is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Corresponding_Loop_Exited (Element));
+         begin
+            State.Add_To_Dot_Label ("Corresponding_Loop_Exited", To_String (ID));
+            Result.Corresponding_Loop_Exited := ID;
+         end;
+
+         procedure Add_Exit_Condition is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Exit_Condition (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Exit_Condition", ID);
+            Result.Exit_Condition := ID;
+         end;
+
+         procedure Add_Exit_Loop_Name is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Exit_Loop_Name (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Exit_Loop_Name", ID);
+            Result.Exit_Loop_Name := ID;
+         end;
+
+         procedure Add_For_Loop_Parameter_Specification is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.For_Loop_Parameter_Specification (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("For_Loop_Parameter_Specification", ID);
+            Result.For_Loop_Parameter_Specification := ID;
+         end;
+
          procedure Add_Is_Name_Repeated is
             Value : constant Boolean := Asis.Statements.Is_Name_Repeated (Element);
          begin
@@ -2296,7 +2328,7 @@ package body Asis_Tool_2.Element is
             ID : constant a_nodes_h.Element_ID :=
               Get_Element_ID (Asis.Statements.Statement_Identifier (Element));
          begin
-            State.Add_To_Dot_Label ("Statement_Identifier", To_String (ID));
+            State.Add_To_Dot_Label_And_Edge ("Statement_Identifier", ID);
             Result.Statement_Identifier := ID;
          end;
 
@@ -2310,12 +2342,28 @@ package body Asis_Tool_2.Element is
                Add_Edges      => True);
          end;
 
+         procedure Add_While_Condition is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.While_Condition (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("While_Condition", ID);
+            Result.While_Condition := ID;
+         end;
+
          procedure Add_Common_Items is
          begin
             State.Add_To_Dot_Label ("Statement_Kind", Statement_Kind'Image);
             Result.Statement_Kind := anhS.To_Statement_Kinds (Statement_Kind);
             Add_Label_Names;
          end Add_Common_Items;
+
+         procedure Add_Common_Loop_Items is
+         begin
+            Add_Statement_Identifier;
+            Add_Is_Name_Repeated;
+            Add_Loop_Statements;
+         end Add_Common_Loop_Items;
+
 
          use all type Asis.Statement_Kinds;
       begin
@@ -2339,22 +2387,19 @@ package body Asis_Tool_2.Element is
                Add_Statement_Paths;
 
             when A_Case_Statement =>
-               Add_Statement_Paths;
                Add_Case_Expression;
+               Add_Statement_Paths;
 
             when A_Loop_Statement =>
-               Add_Statement_Identifier;
-               Add_Is_Name_Repeated;
-               Add_Loop_Statements;
+               Add_Common_Loop_Items;
 
             when A_While_Loop_Statement =>
-               State.Add_Not_Implemented;
+               Add_While_Condition;
+               Add_Common_Loop_Items;
 
             when A_For_Loop_Statement =>
-               State.Add_Not_Implemented;
-               -- Statement_Identifier
-               -- For_Loop_Parameter_Specification
-               -- Loop_Statements
+               Add_For_Loop_Parameter_Specification;
+               Add_Common_Loop_Items;
 
             when A_Block_Statement =>
                State.Add_Not_Implemented;
@@ -2366,10 +2411,9 @@ package body Asis_Tool_2.Element is
                -- Block_Exception_Handlers
 
             when An_Exit_Statement =>
-               State.Add_Not_Implemented;
-               -- Exit_Loop_Name
-               -- Exit_Condition
-               -- Corresponding_Loop_Exited
+               Add_Exit_Condition;
+               Add_Exit_Loop_Name;
+               Add_Corresponding_Loop_Exited;
 
             when A_Goto_Statement =>
                State.Add_Not_Implemented;
