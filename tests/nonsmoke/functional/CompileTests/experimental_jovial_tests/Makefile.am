@@ -22,7 +22,8 @@ JOVIAL_TESTCODES = \
  1_2_3_main-program-module_d.jov        \
  1_2_3_program-body_a.jov               \
  1_2_3_program-body_b.jov               \
- 1_2_3_program-body_c.jov
+ 1_2_3_program-body_c.jov               \
+ 2_1_1_7_pointer_type.jov
 
 
 JOVIAL_PARSER_TESTCODES = \

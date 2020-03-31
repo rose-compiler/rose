@@ -5,7 +5,7 @@ BEGIN
   ITEM ia S ;
   ITEM ib S ;
   ITEM bf B 1 ;
-% ITEM ptr P ; %
+  ITEM ptr P ;
 
   ia = 1 ;
   ia = ib - 2 ;
