@@ -80,6 +80,8 @@ namespace CodeThorn {
     bool hasCharType(VariableId varId);
     // returns true if this variable has any signed or unsigned integer type (short,int,long,longlong)
     bool hasIntegerType(VariableId varId);
+    // returns true if this variable has an enum type 
+    bool hasEnumType(VariableId varId);
     // returns true if this variable has any floating-point type (float,double,longdouble,float80,float128))
     bool hasFloatingPointType(VariableId varId);
     bool hasPointerType(VariableId varId);
