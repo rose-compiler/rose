@@ -1365,21 +1365,22 @@ ATbool ATermToSageJovialTraversal::traverse_OptTypeName(ATerm term, SgType* & ty
    type = nullptr;
 
    if (ATmatch(term, "no-type-name()")) {
-      // MATCHED no-type-name (optional branch returns nullptr for type)
-      return ATtrue;
-   } else if (ATmatch(term, "TypeName(<term>)", &t_type_name)) {
+      // As there is no type name this will become a pointer to void (void*)
+      type = SageBuilder::buildVoidType();
+   }
+   else if (ATmatch(term, "TypeName(<term>)", &t_type_name)) {
       if (traverse_Name(t_type_name, type_name)) {
-         // MATCHED TypeName
-      } else return ATfalse;
+         type = SageInterface::lookupNamedTypeInParentScopes(type_name, SageBuilder::topScopeStack());
+         if (type == nullptr) {
+            cerr << "WARNING UNIMPLEMENTED: OptTypeName for name: " << type_name << endl;
+            //DELETE_ME - TEMPORARY - ensure that there is some type (what about primitive types?)
+            type = SageBuilder::buildVoidType();
+         }
+      }
+      else return ATfalse;
    }
    else return ATfalse;
 
-   type = SageInterface::lookupNamedTypeInParentScopes(type_name, SageBuilder::topScopeStack());
-
-   if (type == nullptr) {
-      cerr << "WARNING UNIMPLEMENTED: OptTypeName for name: " << type_name << endl;
-      return ATtrue;
-   }
    ROSE_ASSERT(type != nullptr);
 
    return ATtrue;
@@ -6874,6 +6875,8 @@ ATbool ATermToSageJovialTraversal::traverse_TypeNameConversion(ATerm term, SgTyp
       } else return ATfalse;
    }
    else return ATfalse;
+
+   ROSE_ASSERT(type);
 
    return ATtrue;
 }

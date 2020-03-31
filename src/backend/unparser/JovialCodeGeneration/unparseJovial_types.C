@@ -156,12 +156,12 @@ Unparse_Jovial::unparseJovialType(SgPointerType* pointer_type, SgUnparse_Info& i
      unparseTypeDesc(pointer_type, info);
      curprint(" ");
 
+  // The type name is optional
      SgNamedType* named_type = isSgNamedType(pointer_type->get_base_type());
      if (named_type != NULL)
         {
            curprint(named_type->get_name());
         }
-     else  std::cerr << "WARNING UNIMPLEMENTED: unparseJovialType - named_type is NULL\n";
   }
 
 void

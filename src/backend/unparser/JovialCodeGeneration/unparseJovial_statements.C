@@ -207,10 +207,6 @@ Unparse_Jovial::unparseProgHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
      curprint(";\n");
 
      unparseStatement(prog->get_definition(), ninfo);
-
- //  unparseStatementNumbersSupport(mod->get_end_numeric_label(),info);
-
-  // TODO - unparse non-nested-subroutines
    }
 
 void
@@ -934,6 +930,9 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
 
      info.set_inVarDecl();
 
+  // pretty printing
+     curprint( ws_prefix(info.get_nestingLevel()) );
+
      bool is_block = false;
      SgClassDeclaration* type_decl = isSgClassDeclaration(type->getAssociatedDeclaration());
      if (type_decl) {
@@ -1061,6 +1060,9 @@ Unparse_Jovial::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgExprStatement* expr_stmt = isSgExprStatement(stmt);
      ROSE_ASSERT(expr_stmt != NULL);
      ROSE_ASSERT(expr_stmt->get_expression());
+
+  // pretty printing
+     curprint( ws_prefix(info.get_nestingLevel()) );
 
      unparseExpression(expr_stmt->get_expression(), info);
 
