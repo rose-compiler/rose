@@ -2225,6 +2225,14 @@ package body Asis_Tool_2.Element is
             Result.Called_Name := ID;
          end;
 
+         procedure Add_Case_Expression is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Statements.Case_Expression (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Case_Expression", ID);
+            Result.Case_Expression := ID;
+         end;
+
          procedure Add_Corresponding_Called_Entity is
             ID : constant a_nodes_h.Element_ID :=
               Get_Element_ID (Asis.Statements.Corresponding_Called_Entity (Element));
@@ -2331,8 +2339,8 @@ package body Asis_Tool_2.Element is
                Add_Statement_Paths;
 
             when A_Case_Statement =>
-               State.Add_Not_Implemented;
-               -- Case_Expression
+               Add_Statement_Paths;
+               Add_Case_Expression;
 
             when A_Loop_Statement =>
                Add_Statement_Identifier;

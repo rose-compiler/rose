@@ -4,7 +4,7 @@ library project DOT_ASIS_Library is
 
    for Library_Name use "dot_asis";
    for Library_Dir  use "./lib";
-   for Library_Kind use "dynamic";
+   for Library_Kind use "static";
    
    -- This is a "stand-alone library". See
    -- https://docs.adacore.com/gprbuild-docs/html/gprbuild_ug/gnat_project_manager.html#library-projects
@@ -22,7 +22,7 @@ library project DOT_ASIS_Library is
       "dot.ads",
       "indented_text.ads",
       "tool_2_wrapper_h.ads");
-   for Library_Standalone use "encapsulated";
+--   for Library_Standalone use "encapsulated";
    for Library_Auto_Init use "false";
    
    for Source_Dirs use
@@ -37,6 +37,8 @@ library project DOT_ASIS_Library is
       for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g");
    end Compiler;
 
+   -- Linker switches are not taken into account in library projects
+   
    package Ide is
       for Vcs_Kind use "Git";
    end Ide;
