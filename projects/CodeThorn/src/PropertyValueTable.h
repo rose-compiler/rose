@@ -8,7 +8,7 @@
 #include "Miscellaneous.h"
 #include "rose_config.h"
 #ifdef HAVE_SPOT
-#include "SpotMiscellaneous.h"
+#include "ltlthorn-lib/SpotMiscellaneous.h"
 #endif
 
 using namespace std;

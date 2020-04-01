@@ -1,12 +1,13 @@
 #ifndef PHI_ATTRIBUTE_H
 #define PHI_ATTRIBUTE_H
 
-#include<AstAttributeMechanism.h>
-#include<vector>
-#include<PhiStatement.h>
-#include<map>
-#include<set>
-#include"SSAGenerator.h"
+#include "AstAttributeMechanism.h"
+#include "PhiStatement.h"
+#include "SSAGenerator.h"
+
+#include <vector>
+#include <map>
+#include <set>
 
 using namespace std;
 

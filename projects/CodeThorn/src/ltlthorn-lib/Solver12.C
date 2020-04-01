@@ -46,9 +46,9 @@ void Solver12::run() {
   bool ioReductionActive = false;
   unsigned int ioReductionThreshold = 0;
   unsigned int estatesLastReduction = 0;
-  if(args.count("io-reduction")) {
+  if(args.isDefined("io-reduction")) {
     ioReductionActive = true;
-    ioReductionThreshold = args["io-reduction"].as<int>();
+    ioReductionThreshold = args.getInt("io-reduction");
   }
 
   logger[TRACE]<<"STATUS: Running parallel solver 12 with "<<workers<<" threads."<<endl;
@@ -224,7 +224,7 @@ void Solver12::run() {
       } // conditional: test if work is available
     } // while
   } // omp parallel
-  _analyzer->_analysisTimer.stop();
+  //_analyzer->_analysisTimer.stop(); 2020-03-20: stopped when time is requested
   const bool isComplete=true;
   if (!_analyzer->isPrecise()) {
     _analyzer->_firstAssertionOccurences = list<FailedAssertion>(); //ignore found assertions if the STG is not precise

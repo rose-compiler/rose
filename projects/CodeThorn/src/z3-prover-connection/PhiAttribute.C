@@ -1,10 +1,10 @@
 #ifndef PHI_ATTRIBUTE_C
 #define PHI_ATTRIBUTE_C
 
-#include<PhiAttribute.h>
+#include "PhiAttribute.h"
 
-#include<PhiStatement.h>
-#include<sstream>
+#include "PhiStatement.h"
+#include <sstream>
 
 using namespace std;
 

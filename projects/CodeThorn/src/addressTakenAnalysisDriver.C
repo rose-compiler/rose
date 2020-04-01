@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
   fipi.printInfoSets();
 
   timer.stop();
-  double fipaMeasuredTime=timer.getTimeDuration().milliSeconds();
+  double fipaMeasuredTime=timer.getTimeDurationAndStop().milliSeconds();
 
   TestDefUseVarsInfoTraversal tt(vidm);
   // change to traverse for entire project
@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
   tt.traverse(project, preorder);
   timer.stop();
 
-  double duMeasuredTime = timer.getTimeDuration().milliSeconds();
+  double duMeasuredTime = timer.getTimeDurationAndStop().milliSeconds();
 
   std::cout << "fipa : " << fipaMeasuredTime << "\n";
   std::cout << "du : " << duMeasuredTime << "\n";

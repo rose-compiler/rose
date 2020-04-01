@@ -54,7 +54,7 @@ namespace CodeThorn {
    * \author Marc Jasper
    * \date 2016.
    */
-  class ParallelAutomataGenerator {
+  class ParProAutomataGenerator {
   public:
     std::vector<Flow*> randomlySyncedCircleAutomata(int numAutomata, std::pair<int,int> numSyncsBounds, 
 						     std::pair<int,int> numCirclesBounds, std::pair<int,int> lengthBounds, 

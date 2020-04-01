@@ -4,7 +4,7 @@
 #include "rose_config.h"
 
 #include "LtsminConnection.h"
-#include "ParallelAutomataGenerator.h"
+#include "ParProAutomataGenerator.h"
 
 
 using namespace CodeThorn;

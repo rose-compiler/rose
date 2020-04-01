@@ -1936,11 +1936,6 @@ AC_CONFIG_SUBDIRS([libltdl])
 CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
 AC_CONFIG_FILES([
 src/frontend/CxxFrontend/EDG/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.9/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.9/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.9/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.9/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.9/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/src/Makefile
