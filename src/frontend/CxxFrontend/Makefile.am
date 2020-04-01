@@ -132,7 +132,7 @@ EDG_HELP_URL="https://github.com/rose-compiler/rose/wiki/EDG-Installation-Instru
 
 #(see above): .PHONY: check-network
 check-network:
-	@if ! ping -c 1 google.com 2>&1 >/dev/null; then						\
+	@if ! wget -q --spider -t 3 --wait=1 google.com ; then						\
 	    echo "Unable to ping google.com" >&2;							\
 	    echo "ROSE requires an internet connection to download EDG binary" >&2;			\
 	    echo "For more information on EDG binaries visit" >&2;			\
