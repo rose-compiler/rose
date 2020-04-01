@@ -1446,6 +1446,11 @@ mangleExpression (const SgExpression* expr)
           mangled_name << "_bBracedInitializer_" << mangleExpression (e->get_initializers()) << "_eBracedInitializer_";
           break;
         }
+        case V_SgAssignInitializer: {
+          const SgAssignInitializer* e = isSgAssignInitializer (expr);
+          mangled_name << "_bAssignInitializer_" << mangleExpression (e->get_operand_i()) << "_eAssignInitializer_";
+          break;
+        }
         case V_SgNewExp: {
           // FIXME ROSE-1783
           const SgNewExp* e = isSgNewExp (expr);
