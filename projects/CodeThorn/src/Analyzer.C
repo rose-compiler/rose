@@ -1916,7 +1916,9 @@ PState CodeThorn::Analyzer::analyzeAssignRhs(Label lab, PState currentPState, Va
   }
 
   if(isRhsIntVal && isPrecise()) {
-    ROSE_ASSERT(!rhsIntVal.isTop());
+    // \pp with SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL enabled the analysis
+    //     is currently imprecise...
+    ROSE_ASSERT(!rhsIntVal.isTop() || SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL);
   }
 
   if(newPState.varExists(lhsVar)) {
@@ -2601,6 +2603,17 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
     // no effect if $return does not exist
     newPState.deleteVar(returnVarId);
     return elistify(createEState(edge.target(),cs,newPState,cset));
+  } else if (SgNodeHelper::matchExtendedNormalizedCall(nextNodeToAnalyze1)) {
+    // Handles Constructor Calls
+    // \pp TEMPORARY SOLUTION TO MAKE CODE PASS THROUGH
+    // \todo THIS IS WRONG 
+    // (1) matchExtendedNormalizedCall is too coarse grain, as it covers
+    //     both constructor and function calls
+    // (2) distinction between constructor call of a base class and an
+    //     variable initialization needs to be made. 
+    EState newEState=currentEState;
+    newEState.setLabel(edge.target());
+    return elistify(newEState);
   } else {
     logger[FATAL] << "function call-return from unsupported call type:"<<nextNodeToAnalyze1->unparseToString()<<endl;
     exit(1);
@@ -3052,6 +3065,8 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
       } else if(variableIdMapping->hasCharType(lhsVar)) {
         getExprAnalyzer()->writeToMemoryLocation(currentLabel,&newPState,lhsVar,(*i).result);
       } else if(variableIdMapping->hasIntegerType(lhsVar)) {
+        getExprAnalyzer()->writeToMemoryLocation(currentLabel,&newPState,lhsVar,(*i).result);
+      } else if(variableIdMapping->hasEnumType(lhsVar)) /* PP */ {
         getExprAnalyzer()->writeToMemoryLocation(currentLabel,&newPState,lhsVar,(*i).result);
       } else if(variableIdMapping->hasFloatingPointType(lhsVar)) {
         getExprAnalyzer()->writeToMemoryLocation(currentLabel,&newPState,lhsVar,(*i).result);

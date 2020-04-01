@@ -97,6 +97,11 @@ bool VariableIdMapping::hasIntegerType(VariableId varId) {
   return SageInterface::isStrictIntegerType(type);
 }
 
+bool VariableIdMapping::hasEnumType(VariableId varId) {
+  SgType* type=getType(varId);
+  return SageInterface::IsEnum(type);
+}
+
 bool VariableIdMapping::hasFloatingPointType(VariableId varId) {
   SgType* type=getType(varId);
   return isSgTypeFloat(type)||isSgTypeDouble(type)||isSgTypeLongDouble(type)||isSgTypeFloat80(type)||isSgTypeFloat128(type);
