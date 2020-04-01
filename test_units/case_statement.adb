@@ -5,5 +5,7 @@ begin
          null;
       when False =>
          null;
+      when others =>
+         null;
    end case;
 end Case_Statement;
