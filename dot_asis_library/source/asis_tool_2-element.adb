@@ -607,11 +607,20 @@ package body Asis_Tool_2.Element is
             Result.Entry_Family_Definition := ID;
          end;
 
+         procedure Add_Specification_Subtype_Definition is
+            ID : constant a_nodes_h.Element_ID :=
+              Get_Element_ID (Asis.Declarations.Specification_Subtype_Definition (Element));
+         begin
+            State.Add_To_Dot_Label_And_Edge ("Specification_Subtype_Definition", ID);
+            Result.Specification_Subtype_Definition := ID;
+         end;
+
          procedure Add_Entry_Index_Specification is
 --              ID : constant a_nodes_h.Element_ID :=
 --                Get_Element_ID (Asis.Declarations.Entry_Index_Specification (Element));
          begin
             -- TODO: Finish
+            State.Add_Not_Implemented;
             null;
 --              State.Add_To_Dot_Label_And_Edge ("Entry_Index_Specification", ID);
 --              Result.Entry_Index_Specification := ID;
@@ -918,7 +927,8 @@ package body Asis_Tool_2.Element is
                Add_Initialization_Expression;
 
             when A_Loop_Parameter_Specification =>
-               State.Add_Not_Implemented;
+               Add_Specification_Subtype_Definition;
+               Add_Has_Reverse;
 
             when A_Generalized_Iterator_Specification =>
                State.Add_Not_Implemented;
