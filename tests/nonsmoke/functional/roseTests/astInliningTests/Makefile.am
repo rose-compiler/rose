@@ -52,6 +52,7 @@ inlineEverything_cpp11_specimens =			\
 
 EXTRA_DIST += $(inlineEverything_specimens) inlineEverything.conf
 
+# the default way to call the inliner
 inlineEverything_test_targets = $(addprefix inlineEverything_, $(addsuffix .passed, $(inlineEverything_specimens)))
 TEST_TARGETS += $(inlineEverything_test_targets)
 $(inlineEverything_test_targets): inlineEverything_%.passed: % inlineEverything inlineEverything.conf
@@ -61,6 +62,18 @@ $(inlineEverything_test_targets): inlineEverything_%.passed: % inlineEverything 
 		NINLINE="$$(echo $(notdir $<) |sed --regexp-extended 's/specimen[0-9]+_([0-9]+).*/\1/')"	\
 		TRANSLATOR="$$(pwd)/inlineEverything"								\
 		$(srcdir)/inlineEverything.conf $@
+
+# skip the postprocessing cleanup step
+inlineEverything_test_targets_noclean = $(addprefix inlineEverything_noclean_, $(addsuffix .passed, $(inlineEverything_specimens)))
+TEST_TARGETS += $(inlineEverything_test_targets_noclean)
+$(inlineEverything_test_targets_noclean): inlineEverything_noclean_%.passed: % inlineEverything inlineEverything.conf
+	@$(RTH_RUN)												\
+		TITLE="inlineEverything $< [$@]"								\
+		SPECIMEN="$(abspath $<)"									\
+		NINLINE="$$(echo $(notdir $<) |sed --regexp-extended 's/specimen[0-9]+_([0-9]+).*/\1/')"	\
+		TRANSLATOR="$$(pwd)/inlineEverything -skip-postprocessing"								\
+		$(srcdir)/inlineEverything.conf $@
+
 
 inlineEverything_withTokenStreamUnparsing_specimens = \
    testWithTokenStreamUnparsing_01.C \
