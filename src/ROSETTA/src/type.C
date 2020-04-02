@@ -122,6 +122,8 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( ArrayType           , "ArrayType",            "T_ARRAY" );
      NEW_TERMINAL_MACRO ( TypeEllipse         , "TypeEllipse",          "T_ELLIPSE" );
      NEW_TERMINAL_MACRO ( AdaAccessType       , "AdaAccessType",        "T_ADA_ACCESS" );
+     NEW_TERMINAL_MACRO ( AdaSubtype          , "AdaSubtype",           "T_ADA_SUBTYPE" );
+     NEW_TERMINAL_MACRO ( AdaFloatType        , "AdaFloatType",         "T_ADA_FLOAT" );
 
   // FMZ (4/8/2009): Added for Cray Pointer
      NEW_TERMINAL_MACRO ( TypeCrayPointer           , "TypeCrayPointer",            "T_CRAY_POINTER" );
@@ -212,7 +214,8 @@ Grammar::setUpTypes ()
           TypeCrayPointer      | TypeLabel               | JavaUnionType             | RvalueReferenceType  | 
           TypeNullptr          | DeclType                | TypeOfType                | TypeMatrix           |
           TypeTuple            | TypeChar16              | TypeChar32                | TypeFloat128         |
-          TypeFixed            | AutoType                | AdaAccessType,
+          TypeFixed            | AutoType                | AdaAccessType             | AdaSubtype           | 
+AdaFloatType,
         "Type","TypeTag", false);
 
      //SK(08/20/2015): TypeMatrix and TypeTuple for Matlab
@@ -385,6 +388,12 @@ Grammar::setUpTypes ()
   // PP (3/24/20): Adding ADA types
      AdaAccessType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      AdaAccessType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+
+AdaSubtype.excludeFunctionPrototype    ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     AdaSubtype.excludeFunctionSource       ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+
+     AdaFloatType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     AdaFloatType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
   // Rasmussen (2/18/2020): Added TypeFixed for Jovial
      TypeFixed.excludeFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
@@ -655,6 +664,16 @@ Grammar::setUpTypes ()
      CUSTOM_CREATE_TYPE_MACRO(AdaAccessType,
             "SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE",
             "SgType* type = NULL");
+
+  // PP (3/31/20): Adding ADA types          
+     CUSTOM_CREATE_TYPE_MACRO(AdaSubtype,
+            "SOURCE_CREATE_TYPE_FOR_ADA_SUBTYPE",
+            "SgType* type = NULL, SgAdaTypeConstraint* constraint = NULL");
+
+     
+     CUSTOM_CREATE_TYPE_MACRO(AdaFloatType,
+            "SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE",
+            "SgExpression* digits = NULL, SgAdaRangeConstraint* range = NULL");
      
   // Rasmussen (2/18/2020): Added support for the create function for Jovial TypeFixed
      CUSTOM_CREATE_TYPE_MACRO(TypeFixed,
@@ -1049,6 +1068,26 @@ Grammar::setUpTypes ()
      AdaAccessType.setDataPrototype ("SgType*"      , "base_type", "= NULL",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     AdaSubtype.setFunctionPrototype ("HEADER_ADA_SUBTYPE", "../Grammar/Type.code" );
+
+     AdaSubtype.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
+
+     AdaSubtype.setDataPrototype ("SgType*"      , "base_type", "= NULL",
+                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaSubtype.setDataPrototype ("SgAdaTypeConstraint*", "constraint", "= NULL",
+                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+     AdaFloatType.setFunctionPrototype ("HEADER_ADA_FLOAT_TYPE", "../Grammar/Type.code" );
+
+     AdaFloatType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
+
+     AdaFloatType.setDataPrototype ("SgExpression*", "digits", "= NULL",
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaFloatType.setDataPrototype ("SgAdaRangeConstraint*", "range", "= NULL",
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Rasmussen (2/18/2020): Added TypeFixed for Jovial
      TypeFixed.setFunctionPrototype ("HEADER_TYPE_FIXED_TYPE", "../Grammar/Type.code" );
@@ -1143,6 +1182,9 @@ Grammar::setUpTypes ()
   // ArrayType.setFunctionSource ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
 
      AdaAccessType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     AdaSubtype.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     AdaFloatType.excludeFunctionSource  ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+  
   // We require a special function here which is included directly
      FunctionType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
@@ -1313,6 +1355,8 @@ Grammar::setUpTypes ()
      TypeLabel.setFunctionSource         ( "SOURCE_TYPE_LABEL_TYPE", "../Grammar/Type.code");
 
      AdaAccessType.setFunctionSource     ( "SOURCE_ADA_ACCESS_TYPE", "../Grammar/Type.code");
+     AdaSubtype.setFunctionSource        ( "SOURCE_ADA_SUBTYPE", "../Grammar/Type.code");
+     AdaFloatType.setFunctionSource      ( "SOURCE_ADA_FLOAT_TYPE", "../Grammar/Type.code");
 #endif
    }
 

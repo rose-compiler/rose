@@ -85,6 +85,13 @@ Grammar::setUpSupport ()
           BaseClassModifier       | TypeModifier           | DeclarationModifier|
           OpenclAccessModeModifier, "Modifier", "ModifierTag", false);
 
+     
+     NEW_TERMINAL_MACRO (AdaRangeConstraint, "AdaRangeConstraint", "AdaRangeConstraintTag");
+          
+     NEW_NONTERMINAL_MACRO (AdaTypeConstraint,
+          AdaRangeConstraint,
+          "AdaTypeConstraint", "AdaTypeConstraintTag", false);
+
      NEW_TERMINAL_MACRO (File_Info, "_File_Info", "_File_InfoTag" );
 
 #if 0
@@ -258,7 +265,7 @@ Grammar::setUpSupport ()
           Options               | Unparse_Info              | BaseClass                | TypedefSeq           |
           TemplateParameter     | TemplateArgument          | Directory                | FileList             |
           DirectoryList         | FunctionParameterTypeList | QualifiedName            | TemplateArgumentList |
-          TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
+          TemplateParameterList | AdaTypeConstraint         | /* RenamePair                | InterfaceBody       |*/
           Graph                 | GraphNode                 | GraphEdge                |
           GraphNodeList         | GraphEdgeList             | TypeTable                |
           NameGroup             | DimensionObject           | FormatItem               |
@@ -392,6 +399,9 @@ Grammar::setUpSupport ()
      ElaboratedTypeModifier.setFunctionPrototype  ( "HEADER_ELABORATED_TYPE_MODIFIER" , "../Grammar/Support.code");
      LinkageModifier.setFunctionPrototype         ( "HEADER_LINKAGE_MODIFIER"         , "../Grammar/Support.code");
      BaseClassModifier.setFunctionPrototype       ( "HEADER_BASECLASS_MODIFIER"       , "../Grammar/Support.code");
+     
+     AdaTypeConstraint.setFunctionPrototype       ( "HEADER_ADA_TYPE_CONSTRAINT"      , "../Grammar/Support.code");
+     AdaRangeConstraint.setFunctionPrototype      ( "HEADER_ADA_RANGE_CONSTRAINT"     , "../Grammar/Support.code");
 
      File_Info.setFunctionPrototype           ( "HEADER_FILE_INFORMATION", "../Grammar/Support.code");
 
@@ -2446,6 +2456,9 @@ Specifiers that can have only one value (implemented with a protected enum varia
      BaseClassModifier.setDataPrototype("SgAccessModifier", "accessModifier", "",
                                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // PP: Ada Constraints
+     AdaRangeConstraint.setDataPrototype("SgRangeExp*", "range", "",
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // MK: I moved the following data member declarations from ../Grammar/Support.code to this position:
   // File_Info.setDataPrototype("char*","filename","= NULL",
@@ -2853,6 +2866,8 @@ Specifiers that can have only one value (implemented with a protected enum varia
 
   // Place declarations of friend output operators after the BaseClassModifier
   // Modifier.setPostdeclarationString   ("SOURCE_MODIFIER_POSTDECLARATION", "../Grammar/Support.code");
+     AdaTypeConstraint.setFunctionSource       ( "SOURCE_ADA_TYPE_CONSTRAINT"      , "../Grammar/Support.code");
+     AdaRangeConstraint.setFunctionSource      ( "SOURCE_ADA_RANGE_CONSTRAINT"     , "../Grammar/Support.code");
 
      File_Info.setFunctionSource       ( "SOURCE_FILE_INFORMATION", "../Grammar/Support.code");
 
