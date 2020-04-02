@@ -120,6 +120,7 @@ CODETHORN_HEADER_FILES=\
   Miscellaneous2.h \
   Miscellaneous.h \
   Normalization.h \
+  NormalizationCxx.h \
   NormalizationInliner.h \
   NormalizationOp.h \
   NumberIntervalLattice.h \
@@ -223,6 +224,7 @@ CODETHORN_SOURCE_FILES=\
   Miscellaneous2.C \
   Miscellaneous.C \
   Normalization.C \
+  NormalizationCxx.C \
   NormalizationInliner.C \
   NormalizationOp.C \
   NumberIntervalLattice.C \

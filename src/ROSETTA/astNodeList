@@ -1,8 +1,12 @@
 SgAccessModifier
 SgActualArgumentExpression
-SgAdaExitStmt
-SgAdaLoopStmt
 SgAdaAccessType
+SgAdaExitStmt
+SgAdaFloatType
+SgAdaLoopStmt
+SgAdaRangeConstraint
+SgAdaSubtype
+SgAdaTypeConstraint
 SgAddOp
 SgAddressOfOp
 SgAggregateInitializer

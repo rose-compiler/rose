@@ -83,6 +83,8 @@ namespace CodeThorn {
       bool normalizeVariableDeclarations=false;
       bool normalizeVariableDeclarationsWithFunctionCalls=true;
 
+      bool normalizeCplusplus=true;
+
       // puts the sequence of normalized expressions in a block. This
       // way the scope of temporary variables ends right after the
       // last initialization (or assignment) of the normalized

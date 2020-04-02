@@ -2,6 +2,7 @@
 #include "SingleStatementToBlockNormalization.h"
 
 #include "Normalization.h"
+#include "NormalizationCxx.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 #include "CFAnalysis.h"
@@ -129,6 +130,9 @@ namespace CodeThorn {
   }
 
   void Normalization::normalizeAstPhaseByPhase(SgNode* root) {
+    if (options.normalizeCplusplus) {
+      normalizeCxx(root);
+    }
     if(options.normalizeSingleStatements) {
       normalizeSingleStatementsToBlocks(root);
     }
