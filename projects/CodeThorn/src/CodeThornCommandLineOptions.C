@@ -286,8 +286,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     .add(infoOptions)
     ;
 
-  po::options_description configOptions("Configuration file options");
-  configOptions.add(visibleOptions)
+  po::options_description configFileOptions("Configuration file options");
+  configFileOptions.add(visibleOptions)
     .add(hiddenOptions)
     .add(cegpraOptions)
     .add(equivalenceCheckingOptions)
@@ -302,52 +302,55 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     .add(infoOptions)
     ;
 
+#if 0
   po::store(po::command_line_parser(argc, argv).options(all).run(), args);
   po::notify(args);
 
   if (args.isDefined("config")) {
     ifstream configStream(args.getString("config").c_str());
-    po::store(po::parse_config_file(configStream, configOptions), args);
+    po::store(po::parse_config_file(configStream, configFileOptions), args);
     po::notify(args);
   } 
-
-  if (args.count("help")) {
+#else
+  args.parse(argc,argv,all,configFileOptions);
+#endif
+  if (args.isDefined("help")) {
     cout << visibleOptions << "\n";
     exit(0);
-  } else if(args.count("help-cegpra")) {
+  } else if(args.isDefined("help-cegpra")) {
     cout << cegpraOptions << "\n";
     exit(0);
-  } else if(args.count("help-eq")) {
+  } else if(args.isDefined("help-eq")) {
     cout << equivalenceCheckingOptions << "\n";
     exit(0);
-  } else if(args.count("help-exp")) {
+  } else if(args.isDefined("help-exp")) {
     cout << experimentalOptions << "\n";
     exit(0);
-  } else if(args.count("help-ltl")) {
+  } else if(args.isDefined("help-ltl")) {
     cout << ltlOptions << "\n";
     exit(0);
-  } else if(args.count("help-par")) {
+  } else if(args.isDefined("help-par")) {
     cout << parallelProgramOptions << "\n";
     exit(0);
-  } else if(args.count("help-pat")) {
+  } else if(args.isDefined("help-pat")) {
     cout << patternSearchOptions << "\n";
     exit(0);
-  } else if(args.count("help-rers")) {
+  } else if(args.isDefined("help-rers")) {
     cout << rersOptions << "\n";
     exit(0);
-  } else if(args.count("help-svcomp")) {
+  } else if(args.isDefined("help-svcomp")) {
     cout << svcompOptions << "\n";
     exit(0);
-  } else if(args.count("help-vis")) {
+  } else if(args.isDefined("help-vis")) {
     cout << visualizationOptions << "\n";
     exit(0);
-  } else if(args.count("help-data-race")) {
+  } else if(args.isDefined("help-data-race")) {
     cout << dataRaceOptions << "\n";
     exit(0);
-  } else if(args.count("help-info")) {
+  } else if(args.isDefined("help-info")) {
     cout << infoOptions << "\n";
     exit(0);
-  } else if (args.count("version")) {
+  } else if (args.isDefined("version")) {
     cout << "CodeThorn version "<<version<<endl;
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);

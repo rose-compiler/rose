@@ -66,13 +66,8 @@ else
 endif
 
 # DQ (11/19/2016): This test is failing in the unparsed code (a RAJA example) at least for the GNU 6.1 compiler and using EDG 4.11).
-if ROSE_USE_EDG_VERSION_4_9
-  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-     test2016_06.C 
-else
-  TESTCODE_CURRENTLY_FAILING += \
-     test2016_06.C 
-endif
+TESTCODE_CURRENTLY_FAILING += \
+   test2016_06.C 
 
 # Note: last.C just simplifies the Makefile.am it
 # avoids common makefle errors in adding new files.
@@ -160,16 +155,6 @@ print_testcodes:
 	echo $(TESTCODES)
 
 check-local:
-# DQ (2/19/2017): NEW VERSION OF LOGIC
-# DQ (2/18/2017): More specific logic required for portability.
-# When using EDG 4.9 these files don't compile on later versions of GNU, CLANG, and Intel compilers 
-# but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
-# the compiler vendor and GNU compiler version).
-if ROSE_USE_EDG_VERSION_4_9
-	@echo "ROSE_USE_EDG_VERSION_4_9 == true: C++14 support is not available with EDG 4.9"
-else  # NOT ROSE_USE_EDG_VERSION_4_9
-# Using EDG 4.12 or later (run all tests independent of the compiler).
-	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
 if USING_GNU_COMPILER
 	@echo "USING_GCC_COMPILER == true"
 if ROSE_USING_GCC_VERSION_LATER_4_9
@@ -204,7 +189,6 @@ else # NOT USING_INTEL_COMPILER
 endif # USING_INTEL_COMPILER
 endif # USING_CLANG_COMPILER
 endif # USING_GNU_COMPILER
-endif # ROSE_USE_EDG_VERSION_4_9
 	@echo "*********************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Cxx14_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************************"

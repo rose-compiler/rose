@@ -39,44 +39,6 @@ docs:
 
 check-local:
 	@echo "*****************************************************************************"
-	@echo "*** Testing blank AST checker generator ***"
-	@echo "*****************************************************************************"
-# DQ (9/10/2009): Skip tests on Debian system to test ROSE (and focus first on where it works!)
-if !OS_VENDOR_DEBIAN
-if USING_GNU_COMPILER
-
-if ROSE_USE_EDG_VERSION_4_9
-if ROSE_USING_GCC_VERSION_LATER_6_1
-# DQ (3/2/2017): This makefile rule will modify the source tree and the CHECKER_LIST file which is a 
-# problem for development because the modification is done to the source tree and the new directory
-# will not be a part of the git repository, and which the work is commited and tested the modified
-# CHECKER_LIST file will reference a checker "blankTestChecker" that does not exist.  This rule
-# should be modified to only make changes to the build tree.
-#	@$(MAKE) testNewChecker
-	@echo "***********************"
-	@echo "*** Testing compass ***"
-	@echo "***********************"
-	@$(MAKE) test
-else
-if !ROSE_USING_GCC_VERSION_LATER_4_8
-# DQ (3/2/2017): This makefile rule will modify the source tree and the CHECKER_LIST file which is a 
-# problem for development because the modification is done to the source tree and the new directory
-# will not be a part of the git repository, and which the work is commited and tested the modified
-# CHECKER_LIST file will reference a checker "blankTestChecker" that does not exist.  This rule
-# should be modified to only make changes to the build tree.
-#	@$(MAKE) testNewChecker
-	@echo "***********************"
-	@echo "*** Testing compass ***"
-	@echo "***********************"
-	@$(MAKE) test
-else
-# GNU Compiler version numbers 4.8 and and greater and strictly less than 6.1
-endif
-endif
-endif
-endif
-endif
-	@echo "*****************************************************************************"
 	@echo "*** ROSE/projects/compass/tools/compass: make check rule complete (terminated normally) ***"
 	@echo "*****************************************************************************"
 
