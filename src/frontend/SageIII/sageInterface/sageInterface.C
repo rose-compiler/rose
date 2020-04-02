@@ -20025,7 +20025,13 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
     SgExpression* lhs = isSgSubtractOp(current)->get_lhs_operand();
     return convertRefToInitializedName(lhs, coarseGrain);
   }
- else
+  // operator->() may be called upon a class object.
+  // e.g.  we need to get the function: it a SgDotExp node, (lhs is the class object, rhs is its member function)
+ else if (SgFunctionCallExp * func_call = isSgFunctionCallExp(current))
+ {
+    return convertRefToInitializedName(func_call->get_function(), coarseGrain); 
+ }
+  else
   {
     // side effect analysis will return rhs of  Class A a = A(); as a read ref exp. SgConstructorInitializer 
     if (!isSgConstructorInitializer(current)) 
