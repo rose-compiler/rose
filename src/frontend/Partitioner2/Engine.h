@@ -7,6 +7,7 @@
 #include <BinaryLoader.h>
 #include <BinarySerialIo.h>
 #include <boost/noncopyable.hpp>
+#include <boost/regex.hpp>
 #include <Disassembler.h>
 #include <FileSystem.h>
 #include <Partitioner2/Function.h>
@@ -1139,6 +1140,36 @@ public:
      * @{ */
     const std::string& linkerCommand() const /*final*/ { return settings_.loader.linker; }
     virtual void linkerCommand(const std::string &cmd) { settings_.loader.linker = cmd; }
+    /** @} */
+
+    /** Property: Environment variable erasure names.
+     *
+     *  This property is a list of environment variable names that will be removed before launching a "run:" style specimen.
+     *
+     * @{ */
+    const std::vector<std::string> environmentEraseNames() const /*final*/ { return settings_.loader.envEraseNames; }
+    virtual void environmentEraseNames(const std::vector<std::string> &names) { settings_.loader.envEraseNames = names; }
+    /** @} */
+
+    /** Property: Environment variable erasure patterns.
+     *
+     *  This property is a list of regular expressions that will erase matching environment variable names before launching
+     *  a "run:" style specimen.
+     *
+     * @{ */
+    const std::vector<boost::regex> environmentErasePatterns() const /*final*/ { return settings_.loader.envErasePatterns; }
+    virtual void environmentErasePatterns(const std::vector<boost::regex> &res) { settings_.loader.envErasePatterns = res; }
+    /** @} */
+
+    /** Property: Environment variables to insert.
+     *
+     *  This property is a list of environment variables and values to insert before launching a "run:" style
+     *  specimen. Insertions always occur after all environment variable erasures have been processed.  Each string must
+     *  contain at least one equal sign ("="), the first of which separates the variable name from its value.
+     *
+     * @{ */
+    const std::vector<std::string> environmentInsertions() const /*final*/ { return settings_.loader.envInsert; }
+    virtual void environmentInsertions(const std::vector<std::string> &vars) { settings_.loader.envInsert = vars; }
     /** @} */
 
     /** Property: Disassembler.

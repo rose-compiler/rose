@@ -499,6 +499,18 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,ESt
       logger[WARN] << "at label "<<lab<<": "<<(_analyzer->getLabeler()->getNode(lab)->unparseToString())<<": this pointer set to top."<<endl;
       return listify(res);
   }
+  case V_SgAssignInitializer: {
+      res.result=AbstractValue::createTop();
+      Label lab=estate.label();
+      logger[WARN] << "at label "<<lab<<": "<<(_analyzer->getLabeler()->getNode(lab)->unparseToString())<<": this pointer set to top."<<endl;
+      return listify(res);
+  }
+  case V_SgConstructorInitializer: {
+      res.result=AbstractValue::createTop();
+      Label lab=estate.label();
+      logger[WARN] << "at label "<<lab<<": "<<(_analyzer->getLabeler()->getNode(lab)->unparseToString())<<": this pointer set to top."<<endl;
+      return listify(res);
+  }
   default:
     throw CodeThorn::Exception("Error: evaluateExpression::unknown node in expression: "+string(node->sage_class_name())+" at "+SgNodeHelper::sourceFilenameToString(node)+" in file "+SgNodeHelper::sourceFilenameToString(node));
   } // end of switch

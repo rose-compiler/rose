@@ -159,7 +159,7 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
     SgNodeHelper::ExtendedCallInfo callInfo = SgNodeHelper::matchExtendedNormalizedCall(callNode);
     if(!callInfo)
     {
-      std::cerr << callNode->unparseToString() << std::endl;
+      logger[ERROR] << callNode->unparseToString() << std::endl;
       throw CodeThorn::Exception("interFlow: unknown call expression");
     }
 
@@ -168,12 +168,16 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
       FunctionCallTargetSet funCallTargetSet=determineFunctionDefinition5(*i, callInfo.representativeNode());
       Label callLabel,entryLabel,exitLabel,callReturnLabel;
       if(funCallTargetSet.size()==0) {
+        std::cerr << "undefined call target: " << callNode->unparseToString() << std::endl;
         callLabel=*i;
         entryLabel=Labeler::NO_LABEL;
         exitLabel=Labeler::NO_LABEL;
         callReturnLabel=labeler->functionCallReturnLabel(callNode);
         interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
       } else {
+        std::cerr << "defined call target: " << callNode->unparseToString() 
+                       << " <" << typeid(*callNode).name() << ">"
+                       << std::endl;
         for(auto fct : funCallTargetSet) {
           callLabel=*i;
           SgFunctionDefinition* funDef=fct.getDefinition();
@@ -359,7 +363,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     return labeler->getLabel(node);
 
   // special case of function call
-  if(SgNodeHelper::Pattern::matchFunctionCall(node))
+  if(SgNodeHelper::matchExtendedNormalizedCall(node) || SgNodeHelper::Pattern::matchFunctionCall(node))
     return labeler->getLabel(node);
 
   if(!labeler->numberOfAssociatedLabels(node)) {
@@ -498,6 +502,12 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     } else {
       finalSet.insert(labeler->functionCallReturnLabel(node));
     }
+    return finalSet;
+  }
+  
+  if (SgNodeHelper::matchExtendedNormalizedCall(node))
+  {
+    finalSet.insert(labeler->functionCallReturnLabel(node));
     return finalSet;
   }
 
@@ -1154,6 +1164,13 @@ Flow CFAnalysis::flow(SgNode* node) {
       Label returnStmtLabel=labeler->functionCallReturnLabel(node)+1;
       edgeSet.insert(Edge(callReturnLabel,EDGE_FORWARD,returnStmtLabel));
     }
+    return edgeSet;
+  }
+  
+  if(SgNodeHelper::matchExtendedNormalizedCall(node)) {
+    Label callLabel=labeler->functionCallLabel(node);
+    Label callReturnLabel=labeler->functionCallReturnLabel(node);
+    edgeSet.insert(Edge(callLabel,EDGE_LOCAL,callReturnLabel));
     return edgeSet;
   }
 
