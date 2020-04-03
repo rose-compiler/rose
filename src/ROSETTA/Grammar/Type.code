@@ -1034,12 +1034,21 @@ HEADER_ARRAY_TYPE_END
 
 HEADER_ADA_ACCESS_TYPE_START
 
-       // DQ (3/22/2017): I would like to remove this function if possible.
-       // DQ (3/22/2017): Added the get_name() function prototype directly so that 
-       // it could be differentiated from where it is a virtual function.
           SgName get_name() const;
 
 HEADER_ADA_ACCESS_TYPE_END
+
+HEADER_ADA_SUBTYPE_START
+
+          SgName get_name() const;
+
+HEADER_ADA_SUBTYPE_END
+
+HEADER_ADA_FLOAT_TYPE_START
+
+          SgName get_name() const;
+
+HEADER_ADA_FLOAT_TYPE_END
 
 
 // Rasmussen (2/19/2020): Added SgTypedFixed for Jovial. Don't really know what to do here.
@@ -6668,29 +6677,6 @@ SOURCE_ARRAY_TYPE_END
 
 SOURCE_ADA_ACCESS_TYPE_START
 
-#if 0
-SgName
-SgAdaAccessType::get_name(void) const {
-    SgType* under_type = p_base_type;
-
-    string name("access ");
-    
-    name.append(under_type->get_name());
-    return SgName(name);
-}
-
-SgName
-SgAdaAccessType::get_qualified_name(void) const {
-    SgType* under_type = p_base_type;
-
-    string name("access ");
-    
-    name.append(under_type->get_qualified_name());
-    return SgName(name);
-}
-#endif
-
-// RV (1/31/2006): Changed the form of the mangled name to include begin/end tags.
 SgName
 SgAdaAccessType::get_mangled(void) const {
     const SgType* under_type = get_base_type();
@@ -6703,6 +6689,34 @@ SgAdaAccessType::get_mangled(void) const {
      
 SOURCE_ADA_ACCESS_TYPE_END
 
+SOURCE_ADA_SUBTYPE_START
+
+SgName
+SgAdaSubtype::get_mangled(void) const {
+    const SgType* under_type = get_base_type();
+    std::string   name(under_type->get_mangled());
+    
+    name += ":>";
+    name += get_constraint()->displayString();
+    return SgName(name);
+}
+     
+SOURCE_ADA_SUBTYPE_END
+
+
+SOURCE_ADA_FLOAT_TYPE_START
+
+SgName
+SgAdaFloatType::get_mangled(void) const {
+    string name("f'");
+    
+    name.append(get_digits()->unparseToString());
+    name.append("'");
+    name.append(get_range()->displayString());
+    return SgName(name);
+}
+     
+SOURCE_ADA_FLOAT_TYPE_END
 
 
 SOURCE_TYPE_ELLIPSE_TYPE_START
@@ -8689,6 +8703,49 @@ SgAdaAccessType::createType (SgType* base_type, SgExpression* /*optional_fortran
 }
 
 SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE_END
+
+SOURCE_CREATE_TYPE_FOR_ADA_SUBTYPE_START
+
+SgAdaSubtype*
+SgAdaSubtype::createType (SgType* base_type, SgAdaTypeConstraint* constraint, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgAdaSubtype  proto(base_type, constraint); // \pp not sure if stack allocation works
+  SgName        name = proto.get_mangled();
+  SgType*       ty = get_globalTypeTable()->lookup_type(name);
+  
+  if (SgAdaSubtype* unified = isSgAdaSubtype(ty))
+    return unified;
+   
+  ROSE_ASSERT(ty == NULL); 
+  SgAdaSubtype* res = new SgAdaSubtype(base_type, constraint);
+  
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+
+SOURCE_CREATE_TYPE_FOR_ADA_SUBTYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE_START
+
+SgAdaFloatType*
+SgAdaFloatType::createType (SgExpression* digits, SgAdaRangeConstraint* range, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgAdaFloatType   proto(digits, range); 
+  SgName           name = proto.get_mangled();
+  SgType*          ty   = get_globalTypeTable()->lookup_type(name);
+  
+  if (SgAdaFloatType* unified = isSgAdaFloatType(ty))
+    return unified;
+   
+  ROSE_ASSERT(ty == NULL); 
+  SgAdaFloatType* res = new SgAdaFloatType(digits, range);
+  
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+
+SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE_END
 
 
 // Rasmussen (2/19/2020): Added SgTypedFixed (primitive type in Jovial)
