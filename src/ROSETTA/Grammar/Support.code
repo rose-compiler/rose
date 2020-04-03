@@ -598,6 +598,11 @@ HEADER_STORAGE_MODIFIER_START
                e_cuda_pinned         = 22, /*!< CUDA, in device's texture memory (read only)  */
                e_cuda_texture        = 23, /*!< CUDA, in host's page-locked memory */
 
+            // Rasmussen (04/02/2020): Jovial packing specifiers
+               e_packing_none  = 24, /*!< None indicates items are not packed */
+               e_packing_mixed = 25, /*!< Mixed indicates a density of packing that can be between N and D */
+               e_packing_dense = 26, /*!< Dense indicates dense packing */
+
                e_last_modifier  /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -665,6 +670,16 @@ HEADER_STORAGE_MODIFIER_START
        // Rasmussen (02/06/2018): Fortran contiguous array storage attribute
           bool isContiguous() const;
           void setContiguous();
+
+       // Rasmussen (04/02/2020): Jovial packing specifiers
+          bool isPackingNone() const;
+          void setPackingNone();
+
+          bool isPackingMixed() const;
+          void setPackingMixed();
+
+          bool isPackingDense() const;
+          void setPackingDense();
 
        // TV (04/08/2010): Support for CUDA storage modifiers
 
@@ -1039,6 +1054,7 @@ HEADER_FUNCTION_MODIFIER_START
           void reset();
 
 HEADER_FUNCTION_MODIFIER_END
+
 
 HEADER_UPC_ACCESS_MODIFIER_START
 
@@ -2504,6 +2520,16 @@ void $CLASSNAME::setPointerBased()      { p_modifier = e_pointer_based; }
 // Rasmussen (02/04/2018): Fortran contiguous array storage attribute
 bool SgStorageModifier::isContiguous() const { return p_modifier == e_contiguous; }
 void SgStorageModifier::setContiguous()      {        p_modifier  = e_contiguous; }
+
+// Rasmussen (04/02/2020): Jovial packing specifiers
+bool SgStorageModifier::isPackingNone() const  { return p_modifier == e_packing_none; }
+void SgStorageModifier::setPackingNone()       {        p_modifier  = e_packing_none; }
+
+bool SgStorageModifier::isPackingMixed() const { return p_modifier == e_packing_mixed; }
+void SgStorageModifier::setPackingMixed()      {        p_modifier  = e_packing_mixed; }
+
+bool SgStorageModifier::isPackingDense() const { return p_modifier == e_packing_dense; }
+void SgStorageModifier::setPackingDense()      {        p_modifier  = e_packing_dense; }
 
 // TV (08/04/2010): Support for CUDA storage modifiers
 

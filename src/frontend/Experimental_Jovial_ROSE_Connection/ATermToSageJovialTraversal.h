@@ -100,17 +100,21 @@ ATbool traverse_OptTypeName            (ATerm term, SgType* & type, std::string 
 // 2.1.2 TABLE DECLARATION
 ATbool traverse_TableDeclaration       (ATerm term, int def_or_ref = 0);
 ATbool traverse_TableDescriptionName   (ATerm term, std::string &type_name, SgType* &sg_type, SgExpression* &preset);
-ATbool traverse_TableDescriptionType   (ATerm term, SgType* &base_type, SgExpression* &preset, SgExprListExp* attr_list);
-ATbool traverse_TableDescriptionBody   (ATerm term, std::string &type_name, SgJovialTableStatement* &sg_table_decl, SgExpression* &preset);
-ATbool traverse_EntrySpecifierType     (ATerm term, SgType* &type, LocationSpecifier &loc_spec, SgExpression* &preset, SgExprListExp* attr_list);
-ATbool traverse_EntrySpecifierBody     (ATerm term, SgJovialTableStatement* table_decl, SgExpression* &preset);
+ATbool traverse_TableDescriptionType   (ATerm term, SgType* &base_type, SgExpression* &preset,
+                                                    SgExprListExp* attr_list, SgStorageModifier::storage_modifier_enum &packing_spec);
+ATbool traverse_TableDescriptionBody   (ATerm term, std::string &type_name, SgJovialTableStatement* &sg_table_decl,
+                                                    SgExpression* &preset, SgStorageModifier::storage_modifier_enum &packing_spec);
+ATbool traverse_EntrySpecifierType     (ATerm term, SgType* &type, LocationSpecifier &loc_spec, SgExpression* &preset,
+                                                    SgExprListExp* attr_list, SgStorageModifier::storage_modifier_enum &packing_spec);
+ATbool traverse_EntrySpecifierBody     (ATerm term, SgJovialTableStatement* table_decl,
+                                                    SgExpression* &preset, SgStorageModifier::storage_modifier_enum &packing_spec);
 
 // 2.1.2.3 ORDINARY TABLE ENTRIES
-ATbool traverse_OrdinaryEntrySpecifierType   (ATerm term, SgType* &type, SgExpression* &preset);
-ATbool traverse_OrdinaryEntrySpecifierBody   (ATerm term, SgExpression* &preset);
+ATbool traverse_OrdinaryEntrySpecifierType   (ATerm term, SgType* &type, SgExpression* &preset, SgStorageModifier::storage_modifier_enum &packing_spec);
+ATbool traverse_OrdinaryEntrySpecifierBody   (ATerm term, SgExpression* &preset, SgStorageModifier::storage_modifier_enum &packing_spec);
 ATbool traverse_OrdinaryTableBody            (ATerm term);
 ATbool traverse_OrdinaryTableItemDeclaration (ATerm term);
-ATbool traverse_OptPackingSpecifier          (ATerm term, Sawyer::Optional<LanguageTranslation::ExpressionKind> &modifier_enum);
+ATbool traverse_OptPackingSpecifier          (ATerm term, SgStorageModifier::storage_modifier_enum &packing_spec);
 
 // 2.1.2.1 TABLE DIMENSION LISTS
 ATbool traverse_OptDimensionList (ATerm term, SgExprListExp* sg_shape);

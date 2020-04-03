@@ -23,7 +23,8 @@ JOVIAL_TESTCODES = \
  1_2_3_program-body_a.jov               \
  1_2_3_program-body_b.jov               \
  1_2_3_program-body_c.jov               \
- 2_1_1_7_pointer_type.jov
+ 2_1_1_7_pointer_type.jov               \
+ 2_1_2_3_packing_spec.jov
 
 
 JOVIAL_PARSER_TESTCODES = \
@@ -35,7 +36,6 @@ JOVIAL_PARSER_TESTCODES = \
  2_1_2_compound_table_var.jov           \
  2_1_2_1_table_dimension_list_a.jov     \
  2_1_2_1_table_dimension_list_b.jov     \
- 2_1_2_3_packing_spec.jov               \
  2_4_define.jov                         \
  4_2_loop_stmt_while_a.jov              \
  4_2_loop_stmt_b1.jov                   \
@@ -61,7 +61,8 @@ JOVIAL_PARSER_TESTCODES = \
 
 COMPOOL_TESTCODES = \
  bit_cast.cpl                           \
- status_type.cpl
+ status_type.cpl                        \
+ 3_0_rent_and_rec.cpl
 
 # proc_refs.cpl                          
 
@@ -82,7 +83,6 @@ COMPOOL_PARSER_TESTCODES = \
  2_2_simple_block_type.cpl              \
  2_2_simple_table_type.cpl              \
  2_5_def_ref_item.cpl                   \
- 3_0_rent_and_rec.cpl                   \
  5_1_fixed_or_float.cpl                 \
  rose-issue-1518.cpl                    \
  rose-issue-1520.cpl                    \
