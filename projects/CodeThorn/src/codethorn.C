@@ -677,8 +677,6 @@ int main( int argc, char * argv[] ) {
       cout<< "STATUS: Parsing and creating AST started."<<endl;
     }
 
-    timer.stop();
-    timer.start();
     SgProject* sageProject = 0;
     vector<string> argvList(argv,argv+argc);
     //string turnOffRoseLoggerWarnings="-rose:log none";
@@ -687,15 +685,19 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE])<<"selected OpenMP AST."<<endl;
       argvList.push_back("-rose:OpenMP:ast_only");
     }
+    timer.stop();
+
+    timer.start();
     sageProject=frontend(argvList);
+    double frontEndRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
     if(!args.isDefined("quiet")) {
       cout << "STATUS: Parsing and creating AST finished."<<endl;
     }
-    double frontEndRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
     /* perform inlining before variable ids are computed, because
        variables are duplicated by inlining. */
+    timer.start();
     Normalization lowering;
     if(args.getBool("normalize-fcalls")) {
       lowering.normalizeAst(sageProject,1);
@@ -709,6 +711,7 @@ int main( int argc, char * argv[] ) {
       //SAWYER_MESG(logger[INFO])<<"STATUS: normalizing program."<<endl;
       lowering.normalizeAst(sageProject,2);
     }
+    double normalizationRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
     /* Context sensitive analysis using call strings.
      */
@@ -904,8 +907,14 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments finished."<<endl;
     }
 
-    timer.start();
+    if(args.getBool("eliminate-arrays")) {
+      Specialization speci;
+      speci.transformArrayProgram(sageProject, analyzer);
+      sageProject->unparse(0,0);
+      exit(0);
+    }
 
+    timer.start();
 #if 0
     if(!analyzer->getVariableIdMapping()->isUniqueVariableSymbolMapping()) {
       logger[WARN] << "Variable<->Symbol mapping not bijective."<<endl;
@@ -915,13 +924,6 @@ int main( int argc, char * argv[] ) {
 #if 0
     analyzer->getVariableIdMapping()->toStream(cout);
 #endif
-
-    if(args.getBool("eliminate-arrays")) {
-      Specialization speci;
-      speci.transformArrayProgram(sageProject, analyzer);
-      sageProject->unparse(0,0);
-      exit(0);
-    }
 
     SAWYER_MESG(logger[TRACE])<< "INIT: creating solver "<<analyzer->getSolver()->getId()<<"."<<endl;
 
@@ -963,22 +965,22 @@ int main( int argc, char * argv[] ) {
       analyzer->getCFAnalyzer()->getFunctionIdMapping()->toStream(cout);
     }
 
-
     if(args.isUserProvided("pattern-search-max-depth") || args.isUserProvided("pattern-search-max-suffix")
        || args.isUserProvided("pattern-search-repetitions") || args.isUserProvided("pattern-search-exploration")) {
       logger[INFO] << "at least one of the parameters of mode \"pattern search\" was set. Choosing solver 10." << endl;
       analyzer->setSolver(new Solver10());
       analyzer->setStartPState(*analyzer->popWorkList()->pstate());
     }
-
     double initRunTime=timer.getTimeDurationAndStop().milliSeconds();
-
+    cout<<"DEBUG: initRunTime: "<<initRunTime<<endl;
+    
     timer.start();
     analyzer->printStatusMessageLine("==============================================================");
     if(!analyzer->getModeLTLDriven() && args.isDefined("z3") == 0 && !args.getBool("ssa")) {
       analyzer->runSolver();
     }
     double analysisRunTime=timer.getTimeDurationAndStop().milliSeconds();
+
     analyzer->printStatusMessageLine("==============================================================");
 
     if (args.getBool("svcomp-mode") && args.isDefined("witness-file")) {
@@ -1137,17 +1139,7 @@ int main( int argc, char * argv[] ) {
     double infPathsOnlyTime = 0;
     double stdIoOnlyTime = 0;
 
-    if(args.getBool("inf-paths-only")) {
-      assert (!args.getBool("keep-error-states"));
-      cout << "recursively removing all leaves (1)."<<endl;
-      timer.start();
-      infPathsOnlyTime = timer.getTimeDurationAndStop().milliSeconds();
-      pstateSetSizeInf=analyzer->getPStateSet()->size();
-      eStateSetSizeInf = analyzer->getEStateSet()->size();
-      transitionGraphSizeInf = analyzer->getTransitionGraph()->size();
-      eStateSetSizeStgInf = (analyzer->getTransitionGraph())->estateSet().size();
-    }
-    
+ 
     if(args.getBool("std-io-only")) {
       SAWYER_MESG(logger[TRACE]) << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
       timer.start();
@@ -1160,6 +1152,18 @@ int main( int argc, char * argv[] ) {
         analyzer->pruneLeaves();
       }
       stdIoOnlyTime = timer.getTimeDurationAndStop().milliSeconds();
+    } else {
+      if(args.getBool("inf-paths-only")) {
+        assert (!args.getBool("keep-error-states"));
+        cout << "recursively removing all leaves (1)."<<endl;
+        timer.start();
+        analyzer->pruneLeaves();
+        infPathsOnlyTime = timer.getTimeDurationAndStop().milliSeconds();
+        pstateSetSizeInf=analyzer->getPStateSet()->size();
+        eStateSetSizeInf = analyzer->getEStateSet()->size();
+        transitionGraphSizeInf = analyzer->getTransitionGraph()->size();
+        eStateSetSizeStgInf = (analyzer->getTransitionGraph())->estateSet().size();
+      }
     }
 
     long eStateSetSizeIoOnly = 0;
@@ -1375,61 +1379,63 @@ int main( int argc, char * argv[] ) {
       string filename=args.getString("csv-stats").c_str();
       stringstream text;
       text<<"Sizes,"<<pstateSetSize<<", "
-        <<eStateSetSize<<", "
-        <<transitionGraphSize<<", "
-        <<numOfconstraintSets<<", "
-        << numOfStdinEStates<<", "
-        << numOfStdoutEStates<<", "
-        << numOfStderrEStates<<", "
-        << numOfFailedAssertEStates<<", "
-        << numOfConstEStates<<endl;
+          <<eStateSetSize<<", "
+          <<transitionGraphSize<<", "
+          <<numOfconstraintSets<<", "
+          << numOfStdinEStates<<", "
+          << numOfStdoutEStates<<", "
+          << numOfStderrEStates<<", "
+          << numOfFailedAssertEStates<<", "
+          << numOfConstEStates<<endl;
       text<<"Memory,"<<pstateSetBytes<<", "
-        <<eStateSetBytes<<", "
-        <<transitionGraphBytes<<", "
-        <<constraintSetsBytes<<", "
-        <<totalMemory<<endl;
+          <<eStateSetBytes<<", "
+          <<transitionGraphBytes<<", "
+          <<constraintSetsBytes<<", "
+          <<totalMemory<<endl;
       text<<"Runtime(readable),"
-        <<CodeThorn::readableruntime(frontEndRunTime)<<", "
-        <<CodeThorn::readableruntime(initRunTime)<<", "
-        <<CodeThorn::readableruntime(analysisRunTime)<<", "
-        <<CodeThorn::readableruntime(verifyUpdateSequenceRaceConditionRunTime)<<", "
-        <<CodeThorn::readableruntime(arrayUpdateExtractionRunTime)<<", "
-        <<CodeThorn::readableruntime(arrayUpdateSsaNumberingRunTime)<<", "
-        <<CodeThorn::readableruntime(sortingAndIORunTime)<<", "
-        <<CodeThorn::readableruntime(totalRunTime)<<", "
-        <<CodeThorn::readableruntime(extractAssertionTracesTime)<<", "
-        <<CodeThorn::readableruntime(determinePrefixDepthTime)<<", "
-        <<CodeThorn::readableruntime(totalInputTracesTime)<<", "
-        <<CodeThorn::readableruntime(infPathsOnlyTime)<<", "
-        <<CodeThorn::readableruntime(stdIoOnlyTime)<<", "
-        <<CodeThorn::readableruntime(spotLtlAnalysisTime)<<", "
-        <<CodeThorn::readableruntime(totalLtlRunTime)<<", "
-        <<CodeThorn::readableruntime(overallTime)<<endl;
+          <<CodeThorn::readableruntime(frontEndRunTime)<<", "
+          <<CodeThorn::readableruntime(initRunTime)<<", "
+          <<CodeThorn::readableruntime(normalizationRunTime)<<", "
+          <<CodeThorn::readableruntime(analysisRunTime)<<", "
+          <<CodeThorn::readableruntime(verifyUpdateSequenceRaceConditionRunTime)<<", "
+          <<CodeThorn::readableruntime(arrayUpdateExtractionRunTime)<<", "
+          <<CodeThorn::readableruntime(arrayUpdateSsaNumberingRunTime)<<", "
+          <<CodeThorn::readableruntime(sortingAndIORunTime)<<", "
+          <<CodeThorn::readableruntime(totalRunTime)<<", "
+          <<CodeThorn::readableruntime(extractAssertionTracesTime)<<", "
+          <<CodeThorn::readableruntime(determinePrefixDepthTime)<<", "
+          <<CodeThorn::readableruntime(totalInputTracesTime)<<", "
+          <<CodeThorn::readableruntime(infPathsOnlyTime)<<", "
+          <<CodeThorn::readableruntime(stdIoOnlyTime)<<", "
+          <<CodeThorn::readableruntime(spotLtlAnalysisTime)<<", "
+          <<CodeThorn::readableruntime(totalLtlRunTime)<<", "
+          <<CodeThorn::readableruntime(overallTime)<<endl;
       text<<"Runtime(ms),"
-        <<frontEndRunTime<<", "
-        <<initRunTime<<", "
-        <<analysisRunTime<<", "
-        <<verifyUpdateSequenceRaceConditionRunTime<<", "
-        <<arrayUpdateExtractionRunTime<<", "
-        <<arrayUpdateSsaNumberingRunTime<<", "
-        <<sortingAndIORunTime<<", "
-        <<totalRunTime<<", "
-        <<extractAssertionTracesTime<<", "
-        <<determinePrefixDepthTime<<", "
-        <<totalInputTracesTime<<", "
-        <<infPathsOnlyTime<<", "
-        <<stdIoOnlyTime<<", "
-        <<spotLtlAnalysisTime<<", "
-        <<totalLtlRunTime<<", "
-        <<overallTime<<endl;
+          <<frontEndRunTime<<", "
+          <<initRunTime<<", "
+          <<normalizationRunTime<<", "
+          <<analysisRunTime<<", "
+          <<verifyUpdateSequenceRaceConditionRunTime<<", "
+          <<arrayUpdateExtractionRunTime<<", "
+          <<arrayUpdateSsaNumberingRunTime<<", "
+          <<sortingAndIORunTime<<", "
+          <<totalRunTime<<", "
+          <<extractAssertionTracesTime<<", "
+          <<determinePrefixDepthTime<<", "
+          <<totalInputTracesTime<<", "
+          <<infPathsOnlyTime<<", "
+          <<stdIoOnlyTime<<", "
+          <<spotLtlAnalysisTime<<", "
+          <<totalLtlRunTime<<", "
+          <<overallTime<<endl;
       text<<"hashset-collisions,"
-        <<pstateSetMaxCollisions<<", "
-        <<eStateSetMaxCollisions<<", "
-        <<constraintSetsMaxCollisions<<endl;
+          <<pstateSetMaxCollisions<<", "
+          <<eStateSetMaxCollisions<<", "
+          <<constraintSetsMaxCollisions<<endl;
       text<<"hashset-loadfactors,"
-        <<pstateSetLoadFactor<<", "
-        <<eStateSetLoadFactor<<", "
-        <<constraintSetsLoadFactor<<endl;
+          <<pstateSetLoadFactor<<", "
+          <<eStateSetLoadFactor<<", "
+          <<constraintSetsLoadFactor<<endl;
       text<<"threads,"<<analyzer->getNumberOfThreadsToUse()<<endl;
       //    text<<"abstract-and-const-states,"
       //    <<"";
