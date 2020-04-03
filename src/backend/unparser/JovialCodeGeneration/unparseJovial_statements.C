@@ -979,6 +979,11 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
              curprint(" ");
         }
 
+  // OptPackingSpecifier
+     if      (var_decl->get_declarationModifier().get_storageModifier().isPackingNone())  curprint("N ");
+     else if (var_decl->get_declarationModifier().get_storageModifier().isPackingMixed()) curprint("M ");
+     else if (var_decl->get_declarationModifier().get_storageModifier().isPackingDense()) curprint("D ");
+
   // OptAllocationSpecifier
      if (var_decl->get_declarationModifier().isJovialStatic())
         {
@@ -1026,11 +1031,12 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
 
            if (table_def->get_members().size() > 0)
               {
-                 curprint(";");
-                 unp->cur.insert_newline(1);
-                 curprint("BEGIN");
-                 unp->cur.insert_newline(1);
+                 curprint(";\n");
 
+                 info.inc_nestingLevel();
+                 curprint_indented("BEGIN\n", info);
+
+                 info.inc_nestingLevel();
                  BOOST_FOREACH(SgDeclarationStatement* item_decl, table_def->get_members())
                     {
                        SgVariableDeclaration* vardecl = isSgVariableDeclaration(item_decl);
@@ -1040,10 +1046,10 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
                           }
                        else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
                     }
+                 info.dec_nestingLevel();
 
-                 unp->cur.insert_newline(1);
-                 curprint("END");
-                 unp->cur.insert_newline(1);
+                 curprint_indented("END\n", info);
+                 info.dec_nestingLevel();
               }
         }
      else

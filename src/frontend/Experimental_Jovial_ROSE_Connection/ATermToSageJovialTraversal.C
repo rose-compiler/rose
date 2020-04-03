@@ -1412,6 +1412,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
    bool is_type_inherited = false;
 
    Sawyer::Optional<LanguageTranslation::ExpressionKind> modifier_enum;
+   SgStorageModifier::storage_modifier_enum packing_spec = SgStorageModifier::e_unknown;
 
    if (ATmatch(term, "TableDeclaration(<term>,<term>,<term>,<term>)", &t_name,&t_alloc,&t_dim_list,&t_table_desc)) {
       std::string label = "";
@@ -1453,7 +1454,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 // 2. Otherwise look for a base type (this is not inheritance, rather it is similar to the base type of an array type).
 //    The base type is the table description and there will be no body.
 //
-      else if (traverse_TableDescriptionType(t_table_desc, base_type, preset, attr_list)) {
+      else if (traverse_TableDescriptionType(t_table_desc, base_type, preset, attr_list, packing_spec)) {
          ROSE_ASSERT(base_type);
 
       // This must be anonymous as there is no explicit name for the type.
@@ -1467,7 +1468,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 //    with a body for the table definition member variables. The declaration will be anonymous
 //    and associated with the variable declaration (via baseTypeDefiningDeclaration).
 //
-      else if (traverse_TableDescriptionBody(t_table_desc, anon_type_name, table_decl, preset)) {
+      else if (traverse_TableDescriptionBody(t_table_desc, anon_type_name, table_decl, preset, packing_spec)) {
          ROSE_ASSERT(table_decl);
 
          SgJovialTableType* table_type = isSgJovialTableType(table_decl->get_type());
@@ -1501,6 +1502,13 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 
    if (is_type_inherited == false) {
       SageInterface::setBaseTypeDefiningDeclaration(var_decl, def_decl);
+   }
+
+   if (packing_spec != SgStorageModifier::e_unknown) {
+      SgStorageModifier& storage_mod = var_decl->get_declarationModifier().get_storageModifier();
+      if      (packing_spec == SgStorageModifier::e_packing_none)  storage_mod.setPackingNone();
+      else if (packing_spec == SgStorageModifier::e_packing_mixed) storage_mod.setPackingMixed();
+      else if (packing_spec == SgStorageModifier::e_packing_dense) storage_mod.setPackingDense();
    }
 
    SgClassDefinition* def = def_decl->get_definition();
@@ -1576,7 +1584,8 @@ traverse_TableDescriptionName(ATerm term, std::string &type_name, SgType* &type,
 
 // This table is array-like in that it doesn't have a table/structure body (but has a base type)
 ATbool ATermToSageJovialTraversal::
-traverse_TableDescriptionType(ATerm term, SgType* &type, SgExpression* &preset, SgExprListExp* attr_list)
+traverse_TableDescriptionType(ATerm term, SgType* &type, SgExpression* &preset,
+                                          SgExprListExp* attr_list, SgStorageModifier::storage_modifier_enum &packing_spec)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_TableDescriptionType: %s\n", ATwriteToString(term));
@@ -1592,7 +1601,7 @@ traverse_TableDescriptionType(ATerm term, SgType* &type, SgExpression* &preset, 
    if (ATmatch(term, "TableDescription(<term>,<term>)", &t_struct_spec, &t_entry_spec)) {
 
    // This is an EntrySpecifier without a body
-      if (traverse_EntrySpecifierType(t_entry_spec, type, location_spec, preset, attr_list)) {
+      if (traverse_EntrySpecifierType(t_entry_spec, type, location_spec, preset, attr_list, packing_spec)) {
          // MATCHED EntrySpecifierType
       } else return ATfalse;
 
@@ -1609,7 +1618,8 @@ traverse_TableDescriptionType(ATerm term, SgType* &type, SgExpression* &preset, 
 }
 
 ATbool ATermToSageJovialTraversal::
-traverse_TableDescriptionBody(ATerm term, std::string &type_name, SgJovialTableStatement* &table_decl, SgExpression* &preset)
+traverse_TableDescriptionBody(ATerm term, std::string &type_name, SgJovialTableStatement* &table_decl,
+                                          SgExpression* &preset, SgStorageModifier::storage_modifier_enum &packing_spec)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_TableDescription: %s\n", ATwriteToString(term));
@@ -1632,7 +1642,7 @@ traverse_TableDescriptionBody(ATerm term, std::string &type_name, SgJovialTableS
          // MATCHED OptStructureSpecifier
       } else return ATfalse;
 
-      if (traverse_EntrySpecifierBody(t_entry_spec, table_decl, preset)){
+      if (traverse_EntrySpecifierBody(t_entry_spec, table_decl, preset, packing_spec)){
          // MATCHED EntrySpecifierBody
       } else return ATfalse;
    }
@@ -1653,9 +1663,10 @@ traverse_TableDescriptionBody(ATerm term, std::string &type_name, SgJovialTableS
 }
 
 ATbool ATermToSageJovialTraversal::
-traverse_EntrySpecifierType(ATerm term, SgType* &type, LocationSpecifier &loc_spec, SgExpression* &preset, SgExprListExp* attr_list)
+traverse_EntrySpecifierType(ATerm term, SgType* &type, LocationSpecifier &loc_spec, SgExpression* &preset,
+                                        SgExprListExp* attr_list, SgStorageModifier::storage_modifier_enum &packing_spec)
 {
-   if (traverse_OrdinaryEntrySpecifierType(term, type, preset)) {
+   if (traverse_OrdinaryEntrySpecifierType(term, type, preset, packing_spec)) {
       // MATCHED OrdinaryEntrySpecifier -> EntrySpecifier with an item description (no structure body)
    }
    else if (traverse_SpecifiedEntrySpecifierType(term, type, loc_spec, preset, attr_list)) {
@@ -1667,9 +1678,10 @@ traverse_EntrySpecifierType(ATerm term, SgType* &type, LocationSpecifier &loc_sp
 }
 
 ATbool ATermToSageJovialTraversal::
-traverse_EntrySpecifierBody(ATerm term, SgJovialTableStatement* table_decl, SgExpression* &preset)
+traverse_EntrySpecifierBody(ATerm term, SgJovialTableStatement* table_decl,
+                                        SgExpression* &preset, SgStorageModifier::storage_modifier_enum &packing_spec)
 {
-   if (traverse_OrdinaryEntrySpecifierBody(term, preset)) {
+   if (traverse_OrdinaryEntrySpecifierBody(term, preset, packing_spec)) {
       // MATCHED OrdinaryEntrySpecifier -> EntrySpecifier with a structure body
    }
    else if (traverse_SpecifiedEntrySpecifierBody(term, table_decl, preset)) {
@@ -1786,7 +1798,7 @@ ATbool ATermToSageJovialTraversal::traverse_OptStructureSpecifier(ATerm term, St
 // 2.1.2.3 ORDINARY TABLE ENTRIES
 //----------------------------------------------------------------------------------------
 ATbool ATermToSageJovialTraversal::
-traverse_OrdinaryEntrySpecifierType(ATerm term, SgType* &type, SgExpression* &preset)
+traverse_OrdinaryEntrySpecifierType(ATerm term, SgType* &type, SgExpression* &preset, SgStorageModifier::storage_modifier_enum &packing_spec)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OrdinaryEntrySpecifierType: %s\n", ATwriteToString(term));
@@ -1799,13 +1811,12 @@ traverse_OrdinaryEntrySpecifierType(ATerm term, SgType* &type, SgExpression* &pr
 
    Sawyer::Optional<SgExpression*> status_size;
    std::list<SgInitializedName*> status_list;
-   Sawyer::Optional<LanguageTranslation::ExpressionKind> modifier_enum;
 
    std::string label = "";
 
    if (ATmatch(term, "OrdinaryEntrySpecifier(<term>,<term>,<term>)", &t_pack_spec, &t_item_desc, &t_preset)) {
 
-      if (traverse_OptPackingSpecifier(t_pack_spec, modifier_enum)) {
+      if (traverse_OptPackingSpecifier(t_pack_spec, packing_spec)) {
          // MATCHED OptPackingSpecifier
       } else return ATfalse;
 
@@ -1838,18 +1849,17 @@ traverse_OrdinaryEntrySpecifierType(ATerm term, SgType* &type, SgExpression* &pr
 }
 
 ATbool ATermToSageJovialTraversal::
-traverse_OrdinaryEntrySpecifierBody(ATerm term, SgExpression* &preset)
+traverse_OrdinaryEntrySpecifierBody(ATerm term, SgExpression* &preset, SgStorageModifier::storage_modifier_enum &packing_spec)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OrdinaryEntrySpecifierBody: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_pack_spec, t_preset, t_body;
-   Sawyer::Optional<LanguageTranslation::ExpressionKind> modifier_enum;
 
    if (ATmatch(term, "OrdinaryEntrySpecifierBody(<term>,<term>,<term>)", &t_pack_spec, &t_preset, &t_body)) {
 
-      if (traverse_OptPackingSpecifier(t_pack_spec, modifier_enum)) {
+      if (traverse_OptPackingSpecifier(t_pack_spec, packing_spec)) {
          // MATCHED OptPackingSpecifier
       } else return ATfalse;
 
@@ -1956,26 +1966,26 @@ ATbool ATermToSageJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATerm t
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_OptPackingSpecifier(ATerm term, Sawyer::Optional<LanguageTranslation::ExpressionKind> &modifier_enum)
+ATbool ATermToSageJovialTraversal::traverse_OptPackingSpecifier(ATerm term, SgStorageModifier::storage_modifier_enum &packing_spec)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptPackingSpecifier: %s\n", ATwriteToString(term));
 #endif
 
    if (ATmatch(term, "no-packing-specifier()")) {
-      modifier_enum = Sawyer::Nothing();
+      packing_spec = SgStorageModifier::e_unknown;
    }
    else if (ATmatch(term, "PackingSpecifierN()")) {
       cerr << "WARNING UNIMPLEMENTED: OptPackingSpecifier - N \n";
-      modifier_enum = Sawyer::Optional<LanguageTranslation::ExpressionKind>(e_type_modifier_packing_n);
+      packing_spec = SgStorageModifier::e_packing_none;
    }
    else if (ATmatch(term, "PackingSpecifierM()")) {
       cerr << "WARNING UNIMPLEMENTED: OptPackingSpecifier - M \n";
-      modifier_enum = Sawyer::Optional<LanguageTranslation::ExpressionKind>(e_type_modifier_packing_m);
+      packing_spec = SgStorageModifier::e_packing_mixed;
    }
    else if (ATmatch(term, "PackingSpecifierD()")) {
       cerr << "WARNING UNIMPLEMENTED: OptPackingSpecifier - D \n";
-      modifier_enum = Sawyer::Optional<LanguageTranslation::ExpressionKind>(e_type_modifier_packing_d);
+      packing_spec = SgStorageModifier::e_packing_dense;
    }
    else return ATfalse;
 
@@ -3052,12 +3062,15 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
       SgExprListExp* attr_list = nullptr;
       LocationSpecifier loc_spec;
 
+      SgStorageModifier::storage_modifier_enum packing_spec;
+      cerr << "WARNING UNIMPLEMENTED: TableTypeSpecifier - packing_spec \n";
+
    // Entry specifier without a body
-      if (traverse_EntrySpecifierType(t_entry_spec, base_type, loc_spec, preset, attr_list)) {
+      if (traverse_EntrySpecifierType(t_entry_spec, base_type, loc_spec, preset, attr_list, packing_spec)) {
          // MATCHED EntrySpecifier
       }
    // Entry specifier with a body
-      else if (traverse_EntrySpecifierBody(t_entry_spec, table_decl, preset)) {
+      else if (traverse_EntrySpecifierBody(t_entry_spec, table_decl, preset, packing_spec)) {
          // MATCHED EntrySpecifierBody
       }
       else return ATfalse;
