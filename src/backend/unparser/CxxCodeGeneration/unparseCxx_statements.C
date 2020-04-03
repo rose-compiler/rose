@@ -7636,7 +7636,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                        }
                   }
 
-#if DEBUG_VARIABLE_DECLARATION
+#if DEBUG_VARIABLE_DECLARATION || 1
                printf ("Calling unp->u_sage->printSpecifier2 \n");
                curprint ("\n/* Calling unp->u_sage->printSpecifier2() */ \n");
             // printDebugInfo("entering unp->u_sage->printSpecifier2", true);
