@@ -87,7 +87,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.11.7";
+const std::string versionString="1.11.8";
 
 // handler for generating backtrace
 void handler(int sig) {
@@ -379,97 +379,113 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
   analyzer->setSolver(solver);
 }
 
+void configureRose() {
+  ROSE_INITIALIZE;
+  CodeThorn::initDiagnostics();
+  CodeThorn::initDiagnosticsLTL();
+
+  Rose::Diagnostics::mprefix->showProgramName(false);
+  Rose::Diagnostics::mprefix->showThreadId(false);
+  Rose::Diagnostics::mprefix->showElapsedTime(false);
+
+  string turnOffRoseWarnings=string("Rose(none,>=error),Rose::EditDistance(none,>=error),Rose::FixupAstDeclarationScope(none,>=error),")
+    +"Rose::FixupAstSymbolTablesToSupportAliasedSymbols(none,>=error),"
+    +"Rose::EditDistance(none,>=error),"
+    +"Rose::TestChildPointersInMemoryPool(none,>=error),Rose::UnparseLanguageIndependentConstructs(none,>=error),"
+    +"rose_ir_node(none,>=error)";
+  // result string must be checked
+  string result=Rose::Diagnostics::mfacilities.control(turnOffRoseWarnings); 
+  if(result!="") {
+    cerr<<result<<endl;
+    cerr<<"Error in logger initialization."<<endl;
+    exit(1);
+  }
+
+  Rose::global_options.set_frontend_notes(false);
+  Rose::global_options.set_frontend_warnings(false);
+  Rose::global_options.set_backend_warnings(false);
+
+  signal(SIGSEGV, handler);   // install handler for backtrace
+}
+
+void configureRersSpecialization() {
+#ifdef RERS_SPECIALIZATION
+  // only included in hybrid RERS analyzers.
+  // Init external function pointers for generated property state
+  // marshalling functions (5 function pointers named:
+  // RERS_Problem::...FP, are initialized in the following external
+  // function.
+  // An implementation of this function is linked with the hybrid analyzer
+  extern void RERS_Problem_FunctionPointerInit();
+  RERS_Problem_FunctionPointerInit();
+#endif
+}
+
+void configureOptionSets() {
+  string optionName="options-set";
+  int optionValue=args.getInt(optionName);
+  switch(optionValue) {
+  case 0:
+    // fall-through for default
+    break;
+  case 1:
+    args.setOption("explicit-arrays",true);
+    args.setOption("in-state-string-literals",true);
+    args.setOption("ignore-unknown-functions",true);
+    args.setOption("ignore-function-pointers",true);
+    args.setOption("std-functions",true);
+    args.setOption("context-sensitive",true);
+    args.setOption("normalize-all",true);
+    args.setOption("abstraction-mode",1);
+    break;
+  case 2:
+    args.setOption("explicit-arrays",true);
+    args.setOption("in-state-string-literals",true);
+    args.setOption("ignore-unknown-functions",true);
+    args.setOption("ignore-function-pointers",false);
+    args.setOption("std-functions",true);
+    args.setOption("context-sensitive",true);
+    args.setOption("normalize-all",true);
+    args.setOption("abstraction-mode",1);
+    break;
+  case 3:
+    args.setOption("explicit-arrays",true);
+    args.setOption("in-state-string-literals",true);
+    args.setOption("ignore-unknown-functions",true);
+    args.setOption("ignore-function-pointers",false);
+    args.setOption("std-functions",true);
+    args.setOption("context-sensitive",true);
+    args.setOption("normalize-all",true);
+    args.setOption("abstraction-mode",0);
+    break;
+  default:
+    cerr<<"Error: unsupported "<<optionName<<" value: "<<optionValue<<endl;
+    exit(1);
+  }
+}
+
 int main( int argc, char * argv[] ) {
   try {
-    ROSE_INITIALIZE;
-    CodeThorn::initDiagnostics();
-    CodeThorn::initDiagnosticsLTL();
-
-    Rose::Diagnostics::mprefix->showProgramName(false);
-    Rose::Diagnostics::mprefix->showThreadId(false);
-    Rose::Diagnostics::mprefix->showElapsedTime(false);
-
-    string turnOffRoseWarnings=string("Rose(none,>=error),Rose::EditDistance(none,>=error),Rose::FixupAstDeclarationScope(none,>=error),")
-      +"Rose::FixupAstSymbolTablesToSupportAliasedSymbols(none,>=error),"
-      +"Rose::EditDistance(none,>=error),"
-      +"Rose::TestChildPointersInMemoryPool(none,>=error),Rose::UnparseLanguageIndependentConstructs(none,>=error),"
-      +"rose_ir_node(none,>=error)";
-    // result string must be checked
-    string result=Rose::Diagnostics::mfacilities.control(turnOffRoseWarnings); 
-    if(result!="") {
-      cerr<<result<<endl;
-      cerr<<"Error in logger initialization."<<endl;
-      exit(1);
-    }
-
-    Rose::global_options.set_frontend_notes(false);
-    Rose::global_options.set_frontend_warnings(false);
-    Rose::global_options.set_backend_warnings(false);
-
-    signal(SIGSEGV, handler);   // install handler for backtrace
-
+    configureRose();
     Sawyer::Message::Facility logger;
     Rose::Diagnostics::initAndRegister(&logger, "CodeThorn");
-
-#ifdef RERS_SPECIALIZATION
-    // only included in hybrid RERS analyzers.
-    // Init external function pointers for generated property state
-    // marshalling functions (5 function pointers named:
-    // RERS_Problem::...FP, are initialized in the following external
-    // function.
-    // An implementation of this function is linked with the hybrid analyzer
-    extern void RERS_Problem_FunctionPointerInit();
-    RERS_Problem_FunctionPointerInit();
-#endif
+    configureRersSpecialization();
 
     TimeMeasurement timer;
     timer.start();
 
     parseCommandLine(argc, argv, logger,versionString);
 
-    // Check if chosen options are available
-#ifndef HAVE_SPOT
-    // display error message and exit in case SPOT is not avaiable, but related options are selected
-    if (args.isDefined("csv-stats-cegpra") ||
-	args.isDefined("cegpra-ltl") ||
-	args.getBool("cegpra-ltl-all") ||
-	args.isDefined("cegpra-max-iterations") ||
-	args.isDefined("viz-cegpra-detailed") ||
-	args.isDefined("csv-spot-ltl") ||
-	args.isDefined("check-ltl") ||
-	args.isDefined("single-property") ||
-	args.isDefined("ltl-in-alphabet") ||
-	args.isDefined("ltl-out-alphabet") ||
-	args.getBool("ltl-driven") ||
-	args.getBool("with-ltl-counterexamples") ||
-	args.isDefined("mine-num-verifiable") ||
-	args.isDefined("mine-num-falsifiable") ||
-	args.isDefined("ltl-mode") ||
-	args.isDefined("ltl-properties-output") ||
-	args.isDefined("promela-output") ||
-	args.getBool("promela-output-only") ||
-	args.getBool("output-with-results") ||
-	args.getBool("output-with-annotations")) {
-      cerr << "Error: Options selected that require the SPOT library, however SPOT was not selected during configuration." << endl;
-      exit(1);
-    }
-#endif
-
-#ifndef HAVE_Z3
-    if (args.isDefined("z3") ||
-	args.isDefined("rers-upper-input-bound") ||
-	args.isDefined("rers-verifier-error-number")){
-      cerr << "Error: Options selected that require the Z3 library, however Z3 was not selected during configuration." << endl;
-      exit(1);
-    }
-#endif	
-
+    checkSpotOptions();
+    checkZ3Options();
+    
     // Start execution
     mfacilities.control(args.getString("log-level"));
     SAWYER_MESG(logger[TRACE]) << "Log level is " << args.getString("log-level") << endl;
 
     // ParPro command line options
-    if(CodeThorn::ParProAutomata::handleCommandLineArguments(args,logger)) {
+    bool exitRequest=CodeThorn::ParProAutomata::handleCommandLineArguments(args,logger);
+    if(exitRequest) {
       exit(0);
     }
 
@@ -496,46 +512,7 @@ int main( int argc, char * argv[] ) {
         return 0;
     }
 
-    string optionName="options-set";
-    int optionValue=args.getInt(optionName);
-    switch(optionValue) {
-    case 0:
-      // fall-through for default
-      break;
-    case 1:
-      args.setOption("explicit-arrays",true);
-      args.setOption("in-state-string-literals",true);
-      args.setOption("ignore-unknown-functions",true);
-      args.setOption("ignore-function-pointers",true);
-      args.setOption("std-functions",true);
-      args.setOption("context-sensitive",true);
-      args.setOption("normalize-all",true);
-      args.setOption("abstraction-mode",1);
-      break;
-    case 2:
-      args.setOption("explicit-arrays",true);
-      args.setOption("in-state-string-literals",true);
-      args.setOption("ignore-unknown-functions",true);
-      args.setOption("ignore-function-pointers",false);
-      args.setOption("std-functions",true);
-      args.setOption("context-sensitive",true);
-      args.setOption("normalize-all",true);
-      args.setOption("abstraction-mode",1);
-      break;
-    case 3:
-      args.setOption("explicit-arrays",true);
-      args.setOption("in-state-string-literals",true);
-      args.setOption("ignore-unknown-functions",true);
-      args.setOption("ignore-function-pointers",false);
-      args.setOption("std-functions",true);
-      args.setOption("context-sensitive",true);
-      args.setOption("normalize-all",true);
-      args.setOption("abstraction-mode",0);
-      break;
-    default:
-      cerr<<"Error: unsupported "<<optionName<<" value: "<<optionValue<<endl;
-      exit(1);
-    }
+    configureOptionSets();
 
     analyzer->optionStringLiteralsInState=args.getBool("in-state-string-literals");
     analyzer->setSkipUnknownFunctionCalls(args.getBool("ignore-unknown-functions"));

@@ -6,10 +6,54 @@
 #include <sstream>
 #include <iostream>
 
+// required for checking of: HAVE_SPOT, HAVE_Z3
+#include "rose_config.h"
+
 #include "Diagnostics.h"
 using namespace Sawyer::Message;
 using namespace std;
 using namespace CodeThorn;
+
+void checkSpotOptions() {
+    // Check if chosen options are available
+#ifndef HAVE_SPOT
+    // display error message and exit in case SPOT is not avaiable, but related options are selected
+    if (args.isDefined("csv-stats-cegpra") ||
+	args.isDefined("cegpra-ltl") ||
+	args.getBool("cegpra-ltl-all") ||
+	args.isDefined("cegpra-max-iterations") ||
+	args.isDefined("viz-cegpra-detailed") ||
+	args.isDefined("csv-spot-ltl") ||
+	args.isDefined("check-ltl") ||
+	args.isDefined("single-property") ||
+	args.isDefined("ltl-in-alphabet") ||
+	args.isDefined("ltl-out-alphabet") ||
+	args.getBool("ltl-driven") ||
+	args.getBool("with-ltl-counterexamples") ||
+	args.isDefined("mine-num-verifiable") ||
+	args.isDefined("mine-num-falsifiable") ||
+	args.isDefined("ltl-mode") ||
+	args.isDefined("ltl-properties-output") ||
+	args.isDefined("promela-output") ||
+	args.getBool("promela-output-only") ||
+	args.getBool("output-with-results") ||
+	args.getBool("output-with-annotations")) {
+      cerr << "Error: Options selected that require the SPOT library, however SPOT was not selected during configuration." << endl;
+      exit(1);
+    }
+#endif
+}
+
+void checkZ3Options() {
+#ifndef HAVE_Z3
+    if (args.isDefined("z3") ||
+	args.isDefined("rers-upper-input-bound") ||
+	args.isDefined("rers-verifier-error-number")){
+      cerr << "Error: Options selected that require the Z3 library, however Z3 was not selected during configuration." << endl;
+      exit(1);
+    }
+#endif	
+}
 
 CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger, std::string version) {
   // Command line option handling.
@@ -398,6 +442,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     // Must be a CodeThorn option, therefore remove it from argv.
     argv[i] = strdup("");
   }
+
+  checkSpotOptions();
+  checkZ3Options();
 
   return args;
 }
