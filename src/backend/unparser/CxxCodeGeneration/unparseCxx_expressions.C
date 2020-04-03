@@ -7661,7 +7661,9 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
         {
        // Now check the version of the identified GNU g++ compiler.
           if ((usingGxx && ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 5) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4)))
-             || (usingClang && (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 7)))
+          // DQ (3/31/2020): bug fix for use of ROSE on older clang version 6 (on my Mac)
+          // || (usingClang && (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 7)))
+             || (usingClang && (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 6)))
              {
             // If this is the GNU g++ 4.5 version compiler (or greater) then we have to use "X::A()"
             // as a constructor name instead of "X::A::A()" which was previously accepted by GNU g++.
