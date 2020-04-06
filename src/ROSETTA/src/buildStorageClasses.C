@@ -917,6 +917,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgToken::ROSE_Fortran_Keywords" ) ||
               // DQ (12/9/2015): Added to support use of enums from SgUntypedType class.
                  ( varTypeString == "SgUntypedType::type_enum" ) ||
+                 ( varTypeString == "SgFile::standard_enum" ) ||
                  false 
               )
        {

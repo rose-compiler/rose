@@ -5,8 +5,9 @@
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BitFlags.h>
-#include <boost/noncopyable.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/regex.hpp>
 #include <Disassembler.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Message.h>
@@ -53,9 +54,11 @@ public:
         unsigned long persona_;                         // personality(2) flags
 
         // Members for running a program
-        boost::filesystem::path program_;               // ;full path of executable program
+        boost::filesystem::path program_;               // full path of executable program
         std::vector<std::string> arguments_;            // command-line arguments of executable program
         boost::filesystem::path workingDirectory_;      // name or working directory, or use CWD if empty
+        std::vector<boost::regex> clearEnvVars_;        // clear environment variables matching these patterns
+        std::map<std::string, std::string> setEnvVars_; // environment variables to be set
 
         // Members for attaching to a process
         int pid_;                                       // process ID (int instead of pid_t for portability)
@@ -113,6 +116,32 @@ public:
         }
         /** @} */
 
+        /** Remove an environment variable.
+         *
+         *  The specified environment variable is removed from environment before starting the subordinate process. This
+         *  function can be called multiple times to remove multiple variables. The variables are removed from the subordinate
+         *  process without affecting process from which this is called. Removals happen before additions. */
+        void eraseEnvironmentVariable(const std::string&);
+
+        /** Remove some environment variables.
+         *
+         *  Variables whose names match the specified regular expression are removed from the environment before starting the
+         *  subordinate process. This function can be called multiple times to remove multiple variables. The variables are
+         *  removed from the subordinate process without affectig the calling process. Removals happen before additions. */
+        void eraseMatchingEnvironmentVariables(const boost::regex&);
+
+        /** Remove all environment variables.
+         *
+         *  All environment variables are removed before starting the subordinate process. Removals happen before additions. */
+        void eraseAllEnvironmentVariables();
+
+        /** Add an environment variable.
+         *
+         *  The specified variable and value is added to the subordinate process's environment. This function can be called
+         *  multiple times to add multiple variables. The variables are added to the subordinate process without affecting this
+         *  calling process. Additions happen after removals. */
+        void insertEnvironmentVariable(const std::string &name, const std::string &value);
+        
         /** Property: Current working directory for running a program.
          *
          *  This property is only used for starting a new program, not for attaching to a process (which already has
@@ -185,6 +214,9 @@ public:
 
         /** Print some basic info about the specimen. */
         void print(std::ostream &out) const;
+
+        // Used internally.
+        char** prepareEnvAdjustments() const;
     };
 
 public:

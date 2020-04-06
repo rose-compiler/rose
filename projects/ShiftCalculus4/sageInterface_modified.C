@@ -3902,11 +3902,7 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
 //#ifdef _MSCx_VER
 #if 0
 //#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
-     printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
-     ReplacementMapTraversal::ReplacementMapType replacementMap;
-#else
-     ReplacementMapTraversal::ReplacementMapType replacementMap(replacementHashTableSize);
-#endif
+     p
      int counter = 0;
      while (i != this_symbolTable->get_table()->end())
         {
@@ -3974,10 +3970,6 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
      set<SgNode*>  intermediateDeleteSet;
 
 #if 0
-     printf ("Output the replacementMap: \n");
-  // printf ("replacementMap.size() = %zu \n",replacementMap.size());
-     ReplacementMapTraversal::displayReplacementMap(replacementMap);
-
      printf ("\n\n************************************************************\n");
      printf ("fixupReferencesToSymbols(this_scope = %p copy_scope = %p = %s = %s): calling fixupSubtreeTraversal() \n",this_scope,copy_scope,copy_scope->class_name().c_str(),get_name(copy_scope).c_str());
 #endif
@@ -14718,15 +14710,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 
   // This is used to fixup the AST by resetting references to IR nodes (leveraged from AST merge).
      int replacementHashTableSize = 1001;
-// CH (4/9/2010): Use boost::unordered instead
-//#ifdef _MSC_VER
-#if 0
-//#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
-     printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
-     ReplacementMapTraversal::ReplacementMapType replacementMap;
-#else
-     ReplacementMapTraversal::ReplacementMapType replacementMap(replacementHashTableSize);
-#endif
+     std::map<SgNode*, SgNode*> replacementMap(replacementHashTableSize);
 
   // DQ (3/2/2009): Now use the collectDependentDeclarationsCopyType object to generate the mapping
   // from the symbols in the old AST to the new symbols in the new AST (generated as part of the AST
@@ -15204,9 +15188,6 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 
      printf ("\n\n After replacementMapTraversal(): intermediateDeleteSet: \n");
      displaySet(intermediateDeleteSet,"After fixupTraversal");
-
-     printf ("Output the replacementMap: \n");
-     ReplacementMapTraversal::displayReplacementMap(replacementMap);
 #endif
 
   // Repeated test from above
@@ -15234,7 +15215,6 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 // This function is not implemented our used, but it might be when the final code is refactored.
 
 // rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr>
-// void SageInterface::supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap )
 void
 SageInterface::supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap )
    {

@@ -1,140 +1,70 @@
-// tps (01/14/2010) : Switching from rose.h to sage3.
-#include "sage3basic.h"
-#include "collectAssociateNodes.h"
-#include "test_support.h"
-#include "merge_support.h"
 
-// #include "colorTraversal.h"
+#include "sage3basic.h"
+
+#include "merge_support.h"
 
 using namespace std;
 
-// set<SgNode*> firstAST_globalVar;
+namespace Rose {
+namespace AST {
 
-#if 0
-// To test the merge process we make a copy of the AST built from the input file and 
-// try to merge the copied AST with the original AST.
-SgNode*
-copyAST ( SgNode* node )
-   {
-     ROSE_ASSERT(node != NULL);
+ROSE_DLL_API std::set<SgNode*> getFrontendSpecificNodes() {
+  struct FrontendSpecificTraversal : public ROSE_VisitTraversal {
+    std::set<SgNode*> specific;
+    std::set<SgNode*> non_specific;
+ 
+    static void recursive_collect( SgNode* node , std::set<SgNode *> & collection ) {
+      // Stop on sinks and loops
+      if (node == NULL || !collection.insert(node).second) return;
 
-  // This is a better implementation using a derived class from SgCopyHelp to control the 
-  // copying process (skipping the copy of any function definition).  This is a variable 
-  // declaration with an explicitly declared class type.
-     class RestrictedCopyType : public SgCopyHelp
-        {
-       // DQ (9/26/2005): This class demonstrates the use of the copy mechanism 
-       // within Sage III (originally designed and implemented by Qing Yi).
-       // One problem with it is that there is no context information permitted.
+      std::vector<std::pair<SgNode*, std::string> > data_members = node->returnDataMemberPointers();
+      for (std::vector<std::pair<SgNode*, std::string> >::iterator i = data_members.begin(); i != data_members.end(); ++i) {
+        recursive_collect(i->first, collection);
+      }
+    }
 
-          public:
-               virtual SgNode *copyAst(const SgNode *n)
-                  {
-                    SgNode *returnValue = n->copy(*this);
-                    return returnValue;
-                  }
-        } restrictedCopyType;
+    void visit (SgNode* n) {
+      Sg_File_Info * fileInfo = n->get_file_info();
 
-     SgNode* copyOfNode = node->copy(restrictedCopyType);
-
-     ROSE_ASSERT(copyOfNode != NULL);
-     return copyOfNode;
-   }
-#endif
-
-
-void
-displaySet ( const set<SgNode*> & inputSet, const std::string & label )
-   {
-     printf ("In displaySet(inputSet.size() = %" PRIuPTR ", label = %s) \n",inputSet.size(),label.c_str());
-     set<SgNode*>::const_iterator i = inputSet.begin();
-     while ( i != inputSet.end() )
-        {
-          Sg_File_Info* fileInfo = (*i)->get_file_info();
-          printf ("set element: i = %p = %s = %s = %s from file = %s \n",*i,(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),SageInterface::generateUniqueName(*i,false).c_str(),(fileInfo != NULL) ? fileInfo->get_filenameString().c_str() : "fileInfo == NULL");
-          i++;
+      if (fileInfo != NULL) {
+        if (fileInfo->isFrontendSpecific()) {
+          specific.insert(n);
+          recursive_collect(n, specific);
+        } else {
+          non_specific.insert(n);
+          recursive_collect(n, non_specific);
         }
-   }
+      } else {
+        fileInfo = isSg_File_Info(n);
+        if (fileInfo != NULL) {
+          if (fileInfo->isFrontendSpecific()) {
+            specific.insert(n);
+          } else {
+            non_specific.insert(n);
+          }
+        }
+      }
+    }
 
+    std::set<SgNode*> apply() {
+      traverseMemoryPool();
 
-set<SgNode*>
-generateNodeListFromAST ( SgNode* node )
-   {
-  // Generate a list of the SgNode* in the AST (subset of all IR nodes in the memory pool)
-     class NodeListTraversal : public SgSimpleProcessing
-        {
-          public:
-              set<SgNode*> nodeList;
-              void visit (SgNode* n )
-                 {
-#ifndef USE_ROSE
-                // DQ (2/8/2010): This code demonstrates a bug in the unparser for ROSE when run using tests/nonsmoke/functional/testCodeGeneration
-                   ROSE_ASSERT(n != NULL);
-                // printf ("In generateNodeListFromAST building nodeList n = %p = %s \n",n,n->class_name().c_str());
-                   nodeList.insert(n);
-#endif
-                 }
-        };
+      std::set<SgNode*> result;
 
-     NodeListTraversal t;
-     t.traverse(node,preorder);
+      std::set_difference(
+        specific.begin(), specific.end(),
+        non_specific.begin(), non_specific.end(),
+        std::insert_iterator<set<SgNode*> >(result, result.begin())
+      );
 
-     return t.nodeList;
-   }
+      return result;
+    }
+  };
 
-set<SgNode*>
-generateNodeListFromMemoryPool()
-   {
-  // Generate a list of the SgNode* in the memory pool (all IR nodes)
-     class NodeListTraversal : public ROSE_VisitTraversal
-        {
-          public:
-              set<SgNode*> nodeList;
-              void visit (SgNode* n ) { nodeList.insert(n); }
-              virtual ~NodeListTraversal() {}
-        };
+  FrontendSpecificTraversal fst;
+  return fst.apply();
+}
 
-     NodeListTraversal t;
-     t.traverseMemoryPool();
-
-     return t.nodeList;
-   }
-
-
-set<SgNode*>
-getSetOfSharedNodes()
-   {
-  // Generate a subset of the SgNode* in the memory pool (all IR nodes)
-     class NodeListTraversal : public ROSE_VisitTraversal
-        {
-          public:
-              set<SgNode*> nodeList;
-              void visit (SgNode* n )
-                 {
-                   Sg_File_Info* fileInfo = NULL;
-                   fileInfo = n->get_file_info();
-                   if (fileInfo != NULL)
-                      {
-                        if (fileInfo->isShared() == true)
-                           nodeList.insert(n);
-                      }
-                     else
-                      {
-                        fileInfo = isSg_File_Info(n);
-                        if (fileInfo != NULL)
-                           {
-                             if (fileInfo->isShared() == true)
-                                  nodeList.insert(n);
-                           }
-                      }
-                 }
-
-              virtual ~NodeListTraversal() {}
-        };
-
-     NodeListTraversal t;
-     t.traverseMemoryPool();
-
-     return t.nodeList;
-   }
+}
+}
 

@@ -143,9 +143,6 @@ endif
 #    mergeTest_06.C
 
 
-# DQ (5/26/2013) (mergeTest_121.C) This is a failing test on Jenkins that I can now reproduce on my machine.
-# Command line to generate problem: ./testMerge --edg:no_warnings -w --edg:restrict -rose:astMerge -c /home/dquinlan/ROSE/git-dq-edg4x-rc/tests/nonsmoke/functional/CompileTests/mergeAST_tests/mergeTest_121.C mergeTest_121_alt.C
-# TOO1 (5/28/2013) (mergeTest_121.C) Add to EXTRA_DIST (below) to fix UnusedSourcesPolicy test.
 TESTCODES_TO_FIX = \
 	mergeTest_121.C
 
@@ -253,7 +250,7 @@ VALGRIND =
 endif
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
-ROSE_FLAGS = --edg:no_warnings -w --edg:restrict -rose:astMerge
+ROSE_FLAGS = --edg:no_warnings -w --edg:restrict -rose:ast:merge
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o}
 TEST_Objects = ${ALL_TESTCODES:.C=.o}
