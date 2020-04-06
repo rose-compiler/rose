@@ -96,15 +96,6 @@ rose_string_decoder_LDFLAGS = $(ROSE_RPATHS)
 rose_string_decoder_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
-# Find code that cannot be reached according to static analysis
-
-bin_PROGRAMS += rose-find-dead-code
-rose_find_dead_code_SOURCES = findDeadCode.C
-rose_find_dead_code_CPPFLAGS = $(ROSE_INCLUDES)
-rose_find_dead_code_LDFLAGS = $(ROSE_RPATHS)
-rose_find_dead_code_LDADD = $(ROSE_LIBS)
-
-#------------------------------------------------------------------------------------------------------------------------
 # Parse and simplify symbolic expressions
 
 bin_PROGRAMS += rose-symbolic-simplifier
