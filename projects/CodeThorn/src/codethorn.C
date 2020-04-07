@@ -210,17 +210,17 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
     args.setOption("with-ltl-counterexamples",true);
   }
 
-  if(args.isDefined("stg-trace-file")) {
+  if(args.isUserProvided("stg-trace-file")) {
     analyzer->setStgTraceFileName(args.getString("stg-trace-file"));
   }
 
-  if (args.isDefined("cl-args")) {
+  if (args.isUserProvided("cl-args")) {
     string clOptions=args.getString("cl-args");
     vector<string> clOptionsVector=Parse::commandLineArgs(clOptions);
     analyzer->setCommandLineOptions(clOptionsVector);
   }
 
-  if(args.isDefined("input-values")) {
+  if(args.isUserProvided("input-values")) {
     string setstring=args.getString("input-values");
     cout << "STATUS: input-values="<<setstring<<endl;
 
@@ -230,7 +230,7 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
     }
   }
 
-  if(args.isDefined("input-sequence")) {
+  if(args.isUserProvided("input-sequence")) {
     string liststring=args.getString("input-sequence");
     cout << "STATUS: input-sequence="<<liststring<<endl;
 
@@ -240,7 +240,7 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
     }
   }
 
-  if(args.isDefined("exploration-mode")) {
+  if(args.isUserProvided("exploration-mode")) {
     string explorationMode=args.getString("exploration-mode");
     if(explorationMode=="depth-first") {
       analyzer->setExplorationMode(EXPL_DEPTH_FIRST);
@@ -261,9 +261,9 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
     analyzer->setExplorationMode(EXPL_BREADTH_FIRST);
   }
 
-  if (args.isDefined("max-iterations") || args.isDefined("max-iterations-forced-top")) {
+  if (args.isUserProvided("max-iterations") || args.isUserProvided("max-iterations-forced-top")) {
     bool notSupported=false;
-    if (!args.isDefined("exploration-mode")) {
+    if (!args.isUserProvided("exploration-mode")) {
       notSupported=true;
     } else {
       string explorationMode=args.getString("exploration-mode");
@@ -277,61 +277,61 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
     }
   }
 
-  if(args.isDefined("abstraction-mode")) {
+  if(args.isUserProvided("abstraction-mode")) {
     analyzer->setAbstractionMode(args.getInt("abstraction-mode"));
   }
 
-  if(args.isDefined("max-transitions")) {
+  if(args.isUserProvided("max-transitions")) {
     analyzer->setMaxTransitions(args.getInt("max-transitions"));
   }
 
-  if(args.isDefined("max-iterations")) {
+  if(args.isUserProvided("max-iterations")) {
     analyzer->setMaxIterations(args.getInt("max-iterations"));
   }
 
-  if(args.isDefined("max-iterations-forced-top")) {
+  if(args.isUserProvided("max-iterations-forced-top")) {
     analyzer->setMaxIterationsForcedTop(args.getInt("max-iterations-forced-top"));
     analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
   }
 
-  if(args.isDefined("max-transitions-forced-top")) {
+  if(args.isUserProvided("max-transitions-forced-top")) {
     analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top"));
     analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
-  } else if(args.isDefined("max-transitions-forced-top1")) {
+  } else if(args.isUserProvided("max-transitions-forced-top1")) {
     analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top1"));
     analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
-  } else if(args.isDefined("max-transitions-forced-top2")) {
+  } else if(args.isUserProvided("max-transitions-forced-top2")) {
     analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top2"));
     analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCF);
-  } else if(args.isDefined("max-transitions-forced-top3")) {
+  } else if(args.isUserProvided("max-transitions-forced-top3")) {
     analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top3"));
     analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCFPTR);
-  } else if(args.isDefined("max-transitions-forced-top4")) {
+  } else if(args.isUserProvided("max-transitions-forced-top4")) {
     analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top4"));
     analyzer->setGlobalTopifyMode(Analyzer::GTM_COMPOUNDASSIGN);
-  } else if(args.isDefined("max-transitions-forced-top5")) {
+  } else if(args.isUserProvided("max-transitions-forced-top5")) {
     analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top5"));
     analyzer->setGlobalTopifyMode(Analyzer::GTM_FLAGS);
   }
 
-  if (args.isDefined("max-memory")) {
+  if (args.isUserProvided("max-memory")) {
     analyzer->setMaxBytes(args.getLongInt("max-memory"));
   }
-  if (args.isDefined("max-time")) {
+  if (args.isUserProvided("max-time")) {
     analyzer->setMaxSeconds(args.getLongInt("max-time"));
   }
-  if (args.isDefined("max-memory-forced-top")) {
+  if (args.isUserProvided("max-memory-forced-top")) {
     analyzer->setMaxBytesForcedTop(args.getLongInt("max-memory-forced-top"));
   }
-  if (args.isDefined("max-time-forced-top")) {
+  if (args.isUserProvided("max-time-forced-top")) {
     analyzer->setMaxSecondsForcedTop(args.getLongInt("max-time-forced-top"));
   }
 
-  if(args.isDefined("display-diff")) {
+  if(args.isUserProvided("display-diff")) {
     int displayDiff=args.getInt("display-diff");
     analyzer->setDisplayDiff(displayDiff);
   }
-  if(args.isDefined("resource-limit-diff")) {
+  if(args.isUserProvided("resource-limit-diff")) {
     int resourceLimitDiff=args.getInt("resource-limit-diff");
     analyzer->setResourceLimitDiff(resourceLimitDiff);
   }
@@ -499,12 +499,12 @@ int main( int argc, char * argv[] ) {
 
 #if 0
     string option_pragma_name;
-    if (args.isDefined("limit-to-fragment")) {
+    if (args.isUserProvided("limit-to-fragment")) {
       option_pragma_name = args.getString("limit-to-fragment");
     }
 #endif
 
-    if (args.isDefined("internal-checks")) {
+    if (args.isUserProvided("internal-checks")) {
       mfacilities.shutdown();
       if(CodeThorn::internalChecks(argc,argv)==false)
         return 1;
@@ -547,7 +547,7 @@ int main( int argc, char * argv[] ) {
     // analyzer->setFunctionResolutionMode(args.getInt("function-resolution-mode")); xxx
     // needs to set CFAnalysis functionResolutionMode
 
-    if(args.isDefined("threads")) {
+    if(args.isUserProvided("threads")) {
       int numThreads=args.getInt("threads");
       if(numThreads<=0) {
         cerr<<"Error: number of threads must be greater or equal 1."<<endl;
@@ -559,7 +559,7 @@ int main( int argc, char * argv[] ) {
     }
 
     string option_start_function="main";
-    if(args.isDefined("start-function")) {
+    if(args.isUserProvided("start-function")) {
       option_start_function = args.getString("start-function");
     }
 
@@ -568,39 +568,39 @@ int main( int argc, char * argv[] ) {
     vector<int> option_specialize_fun_const_list;
     vector<string> option_specialize_fun_varinit_list;
     vector<int> option_specialize_fun_varinit_const_list;
-    if(args.isDefined("specialize-fun-name")) {
+    if(args.isUserProvided("specialize-fun-name")) {
       option_specialize_fun_name = args.getString("specialize-fun-name");
       // logger[DEBUG] << "option_specialize_fun_name: "<< option_specialize_fun_name<<endl;
     } else {
       // logger[DEBUG] << "option_specialize_fun_name: NONE"<< option_specialize_fun_name<<endl;
     }
 
-    if(args.isDefined("specialize-fun-param")) {
+    if(args.isUserProvided("specialize-fun-param")) {
       option_specialize_fun_param_list=args.getIntVector("specialize-fun-param");
       option_specialize_fun_const_list=args.getIntVector("specialize-fun-const");
     }
 
-    if(args.isDefined("specialize-fun-varinit")) {
+    if(args.isUserProvided("specialize-fun-varinit")) {
       option_specialize_fun_varinit_list=args.getStringVector("specialize-fun-varinit");
       option_specialize_fun_varinit_const_list=args.getIntVector("specialize-fun-varinit-const");
     }
 
     // logger[DEBUG] << "specialize-params:"<<option_specialize_fun_const_list.size()<<endl;
 
-    if(args.isDefined("specialize-fun-name")) {
-      if((args.isDefined("specialize-fun-param")||args.isDefined("specialize-fun-const"))
-          && !(args.isDefined("specialize-fun-name")&&args.isDefined("specialize-fun-param")&&args.isDefined("specialize-fun-param"))) {
+    if(args.isUserProvided("specialize-fun-name")) {
+      if((args.isUserProvided("specialize-fun-param")||args.isUserProvided("specialize-fun-const"))
+          && !(args.isUserProvided("specialize-fun-name")&&args.isUserProvided("specialize-fun-param")&&args.isUserProvided("specialize-fun-param"))) {
         logger[ERROR] <<"options --specialize-fun-name=NAME --specialize-fun-param=NUM --specialize-fun-const=NUM must be used together."<<endl;
         exit(1);
       }
-      if((args.isDefined("specialize-fun-varinit")||args.isDefined("specialize-fun-varinit-const"))
-          && !(args.isDefined("specialize-fun-varinit")&&args.isDefined("specialize-fun-varinit-const"))) {
+      if((args.isUserProvided("specialize-fun-varinit")||args.isUserProvided("specialize-fun-varinit-const"))
+          && !(args.isUserProvided("specialize-fun-varinit")&&args.isUserProvided("specialize-fun-varinit-const"))) {
         logger[ERROR] <<"options --specialize-fun-name=NAME --specialize-fun-varinit=NAME --specialize-fun-const=NUM must be used together."<<endl;
         exit(1);
       }
     }
 
-    if((args.getBool("print-update-infos")||args.isDefined("equivalence-check"))&&(args.isDefined("dump-sorted")==0 && args.isDefined("dump-non-sorted")==0)) {
+    if((args.getBool("print-update-infos")||args.isUserProvided("equivalence-check"))&&(args.isUserProvided("dump-sorted")==0 && args.isUserProvided("dump-non-sorted")==0)) {
       logger[ERROR] <<"option print-update-infos/equivalence-check must be used together with option --dump-non-sorted or --dump-sorted."<<endl;
       exit(1);
     }
@@ -611,7 +611,7 @@ int main( int argc, char * argv[] ) {
     if(args.getBool("ignore-undefined-dereference")) {
       analyzer->setIgnoreUndefinedDereference(true);
     }
-    if(args.isDefined("dump-sorted")>0 || args.isDefined("dump-non-sorted")>0 || args.isDefined("equivalence-check")>0) {
+    if(args.isUserProvided("dump-sorted")>0 || args.isUserProvided("dump-non-sorted")>0 || args.isUserProvided("equivalence-check")>0) {
       analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
       args.setOption("explicit-arrays",false);
@@ -638,11 +638,11 @@ int main( int argc, char * argv[] ) {
       analyzer->setExternalErrorFunctionName(errorFunctionName);
     }
 
-    if(args.isDefined("external-function-semantics")) {
+    if(args.isUserProvided("external-function-semantics")) {
       // obsolete
     }
 
-    if(args.isDefined("error-function")) {
+    if(args.isUserProvided("error-function")) {
       string errorFunctionName=args.getString("error-function");
       analyzer->setExternalErrorFunctionName(errorFunctionName);
     }
@@ -682,7 +682,7 @@ int main( int argc, char * argv[] ) {
     }
 
     if(args.getBool("normalize-all")||args.getInt("options-set")==1) {
-      if(!args.isDefined("quiet")) {
+      if(!args.isUserProvided("quiet")) {
         cout<<"STATUS: normalizing program."<<endl;
       }
       //SAWYER_MESG(logger[INFO])<<"STATUS: normalizing program."<<endl;
@@ -781,7 +781,7 @@ int main( int argc, char * argv[] ) {
       }
     }
     
-    if(args.isDefined("run-rose-tests")) {
+    if(args.isUserProvided("run-rose-tests")) {
       cout << "ROSE tests started."<<endl;
       // Run internal consistency tests on AST
       AstTests::runAllTests(sageProject);
@@ -853,7 +853,7 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    if(args.isDefined("rewrite")) {
+    if(args.isUserProvided("rewrite")) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: rewrite started."<<endl;
       rewriteSystem.resetStatistics();
       rewriteSystem.setRewriteCondStmt(false); // experimental: supposed to normalize conditions
@@ -952,14 +952,14 @@ int main( int argc, char * argv[] ) {
     
     timer.start();
     analyzer->printStatusMessageLine("==============================================================");
-    if(!analyzer->getModeLTLDriven() && args.isDefined("z3") == 0 && !args.getBool("ssa")) {
+    if(!analyzer->getModeLTLDriven() && args.isUserProvided("z3") == 0 && !args.getBool("ssa")) {
       analyzer->runSolver();
     }
     double analysisRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
     analyzer->printStatusMessageLine("==============================================================");
 
-    if (args.getBool("svcomp-mode") && args.isDefined("witness-file")) {
+    if (args.getBool("svcomp-mode") && args.isUserProvided("witness-file")) {
       analyzer->writeWitnessToFile(args.getString("witness-file"));
     }
 
@@ -980,7 +980,7 @@ int main( int argc, char * argv[] ) {
       analyzer->printStatusMessageLine("==============================================================");
       analyzer->reachabilityResults.printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_", withCe);
     }
-    if (args.isDefined("csv-assert")) {
+    if (args.isUserProvided("csv-assert")) {
       string filename=args.getString("csv-assert").c_str();
       analyzer->reachabilityResults.writeFile(filename.c_str(), false, 0, withCe);
       if(args.getBool("status")) {
@@ -999,9 +999,9 @@ int main( int argc, char * argv[] ) {
     }
 
 #ifdef HAVE_Z3
-    if(args.isDefined("z3"))
+    if(args.isUserProvided("z3"))
     {
-	assert(args.isDefined("rers-upper-input-bound") != 0 &&  args.isDefined("rers-verifier-error-number") != 0);	
+	assert(args.isUserProvided("rers-upper-input-bound") != 0 &&  args.isUserProvided("rers-verifier-error-number") != 0);	
 	int RERSUpperBoundForInput = args.getInt("rers-upper-input-bound");
 	int RERSVerifierErrorNumber = args.getInt("rers-verifier-error-number");
 	cout << "generateSSAForm()" << endl;
@@ -1029,9 +1029,9 @@ int main( int argc, char * argv[] ) {
       string analysisName=analysisInfo.second;
       string analysisOption=analysisName+"-analysis";
       string analysisOutputFileOption=analysisName+"-analysis-file";
-      if(args.isDefined(analysisOption)>0||args.isDefined(analysisOutputFileOption)) {
+      if(args.isUserProvided(analysisOption)>0||args.isUserProvided(analysisOutputFileOption)) {
         ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getViolatingLocations(analysisSel);
-        if(args.isDefined(analysisOption)>0) {
+        if(args.isUserProvided(analysisOption)>0) {
           cout<<"\nResults for "<<analysisName<<" analysis:"<<endl;
           if(locations.numTotalLocations()>0) {
             locations.writeResultToStream(cout,analyzer->getLabeler());
@@ -1039,7 +1039,7 @@ int main( int argc, char * argv[] ) {
             cout<<"No violations detected."<<endl;
           }
         }
-        if(args.isDefined(analysisOutputFileOption)) {
+        if(args.isUserProvided(analysisOutputFileOption)) {
           string fileName=args.getString(analysisOutputFileOption);
           cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
           locations.writeResultFile(fileName,analyzer->getLabeler());
@@ -1149,7 +1149,7 @@ int main( int argc, char * argv[] ) {
     stringstream statisticsSizeAndLtl;
     stringstream statisticsCegpra;
 
-    if (args.isDefined("check-ltl")) {
+    if (args.isUserProvided("check-ltl")) {
       logger[INFO] <<"STG size: "<<analyzer->getTransitionGraph()->size()<<endl;
       string ltl_filename = args.getString("check-ltl");
       if(args.getBool("rersmode")) {  //reduce the graph accordingly, if not already done
@@ -1189,14 +1189,14 @@ int main( int argc, char * argv[] ) {
       timer.start();
       std::set<int> ltlInAlphabet = analyzer->getInputVarValues();
       //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
-      if (args.isDefined("ltl-in-alphabet")) {
+      if (args.isUserProvided("ltl-in-alphabet")) {
         string setstring=args.getString("ltl-in-alphabet");
         ltlInAlphabet=Parse::integerSet(setstring);
         SAWYER_MESG(logger[TRACE]) << "LTL input alphabet explicitly selected: "<< setstring << endl;
       }
       //take ltl output alphabet if specifically described, otherwise take the old RERS specific 21...26 (a.k.a. oU...oZ)
       std::set<int> ltlOutAlphabet = Parse::integerSet("{21,22,23,24,25,26}");
-      if (args.isDefined("ltl-out-alphabet")) {
+      if (args.isUserProvided("ltl-out-alphabet")) {
         string setstring=args.getString("ltl-out-alphabet");
         ltlOutAlphabet=Parse::integerSet(setstring);
         SAWYER_MESG(logger[TRACE]) << "LTL output alphabet explicitly selected: "<< setstring << endl;
@@ -1211,7 +1211,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE]) << "STATUS: generating LTL results"<<endl;
       bool spuriousNoAnswers = false;
       SAWYER_MESG(logger[TRACE]) << "LTL: check properties."<<endl;
-      if (args.isDefined("single-property")) {
+      if (args.isUserProvided("single-property")) {
 	int propertyNum = args.getInt("single-property");
 	spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
       } else {
@@ -1222,8 +1222,8 @@ int main( int argc, char * argv[] ) {
       ltlResults = spotConnection.getLtlResults();
       SAWYER_MESG(logger[TRACE]) << "LTL: results computed."<<endl;
 
-      if (args.isDefined("cegpra-ltl") || (args.isDefined("cegpra-ltl-all")&&args.getBool("cegpra-ltl-all"))) {
-        if (args.isDefined("csv-stats-cegpra")) {
+      if (args.isUserProvided("cegpra-ltl") || (args.isUserProvided("cegpra-ltl-all")&&args.getBool("cegpra-ltl-all"))) {
+        if (args.isUserProvided("csv-stats-cegpra")) {
           statisticsCegpra << "init,";
           analyzer->getTransitionGraph()->printStgSize("initial abstract model");
           analyzer->getTransitionGraph()->csvToStream(statisticsCegpra);
@@ -1233,7 +1233,7 @@ int main( int argc, char * argv[] ) {
           statisticsCegpra << "," << ltlResults->entriesWithValue(PROPERTY_VALUE_UNKNOWN);
         }
         CounterexampleAnalyzer ceAnalyzer(analyzer, &statisticsCegpra);
-        if (args.isDefined("cegpra-max-iterations")) {
+        if (args.isUserProvided("cegpra-max-iterations")) {
           ceAnalyzer.setMaxCounterexamples(args.getInt("cegpra-max-iterations"));
         }
         if (args.getBool("cegpra-ltl-all")) {
@@ -1250,12 +1250,12 @@ int main( int argc, char * argv[] ) {
         ltlResults->printResultsStatistics();
         analyzer->printStatusMessageLine("==============================================================");
       }
-      if (args.isDefined("csv-spot-ltl")) {  //write results to a file instead of displaying them directly
+      if (args.isUserProvided("csv-spot-ltl")) {  //write results to a file instead of displaying them directly
         std::string csv_filename = args.getString("csv-spot-ltl");
         SAWYER_MESG(logger[TRACE]) << "STATUS: writing ltl results to file: " << csv_filename << endl;
         ltlResults->writeFile(csv_filename.c_str(), false, 0, withCounterexample);
       }
-      if (args.isDefined("csv-stats-size-and-ltl")) {
+      if (args.isUserProvided("csv-stats-size-and-ltl")) {
         analyzer->getTransitionGraph()->printStgSize("final model");
         analyzer->getTransitionGraph()->csvToStream(statisticsSizeAndLtl);
         statisticsSizeAndLtl <<","<< ltlResults->entriesWithValue(PROPERTY_VALUE_YES);
@@ -1297,7 +1297,7 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    if(args.isDefined("dump-sorted")>0 || args.isDefined("dump-non-sorted")>0) {
+    if(args.isUserProvided("dump-sorted")>0 || args.isUserProvided("dump-non-sorted")>0) {
       SAR_MODE sarMode=SAR_SSA;
       if(args.getBool("rewrite-ssa")) {
 	sarMode=SAR_SUBSTITUTE;
@@ -1334,11 +1334,11 @@ int main( int argc, char * argv[] ) {
       speci.createSsaNumbering(arrayUpdates, analyzer->getVariableIdMapping());
       arrayUpdateSsaNumberingRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
-      if(args.isDefined("dump-non-sorted")) {
+      if(args.isUserProvided("dump-non-sorted")) {
         string filename=args.getString("dump-non-sorted");
         speci.writeArrayUpdatesToFile(arrayUpdates, filename, sarMode, false);
       }
-      if(args.isDefined("dump-sorted")) {
+      if(args.isUserProvided("dump-sorted")) {
         timer.start();
         string filename=args.getString("dump-sorted");
         speci.writeArrayUpdatesToFile(arrayUpdates, filename, sarMode, true);
@@ -1351,7 +1351,7 @@ int main( int argc, char * argv[] ) {
 
     analyzer->printAnalyzerStatistics(totalRunTime, "STG generation and assertion analysis complete");
 
-    if(args.isDefined("csv-stats")) {
+    if(args.isUserProvided("csv-stats")) {
       string filename=args.getString("csv-stats").c_str();
       stringstream text;
       text<<"Sizes,"<<pstateSetSize<<", "
@@ -1459,7 +1459,7 @@ int main( int argc, char * argv[] ) {
       cout << "generated "<<filename<<endl;
     }
 
-    if (args.isDefined("csv-stats-size-and-ltl")) {
+    if (args.isUserProvided("csv-stats-size-and-ltl")) {
       // content of a line in the .csv file:
       // <#transitions>,<#states>,<#input_states>,<#output_states>,<#error_states>,<#verified_LTL>,<#falsified_LTL>,<#unknown_LTL>
       string filename = args.getString("csv-stats-size-and-ltl");
@@ -1467,7 +1467,7 @@ int main( int argc, char * argv[] ) {
       cout << "generated "<<filename<<endl;
     }
 
-    if (args.isDefined("csv-stats-cegpra")) {
+    if (args.isUserProvided("csv-stats-cegpra")) {
       // content of a line in the .csv file:
       // <analyzed_property>,<#transitions>,<#states>,<#input_states>,<#output_states>,<#error_states>,
       // <#analyzed_counterexamples>,<analysis_result(y/n/?)>,<#verified_LTL>,<#falsified_LTL>,<#unknown_LTL>
@@ -1479,7 +1479,7 @@ int main( int argc, char * argv[] ) {
 
     {
       Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
-      if (args.isDefined("cfg")) {
+      if (args.isUserProvided("cfg")) {
         string cfgFileName=args.getString("cfg");
         DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
         ddvis.setDotGraphName("CFG");
@@ -1525,7 +1525,7 @@ int main( int argc, char * argv[] ) {
         cout << "generated transitiongraph2.dot."<<endl;
       }
 
-      if (args.isDefined("dot-io-stg")) {
+      if (args.isUserProvided("dot-io-stg")) {
         string filename=args.getString("dot-io-stg");
         cout << "generating dot IO graph file:"<<filename<<endl;
         string dotFile="digraph G {\n";
@@ -1535,7 +1535,7 @@ int main( int argc, char * argv[] ) {
         cout << "=============================================================="<<endl;
       }
 
-      if (args.isDefined("dot-io-stg-forced-top")) {
+      if (args.isUserProvided("dot-io-stg-forced-top")) {
         string filename=args.getString("dot-io-stg-forced-top");
         cout << "generating dot IO graph file for an abstract STG:"<<filename<<endl;
         string dotFile="digraph G {\n";
@@ -1548,9 +1548,9 @@ int main( int argc, char * argv[] ) {
     // InputPathGenerator
 #if 1
     {
-      if(args.isDefined("iseq-file")) {
+      if(args.isUserProvided("iseq-file")) {
         int iseqLen=0;
-        if(args.isDefined("iseq-length")) {
+        if(args.isUserProvided("iseq-length")) {
           iseqLen=args.getInt("iseq-length");
         } else {
           logger[ERROR] <<"input-sequence file specified, but no sequence length."<<endl;
@@ -1559,7 +1559,7 @@ int main( int argc, char * argv[] ) {
         string fileName=args.getString("iseq-file");
         SAWYER_MESG(logger[TRACE]) <<"STATUS: computing input sequences of length "<<iseqLen<<endl;
         IOSequenceGenerator iosgen;
-        if(args.isDefined("iseq-random-num")) {
+        if(args.isUserProvided("iseq-random-num")) {
           int randomNum=args.getInt("iseq-random-num");
           SAWYER_MESG(logger[TRACE]) <<"STATUS: reducing input sequence set to "<<randomNum<<" random elements."<<endl;
           iosgen.computeRandomInputPathSet(iseqLen,*analyzer->getTransitionGraph(),randomNum);
@@ -1569,7 +1569,7 @@ int main( int argc, char * argv[] ) {
         SAWYER_MESG(logger[TRACE]) <<"STATUS: generating input sequence file "<<fileName<<endl;
         iosgen.generateFile(fileName);
       } else {
-        if(args.isDefined("iseq-length")) {
+        if(args.isUserProvided("iseq-length")) {
           logger[ERROR] <<"input sequence length specified without also providing a file name (use option --iseq-file)."<<endl;
           exit(1);
         }

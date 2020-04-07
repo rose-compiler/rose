@@ -45,7 +45,7 @@ void Solver5::run() {
   bool ioReductionActive = false;
   unsigned int ioReductionThreshold = 0;
   unsigned int estatesLastReduction = 0;
-  if(args.isDefined("io-reduction")) {
+  if(args.isUserProvided("io-reduction")) {
     ioReductionActive = true;
     ioReductionThreshold = args.getInt("io-reduction");
   }

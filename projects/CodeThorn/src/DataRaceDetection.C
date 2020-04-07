@@ -39,7 +39,7 @@ void DataRaceDetection::handleCommandLineOptions(Analyzer& analyzer) {
   if(args.getBool("data-race-fail")) {
     args.setOption("data-race",true);
   }
-  if(args.isDefined("data-race-csv")) {
+  if(args.isUserProvided("data-race-csv")) {
     options.dataRaceCsvFileName=args.getString("data-race-csv");
     args.setOption("data-race",true);
   }
@@ -57,7 +57,7 @@ void DataRaceDetection::handleCommandLineOptions(Analyzer& analyzer) {
     options.printUpdateInfos=true;
   }
   options.useConstSubstitutionRule=args.getBool("rule-const-subst");
-  if(args.isDefined("max-extracted-updates")) {
+  if(args.isUserProvided("max-extracted-updates")) {
     options.maxNumberOfExtractedUpdates=args.getInt("max-extracted-updates");
   }
 }
