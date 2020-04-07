@@ -24,8 +24,8 @@ JOVIAL_TESTCODES = \
  1_2_3_program-body_b.jov               \
  1_2_3_program-body_c.jov               \
  2_1_1_7_pointer_type.jov               \
+ 2_1_2_2_structure_spec.jov             \
  2_1_2_3_packing_spec.jov
-
 
 JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \

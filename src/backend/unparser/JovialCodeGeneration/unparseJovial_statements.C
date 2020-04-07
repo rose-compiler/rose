@@ -930,6 +930,13 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
 
      info.set_inVarDecl();
 
+  // Unwrap the base type if there is a modifier for it
+     SgModifierType* modifier_type = isSgModifierType(type);
+     if (modifier_type)
+        {
+           type = modifier_type->get_base_type();
+        }
+
   // pretty printing
      curprint( ws_prefix(info.get_nestingLevel()) );
 
@@ -979,11 +986,6 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
              curprint(" ");
         }
 
-  // OptPackingSpecifier
-     if      (var_decl->get_declarationModifier().get_storageModifier().isPackingNone())  curprint("N ");
-     else if (var_decl->get_declarationModifier().get_storageModifier().isPackingMixed()) curprint("M ");
-     else if (var_decl->get_declarationModifier().get_storageModifier().isPackingDense()) curprint("D ");
-
   // OptAllocationSpecifier
      if (var_decl->get_declarationModifier().isJovialStatic())
         {
@@ -991,6 +993,28 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         }
 
      unparseType(type, info);
+
+  // OptStructureSpecifier
+     if (modifier_type)
+        {
+           SgStructureModifier& struct_modifier = modifier_type->get_typeModifier().get_structureModifier();
+           if (struct_modifier.isParallel()) {
+              curprint("PARALLEL ");
+           }
+           else if (struct_modifier.isTight()) {
+              curprint("T ");
+              if (struct_modifier.get_bits_per_entry() > 0) {
+                 std::string value = Rose::StringUtility::numberToString(struct_modifier.get_bits_per_entry());
+                 curprint(value);
+                 curprint(" ");
+              }
+           }
+        }
+
+  // OptPackingSpecifier
+     if      (var_decl->get_declarationModifier().get_storageModifier().isPackingNone())  curprint("N ");
+     else if (var_decl->get_declarationModifier().get_storageModifier().isPackingMixed()) curprint("M ");
+     else if (var_decl->get_declarationModifier().get_storageModifier().isPackingDense()) curprint("D ");
 
   // Unparse the LocationSpecifier if present
      if (var_decl->get_bitfield() != NULL)

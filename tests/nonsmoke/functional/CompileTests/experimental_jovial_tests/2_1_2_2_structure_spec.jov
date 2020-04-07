@@ -1,0 +1,19 @@
+START
+
+PROGRAM structure'specifier ;
+BEGIN
+
+TABLE table'n PARALLEL ;
+   ITEM xpos U ;
+
+TABLE table'm T ;
+   ITEM ypos U ;
+
+TABLE table'd T 16 ;
+   ITEM zpos U ;
+
+xpos = 13;
+
+END
+
+TERM
