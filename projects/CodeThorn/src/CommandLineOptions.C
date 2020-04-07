@@ -107,7 +107,7 @@ namespace CodeThorn {
     //                                                        .allow_unregistered()
     po::notify(args);
     
-    if (args.isDefined("config")) {
+    if (args.isUserProvided("config")) {
       ifstream configStream(args.getString("config").c_str());
       // passing *this allows access to private data members of inherited class
         po::store(po::parse_config_file(configStream, configFileOptions), *this);
