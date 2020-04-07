@@ -21,7 +21,7 @@ get_rmod_dir(SgFile* sfile)
 void
 generateModFile(SgFile *sfile)
    {
-     ROSE_ASSERT(sfile != NULL);
+     ASSERT_not_null(sfile);
 
   // file name, with full path.
      string  originalModuleFilenameWithPath = sfile->get_file_info()->get_filenameString();
@@ -65,7 +65,7 @@ generateModFile(SgFile *sfile)
        // all the variable definitions and function declarations 
           SgModuleStatement* module_stmt = isSgModuleStatement(*i);
 
-          ROSE_ASSERT(module_stmt != NULL);
+          ASSERT_not_null(module_stmt);
 string outputDir = get_rmod_dir(sfile);
 string outputFilename;
 if (outputDir !="")
