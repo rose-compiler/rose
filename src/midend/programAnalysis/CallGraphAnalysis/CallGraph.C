@@ -738,18 +738,26 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
 
     left = binaryExp->get_lhs_operand();
     right = binaryExp->get_rhs_operand();
+    ROSE_ASSERT(left->get_type());
+    
+    SgType* leftBase = left->get_type()->findBaseType();
 
     // left side of the expression should have class type (but it might have SgTemplateType which we should ignore since that
     // means we're trying to do call graph analysis inside a class template, which doesn't make much sense.)
-    if (isSgTemplateType(left->get_type()->findBaseType()))
-        return functionList; // empty
-    classType = isSgClassType(left->get_type()->findBaseType());
+    if (isSgTemplateType(leftBase) || isSgNonrealType(leftBase))
+    {
+        ROSE_ASSERT(functionList.empty());
+        return functionList;
+    }
+        
+    classType = isSgClassType(leftBase);
     ROSE_ASSERT(classType != NULL);
-
     ROSE_ASSERT(classType->get_declaration() != NULL);
     ROSE_ASSERT(classType->get_declaration()->get_definingDeclaration() != NULL);
+    
     SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classType->get_declaration()->get_definingDeclaration());
     ROSE_ASSERT(definingClassDeclaration != NULL);
+    
     classDefinition = definingClassDeclaration->get_definition();
     ROSE_ASSERT(classDefinition != NULL);
 
@@ -1292,6 +1300,15 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
         case V_SgPntrArrRefExp:
         case V_SgCastExp:
              break; // FIXME ROSE-1487
+             
+        // \todo 
+        // PP (04/06/20) 
+        case V_SgTemplateFunctionRefExp:
+        case V_SgNonrealRefExp:
+        case V_SgTemplateMemberFunctionRefExp:
+        case V_SgConstructorInitializer:
+        case V_SgFunctionCallExp:
+             break;  
 
         default: {
             cout << "Error, unexpected type of functionRefExp: " << functionExp->sage_class_name() << "!!!\n";

@@ -14,9 +14,26 @@ namespace si = SageInterface;
 
 namespace CodeThorn
 {
-
+  // internal use (does not exclude templates)
+  void normalizeCxx(SgNode* root);
+  
 namespace 
 {
+  auto logInfo() -> decltype(Normalization::logger[Sawyer::Message::INFO])
+  {
+    return Normalization::logger[Sawyer::Message::INFO];  
+  }
+  
+  auto logWarn() -> decltype(Normalization::logger[Sawyer::Message::WARN])
+  {
+    return Normalization::logger[Sawyer::Message::WARN];  
+  }
+  
+  auto logTrace() -> decltype(Normalization::logger[Sawyer::Message::TRACE])
+  {
+    return Normalization::logger[Sawyer::Message::TRACE];  
+  }
+  
   // borrowed from XPlacer
   struct BaseTransform
   {
@@ -164,10 +181,17 @@ namespace
     
     bool operator()(SgInitializedName* cand)
     {
-      ROSE_ASSERT(cand);
+      ROSE_ASSERT(cand && cand->get_initializer());
       
-      SgConstructorInitializer&    ini = SG_DEREF( isSgConstructorInitializer(cand->get_initializer()) );
-      SgMemberFunctionDeclaration& mfn = SG_DEREF( ini.get_declaration() );
+      SgConstructorInitializer* ctorini = isSgConstructorInitializer(cand->get_initializer());
+      
+      // if it is not a base class initialization, it must be member variable initialization
+      //   -> ignore
+      // \todo once we see a member variable initialization, the base class was not found, 
+      //       and the iteration can be aborted.
+      if (!ctorini) return false;
+      
+      SgMemberFunctionDeclaration& mfn = SG_DEREF( ctorini->get_declaration() );
       
       return &getClassDef(mfn) == &classdef;
     }
@@ -268,14 +292,6 @@ namespace
     SgExprListExp& args;
   };
 
-  //~ auto& defaultLogger = Normalization::logger[Sawyer::Message::INFO]; 
-  auto& defaultLogger = std::cerr; 
-
-  auto logInfo() -> decltype(defaultLogger)
-  {
-    return defaultLogger;  
-  }
-
   Sg_File_Info* dummyFileInfo()
   {
     return Sg_File_Info::generateDefaultFileInfoForTransformationNode();
@@ -312,10 +328,7 @@ namespace
   SgMemberFunctionDeclaration&
   mkDctorDef(SgClassDefinition& scope, SgMemberFunctionDeclaration& nondef)
   {
-    if (nondef.get_name() == std::string("A"))
-    {
-      std::cerr << "**** " << nondef.get_name() << std::endl;
-    }
+    ROSE_ASSERT(nondef.get_definingDeclaration() == nullptr);
     
     SgName                       nm  = nondef.get_name();
     SgType&                      ty  = SG_DEREF(nondef.get_orig_return_type());
@@ -442,13 +455,22 @@ namespace
       {
         // is it already done?
         if (ctor->get_definingDeclaration()) return;
+
+        // \todo cannot yet handle SgTemplateInstantiationMemberFunctionDecl
+        if (isSgTemplateInstantiationMemberFunctionDecl(ctor))
+        {
+          logWarn() << "Definition for SgTemplateInstantiationMemberFunctionDecl not generated: "
+                    << ctor->get_name()
+                    << std::endl;
+          return;
+        }
         
         SgClassDefinition&           clsdef  = sg::ancestor<SgClassDefinition>(*ctor);
         SgMemberFunctionDeclaration& ctordef = mkDctorDef(clsdef, *ctor);
 
         clsdef.prepend_member(&ctordef);
         
-        // initialize member
+        // initialize members
         normalizeCxx(&ctordef);
       }
     
@@ -483,7 +505,7 @@ namespace
     SgBasicBlock&          blk = getCtorBody(fun);
     SgClassDefinition&     cls = getClassDef(fun);
     SgCtorInitializerList& lst = SG_DEREF( fun.get_CtorInitializerList() );
-    
+
     // explicitly initialize all member variables;
     //   execute the transformations in reverse order
     for (int i = cls.get_members().size(); i > 0; --i)
@@ -555,6 +577,34 @@ namespace
   };
 } // anonymous namespace
 
+  void normalizeCxx(Normalization& norm, SgNode* root)
+  {
+    CxxTransformer::container transformations;
+    size_t                    templateWarning = 0;
+    
+    logInfo() << "Starting C++ normalization." << std::endl;
+    RoseAst ast(root);
+    for (auto i=ast.begin();i!=ast.end();++i)
+    {
+      if (norm.isTemplateNode(*i)) 
+      {
+        i.skipChildrenOnForward();
+        ++templateWarning;
+        continue;
+      }
+      
+      sg::dispatch(CxxTransformer(transformations), *i);
+    }
+    
+    if (templateWarning) logWarn() << "Skipped " << templateWarning << " templates " << std::endl; 
+    logInfo() << "Found " << transformations.size() << " transformations..." << std::endl;
+    
+    for (AnyTransform& tf : transformations) 
+      tf.execute();
+
+    logInfo() << "Finished C++ normalization." << std::endl; 
+  }
+
   void normalizeCxx(SgNode* root)
   {
     CxxTransformer::container transformations;
@@ -563,7 +613,7 @@ namespace
       sg::dispatch(CxxTransformer(transformations), n);
     
     for (AnyTransform& tf : transformations) 
-      tf.execute();
+      tf.execute();      
   }
 
 } // CodeThorn namespace

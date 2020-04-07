@@ -131,7 +131,7 @@ namespace CodeThorn {
 
   void Normalization::normalizeAstPhaseByPhase(SgNode* root) {
     if (options.normalizeCplusplus) {
-      normalizeCxx(root);
+      normalizeCxx(*this, root);
     }
     if(options.normalizeSingleStatements) {
       normalizeSingleStatementsToBlocks(root);
