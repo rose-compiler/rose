@@ -78,222 +78,66 @@ void *$CLASSNAME::operator new ( size_t Size )
      * returning or throwing an exception. */
     ALLOC_MUTEX($CLASSNAME, lock);
 
-
-#if COMPILE_DEBUG_STATEMENTS
-    if (ROSE_DEBUG > 1) {
-        printf("Call $CLASSNAME::operator new!  "
-               "$CLASSNAME_Memory_Block_List.size() = %" PRIuPTR "  Size(%" PRIuPTR ") != sizeof($CLASSNAME)(%" PRIuPTR ")\n",
-               $CLASSNAME_Memory_Block_List.size(), Size, sizeof($CLASSNAME));
-    }
+#if ROSE_ALLOC_TRACE
+    printf("$CLASSNAME::new (IN)\n  current_link = %p\n", $CLASSNAME_Current_Link);
 #endif
 
 #if USE_CPP_NEW_DELETE_OPERATORS
-    {
-#       if COMPILE_DEBUG_STATEMENTS
-        if (ROSE_DEBUG > 1)
-            printf("Calling ROSE_MALLOC(Size = %" PRIuPTR ")\n",Size);
-#       endif
-        void *mem = ROSE_MALLOC(Size);
-        ALLOC_MUTEX($CLASSNAME, unlock);
-        return mem;
-    }
+    void *mem = ROSE_MALLOC(Size);
+    ALLOC_MUTEX($CLASSNAME, unlock);
+    return mem;
 #else /* !USE_CPP_NEW_DELETE_OPERATORS... */
-    {
-        // Because of the way the size of the memory blocks doubles in size
-        // for each proceeding memory block 100 is a good limit for the size of
-        // the memory block list!
-
-        // These were taken out to allow the new operator to be inlined!
-        // const int Max_Number_Of_Memory_Blocks = 1000;
-        // static unsigned char *Memory_Block_List [Max_Number_Of_Memory_Blocks];
-        // static int Memory_Block_Index = 0;
-
-        if (Size != sizeof($CLASSNAME)) {
-            // DQ (9/21/205): comments specific to A++/P++ where I took this code 
-            // (where I had implemented memory pools previously).
-            
-            // Bugfix (5/22/95) this case must be supported and was commented out by mistake
-            // Overture's Grid Function class derives from A++/P++ array objects
-            // and so must be able to return a valid pointer to memory when using 
-            // even the A++ or P++ new operator.
-
-            // If this is an object derived from $CLASSNAME
-            // then we can't do anything with memory pools from here!
-            // It would have to be done within the context of the derived objects
-            // operator new!  So we just return the following!
-
-#           if COMPILE_DEBUG_STATEMENTS
-            if (ROSE_DEBUG > 1) {
-                printf("In $CLASSNAME::operator new: "
-                       "Calling ROSE_MALLOC because Size(%" PRIuPTR ") != sizeof($CLASSNAME)(%" PRIuPTR ")\n",
-                       Size, sizeof($CLASSNAME));
-            }
-            printf("Inside of $CLASSNAME::operator new: sizeof(int)(%" PRIuPTR ")\n", sizeof(int));
-            printf("Inside of $CLASSNAME::operator new: sizeof(bool)(%" PRIuPTR ")\n", sizeof(bool));
-            printf("Inside of $CLASSNAME::operator new: sizeof(SgSharedVector<unsigned char>)(%" PRIuPTR ")\n",
-                   sizeof(SgSharedVector<unsigned char>));
-            printf("Inside of $CLASSNAME::operator new: sizeof(SgFileContentList)(%" PRIuPTR ")\n", sizeof(SgFileContentList));
-            printf("Inside of $CLASSNAME::operator new: sizeof(SgAsmGenericFormat::fileDetails)(%" PRIuPTR ")\n",
-                   sizeof(SgAsmGenericFormat::fileDetails));
-#           endif
-
-            void *mem = ROSE_MALLOC(Size);
-            ALLOC_MUTEX($CLASSNAME, unlock);
-            return mem;
-        } else {
-            if ($CLASSNAME_Current_Link == NULL) {
-                // CLASS_ALLOCATION_POOL_SIZE *= 2;
-#               if COMPILE_DEBUG_STATEMENTS
-                if (ROSE_DEBUG > 1)
-                    printf("Call ROSE_MALLOC for Array $CLASSNAME_Memory_Block_List.size() = %" PRIuPTR "\n",
-                           $CLASSNAME_Memory_Block_List.size());
-#               endif
-
-                // Use new operator instead of ROSE_MALLOC to avoid Purify FMM warning
-                // Current_Link = ($CLASSNAME*) new char [ CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME) ];
-                $CLASSNAME_Current_Link = ($CLASSNAME*) ROSE_MALLOC ( $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME) );
-#               if ROSE_USE_VALGRIND
-                // VALGRIND_FREELIKE_BLOCK(Current_Link, 0); // To trick Valgrind into not having overlapping heap blocks
-                // VALGRIND_MAKE_NOACCESS(Current_Link, CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME));
-#               endif
-
-             // DQ (3/4/2016): Added assertion to avoid passing NULL pointer out of this function (detected by Klocworks static analysis).
-                ROSE_ASSERT($CLASSNAME_Current_Link != NULL);
-
-#               if COMPILE_DEBUG_STATEMENTS
-                if (ROSE_DEBUG > 1) {
-                    printf("Called ROSE_MALLOC for Array $CLASSNAME_Memory_Block_List.size() = %" PRIuPTR "\n",
-                           $CLASSNAME_Memory_Block_List.size());
-                }
-#               endif
-
-#if EXTRA_ERROR_CHECKING
-                if ($CLASSNAME_Current_Link == NULL) { 
-                    printf("ERROR: ROSE_MALLOC == NULL in $CLASSNAME::operator new!\n"); 
-                    ROSE_ASSERT(false);
-                }
-
-                // DQ (12/15/2005): Removed in favor of Jochen's implementation using STL.
-                // Initialize the Memory_Block_List to NULL
-                // This is used to delete the Memory pool blocks to free memory in use
-                // and thus prevent memory-in-use errors from Purify
-                //if (Memory_Block_Index == 0) {
-                //    for (int i=0; i < Max_Number_Of_Memory_Blocks-1; i++)
-                //        Memory_Block_List [i] = NULL;
-                //}
-#endif
-
-                // JH (11/29/2005): Introducing STL vectors to manage the list of pointers to the memory block.
-                // The pointer to a new memory block has just to be pushed on the end of the list of the pointers
-                // to the memory blocks
-                // Memory_Block_List [Memory_Block_Index++] = (unsigned char *) Current_Link;
-                $CLASSNAME_Memory_Block_List.push_back ( (unsigned char *) $CLASSNAME_Current_Link );
-
-                //// JH (30/11/2005): This is not necessary for STL vector based management of the pointers
-                //// to the memory pools. So it can be skipped! 
-                //#if EXTRA_ERROR_CHECKING
-                //// Bounds checking!
-                //if (Memory_Block_Index >= Max_Number_Of_Memory_Blocks) {
-                //    printf("ERROR: Memory_Block_Index (%d) >= Max_Number_Of_Memory_Blocks(%d) \n",
-                //           Memory_Block_Index,Max_Number_Of_Memory_Blocks);
-                //ROSE_ASSERT(false);
-                //}
-                //#endif
-
-                // Initialize the free list of pointers!
-                for (int i=0; i < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE-1; i++) {
-#                   if ROSE_USE_VALGRIND
-                    // VALGRIND_MAKE_WRITABLE(&Current_Link[i].p_freepointer, sizeof(&Current_Link[i].p_freepointer));
-#                   endif
-                    $CLASSNAME_Current_Link[i].p_freepointer = &($CLASSNAME_Current_Link[i+1]);
-
-                 // DQ (3/4/2016): Added assertion to avoid passing NULL pointer out of this function (detected by Klocworks static analysis).
-                    ROSE_ASSERT($CLASSNAME_Current_Link[i].p_freepointer != NULL);
-                }
-
-                // Set the pointer of the last one to NULL!
-#               if ROSE_USE_VALGRIND
-                // VALGRIND_MAKE_WRITABLE(&Current_Link[CLASS_ALLOCATION_POOL_SIZE-1].p_freepointer,
-                //                        sizeof(&Current_Link[CLASS_ALLOCATION_POOL_SIZE-1].p_freepointer));
-#               endif
-                $CLASSNAME_Current_Link[$CLASSNAME_CLASS_ALLOCATION_POOL_SIZE-1].p_freepointer = NULL;
-
-            }
-
-            // DQ (6/24/2006): Added test to make sure that Current_Link is valid
-            ROSE_ASSERT($CLASSNAME_Current_Link != NULL);
-        }
-
-     // DQ (6/24/2006): Added test to make sure that Current_Link is valid
-        ROSE_ASSERT($CLASSNAME_Current_Link != NULL);
-
-     // Save the start of the list and remove the first link and return that first link as the new object!
-        $CLASSNAME* Forward_Link = $CLASSNAME_Current_Link;
-
-     // DQ (12/13/2012): Added assertion.
-        ROSE_ASSERT($CLASSNAME_Current_Link != NULL);
-
-     // DQ (10/21/2005): I would have liked to have used a dynamic_cast<>() here!
-     // Current_Link = dynamic_cast<$CLASSNAME*>(Current_Link->p_freepointer);
-#       if ROSE_USE_VALGRIND
-     // VALGRIND_MALLOCLIKE_BLOCK(Forward_Link, sizeof($CLASSNAME), 0, 0);
-     // VALGRIND_MAKE_WRITABLE(Forward_Link, sizeof($CLASSNAME));
-     // VALGRIND_MAKE_READABLE(&Current_Link->p_freepointer, sizeof(Current_Link->p_freepointer));
-     // VALGRIND_PRINTF_BACKTRACE("Allocating block at %p size %u for $CLASSNAME\n", Forward_Link, sizeof($CLASSNAME));
-#       endif
-        $CLASSNAME_Current_Link = ($CLASSNAME*)($CLASSNAME_Current_Link->p_freepointer);
-
-     // DQ (12/13/2012): Added assertion.
-        ROSE_ASSERT(Forward_Link != NULL);
-
-     // DQ (10/21/2005): It seems that p_freepointer's value serves no purpose once the
-     // Current_Link has been reset. Set the free pointer of the currently allocated 
-     // object to NULL (only significant in delete operator).
-        Forward_Link->p_freepointer = NULL;
-
-#       if COMPILE_DEBUG_STATEMENTS
-        if (ROSE_DEBUG > 0)
-            printf("Returning from $CLASSNAME::operator new! (with address of %p)\n",Forward_Link);
-#       endif
-
-        ALLOC_MUTEX($CLASSNAME, unlock);
-
-#if 0
-  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
-     printf ("In $CLASSNAME::new(): this = %p \n",Forward_Link);
-
-  // DQ (11/1/2016): Since we have not called the constructor yet, this cast and calling of member functions is not possible.
-  // printf ("   --- Forward_Link->class_name() = %s \n",(($CLASSNAME*)Forward_Link)->class_name().c_str());
-#endif
-
-#if 0
-  // DQ (11/1/2016): Adding testing of the memory pool after allocation of IR node (this is expensive).
-     if ($CLASSNAME_Memory_Block_List.empty() == false)
-        {
-       // Generate an array of memory pools
-          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME_Memory_Block_List[0]);
-
-       // Build a local variable for better performance
-          const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
-
-       // Iterate over the memory pools
-          for (unsigned int i=0; i < $CLASSNAME_Memory_Block_List.size(); i++)
-             {
-            // objectArray[i] is a single memory pool
-               for (int j=0; j < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; j++)
-                  {
-                    if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
-                       {
-                      // traversal.visit(&(objectArray[i][j]));
-                         objectArray[i][j].variantT();
-                       }
-                  }
-             }
-        }
-#endif
-
-        return Forward_Link;
+#if ROSE_ALLOC_AUTH_ALT_SIZE
+    if (Size != sizeof($CLASSNAME)) {
+      void * object = ROSE_MALLOC(Size);
+      ALLOC_MUTEX($CLASSNAME, unlock);
+      return object;
     }
+#else
+    ROSE_ASSERT(Size == sizeof($CLASSNAME));
+#endif
+
+    if ($CLASSNAME_Current_Link == NULL) {
+        $CLASSNAME * alloc = ($CLASSNAME*) ROSE_MALLOC ( $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME) );
+        ROSE_ASSERT(alloc != NULL);
+
+#if ROSE_ALLOC_TRACE
+        printf("$CLASSNAME::alloc\n  block[%zi] = [ %p , %p [\n", $CLASSNAME_Memory_Block_List.size(), alloc, alloc + $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE);
+#endif
+
+#if ROSE_ALLOC_MEMSET == 1
+        memset(alloc, 0x00, $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME));
+#elif ROSE_ALLOC_MEMSET == 2
+        memset(alloc, 0xAA, $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME));
+#endif
+        for (int i=0; i < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE-1; i++) {
+          alloc[i].p_freepointer = &(alloc[i+1]);
+        }
+        alloc[$CLASSNAME_CLASS_ALLOCATION_POOL_SIZE-1].p_freepointer = NULL;
+
+        $CLASSNAME_Memory_Block_List.push_back ( (unsigned char *) alloc );
+        $CLASSNAME_Current_Link = alloc;
+    }
+    ROSE_ASSERT($CLASSNAME_Current_Link != NULL);
+
+    $CLASSNAME * object = $CLASSNAME_Current_Link;
+    $CLASSNAME_Current_Link = ($CLASSNAME*)(object->p_freepointer);
+
+#if ROSE_ALLOC_MEMSET == 1
+    memset(object, 0x00, sizeof($CLASSNAME));
+#elif ROSE_ALLOC_MEMSET == 2
+    memset(object, 0xBB, sizeof($CLASSNAME));
+#endif
+
+    object->p_freepointer = AST_FileIO::IS_VALID_POINTER();
+
+#if ROSE_ALLOC_TRACE
+    printf("$CLASSNAME::new (OUT)\n  object = %p\n    ->freepointer = %p\n    ->parent = %p\n  current_link = %p\n", object, object->p_freepointer, object->p_parent, $CLASSNAME_Current_Link);
+#endif
+
+    ALLOC_MUTEX($CLASSNAME, unlock);
+
+    return object;
 #endif /* USE_CPP_NEW_DELETE_OPERATORS */
 }
 
@@ -311,115 +155,55 @@ void *$CLASSNAME::operator new ( size_t Size )
    be alligned on page boundaries.  ROSE_FREE is whatever it takes to 
    deallocate memory allocated using ROSE_MALLOC.
 */
-void $CLASSNAME::operator delete(void *Pointer, size_t sizeOfObject)
+void $CLASSNAME::operator delete(void *Pointer, size_t Size)
 {
     /* Entire function is protected by a mutex. To prevent deadlock, be sure to unlock this mutex before returning
      * or throwing an exception. */
     ALLOC_MUTEX($CLASSNAME, lock);
 
-#if 0
-  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
-     printf ("In $CLASSNAME::delete(): Pointer = %p \n",Pointer);
-     printf ("   --- Pointer->class_name() = %s \n",(($CLASSNAME*)Pointer)->class_name().c_str());
-#endif
-
-#   if COMPILE_DEBUG_STATEMENTS
-    if (ROSE_DEBUG > 1)
-        printf("In $CLASSNAME::operator delete: Size(%d)  sizeof($CLASSNAME)(%d)\n",sizeOfObject,sizeof($CLASSNAME));
-#   endif
-
 #if USE_CPP_NEW_DELETE_OPERATORS
     ROSE_FREE(Pointer);
 #else
-    if (sizeOfObject != sizeof($CLASSNAME)) {
-        // Overture's Grid Function class derives from A++/P++ array objects
-        // and so must be able to return a valid pointer to memory when using 
-        // even the A++ or P++ new operator.
+#if ROSE_ALLOC_AUTH_ALT_SIZE
+    if (Size != sizeof($CLASSNAME)) {
+      ROSE_FREE(Pointer);
+      ALLOC_MUTEX($CLASSNAME, unlock);
+      return;
+    }
+#else
+    ROSE_ASSERT(Size == sizeof($CLASSNAME));
+#endif
 
-        // If this is an object derived from $CLASSNAME
-        // then we can't do anything with memory pools from here!
-        // It would have to be done within the context of the derived objects
-        // operator new!  So we just return the following!
+    $CLASSNAME * object = ($CLASSNAME*) Pointer;
+    ROSE_ASSERT(object != NULL);
 
-#       if COMPILE_DEBUG_STATEMENTS
-        if (ROSE_DEBUG > 1) {
-            printf("In $CLASSNAME::operator delete: "
-                   "Calling global delete (ROSE_FREE) because Size(%d) != sizeof($CLASSNAME)(%d)\n",
-                   sizeOfObject, sizeof($CLASSNAME));
-        }
-#       endif
+#if ROSE_ALLOC_TRACE
+    printf("$CLASSNAME::delete (IN)\n  object = %p\n    ->freepointer = %p\n    ->parent = %p\n  current_link = %p\n", object, object->p_freepointer, object->p_parent, $CLASSNAME_Current_Link);
+#endif
 
-        ROSE_FREE(Pointer);
-    } else {
-        $CLASSNAME *New_Link = ($CLASSNAME*) Pointer;
+#if ROSE_DEALLOC_ASSERT == 1
+    ROSE_ASSERT(object->p_freepointer == AST_FileIO::IS_VALID_POINTER());
+#endif
 
-#       if COMPILE_DEBUG_STATEMENTS
-        if (ROSE_DEBUG > 1) {
-            printf("In $CLASSNAME::operator delete (%p): "
-                   "Using the pool mechanism Size(%d) == sizeof($CLASSNAME)(%d)\n",
-                   Pointer, sizeOfObject, sizeof($CLASSNAME));
-        }
-#       endif
+#if ROSE_ALLOC_MEMSET == 1
+    memset(object, 0x00, sizeof($CLASSNAME));
+#elif ROSE_ALLOC_MEMSET == 2
+    memset(object, 0xDD, sizeof($CLASSNAME));
+#endif
 
-        if (New_Link != NULL) {
-            // purify error checking
-            ROSE_ASSERT((New_Link->p_freepointer != NULL) || (New_Link->p_freepointer == NULL));
-            ROSE_ASSERT(($CLASSNAME_Current_Link != NULL) || ($CLASSNAME_Current_Link == NULL));
-            ROSE_ASSERT((New_Link != NULL) || (New_Link == NULL));
 // Liao, 8/11/2014, to support IR mapping, we need unique IDs for AST nodes.
 // We provide a mode in which memory space will not be reused later so we can easily generate unique IDs based on memory addresses.
 #ifdef ROSE_USE_MEMORY_POOL_NO_REUSE
-            New_Link->p_freepointer = NULL;   // clear IS_VALID_POINTER flag, but not putting it back to the memory pool.
+    object->p_freepointer = NULL;   // clear IS_VALID_POINTER flag, but not putting it back to the memory pool.
 #else
-            // Put deleted object (New_Link) at front of linked list (Current_Link)!
-            New_Link->p_freepointer = $CLASSNAME_Current_Link;
-            $CLASSNAME_Current_Link = New_Link;
-#endif            
-#           if ROSE_USE_VALGRIND
-            // VALGRIND_PRINTF_BACKTRACE("Deallocating block at %p size %u (for $CLASSNAME)\n", Current_Link, sizeof($CLASSNAME));
-            // VALGRIND_FREELIKE_BLOCK(Current_Link, 0);
-            // VALGRIND_MAKE_NOACCESS(Current_Link, sizeof(*Current_Link));
-            // VALGRIND_MAKE_READABLE(&Current_Link->p_freepointer, sizeof(Current_Link->p_freepointer));
-#           endif
-        } else {
-#           if EXTRA_ERROR_CHECKING
-            printf("ERROR: In $CLASSNAME::operator delete - attempt made to delete a NULL pointer!\n");
-            ROSE_ABORT();
-#           endif
-        }
-    }
-
-
-#if 0
-  // DQ (11/1/2016): Adding testing of the memory pool after deletion of IR node (this is expensive).
-     if ($CLASSNAME_Memory_Block_List.empty() == false)
-        {
-       // Generate an array of memory pools
-          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME_Memory_Block_List[0]);
-
-       // Build a local variable for better performance
-          const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
-
-       // Iterate over the memory pools
-          for (unsigned int i=0; i < $CLASSNAME_Memory_Block_List.size(); i++)
-             {
-            // objectArray[i] is a single memory pool
-               for (int j=0; j < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; j++)
-                  {
-                    if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
-                       {
-                      // traversal.visit(&(objectArray[i][j]));
-                         objectArray[i][j].variantT();
-                       }
-                  }
-             }
-        }
+    object->p_freepointer = $CLASSNAME_Current_Link;
+    $CLASSNAME_Current_Link = object;
 #endif
 
-#   if COMPILE_DEBUG_STATEMENTS
-    if (ROSE_DEBUG > 1)
-        printf("Leaving $CLASSNAME::operator delete!\n");
-#   endif
+#if ROSE_ALLOC_TRACE
+    printf("$CLASSNAME::delete (OUT)\n  object = %p\n    ->freepointer = %p\n    ->parent = %p\n  current_link = %p\n", object, object->p_freepointer, object->p_parent, $CLASSNAME_Current_Link);
+#endif
+
 #endif /* USE_CPP_NEW_DELETE_OPERATORS */
 
     ALLOC_MUTEX($CLASSNAME, unlock);

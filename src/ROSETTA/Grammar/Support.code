@@ -5898,10 +5898,6 @@ public:
                e_f18_standard
              };
 
-protected:
-          enum standard_enum p_standard;
-          bool p_is_gnu_standard;
-
 public:
           enum standard_enum get_standard(void) const;
           void set_standard(enum standard_enum e_std);
@@ -12030,45 +12026,53 @@ SgInitializedName::search_for_symbol_from_symbol_table() const
    }
 
 // DQ (10/13/2014): Adding a default constructor for compatability with what was previously the API before the newer aterm support.
-SgInitializedName::SgInitializedName()
-   : p_name(""), p_typeptr(NULL), p_initptr(NULL), p_prev_decl_item(NULL), p_is_initializer(false), p_declptr(NULL), p_scope(NULL)
+SgInitializedName::SgInitializedName() ROSE_DEPRECATED_FUNCTION
+   : p_name(""),
+     p_microsoft_uuid_string(""),
+     p_typeptr(NULL),
+     p_initptr(NULL),
+     p_prev_decl_item(NULL),
+     p_is_initializer(true),
+     p_declptr(NULL),
+     p_storageModifier(NULL),
+     p_scope(NULL),
+     p_preinitialization(e_unknown_preinitialization),
+     p_isCoArray(false),
+     p_register_name_code(SgInitializedName::e_invalid_register),
+     p_excess_specifier(SgInitializedName::e_excess_specifier_none),
+     p_register_name_string(""),
+     p_requiresGlobalNameQualificationOnType(false),
+     p_shapeDeferred(false),
+     p_initializationDeferred(false),
+     p_gnu_attribute_modifierVector(e_last_gnu_variable_attribute,false),
+     p_gnu_attribute_initialization_priority(0),
+     p_gnu_attribute_named_weak_reference(""),
+     p_gnu_attribute_named_alias(""),
+     p_gnu_attribute_cleanup_function(""),
+     p_gnu_attribute_section_name(""),
+     p_gnu_attribute_alignment(-1),
+     p_gnu_attribute_visability(SgDeclarationModifier::e_unknown_visibility),
+     p_protected_declaration(false),
+     p_name_qualification_length(0),
+     p_type_elaboration_required(false),
+     p_global_qualification_required(false),
+     p_name_qualification_length_for_type(false),
+     p_type_elaboration_required_for_type(0),
+     p_global_qualification_required_for_type(false),
+     p_hasArrayTypeWithEmptyBracketSyntax(false),
+     p_using_C11_Alignas_keyword(false),
+     p_constant_or_type_argument_for_Alignas_keyword(NULL),
+     p_using_auto_keyword(false),
+     p_auto_decltype(NULL),
+     p_using_device_keyword(false),
+     p_is_braced_initialized(false),
+     p_using_assignment_copy_constructor_syntax(false),
+     p_needs_definitions(false),
+     p_is_parameter_pack(false),
+     p_is_pack_element(false)
    {
   // This constructor has been added to support the previous API, I would like to depricate it.
    }
-
-#if 0
-SgInitializedName::~SgInitializedName() 
-   {
-   /*delete p_ptr;*/
-   }
-
-SgInitializedName::SgInitializedName()
-   : p_typeptr(0), p_initptr(0), p_declptr(0),
-    // p_itemptr(0), p_prev_itemptr(0), 
-     p_is_initializer(1)
-   {
-   }
-
-
-Sg_File_Info*
-SgInitializedName::get_file_info() const
-   {
-  // This redefines get_file_info() as it is implemented for a SgLocatedNode 
-  // to use the "get_startOfConstruct()" for consistancy with SgLocatedNode IR nodes.
-     return get_startOfConstruct();
-   }
-
-void
-SgInitializedName::set_file_info(Sg_File_Info* X)
-   {
-  // DQ (4/14/2015): Added call to set_isModified() function to record change to this IR node.
-     set_isModified(true);
-
-  // This redefines set_file_info() as it is implemented for a SgLocatedNode 
-  // to use the "set_startOfConstruct()" for consistancy with SgLocatedNode IR nodes.
-     return set_startOfConstruct(X);
-   }
-#endif
 
 SgStorageModifier &
 SgInitializedName::get_storageModifier()
@@ -12237,67 +12241,105 @@ SgInitializedName::post_construction_initialization()
    }
 
 // This constructor is specific to the creation of SgInitializedName objects used as initializers
-SgInitializedName::SgInitializedName
-   ( const SgName& name, SgType *typeptr, SgInitializer* iptr,
-     SgDeclarationStatement *declptr, 
-    // QY:11/2/04 remove itemptr 
-    // SgInitializedName *itemptr,
-     SgInitializedName *prev_itemptr ) ROSE_DEPRECATED_FUNCTION
-  // DQ (1/18/2006): name change to make consistant with virtual SgNode::get_file_info() 
-  // DQ (11/20/2004): Reodered elements of pre-initialization list to avoid compiler warnings
-  // : p_file_info(NULL), // Note that file_info is a new data member and is set explicitly after construction
-   : // p_startOfConstruct(NULL), // Note that file_info is a new data member and is set explicitly after construction
-     p_name(name), 
+SgInitializedName::SgInitializedName (
+  const SgName& name, SgType *typeptr, SgInitializer* iptr,
+  SgDeclarationStatement *declptr, 
+  SgInitializedName *prev_itemptr
+) ROSE_DEPRECATED_FUNCTION :
+     p_name(name),
+     p_microsoft_uuid_string(""),
      p_typeptr(typeptr),
-  // p_itemptr(itemptr), Removed constructor parameter list
      p_initptr(iptr),
      p_prev_decl_item(prev_itemptr),
      p_is_initializer(true),
-  // DQ (6/18/2006): declptr was not being used to set the internal p_declptr data member.
-  // p_declptr(NULL),
      p_declptr(declptr),
-  // DQ (11/20/2004): Added additional initialization of remaining data members
      p_storageModifier(NULL),
      p_scope(NULL),
-  // DQ (3/1/2005): Added to avoid valgrind warning about uninitialized use
      p_preinitialization(e_unknown_preinitialization),
-  // DQ (4/10/2006): Removed in favor of implementation at SgNode using
-  // a pointer and the interface represented directly at the SgNode
-  // DQ (1/17/2006): Moved attribute mechanism to specific IR nodes (Added initialization to prevent valgrind warning)
-    // p_attributeMechanism(NULL),
-  // DQ (7/31/2006): Added support for asm declarations on variables (using GNU register codes)
+     p_isCoArray(false),
      p_register_name_code(SgInitializedName::e_invalid_register),
-  // DQ (8/9/2006): Added support for asm declarations on variables (using strings)
+     p_excess_specifier(SgInitializedName::e_excess_specifier_none),
      p_register_name_string(""),
-  // DQ (10/10/2007): Added support for initialization of this data member (reported as uninitialized by valgrind).
      p_requiresGlobalNameQualificationOnType(false),
-     p_auto_decltype(NULL)
+     p_shapeDeferred(false),
+     p_initializationDeferred(false),
+     p_gnu_attribute_modifierVector(e_last_gnu_variable_attribute,false),
+     p_gnu_attribute_initialization_priority(0),
+     p_gnu_attribute_named_weak_reference(""),
+     p_gnu_attribute_named_alias(""),
+     p_gnu_attribute_cleanup_function(""),
+     p_gnu_attribute_section_name(""),
+     p_gnu_attribute_alignment(-1),
+     p_gnu_attribute_visability(SgDeclarationModifier::e_unknown_visibility),
+     p_protected_declaration(false),
+     p_name_qualification_length(0),
+     p_type_elaboration_required(false),
+     p_global_qualification_required(false),
+     p_name_qualification_length_for_type(false),
+     p_type_elaboration_required_for_type(0),
+     p_global_qualification_required_for_type(false),
+     p_hasArrayTypeWithEmptyBracketSyntax(false),
+     p_using_C11_Alignas_keyword(false),
+     p_constant_or_type_argument_for_Alignas_keyword(NULL),
+     p_using_auto_keyword(false),
+     p_auto_decltype(NULL),
+     p_using_device_keyword(false),
+     p_is_braced_initialized(false),
+     p_using_assignment_copy_constructor_syntax(false),
+     p_needs_definitions(false),
+     p_is_parameter_pack(false),
+     p_is_pack_element(false)
    {
      post_construction_initialization();
    }
 
-// DQ (8/4/2006): This constructor adds the newer fileInfo data member to the constructor parameter list.
-// We might soon depricate the older constructor.
-SgInitializedName::SgInitializedName
-   ( Sg_File_Info* fileInfo, const SgName& name, SgType *typeptr, SgInitializer* iptr, 
-     SgDeclarationStatement *declptr, SgScopeStatement* scope, SgInitializedName *prev_itemptr )
-   // : p_file_info(fileInfo), // Note that file_info is a new data member and is set explicitly after construction
-   :// p_startOfConstruct(fileInfo), // Note that file_info is a new data member and is set explicitly after construction
-     p_name(name), 
+SgInitializedName::SgInitializedName(
+  Sg_File_Info* fileInfo, const SgName& name, SgType *typeptr, SgInitializer* iptr, 
+     SgDeclarationStatement *declptr, SgScopeStatement* scope, SgInitializedName *prev_itemptr
+) :
+     p_name(name),
+     p_microsoft_uuid_string(""),
      p_typeptr(typeptr),
      p_initptr(iptr),
      p_prev_decl_item(prev_itemptr),
      p_is_initializer(true),
      p_declptr(declptr),
      p_storageModifier(NULL),
-     p_scope(NULL),
+     p_scope(scope),
      p_preinitialization(e_unknown_preinitialization),
-     //p_attributeMechanism(NULL),
+     p_isCoArray(false),
      p_register_name_code(SgInitializedName::e_invalid_register),
+     p_excess_specifier(SgInitializedName::e_excess_specifier_none),
      p_register_name_string(""),
-  // DQ (10/10/2007): Added support for initialization of this data member (reported as uninitialized by valgrind).
      p_requiresGlobalNameQualificationOnType(false),
-     p_auto_decltype(NULL)
+     p_shapeDeferred(false),
+     p_initializationDeferred(false),
+     p_gnu_attribute_modifierVector(e_last_gnu_variable_attribute,false),
+     p_gnu_attribute_initialization_priority(0),
+     p_gnu_attribute_named_weak_reference(""),
+     p_gnu_attribute_named_alias(""),
+     p_gnu_attribute_cleanup_function(""),
+     p_gnu_attribute_section_name(""),
+     p_gnu_attribute_alignment(-1),
+     p_gnu_attribute_visability(SgDeclarationModifier::e_unknown_visibility),
+     p_protected_declaration(false),
+     p_name_qualification_length(0),
+     p_type_elaboration_required(false),
+     p_global_qualification_required(false),
+     p_name_qualification_length_for_type(false),
+     p_type_elaboration_required_for_type(0),
+     p_global_qualification_required_for_type(false),
+     p_hasArrayTypeWithEmptyBracketSyntax(false),
+     p_using_C11_Alignas_keyword(false),
+     p_constant_or_type_argument_for_Alignas_keyword(NULL),
+     p_using_auto_keyword(false),
+     p_auto_decltype(NULL),
+     p_using_device_keyword(false),
+     p_is_braced_initialized(false),
+     p_using_assignment_copy_constructor_syntax(false),
+     p_needs_definitions(false),
+     p_is_parameter_pack(false),
+     p_is_pack_element(false)
    {
      p_startOfConstruct = fileInfo; 
      post_construction_initialization();
@@ -13953,82 +13995,36 @@ Sg_File_Info::display_static_data( const std::string label )
 // Sg_File_Info::Sg_File_Info() {}
 
 Sg_File_Info::Sg_File_Info()
+   : p_file_id(COPY_FILE_ID), p_line(0), p_col(0),
+     p_classificationBitField(0),
+     p_physical_file_id(NULL_FILE_ID),
+     p_physical_line(0),
+     p_source_sequence_number(0),
+     p_fileIDsToUnparse(),
+     p_fileLineNumbersToUnparse()
    {
-  // DQ (3/19/2016): Note that this asserion does not generate an issue in Klocworks since there is no pre-initialization list.
-     assert(this != NULL);
-
-#if 0
-     mprintf ("In Sg_File_Info::Sg_File_Info() this = %p \n",this);
-#endif
-
-  // Default constructor used for making copies of subtrees
-     p_line                   = 0;
-     p_col                    = 0;
-     p_classificationBitField = 0;
-
-  // MK (7/22/05) : Initialize p_file_id to inidicate a copy
-     p_file_id = COPY_FILE_ID;
-
-  // DQ (12/18/2012): Added support for physical source position (existing file_id and line data represents logical position data).
-     p_physical_file_id = NULL_FILE_ID;
-     p_physical_line    = 0;
-
-  // DQ (1/23/2013): Added source sequence information.
-     p_source_sequence_number = 0;
-
-#if 0
-     mprintf ("Sg_File_Info default constructor = %p \n",this);
-  // display("In constructor");
-#endif
-
-  // Provide a common function called for initialization support.
+     ROSE_ASSERT(this != NULL);
      post_construction_initialization();
    }
 
 // DQ (4/19/2006): Added constructor to take std::string as part of move
 // away from C style strings to C++ style strings.
 Sg_File_Info::Sg_File_Info ( const std::string & filename, int line, int col )
-   : p_line(line), p_col(col),
+   : p_file_id(NULL_FILE_ID), p_line(line), p_col(col),
      p_classificationBitField(0),
      p_physical_file_id(NULL_FILE_ID),
      p_physical_line(0),
-     p_source_sequence_number(0)
+     p_source_sequence_number(0),
+     p_fileIDsToUnparse(),
+     p_fileLineNumbersToUnparse()
    {
-  // DQ (3/19/2016): Klocworks reports "Suspicious dereference of pointer 'this' before NULL check at line ####"
-  // The reasoning is that the "this" pointer has already been assumed to be non-null in the preinitializaion list.
-  // I will accept this, at least for now and comment out this assert for the constructor.  It seems reasonable
-  // that this assertion is too late to be effective, and I wish to keep the preinitialization list use in ROSE.
-  // assert(this != NULL);
-
-#if 0
-     mprintf ("In Sg_File_Info::Sg_File_Info(filename = %s, line = %d, col = %d) \n",filename.c_str(),line,col);
-#endif
-
-  // ROSE-1499: Set p_file_id to NULL_FILE_ID before calling set_filenameString (if needed)
-     p_file_id = NULL_FILE_ID;
      if (filename != "NULL_FILE")
         {
           set_filenameString(filename);
         }
 
-     p_classificationBitField = 0;
-
-  // DQ (12/20/2012): Initialize the physical file/line information to be that of the input file/line information.
-  // p_physical_file_id = p_file_id,
-  // p_physical_line    = p_line;
-
-     assert (p_col >= 0);
-
-  // DQ (12/18/2012): When the source position is set explicitly with a filename then initialize 
-  // the physical position to be the saem (it might be changed after construction).
      set_physical_source_position_to_match_logical_source_position();
 
-#if 0
-     mprintf ("Sg_File_Info constructor(const std::string,int,int) = %p \n",this);
-  // display("In constructor");
-#endif
-
-  // Provide a common function called for initialization support.
      post_construction_initialization();
    }
 
@@ -14037,8 +14033,6 @@ Sg_File_Info::Sg_File_Info(const Sg_File_Info & X)
    : p_file_id(X.p_file_id),
      p_line(X.p_line),
      p_col(X.p_col),
-  // DQ (7/29/2005): Preserve IR node classification within copy constructor
-  // p_classificationBitField(0)
      p_classificationBitField(X.p_classificationBitField),
      p_physical_file_id(X.p_physical_file_id),
      p_physical_line(X.p_physical_line),
@@ -14046,52 +14040,8 @@ Sg_File_Info::Sg_File_Info(const Sg_File_Info & X)
      p_fileIDsToUnparse(X.p_fileIDsToUnparse),
      p_fileLineNumbersToUnparse(X.p_fileLineNumbersToUnparse)
    {
-  // DQ (3/19/2016): Klocworks reports "Suspicious dereference of pointer 'this' before NULL check at line ####"
-  // The reasoning is that the "this" pointer has already been assumed to be non-null in the preinitializaion list.
-  // I will accept this, at least for now and comment out this assert for the constructor.  It seems reasonable
-  // that this assertion is too late to be effective, and I wish to keep the preinitialization list use in ROSE.
-  // assert(this != NULL);
-
-     assert (p_col >= 0);
-
-#if 0
-     mprintf ("Sg_File_Info copy constructor(const Sg_File_Info = %p) = %p \n",&X,this);
-  // display("In copy constructor");
-#endif
-
-  // Provide a common function called for initialization support.
      post_construction_initialization();
    }
-
-#if 0
-// This is at least older than 12/18/2012: so remove at some point later.
-// This is now removed but saved becuase it might be that it should be depricated for a while
-Sg_File_Info::Sg_File_Info ( const char* filename, int line, int col )
-   : p_line(line), p_col(col) // , p_isPartOfTransformation(false)
-   {
-     assert(this != NULL);
-
-     if (!filename) {
-          p_file_id = NULL_FILE_ID;
-        }
-       else 
-        {
-       // DQ (7/25/2005): Refactored to use set_filename()
-          set_filename(filename);
-        }
-
-     p_classificationBitField = 0;
-
-     if (p_col < 0)
-        {
-          mprintf ("Error p_col = %d \n",p_col);
-        }
-     assert (p_col >= 0);
-
-  // Provide a common function called for initialization support.
-     post_construction_initialization();
-   }
-#endif
 
 // DQ (11/6/2008): added constructor to support building objects from Dwarf 
 // information (which uses a pre-resolved integer file_id instead of a string)
@@ -14102,28 +14052,17 @@ Sg_File_Info::Sg_File_Info( int file_id, int line, int column )
      p_classificationBitField(0),
      p_physical_file_id(NULL_FILE_ID),
      p_physical_line(0),
-     p_source_sequence_number(0)
+     p_source_sequence_number(0),
+     p_fileIDsToUnparse(),
+     p_fileLineNumbersToUnparse()
    {
-  // DQ (3/19/2016): Klocworks reports "Suspicious dereference of pointer 'this' before NULL check at line ####"
-  // The reasoning is that the "this" pointer has already been assumed to be non-null in the preinitializaion list.
-  // I will accept this, at least for now and comment out this assert for the constructor.  It seems reasonable
-  // that this assertion is too late to be effective, and I wish to keep the preinitialization list use in ROSE.
-  // assert(this != NULL);
-
-#if 0
-     mprintf ("In Sg_File_Info::Sg_File_Info(file_id = %d, line = %d, column = %d) this = %p \n",file_id,line,column,this);
-#endif
-
-     assert (p_col >= 0);
-
-  // Provide a common function called for initialization support.
      post_construction_initialization();
    }
 
 void
 Sg_File_Info::post_construction_initialization()
    {
-     assert (this != NULL);
+     ROSE_ASSERT(this != NULL);
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
@@ -15833,81 +15772,6 @@ SgFile::initialization()
    {
      assert(this != NULL);
 
-  // This should use a Sg_File_Info with the correct name (maybe this 
-  // should be initialized by "callFrontEnd()")
-  // Sg_File_Info* fileInfo = new Sg_File_Info("SgFile file unknown",0,0);
-
-  // DQ (1/17/2006): Initialize the local file info pointer (this was not previously set!)
-  // the name will be reset to the file name later in the construction of the SgFile.
-  // set_file_info(new Sg_File_Info (*fileInfo));
-
-  // DQ (12/23/3006): Let the fileInfo be initialized with line 1, column 1 (instead of 
-  // line 0, column 0). This avoids it failing the test for a valid Sg_File_Info object 
-  // later (e.g. in fixupSourcePositionInformation.C).
-  // DQ (8/31/2006): Generate a NULL_FILE (instead of SgFile::SgFile) so that we can 
-  // enforce that the filename is always an absolute path (starting with "/").
-  // Sg_File_Info* fileInfo = new Sg_File_Info("SgFile::SgFile",0,0);
-  // Sg_File_Info* fileInfo = new Sg_File_Info("",0,0);
-
-#if 0
-  // DQ (12/23/2008): Build this later when we have a valid filename.
-     Sg_File_Info* fileInfo = new Sg_File_Info("",1,1);
-     assert(fileInfo != NULL);
-
-  // set_file_info(fileInfo);
-     set_startOfConstruct(fileInfo);
-     fileInfo->set_parent(this);
-     assert(get_startOfConstruct() != NULL);
-     assert(get_file_info() != NULL);
-#endif
-
-  // DQ (9/4/2008): This is now part of the SgSourceFile
-  // assert (p_root == NULL);
-
-
-#if 0
-  // DQ (12/23/2008): Build this later when we have a valid filename.
-
-  // DQ (9/5/2008): This part needs to be rewritten, this is temporary code!
-     SgSourceFile* sourceFile = const_cast<SgSourceFile*>(isSgSourceFile(this));
-     if (sourceFile != NULL)
-        {
-       // DQ (8/31/2006): Generate a NULL_FILE (instead of SgFile::SgFile) so that we can 
-       // enforce that the filename is always an absolute path (starting with "/").
-       // Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("SgGlobal::SgGlobal",0,0);
-          Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("",0,0);
-          assert (globalScopeFileInfo != NULL);
-
-          mprintf ("@@@@@@@@ In SgFile::initialization(): Building SgGlobal (with empty filename) @@@@@@@@@ \n");
-
-          sourceFile->set_globalScope( new SgGlobal( globalScopeFileInfo ) );
-          assert (sourceFile->get_globalScope() != NULL);
-
-       // DQ (2/15/2006): Set the parent of the SgGlobal IR node
-          sourceFile->get_globalScope()->set_parent(this);
-
-       // DQ (8/21/2008): Set the end of the global scope (even if it is updated later)
-       // mprintf ("In SgFile::initialization(): p_root->get_endOfConstruct() = %p \n",p_root->get_endOfConstruct());
-          assert(sourceFile->get_globalScope()->get_endOfConstruct() == NULL);
-          sourceFile->get_globalScope()->set_endOfConstruct(new Sg_File_Info("",0,0));
-          assert(sourceFile->get_globalScope()->get_endOfConstruct() != NULL);
-        }
-#endif
-
-  // DQ (10/16/2005): Removed as part of cleanup to SgFile
-  // DQ (12/6/2003): initialize these here.
-  // p_defaultNumberOfCommandLineArguments = 0;
-  // p_defaultCommandLineArgumentList      = NULL;
-
-  // DQ (7/13/2004): Not previously initialized (except through constructor preinitialization list)
-  // I have removed them from the constructor preinitialization list so that ALL local member data
-  // could be set in this inialization function!
-  // p_numberOfCommandLineArguments = 0;
-  // p_commandLineArgumentList      = NULL;
-
-  // DQ (10/15/2005): Don't have a default for this (use an empty string)!
-  // p_unparse_output_filename = "rose_unparse.C";
-
      p_verbose                 = 0;
   // version                   = false;
   // help                      = false;
@@ -16006,87 +15870,7 @@ SgFile::initialization()
      p_outputLanguage          = SgFile::e_default_language;
 
      p_standard = e_default_standard;
-     p_is_gnu_standard = false;
-
-#if 0
-// Order of data member entries in support.C, matched against the 
-// initialization to make sure that all data members are initialized.
-X startOfConstruct
-X root
-X verbose
-X output_warnings
-X C_only
-X UPC_only
-X upc_threads
-X C99_only
-X Cxx_only
-X Fortran_only
-X F77_only
-X F90_only
-X F95_only
-X F2003_only
-X PHP_only
-X Python_only
-X requires_C_preprocessor
-X binary_only
-X inputFormat
-X outputFormat
-X backendCompileFormat
-X fortran_implicit_none
-X fortran_openmp
-X cray_pointer_support
-X output_parser_actions
-X exit_after_parser
-X skip_syntax_check
-X skip_transformation
-X skip_unparse
-X skipfinalCompileStep
-X unparse_includes
-X unparse_line_directives
-X unparse_instruction_addresses
-X unparse_raw_memory_contents
-X unparse_binary_file_format
-X outputLanguage
-STRING  sourceFileNameWithPath
-STRING  sourceFileNameWithoutPath
-STRING  unparse_output_filename
-X useBackendOnly
-X compileOnly
-STRING  savedFrontendCommandLine
-X no_implicit_templates
-X no_implicit_inline_templates
-X skip_commentsAndDirectives
-X collectAllCommentsAndDirectives
-X unparseHeaderFiles
-X preprocessorDirectivesAndCommentsList
-X attributeMechanism
-X KCC_frontend
-X new_frontend
-X disable_edg_backend
-X disable_sage_backend
-X testingLevel
-X preinit_il
-X enable_cp_backend
-// X outputGrammarTreeFiles
-// X outputGrammarTreeFilesForHeaderFiles
-// X outputGrammarTreeFilesForEDG
-X markGeneratedFiles
-X negative_test
-X strict_language_handling
-X embedColorCodesInGeneratedCode
-X generateSourcePositionCodes
-X sourceFileUsesCppFileExtension
-X sourceFileUsesFortranFileExtension
-X sourceFileUsesFortran77FileExtension
-X sourceFileUsesFortran90FileExtension
-X sourceFileUsesFortran95FileExtension
-X sourceFileUsesPHPFileExtension
-X sourceFileUsesBinaryFileExtension
-X binaryFile
-X read_executable_file_format_only
-X read_instructions_only
-X aggressive
-#endif
+     p_gnu_standard = false;
 
   // initialize p_useBackendOnly data member
      p_useBackendOnly = false;
@@ -16105,13 +15889,6 @@ X aggressive
 
   // negara1 (07/08/2011): Added to control whether header files should be unparsed.
      p_unparseHeaderFiles = false;
-
-  // DQ (4/7/2001) Added support for multiple files (save the preprocessor 
-  //               directives and comments into the SgFile)
-  //               the ROSEAttributesListContainer represents all preprocessor 
-  //               declarations and comments from each source file (and its 
-  //               corresponding include files) (thus a list of lists of lists 
-  //               of cpp directives and comments!!!)
 
   // At construction this is a NULL pointer, it is updated later after construction of the AST.
      p_preprocessorDirectivesAndCommentsList = NULL; // new ROSEAttributesListContainer();
@@ -16335,7 +16112,7 @@ std::string SgFile::display_standard(enum standard_enum e_std)
 
           default:
              {
-               mprintf ("Error default reached in switch: SgFile::display_standard(): e_std = %d \n",e_std);
+               printf ("Error default reached in switch: SgFile::display_standard(): e_std = %x \n",e_std);
                ROSE_ASSERT(false);
              }
         }
@@ -16343,45 +16120,45 @@ std::string SgFile::display_standard(enum standard_enum e_std)
      return s;
    }
 
-bool SgFile::is_gnu_standard(void) const { return p_is_gnu_standard; }
-void SgFile::set_gnu_standard(void) { p_is_gnu_standard = true; }
-void SgFile::unset_gnu_standard(void) { p_is_gnu_standard = false; }
+bool SgFile::is_gnu_standard(void) const { return p_gnu_standard; }
+void SgFile::set_gnu_standard(void) { p_gnu_standard = true; }
+void SgFile::unset_gnu_standard(void) { p_gnu_standard = false; }
 
 bool SgFile::get_C89_only (void) const { return p_standard == e_c89_standard; }
 void SgFile::set_C89_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c89_standard; }
 
-bool SgFile::get_C89_gnu_only (void) const { return p_standard == e_c89_standard && p_is_gnu_standard; }
-void SgFile::set_C89_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c89_standard; p_is_gnu_standard = true; }
+bool SgFile::get_C89_gnu_only (void) const { return p_standard == e_c89_standard && p_gnu_standard; }
+void SgFile::set_C89_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c89_standard; p_gnu_standard = true; }
 
 bool SgFile::get_C90_only (void) const { return p_standard == e_c90_standard; }
 void SgFile::set_C90_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c90_standard; }
 
-bool SgFile::get_C90_gnu_only (void) const { return p_standard == e_c90_standard && p_is_gnu_standard; }
-void SgFile::set_C90_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c90_standard; p_is_gnu_standard = true; }
+bool SgFile::get_C90_gnu_only (void) const { return p_standard == e_c90_standard && p_gnu_standard; }
+void SgFile::set_C90_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c90_standard; p_gnu_standard = true; }
 
 bool SgFile::get_C99_only (void) const { return p_standard == e_c99_standard; }
 void SgFile::set_C99_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c99_standard; }
 
-bool SgFile::get_C99_gnu_only (void) const { return p_standard == e_c99_standard && p_is_gnu_standard; }
-void SgFile::set_C99_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c99_standard; p_is_gnu_standard = true; }
+bool SgFile::get_C99_gnu_only (void) const { return p_standard == e_c99_standard && p_gnu_standard; }
+void SgFile::set_C99_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c99_standard; p_gnu_standard = true; }
 
 bool SgFile::get_C11_only (void) const { return p_standard == e_c11_standard; }
 void SgFile::set_C11_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c11_standard; }
 
-bool SgFile::get_C11_gnu_only (void) const { return p_standard == e_c11_standard && p_is_gnu_standard; }
-void SgFile::set_C11_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c11_standard; p_is_gnu_standard = true; }
+bool SgFile::get_C11_gnu_only (void) const { return p_standard == e_c11_standard && p_gnu_standard; }
+void SgFile::set_C11_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c11_standard; p_gnu_standard = true; }
 
 bool SgFile::get_C14_only (void) const { return p_standard == e_c14_standard; }
 void SgFile::set_C14_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c14_standard; }
 
-bool SgFile::get_C14_gnu_only (void) const { return p_standard == e_c14_standard && p_is_gnu_standard; }
-void SgFile::set_C14_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c14_standard; p_is_gnu_standard = true; }
+bool SgFile::get_C14_gnu_only (void) const { return p_standard == e_c14_standard && p_gnu_standard; }
+void SgFile::set_C14_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c14_standard; p_gnu_standard = true; }
 
 bool SgFile::get_C18_only (void) const { return p_standard == e_c18_standard; }
 void SgFile::set_C18_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c18_standard; }
 
-bool SgFile::get_C18_gnu_only (void) const { return p_standard == e_c18_standard && p_is_gnu_standard; }
-void SgFile::set_C18_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c18_standard; p_is_gnu_standard = true; }
+bool SgFile::get_C18_gnu_only (void) const { return p_standard == e_c18_standard && p_gnu_standard; }
+void SgFile::set_C18_gnu_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_c18_standard; p_gnu_standard = true; }
 
 bool SgFile::get_UPC_only (void) const { return p_standard == e_upc_standard; }
 void SgFile::set_UPC_only (void) { set_C_only(true); set_Cxx_only(false); p_standard = e_upc_standard; }
@@ -16389,38 +16166,38 @@ void SgFile::set_UPC_only (void) { set_C_only(true); set_Cxx_only(false); p_stan
 bool SgFile::get_Cxx98_only (void) const { return p_standard == e_cxx98_standard; }
 void SgFile::set_Cxx98_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx98_standard; }
 
-bool SgFile::get_Cxx98_gnu_only (void) const { return p_standard == e_cxx98_standard && p_is_gnu_standard; }
-void SgFile::set_Cxx98_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx98_standard; p_is_gnu_standard = true; }
+bool SgFile::get_Cxx98_gnu_only (void) const { return p_standard == e_cxx98_standard && p_gnu_standard; }
+void SgFile::set_Cxx98_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx98_standard; p_gnu_standard = true; }
 
 bool SgFile::get_Cxx03_only (void) const { return p_standard == e_cxx03_standard; }
 void SgFile::set_Cxx03_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx03_standard; }
 
-bool SgFile::get_Cxx03_gnu_only (void) const { return p_standard == e_cxx03_standard && p_is_gnu_standard; }
-void SgFile::set_Cxx03_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx03_standard; p_is_gnu_standard = true; }
+bool SgFile::get_Cxx03_gnu_only (void) const { return p_standard == e_cxx03_standard && p_gnu_standard; }
+void SgFile::set_Cxx03_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx03_standard; p_gnu_standard = true; }
 
 bool SgFile::get_Cxx11_only (void) const { return p_standard == e_cxx11_standard; }
 void SgFile::set_Cxx11_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx11_standard; }
 
-bool SgFile::get_Cxx11_gnu_only (void) const { return p_standard == e_cxx11_standard && p_is_gnu_standard; }
-void SgFile::set_Cxx11_gnu_only (void) {set_C_only(false); set_Cxx_only(true); p_standard = e_cxx11_standard; p_is_gnu_standard = true; }
+bool SgFile::get_Cxx11_gnu_only (void) const { return p_standard == e_cxx11_standard && p_gnu_standard; }
+void SgFile::set_Cxx11_gnu_only (void) {set_C_only(false); set_Cxx_only(true); p_standard = e_cxx11_standard; p_gnu_standard = true; }
 
 bool SgFile::get_Cxx14_only (void) const { return p_standard == e_cxx14_standard; }
 void SgFile::set_Cxx14_only (void) {set_C_only(false); set_Cxx_only(true);  p_standard = e_cxx14_standard; }
 
-bool SgFile::get_Cxx14_gnu_only (void) const { return p_standard == e_cxx14_standard && p_is_gnu_standard; }
-void SgFile::set_Cxx14_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx14_standard; p_is_gnu_standard = true; }
+bool SgFile::get_Cxx14_gnu_only (void) const { return p_standard == e_cxx14_standard && p_gnu_standard; }
+void SgFile::set_Cxx14_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx14_standard; p_gnu_standard = true; }
 
 bool SgFile::get_Cxx17_only (void) const { return p_standard == e_cxx17_standard; }
 void SgFile::set_Cxx17_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx17_standard; }
 
-bool SgFile::get_Cxx17_gnu_only (void) const { return p_standard == e_cxx17_standard && p_is_gnu_standard; }
-void SgFile::set_Cxx17_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx17_standard; p_is_gnu_standard = true; }
+bool SgFile::get_Cxx17_gnu_only (void) const { return p_standard == e_cxx17_standard && p_gnu_standard; }
+void SgFile::set_Cxx17_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx17_standard; p_gnu_standard = true; }
 
 bool SgFile::get_Cxx20_only (void) const { return p_standard == e_cxx20_standard; }
 void SgFile::set_Cxx20_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx20_standard; }
 
-bool SgFile::get_Cxx20_gnu_only (void) const { return p_standard == e_cxx20_standard && p_is_gnu_standard; }
-void SgFile::set_Cxx20_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx20_standard; p_is_gnu_standard = true; }
+bool SgFile::get_Cxx20_gnu_only (void) const { return p_standard == e_cxx20_standard && p_gnu_standard; }
+void SgFile::set_Cxx20_gnu_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_cxx20_standard; p_gnu_standard = true; }
 
 bool SgFile::get_UPCxx_only (void) const { return p_standard == e_upcxx_standard; }
 void SgFile::set_UPCxx_only (void) { set_C_only(false); set_Cxx_only(true); p_standard = e_upcxx_standard; }
@@ -18206,8 +17983,7 @@ SgProject::initialization()
 
      p_prelink                             = false;
      p_template_instantiation_mode         = e_unknown;
-     p_astMerge                            = false;
-     p_astMergeCommandFile                 = "";
+     p_ast_merge                            = false;
      p_projectSpecificDatabaseFile         = "";
      p_compilationPerformanceFile          = "";
      p_C_PreprocessorOnly                  = false;
@@ -18274,7 +18050,9 @@ SgProject::initialization()
      p_frontendConstantFolding = false;
 
   // TV (07/18/2013): Initialise the global GlobalScope for multiple flie handeling
-     p_globalScopeAcrossFiles = new SgGlobal(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
+     Sg_File_Info * fi_gsaf = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+     p_globalScopeAcrossFiles = new SgGlobal(fi_gsaf);
+     fi_gsaf->set_parent(p_globalScopeAcrossFiles);
      p_globalScopeAcrossFiles->set_parent(this);
 
   // DQ (9/15/2013): Adding support to handle output of files into the same directory as the source file.
@@ -19347,8 +19125,7 @@ SgProject::display ( const std::string & label ) const
 
      mprintf ("   p_template_instantiation_mode             = %d \n",p_template_instantiation_mode);
 
-     mprintf ("   p_astMerge                                = %s \n",(p_astMerge == true) ? "true" : "false");
-     mprintf ("   p_astMergeCommandFile                     = %s \n",p_astMergeCommandFile.c_str());
+     mprintf ("   p_ast_merge                               = %s \n",(p_ast_merge == true) ? "true" : "false");
      mprintf ("   p_projectSpecificDatabaseFile             = %s \n",p_projectSpecificDatabaseFile.c_str());
      mprintf ("   p_compilationPerformanceFile              = %s \n",p_compilationPerformanceFile.c_str());
 
