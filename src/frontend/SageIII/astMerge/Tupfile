@@ -1,10 +1,6 @@
 include_rules
 
 # FIXME: This directory has extra source files that aren't used
-run $(librose_compile) merge_support.C test_support.C buildMangledNameMap.C buildSetOfFrontendSpecificNodes.C \
-     deleteNodes.C fixupTraversal.C nullifyAST.C buildReplacementMap.C collectAssociateNodes.C deleteOrphanNodes.C \
-     normalizeTypes.C requiredNodes.C merge.C AstFixParentTraversal.C
+run $(librose_compile) merge.C fixupTraversal.C
 
-run $(public_header) buildMangledNameMap.h  buildReplacementMap.h  collectAssociateNodes.h  deleteOrphanNodes.h \
-    fixupTraversal.h  merge.h  merge_support.h  nullifyAST.h  test_support.h requiredNodes.h astMergeAPI.h \
-    AstFixParentTraversal.h
+run $(public_header) merge.h fixupTraversal.h

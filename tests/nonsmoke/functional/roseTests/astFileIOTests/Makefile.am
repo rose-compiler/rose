@@ -1,247 +1,181 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-TEST_TARGETS =
-EXTRA_TEST_TARGETS =
-MOSTLYCLEANFILES =
 
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
-EXTRA_DIST = README.txt
 
-AM_CPPFLAGS = $(ROSE_INCLUDES)
-AM_LDFLAGS = $(ROSE_RPATHS)
-
-#------------------------------------------------------------------------------------------------------------------------
-# It makes no sense to install these since some (at least parallelMerge) have hard-coded paths to other executables.
-noinst_PROGRAMS  = astFileIO astFileRead astCompressionTest parallelMerge
-
-astFileIO_SOURCES = astFileIO.C 
-astFileIO_LDADD = $(ROSE_SEPARATE_LIBS)
-
-astCompressionTest_SOURCES = astCompressionTest.C 
-astCompressionTest_LDADD = $(ROSE_SEPARATE_LIBS)
-
-astFileRead_SOURCES = astFileRead.C
-astFileRead_LDADD = $(ROSE_SEPARATE_LIBS)
-
-parallelMerge_SOURCES = parallelMerge.C
-parallelMerge_CPPFLAGS = -DTEST_AST_FILE_READ='"$(abspath $(top_builddir)/tests/nonsmoke/functional/testAstFileRead)"' $(ROSE_INCLUDES)
-parallelMerge_LDADD = $(ROSE_SEPARATE_LIBS)
+COMMA := ,
+EMPTY :=
+SPACE := $(EMPTY) $(EMPTY)
 
 #------------------------------------------------------------------------------------------------------------------------
-# This makefile uses ../../testAstFileIO and ../../testAstFileRead, and must therefore make sure they're built.
 
-../../testAstFileIO:
-	$(MAKE) -C ../.. testAstFileIO
-
-../../testAstFileRead:
-	$(MAKE) -C ../.. testAstFileRead
+ROSE_COMPILER = $(top_builddir)/src/rose-compiler
+ROSE_NO_BACKEND_FLAGS = -rose:skip_unparse -rose:skipfinalCompileStep
+	
+$(top_builddir)/src/rose-compiler:
+	$(MAKE) -C $(top_builddir)/src rose-compiler
 
 #------------------------------------------------------------------------------------------------------------------------
 # Creates *.binary files which are used as inputs for other tests.  The creation of the *.binary file is itself a test.
 
-EXTRA_DIST += testAstFileIO.conf
-
 include $(srcdir)/Makefile-pass-IO.inc
-Cxx_specimens = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
 Cxx_directory = $(abspath $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests)
-Cxx_binaries = $(addsuffix .binary, $(Cxx_specimens))
-$(Cxx_binaries): %.binary: $(Cxx_directory)/% ../../testAstFileIO
-	@$(RTH_RUN) \
-		TITLE="../../testAstFileIO $(notdir $<) [$@]" \
-		FLAGS="$(ROSE_FLAGS) -I$(Cxx_directory)" \
-		INPUT=$(abspath $<) \
-		OUTPUT=$@ \
-		$(srcdir)/testAstFileIO.conf $@.passed
-EXTRA_TEST_TARGETS += $(addsuffix .passed, $(Cxx_binaries))
 
-local_specimens = input_tiny_01a.C input_tiny_01b.C input_tiny_02a.C input_tiny_02b.C input_tiny_03a.C input_tiny_03b.C
-local_binaries = $(addsuffix .binary, $(local_specimens))
-EXTRA_DIST += $(local_specimens)
-$(local_binaries): %.binary: % ../../testAstFileIO
+ast_write_targets = $(addsuffix .binary, $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS))
+$(ast_write_targets): %.binary: $(Cxx_directory)/% $(ROSE_COMPILER)
 	@$(RTH_RUN) \
-		TITLE="../../testAstFileIO $(notdir $<) [$@]" \
-		FLAGS="$(ROSE_FLAGS) -I." \
-		INPUT=$(abspath $<) \
-		OUTPUT=$@ \
-		$(srcdir)/testAstFileIO.conf $@.passed
-EXTRA_TEST_TARGETS += $(addsuffix .passed, $(local_binaries))
+		TITLE="Write Serialize AST for $(notdir $<) [$@]" \
+		CMD="$(ROSE_COMPILER) -I$(Cxx_directory) -c $(abspath $<) -rose:ast:write $@" \
+		$(TEST_EXIT_STATUS) $@.write.passed
 
-# use this target if you just want to check creating all the binaries
-check_testAstFileIO: $(Cxx_binaries) $(local_binaries)
+check_ast_write: $(ast_write_targets)
 
 #------------------------------------------------------------------------------------------------------------------------
-# Test ../../testAstFileRead on a coupld of specific inputs.  The testAstFileRead has the annoying feature that when
-# you tell it to read "foo" it actually tries to read "foo.binary", so we have to jump through some hoops in order to
-# pass the correct file names.  We also run the test in a temporary subdirectory since it drops other files that are
-# hard to accurately clean up in the makefile (we want to avoid wildcards since that wipes out important files that the
-# developer might have sitting around).
-TEST_TARGETS += test_read.passed
-test_read_specimens = test2001_01.C test2001_02.C
-test_read_directory = $(Cxx_directory)
-test_read_binaries = $(addsuffix .binary, $(test_read_specimens))
-test_read.passed: ../../testAstFileRead $(test_read_binaries)
+
+ast_read_single_targets = $(addsuffix .read.passed, $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS))
+$(ast_read_single_targets): %.read.passed: %.binary $(ROSE_COMPILER)
 	@$(RTH_RUN) \
-		USE_SUBDIR=yes \
-		CMD="$$(pwd)/../../testAstFileRead $(addprefix $$(pwd)/, $(test_read_specimens)) output.C" \
-		$(TEST_EXIT_STATUS) $@
+		TITLE="Read Serialize AST for $< [$@]" \
+		CMD="$(ROSE_COMPILER) -rose:ast:read $<" \
+		$(TEST_EXIT_STATUS) $@.read.passed
+
+check_ast_read_single: $(ast_read_single_targets)
 
 #------------------------------------------------------------------------------------------------------------------------
-# Some tests of ../../testAstFileIO on particular *.binary files generated from files in this source directory
-# Same difficulties as for the test_read.passed target.
 
-TEST_TARGETS += test_read_tiny_01.passed
-test_read_tiny_01_specimens = input_tiny_01a.C input_tiny_01b.C
-test_read_tiny_01_binaries = $(addsuffix .binary, $(test_read_tiny_01_specimens))
-EXTRA_DIST += $(test_read_tiny_01_specimens)
-test_read_tiny_01.passed: ../../testAstFileRead $(test_read_tiny_01_binaries)
+test_read_multi_00_specimens = test2003_01.C test2003_03.C test2003_05.C
+test_read_multi_00_binaries = $(addsuffix .binary, $(test_read_multi_00_specimens))
+test_read_multi_00.passed: $(test_read_multi_00_binaries) $(ROSE_COMPILER)
 	@$(RTH_RUN) \
-		USE_SUBDIR=yes \
-		CMD="$$(pwd)/../../testAstFileRead $(addprefix $$(pwd)/, $(test_read_tiny_01_specimens)) output.C" \
-		$(TEST_EXIT_STATUS) $@
+		TITLE="Read Serialized ASTs for $(test_read_multi_00_specimens)" \
+		CMD="$(ROSE_COMPILER) \
+			-rose:ast:read $(subst $(SPACE),$(COMMA),$(test_read_multi_00_binaries)) \
+			-rose:ast:write test_read_multi_00.binary \
+			$(ROSE_NO_BACKEND_FLAGS)" \
+		$(TEST_EXIT_STATUS) test_read_multi_00.passed
 
-TEST_TARGETS += test_read_tiny_02.passed
-test_read_tiny_02_specimens = input_tiny_02a.C input_tiny_02b.C
-test_read_tiny_02_binaries = $(addsuffix .binary, $(test_read_tiny_02_specimens))
-EXTRA_DIST += $(test_read_tiny_02_specimens)
-test_read_tiny_02.passed: ../../testAstFileRead $(test_read_tiny_02_binaries)
+test_read_multi_01_specimens = test2003_10.C test2003_12.C test2003_14.C
+test_read_multi_01_binaries = $(addsuffix .binary, $(test_read_multi_01_specimens))
+test_read_multi_01.passed: $(test_read_multi_01_binaries) $(ROSE_COMPILER)
 	@$(RTH_RUN) \
-		USE_SUBDIR=yes \
-		CMD="$$(pwd)/../../testAstFileRead $(addprefix $$(pwd)/, $(test_read_tiny_02_specimens)) output.C " \
-		$(TEST_EXIT_STATUS) $@
+		TITLE="Read Serialized ASTs for $(test_read_multi_01_specimens)" \
+		CMD="$(ROSE_COMPILER) \
+			-rose:ast:read $(subst $(SPACE),$(COMMA),$(test_read_multi_01_binaries)) \
+			-rose:ast:write test_read_multi_01.binary \
+			$(ROSE_NO_BACKEND_FLAGS)" \
+		$(TEST_EXIT_STATUS) test_read_multi_01.passed
 
-TEST_TARGETS += test_read_tiny_03.passed
-test_read_tiny_03_specimens = input_tiny_03a.C input_tiny_03b.C
-test_read_tiny_03_binaries = $(addsuffix .binary, $(test_read_tiny_03_specimens))
-EXTRA_DIST += $(test_read_tiny_03_specimens)
-test_read_tiny_03.passed: ../../testAstFileRead $(test_read_tiny_03_binaries)
+test_read_multi_02_specimens = test2003_18.C test2003_20.C test2003_23.C
+test_read_multi_02_binaries = $(addsuffix .binary, $(test_read_multi_02_specimens))
+test_read_multi_02.passed: $(test_read_multi_02_binaries) $(ROSE_COMPILER)
 	@$(RTH_RUN) \
-		USE_SUBDIR=yes \
-		CMD="$$(pwd)/../../testAstFileRead $(addprefix $$(pwd)/, $(test_read_tiny_03_specimens)) output.C" \
-		$(TEST_EXIT_STATUS) $@
+		TITLE="Read Serialized ASTs for $(test_read_multi_02_specimens)" \
+		CMD="$(ROSE_COMPILER) \
+			-rose:ast:read $(subst $(SPACE),$(COMMA),$(test_read_multi_02_binaries)) \
+			-rose:ast:write test_read_multi_02.binary \
+			$(ROSE_NO_BACKEND_FLAGS)" \
+		$(TEST_EXIT_STATUS) test_read_multi_02.passed
+
+test_read_multi_03_specimens = test2003_25.C test2003_27.C test2003_35.C
+test_read_multi_03_binaries = $(addsuffix .binary, $(test_read_multi_03_specimens))
+test_read_multi_03.passed: $(test_read_multi_03_binaries) $(ROSE_COMPILER)
+	@$(RTH_RUN) \
+		TITLE="Read Serialized ASTs for $(test_read_multi_03_specimens)" \
+		CMD="$(ROSE_COMPILER) \
+			-rose:ast:read $(subst $(SPACE),$(COMMA),$(test_read_multi_03_binaries)) \
+			-rose:ast:write test_read_multi_03.binary \
+			$(ROSE_NO_BACKEND_FLAGS)" \
+		$(TEST_EXIT_STATUS) test_read_multi_03.passed
+
+test_read_multi_04_specimens = test2003_02.C test2003_06.C test2003_09.C
+test_read_multi_04_binaries = $(addsuffix .binary, $(test_read_multi_04_specimens))
+test_read_multi_04.passed: $(test_read_multi_04_binaries) $(ROSE_COMPILER)
+	@$(RTH_RUN) \
+		TITLE="Read Serialized ASTs for $(test_read_multi_04_specimens)" \
+		CMD="$(ROSE_COMPILER) \
+			-rose:ast:read $(subst $(SPACE),$(COMMA),$(test_read_multi_04_binaries)) \
+			-rose:ast:write test_read_multi_04.binary \
+			$(ROSE_NO_BACKEND_FLAGS)" \
+		$(TEST_EXIT_STATUS) test_read_multi_04.passed
+
+test_read_multi_05_specimens = test2003_11.C test2003_15.C test2003_17.C
+test_read_multi_05_binaries = $(addsuffix .binary, $(test_read_multi_05_specimens))
+test_read_multi_05.passed: $(test_read_multi_05_binaries) $(ROSE_COMPILER)
+	@$(RTH_RUN) \
+		TITLE="Read Serialized ASTs for $(test_read_multi_05_specimens)" \
+		CMD="$(ROSE_COMPILER) \
+			-rose:ast:read $(subst $(SPACE),$(COMMA),$(test_read_multi_05_binaries)) \
+			-rose:ast:write test_read_multi_05.binary \
+			$(ROSE_NO_BACKEND_FLAGS)" \
+		$(TEST_EXIT_STATUS) test_read_multi_05.passed
+
+test_read_multi_06_specimens = test2003_21.C test2003_24.C test2003_26.C
+test_read_multi_06_binaries = $(addsuffix .binary, $(test_read_multi_06_specimens))
+test_read_multi_06.passed: $(test_read_multi_06_binaries) $(ROSE_COMPILER)
+	@$(RTH_RUN) \
+		TITLE="Read Serialized ASTs for $(test_read_multi_06_specimens)" \
+		CMD="$(ROSE_COMPILER) \
+			-rose:ast:read $(subst $(SPACE),$(COMMA),$(test_read_multi_06_binaries)) \
+			-rose:ast:write test_read_multi_06.binary \
+			$(ROSE_NO_BACKEND_FLAGS)" \
+		$(TEST_EXIT_STATUS) test_read_multi_06.passed
+
+test_read_multi_07_specimens = test2003_28.C test2003_30.C test2003_32.C test2003_36.C
+test_read_multi_07_binaries = $(addsuffix .binary, $(test_read_multi_07_specimens))
+test_read_multi_07.passed: $(test_read_multi_07_binaries) $(ROSE_COMPILER)
+	@$(RTH_RUN) \
+		TITLE="Read Serialized ASTs for $(test_read_multi_07_specimens)" \
+		CMD="$(ROSE_COMPILER) \
+			-rose:ast:read $(subst $(SPACE),$(COMMA),$(test_read_multi_07_binaries)) \
+			-rose:ast:write test_read_multi_07.binary \
+			$(ROSE_NO_BACKEND_FLAGS)" \
+		$(TEST_EXIT_STATUS) test_read_multi_07.passed
+
+TEST_READ_MULTI_TARGETS= \
+	test_read_multi_00.passed \
+	test_read_multi_01.passed \
+	test_read_multi_02.passed \
+	test_read_multi_03.passed \
+	test_read_multi_04.passed \
+	test_read_multi_05.passed \
+	test_read_multi_06.passed \
+	test_read_multi_07.passed
+
+check_ast_read_multi: $(TEST_READ_MULTI_TARGETS)
 
 #------------------------------------------------------------------------------------------------------------------------
-# Tests ../../testAstFileRead on a short list of inputs. Same difficulties as for test_read.passed
 
-TEST_TARGETS += test_read_short.passed
-test_read_short_directory = $(Cxx_directory)
-test_read_short_specimens = test2003_01.C test2003_03.C test2003_05.C test2003_08.C test2003_10.C test2003_12.C test2003_14.C
-test_read_short_binaries = $(addsuffix .binary, $(test_read_short_specimens))
+TEST_READ_MERGE_INPUTS= \
+	test_read_multi_00.binary \
+	test_read_multi_01.binary \
+	test_read_multi_02.binary \
+	test_read_multi_03.binary \
+	test_read_multi_04.binary \
+	test_read_multi_05.binary \
+	test_read_multi_06.binary \
+	test_read_multi_07.binary
 
-test_read_short.passed: ../../testAstFileRead $(test_read_short_binaries)
+test_read_merged_00.passed: $(TEST_READ_MERGE_INPUTS) $(ROSE_COMPILER)
 	@$(RTH_RUN) \
-		USE_SUBDIR=yes \
-		CMD="$$(pwd)/../../testAstFileRead $(addprefix $$(pwd)/, $(test_read_short_specimens)) output.C" \
-		$(TEST_EXIT_STATUS) $@
+		TITLE="Read Merged ASTs: $(TEST_READ_MERGE_INPUTS)" \
+		CMD="$(ROSE_COMPILER) \
+			-rose:ast:read $(subst $(SPACE),$(COMMA),$(TEST_READ_MERGE_INPUTS)) \
+			-rose:ast:write test_read_merged_00.binary \
+			$(ROSE_NO_BACKEND_FLAGS)" \
+		$(TEST_EXIT_STATUS) test_read_merged_00.passed
+
+TEST_READ_MERGED_TARGETS=test_read_merged_00.passed
+
+check_ast_read_merged: $(TEST_READ_MERGED_TARGETS)
 
 #------------------------------------------------------------------------------------------------------------------------
-# Tests parallelMerge on a short list of inputs from the Cxx_tests directory.
-# The parallelMerge executable takes "foo" as an argument, but actually reads "foo.binary"; hence we need to jump through
-# some hoops: parallelMerge_short_arguments are the absolute names of the foo.binary files, but without the ".binary" part.
 
-parallelMerge_short_specimens = test2003_01.C test2003_03.C test2003_05.C test2003_10.C test2003_12.C test2003_14.C
-parallelMerge_short_directory = $(Cxx_directory)
-parallelMerge_short_binaries = $(addsuffix .binary, $(parallelMerge_short_specimens))
-parallelMerge_short_arguments = $(addprefix $$(pwd)/, $(parallelMerge_short_specimens))
-
-# Liao 2/9/2011. boost thread_group may have bug on Mac OS X 10.6
-if !OS_MACOSX	
-TEST_TARGETS += parallelMerge_short.passed
-endif
-
-parallelMerge_short.passed: ../../testAstFileRead parallelMerge $(parallelMerge_short_binaries)
-	@$(RTH_RUN) \
-		USE_SUBDIR=yes \
-		CMD="mkdir data temp; $$(pwd)/parallelMerge $(parallelMerge_short_arguments) output.C" \
-		$(TEST_EXIT_STATUS) $@
-
-#------------------------------------------------------------------------------------------------------------------------
-# Similar to parallelMerge_short but with a longer list of specimens.
-# Must run in a subdir to avoid conflicts with other parallelMerge tests running concurrently.
-
-parallelMerge_medium_specimens =											\
-	test2003_01.C test2003_03.C test2003_05.C test2003_10.C test2003_12.C test2003_14.C test2003_18.C test2003_20.C	\
-	test2003_23.C test2003_25.C test2003_27.C test2003_35.C test2003_02.C test2003_06.C test2003_09.C test2003_11.C	\
-	test2003_15.C test2003_17.C test2003_21.C test2003_24.C test2003_26.C test2003_28.C test2003_30.C test2003_32.C	\
-	test2003_36.C 
-parallelMerge_medium_directory = $(Cxx_directory)
-parallelMerge_medium_binaries = $(addsuffix .binary, $(parallelMerge_medium_specimens))
-parallelMerge_medium_arguments = $(addprefix $$(pwd)/, $(parallelMerge_medium_specimens))
-
-# Liao 2/9/2011. boost thread_group may have bug on Mac OS X 10.6
-if !OS_MACOSX	
-TEST_TARGETS += parallelMerge_medium.passed
-endif
-
-parallelMerge_medium.passed: ../../testAstFileRead parallelMerge $(parallelMerge_medium_binaries)
-	@$(RTH_RUN) \
-		USE_SUBDIR=yes \
-		CMD="mkdir data temp; $$(pwd)/parallelMerge $(parallelMerge_short_arguments) output.C" \
-		$(TEST_EXIT_STATUS) $@
-
-#------------------------------------------------------------------------------------------------------------------------
-# This is a test of the same files used with parallelMerge_medium.passed but run in serial. This is different and usually
-# faster for small problems than the singled threaded parallel merge.  Same difficulties apply as for test_read_short.passed.
-
-test_read_medium_specimens = $(parallelMerge_medium_specimens)
-test_read_medium_directory = $(parallelMerge_medium_directory)
-test_read_medium_binaries = $(addsuffix .binary, $(test_read_medium_specimens))
-test_read_medium_arguments = $(addprefix $$(pwd)/, $(test_read_medium_specimens))
-
-# The output from the following tests build on each other, each reading the output from the previous test to produce
-# a new output.  Therefore, we make the tests depend on the output file rather than the usual .passed file (although
-# the .passed and .failed files will still be created.
-#
-# Beware of the strange arguments for testAstFileRead: it takes "foo" as an argument, but actually reads "foo.binary".
-# Same thing applies to the output file name (the last argument).
-MOSTLYCLEANFILES += medium_output.C.binary $(addprefix medium_output, .passed .failed)
-medium_output.C.binary: ../../testAstFileRead $(test_read_medium_binaries)
-	@$(RTH_RUN) \
-		USE_SUBDIR=yes \
-		CMD="$$(pwd)/../../testAstFileRead $(test_read_medium_arguments) $$(pwd)/$(@:.binary=)" \
-		$(TEST_EXIT_STATUS) medium_output.passed
-
-MOSTLYCLEANFILES += large_output.C.binary $(addprefix large_output, .passed .failed)
-large_output.C.binary: medium_output.C.binary
-	@$(RTH_RUN) \
-		USE_SUBDIR=yes \
-		CMD="$$(pwd)/../../testAstFileRead $(foreach I, 1 2 3 4, $$(pwd)/$(<:.binary=)) $$(pwd)/$(@:.binary=)" \
-		$(TEST_EXIT_STATUS) large_output.passed
-
-MOSTLYCLEANFILES += huge_output.C.binary $(addprefix huge_output, .passed .failed)
-huge_output.C.binary: large_output.C.binary
-	@$(RTH_RUN) \
-		DISABLED="too large for most systems" \
-		USE_SUBDIR=yes \
-		CMD="$$(pwd)/../../testAstFileRead $(foreach I, 1 2 3 4, $$(pwd)/$(<:.binary=)) $$(pwd)/$(@:.binary=)" \
-		$(TEST_EXIT_STATUS) huge_output.passed
-
-MOSTLYCLEANFILES += reallyhuge_output.C.binary $(addprefix reallyhuge_output, .passed .failed)
-reallyhuge_output.C.binary: huge_output.C.binary
-	@$(RTH_RUN) \
-		DISABLED="too large for most systems" \
-		USE_SUBDIR=yes \
-		CMD="$$(pwd)/../../testAstFileRead $(foreach I, 1 2 3 4, $$(pwd)/$(<:.binary=)) $$(pwd)/$(@:.binary=)" \
-		$(TEST_EXIT_STATUS) reallyhuge_output.passed
-
-# Liao 2/9/2011. boost thread_group may have bug on Mac OS X 10.6
-if !OS_MACOSX	
-TEST_TARGETS += medium_output.C.binary
-if ROSE_USE_LONG_MAKE_CHECK_RULE
-TEST_TARGETS += large_output.C.binary huge_output.C.binary reallyhuge_output.C.binary
-endif
-endif
-
-#------------------------------------------------------------------------------------------------------------------------
-# automake boilerplate
-
-check-local: $(Cxx_binaries) $(local_binaries) $(TEST_TARGETS)
+check-local: \
+		check_ast_write \
+		check_ast_read_single
 	@echo "*********************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/roseTests/astFileIOTests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************************"
 
 clean-local:
-	rm -f $(TEST_TARGETS)
-	rm -f $(TEST_TARGETS:.passed=.failed)
-	rm -f $(EXTRA_TEST_TARGETS)
-	rm -f $(EXTRA_TEST_TARGETS:.passed=.failed)
-	rm -f $(EXTRA_TEST_TARGETS:.passed=)
+	rm -f *.binary *.passed *.failed rose_* *.o
 

@@ -1511,67 +1511,78 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCall(SgFunctionCallExp*
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::execFunctionCallPrintf(SgFunctionCallExp* funCall, EState estate) {
-  cout<<"DEBUG: ExprAnalyzer::execFunctionCallPrintf"<<endl;
+  //cout<<"DEBUG: ExprAnalyzer::execFunctionCallPrintf"<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(Top())); // default value for void function call
   ROSE_ASSERT(_variableIdMapping);
   SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
   auto iter=argsList.begin();
   ROSE_ASSERT(iter!=argsList.end());
-  SgStringVal* formatStringVal=isSgStringVal(*iter++);
-  ROSE_ASSERT(formatStringVal);
-  string formatString=formatStringVal->get_value();
-  vector<string> avStringVector;
-  for(size_t i=1;i<argsList.size();i++) {
-    SgExpression* arg=*iter++;
-    list<SingleEvalResultConstInt> argResList=evaluateExpression(arg,estate);
-    if(argResList.size()!=1) {
-      cerr<<"Error: conditional control-flow in printf argument not supported. Expression normalization required."<<endl;
+  SgNode* arg=*iter++;
+  while(SgCastExp* castExp=isSgCastExp(arg)) {
+    arg=castExp->get_operand_i();
+  }
+  if(SgStringVal* formatStringVal=isSgStringVal(arg)) {
+    ROSE_ASSERT(formatStringVal);
+    string formatString=formatStringVal->get_value();
+    vector<string> avStringVector;
+    for(size_t i=1;i<argsList.size();i++) {
+      SgExpression* arg=*iter++;
+      list<SingleEvalResultConstInt> argResList=evaluateExpression(arg,estate);
+      if(argResList.size()!=1) {
+        cerr<<"Error: conditional control-flow in printf argument not supported. Expression normalization required."<<endl;
         exit(1);
-    } else {
-      AbstractValue av=(*argResList.begin()).value();
-      avStringVector.push_back(av.toString(_variableIdMapping));
-    }
-  }
-  // replace all uses of %? with respective AVString
-  string concAVString;
-  size_t j=0;
-  for(size_t i=0;i<formatString.size();++i) {
-    if(formatString[i]=='%') {
-      i++; // skip next character
-      if(j>=avStringVector.size()) {
-        // number of arguments and uses of '%' don't match in input
-        // program. This could be reported as program error.  For now
-        // we just do not produce an output (as the original program
-        // does not either)
-        // TODO: report input program error
-        continue; // continue to print other characters
-      }
-      concAVString+=avStringVector[j++];
-    } else if(formatString[i]=='\\') {
-      if(i+1<=formatString.size()-1 && formatString[i+1]=='%') {
-        i+=1; // process additional character '%'
-        concAVString+="\%";
-      } else if(i+1<=formatString.size()-1 && formatString[i+1]=='n') {
-        concAVString+='\n'; // this generates a proper newline
-        i+=1; // process additional character 'n'
       } else {
-        concAVString+='\\';
+        AbstractValue av=(*argResList.begin()).value();
+        avStringVector.push_back(av.toString(_variableIdMapping));
+      }
+    }
+    // replace all uses of %? with respective AVString
+    string concAVString;
+    size_t j=0;
+    for(size_t i=0;i<formatString.size();++i) {
+      if(formatString[i]=='%') {
+        i++; // skip next character
+        if(j>=avStringVector.size()) {
+          // number of arguments and uses of '%' don't match in input
+          // program. This could be reported as program error.  For now
+          // we just do not produce an output (as the original program
+          // does not either)
+          // TODO: report input program error
+          continue; // continue to print other characters
+        }
+        concAVString+=avStringVector[j++];
+      } else if(formatString[i]=='\\') {
+        if(i+1<=formatString.size()-1 && formatString[i+1]=='%') {
+          i+=1; // process additional character '%'
+          concAVString+="\%";
+        } else if(i+1<=formatString.size()-1 && formatString[i+1]=='n') {
+          concAVString+='\n'; // this generates a proper newline
+          i+=1; // process additional character 'n'
+        } else {
+          concAVString+='\\';
+        }
+      } else {
+        // any other character
+        concAVString+=formatString[i];
+      }
+    }
+    string fileName=getInterpreterModeFileName();
+    if(fileName!="") {
+      bool ok=CppStdUtilities::appendFile(fileName,concAVString);
+      if(!ok) {
+        cerr<<"Error: could not open output file "<<fileName<<endl;
+        exit(1);
       }
     } else {
-      // any other character
-      concAVString+=formatString[i];
-    }
-  }
-  string fileName=getInterpreterModeFileName();
-  if(fileName!="") {
-    bool ok=CppStdUtilities::appendFile(fileName,concAVString);
-    if(!ok) {
-      cerr<<"Error: could not open output file "<<fileName<<endl;
-      exit(1);
+      cout<<concAVString;
     }
   } else {
-    cout<<concAVString;
+    // first argument is not a string, must be some constant
+    // since it is only printed, it is not modifying the state
+    // TODO: it could be recorded as output state
+    
+    cout<<"WARNING: unsupported printf argument: "<<(arg)->class_name()<<" : "<<(arg)->unparseToString()<<endl;
   }
   return listify(res);
 }

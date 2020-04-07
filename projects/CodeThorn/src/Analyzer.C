@@ -744,13 +744,15 @@ bool CodeThorn::Analyzer::isActiveGlobalTopify() {
 }
 
 void CodeThorn::Analyzer::eventGlobalTopifyTurnedOn() {
-  cout << "STATUS: mode global-topify activated:"<<endl
-       << "Transitions  : "<<(long int)transitionGraph.size()<<","<<_maxTransitionsForcedTop<<endl
-       << "Iterations   : "<<getIterations()<<":"<< _maxIterationsForcedTop<<endl
-       << "Memory(bytes): "<<getPhysicalMemorySize()<<":"<< _maxBytesForcedTop<<endl
-       << "Runtime(s)   : "<<analysisRunTimeInSeconds() <<":"<< _maxSecondsForcedTop<<endl;
+  stringstream ss;
+  ss << "STATUS: mode global-topify activated:"<<endl
+     << "Transitions  : "<<(long int)transitionGraph.size()<<","<<_maxTransitionsForcedTop<<endl
+     << "Iterations   : "<<getIterations()<<":"<< _maxIterationsForcedTop<<endl
+     << "Memory(bytes): "<<getPhysicalMemorySize()<<":"<< _maxBytesForcedTop<<endl
+     << "Runtime(s)   : "<<analysisRunTimeInSeconds() <<":"<< _maxSecondsForcedTop<<endl;
+  printStatusMessage(ss.str());
 
-AbstractValueSet vset=variableValueMonitor.getVariables();
+  AbstractValueSet vset=variableValueMonitor.getVariables();
   int n=0;
   int nt=0;
   for(AbstractValueSet::iterator i=vset.begin();i!=vset.end();++i) {

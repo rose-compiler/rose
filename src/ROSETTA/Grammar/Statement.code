@@ -240,11 +240,6 @@ HEADER_SCOPE_STATEMENT_START
        // DQ (5/23/2013): Put the get_symbol_table() function back to being public so that we can proceed with testing.  
        // This fails for the GNU 4.4 compiler only. Sort it out later.
 
-       // DQ (5/21/2013): These function require access to the private symbol table support so that they can support the AST merge functionality.
-          friend void deleteSetErrorCheck( SgProject* project, const std::set<SgNode*> & listToDelete );
-       // friend void addAssociatedNodes ( SgExpression* expression, std::set<SgNode*> & nodeList, bool markMemberNodesDefinedToBeDeleted );
-          friend void addAssociatedNodes ( SgNode* node, std::set<SgNode*> & nodeList, bool markMemberNodesDefinedToBeDeleted, SgNode* matchingNodeInMergedAST );
-
        // DQ (5/21/2013): This class needs access because it rebuilds the symbol tables.
           friend class FixupAstSymbolTables;
 

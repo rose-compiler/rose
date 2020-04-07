@@ -82,6 +82,14 @@ void TimeMeasurement::stop() {
   }  
 } 
 
+void TimeMeasurement::resume() {
+  if(state==TIME_RUNNING) {
+    throw std::runtime_error("Time Measurement: error 6: resume(): TimeMeasurement not stopped (state: RUNNING).");
+  } else {
+    state=TIME_RUNNING;
+  }  
+} 
+
 TimeDuration TimeMeasurement::getTimeDuration() {
   if(state==TIME_RUNNING) {
     throw std::runtime_error("Time Measurement: error 3: : getTimeDuration: TimeMeasurement not stopped (state: RUNNING).");
@@ -96,7 +104,7 @@ TimeDuration TimeMeasurement::getTimeDurationAndKeepRunning() {
   }
   stop();
   TimeDuration td=TimeDuration((endCount.tv_sec-startCount.tv_sec)*1000000.0+(endCount.tv_usec-startCount.tv_usec));
-  state=TIME_RUNNING;
+  resume();
   return td;
 }
 
@@ -104,7 +112,7 @@ TimeDuration TimeMeasurement::getTimeDurationAndStop() {
   if(state==TIME_STOPPED) {
     throw std::runtime_error("Time Measurement: error 5: : getTimeDurationAndStop: TimeMeasurement already stopped, cannot stop again (state: STOPPED).");
   }
-  TimeDuration td=TimeDuration((endCount.tv_sec-startCount.tv_sec)*1000000.0+(endCount.tv_usec-startCount.tv_usec));
   stop();
+  TimeDuration td=TimeDuration((endCount.tv_sec-startCount.tv_sec)*1000000.0+(endCount.tv_usec-startCount.tv_usec));
   return td;
 }

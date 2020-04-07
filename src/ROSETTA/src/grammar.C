@@ -3481,6 +3481,11 @@ Grammar::buildCode ()
      includeHeaderString += defines2;
      includeHeaderString += defines3;
 
+     includeHeaderString += "#define ROSE_ALLOC_MEMSET 0\n";
+     includeHeaderString += "#define ROSE_ALLOC_TRACE 0\n";
+     includeHeaderString += "#define ROSE_ALLOC_AUTH_ALT_SIZE 1\n";
+     includeHeaderString += "#define ROSE_DEALLOC_ASSERT 0\n\n";
+
   // DQ (3/5/2017): Add message stream support for diagnostic messge from the ROSE IR nodes.
   // This allows us to easily convert printf() functions to mprintf() functions that contain
   // the more sophisticated Saywer support for diagnostic messages.
