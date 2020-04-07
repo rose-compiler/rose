@@ -658,6 +658,7 @@ SgStorageModifier
 SgStringConversion
 SgStringKeyedBidirectionalGraph
 SgStringVal
+SgStructureModifier
 SgSubscriptExpression
 SgSubtractOp
 SgSupport

@@ -1111,6 +1111,56 @@ HEADER_UPC_ACCESS_MODIFIER_START
 
 HEADER_UPC_ACCESS_MODIFIER_END
 
+// Rasmussen (4/4/2020): Added SgStructureModifier for Jovial tables
+HEADER_STRUCTURE_MODIFIER_START
+
+       // Jovial structure specifiers (unspecified, parallel, tight)
+
+      /*! \brief Jovial Structure Modifier/Specifier (tight implies serial)
+
+          Jovial Structure Specifier (parallel, tight).
+
+          \internal Only one value can be specified
+       */
+          enum jovial_structure_modifier_enum
+             {
+               e_unknown,                    /*!< error value */
+               e_default,                    /*!< jovial table structure is unspecified, indicates serial structure */
+               e_table_structure_parallel,   /*!< jovial table has parallel structure */
+               e_table_structure_tight,      /*!< jovial table has serial structure that is tightly packed */
+               e_last_modifier               /*!< last value (upper bound on range of values, used in error checking) */
+             };
+
+       // Copy constructor
+          $CLASSNAME ( const $CLASSNAME & X );
+
+       // Assignment Operator
+          $CLASSNAME & operator= ( const $CLASSNAME & X );
+
+          void post_construction_initialization() $ROSE_OVERRIDE;
+
+          bool isUnknown() const;
+          void setUnknown();
+
+          bool isDefault() const;
+          void setDefault();
+
+          bool isParallel() const;
+          void setParallel();
+
+          bool isTight() const;
+          void setTight();
+
+          std::string displayString() const;
+          void display ( std::string label ) const;
+          friend std::ostream & operator<< ( std::ostream & os, const SgStructureModifier & m );
+          friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+
+       // Clear all bits
+          void reset();
+
+HEADER_STRUCTURE_MODIFIER_END
+
 
 HEADER_SPECIAL_FUNCTION_MODIFIER_START
 
@@ -1633,6 +1683,9 @@ HEADER_TYPE_MODIFIER_START
           const SgUPC_AccessModifier     & get_upcModifier(void) const;
           const SgConstVolatileModifier  & get_constVolatileModifier(void) const;
           const SgElaboratedTypeModifier & get_elaboratedTypeModifier(void) const;
+
+          SgStructureModifier            & get_structureModifier();
+          const SgStructureModifier      & get_structureModifier() const;
 
           bool isUnknown() const;
           void setUnknown();
@@ -3103,8 +3156,7 @@ std::ostream & operator<< ( std::ostream& os, const SgAdaRangeConstraint& c)
 SOURCE_ADA_RANGE_CONSTRAINT_END
 
 
-
-SOURCE_UPS_ACCESS_MODIFIER_START
+SOURCE_UPC_ACCESS_MODIFIER_START
 // Copy constructor
 $CLASSNAME::$CLASSNAME ( const $CLASSNAME & X )
    {
@@ -3186,7 +3238,84 @@ void $CLASSNAME::reset()
      setDefault();
    }
 
-SOURCE_UPS_ACCESS_MODIFIER_END
+SOURCE_UPC_ACCESS_MODIFIER_END
+
+// Rasmussen (4/4/2020): Added SgStructureModifier for Jovial tables
+SOURCE_STRUCTURE_MODIFIER_START
+
+// Copy constructor
+$CLASSNAME::$CLASSNAME ( const $CLASSNAME & X )
+   {
+     p_modifier = X.p_modifier;
+   }
+
+$CLASSNAME &
+$CLASSNAME::operator= ( const $CLASSNAME & X )
+   {
+     p_modifier = X.p_modifier;
+     return *this;
+   }
+
+void
+$CLASSNAME::post_construction_initialization()
+   {
+     p_modifier = e_default;
+   }
+
+bool $CLASSNAME::isUnknown() const { return p_modifier == e_unknown; }
+void $CLASSNAME::setUnknown()      { p_modifier = e_unknown; }
+
+bool $CLASSNAME::isDefault() const { return p_modifier == e_default; }
+void $CLASSNAME::setDefault()      { p_modifier = e_default; }
+
+bool $CLASSNAME::isParallel() const { return p_modifier == e_table_structure_parallel; }
+void $CLASSNAME::setParallel()      { p_modifier = e_table_structure_parallel; }
+
+bool $CLASSNAME::isTight()    const { return p_modifier == e_table_structure_tight; }
+void $CLASSNAME::setTight()         { p_modifier = e_table_structure_tight; }
+
+string
+$CLASSNAME::displayString() const
+   {
+     std::string s = "$CLASSNAME(";
+     s += std::string("isUnknown() = ")     + std::string(isUnknown()     ? "true " : "false ");
+     s += std::string("isDefault() = ")     + std::string(isDefault()     ? "true " : "false ");
+     s += std::string("isParallel() = ")    + std::string(isParallel()    ? "true " : "false ");
+     s += std::string("isTight() = ")       + std::string(isTight()       ? "true " : "false ");
+
+     s += ")";
+     return s;
+   }
+
+void
+$CLASSNAME::display ( std::string label ) const
+   {
+     mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
+     mprintf ("%s \n",displayString().c_str());
+   }
+
+std::ostream & operator<< ( std::ostream & os, const SgStructureModifier & m)
+   {
+     os << m.get_modifier();
+     return os;
+   }
+
+bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
+{
+        return
+	       (lhs.isUnknown()  == rhs.isUnknown()  ) &&
+	       (lhs.isDefault()  == rhs.isDefault()  ) &&
+	       (lhs.isParallel() == rhs.isParallel() ) &&
+	       (lhs.isTight()    == rhs.isTight()    ) &&
+		   true;
+}
+
+void $CLASSNAME::reset()
+   {
+     setDefault();
+   }
+
+SOURCE_STRUCTURE_MODIFIER_END
 
 
 SOURCE_SPECIAL_FUNCTION_MODIFIER_START
@@ -3862,15 +3991,10 @@ $CLASSNAME::displayString() const
      s += std::string("gnu_attribute_sentinel = ")     + Rose::StringUtility::numberToString((int)p_gnu_attribute_sentinel)     + " ";
      s += std::string("address_space_value = ")        + Rose::StringUtility::numberToString((int)p_address_space_value)        + " ";
      s += std::string("vector_size = ")                + Rose::StringUtility::numberToString((int)p_vector_size)                + " ";
-#if 0
-     s += std::string("\n     ")                       + get_constVolatileModifier().displayString()                      + " ";
-     s += std::string("\n     ")                       + get_upcModifier().displayString()                                + " ";
-     s += std::string("\n     ")                       + get_elaboratedTypeModifier().displayString();
-#else
-     s += std::string("   ")                           + get_constVolatileModifier().displayString()                      + " ";
-     s += std::string("   ")                           + get_upcModifier().displayString()                                + " ";
+     s += std::string("   ")                           + get_constVolatileModifier().displayString()                            + " ";
+     s += std::string("   ")                           + get_upcModifier().displayString()                                      + " ";
+     s += std::string("   ")                           + get_structureModifier().displayString()                                + " ";
      s += std::string("   ")                           + get_elaboratedTypeModifier().displayString();
-#endif
      s += ")";
      return s;
    }
@@ -3913,6 +4037,7 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
    {
      return
           (lhs.get_upcModifier()            == rhs.get_upcModifier()           ) &&
+          (lhs.get_structureModifier()      == rhs.get_structureModifier()     ) &&
           (lhs.get_constVolatileModifier()  == rhs.get_constVolatileModifier() ) &&
           (lhs.get_elaboratedTypeModifier() == rhs.get_elaboratedTypeModifier()) &&
           (lhs.isUnknown() == rhs.isUnknown()) &&
@@ -3972,6 +4097,13 @@ $CLASSNAME::get_upcModifier ()
      return p_upcModifier;
    }
 
+SgStructureModifier &
+$CLASSNAME::get_structureModifier ()
+   {
+     assert (this != NULL);
+     return p_structureModifier;
+   }
+
 SgElaboratedTypeModifier &
 $CLASSNAME::get_elaboratedTypeModifier ()
    {
@@ -3990,6 +4122,7 @@ void $CLASSNAME::reset()
 
      get_constVolatileModifier().reset();
      get_upcModifier().reset();
+     get_structureModifier().reset();
      get_elaboratedTypeModifier().reset();
    }
 
@@ -4007,6 +4140,13 @@ $CLASSNAME::get_upcModifier (void) const
    {
      assert (this != NULL);
      return p_upcModifier;
+   }
+
+const SgStructureModifier &
+$CLASSNAME::get_structureModifier (void) const
+   {
+     assert (this != NULL);
+     return p_structureModifier;
    }
 
 // RV (2/2/2006): Created this 'const' version of the member function.

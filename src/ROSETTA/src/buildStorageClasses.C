@@ -797,7 +797,8 @@ AstNodeClass::evaluateType(std::string& varTypeString)
               varTypeString == "SgStorageModifier" || 
               varTypeString == "SgElaboratedTypeModifier" ||
               varTypeString == "SgUPC_AccessModifier" ||
-              varTypeString == "SgConstVolatileModifier")
+              varTypeString == "SgConstVolatileModifier" ||
+              varTypeString == "SgStructureModifier")
              {
                returnType = MODIFIERCLASS_WITHOUTEASYSTORAGE;
              }
@@ -829,6 +830,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgStorageModifier::storage_modifier_enum" ) ||
                  ( varTypeString == "SgAccessModifier::access_modifier_enum" ) ||
                  ( varTypeString == "SgUPC_AccessModifier::upc_access_modifier_enum" ) ||
+                 ( varTypeString == "SgStructureModifier::jovial_structure_modifier_enum" ) ||
                  ( varTypeString == "SgElaboratedTypeModifier::elaborated_type_modifier_enum" ) ||
                  ( varTypeString == "SgDeclarationStatement::template_specialization_enum" ) ||
                  ( varTypeString == "SgDeclarationModifier::gnu_declaration_visability_enum" ) ||

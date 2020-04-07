@@ -32,6 +32,14 @@ namespace LanguageTranslation
            e_function_modifier_last
         };
 
+     enum PackingSpecifier
+        {
+           e_packing_spec_unknown = 0,
+           e_packing_spec_none,    // "N" from grammar
+           e_packing_spec_mixed,   // "M" from grammar
+           e_packing_spec_dense,   // "D" from grammar
+        };
+
   // Enum for different types of expressions (used with untyped IR nodes).
   //
      enum ExpressionKind
@@ -64,9 +72,6 @@ namespace LanguageTranslation
           e_type_modifier_intent_inout,
           e_type_modifier_intrinsic,
           e_type_modifier_optional,
-          e_type_modifier_packing_d,
-          e_type_modifier_packing_m,
-          e_type_modifier_packing_n,
           e_type_modifier_pointer,
           e_type_modifier_protected,
           e_type_modifier_round,
@@ -245,11 +250,16 @@ namespace LanguageTranslation
       };
 
       struct StructureSpecifier {
-         StructureSpecifier()                  : bits_per_entry(NULL), is_parallel(false) {}
-         StructureSpecifier(SgExpression* bpe) : bits_per_entry(bpe),  is_parallel(false) {}
-         StructureSpecifier(bool isp)          : bits_per_entry(NULL), is_parallel(isp)   {}
-         SgExpression* bits_per_entry;
+         StructureSpecifier() : is_parallel(false), is_tight(false), bits_per_entry(0) {}
          bool is_parallel;
+         bool is_tight;
+         int  bits_per_entry;
+      };
+
+      struct TableSpecifier {
+         TableSpecifier() : packing_spec(e_packing_spec_unknown) {}
+         StructureSpecifier struct_spec;
+         PackingSpecifier packing_spec;
       };
 
      typedef std::list<LanguageTranslation::FunctionModifier> FunctionModifierList;
