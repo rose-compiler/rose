@@ -6,7 +6,9 @@ struct SgNode;
 
 namespace CodeThorn
 {
-  void normalizeCxx(SgNode* node);
+  struct Normalization;
+  
+  void normalizeCxx(Normalization& norm, SgNode* node);
 }
 
 #endif /* NORMALIZATION_CXX_H */
