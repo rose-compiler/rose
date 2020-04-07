@@ -197,7 +197,7 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
     analyzer->setModeLTLDriven(true);
   }
 
-  if (args.isDefined("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
+  if (args.isUserProvided("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
     analyzer->setMaxTransitionsForcedTop(1); //initial over-approximated model
     args.setOption("no-input-input",true);
     args.setOption("with-ltl-counterexamples",true);
@@ -650,8 +650,8 @@ int main( int argc, char * argv[] ) {
     analyzer->setTreatStdErrLikeFailedAssert(args.getBool("stderr-like-failed-assert"));
 
     // Build the AST used by ROSE
-    if(!args.isDefined("quiet")) {
-      cout<< "STATUS: Parsing and creating AST started."<<endl;
+    if(args.getBool("status")) {
+      cout<< "STATUS: Parsing and creating AST started!"<<endl;
     }
 
     SgProject* sageProject = 0;
@@ -668,7 +668,7 @@ int main( int argc, char * argv[] ) {
     sageProject=frontend(argvList);
     double frontEndRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
-    if(!args.isDefined("quiet")) {
+    if(args.getBool("status")) {
       cout << "STATUS: Parsing and creating AST finished."<<endl;
     }
 
@@ -754,7 +754,7 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    if(!args.isDefined("quiet")) {
+    if(args.getBool("status")) {
       cout<<"STATUS: analysis started."<<endl;
     }
     // TODO: introduce ProgramAbstractionLayer
@@ -949,7 +949,6 @@ int main( int argc, char * argv[] ) {
       analyzer->setStartPState(*analyzer->popWorkList()->pstate());
     }
     double initRunTime=timer.getTimeDurationAndStop().milliSeconds();
-    cout<<"DEBUG: initRunTime: "<<initRunTime<<endl;
     
     timer.start();
     analyzer->printStatusMessageLine("==============================================================");
@@ -1604,7 +1603,7 @@ int main( int argc, char * argv[] ) {
     }
 
     // reset terminal
-    if(!args.isDefined("quiet"))
+    if(args.getBool("status"))
       cout<<color("normal")<<"done."<<endl;
 
     // main function try-catch
