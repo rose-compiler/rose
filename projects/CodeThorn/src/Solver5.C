@@ -45,7 +45,7 @@ void Solver5::run() {
   bool ioReductionActive = false;
   unsigned int ioReductionThreshold = 0;
   unsigned int estatesLastReduction = 0;
-  if(args.isDefined("io-reduction")) {
+  if(args.isUserProvided("io-reduction")) {
     ioReductionActive = true;
     ioReductionThreshold = args.getInt("io-reduction");
   }
@@ -232,7 +232,7 @@ void Solver5::run() {
   }
   if(_analyzer->isIncompleteSTGReady()) {
     _analyzer->printStatusMessage(true);
-    cout<< "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
+    _analyzer->printStatusMessage("STATUS: analysis finished (incomplete STG due to specified resource restriction).",true);
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),!isComplete);
     _analyzer->transitionGraph.setIsComplete(!isComplete);
   } else {
@@ -240,7 +240,7 @@ void Solver5::run() {
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),tmpcomplete);
     _analyzer->printStatusMessage(true);
     _analyzer->transitionGraph.setIsComplete(tmpcomplete);
-    cout<< "STATUS: analysis finished (worklist is empty)."<<endl;
+    _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
   }
   _analyzer->transitionGraph.setIsPrecise(_analyzer->isPrecise());
 }

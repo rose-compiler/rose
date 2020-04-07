@@ -66,7 +66,11 @@ enum TimeMeasurementState { TIME_RUNNING, TIME_STOPPED };
 class TimeMeasurement {
  public:
   TimeMeasurement();
+  // start measurement at 0
   virtual void start();
+  // continue measurement after having stopped
+  virtual void resume();
+  // stop running measurement (and store end time)
   virtual void stop();
   virtual TimeDuration getTimeDuration(); // must be stopped
   virtual TimeDuration getTimeDurationAndStop(); // must be running

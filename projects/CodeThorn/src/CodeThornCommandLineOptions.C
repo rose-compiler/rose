@@ -6,10 +6,54 @@
 #include <sstream>
 #include <iostream>
 
+// required for checking of: HAVE_SPOT, HAVE_Z3
+#include "rose_config.h"
+
 #include "Diagnostics.h"
 using namespace Sawyer::Message;
 using namespace std;
 using namespace CodeThorn;
+
+void checkSpotOptions() {
+    // Check if chosen options are available
+#ifndef HAVE_SPOT
+    // display error message and exit in case SPOT is not avaiable, but related options are selected
+    if (args.isUserProvided("csv-stats-cegpra") ||
+	args.isUserProvided("cegpra-ltl") ||
+	args.getBool("cegpra-ltl-all") ||
+	args.isUserProvided("cegpra-max-iterations") ||
+	args.isUserProvided("viz-cegpra-detailed") ||
+	args.isUserProvided("csv-spot-ltl") ||
+	args.isUserProvided("check-ltl") ||
+	args.isUserProvided("single-property") ||
+	args.isUserProvided("ltl-in-alphabet") ||
+	args.isUserProvided("ltl-out-alphabet") ||
+	args.getBool("ltl-driven") ||
+	args.getBool("with-ltl-counterexamples") ||
+	args.isUserProvided("mine-num-verifiable") ||
+	args.isUserProvided("mine-num-falsifiable") ||
+	args.isUserProvided("ltl-mode") ||
+	args.isUserProvided("ltl-properties-output") ||
+	args.isUserProvided("promela-output") ||
+	args.getBool("promela-output-only") ||
+	args.getBool("output-with-results") ||
+	args.getBool("output-with-annotations")) {
+      cerr << "Error: Options selected that require the SPOT library, however SPOT was not selected during configuration." << endl;
+      exit(1);
+    }
+#endif
+}
+
+void checkZ3Options() {
+#ifndef HAVE_Z3
+    if (args.isUserProvided("z3") ||
+	args.isUserProvided("rers-upper-input-bound") ||
+	args.isUserProvided("rers-verifier-error-number")){
+      cerr << "Error: Options selected that require the Z3 library, however Z3 was not selected during configuration." << endl;
+      exit(1);
+    }
+#endif	
+}
 
 CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger, std::string version) {
   // Command line option handling.
@@ -306,7 +350,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   po::store(po::command_line_parser(argc, argv).options(all).run(), args);
   po::notify(args);
 
-  if (args.isDefined("config")) {
+  if (args.isUserProvided("config")) {
     ifstream configStream(args.getString("config").c_str());
     po::store(po::parse_config_file(configStream, configFileOptions), args);
     po::notify(args);
@@ -314,43 +358,43 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 #else
   args.parse(argc,argv,all,configFileOptions);
 #endif
-  if (args.isDefined("help")) {
+  if (args.isUserProvided("help")) {
     cout << visibleOptions << "\n";
     exit(0);
-  } else if(args.isDefined("help-cegpra")) {
+  } else if(args.isUserProvided("help-cegpra")) {
     cout << cegpraOptions << "\n";
     exit(0);
-  } else if(args.isDefined("help-eq")) {
+  } else if(args.isUserProvided("help-eq")) {
     cout << equivalenceCheckingOptions << "\n";
     exit(0);
-  } else if(args.isDefined("help-exp")) {
+  } else if(args.isUserProvided("help-exp")) {
     cout << experimentalOptions << "\n";
     exit(0);
-  } else if(args.isDefined("help-ltl")) {
+  } else if(args.isUserProvided("help-ltl")) {
     cout << ltlOptions << "\n";
     exit(0);
-  } else if(args.isDefined("help-par")) {
+  } else if(args.isUserProvided("help-par")) {
     cout << parallelProgramOptions << "\n";
     exit(0);
-  } else if(args.isDefined("help-pat")) {
+  } else if(args.isUserProvided("help-pat")) {
     cout << patternSearchOptions << "\n";
     exit(0);
-  } else if(args.isDefined("help-rers")) {
+  } else if(args.isUserProvided("help-rers")) {
     cout << rersOptions << "\n";
     exit(0);
-  } else if(args.isDefined("help-svcomp")) {
+  } else if(args.isUserProvided("help-svcomp")) {
     cout << svcompOptions << "\n";
     exit(0);
-  } else if(args.isDefined("help-vis")) {
+  } else if(args.isUserProvided("help-vis")) {
     cout << visualizationOptions << "\n";
     exit(0);
-  } else if(args.isDefined("help-data-race")) {
+  } else if(args.isUserProvided("help-data-race")) {
     cout << dataRaceOptions << "\n";
     exit(0);
-  } else if(args.isDefined("help-info")) {
+  } else if(args.isUserProvided("help-info")) {
     cout << infoOptions << "\n";
     exit(0);
-  } else if (args.isDefined("version")) {
+  } else if (args.isUserProvided("version")) {
     cout << "CodeThorn version "<<version<<endl;
     cout << "Written by Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl\n";
     exit(0);
@@ -398,6 +442,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     // Must be a CodeThorn option, therefore remove it from argv.
     argv[i] = strdup("");
   }
+
+  checkSpotOptions();
+  checkZ3Options();
 
   return args;
 }

@@ -5,4 +5,7 @@
 
 CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger, std::string version);
 
+void checkSpotOptions();
+void checkZ3Options();
+
 #endif
