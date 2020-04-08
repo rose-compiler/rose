@@ -2561,6 +2561,8 @@ Ada_ROSE_Translation::processStatement( Statement_Struct & statement, int elemen
 #endif
                break;
              }
+          case A_Goto_Statement:
+               break;
 
 #if 0
           case x:
