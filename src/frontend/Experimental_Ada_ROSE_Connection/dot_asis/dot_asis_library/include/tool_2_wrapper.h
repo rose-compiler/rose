@@ -3,14 +3,25 @@
 
 #include "a_nodes.h"
 
-
-extern "C" void dot_asisinit (void);
-extern "C" void dot_asisfinal (void);
-
+#if __cplusplus
+#define EXTERN
 extern "C"
+{
+#else
+#define EXTERN extern
+#endif
+
+EXTERN void dot_asisinit (void);
+EXTERN void dot_asisfinal (void);
+
+EXTERN
 Nodes_Struct tool_2_wrapper
   (char *target_file_in,
    char *gnat_home,
    char *output_dir);
+
+#if __cplusplus
+}
+#endif
 
 #endif // ifndef TOOL_2_WRAPPER_H
