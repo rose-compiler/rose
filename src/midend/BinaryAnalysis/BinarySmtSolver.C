@@ -210,6 +210,9 @@ SmtSolver::resetStatistics() {
     classStats.prepareTime += stats.prepareTime;
     classStats.solveTime += stats.solveTime;
     classStats.evidenceTime += stats.evidenceTime;
+    classStats.nSatisfied += stats.nSatisfied;
+    classStats.nUnsatisfied += stats.nUnsatisfied;
+    classStats.nUnknown += stats.nUnknown;
     stats = Stats();
 }
 
@@ -394,18 +397,19 @@ SmtSolver::check() {
         }
     }
     
-    if (mlog[DEBUG]) {
-        switch (retval) {
-            case SAT_NO:
-                mlog[DEBUG] <<"  unsat\n";
-                break;
-            case SAT_YES:
-                mlog[DEBUG] <<"  sat\n";
-                break;
-            case SAT_UNKNOWN:
-                mlog[DEBUG] <<"  unknown\n";
-                break;
-        }
+    switch (retval) {
+        case SAT_NO:
+            SAWYER_MESG(mlog[DEBUG]) <<"  unsat\n";
+            ++stats.nUnsatisfied;
+            break;
+        case SAT_YES:
+            SAWYER_MESG(mlog[DEBUG]) <<"  sat\n";
+            ++stats.nSatisfied;
+            break;
+        case SAT_UNKNOWN:
+            SAWYER_MESG(mlog[DEBUG]) <<"  unknown\n";
+            ++stats.nUnknown;
+            break;
     }
     
     // Cache the result

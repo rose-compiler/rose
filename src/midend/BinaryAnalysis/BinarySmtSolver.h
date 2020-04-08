@@ -96,11 +96,14 @@ public:
         double prepareTime;                             /**< Time spent creating assertions before solving. */
         double solveTime;                               /**< Seconds spent in solver's solve function. */
         double evidenceTime;                            /**< Seconds to retrieve evidence of satisfiability. */
+        size_t nSatisfied;                              /**< Number of times the solver returned "satisified". */
+        size_t nUnsatisfied;                            /**< Number of times the solver returned "unsatisfied". */
+        size_t nUnknown;                                /**< Number of times the solver returned "unknown". */
         // Remember to add all data members to resetStatistics()
 
         Stats()
             : ncalls(0), input_size(0), output_size(0), memoizationHits(0), nSolversCreated(0), nSolversDestroyed(0),
-              prepareTime(0.0), solveTime(0.0), evidenceTime(0.0) {
+              prepareTime(0.0), solveTime(0.0), evidenceTime(0.0), nSatisfied(0), nUnsatisfied(0), nUnknown(0) {
         }
     };
 
