@@ -401,6 +401,7 @@ void configureRose() {
     exit(1);
   }
 
+  // see class Options in src/roseSupport/utility_functions.h
   Rose::global_options.set_frontend_notes(false);
   Rose::global_options.set_frontend_warnings(false);
   Rose::global_options.set_backend_warnings(false);
