@@ -205,7 +205,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
           if (EDG_ROSE_Translation::edg_include_file_map.find(filename) != EDG_ROSE_Translation::edg_include_file_map.end())
              {
                SgIncludeFile* include_file = EDG_ROSE_Translation::edg_include_file_map[filename];
-            // ROSE_ASSERT(include_file != NULL);
+            // ASSERT_not_null(include_file);
                if (include_file != NULL)
                   {
 #if 0
@@ -242,7 +242,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 #if 0
                          printf ("include_file = %p \n",include_file);
 #endif
-                      // ROSE_ASSERT(include_file != NULL);
+                      // ASSERT_not_null(include_file);
                          if (include_file != NULL)
                             {
 #if 0
@@ -687,7 +687,7 @@ void IncludedFilesUnparser::addIncludeCompilerPath(int upFolderCount, const stri
 
 void IncludedFilesUnparser::updatePreprocessingInfoPaths(const string& includedFile, PreprocessingInfo* includingPreprocessingInfo) 
    {
-     ROSE_ASSERT(includingPreprocessingInfo != NULL);
+     ASSERT_not_null(includingPreprocessingInfo);
 
 #if 0
      printf ("In updatePreprocessingInfoPaths(): includedFile = %s \n",includedFile.c_str());
@@ -876,10 +876,10 @@ IncludedFilesUnparser::initializeFilesToUnparse()
   // DQ (8/20/2019): Collect the comments and CPP directives of the modified header files so that they can be unparsed.
 #if 1
   // SgSourceFile* file = NULL;
-     ROSE_ASSERT(projectNode != NULL);
+     ASSERT_not_null(projectNode);
      SgSourceFile* file = isSgSourceFile(&(projectNode->get_file(0)));
 
-     ROSE_ASSERT(file != NULL);
+     ASSERT_not_null(file);
 
      if (file->get_header_file_unparsing_optimization() == true)
         {
@@ -910,7 +910,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                if (unparseScopesMap.find(filename) != unparseScopesMap.end())
                   {
                     SgScopeStatement* scope = unparseScopesMap[filename];
-                    ROSE_ASSERT(scope != NULL);
+                    ASSERT_not_null(scope);
 #if 0
                     printf ("Found entry in unparseScopesMap: scope = %p = %s \n",scope,scope->class_name().c_str());
 #endif
@@ -927,7 +927,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                   {
                  // SgSourceFile* sourceFile = unparseSourceFileMap[filename];
                     sourceFile = unparseSourceFileMap[filename];
-                    ROSE_ASSERT(sourceFile != NULL);
+                    ASSERT_not_null(sourceFile);
 #if 0
                     printf ("Found entry in unparseSourceFileMap: sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
 #endif
@@ -947,7 +947,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                     printf ("In initializeFilesToUnparse(): Looking for a SgIncludeFile: filename = %s \n",filename.c_str());
 #endif
                     SgIncludeFile* includeFile = EDG_ROSE_Translation::edg_include_file_map[filename];
-                 // ROSE_ASSERT(includeFile != NULL);
+                 // ASSERT_not_null(includeFile);
                     if (includeFile != NULL)
                        {
 #if 0
@@ -961,15 +961,15 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                             {
                               printf ("When sourceFile == NULL we need to add it directly: filename = %s \n",filename.c_str());
 
-                              ROSE_ASSERT(projectNode != NULL);
+                              ASSERT_not_null(projectNode);
                               sourceFile = buildSourceFileForHeaderFile(projectNode,filename);
 
-                              ROSE_ASSERT(sourceFile != NULL);
+                              ASSERT_not_null(sourceFile);
 
                               printf ("Calling includeFile->set_source_file(sourceFile): includeFile = %p filename = %s sourceFile = %p \n",includeFile,includeFile->get_filename().str(),sourceFile);
 
                            // This is set in buildSourceFileForHeaderFile().
-                              ROSE_ASSERT(includeFile->get_source_file() != NULL);
+                              ASSERT_not_null(includeFile->get_source_file());
                            // includeFile->set_source_file(sourceFile);
 #if 0
                               printf ("Exiting as a test! \n");
@@ -990,7 +990,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #endif
                        }
 
-                    ROSE_ASSERT(sourceFile != NULL);
+                    ASSERT_not_null(sourceFile);
 #if 0
                     printf ("Found entry in EDG_ROSE_Translation::edg_include_file_map: sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
 #endif
@@ -1002,7 +1002,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #endif
                   }
 
-            // ROSE_ASSERT(sourceFile != NULL);
+            // ASSERT_not_null(sourceFile);
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -1015,19 +1015,19 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                  // ROSE_ASSERT(unparseSourceFileMap.find(filename) != unparseSourceFileMap.end());
 
                     SgScopeStatement* scopeForHeaderFile = unparseScopesMap[filename];
-                    ROSE_ASSERT(scopeForHeaderFile != NULL);
+                    ASSERT_not_null(scopeForHeaderFile);
                     SgGlobal* globalScopeForHeaderFile = isSgGlobal(scopeForHeaderFile);
-                    ROSE_ASSERT(globalScopeForHeaderFile != NULL);
+                    ASSERT_not_null(globalScopeForHeaderFile);
 
                     SgNode* parent = globalScopeForHeaderFile->get_parent();
-                    ROSE_ASSERT(parent != NULL);
+                    ASSERT_not_null(parent);
 
                     printf ("parent = %p = %s \n",parent,parent->class_name().c_str());
 
                  // SgSourceFile* sourceFile = unparseSourceFileMap[filename];
                  // SgSourceFile* sourceFile = isSgSourceFile(parent);
 #endif
-                    ROSE_ASSERT(sourceFile != NULL);
+                    ASSERT_not_null(sourceFile);
 #if 0
                     printf ("sourceFile->getFileName()      = %s \n",sourceFile->getFileName().c_str());
                     printf ("sourceFile->get_isHeaderFile() = %s \n",sourceFile->get_isHeaderFile() ? "true" : "false");
@@ -1037,12 +1037,12 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                     if (sourceFile->get_isHeaderFile() == true)
                        {
                          SgNode* parent2 = sourceFile->get_parent();
-                         ROSE_ASSERT(parent2 != NULL);
+                         ASSERT_not_null(parent2);
 #if 0
                          printf ("parent2 = %p = %s \n",parent2,parent2->class_name().c_str());
 #endif
                          SgIncludeFile* includeFile = isSgIncludeFile(sourceFile->get_parent());
-                         ROSE_ASSERT(includeFile != NULL);
+                         ASSERT_not_null(includeFile);
 
                          modifiedIncludeFiles.insert(includeFile);
                        }
@@ -1091,14 +1091,14 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                while (includeFileIterator != modifiedIncludeFiles.end())
                   {
                     SgIncludeFile* includeFile = *includeFileIterator;
-                    ROSE_ASSERT(includeFile != NULL);
+                    ASSERT_not_null(includeFile);
 
                     string filename = includeFile->get_filename();
 #if 0
                     printf ("Iterating over modifiedIncludeFiles: Calling function to collect comments and CPP directives from filename = %s \n",filename.c_str());
 #endif
                     SgSourceFile* sourceFile = isSgSourceFile(includeFile->get_source_file());
-                    ROSE_ASSERT(sourceFile != NULL);
+                    ASSERT_not_null(sourceFile);
 
                  // DQ (10/11/2019): This is required to be set when using the header file optimization (tested in AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute()).
 #if 0
@@ -1113,7 +1113,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
                     ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
 
 #if 0
-                 // ROSE_ASSERT(filePreprocInfo != NULL);
+                 // ASSERT_not_null(filePreprocInfo);
                     if (filePreprocInfo != NULL)
                        {
                          printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): filePreprocInfo->getList().empty() = %s \n",filePreprocInfo->getList().empty() ? "true" : "false");
@@ -1159,7 +1159,7 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #if 0
              {
                SgSourceFile* sourceFile = isSgSourceFile(file);
-               ROSE_ASSERT(sourceFile != NULL);
+               ASSERT_not_null(sourceFile);
 
                printf ("sourceFile->getFileName()      = %s \n",sourceFile->getFileName().c_str());
                printf ("sourceFile->get_isHeaderFile() = %s \n",sourceFile->get_isHeaderFile() ? "true" : "false");
@@ -1345,7 +1345,7 @@ IncludedFilesUnparser::collectAdditionalListOfHeaderFilesToCopy()
      printf ("defaultUnparseFolderName = %s \n",defaultUnparseFolderName.c_str());
 #endif
 
-     ROSE_ASSERT(projectNode != NULL);
+     ASSERT_not_null(projectNode);
      string applicationRootDirectory = projectNode->get_applicationRootDirectory();
 
 #if 0
@@ -1649,11 +1649,11 @@ void IncludedFilesUnparser::visit(SgNode* node)
      if (includeDirectiveStatement != NULL)
         {
           SgHeaderFileBody* headerFileBody = includeDirectiveStatement->get_headerFileBody();
-          ROSE_ASSERT(headerFileBody != NULL);
+          ASSERT_not_null(headerFileBody);
           SgSourceFile* headerFile = headerFileBody->get_include_file();
 
        // DQ (11/22/2018): We only build associated SgSourceFile for application header files.
-       // ROSE_ASSERT(headerFile != NULL);
+       // ASSERT_not_null(headerFile);
           if (headerFile != NULL)
              {
 #if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
@@ -1693,7 +1693,7 @@ void IncludedFilesUnparser::visit(SgNode* node)
                printf ("ERROR: normalizedFileName = %s \n",normalizedFileName.c_str());
 #endif
                SgSourceFile* sourceFile = TransformationSupport::getSourceFile(node);
-               ROSE_ASSERT(sourceFile != NULL);
+               ASSERT_not_null(sourceFile);
                normalizedFileName = sourceFile->getFileName();
 #if 0
                printf ("normalizedFileName = %s \n",normalizedFileName.c_str());
@@ -1847,15 +1847,15 @@ void IncludedFilesUnparser::visit(SgNode* node)
                if (isSgStatement(node) == NULL)
                   {
                  // DQ (6/8/2019): Added error checking.
-                    ROSE_ASSERT(node != NULL);
+                    ASSERT_not_null(node);
                     SgStatement* enclosingStatement = TransformationSupport::getStatement(node);
                     if (enclosingStatement == NULL)
                        {
                          printf ("Error: enclosingStatement == NULL: computed from node = %p = %s \n",node,node->class_name().c_str());
-                         ROSE_ASSERT(node->get_file_info() != NULL);
+                         ASSERT_not_null(node->get_file_info());
                          node->get_file_info()->display("Error: enclosingStatement == NULL: debug");
                        }
-                    ROSE_ASSERT(enclosingStatement != NULL);
+                    ASSERT_not_null(enclosingStatement);
 #if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
                     printf ("Found non-statement = %p = %s as modified, marking enclosing statement = %p = %s \n",
                          node,node->class_name().c_str(),enclosingStatement,enclosingStatement->class_name().c_str());
