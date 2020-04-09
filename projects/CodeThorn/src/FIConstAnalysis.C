@@ -694,13 +694,12 @@ void FIConstAnalysis::writeCvsConstResult(VariableIdMapping& variableIdMapping, 
     cout << "Error: could not open file: " << filename << endl;
     exit(1);
   }
-  cout<<"DEBUG: FIConstAnalysis: Result:"<<endl;
+  //cout<<"DEBUG: FIConstAnalysis: Result:"<<endl;
   //VariableConstInfo vci(&variableIdMapping, &map);
   for(VarConstSetMap::iterator i=_varConstSetMap.begin();i!=_varConstSetMap.end();++i) {
     VariableId varId=(*i).first;
     //string variableName=variableIdMapping.uniqueVariableName(varId);
     string variableName=variableIdMapping.variableName(varId);
-    cout<<"DEBUG: writing data for variable "<<variableName<<endl;
     myfile<<variableName;
     myfile<<",";
     myfile<<global_variableConstInfo->isAny(varId);
