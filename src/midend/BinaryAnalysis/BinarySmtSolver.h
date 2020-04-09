@@ -8,6 +8,7 @@
 #endif
 
 #include <BinarySymbolicExpr.h>
+#include <boost/chrono.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/serialization/access.hpp>
@@ -344,6 +345,11 @@ public:
     virtual size_t memoizationNEntries() const {
         return memoization_.size();
     }
+
+    /** Set the timeout for the solver.
+     *
+     *  This sets the maximum time that the solver will try to find a solution before returning "unknown". */
+    virtual void timeout(boost::chrono::duration<double> seconds) = 0;
 
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
