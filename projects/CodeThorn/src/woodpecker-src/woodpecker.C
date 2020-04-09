@@ -49,7 +49,8 @@ using namespace Sawyer::Message;
 //static  VariableIdSet variablesOfInterest;
 static bool detailedOutput=0;
 const char* csvAssertFileName=0;
-const char* csvConstResultFileName=0;
+string csvConstResultFileName;
+const char* csvConstResultFileName_c=0;
 bool global_option_multiconstanalysis=false;
 
 size_t numberOfFunctions(SgNode* node) {
@@ -84,9 +85,7 @@ void printCodeStatistics(SgNode* root) {
 int main(int argc, char* argv[]) {
   ROSE_INITIALIZE;
   
-  CodeThorn::CommandLineOptions args;
-
- Rose::Diagnostics::mprefix->showProgramName(false);
+  Rose::Diagnostics::mprefix->showProgramName(false);
   Rose::Diagnostics::mprefix->showThreadId(false);
   Rose::Diagnostics::mprefix->showElapsedTime(false);
 
@@ -144,25 +143,28 @@ int main(int argc, char* argv[]) {
   // this this not allow unregistered
   args.parse(argc,argv,desc);
 #endif
-  if (args.isDefined("help")) {
+  if (args.isUserProvided("help")) {
     cout << "woodpecker <filename> [OPTIONS]"<<endl;
     cout << desc << "\n";
     exit(0);
   }
-  if (args.isDefined("rose-help")) {
+  if (args.isUserProvided("rose-help")) {
     argv[1] = strdup("--help");
   }
 
-  if (args.isDefined("version")) {
+  if (args.isUserProvided("version")) {
     cout << "Woodpecker version 0.1\n";
     cout << "Written by Markus Schordan 2013\n";
     exit(0);
   }
-  if (args.isDefined("csv-assert")) {
+  if (args.isUserProvided("csv-assert")) {
     csvAssertFileName=args.getString("csv-assert").c_str();
   }
-  if (args.isDefined("csv-const-result")) {
-    csvConstResultFileName=args.getString("csv-const-result").c_str();
+  if (args.isUserProvided("csv-const-result")) {
+    csvConstResultFileName=args.getString("csv-const-result");
+    cout<<"Woodpecker: CSVConstResultFileName: "<<csvConstResultFileName<<endl;
+    csvConstResultFileName_c=csvConstResultFileName.c_str();
+    cout<<"Woodpecker: CSVConstResultFileName: "<<csvConstResultFileName_c<<endl;
   }
 
   if(args.getBool("verbose"))
@@ -214,11 +216,12 @@ int main(int argc, char* argv[]) {
 
   VariableIdMappingExtended variableIdMapping;
   variableIdMapping.computeVariableSymbolMapping(root);
+  AbstractValue::setVariableIdMapping(&variableIdMapping);
   variableIdMapping.computeTypeSizes();
-  
+
   logger[TRACE]<<"STATUS: variable id mapping generated."<<endl;
   
-  if(args.isDefined("transform-thread-variable")) {
+  if(args.isUserProvided("transform-thread-variable")) {
     Threadification* threadTransformation=new Threadification(&variableIdMapping);
     threadTransformation->transform(root);
     root->unparse(0,0);
@@ -297,7 +300,7 @@ int main(int argc, char* argv[]) {
     cout <<"constant variables: "<<variablesOfInterest.size()<<endl;
   }
 
-  if(csvConstResultFileName) {
+  if(csvConstResultFileName_c!=nullptr) {
     FIConstAnalysis fiConstAnalysis(&variableIdMapping);
     fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
     fiConstAnalysis.runAnalysis(root, mainFunctionRoot);
@@ -309,10 +312,11 @@ int main(int argc, char* argv[]) {
     logger[INFO]<<"number of used vars in global initializations: "<<setOfUsedVarsGlobalInit.size()<<endl;
     logger[INFO]<<"number of vars inside functions or in global inititializations: "<<setOfAllUsedVars.size()<<endl;
     fiConstAnalysis.filterVariables(setOfAllUsedVars);
-    fiConstAnalysis.writeCvsConstResult(variableIdMapping, string(csvConstResultFileName));
+    cout<<"woodpecker: csvconstanalysis file: "<<csvConstResultFileName_c<<endl;
+    fiConstAnalysis.writeCvsConstResult(variableIdMapping, csvConstResultFileName_c);
   }
 
-  if(args.isDefined("generate-conversion-functions")) {
+  if(args.isUserProvided("generate-conversion-functions")) {
     ConversionFunctionsGenerator gen;
     gen.generateFile(root,"conversionFunctions.C");
     return 0;
@@ -341,7 +345,7 @@ int main(int argc, char* argv[]) {
     root->unparse(0,0);
   }
 
-  if(args.isDefined("stats")) {
+  if(args.isUserProvided("stats")) {
     printCodeStatistics(root);
   }
 

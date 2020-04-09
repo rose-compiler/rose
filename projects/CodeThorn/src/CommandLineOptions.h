@@ -56,6 +56,8 @@ public:
   /// parse command line, store are options in args.
   void parse(int argc, char * argv[], po::options_description all);
   /// parse command line, store are options in args.
+  void parseAllowUnregistered(int argc, char * argv[], po::options_description all);
+  /// parse command line, store are options in args.
   void parse(int argc, char * argv[], po::options_description all, po::options_description configFileOptions);
   };
 
