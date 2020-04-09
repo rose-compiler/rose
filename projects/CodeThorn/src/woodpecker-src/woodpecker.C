@@ -162,9 +162,7 @@ int main(int argc, char* argv[]) {
   }
   if (args.isUserProvided("csv-const-result")) {
     csvConstResultFileName=args.getString("csv-const-result");
-    cout<<"Woodpecker: CSVConstResultFileName: "<<csvConstResultFileName<<endl;
     csvConstResultFileName_c=csvConstResultFileName.c_str();
-    cout<<"Woodpecker: CSVConstResultFileName: "<<csvConstResultFileName_c<<endl;
   }
 
   if(args.getBool("verbose"))
@@ -312,7 +310,6 @@ int main(int argc, char* argv[]) {
     logger[INFO]<<"number of used vars in global initializations: "<<setOfUsedVarsGlobalInit.size()<<endl;
     logger[INFO]<<"number of vars inside functions or in global inititializations: "<<setOfAllUsedVars.size()<<endl;
     fiConstAnalysis.filterVariables(setOfAllUsedVars);
-    cout<<"woodpecker: csvconstanalysis file: "<<csvConstResultFileName_c<<endl;
     fiConstAnalysis.writeCvsConstResult(variableIdMapping, csvConstResultFileName_c);
   }
 
