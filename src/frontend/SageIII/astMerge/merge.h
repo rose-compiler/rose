@@ -1,37 +1,24 @@
-#ifndef MERGE_H
-#define MERGE_H
+#ifndef __MERGE_H__
+#define __MERGE_H__
 
+#include <list>
+#include <string>
 
-// #include "colorTraversal.h"
+class SgProject;
 
-#include "test_support.h"
-#include "merge_support.h"
-#include "nullifyAST.h"
-#include "buildMangledNameMap.h"
-#include "deleteOrphanNodes.h"
-#include "buildReplacementMap.h"
-#include "fixupTraversal.h"
-#include "collectAssociateNodes.h"
-#include "requiredNodes.h"
+namespace Rose {
+namespace AST {
 
-// Global variable that functions can use to make sure that there IR nodes were not deleted!
-extern std::set<SgNode*> finalDeleteSet;
+// Load
+void load(SgProject *, std::list<std::string> const &);
 
-// std::set<SgNode*> getSetOfFrontendSpecificNodes( const std::set<SgNode*> & requiredNodesTest );
-// void deleteSubtrees ( std::set<SgNode*> & listToDelete );
-std::set<SgNode*> getSetOfFrontendSpecificNodes();
+// Remove redundant (shareable) nodes from AST. Used when building multiple
+// translation units from the same command lines, and when serialized ASTs
+// are loaded from files.
+void merge(SgProject *);
 
-void deleteNodes ( std::set<SgNode*> & listToDelete );
+}
+}
 
-void deleteSetErrorCheck( SgProject* project, const std::set<SgNode*> & listToDelete );
-
-void mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes = false );
-
-
-// DQ (7/3/2010): Implementation of alternative appraoch to define the list 
-// of redundant nodes to delete based on the detection of nodes disconnected 
-// from the modified AST after the merge.
-std::set<SgNode*> buildDeleteSet( SgProject* project );
-
-#endif // MERGE_H
+#endif // __MERGE_H__
 

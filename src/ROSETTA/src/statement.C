@@ -525,7 +525,8 @@ Grammar::setUpStatements ()
           JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement     |
           StaticAssertionDeclaration              | OmpDeclareSimdStatement   | MicrosoftAttributeDeclaration|
           JovialCompoolStatement                  | JovialDirectiveStatement  | JovialDefineDeclaration      |
-          NonrealDecl                             | EmptyDeclaration        /*| ClassPropertyList |*/,
+          NonrealDecl                             | EmptyDeclaration                 
+          /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
 

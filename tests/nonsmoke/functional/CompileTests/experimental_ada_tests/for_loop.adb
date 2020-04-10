@@ -1,6 +1,5 @@
 function SumRange(x, y: IN Integer) return Integer is
    Result : Integer;
-   I      : Integer;
 begin
    Result := 0;
 

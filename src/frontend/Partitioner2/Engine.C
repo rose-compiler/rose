@@ -251,6 +251,28 @@ Engine::loaderSwitches(LoaderSettings &settings) {
                    "and archive files are processed without linking.  The default link command is \"" +
                    StringUtility::cEscape(settings.linker) + "\"."));
 
+    sg.insert(Switch("env-erase-name")
+              .argument("variable", anyParser(settings.envEraseNames))
+              .whichValue(SAVE_ALL)
+              .doc("Remove the specified variable from the environment when processing specimens with the \"run:\" schema. This "
+                   "switch may appear multiple times to remove multiple variables. The default is to not erase any variables. "
+                   "See also, @s{env-erase-pattern}."));
+
+    sg.insert(Switch("env-erase-pattern")
+              .argument("regular-expression", anyParser(settings.envErasePatterns))
+              .whichValue(SAVE_ALL)
+              .doc("Remove variables whose names match the specified regular expression when processing specimens with the "
+                   "\"run:\" schema. You must specify \"^\" and/or \"$\" if you want the regular expression anchored to the "
+                   "beginning and/or end of names. This switch may appear multiple times to supply multiple regular expressions. "
+                   "See also, @s{env-erase-name}."));
+
+    sg.insert(Switch("env-insert")
+              .argument("name=value", anyParser(settings.envInsert))
+              .whichValue(SAVE_ALL)
+              .doc("Add the specified variable and value to the environment when processing specimens with the \"run:\" schema. "
+                   "Insertions occur after all environment variable erasures. This switch may appear multiple times to specify "
+                   "multiple environment variables."));
+
     return sg;
 }
 
@@ -1208,7 +1230,7 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             bool doReplace = false;
             if (colon2 == std::string::npos) {
                 // [Robb Matzke 2017-07-24]: deprecated. ROSE used to accept "run:/name/of/executable" which is a
-                // different syntax than what all the other methods accept (the others all have two colons).
+                // different syntax than what all the other methods accept (the others all have at least two colons).
                 exeName = fileName.substr(colon1+1);
             } else {
                 std::string optionsStr = fileName.substr(colon1+1, colon2-(colon1+1));
@@ -1232,6 +1254,18 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
                 .set(Debugger::REDIRECT_INPUT)
                 .set(Debugger::REDIRECT_OUTPUT)
                 .set(Debugger::REDIRECT_ERROR);
+            BOOST_FOREACH (const std::string &name, settings_.loader.envEraseNames)
+                subordinate.eraseEnvironmentVariable(name);
+            BOOST_FOREACH (const boost::regex &re, settings_.loader.envErasePatterns)
+                subordinate.eraseMatchingEnvironmentVariables(re);
+            BOOST_FOREACH (const std::string &var, settings_.loader.envInsert) {
+                size_t eq = var.find('=');
+                if (std::string::npos == eq)
+                    throw std::runtime_error("no '=' in NAME=VALUE: \"" + StringUtility::cEscape(var) + "\"");
+                if (eq == 0)
+                    throw std::runtime_error("empty name in NAME=VALUE: \"" + StringUtility::cEscape(var) + "\"");
+                subordinate.insertEnvironmentVariable(var.substr(0, eq), var.substr(eq+1));
+            }
             Debugger::Ptr debugger = Debugger::instance(subordinate);
 
             // Set breakpoints for all executable addresses in the memory map created by the Linux kernel. Since we're doing

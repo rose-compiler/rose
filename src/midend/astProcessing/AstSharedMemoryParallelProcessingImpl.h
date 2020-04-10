@@ -207,7 +207,7 @@ AstSharedMemoryParallelTopDownBottomUpProcessing(const AstSharedMemoryParallelTo
 
 template <class I, class S>
 void
-AstSharedMemoryParallelTopDownBottomUpProcessing<I, S>::set_numberOfThreads(size_t threads) const
+AstSharedMemoryParallelTopDownBottomUpProcessing<I, S>::set_numberOfThreads(size_t threads)
 {
 #if !USE_ROSE
 // DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct
@@ -219,7 +219,7 @@ AstSharedMemoryParallelTopDownBottomUpProcessing<I, S>::set_numberOfThreads(size
 
 template <class I, class S>
 void
-AstSharedMemoryParallelTopDownBottomUpProcessing<I, S>::set_synchronizationWindowSize(size_t windowSize) const
+AstSharedMemoryParallelTopDownBottomUpProcessing<I, S>::set_synchronizationWindowSize(size_t windowSize)
 {
 #if !USE_ROSE
 // DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct
@@ -402,7 +402,7 @@ AstSharedMemoryParallelTopDownProcessing(const AstSharedMemoryParallelTopDownPro
 
 template <class I>
 void
-AstSharedMemoryParallelTopDownProcessing<I>::set_numberOfThreads(size_t threads) const
+AstSharedMemoryParallelTopDownProcessing<I>::set_numberOfThreads(size_t threads)
 {
 #if !USE_ROSE
 // DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct
@@ -414,7 +414,7 @@ AstSharedMemoryParallelTopDownProcessing<I>::set_numberOfThreads(size_t threads)
 
 template <class I>
 void
-AstSharedMemoryParallelTopDownProcessing<I>::set_synchronizationWindowSize(size_t windowSize) const
+AstSharedMemoryParallelTopDownProcessing<I>::set_synchronizationWindowSize(size_t windowSize)
 {
 #if !USE_ROSE
 // DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct
@@ -589,7 +589,7 @@ AstSharedMemoryParallelBottomUpProcessing(const AstSharedMemoryParallelBottomUpP
 
 template <class S>
 void
-AstSharedMemoryParallelBottomUpProcessing<S>::set_numberOfThreads(size_t threads) const
+AstSharedMemoryParallelBottomUpProcessing<S>::set_numberOfThreads(size_t threads)
 {
 #if !USE_ROSE
 // DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct
@@ -601,7 +601,7 @@ AstSharedMemoryParallelBottomUpProcessing<S>::set_numberOfThreads(size_t threads
 
 template <class S>
 void
-AstSharedMemoryParallelBottomUpProcessing<S>::set_synchronizationWindowSize(size_t windowSize) const
+AstSharedMemoryParallelBottomUpProcessing<S>::set_synchronizationWindowSize(size_t windowSize)
 {
 #if !USE_ROSE
 // DQ (11/3/2011): EDG compilains about this (but GNU allowed it, I think that EDG might be correct

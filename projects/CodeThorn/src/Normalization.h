@@ -171,13 +171,14 @@ namespace CodeThorn {
     static SgGotoStatement* createGotoStmtAndInsertLabel(SgLabelStatement* newLabel, SgStatement* target);
     // transforms Label1: Label2: LabelN: Stmt; ==> Label1:; Label2:; LabelN:; Stmt;
     // requires: normalizeSingleStatementsToBlocks()
-
-  private:
+    
     // used to exclude templates from normalization (not excluding template instantiations!)
+    // PP (04/06/20) made functions public so they can be accessed from outside normalization
     bool isTemplateInstantiationNode(SgNode* node);
     SgClassDeclaration* isSpecialization(SgNode* node);
     bool isTemplateNode(SgNode* node);
 
+  private:
     /* normalize all Expressions in AST. The original variables remain
      * in the program and are assign the last value of the sequence of
      * operations of an expression. */

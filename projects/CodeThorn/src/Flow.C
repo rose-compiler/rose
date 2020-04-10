@@ -516,6 +516,8 @@ string Flow::toDot(Labeler* labeler) {
           ss<<" ... "<<expr->unparseToString();
         }
         ss<<":";
+      } else if(isSgTryStmt(node)) {
+        ss<<"try: ";
       } else if(isSgDefaultOptionStmt(node)) {
         ss<<"default:";
       } else if(labeler->isJoinLabel(*i)) {
