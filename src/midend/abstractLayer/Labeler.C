@@ -276,6 +276,7 @@ int Labeler::numberOfAssociatedLabels(SgNode* node) {
   switch(node->variantT()) {
     //  case V_SgFunctionCallExp:
   case V_SgBasicBlock:
+  case V_SgTryStmt:
     return 1;
   case V_SgFunctionDefinition:
     return 2;
