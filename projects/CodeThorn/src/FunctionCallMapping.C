@@ -72,6 +72,11 @@ float percent(int part, int whole)
   return (part*100.0)/whole;
 }
 
+std::string nameOfType(SgFunctionDefinition* fn)
+{
+  return fn->get_declaration()->get_type()->unparseToString();
+}
+
 void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
   RoseAst ast(root);
   std::vector<SgFunctionDeclaration*> funDeclList;
@@ -104,11 +109,45 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
 #endif
   SAWYER_MESG(logger[INFO])<< "Found " << funDefList.size() << " function definitions." <<endl;
   SAWYER_MESG(logger[INFO])<< "Resolving " << funCallList.size() << " function call sites." <<endl;
-  // experimental O(m*n) matching
+  
+  // experimental O(m lg n) + O(n lg n) matching
+  ROSE_ASSERT(_matchMode == 3);
+  
+  if (_matchMode == 3) {
+    std::sort( funDefList.begin(), funDefList.end(), 
+               [](SgFunctionDefinition* lhs, SgFunctionDefinition* rhs) -> bool
+               {
+                 return nameOfType(lhs) < nameOfType(rhs); 
+               }
+             );
+  }
+  
   int n=0;
   for (auto fc : funCallList) {
     FunctionCallInfo fcInfo=determineFunctionCallInfo(fc);
     if(fcInfo.funCallType!=nullptr) {
+      std::string funCallTypeName = fcInfo.funCallType->unparseToString();
+      auto pos = std::lower_bound( funDefList.begin(), funDefList.end(),
+                                   funCallTypeName, 
+                                   [](SgFunctionDefinition* el, const std::string& criteria) -> bool
+                                   {
+                                     return nameOfType(el) < criteria;
+                                   }
+                                 );
+      
+      while (pos != funDefList.end() && (nameOfType(*pos) == funCallTypeName))
+      {
+        FunctionCallTarget fcTarget(*pos);
+        
+        if(fcInfo.isFunctionPointerCall()) {
+          mapping[fc].insert(fcTarget);n++;
+        } else if(fcInfo.funCallName==fcTarget.getFunctionName()) {
+          mapping[fc].insert(fcTarget);n++;
+        }
+        
+        ++pos;
+      }
+      /*
       for (auto fd : funDefList) {
         FunctionCallTarget fcTarget(fd);
         bool matching;
@@ -134,6 +173,7 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
           }
         }
       }
+      */
     } else {
       std::vector<SgFunctionDeclaration*> targets;
 
