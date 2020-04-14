@@ -115,7 +115,7 @@ protected:
 class CompactRepresentation : public CompReprBase{
     
     //! A Map to hold the SgNode to SgGraphNode mapping
-    unordered_map<SgNode *,SgGraphNode *> all_nodes;
+    boost::unordered_map<SgNode *,SgGraphNode *> all_nodes;
     
     //! Get Graph Node from SgNode
     SgGraphNode * getGraphNode(SgNode *node);
@@ -147,7 +147,7 @@ class CompactRepresentation : public CompReprBase{
     
 public:
     //! Get the Mapping from SgNode to SgGraphNode
-    unordered_map<SgNode *,SgGraphNode *>  getNodesMapping(){ return all_nodes;}
+    boost::unordered_map<SgNode *,SgGraphNode *>  getNodesMapping(){ return all_nodes;}
     CompactRepresentation() {  init(); }
     
     //! Get the Graph
@@ -214,16 +214,16 @@ public:
 //! Helper class to hold Alias Information
 class AliasInfoGenerator {
     //!  IN of every CFG Node
-    unordered_map<SgGraphNode *, CompReprPtr> ins;
+    boost::unordered_map<SgGraphNode *, CompReprPtr> ins;
     
     //!  OUT of every CFG Node
-    unordered_map<SgGraphNode *, CompReprPtr> outs;
+    boost::unordered_map<SgGraphNode *, CompReprPtr> outs;
     
     //! All the Return Stmts
     std::vector <AliasRelationNode > returnStmts;
     
     //! All the AliasRelations for every CFG Node 
-    unordered_map<SgGraphNode *, std::vector <std::pair<AliasRelationNode, AliasRelationNode> > >aliasRelations;    
+    boost::unordered_map<SgGraphNode *, std::vector <std::pair<AliasRelationNode, AliasRelationNode> > >aliasRelations;    
     
 public :
     AliasInfoGenerator();
@@ -283,7 +283,7 @@ class CollectAliasRelations {
       void run();
   private:
       //! recursively Collect Alias Information from the CFG Nodes
-      void recursiveCollect(SgGraphNode *, unordered_map<SgGraphNode*, CollectAliasRelations::COLOR> &);
+      void recursiveCollect(SgGraphNode *, boost::unordered_map<SgGraphNode*, CollectAliasRelations::COLOR> &);
 };
 
 //! IntraProcedurial DataFlow Analysis to compute exit and entry from all the function which
