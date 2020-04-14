@@ -16299,9 +16299,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
      * @param label The label.
      * @param id The identifier, if present, otherwise null.
      */
-// void c_action_module_stmt(Token_t * label, Token_t * id)
-    void c_action_module_stmt(Token_t *label, Token_t *moduleKeyword, Token_t *id,
-            Token_t *eos)
+    void c_action_module_stmt(Token_t *label, Token_t *moduleKeyword, Token_t *id, Token_t *eos)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(
@@ -16338,7 +16336,6 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
      * @param label The label.
      * @param id The identifier, if present, otherwise null.
      */
-// void c_action_end_module_stmt(Token_t * label, Token_t * id)
     void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword,
             Token_t *moduleKeyword, Token_t *id, Token_t *eos)
     {
@@ -16604,12 +16601,6 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
         ROSE_ASSERT(id != NULL);
         SgName name = id->text;
 
-        // SgExprListExp* nameList                = NULL;
-        // SgUseOnlyExpression* useOnlyExpression = NULL;
-        // SgUseStatement* useStatement = new SgUseStatement(name,nameList,useOnlyExpression);
-
-        // SgRenamePairPtrList nameList;
-        // SgUseStatement* useStatement = new SgUseStatement(name,hasOnly,nameList);
         SgUseStatement* useStatement = new SgUseStatement(name, hasOnly);
 
         ROSE_ASSERT(useKeyword != NULL);

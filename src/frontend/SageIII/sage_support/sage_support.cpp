@@ -22,6 +22,9 @@
 #   include "unparseFortran_modfile.h"
 #endif
 
+#include "unparseJovial_modfile.h"
+
+
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #   include <Partitioner2/Engine.h>
 #   include <Partitioner2/ModulesElf.h>
@@ -6285,6 +6288,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                                            {
                                              frontendErrorLevel = build_Jovial_AST(argv,inputCommandLine);
                                              frontend_failed = (frontendErrorLevel > 0);
+                                             generateJovialCompoolFile(this);
                                           // Rasmussen (11/21/2017): No Jovial compiler for now
                                              set_skipfinalCompileStep(true);
                                            }

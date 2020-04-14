@@ -134,6 +134,7 @@ private:
    TraversalContext context_;
 
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
+   void importModule(const std::string &module_name);
 
 public:
    const TraversalContext & get_context(void) {return context_;}

@@ -1,0 +1,8 @@
+START
+!COMPOOL (simplecompool) ;
+
+COMPOOL compooldirective ;
+
+   DEF ITEM gg F ;
+
+TERM

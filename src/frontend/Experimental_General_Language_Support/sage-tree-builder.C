@@ -3,6 +3,8 @@
 
 #include "sage-tree-builder.h"
 #include "Jovial_to_ROSE_translation.h"
+#include "ModuleBuilder.h"
+
 #include <boost/optional/optional_io.hpp>
 #include <iostream>
 
@@ -514,6 +516,16 @@ Enter(SgJovialDirectiveStatement* &directive, const std::string &directive_strin
 
 // The first nondefining declaration must be set
    directive->set_firstNondefiningDeclaration(directive);
+
+// Do what needs to be done for specific directives
+   switch (directive_type)
+     {
+       case SgJovialDirectiveStatement::e_compool:
+          importModule(directive_string);
+          break;
+       default:
+          break;
+     }
 }
 
 void SageTreeBuilder::
@@ -522,6 +534,16 @@ Leave(SgJovialDirectiveStatement* directive)
    mlog[INFO] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement*) \n";
 
    ROSE_ASSERT(directive != nullptr);
+
+   switch (directive->get_directive_type())
+     {
+       case SgJovialDirectiveStatement::e_compool:
+       // A compool directive reads in the compool file and pushes its scope to the scope stack
+          SageBuilder::popScopeStack();
+          break;
+       default:
+          break;
+     }
 
    SageInterface::appendStatement(directive, SageBuilder::topScopeStack());
    ROSE_ASSERT(directive->get_parent() == SageBuilder::topScopeStack());
@@ -690,6 +712,15 @@ Leave(SgTypedefDeclaration* type_def)
    mlog[INFO] << "SageTreeBuilder::Leave(SgTypedefDeclaration*) \n";
 
    SageInterface::appendStatement(type_def, SageBuilder::topScopeStack());
+}
+
+// template <typename T>
+void SageTreeBuilder::
+importModule(const std::string &module_name)
+{
+   mlog[INFO] << "SageTreeBuilder::importModule " << module_name << std::endl;
+
+   ModuleBuilderFactory::get_compool_builder().getModule(module_name);
 }
 
 } // namespace builder
