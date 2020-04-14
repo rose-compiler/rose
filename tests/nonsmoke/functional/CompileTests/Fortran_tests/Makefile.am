@@ -1345,6 +1345,13 @@ test2019_private_attribute2.f90.passed: testTranslator
 test2019_private_attribute.f90.passed: testTranslator test2019_private_attribute2.f90.passed
 	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
 
+test2020_use_iso_c_binding_3.f90.passed: testTranslator
+	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
+
+# Force representation of module dependency so that mod files are properly generated before use.
+test2020_use_iso_c_binding_4.f90.passed: testTranslator test2020_use_iso_c_binding_3.f90.passed
+	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
+
 test2010_01.o:
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:relax_syntax_check -c $(srcdir)/$(@:.o=.f90)
 
@@ -1371,7 +1378,7 @@ problemTests:
 
 # We will build a larger collection of module tests soon (supported by makefile dependence rules).
 # PASSING_MODULE_TEST_Objects = module_B_file.o
-PASSING_MODULE_TEST_Objects = module_B_file.f90.passed test2019_module_2_file.f90.passed test2019_private_attribute.f90.passed
+PASSING_MODULE_TEST_Objects = module_B_file.f90.passed test2019_module_2_file.f90.passed test2019_private_attribute.f90.passed test2020_use_iso_c_binding_4.f90.passed
 
 # DQ (10/4/2010): Test calling OFP directly and ROSE for different filename extensions.
 CALL_OFP = java -Djava.class.path=$(top_srcdir)/src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar:$(top_builddir)/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.5.jar fortran.ofp.FrontEnd

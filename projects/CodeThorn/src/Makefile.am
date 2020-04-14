@@ -606,7 +606,7 @@ check-const-analysis:
 	@echo ================================================================
 	@echo RUNNING CONST ANALYSIS CHECK
 	@echo ================================================================
-	@./woodpecker --edg:no_warnings --csv-const-result=tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.c
+	@./woodpecker --csv-const-result=tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.c
 	@diff tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.const.csv
 	@rm tmp.const.csv
 
@@ -697,7 +697,7 @@ check-commandline-options: ./codethorn
 	@echo ================================================================
 	@echo RUNNING COMMAND LINE OPTION TESTS
 	@echo ================================================================
-	@./codethorn --edg:no_warnings --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --viz
+	@./codethorn --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --viz
 	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-deadcode:
