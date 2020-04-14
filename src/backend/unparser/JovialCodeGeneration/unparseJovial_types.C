@@ -24,7 +24,7 @@ void replaceString (std::string& str, const std::string& from, const std::string
 void
 Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
    {
-     ROSE_ASSERT(type != NULL);
+     ASSERT_not_null(type);
 
      switch (type->variantT())
         {
@@ -58,7 +58,7 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseTypeDesc(SgType* type, SgUnparse_Info& info)
    {
-     ROSE_ASSERT(type != NULL);
+     ASSERT_not_null(type);
 
      switch (type->variantT())
         {
@@ -79,7 +79,7 @@ Unparse_Jovial::unparseTypeDesc(SgType* type, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
    {
-     ROSE_ASSERT(type != NULL);
+     ASSERT_not_null(type);
 
      switch (type->variantT())
         {
@@ -100,12 +100,12 @@ Unparse_Jovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseTypeSize(SgTypeFixed* fixed_type, SgUnparse_Info& info)
    {
-      ROSE_ASSERT(fixed_type != NULL);
+      ASSERT_not_null(fixed_type);
 
       SgExpression* scale    = fixed_type->get_scale();
       SgExpression* fraction = fixed_type->get_fraction();
 
-      ROSE_ASSERT(scale != NULL);
+      ASSERT_not_null(scale);
 
       curprint(" ");
       unparseExpression(scale, info);
@@ -119,7 +119,7 @@ Unparse_Jovial::unparseTypeSize(SgTypeFixed* fixed_type, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseTypeSize(SgTypeString* string_type, SgUnparse_Info& info)
    {
-      ROSE_ASSERT(string_type != NULL);
+      ASSERT_not_null(string_type);
 
       SgExpression* size = string_type->get_lengthExpression();
       if (size != NULL)
@@ -133,7 +133,7 @@ Unparse_Jovial::unparseTypeSize(SgTypeString* string_type, SgUnparse_Info& info)
 template <class T> void
 Unparse_Jovial::unparseJovialType(T* type, SgUnparse_Info& info)
    {
-      ROSE_ASSERT(type != NULL);
+      ASSERT_not_null(type);
       unparseTypeDesc(type, info);
       unparseTypeSize(type, info);
    }
@@ -141,7 +141,7 @@ Unparse_Jovial::unparseJovialType(T* type, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseJovialType(SgArrayType* array_type, SgUnparse_Info& info)
   {
-     ROSE_ASSERT(array_type != NULL);
+     ASSERT_not_null(array_type);
      curprint("(");
      UnparseLanguageIndependentConstructs::unparseExprList(array_type->get_dim_info(), info);
      curprint(") ");
@@ -152,7 +152,7 @@ Unparse_Jovial::unparseJovialType(SgArrayType* array_type, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseJovialType(SgPointerType* pointer_type, SgUnparse_Info& info)
   {
-     ROSE_ASSERT(pointer_type != NULL);
+     ASSERT_not_null(pointer_type);
      unparseTypeDesc(pointer_type, info);
      curprint(" ");
 
@@ -167,7 +167,7 @@ Unparse_Jovial::unparseJovialType(SgPointerType* pointer_type, SgUnparse_Info& i
 void
 Unparse_Jovial::unparseJovialType(SgEnumType* enum_type, SgUnparse_Info& info)
   {
-     ROSE_ASSERT(enum_type != NULL);
+     ASSERT_not_null(enum_type);
   // TODO - for now only unparse the name
      curprint(enum_type->get_name());
   }
@@ -206,7 +206,7 @@ Unparse_Jovial::unparseJovialType(SgModifierType* modifier_type, SgUnparse_Info&
 void
 Unparse_Jovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info& info)
   {
-     ROSE_ASSERT(table_type != NULL);
+     ASSERT_not_null(table_type);
 
      SgType* base_type = table_type->get_base_type();
      std::string type_name = table_type->get_name();
