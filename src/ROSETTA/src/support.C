@@ -85,9 +85,8 @@ Grammar::setUpSupport ()
           ModifierNodes           | ConstVolatileModifier  | StorageModifier    |
           AccessModifier          | FunctionModifier       | UPC_AccessModifier |
           SpecialFunctionModifier | ElaboratedTypeModifier | LinkageModifier    |
-          BaseClassModifier       | TypeModifier           | DeclarationModifier|
-          OpenclAccessModeModifier| StructureModifier, "Modifier", "ModifierTag", false);
-
+          BaseClassModifier       | StructureModifier      | TypeModifier       |
+          DeclarationModifier     | OpenclAccessModeModifier, "Modifier", "ModifierTag", false);
      
      NEW_TERMINAL_MACRO (AdaRangeConstraint, "AdaRangeConstraint", "AdaRangeConstraintTag");
           

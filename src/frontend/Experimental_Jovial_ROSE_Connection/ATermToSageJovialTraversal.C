@@ -7370,6 +7370,7 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
    }
    else return ATfalse;
 
+// This seems wierd. Look into traverse_CharacterLiteral returning something else (maybe overloaded function?)
    if (file_name != nullptr) {
       SgStringVal* file_string = isSgStringVal(file_name);
       ROSE_ASSERT(file_string);
