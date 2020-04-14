@@ -109,7 +109,7 @@ struct OnlyNonCompilerGenerated : public std::unary_function<bool, SgFunctionDec
  }
 
 void PtrAliasAnalysis:: SortCallGraphRecursive(SgFunctionDeclaration* targetFunction, SgIncidenceDirectedGraph* callGraph,
-               unordered_map<SgFunctionDeclaration*, SgGraphNode*> &graphNodeToFunction, unordered_map<SgGraphNode*, COLOR> &colors,
+               boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*> &graphNodeToFunction, boost::unordered_map<SgGraphNode*, COLOR> &colors,
                vector<SgFunctionDeclaration*> &processingOrder, TRAVERSAL_TYPE order) {
         
                 //If the function is already in the list of functions to be processed, don't add it again.
@@ -120,7 +120,7 @@ void PtrAliasAnalysis:: SortCallGraphRecursive(SgFunctionDeclaration* targetFunc
         {
           printf("The function %s has no vertex in the call graph!\n", targetFunction->get_name().str());
           printf("graphNodeToFunction contains:\n");
-          unordered_map<SgFunctionDeclaration*, SgGraphNode*>::const_iterator iter;
+          boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*>::const_iterator iter;
           for (iter= graphNodeToFunction.begin(); iter != graphNodeToFunction.end(); iter ++)
           {
             SgFunctionDeclaration* func = (*iter).first;
@@ -174,11 +174,11 @@ void PtrAliasAnalysis:: SortCallGraphRecursive(SgFunctionDeclaration* targetFunc
  * @param order: 0-topological, 1- reverse
  */
 void PtrAliasAnalysis::SortCallGraphNodes(SgFunctionDeclaration* targetFunction, SgIncidenceDirectedGraph* callGraph,
-                unordered_map<SgFunctionDeclaration*, SgGraphNode*> &graphNodeToFunction,
+                boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*> &graphNodeToFunction,
                 vector<SgFunctionDeclaration*> &processingOrder, TRAVERSAL_TYPE order) {
         
-        unordered_map<SgGraphNode*, COLOR> colors;
-        typedef unordered_map<SgFunctionDeclaration*, SgGraphNode*> my_map;
+        boost::unordered_map<SgGraphNode*, COLOR> colors;
+        typedef boost::unordered_map<SgFunctionDeclaration*, SgGraphNode*> my_map;
         
         foreach(my_map::value_type item, graphNodeToFunction) {
             colors[item.second] = WHITE;
