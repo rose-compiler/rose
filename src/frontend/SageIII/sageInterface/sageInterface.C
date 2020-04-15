@@ -20383,6 +20383,15 @@ bool SageInterface::isUseByAddressVariableRef(SgVarRefExp* ref)
         SgFunctionDeclaration* funcDecl = isSgFunctionSymbol(funcRef->get_symbol())->get_declaration();
         SgInitializedNamePtrList nameList = funcDecl->get_args();
         //TODO tolerate typedef chains
+        // printf() has only two arguments to express variable arguments.
+        // The third argument index ==2 will be out of bounds for nameList[index]
+        // So we must check the bound first.
+        if (param_index>=nameList.size() ||isSgTypeEllipse(nameList[param_index]->get_type()) )
+        {
+          if (isSgReferenceType(ref))
+            result = true; 
+        }
+        else // now within the bound: two situations,  
         if (isSgReferenceType(nameList[param_index]->get_type()))
         {
           result = true;
