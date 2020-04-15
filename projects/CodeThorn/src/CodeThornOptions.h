@@ -42,7 +42,7 @@ struct CodeThornOptions : public Options {
     std::string icfgFileName;
   } visualization;
   
-  // analysis options
+  // experimental options
   bool ompAst;
   bool normalizeAll;
   bool normalizeFCalls;
@@ -81,8 +81,101 @@ struct CodeThornOptions : public Options {
   int optionsSet;
   int callStringLength; // not used yet
 
-  
+  // RERS C-subset program options
+  struct Rers {
+    std::string assertResultsOutputFileName;
+    bool eliminateArrays;
+    std::string iSeqFile;
+    int iSeqLength;
+    int iSeqRandomNum;
+    bool rersBinary;
+    bool rersNumeric;
+    bool rersMode;
+    bool stdErrLikeFailedAssert;
+  } rers;
+
+    // sv-comp options
+  struct SVCOMP {
+    bool svcompMode;
+    std::string detectedErrorFunctionName;
+    std::string witnessFileName;
+  } svcomp;
+
+  struct EquivalenceChecking {
+    std::string dumpSortedFileName;
+    std::string dumpNonSortedFileName;
+    bool rewriteSSA;
+    bool printRewriteTrace;
+    bool printUpdateInfos;
+    bool ruleConstSubst;
+    bool ruleCommutativeSort;
+    int maxExtractedUpdates;
+    std::string specializeFunName;
+    std::vector<int> specializeFunParamList;
+    std::vector<int> specializeFunConstList;
+    std::vector<std::string> specializeFunVarInitList;
+    std::vector<int> specializeFunVarInitConstList;
+  } equiCheck;
+
+  struct PatternSearch {
+    int maxDepth;
+    int repetitions;
+    int maxSuffix;
+    std::string explorationMode;
+  } patSearch;
+
+  struct DataRace {
+    bool detection;
+    bool checkShuffleAlgorithm;
+    std::string csvResultsFile;
+    bool failOnError;
+  } dr;
+
+  // visible options
+  std::string configFileName;
   bool colors;
+  std::string csvStatsFileName;
+  int displayDiff;
+  std::string explorationMode;
+  bool quiet;
+  std::string startFunctionName;
+  std::string externalFunctionCallsFileName;
+  bool status;
+  bool reduceCfg;
+  bool internalChecks;
+  std::string analyzedProgramCLArgs;
+  std::string inputValues;
+  bool inputValuesAsConstraints; // obsolete
+  std::string inputSequence;
+  std::string logLevel;
+  int maxTransitions;
+  int maxIterations;
+  long maxMemory;
+  long maxTime;
+  int maxTransitionsForcedTop;
+  int maxIterationsForcedTop;
+  long maxMemoryForcedTop;
+  long maxTimeForcedTop;
+  int resourceLimitDiff;
+  bool rewrite;
+  bool runRoseAstChecks;
+  std::string analyzedFunctionsCSVFileName;
+  std::string analyzedFilesCSVFileName;
+  std::string externalFunctionsCSVFileName;  
+  int threads;
+  bool unparse;
+  bool displayVersion;
+
+  struct Info {
+    bool printVariableIdMapping;
+    bool printFunctionIdMapping;
+    bool printAstNodeStats;
+    std::string astNodeStatsCSVFileName;
+    bool printTypeSizeMapping;
+    std::string typeSizeMappingCSVFileName;
+
+  } info;
+  
 };
 
 #endif
