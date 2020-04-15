@@ -77,6 +77,7 @@ C_TESTCODES_REQUIRED_TO_PASS =			\
 	 moreTest0.c				\
 	 moreTest1.c				\
 	 moreTest8.c				\
+	 print.c	\
 	 zeroParameter.c
 
 # This is not ready
@@ -92,6 +93,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS =		\
 # Add a few tool_G's regression tests
 # 	test_26_v2_2020.cpp  this is not ready, not sure what happened for preprocessing
 CXX2_TESTCODES_REQUIRED_TO_PASS =                \
+ 	print.cpp \						 
 	test_42_2020.cpp \
 	test_20_2019.cpp \
 	test_26_v1_2020.cpp \
