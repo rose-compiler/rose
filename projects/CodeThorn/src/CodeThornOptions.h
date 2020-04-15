@@ -42,6 +42,46 @@ struct CodeThornOptions : public Options {
     std::string icfgFileName;
   } visualization;
   
+  // analysis options
+  bool ompAst;
+  bool normalizeAll;
+  bool normalizeFCalls;
+  bool inlineFunctions;
+  int inlineFunctionsDepth;
+  bool eliminateCompoundStatements;
+  bool annotateTerms; // unparsing
+  bool eliminateSTGBackEdges;
+  bool generateAssertions; // unparsing
+  bool precisionExactConstraints; // obsolete
+  std::string stgTraceFileName;
+  bool explicitArrays;
+  bool z3BasedReachabilityAnalysis;
+  int z3UpperInputBound;
+  int z3VerifierErrorNumber;
+  bool ssa; // transformation
+  bool nullPointerAnalysis;
+  bool outOfBoundsAnalysis;
+  bool uninitializedMemoryAnalysis;
+  std::string nullPointerAnalysisFileName;
+  std::string outOfBoundsAnalysisFileName;
+  std::string uninitializedMemoryAnalysisFileName;
+  bool programStatsOnly;
+  bool programStats;
+  bool inStateStringLiterals;
+  bool stdFunctions;
+  bool ignoreUnknownFunctions;
+  bool ignoreUndefinedDereference;
+  int functionResolutionMode;
+  bool contextSensitive; // abitrary length call strings
+  int abstractionMode;
+  int interpreterMode;
+  std::string interpreterModeOuputFileName;
+  bool printWarnings;
+  bool printViolations;
+  int optionsSet;
+  int callStringLength; // not used yet
+
+  
   bool colors;
 };
 
