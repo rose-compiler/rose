@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_Registers_H
 #define ROSE_BinaryAnalysis_Registers_H
 
-#include <rosePublicConfig.h>
+#include <featureTests.h>
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "RegisterParts.h"
@@ -105,18 +105,15 @@ public:
      *  the same name, and debug registers dr0-dr7, which are also replaced by 64-bit registers of the same name. */
     static const RegisterDictionary *dictionary_amd64();
 
-    /** ARM7 registers.
+#ifdef ROSE_ENABLE_ASM_A64
+    /** AArch64 registers.
      *
-     * The CPU has a total of 37 registers, each 32 bits wide: 31 general purpose registers named and six status registers
-     * named.  At most 16 (8 in Thumb mode) general purpose registers are visible at a time depending on the mode of
-     * operation. They have names rN where N is an integer between 0 and 15, inclusive and are mapped onto a subset of the 31
-     * physical general purpose registers. Register r13 and r14 are, by convention, a stack pointer and link register (the link
-     * register holds the return address for a function call). Register r15 is the instruction pointer.  Also, at most two
-     * status registers are available at a time.
+     *  These are the registers for ARM's ARMv8 (a.k.a., "Armv8") architecture for the "AArch64" (a.k.a., "A64")
+     *  instruction set.
      *
-     * The major number of a RegisterDescriptor is used to indicate the type of register: 0=general purpose, 1=status. The
-     * minor number indicates the register number: 0-15 for general purpose, 0 or 1 for status. */
-    static const RegisterDictionary *dictionary_arm7();
+     *  They are documented in "Arm Instruction Set Version 1.0 Reference Guide" copyright 2018 Arm Limited. */
+    static const RegisterDictionary* dictionary_aarch64();
+#endif
 
     /** PowerPC-32 registers. */
     static const RegisterDictionary *dictionary_powerpc32();

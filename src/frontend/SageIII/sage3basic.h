@@ -380,6 +380,7 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 // rosePublicConfig.h file (in the script scripts/publicConfiguration.pl).
 // #include "rose_config.h"
 #include "rosePublicConfig.h"
+#include "featureTests.h"
 
 // DQ (10/4/2014): Not clear if this is the best way to control use of ATerm.
 // I think we need a specific macro to be defined for when ATerms are being used.

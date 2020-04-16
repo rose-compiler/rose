@@ -456,10 +456,10 @@ typedef SgAsmIntegerValuePtrList* 		 SgAsmIntegerValuePtrListPtr;
 typedef Rose_STL_Container<SgAsmSynthesizedDeclaration*> SgAsmSynthesizedDeclarationPtrList;
 typedef SgAsmSynthesizedDeclarationPtrList*              SgAsmSynthesizedDeclarationPtrListPtr;
 
-// JJW (3/19/2008): Added support for containers of x86 instructions
 typedef Rose_STL_Container<SgAsmX86Instruction*> SgAsmX86InstructionPtrList;
-// JJW (3/21/2008): Added support for containers of Arm instructions
-typedef Rose_STL_Container<SgAsmArmInstruction*> SgAsmArmInstructionPtrList;
+#ifdef ROSE_ENABLE_ASM_A64
+typedef Rose_STL_Container<SgAsmArm64Instruction*> SgAsmArm64InstructionPtrList;
+#endif
 #endif
 
 // DQ (11/19/2007): Added support for Fortran namelist statement.

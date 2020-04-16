@@ -1,4 +1,4 @@
-#include <rosePublicConfig.h>
+#include <featureTests.h>
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "Registers.h"
@@ -267,8 +267,10 @@ RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitec
         case EFF::ISA_MIPS_Family:
             return dictionary_mips32_altnames(); // disassembler assumes only dictionary_mips32()
 
+#ifdef ROSE_ENABLE_ASM_A64
         case EFF::ISA_ARM_Family:
-            return dictionary_arm7();
+            return dictionary_aarch64();
+#endif
 
         case EFF::ISA_PowerPC:
             return dictionary_powerpc32();
@@ -668,50 +670,170 @@ RegisterDictionary::dictionary_amd64() {
     return regs;
 }
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_arm7() {
+#ifdef ROSE_ENABLE_ASM_A64
+const RegisterDictionary*
+RegisterDictionary::dictionary_aarch64() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-
-    /* Documentation of the Nintendo GameBoy Advance is pretty decent. It's located here:
-     * http:// nocash.emubase.de/gbatek.htm */
     static RegisterDictionary *regs = NULL;
     if (!regs) {
-        regs = new RegisterDictionary("arm7");
+        // References:
+        //   [1] "Arm Instruction Set Version 1.0 Reference Guide" copyright 2018 Arm Limited.
+        //   [2] "ARM Cortex-A Series Version 1.0 Programmer's Guide for ARMv8-A" copyright 2015 ARM.
+        regs = new RegisterDictionary("aarch64");
 
-        /* The (up-to) 16 general purpose registers available within the current mode. */
-        for (unsigned i=0; i<16; i++)
-            regs->insert("r"+StringUtility::numberToString(i), arm_regclass_gpr, i, 0, 32);
+        // 31 64-bit general-purpose registers "x0" through "x30". The names "w0" through "w30" refer to the low-order 32 bits
+        // of the corresponding "x" register in that read operations read only the low-order 32 bits and write operations write
+        // to all 64 bits (always clearing the high-order 32 bits). [1, p. A3-72]
+        //
+        for (unsigned i = 0; i < 31; ++i) {
+            regs->insert("x" + boost::lexical_cast<std::string>(i), arm_regclass_gpr, i, 0, 64);
+            regs->insert("w" + boost::lexical_cast<std::string>(i), arm_regclass_gpr, i, 0, 32);
+        }
 
-        /* The (up to) two status registers available within the current mode. */
-        regs->insert("cpsr", arm_regclass_psr, arm_psr_current, 0, 32);      /* current program status register */
-        regs->insert("spsr", arm_regclass_psr, arm_psr_saved,   0, 32);      /* saved program status register */
+        // Zero register. Also called "register 31" in the documentation ("sp", though distinct from the zero register, is also
+        // called "register 31" in the documentation. [1, pp. A3-72, A3-76]
+        regs->insert("xzr", arm_regclass_gpr, 31, 0, 64);
+        regs->insert("wzr", arm_regclass_gpr, 31, 0, 32);
 
-        /* Individual parts of the cpsr register */
-        regs->insert("cpsr_m", arm_regclass_psr, arm_psr_current,  0, 5);    /* Mode bits indicating current operating mode */
-        regs->insert("cpsr_t", arm_regclass_psr, arm_psr_current,  5, 1);    /* State bit (0=>ARM; 1=>THUMB) */
-        regs->insert("cpsr_f", arm_regclass_psr, arm_psr_current,  6, 1);    /* FIQ disable (0=>enable; 1=>disable) */
-        regs->insert("cpsr_i", arm_regclass_psr, arm_psr_current,  7, 1);    /* IRQ disable (0=>enable; 1=>disable) */
-        regs->insert("cpsr_q", arm_regclass_psr, arm_psr_current, 27, 1);    /* sticky overflow (ARMv5TE and up only) */
-        regs->insert("cpsr_v", arm_regclass_psr, arm_psr_current, 28, 1);    /* overflow flag (0=>no overflow; 1=overflow) */
-        regs->insert("cpsr_c", arm_regclass_psr, arm_psr_current, 29, 1);    /* carry flag (1=>no carry; 1=>carry) */
-        regs->insert("cpsr_z", arm_regclass_psr, arm_psr_current, 30, 1);    /* zero flag (0=>not zero; 1=>zero) */
-        regs->insert("cpsr_n", arm_regclass_psr, arm_psr_current, 31, 1);    /* sign flag (0=>not signed; 1=>signed) */
+        // Another name for "x30" is "lr", the "procedure link register". [1. pp. A3-74, A3-76]
+        regs->insert("lr", arm_regclass_gpr, 30, 0, 64);
 
-        /* The six spsr registers (at most one available depending on the operating mode), have the same bit fields as the cpsr
-         * register. When an exception occurs, the current status (in cpsr) is copied to one of the spsr registers. */
-        regs->insert("spsr_m", arm_regclass_psr, arm_psr_saved,  0, 5);    /* Mode bits indicating saved operating mode */
-        regs->insert("spsr_t", arm_regclass_psr, arm_psr_saved,  5, 1);    /* State bit (0=>ARM; 1=>THUMB) */
-        regs->insert("spsr_f", arm_regclass_psr, arm_psr_saved,  6, 1);    /* FIQ disable (0=>enable; 1=>disable) */
-        regs->insert("spsr_i", arm_regclass_psr, arm_psr_saved,  7, 1);    /* IRQ disable (0=>enable; 1=>disable) */
-        regs->insert("spsr_q", arm_regclass_psr, arm_psr_saved, 27, 1);    /* sticky overflow (ARMv5TE and up only) */
-        regs->insert("spsr_v", arm_regclass_psr, arm_psr_saved, 28, 1);    /* overflow flag (0=>no overflow; 1=overflow) */
-        regs->insert("spsr_c", arm_regclass_psr, arm_psr_saved, 29, 1);    /* carry flag (1=>no carry; 1=>carry) */
-        regs->insert("spsr_z", arm_regclass_psr, arm_psr_saved, 30, 1);    /* zero flag (0=>not zero; 1=>zero) */
-        regs->insert("spsr_n", arm_regclass_psr, arm_psr_saved, 31, 1);    /* sign flag (0=>not signed; 1=>signed) */
+        // Another name for "x29" is "fp", the frame pointer. [2, p 4-2]
+        regs->insert("lr", arm_regclass_gpr, 30, 0, 64);
+
+        // One program counter. Not a general purpose register. [1. p. A3-78]
+        regs->insert("pc", arm_regclass_pc, 0, 0, 64);
+
+        // Four stack pointer registers. [1. p. A3-72] These store the exception return address per exception level. The
+        // "sp_el0" is an alias for the stack pointer "sp". [1. p. A3-75] The "sp" register is also referred to as "register 31"
+        // in the documentation [1. p. A3-72] (along with "xzr" and "wzr", which is clearly a distinct register) although this
+        // register is also claimed to be not general-purpose like all the other "x" and "w" registers. [1. p. A3-75].
+        regs->insert("sp_el0", arm_regclass_sp, 0, 0, 64); // "sp_el0" is an alias for "sp" [1. p. A3-75]
+        regs->insert("sp_el1", arm_regclass_sp, 1, 0, 64);
+        regs->insert("sp_el2", arm_regclass_sp, 2, 0, 64);
+        regs->insert("sp_el3", arm_regclass_sp, 3, 0, 64);
+        regs->insert("sp",     arm_regclass_sp, 0, 0, 64);
+        regs->insert("wsp",    arm_regclass_sp, 0, 0, 32); // [2, p. 4-3]
+
+        // Three saved program status registers. [1. p. A3-72, A3-82]. These store the processor state fields per exception
+        // level so they can be restored when the exception handler returns. The processor state registers have various fields
+        // defined in [2, p. 4-5]. Unlike AArch32, there is no processor state register that's accessible directly from assembly
+        // instructions, but ROSE still must define it because it does exist internally. ROSE gives it the minor number zero and
+        // the base name "cpsr" (the same name as from AArch32).
+        for (unsigned i = 0; i < 4; ++i) {
+            std::string base = 0==i ? "cpsr" : "spsr_el" + boost::lexical_cast<std::string>(i);
+            regs->insert(base, arm_regclass_system, arm_system_spsr+i, 0, 32);
+            regs->insert(base+".n",  arm_regclass_system, arm_system_spsr+i, 31, 1);     // negative condition flag
+            regs->insert(base+".z",  arm_regclass_system, arm_system_spsr+i, 30, 1);     // zero condition flag
+            regs->insert(base+".c",  arm_regclass_system, arm_system_spsr+i, 29, 1);     // carry condition flag
+            regs->insert(base+".v",  arm_regclass_system, arm_system_spsr+i, 28, 1);     // overflow condition flag
+            regs->insert(base+".ss", arm_regclass_system, arm_system_spsr+i, 21, 1);     // software step bit
+            regs->insert(base+".il", arm_regclass_system, arm_system_spsr+i, 20, 1);     // illegal excecution bit
+            regs->insert(base+".d",  arm_regclass_system, arm_system_spsr+i, 9, 1);      // debug mask bit
+            regs->insert(base+".a",  arm_regclass_system, arm_system_spsr+i, 8, 1);      // "SError" mask bit
+            regs->insert(base+".i",  arm_regclass_system, arm_system_spsr+i, 7, 1);      // IRQ mask bit
+            regs->insert(base+".f",  arm_regclass_system, arm_system_spsr+i, 6, 1);      // FIQ mask bit
+            regs->insert(base+".m",  arm_regclass_system, arm_system_spsr+i, 0, 4);      // source of exception
+        }
+
+        // System registers [2, p. 4-7]
+        for (unsigned i = 0; i < 4; ++i) {
+            std::string n = boost::lexical_cast<std::string>(i);
+            // FPCR?
+            // FPSR?
+            if (i == 0) {
+                regs->insert("cntfrq_el"+n,    arm_regclass_system, arm_system_cntfrq+i,    0, 64); // ctr-timer frequency reg
+                regs->insert("cntpct_el"+n,    arm_regclass_system, arm_system_cntpct+i,    0, 64); // ctr-timer phys count reg
+                regs->insert("cntp_cval_el"+n, arm_regclass_system, arm_system_cntp_cval+i, 0, 64); // ctr-timer phys timer cmp
+                regs->insert("cntp_ctl_el"+n,  arm_regclass_system, arm_system_cntp_ctl+i,  0, 64); // ctr-timer phys control reg
+                regs->insert("ctr_el"+n,       arm_regclass_system, arm_system_ctr+i,       0, 64); // cache type register
+                regs->insert("dczid_el"+n,     arm_regclass_system, arm_system_dczid+i,     0, 64); // data cache zero ID reg
+                regs->insert("tpidrr0_el"+n,   arm_regclass_system, arm_system_tpidrr0+i,   0, 64); // user read-only thread ID reg
+            }
+            if (i == 1) {
+                regs->insert("ccsidr_el"+n,  arm_regclass_system, arm_system_ccsidr+i,  0, 64); // current cache size ID register
+                regs->insert("cntkctl_el"+n, arm_regclass_system, arm_system_cntkctl+i, 0, 64); // counter-timer kernel control reg
+                regs->insert("cpacr_el"+n,   arm_regclass_system, arm_system_cpacr+i,   0, 64); // coprocessor access control reg
+                regs->insert("csselr_el"+n,  arm_regclass_system, arm_system_csselr+i,  0, 64); // cache size selection register
+                regs->insert("midr_el"+n,    arm_regclass_system, arm_system_midr+i,    0, 64); // main ID register
+                regs->insert("mpidr_el"+n,   arm_regclass_system, arm_system_mpidr+i,   0, 64); // multiprocessor affinity reg
+                regs->insert("ttbr1_el"+n,   arm_regclass_system, arm_system_ttbr1+i,   0, 64); // translation table base reg 1
+            }
+            if (i == 2) {
+                regs->insert("hcr_el"+n,   arm_regclass_system, arm_system_hcr+i,   0, 64); // hypervisor configuration register
+                regs->insert("vtcr_el"+n,  arm_regclass_system, arm_system_vtcr+i,  0, 64); // virtualization translation ctr reg
+                regs->insert("vttbr_el"+n, arm_regclass_system, arm_system_vttbr+i, 0, 64); // virt translation table base reg
+            }
+            if (i == 3) {
+                regs->insert("scr_el"+n,   arm_regclass_system, arm_system_scr+i,   0, 64); // secure configuration register
+
+            }
+            if (true) {
+                regs->insert("sctlr_el"+n, arm_regclass_system, arm_system_sctlr+i, 0, 32); // system control register [2, p. 4-10]
+                {
+                    // Not all bits are available above EL1, but ROSE defines them across the board anyway. Also the
+                    // documentation is confusing: it says in one place [2, p. 4-9] that this register is defined for EL0
+                    // through EL3, but then in another place [2, p. 4-10] that the bit fields are only defined for EL1 through
+                    // EL3.
+                    regs->insert("sctlr_el"+n+".uci",     arm_regclass_system, arm_system_sctlr+i, 26, 1); // enable EL0 access
+                    regs->insert("sctlr_el"+n+".ee",      arm_regclass_system, arm_system_sctlr+i, 25, 1); // exception endianness
+                    regs->insert("sctlr_el"+n+".eoe",     arm_regclass_system, arm_system_sctlr+i, 24, 1); // endianness of explicit data accesses at EL0
+                    regs->insert("sctlr_el"+n+".wxn",     arm_regclass_system, arm_system_sctlr+i, 19, 1); // write permission implies execute never
+                    regs->insert("sctlr_el"+n+".ntwe",    arm_regclass_system, arm_system_sctlr+i, 18, 1); // not trap WFE
+                    regs->insert("sctlr_el"+n+".ntwi",    arm_regclass_system, arm_system_sctlr+i, 16, 1); // not trap WFI
+                    regs->insert("sctlr_el"+n+".uct",     arm_regclass_system, arm_system_sctlr+i, 15, 1); // enable EL0 access to CTR_EL0 register
+                    regs->insert("sctlr_el"+n+".dze",     arm_regclass_system, arm_system_sctlr+i, 14, 1); // access to DC ZVA instruction at EL0
+                    regs->insert("sctlr_el"+n+".uma",     arm_regclass_system, arm_system_sctlr+i,  9, 1); // user mask access
+                    regs->insert("sctlr_el"+n+".sed",     arm_regclass_system, arm_system_sctlr+i,  8, 1); // SETEND disable
+                    regs->insert("sctlr_el"+n+".itd",     arm_regclass_system, arm_system_sctlr+i,  7, 1); // IT disable
+                    regs->insert("sctlr_el"+n+".cp15ben", arm_regclass_system, arm_system_sctlr+i,  5, 1); // CP15 barrier enable
+                    regs->insert("sctlr_el"+n+".sa0",     arm_regclass_system, arm_system_sctlr+i,  4, 1); // stack alignment check enable for EL0
+                    regs->insert("sctlr_el"+n+".sa",      arm_regclass_system, arm_system_sctlr+i,  3, 1); // stack alignment check enable
+                    regs->insert("sctlr_el"+n+".c",       arm_regclass_system, arm_system_sctlr+i,  2, 1); // data enable cache
+                    regs->insert("sctlr_el"+n+".a",       arm_regclass_system, arm_system_sctlr+i,  1, 1); // alignment check enable bit
+                    regs->insert("sctlr_el"+n+".m",       arm_regclass_system, arm_system_sctlr+i,  0, 1); // enable the MMU
+                }
+                regs->insert("tpidr_el"+n, arm_regclass_system, arm_system_tpidr+i, 0, 64); // user read/write thread ID register
+            }
+            if (i >= 1) {
+                regs->insert("actlr_el"+n, arm_regclass_system, arm_system_actlr+i, 0, 64); // auxiliary control registers
+                regs->insert("clidr_el"+n, arm_regclass_system, arm_system_clidr+i, 0, 64); // cache level ID registers
+                regs->insert("elr_el"+n,   arm_regclass_system, arm_system_elr+i,   0, 64); // exception link registers
+                regs->insert("esr_el"+n,   arm_regclass_system, arm_system_esr+i,   0, 64); // exception syndrome registers
+                regs->insert("far_el"+n,   arm_regclass_system, arm_system_far+i,   0, 64); // fault address register
+                regs->insert("mair_el"+n,  arm_regclass_system, arm_system_mair+i,  0, 64); // memory attribute indirection register
+                //gs->insert("spsr_el"+n,  arm_regclass_system, arm_system_spsr+i,  0, 64); // saved program status register (see above)
+                regs->insert("tcr_el"+n,   arm_regclass_system, arm_system_tcr+i,   0, 64); // translation control register
+                regs->insert("ttbr0_el"+n, arm_regclass_system, arm_system_ttbr0+i, 0, 64); // translation table base register 0
+                regs->insert("vbar_el"+n,  arm_regclass_system, arm_system_vbar+i,  0, 64); // vector based address register
+            }
+        }
+            
+            
+        // "Advanced SIMD" registers, which are also the floating-point registers. [1. p. A3-77]
+        // also known as "NEON and floating-point registers" [2, p. 4-16]
+        for (unsigned i = 0; i < 32; ++i) {
+            // Floating-point registers. 32 registers having names that access various parts of each register.
+            regs->insert("v" + boost::lexical_cast<std::string>(i), arm_regclass_ext, i, 0, 128); // "quadword"
+            regs->insert("d" + boost::lexical_cast<std::string>(i), arm_regclass_ext, i, 0, 64); // "doubleword"
+            regs->insert("s" + boost::lexical_cast<std::string>(i), arm_regclass_ext, i, 0, 32); // "word"
+            regs->insert("h" + boost::lexical_cast<std::string>(i), arm_regclass_ext, i, 0, 16); // "halfword"
+
+            // Scalar registers are the same as the floating-point registers but use the name "q" to refer to the whole
+            // register. It also uses "b" to refer to the least significant bit. Since the "q" and "v" registers are actually
+            // the same register, and since ROSE identifies registers internally by their locations (RegisterDescriptor) rather
+            // than their names, various parts of ROSE will report "q" instead of "v".
+            regs->insert("q" + boost::lexical_cast<std::string>(i), arm_regclass_ext, i, 0, 128); // SIMD
+            regs->insert("b" + boost::lexical_cast<std::string>(i), arm_regclass_ext, i, 0, 8); // SIMD
+        }
+        
+        // Conditional execution registers. [1. p. A3-79]
+        regs->insert("nzcv", arm_regclass_cc, 0, 0, 4);
     }
     return regs;
 }
+#endif
 
 const RegisterDictionary *
 RegisterDictionary::dictionary_powerpc32() {

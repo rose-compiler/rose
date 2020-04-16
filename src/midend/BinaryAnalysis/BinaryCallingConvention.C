@@ -39,7 +39,7 @@ initDiagnostics() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const Dictionary&
-dictionaryArm() {
+dictionaryArm64() {
     static Dictionary dict;
     // FIXME[Robb P. Matzke 2015-08-21]: none defind yet
     return dict;

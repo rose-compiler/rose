@@ -1,5 +1,5 @@
 /* These are backward compatibility functions now implemented in terms of AsmUnparser */
-#include <rosePublicConfig.h>
+#include <featureTests.h>
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
@@ -41,8 +41,10 @@ std::string unparseMnemonic(SgAsmInstruction *insn) {
     switch (insn->variantT()) {
         case V_SgAsmX86Instruction:
             return unparseX86Mnemonic(isSgAsmX86Instruction(insn));
-        case V_SgAsmArmInstruction:
-            return unparseArmMnemonic(isSgAsmArmInstruction(insn));
+#ifdef ROSE_ENABLE_ASM_A64
+        case V_SgAsmArm64Instruction:
+            ASSERT_not_implemented("compatibility mode no longer supported for ARM");
+#endif
         case V_SgAsmPowerpcInstruction:
             return unparsePowerpcMnemonic(isSgAsmPowerpcInstruction(insn));
         case V_SgAsmMipsInstruction:
@@ -76,8 +78,10 @@ std::string unparseExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap
     switch (insn->variantT()) {
         case V_SgAsmX86Instruction:
             return unparseX86Expression(expr, labels, registers);
-        case V_SgAsmArmInstruction:
-            return unparseArmExpression(expr, labels, registers);
+#ifdef ROSE_ENABLE_ASM_A64
+        case V_SgAsmArm64Instruction:
+            ASSERT_not_implemented("compatibility mode not supported for ARM");
+#endif
         case V_SgAsmPowerpcInstruction:
             return unparsePowerpcExpression(expr, labels, registers);
         case V_SgAsmMipsInstruction:
@@ -100,7 +104,9 @@ unparseAsmStatement(SgAsmStatement* stmt)
     AsmUnparser u;
     switch (stmt->variantT()) {
         case V_SgAsmX86Instruction:
-        case V_SgAsmArmInstruction:
+#ifdef ROSE_ENABLE_ASM_A64
+        case V_SgAsmArm64Instruction:
+#endif
         case V_SgAsmPowerpcInstruction:
         case V_SgAsmMipsInstruction:
         case V_SgAsmM68kInstruction:
