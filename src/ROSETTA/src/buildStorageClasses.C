@@ -878,8 +878,8 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "X86RepeatPrefix" ) || "Rose::BinaryAnalysis::X86RepeatPrefix" == varTypeString ||
                  ( varTypeString == "X86PositionInRegister" ) || "Rose::BinaryAnalysis::X86PositionInRegister" == varTypeString ||
                  ( varTypeString == "X86InstructionSize" ) || "Rose::BinaryAnalysis::X86InstructionSize" == varTypeString ||
-                 ( varTypeString == "ArmInstructionKind" ) || "Rose::BinaryAnalysis::ArmInstructionKind" == varTypeString ||
-                 ( varTypeString == "ArmInstructionCondition" ) || "Rose::BinaryAnalysis::ArmInstructionCondition" == varTypeString ||
+                 ( varTypeString == "Arm64InstructionKind" ) || "Rose::BinaryAnalysis::Arm64InstructionKind" == varTypeString ||
+                 ( varTypeString == "Arm64InstructionCondition" ) || "Rose::BinaryAnalysis::Arm64InstructionCondition" == varTypeString ||
                  ( varTypeString == "PowerpcInstructionKind" ) || "Rose::BinaryAnalysis::PowerpcInstructionKind" == varTypeString ||
                  ( varTypeString == "PowerpcRegisterClass" ) || "Rose::BinaryAnalysis::PowerpcRegisterClass" == varTypeString ||
                  ( varTypeString == "PowerpcConditionRegisterAccessGranularity" ) || "Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity" == varTypeString ||

@@ -26,7 +26,7 @@ ifneq (@(LINKAGE),shared)
       |> librose.a $(ROSE)/install-staging/lib/<staging>
 endif
 
-run $(public_header) rose.h roseInternal.h rose_msvc.h msvc_stdint.h
+run $(public_header) featureTests.h rose.h roseInternal.h rose_msvc.h msvc_stdint.h
 
 ########################################################################################################################
 # ROSE configuration information for use by other tools.
