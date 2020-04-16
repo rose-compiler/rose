@@ -175,7 +175,8 @@ struct CodeThornOptions : public Options {
     std::string typeSizeMappingCSVFileName;
 
   } info;
-  
+
+   bool activeOptionsRequireZ3Library();
 };
 
 #endif

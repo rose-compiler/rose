@@ -19,6 +19,7 @@
 #include <map>
 
 #include "CodeThornCommandLineOptions.h"
+
 #include "InternalChecks.h"
 #include "AstAnnotator.h"
 #include "AstTerm.h"
@@ -485,11 +486,11 @@ int main( int argc, char * argv[] ) {
     TimeMeasurement timer;
     timer.start();
 
-    parseCommandLine(argc, argv, logger,versionString);
+    CodeThornOptions ctOpt;
+    LTLOptions ltlOpt; // to be moved into separate tool
+    ParProOptions parProOpt; // to be moved into separate tool
+    parseCommandLine(argc, argv, logger,versionString,ctOpt,ltlOpt,parProOpt);
 
-    checkSpotOptions();
-    checkZ3Options();
-    
     // Start execution
     mfacilities.control(args.getString("log-level"));
     SAWYER_MESG(logger[TRACE]) << "Log level is " << args.getString("log-level") << endl;

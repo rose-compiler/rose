@@ -32,6 +32,7 @@ struct ParProOptions : public Options {
   bool outputWithResults;
   bool outputWithAnnotations;
   std::string verificationEngine;
+  bool activeOptionsRequireSPOTLibrary();
 };
 
 #endif

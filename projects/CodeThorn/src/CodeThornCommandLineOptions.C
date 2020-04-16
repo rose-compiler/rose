@@ -9,63 +9,34 @@
 // required for checking of: HAVE_SPOT, HAVE_Z3
 #include "rose_config.h"
 
-#include "CodeThornOptions.h"
-
-// to be move into other tool
-#include "LTLOptions.h"
-// to be move into other tool
-#include "ltlthorn-lib/ParProOptions.h"
-
 #include "Diagnostics.h"
 using namespace Sawyer::Message;
 using namespace std;
 using namespace CodeThorn;
 
-void checkSpotOptions() {
+void checkSpotOptions(LTLOptions& ltlOpt, ParProOptions& parProOpt) {
     // Check if chosen options are available
 #ifndef HAVE_SPOT
     // display error message and exit in case SPOT is not avaiable, but related options are selected
-    if (args.isUserProvided("csv-stats-cegpra") ||
-	args.isUserProvided("cegpra-ltl") ||
-	args.getBool("cegpra-ltl-all") ||
-	args.isUserProvided("cegpra-max-iterations") ||
-	args.isUserProvided("viz-cegpra-detailed") ||
-	args.isUserProvided("csv-spot-ltl") ||
-	args.isUserProvided("check-ltl") ||
-	args.isUserProvided("single-property") ||
-	args.isUserProvided("ltl-in-alphabet") ||
-	args.isUserProvided("ltl-out-alphabet") ||
-	args.getBool("ltl-driven") ||
-	args.getBool("with-ltl-counterexamples") ||
-	args.isUserProvided("mine-num-verifiable") ||
-	args.isUserProvided("mine-num-falsifiable") ||
-	args.isUserProvided("ltl-mode") ||
-	args.isUserProvided("ltl-properties-output") ||
-	args.isUserProvided("promela-output") ||
-	args.getBool("promela-output-only") ||
-	args.getBool("output-with-results") ||
-	args.getBool("output-with-annotations")) {
-      cerr << "Error: Options selected that require the SPOT library, however SPOT was not selected during configuration." << endl;
-      exit(1);
-    }
+  if (ltlOptions.activeOptionsRequireSPOTLibrary()
+      || parProOptions.activeOptionsRequireSPOTLibrary()) {
+    cerr << "Error: Options selected that require the SPOT library, however SPOT was not selected during configuration." << endl;
+    exit(1);
+  }
 #endif
 }
 
-void checkZ3Options() {
+void checkZ3Options(CodeThornOptions& ctOpt) {
 #ifndef HAVE_Z3
-    if (args.isUserProvided("z3") ||
-	args.isUserProvided("rers-upper-input-bound") ||
-	args.isUserProvided("rers-verifier-error-number")){
-      cerr << "Error: Options selected that require the Z3 library, however Z3 was not selected during configuration." << endl;
-      exit(1);
-    }
+  if(ctOpt.activeOptionsRequireZ3Library()) {
+    cerr << "Error: Options selected that require the Z3 library, however Z3 was not selected during configuration." << endl;
+    exit(1);
+  }
 #endif	
 }
 
-CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger, std::string version) {
-  CodeThornOptions ctOpt;
-  LTLOptions ltlOpt; // to be moved into separate tool
-  ParProOptions parProOpt; // to be moved into separate tool
+CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::Message::Facility logger, std::string version,
+                                                CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
 
   // Command line option handling.
   po::options_description visibleOptions("Supported options");
@@ -120,7 +91,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ;
 
   cegpraOptions.add_options()
-    ("csv-stats-cegpra",po::value< string >(&ltlOpt.cegpra.csvStats),"Output statistics regarding the counterexample-guided prefix refinement analysis (CEGPRA) into a CSV file <arg>.")
+    ("csv-stats-cegpra",po::value< string >(&ltlOpt.cegpra.csvStatsFileName),"Output statistics regarding the counterexample-guided prefix refinement analysis (CEGPRA) into a CSV file <arg>.")
     ("cegpra-ltl",po::value< int >(&ltlOpt.cegpra.ltlPropertyNr),"Select the ID of an LTL property that should be checked using cegpra (between 0 and 99).")
     ("cegpra-ltl-all", po::value< bool >(&ltlOpt.cegpra.checkAllProperties)->default_value(false)->implicit_value(true),"Check all specified LTL properties using CEGPRA.")
     ("cegpra-max-iterations",po::value< int >(&ltlOpt.cegpra.maxIterations),"Select a maximum number of counterexamples anaylzed by CEGPRA.")
@@ -454,8 +425,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     argv[i] = strdup("");
   }
 
-  checkSpotOptions();
-  checkZ3Options();
+  checkSpotOptions(ltlOpt,parProOpt);
+  checkZ3Options(ctOpt);
 
   return args;
 }
