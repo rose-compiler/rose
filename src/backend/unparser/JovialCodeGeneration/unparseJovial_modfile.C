@@ -3,7 +3,7 @@
 #include "unparser.h"
 #include "unparseJovial_modfile.h"
 
-//using namespace Rose;
+using namespace std;
 using namespace Rose::Diagnostics;
 
 
@@ -64,7 +64,7 @@ generateJovialCompoolFile(SgFile *sfile)
                           << lowerCaseOutputFilename << " for module = " << outputFilename << std::endl;
              }
 
-          std::fstream Module_OutputFile(lowerCaseOutputFilename, std::ios::out);
+          fstream Module_OutputFile(lowerCaseOutputFilename, ios::out);
 
           if (!Module_OutputFile) {
              mlog[ERROR] << "Error detected in opening file " << lowerCaseOutputFilename << "for output\n";
