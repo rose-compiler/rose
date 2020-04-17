@@ -11,8 +11,7 @@ extern vector<SgNode*>      removeList;
 
 /******************************************************************************************************************/
 /*
-  Rename the output filename to .C file
-  Replace the output file name to rose_j2c_*.C"
+  Replace the output file name to rose_j2c_*.cc"
  */
 /******************************************************************************************************************/
 void Jovial_to_C::translateFileName(SgFile* sourceFile)
@@ -40,7 +39,7 @@ void Jovial_to_C::translateFileName(SgFile* sourceFile)
         ROSE_ASSERT(found != string::npos);
      }
     
-   outputFilename.replace(found, 4, ".c");
+   outputFilename.replace(found, 4, ".cc");
    outputFilename = "rose_j2c_" + outputFilename;
    if (SgProject::get_verbose() > 2)
      {
@@ -49,15 +48,15 @@ void Jovial_to_C::translateFileName(SgFile* sourceFile)
 
 // set the output filename
    sourceFile->set_unparse_output_filename(outputFilename);
-   sourceFile->set_inputLanguage (SgFile::e_C_language);
-   sourceFile->set_outputLanguage(SgFile::e_C_language);
-   sourceFile->set_C_only(true);
+   sourceFile->set_inputLanguage (SgFile::e_Cxx_language);
+   sourceFile->set_outputLanguage(SgFile::e_Cxx_language);
+   sourceFile->set_Cxx_only(true);
 }
 
 
 /******************************************************************************************************************/
 /*
-  Translate SgJovialCompoolStatement in Jovial into C.  For now (at least) all declarations in the compool module
+  Translate SgJovialCompoolStatement in Jovial into C++.  For now (at least) all declarations in the compool module
   will go into global scope.
 */
 /******************************************************************************************************************/
@@ -71,6 +70,13 @@ void Jovial_to_C::translateJovialCompoolStatement(SgJovialCompoolStatement* comp
    SgGlobal* global = isSgGlobal(scopeStatement);
    ROSE_ASSERT(global);
    ROSE_ASSERT(scopeStatement == global);
+
+#if 0
+// Build a namespace for the compool module
+   SgName compoolName = compoolStatement->get_name();
+   SgNamespaceDeclarationStatement* cpl_namespace = SageBuilder::buildNamespaceDeclaration (compoolName, global);
+   ROSE_ASSERT(cpl_namespace);
+#endif
 
 #if 0
    cout << ".x.  translate compool module: scope is " << scopeStatement << ": global scope is " << global << endl;
@@ -111,14 +117,14 @@ void Jovial_to_C::translateJovialCompoolStatement(SgJovialCompoolStatement* comp
 // cFunctionDeclaration->set_startOfConstruct(functionDefinition->get_startOfConstruct());
 // cFunctionDeclaration->set_endOfConstruct(functionDefinition->get_endOfConstruct());
 // cFunctionDeclaration->get_file_info()->set_physical_filename(cFunctionDeclaration->get_file_info()->get_filenameString());
-
 #endif
+
 }  // End of Jovial_to_C::translateJovialCompoolStatement
 
 
 /******************************************************************************************************************/
 /*
-  Translate SgJovialTableStatement in Jovial into C.  A table will be translated to a C struct.
+  Translate SgJovialTableStatement in Jovial into C++.  A table will be translated to a C struct.
 */
 /******************************************************************************************************************/
 void Jovial_to_C::translateJovialTableStatement(SgJovialTableStatement* tableStatement)

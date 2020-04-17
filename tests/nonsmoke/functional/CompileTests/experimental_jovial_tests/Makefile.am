@@ -7,25 +7,29 @@ AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD    = $(ROSE_LIBS)
 
 JOVIAL_TESTCODES = \
- tiny.jov                               \
- int_conversion.jov                     \
- item_desc_conversion.jov               \
- status_enumval.jov                     \
- typename_conv.jov                      \
- 1_2_2_non-nested-subroutine_a.jov      \
- 1_2_2_non-nested-subroutine_b.jov      \
- 1_2_2_procedure-module_a.jov           \
- 1_2_2_procedure-module_b.jov           \
- 1_2_2_procedure-module_e.jov           \
- 1_2_2_procedure-module_f.jov           \
- 1_2_3_main-program-module_a.jov        \
- 1_2_3_main-program-module_d.jov        \
- 1_2_3_program-body_a.jov               \
- 1_2_3_program-body_b.jov               \
- 1_2_3_program-body_c.jov               \
- 2_1_1_7_pointer_type.jov               \
- 2_1_2_2_structure_spec.jov             \
- 2_1_2_3_packing_spec.jov
+ tiny.jov
+
+# tiny.jov                               \
+# int_conversion.jov                     \
+# item_desc_conversion.jov               \
+# status_enumval.jov                     \
+# typename_conv.jov                      \
+# 1_2_2_non-nested-subroutine_a.jov      \
+# 1_2_2_non-nested-subroutine_b.jov      \
+# 1_2_2_procedure-module_a.jov           \
+# 1_2_2_procedure-module_b.jov           \
+# 1_2_2_procedure-module_e.jov           \
+# 1_2_2_procedure-module_f.jov           \
+# 1_2_3_main-program-module_a.jov        \
+# 1_2_3_main-program-module_d.jov        \
+# 1_2_3_program-body_a.jov               \
+# 1_2_3_program-body_b.jov               \
+# 1_2_3_program-body_c.jov               \
+# 2_1_1_7_pointer_type.jov               \
+# 2_1_2_2_structure_spec.jov             \
+# 2_1_2_3_packing_spec.jov               \
+# 4_10_abort_stmt_a.jov                  \
+# 4_10_abort_stmt_b.jov
 
 JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \
@@ -48,8 +52,6 @@ JOVIAL_PARSER_TESTCODES = \
  4_9_stop_stmt_a.jov                    \
  4_9_stop_stmt_b.jov                    \
  4_9_stop_stmt_c.jov                    \
- 4_10_abort_stmt_a.jov                  \
- 4_10_abort_stmt_b.jov                  \
  5_1_1_integer-precedence.jov           \
  5_1_1_integer-primary.jov              \
  5_1_1_integer-term.jov                 \
@@ -60,11 +62,13 @@ JOVIAL_PARSER_TESTCODES = \
  rose-issue-2143.jov
 
 COMPOOL_TESTCODES = \
- bit_cast.cpl                           \
- status_type.cpl                        \
- simple_compool.cpl                     \
- 3_0_rent_and_rec.cpl                   \
- 9_1_compool_directive.cpl
+ bit_cast.cpl
+
+# bit_cast.cpl                           \
+# status_type.cpl                        \
+# simple_compool.cpl                     \
+# 3_0_rent_and_rec.cpl                   \
+# 9_1_compool_directive.cpl
 
 # proc_refs.cpl                          
 

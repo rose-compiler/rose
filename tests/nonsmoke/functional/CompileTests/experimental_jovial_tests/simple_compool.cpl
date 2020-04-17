@@ -1,6 +1,6 @@
 START
 
-COMPOOL simplecompool ;
+COMPOOL SIMPLECOMPOOL ;
 
    DEF ITEM ff F ;
 

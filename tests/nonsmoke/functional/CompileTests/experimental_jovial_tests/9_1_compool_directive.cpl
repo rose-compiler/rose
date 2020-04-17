@@ -1,5 +1,5 @@
 START
-!COMPOOL (simplecompool) ;
+!COMPOOL ('SIMPLECOMPOOL') ;
 
 COMPOOL compooldirective ;
 

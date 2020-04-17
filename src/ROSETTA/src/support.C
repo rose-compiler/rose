@@ -1053,6 +1053,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "Java_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Rasmussen (4/16/2020): Jovial_only had been left out of initial Jovial support.
+     File.setDataPrototype         ( "bool", "Jovial_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // X10 support
      File.setDataPrototype         ( "bool", "X10_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1080,11 +1084,6 @@ Grammar::setUpSupport ()
   // DQ (8/25/2017): Added more language support.
   // Ada support
      File.setDataPrototype         ( "bool", "Ada_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (8/25/2017): Added more language support.
-  // Jovial support
-     File.setDataPrototype         ( "bool", "Jovial_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/25/2017): Added more language support.
@@ -2142,6 +2141,10 @@ Grammar::setUpSupport ()
 
   // DQ (10/11/2010): Added initial Java support.
      Project.setDataPrototype ( "bool", "Java_only", "= false",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Rasmussen (4/16/2020): Jovial_only had been left out of initial Jovial support.
+     Project.setDataPrototype ( "bool", "Jovial_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Project.setDataPrototype ( "bool", "X10_only", "= false",

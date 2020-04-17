@@ -3,11 +3,11 @@ PROGRAM main ;
 BEGIN
   ITEM ia S ;
   ITEM ib S ;
-" ITEM bf B 1 ; "
+  ITEM bf B 1 ;
   ia = 1 ;
   ia = ib - 2 ;
   ia = ib * 3 ;
   ia = ib / 4 ;
-" bf = ib < 5 ; "
+  bf = ib < 5 ;
 END
 TERM

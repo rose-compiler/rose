@@ -16,7 +16,7 @@
 #include "j2c.h"
 #include "CommandOptions.h"
 
-#define DEBUG_JOVIAL_TRANSLATION 0
+#define DEBUG_JOVIAL_TRANSLATION 1
 
 using namespace std;
 using namespace SageInterface;
@@ -190,9 +190,9 @@ int main( int argc, char * argv[] )
      SgSourceFile* src_file = isSgSourceFile(file);
      ROSE_ASSERT(src_file);
 
-  // std::cout << std::endl;
-  // std::cout << "STARTING translation to C ..." << std::endl;
-  // std::cout << std::endl;
+     std::cout << std::endl;
+     std::cout << "STARTING translation to C ..." << std::endl;
+     std::cout << std::endl;
 
   // Simple traversal, bottom-up, to translate the rest
      Jovial2cTraversal j2c;
@@ -217,13 +217,11 @@ int main( int argc, char * argv[] )
           deepDelete(*i);
        }
 
-  // std::cout << "... # of files is " << project->numberOfFiles() << std::endl;
+     std::cout << "... # of files is " << project->numberOfFiles() << std::endl;
 
-     project->set_C_only(true);
+     project->set_Cxx_only(true);
      project->set_Fortran_only(false);
-
-  // Not in API
-  // project->set_Jovial_only(false);
+     project->set_Jovial_only(false);
 
 /*
   1. There should be no Jovial-specific AST nodes in the whole
@@ -256,4 +254,3 @@ int main( int argc, char * argv[] )
 
      return backend(project);
 }
-
