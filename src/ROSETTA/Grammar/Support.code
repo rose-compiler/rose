@@ -2043,7 +2043,7 @@ HEADER_BASECLASS_MODIFIER_END
 HEADER_ADA_TYPE_CONSTRAINT_START
           SgAdaTypeConstraint (const SgAdaTypeConstraint& X);
           SgAdaTypeConstraint& operator= (const SgAdaTypeConstraint& X);
-          virtual std::string displayString() const { ROSE_ASSERT(false); };
+          virtual std::string displayString() const { ROSE_ASSERT(false); return std::string(); };
 HEADER_ADA_TYPE_CONSTRAINT_END
 
 
@@ -6791,7 +6791,7 @@ HEADER_APPLICATION_PROJECT_START
 
        // DQ (8/25/2017): Added more language support.
           bool get_Jovial_only (void) const;
-       // void set_Jovial_only (bool value);
+          void set_Jovial_only (bool value);
 
        // DQ (8/25/2017): Added more language support.
           bool get_Cobol_only (void) const;
@@ -18177,6 +18177,7 @@ SgProject::initialization()
      p_Fortran_only          = false;
      p_addCppDirectivesToAST = false;
      p_Java_only             = false;
+     p_Jovial_only           = false;
 
   // DQ (11/10/2016): Added initialization for data member that appeared to be missing.
      p_X10_only              = false;
@@ -19162,13 +19163,17 @@ SgProject::get_Ada_only (void) const
      return result;
    }
 
+void
+SgProject::set_Jovial_only (bool value)
+   {
+     ROSE_ASSERT(this != NULL);
+     p_Jovial_only = value;
+   }
+
 bool
 SgProject::get_Jovial_only (void) const
    {
-  // DQ (8/25/2017): Added more language support.
-
-  // look at how the files are set
-     bool result = false;
+     bool result = p_Jovial_only;
      for (int i = 0; i < numberOfFiles(); i++)
         {
           SgFile & file = get_file(i);
