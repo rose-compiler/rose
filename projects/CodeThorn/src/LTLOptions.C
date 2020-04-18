@@ -17,3 +17,7 @@ bool LTLOptions::activeOptionsRequireSPOTLibrary() {
     || withLTLCounterExamples
     ;
 }
+
+bool LTLOptions::CEGPra::ltlPropertyNrIsSet() {
+  return ltlPropertyNr!=-1;
+}

@@ -27,10 +27,11 @@ struct LTLOptions : public Options {
   // cegpra LTL options
   struct CEGPra {
     std::string csvStatsFileName;
-    int ltlPropertyNr; // between 0..99
+    int ltlPropertyNr=-1; // between 0..99
     bool checkAllProperties;
     int maxIterations;
     std::string visualizationDotFile;
+    bool ltlPropertyNrIsSet();
   } cegpra;
 
   bool activeOptionsRequireSPOTLibrary();

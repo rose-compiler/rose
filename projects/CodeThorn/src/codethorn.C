@@ -185,64 +185,57 @@ AbstractValueSet determineVarsInAssertConditions(SgNode* node, VariableIdMapping
   return usedVarsInAssertConditions;
 }
 
-void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
-  analyzer->setOptionOutputWarnings(args.getBool("print-warnings"));
-  analyzer->setPrintDetectedViolations(args.getBool("print-violations"));
+void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
+                   CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
+  analyzer->setOptionOutputWarnings(ctOpt.printWarnings);
+  analyzer->setPrintDetectedViolations(ctOpt.printViolations);
 
-  if(args.getBool("explicit-arrays")==false) {
-    analyzer->setSkipArrayAccesses(true);
-  }
-  
   // this must be set early, as subsequent initialization depends on this flag
-  if (args.getBool("ltl-driven")) {
+  if (ltlOpt.ltlDriven) {
     analyzer->setModeLTLDriven(true);
   }
 
-  if (args.isUserProvided("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
+  if (ltlOpt.cegpra.ltlPropertyNrIsSet() || ltlOpt.cegpra.checkAllProperties) {
     analyzer->setMaxTransitionsForcedTop(1); //initial over-approximated model
-    args.setOption("no-input-input",true);
-    args.setOption("with-ltl-counterexamples",true);
-    args.setOption("counterexamples-with-output",true);
+    ltlOpt.noInputInputTransitions=true;
+    ltlOpt.withLTLCounterExamples=true;
+    ltlOpt.counterExamplesWithOutput=true;
     cout << "STATUS: CEGPRA activated (with it LTL counterexamples that include output states)." << endl;
     cout << "STATUS: CEGPRA mode: will remove input state --> input state transitions in the approximated STG." << endl;
   }
 
-  if (args.getBool("counterexamples-with-output")) {
-    args.setOption("with-ltl-counterexamples",true);
+  if (ltlOpt.counterExamplesWithOutput) {
+    ltlOpt.withLTLCounterExamples=true;
   }
 
-  if(args.isUserProvided("stg-trace-file")) {
-    analyzer->setStgTraceFileName(args.getString("stg-trace-file"));
+  if(ctOpt.stgTraceFileName.size()>0) {
+    analyzer->setStgTraceFileName(ctOpt.stgTraceFileName);
   }
 
-  if (args.isUserProvided("cl-args")) {
-    string clOptions=args.getString("cl-args");
+  if(ctOpt.analyzedProgramCLArgs.size()>0) {
+    string clOptions=ctOpt.analyzedProgramCLArgs;
     vector<string> clOptionsVector=Parse::commandLineArgs(clOptions);
     analyzer->setCommandLineOptions(clOptionsVector);
   }
 
-  if(args.isUserProvided("input-values")) {
-    string setstring=args.getString("input-values");
-    cout << "STATUS: input-values="<<setstring<<endl;
-
-    set<int> intSet=Parse::integerSet(setstring);
+  if(ctOpt.inputValues.size()>0) {
+    cout << "STATUS: input-values="<<ctOpt.inputValues<<endl;
+    set<int> intSet=Parse::integerSet(ctOpt.inputValues);
     for(set<int>::iterator i=intSet.begin();i!=intSet.end();++i) {
       analyzer->insertInputVarValue(*i);
     }
   }
 
-  if(args.isUserProvided("input-sequence")) {
-    string liststring=args.getString("input-sequence");
-    cout << "STATUS: input-sequence="<<liststring<<endl;
-
-    list<int> intList=Parse::integerList(liststring);
+  if(ctOpt.inputSequence.size()>0) {
+    cout << "STATUS: input-sequence="<<ctOpt.inputSequence<<endl;
+    list<int> intList=Parse::integerList(ctOpt.inputSequence);
     for(list<int>::iterator i=intList.begin();i!=intList.end();++i) {
       analyzer->addInputSequenceValue(*i);
     }
   }
 
-  if(args.isUserProvided("exploration-mode")) {
-    string explorationMode=args.getString("exploration-mode");
+  if(ctOpt.explorationMode.size()>0) {
+    string explorationMode=ctOpt.explorationMode;
     if(explorationMode=="depth-first") {
       analyzer->setExplorationMode(EXPL_DEPTH_FIRST);
     } else if(explorationMode=="breadth-first") {
@@ -509,13 +502,6 @@ int main( int argc, char * argv[] ) {
     }
     global_analyzer=analyzer;
 
-#if 0
-    string option_pragma_name;
-    if (args.isUserProvided("limit-to-fragment")) {
-      option_pragma_name = args.getString("limit-to-fragment");
-    }
-#endif
-
     if (args.isUserProvided("internal-checks")) {
       mfacilities.shutdown();
       if(CodeThorn::internalChecks(argc,argv)==false)
@@ -531,7 +517,7 @@ int main( int argc, char * argv[] ) {
     analyzer->setIgnoreFunctionPointers(args.getBool("ignore-function-pointers"));
     analyzer->setStdFunctionSemantics(args.getBool("std-functions"));
 
-    analyzerSetup(analyzer, logger);
+    analyzerSetup(analyzer, logger, ctOpt, ltlOpt, parProOpt);
 
     switch(int mode=args.getInt("interpreter-mode")) {
     case 0: analyzer->setInterpreterMode(IM_ABSTRACT); break;
