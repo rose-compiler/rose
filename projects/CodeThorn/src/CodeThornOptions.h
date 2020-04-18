@@ -69,8 +69,9 @@ struct CodeThornOptions : public Options {
   bool programStats;
   bool inStateStringLiterals;
   bool stdFunctions;
-  bool ignoreUnknownFunctions;
+  bool ignoreFunctionPointers;
   bool ignoreUndefinedDereference;
+  bool ignoreUnknownFunctions;
   int functionResolutionMode;
   bool contextSensitive; // abitrary length call strings
   int abstractionMode;

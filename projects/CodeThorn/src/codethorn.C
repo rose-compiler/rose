@@ -224,6 +224,7 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
     for(set<int>::iterator i=intSet.begin();i!=intSet.end();++i) {
       analyzer->insertInputVarValue(*i);
     }
+    cout << "STATUS: input-values stored."<<endl;
   }
 
   if(ctOpt.inputSequence.size()>0) {
@@ -255,88 +256,69 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
     analyzer->setExplorationMode(EXPL_BREADTH_FIRST);
   }
 
-  if (args.isUserProvided("max-iterations") || args.isUserProvided("max-iterations-forced-top")) {
-    bool notSupported=false;
-    if (!args.isUserProvided("exploration-mode")) {
-      notSupported=true;
-    } else {
-      string explorationMode=args.getString("exploration-mode");
-      if(explorationMode!="loop-aware" && explorationMode!="loop-aware-sync") {
-        notSupported=true;
-      }
-    }
-    if(notSupported) {
+  if (ctOpt.maxIterations!=-1 || ctOpt.maxIterationsForcedTop!=-1) {
+    if(ctOpt.explorationMode!="loop-aware" && ctOpt.explorationMode!="loop-aware-sync") {
       cout << "Error: \"max-iterations[-forced-top]\" modes currently require \"--exploration-mode=loop-aware[-sync]\"." << endl;
       exit(1);
     }
   }
 
-  if(args.isUserProvided("abstraction-mode")) {
-    analyzer->setAbstractionMode(args.getInt("abstraction-mode"));
-  }
+  analyzer->setAbstractionMode(ctOpt.abstractionMode);
+  analyzer->setMaxTransitions(ctOpt.maxTransitions);
+  analyzer->setMaxIterations(ctOpt.maxIterations);
 
-  if(args.isUserProvided("max-transitions")) {
-    analyzer->setMaxTransitions(args.getInt("max-transitions"));
-  }
-
-  if(args.isUserProvided("max-iterations")) {
-    analyzer->setMaxIterations(args.getInt("max-iterations"));
-  }
-
-  if(args.isUserProvided("max-iterations-forced-top")) {
-    analyzer->setMaxIterationsForcedTop(args.getInt("max-iterations-forced-top"));
+  if(ctOpt.maxIterationsForcedTop!=-1) {
+    analyzer->setMaxIterationsForcedTop(ctOpt.maxIterationsForcedTop);
     analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
   }
 
-  if(args.isUserProvided("max-transitions-forced-top")) {
-    analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top"));
+  // TODO: Analyzer::GTM_IO is only mode used now, all others are deprecated
+  if(ctOpt.maxTransitionsForcedTop!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop);
     analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
-  } else if(args.isUserProvided("max-transitions-forced-top1")) {
-    analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top1"));
+  } else if(ctOpt.maxTransitionsForcedTop1!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop1);
     analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
-  } else if(args.isUserProvided("max-transitions-forced-top2")) {
-    analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top2"));
+  } else if(ctOpt.maxTransitionsForcedTop2!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop2);
     analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCF);
-  } else if(args.isUserProvided("max-transitions-forced-top3")) {
-    analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top3"));
+  } else if(ctOpt.maxTransitionsForcedTop3!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop3);
     analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCFPTR);
-  } else if(args.isUserProvided("max-transitions-forced-top4")) {
-    analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top4"));
+  } else if(ctOpt.maxTransitionsForcedTop4!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop4);
     analyzer->setGlobalTopifyMode(Analyzer::GTM_COMPOUNDASSIGN);
-  } else if(args.isUserProvided("max-transitions-forced-top5")) {
-    analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top5"));
+  } else if(ctOpt.maxTransitionsForcedTop5!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop5);
     analyzer->setGlobalTopifyMode(Analyzer::GTM_FLAGS);
   }
 
-  if (args.isUserProvided("max-memory")) {
-    analyzer->setMaxBytes(args.getLongInt("max-memory"));
+  if (ctOpt.maxMemory!=1) {
+    analyzer->setMaxBytes(ctOpt.maxMemory);
   }
-  if (args.isUserProvided("max-time")) {
-    analyzer->setMaxSeconds(args.getLongInt("max-time"));
+  if (ctOpt.maxTime!=1) {
+    analyzer->setMaxSeconds(ctOpt.maxTime);
   }
-  if (args.isUserProvided("max-memory-forced-top")) {
-    analyzer->setMaxBytesForcedTop(args.getLongInt("max-memory-forced-top"));
+  if (ctOpt.maxMemoryForcedTop!=-1) {
+    analyzer->setMaxBytesForcedTop(ctOpt.maxMemoryForcedTop);
   }
-  if (args.isUserProvided("max-time-forced-top")) {
-    analyzer->setMaxSecondsForcedTop(args.getLongInt("max-time-forced-top"));
+  if (ctOpt.maxTimeForcedTop!=-1) {
+    analyzer->setMaxSecondsForcedTop(ctOpt.maxTimeForcedTop);
   }
 
-  if(args.isUserProvided("display-diff")) {
-    int displayDiff=args.getInt("display-diff");
-    analyzer->setDisplayDiff(displayDiff);
+  if(ctOpt.displayDiff!=-1) {
+    analyzer->setDisplayDiff(ctOpt.displayDiff);
   }
-  if(args.isUserProvided("resource-limit-diff")) {
-    int resourceLimitDiff=args.getInt("resource-limit-diff");
-    analyzer->setResourceLimitDiff(resourceLimitDiff);
+  if(ctOpt.resourceLimitDiff!=-1) {
+    analyzer->setResourceLimitDiff(ctOpt.resourceLimitDiff);
   }
 
   Solver* solver = nullptr;
   // overwrite solver ID based on other options
   if(analyzer->getModeLTLDriven()) {
-    args.setOption("solver", 11);
+    ctOpt.solver=11;
   }
-  ROSE_ASSERT(args.isDefined("solver")); // Options should contain a default solver
-  int solverId=args.getInt("solver");
+  int solverId=ctOpt.solver;
   // solverId sanity checks
   if(analyzer->getExplorationMode() == EXPL_LOOP_AWARE_SYNC &&
      solverId != 12) {
@@ -416,52 +398,52 @@ void configureRersSpecialization() {
 #endif
 }
 
-void configureOptionSets() {
-  string optionName="options-set";
-  int optionValue=args.getInt(optionName);
+void configureOptionSets(CodeThornOptions& ctOpt) {
+  string optionName="options-set";  // only used for error reporting
+  int optionValue=ctOpt.optionsSet; // only used for error reporting
   switch(optionValue) {
   case 0:
     // fall-through for default
     break;
   case 1:
-    args.setOption("explicit-arrays",true);
-    args.setOption("in-state-string-literals",true);
-    args.setOption("ignore-unknown-functions",true);
-    args.setOption("ignore-function-pointers",true);
-    args.setOption("std-functions",true);
-    args.setOption("context-sensitive",true);
-    args.setOption("normalize-all",true);
-    args.setOption("abstraction-mode",1);
+    ctOpt.explicitArrays=true;
+    ctOpt.inStateStringLiterals=true;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=true;
+    ctOpt.stdFunctions=true;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=1;
     break;
   case 2:
-    args.setOption("explicit-arrays",true);
-    args.setOption("in-state-string-literals",true);
-    args.setOption("ignore-unknown-functions",true);
-    args.setOption("ignore-function-pointers",false);
-    args.setOption("std-functions",true);
-    args.setOption("context-sensitive",true);
-    args.setOption("normalize-all",true);
-    args.setOption("abstraction-mode",1);
+    ctOpt.explicitArrays=true;
+    ctOpt.inStateStringLiterals=true;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=false;
+    ctOpt.stdFunctions=true;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=1;
     break;
   case 3:
-    args.setOption("explicit-arrays",true);
-    args.setOption("in-state-string-literals",false);
-    args.setOption("ignore-unknown-functions",true);
-    args.setOption("ignore-function-pointers",false);
-    args.setOption("std-functions",false);
-    args.setOption("context-sensitive",true);
-    args.setOption("normalize-all",true);
-    args.setOption("abstraction-mode",1);
+    ctOpt.explicitArrays=true;
+    ctOpt.inStateStringLiterals=false;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=false;
+    ctOpt.stdFunctions=false;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=1;
     break;
   case 11:
-    args.setOption("explicit-arrays",true);
-    args.setOption("in-state-string-literals",true);
-    args.setOption("ignore-unknown-functions",true);
-    args.setOption("ignore-function-pointers",false);
-    args.setOption("std-functions",true);
-    args.setOption("context-sensitive",true);
-    args.setOption("normalize-all",true);
-    args.setOption("abstraction-mode",0);
+    ctOpt.explicitArrays=true;
+    ctOpt.inStateStringLiterals=true;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=false;
+    ctOpt.stdFunctions=false;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=0;
     break;
   default:
     cerr<<"Error: unsupported "<<optionName<<" value: "<<optionValue<<endl;
@@ -510,7 +492,7 @@ int main( int argc, char * argv[] ) {
         return 0;
     }
 
-    configureOptionSets();
+    configureOptionSets(ctOpt);
 
     analyzer->optionStringLiteralsInState=args.getBool("in-state-string-literals");
     analyzer->setSkipUnknownFunctionCalls(args.getBool("ignore-unknown-functions"));
@@ -1234,7 +1216,8 @@ int main( int argc, char * argv[] ) {
         if (args.getBool("cegpra-ltl-all")) {
           ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlInAlphabet, ltlOutAlphabet);
         } else {  // cegpra for single LTL property
-          int property = args.getInt("cegpra-ltl");
+          //ROSE_ASSERT(ltlOpt.cegpra.ltlPropertyNr!=-1);
+          int property = ltlOpt.cegpra.ltlPropertyNr;
           ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);
         }
       }
