@@ -142,9 +142,9 @@ Unparse_Jovial::unparseDirectiveStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
         case SgJovialDirectiveStatement::e_compool:
            {
-              curprint("!COMPOOL (");
+              curprint("!COMPOOL ('");
               curprint(content);
-              curprint(");\n");
+              curprint("');\n");
               break;
            }
         case SgJovialDirectiveStatement::e_reducible:

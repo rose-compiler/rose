@@ -81,8 +81,8 @@ ATbool traverse_FractionSpecifier(ATerm term, SgExpression* &fraction);
 ATbool traverse_BitItemDescription(ATerm term, SgType* &type);
 
 // 2.1.1.5 CHARACTER TYPE DESCRIPTIONS
-ATbool traverse_CharacterItemDescription  (ATerm term, SgType* & type);
-ATbool traverse_CharacterLiteral          (ATerm term, SgExpression* &expr);
+ATbool traverse_CharacterItemDescription (ATerm term, SgType* & type);
+ATbool traverse_CharacterLiteral         (ATerm term, std::string &str_literal);
 
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
 ATbool traverse_StatusItemDescription (ATerm term, std::list<SgInitializedName*> &status_list, Sawyer::Optional<SgExpression*> &status_size);

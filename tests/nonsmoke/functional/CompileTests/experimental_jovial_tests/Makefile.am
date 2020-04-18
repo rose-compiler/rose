@@ -62,12 +62,11 @@ JOVIAL_PARSER_TESTCODES = \
  rose-issue-2143.jov
 
 COMPOOL_TESTCODES = \
- bit_cast.cpl
+ bit_cast.cpl                           \
+ status_type.cpl                        \
+ 3_0_rent_and_rec.cpl
 
-# bit_cast.cpl                           \
-# status_type.cpl                        \
 # simple_compool.cpl                     \
-# 3_0_rent_and_rec.cpl                   \
 # 9_1_compool_directive.cpl
 
 # proc_refs.cpl                          

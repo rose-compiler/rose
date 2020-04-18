@@ -1050,17 +1050,16 @@ ATbool ATermToSageJovialTraversal::traverse_BitItemDescription(ATerm term, SgTyp
 //========================================================================================
 // 2.1.1.5 CHARACTER TYPE DESCRIPTIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_CharacterLiteral(ATerm term, SgExpression* &expr)
+ATbool ATermToSageJovialTraversal::traverse_CharacterLiteral(ATerm term, std::string &str_literal)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_CharacterLiteral: %s\n", ATwriteToString(term));
 #endif
 
-   char* name;
+   char* char_literal;
 
-   if (ATmatch(term, "CharacterLiteral(<str>)", &name)) {
-      expr = SageBuilder::buildStringVal(std::string(name));
-      setSourcePosition(expr, term);
+   if (ATmatch(term, "CharacterLiteral(<str>)", &char_literal)) {
+      str_literal = char_literal;
    } else return ATfalse;
 
    return ATtrue;
@@ -3083,10 +3082,6 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
       if (traverse_OptStructureSpecifier(t_struct_spec, struct_spec)) {
          // MATCHED OptStructureSpecifier
       } else return ATfalse;
-
-      std::cout << ".x. TableTypeSpecifier - struct_spec.is_tight          = " << struct_spec.is_tight << std::endl;
-      std::cout << ".x. TableTypeSpecifier - struct_spec.is_parallel       = " << struct_spec.is_parallel << std::endl;
-      std::cout << ".x. TableTypeSpecifier - struct_spec.is_bits_per_entry = " << struct_spec.bits_per_entry << std::endl;
 
    // Like option
       if (ATmatch(t_like_option, "no-like-option()")) {
@@ -5423,15 +5418,18 @@ ATbool ATermToSageJovialTraversal::traverse_StopStatement(ATerm term)
    ATerm t_labels, t_stop_code;
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
-   SgExpression* sg_stop_code = nullptr;
+
+   SgStopOrPauseStatement* stop_stmt = nullptr;
+   SgExpression* stop_code = nullptr;
 
    if (ATmatch(term, "StopStatement(<term>,<term>)", &t_labels, &t_stop_code)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
 
+#if 0
       if (ATmatch(t_stop_code, "no-integer-formula()")) {
-         // No StopCode
+         // no stop code
          // DELETE ME
          //         stop_code = UntypedBuilder::buildUntypedNullExpression();
       }
@@ -5444,6 +5442,7 @@ ATbool ATermToSageJovialTraversal::traverse_StopStatement(ATerm term)
       //      setSourcePosition(stop_stmt, term);
 
       //      stmt = convert_Labels(labels, locations, stop_stmt);
+#endif
    }
    else return ATfalse;
 
@@ -5468,12 +5467,17 @@ ATbool ATermToSageJovialTraversal::traverse_AbortStatement(ATerm term)
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
+   SgStopOrPauseStatement* abort_stmt = nullptr;
+   SgExpression* stop_code = nullptr;
+
+
    if (ATmatch(term, "AbortStatement(<term>)", &t_labels)) {
-//TODO_STATEMENTS
-#if 0
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
+
+//TODO_STATEMENTS
+#if 0
 
       SgUntypedAbortStatement* abort_stmt = new SgUntypedAbortStatement("");
       setSourcePosition(abort_stmt, term);
@@ -5481,6 +5485,17 @@ ATbool ATermToSageJovialTraversal::traverse_AbortStatement(ATerm term)
 #endif
    }
    else return ATfalse;
+
+#if 0
+   // Begin SageTreeBuilder
+   sage_tree_builder.Enter(abort_stmt, rhs, vars, std::string());
+
+   } else return ATfalse;
+   ROSE_ASSERT(assign_stmt != nullptr);
+
+  // End SageTreeBuilder
+  sage_tree_builder.Leave(assign_stmt, );
+#endif
 
    return ATtrue;
 }
@@ -6114,15 +6129,17 @@ ATbool ATermToSageJovialTraversal::traverse_CharacterFormula(ATerm term, SgExpre
 
    ATerm t_literal, t_formula, t_conv_type;
 
+   std::string str_literal;
    SgExpression* cast_formula = nullptr;
    SgType* conv_type = nullptr;
 
    expr = nullptr;
 
    if (ATmatch(term, "CharacterFormula(<term>)", &t_literal)) {
-      if (traverse_CharacterLiteral(t_literal, expr)) {
-         // CharacterLiteral -> CharacterFormula
-         // MATCHED CharacterLiteral
+      if (traverse_CharacterLiteral(t_literal, str_literal)) {
+         // MATCHED CharacterLiteral -> CharacterFormula
+         expr = SageBuilder::buildStringVal(str_literal);
+         setSourcePosition(expr, t_literal);
       } else return ATfalse;
 
    } else if (ATmatch(term, "CharacterFormulaParens(<term>)", &t_formula)) {
@@ -7335,26 +7352,25 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
    printf("... traverse_CompoolDirective: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_dir_list, t_file_name, t_decl_name;
-   std::string decl_name, directive_string;
-   SgExpression* file_name = nullptr;
+   ATerm t_dir_list, t_compool_name, t_decl_name;
+   std::string compool_name;
    SgJovialDirectiveStatement* directive_stmt = nullptr;
 
    if (ATmatch(term, "CompoolDirective(<term>)", &t_dir_list)) {
 
-      if (ATmatch(t_dir_list, "CompoolDirectiveList(<term>)", &t_file_name)) {
-         if (ATmatch(t_file_name, "no-compool-file-name")) {
+      if (ATmatch(t_dir_list, "CompoolDirectiveList(<term>)", &t_compool_name)) {
+         if (ATmatch(t_compool_name, "no-compool-file-name")) {
             // MATCHED no-compool-file-name
          }
-         else if (traverse_CharacterLiteral(t_file_name, file_name)) {
+         else if (traverse_CharacterLiteral(t_compool_name, compool_name)) {
             //  '(' OptCompoolFileName ')'    -> CompoolDirectiveList     {cons("CompoolDirectiveList")}
          } else return ATfalse;
       }
-      else if (ATmatch(t_dir_list, "CompoolDirectiveList(<term>, <term>)", &t_file_name, &t_decl_name)) {
-         if (ATmatch(t_file_name, "no-compool-file-name")) {
+      else if (ATmatch(t_dir_list, "CompoolDirectiveList(<term>, <term>)", &t_compool_name, &t_decl_name)) {
+         if (ATmatch(t_compool_name, "no-compool-file-name")) {
             // MATCHED no-compool-file-name
          }
-         else if (traverse_CharacterLiteral(t_file_name, file_name)) {
+         else if (traverse_CharacterLiteral(t_compool_name, compool_name)) {
             //  '(' OptCompoolFileName ')'    -> CompoolDirectiveList     {cons("CompoolDirectiveList")}
          } else return ATfalse;
 
@@ -7362,23 +7378,19 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
          while (! ATisEmpty(tail)) {
             ATerm head = ATgetFirst(tail);
             tail = ATgetNext(tail);
-            if (traverse_Name(head, decl_name)) {
-               directive_string = decl_name;
+            if (traverse_Name(head, compool_name)) {
+               // MATCHED Name
             } else return ATfalse;
          }
       } else return ATfalse;
    }
    else return ATfalse;
 
-// This seems wierd. Look into traverse_CharacterLiteral returning something else (maybe overloaded function?)
-   if (file_name != nullptr) {
-      SgStringVal* file_string = isSgStringVal(file_name);
-      ROSE_ASSERT(file_string);
-      directive_string = file_string->get_value();
-      delete file_string;
-   }
+// Remove single quotes
+   if (compool_name.back()  == '\'') compool_name.pop_back();
+   if (compool_name.front() == '\'') compool_name = compool_name.substr(1);
 
-   sage_tree_builder.Enter(directive_stmt, directive_string, SgJovialDirectiveStatement::e_compool);
+   sage_tree_builder.Enter(directive_stmt, compool_name, SgJovialDirectiveStatement::e_compool);
    sage_tree_builder.Leave(directive_stmt);
 
    return ATtrue;

@@ -176,7 +176,7 @@ SgSourceFile* ModuleBuilder::createSgSourceFile(const std::string &module_name)
      std::vector<std::string> argv;
 
   // current directory
-     std::string module_filename = module_name + MOD_FILE_SUFFIX;
+     std::string module_filename = boost::algorithm::to_lower_copy(module_name) + MOD_FILE_SUFFIX;
 
      if (boost::filesystem::exists(module_filename) == false)
         {
@@ -184,17 +184,6 @@ SgSourceFile* ModuleBuilder::createSgSourceFile(const std::string &module_name)
            ROSE_ASSERT(false);
            //return NULL;
         }
-
-#if 0
-  // Try looking for cpl file (for now)
-     module_filename = module_name + ".cpl";
-
-     if (boost::filesystem::exists(module_filename) == false)
-        {
-           mlog[ERROR] << "File module filename = " << module_filename << " NOT FOUND (expected to be present) \n";
-           return NULL;
-        }
-#endif
 
      argv.push_back(SKIP_SYNTAX_CHECK);
      argv.push_back(module_filename);
