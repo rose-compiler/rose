@@ -3572,6 +3572,7 @@ ATbool ATermToSageJovialTraversal::traverse_OverlayDeclaration(ATerm term)
 
    if (ATmatch(term, "OverlayDeclaration(<term>,<term>)", &t_addr, &t_expr)) {
       cerr << "WARNING UNIMPLEMENTED: OverlayDeclaration\n";
+      ROSE_ASSERT(false);
       if (ATmatch(t_addr, "AbsoluteAddress(<term>)", &t_absolute_addr)) {
          // 'POS' '(' OverlayAddress ')'    -> AbsoluteAddress      {cons("AbsoluteAddress")}
          if (traverse_NumericFormula(t_absolute_addr, sg_addr)) {
@@ -7387,8 +7388,14 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
    else return ATfalse;
 
 // Remove single quotes
-   if (compool_name.back()  == '\'') compool_name.pop_back();
-   if (compool_name.front() == '\'') compool_name = compool_name.substr(1);
+// Return to C++11 usage when possible
+// if (compool_name.back()  == '\'') compool_name.pop_back();
+// if (compool_name.front() == '\'') compool_name = compool_name.substr(1);
+   unsigned int len = compool_name.length();
+   ROSE_ASSERT(len > 2);
+   if (compool_name[0]  == '\'' && compool_name[len-1]) {
+      compool_name = compool_name.substr(1,len-2);
+   }
 
    sage_tree_builder.Enter(directive_stmt, compool_name, SgJovialDirectiveStatement::e_compool);
    sage_tree_builder.Leave(directive_stmt);
