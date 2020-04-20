@@ -27,13 +27,14 @@ namespace
     return logger[Sawyer::Message::WARN];
   }
   
-  auto logInfo() -> decltype(logger[Sawyer::Message::WARN])
+  auto logInfo() -> decltype(logger[Sawyer::Message::INFO])
   {
     return logger[Sawyer::Message::INFO];
   }
 
+  // \note SgConstructorInitializer should not be handled through CallGraph..
   std::vector<SgFunctionDeclaration*>
-  callTargets(SgExpression* callexp, ClassHierarchyWrapper* classHierarchy)
+  callTargets(SgCallExpression* callexp, ClassHierarchyWrapper* classHierarchy)
   {
     std::vector<SgFunctionDeclaration*> targets;
   
@@ -77,7 +78,29 @@ bool FunctionCallInfo::isFunctionPointerCall() {
 }
 #endif /* WITHOUT_OLD_FUNCTION_CALL_MAPPING_1 */
 
+void addEntry(FunctionCallTargetSet& targetset, SgFunctionDeclaration* dcl)
+{
+  ROSE_ASSERT(dcl);
+  
+  SgFunctionDeclaration* defdcl = isSgFunctionDeclaration(dcl->get_definingDeclaration());
+  
+  if (!defdcl)
+  {
+    logWarn() << "unable to find definition for " << dcl->get_name()
+              << std::endl;
+    return;
+  }
+  
+  SgFunctionDefinition* def = defdcl->get_definition();
+  ROSE_ASSERT(def);
+  
+  targetset.insert(FunctionCallTarget(def));
+}
 
+namespace
+{
+  float percent(int part, int whole) { return (part*100.0)/whole; }
+}
 
 void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
 {
@@ -95,11 +118,13 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
     }
   }
 
+  int numCalls = 0;
   for (Label lbl : *labeler)
   {
     if (!labeler->isFunctionCallLabel(lbl))
       continue;
 
+    ++numCalls;
     SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(labeler->getNode(lbl));
 
     if (SgPointerDerefExp* callNode = callinfo.functionPointer())
@@ -113,42 +138,37 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
       
       while (aa != zz && aa->first == key)
       {
-        if (SgFunctionDefinition* fdef = aa->second->get_definition())
-        {
-          map_entry.insert(FunctionCallTarget(fdef));
-        }
-        else
-        {
-          // \todo print warning that no definition was available
-        }
+        addEntry(map_entry, aa->second);
 
         ++aa;
       }
-      
-      ROSE_ASSERT(map_entry.size() > 0);
     }
     else if (SgCallExpression* callexpr = callinfo.callExpression())
     {
       // handles explicit function calls (incl. virtual functions)
+      std::vector<SgFunctionDeclaration*> tgts(callTargets(callexpr, classHierarchy));
       
-      for (SgFunctionDeclaration* fdcl : callTargets(callexpr, classHierarchy))
+      if (tgts.size() == 0)
       {
-        // \todo consider adding all defining or if not available first non defining declarations
-        if (SgFunctionDeclaration* defdcl = isSgFunctionDeclaration(fdcl->get_definingDeclaration()))
-        {
-          mapping[lbl].insert(FunctionCallTarget(defdcl->get_definition()));
-        }
+        logWarn() << "unable to resolve target for " << callexpr->unparseToString() << std::endl;
+      }
+      
+      for (SgFunctionDeclaration* fdcl : tgts)
+      {
+        addEntry(mapping[lbl], fdcl);
       }
     }
     else if (SgConstructorInitializer* ctorinit = callinfo.ctorInitializer())
     {
-      for (SgFunctionDeclaration* fdcl : callTargets(ctorinit, classHierarchy))
+      // handles constructor calls
+      if (SgFunctionDeclaration* ctor = ctorinit->get_declaration())
       {
-        // \todo consider adding all defining or if not available first non defining declarations
-        if (SgFunctionDeclaration* defdcl = isSgFunctionDeclaration(fdcl->get_definingDeclaration()))
-        {
-          mapping[lbl].insert(FunctionCallTarget(defdcl->get_definition()));
-        }
+        addEntry(mapping[lbl], ctor);
+      }
+      else
+      {
+        logWarn() << "unable to resolve target for " << ctorinit->unparseToString()
+                  << std::endl;
       }
     }
     else
@@ -157,7 +177,7 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
     }
   }
 
-  logInfo()<<"Resolved "<< mapping.size() <<" function calls."<<std::endl;
+  logInfo()<<"Resolved "<<mapping.size()<<" ("<< percent(mapping.size(), numCalls) << "%) function calls."<<std::endl;
 }
 
 std::string FunctionCallMapping2::toString()
