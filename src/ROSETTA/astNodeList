@@ -3,6 +3,7 @@ SgActualArgumentExpression
 SgAdaAccessType
 SgAdaExitStmt
 SgAdaFloatType
+SgAdaFloatVal
 SgAdaLoopStmt
 SgAdaRangeConstraint
 SgAdaSubtype
