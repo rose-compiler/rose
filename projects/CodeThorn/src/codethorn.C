@@ -401,6 +401,7 @@ void configureRose() {
     exit(1);
   }
 
+  // see class Options in src/roseSupport/utility_functions.h
   Rose::global_options.set_frontend_notes(false);
   Rose::global_options.set_frontend_warnings(false);
   Rose::global_options.set_backend_warnings(false);
@@ -449,6 +450,16 @@ void configureOptionSets() {
     args.setOption("abstraction-mode",1);
     break;
   case 3:
+    args.setOption("explicit-arrays",true);
+    args.setOption("in-state-string-literals",false);
+    args.setOption("ignore-unknown-functions",true);
+    args.setOption("ignore-function-pointers",false);
+    args.setOption("std-functions",false);
+    args.setOption("context-sensitive",true);
+    args.setOption("normalize-all",true);
+    args.setOption("abstraction-mode",1);
+    break;
+  case 11:
     args.setOption("explicit-arrays",true);
     args.setOption("in-state-string-literals",true);
     args.setOption("ignore-unknown-functions",true);
@@ -866,12 +877,6 @@ int main( int argc, char * argv[] ) {
     }
 
     {
-      // TODO: refactor this into class Analyzer after normalization has been moved to class Analyzer->
-      set<AbstractValue> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer->getVariableIdMapping(),root);
-      analyzer->setCompoundIncVarsSet(compoundIncVarsSet);
-      SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
-    }
-    {
       AbstractValueSet varsInAssertConditions=determineVarsInAssertConditions(root,analyzer->getVariableIdMapping());
       SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
       analyzer->setAssertCondVarsSet(varsInAssertConditions);
@@ -879,6 +884,9 @@ int main( int argc, char * argv[] ) {
 
     if(args.getBool("eliminate-compound-assignments")) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments started."<<endl;
+      set<AbstractValue> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer->getVariableIdMapping(),root);
+      analyzer->setCompoundIncVarsSet(compoundIncVarsSet);
+      SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<compoundIncVarsSet.size()<<" compound inc/dec variables before normalization."<<endl;
       rewriteSystem.resetStatistics();
       rewriteSystem.rewriteCompoundAssignmentsInAst(root,analyzer->getVariableIdMapping());
       SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments finished."<<endl;

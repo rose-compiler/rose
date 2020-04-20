@@ -15,6 +15,10 @@ namespace CodeThorn {
   /////////////////////////////////////////////////
 
   bool CommandLineOptions::isDefined(string option) {
+    //cout<<"DEBUG: isDefined: checking:"<<option<<" exists:"<<(find(option)!=end())<<"args.size():"<<args.size()<<endl;
+    //for(CommandLineOptions::iterator iter=args.begin();iter!=args.end();++iter) {
+    //  cout<<"("<<(*iter).first<<")"<<endl;
+    //}
     return (find(option) != end());
   }
 
@@ -102,6 +106,10 @@ namespace CodeThorn {
     //                                                        .allow_unregistered()
     po::notify(args);
   }
+  void CommandLineOptions::parseAllowUnregistered(int argc, char * argv[], po::options_description all) {
+    po::store(po::command_line_parser(argc, argv).options(all).allow_unregistered().run(), args);
+    po::notify(args);
+  }
   void CommandLineOptions::parse(int argc, char * argv[], po::options_description all, po::options_description configFileOptions) {
     po::store(po::command_line_parser(argc, argv).options(all).run(), args);
     //                                                        .allow_unregistered()
@@ -115,6 +123,8 @@ namespace CodeThorn {
     } 
   }
 }
+
+
 // TODO: move to CodeThornCommandLineOptions, once all args
 // references are removed from codethorn library.
 CodeThorn::CommandLineOptions CodeThorn::args;

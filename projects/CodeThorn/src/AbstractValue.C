@@ -685,12 +685,20 @@ AbstractValue AbstractValue::operatorUnaryMinus() {
     tmp.valueType=AbstractValue::INTEGER;
     tmp.intValue=-intValue; // unary minus
     break;
-  case AbstractValue::TOP: tmp=Top();break;
+  case AbstractValue::FLOAT: 
+    tmp.valueType=AbstractValue::FLOAT;
+    tmp.floatValue=-floatValue; // unary minus
+    break;
+  case AbstractValue::TOP:
+    tmp=Top();break;
+  case AbstractValue::UNDEFINED:
+    tmp=*this;break; // keep information that it is undefined
   case AbstractValue::BOT: tmp=Bot();break;
   case AbstractValue::PTR:
     throw CodeThorn::Exception("Error: AbstractValue operator unary minus on pointer value.");
-  default:
-    throw CodeThorn::Exception("Error: AbstractValue operation unaryMinus failed.");
+  case AbstractValue::REF:
+    throw CodeThorn::Exception("Error: AbstractValue operator unary minus on reference value.");
+    //  default case intentionally not present to force all values to be handled explicitly
   }
   return tmp;
 }
@@ -715,7 +723,7 @@ AbstractValue AbstractValue::operatorAdd(AbstractValue& a,AbstractValue& b) {
   } else if(a.isConstInt() && b.isConstInt()) {
     return a.getIntValue()+b.getIntValue();
   } else {
-    throw CodeThorn::Exception("Error: undefined behavior in '+' operation.");
+    throw CodeThorn::Exception("Error: undefined behavior in '+' operation: "+a.toString()+","+b.toString());
   }
 }
 AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
@@ -744,7 +752,7 @@ AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
   } else if(a.isConstInt() && b.isConstInt()) {
     return a.getIntValue()-b.getIntValue();
   } else {
-    throw CodeThorn::Exception("Error: undefined behavior in '-' operation.");
+    throw CodeThorn::Exception("Error: undefined behavior in binary '-' operation.");
   }
 }
 AbstractValue AbstractValue::operatorMul(AbstractValue& a,AbstractValue& b) {

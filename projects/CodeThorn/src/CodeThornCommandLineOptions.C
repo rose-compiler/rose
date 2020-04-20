@@ -203,7 +203,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("interpreter-mode-file",po::value< string >()->default_value(""),"Select interpretation mode output file (otherwise stdout is used).")
     ("print-warnings",po::value< bool >()->default_value(false)->implicit_value(true),"Print warnings on stdout during analysis (this can slow down the analysis significantly)")
     ("print-violations",po::value< bool >()->default_value(false)->implicit_value(true),"Print detected violations on stdout during analysis (this can slow down the analysis significantly)")
-    ("options-set",po::value< int >()->default_value(0)->implicit_value(0),"Use a predefined set of default options (0..3).")
+    ("options-set",po::value< int >()->default_value(0)->implicit_value(0),"Use a predefined set of default options (0:default|1..3:abstract)|11:concrete)).")
 //  ("callstring-length",po::value< int >()->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ;
 

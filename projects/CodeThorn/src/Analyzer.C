@@ -1843,125 +1843,6 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   SAWYER_MESG(logger[TRACE])<< "INIT: finished."<<endl;
 }
 
-// TODO: this function should be implemented with a call of ExprCodeThorn::Analyzer::evaluateExpression
-PState CodeThorn::Analyzer::analyzeAssignRhs(Label lab, PState currentPState, VariableId lhsVar, SgNode* rhs, ConstraintSet& cset) {
-  ROSE_ASSERT(isSgExpression(rhs));
-  AbstractValue rhsIntVal=CodeThorn::Top();
-  bool isRhsIntVal=false;
-  bool isRhsVar=false;
-
-  if(SgCastExp* castExp=isSgCastExp(rhs)) {
-    // just skip the cast for now (casting is addressed in the new expression evaluation)
-    rhs=castExp->get_operand();
-  }
-
-  // TODO: -1 is OK, but not -(-1); yet.
-  if(SgMinusOp* minusOp=isSgMinusOp(rhs)) {
-    if(SgIntVal* intValNode=isSgIntVal(SgNodeHelper::getFirstChild(minusOp))) {
-      // found integer on rhs
-      rhsIntVal=-((int)intValNode->get_value());
-      isRhsIntVal=true;
-    }
-  }
-  // extracted info: isRhsIntVal:rhsIntVal
-  if(SgIntVal* intValNode=isSgIntVal(rhs)) {
-    // found integer on rhs
-    rhsIntVal=(int)intValNode->get_value();
-    isRhsIntVal=true;
-  }
-  // allow single var on rhs
-  if(SgVarRefExp* varRefExp=isSgVarRefExp(rhs)) {
-    VariableId rhsVarId;
-    isRhsVar=exprAnalyzer.variable(varRefExp,rhsVarId);
-    ROSE_ASSERT(isRhsVar);
-    ROSE_ASSERT(rhsVarId.isValid());
-    // x=y: constraint propagation for var1=var2 assignments
-    // we do not perform this operation on assignments yet, as the constraint set could become inconsistent.
-    //cset.addEqVarVar(lhsVar, rhsVarId);
-
-    if(currentPState.varExists(rhsVarId)) {
-      rhsIntVal=getExprAnalyzer()->readFromMemoryLocation(lab,&currentPState,rhsVarId);
-    } else {
-      if(variableIdMapping->hasArrayType(rhsVarId) && CodeThorn::args.getBool("explicit-arrays")==false) {
-        // in case of an array the id itself is the pointer value
-        ROSE_ASSERT(rhsVarId.isValid());
-        rhsIntVal=rhsVarId.getIdCode();
-      } else {
-        SAWYER_MESG(logger[WARN])<< "access to variable "<<variableIdMapping->uniqueVariableName(rhsVarId)<< " id:"<<rhsVarId.toString()<<" on rhs of assignment, but variable does not exist in state. Initializing with top."<<endl;
-        rhsIntVal=CodeThorn::Top();
-        isRhsIntVal=true;
-      }
-    }
-  }
-  PState newPState=currentPState;
-
-  // handle pointer assignment
-  if(variableIdMapping->hasPointerType(lhsVar)) {
-    //cout<<"DEBUG: "<<lhsVar.toString()<<" = "<<rhs->unparseToString()<<" : "<<astTermWithNullValuesToString(rhs)<<" : ";
-    //cout<<"LHS: pointer variable :: "<<lhsVar.toString()<<endl;
-    if(SgVarRefExp* rhsVarExp=isSgVarRefExp(rhs)) {
-      VariableId rhsVarId=variableIdMapping->variableId(rhsVarExp);
-      if(variableIdMapping->hasArrayType(rhsVarId)) {
-        //cout<<" of array type.";
-        // we use the id-code as int-value (points-to info)
-        int idCode=rhsVarId.getIdCode();
-        getExprAnalyzer()->writeToMemoryLocation(lab,&newPState,lhsVar,CodeThorn::AbstractValue(AbstractValue(idCode)));
-        //cout<<" id-code: "<<idCode;
-        return newPState;
-      } else {
-        logger[ERROR] <<"RHS: unknown : type: ";
-        logger[ERROR]<<AstTerm::astTermWithNullValuesToString(isSgExpression(rhs)->get_type());
-        exit(1);
-      }
-      //cout<<endl;
-    }
-  }
-
-  if(isRhsIntVal && isPrecise()) {
-    // \pp with SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL enabled the analysis
-    //     is currently imprecise...
-    ROSE_ASSERT(!rhsIntVal.isTop() || SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL);
-  }
-
-  if(newPState.varExists(lhsVar)) {
-    if(!isRhsIntVal && !isRhsVar) {
-      rhsIntVal=CodeThorn::Top();
-      ROSE_ASSERT(!isPrecise());
-    }
-    // we are using AbstractValue here (and  operator== is overloaded for AbstractValue==AbstractValue)
-    // for this comparison isTrue() is also false if any of the two operands is CodeThorn::Top()
-    if( (getExprAnalyzer()->readFromMemoryLocation(lab,&newPState,lhsVar).operatorEq(rhsIntVal)).isTrue() ) {
-      // update of existing variable with same value
-      // => no state change
-      return newPState;
-    } else {
-      // update of existing variable with new value
-      //newPState[lhsVar]=rhsIntVal;
-      getExprAnalyzer()->writeToMemoryLocation(lab,&newPState,lhsVar,rhsIntVal);
-#if 0
-      if((!rhsIntVal.isTop() && !isRhsVar))
-        cset.removeAllConstraintsOfVar(lhsVar);
-#endif
-      return newPState;
-    }
-  } else {
-    if(_variablesToIgnore.size()>0 && (_variablesToIgnore.find(lhsVar)!=_variablesToIgnore.end())) {
-      // nothing to do because variable is ignored
-    } else {
-      // new variable with new value.
-      getExprAnalyzer()->writeToMemoryLocation(lab,&newPState,lhsVar,rhsIntVal);
-    }
-    // no update of constraints because no constraints can exist for a new variable
-    return newPState;
-  }
-  // make sure, we only create/propagate contraints if a non-const value is assigned or if a variable is on the rhs.
-#if 0
-  if(!rhsIntVal.isTop() && !isRhsVar)
-    cset.removeAllConstraintsOfVar(lhsVar);
-#endif
-  return newPState;
-}
-
 void CodeThorn::Analyzer::initAstNodeInfo(SgNode* node) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -2443,6 +2324,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallLocalEdge(Edge edge, 
 }
 
 std::list<EState> CodeThorn::Analyzer::transferReturnStmt(Edge edge, const EState* estate) {
+  Label lab=estate->label();
   EState currentEState=*estate;
   CallString cs=currentEState.callString;
   PState currentPState=*currentEState.pstate();
@@ -2461,10 +2343,25 @@ std::list<EState> CodeThorn::Analyzer::transferReturnStmt(Edge edge, const EStat
     {
       returnVarId=variableIdMapping->createUniqueTemporaryVariableId(string("$return"));
     }
-    PState newPState=analyzeAssignRhs(currentEState.label(),currentPState,
-                                      returnVarId,
-                                      expr,
-                                      cset);
+
+    // MS 04/09/2020: removed all old code here and function analyzeAssignRhs. Replaced it with function call 'evaluateExpression'
+    // old version available in commit: 9645ce260b0bd44207d342a760afc27620380140
+    list<SingleEvalResultConstInt> rhsResList=exprAnalyzer.evaluateExpression(expr,currentEState, CodeThorn::ExprAnalyzer::MODE_VALUE);
+    AbstractValue rhsResultValue;
+    if(rhsResList.size()==0) {
+      // analyzed program execution ends, return empty set to indicate that execution does not continue
+      // TODO: may also return an error state here
+      std::list<EState> emptyList;
+      return emptyList;
+    } else if(rhsResList.size()>1) {
+      cerr<<"Error: return expression gives more than one result. Not normalized."<<endl;
+      exit(1);
+    } else {
+      ROSE_ASSERT(rhsResList.size()==1);
+      rhsResultValue=(*rhsResList.begin()).value();
+    }
+    PState newPState=currentPState;
+    getExprAnalyzer()->writeToMemoryLocation(lab,&newPState,returnVarId,rhsResultValue);
     return elistify(createEState(edge.target(),cs,newPState,cset));
   }
 }
