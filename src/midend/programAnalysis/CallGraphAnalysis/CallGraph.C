@@ -1010,6 +1010,14 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
   return functionList;
 }
 
+/**
+ * This function determines all the constructors called in a constructor 
+ * initializer.  For example: 
+ *   Bar::Bar() : foo() {} 
+ *   In this case, we need to list foo() as having been called, and the constructors
+ *   for all of foo's BaseClasses.  (These are returned as SgFunctionDeclarations, in 
+ *   the props vector)
+ **/
 std::vector<SgFunctionDeclaration*>
 CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit)
 {
@@ -1039,8 +1047,14 @@ CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit)
                 SgClassDeclaration* currClassDecl = worklist.back();
                 worklist.pop_back();
 
-                currClassDecl = isSgClassDeclaration(currClassDecl->get_definingDeclaration());
+                SgClassDeclaration* defClassDecl = isSgClassDeclaration(currClassDecl->get_definingDeclaration());
+                if(defClassDecl == NULL) { // Can get a NULL here if a primative type is being constructed. 
+                  continue;                // For example, a pointer
+                }
                 SgClassDefinition* currClass = currClassDecl->get_definition();
+                if(currClass == NULL) { // Can get a NULL here if class is an anonymous compiler generated BaseClass
+                  continue;    
+                }
 
                 foreach(SgBaseClass* baseClass, currClass->get_inheritances())
                 {
@@ -1523,7 +1537,52 @@ CallGraphBuilder::buildCallGraph (){
   buildCallGraph(dummyFilter());
 }
 
+
+/**
+ *  CallGraphBuilder::hasGraphNodeFor
+ *
+ * \brief Checks the graphNodes map for a graph node match fdecl
+ *
+ * This does a lookup on the CallGraph map to see if a given function is in it.
+ * This is used in constructing the CallGraph.  If multiple files are input on 
+ * the command line firstNondefiningDeclartion may not be unique, so not finding
+ * a graphNode for fdecl does not guarantee that the target function does not exist
+ * in the graph, only that it is not in the lookup map.  Use getGraphNodeFor 
+ * to be sure.  Again, this is mainly used in constructing the call graph.
+ *
+ * \param[in] fdecl The declaration of the function to look for in the graph
+ *
+ **/
+SgGraphNode * CallGraphBuilder::hasGraphNodeFor(SgFunctionDeclaration * fdecl) const {
+  SgFunctionDeclaration *unique = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
+  GraphNodes::const_iterator lookedup = graphNodes.find(unique); 
+  if(lookedup != graphNodes.end()) {
+    return lookedup->second;
+  }
+  return NULL;
+}
+
+/**
+ *  CallGraphBuilder::getGraphNodeFor
+ *
+ * \brief Double checks that the Call Graph has the function
+ *
+ * This double checks for a call graph node.  If multiple files are input on the command
+ * line firstNondefiningDeclartion may not be unique.  (As expected) So we can double check
+ * on the name.  This is useful only outside the CallGraph, if the CallGraph is fully
+ * constructed, and we need a particular node from it.
+ *
+ * \param[in] fdecl The declaration of the function to look for in the graph
+ *
+ **/
 SgGraphNode * CallGraphBuilder::getGraphNodeFor(SgFunctionDeclaration * fdecl) const {
+  SgFunctionDeclaration *unique = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
+  GraphNodes::const_iterator lookedup = graphNodes.find(unique); 
+  if(lookedup != graphNodes.end()) {
+    return lookedup->second;
+  }
+
+  //Fall back on old slow method (When putting multiple 
   std::string fname = fdecl->get_mangled_name();
   for (GraphNodes::const_iterator it = graphNodes.begin(); it != graphNodes.end(); ++it )
     if (it->first->get_mangled_name() == fname)
