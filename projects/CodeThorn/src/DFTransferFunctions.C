@@ -3,6 +3,8 @@
 
 #include "sage3basic.h"
 
+#include "sageGeneric.h"
+
 using namespace std;
 
 #include "CollectionOperators.h"
@@ -10,6 +12,11 @@ using namespace std;
 #include "AnalysisAbstractionLayer.h"
 
 using namespace CodeThorn;
+
+namespace
+{
+  std::ostream& logWarn() { return std::cerr << "[WARN] "; } 
+}
 
 DFTransferFunctions::DFTransferFunctions():_programAbstractionLayer(0){}
 
@@ -31,6 +38,9 @@ void DFTransferFunctions::transferCondition(Edge edge, Lattice& element) {
   transfer(lab0,element);
 }
 
+static inline
+VariableId withoutVariable() { return VariableId(); }
+
 void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   ROSE_ASSERT(getLabeler());
   //cout<<"transfer @label:"<<lab<<endl;
@@ -43,16 +53,26 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     // the extremal value must be different to the bottom element.
     return;
   }
+  
   if(getLabeler()->isFunctionCallLabel(lab)) {
     // 1) f(x), 2) y=f(x) (but not y+=f(x))
-    if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(node)) {
+    SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(node);
+    
+    //~ if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(node)) {
+    if(SgFunctionCallExp* funCall = callinfo.callExpression()) {
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
       transferFunctionCall(lab, funCall, arguments, element);
-      return;
+    } else if (SgConstructorInitializer* ctorCall = callinfo.ctorInitializer()) {
+      SgExpressionPtrList& arguments=SG_DEREF(ctorCall->get_args()).get_expressions();
+      transferConstructorCall(lab, ctorCall, arguments, element);
     } else {
-      cerr<<"Error: DFTransferFunctions::callexp: no function call on rhs of assignment found. Only found "<<funCall->class_name()<<endl;
+      cerr<<"Error: DFTransferFunctions::callexp: no function call on rhs of assignment found. Only found "
+          <<node->class_name() << " for " << node->unparseToString() 
+          <<endl;
       exit(1);
     }
+    
+    return;
   }
 
   if(getLabeler()->isFunctionCallReturnLabel(lab)) {
@@ -70,19 +90,25 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
         exit(1);
       }
       SgNode* rhs=SgNodeHelper::getRhs(node);
+      VariableId varId = getVariableIdMapping()->variableId(lhsVar);
       while(isSgCastExp(rhs))
         rhs=SgNodeHelper::getFirstChild(rhs);
-      SgFunctionCallExp* funCall=isSgFunctionCallExp(rhs);
-      if(!funCall) {
-        cerr<<"Transfer: no function call on rhs of assignment."<<endl;
-        cerr<<node->unparseToString()<<endl;
-        exit(1);
+      if(SgFunctionCallExp* funCall=isSgFunctionCallExp(rhs)) {
+        transferFunctionCallReturn(lab, varId, funCall, element);
+        return;
       }
-      transferFunctionCallReturn(lab, lhsVar, funCall, element);
-      return;
+      if(SgConstructorInitializer* ctorCall=isSgConstructorInitializer(rhs)) {
+        transferConstructorCallReturn(lab, varId, ctorCall, element);
+        return;
+      }
+      cerr<<"Transfer: no function call on rhs of assignment."<<endl;
+      cerr<<node->unparseToString()<<endl;
+      exit(1);
     } else if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
-      SgVarRefExp* lhsVar=0;
-      transferFunctionCallReturn(lab, lhsVar, funCall, element);
+      transferFunctionCallReturn(lab, withoutVariable(), funCall, element);
+      return;
+    } else if(SgConstructorInitializer* ctorCall=isSgConstructorInitializer(node)) {
+      transferConstructorCallReturn(lab, withoutVariable(), ctorCall, element);
       return;
     } else if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCallExpInVariableDeclaration(node)) {
       // handle special case of function call in variable declaration: type var=f();
@@ -90,12 +116,22 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
       VariableId lhsVarId=getVariableIdMapping()->variableId(varDecl);
       ROSE_ASSERT(lhsVarId.isValid());
       transferFunctionCallReturn(lab, lhsVarId, funCall, element);
+    } else if(SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(node)) {
+      SgVariableDeclaration* varDecl=isSgVariableDeclaration(node);
+      ROSE_ASSERT(varDecl);
+      VariableId lhsVarId=getVariableIdMapping()->variableId(varDecl);
+      ROSE_ASSERT(lhsVarId.isValid());
+      transferConstructorCallReturn(lab, lhsVarId, callinfo.ctorInitializer(), element);
     } else if(isSgReturnStmt(node)) {
       // special case of return f(...);
       node=SgNodeHelper::getFirstChild(node);
       if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
-        transferFunctionCallReturn(lab, 0, funCall, element);
+        transferFunctionCallReturn(lab, withoutVariable(), funCall, element);
         return;
+      } else {
+        SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(node);
+        ROSE_ASSERT(callinfo && callinfo.ctorInitializer());
+        transferConstructorCallReturn(lab, withoutVariable(), callinfo.ctorInitializer(), element);
       }
     } else {
       if(getSkipUnknownFunctionCalls()) {
@@ -246,10 +282,15 @@ void DFTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* cal
   // default identity function
 }
 
+void DFTransferFunctions::transferConstructorCall(Label, SgConstructorInitializer*, SgExpressionPtrList&, Lattice&) {
+  // default identity function
+}
+
 void DFTransferFunctions::transferExternalFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element) {
   // default identity function
 }
 
+/*
 void DFTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element) {
   // default function implementation
   VariableId varId;
@@ -259,11 +300,15 @@ void DFTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhs
   // for void functions, varId remains invalid
   transferFunctionCallReturn(lab,varId,callExp,element);
 }
+*/
 
 void DFTransferFunctions::transferFunctionCallReturn(Label lab, VariableId varId, SgFunctionCallExp* callExp, Lattice& element) {
   // default identity function
 }
 
+void DFTransferFunctions::transferConstructorCallReturn(Label, VariableId, SgConstructorInitializer*, Lattice&) {
+  // default identity function
+}
 
 void DFTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element) {
   // default identity function
@@ -389,9 +434,17 @@ void storeIfBetter( std::map<VariableId, SgVariableDeclaration*>& initmap,
 
   if (!choice)
   {
-    std::cerr << "WARN: two equally good initializers found\n"
-              << "      " << cand.second->unparseToString() << " [chosen]\n"
-              << "      " << curr->unparseToString() << " [ignored]\n";
+    std::string currstr = curr->unparseToString();
+    std::string candstr = cand.second->unparseToString();
+    
+    // suppress the warning if the two candidates unparse to the same string
+    if (currstr != candstr)
+    {
+      logWarn() << "two equally good initializers found\n"
+                << "      " << currstr << " [chosen]\n"
+                << "      " << candstr << " [ignored]"
+                << std::endl;
+    }
   }
   else if (curr != choice)
   {
