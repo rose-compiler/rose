@@ -467,8 +467,8 @@ int main( int argc, char * argv[] ) {
     parseCommandLine(argc, argv, logger,versionString,ctOpt,ltlOpt,parProOpt);
 
     // Start execution
-    mfacilities.control(args.getString("log-level"));
-    SAWYER_MESG(logger[TRACE]) << "Log level is " << args.getString("log-level") << endl;
+    mfacilities.control(ctOpt.logLevel);
+    SAWYER_MESG(logger[TRACE]) << "Log level is " << ctOpt.logLevel << endl;
 
     // ParPro command line options
     bool exitRequest=CodeThorn::ParProAutomata::handleCommandLineArguments(args,logger);
@@ -477,14 +477,14 @@ int main( int argc, char * argv[] ) {
     }
 
     IOAnalyzer* analyzer;
-    if(args.getBool("data-race-check-shuffle")) {
+    if(ctOpt.dr.checkShuffleAlgorithm) {
       analyzer = new ReadWriteAnalyzer();
     } else {
       analyzer = new IOAnalyzer();
     }
     global_analyzer=analyzer;
 
-    if (args.isUserProvided("internal-checks")) {
+    if(ctOpt.internalChecks) {
       mfacilities.shutdown();
       if(CodeThorn::internalChecks(argc,argv)==false)
         return 1;
@@ -494,27 +494,27 @@ int main( int argc, char * argv[] ) {
 
     configureOptionSets(ctOpt);
 
-    analyzer->optionStringLiteralsInState=args.getBool("in-state-string-literals");
-    analyzer->setSkipUnknownFunctionCalls(args.getBool("ignore-unknown-functions"));
-    analyzer->setIgnoreFunctionPointers(args.getBool("ignore-function-pointers"));
-    analyzer->setStdFunctionSemantics(args.getBool("std-functions"));
+    analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;
+    analyzer->setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
+    analyzer->setIgnoreFunctionPointers(ctOpt.ignoreFunctionPointers);
+    analyzer->setStdFunctionSemantics(ctOpt.stdFunctions);
 
     analyzerSetup(analyzer, logger, ctOpt, ltlOpt, parProOpt);
 
-    switch(int mode=args.getInt("interpreter-mode")) {
+    switch(int mode=ctOpt.interpreterMode) {
     case 0: analyzer->setInterpreterMode(IM_ABSTRACT); break;
     case 1: analyzer->setInterpreterMode(IM_CONCRETE); break;
     default:
       cerr<<"Unknown interpreter mode "<<mode<<" provided on command line (supported: 0..1)."<<endl;
       exit(1);
     }
-    string outFileName=args.getString("interpreter-mode-file");
+    string outFileName=ctOpt.interpreterModeOuputFileName;
     if(outFileName!="") {
       analyzer->setInterpreterModeOutputFileName(outFileName);
       CppStdUtilities::writeFile(outFileName,""); // touch file
     }
     {
-      switch(int argVal=args.getInt("function-resolution-mode")) {
+      switch(int argVal=ctOpt.functionResolutionMode) {
       case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
       case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
       case 3: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_ID_MAPPING;break;
@@ -527,19 +527,15 @@ int main( int argc, char * argv[] ) {
     // analyzer->setFunctionResolutionMode(args.getInt("function-resolution-mode")); xxx
     // needs to set CFAnalysis functionResolutionMode
 
-    if(args.isUserProvided("threads")) {
-      int numThreads=args.getInt("threads");
-      if(numThreads<=0) {
-        cerr<<"Error: number of threads must be greater or equal 1."<<endl;
-        exit(1);
-      }
-      analyzer->setNumberOfThreadsToUse(numThreads);
-    } else {
-      analyzer->setNumberOfThreadsToUse(1);
+    int numThreads=ctOpt.threads; // default is 1
+    if(numThreads<=0) {
+      cerr<<"Error: number of threads must be greater or equal 1."<<endl;
+      exit(1);
     }
+    analyzer->setNumberOfThreadsToUse(numThreads);
 
     string option_start_function="main";
-    if(args.isUserProvided("start-function")) {
+    if(ctOpt.startFunctionName.size()>0) {
       option_start_function = args.getString("start-function");
     }
 
@@ -548,33 +544,33 @@ int main( int argc, char * argv[] ) {
     vector<int> option_specialize_fun_const_list;
     vector<string> option_specialize_fun_varinit_list;
     vector<int> option_specialize_fun_varinit_const_list;
-    if(args.isUserProvided("specialize-fun-name")) {
-      option_specialize_fun_name = args.getString("specialize-fun-name");
+    if(ctOpt.equiCheck.specializeFunName.size()>0) {
+      option_specialize_fun_name = ctOpt.equiCheck.specializeFunName;
       // logger[DEBUG] << "option_specialize_fun_name: "<< option_specialize_fun_name<<endl;
     } else {
       // logger[DEBUG] << "option_specialize_fun_name: NONE"<< option_specialize_fun_name<<endl;
     }
 
-    if(args.isUserProvided("specialize-fun-param")) {
-      option_specialize_fun_param_list=args.getIntVector("specialize-fun-param");
-      option_specialize_fun_const_list=args.getIntVector("specialize-fun-const");
+    if(ctOpt.equiCheck.specializeFunParamList.size()>0) {
+      option_specialize_fun_param_list=ctOpt.equiCheck.specializeFunParamList;
+      option_specialize_fun_const_list=ctOpt.equiCheck.specializeFunConstList;
     }
 
-    if(args.isUserProvided("specialize-fun-varinit")) {
-      option_specialize_fun_varinit_list=args.getStringVector("specialize-fun-varinit");
-      option_specialize_fun_varinit_const_list=args.getIntVector("specialize-fun-varinit-const");
+    if(ctOpt.equiCheck.specializeFunVarInitList.size()>0) {
+      option_specialize_fun_varinit_list=ctOpt.equiCheck.specializeFunVarInitList;
+      option_specialize_fun_varinit_const_list=ctOpt.equiCheck.specializeFunVarInitConstList;
     }
 
     // logger[DEBUG] << "specialize-params:"<<option_specialize_fun_const_list.size()<<endl;
 
-    if(args.isUserProvided("specialize-fun-name")) {
-      if((args.isUserProvided("specialize-fun-param")||args.isUserProvided("specialize-fun-const"))
-          && !(args.isUserProvided("specialize-fun-name")&&args.isUserProvided("specialize-fun-param")&&args.isUserProvided("specialize-fun-param"))) {
+    if(ctOpt.equiCheck.specializeFunName.size()>0) {
+      if( ((ctOpt.equiCheck.specializeFunParamList.size()>0)||ctOpt.equiCheck.specializeFunConstList.size()>0)
+        && !(ctOpt.equiCheck.specializeFunName.size()>0&&ctOpt.equiCheck.specializeFunParamList.size()>0)) {
         logger[ERROR] <<"options --specialize-fun-name=NAME --specialize-fun-param=NUM --specialize-fun-const=NUM must be used together."<<endl;
         exit(1);
       }
-      if((args.isUserProvided("specialize-fun-varinit")||args.isUserProvided("specialize-fun-varinit-const"))
-          && !(args.isUserProvided("specialize-fun-varinit")&&args.isUserProvided("specialize-fun-varinit-const"))) {
+    if((ctOpt.equiCheck.specializeFunVarInitList.size()>0||ctOpt.equiCheck.specializeFunVarInitConstList.size()>0)
+       && !(ctOpt.equiCheck.specializeFunVarInitList.size()>0&&ctOpt.equiCheck.specializeFunVarInitConstList.size()>0)) {
         logger[ERROR] <<"options --specialize-fun-name=NAME --specialize-fun-varinit=NAME --specialize-fun-const=NUM must be used together."<<endl;
         exit(1);
       }
