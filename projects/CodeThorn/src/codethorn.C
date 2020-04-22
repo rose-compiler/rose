@@ -536,7 +536,7 @@ int main( int argc, char * argv[] ) {
 
     string option_start_function="main";
     if(ctOpt.startFunctionName.size()>0) {
-      option_start_function = args.getString("start-function");
+      option_start_function = ctOpt.startFunctionName;
     }
 
     string option_specialize_fun_name="";
@@ -671,7 +671,7 @@ int main( int argc, char * argv[] ) {
 
     /* perform inlining before variable ids are computed, because
      * variables are duplicated by inlining. */
-    if(args.getBool("inline")) {
+    if(ctOpt.inlineFunctions) {
       InlinerBase* inliner=lowering.getInliner();
       if(RoseInliner* roseInliner=dynamic_cast<CodeThorn::RoseInliner*>(inliner)) {
         roseInliner->inlineDepth=ctOpt.inlineFunctionsDepth;
@@ -683,8 +683,8 @@ int main( int argc, char * argv[] ) {
 
     {
       bool unknownFunctionsFile=ctOpt.externalFunctionsCSVFileName.size()>0;
-      bool showProgramStats=args.getBool("program-stats");
-      bool showProgramStatsOnly=args.getBool("program-stats-only");
+      bool showProgramStats=ctOpt.programStats;
+      bool showProgramStatsOnly=ctOpt.programStatsOnly;
       if(unknownFunctionsFile||showProgramStats||showProgramStatsOnly) {
         ProgramInfo programInfo(sageProject);
         programInfo.compute();
@@ -735,7 +735,7 @@ int main( int argc, char * argv[] ) {
       analyzer->getVariableIdMapping()->toStream(cout);
     }
   
-    if(args.isUserProvided("type-size-mapping-print")||args.isUserProvided("type-size-mapping-csv")) {
+    if(ctOpt.info.printTypeSizeMapping||ctOpt.info.typeSizeMappingCSVFileName.size()>0) {
       // from: src/midend/astDiagnostics/AstStatistics.C
       string s=analyzer->typeSizeMappingToString();
       if(ctOpt.info.printTypeSizeMapping) {
@@ -966,18 +966,18 @@ int main( int argc, char * argv[] ) {
     }
 
 #ifdef HAVE_Z3
-    if(args.isUserProvided("z3"))
-    {
-	assert(ctOpt.z3UpperInputBound!=-1 && ctOpt.z3VerifierErrorNumber!=-1);	
-	int RERSUpperBoundForInput=ctOpt.z3UpperInputBound
-	int RERSVerifierErrorNumber=ctOpt.z3VerifierErrorNumber
-	cout << "generateSSAForm()" << endl;
-	ReachabilityAnalyzerZ3* reachAnalyzer = new ReachabilityAnalyzerZ3(RERSUpperBoundForInput, RERSVerifierErrorNumber, analyzer, &logger);	
-	cout << "checkReachability()" << endl;
-	reachAnalyzer->checkReachability();
+    if(ctOpt.z3BasedReachabilityAnalysis)
+      {
+        assert(ctOpt.z3UpperInputBound!=-1 && ctOpt.z3VerifierErrorNumber!=-1);	
+        int RERSUpperBoundForInput=ctOpt.z3UpperInputBound;
+        int RERSVerifierErrorNumber=ctOpt.z3VerifierErrorNumber;
+        cout << "generateSSAForm()" << endl;
+        ReachabilityAnalyzerZ3* reachAnalyzer = new ReachabilityAnalyzerZ3(RERSUpperBoundForInput, RERSVerifierErrorNumber, analyzer, &logger);	
+        cout << "checkReachability()" << endl;
+        reachAnalyzer->checkReachability();
 
-	exit(0);
-    }
+        exit(0);
+      }
 #endif	
 
     if(ctOpt.ssa) {
@@ -1246,7 +1246,7 @@ int main( int argc, char * argv[] ) {
     double totalLtlRunTime =  infPathsOnlyTime + stdIoOnlyTime + spotLtlAnalysisTime;
 
     // TEST
-    if (args.getBool("generate-assertions")) {
+    if (ctOpt.generateAssertions) {
       AssertionExtractor assertionExtractor(analyzer);
       assertionExtractor.computeLabelVectorOfEStates();
       assertionExtractor.annotateAst();
@@ -1269,9 +1269,9 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    if(args.isUserProvided("dump-sorted")>0 || args.isUserProvided("dump-non-sorted")>0) {
+    if(ctOpt.equiCheck.dumpSortedFileName.size()>0 || ctOpt.equiCheck.dumpNonSortedFileName.size()>0) {
       SAR_MODE sarMode=SAR_SSA;
-      if(args.getBool("rewrite-ssa")) {
+      if(ctOpt.equiCheck.rewriteSSA) {
 	sarMode=SAR_SUBSTITUTE;
       }
       Specialization speci;
@@ -1279,8 +1279,8 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE]) <<"STATUS: performing array analysis on STG."<<endl;
       SAWYER_MESG(logger[TRACE]) <<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
 
-      bool useRuleConstSubstitution=args.getBool("rule-const-subst");
-      bool useRuleCommutativeSort=args.getBool("rule-commutative-sort");
+      bool useRuleConstSubstitution=ctOpt.equiCheck.ruleConstSubst;
+      bool useRuleCommutativeSort=ctOpt.equiCheck.ruleCommutativeSort;
       
       timer.start();
       speci.extractArrayUpdateOperations(analyzer,
@@ -1298,7 +1298,7 @@ int main( int argc, char * argv[] ) {
       speci.substituteArrayRefs(arrayUpdates, analyzer->getVariableIdMapping(), sarMode, rewriteSystem);
       arrayUpdateExtractionRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
-      if(args.getBool("print-update-infos")) {
+      if(ctOpt.equiCheck.printUpdateInfos) {
         speci.printUpdateInfos(arrayUpdates,analyzer->getVariableIdMapping());
       }
       SAWYER_MESG(logger[TRACE]) <<"STATUS: establishing array-element SSA numbering."<<endl;
@@ -1306,13 +1306,13 @@ int main( int argc, char * argv[] ) {
       speci.createSsaNumbering(arrayUpdates, analyzer->getVariableIdMapping());
       arrayUpdateSsaNumberingRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
-      if(args.isUserProvided("dump-non-sorted")) {
-        string filename=args.getString("dump-non-sorted");
+      if(ctOpt.equiCheck.dumpNonSortedFileName.size()>0) {
+        string filename=ctOpt.equiCheck.dumpNonSortedFileName;
         speci.writeArrayUpdatesToFile(arrayUpdates, filename, sarMode, false);
       }
-      if(args.isUserProvided("dump-sorted")) {
+      if(ctOpt.equiCheck.dumpSortedFileName.size()>0) {
         timer.start();
-        string filename=args.getString("dump-sorted");
+        string filename=ctOpt.equiCheck.dumpSortedFileName;
         speci.writeArrayUpdatesToFile(arrayUpdates, filename, sarMode, true);
         sortingAndIORunTime=timer.getTimeDurationAndStop().milliSeconds();
       }
@@ -1323,8 +1323,8 @@ int main( int argc, char * argv[] ) {
 
     analyzer->printAnalyzerStatistics(totalRunTime, "STG generation and assertion analysis complete");
 
-    if(args.isUserProvided("csv-stats")) {
-      string filename=args.getString("csv-stats").c_str();
+    if(ctOpt.csvStatsFileName.size()>0) {
+      string filename=ctOpt.csvStatsFileName;
       stringstream text;
       text<<"Sizes,"<<pstateSetSize<<", "
           <<eStateSetSize<<", "
@@ -1520,19 +1520,19 @@ int main( int argc, char * argv[] ) {
     // InputPathGenerator
 #if 1
     {
-      if(args.isUserProvided("iseq-file")) {
+      if(ctOpt.rers.iSeqFile.size()>0) {
         int iseqLen=0;
-        if(args.isUserProvided("iseq-length")) {
-          iseqLen=args.getInt("iseq-length");
+        if(ctOpt.rers.iSeqLength!=-1) {
+          iseqLen=ctOpt.rers.iSeqLength;
         } else {
           logger[ERROR] <<"input-sequence file specified, but no sequence length."<<endl;
           exit(1);
         }
-        string fileName=args.getString("iseq-file");
+        string fileName=ctOpt.rers.iSeqFile;
         SAWYER_MESG(logger[TRACE]) <<"STATUS: computing input sequences of length "<<iseqLen<<endl;
         IOSequenceGenerator iosgen;
-        if(args.isUserProvided("iseq-random-num")) {
-          int randomNum=args.getInt("iseq-random-num");
+        if(ctOpt.rers.iSeqRandomNum!=-1) {
+          int randomNum=ctOpt.rers.iSeqRandomNum;
           SAWYER_MESG(logger[TRACE]) <<"STATUS: reducing input sequence set to "<<randomNum<<" random elements."<<endl;
           iosgen.computeRandomInputPathSet(iseqLen,*analyzer->getTransitionGraph(),randomNum);
         } else {
@@ -1541,7 +1541,7 @@ int main( int argc, char * argv[] ) {
         SAWYER_MESG(logger[TRACE]) <<"STATUS: generating input sequence file "<<fileName<<endl;
         iosgen.generateFile(fileName);
       } else {
-        if(args.isUserProvided("iseq-length")) {
+        if(ctOpt.rers.iSeqLength!=-1) {
           logger[ERROR] <<"input sequence length specified without also providing a file name (use option --iseq-file)."<<endl;
           exit(1);
         }
@@ -1560,22 +1560,22 @@ int main( int argc, char * argv[] ) {
     }
 #endif
 
-    if (args.getBool("annotate-terms")) {
-      // TODO: it might be useful to be able to select certain analysis results to be only annotated
+    if (ctOpt.annotateTerms) {
+      // TODO: it might be useful to be able to select certain analysis results to be annotated only
       logger[INFO] << "Annotating term representations."<<endl;
       AstTermRepresentationAttribute::attachAstTermRepresentationAttributes(sageProject);
       AstAnnotator ara(analyzer->getLabeler());
       ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
     }
 
-    if (args.getBool("annotate-terms")||args.getBool("generate-assertions")) {
+    if (ctOpt.annotateTerms||ctOpt.generateAssertions) {
       logger[INFO] << "Generating annotated program."<<endl;
       //backend(sageProject);
       sageProject->unparse(0,0);
     }
 
     // reset terminal
-    if(args.getBool("status"))
+    if(ctOpt.status)
       cout<<color("normal")<<"done."<<endl;
 
     // main function try-catch
