@@ -94,7 +94,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("csv-stats-cegpra",po::value< string >(&ltlOpt.cegpra.csvStatsFileName),"Output statistics regarding the counterexample-guided prefix refinement analysis (CEGPRA) into a CSV file <arg>.")
     ("cegpra-ltl",po::value< int >(&ltlOpt.cegpra.ltlPropertyNr)->default_value(-1),"Select the ID of an LTL property that should be checked using cegpra (between 0 and 99).")
     ("cegpra-ltl-all", po::value< bool >(&ltlOpt.cegpra.checkAllProperties)->default_value(false)->implicit_value(true),"Check all specified LTL properties using CEGPRA.")
-    ("cegpra-max-iterations",po::value< int >(&ltlOpt.cegpra.maxIterations),"Select a maximum number of counterexamples anaylzed by CEGPRA.")
+    ("cegpra-max-iterations",po::value< int >(&ltlOpt.cegpra.maxIterations)->default_value(-1),"Select a maximum number of counterexamples anaylzed by CEGPRA.")
     ("viz-cegpra-detailed",po::value< string >(&ltlOpt.cegpra.visualizationDotFile),"Generate visualization (.dot) output files with prefix <arg> for different stages within each loop of CEGPRA.")
     ;
 

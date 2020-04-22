@@ -1193,8 +1193,8 @@ int main( int argc, char * argv[] ) {
       ltlResults = spotConnection.getLtlResults();
       SAWYER_MESG(logger[TRACE]) << "LTL: results computed."<<endl;
 
-      if (args.isUserProvided("cegpra-ltl") || (args.isUserProvided("cegpra-ltl-all")&&args.getBool("cegpra-ltl-all"))) {
-        if (args.isUserProvided("csv-stats-cegpra")) {
+      if (ltlOpt.cegpra.ltlPropertyNr!=-1 || ltlOpt.cegpra.checkAllProperties) {
+        if (ltlOpt.cegpra.csvStatsFileName.size()>0) {
           statisticsCegpra << "init,";
           analyzer->getTransitionGraph()->printStgSize("initial abstract model");
           analyzer->getTransitionGraph()->csvToStream(statisticsCegpra);
@@ -1204,10 +1204,10 @@ int main( int argc, char * argv[] ) {
           statisticsCegpra << "," << ltlResults->entriesWithValue(PROPERTY_VALUE_UNKNOWN);
         }
         CounterexampleAnalyzer ceAnalyzer(analyzer, &statisticsCegpra);
-        if (args.isUserProvided("cegpra-max-iterations")) {
-          ceAnalyzer.setMaxCounterexamples(args.getInt("cegpra-max-iterations"));
+        if (ltlOpt.cegpra.maxIterations!=-1) {
+          ceAnalyzer.setMaxCounterexamples(ltlOpt.cegpra.maxIterations);
         }
-        if (args.getBool("cegpra-ltl-all")) {
+        if (ltlOpt.cegpra.checkAllProperties) {
           ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlInAlphabet, ltlOutAlphabet);
         } else {  // cegpra for single LTL property
           //ROSE_ASSERT(ltlOpt.cegpra.ltlPropertyNr!=-1);
@@ -1216,7 +1216,7 @@ int main( int argc, char * argv[] ) {
         }
       }
 
-      if(args.getBool("status")) {
+      if(ctOpt.status) {
         ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
         analyzer->printStatusMessageLine("==============================================================");
         ltlResults->printResultsStatistics();
