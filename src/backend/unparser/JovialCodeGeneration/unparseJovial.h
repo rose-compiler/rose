@@ -32,6 +32,9 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
       //  virtual void unparseFuncDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseFuncDefnStmt           (SgStatement* stmt, SgUnparse_Info& info);
 
+          virtual void unparseNamespaceDeclarationStatement(SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseNamespaceDefinitionStatement (SgStatement* stmt, SgUnparse_Info& info);
+
           virtual void unparseBasicBlockStmt         (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseLabelStmt              (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseForStatement           (SgStatement* stmt, SgUnparse_Info& info);
@@ -273,8 +276,9 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           std::string ws_prefix(int nesting_level)
              {
                 std::stringstream code;
-                for(int i = 0; i < nesting_level; i++)
+                for (int i = 0; i < nesting_level; i++) {
                    code << "  ";
+                }
                 return code.str();
              }
 

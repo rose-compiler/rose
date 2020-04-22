@@ -87,15 +87,19 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolModule(ATerm term)
    std::string name;
    Rose::builder::SourcePositionPair sources;
    SgJovialCompoolStatement* compool_stmt = nullptr;
+   SgNamespaceDeclarationStatement* namespace_decl = nullptr;
 
    if (ATmatch(term, "CompoolModule(<term>,<term>,<term>)", &t_dirs, &t_name, &t_decls)) {
 
-      if (traverse_DirectiveList(t_dirs)) {
-         // MATCHED DirectiveList
-      } else return ATfalse;
-
+   // Traverse Name first to have it available
       if (traverse_Name(t_name, name)) {
          // MATCHED Name
+      } else return ATfalse;
+
+      sage_tree_builder.Enter(namespace_decl, name, sources);
+
+      if (traverse_DirectiveList(t_dirs)) {
+         // MATCHED DirectiveList
       } else return ATfalse;
 
       sage_tree_builder.Enter(compool_stmt, name, sources);
@@ -107,8 +111,9 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolModule(ATerm term)
 
    } else return ATfalse;
 
-   return ATtrue;
+   sage_tree_builder.Leave(namespace_decl);
 
+   return ATtrue;
 }
 
 //========================================================================================
