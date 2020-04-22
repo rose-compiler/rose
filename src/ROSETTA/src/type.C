@@ -162,6 +162,9 @@ Grammar::setUpTypes ()
   // This is an error that ROSETTA currently does not catch and which I need to discuss with Danny Thorne
   // For the moment it seems that ROSETTA is by default ignoring this connection!
   // printf ("WARNING: TemplateInstantiationType specificed as a child of both NamedType and ClassType! \n");
+  
+  // PP 05/07/20   
+     NEW_TERMINAL_MACRO ( AdaTaskType , "AdaTaskType", "T_ADA_TASK_TYPE" );  
 
   // NEW_NONTERMINAL_MACRO (NamedType,
   //                        ClassType | TemplateInstantiationType | EnumType | TypedefType,
@@ -178,8 +181,8 @@ Grammar::setUpTypes ()
                             JavaParameterType | JovialTableType,
                             "ClassType","T_CLASS", true);
      NEW_NONTERMINAL_MACRO (NamedType,
-                            ClassType | EnumType | TypedefType | NonrealType |
-                            JavaParameterizedType | JavaQualifiedType | JavaWildcardType,
+                            ClassType             | EnumType          | TypedefType      | NonrealType |
+                            JavaParameterizedType | JavaQualifiedType | JavaWildcardType | AdaTaskType,
                             "NamedType","T_NAME", false);
 #endif
  
@@ -385,11 +388,16 @@ AdaFloatType,
      ArrayType.excludeFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      ArrayType.excludeFunctionSource        ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      
+     
+  // PP (5/7/20): Adding ADA types
+     AdaTaskType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     AdaTaskType.setFunctionSource        ( "SOURCE_ADA_TASK_TYPE", "../Grammar/Type.code");
+
   // PP (3/24/20): Adding ADA types
      AdaAccessType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      AdaAccessType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
-AdaSubtype.excludeFunctionPrototype    ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     AdaSubtype.excludeFunctionPrototype    ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      AdaSubtype.excludeFunctionSource       ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
      AdaFloatType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
@@ -660,6 +668,11 @@ AdaSubtype.excludeFunctionPrototype    ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Gram
             "SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE",
             "SgType* type = NULL, SgExpression* expr = NULL");
 
+  // PP (5/07/20): Adding ADA types          
+     CUSTOM_CREATE_TYPE_MACRO(AdaTaskType,
+            "SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE",
+            "SgDeclarationStatement* decl = NULL");
+  
   // PP (3/24/20): Adding ADA types          
      CUSTOM_CREATE_TYPE_MACRO(AdaAccessType,
             "SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE",
@@ -1060,6 +1073,14 @@ AdaSubtype.excludeFunctionPrototype    ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Gram
      ArrayType.setDataPrototype ("bool", "is_variable_length_array" , "= false",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // PP (5/7/20): Adding ADA types
+     AdaTaskType.setFunctionPrototype ("HEADER_ADA_TASK_TYPE", "../Grammar/Type.code" );
+
+     AdaTaskType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
+
+     AdaTaskType.setDataPrototype ("SgAdaTaskTypeDecl*", "decl", "= NULL",
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  
   // PP (3/24/20): Adding ADA types
      AdaAccessType.setFunctionPrototype ("HEADER_ADA_ACCESS_TYPE", "../Grammar/Type.code" );
 

@@ -1623,6 +1623,35 @@ SgAdaExitStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
   // Also call the base class version of the fixupCopycopy() member function
      SgStatement::fixupCopy_scopes(copy,help);
    }
+
+
+void
+SgAdaAcceptStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgAdaExitStmt::fixupCopy_scopes() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+     SgAdaAcceptStmt* acceptStmt_copy = isSgAdaAcceptStmt(copy);
+     ROSE_ASSERT(acceptStmt_copy != NULL);
+
+     SgStatement* body_original = get_body();
+
+     SgCopyHelp::copiedNodeMapTypeIterator i = help.get_copiedNodeMap().find(body_original);
+
+  // If the declaration is in the map then it is because we have copied it previously
+  // and thus it should be updated to reflect the copied declaration.
+     if (i != help.get_copiedNodeMap().end())
+        {
+          SgStatement* body_copy = isSgStatement(i->second);
+          ROSE_ASSERT(body_copy != NULL);
+          acceptStmt_copy->set_body(body_copy);
+        }
+        
+  // Also call the base class version of the fixupCopycopy() member function
+     SgStatement::fixupCopy_scopes(copy,help);
+   }
+
    
 void
 SgAdaLoopStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
