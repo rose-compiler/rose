@@ -795,7 +795,7 @@ int main( int argc, char * argv[] ) {
       // do specialization and setup data structures
       analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
-      ctOpt.explicitArrays=false;
+      args.setOption("explicit-arrays",false); //ctOpt.explicitArrays=false; must also be changed in ExprAnalyzer
       //TODO1: refactor into separate function
       int numSubst=0;
       if(option_specialize_fun_name!="") {
