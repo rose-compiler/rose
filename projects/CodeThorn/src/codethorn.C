@@ -524,7 +524,7 @@ int main( int argc, char * argv[] ) {
         exit(1);
       }
     }
-    // analyzer->setFunctionResolutionMode(args.getInt("function-resolution-mode")); xxx
+    // analyzer->setFunctionResolutionMode(args.getInt("function-resolution-mode"));
     // needs to set CFAnalysis functionResolutionMode
 
     int numThreads=ctOpt.threads; // default is 1
@@ -614,15 +614,14 @@ int main( int argc, char * argv[] ) {
       analyzer->setExternalErrorFunctionName(errorFunctionName);
     }
 
-    if(ctOpt.svcomp.detectedErrorFunctionName) {
-      string errorFunctionName=args.getString("error-function");
-      analyzer->setExternalErrorFunctionName(errorFunctionName);
+    if(ctOpt.svcomp.detectedErrorFunctionName.size()>0) {
+      analyzer->setExternalErrorFunctionName(ctOpt.svcomp.detectedErrorFunctionName);
     }
 
-    analyzer->setTreatStdErrLikeFailedAssert(args.getBool("stderr-like-failed-assert"));
+    analyzer->setTreatStdErrLikeFailedAssert(ctOpt.rers.stdErrLikeFailedAssert);
 
     // Build the AST used by ROSE
-    if(args.getBool("status")) {
+    if(ctOpt.status) {
       cout<< "STATUS: Parsing and creating AST started!"<<endl;
     }
 
@@ -630,7 +629,7 @@ int main( int argc, char * argv[] ) {
     vector<string> argvList(argv,argv+argc);
     //string turnOffRoseLoggerWarnings="-rose:log none";
     //    argvList.push_back(turnOffRoseLoggerWarnings);
-    if(args.getBool("omp-ast")||args.getBool("data-race")) {
+    if(ctOpt.ompAst||ctOpt.dr.detection) {
       SAWYER_MESG(logger[TRACE])<<"selected OpenMP AST."<<endl;
       argvList.push_back("-rose:OpenMP:ast_only");
     }
@@ -640,7 +639,7 @@ int main( int argc, char * argv[] ) {
     sageProject=frontend(argvList);
     double frontEndRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
-    if(args.getBool("status")) {
+    if(ctOpt.status) {
       cout << "STATUS: Parsing and creating AST finished."<<endl;
     }
 
@@ -648,13 +647,13 @@ int main( int argc, char * argv[] ) {
        variables are duplicated by inlining. */
     timer.start();
     Normalization lowering;
-    if(args.getBool("normalize-fcalls")) {
+    if(ctOpt.normalizeFCalls) {
       lowering.normalizeAst(sageProject,1);
       SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
     }
 
-    if(args.getBool("normalize-all")||args.getInt("options-set")==1) {
-      if(!args.isUserProvided("quiet")) {
+    if(ctOpt.normalizeAll) {
+      if(ctOpt.quiet==false) {
         cout<<"STATUS: normalizing program."<<endl;
       }
       //SAWYER_MESG(logger[INFO])<<"STATUS: normalizing program."<<endl;
@@ -665,7 +664,7 @@ int main( int argc, char * argv[] ) {
     /* Context sensitive analysis using call strings.
      */
     {
-      analyzer->setOptionContextSensitiveAnalysis(args.getBool("context-sensitive"));
+      analyzer->setOptionContextSensitiveAnalysis(ctOpt.contextSensitive);
       //Call strings length abrivation is not supported yet.
       //CodeThorn::CallString::setMaxLength((args.getInt("callstring-length")));
     }
@@ -675,7 +674,7 @@ int main( int argc, char * argv[] ) {
     if(args.getBool("inline")) {
       InlinerBase* inliner=lowering.getInliner();
       if(RoseInliner* roseInliner=dynamic_cast<CodeThorn::RoseInliner*>(inliner)) {
-        roseInliner->inlineDepth=args.getInt("inlinedepth");
+        roseInliner->inlineDepth=ctOpt.inlineFunctionsDepth;
       }
       inliner->inlineFunctions(sageProject);
       size_t numInlined=inliner->getNumInlinedFunctions();
@@ -683,7 +682,7 @@ int main( int argc, char * argv[] ) {
     }
 
     {
-      bool unknownFunctionsFile=args.isUserProvided("unknown-functions-file");
+      bool unknownFunctionsFile=ctOpt.externalFunctionsCSVFileName.size()>0;
       bool showProgramStats=args.getBool("program-stats");
       bool showProgramStatsOnly=args.getBool("program-stats-only");
       if(unknownFunctionsFile||showProgramStats||showProgramStatsOnly) {
@@ -691,8 +690,7 @@ int main( int argc, char * argv[] ) {
         programInfo.compute();
         if(unknownFunctionsFile) {
           ROSE_ASSERT(analyzer);
-          string unknownFunctionsFileName=args.getString("unknown-functions-file");
-          programInfo.writeFunctionCallNodesToFile(unknownFunctionsFileName);
+          programInfo.writeFunctionCallNodesToFile(ctOpt.externalFunctionsCSVFileName);
         }
         if(showProgramStats||showProgramStatsOnly) {
           programInfo.printDetailed();
@@ -703,21 +701,21 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    if(args.getBool("unparse")) {
+    if(ctOpt.unparse) {
       sageProject->unparse(0,0);
       return 0;
     }
 
-    if(args.isUserProvided("ast-stats-print")||args.isUserProvided("ast-stats-csv")) {
+    if(ctOpt.info.printAstNodeStats||ctOpt.info.astNodeStatsCSVFileName.size()>0) {
       // from: src/midend/astDiagnostics/AstStatistics.C
-      if(args.getBool("ast-stats-print")) {
+      if(ctOpt.info.printAstNodeStats) {
         ROSE_Statistics::AstNodeTraversalStatistics astStats;
         string s=astStats.toString(sageProject);
         cout<<s; // output includes newline at the end
       }
-      if(args.isUserProvided("ast-stats-csv")) {
+      if(ctOpt.info.astNodeStatsCSVFileName.size()>0) {
         ROSE_Statistics::AstNodeTraversalCSVStatistics astCSVStats;
-        string fileName=args.getString("ast-stats-csv");
+        string fileName=ctOpt.info.astNodeStatsCSVFileName;
         astCSVStats.setMinCountToShow(1); // default value is 1
         if(!CppStdUtilities::writeFile(fileName, astCSVStats.toString(sageProject))) {
           cerr<<"Error: cannot write AST node statistics to CSV file "<<fileName<<endl;
@@ -726,26 +724,26 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    if(args.getBool("status")) {
+    if(ctOpt.status) {
       cout<<"STATUS: analysis started."<<endl;
     }
     // TODO: introduce ProgramAbstractionLayer
     analyzer->initializeVariableIdMapping(sageProject);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
 
-    if(args.getBool("print-variable-id-mapping")) {
+    if(ctOpt.info.printVariableIdMapping) {
       analyzer->getVariableIdMapping()->toStream(cout);
     }
   
     if(args.isUserProvided("type-size-mapping-print")||args.isUserProvided("type-size-mapping-csv")) {
       // from: src/midend/astDiagnostics/AstStatistics.C
       string s=analyzer->typeSizeMappingToString();
-      if(args.getBool("type-size-mapping-print")) {
+      if(ctOpt.info.printTypeSizeMapping) {
         cout<<"Type size mapping:"<<endl;
         cout<<s; // output includes newline at the end
       }
-      if(args.isUserProvided("type-size-mapping-csv")) {
-        string fileName=args.getString("type-size-mapping-csv");
+      if(ctOpt.info.typeSizeMappingCSVFileName.size()>0) {
+        string fileName=ctOpt.info.typeSizeMappingCSVFileName;
         if(!CppStdUtilities::writeFile(fileName, s)) {
           cerr<<"Error: cannot write type-size mapping to CSV file "<<fileName<<endl;
           exit(1);
@@ -753,7 +751,7 @@ int main( int argc, char * argv[] ) {
       }
     }
     
-    if(args.isUserProvided("run-rose-tests")) {
+    if(ctOpt.runRoseAstChecks) {
       cout << "ROSE tests started."<<endl;
       // Run internal consistency tests on AST
       AstTests::runAllTests(sageProject);
@@ -797,8 +795,7 @@ int main( int argc, char * argv[] ) {
       // do specialization and setup data structures
       analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
-      args.setOption("explicit-arrays",false);
-
+      ctOpt.explicitArrays=false;
       //TODO1: refactor into separate function
       int numSubst=0;
       if(option_specialize_fun_name!="") {
@@ -825,7 +822,7 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    if(args.isUserProvided("rewrite")) {
+    if(ctOpt.rewrite) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: rewrite started."<<endl;
       rewriteSystem.resetStatistics();
       rewriteSystem.setRewriteCondStmt(false); // experimental: supposed to normalize conditions
@@ -843,7 +840,7 @@ int main( int argc, char * argv[] ) {
       analyzer->setAssertCondVarsSet(varsInAssertConditions);
     }
 
-    if(args.getBool("eliminate-compound-assignments")) {
+    if(ctOpt.eliminateCompoundStatements) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments started."<<endl;
       set<AbstractValue> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer->getVariableIdMapping(),root);
       analyzer->setCompoundIncVarsSet(compoundIncVarsSet);
@@ -853,7 +850,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments finished."<<endl;
     }
 
-    if(args.getBool("eliminate-arrays")) {
+    if(ctOpt.rers.eliminateArrays) {
       Specialization speci;
       speci.transformArrayProgram(sageProject, analyzer);
       sageProject->unparse(0,0);
@@ -905,15 +902,15 @@ int main( int argc, char * argv[] ) {
     analyzer->initLabeledAssertNodes(sageProject);
 
     // function-id-mapping is initialized in initializeSolver.
-    if(args.getBool("print-function-id-mapping")) {
+    if(ctOpt.info.printFunctionIdMapping) {
       ROSE_ASSERT(analyzer->getCFAnalyzer());
       ROSE_ASSERT(analyzer->getCFAnalyzer()->getFunctionIdMapping());
       analyzer->getCFAnalyzer()->getFunctionIdMapping()->toStream(cout);
     }
-
-    if(args.isUserProvided("pattern-search-max-depth") || args.isUserProvided("pattern-search-max-suffix")
-       || args.isUserProvided("pattern-search-repetitions") || args.isUserProvided("pattern-search-exploration")) {
-      logger[INFO] << "at least one of the parameters of mode \"pattern search\" was set. Choosing solver 10." << endl;
+    // pattern search: requires that exploration mode is set,
+    // otherwise no pattern search is performed
+    if(ctOpt.patSearch.explorationMode.size()>0) {
+      logger[INFO] << "Pattern search exploration mode was set. Choosing solver 10." << endl;
       analyzer->setSolver(new Solver10());
       analyzer->setStartPState(*analyzer->popWorkList()->pstate());
     }
@@ -921,14 +918,14 @@ int main( int argc, char * argv[] ) {
     
     timer.start();
     analyzer->printStatusMessageLine("==============================================================");
-    if(!analyzer->getModeLTLDriven() && args.isUserProvided("z3") == 0 && !args.getBool("ssa")) {
+    if(!analyzer->getModeLTLDriven() && ctOpt.z3BasedReachabilityAnalysis==false && ctOpt.ssa==false) {
       analyzer->runSolver();
     }
     double analysisRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
     analyzer->printStatusMessageLine("==============================================================");
 
-    if (args.getBool("svcomp-mode") && args.isUserProvided("witness-file")) {
+    if (ctOpt.svcomp.svcompMode && args.isUserProvided("witness-file")) {
       analyzer->writeWitnessToFile(args.getString("witness-file"));
     }
 
