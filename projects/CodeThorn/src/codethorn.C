@@ -576,21 +576,21 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    if((args.getBool("print-update-infos")||args.isUserProvided("equivalence-check"))&&(args.isUserProvided("dump-sorted")==0 && args.isUserProvided("dump-non-sorted")==0)) {
+    if((ctOpt.equiCheck.printUpdateInfos)&&(ctOpt.equiCheck.dumpSortedFileName.size()==0 && ctOpt.equiCheck.dumpNonSortedFileName.size()==0)) {
       logger[ERROR] <<"option print-update-infos/equivalence-check must be used together with option --dump-non-sorted or --dump-sorted."<<endl;
       exit(1);
     }
     RewriteSystem rewriteSystem;
-    if(args.getBool("print-rewrite-trace")) {
+    if(ctOpt.equiCheck.printRewriteTrace) {
       rewriteSystem.setTrace(true);
     }
-    if(args.getBool("ignore-undefined-dereference")) {
+    if(ctOpt.ignoreUndefinedDereference) {
       analyzer->setIgnoreUndefinedDereference(true);
     }
-    if(args.isUserProvided("dump-sorted")>0 || args.isUserProvided("dump-non-sorted")>0 || args.isUserProvided("equivalence-check")>0) {
+    if(ctOpt.equiCheck.dumpSortedFileName.size()>0 || ctOpt.equiCheck.dumpNonSortedFileName.size()>0) {
       analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
-      args.setOption("explicit-arrays",false);
+      ctOpt.explicitArrays=false;
       if(analyzer->getNumberOfThreadsToUse()>1) {
         logger[ERROR] << "multi threaded rewrite not supported yet."<<endl;
         exit(1);
@@ -600,25 +600,21 @@ int main( int argc, char * argv[] ) {
     // parse command line options for data race detection
     DataRaceDetection dataRaceDetection;
     dataRaceDetection.handleCommandLineOptions(*analyzer);
-    dataRaceDetection.setVisualizeReadWriteAccesses(args.getBool("visualize-read-write-sets"));
+    dataRaceDetection.setVisualizeReadWriteAccesses(ctOpt.visualization.visualizeRWSets);
 
     // handle RERS mode: reconfigure options
-    if(args.getBool("rersmode")) {
+    if(ctOpt.rers.rersMode) {
       SAWYER_MESG(logger[TRACE]) <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
-      args.setOption("stderr-like-failed-assert",true);
+      ctOpt.rers.stdErrLikeFailedAssert=true;
     }
 
-    if(args.getBool("svcomp-mode")) {
+    if(ctOpt.svcomp.svcompMode) {
       analyzer->enableSVCompFunctionSemantics();
       string errorFunctionName="__VERIFIER_error";
       analyzer->setExternalErrorFunctionName(errorFunctionName);
     }
 
-    if(args.isUserProvided("external-function-semantics")) {
-      // obsolete
-    }
-
-    if(args.isUserProvided("error-function")) {
+    if(ctOpt.svcomp.detectedErrorFunctionName) {
       string errorFunctionName=args.getString("error-function");
       analyzer->setExternalErrorFunctionName(errorFunctionName);
     }

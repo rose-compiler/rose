@@ -203,7 +203,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 
   svcompOptions.add_options()
     ("svcomp-mode", po::value< bool >(&ctOpt.svcomp.svcompMode)->default_value(false)->implicit_value(true), "Sets default options for all following SVCOMP-specific options.")
-    //("external-function-semantics",  "assumes specific semantics for the external functions: __VERIFIER_error, __VERIFIER_nondet_int, exit, memcpy.")
     ("error-function", po::value< string >(&ctOpt.svcomp.detectedErrorFunctionName), "Detect a verifier error function with name <arg> (terminates verification).")
     ("witness-file", po::value< string >(&ctOpt.svcomp.witnessFileName), "Write an SV-COMP witness (counterexample) to file <arg>.")
     ;
