@@ -425,6 +425,35 @@ Leave(SgDerivedTypeStatement* derived_type_stmt)
 //
 
 void SageTreeBuilder::
+Enter(SgNamespaceDeclarationStatement* &namespace_decl, const std::string &name, const SourcePositionPair &positions)
+{
+   mlog[INFO] << "SageTreeBuilder::Enter(SgNamespaceDeclarationStatement* &, ...) \n";
+
+   namespace_decl = SageBuilder::buildNamespaceDeclaration_nfi(name, true, SageBuilder::topScopeStack());
+   SageInterface::setSourcePosition(namespace_decl);
+
+   SgNamespaceDefinitionStatement* namespace_defn = namespace_decl->get_definition();
+   ROSE_ASSERT(namespace_defn);
+   ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());
+
+// TEMPORARY: fix in SageBuilder
+   namespace_defn->setCaseInsensitive(true);
+   ROSE_ASSERT(namespace_defn->isCaseInsensitive());
+
+   SageInterface::appendStatement(namespace_decl, SageBuilder::topScopeStack());
+   SageBuilder::pushScopeStack(namespace_defn);
+}
+
+void SageTreeBuilder::
+Leave(SgNamespaceDeclarationStatement* namespace_decl)
+{
+   mlog[INFO] << "SageTreeBuilder::Leave(SgNamespaceDeclarationStatement*, ...) \n";
+
+   SageBuilder::popScopeStack();  // namespace definition
+}
+
+
+void SageTreeBuilder::
 Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExpression*> &vars, const std::string& label)
 {
    mlog[INFO] << "SageTreeBuilder::Enter(SgExprStatement* &, ...) \n";
@@ -560,7 +589,19 @@ Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const So
    compool_decl->set_definingDeclaration(compool_decl);
    compool_decl->set_firstNondefiningDeclaration(compool_decl);
 
+// TODO?
+// SageBuilder::pushScopeStack(compool_defn);
+
    SageInterface::appendStatement(compool_decl, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Leave(SgJovialCompoolStatement* compool_decl)
+{
+   mlog[INFO] << "SageTreeBuilder::Leave(SgJovialCompoolStatement*, ...) \n";
+
+// TODO?
+// SageBuilder::popScopeStack();  // compool definition
 }
 
 void SageTreeBuilder::

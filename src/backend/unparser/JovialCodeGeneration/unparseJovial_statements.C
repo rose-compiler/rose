@@ -63,6 +63,9 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
        // case V_SgFunctionDeclaration:        unparseFuncDeclStmt(stmt, info);     break;  /* replaced by SgProcedureHeaderStatement */
           case V_SgFunctionDefinition:         unparseFuncDefnStmt(stmt, info);     break;
 
+          case V_SgNamespaceDeclarationStatement: unparseNamespaceDeclarationStatement(stmt, info);  break;
+          case V_SgNamespaceDefinitionStatement:  unparseNamespaceDefinitionStatement (stmt, info);  break;
+
        // directives, define
 
           case V_SgJovialDirectiveStatement:   unparseDirectiveStmt (stmt, info);   break;
@@ -393,6 +396,34 @@ Unparse_Jovial::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
           unparseStatement(funcdef->get_body(), info);
         }
+   }
+
+void
+Unparse_Jovial::unparseNamespaceDeclarationStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgNamespaceDeclarationStatement* decl = isSgNamespaceDeclarationStatement(stmt);
+     ASSERT_not_null(decl);
+
+     SgNamespaceDefinitionStatement* defn = decl->get_definition();
+     ASSERT_not_null(defn);
+
+     unparseNamespaceDefinitionStatement(defn, info);
+   }
+
+void
+Unparse_Jovial::unparseNamespaceDefinitionStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgNamespaceDefinitionStatement* namespace_defn = isSgNamespaceDefinitionStatement(stmt);
+     ASSERT_not_null(namespace_defn);
+
+     const SgDeclarationStatementPtrList& declarations = namespace_defn->get_declarations();
+
+     info.inc_nestingLevel();
+     BOOST_FOREACH(SgStatement* namespace_stmt, declarations)
+        {
+           unparseStatement(namespace_stmt, info);
+        }
+     info.dec_nestingLevel();
    }
 
 

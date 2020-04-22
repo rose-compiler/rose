@@ -111,6 +111,9 @@ public:
 
 // Statements
 //
+   void Enter(SgNamespaceDeclarationStatement* &, const std::string &, const SourcePositionPair &);
+   void Leave(SgNamespaceDeclarationStatement*);
+
    void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &, const std::string &);
    void Leave(SgExprStatement*);
 
@@ -124,10 +127,10 @@ public:
    void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, SgJovialDirectiveStatement::directive_types);
    void Leave(SgJovialDirectiveStatement*);
 
-   void Enter(SgJovialCompoolStatement* &,
-              const std::string &, const SourcePositionPair &);
-   void Enter(SgJovialTableStatement* &,
-              const std::string &, const SourcePositionPair &, bool is_block=false);
+   void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);
+   void Leave(SgJovialCompoolStatement*);
+
+   void Enter(SgJovialTableStatement* &, const std::string &, const SourcePositionPair &, bool is_block=false);
    void Leave(SgJovialTableStatement*);
 
 private:

@@ -7,12 +7,12 @@ AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD    = $(ROSE_LIBS)
 
 JOVIAL_TESTCODES = \
- tiny.jov
+ tiny.jov                               \
+ int_conversion.jov                     \
+ item_desc_conversion.jov               \
+ status_enumval.jov                     \
+ typename_conv.jov
 
-# tiny.jov                               \
-# int_conversion.jov                     \
-# item_desc_conversion.jov               \
-# status_enumval.jov                     \
 # typename_conv.jov                      \
 # 1_2_2_non-nested-subroutine_a.jov      \
 # 1_2_2_non-nested-subroutine_b.jov      \
