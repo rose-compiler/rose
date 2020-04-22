@@ -4039,7 +4039,8 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
         ||nodeName == "SgOmpForSimdStatement"
         ||nodeName == "SgOmpDoStatement"
         ||nodeName == "SgOmpAtomicStatement"
-        ||nodeName == "SgExprListExp");
+        ||nodeName == "SgExprListExp"
+        ||nodeName == "SgAdaTaskSpec");
   }
   return info;
 }
