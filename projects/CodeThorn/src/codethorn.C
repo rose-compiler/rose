@@ -925,12 +925,13 @@ int main( int argc, char * argv[] ) {
 
     analyzer->printStatusMessageLine("==============================================================");
 
-    if (ctOpt.svcomp.svcompMode && args.isUserProvided("witness-file")) {
-      analyzer->writeWitnessToFile(args.getString("witness-file"));
+    if (ctOpt.svcomp.svcompMode && ctOpt.svcomp.witnessFileName.size()>0) {
+      analyzer->writeWitnessToFile(ctOpt.svcomp.witnessFileName);
     }
 
     double extractAssertionTracesTime= 0;
-    if ( args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
+    bool withCe=ltlOpt.withCounterExamples || ltlOpt.withAssertCounterExamples;
+    if(withCe) {
       SAWYER_MESG(logger[TRACE]) << "STATUS: extracting assertion traces (this may take some time)"<<endl;
       timer.start();
       analyzer->extractRersIOAssertionTraces();
@@ -941,25 +942,25 @@ int main( int argc, char * argv[] ) {
     int inputSeqLengthCovered = -1;
     double totalInputTracesTime = extractAssertionTracesTime + determinePrefixDepthTime;
 
-    bool withCe = args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples");
-    if(args.getBool("status")) {
+    if(ctOpt.status) {
       analyzer->printStatusMessageLine("==============================================================");
       analyzer->reachabilityResults.printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_", withCe);
     }
-    if (args.isUserProvided("csv-assert")) {
-      string filename=args.getString("csv-assert").c_str();
-      analyzer->reachabilityResults.writeFile(filename.c_str(), false, 0, withCe);
-      if(args.getBool("status")) {
-        cout << "Reachability results written to file \""<<filename<<"\"." <<endl;
+    if (ctOpt.rers.assertResultsOutputFileName.size()>0) {
+      analyzer->reachabilityResults.writeFile(ctOpt.rers.assertResultsOutputFileName.c_str(),
+                                              false, 0, withCe);
+      if(ctOpt.status) {
+        cout << "Reachability results written to file \""<<ctOpt.rers.assertResultsOutputFileName<<"\"." <<endl;
         cout << "=============================================================="<<endl;
       }
     }
-    if(args.getBool("eliminate-stg-back-edges")) {
+    // deprecated?
+    if(ctOpt.eliminateSTGBackEdges) {
       int numElim=analyzer->getTransitionGraph()->eliminateBackEdges();
       SAWYER_MESG(logger[TRACE])<<"STATUS: eliminated "<<numElim<<" STG back edges."<<endl;
     }
 
-    if(args.getBool("status")) {
+    if(ctOpt.status) {
       analyzer->reachabilityResults.printResultsStatistics();
       analyzer->printStatusMessageLine("==============================================================");
     }
@@ -967,9 +968,9 @@ int main( int argc, char * argv[] ) {
 #ifdef HAVE_Z3
     if(args.isUserProvided("z3"))
     {
-	assert(args.isUserProvided("rers-upper-input-bound") != 0 &&  args.isUserProvided("rers-verifier-error-number") != 0);	
-	int RERSUpperBoundForInput = args.getInt("rers-upper-input-bound");
-	int RERSVerifierErrorNumber = args.getInt("rers-verifier-error-number");
+	assert(ctOpt.z3UpperInputBound!=-1 && ctOpt.z3VerifierErrorNumber!=-1);	
+	int RERSUpperBoundForInput=ctOpt.z3UpperInputBound
+	int RERSVerifierErrorNumber=ctOpt.z3VerifierErrorNumber
 	cout << "generateSSAForm()" << endl;
 	ReachabilityAnalyzerZ3* reachAnalyzer = new ReachabilityAnalyzerZ3(RERSUpperBoundForInput, RERSVerifierErrorNumber, analyzer, &logger);	
 	cout << "checkReachability()" << endl;
@@ -979,7 +980,7 @@ int main( int argc, char * argv[] ) {
     }
 #endif	
 
-    if(args.getBool("ssa")) {
+    if(ctOpt.ssa) {
       SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
       ssaGen->generateSSAForm();
       exit(0);
@@ -1013,8 +1014,8 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    if(args.isUserProvided("analyzed-functions-csv")) {
-      string fileName=args.getString("analyzed-functions-csv");
+    if(ctOpt.analyzedFunctionsCSVFileName.size()>0) {
+      string fileName=ctOpt.analyzedFunctionsCSVFileName;
       cout<<"Writing list of analyzed functions to file "<<fileName<<endl;
       string s=analyzer->analyzedFunctionsToString();
       if(!CppStdUtilities::writeFile(fileName, s)) {
@@ -1022,8 +1023,8 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    if(args.isUserProvided("analyzed-files-csv")) {
-      string fileName=args.getString("analyzed-files-csv");
+    if(ctOpt.analyzedFilesCSVFileName.size()>0) {
+      string fileName=ctOpt.analyzedFilesCSVFileName;
       cout<<"Writing list of analyzed files to file "<<fileName<<endl;
       string s=analyzer->analyzedFilesToString();
       if(!CppStdUtilities::writeFile(fileName, s)) {
@@ -1031,8 +1032,8 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    if(args.isUserProvided("external-functions-csv")) {
-      string fileName=args.getString("external-functions-csv");
+    if(ctOpt.externalFunctionsCSVFileName.size()>0) {
+      string fileName=ctOpt.externalFunctionsCSVFileName;
       cout<<"Writing list of external functions to file "<<fileName<<endl;
       string s=analyzer->externalFunctionsToString();
       if(!CppStdUtilities::writeFile(fileName, s)) {
@@ -1082,21 +1083,21 @@ int main( int argc, char * argv[] ) {
     double stdIoOnlyTime = 0;
 
  
-    if(args.getBool("std-io-only")) {
+    if(ltlOpt.stdIOOnly) {
       SAWYER_MESG(logger[TRACE]) << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
       timer.start();
-      if (args.getBool("keep-error-states")) {
+      if (ltlOpt.keepErrorStates) {
         analyzer->reduceStgToInOutAssertStates();
       } else {
         analyzer->reduceStgToInOutStates();
       }
-      if(args.getBool("inf-paths-only")) {
+      if(ltlOpt.inifinitePathsOnly) {
         analyzer->pruneLeaves();
       }
       stdIoOnlyTime = timer.getTimeDurationAndStop().milliSeconds();
     } else {
-      if(args.getBool("inf-paths-only")) {
-        assert (!args.getBool("keep-error-states"));
+      if(ltlOpt.inifinitePathsOnly) {
+        assert (!ltlOpt.keepErrorStates);
         cout << "recursively removing all leaves (1)."<<endl;
         timer.start();
         analyzer->pruneLeaves();
