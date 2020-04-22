@@ -1116,11 +1116,13 @@ int main( int argc, char * argv[] ) {
     stringstream statisticsSizeAndLtl;
     stringstream statisticsCegpra;
 
-    if (args.isUserProvided("check-ltl")) {
+    if (ltlOpt.ltlFormulaeFile.size()>0) {
       logger[INFO] <<"STG size: "<<analyzer->getTransitionGraph()->size()<<endl;
-      string ltl_filename = args.getString("check-ltl");
-      if(args.getBool("rersmode")) {  //reduce the graph accordingly, if not already done
-        if (!args.getBool("inf-paths-only") && !args.getBool("keep-error-states") &&!analyzer->getModeLTLDriven()) {
+      string ltl_filename = ltlOpt.ltlFormulaeFile;
+      if(ctOpt.rers.rersMode) {  //reduce the graph accordingly, if not already done
+        if (!ltlOpt.inifinitePathsOnly
+            && !ltlOpt.keepErrorStates
+            &&!analyzer->getModeLTLDriven()) {
           cout<< "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
           timer.start();
           analyzer->pruneLeaves();
@@ -1131,11 +1133,11 @@ int main( int argc, char * argv[] ) {
           transitionGraphSizeInf = analyzer->getTransitionGraph()->size();
           eStateSetSizeStgInf = (analyzer->getTransitionGraph())->estateSet().size();
         }
-        if (!args.getBool("std-io-only") &&!analyzer->getModeLTLDriven()) {
+        if (!ltlOpt.stdIOOnly &&!analyzer->getModeLTLDriven()) {
           cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode) (P1)."<<endl;
           timer.start();
           analyzer->getTransitionGraph()->printStgSize("before reducing non-I/O states");
-          if (args.getBool("keep-error-states")) {
+          if (ltlOpt.keepErrorStates) {
             analyzer->reduceStgToInOutAssertStates();
           } else {
             analyzer->reduceStgToInOutStates();
@@ -1144,29 +1146,31 @@ int main( int argc, char * argv[] ) {
           analyzer->getTransitionGraph()->printStgSize("after reducing non-I/O states");
         }
       }
-      if(args.getBool("no-input-input")) {  //delete transitions that indicate two input states without an output in between
+      if(ltlOpt.noInputInputTransitions) {  //delete transitions that indicate two input states without an output in between
         analyzer->removeInputInputTransitions();
         analyzer->getTransitionGraph()->printStgSize("after reducing input->input transitions");
       }
       bool withCounterexample = false;
-      if(args.getBool("with-counterexamples") || args.getBool("with-ltl-counterexamples")) {  //output a counter-example input sequence for falsified formulae
+      if(ltlOpt.withCounterExamples || ltlOpt.withLTLCounterExamples) {  //output a counter-example input sequence for falsified formulae
         withCounterexample = true;
       }
 
       timer.start();
       std::set<int> ltlInAlphabet = analyzer->getInputVarValues();
       //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
-      if (args.isUserProvided("ltl-in-alphabet")) {
-        string setstring=args.getString("ltl-in-alphabet");
+      if (ltlOpt.ltlInAlphabet.size()>0) {
+        string setstring=ltlOpt.ltlInAlphabet;
         ltlInAlphabet=Parse::integerSet(setstring);
         SAWYER_MESG(logger[TRACE]) << "LTL input alphabet explicitly selected: "<< setstring << endl;
       }
       //take ltl output alphabet if specifically described, otherwise take the old RERS specific 21...26 (a.k.a. oU...oZ)
       std::set<int> ltlOutAlphabet = Parse::integerSet("{21,22,23,24,25,26}");
-      if (args.isUserProvided("ltl-out-alphabet")) {
-        string setstring=args.getString("ltl-out-alphabet");
+      if (ltlOpt.ltlOutAlphabet.size()>0) {
+        string setstring=ltlOpt.ltlOutAlphabet;
         ltlOutAlphabet=Parse::integerSet(setstring);
         SAWYER_MESG(logger[TRACE]) << "LTL output alphabet explicitly selected: "<< setstring << endl;
+      } else {
+        // TODO: fail, if no output alphabet is provided
       }
       PropertyValueTable* ltlResults=nullptr;
       SpotConnection spotConnection(ltl_filename);
@@ -1178,11 +1182,11 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE]) << "STATUS: generating LTL results"<<endl;
       bool spuriousNoAnswers = false;
       SAWYER_MESG(logger[TRACE]) << "LTL: check properties."<<endl;
-      if (args.isUserProvided("single-property")) {
-	int propertyNum = args.getInt("single-property");
-	spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+      if (ltlOpt.propertyNrToCheck!=-1) {
+        int propertyNum = ltlOpt.propertyNrToCheck;
+        spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
       } else {
-	spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+        spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
       }
       spotLtlAnalysisTime=timer.getTimeDurationAndStop().milliSeconds();
       SAWYER_MESG(logger[TRACE]) << "LTL: get results from spot connection."<<endl;

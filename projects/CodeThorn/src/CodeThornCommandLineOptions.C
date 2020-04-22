@@ -58,7 +58,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("csv-spot-ltl", po::value< string >(&ltlOpt.spotVerificationResultsCSVFileName), "Output SPOT's LTL verification results into a CSV file <arg>.")
     ("csv-stats-size-and-ltl",po::value< string >(&ltlOpt.ltlStatisticsCSVFileName),"Output statistics regarding the final model size and results for LTL properties into a CSV file <arg>.")
     ("check-ltl", po::value< string >(&ltlOpt.ltlFormulaeFile), "Take a text file of LTL I/O formulae <arg> and check whether or not the analyzed program satisfies these formulae. Formulae should start with '('. Use \"csv-spot-ltl\" option to specify an output csv file for the results.")
-    ("single-property", po::value< int >(&ltlOpt.propertyNrToCheck), "Number (ID) of the property that is supposed to be analyzed. All other LTL properties will be ignored. ( Use \"check-ltl\" option to specify a input property file).")
+    ("single-property", po::value< int >(&ltlOpt.propertyNrToCheck)->default_value(-1), "Number (ID) of the property that is supposed to be analyzed. All other LTL properties will be ignored. ( Use \"check-ltl\" option to specify a input property file).")
     ("counterexamples-with-output", po::value< bool >(&ltlOpt.counterExamplesWithOutput)->default_value(false)->implicit_value(true), "Reported counterexamples for LTL or reachability properties also include output values.")
     ("inf-paths-only", po::value< bool >(&ltlOpt.inifinitePathsOnly)->default_value(false)->implicit_value(true), "Recursively prune the transition graph so that only infinite paths remain when checking LTL properties.")
     ("io-reduction", po::value< int >(&ltlOpt.ioReduction), "(work in progress) IO reduction threshold. Reduce the transition system to only input/output/worklist states after every <arg> computed EStates.")
@@ -92,7 +92,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 
   cegpraOptions.add_options()
     ("csv-stats-cegpra",po::value< string >(&ltlOpt.cegpra.csvStatsFileName),"Output statistics regarding the counterexample-guided prefix refinement analysis (CEGPRA) into a CSV file <arg>.")
-    ("cegpra-ltl",po::value< int >(&ltlOpt.cegpra.ltlPropertyNr),"Select the ID of an LTL property that should be checked using cegpra (between 0 and 99).")
+    ("cegpra-ltl",po::value< int >(&ltlOpt.cegpra.ltlPropertyNr)->default_value(-1),"Select the ID of an LTL property that should be checked using cegpra (between 0 and 99).")
     ("cegpra-ltl-all", po::value< bool >(&ltlOpt.cegpra.checkAllProperties)->default_value(false)->implicit_value(true),"Check all specified LTL properties using CEGPRA.")
     ("cegpra-max-iterations",po::value< int >(&ltlOpt.cegpra.maxIterations),"Select a maximum number of counterexamples anaylzed by CEGPRA.")
     ("viz-cegpra-detailed",po::value< string >(&ltlOpt.cegpra.visualizationDotFile),"Generate visualization (.dot) output files with prefix <arg> for different stages within each loop of CEGPRA.")
