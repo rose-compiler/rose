@@ -1222,12 +1222,12 @@ int main( int argc, char * argv[] ) {
         ltlResults->printResultsStatistics();
         analyzer->printStatusMessageLine("==============================================================");
       }
-      if (args.isUserProvided("csv-spot-ltl")) {  //write results to a file instead of displaying them directly
-        std::string csv_filename = args.getString("csv-spot-ltl");
+      if (ltlOpt.spotVerificationResultsCSVFileName.size()>0) {  //write results to a file instead of displaying them directly
+        std::string csv_filename = ltlOpt.spotVerificationResultsCSVFileName;
         SAWYER_MESG(logger[TRACE]) << "STATUS: writing ltl results to file: " << csv_filename << endl;
         ltlResults->writeFile(csv_filename.c_str(), false, 0, withCounterexample);
       }
-      if (args.isUserProvided("csv-stats-size-and-ltl")) {
+      if (ltlOpt.ltlStatisticsCSVFileName.size()>0) {
         analyzer->getTransitionGraph()->printStgSize("final model");
         analyzer->getTransitionGraph()->csvToStream(statisticsSizeAndLtl);
         statisticsSizeAndLtl <<","<< ltlResults->entriesWithValue(PROPERTY_VALUE_YES);
@@ -1431,19 +1431,19 @@ int main( int argc, char * argv[] ) {
       cout << "generated "<<filename<<endl;
     }
 
-    if (args.isUserProvided("csv-stats-size-and-ltl")) {
+    if(ltlOpt.ltlStatisticsCSVFileName.size()>0) {
       // content of a line in the .csv file:
       // <#transitions>,<#states>,<#input_states>,<#output_states>,<#error_states>,<#verified_LTL>,<#falsified_LTL>,<#unknown_LTL>
-      string filename = args.getString("csv-stats-size-and-ltl");
+      string filename = ltlOpt.ltlStatisticsCSVFileName;
       write_file(filename,statisticsSizeAndLtl.str());
       cout << "generated "<<filename<<endl;
     }
 
-    if (args.isUserProvided("csv-stats-cegpra")) {
+    if (ltlOpt.cegpra.csvStatsFileName.size()>0) {
       // content of a line in the .csv file:
       // <analyzed_property>,<#transitions>,<#states>,<#input_states>,<#output_states>,<#error_states>,
       // <#analyzed_counterexamples>,<analysis_result(y/n/?)>,<#verified_LTL>,<#falsified_LTL>,<#unknown_LTL>
-      string filename = args.getString("csv-stats-cegpra");
+      string filename = ltlOpt.cegpra.csvStatsFileName;
       write_file(filename,statisticsCegpra.str());
       cout << "generated "<<filename<<endl;
     }
@@ -1451,16 +1451,16 @@ int main( int argc, char * argv[] ) {
 
     {
       Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
-      if (args.isUserProvided("cfg")) {
-        string cfgFileName=args.getString("cfg");
+      if (ctOpt.visualization.icfgFileName.size()>0) {
+        string cfgFileName=ctOpt.visualization.icfgFileName;
         DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
         ddvis.setDotGraphName("CFG");
         ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,false);
         cout << "generated "<<cfgFileName<<endl;
       }
-      if(args.getBool("viz")) {
+      if(ctOpt.visualization.viz) {
         cout << "generating graphviz files:"<<endl;
-        visualizer.setOptionMemorySubGraphs(args.getBool("tg1-estate-memory-subgraphs"));
+        visualizer.setOptionMemorySubGraphs(ctOpt.visualization.tg1EStateMemorySubgraphs);
         string dotFile="digraph G {\n";
         dotFile+=visualizer.transitionGraphToDot();
         dotFile+="}\n";
@@ -1491,14 +1491,14 @@ int main( int argc, char * argv[] ) {
         cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
         cout << "=============================================================="<<endl;
       }
-      if(args.getBool("viz-tg2")) {
+      if(ctOpt.visualization.vizTg2) {
         string dotFile3=visualizer.foldedTransitionGraphToDot();
         write_file("transitiongraph2.dot", dotFile3);
         cout << "generated transitiongraph2.dot."<<endl;
       }
 
-      if (args.isUserProvided("dot-io-stg")) {
-        string filename=args.getString("dot-io-stg");
+      if (ctOpt.visualization. dotIOStg.size()>0) {
+        string filename=ctOpt.visualization. dotIOStg;
         cout << "generating dot IO graph file:"<<filename<<endl;
         string dotFile="digraph G {\n";
         dotFile+=visualizer.transitionGraphWithIOToDot();
@@ -1507,8 +1507,8 @@ int main( int argc, char * argv[] ) {
         cout << "=============================================================="<<endl;
       }
 
-      if (args.isUserProvided("dot-io-stg-forced-top")) {
-        string filename=args.getString("dot-io-stg-forced-top");
+      if (ctOpt.visualization.dotIOStgForcedTop.size()>0) {
+        string filename=ctOpt.visualization.dotIOStgForcedTop;
         cout << "generating dot IO graph file for an abstract STG:"<<filename<<endl;
         string dotFile="digraph G {\n";
         dotFile+=visualizer.abstractTransitionGraphToDot();
