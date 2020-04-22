@@ -160,7 +160,7 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
     if(!callInfo)
     {
       logger[ERROR] << callNode->unparseToString() << std::endl;
-      throw CodeThorn::Exception("interFlow: unknown call expression");
+      throw CodeThorn::Exception("interFlow2: unknown call expression");
     }
 
     switch(functionResolutionMode) {
@@ -168,16 +168,16 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
       FunctionCallTargetSet funCallTargetSet=determineFunctionDefinition5(*i, callInfo.representativeNode());
       Label callLabel,entryLabel,exitLabel,callReturnLabel;
       if(funCallTargetSet.size()==0) {
-        std::cerr << "undefined call target: " << callNode->unparseToString() << std::endl;
+        logger[INFO] << "undefined call target: " << callNode->unparseToString() << std::endl;
         callLabel=*i;
         entryLabel=Labeler::NO_LABEL;
         exitLabel=Labeler::NO_LABEL;
         callReturnLabel=labeler->functionCallReturnLabel(callNode);
         interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
       } else {
-        std::cerr << "defined call target: " << callNode->unparseToString() 
-                       << " <" << typeid(*callNode).name() << ">"
-                       << std::endl;
+        logger[INFO] << "defined call target: " << callNode->unparseToString() 
+                     << " <" << typeid(*callNode).name() << ">"
+                     << std::endl;
         for(auto fct : funCallTargetSet) {
           callLabel=*i;
           SgFunctionDefinition* funDef=fct.getDefinition();
