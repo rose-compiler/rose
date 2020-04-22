@@ -1228,13 +1228,16 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
                          ROSE_ASSERT(false);
 #endif
                          varRefExp->set_isModified(true);
+                         varRefExp->setTransformation();
 
+#if 0
                       // DQ (11/13/2018): Mark the statement associated with this SgVarRefExp (see test9 in UnparseHeaders_tests).
                          SgStatement* associatedStatement = getEnclosingStatement(varRefExp);
                          ROSE_ASSERT(associatedStatement != NULL);
                       // associatedStatement->set_isModified(true);
                       // associatedStatement->set_containsTransformation(true);
                          associatedStatement->setTransformation();
+#endif
                        }
                   }
 
