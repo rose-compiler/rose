@@ -4,6 +4,12 @@
 #include "Options.h"
 #include <vector>
 #include <string>
+#include <list>
+
+namespace CodeThorn {
+  enum AnalysisSelector { ANALYSIS_NULL_POINTER, ANALYSIS_OUT_OF_BOUNDS, ANALYSIS_UNINITIALIZED, ANALYSIS_NUM };
+}
+
 
 struct CodeThornOptions : public Options {
   // hidden options
@@ -178,6 +184,10 @@ struct CodeThornOptions : public Options {
   } info;
 
    bool activeOptionsRequireZ3Library();
+   bool getAnalysisSelectionFlag(CodeThorn::AnalysisSelector asel);
+   std::string getAnalysisReportFileName(CodeThorn::AnalysisSelector asel);
+   typedef std::list<std::pair<CodeThorn::AnalysisSelector,std::string> > AnalysisListType;
+   AnalysisListType analysisList() const;
 };
 
 #endif

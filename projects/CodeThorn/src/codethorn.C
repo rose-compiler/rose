@@ -988,19 +988,12 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    list<pair<CodeThorn::AnalysisSelector,string> > analysisNames={
-      {ANALYSIS_NULL_POINTER,"null-pointer"},
-      {ANALYSIS_OUT_OF_BOUNDS,"out-of-bounds"},
-      {ANALYSIS_UNINITIALIZED,"uninitialized"}
-    };
-    for(auto analysisInfo : analysisNames) {
+    for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
       string analysisName=analysisInfo.second;
-      string analysisOption=analysisName+"-analysis";
-      string analysisOutputFileOption=analysisName+"-analysis-file";
-      if(args.isUserProvided(analysisOption)>0||args.isUserProvided(analysisOutputFileOption)) {
+      if(ctOpt.getAnalysisSelectionFlag(analysisSel)||ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
         ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getViolatingLocations(analysisSel);
-        if(args.isUserProvided(analysisOption)>0) {
+        if(ctOpt.getAnalysisSelectionFlag(analysisSel)) {
           cout<<"\nResults for "<<analysisName<<" analysis:"<<endl;
           if(locations.numTotalLocations()>0) {
             locations.writeResultToStream(cout,analyzer->getLabeler());
@@ -1008,8 +1001,8 @@ int main( int argc, char * argv[] ) {
             cout<<"No violations detected."<<endl;
           }
         }
-        if(args.isUserProvided(analysisOutputFileOption)) {
-          string fileName=args.getString(analysisOutputFileOption);
+        if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
+          string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
           cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
           locations.writeResultFile(fileName,analyzer->getLabeler());
         }
