@@ -482,6 +482,7 @@ int main( int argc, char * argv[] ) {
     } else {
       analyzer = new IOAnalyzer();
     }
+    analyzer->setOptions(ctOpt);
     global_analyzer=analyzer;
 
     if(ctOpt.internalChecks) {
@@ -795,7 +796,8 @@ int main( int argc, char * argv[] ) {
       // do specialization and setup data structures
       analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
-      args.setOption("explicit-arrays",false); //ctOpt.explicitArrays=false; must also be changed in ExprAnalyzer
+      analyzer->getOptionsRef().explicitArrays=false;
+      analyzer->setOptions(ctOpt);
       //TODO1: refactor into separate function
       int numSubst=0;
       if(option_specialize_fun_name!="") {

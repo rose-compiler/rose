@@ -48,6 +48,7 @@
 #include "AstNodeInfo.h"
 #include "SgTypeSizeMapping.h"
 #include "CallString.h"
+#include "CodeThornOptions.h"
 
 namespace CodeThorn {
 
@@ -294,7 +295,8 @@ namespace CodeThorn {
     std::string analyzedFilesToString();
     void recordExternalFunctionCall(SgFunctionCallExp* funCall);
     std::string externalFunctionsToString();
-
+    void setOptions(CodeThornOptions options);
+    CodeThornOptions& getOptionsRef();
   protected:
     // this function is protected to ensure it is not used from outside. It is supposed to be used
     // only for internal timing managing the max-time option resource.
@@ -431,13 +433,12 @@ namespace CodeThorn {
     long int _maxSecondsForcedTop;
 
     VariableValueMonitor variableValueMonitor;
-
+    CodeThornOptions _ctOpt;
     bool _treatStdErrLikeFailedAssert;
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
     bool _topifyModeActive;
     int _abstractionMode=0; // 0=no abstraction, >=1: different abstraction modes.
-    bool _explicitArrays;
 
     int _iterations;
     int _approximated_iterations;

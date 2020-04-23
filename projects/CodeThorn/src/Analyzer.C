@@ -494,7 +494,7 @@ bool CodeThorn::Analyzer::isPrecise() {
   if (isActiveGlobalTopify()) {
     return false;
   }
-  if (CodeThorn::args.getBool("explicit-arrays")==false && !CodeThorn::args.getBool("rers-binary")) {
+  if (_ctOpt.explicitArrays==false && !CodeThorn::args.getBool("rers-binary")) {
     return false;
   }
   return true;
@@ -1081,7 +1081,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         return createEState(targetLabel,cs,newPState,cset);
       }
 
-      if(variableIdMapping->hasArrayType(initDeclVarId) && CodeThorn::args.getBool("explicit-arrays")==false) {
+      if(variableIdMapping->hasArrayType(initDeclVarId) && _ctOpt.explicitArrays==false) {
         // in case of a constant array the array (and its members) are not added to the state.
         // they are considered to be determined from the initializer without representing them
         // in the state
@@ -3306,4 +3306,10 @@ std::string CodeThorn::Analyzer::typeSizeMappingToString() {
   return variableIdMapping->typeSizeMappingToString();
 }
 
+void CodeThorn::Analyzer::setOptions(CodeThornOptions options) {
+  _ctOpt=options;
+}
 
+CodeThornOptions& CodeThorn::Analyzer::getOptionsRef() {
+  return _ctOpt;
+}
