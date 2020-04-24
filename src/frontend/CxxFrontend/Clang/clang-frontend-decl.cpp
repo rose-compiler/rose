@@ -141,6 +141,18 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
         case clang::Decl::Block:
             ret_status = VisitBlockDecl((clang::BlockDecl *)decl, &result);
             break;
+        case clang::Decl::Captured:
+            ret_status = VisitCapturedDecl((clang::CapturedDecl *)decl, &result);
+            break;
+        case clang::Decl::Empty:
+            ret_status = VisitEmptyDecl((clang::EmptyDecl *)decl, &result);
+            break;
+        case clang::Decl::Export:
+            ret_status = VisitExportDecl((clang::ExportDecl *)decl, &result);
+            break;
+        case clang::Decl::ExternCContext:
+            ret_status = VisitExternCContextDecl((clang::ExternCContextDecl *)decl, &result);
+            break;
         case clang::Decl::FileScopeAsm:
             ret_status = VisitFileScopeAsmDecl((clang::FileScopeAsmDecl *)decl, &result);
             break;
@@ -150,11 +162,23 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
         case clang::Decl::FriendTemplate:
             ret_status = VisitFriendTemplateDecl((clang::FriendTemplateDecl *)decl, &result);
             break;
+        case clang::Decl::Import:
+            ret_status = VisitImportDecl((clang::ImportDecl *)decl, &result);
+            break;
         case clang::Decl::Label:
             ret_status = VisitLabelDecl((clang::LabelDecl *)decl, &result);
             break;
+        case clang::Decl::NamespaceAlias:
+            ret_status = VisitNamespaceAliasDecl((clang::NamespaceAliasDecl *)decl, &result);
+            break;
         case clang::Decl::Namespace:
             ret_status = VisitNamespaceDecl((clang::NamespaceDecl *)decl, &result);
+            break;
+        case clang::Decl::BuiltinTemplate:
+            ret_status = VisitBuiltinTemplateDecl((clang::BuiltinTemplateDecl *)decl, &result);
+            break;
+        case clang::Decl::Concept:
+            ret_status = VisitConceptDecl((clang::ConceptDecl *)decl, &result);
             break;
         case clang::Decl::ClassTemplate:
             ret_status = VisitClassTemplateDecl((clang::ClassTemplateDecl *)decl, &result);
@@ -164,6 +188,9 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
             break;
         case clang::Decl::TypeAliasTemplate:
             ret_status = VisitTypeAliasTemplateDecl((clang::TypeAliasTemplateDecl *)decl, &result);
+            break;
+        case clang::Decl::VarTemplate:
+            ret_status = VisitVarTemplateDecl((clang::VarTemplateDecl *)decl, &result);
             break;
         case clang::Decl::TemplateTemplateParm:
             ret_status = VisitTemplateTemplateParmDecl((clang::TemplateTemplateParmDecl *)decl, &result);
@@ -192,14 +219,32 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
         case clang::Decl::TypeAlias:
             ret_status = VisitTypeAliasDecl((clang::TypeAliasDecl *)decl, &result);
             break;
+        case clang::Decl::UnresolvedUsingTypename:
+            ret_status = VisitUnresolvedUsingTypenameDecl((clang::UnresolvedUsingTypenameDecl *)decl, &result);
+            break;
+        case clang::Decl::Using:
+            ret_status = VisitUsingDecl((clang::UsingDecl *)decl, &result);
+            break;
+        case clang::Decl::UsingDirective:
+            ret_status = VisitUsingDirectiveDecl((clang::UsingDirectiveDecl *)decl, &result);
+            break;
+        case clang::Decl::UsingPack:
+            ret_status = VisitUsingPackDecl((clang::UsingPackDecl *)decl, &result);
+            break;
+        case clang::Decl::ConstructorUsingShadow:
+            ret_status = VisitConstructorUsingShadowDecl((clang::ConstructorUsingShadowDecl *)decl, &result);
+            break;
+        case clang::Decl::Binding:
+            ret_status = VisitBindingDecl((clang::BindingDecl *)decl, &result);
+            break;
         case clang::Decl::Field:
             ret_status = VisitFieldDecl((clang::FieldDecl *)decl, &result);
             break;
         case clang::Decl::Function:
             ret_status = VisitFunctionDecl((clang::FunctionDecl *)decl, &result);
             break;
-        case clang::Decl::CXXMethod:
-            ret_status = VisitCXXMethodDecl((clang::CXXMethodDecl *)decl, &result);
+        case clang::Decl::CXXDeductionGuide:
+            ret_status = VisitCXXDeductionGuideDecl((clang::CXXDeductionGuideDecl *)decl, &result);
             break;
         case clang::Decl::CXXConstructor:
             ret_status = VisitCXXConstructorDecl((clang::CXXConstructorDecl *)decl, &result);
@@ -210,23 +255,59 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
         case clang::Decl::CXXDestructor:
             ret_status = VisitCXXDestructorDecl((clang::CXXDestructorDecl *)decl, &result);
             break;
+        case clang::Decl::MSProperty:
+            ret_status = VisitMSPropertyDecl((clang::MSPropertyDecl *)decl, &result);
+            break;
         case clang::Decl::NonTypeTemplateParm:
             ret_status = VisitNonTypeTemplateParmDecl((clang::NonTypeTemplateParmDecl *)decl, &result);
             break;
-        case clang::Decl::Var:
-            ret_status = VisitVarDecl((clang::VarDecl *)decl, &result);
+        case clang::Decl::Decomposition:
+            ret_status = VisitDecompositionDecl((clang::DecompositionDecl *)decl, &result);
             break;
         case clang::Decl::ImplicitParam:
             ret_status = VisitImplicitParamDecl((clang::ImplicitParamDecl *)decl, &result);
             break;
+        case clang::Decl::OMPCapturedExpr:
+            ret_status = VisitOMPCaptureExprDecl((clang::OMPCapturedExprDecl *)decl, &result);
+            break;
         case clang::Decl::ParmVar:
             ret_status = VisitParmVarDecl((clang::ParmVarDecl *)decl, &result);
+            break;
+        case clang::Decl::VarTemplatePartialSpecialization:
+            ret_status = VisitVarTemplatePartialSpecializationDecl((clang::VarTemplatePartialSpecializationDecl *)decl, &result);
             break;
         case clang::Decl::EnumConstant:
             ret_status = VisitEnumConstantDecl((clang::EnumConstantDecl *)decl, &result);
             break;
         case clang::Decl::IndirectField:
             ret_status = VisitIndirectFieldDecl((clang::IndirectFieldDecl *)decl, &result);
+            break;
+        case clang::Decl::OMPDeclareMapper:
+            ret_status = VisitOMPDeclareMapperDecl((clang::OMPDeclareMapperDecl *)decl, &result);
+            break;
+        case clang::Decl::OMPDeclareReduction:
+            ret_status = VisitOMPDeclareReductionDecl((clang::OMPDeclareReductionDecl *)decl, &result);
+            break;
+        case clang::Decl::UnresolvedUsingValue:
+            ret_status = VisitUnresolvedUsingValueDecl((clang::UnresolvedUsingValueDecl *)decl, &result);
+            break;
+        case clang::Decl::OMPAllocate:
+            ret_status = VisitOMPAllocateDecl((clang::OMPAllocateDecl *)decl, &result);
+            break;
+        case clang::Decl::OMPRequires:
+            ret_status = VisitOMPRequiresDecl((clang::OMPRequiresDecl *)decl, &result);
+            break;
+        case clang::Decl::OMPThreadPrivate:
+            ret_status = VisitOMPThreadPrivateDecl((clang::OMPThreadPrivateDecl *)decl, &result);
+            break;
+        case clang::Decl::PragmaComment:
+            ret_status = VisitPragmaCommentDecl((clang::PragmaCommentDecl *)decl, &result);
+            break;
+        case clang::Decl::PragmaDetectMismatch:
+            ret_status = VisitPragmaDetectMismatchDecl((clang::PragmaDetectMismatchDecl *)decl, &result);
+            break;
+        case clang::Decl::StaticAssert:
+            ret_status = VisitStaticAssertDecl((clang::StaticAssertDecl *)decl, &result);
             break;
         case clang::Decl::TranslationUnit:
             ret_status = VisitTranslationUnitDecl((clang::TranslationUnitDecl *)decl, &result);
@@ -310,6 +391,50 @@ bool ClangToSageTranslator::VisitBlockDecl(clang::BlockDecl * block_decl, SgNode
     return VisitDecl(block_decl, node) && res;
 }
 
+bool ClangToSageTranslator::VisitCapturedDecl(clang::CapturedDecl * captured_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitCapturedDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitDecl(captured_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitEmptyDecl(clang::EmptyDecl * empty_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitEmptyDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitDecl(empty_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitExportDecl(clang::ExportDecl * export_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitExportDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitDecl(export_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitExternCContextDecl(clang::ExternCContextDecl * ccontent_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitCContextDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitDecl(ccontent_decl, node) && res;
+}
+
 bool ClangToSageTranslator::VisitFileScopeAsmDecl(clang::FileScopeAsmDecl * file_scope_asm_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitFileScopeAsmDecl" << std::endl;
@@ -343,6 +468,17 @@ bool ClangToSageTranslator::VisitFriendTemplateDecl(clang::FriendTemplateDecl * 
     return VisitDecl(friend_template_decl, node) && res;
 }
 
+bool ClangToSageTranslator::VisitImportDecl(clang::ImportDecl * import_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitImportDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+
+    return VisitDecl(import_decl, node) && res;
+}
+
 bool ClangToSageTranslator::VisitNamedDecl(clang::NamedDecl * named_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitNamedDecl" << std::endl;
@@ -365,6 +501,17 @@ bool ClangToSageTranslator::VisitLabelDecl(clang::LabelDecl * label_decl, SgNode
     return VisitNamedDecl(label_decl, node) && res;
 }
 
+bool ClangToSageTranslator::VisitNamespaceAliasDecl(clang::NamespaceAliasDecl * namespace_alias_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitNamespaceAliasDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitNamedDecl(namespace_alias_decl, node) && res;
+}
+
 bool ClangToSageTranslator::VisitNamespaceDecl(clang::NamespaceDecl * namespace_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitNamespaceDecl" << std::endl;
@@ -385,6 +532,28 @@ bool ClangToSageTranslator::VisitTemplateDecl(clang::TemplateDecl * template_dec
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
     return VisitNamedDecl(template_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitBuiltinTemplateDecl(clang::BuiltinTemplateDecl * builtin_template_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitBuiltinTemplateDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+
+    return VisitTemplateDecl(builtin_template_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitConceptDecl(clang::ConceptDecl * concept_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitConceptDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+
+    return VisitTemplateDecl(concept_decl, node) && res;
 }
 
 bool ClangToSageTranslator::VisitRedeclarableTemplateDecl(clang::RedeclarableTemplateDecl * redeclarable_template_decl, SgNode ** node) {
@@ -429,6 +598,18 @@ bool ClangToSageTranslator::VisitTypeAliasTemplateDecl(clang::TypeAliasTemplateD
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitRedeclarableTemplateDecl(type_alias_template_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitVarTemplateDecl(clang::VarTemplateDecl * var_template_decl, SgNode ** node) {
+
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitVarTemplateDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitRedeclarableTemplateDecl(var_template_decl, node) && res;
 }
 
 
@@ -760,13 +941,79 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
 
 bool ClangToSageTranslator::VisitTypeAliasDecl(clang::TypeAliasDecl * type_alias_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitValueDecl" << std::endl;
+    std::cerr << "ClangToSageTranslator::VisitTypeAliasDecl" << std::endl;
 #endif  
     bool res = true;
 
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitTypedefNameDecl(type_alias_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitUnresolvedUsingTypenameDecl(clang::UnresolvedUsingTypenameDecl * unresolved_using_type_name_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitUnresolvedUsingTypenameDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+
+    return VisitTypeDecl(unresolved_using_type_name_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitUsingDecl(clang::UsingDecl * using_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitUsingDecl" << std::endl;
+#endif  
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+
+    return VisitNamedDecl(using_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitUsingDirectiveDecl(clang::UsingDirectiveDecl * using_directive_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitUsingDirectiveDecl" << std::endl;
+#endif  
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+
+    return VisitNamedDecl(using_directive_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitUsingPackDecl(clang::UsingPackDecl * using_pack_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitUsingPackDecl" << std::endl;
+#endif  
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+
+    return VisitNamedDecl(using_pack_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitUsingShadowDecl(clang::UsingShadowDecl * using_shadow_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitUsingShadowDecl" << std::endl;
+#endif  
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+
+    return VisitNamedDecl(using_shadow_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitConstructorUsingShadowDecl(clang::ConstructorUsingShadowDecl * constructor_using_shadow_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitConstructorUsingShadowDecl" << std::endl;
+#endif  
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+
+    return VisitNamedDecl(constructor_using_shadow_decl, node) && res;
 }
 
 bool ClangToSageTranslator::VisitValueDecl(clang::ValueDecl * value_decl, SgNode ** node) {
@@ -780,6 +1027,17 @@ bool ClangToSageTranslator::VisitValueDecl(clang::ValueDecl * value_decl, SgNode
     return VisitNamedDecl(value_decl, node) && res;
 }
 
+bool ClangToSageTranslator::VisitBindingDecl(clang::BindingDecl * binding_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitBindingDecl" << std::endl;
+#endif  
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+
+    return VisitValueDecl(binding_decl, node) && res;
+}
+    
 bool ClangToSageTranslator::VisitDeclaratorDecl(clang::DeclaratorDecl * declarator_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitDeclaratorDecl" << std::endl;
@@ -1042,6 +1300,17 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
     return VisitDeclaratorDecl(function_decl, node) && res;
 }
 
+bool ClangToSageTranslator::VisitCXXDeductionGuideDecl(clang::CXXDeductionGuideDecl * cxx_deduction_guide_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitCXXDeductionGuideDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitFunctionDecl(cxx_deduction_guide_decl, node) && res;
+}
+
 bool ClangToSageTranslator::VisitCXXMethodDecl(clang::CXXMethodDecl * cxx_method_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl" << std::endl;
@@ -1084,6 +1353,17 @@ bool ClangToSageTranslator::VisitCXXDestructorDecl(clang::CXXDestructorDecl * cx
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitCXXMethodDecl(cxx_destructor_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitMSPropertyDecl(clang::MSPropertyDecl * ms_property_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitMSPropertyDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitDeclaratorDecl(ms_property_decl, node) && res;
 }
 
 bool ClangToSageTranslator::VisitNonTypeTemplateParmDecl(clang::NonTypeTemplateParmDecl * non_type_template_param_decl, SgNode ** node) {
@@ -1168,6 +1448,17 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     return VisitDeclaratorDecl(var_decl, node) && res;
 }
 
+bool ClangToSageTranslator::VisitDecompositionDecl(clang::DecompositionDecl * decomposition_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitDecompositionDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitVarDecl(decomposition_decl, node) && res;
+}
+
 bool ClangToSageTranslator::VisitImplicitParamDecl(clang::ImplicitParamDecl * implicit_param_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitImplicitParamDecl" << std::endl;
@@ -1177,6 +1468,17 @@ bool ClangToSageTranslator::VisitImplicitParamDecl(clang::ImplicitParamDecl * im
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitVarDecl(implicit_param_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitOMPCaptureExprDecl(clang::OMPCapturedExprDecl * omp_capture_expr_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitOMPCaptureExprDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitVarDecl(omp_capture_expr_decl, node) && res;
 }
 
 bool ClangToSageTranslator::VisitParmVarDecl(clang::ParmVarDecl * param_var_decl, SgNode ** node) {
@@ -1208,6 +1510,28 @@ bool ClangToSageTranslator::VisitParmVarDecl(clang::ParmVarDecl * param_var_decl
     *node = SageBuilder::buildInitializedName(name, type, init);
 
     return VisitDeclaratorDecl(param_var_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitVarTemplateSpecializationDecl(clang::VarTemplateSpecializationDecl * var_template_specialization_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitVarTemplateSpecializationDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitDeclaratorDecl(var_template_specialization_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitVarTemplatePartialSpecializationDecl(clang::VarTemplatePartialSpecializationDecl * var_template_partial_specialization_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitVarTemplatePartialSpecializationDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitVarTemplateSpecializationDecl(var_template_partial_specialization_decl, node) && res;
 }
 
 bool  ClangToSageTranslator::VisitEnumConstantDecl(clang::EnumConstantDecl * enum_constant_decl, SgNode ** node) {
@@ -1254,6 +1578,105 @@ bool ClangToSageTranslator::VisitIndirectFieldDecl(clang::IndirectFieldDecl * in
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitValueDecl(indirect_field_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitOMPDeclareMapperDecl(clang::OMPDeclareMapperDecl * omp_declare_mapper_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitOMPDeclareMapperDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitValueDecl(omp_declare_mapper_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitOMPDeclareReductionDecl(clang::OMPDeclareReductionDecl * omp_declare_reduction_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitOMPDeclareReductionDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitValueDecl(omp_declare_reduction_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitUnresolvedUsingValueDecl(clang::UnresolvedUsingValueDecl * unresolved_using_value_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitUnresolvedUsingValueDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitValueDecl(unresolved_using_value_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitOMPAllocateDecl(clang::OMPAllocateDecl * omp_allocate_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitOMPAllocateDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitDecl(omp_allocate_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitOMPRequiresDecl(clang::OMPRequiresDecl * omp_requires_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitOMPRequiresDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitDecl(omp_requires_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitOMPThreadPrivateDecl(clang::OMPThreadPrivateDecl * omp_thread_private_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitOMPThreadPrivateDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitDecl(omp_thread_private_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitPragmaCommentDecl(clang::PragmaCommentDecl * pragma_comment_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitPragmaCommentDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitDecl(pragma_comment_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitPragmaDetectMismatchDecl(clang::PragmaDetectMismatchDecl * pragma_detect_mismatch_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitPragmaDetectMismatchDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitDecl(pragma_detect_mismatch_decl, node) && res;
+}
+
+bool ClangToSageTranslator::VisitStaticAssertDecl(clang::StaticAssertDecl * pragma_static_assert_decl, SgNode ** node) {
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitStaticAssertDecl" << std::endl;
+#endif
+    bool res = true;
+
+    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+    return VisitDecl(pragma_static_assert_decl, node) && res;
 }
 
 bool ClangToSageTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl * translation_unit_decl, SgNode ** node) {

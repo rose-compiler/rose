@@ -201,17 +201,17 @@ class ClangToSageTranslator : public clang::ASTConsumer {
         virtual bool VisitDecl(clang::Decl * decl, SgNode ** node);
             virtual bool VisitAccessSpecDecl(clang::AccessSpecDecl * access_spec_decl, SgNode ** node);
             virtual bool VisitBlockDecl(clang::BlockDecl * block_decl, SgNode ** node);
-          //virtual bool VisitCapturedDecl
-          //virtual bool VisitEmptyDecl
-          //virtual bool VisitExportDecl
-          //virtual bool VisitExternCContextDecl
+            virtual bool VisitCapturedDecl(clang::CapturedDecl * capture_decl, SgNode ** node);
+            virtual bool VisitEmptyDecl(clang::EmptyDecl * empty_decl, SgNode ** node);
+            virtual bool VisitExportDecl(clang::ExportDecl * export_decl, SgNode ** node);
+            virtual bool VisitExternCContextDecl(clang::ExternCContextDecl * ccontext_decl, SgNode ** node);
             virtual bool VisitFileScopeAsmDecl(clang::FileScopeAsmDecl * file_scope_asm_decl, SgNode ** node);
             virtual bool VisitFriendDecl(clang::FriendDecl * friend_decl, SgNode ** node);
             virtual bool VisitFriendTemplateDecl(clang::FriendTemplateDecl * friend_template_decl, SgNode ** node);
-          //virtual bool VisitImportDecl
+            virtual bool VisitImportDecl(clang::ImportDecl * import_decl, SgNode ** node);
             virtual bool VisitNamedDecl(clang::NamedDecl * named_decl, SgNode ** node);
                 virtual bool VisitLabelDecl(clang::LabelDecl * label_decl, SgNode ** node);
-              //virtual bool VisitNamespaceAliasDecl
+                virtual bool VisitNamespaceAliasDecl(clang::NamespaceAliasDecl * namespace_alias_decl, SgNode ** node);
                 virtual bool VisitNamespaceDecl(clang::NamespaceDecl * namespace_decl, SgNode ** node);
               //virtual bool VisitObjCCompatibleAliasDecl
               //virtual bool VisitObjCContainerDecl
@@ -222,13 +222,13 @@ class ClangToSageTranslator : public clang::ASTConsumer {
               //virtual bool VisitObjCMethodDecl
               //virtual bool VisitObjCPropertyDecl
                 virtual bool VisitTemplateDecl(clang::TemplateDecl * template_decl, SgNode ** node);
-                  //virtual bool VisitBuiltinTemplateDecl
-                  //virtual bool VisitConceptDecl
+                    virtual bool VisitBuiltinTemplateDecl(clang::BuiltinTemplateDecl * builtin_template_decl, SgNode ** node);
+                    virtual bool VisitConceptDecl(clang::ConceptDecl * concept_decl, SgNode ** node);
                     virtual bool VisitRedeclarableTemplateDecl(clang::RedeclarableTemplateDecl * redeclarable_template_decl, SgNode ** node);
                         virtual bool VisitClassTemplateDecl(clang::ClassTemplateDecl * class_template_decl, SgNode ** node);
                         virtual bool VisitFunctionTemplateDecl(clang::FunctionTemplateDecl * function_template_decl, SgNode ** node);
                         virtual bool VisitTypeAliasTemplateDecl(clang::TypeAliasTemplateDecl * type_alias_template_decl, SgNode ** node);
-                      //virtual bool VisitVarTempalteDecl
+                        virtual bool VisitVarTemplateDecl(clang::VarTemplateDecl * var_template_decl, SgNode ** node);
                     virtual bool VisitTemplateTemplateParmDecl(clang::TemplateTemplateParmDecl * template_template_parm_decl, SgNode ** node);
                 virtual bool VisitTypeDecl(clang::TypeDecl * type_decl, SgNode ** node);
                     virtual bool VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** node);
@@ -241,45 +241,46 @@ class ClangToSageTranslator : public clang::ASTConsumer {
                     virtual bool VisitTypedefNameDecl(clang::TypedefNameDecl * typedef_name_decl, SgNode ** node);
                         virtual bool VisitTypedefDecl(clang::TypedefDecl * typedef_decl, SgNode ** node);
                         virtual bool VisitTypeAliasDecl(clang::TypeAliasDecl * type_alias_decl, SgNode ** node);
-                      //virtual bool VisitObjCTypeParamDecl
-                 //virtual bool VisitUnresolvedUsingTypenameDecl
-              //virtual bool VisitUsingDecl
-              //virtual bool VisitUsingDirectiveDecl
-              //virtual bool VisitUsingPackDecl
-              //virtual bool VisitUsingShadowDecl
+                        //virtual bool VisitObjCTypeParamDecl(clang::ObjCTypeParamDecl * obj_type_param_decl, SgNode ** node);
+                    virtual bool VisitUnresolvedUsingTypenameDecl(clang::UnresolvedUsingTypenameDecl * unresolved_using_type_name_decl, SgNode ** node);
+                virtual bool VisitUsingDecl(clang::UsingDecl * using_decl, SgNode ** node);
+                virtual bool VisitUsingDirectiveDecl(clang::UsingDirectiveDecl * using_directive_decl, SgNode ** node);
+                virtual bool VisitUsingPackDecl(clang::UsingPackDecl * using_pack_decl, SgNode ** node);
+                virtual bool VisitUsingShadowDecl(clang::UsingShadowDecl * using_shadow_decl, SgNode ** node);
+                    virtual bool VisitConstructorUsingShadowDecl(clang::ConstructorUsingShadowDecl * constructor_using_shadow_decl, SgNode ** node);
                 virtual bool VisitValueDecl(clang::ValueDecl * value_decl, SgNode ** node);
-                  //virtual bool VisitBindingDecl
+                    virtual bool VisitBindingDecl(clang::BindingDecl * binding_decl, SgNode ** node);
                     virtual bool VisitDeclaratorDecl(clang::DeclaratorDecl * declarator_decl, SgNode ** node);
                         virtual bool VisitFieldDecl(clang::FieldDecl * field_decl, SgNode ** node);
-                          //virtual bool VisitObcjAtDefsFieldDecl
+                          //virtual bool VisitObjCAtDefsFieldDecl
                           //virtual bool VisitObjCvarDecl
                         virtual bool VisitFunctionDecl(clang::FunctionDecl * function_decl, SgNode ** node);
-                          //virtual bool VisitCxxDeductionGuideDecl
+                            virtual bool VisitCXXDeductionGuideDecl(clang::CXXDeductionGuideDecl * cxx_deduction_guide_guide, SgNode ** node);
                             virtual bool VisitCXXMethodDecl(clang::CXXMethodDecl * cxx_method_decl, SgNode ** node);
                                 virtual bool VisitCXXConstructorDecl(clang::CXXConstructorDecl * cxx_constructor_decl, SgNode ** node);
                                 virtual bool VisitCXXConversionDecl(clang::CXXConversionDecl * cxx_conversion_decl, SgNode ** node);
                                 virtual bool VisitCXXDestructorDecl(clang::CXXDestructorDecl * cxx_destructor_decl, SgNode ** node);
-                      //virtual bool VisitMSPropertyDecl
+                        virtual bool VisitMSPropertyDecl(clang::MSPropertyDecl * ms_property_decl, SgNode ** node);
                         virtual bool VisitNonTypeTemplateParmDecl(clang::NonTypeTemplateParmDecl * non_type_template_param_decl, SgNode ** node);
                         virtual bool VisitVarDecl(clang::VarDecl * var_decl, SgNode ** node);
-                          //virtual bool VisitDecompositioNDecl
+                            virtual bool VisitDecompositionDecl(clang::DecompositionDecl* decomposition_decl, SgNode ** node);
                             virtual bool VisitImplicitParamDecl(clang::ImplicitParamDecl * implicit_param_decl, SgNode ** node);
-                          //virtual bool VisitOMPCaptureExprDecl
+                            virtual bool VisitOMPCaptureExprDecl(clang::OMPCapturedExprDecl* omp_capture_expr_decl, SgNode ** node);
                             virtual bool VisitParmVarDecl(clang::ParmVarDecl * param_var_decl, SgNode ** node);
-                          //virtual bool VisitTemplateSpecializationDecl
-                              //virtual bool VisitTemplatePartialSpecializationDecl
+                            virtual bool VisitVarTemplateSpecializationDecl(clang::VarTemplateSpecializationDecl * var_template_specialization_decl, SgNode ** node);
+                                virtual bool VisitVarTemplatePartialSpecializationDecl(clang::VarTemplatePartialSpecializationDecl * var_template_partial_specialization, SgNode ** node);
                     virtual bool VisitEnumConstantDecl(clang::EnumConstantDecl * enum_constant_decl, SgNode ** node);
                     virtual bool VisitIndirectFieldDecl(clang::IndirectFieldDecl * indirect_field_decl, SgNode ** node);
-                  //virtual bool VisitOMPDeclareDecl
-                  //virtual bool VisitOMPDeclareReductionDecl
-                  //virtual bool VisitUnresolvedUsingValueDecl
+                    virtual bool VisitOMPDeclareMapperDecl(clang::OMPDeclareMapperDecl * omp_declare_mapper_decl, SgNode ** node);
+                    virtual bool VisitOMPDeclareReductionDecl(clang::OMPDeclareReductionDecl * omp_declare_reduction_decl, SgNode ** node);
+                    virtual bool VisitUnresolvedUsingValueDecl(clang::UnresolvedUsingValueDecl * unresolved_using_value_decl, SgNode ** node);
           //virtual bool VisitObjCPropertyImplDecl
-          //virtual bool VisitOMPAllocateDecl
-          //virtual bool VisitOMPRequiresDecl
-          //virtual bool VisitOMPThreadPrivateDecl
-          //virtual bool VisitPragmaCommentDecl
-          //virtual bool VisitPragmaDetectMisMatchDecl
-          //virtual bool VisitStaticAssertDecl
+            virtual bool VisitOMPAllocateDecl(clang::OMPAllocateDecl * omp_allocate_decl, SgNode ** node);
+            virtual bool VisitOMPRequiresDecl(clang::OMPRequiresDecl * omp_requires_decl, SgNode ** node);
+            virtual bool VisitOMPThreadPrivateDecl(clang::OMPThreadPrivateDecl * omp_thread_private_decl, SgNode ** node);
+            virtual bool VisitPragmaCommentDecl(clang::PragmaCommentDecl * pragma_comment_decl, SgNode ** node);
+            virtual bool VisitPragmaDetectMismatchDecl(clang::PragmaDetectMismatchDecl * pragma_detect_mismatch, SgNode ** node);
+            virtual bool VisitStaticAssertDecl(clang::StaticAssertDecl * static_assert_decl, SgNode ** node);
             virtual bool VisitTranslationUnitDecl(clang::TranslationUnitDecl * translation_unit_decl, SgNode ** node);
 
   /* 
