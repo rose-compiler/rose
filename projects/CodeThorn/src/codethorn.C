@@ -471,7 +471,7 @@ int main( int argc, char * argv[] ) {
     SAWYER_MESG(logger[TRACE]) << "Log level is " << ctOpt.logLevel << endl;
 
     // ParPro command line options
-    bool exitRequest=CodeThorn::ParProAutomata::handleCommandLineArguments(args,logger);
+    bool exitRequest=CodeThorn::ParProAutomata::handleCommandLineArguments(parProOpt,ctOpt,ltlOpt,logger);
     if(exitRequest) {
       exit(0);
     }
