@@ -124,9 +124,9 @@ CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const Co
     if(threadNum==0 && _resourceLimitDiff && (estateSetSize>(_prevStateSetSizeResource+_resourceLimitDiff))) {
       if (isIncompleteSTGReady()) {
 #pragma omp critical(ESTATEWL)
-	{
-	  earlyTermination = true;
-	}
+        {
+          earlyTermination = true;
+        }
       }
       isActiveGlobalTopify(); // Checks if a switch to topify is necessary. If yes, it changes the analyzer state.
       _prevStateSetSizeResource=estateSetSize;
@@ -148,89 +148,89 @@ CodeThorn::Analyzer::SubSolverResultType CodeThorn::Analyzer::subSolver(const Co
       const EState* currentEStatePtr=*localWorkList.begin();
       localWorkList.pop_front();
       if(isFailedAssertEState(currentEStatePtr)) {
-	// ensure we do not compute any successors of a failed assert state
-	continue;
+        // ensure we do not compute any successors of a failed assert state
+        continue;
       }
       Flow edgeSet=flow.outEdges(currentEStatePtr->label());
       for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
-	Edge e=*i;
-	list<EState> newEStateList;
-	newEStateList=transferEdgeEState(e,currentEStatePtr);
-	for(list<EState>::iterator nesListIter=newEStateList.begin();
-	    nesListIter!=newEStateList.end();
-	    ++nesListIter) {
-	  // newEstate is passed by value (not created yet)
-	  EState newEState=*nesListIter;
-	  ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
+        Edge e=*i;
+        list<EState> newEStateList;
+        newEStateList=transferEdgeEState(e,currentEStatePtr);
+        for(list<EState>::iterator nesListIter=newEStateList.begin();
+            nesListIter!=newEStateList.end();
+            ++nesListIter) {
+          // newEstate is passed by value (not created yet)
+          EState newEState=*nesListIter;
+          ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
 
-	  if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
-	    HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
-	    const EState* newEStatePtr=pres.second;
-	    ROSE_ASSERT(newEStatePtr);
-	    if(pres.first==true) {
-	      if(isLTLRelevantEState(newEStatePtr)) {
-		deferedWorkList.push_back(newEStatePtr);
-	      } else {
-		localWorkList.push_back(newEStatePtr);
-	      }
-	    } else {
-	      // we have found an existing state, but need to make also sure it's a relevent one
-	      if(isLTLRelevantEState(newEStatePtr)) {
-		ROSE_ASSERT(newEStatePtr!=nullptr);
-		existingEStateSet.insert(const_cast<EState*>(newEStatePtr));
-	      } else {
-		// TODO: use a unique list
-		localWorkList.push_back(newEStatePtr);
-	      }
-	    }
-	    // TODO: create reduced transition set at end of this function
-	    if(!getModeLTLDriven()) {
-	      recordTransition(currentEStatePtr,e,newEStatePtr);
-	    }
-	  }
-	  if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
-	    // failed-assert end-state: do not add to work list but do add it to the transition graph
-	    const EState* newEStatePtr;
-	    newEStatePtr=processNewOrExisting(newEState);
-	    // TODO: create reduced transition set at end of this function
-	    if(!getModeLTLDriven()) {
-	      recordTransition(currentEStatePtr,e,newEStatePtr);
-	    }
-	    deferedWorkList.push_back(newEStatePtr);
-	    if(isVerificationErrorEState(&newEState)) {
-	      SAWYER_MESG(logger[TRACE])<<"STATUS: detected verification error state ... terminating early"<<endl;
-	      // set flag for terminating early
-	      reachabilityResults.reachable(0);
-	      _firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
-	      EStateWorkList emptyWorkList;
-	      EStatePtrSet emptyExistingStateSet;
-	      return make_pair(emptyWorkList,emptyExistingStateSet);
-	    } else if(isFailedAssertEState(&newEState)) {
-	      // record failed assert
-	      int assertCode;
-	      if(_ctOpt.rers.rersBinary) {
-		assertCode=reachabilityAssertCode(newEStatePtr);
-	      } else {
-		assertCode=reachabilityAssertCode(currentEStatePtr);
-	      }
-	      /* if a property table is created for reachability we can also
-		 collect on the fly reachability results in LTL-driven mode
-		 but for now, we don't
-	      */
-	      if(!getModeLTLDriven()) {
-		if(assertCode>=0) {
-		  if(CodeThorn::args.getBool("with-counterexamples") || CodeThorn::args.getBool("with-assert-counterexamples")) {
-		    //if this particular assertion was never reached before, compute and update counterexample
-		    if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
-		      _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
-		    }
-		  }
-		  reachabilityResults.reachable(assertCode);
-		}	    // record failed assert
-	      }
-	    } // end of failed assert handling
-	  } // end of if (no disequality (= no infeasable path))
-	} // end of loop on transfer function return-estates
+          if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
+            HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
+            const EState* newEStatePtr=pres.second;
+            ROSE_ASSERT(newEStatePtr);
+            if(pres.first==true) {
+              if(isLTLRelevantEState(newEStatePtr)) {
+                deferedWorkList.push_back(newEStatePtr);
+              } else {
+                localWorkList.push_back(newEStatePtr);
+              }
+            } else {
+              // we have found an existing state, but need to make also sure it's a relevent one
+              if(isLTLRelevantEState(newEStatePtr)) {
+                ROSE_ASSERT(newEStatePtr!=nullptr);
+                existingEStateSet.insert(const_cast<EState*>(newEStatePtr));
+              } else {
+                // TODO: use a unique list
+                localWorkList.push_back(newEStatePtr);
+              }
+            }
+            // TODO: create reduced transition set at end of this function
+            if(!getModeLTLDriven()) {
+              recordTransition(currentEStatePtr,e,newEStatePtr);
+            }
+          }
+          if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
+            // failed-assert end-state: do not add to work list but do add it to the transition graph
+            const EState* newEStatePtr;
+            newEStatePtr=processNewOrExisting(newEState);
+            // TODO: create reduced transition set at end of this function
+            if(!getModeLTLDriven()) {
+              recordTransition(currentEStatePtr,e,newEStatePtr);
+            }
+            deferedWorkList.push_back(newEStatePtr);
+            if(isVerificationErrorEState(&newEState)) {
+              SAWYER_MESG(logger[TRACE])<<"STATUS: detected verification error state ... terminating early"<<endl;
+              // set flag for terminating early
+              reachabilityResults.reachable(0);
+              _firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
+              EStateWorkList emptyWorkList;
+              EStatePtrSet emptyExistingStateSet;
+              return make_pair(emptyWorkList,emptyExistingStateSet);
+            } else if(isFailedAssertEState(&newEState)) {
+              // record failed assert
+              int assertCode;
+              if(_ctOpt.rers.rersBinary) {
+                assertCode=reachabilityAssertCode(newEStatePtr);
+              } else {
+                assertCode=reachabilityAssertCode(currentEStatePtr);
+              }
+              /* if a property table is created for reachability we can also
+                 collect on the fly reachability results in LTL-driven mode
+                 but for now, we don't
+              */
+              if(!getModeLTLDriven()) {
+                if(assertCode>=0) {
+                  if(_ltlOpt.withCounterExamples || _ltlOpt.withAssertCounterExamples) {
+                    //if this particular assertion was never reached before, compute and update counterexample
+                    if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
+                      _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
+                    }
+                  }
+                  reachabilityResults.reachable(assertCode);
+                }	    // record failed assert
+              }
+            } // end of failed assert handling
+          } // end of if (no disequality (= no infeasable path))
+        } // end of loop on transfer function return-estates
       } // edge set iterator
     }
   }
@@ -735,7 +735,7 @@ bool CodeThorn::Analyzer::isActiveGlobalTopify() {
       if (!_topifyModeActive) {
         _topifyModeActive=true;
         eventGlobalTopifyTurnedOn();
-        CodeThorn::args.setOption("rers-binary",false);
+        _ctOpt.rers.rersBinary=false;
       }
     }
     return true;
@@ -1744,12 +1744,12 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
 
   // Runs consistency checks on the fork / join and workshare / barrier nodes in the parallel CFG
   // If the --omp-ast flag is not selected by the user, the parallel nodes are not inserted into the CFG
-  if (CodeThorn::args.getBool("omp-ast")) {
+  if (_ctOpt.ompAst) {
     cfanalyzer->forkJoinConsistencyChecks(flow);
   }
 
   SAWYER_MESG(logger[TRACE])<< "STATUS: Building CFGs finished."<<endl;
-  if(CodeThorn::args.getBool("reduce-cfg")) {
+  if(_ctOpt.reduceCfg) {
     int cnt=cfanalyzer->optimizeFlow(flow);
     SAWYER_MESG(logger[TRACE])<< "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
   }
@@ -1763,7 +1763,7 @@ void CodeThorn::Analyzer::initializeSolver(std::string functionToStartAt,SgNode*
   SAWYER_MESG(logger[TRACE])<< "INIT: ICFG OK. (size: " << flow.size() << " edges)"<<endl;
 
 #if 0
-  if(CodeThorn::args.getBool("reduce-cfg")) {
+  if(_ctOpt.reduceCfg) {
     int cnt=cfanalyzer->inlineTrivialFunctions(flow);
     cout << "INIT: CFG reduction OK. (inlined "<<cnt<<" functions; eliminated "<<cnt*4<<" nodes)"<<endl;
   }
@@ -2612,7 +2612,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallExternal(Edge edge, c
       } else {
         return resList; // return no state (this ends the analysis)
       }
-      if(CodeThorn::args.getBool("input-values-as-constraints")) {
+      if(_ctOpt.inputValuesAsConstraints) {
         SAWYER_MESG(logger[FATAL])<<"Option input-values-as-constraints no longer supported."<<endl;
         exit(1);
         //newCSet.removeAllConstraintsOfVar(varId);
@@ -2639,7 +2639,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallExternal(Edge edge, c
         list<EState> resList;
         for(set<int>::iterator i=_inputVarValues.begin();i!=_inputVarValues.end();++i) {
           PState newPState=*currentEState.pstate();
-          if(CodeThorn::args.getBool("input-values-as-constraints")) {
+          if(_ctOpt.inputValuesAsConstraints) {
             SAWYER_MESG(logger[FATAL])<<"Option input-values-as-constraints no longer supported."<<endl;
             exit(1);
             //newCSet.removeAllConstraintsOfVar(varId);
@@ -3312,4 +3312,12 @@ void CodeThorn::Analyzer::setOptions(CodeThornOptions options) {
 
 CodeThornOptions& CodeThorn::Analyzer::getOptionsRef() {
   return _ctOpt;
+}
+
+void CodeThorn::Analyzer::setLtlOptions(LTLOptions ltlOptions) {
+  _ltlOpt=ltlOptions;
+}
+
+LTLOptions& CodeThorn::Analyzer::getLtlOptionsRef() {
+  return _ltlOpt;
 }

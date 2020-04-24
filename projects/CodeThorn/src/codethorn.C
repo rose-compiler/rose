@@ -483,6 +483,7 @@ int main( int argc, char * argv[] ) {
       analyzer = new IOAnalyzer();
     }
     analyzer->setOptions(ctOpt);
+    analyzer->setLtlOptions(ltlOpt);
     global_analyzer=analyzer;
 
     if(ctOpt.internalChecks) {
@@ -525,7 +526,7 @@ int main( int argc, char * argv[] ) {
         exit(1);
       }
     }
-    // analyzer->setFunctionResolutionMode(args.getInt("function-resolution-mode"));
+    // analyzer->setFunctionResolutionMode(ctOpt.functionResolutionMode);
     // needs to set CFAnalysis functionResolutionMode
 
     int numThreads=ctOpt.threads; // default is 1
@@ -667,7 +668,7 @@ int main( int argc, char * argv[] ) {
     {
       analyzer->setOptionContextSensitiveAnalysis(ctOpt.contextSensitive);
       //Call strings length abrivation is not supported yet.
-      //CodeThorn::CallString::setMaxLength((args.getInt("callstring-length")));
+      //CodeThorn::CallString::setMaxLength(_ctOpt.callStringLength);
     }
 
     /* perform inlining before variable ids are computed, because

@@ -49,6 +49,7 @@
 #include "SgTypeSizeMapping.h"
 #include "CallString.h"
 #include "CodeThornOptions.h"
+#include "LTLOptions.h"
 
 namespace CodeThorn {
 
@@ -297,6 +298,8 @@ namespace CodeThorn {
     std::string externalFunctionsToString();
     void setOptions(CodeThornOptions options);
     CodeThornOptions& getOptionsRef();
+    void setLtlOptions(LTLOptions ltlOptions);
+    LTLOptions& getLtlOptionsRef();
   protected:
     // this function is protected to ensure it is not used from outside. It is supposed to be used
     // only for internal timing managing the max-time option resource.
@@ -434,6 +437,7 @@ namespace CodeThorn {
 
     VariableValueMonitor variableValueMonitor;
     CodeThornOptions _ctOpt;
+    LTLOptions _ltlOpt;
     bool _treatStdErrLikeFailedAssert;
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
