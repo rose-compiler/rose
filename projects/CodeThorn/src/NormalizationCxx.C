@@ -271,11 +271,12 @@ namespace
   //~ auto& defaultLogger = Normalization::logger[Sawyer::Message::INFO]; 
   auto& defaultLogger = std::cerr; 
 
+  /* // MS: not used, causes warning
   auto logInfo() -> decltype(defaultLogger)
   {
     return defaultLogger;  
   }
-
+  */
   Sg_File_Info* dummyFileInfo()
   {
     return Sg_File_Info::generateDefaultFileInfoForTransformationNode();
