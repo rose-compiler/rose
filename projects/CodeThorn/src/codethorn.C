@@ -601,6 +601,7 @@ int main( int argc, char * argv[] ) {
 
     // parse command line options for data race detection
     DataRaceDetection dataRaceDetection;
+    dataRaceDetection.setOptions(ctOpt);
     dataRaceDetection.handleCommandLineOptions(*analyzer);
     dataRaceDetection.setVisualizeReadWriteAccesses(ctOpt.visualization.visualizeRWSets);
 
