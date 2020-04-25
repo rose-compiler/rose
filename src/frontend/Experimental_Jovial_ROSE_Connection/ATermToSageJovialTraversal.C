@@ -5870,7 +5870,6 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
 #endif
 
    ATerm t_operand, t_continuation, t_amb;
-   SgExpression* sg_continuation = nullptr;
 
    expr = nullptr;
 
@@ -5887,15 +5886,19 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
          // MATCHED LogicalOperand
       } else return ATfalse;
 
-      if (traverse_OptLogicalContinuation(t_continuation, sg_continuation)) {
+      if (traverse_OptLogicalContinuation(t_continuation, expr)) {
          // MATCHED OptLogicalContinuation
-         cerr << "WARNING UNIMPLEMENTED: BitFormula - with continuation\n";
       } else return ATfalse;
 
    } else if (ATmatch(term, "BitFormulaNOT(<term>)", &t_operand)) {
       if (traverse_LogicalOperand(t_operand, expr)) {
          // MATCHED LogicalOperand
       } else return ATfalse;
+
+      ROSE_ASSERT(expr);
+      SgNotOp* not_op = SageBuilder::buildNotOp(expr);
+      setSourcePosition(not_op, term);
+      expr = not_op;
 
    } else if (ATmatch(term, "BitVariableFormula(<term>)", &t_operand)) {
       if (traverse_Variable(t_operand, expr)) {
@@ -5908,7 +5911,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
       return ATtrue;
    }
 
-   ROSE_ASSERT(expr != NULL);
+   ROSE_ASSERT(expr);
 
    return ATtrue;
 }
@@ -5918,6 +5921,9 @@ ATbool ATermToSageJovialTraversal::traverse_OptLogicalContinuation(ATerm term, S
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OptLogicalContinuation: %s\n", ATwriteToString(term));
 #endif
+
+// expr is an input variable (and may be modified on output)
+   ROSE_ASSERT(expr);
 
    if (ATmatch(term, "no-logical-continuation")) {
       // MATCHED no-logical-continuation
@@ -5932,6 +5938,9 @@ ATbool ATermToSageJovialTraversal::traverse_OptLogicalContinuation(ATerm term, S
       }
    }
 
+// expr may be modified on output
+   ROSE_ASSERT(expr);
+
    return ATtrue;
 }
 
@@ -5942,29 +5951,44 @@ ATbool ATermToSageJovialTraversal::traverse_LogicalContinuation(ATerm term, SgEx
 #endif
 
    ATerm t_operand;
+   SgExpression* rhs;
+
+   ROSE_ASSERT(expr);
 
    if (ATmatch(term, "AndContinuation(<term>)", &t_operand)) {
-      if (traverse_LogicalOperand(t_operand, expr)) {
-      // MATCHED LogicalOperand
+      if (traverse_LogicalOperand(t_operand, rhs)) {
+         ROSE_ASSERT(rhs);
+         expr = SageBuilder::buildBitAndOp_nfi(expr, rhs);
       } else return ATfalse;
+
    } else if (ATmatch(term, "OrContinuation(<term>)", &t_operand)) {
-      if (traverse_LogicalOperand(t_operand, expr)) {
-      // MATCHED LogicalOperand
+      if (traverse_LogicalOperand(t_operand, rhs)) {
+         ROSE_ASSERT(rhs);
+         expr = SageBuilder::buildBitOrOp_nfi(expr, rhs);
       } else return ATfalse;
+
    } else if (ATmatch(term, "XorContinuation(<term>)", &t_operand)) {
-      if (traverse_LogicalOperand(t_operand, expr)) {
-      // MATCHED LogicalOperand
+      if (traverse_LogicalOperand(t_operand, rhs)) {
+         ROSE_ASSERT(rhs);
+         expr = SageBuilder::buildBitXorOp_nfi(expr, rhs);
       } else return ATfalse;
+
    } else if (ATmatch(term, "EqvContinuation(<term>)", &t_operand)) {
-      if (traverse_LogicalOperand(t_operand, expr)) {
-      // MATCHED LogicalOperand
+      if (traverse_LogicalOperand(t_operand, rhs)) {
+         ROSE_ASSERT(rhs);
+         expr = SageBuilder::buildEqualityOp_nfi(expr, rhs);
       } else return ATfalse;
-   } else return ATfalse;
+
+   }
+   else return ATfalse;
+
+   ROSE_ASSERT(expr);
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_LogicalOperand(ATerm term, SgExpression* & expr)
+ATbool ATermToSageJovialTraversal::traverse_LogicalOperand(ATerm term, SgExpression* &expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_LogicalOperand: %s\n", ATwriteToString(term));
@@ -5982,7 +6006,8 @@ ATbool ATermToSageJovialTraversal::traverse_LogicalOperand(ATerm term, SgExpress
       // MATCHED RelationalExpression
    } else return ATfalse;
 
-   ROSE_ASSERT(expr != NULL);
+   ROSE_ASSERT(expr);
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }
