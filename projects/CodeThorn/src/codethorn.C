@@ -88,7 +88,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.11.8";
+const std::string versionString="1.11.9";
 
 // handler for generating backtrace
 void handler(int sig) {
