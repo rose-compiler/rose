@@ -104,7 +104,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("rw-highlight-races", po::value< bool >(&ctOpt.visualization.rwHighlightRaces)->default_value(false)->implicit_value(true), "Highlight data races as large red dots (read/write-set graphs).") 
     ("dot-io-stg", po::value< string >(&ctOpt.visualization. dotIOStg), "Output STG with explicit I/O node information in dot file <arg>.")
     ("dot-io-stg-forced-top", po::value< string >(&ctOpt.visualization.dotIOStgForcedTop), "Output STG with explicit I/O node information in dot file <arg>. Groups abstract states together.")
-    ("tg1-estate-address", po::value< bool >(&ctOpt.visualization. tg1EStateAddress)->default_value(false)->implicit_value(true), "Transition graph 1: Visualize address.")
+    ("tg1-estate-address", po::value< bool >(&ctOpt.visualization.tg1EStateAddress)->default_value(false)->implicit_value(true), "Transition graph 1: Visualize address.")
     ("tg1-estate-id", po::value< bool >(&ctOpt.visualization.tg1EStateId)->default_value(true)->implicit_value(true), "Transition graph 1: Visualize estate-id.")
     ("tg1-estate-properties", po::value< bool >(&ctOpt.visualization.tg1EStateProperties)->default_value(true)->implicit_value(true), "Transition graph 1: Visualize all estate-properties.")
     ("tg1-estate-predicate", po::value< bool >(&ctOpt.visualization.tg1EStatePredicate)->default_value(false)->implicit_value(true), "Transition graph 1: Show estate as predicate.")
