@@ -10,9 +10,11 @@ JOVIAL_TESTCODES = \
  tiny.jov                               \
  int_conversion.jov                     \
  item_desc_conversion.jov               \
- status_enumval.jov                     \
- typename_conv.jov
+ typename_conv.jov                      \
+ 5_2_logical_continuation_a.jov         \
+ 5_2_logical_continuation_b.jov
 
+# status_enumval.jov                     \
 # typename_conv.jov                      \
 # 1_2_2_non-nested-subroutine_a.jov      \
 # 1_2_2_non-nested-subroutine_b.jov      \
