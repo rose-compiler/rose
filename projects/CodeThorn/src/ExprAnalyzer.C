@@ -908,7 +908,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           exit(1);
         }
         // array variable NOT in state. Special space optimization case for constant array.
-        if(_variableIdMapping->hasArrayType(arrayVarId) && args.getBool("explicit-arrays")==false) {
+        if(_variableIdMapping->hasArrayType(arrayVarId) && _analyzer->getOptionsRef().explicitArrays==false) {
           SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
           int elemIndex=0;
           // TODO: slow linear lookup (TODO: pre-compute all values and provide access function)
@@ -950,7 +950,6 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           //cout<<"DEBUG: array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
           //cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
           //cerr<<"AST: "<<node->unparseToString()<<endl;
-          //cerr<<"explicit arrays flag: "<<args.getBool("explicit-arrays")<<endl;
           recordPotentialViolatingLocation(ANALYSIS_NULL_POINTER,estate.label());
           // continue after potential out-of-bounds access (assume any value can have been read)
           AbstractValue val=AbstractValue::createTop();
@@ -1371,7 +1370,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
     // special mode to represent information not stored in the state
     // i) unmodified arrays: data can be stored outside the state
     // ii) undefined variables mapped to 'top' (abstraction by removing variables from state)
-    if(_variableIdMapping->hasArrayType(varId) && args.getBool("explicit-arrays")==false) {
+    if(_variableIdMapping->hasArrayType(varId) && _analyzer->getOptionsRef().explicitArrays==false) {
       // variable is used on the rhs and it has array type implies it avalates to a pointer to that array
       //res.result=AbstractValue(varId.getIdCode());
       SAWYER_MESG(logger[TRACE])<<"DEBUG: lvalue array address (non-existing in state)(?): "<<node->unparseToString()<<endl;
@@ -1421,7 +1420,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
     // special mode to represent information not stored in the state
     // i) unmodified arrays: data can be stored outside the state
     // ii) undefined variables mapped to 'top' (abstraction by removing variables from state)
-    if(_variableIdMapping->hasArrayType(varId) && args.getBool("explicit-arrays")==false) {
+    if(_variableIdMapping->hasArrayType(varId) && _analyzer->getOptionsRef().explicitArrays==false) {
       // variable is used on the rhs and it has array type implies it avalates to a pointer to that array
       //res.result=AbstractValue(varId.getIdCode());
       res.result=AbstractValue::createAddressOfArray(varId);

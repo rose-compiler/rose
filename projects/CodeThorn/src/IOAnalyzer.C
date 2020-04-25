@@ -67,7 +67,7 @@ void IOAnalyzer::addCounterexample(int assertCode, const EState* assertEState) {
     _counterexampleGenerator.traceLeadingTo(assertEState);
   if(RersCounterexample* rersCe = dynamic_cast<RersCounterexample*>(trace)) {
     string ceString;
-    if (args.getBool("counterexamples-with-output")) {
+    if (_ltlOpt.counterExamplesWithOutput) {
       ceString = rersCe->toRersIOString();
     } else {
       ceString = rersCe->toRersIString();

@@ -19,6 +19,7 @@
 #include <map>
 
 #include "CodeThornCommandLineOptions.h"
+
 #include "InternalChecks.h"
 #include "AstAnnotator.h"
 #include "AstTerm.h"
@@ -87,7 +88,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.11.8";
+const std::string versionString="1.11.9";
 
 // handler for generating backtrace
 void handler(int sig) {
@@ -184,64 +185,58 @@ AbstractValueSet determineVarsInAssertConditions(SgNode* node, VariableIdMapping
   return usedVarsInAssertConditions;
 }
 
-void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
-  analyzer->setOptionOutputWarnings(args.getBool("print-warnings"));
-  analyzer->setPrintDetectedViolations(args.getBool("print-violations"));
+void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
+                   CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt) {
+  analyzer->setOptionOutputWarnings(ctOpt.printWarnings);
+  analyzer->setPrintDetectedViolations(ctOpt.printViolations);
 
-  if(args.getBool("explicit-arrays")==false) {
-    analyzer->setSkipArrayAccesses(true);
-  }
-  
   // this must be set early, as subsequent initialization depends on this flag
-  if (args.getBool("ltl-driven")) {
+  if (ltlOpt.ltlDriven) {
     analyzer->setModeLTLDriven(true);
   }
 
-  if (args.isUserProvided("cegpra-ltl") || args.getBool("cegpra-ltl-all")) {
+  if (ltlOpt.cegpra.ltlPropertyNrIsSet() || ltlOpt.cegpra.checkAllProperties) {
     analyzer->setMaxTransitionsForcedTop(1); //initial over-approximated model
-    args.setOption("no-input-input",true);
-    args.setOption("with-ltl-counterexamples",true);
-    args.setOption("counterexamples-with-output",true);
+    ltlOpt.noInputInputTransitions=true;
+    ltlOpt.withLTLCounterExamples=true;
+    ltlOpt.counterExamplesWithOutput=true;
     cout << "STATUS: CEGPRA activated (with it LTL counterexamples that include output states)." << endl;
     cout << "STATUS: CEGPRA mode: will remove input state --> input state transitions in the approximated STG." << endl;
   }
 
-  if (args.getBool("counterexamples-with-output")) {
-    args.setOption("with-ltl-counterexamples",true);
+  if (ltlOpt.counterExamplesWithOutput) {
+    ltlOpt.withLTLCounterExamples=true;
   }
 
-  if(args.isUserProvided("stg-trace-file")) {
-    analyzer->setStgTraceFileName(args.getString("stg-trace-file"));
+  if(ctOpt.stgTraceFileName.size()>0) {
+    analyzer->setStgTraceFileName(ctOpt.stgTraceFileName);
   }
 
-  if (args.isUserProvided("cl-args")) {
-    string clOptions=args.getString("cl-args");
+  if(ctOpt.analyzedProgramCLArgs.size()>0) {
+    string clOptions=ctOpt.analyzedProgramCLArgs;
     vector<string> clOptionsVector=Parse::commandLineArgs(clOptions);
     analyzer->setCommandLineOptions(clOptionsVector);
   }
 
-  if(args.isUserProvided("input-values")) {
-    string setstring=args.getString("input-values");
-    cout << "STATUS: input-values="<<setstring<<endl;
-
-    set<int> intSet=Parse::integerSet(setstring);
+  if(ctOpt.inputValues.size()>0) {
+    cout << "STATUS: input-values="<<ctOpt.inputValues<<endl;
+    set<int> intSet=Parse::integerSet(ctOpt.inputValues);
     for(set<int>::iterator i=intSet.begin();i!=intSet.end();++i) {
       analyzer->insertInputVarValue(*i);
     }
+    cout << "STATUS: input-values stored."<<endl;
   }
 
-  if(args.isUserProvided("input-sequence")) {
-    string liststring=args.getString("input-sequence");
-    cout << "STATUS: input-sequence="<<liststring<<endl;
-
-    list<int> intList=Parse::integerList(liststring);
+  if(ctOpt.inputSequence.size()>0) {
+    cout << "STATUS: input-sequence="<<ctOpt.inputSequence<<endl;
+    list<int> intList=Parse::integerList(ctOpt.inputSequence);
     for(list<int>::iterator i=intList.begin();i!=intList.end();++i) {
       analyzer->addInputSequenceValue(*i);
     }
   }
 
-  if(args.isUserProvided("exploration-mode")) {
-    string explorationMode=args.getString("exploration-mode");
+  if(ctOpt.explorationMode.size()>0) {
+    string explorationMode=ctOpt.explorationMode;
     if(explorationMode=="depth-first") {
       analyzer->setExplorationMode(EXPL_DEPTH_FIRST);
     } else if(explorationMode=="breadth-first") {
@@ -261,88 +256,69 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger) {
     analyzer->setExplorationMode(EXPL_BREADTH_FIRST);
   }
 
-  if (args.isUserProvided("max-iterations") || args.isUserProvided("max-iterations-forced-top")) {
-    bool notSupported=false;
-    if (!args.isUserProvided("exploration-mode")) {
-      notSupported=true;
-    } else {
-      string explorationMode=args.getString("exploration-mode");
-      if(explorationMode!="loop-aware" && explorationMode!="loop-aware-sync") {
-        notSupported=true;
-      }
-    }
-    if(notSupported) {
+  if (ctOpt.maxIterations!=-1 || ctOpt.maxIterationsForcedTop!=-1) {
+    if(ctOpt.explorationMode!="loop-aware" && ctOpt.explorationMode!="loop-aware-sync") {
       cout << "Error: \"max-iterations[-forced-top]\" modes currently require \"--exploration-mode=loop-aware[-sync]\"." << endl;
       exit(1);
     }
   }
 
-  if(args.isUserProvided("abstraction-mode")) {
-    analyzer->setAbstractionMode(args.getInt("abstraction-mode"));
-  }
+  analyzer->setAbstractionMode(ctOpt.abstractionMode);
+  analyzer->setMaxTransitions(ctOpt.maxTransitions);
+  analyzer->setMaxIterations(ctOpt.maxIterations);
 
-  if(args.isUserProvided("max-transitions")) {
-    analyzer->setMaxTransitions(args.getInt("max-transitions"));
-  }
-
-  if(args.isUserProvided("max-iterations")) {
-    analyzer->setMaxIterations(args.getInt("max-iterations"));
-  }
-
-  if(args.isUserProvided("max-iterations-forced-top")) {
-    analyzer->setMaxIterationsForcedTop(args.getInt("max-iterations-forced-top"));
+  if(ctOpt.maxIterationsForcedTop!=-1) {
+    analyzer->setMaxIterationsForcedTop(ctOpt.maxIterationsForcedTop);
     analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
   }
 
-  if(args.isUserProvided("max-transitions-forced-top")) {
-    analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top"));
+  // TODO: Analyzer::GTM_IO is only mode used now, all others are deprecated
+  if(ctOpt.maxTransitionsForcedTop!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop);
     analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
-  } else if(args.isUserProvided("max-transitions-forced-top1")) {
-    analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top1"));
+  } else if(ctOpt.maxTransitionsForcedTop1!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop1);
     analyzer->setGlobalTopifyMode(Analyzer::GTM_IO);
-  } else if(args.isUserProvided("max-transitions-forced-top2")) {
-    analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top2"));
+  } else if(ctOpt.maxTransitionsForcedTop2!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop2);
     analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCF);
-  } else if(args.isUserProvided("max-transitions-forced-top3")) {
-    analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top3"));
+  } else if(ctOpt.maxTransitionsForcedTop3!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop3);
     analyzer->setGlobalTopifyMode(Analyzer::GTM_IOCFPTR);
-  } else if(args.isUserProvided("max-transitions-forced-top4")) {
-    analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top4"));
+  } else if(ctOpt.maxTransitionsForcedTop4!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop4);
     analyzer->setGlobalTopifyMode(Analyzer::GTM_COMPOUNDASSIGN);
-  } else if(args.isUserProvided("max-transitions-forced-top5")) {
-    analyzer->setMaxTransitionsForcedTop(args.getInt("max-transitions-forced-top5"));
+  } else if(ctOpt.maxTransitionsForcedTop5!=-1) {
+    analyzer->setMaxTransitionsForcedTop(ctOpt.maxTransitionsForcedTop5);
     analyzer->setGlobalTopifyMode(Analyzer::GTM_FLAGS);
   }
 
-  if (args.isUserProvided("max-memory")) {
-    analyzer->setMaxBytes(args.getLongInt("max-memory"));
+  if (ctOpt.maxMemory!=1) {
+    analyzer->setMaxBytes(ctOpt.maxMemory);
   }
-  if (args.isUserProvided("max-time")) {
-    analyzer->setMaxSeconds(args.getLongInt("max-time"));
+  if (ctOpt.maxTime!=1) {
+    analyzer->setMaxSeconds(ctOpt.maxTime);
   }
-  if (args.isUserProvided("max-memory-forced-top")) {
-    analyzer->setMaxBytesForcedTop(args.getLongInt("max-memory-forced-top"));
+  if (ctOpt.maxMemoryForcedTop!=-1) {
+    analyzer->setMaxBytesForcedTop(ctOpt.maxMemoryForcedTop);
   }
-  if (args.isUserProvided("max-time-forced-top")) {
-    analyzer->setMaxSecondsForcedTop(args.getLongInt("max-time-forced-top"));
+  if (ctOpt.maxTimeForcedTop!=-1) {
+    analyzer->setMaxSecondsForcedTop(ctOpt.maxTimeForcedTop);
   }
 
-  if(args.isUserProvided("display-diff")) {
-    int displayDiff=args.getInt("display-diff");
-    analyzer->setDisplayDiff(displayDiff);
+  if(ctOpt.displayDiff!=-1) {
+    analyzer->setDisplayDiff(ctOpt.displayDiff);
   }
-  if(args.isUserProvided("resource-limit-diff")) {
-    int resourceLimitDiff=args.getInt("resource-limit-diff");
-    analyzer->setResourceLimitDiff(resourceLimitDiff);
+  if(ctOpt.resourceLimitDiff!=-1) {
+    analyzer->setResourceLimitDiff(ctOpt.resourceLimitDiff);
   }
 
   Solver* solver = nullptr;
   // overwrite solver ID based on other options
   if(analyzer->getModeLTLDriven()) {
-    args.setOption("solver", 11);
+    ctOpt.solver=11;
   }
-  ROSE_ASSERT(args.isDefined("solver")); // Options should contain a default solver
-  int solverId=args.getInt("solver");
+  int solverId=ctOpt.solver;
   // solverId sanity checks
   if(analyzer->getExplorationMode() == EXPL_LOOP_AWARE_SYNC &&
      solverId != 12) {
@@ -422,52 +398,52 @@ void configureRersSpecialization() {
 #endif
 }
 
-void configureOptionSets() {
-  string optionName="options-set";
-  int optionValue=args.getInt(optionName);
+void configureOptionSets(CodeThornOptions& ctOpt) {
+  string optionName="options-set";  // only used for error reporting
+  int optionValue=ctOpt.optionsSet; // only used for error reporting
   switch(optionValue) {
   case 0:
     // fall-through for default
     break;
   case 1:
-    args.setOption("explicit-arrays",true);
-    args.setOption("in-state-string-literals",true);
-    args.setOption("ignore-unknown-functions",true);
-    args.setOption("ignore-function-pointers",true);
-    args.setOption("std-functions",true);
-    args.setOption("context-sensitive",true);
-    args.setOption("normalize-all",true);
-    args.setOption("abstraction-mode",1);
+    ctOpt.explicitArrays=true;
+    ctOpt.inStateStringLiterals=true;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=true;
+    ctOpt.stdFunctions=true;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=1;
     break;
   case 2:
-    args.setOption("explicit-arrays",true);
-    args.setOption("in-state-string-literals",true);
-    args.setOption("ignore-unknown-functions",true);
-    args.setOption("ignore-function-pointers",false);
-    args.setOption("std-functions",true);
-    args.setOption("context-sensitive",true);
-    args.setOption("normalize-all",true);
-    args.setOption("abstraction-mode",1);
+    ctOpt.explicitArrays=true;
+    ctOpt.inStateStringLiterals=true;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=false;
+    ctOpt.stdFunctions=true;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=1;
     break;
   case 3:
-    args.setOption("explicit-arrays",true);
-    args.setOption("in-state-string-literals",false);
-    args.setOption("ignore-unknown-functions",true);
-    args.setOption("ignore-function-pointers",false);
-    args.setOption("std-functions",false);
-    args.setOption("context-sensitive",true);
-    args.setOption("normalize-all",true);
-    args.setOption("abstraction-mode",1);
+    ctOpt.explicitArrays=true;
+    ctOpt.inStateStringLiterals=false;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=false;
+    ctOpt.stdFunctions=false;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=1;
     break;
   case 11:
-    args.setOption("explicit-arrays",true);
-    args.setOption("in-state-string-literals",true);
-    args.setOption("ignore-unknown-functions",true);
-    args.setOption("ignore-function-pointers",false);
-    args.setOption("std-functions",true);
-    args.setOption("context-sensitive",true);
-    args.setOption("normalize-all",true);
-    args.setOption("abstraction-mode",0);
+    ctOpt.explicitArrays=true;
+    ctOpt.inStateStringLiterals=true;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=false;
+    ctOpt.stdFunctions=false;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=0;
     break;
   default:
     cerr<<"Error: unsupported "<<optionName<<" value: "<<optionValue<<endl;
@@ -485,37 +461,32 @@ int main( int argc, char * argv[] ) {
     TimeMeasurement timer;
     timer.start();
 
-    parseCommandLine(argc, argv, logger,versionString);
+    CodeThornOptions ctOpt;
+    LTLOptions ltlOpt; // to be moved into separate tool
+    ParProOptions parProOpt; // to be moved into separate tool
+    parseCommandLine(argc, argv, logger,versionString,ctOpt,ltlOpt,parProOpt);
 
-    checkSpotOptions();
-    checkZ3Options();
-    
     // Start execution
-    mfacilities.control(args.getString("log-level"));
-    SAWYER_MESG(logger[TRACE]) << "Log level is " << args.getString("log-level") << endl;
+    mfacilities.control(ctOpt.logLevel);
+    SAWYER_MESG(logger[TRACE]) << "Log level is " << ctOpt.logLevel << endl;
 
     // ParPro command line options
-    bool exitRequest=CodeThorn::ParProAutomata::handleCommandLineArguments(args,logger);
+    bool exitRequest=CodeThorn::ParProAutomata::handleCommandLineArguments(parProOpt,ctOpt,ltlOpt,logger);
     if(exitRequest) {
       exit(0);
     }
 
     IOAnalyzer* analyzer;
-    if(args.getBool("data-race-check-shuffle")) {
+    if(ctOpt.dr.checkShuffleAlgorithm) {
       analyzer = new ReadWriteAnalyzer();
     } else {
       analyzer = new IOAnalyzer();
     }
+    analyzer->setOptions(ctOpt);
+    analyzer->setLtlOptions(ltlOpt);
     global_analyzer=analyzer;
 
-#if 0
-    string option_pragma_name;
-    if (args.isUserProvided("limit-to-fragment")) {
-      option_pragma_name = args.getString("limit-to-fragment");
-    }
-#endif
-
-    if (args.isUserProvided("internal-checks")) {
+    if(ctOpt.internalChecks) {
       mfacilities.shutdown();
       if(CodeThorn::internalChecks(argc,argv)==false)
         return 1;
@@ -523,29 +494,29 @@ int main( int argc, char * argv[] ) {
         return 0;
     }
 
-    configureOptionSets();
+    configureOptionSets(ctOpt);
 
-    analyzer->optionStringLiteralsInState=args.getBool("in-state-string-literals");
-    analyzer->setSkipUnknownFunctionCalls(args.getBool("ignore-unknown-functions"));
-    analyzer->setIgnoreFunctionPointers(args.getBool("ignore-function-pointers"));
-    analyzer->setStdFunctionSemantics(args.getBool("std-functions"));
+    analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;
+    analyzer->setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
+    analyzer->setIgnoreFunctionPointers(ctOpt.ignoreFunctionPointers);
+    analyzer->setStdFunctionSemantics(ctOpt.stdFunctions);
 
-    analyzerSetup(analyzer, logger);
+    analyzerSetup(analyzer, logger, ctOpt, ltlOpt, parProOpt);
 
-    switch(int mode=args.getInt("interpreter-mode")) {
+    switch(int mode=ctOpt.interpreterMode) {
     case 0: analyzer->setInterpreterMode(IM_ABSTRACT); break;
     case 1: analyzer->setInterpreterMode(IM_CONCRETE); break;
     default:
       cerr<<"Unknown interpreter mode "<<mode<<" provided on command line (supported: 0..1)."<<endl;
       exit(1);
     }
-    string outFileName=args.getString("interpreter-mode-file");
+    string outFileName=ctOpt.interpreterModeOuputFileName;
     if(outFileName!="") {
       analyzer->setInterpreterModeOutputFileName(outFileName);
       CppStdUtilities::writeFile(outFileName,""); // touch file
     }
     {
-      switch(int argVal=args.getInt("function-resolution-mode")) {
+      switch(int argVal=ctOpt.functionResolutionMode) {
       case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
       case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
       case 3: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_ID_MAPPING;break;
@@ -555,23 +526,19 @@ int main( int argc, char * argv[] ) {
         exit(1);
       }
     }
-    // analyzer->setFunctionResolutionMode(args.getInt("function-resolution-mode")); xxx
+    // analyzer->setFunctionResolutionMode(ctOpt.functionResolutionMode);
     // needs to set CFAnalysis functionResolutionMode
 
-    if(args.isUserProvided("threads")) {
-      int numThreads=args.getInt("threads");
-      if(numThreads<=0) {
-        cerr<<"Error: number of threads must be greater or equal 1."<<endl;
-        exit(1);
-      }
-      analyzer->setNumberOfThreadsToUse(numThreads);
-    } else {
-      analyzer->setNumberOfThreadsToUse(1);
+    int numThreads=ctOpt.threads; // default is 1
+    if(numThreads<=0) {
+      cerr<<"Error: number of threads must be greater or equal 1."<<endl;
+      exit(1);
     }
+    analyzer->setNumberOfThreadsToUse(numThreads);
 
     string option_start_function="main";
-    if(args.isUserProvided("start-function")) {
-      option_start_function = args.getString("start-function");
+    if(ctOpt.startFunctionName.size()>0) {
+      option_start_function = ctOpt.startFunctionName;
     }
 
     string option_specialize_fun_name="";
@@ -579,53 +546,53 @@ int main( int argc, char * argv[] ) {
     vector<int> option_specialize_fun_const_list;
     vector<string> option_specialize_fun_varinit_list;
     vector<int> option_specialize_fun_varinit_const_list;
-    if(args.isUserProvided("specialize-fun-name")) {
-      option_specialize_fun_name = args.getString("specialize-fun-name");
+    if(ctOpt.equiCheck.specializeFunName.size()>0) {
+      option_specialize_fun_name = ctOpt.equiCheck.specializeFunName;
       // logger[DEBUG] << "option_specialize_fun_name: "<< option_specialize_fun_name<<endl;
     } else {
       // logger[DEBUG] << "option_specialize_fun_name: NONE"<< option_specialize_fun_name<<endl;
     }
 
-    if(args.isUserProvided("specialize-fun-param")) {
-      option_specialize_fun_param_list=args.getIntVector("specialize-fun-param");
-      option_specialize_fun_const_list=args.getIntVector("specialize-fun-const");
+    if(ctOpt.equiCheck.specializeFunParamList.size()>0) {
+      option_specialize_fun_param_list=ctOpt.equiCheck.specializeFunParamList;
+      option_specialize_fun_const_list=ctOpt.equiCheck.specializeFunConstList;
     }
 
-    if(args.isUserProvided("specialize-fun-varinit")) {
-      option_specialize_fun_varinit_list=args.getStringVector("specialize-fun-varinit");
-      option_specialize_fun_varinit_const_list=args.getIntVector("specialize-fun-varinit-const");
+    if(ctOpt.equiCheck.specializeFunVarInitList.size()>0) {
+      option_specialize_fun_varinit_list=ctOpt.equiCheck.specializeFunVarInitList;
+      option_specialize_fun_varinit_const_list=ctOpt.equiCheck.specializeFunVarInitConstList;
     }
 
     // logger[DEBUG] << "specialize-params:"<<option_specialize_fun_const_list.size()<<endl;
 
-    if(args.isUserProvided("specialize-fun-name")) {
-      if((args.isUserProvided("specialize-fun-param")||args.isUserProvided("specialize-fun-const"))
-          && !(args.isUserProvided("specialize-fun-name")&&args.isUserProvided("specialize-fun-param")&&args.isUserProvided("specialize-fun-param"))) {
+    if(ctOpt.equiCheck.specializeFunName.size()>0) {
+      if( ((ctOpt.equiCheck.specializeFunParamList.size()>0)||ctOpt.equiCheck.specializeFunConstList.size()>0)
+        && !(ctOpt.equiCheck.specializeFunName.size()>0&&ctOpt.equiCheck.specializeFunParamList.size()>0)) {
         logger[ERROR] <<"options --specialize-fun-name=NAME --specialize-fun-param=NUM --specialize-fun-const=NUM must be used together."<<endl;
         exit(1);
       }
-      if((args.isUserProvided("specialize-fun-varinit")||args.isUserProvided("specialize-fun-varinit-const"))
-          && !(args.isUserProvided("specialize-fun-varinit")&&args.isUserProvided("specialize-fun-varinit-const"))) {
+    if((ctOpt.equiCheck.specializeFunVarInitList.size()>0||ctOpt.equiCheck.specializeFunVarInitConstList.size()>0)
+       && !(ctOpt.equiCheck.specializeFunVarInitList.size()>0&&ctOpt.equiCheck.specializeFunVarInitConstList.size()>0)) {
         logger[ERROR] <<"options --specialize-fun-name=NAME --specialize-fun-varinit=NAME --specialize-fun-const=NUM must be used together."<<endl;
         exit(1);
       }
     }
 
-    if((args.getBool("print-update-infos")||args.isUserProvided("equivalence-check"))&&(args.isUserProvided("dump-sorted")==0 && args.isUserProvided("dump-non-sorted")==0)) {
+    if((ctOpt.equiCheck.printUpdateInfos)&&(ctOpt.equiCheck.dumpSortedFileName.size()==0 && ctOpt.equiCheck.dumpNonSortedFileName.size()==0)) {
       logger[ERROR] <<"option print-update-infos/equivalence-check must be used together with option --dump-non-sorted or --dump-sorted."<<endl;
       exit(1);
     }
     RewriteSystem rewriteSystem;
-    if(args.getBool("print-rewrite-trace")) {
+    if(ctOpt.equiCheck.printRewriteTrace) {
       rewriteSystem.setTrace(true);
     }
-    if(args.getBool("ignore-undefined-dereference")) {
+    if(ctOpt.ignoreUndefinedDereference) {
       analyzer->setIgnoreUndefinedDereference(true);
     }
-    if(args.isUserProvided("dump-sorted")>0 || args.isUserProvided("dump-non-sorted")>0 || args.isUserProvided("equivalence-check")>0) {
+    if(ctOpt.equiCheck.dumpSortedFileName.size()>0 || ctOpt.equiCheck.dumpNonSortedFileName.size()>0) {
       analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
-      args.setOption("explicit-arrays",false);
+      ctOpt.explicitArrays=false;
       if(analyzer->getNumberOfThreadsToUse()>1) {
         logger[ERROR] << "multi threaded rewrite not supported yet."<<endl;
         exit(1);
@@ -634,34 +601,30 @@ int main( int argc, char * argv[] ) {
 
     // parse command line options for data race detection
     DataRaceDetection dataRaceDetection;
+    dataRaceDetection.setOptions(ctOpt);
     dataRaceDetection.handleCommandLineOptions(*analyzer);
-    dataRaceDetection.setVisualizeReadWriteAccesses(args.getBool("visualize-read-write-sets"));
+    dataRaceDetection.setVisualizeReadWriteAccesses(ctOpt.visualization.visualizeRWSets);
 
     // handle RERS mode: reconfigure options
-    if(args.getBool("rersmode")) {
+    if(ctOpt.rers.rersMode) {
       SAWYER_MESG(logger[TRACE]) <<"RERS MODE activated [stderr output is treated like a failed assert]"<<endl;
-      args.setOption("stderr-like-failed-assert",true);
+      ctOpt.rers.stdErrLikeFailedAssert=true;
     }
 
-    if(args.getBool("svcomp-mode")) {
+    if(ctOpt.svcomp.svcompMode) {
       analyzer->enableSVCompFunctionSemantics();
       string errorFunctionName="__VERIFIER_error";
       analyzer->setExternalErrorFunctionName(errorFunctionName);
     }
 
-    if(args.isUserProvided("external-function-semantics")) {
-      // obsolete
+    if(ctOpt.svcomp.detectedErrorFunctionName.size()>0) {
+      analyzer->setExternalErrorFunctionName(ctOpt.svcomp.detectedErrorFunctionName);
     }
 
-    if(args.isUserProvided("error-function")) {
-      string errorFunctionName=args.getString("error-function");
-      analyzer->setExternalErrorFunctionName(errorFunctionName);
-    }
-
-    analyzer->setTreatStdErrLikeFailedAssert(args.getBool("stderr-like-failed-assert"));
+    analyzer->setTreatStdErrLikeFailedAssert(ctOpt.rers.stdErrLikeFailedAssert);
 
     // Build the AST used by ROSE
-    if(args.getBool("status")) {
+    if(ctOpt.status) {
       cout<< "STATUS: Parsing and creating AST started!"<<endl;
     }
 
@@ -669,7 +632,7 @@ int main( int argc, char * argv[] ) {
     vector<string> argvList(argv,argv+argc);
     //string turnOffRoseLoggerWarnings="-rose:log none";
     //    argvList.push_back(turnOffRoseLoggerWarnings);
-    if(args.getBool("omp-ast")||args.getBool("data-race")) {
+    if(ctOpt.ompAst||ctOpt.dr.detection) {
       SAWYER_MESG(logger[TRACE])<<"selected OpenMP AST."<<endl;
       argvList.push_back("-rose:OpenMP:ast_only");
     }
@@ -679,7 +642,7 @@ int main( int argc, char * argv[] ) {
     sageProject=frontend(argvList);
     double frontEndRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
-    if(args.getBool("status")) {
+    if(ctOpt.status) {
       cout << "STATUS: Parsing and creating AST finished."<<endl;
     }
 
@@ -687,13 +650,13 @@ int main( int argc, char * argv[] ) {
        variables are duplicated by inlining. */
     timer.start();
     Normalization lowering;
-    if(args.getBool("normalize-fcalls")) {
+    if(ctOpt.normalizeFCalls) {
       lowering.normalizeAst(sageProject,1);
       SAWYER_MESG(logger[TRACE])<<"STATUS: normalized expressions with fcalls (if not a condition)"<<endl;
     }
 
-    if(args.getBool("normalize-all")||args.getInt("options-set")==1) {
-      if(!args.isUserProvided("quiet")) {
+    if(ctOpt.normalizeAll) {
+      if(ctOpt.quiet==false) {
         cout<<"STATUS: normalizing program."<<endl;
       }
       //SAWYER_MESG(logger[INFO])<<"STATUS: normalizing program."<<endl;
@@ -704,17 +667,17 @@ int main( int argc, char * argv[] ) {
     /* Context sensitive analysis using call strings.
      */
     {
-      analyzer->setOptionContextSensitiveAnalysis(args.getBool("context-sensitive"));
+      analyzer->setOptionContextSensitiveAnalysis(ctOpt.contextSensitive);
       //Call strings length abrivation is not supported yet.
-      //CodeThorn::CallString::setMaxLength((args.getInt("callstring-length")));
+      //CodeThorn::CallString::setMaxLength(_ctOpt.callStringLength);
     }
 
     /* perform inlining before variable ids are computed, because
      * variables are duplicated by inlining. */
-    if(args.getBool("inline")) {
+    if(ctOpt.inlineFunctions) {
       InlinerBase* inliner=lowering.getInliner();
       if(RoseInliner* roseInliner=dynamic_cast<CodeThorn::RoseInliner*>(inliner)) {
-        roseInliner->inlineDepth=args.getInt("inlinedepth");
+        roseInliner->inlineDepth=ctOpt.inlineFunctionsDepth;
       }
       inliner->inlineFunctions(sageProject);
       size_t numInlined=inliner->getNumInlinedFunctions();
@@ -722,16 +685,15 @@ int main( int argc, char * argv[] ) {
     }
 
     {
-      bool unknownFunctionsFile=args.isUserProvided("unknown-functions-file");
-      bool showProgramStats=args.getBool("program-stats");
-      bool showProgramStatsOnly=args.getBool("program-stats-only");
+      bool unknownFunctionsFile=ctOpt.externalFunctionsCSVFileName.size()>0;
+      bool showProgramStats=ctOpt.programStats;
+      bool showProgramStatsOnly=ctOpt.programStatsOnly;
       if(unknownFunctionsFile||showProgramStats||showProgramStatsOnly) {
         ProgramInfo programInfo(sageProject);
         programInfo.compute();
         if(unknownFunctionsFile) {
           ROSE_ASSERT(analyzer);
-          string unknownFunctionsFileName=args.getString("unknown-functions-file");
-          programInfo.writeFunctionCallNodesToFile(unknownFunctionsFileName);
+          programInfo.writeFunctionCallNodesToFile(ctOpt.externalFunctionsCSVFileName);
         }
         if(showProgramStats||showProgramStatsOnly) {
           programInfo.printDetailed();
@@ -742,21 +704,21 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    if(args.getBool("unparse")) {
+    if(ctOpt.unparse) {
       sageProject->unparse(0,0);
       return 0;
     }
 
-    if(args.isUserProvided("ast-stats-print")||args.isUserProvided("ast-stats-csv")) {
+    if(ctOpt.info.printAstNodeStats||ctOpt.info.astNodeStatsCSVFileName.size()>0) {
       // from: src/midend/astDiagnostics/AstStatistics.C
-      if(args.getBool("ast-stats-print")) {
+      if(ctOpt.info.printAstNodeStats) {
         ROSE_Statistics::AstNodeTraversalStatistics astStats;
         string s=astStats.toString(sageProject);
         cout<<s; // output includes newline at the end
       }
-      if(args.isUserProvided("ast-stats-csv")) {
+      if(ctOpt.info.astNodeStatsCSVFileName.size()>0) {
         ROSE_Statistics::AstNodeTraversalCSVStatistics astCSVStats;
-        string fileName=args.getString("ast-stats-csv");
+        string fileName=ctOpt.info.astNodeStatsCSVFileName;
         astCSVStats.setMinCountToShow(1); // default value is 1
         if(!CppStdUtilities::writeFile(fileName, astCSVStats.toString(sageProject))) {
           cerr<<"Error: cannot write AST node statistics to CSV file "<<fileName<<endl;
@@ -765,26 +727,26 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    if(args.getBool("status")) {
+    if(ctOpt.status) {
       cout<<"STATUS: analysis started."<<endl;
     }
     // TODO: introduce ProgramAbstractionLayer
     analyzer->initializeVariableIdMapping(sageProject);
     logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
 
-    if(args.getBool("print-variable-id-mapping")) {
+    if(ctOpt.info.printVariableIdMapping) {
       analyzer->getVariableIdMapping()->toStream(cout);
     }
   
-    if(args.isUserProvided("type-size-mapping-print")||args.isUserProvided("type-size-mapping-csv")) {
+    if(ctOpt.info.printTypeSizeMapping||ctOpt.info.typeSizeMappingCSVFileName.size()>0) {
       // from: src/midend/astDiagnostics/AstStatistics.C
       string s=analyzer->typeSizeMappingToString();
-      if(args.getBool("type-size-mapping-print")) {
+      if(ctOpt.info.printTypeSizeMapping) {
         cout<<"Type size mapping:"<<endl;
         cout<<s; // output includes newline at the end
       }
-      if(args.isUserProvided("type-size-mapping-csv")) {
-        string fileName=args.getString("type-size-mapping-csv");
+      if(ctOpt.info.typeSizeMappingCSVFileName.size()>0) {
+        string fileName=ctOpt.info.typeSizeMappingCSVFileName;
         if(!CppStdUtilities::writeFile(fileName, s)) {
           cerr<<"Error: cannot write type-size mapping to CSV file "<<fileName<<endl;
           exit(1);
@@ -792,7 +754,7 @@ int main( int argc, char * argv[] ) {
       }
     }
     
-    if(args.isUserProvided("run-rose-tests")) {
+    if(ctOpt.runRoseAstChecks) {
       cout << "ROSE tests started."<<endl;
       // Run internal consistency tests on AST
       AstTests::runAllTests(sageProject);
@@ -836,8 +798,8 @@ int main( int argc, char * argv[] ) {
       // do specialization and setup data structures
       analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
-      args.setOption("explicit-arrays",false);
-
+      analyzer->getOptionsRef().explicitArrays=false;
+      analyzer->setOptions(ctOpt);
       //TODO1: refactor into separate function
       int numSubst=0;
       if(option_specialize_fun_name!="") {
@@ -864,7 +826,7 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    if(args.isUserProvided("rewrite")) {
+    if(ctOpt.rewrite) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: rewrite started."<<endl;
       rewriteSystem.resetStatistics();
       rewriteSystem.setRewriteCondStmt(false); // experimental: supposed to normalize conditions
@@ -882,7 +844,7 @@ int main( int argc, char * argv[] ) {
       analyzer->setAssertCondVarsSet(varsInAssertConditions);
     }
 
-    if(args.getBool("eliminate-compound-assignments")) {
+    if(ctOpt.eliminateCompoundStatements) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments started."<<endl;
       set<AbstractValue> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer->getVariableIdMapping(),root);
       analyzer->setCompoundIncVarsSet(compoundIncVarsSet);
@@ -892,7 +854,7 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments finished."<<endl;
     }
 
-    if(args.getBool("eliminate-arrays")) {
+    if(ctOpt.rers.eliminateArrays) {
       Specialization speci;
       speci.transformArrayProgram(sageProject, analyzer);
       sageProject->unparse(0,0);
@@ -944,15 +906,15 @@ int main( int argc, char * argv[] ) {
     analyzer->initLabeledAssertNodes(sageProject);
 
     // function-id-mapping is initialized in initializeSolver.
-    if(args.getBool("print-function-id-mapping")) {
+    if(ctOpt.info.printFunctionIdMapping) {
       ROSE_ASSERT(analyzer->getCFAnalyzer());
       ROSE_ASSERT(analyzer->getCFAnalyzer()->getFunctionIdMapping());
       analyzer->getCFAnalyzer()->getFunctionIdMapping()->toStream(cout);
     }
-
-    if(args.isUserProvided("pattern-search-max-depth") || args.isUserProvided("pattern-search-max-suffix")
-       || args.isUserProvided("pattern-search-repetitions") || args.isUserProvided("pattern-search-exploration")) {
-      logger[INFO] << "at least one of the parameters of mode \"pattern search\" was set. Choosing solver 10." << endl;
+    // pattern search: requires that exploration mode is set,
+    // otherwise no pattern search is performed
+    if(ctOpt.patSearch.explorationMode.size()>0) {
+      logger[INFO] << "Pattern search exploration mode was set. Choosing solver 10." << endl;
       analyzer->setSolver(new Solver10());
       analyzer->setStartPState(*analyzer->popWorkList()->pstate());
     }
@@ -960,19 +922,20 @@ int main( int argc, char * argv[] ) {
     
     timer.start();
     analyzer->printStatusMessageLine("==============================================================");
-    if(!analyzer->getModeLTLDriven() && args.isUserProvided("z3") == 0 && !args.getBool("ssa")) {
+    if(!analyzer->getModeLTLDriven() && ctOpt.z3BasedReachabilityAnalysis==false && ctOpt.ssa==false) {
       analyzer->runSolver();
     }
     double analysisRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
     analyzer->printStatusMessageLine("==============================================================");
 
-    if (args.getBool("svcomp-mode") && args.isUserProvided("witness-file")) {
-      analyzer->writeWitnessToFile(args.getString("witness-file"));
+    if (ctOpt.svcomp.svcompMode && ctOpt.svcomp.witnessFileName.size()>0) {
+      analyzer->writeWitnessToFile(ctOpt.svcomp.witnessFileName);
     }
 
     double extractAssertionTracesTime= 0;
-    if ( args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
+    bool withCe=ltlOpt.withCounterExamples || ltlOpt.withAssertCounterExamples;
+    if(withCe) {
       SAWYER_MESG(logger[TRACE]) << "STATUS: extracting assertion traces (this may take some time)"<<endl;
       timer.start();
       analyzer->extractRersIOAssertionTraces();
@@ -983,63 +946,56 @@ int main( int argc, char * argv[] ) {
     int inputSeqLengthCovered = -1;
     double totalInputTracesTime = extractAssertionTracesTime + determinePrefixDepthTime;
 
-    bool withCe = args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples");
-    if(args.getBool("status")) {
+    if(ctOpt.status) {
       analyzer->printStatusMessageLine("==============================================================");
       analyzer->reachabilityResults.printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_", withCe);
     }
-    if (args.isUserProvided("csv-assert")) {
-      string filename=args.getString("csv-assert").c_str();
-      analyzer->reachabilityResults.writeFile(filename.c_str(), false, 0, withCe);
-      if(args.getBool("status")) {
-        cout << "Reachability results written to file \""<<filename<<"\"." <<endl;
+    if (ctOpt.rers.assertResultsOutputFileName.size()>0) {
+      analyzer->reachabilityResults.writeFile(ctOpt.rers.assertResultsOutputFileName.c_str(),
+                                              false, 0, withCe);
+      if(ctOpt.status) {
+        cout << "Reachability results written to file \""<<ctOpt.rers.assertResultsOutputFileName<<"\"." <<endl;
         cout << "=============================================================="<<endl;
       }
     }
-    if(args.getBool("eliminate-stg-back-edges")) {
+    // deprecated?
+    if(ctOpt.eliminateSTGBackEdges) {
       int numElim=analyzer->getTransitionGraph()->eliminateBackEdges();
       SAWYER_MESG(logger[TRACE])<<"STATUS: eliminated "<<numElim<<" STG back edges."<<endl;
     }
 
-    if(args.getBool("status")) {
+    if(ctOpt.status) {
       analyzer->reachabilityResults.printResultsStatistics();
       analyzer->printStatusMessageLine("==============================================================");
     }
 
 #ifdef HAVE_Z3
-    if(args.isUserProvided("z3"))
-    {
-	assert(args.isUserProvided("rers-upper-input-bound") != 0 &&  args.isUserProvided("rers-verifier-error-number") != 0);	
-	int RERSUpperBoundForInput = args.getInt("rers-upper-input-bound");
-	int RERSVerifierErrorNumber = args.getInt("rers-verifier-error-number");
-	cout << "generateSSAForm()" << endl;
-	ReachabilityAnalyzerZ3* reachAnalyzer = new ReachabilityAnalyzerZ3(RERSUpperBoundForInput, RERSVerifierErrorNumber, analyzer, &logger);	
-	cout << "checkReachability()" << endl;
-	reachAnalyzer->checkReachability();
+    if(ctOpt.z3BasedReachabilityAnalysis)
+      {
+        assert(ctOpt.z3UpperInputBound!=-1 && ctOpt.z3VerifierErrorNumber!=-1);	
+        int RERSUpperBoundForInput=ctOpt.z3UpperInputBound;
+        int RERSVerifierErrorNumber=ctOpt.z3VerifierErrorNumber;
+        cout << "generateSSAForm()" << endl;
+        ReachabilityAnalyzerZ3* reachAnalyzer = new ReachabilityAnalyzerZ3(RERSUpperBoundForInput, RERSVerifierErrorNumber, analyzer, &logger);	
+        cout << "checkReachability()" << endl;
+        reachAnalyzer->checkReachability();
 
-	exit(0);
-    }
+        exit(0);
+      }
 #endif	
 
-    if(args.getBool("ssa")) {
+    if(ctOpt.ssa) {
       SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
       ssaGen->generateSSAForm();
       exit(0);
     }
 
-    list<pair<CodeThorn::AnalysisSelector,string> > analysisNames={
-      {ANALYSIS_NULL_POINTER,"null-pointer"},
-      {ANALYSIS_OUT_OF_BOUNDS,"out-of-bounds"},
-      {ANALYSIS_UNINITIALIZED,"uninitialized"}
-    };
-    for(auto analysisInfo : analysisNames) {
+    for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
       string analysisName=analysisInfo.second;
-      string analysisOption=analysisName+"-analysis";
-      string analysisOutputFileOption=analysisName+"-analysis-file";
-      if(args.isUserProvided(analysisOption)>0||args.isUserProvided(analysisOutputFileOption)) {
+      if(ctOpt.getAnalysisSelectionFlag(analysisSel)||ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
         ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getViolatingLocations(analysisSel);
-        if(args.isUserProvided(analysisOption)>0) {
+        if(ctOpt.getAnalysisSelectionFlag(analysisSel)) {
           cout<<"\nResults for "<<analysisName<<" analysis:"<<endl;
           if(locations.numTotalLocations()>0) {
             locations.writeResultToStream(cout,analyzer->getLabeler());
@@ -1047,16 +1003,16 @@ int main( int argc, char * argv[] ) {
             cout<<"No violations detected."<<endl;
           }
         }
-        if(args.isUserProvided(analysisOutputFileOption)) {
-          string fileName=args.getString(analysisOutputFileOption);
+        if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
+          string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
           cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
           locations.writeResultFile(fileName,analyzer->getLabeler());
         }
       }
     }
 
-    if(args.isUserProvided("analyzed-functions-csv")) {
-      string fileName=args.getString("analyzed-functions-csv");
+    if(ctOpt.analyzedFunctionsCSVFileName.size()>0) {
+      string fileName=ctOpt.analyzedFunctionsCSVFileName;
       cout<<"Writing list of analyzed functions to file "<<fileName<<endl;
       string s=analyzer->analyzedFunctionsToString();
       if(!CppStdUtilities::writeFile(fileName, s)) {
@@ -1064,8 +1020,8 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    if(args.isUserProvided("analyzed-files-csv")) {
-      string fileName=args.getString("analyzed-files-csv");
+    if(ctOpt.analyzedFilesCSVFileName.size()>0) {
+      string fileName=ctOpt.analyzedFilesCSVFileName;
       cout<<"Writing list of analyzed files to file "<<fileName<<endl;
       string s=analyzer->analyzedFilesToString();
       if(!CppStdUtilities::writeFile(fileName, s)) {
@@ -1073,8 +1029,8 @@ int main( int argc, char * argv[] ) {
       }
     }
 
-    if(args.isUserProvided("external-functions-csv")) {
-      string fileName=args.getString("external-functions-csv");
+    if(ctOpt.externalFunctionsCSVFileName.size()>0) {
+      string fileName=ctOpt.externalFunctionsCSVFileName;
       cout<<"Writing list of external functions to file "<<fileName<<endl;
       string s=analyzer->externalFunctionsToString();
       if(!CppStdUtilities::writeFile(fileName, s)) {
@@ -1124,21 +1080,21 @@ int main( int argc, char * argv[] ) {
     double stdIoOnlyTime = 0;
 
  
-    if(args.getBool("std-io-only")) {
+    if(ltlOpt.stdIOOnly) {
       SAWYER_MESG(logger[TRACE]) << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
       timer.start();
-      if (args.getBool("keep-error-states")) {
+      if (ltlOpt.keepErrorStates) {
         analyzer->reduceStgToInOutAssertStates();
       } else {
         analyzer->reduceStgToInOutStates();
       }
-      if(args.getBool("inf-paths-only")) {
+      if(ltlOpt.inifinitePathsOnly) {
         analyzer->pruneLeaves();
       }
       stdIoOnlyTime = timer.getTimeDurationAndStop().milliSeconds();
     } else {
-      if(args.getBool("inf-paths-only")) {
-        assert (!args.getBool("keep-error-states"));
+      if(ltlOpt.inifinitePathsOnly) {
+        assert (!ltlOpt.keepErrorStates);
         cout << "recursively removing all leaves (1)."<<endl;
         timer.start();
         analyzer->pruneLeaves();
@@ -1157,11 +1113,13 @@ int main( int argc, char * argv[] ) {
     stringstream statisticsSizeAndLtl;
     stringstream statisticsCegpra;
 
-    if (args.isUserProvided("check-ltl")) {
+    if (ltlOpt.ltlFormulaeFile.size()>0) {
       logger[INFO] <<"STG size: "<<analyzer->getTransitionGraph()->size()<<endl;
-      string ltl_filename = args.getString("check-ltl");
-      if(args.getBool("rersmode")) {  //reduce the graph accordingly, if not already done
-        if (!args.getBool("inf-paths-only") && !args.getBool("keep-error-states") &&!analyzer->getModeLTLDriven()) {
+      string ltl_filename = ltlOpt.ltlFormulaeFile;
+      if(ctOpt.rers.rersMode) {  //reduce the graph accordingly, if not already done
+        if (!ltlOpt.inifinitePathsOnly
+            && !ltlOpt.keepErrorStates
+            &&!analyzer->getModeLTLDriven()) {
           cout<< "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
           timer.start();
           analyzer->pruneLeaves();
@@ -1172,11 +1130,11 @@ int main( int argc, char * argv[] ) {
           transitionGraphSizeInf = analyzer->getTransitionGraph()->size();
           eStateSetSizeStgInf = (analyzer->getTransitionGraph())->estateSet().size();
         }
-        if (!args.getBool("std-io-only") &&!analyzer->getModeLTLDriven()) {
+        if (!ltlOpt.stdIOOnly &&!analyzer->getModeLTLDriven()) {
           cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode) (P1)."<<endl;
           timer.start();
           analyzer->getTransitionGraph()->printStgSize("before reducing non-I/O states");
-          if (args.getBool("keep-error-states")) {
+          if (ltlOpt.keepErrorStates) {
             analyzer->reduceStgToInOutAssertStates();
           } else {
             analyzer->reduceStgToInOutStates();
@@ -1185,29 +1143,31 @@ int main( int argc, char * argv[] ) {
           analyzer->getTransitionGraph()->printStgSize("after reducing non-I/O states");
         }
       }
-      if(args.getBool("no-input-input")) {  //delete transitions that indicate two input states without an output in between
+      if(ltlOpt.noInputInputTransitions) {  //delete transitions that indicate two input states without an output in between
         analyzer->removeInputInputTransitions();
         analyzer->getTransitionGraph()->printStgSize("after reducing input->input transitions");
       }
       bool withCounterexample = false;
-      if(args.getBool("with-counterexamples") || args.getBool("with-ltl-counterexamples")) {  //output a counter-example input sequence for falsified formulae
+      if(ltlOpt.withCounterExamples || ltlOpt.withLTLCounterExamples) {  //output a counter-example input sequence for falsified formulae
         withCounterexample = true;
       }
 
       timer.start();
       std::set<int> ltlInAlphabet = analyzer->getInputVarValues();
       //take fixed ltl input alphabet if specified, instead of the input values used for stg computation
-      if (args.isUserProvided("ltl-in-alphabet")) {
-        string setstring=args.getString("ltl-in-alphabet");
+      if (ltlOpt.ltlInAlphabet.size()>0) {
+        string setstring=ltlOpt.ltlInAlphabet;
         ltlInAlphabet=Parse::integerSet(setstring);
         SAWYER_MESG(logger[TRACE]) << "LTL input alphabet explicitly selected: "<< setstring << endl;
       }
       //take ltl output alphabet if specifically described, otherwise take the old RERS specific 21...26 (a.k.a. oU...oZ)
       std::set<int> ltlOutAlphabet = Parse::integerSet("{21,22,23,24,25,26}");
-      if (args.isUserProvided("ltl-out-alphabet")) {
-        string setstring=args.getString("ltl-out-alphabet");
+      if (ltlOpt.ltlOutAlphabet.size()>0) {
+        string setstring=ltlOpt.ltlOutAlphabet;
         ltlOutAlphabet=Parse::integerSet(setstring);
         SAWYER_MESG(logger[TRACE]) << "LTL output alphabet explicitly selected: "<< setstring << endl;
+      } else {
+        // TODO: fail, if no output alphabet is provided
       }
       PropertyValueTable* ltlResults=nullptr;
       SpotConnection spotConnection(ltl_filename);
@@ -1219,19 +1179,19 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE]) << "STATUS: generating LTL results"<<endl;
       bool spuriousNoAnswers = false;
       SAWYER_MESG(logger[TRACE]) << "LTL: check properties."<<endl;
-      if (args.isUserProvided("single-property")) {
-	int propertyNum = args.getInt("single-property");
-	spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+      if (ltlOpt.propertyNrToCheck!=-1) {
+        int propertyNum = ltlOpt.propertyNrToCheck;
+        spotConnection.checkSingleProperty(propertyNum, *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
       } else {
-	spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+        spotConnection.checkLtlProperties( *(analyzer->getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
       }
       spotLtlAnalysisTime=timer.getTimeDurationAndStop().milliSeconds();
       SAWYER_MESG(logger[TRACE]) << "LTL: get results from spot connection."<<endl;
       ltlResults = spotConnection.getLtlResults();
       SAWYER_MESG(logger[TRACE]) << "LTL: results computed."<<endl;
 
-      if (args.isUserProvided("cegpra-ltl") || (args.isUserProvided("cegpra-ltl-all")&&args.getBool("cegpra-ltl-all"))) {
-        if (args.isUserProvided("csv-stats-cegpra")) {
+      if (ltlOpt.cegpra.ltlPropertyNr!=-1 || ltlOpt.cegpra.checkAllProperties) {
+        if (ltlOpt.cegpra.csvStatsFileName.size()>0) {
           statisticsCegpra << "init,";
           analyzer->getTransitionGraph()->printStgSize("initial abstract model");
           analyzer->getTransitionGraph()->csvToStream(statisticsCegpra);
@@ -1241,29 +1201,30 @@ int main( int argc, char * argv[] ) {
           statisticsCegpra << "," << ltlResults->entriesWithValue(PROPERTY_VALUE_UNKNOWN);
         }
         CounterexampleAnalyzer ceAnalyzer(analyzer, &statisticsCegpra);
-        if (args.isUserProvided("cegpra-max-iterations")) {
-          ceAnalyzer.setMaxCounterexamples(args.getInt("cegpra-max-iterations"));
+        if (ltlOpt.cegpra.maxIterations!=-1) {
+          ceAnalyzer.setMaxCounterexamples(ltlOpt.cegpra.maxIterations);
         }
-        if (args.getBool("cegpra-ltl-all")) {
+        if (ltlOpt.cegpra.checkAllProperties) {
           ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlInAlphabet, ltlOutAlphabet);
         } else {  // cegpra for single LTL property
-          int property = args.getInt("cegpra-ltl");
+          //ROSE_ASSERT(ltlOpt.cegpra.ltlPropertyNr!=-1);
+          int property = ltlOpt.cegpra.ltlPropertyNr;
           ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);
         }
       }
 
-      if(args.getBool("status")) {
+      if(ctOpt.status) {
         ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);
         analyzer->printStatusMessageLine("==============================================================");
         ltlResults->printResultsStatistics();
         analyzer->printStatusMessageLine("==============================================================");
       }
-      if (args.isUserProvided("csv-spot-ltl")) {  //write results to a file instead of displaying them directly
-        std::string csv_filename = args.getString("csv-spot-ltl");
+      if (ltlOpt.spotVerificationResultsCSVFileName.size()>0) {  //write results to a file instead of displaying them directly
+        std::string csv_filename = ltlOpt.spotVerificationResultsCSVFileName;
         SAWYER_MESG(logger[TRACE]) << "STATUS: writing ltl results to file: " << csv_filename << endl;
         ltlResults->writeFile(csv_filename.c_str(), false, 0, withCounterexample);
       }
-      if (args.isUserProvided("csv-stats-size-and-ltl")) {
+      if (ltlOpt.ltlStatisticsCSVFileName.size()>0) {
         analyzer->getTransitionGraph()->printStgSize("final model");
         analyzer->getTransitionGraph()->csvToStream(statisticsSizeAndLtl);
         statisticsSizeAndLtl <<","<< ltlResults->entriesWithValue(PROPERTY_VALUE_YES);
@@ -1282,7 +1243,7 @@ int main( int argc, char * argv[] ) {
     double totalLtlRunTime =  infPathsOnlyTime + stdIoOnlyTime + spotLtlAnalysisTime;
 
     // TEST
-    if (args.getBool("generate-assertions")) {
+    if (ctOpt.generateAssertions) {
       AssertionExtractor assertionExtractor(analyzer);
       assertionExtractor.computeLabelVectorOfEStates();
       assertionExtractor.annotateAst();
@@ -1305,9 +1266,9 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    if(args.isUserProvided("dump-sorted")>0 || args.isUserProvided("dump-non-sorted")>0) {
+    if(ctOpt.equiCheck.dumpSortedFileName.size()>0 || ctOpt.equiCheck.dumpNonSortedFileName.size()>0) {
       SAR_MODE sarMode=SAR_SSA;
-      if(args.getBool("rewrite-ssa")) {
+      if(ctOpt.equiCheck.rewriteSSA) {
 	sarMode=SAR_SUBSTITUTE;
       }
       Specialization speci;
@@ -1315,8 +1276,8 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE]) <<"STATUS: performing array analysis on STG."<<endl;
       SAWYER_MESG(logger[TRACE]) <<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
 
-      bool useRuleConstSubstitution=args.getBool("rule-const-subst");
-      bool useRuleCommutativeSort=args.getBool("rule-commutative-sort");
+      bool useRuleConstSubstitution=ctOpt.equiCheck.ruleConstSubst;
+      bool useRuleCommutativeSort=ctOpt.equiCheck.ruleCommutativeSort;
       
       timer.start();
       speci.extractArrayUpdateOperations(analyzer,
@@ -1334,7 +1295,7 @@ int main( int argc, char * argv[] ) {
       speci.substituteArrayRefs(arrayUpdates, analyzer->getVariableIdMapping(), sarMode, rewriteSystem);
       arrayUpdateExtractionRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
-      if(args.getBool("print-update-infos")) {
+      if(ctOpt.equiCheck.printUpdateInfos) {
         speci.printUpdateInfos(arrayUpdates,analyzer->getVariableIdMapping());
       }
       SAWYER_MESG(logger[TRACE]) <<"STATUS: establishing array-element SSA numbering."<<endl;
@@ -1342,13 +1303,13 @@ int main( int argc, char * argv[] ) {
       speci.createSsaNumbering(arrayUpdates, analyzer->getVariableIdMapping());
       arrayUpdateSsaNumberingRunTime=timer.getTimeDurationAndStop().milliSeconds();
 
-      if(args.isUserProvided("dump-non-sorted")) {
-        string filename=args.getString("dump-non-sorted");
+      if(ctOpt.equiCheck.dumpNonSortedFileName.size()>0) {
+        string filename=ctOpt.equiCheck.dumpNonSortedFileName;
         speci.writeArrayUpdatesToFile(arrayUpdates, filename, sarMode, false);
       }
-      if(args.isUserProvided("dump-sorted")) {
+      if(ctOpt.equiCheck.dumpSortedFileName.size()>0) {
         timer.start();
-        string filename=args.getString("dump-sorted");
+        string filename=ctOpt.equiCheck.dumpSortedFileName;
         speci.writeArrayUpdatesToFile(arrayUpdates, filename, sarMode, true);
         sortingAndIORunTime=timer.getTimeDurationAndStop().milliSeconds();
       }
@@ -1359,8 +1320,8 @@ int main( int argc, char * argv[] ) {
 
     analyzer->printAnalyzerStatistics(totalRunTime, "STG generation and assertion analysis complete");
 
-    if(args.isUserProvided("csv-stats")) {
-      string filename=args.getString("csv-stats").c_str();
+    if(ctOpt.csvStatsFileName.size()>0) {
+      string filename=ctOpt.csvStatsFileName;
       stringstream text;
       text<<"Sizes,"<<pstateSetSize<<", "
           <<eStateSetSize<<", "
@@ -1467,19 +1428,19 @@ int main( int argc, char * argv[] ) {
       cout << "generated "<<filename<<endl;
     }
 
-    if (args.isUserProvided("csv-stats-size-and-ltl")) {
+    if(ltlOpt.ltlStatisticsCSVFileName.size()>0) {
       // content of a line in the .csv file:
       // <#transitions>,<#states>,<#input_states>,<#output_states>,<#error_states>,<#verified_LTL>,<#falsified_LTL>,<#unknown_LTL>
-      string filename = args.getString("csv-stats-size-and-ltl");
+      string filename = ltlOpt.ltlStatisticsCSVFileName;
       write_file(filename,statisticsSizeAndLtl.str());
       cout << "generated "<<filename<<endl;
     }
 
-    if (args.isUserProvided("csv-stats-cegpra")) {
+    if (ltlOpt.cegpra.csvStatsFileName.size()>0) {
       // content of a line in the .csv file:
       // <analyzed_property>,<#transitions>,<#states>,<#input_states>,<#output_states>,<#error_states>,
       // <#analyzed_counterexamples>,<analysis_result(y/n/?)>,<#verified_LTL>,<#falsified_LTL>,<#unknown_LTL>
-      string filename = args.getString("csv-stats-cegpra");
+      string filename = ltlOpt.cegpra.csvStatsFileName;
       write_file(filename,statisticsCegpra.str());
       cout << "generated "<<filename<<endl;
     }
@@ -1487,16 +1448,16 @@ int main( int argc, char * argv[] ) {
 
     {
       Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
-      if (args.isUserProvided("cfg")) {
-        string cfgFileName=args.getString("cfg");
+      if (ctOpt.visualization.icfgFileName.size()>0) {
+        string cfgFileName=ctOpt.visualization.icfgFileName;
         DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
         ddvis.setDotGraphName("CFG");
         ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,false);
         cout << "generated "<<cfgFileName<<endl;
       }
-      if(args.getBool("viz")) {
+      if(ctOpt.visualization.viz) {
         cout << "generating graphviz files:"<<endl;
-        visualizer.setOptionMemorySubGraphs(args.getBool("tg1-estate-memory-subgraphs"));
+        visualizer.setOptionMemorySubGraphs(ctOpt.visualization.tg1EStateMemorySubgraphs);
         string dotFile="digraph G {\n";
         dotFile+=visualizer.transitionGraphToDot();
         dotFile+="}\n";
@@ -1527,14 +1488,14 @@ int main( int argc, char * argv[] ) {
         cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
         cout << "=============================================================="<<endl;
       }
-      if(args.getBool("viz-tg2")) {
+      if(ctOpt.visualization.vizTg2) {
         string dotFile3=visualizer.foldedTransitionGraphToDot();
         write_file("transitiongraph2.dot", dotFile3);
         cout << "generated transitiongraph2.dot."<<endl;
       }
 
-      if (args.isUserProvided("dot-io-stg")) {
-        string filename=args.getString("dot-io-stg");
+      if (ctOpt.visualization. dotIOStg.size()>0) {
+        string filename=ctOpt.visualization. dotIOStg;
         cout << "generating dot IO graph file:"<<filename<<endl;
         string dotFile="digraph G {\n";
         dotFile+=visualizer.transitionGraphWithIOToDot();
@@ -1543,8 +1504,8 @@ int main( int argc, char * argv[] ) {
         cout << "=============================================================="<<endl;
       }
 
-      if (args.isUserProvided("dot-io-stg-forced-top")) {
-        string filename=args.getString("dot-io-stg-forced-top");
+      if (ctOpt.visualization.dotIOStgForcedTop.size()>0) {
+        string filename=ctOpt.visualization.dotIOStgForcedTop;
         cout << "generating dot IO graph file for an abstract STG:"<<filename<<endl;
         string dotFile="digraph G {\n";
         dotFile+=visualizer.abstractTransitionGraphToDot();
@@ -1556,19 +1517,19 @@ int main( int argc, char * argv[] ) {
     // InputPathGenerator
 #if 1
     {
-      if(args.isUserProvided("iseq-file")) {
+      if(ctOpt.rers.iSeqFile.size()>0) {
         int iseqLen=0;
-        if(args.isUserProvided("iseq-length")) {
-          iseqLen=args.getInt("iseq-length");
+        if(ctOpt.rers.iSeqLength!=-1) {
+          iseqLen=ctOpt.rers.iSeqLength;
         } else {
           logger[ERROR] <<"input-sequence file specified, but no sequence length."<<endl;
           exit(1);
         }
-        string fileName=args.getString("iseq-file");
+        string fileName=ctOpt.rers.iSeqFile;
         SAWYER_MESG(logger[TRACE]) <<"STATUS: computing input sequences of length "<<iseqLen<<endl;
         IOSequenceGenerator iosgen;
-        if(args.isUserProvided("iseq-random-num")) {
-          int randomNum=args.getInt("iseq-random-num");
+        if(ctOpt.rers.iSeqRandomNum!=-1) {
+          int randomNum=ctOpt.rers.iSeqRandomNum;
           SAWYER_MESG(logger[TRACE]) <<"STATUS: reducing input sequence set to "<<randomNum<<" random elements."<<endl;
           iosgen.computeRandomInputPathSet(iseqLen,*analyzer->getTransitionGraph(),randomNum);
         } else {
@@ -1577,7 +1538,7 @@ int main( int argc, char * argv[] ) {
         SAWYER_MESG(logger[TRACE]) <<"STATUS: generating input sequence file "<<fileName<<endl;
         iosgen.generateFile(fileName);
       } else {
-        if(args.isUserProvided("iseq-length")) {
+        if(ctOpt.rers.iSeqLength!=-1) {
           logger[ERROR] <<"input sequence length specified without also providing a file name (use option --iseq-file)."<<endl;
           exit(1);
         }
@@ -1596,22 +1557,22 @@ int main( int argc, char * argv[] ) {
     }
 #endif
 
-    if (args.getBool("annotate-terms")) {
-      // TODO: it might be useful to be able to select certain analysis results to be only annotated
+    if (ctOpt.annotateTerms) {
+      // TODO: it might be useful to be able to select certain analysis results to be annotated only
       logger[INFO] << "Annotating term representations."<<endl;
       AstTermRepresentationAttribute::attachAstTermRepresentationAttributes(sageProject);
       AstAnnotator ara(analyzer->getLabeler());
       ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
     }
 
-    if (args.getBool("annotate-terms")||args.getBool("generate-assertions")) {
+    if (ctOpt.annotateTerms||ctOpt.generateAssertions) {
       logger[INFO] << "Generating annotated program."<<endl;
       //backend(sageProject);
       sageProject->unparse(0,0);
     }
 
     // reset terminal
-    if(args.getBool("status"))
+    if(ctOpt.status)
       cout<<color("normal")<<"done."<<endl;
 
     // main function try-catch
