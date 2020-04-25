@@ -76,23 +76,6 @@ void TransitionGraph::reduceEStates(set<const EState*> toReduce) {
 }
 
 /*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-void TransitionGraph::reduceEStates2(set<const EState*> toReduce) {
-  size_t todo=toReduce.size();
-  if(args.getBool("post-semantic-fold"))
-    cout << "STATUS: remaining states to fold: "<<todo<<endl;
-  for(set<const EState*>::const_iterator i=toReduce.begin();i!=toReduce.end();++i) { 
-    reduceEState2(*i);
-    todo--;
-    if(todo%10000==0 && args.getBool("post-semantic-fold")) {
-      cout << "STATUS: remaining states to fold: "<<todo<<endl;
-    }
-  }
-}
-
-/*! 
  * \author Markus Schordan
  * \date 2019 (linear algorithm for IO reduction)
  */         

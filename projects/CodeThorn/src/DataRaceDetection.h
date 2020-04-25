@@ -70,6 +70,7 @@ class DataRaceDetection {
   // predicates to filter variables from data race detection (only shared variables are relevant)
   bool isSharedArrayAccess(SgPntrArrRefExp* useRef);
   bool isSharedVariable(SgVarRefExp* varRef);
+  void setOptions(CodeThornOptions options);
  private:
   static Sawyer::Message::Facility logger;
   // for data race check of all loops independent on whether they are marked as parallel loops
@@ -90,6 +91,7 @@ class DataRaceDetection {
     long maxNumberOfExtractedUpdates=5000;
   };
   Options options;
+  CodeThornOptions _ctOpt;
 };
 
 // ----- template implementation -----

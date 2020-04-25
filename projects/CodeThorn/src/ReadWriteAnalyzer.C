@@ -54,7 +54,7 @@ void ReadWriteAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* r
     flow=cfanalyzer->flow(root);
 
   logger[TRACE]<< "STATUS: Building CFGs finished."<<endl;
-  if(args.getBool("reduce-cfg")) {
+  if(_ctOpt.reduceCfg) {
     int cnt=cfanalyzer->optimizeFlow(flow);
     logger[TRACE]<< "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
   }
