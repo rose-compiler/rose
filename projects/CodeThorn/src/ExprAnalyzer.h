@@ -18,6 +18,7 @@
 #include "ProgramLocationsReport.h"
 #include "SgTypeSizeMapping.h"
 #include "StructureAccessLookup.h"
+#include "CodeThornOptions.h"
 
 using namespace std;
 
@@ -58,7 +59,7 @@ namespace CodeThorn {
   enum InterpreterMode { IM_ABSTRACT, IM_CONCRETE };
   // ACCESS_ERROR is null pointer dereference is detected. ACCESS_NON_EXISTING if pointer is lattice bottom element.
   enum MemoryAccessBounds {ACCESS_ERROR,ACCESS_DEFINITELY_NP, ACCESS_DEFINITELY_INSIDE_BOUNDS, ACCESS_POTENTIALLY_OUTSIDE_BOUNDS, ACCESS_DEFINITELY_OUTSIDE_BOUNDS, ACCESS_NON_EXISTING};
-  enum AnalysisSelector { ANALYSIS_NULL_POINTER, ANALYSIS_OUT_OF_BOUNDS, ANALYSIS_UNINITIALIZED, ANALYSIS_NUM };
+  //  enum AnalysisSelector { ANALYSIS_NULL_POINTER, ANALYSIS_OUT_OF_BOUNDS, ANALYSIS_UNINITIALIZED, ANALYSIS_NUM };
   
   /*! 
    * \author Markus Schordan

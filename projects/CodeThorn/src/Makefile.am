@@ -124,6 +124,10 @@ CODETHORN_HEADER_FILES=\
   NormalizationInliner.h \
   NormalizationOp.h \
   NumberIntervalLattice.h \
+  Options.h \
+  CodeThornOptions.h \
+  LTLOptions.h \
+  ltlthorn-lib/ParProOptions.h \
   PASolver1.h \
   PointerAnalysisInterface.h \
   PragmaHandler.h \
@@ -216,6 +220,9 @@ CODETHORN_SOURCE_FILES=\
   LanguageRestrictor.C \
   Lattice.C \
   LoopInfo.C \
+  CodeThornOptions.C \
+  LTLOptions.C \
+  ltlthorn-lib/ParProOptions.C \
   LVAnalysis.C \
   LVAstAttribute.C \
   LVAstAttributeInterface.C \

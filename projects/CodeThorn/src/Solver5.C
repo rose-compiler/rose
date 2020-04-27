@@ -45,9 +45,9 @@ void Solver5::run() {
   bool ioReductionActive = false;
   unsigned int ioReductionThreshold = 0;
   unsigned int estatesLastReduction = 0;
-  if(args.isUserProvided("io-reduction")) {
+  if(_analyzer->getLtlOptionsRef().ioReduction) {
     ioReductionActive = true;
-    ioReductionThreshold = args.getInt("io-reduction");
+    ioReductionThreshold = _analyzer->getLtlOptionsRef().ioReduction;
   }
 
   SAWYER_MESG(logger[TRACE])<<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
@@ -197,7 +197,7 @@ void Solver5::run() {
               } else if(_analyzer->isFailedAssertEState(&newEState)) {
                 // record failed assert
                 int assertCode;
-                if(args.getBool("rers-binary")) {
+                if(_analyzer->getOptionsRef().rers.rersBinary) {
                   assertCode=_analyzer->reachabilityAssertCode(newEStatePtr);
                 } else {
                   assertCode=_analyzer->reachabilityAssertCode(currentEStatePtr);
@@ -205,18 +205,13 @@ void Solver5::run() {
                 if(assertCode>=0) {
 #pragma omp critical
                   {
-                    if(args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
+                    if(_analyzer->getLtlOptionsRef().withCounterExamples || _analyzer->getLtlOptionsRef().withAssertCounterExamples) {
                       //if this particular assertion was never reached before, compute and update counterexample
                       if (_analyzer->reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
                         _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
                       }
                     }
                     _analyzer->reachabilityResults.reachable(assertCode);
-                  }
-                } else {
-                  // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
-                  if(!args.getBool("rersmode")) {
-                    // assert without label
                   }
                 }
               } // end of failed assert handling
