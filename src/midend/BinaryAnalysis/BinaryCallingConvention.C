@@ -202,7 +202,7 @@ Definition::x86_cdecl(const RegisterDictionary *regDict) {
     cc->stackCleanup(CLEANUP_BY_CALLER);
 
     // Other inputs
-    cc->appendInputParameter(*regDict->lookup("df"));   // direction flag is always assumed to be valid
+    cc->appendInputParameter(regDict->findOrThrow("df"));   // direction flag is always assumed to be valid
 
     // Return values
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
@@ -354,7 +354,7 @@ Definition::x86_stdcall(const RegisterDictionary *regDict) {
     cc->stackCleanup(CLEANUP_BY_CALLEE);
 
     // Other inputs
-    cc->appendInputParameter(*regDict->lookup("df"));   // direction flag is always assumed to be valid
+    cc->appendInputParameter(regDict->findOrThrow("df"));   // direction flag is always assumed to be valid
 
     // Return values
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
@@ -403,7 +403,7 @@ Definition::x86_fastcall(const RegisterDictionary *regDict) {
     cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
     cc->stackParameterOrder(RIGHT_TO_LEFT);
     cc->stackCleanup(CLEANUP_BY_CALLEE);
-    cc->appendInputParameter(*regDict->lookup("df"));   // direction flag is always assumed to be valid
+    cc->appendInputParameter(regDict->findOrThrow("df"));   // direction flag is always assumed to be valid
 
     // Return values
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
@@ -465,7 +465,7 @@ Definition::x86_64bit_sysv() {
         cc->appendInputParameter(RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 8)); // for varargs calls
 
         // direction flag is always assumed to be initialized and is thus often treated as input
-        cc->appendInputParameter(*regDict->lookup("df"));
+        cc->appendInputParameter(regDict->findOrThrow("df"));
 
         // Arguments that don't fit in the input registers are passed on the stack
         cc->stackParameterOrder(RIGHT_TO_LEFT);

@@ -80,6 +80,21 @@ RegisterDictionary::insert(const RegisterDictionary *other) {
         insert(*other);
 }
 
+RegisterDescriptor
+RegisterDictionary::find(const std::string &name) const {
+    Entries::const_iterator fi = forward.find(name);
+    return forward.end() == fi ? RegisterDescriptor() : fi->second;
+}
+
+RegisterDescriptor
+RegisterDictionary::findOrThrow(const std::string &name) const {
+    Entries::const_iterator fi = forward.find(name);
+    if (forward.end() == fi)
+        throw std::domain_error("register " + name + " not found");
+    return fi->second;
+}
+
+// deprecated 2020-04-17
 const RegisterDescriptor *
 RegisterDictionary::lookup(const std::string &name) const {
     Entries::const_iterator fi = forward.find(name);
@@ -133,11 +148,9 @@ RegisterDictionary::findLargestRegister(unsigned major, unsigned minor, size_t m
 
 void
 RegisterDictionary::resize(const std::string &name, unsigned new_nbits) {
-    const RegisterDescriptor *old_desc = lookup(name);
-    ROSE_ASSERT(old_desc!=NULL);
-    RegisterDescriptor new_desc = *old_desc;
-    new_desc.nBits(new_nbits);
-    insert(name, new_desc);
+    RegisterDescriptor reg = findOrThrow(name);
+    reg.nBits(new_nbits);
+    insert(name, reg);
 }
 
 RegisterParts

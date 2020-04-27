@@ -217,10 +217,23 @@ public:
      *  register into the dictionary using the new descriptor.  This method does exactly that. */
     void resize(const std::string &name, unsigned new_nbits);
 
-    /** Returns a descriptor for a given register name. Returns the null pointer if the name is not found. It is not possible
+    /** Find a register by name.
+     *
+     *  Looks up the descriptor for the register having the specified name. If no descriptor exists for that name then a
+     *  default constructed invalid descriptor is returned. See also, @ref findOrThrow. */
+    RegisterDescriptor find(const std::string &name) const;
+
+    /** Find a register by name.
+     *
+     *  Looks up the descriptor for the register having the specified name.  If no descriptor exists for that name then a
+     *  std::domain_error exception is thrown.  See also @ref find. */
+    RegisterDescriptor findOrThrow(const std::string &name) const;
+
+    // Deprecated 2020-04-17 because it returns a raw pointer and leaves it up to the caller to check it.
+    /*  Returns a descriptor for a given register name. Returns the null pointer if the name is not found. It is not possible
      *  to modify a descriptor in the dictionary because doing so would interfere with the dictionary's data structures for
      *  reverse lookups. */
-    const RegisterDescriptor *lookup(const std::string &name) const;
+    const RegisterDescriptor *lookup(const std::string &name) const ROSE_DEPRECATED("use find or findOrThrow");
 
     /** Returns a register name for a given descriptor. If more than one register has the same descriptor then the name added
      *  latest is returned.  If no register is found then either return the empty string (default) or generate a generic name

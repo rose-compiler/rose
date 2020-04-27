@@ -160,20 +160,20 @@ SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeRegister(unsigned regnum)
 {
     std::string regname = "r" + StringUtility::numberToString(regnum);
-    const RegisterDescriptor *regdesc = registerDictionary()->lookup(regname);
+    const RegisterDescriptor regdesc = registerDictionary()->find(regname);
     if (!regdesc)
         throw Exception("no such register: "+regname);
-    return new SgAsmDirectRegisterExpression(*regdesc);
+    return new SgAsmDirectRegisterExpression(regdesc);
 }
 
 SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeFpRegister(unsigned regnum)
 {
     std::string regname = "f" + StringUtility::numberToString(regnum);
-    const RegisterDescriptor *regdesc = registerDictionary()->lookup(regname);
+    const RegisterDescriptor regdesc = registerDictionary()->find(regname);
     if (!regdesc)
         throw Exception("no such register: "+regname);
-    return new SgAsmDirectRegisterExpression(*regdesc);
+    return new SgAsmDirectRegisterExpression(regdesc);
 }
 
 SgAsmRegisterReferenceExpression *
@@ -404,20 +404,20 @@ DisassemblerMips::makeCp0Register(unsigned regnum, unsigned sel)
     if (s.empty())
         throw Exception("invalid CP0 register "+StringUtility::numberToString(regnum)+
                         " (sel="+StringUtility::numberToString(sel)+")");
-    const RegisterDescriptor *regdesc = registerDictionary()->lookup(s);
+    const RegisterDescriptor regdesc = registerDictionary()->find(s);
     if (!regdesc)
         throw Exception("no such register: " + s);
-    return new SgAsmDirectRegisterExpression(*regdesc);
+    return new SgAsmDirectRegisterExpression(regdesc);
 }
 
 SgAsmRegisterReferenceExpression *
 DisassemblerMips::makeFpccRegister(unsigned cc)
 {
     ASSERT_require(cc<=7);
-    const RegisterDescriptor *regdesc = registerDictionary()->lookup("fscr");
+    const RegisterDescriptor regdesc = registerDictionary()->find("fscr");
     if (!regdesc)
         throw Exception("no such register: fcsr");
-    RegisterDescriptor r(regdesc->majorNumber(), regdesc->minorNumber(), cc?24+cc:23, 1);
+    RegisterDescriptor r(regdesc.majorNumber(), regdesc.minorNumber(), cc?24+cc:23, 1);
     return new SgAsmDirectRegisterExpression(r);
 }
 
@@ -3611,8 +3611,8 @@ DisassemblerMips::init(ByteOrder::Endianness sex)
     }
 
     registerDictionary(RegisterDictionary::dictionary_mips32()); // only a default
-    REG_IP = *registerDictionary()->lookup("pc");
-    REG_SP = *registerDictionary()->lookup("sp");
+    REG_IP = registerDictionary()->findOrThrow("pc");
+    REG_SP = registerDictionary()->findOrThrow("sp");
 
     wordSizeBytes(4);
     byteOrder(sex);
