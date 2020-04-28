@@ -10,13 +10,12 @@ JOVIAL_TESTCODES = \
  tiny.jov                               \
  int_conversion.jov                     \
  item_desc_conversion.jov               \
+ status_enumval.jov                     \
  typename_conv.jov                      \
  5_2_logical_continuation_a.jov         \
  5_2_logical_continuation_b.jov         \
  6_1_ptr_dereference.jov
 
-# status_enumval.jov                     \
-# typename_conv.jov                      \
 # 1_2_2_non-nested-subroutine_a.jov      \
 # 1_2_2_non-nested-subroutine_b.jov      \
 # 1_2_2_procedure-module_a.jov           \
@@ -206,7 +205,7 @@ check-jovial:
 	@echo $(PASSING_TEST_Objects)
 
 clean-local:
-	rm -f rose_*.* *.aterm *.dot
+	rm -f rose_*.* *.aterm *.rcmp *.dot
 
 check-local:
 	@echo "Tests for experimental Jovial frontend."
