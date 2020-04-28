@@ -87,6 +87,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     (",I", po::value< vector<string> >(&ctOpt.includeDirs),"Include directories.")
     (",D", po::value< vector<string> >(&ctOpt.preProcessorDefines),"Define constants for preprocessor.")
     (",std", po::value< string >(&ctOpt.languageStandard),"Compilation standard.")
+    (",rose:ast:read", po::value<std::string>(),"read in binary AST from comma separated list (no spaces)")
     ("edg:no_warnings", po::bool_switch(&ctOpt.edgNoWarningsFlag),"EDG frontend flag.")
     ;
 
@@ -400,6 +401,10 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     }
     // explicitly keep options relevant to the ROSE frontend (white list) 
     else if (currentArg == "-I") {
+      assert(i+1<argc);
+      ++i;
+      continue;
+    } else if (currentArg == "-rose:ast:read") {
       assert(i+1<argc);
       ++i;
       continue;
