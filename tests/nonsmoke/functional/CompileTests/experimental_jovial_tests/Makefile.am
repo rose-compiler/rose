@@ -12,7 +12,8 @@ JOVIAL_TESTCODES = \
  item_desc_conversion.jov               \
  typename_conv.jov                      \
  5_2_logical_continuation_a.jov         \
- 5_2_logical_continuation_b.jov
+ 5_2_logical_continuation_b.jov         \
+ 6_1_ptr_dereference.jov
 
 # status_enumval.jov                     \
 # typename_conv.jov                      \
@@ -64,10 +65,10 @@ JOVIAL_PARSER_TESTCODES = \
  rose-issue-2143.jov
 
 COMPOOL_TESTCODES = \
- bit_cast.cpl                           \
  status_type.cpl                        \
  3_0_rent_and_rec.cpl
 
+# bit_cast.cpl                           \
 # simple_compool.cpl                     \
 # 9_1_compool_directive.cpl
 
