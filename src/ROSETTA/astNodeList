@@ -271,6 +271,7 @@ SgBinaryOp
 SgBitAndOp
 SgBitAttribute
 SgBitComplementOp
+SgBitEqvOp
 SgBitOrOp
 SgBitXorOp
 SgBlockDataStatement
