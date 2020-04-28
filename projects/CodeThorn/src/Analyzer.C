@@ -3017,17 +3017,12 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
         estateList.push_back(createEState(edge.target(),cs,newPState,cset));
       }
     } else if(isSgPntrArrRefExp(lhs)) {
-      // for now we ignore array refs on lhs
-      // TODO: assignments in index computations of ignored array ref
-      // see ExprAnalyzer.C: case V_SgPntrArrRefExp:
-      // since nothing can change (because of being ignored) state remains the same
       VariableIdMapping* _variableIdMapping=variableIdMapping;
       EState estate=(*i).estate;
       Label label=estate.label();
       PState oldPState=*estate.pstate();
       ConstraintSet oldcset=*estate.constraints();
       if(getSkipArrayAccesses()) {
-        // TODO: remove constraints on array-element(s) [currently no constraints are computed for arrays]
         estateList.push_back(createEState(edge.target(),cs,oldPState,oldcset));
       } else {
         SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(lhs));
@@ -3044,7 +3039,6 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
             // in case it is a pointer retrieve pointer value
             AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
             if(pstate2.varExists(ptr)) {
-              //cout<<"DEBUG: pointer exists (OK): "<<ptr.toString(_variableIdMapping)<<endl;
               arrayPtrValue=getExprAnalyzer()->readFromMemoryLocation(estate.label(),&pstate2,ptr);
               //cout<<"DEBUG: arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
               // convert integer to VariableId
@@ -3068,49 +3062,6 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
           ROSE_ASSERT(res.size()==1); // this should always hold for normalized ASTs
           AbstractValue indexValue=(*(res.begin())).value();
           AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexValue);
-          //cout<<"DEBUG: arrayPtrPlusIndexValue: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
-          /*
-          {
-            //VariableId arrayVarId2=arrayPtrPlusIndexValue.getVariableId();
-            MemoryAccessBounds boundsCheckResult=exprAnalyzer.checkMemoryAccessBounds(arrayPtrPlusIndexValue);
-            switch(boundsCheckResult) {
-            case ACCESS_DEFINITELY_NP:
-              exprAnalyzer.recordDefinitiveNullPointerDereferenceLocation(estate.label());
-              SAWYER_MESG(logger[TRACE])<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze2)<<" : definitive null pointer dereference detected."<<endl;// ["<<lhs->unparseToString()<<"]"<<endl;
-              SAWYER_MESG(logger[TRACE])<<"Violating pointer (np): "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
-              return estateList;
-              break;
-            case ACCESS_DEFINITELY_INSIDE_BOUNDS:
-              // continue for all values
-              break;
-            case ACCESS_POTENTIALLY_OUTSIDE_BOUNDS:
-              if(arrayPtrPlusIndexValue.isTop()) {
-                exprAnalyzer.recordPotentialNullPointerDereferenceLocation(estate.label());
-              }
-              exprAnalyzer.recordPotentialOutOfBoundsAccessLocation(estate.label());
-              // continue for other values
-              break;
-            case ACCESS_DEFINITELY_OUTSIDE_BOUNDS: {
-              exprAnalyzer.recordDefinitiveOutOfBoundsAccessLocation(estate.label());
-              int index2=arrayPtrPlusIndexValue.getIndexIntValue();
-              SAWYER_MESG(logger[TRACE])<<"Program error detected at "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze2)<<" : write access out of bounds."<<endl;// ["<<lhs->unparseToString()<<"]"<<endl;
-              SAWYER_MESG(logger[TRACE])<<"Violating pointer (bounds): "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
-              //cerr<<"arrayVarId2: "<<arrayVarId2.toUniqueString(_variableIdMapping)<<endl;
-              //cerr<<"array size: "<<_variableIdMapping->getNumberOfElements(arrayVarId)<<endl;
-              // no state can follow, return estateList (may be empty)
-              return estateList;
-              break;
-            }
-            case ACCESS_NON_EXISTING:
-              // memory is known not to exist - infeasable path? return empty state list.
-              return estateList;
-              break;
-            default:
-              cerr<<"Error: unknown bounds check result: "<<boundsCheckResult<<endl;
-              exit(1);
-            }
-          }
-          */
           arrayElementId=arrayPtrPlusIndexValue;
           //cout<<"DEBUG: arrayElementId: "<<arrayElementId.toString(_variableIdMapping)<<endl;
           //SAWYER_MESG(logger[TRACE])<<"arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
