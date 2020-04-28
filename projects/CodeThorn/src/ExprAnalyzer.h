@@ -127,10 +127,9 @@ namespace CodeThorn {
     void setOptionOutputWarnings(bool flag);
     bool getOptionOutputWarnings();
 
-    //! returns true if node is a VarRefExp and sets varName=name, otherwise false and varName="$".
-    static bool variable(SgNode* node,VariableName& varName);
     //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
-    bool variable(SgNode* node,VariableId& varId);
+    bool checkIfVariableAndDetermineVarId(SgNode* node,VariableId& varId); // only used by Analyzer
+
     list<SingleEvalResultConstInt> evalFunctionCallArguments(SgFunctionCallExp* funCall, EState estate);
     list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate);
     bool isLValueOp(SgNode* node);
@@ -150,15 +149,20 @@ namespace CodeThorn {
     void writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
     void writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc);
     
+    //! This function turn a single result into a one-elment list with
+    //! this one result.
+    static list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res);
+
+    // utilify functions
+    int getMemoryRegionNumElements(CodeThorn::AbstractValue ptrToRegion);
+    int getMemoryRegionElementSize(CodeThorn::AbstractValue);
+
   protected:
     static void initDiagnostics();
     static Sawyer::Message::Facility logger;
     AbstractValue constIntLatticeFromSgValueExp(SgValueExp* valueExp);
     
-    //! This function turn a single result into a one-elment list with
-    //! this one result.
-    static list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res);
-    
+   
     // evaluation state
 #ifdef EXPR_VISITOR
     SingleEvalResultConstInt res;
@@ -317,10 +321,6 @@ namespace CodeThorn {
     // supported functions to be executed (interpreter mode)
     list<SingleEvalResultConstInt> execFunctionCallPrintf(SgFunctionCallExp* funCall, EState estate);
     list<SingleEvalResultConstInt> execFunctionCallScanf(SgFunctionCallExp* funCall, EState estate);
-
-    // utilify functions
-    int getMemoryRegionNumElements(CodeThorn::AbstractValue ptrToRegion);
-    int getMemoryRegionElementSize(CodeThorn::AbstractValue);
 
   private:
     void initViolatingLocations();

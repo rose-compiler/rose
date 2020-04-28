@@ -2199,7 +2199,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
       VariableId actualParameterVarId;
       ROSE_ASSERT(actualParameterExpr);
 #if 0
-      if(exprAnalyzer.variable(actualParameterExpr,actualParameterVarId)) {
+      if(exprAnalyzer.checkIfVariableAndDetermineVarId(actualParameterExpr,actualParameterVarId)) {
         // propagate constraint from actualParamterVarId to formalParameterVarId
         cset.addAssignEqVarVar(formalParameterVarId,actualParameterVarId);
       }
@@ -2298,7 +2298,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallLocalEdge(Edge edge, 
         if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nodeToAnalyze)) {
           SgNode* lhs=SgNodeHelper::getLhs(SgNodeHelper::getExprStmtChild(nodeToAnalyze));
           VariableId lhsVarId;
-          bool isLhsVar=exprAnalyzer.variable(lhs,lhsVarId);
+          bool isLhsVar=exprAnalyzer.checkIfVariableAndDetermineVarId(lhs,lhsVarId);
           ROSE_ASSERT(isLhsVar); // must hold
           // logger[DEBUG]<< "lhsvar:rers-result:"<<lhsVarId.toString()<<"="<<rers_result<<endl;
           //_pstate[lhsVarId]=AbstractValue(rers_result);
@@ -2425,7 +2425,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
     }
     SgNode* lhs=SgNodeHelper::getLhs(SgNodeHelper::getExprStmtChild(nextNodeToAnalyze1));
     VariableId lhsVarId;
-    bool isLhsVar=exprAnalyzer.variable(lhs,lhsVarId);
+    bool isLhsVar=exprAnalyzer.checkIfVariableAndDetermineVarId(lhs,lhsVarId);
     ROSE_ASSERT(isLhsVar); // must hold
     PState newPState=*currentEState.pstate();
     // we only create this variable here to be able to find an existing $return variable!
@@ -2902,7 +2902,7 @@ list<EState> CodeThorn::Analyzer::transferIncDecOp(SgNode* nextNodeToAnalyze2, E
 
   SgNode* nextNodeToAnalyze3=SgNodeHelper::getUnaryOpChild(nextNodeToAnalyze2);
   VariableId var;
-  if(exprAnalyzer.variable(nextNodeToAnalyze3,var)) {
+  if(exprAnalyzer.checkIfVariableAndDetermineVarId(nextNodeToAnalyze3,var)) {
     list<SingleEvalResultConstInt> res=exprAnalyzer.evaluateExpression(nextNodeToAnalyze3,currentEState);
     ROSE_ASSERT(res.size()==1); // must hold for currently supported limited form of ++,--
     list<SingleEvalResultConstInt>::iterator i=res.begin();
@@ -2952,7 +2952,7 @@ std::list<EState> CodeThorn::Analyzer::transferAssignOp(SgAssignOp* nextNodeToAn
   list<EState> estateList;
   for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
     VariableId lhsVar;
-    bool isLhsVar=exprAnalyzer.variable(lhs,lhsVar);
+    bool isLhsVar=exprAnalyzer.checkIfVariableAndDetermineVarId(lhs,lhsVar);
     if(isLhsVar) {
       EState estate=(*i).estate;
       Label currentLabel=estate.label();

@@ -479,7 +479,7 @@ namespace CodeThorn {
     AnalyzedFunctionsContainerType analyzedFunctions;
     typedef std::unordered_set<SgFunctionCallExp*> ExternalFunctionsContainerType;
     ExternalFunctionsContainerType externalFunctions;
-    
+    //xxx
   private:
     //std::unordered_map<int,const EState*> _summaryStateMap;
     std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;
