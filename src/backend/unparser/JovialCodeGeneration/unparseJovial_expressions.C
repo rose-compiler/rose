@@ -48,6 +48,7 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
        // symbol references
           case V_SgFunctionRefExp:      unparseFuncRef    (expr, info);          break;
           case V_SgVarRefExp:           unparseVarRef     (expr, info);          break;
+          case V_SgPointerDerefExp:     unparsePtrDeref   (expr, info);          break;
 
        // operators
           case V_SgUnaryOp:             unparseUnaryExpr  (expr, info);          break;
@@ -328,6 +329,28 @@ Unparse_Jovial::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
      ASSERT_not_null(var_ref->get_symbol());
 
      curprint(var_ref->get_symbol()->get_name().str());
+   }
+
+void
+Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgPointerDerefExp* deref = isSgPointerDerefExp(expr);
+     ROSE_ASSERT(deref != NULL);
+
+     SgExpression* operand = deref->get_operand();
+     ROSE_ASSERT(operand);
+
+     switch (operand->variantT())
+        {
+        case V_SgVarRefExp:
+           curprint("@");
+           unparseVarRef(operand, info);
+           break;
+        default:
+           cout << "error: unparsePtrDeref() is unimplemented for " << operand->class_name() << endl;
+           ROSE_ASSERT(false);
+           break;
+        }
    }
 
 //----------------------------------------------------------------------------

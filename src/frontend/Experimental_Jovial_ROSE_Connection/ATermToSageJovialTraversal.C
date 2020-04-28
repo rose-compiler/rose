@@ -6006,8 +6006,7 @@ ATbool ATermToSageJovialTraversal::traverse_LogicalOperand(ATerm term, SgExpress
       // MATCHED RelationalExpression
    } else return ATfalse;
 
-   ROSE_ASSERT(expr);
-   setSourcePosition(expr, term);
+   ROSE_ASSERT(expr != NULL);
 
    return ATtrue;
 }
@@ -6046,11 +6045,6 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
       // BitVariable                   -> BitPrimary {cons("BitVariable")} (not currently working in tests)
       // NamedBitConstant              -> BitPrimary {cons("NamedBitConstant")} (rejected in grammar)
       // BitFunctionCall               -> BitPrimary (no cons)
-
-   if (!expr) {
-      cerr << "WARNING UNIMPLEMENTED: BitPrimary - possibly Dereference\n";
-      return ATtrue;
-   }
 
    ROSE_ASSERT(expr != NULL);
 
@@ -6475,7 +6469,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpre
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_Dereference(ATerm term, SgExpression* &formula)
+ATbool ATermToSageJovialTraversal::traverse_Dereference(ATerm term, SgExpression* &expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Dereference: %s\n", ATwriteToString(term));
@@ -6483,15 +6477,30 @@ ATbool ATermToSageJovialTraversal::traverse_Dereference(ATerm term, SgExpression
 
    ATerm t_deref;
    char* name;
+   SgExpression* formula = nullptr;
+   SgPointerDerefExp* deref = nullptr;
+
+   expr = nullptr;
 
    if (ATmatch(term, "Dereference(<term>)", &t_deref)) {
       if (ATmatch(t_deref, "<str>", &name)) {
-         cerr << "WARNING UNIMPLEMENTED: Dereference -> PointerItemName\n";
          // MATCHED PointerItemName
+         SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+         ROSE_ASSERT(var_ref);
+
+         deref = SageBuilder::buildPointerDerefExp(var_ref);
       } else if (traverse_GeneralFormula(t_deref, formula)) {
          // MATCHED PointerFormula through GeneralFormula
+         ROSE_ASSERT(formula);
+         deref = SageBuilder::buildPointerDerefExp(formula);
       } else return ATfalse;
-   } else return ATfalse;
+   }
+   else return ATfalse;
+
+   ROSE_ASSERT(deref);
+   setSourcePosition(deref, term);
+
+   expr = deref;
 
    return ATtrue;
 }

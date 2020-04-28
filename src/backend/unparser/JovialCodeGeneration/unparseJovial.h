@@ -107,6 +107,7 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseAssignOp       (SgExpression* expr, SgUnparse_Info& info);   
           virtual void unparseFuncRef        (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseVarRef         (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparsePtrDeref       (SgExpression* expr, SgUnparse_Info& info);
 
           virtual void unparseFuncCall       (SgExpression* expr, SgUnparse_Info& info);
 
