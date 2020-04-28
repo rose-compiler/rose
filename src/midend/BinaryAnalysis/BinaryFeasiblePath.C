@@ -697,6 +697,13 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                    "Exploration along a path stops when any of these limits is met. The default maximum path length is " +
                    StringUtility::plural(settings.maxPathLength, "instructions") + "."));
 
+    sg.insert(Switch("max-expression-size")
+              .argument("n", nonNegativeIntegerParser(settings.maxExprSize))
+              .doc("Maximum size of symbolic expressions, measured in number of nodes of the expression tree, before the "
+                   "expression is replaced with a new free variable. This can make the analysis faster but less precise. "
+                   "See also, @s{smt-timeout}.  The default is " +
+                   boost::lexical_cast<std::string>(settings.maxExprSize) + "."));
+
     sg.insert(Switch("cycle-k")
               .argument("coefficent", realNumberParser(settings.kCycleCoefficient))
               .doc("When the algorithm encounters a vertex which has already been visited by the current path, then the "
@@ -746,6 +753,14 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                .doc("When analyzing paths for model checking, use this SMT solver.  This switch overrides the general, "
                     "global SMT solver. Since an SMT solver is required for model checking, in the absence of any specified "
                     "solver the \"best\" solver is used.  The default solver is \"" + settings.solverName + "\"."));
+
+    sg.insert(Switch("smt-timeout")
+              .argument("seconds", realNumberParser(settings.smtTimeout))
+              .doc("Amount of time in seconds (fractional values allowed) that the SMT solver is allowed to work on any "
+                   "particular system of equations.  See also, @s{max-expression-size}. The default is " +
+                   (settings.smtTimeout && settings.smtTimeout->count() > 0 ?
+                    boost::lexical_cast<std::string>(*settings.smtTimeout) + " seconds" :
+                    std::string("no limit")) + "."));
 
     CommandLine::insertBooleanSwitch(sg, "null-derefs", settings.nullDeref.check,
                                      "Check for null dereferences along the paths.");
@@ -837,6 +852,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
 
     // Create the RiscOperators and Dispatcher.
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, this, path, pathProcessor);
+    ops->trimThreshold(settings_.maxExprSize);
     ops->initialState(ops->currentState()->clone());
     ops->nullPtrSolver(solver);
     for (size_t i = 0; i < settings().ipRewrite.size(); i += 2) {
@@ -1593,6 +1609,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
         ASSERT_always_not_null(solver);
         solver->errorIfReset(true);
         solver->name("FeasiblePath " + solver->name());
+        if (settings_.smtTimeout)
+            solver->timeout(*settings_.smtTimeout);
 #if 1 // DEBUGGING [Robb Matzke 2018-11-14]
         solver->memoization(false);
 #endif
