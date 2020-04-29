@@ -272,13 +272,14 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 
             if (!is_lvalue) {
               SgAssignInitializer* ai = SageInterface::splitExpression(lhs);
-              ROSE_ASSERT (isSgInitializer(ai->get_operand()));
+              // ROSE_ASSERT (isSgInitializer(ai->get_operand())); // it can be SgVarRefExp
 #if 0
               printf ("ai = %p ai->isTransformation() = %s \n",ai,ai->isTransformation() ? "true" : "false");
 #endif
               SgInitializedName* in = isSgInitializedName(ai->get_parent());
               ROSE_ASSERT (in);
-              removeRedundantCopyInConstruction(in);
+              if (isSgInitializer(ai->get_operand()))
+                removeRedundantCopyInConstruction(in);
               lhs = dotexp->get_lhs_operand(); // Should be a var ref now
             }
             thisptr = new SgAddressOfOp(SgNULL_FILE, lhs);
