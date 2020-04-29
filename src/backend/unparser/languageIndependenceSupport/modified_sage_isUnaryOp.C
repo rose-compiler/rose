@@ -136,7 +136,7 @@ Unparse_MOD_SAGE::isUnaryAddressOperator(SgExpression* expr)
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
   // If it is a non-member function this it will have a single argument
   // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -204,7 +204,7 @@ Unparse_MOD_SAGE::isUnaryDereferenceOperator(SgExpression* expr)
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
   // If it is a non-member function this it will have a single argument
   // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -266,7 +266,7 @@ Unparse_MOD_SAGE::isUnaryComplementOperator(SgExpression* expr)
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
   // If it is a non-member function this it will have a single argument
   // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)
@@ -328,7 +328,7 @@ Unparse_MOD_SAGE::isUnaryNotOperator(SgExpression* expr)
   // DQ (5/6/2007): This might be a non-member function and if so we don't handle this case correctly!
   // If it is a non-member function this it will have a single argument
   // ROSE_ASSERT(isSgFunctionRefExp(expr) == NULL);
-     ROSE_ASSERT(expr != NULL);
+     ASSERT_not_null(expr);
 
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
      if (mfunc_ref != NULL)

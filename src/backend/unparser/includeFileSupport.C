@@ -25,7 +25,7 @@ IncludeFileSupport::SynthesizedAttribute::SynthesizedAttribute ()
 
 IncludeFileSupport::SynthesizedAttribute::SynthesizedAttribute (SgIncludeFile* input_include_file)
    {
-     ROSE_ASSERT(input_include_file != NULL);
+     ASSERT_not_null(input_include_file);
 
      path_prefix = "";
      include_file = input_include_file;
@@ -83,7 +83,7 @@ IncludeFileSupport::PrefixTraversal::evaluateSynthesizedAttribute ( SgNode* node
 #endif
 
      SgIncludeFile* includeFile = isSgIncludeFile(node);
-     ROSE_ASSERT(includeFile != NULL);
+     ASSERT_not_null(includeFile);
 
      SynthesizedAttribute syn_attribute (includeFile);
 
@@ -99,7 +99,7 @@ IncludeFileSupport::PrefixTraversal::evaluateSynthesizedAttribute ( SgNode* node
           for (size_t i = 0; i < synthesizedAttributeList.size(); i++)
              {
                SgIncludeFile* child_include_file = synthesizedAttributeList[i].include_file;
-               ROSE_ASSERT(child_include_file != NULL);
+               ASSERT_not_null(child_include_file);
 #if 0
                printf ("synthesizedAttributeList[%zu].include_file: filename = %s \n",i,child_include_file->get_filename().str());
 #endif
@@ -145,7 +145,7 @@ IncludeFileSupport::PrefixTraversal::evaluateSynthesizedAttribute ( SgNode* node
           for (size_t i = 0; i < synthesizedAttributeList.size(); i++)
              {
                SgIncludeFile* child_include_file = synthesizedAttributeList[i].include_file;
-               ROSE_ASSERT(child_include_file != NULL);
+               ASSERT_not_null(child_include_file);
 #if 0
                printf ("(2nd pass) synthesizedAttributeList[%zu].include_file: filename = %s \n",i,child_include_file->get_filename().str());
                printf ("   --- child_include_file->get_requires_explict_path_for_unparsed_headers() = %s \n",child_include_file->get_requires_explict_path_for_unparsed_headers() ? "true" : "false");

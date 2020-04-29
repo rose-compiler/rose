@@ -129,8 +129,8 @@ public:
     AstSharedMemoryParallelTopDownBottomUpProcessing();
     AstSharedMemoryParallelTopDownBottomUpProcessing(const TraversalPtrList &);
 
-    void set_numberOfThreads(size_t threads) const;
-    void set_synchronizationWindowSize(size_t windowSize) const;
+    void set_numberOfThreads(size_t threads);
+    void set_synchronizationWindowSize(size_t windowSize);
 
 private:
     size_t numberOfThreads;
@@ -193,8 +193,8 @@ public:
     AstSharedMemoryParallelTopDownProcessing();
     AstSharedMemoryParallelTopDownProcessing(const TraversalPtrList &);
 
-    void set_numberOfThreads(size_t threads) const;
-    void set_synchronizationWindowSize(size_t windowSize) const;
+    void set_numberOfThreads(size_t threads);
+    void set_synchronizationWindowSize(size_t windowSize);
 
 private:
     size_t numberOfThreads;
@@ -258,8 +258,8 @@ public:
     AstSharedMemoryParallelBottomUpProcessing();
     AstSharedMemoryParallelBottomUpProcessing(const TraversalPtrList &);
 
-    void set_numberOfThreads(size_t threads) const;
-    void set_synchronizationWindowSize(size_t windowSize) const;
+    void set_numberOfThreads(size_t threads);
+    void set_synchronizationWindowSize(size_t windowSize);
 
 private:
     size_t numberOfThreads;
