@@ -272,7 +272,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 
             if (!is_lvalue) {
               SgAssignInitializer* ai = SageInterface::splitExpression(lhs);
-              ROSE_ASSERT (isSgInitializer(ai->get_operand()));
+              // ROSE_ASSERT (isSgInitializer(ai->get_operand())); // it can be SgVarRefExp
 #if 0
               printf ("ai = %p ai->isTransformation() = %s \n",ai,ai->isTransformation() ? "true" : "false");
 #endif
