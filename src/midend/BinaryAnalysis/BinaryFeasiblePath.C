@@ -697,12 +697,20 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                    "Exploration along a path stops when any of these limits is met. The default maximum path length is " +
                    StringUtility::plural(settings.maxPathLength, "instructions") + "."));
 
+    sg.insert(Switch("max-expression-size")
+              .argument("n", nonNegativeIntegerParser(settings.maxExprSize))
+              .doc("Maximum size of symbolic expressions, measured in number of nodes of the expression tree, before the "
+                   "expression is replaced with a new free variable. This can make the analysis faster but less precise. "
+                   "See also, @s{smt-timeout}.  The default is " +
+                   boost::lexical_cast<std::string>(settings.maxExprSize) + "."));
+
     sg.insert(Switch("cycle-k")
               .argument("coefficent", realNumberParser(settings.kCycleCoefficient))
               .doc("When the algorithm encounters a vertex which has already been visited by the current path, then the "
                    "effective k value is adjusted. The amount of adjustment is the size of the vertex (e.g., number of "
-                   "instructions) multiplied by the @v{coefficient} specified here. Both positive and negative coefficients "
-                   "are permitted. The default is " + boost::lexical_cast<std::string>(settings.kCycleCoefficient) + "."));
+                   "instructions) multiplied by the floating-point @v{coefficient} specified here. Both positive and "
+                   "negative coefficients are permitted. The default is " +
+                   boost::lexical_cast<std::string>(settings.kCycleCoefficient) + "."));
 
     sg.insert(Switch("max-call-depth")
               .argument("n", nonNegativeIntegerParser(settings.maxCallDepth))
@@ -745,6 +753,14 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                .doc("When analyzing paths for model checking, use this SMT solver.  This switch overrides the general, "
                     "global SMT solver. Since an SMT solver is required for model checking, in the absence of any specified "
                     "solver the \"best\" solver is used.  The default solver is \"" + settings.solverName + "\"."));
+
+    sg.insert(Switch("smt-timeout")
+              .argument("seconds", realNumberParser(settings.smtTimeout))
+              .doc("Amount of time in seconds (fractional values allowed) that the SMT solver is allowed to work on any "
+                   "particular system of equations.  See also, @s{max-expression-size}. The default is " +
+                   (settings.smtTimeout && settings.smtTimeout->count() > 0 ?
+                    boost::lexical_cast<std::string>(*settings.smtTimeout) + " seconds" :
+                    std::string("no limit")) + "."));
 
     CommandLine::insertBooleanSwitch(sg, "null-derefs", settings.nullDeref.check,
                                      "Check for null dereferences along the paths.");
@@ -836,6 +852,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
 
     // Create the RiscOperators and Dispatcher.
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, this, path, pathProcessor);
+    ops->trimThreshold(settings_.maxExprSize);
     ops->initialState(ops->currentState()->clone());
     ops->nullPtrSolver(solver);
     for (size_t i = 0; i < settings().ipRewrite.size(); i += 2) {
@@ -1592,6 +1609,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
         ASSERT_always_not_null(solver);
         solver->errorIfReset(true);
         solver->name("FeasiblePath " + solver->name());
+        if (settings_.smtTimeout)
+            solver->timeout(*settings_.smtTimeout);
 #if 1 // DEBUGGING [Robb Matzke 2018-11-14]
         solver->memoization(false);
 #endif
@@ -1757,7 +1776,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             // If we've visited a vertex too many times (e.g., because of a loop or recursion), then don't go any further.
             size_t nVertexVisits = path.nVisits(backVertex);
             if (nVertexVisits > settings_.maxVertexVisit) {
-                SAWYER_MESG(mlog[WARN]) <<indent <<"max visits (" <<settings_.maxVertexVisit <<") reached"
+                SAWYER_MESG(mlog[TRACE]) <<indent <<"max visits (" <<settings_.maxVertexVisit <<") reached"
                                         <<" for vertex " <<partitioner().vertexName(backVertex) <<"\n";
                 ++stats_.maxVertexVisitHits;
                 doBacktrack = true;
@@ -1775,10 +1794,10 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             // Limit path length (in terms of number of instructions)
             if (!doBacktrack) {
                 if ((double)pathNInsns > effectiveMaxPathLength) {
-                    SAWYER_MESG(mlog[WARN]) <<indent <<"maximum path length exceeded:"
-                                            <<" path length is " <<StringUtility::plural(pathNInsns, "instructions")
-                                            <<", effective limit is " <<effectiveMaxPathLength
-                                            <<" at vertex " <<partitioner().vertexName(backVertex) <<"\n";
+                    SAWYER_MESG(trace) <<indent <<"maximum path length exceeded:"
+                                       <<" path length is " <<StringUtility::plural(pathNInsns, "instructions")
+                                       <<", effective limit is " <<effectiveMaxPathLength
+                                       <<" at vertex " <<partitioner().vertexName(backVertex) <<"\n";
                     ++stats_.maxPathLengthHits;
                     doBacktrack = true;
                 }

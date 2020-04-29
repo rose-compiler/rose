@@ -348,7 +348,6 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:excludePath" ||
           argument == "-rose:includeFile" ||
           argument == "-rose:excludeFile" ||
-          argument == "-rose:astMergeCommandFile" ||
           argument == "-rose:projectSpecificDatabaseFile" ||
 
           // AST I/O
@@ -1500,18 +1499,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              }
         }
 
-  // DQ (6/17/2005): Added support for AST merging (sharing common parts of the AST most often represented in common header files of a project)
-  //
-  // specify AST merge option
-  //
-  // if ( CommandlineProcessing::isOption(argc,argv,"-rose:","(astMerge)",true) == true )
-     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(astMerge)",true) == true )
-        {
-       // printf ("-rose:astMerge option found \n");
-       // set something not yet defined!
-          p_astMerge = true;
-        }
-
   // DQ (9/15/2018): Adding support for output of report on the header file unparsing (for debugging).
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(headerFileUnparsingReport)",true) == true )
         {
@@ -1519,20 +1506,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           printf ("-rose:headerFileUnparsingReport option found \n");
 #endif
           set_reportOnHeaderFileUnparsing(true);
-        }
-
-  // DQ (6/17/2005): Added support for AST merging (sharing common parts of the AST most often represented in common header files of a project)
-  //
-  // specify AST merge command file option
-  //
-     std::string astMergeFilenameParameter;
-     if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,
-          "-rose:","(astMergeCommandFile)",astMergeFilenameParameter,true) == true )
-        {
-          printf ("-rose:astMergeCommandFile %s \n",astMergeFilenameParameter.c_str());
-       // Make our own copy of the filename string
-       // set_astMergeCommandLineFilename(xxx);
-          p_astMergeCommandFile = astMergeFilenameParameter;
         }
 
    // Milind Chabbi (9/9/2013): Added an option to store all files compiled by a project.
@@ -1585,12 +1558,19 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        }
        std::string astfile = rose_ast_option_param.substr(prev, pos-prev);
        p_astfiles_in.push_back(astfile);
+
+       p_ast_merge = true;
      }
 
      // `-rose:ast:write out.ast` (extension does not matter)
      rose_ast_option_param = "";
      if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:", "(ast:write)", rose_ast_option_param, true) == true ) {
        p_astfile_out = rose_ast_option_param;
+     }
+
+     // `-rose:ast:merge`
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(ast:merge)",true) == true ) {
+       p_ast_merge = true;
      }
 
   // Verbose ?
@@ -3255,10 +3235,6 @@ SgFile::usage ( int status )
 "                             ambiguity when ROSE might want to assume linking instead)\n"
 "     -rose:FailSafe, -rose:failsafe\n"
 "                             Enable experimental processing of resilience directives defined by FAIL-SAFE annotation language specification.\n"
-"     -rose:astMerge          merge ASTs from different files\n"
-"     -rose:astMergeCommandFile FILE\n"
-"                             filename where compiler command lines are stored\n"
-"                             for later processing (using AST merge mechanism)\n"
 "     -rose:projectSpecificDatabaseFile FILE\n"
 "                             filename where a database of all files used in a project are stored\n"
 "                             for producing unique trace ids and retrieving the reverse mapping from trace to files"
@@ -3325,6 +3301,7 @@ SgFile::usage ( int status )
 "     -rose:ast:write out.ast\n"
 "                             Output AST file (extension does *not* matter).\n"
 "                             Evaluated in the backend before any file unparsing or backend compiler calls.\n"
+"     -rose:ast:merge         Merges ASTs from different source files (always true when -rose:ast:read is used)\n"
 "\n"
 "Plugin Mode:\n"
 "     -rose:plugin_lib <shared_lib_filename>\n"

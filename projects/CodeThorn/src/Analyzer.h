@@ -48,6 +48,8 @@
 #include "AstNodeInfo.h"
 #include "SgTypeSizeMapping.h"
 #include "CallString.h"
+#include "CodeThornOptions.h"
+#include "LTLOptions.h"
 
 namespace CodeThorn {
 
@@ -130,7 +132,6 @@ namespace CodeThorn {
     PState analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer, PState pState, EState currentEState);
     // modifies PState with written initializers
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1, EState currentEState, Label targetLabel);
-    PState analyzeAssignRhs(Label lab, PState currentPState, VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
 
     // thread save; only prints if option status messages is enabled.
     void printStatusMessage(bool);
@@ -295,7 +296,10 @@ namespace CodeThorn {
     std::string analyzedFilesToString();
     void recordExternalFunctionCall(SgFunctionCallExp* funCall);
     std::string externalFunctionsToString();
-
+    void setOptions(CodeThornOptions options);
+    CodeThornOptions& getOptionsRef();
+    void setLtlOptions(LTLOptions ltlOptions);
+    LTLOptions& getLtlOptionsRef();
   protected:
     // this function is protected to ensure it is not used from outside. It is supposed to be used
     // only for internal timing managing the max-time option resource.
@@ -432,13 +436,13 @@ namespace CodeThorn {
     long int _maxSecondsForcedTop;
 
     VariableValueMonitor variableValueMonitor;
-
+    CodeThornOptions _ctOpt;
+    LTLOptions _ltlOpt;
     bool _treatStdErrLikeFailedAssert;
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
     bool _topifyModeActive;
     int _abstractionMode=0; // 0=no abstraction, >=1: different abstraction modes.
-    bool _explicitArrays;
 
     int _iterations;
     int _approximated_iterations;

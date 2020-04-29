@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# Usage: srun_do <command> [paremeters]
+#
+# This script will run a command on one compute node of the current cluster, 
+# in the current directory.  It produces a log file named after the command.
+# See run_and_log for details.
+
+# Dependencies on other scripts:
+#   utility_functions.sh
+#   run_and_log
+
+# Note:
+# $*, $@ - all args
+# "$*"   - all args quoted in one string
+# "$@"   - all args quoted individually
+
+# Defines log, log_and_run, etc.:
+source `which utility_functions.sh`
+
+log_start
+log_invocation "$@"
+log_and_run srun -l -N 1 -p pdebug run_and_log "$@"
+log_end
+

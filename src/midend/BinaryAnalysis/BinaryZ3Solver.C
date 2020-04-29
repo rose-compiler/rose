@@ -38,6 +38,22 @@ Z3Solver::reset() {
         delete ctx_;
         ctx_ = new z3::context;
         solver_ = new z3::solver(*ctx_);
+        if (timeout_) {
+            // It's not well documented. Experimentally determined to be milliseconds.
+            ctx_->set("timeout", boost::lexical_cast<std::string>((unsigned)::round(timeout_->count()*1000)).c_str());
+        }
+    }
+#endif
+}
+
+void
+Z3Solver::timeout(boost::chrono::duration<double> seconds) {
+#ifdef ROSE_HAVE_Z3
+    timeout_ = seconds;
+    if (linkage() == LM_LIBRARY) {
+        ASSERT_not_null(ctx_);
+        // It's not well documented. Experimentally determined to be milliseconds.
+        ctx_->set("timeout", boost::lexical_cast<std::string>((unsigned)::round(seconds.count()*1000)).c_str());
     }
 #endif
 }

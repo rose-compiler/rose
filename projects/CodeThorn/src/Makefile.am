@@ -124,6 +124,10 @@ CODETHORN_HEADER_FILES=\
   NormalizationInliner.h \
   NormalizationOp.h \
   NumberIntervalLattice.h \
+  Options.h \
+  CodeThornOptions.h \
+  LTLOptions.h \
+  ltlthorn-lib/ParProOptions.h \
   PASolver1.h \
   PointerAnalysisInterface.h \
   PragmaHandler.h \
@@ -216,6 +220,9 @@ CODETHORN_SOURCE_FILES=\
   LanguageRestrictor.C \
   Lattice.C \
   LoopInfo.C \
+  CodeThornOptions.C \
+  LTLOptions.C \
+  ltlthorn-lib/ParProOptions.C \
   LVAnalysis.C \
   LVAstAttribute.C \
   LVAstAttributeInterface.C \
@@ -606,7 +613,7 @@ check-const-analysis:
 	@echo ================================================================
 	@echo RUNNING CONST ANALYSIS CHECK
 	@echo ================================================================
-	@./woodpecker --edg:no_warnings --csv-const-result=tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.c
+	@./woodpecker --csv-const-result=tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.c
 	@diff tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.const.csv
 	@rm tmp.const.csv
 
@@ -697,7 +704,7 @@ check-commandline-options: ./codethorn
 	@echo ================================================================
 	@echo RUNNING COMMAND LINE OPTION TESTS
 	@echo ================================================================
-	@./codethorn --edg:no_warnings --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --viz
+	@./codethorn --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --viz
 	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-deadcode:

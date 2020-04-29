@@ -7,6 +7,7 @@
 #include <BinaryLoader.h>
 #include <BinarySerialIo.h>
 #include <boost/noncopyable.hpp>
+#include <boost/regex.hpp>
 #include <Disassembler.h>
 #include <FileSystem.h>
 #include <Partitioner2/Function.h>
@@ -1141,6 +1142,36 @@ public:
     virtual void linkerCommand(const std::string &cmd) { settings_.loader.linker = cmd; }
     /** @} */
 
+    /** Property: Environment variable erasure names.
+     *
+     *  This property is a list of environment variable names that will be removed before launching a "run:" style specimen.
+     *
+     * @{ */
+    const std::vector<std::string> environmentEraseNames() const /*final*/ { return settings_.loader.envEraseNames; }
+    virtual void environmentEraseNames(const std::vector<std::string> &names) { settings_.loader.envEraseNames = names; }
+    /** @} */
+
+    /** Property: Environment variable erasure patterns.
+     *
+     *  This property is a list of regular expressions that will erase matching environment variable names before launching
+     *  a "run:" style specimen.
+     *
+     * @{ */
+    const std::vector<boost::regex> environmentErasePatterns() const /*final*/ { return settings_.loader.envErasePatterns; }
+    virtual void environmentErasePatterns(const std::vector<boost::regex> &res) { settings_.loader.envErasePatterns = res; }
+    /** @} */
+
+    /** Property: Environment variables to insert.
+     *
+     *  This property is a list of environment variables and values to insert before launching a "run:" style
+     *  specimen. Insertions always occur after all environment variable erasures have been processed.  Each string must
+     *  contain at least one equal sign ("="), the first of which separates the variable name from its value.
+     *
+     * @{ */
+    const std::vector<std::string> environmentInsertions() const /*final*/ { return settings_.loader.envInsert; }
+    virtual void environmentInsertions(const std::vector<std::string> &vars) { settings_.loader.envInsert = vars; }
+    /** @} */
+
     /** Property: Disassembler.
      *
      *  This property holds the disassembler to use whenever a new partitioner is created. If null, then the engine will choose
@@ -1203,12 +1234,30 @@ public:
     virtual void semanticMemoryParadigm(SemanticMemoryParadigm p) { settings_.partitioner.semanticMemoryParadigm = p; }
     /** @} */
 
-    /**  Property: Whether to follow ghost edges.
+    /** Property: Whether to follow ghost edges.
      *
-     *   If set, then "ghost" edges are followed during disassembly.  A ghost edge is a control flow edge from a branch
-     *   instruction where the partitioner has decided according to instruction semantics that the branch cannot be taken at
-     *   run time.  If semantics are disabled then ghost edges are always followed since its not possible to determine whether
-     *   an edge is a ghost edge.
+     *  A "ghost edge" is a control flow graph (CFG) edge that would be present if the CFG-building analysis looked only
+     *  at individual instructions, but would be absent when the analysis considers coarser units of code.  For instance,
+     *  consider the following x86 instructions:
+     *
+     * @code
+     *  1: mov eax, 0
+     *  2: cmp eax, 0
+     *  3: jne 5
+     *  4: nop
+     *  5: hlt
+     * @endcode
+     *
+     *  If the analysis looks only at instruction 3, then it appears to have two CFG successors: instructions 4 and 5. But if
+     *  the analysis looks at the first three instructions collectively it will ascertain that instruction 3 has an opaque
+     *  predicate, that the only valid CFG successor is instruction 4, and that the edge from 3 to 5 is a \"ghost\". In fact,
+     *  if there are no other incoming edges to these instructions, then instructions 1 through 4 will form a basic block with
+     *  the (unconditional) branch instruction in its interior.  The ability to look at larger units of code than single
+     *  instructions is controlled by the @ref usingSemantics property.
+     *
+     *  If this @ref followingGhostEdges property is true then ghost edges will be added back into the CFG as real edges,
+     *  which might force a basic block to end, as in this example, at the branch instruction and may attempt to disassemble
+     *  additional code by folowing all edges.
      *
      * @{ */
     bool followingGhostEdges() const /*final*/ { return settings_.partitioner.followingGhostEdges; }
@@ -1305,8 +1354,10 @@ public:
 
     /** Property: Whether to find dead code.
      *
-     *  If set, then the partitioner looks for code that is reachable by ghost edges after all other code has been found.  This
-     *  is different than @ref followingGhostEdges in that the former follows those edges immediately.
+     *  If ghost edges are being discovered (see @ref usingSemantics and @ref followingGhostEdges) and are not being inserted
+     *  into the global CFG, then the target address of the ghost edges might not be used as code addresses during the code
+     *  discovery phase.  This property, when true, will cause the target address of ghost edges to be used to discover additional
+     *  instructions even if they have no incoming CFG edges.
      *
      * @{ */
     bool findingDeadCode() const /*final*/ { return settings_.partitioner.findingDeadCode; }

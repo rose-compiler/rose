@@ -2520,12 +2520,13 @@ SgType::getAssociatedDeclaration() const
        // printf ("In HiddenListTraversal::getDeclarationAssociatedWithType(): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 
        // DQ (5/25/2013): Check if the declaration might have been deleted.
-          if (declaration->class_name() == "SgNode")
-             {
-               printf ("Found a case where the declaration = %p for the type = %p = %s has been deleted (returning NULL) \n",declaration,this,this->class_name().c_str());
-               declaration = NULL;
-             }
-       // ROSE_ASSERT(declaration->class_name() != "SgNode");
+          if (declaration->get_freepointer() != AST_FileIO::IS_VALID_POINTER()) {
+            printf("Found a pointer to a deleted node:\n");
+            printf(" - type = %p (%s)\n", this, this->class_name().c_str());
+            printf(" - decl = %p\n", declaration);
+            printf(" - name : %s\n", SageInterface::generateUniqueName(this, false).c_str());
+          }
+          ROSE_ASSERT(declaration->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
         }
 
 #if 0

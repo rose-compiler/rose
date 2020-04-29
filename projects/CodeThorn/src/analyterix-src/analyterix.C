@@ -319,7 +319,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     fiConstAnalysis.attachAstAttributes(labeler,"const-analysis-inout"); // not iolabeler
     if(csvConstResultFileName) {
       cout<<"INFO: generating const CSV file "<<option_prefix+csvConstResultFileName<<endl;
-      fiConstAnalysis.writeCvsConstResult(*variableIdMapping, option_prefix+csvConstResultFileName);
+      fiConstAnalysis.writeCvsConstResult(*variableIdMapping, (option_prefix+csvConstResultFileName).c_str());
     }
     if(option_annotate_source_code) {
       cout << "INFO: annotating analysis results as comments."<<endl;
@@ -687,7 +687,7 @@ int main(int argc, char* argv[]) {
   // required for Sawyer logger streams
   ROSE_INITIALIZE;
   CodeThorn::initDiagnostics();
-  CodeThorn::CommandLineOptions args;
+  //CodeThorn::CommandLineOptions args; must use provided args variable
 
   try {
     if(argc==1) {
@@ -751,7 +751,7 @@ int main(int argc, char* argv[]) {
     po::store(po::command_line_parser(argc, argv).options(desc).allow_unregistered().run(), args);
     po::notify(args);
 #else
-    args.parse(argc,argv,desc);
+    args.parseAllowUnregistered(argc,argv,desc);
 #endif
     if (args.isDefined("help")) {
       cout << "analyterix <filename> [OPTIONS]"<<endl;

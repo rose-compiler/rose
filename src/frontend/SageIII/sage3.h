@@ -64,11 +64,6 @@
 #endif
 
 
-#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-// DQ (5/28/2007): Added new AST Merge API
-#include "astMergeAPI.h"
-#endif
-
 // JJW 10-23-2007
 // Add possibility to include Valgrind header for memcheck
 #if ROSE_USE_VALGRIND
