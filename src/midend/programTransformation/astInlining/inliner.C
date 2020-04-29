@@ -278,7 +278,8 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 #endif
               SgInitializedName* in = isSgInitializedName(ai->get_parent());
               ROSE_ASSERT (in);
-              removeRedundantCopyInConstruction(in);
+              if (isSgInitializer(ai->get_operand()))
+                removeRedundantCopyInConstruction(in);
               lhs = dotexp->get_lhs_operand(); // Should be a var ref now
             }
             thisptr = new SgAddressOfOp(SgNULL_FILE, lhs);
