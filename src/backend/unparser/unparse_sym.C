@@ -18,7 +18,7 @@ using namespace std;
 void
 Unparse_Sym::unparseSymbol(SgSymbol* sym, SgUnparse_Info& info)
    {
-     ROSE_ASSERT(sym != NULL);
+     ASSERT_not_null(sym);
     
      switch(sym->variant())
         {
