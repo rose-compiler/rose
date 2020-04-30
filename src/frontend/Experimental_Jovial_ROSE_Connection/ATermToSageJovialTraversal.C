@@ -6118,11 +6118,8 @@ ATbool ATermToSageJovialTraversal::traverse_GeneralFormula(ATerm term, SgExpress
    SgFunctionCallExp* func_call = nullptr;
 
    if (ATmatch(term, "GeneralFormula(<str>)", &variable)) {
-#if 0
-      expr_enum = Jovial_ROSE_Translation::e_referenceExpression;
-      expr = new SgUntypedReferenceExpression(expr_enum, variable);
+      expr = SageBuilder::buildVarRefExp(variable, SageBuilder::topScopeStack());
       setSourcePosition(expr, term);
-#endif
    } else if (ATmatch(term, "GeneralFormula(<term>)", &t_func_const_or_var)) {
       if (traverse_FunctionCall(t_func_const_or_var, func_call)) {
          // MATCHED FunctionCall
@@ -6757,23 +6754,39 @@ ATbool ATermToSageJovialTraversal::traverse_NextFunction(ATerm term, SgFunctionC
 #endif
 
    ATerm t_argument, t_increment;
-   SgExpression * sg_next_arg, * sg_increment;
+   SgExpression * next_arg, * increment;
+   SgType* return_type = nullptr;
 
    func_call = nullptr;
 
    if (ATmatch(term, "NextFunction(<term>, <term>)", &t_argument, &t_increment)) {
-      cerr << "WARNING UNIMPLEMENTED: NextFunction\n";
-      if (traverse_GeneralFormula(t_argument, sg_next_arg)) {
-         // MATCHED GeneralFormula
+      if (traverse_GeneralFormula(t_argument, next_arg)) {
+         // NextArg will most likely be a variable of a PointerType or a StatusType
+         // GeneralFormula will catch all the variables of either type here
+         ROSE_ASSERT(next_arg);
+         return_type = next_arg->get_type();
       }
-      else if (traverse_StatusFormula(t_argument, sg_next_arg)) {
-         // MATCHED StatusFormula
+      else if (traverse_StatusFormula(t_argument, next_arg)) {
+         // I don't think it will ever get here. The only way for the parser to arrive
+         // here is if it uses a StatusConstant as the argument and
+         // StatusConstant doesn't seem to be applicable.
+         cerr << "WARNING UNIMPLEMENTED: NextFunction with a status constant\n";
+         ROSE_ASSERT(false);
       } else return ATfalse;
 
-      if (traverse_NumericFormula(t_increment, sg_increment)) {
+      if (traverse_NumericFormula(t_increment, increment)) {
          // MATCHED NumericFormula
       } else return ATfalse;
    } else return ATfalse;
+
+   // build the parameter list
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   params->append_expression(next_arg);
+   params->append_expression(increment);
+
+   func_call = SageBuilder::buildFunctionCallExp("NEXT", return_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
+   setSourcePosition(func_call, term);
 
    return ATtrue;
 }

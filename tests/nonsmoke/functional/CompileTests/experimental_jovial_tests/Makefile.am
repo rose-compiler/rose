@@ -10,12 +10,12 @@ JOVIAL_TESTCODES = \
  tiny.jov                               \
  int_conversion.jov                     \
  item_desc_conversion.jov               \
- status_enumval.jov                     \
  typename_conv.jov                      \
  5_2_logical_continuation_a.jov         \
  5_2_logical_continuation_b.jov         \
  6_1_ptr_dereference.jov
 
+# status_enumval.jov                     \
 # 1_2_2_non-nested-subroutine_a.jov      \
 # 1_2_2_non-nested-subroutine_b.jov      \
 # 1_2_2_procedure-module_a.jov           \
@@ -58,6 +58,8 @@ JOVIAL_PARSER_TESTCODES = \
  5_1_1_integer-primary.jov              \
  5_1_1_integer-term.jov                 \
  5_2_1_relational_expressions_a.jov     \
+ 6_3_2_next_function_pointer.jov        \
+ 6_3_2_next_function_status.jov         \
  9_0_directives.jov                     \
  rose-issue-1507.jov                    \
  rose-issue-1516.jov                    \
