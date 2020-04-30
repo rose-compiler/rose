@@ -131,6 +131,7 @@ CODETHORN_HEADER_FILES=\
   PASolver1.h \
   PointerAnalysisInterface.h \
   PragmaHandler.h \
+  PredefinedSemanticFunctions.h \
   ProgramAbstractionLayer.h \
   ProgramInfo.h \
   ProgramLocationsReport.h \
@@ -238,6 +239,7 @@ CODETHORN_SOURCE_FILES=\
   PASolver1.C \
   PointerAnalysisInterface.C \
   PragmaHandler.C \
+  PredefinedSemanticFunctions.C \
   ProgramAbstractionLayer.C \
   ProgramInfo.C \
   ProgramLocationsReport.C \

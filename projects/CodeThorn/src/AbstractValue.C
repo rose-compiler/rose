@@ -21,6 +21,7 @@ using namespace CodeThorn;
 using namespace CodeThorn;
 
 VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
+bool AbstractValue::strictChecking=true;
 
 istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   value.fromStream(is);
@@ -190,18 +191,23 @@ bool AbstractValue::isBot() const {return valueType==AbstractValue::BOT;}
 bool AbstractValue::isConstInt() const {return valueType==AbstractValue::INTEGER;}
 bool AbstractValue::isConstPtr() const {return (valueType==AbstractValue::PTR);}
 bool AbstractValue::isPtr() const {return (valueType==AbstractValue::PTR);}
+bool AbstractValue::isRef() const {return (valueType==AbstractValue::REF);}
 bool AbstractValue::isNullPtr() const {return valueType==AbstractValue::INTEGER && intValue==0;}
 
 long AbstractValue::hash() const {
   if(isTop()) return LONG_MAX;
   else if(isBot()) return LONG_MIN;
   else if(isConstInt()) return getIntValue();
-  else if(isPtr()) {
+  else if(isPtr()||isRef()) {
     VariableId varId=getVariableId();
     ROSE_ASSERT(varId.isValid());
     return varId.getIdCode()+getIntValue();
   }
-  else throw CodeThorn::Exception("Error: AbstractValue hash: unknown value.");
+  else {
+    if(strictChecking)
+      throw CodeThorn::Exception("Error: AbstractValue hash: unknown value.");
+    return LONG_MAX<<1;
+  }
 }
 
 AbstractValue AbstractValue::operatorNot() {
@@ -507,7 +513,11 @@ string AbstractValue::toLhsString(CodeThorn::VariableIdMapping* vim) const {
     return ss.str();
   }
   default:
-    throw CodeThorn::Exception("Error: AbstractValue::toLhsString operation failed. Unknown abstraction type.");
+    if(strictChecking) {
+      throw CodeThorn::Exception("Error: AbstractValue::toLhsString operation failed. Unknown abstraction type.");
+    } else {
+      return "<<ERROR>>";
+    }
   }
 }
 
@@ -532,7 +542,11 @@ string AbstractValue::toRhsString(CodeThorn::VariableIdMapping* vim) const {
     return ss.str();
   }
   default:
-    throw CodeThorn::Exception("Error: AbstractValue::toRhsString operation failed. Unknown abstraction type.");
+    if(strictChecking) {
+      throw CodeThorn::Exception("Error: AbstractValue::toRhsString operation failed. Unknown abstraction type.");
+    } else {
+      return "<<ERROR>>";
+    }
   }
 }
 
@@ -544,7 +558,11 @@ string AbstractValue::arrayVariableNameToString(CodeThorn::VariableIdMapping* vi
     return ss.str();
   }
   default:
-    throw CodeThorn::Exception("Error: AbstractValue::arrayVariableNameToString operation failed. Unknown abstraction type.");
+    if(strictChecking) {
+      throw CodeThorn::Exception("Error: AbstractValue::arrayVariableNameToString operation failed. Unknown abstraction type.");
+    } else {
+      return "<<ERROR>>";
+    }
   }
 }
 
@@ -575,7 +593,11 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
       //    }
   }
   default:
-    throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
+    if(strictChecking) {
+      throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
+    } else {
+      return "<<ERROR>>";
+    }
   }
 }
 
@@ -598,7 +620,11 @@ string AbstractValue::toString() const {
     return ss.str();
   }
   default:
-    throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
+    if(strictChecking) {
+      throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
+    } else {
+      return "<<ERROR>>";
+    }
   }
 }
 
@@ -695,9 +721,9 @@ AbstractValue AbstractValue::operatorUnaryMinus() {
     tmp=*this;break; // keep information that it is undefined
   case AbstractValue::BOT: tmp=Bot();break;
   case AbstractValue::PTR:
-    throw CodeThorn::Exception("Error: AbstractValue operator unary minus on pointer value.");
+    return topOrError("Error: AbstractValue operator unary minus on pointer value.");
   case AbstractValue::REF:
-    throw CodeThorn::Exception("Error: AbstractValue operator unary minus on reference value.");
+    return topOrError("Error: AbstractValue operator unary minus on reference value.");
     //  default case intentionally not present to force all values to be handled explicitly
   }
   return tmp;
@@ -719,11 +745,15 @@ AbstractValue AbstractValue::operatorAdd(AbstractValue& a,AbstractValue& b) {
     val.intValue+=a.intValue;
     return val;
   } else if(a.isPtr() && b.isPtr()) {
-    throw CodeThorn::Exception("Error: invalid operands of type pointer to binary ‘operator+’"+a.toString()+"+"+b.toString());
+    if(strictChecking)
+      throw CodeThorn::Exception("Error: invalid operands of type pointer to binary ‘operator+’"+a.toString()+"+"+b.toString());
+    return createTop();
   } else if(a.isConstInt() && b.isConstInt()) {
     return a.getIntValue()+b.getIntValue();
   } else {
-    throw CodeThorn::Exception("Error: undefined behavior in '+' operation: "+a.toString()+","+b.toString());
+    if(strictChecking)
+      throw CodeThorn::Exception("Error: undefined behavior in '+' operation: "+a.toString()+","+b.toString());
+    return createTop();
   }
 }
 AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
@@ -748,13 +778,26 @@ AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
     val.intValue-=b.intValue;
     return val;
   } else if(a.isConstInt() && b.isPtr()) {
-    throw CodeThorn::Exception("Error: forbidden operation in '-' operation. Attempt to subtract pointer from integer.");
+    if(strictChecking)
+      throw CodeThorn::Exception("Error: forbidden operation in '-' operation. Attempt to subtract pointer from integer.");
+    return createTop();
   } else if(a.isConstInt() && b.isConstInt()) {
     return a.getIntValue()-b.getIntValue();
   } else {
-    throw CodeThorn::Exception("Error: undefined behavior in binary '-' operation.");
+    if(strictChecking)
+      throw CodeThorn::Exception("Error: undefined behavior in binary '-' operation.");
+    return createTop();
   }
 }
+
+AbstractValue AbstractValue::topOrError(std::string errorMsg) const {
+  if(strictChecking) {
+    throw CodeThorn::Exception(errorMsg);
+  } else {
+    return createTop();
+  }
+}
+
 AbstractValue AbstractValue::operatorMul(AbstractValue& a,AbstractValue& b) {
   if(a.isTop() || b.isTop())
     return Top();
