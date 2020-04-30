@@ -13336,7 +13336,7 @@ SgCtorInitializerList::post_construction_initialization()
         }
 
      // Liao, 2020/4/29, move these two steps from SageBuilder::buildNondefiningMemberFunctionDeclaration() here
-     this->set_definingDeclaration(ctor);
+     this->set_definingDeclaration(this);
      this->set_firstNondefiningDeclaration(this);
 #if 0
   // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
