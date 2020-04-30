@@ -99,6 +99,8 @@ public:
         EdgeVisitOrder edgeVisitOrder;                  /**< Order in which to visit edges. */
         bool trackingCodeCoverage;                      /**< If set, track which block addresses are reached. */
         std::vector<rose_addr_t> ipRewrite;             /**< An even number of from,to pairs for rewriting the insn ptr reg. */
+        Sawyer::Optional<boost::chrono::duration<double> > smtTimeout; /**< Max seconds allowed per SMT solve call. */
+        size_t maxExprSize;                             /**< Maximum symbolic expression size before replacement. */
 
         // Null dereferences
         struct NullDeref {
@@ -117,7 +119,7 @@ public:
             : searchMode(SEARCH_SINGLE_DFS), maxVertexVisit((size_t)-1), maxPathLength(200), maxCallDepth((size_t)-1),
               maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true), solverName("best"),
               memoryParadigm(LIST_BASED_MEMORY), processFinalVertex(false), ignoreSemanticFailure(false),
-              kCycleCoefficient(0.0), edgeVisitOrder(VISIT_NATURAL), trackingCodeCoverage(true) {}
+              kCycleCoefficient(0.0), edgeVisitOrder(VISIT_NATURAL), trackingCodeCoverage(true), maxExprSize(UNLIMITED) {}
     };
 
     /** Statistics from path searching. */

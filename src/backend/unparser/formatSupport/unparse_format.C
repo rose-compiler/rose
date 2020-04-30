@@ -39,7 +39,7 @@ UnparseFormat::UnparseFormat( ostream* nos, UnparseFormatHelp *inputFormatHelp)
 UnparseFormat::~UnparseFormat()
    {
   // DQ (3/18/2006): I think we can assert this
-     ROSE_ASSERT(os != NULL);
+     ASSERT_not_null(os);
      if (os != NULL)
         {
        // Add a new line to avoid warnings from many compilers about lack of a final CR in the generated code
@@ -256,7 +256,7 @@ UnparseFormat& UnparseFormat::operator << ( string out)
   // for ( ; p != p2; p++)
      for ( ; p < p2; p++)
         {
-          ROSE_ASSERT(p != NULL);
+          ASSERT_not_null(p);
        // printf ("p = %p p2 = %p *p = %c \n",p,p2,*p);
 
      // Liao, 5/16/2009
@@ -1008,7 +1008,7 @@ UnparseOrigFormat::special_cases(SgLocatedNode* node)
           SgInitializedNamePtrList::iterator iter = initname_list.begin();
           if (iter != initname_list.end())
              {
-               ROSE_ASSERT ((*iter) != NULL);
+               ASSERT_not_null((*iter));
                SgType* tmp_type = (*iter)->get_type();
                assert(tmp_type != NULL);
 
