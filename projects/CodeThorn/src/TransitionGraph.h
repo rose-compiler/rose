@@ -75,8 +75,6 @@ namespace CodeThorn {
     //! deprecated
     void reduceEStates(std::set<const EState*> toReduce);
     void reduceEState(const EState* estate);
-    //! reduces estates. Adds edge-annotation PATH. Structure preserving by remapping existing edges.
-    void reduceEStates2(std::set<const EState*> toReduce);
     void reduceEState2(const EState* estate); // used for semantic folding
     void reduceEStates3(std::function<bool(const EState*)> predicate); // used for semantic folding
     TransitionPtrSet inEdges(const EState* estate);

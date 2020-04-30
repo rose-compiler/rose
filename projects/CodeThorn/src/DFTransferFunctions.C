@@ -41,6 +41,29 @@ void DFTransferFunctions::transferCondition(Edge edge, Lattice& element) {
 static inline
 VariableId withoutVariable() { return VariableId(); }
 
+static inline 
+VariableId getVariableId(CodeThorn::VariableIdMapping* vmap, SgNode* n)
+{
+  ROSE_ASSERT(vmap && n);
+  
+  if (SgVarRefExp* ref = isSgVarRefExp(n))
+    return vmap->variableId(ref);
+    
+  // \todo handle x->field expressions    
+  if(SgArrowExp* arrow = isSgArrowExp(n)) 
+    return getVariableId(vmap, arrow->get_lhs_operand());
+  
+  // \todo handle this expression
+  if(isSgThisExp(n)) 
+    return withoutVariable();
+    
+  cerr<<"Transfer: unknown lhs of function call result assignment."<<endl;
+  cerr<<n->unparseToString()<<endl;
+  exit(1);
+  
+  //~ return withoutVariable();
+}
+
 void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   ROSE_ASSERT(getLabeler());
   //cout<<"transfer @label:"<<lab<<endl;
@@ -79,18 +102,10 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     if(isSgExprStatement(node)) {
       node=SgNodeHelper::getExprStmtChild(node);
     }
-    SgVarRefExp* lhsVar=0;
     // case x=f(y);
     if(isSgAssignOp(node)||isSgCompoundAssignOp(node)) {
-      if(SgVarRefExp* lhs=isSgVarRefExp(SgNodeHelper::getLhs(node))) {
-        lhsVar=lhs;
-      } else {
-        cerr<<"Transfer: unknown lhs of function call result assignment."<<endl;
-        cerr<<node->unparseToString()<<endl;
-        exit(1);
-      }
+      VariableId varId = getVariableId(getVariableIdMapping(), SgNodeHelper::getLhs(node));
       SgNode* rhs=SgNodeHelper::getRhs(node);
-      VariableId varId = getVariableIdMapping()->variableId(lhsVar);
       while(isSgCastExp(rhs))
         rhs=SgNodeHelper::getFirstChild(rhs);
       if(SgFunctionCallExp* funCall=isSgFunctionCallExp(rhs)) {
@@ -99,6 +114,11 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
       }
       if(SgConstructorInitializer* ctorCall=isSgConstructorInitializer(rhs)) {
         transferConstructorCallReturn(lab, varId, ctorCall, element);
+        return;
+      }
+      if(SgNewExp* newExp=isSgNewExp(rhs))
+      {
+        transferConstructorCallReturn(lab, varId, newExp->get_constructor_args(), element);
         return;
       }
       cerr<<"Transfer: no function call on rhs of assignment."<<endl;
@@ -116,12 +136,6 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
       VariableId lhsVarId=getVariableIdMapping()->variableId(varDecl);
       ROSE_ASSERT(lhsVarId.isValid());
       transferFunctionCallReturn(lab, lhsVarId, funCall, element);
-    } else if(SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(node)) {
-      SgVariableDeclaration* varDecl=isSgVariableDeclaration(node);
-      ROSE_ASSERT(varDecl);
-      VariableId lhsVarId=getVariableIdMapping()->variableId(varDecl);
-      ROSE_ASSERT(lhsVarId.isValid());
-      transferConstructorCallReturn(lab, lhsVarId, callinfo.ctorInitializer(), element);
     } else if(isSgReturnStmt(node)) {
       // special case of return f(...);
       node=SgNodeHelper::getFirstChild(node);
@@ -133,7 +147,14 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
         ROSE_ASSERT(callinfo && callinfo.ctorInitializer());
         transferConstructorCallReturn(lab, withoutVariable(), callinfo.ctorInitializer(), element);
       }
-    } else {
+    } else if(SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(node)) {
+      SgVariableDeclaration* varDecl=isSgVariableDeclaration(node);
+      ROSE_ASSERT(varDecl);
+      VariableId lhsVarId=getVariableIdMapping()->variableId(varDecl);
+      ROSE_ASSERT(lhsVarId.isValid());
+      transferConstructorCallReturn(lab, lhsVarId, callinfo.ctorInitializer(), element);
+    } 
+    else {
       if(getSkipUnknownFunctionCalls()) {
         // ignore unknown function call (requires command line option --ignore-unknown-functions)
       } else {

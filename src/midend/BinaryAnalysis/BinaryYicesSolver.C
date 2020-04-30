@@ -36,6 +36,11 @@ YicesSolver::reset() {
     varsForSets_.clear();
 }
 
+void
+YicesSolver::timeout(boost::chrono::duration<double> seconds) {
+    mlog[WARN] <<"Yices timeout value is ignored\n";
+}
+
 // class method
 unsigned
 YicesSolver::availableLinkages()

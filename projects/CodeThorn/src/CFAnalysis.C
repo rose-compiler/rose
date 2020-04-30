@@ -1733,7 +1733,7 @@ FunctionCallTargetSet CFAnalysis::determineFunctionDefinition4(SgFunctionCallExp
 
 FunctionCallTargetSet CFAnalysis::determineFunctionDefinition5(Label lbl, SgLocatedNode* astnode) {
   SAWYER_MESG(logger[TRACE])<<"CFAnalysis::determineFunctionDefinition4:"<<astnode->unparseToString()<<": ";
-  ROSE_ASSERT(getFunctionCallMapping());
+  ROSE_ASSERT(getFunctionCallMapping2());
   FunctionCallTargetSet res=getFunctionCallMapping2()->resolveFunctionCall(lbl);
 #if 1
   if(res.size()>0) {

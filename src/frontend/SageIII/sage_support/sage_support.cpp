@@ -4039,7 +4039,18 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // Note: The `-traditional' and `-undef' flags are supplied to cpp by default [when used with cpp is used by gfortran],
        // to help avoid unpleasant surprises.  So to simplify use of cpp and make it more consistant with gfortran we use
        // gfortran to call cpp.
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
           fortran_C_preprocessor_commandLine.push_back(BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
+#elif BACKEND_FORTRAN_IS_PGI_COMPILER
+          fortran_C_preprocessor_commandLine.push_back(BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
+#elif BACKEND_FORTRAN_IS_INTEL_COMPILER
+#if ROSE_USE_INTEL_FPP
+          fortran_C_preprocessor_commandLine.push_back(INTEL_FPP_PATH);
+#else
+          cerr << "Intel Fortran preprocessor not available! " << endl;
+          ROSE_ASSERT(false);
+#endif
+#endif
 
        // DQ (10/23/2010): Added support for "-D" options (this will trigger CPP preprocessing, eventually, but this is just to support the syntax checking).
        // Note that we have to do this before calling the C preprocessor and not with the syntax checking.
@@ -4061,7 +4072,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // add option to specify preprocessing only
 #if BACKEND_FORTRAN_IS_GNU_COMPILER
           fortran_C_preprocessor_commandLine.push_back("-E");
-#else
+#elif BACKEND_FORTRAN_IS_PGI_COMPILER
      // Pei-Hung 12/09/2019 This is for PGI Fortran compiler, add others if necessary
           fortran_C_preprocessor_commandLine.push_back("-Mcpp");
 
