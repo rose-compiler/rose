@@ -337,10 +337,13 @@ ATbool traverse_LocFunction          (ATerm term, SgFunctionCallExp* &func_call)
 ATbool traverse_NextFunction         (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.4 BYTE FUNCTION
-ATbool traverse_ByteFunction(ATerm term, SgFunctionCallExp* &func_call);
+ATbool traverse_ByteFunction         (ATerm term, SgFunctionCallExp* &func_call);
+
+// 6.3.5 SHIFT FUNCTION
+ATbool traverse_ShiftFunction        (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.7 SIZE FUNCTION
-ATbool traverse_SizeFunction(ATerm term, SgFunctionCallExp* &func_call);
+ATbool traverse_SizeFunction         (ATerm term, SgFunctionCallExp* &func_call);
 
 // 6.3.11 STATUS INVERSE FUNCTIONS
 ATbool traverse_StatusInverseFunction(ATerm term, SgFunctionCallExp* &func_call);

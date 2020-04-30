@@ -6676,9 +6676,11 @@ ATbool ATermToSageJovialTraversal::traverse_IntrinsicFunctionCall(ATerm term, Sg
    else if (traverse_ByteFunction(term, func_call)) {
       // MATCHED ByteFunction
    }
+   else if (traverse_ShiftFunction(term, func_call)) {
+      // MATCHED ShiftFunction
+   }
 
    //   BitFunction                 -> IntrinsicFunctionCall
-   //   ShiftFunction               -> IntrinsicFunctionCall
    //   AbsFunction                 -> IntrinsicFunctionCall
    //   SignFunction                -> IntrinsicFunctionCall
 
@@ -6765,6 +6767,7 @@ ATbool ATermToSageJovialTraversal::traverse_NextFunction(ATerm term, SgFunctionC
          // GeneralFormula will catch all the variables of either type here
          ROSE_ASSERT(next_arg);
          return_type = next_arg->get_type();
+         ROSE_ASSERT(return_type);
       }
       else if (traverse_StatusFormula(t_argument, next_arg)) {
          // I don't think it will ever get here. The only way for the parser to arrive
@@ -6819,6 +6822,57 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionC
          // MATCHED NumericFormula
       } else return ATfalse;
    } else return ATfalse;
+
+   return ATtrue;
+}
+
+//========================================================================================
+// 6.3.5 SHIFT FUNCTIONS
+//----------------------------------------------------------------------------------------
+ATbool ATermToSageJovialTraversal::traverse_ShiftFunction(ATerm term, SgFunctionCallExp* &func_call)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_ShiftFunction: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_direction, t_formula, t_count;
+   SgExpression * formula, * shift_count;
+   std::string func_name;
+   SgType* return_type = nullptr;
+
+   func_call = nullptr;
+
+   if (ATmatch(term, "ShiftFunction(<term>, <term>,<term>)", &t_direction, &t_formula, &t_count)) {
+      if (ATmatch(t_direction, "SHIFTL")) {
+         // MATCHED ShiftDirection Left
+         func_name = "SHIFTL";
+      }
+      else if (ATmatch(t_direction, "SHIFTR")) {
+         // MATCHED ShiftDirection Right
+         func_name = "SHIFTR";
+      } else return ATfalse;
+
+      if (traverse_BitFormula(t_formula, formula)) {
+         // MATCHED BitFormula
+
+         // The return type is the same as the type of the BitFormula argument
+         return_type = formula->get_type();
+         ROSE_ASSERT(return_type);
+      } else return ATfalse;
+
+      if (traverse_NumericFormula(t_count, shift_count)) {
+         // MATCHED NumericFormula
+      } else return ATfalse;
+   } else return ATfalse;
+
+   // build the parameter list
+   SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
+   params->append_expression(formula);
+   params->append_expression(shift_count);
+
+   func_call = SageBuilder::buildFunctionCallExp(func_name, return_type, params, SageBuilder::topScopeStack());
+   ROSE_ASSERT(func_call);
+   setSourcePosition(func_call, term);
 
    return ATtrue;
 }

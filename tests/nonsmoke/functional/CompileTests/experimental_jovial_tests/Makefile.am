@@ -11,13 +11,14 @@ JOVIAL_TESTCODES = \
  int_conversion.jov                     \
  item_desc_conversion.jov               \
  typename_conv.jov                      \
+ 1_2_2_non-nested-subroutine_a.jov      \
+ 1_2_2_non-nested-subroutine_b.jov      \
  5_2_logical_continuation_a.jov         \
  5_2_logical_continuation_b.jov         \
- 6_1_ptr_dereference.jov
+ 6_1_ptr_dereference.jov                \
+ 6_3_5_shift_function.jov
 
 # status_enumval.jov                     \
-# 1_2_2_non-nested-subroutine_a.jov      \
-# 1_2_2_non-nested-subroutine_b.jov      \
 # 1_2_2_procedure-module_a.jov           \
 # 1_2_2_procedure-module_b.jov           \
 # 1_2_2_procedure-module_e.jov           \
