@@ -18,8 +18,8 @@ void checkSpotOptions(LTLOptions& ltlOpt, ParProOptions& parProOpt) {
     // Check if chosen options are available
 #ifndef HAVE_SPOT
     // display error message and exit in case SPOT is not avaiable, but related options are selected
-  if (ltlOptions.activeOptionsRequireSPOTLibrary()
-      || parProOptions.activeOptionsRequireSPOTLibrary()) {
+  if (ltlOpt.activeOptionsRequireSPOTLibrary()
+      || parProOpt.activeOptionsRequireSPOTLibrary()) {
     cerr << "Error: Options selected that require the SPOT library, however SPOT was not selected during configuration." << endl;
     exit(1);
   }
