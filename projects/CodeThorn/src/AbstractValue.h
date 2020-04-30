@@ -77,6 +77,7 @@ class AbstractValue {
   // currently identical to isPtr() but already used where one unique value is required
   bool isConstPtr() const;
   bool isPtr() const;
+  bool isRef() const;
   bool isNullPtr() const;
   AbstractValue operatorNot();
   AbstractValue operatorUnaryMinus(); // unary minus
@@ -148,7 +149,9 @@ class AbstractValue {
   static void setVariableIdMapping(CodeThorn::VariableIdMappingExtended* varIdMapping);
   static bool approximatedBy(AbstractValue val1, AbstractValue val2);
   static AbstractValue combine(AbstractValue val1, AbstractValue val2);
+  static bool strictChecking; // if turned off, some error conditions are not active, but the result remains sound.
  private:
+  AbstractValue topOrError(std::string) const;
   ValueType valueType;
   CodeThorn::VariableId variableId;
   // union required

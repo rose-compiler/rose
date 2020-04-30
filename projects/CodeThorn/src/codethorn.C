@@ -88,7 +88,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.11.9";
+const std::string versionString="1.12.0";
 
 // handler for generating backtrace
 void handler(int sig) {
@@ -414,6 +414,7 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     ctOpt.contextSensitive=true;
     ctOpt.normalizeAll=true;
     ctOpt.abstractionMode=1;
+    AbstractValue::strictChecking=false;
     break;
   case 2:
     ctOpt.explicitArrays=true;
@@ -424,6 +425,7 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     ctOpt.contextSensitive=true;
     ctOpt.normalizeAll=true;
     ctOpt.abstractionMode=1;
+    AbstractValue::strictChecking=false;
     break;
   case 3:
     ctOpt.explicitArrays=true;
@@ -434,6 +436,18 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     ctOpt.contextSensitive=true;
     ctOpt.normalizeAll=true;
     ctOpt.abstractionMode=1;
+    AbstractValue::strictChecking=false;
+    break;
+  case 4:
+    ctOpt.explicitArrays=true;
+    ctOpt.inStateStringLiterals=false;
+    ctOpt.ignoreUnknownFunctions=true;
+    ctOpt.ignoreFunctionPointers=false;
+    ctOpt.stdFunctions=false;
+    ctOpt.contextSensitive=true;
+    ctOpt.normalizeAll=true;
+    ctOpt.abstractionMode=1;
+    AbstractValue::strictChecking=true;
     break;
   case 11:
     ctOpt.explicitArrays=true;
