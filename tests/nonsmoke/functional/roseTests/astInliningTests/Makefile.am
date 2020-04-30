@@ -49,7 +49,8 @@ inlineEverything_specimens =			\
 
 #Liao, new set of tests with C++11 lambda expressions, not yet supported
 inlineEverything_cpp11_specimens =			\
-        simplest_raja.C
+        simplest_raja.C \
+	simplest_raja_v2.C
 
 EXTRA_DIST += $(inlineEverything_specimens) inlineEverything.conf
 
