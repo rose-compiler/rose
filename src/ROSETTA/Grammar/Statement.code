@@ -13335,6 +13335,10 @@ SgCtorInitializerList::post_construction_initialization()
           set_endOfConstruct(endingPosition);
         }
 
+     // Liao, 2020/4/29, borrow these two steps from SageBuilder::buildNondefiningMemberFunctionDeclaration() here
+     // This is necessary to fix AST copy of member function declarations. The copy does not set defining declaration.
+     this->set_definingDeclaration(this);
+     this->set_firstNondefiningDeclaration(this);
 #if 0
   // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
      printf ("In SgCtorInitializerList::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
