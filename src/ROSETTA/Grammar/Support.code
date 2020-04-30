@@ -1974,7 +1974,7 @@ HEADER_BASECLASS_MODIFIER_END
 HEADER_ADA_TYPE_CONSTRAINT_START
           SgAdaTypeConstraint (const SgAdaTypeConstraint& X);
           SgAdaTypeConstraint& operator= (const SgAdaTypeConstraint& X);
-          virtual std::string displayString() const { ROSE_ASSERT(false); };
+          virtual std::string displayString() const { ASSERT_not_reachable("Pirkelbaur 2020-04-02"); };
 HEADER_ADA_TYPE_CONSTRAINT_END
 
 
