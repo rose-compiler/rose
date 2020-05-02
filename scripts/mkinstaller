@@ -22,11 +22,11 @@ $Interpreter ||= "/usr/bin/perl";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
-$mkinstaller_ver_build = "0";
-$mkinstaller_ver_patch = "2";
-$mkinstaller_ver_name  = "2.6.0.2";
-$mkinstaller_ver_time  = "27Apr2020,18:36:43z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.0.2 - 27Apr2020,18:36:43z";
+$mkinstaller_ver_build = "1";
+$mkinstaller_ver_patch = "";
+$mkinstaller_ver_name  = "2.6.1";
+$mkinstaller_ver_time  = " 1May2020,03:15:07z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.1 -  1May2020,03:15:07z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
@@ -218,6 +218,8 @@ if ($valueOfDebugVar ne "") {
    my %dirPathnames                    = ( );
    my @dirPathnames                    = ( );
    my $dirPathnameCount                = 0;
+   my %exclusions                      = ( );
+   my @exclusions                      = ( );
    my %fileBasenames                   = ( );
    my @fileBasenames                   = ( );
    my $fileBasenameCount               = 0;
@@ -233,6 +235,7 @@ if ($valueOfDebugVar ne "") {
    my %givenPathnames                  = ( );
    my @givenPathnames                  = ( );
    my $givenStdNames                   = 0;
+   my $haveExclusions                  = 0;
    my $here                            = getWorkingDirectory();
    my $HWname                          = "";
    my $intermediateName                = "";
@@ -804,6 +807,58 @@ if ($valueOfDebugVar ne "") {
 
                           && do {
                              $followSymlinks = 1;
+                             last parseArgs;
+                          };
+
+                       /^--exclude=?$/
+
+                          && do {
+                             my $optName = $1;
+                             print STDERR "mkinstaller: error: missing argument to $optName option\n";
+                             cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                             close DBGOUT if $dbgOutToPathname ne "";
+                             exit 1;
+                          };
+
+                       /^(--exclude)=(.+)$/
+
+                          && do {
+                             my $optName     = $1;
+                             my $given       = $2;
+                             my $globPattern = unquote($given);
+                             print DBGOUT "mkinstaller:    aka. $optName option\n" if $debugging;
+                             print DBGOUT "mkinstaller:    with [$globPattern]\n" if $debugging;
+                             if ($globPattern eq "") {
+                                print STDERR "mkinstaller: error: empty argument to $optName option\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                                close DBGOUT if $dbgOutToPathname ne "";
+                                exit 1;
+                             }
+                             my $bn          = basename($globPattern);
+                             if ($globPattern ne $bn) {
+                                print STDERR "mkinstaller: error: invalid argument(=\"".$globPattern."\") to ".$optName." option\n";
+                                print STDERR "mkinstaller: ...pattern must be simple; without directory components\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                                close DBGOUT if $dbgOutToPathname ne "";
+                                exit 1;
+                             }
+                             my $pattern     = translateGlobPatternToRegExp($globPattern);
+                             if ($pattern eq "") {
+                                print STDERR "mkinstaller: error: invalid argument(=\"".$globPattern."\") to ".$optName." option\n";
+                                print STDERR "mkinstaller: ...\"".$globPattern."\" is not a valid globbing pattern\n";
+                                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                                close DBGOUT if $dbgOutToPathname ne "";
+                                exit 1;
+                             }
+                             if ( ! exists $exclusions{$pattern}) {
+                                my $idx               = $#exclusions + 1;
+                                $exclusions[$idx]     = $pattern;
+                                $exclusions{$pattern} = $idx;
+                                $haveExclusions       = 1;
+                             }
+                             else {
+                                print STDERR "mkinstaller: note: redundant ".$optName."=".$given." is ignored\n";
+                             }
                              last parseArgs;
                           };
 
@@ -2978,7 +3033,9 @@ if ($valueOfDebugVar ne "") {
          $genSHA        = 0;
          print STDERR "mkinstaller: warning: can't generate a hash file\n";
       }
-      print STDERR "mkinstaller: ...using \"".nativePathname($use_hasher)."\"\n" if (1 <= $verbosityLevel);
+      if ($use_hasher ne "") {
+         print STDERR "mkinstaller: ...using \"".nativePathname($use_hasher)."\"\n" if (1 <= $verbosityLevel);
+      }
    }
 
    #----------------------------------------------------------------------------
@@ -3693,9 +3750,9 @@ if ($valueOfDebugVar ne "") {
                   print DBGOUT "mkinstaller:       \"".nativePathname($pathname)."\"\n" if $debugging;
                }
                if (opendir(DIR,"$pathname")) {
-                  while (defined($tmpName1 = readdir(DIR))) {
-                     if (($tmpName1 ne "" ) && ($tmpName1 ne ".") && ($tmpName1 ne "..")) {
-                        if (($tmpName1 =~ /^bin$/i) || ($tmpName1 =~ /^lib$/i) || ($tmpName1 =~ /^lib64$/i) || ($tmpName1 =~ /^include$/i)) {
+                  while (defined($tmpName3 = readdir(DIR))) {
+                     if (($tmpName3 ne "" ) && ($tmpName3 ne ".") && ($tmpName3 ne "..")) {
+                        if (($tmpName3 =~ /^bin$/i) || ($tmpName3 =~ /^lib$/i) || ($tmpName3 =~ /^lib64$/i) || ($tmpName3 =~ /^include$/i)) {
                            $foundOne          = 1;
                            if ($bn =~ /^lib$/i) {
                               $libDirBasename = "lib";
@@ -3712,9 +3769,9 @@ if ($valueOfDebugVar ne "") {
                if ($foundOne) {
                   print DBGOUT "mkinstaller:          has a subdir with a standard basename\n" if $debugging;
                   if (opendir(DIR,"$pathname")) {
-                     while (defined($tmpName2 = readdir(DIR))) {
-                        if (($tmpName2 ne "" ) && ($tmpName2 ne ".") && ($tmpName2 ne "..")) {
-                           my $joinName = fixpath(joinpath($pathname,$tmpName2));
+                     while (defined($tmpName4 = readdir(DIR))) {
+                        if (($tmpName4 ne "" ) && ($tmpName4 ne ".") && ($tmpName4 ne "..")) {
+                           my $joinName = fixpath(joinpath($pathname,$tmpName4));
                            if ( ! $followSymlinks) {
                               if ( -l $joinName) {
                                  if ( -e $joinName) {
@@ -4146,9 +4203,15 @@ if ($valueOfDebugVar ne "") {
                exit 1;
             }
          }
-         print STDERR "mkinstaller: ...using \"".nativePathname($use_tar)."\"$style\n" if (2 <= $verbosityLevel);
-         print STDERR "mkinstaller: ...using \"".nativePathname($use_gzcat)."\n" if (2 <= $verbosityLevel);
-         print STDERR "mkinstaller: ...using \"".nativePathname($use_gzip)."\n" if (2 <= $verbosityLevel);
+         if ($use_tar ne "") {
+            print STDERR "mkinstaller: ...using \"".nativePathname($use_tar)."\"$style\n" if (2 <= $verbosityLevel);
+         }
+         if ($use_gzcat ne "") {
+            print STDERR "mkinstaller: ...using \"".nativePathname($use_gzcat)."\"\n" if (2 <= $verbosityLevel);
+         }
+         if ($use_gzip ne "") {
+            print STDERR "mkinstaller: ...using \"".nativePathname($use_gzip)."\"\n" if (2 <= $verbosityLevel);
+         }
       }
       else {
          #---------------------------------------
@@ -4303,10 +4366,11 @@ if ($valueOfDebugVar ne "") {
          print DBGOUT "mkinstaller: ...first tarup to $TmpDirI directory...\n" if $debugging;
          print DBGOUT "mkinstaller:    then untar to $TmpDirA directory (to merge)\n" if $debugging;
          {
+            print STDERR "mkinstaller: working the directories...\n" if (1 <= $verbosityLevel);
             my $bn;
             foreach $bn (sort keys %dirBasenames) {
                my $Tstart = time();
-               print STDERR "mkinstaller: working \"$bn\"\n" if (1 <= $verbosityLevel);
+               print STDERR "mkinstaller: ...working \"$bn\"\n" if (1 <= $verbosityLevel);
                {
                   if ($debugging) {
                      my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
@@ -4317,12 +4381,7 @@ if ($valueOfDebugVar ne "") {
                   for ($i=0; $i<=$#dirs; $i+=1) {
                      my $pathname = $dirs[$i];
                      print DBGOUT "mkinstaller: ...directory \"".nativePathname($pathname)."\"\n" if $debugging;
-                     if ($i == 0) {
-                        print STDERR "mkinstaller: ...\"".nativePathname($pathname)."\"\n" if (2 <= $verbosityLevel);
-                     }
-                     else {
-                        print STDERR "mkinstaller:    \"".nativePathname($pathname)."\"\n" if (2 <= $verbosityLevel);
-                     }
+                     print STDERR "mkinstaller:    \"".nativePathname($pathname)."\"\n" if (2 <= $verbosityLevel);
                      my $dn       = dirname($pathname);
                      my $bn       = basename($pathname);
                      if ( ! chdir($dn)) {
@@ -4530,6 +4589,7 @@ if ($valueOfDebugVar ne "") {
                   print STDERR "mkinstaller: ...done\n" if (3 <= $verbosityLevel);
                }
             }
+            print STDERR "mkinstaller: ...done\n" if (1 <= $verbosityLevel);
             #-------------------------------------------------------------------
             #-------------------------------------------------------------------
             foreach $bn (sort keys %fileBasenames) {
@@ -4596,14 +4656,172 @@ if ($valueOfDebugVar ne "") {
                   print STDERR "mkinstaller: ...done\n" if (3 <= $verbosityLevel);
                }
             }
+
+            if ($haveExclusions) {
+               print DBGOUT "mkinstaller: ...have exclusions, we'll have to scan for files in the accumulator directory\n" if $debugging;
+               #---------------------------------------
+               #
+               #  If there are exclusions then we'll
+               #  have a bit more work to do on the
+               #  payload. We'll scan over the files
+               #  in the accumulator directory tree
+               #  looking for matches with the patterns
+               #  in the exclusions array. Files whose
+               #  basenames match an exclusion pattern
+               #  will be deleted from the accumulator
+               #  directory tree.
+               #
+               #---------------------------------------
+
+               my $wasInDir = `pwd`; chomp $wasInDir; $wasInDir =~ s/\r$//;
+               if ($debugging) {
+                  my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
+                  print DBGOUT "mkinstaller:    was in \"$imInDir\"\n" if $debugging;
+               }
+               if ( ! chdir($TmpDirA)) {
+                  print STDERR "mkinstaller: error: can't cd into \"$TmpDirA\"\n";
+                  cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                  close DBGOUT if $dbgOutToPathname ne "";
+                  exit 1;
+               }
+               {
+                  if ($debugging) {
+                     my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
+                     print DBGOUT "mkinstaller:    now in \"$imInDir\"\n" if $debugging;
+                  }
+                  #---------------------------------------
+                  #
+                  #  Collect a list of pathnames forming
+                  #  the directory tree rooted at the
+                  #  currect directory. Note that symbolic-
+                  #  links are NOT followed.
+                  #
+                  #---------------------------------------
+
+                  my $theRoot            = `pwd`; chomp $theRoot; $theRoot =~ s/\r$//;
+                  print DBGOUT "mkinstaller:    scan directory tree rooted at \"".$theRoot."\"\n" if $debugging;
+                  my @theList            = ();
+                  my $idx                = $#theList +1;
+                  $theList[$idx]{"name"} = ".";
+                  $theList[$idx]{"type"} = "unknown";
+                  {
+                     #  Form the list...
+
+                     print DBGOUT "mkinstaller:    ...form the pathname list\n" if $debugging;
+                     my $i;
+                     for ($i=0; $i<=$#theList; ++$i) {
+                        my $thePathname = $theList[$i]{"name"};
+                        my $theType     = $theList[$i]{"type"};
+                        my $theRealName = fixpath(joinpath($theRoot,$thePathname));
+                        if ( -l "$theRealName" ) {
+                           $theList[$i]{"type"} = "symbolic-link";
+                        }
+                        elsif ( -f "$theRealName" ) {
+                           $theList[$i]{"type"} = "file";
+                        }
+                        elsif ( -d "$theRealName" ) {
+                           $theList[$i]{"type"} = "directory";
+                           if (opendir(DIR,"$theRealName")) {
+                              while (defined($tmpName5 = readdir(DIR))) {
+                                 if (($tmpName5 ne "" ) && ($tmpName5 ne ".") && ($tmpName5 ne "..")) {
+                                    my $joinName         = fixpath(joinpath($thePathname,$tmpName5));
+                                    my $j                = $#theList + 1;
+                                    $theList[$j]{"name"} = $joinName;
+                                    $theList[$j]{"type"} = "unknown";
+                                 }
+                              }
+                              closedir(DIR);
+                           }
+                           else {
+                              print STDERR "mkinstaller: error: can't read directory \"".nativePathname($theRealName)."\"\n";
+                              print STDERR "mkinstaller:    was done from in \"".nativePathname($wasInDir)."\"\n";
+                              cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                              close DBGOUT if $dbgOutToPathname ne "";
+                              exit 1;
+                           }
+                        }
+                        else {
+                           $theList[$i]{"type"} = "other";
+                        }
+                     }
+
+                     #  Scan the list...
+
+                     print DBGOUT "mkinstaller:    ...scan the pathname list\n" if $debugging;
+                     for ($i=0; $i<=$#theList; ++$i) {
+                        my $thePathname = $theList[$i]{"name"};
+                        my $theType     = $theList[$i]{"type"};
+                        my $theRealName = fixpath(joinpath($theRoot,$thePathname));
+                        if ($theType eq "directory") {
+                           print DBGOUT "mkinstaller:       d \"".nativePathname($theRealName)."\"\n" if $debugging;
+                        }
+                        elsif ($theType eq "file") {
+                           my $bn = basename($theRealName);
+                           print DBGOUT "mkinstaller:       f \"".nativePathname($theRealName)."\" ($bn)\n" if $debugging;
+                           my $matched = 0;
+                           my $j;
+                           for ($j=0; $j<=$#exclusions; ++$j) {
+                              my $pattern = $exclusions[$j];
+                              if ($bn =~ /$pattern/) {
+                                 print DBGOUT "mkinstaller:         ...matched [$pattern]\n" if $debugging;
+                                 $matched = 1;
+                                 last;
+                              }
+                           }
+                           if ($matched) {
+                              print DBGOUT "mkinstaller:            delete \"".nativePathname($theRealName)."\"\n" if $debugging;
+                              unlink($theRealName);
+                              if ( -f $theRealName) {
+                                 print DBGOUT "mkinstaller:            ...failed, \"".nativePathname($theRealName)."\" is still there\n" if $debugging;
+                                 print STDERR "mkinstaller: error: can't delete file \"".nativePathname($theRealName)."\"\n";
+                                 cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                                 close DBGOUT if $dbgOutToPathname ne "";
+                                 exit 1;
+                              }
+                              else {
+                                 print DBGOUT "mkinstaller:            ...done\n" if $debugging;
+                                 print STDERR "mkinstaller: note: excluded \"$theRealName\"\n" if 1 <= $verbosityLevel;
+                              }
+                           }
+                        }
+                        elsif ($theType eq "symbolic-link") {
+                           print DBGOUT "mkinstaller:       l \"".nativePathname($theRealName)."\"\n" if $debugging;
+                        }
+                        elsif ($theType eq "other") {
+                           print DBGOUT "mkinstaller:       o \"".nativePathname($theRealName)."\"\n" if $debugging;
+                        }
+                        else {
+                           print DBGOUT "mkinstaller:       ? \"".nativePathname($theRealName)."\"\n" if $debugging;
+                        }
+                     }
+                  }
+               }
+               if ( ! chdir($wasInDir)) {
+                  print STDERR "mkinstaller: error: can't cd back to \"$wasInDir\"\n";
+                  cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                  close DBGOUT if $dbgOutToPathname ne "";
+                  exit 1;
+               }
+               if ($debugging) {
+                  my $imInDir = `pwd`; chomp $imInDir; $imInDir =~ s/\r$//;
+                  print DBGOUT "mkinstaller:    back in \"$imInDir\"\n" if $debugging;
+               }
+            }
+
+            #-------------------------------------------------------------------
             #
             #  The merging process is done, now tarup the merged individual
             #  directories from the accumulator directory in to the wrapper
             #  directory TmpDirW
             #
+            #-------------------------------------------------------------------
+
             print DBGOUT "mkinstaller: ...tarup the individual directories into the wrapper directory\n" if $debugging;
+            print DBGOUT "mkinstaller:    cd into \"$TmpDirA\"\n" if $debugging;
             if ( ! chdir($TmpDirA)) {
+               my $fromWithin = `pwd`; chomp $fromWithin; $fromWithin =~ s/\r$//;
                print STDERR "mkinstaller: error: can't cd into \"$TmpDirA\"\n";
+               print STDERR "mkinstaller: ...from within \"$fromWithin\"\n";
                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                close DBGOUT if $dbgOutToPathname ne "";
                exit 1;
@@ -4619,25 +4837,41 @@ if ($valueOfDebugVar ne "") {
                   #  now contains...
                   #
                   my $back = `pwd`; chomp $back; $back =~ s/\r$//;
-                  chdir($TmpDirW);
-                     if (opendir(DIR,$TmpDirW)) {
-                        my $count = 0;
-                        print DBGOUT "mkinstaller:    ...\"".$TmpDirW.$slash."\" now contains\n" if $debugging;
-                        while (defined($tmp = readdir(DIR))) {
-                           if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
-                              print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
-                              $count += 1;
-                           }
-                        }
-                        closedir(DIR);
-                        if ($count <= 0) {
-                           print DBGOUT "mkinstaller:       <nothing>\n" if $debugging;
+                  print DBGOUT "mkinstaller:    cd into \"$TmpDirW\"\n" if $debugging;
+                  if ( ! chdir($TmpDirW)) {
+                     my $fromWithin = `pwd`; chomp $fromWithin; $fromWithin =~ s/\r$//;
+                     print STDERR "mkinstaller: error: can't cd into \"$TmpDirW\"\n";
+                     print STDERR "mkinstaller: ...from within \"$fromWithin\"\n";
+                     cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                     close DBGOUT if $dbgOutToPathname ne "";
+                     exit 1;
+                  }
+                  if (opendir(DIR,$TmpDirW)) {
+                     my $count = 0;
+                     print DBGOUT "mkinstaller:    ...\"".$TmpDirW.$slash."\" now contains\n" if $debugging;
+                     while (defined($tmp = readdir(DIR))) {
+                        if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                           print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
+                           $count += 1;
                         }
                      }
-                     else {
-                        print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirW.$slash."\" contains\n" if $debugging;
+                     closedir(DIR);
+                     if ($count <= 0) {
+                        print DBGOUT "mkinstaller:       <nothing>\n" if $debugging;
                      }
-                  chdir($back);
+                  }
+                  else {
+                     print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirW.$slash."\" contains\n" if $debugging;
+                  }
+                  print DBGOUT "mkinstaller:    cd back to \"$back\"\n" if $debugging;
+                  if ( ! chdir($back)) {
+                     my $fromWithin = `pwd`; chomp $fromWithin; $fromWithin =~ s/\r$//;
+                     print STDERR "mkinstaller: error: can't cd back to \"$back\"\n";
+                     print STDERR "mkinstaller: ...from within \"$fromWithin\"\n";
+                     cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                     close DBGOUT if $dbgOutToPathname ne "";
+                     exit 1;
+                  }
                }
                my $bn;
                foreach $bn (sort keys %dirBasenames) {
@@ -4690,31 +4924,51 @@ if ($valueOfDebugVar ne "") {
                      #  Show what the "wrapper" directory
                      #  now contains...
                      #
-                     my $back = `pwd`; chomp $back; $back = s/\r$//;
-                     chdir($TmpDirW);
-                        if (opendir(DIR,$TmpDirW)) {
-                           my $count = 0;
-                           print DBGOUT "mkinstaller:    ...\"".$TmpDirW.$slash."\" now contains\n" if $debugging;
-                           while (defined($tmp = readdir(DIR))) {
-                              if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
-                                 print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
-                                 $count += 1;
-                              }
-                           }
-                           closedir(DIR);
-                           if ($count <= 0) {
-                              print DBGOUT "mkinstaller:       <nothing>\n" if $debugging;
+                     my $back = `pwd`; chomp $back; $back =~ s/\r$//;
+                     print DBGOUT "mkinstaller:    cd into \"$TmpDirW\"\n" if $debugging;
+                     print DBGOUT "mkinstaller:    ...from \"$back\"\n" if $debugging;
+                     if ( ! chdir($TmpDirW)) {
+                        my $fromWithin = `pwd`; chomp $fromWithin; $fromWithin =~ s/\r$//;
+                        print STDERR "mkinstaller: error: can't cd into \"$TmpDirW\"\n";
+                        print STDERR "mkinstaller: ...from within \"$fromWithin\"\n";
+                        cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                        close DBGOUT if $dbgOutToPathname ne "";
+                        exit 1;
+                     }
+                     if (opendir(DIR,$TmpDirW)) {
+                        my $count = 0;
+                        print DBGOUT "mkinstaller:    ...\"".$TmpDirW.$slash."\" now contains\n" if $debugging;
+                        while (defined($tmp = readdir(DIR))) {
+                           if (($tmp ne "" ) && ($tmp ne ".") && ($tmp ne "..")) {
+                              print DBGOUT "mkinstaller:       \"".$tmp."\"\n" if $debugging;
+                              $count += 1;
                            }
                         }
-                        else {
-                           print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirW.$slash."\" contains\n" if $debugging;
+                        closedir(DIR);
+                        if ($count <= 0) {
+                           print DBGOUT "mkinstaller:       <nothing>\n" if $debugging;
                         }
-                     chdir($back);
+                     }
+                     else {
+                        print DBGOUT "mkinstaller:    ...can't see what \"".$TmpDirW.$slash."\" contains\n" if $debugging;
+                     }
+                     print DBGOUT "mkinstaller:    cd back to \"$back\"\n" if $debugging;
+                     if ( ! chdir($back)) {
+                        my $fromWithin = `pwd`; chomp $fromWithin; $fromWithin =~ s/\r$//;
+                        print STDERR "mkinstaller: error: can't cd back to \"$back\"\n";
+                        print STDERR "mkinstaller: ...from within \"$fromWithin\"\n";
+                        cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
+                        close DBGOUT if $dbgOutToPathname ne "";
+                        exit 1;
+                     }
                   }
                }
             }
+            print DBGOUT "mkinstaller:    cd back to \"$here\"\n" if $debugging;
             if ( ! chdir($here)) {
+               my $fromWithin = `pwd`; chomp $fromWithin; $fromWithin =~ s/\r$//;
                print STDERR "mkinstaller: error: can't cd back to \"$here\"\n";
+               print STDERR "mkinstaller: ...from within \"$fromWithin\"\n";
                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
                close DBGOUT if $dbgOutToPathname ne "";
                exit 1;
@@ -4784,6 +5038,7 @@ if ($valueOfDebugVar ne "") {
                   }
                }
             }
+            print DBGOUT "mkinstaller:    cd back to \"$here\"\n" if $debugging;
             if ( ! chdir($here)) {
                print STDERR "mkinstaller: error: can't cd back to \"$here\"\n";
                cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging);
@@ -17214,7 +17469,6 @@ EOFc
          print DBGOUT "mki_try_c_run:    done\n" if $debugging;
          if ( -f "konftest.out" ) {
             print DBGOUT "mki_try_c_run: ...delete existing \"konftest.out\"\n" if $debugging;
-            print AK_logFile __FILE__,":",__LINE__,"[",AK_whoAmI(),"]: delete \"konftest.out\" first\n";
             while ( -f "konftest.out" ) {
                unlink("konftest.out");
             }
@@ -22530,6 +22784,497 @@ sub touchPathname {
    return $result;
 }
 
+# MyUniqueFileId: 20123055-0c01-4dbb-e091-86664b652380
+#-------------------------------------------------------------------------------
+#
+#  This subroutine is used to translate a shell-style globbing pattern to a
+#  regular expression.
+#
+#  see: totebag/src/perl-lib/translateGlobPatternToRegExp.psub
+#
+#  Dated: 16Oct2019 translateGlobPatternToRegExp
+#
+#-------------------------------------------------------------------------------
+
+sub translateGlobPatternToRegExp {
+   my $given = shift;
+   print DBGOUT "translateGlobPatternToRegExp[ given=\"$given\"...\n" if $debugging;
+   my $gives = "\^";
+   my @chars = split(//,$given);
+   my $state = 0;
+   print DBGOUT "translateGlobPatternToRegExp: ...scan\n" if $debugging;
+   my $i;
+   for ($i=0; $i<=$#chars; $i+=1) {
+      my $c = $chars[$i];
+      print DBGOUT "translateGlobPatternToRegExp:    state $state -- got \'$c\'\n" if $debugging;
+      $_    = $state;
+      switch: {
+                /0/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...zero\n" if $debugging;
+                       $_ = $c;
+                       switch_0: {
+                                   /^\*$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...leading star\n" if $debugging;
+                                             $gives = $gives."\.\*";
+                                             $state = 1;
+                                             last switch_0;
+                                          };
+                                   /^\?$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...leading question\n" if $debugging;
+                                             $gives = $gives."\.";
+                                             $state = 1;
+                                             last switch_0;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...leading dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 1;
+                                             last switch_0;
+                                          };
+                                   /^\[$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...leading square\n" if $debugging;
+                                             $gives = $gives."[";
+                                             $state = 6;
+                                             last switch_0;
+                                          };
+                                   /^\]$/ && do {
+                                             print STDERR "p-grep: unexpected ']'\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\{$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...leading curly\n" if $debugging;
+                                             $gives = $gives."(";
+                                             $state = 3;
+                                             last switch_0;
+                                          };
+                                   /^,$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...leading comma\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 1;
+                                             last switch_0;
+                                          };
+                                   /^\}$/ && do {
+                                             print STDERR "p-grep: unexpected '}'\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...leading normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 1;
+                                             last switch_0;
+                                          };
+                       }
+                       last switch;
+                    };
+                /1/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...one\n" if $debugging;
+                       $_ = $c;
+                       switch_1: {
+                                   /^\*$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal star\n" if $debugging;
+                                             $gives = $gives."\.\*";
+                                             $state = 1;
+                                             last switch_1;
+                                          };
+                                   /^\?$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal question\n" if $debugging;
+                                             $gives = $gives."\.";
+                                             $state = 1;
+                                             last switch_1;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 1;
+                                             last switch_1;
+                                          };
+                                   /^\[$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal square\n" if $debugging;
+                                             $gives = $gives."[";
+                                             $state = 6;
+                                             last switch_1;
+                                          };
+                                   /^\]$/ && do {
+                                             print STDERR "p-grep: unexpected ']'\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\{$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal curly\n" if $debugging;
+                                             $gives = $gives."(";
+                                             $state = 3;
+                                             last switch_1;
+                                          };
+                                   /^,$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal comma\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 1;
+                                             last switch_1;
+                                          };
+                                   /^\}$/ && do {
+                                             print STDERR "p-grep: unexpected '}'\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 1;
+                                             last switch_1;
+                                          };
+                       }
+                       last switch;
+                    };
+                /2/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...two\n" if $debugging;
+                       $_ = $c;
+                       switch_2: {
+                                   /^\*$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal star\n" if $debugging;
+                                             $gives = $gives."\.\*";
+                                             $state = 1;
+                                             last switch_2;
+                                          };
+                                   /^\?$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal question\n" if $debugging;
+                                             $gives = $gives."\.";
+                                             $state = 1;
+                                             last switch_2;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 1;
+                                             last switch_2;
+                                          };
+                                   /^\[$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal square\n" if $debugging;
+                                             $gives = $gives."[";
+                                             $state = 6;
+                                             last switch_2;
+                                          };
+                                   /^\]$/ && do {
+                                             print STDERR "p-grep: unexpected ']'\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\{$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal curly\n" if $debugging;
+                                             $gives = $gives."(";
+                                             $state = 3;
+                                             last switch_2;
+                                          };
+                                   /^,$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal comma\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 1;
+                                             last switch_2;
+                                          };
+                                   /^\}$/ && do {
+                                             print STDERR "p-grep: unexpected '}'\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...internal normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 1;
+                                             last switch_2;
+                                          };
+                       }
+                       last switch;
+                    };
+                /3/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...three\n" if $debugging;
+                       $_ = $c;
+                       switch_3: {
+                                   /^\*$/ && do {
+                                             print STDERR "p-grep: unexpected '*' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\?$/ && do {
+                                             print STDERR "p-grep: unexpected '?' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 4;
+                                             last switch_3;
+                                          };
+                                   /^\[$/ && do {
+                                             print STDERR "p-grep: unexpected '[' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\]$/ && do {
+                                             print STDERR "p-grep: unexpected ']' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\{$/ && do {
+                                             print STDERR "p-grep: unexpected '{' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^,$/  && do {
+                                             print STDERR "p-grep: unexpected ',' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\}$/ && do {
+                                             print STDERR "p-grep: unexpected '}' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 4;
+                                             last switch_3;
+                                          };
+                       }
+                       last switch;
+                    };
+                /4/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...four\n" if $debugging;
+                       $_ = $c;
+                       switch_4: {
+                                   /^\*$/ && do {
+                                             print STDERR "p-grep: unexpected '*' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\?$/ && do {
+                                             print STDERR "p-grep: unexpected '?' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 4;
+                                             last switch_4;
+                                          };
+                                   /^\[$/ && do {
+                                             print STDERR "p-grep: unexpected '[' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\]$/ && do {
+                                             print STDERR "p-grep: unexpected ']' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\{$/ && do {
+                                             print STDERR "p-grep: unexpected '{' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^,$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly comma\n" if $debugging;
+                                             $gives = $gives."|";
+                                             $state = 5;
+                                             last switch_4;
+                                          };
+                                   /^\}$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly curly\n" if $debugging;
+                                             $gives = $gives.")";
+                                             $state = 1;
+                                             last switch_4;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 4;
+                                             last switch_4;
+                                          };
+                       }
+                       last switch;
+                    };
+                /5/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...five\n" if $debugging;
+                       $_ = $c;
+                       switch_5: {
+                                   /^\*$/ && do {
+                                             print STDERR "p-grep: unexpected '*' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\?$/ && do {
+                                             print STDERR "p-grep: unexpected '?' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 4;
+                                             last switch_5;
+                                          };
+                                   /^\[$/ && do {
+                                             print STDERR "p-grep: unexpected '[' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\]$/ && do {
+                                             print STDERR "p-grep: unexpected ']' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\{$/ && do {
+                                             print STDERR "p-grep: unexpected '{' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^,$/  && do {
+                                             print STDERR "p-grep: unexpected ',' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\}$/ && do {
+                                             print STDERR "p-grep: unexpected '}' in {...} construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                             last switch_5;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...curly normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 4;
+                                             last switch_5;
+                                          };
+                       }
+                       last switch;
+                    };
+                /6/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...six\n" if $debugging;
+                       $_ = $c;
+                       switch_6: {
+                                   /^\*$/ && do {
+                                             print STDERR "p-grep: unexpected '*' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\?$/ && do {
+                                             print STDERR "p-grep: unexpected '?' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...square dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 7;
+                                             last switch_6;
+                                          };
+                                   /^\[$/ && do {
+                                             print STDERR "p-grep: unexpected '[' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\]$/ && do {
+                                             print STDERR "p-grep: unexpected ']' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\{$/ && do {
+                                             print STDERR "p-grep: unexpected '{' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^,$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...square comma\n" if $debugging;
+                                             $gives = $gives.",";
+                                             $state = 7;
+                                             last switch_6;
+                                          };
+                                   /^\}$/ && do {
+                                             print STDERR "p-grep: unexpected '}' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...square normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 7;
+                                             last switch_6;
+                                          };
+                       }
+                       last switch;
+                    };
+                /7/ && do {
+                       print DBGOUT "translateGlobPatternToRegExp:    ...siz\n" if $debugging;
+                       $_ = $c;
+                       switch_7: {
+                                   /^\*$/ && do {
+                                             print STDERR "p-grep: unexpected '*' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\?$/ && do {
+                                             print STDERR "p-grep: unexpected '?' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\.$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...square dot\n" if $debugging;
+                                             $gives = $gives."\\\.";
+                                             $state = 7;
+                                             last switch_7;
+                                          };
+                                   /^\[$/ && do {
+                                             print STDERR "p-grep: unexpected '[' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^\]$/ && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...square square\n" if $debugging;
+                                             $gives = $gives."]";
+                                             $state = 1;
+                                             last switch_7;
+                                          };
+                                   /^\{$/ && do {
+                                             print STDERR "p-grep: unexpected '{' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^,$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...square comma\n" if $debugging;
+                                             $gives = $gives.",";
+                                             $state = 7;
+                                             last switch_7;
+                                          };
+                                   /^\}$/ && do {
+                                             print STDERR "p-grep: unexpected '}' in [...] construct\n";
+                                             close DBGOUT if $dbgOutToPathname ne "";
+                                             exit 1;
+                                          };
+                                   /^.$/  && do {
+                                             print DBGOUT "translateGlobPatternToRegExp:    ...square normal\n" if $debugging;
+                                             $gives = $gives.$c;
+                                             $state = 7;
+                                             last switch_7;
+                                          };
+                       }
+                       last switch;
+                    };
+      }
+   }
+   print DBGOUT "translateGlobPatternToRegExp:    done in state $state\n" if $debugging;
+   if ($state != 1 && $state != 2) {
+      print STDERR "p-grep: unexpected <end-of-string>\n";
+      close DBGOUT if $dbgOutToPathname ne "";
+      exit 1;
+   }
+   $gives = $gives."\$";
+   print DBGOUT "translateGlobPatternToRegExp] ...done(=\"$gives\")\n" if $debugging;
+   return $gives;
+}
+
 # MyUniqueFileId: 31fb3037-130d-4150-fe5e-d0e8e636135e
 #-------------------------------------------------------------------------------
 #
@@ -22854,6 +23599,16 @@ sub help {
    |            script. Note that by default there is no default installation
    |            prefix in the generated script and so the user of that script
    |            must supply a pathname for the installation prefix.
+   |
+   |        --exclude=<pattern>
+   |
+   |            Exclude files whose basenames match the given globbing pattern.
+   |            Note that the pattern almost always needs to be quoted as such
+   |            patterns typically contain characters that are significant to
+   |            the shell. For example: --exclude='*.a'
+   |
+   |            This option is not well supported on Windows-like hosts at this
+   |            time.
    |
    |        --fill
    |
@@ -23945,6 +24700,18 @@ sub html {
    |               script. Note that by default there is no default installation
    |               prefix in the generated script and so the user of that script
    |               must supply a pathname for the installation prefix.
+   |            </blockquote>
+   |
+   |            <b>--exclude=</b><i>pattern</i>
+   |            <blockquote>
+   |               Exclude files whose basenames match the given globbing pattern.
+   |               Note that the pattern almost always needs to be quoted as such
+   |               patterns typically contain characters that are significant to
+   |               the shell. For example: <b><big><code>--exclude='*.a'</code></big></b>
+   |            </blockquote>
+   |            <blockquote>
+   |               This option is not well supported on Windows-like hosts at this
+   |               time.
    |            </blockquote>
    |
    |            <b>--fill</b>
