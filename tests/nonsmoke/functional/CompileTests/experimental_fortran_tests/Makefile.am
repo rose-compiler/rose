@@ -14,7 +14,7 @@ TEST_FORTRAN_Sources = ${FORTRAN_TESTCODES:.f90=.f90.passed}
 
 PASSING_TEST_Objects = $(TEST_FORTRAN_Objects)
 
-../../testTranslagor:
+../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
 
 $(TEST_FORTRAN_Objects): ../../testTranslator

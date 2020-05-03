@@ -160,7 +160,7 @@ int main(int argc, char** argv)
 
   if (useFile)
   {
-    fb.open(settings.outputFileName.native().c_str(), std::ios::out);
+    fb.open(settings.outputFileName.string().c_str(), std::ios::out);
   }
 
   std::ostream             traceOutput(useFile ? &fb : std::cout.rdbuf());

@@ -1,0 +1,38 @@
+with "../dot_asis_library/dot_asis_library";
+
+project DOT_ASIS is
+
+   for Source_Dirs use
+     (".");
+
+   for Object_Dir use "./obj";
+
+   -- There are no C or C++ sources in this project.  Those languages appear
+   -- below so that the GPS IDE may easily be used for incidental language-
+   -- aware viewing of C and C++ files when it has this project open.
+   --
+   for Languages use ("Ada", "C", "C++");
+
+   for Main use
+     ("demo_dot.adb",
+      "run_asis_tool_2.adb",
+      "test_gnat_command_line.adb");
+
+   package Compiler is
+      for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g");
+   end Compiler;
+
+   package Linker is
+      for Default_Switches ("ada") use ("-g");
+   end Linker;
+
+   package Ide is
+      for Vcs_Kind use "Git";
+   end Ide;
+
+   package Binder is
+      for Switches ("ada") use ("-E");
+   end Binder;
+
+end DOT_ASIS;
+

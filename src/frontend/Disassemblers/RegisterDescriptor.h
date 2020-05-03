@@ -1,6 +1,9 @@
 #ifndef Rose_BinaryAnalysis_RegisterDescriptor_H
 #define Rose_BinaryAnalysis_RegisterDescriptor_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <boost/serialization/access.hpp>
 
 namespace Rose {
@@ -157,6 +160,13 @@ public:
         return 0 == nBits();
     }
 
+    /** Predicate returns true if width is non-zero.
+     *
+     *  Default-constructed register descriptors have an initial width of zero. */
+    bool isValid() const {
+        return nBits() != 0;
+    }
+
     /** Compare two descriptors.
      *
      *  Descriptors are sorted by major and minor numbers. If two descriptors have the same major and minor numbers then this
@@ -236,4 +246,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

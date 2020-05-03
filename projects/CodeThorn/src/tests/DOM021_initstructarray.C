@@ -2,14 +2,14 @@
 
 struct S {
   int x;
-  long a[3];
+  int a[3];
 };
 
 void printStruct(S* s) {
-  printf("s->x\n",s->x);
-  printf("s->a[0]\n",s->a[0]);
-  printf("s->a[1]\n",s->a[1]);
-  printf("s->a[2]\n",s->a[2]);
+  printf("s->x:%d\n",s->x);
+  printf("s->a:%d[0]\n",s->a[0]);
+  printf("s->a[1]:%d\n",s->a[1]);
+  printf("s->a[2]:%d\n",s->a[2]);
 }
 
 // variants of initializing the same data structure

@@ -1032,6 +1032,30 @@ HEADER_ARRAY_TYPE_START
 
 HEADER_ARRAY_TYPE_END
 
+HEADER_ADA_ACCESS_TYPE_START
+
+          SgName get_name() const;
+
+HEADER_ADA_ACCESS_TYPE_END
+
+HEADER_ADA_SUBTYPE_START
+
+          SgName get_name() const;
+
+HEADER_ADA_SUBTYPE_END
+
+HEADER_ADA_FLOAT_TYPE_START
+
+          SgName get_name() const;
+
+HEADER_ADA_FLOAT_TYPE_END
+
+
+// Rasmussen (2/19/2020): Added SgTypedFixed for Jovial. Don't really know what to do here.
+HEADER_TYPE_FIXED_TYPE_START
+      // SgName get_name() const;
+HEADER_TYPE_FIXED_TYPE_END
+
 
 // #########################################################
 // #########################################################
@@ -1062,7 +1086,7 @@ $CLASSNAME::get_mangled (void) const
      ROSE_ASSERT(this != NULL);
 
   // DQ (10/4/2010): Modified to provide Fortran support (type_kind is a data member used for Fortran only, it is always NULL for other languages)
-  // return SgName("MANGLED_ID_STRING");
+  // Rasmussen (3/6/2020): Now type_kind is also used for Jovial.
      SgName name = "MANGLED_ID_STRING";
      if (get_type_kind() != NULL)
         {
@@ -1090,8 +1114,31 @@ $CLASSNAME::get_mangled (void) const
              }
         }
 
+  // Rasmussen (3/6/2020): This is a hack but I can't get SgTypeFixed::get_mangled() to work
+  // REMOVE_ME please!
+     if (isSgTypeFixed(this))
+        {
+          const SgTypeFixed* fixed_type = isSgTypeFixed(this);
+          if (fixed_type->get_scale() != NULL)
+             {
+               SgValueExp* value = isSgValueExp(fixed_type->get_scale());
+               if (value != NULL)
+                  {
+                    name += string("_") + value->get_constant_folded_value_as_string();
+                  }
+             }
+          if (fixed_type->get_fraction() != NULL)
+             {
+               SgValueExp* value = isSgValueExp(fixed_type->get_fraction());
+               if (value != NULL)
+                  {
+                    name += string("_") + value->get_constant_folded_value_as_string();
+                  }
+             }
+        }
+
 #if 0
-     printf ("Leaving get_mangled(void): this = %p = %s MANGLED_ID_STRING = %s \n",this,this->class_name().c_str(),"MANGLED_ID_STRING");
+     printf("Leaving get_mangled(void): this = %p = %s mangled name = %s \n",this,this->class_name().c_str(),name.str());
 #endif
 
      return name;
@@ -1312,6 +1359,46 @@ SgTypeString::get_mangled (void) const
 
 SOURCE_GET_MANGLED_STRING_TYPE_END
 
+// Rasmussen (3/6/2020): Added get_mangled for SgTypedFixed (primitive type in Jovial)
+SOURCE_GET_MANGLED_TYPE_FIXED_START
+
+SgName
+SgTypeFixed::get_mangled (void) const
+   {
+     ROSE_ASSERT(this != NULL);
+
+     SgName mangled_name = "MANGLED_ID_STRING";
+
+  // Note additional name mangling is being done here because I couldn't figure out how to add
+  // it to get_mangled directly because the class is a ROSETTA macro and doesn't have access to
+  // the scale or fraction information.
+     if (get_scale() != NULL)
+        {
+           SgValueExp* value = isSgValueExp(get_scale());
+           if (value != NULL)
+              {
+                 mangled_name += string("_") + value->get_constant_folded_value_as_string();
+                 std::cout << "--> added scale " << mangled_name << std::endl;
+              }
+        }
+     if (get_fraction() != NULL)
+        {
+           SgValueExp* value = isSgValueExp(get_fraction());
+           if (value != NULL)
+              {
+                 mangled_name += string("_") + value->get_constant_folded_value_as_string();
+                 std::cout << "--> added fraction " << mangled_name << std::endl;
+              }
+        }
+
+#if 1
+     printf ("LEAVING: In SgTypeFixed::get_mangled(): mangled_name = %s \n",mangled_name.str());
+#endif
+
+     return mangled_name;
+   }
+
+SOURCE_GET_MANGLED_TYPE_FIXED_END
 
 SOURCE_CONSTRUCTOR_START
 #if 0
@@ -2433,12 +2520,13 @@ SgType::getAssociatedDeclaration() const
        // printf ("In HiddenListTraversal::getDeclarationAssociatedWithType(): declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 
        // DQ (5/25/2013): Check if the declaration might have been deleted.
-          if (declaration->class_name() == "SgNode")
-             {
-               printf ("Found a case where the declaration = %p for the type = %p = %s has been deleted (returning NULL) \n",declaration,this,this->class_name().c_str());
-               declaration = NULL;
-             }
-       // ROSE_ASSERT(declaration->class_name() != "SgNode");
+          if (declaration->get_freepointer() != AST_FileIO::IS_VALID_POINTER()) {
+            printf("Found a pointer to a deleted node:\n");
+            printf(" - type = %p (%s)\n", this, this->class_name().c_str());
+            printf(" - decl = %p\n", declaration);
+            printf(" - name : %s\n", SageInterface::generateUniqueName(this, false).c_str());
+          }
+          ROSE_ASSERT(declaration->get_freepointer() == AST_FileIO::IS_VALID_POINTER());
         }
 
 #if 0
@@ -3222,7 +3310,7 @@ SgTypeDefault::createType ( const SgName & nameOfType )
         {
        // The pointer type was not found in the type table, put it into the global type table.
 #if 0
-          printf ("Mangled type name for SgTypeDefault = %s (does NOT exist in type table) interting it... \n",name.str());
+          printf ("Mangled type name for SgTypeDefault = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
           get_globalTypeTable()->insert_type(name,returnType);
         }
@@ -3301,7 +3389,7 @@ SgTypeLabel::createType ( const SgName & nameOfType )
         {
        // The pointer type was not found in the type table, put it into the global type table.
 #if 0
-          printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+          printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
           get_globalTypeTable()->insert_type(name,returnType);
         }
@@ -6588,6 +6676,50 @@ SgArrayType::get_mangled(void) const
 
 SOURCE_ARRAY_TYPE_END
 
+SOURCE_ADA_ACCESS_TYPE_START
+
+SgName
+SgAdaAccessType::get_mangled(void) const {
+    const SgType* under_type = get_base_type();
+     
+    string name("a'");
+    
+    name.append(under_type->get_mangled());
+    return SgName(name);
+}
+     
+SOURCE_ADA_ACCESS_TYPE_END
+
+SOURCE_ADA_SUBTYPE_START
+
+SgName
+SgAdaSubtype::get_mangled(void) const {
+    const SgType* under_type = get_base_type();
+    std::string   name(under_type->get_mangled());
+    
+    name += ":>";
+    name += get_constraint()->displayString();
+    return SgName(name);
+}
+     
+SOURCE_ADA_SUBTYPE_END
+
+
+SOURCE_ADA_FLOAT_TYPE_START
+
+SgName
+SgAdaFloatType::get_mangled(void) const {
+    string name("f'");
+    
+    name.append(get_digits()->unparseToString());
+    name.append("'");
+    name.append(get_range()->displayString());
+    return SgName(name);
+}
+     
+SOURCE_ADA_FLOAT_TYPE_END
+
+
 SOURCE_TYPE_ELLIPSE_TYPE_START
 SgName
 $CLASSNAME::get_mangled (void) const
@@ -7891,7 +8023,7 @@ SgPointerType::createType(SgType* base_type, SgExpression* optional_fortran_type
                if (handledUsingLocalTable(root_type) == false)
                   {
 #if 0
-                    printf ("Mangled type name for SgPointerType = %s (does NOT exist in type table) interting it... \n",name.str());
+                    printf ("Mangled type name for SgPointerType = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                     get_globalTypeTable()->insert_type(name,newType);
                   }
@@ -7988,7 +8120,7 @@ SgReferenceType::createType(SgType* base_type, SgExpression* optional_fortran_ty
                if (handledUsingLocalTable(root_type) == false)
                   {
 #if 0
-                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                     get_globalTypeTable()->insert_type(name,newType);
                   }
@@ -8068,7 +8200,7 @@ SgRvalueReferenceType::createType(SgType* base_type, SgExpression* optional_fort
                if (handledUsingLocalTable(root_type) == false)
                   {
 #if 0
-                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                     get_globalTypeTable()->insert_type(name,newType);
                   }
@@ -8197,7 +8329,7 @@ SgDeclType::createType(SgExpression* base_expression, SgExpression* optional_for
                if (handledUsingLocalTable(root_type) == false)
                   {
 #if 0
-                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                     get_globalTypeTable()->insert_type(name,newType);
                   }
@@ -8297,7 +8429,7 @@ SgTypeOfType::createType(SgExpression* base_expression, SgExpression* optional_f
                if (handledUsingLocalTable(root_type) == false)
                   {
 #if DEBUG_TYPEOF_CREATETYPE_EXP
-                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                     get_globalTypeTable()->insert_type(name,newType);
                   }
@@ -8390,7 +8522,7 @@ SgTypeOfType::createType(SgType* base_type, SgExpression* optional_fortran_type_
                if (handledUsingLocalTable(root_type) == false)
                   {
 #if DEBUG_TYPEOF_CREATETYPE_TYPE
-                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+                    printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                     get_globalTypeTable()->insert_type(name,newType);
                   }
@@ -8475,7 +8607,7 @@ SgArrayType::createType ( SgType* base_type, SgExpression* idx, SgExpression* op
           if (handledUsingLocalTable(root_type) == false)
              {
 #if 0
-               printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+               printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                get_globalTypeTable()->insert_type(name,returnType);
              }
@@ -8552,6 +8684,109 @@ SgArrayType::createType ( SgType* base_type, SgExpression* idx, SgExpression* op
 
 SOURCE_CREATE_TYPE_FOR_ARRAY_TYPE_END
 
+SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE_START
+
+SgAdaAccessType*
+SgAdaAccessType::createType (SgType* base_type, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgAdaAccessType  proto(base_type); // \pp not sure if stack allocation works
+  SgName           name = proto.get_mangled();
+  SgType*          ty = get_globalTypeTable()->lookup_type(name);
+  
+  if (SgAdaAccessType* unified = isSgAdaAccessType(ty))
+    return unified;
+   
+  ROSE_ASSERT(ty == NULL); 
+  SgAdaAccessType* res = new SgAdaAccessType(base_type);
+  
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+
+SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE_END
+
+SOURCE_CREATE_TYPE_FOR_ADA_SUBTYPE_START
+
+SgAdaSubtype*
+SgAdaSubtype::createType (SgType* base_type, SgAdaTypeConstraint* constraint, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgAdaSubtype  proto(base_type, constraint); // \pp not sure if stack allocation works
+  SgName        name = proto.get_mangled();
+  SgType*       ty = get_globalTypeTable()->lookup_type(name);
+  
+  if (SgAdaSubtype* unified = isSgAdaSubtype(ty))
+    return unified;
+   
+  ROSE_ASSERT(ty == NULL); 
+  SgAdaSubtype* res = new SgAdaSubtype(base_type, constraint);
+  
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+
+SOURCE_CREATE_TYPE_FOR_ADA_SUBTYPE_END
+
+
+SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE_START
+
+SgAdaFloatType*
+SgAdaFloatType::createType (SgExpression* digits, SgAdaRangeConstraint* range, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgAdaFloatType   proto(digits, range); 
+  SgName           name = proto.get_mangled();
+  SgType*          ty   = get_globalTypeTable()->lookup_type(name);
+  
+  if (SgAdaFloatType* unified = isSgAdaFloatType(ty))
+    return unified;
+   
+  ROSE_ASSERT(ty == NULL); 
+  SgAdaFloatType* res = new SgAdaFloatType(digits, range);
+  
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+
+SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE_END
+
+
+// Rasmussen (2/19/2020): Added SgTypedFixed (primitive type in Jovial)
+SOURCE_CREATE_TYPE_FOR_TYPE_FIXED_START
+
+SgTypeFixed*
+SgTypeFixed::createType ( SgExpression* scale, SgExpression* fraction, SgExpression* optional_fortran_type_kind )
+   {
+  // There is no size (equivalent to Fortran kind) parameter for Jovial fixed type
+     ROSE_ASSERT(optional_fortran_type_kind == NULL);
+
+     SgTypeFixed* return_type = new SgTypeFixed(scale, fraction);
+     ROSE_ASSERT(return_type != NULL);
+
+     SgName name = return_type->get_mangled();
+
+  // Only look for pointers to type in the global type table.
+     SgType* t = get_globalTypeTable()->lookup_type(name);
+     if (t == NULL)
+        {
+           get_globalTypeTable()->insert_type(name,return_type);
+        }
+       else
+        {
+       // If it is already present in the type table then delete the type (so that it will remain unique).
+#if ALLOW_DELETE_OF_EXPLORATORY_NODE
+       // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
+       // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
+       // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
+          ROSE_ASSERT(t != return_type);
+          delete return_type;
+#endif
+          return_type = isSgTypeFixed(t);
+        }
+
+     return return_type;
+   }
+
+SOURCE_CREATE_TYPE_FOR_TYPE_FIXED_END
+
 
 SOURCE_CREATE_TYPE_FOR_STRING_TYPE_START
 
@@ -8591,7 +8826,7 @@ SgTypeString::createType ( SgExpression* lengthExpression, SgExpression* optiona
         {
        // The pointer type was not found in the type table, put it into the global type table.
 #if 0
-          printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+          printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
           get_globalTypeTable()->insert_type(name,returnType);
         }
@@ -8692,7 +8927,7 @@ SgModifierType::createType(SgType* base_type, unsigned int f, SgExpression* opti
           if (handledUsingLocalTable(root_type) == false)
              {
 #if 0
-               printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
+               printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) inserting it... \n",name.str());
 #endif
                get_globalTypeTable()->insert_type(name,newType);
              }

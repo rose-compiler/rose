@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
+
 #include <AsmUnparser_compat.h>
 #include <BinaryCodeInserter.h>
 #include <BinaryUnparserBase.h>
@@ -672,3 +675,5 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
 
 } // namespace
 } // namespace
+
+#endif

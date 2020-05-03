@@ -33,7 +33,8 @@ bool StructureAccessLookup::isUnionDeclaration(SgNode* node) {
   }
   return false;
 }
-void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMapping, SgProject* root) {
+
+void StructureAccessLookup::initializeOffsets(VariableIdMappingExtended* variableIdMapping, SgProject* root) {
   ROSE_ASSERT(variableIdMapping);
   ROSE_ASSERT(root);
   RoseAst ast(root);
@@ -53,7 +54,7 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
         if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(dataMember)) {
           SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
           if(VariableIdMapping::isAnonymousBitfield(initName)) {
-            // ROSE AST BUG WORKAROUND (ROSE-1867)
+            // ROSE AST BUG WORKAROUND (ROSE-1867): anonymous bitfields are assigned the same SgSymbol
             continue;
           }
           //cout<<"DEBUG: struct data member decl: "<<dataMember->unparseToString()<<" : ";
@@ -66,9 +67,7 @@ void StructureAccessLookup::initializeOffsets(VariableIdMapping* variableIdMappi
               // currently nested types are ignored!
               //if(isStruct(type) ...) initialize(variableIdMapping, dataMember);
 
-              SgTypeSizeMapping* typeSizeMapping=AbstractValue::getTypeSizeMapping();
-              ROSE_ASSERT(typeSizeMapping);
-              int typeSize=typeSizeMapping->determineTypeSize(varType);
+              int typeSize=variableIdMapping->getTypeSize(varType);
               if(typeSize==0) {
                 numZeroTypeSize++;
                 //cout<<"DEBUG: Type of size 0: "<<varType->unparseToString()<<endl;

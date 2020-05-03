@@ -1,5 +1,6 @@
-#include "sage3basic.h"
 #include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include "sage3basic.h"
 
 #include "rose_strtoull.h"
 #include "BinaryYicesSolver.h"
@@ -33,6 +34,11 @@ void
 YicesSolver::reset() {
     SmtSolver::reset();
     varsForSets_.clear();
+}
+
+void
+YicesSolver::timeout(boost::chrono::duration<double> seconds) {
+    mlog[WARN] <<"Yices timeout value is ignored\n";
 }
 
 // class method
@@ -1447,4 +1453,6 @@ YicesSolver::ctx_read(const SymbolicExpr::InteriorPtr &in) {
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::YicesSolver);
+#endif
+
 #endif

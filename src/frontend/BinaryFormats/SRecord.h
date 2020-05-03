@@ -1,6 +1,9 @@
 #ifndef ROSE_BinaryFormats_SRecord_H
 #define ROSE_BinaryFormats_SRecord_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 namespace Rose {
 namespace BinaryAnalysis {
 
@@ -238,4 +241,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

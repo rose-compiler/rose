@@ -106,14 +106,16 @@ namespace SageInterface
 //! An internal counter for generating unique SgName
 ROSE_DLL_API extern int gensym_counter;
 
-// tps : 28 Oct 2008 - support for finding the main interpretation
- SgAsmInterpretation* getMainInterpretation(SgAsmGenericFile* file);
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+//! Find the main interpretation.
+SgAsmInterpretation* getMainInterpretation(SgAsmGenericFile* file);
 
 //! Get the unsigned value of a disassembled constant.
 uint64_t getAsmConstant(SgAsmValueExpression* e);
 
 //! Get the signed value of a disassembled constant.
 int64_t getAsmSignedConstant(SgAsmValueExpression *e);
+#endif
 
 //! Function to add "C" style comment to statement.
  void addMessageStatement( SgStatement* stmt, std::string message );
@@ -128,47 +130,6 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
      void set_name (std::string n) {name = n;};
      std::string get_name () {return name;};
   };
-
-// DQ (3/2/2009): Added support for collectiong an merging the referenced symbols in the outlined
-// function into the list used to edit the outlined code subtree to fixup references (from symbols
-// in the original file to the symbols in the newer separate file).
-// typedef rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> ReplacementMapType;
-// void supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap );
-
-// CH (4/9/2010): Use boost::hash instead
-//#ifdef _MSC_VER
-#if 0
-inline size_t hash_value(SgNode* t) {return (size_t)t;}
-#endif
-
-#if 0
-// DQ (8/3/2015): We expect that this is not used and is generating a warnings so we 
-// can best fix it by removing it.
-struct hash_nodeptr
-   {
-// CH (4/9/2010): Use boost::hash instead
-//#ifndef _MSC_VER
-#if 0
-           //rose_hash::hash<char*> hasher;
-#endif
-     public:
-          size_t operator()(SgNode* node) const
-             {
-// CH (4/9/2010): Use boost::hash instead
-//#ifdef _MSC_VER
- #if 0
-                                  return (size_t) hash_value(node);
- #else
-                                  return (size_t) node;
- #endif
-                   }
-    };
-
-#ifndef SWIG
-// DQ (3/10/2013): This appears to be a problem for the SWIG interface (undefined reference at link-time).
-  void supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap );
-#endif
-#endif
 
  //------------------------------------------------------------------------
  //@{
@@ -761,10 +722,6 @@ PreprocessingInfo* attachComment(
    ROSE_DLL_API PreprocessingInfo* attachComment(SgLocatedNode* target, const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
                PreprocessingInfo::DirectiveType dtype= PreprocessingInfo::CpreprocessorUnknownDeclaration);
-
-// DQ (11/25/2009): Added matching support for adding comments to SgAsm nodes.
-// Build and attach comment
-// void attachComment(SgAsmStatement* target, const std::string & content );
 
 // DQ (7/20/2008): I am not clear were I should put this function, candidates include: SgLocatedNode or SgInterface
 //! Add a string to be unparsed to support code generation for back-end specific tools or compilers.
@@ -1707,6 +1664,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   // ROSE_DLL_API std::list<SgClassType*> getClassTypeChainForDataMemberReference(SgVarRefExp* varRefExp);
   ROSE_DLL_API std::list<SgClassType*> getClassTypeChainForMemberReference(SgExpression* refExp);
 
+  ROSE_DLL_API std::set<SgNode*> getFrontendSpecificNodes();
 
   // DQ (2/17/2019): Display the shared nodes in the AST for debugging.
   ROSE_DLL_API void outputSharedNodes( SgNode* node );

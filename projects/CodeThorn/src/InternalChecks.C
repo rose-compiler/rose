@@ -46,8 +46,6 @@ void check(string checkIdentifier, bool checkResult, bool check);
 extern bool checkresult;
 
 bool CodeThorn::internalChecks(int argc, char *argv[]) {
-  SgTypeSizeMapping* typeSizeMapping=new SgTypeSizeMapping();
-  AbstractValue::setTypeSizeMapping(typeSizeMapping);
   try {
     // checkTypes() writes into checkresult
     checkTypes();
@@ -70,8 +68,6 @@ bool CodeThorn::internalChecks(int argc, char *argv[]) {
   cout << color("white")<<"-------------------------"<<endl;
   cout << color("default-bg-color");
   cout << color("normal");
-  AbstractValue::setTypeSizeMapping(nullptr);
-  delete typeSizeMapping;
   return checkresult;
 }
 
@@ -110,7 +106,9 @@ void check(string checkIdentifier, bool checkResult, bool check=true) {
 #endif
 
 void checkTypes() {
-  VariableIdMapping variableIdMapping;
+  VariableIdMappingExtended variableIdMapping;
+  AbstractValue::setVariableIdMapping(&variableIdMapping);
+  
   PState s1;
   cout << "RUNNING CHECKS:"<<endl;
   {

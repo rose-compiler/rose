@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_StackDelta_H
 #define ROSE_BinaryAnalysis_StackDelta_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 #include <Disassembler.h>
@@ -291,4 +293,5 @@ std::ostream& operator<<(std::ostream&, const Analysis&);
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -58,42 +58,7 @@ test_unparseProject_template: unparseProject
 ########################################################################################################################
 
 # check-local: $(TEST_TARGETS)
-check-local: 
-# DQ (2/19/2017): NEW VERSION OF LOGIC
-# DQ (2/18/2017): More specific logic required for portability.
-# When using EDG 4.9 these files don't compile on later versions of GNU, CLANG, and Intel compilers 
-# but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
-# the compiler vendor and GNU compiler version).
-if ROSE_USE_EDG_VERSION_4_9
-	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
-if USING_GNU_COMPILER
-	@echo "USING_GCC_COMPILER == true"
-if ROSE_USING_GCC_VERSION_LATER_4_9
-	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
-else  # NOT ROSE_USING_GCC_VERSION_LATER_4_9
-	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == false"
-	@echo "unparseToString tests using GNU version 4.8 and earlier backend compiler."
-	@$(MAKE) $(TEST_TARGETS)
-endif # ROSE_USING_GCC_VERSION_LATER_4_8
-else  # NOT USING_GNU_COMPILER
-	@echo "USING_GCC_COMPILER == false"
-if USING_CLANG_COMPILER
-# Exclude this list of files in the case of CLANG compiler.
-	@echo "USING_CLANG_COMPILER == true"
-else # NOT USING_CLANG_COMPILER
-	@echo "USING_CLANG_COMPILER == false"
-if USING_INTEL_COMPILER
-# Exclude this list of files in the case of Intel compiler.
-	@echo "USING_INTEL_COMPILER == true"
-else # NOT USING_INTEL_COMPILER
-# This is an unknown compiler.
-	@echo "USING_INTEL_COMPILER == false"
-endif # USING_INTEL_COMPILER
-endif # USING_CLANG_COMPILER
-endif # USING_GNU_COMPILER
-else  # NOT ROSE_USE_EDG_VERSION_4_9
-# Using EDG 4.12 or later (run all tests independent of the compiler).
-	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
+check-local:
 if USING_GNU_COMPILER
 	@echo "USING_GCC_COMPILER == true"
 	@echo "unparseToString tests using GNU version 4.8 backend compiler."
@@ -116,7 +81,6 @@ else # NOT USING_INTEL_COMPILER
 endif # USING_INTEL_COMPILER
 endif # USING_CLANG_COMPILER
 endif # USING_GNU_COMPILER
-endif # ROSE_USE_EDG_VERSION_4_9
 	@echo "*******************************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/unparseToString_tests: make check rule complete (terminated normally) ******"
 	@echo "*******************************************************************************************************************************"

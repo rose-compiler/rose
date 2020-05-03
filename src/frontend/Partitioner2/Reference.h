@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_Reference_H
 #define ROSE_Partitioner2_Reference_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/Function.h>
 #include <set>
@@ -157,4 +160,5 @@ typedef Sawyer::Container::Map<Reference, ReferenceSet> CrossReferences;
 } // namespace
 } // namespace
 
+#endif
 #endif

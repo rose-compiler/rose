@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "Solver5.h"
 #include "Analyzer.h"
+#include "CodeThornCommandLineOptions.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -44,9 +45,9 @@ void Solver5::run() {
   bool ioReductionActive = false;
   unsigned int ioReductionThreshold = 0;
   unsigned int estatesLastReduction = 0;
-  if(args.count("io-reduction")) {
+  if(_analyzer->getLtlOptionsRef().ioReduction) {
     ioReductionActive = true;
-    ioReductionThreshold = args["io-reduction"].as<int>();
+    ioReductionThreshold = _analyzer->getLtlOptionsRef().ioReduction;
   }
 
   SAWYER_MESG(logger[TRACE])<<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
@@ -114,11 +115,11 @@ void Solver5::run() {
               {
                 fout.open(_analyzer->_stg_trace_filename.c_str(),ios::app);    // open file for appending
                 assert (!fout.fail( ));
-                fout<<"ESTATE-IN :"<<currentEStatePtr->toString(&(_analyzer->variableIdMapping));
+                fout<<"ESTATE-IN :"<<currentEStatePtr->toString(_analyzer->getVariableIdMapping());
                 string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
                 if(sourceString.size()==60) sourceString+="...";
                 fout<<"\n==>"<<"TRANSFER:"<<sourceString;
-                fout<<"==>\n"<<"ESTATE-OUT:"<<newEState.toString(&(_analyzer->variableIdMapping));
+                fout<<"==>\n"<<"ESTATE-OUT:"<<newEState.toString(_analyzer->getVariableIdMapping());
                 fout<<endl;
                 fout<<endl;
                 fout.close();
@@ -136,7 +137,9 @@ void Solver5::run() {
                   //cout<<"DEBUG: Adding estate to worklist."<<endl;
                   _analyzer->addToWorkList(newEStatePtr);
                   break;
-                case 1: {
+                case 1:
+                case 3:
+                  {
                   // performing merge
 #pragma omp critical(SUMMARY_STATES_MAP)
                   {
@@ -194,7 +197,7 @@ void Solver5::run() {
               } else if(_analyzer->isFailedAssertEState(&newEState)) {
                 // record failed assert
                 int assertCode;
-                if(args.getBool("rers-binary")) {
+                if(_analyzer->getOptionsRef().rers.rersBinary) {
                   assertCode=_analyzer->reachabilityAssertCode(newEStatePtr);
                 } else {
                   assertCode=_analyzer->reachabilityAssertCode(currentEStatePtr);
@@ -202,18 +205,13 @@ void Solver5::run() {
                 if(assertCode>=0) {
 #pragma omp critical
                   {
-                    if(args.getBool("with-counterexamples") || args.getBool("with-assert-counterexamples")) {
+                    if(_analyzer->getLtlOptionsRef().withCounterExamples || _analyzer->getLtlOptionsRef().withAssertCounterExamples) {
                       //if this particular assertion was never reached before, compute and update counterexample
                       if (_analyzer->reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
                         _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
                       }
                     }
                     _analyzer->reachabilityResults.reachable(assertCode);
-                  }
-                } else {
-                  // TODO: this is a workaround for isFailedAssert being true in case of rersmode for stderr (needs to be refined)
-                  if(!args.getBool("rersmode")) {
-                    // assert without label
                   }
                 }
               } // end of failed assert handling
@@ -229,7 +227,7 @@ void Solver5::run() {
   }
   if(_analyzer->isIncompleteSTGReady()) {
     _analyzer->printStatusMessage(true);
-    cout<< "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
+    _analyzer->printStatusMessage("STATUS: analysis finished (incomplete STG due to specified resource restriction).",true);
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),!isComplete);
     _analyzer->transitionGraph.setIsComplete(!isComplete);
   } else {
@@ -237,7 +235,7 @@ void Solver5::run() {
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),tmpcomplete);
     _analyzer->printStatusMessage(true);
     _analyzer->transitionGraph.setIsComplete(tmpcomplete);
-    cout<< "STATUS: analysis finished (worklist is empty)."<<endl;
+    _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
   }
   _analyzer->transitionGraph.setIsPrecise(_analyzer->isPrecise());
 }

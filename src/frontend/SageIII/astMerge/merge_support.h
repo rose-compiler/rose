@@ -1,5 +1,17 @@
-void displaySet ( const std::set<SgNode*> & inputSet, const std::string & label );
-std::set<SgNode*> generateNodeListFromAST ( SgNode* node );
-std::set<SgNode*> generateNodeListFromMemoryPool();
-std::set<SgNode*> getSetOfSharedNodes();
+#ifndef __MERGE_SUPPORT_H__
+#define __MERGE_SUPPORT_H__
 
+#include <set>
+#include <string>
+
+class SgNode;
+
+namespace Rose {
+namespace AST {
+
+ROSE_DLL_API std::set<SgNode*> getFrontendSpecificNodes();
+
+}
+}
+
+#endif /* __MERGE_SUPPORT_H__ */

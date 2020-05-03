@@ -1,6 +1,5 @@
 // Second implementation of Concolic::Database that works for both SQLite and PostgreSQL
 // The schema is not identical to that of the first implementation.
-
 #include <sage3basic.h>
 #include <BinaryConcolic.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
@@ -14,6 +13,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
+#include <boost/regex.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/archive/xml_oarchive.hpp>
 #include <ctime>
@@ -24,9 +24,7 @@
 #endif
 
 #ifdef ROSE_HAVE_LIBPQXX
-#if 0 // [Robb Matzke 2020-02-03]: not officially supported yet
 #include <Sawyer/DatabasePostgresql.h>
-#endif
 #endif
 
 namespace Rose {
@@ -36,10 +34,14 @@ namespace Concolic {
 // Return the file name part of an SQLite connection URL
 static boost::filesystem::path
 sqliteFileName(const std::string &url) {
-    if (boost::starts_with(url, "sqlite://")) {
-        return url.substr(9);
-    } else if (boost::starts_with(url, "sqlite3://")) {
-        return url.substr(10);
+    boost::regex re("(\\w*)://(.+)");
+    boost::smatch matched;
+    if (boost::regex_match(url, matched, re)) {
+        if (matched.str(1) == "sqlite" || matched.str(1) == "sqlite3") {
+            return matched.str(2);
+        } else {
+            return boost::filesystem::path();
+        }
     } else {
         return url;
     }
@@ -291,19 +293,28 @@ idHelper(const Database::Ptr &db, const typename IdObjMap::Target &obj, Update::
 Database::Ptr
 Database::instance(const std::string &url) {
     Ptr db(new Database);
-#if 0 // DEBUGGING [Robb Matzke 2020-01-24]
+
     if (boost::starts_with(url, "postgresql://") || boost::starts_with(url, "postgres://")) {
-        db->connection_ = Sawyer::Database::Posgtresql(url);
-    }
+#ifdef ROSE_HAVE_LIBPQXX
+#if 0 // [Robb Matzke 2020-02-21]: not ready to use yet
+        db->connection_ = Sawyer::Database::Postgresql(url);
 #else
-    if (false) {
-    }
+        ASSERT_not_implemented("[Robb Matzke 2020-02-21]");
 #endif
-    else {
-     boost::filesystem::path fileName = sqliteFileName(url);
+#else
+        throw Exception("ROSE was not configured with PostgreSQL");
+#endif
+    }
+
+    boost::filesystem::path fileName = sqliteFileName(url);
+    if (!fileName.empty()) {
+#ifdef ROSE_HAVE_SQLITE3
         if (!boost::filesystem::exists(fileName))
             throw Exception("sqlite database " + boost::lexical_cast<std::string>(fileName) + " does not exist");
         db->connection_ = Sawyer::Database::Sqlite(fileName);
+#else
+        throw Exception("ROSE was not configured with SQLite");
+#endif
     }
 
     initTestSuite(db);
@@ -314,21 +325,26 @@ Database::instance(const std::string &url) {
 Database::Ptr
 Database::create(const std::string &url, const Sawyer::Optional<std::string> &testSuiteName) {
     Ptr db;
-#if 0 // DEBUGGING [Robb Matzke 2020-01-24]
+
     if (boost::starts_with(url, "postgresql://") || boost::starts_with(url, "postgres://")) {
+#ifdef ROSE_HAVE_LIBPQXX
         throw Exception("cannot create a PostgreSQL database; use external tools to do that, then open the database");
-    }
 #else
-    if (false) {
-    }
+        throw Exception("ROSE was not configured with PostgreSQL");
 #endif
-    else {
+    }
+
+    boost::filesystem::path fileName = sqliteFileName(url);
+    if (!fileName.empty()) {
+#ifdef ROSE_HAVE_SQLITE3
         db = Ptr(new Database);
-        boost::filesystem::path fileName = sqliteFileName(url);
         boost::system::error_code ec;
         boost::filesystem::remove(fileName, ec);
         db->connection_ = Sawyer::Database::Sqlite(fileName);
         initSchema(db->connection_);
+#else
+        throw Exception("ROSE was not configured with SQLite");
+#endif
     }
 
     if (testSuiteName) {
@@ -468,9 +484,9 @@ Database::rbaExists(SpecimenId id) {
 
 void
 Database::saveRbaFile(const boost::filesystem::path &fileName, SpecimenId id) {
-    std::ifstream in(fileName.native().c_str(), std::ios_base::binary);
+    std::ifstream in(fileName.string().c_str(), std::ios_base::binary);
     if (!in)
-        throw Exception("cannot read file \"" + StringUtility::cEscape(fileName.native()) + "\"");
+        throw Exception("cannot read file \"" + StringUtility::cEscape(fileName.string()) + "\"");
     using Iter = std::istreambuf_iterator<char>;
     std::vector<uint8_t> rba;
     rba.reserve(boost::filesystem::file_size(fileName));
@@ -483,9 +499,9 @@ Database::saveRbaFile(const boost::filesystem::path &fileName, SpecimenId id) {
 
 void
 Database::extractRbaFile(const boost::filesystem::path &fileName, SpecimenId id) {
-    std::ofstream out(fileName.native().c_str(), std::ios_base::binary);
+    std::ofstream out(fileName.string().c_str(), std::ios_base::binary);
     if (!out)
-        throw Exception("cannot create or truncate file \"" + StringUtility::cEscape(fileName.native()) + "\"");
+        throw Exception("cannot create or truncate file \"" + StringUtility::cEscape(fileName.string()) + "\"");
     auto rba = connection().stmt("select rba from specimens where id = ?id").bind("id", *id).get<std::vector<uint8_t>>();
     if (!rba)
         throw Exception("no RBA data associated with specimen " + boost::lexical_cast<std::string>(*id));

@@ -1,6 +1,8 @@
-#include <sage3basic.h>
 #include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <sage3basic.h>
 #include <BinaryDebugger.h>
+
 #include <DisassemblerX86.h>
 #include <integerOps.h>
 #include <Registers.h>
@@ -9,12 +11,18 @@
 #include <boost/filesystem.hpp>
 #include <dirent.h>
 #include <Sawyer/Message.h>
+#include <cstdlib>
 
 #ifdef ROSE_HAVE_SYS_PERSONALITY_H
 #include <sys/personality.h>
 #endif
 
 #include <boost/config.hpp>
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Supporting functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifdef BOOST_WINDOWS                                    // FIXME[Robb P. Matzke 2014-10-11]: not implemented on Windows
 
 enum __ptrace_request {                                 // Windows dud
@@ -76,8 +84,8 @@ static int WSTOPSIG(int) { return 0; }                  // Windows dud
 
 #elif defined(__APPLE__) && defined(__MACH__)
 
-# warning("FIXME[Robb P. Matzke  2015-02-20]: Not supported on Mac OSX yet")
-# warning("FIXME[Craig Rasmussen 2017-12-09]: Still not supported on Mac OSX but will now compile")
+# warning("FIXME[Robb P. Matzke  2015-02-20]: Not supported on macOS yet")
+# warning("FIXME[Craig Rasmussen 2017-12-09]: Still not supported on macOS but will now compile")
 
 # include <signal.h>
 # include <sys/ptrace.h>
@@ -99,16 +107,18 @@ static int WSTOPSIG(int) { return 0; }                  // Windows dud
 #define PTRACE_GETFPREGS       ROSE_PT_NO_EQUIVALENT
 #define PTRACE_SYSCALL         ROSE_PT_NO_EQUIVALENT
 
-struct user_regs_struct {                               // Mac OSX dud
+struct user_regs_struct {                               // macOS dud
     long int eip;
 };
 
-typedef int __ptrace_request;                           // Mac OSX dud
+typedef int __ptrace_request;                           // macOS dud
 
-static int ptrace(__ptrace_request, int, void*, void*) {// Mac OSX dud
+static int ptrace(__ptrace_request, int, void*, void*) {// macOS dud
     errno = ENOSYS;
     return -1;
 }
+
+static char **environ = NULL;                           // macOS dud
 
 #else
 
@@ -125,6 +135,98 @@ namespace bfs = boost::filesystem;
 
 namespace Rose {
 namespace BinaryAnalysis {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Specimen
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+Debugger::Specimen::eraseMatchingEnvironmentVariables(const boost::regex &re) {
+    clearEnvVars_.push_back(re);
+}
+
+void
+Debugger::Specimen::eraseAllEnvironmentVariables() {
+    clearEnvVars_.clear();
+    clearEnvVars_.push_back(boost::regex(".*"));
+}
+
+void
+Debugger::Specimen::eraseEnvironmentVariable(const std::string &s) {
+    std::string reStr = "^";
+    BOOST_FOREACH (char ch, s) {
+        if (strchr(".|*?+(){}[]^$\\", ch))
+            reStr += "\\";
+        reStr += ch;
+    }
+    reStr += "$";
+    eraseMatchingEnvironmentVariables(boost::regex(reStr));
+}
+
+void
+Debugger::Specimen::insertEnvironmentVariable(const std::string &name, const std::string &value) {
+    setEnvVars_[name] = value;
+}
+
+char**
+Debugger::Specimen::prepareEnvAdjustments() const {
+    // Variables to be erased
+    std::vector<std::string> erasures;
+    for (char **entryPtr = environ; entryPtr && *entryPtr; ++entryPtr) {
+        char *eq = std::strchr(*entryPtr, '=');
+        ASSERT_not_null(eq);
+        std::string name(*entryPtr, eq);
+        BOOST_FOREACH (const boost::regex &re, clearEnvVars_) {
+            if (boost::regex_search(name, re)) {
+                erasures.push_back(name);
+                break;
+            }
+        }
+    }
+
+    // Return value should be a list of strings that are either variable names to be moved, or variables to be added. The
+    // variables to be added will have an '=' in the string.
+    char **retval = new char*[erasures.size() + setEnvVars_.size() + 1]();
+    char **entryPtr = retval;
+    BOOST_FOREACH (const std::string &name, erasures) {
+        *entryPtr = new char[name.size()+1];
+        std::strcpy(*entryPtr, name.c_str());
+        ++entryPtr;
+    }
+    for (std::map<std::string, std::string>::const_iterator iter = setEnvVars_.begin(); iter != setEnvVars_.end(); ++iter) {
+        std::string var = iter->first + "=" + iter->second;
+        *entryPtr = new char[var.size()+1];
+        std::strcpy(*entryPtr, var.c_str());
+        ++entryPtr;
+    }
+    ASSERT_require(entryPtr - retval == erasures.size() + setEnvVars_.size());
+    ASSERT_require(NULL == *entryPtr);
+    return retval;
+}
+
+// This function should be async signal safe. However, the call to putenv is AS-unsafe. I think the only time this might be an
+// issue is if fork() happened to be called when some other thread was also operating on the environment and assuming that
+// glibc fails to have an pthread::atfork handler that releases the lock.
+static void
+adjustEnvironment(char **list) {
+    if (list) {
+        for (char **entryPtr = list; *entryPtr; ++entryPtr)
+            putenv(*entryPtr);                          // NOT ASYNC SIGNAL SAFE
+    }
+}
+
+// Free an allocated list of C strings.
+static char**
+freeStringList(char **list) {
+    for (char **entryPtr = list; entryPtr && *entryPtr; ++entryPtr)
+        delete[] *entryPtr;
+    delete[] list;
+    return NULL;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Debugger
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static long
 sendCommand(__ptrace_request request, int child, void *addr=0, void *data=0) {
@@ -421,11 +523,13 @@ Debugger::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete
         autoDetach_ = onDelete.orElse(KILL);
 
         // Create the child exec arguments before the fork because heap allocation is not async-signal-safe.
-        char **argv = new char*[1 /*name*/ + specimen.arguments().size() + 1 /*null*/];
-        argv[0] = strdup(specimen.program().native().c_str());
-        for (size_t i = 0; i < specimen.arguments().size(); ++i)
-            argv[i+1] = strdup(specimen.arguments()[i].c_str());
-        argv[1 + specimen.arguments().size()] = NULL;
+        char **argv = new char*[1 /*name*/ + specimen.arguments().size() + 1 /*null*/]();
+        argv[0] = new char[specimen.program().string().size()+1];
+        std::strcpy(argv[0], specimen.program().string().c_str());
+        for (size_t i = 0; i < specimen.arguments().size(); ++i) {
+            argv[i+1] = new char[specimen.arguments()[i].size()+1];
+            std::strcpy(argv[i+1], specimen.arguments()[i].c_str());
+        }
 
 #ifndef BOOST_WINDOWS
         // Prepare to close files when forking.  This is a race because some other thread might open a file without the
@@ -448,9 +552,11 @@ Debugger::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete
         }
 #endif
 
+        char **envAdjustments = specimen.prepareEnvAdjustments();
         child_ = fork();
         if (0==child_) {
             // Since the parent process may have been multi-threaded, we are now in an async-signal-safe context.
+            adjustEnvironment(envAdjustments);
             if (specimen.flags().isSet(REDIRECT_INPUT))
                 devNullTo(0, O_RDONLY);                 // async-signal-safe
 
@@ -485,9 +591,8 @@ Debugger::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete
             _Exit(1);
         }
 
-        for (size_t i=0; argv[i]; ++i)
-            free(argv[i]);
-        delete[] argv;
+        argv = freeStringList(argv);
+        envAdjustments = freeStringList(envAdjustments);
 
         waitForChild();
         if (isTerminated())
@@ -780,3 +885,5 @@ Debugger::setPersonality(unsigned long bits) {
 
 } // namespace
 } // namespace
+
+#endif

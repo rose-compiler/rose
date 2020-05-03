@@ -1,5 +1,7 @@
 #ifndef Rose_SymbolicSemantics2_H
 #define Rose_SymbolicSemantics2_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS
@@ -1231,4 +1233,5 @@ BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSema
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics::RiscOperators);
 #endif
 
+#endif
 #endif

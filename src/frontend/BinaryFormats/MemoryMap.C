@@ -1,8 +1,10 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+#include "MemoryMap.h"
 
 #include "Diagnostics.h"
 #include "FileSystem.h"
-#include "MemoryMap.h"
 #include "rose_getline.h"
 #include "rose_strtoull.h"
 
@@ -925,3 +927,5 @@ MemoryMap::dump(std::ostream &out, std::string prefix) const
 
 } // namespace
 } // namespace
+
+#endif

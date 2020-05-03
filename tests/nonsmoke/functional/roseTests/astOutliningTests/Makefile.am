@@ -72,10 +72,12 @@ outlineSelection_LDADD = $(ROSE_LIBS)
 C_TESTCODES_REQUIRED_TO_PASS =			\
 	 array1.c				\
 	 arrayParameter.c			\
+	 arrayRef.c \
 	 jacobi.c                               \
 	 moreTest0.c				\
 	 moreTest1.c				\
 	 moreTest8.c				\
+	 print.c	\
 	 zeroParameter.c
 
 # This is not ready
@@ -91,8 +93,11 @@ CXX_TESTCODES_REQUIRED_TO_PASS =		\
 # Add a few tool_G's regression tests
 # 	test_26_v2_2020.cpp  this is not ready, not sure what happened for preprocessing
 CXX2_TESTCODES_REQUIRED_TO_PASS =                \
+ 	print.cpp \						 
+	test_42_2020.cpp \
 	test_20_2019.cpp \
-	test_26_v1_2020.cpp
+	test_26_v1_2020.cpp \
+	test_37_2020.cpp
 
 # DQ (11/14/2017): This is failing and I need to learn the depth of what is the problem for the outlining tests.
 # I think I need to work with Liao on this when he is back from vacation.

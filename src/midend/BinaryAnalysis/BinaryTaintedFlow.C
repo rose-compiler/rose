@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include "BinaryTaintedFlow.h"
+
 #include "stringify.h"
 #include <sstream>
 
@@ -175,3 +178,5 @@ operator<<(std::ostream &out, const TaintedFlow::State &state) {
 
 } // namespace
 } // namespace
+
+#endif

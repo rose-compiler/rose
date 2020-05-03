@@ -3,6 +3,9 @@
 #ifndef ROSE_BinaryAnalysis_InstructionEnumsX86_H
 #define ROSE_BinaryAnalysis_InstructionEnumsX86_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include "AssemblerX86Init.h"   /* A big enum whose members are all possible x86 instructions. */
 
 namespace Rose {
@@ -153,4 +156,5 @@ enum X86Exception {
 } // namespace
 } // namespace
 
+#endif
 #endif

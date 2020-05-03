@@ -16,8 +16,12 @@ namespace CodeThorn {
     // returns the element type size of an array
     CodeThorn::TypeSize determineElementTypeSize(SgArrayType* sgType);
 
+    // returns the element type size of an array
+    CodeThorn::TypeSize determineNumberOfElements(SgArrayType* sgType);
+
     // returns the size of the type pointed to.
     CodeThorn::TypeSize determineTypeSizePointedTo(SgPointerType* sgType);
+    std::string toString();
   };
 } // end of namespace CodeThorn
 

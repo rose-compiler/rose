@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
+
 #include <AsmUnparser_compat.h>
 #include <BaseSemantics2.h>
 #include <BinaryFeasiblePath.h>
@@ -694,12 +697,20 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                    "Exploration along a path stops when any of these limits is met. The default maximum path length is " +
                    StringUtility::plural(settings.maxPathLength, "instructions") + "."));
 
+    sg.insert(Switch("max-expression-size")
+              .argument("n", nonNegativeIntegerParser(settings.maxExprSize))
+              .doc("Maximum size of symbolic expressions, measured in number of nodes of the expression tree, before the "
+                   "expression is replaced with a new free variable. This can make the analysis faster but less precise. "
+                   "See also, @s{smt-timeout}.  The default is " +
+                   boost::lexical_cast<std::string>(settings.maxExprSize) + "."));
+
     sg.insert(Switch("cycle-k")
               .argument("coefficent", realNumberParser(settings.kCycleCoefficient))
               .doc("When the algorithm encounters a vertex which has already been visited by the current path, then the "
                    "effective k value is adjusted. The amount of adjustment is the size of the vertex (e.g., number of "
-                   "instructions) multiplied by the @v{coefficient} specified here. Both positive and negative coefficients "
-                   "are permitted. The default is " + boost::lexical_cast<std::string>(settings.kCycleCoefficient) + "."));
+                   "instructions) multiplied by the floating-point @v{coefficient} specified here. Both positive and "
+                   "negative coefficients are permitted. The default is " +
+                   boost::lexical_cast<std::string>(settings.kCycleCoefficient) + "."));
 
     sg.insert(Switch("max-call-depth")
               .argument("n", nonNegativeIntegerParser(settings.maxCallDepth))
@@ -742,6 +753,14 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                .doc("When analyzing paths for model checking, use this SMT solver.  This switch overrides the general, "
                     "global SMT solver. Since an SMT solver is required for model checking, in the absence of any specified "
                     "solver the \"best\" solver is used.  The default solver is \"" + settings.solverName + "\"."));
+
+    sg.insert(Switch("smt-timeout")
+              .argument("seconds", realNumberParser(settings.smtTimeout))
+              .doc("Amount of time in seconds (fractional values allowed) that the SMT solver is allowed to work on any "
+                   "particular system of equations.  See also, @s{max-expression-size}. The default is " +
+                   (settings.smtTimeout && settings.smtTimeout->count() > 0 ?
+                    boost::lexical_cast<std::string>(*settings.smtTimeout) + " seconds" :
+                    std::string("no limit")) + "."));
 
     CommandLine::insertBooleanSwitch(sg, "null-derefs", settings.nullDeref.check,
                                      "Check for null dereferences along the paths.");
@@ -833,6 +852,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
 
     // Create the RiscOperators and Dispatcher.
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, this, path, pathProcessor);
+    ops->trimThreshold(settings_.maxExprSize);
     ops->initialState(ops->currentState()->clone());
     ops->nullPtrSolver(solver);
     for (size_t i = 0; i < settings().ipRewrite.size(); i += 2) {
@@ -883,6 +903,8 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
     // Direction flag (DF) is always set
     if (const RegisterDescriptor *REG_DF = cpu->get_register_dictionary()->lookup("df"))
         ops->writeRegister(*REG_DF, ops->boolean_(true));
+
+    initialState_ = ops->currentState()->clone();
 }
 
 /** Process instructions for one basic block on the specified virtual CPU. */
@@ -1272,8 +1294,10 @@ FeasiblePath::shouldInline(const P2::CfgPath &path, const P2::ControlFlowGraph::
     // Don't let the call depth get too deep
     ssize_t callDepth = path.callDepth();
     ASSERT_require(callDepth >= 0);
-    if ((size_t)callDepth >= settings_.maxCallDepth)
+    if ((size_t)callDepth >= settings_.maxCallDepth) {
+        ++stats_.maxCallDepthHits;
         return false;
+    }
 
     // Don't inline if there's no function
     if (cfgCallTarget->value().type() != P2::V_BASIC_BLOCK)
@@ -1286,8 +1310,10 @@ FeasiblePath::shouldInline(const P2::CfgPath &path, const P2::ControlFlowGraph::
     if (settings_.maxRecursionDepth < UNLIMITED) {
         ssize_t callDepth = path.callDepth(callee);
         ASSERT_require(callDepth >= 0);
-        if ((size_t)callDepth >= settings_.maxRecursionDepth)
+        if ((size_t)callDepth >= settings_.maxRecursionDepth) {
+            ++stats_.maxRecursionDepthHits;
             return false;
+        }
     }
 
     // Don't inline imported functions that aren't linked -- we'd just get bogged down deep inside the
@@ -1359,6 +1385,11 @@ FeasiblePath::isAnyEndpointReachable(const P2::ControlFlowGraph &cfg,
             return true;
     }
     return false;
+}
+
+BaseSemantics::StatePtr
+FeasiblePath::initialState() const {
+    return initialState_;
 }
 
 BaseSemantics::StatePtr
@@ -1543,13 +1574,13 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
         return;
 
     // Debugging
-    if (debug) {
-        debug <<"depthFirstSearch call #" <<callId <<":\n";
-        debug <<"  paths graph saved in " <<emitPathGraph(callId, graphId) <<"\n";
+    if (trace || debug) {
+        SAWYER_MESG_OR(trace, debug) <<"depthFirstSearch call #" <<callId <<":\n";
+        SAWYER_MESG_OR(trace, debug) <<"  paths graph saved in " <<emitPathGraph(callId, graphId) <<"\n";
         BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsBeginVertices_.values())
-            debug <<"  begin at vertex " <<partitioner().vertexName(v) <<"\n";
+            SAWYER_MESG_OR(trace, debug) <<"  begin at vertex " <<partitioner().vertexName(v) <<"\n";
         BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsEndVertices_.values())
-            debug <<"  end   at vertex " <<partitioner().vertexName(v) <<"\n";
+            SAWYER_MESG_OR(trace, debug) <<"  end   at vertex " <<partitioner().vertexName(v) <<"\n";
     }
 
     const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
@@ -1569,12 +1600,17 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
 
     // Analyze each of the starting locations individually
     BOOST_FOREACH (P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex, pathsBeginVertices_.values()) {
+        Sawyer::ProgressBar<size_t> progress(std::min(settings_.maxPathLength, (size_t)5000 /*arbitrary*/), mlog[MARCH], "path");
+        progress.suffix(" vertices");
+
         // Create the SMT solver.  The solver will have one initial state, plus one additional state pushed for each edge of
         // the current path.
         SmtSolverPtr solver = SmtSolver::instance(settings_.solverName);
         ASSERT_always_not_null(solver);
         solver->errorIfReset(true);
         solver->name("FeasiblePath " + solver->name());
+        if (settings_.smtTimeout)
+            solver->timeout(*settings_.smtTimeout);
 #if 1 // DEBUGGING [Robb Matzke 2018-11-14]
         solver->memoization(false);
 #endif
@@ -1595,6 +1631,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
 
         while (!path.isEmpty()) {
             size_t pathNInsns = pathLength(path);
+            progress.value(pathNInsns);
 
             if (debug) {
                 debug <<"  path vertices (" <<path.nVertices() <<"):";
@@ -1739,8 +1776,9 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             // If we've visited a vertex too many times (e.g., because of a loop or recursion), then don't go any further.
             size_t nVertexVisits = path.nVisits(backVertex);
             if (nVertexVisits > settings_.maxVertexVisit) {
-                SAWYER_MESG(mlog[WARN]) <<indent <<"max visits (" <<settings_.maxVertexVisit <<") reached"
+                SAWYER_MESG(mlog[TRACE]) <<indent <<"max visits (" <<settings_.maxVertexVisit <<") reached"
                                         <<" for vertex " <<partitioner().vertexName(backVertex) <<"\n";
+                ++stats_.maxVertexVisitHits;
                 doBacktrack = true;
             } else if (nVertexVisits > 1 && !rose_isnan(settings_.kCycleCoefficient)) {
                 size_t n = vertexSize(backVertex);
@@ -1756,10 +1794,11 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             // Limit path length (in terms of number of instructions)
             if (!doBacktrack) {
                 if ((double)pathNInsns > effectiveMaxPathLength) {
-                    SAWYER_MESG(mlog[WARN]) <<indent <<"maximum path length exceeded:"
-                                            <<" path length is " <<StringUtility::plural(pathNInsns, "instructions")
-                                            <<", effective limit is " <<effectiveMaxPathLength
-                                            <<" at vertex " <<partitioner().vertexName(backVertex) <<"\n";
+                    SAWYER_MESG(trace) <<indent <<"maximum path length exceeded:"
+                                       <<" path length is " <<StringUtility::plural(pathNInsns, "instructions")
+                                       <<", effective limit is " <<effectiveMaxPathLength
+                                       <<" at vertex " <<partitioner().vertexName(backVertex) <<"\n";
+                    ++stats_.maxPathLengthHits;
                     doBacktrack = true;
                 }
             }
@@ -1773,12 +1812,11 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 P2::CfgConstEdgeSet callEdges = P2::findCallEdges(cfgBackVertex);
                 BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, callEdges.values()) {
                     if (shouldSummarizeCall(path.backVertex(), partitioner().cfg(), cfgCallEdge->target())) {
-                        SAWYER_MESG_OR(trace, debug) <<indent <<"summarizing function for edge "
-                                                     <<partitioner().edgeName(cfgCallEdge) <<"\n";
+                        SAWYER_MESG(debug) <<indent <<"summarizing function for edge " <<partitioner().edgeName(cfgCallEdge) <<"\n";
                         insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);
                     } else if (shouldInline(path, cfgCallEdge->target())) {
-                        SAWYER_MESG_OR(trace, debug) <<indent <<"inlining function call paths at vertex "
-                                                     <<partitioner().vertexName(backVertex) <<"\n";
+                        SAWYER_MESG(debug) <<indent <<"inlining function call paths at vertex "
+                                           <<partitioner().vertexName(backVertex) <<"\n";
                         if (cfgCallEdge->target()->value().type() == P2::V_INDETERMINATE &&
                             cfgBackVertex->value().type() == P2::V_BASIC_BLOCK) {
                             // If the CFG has a vertex to an indeterminate function (e.g., from "call eax"), then instead of
@@ -1808,8 +1846,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                                                       cfgBackVertex, cfgEndAvoidVertices_, cfgAvoidEdges_);
                         }
                     } else {
-                        SAWYER_MESG_OR(trace, debug) <<indent <<"summarizing function for edge "
-                                                     <<partitioner().edgeName(cfgCallEdge) <<"\n";
+                        SAWYER_MESG(debug) <<indent <<"summarizing function for edge " <<partitioner().edgeName(cfgCallEdge) <<"\n";
                         insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);
                     }
                 }
@@ -1831,8 +1868,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 backVertex = path.backVertex();
                 cfgBackVertex = pathToCfg(backVertex);
 
-                SAWYER_MESG_OR(trace, debug) <<indent <<"paths graph has " <<StringUtility::plural(paths_.nVertices(), "vertices")
-                                             <<" and " <<StringUtility::plural(paths_.nEdges(), "edges") <<"\n";
+                SAWYER_MESG(debug) <<indent <<"paths graph has " <<StringUtility::plural(paths_.nVertices(), "vertices")
+                                   <<" and " <<StringUtility::plural(paths_.nEdges(), "edges") <<"\n";
                 SAWYER_MESG(debug) <<"    paths graph saved in " <<emitPathGraph(callId, ++graphId) <<"\n";
             }
 
@@ -1841,7 +1878,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             if (doBacktrack || backVertex->nOutEdges() == 0) {
                 // Backtrack and follow a different path.  The backtrack not only pops edges off the path, but then also appends
                 // the next edge.  We must adjust visit counts for the vertices we backtracked.
-                SAWYER_MESG(debug) <<"    backtrack\n";
+                SAWYER_MESG_OR(trace, debug) <<"    backtrack\n";
                 backtrack(path, solver);
                 if (!path.isEmpty()) {
                     double d = pathEffectiveK(path);
@@ -1852,7 +1889,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
                 }
             } else {
                 // Push next edge onto path.
-                SAWYER_MESG(debug) <<"    advance along cfg edge " <<partitioner().edgeName(backVertex->outEdges().begin()) <<"\n";
+                SAWYER_MESG_OR(trace, debug) <<"    advance along cfg edge "
+                                             <<partitioner().edgeName(backVertex->outEdges().begin()) <<"\n";
                 ASSERT_require(paths_.isValidEdge(backVertex->outEdges().begin()));
                 typedef P2::ControlFlowGraph::ConstEdgeIterator CEI;
                 std::vector<CEI> outEdges;
@@ -1873,7 +1911,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
             }
         }
     }
-    SAWYER_MESG(debug) <<"  path search completed\n";
+    SAWYER_MESG_OR(trace, debug) <<"  path search completed\n";
 }
 
 const FeasiblePath::FunctionSummary&
@@ -1937,3 +1975,5 @@ std::ostream& operator<<(std::ostream &out, const Rose::BinaryAnalysis::Feasible
     expr.print(out);
     return out;
 }
+
+#endif

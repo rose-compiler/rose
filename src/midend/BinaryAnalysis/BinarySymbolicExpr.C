@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #define __STDC_LIMIT_MACROS
 #include <sage3basic.h>
 #include <BinarySymbolicExpr.h>
@@ -4049,3 +4051,5 @@ makeZerop(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, 
 } // namespace
 } // namespace
 } // namespace
+
+#endif

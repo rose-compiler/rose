@@ -196,6 +196,29 @@ public:
     }
 };
 
+class VxcoreDumper: public Dumper {
+public:
+    virtual void formatData(std::ostream &stream, const AddressInterval &segmentInterval, const MemoryMap::Segment &segment,
+                            const AddressInterval &dataInterval, const uint8_t *data) ROSE_OVERRIDE {
+        std::string perms = "=";
+        if (0 != (segment.accessibility() & MemoryMap::READABLE))
+            perms += "r";
+        if (0 != (segment.accessibility() & MemoryMap::WRITABLE))
+            perms += "w";
+        if (0 != (segment.accessibility() & MemoryMap::EXECUTABLE))
+            perms += "x";
+
+        stream <<(boost::format("%x %x %s:\n") % dataInterval.least() % dataInterval.size());
+        stream.write((const char*)data, dataInterval.size());
+        if (!stream.good()) {
+            std::ostringstream mesg;
+            mesg <<"write failed for virtual address " <<dataInterval <<" in segment " <<segmentInterval
+                 <<" \"" <<StringUtility::cEscape(segment.name()) <<"\"";
+            throw std::runtime_error(mesg.str());
+        }
+    }
+};
+
 int
 main(int argc, char *argv[]) {
     // Initialization
@@ -280,6 +303,12 @@ main(int argc, char *argv[]) {
                     SRecordDumper(*settings.showAsSRecords)(settings, map, interval, output);
                     if (SRecord::SREC_INTEL == *settings.showAsSRecords)
                         std::cout <<SRecord(SRecord::SREC_I_END, 0, std::vector<uint8_t>()) <<"\n";
+                }
+                if (settings.showAsVxcore) {
+                    std::ofstream output(outputName.c_str());
+                    if (!output.good())
+                        throw std::runtime_error("cannot create \"" + outputName);
+                    VxcoreDumper()(settings, map, interval, output);
                 }
                 if (settings.showAsBinary) {
                     std::ofstream output((outputName+".raw").c_str());

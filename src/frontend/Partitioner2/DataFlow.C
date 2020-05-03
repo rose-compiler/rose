@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 #include <AsmUnparser_compat.h>
@@ -668,3 +670,5 @@ TransferFunction::printState(const BaseSemantics::StatePtr &state) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

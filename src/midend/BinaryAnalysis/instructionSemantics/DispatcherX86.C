@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "BaseSemantics2.h"
 #include "Diagnostics.h"
 #include "DispatcherX86.h"
@@ -5176,4 +5179,6 @@ DispatcherX86::saturateUnsignedToUnsigned(const BaseSemantics::SValuePtr &src, s
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::DispatcherX86);
+#endif
+
 #endif

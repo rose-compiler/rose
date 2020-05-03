@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include <Partitioner2/ModulesElf.h>
+
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
 #include <rose_getline.h>
@@ -259,7 +262,7 @@ isObjectFile(const boost::filesystem::path &fileName) {
     if (!boost::filesystem::exists(fileName))
         return false;                                   // file doesn't exist
     MemoryMap::Ptr map = MemoryMap::instance();
-    if (0 == map->insertFile(fileName.native(), 0))
+    if (0 == map->insertFile(fileName.string(), 0))
         return false;                                   // file cannot be mmap'd
 
     uint8_t magic[4];
@@ -296,7 +299,7 @@ isStaticArchive(const boost::filesystem::path &fileName) {
     if (!boost::filesystem::exists(fileName))
         return false;                                   // file doesn't exist
     MemoryMap::Ptr map = MemoryMap::instance();
-    if (0 == map->insertFile(fileName.native(), 0))
+    if (0 == map->insertFile(fileName.string(), 0))
         return false;                                   // file cannot be mmap'd
     uint8_t magic[7];
     if (map->at(0).limit(7).read(magic).size() != 7)
@@ -313,7 +316,7 @@ tryLink(const std::string &commandTemplate, const boost::filesystem::path &outpu
 
     std::string allInputs;
     BOOST_FOREACH (const boost::filesystem::path &input, inputNames)
-        allInputs += (allInputs.empty()?"":" ") + StringUtility::bourneEscape(input.native());
+        allInputs += (allInputs.empty()?"":" ") + StringUtility::bourneEscape(input.string());
 
     std::string cmd;
     bool escaped = false;
@@ -324,7 +327,7 @@ tryLink(const std::string &commandTemplate, const boost::filesystem::path &outpu
         } else if (escaped) {
             cmd += commandTemplate[i];
         } else if ('%' == commandTemplate[i] && i+1 < commandTemplate.size() && 'o' == commandTemplate[i+1]) {
-            cmd += StringUtility::bourneEscape(outputName.native());
+            cmd += StringUtility::bourneEscape(outputName.string());
             ++i;                                        // skip the "o"
         } else if ('%' == commandTemplate[i] && i+1 < commandTemplate.size() && 'f' == commandTemplate[i+1]) {
             cmd += allInputs;
@@ -388,7 +391,7 @@ tryLink(const std::string &commandTemplate, const boost::filesystem::path &outpu
         return false;
 
     // Try the linking again, but with the object file as well
-    inputNames.insert(inputNames.begin(), oFile.name().native());
+    inputNames.insert(inputNames.begin(), oFile.name().string());
     return tryLink(commandTemplate, outputName, inputNames, errors, FixUndefinedSymbols::NO);
 }
 
@@ -403,8 +406,8 @@ extractStaticArchive(const boost::filesystem::path &directory, const boost::file
     boost::filesystem::path absArchive = boost::filesystem::absolute(archive);
 
     // Run extraction command
-    std::string cmd = "cd " + StringUtility::bourneEscape(subdir.native()) +
-                      " && ar x " + StringUtility::bourneEscape(absArchive.native());
+    std::string cmd = "cd " + StringUtility::bourneEscape(subdir.string()) +
+                      " && ar x " + StringUtility::bourneEscape(absArchive.string());
     SAWYER_MESG(mlog[DEBUG]) <<"extracting members of " <<archive <<" into " <<subdir <<"\n";
     SAWYER_MESG(mlog[DEBUG]) <<"extraction command: " <<cmd <<"\n";
     int status = system(cmd.c_str());
@@ -503,3 +506,5 @@ buildMayReturnLists(Partitioner &p) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

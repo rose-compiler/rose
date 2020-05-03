@@ -8,7 +8,7 @@
 #include <iomanip>
 #include "pre.h"
 #include "rose_config.h" // for BOOST_FILESYSTEM_VERSION
-
+#include "RoseAst.h" // using AST Iterator
 #include <Diagnostics.h>
 #include <AstConsistencyTests.h>
 
@@ -272,13 +272,14 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 
             if (!is_lvalue) {
               SgAssignInitializer* ai = SageInterface::splitExpression(lhs);
-              ROSE_ASSERT (isSgInitializer(ai->get_operand()));
+              // ROSE_ASSERT (isSgInitializer(ai->get_operand())); // it can be SgVarRefExp
 #if 0
               printf ("ai = %p ai->isTransformation() = %s \n",ai,ai->isTransformation() ? "true" : "false");
 #endif
               SgInitializedName* in = isSgInitializedName(ai->get_parent());
               ROSE_ASSERT (in);
-              removeRedundantCopyInConstruction(in);
+              if (isSgInitializer(ai->get_operand()))
+                removeRedundantCopyInConstruction(in);
               lhs = dotexp->get_lhs_operand(); // Should be a var ref now
             }
             thisptr = new SgAddressOfOp(SgNULL_FILE, lhs);
@@ -426,6 +427,19 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      SgFunctionDefinition* function_copy = isSgFunctionDefinition(fundef->copy(tc));
      ROSE_ASSERT (function_copy);
      SgBasicBlock* funbody_copy = function_copy->get_body();
+#if 0
+// Check possible SgLambdaExp's SgMemberFunctionDeclaration's SgCtorInitializerList
+     RoseAst func_ast(funbody_copy);
+     for(RoseAst::iterator i=func_ast.begin();i!=func_ast.end();++i) {
+     //     cout<<"We are here:"<<(*i)->class_name()<<endl;
+          SgNode* n = (*i);
+          if (SgCtorInitializerList * ctor_init_list = isSgCtorInitializerList (n))
+          {
+            cout<<"Found SgCtorInitializerList:"<<n<<endl;
+            ROSE_ASSERT(ctor_init_list == ctor_init_list->get_definingDeclaration());
+          }
+     }
+#endif     
      // rename labels in an inlined function definition. goto statements to them will be updated. 
      renameLabels(funbody_copy, targetFunction);
 

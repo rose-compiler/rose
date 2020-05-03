@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_RegisterState_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_RegisterState_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemanticsMerger.h>
 #include <BaseSemanticsSValue.h>
@@ -210,4 +212,5 @@ std::ostream& operator<<(std::ostream&, const RegisterState::WithFormatter&);
 // Class versions must be at global scope
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterState, 1);
 
+#endif
 #endif

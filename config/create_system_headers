@@ -292,7 +292,6 @@ if [ "x$language" = "xc" -o "x$language" = "xc++" ]; then
        # is to build a version of the rose_edg_required_macros_and_functions.h file specific for EDG 4.9 while we are in the transition 
        # from EDG 4.9 to EDG 4.12.  I can't figure out the bug that is in EDG 4.9 and since it is fixed in later versions of EDG it
        # is not pratical to focus more time on this issue.
-       sed "/REPLACE_ME_WITH_MACRO_DEFINITIONS/r$tmpFile" < "$roseHome/config/rose_edg_required_macros_and_functions_EDG_49.h.in" > "$mainTargetDir/rose_edg_required_macros_and_functions_EDG_49.h"
        sed "/REPLACE_ME_WITH_MACRO_DEFINITIONS/r$tmpFile" < "$roseHome/config/rose_edg_required_macros_and_functions.h.in" > "$mainTargetDir/rose_edg_required_macros_and_functions.h"
 
      # echo "******************************************************"

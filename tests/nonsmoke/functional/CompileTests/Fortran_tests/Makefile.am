@@ -21,7 +21,11 @@ endif
 endif
 
 if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-   SUBDIRS += experimental_frontend_tests
+# Rasmussen (3/7/2020): Removed testing of the experimental (ATerm based) Fortran. It is now obsolete because
+# it is being replaced by experimental_flang_frontend
+#
+#   SUBDIRS += experimental_frontend_tests
+#
 endif
 
 
@@ -334,13 +338,13 @@ F90_TESTCODES_REQUIRED_TO_PASS =  \
      test2019_multi_associate.f90 \
      test2019_accessibility_attribute.f90 \
      test2019_accessibility_attribute2.f90 \
+     test2020_use_iso_c_binding.f90 \
+     test2020_use_iso_c_binding_2.f90 \
+     test2020_select_case.f90 \
      rose-issue-par-39.f90 \
-     canonicalExample.f90 
-
-# Rasmussen(1/9/2019): rose-1612.f90 uses the module in rose_iso_c_binding.f90 which runs afoul of a
-# naming conflict policy.  Need to figure out how to get around this and have the module build first.
-#    rose_iso_c_binding.f90
-#    rose-1612.f90
+     canonicalExample.f90 \
+     fCaller.f90 \
+     rose-1612.f90
 
 # DQ (11/11/2014): These test fail due to changes to support C++11 work (need to look into this separately).
 #    test2010_154.f90
@@ -905,7 +909,6 @@ F90_TESTCODES_CURRENTLY_FAILING += \
      test2011_Rice_B-cant-assert-keyword-nonnull.f90 \
      test2011_Rice_C-cant-assert-keyword-nonnull.f90 \
      test2011_Rice_lost-func-return-type.f90 \
-     fCaller.f90 \
      triangle.f90 \
      X-comment-in-wrong-place.f90 \
      X-enddo-plus-label.f90  \
@@ -1342,6 +1345,13 @@ test2019_private_attribute2.f90.passed: testTranslator
 test2019_private_attribute.f90.passed: testTranslator test2019_private_attribute2.f90.passed
 	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
 
+test2020_use_iso_c_binding_3.f90.passed: testTranslator
+	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
+
+# Force representation of module dependency so that mod files are properly generated before use.
+test2020_use_iso_c_binding_4.f90.passed: testTranslator test2020_use_iso_c_binding_3.f90.passed
+	@$(RTH_RUN) CMD="../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.f90.passed=.f90)" $(top_srcdir)/scripts/test_exit_status $@
+
 test2010_01.o:
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:relax_syntax_check -c $(srcdir)/$(@:.o=.f90)
 
@@ -1368,7 +1378,7 @@ problemTests:
 
 # We will build a larger collection of module tests soon (supported by makefile dependence rules).
 # PASSING_MODULE_TEST_Objects = module_B_file.o
-PASSING_MODULE_TEST_Objects = module_B_file.f90.passed test2019_module_2_file.f90.passed test2019_private_attribute.f90.passed
+PASSING_MODULE_TEST_Objects = module_B_file.f90.passed test2019_module_2_file.f90.passed test2019_private_attribute.f90.passed test2020_use_iso_c_binding_4.f90.passed
 
 # DQ (10/4/2010): Test calling OFP directly and ROSE for different filename extensions.
 CALL_OFP = java -Djava.class.path=$(top_srcdir)/src/3rdPartyLibraries/antlr-jars/antlr-3.5.2-complete.jar:$(top_builddir)/src/3rdPartyLibraries/fortran-parser/OpenFortranParser-0.8.5.jar fortran.ofp.FrontEnd
@@ -1416,6 +1426,13 @@ testMPItypes:
 testMultipleFortranFiles: $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90
 	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90 || cat $(srcdir)/test2010_79.f90 rose_test2010_79.f90
 
+# Pei-Hung (2/25/2020) test if output still contains comment after preprocessor
+REFERENCE_PATH=$(top_srcdir)/tests/nonsmoke/functional/CompileTests/Fortran_tests/referenceResults
+testPreprocessedOutput: $(srcdir)/test2007_suffixTest_07.F90
+	../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/test2007_suffixTest_07.F90 
+	bash -c "diff <(tail -n 6 rose_test2007_suffixTest_07.F90) <(tail -n 6 $(REFERENCE_PATH)/rose_test2007_suffixTest_07.F90.output)" 
+	
+
 # DQ (11/5/2010): This bug causes the unparsed second file to include a Fortran "include" statement (magically).
 # Note that the compilation will generate an error not caught by make since the use of "cat" will succeed.
 riceBug1: $(srcdir)/test2010_78.f90 $(srcdir)/test2010_79.f90
@@ -1445,7 +1462,7 @@ crayPointerTest: testTranslator test2011_imperial_crayPointers.f90
 	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -rose:f90 -rose:skip_syntax_check -rose:skipfinalCompileStep -c $(srcdir)/test2011_imperial_crayPointers.f90
 
 # DQ (4/9/2011): Let's at least run these in parallel (more important for the Insure++ tests).
-extra_tests: $(PASSING_MODULE_TEST_Objects) testCPP_Defines testMPItypes testMultipleFortranFiles
+extra_tests: $(PASSING_MODULE_TEST_Objects) testCPP_Defines testMPItypes testMultipleFortranFiles testPreprocessedOutput
 
 # DQ (2/2/2011): We are now enforcing the module names are unique so that we can always run the 
 # test code in parallel and avoid name conflicts with *.mod (gfortran) and *.rmod (rose) files.

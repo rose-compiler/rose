@@ -5,6 +5,10 @@
 
 
 
+#include <boost/filesystem.hpp>
+#include <fstream>
+#include <boost/lexical_cast.hpp>
+
 #if __cplusplus >= 201103L
 
 #ifndef DRIVER
@@ -19,8 +23,6 @@
     #error "invalid database driver number"
 #endif
 
-#include <boost/filesystem.hpp>
-#include <boost/lexical_cast.hpp>
 #include <iostream>
 
 using namespace Sawyer::Database;
@@ -173,7 +175,7 @@ int main() {
     boost::filesystem::path dbName = "test" + boost::lexical_cast<std::string>(DRIVER) + ".db";
     boost::system::error_code ec;
     boost::filesystem::remove(dbName, ec);
-    Sqlite db(dbName.native());
+    Sqlite db(dbName.string());
 #elif DRIVER == 2
     // Set up the test with these commands:
     //   sudo su postgres
@@ -208,6 +210,10 @@ int main() {
 #include <iostream>
 int main() {
     std::cerr <<"not tested; needs C++11 or later\n";
+#if DRIVER == 1
+    boost::filesystem::path dbName = "test" + boost::lexical_cast<std::string>(DRIVER) + ".db";
+    std::ofstream(dbName.string().c_str());             //  create file anyway for Tup's sake
+#endif
 }
 
 #endif

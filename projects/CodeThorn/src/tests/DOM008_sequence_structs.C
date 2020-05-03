@@ -2,7 +2,7 @@
 struct S {
   short x;
   int y;
-  long z;
+  int z;
 };
 int main() {
   S a;

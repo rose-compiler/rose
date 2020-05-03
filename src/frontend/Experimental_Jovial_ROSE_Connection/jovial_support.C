@@ -10,12 +10,10 @@
 #include <iostream>
 #include <string>
 
+#include "ATermToSageJovialTraversal.h"
 #include "jovial_support.h"
-#include "ATermToUntypedJovialTraversal.h"
-#include "UntypedJovialTraversal.h"
-#include "UntypedJovialConverter.h"
 
-#define ATERM_TRAVERSAL_ONLY 1
+#define ATERM_TRAVERSAL_ONLY 0
 #define DEBUG_EXPERIMENTAL_JOVIAL 0
 #define OUTPUT_WHOLE_GRAPH_AST 0
 #define OUTPUT_DOT_FILE_AST 0
@@ -23,6 +21,41 @@
 #if OUTPUT_WHOLE_GRAPH_AST
 #  include "wholeAST_API.h"
 #endif
+
+
+// TODO: THIS IS TEMPORARY (obtain it from somewhere else)
+static SgGlobal* initialize_global_scope(SgSourceFile* file)
+{
+ // First we have to get the global scope initialized (and pushed onto the stack).
+
+ // Set the default for source position generation to be consistent with other languages (e.g. C/C++).
+    SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
+ // TODO      SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionCompilerGenerated);
+
+    SgGlobal* globalScope = file->get_globalScope();
+    ROSE_ASSERT(globalScope != NULL);
+    ROSE_ASSERT(globalScope->get_parent() != NULL);
+
+ // Fortran is case insensitive
+    globalScope->setCaseInsensitive(true);
+
+ // DQ (8/21/2008): endOfConstruct is not set to be consistent with startOfConstruct.
+    ROSE_ASSERT(globalScope->get_endOfConstruct()   != NULL);
+    ROSE_ASSERT(globalScope->get_startOfConstruct() != NULL);
+
+ // DQ (10/10/2010): Set the start position of global scope to "1".
+    globalScope->get_startOfConstruct()->set_line(1);
+
+ // DQ (10/10/2010): Set this position to the same value so that if we increment
+ // by "1" the start and end will not be the same value.
+    globalScope->get_endOfConstruct()->set_line(1);
+
+    ROSE_ASSERT(SageBuilder::emptyScopeStack() == true);
+    SageBuilder::pushScopeStack(globalScope);
+
+    return globalScope;
+}
+
 
 int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
    {
@@ -69,7 +102,7 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
            return status;
         }
 
-  // Step 2 - Traverse the ATerm parse tree and convert into Untyped nodes
+  // Step 2 - Traverse the ATerm parse tree and convert into Sage nodes
   // ------
 
   // Initialize the ATerm library
@@ -97,9 +130,12 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
      std::cout << "SUCCESSFULLY read ATerm parse-tree file " << "\n";
 #endif
 
-     ATermSupport::ATermToUntypedJovialTraversal* aterm_traversal = NULL;
+  // Initialize the global scope and put it on the SageInterface scope stack
+  // for usage by the sage tree builder during the ATerm traversal.
+     initialize_global_scope(sg_source_file);
 
-     aterm_traversal = new ATermSupport::ATermToUntypedJovialTraversal(sg_source_file);
+     ATermSupport::ATermToSageJovialTraversal* aterm_traversal;
+     aterm_traversal = new ATermSupport::ATermToSageJovialTraversal(sg_source_file);
 
      if (aterm_traversal->traverse_Module(module_term) != ATtrue)
         {
@@ -113,24 +149,6 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 #if ATERM_TRAVERSAL_ONLY
      return 0;
 #endif
-
-#if OUTPUT_DOT_FILE_AST
-  // Generate dot file for untyped nodes.
-     SgUntypedGlobalScope* global_scope = aterm_traversal->get_scope();
-     generateDOT(global_scope, filenameWithoutPath + ".ut");
-#endif
-
-  // Step 3 - Traverse the SgUntypedFile object and convert to regular sage nodes
-  // ------
-
-  // Create the ATerm traversal object
-
-     Untyped::UntypedJovialConverter sg_converter;
-     Untyped::UntypedJovialTraversal sg_traversal(sg_source_file, &sg_converter);
-     Untyped::InheritedAttribute scope = NULL;
-
-  // Traverse the untyped tree and convert to sage nodes
-     sg_traversal.traverse(aterm_traversal->get_file(),scope);
 
 #if OUTPUT_DOT_FILE_AST
   // Generate dot file for Sage nodes.

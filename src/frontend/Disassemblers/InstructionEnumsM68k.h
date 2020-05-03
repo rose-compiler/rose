@@ -1,5 +1,9 @@
 #ifndef ROSE_BinaryAnalysis_InstructionEnumsM68k_H
 #define ROSE_BinaryAnalysis_InstructionEnumsM68k_H
+
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 /* References:
  *   [1] "M68000 PM/AD REV.1 Programmers Reference Manual (Includes CPU32 Instructions)" Downloaded from the
  *       Freescale website on 2013-10-07.
@@ -504,4 +508,5 @@ enum M68kInstructionKind {
 } // namespace
 } // namespace
 
+#endif
 #endif

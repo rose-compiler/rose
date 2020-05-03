@@ -4,6 +4,7 @@
 #include "CollectionOperators.h"
 #include "CodeThornException.h"
 #include "DataRaceDetection.h"
+#include "CodeThornCommandLineOptions.h"
 
 #include <omp.h>
 
@@ -53,7 +54,7 @@ void ReadWriteAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* r
     flow=cfanalyzer->flow(root);
 
   logger[TRACE]<< "STATUS: Building CFGs finished."<<endl;
-  if(args.getBool("reduce-cfg")) {
+  if(_ctOpt.reduceCfg) {
     int cnt=cfanalyzer->optimizeFlow(flow);
     logger[TRACE]<< "INIT: CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
   }
@@ -80,7 +81,7 @@ void ReadWriteAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* r
   VariableId argvVarId;
   size_t mainFunArgNr=0;
   for(SgInitializedNamePtrList::iterator i=initNamePtrList.begin();i!=initNamePtrList.end();++i) {
-    VariableId varId=variableIdMapping.variableId(*i);
+    VariableId varId=variableIdMapping->variableId(*i);
     if(functionName=="main") {
       //string varName=getVariableIdMapping()->variableName(varId)) {
       switch(mainFunArgNr) {
@@ -99,12 +100,12 @@ void ReadWriteAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* r
   if(_commandLineOptions.size()>0) {
     // create command line option array argv and argc in initial pstate
     int argc=0;
-    VariableId argvArrayMemoryId=variableIdMapping.createAndRegisterNewMemoryRegion("$argv",(int)_commandLineOptions.size());
+    VariableId argvArrayMemoryId=variableIdMapping->createAndRegisterNewMemoryRegion("$argv",(int)_commandLineOptions.size());
     AbstractValue argvAddress=AbstractValue::createAddressOfArray(argvArrayMemoryId);
     initialPState.writeToMemoryLocation(argvVarId,argvAddress);
     for (auto argvElem:_commandLineOptions) {
       cout<<"Initial state: "
-          <<variableIdMapping.variableName(argvVarId)<<"["<<argc+1<<"]: "
+          <<variableIdMapping->variableName(argvVarId)<<"["<<argc+1<<"]: "
           <<argvElem;
       int regionSize=(int)string(argvElem).size();
       cout<<" size: "<<regionSize<<endl;
@@ -138,16 +139,16 @@ void ReadWriteAnalyzer::initializeSolver(std::string functionToStartAt,SgNode* r
     list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
     logger[TRACE]<< globalVars.size()<<endl;
 
-    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
+    VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,variableIdMapping);
 
     logger[TRACE]<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
 
     int filteredVars=0;
     for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-      VariableId globalVarId=variableIdMapping.variableId(*i);
+      VariableId globalVarId=variableIdMapping->variableId(*i);
       // TODO: investigate why array variables get filtered (but should not)
       if(true || (setOfUsedVars.find(globalVarId)!=setOfUsedVars.end() && _variablesToIgnore.find(globalVarId)==_variablesToIgnore.end())) {
-        //globalVarName2VarIdMapping[variableIdMapping.variableName(variableIdMapping.variableId(*i))]=variableIdMapping.variableId(*i);
+        //globalVarName2VarIdMapping[variableIdMapping->variableName(variableIdMapping.variableId(*i))]=variableIdMapping.variableId(*i);
         estate=analyzeVariableDeclaration(*i,estate,estate.label());
       } else {
         filteredVars++;

@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_BinaryLoaderPe_H
 
 #include "BinaryLoader.h"
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -54,4 +55,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

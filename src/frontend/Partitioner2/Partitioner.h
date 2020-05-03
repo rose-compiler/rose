@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_Partitioner_H
 #define ROSE_Partitioner2_Partitioner_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/AddressUsageMap.h>
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/BasicTypes.h>
@@ -2296,6 +2299,12 @@ public:
      *  Thread safety: Not thread safe. */
     static std::string functionName(const Function::Ptr&) /*final*/;
 
+    /** Expands indeterminate function calls.
+     *
+     *  Modifies the control flow graph so that any function call to the indeterminate vertex is replaced by function calls to
+     *  every possible function. */
+    void expandIndeterminateCalls();
+
     /** Property: How to report progress.
      *
      *  Partitioning progress is reported in two ways:
@@ -2552,4 +2561,5 @@ private:
 // Class versions must be at global scope
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Partitioner, 1);
 
+#endif
 #endif

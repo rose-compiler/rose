@@ -1,6 +1,6 @@
 #include <rose.h>
 #include <BinaryConcolic.h>
-#ifdef ROSE_ENABLE_CONCOLIC_TESTING
+#if defined(ROSE_ENABLE_CONCOLIC_TESTING) && defined(ROSE_HAVE_SQLITE3)
 
 using namespace Rose::BinaryAnalysis::Concolic;
 
@@ -34,7 +34,7 @@ main() {
     boost::filesystem::path dbName = "testTestCase.db";
     boost::system::error_code ec;
     boost::filesystem::remove(dbName, ec);
-    std::string dbUrl = "sqlite3://" + dbName.native();
+    std::string dbUrl = "sqlite3://" + dbName.string();
 
     TestCaseId testCaseId = createDatabase(dbUrl);
     checkDatabase(dbUrl, testCaseId);

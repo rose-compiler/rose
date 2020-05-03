@@ -1596,6 +1596,63 @@ SgGotoStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
    }
 
 void
+SgAdaExitStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgAdaExitStmt::fixupCopy_scopes() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+     SgAdaExitStmt* exitStmt_copy = isSgAdaExitStmt(copy);
+     ROSE_ASSERT(exitStmt_copy != NULL);
+
+     SgStatement* loop_original = get_loop();
+
+     SgCopyHelp::copiedNodeMapTypeIterator i = help.get_copiedNodeMap().find(loop_original);
+
+  // If the declaration is in the map then it is because we have copied it previously
+  // and thus it should be updated to reflect the copied declaration.
+     if (i != help.get_copiedNodeMap().end())
+        {
+          SgStatement* loop_copy = isSgStatement(i->second);
+          ROSE_ASSERT(loop_copy != NULL);
+          exitStmt_copy->set_loop(loop_copy);
+        }
+        
+     this->get_condition()->fixupCopy_scopes(exitStmt_copy->get_condition(),help);
+
+  // Also call the base class version of the fixupCopycopy() member function
+     SgStatement::fixupCopy_scopes(copy,help);
+   }
+   
+void
+SgAdaLoopStmt::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
+   {
+#if DEBUG_FIXUP_COPY
+     printf ("Inside of SgAdaLoopStmt::fixupCopy_scopes() for %p = %s copy = %p \n",this,this->class_name().c_str(),copy);
+#endif
+
+     SgAdaLoopStmt* loop_copy = isSgAdaLoopStmt(copy);
+     ROSE_ASSERT(loop_copy != NULL);
+
+     SgBasicBlock* body_original = get_body();
+
+     SgCopyHelp::copiedNodeMapTypeIterator i = help.get_copiedNodeMap().find(body_original);
+
+  // If the declaration is in the map then it is because we have copied it previously
+  // and thus it should be updated to reflect the copied declaration.
+     if (i != help.get_copiedNodeMap().end())
+        {
+          SgBasicBlock* body_copy = isSgBasicBlock(i->second);
+          ROSE_ASSERT(body_copy != NULL);
+          loop_copy->set_body(body_copy);
+        }
+        
+  // Also call the base class version of the fixupCopycopy() member function
+     SgStatement::fixupCopy_scopes(copy,help);
+   }
+   
+
+void
 SgTypedefDeclaration::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
    {
   // We need to call the fixupCopy function from the parent of a SgTypedefDeclaration because the 

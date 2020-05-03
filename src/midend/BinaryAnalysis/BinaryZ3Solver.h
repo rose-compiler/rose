@@ -1,7 +1,8 @@
 #ifndef Rose_BinaryAnalysis_Z3Solver_H
 #define Rose_BinaryAnalysis_Z3Solver_H
-
 #include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <BinarySmtlibSolver.h>
 #ifdef ROSE_HAVE_Z3
 #include <z3++.h>
@@ -155,6 +156,7 @@ public:
     virtual void parseEvidence() ROSE_OVERRIDE;
     virtual void pop() ROSE_OVERRIDE;
     virtual void selfTest() ROSE_OVERRIDE;
+    virtual void timeout(boost::chrono::duration<double>) ROSE_OVERRIDE;
 protected:
     virtual void outputBvxorFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;
     virtual void outputComparisonFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;
@@ -199,4 +201,5 @@ protected:
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Z3Solver);
 #endif
 
+#endif
 #endif

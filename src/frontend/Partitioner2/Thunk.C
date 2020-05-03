@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <Partitioner2/Thunk.h>
 
@@ -204,7 +206,7 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
         // of a loop).  Recursive calls (other than optimized tail recursion) should be fine.
         bool hasIntraFunctionEdge = false;
         BOOST_FOREACH (const ControlFlowGraph::Edge &edge, entryVertex->inEdges()) {
-            if (edge.value().type() == E_NORMAL) {
+            if (partitioner.isEdgeIntraProcedural(edge, candidate)) {
                 hasIntraFunctionEdge = true;
                 break;
             }
@@ -317,3 +319,4 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
 } // namespace
 } // namespace
 
+#endif

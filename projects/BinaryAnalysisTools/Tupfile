@@ -14,7 +14,6 @@ run $(tool_compile_linkexe) --install -o rose-check-execution-addresses checkExe
 run $(tool_compile_linkexe) --install -o rose-magic-scanner magicScanner.C
 run $(tool_compile_linkexe) --install -o rose-simulate simulate.C
 run $(tool_compile_linkexe) --install -o rose-string-decoder stringDecoder.C
-run $(tool_compile_linkexe) --install -o rose-find-dead-code findDeadCode.C
 run $(tool_compile_linkexe) --install -o rose-symbolic-simplifier symbolicSimplifier.C
 run $(tool_compile_linkexe) --install -o rose-binary-to-source binaryToSource.C
 run $(tool_compile_linkexe) --install -o rose-trace trace.C

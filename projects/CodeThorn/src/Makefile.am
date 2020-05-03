@@ -1,5 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# override ROSE settings from AM_INIT_AUTOMAKE
+AUTOMAKE_OPTIONS = subdir-objects
+
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
@@ -37,6 +40,7 @@ lib_LTLIBRARIES = libcodethorn.la libltlthorn.la
 # LIBRARY: CODETHORN (CORE)
 ##############################################################
 
+# codethorn liabrary header files without corresponding source files
 CODETHORN_SOLO_HEADER_FILES=\
   AnalysisParameters.h \
   CollectionOperators.h \
@@ -54,6 +58,7 @@ CODETHORN_SOLO_HEADER_FILES=\
   WorkListSeq.h \
   WorkList.h
 
+# codethorn library header files (each with a corresponding source file)
 CODETHORN_HEADER_FILES=\
   AbstractValue.h \
   addressTakenAnalysis.h \
@@ -77,6 +82,7 @@ CODETHORN_HEADER_FILES=\
   CTIOLabeler.h \
   CtxCallStrings.h \
   DataDependenceVisualizer.h \
+  DataRaceDetection.h \
   defUseQuery.h \
   DFAnalysisBase.h \
   DFTransferFunctions.h \
@@ -87,6 +93,7 @@ CODETHORN_HEADER_FILES=\
   FIConstAnalysis.h \
   Flow.h \
   FunctionCallMapping.h \
+  FunctionCallMapping2.h \
   FunctionCallTarget.h \
   FunctionId.h \
   FunctionIdMapping.h \
@@ -98,6 +105,9 @@ CODETHORN_HEADER_FILES=\
   IntervalPropertyStateFactory.h \
   IntervalPropertyState.h \
   IntervalTransferFunctions.h \
+  IOAnalyzer.h \
+  IOSequenceGenerator.h \
+  IOSolver.h \
   LanguageRestrictorCollection.h \
   LanguageRestrictor.h \
   Lattice.h \
@@ -110,14 +120,18 @@ CODETHORN_HEADER_FILES=\
   Miscellaneous2.h \
   Miscellaneous.h \
   Normalization.h \
+  NormalizationCxx.h \
   NormalizationInliner.h \
   NormalizationOp.h \
   NumberIntervalLattice.h \
+  Options.h \
+  CodeThornOptions.h \
+  LTLOptions.h \
+  ltlthorn-lib/ParProOptions.h \
   PASolver1.h \
-  PhiAttribute.h \
-  PhiStatement.h \
   PointerAnalysisInterface.h \
   PragmaHandler.h \
+  PredefinedSemanticFunctions.h \
   ProgramAbstractionLayer.h \
   ProgramInfo.h \
   ProgramLocationsReport.h \
@@ -129,13 +143,16 @@ CODETHORN_HEADER_FILES=\
   RDLattice.h \
   RDTransferFunctions.h \
   ReachabilityAnalysis.h \
+  ReadWriteAnalyzer.h \
   ReadWriteHistory.h \
   RERS_empty_specialization.h \
+  RersCounterexample.h \
   RewriteStatistics.h \
   RewriteSystem.h \
   RWState.h \
   SgTypeSizeMapping.h \
   Solver5.h \
+  Solver8.h \
   Solver.h \
   Specialization.h \
   StructureAccessLookup.h \
@@ -146,9 +163,11 @@ CODETHORN_HEADER_FILES=\
   TypeSizeMapping.h \
   UDAstAttribute.h \
   VariableIdUtils.h \
+  VariableIdMappingExtended.h \
   VariableValueMonitor.h \
   Visualizer.h
 
+# codethorn library source files (each with a corresponding header file)
 CODETHORN_SOURCE_FILES=\
   AbstractValue.C \
   addressTakenAnalysis.C \
@@ -173,6 +192,7 @@ CODETHORN_SOURCE_FILES=\
   CtxCallStrings.C \
   DataDependenceVisualizer.C \
   defUseQuery.C \
+  DataRaceDetection.C \
   DFAnalysisBase.C \
   DFTransferFunctions.C \
   DotGraphCfgFrontend.C \
@@ -182,6 +202,7 @@ CODETHORN_SOURCE_FILES=\
   FIConstAnalysis.C \
   Flow.C \
   FunctionCallMapping.C \
+  FunctionCallMapping2.C \
   FunctionCallTarget.C \
   FunctionId.C \
   FunctionIdMapping.C \
@@ -193,10 +214,16 @@ CODETHORN_SOURCE_FILES=\
   IntervalPropertyStateFactory.C \
   IntervalPropertyState.C \
   IntervalTransferFunctions.C \
+  IOAnalyzer.C \
+  IOSequenceGenerator.C \
+  IOSolver.C \
   LanguageRestrictorCollection.C \
   LanguageRestrictor.C \
   Lattice.C \
   LoopInfo.C \
+  CodeThornOptions.C \
+  LTLOptions.C \
+  ltlthorn-lib/ParProOptions.C \
   LVAnalysis.C \
   LVAstAttribute.C \
   LVAstAttributeInterface.C \
@@ -205,14 +232,14 @@ CODETHORN_SOURCE_FILES=\
   Miscellaneous2.C \
   Miscellaneous.C \
   Normalization.C \
+  NormalizationCxx.C \
   NormalizationInliner.C \
   NormalizationOp.C \
   NumberIntervalLattice.C \
   PASolver1.C \
-  PhiAttribute.C \
-  PhiStatement.C \
   PointerAnalysisInterface.C \
   PragmaHandler.C \
+  PredefinedSemanticFunctions.C \
   ProgramAbstractionLayer.C \
   ProgramInfo.C \
   ProgramLocationsReport.C \
@@ -224,13 +251,16 @@ CODETHORN_SOURCE_FILES=\
   RDLattice.C \
   RDTransferFunctions.C \
   ReachabilityAnalysis.C \
+  ReadWriteAnalyzer.C \
   ReadWriteHistory.C \
   RERS_empty_specialization.C \
+  RersCounterexample.C \
   RewriteStatistics.C \
   RewriteSystem.C \
   RWState.C \
   SgTypeSizeMapping.C \
   Solver5.C \
+  Solver8.C \
   Solver.C \
   Specialization.C \
   StructureAccessLookup.C \
@@ -241,6 +271,7 @@ CODETHORN_SOURCE_FILES=\
   TypeSizeMapping.C \
   UDAstAttribute.C \
   VariableIdUtils.C \
+  VariableIdMappingExtended.C \
   VariableValueMonitor.C \
   Visualizer.C
 
@@ -269,66 +300,60 @@ libltlthorn_la_CXXFLAGS = -fopenmp -Wall -O3
 
 LTLTHORN_SOLO_HEADER_FILES=
 LTLTHORN_HEADER_FILES=\
-  CounterexampleAnalyzer.h \
-  DataRaceDetection.h \
-  IOAnalyzer.h \
-  IOSolver.h \
-  LtsminConnection.h \
-  ParallelAutomataGenerator.h \
-  ParProAnalyzer.h \
-  ParProEState.h \
-  ParProExplorer.h \
-  ParProLtlMiner.h \
-  ParProSpotState.h \
-  ParProSpotSuccIter.h \
-  ParProSpotTgba.h \
-  ParProTransitionGraph.h \
-  PromelaCodeGenerator.h \
-  ReachabilityAnalyzerZ3.h \
-  ReadWriteAnalyzer.h \
-  RersCounterexample.h \
-  Solver10.h \
-  Solver11.h \
-  Solver12.h \
-  Solver8.h \
-  SpotConnection.h \
-  SpotMiscellaneous.h \
-  SpotRenameVisitor.h \
-  SpotState.h \
-  SpotSuccIter.h \
-  SpotTgba.h \
-  SSAGenerator.h
+  z3-prover-connection/ReachabilityAnalyzerZ3.h \
+  z3-prover-connection/SSAGenerator.h \
+  z3-prover-connection/PhiAttribute.h \
+  z3-prover-connection/PhiStatement.h \
+  ltlthorn-lib/CounterexampleAnalyzer.h \
+  ltlthorn-lib/LtsminConnection.h \
+  ltlthorn-lib/ParProAutomataGenerator.h \
+  ltlthorn-lib/ParProAutomata.h \
+  ltlthorn-lib/ParProAnalyzer.h \
+  ltlthorn-lib/ParProEState.h \
+  ltlthorn-lib/ParProExplorer.h \
+  ltlthorn-lib/ParProLtlMiner.h \
+  ltlthorn-lib/ParProSpotState.h \
+  ltlthorn-lib/ParProSpotSuccIter.h \
+  ltlthorn-lib/ParProSpotTgba.h \
+  ltlthorn-lib/ParProTransitionGraph.h \
+  ltlthorn-lib/PromelaCodeGenerator.h \
+  ltlthorn-lib/Solver10.h \
+  ltlthorn-lib/Solver11.h \
+  ltlthorn-lib/Solver12.h \
+  ltlthorn-lib/SpotConnection.h \
+  ltlthorn-lib/SpotMiscellaneous.h \
+  ltlthorn-lib/SpotRenameVisitor.h \
+  ltlthorn-lib/SpotState.h \
+  ltlthorn-lib/SpotSuccIter.h \
+  ltlthorn-lib/SpotTgba.h
 
 LTLTHORN_SOURCE_FILES=\
-  CounterexampleAnalyzer.C \
-  DataRaceDetection.C \
-  IOAnalyzer.C \
-  IOSolver.C \
-  LtsminConnection.C \
-  ParallelAutomataGenerator.C \
-  ParProAnalyzer.C \
-  ParProEState.C \
-  ParProExplorer.C \
-  ParProLtlMiner.C \
-  ParProSpotState.C \
-  ParProSpotSuccIter.C \
-  ParProSpotTgba.C \
-  ParProTransitionGraph.C \
-  PromelaCodeGenerator.C \
-  ReachabilityAnalyzerZ3.C \
-  ReadWriteAnalyzer.C \
-  RersCounterexample.C \
-  Solver10.C \
-  Solver11.C \
-  Solver12.C \
-  Solver8.C \
-  SpotConnection.C \
-  SpotMiscellaneous.C \
-  SpotRenameVisitor.C \
-  SpotState.C \
-  SpotSuccIter.C \
-  SpotTgba.C \
-  SSAGenerator.C
+  z3-prover-connection/ReachabilityAnalyzerZ3.C \
+  z3-prover-connection/SSAGenerator.C \
+  z3-prover-connection/PhiAttribute.C \
+  z3-prover-connection/PhiStatement.C \
+  ltlthorn-lib/CounterexampleAnalyzer.C \
+  ltlthorn-lib/LtsminConnection.C \
+  ltlthorn-lib/ParProAutomataGenerator.C \
+  ltlthorn-lib/ParProAutomata.C \
+  ltlthorn-lib/ParProAnalyzer.C \
+  ltlthorn-lib/ParProEState.C \
+  ltlthorn-lib/ParProExplorer.C \
+  ltlthorn-lib/ParProLtlMiner.C \
+  ltlthorn-lib/ParProSpotState.C \
+  ltlthorn-lib/ParProSpotSuccIter.C \
+  ltlthorn-lib/ParProSpotTgba.C \
+  ltlthorn-lib/ParProTransitionGraph.C \
+  ltlthorn-lib/PromelaCodeGenerator.C \
+  ltlthorn-lib/Solver10.C \
+  ltlthorn-lib/Solver11.C \
+  ltlthorn-lib/Solver12.C \
+  ltlthorn-lib/SpotConnection.C \
+  ltlthorn-lib/SpotMiscellaneous.C \
+  ltlthorn-lib/SpotRenameVisitor.C \
+  ltlthorn-lib/SpotState.C \
+  ltlthorn-lib/SpotSuccIter.C \
+  ltlthorn-lib/SpotTgba.C
 
 # only informative (not installed)
 libltlthorn_xHEADERS = \
@@ -368,12 +393,14 @@ codethorndir=.
 # only informative
 codethorn_xHEADERS = \
   CommandLineOptions.h \
+  CodeThornCommandLineOptions.h \
   codethorn.h \
   LTL.h
 
 # codethorn sources in addition to libcodethorn and libltlthorn
 codethorn_SOURCES = \
   LTLParser.y++ \
+  CodeThornCommandLineOptions.C \
   codethorn.C
 
 ##############################################################
@@ -396,17 +423,17 @@ woodpecker_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
 endif
 woodpecker_CXXFLAGS= -fopenmp -Wall -O3
 woodpecker_SOURCES = \
-  ProgramStats.h                 \
-  ProgramStats.C                 \
-  Threadification.h \
-  Threadification.C \
-  TrivialInlining.C                \
-  TrivialInlining.h                \
-  DeadCodeElimination.C                \
-  DeadCodeElimination.h                \
-  ConversionFunctionsGenerator.h \
-  ConversionFunctionsGenerator.C \
-  woodpecker.C
+  shared-src/ProgramStats.h \
+  shared-src/ProgramStats.C \
+  woodpecker-src/Threadification.h \
+  woodpecker-src/Threadification.C \
+  woodpecker-src/TrivialInlining.C \
+  woodpecker-src/TrivialInlining.h \
+  woodpecker-src/DeadCodeElimination.C \
+  woodpecker-src/DeadCodeElimination.h \
+  woodpecker-src/ConversionFunctionsGenerator.h \
+  woodpecker-src/ConversionFunctionsGenerator.C \
+  woodpecker-src/woodpecker.C
 
 
 ##############################################################
@@ -422,22 +449,23 @@ analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
 endif
 analyterix_CXXFLAGS = -fopenmp -Wall -O3
 analyterix_SOURCES = \
-  DeadCodeAnalysis.C \
-  DeadCodeAnalysis.h \
-  DFAstAttributeConversion.h DFAstAttributeConversion.C \
-  FIPointerAnalysis.C \
-  FIPointerAnalysis.h \
-  ProgramStats.C \
-  ProgramStats.h \
-  RoseRDAnalysis.C \
-  RoseRDAnalysis.h \
-  TransformationOperators.h \
-  TransformationOperators.C \
-  analyterix.C
+  shared-src/ProgramStats.C \
+  shared-src/ProgramStats.h \
+  analyterix-src/DFAstAttributeConversion.h \
+  analyterix-src/DFAstAttributeConversion.C \
+  analyterix-src/DeadCodeAnalysis.C \
+  analyterix-src/DeadCodeAnalysis.h \
+  analyterix-src/FIPointerAnalysis.C \
+  analyterix-src/FIPointerAnalysis.h \
+  analyterix-src/RoseRDAnalysis.C \
+  analyterix-src/RoseRDAnalysis.h \
+  analyterix-src/TransformationOperators.h \
+  analyterix-src/TransformationOperators.C \
+  analyterix-src/analyterix.C
 
 roseonlytools: woodpecker analyterix
 
-check-roseonlytools: check-flow-insenstive
+check-roseonlytools: check-flow-insensitive
 
 
 ##############################################################
@@ -448,7 +476,7 @@ if ROSE_WITH_SPOT
 addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lboost_program_options
 addressTakenAnalysis_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
-addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
+addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lboost_program_options
 endif
 addressTakenAnalysis_CXXFLAGS = -fopenmp -Wall -O3
 addressTakenAnalysis_DEPENDENCIES=libcodethorn.la
@@ -587,7 +615,7 @@ check-const-analysis:
 	@echo ================================================================
 	@echo RUNNING CONST ANALYSIS CHECK
 	@echo ================================================================
-	@./woodpecker --edg:no_warnings --csv-const-result=tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.c
+	@./woodpecker --csv-const-result=tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.c
 	@diff tmp.const.csv $(srcdir)/tests/Problem1401_opt.pp.const.csv
 	@rm tmp.const.csv
 
@@ -599,13 +627,13 @@ check-par-cfg:
 check-ltl-old: check-ltl-rers-different-versions
 
 # failing tests
-#check-failing: check-ltl-rers-timeout 
+#check-failing: 
 
 # failing tests due to changes in domain
 #check-ltl-failing: check-ltl-rers-array
 
 # current tests all passing
-check-ltl: check-ltl-start check-ltl-rers-arithmetic check-ltl-rers-loop-aware-sync check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array
+check-ltl: check-ltl-start check-ltl-rers-timeout check-ltl-rers-arithmetic check-ltl-rers-loop-aware-sync check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array
 
 check-ltl-start:
 	@echo ================================================================
@@ -669,7 +697,7 @@ check-equivalence:
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
-	@./codethorn --edg:no_warnings $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump --rule-commutative-sort=no
+	@./codethorn --edg:no_warnings --normalize-all=off $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump --rule-commutative-sort=no --abstraction-mode=0
 #	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
 	@cat tmp.nsdump
 	@rm -f tmp.nsdump
@@ -678,7 +706,7 @@ check-commandline-options: ./codethorn
 	@echo ================================================================
 	@echo RUNNING COMMAND LINE OPTION TESTS
 	@echo ================================================================
-	@./codethorn --edg:no_warnings --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --viz
+	@./codethorn --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --viz
 	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-deadcode:
@@ -713,6 +741,9 @@ clean-local:
 	rm -f a.out
 	rm -rf ../docs/doxygen
 	rm -f *.imout
+	rm -f *.exe
+	rm -f *.imout.check
+	rm -Rf make_check_log_*
 
 distclean-local: clean
 	rm -f *.tgz

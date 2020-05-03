@@ -1075,21 +1075,25 @@ CustomMemoryPoolDOTGeneration::symbolFilter(SgNode* node)
 void
 CustomMemoryPoolDOTGeneration::asmFileFormatFilter(SgNode* node)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   // DQ (10/18/2009): Added support to skip output of binary file format in generation of AST visualization.
      if (isSgAsmExecutableFileFormat(node) != NULL)
         {
           skipNode(node);
         }
+#endif
    }
 
 void
 CustomMemoryPoolDOTGeneration::asmTypeFilter(SgNode* node)
    {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
   // DQ (10/18/2009): Added support to skip output of binary expression type information in generation of AST visualization.
      if (isSgAsmType(node) != NULL)
         {
           skipNode(node);
         }
+#endif
    }
 
 void
@@ -2096,7 +2100,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
             // case V_SgFile:
                case V_SgSourceFile:
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
                case V_SgBinaryComposite:
+#endif
                   {
                     SgFile* file = isSgFile(node);
                     additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"blue\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";
@@ -2380,6 +2386,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 #endif
         }
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      if (isSgAsmType(node) != NULL)
         {
           string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=3,peripheries=1,color=\"blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
@@ -2400,10 +2407,11 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
+#endif
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      if (isSgAsmNode(node) != NULL)
         {
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
        // Color selection for the binary file format and binary instruction IR nodes.
 
           string additionalNodeOptions;
@@ -2516,11 +2524,8 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
-#else
-          printf ("Warning: In wholeAST.C ROSE_BUILD_BINARY_ANALYSIS_SUPPORT is not defined \n");
-#endif
         }
-
+#endif
 
 #if 0
   // DQ (3/5/2007): Mark the parent edge in a different color, this does not appear to work!!!!
@@ -2738,7 +2743,6 @@ class SimpleColorMemoryPoolTraversal
      public ROSE_VisitTraversal
    {
      public:
-       // MangledNameMapTraversal::SetOfNodesType     & setOfIRnodes;
           static const set<SgNode*> defaultSetOfIRnodes;
           const set<SgNode*> & setOfIRnodes;
 
@@ -3232,9 +3236,6 @@ generateWholeGraphOfAST( string filename)
 void
 generateWholeGraphOfAST( string filename, CustomMemoryPoolDOTGeneration::s_Filter_Flags* flags/*= NULL*/)
    {
-  // set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();
-  // SimpleColorMemoryPoolTraversal::generateGraph(filename+"_beforeMergeWholeAST",skippedNodeSet);
-
   // DQ (10/29/2009): Added code to output the default flag setting...
   // CustomMemoryPoolDOTGeneration::print_filter_flags();
   // CustomMemoryPoolDOTGeneration::init_filters();
@@ -3268,33 +3269,7 @@ generateWholeGraphOfAST( string filename, CustomMemoryPoolDOTGeneration::s_Filte
 void
 generateWholeGraphOfAST_filteredFrontendSpecificNodes( string filename, CustomMemoryPoolDOTGeneration::s_Filter_Flags* flags)
    {
-#ifdef _MSC_VER
-  // DQ (11/27/2009): This appears to be required for MSVC (I think it is correct for GNU as well).
-     extern set<SgNode*> getSetOfFrontendSpecificNodes();
-#endif
-
-#if 1
-  // Normally we want to skip the frontend IR nodes so avoid cluttering the graphs for users.
-#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-  // DQ (2/20/2012): This(fails when compiled with ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT.
-  // This is because with this option the the getSetOfFrontendSpecificNodes() function is not seen.
-  // To eliminate the frontend specific nodes we turn off the processing of them in the header file directly.
-     set<SgNode*> skippedNodeSet = getSetOfFrontendSpecificNodes();
-#else
-     set<SgNode*> skippedNodeSet;
-     printf ("ROSE configured for internal frontend development \n");
-
-  // This is OK to still proceed, just that front-end IR nodes will not be filtered.
-  // They can however be skipped in rose_edg_required_macros_and_functions.h directly.
-  // ROSE_ASSERT(false);
-#endif
-
-#else
-  // DQ (7/26/2010): We want to include the frontend IR nodes so that we can debug the type table.
-     printf ("Generating an empty set of Frontend specific IR nodes to skip \n");
-     set<SgNode*> skippedNodeSet;
-#endif
-
+     std::set<SgNode*> skippedNodeSet = SageInterface::getFrontendSpecificNodes();
      SimpleColorMemoryPoolTraversal::generateGraph(filename,skippedNodeSet, flags);
    }
 

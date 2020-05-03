@@ -1,5 +1,6 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 
 // DQ (8/21/2008): Now we want to move away from using the older header files (from before we used the IR nodes).
@@ -1125,3 +1126,5 @@ SgAsmLEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
 
 // }; //namespace LE
 // }; //namespace Exec
+
+#endif

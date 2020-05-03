@@ -2,6 +2,7 @@
 #include "SingleStatementToBlockNormalization.h"
 
 #include "Normalization.h"
+#include "NormalizationCxx.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 #include "CFAnalysis.h"
@@ -129,6 +130,9 @@ namespace CodeThorn {
   }
 
   void Normalization::normalizeAstPhaseByPhase(SgNode* root) {
+    if (options.normalizeCplusplus) {
+      normalizeCxx(*this, root);
+    }
     if(options.normalizeSingleStatements) {
       normalizeSingleStatementsToBlocks(root);
     }
@@ -919,16 +923,16 @@ add
   Normalization::TmpVarNrType Normalization::registerSubExpressionTempVars(SgStatement* stmt, SgExpression* expr, SubExprTransformationList& subExprTransformationList,bool insideExprToBeEliminated) {
     ROSE_ASSERT(stmt);
     ROSE_ASSERT(expr);
-    SAWYER_MESG(logger[TRACE])<<"registerSubExpressionTempVars@"<<":"<<SgNodeHelper::sourceLineColumnToString(expr)<<expr->class_name()<<endl;
+    SAWYER_MESG(logger[TRACE])<<"registerSubExpressionTempVars:insideExpToBeElim:"<<insideExprToBeEliminated<<" @"<<SgNodeHelper::sourceLineColumnToString(expr)<<expr->class_name()<<":"<<AstTerm::astTermWithNullValuesToString(expr)<<endl;
     Normalization::TmpVarNrType mostRecentTmpVarNr=-1;
     /*if(SgCastExp* castExp=isSgCastExp(expr)) {
       registerSubExpressionTempVars(stmt,castExp->get_operand(),subExprTransformationList);
       } else*/
-    if(SgPntrArrRefExp* arrExp=isSgPntrArrRefExp(expr)) {
+    /*if(SgPntrArrRefExp* arrExp=isSgPntrArrRefExp(expr)) {
       // special case: normalize array index-expressions
       registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(arrExp)),subExprTransformationList,insideExprToBeEliminated);
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,subExprTransformationList);
-    } else if(SgAddressOfOp* addressOfOp=isSgAddressOfOp(expr)) {
+      } else*/ if(SgAddressOfOp* addressOfOp=isSgAddressOfOp(expr)) {
       // never normalize address operator - skip all address operators
       SAWYER_MESG(logger[TRACE])<<"skipping argument of address operator to be normalized: "<<addressOfOp->unparseToString()<<endl;
       SgExpression* addressOfOperand=isSgExpression(SgNodeHelper::getUnaryOpChild(addressOfOp));
@@ -944,12 +948,11 @@ add
       // special case: normalize assignment with lhs/rhs-semantics
 
       if(isSgExprStatement(expr->get_parent())) {
-        // special handling of assignment that is not inside an expression
-        // normalize rhs of assignment
+        // special handling of assignment that is not inside an
+        // expression normalize rhs of assignment
         mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getRhs(expr)),subExprTransformationList,insideExprToBeEliminated);
-        // normalize lhs of assignment
-        // skip normalizing top-most operator of lhs because an
-        // lvalue-expression must remain an
+        // normalize lhs of assignment skip normalizing top-most
+        // operator of lhs because an lvalue-expression must remain an
         // lvalue-expression. Introduction of temporary would be
         // wrong. Note: not all operators can appear as top-most op on
         // lhs.
@@ -1079,7 +1082,7 @@ add
           mostRecentTmpVarNr=fbResultTempVarNr; // note both branches must be either void or non-void.
         } else {
           // special case: if void-expr then ?-op must be removed. In
-          // this case the operator must be the inside a ExprStmt (casts
+          // this case the operator must be inside an ExprStmt (casts
           // may exist as well, therefore the pattern can be more
           // complicated, but the root is stmt.
           registerStmtRemoval(stmt,subExprTransformationList);

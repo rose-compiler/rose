@@ -1,7 +1,8 @@
-#include <sage3basic.h>
-
 #include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <sage3basic.h>
 #include <BinarySmtlibSolver.h>
+
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/lexical_cast.hpp>
 #include <Diagnostics.h>
@@ -31,6 +32,11 @@ SmtlibSolver::clearMemoization() {
     memoizedEvidence.clear();
 }
 
+void
+SmtlibSolver::timeout(boost::chrono::duration<double> seconds) {
+    timeout_ = seconds;
+}
+
 std::string
 SmtlibSolver::getCommand(const std::string &configName) {
     std::string exe = executable_.empty() ? std::string("/bin/false") : executable_.string();
@@ -40,6 +46,11 @@ SmtlibSolver::getCommand(const std::string &configName) {
 void
 SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) {
     requireLinkage(LM_EXECUTABLE);
+
+    if (timeout_) {
+        // It's not well documented. Experimentally determined to be milliseconds using Z3.
+        o <<"(set-option :timeout " <<(unsigned)::round(timeout_->count()*1000) <<")\n";
+    }
 
     // Find all variables
     VariableSet vars;
@@ -1308,3 +1319,5 @@ SmtlibSolver::evidenceNames() {
 
 } // namespace
 } // namespace
+
+#endif

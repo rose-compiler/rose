@@ -1,6 +1,9 @@
 #ifndef ROSE_Partitioner2_DataBlock_H
 #define ROSE_Partitioner2_DataBlock_H
 
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include <Partitioner2/BasicTypes.h>
 #include <SageBuilderAsm.h>
 #include <SourceLocation.h>
@@ -172,4 +175,5 @@ private:
 // Class versions must be at global scope
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::DataBlock, 3);
 
+#endif
 #endif

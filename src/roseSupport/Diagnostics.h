@@ -31,10 +31,11 @@ namespace Rose {
  *
  * @section usage Command-line usage
  *
- *  ROSE looks for the command-line switch (e.g., "--log") that takes one argument: <em>what</em>".  If <em>what</em> is the
- *  word "help" then usage information is displayed; if <em>what</em> is the word "list" then log settings are displayed.
- *  Otherwise, <em>what</em> is expected to be a string to pass to the @ref Rose::Diagnostics::mfacilities.control function.
- *  See the output from any tool that supports "--log help" for details about the syntax.
+ *  ROSE looks for the command-line switch (e.g., "-rose:log" for source analysis tools or "--log" for binary analysis tools)
+ *  that takes one argument: @em what.  If @em what is the word "help" then usage information is displayed; if
+ *  @em what is the word "list" then log settings are displayed.  Otherwise, @em what is expected to be a string to
+ *  pass to the @ref Rose::Diagnostics::mfacilities.control function.  See the output from any tool that supports "--log help"
+ *  for details about the syntax.
  *
  * @section library_diagnostics Adding a facility to ROSE
  *
@@ -155,13 +156,13 @@ namespace Rose {
  * @section usage Using a facility in the ROSE library or tools
  *
  *  When using a message facility within the ROSE library source code, it is generally desirable to have a "using namespace
- *  @ref Rose::Diagnostics" in effect.  Not only does this alleviate the need to qualify the important levels (e.g.,
+ *  Rose::Diagnostics" in effect.  Not only does this alleviate the need to qualify the important levels (e.g.,
  *  <code>INFO</code>, <code>WARN</code>, etc), but it also brings @ref Rose::Diagnostics::mlog, the library-wide logging
  *  facility, into scope.  Doing so will allow any software component to perform logging using the library-wide facility, and
  *  once a more local @c mlog is declared the more local symbol is automatically used.
  *
  *  When using a message facility within a tool, importing the @ref Sawyer::Message::Common instead of @ref Rose::Diagnostics
- *  will prevent an ambiguity between the tools global @c mlog and @ref Rose::Diagnostics::mlog. You can do which ever you
+ *  will prevent an ambiguity between the tool's global @c mlog and @ref Rose::Diagnostics::mlog. You can do which ever you
  *  prefer.
  *
  *  Regardless of whether you're writing a ROSE library component or a tool, all one needs to do to use a facility is to write
@@ -263,6 +264,28 @@ namespace Rose {
  *
  *  The documentation for @ref Sawyer::Message has additional hints and examples.
  *
+ * @section diagnostics_prefix Diagnostic prefix
+ *
+ *  Each diagnostic message has a prefix that contains, by default, the process ID and time, among other things. Sometimes
+ *  this information should be suppressed in order to more easily compare diagnostic messages between tools. This can be
+ *  done by adjusting the @ref Rose::Diagnostics::mprefix, which is a pointer to a @ref Sawyer::Message::Prefix object. The
+ *  adjustments should be done after the ROSE library is initialized (e.g., via ROSE_INITIALIZE, normally the first thing
+ *  in "main").
+ *
+ * @section diagnostics_destinations Sending output to other locations
+ *
+ *  Diagnostic output always goes to standard error by default in ROSE and ROSE-based tools.  If you want to send your tool's
+ *  output to a file instead, you can do something like follows instead of the usual call to @ref Rose::Diagnostics::initAndRegister.
+ *
+ * @code
+ *  std::ofstream output("tool-errors.txt"); // must remain open for duration of run
+ *  Sawyer::Message::DestinationPtr destination = Sawyer::Message::StreamSink::instance(output, Rose::Diagnostics::mprefix);
+ *  mlog = Facility("tool", destination); // your tool's global diagnostic facility
+ *  Sawyer::Message::mfacilities.insertAndAdjust(mlog); // so it can be controled by ROSE's command-line processing
+ * @endcode
+ *
+ *  Be sure to flush the file by closing it explicitly or implicitly since we didn't configure it to be unbuffered or line
+ *  buffered. Failure to do any of these steps could result in your file not actually getting any diagnostic messages.
  */
 namespace Diagnostics {
 

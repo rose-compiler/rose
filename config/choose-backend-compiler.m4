@@ -364,6 +364,7 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
 # Or Jeremiah suggests the alternative:
 # gfortran --version | sed -n '1s/.*) //;1p'
   AC_MSG_NOTICE([BACKEND_FORTRAN_COMPILER = "$BACKEND_FORTRAN_COMPILER"])
+  FORTRAN_COMPILER_NAME=`basename $BACKEND_FORTRAN_COMPILER`
 
   if test x$BACKEND_FORTRAN_COMPILER == xpgfortran; then
 
@@ -389,6 +390,19 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
   case "$BACKEND_FORTRAN_COMPILER" in
   gfortran*)
      AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [1], [Mark that GFORTRAN is used in backend])
+     ;;
+  ifort*)
+     AC_DEFINE([BACKEND_FORTRAN_IS_INTEL_COMPILER], [1], [Mark that Intel Fortran is used in backend])
+     AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [0], [Mark that GFORTRAN is not used in backend ])
+     AC_CHECK_TOOL(INTEL_FPP_PATH, [fpp], [no])
+     if test "$INTEL_FPP_PATH" != "no"; then
+       AC_DEFINE([ROSE_USE_INTEL_FPP], [1], [Mark that Intel FPP is used in backend ])
+       AC_DEFINE_UNQUOTED([INTEL_FPP_PATH],"$INTEL_FPP_PATH",[Name of Intel Fortran preprocessor])
+     fi
+     ;;
+  pgf*)
+     AC_DEFINE([BACKEND_FORTRAN_IS_PGI_COMPILER], [1], [Mark that PGI Fortran is used in backend])
+     AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [0], [Mark that GFORTRAN is not used in backend ])
      ;;
   *)
      AC_DEFINE([BACKEND_FORTRAN_IS_GNU_COMPILER], [0], [Mark that GFORTRAN is not used in backend ])
@@ -709,6 +723,9 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
 
   export C_COMPILER_NAME
   AC_DEFINE_UNQUOTED([BACKEND_C_COMPILER_NAME_WITHOUT_PATH],"$C_COMPILER_NAME",[Name of backend C compiler excluding path (used to select code generation options).])
+
+  export FORTRAN_COMPILER_NAME
+  AC_DEFINE_UNQUOTED([BACKEND_FORTRAN_COMPILER_NAME_WITHOUT_PATH],"$FORTRAN_COMPILER_NAME",[Name of backend Fortran compiler excluding path (used to select code generation options).])
 
 # This will be called to execute the backend compiler (for C++)
   export BACKEND_CXX_COMPILER

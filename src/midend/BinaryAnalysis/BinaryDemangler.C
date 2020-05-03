@@ -1,5 +1,8 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BinaryDemangler.h>
+
 #include <rose_getline.h>
 
 #include <cctype>
@@ -79,3 +82,5 @@ Demangler::insert(const std::string &mangledName, const std::string &demangledNa
 
 } // namespace
 } // namespace
+
+#endif

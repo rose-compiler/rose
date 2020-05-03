@@ -7,8 +7,7 @@ noinst_LTLIBRARIES = libroseDisassemblers.la
 
 libroseDisassemblers_la_DEPENDENCIES =
 
-if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   libroseDisassemblers_la_SOURCES =											\
+libroseDisassemblers_la_SOURCES =											\
 	SgAsmBlock.C SgAsmFunction.C											\
 	SgAsmInstruction.C SgAsmArmInstruction.C SgAsmPowerpcInstruction.C SgAsmX86Instruction.C SgAsmMipsInstruction.C	\
 	SgAsmM68kInstruction.C SgAsmExecutableFileFormat.C x86InstructionProperties.C					\
@@ -18,9 +17,6 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 	Assembler.C AssemblerX86.C AssemblerX86Init.C RegisterParts.C							\
 	AssemblerX86Init1.C AssemblerX86Init2.C AssemblerX86Init3.C AssemblerX86Init4.C AssemblerX86Init5.C		\
 	AssemblerX86Init6.C AssemblerX86Init7.C AssemblerX86Init8.C AssemblerX86Init9.C
-else
-   libroseDisassemblers_la_SOURCES = dummyDisassembler.C
-endif
 
 pkginclude_HEADERS =													\
 	Registers.h RegisterDescriptor.h BitPattern.h									\

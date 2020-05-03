@@ -1,6 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_Concolic_H
 #define ROSE_BinaryAnalysis_Concolic_H
 #include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 // When should concolic testing be enabled (ROSE_ENABLE_CONCOLIC_TESTING)
 //
@@ -13,7 +14,10 @@
 //
 //      b. Either or both of SQLite and PostgreSQL are available.
 //
-#if !defined(ROSE_ENABLE_CONCOLIC_TESTING) && __cplusplus >= 201103L && (defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX))
+#if !defined(ROSE_ENABLE_CONCOLIC_TESTING) && \
+    __cplusplus >= 201103L && \
+    (defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)) && \
+    BOOST_VERSION >= 106400
 #define ROSE_ENABLE_CONCOLIC_TESTING
 #endif
 
@@ -1122,5 +1126,6 @@ BOOST_CLASS_EXPORT_KEY2( Rose::BinaryAnalysis::Concolic::LinuxExecutor::Result,
                        )
 #endif /* ROSE_HAVE_BOOST_SERIALIZATION_LIB */
 
+#endif
 #endif
 #endif

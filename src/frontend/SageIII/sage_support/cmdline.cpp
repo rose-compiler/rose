@@ -43,11 +43,22 @@ makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<st
      printf ("In makeSysIncludeList(): top: argString_result_top = %s \n",argString_result_top.c_str());
 #endif
 
+#ifdef _MSC_VER
+     string includeBase = findRoseSupportPathFromBuild("include-staging", "include\\edg");
+     // NP (3/18/2020) Need to switch the slash direction
+     for(int i = 0; i < includeBase.length(); ++i) if(includeBase[i] == '/') includeBase[i] = '\\';
+#else
      string includeBase = findRoseSupportPathFromBuild("include-staging", "include/edg");
+#endif
      for (Rose_STL_Container<string>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
         {
           ROSE_ASSERT (!i->empty());
+#ifdef _MSC_VER
+          string fullPath = (*i)[1] == ':' ? *i : (includeBase + "\\" + *i);
+#else
           string fullPath = (*i)[0] == '/' ? *i : (includeBase + "/" + *i);
+#endif
+
 #if 1
        // DQ (11/8/2011): We want to exclude the /usr/include directory since it will be search automatically by EDG.
        // If we include it here it will become part of the -sys_include directories and that will cause it to 
@@ -337,7 +348,6 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:excludePath" ||
           argument == "-rose:includeFile" ||
           argument == "-rose:excludeFile" ||
-          argument == "-rose:astMergeCommandFile" ||
           argument == "-rose:projectSpecificDatabaseFile" ||
 
           // AST I/O
@@ -431,6 +441,11 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
        // TOO1 (5/14/2015): Add support for GCC --param, e.g. "--param inline-unit-growth=900" found in Valgrind
           argument == "--param" ||    // --param variable=value
 
+       // Peihung (03/09/2020): Add support for ifort v.19
+          argument == "-warn"  ||
+          argument == "-check"  ||
+          argument == "-debug"  ||
+          argument == "-debug-parameters"  ||
           false)
         {
           result = true;
@@ -999,18 +1014,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           set_appendPID(true);
         }
 
-  // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
-  //
-  // unparseTemplateDeclarationsFromAST
-  //
-     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","unparseTemplateDeclarationsFromAST",false) == true )
-        {
-#if 1
-          printf ("detected use of unparseTemplateDeclarationsFromAST mode \n");
-#endif
-          p_unparseTemplateDeclarationsFromAST = true;
-        }
-
   //
   // specify compilation only option (new style command line processing)
   //
@@ -1496,18 +1499,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              }
         }
 
-  // DQ (6/17/2005): Added support for AST merging (sharing common parts of the AST most often represented in common header files of a project)
-  //
-  // specify AST merge option
-  //
-  // if ( CommandlineProcessing::isOption(argc,argv,"-rose:","(astMerge)",true) == true )
-     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(astMerge)",true) == true )
-        {
-       // printf ("-rose:astMerge option found \n");
-       // set something not yet defined!
-          p_astMerge = true;
-        }
-
   // DQ (9/15/2018): Adding support for output of report on the header file unparsing (for debugging).
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(headerFileUnparsingReport)",true) == true )
         {
@@ -1515,20 +1506,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           printf ("-rose:headerFileUnparsingReport option found \n");
 #endif
           set_reportOnHeaderFileUnparsing(true);
-        }
-
-  // DQ (6/17/2005): Added support for AST merging (sharing common parts of the AST most often represented in common header files of a project)
-  //
-  // specify AST merge command file option
-  //
-     std::string astMergeFilenameParameter;
-     if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,
-          "-rose:","(astMergeCommandFile)",astMergeFilenameParameter,true) == true )
-        {
-          printf ("-rose:astMergeCommandFile %s \n",astMergeFilenameParameter.c_str());
-       // Make our own copy of the filename string
-       // set_astMergeCommandLineFilename(xxx);
-          p_astMergeCommandFile = astMergeFilenameParameter;
         }
 
    // Milind Chabbi (9/9/2013): Added an option to store all files compiled by a project.
@@ -1581,12 +1558,19 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        }
        std::string astfile = rose_ast_option_param.substr(prev, pos-prev);
        p_astfiles_in.push_back(astfile);
+
+       p_ast_merge = true;
      }
 
      // `-rose:ast:write out.ast` (extension does not matter)
      rose_ast_option_param = "";
      if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:", "(ast:write)", rose_ast_option_param, true) == true ) {
        p_astfile_out = rose_ast_option_param;
+     }
+
+     // `-rose:ast:merge`
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(ast:merge)",true) == true ) {
+       p_ast_merge = true;
      }
 
   // Verbose ?
@@ -3204,6 +3188,12 @@ SgFile::usage ( int status )
 "     -rose:OpenMP:lowering, -rose:openmp:lowering\n"
 "                             on top of -rose:openmp:ast_only, transform AST with OpenMP nodes into multithreaded code \n"
 "                             targeting GCC GOMP runtime library\n"
+"     -rose:OpenACC, -rose:openacc\n"
+"                             follow OpenACC 3.0 specification for Fortran, perform one of the following actions:\n"
+"     -rose:OpenACC:parse_only, -rose:openacc:parse_only\n"
+"                             parse OpenACC directives to OmpAccAttributes, no further actions (default behavior now)\n"
+"     -rose:OpenACC:ast_only, -rose:openacc:ast_only\n"
+"                             on top of -rose:openacc:parse_only, build OpenACC AST nodes from OmpAccAttributes, no further actions\n"
 "     -rose:UPC_only, -rose:UPC\n"
 "                             follow Unified Parallel C 1.2 specification\n"
 "     -rose:UPCxx_only, -rose:UPCxx\n"
@@ -3245,10 +3235,6 @@ SgFile::usage ( int status )
 "                             ambiguity when ROSE might want to assume linking instead)\n"
 "     -rose:FailSafe, -rose:failsafe\n"
 "                             Enable experimental processing of resilience directives defined by FAIL-SAFE annotation language specification.\n"
-"     -rose:astMerge          merge ASTs from different files\n"
-"     -rose:astMergeCommandFile FILE\n"
-"                             filename where compiler command lines are stored\n"
-"                             for later processing (using AST merge mechanism)\n"
 "     -rose:projectSpecificDatabaseFile FILE\n"
 "                             filename where a database of all files used in a project are stored\n"
 "                             for producing unique trace ids and retrieving the reverse mapping from trace to files"
@@ -3315,6 +3301,7 @@ SgFile::usage ( int status )
 "     -rose:ast:write out.ast\n"
 "                             Output AST file (extension does *not* matter).\n"
 "                             Evaluated in the backend before any file unparsing or backend compiler calls.\n"
+"     -rose:ast:merge         Merges ASTs from different source files (always true when -rose:ast:read is used)\n"
 "\n"
 "Plugin Mode:\n"
 "     -rose:plugin_lib <shared_lib_filename>\n"
@@ -3497,9 +3484,6 @@ SgFile::usage ( int status )
 "                             files should be identical, and the same as the input file. \n"
 "     -rose:unparse_template_ast\n"
 "                             unparse C++ templates from their AST, not from strings stored by EDG. \n"
-"     -rose:unparseTemplateDeclarationsFromAST\n"
-"                             (experimental) option to permit unparsing template declarations \n"
-"                             from the AST (default: false). \n"
 "\n"
 "Debugging options:\n"
 "     -rose:detect_dangling_pointers LEVEL \n"
@@ -4630,6 +4614,71 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              }
         }
 
+  // Liao 3/12/2020: handle options for OpenACC support
+  // Allows handling of OpenACC "!$omp" directives in free form and "c$omp", *$omp and "!$omp" directives in fixed form, enables "!$" conditional
+  // compilation sentinels in free form and "c$", "*$" and "!$" sentinels in fixed form and when linking arranges for the OpenMP runtime library
+  // to be linked in. (Not implemented yet).
+     set_openacc(false);
+     //string ompmacro="-D_OPENMP="+ boost::to_string(OMPVERSION); // Mac OS complains this function does not exist!
+     string ompacc_macro="-D_OPENACC="+ StringUtility::numberToString(3); 
+     ROSE_ASSERT (get_openacc() == false);
+     ROSE_ASSERT (get_openacc_parse_only() == false); 
+     ROSE_ASSERT (get_openacc_ast_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(OpenACC|openacc)",true) == true 
+         ||CommandlineProcessing::isOption(argv,"-","(openacc|fopenacc)",true) == true
+         )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("OpenACC option specified \n");
+          set_openacc(true);
+          set_openacc_parse_only(true); // default is parse_only for now
+        //side effect for enabling OpenACC, define the macro as required
+         //This new option does not reach the backend compiler
+         //But it is enough to reach EDG only.
+         //We can later on back end option to turn on their OpenMP handling flags,
+         //like -fopenacc for GCC, depending on the version of gcc
+         //which will define this macro for GCC
+          argv.push_back(ompacc_macro);
+        }
+
+     // Process sub-options 
+     // We want to turn on OpenACC if any of its suboptions is used. 
+     if ( CommandlineProcessing::isOption(argv,"-rose:OpenACC:","parse_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"-rose:openacc:","parse_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"--rose:OpenACC:","parse_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"--rose:openacc:","parse_only",true) == true
+         )
+     {
+       if ( SgProject::get_verbose() >= 1 )
+         printf ("OpenACC sub option for parsing specified \n");
+       set_openacc_parse_only(true);
+       // turn on OpenMP if not set explicitly by standalone -rose:OpenMP
+       if (!get_openacc())
+       {
+         set_openacc(true);
+         argv.push_back(ompacc_macro);
+       }
+     }
+
+     if ( CommandlineProcessing::isOption(argv,"-rose:OpenACC:","ast_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"-rose:openacc:","ast_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"--rose:openacc:","ast_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"--rose:OpenACC:","ast_only",true) == true
+         )
+     {
+       if ( SgProject::get_verbose() >= 1 )
+         printf ("OpenACC option for AST construction specified \n");
+       set_openacc_ast_only(true);
+       // we don't want to stop after parsing  if we want to proceed to ast creation before stopping
+       set_openacc_parse_only(false);
+       if (!get_openacc())
+       {
+         set_openacc(true);
+         argv.push_back(ompacc_macro);
+       }
+     }
+
+
   // Liao 10/28/2008: I changed it to a more generic flag to indicate support for either Fortran or C/C++
   // DQ (8/19/2007): I have added the option here so that we can start to support OpenMP for Fortran.
   // Allows handling of OpenMP "!$omp" directives in free form and "c$omp", *$omp and "!$omp" directives in fixed form, enables "!$" conditional
@@ -5376,6 +5425,14 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)^", "(upc_threads)", &integerOption, 1);
      optionCount = sla(argv, "-rose:", "($)", "(C|C_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(UPC|UPC_only)",1);
+
+     optionCount = sla(argv, "-rose:", "($)", "(OpenACC|openacc)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(openacc:parse_only|OpenACC:parse_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(openacc:ast_only|OpenACC:ast_only)",1);
+     // support --rose:openacc variants
+     optionCount = sla(argv, "--rose:", "($)", "(openacc:parse_only|OpenACC:parse_only)",1);
+     optionCount = sla(argv, "--rose:", "($)", "(openacc:ast_only|OpenACC:ast_only)",1);
+
      optionCount = sla(argv, "-rose:", "($)", "(OpenMP|openmp)",1);
      optionCount = sla(argv, "-rose:", "($)", "(openmp:parse_only|OpenMP:parse_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(openmp:ast_only|OpenMP:ast_only)",1);
@@ -5423,7 +5480,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(relax_syntax_check)",1);
 
   // DQ (8/11/2007): Support for Fortran and its different flavors
-     optionCount = sla(argv, "-rose:", "($)", "(f|F|fortran)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(f|F|Fortran)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f77|F77|Fortran77)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f90|F90|Fortran90)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f95|F95|Fortran95)",1);
@@ -5596,9 +5653,6 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
      optionCount = sla(argv, "-rose:", "($)", "appendPID",1);
-
-  // DQ (9/8/2016): Adding support to optionally unparse template declarations from the AST 
-     optionCount = sla(argv, "-rose:", "($)", "unparseTemplateDeclarationsFromAST",1);
 
   // DQ (30/8/2017): Removing option to specify Csharp language support.
      optionCount = sla(argv, "-rose:", "($)", "(cs|cs_only)",1);
@@ -6216,6 +6270,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           commandLine.push_back("--preinclude");
           commandLine.push_back(*i);
         }
+
+#ifdef _MSC_VER
+     //Properly process some header files on windows
+     commandLine.push_back("-DRC_INVOKED");
+#endif
 
   // DQ (12/2/2006): Both GNU and EDG determine the language mode from the source file name extension.
   // In ROSE we also require that C files be explicitly specified to use the C language mode. Thus
@@ -7263,13 +7322,18 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      //Liao, 5/15/2009
      //the file name already has absolute path, the following code may be redundant.
      sourceFile = StringUtility::stripPathFromFileName(sourceFile);
+#ifndef _MSC_VER
      if(sourceFilePath == "" )
         sourceFilePath = "./";
      sourceFilePath = StringUtility::getAbsolutePathFromRelativePath(sourceFilePath);
-#ifndef _MSC_VER
      fileList.push_back(sourceFilePath+"/"+sourceFile);
 #else
-     fileList.push_back(sourceFilePath+"\\"+sourceFile);
+     //TODO get absolute file path on windows
+     //if(sourceFilePath == "" )
+     //   sourceFilePath = ".\\";
+     //sourceFilePath = StringUtility::getAbsolutePathFromRelativePath(sourceFilePath);
+     //fileList.push_back(sourceFilePath+"\\"+sourceFile);
+     fileList.push_back(sourceFile);
 #endif
      CommandlineProcessing::addListToCommandLine(inputCommandLine,"",fileList);
 
@@ -7376,8 +7440,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
         {
        // Search dir for header files, after all directories specified by -I but
        // before the standard system directories.
+#ifndef _MSC_VER
           compilerNameString.push_back("-isystem");
           compilerNameString.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+#endif
         }
 #endif
 
@@ -8402,7 +8468,11 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // where only a minimum configuration options are used and not all macros are defined. 
 #ifdef ROSE_INSTALLATION_PATH 
        string include_path(ROSE_INSTALLATION_PATH);
+#ifndef _MSC_VER
        include_path += "/include/rose"; 
+#else
+       include_path += "\\include\\rose"; 
+#endif
        compilerNameString.insert(iter_last_inc, "-I"+include_path); 
 #endif
      }
@@ -8446,8 +8516,15 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                if (objectNameSpecified == false)
                   {
                  // cout<<"making object file explicit for compilation only mode without -o options"<<endl;
-                    compilerNameString.push_back("-o");
-                    compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+
+
+#ifndef _MSC_VER
+                     compilerNameString.push_back("-o");
+                     compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+#else
+                     compilerNameString.push_back("/Fo" + currentDirectory + "\\" + objectFileName);
+#endif
+
                   }
                  else
                   {
@@ -8461,8 +8538,15 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                       // For multi-file handling we have to build a output (object file) using the name of the source file.
                          compilerNameString.push_back("-c");
                          std::string objectFileName = generateOutputFileName();
+
+#ifndef _MSC_VER
                          compilerNameString.push_back("-o");
                          compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+#else
+                         compilerNameString.push_back("/Fo" + currentDirectory + "\\" + objectFileName);
+#endif
+
+
                        }
                       else
                        {
@@ -8496,8 +8580,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                  // For multi-file handling we have to build a output (object file) using the name of the source file.
                     compilerNameString.push_back("-c");
                     std::string objectFileName = generateOutputFileName();
-                    compilerNameString.push_back("-o");
-                    compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+                    compilerNameString.push_back("/Fo");
+                    compilerNameString.push_back(currentDirectory + "\" + objectFileName);
 #else
                  // DQ (4/13/2015): Only output a -c and -o option to specify the executable if one has not already been specified.
                  // Liao 5/1/2015: for the case of doing both compiling and linking, and with multiple files, 
@@ -8515,23 +8599,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                          compilerNameString.push_back(currentDirectory + "/" + objectFileName);
                        }
 #endif
-#if 0
-                 // OLD CODE
-                 // DQ (4/13/2015): If the compilation only is not specified, then never output an explicit -o option to specify the output file.
-#error "DEAD CODE!"
-                 // DQ (4/13/2015): Only output a -c and -o option to specify the executable if one has not already been specified.
-                    if (objectNameSpecified == false)
-                       {
-                      // cout<<"turn on compilation only at the file compilation level"<<endl;
-                         compilerNameString.push_back("-c");
-                      // For compile+link mode, -o is used for the final executable, if it exists
-                      // We make -o objectfile explicit 
-                         std::string objectFileName = generateOutputFileName();
 
-                         compilerNameString.push_back("-o");
-                         compilerNameString.push_back(currentDirectory + "/" + objectFileName);
-                       }
-#endif
                   }
 #endif
 
@@ -8544,9 +8612,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                  compilerNameString.push_back("-c");
               // compilation step of the two (compile + link) steps
                  std::string objectFileName = generateOutputFileName();
-
+#ifndef _MSC_VER
                  compilerNameString.push_back("-o");
                  compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+#else
+                 compilerNameString.push_back("/Fo" + currentDirectory + "\\" + objectFileName);
+#endif
              }
         }
 

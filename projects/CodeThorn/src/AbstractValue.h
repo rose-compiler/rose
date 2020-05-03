@@ -13,7 +13,8 @@
 #include "BoolLattice.h"
 #include "VariableIdMapping.h"
 #include <cstdint>
-#include "SgTypeSizeMapping.h"
+#include "VariableIdMappingExtended.h"
+#include "TypeSizeMapping.h"
 
 using std::string;
 using std::istream;
@@ -37,7 +38,7 @@ class AbstractValue {
   typedef uint16_t TypeSize;
   friend bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
   friend bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
-  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, TOP};
+  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, TOP, UNDEFINED };
   AbstractValue();
   AbstractValue(bool val);
   // type conversion
@@ -76,6 +77,7 @@ class AbstractValue {
   // currently identical to isPtr() but already used where one unique value is required
   bool isConstPtr() const;
   bool isPtr() const;
+  bool isRef() const;
   bool isNullPtr() const;
   AbstractValue operatorNot();
   AbstractValue operatorUnaryMinus(); // unary minus
@@ -106,7 +108,9 @@ class AbstractValue {
   static AbstractValue createAddressOfArray(CodeThorn::VariableId arrayVariableId);
   static AbstractValue createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, AbstractValue Index);
   static AbstractValue createNullPtr();
+  static AbstractValue createUndefined(); // used to model values of uninitialized variables/memory locations
   static AbstractValue createTop();
+  static AbstractValue createBot();
   // strict weak ordering (required for sorted STL data structures if
   // no comparator is provided)
   //  bool operator==(AbstractValue other) const;
@@ -140,15 +144,14 @@ class AbstractValue {
   long hash() const;
   std::string valueTypeToString() const;
 
-  // deprecated (use getTypeSize() instead)
-  TypeSize getValueSize() const; 
   TypeSize getTypeSize() const;
   void setTypeSize(TypeSize valueSize);
-  static void setTypeSizeMapping(CodeThorn::SgTypeSizeMapping* typeSizeMapping);
-  static CodeThorn::SgTypeSizeMapping* getTypeSizeMapping();
+  static void setVariableIdMapping(CodeThorn::VariableIdMappingExtended* varIdMapping);
   static bool approximatedBy(AbstractValue val1, AbstractValue val2);
   static AbstractValue combine(AbstractValue val1, AbstractValue val2);
+  static bool strictChecking; // if turned off, some error conditions are not active, but the result remains sound.
  private:
+  AbstractValue topOrError(std::string) const;
   ValueType valueType;
   CodeThorn::VariableId variableId;
   // union required
@@ -156,7 +159,7 @@ class AbstractValue {
   long double floatValue=0.0;
 
   TypeSize typeSize=0;
-  static CodeThorn::SgTypeSizeMapping* _typeSizeMapping;
+  static CodeThorn::VariableIdMappingExtended* _variableIdMapping;
 };
 
 // arithmetic operators

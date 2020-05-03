@@ -3,6 +3,8 @@
 #define ROSE_DISASSEMBLER_MIPS_H
 
 #include "Disassembler.h"
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+
 #include "InstructionEnumsMips.h"
 #include "SageBuilderAsm.h"
 
@@ -145,4 +147,5 @@ protected:
 } // namespace
 } // namespace
 
+#endif
 #endif

@@ -3,21 +3,21 @@ CFG dominators for function 0x00400498:
   function 0x00400498 dominator of 0x004004a1<1> is 0x00400498<0>
   function 0x00400498 dominator of 0x004004ab<2> is 0x004004a6<3>
   function 0x00400498 dominator of 0x004004a6<3> is 0x004004a1<1>
-CFG dominators for function 0x004004b0 "DYNAMIC_LINKER_TRAMPOLINE":
+CFG dominators for function 0x004004b0:
   function 0x004004b0 dominator of 0x004004b0<0> is none
-CFG dominators for function 0x004004c0 "__libc_start_main@plt":
+CFG dominators for function 0x004004c0:
   function 0x004004c0 dominator of 0x004004c0<0> is none
-CFG dominators for function 0x004004d0 "read@plt":
+CFG dominators for function 0x004004d0:
   function 0x004004d0 dominator of 0x004004d0<0> is none
-CFG dominators for function 0x004004e0 "write@plt":
+CFG dominators for function 0x004004e0:
   function 0x004004e0 dominator of 0x004004e0<0> is none
-CFG dominators for function 0x004004f0 "open@plt":
+CFG dominators for function 0x004004f0:
   function 0x004004f0 dominator of 0x004004f0<0> is none
-CFG dominators for function 0x00400500 "exit@plt":
+CFG dominators for function 0x00400500:
   function 0x00400500 dominator of 0x00400500<0> is none
-CFG dominators for function 0x00400510 "close@plt":
+CFG dominators for function 0x00400510:
   function 0x00400510 dominator of 0x00400510<0> is none
-CFG dominators for function 0x00400520 "_start":
+CFG dominators for function 0x00400520:
   function 0x00400520 dominator of 0x0040054a<0> is 0x00400520<1>
   function 0x00400520 dominator of 0x00400520<1> is none
 CFG dominators for function 0x0040054c:
@@ -39,7 +39,7 @@ CFG dominators for function 0x004005b0:
   function 0x004005b0 dominator of 0x004005b0<1> is none
   function 0x004005b0 dominator of 0x004005be<2> is 0x004005b0<1>
   function 0x004005b0 dominator of 0x004005d4<3> is 0x004005b0<1>
-CFG dominators for function 0x00400660 "main":
+CFG dominators for function 0x00400660:
   function 0x00400660 dominator of 0x00400694<0> is 0x00400681<2>
   function 0x00400660 dominator of 0x0040069b<1> is 0x00400697<3>
   function 0x00400660 dominator of 0x00400681<2> is 0x00400660<5>

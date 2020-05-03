@@ -178,7 +178,7 @@ CFG dominators for function 0x010016ac:
   function 0x010016ac dominator of 0x010016e2<14> is 0x010016d0<8>
   function 0x010016ac dominator of 0x01001720<15> is 0x01001714<13>
   function 0x010016ac dominator of 0x01001718<16> is 0x01001714<13>
-CFG dominators for function 0x01001774 "_start":
+CFG dominators for function 0x01001774:
   function 0x01001774 dominator of 0x010018e2<0> is 0x010018b3<8>
   function 0x01001774 dominator of 0x010018dc<1> is none
   function 0x01001774 dominator of 0x010018d5<2> is none
@@ -235,79 +235,79 @@ CFG dominators for function 0x01001996:
   function 0x01001996 dominator of 0x01001996<0> is none
 CFG dominators for function 0x010019a2:
   function 0x010019a2 dominator of 0x010019a2<0> is none
-CFG dominators for function 0x010041b4 "??3@YAXPAX@Z@msvcrt.dll":
+CFG dominators for function 0x010041b4:
   function 0x010041b4 dominator of 0x010041b4<0,X> is none
-CFG dominators for function 0x010041c4 "??2@YAPAXI@Z@msvcrt.dll":
+CFG dominators for function 0x010041c4:
   function 0x010041c4 dominator of 0x010041c4<0,X> is none
-CFG dominators for function 0x010041d4 "wcslen@msvcrt.dll":
+CFG dominators for function 0x010041d4:
   function 0x010041d4 dominator of 0x010041d4<0,X> is none
-CFG dominators for function 0x010041de "tolower@msvcrt.dll":
+CFG dominators for function 0x010041de:
   function 0x010041de dominator of 0x010041de<0,X> is none
-CFG dominators for function 0x010041e8 "exit@msvcrt.dll":
+CFG dominators for function 0x010041e8:
   function 0x010041e8 dominator of 0x010041e8<0,X> is none
-CFG dominators for function 0x010041f0 "_c_exit@msvcrt.dll":
+CFG dominators for function 0x010041f0:
   function 0x010041f0 dominator of 0x010041f0<0,X> is none
-CFG dominators for function 0x010041fa "_exit@msvcrt.dll":
+CFG dominators for function 0x010041fa:
   function 0x010041fa dominator of 0x010041fa<0,X> is none
-CFG dominators for function 0x01004202 "_XcptFilter@msvcrt.dll":
+CFG dominators for function 0x01004202:
   function 0x01004202 dominator of 0x01004202<0,X> is none
-CFG dominators for function 0x01004210 "_cexit@msvcrt.dll":
+CFG dominators for function 0x01004210:
   function 0x01004210 dominator of 0x01004210<0,X> is none
-CFG dominators for function 0x0100421a "__initenv@msvcrt.dll":
+CFG dominators for function 0x0100421a:
   function 0x0100421a dominator of 0x0100421a<0,X> is none
-CFG dominators for function 0x01004226 "__getmainargs@msvcrt.dll":
+CFG dominators for function 0x01004226:
   function 0x01004226 dominator of 0x01004226<0,X> is none
-CFG dominators for function 0x01004236 "_initterm@msvcrt.dll":
+CFG dominators for function 0x01004236:
   function 0x01004236 dominator of 0x01004236<0,X> is none
-CFG dominators for function 0x01004242 "__setusermatherr@msvcrt.dll":
+CFG dominators for function 0x01004242:
   function 0x01004242 dominator of 0x01004242<0,X> is none
-CFG dominators for function 0x01004256 "_adjust_fdiv@msvcrt.dll":
+CFG dominators for function 0x01004256:
   function 0x01004256 dominator of 0x01004256<0,X> is none
-CFG dominators for function 0x01004266 "__p__commode@msvcrt.dll":
+CFG dominators for function 0x01004266:
   function 0x01004266 dominator of 0x01004266<0,X> is none
-CFG dominators for function 0x01004276 "__p__fmode@msvcrt.dll":
+CFG dominators for function 0x01004276:
   function 0x01004276 dominator of 0x01004276<0,X> is none
-CFG dominators for function 0x01004284 "__set_app_type@msvcrt.dll":
+CFG dominators for function 0x01004284:
   function 0x01004284 dominator of 0x01004284<0,X> is none
-CFG dominators for function 0x01004296 "_except_handler3@msvcrt.dll":
+CFG dominators for function 0x01004296:
   function 0x01004296 dominator of 0x01004296<0,X> is none
-CFG dominators for function 0x010042b6 "_controlfp@msvcrt.dll":
+CFG dominators for function 0x010042b6:
   function 0x010042b6 dominator of 0x010042b6<0,X> is none
-CFG dominators for function 0x010042c4 "FreeLibrary@KERNEL32.dll":
+CFG dominators for function 0x010042c4:
   function 0x010042c4 dominator of 0x010042c4<0,X> is none
-CFG dominators for function 0x010042d2 "FormatMessageW@KERNEL32.dll":
+CFG dominators for function 0x010042d2:
   function 0x010042d2 dominator of 0x010042d2<0,X> is none
-CFG dominators for function 0x010042e4 "LoadLibraryExA@KERNEL32.dll":
+CFG dominators for function 0x010042e4:
   function 0x010042e4 dominator of 0x010042e4<0,X> is none
-CFG dominators for function 0x010042f6 "WriteFile@KERNEL32.dll":
+CFG dominators for function 0x010042f6:
   function 0x010042f6 dominator of 0x010042f6<0,X> is none
-CFG dominators for function 0x01004302 "WideCharToMultiByte@KERNEL32.dll":
+CFG dominators for function 0x01004302:
   function 0x01004302 dominator of 0x01004302<0,X> is none
-CFG dominators for function 0x01004318 "GetConsoleOutputCP@KERNEL32.dll":
+CFG dominators for function 0x01004318:
   function 0x01004318 dominator of 0x01004318<0,X> is none
-CFG dominators for function 0x0100432e "WriteConsoleW@KERNEL32.dll":
+CFG dominators for function 0x0100432e:
   function 0x0100432e dominator of 0x0100432e<0,X> is none
-CFG dominators for function 0x0100433e "GetConsoleMode@KERNEL32.dll":
+CFG dominators for function 0x0100433e:
   function 0x0100433e dominator of 0x0100433e<0,X> is none
-CFG dominators for function 0x01004350 "GetFileType@KERNEL32.dll":
+CFG dominators for function 0x01004350:
   function 0x01004350 dominator of 0x01004350<0,X> is none
-CFG dominators for function 0x0100435e "GetStdHandle@KERNEL32.dll":
+CFG dominators for function 0x0100435e:
   function 0x0100435e dominator of 0x0100435e<0,X> is none
-CFG dominators for function 0x0100436e "MultiByteToWideChar@KERNEL32.dll":
+CFG dominators for function 0x0100436e:
   function 0x0100436e dominator of 0x0100436e<0,X> is none
-CFG dominators for function 0x01004384 "lstrlenA@KERNEL32.dll":
+CFG dominators for function 0x01004384:
   function 0x01004384 dominator of 0x01004384<0,X> is none
-CFG dominators for function 0x01004390 "GetLastError@KERNEL32.dll":
+CFG dominators for function 0x01004390:
   function 0x01004390 dominator of 0x01004390<0,X> is none
-CFG dominators for function 0x010043a0 "LocalFree@KERNEL32.dll":
+CFG dominators for function 0x010043a0:
   function 0x010043a0 dominator of 0x010043a0<0,X> is none
-CFG dominators for function 0x010043ac "GlobalFree@KERNEL32.dll":
+CFG dominators for function 0x010043ac:
   function 0x010043ac dominator of 0x010043ac<0,X> is none
-CFG dominators for function 0x010043ba "GetModuleHandleA@KERNEL32.dll":
+CFG dominators for function 0x010043ba:
   function 0x010043ba dominator of 0x010043ba<0,X> is none
-CFG dominators for function 0x010043dc "InternetQueryOptionA@WININET.dll":
+CFG dominators for function 0x010043dc:
   function 0x010043dc dominator of 0x010043dc<0,X> is none
-CFG dominators for function 0x01004400 "WinHttpSetDefaultProxyConfiguration@WINHTTP.dll":
+CFG dominators for function 0x01004400:
   function 0x01004400 dominator of 0x01004400<0,X> is none
-CFG dominators for function 0x01004426 "WinHttpGetDefaultProxyConfiguration@WINHTTP.dll":
+CFG dominators for function 0x01004426:
   function 0x01004426 dominator of 0x01004426<0,X> is none

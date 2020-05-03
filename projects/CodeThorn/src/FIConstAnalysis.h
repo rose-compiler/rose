@@ -87,7 +87,7 @@ class FIConstAnalysis {
   void attachAstAttributes(Labeler* labeler, string attributeName);
 
   void setOptionMultiConstAnalysis(bool);
-  void writeCvsConstResult(VariableIdMapping& variableIdMapping, string filename);
+  void writeCvsConstResult(VariableIdMapping& variableIdMapping, const char* filename);
 
   VariableIdMapping::VariableIdSet determinedConstantVariables();
 

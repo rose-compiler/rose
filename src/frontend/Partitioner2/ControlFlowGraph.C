@@ -1,4 +1,7 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>
@@ -408,3 +411,5 @@ operator<<(std::ostream &out, const ControlFlowGraph::Edge &x) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

@@ -1,6 +1,5 @@
 include_directories( ${CMAKE_SOURCE_DIR}/src/frontend/Experimental_General_Language_Support )
 
-if (enable-binary-analysis)
 add_library(sageInterface OBJECT
   sageInterface.C
   sageInterfaceAsm.C
@@ -12,17 +11,6 @@ add_library(sageInterface OBJECT
   sageBuilder_untypedNodes.C
   SageBuilderAsm.C
   abiStuff.C)
-else()
-add_library(sageInterface OBJECT
-  sageInterface.C
-  sageInterface_type.C
-  generateUniqueName.C
-  sageBuilder.C
-  sageBuilder_fortran.C
-  sageBuilder_untypedNodes.C
-  untypedBuilder.C
-  abiStuff.C)
-endif()
 
 add_dependencies(sageInterface rosetta_generated)
 

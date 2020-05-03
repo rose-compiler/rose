@@ -14,6 +14,7 @@ LDADD  = $(ROSE_LIBS)
 
 # most test translators should not be installed (noinst)
 # The bug numbers come from ROSE's SciDAC bug trackers
+#github_83_outline, this test uses C++11, we have better regression test for this bug. Disable it for now.
 noinst_PROGRAMS = \
 	bug125 \
 	qualifiedName \
@@ -31,7 +32,7 @@ noinst_PROGRAMS = \
 	testPragmaInBody \
 	querySubTree \
 	testCopyAndDelete \
-   testTraversalOfTemplateInstantiations \
+        testTraversalOfTemplateInstantiations \
 	testTranslator2013_01 \
 	testTranslator2013_02 \
 	testTranslator2018_01 \
@@ -73,7 +74,7 @@ testTranslator2013_01_SOURCES = testTranslator2013_01.C
 testTranslator2013_02_SOURCES = testTranslator2013_02.C
 testTranslator2018_01_SOURCES = testTranslator2018_01.C
 testTranslator2018_02_SOURCES = testTranslator2018_02.C
-
+#github_83_outline_SOURCES = github_83_outline.C
 # LDADD = $(ROSE_SEPARATE_LIBS)
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
@@ -163,6 +164,8 @@ input_testTranslator2018_01.o: testTranslator2018_01
 input_testTranslator2018_02.o: testTranslator2018_02
 	./testTranslator2018_02 -rose:verbose 0 -c $(srcdir)/input_testTranslator2018_02.C && touch $@
 
+#input_github_83_outline.o: github_83_outline
+#	./github_83_outline -rose:verbose 0  --rose:openmp:ast_only -c $(srcdir)/input_github_83_outline.C && touch $@
 
 EXTRA_DIST = \
    CMakeLists.txt \
@@ -174,9 +177,11 @@ EXTRA_DIST = \
    input_testTranslator2012_01a.C \
    input_testTranslator2012_01a.C \
    input_testPragmaInBody.c \
-   input_querySubTree.C
+   input_querySubTree.C \
+   input_github_83_outline.C
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+# input_github_83_outline.o, 2/18/2020
 check-cxx: \
 	test125.pdf \
 	jacobi.o \
@@ -186,7 +191,7 @@ check-cxx: \
 	input_testTranslator2010_2.o \
 	input_testTranslator2010_3.o \
 	input_label_stmt_file_info_translator.o \
-	input_querySubTree.o
+	input_querySubTree.o 
 # TODO: FIX the following tests
 #Currently_Failing_Cxx_tests =
 #	dataMemberOfConst.o 
@@ -206,46 +211,6 @@ check-fortran:
 endif
 
 check-local:
-#	@$(MAKE) check-cxx check-fortran
-# DQ (2/19/2017): NEW VERSION OF LOGIC
-# DQ (2/18/2017): More specific logic required for portability.
-# When using EDG 4.9 these files don't compile on later versions of GNU, CLANG, and Intel compilers 
-# but we still want them tests as we transition to EDG 4.12 (where they all work fine independent of 
-# the compiler vendor and GNU compiler version).
-if ROSE_USE_EDG_VERSION_4_9
-	@echo "ROSE_USE_EDG_VERSION_4_9 == true"
-if USING_GNU_COMPILER
-	@echo "USING_GCC_COMPILER == true"
-if ROSE_USING_GCC_VERSION_LATER_4_9
-	@echo "ROSE_USING_GCC_VERSION_LATER_4_9 == true"
-	@echo "OpenMP tests using EDG 4.9 and GNU version 4.9 backend compiler are disabled."
-# Exclude these tests on GNU 4.9 and later compilers).
-else  # NOT ROSE_USING_GCC_VERSION_LATER_4_8
-# If this is not the CLANG or Intel compilers and an earlier version of GNU than GNU 4.9 compiler, so include these files.
-	@echo "ROSE_USING_GCC_VERSION_LATER_4_8 == false"
-	@$(MAKE) check-cxx check-fortran
-endif # ROSE_USING_GCC_VERSION_LATER_4_8
-else  # NOT USING_GNU_COMPILER
-	@echo "USING_GCC_COMPILER == false"
-if USING_CLANG_COMPILER
-# Exclude this list of files in the case of CLANG compiler.
-	@echo "USING_CLANG_COMPILER == true"
-	@echo "Translator tests using EDG 4.9: Clang backend compiler are NOT allowed with the EDG 4.9 frontend."
-else # NOT USING_CLANG_COMPILER
-	@echo "USING_CLANG_COMPILER == false"
-if USING_INTEL_COMPILER
-# Exclude this list of files in the case of Intel compiler.
-	@echo "USING_INTEL_COMPILER == true"
-	@echo "Translator tests using EDG 4.9 Intel backend compiler are allowed."
-else # NOT USING_INTEL_COMPILER
-# This is an unknown compiler.
-	@echo "USING_INTEL_COMPILER == false"
-endif # USING_INTEL_COMPILER
-endif # USING_CLANG_COMPILER
-endif # USING_GNU_COMPILER
-else  # NOT ROSE_USE_EDG_VERSION_4_9
-# Using EDG 4.12 or later (run all tests independent of the compiler).
-	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
 if USING_GNU_COMPILER
 if ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "Translator tests require configuration with either EDG version 4.9 and GNU version 4.8 or backend compiler or EDG 4.12 and 4.8 or any later GNU compiler."
@@ -253,7 +218,6 @@ if ROSE_USING_GCC_VERSION_LATER_4_8
 	@$(MAKE) check-cxx check-fortran
 endif # ROSE_USING_GCC_VERSION_LATER_4_8
 else
-	@echo "ROSE_USE_EDG_VERSION_4_9 == false"
 if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
 	@echo "USING_CLANG_COMPILER == true"
@@ -274,7 +238,6 @@ else # NOT USING_INTEL_COMPILER
 endif # USING_INTEL_COMPILER
 endif # USING_CLANG_COMPILER
 endif # USING_GNU_COMPILER
-endif # ROSE_USE_EDG_VERSION_4_9
 	@echo "************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/translatorTests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************************************************"

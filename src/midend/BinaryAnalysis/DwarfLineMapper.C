@@ -1,5 +1,6 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
-#include "rosePublicConfig.h"
 #include "DwarfLineMapper.h"
 
 namespace Rose {
@@ -169,3 +170,5 @@ DwarfLineMapper::visit(SgNode *node)
 
 } // namespace
 } // namespace
+
+#endif

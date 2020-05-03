@@ -1,6 +1,8 @@
 /* Windows PE Export Sections (SgAsmPEExportSection and related classes) */
-
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
+
 #include "MemoryMap.h"
 #include "Diagnostics.h"
 
@@ -332,3 +334,5 @@ SgAsmPEExportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (variantT() == V_SgAsmPEExportSection) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
+
+#endif

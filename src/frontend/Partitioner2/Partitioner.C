@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include "sage3basic.h"
 #include <Partitioner2/Partitioner.h>
 
@@ -70,7 +72,10 @@ Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // move constructor
-Partitioner::Partitioner(BOOST_RV_REF(Partitioner) other) {
+Partitioner::Partitioner(BOOST_RV_REF(Partitioner) other)
+    : solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)), autoAddCallReturnEdges_(false),
+      assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+      progress_(Progress::instance()), cfgProgressTotal_(0) {
     *this = boost::move(other);
 }
 
@@ -154,7 +159,10 @@ Partitioner::~Partitioner() {
 // Copy construction, assignment, destructor when move semantics are absent
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Partitioner::Partitioner(const Partitioner &other) {
+Partitioner::Partitioner(const Partitioner &other)
+    : solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)), autoAddCallReturnEdges_(false),
+      assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
+      progress_(Progress::instance()), cfgProgressTotal_(0) {
     // WARNING: This is a dangerous operation. Both partitioners will now be pointing to the same data and confusion is likely.
     // The only safe thing to do with the other partitioner is to delete it.
     *this = other;
@@ -2454,6 +2462,34 @@ Partitioner::checkConsistency() const {
 // CFG utilities
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void
+Partitioner::expandIndeterminateCalls() {
+    std::vector<ControlFlowGraph::VertexIterator> allFunctions;
+    for (ControlFlowGraph::VertexIterator vertex = cfg_.vertices().begin(); vertex != cfg_.vertices().end(); ++vertex) {
+        // Look for indeterminate function calls
+        std::vector<ControlFlowGraph::EdgeIterator> indeterminateEdges;
+        for (ControlFlowGraph::EdgeIterator edge = vertex->outEdges().begin(); edge != vertex->outEdges().end(); ++edge) {
+            if (edge->value().type() == E_FUNCTION_CALL && edge->target()->value().type() == V_INDETERMINATE)
+                indeterminateEdges.push_back(edge);
+        }
+
+        if (!indeterminateEdges.empty()) {
+            BOOST_FOREACH (ControlFlowGraph::EdgeIterator edge, indeterminateEdges)
+                cfg_.eraseEdge(edge);
+
+            if (allFunctions.empty()) {
+                for (ControlFlowGraph::VertexIterator v = cfg_.vertices().begin(); v != cfg_.vertices().end(); ++v) {
+                    if (v->value().isEntryBlock())
+                        allFunctions.push_back(v);
+                }
+            }
+
+            BOOST_FOREACH (ControlFlowGraph::VertexIterator target, allFunctions)
+                cfg_.insertEdge(vertex, target, CfgEdge(E_FUNCTION_CALL));
+        }
+    }
+}
+
 // class method
 std::string
 Partitioner::basicBlockName(const BasicBlock::Ptr &bblock) {
@@ -2974,3 +3010,5 @@ Partitioner::pythonUnparse() const {
 } // namespace
 } // namespace
 } // namespace
+
+#endif

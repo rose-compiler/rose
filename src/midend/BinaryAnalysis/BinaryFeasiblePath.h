@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_FeasiblePath_H
 #define ROSE_BinaryAnalysis_FeasiblePath_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include <BaseSemantics2.h>
 #include <BinarySmtSolver.h>
@@ -97,6 +99,8 @@ public:
         EdgeVisitOrder edgeVisitOrder;                  /**< Order in which to visit edges. */
         bool trackingCodeCoverage;                      /**< If set, track which block addresses are reached. */
         std::vector<rose_addr_t> ipRewrite;             /**< An even number of from,to pairs for rewriting the insn ptr reg. */
+        Sawyer::Optional<boost::chrono::duration<double> > smtTimeout; /**< Max seconds allowed per SMT solve call. */
+        size_t maxExprSize;                             /**< Maximum symbolic expression size before replacement. */
 
         // Null dereferences
         struct NullDeref {
@@ -115,7 +119,18 @@ public:
             : searchMode(SEARCH_SINGLE_DFS), maxVertexVisit((size_t)-1), maxPathLength(200), maxCallDepth((size_t)-1),
               maxRecursionDepth((size_t)-1), nonAddressIsFeasible(true), solverName("best"),
               memoryParadigm(LIST_BASED_MEMORY), processFinalVertex(false), ignoreSemanticFailure(false),
-              kCycleCoefficient(0.0), edgeVisitOrder(VISIT_NATURAL), trackingCodeCoverage(true) {}
+              kCycleCoefficient(0.0), edgeVisitOrder(VISIT_NATURAL), trackingCodeCoverage(true), maxExprSize(UNLIMITED) {}
+    };
+
+    /** Statistics from path searching. */
+    struct Statistics {
+        size_t maxVertexVisitHits;                      /**< Number of times settings.maxVertexVisit was hit. */
+        size_t maxPathLengthHits;                       /**< Number of times settings.maxPathLength was hit (effective K). */
+        size_t maxCallDepthHits;                        /**< Number of times settings.maxCallDepth was hit. */
+        size_t maxRecursionDepthHits;                   /**< Number of times settings.maxRecursionDepth was hit. */
+
+        Statistics()
+            : maxVertexVisitHits(0), maxPathLengthHits(0), maxCallDepthHits(0), maxRecursionDepthHits(0) {}
     };
 
     /** Diagnostic output. */
@@ -318,6 +333,8 @@ private:
     Partitioner2::CfgConstVertexSet cfgEndAvoidVertices_;// CFG end-of-path and other avoidance vertices
     FunctionSummarizer::Ptr functionSummarizer_;        // user-defined function for handling function summaries
     AddressSet reachedBlockVas_;                        // basic block addresses reached during analysis
+    InstructionSemantics2::BaseSemantics::StatePtr initialState_; // set by setInitialState.
+    Statistics stats_;                                  // statistical results of the analysis
     static Sawyer::Attribute::Id POST_STATE;            // stores semantic state after executing the insns for a vertex
     static Sawyer::Attribute::Id POST_INSN_LENGTH;      // path length in instructions at end of vertex
     static Sawyer::Attribute::Id EFFECTIVE_K;           // (double) effective maximimum path length
@@ -346,6 +363,12 @@ public:
         cfgAvoidEdges_.clear();
         cfgEndAvoidVertices_.clear();
         reachedBlockVas_.clear();
+        resetStatistics();
+    }
+
+    /** Reset only statistics. */
+    void resetStatistics() {
+        stats_ = Statistics();
     }
 
     /** Initialize diagnostic output. This is called automatically when ROSE is initialized. */
@@ -550,6 +573,9 @@ public:
     /** Details about all variables by name. */
     const VarDetails& varDetails(const InstructionSemantics2::BaseSemantics::StatePtr&) const;
 
+    /** Get the initial state before the first path vertex. */
+    InstructionSemantics2::BaseSemantics::StatePtr initialState() const;
+
     /** Get the state at the end of the specified vertex. */
     static InstructionSemantics2::BaseSemantics::StatePtr pathPostState(const Partitioner2::CfgPath&, size_t vertexIdx);
 
@@ -567,6 +593,13 @@ public:
      *  of instructions in that basic block. The path length is what's used to limit the depth of the search in k-bounded
      *  model checking. */
     static size_t pathLength(const Partitioner2::CfgPath&);
+
+    /** Cumulative statistics about prior analyses.
+     *
+     *  These statistics accumulate across all analysis calls and can be reset by either @ref reset or @ref resetStatistics. */
+    Statistics statistics() const {
+        return stats_;
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Functions for code coverage
@@ -646,4 +679,5 @@ namespace Sawyer {
     }
 }
 
+#endif
 #endif

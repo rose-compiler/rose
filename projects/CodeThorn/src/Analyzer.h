@@ -39,6 +39,7 @@
 #include "CounterexampleGenerator.h"
 
 #include "VariableIdMapping.h"
+#include "VariableIdMappingExtended.h"
 #include "FunctionIdMapping.h"
 #include "FunctionCallMapping.h"
 
@@ -47,6 +48,8 @@
 #include "AstNodeInfo.h"
 #include "SgTypeSizeMapping.h"
 #include "CallString.h"
+#include "CodeThornOptions.h"
+#include "LTLOptions.h"
 
 namespace CodeThorn {
 
@@ -57,15 +60,15 @@ namespace CodeThorn {
 
   class SpotConnection;
 
-  struct hash_pair { 
-    template <class T1, class T2> 
+  struct hash_pair {
+    template <class T1, class T2>
       size_t operator()(const pair<T1, T2>& p) const
-    { 
-      auto hash1 = hash<T1>{}(p.first); 
-      auto hash2 = hash<T2>{}(p.second); 
-      return hash1 ^ hash2; 
-    } 
-  }; 
+    {
+      auto hash1 = hash<T1>{}(p.first);
+      auto hash2 = hash<T2>{}(p.second);
+      return hash1 ^ hash2;
+    }
+  };
 
   /*!
    * \author Markus Schordan
@@ -83,10 +86,10 @@ namespace CodeThorn {
     friend class VariableValueMonitor;
 
   public:
+    static void initDiagnostics();
     Analyzer();
     virtual ~Analyzer();
 
-    static void initDiagnostics();
     void initAstNodeInfo(SgNode* node);
     virtual void initializeSolver(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initLabeledAssertNodes(SgProject* root);
@@ -107,8 +110,6 @@ namespace CodeThorn {
     //load previous backup of the transitionGraph, storing the current version as a backup instead
     void swapStgWithBackup();
 
-    long analysisRunTimeInSeconds();
-
     // reductions based on a nested BFS from the STG's start state
     void reduceStgToInOutStates();
     void reduceStgToInOutAssertStates();
@@ -128,10 +129,9 @@ namespace CodeThorn {
 
     int computeNumberOfElements(SgVariableDeclaration* decl);
     // modifies PState with written initializers
-    PState analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pState, EState currentEState);
+    PState analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer, PState pState, EState currentEState);
     // modifies PState with written initializers
-    EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
-    PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
+    EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1, EState currentEState, Label targetLabel);
 
     // thread save; only prints if option status messages is enabled.
     void printStatusMessage(bool);
@@ -148,24 +148,25 @@ namespace CodeThorn {
     bool checkTransitionGraph();
 
     //! The analyzer requires a CFAnalysis to obtain the ICFG.
-    void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
-    CFAnalysis* getCFAnalyzer() const { return cfanalyzer; }
+    void setCFAnalyzer(CFAnalysis* cf);
+    CFAnalysis* getCFAnalyzer() const;
 
     ExprAnalyzer* getExprAnalyzer();
 
     // access  functions for computed information
-    VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
-    FunctionIdMapping* getFunctionIdMapping() { return &functionIdMapping; }
-    FunctionCallMapping* getFunctionCallMapping() { return &functionCallMapping; }
+    VariableIdMappingExtended* getVariableIdMapping();
+    FunctionIdMapping* getFunctionIdMapping();
+    FunctionCallMapping* getFunctionCallMapping();
+    FunctionCallMapping2* getFunctionCallMapping2();
     CTIOLabeler* getLabeler() const;
-    Flow* getFlow() { return &flow; }
-    PStateSet* getPStateSet() { return &pstateSet; }
-    EStateSet* getEStateSet() { return &estateSet; }
-    TransitionGraph* getTransitionGraph() { return &transitionGraph; }
-    ConstraintSetMaintainer* getConstraintSetMaintainer() { return &constraintSetMaintainer; }
-    std::list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
+    Flow* getFlow();
+    CodeThorn::PStateSet* getPStateSet();
+    EStateSet* getEStateSet();
+    TransitionGraph* getTransitionGraph();
+    ConstraintSetMaintainer* getConstraintSetMaintainer();
+    std::list<FailedAssertion> getFirstAssertionOccurences();
 
-    void setSkipSelectedFunctionCalls(bool defer);
+    void setSkipUnknownFunctionCalls(bool defer);
     void setSkipArrayAccesses(bool skip);
     bool getSkipArrayAccesses();
     void setIgnoreUndefinedDereference(bool);
@@ -194,12 +195,13 @@ namespace CodeThorn {
     void setStgTraceFileName(std::string filename);
 
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; } // not used
+    // 0: concrete, 1: abstract, 2: strict abstract (does not try to approximate all non-supported operators, rejects program instead)
     void setAbstractionMode(int mode) { _abstractionMode=mode; }
     int getAbstractionMode() { return _abstractionMode; }
-    void setInterpretationMode(CodeThorn::InterpretationMode mode);
-    CodeThorn::InterpretationMode getInterpretationMode();
-    void setInterpretationModeOutputFileName(string);
-    string getInterpretationModeOutputFileName();
+    void setInterpreterMode(CodeThorn::InterpreterMode mode);
+    CodeThorn::InterpreterMode getInterpreterMode();
+    void setInterpreterModeOutputFileName(string);
+    string getInterpreterModeOutputFileName();
 
     bool getPrintDetectedViolations();
     void setPrintDetectedViolations(bool flag);
@@ -247,7 +249,6 @@ namespace CodeThorn {
     // TODO: move to flow analyzer (reports label,init,final sets)
     static std::string astNodeInfoAttributeAndNodeToString(SgNode* node);
 
-    // public member variables
     SgNode* startFunRoot;
     PropertyValueTable reachabilityResults;
     boost::unordered_map <std::string,int*> mapGlobalVarAddress;
@@ -286,10 +287,24 @@ namespace CodeThorn {
     // first: list of new states (worklist), second: set of found existing states
     typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
     SubSolverResultType subSolver(const EState* currentEStatePtr);
+    std::string typeSizeMappingToString();
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
 
+    void recordAnalyzedFunction(SgFunctionDefinition* funDef);
+    std::string analyzedFunctionsToString();
+    std::string analyzedFilesToString();
+    void recordExternalFunctionCall(SgFunctionCallExp* funCall);
+    std::string externalFunctionsToString();
+    void setOptions(CodeThornOptions options);
+    CodeThornOptions& getOptionsRef();
+    void setLtlOptions(LTLOptions ltlOptions);
+    LTLOptions& getLtlOptionsRef();
   protected:
+    // this function is protected to ensure it is not used from outside. It is supposed to be used
+    // only for internal timing managing the max-time option resource.
+    long analysisRunTimeInSeconds();
+
     static Sawyer::Message::Facility logger;
     void printStatusMessage(string s, bool newLineFlag);
 
@@ -389,9 +404,10 @@ namespace CodeThorn {
     std::list<int> _inputSequence;
     std::list<int>::iterator _inputSequenceIterator;
     ExprAnalyzer exprAnalyzer;
-    VariableIdMapping variableIdMapping;
+    VariableIdMappingExtended* variableIdMapping;
     FunctionIdMapping functionIdMapping;
     FunctionCallMapping functionCallMapping;
+    FunctionCallMapping2 functionCallMapping2;
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
     EStateWorkList* estateWorkListCurrent;
     EStateWorkList* estateWorkListNext;
@@ -420,13 +436,13 @@ namespace CodeThorn {
     long int _maxSecondsForcedTop;
 
     VariableValueMonitor variableValueMonitor;
-
+    CodeThornOptions _ctOpt;
+    LTLOptions _ltlOpt;
     bool _treatStdErrLikeFailedAssert;
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
     bool _topifyModeActive;
     int _abstractionMode=0; // 0=no abstraction, >=1: different abstraction modes.
-    bool _explicitArrays;
 
     int _iterations;
     int _approximated_iterations;
@@ -454,11 +470,16 @@ namespace CodeThorn {
     // to represent multiple summary states in the transition system)
     size_t getSummaryStateMapSize();
     const EState* getBottomSummaryState(Label lab, CallString cs);
+    bool isLTLRelevantEState(const EState* estate);
 
     size_t _prevStateSetSizeDisplay = 0;
     size_t _prevStateSetSizeResource = 0;
-    bool isLTLRelevantEState(const EState* estate);
 
+    typedef std::unordered_set<SgFunctionDefinition*> AnalyzedFunctionsContainerType;
+    AnalyzedFunctionsContainerType analyzedFunctions;
+    typedef std::unordered_set<SgFunctionCallExp*> ExternalFunctionsContainerType;
+    ExternalFunctionsContainerType externalFunctions;
+    //xxx
   private:
     //std::unordered_map<int,const EState*> _summaryStateMap;
     std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;

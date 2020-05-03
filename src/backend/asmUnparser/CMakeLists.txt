@@ -1,25 +1,20 @@
-if (enable-binary-analysis)
-    add_library(roseAsmUnparser OBJECT
-        AsmUnparser.C
-        AsmUnparser_compat.C
-        AsmFunctionIndex.C
-	BinaryEdgeArrows.C
-	BinarySerialIo.C
-        BinaryUnparserArm.C
-        BinaryUnparserBase.C
-        BinaryUnparserM68k.C
-        BinaryUnparserMips.C
-        BinaryUnparserPowerpc.C
-        BinaryUnparserX86.C
-        unparseArmAsm.C
-        unparseM68kAsm.C
-        unparseMipsAsm.C
-        unparsePowerpcAsm.C
-        unparseX86Asm.C)
-else()
-    add_library(roseAsmUnparser OBJECT
-        dummyAsmUnparser.C)
-endif()
+add_library(roseAsmUnparser OBJECT
+  AsmUnparser.C
+  AsmUnparser_compat.C
+  AsmFunctionIndex.C
+  BinaryEdgeArrows.C
+  BinarySerialIo.C
+  BinaryUnparserArm.C
+  BinaryUnparserBase.C
+  BinaryUnparserM68k.C
+  BinaryUnparserMips.C
+  BinaryUnparserPowerpc.C
+  BinaryUnparserX86.C
+  unparseArmAsm.C
+  unparseM68kAsm.C
+  unparseMipsAsm.C
+  unparsePowerpcAsm.C
+  unparseX86Asm.C)
 
 add_dependencies(roseAsmUnparser rosetta_generated)
 

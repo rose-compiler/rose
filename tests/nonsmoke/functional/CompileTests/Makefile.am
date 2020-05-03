@@ -78,39 +78,21 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 # SUBDIRS += OpenMP_tests FailSafe_tests
 # endif
 
-# DQ (2/19/2017): Added the more complex logic to control this for different compilers, and versions of EDG.
-if ROSE_USE_EDG_VERSION_4_9
+
 if USING_GNU_COMPILER
-SUBDIRS += OpenMP_tests FailSafe_tests
+SUBDIRS += OpenMP_tests OpenACC_tests FailSafe_tests
 else # NOT USING_GNU_COMPILER
 if USING_CLANG_COMPILER
 # Exclude this list of files in the case of CLANG compiler.
 else # NOT USING_CLANG_COMPILER
 if USING_INTEL_COMPILER
 # Exclude this list of files in the case of Intel compiler.
-else # NOT USING_INTEL_COMPILER
-# This is an unknown compiler.
-# DQ (2/27/2017): If this is really an unknown compile then don't do any testing (until we understand this case).
-# SUBDIRS += OpenMP_tests FailSafe_tests
-endif # USING_INTEL_COMPILER
-endif # USING_CLANG_COMPILER
-endif # USING_GNU_COMPILER
-else # NOT ROSE_USE_EDG_VERSION_4_9
-if USING_GNU_COMPILER
-SUBDIRS += OpenMP_tests FailSafe_tests
-else # NOT USING_GNU_COMPILER
-if USING_CLANG_COMPILER
-# Exclude this list of files in the case of CLANG compiler.
-else # NOT USING_CLANG_COMPILER
-if USING_INTEL_COMPILER
-# Exclude this list of files in the case of Intel compiler.
-SUBDIRS += OpenMP_tests FailSafe_tests
+SUBDIRS += OpenMP_tests OpenACC_tests FailSafe_tests
 else # NOT USING_INTEL_COMPILER
 # This is an unknown compiler.
 endif # USING_INTEL_COMPILER
 endif # USING_CLANG_COMPILER
 endif # USING_GNU_COMPILER
-endif # ROSE_USE_EDG_VERSION_4_9
 
 if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 if !ROSE_USE_SANITIZER

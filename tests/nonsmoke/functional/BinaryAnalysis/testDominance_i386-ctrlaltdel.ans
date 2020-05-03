@@ -3,29 +3,29 @@ CFG dominators for function 0x080483cc:
   function 0x080483cc dominator of 0x080483cc<1> is none
   function 0x080483cc dominator of 0x080483e1<2> is 0x080483dc<3>
   function 0x080483cc dominator of 0x080483dc<3> is 0x080483d7<0>
-CFG dominators for function 0x080483e4 "DYNAMIC_LINKER_TRAMPOLINE":
+CFG dominators for function 0x080483e4:
   function 0x080483e4 dominator of 0x080483e4<0> is none
-CFG dominators for function 0x080483f4 "perror@plt":
+CFG dominators for function 0x080483f4:
   function 0x080483f4 dominator of 0x080483f4<0> is none
-CFG dominators for function 0x08048404 "fprintf@plt":
+CFG dominators for function 0x08048404:
   function 0x08048404 dominator of 0x08048404<0> is none
-CFG dominators for function 0x08048414 "dcgettext@plt":
+CFG dominators for function 0x08048414:
   function 0x08048414 dominator of 0x08048414<0> is none
-CFG dominators for function 0x08048424 "setlocale@plt":
+CFG dominators for function 0x08048424:
   function 0x08048424 dominator of 0x08048424<0> is none
-CFG dominators for function 0x08048434 "reboot@plt":
+CFG dominators for function 0x08048434:
   function 0x08048434 dominator of 0x08048434<0> is none
-CFG dominators for function 0x08048444 "bindtextdomain@plt":
+CFG dominators for function 0x08048444:
   function 0x08048444 dominator of 0x08048444<0> is none
-CFG dominators for function 0x08048454 "__libc_start_main@plt":
+CFG dominators for function 0x08048454:
   function 0x08048454 dominator of 0x08048454<0> is none
-CFG dominators for function 0x08048464 "textdomain@plt":
+CFG dominators for function 0x08048464:
   function 0x08048464 dominator of 0x08048464<0> is none
-CFG dominators for function 0x08048474 "exit@plt":
+CFG dominators for function 0x08048474:
   function 0x08048474 dominator of 0x08048474<0> is none
-CFG dominators for function 0x08048484 "geteuid@plt":
+CFG dominators for function 0x08048484:
   function 0x08048484 dominator of 0x08048484<0> is none
-CFG dominators for function 0x080484a0 "_start":
+CFG dominators for function 0x080484a0:
   function 0x080484a0 dominator of 0x080484c1<0> is 0x080484a0<1>
   function 0x080484a0 dominator of 0x080484a0<1> is none
 CFG dominators for function 0x080484c4:
@@ -46,7 +46,7 @@ CFG dominators for function 0x0804851c:
   function 0x0804851c dominator of 0x08048534<2> is 0x0804852b<0>
   function 0x0804851c dominator of 0x08048544<3> is 0x0804851c<1>
   function 0x0804851c dominator of 0x0804853e<4> is 0x08048534<2>
-CFG dominators for function 0x08048550 "main":
+CFG dominators for function 0x08048550:
   function 0x08048550 dominator of 0x080485a0<0> is 0x08048598<19>
   function 0x08048550 dominator of 0x0804862e<1> is 0x08048598<19>
   function 0x08048550 dominator of 0x080485a6<2> is 0x080485a0<0>

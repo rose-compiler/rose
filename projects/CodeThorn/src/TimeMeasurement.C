@@ -13,8 +13,17 @@ TimeDuration TimeDuration::operator+(const TimeDuration &other) {
   return TimeDuration(_timeDuration+other._timeDuration);
 }
 
+TimeDuration TimeDuration::operator-(const TimeDuration &other) {
+  return TimeDuration(_timeDuration-other._timeDuration);
+}
+
 TimeDuration& TimeDuration::operator+=(const TimeDuration& rhs){
       this->_timeDuration += rhs._timeDuration;
+      return *this;
+}
+
+TimeDuration& TimeDuration::operator-=(const TimeDuration& rhs){
+      this->_timeDuration -= rhs._timeDuration;
       return *this;
 }
 
@@ -49,9 +58,7 @@ std::string TimeDuration::longTimeString() {
 }
 
 TimeMeasurement::TimeMeasurement():
-  state(TIME_STOPPED),
-  startTimeInMicroSeconds(0.0),
-  endTimeInMicroSeconds(0.0)
+  state(TIME_STOPPED)
 {
     startCount.tv_sec = startCount.tv_usec = 0;
     endCount.tv_sec = endCount.tv_usec = 0;
@@ -59,7 +66,7 @@ TimeMeasurement::TimeMeasurement():
 
 void TimeMeasurement::start() {
   if(state==TIME_RUNNING) {
-    throw std::runtime_error("Internal error 1: start(): TimeMeasurement already running (state: RUNNING).");
+    throw std::runtime_error("Time Measurement: error 1: start(): TimeMeasurement already running (state: RUNNING).");
   } else {
     state=TIME_RUNNING;
     gettimeofday(&startCount, 0);
@@ -68,21 +75,44 @@ void TimeMeasurement::start() {
 
 void TimeMeasurement::stop() {
   if(state==TIME_STOPPED) {
-    throw std::runtime_error("Internal error 2: stop(): TimeMeasurement already stopped (state: STOPPED).");
+    throw std::runtime_error("Time Measurement: error 2: stop(): TimeMeasurement already stopped (state: STOPPED).");
   } else {
     gettimeofday(&endCount, NULL);
     state=TIME_STOPPED;
   }  
 } 
 
+void TimeMeasurement::resume() {
+  if(state==TIME_RUNNING) {
+    throw std::runtime_error("Time Measurement: error 6: resume(): TimeMeasurement not stopped (state: RUNNING).");
+  } else {
+    state=TIME_RUNNING;
+  }  
+} 
+
 TimeDuration TimeMeasurement::getTimeDuration() {
   if(state==TIME_RUNNING) {
-    //throw std::runtime_error("Internal error 3: getTimeDuration(): TimeMeasurement in wrong state (RUNNING).");
-    stop();
+    throw std::runtime_error("Time Measurement: error 3: : getTimeDuration: TimeMeasurement not stopped (state: RUNNING).");
   }
   TimeDuration td=TimeDuration((endCount.tv_sec-startCount.tv_sec)*1000000.0+(endCount.tv_usec-startCount.tv_usec));
-  if(state==TIME_RUNNING) {
-    start();
+  return td;
+}
+
+TimeDuration TimeMeasurement::getTimeDurationAndKeepRunning() {
+  if(state==TIME_STOPPED) {
+    throw std::runtime_error("Time Measurement: error 4: : getTimeDurationAndKeepRunning: TimeMeasurement already stopped, cannot keep it running (state: STOPPED).");
   }
+  stop();
+  TimeDuration td=TimeDuration((endCount.tv_sec-startCount.tv_sec)*1000000.0+(endCount.tv_usec-startCount.tv_usec));
+  resume();
+  return td;
+}
+
+TimeDuration TimeMeasurement::getTimeDurationAndStop() {
+  if(state==TIME_STOPPED) {
+    throw std::runtime_error("Time Measurement: error 5: : getTimeDurationAndStop: TimeMeasurement already stopped, cannot stop again (state: STOPPED).");
+  }
+  stop();
+  TimeDuration td=TimeDuration((endCount.tv_sec-startCount.tv_sec)*1000000.0+(endCount.tv_usec-startCount.tv_usec));
   return td;
 }

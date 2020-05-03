@@ -1,30 +1,30 @@
 CFG dominators for function 0x00000000:
   function 0x00000000 dominator of 0x00000000<0,X> is none
-CFG dominators for function 0x080482c8 "_init":
+CFG dominators for function 0x080482c8:
   function 0x080482c8 dominator of 0x080482dd<0> is 0x080482d8<1>
   function 0x080482c8 dominator of 0x080482d8<1> is 0x080482d3<3>
   function 0x080482c8 dominator of 0x080482c8<2> is none
   function 0x080482c8 dominator of 0x080482d3<3> is 0x080482c8<2>
-CFG dominators for function 0x080482e0 "DYNAMIC_LINKER_TRAMPOLINE":
+CFG dominators for function 0x080482e0:
   function 0x080482e0 dominator of 0x080482e0<0> is none
-CFG dominators for function 0x080482f0 "signal@plt":
+CFG dominators for function 0x080482f0:
   function 0x080482f0 dominator of 0x080482f0<0> is none
-CFG dominators for function 0x08048300 "puts@plt":
+CFG dominators for function 0x08048300:
   function 0x08048300 dominator of 0x08048300<0> is none
-CFG dominators for function 0x08048310 "__libc_start_main@plt":
+CFG dominators for function 0x08048310:
   function 0x08048310 dominator of 0x08048310<0> is none
-CFG dominators for function 0x08048320 "_exit@plt":
+CFG dominators for function 0x08048320:
   function 0x08048320 dominator of 0x08048320<0> is none
-CFG dominators for function 0x08048330 "__gmon_start__@plt":
+CFG dominators for function 0x08048330:
   function 0x08048330 dominator of 0x08048330<0> is none
-CFG dominators for function 0x08048340 "_start":
+CFG dominators for function 0x08048340:
   function 0x08048340 dominator of 0x08048361<0> is 0x08048340<1>
   function 0x08048340 dominator of 0x08048340<1> is none
-CFG dominators for function 0x08048364 "call_gmon_start":
+CFG dominators for function 0x08048364:
   function 0x08048364 dominator of 0x0804837f<0> is 0x08048364<2>
   function 0x08048364 dominator of 0x08048384<1> is 0x08048364<2>
   function 0x08048364 dominator of 0x08048364<2> is none
-CFG dominators for function 0x08048390 "__do_global_dtors_aux":
+CFG dominators for function 0x08048390:
   function 0x08048390 dominator of 0x080483cc<0> is 0x08048390<6>
   function 0x08048390 dominator of 0x0804839f<1> is 0x08048390<6>
   function 0x08048390 dominator of 0x080483b0<2> is 0x080483aa<5>
@@ -32,25 +32,25 @@ CFG dominators for function 0x08048390 "__do_global_dtors_aux":
   function 0x08048390 dominator of 0x080483c5<4> is 0x0804839f<1>
   function 0x08048390 dominator of 0x080483aa<5> is 0x0804839f<1>
   function 0x08048390 dominator of 0x08048390<6> is none
-CFG dominators for function 0x080483d0 "frame_dummy":
+CFG dominators for function 0x080483d0:
   function 0x080483d0 dominator of 0x080483df<0> is 0x080483d0<3>
   function 0x080483d0 dominator of 0x080483f4<1> is 0x080483e8<4>
   function 0x080483d0 dominator of 0x08048400<2> is 0x080483d0<3>
   function 0x080483d0 dominator of 0x080483d0<3> is none
   function 0x080483d0 dominator of 0x080483e8<4> is 0x080483df<0>
-CFG dominators for function 0x08048410 "main":
+CFG dominators for function 0x08048410:
   function 0x08048410 dominator of 0x08048410<0> is none
   function 0x08048410 dominator of 0x0804842e<1> is 0x08048410<0>
-CFG dominators for function 0x08048440 "bar":
+CFG dominators for function 0x08048440:
   function 0x08048440 dominator of 0x08048452<0> is 0x08048440<1>
   function 0x08048440 dominator of 0x08048440<1> is none
-CFG dominators for function 0x08048460 "foo":
+CFG dominators for function 0x08048460:
   function 0x08048460 dominator of 0x08048460<0> is none
   function 0x08048460 dominator of 0x08048472<1> is 0x08048460<0>
-CFG dominators for function 0x08048480 "handler":
+CFG dominators for function 0x08048480:
   function 0x08048480 dominator of 0x08048480<0> is none
   function 0x08048480 dominator of 0x08048498<1> is 0x08048480<0>
-CFG dominators for function 0x080484b0 "__libc_csu_init":
+CFG dominators for function 0x080484b0:
   function 0x080484b0 dominator of 0x080484e8<0> is none
   function 0x080484b0 dominator of 0x08048502<1> is 0x08048500<4>
   function 0x080484b0 dominator of 0x080484e0<2> is 0x080484ca<5>
@@ -59,19 +59,19 @@ CFG dominators for function 0x080484b0 "__libc_csu_init":
   function 0x080484b0 dominator of 0x080484ca<5> is 0x080484b0<6>
   function 0x080484b0 dominator of 0x080484b0<6> is none
   function 0x080484b0 dominator of 0x080484f0<7> is 0x080484ca<5>
-CFG dominators for function 0x08048520 "__libc_csu_fini":
+CFG dominators for function 0x08048520:
   function 0x08048520 dominator of 0x08048562<0> is 0x08048560<5>
   function 0x08048520 dominator of 0x08048570<1> is 0x0804856b<3>
   function 0x08048520 dominator of 0x0804854f<2> is 0x08048520<4>
   function 0x08048520 dominator of 0x0804856b<3> is 0x08048520<4>
   function 0x08048520 dominator of 0x08048520<4> is none
   function 0x08048520 dominator of 0x08048560<5> is 0x0804854f<2>
-CFG dominators for function 0x08048580 "__do_global_ctors_aux":
+CFG dominators for function 0x08048580:
   function 0x08048580 dominator of 0x08048596<0> is 0x08048580<3>
   function 0x08048580 dominator of 0x080485a0<1> is 0x08048596<0>
   function 0x08048580 dominator of 0x080485a5<2> is 0x080485a0<1>
   function 0x08048580 dominator of 0x08048580<3> is none
   function 0x08048580 dominator of 0x080485ac<4> is 0x08048580<3>
-CFG dominators for function 0x080485b0 "_fini":
+CFG dominators for function 0x080485b0:
   function 0x080485b0 dominator of 0x080485b0<0> is none
   function 0x080485b0 dominator of 0x080485c6<1> is 0x080485b0<0>

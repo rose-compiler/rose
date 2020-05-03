@@ -128,11 +128,22 @@ else
 
 all-am: EDG/libroseEDG.la
 
+EDG_HELP_URL="https://github.com/rose-compiler/rose/wiki/EDG-Installation-Instructions"
+
 #(see above): .PHONY: check-network
 check-network:
+	@if ! wget -q --spider -t 3 --wait=1 google.com ; then						\
+	    echo "Unable to ping google.com" >&2;							\
+	    echo "ROSE requires an internet connection to download EDG binary" >&2;			\
+	    echo "For more information on EDG binaries visit" >&2;			\
+	    echo "$(EDG_HELP_URL)" >&2;	\
+	    exit 1;											\
+	fi
 	@if ! wget -q --spider -t 3 --wait=1 $(ROSE_WEB_SERVER); then					\
-	    echo "ROSE web server $(ROSE_WEB_SERVER) is not currently reachable (try again later)";	\
+	    echo "ROSE web server $(ROSE_WEB_SERVER) is not currently reachable" >&2;			\
 	    echo "$(CONTACT_INFO)" >&2;									\
+	    echo "For more information on EDG binaries visit" >&2;			\
+	    echo "$(EDG_HELP_URL)" >&2;	\
 	    exit 1;											\
 	fi
 
@@ -143,20 +154,23 @@ network_checking: check-network
 # but others will need to go to a Web server.  We use wget rather than curl because curl was sometimes placing error
 # messages inside the tarball. Don't use $(EDGBIN_NAME) in the target or dependencies because it hasn't been computed
 # yet when make parses that part of this rule; it's okay to use it in the commands though.
-EDG.tar.gz: $(EDGBIN_SIGNATURE_FILE)
+EDG.tar.gz: $(EDGBIN_SIGNATURE_FILE) 
 	@if [ "$(EDGBIN_SIGNATURE)" = "" ]; then							\
 	    echo "error: empty EDG binary compatibility signature in $(EDGBIN_SIGNATURE_FILE)." >&2;	\
 	    echo "$(CONTACT_INFO)" >&2;									\
 	    exit 1;											\
 	fi
-
+	
 	@if [ -r "$(EDGBIN_NAME).tar.gz" ]; then								\
 	    echo "EDG binary tarball appears to have been downloaded already: $(EDGBIN_NAME).tar.gz";		\
 	else													\
 	    $(MAKE) check-network || exit 1;									\
 	    echo "Downloading EDG binary tarball: $(EDGBIN_NAME).tar.gz";					\
 	    if ! wget -q --spider -t 3 --wait=1 $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_NAME).tar.gz; then		\
-	        echo "error: the EDG binary tarball is not available (or the web site is not reachable)." >&2;	\
+	        echo "The needed EDG binary is unavailable." >&2;						\ 
+	        echo "This is likely because there is not a binary distributed for your current compiler." >&2;	\ 
+	        echo "For more information on EDG binaries visit" >&2;						\
+	        echo "$(EDG_HELP_URL)" >&2;									\
 	        echo "$(CONTACT_INFO)" >&2;									\
 	        exit 1;												\
 	    fi;													\

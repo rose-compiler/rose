@@ -15,13 +15,13 @@
 #include "Miscellaneous2.h"
 #include "CodeThornException.h"
 #include "VariableIdMapping.h"
-#include "TypeSizeMapping.h"
 
 using namespace std;
 using namespace CodeThorn;
 using namespace CodeThorn;
 
-SgTypeSizeMapping* AbstractValue::_typeSizeMapping=nullptr;
+VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
+bool AbstractValue::strictChecking=true;
 
 istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   value.fromStream(is);
@@ -33,7 +33,7 @@ istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
 AbstractValue::AbstractValue():valueType(AbstractValue::BOT),intValue(0) {}
 
 // type conversion
-// TODO: represent value 'unitialized' here
+// TODO: represent value 'undefined' here
 AbstractValue::AbstractValue(VariableId varId):valueType(AbstractValue::PTR),variableId(varId),intValue(0) {
 }
 
@@ -48,22 +48,13 @@ AbstractValue::AbstractValue(bool val) {
   }
 }
 
-void AbstractValue::setTypeSizeMapping(SgTypeSizeMapping* typeSizeMapping) {
-#if 0
-  if(AbstractValue::_typeSizeMapping!=nullptr) {
-    delete _typeSizeMapping;
-  }
-#endif
-  AbstractValue::_typeSizeMapping=typeSizeMapping;
-}
-
-SgTypeSizeMapping* AbstractValue::getTypeSizeMapping() {
-  return  _typeSizeMapping;
+void AbstractValue::setVariableIdMapping(VariableIdMappingExtended* varIdMapping) {
+  AbstractValue::_variableIdMapping=varIdMapping;
 }
 
 AbstractValue::TypeSize AbstractValue::calculateTypeSize(CodeThorn::BuiltInType btype) {
-  ROSE_ASSERT(AbstractValue::_typeSizeMapping);
-  return AbstractValue::_typeSizeMapping->getTypeSize(btype);
+  ROSE_ASSERT(AbstractValue::_variableIdMapping);
+  return AbstractValue::_variableIdMapping->getTypeSize(btype);
 }
 
 void AbstractValue::setValue(long long int val) {
@@ -97,9 +88,9 @@ void AbstractValue::initFloat(CodeThorn::BuiltInType btype, long double fval) {
 }
 
 // type conversion
-AbstractValue::AbstractValue(Top e) {valueType=AbstractValue::TOP;intValue=0;}
+AbstractValue::AbstractValue(Top e) {valueType=AbstractValue::TOP;intValue=0;} // intValue=0 superfluous
 // type conversion
-AbstractValue::AbstractValue(Bot e) {valueType=AbstractValue::BOT;intValue=0;}
+AbstractValue::AbstractValue(Bot e) {valueType=AbstractValue::BOT;intValue=0;} // intValue=0 superfluous
 
 AbstractValue::AbstractValue(unsigned char x) {
   initInteger(BITYPE_UCHAR,x);
@@ -179,6 +170,7 @@ AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId
 std::string AbstractValue::valueTypeToString() const {
   switch(valueType) {
   case TOP: return "top";
+  case UNDEFINED: return "undefined";
   case INTEGER: return "constint";
   case FLOAT: return "float";
   case PTR: return "ptr";
@@ -191,27 +183,31 @@ std::string AbstractValue::valueTypeToString() const {
 
 // currently maps to isTop(); in preparation for explicit handling of
 // undefined values.
-bool AbstractValue::isUndefined() const {return isTop();}
-
-bool AbstractValue::isTop() const {return valueType==AbstractValue::TOP;}
+bool AbstractValue::isUndefined() const {return valueType==AbstractValue::UNDEFINED;}
+bool AbstractValue::isTop() const {return valueType==AbstractValue::TOP||isUndefined();}
 bool AbstractValue::isTrue() const {return valueType==AbstractValue::INTEGER && intValue!=0;}
 bool AbstractValue::isFalse() const {return valueType==AbstractValue::INTEGER && intValue==0;}
 bool AbstractValue::isBot() const {return valueType==AbstractValue::BOT;}
 bool AbstractValue::isConstInt() const {return valueType==AbstractValue::INTEGER;}
 bool AbstractValue::isConstPtr() const {return (valueType==AbstractValue::PTR);}
 bool AbstractValue::isPtr() const {return (valueType==AbstractValue::PTR);}
+bool AbstractValue::isRef() const {return (valueType==AbstractValue::REF);}
 bool AbstractValue::isNullPtr() const {return valueType==AbstractValue::INTEGER && intValue==0;}
 
 long AbstractValue::hash() const {
   if(isTop()) return LONG_MAX;
   else if(isBot()) return LONG_MIN;
   else if(isConstInt()) return getIntValue();
-  else if(isPtr()) {
+  else if(isPtr()||isRef()) {
     VariableId varId=getVariableId();
     ROSE_ASSERT(varId.isValid());
     return varId.getIdCode()+getIntValue();
   }
-  else throw CodeThorn::Exception("Error: AbstractValue hash: unknown value.");
+  else {
+    if(strictChecking)
+      throw CodeThorn::Exception("Error: AbstractValue hash: unknown value.");
+    return LONG_MAX<<1;
+  }
 }
 
 AbstractValue AbstractValue::operatorNot() {
@@ -227,8 +223,11 @@ AbstractValue AbstractValue::operatorNot() {
     break;
   case AbstractValue::TOP: tmp=Top();break;
   case AbstractValue::BOT: tmp=Bot();break;
+  case AbstractValue::UNDEFINED: tmp=*this;break;
   default:
-    throw CodeThorn::Exception("Error: AbstractValue operation '!' failed.");
+    // other cases should not appear because there must be a proper cast
+    // TODO: logger[WARN]<<"AbstractValue::operatorNot: unhandled abstract value "<<tmp.toString()<<". Assuming any value as result."<<endl;
+    tmp=Top();
   }
   return tmp;
 }
@@ -303,7 +302,7 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
         if(c1.getIntValue()!=c2.getIntValue()) {
           return c1.getIntValue()<c2.getIntValue();
         } else {
-          return c1.getValueSize()<c2.getValueSize();
+          return c1.getTypeSize()<c2.getTypeSize();
         }
       }
     } else if (c1.isBot()==c2.isBot()) {
@@ -319,9 +318,9 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
 bool CodeThorn::strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2) {
   if(c1.getValueType()==c2.getValueType()) {
     if(c1.isConstInt() && c2.isConstInt())
-      return c1.getIntValue()==c2.getIntValue() && c1.getValueSize()==c2.getValueSize();
+      return c1.getIntValue()==c2.getIntValue() && c1.getTypeSize()==c2.getTypeSize();
     else if(c1.isPtr() && c2.isPtr()) {
-      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue() && c1.getValueSize()==c2.getValueSize();
+      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue() && c1.getTypeSize()==c2.getTypeSize();
     } else {
       ROSE_ASSERT((c1.isTop()&&c2.isTop()) || (c1.isBot()&&c2.isBot()));
       return true;
@@ -364,9 +363,9 @@ AbstractValue AbstractValue::operatorEq(AbstractValue other) const {
   } else if(other.valueType==BOT) { 
     return *this;
   } else if(isPtr() && other.isPtr()) {
-    return AbstractValue(variableId==other.variableId && intValue==other.intValue && getValueSize()==other.getValueSize());
+    return AbstractValue(variableId==other.variableId && intValue==other.intValue && getTypeSize()==other.getTypeSize());
   } else if(isConstInt() && other.isConstInt()) {
-    return AbstractValue(intValue==other.intValue && getValueSize()==other.getValueSize());
+    return AbstractValue(intValue==other.intValue && getTypeSize()==other.getTypeSize());
   } else {
     return AbstractValue(Top()); // all other cases can be true or false
   }
@@ -386,7 +385,7 @@ AbstractValue AbstractValue::operatorLess(AbstractValue other) const {
   if(isPtr() && other.isPtr()) {
     // check is same memory region
     if(variableId==other.variableId) {
-      return AbstractValue(intValue<other.intValue && getValueSize()==other.getValueSize());
+      return AbstractValue(intValue<other.intValue && getTypeSize()==other.getTypeSize());
     } else {
       // incompatible pointer comparison (can be true or false)
       return AbstractValue::createTop();
@@ -498,6 +497,7 @@ string AbstractValue::toLhsString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
+  case UNDEFINED: return "undefined";
   case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
@@ -513,7 +513,11 @@ string AbstractValue::toLhsString(CodeThorn::VariableIdMapping* vim) const {
     return ss.str();
   }
   default:
-    throw CodeThorn::Exception("Error: AbstractValue::toLhsString operation failed. Unknown abstraction type.");
+    if(strictChecking) {
+      throw CodeThorn::Exception("Error: AbstractValue::toLhsString operation failed. Unknown abstraction type.");
+    } else {
+      return "<<ERROR>>";
+    }
   }
 }
 
@@ -521,6 +525,7 @@ string AbstractValue::toRhsString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
+  case UNDEFINED: return "undefined";
   case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
@@ -537,7 +542,11 @@ string AbstractValue::toRhsString(CodeThorn::VariableIdMapping* vim) const {
     return ss.str();
   }
   default:
-    throw CodeThorn::Exception("Error: AbstractValue::toRhsString operation failed. Unknown abstraction type.");
+    if(strictChecking) {
+      throw CodeThorn::Exception("Error: AbstractValue::toRhsString operation failed. Unknown abstraction type.");
+    } else {
+      return "<<ERROR>>";
+    }
   }
 }
 
@@ -549,7 +558,11 @@ string AbstractValue::arrayVariableNameToString(CodeThorn::VariableIdMapping* vi
     return ss.str();
   }
   default:
-    throw CodeThorn::Exception("Error: AbstractValue::arrayVariableNameToString operation failed. Unknown abstraction type.");
+    if(strictChecking) {
+      throw CodeThorn::Exception("Error: AbstractValue::arrayVariableNameToString operation failed. Unknown abstraction type.");
+    } else {
+      return "<<ERROR>>";
+    }
   }
 }
 
@@ -557,6 +570,7 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
+  case UNDEFINED: return "undefined";
   case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
@@ -579,7 +593,11 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
       //    }
   }
   default:
-    throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
+    if(strictChecking) {
+      throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
+    } else {
+      return "<<ERROR>>";
+    }
   }
 }
 
@@ -587,6 +605,7 @@ string AbstractValue::toString() const {
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";
+  case UNDEFINED: return "undefined";
   case INTEGER: {
     stringstream ss;
     ss<<getIntValue();
@@ -601,7 +620,11 @@ string AbstractValue::toString() const {
     return ss.str();
   }
   default:
-    throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
+    if(strictChecking) {
+      throw CodeThorn::Exception("Error: AbstractValue::toString operation failed. Unknown abstraction type.");
+    } else {
+      return "<<ERROR>>";
+    }
   }
 }
 
@@ -627,11 +650,6 @@ AbstractValue::ValueType AbstractValue::getValueType() const {
 
 AbstractValue::TypeSize AbstractValue::getTypeSize() const {
   return typeSize;
-}
-
-// deprecated
-AbstractValue::TypeSize AbstractValue::getValueSize() const {
-  return getTypeSize();
 }
 
 void AbstractValue::setTypeSize(AbstractValue::TypeSize typeSize) {
@@ -693,12 +711,20 @@ AbstractValue AbstractValue::operatorUnaryMinus() {
     tmp.valueType=AbstractValue::INTEGER;
     tmp.intValue=-intValue; // unary minus
     break;
-  case AbstractValue::TOP: tmp=Top();break;
+  case AbstractValue::FLOAT: 
+    tmp.valueType=AbstractValue::FLOAT;
+    tmp.floatValue=-floatValue; // unary minus
+    break;
+  case AbstractValue::TOP:
+    tmp=Top();break;
+  case AbstractValue::UNDEFINED:
+    tmp=*this;break; // keep information that it is undefined
   case AbstractValue::BOT: tmp=Bot();break;
   case AbstractValue::PTR:
-    throw CodeThorn::Exception("Error: AbstractValue operator unary minus on pointer value.");
-  default:
-    throw CodeThorn::Exception("Error: AbstractValue operation unaryMinus failed.");
+    return topOrError("Error: AbstractValue operator unary minus on pointer value.");
+  case AbstractValue::REF:
+    return topOrError("Error: AbstractValue operator unary minus on reference value.");
+    //  default case intentionally not present to force all values to be handled explicitly
   }
   return tmp;
 }
@@ -719,11 +745,15 @@ AbstractValue AbstractValue::operatorAdd(AbstractValue& a,AbstractValue& b) {
     val.intValue+=a.intValue;
     return val;
   } else if(a.isPtr() && b.isPtr()) {
-    throw CodeThorn::Exception("Error: invalid operands of type pointer to binary ‘operator+’"+a.toString()+"+"+b.toString());
+    if(strictChecking)
+      throw CodeThorn::Exception("Error: invalid operands of type pointer to binary ‘operator+’"+a.toString()+"+"+b.toString());
+    return createTop();
   } else if(a.isConstInt() && b.isConstInt()) {
     return a.getIntValue()+b.getIntValue();
   } else {
-    throw CodeThorn::Exception("Error: undefined behavior in '+' operation.");
+    if(strictChecking)
+      throw CodeThorn::Exception("Error: undefined behavior in '+' operation: "+a.toString()+","+b.toString());
+    return createTop();
   }
 }
 AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
@@ -748,13 +778,26 @@ AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
     val.intValue-=b.intValue;
     return val;
   } else if(a.isConstInt() && b.isPtr()) {
-    throw CodeThorn::Exception("Error: forbidden operation in '-' operation. Attempt to subtract pointer from integer.");
+    if(strictChecking)
+      throw CodeThorn::Exception("Error: forbidden operation in '-' operation. Attempt to subtract pointer from integer.");
+    return createTop();
   } else if(a.isConstInt() && b.isConstInt()) {
     return a.getIntValue()-b.getIntValue();
   } else {
-    throw CodeThorn::Exception("Error: undefined behavior in '-' operation.");
+    if(strictChecking)
+      throw CodeThorn::Exception("Error: undefined behavior in binary '-' operation.");
+    return createTop();
   }
 }
+
+AbstractValue AbstractValue::topOrError(std::string errorMsg) const {
+  if(strictChecking) {
+    throw CodeThorn::Exception(errorMsg);
+  } else {
+    return createTop();
+  }
+}
+
 AbstractValue AbstractValue::operatorMul(AbstractValue& a,AbstractValue& b) {
   if(a.isTop() || b.isTop())
     return Top();
@@ -795,6 +838,10 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
   if(val1.isBot()||val2.isTop()) {
     // bot <= x, x <= top
     return true;
+  } else if(val1.isTop() && val2.isTop()) {
+    // this case is necessary because TOP and UNDEFINED need to be treated the same
+    // and isTop also includes isUndefined (in its definition).
+    return true;
   } else if(val1.valueType==val2.valueType) {
     switch(val1.valueType) {
     case BOT: return true;
@@ -802,7 +849,11 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
     case FLOAT: return (val1.floatValue==val2.floatValue);
     case PTR: return (val1.getVariableId()==val2.getVariableId());
     case REF: return (val1.getVariableId()==val2.getVariableId());
-    case TOP: return true;
+    case TOP:
+    case UNDEFINED:
+      // special cases of above if-conditions
+      // TODO: enfore non-reachable here
+      return true;
     }
   }
   return false;
@@ -810,8 +861,15 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
 
 // static function, two arguments
 AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
-  if(val1.isTop()||val2.isTop()) {
-    return createTop();
+  if(val1.isUndefined()||val2.isUndefined()) {
+    // keep it undefined if at least one of the two is undefined (taint analysis)
+    // any undefined value is treated like top everywhere else
+    if(val1.isUndefined())
+      return val1;
+    else
+      return val2;
+  } else if(val1.isTop()||val2.isTop()) {
+    return createTop(); // create top when any of the two is top (all undefined-cases already handled above)
   } else if(val1.isBot()) {
     return val2;
   } else if(val2.isBot()) {
@@ -819,7 +877,8 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
   } else if(val1.valueType==val2.valueType) {
     switch(val1.valueType) {
     case BOT: return val2;
-    case TOP: return val1;
+    case TOP: return val1; // special case of above if-conds (TODO: enforce not reachable)
+    case UNDEFINED: return val1; // special case of above if-cond (TODO: enforce not reachable)
     case INTEGER: {
       if(val1.intValue==val2.intValue) {
         return val1;
@@ -850,6 +909,15 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
 AbstractValue AbstractValue::createTop() {
   CodeThorn::Top top;
   return AbstractValue(top);
+}
+AbstractValue AbstractValue::createUndefined() {
+  AbstractValue newValue;
+  newValue.valueType=AbstractValue::UNDEFINED;
+  return newValue;
+}
+AbstractValue AbstractValue::createBot() {
+  CodeThorn::Bot bot;
+  return AbstractValue(bot);
 }
 
 AbstractValue CodeThorn::operator+(AbstractValue& a,AbstractValue& b) {

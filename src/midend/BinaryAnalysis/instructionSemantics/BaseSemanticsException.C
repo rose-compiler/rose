@@ -1,3 +1,5 @@
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #include <sage3basic.h>
 #include <BaseSemanticsException.h>
 
@@ -24,3 +26,5 @@ std::ostream& operator<<(std::ostream &o, const Exception &x) {
 } // namespace
 } // namespace
 } // namespace
+
+#endif
