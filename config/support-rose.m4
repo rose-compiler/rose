@@ -1936,11 +1936,6 @@ AC_CONFIG_SUBDIRS([libltdl])
 CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
 AC_CONFIG_FILES([
 src/frontend/CxxFrontend/EDG/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.9/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.9/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.9/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.9/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.9/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_4.12/src/Makefile
@@ -2303,6 +2298,7 @@ src/roseSupport/Makefile
 src/util/Makefile
 src/util/commandlineProcessing/Makefile
 src/util/graphs/Makefile
+src/util/Sawyer/Makefile
 src/util/stringSupport/Makefile
 src/util/support/Makefile
 stamp-h
@@ -2354,6 +2350,8 @@ tests/nonsmoke/functional/CompileTests/MicrosoftWindows_Cxx_tests/Makefile
 tests/nonsmoke/functional/CompileTests/MicrosoftWindows_Java_tests/Makefile
 tests/nonsmoke/functional/CompileTests/MicrosoftWindows_tests/Makefile
 tests/nonsmoke/functional/CompileTests/OpenClTests/Makefile
+tests/nonsmoke/functional/CompileTests/OpenACC_tests/Makefile
+tests/nonsmoke/functional/CompileTests/OpenACC_tests/fortran/Makefile
 tests/nonsmoke/functional/CompileTests/OpenMP_tests/Makefile
 tests/nonsmoke/functional/CompileTests/OpenMP_tests/cvalidation/Makefile
 tests/nonsmoke/functional/CompileTests/OpenMP_tests/fortran/Makefile

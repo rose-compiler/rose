@@ -1,4 +1,4 @@
-################################################################################################ -*- cmake -*- #########
+﻿################################################################################################ -*- cmake -*- #########
 # General warnings, instructions, and style guide.
 ########################################################################################################################
 
@@ -306,6 +306,7 @@ endif()
 # Set ROSE_SHLIBPATH_VAR.  For Visual Studio, this is PATH.  Otherwise, it is just LD_LIBRARY_PATH.
 if(MSVC)
   set(ROSE_SHLIBPATH_VAR "PATH")
+  add_definitions("-D__STDC_LIMIT_MACROS")
 else()
   set(ROSE_SHLIBPATH_VAR "LD_LIBRARY_PATH")
 endif()
@@ -421,6 +422,11 @@ if(enable-jovial)
   set(ROSE_BUILD_JOVIAL_LANGUAGE_SUPPORT 1)
 endif()
 
+# The C preprocessor is enabled automatically if C, C++, or Fortran is enabled
+if(enable-c OR enable-fortran)
+  set(enable-cpp ON)
+  set(ROSE_BUILD_CPP_LANGUAGE_SUPPORT 1)
+endif()
 
 
 ########################################################################################################################
@@ -452,16 +458,12 @@ endif()
 # Check whether we have the EDG source code. Even if we have it, we might pretend (for testing) that we don't.
 option(EDG_COMPILE "Compile EDG source code if available" TRUE)
 if(EXISTS "${PROJECT_SOURCE_DIR}/src/frontend/CxxFrontend/EDG/CMakeLists.txt")
-  message(STATUS "ROBB: EDG/CMakeLists.txt is found")
   if(EDG_COMPILE)
-    message(STATUS "ROBB: EDG_COMPILE is true")
     set(have_EDG_source TRUE)
   else()
-    message(STATUS "ROBB: EDG_COMPILE is false")
     set(have_EDG_source FALSE)
   endif()
 else()
-  message(STATUS "ROBB: EDG/CMakeLists.txt is absent")
   set(have_EDG_source FALSE)
   set(EDG_COMPILE FALSE)
 endif()
@@ -1228,10 +1230,19 @@ if(enable-c)
     execute_process(
       COMMAND ${CMAKE_COMMAND} -E create_symlink
       ${CMAKE_BINARY_DIR}/include-staging ${CMAKE_BINARY_DIR}/include)
+  elseif(MSVC)
+    set(INCLUDE_LIST $ENV{INCLUDE})
+    string(REPLACE "\\" "\\\\" INCLUDE_LIST "${INCLUDE_LIST}")
+    foreach(C_include_dir ${INCLUDE_LIST})
+      string(STRIP "${C_include_dir}" C_include_dir)
+      set(C_INCLUDE_STRING "${C_INCLUDE_STRING}, \"${C_include_dir}\"")
+    endforeach()
+    set(CXX_INCLUDE_STRING "${C_INCLUDE_STRING}")
   endif()
   set(C_INCLUDE_STRING "${C_INCLUDE_STRING}}")
   set(CXX_INCLUDE_STRING "${CXX_INCLUDE_STRING}}")
-
+message("NATHAN TEST REMOVE CXX ${CXX_INCLUDE_STRING}")
+message("NATHAN TEST REMOVE C   ${C_INCLUDE_STRING}")
 else()
   set(C_INCLUDE_STRING {\"none\"})
   set(CXX_INCLUDE_STRING {\"none\"})

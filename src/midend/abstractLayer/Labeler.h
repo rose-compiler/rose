@@ -17,7 +17,7 @@
 
 namespace CodeThorn {
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2012, 2014.
  */
@@ -49,7 +49,7 @@ class Label {
 
 std::ostream& operator<<(std::ostream& os, const Label& label);
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2012.
  */
@@ -57,7 +57,7 @@ std::ostream& operator<<(std::ostream& os, const Label& label);
 // internal data structure (not used in Labeler's interface)
 class LabelProperty {
  public:
-   enum LabelType { LABEL_UNDEF=1, LABEL_OTHER=2, 
+   enum LabelType { LABEL_UNDEF=1, LABEL_OTHER=2,
                     LABEL_FUNCTIONCALL=100, LABEL_FUNCTIONCALLRETURN,
                     LABEL_FUNCTIONENTRY, LABEL_FUNCTIONEXIT,
                     LABEL_BLOCKBEGIN, LABEL_BLOCKEND,
@@ -124,7 +124,7 @@ class LabelProperty {
    bool _isExternalFunctionCallLabel;
 };
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2012.
  */
@@ -140,7 +140,7 @@ class LabelSet : public std::set<Label> {
 
 typedef std::set<LabelSet> LabelSetSet;
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2012, 2013.
  */
@@ -150,7 +150,7 @@ class Labeler {
   static Label NO_LABEL; // default initialized label (used to check for non-existing labels)
   Labeler(SgNode* start);
   static std::string labelToString(Label lab);
-  int isLabelRelevantNode(SgNode* node);
+  int numberOfAssociatedLabels(SgNode* node);
   virtual void createLabels(SgNode* node);
 
   /** Labels are numbered 0..n-1 where n is the number of labels
@@ -232,7 +232,7 @@ class IOLabeler : public Labeler {
   IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping);
   virtual bool isStdIOLabel(Label label);
   virtual bool isStdInLabel(Label label, VariableId* id=0);
-  virtual bool isStdOutLabel(Label label); 
+  virtual bool isStdOutLabel(Label label);
   virtual bool isStdOutVarLabel(Label label, VariableId* id=0);
   virtual bool isStdOutConstLabel(Label label, int* constvalue=0);
   virtual bool isStdErrLabel(Label label, VariableId* id=0);
@@ -241,6 +241,7 @@ class IOLabeler : public Labeler {
  protected:
   VariableIdMapping* _variableIdMapping;
 };
+
 
 } // end of namespace CodeThorn
 

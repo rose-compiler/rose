@@ -11,11 +11,7 @@
 
 #include "SgNodeHelper.h" //Markus's helper functions
 
-#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-   #include "buildMangledNameMap.h"
-   #include "buildReplacementMap.h"
-   #include "fixupTraversal.h"
-#endif
+#include "fixupTraversal.h"
 
 #include "sageInterface.h"
 
@@ -1232,13 +1228,16 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
                          ROSE_ASSERT(false);
 #endif
                          varRefExp->set_isModified(true);
+                         varRefExp->setTransformation();
 
+#if 0
                       // DQ (11/13/2018): Mark the statement associated with this SgVarRefExp (see test9 in UnparseHeaders_tests).
                          SgStatement* associatedStatement = getEnclosingStatement(varRefExp);
                          ROSE_ASSERT(associatedStatement != NULL);
                       // associatedStatement->set_isModified(true);
                       // associatedStatement->set_containsTransformation(true);
                          associatedStatement->setTransformation();
+#endif
                        }
                   }
 
@@ -1967,7 +1966,9 @@ SageInterface::get_name ( const SgSupport* node )
        // DQ (5/31/2007): Implemented case for SgFile
        // case V_SgFile:
           case V_SgSourceFile:
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
           case V_SgBinaryComposite:
+#endif
              {
                name = "_file_";
 
@@ -4579,16 +4580,7 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
      SgSymbolTable::hash_iterator i = this_symbolTable->get_table()->begin();
 
   // This is used to fixup the AST by resetting references to IR nodes (leveraged from AST merge).
-     int replacementHashTableSize = 1001;
-// CH (4/9/2010): Use boost::unordered instead
-//#ifdef _MSCx_VER
-#if 0
-//#pragma message ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC.")
-     printf ("WARNING: in MSCV, hash_map constructor taking integer is not availalbe in MSVC. \n");
-     ReplacementMapTraversal::ReplacementMapType replacementMap;
-#else
-     ReplacementMapTraversal::ReplacementMapType replacementMap(replacementHashTableSize);
-#endif
+     std::map<SgNode*, SgNode*> replacementMap;
      int counter = 0;
      while (i != this_symbolTable->get_table()->end())
         {
@@ -4653,18 +4645,12 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
           i++;
         }
 
-     set<SgNode*>  intermediateDeleteSet;
-
 #if 0
-     printf ("Output the replacementMap: \n");
-  // printf ("replacementMap.size() = %" PRIuPTR " \n",replacementMap.size());
-     ReplacementMapTraversal::displayReplacementMap(replacementMap);
-
      printf ("\n\n************************************************************\n");
      printf ("fixupReferencesToSymbols(this_scope = %p copy_scope = %p = %s = %s): calling fixupSubtreeTraversal() \n",this_scope,copy_scope,copy_scope->class_name().c_str(),get_name(copy_scope).c_str());
 #endif
 
-     fixupSubtreeTraversal(copy_scope,replacementMap,intermediateDeleteSet);
+     Rose::AST::fixupSubtreeTraversal(copy_scope,replacementMap);
 
 #if 0
      printf ("fixupReferencesToSymbols(): calling fixupSubtreeTraversal(): DONE \n");
@@ -4718,7 +4704,9 @@ SageInterface::generateFileList()
   // traverse just the SgFile nodes (both the SgSourceFile and SgBinaryComposite IR nodes)!
   // SgFile::visitRepresentativeNode(fileTraversal);
      SgSourceFile::traverseMemoryPoolNodes(fileTraversal);
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      SgBinaryComposite::traverseMemoryPoolNodes(fileTraversal);
+#endif
 
   // This would alternatively traverse all IR nodes in thememory pool!
   // fileTraversal.traverseMemoryPool();
@@ -9001,6 +8989,62 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
         }
    }
 
+std::set<SgNode*> SageInterface::getFrontendSpecificNodes() {
+  struct FrontendSpecificTraversal : public ROSE_VisitTraversal {
+    std::set<SgNode*> specific;
+    std::set<SgNode*> non_specific;
+ 
+    static void recursive_collect( SgNode* node , std::set<SgNode *> & collection ) {
+      // Stop on sinks and loops
+      if (node == NULL || !collection.insert(node).second) return;
+
+      std::vector<std::pair<SgNode*, std::string> > data_members = node->returnDataMemberPointers();
+      for (std::vector<std::pair<SgNode*, std::string> >::iterator i = data_members.begin(); i != data_members.end(); ++i) {
+        recursive_collect(i->first, collection);
+      }
+    }
+
+    void visit (SgNode* n) {
+      Sg_File_Info * fileInfo = n->get_file_info();
+
+      if (fileInfo != NULL) {
+        if (fileInfo->isFrontendSpecific()) {
+          specific.insert(n);
+          recursive_collect(n, specific);
+        } else {
+          non_specific.insert(n);
+          recursive_collect(n, non_specific);
+        }
+      } else {
+        fileInfo = isSg_File_Info(n);
+        if (fileInfo != NULL) {
+          if (fileInfo->isFrontendSpecific()) {
+            specific.insert(n);
+          } else {
+            non_specific.insert(n);
+          }
+        }
+      }
+    }
+
+    std::set<SgNode*> apply() {
+      traverseMemoryPool();
+
+      std::set<SgNode*> result;
+
+      std::set_difference(
+        specific.begin(), specific.end(),
+        non_specific.begin(), non_specific.end(),
+        std::insert_iterator<set<SgNode*> >(result, result.begin())
+      );
+
+      return result;
+    }
+  };
+
+  FrontendSpecificTraversal fst;
+  return fst.apply();
+}
 
 void
 SageInterface::outputSharedNodes( SgNode* node )
@@ -16900,6 +16944,7 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
   }
 
 
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 // tps : 28 Oct 2008 - support for finding the main interpretation
 // rpm : 18 Sep 2009 - rewritten to support multiple files per interpretation
 /** Returns the "main" interpretation. "Main" is defined as the first interpretation that points to a header of the supplied
@@ -16938,6 +16983,7 @@ SageInterface::getMainInterpretation(SgAsmGenericFile *file)
     ROSE_ASSERT(!"no appropriate interpretation");
     return NULL;
 }
+#endif
 
 class CollectDependentDeclarationsCopyType : public SgCopyHelp
    {
@@ -18301,8 +18347,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
      ROSE_ASSERT(TransformationSupport::getSourceFile(decl->get_scope()) == TransformationSupport::getSourceFile(decl->get_firstNondefiningDeclaration()));
 
   // This is used to fixup the AST by resetting references to IR nodes (leveraged from AST merge).
-     int replacementHashTableSize = 1001;
-     ReplacementMapTraversal::ReplacementMapType replacementMap(replacementHashTableSize);
+     std::map<SgNode*, SgNode*> replacementMap;
 
   // DQ (3/2/2009): Now use the collectDependentDeclarationsCopyType object to generate the mapping
   // from the symbols in the old AST to the new symbols in the new AST (generated as part of the AST
@@ -18529,10 +18574,6 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
      SgSourceFile* outlinedFile = TransformationSupport::getSourceFile(scope);
      ROSE_ASSERT(outlinedFile != NULL);
 
-  // This is required because the AST merge interface records a delete list
-  // (these nodes are not deleted for the outlining support).
-     set<SgNode*>  intermediateDeleteSet;
-
   // This replacement will be done over the entire file (parts of it are redundant with what has already
   // been done by the AST copy (so this step need not do as much and may be reduced to just operating
   // on the outlined function, I think).
@@ -18541,7 +18582,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
      printf ("Calling fixupSubtreeTraversal() \n");
 #endif
 
-     fixupSubtreeTraversal(outlinedFile,replacementMap,intermediateDeleteSet);
+     Rose::AST::fixupSubtreeTraversal(outlinedFile,replacementMap);
 
 #if 0
      printf ("Calling fixupSubtreeTraversal(): DONE \n");
@@ -18549,9 +18590,6 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 
      printf ("\n\n After replacementMapTraversal(): intermediateDeleteSet: \n");
      displaySet(intermediateDeleteSet,"After fixupTraversal");
-
-     printf ("Output the replacementMap: \n");
-     ReplacementMapTraversal::displayReplacementMap(replacementMap);
 #endif
 
   // Repeated test from above
@@ -18567,27 +18605,6 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
   // ROSE_ASSERT(replacementMap.size() == dependentDeclarationList.size() + 1);
 #endif
    }
-
-
-
-#if 0
-// This function is not implemented or used, but it might be when the final code is refactored.
-
-// rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr>
-// void SageInterface::supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap )
-void
-SageInterface::supplementReplacementSymbolMap ( rose_hash::unordered_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap )
-   {
-  // Prior to the call to fixupSubtreeTraversal(), we have to build the "replacementMap".  The "replacementMap"
-  // contains the IR node address references into the old AST (what was copied) which need to be replaced in the
-  // new AST (the copy).  In general the old AST is the original file from which outlining was done and the new
-  // AST is the separate file where the outlined code has been placed with its dependent declarations.
-  // This function adds to the previously assembled "replacementMap"
-
-
-   }
-#endif
-
 
 void
 SageInterface::deleteAST ( SgNode* n )
@@ -20030,7 +20047,13 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
     SgExpression* lhs = isSgSubtractOp(current)->get_lhs_operand();
     return convertRefToInitializedName(lhs, coarseGrain);
   }
- else
+  // operator->() may be called upon a class object.
+  // e.g.  we need to get the function: it a SgDotExp node, (lhs is the class object, rhs is its member function)
+ else if (SgFunctionCallExp * func_call = isSgFunctionCallExp(current))
+ {
+    return convertRefToInitializedName(func_call->get_function(), coarseGrain); 
+ }
+  else
   {
     // side effect analysis will return rhs of  Class A a = A(); as a read ref exp. SgConstructorInitializer
     if (!isSgConstructorInitializer(current))
@@ -20350,6 +20373,15 @@ bool SageInterface::isUseByAddressVariableRef(SgVarRefExp* ref)
         SgFunctionDeclaration* funcDecl = isSgFunctionSymbol(funcRef->get_symbol())->get_declaration();
         SgInitializedNamePtrList nameList = funcDecl->get_args();
         //TODO tolerate typedef chains
+        // printf() has only two arguments to express variable arguments.
+        // The third argument index ==2 will be out of bounds for nameList[index]
+        // So we must check the bound first.
+        if (param_index>=nameList.size() ||isSgTypeEllipse(nameList[param_index]->get_type()) )
+        {
+          if (isSgReferenceType(ref))
+            result = true; 
+        }
+        else // now within the bound: two situations,  
         if (isSgReferenceType(nameList[param_index]->get_type()))
         {
           result = true;

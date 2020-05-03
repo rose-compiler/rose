@@ -22,26 +22,26 @@ using namespace Rose;
 /***************************************************
  * Get the vector of base types for the current type
  **************************************************/
- 
+
 static
 SgType*
 skipTypeAliases(SgType* ty)
 {
   ROSE_ASSERT(ty);
-  
+
   return ty->stripType( SgType::STRIP_TYPEDEF_TYPE );
-} 
+}
 
 namespace
 {
-  template <class SageNode> 
+  template <class SageNode>
   SgType* genericUnderType(SageNode* ty)
   {
     ROSE_ASSERT(ty);
-    
+
     return ty->get_base_type();
-  } 
-  
+  }
+
   SgType* getUnderType(SgType* ty)                { return NULL /* base case */; }
   SgType* getUnderType(SgModifierType* ty)        { return genericUnderType(ty); }
   SgType* getUnderType(SgPointerType* ty)         { return genericUnderType(ty); }
@@ -49,18 +49,18 @@ namespace
   SgType* getUnderType(SgRvalueReferenceType* ty) { return genericUnderType(ty); }
   SgType* getUnderType(SgArrayType* ty)           { return genericUnderType(ty); }
   SgType* getUnderType(SgTypedefType* ty)         { return genericUnderType(ty); }
-}  
-  
+}
+
 static
 std::vector<SgType*>
 get_type_vector(SgType* currentType )
 {
   std::vector<SgType*> returnVector;
-  
+
   while (true)
   {
     ROSE_ASSERT(currentType);
-    
+
     returnVector.push_back(currentType);
 
     if (SgModifierType* modType = isSgModifierType(currentType))
@@ -92,12 +92,12 @@ get_type_vector(SgType* currentType )
     }
     else {
       // \todo PP: templated types, using aliases
-      
+
       // Exit the while(true){} loop!
       break;
     }
   }
-               
+
   return returnVector;
 };
 
@@ -105,58 +105,58 @@ static
 bool is_functions_types_equal(SgFunctionType* f1, SgFunctionType* f2);
 
 
-static 
+static
 bool typeEquality(SgType*, SgType*)
 {
   return true;
 }
 
-static 
+static
 bool typeEquality(SgNamedType* type1, SgNamedType* type2)
 {
   ROSE_ASSERT(type1 && type2);
-  
+
   SgDeclarationStatement& decl1 = SG_DEREF(type1->get_declaration());
   SgDeclarationStatement& decl2 = SG_DEREF(type2->get_declaration());
-  
+
   return decl1.get_firstNondefiningDeclaration() == decl2.get_firstNondefiningDeclaration();
 }
 
-static 
+static
 bool typeEquality(SgFunctionType* type1, SgFunctionType* type2)
 {
   ROSE_ASSERT(type1 && type2);
-  
+
   return is_functions_types_equal(type1, type2);
 }
 
-static 
+static
 bool typeEquality(SgModifierType* type1, SgModifierType* type2)
 {
   ROSE_ASSERT(type1 && type2);
-  
-  bool            types_are_equal = true; 
+
+  bool            types_are_equal = true;
   SgTypeModifier& typeModifier1 = type1->get_typeModifier();
   SgTypeModifier& typeModifier2 = type1->get_typeModifier();
-  
+
   if( typeModifier1.get_modifierVector () != typeModifier2.get_modifierVector ()   )
     types_are_equal = false;
-  
+
   if( typeModifier1.get_upcModifier().get_modifier () !=
-      typeModifier2.get_upcModifier().get_modifier () 
+      typeModifier2.get_upcModifier().get_modifier ()
     )
     types_are_equal = false;
-  
+
   if( typeModifier1.get_constVolatileModifier().get_modifier () !=
-      typeModifier2.get_constVolatileModifier().get_modifier () 
+      typeModifier2.get_constVolatileModifier().get_modifier ()
     )
     types_are_equal = false;
-  
+
   if( typeModifier1.get_elaboratedTypeModifier().get_modifier () !=
-      typeModifier2.get_elaboratedTypeModifier().get_modifier () 
+      typeModifier2.get_elaboratedTypeModifier().get_modifier ()
     )
     types_are_equal = false;
-    
+
   return types_are_equal;
 }
 
@@ -178,13 +178,13 @@ bool is_types_equal( SgType* t1, SgType* t2 )
       {
         //The named types do not point to the same declaration
         if( isSgNamedType(f1_vec[i]) != NULL )
-        { 
+        {
           if ( !typeEquality(isSgNamedType(f1_vec[i]), isSgNamedType(f2_vec[i])) )
             types_are_equal = false;
         }
 
         if(  isSgModifierType( f1_vec[i] ) != NULL  )
-        {          
+        {
           if (!typeEquality(isSgModifierType( f1_vec[i] ), isSgModifierType( f2_vec[i] )))
             types_are_equal = false;
         }
@@ -259,88 +259,88 @@ struct CovarianceChecker : sg::DispatchHandler<bool>
     CovarianceChecker(SgType& baseType, ClassHierarchyWrapper* hierarchy = NULL)
     : base(&baseType), chw(hierarchy)
     {}
-  
+
     template <class T>
     static
     bool typeChk(T& derived, T& base, ClassHierarchyWrapper* chw)
     {
       return ::typeEquality(&derived, &base);
     }
-    
+
     static
     bool typeChk(SgNamedType& derived, SgNamedType& base, ClassHierarchyWrapper* chw)
     {
       typedef ClassHierarchyWrapper::ClassDefSet ClassDefSet;
-      
+
       const bool         sameTypes = ::typeEquality(&derived, &base);
       if (!chw || sameTypes) return sameTypes;
-      
+
       SgClassType*       derivedClass = isSgClassType(&derived);
       if (!derivedClass) return false;
-      
+
       SgClassType*       baseClass = isSgClassType(&base);
       if (!baseClass) return false;
 
-      SgClassDeclaration& derivedDcl0 = SG_ASSERT_TYPE(SgClassDeclaration, SG_DEREF(derivedClass->get_declaration())); 
+      SgClassDeclaration& derivedDcl0 = SG_ASSERT_TYPE(SgClassDeclaration, SG_DEREF(derivedClass->get_declaration()));
       SgClassDeclaration& baseDcl0    = SG_ASSERT_TYPE(SgClassDeclaration, SG_DEREF(baseClass->get_declaration()));
       SgClassDeclaration* derivedDcl  = isSgClassDeclaration(derivedDcl0.get_definingDeclaration());
       SgClassDeclaration* baseDcl     = isSgClassDeclaration(baseDcl0.get_definingDeclaration());
       if (!derivedDcl || !baseDcl) return false;
-      
-      SgClassDefinition*  derivedDef  = derivedDcl->get_definition(); 
-      SgClassDefinition*  baseDef     = baseDcl->get_definition(); 
+
+      SgClassDefinition*  derivedDef  = derivedDcl->get_definition();
+      SgClassDefinition*  baseDef     = baseDcl->get_definition();
       const ClassDefSet& ancestors    = chw->getAncestorClasses(derivedDef);
-      
+
       return ancestors.find(baseDef) != ancestors.end();
     }
-    
+
     template <class T>
     static
     bool underChk(T& derived, T& base, ClassHierarchyWrapper* chw)
     {
       SgType* derived_base = getUnderType(&derived);
-      
+
       // if there is no underlying type and everything matched up to
       //   here, we have found a winner.
       if (!derived_base) return true;
-      
+
       return isCovariantType(derived_base, &base, chw);
     }
-    
-    ReturnType 
+
+    ReturnType
     descend(SgType* ty) const
     {
       return sg::dispatch(*this, ty);
     }
-    
+
     /// generic template routine to check for covariance
     /// if @chw is null, the check tests for strict equality
     template <class T>
     bool check(T& derivedTy, ClassHierarchyWrapper* nextChw = NULL)
     {
       base = skipTypeAliases(base);
-      
+
       // symmetric check for strict type equality
       if (typeid(derivedTy) != typeid(*base))
         return false;
-      
+
       T& baseTy = SG_ASSERT_TYPE(T, *base);
-      
-      if (&derivedTy == &baseTy) 
+
+      if (&derivedTy == &baseTy)
         return true;
-        
+
       return (  typeChk(derivedTy, baseTy, nextChw)
              && underChk(derivedTy, baseTy, nextChw)
              );
     }
-    
+
     void handle(SgNode& derived)                  { SG_UNEXPECTED_NODE(derived); }
-    
+
     void handle(SgType& derived)                  { res = check(derived); }
 
     // skip typedefs
-    void handle(SgTypedefType& derived)           { res = descend(getUnderType(&derived)); }    
-    
+    void handle(SgTypedefType& derived)           { res = descend(getUnderType(&derived)); }
+
     // check equality of underlying types
     // @{
     void handle(SgPointerType& derived)           { res = check(derived); }
@@ -354,7 +354,7 @@ struct CovarianceChecker : sg::DispatchHandler<bool>
     // @}
 
     // should have been removed by PolymorphicRootsFinder
-    // @{ 
+    // @{
     void handle(SgReferenceType& derived)         { SG_UNEXPECTED_NODE(derived); }
     void handle(SgRvalueReferenceType& derived)   { SG_UNEXPECTED_NODE(derived); }
     // @}
@@ -370,25 +370,25 @@ struct PolymorphicRootsFinder : sg::DispatchHandler< std::pair<SgType*, SgType*>
     PolymorphicRootsFinder(SgType& baseType)
     : base(&baseType)
     {}
-  
+
     static
     bool typeChk(SgType& derived, SgType& base)
     {
       return true;
     }
-  
+
     static
     bool typeChk(SgModifierType& derived, SgModifierType& base)
     {
       return ::typeEquality(&derived, &base);
     }
-    
-    ReturnType 
+
+    ReturnType
     descend(SgType* ty) const
     {
       return sg::dispatch(*this, ty);
     }
-    
+
     /// generic template routine to check for covariance
     /// if @chw is null, the check tests for strict equality
     template <class T>
@@ -396,33 +396,33 @@ struct PolymorphicRootsFinder : sg::DispatchHandler< std::pair<SgType*, SgType*>
     check(T& derivedTy)
     {
       ReturnType res(NULL, NULL);
-      
+
       base = skipTypeAliases(base);
-      
+
       // symmetric check for strict type equality
       if (typeid(derivedTy) != typeid(*base))
         return res;
-      
+
       T& baseTy = SG_ASSERT_TYPE(T, *base);
-      
+
       if (typeChk(derivedTy, baseTy))
       {
         res = ReturnType(getUnderType(&derivedTy), getUnderType(&baseTy));
       }
-             
+
       return res;
     }
-    
+
     void handle(SgNode& derived)                  { SG_UNEXPECTED_NODE(derived); }
-                
+
     void handle(SgType& derived)                  {}
-    
+
     // skip typedefs
-    void handle(SgTypedefType& derived)           { res = descend(getUnderType(&derived)); }    
-                
+    void handle(SgTypedefType& derived)           { res = descend(getUnderType(&derived)); }
+
     // the modifiers must equal
     void handle(SgModifierType& derived)          { res = check(derived); }
-                    
+
     // polymorphic root types (must also equal)
     // @{
     void handle(SgReferenceType& derived)         { res = check(derived); }
@@ -438,20 +438,20 @@ struct PolymorphicRootsFinder : sg::DispatchHandler< std::pair<SgType*, SgType*>
 /// \param derived a non-null type
 /// \param base    a non-null type
 /// \param chw     the "unrolled" class hierarchy information
-/// \brief if chw is NULL, strict type equality is checked                    
+/// \brief if chw is NULL, strict type equality is checked
 static
-bool 
+bool
 isCovariantType(SgType* derived, SgType* base, ClassHierarchyWrapper* chw)
 {
   // find polymorphic root (e.g., reference, pointer)
   std::pair<SgType*, SgType*> rootTypes = sg::dispatch(PolymorphicRootsFinder(SG_DEREF(base)), derived);
-  
-  if (!rootTypes.first) 
+
+  if (!rootTypes.first)
     return sg::dispatch(CovarianceChecker(SG_DEREF(base)), derived);
-  
-  // test if the roots are covariant 
+
+  // test if the roots are covariant
   return sg::dispatch(CovarianceChecker(SG_DEREF(rootTypes.second), chw), rootTypes.first);
-} 
+}
 
 
 /// returns @derived is an overriding type of @base
@@ -464,16 +464,16 @@ isCovariantType(SgType* derived, SgType* base, ClassHierarchyWrapper* chw)
 ///    @derived's arguments must equal @base's argument, and @derived's
 ///    return type may be covariabt with respect to @base's return type.
 static
-bool 
-isOverridingType( SgMemberFunctionType* derived, 
-                  SgMemberFunctionType* base, 
+bool
+isOverridingType( SgMemberFunctionType* derived,
+                  SgMemberFunctionType* base,
                   ClassHierarchyWrapper* chw
                 )
 {
   ROSE_ASSERT(derived && base);
-  
+
   if (derived == base) return true;
-  
+
   if (  derived->get_mfunc_specifier() != base->get_mfunc_specifier()
      || derived->get_ref_qualifiers()  != base->get_ref_qualifiers()
      || derived->get_has_ellipses()    != base->get_has_ellipses()
@@ -484,44 +484,46 @@ isOverridingType( SgMemberFunctionType* derived,
 
   if (!isCovariantType(derived->get_return_type(), base->get_return_type(), chw))
     return false;
-        
+
   SgTypePtrList& args_derived = derived->get_arguments();
   SgTypePtrList& args_base    = base->get_arguments();
 
   // See if the arguments match
   if (args_derived.size() != args_base.size())
     return false;
-  
+
   SgTypePtrList::iterator derived_end = args_derived.end();
-    
+
   return std::mismatch( args_derived.begin(), derived_end,
                         args_base.begin(),
                         is_types_equal
-                      ).first == derived_end;      
-} 
+                      ).first == derived_end;
+}
 
 /// tests if derived overrides base
 static
-bool isOverridingFunction( SgMemberFunctionDeclaration* derived,   
-                           SgMemberFunctionDeclaration* base,
+bool isOverridingFunction( SgMemberFunctionDeclaration* candidate,
+                           SgMemberFunctionDeclaration* member,
                            ClassHierarchyWrapper*       chw
                          )
 {
-  ROSE_ASSERT(derived && base);
-  
-  return isOverridingType( isSgMemberFunctionType(derived->get_type()),
-                           isSgMemberFunctionType(base->get_type()),
-                           chw
-                         );
+  ROSE_ASSERT(candidate && member);
+
+  return (  candidate->get_name() == member->get_name()
+         && isOverridingType( isSgMemberFunctionType(candidate->get_type()),
+                              isSgMemberFunctionType(member->get_type()),
+                              chw
+                            )
+         );
 }
 
-SgFunctionDeclaration* 
-is_function_exists(SgClassDefinition *cls, SgMemberFunctionDeclaration *memberFunctionDeclaration) 
-{      
+SgFunctionDeclaration*
+is_function_exists(SgClassDefinition *cls, SgMemberFunctionDeclaration *memberFunctionDeclaration)
+{
   SgFunctionDeclaration *resultDecl = NULL;
   string f1 = memberFunctionDeclaration->get_name().getString();
   string f2;
-  
+
   SgDeclarationStatementPtrList &clsMembers = cls->get_members();
   for ( SgDeclarationStatementPtrList::iterator it_cls_mb = clsMembers.begin(); it_cls_mb != clsMembers.end(); it_cls_mb++ )
   {
@@ -532,7 +534,7 @@ is_function_exists(SgClassDefinition *cls, SgMemberFunctionDeclaration *memberFu
     SgMemberFunctionType* funcType1 = isSgMemberFunctionType(memberFunctionDeclaration->get_type());
     SgMemberFunctionType* funcType2 = isSgMemberFunctionType(cls_mb_decl->get_type());
     f2 = cls_mb_decl->get_name().getString();
-    
+
     if(f1 != f2) continue;
     if (funcType1 == NULL || funcType2 == NULL) continue;
     if ( is_functions_types_equal(funcType1, funcType2) )
@@ -543,7 +545,7 @@ is_function_exists(SgClassDefinition *cls, SgMemberFunctionDeclaration *memberFu
         isSgMemberFunctionDeclaration( cls_mb_decl->get_definingDeclaration() );
 
       // ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
-      
+
       resultDecl = (nonDefDecl) ? nonDefDecl : defDecl;
       ROSE_ASSERT ( resultDecl );
       if ( !( resultDecl->get_functionModifier().isPureVirtual() ) )
@@ -554,12 +556,12 @@ is_function_exists(SgClassDefinition *cls, SgMemberFunctionDeclaration *memberFu
       }
     }
   }
-    
+
   ROSE_ASSERT(!isSgTemplateFunctionDeclaration(resultDecl));
   return resultDecl;
 }
 
-bool 
+bool
 dummyFilter::operator() (SgFunctionDeclaration* node) const{
   assert(!isSgTemplateFunctionDeclaration(node));
   return true;
@@ -588,7 +590,7 @@ builtinFilter::operator() (SgFunctionDeclaration* funcDecl) const
   // filter out other built in functions
   //      else if( func_name.find ("__",0)== 0);
   //         returnValue = false;
-  // _IO_getc _IO_putc _IO_feof, etc.       
+  // _IO_getc _IO_putc _IO_feof, etc.
   //loc = func_name.find ("_IO_",0);
   //if (loc == 0 ) returnValue = false;
 
@@ -627,10 +629,10 @@ builtinFilter::operator() (SgFunctionDeclaration* funcDecl) const
 }
 
 
-  bool 
-FunctionData::isDefined () 
-{ 
-  return hasDefinition; 
+  bool
+FunctionData::isDefined ()
+{
+  return hasDefinition;
 }
 
 
@@ -641,17 +643,17 @@ CallGraphBuilder::CallGraphBuilder( SgProject *proj)
 }
 
   SgIncidenceDirectedGraph*
-CallGraphBuilder::getGraph() 
-{ 
-  return graph; 
+CallGraphBuilder::getGraph()
+{
+  return graph;
 }
 
 
 
 
-Rose_STL_Container<SgFunctionDeclaration*> 
-CallTargetSet::solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType* functionType ) 
-{ 
+Rose_STL_Container<SgFunctionDeclaration*>
+CallTargetSet::solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType* functionType )
+{
   Rose_STL_Container<SgFunctionDeclaration*> functionList;
 
   SgFunctionDeclaration* fctDecl = isSgFunctionDeclaration(node);
@@ -678,7 +680,7 @@ CallTargetSet::solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType*
   }//else
   //ROSE_ASSERT( functionType->get_mangled().getString() != fctDecl->get_type()->get_mangled().getString() );
 
-  return functionList; 
+  return functionList;
 }
 
 
@@ -696,8 +698,8 @@ CallTargetSet::solveFunctionPointerCall( SgPointerDerefExp *pointerDerefExp, SgP
   string type1str = fctType->get_mangled().str();
   // cout << "Return type of function pointer " << type1str << "\n";
 
-  // cout << " Line: " << pointerDerefExp->get_file_info()->get_filenameString() <<  
-  //  " l" << pointerDerefExp->get_file_info()->get_line() << 
+  // cout << " Line: " << pointerDerefExp->get_file_info()->get_filenameString() <<
+  //  " l" << pointerDerefExp->get_file_info()->get_line() <<
   //  " c" << pointerDerefExp->get_file_info()->get_col()  << std::endl;
   // getting all possible functions with the same type
   // DQ (1/31/2006): Changed name and made global function type symbol table a static data member.
@@ -736,18 +738,26 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
 
     left = binaryExp->get_lhs_operand();
     right = binaryExp->get_rhs_operand();
+    ROSE_ASSERT(left->get_type());
+    
+    SgType* leftBase = left->get_type()->findBaseType();
 
     // left side of the expression should have class type (but it might have SgTemplateType which we should ignore since that
     // means we're trying to do call graph analysis inside a class template, which doesn't make much sense.)
-    if (isSgTemplateType(left->get_type()->findBaseType()))
-        return functionList; // empty
-    classType = isSgClassType(left->get_type()->findBaseType());
+    if (isSgTemplateType(leftBase) || isSgNonrealType(leftBase))
+    {
+        ROSE_ASSERT(functionList.empty());
+        return functionList;
+    }
+        
+    classType = isSgClassType(leftBase);
     ROSE_ASSERT(classType != NULL);
-
     ROSE_ASSERT(classType->get_declaration() != NULL);
     ROSE_ASSERT(classType->get_declaration()->get_definingDeclaration() != NULL);
+    
     SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classType->get_declaration()->get_definingDeclaration());
     ROSE_ASSERT(definingClassDeclaration != NULL);
+    
     classDefinition = definingClassDeclaration->get_definition();
     ROSE_ASSERT(classDefinition != NULL);
 
@@ -824,14 +834,103 @@ CallTargetSet::solveMemberFunctionPointerCall(SgExpression *functionExp, ClassHi
     return functionList;
 }
 
+static
+bool isPureVirtual(SgMemberFunctionDeclaration* dcl)
+{
+  ROSE_ASSERT(dcl);
+
+  return dcl->get_functionModifier().isPureVirtual();
+}
+
+static
+void solveVirtualFunctionCall( SgClassType* crtClass,
+                               ClassHierarchyWrapper* classHierarchy,
+                               SgMemberFunctionDeclaration* memberFunctionDeclaration,
+                               SgMemberFunctionDeclaration* functionDeclarationInClass,
+                               bool includePureVirtualFunc,
+                               std::vector<SgFunctionDeclaration*>& result
+                             )
+{
+  ROSE_ASSERT(classHierarchy && memberFunctionDeclaration && functionDeclarationInClass);
+
+  // If it's not pure virtual then the current function declaration is a candidate function to be called
+  if (includePureVirtualFunc || !isPureVirtual(functionDeclarationInClass))
+    result.push_back( functionDeclarationInClass );
+
+  // Search down the class hierarchy to get all redeclarations of the current member function which may be the ones being
+  // called via polymorphism.
+  SgClassDefinition* crtClsDef = NULL;
+
+  // selecting the root of the hierarchy
+  if (crtClass)
+  {
+    SgClassDeclaration* tmp = isSgClassDeclaration(crtClass->get_declaration());
+    ROSE_ASSERT(tmp);
+    SgClassDeclaration* tmp2 = isSgClassDeclaration(tmp->get_definingDeclaration());
+    ROSE_ASSERT(tmp2);
+
+    crtClsDef = tmp2->get_definition();
+    ROSE_ASSERT(crtClsDef);
+  }
+  else
+  {
+    crtClsDef = isSgClassDefinition(memberFunctionDeclaration->get_scope());
+    ROSE_ASSERT(crtClsDef);
+  }
+
+  // For virtual functions, we need to search down in the hierarchy of classes and retrieve all declarations of member
+  // functions with the same name and type.  Names are not important for destructors.
+  const ClassHierarchyWrapper::ClassDefSet& subclasses = classHierarchy->getSubclasses(crtClsDef);
+
+  std::string f1 = memberFunctionDeclaration->get_mangled_name().str();
+  ROSE_ASSERT(!memberFunctionDeclaration->get_name().getString().empty());
+
+  const bool isDestructor1 = '~' == memberFunctionDeclaration->get_name().getString()[0];
+
+  for (ClassHierarchyWrapper::ClassDefSet::const_iterator sci=subclasses.begin(); sci!=subclasses.end(); ++sci)
+  {
+    SgClassDefinition* cls = isSgClassDefinition(*sci);
+    SgDeclarationStatementPtrList& clsMembers = cls->get_members();
+
+    for (SgDeclarationStatementPtrList::iterator cmi=clsMembers.begin(); cmi!=clsMembers.end(); ++cmi)
+    {
+      SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration(*cmi);
+      if (cls_mb_decl == NULL)
+        continue;
+
+      ROSE_ASSERT(!cls_mb_decl->get_name().getString().empty());
+
+      const bool isDestructor2 = '~' == cls_mb_decl->get_name().getString()[0];
+      const bool keep = (  (isDestructor1 && isDestructor2)
+                        || isOverridingFunction(cls_mb_decl, memberFunctionDeclaration, classHierarchy)
+                        );
+
+      if (keep)
+      {
+        SgMemberFunctionDeclaration* nonDefDecl =
+            isSgMemberFunctionDeclaration(cls_mb_decl->get_firstNondefiningDeclaration());
+        SgMemberFunctionDeclaration* defDecl =
+            isSgMemberFunctionDeclaration(cls_mb_decl->get_definingDeclaration());
+
+        // MD 2010/07/08 defDecl might be NULL
+        SgMemberFunctionDeclaration* candidate = nonDefDecl ? nonDefDecl : defDecl;
+        ROSE_ASSERT(candidate);
+
+        if (includePureVirtualFunc || !isPureVirtual(candidate))
+          result.push_back(candidate);
+      }
+    }
+  }
+}
+
 std::vector<SgFunctionDeclaration*>
-CallTargetSet::solveMemberFunctionCall(SgClassType *crtClass, ClassHierarchyWrapper *classHierarchy,
-                                       SgMemberFunctionDeclaration *memberFunctionDeclaration, bool polymorphic,
+CallTargetSet::solveMemberFunctionCall(SgClassType *crtClass, ClassHierarchyWrapper* classHierarchy,
+                                       SgMemberFunctionDeclaration* memberFunctionDeclaration, bool polymorphic,
                                        bool includePureVirtualFunc)
 {
-    std::vector<SgFunctionDeclaration*> functionList;
-    ROSE_ASSERT(memberFunctionDeclaration && classHierarchy);
+    ROSE_ASSERT(memberFunctionDeclaration);
 
+    std::vector<SgFunctionDeclaration*> functionList;
 
     SgMemberFunctionDeclaration *functionDeclarationInClass = NULL;
     if (SgDeclarationStatement *nonDefDeclInClass = memberFunctionDeclaration->get_firstNondefiningDeclaration()) {
@@ -845,77 +944,23 @@ CallTargetSet::solveMemberFunctionCall(SgClassType *crtClass, ClassHierarchyWrap
 
     // We need the inclass declaration so we can determine if it is a virtual function
     if (functionDeclarationInClass->get_functionModifier().isVirtual() && polymorphic) {
+        // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+        // SgFunctionDefinition *functionDefinition = NULL;
 
-     // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-     // SgFunctionDefinition *functionDefinition = NULL;
+        // SgMemberFunctionDeclaration* memberFunctionDefDeclaration =
+        //     isSgMemberFunctionDeclaration(memberFunctionDeclaration->get_definingDeclaration());
 
-     // SgMemberFunctionDeclaration* memberFunctionDefDeclaration = 
-     //     isSgMemberFunctionDeclaration(memberFunctionDeclaration->get_definingDeclaration());
-
-     // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
-     // if (memberFunctionDefDeclaration != NULL) {
-     //     functionDefinition = memberFunctionDefDeclaration->get_definition();
-     // }
-
-        // If it's not pure virtual then the current function declaration is a candidate function to be called
-        if (includePureVirtualFunc || !functionDeclarationInClass->get_functionModifier().isPureVirtual())
-            functionList.push_back( functionDeclarationInClass );
-
-        // Search down the class hierarchy to get all redeclarations of the current member function which may be the ones being
-        // called via polymorphism.
-        SgClassDefinition *crtClsDef = NULL;
-        // selecting the root of the hierarchy
-        if (crtClass) {
-            SgClassDeclaration *tmp = isSgClassDeclaration(crtClass->get_declaration());
-            ROSE_ASSERT(tmp);
-            SgClassDeclaration* tmp2 = isSgClassDeclaration(tmp->get_definingDeclaration());
-            ROSE_ASSERT(tmp2);
-            crtClsDef = tmp2->get_definition();
-            ROSE_ASSERT(crtClsDef);
-        } else {
-            crtClsDef = isSgClassDefinition(memberFunctionDeclaration->get_scope());
-            ROSE_ASSERT(crtClsDef);
-        }
-
-        // For virtual functions, we need to search down in the hierarchy of classes and retrieve all declarations of member
-        // functions with the same name and type.  Names are not important for destructors.
-        const ClassHierarchyWrapper::ClassDefSet& subclasses = classHierarchy->getSubclasses(crtClsDef);
-        functionDeclarationInClass = NULL;
-        string f1 = memberFunctionDeclaration->get_mangled_name().str();
-        assert(!memberFunctionDeclaration->get_name().getString().empty());
-        bool isDestructor1 = '~' == memberFunctionDeclaration->get_name().getString()[0];
-        for (ClassHierarchyWrapper::ClassDefSet::const_iterator sci=subclasses.begin(); sci!=subclasses.end(); ++sci) {
-            SgClassDefinition *cls = isSgClassDefinition(*sci);
-            SgDeclarationStatementPtrList &clsMembers = cls->get_members();
-            for (SgDeclarationStatementPtrList::iterator cmi=clsMembers.begin(); cmi!=clsMembers.end(); ++cmi) {
-                SgMemberFunctionDeclaration *cls_mb_decl = isSgMemberFunctionDeclaration(*cmi);
-                if (cls_mb_decl == NULL)
-                    continue;
-
-                assert(!cls_mb_decl->get_name().getString().empty());
-                bool isDestructor2 = '~' == cls_mb_decl->get_name().getString()[0];
-                bool keep = false;
-                if (isDestructor1 && isDestructor2) {
-                    keep = true;
-                } else if (memberFunctionDeclaration->get_name()==cls_mb_decl->get_name()) {
-                  keep = isOverridingFunction(cls_mb_decl, memberFunctionDeclaration, classHierarchy);
-                  
-                  std::cerr << cls_mb_decl->unparseToString() << " " << keep << std::endl;
-                }
-                if (keep) {
-                    SgMemberFunctionDeclaration *nonDefDecl =
-                        isSgMemberFunctionDeclaration(cls_mb_decl->get_firstNondefiningDeclaration());
-                    SgMemberFunctionDeclaration *defDecl =
-                        isSgMemberFunctionDeclaration(cls_mb_decl->get_definingDeclaration());
-                    // MD 2010/07/08 defDecl might be NULL
-                    // ROSE_ASSERT ( (!nonDefDecl && defDecl == cls_mb_decl) || (nonDefDecl == cls_mb_decl && nonDefDecl) );
-                    functionDeclarationInClass = nonDefDecl ? nonDefDecl : defDecl;
-                    ROSE_ASSERT(functionDeclarationInClass);
-                    if (includePureVirtualFunc || !(functionDeclarationInClass->get_functionModifier().isPureVirtual()))
-                        functionList.push_back(functionDeclarationInClass);
-                }
-            }
-        }
+        // DQ (12/10/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
+        // if (memberFunctionDefDeclaration != NULL) {
+        //     functionDefinition = memberFunctionDefDeclaration->get_definition();
+        // }
+        solveVirtualFunctionCall( crtClass,
+                                  classHierarchy,
+                                  memberFunctionDeclaration,
+                                  functionDeclarationInClass,
+                                  includePureVirtualFunc,
+                                  functionList
+                                );
     } else {
         // Non virtual (standard) member function or call not polymorphic (or both)
         // Always pushing the in-class declaration, so we need to find that one
@@ -936,8 +981,8 @@ CallTargetSet::solveMemberFunctionCall(SgClassType *crtClass, ClassHierarchyWrap
 
 
 
-Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType* functionType ) 
-{ 
+Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType* functionType )
+{
   Rose_STL_Container<SgFunctionDeclaration*> functionList;
 
   SgFunctionDeclaration* fctDecl = isSgFunctionDeclaration(node);
@@ -962,25 +1007,33 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
   }//else
   //ROSE_ASSERT( functionType->get_mangled().getString() != fctDecl->get_type()->get_mangled().getString() );
 
-  return functionList; 
+  return functionList;
 }
 
+/**
+ * This function determines all the constructors called in a constructor 
+ * initializer.  For example: 
+ *   Bar::Bar() : foo() {} 
+ *   In this case, we need to list foo() as having been called, and the constructors
+ *   for all of foo's BaseClasses.  (These are returned as SgFunctionDeclarations, in 
+ *   the props vector)
+ **/
 std::vector<SgFunctionDeclaration*>
 CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit)
 {
-    //FIXME: There is a bug in this function. 
+    //FIXME: There is a bug in this function.
     //Consider the inheritance hierarchy A -> B -> C (C inherits from B, B inherits from A).
     //Let C have an explicit constructor, without explictly calling B's constructor. We will only return the constructor for C
-    
-    
+
+
     std::vector<SgFunctionDeclaration*> props;
     SgMemberFunctionDeclaration* memFunDecl = sgCtorInit->get_declaration();
-    
+
     //It's possible to have a null constructor declaration, in case of compiler-generated
     //default constructors.
     if (memFunDecl == NULL || memFunDecl->get_file_info()->isCompilerGenerated())
     {
-        //If there are superclasses, the constructors for those classes may have been called. We need to return them       
+        //If there are superclasses, the constructors for those classes may have been called. We need to return them
 
         //Sometimes constructor initializers appear for primitive types. (e.g. x() in a constructor initializer list)
         if (sgCtorInit->get_class_decl() != NULL)
@@ -994,8 +1047,14 @@ CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit)
                 SgClassDeclaration* currClassDecl = worklist.back();
                 worklist.pop_back();
 
-                currClassDecl = isSgClassDeclaration(currClassDecl->get_definingDeclaration());
+                SgClassDeclaration* defClassDecl = isSgClassDeclaration(currClassDecl->get_definingDeclaration());
+                if(defClassDecl == NULL) { // Can get a NULL here if a primative type is being constructed. 
+                  continue;                // For example, a pointer
+                }
                 SgClassDefinition* currClass = currClassDecl->get_definition();
+                if(currClass == NULL) { // Can get a NULL here if class is an anonymous compiler generated BaseClass
+                  continue;    
+                }
 
                 foreach(SgBaseClass* baseClass, currClass->get_inheritances())
                 {
@@ -1019,21 +1078,21 @@ CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit)
         SgMemberFunctionDeclaration* decl = isSgMemberFunctionDeclaration(memFunDecl->get_firstNondefiningDeclaration());
         if (decl == NULL)
             decl = isSgMemberFunctionDeclaration(memFunDecl->get_definingDeclaration());
-        ROSE_ASSERT(decl != NULL);        
+        ROSE_ASSERT(decl != NULL);
         props.push_back(decl);
     }
-    
+
     return props;
 }
 
 //
-// Add the declaration for functionCallExp to functionList. In the case of 
+// Add the declaration for functionCallExp to functionList. In the case of
 // function pointers and virtual functions, append the set of declarations
-// to functionList. 
-void 
-getPropertiesForSgConstructorInitializer(SgConstructorInitializer* sgCtorInit, 
+// to functionList.
+void
+getPropertiesForSgConstructorInitializer(SgConstructorInitializer* sgCtorInit,
                          ClassHierarchyWrapper* classHierarchy,
-                         Rose_STL_Container<SgFunctionDeclaration *>& functionList) 
+                         Rose_STL_Container<SgFunctionDeclaration *>& functionList)
 {
   // currently, all constructor initializers can be handled by solveConstructorInitializer
   const std::vector<SgFunctionDeclaration*>& props = CallTargetSet::solveConstructorInitializer(sgCtorInit);
@@ -1053,7 +1112,7 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
 
     while (isSgCommaOpExp(functionExp))
         functionExp = isSgCommaOpExp(functionExp)->get_rhs_operand();
-    
+
     switch (functionExp->variantT()) {
         case V_SgArrowStarOp:
         case V_SgDotStarOp: {
@@ -1153,22 +1212,22 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
                 //~ if (!isSgThisExp(leftSide))
                     //~ polymorphic = true;
 #endif
-                // test if the memberFunctionRefExp is scope qualified 
+                // test if the memberFunctionRefExp is scope qualified
                 //   in which case the vcall is suppressed.
                 // \note to handle constructors correctly, we would need the assumed call stack.
-                
-                
+
+
                 SgType* const receiverBaseType = receiverType->stripTypedefsAndModifiers();
                 const bool    polymorphicType  = (  isSgPointerType(receiverBaseType)
                                                  || isSgReferenceType(receiverBaseType)
                                                  || isSgRvalueReferenceType(receiverBaseType)
                                                  || isSgArrayType(receiverBaseType)
                                                  );
-                 
-                const bool    polymorphicCall  = (  polymorphicType 
+
+                const bool    polymorphicCall  = (  polymorphicType
                                                  && (memberFunctionRefExp->get_need_qualifier() == 0)
                                                  );
-                
+
                 std::vector<SgFunctionDeclaration*> fD =
                     CallTargetSet::solveMemberFunctionCall(crtClass, classHierarchy, memberFunctionDeclaration, polymorphicCall,
                                                            includePureVirtualFunc);
@@ -1176,7 +1235,7 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
             }
             break;
         }
-        
+
         case V_SgPointerDerefExp: {
             SgPointerDerefExp *exp = isSgPointerDerefExp(functionExp);
             // If the thing pointed to is ultimately a SgFunctionRefExp then we can figure out the exact function that's being
@@ -1203,7 +1262,7 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
             }
         }
         // fall through...
-            
+
         case V_SgMemberFunctionRefExp:
         case V_SgFunctionRefExp: {
             SgFunctionDeclaration *fctDecl =
@@ -1255,6 +1314,15 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
         case V_SgPntrArrRefExp:
         case V_SgCastExp:
              break; // FIXME ROSE-1487
+             
+        // \todo 
+        // PP (04/06/20) 
+        case V_SgTemplateFunctionRefExp:
+        case V_SgNonrealRefExp:
+        case V_SgTemplateMemberFunctionRefExp:
+        case V_SgConstructorInitializer:
+        case V_SgFunctionCallExp:
+             break;  
 
         default: {
             cout << "Error, unexpected type of functionRefExp: " << functionExp->sage_class_name() << "!!!\n";
@@ -1262,9 +1330,9 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
         }
     }
 }
-// Add the declaration for functionCallExp to functionList. In the case of 
+// Add the declaration for functionCallExp to functionList. In the case of
 // function pointers and virtual functions, append the set of declarations
-// to functionList. 
+// to functionList.
 
 void
 CallTargetSet::getPropertiesForExpression(SgExpression* sgexp, ClassHierarchyWrapper* classHierarchy,
@@ -1330,8 +1398,8 @@ CallTargetSet::getDefinitionsForExpression(SgExpression* sgexp,
     }
 }
 
-void 
-CallTargetSet::getExpressionsForDefinition(SgFunctionDefinition* targetDef, 
+void
+CallTargetSet::getExpressionsForDefinition(SgFunctionDefinition* targetDef,
                                            ClassHierarchyWrapper* classHierarchy,
                                            Rose_STL_Container<SgExpression*>& exps) {
   VariantVector vv(V_SgFunctionCallExp);
@@ -1384,7 +1452,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
     }
 
     //cout << "!!!" << inputFunctionDeclaration->get_name().str() << " has definition " << defDecl << "\n";
-    //     cout << "Input declaration: " << inputFunctionDeclaration << " as opposed to " << functionDeclaration << "\n"; 
+    //     cout << "Input declaration: " << inputFunctionDeclaration << " as opposed to " << functionDeclaration << "\n";
 
     // Test for a forward declaration (declaration without a definition)
     if (defDecl != NULL)
@@ -1404,7 +1472,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
         }
     }
 }
-SgFunctionDeclaration * CallTargetSet::getFirstVirtualFunctionDefinitionFromAncestors(SgClassType *crtClass, 
+SgFunctionDeclaration * CallTargetSet::getFirstVirtualFunctionDefinitionFromAncestors(SgClassType *crtClass,
         SgMemberFunctionDeclaration *memberFunctionDeclaration, ClassHierarchyWrapper *classHierarchy)  {
 
     SgFunctionDeclaration *resultDecl = NULL;
@@ -1412,7 +1480,7 @@ SgFunctionDeclaration * CallTargetSet::getFirstVirtualFunctionDefinitionFromAnce
     ROSE_ASSERT ( memberFunctionDeclaration && classHierarchy );
   //  memberFunctionDeclaration->get_file_info()->display( "Member function we are considering" );
     SgDeclarationStatement *nonDefDeclInClass = NULL;
-    
+
   nonDefDeclInClass = memberFunctionDeclaration->get_firstNondefiningDeclaration();
   SgMemberFunctionDeclaration *functionDeclarationInClass = NULL;
 
@@ -1445,11 +1513,11 @@ SgFunctionDeclaration * CallTargetSet::getFirstVirtualFunctionDefinitionFromAnce
       crtClsDef = isSgClassDefinition( memberFunctionDeclaration->get_scope() );
       ROSE_ASSERT ( crtClsDef );
   }
-  
+
     functionDeclarationInClass = NULL;
     vector<SgClassDefinition*> worklist;
     worklist.push_back(crtClsDef);
-    
+
     while(!worklist.empty()) {
         SgClassDefinition* ancestor = worklist.back();
         worklist.pop_back();
@@ -1469,7 +1537,52 @@ CallGraphBuilder::buildCallGraph (){
   buildCallGraph(dummyFilter());
 }
 
+
+/**
+ *  CallGraphBuilder::hasGraphNodeFor
+ *
+ * \brief Checks the graphNodes map for a graph node match fdecl
+ *
+ * This does a lookup on the CallGraph map to see if a given function is in it.
+ * This is used in constructing the CallGraph.  If multiple files are input on 
+ * the command line firstNondefiningDeclartion may not be unique, so not finding
+ * a graphNode for fdecl does not guarantee that the target function does not exist
+ * in the graph, only that it is not in the lookup map.  Use getGraphNodeFor 
+ * to be sure.  Again, this is mainly used in constructing the call graph.
+ *
+ * \param[in] fdecl The declaration of the function to look for in the graph
+ *
+ **/
+SgGraphNode * CallGraphBuilder::hasGraphNodeFor(SgFunctionDeclaration * fdecl) const {
+  SgFunctionDeclaration *unique = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
+  GraphNodes::const_iterator lookedup = graphNodes.find(unique); 
+  if(lookedup != graphNodes.end()) {
+    return lookedup->second;
+  }
+  return NULL;
+}
+
+/**
+ *  CallGraphBuilder::getGraphNodeFor
+ *
+ * \brief Double checks that the Call Graph has the function
+ *
+ * This double checks for a call graph node.  If multiple files are input on the command
+ * line firstNondefiningDeclartion may not be unique.  (As expected) So we can double check
+ * on the name.  This is useful only outside the CallGraph, if the CallGraph is fully
+ * constructed, and we need a particular node from it.
+ *
+ * \param[in] fdecl The declaration of the function to look for in the graph
+ *
+ **/
 SgGraphNode * CallGraphBuilder::getGraphNodeFor(SgFunctionDeclaration * fdecl) const {
+  SgFunctionDeclaration *unique = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
+  GraphNodes::const_iterator lookedup = graphNodes.find(unique); 
+  if(lookedup != graphNodes.end()) {
+    return lookedup->second;
+  }
+
+  //Fall back on old slow method (When putting multiple 
   std::string fname = fdecl->get_mangled_name();
   for (GraphNodes::const_iterator it = graphNodes.begin(); it != graphNodes.end(); ++it )
     if (it->first->get_mangled_name() == fname)
@@ -1477,7 +1590,7 @@ SgGraphNode * CallGraphBuilder::getGraphNodeFor(SgFunctionDeclaration * fdecl) c
   return NULL;
 }
 
-  GetOneFuncDeclarationPerFunction::result_type 
+  GetOneFuncDeclarationPerFunction::result_type
 GetOneFuncDeclarationPerFunction::operator()(SgNode* node )
 {
   result_type returnType;

@@ -111,6 +111,8 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (ContinueStmt,              "ContinueStmt",              "CONTINUE_STMT" );
      NEW_TERMINAL_MACRO (ReturnStmt,                "ReturnStmt",                "RETURN_STMT" );
      NEW_TERMINAL_MACRO (GotoStatement,             "GotoStatement",             "GOTO_STMT" );
+     NEW_TERMINAL_MACRO (AdaExitStmt,               "AdaExitStmt",               "ADA_EXIT_STMT" );
+     NEW_TERMINAL_MACRO (AdaLoopStmt,               "AdaLoopStmt",               "ADA_LOOP_STMT" );
      NEW_TERMINAL_MACRO (SpawnStmt,                 "SpawnStmt",                 "SPAWN_STMT" );
 
   // DQ (10/14/2014): Added template typedef as part of C++11 support.
@@ -523,7 +525,8 @@ Grammar::setUpStatements ()
           JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement     |
           StaticAssertionDeclaration              | OmpDeclareSimdStatement   | MicrosoftAttributeDeclaration|
           JovialCompoolStatement                  | JovialDirectiveStatement  | JovialDefineDeclaration      |
-          NonrealDecl                             | EmptyDeclaration        /*| ClassPropertyList |*/,
+          NonrealDecl                             | EmptyDeclaration                 
+          /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
 
@@ -542,7 +545,8 @@ Grammar::setUpStatements ()
              SequenceStatement         | WithStatement          | PythonPrintStmt                 | PassStatement         |
              AssertStmt                | ExecStatement          | PythonGlobalStmt                | JavaThrowStatement    |
              JavaSynchronizedStatement | AsyncStmt              | FinishStmt                      | AtStmt                |
-             AtomicStmt                | WhenStmt               | ImageControlStatement /* | JavaPackageDeclaration */,
+             AtomicStmt                | WhenStmt               | ImageControlStatement | /* JavaPackageDeclaration | */ 
+             AdaExitStmt               | AdaLoopStmt,
              "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -2524,6 +2528,26 @@ Grammar::setUpStatements ()
   // goto" does not make sense for the C language.
      GotoStatement.setDataPrototype     ( "SgExpression*", "selector_expression", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  
+  // ADA begin
+  // PP (03/23/20) Ada Exit Stmt
+     AdaExitStmt.setFunctionPrototype ( "HEADER_ADA_EXIT_STATEMENT", "../Grammar/Statement.code" );             
+     AdaExitStmt.setDataPrototype     ( "SgStatement*", "loop", "= NULL",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaExitStmt.setDataPrototype     ( "SgExpression*", "condition", "= NULL",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                        
+     AdaExitStmt.setDataPrototype     ( "bool", "explicitLoopName", "= false",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaLoopStmt.setFunctionPrototype ( "HEADER_ADA_LOOP_STATEMENT", "../Grammar/Statement.code" );             
+     AdaLoopStmt.setDataPrototype     ( "SgBasicBlock*", "body", "= NULL",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaLoopStmt.setDataPrototype     ( "SgName", "label", "",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // ADA end
 
      AsmStmt.setFunctionPrototype  ( "HEADER_ASM_STATEMENT", "../Grammar/Statement.code" );
 
@@ -3972,6 +3996,8 @@ Grammar::setUpStatements ()
 
      ReturnStmt.setFunctionSource           ( "SOURCE_RETURN_STATEMENT", "../Grammar/Statement.code" );
      GotoStatement.setFunctionSource        ( "SOURCE_GOTO_STATEMENT", "../Grammar/Statement.code" );
+     AdaExitStmt.setFunctionSource          ( "SOURCE_ADA_EXIT_STATEMENT", "../Grammar/Statement.code" );
+     AdaLoopStmt.setFunctionSource          ( "SOURCE_ADA_LOOP_STATEMENT", "../Grammar/Statement.code" );
      AsmStmt.setFunctionSource              ( "SOURCE_ASM_STATEMENT", "../Grammar/Statement.code" );
      SpawnStmt.setFunctionSource            ( "SOURCE_SPAWN_STATEMENT", "../Grammar/Statement.code" );
 

@@ -1516,9 +1516,11 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
           printf ("Generating a new ROSEAttributesList: currentFileNameId = %d \n",currentFileNameId);
 #endif
 
+#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
        // DQ (11/2/2019): A call to getListOfAttributes() will generate infinite recursion.
        // returnListOfAttributes = getListOfAttributes(currentFileNameId);
           returnListOfAttributes = getPreprocessorDirectives(fileNameForDirectivesAndComments);
+#endif
 #if 0
           printf ("DONE: Generating a new ROSEAttributesList: currentFileNameId = %d \n",currentFileNameId);
           printf (" --- returnListOfAttributes->getList().size() = %" PRIuPTR " \n",returnListOfAttributes->getList().size());
@@ -1776,7 +1778,9 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #if 0
                     printf ("Found returnListOfAttributes == NULL, calling getPreprocessorDirectives() \n");
 #endif
+#ifdef ROSE_BUILD_CPP_LANGUAGE_SUPPORT
                     returnListOfAttributes = getPreprocessorDirectives(fileNameForDirectivesAndComments);
+#endif
                   }
 #endif
              }
@@ -2730,7 +2734,10 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
                printf (" --- currentLocNodePtr->get_file_info()->get_file_id()                    = %d \n",currentLocNodePtr->get_file_info()->get_file_id());
                printf (" --- currentLocNodePtr->get_file_info()->get_physical_file_id()           = %d \n",currentLocNodePtr->get_file_info()->get_physical_file_id());
 #endif
-
+  
+            // Pei-Hung (2/25/2020): If CPP is required, then we should use currentFileNameId here to use the preprocessed
+            // input file.  Otherwise, all the preprocessed information is not attached to AST.  Comments and directives
+            // will not be unparsed.
             // DQ (11/3/2019): I think we want the source_file_id below, since they used to be that currentFileNameId 
             // and source_file_id had the same value, but this didn't allow us to support the header file unparsing.
             // Or perhaps it didn't allow the support of the optimization of the header file unparsing.
@@ -2738,7 +2745,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
             // if ( isCompilerGenerated || isTransformation || currentFileNameId == fileIdForOriginOfCurrentLocatedNode )
             // if ( isCompilerGenerated || isTransformation || source_file_id == fileIdForOriginOfCurrentLocatedNode )
             // if ( source_file_id == fileIdForOriginOfCurrentLocatedNode )
-               if ( source_file_id == currentLocNode_physical_file_id )
+               if ( ((sourceFile->get_requires_C_preprocessor() == true) ? currentFileNameId:source_file_id) == currentLocNode_physical_file_id )
                   {
                  // DQ (11/3/2019): Check that the comment or CPP directive is from the same file as the locatedNode.
                  // A variation of this test might be required later, though we should only be attacheing comments and 
@@ -3206,6 +3213,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 
                switch (n->variantT())
                   {
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
                  // SgBinaryComposite need not be in the switch since we don't attach CPP directives or comments to it.
                     case V_SgBinaryComposite:
                         {
@@ -3213,6 +3221,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                           ROSE_ASSERT(false);
                           break;
                         }
+#endif
 
                  // I wanted to leave the SgFile case in the switch statement rather 
                  // than separating it out in a conditional statement at the top of the file.

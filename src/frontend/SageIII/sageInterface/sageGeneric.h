@@ -284,7 +284,9 @@ namespace sg
     GEN_VISIT(SgVariableDeclaration)
     GEN_VISIT(SgVariableDefinition)
     GEN_VISIT(SgEnumDeclaration)
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     GEN_VISIT(SgAsmStmt)
+#endif
     GEN_VISIT(SgTypedefDeclaration)
     GEN_VISIT(SgFunctionTypeTable)
     GEN_VISIT(SgExprStatement)
@@ -561,8 +563,10 @@ namespace sg
     GEN_VISIT(SgCommonSymbol)
     GEN_VISIT(SgRenameSymbol)
     GEN_VISIT(SgFunctionSymbol)
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
     GEN_VISIT(SgAsmBinaryAddressSymbol)
     GEN_VISIT(SgAsmBinaryDataSymbol)
+#endif
     GEN_VISIT(SgAliasSymbol)
     GEN_VISIT(SgSymbol)
 

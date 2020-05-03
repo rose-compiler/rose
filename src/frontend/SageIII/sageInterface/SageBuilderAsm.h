@@ -1,5 +1,7 @@
 #ifndef ROSE_SageBuilderAsm_H
 #define ROSE_SageBuilderAsm_H
+#include <rosePublicConfig.h>
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 namespace Rose {
 
@@ -153,4 +155,5 @@ SgAsmBlock* buildDataBlock(SgAsmStaticData*);
 } // namespace
 } // namespace
 
+#endif
 #endif

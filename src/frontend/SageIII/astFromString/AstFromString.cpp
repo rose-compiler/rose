@@ -2510,8 +2510,8 @@ postfix_operator
       c_parsed_node = NULL; // prep for initializer
       if (afs_match_char('=') && afs_match_initializer())
       {
-        *initializer = isSgExpression(c_parsed_node); 
         assert (initializer != NULL);
+        *initializer = isSgExpression(c_parsed_node); 
       }  
       return true; 
     }

@@ -17,6 +17,7 @@
 
 #include <boost/config.hpp>
 #include <boost/logic/tribool.hpp>
+#include <boost/regex.hpp>
 #include <cassert>
 #include <cstring>
 #include <list>
@@ -1580,12 +1581,16 @@ public:
  *  This forms a collection of message streams for a software component and contains one stream per message importance level.
  *  A facility is intended to be used by a software component at whatever granularity is desired by the author (program, name
  *  space, class, method, etc.) and is usually given a string name that is related to the software component which it serves.
- *  The string name becomes part of messages and is also the default name used by Facilities::control.  All message streams
- *  created for the facility are given the same name, message prefix generator, and message sink, but they can be adjusted
- *  later on a per-stream basis.
+ *  The string name becomes part of messages and is also the default name used by Facilities::control. The name follows a
+ *  particular syntax described below. All message streams created for the facility are given the same name, message prefix
+ *  generator, and message sink, but they can be adjusted later on a per-stream basis.
  *
  *  The C++ name for the facility is often just "mlog" or "logger" (appropriately scoped) so that code to emit messages is self
  *  documenting. The name "log" is sometimes used, but can be ambiguous with the <code>\::log</code> function in math.h.
+ *
+ *  The string name for the facility follows a particular syntax: the name is composed of one or more components separated from
+ *  one another by separators. Each component contains one or more letters, digits, and underscores. A separator is a dot
+ *  ("."), one or two colons (":" or "::"), or a hyphen ("-").
  *
  * @code
  *  mlog[ERROR] <<"I got an error\n";
@@ -1664,6 +1669,11 @@ public:
     }
     /** @} */
 
+    /** Tests whether a name is valie.
+     *
+     *  Returns true if the specified string satisfies the requirements for being a valid facility name. */
+    static bool isValidName(const std::string&);
+
     /** Return the name of the facility.
      *
      *  This is a read-only field initialized at construction time.
@@ -1698,6 +1708,11 @@ public:
      *
      *  Thread safety: This method is thread-safe. */
     Facility& initStreams(const DestinationPtr&);
+
+protected:
+    // Parse a name into a vector of components. Returns an empty vector if the name is not valid.
+    static std::vector<std::string> parseName(const std::string&);
+
 };
 
 /** Collection of facilities.
@@ -1919,10 +1934,10 @@ public:
 private:
     /** @internal Private info used by control() to indicate what should be adjusted. */
     struct ControlTerm {
-        ControlTerm(const std::string &facilityName, bool enable)
-            : facilityName(facilityName), lo(DEBUG), hi(DEBUG), enable(enable) {}
+        ControlTerm(const boost::regex &facilityNamePattern, bool enable)
+            : facilityNamePattern(facilityNamePattern), lo(DEBUG), hi(DEBUG), enable(enable) {}
         std::string toString() const;                   /**< String representation of this struct for debugging. */
-        std::string facilityName;                       /**< %Optional facility name. Empty implies all facilities. */
+        boost::regex facilityNamePattern;               /**< Facility name pattern. Empty implies all facilities. */
         Importance lo, hi;                              /**< Inclusive range of importances. */
         bool enable;                                    /**< New state. */
     };
@@ -1938,16 +1953,18 @@ private:
     };
 
     // Functions used by the control() method
-    static std::string parseFacilityName(const char* &input);
+    static boost::regex parseFacilityNamePattern(const char* &input);
     static std::string parseEnablement(const char* &input);
     static std::string parseRelation(const char* &input);
     static std::string parseImportanceName(const char* &input);
     static Importance importanceFromString(const std::string&);
-    static std::list<ControlTerm> parseImportanceList(const std::string &facilityName, const char* &input, bool isGlobal);
+    static std::list<ControlTerm> parseImportanceList(const boost::regex &facilityNamePattern, const char* &input, bool isGlobal);
 
     // Remove Facility objects that have apparently been destroyed
     void eraseDestroyedNS();
 
+    // Return the list of facilities whose name matches the pattern.
+    std::vector<Facility*> matchingFacilitiesNS(const boost::regex &namePattern) const;
 };
 
 

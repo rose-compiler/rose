@@ -46,10 +46,6 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
    AC_MSG_NOTICE([BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER = "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"])
    AC_MSG_NOTICE([BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER = "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"])
 
- # DQ (2/2/2016): Debugging new support for detected the compiler vendor.
- # echo "Exiting after call to create_system_headers in GENERATE BACKEND CXX COMPILER SPECIFIC HEADERS"
- # exit 1
-
  # DQ (8/14/2010): GNU 4.5 includes some code that will not compile and appears to not be valid C++ code.
  # We fixup a specific GNU 4.5 issues use of "return { __mask };"
    if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
@@ -130,95 +126,13 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
    if test "x$BACKEND_CXX_COMPILER_VENDOR" = "xclang"; then
       cp ${srcdir}/config/rose_specific_clang_atomic ./include-staging/${compilerName}_HEADERS/atomic
    fi
-
-# DQ (2/21/2017): This is only required for C language support (not for C++).
-# DQ (2/4/2017): Need to add required header file to support Intel compiler because we are using 
-# the __INTEL_CLANG_COMPILER macro to use EDG with the Intel header files.
-#  if test "x$BACKEND_CXX_COMPILER_VENDOR" = "xintel"; then
-#     cp ${srcdir}/config/rose_specific_tgmath_clang.h ./include-staging/${compilerName}_HEADERS/tgmath_clang.h
-#  fi
-
-# DQ (1/15/2017): Debugging info to debug clange on Mac OSX.
-AC_MSG_NOTICE([edg_major_version_number = "$edg_major_version_number"])
-AC_MSG_NOTICE([compilerName = "${compilerName}"])
-AC_MSG_NOTICE([BACKEND_CXX_COMPILER_VENDOR = "$BACKEND_CXX_COMPILER_VENDOR"])
-AC_MSG_NOTICE([build_vendor = "$build_vendor"])
-
- # DQ (12/14/2016): We now want this to apply to EDG 4.12 because it does not handle C++11 constexpr 
- # return type of builtin functions properly. Note that this is only an issue when processing file 
- # generated via CPP (or using -E flags to the compiler) header files.
- # DQ (10/10/2016): Make the us of the ROSE generation of builtins dependent on the version of EDG.
- # This is because EDG 4.12 introduces a new mechanism to handle builtin functions and is thus more 
- # complete.  However, it is still missing __builtin_fxsave() functions, though this is not clear 
- # why since they are present in EDG 4.12's tables.
-   if test "x$edg_major_version_number" = "x4"; then
-#     if test "$edg_minor_version_number" -le "11"; then
-         # DQ (9/12/2016): Added use of new support to specify constexpr specific builtin functions (uses an additional file, support added by Robb).
-         # DQ (9/1/2016): Adding generated header file from new support for builtin functions.
-           AC_MSG_NOTICE([now output the builtin generated file into build directory])
-
-         # DQ (2/25/2017): We need to support a different version of the buildin function support for EDG 4.9 because later versions 
-         # of this generated file cause the tests/roseTests/astFileIOTests makefile rule parallelMerge_short and parallelMerge_medium
-         # to fail randomly.  This can only so far be traced to it failing for EDG 4.9, but not EDG 4.12.  So the only practical solution 
-         # is to build a version of the rose_edg_required_macros_and_functions.h file specific for EDG 4.9 while we are in the transition 
-         # from EDG 4.9 to EDG 4.12.  I can't figure out the bug that is in EDG 4.9 and since it is fixed in later versions of EDG it
-         # is not pratical to focus more time on this issue.
-         # ${srcdir}/scripts/builtinLlvmFunctions.pl ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
-         # ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
-           if test "$edg_minor_version_number" -le "9"; then
-              AC_MSG_NOTICE([building EDG 4.9 specific version of rose_generated_builtin_functions.h])
-              ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins_EDG_49.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
-           else
-              AC_MSG_NOTICE([building EDG 4.12 (and later) specific version of rose_generated_builtin_functions.h])
-              ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
-           fi
-           AC_MSG_NOTICE([now use sed to edit the builtins into the ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h file using the file of builtin functions])
-
-         # DQ (1/17/2017): Make this different for Mac OSX and other (Linux) systems.
-         # DQ (1/15/2017): Note that on Mac OSX it is required to use the additional option to specify the backup file name (I think this is the more portable form).
-         # sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
-         # sed -i ".original" "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
-           if test "x$build_vendor" = "xapple"; then
-              sed -i ".original" "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
-           else
-            # DQ (2/25/2017): We need to support a different version of the buildin function support for EDG 4.9 because later versions 
-            # of this generated file cause the tests/roseTests/astFileIOTests makefile rule parallelMerge_short and parallelMerge_medium
-            # to fail randomly.  This can only so far be traced to it failing for EDG 4.9, but not EDG 4.12.  So the only practical solution 
-            # is to build a version of the rose_edg_required_macros_and_functions.h file specific for EDG 4.9 while we are in the transition 
-            # from EDG 4.9 to EDG 4.12.  I can't figure out the bug that is in EDG 4.9 and since it is fixed in later versions of EDG it
-            # is not pratical to focus more time on this issue.
-            # sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
-              if test "$edg_minor_version_number" -le "9"; then
-                 AC_MSG_NOTICE([building EDG 4.9 specific version of rose_edg_required_macros_and_functions.h])
-                 sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions_EDG_49.h"
-                 cp ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions_EDG_49.h ./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h
-              else
-                 AC_MSG_NOTICE([building EDG 4.12 (and later) specific version of rose_edg_required_macros_and_functions.h])
-                 sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
-              fi
-           fi
-
-         # echo "ERROR: Could not identify the EDG minor version number."
-         # exit 1
+   
+   ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
+   if test "x$build_vendor" = "xapple"; then
+     sed -i ".original" "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
    else
-     if test "x$edg_major_version_number" = "x5" || test "x$edg_major_version_number" = "x6"; then
-       AC_MSG_NOTICE([building EDG 5.0 (and later) specific version of rose_generated_builtin_functions.h (same as EDG 4.12)])
-       ${srcdir}/scripts/builtinLlvmFunctions.pl --constexpr=${srcdir}/config/constexpr_builtins.def ${srcdir}/config/Builtins.def > ./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h
-
-       if test "x$build_vendor" = "xapple"; then
-         sed -i ".original" "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
-       else
-         sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
-       fi
-     else
-        AC_MSG_FAILURE([future versions of EDG 7.x and later version builtins maybe determined using a new mechanism that is more complete than older versions (so we don't require our ROSE specific built-in mechanism)])
-     fi
+     sed -i "/REPLACE_ME_WITH_GENERATED_BUILTIN_FUNCTIONS/r./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h" "./include-staging/${compilerName}_HEADERS/rose_edg_required_macros_and_functions.h"
    fi
-
- # "./include-staging/${compilerName}_HEADERS/rose_generated_builtin_functions.h"
-
-# echo "Exiting as a test in GENERATE BACKEND CXX COMPILER SPECIFIC HEADERS"
-# exit 1
 ])
 
 
@@ -277,20 +191,14 @@ compilerNameCxx="`basename ${BACKEND_CXX_COMPILER}`"
        AC_MSG_FAILURE([in SETUP BACKEND CXX COMPILER SPECIFIC REFERENCES: get_compiler_header_dirs failed])
    fi
 
- # echo "compilerHeaderDirs = $compilerHeaderDirs"
- # echo "{compilerNameCxx}_HEADERS = ${compilerNameCxx}_HEADERS"
- # temp_directory_list=`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameCxx}_HEADERS"`
- # echo "temp_directory_list = $temp_directory_list"
- # echo "space"
- # echo "space"
-
- # temp_includeString="{\"${compilerNameCxx}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameCxx}_HEADERS"`, $compilerHeaderDirs"
- # echo "temp_includeString = $temp_includeString"
- # echo "space"
- # echo "space"
-
    includeString="{\"${compilerNameCxx}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameCxx}_HEADERS"`, $compilerHeaderDirs"
-   includeString="$includeString \"/usr/include\"}"
+
+   if test "x$build_vendor" = "xapple"; then
+     xcodeSDKPath=`xcrun --show-sdk-path`
+     includeString="$includeString \"$xcodeSDKPath/usr/include\"}"
+   else
+     includeString="$includeString \"/usr/include\"}"
+   fi
 
    AC_MSG_NOTICE([includeString = "$includeString"])
    AC_DEFINE_UNQUOTED([CXX_INCLUDE_STRING],$includeString,[Include path for backend C++ compiler.])
@@ -371,7 +279,7 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
 # Only GCC 4.6+ supports AVX instructions.
    if test x$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == x4; then
       if test "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER" -ge "6"; then
-   cp ${srcdir}/config/rose_specific_avxintrin.h ./include-staging/${compilerName}_HEADERS/avxintrin.h
+         cp ${srcdir}/config/rose_specific_avxintrin.h ./include-staging/${compilerName}_HEADERS/avxintrin.h
       fi
    fi
 
@@ -410,7 +318,7 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
      EO="-n"
    fi
 
-compilerNameC="`basename $BACKEND_C_COMPILER`"
+   compilerNameC="`basename $BACKEND_C_COMPILER`"
 
  # DQ (11/1/2011): We need this same mechanism for C++'s use of EDG 4.x as we did for EDG 3.3 (but for C code this was not required; and was simpler).
  # Include the directory with the subdirectories of header files
@@ -441,7 +349,12 @@ compilerNameC="`basename $BACKEND_C_COMPILER`"
  # echo "\n\n"
 
    includeString="{\"${compilerNameC}_HEADERS\"`${srcdir}/$ROSE_HOME/config/dirincludes "./include-staging/" "${compilerNameC}_HEADERS"`, $compilerHeaderDirs"
-   includeString="$includeString \"/usr/include\"}"
+   if test "x$build_vendor" = "xapple"; then
+     xcodeSDKPath=`xcrun --show-sdk-path`
+     includeString="$includeString \"$xcodeSDKPath/usr/include\"}"
+   else
+     includeString="$includeString \"/usr/include\"}"
+   fi
 
    AC_MSG_NOTICE([includeString = "$includeString"])
    AC_DEFINE_UNQUOTED([C_INCLUDE_STRING],$includeString,[Include path for backend C compiler.])

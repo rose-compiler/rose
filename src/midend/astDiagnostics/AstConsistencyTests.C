@@ -330,7 +330,7 @@ AstTests::runAllTests(SgProject* sageProject)
   // DQ (9/21/2013): Force this to be skipped where ROSE's AST merge feature is active (since the point of 
   // merge is to share IR nodes, it is pointless to detect sharing and generate output for each identified case).
   // if (sageProject->get_astMerge() == false)
-     if (sageProject->get_astMerge() == false && sageProject->get_Fortran_only() == false)
+     if (sageProject->get_ast_merge() == false && sageProject->get_Fortran_only() == false)
         {
        // DQ (4/2/2012): Added test for unique IR nodes in the AST.
           if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
@@ -821,7 +821,7 @@ AstTests::runAllTests(SgProject* sageProject)
   // DQ (9/21/2013): Force this to be skipped where ROSE's AST merge feature is active (since the point of 
   // detect inconsistancy in parent child relationships and these will be present when astMerge is active.
   // if (sageProject->get_astMerge() == false)
-     if (sageProject->get_astMerge() == false && sageProject->get_Fortran_only() == false)
+     if (sageProject->get_ast_merge() == false && sageProject->get_Fortran_only() == false)
         {
        // DQ (3/19/2012): Added test from Robb for parents of the IR nodes in the AST.
           TestForParentsMatchingASTStructure::test(sageProject);
@@ -967,7 +967,11 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
   // if ( !isSgFile(node) && !isSgProject(node) )
   // if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node))
   // if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node) && !isSgFileList(node) && !isSgDirectory(node))
-     if ( !isSgFile(node) && !isSgProject(node) && !isSgAsmNode(node) && !isSgFileList(node) && !isSgDirectory(node) && !isSgJavaImportStatementList(node) && !isSgJavaClassDeclarationList(node) )
+     bool isFileNode = isSgFile(node) || isSgProject(node) || isSgFileList(node) || isSgDirectory(node) || isSgJavaImportStatementList(node) || isSgJavaClassDeclarationList(node);
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+     isFileNode = isFileNode || isSgAsmNode(node);
+#endif
+     if (!isFileNode)
         {
           Sg_File_Info* fileInfo = node->get_file_info();
           if ( fileInfo == NULL )
@@ -2810,8 +2814,24 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // build a special non-defining declaration for these declarations.
                if (declaration != definingDeclaration)
                   {
-                    printf ("Warning: declaration %p = %s not equal to definingDeclaration = %p \n",
-                         declaration,declaration->sage_class_name(),definingDeclaration);
+                    printf ("declaration = %p (%s)\n",
+                                 declaration,
+                                 declaration->class_name().c_str());
+                    if (definingDeclaration) {
+                      printf ("definingDeclaration = %p (%s)\n",
+                                   definingDeclaration,
+                                   definingDeclaration->class_name().c_str());
+                    }
+                    if (declaration->get_definingDeclaration()) {
+                      printf ("declaration->get_definingDeclaration() = %p (%s)\n",
+                                   declaration->get_definingDeclaration(),
+                                   declaration->get_definingDeclaration()->class_name().c_str());
+                    }
+                    if (declaration->get_firstNondefiningDeclaration()) {
+                      printf ("declaration->get_firstNondefiningDeclaration() = %p (%s)\n",
+                                   declaration->get_firstNondefiningDeclaration(),
+                                   declaration->get_firstNondefiningDeclaration()->class_name().c_str());
+                    }
                   }
                ROSE_ASSERT(declaration == definingDeclaration);
                break;
@@ -4800,7 +4820,9 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                case V_SgSymbolTable:
             // case V_SgFile:
                case V_SgSourceFile:
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
                case V_SgBinaryComposite:
+#endif
                case V_SgUnknownFile:
                case V_SgTypedefSeq:
                case V_SgFunctionParameterTypeList:
@@ -6210,7 +6232,7 @@ TestForProperLanguageAndSymbolTableCaseSensitivity::evaluateInheritedAttribute(S
        // printf ("Found SgSourceFile for %s get_Fortran_only() = %s \n",sourceFile->getFileName().c_str(),sourceFile->get_Fortran_only() ? "true" : "false");
 
           return_inheritedAttribute.sourceFile = sourceFile;
-          if (sourceFile->get_Fortran_only() == true)
+          if (sourceFile->get_Fortran_only() == true || sourceFile->get_Jovial_only() == true)
              {
                return_inheritedAttribute.caseInsensitive = true;
              }
@@ -6228,9 +6250,9 @@ TestForProperLanguageAndSymbolTableCaseSensitivity::evaluateInheritedAttribute(S
                scope->get_startOfConstruct()->display("scope->isCaseInsensitive() incorrectly set");
                ROSE_ASSERT(return_inheritedAttribute.sourceFile != NULL);
                SgSourceFile* sourceFile = inheritedAttribute.sourceFile;
-               if (sourceFile->get_Fortran_only() == true)
+               if (sourceFile->get_Fortran_only() == true || sourceFile->get_Jovial_only() == true)
                   {
-                    printf ("Fortran file %s should have an AST with scopes marked as case insensitive \n",sourceFile->getFileName().c_str());
+                    printf ("Fortran (or Jovial) file %s should have an AST with scopes marked as case insensitive \n",sourceFile->getFileName().c_str());
                   }
                  else
                   {
