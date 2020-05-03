@@ -18,8 +18,8 @@ void checkSpotOptions(LTLOptions& ltlOpt, ParProOptions& parProOpt) {
     // Check if chosen options are available
 #ifndef HAVE_SPOT
     // display error message and exit in case SPOT is not avaiable, but related options are selected
-  if (ltlOptions.activeOptionsRequireSPOTLibrary()
-      || parProOptions.activeOptionsRequireSPOTLibrary()) {
+  if (ltlOpt.activeOptionsRequireSPOTLibrary()
+      || parProOpt.activeOptionsRequireSPOTLibrary()) {
     cerr << "Error: Options selected that require the SPOT library, however SPOT was not selected during configuration." << endl;
     exit(1);
   }
@@ -66,7 +66,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("ltl-in-alphabet",po::value< string >(&ltlOpt.ltlInAlphabet),"Specify an input alphabet used by the LTL formulae. (e.g. \"{1,2,3}\")")
     ("ltl-out-alphabet",po::value< string >(&ltlOpt.ltlOutAlphabet),"Specify an output alphabet used by the LTL formulae. (e.g. \"{19,20,21,22,23,24,25,26}\")")
     ("ltl-driven", po::value< bool >(&ltlOpt.ltlDriven)->default_value(false)->implicit_value(true), "Select mode to verify LTLs driven by SPOT's access to the state transitions.")
-    ("reset-analyzer", po::value< bool >(&ltlOpt.resetAnalyzer)->default_value(true)->implicit_value(true), "Reset the analyzer and therefore the state transition graph before checking the next property. Only affects ltl-driven mode.")
+    ("reset-analyzer", po::value< bool >(&ltlOpt.resetAnalyzer)->default_value(false)->implicit_value(true), "Reset the analyzer and therefore the state transition graph before checking the next property. Only affects ltl-driven mode.")
     ("no-input-input",  po::value< bool >(&ltlOpt.noInputInputTransitions)->default_value(false)->implicit_value(true), "(deprecated) remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [yes|=no]")
     ("std-io-only", po::value< bool >(&ltlOpt.stdIOOnly)->default_value(false)->implicit_value(true), "Bypass and remove all states that are not standard I/O.")
     ("with-counterexamples", po::value< bool >(&ltlOpt.withCounterExamples)->default_value(false)->implicit_value(true), "Add counterexample I/O traces to the analysis results. Applies to reachable assertions and falsified LTL properties (uses RERS-specific alphabet).")
@@ -87,6 +87,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     (",I", po::value< vector<string> >(&ctOpt.includeDirs),"Include directories.")
     (",D", po::value< vector<string> >(&ctOpt.preProcessorDefines),"Define constants for preprocessor.")
     (",std", po::value< string >(&ctOpt.languageStandard),"Compilation standard.")
+    (",rose:ast:read", po::value<std::string>(),"read in binary AST from comma separated list (no spaces)")
     ("edg:no_warnings", po::bool_switch(&ctOpt.edgNoWarningsFlag),"EDG frontend flag.")
     ;
 
@@ -400,6 +401,10 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     }
     // explicitly keep options relevant to the ROSE frontend (white list) 
     else if (currentArg == "-I") {
+      assert(i+1<argc);
+      ++i;
+      continue;
+    } else if (currentArg == "-rose:ast:read") {
       assert(i+1<argc);
       ++i;
       continue;

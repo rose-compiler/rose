@@ -9,27 +9,27 @@ struct LTLOptions : public Options {
   std::string spotVerificationResultsCSVFileName;
   std::string ltlStatisticsCSVFileName;
   std::string ltlFormulaeFile;
-  int propertyNrToCheck;
-  bool counterExamplesWithOutput;
-  bool inifinitePathsOnly;
-  int ioReduction; // experimental
-  bool keepErrorStates;
+  int propertyNrToCheck=-1;
+  bool counterExamplesWithOutput=false;
+  bool inifinitePathsOnly=false;
+  int ioReduction=0; // experimental (threshold value)
+  bool keepErrorStates=false;
   std::string ltlInAlphabet;  // format: "{NUM,NUM,...}"
   std::string ltlOutAlphabet; // format: "{NUM,NUM,...}"
-  bool ltlDriven;
-  bool resetAnalyzer;
-  bool noInputInputTransitions; // deprecated
-  bool stdIOOnly;
-  bool withCounterExamples;
-  bool withAssertCounterExamples;
-  bool withLTLCounterExamples;
+  bool ltlDriven=false;
+  bool resetAnalyzer=false;
+  bool noInputInputTransitions=false; // deprecated
+  bool stdIOOnly=false;
+  bool withCounterExamples=false;
+  bool withAssertCounterExamples=false;
+  bool withLTLCounterExamples=false;
 
   // cegpra LTL options
   struct CEGPra {
     std::string csvStatsFileName;
     int ltlPropertyNr=-1; // between 0..99
-    bool checkAllProperties;
-    int maxIterations;
+    bool checkAllProperties=false;
+    int maxIterations=-1;
     std::string visualizationDotFile;
     bool ltlPropertyNrIsSet();
   } cegpra;
