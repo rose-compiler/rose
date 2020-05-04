@@ -1046,8 +1046,10 @@ ATbool ATermToSageJovialTraversal::traverse_BitItemDescription(ATerm term, SgTyp
 
    if (opt_size) size = *opt_size;
 
-   // TODO - is incorrect (may be closer to a hexadecimal or Hollerith, but used in boolean expressions)
-   type = SageBuilder::buildBoolType(size);
+   // Need help from Leo to create SageBuilder function for SgJovialBitType
+   // TODO: needs symbol created and parent set
+   //       also check size when NULL
+   type = new SgJovialBitType(size);
 
    return ATtrue;
 }

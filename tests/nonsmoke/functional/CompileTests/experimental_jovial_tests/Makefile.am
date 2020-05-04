@@ -13,16 +13,17 @@ JOVIAL_TESTCODES = \
  typename_conv.jov                      \
  1_2_2_non-nested-subroutine_a.jov      \
  1_2_2_non-nested-subroutine_b.jov      \
+ 1_2_2_procedure-module_a.jov           \
+ 1_2_2_procedure-module_b.jov           \
+ 1_2_2_procedure-module_e.jov           \
+ 1_2_2_procedure-module_f.jov           \
+ 2_1_1_4_bit_type.jov                   \
  5_2_logical_continuation_a.jov         \
  5_2_logical_continuation_b.jov         \
  6_1_ptr_dereference.jov                \
  6_3_5_shift_function.jov
 
 # status_enumval.jov                     \
-# 1_2_2_procedure-module_a.jov           \
-# 1_2_2_procedure-module_b.jov           \
-# 1_2_2_procedure-module_e.jov           \
-# 1_2_2_procedure-module_f.jov           \
 # 1_2_3_main-program-module_a.jov        \
 # 1_2_3_main-program-module_d.jov        \
 # 1_2_3_program-body_a.jov               \

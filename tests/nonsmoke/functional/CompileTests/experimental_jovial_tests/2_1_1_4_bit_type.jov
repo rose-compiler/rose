@@ -1,0 +1,13 @@
+START
+
+PROGRAM main ;
+BEGIN
+  ITEM bf B 16 ;
+
+  bf = TRUE ;
+  bf = 4B'FFEE' ;
+  bf = bf AND FALSE ;
+
+END
+
+TERM

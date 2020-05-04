@@ -80,6 +80,7 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           void unparseTypeSize (SgType* type,       SgUnparse_Info& info);
           void unparseTypeSize (SgTypeFixed* type,  SgUnparse_Info& info);
           void unparseTypeSize (SgTypeString* type, SgUnparse_Info& info);
+          void unparseTypeSize (SgJovialBitType* type, SgUnparse_Info& info);
 
 #if 0
           virtual void unparseBaseClass(SgBaseClass* base, SgUnparse_Info& info);
