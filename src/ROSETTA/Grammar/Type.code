@@ -1050,6 +1050,11 @@ HEADER_ADA_FLOAT_TYPE_START
 
 HEADER_ADA_FLOAT_TYPE_END
 
+// Rasmussen (4/4/2020): Added SgJovialBitType for Jovial. This type participates in logical
+//                       operations with literals TRUE and FALSE.
+HEADER_JOVIAL_BIT_TYPE_START
+          SgName get_name() const;
+HEADER_JOVIAL_BIT_TYPE_END
 
 // Rasmussen (2/19/2020): Added SgTypedFixed for Jovial. Don't really know what to do here.
 HEADER_TYPE_FIXED_TYPE_START
@@ -6719,6 +6724,16 @@ SgAdaFloatType::get_mangled(void) const {
      
 SOURCE_ADA_FLOAT_TYPE_END
 
+SOURCE_JOVIAL_BIT_TYPE_START
+SgName
+SgJovialBitType::get_mangled(void) const {
+    string name("bt'");
+    name.append(get_size()->unparseToString());
+    name.append("'");
+    return SgName(name);
+}
+SOURCE_JOVIAL_BIT_TYPE_END
+
 
 SOURCE_TYPE_ELLIPSE_TYPE_START
 SgName
@@ -6727,7 +6742,7 @@ $CLASSNAME::get_mangled (void) const
      ROSE_ASSERT(this != NULL);
      return SgName ("_E_");
    }
- SOURCE_TYPE_ELLIPSE_TYPE_END
+SOURCE_TYPE_ELLIPSE_TYPE_END
 
 
 
@@ -8748,6 +8763,24 @@ SgAdaFloatType::createType (SgExpression* digits, SgAdaRangeConstraint* range, S
 
 SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE_END
 
+SOURCE_CREATE_TYPE_FOR_JOVIAL_BIT_TYPE_START
+SgJovialBitType*
+SgJovialBitType::createType (SgExpression* size, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgJovialBitType  proto(size);
+  SgName           name = proto.get_mangled();
+  SgType*          ty   = get_globalTypeTable()->lookup_type(name);
+
+  if (SgJovialBitType* unified = isSgJovialBitType(ty))
+    return unified;
+
+  ROSE_ASSERT(ty == NULL);
+  SgJovialBitType* res = new SgJovialBitType(size);
+
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+SOURCE_CREATE_TYPE_FOR_JOVIAL_BIT_TYPE_END
 
 // Rasmussen (2/19/2020): Added SgTypedFixed (primitive type in Jovial)
 SOURCE_CREATE_TYPE_FOR_TYPE_FIXED_START

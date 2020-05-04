@@ -448,6 +448,8 @@ SgIntrinsicSymbol
 SgIsOp
 SgIsNotOp
 SgIorAssignOp
+SgJovialBitType
+SgJovialTableType
 SgJovialCompoolStatement
 SgJovialForThenStatement
 SgJovialDefineDeclaration
@@ -914,7 +916,6 @@ SgJavaQualifiedType
 SgClassExp
 SgJavaUnionType
 SgJavaParameterType
-SgJovialTableType
 SgAsyncStmt
 SgFinishStmt
 SgAtStmt
