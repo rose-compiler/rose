@@ -823,14 +823,14 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         SAWYER_MESG(logger[DEBUG])<<"pointer-array access."<<endl;
         if(pstate2.varExists(arrayVarId)) {
           arrayPtrValue=readFromMemoryLocation(estate.label(),&pstate2,arrayVarId); // pointer value (without index)
-          SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue read from memory, arrayPtrValue:"<<arrayPtrValue.toString(_variableIdMapping)<<endl;
+          SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue read from memory (in state), arrayPtrValue:"<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
             logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<": value not a pointer value: "<<arrayPtrValue.toString()<<endl;
             logger[ERROR]<<estate.toString(_variableIdMapping)<<endl;
             exit(1);
           }
         } else {
-          //cerr<<"Error: pointer variable does not exist in PState: "<<arrayVarId->toString()<<endl  ;
+          //cerr<<"Error: pointer variable does not exist in PState: "<<arrayVarId.toString()<<endl  ;
           // TODO PRECISION 2
           // variable may have been not written because abstraction is too coarse (subsummed in write to top)
           // => reading from anywhere, returning any value
@@ -845,7 +845,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
       AbstractValue indexExprResultValue=indexExprResult.value();
       AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue);
       if(arrayPtrPlusIndexValue.isNullPtr()) {
-        recordDefinitiveViolatingLocation(ANALYSIS_NULL_POINTER,estate.label());
+        recordDefinitiveViolatingLocation(ANALYSIS_NULL_POINTER,estate.label()); // NP_SOUNDNESS
         // there is no state following a definitive null pointer
         // dereference. An error-state recording this property is
         // created to allow analysis of errors on the programs
@@ -863,8 +863,9 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           //logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<" evalArrayReferenceOp: pointer is top. Pointer abstraction too coarse."<<endl;
           // TODO: PRECISION 1
           res.result=CodeThorn::Top();
-          recordPotentialNullPointerDereferenceLocation(estate.label());
-          if(_analyzer->getAbstractionMode()!=3) recordPotentialOutOfBoundsAccessLocation(estate.label());
+          recordPotentialNullPointerDereferenceLocation(estate.label()); // NP_SOUNDNESS
+          //if(_analyzer->getAbstractionMode()!=3) recordPotentialOutOfBoundsAccessLocation(estate.label());
+          recordPotentialViolatingLocation(ANALYSIS_UNINITIALIZED,estate.label()); // UNINIT_SOUNDNESS
           resultList.push_back(res);
           return resultList;
         } else {
@@ -879,7 +880,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
         switch(mode) {
         case MODE_VALUE:
           res.result=readFromMemoryLocation(estate.label(),&pstate2,arrayPtrPlusIndexValue);
-          SAWYER_MESG(logger[DEBUG])<<"retrieved array element value:"<<res.result<<endl;
+          SAWYER_MESG(logger[TRACE])<<"retrieved array element value:"<<res.result<<endl;
           return listify(res);
         case MODE_ADDRESS:
           res.result=arrayPtrPlusIndexValue;
@@ -939,7 +940,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           //cout<<"DEBUG: array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
           //cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
           //cerr<<"AST: "<<node->unparseToString()<<endl;
-          recordPotentialViolatingLocation(ANALYSIS_NULL_POINTER,estate.label());
+          recordPotentialViolatingLocation(ANALYSIS_NULL_POINTER,estate.label()); // NP_SOUNDNESS
           // continue after potential out-of-bounds access (assume any value can have been read)
           AbstractValue val=AbstractValue::createTop();
           res.result=val;
@@ -1011,6 +1012,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
 list<SingleEvalResultConstInt> ExprAnalyzer::evalCastOp(SgCastExp* node,
                                                         SingleEvalResultConstInt operandResult,
                                                         EState estate, EvalMode mode) {
+  // TODO: truncation of values
   SingleEvalResultConstInt res;
   res.init(estate,operandResult.result);
   return listify(res);
@@ -1282,12 +1284,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueExp(SgNode* node, EState 
       SAWYER_MESG(logger[DEBUG])<<"rhs-val: "<<(*riter).result.toString()<<endl;
       list<SingleEvalResultConstInt> intermediateResultList;
       if(SgDotExp* dotExp=isSgDotExp(node)) {
-	intermediateResultList=evalDotOp(dotExp,*liter,*riter,estate,MODE_ADDRESS);
+        intermediateResultList=evalDotOp(dotExp,*liter,*riter,estate,MODE_ADDRESS);
       } else if(SgArrowExp* arrowExp=isSgArrowExp(node)) {
-	intermediateResultList=evalArrowOp(arrowExp,*liter,*riter,estate,MODE_ADDRESS);
+        intermediateResultList=evalArrowOp(arrowExp,*liter,*riter,estate,MODE_ADDRESS);
       } else {
-	cerr<<"Internal error: ExprAnalyzer::evalLValueExp: wrong oeprator node type: "<<node->class_name()<<endl;
-	exit(1);
+        cerr<<"Internal error: ExprAnalyzer::evalLValueExp: wrong oeprator node type: "<<node->class_name()<<endl;
+        exit(1);
       }
       // move elements from intermediateResultList to resultList
       resultList.splice(resultList.end(), intermediateResultList);
@@ -1679,19 +1681,32 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalFunctionCallMalloc(SgFunctionCa
     list<SingleEvalResultConstInt> resList2;
     memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(ss.str(),memoryRegionSize);
     AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
+    logger[TRACE]<<"function call malloc: allocated at: "<<allocatedMemoryPtr.toString()<<endl;
     res.init(estate,allocatedMemoryPtr);
     //cout<<"DEBUG: evaluating function call malloc:"<<funCall->unparseToString()<<endl;
     ROSE_ASSERT(allocatedMemoryPtr.isPtr());
     //cout<<"Generated malloc-allocated mem-chunk pointer is OK."<<endl;
     // create resList with two states now
     resList2.push_back(res);
-
 #if 0
     // (ii) add memory allocation case: null pointer (allocation failed)
     SingleEvalResultConstInt resNullPtr;
     AbstractValue nullPtr=AbstractValue::createNullPtr();
     resNullPtr.init(estate,nullPtr);
     resList2.push_back(resNullPtr);
+#endif
+#if 0
+    // TODO: update of state (not allowed here)
+    // generate representation of allocated memory (we only have the address so far)
+    if(memoryRegionSize>0 && memoryRegionSize<=_analyzer->getOptionsRef().maxExactMemorySizeRepresentation) {
+      // reserve memory
+      for(int i=0;i<memoryRegionSize;++i) {
+        AbstractValue arrayElemAddr=AbstractValue::createAddressOfArrayElement(memLocVarId,AbstractValue::createIntegerValue(CodeThorn::BITYPE_UINT,i));
+        AbstractValue undefVal=AbstractValue::createUndefined();
+        PState* pstate=estate.pstate();
+        pstate->writeToMemoryLocation(arrayElemAddr,undefVal);
+      }
+    }
 #endif
     return resList2;
   } else {
@@ -1898,17 +1913,15 @@ AbstractValue ExprAnalyzer::readFromMemoryLocation(Label lab, const PState* psta
   // inspect memory location here
   if(memLoc.isNullPtr()) {
     recordDefinitiveNullPointerDereferenceLocation(lab);
-    return AbstractValue::createBot();
+    //return AbstractValue::createBot();
+    return AbstractValue::createTop();
   }
   if(memLoc.isTop()) {
     recordPotentialNullPointerDereferenceLocation(lab);
-    if(_analyzer->getAbstractionMode()!=3)
-      recordPotentialOutOfBoundsAccessLocation(lab);
-    recordPotentialUninitializedAccessLocation(lab);
+    recordPotentialOutOfBoundsAccessLocation(lab);
+    recordPotentialViolatingLocation(ANALYSIS_UNINITIALIZED,lab); // UNINIT_SOUNDNESS
   } else if(!pstate->memLocExists(memLoc)) {
-    if(_analyzer->getAbstractionMode()!=3)
-      recordPotentialOutOfBoundsAccessLocation(lab);
-    
+    //recordPotentialOutOfBoundsAccessLocation(lab);
     recordPotentialUninitializedAccessLocation(lab);
   }
   AbstractValue val=pstate->readFromMemoryLocation(memLoc);

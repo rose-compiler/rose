@@ -1019,7 +1019,8 @@ int main( int argc, char * argv[] ) {
         }
         if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
           string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
-          cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
+          if(!ctOpt.quiet)
+            cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
           locations.writeResultFile(fileName,analyzer->getLabeler());
         }
       }
@@ -1027,7 +1028,8 @@ int main( int argc, char * argv[] ) {
 
     if(ctOpt.analyzedFunctionsCSVFileName.size()>0) {
       string fileName=ctOpt.analyzedFunctionsCSVFileName;
-      cout<<"Writing list of analyzed functions to file "<<fileName<<endl;
+      if(!ctOpt.quiet)
+        cout<<"Writing list of analyzed functions to file "<<fileName<<endl;
       string s=analyzer->analyzedFunctionsToString();
       if(!CppStdUtilities::writeFile(fileName, s)) {
         logger[ERROR]<<"Cannot create file "<<fileName<<endl;
@@ -1036,7 +1038,8 @@ int main( int argc, char * argv[] ) {
 
     if(ctOpt.analyzedFilesCSVFileName.size()>0) {
       string fileName=ctOpt.analyzedFilesCSVFileName;
-      cout<<"Writing list of analyzed files to file "<<fileName<<endl;
+      if(!ctOpt.quiet)
+        cout<<"Writing list of analyzed files to file "<<fileName<<endl;
       string s=analyzer->analyzedFilesToString();
       if(!CppStdUtilities::writeFile(fileName, s)) {
         logger[ERROR]<<"Cannot create file "<<fileName<<endl;
@@ -1045,7 +1048,8 @@ int main( int argc, char * argv[] ) {
 
     if(ctOpt.externalFunctionsCSVFileName.size()>0) {
       string fileName=ctOpt.externalFunctionsCSVFileName;
-      cout<<"Writing list of external functions to file "<<fileName<<endl;
+      if(!ctOpt.quiet)
+        cout<<"Writing list of external functions to file "<<fileName<<endl;
       string s=analyzer->externalFunctionsToString();
       if(!CppStdUtilities::writeFile(fileName, s)) {
         logger[ERROR]<<"Cannot create file "<<fileName<<endl;
@@ -1481,7 +1485,7 @@ int main( int argc, char * argv[] ) {
         write_file("transitiongraph2.dot", dotFile3);
         cout << "generated transitiongraph2.dot."<<endl;
 
-        string datFile1=(analyzer->getTransitionGraph())->toString();
+        string datFile1=(analyzer->getTransitionGraph())->toString(analyzer->getVariableIdMapping());
         write_file("transitiongraph1.dat", datFile1);
         cout << "generated transitiongraph1.dat."<<endl;
 
