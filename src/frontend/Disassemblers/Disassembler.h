@@ -1,7 +1,6 @@
 #ifndef ROSE_DISASSEMBLER_H
 #define ROSE_DISASSEMBLER_H
-
-#include <rosePublicConfig.h>
+#include <featureTests.h>
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 #include "BinaryCallingConvention.h"
@@ -185,7 +184,8 @@ public:
 
     /** List of names recognized by @ref lookup.
      *
-     *  Returns the list of names that the @ref lookup method recognizes. */
+     *  Returns the list of names that the @ref lookup method recognizes. These are the disassemblers that are actually
+     *  enabled in this configuration of ROSE. */
     static std::vector<std::string> isaNames();
 
     /** Finds a suitable disassembler. Looks through the list of registered disassembler instances (from most recently

@@ -1974,7 +1974,7 @@ HEADER_BASECLASS_MODIFIER_END
 HEADER_ADA_TYPE_CONSTRAINT_START
           SgAdaTypeConstraint (const SgAdaTypeConstraint& X);
           SgAdaTypeConstraint& operator= (const SgAdaTypeConstraint& X);
-          virtual std::string displayString() const { ROSE_ASSERT(false); };
+          virtual std::string displayString() const { ASSERT_not_reachable("Pirkelbaur 2020-04-02"); };
 HEADER_ADA_TYPE_CONSTRAINT_END
 
 
@@ -19431,6 +19431,8 @@ SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
   // DQ (12/26/2019): When supporting multiple files, the defining declaration in a named type must refer to the 
   // defining declaration associated with the appropriate file (to be unparsed correctly).
      p_declstatement_associated_with_type = X.p_declstatement_associated_with_type;
+
+     p_user_defined_literal = X.p_user_defined_literal;
 
      return *this;
    }

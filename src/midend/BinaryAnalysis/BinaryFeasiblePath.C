@@ -697,6 +697,13 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                    "Exploration along a path stops when any of these limits is met. The default maximum path length is " +
                    StringUtility::plural(settings.maxPathLength, "instructions") + "."));
 
+    sg.insert(Switch("max-expression-size")
+              .argument("n", nonNegativeIntegerParser(settings.maxExprSize))
+              .doc("Maximum size of symbolic expressions, measured in number of nodes of the expression tree, before the "
+                   "expression is replaced with a new free variable. This can make the analysis faster but less precise. "
+                   "See also, @s{smt-timeout}.  The default is " +
+                   boost::lexical_cast<std::string>(settings.maxExprSize) + "."));
+
     sg.insert(Switch("cycle-k")
               .argument("coefficent", realNumberParser(settings.kCycleCoefficient))
               .doc("When the algorithm encounters a vertex which has already been visited by the current path, then the "
@@ -746,6 +753,14 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                .doc("When analyzing paths for model checking, use this SMT solver.  This switch overrides the general, "
                     "global SMT solver. Since an SMT solver is required for model checking, in the absence of any specified "
                     "solver the \"best\" solver is used.  The default solver is \"" + settings.solverName + "\"."));
+
+    sg.insert(Switch("smt-timeout")
+              .argument("seconds", realNumberParser(settings.smtTimeout))
+              .doc("Amount of time in seconds (fractional values allowed) that the SMT solver is allowed to work on any "
+                   "particular system of equations.  See also, @s{max-expression-size}. The default is " +
+                   (settings.smtTimeout && settings.smtTimeout->count() > 0 ?
+                    boost::lexical_cast<std::string>(*settings.smtTimeout) + " seconds" :
+                    std::string("no limit")) + "."));
 
     CommandLine::insertBooleanSwitch(sg, "null-derefs", settings.nullDeref.check,
                                      "Check for null dereferences along the paths.");
@@ -823,13 +838,13 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
         // Where are return values stored?  FIXME[Robb Matzke 2015-12-01]: We need to support returning multiple values. We
         // should be using the new calling convention analysis to detect these.
         ASSERT_require(REG_RETURN_.isEmpty());
-        const RegisterDescriptor *r = NULL;
-        if ((r = registers_->lookup("rax")) || (r = registers_->lookup("eax")) || (r = registers_->lookup("ax"))) {
-            REG_RETURN_ = *r;
-        } else if ((r = registers_->lookup("d0"))) {
-            REG_RETURN_ = *r;                           // m68k also typically has other return registers
-        } else if ((r = registers_->lookup("r3"))) {
-            REG_RETURN_ = *r;                           // PowerPC also returns via r4
+        RegisterDescriptor r;
+        if ((r = registers_->find("rax")) || (r = registers_->find("eax")) || (r = registers_->find("ax"))) {
+            REG_RETURN_ = r;
+        } else if ((r = registers_->find("d0"))) {
+            REG_RETURN_ = r;                            // m68k also typically has other return registers
+        } else if ((r = registers_->find("r3"))) {
+            REG_RETURN_ = r;                            // PowerPC also returns via r4
         } else {
             ASSERT_not_implemented("function return value register is not implemented for this ISA/ABI");
         }
@@ -837,6 +852,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
 
     // Create the RiscOperators and Dispatcher.
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, this, path, pathProcessor);
+    ops->trimThreshold(settings_.maxExprSize);
     ops->initialState(ops->currentState()->clone());
     ops->nullPtrSolver(solver);
     for (size_t i = 0; i < settings().ipRewrite.size(); i += 2) {
@@ -885,8 +901,8 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
     }
 
     // Direction flag (DF) is always set
-    if (const RegisterDescriptor *REG_DF = cpu->get_register_dictionary()->lookup("df"))
-        ops->writeRegister(*REG_DF, ops->boolean_(true));
+    if (const RegisterDescriptor REG_DF = cpu->get_register_dictionary()->findOrThrow("df"))
+        ops->writeRegister(REG_DF, ops->boolean_(true));
 
     initialState_ = ops->currentState()->clone();
 }
@@ -1593,6 +1609,8 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
         ASSERT_always_not_null(solver);
         solver->errorIfReset(true);
         solver->name("FeasiblePath " + solver->name());
+        if (settings_.smtTimeout)
+            solver->timeout(*settings_.smtTimeout);
 #if 1 // DEBUGGING [Robb Matzke 2018-11-14]
         solver->memoization(false);
 #endif

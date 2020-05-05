@@ -179,7 +179,7 @@ set_target_properties(ROSE_DLL PROPERTIES
 install(TARGETS ROSE_DLL DESTINATION ${ROSE_LIB_DIR_NAME})
 install(
   FILES
-    rose.h roseInternal.h rose_msvc.h msvc_stdint.h
+    featureTests.h rose.h roseInternal.h rose_msvc.h msvc_stdint.h
     ${CMAKE_BINARY_DIR}/rosePublicConfig.h
   DESTINATION ${INCLUDE_INSTALL_DIR})
 

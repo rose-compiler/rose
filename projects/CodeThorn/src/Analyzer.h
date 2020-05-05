@@ -48,6 +48,8 @@
 #include "AstNodeInfo.h"
 #include "SgTypeSizeMapping.h"
 #include "CallString.h"
+#include "CodeThornOptions.h"
+#include "LTLOptions.h"
 
 namespace CodeThorn {
 
@@ -294,7 +296,10 @@ namespace CodeThorn {
     std::string analyzedFilesToString();
     void recordExternalFunctionCall(SgFunctionCallExp* funCall);
     std::string externalFunctionsToString();
-
+    void setOptions(CodeThornOptions options);
+    CodeThornOptions& getOptionsRef();
+    void setLtlOptions(LTLOptions ltlOptions);
+    LTLOptions& getLtlOptionsRef();
   protected:
     // this function is protected to ensure it is not used from outside. It is supposed to be used
     // only for internal timing managing the max-time option resource.
@@ -431,13 +436,13 @@ namespace CodeThorn {
     long int _maxSecondsForcedTop;
 
     VariableValueMonitor variableValueMonitor;
-
+    CodeThornOptions _ctOpt;
+    LTLOptions _ltlOpt;
     bool _treatStdErrLikeFailedAssert;
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
     bool _topifyModeActive;
     int _abstractionMode=0; // 0=no abstraction, >=1: different abstraction modes.
-    bool _explicitArrays;
 
     int _iterations;
     int _approximated_iterations;
@@ -474,7 +479,7 @@ namespace CodeThorn {
     AnalyzedFunctionsContainerType analyzedFunctions;
     typedef std::unordered_set<SgFunctionCallExp*> ExternalFunctionsContainerType;
     ExternalFunctionsContainerType externalFunctions;
-    
+    //xxx
   private:
     //std::unordered_map<int,const EState*> _summaryStateMap;
     std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;

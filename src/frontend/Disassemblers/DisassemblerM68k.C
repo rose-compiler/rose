@@ -4848,8 +4848,8 @@ DisassemblerM68k::init()
         regdict = RegisterDictionary::dictionary_m68000();
     }
     registerDictionary(regdict);
-    REG_IP = *registerDictionary()->lookup("pc");
-    REG_SP = *registerDictionary()->lookup("a7");
+    REG_IP = registerDictionary()->findOrThrow("pc");
+    REG_SP = registerDictionary()->findOrThrow("a7");
 
     p_proto_dispatcher = InstructionSemantics2::DispatcherM68k::instance();
     p_proto_dispatcher->addressWidth(32);

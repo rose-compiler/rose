@@ -167,6 +167,15 @@ public:
         return nBits() != 0;
     }
 
+    // The following trickery is to have something like "explicit operator bool" before C++11
+private:
+    typedef void(RegisterDescriptor::*unspecified_bool)() const;
+    void this_type_does_not_support_comparisons() const {}
+public:
+    operator unspecified_bool() const {
+        return isEmpty() ? 0 : &RegisterDescriptor::this_type_does_not_support_comparisons;
+    }
+
     /** Compare two descriptors.
      *
      *  Descriptors are sorted by major and minor numbers. If two descriptors have the same major and minor numbers then this

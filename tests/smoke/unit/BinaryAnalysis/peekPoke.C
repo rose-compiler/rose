@@ -41,7 +41,7 @@ main(int argc, char *argv[]) {
 
     // Create the machine state
     const RegisterDictionary *registers = RegisterDictionary::dictionary_amd64();
-    const RegisterDescriptor EAX = *registers->lookup("eax");
+    const RegisterDescriptor EAX = registers->findOrThrow("eax");
     SmtSolverPtr solver;
     BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registers, solver);
     ASSERT_always_not_null(ops);
@@ -68,7 +68,7 @@ main(int argc, char *argv[]) {
     ASSERT_always_require2(s0.str() == s1.str(), s1.str());
 
     // Peek at parts of the state that don't exist
-    const RegisterDescriptor EBX = *registers->lookup("ebx");
+    const RegisterDescriptor EBX = registers->findOrThrow("ebx");
     BaseSemantics::SValuePtr ebx = ops->undefined_(32);
     BaseSemantics::SValuePtr v2 = ops->peekRegister(EBX, ebx);
     ASSERT_always_not_null(v2);
@@ -83,7 +83,7 @@ main(int argc, char *argv[]) {
     ASSERT_always_require2(s0.str() == s2.str(), s2.str());
 
     // Peek at parts of the state that partly exist.
-    const RegisterDescriptor RAX = *registers->lookup("rax");
+    const RegisterDescriptor RAX = registers->findOrThrow("rax");
     BaseSemantics::SValuePtr zero64 = ops->number_(64, 0);
     BaseSemantics::SValuePtr v3 = ops->peekRegister(RAX, zero64);
     ASSERT_always_not_null(v3);

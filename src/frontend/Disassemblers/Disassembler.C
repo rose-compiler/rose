@@ -1,19 +1,19 @@
-#include <rosePublicConfig.h>
+#include <featureTests.h>
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-#include "sage3basic.h"
-#include "Disassembler.h"
+#include <sage3basic.h>
+#include <Disassembler.h>
 
-#include "Assembler.h"
-#include "AssemblerX86.h"
-#include "AsmUnparser_compat.h"
-#include "Diagnostics.h"
-#include "DisassemblerPowerpc.h"
-#include "DisassemblerArm.h"
-#include "DisassemblerM68k.h"
-#include "DisassemblerMips.h"
-#include "DisassemblerX86.h"
-#include "BinaryLoader.h"
-#include "stringify.h"
+#include <Assembler.h>
+#include <AssemblerX86.h>
+#include <AsmUnparser_compat.h>
+#include <Diagnostics.h>
+#include <DisassemblerPowerpc.h>
+#include <DisassemblerArm.h>
+#include <DisassemblerM68k.h>
+#include <DisassemblerMips.h>
+#include <DisassemblerX86.h>
+#include <BinaryLoader.h>
+#include <stringify.h>
 
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
@@ -25,9 +25,6 @@ namespace BinaryAnalysis {
 
 using namespace Diagnostics;
 using namespace StringUtility;
-
-/* See header file for full documentation of all methods in this file. */
-
 
 /* Mutex for class-wide operations (such as adjusting Disassembler::disassemblers) */
 static boost::mutex class_mutex;
@@ -81,7 +78,9 @@ operator<<(std::ostream &o, const Disassembler::Exception &e)
 void
 Disassembler::initclassHelper()
 {
-    registerSubclass(new DisassemblerArm());
+#ifdef ROSE_ENABLE_ASM_A64
+    registerSubclass(new DisassemblerArm(DisassemblerArm::ARCH_ARM64));
+#endif
     registerSubclass(new DisassemblerPowerpc(powerpc_32));
     registerSubclass(new DisassemblerPowerpc(powerpc_64));
     registerSubclass(new DisassemblerM68k(m68k_freescale_isab));
@@ -178,7 +177,9 @@ std::vector<std::string>
 Disassembler::isaNames() {
     std::vector<std::string> v;
     v.push_back("amd64");
-    v.push_back("arm");
+#ifdef ROSE_ENABLE_ASM_A64
+    v.push_back("a64");         // ARM AArch64 A64
+#endif
     v.push_back("coldfire");
     v.push_back("i386");
     v.push_back("m68040");
@@ -199,8 +200,12 @@ Disassembler::lookup(const std::string &name)
         BOOST_FOREACH (const std::string &name, isaNames())
             std::cout <<"  " <<name <<"\n";
         exit(0);
-    } else if (name == "arm") {
-        retval = new DisassemblerArm();
+    } else if (name == "a64") {
+#ifdef ROSE_ENABLE_ASM_A64
+        retval = new DisassemblerArm(DisassemblerArm::ARCH_ARM64);
+#else
+        throw Exception(name + " disassembler is not enabled in this ROSE configuration");
+#endif
     } else if (name == "ppc32") {
         retval = new DisassemblerPowerpc(powerpc_32);
     } else if (name == "ppc64") {

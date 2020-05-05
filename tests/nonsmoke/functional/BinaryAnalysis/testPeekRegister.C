@@ -18,7 +18,7 @@ main() {
     RegisterStateGenericPtr registers = RegisterStateGeneric::promote(ops->currentState()->registerState());
 
     // Store some things in the register state
-    const RegisterDescriptor RIP = *regdict->lookup("rip");
+    const RegisterDescriptor RIP = regdict->findOrThrow("rip");
     RegisterDescriptor bit1 = RegisterDescriptor(RIP.majorNumber(), RIP.minorNumber(), 1, 1);
     RegisterDescriptor bit3 = RegisterDescriptor(RIP.majorNumber(), RIP.minorNumber(), 3, 1);
     registers->writeRegister(bit1, ops->boolean_(true), ops.get());

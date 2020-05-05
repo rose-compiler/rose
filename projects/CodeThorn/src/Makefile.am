@@ -124,9 +124,14 @@ CODETHORN_HEADER_FILES=\
   NormalizationInliner.h \
   NormalizationOp.h \
   NumberIntervalLattice.h \
+  Options.h \
+  CodeThornOptions.h \
+  LTLOptions.h \
+  ltlthorn-lib/ParProOptions.h \
   PASolver1.h \
   PointerAnalysisInterface.h \
   PragmaHandler.h \
+  PredefinedSemanticFunctions.h \
   ProgramAbstractionLayer.h \
   ProgramInfo.h \
   ProgramLocationsReport.h \
@@ -216,6 +221,9 @@ CODETHORN_SOURCE_FILES=\
   LanguageRestrictor.C \
   Lattice.C \
   LoopInfo.C \
+  CodeThornOptions.C \
+  LTLOptions.C \
+  ltlthorn-lib/ParProOptions.C \
   LVAnalysis.C \
   LVAstAttribute.C \
   LVAstAttributeInterface.C \
@@ -231,6 +239,7 @@ CODETHORN_SOURCE_FILES=\
   PASolver1.C \
   PointerAnalysisInterface.C \
   PragmaHandler.C \
+  PredefinedSemanticFunctions.C \
   ProgramAbstractionLayer.C \
   ProgramInfo.C \
   ProgramLocationsReport.C \
@@ -467,7 +476,7 @@ if ROSE_WITH_SPOT
 addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lboost_program_options
 addressTakenAnalysis_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
-addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
+addressTakenAnalysis_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn -lboost_program_options
 endif
 addressTakenAnalysis_CXXFLAGS = -fopenmp -Wall -O3
 addressTakenAnalysis_DEPENDENCIES=libcodethorn.la
