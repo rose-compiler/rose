@@ -42,20 +42,6 @@ std::string unparseX86Register(SgAsmInstruction*, Rose::BinaryAnalysis::Register
                                const Rose::BinaryAnalysis::RegisterDictionary*);
 
 /*-------------------------------------------------------------------------------------------------------------------------------
- * ARM
- *-------------------------------------------------------------------------------------------------------------------------------*/
-enum ArmSignForExpressionUnparsing 
-{
-  arm_sign_none,
-  arm_sign_plus,
-  arm_sign_minus
-} ;
-
-std::string unparseArmMnemonic(SgAsmArmInstruction*);
-std::string unparseArmExpression(SgAsmExpression*, const Rose::BinaryAnalysis::AsmUnparser::LabelMap*,
-                                 const Rose::BinaryAnalysis::RegisterDictionary*);
-
-/*-------------------------------------------------------------------------------------------------------------------------------
  * PowerPC
  *-------------------------------------------------------------------------------------------------------------------------------*/
 

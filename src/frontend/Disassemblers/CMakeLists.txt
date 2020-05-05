@@ -5,7 +5,7 @@ add_library(roseDisassemblers OBJECT
   AssemblerX86Init7.C AssemblerX86Init8.C AssemblerX86Init9.C
   AssemblerX86Init.C DisassemblerArm.C Disassembler.C DisassemblerMips.C
   DisassemblerM68k.C DisassemblerPowerpc.C DisassemblerX86.C
-  Registers.C RegisterDescriptor.C SgAsmArmInstruction.C SgAsmBlock.C SgAsmExecutableFileFormat.C SgAsmExpression.C
+  Registers.C RegisterDescriptor.C SgAsmArm64Instruction.C SgAsmBlock.C SgAsmExecutableFileFormat.C SgAsmExpression.C
   SgAsmFloatValueExpression.C SgAsmFunction.C SgAsmInstruction.C
   SgAsmIntegerValueExpression.C SgAsmInterpretation.C SgAsmType.C
   SgAsmM68kInstruction.C SgAsmMipsInstruction.C SgAsmPowerpcInstruction.C
@@ -21,6 +21,6 @@ install(
     DisassemblerArm.h DisassemblerM68k.h
     DisassemblerMips.h DisassemblerPowerpc.h DisassemblerX86.h
     InstructionEnumsM68k.h x86InstructionProperties.h
-    InstructionEnumsArm.h InstructionEnumsMips.h InstructionEnumsX86.h
+    InstructionEnumsArm64.h InstructionEnumsMips.h InstructionEnumsX86.h
     Registers.h RegisterDescriptor.h InstructionEnumsPowerpc.h RegisterParts.h
   DESTINATION ${INCLUDE_INSTALL_DIR})
