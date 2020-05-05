@@ -1196,9 +1196,9 @@ ROSE_SUPPORT_OFP
 AC_PROG_SWIG(2.0.0)
 SWIG_ENABLE_CXX
 #AS (10/23/07): introduced conditional use of javaport
-AC_ARG_WITH(javaport,
+AC_ARG_WITH([javaport],
    [  --with-javaport ... Enable generation of Java bindings for ROSE using Swig],
-   [with_javaport=yes],
+   [with_javaport=$withval],
    [with_javaport=no])
 AM_CONDITIONAL(ENABLE_JAVAPORT,test "$with_javaport" = yes)
 
