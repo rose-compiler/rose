@@ -261,6 +261,7 @@ EXTRA_DIST = CMakeLists.txt extra.docs
 
 # Header files that need to be included in the distribution
 pkginclude_HEADERS = \
+     featureTests.h \
      rose.h \
      roseInternal.h \
      rose_msvc.h \

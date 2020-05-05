@@ -520,7 +520,7 @@ public:
     /** Determine whether a specimen is an RBA file.
      *
      *  Returns true if the name looks like a ROSE Binary Analysis file. Such files are not intended to be passed to ROSE's
-     *  @c frontend function. */
+     *  global @c ::frontend function but may be passed to this Engine's @ref frontent method. */
     virtual bool isRbaFile(const std::string&);
 
     /** Determine whether a specimen name is a non-container.

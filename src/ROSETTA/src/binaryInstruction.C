@@ -1,4 +1,4 @@
-#include <rosePublicConfig.h>
+#include <featureTests.h>
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 /******************************************************************************************************************************
@@ -22,10 +22,10 @@
  * NOTE:  Please use three blank lines between IR node definitions to help make this file more readable.  Unless those IR
  *        nodes are so closely related to one another that it's better to keep them close.
  *
- * UPDATE: Instead of splitting class declarations into four separate places, we can now use the macros defined below to put
- *        everything into one place in this file.  My goal is to eventually remove the
- *        src/ROSETTA/Grammar/BinaryInstruction.code file and the related docs/testDoxygen/xxx.docs files and to add
- *        documentation here for all property accessors.
+ * UPDATE: Instead of splitting class declarations into five separate places, we can now use the macros defined below to
+ *        put everything but the node name into one place in this file. The node name still needs a line in the
+ *        "astNodeList" file.  My goal is to eventually remove the src/ROSETTA/Grammar/BinaryInstruction.code file and
+ *        the related docs/testDoxygen/xxx.docs files and to add documentation here for all property accessors.
  *
  * ROSETTA FAILURE MODES:
  *
@@ -59,7 +59,7 @@
 //   IDE's figure out the indentation and as commentary. We don't use "#if 0" because some IDEs figure out that the code is
 //   never possible and don't indent it properly. For instance, most of the classes are defined like this:
 //       #ifdef DOCUMENTATION
-//       class SgAsmArmInstruction: public SgAsmInstruction {
+//       class SgAsmArm64Instruction: public SgAsmInstruction {
 //       #endif
 //
 //       ...
@@ -171,63 +171,52 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    DECLARE_LEAF_CLASS(AsmArmInstruction);
-    IS_SERIALIZABLE(AsmArmInstruction);
+#ifdef ROSE_ENABLE_ASM_A64
+    DECLARE_LEAF_CLASS(AsmArm64Instruction);
+    IS_SERIALIZABLE(AsmArm64Instruction);
 
-    DECLARE_HEADERS(AsmArmInstruction);
-#if defined(SgAsmArmInstruction_HEADERS) || defined(DOCUMENTATION)
-    #include <InstructionEnumsArm.h>
-#endif // SgAsmArmInstruction_HEADERS
+    DECLARE_HEADERS(AsmArm64Instruction);
+#if defined(SgAsmArm64Instruction_HEADERS) || defined(DOCUMENTATION)
+    #include <InstructionEnumsArm64.h>
+#endif // SgAsmArm64Instruction_HEADERS
 
 #ifdef DOCUMENTATION
-    /** Represents one ARM machine instruction. */
-    class SgAsmArmInstruction: public SgAsmInstruction {
+    /** Represents one ARM A64 machine instruction. */
+    class SgAsmArm64Instruction: public SgAsmInstruction {
     public:
 #endif
 
 #ifdef DOCUMENTATION
         /** Property: Instruction kind.
          *
-         *  Returns an enum constant describing the ARM instruction. These enum constants correspond roughly 1:1 with
+         *  Returns an enum constant describing the AArch64 A64 instruction. These enum constants correspond roughly 1:1 with
          *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
          *
          * @{ */
-        Rose::BinaryAnalysis::ArmInstructionKind get_kind() const;
-        void set_kind(Rose::BinaryAnalysis::ArmInstructionKind);
+        Rose::BinaryAnalysis::Arm64InstructionKind get_kind() const;
+        void set_kind(Rose::BinaryAnalysis::Arm64InstructionKind);
         /** @} */
 #else
-        AsmArmInstruction.setDataPrototype("Rose::BinaryAnalysis::ArmInstructionKind", "kind",
-                                           "= Rose::BinaryAnalysis::arm_unknown_instruction",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+        AsmArm64Instruction.setDataPrototype("Rose::BinaryAnalysis::Arm64InstructionKind", "kind",
+                                             "= Rose::BinaryAnalysis::Arm64InstructionKind::ARM64_INS_INVALID",
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: Arm instruction condition.
+        /** Property: ARM A64 instruction condition.
          *
          *  @{ */
-        Rose::BinaryAnalysis::ArmInstructionCondition get_condition() const;
-        void set_condition(Rose::BinaryAnalysis::ArmInstructionCondition);
+        Rose::BinaryAnalysis::Arm64InstructionCondition get_condition() const;
+        void set_condition(Rose::BinaryAnalysis::Arm64InstructionCondition);
         /** @} */
 #else
-        AsmArmInstruction.setDataPrototype("Rose::BinaryAnalysis::ArmInstructionCondition", "condition",
-                                           "= Rose::BinaryAnalysis::arm_cond_unknown",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+        AsmArm64Instruction.setDataPrototype("Rose::BinaryAnalysis::Arm64InstructionCondition", "condition",
+                                             "= Rose::BinaryAnalysis::Arm64InstructionCondition::ARM64_CC_INVALID",
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif
 
-#ifdef DOCUMENTATION
-        /** Property: Bit position of condition bits in instruction menmonic.
-         *
-         * @{ */
-        int get_positionOfConditionInMnemonic() const;
-        void set_positionOfConditionInMnemonic(int);
-        /** @} */
-#else
-        AsmArmInstruction.setDataPrototype("int", "positionOfConditionInMnemonic", "= -1",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif
-
-        DECLARE_OTHERS(AsmArmInstruction);
-#if defined(SgAsmArmInstruction_OTHERS) || defined(DOCUMENTATION)
+        DECLARE_OTHERS(AsmArm64Instruction);
+#if defined(SgAsmArm64Instruction_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
@@ -237,7 +226,6 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
             s & BOOST_SERIALIZATION_NVP(p_kind);
             s & BOOST_SERIALIZATION_NVP(p_condition);
-            s & BOOST_SERIALIZATION_NVP(p_positionOfConditionInMnemonic);
         }
 #endif
 
@@ -248,11 +236,11 @@ void Grammar::setUpBinaryInstructions() {
         virtual std::set<rose_addr_t> getSuccessors(bool* complete) $ROSE_OVERRIDE;
         virtual bool isUnknown() const $ROSE_OVERRIDE;
         virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
-#endif // SgAsmArmInstruction_OTHERS
+#endif // SgAsmArm64Instruction_OTHERS
 #ifdef DOCUMENTATION
     };
 #endif
-
+#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -605,7 +593,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: Instruction kind.
          *
-         *  Returns an enum constant describing the ARM instruction. These enum constants correspond roughly 1:1 with
+         *  Returns an enum constant describing the Motorola m68k instruction. These enum constants correspond roughly 1:1 with
          *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
          *
          * @{ */
@@ -658,7 +646,11 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_NONTERMINAL_MACRO(AsmInstruction,
-                          AsmX86Instruction | AsmArmInstruction | AsmPowerpcInstruction | AsmMipsInstruction |
+                          AsmX86Instruction
+#ifdef ROSE_ENABLE_ASM_A64
+                          | AsmArm64Instruction
+#endif
+                          | AsmPowerpcInstruction | AsmMipsInstruction |
                           AsmM68kInstruction,
                           "AsmInstruction", "AsmInstructionTag", true);
     AsmInstruction.setCppCondition("!defined(DOCUMENTATION)");
@@ -1715,17 +1707,21 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    DECLARE_LEAF_CLASS(AsmUnaryArmSpecialRegisterList);
-    IS_SERIALIZABLE(AsmUnaryArmSpecialRegisterList);
+    DECLARE_LEAF_CLASS(AsmUnaryTruncate);
+    IS_SERIALIZABLE(AsmUnaryTruncate);
 
 #ifdef DOCUMENTATION
-    // FIXME[Robb P Matzke 2016-10-31]: no idea what this is
-    class SgAsmUnaryArmSpecialRegisterList: public SgAsmUnaryExpression {
+    /** Expression representing truncation.
+     *
+     *  The amount of truncation is based on the sizes of the types for the operand and the result. There is no second argument
+     *  that says how large the result should be since this would be redundant and possibly inconsistent with the type for the
+     *  resulting expression. */
+    class SgAsmUnaryTruncation: public SgAsmUnaryExpression {
     public:
 #endif
 
-        DECLARE_OTHERS(AsmUnaryArmSpecialRegisterList);
-#if defined(SgAsmUnaryArmSpecialRegisterList_OTHERS) || defined(DOCUMENTATION)
+        DECLARE_OTHERS(AsmUnaryTruncate);
+#if defined(SgAsmUnaryTruncate_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
@@ -1735,7 +1731,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
         }
 #endif
-#endif // SgAsmUnaryArmSpecialRegisterList_OTHERS
+#endif // SgAsmUnaryTruncate_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -1743,9 +1739,233 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    DECLARE_LEAF_CLASS(AsmUnarySignedExtend);
+    IS_SERIALIZABLE(AsmUnarySignedExtend);
+
+#ifdef DOCUMENTATION
+    /** Expression representing sign extending.
+     *
+     *  The size of the result is based on the sizes of the types for the operand and the result. There is no second argument
+     *  that says how large the result should be since this would be redundant and possibly inconsistent with the type for the
+     *  resulting expression. */
+    class SgAsmUnarySignedExtend: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmUnarySignedExtend);
+#if defined(SgAsmUnarySignedExtend_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+        }
+#endif
+#endif // SgAsmUnarySignedExtend_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmUnaryUnsignedExtend);
+    IS_SERIALIZABLE(AsmUnaryUnsignedExtend);
+
+#ifdef DOCUMENTATION
+    /** Expression representing unsigned extending.
+     *
+     *  The size of the result is based on the sizes of the types for the operand and the result. There is no second argument
+     *  that says how large the result should be since this would be redundant and possibly inconsistent with the type for the
+     *  resulting expression. */
+    class SgAsmUnaryUnsignedExtend: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmUnaryUnsignedExtend);
+#if defined(SgAsmUnaryUnsignedExtend_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+        }
+#endif
+#endif // SgAsmUnaryUnsignedExtend_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ROSE_ENABLE_ASM_A64
+    DECLARE_LEAF_CLASS(AsmArm64AtOperand);
+    IS_SERIALIZABLE(AsmArm64AtOperand);
+
+#ifdef DOCUMENTATION
+    /** Operand for an ARM AArch64 A64 AT instruction. */
+    class SgAsmArm64AtOperand: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmArm64AtOperand);
+#if defined(SgAsmArm64AtOperand_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_NVP(operation_);
+        }
+#endif
+
+    private:
+        Rose::BinaryAnalysis::Arm64AtOperation operation_;
+
+    public:
+        /** Construct a unary expression for the AT instruction's operand. */
+        explicit SgAsmArm64AtOperand(Rose::BinaryAnalysis::Arm64AtOperation op)
+            : operation_(op) {}
+
+        /** Property: AT Operation.
+         *
+         *  An enum representing the operation to be performed.
+         *
+         *  @{ */
+        Rose::BinaryAnalysis::Arm64AtOperation operation() const {
+            return operation_;
+        }
+        void operation(Rose::BinaryAnalysis::Arm64AtOperation op) {
+            operation_ = op;
+        }
+        /** @} */
+#endif // SgAsmArm64AtOperand_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ROSE_ENABLE_ASM_A64
+    DECLARE_LEAF_CLASS(AsmArm64PrefetchOperand);
+    IS_SERIALIZABLE(AsmArm64PrefetchOperand);
+
+#ifdef DOCUMENTATION
+    /** Operand for an ARM AArch64 A64 prefetch instruction. */
+    class SgAsmArm64PrefetchOperand: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmArm64PrefetchOperand);
+#if defined(SgAsmArm64PrefetchOperand_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_NVP(operation_);
+        }
+#endif
+
+    private:
+        Rose::BinaryAnalysis::Arm64PrefetchOperation operation_;
+
+    public:
+        /** Construct a unary expression for a prefetch instruction's prefetch operand. */
+        explicit SgAsmArm64PrefetchOperand(Rose::BinaryAnalysis::Arm64PrefetchOperation op)
+            : operation_(op) {}
+
+        /** Property: Prefetch operation.
+         *
+         *  An enum representing the operation to be performed.
+         *
+         *  @{ */
+        Rose::BinaryAnalysis::Arm64PrefetchOperation operation() const {
+            return operation_;
+        }
+        void operation(Rose::BinaryAnalysis::Arm64PrefetchOperation op) {
+            operation_ = op;
+        }
+        /** @} */
+#endif // SgAsmArm64PrefetchOperand_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ROSE_ENABLE_ASM_A64
+    DECLARE_LEAF_CLASS(AsmArm64MrsOperand);
+    IS_SERIALIZABLE(AsmArm64MrsOperand);
+
+#ifdef DOCUMENTATION
+    /** Describes a register for the ARM AArch64 A64 MRS instruction. */
+    class SgAsmArm64MrsOperand: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmArm64MrsOperand);
+#if defined(SgAsmArm64MrsOperand_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_NVP(access_);
+        }
+#endif
+
+    private:
+        unsigned access_;
+
+    public:
+        /** Construct a unary expression for the system register access. */
+        explicit SgAsmArm64MrsOperand(unsigned access)
+            : access_(access) {}
+
+        /** Property: system register access bits.
+         *
+         *  The bits describing how to access a system register. These come directly from the encoded instruction.
+         *
+         *  @{ */
+        unsigned access() const {
+            return access_;
+        }
+        void access(unsigned ac) {
+            access_ = ac;
+        }
+        /** @} */
+#endif // SgAsmArm64MrsOperand_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     NEW_NONTERMINAL_MACRO(AsmUnaryExpression,
-                          AsmUnaryPlus | AsmUnaryMinus | AsmUnaryRrx | AsmUnaryArmSpecialRegisterList,
-                          "AsmUnaryExpression", "AsmUnaryExpressionTag", false);
+                          AsmUnaryPlus | AsmUnaryMinus | AsmUnaryRrx | AsmUnaryTruncate | AsmUnarySignedExtend
+                          | AsmUnaryUnsignedExtend
+#ifdef ROSE_ENABLE_ASM_A64
+                          | AsmArm64AtOperand | AsmArm64PrefetchOperand | AsmArm64MrsOperand
+#endif
+                          , "AsmUnaryExpression", "AsmUnaryExpressionTag", false);
     AsmUnaryExpression.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmUnaryExpression);
 
@@ -1796,19 +2016,6 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifdef DOCUMENTATION
-        /** Property: PSR mask for ARM architectures.
-         *
-         * @{ */
-        unsigned get_psr_mask() const;
-        void set_psr_mask(unsigned);
-        /** @} */
-#else
-        AsmDirectRegisterExpression.setDataPrototype("unsigned", "psr_mask", "=0", // for ARM
-                                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL,
-                                                     NO_DELETE);
-#endif
-
         DECLARE_OTHERS(AsmDirectRegisterExpression);
 #if defined(SgAsmDirectRegisterExpression_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -1818,14 +2025,12 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmRegisterReferenceExpression);
-            s & BOOST_SERIALIZATION_NVP(p_psr_mask);
         }
 #endif
 
     private:
         // Default c'tor needed for serialization
-        SgAsmDirectRegisterExpression()
-            : p_psr_mask(0) {}
+        SgAsmDirectRegisterExpression() {}
 #endif // SgAsmDirectRegisterExpression_OTHERS
 
 #ifdef DOCUMENTATION

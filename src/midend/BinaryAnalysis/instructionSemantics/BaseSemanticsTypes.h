@@ -8,6 +8,7 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <Sawyer/SharedPointer.h>
+#include <Sawyer/Set.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
