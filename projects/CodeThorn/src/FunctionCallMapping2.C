@@ -87,6 +87,7 @@ void addEntry(FunctionCallTargetSet& targetset, SgFunctionDeclaration* dcl)
   if (!defdcl)
   {
     logWarn() << "unable to find definition for " << dcl->get_name()
+              << (dcl->get_definition() ? "*" : "")
               << std::endl;
     return;
   }

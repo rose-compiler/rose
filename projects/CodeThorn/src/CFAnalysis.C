@@ -1114,11 +1114,12 @@ namespace
     typedef sg::DispatchHandler<bool> base;
     
     ExcludeFromCfg()
-    : base(false)
+    : base(false /* include in CFG */)
     {}
     
-    void handle(SgNode&) {}
-    void handle(SgUsingDeclarationStatement&) { res = true; }
+    void handle(SgNode&)                       { /* default */ }
+    void handle(SgUsingDeclarationStatement&)  { res = true;   }
+    void handle(SgTemplateTypedefDeclaration&) { res = true;   }
   };
 }
 
@@ -1502,18 +1503,20 @@ Flow CFAnalysis::flow(SgNode* node) {
     size_t len=std::distance(succ.begin(), pos);
     if(len==0) {
       return edgeSet;
+    } 
+    
+    if(len==1) {
+      SgNode* onlyStmt=succ.at(0);
+      Flow onlyFlow=flow(onlyStmt);
+      edgeSet+=onlyFlow;
     } else {
-      if(len==1) {
-        SgNode* onlyStmt=succ.at(0);
-        Flow onlyFlow=flow(onlyStmt);
-        edgeSet+=onlyFlow;
-      } else {
-        for(size_t i=0;i<len-1;++i) {
-          SgNode* childNode1=succ.at(i);
-          SgNode* childNode2=succ.at(i+1);
-          Flow flow12=flow(childNode1,childNode2);
-          edgeSet+=flow12;
-        }
+      for(size_t i=0;i<len-1;++i) {
+        SgNode* childNode1=succ.at(i);
+        ROSE_ASSERT(!isSgTemplateTypedefDeclaration(childNode1));
+        SgNode* childNode2=succ.at(i+1);
+        ROSE_ASSERT(!isSgTemplateTypedefDeclaration(childNode2));
+        Flow flow12=flow(childNode1,childNode2);
+        edgeSet+=flow12;
       }
     }
     SgNode* firstStmt=succ.at(0);
@@ -1732,7 +1735,7 @@ FunctionCallTargetSet CFAnalysis::determineFunctionDefinition4(SgFunctionCallExp
 
 
 FunctionCallTargetSet CFAnalysis::determineFunctionDefinition5(Label lbl, SgLocatedNode* astnode) {
-  SAWYER_MESG(logger[TRACE])<<"CFAnalysis::determineFunctionDefinition4:"<<astnode->unparseToString()<<": ";
+  SAWYER_MESG(logger[TRACE])<<"CFAnalysis::determineFunctionDefinition5:"<<astnode->unparseToString()<<": ";
   ROSE_ASSERT(getFunctionCallMapping2());
   FunctionCallTargetSet res=getFunctionCallMapping2()->resolveFunctionCall(lbl);
 #if 1

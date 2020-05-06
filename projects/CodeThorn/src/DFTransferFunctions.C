@@ -84,9 +84,17 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     //~ if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(node)) {
     if(SgFunctionCallExp* funCall = callinfo.callExpression()) {
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+      std::string calltext = funCall->unparseToString(); 
+      
+      if (calltext == "\"INFO: \"+PREFIX")
+      {
+        cerr<<"InfoX: callexp: fcall found " << funCall->unparseToString() << std::endl;
+      }
+      
       transferFunctionCall(lab, funCall, arguments, element);
     } else if (SgConstructorInitializer* ctorCall = callinfo.ctorInitializer()) {
       SgExpressionPtrList& arguments=SG_DEREF(ctorCall->get_args()).get_expressions();
+      cerr<<"InfoY: callexp: ccall found " << ctorCall->unparseToString() << std::endl;
       transferConstructorCall(lab, ctorCall, arguments, element);
     } else {
       cerr<<"Error: DFTransferFunctions::callexp: no function call on rhs of assignment found. Only found "
@@ -168,7 +176,17 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   if(getLabeler()->isFunctionEntryLabel(lab)) {
     if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(lab))) {
       // 1) obtain formal parameters
-      assert(funDef);
+      std::string xyz = funDef->get_mangled_name();
+      
+      if (xyz == "L2167R")
+      {
+        std::cout << "! " << funDef->unparseToString() << std::endl; 
+      } 
+      else
+      {
+        std::cout << ": " << xyz << std::endl; 
+      }
+      
       SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
       transferFunctionEntry(lab, funDef, formalParameters, element);
       return;
@@ -442,6 +460,26 @@ chooseInitializer(SgVariableDeclaration* one, SgVariableDeclaration* two)
   return one;
 }
 
+namespace 
+{
+  // auxiliary wrapper for printing Sg_File_Info objects 
+  struct SrcLoc
+  {
+    explicit
+    SrcLoc(SgLocatedNode& n)
+    : info(n.get_file_info())
+    {}
+    
+    Sg_File_Info* info;
+  };
+
+  inline  
+  std::ostream& operator<<(std::ostream& os, SrcLoc el)
+  {
+    return os << el.info->get_filenameString() 
+              << "@" << el.info->get_line() << ":" << el.info->get_col();
+  } 
+}
 
 typedef std::map<VariableId, SgVariableDeclaration*> VariableInitialzationMap;
 
@@ -450,6 +488,8 @@ void storeIfBetter( std::map<VariableId, SgVariableDeclaration*>& initmap,
                     std::pair<VariableId, SgVariableDeclaration*> cand
                   )
 {
+  ROSE_ASSERT (cand.second != nullptr); 
+  
   VariableInitialzationMap::mapped_type& curr   = initmap[cand.first];
   VariableInitialzationMap::mapped_type  choice = chooseInitializer(cand.second, curr);
 
@@ -469,8 +509,17 @@ void storeIfBetter( std::map<VariableId, SgVariableDeclaration*>& initmap,
   }
   else if (curr != choice)
   {
+    //~ logWarn() << "+: " << (curr ? curr->unparseToString() : "<null>") << "/"
+              //~ << choice->unparseToString()
+              //~ << " - " << typeid(*choice).name()  
+              //~ << SrcLoc(*choice)
+              //~ << std::endl;
     curr = choice;
   }
+  //~ else
+  //~ {
+    //~ logWarn() << "-: " << curr->unparseToString() << std::endl;
+  //~ }
 }
 
 Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
@@ -497,7 +546,9 @@ Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
   for(SgVariableDeclaration* var : globalVarDecls) {
     VariableId varid = getVariableIdMapping()->variableId(var);
 
-    if (usedGlobalVarIds.find(varid) != usedGlobalVarIds.end()) {
+    if (  !isSgTemplateVariableDeclaration(var) 
+       && usedGlobalVarIds.find(varid) != usedGlobalVarIds.end()
+       ) {
       // cout << "DEBUG: transfer for global var @" << getLabeler()->getLabel(*i) << " : " << (*i)->unparseToString()
       //     << "id = " << getVariableIdMapping()->variableId(*i).toString()
       //     << endl;
@@ -511,6 +562,7 @@ Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
   for (VariableInitialzationMap::value_type& init : varinit) {
     ROSE_ASSERT(init.second);
 
+    cout<<"INFOx: "<< init.second->unparseToString() << endl;
     transfer(getLabeler()->getLabel(init.second), *elem);
   }
 

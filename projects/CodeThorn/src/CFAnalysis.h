@@ -132,13 +132,13 @@ class CFAnalysis {
   static bool isLoopConstructRootNode(SgNode* node);
   enum FunctionResolutionMode { FRM_TRANSLATION_UNIT, FRM_WHOLE_AST_LOOKUP, FRM_FUNCTION_ID_MAPPING, FRM_FUNCTION_CALL_MAPPING };
   static FunctionResolutionMode functionResolutionMode;
+  static Sawyer::Message::Facility logger;
  protected:
   SgFunctionDefinition* determineFunctionDefinition2(SgFunctionCallExp* funCall);
   SgFunctionDefinition* determineFunctionDefinition3(SgFunctionCallExp* funCall);
   FunctionCallTargetSet determineFunctionDefinition4(SgFunctionCallExp* funCall);
   FunctionCallTargetSet determineFunctionDefinition5(Label lbl, SgLocatedNode* astnode);
   static void initDiagnostics();
-  static Sawyer::Message::Facility logger;
  private:
   SgStatement* getCaseOrDefaultBodyStmt(SgNode* node);
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
