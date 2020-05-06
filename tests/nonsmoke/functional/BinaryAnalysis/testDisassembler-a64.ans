@@ -396,25 +396,32 @@ L311  # bfxil w2, w1, #0, #1
 L312  0x22 0x00 0x00 0x33
 L312  0x00000000: 22 00 00 33               ?? bfxil    w2, w1, 0, 1                             ; bifield extract and insert low
 L313  
-L314  # ubfx w2, w1, #0, #1
-L315  0x22 0x00 0x00 0x53
-L315  0x00000000: 22 00 00 53               ?? ubfx     w2, w1, 0, 1                             ; unsigned bitfield extract
-L316  
-L317  # prfum plil2keep, [x13, #0xf4]
-L318  # This seems to be disassembled incorrecty by Capstone as far as I can
-L319  # tell. The returned instruction has only one operand, although
-L320  # Capstone itself prints both operands. Therfore ROSE is only able to
-L321  # build the first operand and reports just "prfum plil2keep".
-L322  0xaa 0x41 0x8f 0xf8
-L322  0x00000000: aa 41 8f f8               ?? prfum    plil2keep                                ; prefetch memory
+L314  # prfum plil2keep, [x13, #0xf4]
+L315  # This seems to be disassembled incorrecty by Capstone as far as I can
+L316  # tell. The returned instruction has only one operand, although
+L317  # Capstone itself prints both operands. Therfore ROSE is only able to
+L318  # build the first operand and reports just "prfum plil2keep".
+L319  0xaa 0x41 0x8f 0xf8
+L319  0x00000000: aa 41 8f f8               ?? prfum    plil2keep                                ; prefetch memory
+L320  
+L321  # mrs x23, s3_0_c15_c12_5
+L322  0xb7 0xfc 0x38 0xd5
+L322  0x00000000: b7 fc 38 d5               ?? mrs      x23, s3_0_c15_c12_5                      ; copy from system register
 L323  
-L324  # mrs x23, s3_0_c15_c12_5
-L325  0xb7 0xfc 0x38 0xd5
-L325  0x00000000: b7 fc 38 d5               ?? mrs      x23, s3_0_c15_c12_5                      ; copy from system register
-L326  
-L327  # mrs x23, s2_0_c15_c12_5
-L328  # This seems to be disassembled incorrecty by Capstone. Capstone emits
-L329  # s3_0_c15_c12_5 instead of s2_0_c15_c12_5.
-L330  0xb7 0xfc 0x30 0xd5
-L330  0x00000000: b7 fc 30 d5               ?? mrs      x23, s2_0_c15_c12_5                      ; copy from system register
+L324  # mrs x23, s2_0_c15_c12_5
+L325  # This seems to be disassembled incorrecty by Capstone. Capstone emits
+L326  # s3_0_c15_c12_5 instead of s2_0_c15_c12_5.
+L327  0xb7 0xfc 0x30 0xd5
+L327  0x00000000: b7 fc 30 d5               ?? mrs      x23, s2_0_c15_c12_5                      ; copy from system register
+L328  
+L329  # msr s3_2_c3_c8_1, x21
+L330  0x35 0x38 0x1a 0xd5
+L330  0x00000000: 35 38 1a d5               ?? msr      s3_2_c3_c8_1, x21                        ; copy to system register
 L331  
+L332  # ubfx w2, w1, #0, #1
+L333  0x22 0x00 0x00 0x53
+L333  0x00000000: 22 00 00 53               ?? ubfx     w2, w1, 0, 1                             ; unsigned bitfield extract
+L334  
+L335  # sys #6, c10, c1, #1, x13
+L336  0x2d 0xa1 0x0e 0xd5
+L336  0x00000000: 2d a1 0e d5               ?? sys      6, c10, c1, 1, x13

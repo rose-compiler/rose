@@ -1478,6 +1478,36 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    DECLARE_LEAF_CLASS(AsmBinaryMsl);
+    IS_SERIALIZABLE(AsmBinaryMsl);
+
+#ifdef DOCUMENTATION
+    /** Expression that performs a logical left shift operation filling low-order bits with one.
+     *
+     *  This is identical to the Lsl operation except instead of low-order bits being cleared they are set. */
+    class SgAsmBinaryMsl: public SgAsmBinaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmBinaryMsl);
+#if defined(SgAsmBinaryMsl_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        }
+#endif
+#endif // SgAsmBinaryMsl_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     DECLARE_LEAF_CLASS(AsmBinaryLsr);
     IS_SERIALIZABLE(AsmBinaryLsr);
 
@@ -1567,7 +1597,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmBinaryDivide            | AsmBinaryMod           | AsmBinaryAddPreupdate       |
                           AsmBinarySubtractPreupdate | AsmBinaryAddPostupdate | AsmBinarySubtractPostupdate |
                           AsmBinaryLsl               | AsmBinaryLsr           | AsmBinaryAsr                |
-                          AsmBinaryRor,
+                          AsmBinaryRor               | AsmBinaryMsl,
                           "AsmBinaryExpression", "AsmBinaryExpressionTag", false);
     AsmBinaryExpression.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmBinaryExpression);
@@ -1908,17 +1938,17 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef ROSE_ENABLE_ASM_A64
-    DECLARE_LEAF_CLASS(AsmArm64MrsOperand);
-    IS_SERIALIZABLE(AsmArm64MrsOperand);
+    DECLARE_LEAF_CLASS(AsmArm64SysMoveOperand);
+    IS_SERIALIZABLE(AsmArm64SysMoveOperand);
 
 #ifdef DOCUMENTATION
-    /** Describes a register for the ARM AArch64 A64 MRS instruction. */
-    class SgAsmArm64MrsOperand: public SgAsmUnaryExpression {
+    /** Describes a system register for the ARM AArch64 A64 MRS and MSR instructions. */
+    class SgAsmArm64SysMoveOperand: public SgAsmUnaryExpression {
     public:
 #endif
 
-        DECLARE_OTHERS(AsmArm64MrsOperand);
-#if defined(SgAsmArm64MrsOperand_OTHERS) || defined(DOCUMENTATION)
+        DECLARE_OTHERS(AsmArm64SysMoveOperand);
+#if defined(SgAsmArm64SysMoveOperand_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
@@ -1935,7 +1965,7 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         /** Construct a unary expression for the system register access. */
-        explicit SgAsmArm64MrsOperand(unsigned access)
+        explicit SgAsmArm64SysMoveOperand(unsigned access)
             : access_(access) {}
 
         /** Property: system register access bits.
@@ -1950,7 +1980,59 @@ void Grammar::setUpBinaryInstructions() {
             access_ = ac;
         }
         /** @} */
-#endif // SgAsmArm64MrsOperand_OTHERS
+#endif // SgAsmArm64SysMoveOperand_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ROSE_ENABLE_ASM_A64
+    DECLARE_LEAF_CLASS(AsmArm64CImmediateOperand);
+    IS_SERIALIZABLE(AsmArm64CImmediateOperand);
+
+#ifdef DOCUMENTATION
+    /** C-Immediate operand for SYS, AT, CFP, CPP, DC, DVP, IC, and TLBI instructions. */
+    class SgAsmArm64CImmediateOperand: public SgAsmUnaryExpression {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmArm64CImmediateOperand);
+#if defined(SgAsmArm64CImmediateOperand_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+            s & BOOST_SERIALIZATION_NVP(imm_);
+        }
+#endif
+
+    private:
+        unsigned imm_;
+
+    public:
+        /** Construct a unary expression for the C-immediate. */
+        explicit SgAsmArm64CImmediateOperand(unsigned imm)
+            : imm_(imm) {}
+
+        /** Property: C-immediate value.
+         *
+         *  The C-immediate value for the instruction.
+         *
+         *  @{ */
+        unsigned immediate() const {
+            return imm_;
+        }
+        void immediate(unsigned imm) {
+            imm_ = imm;
+        }
+        /** @} */
+#endif // SgAsmArm64CImmediateOperand_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -1963,7 +2045,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmUnaryPlus | AsmUnaryMinus | AsmUnaryRrx | AsmUnaryTruncate | AsmUnarySignedExtend
                           | AsmUnaryUnsignedExtend
 #ifdef ROSE_ENABLE_ASM_A64
-                          | AsmArm64AtOperand | AsmArm64PrefetchOperand | AsmArm64MrsOperand
+                          | AsmArm64AtOperand | AsmArm64PrefetchOperand | AsmArm64SysMoveOperand | AsmArm64CImmediateOperand
 #endif
                           , "AsmUnaryExpression", "AsmUnaryExpressionTag", false);
     AsmUnaryExpression.setCppCondition("!defined(DOCUMENTATION)");

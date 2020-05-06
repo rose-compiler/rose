@@ -20,9 +20,10 @@ SgArrayType
 SgArrowExp
 SgArrowStarOp
 SgAsmArm64AtOperand
+SgAsmArm64CImmediateOperand
 SgAsmArm64Instruction
-SgAsmArm64MrsOperand
 SgAsmArm64PrefetchOperand
+SgAsmArm64SysMoveOperand
 SgAsmBasicString
 SgAsmBinaryAdd
 SgAsmBinaryAddPostupdate
@@ -33,6 +34,7 @@ SgAsmBinaryExpression
 SgAsmBinaryLsl
 SgAsmBinaryLsr
 SgAsmBinaryMod
+SgAsmBinaryMsl
 SgAsmBinaryMultiply
 SgAsmBinaryRor
 SgAsmBinarySubtract
