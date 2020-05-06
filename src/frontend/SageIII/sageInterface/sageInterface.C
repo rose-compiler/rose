@@ -19814,6 +19814,16 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
 
                            SgInitializedName * init_name = (*ii);
 
+// Rasmussen (3/25/2020): I don't think anonymous types are moved!!!
+// They should be, this should be fixed.
+#if 0
+                           std::cout << "--! moveStatements... var is  " << init_name->get_name() << ": var_decl is " << varDecl << ": " << varDecl->class_name() << std::endl;
+                           std::cout << "--! moveStatements... type is " << init_name->get_type() << ": " << init_name->get_type()->class_name() << std::endl;
+                           std::cout << "--! moveStatements... def  is " << init_name->get_definition() << ": " << init_name->get_definition()->class_name() << std::endl;
+                           std::cout << "--! moveStatements... parent  " << varDecl->get_parent() << ": " << varDecl->get_parent()->class_name() << std::endl;
+                         //std::cout << "--! moveStatements... scope  "  << varDecl->get_parent()->get_scope() std::endl;
+#endif
+
 //                         ROSE_ASSERT(init_name ->get_scope() == sourceBlock); // the sourceBlock is transformation generated basic block. the original scope of init_name is the one in the original scource code.
 //                           SgSymbol* symbol = s_table->find(init_name); // this will not return the right symbol
  //                          ROSE_ASSERT (symbol != NULL);
