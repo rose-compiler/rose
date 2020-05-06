@@ -11105,13 +11105,23 @@ SgTypeFloat * SageBuilder::buildFloatType()
 }
 
 // Rasmussen (2/20/2020): Added builder for Jovial fixed type
-SgTypeFixed* buildFixedType(SgExpression* fraction, SgExpression* scale)
+SgTypeFixed* SageBuilder::buildFixedType(SgExpression* fraction, SgExpression* scale)
 {
   SgTypeFixed * result = SgTypeFixed::createType(scale, fraction);
   ROSE_ASSERT(result);
 
    if (scale) scale->set_parent(result);
    if (fraction) fraction->set_parent(result);
+
+  return result;
+}
+
+// Rasmussen (5/5/2020): Added builder for Jovial bit type
+SgJovialBitType* SageBuilder::buildJovialBitType(SgExpression* size)
+{
+   SgJovialBitType * result = SgJovialBitType::createType(size, NULL);
+
+   if (size) size->set_parent(result);
 
   return result;
 }

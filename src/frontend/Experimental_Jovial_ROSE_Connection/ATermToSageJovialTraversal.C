@@ -973,16 +973,7 @@ ATbool ATermToSageJovialTraversal::traverse_FixedItemDescription(ATerm term, SgT
    }
    else return ATfalse;
 
-// FIXME SageBuilder
-#if 0
-// TODO - for some reason this SageBuilder function fails in linker stage
    type = SageBuilder::buildFixedType(scale, fraction);
-#else
-   type = SgTypeFixed::createType(scale, fraction);
-   ROSE_ASSERT(type);
-   if (scale)    scale   ->set_parent(type);
-   if (fraction) fraction->set_parent(type);
-#endif
 
    if (modifier_enum) {
       SgModifierType* mod_type = SageBuilder::buildModifierType(type);
@@ -1036,6 +1027,8 @@ ATbool ATermToSageJovialTraversal::traverse_BitItemDescription(ATerm term, SgTyp
    Sawyer::Optional<SgExpression*> opt_size;
    SgExpression* size = nullptr;
 
+   type = nullptr;
+
    if (ATmatch(term, "BitItemDescription(<term>,<term>)", &t_type_desc, &t_size)) {
     // Ignore the BitTypeDesc term t_type_desc.  It was placed in JovialLex and will be 'B' (just syntax)
    } else return ATfalse;
@@ -1046,10 +1039,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitItemDescription(ATerm term, SgTyp
 
    if (opt_size) size = *opt_size;
 
-   // Need help from Leo to create SageBuilder function for SgJovialBitType
-   // TODO: needs symbol created and parent set
-   //       also check size when NULL
-   type = new SgJovialBitType(size);
+   type = SageBuilder::buildJovialBitType(size);
 
    return ATtrue;
 }

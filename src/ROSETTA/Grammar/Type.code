@@ -6727,9 +6727,12 @@ SOURCE_ADA_FLOAT_TYPE_END
 SOURCE_JOVIAL_BIT_TYPE_START
 SgName
 SgJovialBitType::get_mangled(void) const {
-    string name("bt'");
-    name.append(get_size()->unparseToString());
-    name.append("'");
+    string name("bt");
+    if (get_size())
+       {
+          name.append("_");
+          name.append(get_size()->unparseToString());
+       }
     return SgName(name);
 }
 SOURCE_JOVIAL_BIT_TYPE_END
@@ -8771,8 +8774,9 @@ SgJovialBitType::createType (SgExpression* size, SgExpression* /*optional_fortra
   SgName           name = proto.get_mangled();
   SgType*          ty   = get_globalTypeTable()->lookup_type(name);
 
-  if (SgJovialBitType* unified = isSgJovialBitType(ty))
-    return unified;
+  if (SgJovialBitType* unified = isSgJovialBitType(ty)) {
+     return unified;
+  }
 
   ROSE_ASSERT(ty == NULL);
   SgJovialBitType* res = new SgJovialBitType(size);
