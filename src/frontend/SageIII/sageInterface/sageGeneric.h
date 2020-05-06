@@ -873,6 +873,8 @@ namespace sg
     GEN_VISIT(SgPointerType)
     GEN_VISIT(SgNamedType)
     GEN_VISIT(SgQualifiedNameType)
+    GEN_VISIT(SgTemplateTypedefDeclaration)
+    
    // DQ (4/5/2017): Added this case that shows up using GNU 6.1 and Boost 1.51 (or Boost 1.52).
     GEN_VISIT(SgDeclType)
     GEN_VISIT(SgAutoType)
