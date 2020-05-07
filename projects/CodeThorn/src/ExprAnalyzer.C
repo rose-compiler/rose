@@ -287,6 +287,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateShortCircuitOperators(SgNod
       } else {
         // rhs not executed
         ROSE_ASSERT(lhsResult.isFalse());
+        // result must be zero (=false)
         resultList.push_back(lhsResult);
       }
       break;
@@ -305,6 +306,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateShortCircuitOperators(SgNod
       } else {
         // rhs not executed
         ROSE_ASSERT(lhsResult.isTrue());
+        // bugfix MS 50/06/2020: convert any true value to true/1: (10||x)=>1
+        lhsResult.result=AbstractValue(true);
         resultList.push_back(lhsResult);
       }
       break;
