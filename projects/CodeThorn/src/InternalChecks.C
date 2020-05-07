@@ -45,6 +45,34 @@ void check(string checkIdentifier, bool checkResult, bool check);
 // intentionally global
 extern bool checkresult;
 
+
+void checkLanguageRestrictor(int argc, char *argv[]) {
+  // Build the AST used by ROSE
+  SgProject* sageProject = frontend(argc,argv);
+  LanguageRestrictor lr;
+  LanguageRestrictor::VariantSet vs= lr.computeVariantSetOfProvidedAst(sageProject);
+  for(LanguageRestrictor::VariantSet::iterator i=vs.begin();i!=vs.end();++i) {
+    cout << "VARIANT: "<<lr.variantToString(*i)<<endl;
+  }
+  cout <<endl;
+  lr.allowAstNodesRequiredForEmptyProgram();
+  vs=lr.getAllowedAstNodeVariantSet();
+  for(LanguageRestrictor::VariantSet::iterator i=vs.begin();i!=vs.end();++i) {
+    cout << "VARIANT: "<<lr.variantToString(*i)<<endl;
+  }
+}
+
+void checkLargeSets() {
+  VariableIdMapping variableIdMapping;
+  AbstractValue i;
+  set<AbstractValue> cilSet;
+  cilSet.insert(AbstractValue(Bot()));
+  cilSet.insert(AbstractValue(Top()));
+  for(int i=-10;i<10;i++) {
+    cilSet.insert(AbstractValue(i));
+  }
+  check("integer set: bot,-10, ... ,+10,top",cilSet.size()==22); // 1+20+1
+}
 bool CodeThorn::internalChecks(int argc, char *argv[]) {
   try {
     // checkTypes() writes into checkresult
@@ -523,33 +551,4 @@ void checkTypes() {
     CallString s2;
     check("callstrings: "+s1.toString()+" == "+s2.toString()+" (true)",s1==s2);
   }
-
-}
-
-void checkLanguageRestrictor(int argc, char *argv[]) {
-  // Build the AST used by ROSE
-  SgProject* sageProject = frontend(argc,argv);
-  LanguageRestrictor lr;
-  LanguageRestrictor::VariantSet vs= lr.computeVariantSetOfProvidedAst(sageProject);
-  for(LanguageRestrictor::VariantSet::iterator i=vs.begin();i!=vs.end();++i) {
-    cout << "VARIANT: "<<lr.variantToString(*i)<<endl;
-  }
-  cout <<endl;
-  lr.allowAstNodesRequiredForEmptyProgram();
-  vs=lr.getAllowedAstNodeVariantSet();
-  for(LanguageRestrictor::VariantSet::iterator i=vs.begin();i!=vs.end();++i) {
-    cout << "VARIANT: "<<lr.variantToString(*i)<<endl;
-  }
-}
-
-void checkLargeSets() {
-  VariableIdMapping variableIdMapping;
-  AbstractValue i;
-  set<AbstractValue> cilSet;
-  cilSet.insert(AbstractValue(Bot()));
-  cilSet.insert(AbstractValue(Top()));
-  for(int i=-10;i<10;i++) {
-    cilSet.insert(AbstractValue(i));
-  }
-  check("integer set: bot,-10, ... ,+10,top",cilSet.size()==22); // 1+20+1
 }

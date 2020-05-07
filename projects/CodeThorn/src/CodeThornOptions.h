@@ -188,6 +188,11 @@ struct CodeThornOptions : public Options {
    std::string getAnalysisReportFileName(CodeThorn::AnalysisSelector asel);
    typedef std::list<std::pair<CodeThorn::AnalysisSelector,std::string> > AnalysisListType;
    AnalysisListType analysisList() const;
+
+   // default hard code init values
+   int maxExactMemorySizeRepresentation=10;
+   bool exprEvalTest=false;
+   
 };
 
 #endif

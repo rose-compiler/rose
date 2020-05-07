@@ -15,7 +15,7 @@ namespace CodeThorn {
     const EState* source; // source node
     Edge edge;
     const EState* target; // target node
-    string toString() const;
+    string toString(CodeThorn::VariableIdMapping* variableIdMapping=0) const;
     size_t memorySize() const;
   private:
   };
@@ -60,7 +60,7 @@ namespace CodeThorn {
     EStatePtrSet estateSet();
     long numberOfObservableStates(bool includeIn=true, bool includeOut=true, bool includeErr=true);
     void add(Transition trans);
-    string toString() const;
+    string toString(VariableIdMapping* variableIdMapping=0) const;
     LabelSet labelSetOfIoOperations(InputOutput::OpType op);
     Label getStartLabel() { assert(_startLabel!=Label()); return _startLabel; }
     void setStartLabel(Label lab) { _startLabel=lab; }

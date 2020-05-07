@@ -16,10 +16,10 @@ Transition::Transition(const EState* source,Edge edge, const EState* target)
   :source(source),edge(edge),target(target) {
 }
 
-string Transition::toString() const {
-  string s1=source->toString();
+string Transition::toString(CodeThorn::VariableIdMapping* variableIdMapping) const {
+  string s1=source->toString(variableIdMapping);
   string s2=edge.toString();
-  string s3=target->toString();
+  string s3=target->toString(variableIdMapping);
   return string("(")+s1+", "+s2+", "+s3+")";
 }
 
@@ -309,11 +309,11 @@ void TransitionGraph::eliminateEState(const EState* estate) {
   * \author Markus Schordan
   * \date 2012.
  */
-string TransitionGraph::toString() const {
+string TransitionGraph::toString(VariableIdMapping* variableIdMapping) const {
   string s;
   size_t cnt=0;
   for(TransitionGraph::const_iterator i=begin();i!=end();++i) {
-    s+=(*i)->toString()+"\n";
+    s+=(*i)->toString(variableIdMapping)+"\n";
     cnt++;
   }
   assert(cnt==size());

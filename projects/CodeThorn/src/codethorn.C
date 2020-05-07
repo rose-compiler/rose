@@ -88,7 +88,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.12.2";
+const std::string versionString="1.12.3";
 
 // handler for generating backtrace
 void handler(int sig) {
@@ -465,6 +465,58 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
   }
 }
 
+void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
+  cout << "------------------------------------------"<<endl;
+  cout << "RUNNING CHECKS FOR EXPR ANALYZER:"<<endl;
+  cout << "------------------------------------------"<<endl;
+  SgProject* sageProject=frontend(argc,argv);
+  Normalization lowering;
+  if(ctOpt.normalizeAll) {
+    if(ctOpt.quiet==false) {
+      cout<<"STATUS: normalizing program."<<endl;
+    }
+    lowering.normalizeAst(sageProject,2);
+  }
+  ExprAnalyzer* exprAnalyzer=new ExprAnalyzer();
+  VariableIdMappingExtended* vid=new VariableIdMappingExtended();
+  AbstractValue::setVariableIdMapping(vid);
+  EState estate;
+  PState pstate;
+  estate.setPState(&pstate);
+
+  RoseAst ast(sageProject);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    // match on expr stmts and test the expression
+    SgExpression* expr=0;
+    
+    // TEMPLATESKIP this skips all templates
+    if(Normalization::isTemplateNode(*i)) {
+      i.skipChildrenOnForward();
+      continue;
+    }
+    if(SgExprStatement* exprStmt=isSgExprStatement(*i)) {
+      if(!SgNodeHelper::isCond(exprStmt)) {
+        expr=exprStmt->get_expression();
+      }
+    } else if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
+      expr=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
+    }
+    if(expr) {
+      cout<<"Testing expr eval with empty state: "<<expr->unparseToString();
+      ExprAnalyzer::EvalMode evalMode=ExprAnalyzer::MODE_EMPTY_STATE;
+      if(true) {
+        list<SingleEvalResultConstInt> resList=exprAnalyzer->evaluateExpression(expr,estate,evalMode);
+        cout<<" => result value(s): ";
+        for(auto r:resList) {
+          cout<<r.value().toString()<<" ";
+        }
+        cout<<endl;
+      }
+    }
+  }
+  delete exprAnalyzer;
+}
+
 int main( int argc, char * argv[] ) {
   try {
     configureRose();
@@ -506,6 +558,11 @@ int main( int argc, char * argv[] ) {
         return 1;
       else
         return 0;
+    }
+
+    if(ctOpt.exprEvalTest) {
+      exprEvalTest(argc,argv,ctOpt);
+      return 0;
     }
 
     configureOptionSets(ctOpt);
@@ -1019,7 +1076,8 @@ int main( int argc, char * argv[] ) {
         }
         if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
           string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
-          cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
+          if(!ctOpt.quiet)
+            cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
           locations.writeResultFile(fileName,analyzer->getLabeler());
         }
       }
@@ -1027,7 +1085,8 @@ int main( int argc, char * argv[] ) {
 
     if(ctOpt.analyzedFunctionsCSVFileName.size()>0) {
       string fileName=ctOpt.analyzedFunctionsCSVFileName;
-      cout<<"Writing list of analyzed functions to file "<<fileName<<endl;
+      if(!ctOpt.quiet)
+        cout<<"Writing list of analyzed functions to file "<<fileName<<endl;
       string s=analyzer->analyzedFunctionsToString();
       if(!CppStdUtilities::writeFile(fileName, s)) {
         logger[ERROR]<<"Cannot create file "<<fileName<<endl;
@@ -1036,7 +1095,8 @@ int main( int argc, char * argv[] ) {
 
     if(ctOpt.analyzedFilesCSVFileName.size()>0) {
       string fileName=ctOpt.analyzedFilesCSVFileName;
-      cout<<"Writing list of analyzed files to file "<<fileName<<endl;
+      if(!ctOpt.quiet)
+        cout<<"Writing list of analyzed files to file "<<fileName<<endl;
       string s=analyzer->analyzedFilesToString();
       if(!CppStdUtilities::writeFile(fileName, s)) {
         logger[ERROR]<<"Cannot create file "<<fileName<<endl;
@@ -1045,7 +1105,8 @@ int main( int argc, char * argv[] ) {
 
     if(ctOpt.externalFunctionsCSVFileName.size()>0) {
       string fileName=ctOpt.externalFunctionsCSVFileName;
-      cout<<"Writing list of external functions to file "<<fileName<<endl;
+      if(!ctOpt.quiet)
+        cout<<"Writing list of external functions to file "<<fileName<<endl;
       string s=analyzer->externalFunctionsToString();
       if(!CppStdUtilities::writeFile(fileName, s)) {
         logger[ERROR]<<"Cannot create file "<<fileName<<endl;
@@ -1481,7 +1542,7 @@ int main( int argc, char * argv[] ) {
         write_file("transitiongraph2.dot", dotFile3);
         cout << "generated transitiongraph2.dot."<<endl;
 
-        string datFile1=(analyzer->getTransitionGraph())->toString();
+        string datFile1=(analyzer->getTransitionGraph())->toString(analyzer->getVariableIdMapping());
         write_file("transitiongraph1.dat", datFile1);
         cout << "generated transitiongraph1.dat."<<endl;
 
