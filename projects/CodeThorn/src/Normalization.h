@@ -174,9 +174,9 @@ namespace CodeThorn {
     
     // used to exclude templates from normalization (not excluding template instantiations!)
     // PP (04/06/20) made functions public so they can be accessed from outside normalization
-    bool isTemplateInstantiationNode(SgNode* node);
-    SgClassDeclaration* isSpecialization(SgNode* node);
-    bool isTemplateNode(SgNode* node);
+    static bool isTemplateInstantiationNode(SgNode* node);
+    static SgClassDeclaration* isSpecialization(SgNode* node);
+    static bool isTemplateNode(SgNode* node);
 
   private:
     /* normalize all Expressions in AST. The original variables remain

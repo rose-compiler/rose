@@ -88,7 +88,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.12.2";
+const std::string versionString="1.12.3";
 
 // handler for generating backtrace
 void handler(int sig) {
@@ -465,6 +465,51 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
   }
 }
 
+void exprEvalTest(int argc, char* argv[]) {
+  cout << "------------------------------------------"<<endl;
+  cout << "RUNNING CHECKS FOR EXPR ANALYZER:"<<endl;
+  cout << "------------------------------------------"<<endl;
+  SgProject* sageProject=frontend(argc,argv);
+  ExprAnalyzer* exprAnalyzer=new ExprAnalyzer();
+  VariableIdMappingExtended* vid=new VariableIdMappingExtended();
+  AbstractValue::setVariableIdMapping(vid);
+  EState estate;
+  PState pstate;
+  estate.setPState(&pstate);
+
+  RoseAst ast(sageProject);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    // match on expr stmts and test the expression
+    SgExpression* expr=0;
+    
+    // TEMPLATESKIP this skips all templates
+    if(Normalization::isTemplateNode(*i)) {
+      i.skipChildrenOnForward();
+      continue;
+    }
+    if(SgExprStatement* exprStmt=isSgExprStatement(*i)) {
+      if(!SgNodeHelper::isCond(exprStmt)) {
+        expr=exprStmt->get_expression();
+      }
+    } else if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
+      expr=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
+    }
+    if(expr) {
+      cout<<"Testing expr eval with empty state: "<<expr->unparseToString();
+      ExprAnalyzer::EvalMode evalMode=ExprAnalyzer::MODE_EMPTY_STATE;
+      if(true) {
+        list<SingleEvalResultConstInt> resList=exprAnalyzer->evaluateExpression(expr,estate,evalMode);
+        cout<<" => result value(s): ";
+        for(auto r:resList) {
+          cout<<r.value().toString()<<" ";
+        }
+        cout<<endl;
+      }
+    }
+  }
+  delete exprAnalyzer;
+}
+
 int main( int argc, char * argv[] ) {
   try {
     configureRose();
@@ -508,6 +553,11 @@ int main( int argc, char * argv[] ) {
         return 0;
     }
 
+    if(ctOpt.exprEvalTest) {
+      exprEvalTest(argc,argv);
+      return 0;
+    }
+   
     configureOptionSets(ctOpt);
 
     analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;

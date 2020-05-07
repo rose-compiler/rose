@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# test 1-9: normalization: YES
+# test 10:  normalization: NO
+
+red=$'\e[1;31m'
+grn=$'\e[1;32m'
+yel=$'\e[1;33m'
+blu=$'\e[1;34m'
+mag=$'\e[1;35m'
+cyn=$'\e[1;36m'
+end=$'\e[0m'
+
+COLORED_FAIL=${red}FAIL${end}
+COLORED_WARN=${yel}WARN${end}
+COLORED_PASS=${grn}PASS${end}
+
+unitTestName="ExprAnalyzer: evaluateExpression (with empty state)"
+
+TESTDIR=$1
+echo "----------------------------------------------------------------------"
+echo "running UNIT TEST: $unitTestName"
+echo "----------------------------------------------------------------------"
+
+BENCH_PASS=0
+BENCH_FAIL=0
+
+function UnitTests {
+testNumbers=`echo {001..028}`
+echo "Scheduled tests: $testNumbers"
+for testNumber in $testNumbers; do
+    benchmarkprefix=$TESTDIR/DOM${testNumber};
+    for benchmark in ${benchmarkprefix}*.[Cc]; do
+        benchmarkname=$(basename $benchmark)
+        printf "Unit test on %-35s: " $benchmarkname
+        CT_OUTPUT_FILE=$benchmarkname.imout
+        ./codethorn $benchmark --test-expr-analyzer=yes -I $TESTDIR  > /dev/null
+        if [ ! $? -eq 0 ]
+        then
+	        echo "$COLORED_FAIL"
+            exit 1
+        else
+            echo "$COLORED_PASS"
+        fi
+    done
+done
+}
+
+UnitTests
+
+
