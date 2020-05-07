@@ -465,11 +465,18 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
   }
 }
 
-void exprEvalTest(int argc, char* argv[]) {
+void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
   cout << "------------------------------------------"<<endl;
   cout << "RUNNING CHECKS FOR EXPR ANALYZER:"<<endl;
   cout << "------------------------------------------"<<endl;
   SgProject* sageProject=frontend(argc,argv);
+  Normalization lowering;
+  if(ctOpt.normalizeAll) {
+    if(ctOpt.quiet==false) {
+      cout<<"STATUS: normalizing program."<<endl;
+    }
+    lowering.normalizeAst(sageProject,2);
+  }
   ExprAnalyzer* exprAnalyzer=new ExprAnalyzer();
   VariableIdMappingExtended* vid=new VariableIdMappingExtended();
   AbstractValue::setVariableIdMapping(vid);
@@ -554,10 +561,10 @@ int main( int argc, char * argv[] ) {
     }
 
     if(ctOpt.exprEvalTest) {
-      exprEvalTest(argc,argv);
+      exprEvalTest(argc,argv,ctOpt);
       return 0;
     }
-   
+
     configureOptionSets(ctOpt);
 
     analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;

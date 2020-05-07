@@ -34,7 +34,7 @@ for testNumber in $testNumbers; do
         benchmarkname=$(basename $benchmark)
         printf "Unit test on %-35s: " $benchmarkname
         CT_OUTPUT_FILE=$benchmarkname.imout
-        ./codethorn $benchmark --test-expr-analyzer=yes -I $TESTDIR  > /dev/null
+        ./codethorn $benchmark --unit-test-expr-analyzer=yes -I $TESTDIR  > /dev/null
         if [ ! $? -eq 0 ]
         then
 	        echo "$COLORED_FAIL"
