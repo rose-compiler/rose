@@ -406,17 +406,17 @@ L319  0x00000000: aa 41 8f f8               ?? prfum    plil2keep               
 L320  
 L321  # mrs x23, s3_0_c15_c12_5
 L322  0xb7 0xfc 0x38 0xd5
-L322  0x00000000: b7 fc 38 d5               ?? mrs      x23, s3_0_c15_c12_5                      ; copy from system register
+L322  0x00000000: b7 fc 38 d5               ?? mrs      x23, s3_0_c15_c12_5                      ; move from system register
 L323  
 L324  # mrs x23, s2_0_c15_c12_5
 L325  # This seems to be disassembled incorrecty by Capstone. Capstone emits
 L326  # s3_0_c15_c12_5 instead of s2_0_c15_c12_5.
 L327  0xb7 0xfc 0x30 0xd5
-L327  0x00000000: b7 fc 30 d5               ?? mrs      x23, s2_0_c15_c12_5                      ; copy from system register
+L327  0x00000000: b7 fc 30 d5               ?? mrs      x23, s2_0_c15_c12_5                      ; move from system register
 L328  
 L329  # msr s3_2_c3_c8_1, x21
 L330  0x35 0x38 0x1a 0xd5
-L330  0x00000000: 35 38 1a d5               ?? msr      s3_2_c3_c8_1, x21                        ; copy to system register
+L330  0x00000000: 35 38 1a d5               ?? msr      s3_2_c3_c8_1, x21                        ; move to system register
 L331  
 L332  # ubfx w2, w1, #0, #1
 L333  0x22 0x00 0x00 0x53
@@ -424,4 +424,4 @@ L333  0x00000000: 22 00 00 53               ?? ubfx     w2, w1, 0, 1            
 L334  
 L335  # sys #6, c10, c1, #1, x13
 L336  0x2d 0xa1 0x0e 0xd5
-L336  0x00000000: 2d a1 0e d5               ?? sys      6, c10, c1, 1, x13
+L336  0x00000000: 2d a1 0e d5               ?? sys      6, c10, c1, 1, x13                       ; system instruction
