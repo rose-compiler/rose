@@ -544,7 +544,7 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-equivalence check-svcomp-witness check-par-cfg
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain unit-tests check-normalization check-equivalence check-svcomp-witness check-par-cfg
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
@@ -581,6 +581,9 @@ check-codethorn-internal:
 
 check-domain:
 	$(srcdir)/scripts/runDomainTests $(srcdir)/tests
+
+unit-tests:
+	$(srcdir)/scripts/runUnitTests $(srcdir)/tests
 
 check-domain-old:
 	@echo ================================================================
