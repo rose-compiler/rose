@@ -2024,9 +2024,6 @@ projects/EditDistanceMetric/Makefile
 projects/Fortran_to_C/Makefile
 projects/Fortran_to_C/src/Makefile
 projects/Fortran_to_C/tests/Makefile
-projects/Jovial_to_C/Makefile
-projects/Jovial_to_C/src/Makefile
-projects/Jovial_to_C/tests/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/HeaderFilesInclusion/Makefile
