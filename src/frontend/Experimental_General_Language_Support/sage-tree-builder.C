@@ -82,17 +82,34 @@ SageTreeBuilder::setSourcePosition(SgLocatedNode* node, const SourcePosition &st
 
 void SageTreeBuilder::Leave(SgScopeStatement* & scope)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgScopeStatement* &) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgScopeStatement* &) \n";
 
    scope = SageBuilder::getGlobalScopeFromScopeStack();
    ROSE_ASSERT(scope);
+}
+
+void SageTreeBuilder::Enter(SgBasicBlock* &block)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgBasicBlock* &) \n";
+
+   block = SageBuilder::buildBasicBlock_nfi();
+
+   SageBuilder::pushScopeStack(block);
+}
+
+void SageTreeBuilder::Leave(SgBasicBlock* block)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgBasicBlock*) \n";
+
+   SageBuilder::popScopeStack();  // this basic block
+   SageInterface::appendStatement(block, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
 Enter(SgProgramHeaderStatement* &program_decl,
       const boost::optional<std::string> &name, const std::list<std::string> &labels, const SourcePositions &sources)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgProgramHeaderStatement* &, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgProgramHeaderStatement* &, ...) \n";
 
    SgScopeStatement* scope = SageBuilder::topScopeStack();
 
@@ -159,7 +176,7 @@ void SageTreeBuilder::Leave(SgProgramHeaderStatement* program_decl)
 // properly connected, cleaned up the scope stack, resolved symbols, and
 // inserted the declaration into its scope.
 
-   mlog[INFO] << "SageTreeBuilder::Leave(SgProgramHeaderStatement*) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgProgramHeaderStatement*) \n";
 
    SageBuilder::popScopeStack();  // program body
    SageBuilder::popScopeStack();  // program definition
@@ -207,7 +224,7 @@ setFortranEndProgramStmt(SgProgramHeaderStatement* program_decl,
 void SageTreeBuilder::
 Enter(SgFunctionParameterList* &param_list, SgBasicBlock* &param_scope)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgFunctionParameterList*) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionParameterList*) \n";
 
    param_list = SageBuilder::buildFunctionParameterList_nfi();
 
@@ -231,7 +248,7 @@ Enter(SgFunctionParameterList* &param_list, SgBasicBlock* &param_scope)
 void SageTreeBuilder::
 Leave(SgFunctionParameterList* param_list, SgBasicBlock* param_scope, const std::list<FormalParameter> &param_name_list)
 {
-   mlog[INFO] << "SageTreeBuilder::Leave(SgFunctionParameterList*) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionParameterList*) \n";
 
    ROSE_ASSERT(param_list);
    ROSE_ASSERT(param_scope);
@@ -280,7 +297,7 @@ Leave(SgFunctionParameterList* param_list, SgBasicBlock* param_scope, const std:
 void SageTreeBuilder::
 Enter(SgFunctionDefinition* &function_def)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgFunctionDefinition*) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionDefinition*) \n";
 
    SgBasicBlock* block = SageBuilder::buildBasicBlock_nfi();
 
@@ -295,7 +312,7 @@ Enter(SgFunctionDefinition* &function_def)
 void SageTreeBuilder::
 Leave(SgFunctionDefinition* function_def)
 {
-   mlog[INFO] << "SageTreeBuilder::Leave(SgFunctionDefinition*) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionDefinition*) \n";
 // don't pop the scope stack here as the function declaration will need it on enter
 }
 
@@ -303,7 +320,7 @@ void SageTreeBuilder::
 Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* return_type, SgFunctionParameterList* param_list,
                                              const LanguageTranslation::FunctionModifierList &modifiers)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgFunctionDeclaration* &, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionDeclaration* &, ...) \n";
 
    SgFunctionDefinition* function_def = nullptr;
    SgBasicBlock* function_body = nullptr;
@@ -372,7 +389,7 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* re
 void SageTreeBuilder::
 Leave(SgFunctionDeclaration* function_decl, SgBasicBlock* param_scope)
 {
-   mlog[INFO] << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionDeclaration*) \n";
 
    SgBasicBlock* function_body = isSgBasicBlock(SageBuilder::topScopeStack());
    ROSE_ASSERT(function_body);
@@ -401,7 +418,7 @@ Leave(SgFunctionDeclaration* function_decl, SgBasicBlock* param_scope)
 void SageTreeBuilder::
 Enter(SgDerivedTypeStatement* & derived_type_stmt, const std::string & name)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgDerivedTypeStatement* &, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgDerivedTypeStatement* &, ...) \n";
 
    derived_type_stmt = SageBuilder::buildDerivedTypeStatement(name, SageBuilder::topScopeStack());
 
@@ -414,7 +431,7 @@ Enter(SgDerivedTypeStatement* & derived_type_stmt, const std::string & name)
 void SageTreeBuilder::
 Leave(SgDerivedTypeStatement* derived_type_stmt)
 {
-   mlog[INFO] << "SageTreeBuilder::Leave(SgDerivedTypeStatement*) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgDerivedTypeStatement*) \n";
    ROSE_ASSERT(derived_type_stmt != nullptr);
 
    SageBuilder::popScopeStack();  // class definition
@@ -427,7 +444,7 @@ Leave(SgDerivedTypeStatement* derived_type_stmt)
 void SageTreeBuilder::
 Enter(SgNamespaceDeclarationStatement* &namespace_decl, const std::string &name, const SourcePositionPair &positions)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgNamespaceDeclarationStatement* &, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgNamespaceDeclarationStatement* &, ...) \n";
 
    namespace_decl = SageBuilder::buildNamespaceDeclaration_nfi(name, true, SageBuilder::topScopeStack());
    SageInterface::setSourcePosition(namespace_decl);
@@ -447,16 +464,15 @@ Enter(SgNamespaceDeclarationStatement* &namespace_decl, const std::string &name,
 void SageTreeBuilder::
 Leave(SgNamespaceDeclarationStatement* namespace_decl)
 {
-   mlog[INFO] << "SageTreeBuilder::Leave(SgNamespaceDeclarationStatement*, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgNamespaceDeclarationStatement*, ...) \n";
 
    SageBuilder::popScopeStack();  // namespace definition
 }
 
-
 void SageTreeBuilder::
 Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExpression*> &vars, const std::string& label)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgExprStatement* &, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgExprStatement* &, ...) \n";
 
    SgEnumVal* old_val = isSgEnumVal(rhs);
 
@@ -471,6 +487,82 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
 
    SgAssignOp* assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(vars[0], rhs);
    assign_stmt = SageBuilder::buildExprStatement_nfi(assign_op);
+}
+
+void SageTreeBuilder::
+Leave(SgExprStatement* assign_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgExprStatement*) \n";
+   ROSE_ASSERT(assign_stmt != nullptr);
+
+   SageInterface::appendStatement(assign_stmt, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
+Enter(SgSwitchStatement* &switch_stmt, SgExpression* selector, const SourcePositionPair &sources)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgSwitchStatement* &, ...) \n";
+
+   ROSE_ASSERT(selector);
+   SgExprStatement* selector_stmt = SageBuilder::buildExprStatement_nfi(selector);
+   SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
+
+   switch_stmt = SageBuilder::buildSwitchStatement_nfi(selector_stmt, body);
+
+   SageInterface::appendStatement(switch_stmt, SageBuilder::topScopeStack());
+   SageBuilder::pushScopeStack(body);
+}
+
+void SageTreeBuilder::
+Leave(SgSwitchStatement* switch_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgSwitchStatement*, ...) \n";
+   ROSE_ASSERT(switch_stmt);
+
+   SageBuilder::popScopeStack();  // switch statement body
+}
+
+void SageTreeBuilder::
+Enter(SgCaseOptionStmt* &case_option_stmt, SgExprListExp* key)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgCaseOptionStmt* &, ...) \n";
+   ROSE_ASSERT(key);
+
+   SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
+   case_option_stmt = SageBuilder::buildCaseOptionStmt_nfi(key, body);
+
+   SageInterface::appendStatement(case_option_stmt, SageBuilder::topScopeStack());
+   SageBuilder::pushScopeStack(body);
+}
+
+void SageTreeBuilder::
+Leave(SgCaseOptionStmt* case_option_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgCaseOptionStmt*, ...) \n";
+   ROSE_ASSERT(case_option_stmt);
+
+   SageBuilder::popScopeStack();  // case_option_stmt body
+}
+
+void SageTreeBuilder::
+Enter(SgDefaultOptionStmt* &default_option_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgDefautlOptionStmt* &, ...) \n";
+
+   SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
+   default_option_stmt = SageBuilder::buildDefaultOptionStmt(body);
+
+   SageInterface::appendStatement(default_option_stmt, SageBuilder::topScopeStack());
+   SageBuilder::pushScopeStack(body);
+}
+
+void SageTreeBuilder::
+Leave(SgDefaultOptionStmt* default_option_stmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgDefautlOptionStmt*, ...) \n";
+   ROSE_ASSERT(default_option_stmt);
+
+   SageBuilder::popScopeStack();  // default_option_stmt body
 }
 
 SgEnumVal* SageTreeBuilder::
@@ -498,22 +590,13 @@ ReplaceEnumVal(SgEnumType* enum_type, SgName name)
    return enum_val;
 }
 
-void SageTreeBuilder::
-Leave(SgExprStatement* assign_stmt)
-{
-   mlog[INFO] << "SageTreeBuilder::Leave(SgExprStatement*) \n";
-   ROSE_ASSERT(assign_stmt != nullptr);
-
-   SageInterface::appendStatement(assign_stmt, SageBuilder::topScopeStack());
-}
-
 // Jovial specific nodes
 //
 
 void SageTreeBuilder::
 Enter(SgJovialDefineDeclaration* &define_decl, const std::string &define_string)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgJovialDefineDeclaration* &, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialDefineDeclaration* &, ...) \n";
 
    define_decl = new SgJovialDefineDeclaration(define_string);
    ROSE_ASSERT(define_decl != nullptr);
@@ -526,7 +609,7 @@ Enter(SgJovialDefineDeclaration* &define_decl, const std::string &define_string)
 void SageTreeBuilder::
 Leave(SgJovialDefineDeclaration* define_decl)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement*) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement*) \n";
 
    ROSE_ASSERT(define_decl != nullptr);
 
@@ -537,7 +620,7 @@ Leave(SgJovialDefineDeclaration* define_decl)
 void SageTreeBuilder::
 Enter(SgJovialDirectiveStatement* &directive, const std::string &directive_string, SgJovialDirectiveStatement::directive_types directive_type)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement* &, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement* &, ...) \n";
 
    directive = new SgJovialDirectiveStatement(directive_string, directive_type);
    ROSE_ASSERT(directive);
@@ -560,7 +643,7 @@ Enter(SgJovialDirectiveStatement* &directive, const std::string &directive_strin
 void SageTreeBuilder::
 Leave(SgJovialDirectiveStatement* directive)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement*) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement*) \n";
 
    ROSE_ASSERT(directive != nullptr);
 
@@ -581,7 +664,7 @@ Leave(SgJovialDirectiveStatement* directive)
 void SageTreeBuilder::
 Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const SourcePositionPair &positions)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgJovialCompoolStatement* &, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialCompoolStatement* &, ...) \n";
 
    compool_decl = new SgJovialCompoolStatement(name);
    SageInterface::setSourcePosition(compool_decl);
@@ -598,7 +681,7 @@ Enter(SgJovialCompoolStatement* &compool_decl, const std::string &name, const So
 void SageTreeBuilder::
 Leave(SgJovialCompoolStatement* compool_decl)
 {
-   mlog[INFO] << "SageTreeBuilder::Leave(SgJovialCompoolStatement*, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialCompoolStatement*, ...) \n";
 
 // TODO?
 // SageBuilder::popScopeStack();  // compool definition
@@ -608,7 +691,7 @@ void SageTreeBuilder::
 Enter(SgJovialTableStatement* &table_decl,
       const std::string &name, const SourcePositionPair &positions, bool is_block)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgJovialTableStatement* &, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialTableStatement* &, ...) \n";
 
    SgName type_name = name;
    SgClassDeclaration::class_types struct_kind = SgClassDeclaration::e_jovial_table;
@@ -645,7 +728,7 @@ Enter(SgJovialTableStatement* &table_decl,
 void SageTreeBuilder::
 Leave(SgJovialTableStatement* table_type_stmt)
 {
-   mlog[INFO] << "SageTreeBuilder::Leave(SgJovialTableStatement*) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialTableStatement*) \n";
 
    SageBuilder::popScopeStack();  // class definition
    SageInterface::appendStatement(table_type_stmt, SageBuilder::topScopeStack());
@@ -654,7 +737,7 @@ Leave(SgJovialTableStatement* table_type_stmt)
 void SageTreeBuilder::
 Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, SgExpression* init_expr)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgVariableDeclaration* &, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgVariableDeclaration* &, ...) \n";
 
    ROSE_ASSERT(type != nullptr);
 
@@ -695,13 +778,13 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
 void SageTreeBuilder::
 Leave(SgVariableDeclaration* var_decl)
 {
-   mlog[INFO] << "SageTreeBuilder::Leave(SgVariableDeclaration*) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) \n";
 }
 
 void SageTreeBuilder::
 Enter(SgEnumDeclaration* &enum_decl, const std::string &name, std::list<SgInitializedName*> &status_list)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgEnumDeclaration* &, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgEnumDeclaration* &, ...) \n";
 
    enum_decl = SageBuilder::buildEnumDeclaration_nfi(name, SageBuilder::topScopeStack());
    ROSE_ASSERT(enum_decl);
@@ -734,7 +817,7 @@ Enter(SgEnumDeclaration* &enum_decl, const std::string &name, std::list<SgInitia
 void SageTreeBuilder::
 Leave(SgEnumDeclaration* enum_decl)
 {
-   mlog[INFO] << "SageTreeBuilder::Leave(SgEnumDeclaration*) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgEnumDeclaration*) \n";
 
    SageInterface::appendStatement(enum_decl, SageBuilder::topScopeStack());
 }
@@ -742,7 +825,7 @@ Leave(SgEnumDeclaration* enum_decl)
 void SageTreeBuilder::
 Enter(SgTypedefDeclaration* &type_def, const std::string &name, SgType* type)
 {
-   mlog[INFO] << "SageTreeBuilder::Enter(SgTypedefDeclaration*) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgTypedefDeclaration*) \n";
 
    type_def = SageBuilder::buildTypedefDeclaration(name, type, SageBuilder::topScopeStack());
 }
@@ -750,7 +833,7 @@ Enter(SgTypedefDeclaration* &type_def, const std::string &name, SgType* type)
 void SageTreeBuilder::
 Leave(SgTypedefDeclaration* type_def)
 {
-   mlog[INFO] << "SageTreeBuilder::Leave(SgTypedefDeclaration*) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgTypedefDeclaration*) \n";
 
    SageInterface::appendStatement(type_def, SageBuilder::topScopeStack());
 }
@@ -759,7 +842,7 @@ Leave(SgTypedefDeclaration* type_def)
 void SageTreeBuilder::
 importModule(const std::string &module_name)
 {
-   mlog[INFO] << "SageTreeBuilder::importModule " << module_name << std::endl;
+   mlog[TRACE] << "SageTreeBuilder::importModule " << module_name << std::endl;
 
    ModuleBuilderFactory::get_compool_builder().getModule(module_name);
 }

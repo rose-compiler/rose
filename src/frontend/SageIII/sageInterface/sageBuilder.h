@@ -194,6 +194,10 @@ ROSE_DLL_API SgTypeFloat128* buildFloat128Type();
 //! Build a Jovial fixed type with a fraction specifier and a scale specifier
 ROSE_DLL_API SgTypeFixed* buildFixedType(SgExpression* fraction, SgExpression* scale);
 
+// Rasmussen (5/5/2020): Added builder for Jovial bit type
+//! Build a Jovial bit type of a given size
+ROSE_DLL_API SgJovialBitType* buildJovialBitType(SgExpression* size);
+
 //! DQ (8/21/2010): We want to move to the new buildStringType( SgExpression*,size_t) function over the older buildStringType() function.
 ROSE_DLL_API SgTypeString* buildStringType();
 // SgTypeString* buildStringType( SgExpression* stringLengthExpression, size_t stringLengthLiteral );

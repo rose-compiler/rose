@@ -1,11 +1,13 @@
 START
-PROGRAM testcase ;
+PROGRAM testcase;
 BEGIN
-  label1:
-  CASE TEST;
+  ITEM ii S;
+  CASE test;
   BEGIN
-    (DEFAULT): ;
-    (0,1,2): ;
+    (DEFAULT): ii=0;
+    (0,1,2): ii=1;
+    (3:5,11:13): BEGIN ii=3; ii=4; END
   END
+  ii = 33;
 END
 TERM

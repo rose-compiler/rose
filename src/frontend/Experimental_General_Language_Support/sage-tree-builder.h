@@ -23,6 +23,7 @@ class SgLocatedNode;
 class SgProgramHeaderStatement;
 class SgScopeStatement;
 class SgSourceFile;
+class SgSwitchStatement;
 class SgType;
 class SgVariableDeclaration;
 
@@ -79,6 +80,9 @@ public:
 
    void Leave(SgScopeStatement* &);
 
+   void Enter(SgBasicBlock* &);
+   void Leave(SgBasicBlock*);
+
    void Enter(SgProgramHeaderStatement* &,
               const boost::optional<std::string> &, const std::list<std::string> &, const SourcePositions &);
    void Leave(SgProgramHeaderStatement*);
@@ -116,6 +120,15 @@ public:
 
    void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &, const std::string &);
    void Leave(SgExprStatement*);
+
+   void Enter(SgSwitchStatement* &, SgExpression*, const SourcePositionPair &);
+   void Leave(SgSwitchStatement*);
+
+   void Enter(SgCaseOptionStmt* &, SgExprListExp*);
+   void Leave(SgCaseOptionStmt*);
+
+   void Enter(SgDefaultOptionStmt* &);
+   void Leave(SgDefaultOptionStmt*);
 
    SgEnumVal* ReplaceEnumVal(SgEnumType*, SgName);
 

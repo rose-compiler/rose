@@ -18,6 +18,7 @@ JOVIAL_TESTCODES = \
  1_2_2_procedure-module_e.jov           \
  1_2_2_procedure-module_f.jov           \
  2_1_1_4_bit_type.jov                   \
+ 4_4_case_stmt_a.jov                    \
  5_2_logical_continuation_a.jov         \
  5_2_logical_continuation_b.jov         \
  6_1_ptr_dereference.jov                \
@@ -49,7 +50,6 @@ JOVIAL_PARSER_TESTCODES = \
  4_2_loop_stmt_b1.jov                   \
  4_2_loop_stmt_d1.jov                   \
  4_3_if_else_stmt.jov                   \
- 4_4_case_stmt_a.jov                    \
  4_6_return_stmt_a.jov                  \
  4_7_goto_stmt_a.jov                    \
  4_8_exit_stmt.jov                      \
