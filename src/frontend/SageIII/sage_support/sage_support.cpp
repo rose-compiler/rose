@@ -4052,6 +4052,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 #elif BACKEND_FORTRAN_IS_INTEL_COMPILER
 #if ROSE_USE_INTEL_FPP
           fortran_C_preprocessor_commandLine.push_back(INTEL_FPP_PATH);
+          fortran_C_preprocessor_commandLine.push_back("-P");
 #else
           cerr << "Intel Fortran preprocessor not available! " << endl;
           ROSE_ASSERT(false);
@@ -4253,7 +4254,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
             // DQ (5/20/2008)
             // fortranCommandLine.push_back("-ffree-line-length-none");
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
                use_line_length_none_string = "-ffree-line-length-none";
+#elif BACKEND_FORTRAN_IS_INTEL_COMPILER
+               use_line_length_none_string = "-free";
+#endif
              }
             else
              {
@@ -4270,7 +4275,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
                  // DQ (5/20/2008)
                  // fortranCommandLine.push_back("-ffree-line-length-none");
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
                     use_line_length_none_string = "-ffree-line-length-none";
+#elif BACKEND_FORTRAN_IS_INTEL_COMPILER
+                    use_line_length_none_string = "-free";
+#endif 
                   }
                  else
                   {
@@ -4284,13 +4293,20 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                            // for F90 code.  So this needs to be tested, see comments above relative to use of "-std=legacy".
                               fortranCommandLine.push_back("-std=f2008");
                             }
-
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
                          use_line_length_none_string = "-ffree-line-length-none";
+#elif BACKEND_FORTRAN_IS_INTEL_COMPILER
+                         use_line_length_none_string = "-free";
+#endif
                        }
                       else
                        {
                       // This should be the default mode (fortranMode string is empty). So is it f77?
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
                          use_line_length_none_string = "-ffixed-line-length-none";
+#elif BACKEND_FORTRAN_IS_INTEL_COMPILER
+                         use_line_length_none_string = "-fixed";
+#endif
                        }
                   }
              }
@@ -4304,6 +4320,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              {
                fortranCommandLine.push_back(use_line_length_none_string);
              }
+#elif BACKEND_FORTRAN_IS_INTEL_COMPILER
+          fortranCommandLine.push_back(use_line_length_none_string);
 #endif
 
        // DQ (12/8/2007): Added support for cray pointers from commandline.
