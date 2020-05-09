@@ -250,11 +250,11 @@ ATbool traverse_IfStatement   (ATerm term);
 
 // 4.4 CASE STATEMENTS
 ATbool traverse_CaseStatement   (ATerm term);
-ATbool traverse_CaseBody        (ATerm term, SgUntypedStatement* &case_body);
+ATbool traverse_CaseBody        (ATerm term);
 ATbool traverse_CaseAlternative (ATerm term);
 ATbool traverse_DefaultOption   (ATerm term);
-ATbool traverse_CaseIndexGroup  (ATerm term, SgUntypedExprListExpression* & case_index_group);
-ATbool traverse_CaseIndex       (ATerm term, SgUntypedExpression* & case_index);
+ATbool traverse_CaseIndexGroup  (ATerm term, SgExprListExp* &key);
+ATbool traverse_CaseIndex       (ATerm term, SgExpression*  &index);
 
 // 4.5 PROCEDURE CALL STATEMENTS
 ATbool traverse_ProcedureCallStatement (ATerm term);

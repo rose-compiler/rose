@@ -4338,17 +4338,15 @@ ATbool ATermToSageJovialTraversal::traverse_CompoundStatement(ATerm term)
    std::vector<std::string> labels, labels2;
    std::vector<PosInfo> locations, locations2;
 
+   SgBasicBlock* block = nullptr;
+
    if (ATmatch(term, "CompoundStatement(<term>,<term>,<term>)", &t_labels, &t_stmt, &t_labels2)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
 
-//TODO_STATEMENTS
-#if 0
-      block_stmt = SageBuilder::buildUntypedBlockStatement("");
-      ROSE_ASSERT(block_stmt);
-
-      new_stmt_list = block_stmt->get_scope()->get_statement_list();
+   // Begin SageTreeBuilder
+      sage_tree_builder.Enter(block);
 
       if (traverse_StatementList(t_stmt)) {
          // MATCHED StatementList
@@ -4357,10 +4355,14 @@ ATbool ATermToSageJovialTraversal::traverse_CompoundStatement(ATerm term)
       if (traverse_LabelList(t_labels2, labels2, locations2)) {
          // MATCHED LabelList
       } else return ATfalse;
-#endif
 
    }
    else return ATfalse;
+
+   ROSE_ASSERT(block);
+
+// End SageTreeBuilder
+   sage_tree_builder.Leave(block);
 
    return ATtrue;
 }
@@ -4870,25 +4872,26 @@ ATbool ATermToSageJovialTraversal::traverse_CaseStatement(ATerm term)
    ATerm t_labels, t_formula, t_case_body, t_labels2;
    std::vector<std::string> labels, labels2;
    std::vector<PosInfo> locations, locations2;
-   SgUntypedStatement* stmt;
-   SgUntypedExpression* formula = NULL;
-   SgUntypedStatement* body = NULL;
 
-// Begin SageTreeBuilder
-   SgExpression* sg_expr = nullptr;
+   Rose::builder::SourcePositionPair sources;
 
-   int stmt_enum = LanguageTranslation::e_switch_stmt;
+   SgExpression* selector = nullptr;
+   SgSwitchStatement* switch_stmt = nullptr;
 
    if (ATmatch(term, "CaseStatement(<term>,<term>,<term>,<term>)", &t_labels, &t_formula, &t_case_body, &t_labels2)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
          // MATCHED LabelList
       } else return ATfalse;
 
-      if (traverse_Formula(t_formula, sg_expr)) {
+      if (traverse_Formula(t_formula, selector)) {
         // MATCHED Formula
       } else return ATfalse;
 
-      if (traverse_CaseBody(t_case_body, body)) {
+   // Begin SageTreeBuilder
+      sage_tree_builder.Enter(switch_stmt, selector, sources);
+      setSourcePosition(switch_stmt, term);
+
+      if (traverse_CaseBody(t_case_body)) {
         // MATCHED CaseBody
       } else return ATfalse;
 
@@ -4896,38 +4899,19 @@ ATbool ATermToSageJovialTraversal::traverse_CaseStatement(ATerm term)
          // MATCHED LabelList
          ROSE_ASSERT(locations2.size() == 0);  // TODO
       } else return ATfalse;
-
-      ROSE_ASSERT(formula != NULL);
-      ROSE_ASSERT(body != NULL);
-
-      SgUntypedCaseStatement* case_stmt = new SgUntypedCaseStatement("", stmt_enum, formula, body, "", true);
-      setSourcePosition(case_stmt, term);
-
-      stmt = convert_Labels(labels, locations, case_stmt);
    }
    else return ATfalse;
 
-//TODO_STATEMENTS
-#if 0
-   stmt_list->get_stmt_list().push_back(stmt);
-#endif
+// End SageTreeBuilder
+   sage_tree_builder.Leave(switch_stmt);
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_CaseBody(ATerm term, SgUntypedStatement* & case_body)
+ATbool ATermToSageJovialTraversal::traverse_CaseBody(ATerm term)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_CaseBody: %s\n", ATwriteToString(term));
-#endif
-
-//TODO_STATEMENTS
-#if 0
-   SgUntypedBlockStatement* body = SageBuilder::buildUntypedBlockStatement("");
-   ROSE_ASSERT(body != NULL);
-   setSourcePosition(body, term);
-
-   SgUntypedStatementList* my_stmt_list = body->get_scope()->get_statement_list();
 #endif
 
    ATermList tail = (ATermList) ATmake("<term>", term);
@@ -4941,11 +4925,6 @@ ATbool ATermToSageJovialTraversal::traverse_CaseBody(ATerm term, SgUntypedStatem
       } else return ATfalse;
    }
 
-//TODO_STATEMENTS
-#if 0
-   *case_body = body;
-#endif
-
    return ATtrue;
 }
 
@@ -4956,23 +4935,20 @@ ATbool ATermToSageJovialTraversal::traverse_CaseAlternative(ATerm term)
 #endif
 
    ATerm t_case_index_group, t_stmt, t_fall_thru;
-   bool fall_thru;
-   SgUntypedExprListExpression* case_index_group = NULL;
+   bool fall_thru = false;
+
+   SgCaseOptionStmt* case_option_stmt = nullptr;
+   SgExprListExp* case_index_group = nullptr;
 
    if (ATmatch(term, "CaseAlternative(<term>,<term>,<term>)", &t_case_index_group, &t_stmt, &t_fall_thru)) {
-
-//TODO_STATEMENTS
-#if 0
-      body = SageBuilder::buildUntypedBlockStatement("");
-      ROSE_ASSERT(body != NULL);
-      setSourcePosition(body, term);
-
-      SgUntypedStatementList* my_stmt_list = body->get_scope()->get_statement_list();
-#endif
 
       if (traverse_CaseIndexGroup(t_case_index_group, case_index_group)) {
          // MATCHED CaseIndexGroup
       } else return ATfalse;
+
+   // Begin SageTreeBuilder
+      sage_tree_builder.Enter(case_option_stmt, case_index_group);
+      setSourcePosition(case_option_stmt, term);
 
       if (traverse_Statement(t_stmt)) {
         // MATCHED Statement
@@ -4990,20 +4966,14 @@ ATbool ATermToSageJovialTraversal::traverse_CaseAlternative(ATerm term)
 
    if (!case_index_group) {
       cerr << "WARNING UNIMPLEMENTED: CaseAlternative - probably StatusConstant\n";
-      return ATtrue;
+      ROSE_ASSERT(case_index_group);
    }
 
-//TODO_STATEMENTS
-#if 0
-   ROSE_ASSERT(case_index_group != NULL);
-   ROSE_ASSERT(body != NULL);
+   ROSE_ASSERT(case_option_stmt);
+   case_option_stmt->set_has_fall_through(fall_thru);
 
-   SgUntypedCaseStatement* case_stmt = new SgUntypedCaseStatement("", stmt_enum, case_index_group, body, "", fall_thru);
-   ROSE_ASSERT(case_stmt != NULL);
-   setSourcePosition(case_stmt, term);
-
-   stmt_list->get_stmt_list().push_back(case_stmt);
-#endif
+// End SageTreeBuilder
+   sage_tree_builder.Leave(case_option_stmt);
 
    return ATtrue;
 }
@@ -5015,24 +4985,15 @@ ATbool ATermToSageJovialTraversal::traverse_DefaultOption(ATerm term)
 #endif
 
    ATerm t_stmt, t_fall_thru;
-
-//TODO_STATEMENTS
-#if 0
-   SgUntypedBlockStatement* body = NULL;
-   int stmt_enum = LanguageTranslation::e_case_default_option_stmt;
-#endif
    bool fall_thru = false;
+
+   SgDefaultOptionStmt* default_option_stmt = nullptr;
 
    if (ATmatch(term, "DefaultOption(<term>,<term>)", &t_stmt, &t_fall_thru)) {
 
-//TODO_STATEMENTS
-#if 0
-      body = SageBuilder::buildUntypedBlockStatement("");
-      ROSE_ASSERT(body != NULL);
-      setSourcePosition(body, term);
-
-      SgUntypedStatementList* my_stmt_list = body->get_scope()->get_statement_list();
-#endif
+   // Begin SageTreeBuilder
+      sage_tree_builder.Enter(default_option_stmt);
+      setSourcePosition(default_option_stmt, term);
 
       if (traverse_Statement(t_stmt)) {
          // MATCHED Statement
@@ -5048,108 +5009,92 @@ ATbool ATermToSageJovialTraversal::traverse_DefaultOption(ATerm term)
 
    } else return ATfalse;
 
-//TODO_STATEMENTS
-#if 0
-   ROSE_ASSERT(body != NULL);
+   ROSE_ASSERT(default_option_stmt);
+   default_option_stmt->set_has_fall_through(fall_thru);
 
-   SgUntypedCaseStatement* case_stmt = new SgUntypedCaseStatement("", stmt_enum, NULL, body, "", fall_thru);
-   ROSE_ASSERT(case_stmt != NULL);
-   setSourcePosition(case_stmt, term);
-
-   stmt_list->get_stmt_list().push_back(case_stmt);
-#endif
+// End SageTreeBuilder
+   sage_tree_builder.Leave(default_option_stmt);
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_CaseIndexGroup(ATerm term, SgUntypedExprListExpression* & case_index_group)
+ATbool ATermToSageJovialTraversal::traverse_CaseIndexGroup(ATerm term, SgExprListExp* &index_group)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_CaseIndexGroup: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_case_index;
-   SgUntypedExpression* case_index;
-   SgUntypedExprListExpression* index_group;
+   SgExpression* case_index;
 
-   case_index_group = NULL;
+   index_group = nullptr;
 
    if (ATmatch(term, "CaseIndexGroup(<term>)", &t_case_index)) {
-      index_group = new SgUntypedExprListExpression(LanguageTranslation::e_case_selector);
+
+      index_group = SageBuilder::buildExprListExp_nfi();
       setSourcePosition(index_group, term);
 
       ATermList tail = (ATermList) ATmake("<term>", t_case_index);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
+         case_index = nullptr;
          if (traverse_CaseIndex(head, case_index)) {
             // MATCHED CaseIndex
-            if (!case_index) {
-               cerr << "WARNING UNIMPLEMENTED: CaseIndexGroup - probably Status Constant\n";
-               return ATtrue;
-            }
             ROSE_ASSERT(case_index);
             index_group->get_expressions().push_back(case_index);
-         } else return ATfalse;
+         }
+         else return ATfalse;
       }
    } else return ATfalse;
 
-   ROSE_ASSERT(index_group != NULL);
-   case_index_group = index_group;
+   ROSE_ASSERT(index_group);
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_CaseIndex(ATerm term, SgUntypedExpression* & case_index)
+ATbool ATermToSageJovialTraversal::traverse_CaseIndex(ATerm term, SgExpression* &case_index)
 {
 #if PRINT_ATERM_TRAVERSAL
   printf("... traverse_CaseIndex: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_formula1, t_formula2;
-
-// Begin SageTreeBuilder
-   SgExpression* value = nullptr;
    SgExpression* lower_bound = nullptr;
    SgExpression* upper_bound = nullptr;
 
-   case_index = NULL;
+   case_index = nullptr;
 
+// This case is needed to traverse CompileTimeFormula -> CaseIndex
    if (ATmatch(term, "CaseIndex(<term>)", &t_formula1)) {
-     // This case is needed to traverse CompileTimeFormula -> CaseIndex
-      if (traverse_Formula(t_formula1, value)) {
+      if (traverse_Formula(t_formula1, case_index)) {
          // MATCHED Formula
       } else return ATfalse;
+   }
 
-   } else if (ATmatch(term, "CaseIndex(<term>,<term>)", &t_formula1, &t_formula2)) {
-     // This case is needed to traverse LowerBound : UpperBound -> CaseIndex
+// This case is needed to traverse LowerBound : UpperBound -> CaseIndex
+   else if (ATmatch(term, "CaseIndex(<term>,<term>)", &t_formula1, &t_formula2)) {
       if (traverse_Formula(t_formula1, lower_bound)) {
          // MATCHED Formula
       } else return ATfalse;
       if (traverse_Formula(t_formula2, upper_bound)) {
          // MATCHED Formula
       } else return ATfalse;
+
+   // Perhaps SgRangeExp should be used instead for the stride and then won't need to insert literal "1"
+      SgExpression* stride = new SgIntVal(1,"1");
+      SageInterface::setSourcePosition(stride);
+
+      case_index = SageBuilder::buildSubscriptExpression_nfi(lower_bound, upper_bound, stride);
    }
    else return ATfalse;
-#if 0
-   if (value) {
-      case_index = value;
+
+   if (case_index == nullptr) {
+      cerr << "WARNING UNIMPLEMENTED: CaseIndex = nullptr, probably StatusConstant in lower_bound or upper_bound\n";
    }
-   else if (lower_bound && upper_bound) {
-      int expr_enum = LanguageTranslation::e_case_range;
-      stride = UntypedBuilder::buildUntypedNullExpression();
-      setSourcePositionUnknown(stride);
-      range = new SgUntypedSubscriptExpression(expr_enum, lower_bound, upper_bound, stride);
-      setSourcePosition(range, term);
-      case_index = range;
-   }
-   else {
-      cerr << "WARNING UNIMPLEMENTED: CaseIndex - probably StatusConstant in lower_bound or upper_bound\n";
-      return ATtrue;
-      ROSE_ASSERT(0);
-   }
+
    ROSE_ASSERT(case_index);
-#endif
+   setSourcePosition(case_index, term);
 
    return ATtrue;
 }

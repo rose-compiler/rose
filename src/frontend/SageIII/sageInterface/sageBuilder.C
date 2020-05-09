@@ -6256,7 +6256,7 @@ SageBuilder::buildProcedureHeaderStatement(const SgName& name, SgType* return_ty
        // Rasmussen (3/25/2020): Replaced call to builder function with templated version.
           nondefiningDeclaration = buildNondefiningFunctionDeclaration_T <SgProcedureHeaderStatement>
                                                  ( name, return_type, parameter_list, /*isMemberFunction*/false, scope,
-                                                   /*decoratorList*/NULL, /*functionConstVolatileFlags*/0, NULL, NULL  );
+                                                   /*decoratorList*/NULL, /*functionConstVolatileFlags*/0, NULL, NULL, SgStorageModifier::e_default);
         }
 
   // DQ (8/23/2013): Added assertions.
