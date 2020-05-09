@@ -442,6 +442,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "--param" ||    // --param variable=value
 
        // Peihung (03/09/2020): Add support for ifort v.19
+          argument == "-align"  ||
           argument == "-warn"  ||
           argument == "-check"  ||
           argument == "-debug"  ||
