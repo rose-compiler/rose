@@ -4046,6 +4046,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 #elif BACKEND_FORTRAN_IS_INTEL_COMPILER
 #if ROSE_USE_INTEL_FPP
           fortran_C_preprocessor_commandLine.push_back(INTEL_FPP_PATH);
+          fortran_C_preprocessor_commandLine.push_back("-P");
 #else
           cerr << "Intel Fortran preprocessor not available! " << endl;
           ROSE_ASSERT(false);
