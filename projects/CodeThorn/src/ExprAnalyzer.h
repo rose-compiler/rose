@@ -68,7 +68,7 @@ namespace CodeThorn {
   //#define EXPR_VISITOR
   class ExprAnalyzer {
   public:
-    enum EvalMode { MODE_ADDRESS, MODE_VALUE };
+    enum EvalMode { MODE_ADDRESS, MODE_VALUE, MODE_EMPTY_STATE };
     ExprAnalyzer();
     void setAnalyzer(Analyzer* analyzer);
     //SingleEvalResult eval(SgNode* node,EState estate);
@@ -160,7 +160,7 @@ namespace CodeThorn {
   protected:
     static void initDiagnostics();
     static Sawyer::Message::Facility logger;
-    AbstractValue constIntLatticeFromSgValueExp(SgValueExp* valueExp);
+    AbstractValue constIntLatticeFromSgValueExp(SgValueExp* valueExp, EvalMode mode);
     
    
     // evaluation state
@@ -310,7 +310,7 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalLValueExp(SgNode* node, EState estate, EvalMode mode=MODE_VALUE);
 
     list<SingleEvalResultConstInt> evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
-    list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate);
+    list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate, EvalMode mode);
     
     // supported system functions
     list<SingleEvalResultConstInt> evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate);
@@ -323,6 +323,7 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> execFunctionCallScanf(SgFunctionCallExp* funCall, EState estate);
 
   private:
+    void printLoggerWarning(EState& estate);
     void initViolatingLocations();
     VariableIdMappingExtended* _variableIdMapping=nullptr;
     std::vector<ProgramLocationsReport> _violatingLocations;
@@ -333,7 +334,7 @@ namespace CodeThorn {
     bool _svCompFunctionSemantics=false;
     bool _ignoreUndefinedDereference=false;
     bool _ignoreFunctionPointers=false;
-    Analyzer* _analyzer;
+    Analyzer* _analyzer=nullptr;
     bool _printDetectedViolations=false;
     enum InterpreterMode _interpreterMode=IM_ABSTRACT;
     std::string _interpreterModeFileName;
@@ -341,7 +342,8 @@ namespace CodeThorn {
   public:
     StructureAccessLookup structureAccessLookup;
   };
- 
+
+  
 } // end of namespace CodeThorn
 
 #endif
