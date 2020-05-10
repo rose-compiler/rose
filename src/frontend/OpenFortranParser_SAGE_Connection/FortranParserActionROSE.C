@@ -11364,16 +11364,9 @@ void c_action_label(Token_t * lbl)
         // Output debugging information about saved state (stack) information.
         outputState("At TOP of R810 c_action_case_stmt()");
 #endif
-
-        // ROSE_ASSERT(astExpressionStack.empty() == false);
-
-        SgBasicBlock* body = new SgBasicBlock();
-        ROSE_ASSERT(body != NULL);
-
-        // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-        body->setCaseInsensitive(true);
-
         SgStatement* caseOrDefaultStatement = NULL;
+
+        SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
 
         if (astExpressionStack.empty() == true)
         {
@@ -11418,7 +11411,6 @@ void c_action_label(Token_t * lbl)
         setSourcePosition(caseOrDefaultStatement);
 
         body->set_parent(caseOrDefaultStatement);
-        setSourcePosition(body);
 
         ROSE_ASSERT(astScopeStack.empty() == false);
         astScopeStack.front()->append_statement(caseOrDefaultStatement);
