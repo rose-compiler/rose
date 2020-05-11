@@ -5121,7 +5121,7 @@ void Grammar::setUpBinaryInstructions() {
         uint64_t max_page_size();
 
         /** Convert ELF "machine" identifier to generic instruction set architecture value. */
-        SgAsmExecutableFileFormat::InsSetArchitecture machine_to_isa(unsigned machine) const;
+        static SgAsmExecutableFileFormat::InsSetArchitecture machine_to_isa(unsigned machine);
 
         /** Convert architecture value to an ELF "machine" value. */
         unsigned isa_to_machine(SgAsmExecutableFileFormat::InsSetArchitecture isa) const;
@@ -16284,6 +16284,7 @@ void Grammar::setUpBinaryInstructions() {
                                                          *   IXP460, IXP465 cores */
             ISA_ARM_ARM11               = 0x090d,       /**< ARMv{6,6T2,6KZ,6K} cores */
             ISA_ARM_Cortex              = 0x090e,       /**< Cortex-{A8,A9,A9 MPCore,R4(F),M3,M1} cores */
+            ISA_ARM_A64                 = 0x090f,       /**< ARM AArch64 A64 instruction set. */
 
             // Others, not yet incorporated into this enum
             ISA_OTHER_Family            = 0xf000,
