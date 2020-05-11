@@ -12,6 +12,7 @@
 
 #include <Sawyer/Sawyer.h>
 #include <Sawyer/DenseIntegerSet.h>
+#include <Sawyer/GraphIteratorMap.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/Set.h>
 
@@ -254,7 +255,7 @@ void
 graphEraseParallelEdges(Graph &g) {
     BOOST_FOREACH (const typename Graph::Vertex &src, g.vertices()) {
         if (src.nOutEdges() > 1) {
-            Map<typename Graph::ConstVertexIterator /*target*/, std::vector<typename Graph::ConstEdgeIterator> > edgesByTarget;
+            GraphIteratorMap<typename Graph::ConstVertexIterator /*target*/, std::vector<typename Graph::ConstEdgeIterator> > edgesByTarget;
             typename Graph::ConstEdgeIterator nextEdge = src.outEdges().begin();
             while (nextEdge != src.outEdges().end()) {
                 typename Graph::ConstEdgeIterator curEdge = nextEdge++;
