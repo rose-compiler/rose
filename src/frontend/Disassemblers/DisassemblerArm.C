@@ -57,6 +57,7 @@ DisassemblerArm::init() {
         name += "_microprocessor"; // apparently the "microprocessor profile for Cortex processors"
     if (modes_.isSet(Mode::MODE_V8))
         name += "_a32"; // capstone: "ARMv8 A32 encodings for ARM"
+    this->name(name);
 
     // Architecture independent ROSE disassembler properties
     REG_IP = registerDictionary()->findOrThrow("pc");
@@ -136,6 +137,7 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
         auto insn = new SgAsmArm64Instruction(va, r.csi->mnemonic, (Arm64InstructionKind)r.csi->id, detail.cc);
         insn->set_raw_bytes(SgUnsignedCharList(r.csi->bytes+0, r.csi->bytes+r.csi->size));
         insn->set_operandList(operands);
+        insn->set_condition(detail.cc);
         operands->set_parent(insn);
         retval = insn;
     } else {
