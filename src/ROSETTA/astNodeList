@@ -19,7 +19,10 @@ SgArithmeticIfStatement
 SgArrayType
 SgArrowExp
 SgArrowStarOp
-SgAsmArmInstruction
+SgAsmArm64AtOperand
+SgAsmArm64Instruction
+SgAsmArm64MrsOperand
+SgAsmArm64PrefetchOperand
 SgAsmBasicString
 SgAsmBinaryAdd
 SgAsmBinaryAddPostupdate
@@ -240,11 +243,13 @@ SgAsmStmt
 SgAsmStoredString
 SgAsmStringStorage
 SgAsmType
-SgAsmUnaryArmSpecialRegisterList
 SgAsmUnaryExpression
 SgAsmUnaryMinus
 SgAsmUnaryPlus
 SgAsmUnaryRrx
+SgAsmUnarySignedExtend
+SgAsmUnaryUnsignedExtend
+SgAsmUnaryTruncate
 SgAsmValueExpression
 SgAsmVectorType
 SgAsmX86Instruction
@@ -271,6 +276,7 @@ SgBinaryOp
 SgBitAndOp
 SgBitAttribute
 SgBitComplementOp
+SgBitEqvOp
 SgBitOrOp
 SgBitXorOp
 SgBlockDataStatement
@@ -447,6 +453,8 @@ SgIntrinsicSymbol
 SgIsOp
 SgIsNotOp
 SgIorAssignOp
+SgJovialBitType
+SgJovialTableType
 SgJovialCompoolStatement
 SgJovialForThenStatement
 SgJovialDefineDeclaration
@@ -659,6 +667,7 @@ SgStorageModifier
 SgStringConversion
 SgStringKeyedBidirectionalGraph
 SgStringVal
+SgStructureModifier
 SgSubscriptExpression
 SgSubtractOp
 SgSupport
@@ -912,7 +921,6 @@ SgJavaQualifiedType
 SgClassExp
 SgJavaUnionType
 SgJavaParameterType
-SgJovialTableType
 SgAsyncStmt
 SgFinishStmt
 SgAtStmt

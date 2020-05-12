@@ -134,7 +134,10 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (OrOp,                   "OrOp",                   "OR_OP" );
      NEW_TERMINAL_MACRO (BitXorOp,               "BitXorOp",               "BITXOR_OP" );
      NEW_TERMINAL_MACRO (BitAndOp,               "BitAndOp",               "BITAND_OP" );
-     NEW_TERMINAL_MACRO (BitOrOp,                "BitOrOp",                "BITOR_OP" );
+     NEW_TERMINAL_MACRO (BitOrOp,                "BitOrOp",                "BITOR_OP"  );
+  // Rasmussen (4/28/2020): Added this node to support the Jovial bitwise EQV operator.
+     NEW_TERMINAL_MACRO (BitEqvOp,               "BitEqvOp",               "BITEQV_OP" );
+
      NEW_TERMINAL_MACRO (CommaOpExp,             "CommaOpExp",             "COMMA_OP" );
      NEW_TERMINAL_MACRO (LshiftOp,               "LshiftOp",               "LSHIFT_OP" );
      NEW_TERMINAL_MACRO (RshiftOp,               "RshiftOp",               "RSHIFT_OP" );
@@ -385,8 +388,8 @@ Grammar::setUpExpressions ()
           ArrowExp       | DotExp           | DotStarOp           | ArrowStarOp      | EqualityOp           | LessThanOp     | 
           GreaterThanOp  | NotEqualOp       | LessOrEqualOp       | GreaterOrEqualOp | AddOp                | SubtractOp     | 
           MultiplyOp     | DivideOp         | IntegerDivideOp     | ModOp            | AndOp                | OrOp           |
-          BitXorOp       | BitAndOp         | BitOrOp             | CommaOpExp       | LshiftOp             | RshiftOp       |
-          PntrArrRefExp  | ScopeOp          | AssignOp            | ExponentiationOp | JavaUnsignedRshiftOp |
+          BitXorOp       | BitAndOp         | BitOrOp             | BitEqvOp         | CommaOpExp           | LshiftOp       |
+          RshiftOp       | PntrArrRefExp    | ScopeOp             | AssignOp         | ExponentiationOp     | JavaUnsignedRshiftOp |
           ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         |
 
           NonMembershipOp | IsOp            | IsNotOp             | DotDotExp        | ElementwiseOp        | PowerOp        |
@@ -682,11 +685,13 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
      OrOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
-     BitXorOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+     BitXorOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                   "../Grammar/Expression.code" );
-     BitAndOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+     BitAndOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                   "../Grammar/Expression.code" );
-     BitOrOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+     BitOrOp.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
+                                  "../Grammar/Expression.code" );
+     BitEqvOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                   "../Grammar/Expression.code" );
      CommaOpExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
@@ -985,6 +990,10 @@ Grammar::setUpExpressions ()
      BitXorOp.editSubstitute        ( "PRECEDENCE_VALUE", " 7" );
      BitAndOp.editSubstitute        ( "PRECEDENCE_VALUE", " 8" );
      BitOrOp.editSubstitute         ( "PRECEDENCE_VALUE", " 6" );
+  // Rasmussen (4/28/2020): Added this node to support the Jovial bitwise operator.
+  // Note that precedence of Jovial bitwise operators must be specified by parens, '(' ')'
+  // The PRECEDENCE_VALUE of "6" was chosen so as not to have to change other precedence values.
+     BitEqvOp.editSubstitute        ( "PRECEDENCE_VALUE", " 6" );
      CommaOpExp.editSubstitute      ( "PRECEDENCE_VALUE", " 1" ); // lowest precedence
 
      PowerOp.editSubstitute ( "PRECEDENCE_VALUE", "14" );
@@ -1892,7 +1901,8 @@ Grammar::setUpExpressions ()
      OrOp.setFunctionPrototype ( "HEADER_OR_OPERATOR", "../Grammar/Expression.code" );
      BitXorOp.setFunctionPrototype ( "HEADER_BIT_XOR_OPERATOR", "../Grammar/Expression.code" );
      BitAndOp.setFunctionPrototype ( "HEADER_BIT_AND_OPERATOR", "../Grammar/Expression.code" );
-     BitOrOp.setFunctionPrototype ( "HEADER_BIT_OR_OPERATOR", "../Grammar/Expression.code" );
+     BitOrOp.setFunctionPrototype  ( "HEADER_BIT_OR_OPERATOR",  "../Grammar/Expression.code" );
+     BitEqvOp.setFunctionPrototype ( "HEADER_BIT_EQV_OPERATOR", "../Grammar/Expression.code" );
      CommaOpExp.setFunctionPrototype ( "HEADER_COMMA_OPERATOR_EXPRESSION", "../Grammar/Expression.code" );
      LshiftOp.setFunctionPrototype ( "HEADER_LEFT_SHIFT_OPERATOR", "../Grammar/Expression.code" );
      RshiftOp.setFunctionPrototype ( "HEADER_RIGHT_SHIFT_OPERATOR", "../Grammar/Expression.code" );
@@ -3043,7 +3053,8 @@ Grammar::setUpExpressions ()
      OrOp.setFunctionSource ( "SOURCE_OR_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      BitXorOp.setFunctionSource ( "SOURCE_BIT_XOR_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      BitAndOp.setFunctionSource ( "SOURCE_BIT_AND_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     BitOrOp.setFunctionSource ( "SOURCE_BIT_OR_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     BitOrOp.setFunctionSource  ( "SOURCE_BIT_OR_OPERATOR_EXPRESSION", "../Grammar/Expression.code" );
+     BitEqvOp.setFunctionSource ( "SOURCE_BIT_EQV_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      CommaOpExp.setFunctionSource ( "SOURCE_COMMA_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      LshiftOp.setFunctionSource ( "SOURCE_LEFT_SHIFT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      RshiftOp.setFunctionSource ( "SOURCE_RIGHT_SHIFT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
@@ -3139,6 +3150,7 @@ Grammar::setUpExpressions ()
      BitXorOp.setFunctionSource ( "SOURCE_BIT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      BitAndOp.setFunctionSource ( "SOURCE_BIT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      BitOrOp.setFunctionSource  ( "SOURCE_BIT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     BitEqvOp.setFunctionSource ( "SOURCE_BIT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
 
      CommaOpExp.setFunctionSource ( "SOURCE_COMMA_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
 

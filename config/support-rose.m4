@@ -1196,9 +1196,9 @@ ROSE_SUPPORT_OFP
 AC_PROG_SWIG(2.0.0)
 SWIG_ENABLE_CXX
 #AS (10/23/07): introduced conditional use of javaport
-AC_ARG_WITH(javaport,
+AC_ARG_WITH([javaport],
    [  --with-javaport ... Enable generation of Java bindings for ROSE using Swig],
-   [with_javaport=yes],
+   [with_javaport=$withval],
    [with_javaport=no])
 AM_CONDITIONAL(ENABLE_JAVAPORT,test "$with_javaport" = yes)
 
@@ -2024,9 +2024,6 @@ projects/EditDistanceMetric/Makefile
 projects/Fortran_to_C/Makefile
 projects/Fortran_to_C/src/Makefile
 projects/Fortran_to_C/tests/Makefile
-projects/Jovial_to_C/Makefile
-projects/Jovial_to_C/src/Makefile
-projects/Jovial_to_C/tests/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/HeaderFilesInclusion/Makefile

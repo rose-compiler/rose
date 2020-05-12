@@ -625,6 +625,10 @@ SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::ma
   ROSE_DLL_API bool is_mixed_Fortran_and_C_language ();
   ROSE_DLL_API bool is_mixed_Fortran_and_Cxx_language ();
   ROSE_DLL_API bool is_mixed_Fortran_and_C_and_Cxx_language ();
+
+  ROSE_DLL_API bool is_language_case_insensitive ();
+  ROSE_DLL_API bool language_may_contain_nondeclarations_in_scope ();
+
 //@}
 
 //------------------------------------------------------------------------

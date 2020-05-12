@@ -183,6 +183,18 @@ ifneq (@(WITH_BINWALK),no)
     BINWALK_ROOT = @(WITH_BINWALK)
 endif
 
+# Capstone disassembler
+ifneq (@(WITH_CAPSTONE),no)
+    CAPSTONE_ROOT = @(WITH_CAPSTONE)
+    ifneq (@(WITH_CAPSTONE),system)
+	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(CAPSTONE_ROOT)/include
+	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(CAPSTONE_ROOT)/lib
+	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(CAPSTONE_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(CAPSTONE_ROOT)/lib
+    endif
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)capstone
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)capstone
+endif
+
 # Dlib general-purpose cross platform library
 ifneq (@(WITH_DLIB),no)
     DLIB_ROOT = @(WITH_DLIB)

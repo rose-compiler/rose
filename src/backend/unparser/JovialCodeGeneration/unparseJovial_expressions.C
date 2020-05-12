@@ -48,10 +48,13 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
        // symbol references
           case V_SgFunctionRefExp:      unparseFuncRef    (expr, info);          break;
           case V_SgVarRefExp:           unparseVarRef     (expr, info);          break;
+          case V_SgPointerDerefExp:     unparsePtrDeref   (expr, info);          break;
 
        // operators
           case V_SgUnaryOp:             unparseUnaryExpr  (expr, info);          break;
           case V_SgBinaryOp:            unparseBinaryExpr (expr, info);          break;
+          case V_SgCastExp:             unparseCastExp    (expr, info);          break;
+
           case V_SgAssignOp:            unparseAssignOp   (expr, info);          break;
 
           case V_SgAddOp:               unparseBinaryOperator(expr, "+", info);  break;
@@ -66,9 +69,14 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
           case V_SgGreaterOrEqualOp:    unparseBinaryOperator(expr,">=", info);  break;
           case V_SgEqualityOp:          unparseBinaryOperator(expr, "=", info);  break;
           case V_SgNotEqualOp:          unparseBinaryOperator(expr,"<>", info);  break;
+          case V_SgBitAndOp:            unparseBinaryOperator(expr,"AND", info); break;
+          case V_SgBitOrOp:             unparseBinaryOperator(expr,"OR", info);  break;
+          case V_SgBitXorOp:            unparseBinaryOperator(expr,"XOR", info); break;
 
           case V_SgUnaryAddOp:          unparseUnaryOperator(expr, "+", info);   break;
           case V_SgMinusOp:             unparseUnaryOperator(expr, "-", info);   break;
+          case V_SgNotOp:               unparseUnaryOperator(expr, "NOT ", info); break;
+
 
           case V_SgPntrArrRefExp:       unparseArrayOp(expr, info);              break;
 
@@ -78,9 +86,6 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
 #if 0
                 case V_SgAndOp:
                 case V_SgAssignOp:
-                case V_SgBitAndOp:
-                case V_SgBitOrOp:
-                case V_SgBitXorOp:
                 case V_SgDotExp:
                 case V_SgArrowExp:
                 case V_SgJavaUnsignedRshiftOp:
@@ -92,7 +97,6 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
 
                 case V_SgPlusPlusOp:
                 case V_SgMinusMinusOp:
-                case V_SgNotOp:
                 case V_SgBitComplementOp:
                      unparseUnaryOp(isSgUnaryOp(expr), info ); break;
                 case V_SgMemberFunctionRefExp:  { unparseMFuncRef(expr, info); break; }
@@ -151,6 +155,63 @@ Unparse_Jovial::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnpar
      SgUnparse_Info ninfo(info);
      ninfo.set_operator_name(op);
      unparseUnaryExpr(expr, ninfo);
+   }
+
+//----------------------------------------------------------------------------
+//  cast expr
+//----------------------------------------------------------------------------
+void
+Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgCastExp* cast_expr = isSgCastExp(expr);
+     ROSE_ASSERT(cast_expr != NULL);
+
+     SgType* type = cast_expr->get_type();
+     ROSE_ASSERT(type);
+
+     SgExpression* size = type->get_type_kind();
+
+  // If there is a size it won't be SgModifierType or SgTypedefType
+     if (size) {
+        curprint("(* ");
+     }
+
+     switch(type->variantT())
+        {
+     // Note fall through
+        case V_SgTypeInt:
+        case V_SgTypeUnsignedInt:
+        case V_SgTypeChar:
+        case V_SgTypeFloat:
+        case V_SgPointerType:
+           unparseType(type, info);
+           break;
+
+        case V_SgModifierType:
+           curprint("(* ");
+           unparseType(type, info);
+           curprint(" *)");
+           break;
+        case V_SgTypedefType:
+           curprint("(* ");
+           unparseJovialType(isSgTypedefType(type), info);
+           curprint(" *)");
+           break;
+        default:
+           cout << "error: unparseCastExp() is unimplemented for " << type->class_name() << endl;
+           ROSE_ASSERT(false);
+           break;
+        }
+
+     if (size) {
+        curprint(" *)");
+     }
+
+     SgExpression* operand_i = cast_expr->get_operand_i();
+     ROSE_ASSERT(operand_i);
+     curprint("(");
+     unparseExpression(operand_i, info);
+     curprint(")");
    }
 
 //----------------------------------------------------------------------------
@@ -268,6 +329,28 @@ Unparse_Jovial::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
      ASSERT_not_null(var_ref->get_symbol());
 
      curprint(var_ref->get_symbol()->get_name().str());
+   }
+
+void
+Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgPointerDerefExp* deref = isSgPointerDerefExp(expr);
+     ROSE_ASSERT(deref != NULL);
+
+     SgExpression* operand = deref->get_operand();
+     ROSE_ASSERT(operand);
+
+     switch (operand->variantT())
+        {
+        case V_SgVarRefExp:
+           curprint("@");
+           unparseVarRef(operand, info);
+           break;
+        default:
+           cout << "error: unparsePtrDeref() is unimplemented for " << operand->class_name() << endl;
+           ROSE_ASSERT(false);
+           break;
+        }
    }
 
 //----------------------------------------------------------------------------
