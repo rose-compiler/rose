@@ -28,8 +28,12 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
 
           virtual void unparseCompoolStmt            (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseProgHdrStmt            (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseFuncDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseProcDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
+      //  virtual void unparseFuncDeclStmt           (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseFuncDefnStmt           (SgStatement* stmt, SgUnparse_Info& info);
+
+          virtual void unparseNamespaceDeclarationStatement(SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseNamespaceDefinitionStatement (SgStatement* stmt, SgUnparse_Info& info);
 
           virtual void unparseBasicBlockStmt         (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseLabelStmt              (SgStatement* stmt, SgUnparse_Info& info);
@@ -69,12 +73,14 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           void unparseJovialType (SgModifierType*    type, SgUnparse_Info& info);
           void unparseJovialType (SgJovialTableType* type, SgUnparse_Info& info);
           void unparseJovialType (SgPointerType*     type, SgUnparse_Info& info);
+          void unparseJovialType (SgTypedefType*     type, SgUnparse_Info& info);
 
           void unparseTypeDesc (SgType* type, SgUnparse_Info& info);
 
           void unparseTypeSize (SgType* type,       SgUnparse_Info& info);
           void unparseTypeSize (SgTypeFixed* type,  SgUnparse_Info& info);
           void unparseTypeSize (SgTypeString* type, SgUnparse_Info& info);
+          void unparseTypeSize (SgJovialBitType* type, SgUnparse_Info& info);
 
 #if 0
           virtual void unparseBaseClass(SgBaseClass* base, SgUnparse_Info& info);
@@ -89,6 +95,7 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
        // Expressions
           virtual void unparseUnaryOperator  (SgExpression* expr, const char* op, SgUnparse_Info& info);
           virtual void unparseBinaryOperator (SgExpression* expr, const char* op, SgUnparse_Info& info);
+          virtual void unparseCastExp        (SgExpression* expr, SgUnparse_Info& info);
 
           virtual void unparseSubscriptExpr     (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseArrayOp           (SgExpression* expr, SgUnparse_Info& info);
@@ -101,6 +108,7 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
           virtual void unparseAssignOp       (SgExpression* expr, SgUnparse_Info& info);   
           virtual void unparseFuncRef        (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseVarRef         (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparsePtrDeref       (SgExpression* expr, SgUnparse_Info& info);
 
           virtual void unparseFuncCall       (SgExpression* expr, SgUnparse_Info& info);
 
@@ -265,6 +273,23 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
 
           void unparseEnumBody(SgClassDefinition *, SgUnparse_Info& info);
 #endif
+
+     private:
+          std::string ws_prefix(int nesting_level)
+             {
+                std::stringstream code;
+                for (int i = 0; i < nesting_level; i++) {
+                   code << "  ";
+                }
+                return code.str();
+             }
+
+          void curprint_indented(std::string txt, SgUnparse_Info& info)
+             {
+                curprint( ws_prefix(info.get_nestingLevel()) );
+                curprint( txt );
+             }
+
    };
 
 #endif

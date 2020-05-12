@@ -56,13 +56,15 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
      switch (stmt->variantT())
         {
-       // case V_SgGlobal:                     cout << "Got it !!!" << endl; /* unparseGlobalStmt (stmt, info); */ break;
-
        // module support
           case V_SgJovialCompoolStatement:     unparseCompoolStmt (stmt, info);     break;
           case V_SgProgramHeaderStatement:     unparseProgHdrStmt (stmt, info);     break;
-          case V_SgFunctionDeclaration:        unparseFuncDeclStmt(stmt, info);     break;
+          case V_SgProcedureHeaderStatement:   unparseProcDeclStmt(stmt, info);     break;
+       // case V_SgFunctionDeclaration:        unparseFuncDeclStmt(stmt, info);     break;  /* replaced by SgProcedureHeaderStatement */
           case V_SgFunctionDefinition:         unparseFuncDefnStmt(stmt, info);     break;
+
+          case V_SgNamespaceDeclarationStatement: unparseNamespaceDeclarationStatement(stmt, info);  break;
+          case V_SgNamespaceDefinitionStatement:  unparseNamespaceDefinitionStatement (stmt, info);  break;
 
        // directives, define
 
@@ -143,9 +145,9 @@ Unparse_Jovial::unparseDirectiveStmt(SgStatement* stmt, SgUnparse_Info& info)
         {
         case SgJovialDirectiveStatement::e_compool:
            {
-              curprint("!COMPOOL (");
+              curprint("!COMPOOL ('");
               curprint(content);
-              curprint(");\n");
+              curprint("');\n");
               break;
            }
         case SgJovialDirectiveStatement::e_reducible:
@@ -208,12 +210,99 @@ Unparse_Jovial::unparseProgHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
      curprint(";\n");
 
      unparseStatement(prog->get_definition(), ninfo);
-
- //  unparseStatementNumbersSupport(mod->get_end_numeric_label(),info);
-
-  // TODO - unparse non-nested-subroutines
    }
 
+void
+Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUnparse_Info ninfo(info);
+
+     SgProcedureHeaderStatement* func = isSgProcedureHeaderStatement(stmt);
+     ROSE_ASSERT(func);
+
+     bool isDefiningDeclaration = (func->get_declarationModifier().isJovialRef() == false);
+
+  // unparse the declaration modifiers
+     if (func->get_declarationModifier().isJovialDef())   curprint("DEF ");
+     if (func->get_declarationModifier().isJovialRef())   curprint("REF ");
+
+     curprint("PROC ");
+     curprint(func->get_name());
+
+  // unparse the function modifiers
+     if (func->get_functionModifier().isRecursive())   curprint(" REC");
+     if (func->get_functionModifier().isReentrant())   curprint(" RENT");
+
+  // unparse function arguments
+     SgFunctionParameterList* params = func->get_parameterList();
+     SgInitializedNamePtrList & args = params->get_args();
+
+     if (args.size() > 0)
+        {
+           bool firstOutParam = false;
+           bool foundOutParam = false;
+
+           curprint("(");
+
+           int i = 0;
+           foreach(SgInitializedName* arg, args)
+              {
+              // TODO - Change temporary hack of using storage modifier isMutable to represent an out parameter
+                 if (arg->get_storageModifier().isMutable() && foundOutParam == false)
+                    {
+                       firstOutParam = true;
+                       foundOutParam = true;
+                       curprint(" : ");
+                    }
+
+              // Don't output comma if this is the first out parameter
+                 if (i++ > 0 && firstOutParam == false) curprint(",");
+                 firstOutParam = false;
+
+                 curprint(arg->get_name());
+              }
+           curprint(")");
+        }
+
+  // unparse function type
+     SgType* type = func->get_type();
+     unparseType(type, ninfo);
+
+     curprint(";\n");
+
+     if (isDefiningDeclaration)
+        {
+           ROSE_ASSERT(func->get_definition());
+
+           info.inc_nestingLevel();
+           unparseStatement(func->get_definition(), ninfo);
+           info.dec_nestingLevel();
+        }
+     else
+        {
+           // There still needs to be at least a BEGIN and END
+           info.inc_nestingLevel();
+           curprint_indented("BEGIN\n", info);
+
+           info.inc_nestingLevel();
+           foreach(SgInitializedName* arg, args)
+              {
+                 curprint( ws_prefix(info.get_nestingLevel()) );
+                 curprint("ITEM ");
+                 curprint(arg->get_name());
+                 curprint(" ");
+                 unparseType(arg->get_type(), ninfo);
+                 curprint(" ;\n");
+              }
+           info.dec_nestingLevel();
+
+           curprint_indented("END\n", info);
+           info.dec_nestingLevel();
+        }
+   }
+
+// Deprecated (Jovial will always have a function body so SgProcedureHeaderStatement)
+#if 0
 void
 Unparse_Jovial::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
@@ -246,7 +335,7 @@ Unparse_Jovial::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
            curprint("(");
 
            int i = 0;
-           BOOST_FOREACH(SgInitializedName* arg, args)
+           foreach(SgInitializedName* arg, args)
               {
               // TODO - Change temporary hack of using storage modifier isMutable to represent an out parameter
                  if (arg->get_storageModifier().isMutable() && foundOutParam == false)
@@ -278,18 +367,23 @@ Unparse_Jovial::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      else
         {
            // There still needs to be at least a BEGIN and END
-           curprint("  BEGIN\n");
-           BOOST_FOREACH(SgInitializedName* arg, args)
+           curprint_indented("BEGIN\n", ninfo);
+           foreach(SgInitializedName* arg, args)
               {
+              // TODO: at some point a table type will need to be unparsed here
+                 SgJovialTableType* table_type = isSgJovialTableType(type);
+                 ROSE_ASSERT(table_type == NULL);
+
                  curprint("    ITEM ");
                  curprint(arg->get_name());
                  curprint(" ");
                  unparseType(arg->get_type(), ninfo);
                  curprint(" ;\n");
               }
-           curprint("  END\n");
+           curprint_indented("END\n", ninfo);
         }
    }
+#endif
 
 void
 Unparse_Jovial::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
@@ -304,6 +398,34 @@ Unparse_Jovial::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
    }
 
+void
+Unparse_Jovial::unparseNamespaceDeclarationStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgNamespaceDeclarationStatement* decl = isSgNamespaceDeclarationStatement(stmt);
+     ASSERT_not_null(decl);
+
+     SgNamespaceDefinitionStatement* defn = decl->get_definition();
+     ASSERT_not_null(defn);
+
+     unparseNamespaceDefinitionStatement(defn, info);
+   }
+
+void
+Unparse_Jovial::unparseNamespaceDefinitionStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgNamespaceDefinitionStatement* namespace_defn = isSgNamespaceDefinitionStatement(stmt);
+     ASSERT_not_null(namespace_defn);
+
+     const SgDeclarationStatementPtrList& declarations = namespace_defn->get_declarations();
+
+     info.inc_nestingLevel();
+     foreach(SgStatement* namespace_stmt, declarations)
+        {
+           unparseStatement(namespace_stmt, info);
+        }
+     info.dec_nestingLevel();
+   }
+
 
 //----------------------------------------------------------------------------
 //  Unparse_Jovial::<executable statements, control flow>
@@ -312,28 +434,28 @@ Unparse_Jovial::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-     SgBasicBlock* basic_stmt = isSgBasicBlock(stmt);
-     ASSERT_not_null(basic_stmt);
+     SgBasicBlock* block = isSgBasicBlock(stmt);
+     ASSERT_not_null(block);
 
-#if 0
-  // DQ (10/6/2008): Adding space here is required to get "else if" blocks formatted correctly (at least).
-     unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK1);
-#endif
+     int block_size = block->get_statements().size();
 
-     curprint("BEGIN\n");
+  // allow one declaration to be unparsed without BEGIN and END
+     if (block_size > 1)
+        {
+           curprint_indented("BEGIN\n", info);
+        }
 
-     SgStatementPtrList::iterator p = basic_stmt->get_statements().begin();
-     for ( ; p != basic_stmt->get_statements().end(); ++p)
-     {
-          unparseStatement((*p), info);
-     }
+     info.inc_nestingLevel();
+     foreach(SgStatement* block_stmt, block->get_statements())
+        {
+           unparseStatement(block_stmt, info);
+        }
+     info.dec_nestingLevel();
 
-     curprint("END\n");
-
-#if 0
-  // DQ (10/6/2008): This does not appear to be required (passes all tests).
-     unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
-#endif
+     if (block_size > 1)
+        {
+           curprint_indented("END\n", info);
+        }
    }
 
 void Unparse_Jovial::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
@@ -527,27 +649,18 @@ Unparse_Jovial::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
     SgSwitchStatement* switch_stmt = isSgSwitchStatement(stmt);
     ASSERT_not_null(switch_stmt);
 
-    curprint("CASE ");
+    curprint_indented("CASE ", info);
 
     SgExprStatement* expressionStatement = isSgExprStatement(switch_stmt->get_item_selector());
     ASSERT_not_null(expressionStatement);
     unparseExpression(expressionStatement->get_expression(), info);
 
-    curprint(";");
-    unp->cur.insert_newline(1);
-    curprint("BEGIN");
-    unp->cur.insert_newline(1);
+    curprint(";\n");
 
     if (switch_stmt->get_body())
       {
          unparseStatement(switch_stmt->get_body(), info);
       }
-
-    unp->cur.insert_newline(1);
-    curprint("END");
-    unp->cur.insert_newline(1);
-
-    unp->cur.insert_newline(1);
   }
 
 void
@@ -557,21 +670,17 @@ Unparse_Jovial::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
     SgCaseOptionStmt* case_stmt = isSgCaseOptionStmt(stmt);
     ASSERT_not_null(case_stmt);
 
-    curprint("(");
+    curprint_indented("(", info);
     unparseExpression(case_stmt->get_key(), info);
-    curprint("):");
-    unp->cur.insert_newline(1);
+    curprint("):\n");
 
     if (case_stmt->get_body())
       {
          unparseStatement(case_stmt->get_body(), info);
       }
-    unp->cur.insert_newline(1);
-
     if (case_stmt->get_has_fall_through())
       {
-         curprint("FALLTHRU");
-         unp->cur.insert_newline(1);
+         curprint_indented("FALLTHRU\n", info);
       }
   }
 
@@ -582,8 +691,7 @@ Unparse_Jovial::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
     SgDefaultOptionStmt* default_stmt = isSgDefaultOptionStmt(stmt);
     ASSERT_not_null(default_stmt);
 
-    curprint("(DEFAULT):");
-    unp->cur.insert_newline(1);
+    curprint_indented("(DEFAULT):\n", info);
 
     if (default_stmt->get_body())
       {
@@ -591,8 +699,7 @@ Unparse_Jovial::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
       }
     if (default_stmt->get_has_fall_through())
       {
-         curprint("FALLTHRU");
-         unp->cur.insert_newline(1);
+         curprint_indented("FALLTHRU\n", info);
       }
   }
 
@@ -682,7 +789,7 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      unp->cur.insert_newline(1);
 
      int n = enum_decl->get_enumerators().size();
-     BOOST_FOREACH(SgInitializedName* init_name, enum_decl->get_enumerators())
+     foreach(SgInitializedName* init_name, enum_decl->get_enumerators())
          {
             std::string name = init_name->get_name().str();
             name.replace(0, 3, "V(");
@@ -789,7 +896,7 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
            curprint("BEGIN");
            unp->cur.insert_newline(1);
 
-           BOOST_FOREACH(SgDeclarationStatement* item_decl, table_def->get_members())
+           foreach(SgDeclarationStatement* item_decl, table_def->get_members())
               {
                  SgVariableDeclaration* vardecl = isSgVariableDeclaration(item_decl);
                  if (vardecl)
@@ -826,6 +933,16 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      ROSE_ASSERT(type);
 
      info.set_inVarDecl();
+
+  // Unwrap the base type if there is a modifier for it
+     SgModifierType* modifier_type = isSgModifierType(type);
+     if (modifier_type)
+        {
+           type = modifier_type->get_base_type();
+        }
+
+  // pretty printing
+     curprint( ws_prefix(info.get_nestingLevel()) );
 
      bool is_block = false;
      SgClassDeclaration* type_decl = isSgClassDeclaration(type->getAssociatedDeclaration());
@@ -881,6 +998,28 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
 
      unparseType(type, info);
 
+  // OptStructureSpecifier
+     if (modifier_type)
+        {
+           SgStructureModifier& struct_modifier = modifier_type->get_typeModifier().get_structureModifier();
+           if (struct_modifier.isParallel()) {
+              curprint("PARALLEL ");
+           }
+           else if (struct_modifier.isTight()) {
+              curprint("T ");
+              if (struct_modifier.get_bits_per_entry() > 0) {
+                 std::string value = Rose::StringUtility::numberToString(struct_modifier.get_bits_per_entry());
+                 curprint(value);
+                 curprint(" ");
+              }
+           }
+        }
+
+  // OptPackingSpecifier
+     if      (var_decl->get_declarationModifier().get_storageModifier().isPackingNone())  curprint("N ");
+     else if (var_decl->get_declarationModifier().get_storageModifier().isPackingMixed()) curprint("M ");
+     else if (var_decl->get_declarationModifier().get_storageModifier().isPackingDense()) curprint("D ");
+
   // Unparse the LocationSpecifier if present
      if (var_decl->get_bitfield() != NULL)
         {
@@ -920,12 +1059,13 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
 
            if (table_def->get_members().size() > 0)
               {
-                 curprint(";");
-                 unp->cur.insert_newline(1);
-                 curprint("BEGIN");
-                 unp->cur.insert_newline(1);
+                 curprint(";\n");
 
-                 BOOST_FOREACH(SgDeclarationStatement* item_decl, table_def->get_members())
+                 info.inc_nestingLevel();
+                 curprint_indented("BEGIN\n", info);
+
+                 info.inc_nestingLevel();
+                 foreach(SgDeclarationStatement* item_decl, table_def->get_members())
                     {
                        SgVariableDeclaration* vardecl = isSgVariableDeclaration(item_decl);
                        if (vardecl)
@@ -934,10 +1074,10 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
                           }
                        else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
                     }
+                 info.dec_nestingLevel();
 
-                 unp->cur.insert_newline(1);
-                 curprint("END");
-                 unp->cur.insert_newline(1);
+                 curprint_indented("END\n", info);
+                 info.dec_nestingLevel();
               }
         }
      else
@@ -954,6 +1094,9 @@ Unparse_Jovial::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgExprStatement* expr_stmt = isSgExprStatement(stmt);
      ASSERT_not_null(expr_stmt);
      ROSE_ASSERT(expr_stmt->get_expression());
+
+  // pretty printing
+     curprint( ws_prefix(info.get_nestingLevel()) );
 
      unparseExpression(expr_stmt->get_expression(), info);
 

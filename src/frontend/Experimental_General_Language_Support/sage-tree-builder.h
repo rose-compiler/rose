@@ -23,6 +23,7 @@ class SgLocatedNode;
 class SgProgramHeaderStatement;
 class SgScopeStatement;
 class SgSourceFile;
+class SgSwitchStatement;
 class SgType;
 class SgVariableDeclaration;
 
@@ -79,6 +80,9 @@ public:
 
    void Leave(SgScopeStatement* &);
 
+   void Enter(SgBasicBlock* &);
+   void Leave(SgBasicBlock*);
+
    void Enter(SgProgramHeaderStatement* &,
               const boost::optional<std::string> &, const std::list<std::string> &, const SourcePositions &);
    void Leave(SgProgramHeaderStatement*);
@@ -87,13 +91,12 @@ public:
                                  const boost::optional<std::string> &,
                                  const boost::optional<std::string> &);
 
-   void Enter(SgFunctionParameterScope* &);
-   void Leave(SgFunctionParameterScope*);
+   void Enter(SgFunctionParameterList* &, SgBasicBlock* &);
+   void Leave(SgFunctionParameterList*, SgBasicBlock*, const std::list<LanguageTranslation::FormalParameter> &);
 
-   void Enter(SgFunctionDeclaration* &, const std::string &,
-                                        const std::list<General_Language_Translation::FormalParameter> &,
-                                        const General_Language_Translation::SubroutineAttribute &);
-   void Leave(SgFunctionDeclaration*);
+   void Enter(SgFunctionDeclaration* &, const std::string &, SgType*, SgFunctionParameterList*,
+                                        const LanguageTranslation::FunctionModifierList &);
+   void Leave(SgFunctionDeclaration*, SgBasicBlock*);
 
    void Enter(SgFunctionDefinition* &);
    void Leave(SgFunctionDefinition*);
@@ -107,10 +110,25 @@ public:
    void Enter(SgEnumDeclaration* &, const std::string &, std::list<SgInitializedName*> &);
    void Leave(SgEnumDeclaration*);
 
+   void Enter(SgTypedefDeclaration* &, const std::string &, SgType*);
+   void Leave(SgTypedefDeclaration*);
+
 // Statements
 //
+   void Enter(SgNamespaceDeclarationStatement* &, const std::string &, const SourcePositionPair &);
+   void Leave(SgNamespaceDeclarationStatement*);
+
    void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &, const std::string &);
    void Leave(SgExprStatement*);
+
+   void Enter(SgSwitchStatement* &, SgExpression*, const SourcePositionPair &);
+   void Leave(SgSwitchStatement*);
+
+   void Enter(SgCaseOptionStmt* &, SgExprListExp*);
+   void Leave(SgCaseOptionStmt*);
+
+   void Enter(SgDefaultOptionStmt* &);
+   void Leave(SgDefaultOptionStmt*);
 
    SgEnumVal* ReplaceEnumVal(SgEnumType*, SgName);
 
@@ -122,21 +140,29 @@ public:
    void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, SgJovialDirectiveStatement::directive_types);
    void Leave(SgJovialDirectiveStatement*);
 
-   void Enter(SgJovialCompoolStatement* &,
-              const std::string &, const SourcePositionPair &);
-   void Enter(SgJovialTableStatement* &,
-              const std::string &, const SourcePositionPair &, bool is_block=false);
+   void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);
+   void Leave(SgJovialCompoolStatement*);
+
+   void Enter(SgJovialTableStatement* &, const std::string &, const SourcePositionPair &, bool is_block=false);
    void Leave(SgJovialTableStatement*);
 
 private:
    TraversalContext context_;
 
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
+   void importModule(const std::string &module_name);
 
 public:
    const TraversalContext & get_context(void) {return context_;}
    void setContext(SgType* type) {context_.type = type;}
    void setActualFunctionParameterScope(SgScopeStatement* scope) {context_.actual_function_param_scope = scope;}
+
+// Helper function
+   bool list_contains(const std::list<LanguageTranslation::FunctionModifier>& lst, const LanguageTranslation::FunctionModifier& item)
+     {
+        return (std::find(lst.begin(), lst.end(), item) != lst.end());
+     }
+
 };
 
 } // namespace builder

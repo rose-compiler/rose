@@ -67,9 +67,12 @@
  // not calling this to avoid including a header:   free(a);
  }
 
+//simplify the code further
+#if 0
  int main()
  {
    foo_input();
    return 0;
  }
+#endif
 

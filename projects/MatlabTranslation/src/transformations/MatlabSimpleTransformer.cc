@@ -20,6 +20,8 @@ namespace si = SageInterface;
 namespace fn = FastNumericsRoseSupport;
 namespace ru = RoseUtils;
 
+namespace
+{
   template <class SageNode>
   struct TransformExecutor
   {
@@ -55,103 +57,109 @@ namespace ru = RoseUtils;
       sg::dispatch(createTransformExecutor(fn), *it);
     }
   }
+}
 
 namespace MatlabToCpp
 {
   //
   // ForloopTransformer
 
-  static
-  void tfForLoop(SgMatlabForStatement* matlabFor)
+  namespace
   {
-    SgExpression*     index = matlabFor->get_index();
-    SgScopeStatement* body = isSgScopeStatement(matlabFor->get_body());
-    ROSE_ASSERT(body);
-
-    SgExpression*     range = matlabFor->get_range();
-    SgExpression*     init = NULL;
-    SgExpression*     increment = NULL;
-    SgStatement*      test = NULL;
-
-    //The RHS in i = rangeExp could be a real range or other expressions return a range.
-    if (SgRangeExp* rangeExp = isSgRangeExp(range))
+    void tfForLoop(SgMatlabForStatement* matlabFor)
     {
-      //If the expression is a real range, we can just convert it to a normal for loop
+      SgVarRefExp*      index = isSgVarRefExp(matlabFor->get_index());
+      ROSE_ASSERT(index);
 
-      SgExpression *start = rangeExp->get_start();
-      SgExpression *stride = rangeExp->get_stride();
+      SgScopeStatement* body = isSgScopeStatement(matlabFor->get_body());
+      ROSE_ASSERT(body);
 
-      if(stride == NULL)
+      SgExpression*     range = matlabFor->get_range();
+      SgExpression*     init = NULL;
+      SgExpression*     incr = NULL;
+      SgStatement*      test = NULL;
+
+      //The RHS in i = rangeExp could be a real range or other expressions return a range.
+      if (SgRangeExp* rangeExp = isSgRangeExp(range))
       {
-        stride = sb::buildIntVal(1);
+        //If the expression is a real range, we can just convert it to a normal for loop
+
+        SgExpression* start  = rangeExp->get_start();
+        SgExpression* stride = rangeExp->get_stride();
+
+        if (stride == NULL)
+        {
+          stride = sb::buildIntVal(1);
+        }
+
+        SgExpression* end = rangeExp->get_end();
+
+        init = start;  //sb::buildAssignOp(index, start);
+        test = sb::buildExprStatement(sb::buildLessOrEqualOp(si::deepCopy(index), end));
+        incr = sb::buildPlusAssignOp(si::deepCopy(index), stride);
+      }
+      else
+      {
+        //Create a .begin() method call on range
+        SgFunctionCallExp* beginCall =
+               ru::createMemberFunctionCall( "Matrix",
+                                             range,
+                                             "begin",
+                                             ru::buildEmptyParams(),
+                                             matlabFor
+                                           );
+
+        //create index = range.getMatrix().begin()
+        init = beginCall;//sb::buildAssignOp(index, beginCall);
+
+        SgFunctionCallExp *endCall =
+               ru::createMemberFunctionCall( "Matrix",
+                                             range,
+                                             "end",
+                                             ru::buildEmptyParams(),
+                                             matlabFor
+                                           );
+
+        //create index != range.getMatrix().end()
+        test = sb::buildExprStatement(sb::buildNotEqualOp(index, endCall));
+
+        //++index
+        incr = sb::buildPlusPlusOp(index, SgUnaryOp::prefix);
+
+        //create *index from index
+        SgExpression *dereferencedIndex = sb::buildPointerDerefExp(index);
+
+        /*Replace each occurrence of index in the loop body with *index
+          So that if in a loop:
+          for i = 1:10
+          y = i
+          end
+
+          then y = i will become y = *i since i in c++ is an iterator over the matrix that represents the range 1:10
+        */
+        ru::replaceVariable(body, isSgVarRefExp(index), dereferencedIndex);
       }
 
-      SgExpression *end = rangeExp->get_end();
+      SgForInitStatement*    cppForInit = sb::buildForInitStatement();
+      SgForStatement*        cppForStmt = sb::buildForStatement(cppForInit, test, incr, body);
+      SgBasicBlock*          funDef     = &sg::ancestor<SgBasicBlock>(SG_DEREF(matlabFor));
 
-      init = start;//sb::buildAssignOp(index, start);
-      test = sb::buildExprStatement(sb::buildLessOrEqualOp(index, end));
-      increment = sb::buildPlusAssignOp(index, stride);
+      SgType*                autoType   = sb::buildOpaqueType("auto", funDef);
+      SgAssignInitializer*   cppForLow  = sb::buildAssignInitializer(init, autoType);
+      SgName                 indexName  = ru::nameOf(isSgVarRefExp(index));
+
+      SgVariableDeclaration* cppForVar =
+              sb::buildVariableDeclaration( indexName,
+                                            autoType,
+                                            cppForLow,
+                                            cppForStmt
+                                          );
+
+      cppForInit->append_init_stmt(cppForVar);
+
+      // TODO replace all varrefs in the body with real varrefs...
+      si::replaceStatement(matlabFor, cppForStmt);
     }
-    else
-    {
-      //Create a .begin() method call on range
-      SgFunctionCallExp* beginCall =
-             ru::createMemberFunctionCall( "Matrix",
-                                           range,
-                                           "begin",
-                                           ru::buildEmptyParams(),
-                                           matlabFor
-                                         );
-
-      //create index = range.getMatrix().begin()
-      init = beginCall;//sb::buildAssignOp(index, beginCall);
-
-      SgFunctionCallExp *endCall =
-             ru::createMemberFunctionCall( "Matrix",
-                                           range,
-                                           "end",
-                                           ru::buildEmptyParams(),
-                                           matlabFor
-                                         );
-
-      //create index != range.getMatrix().end()
-      test = sb::buildExprStatement(sb::buildNotEqualOp(index, endCall));
-
-      //++index
-      increment = sb::buildPlusPlusOp(index, SgUnaryOp::prefix);
-
-      //create *index from index
-      SgExpression *dereferencedIndex = sb::buildPointerDerefExp(index);
-
-      /*Replace each occurrence of index in the loop body with *index
-        So that if in a loop:
-        for i = 1:10
-        y = i
-        end
-
-        then y = i will become y = *i since i in c++ is an iterator over the matrix that represents the range 1:10
-      */
-      ru::replaceVariable(body, isSgVarRefExp(index), dereferencedIndex);
-    }
-
-    SgScopeStatement*      scope = si::getEnclosingScope(matlabFor);
-    //SgType *autoType = sb::buildIntType();
-
-    SgType*                autoType = sb::buildOpaqueType("auto", scope);
-    SgAssignInitializer*   forLoopInitializer = sb::buildAssignInitializer(init, autoType);
-    SgName                 indexName = ru::nameOf(isSgVarRefExp(index));
-
-    SgVariableDeclaration* initDeclaration =
-            sb::buildVariableDeclaration( indexName,
-                                          autoType,
-                                          forLoopInitializer,
-                                          scope
-                                        );
-
-    SgForInitStatement*    cppForInit = sb::buildForInitStatement(initDeclaration);
-    SgForStatement*        cppFor = sb::buildForStatement(cppForInit, test, increment, body);
-
-    si::replaceStatement(matlabFor, cppFor);
   }
 
   void transformForloop(SgProject *project)
@@ -166,43 +174,45 @@ namespace MatlabToCpp
 
   // \todo optimize this method to ignore function calls that do not contain any SgMatrix.
   // Currently the arguments are copied/pasted for every function call.
-  static
-  void tfMatrixOnFunctionCallArguments(SgFunctionCallExp* functionCall)
+  namespace
   {
-    SgExprListExp *arguments = functionCall->get_args();
-
-    if (arguments == NULL) return;
-
-    SgScopeStatement *scope = si::getEnclosingScope(functionCall);
-
-    BOOST_FOREACH(SgExpression *currentArg, arguments->get_expressions())
+    void tfMatrixOnFunctionCallArguments(SgFunctionCallExp* functionCall)
     {
-      if( SgMatrixExp *matrix = isSgMatrixExp(currentArg)) {
-        //If the argument is a matrix, change it to initializer list
+      SgExprListExp *arguments = functionCall->get_args();
 
-        //TODO: We have to think if it is a multidimensional matrix
-        //In that case, first create a variable to hold the matrix
-        //and then pass the variable to the function
+      if (arguments == NULL) return;
 
-        Rose_STL_Container<SgExprListExp*> rows = ru::getMatrixRows(matrix);
+      SgScopeStatement *scope = si::getEnclosingScope(functionCall);
 
-        //I just want to work on a vector now
-        ROSE_ASSERT(rows.size() == 1);
-
-        //Convert each list of numbers [..] to a braced list {..} using AggregateInitializer
-        BOOST_FOREACH(SgExprListExp *currentRow, rows)
-        {
-          SgAggregateInitializer *initializerList = sb::buildAggregateInitializer(currentRow);
-
-          si::replaceExpression(currentArg, initializerList, true);
-        }
-      }
-      else if (isSgMagicColonExp(currentArg))
+      BOOST_FOREACH(SgExpression *currentArg, arguments->get_expressions())
       {
-        //replace a SgMagicColonExp by MatlabSymbol::COLON
-        SgVarRefExp *colon = sb::buildVarRefExp("MatlabSymbol::COLON", scope);
+        if( SgMatrixExp *matrix = isSgMatrixExp(currentArg)) {
+          //If the argument is a matrix, change it to initializer list
 
-        si::replaceExpression(currentArg, colon);
+          //TODO: We have to think if it is a multidimensional matrix
+          //In that case, first create a variable to hold the matrix
+          //and then pass the variable to the function
+
+          Rose_STL_Container<SgExprListExp*> rows = ru::getMatrixRows(matrix);
+
+          //I just want to work on a vector now
+          ROSE_ASSERT(rows.size() == 1);
+
+          //Convert each list of numbers [..] to a braced list {..} using AggregateInitializer
+          BOOST_FOREACH(SgExprListExp *currentRow, rows)
+          {
+            SgAggregateInitializer *initializerList = sb::buildAggregateInitializer(currentRow);
+
+            si::replaceExpression(currentArg, initializerList, true);
+          }
+        }
+        else if (isSgMagicColonExp(currentArg))
+        {
+          //replace a SgMagicColonExp by MatlabSymbol::COLON
+          SgVarRefExp *colon = sb::buildVarRefExp("MatlabSymbol::COLON", scope);
+
+          si::replaceExpression(currentArg, colon);
+        }
       }
     }
   }
@@ -217,68 +227,70 @@ namespace MatlabToCpp
   //
   // RangeExpressionTransformer
 
-  static
-  void tfRangeExpression(SgRangeExp* rangeExp)
+  namespace
   {
-    // Skip the range expression inside a for loop
-    if (isSgMatlabForStatement(rangeExp->get_parent()))
+    void tfRangeExpression(SgRangeExp* rangeExp)
     {
-      // This is because the for loop will deal with the range in a different way.
-      // Actually the range expression M:N in for loop gets transformed to a
-      //   i = M; i <= N; ++i
-      return;
-    }
+      // Skip the range expression inside a for loop
+      if (isSgMatlabForStatement(rangeExp->get_parent()))
+      {
+        // This is because the for loop will deal with the range in a different way.
+        // Actually the range expression M:N in for loop gets transformed to a
+        //   i = M; i <= N; ++i
+        return;
+      }
 
-    SgStatement *enclosingStatement = si::getEnclosingStatement(rangeExp);
+      SgStatement *enclosingStatement = si::getEnclosingStatement(rangeExp);
 
-    //The scope where the range variable will be created
-    SgScopeStatement *destinationScope = si::getEnclosingScope(rangeExp);
+      //The scope where the range variable will be created
+      SgScopeStatement *destinationScope = si::getEnclosingScope(rangeExp);
 
-    if (enclosingStatement == destinationScope)
-    {
-      //in for loop, the expressions inside have the same enclosingStatement and scope
-      destinationScope = si::getEnclosingScope(enclosingStatement);
-    }
+      if (enclosingStatement == destinationScope)
+      {
+        //in for loop, the expressions inside have the same enclosingStatement and scope
+        destinationScope = si::getEnclosingScope(enclosingStatement);
+      }
 
-    //each variable will have a unique name
-    std::string    varName = si::generateUniqueVariableName(destinationScope, "range");
-    SgTypeMatrix*  matrixType = isSgTypeMatrix(fn::getInferredType(rangeExp));
+      //each variable will have a unique name
+      std::string    varName = si::generateUniqueVariableName(destinationScope, "range");
+      SgTypeMatrix*  matrixType = isSgTypeMatrix(fn::getInferredType(rangeExp));
 
-    //Range<type> r
-    SgVariableDeclaration* rangeVarDeclaration =
-            ru::createOpaqueTemplateObject( varName,
-                                                   "Range",
-                                                   matrixType->get_base_type()->unparseToString(),
+      //Range<type> r
+      SgVariableDeclaration* rangeVarDeclaration =
+              ru::createOpaqueTemplateObject( varName,
+                                                     "Range",
+                                                     matrixType->get_base_type()->unparseToString(),
+                                                     destinationScope
+                                                   );
+
+      si::insertStatementBefore(enclosingStatement, rangeVarDeclaration);
+
+      SgExprListExp* functionCallArgs = ru::getExprListExpFromRangeExp(rangeExp);
+      SgVarRefExp*   object = sb::buildVarRefExp(varName, destinationScope);
+
+      //r.setBounds(1, 2, 3);
+      SgFunctionCallExp* setBoundsCallExp =
+              ru::createMemberFunctionCall( "Range",
+                                                   object,
+                                                   "setBounds",
+                                                   functionCallArgs,
                                                    destinationScope
                                                  );
 
-    si::insertStatementBefore(enclosingStatement, rangeVarDeclaration);
+      si::insertStatementAfter(rangeVarDeclaration, sb::buildExprStatement(setBoundsCallExp));
 
-    SgExprListExp* functionCallArgs = ru::getExprListExpFromRangeExp(rangeExp);
-    SgVarRefExp*   object = sb::buildVarRefExp(varName, destinationScope);
+      //r.getMatrix()
+      SgFunctionCallExp *getMatrixCallExp =
+              ru::createMemberFunctionCall( "Range",
+                                                   object,
+                                                   "getMatrix",
+                                                   sb::buildExprListExp(),
+                                                   destinationScope
+                                                 );
 
-    //r.setBounds(1, 2, 3);
-    SgFunctionCallExp* setBoundsCallExp =
-            ru::createMemberFunctionCall( "Range",
-                                                 object,
-                                                 "setBounds",
-                                                 functionCallArgs,
-                                                 destinationScope
-                                               );
-
-    si::insertStatementAfter(rangeVarDeclaration, sb::buildExprStatement(setBoundsCallExp));
-
-    //r.getMatrix()
-    SgFunctionCallExp *getMatrixCallExp =
-            ru::createMemberFunctionCall( "Range",
-                                                 object,
-                                                 "getMatrix",
-                                                 sb::buildExprListExp(),
-                                                 destinationScope
-                                               );
-
-    // replace 1:2:3 with r.getMatrix()
-    si::replaceExpression(rangeExp, getMatrixCallExp, true);
+      // replace 1:2:3 with r.getMatrix()
+      si::replaceExpression(rangeExp, getMatrixCallExp, true);
+    }
   }
 
   void transformRangeExpression(SgProject *project)
@@ -293,98 +305,97 @@ namespace MatlabToCpp
    * flattens out argument lists in the form of
    * disp({1, 2, 3}) ->  disp(1,2,3)
    */
-  static
-  void flattenAggregateInitializer(SgExprListExp* args)
+  namespace
   {
-    ROSE_ASSERT(args);
-    SgExpressionPtrList& exprs = args->get_expressions();
-
-    // nothing to flatten
-    if (exprs.size() != 1) return;
-
-    SgExpression*           fst = exprs.front();
-    SgAggregateInitializer* lst = isSgAggregateInitializer(fst);
-
-    if (lst == NULL) return;
-
-    SgExprListExp*          inner_args = lst->get_initializers();
-    SgCallExpression*       callexp = sg::assert_sage_type<SgCallExpression>(args->get_parent());
-
-    // elevate inner_args
-    callexp->set_args(inner_args);
-    inner_args->set_parent(callexp);
-
-    // remove aggregate initializer + children
-    lst->set_initializers(args);
-    args->set_parent(lst);
-        
-    // remove backlink
-    exprs.pop_back();
-    delete lst; // \todo is this sufficient?
-  }
-
-  static
-  void changeTargetName(SgVarRefExp& n, SgName newname)
-  {
-    SgVarRefExp* newref = sb::buildVarRefExp(newname, n.get_symbol()->get_scope());
-    
-    si::replaceExpression(&n, newref);
-  }
-
-
-  struct CallTransformer
-  {
-    explicit
-    CallTransformer(SgExprListExp* params)
-    : args(params)
-    {}
-        
-    void handle(SgNode&) {}
-
-    void handle(SgVarRefExp& n)
+    void flattenAggregateInitializer(SgExprListExp* args)
     {
-      SgName target = n.get_symbol()->get_name();
-      
-      if (SgName("disp") == target)
-        flattenAggregateInitializer(args);
-      else if (SgName("rand") == target)
-        changeTargetName(n, "rand0");
-      else if (SgName("size") == target)
-        changeTargetName(n, "sizeM");
+      ROSE_ASSERT(args);
+      SgExpressionPtrList& exprs = args->get_expressions();
+
+      // nothing to flatten
+      if (exprs.size() != 1) return;
+
+      SgExpression*           fst = exprs.front();
+      SgAggregateInitializer* lst = isSgAggregateInitializer(fst);
+
+      if (lst == NULL) return;
+
+      SgExprListExp*          inner_args = lst->get_initializers();
+      SgCallExpression*       callexp = sg::assert_sage_type<SgCallExpression>(args->get_parent());
+
+      // elevate inner_args
+      callexp->set_args(inner_args);
+      inner_args->set_parent(callexp);
+
+      // remove aggregate initializer + children
+      lst->set_initializers(args);
+      args->set_parent(lst);
+
+      // remove backlink
+      exprs.pop_back();
+      delete lst; // \todo is this sufficient?
     }
 
-    SgExprListExp* args;
-  };
+    void changeTargetName(SgVarRefExp& n, SgName newname)
+    {
+      SgVarRefExp* newref = sb::buildVarRefExp(newname, n.get_symbol()->get_scope());
 
-  static
-  void tfCalls(SgFunctionCallExp* callExp)
-  {
-    sg::dispatch(CallTransformer(callExp->get_args()), callExp->get_function());
+      si::replaceExpression(&n, newref);
+    }
+
+    struct CallTransformer
+    {
+      explicit
+      CallTransformer(SgExprListExp* params)
+      : args(params)
+      {}
+
+      void handle(SgNode&) {}
+
+      void handle(SgVarRefExp& n)
+      {
+        SgName target = n.get_symbol()->get_name();
+
+        if (SgName("disp") == target)
+          flattenAggregateInitializer(args);
+        else if (SgName("rand") == target)
+          changeTargetName(n, "rand0");
+        else if (SgName("size") == target)
+          changeTargetName(n, "sizeM");
+      }
+
+      SgExprListExp* args;
+    };
+
+    void tfCalls(SgFunctionCallExp* callExp)
+    {
+      sg::dispatch(CallTransformer(callExp->get_args()), callExp->get_function());
+    }
   }
-
 
   void transformSelectedCalls(SgProject* project)
   {
     forAllNodes(project, tfCalls, V_SgFunctionCallExp);
   }
 
-
   //
   // ReturnStatementTransformer
 
-  static
-  void tfReturnStmt(SgReturnStmt* returnStatement)
+  namespace
   {
-    SgExprListExp* returnArgs = isSgExprListExp(returnStatement->get_expression());
-
-    if (returnArgs->get_expressions().size() > 1)
+    void tfReturnStmt(SgReturnStmt* returnStatement)
     {
-      //create a std::make_tuple statement
-      SgScopeStatement* scope = si::getEnclosingScope(returnStatement);
-      SgVarRefExp*      varref = sb::buildVarRefExp("std::make_tuple", scope);
-      SgExpression*     makeTupleExp = sb::buildFunctionCallExp(varref, returnArgs);
+      SgExprListExp* returnArgs = isSgExprListExp(returnStatement->get_expression());
 
-      returnStatement->replace_expression(returnArgs, makeTupleExp);
+      if (returnArgs->get_expressions().size() > 1)
+      {
+        //create a std::make_tuple statement
+        SgScopeStatement* scope = si::getEnclosingScope(returnStatement);
+        SgVarRefExp*      varref = sb::buildVarRefExp("std::make_tuple", scope);
+        SgExpression*     makeTupleExp = sb::buildFunctionCallExp(varref, returnArgs);
+
+        returnStatement->replace_expression(returnArgs, makeTupleExp);
+      }
     }
   }
 
@@ -396,28 +407,30 @@ namespace MatlabToCpp
   //
   // ReturnListTransformer
 
-  static
-  void tfReturnListAttribute(SgFunctionDeclaration* decl)
+  namespace
   {
-    if (decl->getAttribute("RETURN_VARS")) return;
+    void tfReturnListAttribute(SgFunctionDeclaration* decl)
+    {
+      if (decl->getAttribute("RETURN_VARS")) return;
 
-    SgFunctionDefinition*    def = isSgFunctionDefinition(decl->get_definition());
-    if (def == NULL) return;
+      SgFunctionDefinition*    def = isSgFunctionDefinition(decl->get_definition());
+      if (def == NULL) return;
 
-    SgBasicBlock*            body = def->get_body();
-    ROSE_ASSERT(body);        // def has a body
-    if (body->get_statements().size() == 0) return; // empty body
+      SgBasicBlock*            body = def->get_body();
+      ROSE_ASSERT(body);        // def has a body
+      if (body->get_statements().size() == 0) return; // empty body
 
-    SgStatement*             last = body->get_statements().back();
-    SgReturnStmt*            ret = isSgReturnStmt(last);
-    if (ret == NULL) return;  // not a return
+      SgStatement*             last = body->get_statements().back();
+      SgReturnStmt*            ret = isSgReturnStmt(last);
+      if (ret == NULL) return;  // not a return
 
-    SgExprListExp*           exp = isSgExprListExp(ret->get_expression());
-    if (exp == NULL) return;  // empty return
+      SgExprListExp*           exp = isSgExprListExp(ret->get_expression());
+      if (exp == NULL) return;  // empty return
 
-    FunctionReturnAttribute* returnAttribute = new FunctionReturnAttribute(exp);
+      FunctionReturnAttribute* returnAttribute = new FunctionReturnAttribute(exp);
 
-    returnAttribute->attachTo(decl);
+      returnAttribute->attachTo(decl);
+    }
   }
 
   void transformReturnListAttribute(SgProject* project)
@@ -430,28 +443,30 @@ namespace MatlabToCpp
   //
   // TransposeTransformer
 
-  static
-  void tfTranspose(SgMatrixTransposeOp* transposeOp)
+  namespace
   {
-    SgExpression*      obj   = si::deepCopy(transposeOp->get_operand());
-    SgExprListExp*     args  = sb::buildExprListExp(obj);
-    SgScopeStatement*  scope = sg::ancestor<SgScopeStatement>(transposeOp);
-    SgFunctionCallExp* call  =
-           sb::buildFunctionCallExp( sb::buildVarRefExp("transpose", scope),
-                                     args
-                                   );
+    void tfTranspose(SgMatrixTransposeOp* transposeOp)
+    {
+      SgExpression*      obj   = ru::deepCopy(transposeOp->get_operand());
+      SgExprListExp*     args  = sb::buildExprListExp(obj);
+      SgScopeStatement*  scope = sg::ancestor<SgScopeStatement>(transposeOp);
+      SgFunctionCallExp* call  =
+             sb::buildFunctionCallExp( sb::buildVarRefExp("transpose", scope),
+                                       args
+                                     );
 
-/*
-    SgFunctionCallExp* call =
-          ru::createMemberFunctionCall( "Matrix",
-                                        obj,
-                                        "t",
-                                        sb::buildExprListExp(),
-                                        scope
-                                      );
-*/
+  /*
+      SgFunctionCallExp* call =
+            ru::createMemberFunctionCall( "Matrix",
+                                          obj,
+                                          "t",
+                                          sb::buildExprListExp(),
+                                          scope
+                                        );
+  */
 
-    si::replaceExpression(transposeOp, call);
+      si::replaceExpression(transposeOp, call);
+    }
   }
 
   void transformTranspose(SgProject* project)
@@ -463,71 +478,74 @@ namespace MatlabToCpp
   //
   // MatrixOnAssignOpTransformer
 
-  static
-  void tfMatrixOnAssignOp(SgAssignOp *assignOp)
+  namespace
   {
-    //If LHS on an assign operator is a list of expression tie it to a tuple
-    //So [a, b, c] = fcnCall() changes to
-    //std::tie(a, b, c) = fcnCall()
-
-    if(SgExprListExp *assignList = isSgExprListExp(assignOp->get_lhs_operand()))
+    void tfMatrixOnAssignOp(SgAssignOp *assignOp)
     {
-      SgScopeStatement *scope = SageInterface::getEnclosingScope(assignList);
-      SgFunctionCallExp *tieTuple = sb::buildFunctionCallExp(sb::buildVarRefExp("std::tie", scope), assignList);
+      //If LHS on an assign operator is a list of expression tie it to a tuple
+      //So [a, b, c] = fcnCall() changes to
+      //std::tie(a, b, c) = fcnCall()
 
-      assignOp->set_lhs_operand(tieTuple);
-    }
-
-    /*A matrix expression on the right hand side of an equality operator
-      should change to a valid c++ construct
-      For now we change the matrix expression to a shift operator expresssion
-
-      so that:
-      x = [1 2; 3 4]
-      becomes:
-      x << 1 << 2 << endr
-        << 3 << 4;
-     */
-    if (SgMatrixExp *matrix = isSgMatrixExp(assignOp->get_rhs_operand()))
-    {
-      Rose_STL_Container<SgExprListExp*> rows = ru::getMatrixRows(matrix);
-
-      SgExpression *var = isSgVarRefExp(assignOp->get_lhs_operand());
-
-      Rose_STL_Container<SgExprListExp*>::iterator rowsIterator = rows.begin();
-
-      SgExprListExp* firstRow = *rowsIterator;
-
-      SgExpressionPtrList::iterator firstRowIterator = firstRow->get_expressions().begin();
-      SgExpression* firstElement = *firstRowIterator;
-
-      SgExpression* shift = sb::buildLshiftOp(var, firstElement);
-
-      for(firstRowIterator = firstRowIterator + 1; firstRowIterator != firstRow->get_expressions().end(); firstRowIterator++)
+      if(SgExprListExp* assignList = isSgExprListExp(assignOp->get_lhs_operand()))
       {
-        shift = sb::buildLshiftOp(shift, *firstRowIterator);
+        SgScopeStatement*  scope    = &sg::ancestor<SgScopeStatement>(*assignList);
+        SgFunctionCallExp* tieTuple = sb::buildFunctionCallExp(sb::buildVarRefExp("std::tie", scope), assignList);
+
+        tieTuple->set_lvalue(true);
+        assignOp->set_lhs_operand(tieTuple);
       }
 
-      SgScopeStatement *scope = SageInterface::getEnclosingScope(matrix);
-      SgExpression *endr = sb::buildVarRefExp("arma::endr", scope);
-      shift = sb::buildLshiftOp(shift, endr);
+      /*A matrix expression on the right hand side of an equality operator
+        should change to a valid c++ construct
+        For now we change the matrix expression to a shift operator expresssion
 
-      //Now loop through remaining rows
-      for(rowsIterator = rowsIterator + 1; rowsIterator != rows.end(); rowsIterator++)
+        so that:
+        x = [1 2; 3 4]
+        becomes:
+        x << 1 << 2 << endr
+          << 3 << 4;
+       */
+      if (SgMatrixExp *matrix = isSgMatrixExp(assignOp->get_rhs_operand()))
       {
-        SgExpressionPtrList currentRow = (*rowsIterator)->get_expressions();
+        Rose_STL_Container<SgExprListExp*> rows = ru::getMatrixRows(matrix);
 
-        BOOST_FOREACH(SgExpression *expr, currentRow)
+        SgExpression *var = isSgVarRefExp(assignOp->get_lhs_operand());
+
+        Rose_STL_Container<SgExprListExp*>::iterator rowsIterator = rows.begin();
+
+        SgExprListExp* firstRow = *rowsIterator;
+
+        SgExpressionPtrList::iterator firstRowIterator = firstRow->get_expressions().begin();
+        SgExpression* firstElement = *firstRowIterator;
+
+        SgExpression* shift = sb::buildLshiftOp(var, firstElement);
+
+        for(firstRowIterator = firstRowIterator + 1; firstRowIterator != firstRow->get_expressions().end(); firstRowIterator++)
         {
-          shift = sb::buildLshiftOp(shift, expr);
+          shift = sb::buildLshiftOp(shift, *firstRowIterator);
         }
 
+        SgScopeStatement *scope = SageInterface::getEnclosingScope(matrix);
+        SgExpression *endr = sb::buildVarRefExp("arma::endr", scope);
         shift = sb::buildLshiftOp(shift, endr);
-      }
 
-      //Update the parent to ignore the current assignop and replace with the shift expression
-      SgStatement *expressionStatement = SageInterface::getEnclosingStatement(assignOp);
-      expressionStatement->replace_expression(assignOp, shift);
+        //Now loop through remaining rows
+        for(rowsIterator = rowsIterator + 1; rowsIterator != rows.end(); rowsIterator++)
+        {
+          SgExpressionPtrList currentRow = (*rowsIterator)->get_expressions();
+
+          BOOST_FOREACH(SgExpression *expr, currentRow)
+          {
+            shift = sb::buildLshiftOp(shift, expr);
+          }
+
+          shift = sb::buildLshiftOp(shift, endr);
+        }
+
+        //Update the parent to ignore the current assignop and replace with the shift expression
+        SgStatement *expressionStatement = SageInterface::getEnclosingStatement(assignOp);
+        expressionStatement->replace_expression(assignOp, shift);
+      }
     }
   }
 
@@ -575,4 +593,70 @@ namespace MatlabToCpp
   {
     // forAllNodes(project, tfForLoopColon, V_SgForStatement);
   }
+
+  //
+  // checks if a variable is defined in a Matlab for-loop
+
+  namespace
+  {
+    struct LoopVariableChecker : sg::DispatchHandler<bool>
+    {
+      typedef sg::DispatchHandler<bool> base;
+
+      explicit
+      LoopVariableChecker(std::string ident)
+      : base(false), varname(ident)
+      {}
+
+      void recurse(SgScopeStatement& n);
+
+      void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
+
+      void handle(SgScopeStatement& n)   { recurse(n); }
+
+      void handle(SgFunctionDefinition&) { /* res = false; */ }
+      void handle(SgGlobal&)             { /* res = false; */ }
+
+      void handle(SgMatlabForStatement& n)
+      {
+        SgVarRefExp* idx = isSgVarRefExp(n.get_index());
+
+        res = (idx && (ru::nameOf(idx) == varname));
+
+        if (!res) recurse(n);
+      }
+
+      const std::string varname;
+    };
+
+    void LoopVariableChecker::recurse(SgScopeStatement& n)
+    {
+      res = sg::dispatch(*this, sg::ancestor<SgScopeStatement>(n.get_parent()));
+    }
+  }
+
+  bool
+  forLoopIterationVariable(SgVarRefExp* varref, std::string ident)
+  {
+    ROSE_ASSERT(varref);
+
+    SgScopeStatement* enclosing = sg::ancestor<SgScopeStatement>(varref);
+
+    return sg::dispatch(LoopVariableChecker(ident), enclosing);
+  }
+
+  bool
+  forLoopIterationVariable(SgVarRefExp* varref)
+  {
+    ROSE_ASSERT(varref);
+
+    return forLoopIterationVariable(varref, ru::nameOf(varref));
+  }
+
+  /**
+   * tests if varref is defined in a MatlabForLoop
+   *
+   * \detail convenience function
+   */
+  bool forLoopIterationVariable(SgVarRefExp* varref);
 } /* namespace MatlabTransformation */

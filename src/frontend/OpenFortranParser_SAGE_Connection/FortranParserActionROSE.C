@@ -9,8 +9,27 @@
 
 #define SKIP_C_ACTION_IMPLEMENTATION 0
 
-using namespace std;
+using namespace Rose::Diagnostics;
 using namespace Rose;
+using namespace std;
+
+// The following static functions return singleton instances of classes
+// defined in FortranParserState.h
+//
+static CaseStmt* getCaseStmt()
+{
+   static CaseStmt* caseStmt_inst = NULL;
+   if (caseStmt_inst == NULL) caseStmt_inst = new CaseStmt();
+   return caseStmt_inst;
+}
+
+static CaseValueRange* getCaseValueRange()
+{
+   static CaseValueRange* caseValueRange_inst = NULL;
+   if (caseValueRange_inst == NULL) caseValueRange_inst = new CaseValueRange();
+   return caseValueRange_inst;
+}
+
 
 // ********************************************************************
 // ********************************************************************
@@ -11341,230 +11360,212 @@ void c_action_label(Token_t * lbl)
 #endif
     }
 
-    /** R810
-     * case_stmt
-     *
-     * :  (label)? T_CASE case_selector ( T_IDENT )? T_EOS
-     *
-     * @param label The label.
-     * @param id Identifier if present. Otherwise, null.
-     */
-// void c_action_case_stmt(Token_t * label, Token_t * id)
-    void c_action_case_stmt(Token_t *label, Token_t *caseKeyword, Token_t *id,
-            Token_t *eos)
-    {
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf(
-                "In c_action_case_stmt() label = %p = %s caseKeyword = %p = %s id = %p = %s \n",
-                label, label ? label->text : "NULL", caseKeyword,
-                caseKeyword ? caseKeyword->text : "NULL", id,
-                id ? id->text : "NULL");
-
-#if 1
-        // Output debugging information about saved state (stack) information.
-        outputState("At TOP of R810 c_action_case_stmt()");
+/** R810
+ * case_stmt
+ *
+ * :  (label)? T_CASE case_selector ( T_IDENT )? T_EOS
+ *
+ * @param label The label.
+ * @param id Identifier if present. Otherwise, null.
+ */
+void c_action_case_stmt(Token_t *label, Token_t *caseKeyword, Token_t *id, Token_t *eos)
+ {
+     mlog[TRACE] << "In c_action_case_stmt()"
+                 << " label = "       << label       << " = " << (label ? label->text : "NULL")
+                 << " caseKeyword = " << caseKeyword << " = " << (caseKeyword ? caseKeyword->text : "NULL")
+                 << " id = "          << id          << " = " << (id ? id->text : "NULL") << endl;
+#if 0
+     // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R810 c_action_case_stmt()");
 #endif
 
-        // ROSE_ASSERT(astExpressionStack.empty() == false);
+     SgStatement* caseOrDefaultStatement = NULL;
+     SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
 
-        SgBasicBlock* body = new SgBasicBlock();
-        ROSE_ASSERT(body != NULL);
+     if (getCaseStmt()->isDefault)
+       {
+          SgDefaultOptionStmt* defaultOptionStmt = SageBuilder::buildDefaultOptionStmt_nfi(body);
+          if (id != NULL) defaultOptionStmt->set_default_construct_name(id->text);
 
-        // DQ (11/28/2010): Added specification of case insensitivity for Fortran.
-        body->setCaseInsensitive(true);
+          caseOrDefaultStatement = defaultOptionStmt;
+       }
+     else
+       {
+          SgExprListExp* key = getCaseStmt()->key;
+          SgCaseOptionStmt* caseOptionStmt = SageBuilder::buildCaseOptionStmt_nfi(key, body);
 
-        SgStatement* caseOrDefaultStatement = NULL;
+          if (id != NULL) caseOptionStmt->set_case_construct_name(id->text);
 
-        if (astExpressionStack.empty() == true)
-        {
-            ROSE_ASSERT(astNameStack.empty() == false);
-            ROSE_ASSERT(matchingName(astNameStack.front()->text,"default") == true);
-            astNameStack.pop_front();
+          caseOrDefaultStatement = caseOptionStmt;
+       }
 
-            caseOrDefaultStatement = new SgDefaultOptionStmt(body);
+     body->set_parent(caseOrDefaultStatement);
 
-            // A valid id is will be a "default construct name"
-            if (id != NULL)
-            {
-                isSgDefaultOptionStmt(caseOrDefaultStatement)->set_default_construct_name(
-                        id->text);
-            }
-        }
-        else
-        {
-            // DQ (9/6/2010): The case stmt can take a list of expressions as keys.
-            // SgExpression* keyExpression = getTopOfExpressionStack();
-            // astExpressionStack.pop_front();
-            // caseOrDefaultStatement = new SgCaseOptionStmt(keyExpression,body);
-            SgExprListExp* exprListExp = new SgExprListExp();
-            ROSE_ASSERT(exprListExp != NULL);
-            setSourcePosition(exprListExp);
-            while (astExpressionStack.empty() == false)
-            {
-                exprListExp->prepend_expression(astExpressionStack.front());
-                astExpressionStack.pop_front();
-            }
+     ROSE_ASSERT(astScopeStack.empty() == false);
+  // astScopeStack.front()->append_statement(caseOrDefaultStatement);
+     SageInterface::appendStatement(caseOrDefaultStatement, astScopeStack.front());
 
-            caseOrDefaultStatement = new SgCaseOptionStmt(exprListExp, body);
+     astScopeStack.push_front(body);
 
-            // A valid id will be a "case construct name"
-            if (id != NULL)
-            {
-                isSgCaseOptionStmt(caseOrDefaultStatement)->set_case_construct_name(
-                        id->text);
-            }
-        }
-
-        setSourcePosition(caseOrDefaultStatement);
-
-        body->set_parent(caseOrDefaultStatement);
-        setSourcePosition(body);
-
-        ROSE_ASSERT(astScopeStack.empty() == false);
-        astScopeStack.front()->append_statement(caseOrDefaultStatement);
-
-        astScopeStack.push_front(body);
-
-#if 1
-        // Output debugging information about saved state (stack) information.
-        outputState("At BOTTOM of R810 c_action_case_stmt()");
+#if 0
+     // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R810 c_action_case_stmt()");
 #endif
 
-        // DQ (9/6/2010): Added error checking to support test2010_39.f90 test code.
-        // Error checking for astExpressionStack
-        ROSE_ASSERT(astScopeStack.empty() == false);
-        ROSE_ASSERT(astScopeStack.front()->get_parent() != NULL);
-        SgWhereStatement* whereStatement = isSgWhereStatement(
-                astScopeStack.front()->get_parent());
-        SgIfStmt* ifStatement = isSgIfStmt(astScopeStack.front()->get_parent());
-        if (whereStatement != NULL || ifStatement != NULL)
+     // DQ (9/6/2010): Added error checking to support test2010_39.f90 test code.
+     // Error checking for astExpressionStack
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     ROSE_ASSERT(astScopeStack.front()->get_parent() != NULL);
+     SgWhereStatement* whereStatement = isSgWhereStatement(astScopeStack.front()->get_parent());
+     SgIfStmt* ifStatement = isSgIfStmt(astScopeStack.front()->get_parent());
+     if (whereStatement != NULL || ifStatement != NULL)
+       {
+          // If in a where statement produced with R 619:section-subscript-list__begin then the
+          // condition is on the stack, else if it was produced with R744:where-construct-stmt
+          // then the condition was used directly and already cleared from the stack.
+          ROSE_ASSERT(astExpressionStack.size() <= 1);
+       }
+     else
         {
-            // If in a where statement produced with R 619:section-subscript-list__begin then the
-            // condition is on the stack, else if it was produced with R744:where-construct-stmt
-            // then the condition was used directly and already cleared from the stack.
-            // ROSE_ASSERT(astExpressionStack.empty() == false);
-            ROSE_ASSERT(astExpressionStack.size() <= 1);
-        }
-        else
-        {
-            // If this is NOT a where statement then the stack should be empty.
-            ROSE_ASSERT(astExpressionStack.empty() == true);
-        }
-    }
-
-    /** R811
-     * end_select_stmt
-     *
-     * : (label)? T_END T_SELECT (T_IDENT)? T_EOS
-     * | (label)? T_ENDSELECT       (T_IDENT)? T_EOS
-     *
-     * @param label The label.
-     * @param id Identifier if present. Otherwise, null.
-     */
-// void c_action_end_select_stmt(Token_t * label, Token_t * id)
-    void c_action_end_select_stmt(Token_t *label, Token_t *endKeyword,
-            Token_t *selectKeyword, Token_t *id, Token_t *eos)
-    {
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf(
-                "In c_action_end_select_stmt() label = %p = %s endKeyword = %p = %s selectKeyword = %p = %s id = %p = %s \n",
-                label, label ? label->text : "NULL", endKeyword,
-                endKeyword ? endKeyword->text : "NULL", selectKeyword,
-                selectKeyword ? selectKeyword->text : "NULL", id,
-                id ? id->text : "NULL");
-
-        if (label != NULL)
-        {
-            ROSE_ASSERT(label->text != NULL);
-            printf("label->text = %s \n", label->text);
+           // If this is NOT a where statement then the stack should be empty.
+           ROSE_ASSERT(astExpressionStack.empty() == true);
         }
 
-        // DQ (10/10/2010): Test ending position
-        ROSE_ASSERT(astScopeStack.empty() == false);
-        ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
+  // finished with this CaseStmt instance
+     getCaseStmt()->reset();
+ }
 
-        // DQ (10/10/2010): Moved the poping of the stack to this function so that we could set the source end position of the scope.
-        ROSE_ASSERT(endKeyword != NULL);
-        resetEndingSourcePosition(astScopeStack.front(), endKeyword);
+/** R811
+ * end_select_stmt
+ *
+ * : (label)? T_END T_SELECT (T_IDENT)? T_EOS
+ * | (label)? T_ENDSELECT       (T_IDENT)? T_EOS
+ *
+ * @param label The label.
+ * @param id Identifier if present. Otherwise, null.
+ */
+void c_action_end_select_stmt(Token_t *label, Token_t *endKeyword,
+                              Token_t *selectKeyword, Token_t *id, Token_t *eos)
+ {
+    mlog[TRACE] << "In c_action_end_select_stmt()"
+                << " label = "         << label         << " = " << (label ? label->text : "NULL")
+                << " endKeyword = "    << endKeyword    << " = " << (endKeyword ? endKeyword->text : "NULL")
+                << " selectKeyword = " << selectKeyword << " = " << (selectKeyword ? selectKeyword->text : "NULL")
+                << " id = "            << id            << " = " << (id ? id->text : "NULL") << endl;
 
-        ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+    // DQ (10/10/2010): Test ending position
+    ROSE_ASSERT(astScopeStack.empty() == false);
+    ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct() != NULL);
 
-        // Pop off the select block!
-        ROSE_ASSERT(astScopeStack.empty() == false);
-        astScopeStack.pop_front();
+    // DQ (10/10/2010): Moved the poping of the stack to this function so that we could set the source end position of the scope.
+    ROSE_ASSERT(endKeyword != NULL);
+    resetEndingSourcePosition(astScopeStack.front(), endKeyword);
+
+    ROSE_ASSERT(astScopeStack.front()->get_endOfConstruct()->get_line() != astScopeStack.front()->get_startOfConstruct()->get_line());
+
+    // Pop off the select block!
+    ROSE_ASSERT(astScopeStack.empty() == false);
+    astScopeStack.pop_front();
+ }
+
+/**
+ * R813
+ * case_selector
+ *
+ * @param defaultToken T_DEFAULT token or null.
+ */
+void c_action_case_selector(Token_t *defaultToken)
+ {
+    mlog[TRACE] << "In c_action_case_selector()"
+                << " defaultToken = " << defaultToken << " = " << (defaultToken ? defaultToken->text : "NULL") << endl;
+
+    if (defaultToken != NULL)
+      {
+      // This is a DEFAULT case-selector
+         getCaseStmt()->isDefault = true;
+      }
+ }
+
+/**
+ * R814
+ * case_value_range
+ */
+void c_action_case_value_range()
+ {
+    mlog[TRACE] << "In c_action_case_value_range() \n";
+
+    CaseValueRange* caseValueRange = getCaseValueRange();
+
+    SgExpression* lowerBound = caseValueRange->values[0];
+    SgExpression* upperBound = caseValueRange->values[1];
+
+ // Add range expressions to key list
+ // WARNIBG: this will need to change once COLON's in parser are figured out
+    if (caseValueRange->numValues == 1) {
+       getCaseStmt()->key->get_expressions().push_back(lowerBound);
+    }
+    else {
+        if (upperBound == NULL) {
+            upperBound = SageBuilder::buildNullExpression_nfi();
+        }
+        SgExpression* stride = new SgIntVal(1,"1");
+        SageInterface::setSourcePosition(stride);
+
+        SgExpression* range = SageBuilder::buildSubscriptExpression_nfi(lowerBound, upperBound, stride);
+        getCaseStmt()->key->get_expressions().push_back(range);
     }
 
-    /**
-     * R813
-     * case_selector
-     *
-     * @param defaultToken T_DEFAULT token or null.
-     */
-    void c_action_case_selector(Token_t *defaultToken)
-    {
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_case_selector(): defaultToken = %p = %s \n",
-                defaultToken,
-                defaultToken != NULL ? defaultToken->text : "NULL");
+ // finished with this CaseValueRange instance
+    caseValueRange->reset();
+ }
 
-        // There is no expression that it makes sense to push onto the stack, so let an empty
-        // expression stack and a name stack with the "default" token imply the use of the
-        // default case.
+/** R814 list
+ * case_value_range_list
+ *      :       case_value_range ( T_COMMA case_value_range )*
+ *
+ * @param count The number of items in the list.
+ */
+void c_action_case_value_range_list__begin()
+ {
+    mlog[TRACE] << "In c_action_case_value_range_list__begin() \n";
 
-        // ROSE_ASSERT(defaultToken != NULL);
-        if (defaultToken != NULL)
-        astNameStack.push_front(defaultToken);
-    }
+ // An SgExprListExp (the key) is needed for the Fortran grammar case-value-range-list
+    getCaseStmt()->key = SageBuilder::buildExprListExp_nfi();
+ }
 
-    /**
-     * R814
-     * case_value_range
-     *
-     */
-    void c_action_case_value_range()
-    {
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_case_value_range() \n");
-    }
+void c_action_case_value_range_list(int count)
+ {
+    mlog[TRACE] << "In c_action_case_value_range_list(): count = " << count << endl;
+ }
 
-    /** R814 list
-     * case_value_range_list
-     *      :       case_value_range ( T_COMMA case_value_range )*
-     *
-     * @param count The number of items in the list.
-     */
-    void c_action_case_value_range_list__begin()
-    {
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_case_value_range_list__begin() \n");
-    }
-    void c_action_case_value_range_list(int count)
-    {
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_case_value_range_list(): count = %d \n", count);
-    }
+/**
+ * Unknown rule.
+ * case_value_range_suffix
+ *
+ */
+void c_action_case_value_range_suffix()
+ {
+  // This function needs to be modified in the parser to provide
+  // information on colons in the ranges
+  //
+    mlog[TRACE] << "In c_action_case_value_range_suffix() \n";
+ }
 
-    /**
-     * Unknown rule.
-     * case_value_range_suffix
-     *
-     */
-    void c_action_case_value_range_suffix()
-    {
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_case_value_range_suffix() \n");
-    }
+/**
+ * R815
+ * case_value
+ *
+ */
+void c_action_case_value()
+ {
+    mlog[TRACE] << "In c_action_case_value() \n";
 
-    /**
-     * R815
-     * case_value
-     *
-     */
-    void c_action_case_value()
-    {
-        if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
-        printf("In c_action_case_value() \n");
-    }
+    CaseValueRange* caseValueRange = getCaseValueRange();
+
+ // Consume the case-selector expression
+    caseValueRange->values[caseValueRange->numValues++] = astExpressionStack.front();
+    astExpressionStack.pop_front();
+ }
 
     /**
      * R816
@@ -11888,7 +11889,6 @@ void c_action_label(Token_t * lbl)
      * @param label The label.
      * @param id The identifier, if present. Otherwise null.
      */
-// void c_action_end_select_type_stmt(Token_t * label, Token_t * id)
     void c_action_end_select_type_stmt(Token_t *label, Token_t *endKeyword,
             Token_t *selectKeyword, Token_t *id, Token_t *eos)
     {
@@ -16299,9 +16299,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
      * @param label The label.
      * @param id The identifier, if present, otherwise null.
      */
-// void c_action_module_stmt(Token_t * label, Token_t * id)
-    void c_action_module_stmt(Token_t *label, Token_t *moduleKeyword, Token_t *id,
-            Token_t *eos)
+    void c_action_module_stmt(Token_t *label, Token_t *moduleKeyword, Token_t *id, Token_t *eos)
     {
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)
         printf(
@@ -16338,9 +16336,7 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
      * @param label The label.
      * @param id The identifier, if present, otherwise null.
      */
-// void c_action_end_module_stmt(Token_t * label, Token_t * id)
-    void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword,
-            Token_t *moduleKeyword, Token_t *id, Token_t *eos)
+    void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *moduleKeyword, Token_t *id, Token_t *eos)
     {
         // printf ("SgProject::get_verbose() = %d \n",SgProject::get_verbose());
         if (SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL)

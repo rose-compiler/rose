@@ -22,6 +22,9 @@
 #   include "unparseFortran_modfile.h"
 #endif
 
+#include "unparseJovial_modfile.h"
+
+
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 #   include <Partitioner2/Engine.h>
 #   include <Partitioner2/ModulesElf.h>
@@ -753,9 +756,13 @@ SgSourceFile::initializeGlobalScope()
      get_temp_holding_scope()->set_parent(this);
 #endif
 
-     if (SageBuilder::symbol_table_case_insensitive_semantics == true)
+  // Rasmussen (3/22/2020): Fixed setting case insensitivity
+  // if (SageBuilder::symbol_table_case_insensitive_semantics == true)
+     if (SageInterface::is_language_case_insensitive())
         {
-          get_globalScope()->setCaseInsensitive(true);
+  // Rasmussen (3/27/2020): Experimenting with returning to original (using symbol_table_case_insensitive_semantics variable)
+           ROSE_ASSERT(SageBuilder::symbol_table_case_insensitive_semantics == true);
+           get_globalScope()->setCaseInsensitive(true);
         }
 
   // DQ (2/15/2006): Set the parent of the SgGlobal IR node
@@ -1301,17 +1308,16 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                             // DQ (28/8/2017): Adding language support.
                                else if (CommandlineProcessing::isJovialFileNameSuffix(filenameExtension) == true)
                                 {
-                                // file = new SgSourceFile ( argv,  project );
                                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                                    file = sourceFile;
 
                                    file->set_sourceFileUsesJovialFileExtension(true);
                                    file->set_outputLanguage(SgFile::e_Jovial_language);
-
-                                // DQ (29/8/2017): Set the input language as well.
-                                   file->set_inputLanguage(SgFile::e_Jovial_language);
+                                   file->set_inputLanguage (SgFile::e_Jovial_language);
 
                                    file->set_Jovial_only(true);
+
+                                   SageBuilder::symbol_table_case_insensitive_semantics = true;
 
                                 // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
                                 // Note that file->get_requires_C_preprocessor() should be false.
@@ -4046,6 +4052,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 #elif BACKEND_FORTRAN_IS_INTEL_COMPILER
 #if ROSE_USE_INTEL_FPP
           fortran_C_preprocessor_commandLine.push_back(INTEL_FPP_PATH);
+          fortran_C_preprocessor_commandLine.push_back("-P");
 #else
           cerr << "Intel Fortran preprocessor not available! " << endl;
           ROSE_ASSERT(false);
@@ -4247,7 +4254,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
             // DQ (5/20/2008)
             // fortranCommandLine.push_back("-ffree-line-length-none");
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
                use_line_length_none_string = "-ffree-line-length-none";
+#elif BACKEND_FORTRAN_IS_INTEL_COMPILER
+               use_line_length_none_string = "-free";
+#endif
              }
             else
              {
@@ -4264,7 +4275,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
                  // DQ (5/20/2008)
                  // fortranCommandLine.push_back("-ffree-line-length-none");
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
                     use_line_length_none_string = "-ffree-line-length-none";
+#elif BACKEND_FORTRAN_IS_INTEL_COMPILER
+                    use_line_length_none_string = "-free";
+#endif 
                   }
                  else
                   {
@@ -4278,13 +4293,20 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                            // for F90 code.  So this needs to be tested, see comments above relative to use of "-std=legacy".
                               fortranCommandLine.push_back("-std=f2008");
                             }
-
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
                          use_line_length_none_string = "-ffree-line-length-none";
+#elif BACKEND_FORTRAN_IS_INTEL_COMPILER
+                         use_line_length_none_string = "-free";
+#endif
                        }
                       else
                        {
                       // This should be the default mode (fortranMode string is empty). So is it f77?
+#if BACKEND_FORTRAN_IS_GNU_COMPILER
                          use_line_length_none_string = "-ffixed-line-length-none";
+#elif BACKEND_FORTRAN_IS_INTEL_COMPILER
+                         use_line_length_none_string = "-fixed";
+#endif
                        }
                   }
              }
@@ -4298,6 +4320,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              {
                fortranCommandLine.push_back(use_line_length_none_string);
              }
+#elif BACKEND_FORTRAN_IS_INTEL_COMPILER
+          fortranCommandLine.push_back(use_line_length_none_string);
 #endif
 
        // DQ (12/8/2007): Added support for cray pointers from commandline.
@@ -5917,7 +5941,7 @@ int
 SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommandLine )
    {
   // DQ (28/8/2017) In case of a mixed language project, force case sensitivity here.
-     SageBuilder::symbol_table_case_insensitive_semantics = false;
+     SageBuilder::symbol_table_case_insensitive_semantics = true;
 
      std::string frontEndCommandLineString;
      frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
@@ -6293,6 +6317,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                                            {
                                              frontendErrorLevel = build_Jovial_AST(argv,inputCommandLine);
                                              frontend_failed = (frontendErrorLevel > 0);
+                                             generateJovialCompoolFile(this);
                                           // Rasmussen (11/21/2017): No Jovial compiler for now
                                              set_skipfinalCompileStep(true);
                                            }

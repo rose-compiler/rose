@@ -5,12 +5,15 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 if ROSE_WITH_GNU_OCTAVE_PARSER
 
 BASIC_TESTCODES = \
+    compute.m \
+    md.m \
 		belief.m \
 		determ.m \
 		if_condition.m \
 		matrix_access.m \
 		mcmc_test.m \
 		nargin_test.m \
+    nested_for.m \
 		numquad_test.m \
 		sam.m \
 		whileTest.m

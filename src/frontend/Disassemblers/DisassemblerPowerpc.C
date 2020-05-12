@@ -70,9 +70,9 @@ DisassemblerPowerpc::init() {
             break;
     }
     byteOrder(ByteOrder::ORDER_MSB);
-    REG_IP = *regdict->lookup("iar");
-    REG_SP = *regdict->lookup("r1");
-    REG_LINK = *regdict->lookup("lr");
+    REG_IP = regdict->findOrThrow("iar");
+    REG_SP = regdict->findOrThrow("r1");
+    REG_LINK = regdict->findOrThrow("lr");
     InstructionSemantics2::DispatcherPowerpcPtr d = InstructionSemantics2::DispatcherPowerpc::instance(8*wordSizeBytes(), regdict);
     d->set_register_dictionary(regdict);
     p_proto_dispatcher = d;
@@ -380,15 +380,15 @@ DisassemblerPowerpc::makeRegister(PowerpcRegisterClass reg_class, int reg_number
 
     // Obtain a register descriptor from the dictionary
     ASSERT_not_null(registerDictionary());
-    const RegisterDescriptor *rdesc = registerDictionary()->lookup(name);
+    const RegisterDescriptor rdesc = registerDictionary()->find(name);
     if (!rdesc)
         throw ExceptionPowerpc("register \"" + name + "\" is not available for " + registerDictionary()->get_architecture_name(), this);
-    ASSERT_require2(rdesc->nBits() == registerType->get_nBits(),
+    ASSERT_require2(rdesc.nBits() == registerType->get_nBits(),
                     (boost::format("register width (%|u|) doesn't match type width (%|u|)")
-                     % rdesc->nBits() % registerType->get_nBits()).str());
+                     % rdesc.nBits() % registerType->get_nBits()).str());
 
     // Construct the return value
-    SgAsmRegisterReferenceExpression *rre = new SgAsmDirectRegisterExpression(*rdesc);
+    SgAsmRegisterReferenceExpression *rre = new SgAsmDirectRegisterExpression(rdesc);
     ASSERT_not_null(rre);
     rre->set_type(registerType);
     return rre;

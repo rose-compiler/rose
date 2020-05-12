@@ -196,27 +196,27 @@ RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembl
     process->get_memory()->insertProcess(debugger->isAttached(), MemoryMap::Attach::NO);
 
     const RegisterDictionary *regs = disassembler->registerDictionary();
-    initialRegs_.ax = debugger->readRegister(*regs->lookup("rax")).toInteger();
-    initialRegs_.bx = debugger->readRegister(*regs->lookup("rbx")).toInteger();
-    initialRegs_.cx = debugger->readRegister(*regs->lookup("rcx")).toInteger();
-    initialRegs_.dx = debugger->readRegister(*regs->lookup("rdx")).toInteger();
-    initialRegs_.si = debugger->readRegister(*regs->lookup("rsi")).toInteger();
-    initialRegs_.di = debugger->readRegister(*regs->lookup("rdi")).toInteger();
-    initialRegs_.flags = debugger->readRegister(*regs->lookup("rflags")).toInteger();
-    initialRegs_.orig_ax = debugger->readRegister(*regs->lookup("rax")).toInteger();
-    initialRegs_.ip = debugger->readRegister(*regs->lookup("rip")).toInteger();
-    initialRegs_.sp = debugger->readRegister(*regs->lookup("rsp")).toInteger();
-    initialRegs_.bp = debugger->readRegister(*regs->lookup("rbp")).toInteger();
-    initialRegs_.cs = debugger->readRegister(*regs->lookup("cs")).toInteger();
-    initialRegs_.ss = debugger->readRegister(*regs->lookup("ss")).toInteger();
-    initialRegs_.r8 = debugger->readRegister(*regs->lookup("r8")).toInteger();
-    initialRegs_.r9 = debugger->readRegister(*regs->lookup("r9")).toInteger();
-    initialRegs_.r10 = debugger->readRegister(*regs->lookup("r10")).toInteger();
-    initialRegs_.r11 = debugger->readRegister(*regs->lookup("r11")).toInteger();
-    initialRegs_.r12 = debugger->readRegister(*regs->lookup("r12")).toInteger();
-    initialRegs_.r13 = debugger->readRegister(*regs->lookup("r13")).toInteger();
-    initialRegs_.r14 = debugger->readRegister(*regs->lookup("r14")).toInteger();
-    initialRegs_.r15 = debugger->readRegister(*regs->lookup("r15")).toInteger();
+    initialRegs_.ax = debugger->readRegister(regs->findOrThrow("rax")).toInteger();
+    initialRegs_.bx = debugger->readRegister(regs->findOrThrow("rbx")).toInteger();
+    initialRegs_.cx = debugger->readRegister(regs->findOrThrow("rcx")).toInteger();
+    initialRegs_.dx = debugger->readRegister(regs->findOrThrow("rdx")).toInteger();
+    initialRegs_.si = debugger->readRegister(regs->findOrThrow("rsi")).toInteger();
+    initialRegs_.di = debugger->readRegister(regs->findOrThrow("rdi")).toInteger();
+    initialRegs_.flags = debugger->readRegister(regs->findOrThrow("rflags")).toInteger();
+    initialRegs_.orig_ax = debugger->readRegister(regs->findOrThrow("rax")).toInteger();
+    initialRegs_.ip = debugger->readRegister(regs->findOrThrow("rip")).toInteger();
+    initialRegs_.sp = debugger->readRegister(regs->findOrThrow("rsp")).toInteger();
+    initialRegs_.bp = debugger->readRegister(regs->findOrThrow("rbp")).toInteger();
+    initialRegs_.cs = debugger->readRegister(regs->findOrThrow("cs")).toInteger();
+    initialRegs_.ss = debugger->readRegister(regs->findOrThrow("ss")).toInteger();
+    initialRegs_.r8 = debugger->readRegister(regs->findOrThrow("r8")).toInteger();
+    initialRegs_.r9 = debugger->readRegister(regs->findOrThrow("r9")).toInteger();
+    initialRegs_.r10 = debugger->readRegister(regs->findOrThrow("r10")).toInteger();
+    initialRegs_.r11 = debugger->readRegister(regs->findOrThrow("r11")).toInteger();
+    initialRegs_.r12 = debugger->readRegister(regs->findOrThrow("r12")).toInteger();
+    initialRegs_.r13 = debugger->readRegister(regs->findOrThrow("r13")).toInteger();
+    initialRegs_.r14 = debugger->readRegister(regs->findOrThrow("r14")).toInteger();
+    initialRegs_.r15 = debugger->readRegister(regs->findOrThrow("r15")).toInteger();
 
     if (existingPid != -1) {
         debugger->detach();

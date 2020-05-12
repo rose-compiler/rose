@@ -570,7 +570,7 @@ setInitialState(const BaseSemantics::DispatcherPtr &cpu, const P2::ControlFlowGr
     }
 
     // Direction flag (DF) is always set
-    const RegisterDescriptor REG_DF = *cpu->get_register_dictionary()->lookup("df");
+    const RegisterDescriptor REG_DF = cpu->get_register_dictionary()->findOrThrow("df");
     ASSERT_forbid(REG_DF.isEmpty());
     ops->writeRegister(REG_DF, ops->boolean_(true));
 }
@@ -589,11 +589,11 @@ buildVirtualCpu(const P2::Partitioner &partitioner) {
         // Where are return values stored?
         // FIXME[Robb Matzke 2015-12-01]: We need to support returning multiple values. We should be using the new calling
         // convention analysis to detect these.
-        const RegisterDescriptor *r = NULL;
-        if ((r = myRegs->lookup("rax")) || (r = myRegs->lookup("eax")) || (r = myRegs->lookup("ax"))) {
-            REG_RETURN = *r;
-        } else if ((r = myRegs->lookup("d0"))) {
-            REG_RETURN = *r;                            // m68k also typically has other return registers
+        RegisterDescriptor r;
+        if ((r = myRegs->find("rax")) || (r = myRegs->find("eax")) || (r = myRegs->find("ax"))) {
+            REG_RETURN = r;
+        } else if ((r = myRegs->find("d0"))) {
+            REG_RETURN = r;                             // m68k also typically has other return registers
         } else {
             ASSERT_not_implemented("function return value register is not implemented for this ISA/ABI");
         }
@@ -857,16 +857,16 @@ public:
     }
     SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &token) ROSE_OVERRIDE {
         BaseSemantics::RegisterStatePtr regState = ops_->currentState()->registerState();
-        const RegisterDescriptor *regp = regState->get_register_dictionary()->lookup(token.lexeme());
-        if (NULL == regp)
+        const RegisterDescriptor regp = regState->get_register_dictionary()->find(token.lexeme());
+        if (!regp)
             return SymbolicExpr::Ptr();
-        if (token.exprType().nBits() != 0 && token.exprType().nBits() != regp->nBits()) {
+        if (token.exprType().nBits() != 0 && token.exprType().nBits() != regp.nBits()) {
             throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.exprType().nBits()) +
-                                    ", actual=" + StringUtility::numberToString(regp->nBits()) + ")");
+                                    ", actual=" + StringUtility::numberToString(regp.nBits()) + ")");
         }
         if (token.exprType().typeClass() == SymbolicExpr::Type::MEMORY)
             throw token.syntaxError("register type must be scalar");
-        BaseSemantics::SValuePtr regValue = regState->readRegister(*regp, ops_->undefined_(regp->nBits()), ops_.get());
+        BaseSemantics::SValuePtr regValue = regState->readRegister(regp, ops_->undefined_(regp.nBits()), ops_.get());
         return SymbolicSemantics::SValue::promote(regValue)->get_expression();
     }
 };

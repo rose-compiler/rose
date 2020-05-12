@@ -125,24 +125,22 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool al
     if (!regdict)
         throw Exception("no register dictionary", currentInstruction());
 
-    const RegisterDescriptor *reg = regdict->lookup(regname);
+    const RegisterDescriptor reg = regdict->find(regname);
     if (!reg) {
-        if (allowMissing) {
-            static const RegisterDescriptor invalidRegister;
-            return invalidRegister;
-        }
+        if (allowMissing)
+            return reg;
         std::ostringstream ss;
         ss <<"Invalid register \"" <<regname <<"\" in dictionary \"" <<regdict->get_architecture_name() <<"\"";
         throw Exception(ss.str(), currentInstruction());
     }
 
-    if (nbits>0 && reg->nBits()!=nbits) {
+    if (nbits>0 && reg.nBits()!=nbits) {
         std::ostringstream ss;
         ss <<"Invalid " <<nbits <<"-bit register: \"" <<regname <<"\" is "
-           <<reg->nBits() <<" " <<(1==reg->nBits()?"byte":"bytes");
+           <<reg.nBits() <<" " <<(1==reg.nBits()?"byte":"bytes");
         throw Exception(ss.str(), currentInstruction());
     }
-    return *reg;
+    return reg;
 }
 
 void

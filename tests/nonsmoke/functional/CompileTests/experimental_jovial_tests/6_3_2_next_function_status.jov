@@ -1,0 +1,24 @@
+START
+PROGRAM nextFunction;
+BEGIN
+
+   TYPE DAY STATUS
+   (       
+     V(MON),
+     V(TUES),
+     V(WED),
+     V(THURS),
+     V(FRI),
+     V(SAT),
+     V(SUN)
+   );
+
+   ITEM day'1 DAY;
+   ITEM day'2 DAY;
+
+   day'1 = V(THURS);
+   day'2 = NEXT(day'1, 2);
+   day'2 = NEXT(day'1, -1);
+
+END
+TERM

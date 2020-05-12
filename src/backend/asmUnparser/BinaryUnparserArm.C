@@ -1,8 +1,9 @@
-#include <rosePublicConfig.h>
-#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_ASM_A64
 #include <sage3basic.h>
 #include <BinaryUnparserArm.h>
 
+#include <boost/regex.hpp>
 #include <stringify.h>
 
 namespace Rose {
@@ -11,177 +12,227 @@ namespace Unparser {
 
 // class method
 std::string
-Arm::unparseArmCondition(ArmInstructionCondition cond) {
-    std::string retval = stringifyBinaryAnalysisArmInstructionCondition(cond, "arm_cond_");
-    ASSERT_require(!retval.empty() && retval[0]!='(');
-    return retval;
+Arm::unparseArmCondition(Arm64InstructionCondition cond) {
+    // These constants come from capstone, so we don't have any easy stringification mechanism for them like we do for ROSE
+    // enums.
+    switch (cond) {
+        case ARM64_CC_INVALID: return "INVALID";
+        case ARM64_CC_EQ: return "eq";
+        case ARM64_CC_NE: return "ne";
+        case ARM64_CC_HS: return "hs";
+        case ARM64_CC_LO: return "lo";
+        case ARM64_CC_MI: return "mi";
+        case ARM64_CC_PL: return "pl";
+        case ARM64_CC_VS: return "vs";
+        case ARM64_CC_VC: return "vc";
+        case ARM64_CC_HI: return "hi";
+        case ARM64_CC_LS: return "ls";
+        case ARM64_CC_GE: return "ge";
+        case ARM64_CC_LT: return "lt";
+        case ARM64_CC_GT: return "gt";
+        case ARM64_CC_LE: return "le";
+        case ARM64_CC_AL: return "al";
+        case ARM64_CC_NV: return "nv";
+    }
+    ASSERT_not_reachable("invalid condition code");
 }
 
 void
-Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state, std::string sign, std::string *suffix) const {
-    std::ostringstream extra;
-    SgAsmUnaryExpression *uno = isSgAsmUnaryExpression(expr);
-    SgAsmBinaryExpression *dos = isSgAsmBinaryExpression(expr);
+Arm::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_, State&) const {
+    SgAsmArm64Instruction *insn = isSgAsmArm64Instruction(insn_);
+    ASSERT_not_null2(insn, "not an ARM instruction");
+    std::string result = insn->get_mnemonic();
+    out <<result;
+}
+
+void
+Arm::outputRegister(std::ostream &out, SgAsmRegisterReferenceExpression *expr, State &state) const {
+    ASSERT_not_null(expr);
+    ASSERT_not_null(expr->get_type());
+    std::string name = state.registerNames()(expr->get_descriptor());
+
+    if (SgAsmVectorType *vector = isSgAsmVectorType(expr->get_type())) {
+        ASSERT_not_null(vector->get_elmtType());
+
+        // The qN and vN are different names for the same registers and appear in ARM assembly listings depending on whether
+        // their value is being interpreted as a vector. ROSE will try to choose the same name as what is customary in the ARM
+        // assembly listings even though this might be confusing when the same physical register appears in two or more
+        // instructions and is interpretted different ways.
+        boost::regex re("q[0-9]+");
+        if (boost::regex_match(name, re))
+            name[0] = 'v';
+
+        name += "." + boost::lexical_cast<std::string>(vector->get_nElmts());
+        switch (vector->get_elmtType()->get_nBits()) {
+            case 8:
+                name += "b";
+                break;
+            case 16:
+                name += "h";
+                break;
+            case 32:
+                name += "s";
+                break;
+            case 64:
+                name += "d";
+                break;
+            case 128:
+                name += "v";
+                break;
+            default:
+                ASSERT_not_reachable("invalid vector element size: " +
+                                     boost::lexical_cast<std::string>(vector->get_elmtType()->get_nBits()) + " bits");
+        }
+    }
+
+    out <<name;
+
+    if (settings().insn.operands.showingWidth)
+        out <<"[" <<expr->get_descriptor().nBits() <<"]";
+}
+
+void
+Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
+    ASSERT_not_null(expr);
     std::vector<std::string> comments;
 
-    if (!isSgAsmValueExpression(expr)) {
-        out <<sign;
-        sign = "+";
-    }
-    
-    switch (expr->variantT()) {
-        case V_SgAsmBinarySubtractPreupdate:
-            sign = "-";
-            // fall through
-        case V_SgAsmBinaryAddPreupdate: {
-            outputExpr(out, dos->get_lhs(), state, "");
-            out <<", ";
-            outputExpr(out, dos->get_rhs(), state, sign);
-            extra <<"!";
-            break;
+    if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(expr)) {
+        outputExpr(out, add->get_lhs(), state);
+
+        // Print the "+" and RHS only if RHS is non-zero
+        SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(add->get_rhs());
+        if (!ival || !ival->get_bitVector().isAllClear()) {
+            out <<" + ";
+            outputExpr(out, add->get_rhs(), state);
         }
 
-        case V_SgAsmBinarySubtractPostupdate:
-            sign = "-";
-            // fall through
-        case V_SgAsmBinaryAddPostupdate:
-            if (suffix) {
-                // Appears inside a memory reference expression
-                outputExpr(out, dos->get_lhs(), state, "");
-                extra <<", ";
-                outputExpr(extra, dos->get_rhs(), state, sign);
-            } else {
-                // Used by LDM* and STM* instructions outside memory reference expressions. RHS is unused.
-                outputExpr(out, dos->get_lhs(), state, "");
-                out <<"!";
-            }
-            break;
+    } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(expr)) {
+        state.frontUnparser().emitTypeName(out, mre->get_type(), state);
+        out <<" [";
+        outputExpr(out, mre->get_address(), state);
+        out <<"]";
 
-        case V_SgAsmBinaryAdd:
-            outputExpr(out, dos->get_lhs(), state, "");
-            out <<", ";
-            outputExpr(out, dos->get_rhs(), state, "+");
-            break;
+    } else if (SgAsmDirectRegisterExpression *dre = isSgAsmDirectRegisterExpression(expr)) {
+        outputRegister(out, dre, state);
 
-        case V_SgAsmBinarySubtract:
-            outputExpr(out, dos->get_lhs(), state, "");
-            out <<", ";
-            outputExpr(out, dos->get_rhs(), state, "+");
-            break;
+    } else if (SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(expr)) {
+        comments = state.frontUnparser().emitSignedInteger(out, ive->get_bitVector(), state);
 
-        case V_SgAsmBinaryMultiply:
-            outputExpr(out, dos->get_lhs(), state, "");
-            out <<"*";
-            outputExpr(out, dos->get_rhs(), state, "");
-            break;
+    } else if (SgAsmUnaryUnsignedExtend *op = isSgAsmUnaryUnsignedExtend(expr)) {
+        out <<"uext(";
+        outputExpr(out, op->get_operand(), state);
+        out <<", " <<op->get_nBits() <<")";
 
-        case V_SgAsmBinaryLsl:
-            outputExpr(out, dos->get_lhs(), state, "");
-            out <<", lsl ";
-            outputExpr(out, dos->get_rhs(), state, "");
-            break;
+    } else if (SgAsmUnarySignedExtend *op = isSgAsmUnarySignedExtend(expr)) {
+        out <<"sext(";
+        outputExpr(out, op->get_operand(), state);
+        out <<", " <<op->get_nBits() <<")";
 
-        case V_SgAsmBinaryLsr:
-            outputExpr(out, dos->get_lhs(), state, "");
-            out <<", lsr ";
-            outputExpr(out, dos->get_rhs(), state, "");
-            break;
+    } else if (SgAsmUnaryTruncate *op = isSgAsmUnaryTruncate(expr)) {
+        out <<"trunc(";
+        outputExpr(out, op->get_operand(), state);
+        out <<", " <<op->get_nBits() <<")";
 
-        case V_SgAsmBinaryAsr:
-            outputExpr(out, dos->get_lhs(), state, "");
-            out <<", asr ";
-            outputExpr(out, dos->get_rhs(), state, "");
-            break;
+    } else if (SgAsmBinaryAsr *op = isSgAsmBinaryAsr(expr)) {
+        out <<"asr(";
+        outputExpr(out, op->get_lhs(), state);
+        out <<", ";
+        outputExpr(out, op->get_rhs(), state);
+        out <<")";
 
-        case V_SgAsmBinaryRor:
-            outputExpr(out, dos->get_lhs(), state, "");
-            out <<", ror ";
-            outputExpr(out, dos->get_rhs(), state, "");
-            break;
+    } else if (SgAsmBinaryRor *op = isSgAsmBinaryRor(expr)) {
+        out <<"ror(";
+        outputExpr(out, op->get_lhs(), state);
+        out <<", ";
+        outputExpr(out, op->get_rhs(), state);
+        out <<")";
 
-        case V_SgAsmUnaryRrx:
-            outputExpr(out, uno->get_operand(), state, "");
-            out <<", rrx";
-            break;
+    } else if (SgAsmBinaryLsr *op = isSgAsmBinaryLsr(expr)) {
+        outputExpr(out, op->get_lhs(), state);
+        out <<" >> ";
+        outputExpr(out, op->get_rhs(), state);
 
-        case V_SgAsmUnaryArmSpecialRegisterList:
-            outputExpr(out, uno->get_operand(), state, "");
-            out <<"^";
-            break;
+    } else if (SgAsmBinaryLsl *op = isSgAsmBinaryLsl(expr)) {
+        outputExpr(out, op->get_lhs(), state);
+        out <<" << ";
+        outputExpr(out, op->get_rhs(), state);
 
-        case V_SgAsmExprListExp: {
-            const std::vector<SgAsmExpression*> &exprs = isSgAsmExprListExp(expr)->get_expressions();
-            out <<"{";
-            for (size_t i = 0; i < exprs.size(); ++i) {
-                if (i != 0)
-                    out <<", ";
-                outputExpr(out, exprs[i], state, "");
-            }
-            out <<"}";
-            break;
-        }
-            
-        case V_SgAsmMemoryReferenceExpression: {
-            SgAsmMemoryReferenceExpression *mr = isSgAsmMemoryReferenceExpression(expr);
-            SgAsmExpression *addr = mr->get_address();
-            switch (addr->variantT()) {
-                case V_SgAsmDirectRegisterExpression:
-                case V_SgAsmIndirectRegisterExpression:
-                case V_SgAsmBinaryAdd:
-                case V_SgAsmBinarySubtract:
-                case V_SgAsmBinaryAddPreupdate:
-                case V_SgAsmBinarySubtractPreupdate:
-                case V_SgAsmBinaryAddPostupdate:
-                case V_SgAsmBinarySubtractPostupdate:
-                    break;
-                default: ASSERT_not_reachable("bad addressing mode: " + stringifyVariantT(addr->variantT()));
-            }
-
-            std::string suffix;
-            state.frontUnparser().emitTypeName(out, expr->get_type(), state);
-            out <<" [";
-            outputExpr(out, addr, state, "", &suffix);
-            out <<"]" <<suffix;
-            break;
+    } else if (SgAsmArm64AtOperand *op = isSgAsmArm64AtOperand(expr)) {
+        switch (op->operation()) {
+            case ARM64_AT_S1E1R:
+                out <<"s1e1r";
+                break;
+            case ARM64_AT_S1E1W:
+                out <<"s1e1w";
+                break;
+            case ARM64_AT_S1E0R:
+                out <<"s1e0r";
+                break;
+            case ARM64_AT_S1E0W:
+                out <<"s1e0w";
+                break;
+            case ARM64_AT_S1E2R:
+                out <<"s1e2r";
+                break;
+            case ARM64_AT_S1E2W:
+                out <<"s1e2w";
+                break;
+            case ARM64_AT_S12E1R:
+                out <<"s12e1r";
+                break;
+            case ARM64_AT_S12E1W:
+                out <<"s12e1w";
+                break;
+            case ARM64_AT_S12E0R:
+                out <<"s12e0r";
+                break;
+            case ARM64_AT_S12E0W:
+                out <<"s12e0w";
+                break;
+            case ARM64_AT_S1E3R:
+                out <<"s1e3r";
+                break;
+            case ARM64_AT_S1E3W:
+                out <<"s1e3w";
+                break;
+            default:
+                ASSERT_not_reachable("invalid AT operand");
         }
 
-        case V_SgAsmDirectRegisterExpression: {
-            SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(expr);
-            state.frontUnparser().emitRegister(out, rre->get_descriptor(), state);
-            if (rre->get_descriptor().majorNumber() == arm_regclass_psr && rre->get_psr_mask() !=0) {
-                out <<"_";
-                if (rre->get_psr_mask() & 1)
-                    out <<"c";
-                if (rre->get_psr_mask() & 2)
-                    out <<"x";
-                if (rre->get_psr_mask() & 4)
-                    out <<"s";
-                if (rre->get_psr_mask() & 8)
-                    out <<"f";
-            }
-            break;
+    } else if (SgAsmArm64PrefetchOperand *op = isSgAsmArm64PrefetchOperand(expr)) {
+        switch (op->operation()) {
+            case ARM64_PRFM_PLDL1KEEP:  out <<"pldl1keep"; break;
+            case ARM64_PRFM_PLDL1STRM:  out <<"pldl1strm"; break;
+            case ARM64_PRFM_PLDL2KEEP:  out <<"pldl2keep"; break;
+            case ARM64_PRFM_PLDL2STRM:  out <<"pldl2strm"; break;
+            case ARM64_PRFM_PLDL3KEEP:  out <<"pldl3keep"; break;
+            case ARM64_PRFM_PLDL3STRM:  out <<"pldl3strm"; break;
+            case ARM64_PRFM_PLIL1KEEP:  out <<"plil1keep"; break;
+            case ARM64_PRFM_PLIL1STRM:  out <<"plil1strm"; break;
+            case ARM64_PRFM_PLIL2KEEP:  out <<"plil2keep"; break;
+            case ARM64_PRFM_PLIL2STRM:  out <<"plil2strm"; break;
+            case ARM64_PRFM_PLIL3KEEP:  out <<"plil3keep"; break;
+            case ARM64_PRFM_PLIL3STRM:  out <<"plil3strm"; break;
+            case ARM64_PRFM_PSTL1KEEP:  out <<"pstl1keep"; break;
+            case ARM64_PRFM_PSTL1STRM:  out <<"pstl1strm"; break;
+            case ARM64_PRFM_PSTL2KEEP:  out <<"pstl2keep"; break;
+            case ARM64_PRFM_PSTL2STRM:  out <<"pstl2strm"; break;
+            case ARM64_PRFM_PSTL3KEEP:  out <<"pstl3keep"; break;
+            case ARM64_PRFM_PSTL3STRM:  out <<"pstl3strm"; break;
+            default:
+                ASSERT_not_reachable("invalid prefetch command");
         }
 
-        case V_SgAsmIntegerValueExpression: {
-            SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(expr);
-            out <<"#" <<sign;
-            comments = state.frontUnparser().emitUnsignedInteger(out, ive->get_bitVector(), state);
-            break;
-        }
+    } else if (SgAsmArm64MrsOperand *op = isSgAsmArm64MrsOperand(expr)) {
+        unsigned op0 = (op->access() >> 14) & 1;
+        unsigned op1 = (op->access() >> 11) & 7;
+        unsigned crn = (op->access() >>  7) & 0xf;
+        unsigned crm = (op->access() >>  3) & 0xf;
+        unsigned op2 = op->access() & 7;
+        out <<"s" <<(op0 + 2) <<"_" <<op1 <<"_c" <<crn <<"_c" <<crm <<"_" <<op2;
 
-        default:
-            ASSERT_not_reachable("unhandled expression kind: " + expr->class_name());
-    }
-
-    // The extra string should be passed back up the call stack so it can be inserted into the ultimate return string. We can't
-    // insert it here because the string can't be generated strictly left-to-right. If "suffix" is the null pointer then the
-    // caller isn't expecting a suffix and we'll have to just do our best -- the result will not be valid ARM assembly.
-    if (!extra.str().empty()) {
-        if (suffix) {
-            *suffix = extra.str();
-        } else {
-            out <<" and \"" <<StringUtility::cEscape(extra.str()) <<"\"";
-        }
+    } else {
+        ASSERT_not_implemented(expr->class_name());
     }
 
     if (!expr->get_comment().empty())
@@ -191,31 +242,9 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state, std::str
 }
 
 void
-Arm::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_, State&) const {
-    SgAsmArmInstruction *insn = isSgAsmArmInstruction(insn_);
-    ASSERT_not_null2(insn, "not an ARM instruction");
-    std::string result = insn->get_mnemonic();
-    std::string cond = unparseArmCondition(insn->get_condition());
-    ASSERT_require(insn->get_positionOfConditionInMnemonic() >= 0);
-    ASSERT_require((size_t)insn->get_positionOfConditionInMnemonic() <= result.size());
-    result.insert(result.begin() + insn->get_positionOfConditionInMnemonic(), cond.begin(), cond.end());
-    out <<result;
-}
-
-void
 Arm::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) const {
-    SgAsmArmInstruction *insn = SageInterface::getEnclosingNode<SgAsmArmInstruction>(expr);
-    ASSERT_not_null(insn);
-
-    if (insn->get_kind() == arm_b || insn->get_kind() == arm_bl) {
-        ASSERT_require(insn->nOperands() == 1);
-        ASSERT_require(insn->operand(0) == expr);
-        SgAsmIntegerValueExpression *tgt = isSgAsmIntegerValueExpression(expr);
-        ASSERT_not_null(tgt);
-        state.frontUnparser().emitAddress(out, tgt->get_bitVector(), state);
-    } else {
-        outputExpr(out, expr, state, "");
-    }
+    ASSERT_not_null(expr);
+    outputExpr(out, expr, state);
 }
 
 } // namespace

@@ -1718,7 +1718,7 @@ Base::emitInstructionOperands(std::ostream &out, SgAsmInstruction *insn, State &
     ASSERT_not_null(insn);
     if (nextUnparser()) {
         nextUnparser()->emitInstructionOperands(out, insn, state);
-    } else {
+    } else if (insn->get_operandList()) {
         const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
         for (size_t i=0; i<operands.size(); ++i) {
             if (i > 0)

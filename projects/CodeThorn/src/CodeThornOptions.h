@@ -28,82 +28,82 @@ struct CodeThornOptions : public Options {
 
   // visualization
   struct Visualization {
-    bool rwClusters;
-    bool rwData;
-    bool rwHighlightRaces;
+    bool rwClusters=false;
+    bool rwData=false;
+    bool rwHighlightRaces=false;
     std::string dotIOStg;
     std::string dotIOStgForcedTop;
-    bool tg1EStateAddress;
-    bool tg1EStateId;
-    bool tg1EStateProperties;
-    bool tg1EStatePredicate;
-    bool tg1EStateMemorySubgraphs;
-    bool tg2EStateAddress;
-    bool tg2EStateId;
-    bool tg2EStateProperties;
-    bool tg2EStatePredicate;
-    bool visualizeRWSets;
-    bool viz;
-    bool vizTg2;
+    bool tg1EStateAddress=false;
+    bool tg1EStateId=true;
+    bool tg1EStateProperties=true;
+    bool tg1EStatePredicate=false;
+    bool tg1EStateMemorySubgraphs=false;
+    bool tg2EStateAddress=false;
+    bool tg2EStateId=true;
+    bool tg2EStateProperties=false;
+    bool tg2EStatePredicate=false;
+    bool visualizeRWSets=false;
+    bool viz=false;
+    bool vizTg2=false;
     std::string icfgFileName;
   } visualization;
   
   // experimental options
-  bool ompAst;
-  bool normalizeAll;
-  bool normalizeFCalls;
-  bool inlineFunctions;
-  int inlineFunctionsDepth;
-  bool eliminateCompoundStatements;
-  bool annotateTerms; // unparsing
-  bool eliminateSTGBackEdges;
-  bool generateAssertions; // unparsing
-  bool precisionExactConstraints; // obsolete
+  bool ompAst=false;
+  bool normalizeAll=false;
+  bool normalizeFCalls=false;
+  bool inlineFunctions=false;
+  int inlineFunctionsDepth=10;
+  bool eliminateCompoundStatements=false;
+  bool annotateTerms=false; // unparsing
+  bool eliminateSTGBackEdges=false;
+  bool generateAssertions=false; // unparsing
+  bool precisionExactConstraints=false; // obsolete
   std::string stgTraceFileName;
-  bool explicitArrays;
-  bool z3BasedReachabilityAnalysis;
-  int z3UpperInputBound;
-  int z3VerifierErrorNumber;
-  bool ssa; // transformation
-  bool nullPointerAnalysis;
-  bool outOfBoundsAnalysis;
-  bool uninitializedMemoryAnalysis;
+  bool explicitArrays=true;
+  bool z3BasedReachabilityAnalysis=false;
+  int z3UpperInputBound=-1;
+  int z3VerifierErrorNumber=-1;
+  bool ssa=false; // transformation
+  bool nullPointerAnalysis=false;
+  bool outOfBoundsAnalysis=false;
+  bool uninitializedMemoryAnalysis=false;
   std::string nullPointerAnalysisFileName;
   std::string outOfBoundsAnalysisFileName;
   std::string uninitializedMemoryAnalysisFileName;
-  bool programStatsOnly;
-  bool programStats;
-  bool inStateStringLiterals;
-  bool stdFunctions;
-  bool ignoreFunctionPointers;
-  bool ignoreUndefinedDereference;
-  bool ignoreUnknownFunctions;
-  int functionResolutionMode;
-  bool contextSensitive; // abitrary length call strings
-  int abstractionMode;
-  int interpreterMode;
+  bool programStatsOnly=false;
+  bool programStats=false;
+  bool inStateStringLiterals=false;
+  bool stdFunctions=false;
+  bool ignoreFunctionPointers=false;
+  bool ignoreUndefinedDereference=false;
+  bool ignoreUnknownFunctions=true;
+  int functionResolutionMode=4;
+  bool contextSensitive=false; // abitrary length call strings
+  int abstractionMode=0;
+  int interpreterMode=0;
   std::string interpreterModeOuputFileName;
-  bool printWarnings;
-  bool printViolations;
-  int optionsSet;
-  int callStringLength; // not used yet
+  bool printWarnings=false;
+  bool printViolations=false;
+  int optionsSet=0;
+  int callStringLength=-1; // not used yet
 
   // RERS C-subset program options
   struct Rers {
     std::string assertResultsOutputFileName;
-    bool eliminateArrays;
+    bool eliminateArrays=false;
     std::string iSeqFile;
-    int iSeqLength;
-    int iSeqRandomNum;
-    bool rersBinary;
-    bool rersNumeric;
-    bool rersMode;
-    bool stdErrLikeFailedAssert;
+    int iSeqLength=-1;
+    int iSeqRandomNum=-1;
+    bool rersBinary=false;
+    bool rersNumeric=false;
+    bool rersMode=false;
+    bool stdErrLikeFailedAssert=false;
   } rers;
 
     // sv-comp options
   struct SVCOMP {
-    bool svcompMode;
+    bool svcompMode=false;
     std::string detectedErrorFunctionName;
     std::string witnessFileName;
   } svcomp;
@@ -111,12 +111,12 @@ struct CodeThornOptions : public Options {
   struct EquivalenceChecking {
     std::string dumpSortedFileName;
     std::string dumpNonSortedFileName;
-    bool rewriteSSA;
-    bool printRewriteTrace;
-    bool printUpdateInfos;
-    bool ruleConstSubst;
-    bool ruleCommutativeSort;
-    int maxExtractedUpdates;
+    bool rewriteSSA=false;
+    bool printRewriteTrace=false;
+    bool printUpdateInfos=false;
+    bool ruleConstSubst=false;
+    bool ruleCommutativeSort=false;
+    int maxExtractedUpdates=5000;
     std::string specializeFunName;
     std::vector<int> specializeFunParamList;
     std::vector<int> specializeFunConstList;
@@ -125,60 +125,60 @@ struct CodeThornOptions : public Options {
   } equiCheck;
 
   struct PatternSearch {
-    int maxDepth;
-    int repetitions;
-    int maxSuffix;
+    int maxDepth=10;
+    int repetitions=100;
+    int maxSuffix=5;
     std::string explorationMode;
   } patSearch;
 
   struct DataRace {
-    bool detection;
-    bool checkShuffleAlgorithm;
+    bool detection=false;
+    bool checkShuffleAlgorithm=false;
     std::string csvResultsFile;
-    bool failOnError;
+    bool failOnError=false;
   } dr;
 
   // visible options
   std::string configFileName;
-  bool colors;
+  bool colors=true;
   std::string csvStatsFileName;
-  int displayDiff;
-  std::string explorationMode;
-  bool quiet;
+  int displayDiff=10000;
+  std::string explorationMode="breadth-first";
+  bool quiet=false;
   std::string startFunctionName;
   std::string externalFunctionCallsFileName;
-  bool status;
-  bool reduceCfg;
-  bool internalChecks;
+  bool status=false;
+  bool reduceCfg=true;
+  bool internalChecks=false;
   std::string analyzedProgramCLArgs;
   std::string inputValues;
-  bool inputValuesAsConstraints; // obsolete
+  bool inputValuesAsConstraints=false; // obsolete
   std::string inputSequence;
   std::string logLevel;
-  int maxTransitions;
-  int maxIterations;
-  long maxMemory;
-  long maxTime;
-  int maxTransitionsForcedTop;
-  int maxIterationsForcedTop;
-  long maxMemoryForcedTop;
-  long maxTimeForcedTop;
-  int resourceLimitDiff;
-  bool rewrite;
-  bool runRoseAstChecks;
+  int maxTransitions=-1;
+  int maxIterations=-1;
+  long maxMemory=-1;
+  long maxTime=-1;
+  int maxTransitionsForcedTop=-1;
+  int maxIterationsForcedTop=-1;
+  long maxMemoryForcedTop=-1;
+  long maxTimeForcedTop=-1;
+  int resourceLimitDiff=-1;
+  bool rewrite=false;
+  bool runRoseAstChecks=false;
   std::string analyzedFunctionsCSVFileName;
   std::string analyzedFilesCSVFileName;
   std::string externalFunctionsCSVFileName;  
-  int threads;
-  bool unparse;
-  bool displayVersion;
+  int threads=1;
+  bool unparse=false;
+  bool displayVersion=false;
 
   struct Info {
-    bool printVariableIdMapping;
-    bool printFunctionIdMapping;
-    bool printAstNodeStats;
+    bool printVariableIdMapping=false;
+    bool printFunctionIdMapping=false;
+    bool printAstNodeStats=false;
     std::string astNodeStatsCSVFileName;
-    bool printTypeSizeMapping;
+    bool printTypeSizeMapping=false;
     std::string typeSizeMappingCSVFileName;
 
   } info;
@@ -188,6 +188,11 @@ struct CodeThornOptions : public Options {
    std::string getAnalysisReportFileName(CodeThorn::AnalysisSelector asel);
    typedef std::list<std::pair<CodeThorn::AnalysisSelector,std::string> > AnalysisListType;
    AnalysisListType analysisList() const;
+
+   // default hard code init values
+   int maxExactMemorySizeRepresentation=10;
+   bool exprEvalTest=false;
+   
 };
 
 #endif

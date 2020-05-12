@@ -34,7 +34,6 @@ SUBDIRS = \
 	pragmaParsing \
 	ManyCoreRuntime \
 	Fortran_to_C \
-	Jovial_to_C \
 	extractMPISkeleton \
 	RoseBlockLevelTracing \
 	xgenTranslator \

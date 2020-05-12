@@ -179,12 +179,6 @@ printSgAsmExpression(FILE *f, SgAsmExpression *e, const std::string &prefix, uns
             fprintf(f, "}");
             break;
         }
-        case V_SgAsmUnaryArmSpecialRegisterList: {
-            fprintf(f, "ArmSpecialRegisterList {");
-            printSgAsmExpression(f, e, prefix, V_SgAsmUnaryExpression);
-            fprintf(f, "}");
-            break;
-        }
 
         /*=== Register Reference Expressions ===*/
 

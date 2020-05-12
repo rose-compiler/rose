@@ -27,7 +27,6 @@
 #include <string>
 
 #include "CodeThornException.h"
-#include "CodeThornException.h"
 #include "CommandLineOptions.h"
 
 #include "limits.h"

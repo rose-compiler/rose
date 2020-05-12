@@ -838,13 +838,13 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
         // Where are return values stored?  FIXME[Robb Matzke 2015-12-01]: We need to support returning multiple values. We
         // should be using the new calling convention analysis to detect these.
         ASSERT_require(REG_RETURN_.isEmpty());
-        const RegisterDescriptor *r = NULL;
-        if ((r = registers_->lookup("rax")) || (r = registers_->lookup("eax")) || (r = registers_->lookup("ax"))) {
-            REG_RETURN_ = *r;
-        } else if ((r = registers_->lookup("d0"))) {
-            REG_RETURN_ = *r;                           // m68k also typically has other return registers
-        } else if ((r = registers_->lookup("r3"))) {
-            REG_RETURN_ = *r;                           // PowerPC also returns via r4
+        RegisterDescriptor r;
+        if ((r = registers_->find("rax")) || (r = registers_->find("eax")) || (r = registers_->find("ax"))) {
+            REG_RETURN_ = r;
+        } else if ((r = registers_->find("d0"))) {
+            REG_RETURN_ = r;                            // m68k also typically has other return registers
+        } else if ((r = registers_->find("r3"))) {
+            REG_RETURN_ = r;                            // PowerPC also returns via r4
         } else {
             ASSERT_not_implemented("function return value register is not implemented for this ISA/ABI");
         }
@@ -901,8 +901,8 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
     }
 
     // Direction flag (DF) is always set
-    if (const RegisterDescriptor *REG_DF = cpu->get_register_dictionary()->lookup("df"))
-        ops->writeRegister(*REG_DF, ops->boolean_(true));
+    if (const RegisterDescriptor REG_DF = cpu->get_register_dictionary()->findOrThrow("df"))
+        ops->writeRegister(REG_DF, ops->boolean_(true));
 
     initialState_ = ops->currentState()->clone();
 }
