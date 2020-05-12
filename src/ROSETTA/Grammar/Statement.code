@@ -2729,6 +2729,35 @@ HEADER_ADA_LOOP_STATEMENT_START
 
 HEADER_ADA_LOOP_STATEMENT_END
 
+HEADER_ADA_ACCEPT_STATEMENT_START
+       // void post_construction_initialization();
+
+        protected:
+          virtual bool replace_child(SgStatement*, SgStatement*, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
+          int replace_expression(SgExpression * original_expression, SgExpression * new_expression ) $ROSE_OVERRIDE;
+
+        public:
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
+          virtual bool cfgIsIndexInteresting(unsigned int) const $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+#endif
+
+#if ALT_FIXUP_COPY
+       // DQ (11/7/2007): These need to be called separately (see documentation)
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+#else
+       // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
+          virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
+#endif
+
+HEADER_ADA_ACCEPT_STATEMENT_END
+
+
 HEADER_PYTHON_GLOBAL_STMT_START
 HEADER_LIST_DECLARATIONS
 HEADER_PYTHON_GLOBAL_STMT_END
@@ -3266,6 +3295,14 @@ HEADER_NAMESPACE_DECLARATION_STATEMENT_START
 
 HEADER_NAMESPACE_DECLARATION_STATEMENT_END
 
+HEADER_ADA_TASK_SPEC_STMT_START
+// PP what do we need here? 
+HEADER_ADA_TASK_SPEC_STMT_END
+
+HEADER_ADA_TASK_BODY_STMT_START
+// PP what do we need here? 
+HEADER_ADA_TASK_BODY_STMT_END
+
 HEADER_NAMESPACE_DEFINITION_STATEMENT_START
 
        // DQ (9/8/2004): Added to support qualified name generation
@@ -3398,6 +3435,26 @@ HEADER_TEMPLATE_INSTANTIATION_DIRECTIVE_STATEMENT_START
 
 HEADER_TEMPLATE_INSTANTIATION_DIRECTIVE_STATEMENT_END
 
+HEADER_ADA_TASK_SPEC_DECL_STATEMENT_START
+/* TODO: SgAdaTaskSpec  Decl */
+HEADER_ADA_TASK_SPEC_DECL_STATEMENT_END
+
+HEADER_ADA_TASK_TYPE_DECL_STATEMENT_START
+/* TODO: SgAdaTaskTypeDecl */
+HEADER_ADA_TASK_TYPE_DECL_STATEMENT_END
+
+HEADER_ADA_TASK_BODY_DECL_STATEMENT_START
+/* TODO: SgAdaTaskBodyDecl */
+HEADER_ADA_TASK_BODY_DECL_STATEMENT_END
+
+HEADER_ADA_TASK_SPEC_STATEMENT_START
+/* TODO: SgAdaTaskSpec */
+HEADER_ADA_TASK_SPEC_STATEMENT_END
+
+HEADER_ADA_TASK_BODY_STATEMENT_START
+/* TODO: SgAdaTaskBody */
+HEADER_ADA_TASK_BODY_STATEMENT_END
+
 HEADER_PROGRAM_HEADER_STATEMENT_START
   /* HEADER_LIST_DECLARATIONS */
   // DQ (3/20/2007): These are automatically generated access functions from p_name (also added as a data member)
@@ -3477,6 +3534,12 @@ HEADER_ENTRY_STATEMENT_START
           SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 HEADER_ENTRY_STATEMENT_END
+
+HEADER_ADA_ENTRY_DECL_STMT_START
+
+          SgName get_mangled_name() const $ROSE_OVERRIDE;
+
+HEADER_ADA_ENTRY_DECL_STMT_END
 
 HEADER_FORTRAN_DO_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -6201,6 +6264,8 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgFortranDo:
           case V_SgForAllStatement:
           case V_SgCAFWithTeamStatement: //FMZ (2/18/2009)
+      // PP (05/11/20) - Ada support
+          case V_SgAdaTaskBody: 
                returnValue = false;
                break;
 
@@ -6213,6 +6278,8 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgGlobal:
           case V_SgModuleStatement:
           case V_SgDeclarationScope:
+      // PP (05/11/20) - Ada support
+          case V_SgAdaTaskSpec: 
                returnValue = true;
                break;
 
@@ -6491,6 +6558,14 @@ SgScopeStatement::getDeclarationList ()
                SgGlobal* globalScope = isSgGlobal(currentScope);
                ROSE_ASSERT (globalScope != NULL);
                currentStatementList = &(globalScope->get_declarations());
+               break;
+             }
+             
+          case V_SgAdaTaskSpec:
+             {
+               SgAdaTaskSpec* taskScope = isSgAdaTaskSpec(currentScope);
+               ROSE_ASSERT (taskScope != NULL);
+               currentStatementList = &(taskScope->get_declarations());
                break;
              }
 
@@ -16525,6 +16600,37 @@ SgAdaExitStmt::replace_expression(SgExpression* original_expression, SgExpressio
 
 SOURCE_ADA_EXIT_STATEMENT_END
 
+SOURCE_ADA_ACCEPT_STATEMENT_START
+
+void
+SgAdaAcceptStmt::post_construction_initialization()
+{}
+
+bool
+SgAdaAcceptStmt::replace_child(SgStatement *target,SgStatement *newstmt, bool /*extractBasicBlock*/)
+{
+  ROSE_ASSERT(target && newstmt);
+  ROSE_ASSERT(target == p_body);
+   
+  return StatementReplace(this, p_body, target, newstmt);
+}
+
+int
+SgAdaAcceptStmt::replace_expression(SgExpression* original_expression, SgExpression* new_expression)
+{
+  ROSE_ASSERT(original_expression && new_expression);  
+  ROSE_ASSERT(original_expression == get_index());
+  
+  set_index(new_expression);
+  new_expression->set_parent(this);
+  
+  // Let this leak for now
+  // delete original_expression;
+  return 0;
+}
+
+SOURCE_ADA_ACCEPT_STATEMENT_END
+
 SOURCE_ADA_LOOP_STATEMENT_START
 
 void
@@ -18701,6 +18807,20 @@ SgEntryStatement::get_mangled_name() const
 
 SOURCE_ENTRY_STATEMENT_END
 
+SOURCE_ADA_ENTRY_DECL_STMT_START
+
+void
+SgAdaEntryDecl::post_construction_initialization() {}
+
+SgName
+SgAdaEntryDecl::get_mangled_name() const
+{
+  return SgFunctionDeclaration::get_mangled_name();
+}
+
+SOURCE_ADA_ENTRY_DECL_STMT_END
+
+
 
 SOURCE_TYPEDEF_DECLARATION_STATEMENT_START
 
@@ -20068,4 +20188,29 @@ SgMicrosoftAttributeDeclaration::hasExplicitScope() const
      return false;
    }
 SOURCE_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_END
+
+SOURCE_ADA_TASK_SPEC_DECL_STATEMENT_START
+// PP implement header declarations (currently empty)
+void SgAdaTaskSpecDecl::post_construction_initialization() {}
+SOURCE_ADA_TASK_SPEC_DECL_STATEMENT_END
+
+SOURCE_ADA_TASK_TYPE_DECL_STATEMENT_START
+// PP implement header declarations (currently empty)
+void SgAdaTaskTypeDecl::post_construction_initialization() {}
+SOURCE_ADA_TASK_TYPE_DECL_STATEMENT_END
+
+SOURCE_ADA_TASK_BODY_DECL_STATEMENT_START
+// PP implement header declarations (currently empty)
+void SgAdaTaskBodyDecl::post_construction_initialization() {}
+SOURCE_ADA_TASK_BODY_DECL_STATEMENT_END
+
+SOURCE_ADA_TASK_SPEC_STATEMENT_START
+// PP implement header declarations (currently empty)
+void SgAdaTaskSpec::post_construction_initialization() {}
+SOURCE_ADA_TASK_SPEC_STATEMENT_END
+
+SOURCE_ADA_TASK_BODY_STATEMENT_START
+// PP implement header declarations (currently empty)
+void SgAdaTaskBody::post_construction_initialization() {}
+SOURCE_ADA_TASK_BODY_STATEMENT_END
 
