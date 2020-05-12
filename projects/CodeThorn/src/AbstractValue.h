@@ -147,6 +147,7 @@ class AbstractValue {
   TypeSize getTypeSize() const;
   void setTypeSize(TypeSize valueSize);
   static void setVariableIdMapping(CodeThorn::VariableIdMappingExtended* varIdMapping);
+  static CodeThorn::VariableIdMappingExtended* getVariableIdMapping();
   static bool approximatedBy(AbstractValue val1, AbstractValue val2);
   static AbstractValue combine(AbstractValue val1, AbstractValue val2);
   static bool strictChecking; // if turned off, some error conditions are not active, but the result remains sound.

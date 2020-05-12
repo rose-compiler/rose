@@ -320,6 +320,21 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateShortCircuitOperators(SgNod
   return resultList;
 }
 
+AbstractValue ExprAnalyzer::evaluateExpressionWithEmptyState(SgExpression* expr) {
+  ROSE_ASSERT(AbstractValue::getVariableIdMapping());
+  EState emptyEState;
+  PState emptyPState;
+  emptyEState.setPState(&emptyPState);
+  ExprAnalyzer::EvalMode evalMode=ExprAnalyzer::MODE_EMPTY_STATE;
+  list<SingleEvalResultConstInt> resList=evaluateExpression(expr,emptyEState,evalMode);
+  if(resList.size()!=1) {
+    return AbstractValue::createTop();
+  } else {
+    return (*resList.begin()).value();
+  }
+}
+
+
 list<SingleEvalResultConstInt> ExprAnalyzer::evaluateExpression(SgNode* node,EState estate, EvalMode mode) {
   ROSE_ASSERT(estate.pstate()); // ensure state exists
   // initialize with default values from argument(s)

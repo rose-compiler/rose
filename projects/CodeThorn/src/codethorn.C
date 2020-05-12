@@ -480,10 +480,6 @@ void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
   ExprAnalyzer* exprAnalyzer=new ExprAnalyzer();
   VariableIdMappingExtended* vid=new VariableIdMappingExtended();
   AbstractValue::setVariableIdMapping(vid);
-  EState estate;
-  PState pstate;
-  estate.setPState(&pstate);
-
   RoseAst ast(sageProject);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     // match on expr stmts and test the expression
@@ -504,24 +500,18 @@ void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
     if(expr) {
       cout<<"Testing expr eval with empty state: "<<expr->unparseToString();
       ExprAnalyzer::EvalMode evalMode=ExprAnalyzer::MODE_EMPTY_STATE;
-      if(true) {
-        list<SingleEvalResultConstInt> resList=exprAnalyzer->evaluateExpression(expr,estate,evalMode);
-        cout<<" => result value(s): ";
-        for(auto r:resList) {
-          cout<<r.value().toString()<<" ";
-        }
-        cout<<endl;
-      }
+      AbstractValue aVal=exprAnalyzer->evaluateExpressionWithEmptyState(expr);
+      cout<<" => result value: "<<aVal.toString()<<" "<<endl;
     }
   }
+  AbstractValue::setVariableIdMapping(nullptr);
+  delete vid;
   delete exprAnalyzer;
 }
 
 int main( int argc, char * argv[] ) {
   try {
     configureRose();
-    Sawyer::Message::Facility logger;
-    Rose::Diagnostics::initAndRegister(&logger, "CodeThorn");
     configureRersSpecialization();
 
     TimeMeasurement timer;

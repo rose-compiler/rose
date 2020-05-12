@@ -18,7 +18,6 @@
 
 using namespace std;
 using namespace CodeThorn;
-using namespace CodeThorn;
 
 VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
 bool AbstractValue::strictChecking=true;
@@ -50,6 +49,10 @@ AbstractValue::AbstractValue(bool val) {
 
 void AbstractValue::setVariableIdMapping(VariableIdMappingExtended* varIdMapping) {
   AbstractValue::_variableIdMapping=varIdMapping;
+}
+
+CodeThorn::VariableIdMappingExtended* AbstractValue::getVariableIdMapping() {
+  return AbstractValue::_variableIdMapping;
 }
 
 AbstractValue::TypeSize AbstractValue::calculateTypeSize(CodeThorn::BuiltInType btype) {
