@@ -16,6 +16,7 @@ using namespace std;
 
 // set to true for matching C++ ctor calls
 const bool SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL = false;
+//~ const bool SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL = true;
 
 /*!
   * \author Markus Schordan
@@ -1952,9 +1953,9 @@ SgLocatedNode* SgNodeHelper::ExtendedCallInfo::representativeNode() const
   return rep; 
 }
 
-SgCallExpression* SgNodeHelper::ExtendedCallInfo::callExpression() const              
+SgFunctionCallExp* SgNodeHelper::ExtendedCallInfo::callExpression() const              
 { 
-  return isSgCallExpression(rep); 
+  return isSgFunctionCallExp(rep); 
 }
 
 SgConstructorInitializer* SgNodeHelper::ExtendedCallInfo::ctorInitializer() const              
