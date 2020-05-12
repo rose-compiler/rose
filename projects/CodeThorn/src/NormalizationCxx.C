@@ -153,44 +153,108 @@ namespace
   
   typedef std::vector<AnyTransform> transformation_container;
   
+  // end transformations
+  
   //
-  // function call memoization
+  // functor/function decorator to memoize results
   
-  // \todo allow deletion of memoized results
-  struct FunctionMemoizer
+  
+  /// \private
+  template <class Fn>
+  struct fn_traits : fn_traits<decltype(&Fn::operator())> { /* use overloads */ }; 
+  
+  /// \private
+  /// for const member operator() and non-mutable lambda's
+  template <class R, class C, class... Args>
+  struct fn_traits<R (C::*) (Args...) const>
   {
-    /// returns the canonical node of a construction (builder function + components).
-    /// \details
-    ///   for each unique combination of builder function and components the
-    ///   canonical node is returned.
-    ///   On the first invocation, the canonical node is built (using builder(args...))
-    ///   and memoized. On later invocations, the memoized node is returned.
-    /// \tparam Fn   the type of the builder function
-    /// \tparam Args an argument pack consisting of less-than comparable components
-    /// \param  func the function (MUST be a functor, not a function)
-    /// \param  args the arguments to func
-    /// \return the result of calling func(args...)
-    template <class Fn, class... Args>
-    auto operator()(Fn func, Args... args) -> decltype(func(args...))&
-    {
-      typedef decltype(func(args...))                            return_t;
-      typedef std::map<std::tuple<Args...>, return_t>            result_cache_t;
-      typedef std::pair<typename result_cache_t::iterator, bool> emplace_result_t;
-    
-      static result_cache_t cache;
-      
-      std::tuple<Args...>               desc(args...);
-      typename result_cache_t::iterator pos = cache.find(desc);
-  
-      if (pos != cache.end())
-        return pos->second;
-      
-      emplace_result_t                  res = cache.emplace(desc, func(args...));
-        
-      ROSE_ASSERT(res.second);
-      return res.first->second;
-    }        
+    typedef std::tuple<Args...> arguments_t;
+    typedef R                   result_t;
   };
+  
+  /// \private
+  /// for non-const member operator() and mutable lambda's
+  template <class R, class C, class... Args>
+  struct fn_traits<R (C::*) (Args...)>
+  {
+    typedef std::tuple<Args...> arguments_t;
+    typedef R                   result_t;
+  };
+  
+  /// \private
+  /// for freestanding functions
+  template <class R, class... Args>
+  struct fn_traits<R (*) (Args...)>
+  {
+    typedef std::tuple<Args...> arguments_t;
+    typedef R                   result_t;
+  };
+  
+  /// \brief   decorator on functions to cache and reuse results
+  /// \details On the first invocation with a set of arguments, the result
+  ///          is computed and memoized. On later invocations, the memoized 
+  ///          result is returned.
+  /// \tparam Fn the type of the function or functor
+  /// \todo unordered_map may be faster
+  template <class Fn>
+  struct Memoizer
+  {
+      typedef Fn                                      func_t;
+      typedef typename fn_traits<func_t>::result_t    result_t;
+      typedef typename fn_traits<func_t>::arguments_t arguments_t;
+      typedef std::map<arguments_t, result_t>         result_cache_t;
+      
+      explicit
+      Memoizer(Fn f)
+      : func(f)
+      {}
+      
+      Memoizer()                           = default;
+      Memoizer(const Memoizer&)            = default;
+      Memoizer(Memoizer&&)                 = default;
+      Memoizer& operator=(Memoizer&&)      = default;
+      Memoizer& operator=(const Memoizer&) = default;
+
+      /// \tparam Args an argument pack consisting of less-than comparable components
+      /// \param  args the arguments to func
+      /// \return the result of calling func(args...)
+      template <class... Args>
+      result_t& operator()(Args... args)
+      { 
+        typedef typename result_cache_t::iterator cache_iterator;
+        
+        cache_iterator pos = cache.find(std::tie(args...));
+    
+        if (pos != cache.end())
+        {
+          ++num_hits;
+          return pos->second;
+        }
+        
+        arguments_t desc(args...);
+        
+        return cache.emplace(std::move(desc), func(std::forward<Args...>(args)...)).first->second;
+      }        
+      
+      void clear() { cache.clear(); }
+      
+      size_t size() const { return cache.size(); }
+      size_t hits() const { return num_hits; }
+          
+    private:
+      size_t         num_hits = 0;
+      func_t         func;
+      result_cache_t cache;
+  };
+  
+  template <class Fn>
+  inline
+  Memoizer<Fn> memoizer(Fn fn)
+  {
+    return Memoizer<Fn>(fn);
+  }
+  
+  // end memoization wrapper
   
   //
   // convenience functions + functors
@@ -215,23 +279,28 @@ namespace
     return getClassDef(SG_DEREF(n.get_associatedClassDeclaration())); 
   }
   
-  /// Information about whether a class requires a dtor
-  struct TriviallyDestructibleResult
+  SgClassDefinition* getClassDefOpt(SgClassType& n)
   {
-    SgClassDefinition*           clsdef  = nullptr; //< Outermost class if not trivially destructible
-    SgArrayType*                 array   = nullptr; //< Outermost array type of a member
-    SgMemberFunctionDeclaration* dtordcl = nullptr; //< An existing dtor declaration in the outermost class
+    SgDeclarationStatement& dcl    = SG_DEREF( n.get_declaration() ); 
+    SgDeclarationStatement* defdcl = dcl.get_definingDeclaration();
     
-    /// returns whether the class was trivially destructable
-    operator bool() const { return clsdef == nullptr; }
-  };
+    return defdcl ? SG_ASSERT_TYPE(SgClassDeclaration, *defdcl).get_definition()
+                  : nullptr
+                  ;
+  }
   
   
   /// a compiler generated destructor is required, if
   ///   (1) no destructor has been specified
   ///   (2) AND at least one data member has or requires a non-trivial destructor. 
-  struct TriviallyDestructible : sg::DispatchHandler<TriviallyDestructibleResult>
+  struct TriviallyDestructible : sg::DispatchHandler<bool>
   {
+    typedef sg::DispatchHandler<bool> base;
+    
+    TriviallyDestructible()
+    : base(true)
+    {}
+    
     void handle(SgNode& n)         { SG_UNEXPECTED_NODE(n); }
     
     // base case
@@ -240,34 +309,29 @@ namespace
     // types with constructors/destructors
     void handle(SgClassType& n)    
     {
-      SgDeclarationStatement& dcl    = SG_DEREF( n.get_declaration() ); 
-      SgDeclarationStatement* defdcl = dcl.get_definingDeclaration();
+      SgClassDefinition* clsdef = getClassDefOpt(n);
       
-      if (!defdcl) return;
-      
-      SgClassDeclaration&     clsdcl = SG_ASSERT_TYPE(SgClassDeclaration, *defdcl);
-      
-      res = check(clsdcl.get_definition());
+      res = clsdef ? check(clsdef).first : false;
     }
     
     // types that need to be skipped
     void handle(SgArrayType& n)    
     { 
-      res = check(n.get_base_type()); 
-      res.array = &n;
+      res = check(n.get_base_type());
     }
     
     void handle(SgTypedefType& n)  { res = check(n.get_base_type()); }
     void handle(SgModifierType& n) { res = check(n.get_base_type()); }
     
     static
-    TriviallyDestructibleResult check(SgType* n); 
+    bool check(SgType* n); 
 
     static
-    TriviallyDestructibleResult check(SgClassDefinition* n);     
+    std::pair<bool, SgMemberFunctionDeclaration*>
+    check(SgClassDefinition* n);     
   };
   
-  TriviallyDestructibleResult
+  bool
   TriviallyDestructible::check(SgType* ty)
   {
     return sg::dispatch(TriviallyDestructible(), ty);
@@ -356,9 +420,9 @@ namespace
     if (!defdcl) { nontrivial(); return; }
     
     SgClassDeclaration&     clsdcl = SG_ASSERT_TYPE(SgClassDeclaration, *defdcl);
+    const bool              trvl   = TriviallyDestructible::check(clsdcl.get_definition()).first;
     
-    if (!TriviallyDestructible::check(clsdcl.get_definition())) 
-      nontrivial();
+    if (!trvl) nontrivial();
   }
   
   TriviallyDestructibleDecl::ReturnType 
@@ -377,52 +441,43 @@ namespace
     return test;
   }
   
-  TriviallyDestructibleResult
+  std::pair<bool, SgMemberFunctionDeclaration*>
   TriviallyDestructible::check(SgClassDefinition* def)
   {
     ROSE_ASSERT(def);
     
-    TriviallyDestructibleResult trivial;
+    bool trivial_class = true;
     
     // this loop checks if all members are trivially destructable
     //   and if the class has a declared destructor
     for (SgDeclarationStatement* mem : def->get_members())
     {
       ROSE_ASSERT(mem);
-      SgMemberFunctionDeclaration* cand = isSgMemberFunctionDeclaration(mem); 
       
-      if (cand && isDtor(*cand))
+      if (!(TriviallyDestructibleDecl::check(mem).first))
+        trivial_class = false;
+      
+      if (SgMemberFunctionDeclaration* cand = isSgMemberFunctionDeclaration(mem))
       {
-        trivial.clsdef  = def;
-        trivial.dtordcl = cand;
-        return trivial;
-      }  
-      
-      if (!TriviallyDestructibleDecl::check(mem).first)
-      { 
-        trivial.clsdef = def;
+        if (isDtor(*cand)) return std::make_pair(false, cand);
       }
     }
     
-    // if we have found the result, there is no need to look into the
-    //   base class list.
-    if (!trivial) 
-      return trivial; 
-    
+    if (!trivial_class) return std::make_pair(false, nullptr); 
+        
     for (SgBaseClass* baseclass : def->get_inheritances())
     {
       ROSE_ASSERT(baseclass);
       
       if (  baseclass->get_isDirectBaseClass() 
-         && (!TriviallyDestructibleDecl::check(baseclass).first)
+         && (!(TriviallyDestructibleDecl::check(baseclass).first))
          )
       {
-        trivial.clsdef = def;
-        return trivial;
+        return std::make_pair(false, nullptr);
       }    
     }
     
-    return trivial;    
+    return std::make_pair(true, nullptr);    
   }  
       
   struct SameName
@@ -813,39 +868,112 @@ namespace
       SgBaseClass&  baseclass;
   };
   
+  template <class SageNode, class SageChild>
+  void set_child(SageNode& parent, void (SageNode::*setter) (SageChild*), SageChild& child)
+  {
+    (parent.*setter)(&child);
+    child.set_parent(&parent);
+  }
+  
+  
+  struct DtorCallCreator : sg::DispatchHandler<SgStatement*>
+  {
+    typedef sg::DispatchHandler<SgStatement*> base;
+    
+    DtorCallCreator(SgExpression& expr)
+    : base(), elem(expr)
+    {}
+    
+    void descend(SgNode* n) { res = sg::dispatch(*this, n); }
+ 
+    SgForStatement&
+    createLoopOverArray(SgArrayType& arrty)
+    {
+      // loop skeleton
+      SgForStatement&        sgnode  = SG_DEREF( new SgForStatement(dummyFileInfo()) );
+      SgExpression&          start   = SG_DEREF( sb::buildIntVal(0) );
+      std::string            varname = si::generateUniqueVariableName(&sgnode, "dtorloop");
+      SgInitializer&         varini  = SG_DEREF( sb::buildAssignInitializer(&start, start.get_type()) );
+      SgVariableDeclaration& var     = SG_DEREF( sb::buildVariableDeclaration(varname, sb::buildIntType(), &varini, &sgnode) );
+      
+      ROSE_ASSERT(sgnode.get_for_init_stmt() != nullptr);
+      sgnode.append_init_stmt(&var);
+      
+      // test
+      SgExpression&          limit   = SG_DEREF( si::deepCopy(arrty.get_index()) );
+      SgExpression&          vartst  = SG_DEREF( sb::buildVarRefExp(&var) );
+      SgExpression&          lt      = SG_DEREF( sb::buildLessThanOp(&vartst, &limit) );
+      SgStatement&           ltstmt  = SG_DEREF( sb::buildExprStatement(&lt) );
+      
+      set_child(sgnode, &SgForStatement::set_test, ltstmt);
+      
+      // increment
+      SgExpression&          varinc  = SG_DEREF( sb::buildVarRefExp(&var) );
+      SgExpression&          inc     = SG_DEREF( sb::buildPlusPlusOp(&varinc) );
+      
+      set_child(sgnode, &SgForStatement::set_increment, inc);
+      
+      // index expression + body recursion
+      SgExpression&          varidx  = SG_DEREF( sb::buildVarRefExp(&var) );
+      SgExpression&          indexed = SG_DEREF( sb::buildPntrArrRefExp(&elem, &varidx) );
+      SgStatement*           bdy     = sg::dispatch(DtorCallCreator(indexed), arrty.get_base_type());
+      
+      set_child(sgnode, &SgForStatement::set_loop_body, SG_DEREF(bdy));
+      
+      // done 
+      return sgnode;
+    }
+    
+    void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
+    
+    void handle(SgModifierType& n) { descend(n.get_base_type()); }
+    void handle(SgTypedefType& n)  { descend(n.get_base_type()); }
+    
+    void handle(SgClassType& n)
+    {
+      SgClassDefinition&           clsdef   = SG_DEREF( getClassDefOpt(n) );
+      SgExprListExp&               args     = SG_DEREF( sb::buildExprListExp() );
+      SgMemberFunctionDeclaration& dtordcl  = obtainGeneratableDtor(clsdef, args);
+      SgMemberFunctionSymbol*      mfunsym  = SG_ASSERT_TYPE(SgMemberFunctionSymbol, dtordcl.search_for_symbol_from_symbol_table());
+      SgMemberFunctionRefExp&      mfunref  = SG_DEREF( sb::buildMemberFunctionRefExp( mfunsym,
+                                                                                       false /* \todo virtual call */,
+                                                                                       false /* need qualifier */
+                                                                                     ));
+      SgDotExp&                    callee   = SG_DEREF( sb::buildDotExp(&elem, &mfunref) );
+      SgFunctionCallExp&           callexp  = SG_DEREF( sb::buildFunctionCallExp(&callee, &args) );
+      
+      res = sb::buildExprStatement(&callexp);
+    }
+    
+    void handle(SgArrayType& n)
+    { 
+      res = &createLoopOverArray(n);
+    }
+    
+    SgExpression& elem;
+  };
+  
   struct VarDtorInserter
   {
-      VarDtorInserter(SgBasicBlock& where, SgInitializedName& what, SgClassDefinition& classdef)
-      : blk(where), var(what), clsdef(classdef) 
+      VarDtorInserter(SgBasicBlock& where, SgInitializedName& what)
+      : blk(where), var(what)
       {}
       
       void execute() 
       {
-        SgVariableSymbol*            varsym   = SG_ASSERT_TYPE(SgVariableSymbol, var.search_for_symbol_from_symbol_table());         
-        SgExprListExp&               args     = SG_DEREF( sb::buildExprListExp() );
-        SgMemberFunctionDeclaration& dtordcl  = obtainGeneratableDtor(clsdef, args);
+        SgExpression& destructed = SG_DEREF( sb::buildVarRefExp(&var, nullptr) );
+        SgStatement*  dtorcall   = sg::dispatch(DtorCallCreator(destructed), var.get_type());
+        ROSE_ASSERT(dtorcall);
         
-        logInfo() << "adding call to " << dtordcl.get_name()
-                  << " // " << SrcLoc(var)
-                  << std::endl;
-        
-        SgMemberFunctionSymbol*      mfunsym  = SG_ASSERT_TYPE(SgMemberFunctionSymbol, dtordcl.search_for_symbol_from_symbol_table());
-        SgMemberFunctionRefExp&      mfunref  = SG_DEREF( sb::buildMemberFunctionRefExp( mfunsym,
-                                                                                         false /* \todo virtual call */,
-                                                                                         false /* need qualifier */
-                                                                                       )
-                                                        );
-        SgVarRefExp&                 receiver = SG_DEREF( sb::buildVarRefExp(varsym) );
-        SgDotExp&                    callee   = SG_DEREF( sb::buildDotExp(&receiver, &mfunref) );
-        SgFunctionCallExp&           callexp  = SG_DEREF( sb::buildFunctionCallExp(&callee, &args) );
-        
-        blk.prepend_statement(sb::buildExprStatement(&callexp));
+        //~ logInfo() << "destructing " << var.get_name()
+                  //~ << " // " << SrcLoc(var)
+                  //~ << std::endl;        
+        blk.prepend_statement(dtorcall);
       }
       
     private:
       SgBasicBlock&      blk;
       SgInitializedName& var;
-      SgClassDefinition& clsdef;
   };
   
 
@@ -945,61 +1073,70 @@ namespace
            || isGenerateableCtor(n)
            );
   }
-  
-  const SgInitializedNamePtrList&
-  getMemberVars(SgClassDefinition& cls)
-  {
-    struct Extractor
-    {
-      SgInitializedNamePtrList
-      operator()(const SgClassDefinition* cls)
-      {
-        SgInitializedNamePtrList res;
-        
-        for (SgDeclarationStatement* cand : cls->get_members())
-        {
-          SgVariableDeclaration* dcl = isSgVariableDeclaration(cand);
-    
-          if (dcl && !si::isStatic(dcl))
-          { 
-            SgInitializedNamePtrList& lst = dcl->get_variables();
-            
-            ROSE_ASSERT(lst.size() == 1 && lst[0]);  
-            res.push_back(lst[0]);
-          }
-        }
-        
-        return std::move(res);
-      }
-    };
 
-    return FunctionMemoizer()(Extractor(), &cls);
+  // 
+  // memoized functors
+
+  
+  SgInitializedNamePtrList
+  extractNonStaticMemberVars(const SgClassDefinition* cls)
+  {
+    SgInitializedNamePtrList res;
+    
+    for (SgDeclarationStatement* cand : cls->get_members())
+    {
+      SgVariableDeclaration* dcl = isSgVariableDeclaration(cand);
+
+      if (dcl && !si::isStatic(dcl))
+      { 
+        SgInitializedNamePtrList& lst = dcl->get_variables();
+        
+        ROSE_ASSERT(lst.size() == 1 && lst[0]);  
+        res.push_back(lst[0]);
+      }
+    }
+    
+    return std::move(res);
   }
   
-  const SgBaseClassPtrList&
-  getDirectNonVirtualBases(SgClassDefinition& cls)
+  auto getMemberVars = memoizer(extractNonStaticMemberVars);
+  
+  auto getDirectNonVirtualBases = 
+           memoizer( [](const SgClassDefinition* cls) -> SgBaseClassPtrList
+                     {
+                       SgBaseClassPtrList res;
+                     
+                       for (SgBaseClass* cand : cls->get_inheritances())
+                       {
+                         ROSE_ASSERT(cand);
+                                       
+                         if (cand->get_isDirectBaseClass() && !isVirtualBase(*cand))
+                           res.push_back(cand);
+                       }
+                                                   
+                       return std::move(res);
+                     } 
+                   );
+  
+  void clearMemoized()
   {
-    struct Extractor
-    {
-      SgBaseClassPtrList
-      operator()(const SgClassDefinition* cls)
-      {
-        SgBaseClassPtrList res;
-        
-        for (SgBaseClass* cand : cls->get_inheritances())
-        {
-          ROSE_ASSERT(cand);
-                         
-          if (cand->get_isDirectBaseClass() && !isVirtualBase(*cand))
-            res.push_back(cand);
-        }
-                                     
-        return std::move(res);
-      }
-    };
+    logInfo() << getDirectNonVirtualBases.hits() 
+              << " <hits -- size> " 
+              << getDirectNonVirtualBases.size()
+              << " getDirectNonVirtualBases - cache\n" 
+              << getMemberVars.hits() 
+              << " <hits -- size> " 
+              << getMemberVars.size() 
+              << " getMemberVars - cache\n" 
+              << std::endl;
     
-    return FunctionMemoizer()(Extractor(), &cls);
+    getMemberVars.clear();
+    getDirectNonVirtualBases.clear();
   }
+
+  // end memoized functors
+  
+  
   
   void normalizeCtorDef(SgMemberFunctionDeclaration& fun, transformation_container& cont)
   {
@@ -1011,7 +1148,7 @@ namespace
 
     // explicitly construct all member variables;
     //   execute the transformations in reverse order
-    for (SgInitializedName* var : adapt::reverse(getMemberVars(cls)))
+    for (SgInitializedName* var : adapt::reverse(getMemberVars(&cls)))
     {
       SgInitializer* ini = getMemberInitializer(*var, lst);
       
@@ -1020,7 +1157,7 @@ namespace
     
     // explicitly construct all direct non-virtual bases;
     //   execute the transformations in reverse order
-    for (SgBaseClass* base : adapt::reverse(getDirectNonVirtualBases(cls)))
+    for (SgBaseClass* base : adapt::reverse(getDirectNonVirtualBases(&cls)))
     {
       SgInitializer* ini = getBaseInitializer(*base, lst);
       
@@ -1042,28 +1179,22 @@ namespace
     
     // explicitly destruct all member variables of class type;
     //   execute the transformations in reverse order
-    for (SgInitializedName* var : adapt::reverse(getMemberVars(cls)))
+    for (SgInitializedName* var : adapt::reverse(getMemberVars(&cls)))
     {
-      SgType*                     varty = var->get_type();
-      TriviallyDestructibleResult res   = TriviallyDestructible::check(varty);
+      SgType* varty = var->get_type();
       
-      if (!res) 
+      if (!TriviallyDestructible::check(varty)) 
       {
-        if (var->get_name() == "time")
-        {
-          res = TriviallyDestructible::check(varty);
-        }
+        //~ logInfo() << "nontrivial: " << var->get_name() << " " << varty->get_mangled() 
+                  //~ << std::endl;
         
-        logWarn() << "nontrivial: " << var->get_name() << " " << varty->get_mangled() 
-                  << std::endl;
-        
-        cont.emplace_back(VarDtorInserter(blk, *var, *res.clsdef));
+        cont.emplace_back(VarDtorInserter(blk, *var));
       }
     } 
     
     // explicitly destruct all direct non-virtual base classes;
     //   execute the transformations in reverse order
-    for (SgBaseClass* base : adapt::reverse(getDirectNonVirtualBases(cls)))
+    for (SgBaseClass* base : adapt::reverse(getDirectNonVirtualBases(&cls)))
     {
       cont.emplace_back(BaseDtorInserter(blk, *base));
     }
@@ -1112,9 +1243,11 @@ namespace
       
       void handle(SgClassDefinition& n)
       {
-        TriviallyDestructibleResult trivial_dtor = TriviallyDestructible::check(&n);  
+        typedef std::pair<bool, SgMemberFunctionDeclaration*> trivial_result_t;
         
-        if (!trivial_dtor && !trivial_dtor.dtordcl) 
+        trivial_result_t res = TriviallyDestructible::check(&n);
+        
+        if (!res.first /* not trivial */ && !res.second /* no user defined dtor */) 
         {
           cont.emplace_back(DestructorGenerator(n));
           return;
@@ -1124,6 +1257,7 @@ namespace
     private:
       container& cont;
   };
+  
 } // anonymous namespace
 
   // externally visible function
@@ -1146,6 +1280,7 @@ namespace
     for (AnyTransform& tf : transformations) 
       tf.execute();
 
+    clearMemoized();
     logInfo() << "Finished C++ normalization." << std::endl; 
   }
 

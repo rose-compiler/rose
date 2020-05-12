@@ -129,11 +129,14 @@ struct CtxAnalysis : DFAnalysisBase
     const CtxLattice<CallContext>&
     getCallSiteLattice(Label lblret)
     {
-      Labeler&     labeler = *getLabeler();
-      ROSE_ASSERT(labeler.isFunctionCallReturnLabel(lblret));
-
-      SgStatement* call = SG_ASSERT_TYPE(SgStatement, astNode(labeler, lblret));
-      return getCallSiteLattice(*call);
+      Labeler& labeler = *getLabeler();
+      ROSE_ASSERT(labeler.isFunctionCallReturnLabel(lblret) && (lblret.getId() > 0));
+      
+      Label    lblcall(lblret.getId()-1);
+      
+      return getCtxLattice(lblcall);
+      //~ SgStatement* call = SG_ASSERT_TYPE(SgStatement, astNode(labeler, lblret));
+      //~ return getCallSiteLattice(*call);
     }
 
 

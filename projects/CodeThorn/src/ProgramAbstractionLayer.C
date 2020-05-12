@@ -37,28 +37,38 @@ void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
   getVariableIdMapping()->setModeVariableIdForEachArrayElement(getModeArrayElementVariableId());
   getVariableIdMapping()->computeVariableSymbolMapping(root);
   _labeler=new Labeler(root);
-  _functionIdMapping=new FunctionIdMapping();
-  getFunctionIdMapping()->computeFunctionSymbolMapping(root);
-
-  // PP (02/17/20) add class hierarchy and call mapping
+  
   _classHierarchy=new ClassHierarchyWrapper(root);
-  _functionCallMapping=new FunctionCallMapping();
-  getFunctionCallMapping()->setClassHierarchy(getClassHierarchy());
-  getFunctionCallMapping()->computeFunctionCallMapping(root);
+  _cfanalyzer=new CFAnalysis(_labeler);
+  _functionIdMapping=nullptr; 
+  _functionCallMapping=nullptr; 
+  _functionCallMapping2=nullptr;
 
-  _functionCallMapping2=new FunctionCallMapping2();
-  getFunctionCallMapping2()->setLabeler(_labeler);
-  getFunctionCallMapping2()->setClassHierarchy(getClassHierarchy());
-  getFunctionCallMapping2()->computeFunctionCallMapping(root);
-
-  // PP (07/15/19) moved flow generation from DFAnalysisBase class
-  _cfanalyzer = new CFAnalysis(_labeler);
-
-  // PP (02/17/20) sets id and call mappings
-  _cfanalyzer->setFunctionIdMapping(getFunctionIdMapping());
-  _cfanalyzer->setFunctionCallMapping(getFunctionCallMapping());
-  _cfanalyzer->setFunctionCallMapping2(getFunctionCallMapping2());
-
+  if (!SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL)
+  {
+    // a function resolution mode
+    _functionIdMapping = new FunctionIdMapping();
+    
+    getFunctionIdMapping()->computeFunctionSymbolMapping(root);
+    _cfanalyzer->setFunctionIdMapping(getFunctionIdMapping());
+    
+    // another function resolution mode
+    _functionCallMapping = new FunctionCallMapping();
+  
+    getFunctionCallMapping()->setClassHierarchy(getClassHierarchy());
+    getFunctionCallMapping()->computeFunctionCallMapping(root);
+    _cfanalyzer->setFunctionCallMapping(getFunctionCallMapping());
+  }
+  else
+  {
+    // PP (02/17/20) add class hierarchy and call mapping
+    _functionCallMapping2=new FunctionCallMapping2();
+    getFunctionCallMapping2()->setLabeler(_labeler);
+    getFunctionCallMapping2()->setClassHierarchy(getClassHierarchy());
+    getFunctionCallMapping2()->computeFunctionCallMapping(root);
+    _cfanalyzer->setFunctionCallMapping2(getFunctionCallMapping2());
+  }
+  
   //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   cout << "INIT: Building CFG for each function."<<endl;
   _fwFlow = _cfanalyzer->flow(root);
