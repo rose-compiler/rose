@@ -8,27 +8,36 @@
 // WARNING: This file has been designed to compile with -std=c++17
 // This limits the use of ROSE header files at the moment.
 //
+class SgBasicBlock;
+class SgCaseOptionStmt;
+class SgDefaultOptionStmt;
 class SgDerivedTypeStatement;
 class SgEnumDeclaration;
+class SgEnumType;
+class SgEnumVal;
 class SgExpression;
+class SgExprListExp;
 class SgExprStatement;
 class SgFunctionDeclaration;
 class SgFunctionDefinition;
+class SgFunctionParameterList;
 class SgFunctionParameterScope;
 class SgGlobal;
 class SgInitializedName;
-class SgJovialDefineDeclaration;
-class SgJovialDirectiveStatement;
 class SgLocatedNode;
+class SgNamespaceDeclarationStatement;
 class SgProgramHeaderStatement;
 class SgScopeStatement;
 class SgSourceFile;
 class SgSwitchStatement;
 class SgType;
+class SgTypedefDeclaration;
 class SgVariableDeclaration;
 
 // Jovial specific classes
 class SgJovialCompoolStatement;
+class SgJovialDefineDeclaration;
+class SgJovialDirectiveStatement;
 class SgJovialTableStatement;
 
 
@@ -130,14 +139,14 @@ public:
    void Enter(SgDefaultOptionStmt* &);
    void Leave(SgDefaultOptionStmt*);
 
-   SgEnumVal* ReplaceEnumVal(SgEnumType*, SgName);
+   SgEnumVal* ReplaceEnumVal(SgEnumType*, const std::string &);
 
 // Jovial specific nodes
 //
    void Enter(SgJovialDefineDeclaration* &, const std::string &define_string);
    void Leave(SgJovialDefineDeclaration*);
 
-   void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, SgJovialDirectiveStatement::directive_types);
+   void Enter(SgJovialDirectiveStatement* &, const std::string &directive_string, bool is_compool=false);
    void Leave(SgJovialDirectiveStatement*);
 
    void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);
@@ -165,6 +174,13 @@ public:
 
 };
 
+// Temporary wrappers for SageInterface functions (needed until ROSE builds with C++17)
+//
+namespace SageBuilderCpp17 {
+
+   SgType* buildIntType();
+
+} // namespace SageBuilderCpp17
 } // namespace builder
 } // namespace Rose
 

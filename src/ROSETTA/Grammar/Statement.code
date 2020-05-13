@@ -4135,7 +4135,8 @@ HEADER_JOVIAL_DIRECTIVE_STATEMENT_START
       /*! A Jovial directive can be types */
           enum directive_types
              {
-               e_compool,              /*!< 9.1 COMPOOL DIRECTIVE (default) */
+               e_unknown = 0,
+               e_compool,              /*!< 9.1 COMPOOL DIRECTIVE */
                                        /*!< 9.2 TEXT DIRECTIVES */
                e_copy,                 /*!< 9.2.1 COPY DIRECTIVE */
                e_skip,                 /*!< 9.2.2 SKIP DIRECTIVE */

@@ -409,7 +409,7 @@ Grammar::setUpStatements ()
   // DQ (6/10/2011): Added template specific definitions.
      NEW_TERMINAL_MACRO (TemplateClassDefinition,          "TemplateClassDefinition",    "TEMPLATE_CLASS_DEF_STMT" );
      NEW_TERMINAL_MACRO (TemplateFunctionDefinition,       "TemplateFunctionDefinition", "TEMPLATE_FUNCTION_DEF_STMT" );
-     
+
   // DQ (12/21/2011): New design...
      NEW_NONTERMINAL_MACRO (ClassDeclaration,
           TemplateClassDeclaration | TemplateInstantiationDecl | DerivedTypeStatement | ModuleStatement | JavaPackageDeclaration | JovialTableStatement,
@@ -3771,7 +3771,7 @@ Grammar::setUpStatements ()
      JovialDirectiveStatement.setFunctionSource    ( "SOURCE_JOVIAL_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
      JovialDirectiveStatement.setDataPrototype     ( "std::string", "content_string", "= \"\"",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     JovialDirectiveStatement.setDataPrototype     ( "SgJovialDirectiveStatement::directive_types", "directive_type", "= SgJovialDirectiveStatement::e_compool",
+     JovialDirectiveStatement.setDataPrototype     ( "SgJovialDirectiveStatement::directive_types", "directive_type", "= SgJovialDirectiveStatement::e_unknown",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      JovialDefineDeclaration.setFunctionPrototype  ( "HEADER_JOVIAL_DEFINE_DECLARATION", "../Grammar/Statement.code" );
@@ -3897,7 +3897,7 @@ Grammar::setUpStatements ()
      MicrosoftAttributeDeclaration.setFunctionPrototype ( "HEADER_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      MicrosoftAttributeDeclaration.setDataPrototype ("SgName", "attribute_string", "= \"\"",
                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-                                             
+
   // Support for C preprocessor declarations within the AST (does not solve the problem of not
   // knowing where they might be expanded within source code (something we can't see).
   // This support allows transformations to introduce their own macros.
@@ -4216,7 +4216,7 @@ Grammar::setUpStatements ()
 
   // DQ (12/27/2007): Added fortran entry statement.
      EntryStatement.setFunctionSource           ("SOURCE_ENTRY_STATEMENT", "../Grammar/Statement.code" );
-     
+
   // IOControlStatement.setFunctionSource       ("SOURCE_IO_CONTROL_STATEMENT", "../Grammar/Statement.code" );
 
   // InputOutputStatement.setFunctionSource     ("SOURCE_INPUT_OUTPUT_STATEMENT", "../Grammar/Statement.code" );

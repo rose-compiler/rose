@@ -10,21 +10,24 @@
 
 #include "../../frontend/Experimental_Flang_ROSE_Connection/sage-build.h"
 
-#include "../../lib/common/Fortran-features.h"
-#include "../../lib/common/default-kinds.h"
-#include "../../lib/evaluate/expression.h"
-#include "../../lib/parser/characters.h"
-#include "../../lib/parser/dump-parse-tree.h"
-#include "../../lib/parser/message.h"
-#include "../../lib/parser/parse-tree-visitor.h"
-#include "../../lib/parser/parse-tree.h"
-#include "../../lib/parser/parsing.h"
-#include "../../lib/parser/provenance.h"
-#include "../../lib/parser/unparse.h"
-#include "../../lib/semantics/expression.h"
-#include "../../lib/semantics/semantics.h"
-#include "../../lib/semantics/unparse-with-symbols.h"
-#include <cerrno>
+#include "flang/Common/Fortran-features.h"
+#include "flang/Common/default-kinds.h"
+#include "flang/Evaluate/expression.h"
+#include "flang/Lower/PFTBuilder.h"
+#include "flang/Parser/characters.h"
+#include "flang/Parser/dump-parse-tree.h"
+#include "flang/Parser/message.h"
+#include "flang/Parser/parse-tree-visitor.h"
+#include "flang/Parser/parse-tree.h"
+#include "flang/Parser/parsing.h"
+#include "flang/Parser/provenance.h"
+#include "flang/Parser/unparse.h"
+#include "flang/Semantics/expression.h"
+#include "flang/Semantics/semantics.h"
+#include "flang/Semantics/unparse-with-symbols.h"
+#include "llvm/Support/Errno.h"
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cstdio>
 #include <cstring>
 #include <fstream>
@@ -47,8 +50,8 @@ static std::list<std::string> argList(int argc, char *const argv[]) {
 }
 
 struct MeasurementVisitor {
-  template<typename A> bool Pre(const A &) { return true; }
-  template<typename A> void Post(const A &) {
+  template <typename A> bool Pre(const A &) { return true; }
+  template <typename A> void Post(const A &) {
     ++objects;
     bytes += sizeof(A);
   }
@@ -58,8 +61,9 @@ struct MeasurementVisitor {
 void MeasureParseTree(const Fortran::parser::Program &program) {
   MeasurementVisitor visitor;
   Fortran::parser::Walk(program, visitor);
-  std::cout << "Parse tree comprises " << visitor.objects
-            << " objects and occupies " << visitor.bytes << " total bytes.\n";
+  llvm::outs() << "Parse tree comprises " << visitor.objects
+               << " objects and occupies " << visitor.bytes
+               << " total bytes.\n";
 }
 
 std::vector<std::string> filesToDelete;
@@ -78,15 +82,15 @@ struct GetDefinitionArgs {
 
 struct DriverOptions {
   DriverOptions() {}
-  bool verbose{false};  // -v
-  bool compileOnly{false};  // -c
-  std::string outputPath;  // -o path
-  std::vector<std::string> searchDirectories{"."s};  // -I dir
-  std::string moduleDirectory{"."s};  // -module dir
-  std::string moduleFileSuffix{".mod"};  // -moduleSuffix suff
-  bool forcedForm{false};  // -Mfixed or -Mfree appeared
-  bool warnOnNonstandardUsage{false};  // -Mstandard
-  bool warningsAreErrors{false};  // -Werror
+  bool verbose{false}; // -v
+  bool compileOnly{false}; // -c
+  std::string outputPath; // -o path
+  std::vector<std::string> searchDirectories{"."s}; // -I dir
+  std::string moduleDirectory{"."s}; // -module dir
+  std::string moduleFileSuffix{".mod"}; // -moduleSuffix suff
+  bool forcedForm{false}; // -Mfixed or -Mfree appeared
+  bool warnOnNonstandardUsage{false}; // -Mstandard
+  bool warningsAreErrors{false}; // -Werror
   Fortran::parser::Encoding encoding{Fortran::parser::Encoding::UTF_8};
   bool parseOnly{false};
   bool dumpProvenance{false};
@@ -94,9 +98,11 @@ struct DriverOptions {
   bool dumpUnparse{false};
   bool dumpUnparseWithSymbols{false};
   bool dumpParseTree{false};
+  bool dumpPreFirTree{false};
   bool dumpSymbols{false};
   bool debugResolveNames{false};
-  bool debugSemantics{false};
+  bool debugNoSemantics{false};
+  bool debugModuleWriter{false};
   bool measureTree{false};
   bool unparseTypedExprsToPGF90{false};
   std::vector<std::string> pgf90Args;
@@ -109,7 +115,7 @@ struct DriverOptions {
 
 bool ParentProcess() {
   if (fork() == 0) {
-    return false;  // in child process
+    return false; // in child process
   }
   int childStat{0};
   wait(&childStat);
@@ -122,14 +128,14 @@ bool ParentProcess() {
 void Exec(std::vector<char *> &argv, bool verbose = false) {
   if (verbose) {
     for (size_t j{0}; j < argv.size(); ++j) {
-      std::cerr << (j > 0 ? " " : "") << argv[j];
+      llvm::errs() << (j > 0 ? " " : "") << argv[j];
     }
-    std::cerr << '\n';
+    llvm::errs() << '\n';
   }
   argv.push_back(nullptr);
   execvp(argv[0], &argv[0]);
-  std::cerr << "execvp(" << argv[0] << ") failed: " << std::strerror(errno)
-            << '\n';
+  llvm::errs() << "execvp(" << argv[0]
+               << ") failed: " << llvm::sys::StrError(errno) << '\n';
   exit(EXIT_FAILURE);
 }
 
@@ -167,17 +173,22 @@ std::string RelocatableName(const DriverOptions &driver, std::string path) {
 int exitStatus{EXIT_SUCCESS};
 
 static Fortran::parser::AnalyzedObjectsAsFortran asFortran{
-    [](std::ostream &o, const Fortran::evaluate::GenericExprWrapper &x) {
+    [](llvm::raw_ostream &o, const Fortran::evaluate::GenericExprWrapper &x) {
       if (x.v) {
         x.v->AsFortran(o);
       } else {
         o << "(bad expression)";
       }
     },
-    [](std::ostream &o, const Fortran::evaluate::GenericAssignmentWrapper &x) {
-      x.v.AsFortran(o);
+    [](llvm::raw_ostream &o,
+        const Fortran::evaluate::GenericAssignmentWrapper &x) {
+      if (x.v) {
+        x.v->AsFortran(o);
+      } else {
+        o << "(bad assignment)";
+      }
     },
-    [](std::ostream &o, const Fortran::evaluate::ProcedureRef &x) {
+    [](llvm::raw_ostream &o, const Fortran::evaluate::ProcedureRef &x) {
       x.AsFortran(o << "CALL ");
     },
 };
@@ -206,37 +217,37 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   parsing.Prescan(path, options);
   if (!parsing.messages().empty() &&
       (driver.warningsAreErrors || parsing.messages().AnyFatalError())) {
-    std::cerr << driver.prefix << "could not scan " << path << '\n';
-    parsing.messages().Emit(std::cerr, parsing.cooked());
+    llvm::errs() << driver.prefix << "could not scan " << path << '\n';
+    parsing.messages().Emit(llvm::errs(), parsing.cooked());
     exitStatus = EXIT_FAILURE;
     return {};
   }
   if (driver.dumpProvenance) {
-    parsing.DumpProvenance(std::cout);
+    parsing.DumpProvenance(llvm::outs());
     return {};
   }
   if (driver.dumpCookedChars) {
-    parsing.messages().Emit(std::cerr, parsing.cooked());
-    parsing.DumpCookedChars(std::cout);
+    parsing.messages().Emit(llvm::errs(), parsing.cooked());
+    parsing.DumpCookedChars(llvm::outs());
     return {};
   }
-  parsing.Parse(&std::cout);
+  parsing.Parse(llvm::outs());
   if (options.instrumentedParse) {
-    parsing.DumpParsingLog(std::cout);
+    parsing.DumpParsingLog(llvm::outs());
     return {};
   }
   parsing.ClearLog();
-  parsing.messages().Emit(std::cerr, parsing.cooked());
+  parsing.messages().Emit(llvm::errs(), parsing.cooked());
   if (!parsing.consumedWholeFile()) {
-    parsing.EmitMessage(
-        std::cerr, parsing.finalRestingPlace(), "parser FAIL (final position)");
+    parsing.EmitMessage(llvm::errs(), parsing.finalRestingPlace(),
+        "parser FAIL (final position)");
     exitStatus = EXIT_FAILURE;
     return {};
   }
   if ((!parsing.messages().empty() &&
           (driver.warningsAreErrors || parsing.messages().AnyFatalError())) ||
       !parsing.parseTree()) {
-    std::cerr << driver.prefix << "could not parse " << path << '\n';
+    llvm::errs() << driver.prefix << "could not parse " << path << '\n';
     exitStatus = EXIT_FAILURE;
     return {};
   }
@@ -244,32 +255,31 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   if (driver.measureTree) {
     MeasureParseTree(parseTree);
   }
-  // TODO: Change this predicate to just "if (!driver.debugNoSemantics)"
-  if (driver.debugSemantics || driver.debugResolveNames || driver.dumpSymbols ||
-      driver.dumpUnparseWithSymbols || driver.getDefinition ||
-      driver.getSymbolsSources || driver.externalBuilder) {
-    Fortran::semantics::Semantics semantics{
-        semanticsContext, parseTree, parsing.cooked()};
+  if (!driver.debugNoSemantics || driver.debugResolveNames ||
+      driver.dumpSymbols || driver.dumpUnparseWithSymbols ||
+      driver.getDefinition || driver.getSymbolsSources || driver.externalBuilder) {
+    Fortran::semantics::Semantics semantics{semanticsContext, parseTree,
+        parsing.cooked(), driver.debugModuleWriter};
     semantics.Perform();
-    semantics.EmitMessages(std::cerr);
+    semantics.EmitMessages(llvm::errs());
     if (driver.dumpSymbols) {
-      semantics.DumpSymbols(std::cout);
+      semantics.DumpSymbols(llvm::outs());
     }
     if (semantics.AnyFatalError()) {
-      std::cerr << driver.prefix << "semantic errors in " << path << '\n';
+      llvm::errs() << driver.prefix << "semantic errors in " << path << '\n';
       exitStatus = EXIT_FAILURE;
       if (driver.dumpParseTree) {
-        Fortran::parser::DumpTree(std::cout, parseTree, &asFortran);
+        Fortran::parser::DumpTree(llvm::outs(), parseTree, &asFortran);
       }
       return {};
     }
     if (driver.dumpUnparseWithSymbols) {
       Fortran::semantics::UnparseWithSymbols(
-          std::cout, parseTree, driver.encoding);
+          llvm::outs(), parseTree, driver.encoding);
       return {};
     }
     if (driver.getSymbolsSources) {
-      semantics.DumpSymbolsSources(std::cout);
+      semantics.DumpSymbolsSources(llvm::outs());
       return {};
     }
     if (driver.getDefinition) {
@@ -277,23 +287,23 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
               driver.getDefinitionArgs.line,
               driver.getDefinitionArgs.startColumn,
               driver.getDefinitionArgs.endColumn)}) {
-        std::cerr << "String range: >" << cb->ToString() << "<\n";
+        llvm::errs() << "String range: >" << cb->ToString() << "<\n";
         if (auto symbol{semanticsContext.FindScope(*cb).FindSymbol(*cb)}) {
-          std::cerr << "Found symbol name: " << symbol->name().ToString()
-                    << "\n";
+          llvm::errs() << "Found symbol name: " << symbol->name().ToString()
+                       << "\n";
           if (auto sourceInfo{
                   parsing.cooked().GetSourcePositionRange(symbol->name())}) {
-            std::cout << symbol->name().ToString() << ": "
-                      << sourceInfo->first.file.path() << ", "
-                      << sourceInfo->first.line << ", "
-                      << sourceInfo->first.column << "-"
-                      << sourceInfo->second.column << "\n";
+            llvm::outs() << symbol->name().ToString() << ": "
+                         << sourceInfo->first.file.path() << ", "
+                         << sourceInfo->first.line << ", "
+                         << sourceInfo->first.column << "-"
+                         << sourceInfo->second.column << "\n";
             exitStatus = EXIT_SUCCESS;
             return {};
           }
         }
       }
-      std::cerr << "Symbol not found.\n";
+      llvm::errs() << "Symbol not found.\n";
       exitStatus = EXIT_FAILURE;
       return {};
     }
@@ -303,15 +313,23 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     }
   }
   if (driver.dumpParseTree) {
-    Fortran::parser::DumpTree(std::cout, parseTree, &asFortran);
+    Fortran::parser::DumpTree(llvm::outs(), parseTree, &asFortran);
   }
   if (driver.dumpUnparse) {
-    std::cout << "--> will call Unparse \n";
-    Unparse(std::cout, parseTree, driver.encoding, true /*capitalize*/,
+    Unparse(llvm::outs(), parseTree, driver.encoding, true /*capitalize*/,
         options.features.IsEnabled(
             Fortran::common::LanguageFeature::BackslashEscapes),
         nullptr /* action before each statement */, &asFortran);
     return {};
+  }
+  if (driver.dumpPreFirTree) {
+    if (auto ast{Fortran::lower::createPFT(parseTree)}) {
+      Fortran::lower::annotateControl(*ast);
+      Fortran::lower::dumpPFT(llvm::outs(), *ast);
+    } else {
+      llvm::errs() << "Pre FIR Tree is NULL.\n";
+      exitStatus = EXIT_FAILURE;
+    }
   }
   if (driver.parseOnly) {
     return {};
@@ -323,15 +341,17 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   std::snprintf(tmpSourcePath, sizeof tmpSourcePath, "/tmp/f18-%lx.f90",
       static_cast<unsigned long>(getpid()));
   {
-    std::ofstream tmpSource;
-    tmpSource.open(tmpSourcePath);
-    Fortran::evaluate::formatForPGF90 = true;
+    std::error_code EC;
+    llvm::raw_fd_ostream tmpSource(tmpSourcePath, EC, llvm::sys::fs::F_None);
+    if (EC) {
+      llvm::errs() << EC.message() << "\n";
+      std::exit(EXIT_FAILURE);
+    }
     Unparse(tmpSource, parseTree, driver.encoding, true /*capitalize*/,
         options.features.IsEnabled(
             Fortran::common::LanguageFeature::BackslashEscapes),
         nullptr /* action before each statement */,
         driver.unparseTypedExprsToPGF90 ? &asFortran : nullptr);
-    Fortran::evaluate::formatForPGF90 = false;
   }
 
   if (ParentProcess()) {
@@ -483,17 +503,21 @@ int flang_external_builder_main(int argc, char *const argv[])
       options.needProvenanceRangeToCharBlockMappings = true;
     } else if (arg == "-fdebug-dump-parse-tree") {
       driver.dumpParseTree = true;
+    } else if (arg == "-fdebug-pre-fir-tree") {
+      driver.dumpPreFirTree = true;
     } else if (arg == "-fdebug-dump-symbols") {
       driver.dumpSymbols = true;
     } else if (arg == "-fdebug-resolve-names") {
       driver.debugResolveNames = true;
+    } else if (arg == "-fdebug-module-writer") {
+      driver.debugModuleWriter = true;
     } else if (arg == "-fdebug-measure-parse-tree") {
       driver.measureTree = true;
     } else if (arg == "-fdebug-instrumented-parse") {
       options.instrumentedParse = true;
     } else if (arg == "-fdebug-semantics") {
-      // TODO: Enable by default once basic tests pass
-      driver.debugSemantics = true;
+    } else if (arg == "-fdebug-no-semantics") {
+      driver.debugNoSemantics = true;
     } else if (arg == "-funparse") {
       driver.dumpUnparse = true;
     } else if (arg == "-funparse-with-symbols") {
@@ -525,10 +549,13 @@ int flang_external_builder_main(int argc, char *const argv[])
     } else if (arg == "-i8" || arg == "-fdefault-integer-8") {
       defaultKinds.set_defaultIntegerKind(8);
       defaultKinds.set_subscriptIntegerKind(8);
+      defaultKinds.set_sizeIntegerKind(8);
     } else if (arg == "-Mlargearray") {
-      defaultKinds.set_subscriptIntegerKind(8);
     } else if (arg == "-Mnolargearray") {
-      defaultKinds.set_subscriptIntegerKind(4);
+    } else if (arg == "-flarge-sizes") {
+      defaultKinds.set_sizeIntegerKind(8);
+    } else if (arg == "-fno-large-sizes") {
+      defaultKinds.set_sizeIntegerKind(4);
     } else if (arg == "-module") {
       driver.moduleDirectory = args.front();
       args.pop_front();
@@ -550,13 +577,13 @@ int flang_external_builder_main(int argc, char *const argv[])
       int arguments[3];
       for (int i = 0; i < 3; i++) {
         if (args.empty()) {
-          std::cerr << "Must provide 3 arguments for -fget-definitions.\n";
+          llvm::errs() << "Must provide 3 arguments for -fget-definitions.\n";
           return EXIT_FAILURE;
         }
         arguments[i] = std::strtol(args.front().c_str(), &endptr, 10);
         if (*endptr != '\0') {
-          std::cerr << "Invalid argument to -fget-definitions: " << args.front()
-                    << '\n';
+          llvm::errs() << "Invalid argument to -fget-definitions: "
+                       << args.front() << '\n';
           return EXIT_FAILURE;
         }
         args.pop_front();
@@ -565,7 +592,7 @@ int flang_external_builder_main(int argc, char *const argv[])
     } else if (arg == "-fget-symbols-sources") {
       driver.getSymbolsSources = true;
     } else if (arg == "-help" || arg == "--help" || arg == "-?") {
-      std::cerr
+      llvm::errs()
           << "f18 options:\n"
           << "  -Mfixed | -Mfree     force the source form\n"
           << "  -Mextend             132-column fixed form\n"
@@ -592,7 +619,7 @@ int flang_external_builder_main(int argc, char *const argv[])
           << "  -fdebug-dump-symbols\n"
           << "  -fdebug-resolve-names\n"
           << "  -fdebug-instrumented-parse\n"
-          << "  -fdebug-semantics    perform semantic checks\n"
+          << "  -fdebug-no-semantics  disable semantic checks\n"
           << "  -fget-definition\n"
           << "  -fget-symbols-sources\n"
           << "  -fexternal-builder   perform external builder functionality\n"
@@ -601,7 +628,7 @@ int flang_external_builder_main(int argc, char *const argv[])
           << "Other options are passed through to the compiler.\n";
       return exitStatus;
     } else if (arg == "-V") {
-      std::cerr << "\nf18 compiler (under development)\n";
+      llvm::errs() << "\nf18 compiler (under development)\n";
       return exitStatus;
     } else {
       driver.pgf90Args.push_back(arg);
@@ -627,7 +654,7 @@ int flang_external_builder_main(int argc, char *const argv[])
     if (!options.features.IsEnabled(
             Fortran::common::LanguageFeature::BackslashEscapes)) {
       driver.pgf90Args.push_back(
-          "-Mbackslash");  // yes, this *disables* them in pgf90
+          "-Mbackslash"); // yes, this *disables* them in pgf90
     }
     Fortran::parser::useHexadecimalEscapeSequences = false;
   } else {
