@@ -91,7 +91,10 @@ main(int argc, char *argv[]) {
     MemoryMap::Ptr map = createInput(settings);
 
     // Obtain a disassembler
-    Disassembler *disassembler = Disassembler::lookup(settings.isa);
+    Disassembler *disassembler = NULL;
+    try {
+        disassembler = Disassembler::lookup(settings.isa);
+    } catch (...) {};
     if (!disassembler) {
         if (settings.isa == "list")
             exit(0);
