@@ -33,6 +33,21 @@
 ########################################################################################################################
 
 cmake_minimum_required(VERSION 2.8)
+
+#-----------------------------------------------------------------------------------------------------------------------
+# Enable ccache if not already enabled by symlink masquerading and if no other compiler launchers are already defined
+#-----------------------------------------------------------------------------------------------------------------------
+find_program(CCACHE_EXECUTABLE ccache)
+mark_as_advanced(CCACHE_EXECUTABLE)
+if(CCACHE_EXECUTABLE)
+  foreach(LANG C CXX)
+    if(NOT DEFINED CMAKE_${LANG}_COMPILER_LAUNCHER AND NOT CMAKE_${LANG}_COMPILER MATCHES ".*/ccache")
+      message(STATUS "Enabling ccache for ${LANG}")
+      set(CMAKE_${LANG}_COMPILER_LAUNCHER ${CCACHE_EXECUTABLE} CACHE STRING "")
+    endif()
+  endforeach()
+endif()
+
 project(ROSE CXX C)
 
 # CMake 2.8.12 and newer has support for using @rpath in a target’s install name. This was enabled by setting the target
@@ -351,7 +366,7 @@ if(enable-java)
   else()
     message(FATAL_ERROR "Java location cannot be explicit (-DJAVA_ROOT=...)")
   endif()
-  
+
   include(FindJava)
   find_program(GCJ gcj)
   find_program(GCJH gcjh)
@@ -477,15 +492,15 @@ if(NOT have_EDG_source)
     if(NOT WIN32)
       message(STATUS "EDG - downloaindg EDG-${EDG_VERSION} binary tar file")
       if(EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG.tar.gz")
-	execute_process(COMMAND "tar" "-zxvf" "-C" "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG")
+        execute_process(COMMAND "tar" "-zxvf" "-C" "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG")
       else()
-	# no need to display this message after the file has been downloaded
-	if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
-	  message(WARNING
-	    "At build time, CMake will attempt to download a required library tarball.\n"
-	    "Please note that EDG binary tarballs are available for only certain configurations.")
-	endif()
-	include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
+        # no need to display this message after the file has been downloaded
+        if(NOT EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs")
+          message(WARNING
+            "At build time, CMake will attempt to download a required library tarball.\n"
+            "Please note that EDG binary tarballs are available for only certain configurations.")
+        endif()
+        include(${PROJECT_SOURCE_DIR}/cmake/DownloadEDG.cmake)
       endif()
     endif()
   endif()
