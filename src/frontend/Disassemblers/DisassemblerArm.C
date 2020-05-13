@@ -122,12 +122,14 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
         ASSERT_not_implemented("ARM (32-bit) disassembler is not implemented");
     } else if (Architecture::ARCH_ARM64 == arch_) {
         const cs_arm64 &detail = r.csi->detail->arm64;
+#if 0 // DEBGUGGING: show the disassembly string from capstone itself
         std::cerr <<"ROBB: capstone disassembly:"
                   <<" " <<StringUtility::toHex2(bytes[0], 8, false, false)
                   <<" " <<StringUtility::toHex2(bytes[1], 8, false, false)
                   <<" " <<StringUtility::toHex2(bytes[2], 8, false, false)
                   <<" " <<StringUtility::toHex2(bytes[3], 8, false, false)
                   <<": " <<r.csi->mnemonic <<" " <<r.csi->op_str <<"\n";
+#endif
         auto operands = new SgAsmOperandList;
         for (uint8_t i = 0; i < detail.op_count; ++i) {
             auto operand = makeOperand(detail.operands[i]);
