@@ -21,6 +21,9 @@ endif
 # Added support for using flang/F18 for parsing for Fortran [Rasmussen 08/14/2019]
 # Don't build both of these
 if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
+if ROSE_BUILD_ATERM_SUPPORT_FALSE
+   SUBDIRS += Experimental_General_Language_Support
+endif
    SUBDIRS += Experimental_Flang_ROSE_Connection
 endif
 
