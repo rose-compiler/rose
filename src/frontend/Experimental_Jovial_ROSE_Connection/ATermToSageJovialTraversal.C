@@ -7440,7 +7440,9 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
       compool_name = compool_name.substr(1,len-2);
    }
 
-   sage_tree_builder.Enter(directive_stmt, compool_name, SgJovialDirectiveStatement::e_compool);
+   sage_tree_builder.Enter(directive_stmt, compool_name, /*is_compool*/true);
+   directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_compool);
+
    sage_tree_builder.Leave(directive_stmt);
 
    return ATtrue;
@@ -7462,7 +7464,9 @@ ATbool ATermToSageJovialTraversal::traverse_ReducibleDirective(ATerm term)
    }
    else return ATfalse;
 
-   sage_tree_builder.Enter(directive_stmt, std::string(""), SgJovialDirectiveStatement::e_reducible);
+   sage_tree_builder.Enter(directive_stmt, std::string(""));
+   directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_reducible);
+
    sage_tree_builder.Leave(directive_stmt);
 
    return ATtrue;
@@ -7484,7 +7488,9 @@ ATbool ATermToSageJovialTraversal::traverse_OrderDirective(ATerm term)
    }
    else return ATfalse;
 
-   sage_tree_builder.Enter(directive_stmt, std::string(""), SgJovialDirectiveStatement::e_order);
+   sage_tree_builder.Enter(directive_stmt, std::string(""));
+   directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_order);
+
    sage_tree_builder.Leave(directive_stmt);
 
    return ATtrue;

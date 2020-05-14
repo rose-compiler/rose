@@ -23,10 +23,10 @@ $Interpreter ||= "/usr/bin/perl";
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
 $mkinstaller_ver_build = "1";
-$mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.6.1";
-$mkinstaller_ver_time  = " 1May2020,03:15:07z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.1 -  1May2020,03:15:07z";
+$mkinstaller_ver_patch = "1";
+$mkinstaller_ver_name  = "2.6.1.1";
+$mkinstaller_ver_time  = " 6May2020,19:58:56z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.1.1 -  6May2020,19:58:56z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
@@ -13068,9 +13068,9 @@ EOF64
          |      echo "$scriptName:" >&2
          |      echo "$scriptName:    You can use echo to quickly determine which shell is in use:" >&2
          |      echo "$scriptName:" >&2
-         |      echo "$scriptName:       circus: echo \\\$0" >&2
+         |      echo "$scriptName:       bigtop: echo \\\$0" >&2
          |      echo "$scriptName:       csh" >&2
-         |      echo "$scriptName:       circus:" >&2
+         |      echo "$scriptName:       bigtop:" >&2
          |      echo "$scriptName:" >&2
          |      echo "$scriptName:    The above echo command should produce one of: bash, csh, sh" >&2
          |      echo "$scriptName:    or tcsh. On some systems it may be shown with a leading dash." >&2
@@ -24271,11 +24271,11 @@ EOF1
    |          The default use of the generated installer will produce a new
    |          directory on the user's desktop.
    |
-   |             circus> installer.exe
+   |             bigtop> installer.exe
    |
    |          A different prefix may be specified using the /D option:
    |
-   |             circus> installer.exe /D=E:\\opt\\banana
+   |             bigtop> installer.exe /D=E:\\opt\\banana
    |
    |          Note that the prefix directory will be creates as necessary
    |          however the uninstaller will only (recursively delete) the
@@ -24285,7 +24285,7 @@ EOF1
    |
    |       Note that the generated installer will pop-up a progress bar dialog
    |       box to indicate the installation progress. The above examples were
-   |       run by bozo on circus.other.net
+   |       run by bozo on bigtop.highwire.net
    |
    |AUTHOR
    |    Jim Reus (jim.reus\@gmail.com)
@@ -25547,11 +25547,11 @@ EOF1
    |               The default use of the generated installer will produce a new
    |               directory on the user's desktop.
    |               <blockquote>
-   |                  circus> <b><big><code>installer.exe</code></big></b>
+   |                  bigtop> <b><big><code>installer.exe</code></big></b>
    |               </blockquote>
    |               A different prefix may be specified using the <b><big><code>/D</code></big></b> option:
    |               <blockquote>
-   |                  circus> <b><big><code>installer.exe /D=E:\\opt\\banana</code></big></b>
+   |                  bigtop> <b><big><code>installer.exe /D=E:\\opt\\banana</code></big></b>
    |               </blockquote>
    |               Note that the prefix directory will be creates as necessary
    |               however the uninstaller will only (recursively) delete the
@@ -25562,7 +25562,7 @@ EOF1
    |            <blockquote>
    |               Note that the generated installer will pop-up a progress bar dialog
    |               box to indicate the installation progress. The above examples were
-   |               run by bozo on circus.other.net
+   |               run by bozo on bigtop.highwire.net
    |            </blockquote>
    |         </blockquote>
    |      </blockquote>

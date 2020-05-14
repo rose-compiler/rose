@@ -77,7 +77,7 @@ class VectorIndex {
     std::vector<Value> vector_;
 
 public:
-    VectorIndex(): dflt_() {} // Needed apparently for LLVM-9.0.0 C++11, although I could not reproduce the error.
+    VectorIndex() {}
 
     void clear() {
         vector_.clear(0);

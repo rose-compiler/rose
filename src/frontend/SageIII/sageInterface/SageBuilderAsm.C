@@ -625,6 +625,21 @@ buildLslExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) 
     return a;
 }
 
+SgAsmBinaryMsl*
+buildMslExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
+    SgAsmBinaryMsl *a = new SgAsmBinaryMsl(lhs, rhs);
+    lhs->set_parent(a);
+    rhs->set_parent(a);
+    if (type) {
+        a->set_type(type);
+    } else if (lhs->get_type()) {
+        a->set_type(lhs->get_type());
+    } else {
+        a->set_type(rhs->get_type());
+    }
+    return a;
+}
+
 SgAsmBinaryLsr*
 buildLsrExpression(SgAsmExpression *lhs, SgAsmExpression *rhs, SgAsmType *type) {
     SgAsmBinaryLsr *a = new SgAsmBinaryLsr(lhs, rhs);
