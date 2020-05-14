@@ -79,6 +79,8 @@ namespace CodeThorn {
     //! one of the variables was bound to top and branching constructs
     //! are inside the expression.
     list<SingleEvalResultConstInt> evaluateExpression(SgNode* node,EState estate, EvalMode mode=MODE_VALUE);
+    //! uses AbstractValue::getVariableIdMapping()
+    AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr);
     void setVariableIdMapping(VariableIdMappingExtended* variableIdMapping);
     void setSkipUnknownFunctionCalls(bool skip);
     bool getSkipUnknownFunctionCalls();

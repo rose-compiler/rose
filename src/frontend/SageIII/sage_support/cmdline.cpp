@@ -4444,21 +4444,16 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // DQ (28/8/17): Jovial support
      if ( CommandlineProcessing::isOption(argv,"-rose:","(jovial|Jovial)",true) == true )
         {
-          if ( SgProject::get_verbose() >= 0 )
-               printf ("Jovial mode ON \n");
-          set_Jovial_only(true);
+          if ( SgProject::get_verbose() > 0 )
+             std::cout << "Jovial mode ON \n";
           if (get_sourceFileUsesJovialFileExtension() == false)
              {
                printf ("Warning, Non Jovial source file name specificed with explicit -rose:jovial Jovial language option! \n");
                set_Jovial_only(false);
              }
 
-       // DQ (30/8/2017): For Jovial we need to only compile and not link (at least while debugging initial support).
-          printf ("NOTE: For Jovial support disable link step, at least while debugging initial support \n");
-
+          set_Jovial_only(true);
           set_compileOnly(true);
-
-          ROSE_ASSERT(get_compileOnly() == true);
         }
 
   // DQ (28/8/17): Cobol support

@@ -566,7 +566,7 @@ Leave(SgDefaultOptionStmt* default_option_stmt)
 }
 
 SgEnumVal* SageTreeBuilder::
-ReplaceEnumVal(SgEnumType* enum_type, SgName name)
+ReplaceEnumVal(SgEnumType* enum_type, const std::string &name)
 {
    SgEnumDeclaration* enum_decl = isSgEnumDeclaration(enum_type->get_declaration());
    ROSE_ASSERT(enum_decl);
@@ -618,32 +618,30 @@ Leave(SgJovialDefineDeclaration* define_decl)
 }
 
 void SageTreeBuilder::
-Enter(SgJovialDirectiveStatement* &directive, const std::string &directive_string, SgJovialDirectiveStatement::directive_types directive_type)
+Enter(SgJovialDirectiveStatement* &directive, const std::string &directive_string, bool is_compool)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement* &, ...) \n";
 
-   directive = new SgJovialDirectiveStatement(directive_string, directive_type);
+   directive = new SgJovialDirectiveStatement(directive_string, SgJovialDirectiveStatement::e_unknown);
    ROSE_ASSERT(directive);
    SageInterface::setSourcePosition(directive);
 
 // The first nondefining declaration must be set
    directive->set_firstNondefiningDeclaration(directive);
 
-// Do what needs to be done for specific directives
-   switch (directive_type)
+   if (is_compool)
      {
-       case SgJovialDirectiveStatement::e_compool:
-          importModule(directive_string);
-          break;
-       default:
-          break;
+        // Can't use SgJovialDirectiveStatement::e_compool enum as function parameter to SageTreeBuilder
+        // because API can't see Sage nodes until C++17, so set it correctly as it is known here.
+        directive->set_directive_type(SgJovialDirectiveStatement::e_compool);
+        importModule(directive_string);
      }
 }
 
 void SageTreeBuilder::
 Leave(SgJovialDirectiveStatement* directive)
 {
-   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement*) \n";
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialDirectiveStatement*) \n";
 
    ROSE_ASSERT(directive != nullptr);
 
@@ -652,6 +650,9 @@ Leave(SgJovialDirectiveStatement* directive)
        case SgJovialDirectiveStatement::e_compool:
        // A compool directive reads in the compool file and pushes its scope to the scope stack
           SageBuilder::popScopeStack();
+          break;
+       case SgJovialDirectiveStatement::e_unknown:
+          mlog[ERROR] << "SageTreeBuilder::Leave(SgJovialDirectiveStatement*) directive_type is unknown \n";
           break;
        default:
           break;
@@ -846,6 +847,14 @@ importModule(const std::string &module_name)
 
    ModuleBuilderFactory::get_compool_builder().getModule(module_name);
 }
+
+// Temporary wrappers for SageInterface functions (needed until ROSE builds with C++17)
+//
+namespace SageBuilderCpp17 {
+
+   SgType* buildIntType() { return SageBuilder::buildIntType(); }
+
+} // namespace SageBuilderCpp17
 
 } // namespace builder
 } // namespace Rose

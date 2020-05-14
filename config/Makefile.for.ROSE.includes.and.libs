@@ -258,8 +258,8 @@ endif
 
 # Added support for Fortran front-end development using the flang (F18) compiler [Rasmussen 8/12/2019]
 if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
-  ROSE_FLANG_INCLUDES = -I$(FLANG_SOURCE_PATH)/lib/parser
-  ROSE_FLANG_LIBS     = -L$(FLANG_INSTALL_PATH)/lib -lFortranParser -lFortranSemantics -lFortranEvaluate -lFortranCommon -lFortranDecimal
+  ROSE_FLANG_INCLUDES = -I$(FLANG_INSTALL_PATH)/include
+  ROSE_FLANG_LIBS     = -L$(FLANG_INSTALL_PATH)/lib -lLLVMDemangle -lLLVMSupport -lFortranParser -lFortranSemantics -lFortranEvaluate -lFortranCommon -lFortranDecimal -lFortranLower -lncurses
 endif
 
 # DQ (5/9/2017): Adding Ada library support.

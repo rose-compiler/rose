@@ -1434,7 +1434,7 @@ testRandomInput_LDADD = $(ROSE_SEPARATE_LIBS)
 
 testRandomInput_ISAs = amd64 coldfire i386 m68040 mips-be mips-le ppc32
 testRandomInput_Targets = $(addprefix tri_, $(addsuffix .passed, $(testRandomInput_ISAs)))
-TEST_TARGETS += $(testRandomInput_Targets)
+TEST_TARGETS += $(testRandomInput_Targets) tri_a64.passed
 
 $(testRandomInput_Targets): tri_%.passed: testRandomInput conditionalDisable
 	@$(RTH_RUN)							\
@@ -1443,8 +1443,16 @@ $(testRandomInput_Targets): tri_%.passed: testRandomInput conditionalDisable
 		CMD="$$(pwd)/testRandomInput --size=50000 --isa=$*"	\
 		$(TEST_EXIT_STATUS) $@
 
+tri_a64.passed: testRandomInput conditionalDisable isA64Disabled
+	@$(RTH_RUN)							\
+		TITLE="disassemble random $* input [$@]"		\
+		DISABLED="$$(./conditionalDisable)$$(./isA64Disabled)"	\
+		CMD="$$(pwd)/testRandomInput --size=50000 --isa=$*"	\
+		$(TEST_EXIT_STATUS) $@
+
+
 PHONIES += check-random-input
-check-random-input: $(testRandomInput_Targets)
+check-random-input: $(testRandomInput_Targets) tri_a64.passed
 
 #############################################################################################
 # Serialization of IR nodes related to binary analysis

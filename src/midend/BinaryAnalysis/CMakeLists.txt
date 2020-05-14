@@ -1,5 +1,6 @@
-add_library(midend_binary OBJECT
+set(midend_binary_sources
   AbstractLocation.C
+  BinaryAstHash.C
   BinaryBestMapAddress.C
   BinaryCallingConvention.C
   BinaryCodeInserter.C
@@ -73,14 +74,24 @@ add_library(midend_binary OBJECT
   instructionSemantics/SymbolicMemory2.C
   instructionSemantics/SymbolicSemantics2.C
   instructionSemantics/TraceSemantics2.C)
+
+if(SQLITE3_FOUND_LIB)
+  list(APPEND midend_binary_sources
+    libraryIdentification/FunctionIdDatabaseInterface.C
+    #libraryIdentification/functionIdentification.C
+    #libraryIdentification/libraryIdentification_reader.C
+    libraryIdentification/libraryIdentification.C)
+endif()
+
+add_library(midend_binary OBJECT ${midend_binary_sources})
 add_dependencies(midend_binary rosetta_generated)
 
 ########### install files ###############
 
-install(
-  FILES
+set(midend_binary_headers
     AbstractLocation.h
     BinaryAnalysisUtils.h
+    BinaryAstHash.h
     BinaryBestMapAddress.h
     BinaryCallingConvention.h
     BinaryCodeInserter.h
@@ -149,9 +160,15 @@ install(
     instructionSemantics/SymbolicMemory2.h
     instructionSemantics/SymbolicSemantics2.h
     instructionSemantics/TestSemantics2.h
-    instructionSemantics/TraceSemantics2.h
-    libraryIdentification/FunctionIdDatabaseInterface.h  
-    libraryIdentification/FunctionInfo.h  
+    instructionSemantics/TraceSemantics2.h)
+
+if(SQLITE3_FOUND_LIB)
+  list(APPEND midend_binary_headers
+    libraryIdentification/FunctionIdDatabaseInterface.h
+    libraryIdentification/FunctionInfo.h
     libraryIdentification/libraryIdentification.h
-    libraryIdentification/LibraryInfo.h    
-  DESTINATION ${INCLUDE_INSTALL_DIR})
+    libraryIdentification/LibraryInfo.h)
+endif()
+
+install(FILES ${midend_binary_headers} DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES Concolic/ConcolicExecutor.h DESTINATION ${INCLUDE_INSTALL_DIR}/Concolic)

@@ -493,7 +493,7 @@ run $(test) testLazyInitialStates \
 # Test disassembling random input data for various architectures.
 #############################################################################################
 run $(tool_compile_linkexe) testRandomInput.C
-testRandomInput_ISA = amd64 coldfire i386 m68040 mips-be mips-le ppc32
+testRandomInput_ISA = a64 amd64 coldfire i386 m68040 mips-be mips-le ppc32
 
 run for isa in $(testRandomInput_ISA); do \
         $(test) testRandomInput -o ${isa} ./testRandomInput --size=50000 --isa=${isa}; \

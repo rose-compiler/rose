@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-FLANG_INCLUDES = -I$(FLANG_SOURCE_PATH)/lib/parser
+FLANG_INCLUDES = -I$(FLANG_INSTALL_PATH)/include
 
 # NOTE: This doesn't work because CXXFLAGS comes after AM_CXXFLAGS.  Usage of CXXFLAGS in ROSE
 # should be changed to AM_CXXFLAGS so that user's CXXFLAGS can be changed without affecting entire project Makefiles!

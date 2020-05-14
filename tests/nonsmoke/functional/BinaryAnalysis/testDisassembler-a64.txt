@@ -311,9 +311,6 @@
 # bfxil w2, w1, #0, #1
 0x22 0x00 0x00 0x33
 
-# ubfx w2, w1, #0, #1
-0x22 0x00 0x00 0x53
-
 # prfum plil2keep, [x13, #0xf4]
 # This seems to be disassembled incorrecty by Capstone as far as I can
 # tell. The returned instruction has only one operand, although
@@ -329,3 +326,11 @@
 # s3_0_c15_c12_5 instead of s2_0_c15_c12_5.
 0xb7 0xfc 0x30 0xd5
 
+# msr s3_2_c3_c8_1, x21
+0x35 0x38 0x1a 0xd5
+
+# ubfx w2, w1, #0, #1
+0x22 0x00 0x00 0x53
+
+# sys #6, c10, c1, #1, x13
+0x2d 0xa1 0x0e 0xd5

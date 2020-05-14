@@ -57,6 +57,7 @@ DisassemblerArm::init() {
         name += "_microprocessor"; // apparently the "microprocessor profile for Cortex processors"
     if (modes_.isSet(Mode::MODE_V8))
         name += "_a32"; // capstone: "ARMv8 A32 encodings for ARM"
+    this->name(name);
 
     // Architecture independent ROSE disassembler properties
     REG_IP = registerDictionary()->findOrThrow("pc");
@@ -121,7 +122,12 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
         ASSERT_not_implemented("ARM (32-bit) disassembler is not implemented");
     } else if (Architecture::ARCH_ARM64 == arch_) {
         const cs_arm64 &detail = r.csi->detail->arm64;
-        std::cerr <<"ROBB: capstone disassembly: " <<r.csi->mnemonic <<" " <<r.csi->op_str <<"\n";
+        std::cerr <<"ROBB: capstone disassembly:"
+                  <<" " <<StringUtility::toHex2(bytes[0], 8, false, false)
+                  <<" " <<StringUtility::toHex2(bytes[1], 8, false, false)
+                  <<" " <<StringUtility::toHex2(bytes[2], 8, false, false)
+                  <<" " <<StringUtility::toHex2(bytes[3], 8, false, false)
+                  <<": " <<r.csi->mnemonic <<" " <<r.csi->op_str <<"\n";
         auto operands = new SgAsmOperandList;
         for (uint8_t i = 0; i < detail.op_count; ++i) {
             auto operand = makeOperand(detail.operands[i]);
@@ -131,6 +137,7 @@ DisassemblerArm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addre
         auto insn = new SgAsmArm64Instruction(va, r.csi->mnemonic, (Arm64InstructionKind)r.csi->id, detail.cc);
         insn->set_raw_bytes(SgUnsignedCharList(r.csi->bytes+0, r.csi->bytes+r.csi->size));
         insn->set_operandList(operands);
+        insn->set_condition(detail.cc);
         operands->set_parent(insn);
         retval = insn;
     } else {
@@ -199,8 +206,9 @@ DisassemblerArm::makeOperand(const cs_arm64_op &op) {
                         case ARM64_SFT_LSL:
                             addr = SageBuilderAsm::buildLslExpression(addr, disp, u64);
                             break;
-                        case ARM64_SFT_MSL:
-                            ASSERT_not_implemented("not sure what MSL means");
+                        case ARM64_SFT_MSL: // Same as LSL but filling low bits with ones
+                            addr = SageBuilderAsm::buildMslExpression(addr, disp, u64);
+                            break;
                         case ARM64_SFT_LSR:
                             addr = SageBuilderAsm::buildLsrExpression(addr, disp, u64);
                             break;
@@ -227,16 +235,16 @@ DisassemblerArm::makeOperand(const cs_arm64_op &op) {
         }
 
         case ARM64_OP_FP:       // floating-point operand
+            retval = SageBuilderAsm::buildValueFloat(op.fp, SageBuilderAsm::buildIeee754Binary64());
             break;
 
         case ARM64_OP_CIMM:     // C-immediate
+            retval = new SgAsmArm64CImmediateOperand(op.sys);
             break;
 
         case ARM64_OP_REG_MRS:  // MRS register operand
-            retval = new SgAsmArm64MrsOperand(op.reg);
-            break;
-
         case ARM64_OP_REG_MSR:  // MSR register operand
+            retval = new SgAsmArm64SysMoveOperand(op.reg);
             break;
 
         case ARM64_OP_PSTATE:   // PState operand
@@ -325,7 +333,8 @@ DisassemblerArm::extendOperand(SgAsmExpression *expr, arm64_extender extender, S
                 expr = SageBuilderAsm::buildLslExpression(expr, amount);
                 break;
             case ARM64_SFT_MSL:
-                ASSERT_not_implemented("MSL shifting not implemented yet");
+                expr = SageBuilderAsm::buildMslExpression(expr, amount);
+                break;
             case ARM64_SFT_LSR:
                 expr = SageBuilderAsm::buildLsrExpression(expr, amount);
                 break;

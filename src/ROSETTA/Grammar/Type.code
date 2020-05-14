@@ -1044,6 +1044,11 @@ HEADER_ADA_SUBTYPE_START
 
 HEADER_ADA_SUBTYPE_END
 
+HEADER_ADA_TASK_TYPE_START
+          //~ SgName get_name() const;
+HEADER_ADA_TASK_TYPE_END
+
+
 HEADER_ADA_FLOAT_TYPE_START
 
           SgName get_name() const;
@@ -6695,6 +6700,19 @@ SgAdaAccessType::get_mangled(void) const {
      
 SOURCE_ADA_ACCESS_TYPE_END
 
+SOURCE_ADA_TASK_TYPE_START
+
+SgName
+SgAdaTaskType::get_mangled(void) const {
+    string name("t'");
+    
+    name.append(get_decl()->get_task_name());
+    return SgName(name);
+}
+     
+SOURCE_ADA_TASK_TYPE_END
+
+
 SOURCE_ADA_SUBTYPE_START
 
 SgName
@@ -8722,6 +8740,28 @@ SgAdaAccessType::createType (SgType* base_type, SgExpression* /*optional_fortran
 }
 
 SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE_END
+
+SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE_START
+
+SgAdaTaskType*
+SgAdaTaskType::createType (SgDeclarationStatement* decl, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgAdaTaskType    proto(decl); // \pp not sure if stack allocation works
+  SgName           name = proto.get_mangled();
+  SgType*          ty   = get_globalTypeTable()->lookup_type(name);
+  
+  if (SgAdaTaskType* unified = isSgAdaTaskType(ty))
+    return unified;
+   
+  ROSE_ASSERT(ty == NULL); 
+  SgAdaTaskType* res = new SgAdaTaskType(decl);
+  
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+
+SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE_END
+
 
 SOURCE_CREATE_TYPE_FOR_ADA_SUBTYPE_START
 

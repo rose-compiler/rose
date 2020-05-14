@@ -419,6 +419,12 @@ Grammar::setUpStatements ()
 
   // DQ (6/10/2011): Changed this to be a non-AstNodeClass and added TemplateFunctionDefinition
      NEW_NONTERMINAL_MACRO (FunctionDefinition, TemplateFunctionDefinition, "FunctionDefinition",  "FUNC_DEFN_STMT", true );
+     
+  // PP 05/07/20: Add Ada nodes
+     NEW_TERMINAL_MACRO (AdaTaskSpec,   "AdaTaskSpec",   "ADA_TASK_SPEC"); 
+     NEW_TERMINAL_MACRO (AdaTaskBody,   "AdaTaskBody",   "ADA_TASK_BODY");     
+     NEW_TERMINAL_MACRO (AdaAcceptStmt, "AdaAcceptStmt", "ADA_ACCEPT_STMT" );
+
 
   // Note that the associate statement is really a scope, with its own declarations of variables declared by reference to 
   // other variables or expressions.  They are only l-values if and only if the rhs is a l-value (I think).
@@ -428,18 +434,23 @@ Grammar::setUpStatements ()
           ClassDefinition              | WhileStmt            | DoWhileStmt               | SwitchStatement    | CatchOptionStmt    |
           NamespaceDefinitionStatement | BlockDataStatement   | AssociateStatement        | FortranDo          | ForAllStatement    |
           UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement      | JavaLabelStatement | MatlabForStatement |
-          FunctionParameterScope       | DeclarationScope     | RangeBasedForStatement    | JovialForThenStatement
+          FunctionParameterScope       | DeclarationScope     | RangeBasedForStatement    | JovialForThenStatement | AdaTaskSpec    |
+          AdaTaskBody                  | AdaAcceptStmt
      /* | TemplateInstantiationDefn */ ,
           "ScopeStatement","SCOPE_STMT", false);
 
   // DQ (3/22/2004): Added to support template member functions (removed MemberFunctionDeclaration as AstNodeClass)
   // DQ (12/21/2011): New design...
      NEW_NONTERMINAL_MACRO (MemberFunctionDeclaration, TemplateMemberFunctionDeclaration | TemplateInstantiationMemberFunctionDecl,"MemberFunctionDeclaration","MFUNC_DECL_STMT", true);
+     
+  // PP 08/05/20 Ada Nodes
+     NEW_TERMINAL_MACRO (AdaEntryDecl,            "AdaEntryDecl",            "ADA_ENTRY_DECL_STMT" );
 
   // DQ (3/20/2007): ProgramHeaderStatement and ProcedureHeaderStatement are derived from FunctionDeclaration
   // DQ (12/21/2011): New design...
      NEW_NONTERMINAL_MACRO (FunctionDeclaration,
-          TemplateFunctionDeclaration | MemberFunctionDeclaration | TemplateInstantiationFunctionDecl | ProgramHeaderStatement | ProcedureHeaderStatement | EntryStatement,
+          TemplateFunctionDeclaration | MemberFunctionDeclaration | TemplateInstantiationFunctionDecl | ProgramHeaderStatement | 
+          ProcedureHeaderStatement    | EntryStatement            | AdaEntryDecl,
           "FunctionDeclaration","FUNC_DECL_STMT", true);
 
 #if 0
@@ -509,6 +520,11 @@ Grammar::setUpStatements ()
   // token-based unparsing to work with greater precision. For example, used to add an include directive with 
   // greater precission to the global scope and permit the unparsing via the token stream to be used as well.
      NEW_TERMINAL_MACRO (EmptyDeclaration,"EmptyDeclaration","EMPTY_DECLARATION_STMT" );
+     
+  // PP (05/04/20): Adding Ada scoped declarations (tasks, ...)
+     NEW_TERMINAL_MACRO (AdaTaskSpecDecl,       "AdaTaskSpecDecl", "ADA_TASK_SPEC_DECL_STMT" );
+     NEW_TERMINAL_MACRO (AdaTaskTypeDecl,       "AdaTaskTypeDecl", "ADA_TASK_TYPE_DECL_STMT" );
+     NEW_TERMINAL_MACRO (AdaTaskBodyDecl,       "AdaTaskBodyDecl", "ADA_TASK_BODY_DECL_STMT" );
 
      NEW_NONTERMINAL_MACRO (DeclarationStatement,
           FunctionParameterList                   | VariableDeclaration       | VariableDefinition           |
@@ -525,7 +541,8 @@ Grammar::setUpStatements ()
           JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement     |
           StaticAssertionDeclaration              | OmpDeclareSimdStatement   | MicrosoftAttributeDeclaration|
           JovialCompoolStatement                  | JovialDirectiveStatement  | JovialDefineDeclaration      |
-          NonrealDecl                             | EmptyDeclaration                 
+          NonrealDecl                             | EmptyDeclaration          | AdaTaskSpecDecl              |
+          AdaTaskBodyDecl                         | AdaTaskTypeDecl
           /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
@@ -546,7 +563,7 @@ Grammar::setUpStatements ()
              AssertStmt                | ExecStatement          | PythonGlobalStmt                | JavaThrowStatement    |
              JavaSynchronizedStatement | AsyncStmt              | FinishStmt                      | AtStmt                |
              AtomicStmt                | WhenStmt               | ImageControlStatement | /* JavaPackageDeclaration | */ 
-             AdaExitStmt               | AdaLoopStmt,
+             AdaExitStmt               | AdaLoopStmt            ,
              "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -2529,7 +2546,7 @@ Grammar::setUpStatements ()
      GotoStatement.setDataPrototype     ( "SgExpression*", "selector_expression", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
                   
-  // ADA begin
+  // Ada begin
   // PP (03/23/20) Ada Exit Stmt
      AdaExitStmt.setFunctionPrototype ( "HEADER_ADA_EXIT_STATEMENT", "../Grammar/Statement.code" );             
      AdaExitStmt.setDataPrototype     ( "SgStatement*", "loop", "= NULL",
@@ -2547,7 +2564,7 @@ Grammar::setUpStatements ()
 
      AdaLoopStmt.setDataPrototype     ( "SgName", "label", "",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // ADA end
+  // Ada end
 
      AsmStmt.setFunctionPrototype  ( "HEADER_ASM_STATEMENT", "../Grammar/Statement.code" );
 
@@ -2942,6 +2959,26 @@ Grammar::setUpStatements ()
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UsingDirectiveStatement.setDataPrototype("bool","global_qualification_required","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                
+  // PP ADA types             
+     AdaTaskSpecDecl.setFunctionPrototype  ( "HEADER_ADA_TASK_SPEC_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaTaskSpecDecl.setDataPrototype ( "SgName", "task_name", "= \"\"",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaTaskSpecDecl.setDataPrototype ( "SgAdaTaskSpec*", "definition", "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);                  
+
+     AdaTaskTypeDecl.setFunctionPrototype  ( "HEADER_ADA_TASK_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaTaskTypeDecl.setDataPrototype ( "SgName", "task_name", "= \"\"",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaTaskTypeDecl.setDataPrototype ( "SgAdaTaskSpec*", "definition", "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);                  
+                                     
+     AdaTaskBodyDecl.setFunctionPrototype  ( "HEADER_ADA_TASK_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaTaskBodyDecl.setDataPrototype ( "SgName", "task_name", "= \"\"",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaTaskBodyDecl.setDataPrototype ( "SgAdaTaskBody*", "definition", "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);                  
+                                     
 
 #if USE_FORTRAN_IR_NODES
      ProgramHeaderStatement.setFunctionPrototype ( "HEADER_PROGRAM_HEADER_STATEMENT", "../Grammar/Statement.code" );
@@ -3228,7 +3265,7 @@ Grammar::setUpStatements ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
      MatlabForStatement.setDataPrototype ( "SgBasicBlock*", "body", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
-     
+
 
   // DQ (3/22/2007): Added new Fortran Nonblocked do loop construct. For example: "do 10 i=... \n 10 a = 1 \n"
      FortranNonblockedDo.setFunctionPrototype ( "HEADER_FORTRAN_NONBLOCKED_DO", "../Grammar/Statement.code" );
@@ -3734,7 +3771,7 @@ Grammar::setUpStatements ()
      JovialDirectiveStatement.setFunctionSource    ( "SOURCE_JOVIAL_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
      JovialDirectiveStatement.setDataPrototype     ( "std::string", "content_string", "= \"\"",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     JovialDirectiveStatement.setDataPrototype     ( "SgJovialDirectiveStatement::directive_types", "directive_type", "= SgJovialDirectiveStatement::e_compool",
+     JovialDirectiveStatement.setDataPrototype     ( "SgJovialDirectiveStatement::directive_types", "directive_type", "= SgJovialDirectiveStatement::e_unknown",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      JovialDefineDeclaration.setFunctionPrototype  ( "HEADER_JOVIAL_DEFINE_DECLARATION", "../Grammar/Statement.code" );
@@ -4053,7 +4090,12 @@ Grammar::setUpStatements ()
 
   // Support for pragmas in the IR
      PragmaDeclaration.setFunctionSource      ( "SOURCE_PRAGMA_STATEMENT", "../Grammar/Statement.code" );
-
+     
+  // Ada support   
+     AdaTaskSpecDecl.setFunctionSource   ( "SOURCE_ADA_TASK_SPEC_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaTaskTypeDecl.setFunctionSource   ( "SOURCE_ADA_TASK_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaTaskBodyDecl.setFunctionSource   ( "SOURCE_ADA_TASK_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
+    
   // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit 
   // token-based unparsing to work with greater precision. For example, used to add an include directive with 
   // greater precision to the global scope and permit the unparsing via the token stream to be used as well.
@@ -4142,6 +4184,10 @@ Grammar::setUpStatements ()
      WithStatement.setFunctionSource            ("SOURCE_WITH_STATEMENT", "../Grammar/Statement.code" );
      WithStatement.setFunctionSource (
           "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+          
+    AdaTaskSpec.setFunctionSource            ( "SOURCE_ADA_TASK_SPEC_STATEMENT", "../Grammar/Statement.code" );
+    AdaTaskBody.setFunctionSource            ( "SOURCE_ADA_TASK_BODY_STATEMENT", "../Grammar/Statement.code" );
+    AdaAcceptStmt.setFunctionSource          ( "SOURCE_ADA_ACCEPT_STATEMENT",    "../Grammar/Statement.code" );
 
 #if USE_FORTRAN_IR_NODES
      ProgramHeaderStatement.setFunctionSource   ("SOURCE_PROGRAM_HEADER_STATEMENT", "../Grammar/Statement.code" );
@@ -4235,6 +4281,40 @@ Grammar::setUpStatements ()
   // Rasmussen (11/12/2018): Added to support Jovial COMPOOL modules
      JovialCompoolStatement.setFunctionSource     ( "SOURCE_JOVIAL_COMPOOL_STATEMENT",  "../Grammar/Statement.code" );
      JovialForThenStatement.setFunctionSource     ( "SOURCE_JOVIAL_FOR_THEN_STATEMENT", "../Grammar/Statement.code" );
+     
+     
+  // PP 05/08/20 Adding Ada nodes
+     AdaTaskSpec.setFunctionPrototype ( "HEADER_ADA_TASK_SPEC_STATEMENT", "../Grammar/Statement.code" );
+     AdaTaskSpec.setDataPrototype ( "SgAdaTaskBodyDecl*", "body", "= NULL",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                    
+     AdaTaskSpec.setDataPrototype ( "SgDeclarationStatementPtrList", "declarations", "",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     
+     
+     AdaTaskBody.setFunctionPrototype ( "HEADER_ADA_TASK_BODY_STATEMENT", "../Grammar/Statement.code" );
+     AdaTaskBody.setDataPrototype ( "SgDeclarationStatement*", "spec", "= NULL",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaAcceptStmt.setFunctionPrototype ( "HEADER_ADA_ACCEPT_STATEMENT", "../Grammar/Statement.code" );
+     AdaAcceptStmt.setDataPrototype ( "SgFunctionParameterScope*", "parameterScope", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaAcceptStmt.setDataPrototype ( "SgFunctionParameterList*", "parameterList", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     AdaAcceptStmt.setDataPrototype ( "SgExpression*", "entry", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaAcceptStmt.setDataPrototype ( "SgExpression*", "index", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaAcceptStmt.setDataPrototype ( "SgStatement*", "body", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaEntryDecl.setFunctionPrototype ( "HEADER_ADA_ENTRY_DECL_STMT", "../Grammar/Statement.code" );
+
+     AdaEntryDecl.setDataPrototype ( "SgType*", "discrete_index_type", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaEntryDecl.setFunctionSource ( "SOURCE_ADA_ENTRY_DECL_STMT", "../Grammar/Statement.code");
+
 
      MatlabForStatement.setFunctionSource         ( "SOURCE_MATLAB_FOR_STATEMENT", "../Grammar/Statement.code" );
 

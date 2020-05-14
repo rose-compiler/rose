@@ -118,6 +118,9 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
     } else if (SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(expr)) {
         comments = state.frontUnparser().emitSignedInteger(out, ive->get_bitVector(), state);
 
+    } else if (SgAsmFloatValueExpression *fp = isSgAsmFloatValueExpression(expr)) {
+        out <<fp->get_nativeValue();
+
     } else if (SgAsmUnaryUnsignedExtend *op = isSgAsmUnaryUnsignedExtend(expr)) {
         out <<"uext(";
         outputExpr(out, op->get_operand(), state);
@@ -156,6 +159,13 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
         outputExpr(out, op->get_lhs(), state);
         out <<" << ";
         outputExpr(out, op->get_rhs(), state);
+
+    } else if (SgAsmBinaryMsl *op = isSgAsmBinaryMsl(expr)) {
+        out <<"msl(";
+        outputExpr(out, op->get_lhs(), state);
+        out <<", ";
+        outputExpr(out, op->get_rhs(), state);
+        out <<")";
 
     } else if (SgAsmArm64AtOperand *op = isSgAsmArm64AtOperand(expr)) {
         switch (op->operation()) {
@@ -223,13 +233,16 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
                 ASSERT_not_reachable("invalid prefetch command");
         }
 
-    } else if (SgAsmArm64MrsOperand *op = isSgAsmArm64MrsOperand(expr)) {
+    } else if (SgAsmArm64SysMoveOperand *op = isSgAsmArm64SysMoveOperand(expr)) {
         unsigned op0 = (op->access() >> 14) & 1;
         unsigned op1 = (op->access() >> 11) & 7;
         unsigned crn = (op->access() >>  7) & 0xf;
         unsigned crm = (op->access() >>  3) & 0xf;
         unsigned op2 = op->access() & 7;
         out <<"s" <<(op0 + 2) <<"_" <<op1 <<"_c" <<crn <<"_c" <<crm <<"_" <<op2;
+
+    } else if (SgAsmArm64CImmediateOperand *op = isSgAsmArm64CImmediateOperand(expr)) {
+        out <<"c" <<op->immediate();
 
     } else {
         ASSERT_not_implemented(expr->class_name());
