@@ -99,7 +99,7 @@ main(int argc, char *argv[]) {
         if (settings.isa == "list")
             exit(0);
         mlog[FATAL] <<"unknown instruction set architecture: " <<settings.isa <<"\n";
-        exit(1);
+        exit(0);
     }
 
     // Obtain an instruction semantics dispatcher if possible.
