@@ -38,6 +38,7 @@ namespace
               << "@" << el.info->get_line() << ":" << el.info->get_col();
   } 
   
+#if 0  
   //
   struct ExcludeTemplates
   {
@@ -49,7 +50,7 @@ namespace
     void handle(SgTemplateTypedefDeclaration&)        {}
     void handle(SgTemplateVariableDeclaration&)       {}
   };
-
+#endif
     
   //
   // constants
@@ -1200,7 +1201,7 @@ namespace
     }
   }
   
-  struct CxxTransformer : ExcludeTemplates
+  struct CxxTransformer // : ExcludeTemplates
   {
       typedef transformation_container container;
       
@@ -1208,8 +1209,6 @@ namespace
       CxxTransformer(container& transformations)
       : cont(transformations)
       {}
-      
-      using ExcludeTemplates::handle;
       
       void handle(SgNode&) {}
       
@@ -1271,6 +1270,13 @@ namespace
     
     for (auto i=ast.begin(); i!=ast.end(); ++i)
     {
+      if (Normalization::isTemplateNode(*i))
+      {
+        ++templateCount;
+        i.skipChildrenOnForward();
+        continue;
+      }  
+        
       sg::dispatch(CxxTransformer(transformations), *i);
     }
     

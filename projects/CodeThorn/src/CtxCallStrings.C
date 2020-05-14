@@ -1,4 +1,3 @@
-
 #include <algorithm>
 
 #include "CtxCallStrings.h"
@@ -109,7 +108,7 @@ namespace
       Label                 label;
   };
 
-
+#if OBSOLETE_CODE
   //! Compares relevant call string segments, relevant(@ref callctx) < @ref returnctx
   //! \param callctx   the call string at the call site
   //! \param returnctx the already shortened string at the return site
@@ -135,12 +134,17 @@ namespace
                                          returnctx.rbegin(), returnctx.rend()
                                        );
   }
+#endif /* OBSOLETE_CODE */
 
   //! extracts the call string from a lattice element and forwards it for comparison.
   //! \note ltProjectedFull is not overloaded to syntactically simplify taking its address
-  bool ltProjectedFull(const FiniteCallString& lhs, const std::pair<const FiniteCallString, Lattice*>& rhs)
+  bool ltProjectedFull(const FiniteCallString& retctx, const std::pair<const FiniteCallString, Lattice*>& callctx)
   {
+#if OBSOLETE_CODE
     return ltProjected(lhs, rhs.first);
+#endif /* OBSOLETE_CODE */
+    
+    return std::lexicographical_compare(retctx.rbegin(), retctx.rend(), callctx.first.rbegin(), callctx.first.rend()-1);
   }
 
   //! clones a lattice element
@@ -162,6 +166,7 @@ namespace
       Lattice&              lattice;
   };
 
+#if OBSOLETE_CODE
   //! true if these string lengths indicate a caller/callee relationship
   //! on FiniteCallString
   bool callerCalleeLengths(size_t caller, size_t callee, size_t MAXLEN)
@@ -172,6 +177,7 @@ namespace
            || ((caller <  MAXLEN) && (callee == caller+1))
            );
   }
+#endif /* OBSOLETE_CODE */
 
   //! tests if this is a prefix to target
   //! \details
@@ -179,28 +185,43 @@ namespace
   //!   whether target could be called from this.
   bool callerCalleePrefix(const FiniteCallString& caller, const FiniteCallString& callee)
   {
-    static const size_t MAX_OVERLAP = FiniteCallString::MAX_CTX_LENGTH-1;
+    //~ static const size_t MAX_OVERLAP = CTX_CALL_STRING_MAX_LENGTH-1;
 
+#if OBSOLETE_CODE
     // if all labels in the common subrange match
     const size_t len     = caller.size();
     const size_t overlap = std::min(len, MAX_OVERLAP);
     const size_t ofs     = len-overlap;
+#endif /* OBSOLETE_CODE */
 
-    ROSE_ASSERT(overlap+1 == callee.size());
+    //~ const size_t overlap = MAX_OVERLAP;
+    const size_t ofs     = 1;
+
+    //~ ROSE_ASSERT(overlap+1 == callee.size());
     return std::equal(caller.begin() + ofs, caller.end(), callee.begin());
   }
 
   struct IsCallerCallee
   {
+#if OBSOLETE_CODE
     bool
     operator()(const std::pair<const FiniteCallString, Lattice*>& callsite)
     {
       const FiniteCallString& caller    = callsite.first;
 
-      bool res1 = callerCalleeLengths(caller.size(), retctx.size(), FiniteCallString::MAX_CTX_LENGTH);
+      bool res1 = callerCalleeLengths(caller.size(), retctx.size(), CTX_CALL_STRING_MAX_LENGTH);
       bool res2 = res1 && callerCalleePrefix(caller, retctx);
 
       return res2;
+    }
+#endif /* OBSOLETE_CODE */
+
+    bool
+    operator()(const std::pair<const FiniteCallString, Lattice*>& callsite)
+    {
+      const FiniteCallString& caller = callsite.first;
+
+      return callerCalleePrefix(caller, retctx);  
     }
 
     FiniteCallString retctx;
@@ -226,19 +247,24 @@ namespace
 
         if (!entry.first.isValidReturn(labeler, label))
         {
-          //~ std::cerr << "** INVALID RETURN *" << std::endl;
           return;
         }
 
         FiniteCallString retctx(entry.first);
 
+        ROSE_ASSERT(retctx.size() == CTX_CALL_STRING_MAX_LENGTH);
         retctx.callReturn(labeler, label);
+        ROSE_ASSERT(retctx.size() == CTX_CALL_STRING_MAX_LENGTH-1);
 
         const_iterator prelow = pre.lower_bound(retctx);
+        const_iterator prepos = std::upper_bound( prelow, pre.end(), retctx, ltProjectedFull );
+
+#if OBSOLETE_CODE        
         const_iterator prepos = std::upper_bound( prelow, pre.end(),
                                                   retctx,
                                                   ltProjectedFull
                                                 );
+#endif /* OBSOLETE_CODE */
 
         transform_if( prelow, prepos,
                       std::inserter(tgt, tgt.end()),
@@ -250,9 +276,9 @@ namespace
     private:
       const CtxLattice<FiniteCallString>& pre;
       CtxLattice<FiniteCallString>&       tgt;
-      PropertyStateFactory&            factory;
-      Labeler&                         labeler;
-      Label                            label;
+      PropertyStateFactory&               factory;
+      Labeler&                            labeler;
+      Label                               label;
   };
 
 
@@ -330,6 +356,19 @@ void allCallInvoke( const CtxLattice<InfiniteCallString>& src,
   defaultCallInvoke(src, tgt, labeler, lbl);
 }
 
+template <class Iterator>
+void
+dbgPrintContexts(Iterator aa, Iterator zz)
+{
+  while (aa != zz)
+  {
+    std::cerr << "cr: " << aa->first << std::endl;
+    ++aa;
+  }
+  
+  std::cerr << "cr: ----" << std::endl; 
+}
+
 void allCallReturn( const CtxLattice<InfiniteCallString>& src,
                     CtxLattice<InfiniteCallString>& tgt,
                     CtxAnalysis<InfiniteCallString>& /* not used */,
@@ -343,6 +382,8 @@ void allCallReturn( const CtxLattice<InfiniteCallString>& src,
                 IsValidReturn(labeler, lbl),
                 InfiniteReturnHandler(tgt.componentFactory(), labeler, lbl)
               );
+              
+  //~ dbgPrintContexts(tgt.begin(), tgt.end());
 }
 
 bool operator<(const InfiniteCallString& lhs, const InfiniteCallString& rhs)
@@ -366,13 +407,21 @@ bool operator<(const InfiniteCallString& lhs, const InfiniteCallString& rhs)
 }
 
 
+template <class CallContext>
+std::ostream& prnctx(std::ostream& os, const CallContext& callctx)
+{
+  int cnt = 0;
+   
+  for (auto lbl : callctx)
+    os << (cnt++ ? ", " : "'") << lbl;
+
+  os << (cnt ? "'." : ".");
+  return os;
+}
+
 std::ostream& operator<<(std::ostream& os, const InfiniteCallString& el)
 {
-  for (size_t i = 0; i < el.size(); ++i)
-    os << (i == 0 ? "'" : ", ") << el.at(i);
-
-  os << ".";
-  return os;
+  return prnctx(os, el);
 }
 
 
@@ -388,37 +437,41 @@ bool FiniteCallString::isValidReturn(Labeler& labeler, Label retlbl) const
   //     if (argc<2) return main(argc-1, ...);
   //     return 0;
   //   }
+#if OBSOLETE_CODE  
   // \todo use pseudo context to model call to entry functions.
   //       -> saves periodic calls to size.
   return size() && defaultIsValidReturn(labeler, back(), retlbl);
+#endif /* OBSOLETE_CODE */  
+  
+  return (  (!empty()) 
+         && defaultIsValidReturn(labeler, last(), retlbl)
+         );
 }
 
 void FiniteCallString::callInvoke(const Labeler&, Label lbl)
 {
-  if (size() == MAX_CTX_LENGTH)
-    erase(begin());
-
-  ROSE_ASSERT(size() < MAX_CTX_LENGTH);
-  push_back(lbl);
+  append(lbl);
 }
 
 void FiniteCallString::callReturn(Labeler& labeler, CodeThorn::Label lbl)
 {
   ROSE_ASSERT(isValidReturn(labeler, lbl));
-  pop_back();
+  remove();
 }
 
 
 bool FiniteCallString::callerOf(const FiniteCallString& target, Label callsite) const
 {
-  ROSE_ASSERT(MAX_CTX_LENGTH > 0 && target.size());
+  //~ ROSE_ASSERT(CTX_CALL_STRING_MAX_LENGTH > 0 && target.size());
 
   // target is invoked from this, if
   // (1) the target's last label is callsite
-  // (2) the lengths of the call string match caller/callee lengths
+  // (2) the lengths of the call string match caller/callee lengths 
+  //     NOTE: holds by construction (PP 05/15/20)
   // (3) if all labels in the common subrange match
-  return (  (target.back() == callsite)
-         && callerCalleeLengths(size(), target.size(), MAX_CTX_LENGTH)
+  return (  (!target.empty())
+         && (target.last() == callsite)
+         //~ && callerCalleeLengths(size(), target.size(), CTX_CALL_STRING_MAX_LENGTH)
          && callerCalleePrefix(*this, target)
          );
 }
@@ -447,7 +500,7 @@ void allCallReturn( const CtxLattice<FiniteCallString>& src,
                     Label lbl
                   )
 {
-  PropertyStateFactory&               fact = tgt.componentFactory();
+  PropertyStateFactory& fact = tgt.componentFactory();
 
   std::for_each( src.begin(), src.end(),
                  FiniteReturnHandler(pre, tgt, fact, labeler, lbl)
@@ -462,6 +515,8 @@ void allCallReturn( const CtxLattice<FiniteCallString>& src,
                   )
 {
   allCallReturn(src, tgt, analysis.getCallSiteLattice(lbl), labeler, lbl);
+  
+  //~ dbgPrintContexts(tgt.begin(), tgt.end());
 }
 
 //! full comparison of the call string
@@ -472,11 +527,7 @@ bool operator<(const FiniteCallString& lhs, const FiniteCallString& rhs)
 
 std::ostream& operator<<(std::ostream& os, const FiniteCallString& el)
 {
-  for (size_t i = 0; i < el.size(); ++i)
-    os << (i == 0 ? "'" : ", ") << el.at(i);
-
-  os << ".";
-  return os;
+  return prnctx(os, el);
 }
 
 

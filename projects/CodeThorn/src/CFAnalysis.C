@@ -155,6 +155,11 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
   
   for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
     SgNode* callNode=getNode(*i);
+    
+    // filtering for templated code is not strictly necessary
+    //   but it avoids misleading logging output. 
+    if (insideTemplatedCode(callNode))
+      continue;
 
     SgNodeHelper::ExtendedCallInfo callInfo = SgNodeHelper::matchExtendedNormalizedCall(callNode);
     if(!callInfo)
@@ -175,7 +180,7 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
         callReturnLabel=labeler->functionCallReturnLabel(callNode);
         interFlow.insert(InterEdge(callLabel,entryLabel,exitLabel,callReturnLabel));
       } else {
-        logger[INFO] << "defined call target: " << callNode->unparseToString() 
+        logger[TRACE] << "defined call target: " << callNode->unparseToString() 
                      << " <" << typeid(*callNode).name() << ">"
                      << std::endl;
         for(auto fct : funCallTargetSet) {
