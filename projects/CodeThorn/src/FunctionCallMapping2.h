@@ -12,7 +12,7 @@
 
 namespace CodeThorn {
 
-  // \todo when ROSE allows C++11, move this to Labeler.h as std::hash<Label> ...
+  // \todo when ROSE allows C++11, move this to Labeler.h as std::hash<CodeThorn::Label> ...
   //       C++11 and newer allow template specializations for user defined
   //       types to be made within namespace std.
   struct HashLabel
@@ -24,12 +24,15 @@ namespace CodeThorn {
       return hashFun(lbl.getId());
     }
   };
+  
+  /// tests if n occurs as part of a template
+  // \todo consider only labeling non-template code..
+  bool insideTemplatedCode(const SgNode* n);
 
   /*!
    * \author Markus Schordan
    * \date 2019.
    */
-
   class FunctionCallMapping2 {
   public:
     void computeFunctionCallMapping(SgProject*);

@@ -88,8 +88,11 @@ struct InfiniteCallString : private std::vector<Label>
 {
     typedef std::vector<Label> context_string;
 
+    using context_string::const_iterator;
     using context_string::reverse_iterator;
     using context_string::const_reverse_iterator;
+    using context_string::begin;
+    using context_string::end;
     using context_string::rbegin;
     using context_string::rend;
     using context_string::size;  // dbg
@@ -128,18 +131,81 @@ std::ostream& operator<<(std::ostream& os, const InfiniteCallString& el);
 //
 // FiniteCallString
 
+//! maximal logical length of a finite call string
+static constexpr size_t CTX_CALL_STRING_MAX_LENGTH = 4;
 
-//! a context holds up to @ref MAX_CTX_LENGTH as contexts
+/// This class is a simple implementation of a fixed length call string
+///   Keeping the interface, we may want to replace it with a rotating
+///   buffer at some point.
+struct ContextSequence : private std::vector<int>
+{
+  typedef std::vector<int> base;
+  
+  ContextSequence()
+  : base(CTX_CALL_STRING_MAX_LENGTH, -1)
+  {
+    ROSE_ASSERT(base::size() == CTX_CALL_STRING_MAX_LENGTH);
+  }
+  
+  ContextSequence(const ContextSequence&)            = default;
+  ContextSequence& operator=(const ContextSequence&) = default;
+  ContextSequence(ContextSequence&&)                 = delete;
+  ContextSequence& operator=(ContextSequence&&)      = delete;
+  
+  using base::const_reference;
+  using base::reverse_iterator;
+  using base::const_iterator;
+  using base::begin;
+  using base::end;
+  using base::rbegin;
+  using base::rend;
+  //~ using base::back;
+  using base::size;  
+  
+  void append(Label lbl)
+  {
+    ROSE_ASSERT(base::size() == CTX_CALL_STRING_MAX_LENGTH);
+    //~ if (size() == CTX_CALL_STRING_MAX_LENGTH)
+    erase(begin());
+      
+    base::push_back(lbl.getId());
+  }
+  
+  void remove()
+  {
+    ROSE_ASSERT(base::size() == CTX_CALL_STRING_MAX_LENGTH);
+    base::pop_back();
+  }
+  
+  Label last() const
+  {
+    return Label(base::back());
+  }
+  
+  bool empty() const
+  {
+    // a call string ending in -1 is considered empty
+    return base::back() < 0;
+  }
+  
+  bool operator==(const ContextSequence& that) const
+  {
+    const base& self = *this;
+
+    return self == that;
+  }
+};
+
+//! a context holds up to @ref CTX_CALL_STRING_MAX_LENGTH as contexts
 //!   when calls return, the contexts is mapped on to all feasible contexts
 //!   in the caller.
 // \todo the base rep could be replaced by a ring-buffer for efficiency
-struct FiniteCallString : private std::vector<Label>
+struct FiniteCallString : ContextSequence
 {
-    typedef std::vector<Label> context_string;
-
-    static const size_t        MAX_CTX_LENGTH = 4;
+    typedef ContextSequence context_string;
 
     using context_string::reverse_iterator;
+    using context_string::const_iterator;
     using context_string::begin;
     using context_string::end;
     using context_string::rbegin;
@@ -160,7 +226,7 @@ struct FiniteCallString : private std::vector<Label>
 
     //! adds lbl to this call-string
     //! \post
-    //!   size() == min(MAX_CTX_LENGTH, pre.size()+1)
+    //!   size() == min(CTX_CALL_STRING_MAX_LENGTH, pre.size()+1)
     void callInvoke(const Labeler&, Label lbl);
 
     //! removes lbl from this call-string.
