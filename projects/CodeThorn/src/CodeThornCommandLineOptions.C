@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "CodeThornException.h"
 #include "CodeThornCommandLineOptions.h"
+#include "CppStdUtilities.h"
 
 #include <string>
 #include <sstream>
@@ -41,7 +42,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   // Command line option handling.
   po::options_description visibleOptions("Supported options");
   po::options_description hiddenOptions("Hidden options");
-  po::options_description passOnToRose("Options passed on to ROSE frontend");
+  po::options_description passOnToRoseOptions("Options passed on to ROSE frontend");
   po::options_description cegpraOptions("CEGPRA options");
   po::options_description ltlOptions("LTL options");
   po::options_description svcompOptions("SV-Comp options");
@@ -83,12 +84,11 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("solver",po::value< int >(&ctOpt.solver)->default_value(5),"Set solver <arg> to use (one of 1,2,3,...).")
     ;
 
-  passOnToRose.add_options()
+  passOnToRoseOptions.add_options()
     (",I", po::value< vector<string> >(&ctOpt.includeDirs),"Include directories.")
     (",D", po::value< vector<string> >(&ctOpt.preProcessorDefines),"Define constants for preprocessor.")
-    (",std", po::value< string >(&ctOpt.languageStandard),"Compilation standard.")
-    (",rose:ast:read", po::value<std::string>(),"read in binary AST from comma separated list (no spaces)")
     ("edg:no_warnings", po::bool_switch(&ctOpt.edgNoWarningsFlag),"EDG frontend flag.")
+    ("rose:ast:read", po::value<std::string>(&ctOpt.roseAstReadFileName),"read in binary AST from comma separated list (no spaces)")
     ;
 
   cegpraOptions.add_options()
@@ -247,6 +247,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("exploration-mode",po::value< string >(&ctOpt.explorationMode), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync)")
     ("quiet", po::value< bool >(&ctOpt.quiet)->default_value(false)->implicit_value(true), "Produce no output on screen.")
     ("help,h", "Produce this help message.")
+    ("help-all", "Show all help options.")
+    ("help-rose", "Show options that can be passed to ROSE.")
     ("help-cegpra", "Show options for CEGRPA.")
     ("help-eq", "Show options for program equivalence checking.")
     ("help-exp", "Show options for experimental features.")
@@ -299,7 +301,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   po::options_description all("All supported options");
   all.add(visibleOptions)
     .add(hiddenOptions)
-    .add(passOnToRose)
+    .add(passOnToRoseOptions)
     .add(cegpraOptions)
     .add(equivalenceCheckingOptions)
     .add(parallelProgramOptions)
@@ -316,6 +318,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   po::options_description configFileOptions("Configuration file options");
   configFileOptions.add(visibleOptions)
     .add(hiddenOptions)
+    .add(passOnToRoseOptions)
     .add(cegpraOptions)
     .add(equivalenceCheckingOptions)
     .add(parallelProgramOptions)
@@ -329,20 +332,13 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     .add(infoOptions)
     ;
 
-#if 0
-  po::store(po::command_line_parser(argc, argv).options(all).run(), args);
-  po::notify(args);
-
-  if (args.isUserProvided("config")) {
-    ifstream configStream(args.getString("config").c_str());
-    po::store(po::parse_config_file(configStream, configFileOptions), args);
-    po::notify(args);
-  } 
-#else
   args.parse(argc,argv,all,configFileOptions);
-#endif
+
   if (args.isUserProvided("help")) {
     cout << visibleOptions << "\n";
+    exit(0);
+  } else if(args.isUserProvided("help-all")) {
+    cout << all << "\n";
     exit(0);
   } else if(args.isUserProvided("help-cegpra")) {
     cout << cegpraOptions << "\n";
@@ -364,6 +360,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     exit(0);
   } else if(args.isUserProvided("help-rers")) {
     cout << rersOptions << "\n";
+    exit(0);
+  } else if(args.isUserProvided("help-rose")) {
+    cout << passOnToRoseOptions << "\n";
     exit(0);
   } else if(args.isUserProvided("help-svcomp")) {
     cout << svcompOptions << "\n";
@@ -397,6 +396,12 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   // Remove all CodeThorn-specific elements of argv (do not confuse ROSE frontend)
   for (int i=1; i < argc; ++i) {
     string currentArg(argv[i]);
+    if (currentArg == "--rose:ast:read"){
+      argv[i] = strdup("");
+      ROSE_ASSERT(i+1<argc);
+      argv[i+1]= strdup("");
+      continue;
+    }
     if (currentArg[0] != '-' ){
       continue;  // not an option      
     }
@@ -405,23 +410,15 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
       assert(i+1<argc);
       ++i;
       continue;
-    } else if (currentArg == "-rose:ast:read") {
-      assert(i+1<argc);
-      ++i;
-      continue;
     } else if (currentArg == "--edg:no_warnings") {
       continue;
     } else {
       string iPrefix = "-I/";
       string dPrefix = "-D"; // special case, cannot contain separating space
-      string stdPrefix = "-std=";
       if(currentArg.substr(0, iPrefix.size()) == iPrefix) {
         continue;
       }
       if(currentArg.substr(0, dPrefix.size()) == dPrefix) {
-        continue;
-      }
-      if(currentArg.substr(0, stdPrefix.size()) == stdPrefix) {
         continue;
       }
     }
