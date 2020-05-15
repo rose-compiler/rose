@@ -318,7 +318,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   po::options_description configFileOptions("Configuration file options");
   configFileOptions.add(visibleOptions)
     .add(hiddenOptions)
-    .add(passOnToRoseOptions)
+    //    .add(passOnToRoseOptions) [cannot be used in config file]
     .add(cegpraOptions)
     .add(equivalenceCheckingOptions)
     .add(parallelProgramOptions)
