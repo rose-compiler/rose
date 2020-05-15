@@ -60,4 +60,10 @@ for f in $(find "$prefix" -type f -name 'rose-*.cfg'); do
     sed -i~ -e 's%^ROSE_RPATHS[ \t]*=.*%ROSE_RPATHS = '"$prefix"'/lib%' "$f"
 done
 
+# If the libtool shell script is installed, then fix the compiler names by removing the directory components and relying
+# on the compiler being found in the $PATH search paths.
+if [ -e "$prefix/bin/libtool" ]; then
+    sed -i~ -e '/\.spock/ s%\([^=]*\)=".*/\([^/]*\)"%\1="\2"%' "$prefix/bin/libtool"
+fi
+
 exit 0
