@@ -402,24 +402,11 @@ namespace CodeThorn {
   }
 
   bool Normalization::isTemplateInstantiationNode(SgNode* node) {
-    return isSgTemplateInstantiationDecl(node)
-      || isSgTemplateInstantiationDefn(node)
-      || isSgTemplateInstantiationFunctionDecl(node)
-      || isSgTemplateInstantiationMemberFunctionDecl(node)
-      || isSgTemplateInstantiationTypedefDeclaration(node)
-      || isSgTemplateInstantiationDirectiveStatement(node)
-      ;
+    return RoseAst::isTemplateInstantiationNode(node);
   }
 
   bool Normalization::isTemplateNode(SgNode* node) {
-    return isSgTemplateClassDeclaration(node)
-      || isSgTemplateClassDefinition(node)
-      || isSgTemplateFunctionDeclaration(node)
-      || isSgTemplateFunctionDefinition(node)
-      || isSgTemplateMemberFunctionDeclaration(node)
-      || isSgTemplateTypedefDeclaration(node)
-      || isSgTemplateVariableDeclaration(node)
-      ;
+    return RoseAst::isTemplateNode(node);
   }
 
   /***************************************************************************
