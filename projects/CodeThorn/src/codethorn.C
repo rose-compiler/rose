@@ -88,7 +88,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.12.4";
+const std::string versionString="1.12.6";
 
 // handler for generating backtrace
 void handler(int sig) {
@@ -696,6 +696,11 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.ompAst||ctOpt.dr.detection) {
       SAWYER_MESG(logger[TRACE])<<"selected OpenMP AST."<<endl;
       argvList.push_back("-rose:OpenMP:ast_only");
+    }
+    if(ctOpt.roseAstReadFileName.size()>0) {
+      // add ROSE option as required non-standard single dash long option
+      argvList.push_back("-rose:ast:read");
+      argvList.push_back(ctOpt.roseAstReadFileName);
     }
     timer.stop();
 
