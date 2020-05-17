@@ -69,7 +69,8 @@ JOVIAL_PARSER_TESTCODES = \
 
 COMPOOL_TESTCODES = \
  status_type.cpl                        \
- 3_0_rent_and_rec.cpl
+ 3_0_rent_and_rec.cpl                   \
+ rose-issue-2687.cpl
 
 # bit_cast.cpl                           \
 # simple_compool.cpl                     \

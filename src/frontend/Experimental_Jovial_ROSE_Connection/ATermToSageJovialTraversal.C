@@ -680,17 +680,17 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
 
          // status item declarations have to be handled differently than other ItemTypeDescription terms
 
-         // also assume an int is sufficient for status_size for now
-         if (status_size) {
-            cerr << "WARNING UNIMPLEMENTED: ItemDeclaration - StatusItemDescription with size \n";
-            ROSE_ASSERT(false);
-         }
-
          // Begin SageTreeBuilder
          SgEnumDeclaration* enum_decl = nullptr;
          sage_tree_builder.Enter(enum_decl, name, status_list);
          setSourcePosition(enum_decl, term);
 
+         if (status_size) {
+            SgType* field_type = SageBuilder::buildIntType(*status_size);
+            enum_decl->set_field_type(field_type);
+         }
+
+         // End SageTreeBuilder
          sage_tree_builder.Leave(enum_decl);
       } else return ATfalse;
 
@@ -2935,18 +2935,15 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDeclaration(ATerm term)
 
          // status item declarations have to be handled differently than other ItemTypeDescription terms
 
-         // also assume an int is sufficient for status_size for now
-         if (status_size) {
-            cerr << "WARNING UNIMPLEMENTED: ItemTypeDeclaration - StatusItemDescription - has_size \n";
-         // ROSE_ASSERT(false);
-         // DELETE_ME
-            return ATtrue;
-         }
-
       // Begin SageTreeBuilder
          SgEnumDeclaration* enum_decl = nullptr;
          sage_tree_builder.Enter(enum_decl, name, status_list);
          setSourcePosition(enum_decl, term);
+
+         if (status_size) {
+            SgTypeInt* field_type = SageBuilder::buildIntType(*status_size);
+            enum_decl->set_field_type(field_type);
+         }
 
       // End SageTreeBuilder
          sage_tree_builder.Leave(enum_decl);
