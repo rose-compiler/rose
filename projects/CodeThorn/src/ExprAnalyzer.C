@@ -321,12 +321,14 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateShortCircuitOperators(SgNod
 }
 
 AbstractValue ExprAnalyzer::evaluateExpressionWithEmptyState(SgExpression* expr) {
+  logger[TRACE]<<"evaluateExpressionWithEmptyState(1):"<<expr->unparseToString()<<endl;
   ROSE_ASSERT(AbstractValue::getVariableIdMapping());
   EState emptyEState;
   PState emptyPState;
   emptyEState.setPState(&emptyPState);
   ExprAnalyzer::EvalMode evalMode=ExprAnalyzer::MODE_EMPTY_STATE;
   list<SingleEvalResultConstInt> resList=evaluateExpression(expr,emptyEState,evalMode);
+  logger[TRACE]<<"evaluateExpressionWithEmptyState(2):"<<expr->unparseToString()<<endl;
   if(resList.size()!=1) {
     return AbstractValue::createTop();
   } else {
@@ -1017,13 +1019,17 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalUnaryMinusOp(SgMinusOp* node,
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
                                                               EState estate, EvalMode mode) {
+  logger[TRACE]<<"evalSizeofOp(started):"<<node->unparseToString()<<endl;
   SgType* operandType=node->get_operand_type();
   CodeThorn::TypeSize typeSize=0; // remains zero if no size can be determined
   AbstractValue sizeValue=AbstractValue::createTop();
 
   if(operandType) {
+    logger[TRACE]<<"evalSizeofOp(2):"<<node->unparseToString()<<endl;
     typeSize=_variableIdMapping->getTypeSize(operandType);
+    logger[TRACE]<<"evalSizeofOp(3):"<<node->unparseToString()<<endl;
   } else if(SgExpression* exp=node->get_operand_expr()) {
+    logger[TRACE]<<"evalSizeofOp(4):"<<node->unparseToString()<<endl;
     if(SgVarRefExp* varRefExp=isSgVarRefExp(exp)) {
       typeSize=_variableIdMapping->getTypeSize(_variableIdMapping->variableId(varRefExp));
     } else if(SgType* expType=exp->get_type()) {
@@ -1031,9 +1037,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
     } else {
       logger[WARN] <<"sizeof: could not determine any type of sizeof argument and unsupported argument expression: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl<<AstTerm::astTermWithNullValuesToDot(exp)<<endl;
     }
+    logger[TRACE]<<"evalSizeofOp(5):"<<node->unparseToString()<<endl;
   } else {
     logger[WARN] <<"sizeof: could not determine any type of sizeof argument and no expression found either: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl;
   }
+  logger[TRACE]<<"evalSizeofOp(6):"<<node->unparseToString()<<endl;
 
   // determines sizeValue based on typesize
     if(typeSize==0) {
@@ -1046,6 +1054,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
     }
     SingleEvalResultConstInt res;
     res.init(estate,sizeValue);
+    logger[TRACE]<<"evalSizeofOp(finished):"<<node->unparseToString()<<endl;
     return listify(res);
 }
 

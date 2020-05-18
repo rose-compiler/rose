@@ -14,6 +14,7 @@ namespace CodeThorn {
   CodeThorn::TypeSize SgTypeSizeMapping::determineTypeSize(SgType* sgType) {
     ROSE_ASSERT(_mapping.size()!=0);
     ROSE_ASSERT(sgType);
+    CodeThorn::logger[TRACE]<<"DEBUG: determineTypeSize: "<<sgType->unparseToString()<<endl;
     // cache every type's computed size
     if(_typeToSizeMapping.find(sgType)!=_typeToSizeMapping.end()) {
       return _typeToSizeMapping[sgType];
@@ -66,10 +67,13 @@ namespace CodeThorn {
     case V_SgReferenceType:
       return getTypeSize(BITYPE_REFERENCE);
     case V_SgArrayType: {
-      logger[INFO]<<"DEBUG: ARRAYTYPE: "<<sgType->unparseToString()<<endl;
+      CodeThorn::logger[INFO]<<"DEBUG: ARRAYTYPE: "<<sgType->unparseToString()<<endl;
       SgArrayType* arrayType=isSgArrayType(sgType);
+      CodeThorn::logger[TRACE]<<"DEBUG: ARRAYTYPE: p1"<<endl;
       CodeThorn::TypeSize elementTypeSize=determineElementTypeSize(arrayType);
+      CodeThorn::logger[TRACE]<<"DEBUG: ARRAYTYPE: p2"<<endl;
       CodeThorn::TypeSize numberOfElements=determineNumberOfElements(arrayType);
+      CodeThorn::logger[TRACE]<<"DEBUG: ARRAYTYPE: p3"<<endl;
       unsigned int totalSize=numberOfElements*elementTypeSize;
       if(elementTypeSize>0) {
         _typeToSizeMapping[sgType]=totalSize; // cache result
@@ -77,7 +81,7 @@ namespace CodeThorn {
       return totalSize;
     }
     case V_SgClassType: {
-      logger[INFO]<<"DEBUG: CLASSTYPE: "<<sgType->unparseToString()<<endl;
+      CodeThorn::logger[INFO]<<"DEBUG: CLASSTYPE: "<<sgType->unparseToString()<<endl;
       typedef std::vector< std::pair< SgNode*, std::string > > DataMemberPointers;
       CodeThorn::TypeSize sum=0;
       DataMemberPointers dataMemPtrs=isSgClassType(sgType)->returnDataMemberPointers();
@@ -116,12 +120,15 @@ namespace CodeThorn {
     ROSE_ASSERT(t);
     size_t result=0; 
     SgExpression * indexExp =  t->get_index();
+    CodeThorn::logger[TRACE]<<"determineNumberOfElements:p1"<<endl;
     
     // assume dimension default to 1 if not specified ,such as a[] 
     if((indexExp == nullptr) || isSgNullExpression(indexExp)) {
+      CodeThorn::logger[TRACE]<<"determineNumberOfElements:p2"<<endl;
       result = 0;
     } else { 
       if(AbstractValue::getVariableIdMapping()==nullptr) {
+        CodeThorn::logger[TRACE]<<"AbstractValue::getVariableIdMapping()==nullptr"<<endl;
         //Take advantage of the fact that the value expression is always SgUnsignedLongVal in AST
         SgUnsignedLongVal * valExp = isSgUnsignedLongVal(indexExp);
         SgIntVal * valExpInt = isSgIntVal(indexExp);
@@ -135,7 +142,9 @@ namespace CodeThorn {
           else 
             result = valExpInt->get_value();
         }
+        CodeThorn::logger[TRACE]<<"determined result value."<<endl;
       } else {
+        CodeThorn::logger[TRACE]<<"determineNumberOfElements:p3"<<endl;
         // variable id mapping is available in AbstractValue
         ExprAnalyzer tmpExprEvaluator;
         AbstractValue abstractSize=tmpExprEvaluator.evaluateExpressionWithEmptyState(indexExp);
@@ -147,10 +156,12 @@ namespace CodeThorn {
         }
       }
     }
+    CodeThorn::logger[TRACE]<<"determineNumberOfElements:p4"<<endl;
     // consider multi dimensional case 
     SgArrayType* arraybase = isSgArrayType(t->get_base_type());
     if (arraybase)
       result = result * determineNumberOfElements(arraybase);
+    CodeThorn::logger[TRACE]<<"determineNumberOfElements:p5"<<endl;
     return result;
   }
   
