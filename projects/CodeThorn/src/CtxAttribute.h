@@ -1,8 +1,9 @@
 #ifndef CTX_ATTRIBUTE_H
 #define CTX_ATTRIBUTE_H 1
 
-#include <iosfwd>
+//! \author Peter Pirkelbauer
 
+#include <iosfwd>
 
 namespace CodeThorn {
 
