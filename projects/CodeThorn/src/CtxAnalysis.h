@@ -1,6 +1,7 @@
 #ifndef CTX_ANALYSIS_H
 #define CTX_ANALYSIS_H 1
 
+//! \author Peter Pirkelbauer
 
 #include "CtxLattice.h"
 #include "CtxTransfer.h"

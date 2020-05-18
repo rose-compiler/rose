@@ -2,6 +2,8 @@
 #ifndef CTX_TRANSFER_H
 #define CTX_TRANSFER_H 1
 
+//! \author Peter Pirkelbauer
+
 #include <iterator>
 #include <algorithm>
 
