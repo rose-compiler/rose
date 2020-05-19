@@ -779,10 +779,21 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      ASSERT_not_null(enum_decl);
 
      SgName enum_name = enum_decl->get_name();
+     SgType* field_type = enum_decl->get_field_type();
 
      curprint("TYPE ");
      curprint(enum_name.str());
      curprint(" STATUS");
+
+     if (field_type) {
+        SgTypeInt* int_type = isSgTypeInt(field_type);
+        ASSERT_not_null(int_type);
+        curprint(" ");
+        SgExpression* kind_expr = int_type->get_type_kind();
+        ASSERT_not_null(kind_expr);
+        unparseExpression(kind_expr, info);
+     }
+
      unp->cur.insert_newline(1);
 
      curprint("(");
@@ -796,9 +807,9 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             name.append(")");
 
             SgAssignInitializer* assign_expr = isSgAssignInitializer(init_name->get_initializer());
-            ROSE_ASSERT(assign_expr);
+            ASSERT_not_null(assign_expr);
             SgEnumVal* enum_val = isSgEnumVal(assign_expr->get_operand());
-            ROSE_ASSERT(enum_val);
+            ASSERT_not_null(enum_val);
 
             curprint("  ");
             curprint(tostring(enum_val->get_value()));
@@ -822,18 +833,18 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      bool is_block = (table_decl->get_class_type() == SgClassDeclaration::e_jovial_block);
 
      SgJovialTableStatement* defining_decl = isSgJovialTableStatement(table_decl->get_definingDeclaration());
-     ROSE_ASSERT(isSgJovialTableStatement(defining_decl));
+     ASSERT_not_null(isSgJovialTableStatement(defining_decl));
 
      SgClassDefinition* table_def = defining_decl->get_definition();
-     ROSE_ASSERT(table_def);
+     ASSERT_not_null(table_def);
 
      SgName table_name = table_decl->get_name();
 
       SgType* type = table_decl->get_type();
-      ROSE_ASSERT(type);
+      ASSERT_not_null(type);
 
       SgJovialTableType* table_type = isSgJovialTableType(type);
-      ROSE_ASSERT(table_type);
+      ASSERT_not_null(table_type);
 
       curprint("TYPE ");
       curprint(table_name);
@@ -930,7 +941,7 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgName name         = initializedName->get_name();
      SgType* type        = initializedName->get_type();
      SgInitializer* init = initializedName->get_initializer();
-     ROSE_ASSERT(type);
+     ASSERT_not_null(type);
 
      info.set_inVarDecl();
 
@@ -1025,7 +1036,7 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         {
            SgExpression* bitfield = var_decl->get_bitfield();
            SgExprListExp* sg_location_specifier = isSgExprListExp(bitfield);
-           ROSE_ASSERT(sg_location_specifier);
+           ASSERT_not_null(sg_location_specifier);
 
            SgExpressionPtrList & location_exprs = sg_location_specifier->get_expressions();
            ROSE_ASSERT(location_exprs.size() == 2);
@@ -1049,13 +1060,13 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
            SgDeclarationStatement* def_decl = var_decl->get_baseTypeDefiningDeclaration();
-           ROSE_ASSERT(def_decl);
+           ASSERT_not_null(def_decl);
 
            SgJovialTableStatement* table_decl = dynamic_cast<SgJovialTableStatement*>(def_decl);
-           ROSE_ASSERT(table_decl);
+           ASSERT_not_null(table_decl);
 
            SgClassDefinition* table_def = table_decl->get_definition();
-           ROSE_ASSERT(table_def);
+           ASSERT_not_null(table_def);
 
            if (table_def->get_members().size() > 0)
               {
@@ -1093,7 +1104,7 @@ Unparse_Jovial::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgExprStatement* expr_stmt = isSgExprStatement(stmt);
      ASSERT_not_null(expr_stmt);
-     ROSE_ASSERT(expr_stmt->get_expression());
+     ASSERT_not_null(expr_stmt->get_expression());
 
   // pretty printing
      curprint( ws_prefix(info.get_nestingLevel()) );

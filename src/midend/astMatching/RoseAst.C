@@ -9,7 +9,7 @@
 
 /* AST functions */
 
-RoseAst::RoseAst(SgNode* astNode):_startNode(astNode) {
+RoseAst::RoseAst(SgNode* astNode):_startNode(astNode),_withNullValues(false),_withTemplates(true) {
   /* only initializer list required */
 }
 
@@ -56,15 +56,19 @@ RoseAst::iterator::iterator()
   :
   _startNode(0), // 0 is not traversed, due to the empty stack the default iterator is a past-the-end iterator
   _skipChildrenOnForward(false),
-  _withNullValues(false) // default: we do not traverse null values
+  _withNullValues(false), // default: null values are not traversed
+  _withTemplates(true) // default: templates are traversed
 {
 }
 
-RoseAst::iterator::iterator(SgNode* x)
+RoseAst::iterator::iterator(SgNode* x,
+                            bool withNullValues,
+                            bool withTemplates)
   : 
   _startNode(x), 
   _skipChildrenOnForward(false),
-  _withNullValues(false)
+  _withNullValues(withNullValues),
+  _withTemplates(withTemplates)
 {
   stack_element e;
   e.node=x;
@@ -125,7 +129,7 @@ RoseAst::iterator RoseAst::iterator::operator++(int) {
 
 RoseAst::iterator
 RoseAst::begin() { 
-  return iterator(_startNode);
+  return iterator(_startNode,_withNullValues,_withTemplates);
 }
 
 RoseAst::iterator
@@ -190,8 +194,11 @@ RoseAst::iterator::operator++() {
  root_node_has_children:
   if(new_node==0) {
     return *this;
-  }
-  if(!_skipChildrenOnForward) {
+  } else if(!_withTemplates) {
+    if(isTemplateNode(new_node)) {
+      return *this;
+    }
+  } else if(!_skipChildrenOnForward) {
     int numChildren=num_children(new_node);
     // we need to push children in reverse order on the stack (if they are != null)
     for(int new_index=numChildren-1;new_index>=0;new_index--) {
@@ -199,18 +206,18 @@ RoseAst::iterator::operator++() {
       new_e.node=new_node;
       new_e.index=new_index;
       if(new_e.node!=0) {
-    if(_withNullValues) {
-      // if we visit null-nodes we can push anything
-      _stack.push(new_e);
-    } else {
-      if(access_node_by_parent_and_index(new_e.node,new_e.index)!=0) {
-        _stack.push(new_e);
+        if(_withNullValues) {
+          // if we visit null-nodes we can push anything
+          _stack.push(new_e);
+        } else {
+          if(access_node_by_parent_and_index(new_e.node,new_e.index)!=0) {
+            _stack.push(new_e);
+          } else {
+            // we are not visiting null nodes therefore we do not push null nodes on the stack
+          }
+        }
       } else {
-        // we are not visiting null nodes therefore we do not push null nodes on the stack
-      }
-    }
-      } else {
-    // a null node has no children: nothing to do.
+        // a null node has no children: nothing to do.
       }
     }
   } else {
@@ -256,6 +263,22 @@ RoseAst::iterator::withNullValues() {
   return *this;
 } 
 
+RoseAst::iterator& 
+RoseAst::iterator::withoutTemplates() {
+  if(_stack.size()!=1 && (_stack.top().node!=_startNode))
+    throw "Ast::iterator: unallowed mode change.";
+  _withTemplates=false; 
+  return *this;
+} 
+
+RoseAst::iterator& 
+RoseAst::iterator::withTemplates() {
+  if(_stack.size()!=1 && (_stack.top().node!=_startNode))
+    throw "Ast::iterator: unallowed mode change.";
+  _withTemplates=true; 
+  return *this;
+} 
+
 bool
 RoseAst::iterator::is_at_root() const {
   return !is_past_the_end() && _stack.size()>0 && _stack.top().node==_startNode;
@@ -270,7 +293,40 @@ bool RoseAst::iterator::is_at_last_child() const {
   return e.index==num_children(e.node)-1 && e.index!=ROOT_NODE_INDEX;
 }
 
-bool RoseAst::isSubType(VariantT DerivedClassVariant, VariantT BaseClassVariant) { 
+bool RoseAst::isSubTypeOf(VariantT DerivedClassVariant, VariantT BaseClassVariant) { 
   /* access the byte containing the information and mask and extract the bit that holds the value */
   return rose_ClassHierarchyCastTable[DerivedClassVariant][BaseClassVariant >> 3] & (1 << (BaseClassVariant & 7));
+}
+
+bool RoseAst::isSubType(VariantT derivedClassVariant, VariantT baseClassVariant) { 
+  return isSubTypeOf(derivedClassVariant,baseClassVariant);
+}
+
+bool RoseAst::isTemplateNode(SgNode* node) {
+  return isSgTemplateClassDeclaration(node)
+    || isSgTemplateClassDefinition(node)
+    || isSgTemplateFunctionDeclaration(node)
+    || isSgTemplateFunctionDefinition(node)
+    || isSgTemplateMemberFunctionDeclaration(node)
+    || isSgTemplateTypedefDeclaration(node)
+    || isSgTemplateVariableDeclaration(node)
+    ;
+}
+
+bool RoseAst::isTemplateInstantiationNode(SgNode* node) {
+  return isSgTemplateInstantiationDecl(node)
+    || isSgTemplateInstantiationDefn(node)
+    || isSgTemplateInstantiationFunctionDecl(node)
+    || isSgTemplateInstantiationMemberFunctionDecl(node)
+    || isSgTemplateInstantiationTypedefDeclaration(node)
+    || isSgTemplateInstantiationDirectiveStatement(node)
+    ;
+}
+
+void RoseAst::setWithNullValues(bool flag) {
+  _withNullValues=flag;
+}
+
+void RoseAst::setWithTemplates(bool flag) {
+  _withTemplates=flag;
 }
