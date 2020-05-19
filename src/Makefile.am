@@ -417,6 +417,7 @@ rose_config_installed_cppflags =		\
 	$(ROSE_ATERM_INCLUDE)			\
 	$(ROSE_DLIB_INCLUDES)			\
 	$(ROSE_GCRYPT_INCLUDES)			\
+	$(ROSE_CAPSTONE_INCLUDES)		\
 	$(BOOST_CPPFLAGS)
 
 rose_config_installed_ldflags =			\
@@ -451,6 +452,7 @@ rose_config_installed_ldflags =			\
 	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\
 	$(ROSE_DLIB_LIBS_WITH_PATH)		\
 	$(ROSE_GCRYPT_LIBS_WITH_PATH)		\
+	$(ROSE_CAPSTONE_LIBS_WITH_PATH)		\
 	-lm
 if ROSE_USE_EDG_QUAD_FLOAT
   rose_config_installed_ldflags += -lquadmath

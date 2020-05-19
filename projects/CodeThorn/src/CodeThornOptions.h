@@ -23,9 +23,9 @@ struct CodeThornOptions : public Options {
   // pass on to ROSE
   std::vector<std::string> includeDirs;
   std::vector<std::string> preProcessorDefines;
-  std::string languageStandard;
   bool edgNoWarningsFlag;
-
+  std::string roseAstReadFileName;
+  
   // visualization
   struct Visualization {
     bool rwClusters=false;
