@@ -2,8 +2,7 @@
 #define VARIABLE_ID_MAPPING_EXTENDED_H
 
 #include "VariableIdMapping.h"
-#include "SgTypeSizeMapping.h"
-#include <memory>
+#include "TypeSizeMapping.h"
 
 namespace CodeThorn {
   class VariableIdMappingExtended : public VariableIdMapping {
@@ -15,8 +14,9 @@ namespace CodeThorn {
     unsigned int getTypeSize(VariableId varId);
     unsigned int getOffset(VariableId varId);
     std::string typeSizeMappingToString();
+    bool isStructMember(VariableId varId);
   private:
-    std::shared_ptr<SgTypeSizeMapping> typeSizeMapping=std::make_shared<SgTypeSizeMapping>();
+    TypeSizeMapping typeSizeMapping;
   };
 }
 

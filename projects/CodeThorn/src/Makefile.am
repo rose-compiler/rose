@@ -151,12 +151,10 @@ CODETHORN_HEADER_FILES=\
   RewriteStatistics.h \
   RewriteSystem.h \
   RWState.h \
-  SgTypeSizeMapping.h \
   Solver5.h \
   Solver8.h \
   Solver.h \
   Specialization.h \
-  StructureAccessLookup.h \
   SvcompWitness.h \
   TimeMeasurement.h \
   TransitionGraph.h \
@@ -259,12 +257,10 @@ CODETHORN_SOURCE_FILES=\
   RewriteStatistics.C \
   RewriteSystem.C \
   RWState.C \
-  SgTypeSizeMapping.C \
   Solver5.C \
   Solver8.C \
   Solver.C \
   Specialization.C \
-  StructureAccessLookup.C \
   SvcompWitness.C \
   TimeMeasurement.C \
   TransitionGraph.C \

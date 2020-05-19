@@ -51,13 +51,6 @@ void ExprAnalyzer::setInterpreterModeFileName(string imFileName) {
   _interpreterModeFileName=imFileName;
 }
 
-void ExprAnalyzer::initializeStructureAccessLookup(SgProject* node) {
-  ROSE_ASSERT(node);
-  ROSE_ASSERT(_variableIdMapping);
-  structureAccessLookup.initializeOffsets(_variableIdMapping,node);
-  SAWYER_MESG(logger[INFO])<<"Structure access lookup num of members: "<<structureAccessLookup.numOfStoredMembers()<<endl;
-}
-
 void ExprAnalyzer::setAnalyzer(Analyzer* analyzer) {
   ROSE_ASSERT(analyzer);
   _analyzer=analyzer;
@@ -1422,8 +1415,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
   if(isStructMember(varId)) {
-    int offset=structureAccessLookup.getOffset(varId);
     ROSE_ASSERT(_variableIdMapping);
+    int offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
     SAWYER_MESG(logger[TRACE])<<"DEBUG: evalLValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
     //res.result=AbstractValue(offset);
     //return listify(res);
@@ -1480,7 +1473,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
   }
   // check if var is a struct member. if yes return struct-offset.
   if(isStructMember(varId)) {
-    int offset=structureAccessLookup.getOffset(varId);
+    int offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
     ROSE_ASSERT(_variableIdMapping);
     SAWYER_MESG(logger[TRACE])<<"DEBUG: evalRValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
     res.result=AbstractValue(offset);
@@ -1976,7 +1969,7 @@ void ExprAnalyzer::setPrintDetectedViolations(bool flag) {
 }
 
 bool ExprAnalyzer::isStructMember(CodeThorn::VariableId varId) {
-  return structureAccessLookup.isStructMember(varId);
+  return AbstractValue::getVariableIdMapping()->isStructMember(varId);
 }
 
 bool ExprAnalyzer::definitiveErrorDetected() {

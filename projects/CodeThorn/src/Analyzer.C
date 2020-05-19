@@ -1593,9 +1593,6 @@ void CodeThorn::Analyzer::initializeVariableIdMapping(SgProject* project) {
   variableIdMapping->computeTypeSizes(); // only available in extended VIM
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   AbstractValue::setVariableIdMapping(getVariableIdMapping());
-  SAWYER_MESG(logger[TRACE])<<"initializeStructureAccessLookup started."<<endl;
-  exprAnalyzer.initializeStructureAccessLookup(project);
-  SAWYER_MESG(logger[TRACE])<<"initializeStructureAccessLookup finished."<<endl;
   functionIdMapping.computeFunctionSymbolMapping(project);
   functionCallMapping.computeFunctionCallMapping(project);
 }

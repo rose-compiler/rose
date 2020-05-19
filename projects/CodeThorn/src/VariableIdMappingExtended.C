@@ -7,13 +7,11 @@ using namespace Sawyer::Message;
 namespace CodeThorn {
   unsigned int VariableIdMappingExtended::getTypeSize(CodeThorn::BuiltInType biType) {
     CodeThorn::logger[TRACE]<<"getTypeSize(BuiltInType)"<<std::endl;
-    ROSE_ASSERT(typeSizeMapping);
-    return typeSizeMapping->getTypeSize(biType);
+    return typeSizeMapping.getTypeSize(biType);
   }
   unsigned int VariableIdMappingExtended::getTypeSize(SgType* type) {
     CodeThorn::logger[TRACE]<<"getTypeSize(SgType*)"<<std::endl;
-    ROSE_ASSERT(typeSizeMapping);
-    return typeSizeMapping->determineTypeSize(type);
+    return typeSizeMapping.determineTypeSize(type);
   }
   unsigned int VariableIdMappingExtended::getTypeSize(VariableId varId) {
     return getTypeSize(getType(varId));
@@ -23,8 +21,7 @@ namespace CodeThorn {
   }
 
   std::string VariableIdMappingExtended::typeSizeMappingToString() {
-    ROSE_ASSERT(typeSizeMapping);
-    return typeSizeMapping->toString();
+    return typeSizeMapping.toString();
   }
 
   void VariableIdMappingExtended::computeTypeSizes() {
@@ -33,9 +30,13 @@ namespace CodeThorn {
     for(auto vid : varIdSet) {
       SgType* varType=getType(vid);
       if(varType) {
-        ROSE_ASSERT(typeSizeMapping);
-        typeSizeMapping->determineTypeSize(varType);
+        typeSizeMapping.determineTypeSize(varType);
       }
     }
   }
+
+  bool VariableIdMappingExtended::isStructMember(VariableId varId) {
+    return typeSizeMapping.isStructMember(varId);
+  }
+  
 }

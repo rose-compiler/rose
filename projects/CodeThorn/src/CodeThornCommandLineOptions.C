@@ -48,7 +48,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   po::options_description svcompOptions("SV-Comp options");
   po::options_description rersOptions("RERS options");
   po::options_description patternSearchOptions("RERS options");
-  po::options_description equivalenceCheckingOptions("Equivalence checking options");
   po::options_description parallelProgramOptions("Analysis options for parallel programs");
   po::options_description dataRaceOptions("Data race detection options");
   po::options_description experimentalOptions("Experimental options");
@@ -209,22 +208,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("witness-file", po::value< string >(&ctOpt.svcomp.witnessFileName), "Write an SV-COMP witness (counterexample) to file <arg>.")
     ;
 
-  equivalenceCheckingOptions.add_options()
-    ("dump-sorted",po::value< string >(&ctOpt.equiCheck.dumpSortedFileName), " (experimental) Generates sorted array updates in file <file>.")
-    ("dump-non-sorted",po::value< string >(&ctOpt.equiCheck.dumpNonSortedFileName), " (experimental) Generates non-sorted array updates in file <file>.")
-    ("rewrite-ssa", po::value< bool >(&ctOpt.equiCheck.rewriteSSA)->default_value(false)->implicit_value(true), "Rewrite SSA form: Replace use of SSA variable by rhs of its assignment (only applied outside loops or unrolled loops).")
-    ("print-rewrite-trace", po::value< bool >(&ctOpt.equiCheck.printRewriteTrace)->default_value(false)->implicit_value(true), "Print trace of rewrite rules.")
-    ("print-update-infos", po::value< bool >(&ctOpt.equiCheck.printUpdateInfos)->default_value(false)->implicit_value(true), "Print information about array updates on stdout.")
-    ("rule-const-subst", po::value< bool >(&ctOpt.equiCheck.ruleConstSubst)->default_value(true)->implicit_value(true), "Use const-expr substitution rule.")
-    ("rule-commutative-sort", po::value< bool >(&ctOpt.equiCheck.ruleCommutativeSort)->default_value(false)->implicit_value(true), "Apply rewrite rule for commutative sort of expression trees.")
-    ("max-extracted-updates",po::value< int >(&ctOpt.equiCheck.maxExtractedUpdates)->default_value(5000)->implicit_value(-1),"Set maximum number of extracted updates. This ends the analysis.")
-    ("specialize-fun-name", po::value< string >(&ctOpt.equiCheck.specializeFunName), "Function of name <arg> to be specialized.")
-    ("specialize-fun-param", po::value< vector<int> >(&ctOpt.equiCheck.specializeFunParamList), "Function parameter number to be specialized (starting at 0).")
-    ("specialize-fun-const", po::value< vector<int> >(&ctOpt.equiCheck.specializeFunConstList), "Constant <arg>, the param is to be specialized to.")
-    ("specialize-fun-varinit", po::value< vector<string> >(&ctOpt.equiCheck.specializeFunVarInitList), "Variable name of which the initialization is to be specialized (overrides any initializer expression).")
-    ("specialize-fun-varinit-const", po::value< vector<int> >(&ctOpt.equiCheck.specializeFunVarInitConstList), "Constant <arg>, the variable initialization is to be specialized to.")
-    ;
-
   patternSearchOptions.add_options()
     ("pattern-search-max-depth", po::value< int >(&ctOpt.patSearch.maxDepth)->default_value(10), "Maximum input depth that is searched for cyclic I/O patterns.")
     ("pattern-search-repetitions", po::value< int >(&ctOpt.patSearch.repetitions)->default_value(100), "Number of unrolled iterations of cyclic I/O patterns.")
@@ -250,7 +233,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("help-all", "Show all help options.")
     ("help-rose", "Show options that can be passed to ROSE.")
     ("help-cegpra", "Show options for CEGRPA.")
-    ("help-eq", "Show options for program equivalence checking.")
     ("help-exp", "Show options for experimental features.")
     ("help-pat", "Show options for pattern search mode.")
     ("help-svcomp", "Show options for SV-Comp specific features.")
@@ -303,7 +285,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     .add(hiddenOptions)
     .add(passOnToRoseOptions)
     .add(cegpraOptions)
-    .add(equivalenceCheckingOptions)
     .add(parallelProgramOptions)
     .add(experimentalOptions)
     .add(ltlOptions)
@@ -320,7 +301,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     .add(hiddenOptions)
     //    .add(passOnToRoseOptions) [cannot be used in config file]
     .add(cegpraOptions)
-    .add(equivalenceCheckingOptions)
     .add(parallelProgramOptions)
     .add(experimentalOptions)
     .add(ltlOptions)
@@ -342,9 +322,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     exit(0);
   } else if(args.isUserProvided("help-cegpra")) {
     cout << cegpraOptions << "\n";
-    exit(0);
-  } else if(args.isUserProvided("help-eq")) {
-    cout << equivalenceCheckingOptions << "\n";
     exit(0);
   } else if(args.isUserProvided("help-exp")) {
     cout << experimentalOptions << "\n";
