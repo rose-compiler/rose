@@ -23,20 +23,20 @@ $Interpreter ||= "/usr/bin/perl";
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
 $mkinstaller_ver_build = "1";
-$mkinstaller_ver_patch = "1";
-$mkinstaller_ver_name  = "2.6.1.1";
-$mkinstaller_ver_time  = " 6May2020,19:58:56z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.1.1 -  6May2020,19:58:56z";
+$mkinstaller_ver_patch = "2";
+$mkinstaller_ver_name  = "2.6.1.2";
+$mkinstaller_ver_time  = "18May2020,06:15:08z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.1.2 - 18May2020,06:15:08z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
 $perl_library_ver_major = "1";
 $perl_library_ver_minor = "6";
-$perl_library_ver_build = "17";
-$perl_library_ver_patch = "1";
-$perl_library_ver_name  = "1.6.17.1";
-$perl_library_ver_time  = "23Apr2020,04:20:40z";
-$perl_library_ver_id    = "@(#)perl_library 1.6.17.1 - 23Apr2020,04:20:40z";
+$perl_library_ver_build = "18";
+$perl_library_ver_patch = "";
+$perl_library_ver_name  = "1.6.18";
+$perl_library_ver_time  = "17May2020,18:42:33z";
+$perl_library_ver_id    = "@(#)perl_library 1.6.18 - 17May2020,18:42:33z";
 
 #{------------------------------------------------------------------------------
 #
@@ -22007,13 +22007,15 @@ sub mkDirectory {
 #
 #  This subroutine deletes a single pathname (directory, file, or symbolic-link)
 #  If it exists but can't be properly deleted then it will fail with an error
-#  message.
+#  message. Returns 1 on success, 0 on failure.
 #
 #  This function uses: deletePathnames()
 #
 #  see: totebag/src/perl-lib/mustDeletePathname.psub
 #
-#  Dated: 16Oct2019 mustDeletePathname
+#  Dated: 17May2020 mustDeletePathname
+#
+#  NOTE: This function is silent if there is no problem.
 #
 #  NOTE: This function is known to be "hand included" in the following
 #        source files:
@@ -22023,8 +22025,9 @@ sub mkDirectory {
 #-------------------------------------------------------------------------------
 
 sub mustDeletePathname {
-   my $callerIs  = shift;
-   my $pathname  = shift;
+   my $callerIs  = shift;   # Something like: "tarup: "
+   my $pathname  = shift;   # The pathname to be deleted.
+   my $noisy     = shift;   # Pass 0 if silent failures.
    my $result    = 1;
    if ($pathname ne "") {
       my $exists = 0;
@@ -22039,24 +22042,22 @@ sub mustDeletePathname {
          my $Nfailures = $#failures + 1;
          if (1 <= $Nfailures) {
             $result = 0;
-            my $count;
-            my $failedOn;
-            foreach $failedOn (@failures) {
-               $count += 1;
-               print STDERR $callerIs."error: can't delete \"$failedOn\"\n";
-               if (10 <= $count) {
-                  print STDERR $callerIs."  :        :     :\n";
-                  my $lastOne = $failures[$#failures];
-                  print STDERR $callerIs."error: can't delete \"$lastOne\"\n";
-                  last;
+	    if ($noisy) {
+               my $count;
+               my $failedOn;
+               foreach $failedOn (@failures) {
+                  $count += 1;
+                  print STDERR $callerIs."error: can't delete \"$failedOn\"\n";
+                  if (10 <= $count) {
+                     print STDERR $callerIs."  :        :     :\n";
+                     my $lastOne = $failures[$#failures];
+                     print STDERR $callerIs."error: can't delete \"$lastOne\"\n";
+                     last;
+                  }
                }
-            }
-            exit 1;
+	    }
          }
       }
-   }
-   else {
-      $result = 0;
    }
    return $result;
 }
