@@ -2489,6 +2489,7 @@ tests/smoke/unit/Makefile
 tests/smoke/unit/Sawyer/Makefile
 tests/smoke/unit/Utility/Makefile
 tools/Makefile
+tools/BinaryAnalysis/Makefile
 tools/globalVariablesInLambdas/Makefile
 tools/classMemberVariablesInLambdas/Makefile
 tools/checkFortranInterfaces/Makefile
