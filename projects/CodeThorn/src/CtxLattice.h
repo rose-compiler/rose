@@ -180,12 +180,8 @@ namespace
       {
         typename M::const_iterator rhspos = rhslattice.find(lhslattice.first);
         
-        bool x = rhspos == rhslattice.end();
-        bool y = x || !lhslattice.second->approximatedBy(sg::deref(rhspos->second));
-        
-        std::cerr << x << " <x y> " << y << std::endl;
-
-        return y;
+        return rhspos == rhslattice.end()
+               || !lhslattice.second->approximatedBy(sg::deref(rhspos->second));
       }
 
     private:

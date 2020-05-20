@@ -81,15 +81,13 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     // 1) f(x), 2) y=f(x) (but not y+=f(x))
     SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(node);
     
+    SgFunctionCallExp* funCall = SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL 
+                                       ? callinfo.callExpression()
+                                       : SgNodeHelper::Pattern::matchFunctionCall(node);
+
     //~ if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(node)) {
-    if(SgFunctionCallExp* funCall = callinfo.callExpression()) {
+    if(funCall) {
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-      std::string calltext = funCall->unparseToString(); 
-      
-      if (calltext == "\"INFO: \"+PREFIX")
-      {
-        cerr<<"InfoX: callexp: fcall found " << calltext << std::endl;
-      }
       
       transferFunctionCall(lab, funCall, arguments, element);
     } else if (SgConstructorInitializer* ctorCall = callinfo.ctorInitializer()) {

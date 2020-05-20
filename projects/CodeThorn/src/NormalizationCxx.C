@@ -1248,6 +1248,14 @@ namespace
         
         if (!res.first /* not trivial */ && !res.second /* no user defined dtor */) 
         {
+          //~ if (nameOf(n) == "configurationItem")
+          {
+            logInfo() << "enqueue gen dtor: " << nameOf(n) << "\n"
+                      << typeid(*(n.get_parent())).name() << " @" << n.get_parent() << "\n"
+                      << typeid(*(n.get_parent()->get_parent())).name() << " @" << n.get_parent()->get_parent() 
+                      << std::endl;
+          }
+          
           cont.emplace_back(DestructorGenerator(n));
           return;
         }
@@ -1257,30 +1265,44 @@ namespace
       container& cont;
   };
   
+  template <class SetT, class ElemT>
+  inline
+  bool alreadyProcessed(SetT& s, const ElemT& e)
+  {
+    return !s.insert(e).second;
+  }
 } // anonymous namespace
 
   // externally visible function
   void normalizeCxx(Normalization& norm, SgNode* root)
   {
+    typedef std::set<SgNode*> NodeSet;
+    //~ typedef std::unordered_set<SgNode*> NodeSet;
+        
     logInfo() << "Starting C++ normalization." << std::endl;
         
     CxxTransformer::container transformations;
-    size_t                    templateCount = 0;
+    NodeSet                   knownNodes;
     RoseAst                   ast(root);
     
+    logTrace() << "Not normalizing templates.." << std::endl;
+    //~ ast.setWithTemplates(false);
     for (auto i=ast.begin(); i!=ast.end(); ++i)
-    {
+    {    
       if (Normalization::isTemplateNode(*i))
       {
-        ++templateCount;
         i.skipChildrenOnForward();
         continue;
-      }  
-        
+      } 
+      
+      // a node should only be traversed once..
+      if (alreadyProcessed(knownNodes, *i))
+        continue; 
+      
+      // never seen and not a template    
       sg::dispatch(CxxTransformer(transformations), *i);
     }
     
-    if (templateCount) logWarn() << "Skipped " << templateCount << " templates " << std::endl; 
     logInfo() << "Found " << transformations.size() << " terrific top-level transformations..." << std::endl;
     
     for (AnyTransform& tf : transformations) 
