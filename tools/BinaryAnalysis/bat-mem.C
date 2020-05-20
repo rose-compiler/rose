@@ -7,6 +7,7 @@ static const char *description =
     "whose standard input is opened in binary mode, such as Unix-like systems.";
 
 #include <rose.h>
+#include <BinaryVxcoreParser.h>                         // rose
 #include <CommandLine.h>                                // rose
 #include <Partitioner2/Engine.h>                        // rose
 #include <Sawyer/Stopwatch.h>                           // rose
@@ -72,7 +73,8 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                        "index file is emitted to standard output and contains the command-line arguments that describe "
                        "how to load the binary files back into memory.}"
 
-                       "@named{vxcore}{Save the data to a binary file whose format is defined by ROSE.}"));
+                       "@named{vxcore}{Save the data to a binary file whose format is defined by ROSE. The @s{prefix} "
+                       "is used as the output file name.}"));
 
     output.insert(Switch("srecord-syntax")
                   .argument("syntax", enumParser<SRecord::Syntax>(settings.srecordSyntax)
@@ -85,7 +87,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                        "@named{intel}{Intel HEX syntax." +
                        std::string(SRecord::SREC_INTEL == settings.srecordSyntax ? " This is the default." : "") + "}"));
 
-    output.insert(Switch("prefix")
+    output.insert(Switch("prefix", 'o')
                   .argument("name", anyParser(settings.outputPrefix))
                   .doc("When generating binary files (@s{format}=binary), the string argument for this switch is "
                        "prepended to the names of the binary output files as described by @s{format}. The default "
@@ -199,29 +201,6 @@ public:
     }
 };
 
-class VxcoreDumper: public Dumper {
-public:
-    virtual void formatData(std::ostream &stream, const AddressInterval &segmentInterval, const MemoryMap::Segment &segment,
-                            const AddressInterval &dataInterval, const uint8_t *data) ROSE_OVERRIDE {
-        std::string perms = "=";
-        if (0 != (segment.accessibility() & MemoryMap::READABLE))
-            perms += "r";
-        if (0 != (segment.accessibility() & MemoryMap::WRITABLE))
-            perms += "w";
-        if (0 != (segment.accessibility() & MemoryMap::EXECUTABLE))
-            perms += "x";
-
-        stream <<(boost::format("%x %x %s:\n") % dataInterval.least() % dataInterval.size());
-        stream.write((const char*)data, dataInterval.size());
-        if (!stream.good()) {
-            std::ostringstream mesg;
-            mesg <<"write failed for virtual address " <<dataInterval <<" in segment " <<segmentInterval
-                 <<" \"" <<StringUtility::cEscape(segment.name()) <<"\"";
-            throw std::runtime_error(mesg.str());
-        }
-    }
-};
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 } // namespace
 
@@ -253,6 +232,21 @@ main(int argc, char *argv[]) {
                 break;
         }
         partitioner.memoryMap()->dump(std::cout);
+
+    } else if (OUT_VXCORE == settings.outputFormat) {
+        if (settings.outputPrefix.empty()) {
+            mlog[FATAL] <<"an output file must be specified for binary output formats\n";
+            exit(1);
+        }
+        std::string outputName = settings.outputPrefix;
+        std::ofstream output(outputName.c_str(), std::ios_base::binary);
+        if (!output.good())
+            throw std::runtime_error("cannot create \"" + outputName);
+        Rose::BinaryAnalysis::VxcoreParser parser;
+        BOOST_FOREACH (AddressInterval where, settings.where)
+            parser.unparse(output, map, where, "output");
+        exit(0);
+
     } else {
         BOOST_FOREACH (AddressInterval where, settings.where) {
             rose_addr_t va = where.least();
@@ -292,8 +286,7 @@ main(int argc, char *argv[]) {
                         break;
                     }
                     case OUT_VXCORE:
-                        VxcoreDumper()(settings, map, interval, std::cout);
-                        break;
+                        ASSERT_not_reachable("handled above");
                 }
                 if (interval.greatest() == where.greatest())
                     break;                                  // to prevent possible overflow
