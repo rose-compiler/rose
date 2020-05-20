@@ -406,7 +406,7 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     // fall-through for default
     break;
   case 1:
-    ctOpt.explicitArrays=true;
+    ctOpt.arraysNotInState=false;
     ctOpt.inStateStringLiterals=true;
     ctOpt.ignoreUnknownFunctions=true;
     ctOpt.ignoreFunctionPointers=true;
@@ -417,7 +417,7 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     AbstractValue::strictChecking=false;
     break;
   case 2:
-    ctOpt.explicitArrays=true;
+    ctOpt.arraysNotInState=false;
     ctOpt.inStateStringLiterals=true;
     ctOpt.ignoreUnknownFunctions=true;
     ctOpt.ignoreFunctionPointers=false;
@@ -428,7 +428,7 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     AbstractValue::strictChecking=false;
     break;
   case 3:
-    ctOpt.explicitArrays=true;
+    ctOpt.arraysNotInState=false;
     ctOpt.inStateStringLiterals=false;
     ctOpt.ignoreUnknownFunctions=true;
     ctOpt.ignoreFunctionPointers=false;
@@ -439,7 +439,7 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     AbstractValue::strictChecking=false;
     break;
   case 4:
-    ctOpt.explicitArrays=true;
+    ctOpt.arraysNotInState=false;
     ctOpt.inStateStringLiterals=false;
     ctOpt.ignoreUnknownFunctions=true;
     ctOpt.ignoreFunctionPointers=false;
@@ -450,7 +450,7 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     AbstractValue::strictChecking=true;
     break;
   case 11:
-    ctOpt.explicitArrays=true;
+    ctOpt.arraysNotInState=false;
     ctOpt.inStateStringLiterals=true;
     ctOpt.ignoreUnknownFunctions=true;
     ctOpt.ignoreFunctionPointers=false;

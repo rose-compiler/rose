@@ -248,65 +248,61 @@ namespace CodeThorn {
     int numUnknownVarType=0;
     int numNonValidVarId=0;
     int numZeroTypeSize=0;
+    int numUndefinedTypeSize=0;
     for (RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       SgNode* node=*i;
       ROSE_ASSERT(node);
       if(SgClassDefinition* classDef=isSgClassDefinition(node)) {
-        //cout<<"DEBUG: class def: "<<classDef->unparseToString()<<endl;
-        //cout<<"DEBUG: Class Definition: "<<classDef->unparseToString()<<endl;
+        CodeThorn::logger[TRACE]<<"class def: "<<classDef->unparseToString()<<endl;
         std::list<SgVariableDeclaration*> dataMembers=getDataMembers(classDef);
         int offset=0;
         for(auto dataMember : dataMembers) {
-          //cout<<"DEBUG: at data member: "<<dataMember->unparseToString()<<endl;
+          CodeThorn::logger[TRACE]<<"DEBUG: at data member: "<<dataMember->unparseToString()<<endl;
           if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(dataMember)) {
             SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
             if(VariableIdMapping::isAnonymousBitfield(initName)) {
               // ROSE AST BUG WORKAROUND (ROSE-1867): anonymous bitfields are assigned the same SgSymbol
               continue;
             }
-            //cout<<"DEBUG: struct data member decl: "<<dataMember->unparseToString()<<" : ";
+            logger[TRACE]<<"struct data member decl: "<<dataMember->unparseToString()<<" : ";
             VariableId varId=AbstractValue::getVariableIdMapping()->variableId(dataMember);
             if(varId.isValid()) {
               SgType* varType=AbstractValue::getVariableIdMapping()->getType(varId);
               if(varType) {
-
-                // TODO: recursive type size initialization for nested struct/class/union members
-                // currently nested types are ignored!
                 //if(isStruct(type) ...) initialize(variableIdMapping, dataMember);
-
+                // determine if size of type is already known
                 int typeSize=AbstractValue::getVariableIdMapping()->getTypeSize(varType);
-                if(typeSize==0) {
-                  numZeroTypeSize++;
-                  //cout<<"DEBUG: Type of size 0: "<<varType->unparseToString()<<endl;
-                }
-              
-                // different varids can be mapped to the same offset
-                // every varid is inserted exactly once.
-                if(varIdTypeSizeMap.find(varId)!=varIdTypeSizeMap.end()) {
-                  // if the same varId is found, ensure that the offset
-                  // is the same again (e.g. the same headerfile is
-                  // included in 2 different files, both provided on the
-                  // command line
-                  if(varIdTypeSizeMap[varId]!=offset) {
-                    continue; // ROSE AST WORKAROUND (for BUG ROSE-1879): ignore double entries in structs which are the result of a bug
-                    // do nothing for now
-                    //cerr<<"WARNING: Data structure offset mismatch at "<<SgNodeHelper::sourceFilenameLineColumnToString(dataMember)<<":"<<dataMember->unparseToString()<<":"<<varIdTypeSizeMap[varId]<<" vs "<<offset<<endl;
-
-                    //variableIdMapping->toStream(cerr);
-                    //cerr<<"Internal error: TypeSizeMapping::initializeOffsets: varid already exists."<<endl;
-                    //cerr<<"existing var id: "<<varId.toUniqueString(variableIdMapping)<<endl;
-                    //cerr<<"Symbol: "<<variableIdMapping->getSymbol(varId)<<endl;
-                    //cerr<<"Type: "<<variableIdMapping->getType(varId)->unparseToString()<<endl;
-                    //cerr<<"Declaration: "<<node->unparseToString()<<endl;
-                    //exit(1);
-                  }                  
+                if(isUndefinedTypeSize(typeSize)) {
+                  // different varids can be mapped to the same offset
+                  // every varid is inserted exactly once.
+                  if(_typeToSizeMapping.find(varType)!=_typeToSizeMapping.end()) {
+                    // if the same varId is found, ensure that the offset
+                    // is the same again (e.g. the same headerfile is
+                    // included in 2 different files, both provided on the
+                    // command line
+                    if(_typeToSizeMapping[varType]!=offset) {
+                      continue; // ROSE AST WORKAROUND (for BUG ROSE-1879): ignore double entries in structs which are the result of a bug
+                      // do nothing for now
+                      //cerr<<"WARNING: Data structure offset mismatch at "<<SgNodeHelper::sourceFilenameLineColumnToString(dataMember)<<":"<<dataMember->unparseToString()<<":"<<varIdTypeSizeMap[varId]<<" vs "<<offset<<endl;
+                      
+                      //variableIdMapping->toStream(cerr);
+                      //cerr<<"Internal error: TypeSizeMapping::initializeOffsets: varid already exists."<<endl;
+                      //cerr<<"existing var id: "<<varId.toUniqueString(variableIdMapping)<<endl;
+                      //cerr<<"Symbol: "<<variableIdMapping->getSymbol(varId)<<endl;
+                      //cerr<<"Type: "<<variableIdMapping->getType(varId)->unparseToString()<<endl;
+                      //cerr<<"Declaration: "<<node->unparseToString()<<endl;
+                      //exit(1);
+                    }     
+                  } else {
+                    //cout<<" DEBUG Offset: "<<offset<<endl;
+                    _typeToSizeMapping.emplace(varId,offset);
+                  }
+                  // for unions the offset is not increased (it is the same for all members)
+                  if(!isUnionDeclaration(node)) {
+                    offset+=typeSize;
+                  }
                 } else {
-                  //cout<<" DEBUG Offset: "<<offset<<endl;
-                  varIdTypeSizeMap.emplace(varId,offset);
-                }
-                // for unions the offset is not increased (it is the same for all members)
-                if(!isUnionDeclaration(node)) {
-                  offset+=typeSize;
+                  // type size is already known
                 }
               } else {
                 // could not determine var type
@@ -317,12 +313,14 @@ namespace CodeThorn {
             } else {
               // non valid var id
               // throw ...
-              cerr<<"Internal Error: StructureAccessLookup: invalid varid."<<endl;
+              CodeThorn::logger[ERROR]<<"Internal Error: TypeSizeMapping (offset computation): invalid varid."<<endl;
               numNonValidVarId++;
               exit(1);
             }
+          } else {
+            // var decl is 0
           }
-        }
+        } // end of loop on all data members of a type
         // skip subtree of class definition (would revisit nodes).
         i.skipChildrenOnForward();
       }

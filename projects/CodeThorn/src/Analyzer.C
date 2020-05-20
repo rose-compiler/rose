@@ -494,9 +494,10 @@ bool CodeThorn::Analyzer::isPrecise() {
   if (isActiveGlobalTopify()) {
     return false;
   }
-  if (_ctOpt.explicitArrays==false && !_ctOpt.rers.rersBinary) {
-    return false;
-  }
+  // MS 05/20/20: removed (eliminated explicitArrays mode)
+  //if (_ctOpt.arraysNotInState==true && !_ctOpt.rers.rersBinary) {
+  //  return false;
+  //}
   return true;
 }
 
@@ -1081,15 +1082,17 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
         return createEState(targetLabel,cs,newPState,cset);
       }
 
-      if(variableIdMapping->hasArrayType(initDeclVarId) && _ctOpt.explicitArrays==false) {
+      // deactivated 05/20/2020
+      //      if(variableIdMapping->hasArrayType(initDeclVarId) && _ctOpt.explicitArrays==false) {
         // in case of a constant array the array (and its members) are not added to the state.
         // they are considered to be determined from the initializer without representing them
         // in the state
         // logger[DEBUG] <<"not adding array to PState."<<endl;
-        PState newPState=*currentEState.pstate();
-        ConstraintSet cset=*currentEState.constraints();
-        return createEState(targetLabel,cs,newPState,cset);
-      }
+      //  PState newPState=*currentEState.pstate();
+      //  ConstraintSet cset=*currentEState.constraints();
+      //  return createEState(targetLabel,cs,newPState,cset);
+      //}
+
       //SgName initDeclVarName=initDeclVar->get_name();
       //string initDeclVarNameString=initDeclVarName.getString();
       //cout << "INIT-DECLARATION: var:"<<initDeclVarNameString<<endl;

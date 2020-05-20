@@ -406,7 +406,6 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     // fall-through for default
     break;
   case 1:
-    ctOpt.explicitArrays=true;
     ctOpt.inStateStringLiterals=true;
     ctOpt.ignoreUnknownFunctions=true;
     ctOpt.ignoreFunctionPointers=true;
@@ -417,7 +416,6 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     AbstractValue::strictChecking=false;
     break;
   case 2:
-    ctOpt.explicitArrays=true;
     ctOpt.inStateStringLiterals=true;
     ctOpt.ignoreUnknownFunctions=true;
     ctOpt.ignoreFunctionPointers=false;
@@ -428,7 +426,6 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     AbstractValue::strictChecking=false;
     break;
   case 3:
-    ctOpt.explicitArrays=true;
     ctOpt.inStateStringLiterals=false;
     ctOpt.ignoreUnknownFunctions=true;
     ctOpt.ignoreFunctionPointers=false;
@@ -439,7 +436,6 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     AbstractValue::strictChecking=false;
     break;
   case 4:
-    ctOpt.explicitArrays=true;
     ctOpt.inStateStringLiterals=false;
     ctOpt.ignoreUnknownFunctions=true;
     ctOpt.ignoreFunctionPointers=false;
@@ -450,7 +446,6 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     AbstractValue::strictChecking=true;
     break;
   case 11:
-    ctOpt.explicitArrays=true;
     ctOpt.inStateStringLiterals=true;
     ctOpt.ignoreUnknownFunctions=true;
     ctOpt.ignoreFunctionPointers=false;
@@ -653,7 +648,6 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.equiCheck.dumpSortedFileName.size()>0 || ctOpt.equiCheck.dumpNonSortedFileName.size()>0) {
       analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
-      ctOpt.explicitArrays=false;
       if(analyzer->getNumberOfThreadsToUse()>1) {
         logger[ERROR] << "multi threaded rewrite not supported yet."<<endl;
         exit(1);
@@ -864,7 +858,6 @@ int main( int argc, char * argv[] ) {
       // do specialization and setup data structures
       analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
-      analyzer->getOptionsRef().explicitArrays=false;
       analyzer->setOptions(ctOpt);
       //TODO1: refactor into separate function
       int numSubst=0;
