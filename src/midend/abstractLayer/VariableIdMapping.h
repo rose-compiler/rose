@@ -70,7 +70,6 @@ namespace CodeThorn {
     VariableId variableId(SgInitializedName* initName);
     VariableId variableId(SgSymbol* sym);
     VariableId variableIdFromCode(int);
-    VariableId variableIdOfArrayElement(VariableId arrayVar, int elemIndex);
     SgSymbol* getSymbol(VariableId varId);
     SgType* getType(VariableId varId);
 

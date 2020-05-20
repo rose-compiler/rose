@@ -177,8 +177,8 @@ void DefUseVarsInfo::addAllArrayElements(SgInitializedName* array_name, Variable
   for (int e = 0; e < elements; e++) {
     cout<<"Error: DefUseVarsInfo::addAllArrayElements: outdated use of array element ids. Needs to be updated to abstract values."<<endl;
     exit(1);
-    VariableId element_id = vidm.variableIdOfArrayElement(array_var_id, e);
-    info.first.insert(VariableIdInfo(element_id, sgn_type_info_elem));
+    //VariableId element_id = vidm.variableIdOfArrayElement(array_var_id, e);
+    //info.first.insert(VariableIdInfo(element_id, sgn_type_info_elem));
   }
 }
 

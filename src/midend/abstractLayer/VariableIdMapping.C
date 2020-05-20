@@ -464,14 +464,6 @@ VariableId VariableIdMapping::variableId(SgInitializedName* initName) {
     return VariableId(); // always defaults to a value different to all mapped values
 }
 
-VariableId VariableIdMapping::variableIdOfArrayElement(VariableId arrayVar, int elemIndex) {
-  int idCode = arrayVar.getIdCode();
-  int elemIdCode = idCode + elemIndex;
-  VariableId elemVarId;
-  elemVarId.setIdCode(elemIdCode);
-  return elemVarId;
-}
-
 // Returns a valid VariableId corresponding to *ref*
 // if indices in *ref* are all integers and sizes of
 // all array dimensions are known.
@@ -522,7 +514,7 @@ VariableId VariableIdMapping::idForArrayRef(SgPntrArrRefExp* ref)
   }
 
   VariableId varId = variableId(arrVar);
-  result = variableIdOfArrayElement(varId, index);
+  result = varId; //MS 05/20/020: modified to always return array id. previously: variableIdOfArrayElement(varId, index);
   return result;
 }
 
