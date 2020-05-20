@@ -224,7 +224,7 @@ printPath(std::ostream &out, const FeasiblePath &fpAnalysis, const P2::CfgPath &
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    // Figure out how many instructions to list in the path. We want to show the path up and including the last occurrence
+    // Figure out how many instructions to list in the path. We want to show the path up to and including the last occurrence
     // of lastInsn.
     std::pair<size_t, size_t> lastIndices = path.lastInsnIndex(lastInsn);
     size_t lastVertexIdx = lastIndices.first;
@@ -252,6 +252,8 @@ printPath(std::ostream &out, const FeasiblePath &fpAnalysis, const P2::CfgPath &
             P2::BasicBlock::Ptr bb = vertex->value().bblock();
             P2::Function::Ptr function = partitioner.functionsOwningBasicBlock(bb->address()).front();
             out <<"    vertex #" <<vertexIdx <<" in " <<function->printableName() <<"\n";
+            if (bb->sourceLocation())
+                out <<"    at " <<bb->sourceLocation() <<"\n";
             BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
                 std::string idxStr = (boost::format("%-6d") % insnIdx++).str();
                 out <<"      #" <<idxStr <<" " <<unparser->unparse(partitioner, insn) <<"\n";
