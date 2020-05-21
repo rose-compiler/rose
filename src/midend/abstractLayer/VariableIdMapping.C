@@ -59,7 +59,10 @@ size_t VariableIdMapping::getArrayDimensionsFromInitializer(SgAggregateInitializ
   return result;
 }
 
-VariableIdMapping::VariableIdMapping():modeVariableIdForEachArrayElement(false) {
+VariableIdMapping::VariableIdMapping() {
+}
+
+VariableIdMapping::~VariableIdMapping() {
 }
 
 SgVariableDeclaration* VariableIdMapping::getVariableDeclaration(VariableId varId) {
@@ -137,11 +140,11 @@ void VariableIdMapping::toStream(ostream& os) {
     os<<i
       <<","<<varId.toString(this)
       //<<","<<SgNodeHelper::symbolToString(mappingVarIdToInfo[i].sym)  
-      <<","<<mappingVarIdToInfo[variableIdFromCode(i)].sym
+      //<<","<<mappingVarIdToInfo[variableIdFromCode(i)]._sym
       <<","<<getNumberOfElements(varId)
       <<","<<getElementSize(varId)
       <<endl;
-    ROSE_ASSERT(modeVariableIdForEachArrayElement?true:mappingSymToVarId[mappingVarIdToInfo[variableIdFromCode(i)].sym]==variableIdFromCode(i));
+    //ROSE_ASSERT(modeVariableIdForEachArrayElement?true:mappingSymToVarId[mappingVarIdToInfo[variableIdFromCode(i)].sym]==variableIdFromCode(i));
   }
 }
 
@@ -309,6 +312,16 @@ size_t VariableIdMapping::getElementSize(VariableId variableId) {
   return mappingVarIdToInfo[variableId].elementSize;
 }
 
+void VariableIdMapping::setOffset(VariableId variableId, int size) {
+  ROSE_ASSERT(variableId.isValid());
+  mappingVarIdToInfo[variableId].offset=size;
+}
+
+int VariableIdMapping::getOffset(VariableId variableId) {
+  ROSE_ASSERT(variableId.isValid());
+  return mappingVarIdToInfo[variableId].offset;
+}
+
 bool VariableIdMapping::isAnonymousBitfield(SgInitializedName* initName) {
   if(SgDeclarationStatement* declStmt=initName->get_declaration ()) { 
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(declStmt)) { 
@@ -334,6 +347,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
   list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
   for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
     RoseAst ast(*k);
+    ast.setWithTemplates(true);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       // Try to find a symbol, type, and initializer of the current node:
       SgSymbol* sym = 0;
@@ -590,17 +604,17 @@ void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, int arraySize) {
     mappingSymToVarId[sym]=variableIdFromCode(newVariableIdCode);
     VariableId tmpVarId=variableIdFromCode(newVariableIdCode);
 
-    if(getModeVariableIdForEachArrayElement()) {
-      // assign one var-id for each array element (in addition to the variable id of the array itself!)
-      for(int i=0;i<arraySize;i++) {
-        size_t newArrayElemVariableIdCode=mappingVarIdToInfo.size();
-        VariableId newArrayElemVarId=variableIdFromCode(newArrayElemVariableIdCode);
-        mappingVarIdToInfo[newArrayElemVarId].sym=sym;
-      }
-    } else {
+    //if(getModeVariableIdForEachArrayElement()) {
+    //  // assign one var-id for each array element (in addition to the variable id of the array itself!)
+    //  for(int i=0;i<arraySize;i++) {
+    //    size_t newArrayElemVariableIdCode=mappingVarIdToInfo.size();
+    //    VariableId newArrayElemVarId=variableIdFromCode(newArrayElemVariableIdCode);
+    //    mappingVarIdToInfo[newArrayElemVarId].sym=sym;
+    //  }
+    //} else {
       // assign one vari-id for entire array
       mappingVarIdToInfo[tmpVarId].sym=sym;
-    }
+      //}
     // size needs to be set *after* mappingVarIdToInfo[].sym has been updated
     setNumberOfElements(tmpVarId,arraySize);
   } else {
@@ -671,10 +685,11 @@ SgName VariableIdMapping::UniqueTemporaryVariableSymbol::get_name() const {
 }
 
 VariableIdMapping::VariableIdInfo::VariableIdInfo():
+  sym(0),
   numberOfElements(0),
   elementSize(0),
-  offset(0),
-  sym(0) {
+  offset(-1)
+{
 }
 
 /*! 
@@ -782,6 +797,7 @@ VariableIdMapping::VariableIdSet VariableIdMapping::determineVariableIdsOfSgInit
 VariableIdMapping::VariableIdSet VariableIdMapping::variableIdsOfAstSubTree(SgNode* node) {
   VariableIdSet vset;
   RoseAst ast(node);
+  ast.setWithTemplates(true);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     VariableId vid; // creates default invalid id (isValid(vid)==false).
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
@@ -834,6 +850,7 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
   string prefix="$string";
   int num=1;
   RoseAst ast(root);
+  ast.setWithTemplates(true);
   for (RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     SgNode* node=*i;
     if(SgStringVal* stringVal=isSgStringVal(node)) {
@@ -848,6 +865,7 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
         variableIdToSgStringValueMapping[newVariableId]=stringVal;
         // the size of the memory region of a string is its length + 1 (for terminating 0).
         setNumberOfElements(newVariableId,stringVal->get_value().size()+1);
+        setElementSize(newVariableId,1);
         // ensure that maps being built for mapping in both directions are of same size
         ROSE_ASSERT(sgStringValueToVariableIdMapping.size()==variableIdToSgStringValueMapping.size());
         //cout<<"registered."<<endl;
@@ -858,11 +876,11 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
   }
 }
 
-void VariableIdMapping::setModeVariableIdForEachArrayElement(bool active) {
-  ROSE_ASSERT(mappingVarIdToInfo.size()==0); 
-  modeVariableIdForEachArrayElement=active;
-}
+//void VariableIdMapping::setModeVariableIdForEachArrayElement(bool active) {
+//  ROSE_ASSERT(mappingVarIdToInfo.size()==0); 
+//  modeVariableIdForEachArrayElement=active;
+//}
 
-bool VariableIdMapping::getModeVariableIdForEachArrayElement() {
-  return modeVariableIdForEachArrayElement;
-}
+//bool VariableIdMapping::getModeVariableIdForEachArrayElement() {
+//  return modeVariableIdForEachArrayElement;
+//}
