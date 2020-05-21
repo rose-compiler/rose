@@ -317,6 +317,7 @@ void ExprWalker::visit(SgPntrArrRefExp* ref)
   SgExpression* lhs_addr = ref->get_lhs_operand(); // get the address computation expr of the array
   SgExpression* rhs_expr = ref->get_rhs_operand(); // get the index expression
 
+  /* MS 5/20/2020: this mode has been removed
   if (vidm.getModeVariableIdForEachArrayElement()) {
     // Handle array elements specifically.
     // Used in RD analysis.
@@ -343,7 +344,7 @@ void ExprWalker::visit(SgPntrArrRefExp* ref)
     }
     return;
   }
-
+  */
   DefUseVarsInfo lduvi, rduvi;
   // check for the type of address computation expr
   // if p is pointer type in p[expr]
@@ -998,7 +999,7 @@ void ExprWalker::visit(SgVarRefExp* sgn)
   VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
   VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
 
-  if(vidm.getModeVariableIdForEachArrayElement() && sgn_type_info == arrayType) {
+  if(false /*vidm.getModeVariableIdForEachArrayElement() && sgn_type_info == arrayType*/) {
     // If found a reference to whole array, def/use all its elements.
     duvi.addAllArrayElements(SageInterface::convertRefToInitializedName(sgn), vidm, isModExpr);
   } else if(isModExpr) {
@@ -1033,7 +1034,7 @@ void ExprWalker::visit(SgInitializedName* sgn)
   // determine the type info
   VariableIdTypeInfo sgn_type_info = getVariableIdTypeInfo(vid, vidm);
 
-  if(vidm.getModeVariableIdForEachArrayElement() && sgn_type_info == arrayType)
+  if(false /*vidm.getModeVariableIdForEachArrayElement() && sgn_type_info == arrayType*/)
     // When defining an array, define all its elements.
     duvi.addAllArrayElements(sgn, vidm, true);
   else

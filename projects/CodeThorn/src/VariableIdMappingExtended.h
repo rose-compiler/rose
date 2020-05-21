@@ -7,6 +7,7 @@
 namespace CodeThorn {
   class VariableIdMappingExtended : public VariableIdMapping {
   public:
+    void computeVariableSymbolMapping(SgProject* project) override;
     void computeTypeSizes();
     // direct lookup
     unsigned int getTypeSize(CodeThorn::BuiltInType);

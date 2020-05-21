@@ -3,8 +3,16 @@
 #include "CodeThornLib.h"
 
 using namespace Sawyer::Message;
+using namespace std;
 
 namespace CodeThorn {
+
+  void VariableIdMappingExtended::computeVariableSymbolMapping(SgProject* project) {
+    cout<<"DEBUG: extended variable symbol mapping!"<<endl;
+    VariableIdMapping::computeVariableSymbolMapping(project);
+    computeTypeSizes();
+  }
+
   unsigned int VariableIdMappingExtended::getTypeSize(CodeThorn::BuiltInType biType) {
     CodeThorn::logger[TRACE]<<"getTypeSize(BuiltInType)"<<std::endl;
     return typeSizeMapping.getTypeSize(biType);
@@ -30,7 +38,13 @@ namespace CodeThorn {
     for(auto vid : varIdSet) {
       SgType* varType=getType(vid);
       if(varType) {
-        typeSizeMapping.determineTypeSize(varType);
+        if(SgArrayType* arrayType=isSgArrayType(varType)) {
+          setElementSize(vid,typeSizeMapping.determineElementTypeSize(arrayType));
+          setNumberOfElements(vid,typeSizeMapping.determineNumberOfElements(arrayType));
+        } else {
+          setElementSize(vid,typeSizeMapping.determineTypeSize(varType));
+          setNumberOfElements(vid,1);
+        }
       }
     }
   }

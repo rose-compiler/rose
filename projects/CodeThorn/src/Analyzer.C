@@ -65,7 +65,7 @@ CodeThorn::Analyzer::Analyzer():
   _analysisTimer.start();
   _analysisTimer.stop();
   variableIdMapping=new VariableIdMappingExtended();
-  variableIdMapping->setModeVariableIdForEachArrayElement(true);
+  //variableIdMapping->setModeVariableIdForEachArrayElement(true);
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
   }
@@ -1592,8 +1592,9 @@ void CodeThorn::Analyzer::initializeStringLiteralsInState(PState& initialPState)
 }
 
 void CodeThorn::Analyzer::initializeVariableIdMapping(SgProject* project) {
+  cout<<"DEBUG: VIM!!!"<<endl;
   variableIdMapping->computeVariableSymbolMapping(project);
-  variableIdMapping->computeTypeSizes(); // only available in extended VIM
+  //variableIdMapping->computeTypeSizes(); // only available in extended VIM
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   AbstractValue::setVariableIdMapping(getVariableIdMapping());
   functionIdMapping.computeFunctionSymbolMapping(project);
