@@ -470,6 +470,7 @@ SgJovialCompoolStatement
 SgJovialForThenStatement
 SgJovialDefineDeclaration
 SgJovialDirectiveStatement
+SgJovialOverlayDeclaration
 SgJovialTableStatement
 SgKeyDatumPair
 SgCudaKernelExecConfig
