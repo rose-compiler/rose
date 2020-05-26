@@ -143,6 +143,7 @@ void VariableIdMapping::toStream(ostream& os) {
       //<<","<<mappingVarIdToInfo[variableIdFromCode(i)]._sym
       <<","<<getNumberOfElements(varId)
       <<","<<getElementSize(varId)
+      <<","<<getOffset(varId)
       <<endl;
     //ROSE_ASSERT(modeVariableIdForEachArrayElement?true:mappingSymToVarId[mappingVarIdToInfo[variableIdFromCode(i)].sym]==variableIdFromCode(i));
   }

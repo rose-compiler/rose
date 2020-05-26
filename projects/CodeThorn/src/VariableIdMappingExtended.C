@@ -8,9 +8,9 @@ using namespace std;
 namespace CodeThorn {
 
   void VariableIdMappingExtended::computeVariableSymbolMapping(SgProject* project) {
-    cout<<"DEBUG: extended variable symbol mapping!"<<endl;
     VariableIdMapping::computeVariableSymbolMapping(project);
     computeTypeSizes();
+    typeSizeMapping.computeOffsets(project,this);
   }
 
   unsigned int VariableIdMappingExtended::getTypeSize(CodeThorn::BuiltInType biType) {

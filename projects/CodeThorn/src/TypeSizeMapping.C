@@ -105,7 +105,7 @@ namespace CodeThorn {
     case V_SgReferenceType:
       return getTypeSize(BITYPE_REFERENCE);
     case V_SgArrayType: {
-      CodeThorn::logger[INFO]<<"DEBUG: ARRAYTYPE: "<<sgType->unparseToString()<<endl;
+      CodeThorn::logger[TRACE]<<"DEBUG: ARRAYTYPE: "<<sgType->unparseToString()<<endl;
       SgArrayType* arrayType=isSgArrayType(sgType);
       CodeThorn::logger[TRACE]<<"DEBUG: ARRAYTYPE: p1"<<endl;
       CodeThorn::TypeSize elementTypeSize=determineElementTypeSize(arrayType);
@@ -241,15 +241,17 @@ namespace CodeThorn {
     return false;
   }
 
-  void TypeSizeMapping::initializeOffsets(SgProject* root) {
-#if 0
+  void TypeSizeMapping::computeOffsets(SgProject* root,CodeThorn::VariableIdMappingExtended* vim) {
+#if 1
     ROSE_ASSERT(root);
+    ROSE_ASSERT(vim);
     RoseAst ast(root);
     int numUnknownVarType=0;
     int numNonValidVarId=0;
     int numZeroTypeSize=0;
     int numUndefinedTypeSize=0;
     for (RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+#if 1
       SgNode* node=*i;
       ROSE_ASSERT(node);
       if(SgClassDefinition* classDef=isSgClassDefinition(node)) {
@@ -258,20 +260,21 @@ namespace CodeThorn {
         int offset=0;
         for(auto dataMember : dataMembers) {
           CodeThorn::logger[TRACE]<<"DEBUG: at data member: "<<dataMember->unparseToString()<<endl;
+#if 1
           if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(dataMember)) {
             SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
             if(VariableIdMapping::isAnonymousBitfield(initName)) {
               // ROSE AST BUG WORKAROUND (ROSE-1867): anonymous bitfields are assigned the same SgSymbol
               continue;
             }
-            logger[TRACE]<<"struct data member decl: "<<dataMember->unparseToString()<<" : ";
-            VariableId varId=AbstractValue::getVariableIdMapping()->variableId(dataMember);
+            CodeThorn::logger[TRACE]<<"struct data member decl: "<<dataMember->unparseToString()<<" : ";
+            VariableId varId=vim->variableId(dataMember);
             if(varId.isValid()) {
-              SgType* varType=AbstractValue::getVariableIdMapping()->getType(varId);
+              SgType* varType=vim->getType(varId);
               if(varType) {
                 //if(isStruct(type) ...) initialize(variableIdMapping, dataMember);
                 // determine if size of type is already known
-                int typeSize=AbstractValue::getVariableIdMapping()->getTypeSize(varType);
+                int typeSize=vim->getTypeSize(varType);
                 if(isUndefinedTypeSize(typeSize)) {
                   // different varids can be mapped to the same offset
                   // every varid is inserted exactly once.
@@ -280,7 +283,7 @@ namespace CodeThorn {
                     // is the same again (e.g. the same headerfile is
                     // included in 2 different files, both provided on the
                     // command line
-                    if(_typeToSizeMapping[varType]!=offset) {
+                    if(_typeToSizeMapping[varType]!=(size_t)offset) {
                       continue; // ROSE AST WORKAROUND (for BUG ROSE-1879): ignore double entries in structs which are the result of a bug
                       // do nothing for now
                       //cerr<<"WARNING: Data structure offset mismatch at "<<SgNodeHelper::sourceFilenameLineColumnToString(dataMember)<<":"<<dataMember->unparseToString()<<":"<<varIdTypeSizeMap[varId]<<" vs "<<offset<<endl;
@@ -292,10 +295,11 @@ namespace CodeThorn {
                       //cerr<<"Type: "<<variableIdMapping->getType(varId)->unparseToString()<<endl;
                       //cerr<<"Declaration: "<<node->unparseToString()<<endl;
                       //exit(1);
-                    }     
+                    }
                   } else {
-                    //cout<<" DEBUG Offset: "<<offset<<endl;
-                    _typeToSizeMapping.emplace(varId,offset);
+                    // typesize is unknown, invalidate offset computation
+                    offset=-1;
+                    break;
                   }
                   // for unions the offset is not increased (it is the same for all members)
                   if(!isUnionDeclaration(node)) {
@@ -303,6 +307,10 @@ namespace CodeThorn {
                   }
                 } else {
                   // type size is already known
+                  vim->setOffset(varId,offset);
+                  if(!isUnionDeclaration(node)) {
+                    offset+=typeSize;
+                  }
                 }
               } else {
                 // could not determine var type
@@ -312,24 +320,25 @@ namespace CodeThorn {
               }
             } else {
               // non valid var id
-              // throw ...
-              CodeThorn::logger[ERROR]<<"Internal Error: TypeSizeMapping (offset computation): invalid varid."<<endl;
+              CodeThorn::logger[WARN]<<"TypeSizeMapping (offset computation): invalid varid at "
+                                     <<SgNodeHelper::sourceFilenameLineColumnToString(varDecl)<<endl;
               numNonValidVarId++;
-              exit(1);
             }
           } else {
             // var decl is 0
           }
+#endif
         } // end of loop on all data members of a type
         // skip subtree of class definition (would revisit nodes).
         i.skipChildrenOnForward();
       }
-    }
-#if 0
-    cerr<<"DEBUG: Number of unknown var types: "<<numUnknownVarType<<endl;
-    cerr<<"DEBUG: Number of non-valid varids: "<<numNonValidVarId<<endl;
-    cerr<<"DEBUG: Number of types with 0 size: "<<numZeroTypeSize<<endl;
-    cerr<<"DEBUG: typesize map size: "<<varIdTypeSizeMap.size()<<endl;
+#endif
+    }  // iterate on all declarations
+#if 1
+    CodeThorn::logger[INFO]<<"Number of unknown var types: "<<numUnknownVarType<<endl;
+    CodeThorn::logger[INFO]<<"Number of non-valid varids: "<<numNonValidVarId<<endl;
+    CodeThorn::logger[INFO]<<"Number of types with 0 size: "<<numZeroTypeSize<<endl;
+    //CodeThorn::logger[INFO]<<"Typesize map size: "<<_typeToSizeMapping.size()<<endl;
 #endif
 #endif
   }

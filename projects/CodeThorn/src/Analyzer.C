@@ -1592,9 +1592,7 @@ void CodeThorn::Analyzer::initializeStringLiteralsInState(PState& initialPState)
 }
 
 void CodeThorn::Analyzer::initializeVariableIdMapping(SgProject* project) {
-  cout<<"DEBUG: VIM!!!"<<endl;
   variableIdMapping->computeVariableSymbolMapping(project);
-  //variableIdMapping->computeTypeSizes(); // only available in extended VIM
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
   AbstractValue::setVariableIdMapping(getVariableIdMapping());
   functionIdMapping.computeFunctionSymbolMapping(project);

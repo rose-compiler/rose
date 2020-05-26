@@ -3,14 +3,9 @@
 
 #include <vector>
 #include <unordered_map>
-#include "VariableIdMapping.h"
 
 namespace CodeThorn {
-
-  // typesize in bytes
-  typedef long int TypeSize;
-  
-  enum BuiltInType {
+enum BuiltInType {
     BITYPE_BOOL,
     BITYPE_CHAR,   BITYPE_CHAR16,   BITYPE_CHAR32,
     BITYPE_SHORT,  BITYPE_INT,      BITYPE_LONG,       BITYPE_LONG_LONG,
@@ -18,6 +13,15 @@ namespace CodeThorn {
     BITYPE_POINTER,BITYPE_REFERENCE,
     BITYPE_SIZE
   };
+}
+
+namespace CodeThorn {
+
+  class VariableIdMappingExtended;
+  class VariableId;
+  
+  // typesize in bytes
+  typedef long int TypeSize;
   
   class TypeSizeMapping {
   public:
@@ -48,7 +52,7 @@ namespace CodeThorn {
     // returns the size of the type pointed to.
     CodeThorn::TypeSize determineTypeSizePointedTo(SgPointerType* sgType);
 
-    void initializeOffsets(SgProject* root);
+    void computeOffsets(SgProject* project,CodeThorn::VariableIdMappingExtended* vim);
     std::list<SgVariableDeclaration*> getDataMembers(SgClassDefinition* classDef);
     int getOffset(CodeThorn::VariableId varId);
     // returns true if the variable is a member of a struct/class/union.
@@ -57,7 +61,7 @@ namespace CodeThorn {
   protected:
     std::vector<CodeThorn::TypeSize> _mapping={1,
                                                1,2,4,
-                                               1,2,4,8,
+                                               2,4,8,8,
                                                4,8,16,
                                                8,8
     };
