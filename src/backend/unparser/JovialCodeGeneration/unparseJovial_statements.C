@@ -1110,6 +1110,18 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
            SgJovialTableStatement* table_decl = dynamic_cast<SgJovialTableStatement*>(def_decl);
            ASSERT_not_null(table_decl);
 
+        // WordsPerEntry for anonymous table declarations
+           if (table_decl->get_has_table_entry_size())
+              {
+                 // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
+                 if (table_decl->get_table_entry_size() != NULL)
+                    {
+                       curprint("W ");
+                       unparseExpression(table_decl->get_table_entry_size(), info);
+                    }
+                 else curprint("V");
+              }
+
            SgClassDefinition* table_def = table_decl->get_definition();
            ASSERT_not_null(table_def);
 
