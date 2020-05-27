@@ -736,7 +736,20 @@ int main( int argc, char * argv[] ) {
         }
       }
     }
-
+    if(ctOpt.info.astTraversalCSVFileName.size()>0) {
+      RoseAst ast(sageProject);
+      std::ofstream myfile;
+      myfile.open(ctOpt.info.astTraversalCSVFileName.c_str(),std::ios::out);
+      for(auto n : ast) {
+        myfile<<n->class_name();
+        if(ctOpt.info.astTraversalCSVMode>=2) {
+          myfile<<","<<SgNodeHelper::sourceFilenameLineColumnToString(n);
+        }
+        myfile<<endl;
+      }
+      myfile.close();
+      exit(0);
+    }
     if(ctOpt.status) {
       cout<<"STATUS: analysis started."<<endl;
     }
