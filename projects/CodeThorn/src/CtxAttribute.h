@@ -1,7 +1,7 @@
 #ifndef CTX_ATTRIBUTE_H
 #define CTX_ATTRIBUTE_H 1
 
-//! \author Peter Pirkelbauer
+/// \author Peter Pirkelbauer
 
 #include <iosfwd>
 

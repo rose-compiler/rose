@@ -9,9 +9,9 @@ namespace CodeThorn
 
 namespace
 {
-  //! REVERSING the ordering, sorts Label() first;
-  //!   which is a requirement for the use of lower_bound and upper_bound 
-  //!   in FiniteReturnHandler.
+  /// REVERSING the ordering, sorts Label() first;
+  ///   which is a requirement for the use of lower_bound and upper_bound 
+  ///   in FiniteReturnHandler.
   struct FiniteLabelComparator
   {
     bool operator()(Label lhs, Label rhs)
@@ -20,23 +20,23 @@ namespace
     }
   };
   
-  //! \brief copies elements from an input range to an output range,
-  //!        iff pred(element) is true. The input type and output type
-  //!        can differ.
-  //! \tparam InputIterator iterator type of the input range
-  //! \tparam OutputIterator iterator type of the output range
-  //! \tparam Predicate bool Predicate::operator()(InputIterator::reference) returns true,
-  //!         if the element should be copied
-  //! \tparam Op transformation operation,
-  //!         OutputIterator::value_type Op::operator()(InputIterator::reference)
-  //! \param  first an InputIterator, beginning of the input range
-  //! \param  last  an InputIterator, one past the end element of the input range
-  //! \param  sink  an OutputIterator, beginning of the output range
-  //! \param  pred  a Predicate
-  //! \param  op    an Operation
-  //! \details writes op(*first) to the output range if pred(*first) is true.
-  //!
-  //!         see also: std::transform, std::remove_copy_if
+  /// \brief copies elements from an input range to an output range,
+  ///        iff pred(element) is true. The input type and output type
+  ///        can differ.
+  /// \tparam InputIterator iterator type of the input range
+  /// \tparam OutputIterator iterator type of the output range
+  /// \tparam Predicate bool Predicate::operator()(InputIterator::reference) returns true,
+  ///         if the element should be copied
+  /// \tparam Op transformation operation,
+  ///         OutputIterator::value_type Op::operator()(InputIterator::reference)
+  /// \param  first an InputIterator, beginning of the input range
+  /// \param  last  an InputIterator, one past the end element of the input range
+  /// \param  sink  an OutputIterator, beginning of the output range
+  /// \param  pred  a Predicate
+  /// \param  op    an Operation
+  /// \details writes op(*first) to the output range if pred(*first) is true.
+  ///
+  ///         see also: std::transform, std::remove_copy_if
   template <class InputIterator, class OutputIterator, class Predicate, class Op>
   void transform_if(InputIterator first, InputIterator last, OutputIterator sink, Predicate pred, Op op)
   {
@@ -91,7 +91,7 @@ namespace
   {
     ROSE_ASSERT(Labeler::NO_LABEL != invlbl && Labeler::NO_LABEL != retlbl);
 
-    return astNode(labeler, invlbl) == astNode(labeler, retlbl);
+    return labeler.getNode(invlbl) == labeler.getNode(retlbl);
   }
 
   struct InfiniteReturnHandler
@@ -120,8 +120,8 @@ namespace
   };
 
 
-  //! extracts the call string from a lattice element and forwards it for comparison.
-  bool ltProjected(const FiniteCallString& retctx, const std::pair<const FiniteCallString, Lattice*>& callctx)
+  /// extracts the call string from a lattice element and forwards it for comparison.
+  bool cmpCalleeCallerCtx(const FiniteCallString& retctx, const std::pair<const FiniteCallString, Lattice*>& callctx)
   {
     return std::lexicographical_compare( retctx.rbegin(), retctx.rend(), 
                                          callctx.first.rbegin(), callctx.first.rend()-1,
@@ -129,7 +129,7 @@ namespace
                                        );
   }
 
-  //! clones a lattice element
+  /// clones a lattice element
   struct LatticeCloner
   {
       LatticeCloner(PropertyStateFactory& propfact, Lattice& lat)
@@ -149,8 +149,8 @@ namespace
   };
 
 #if OBSOLETE_CODE
-  //! true if these string lengths indicate a caller/callee relationship
-  //! on FiniteCallString
+  /// true if these string lengths indicate a caller/callee relationship
+  /// on FiniteCallString
   bool callerCalleeLengths(size_t caller, size_t callee, size_t MAXLEN)
   {
     //~ std::cerr << caller << " / " << callee << " : " << MAXLEN << std::endl;
@@ -161,10 +161,10 @@ namespace
   }
 #endif /* OBSOLETE_CODE */
 
-  //! tests if this is a prefix to target
-  //! \details
-  //!   tests a call string (sub-) range and determines
-  //!   whether target could be called from this.
+  /// tests if this is a prefix to target
+  /// \details
+  ///   tests a call string (sub-) range and determines
+  ///   whether target could be called from this.
   bool callerCalleePrefix(const FiniteCallString& caller, const FiniteCallString& callee)
   {
     //~ static const size_t MAX_OVERLAP = CTX_CALL_STRING_MAX_LENGTH-1;
@@ -185,33 +185,20 @@ namespace
 
   struct IsCallerCallee
   {
-#if OBSOLETE_CODE
-    bool
-    operator()(const std::pair<const FiniteCallString, Lattice*>& callsite)
-    {
-      const FiniteCallString& caller    = callsite.first;
-
-      bool res1 = callerCalleeLengths(caller.size(), retctx.size(), CTX_CALL_STRING_MAX_LENGTH);
-      bool res2 = res1 && callerCalleePrefix(caller, retctx);
-
-      return res2;
-    }
-#endif /* OBSOLETE_CODE */
-
     bool
     operator()(const std::pair<const FiniteCallString, Lattice*>& callsite)
     {
       const FiniteCallString& caller = callsite.first;
-
+      
       return callerCalleePrefix(caller, retctx);  
     }
 
     FiniteCallString retctx;
   };
 
-  //! A functor that is invoked for every lattice flowing over a return edge.
-  //! - Every valid return context is mapped onto every feasible context in the caller
-  //! - A context is feasible if it has postfix(precall-context) == prefix(return-context)
+  /// A functor that is invoked for every lattice flowing over a return edge.
+  /// - Every valid return context is mapped onto every feasible context in the caller
+  /// - A context is feasible if it has postfix(precall-context) == prefix(return-context)
   struct FiniteReturnHandler
   {
       FiniteReturnHandler( const CtxLattice<FiniteCallString>& prelat,
@@ -229,6 +216,7 @@ namespace
 
         if (!entry.first.isValidReturn(labeler, label))
         {
+          //~ std::cerr << "aa" << std::endl;
           return;
         }
 
@@ -239,7 +227,12 @@ namespace
         ROSE_ASSERT(retctx.size() == CTX_CALL_STRING_MAX_LENGTH-1);
 
         const_iterator prelow = pre.lower_bound(retctx);
-        const_iterator prepos = std::upper_bound( prelow, pre.end(), retctx, ltProjected );
+        const_iterator prepos = std::upper_bound(prelow, pre.end(), retctx, cmpCalleeCallerCtx);
+        
+        //~ std::cerr << "dist: " << std::distance(prelow, prepos) 
+                  //~ << " @" << labeler.getNode(label)->unparseToString() 
+                  //~ << entry.second->toString() << std::endl;
+                  //~ << std::endl; 
 
         transform_if( prelow, prepos,
                       std::inserter(tgt, tgt.end()),
@@ -361,7 +354,8 @@ void allCallReturn( const CtxLattice<InfiniteCallString>& src,
   //~ dbgPrintContexts(tgt.begin(), tgt.end());
 }
 
-bool operator<(const InfiniteCallString& lhs, const InfiniteCallString& rhs)
+bool 
+InfiniteCallStringComparator::operator()(const InfiniteCallString& lhs, const InfiniteCallString& rhs) const
 {
   typedef InfiniteCallString::const_reverse_iterator rev_iterator;
   typedef std::pair<rev_iterator, rev_iterator>      rev_terator_pair;
@@ -494,8 +488,9 @@ void allCallReturn( const CtxLattice<FiniteCallString>& src,
   //~ dbgPrintContexts(tgt.begin(), tgt.end());
 }
 
-//! full comparison of the call string
-bool operator<(const FiniteCallString& lhs, const FiniteCallString& rhs)
+/// full comparison of the call string
+bool 
+FiniteCallStringComparator::operator()(const FiniteCallString& lhs, const FiniteCallString& rhs) const
 {
   return std::lexicographical_compare( lhs.rbegin(), lhs.rend(), 
                                        rhs.rbegin(), rhs.rend(),
