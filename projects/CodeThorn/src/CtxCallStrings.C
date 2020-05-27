@@ -9,6 +9,17 @@ namespace CodeThorn
 
 namespace
 {
+  //! REVERSING the ordering, sorts Label() first;
+  //!   which is a requirement for the use of lower_bound and upper_bound 
+  //!   in FiniteReturnHandler.
+  struct FiniteLabelComparator
+  {
+    bool operator()(Label lhs, Label rhs)
+    {
+      return lhs.getId() > rhs.getId();
+    }
+  };
+  
   //! \brief copies elements from an input range to an output range,
   //!        iff pred(element) is true. The input type and output type
   //!        can differ.
@@ -108,43 +119,14 @@ namespace
       Label                 label;
   };
 
-#if OBSOLETE_CODE
-  //! Compares relevant call string segments, relevant(@ref callctx) < @ref returnctx
-  //! \param callctx   the call string at the call site
-  //! \param returnctx the already shortened string at the return site
-  //! \details
-  //!   On a call return, a call string is shortened. If the call string
-  //!   was already at full capacity, we map the result on all substrings
-  //!   that have the same postfix.
-  bool ltProjected(const FiniteCallString& callctx, const FiniteCallString& returnctx)
-  {
-    int dif = static_cast<int>(callctx.size()) - returnctx.size();
-
-    // if the call context is shorter, we still want to include it in the
-    //   set of candidates.
-    if (dif < 0) dif = 0;
-
-    //~ ROSE_ASSERT(dif <= 1);
-    // the length difference can be greater than one
-    // (i.e., in recursive functions whose call context is initially very short.
-    // \todo \pp discuss with Markus whether we could have an additional
-    //           pseudo label min that we can use for filling the initial
-    //           call string.
-    return std::lexicographical_compare( callctx.rbegin(),   callctx.rend()-dif,
-                                         returnctx.rbegin(), returnctx.rend()
-                                       );
-  }
-#endif /* OBSOLETE_CODE */
 
   //! extracts the call string from a lattice element and forwards it for comparison.
-  //! \note ltProjectedFull is not overloaded to syntactically simplify taking its address
-  bool ltProjectedFull(const FiniteCallString& retctx, const std::pair<const FiniteCallString, Lattice*>& callctx)
+  bool ltProjected(const FiniteCallString& retctx, const std::pair<const FiniteCallString, Lattice*>& callctx)
   {
-#if OBSOLETE_CODE
-    return ltProjected(lhs, rhs.first);
-#endif /* OBSOLETE_CODE */
-    
-    return std::lexicographical_compare(retctx.rbegin(), retctx.rend(), callctx.first.rbegin(), callctx.first.rend()-1);
+    return std::lexicographical_compare( retctx.rbegin(), retctx.rend(), 
+                                         callctx.first.rbegin(), callctx.first.rend()-1,
+                                         FiniteLabelComparator()
+                                       );
   }
 
   //! clones a lattice element
@@ -257,14 +239,7 @@ namespace
         ROSE_ASSERT(retctx.size() == CTX_CALL_STRING_MAX_LENGTH-1);
 
         const_iterator prelow = pre.lower_bound(retctx);
-        const_iterator prepos = std::upper_bound( prelow, pre.end(), retctx, ltProjectedFull );
-
-#if OBSOLETE_CODE        
-        const_iterator prepos = std::upper_bound( prelow, pre.end(),
-                                                  retctx,
-                                                  ltProjectedFull
-                                                );
-#endif /* OBSOLETE_CODE */
+        const_iterator prepos = std::upper_bound( prelow, pre.end(), retctx, ltProjected );
 
         transform_if( prelow, prepos,
                       std::inserter(tgt, tgt.end()),
@@ -522,7 +497,10 @@ void allCallReturn( const CtxLattice<FiniteCallString>& src,
 //! full comparison of the call string
 bool operator<(const FiniteCallString& lhs, const FiniteCallString& rhs)
 {
-  return std::lexicographical_compare(lhs.rbegin(), lhs.rend(), rhs.rbegin(), rhs.rend());
+  return std::lexicographical_compare( lhs.rbegin(), lhs.rend(), 
+                                       rhs.rbegin(), rhs.rend(),
+                                       FiniteLabelComparator()
+                                     );
 }
 
 std::ostream& operator<<(std::ostream& os, const FiniteCallString& el)

@@ -2,6 +2,8 @@
 #ifndef CTX_CALLSTRINGS_H
 #define CTX_CALLSTRINGS_H 1
 
+//! \author Peter Pirkelbauer
+
 #include <vector>
 
 #include <rose.h>
@@ -134,15 +136,24 @@ std::ostream& operator<<(std::ostream& os, const InfiniteCallString& el);
 //! maximal logical length of a finite call string
 static constexpr size_t CTX_CALL_STRING_MAX_LENGTH = 4;
 
-/// This class is a simple implementation of a fixed length call string
-///   Keeping the interface, we may want to replace it with a rotating
-///   buffer at some point.
-struct ContextSequence : private std::vector<int>
+//! This class is a simple implementation of a fixed length call string
+//!   Keeping the interface, we may want to replace it with a rotating
+//!   buffer at some point.
+//! \details
+//!   this implementation fills the call sequence with empty labels,
+//!   which simplifies 
+//! \note 
+//!   the class has been factored out from FiniteCallString to simplify
+//!   its replacement with improved versions
+//!   (e.g., circular buffer based, an implementation that have the
+//!          object share its underlying representation to improve
+//!          memory efficiency). 
+struct ContextSequence : private std::vector<Label>
 {
-  typedef std::vector<int> base;
+  typedef std::vector<Label> base;
   
   ContextSequence()
-  : base(CTX_CALL_STRING_MAX_LENGTH, -1)
+  : base(CTX_CALL_STRING_MAX_LENGTH, Label())
   {
     ROSE_ASSERT(base::size() == CTX_CALL_STRING_MAX_LENGTH);
   }
@@ -159,34 +170,31 @@ struct ContextSequence : private std::vector<int>
   using base::end;
   using base::rbegin;
   using base::rend;
-  //~ using base::back;
   using base::size;  
   
+  //! adds a call label @ref lbl to the end of the sequence.
+  //! if the sequence is at its capacity, the oldest call label will be
+  //! removed.
   void append(Label lbl)
   {
     ROSE_ASSERT(base::size() == CTX_CALL_STRING_MAX_LENGTH);
-    //~ if (size() == CTX_CALL_STRING_MAX_LENGTH)
     erase(begin());
       
-    base::push_back(lbl.getId());
+    base::push_back(lbl);
   }
   
+  //! removes the most recent call label from the sequence
   void remove()
   {
     ROSE_ASSERT(base::size() == CTX_CALL_STRING_MAX_LENGTH);
     base::pop_back();
   }
   
-  Label last() const
-  {
-    return Label(base::back());
-  }
+  //! returns the most recent call label
+  Label last() const { return base::back(); }
   
-  bool empty() const
-  {
-    // a call string ending in -1 is considered empty
-    return base::back() < 0;
-  }
+  //! a call string ending in Label() is considered empty
+  bool empty() const { return base::back() == Label(); }
   
   bool operator==(const ContextSequence& that) const
   {
@@ -242,7 +250,7 @@ struct FiniteCallString : ContextSequence
 };
 
 
-bool operator<(const FiniteCallString&   lhs, const FiniteCallString&   rhs);
+bool operator<(const FiniteCallString& lhs, const FiniteCallString& rhs);
 
 std::ostream& operator<<(std::ostream& os, const FiniteCallString& el);
 

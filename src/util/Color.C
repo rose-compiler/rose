@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <Color.h>
 #include <cmath>
@@ -83,6 +84,14 @@ std::string HSV::toHtml() const {
     return Color::toHtml(*this);
 }
 
+std::string RGB::toAnsi() const {
+    return Color::toAnsi(*this);
+}
+
+std::string HSV::toAnsi() const {
+    return Color::toAnsi(*this);
+}
+
 HSV invertBrightness(const HSV &hsv) {
     return HSV(hsv.h(), hsv.s(), (1.0-hsv.v()), hsv.a());
 }
@@ -103,15 +112,21 @@ HSV fade(const HSV &hsv, double amount) {
 }
 
 std::string toHtml(const RGB &rgb) {
-    char buf[32];
-
     // Microsoft doesn't define round(double) in <cmath>
     unsigned r = boost::numeric::converter<unsigned, double>::convert(clip(rgb.r())*255);
     unsigned g = boost::numeric::converter<unsigned, double>::convert(clip(rgb.g())*255);
     unsigned b = boost::numeric::converter<unsigned, double>::convert(clip(rgb.b())*255);
 
-    sprintf(buf, "#%02x%02x%02x", r, g, b);
-    return buf;
+    return (boost::format("#%02x%02x%02x") % r % g % b).str();
+}
+
+std::string toAnsi(const RGB &rgb) {
+    // Microsoft doesn't define round(double) in <cmath>
+    unsigned r = boost::numeric::converter<unsigned, double>::convert(clip(rgb.r())*255);
+    unsigned g = boost::numeric::converter<unsigned, double>::convert(clip(rgb.g())*255);
+    unsigned b = boost::numeric::converter<unsigned, double>::convert(clip(rgb.b())*255);
+
+    return (boost::format("%d;%d;%dm") % r % g % b).str();
 }
 
 HSV

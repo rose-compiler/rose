@@ -73,15 +73,16 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
        // declarations
 
-          case V_SgEnumDeclaration:            unparseEnumDeclStmt (stmt, info);    break;
-          case V_SgJovialTableStatement:       unparseTableDeclStmt(stmt, info);    break;
-          case V_SgVariableDeclaration:        unparseVarDeclStmt  (stmt, info);    break;
+          case V_SgEnumDeclaration:            unparseEnumDeclStmt   (stmt, info);    break;
+          case V_SgJovialOverlayDeclaration:   unparseOverlayDeclStmt(stmt, info);    break;
+          case V_SgJovialTableStatement:       unparseTableDeclStmt  (stmt, info);    break;
+          case V_SgVariableDeclaration:        unparseVarDeclStmt    (stmt, info);    break;
 
        // executable statements, control flow
           case V_SgBasicBlock:                 unparseBasicBlockStmt (stmt, info);  break;
           case V_SgLabelStatement:             unparseLabelStmt      (stmt, info);  break;
           case V_SgForStatement:               unparseForStatement   (stmt, info);  break;
-          case V_SgJovialForThenStatement:     unparseJovialForThenStatement (stmt, info);  break;
+          case V_SgJovialForThenStatement:     unparseJovialForThenStmt(stmt, info);  break;
           case V_SgWhileStmt:                  unparseWhileStmt      (stmt, info);  break;
           case V_SgGotoStatement:              unparseGotoStmt       (stmt, info);  break;
           case V_SgIfStmt:                     unparseIfStmt         (stmt, info);  break;
@@ -170,8 +171,6 @@ Unparse_Jovial::unparseDirectiveStmt(SgStatement* stmt, SgUnparse_Info& info)
 void
 Unparse_Jovial::unparseDefineDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-     SgUnparse_Info ninfo(info);
-
      SgJovialDefineDeclaration* define = isSgJovialDefineDeclaration(stmt);
      ROSE_ASSERT(define);
 
@@ -187,8 +186,6 @@ Unparse_Jovial::unparseDefineDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 void 
 Unparse_Jovial::unparseCompoolStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
-     SgUnparse_Info ninfo(info);
-
      SgJovialCompoolStatement* compool = isSgJovialCompoolStatement(stmt);
      ROSE_ASSERT(compool);
 
@@ -532,7 +529,7 @@ Unparse_Jovial::unparseForStatement(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseJovialForThenStatement(SgStatement* stmt, SgUnparse_Info& info)
+Unparse_Jovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
   // The SgJovialForThenStatement is used for Jovial for statements like:
   //
@@ -779,10 +776,21 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      ASSERT_not_null(enum_decl);
 
      SgName enum_name = enum_decl->get_name();
+     SgType* field_type = enum_decl->get_field_type();
 
      curprint("TYPE ");
      curprint(enum_name.str());
      curprint(" STATUS");
+
+     if (field_type) {
+        SgTypeInt* int_type = isSgTypeInt(field_type);
+        ASSERT_not_null(int_type);
+        curprint(" ");
+        SgExpression* kind_expr = int_type->get_type_kind();
+        ASSERT_not_null(kind_expr);
+        unparseExpression(kind_expr, info);
+     }
+
      unp->cur.insert_newline(1);
 
      curprint("(");
@@ -790,25 +798,73 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      int n = enum_decl->get_enumerators().size();
      foreach(SgInitializedName* init_name, enum_decl->get_enumerators())
-         {
-            std::string name = init_name->get_name().str();
-            name.replace(0, 3, "V(");
-            name.append(")");
+        {
+           std::string name = init_name->get_name().str();
+           name.replace(0, 3, "V(");
+           name.append(")");
 
-            SgAssignInitializer* assign_expr = isSgAssignInitializer(init_name->get_initializer());
-            ROSE_ASSERT(assign_expr);
-            SgEnumVal* enum_val = isSgEnumVal(assign_expr->get_operand());
-            ROSE_ASSERT(enum_val);
+           SgAssignInitializer* assign_expr = isSgAssignInitializer(init_name->get_initializer());
+           ASSERT_not_null(assign_expr);
+           SgEnumVal* enum_val = isSgEnumVal(assign_expr->get_operand());
+           ASSERT_not_null(enum_val);
 
-            curprint("  ");
-            curprint(tostring(enum_val->get_value()));
-            curprint(name);
-            if (--n > 0) curprint(",");
-            unp->cur.insert_newline(1);
-         }
+           curprint("  ");
+           curprint(tostring(enum_val->get_value()));
+           curprint(name);
+           if (--n > 0) curprint(",");
+           unp->cur.insert_newline(1);
+        }
 
      curprint(");");
      unp->cur.insert_newline(1);
+   }
+
+void
+Unparse_Jovial::unparseOverlayDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+   {
+      SgJovialOverlayDeclaration* overlay_decl = isSgJovialOverlayDeclaration(stmt);
+      ASSERT_not_null(overlay_decl);
+
+      SgExprListExp* overlay = overlay_decl->get_overlay();
+      SgExpression*  address = overlay_decl->get_address();
+
+      curprint_indented("OVERLAY ", info);
+
+      if (!isSgNullExpression(address))
+         {
+            curprint("POS (");
+            unparseExpression(address, info);
+            curprint(") ");
+         }
+
+      int n = overlay->get_expressions().size();
+      foreach(SgExpression* expr, overlay->get_expressions())
+        {
+           SgExprListExp* overlay_expr = isSgExprListExp(expr);
+           ASSERT_not_null(overlay_expr);
+
+           int ns = overlay_expr->get_expressions().size();
+           foreach(SgExpression* overlay_string, overlay_expr->get_expressions())
+             {
+                SgVarRefExp* var = isSgVarRefExp(overlay_string);
+                if (var) unparseExpression(var, info);
+
+                SgIntVal* spacer = isSgIntVal(overlay_string);
+                if (spacer)
+                   {
+                      curprint("W ");
+                      unparseExpression(spacer, info);
+                   }
+                if (var == NULL && spacer == NULL)
+                   {
+                      std::cerr << "WARNING UNIMPLEMENTED: OverlayElement (may be spacer != SgIntVal)\n";
+                   }
+                if (--ns > 0) curprint(", ");
+             }
+           if (--n > 0) curprint(": ");
+        }
+
+      curprint(";\n");
    }
 
 void
@@ -822,18 +878,18 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      bool is_block = (table_decl->get_class_type() == SgClassDeclaration::e_jovial_block);
 
      SgJovialTableStatement* defining_decl = isSgJovialTableStatement(table_decl->get_definingDeclaration());
-     ROSE_ASSERT(isSgJovialTableStatement(defining_decl));
+     ASSERT_not_null(isSgJovialTableStatement(defining_decl));
 
      SgClassDefinition* table_def = defining_decl->get_definition();
-     ROSE_ASSERT(table_def);
+     ASSERT_not_null(table_def);
 
      SgName table_name = table_decl->get_name();
 
       SgType* type = table_decl->get_type();
-      ROSE_ASSERT(type);
+      ASSERT_not_null(type);
 
       SgJovialTableType* table_type = isSgJovialTableType(type);
-      ROSE_ASSERT(table_type);
+      ASSERT_not_null(table_type);
 
       curprint("TYPE ");
       curprint(table_name);
@@ -930,7 +986,7 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgName name         = initializedName->get_name();
      SgType* type        = initializedName->get_type();
      SgInitializer* init = initializedName->get_initializer();
-     ROSE_ASSERT(type);
+     ASSERT_not_null(type);
 
      info.set_inVarDecl();
 
@@ -1025,7 +1081,7 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         {
            SgExpression* bitfield = var_decl->get_bitfield();
            SgExprListExp* sg_location_specifier = isSgExprListExp(bitfield);
-           ROSE_ASSERT(sg_location_specifier);
+           ASSERT_not_null(sg_location_specifier);
 
            SgExpressionPtrList & location_exprs = sg_location_specifier->get_expressions();
            ROSE_ASSERT(location_exprs.size() == 2);
@@ -1049,13 +1105,25 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
            SgDeclarationStatement* def_decl = var_decl->get_baseTypeDefiningDeclaration();
-           ROSE_ASSERT(def_decl);
+           ASSERT_not_null(def_decl);
 
            SgJovialTableStatement* table_decl = dynamic_cast<SgJovialTableStatement*>(def_decl);
-           ROSE_ASSERT(table_decl);
+           ASSERT_not_null(table_decl);
+
+        // WordsPerEntry for anonymous table declarations
+           if (table_decl->get_has_table_entry_size())
+              {
+                 // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
+                 if (table_decl->get_table_entry_size() != NULL)
+                    {
+                       curprint("W ");
+                       unparseExpression(table_decl->get_table_entry_size(), info);
+                    }
+                 else curprint("V");
+              }
 
            SgClassDefinition* table_def = table_decl->get_definition();
-           ROSE_ASSERT(table_def);
+           ASSERT_not_null(table_def);
 
            if (table_def->get_members().size() > 0)
               {
@@ -1093,7 +1161,7 @@ Unparse_Jovial::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgExprStatement* expr_stmt = isSgExprStatement(stmt);
      ASSERT_not_null(expr_stmt);
-     ROSE_ASSERT(expr_stmt->get_expression());
+     ASSERT_not_null(expr_stmt->get_expression());
 
   // pretty printing
      curprint( ws_prefix(info.get_nestingLevel()) );

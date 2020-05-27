@@ -187,10 +187,10 @@ ATbool traverse_RefSpecificationChoice(ATerm term);
 
 // 2.6 OVERLAY DECLARATIONS
 ATbool traverse_OverlayDeclaration    (ATerm term);
-ATbool traverse_OverlayExpression     (ATerm term, SgExpression* & expr);
-ATbool traverse_OverlayString         (ATerm term, SgExpression* & expr);
-ATbool traverse_OverlayElement        (ATerm term, SgExpression* & expr);
-ATbool traverse_Spacer                (ATerm term, SgExpression* & expr);
+ATbool traverse_OverlayExpression     (ATerm term, SgExprListExp* &overlay_expr);
+ATbool traverse_OverlayString         (ATerm term, SgExprListExp* &overlay_string);
+ATbool traverse_OverlayElement        (ATerm term, SgExpression*  &expr);
+ATbool traverse_Spacer                (ATerm term, SgExpression*  &expr);
 
 // 3.0 PROCEDURES AND FUNCTIONS
 ATbool traverse_ProcedureDefinition(ATerm term, LanguageTranslation::FunctionModifierList &modifiers);

@@ -7,11 +7,11 @@ namespace scalarizer
   bool keep_going = false;
   bool isFortran = false;
 
-  std::vector<std::string> getFortranTargetnameList(SgNode* root);
-  std::vector<std::string> getTargetnameList(SgNode* root);
+  std::map<std::string,int> getFortranTargetnameList(SgNode* root);
+  std::map<std::string,int> getTargetnameList(SgNode* root);
   void transformType(SgVariableSymbol* sym, SgType* newType);
-  void transformArrayType(SgBasicBlock* funcBody, SgVariableSymbol* sym, SgType* newType);
-  static bool is_directive_sentinels(const char* str, SgNode* c_sgnode);
+  void transformArrayType(SgBasicBlock* funcBody, SgVariableSymbol* sym, SgType* newType, int parameter);
+  static int is_directive_sentinels(std::string str, SgNode* c_sgnode);
   static bool match_substr(const char* substr, const char* c_char);
   static bool isFixedSourceForm(SgNode* c_sgnode);
 
