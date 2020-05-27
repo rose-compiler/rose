@@ -398,73 +398,6 @@ void configureRersSpecialization() {
 #endif
 }
 
-void configureOptionSets(CodeThornOptions& ctOpt) {
-  string optionName="options-set";  // only used for error reporting
-  int optionValue=ctOpt.optionsSet; // only used for error reporting
-  switch(optionValue) {
-  case 0:
-    // fall-through for default
-    break;
-  case 1:
-    ctOpt.explicitArrays=true;
-    ctOpt.inStateStringLiterals=true;
-    ctOpt.ignoreUnknownFunctions=true;
-    ctOpt.ignoreFunctionPointers=true;
-    ctOpt.stdFunctions=true;
-    ctOpt.contextSensitive=true;
-    ctOpt.normalizeAll=true;
-    ctOpt.abstractionMode=1;
-    AbstractValue::strictChecking=false;
-    break;
-  case 2:
-    ctOpt.explicitArrays=true;
-    ctOpt.inStateStringLiterals=true;
-    ctOpt.ignoreUnknownFunctions=true;
-    ctOpt.ignoreFunctionPointers=false;
-    ctOpt.stdFunctions=true;
-    ctOpt.contextSensitive=true;
-    ctOpt.normalizeAll=true;
-    ctOpt.abstractionMode=1;
-    AbstractValue::strictChecking=false;
-    break;
-  case 3:
-    ctOpt.explicitArrays=true;
-    ctOpt.inStateStringLiterals=false;
-    ctOpt.ignoreUnknownFunctions=true;
-    ctOpt.ignoreFunctionPointers=false;
-    ctOpt.stdFunctions=false;
-    ctOpt.contextSensitive=true;
-    ctOpt.normalizeAll=true;
-    ctOpt.abstractionMode=1;
-    AbstractValue::strictChecking=false;
-    break;
-  case 4:
-    ctOpt.explicitArrays=true;
-    ctOpt.inStateStringLiterals=false;
-    ctOpt.ignoreUnknownFunctions=true;
-    ctOpt.ignoreFunctionPointers=false;
-    ctOpt.stdFunctions=false;
-    ctOpt.contextSensitive=true;
-    ctOpt.normalizeAll=true;
-    ctOpt.abstractionMode=1;
-    AbstractValue::strictChecking=true;
-    break;
-  case 11:
-    ctOpt.explicitArrays=true;
-    ctOpt.inStateStringLiterals=true;
-    ctOpt.ignoreUnknownFunctions=true;
-    ctOpt.ignoreFunctionPointers=false;
-    ctOpt.stdFunctions=false;
-    ctOpt.contextSensitive=true;
-    ctOpt.normalizeAll=true;
-    ctOpt.abstractionMode=0;
-    break;
-  default:
-    cerr<<"Error: unsupported "<<optionName<<" value: "<<optionValue<<endl;
-    exit(1);
-  }
-}
-
 void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt) {
   cout << "------------------------------------------"<<endl;
   cout << "RUNNING CHECKS FOR EXPR ANALYZER:"<<endl;
@@ -554,8 +487,6 @@ int main( int argc, char * argv[] ) {
       exprEvalTest(argc,argv,ctOpt);
       return 0;
     }
-
-    configureOptionSets(ctOpt);
 
     analyzer->optionStringLiteralsInState=ctOpt.inStateStringLiterals;
     analyzer->setSkipUnknownFunctionCalls(ctOpt.ignoreUnknownFunctions);
@@ -653,7 +584,6 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.equiCheck.dumpSortedFileName.size()>0 || ctOpt.equiCheck.dumpNonSortedFileName.size()>0) {
       analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
-      ctOpt.explicitArrays=false;
       if(analyzer->getNumberOfThreadsToUse()>1) {
         logger[ERROR] << "multi threaded rewrite not supported yet."<<endl;
         exit(1);
@@ -864,7 +794,6 @@ int main( int argc, char * argv[] ) {
       // do specialization and setup data structures
       analyzer->setSkipUnknownFunctionCalls(true);
       analyzer->setSkipArrayAccesses(true);
-      analyzer->getOptionsRef().explicitArrays=false;
       analyzer->setOptions(ctOpt);
       //TODO1: refactor into separate function
       int numSubst=0;

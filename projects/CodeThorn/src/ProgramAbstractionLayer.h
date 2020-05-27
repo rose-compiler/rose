@@ -25,8 +25,8 @@ namespace CodeThorn {
     FunctionCallMapping* getFunctionCallMapping();
     FunctionCallMapping2* getFunctionCallMapping2();
     ClassHierarchyWrapper* getClassHierarchy();
-    void setModeArrayElementVariableId(bool val);
-    bool getModeArrayElementVariableId();
+    //    void setModeArrayElementVariableId(bool val);
+    //bool getModeArrayElementVariableId();
     void setNormalizationLevel(unsigned int level);
     unsigned int getNormalizationLevel();
     void setInliningOption(bool flag);
