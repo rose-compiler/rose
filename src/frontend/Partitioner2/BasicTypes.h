@@ -337,7 +337,7 @@ public:
  *  The runtime descriptions and command-line parser for these switches can be obtained from @ref partitionerSwitches. */
 struct PartitionerSettings {
     BasePartitionerSettings base;
-    std::vector<rose_addr_t> startingVas;           /**< Addresses at which to start recursive disassembly. These
+    std::vector<rose_addr_t> functionStartingVas;   /**< Addresses at which to start recursive disassembly. These
                                                      *   addresses are in addition to entry addresses, addresses from
                                                      *   symbols, addresses from configuration files, etc. */
     bool followingGhostEdges;                       /**< Should ghost edges be followed during disassembly?  A ghost edge
@@ -390,7 +390,7 @@ private:
     template<class S>
     void serialize(S &s, unsigned version) {
         s & BOOST_SERIALIZATION_NVP(base);
-        s & BOOST_SERIALIZATION_NVP(startingVas);
+        s & BOOST_SERIALIZATION_NVP(functionStartingVas);
         s & BOOST_SERIALIZATION_NVP(followingGhostEdges);
         s & BOOST_SERIALIZATION_NVP(discontiguousBlocks);
         s & BOOST_SERIALIZATION_NVP(maxBasicBlockSize);

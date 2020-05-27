@@ -319,7 +319,7 @@ Engine::partitionerSwitches(PartitionerSettings &settings) {
            "have already been completed.");
 
     sg.insert(Switch("function-at")
-              .argument("addresses", listParser(nonNegativeIntegerParser(settings.startingVas)))
+              .argument("addresses", listParser(nonNegativeIntegerParser(settings.functionStartingVas)))
               .whichValue(SAVE_ALL)
               .explosiveLists(true)
               .doc("List of addresses where recursive disassembly should start in addition to addresses discovered by "
@@ -1694,7 +1694,7 @@ Engine::runPartitionerInit(Partitioner &partitioner) {
     makeInterruptVectorFunctions(partitioner, settings_.partitioner.interruptVector);
 
     SAWYER_MESG(where) <<"marking user-defined functions\n";
-    makeUserFunctions(partitioner, settings_.partitioner.startingVas);
+    makeUserFunctions(partitioner, settings_.partitioner.functionStartingVas);
 }
 
 void
