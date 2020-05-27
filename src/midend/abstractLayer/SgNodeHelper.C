@@ -85,7 +85,11 @@ SgFunctionDeclaration* SgNodeHelper::findFunctionDeclarationWithFunctionSymbol(S
 std::string SgNodeHelper::sourceFilenameToString(SgNode* node) {
   Sg_File_Info* fi=node->get_file_info();
   std::stringstream ss;
-  ss<<fi->get_filenameString();
+  if(fi) {
+    ss<<(fi->get_filenameString());
+  } else {
+    ss<<"?";
+  }
   return ss.str();
 }
 

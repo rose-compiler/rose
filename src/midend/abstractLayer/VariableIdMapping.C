@@ -143,9 +143,17 @@ void VariableIdMapping::toStream(ostream& os) {
       //<<","<<mappingVarIdToInfo[variableIdFromCode(i)]._sym
       <<","<<getNumberOfElements(varId)
       <<","<<getElementSize(varId)
-      <<","<<getOffset(varId)
-      <<endl;
-    //ROSE_ASSERT(modeVariableIdForEachArrayElement?true:mappingSymToVarId[mappingVarIdToInfo[variableIdFromCode(i)].sym]==variableIdFromCode(i));
+      <<","<<getOffset(varId);
+    if(isStringLiteralAddress(varId)) {
+      os<<","<<"<non-symbol-string-literal-id>";
+    } else if(isTemporaryVariableId(varId)) {
+      os<<","<<"<non-symbol-memory-region-id>";
+    } else if(SgSymbol* sym=getSymbol(varId)) {
+      os<<","<<sym->get_mangled_name();
+    } else {
+      os<<","<<"<missing-symbol>";
+    }
+    os<<endl;
   }
 }
 
@@ -350,11 +358,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
     RoseAst ast(*k);
     ast.setWithTemplates(true);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-      // Try to find a symbol, type, and initializer of the current node:
       SgSymbol* sym = 0;
-      SgType* type = 0;
-      SgInitializer* initializer = 0;
-
       // schroder3 (2016-08-18): Added variables that are "declared" in a lambda capture. There is currently no SgInitializedName for
       //  these closure variables.
       if(SgLambdaCapture* lambdaCapture = isSgLambdaCapture(*i)) {
@@ -364,13 +368,11 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
         ROSE_ASSERT(closureVar);
         sym = closureVar->get_symbol();
         ROSE_ASSERT(sym);
-        type = closureVar->get_type();
+        //type = closureVar->get_type();
       } else if(SgInitializedName* initName = isSgInitializedName(*i)) {
-        //cout<<"DEBUG VIM: @ initName: "<<initName->unparseToString()<<endl;
         // Variable/ parameter found: Try to get its symbol:
         sym = initName->search_for_symbol_from_symbol_table();
         if(sym) {
-          //cout<<"DEBUG VIM: symbol: "<<sym<<endl;
           // determine the declaration to check for bitfields
           if(isAnonymousBitfield(initName)) {
             // MS (2018-12-4/2019-03-20): workaround: ROSE BUG: if a struct contains more than one anonymous bitfield
@@ -378,44 +380,11 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
             // ROSE AST BUG WORKAROUND (ROSE-1867)
             continue;
           }
-          type = initName->get_type();
-          initializer = initName->get_initializer();
-        } else {  
-          //cout << "computeVariableSymbolMapping: SgInitializedName \"" << initName->unparseToString() << "\" without associated symbol found." << endl;
-          // Registration is not possible without symbol.
-          // This is presumably a parameter in a declaration, a built-in variable (e.g. __builtin__x), an enum value, or a child of a SgCtorInitializerList.
-          //  TODO: Is it possible to assert this?
-          //  ==> It is okay to ignore these.
-          //cout<<"DEBUG VIM: NO symbol! "<<endl;
         }
       }
       if(sym) {
-        // Symbol found. There should be a type:
-        ROSE_ASSERT(type);
         // Check if the symbol is already registered:
         if(symbolSet.find(sym) == symbolSet.end()) {
-          // New symbol: Check for array symbol:
-          if(SgArrayType* arrayType=isSgArrayType(type)) {
-            // Try to find the array dimensions:
-            // returns 0 if type does not contain size
-            int arraySize = getArrayElementCount(arrayType);
-            if(arraySize==0) {
-              // check the initializer
-              arraySize=getArrayDimensionsFromInitializer(isSgAggregateInitializer(initializer));
-            }
-            if(arraySize > 0) {
-              //cout<<"INFO: found array decl: size: "<<arraySize<<" :: "<<(*i)->unparseToString()<<endl;
-              // Array dimensions found: Registration as array symbol:
-              registerNewArraySymbol(sym, arraySize);
-              // Remember that this symbol is already registered:
-              symbolSet.insert(sym);
-              // Do not register as normal symbol and continue with next iteration:
-              continue;
-            }
-            else {
-              // Array dimensions are not available at compile time: Register as normal symbol (no continue;)
-            }
-          }
           // Register new symbol as normal variable symbol:
           registerNewSymbol(sym);
           // Remember that this symbol was already registered:
