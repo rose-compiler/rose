@@ -66,7 +66,8 @@ namespace SgNodeHelper {
 
 
  */
-
+  typedef std::pair<int,int> LineColPair;
+  
   //! returns the initializer expression of a variable declaration. If no initializer exists it returns 0.
   SgExpression* getInitializerExpressionOfVariableDeclaration(SgVariableDeclaration* decl);
 
@@ -81,6 +82,9 @@ namespace SgNodeHelper {
 
   //! returns filename+line+column information of AST fragment in format "filename:line:column". Used for generating readable output
   std::string sourceFilenameLineColumnToString(SgNode* node);
+
+  //! returns a std::pair of line and column number. If no file info exists at this node it returns  (-1,-1).
+  SgNodeHelper::LineColPair lineColumnPair(SgNode* node);
 
   //! returns filename as stored in AST node. Used for generating readable output.
   std::string sourceFilenameToString(SgNode* node);
