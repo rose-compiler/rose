@@ -10,7 +10,6 @@ output_file=
 answer_file=
 disabled_mesg=
 disabled_cond=0
-disabled_command=
 filter=cat
 map_srcroot=
 map_bldroot=
@@ -33,7 +32,8 @@ usage() {
     echo "    --disabled=REASON | --enabled"
     echo "        Marks this test as being disabled. As far as the build system is"
     echo "        concerned, the test passes. However, it prints the disablement message"
-    echo "        to the tty in red text."
+    echo "        to the tty in red text. If the REASON string is empty then it means the"
+    echo "        same thing as --enabled."
     echo
     echo "    --disabled-by=COMMAND"
     echo "        The COMMAND is run and if it produces any standard output then that"
@@ -221,11 +221,20 @@ while [ "$#" -gt 0 ]; do
 	--disabled)
 	    [ "$#" -gt 1 ] || die "\"$1\" switch expects an argument"
 	    disabled_mesg="$2"
+	    if [ -n "$disabled_mesg" ]; then
+		disabled_cond=1
+	    else
+		disabled_cond=
+	    fi
 	    shift 2
 	    ;;
 	--disabled=*)
 	    disabled_mesg="${1#--disabled=}"
-	    disabled_cond=1
+	    if [ -n "$disabled_mesg" ]; then
+		disabled_cond=1
+	    else
+		disabled_cond=
+	    fi
 	    shift
 	    ;;
         --disabled-by)

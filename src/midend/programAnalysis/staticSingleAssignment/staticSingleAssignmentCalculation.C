@@ -155,7 +155,7 @@ bool StaticSingleAssignment::isVarInScope(const VarName& var, SgNode* astNode)
         if (funcClassScope != NULL) {
           decl = funcClassScope->get_declaration();
         } else if (funcNonrealScope != NULL) {
-          decl = isSgDeclarationStatement(funcClassScope->get_parent());
+          decl = isSgDeclarationStatement(funcNonrealScope->get_parent());
         } else {
           ROSE_ASSERT(false);
         }

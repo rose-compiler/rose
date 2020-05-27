@@ -1398,7 +1398,7 @@ HEADER_FORALL_STATEMENT_START
   //! This class represents forall statements and the Fortran do concurrent construct.
   //
      public:
-       // Rasmussen (11/08/2018): Needed because of addition of do-concurrent-stmt
+       // CR (11/08/2018): Needed because of addition of do-concurrent-stmt
           enum forall_statement_kind_enum
              {
                e_unknown,
@@ -1625,7 +1625,7 @@ HEADER_LIST_DECLARATIONS
           SgName get_qualified_name_prefix_for_return_type() const;
 
        // DQ (10/11/2014): Adding support for aterm translation to ROSE AST.
-       // Rasmussen (04/17/2019): Support for ATerms has been deprecated.
+       // CR (04/17/2019): Support for ATerms has been deprecated.
        // static SgFunctionDeclaration* build_node_from_nonlist_children(SgType* return_type, SgFunctionParameterList* parameterList, SgScopeStatement* scope, Sg_File_Info* startOfConstruct, SgName name, SgFunctionType* type, SgFunctionDefinition* definition);
 
        // DQ (12/22/2014): Adding support for EDG normalized template member and non-member functions.
@@ -3089,7 +3089,7 @@ HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_START
           void set_definition( SgTemplateInstantiationDefn* definition );
 
        // DQ (10/10/2014): Implemented to support Aterm constructor functions.
-       // Rasmussen (04/17/2019): Support for ATerms has been deprecated. But this may be used elsewhere.
+       // CR (04/17/2019): Support for ATerms has been deprecated. But this may be used elsewhere.
           void set_definition( SgClassDefinition* definition );
 
        // DQ (2/11/2007): Add this to the derived class so that the SgSymbolTable::find() function will work properly
@@ -3638,8 +3638,8 @@ HEADER_USE_STATEMENT_END
 
 HEADER_STOP_OR_PAUSE_STATEMENT_START
      public:
-       // Rasmussen (4/26/2018): Added e_exit for Jovial (exit similar to Fortran stop)
-       // Rasmussen (5/21/2018): Added e_abort for Jovial, perhaps should rethink naming
+       // CR (4/26/2018): Added e_exit for Jovial (exit similar to Fortran stop)
+       // CR (5/21/2018): Added e_abort for Jovial, perhaps should rethink naming
        //                        of SgStopOrPauseStatement (or create new node?)
           enum stop_or_pause_enum
              {
@@ -3659,7 +3659,7 @@ HEADER_STOP_OR_PAUSE_STATEMENT_START
 
 HEADER_STOP_OR_PAUSE_STATEMENT_END
 
-// Rasmussen (9/20/2018): Added image control statements
+// CR (9/20/2018): Added image control statements
 //
 HEADER_IMAGE_CONTROL_STATEMENT_START
   // This is a base class for all the image control statements.
@@ -4168,6 +4168,13 @@ HEADER_JOVIAL_DIRECTIVE_STATEMENT_START
           virtual SgName get_mangled_name() const $ROSE_OVERRIDE;
 
 HEADER_JOVIAL_DIRECTIVE_STATEMENT_END
+
+
+// CR (5/24/2020): Jovial OverlayDeclaration
+HEADER_JOVIAL_OVERLAY_DECLARATION_START
+      virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
+HEADER_JOVIAL_OVERLAY_DECLARATION_END
+
 
 HEADER_PREPROCESSOR_DIRECTIVE_STATEMENT_START
 
@@ -6250,10 +6257,10 @@ SgScopeStatement::containsOnlyDeclarations() const
        // DQ (11/27/2011): Adding more support for template declarations in the AST.
           case V_SgTemplateFunctionDefinition:
 
-       // Rasmussen (11/12/2018): Support for Jovial COMPOOL module
+       // CR (11/12/2018): Support for Jovial COMPOOL module
           case V_SgJovialCompoolStatement:
 
-       // Rasmussen (10/22/2018): Adding node specific to Jovial for statements with a then construct.
+       // CR (10/22/2018): Adding node specific to Jovial for statements with a then construct.
           case V_SgJovialForThenStatement:
 
       // SK (08/06/2015): Adding SgMatlabForStatement that represents Matlab for loop
@@ -6821,7 +6828,7 @@ SgScopeStatement::getStatementList ()
                break;
              }
 
-       // Rasmussen (10/22/2018): Adding node specific to Jovial for statements with a then construct.
+       // CR (10/22/2018): Adding node specific to Jovial for statements with a then construct.
           case V_SgJovialForThenStatement:
              {
                SgJovialForThenStatement* forStatement = isSgJovialForThenStatement(currentScope);
@@ -8948,7 +8955,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                      // default being reached (missed including this type previously).
                                         case V_SgArrayType:
 
-                                     // Rasmussen (2/18/2020): Added SgTypeFixed (primitive type in Jovial)
+                                     // CR (2/18/2020): Added SgTypeFixed (primitive type in Jovial)
                                         case V_SgTypeFixed:
 
                                      // DQ (2/28/2005): List of types used in compiling Kull
@@ -10603,8 +10610,7 @@ SgJovialCompoolStatement::post_construction_initialization()
 SgName
 SgJovialCompoolStatement::get_mangled_name(void) const
    {
-   // Don't believe name mangling required for Jovial
-      return get_name();
+      return SgName("_compool_");
    }
 SOURCE_JOVIAL_COMPOOL_STATEMENT_END
 
@@ -19107,7 +19113,6 @@ SgContainsStatement::post_construction_initialization()
 SgName
 SgContainsStatement::get_mangled_name() const
    {
-  // printf ("Sorry, SgContainsStatement::get_mangled_name() not implemented! \n");
      return SgName("_contains_");
    }
 
@@ -19818,6 +19823,21 @@ SgName SgJovialDirectiveStatement::get_mangled_name() const
    }
 
 SOURCE_JOVIAL_DIRECTIVE_STATEMENT_END
+
+
+SOURCE_JOVIAL_OVERLAY_DECLARATION_START
+
+void
+SgJovialOverlayDeclaration::post_construction_initialization()
+   {
+      // Nothing to setup here.
+   }
+
+SgName SgJovialOverlayDeclaration::get_mangled_name() const
+   {
+       return SgName("_overlay_");
+   }
+SOURCE_JOVIAL_OVERLAY_DECLARATION_END
 
 
 SOURCE_PREPROCESSOR_DIRECTIVE_STATEMENT_START
