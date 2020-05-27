@@ -139,7 +139,7 @@ DFAnalysisBase::initialize(SgProject* root, ProgramAbstractionLayer* programAbst
   } else {
     _programAbstractionLayer=new ProgramAbstractionLayer();
     _programAbstractionLayerOwner=true;
-    _programAbstractionLayer->setModeArrayElementVariableId(variableIdForEachArrayElement);
+    //_programAbstractionLayer->setModeArrayElementVariableId(variableIdForEachArrayElement);
     _programAbstractionLayer->initialize(root);
   }
   _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(getVariableIdMapping());

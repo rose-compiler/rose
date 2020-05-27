@@ -15,13 +15,13 @@ CodeThorn::ProgramAbstractionLayer::~ProgramAbstractionLayer() {
   delete _cfanalyzer;
 }
 
-void CodeThorn::ProgramAbstractionLayer::setModeArrayElementVariableId(bool val) {
-  _modeArrayElementVariableId=val;
-}
+//void CodeThorn::ProgramAbstractionLayer::setModeArrayElementVariableId(bool val) {
+//  _modeArrayElementVariableId=val;
+//}
 
-bool CodeThorn::ProgramAbstractionLayer::getModeArrayElementVariableId() {
-  return _modeArrayElementVariableId;;
-}
+//bool CodeThorn::ProgramAbstractionLayer::getModeArrayElementVariableId() {
+//  return _modeArrayElementVariableId;;
+//}
 
 SgProject* CodeThorn::ProgramAbstractionLayer::getRoot() {
   return _root;
@@ -34,7 +34,7 @@ void CodeThorn::ProgramAbstractionLayer::initialize(SgProject* root) {
   lowering.setInliningOption(getInliningOption());
   lowering.normalizeAst(root,getNormalizationLevel());
   _variableIdMapping=new VariableIdMapping();
-  getVariableIdMapping()->setModeVariableIdForEachArrayElement(getModeArrayElementVariableId());
+  //getVariableIdMapping()->setModeVariableIdForEachArrayElement(getModeArrayElementVariableId());
   getVariableIdMapping()->computeVariableSymbolMapping(root);
   _labeler=new Labeler(root);
   

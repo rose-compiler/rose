@@ -51,13 +51,6 @@ void ExprAnalyzer::setInterpreterModeFileName(string imFileName) {
   _interpreterModeFileName=imFileName;
 }
 
-void ExprAnalyzer::initializeStructureAccessLookup(SgProject* node) {
-  ROSE_ASSERT(node);
-  ROSE_ASSERT(_variableIdMapping);
-  structureAccessLookup.initializeOffsets(_variableIdMapping,node);
-  SAWYER_MESG(logger[INFO])<<"Structure access lookup num of members: "<<structureAccessLookup.numOfStoredMembers()<<endl;
-}
-
 void ExprAnalyzer::setAnalyzer(Analyzer* analyzer) {
   ROSE_ASSERT(analyzer);
   _analyzer=analyzer;
@@ -321,12 +314,14 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evaluateShortCircuitOperators(SgNod
 }
 
 AbstractValue ExprAnalyzer::evaluateExpressionWithEmptyState(SgExpression* expr) {
+  logger[TRACE]<<"evaluateExpressionWithEmptyState(1):"<<expr->unparseToString()<<endl;
   ROSE_ASSERT(AbstractValue::getVariableIdMapping());
   EState emptyEState;
   PState emptyPState;
   emptyEState.setPState(&emptyPState);
   ExprAnalyzer::EvalMode evalMode=ExprAnalyzer::MODE_EMPTY_STATE;
   list<SingleEvalResultConstInt> resList=evaluateExpression(expr,emptyEState,evalMode);
+  logger[TRACE]<<"evaluateExpressionWithEmptyState(2):"<<expr->unparseToString()<<endl;
   if(resList.size()!=1) {
     return AbstractValue::createTop();
   } else {
@@ -938,7 +933,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           exit(1);
         }
         // array variable NOT in state. Special space optimization case for constant array.
-        if(_variableIdMapping->hasArrayType(arrayVarId) && _analyzer->getOptionsRef().explicitArrays==false) {
+        if(_variableIdMapping->hasArrayType(arrayVarId) /* MS 5/20/2020: removed mode: && _analyzer->getOptionsRef().explicitArrays==false*/) {
           SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
           int elemIndex=0;
           // TODO: slow linear lookup (TODO: pre-compute all values and provide access function)
@@ -1017,13 +1012,17 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalUnaryMinusOp(SgMinusOp* node,
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
                                                               EState estate, EvalMode mode) {
+  logger[TRACE]<<"evalSizeofOp(started):"<<node->unparseToString()<<endl;
   SgType* operandType=node->get_operand_type();
   CodeThorn::TypeSize typeSize=0; // remains zero if no size can be determined
   AbstractValue sizeValue=AbstractValue::createTop();
 
   if(operandType) {
+    logger[TRACE]<<"evalSizeofOp(2):"<<node->unparseToString()<<endl;
     typeSize=_variableIdMapping->getTypeSize(operandType);
+    logger[TRACE]<<"evalSizeofOp(3):"<<node->unparseToString()<<endl;
   } else if(SgExpression* exp=node->get_operand_expr()) {
+    logger[TRACE]<<"evalSizeofOp(4):"<<node->unparseToString()<<endl;
     if(SgVarRefExp* varRefExp=isSgVarRefExp(exp)) {
       typeSize=_variableIdMapping->getTypeSize(_variableIdMapping->variableId(varRefExp));
     } else if(SgType* expType=exp->get_type()) {
@@ -1031,9 +1030,11 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
     } else {
       logger[WARN] <<"sizeof: could not determine any type of sizeof argument and unsupported argument expression: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl<<AstTerm::astTermWithNullValuesToDot(exp)<<endl;
     }
+    logger[TRACE]<<"evalSizeofOp(5):"<<node->unparseToString()<<endl;
   } else {
     logger[WARN] <<"sizeof: could not determine any type of sizeof argument and no expression found either: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl;
   }
+  logger[TRACE]<<"evalSizeofOp(6):"<<node->unparseToString()<<endl;
 
   // determines sizeValue based on typesize
     if(typeSize==0) {
@@ -1046,6 +1047,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalSizeofOp(SgSizeOfOp* node,
     }
     SingleEvalResultConstInt res;
     res.init(estate,sizeValue);
+    logger[TRACE]<<"evalSizeofOp(finished):"<<node->unparseToString()<<endl;
     return listify(res);
 }
 
@@ -1413,8 +1415,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
   if(isStructMember(varId)) {
-    int offset=structureAccessLookup.getOffset(varId);
     ROSE_ASSERT(_variableIdMapping);
+    int offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
     SAWYER_MESG(logger[TRACE])<<"DEBUG: evalLValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
     //res.result=AbstractValue(offset);
     //return listify(res);
@@ -1431,7 +1433,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
     // special mode to represent information not stored in the state
     // i) unmodified arrays: data can be stored outside the state
     // ii) undefined variables mapped to 'top' (abstraction by removing variables from state)
-    if(_variableIdMapping->hasArrayType(varId) && _analyzer->getOptionsRef().explicitArrays==false) {
+    if(_variableIdMapping->hasArrayType(varId) && _analyzer->getOptionsRef().arraysNotInState==true) {
       // variable is used on the rhs and it has array type implies it avalates to a pointer to that array
       //res.result=AbstractValue(varId.getIdCode());
       SAWYER_MESG(logger[TRACE])<<"DEBUG: lvalue array address (non-existing in state)(?): "<<node->unparseToString()<<endl;
@@ -1439,9 +1441,6 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
       return listify(res);
     } else {
       Label lab=estate.label();
-      if(_analyzer->getAbstractionMode()==3) {
-        throw CodeThorn::Exception("Variable not in state at "+SgNodeHelper::sourceFilenameLineColumnToString(_analyzer->getLabeler()->getNode(lab)));
-      }
       res.result=CodeThorn::Top();
       logger[WARN] << "at label "<<lab<<": "<<(_analyzer->getLabeler()->getNode(lab)->unparseToString())<<": variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
       //cerr << "WARNING: estate: "<<estate.toString(_variableIdMapping)<<endl;
@@ -1471,7 +1470,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
   }
   // check if var is a struct member. if yes return struct-offset.
   if(isStructMember(varId)) {
-    int offset=structureAccessLookup.getOffset(varId);
+    int offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
     ROSE_ASSERT(_variableIdMapping);
     SAWYER_MESG(logger[TRACE])<<"DEBUG: evalRValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
     res.result=AbstractValue(offset);
@@ -1488,7 +1487,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
     // special mode to represent information not stored in the state
     // i) unmodified arrays: data can be stored outside the state
     // ii) undefined variables mapped to 'top' (abstraction by removing variables from state)
-    if(_variableIdMapping->hasArrayType(varId) && _analyzer->getOptionsRef().explicitArrays==false) {
+    if(_variableIdMapping->hasArrayType(varId) && _analyzer->getOptionsRef().arraysNotInState==true) {
       // variable is used on the rhs and it has array type implies it avalates to a pointer to that array
       //res.result=AbstractValue(varId.getIdCode());
       res.result=AbstractValue::createAddressOfArray(varId);
@@ -1967,7 +1966,7 @@ void ExprAnalyzer::setPrintDetectedViolations(bool flag) {
 }
 
 bool ExprAnalyzer::isStructMember(CodeThorn::VariableId varId) {
-  return structureAccessLookup.isStructMember(varId);
+  return AbstractValue::getVariableIdMapping()->isStructMember(varId);
 }
 
 bool ExprAnalyzer::definitiveErrorDetected() {
