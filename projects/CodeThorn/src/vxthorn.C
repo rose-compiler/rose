@@ -18,7 +18,7 @@
 #include <cstring>
 #include <map>
 
-#include "CodeThornCommandLineOptions.h"
+#include "VxThornCommandLineOptions.h"
 #include "RewriteSystem.h"
 
 #include "InternalChecks.h"
@@ -88,7 +88,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.12.7";
+const std::string versionString="1.12.6";
 
 // handler for generating backtrace
 void handler(int sig) {
@@ -736,20 +736,7 @@ int main( int argc, char * argv[] ) {
         }
       }
     }
-    if(ctOpt.info.astTraversalCSVFileName.size()>0) {
-      RoseAst ast(sageProject);
-      std::ofstream myfile;
-      myfile.open(ctOpt.info.astTraversalCSVFileName.c_str(),std::ios::out);
-      for(auto n : ast) {
-        myfile<<n->class_name();
-        if(ctOpt.info.astTraversalCSVMode>=2) {
-          myfile<<","<<SgNodeHelper::sourceFilenameLineColumnToString(n);
-        }
-        myfile<<endl;
-      }
-      myfile.close();
-      exit(0);
-    }
+
     if(ctOpt.status) {
       cout<<"STATUS: analysis started."<<endl;
     }

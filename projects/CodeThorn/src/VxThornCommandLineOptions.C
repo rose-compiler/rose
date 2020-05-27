@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "CodeThornException.h"
-#include "CodeThornCommandLineOptions.h"
+#include "VxThornCommandLineOptions.h"
 #include "CppStdUtilities.h"
 
 #include <string>
@@ -48,6 +48,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
   po::options_description svcompOptions("SV-Comp options");
   po::options_description rersOptions("RERS options");
   po::options_description patternSearchOptions("RERS options");
+  po::options_description equivalenceCheckingOptions("Equivalence checking options");
   po::options_description parallelProgramOptions("Analysis options for parallel programs");
   po::options_description dataRaceOptions("Data race detection options");
   po::options_description experimentalOptions("Experimental options");
@@ -276,8 +277,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("print-function-id-mapping",po::value< bool >(&ctOpt.info.printFunctionIdMapping)->default_value(false)->implicit_value(true),"Print function-id-mapping on stdout.")
     ("ast-stats-print",po::value< bool >(&ctOpt.info.printAstNodeStats)->default_value(false)->implicit_value(true),"Print ast node statistics on stdout.")
     ("ast-stats-csv",po::value< string >(&ctOpt.info.astNodeStatsCSVFileName),"Write ast node statistics to CSV file [arg].")
-    ("ast-traversal-csv",po::value< string >(&ctOpt.info.astTraversalCSVFileName),"Write ast node traversal (sequence of node types) to file [arg].")
-    ("ast-traversal-csv-mode",po::value< int >(&ctOpt.info.astTraversalCSVMode)->default_value(1),"Select mode to generate csv file (1..2) [arg].")
     ("type-size-mapping-print",po::value< bool >(&ctOpt.info.printTypeSizeMapping)->default_value(false)->implicit_value(true),"Print type-size mapping on stdout.")
     ("type-size-mapping-csv",po::value<std::string>(&ctOpt.info.typeSizeMappingCSVFileName),"Write type-size mapping to CSV file [arg].")
     ;

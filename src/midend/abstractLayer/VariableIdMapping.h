@@ -32,6 +32,7 @@ namespace CodeThorn {
 
   public:
     VariableIdMapping();
+    virtual ~VariableIdMapping();
     typedef std::set<VariableId> VariableIdSet;
 
     /*
@@ -40,8 +41,8 @@ namespace CodeThorn {
       variable-id (including global variables, local variables,
       class/struct/union data members)
     */    
-    void computeVariableSymbolMapping(SgProject* project);
-
+    virtual void computeVariableSymbolMapping(SgProject* project);
+    
     /* create a new unique variable symbol (should be used together with
        deleteUniqueVariableSymbol) this is useful if additional
        (e.g. temporary) variables are introduced in an analysis this
@@ -70,7 +71,6 @@ namespace CodeThorn {
     VariableId variableId(SgInitializedName* initName);
     VariableId variableId(SgSymbol* sym);
     VariableId variableIdFromCode(int);
-    VariableId variableIdOfArrayElement(VariableId arrayVar, int elemIndex);
     SgSymbol* getSymbol(VariableId varId);
     SgType* getType(VariableId varId);
 
@@ -106,6 +106,11 @@ namespace CodeThorn {
     // get the size of an element of the memory region determined by this variableid
     size_t getElementSize(VariableId variableId);
 
+    // set offset of member variable (type is implicit as varids are unique across all types)
+    void setOffset(VariableId variableId, int offset);
+    // get offset of member variable (type is implicit as varids are unique across all types)
+    int getOffset(VariableId variableId);
+
     SgSymbol* createAndRegisterNewSymbol(std::string name);
     CodeThorn::VariableId createAndRegisterNewVariableId(std::string name);
     CodeThorn::VariableId createAndRegisterNewMemoryRegion(std::string name, int regionSize);
@@ -123,8 +128,8 @@ namespace CodeThorn {
        e.g. a[3] gets assigned 3 variable-ids (where the first one denotes a[0])
        this mode must be set before the mapping is computed with computeVariableSymbolMapping
     */
-    void setModeVariableIdForEachArrayElement(bool active);
-    bool getModeVariableIdForEachArrayElement();
+    //void setModeVariableIdForEachArrayElement(bool active);
+    //bool getModeVariableIdForEachArrayElement();
 
     SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar);
     size_t getArrayDimensions(SgArrayType* t, std::vector<size_t> *dimensions = NULL);
@@ -151,11 +156,12 @@ namespace CodeThorn {
 
   protected:
     struct VariableIdInfo {
+    public:
       VariableIdInfo();
+      SgSymbol* sym;
       size_t numberOfElements;
       size_t elementSize; // in bytes
-      size_t offset;      // in bytes, only for member variables
-      SgSymbol* sym;
+      int offset;      // in bytes, only for member variables
     };
     std::map<SgStringVal*,VariableId> sgStringValueToVariableIdMapping;
     std::map<VariableId, SgStringVal*> variableIdToSgStringValueMapping;
@@ -171,7 +177,6 @@ namespace CodeThorn {
     // used for mapping in both directions
     std::map<SgSymbol*,VariableId> mappingSymToVarId;
     std::map<VariableId,VariableIdInfo> mappingVarIdToInfo;
-    bool modeVariableIdForEachArrayElement;
   }; // end of class VariableIdMapping
 
   typedef VariableIdMapping::VariableIdSet VariableIdSet;
