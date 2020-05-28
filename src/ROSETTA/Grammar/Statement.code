@@ -5180,13 +5180,9 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
           SgAliasSymbol* aliasSymbol = new SgAliasSymbol(s);
 
           SgNamespaceDefinitionStatement * gnds = namespaceDefinitionStatement->get_global_definition();
-          ROSE_ASSERT(gnds != NULL);
-
-          if (namespaceDefinitionStatement == gnds) {
-            printf("ERROR: SgScopeStatement::insert_symbol(n=%s,s=%p=%s): directly called on global namespace definition: %p \n", n.str(),s,s->class_name().c_str(),gnds);
+          if (gnds != NULL && namespaceDefinitionStatement != gnds) {
+            gnds->get_symbol_table()->insert(n,aliasSymbol);
           }
-          ROSE_ASSERT(namespaceDefinitionStatement != gnds);
-          gnds->get_symbol_table()->insert(n,aliasSymbol);
         }
 
      SgGlobal * global_scope = isSgGlobal(this);
@@ -17592,7 +17588,7 @@ SgTemplateVariableDeclaration::post_construction_initialization()
 
 
 SgTemplateVariableDeclaration::SgTemplateVariableDeclaration( const SgName& var_name, SgType *type, SgInitializer *initializer)
-   : SgVariableDeclaration(var_name,type,initializer)
+   : SgVariableDeclaration(var_name,type,initializer), p_nonreal_decl_scope(NULL)
    {
   // DQ (11/10/2006): Ultimately, i think this constructor should be eliminated since it will be
   // redundant with a higher level interface which is planned and it is not automatically generated.
