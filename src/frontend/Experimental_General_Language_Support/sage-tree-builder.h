@@ -38,6 +38,7 @@ class SgVariableDeclaration;
 class SgJovialCompoolStatement;
 class SgJovialDefineDeclaration;
 class SgJovialDirectiveStatement;
+class SgJovialOverlayDeclaration;
 class SgJovialTableStatement;
 
 
@@ -151,6 +152,9 @@ public:
 
    void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);
    void Leave(SgJovialCompoolStatement*);
+
+   void Enter(SgJovialOverlayDeclaration* &, SgExpression* address, SgExprListExp* overlay);
+   void Leave(SgJovialOverlayDeclaration*);
 
    void Enter(SgJovialTableStatement* &, const std::string &, const SourcePositionPair &, bool is_block=false);
    void Leave(SgJovialTableStatement*);

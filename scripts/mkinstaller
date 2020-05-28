@@ -23,20 +23,20 @@ $Interpreter ||= "/usr/bin/perl";
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
 $mkinstaller_ver_build = "1";
-$mkinstaller_ver_patch = "2";
-$mkinstaller_ver_name  = "2.6.1.2";
-$mkinstaller_ver_time  = "18May2020,06:15:08z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.1.2 - 18May2020,06:15:08z";
+$mkinstaller_ver_patch = "3";
+$mkinstaller_ver_name  = "2.6.1.3";
+$mkinstaller_ver_time  = "25May2020,21:10:24z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.1.3 - 25May2020,21:10:24z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
 $perl_library_ver_major = "1";
 $perl_library_ver_minor = "6";
 $perl_library_ver_build = "18";
-$perl_library_ver_patch = "";
-$perl_library_ver_name  = "1.6.18";
-$perl_library_ver_time  = "17May2020,18:42:33z";
-$perl_library_ver_id    = "@(#)perl_library 1.6.18 - 17May2020,18:42:33z";
+$perl_library_ver_patch = "1";
+$perl_library_ver_name  = "1.6.18.1";
+$perl_library_ver_time  = "25May2020,19:10:23z";
+$perl_library_ver_id    = "@(#)perl_library 1.6.18.1 - 25May2020,19:10:23z";
 
 #{------------------------------------------------------------------------------
 #
@@ -103,16 +103,16 @@ $foundInDir  = "";
 
 #-------------------------------------------------------------------------------
 #
-#  The DEBUG_mkinstaller (or DEBUG) enviroment variable is used to control the
+#  The DEBUG_mkinstaller (or DEBUG) environment variable is used to control the
 #  production of debugging output.
 #
 #     not set
 #
-#         Don't produce debugging ouput.
+#         Don't produce debugging output.
 #
 #     0
 #
-#         Don't produce debugging ouput.
+#         Don't produce debugging output.
 #
 #     non-zero integer
 #
@@ -244,7 +244,7 @@ if ($valueOfDebugVar ne "") {
    my $keepOpt                         = "";
    my $libDirBasename                  = "";
    my $NadjustedStuff                  = 0;
-   my $oldOSname                       = ""; # Only for backwards compatability
+   my $oldOSname                       = ""; # Only for backwards compatibility
    my $OSname                          = lc $^O;
    my $OSversion                       = "";
    my $postInstallBasename             = "";
@@ -2593,7 +2593,7 @@ if ($valueOfDebugVar ne "") {
    #  Then copy the individual files to be installed (if any) into appropriate
    #  temporary directories. Note that this process works very much like the
    #  way command-line parameters (directories to be installed) are handled
-   #  during command line processing above. This effectivly "converts" individual
+   #  during command line processing above. This effectively "converts" individual
    #  file installations to the expected directory installations.
    #
    #----------------------------------------------------------------------------
@@ -10213,7 +10213,7 @@ EOF20
          |                               echo
          |                               echo "        --enforce-check"
          |                               echo
-         |                               echo "            Enforce compatability. If the source system C and C++"
+         |                               echo "            Enforce compatibility. If the source system C and C++"
          |                               echo "            library versions don't agree then report the problem and"
          |                               echo "            quit. This is the default behavior."
          |                               echo
@@ -10225,7 +10225,7 @@ EOF20
          |                               echo
          |                               echo "        --just-check"
          |                               echo
-         |                               echo "            Don't enforce compatability. If the source system C and C++"
+         |                               echo "            Don't enforce compatibility. If the source system C and C++"
          |                               echo "            library versions don't agree then simply report the problem"
          |                               echo "            then carry-on with the installation."
 EOF21
@@ -10288,7 +10288,7 @@ EOF25
          |                               echo
          |                               echo "               -v3"
          |                               echo
-         |                               echo "            is equavalent to:"
+         |                               echo "            is equivalent to:"
          |                               echo
          |                               echo "               -v -v -v"
          |                               echo
@@ -12060,7 +12060,7 @@ EOF44
          |
          |#-------------------------------------------------------------------------------
          |#
-         |#  Check for compatability...
+         |#  Check for compatibility...
          |#
          |#-------------------------------------------------------------------------------
          |
@@ -12078,7 +12078,7 @@ EOF44
          |
          |#---------------------------------------
          |#
-         |#  Check for HW compatability...
+         |#  Check for HW compatibility...
          |#
          |#---------------------------------------
          |
@@ -12114,7 +12114,7 @@ EOF44
          |
          |#---------------------------------------
          |#
-         |#  Check for OS compatability...
+         |#  Check for OS compatibility...
          |#
          |#---------------------------------------
          |
@@ -12150,7 +12150,7 @@ EOF44
          |
          |#---------------------------------------
          |#
-         |#  Check for libc compatability...
+         |#  Check for libc compatibility...
          |#
          |#---------------------------------------
          |
@@ -12196,7 +12196,7 @@ EOF44
          |
          |#---------------------------------------
          |#
-         |#  Check for Standard C++ library compatability...
+         |#  Check for Standard C++ library compatibility...
          |#
          |#---------------------------------------
          |
@@ -12242,7 +12242,7 @@ EOF44
          |
          |#---------------------------------------
          |#
-         |#  Check for Standard C++ library ABI compatability...
+         |#  Check for Standard C++ library ABI compatibility...
          |#
          |#---------------------------------------
          |
@@ -23382,7 +23382,7 @@ sub help {
    |       3) "Transport". This is the process of taking a copy of the
    |          generated installer script that was generated in phase 2 from
    |          the "source" system to the "target" system. The details of this
-   |          are not discussed here howerver such transport generally
+   |          are not discussed here however such transport generally
    |          involves scp, ftp, curl, CD, DVD, USB-drive, or a download from
    |          a web site.
    |
@@ -23830,7 +23830,7 @@ sub help {
    |
    |               -v3
    |
-   |            is equavalent to:
+   |            is equivalent to:
    |
    |               -v -v -v
    |
@@ -23935,7 +23935,7 @@ sub help {
    |           -v2 \\
    |
    |       The -v2 option indicates (enhanced) verbose output is desired.
-   |       Note that verbose output is generally benificial. Also note that
+   |       Note that verbose output is generally beneficial. Also note that
    |       the trailing backslash was the continuation mark from the above
    |       very long command above (an honest cut/paste), it is not part
    |       of this option or any of the following options and parameters.
@@ -24441,7 +24441,7 @@ sub html {
    |               <li><b>Transport</b>. This is the process of taking a copy of the
    |                   generated installer script that was produced in phase 2 from
    |                   the <b>source</b> system to the <b>target</b> system. The details of this
-   |                   are not discussed here howerver such transport generally
+   |                   are not discussed here however such transport generally
    |                   involves <i>scp</i>, <i>ftp</i>, <i>curl</i>, CD, DVD, USB-drive, or a download from
    |                   a web site.
    |               </li>
@@ -24971,7 +24971,7 @@ sub html {
    |   -v3
    |</pre>
    |<p>
-   |               is equavalent to: <br>
+   |               is equivalent to: <br>
    |               <p>
    |<p>
    |<pre>
@@ -25103,7 +25103,7 @@ sub html {
    |</pre>
    |            </blockquote>
    |            The <b><big><code>-v2</code></big></b> option indicates (enhanced) verbose output is desired.
-   |            Note that verbose output is generally benificial. Also note that
+   |            Note that verbose output is generally beneficial. Also note that
    |            the trailing backslash was the continuation mark from the above
    |            very long command above (an honest cut/paste), it is not part
    |            of this option or any of the following options and parameters.
@@ -25470,7 +25470,7 @@ EOF1
    |                      directories to install have NOT be unwrapped.
    |                  </li>
    |                  <li>Each individual tarball revealed (5) is unwrapped into the
-   |                      approperiate <b><big><code>PREFIX</code></big></b> directory overlying anything already
+   |                      appropriate <b><big><code>PREFIX</code></big></b> directory overlying anything already
    |                      there.
    |                  </li>
    |                  <li>If (5) revealed a post-install script then it will be executed

@@ -16,8 +16,7 @@
 #include "AbstractValue.h"
 #include "AstTerm.h"
 #include "ProgramLocationsReport.h"
-#include "SgTypeSizeMapping.h"
-#include "StructureAccessLookup.h"
+#include "TypeSizeMapping.h"
 #include "CodeThornOptions.h"
 
 using namespace std;
@@ -135,7 +134,6 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalFunctionCallArguments(SgFunctionCallExp* funCall, EState estate);
     list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate);
     bool isLValueOp(SgNode* node);
-    void initializeStructureAccessLookup(SgProject* node);
     // requires StructureAccessLookup to be initialized.
     bool isStructMember(CodeThorn::VariableId varId);
     // checks if value is a null pointer. If it is 0 it records a null pointer violation at provided label.
@@ -342,7 +340,6 @@ namespace CodeThorn {
     std::string _interpreterModeFileName;
     bool _optionOutputWarnings=false;
   public:
-    StructureAccessLookup structureAccessLookup;
   };
 
   

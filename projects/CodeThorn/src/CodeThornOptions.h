@@ -60,7 +60,7 @@ struct CodeThornOptions : public Options {
   bool generateAssertions=false; // unparsing
   bool precisionExactConstraints=false; // obsolete
   std::string stgTraceFileName;
-  bool explicitArrays=true;
+  bool arraysNotInState=false; // exceptional case (double negation intentional)
   bool z3BasedReachabilityAnalysis=false;
   int z3UpperInputBound=-1;
   int z3VerifierErrorNumber=-1;
@@ -178,6 +178,8 @@ struct CodeThornOptions : public Options {
     bool printFunctionIdMapping=false;
     bool printAstNodeStats=false;
     std::string astNodeStatsCSVFileName;
+    std::string astTraversalCSVFileName;
+    int astTraversalCSVMode=1;
     bool printTypeSizeMapping=false;
     std::string typeSizeMappingCSVFileName;
 

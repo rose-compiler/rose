@@ -35,7 +35,6 @@ namespace CodeThorn {
  */
 class AbstractValue {
  public:
-  typedef uint16_t TypeSize;
   friend bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
   friend bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
   enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, TOP, UNDEFINED };
@@ -63,7 +62,7 @@ class AbstractValue {
   void initInteger(CodeThorn::BuiltInType btype, long long int ival);
   void initFloat(CodeThorn::BuiltInType btype, long double fval);
   static AbstractValue createIntegerValue(CodeThorn::BuiltInType btype, long long int ival);
-  TypeSize calculateTypeSize(CodeThorn::BuiltInType btype);
+  CodeThorn::TypeSize calculateTypeSize(CodeThorn::BuiltInType btype);
   // currently this maps to isTop() - in preparation to handle
   // uninitilized explicitly. A declaration (without initializer)
   // should use this function to model the semantics of an undefined value.
@@ -144,8 +143,8 @@ class AbstractValue {
   long hash() const;
   std::string valueTypeToString() const;
 
-  TypeSize getTypeSize() const;
-  void setTypeSize(TypeSize valueSize);
+  CodeThorn::TypeSize getTypeSize() const;
+  void setTypeSize(CodeThorn::TypeSize valueSize);
   static void setVariableIdMapping(CodeThorn::VariableIdMappingExtended* varIdMapping);
   static CodeThorn::VariableIdMappingExtended* getVariableIdMapping();
   static bool approximatedBy(AbstractValue val1, AbstractValue val2);
@@ -159,7 +158,7 @@ class AbstractValue {
   long long int intValue=0;
   long double floatValue=0.0;
 
-  TypeSize typeSize=0;
+  CodeThorn::TypeSize typeSize=0;
   static CodeThorn::VariableIdMappingExtended* _variableIdMapping;
 };
 

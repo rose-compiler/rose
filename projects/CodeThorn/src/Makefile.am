@@ -6,7 +6,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-bin_PROGRAMS = codethorn woodpecker analyterix addressTakenAnalysis cldemo
+# 
+bin_PROGRAMS = codethorn equithorn vxthorn parprothorn ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
 
 # matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis cldemo
@@ -150,12 +151,10 @@ CODETHORN_HEADER_FILES=\
   RewriteStatistics.h \
   RewriteSystem.h \
   RWState.h \
-  SgTypeSizeMapping.h \
   Solver5.h \
   Solver8.h \
   Solver.h \
   Specialization.h \
-  StructureAccessLookup.h \
   SvcompWitness.h \
   TimeMeasurement.h \
   TransitionGraph.h \
@@ -258,12 +257,10 @@ CODETHORN_SOURCE_FILES=\
   RewriteStatistics.C \
   RewriteSystem.C \
   RWState.C \
-  SgTypeSizeMapping.C \
   Solver5.C \
   Solver8.C \
   Solver.C \
   Specialization.C \
-  StructureAccessLookup.C \
   SvcompWitness.C \
   TimeMeasurement.C \
   TransitionGraph.C \
@@ -407,8 +404,145 @@ codethorn_SOURCES = \
 # TOOL: LTLTHORN
 ##############################################################
 
-# TODO
+# yacc flags for LTL parser
+ltlthorn_YFLAGS = -p ltl_ 
 
+# this line creates speparately named object files
+ltlthorn_CXXFLAGS = -fopenmp -Wall -O3 
+
+# ltlthorn has most of its code organized in two separate libraries
+ltlthorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
+
+if ROSE_WITH_SPOT
+#spot and bdd need to be linked last with gcc 5.4
+ltlthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
+ltlthorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+else
+ltlthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
+endif
+
+ltlthorndir=.
+
+# only informative
+ltlthorn_xHEADERS = \
+  CommandLineOptions.h \
+  LTLThornCommandLineOptions.h \
+  codethorn.h \
+  LTL.h
+
+# codethorn sources in addition to libcodethorn and libltlthorn
+ltlthorn_SOURCES = \
+  LTLParser.y++ \
+  LTLThornCommandLineOptions.C \
+  ltlthorn.C
+
+##############################################################
+# TOOL: EQUITHORN
+##############################################################
+
+# yacc flags for LTL parser
+equithorn_YFLAGS = -p ltl_ 
+
+# this line creates speparately named object files
+equithorn_CXXFLAGS = -fopenmp -Wall -O3 
+
+# equithorn has most of its code organized in two separate libraries
+equithorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
+
+if ROSE_WITH_SPOT
+#spot and bdd need to be linked last with gcc 5.4
+equithorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
+equithorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+else
+equithorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
+endif
+
+equithorndir=.
+
+# only informative
+equithorn_xHEADERS = \
+  CommandLineOptions.h \
+  EquiThornCommandLineOptions.h \
+  codethorn.h \
+  LTL.h
+
+# codethorn sources in addition to libcodethorn and libltlthorn
+equithorn_SOURCES = \
+  LTLParser.y++ \
+  EquiThornCommandLineOptions.C \
+  equithorn.C
+
+##############################################################
+# TOOL: PARPROTHORN
+##############################################################
+
+# yacc flags for LTL parser
+parprothorn_YFLAGS = -p ltl_ 
+
+# this line creates speparately named object files
+parprothorn_CXXFLAGS = -fopenmp -Wall -O3 
+
+# parprothorn has most of its code organized in two separate libraries
+parprothorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
+
+if ROSE_WITH_SPOT
+#spot and bdd need to be linked last with gcc 5.4
+parprothorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
+parprothorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+else
+parprothorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
+endif
+
+parprothorndir=.
+
+# only informative
+parprothorn_xHEADERS = \
+  CommandLineOptions.h \
+  ParProThornCommandLineOptions.h \
+  codethorn.h \
+  LTL.h
+
+# codethorn sources in addition to libcodethorn and libltlthorn
+parprothorn_SOURCES = \
+  LTLParser.y++ \
+  ParProThornCommandLineOptions.C \
+  parprothorn.C
+
+##############################################################
+# TOOL: VXTHORN
+##############################################################
+
+# yacc flags for LTL parser
+vxthorn_YFLAGS = -p ltl_ 
+
+# this line creates speparately named object files
+vxthorn_CXXFLAGS = -fopenmp -Wall -O3 
+
+# vxthorn has most of its code organized in two separate libraries
+vxthorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
+
+if ROSE_WITH_SPOT
+#spot and bdd need to be linked last with gcc 5.4
+vxthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
+vxthorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+else
+vxthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
+endif
+
+vxthorndir=.
+
+# only informative
+vxthorn_xHEADERS = \
+  CommandLineOptions.h \
+  VxThornCommandLineOptions.h \
+  codethorn.h \
+  LTL.h
+
+# codethorn sources in addition to libcodethorn and libltlthorn
+vxthorn_SOURCES = \
+  LTLParser.y++ \
+  VxThornCommandLineOptions.C \
+  vxthorn.C
 
 ##############################################################
 # TOOL: WOODPECKER
@@ -700,7 +834,7 @@ check-equivalence:
 	@echo ================================================================
 	@echo RUNNING UPDATE SEQUENCE VERIFICATION TESTS
 	@echo ================================================================
-	@./codethorn --edg:no_warnings --normalize-all=off $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump --rule-commutative-sort=no --abstraction-mode=0
+	@./equithorn --edg:no_warnings --normalize-all=off $(srcdir)/tests/jacobi-1d-imper_mod.c --dump-non-sorted=tmp.nsdump --rule-commutative-sort=no --abstraction-mode=0
 #	@diff tmp.nsdump $(srcdir)/tests/jacobi-1d-imper_mod.c.nsdump
 	@cat tmp.nsdump
 	@rm -f tmp.nsdump

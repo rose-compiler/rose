@@ -689,6 +689,31 @@ Leave(SgJovialCompoolStatement* compool_decl)
 }
 
 void SageTreeBuilder::
+Enter(SgJovialOverlayDeclaration* &overlay_decl, SgExpression* address, SgExprListExp* overlay)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialOverlayDeclaration* &, ...) \n";
+
+   ROSE_ASSERT(address);
+   ROSE_ASSERT(overlay);
+
+   //TOOD: SageBuilder function
+   overlay_decl = new SgJovialOverlayDeclaration(address, overlay);
+   ROSE_ASSERT(overlay_decl);
+   SageInterface::setSourcePosition(overlay_decl);
+
+   address->set_parent(overlay_decl);
+   overlay->set_parent(overlay_decl);
+}
+
+void SageTreeBuilder::
+Leave(SgJovialOverlayDeclaration* overlay_decl)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialOverlayDeclaration*) \n";
+
+   SageInterface::appendStatement(overlay_decl, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
 Enter(SgJovialTableStatement* &table_decl,
       const std::string &name, const SourcePositionPair &positions, bool is_block)
 {

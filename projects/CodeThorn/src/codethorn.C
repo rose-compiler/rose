@@ -19,13 +19,13 @@
 #include <map>
 
 #include "CodeThornCommandLineOptions.h"
+#include "RewriteSystem.h"
 
 #include "InternalChecks.h"
 #include "AstAnnotator.h"
 #include "AstTerm.h"
 #include "AbstractValue.h"
 #include "AstMatching.h"
-#include "RewriteSystem.h"
 #include "ltlthorn-lib/SpotConnection.h"
 #include "ltlthorn-lib/CounterexampleAnalyzer.h"
 #include "AnalysisAbstractionLayer.h"
@@ -88,7 +88,7 @@ using namespace Sawyer::Message;
 #include <stdlib.h>
 #include <unistd.h>
 
-const std::string versionString="1.12.6";
+const std::string versionString="1.12.7";
 
 // handler for generating backtrace
 void handler(int sig) {
@@ -406,7 +406,7 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     // fall-through for default
     break;
   case 1:
-    ctOpt.explicitArrays=true;
+    ctOpt.arraysNotInState=false;
     ctOpt.inStateStringLiterals=true;
     ctOpt.ignoreUnknownFunctions=true;
     ctOpt.ignoreFunctionPointers=true;
@@ -417,7 +417,7 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     AbstractValue::strictChecking=false;
     break;
   case 2:
-    ctOpt.explicitArrays=true;
+    ctOpt.arraysNotInState=false;
     ctOpt.inStateStringLiterals=true;
     ctOpt.ignoreUnknownFunctions=true;
     ctOpt.ignoreFunctionPointers=false;
@@ -428,7 +428,7 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     AbstractValue::strictChecking=false;
     break;
   case 3:
-    ctOpt.explicitArrays=true;
+    ctOpt.arraysNotInState=false;
     ctOpt.inStateStringLiterals=false;
     ctOpt.ignoreUnknownFunctions=true;
     ctOpt.ignoreFunctionPointers=false;
@@ -439,7 +439,7 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     AbstractValue::strictChecking=false;
     break;
   case 4:
-    ctOpt.explicitArrays=true;
+    ctOpt.arraysNotInState=false;
     ctOpt.inStateStringLiterals=false;
     ctOpt.ignoreUnknownFunctions=true;
     ctOpt.ignoreFunctionPointers=false;
@@ -450,7 +450,7 @@ void configureOptionSets(CodeThornOptions& ctOpt) {
     AbstractValue::strictChecking=true;
     break;
   case 11:
-    ctOpt.explicitArrays=true;
+    ctOpt.arraysNotInState=false;
     ctOpt.inStateStringLiterals=true;
     ctOpt.ignoreUnknownFunctions=true;
     ctOpt.ignoreFunctionPointers=false;
@@ -543,11 +543,13 @@ int main( int argc, char * argv[] ) {
     global_analyzer=analyzer;
 
     if(ctOpt.internalChecks) {
-      mfacilities.shutdown();
-      if(CodeThorn::internalChecks(argc,argv)==false)
+      if(CodeThorn::internalChecks(argc,argv)==false) {
+        mfacilities.shutdown();
         return 1;
-      else
+      } else {
+        mfacilities.shutdown();
         return 0;
+      }
     }
 
     if(ctOpt.exprEvalTest) {
@@ -600,64 +602,6 @@ int main( int argc, char * argv[] ) {
     string option_start_function="main";
     if(ctOpt.startFunctionName.size()>0) {
       option_start_function = ctOpt.startFunctionName;
-    }
-
-    string option_specialize_fun_name="";
-    vector<int> option_specialize_fun_param_list;
-    vector<int> option_specialize_fun_const_list;
-    vector<string> option_specialize_fun_varinit_list;
-    vector<int> option_specialize_fun_varinit_const_list;
-    if(ctOpt.equiCheck.specializeFunName.size()>0) {
-      option_specialize_fun_name = ctOpt.equiCheck.specializeFunName;
-      // logger[DEBUG] << "option_specialize_fun_name: "<< option_specialize_fun_name<<endl;
-    } else {
-      // logger[DEBUG] << "option_specialize_fun_name: NONE"<< option_specialize_fun_name<<endl;
-    }
-
-    if(ctOpt.equiCheck.specializeFunParamList.size()>0) {
-      option_specialize_fun_param_list=ctOpt.equiCheck.specializeFunParamList;
-      option_specialize_fun_const_list=ctOpt.equiCheck.specializeFunConstList;
-    }
-
-    if(ctOpt.equiCheck.specializeFunVarInitList.size()>0) {
-      option_specialize_fun_varinit_list=ctOpt.equiCheck.specializeFunVarInitList;
-      option_specialize_fun_varinit_const_list=ctOpt.equiCheck.specializeFunVarInitConstList;
-    }
-
-    // logger[DEBUG] << "specialize-params:"<<option_specialize_fun_const_list.size()<<endl;
-
-    if(ctOpt.equiCheck.specializeFunName.size()>0) {
-      if( ((ctOpt.equiCheck.specializeFunParamList.size()>0)||ctOpt.equiCheck.specializeFunConstList.size()>0)
-        && !(ctOpt.equiCheck.specializeFunName.size()>0&&ctOpt.equiCheck.specializeFunParamList.size()>0)) {
-        logger[ERROR] <<"options --specialize-fun-name=NAME --specialize-fun-param=NUM --specialize-fun-const=NUM must be used together."<<endl;
-        exit(1);
-      }
-    if((ctOpt.equiCheck.specializeFunVarInitList.size()>0||ctOpt.equiCheck.specializeFunVarInitConstList.size()>0)
-       && !(ctOpt.equiCheck.specializeFunVarInitList.size()>0&&ctOpt.equiCheck.specializeFunVarInitConstList.size()>0)) {
-        logger[ERROR] <<"options --specialize-fun-name=NAME --specialize-fun-varinit=NAME --specialize-fun-const=NUM must be used together."<<endl;
-        exit(1);
-      }
-    }
-
-    if((ctOpt.equiCheck.printUpdateInfos)&&(ctOpt.equiCheck.dumpSortedFileName.size()==0 && ctOpt.equiCheck.dumpNonSortedFileName.size()==0)) {
-      logger[ERROR] <<"option print-update-infos/equivalence-check must be used together with option --dump-non-sorted or --dump-sorted."<<endl;
-      exit(1);
-    }
-    RewriteSystem rewriteSystem;
-    if(ctOpt.equiCheck.printRewriteTrace) {
-      rewriteSystem.setTrace(true);
-    }
-    if(ctOpt.ignoreUndefinedDereference) {
-      analyzer->setIgnoreUndefinedDereference(true);
-    }
-    if(ctOpt.equiCheck.dumpSortedFileName.size()>0 || ctOpt.equiCheck.dumpNonSortedFileName.size()>0) {
-      analyzer->setSkipUnknownFunctionCalls(true);
-      analyzer->setSkipArrayAccesses(true);
-      ctOpt.explicitArrays=false;
-      if(analyzer->getNumberOfThreadsToUse()>1) {
-        logger[ERROR] << "multi threaded rewrite not supported yet."<<endl;
-        exit(1);
-      }
     }
 
     // parse command line options for data race detection
@@ -792,7 +736,20 @@ int main( int argc, char * argv[] ) {
         }
       }
     }
-
+    if(ctOpt.info.astTraversalCSVFileName.size()>0) {
+      RoseAst ast(sageProject);
+      std::ofstream myfile;
+      myfile.open(ctOpt.info.astTraversalCSVFileName.c_str(),std::ios::out);
+      for(auto n : ast) {
+        myfile<<n->class_name();
+        if(ctOpt.info.astTraversalCSVMode>=2) {
+          myfile<<","<<SgNodeHelper::sourceFilenameLineColumnToString(n);
+        }
+        myfile<<endl;
+      }
+      myfile.close();
+      exit(0);
+    }
     if(ctOpt.status) {
       cout<<"STATUS: analysis started."<<endl;
     }
@@ -851,59 +808,15 @@ int main( int argc, char * argv[] ) {
     ROSE_ASSERT(root);
 
     // only handle pragmas if fun_name is not set on the command line
-    if(option_specialize_fun_name=="") {
-      SAWYER_MESG(logger[TRACE])<<"STATUS: handling pragmas started."<<endl;
-      PragmaHandler pragmaHandler;
-      pragmaHandler.handlePragmas(sageProject,analyzer);
-      // TODO: requires more refactoring
-      option_specialize_fun_name=pragmaHandler.option_specialize_fun_name;
-      // unparse specialized code
-      //sageProject->unparse(0,0);
-      SAWYER_MESG(logger[TRACE])<<"STATUS: handling pragmas finished."<<endl;
-    } else {
-      // do specialization and setup data structures
-      analyzer->setSkipUnknownFunctionCalls(true);
-      analyzer->setSkipArrayAccesses(true);
-      analyzer->getOptionsRef().explicitArrays=false;
-      analyzer->setOptions(ctOpt);
-      //TODO1: refactor into separate function
-      int numSubst=0;
-      if(option_specialize_fun_name!="") {
-        Specialization speci;
-        SAWYER_MESG(logger[TRACE])<<"STATUS: specializing function: "<<option_specialize_fun_name<<endl;
-
-        string funNameToFind=option_specialize_fun_name;
-
-        for(size_t i=0;i<option_specialize_fun_param_list.size();i++) {
-          int param=option_specialize_fun_param_list[i];
-          int constInt=option_specialize_fun_const_list[i];
-          numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, analyzer->getVariableIdMapping());
-        }
-        SAWYER_MESG(logger[TRACE])<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
-        int numInit=0;
-        //logger[DEBUG]<<"var init spec: "<<endl;
-        for(size_t i=0;i<option_specialize_fun_varinit_list.size();i++) {
-          string varInit=option_specialize_fun_varinit_list[i];
-          int varInitConstInt=option_specialize_fun_varinit_const_list[i];
-          //logger[DEBUG]<<"checking for varInitName nr "<<i<<" var:"<<varInit<<" Const:"<<varInitConstInt<<endl;
-          numInit+=speci.specializeFunction(sageProject,funNameToFind, -1, 0, varInit, varInitConstInt,analyzer->getVariableIdMapping());
-        }
-        SAWYER_MESG(logger[TRACE])<<"STATUS: specialization: number of variable-inits replaced with constant: "<<numInit<<endl;
-      }
-    }
-
-    if(ctOpt.rewrite) {
-      SAWYER_MESG(logger[TRACE])<<"STATUS: rewrite started."<<endl;
-      rewriteSystem.resetStatistics();
-      rewriteSystem.setRewriteCondStmt(false); // experimental: supposed to normalize conditions
-      rewriteSystem.rewriteAst(root,analyzer->getVariableIdMapping(), false, true/*eliminate compound assignments*/);
-      // TODO: Outputs statistics
-      cout <<"Rewrite statistics:"<<endl<<rewriteSystem.getStatistics().toString()<<endl;
-      sageProject->unparse(0,0);
-      SAWYER_MESG(logger[TRACE])<<"STATUS: generated rewritten program."<<endl;
-      exit(0);
-    }
-
+    SAWYER_MESG(logger[TRACE])<<"STATUS: handling pragmas started."<<endl;
+    PragmaHandler pragmaHandler;
+    pragmaHandler.handlePragmas(sageProject,analyzer);
+    // TODO: requires more refactoring
+    string option_specialize_fun_name=pragmaHandler.option_specialize_fun_name;
+    // unparse specialized code
+    //sageProject->unparse(0,0);
+    SAWYER_MESG(logger[TRACE])<<"STATUS: handling pragmas finished."<<endl;
+    
     {
       AbstractValueSet varsInAssertConditions=determineVarsInAssertConditions(root,analyzer->getVariableIdMapping());
       SAWYER_MESG(logger[TRACE])<<"STATUS: determined "<<varsInAssertConditions.size()<< " variables in (guarding) assert conditions."<<endl;
@@ -911,6 +824,7 @@ int main( int argc, char * argv[] ) {
     }
 
     if(ctOpt.eliminateCompoundStatements) {
+      RewriteSystem rewriteSystem;
       SAWYER_MESG(logger[TRACE])<<"STATUS: Elimination of compound assignments started."<<endl;
       set<AbstractValue> compoundIncVarsSet=determineSetOfCompoundIncVars(analyzer->getVariableIdMapping(),root);
       analyzer->setCompoundIncVarsSet(compoundIncVarsSet);
@@ -1335,59 +1249,7 @@ int main( int argc, char * argv[] ) {
     if(dataRaceDetection.run(*analyzer)) {
       exit(0);
     }
-
-    if(ctOpt.equiCheck.dumpSortedFileName.size()>0 || ctOpt.equiCheck.dumpNonSortedFileName.size()>0) {
-      SAR_MODE sarMode=SAR_SSA;
-      if(ctOpt.equiCheck.rewriteSSA) {
-	sarMode=SAR_SUBSTITUTE;
-      }
-      Specialization speci;
-      ArrayUpdatesSequence arrayUpdates;
-      SAWYER_MESG(logger[TRACE]) <<"STATUS: performing array analysis on STG."<<endl;
-      SAWYER_MESG(logger[TRACE]) <<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
-
-      bool useRuleConstSubstitution=ctOpt.equiCheck.ruleConstSubst;
-      bool useRuleCommutativeSort=ctOpt.equiCheck.ruleCommutativeSort;
-      
-      timer.start();
-      speci.extractArrayUpdateOperations(analyzer,
-          arrayUpdates,
-          rewriteSystem,
-          useRuleConstSubstitution
-          );
-
-      //cout<<"DEBUG: Rewrite1:"<<rewriteSystem.getStatistics().toString()<<endl;
-      speci.substituteArrayRefs(arrayUpdates, analyzer->getVariableIdMapping(), sarMode, rewriteSystem);
-      //cout<<"DEBUG: Rewrite2:"<<rewriteSystem.getStatistics().toString()<<endl;
-
-      rewriteSystem.setRuleCommutativeSort(useRuleCommutativeSort); // commutative sort only used in substituteArrayRefs
-      //cout<<"DEBUG: Rewrite3:"<<rewriteSystem.getStatistics().toString()<<endl;
-      speci.substituteArrayRefs(arrayUpdates, analyzer->getVariableIdMapping(), sarMode, rewriteSystem);
-      arrayUpdateExtractionRunTime=timer.getTimeDurationAndStop().milliSeconds();
-
-      if(ctOpt.equiCheck.printUpdateInfos) {
-        speci.printUpdateInfos(arrayUpdates,analyzer->getVariableIdMapping());
-      }
-      SAWYER_MESG(logger[TRACE]) <<"STATUS: establishing array-element SSA numbering."<<endl;
-      timer.start();
-      speci.createSsaNumbering(arrayUpdates, analyzer->getVariableIdMapping());
-      arrayUpdateSsaNumberingRunTime=timer.getTimeDurationAndStop().milliSeconds();
-
-      if(ctOpt.equiCheck.dumpNonSortedFileName.size()>0) {
-        string filename=ctOpt.equiCheck.dumpNonSortedFileName;
-        speci.writeArrayUpdatesToFile(arrayUpdates, filename, sarMode, false);
-      }
-      if(ctOpt.equiCheck.dumpSortedFileName.size()>0) {
-        timer.start();
-        string filename=ctOpt.equiCheck.dumpSortedFileName;
-        speci.writeArrayUpdatesToFile(arrayUpdates, filename, sarMode, true);
-        sortingAndIORunTime=timer.getTimeDurationAndStop().milliSeconds();
-      }
-      totalRunTime+=arrayUpdateExtractionRunTime+verifyUpdateSequenceRaceConditionRunTime+arrayUpdateSsaNumberingRunTime+sortingAndIORunTime;
-    }
-
     double overallTime =totalRunTime + totalInputTracesTime + totalLtlRunTime;
-
     analyzer->printAnalyzerStatistics(totalRunTime, "STG generation and assertion analysis complete");
 
     if(ctOpt.csvStatsFileName.size()>0) {
@@ -1477,7 +1339,6 @@ int main( int argc, char * argv[] ) {
       text<<","<<verifyUpdateSequenceRaceConditionsTotalLoopNum;
       text<<endl;
 
-      text<<"rewrite-stats, "<<rewriteSystem.getRewriteStatistics().toCsvString()<<endl;
       text<<"infinite-paths-size,"<<pstateSetSizeInf<<", "
         <<eStateSetSizeInf<<", "
         <<transitionGraphSizeInf<<", "
