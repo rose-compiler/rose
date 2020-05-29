@@ -5,11 +5,25 @@
 /// \author Peter Pirkelbauer
 
 #include <vector>
+#include <deque>
+#include <list>
 
 #include <rose.h>
 #include <Labeler.h>
 
 #include "CtxLattice.h"
+
+#define WITH_COW_SEQUENCE 0
+
+#if WITH_COW_SEQUENCE 
+
+// a copy on write (COW) sequence could be based off of
+//   https://gist.github.com/Manu343726/02287de75bb24f2cef00#file-cowbasic_string-hpp
+//   needs extensions to support iteration and back, erase.. 
+
+#include "cow-sequence.h"
+
+#endif
 
 
 namespace CodeThorn
@@ -145,22 +159,35 @@ static constexpr size_t CTX_CALL_STRING_MAX_LENGTH = 4;
 /// Comparator class
 struct FiniteCallStringComparator;
 
+/// adds pop_front to a sequence data structure (required from ContextSequence)
+template <class _BaseT>
+struct ext_sequence : _BaseT
+{
+  typedef _BaseT base;
+  
+  using base::base;
+  
+  void pop_front() { base::erase(base::begin()); } 
+};
 
 /// This class is a simple implementation of a fixed length call string
 ///   Keeping the interface, we may want to replace it with a rotating
 ///   buffer at some point.
 /// \details
 ///   this implementation fills the call sequence with empty labels,
-///   which simplifies 
+///   which simplifies some of the comparison algorithms. 
 /// \note 
 ///   the class has been factored out from FiniteCallString to simplify
-///   its replacement with improved versions
+///   its replacement with improved versions.
 ///   (e.g., circular buffer based, an implementation that have the
 ///          object share its underlying representation to improve
 ///          memory efficiency). 
-struct ContextSequence : private std::vector<Label>
+
+
+template <class _BaseT>
+struct ContextSequence : private _BaseT
 {
-  typedef std::vector<Label> base;
+  typedef _BaseT base;
   
   ContextSequence()
   : base(CTX_CALL_STRING_MAX_LENGTH, Label())
@@ -174,13 +201,12 @@ struct ContextSequence : private std::vector<Label>
   ContextSequence& operator=(ContextSequence&&)      = delete;
   
   using base::const_reference;
-  using base::reverse_iterator;
+  using base::const_reverse_iterator;
   using base::const_iterator;
   using base::begin;
   using base::end;
   using base::rbegin;
   using base::rend;
-  using base::size;  
   
   /// adds a call label @ref lbl to the end of the sequence.
   /// if the sequence is at its capacity, the oldest call label will be
@@ -188,8 +214,8 @@ struct ContextSequence : private std::vector<Label>
   void append(Label lbl)
   {
     ROSE_ASSERT(base::size() == CTX_CALL_STRING_MAX_LENGTH);
-    erase(begin());
-      
+    
+    base::pop_front();
     base::push_back(lbl);
   }
   
@@ -214,22 +240,34 @@ struct ContextSequence : private std::vector<Label>
   }
 };
 
+
 /// a context holds up to @ref CTX_CALL_STRING_MAX_LENGTH as contexts
 ///   when calls return, the contexts is mapped on to all feasible contexts
 ///   in the caller.
 // \todo the base rep could be replaced by a ring-buffer for efficiency
-struct FiniteCallString : ContextSequence
+struct FiniteCallString 
 {
-    typedef FiniteCallStringComparator comparator;
-    typedef ContextSequence            context_string;
-
-    using context_string::reverse_iterator;
-    using context_string::const_iterator;
-    using context_string::begin;
-    using context_string::end;
-    using context_string::rbegin;
-    using context_string::rend;
-    using context_string::size;  // dbg
+    // pick your underlying sequence representation
+    typedef ext_sequence< std::vector<Label> >        sequence; // seems somewhat faster than alternatives
+    //~ typedef cowbasic_string<Label>                    sequence; // wip
+    //~ typedef ext_sequence< std::basic_string<Label> >  sequence;
+    //~ typedef std::deque<Label>                         sequence;
+    //~ typedef std::list<Label>                          sequence;
+    
+    typedef FiniteCallStringComparator                comparator;
+    typedef ContextSequence< sequence >               context_string;
+    
+    // "inherited" types
+    typedef context_string::const_reverse_iterator    const_reverse_iterator;
+    typedef context_string::const_iterator            const_iterator;
+    
+    // "inherited" functions 
+    const_iterator         begin()  const { return rep.begin(); }
+    const_iterator         end()    const { return rep.end(); }
+    const_reverse_iterator rbegin() const { return rep.rbegin(); }
+    const_reverse_iterator rend()   const { return rep.rend(); }
+    bool                   empty()  const { return rep.empty(); }  
+    Label                  last()   const { return rep.last(); }  
 
     /// returns true if *this equals that.
     bool operator==(const FiniteCallString& that) const;
@@ -258,6 +296,9 @@ struct FiniteCallString : ContextSequence
     friend
     std::ostream&
     operator<<(std::ostream& os, const FiniteCallString& el);
+    
+  private:
+     context_string rep;
 };
 
 struct FiniteCallStringComparator

@@ -124,7 +124,7 @@ namespace
   bool cmpCalleeCallerCtx(const FiniteCallString& retctx, const std::pair<const FiniteCallString, Lattice*>& callctx)
   {
     return std::lexicographical_compare( retctx.rbegin(), retctx.rend(), 
-                                         callctx.first.rbegin(), callctx.first.rend()-1,
+                                         callctx.first.rbegin(), --callctx.first.rend(),
                                          FiniteLabelComparator()
                                        );
   }
@@ -177,10 +177,11 @@ namespace
 #endif /* OBSOLETE_CODE */
 
     //~ const size_t overlap = MAX_OVERLAP;
-    const size_t ofs     = 1;
-
+    const size_t                     ofs = 1;
+    
     //~ ROSE_ASSERT(overlap+1 == callee.size());
-    return std::equal(caller.begin() + ofs, caller.end(), callee.begin());
+    return std::equal( std::next(caller.begin(), ofs), caller.end(), 
+                       callee.begin());
   }
 
   struct IsCallerCallee
@@ -214,26 +215,15 @@ namespace
       {
         typedef CtxLattice<FiniteCallString>::const_iterator const_iterator;
 
-        if (!entry.first.isValidReturn(labeler, label))
-        {
-          //~ std::cerr << "aa" << std::endl;
-          return;
-        }
-
+        if (!entry.first.isValidReturn(labeler, label)) return;
+        
         FiniteCallString retctx(entry.first);
 
-        ROSE_ASSERT(retctx.size() == CTX_CALL_STRING_MAX_LENGTH);
         retctx.callReturn(labeler, label);
-        ROSE_ASSERT(retctx.size() == CTX_CALL_STRING_MAX_LENGTH-1);
-
+        
         const_iterator prelow = pre.lower_bound(retctx);
         const_iterator prepos = std::upper_bound(prelow, pre.end(), retctx, cmpCalleeCallerCtx);
         
-        //~ std::cerr << "dist: " << std::distance(prelow, prepos) 
-                  //~ << " @" << labeler.getNode(label)->unparseToString() 
-                  //~ << entry.second->toString() << std::endl;
-                  //~ << std::endl; 
-
         transform_if( prelow, prepos,
                       std::inserter(tgt, tgt.end()),
                       IsCallerCallee{entry.first},
@@ -419,13 +409,13 @@ bool FiniteCallString::isValidReturn(Labeler& labeler, Label retlbl) const
 
 void FiniteCallString::callInvoke(const Labeler&, Label lbl)
 {
-  append(lbl);
+  rep.append(lbl);
 }
 
 void FiniteCallString::callReturn(Labeler& labeler, CodeThorn::Label lbl)
 {
   ROSE_ASSERT(isValidReturn(labeler, lbl));
-  remove();
+  rep.remove();
 }
 
 
@@ -445,11 +435,10 @@ bool FiniteCallString::callerOf(const FiniteCallString& target, Label callsite) 
          );
 }
 
+
 bool FiniteCallString::operator==(const FiniteCallString& that) const
 {
-  const context_string& self = *this;
-
-  return self == that;
+  return rep == that.rep;
 }
 
 void allCallInvoke( const CtxLattice<FiniteCallString>& src,
