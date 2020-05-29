@@ -160,7 +160,7 @@ namespace CodeThorn {
   protected:
     static void initDiagnostics();
     static Sawyer::Message::Facility logger;
-    AbstractValue constIntLatticeFromSgValueExp(SgValueExp* valueExp, EvalMode mode);
+    AbstractValue abstractValueFromSgValueExp(SgValueExp* valueExp, EvalMode mode);
     
    
     // evaluation state

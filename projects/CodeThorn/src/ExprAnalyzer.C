@@ -135,24 +135,66 @@ bool ExprAnalyzer::checkIfVariableAndDetermineVarId(SgNode* node, VariableId& va
   }
 }
 
-AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp, EvalMode mode) {
+// macro for repeating code pattern to get correctly typed values from value expressions
+#define CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SG_VALUE_EXP_TYPE, CPP_TYPE) \
+case V_ ## SG_VALUE_EXP_TYPE: {\
+  SG_VALUE_EXP_TYPE* exp=is ## SG_VALUE_EXP_TYPE(valueExp);\
+  ROSE_ASSERT(exp);\
+  CPP_TYPE val=exp->get_value();\
+  return AbstractValue(val); }
+
+AbstractValue ExprAnalyzer::abstractValueFromSgValueExp(SgValueExp* valueExp, EvalMode mode) {
   ROSE_ASSERT(valueExp);
-  if(isSgFloatVal(valueExp)
-     ||isSgDoubleVal(valueExp)
-     ||isSgLongDoubleVal(valueExp)
-     ||isSgComplexVal(valueExp)) {
+  switch(valueExp->variantT()) {
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgFloatVal, float);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgDoubleVal, double);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgLongDoubleVal, long double);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgShortVal, short int);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgIntVal, int);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgLongIntVal, long int);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgLongLongIntVal, long long int);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgUnsignedCharVal, unsigned char);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgUnsignedShortVal, unsigned short);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgUnsignedIntVal, unsigned int);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgUnsignedLongVal, unsigned long int);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgUnsignedLongLongIntVal, unsigned long long int);
+    // following are all cases that require specific handling in ROSE AST
+  case  V_SgCharVal: {
+    SgCharVal* exp=isSgCharVal(valueExp);
+    unsigned char val=(unsigned char)(signed char)exp->get_value();
+    return AbstractValue(val);
+  }
+  case V_SgWcharVal: {
+    SgWcharVal* exp=isSgWcharVal(valueExp);
+    long int val=exp->get_value();
+    return AbstractValue(val);
+  }
+  case V_SgComplexVal: {
     return AbstractValue(CodeThorn::Top());
-  } else if(SgStringVal* stringVal=isSgStringVal(valueExp)) {
+  }
+  case V_SgNullptrValExp: {
+    return AbstractValue((int)0); // null pointer value
+  }
+  case V_SgEnumVal: {
+    SgEnumVal* exp=isSgEnumVal(valueExp);
+    int val=exp->get_value();
+    return AbstractValue(val);
+  }
+  case V_SgStringVal: {
+    SgStringVal* stringVal=isSgStringVal(valueExp);
     if(mode==MODE_EMPTY_STATE) {
+      // string val addresses are only available if variable ids are available
       return AbstractValue::createTop();
     }
     // handle string literals
     std::string s=stringVal->get_value();
     VariableId stringValVarId=_variableIdMapping->getStringLiteralVariableId(stringVal);
     AbstractValue val=AbstractValue::createAddressOfVariable(stringValVarId);
-    SAWYER_MESG(logger[TRACE])<<"Found StringValue: "<<"\""<<s<<"\""<<": abstract value: "<<val.toString(_variableIdMapping)<<endl;
+    SAWYER_MESG(logger[TRACE])<<"Created abstract string literal value: "<<"\""<<s<<"\""<<": abstract value: "<<val.toString(_variableIdMapping)<<endl;
     return val;
-  } else if(SgBoolValExp* exp=isSgBoolValExp(valueExp)) {
+  }
+  case V_SgBoolValExp: {
+    SgBoolValExp* exp=isSgBoolValExp(valueExp);
     // ROSE uses an integer for a bool
     int val=exp->get_value();
     if(val==0)
@@ -163,51 +205,9 @@ AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp, 
       logger[ERROR]<<"Error: unknown bool value (not 0 or 1): SgBoolExp::get_value()=="<<val<<endl;
       exit(1);
     }
-  } else if(SgShortVal* exp=isSgShortVal(valueExp)) {
-    short int val=exp->get_value();
-    return AbstractValue((int)val);
-  } else if(SgIntVal* exp=isSgIntVal(valueExp)) {
-    int val=exp->get_value();
-    return AbstractValue(val);
-  } else if(SgLongIntVal* exp=isSgLongIntVal(valueExp)) {
-    long int val=exp->get_value();
-    return AbstractValue(val);
-  } else if(SgLongLongIntVal* exp=isSgLongLongIntVal(valueExp)) {
-    long long val=exp->get_value();
-    return AbstractValue(val);
-  } else if(SgUnsignedCharVal* exp=isSgUnsignedCharVal(valueExp)) {
-    unsigned char val=exp->get_value();
-    return AbstractValue((int)val);
-  } else if(SgUnsignedShortVal* exp=isSgUnsignedShortVal(valueExp)) {
-    unsigned short val=exp->get_value();
-    return AbstractValue((int)val);
-  } else if(SgUnsignedIntVal* exp=isSgUnsignedIntVal(valueExp)) {
-    unsigned int val=exp->get_value();
-    return AbstractValue(val);
-  } else if(SgUnsignedLongVal* exp=isSgUnsignedLongVal(valueExp)) {
-    unsigned long int val=exp->get_value();
-    return AbstractValue(val);
-  } else if(SgUnsignedLongLongIntVal* exp=isSgUnsignedLongLongIntVal(valueExp)) {
-    unsigned long long int val=exp->get_value();
-    return AbstractValue(val);
-  } else if(SgCharVal* exp=isSgCharVal(valueExp)) {
-    unsigned char val=(unsigned char)(signed char)exp->get_value();
-    return AbstractValue((int)val);
-  } else if(SgWcharVal* exp=isSgWcharVal(valueExp)) {
-    long int val=exp->get_value();
-    return AbstractValue(val);
-  } else if(isSgNullptrValExp(valueExp)) {
-    return AbstractValue((int)0);
-  } else if(SgEnumVal* exp=isSgEnumVal(valueExp)) {
-    int val=exp->get_value();
-    return AbstractValue(val);
-  } else {
-    string s;
-    if(valueExp)
-      s=valueExp->class_name();
-    else
-      s="nullptr";
-    throw CodeThorn::Exception("Error: constIntLatticeFromSgValueExp::unsupported number type in SgValueExp ("+s+")");
+  }
+  default:
+    return AbstractValue(CodeThorn::Top());
   }
 }
 
@@ -1508,7 +1508,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, ESta
   ROSE_ASSERT(node);
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(CodeThorn::Bot()));
-  res.result=constIntLatticeFromSgValueExp(node,mode);
+  res.result=abstractValueFromSgValueExp(node,mode);
   return listify(res);
 }
 
