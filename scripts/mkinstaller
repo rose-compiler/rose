@@ -23,20 +23,20 @@ $Interpreter ||= "/usr/bin/perl";
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
 $mkinstaller_ver_build = "1";
-$mkinstaller_ver_patch = "4";
-$mkinstaller_ver_name  = "2.6.1.4";
-$mkinstaller_ver_time  = "27May2020,20:47:51z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.1.4 - 27May2020,20:47:51z";
+$mkinstaller_ver_patch = "5";
+$mkinstaller_ver_name  = "2.6.1.5";
+$mkinstaller_ver_time  = "29May2020,02:17:56z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.1.5 - 29May2020,02:17:56z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
 $perl_library_ver_major = "1";
 $perl_library_ver_minor = "6";
 $perl_library_ver_build = "18";
-$perl_library_ver_patch = "2";
-$perl_library_ver_name  = "1.6.18.2";
-$perl_library_ver_time  = "27May2020,19:52:15z";
-$perl_library_ver_id    = "@(#)perl_library 1.6.18.2 - 27May2020,19:52:15z";
+$perl_library_ver_patch = "3";
+$perl_library_ver_name  = "1.6.18.3";
+$perl_library_ver_time  = "28May2020,20:15:33z";
+$perl_library_ver_id    = "@(#)perl_library 1.6.18.3 - 28May2020,20:15:33z";
 
 #{------------------------------------------------------------------------------
 #
@@ -15529,7 +15529,7 @@ EOF
                                 s/[^a-zA-Z0-9_]/_/g;
             my $programName_u = $_;
             print DBGOUT "mki_check_prog:           aka. \"$programName_u\"\n" if $debugging;
-            print DBGOUT "mki_check_prog: ...existance of \"$programName\" already known?\n" if $debugging;
+            print DBGOUT "mki_check_prog: ...existence of \"$programName\" already known?\n" if $debugging;
 
             if ( ! exists $check_prog_isSupported{$programName}) {
                $check_prog_isSupported{$programName} = 0;
@@ -18797,7 +18797,7 @@ sub findHomeDirectory {
    #  ...then try HOMEDRIVE and HOMEPATH
    #     environment variables...
    #
-   #     NOTE: The existance of HOMEDRIVE
+   #     NOTE: The existence of HOMEDRIVE
    #           is optional here. If not
    #           defined we'll assume it is
    #           an empty string.
@@ -23755,7 +23755,7 @@ sub help {
    |            installer before all of the payload directories have been
    |            extracted and installed.
    |
-   |            Such pre-install Perl scripts are not generally supported
+   |            Such preinstall Perl scripts are not generally supported
    |            on Windows systems as Perl is not generally found on Windows
    |            systems.
    |
@@ -23859,7 +23859,7 @@ sub help {
    |            <name> in the option name is typically something like bin,
    |            include, lib, ... and like <pathname> below, may not contain
    |            any spaces, tabs, or dashes. If such an installation directory
-   |            hasen't been specified then the appropriate work will be done
+   |            hasn't been specified then the appropriate work will be done
    |            so that the installer will have such a directory containing
    |            the specified file.
    |
@@ -24007,7 +24007,7 @@ sub help {
    |        INEFFECTIVE_mkinstaller
    |
    |            If this environment variable has been set then the generated
-   |            script will lack a payload and may not even be runable. Note
+   |            script will lack a payload and may not even be runnable. Note
    |            that this feature is almost never used except when debugging
    |            the script generation process.
    |
@@ -24114,7 +24114,7 @@ EOF1
    |
    |       Details of the installer construction process on UNIX:
    |
-   |          Aside from initalization and command line processing the UNIX
+   |          Aside from initialization and command line processing the UNIX
    |          implementation of mkinstaller goes through the following steps:
    |
    |          1) Determination of a suitable temp directory. Much of the work
@@ -24187,7 +24187,7 @@ EOF1
    |             determined at the start of this step (see NOTES).
    |          3) PREFIX and PREFIX_xxx values are established from command
    |             line options. If appropriate options aren't supplied to
-   |             install all directories then the installer script will propmpt
+   |             install all directories then the installer script will prompt
    |             for the necessary pathname(s). The installer script will
    |             create the directories if necessary.
    |          4) The tarball embedded in the installer script is extracted from
@@ -24228,7 +24228,7 @@ EOF1
    |
    |       Details of the installer construction process on Windows:
    |
-   |          Aside from initalization and command line processing the Windows
+   |          Aside from initialization and command line processing the Windows
    |          implementation of mkinstaller goes through the following steps:
    |
    |          1) Determination of a suitable temp directory. Much of the work
@@ -24281,7 +24281,7 @@ EOF1
    |          Note that the prefix directory will be creates as necessary
    |          however the uninstaller will only (recursively delete) the
    |          final directory component. In the above example only
-   |          E:\\opt\\banana will be (recursivly deleted, but the
+   |          E:\\opt\\banana will be (recursively deleted, but the
    |          directory E:\\opt will be left intact.
    |
    |       Note that the generated installer will pop-up a progress bar dialog
@@ -25006,7 +25006,7 @@ sub html {
    |               <i>name</i> in the option name is typically something like <b><big><code>bin</code></big></b>,
    |               <b><big><code>include</code></big></b>, <b><big><code>lib</code></big></b>, ... and like <i>pathname</i> below, may not contain
    |               any spaces, tabs, or dashes. If such an installation directory
-   |               hasen't been specified then the appropriate work will be done
+   |               hasn't been specified then the appropriate work will be done
    |               so that the installer will have such a directory containing
    |               the specified file.
    |            </blockquote>
@@ -25210,7 +25210,7 @@ sub html {
    |            <b>INEFFECTIVE_mkinstaller</b>
    |            <blockquote>
    |               If this environment variable has been set then the generated
-   |               script will lack a payload and may not even be runable. Note
+   |               script will lack a payload and may not even be runnable. Note
    |               that this feature is almost never used except when debugging
    |               the script generation process.
    |            </blockquote>
@@ -25356,7 +25356,7 @@ EOF1
    |         <blockquote>
    |            <b>Details of the installer construction process on UNIX:</b>
    |            <blockquote>
-   |               Aside from initalization and command line processing the UNIX
+   |               Aside from initialization and command line processing the UNIX
    |               implementation of <i>mkinstaller</i> goes through the following steps:
    |               <ol>
    |                  <li>Determination of a suitable temp directory. Much of the work
@@ -25444,7 +25444,7 @@ EOF1
    |                  </li>
    |                  <li><b><big><code>PREFIX</code></big></b> and <b><big><code>PREFIX_</code></big></b><i>xxx</i> values are established from command
    |                      line options. If appropriate options aren't supplied to
-   |                      install all directories then the installer script will propmpt
+   |                      install all directories then the installer script will prompt
    |                      for the necessary pathname(s). The installer script will
    |                      create the directories if necessary.
    |                  </li>
@@ -25494,7 +25494,7 @@ EOF1
    |            </blockquote>
    |            <b>Details of the installer construction process on Windows:</b>
    |            <blockquote>
-   |               Aside from initalization and command line processing the Windows
+   |               Aside from initialization and command line processing the Windows
    |               implementation of <i>mkinstaller</i> goes through the following steps:
    |               <ol>
    |                  <li>Determination of a suitable temp directory. Much of the work
@@ -25557,7 +25557,7 @@ EOF1
    |               Note that the prefix directory will be creates as necessary
    |               however the uninstaller will only (recursively) delete the
    |               final directory component. In the above example only
-   |               <b><big><code>E:\\opt\\banana</code></big></b> will be (recursivly deleted, but the
+   |               <b><big><code>E:\\opt\\banana</code></big></b> will be (recursively deleted, but the
    |               directory <b><big><code>E:\\opt</code></big></b> will be left intact.
    |            </blockquote>
    |            <blockquote>
