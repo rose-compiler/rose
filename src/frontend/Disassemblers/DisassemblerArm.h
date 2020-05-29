@@ -78,7 +78,7 @@ private:
     void init();
 
     // Make a ROSE instruction operand from a Capstone operand
-    SgAsmExpression* makeOperand(const cs_arm64_op&);
+    SgAsmExpression* makeOperand(const cs_insn&, const cs_arm64_op&);
 
     // Make a ROSE register descriptor from a Capstone register enum constant.
     RegisterDescriptor makeRegister(arm64_reg);
@@ -89,6 +89,13 @@ private:
 
     // Return a type for register.
     SgAsmType* registerType(arm64_reg, arm64_vas);
+
+    // Capstone doesn't return information about how much memory is read for a memory read operand. Therefore, we need to
+    // partially decode instructions ourselves to get this information.
+    SgAsmType* typeForMemoryRead(const cs_insn&);
+
+    // Change a memory reference expresson's address by wrapping it in a SgAsmPreIncrementExpression or SgAsmPostIncrementExpression if necessary.
+    void wrapPrePostIncrement(SgAsmOperandList*, const cs_arm64&);
 };
 
 } // namespace

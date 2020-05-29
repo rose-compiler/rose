@@ -96,30 +96,42 @@ Arm::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
     ASSERT_not_null(expr);
     std::vector<std::string> comments;
 
-    if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(expr)) {
-        outputExpr(out, add->get_lhs(), state);
+    if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(expr)) {
+        outputExpr(out, op->get_lhs(), state);
 
         // Print the "+" and RHS only if RHS is non-zero
-        SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(add->get_rhs());
+        SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(op->get_rhs());
         if (!ival || !ival->get_bitVector().isAllClear()) {
             out <<" + ";
-            outputExpr(out, add->get_rhs(), state);
+            outputExpr(out, op->get_rhs(), state);
         }
 
-    } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(expr)) {
-        state.frontUnparser().emitTypeName(out, mre->get_type(), state);
+    } else if (SgAsmBinaryAddPreupdate *op = isSgAsmBinaryAddPreupdate(expr)) {
+        outputExpr(out, op->get_lhs(), state);
+        out <<" += ";
+        outputExpr(out, op->get_rhs(), state);
+
+    } else if (SgAsmBinaryAddPostupdate *op = isSgAsmBinaryAddPostupdate(expr)) {
+            outputExpr(out, op->get_lhs(), state);
+            out <<" then ";
+            outputExpr(out, op->get_lhs(), state);
+            out <<" += ";
+            outputExpr(out, op->get_rhs(), state);
+
+    } else if (SgAsmMemoryReferenceExpression *op = isSgAsmMemoryReferenceExpression(expr)) {
+        state.frontUnparser().emitTypeName(out, op->get_type(), state);
         out <<" [";
-        outputExpr(out, mre->get_address(), state);
+        outputExpr(out, op->get_address(), state);
         out <<"]";
 
-    } else if (SgAsmDirectRegisterExpression *dre = isSgAsmDirectRegisterExpression(expr)) {
-        outputRegister(out, dre, state);
+    } else if (SgAsmDirectRegisterExpression *op = isSgAsmDirectRegisterExpression(expr)) {
+        outputRegister(out, op, state);
 
-    } else if (SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(expr)) {
-        comments = state.frontUnparser().emitSignedInteger(out, ive->get_bitVector(), state);
+    } else if (SgAsmIntegerValueExpression *op = isSgAsmIntegerValueExpression(expr)) {
+        comments = state.frontUnparser().emitSignedInteger(out, op->get_bitVector(), state);
 
-    } else if (SgAsmFloatValueExpression *fp = isSgAsmFloatValueExpression(expr)) {
-        out <<fp->get_nativeValue();
+    } else if (SgAsmFloatValueExpression *op = isSgAsmFloatValueExpression(expr)) {
+        out <<op->get_nativeValue();
 
     } else if (SgAsmUnaryUnsignedExtend *op = isSgAsmUnaryUnsignedExtend(expr)) {
         out <<"uext(";
