@@ -850,8 +850,8 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
     case BOT: return true;
     case INTEGER: return (val1.intValue==val2.intValue);
     case FLOAT: return (val1.floatValue==val2.floatValue);
-    case PTR: return (val1.getVariableId()==val2.getVariableId());
-    case REF: return (val1.getVariableId()==val2.getVariableId());
+    case PTR:
+    case REF: return (val1.getVariableId()==val2.getVariableId()&&val1.intValue==val2.intValue);
     case TOP:
     case UNDEFINED:
       // special cases of above if-conditions

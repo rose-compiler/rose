@@ -556,7 +556,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConditionalExpr(SgConditionalEx
     }
   }
   if(condResultList.size()>1) {
-    cerr<<"Error: evaluating condition of conditional operator gives more than one result. Not supported yet."<<endl;
+    logger[ERROR]<<"evaluating condition of conditional operator gives more than one result. Normalization required."<<endl;
     exit(1);
   }
   SingleEvalResultConstInt singleResult=*condResultList.begin();
@@ -921,7 +921,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           res.result=arrayPtrPlusIndexValue;
           return listify(res);
         default:
-          cerr<<"Internal error: evalArrayReferenceOp: unsupported EvalMode."<<endl;
+          SAWYER_MESG(logger[FATAL])<<"Internal error: evalArrayReferenceOp: unsupported EvalMode."<<endl;
           exit(1);
         }
       } else {
@@ -1129,8 +1129,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDotOp(SgDotExp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   // L.R : L evaluates to address, R evaluates to offset value (a struct member always evaluates to an offset)
-  SAWYER_MESG(logger[DEBUG])<<"DotOp: lhs:"<<lhsResult.result.toString(_variableIdMapping)<<" rhs: "<<rhsResult.result.toString(_variableIdMapping)<<endl;
-
+  //SAWYER_MESG(logger[DEBUG])<<"DotOp: lhs:"<<lhsResult.result.toString(_variableIdMapping)<<" rhs: "<<rhsResult.result.toString(_variableIdMapping)<<endl;
+  cout<<"DotOp: "<<node->unparseToString()<<":"<<lhsResult.result.toString(_variableIdMapping)<<"."<<rhsResult.result.toString(_variableIdMapping)<<endl;
+  
   if(mode==ExprAnalyzer::MODE_EMPTY_STATE) {
     // arbitrary value
     res.result=CodeThorn::Top();
@@ -1144,7 +1145,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDotOp(SgDotExp* node,
     AbstractValue address=AbstractValue::operatorAdd(lhsResult.result,rhsResult.result);
     // only if rhs is *not* a dot-operator, needs the value be
     // read. Otherwise this is not the end of the access path and only the address is computed.
-    if(!isSgDotExp(SgNodeHelper::getRhs(node))) {
+    if(true||!isSgDotExp(SgNodeHelper::getRhs(node))) {
       // reached end of dot sequence (a.b.<here>c)
       switch(mode) {
       case MODE_VALUE:
@@ -1414,7 +1415,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
   res.init(estate,AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
-  if(isStructMember(varId)) {
+  if(isMemberVariable(varId)) {
     ROSE_ASSERT(_variableIdMapping);
     int offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
     SAWYER_MESG(logger[TRACE])<<"DEBUG: evalLValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
@@ -1464,16 +1465,18 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
   ROSE_ASSERT(varId.isValid());
-  if(_variableIdMapping->hasClassType(varId)) {
-    res.result=AbstractValue::createAddressOfVariable(varId);
-    return listify(res);
-  }
   // check if var is a struct member. if yes return struct-offset.
-  if(isStructMember(varId)) {
+  //cout<<"DEBUG1: VarRefExp: "<<_variableIdMapping->variableName(varId)<<endl;
+  if(isMemberVariable(varId)) {
     int offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
     ROSE_ASSERT(_variableIdMapping);
     SAWYER_MESG(logger[TRACE])<<"DEBUG: evalRValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
     res.result=AbstractValue(offset);
+    //cout<<"DEBUG1 STRUCT MEMBER: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
+    return listify(res);
+  }
+  if(_variableIdMapping->hasClassType(varId)) {
+    res.result=AbstractValue::createAddressOfVariable(varId);
     return listify(res);
   }
   if(pstate->varExists(varId)) {
@@ -1654,7 +1657,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::execFunctionCallPrintf(SgFunctionCa
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::execFunctionCallScanf(SgFunctionCallExp* funCall, EState estate) {
-  cout<<"DEBUG: ExprAnalyzer::execFunctionCallScanf"<<endl;
+  //cout<<"DEBUG: ExprAnalyzer::execFunctionCallScanf"<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(Top())); // default value for void function call
   ROSE_ASSERT(_variableIdMapping);
@@ -1908,12 +1911,21 @@ std::string ExprAnalyzer::analysisSelectorToString(AnalysisSelector sel) {
   }
 }
 
+std::string ExprAnalyzer::sourceLocationAndNodeToString(Label lab) {
+  SgNode* node=_analyzer->getLabeler()->getNode(lab);
+  return SgNodeHelper::sourceLocationAndNodeToString(node);
+}
+
 void ExprAnalyzer::recordDefinitiveViolatingLocation(enum AnalysisSelector analysisSelector, Label label) {
 #pragma omp critical(VIOLATIONRECORDING)
   {
-  _violatingLocations.at(analysisSelector).recordDefinitiveLocation(label);
-  if(_printDetectedViolations)
-    cout<<analysisSelectorToString(analysisSelector)<<": definitive violation at label "<<label.toString()<<endl;
+    _violatingLocations.at(analysisSelector).recordDefinitiveLocation(label);
+    if(_printDetectedViolations) {
+      cout<<analysisSelectorToString(analysisSelector)
+          <<": definitive violation at L"<<label.toString()<<":"
+          <<sourceLocationAndNodeToString(label)
+          <<endl;
+    }
   }
 }
 
@@ -1965,8 +1977,8 @@ void ExprAnalyzer::setPrintDetectedViolations(bool flag) {
   _printDetectedViolations=flag;
 }
 
-bool ExprAnalyzer::isStructMember(CodeThorn::VariableId varId) {
-  return AbstractValue::getVariableIdMapping()->isStructMember(varId);
+bool ExprAnalyzer::isMemberVariable(CodeThorn::VariableId varId) {
+  return AbstractValue::getVariableIdMapping()->isMemberVariable(varId);
 }
 
 bool ExprAnalyzer::definitiveErrorDetected() {

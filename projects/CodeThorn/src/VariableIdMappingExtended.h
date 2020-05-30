@@ -13,9 +13,7 @@ namespace CodeThorn {
     unsigned int getTypeSize(enum CodeThorn::BuiltInType);
     unsigned int getTypeSize(SgType* type);
     unsigned int getTypeSize(VariableId varId);
-    unsigned int getOffset(VariableId varId);
     std::string typeSizeMappingToString();
-    bool isStructMember(VariableId varId);
   private:
     CodeThorn::TypeSizeMapping typeSizeMapping;
   };
