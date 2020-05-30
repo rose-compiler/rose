@@ -97,6 +97,10 @@ namespace SgNodeHelper {
   //! returns line, column, and unparsed node in one string.
   std::string lineColumnNodeToString(SgNode* node);
 
+  //! returns filename, line, column, and unparsed node in one string.
+  //! Abbreviates unparsed source if too long
+  std::string sourceLocationAndNodeToString(SgNode* node);
+
   //! determines all VarRefExp in the subtree of 'node'. The order in the vector corresponds to the traversal order on the AST.
   std::vector<SgVarRefExp*> determineVariablesInSubtree(SgNode* node);
 
