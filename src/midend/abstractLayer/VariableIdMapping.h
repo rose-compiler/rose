@@ -110,7 +110,9 @@ namespace CodeThorn {
     void setOffset(VariableId variableId, int offset);
     // get offset of member variable (type is implicit as varids are unique across all types)
     int getOffset(VariableId variableId);
-
+    bool isMemberVariable(VariableId variableId);
+    void setIsMemberVariable(VariableId variableId, bool flag);
+    
     SgSymbol* createAndRegisterNewSymbol(std::string name);
     CodeThorn::VariableId createAndRegisterNewVariableId(std::string name);
     CodeThorn::VariableId createAndRegisterNewMemoryRegion(std::string name, int regionSize);
@@ -162,6 +164,7 @@ namespace CodeThorn {
       size_t numberOfElements;
       size_t elementSize; // in bytes
       int offset;      // in bytes, only for member variables
+      bool isMemberVariable;
     };
     std::map<SgStringVal*,VariableId> sgStringValueToVariableIdMapping;
     std::map<VariableId, SgStringVal*> variableIdToSgStringValueMapping;
