@@ -1909,6 +1909,7 @@ CTIOLabeler* CodeThorn::Analyzer::getLabeler() const {
  * \author Marc Jasper
  * \date 2017.
  */
+// MS 05/31/2020: this function is not used anywhere
 void CodeThorn::Analyzer::resetAnalysis() {
   // reset miscellaneous state variables
   _topifyModeActive = false;
