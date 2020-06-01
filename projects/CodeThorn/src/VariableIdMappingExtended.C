@@ -24,10 +24,6 @@ namespace CodeThorn {
   unsigned int VariableIdMappingExtended::getTypeSize(VariableId varId) {
     return getTypeSize(getType(varId));
   }
-  unsigned int VariableIdMappingExtended::getOffset(VariableId varId) {
-    return 0;
-  }
-
   std::string VariableIdMappingExtended::typeSizeMappingToString() {
     return typeSizeMapping.toString();
   }
@@ -49,8 +45,4 @@ namespace CodeThorn {
     }
   }
 
-  bool VariableIdMappingExtended::isStructMember(VariableId varId) {
-    return typeSizeMapping.isStructMember(varId);
-  }
-  
 }

@@ -18,7 +18,7 @@ int main() {
   if ((twoIntsStructPointer != NULL) && (twoIntsStructPointer->intOne == 5)) {
     x=2;
   }
-  assert(x==2);
+  //  assert(x==2);
   printf("x:%d\n",x);
   return 0;
 }

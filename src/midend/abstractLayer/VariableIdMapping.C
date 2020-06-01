@@ -153,6 +153,11 @@ void VariableIdMapping::toStream(ostream& os) {
     } else {
       os<<","<<"<missing-symbol>";
     }
+    if(isMemberVariable(varId)) {
+      os<<",data-member";
+    } else {
+      os<<",variable";
+    }
     os<<endl;
   }
 }
@@ -329,6 +334,16 @@ void VariableIdMapping::setOffset(VariableId variableId, int size) {
 int VariableIdMapping::getOffset(VariableId variableId) {
   ROSE_ASSERT(variableId.isValid());
   return mappingVarIdToInfo[variableId].offset;
+}
+
+void VariableIdMapping::setIsMemberVariable(VariableId variableId, bool flag) {
+  ROSE_ASSERT(variableId.isValid());
+  mappingVarIdToInfo[variableId].isMemberVariable=flag;
+}
+
+bool VariableIdMapping::isMemberVariable(VariableId variableId) {
+  ROSE_ASSERT(variableId.isValid());
+  return mappingVarIdToInfo[variableId].isMemberVariable;
 }
 
 bool VariableIdMapping::isAnonymousBitfield(SgInitializedName* initName) {
@@ -658,7 +673,8 @@ VariableIdMapping::VariableIdInfo::VariableIdInfo():
   sym(0),
   numberOfElements(0),
   elementSize(0),
-  offset(-1)
+  offset(-1),
+  isMemberVariable(false)
 {
 }
 
