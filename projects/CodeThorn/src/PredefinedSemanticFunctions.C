@@ -120,7 +120,7 @@ namespace PredefinedSemanticFunctions {
 
   list<SingleEvalResultConstInt> evalFunctionCallStrLen(ExprAnalyzer* exprAnalyzer, SgFunctionCallExp* funCall, EState estate) {
     SingleEvalResultConstInt res;
-    // memcpy is a void function, no return value
+    cout<<"DEBUG:evalFunctionCallStrLen:"<<funCall->unparseToString()<<endl;
     res.init(estate,AbstractValue(CodeThorn::Top()));
     SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
     if(argsList.size()==1) {
@@ -145,6 +145,7 @@ namespace PredefinedSemanticFunctions {
       while(1) {
         AbstractValue AbstractPos=AbstractValue(pos);
         AbstractValue currentPos=(stringPtr+AbstractPos);
+        cout<<"DEBUG: currentPos:"<<currentPos.toString()<<endl;
         if(currentPos.isTop()) {
           exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
           break;
@@ -158,8 +159,10 @@ namespace PredefinedSemanticFunctions {
         }
 #endif
         AbstractValue currentPosValue=exprAnalyzer->readFromMemoryLocation(estate.label(),estate.pstate(),currentPos);
+        cout<<"DEBUG: currentPosValue:"<<currentPosValue.toString()<<endl;
         // if the memory location that is read, does not exist, it is an out-of-bounds access
         if(currentPosValue.isBot()) {
+          cout<<estate.pstate()->toString()<<endl;
           exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate.label());
           break;
         }

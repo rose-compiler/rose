@@ -1000,6 +1000,7 @@ int CodeThorn::Analyzer::computeNumberOfElements(SgVariableDeclaration* decl) {
 PState CodeThorn::Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pstate, /* for evaluation only  */ EState currentEState) {
   //cout<<"DEBUG: AST:"<<AstTerm::astTermWithNullValuesToString(aggregateInitializer)<<endl;
   // logger[DEBUG] <<"array-initializer found:"<<aggregateInitializer->unparseToString()<<endl;
+  ROSE_ASSERT(aggregateInitializer);
   Label label=currentEState.label();
   PState newPState=pstate;
   int elemIndex=0;
@@ -1038,7 +1039,11 @@ PState CodeThorn::Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVar
     for(int i=elemIndex;i<aggregateSize;i++) {
       AbstractValue arrayElemAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(i));
       SAWYER_MESG(logger[TRACE])<<"Init aggregate default value: "<<arrayElemAddr.toString()<<endl;
-      getExprAnalyzer()->writeUndefToMemoryLocation(label,&newPState,arrayElemAddr);
+      // there must be a default value because an aggregate initializer exists (it is never undefined in this case)
+      // note: int a[3]={}; also forces the array to be initialized with {0,0,0}, the list can be empty.
+      // whereas with int a[3]; all 3 are undefined
+      AbstractValue defaultValue=AbstractValue(0); // TODO: cases where default value is not 0.
+      getExprAnalyzer()->writeToMemoryLocation(label,&newPState,arrayElemAddr,defaultValue);
     }
   } else {
     // if aggregate size is 0 there is nothing to do
