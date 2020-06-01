@@ -12,7 +12,7 @@
       <h3>
          <center>
             <nobr>
-               mkinstaller (rev. 2.6.1.3)
+               mkinstaller (rev. 2.6.1.5)
             </nobr>
          </center>
       </h3>
@@ -680,7 +680,7 @@
                <i>name</i> in the option name is typically something like <b><big><code>bin</code></big></b>,
                <b><big><code>include</code></big></b>, <b><big><code>lib</code></big></b>, ... and like <i>pathname</i> below, may not contain
                any spaces, tabs, or dashes. If such an installation directory
-               hasen't been specified then the appropriate work will be done
+               hasn't been specified then the appropriate work will be done
                so that the installer will have such a directory containing
                the specified file.
             </blockquote>
@@ -884,7 +884,7 @@ CXX=g++ \
             <b>INEFFECTIVE_mkinstaller</b>
             <blockquote>
                If this environment variable has been set then the generated
-               script will lack a payload and may not even be runable. Note
+               script will lack a payload and may not even be runnable. Note
                that this feature is almost never used except when debugging
                the script generation process.
             </blockquote>
@@ -1022,7 +1022,7 @@ CXX=g++ \
          <blockquote>
             <b>Details of the installer construction process on UNIX:</b>
             <blockquote>
-               Aside from initalization and command line processing the UNIX
+               Aside from initialization and command line processing the UNIX
                implementation of <i>mkinstaller</i> goes through the following steps:
                <ol>
                   <li>Determination of a suitable temp directory. Much of the work
@@ -1110,7 +1110,7 @@ CXX=g++ \
                   </li>
                   <li><b><big><code>PREFIX</code></big></b> and <b><big><code>PREFIX_</code></big></b><i>xxx</i> values are established from command
                       line options. If appropriate options aren't supplied to
-                      install all directories then the installer script will propmpt
+                      install all directories then the installer script will prompt
                       for the necessary pathname(s). The installer script will
                       create the directories if necessary.
                   </li>
@@ -1129,7 +1129,7 @@ CXX=g++ \
                       steps (6) and (8).
                   </li>
                   <li>If (5) revealed a pre-install script then it will be executed
-                      by the approptiate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
+                      by the appropriate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
                       and/or <b><big><code>PREFIX_</code></big></b><i>xxx</i> directories will be supplied as an option to
                       this pre-install script (such as  <b><big><code>--prefix_bin=</code></big></b><i>pathname</i>). Also
                       note at this time the individual tarballs representing the
@@ -1140,7 +1140,7 @@ CXX=g++ \
                       there.
                   </li>
                   <li>If (5) revealed a post-install script then it will be executed
-                      by the approptiate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
+                      by the appropriate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
                       directories will be supplied as an option to this post-install
                       script (such as <b><big><code>--prefix_bin=</code></big></b><i>pathname</i>).
                   </li>
@@ -1160,7 +1160,7 @@ CXX=g++ \
             </blockquote>
             <b>Details of the installer construction process on Windows:</b>
             <blockquote>
-               Aside from initalization and command line processing the Windows
+               Aside from initialization and command line processing the Windows
                implementation of <i>mkinstaller</i> goes through the following steps:
                <ol>
                   <li>Determination of a suitable temp directory. Much of the work
@@ -1223,7 +1223,7 @@ CXX=g++ \
                Note that the prefix directory will be creates as necessary
                however the uninstaller will only (recursively) delete the
                final directory component. In the above example only
-               <b><big><code>E:\opt\banana</code></big></b> will be (recursivly deleted, but the
+               <b><big><code>E:\opt\banana</code></big></b> will be (recursively deleted, but the
                directory <b><big><code>E:\opt</code></big></b> will be left intact.
             </blockquote>
             <blockquote>
@@ -1260,11 +1260,11 @@ CXX=g++ \
       <h3>
          <center>
             <nobr>
-               mkinstaller (rev. 2.6.1.3)
+               mkinstaller (rev. 2.6.1.5)
             </nobr>
          </center>
       </h3>
 
-      <i>This man page was generated by mkinstaller 2.6.1.3 using the <code>--html</code> option. Revised 25May2020,21:10:24z</i>
+      <i>This man page was generated by mkinstaller 2.6.1.5 using the <code>--html</code> option. Revised 29May2020,02:17:56z</i>
    </body>
 </html>
