@@ -1007,36 +1007,41 @@ PState CodeThorn::Analyzer::analyzeSgAggregateInitializer(VariableId initDeclVar
   SgExpressionPtrList& initList=initListObjPtr->get_expressions();
 
   for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
-    AbstractValue arrayElemId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
+    AbstractValue arrayElemAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
     SgExpression* exp=*i;
     SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
     if(assignInit==nullptr) {
       SAWYER_MESG(logger[WARN])<<"expected assign initializer but found "<<exp->unparseToString();
       SAWYER_MESG(logger[WARN])<<"AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
       AbstractValue newVal=AbstractValue::createTop();
-      getExprAnalyzer()->writeToMemoryLocation(label,&newPState,arrayElemId,newVal);
+      getExprAnalyzer()->writeToMemoryLocation(label,&newPState,arrayElemAddr,newVal);
     } else {
       // initialize element of array initializer in state
       SgExpression* assignInitExpr=assignInit->get_operand();
       // currentEState from above, newPState must be the same as in currentEState.
       AbstractValue newVal=singleValevaluateExpression(assignInitExpr,currentEState);
-      getExprAnalyzer()->writeToMemoryLocation(label,&newPState,arrayElemId,newVal);
+      getExprAnalyzer()->writeToMemoryLocation(label,&newPState,arrayElemAddr,newVal);
     }
     elemIndex++;
   }
   // initialize remaining elements (if there are any) with default value
   int aggregateSize=(int)getVariableIdMapping()->getNumberOfElements(initDeclVarId);
   // if array size is not 0 then it was determined from the type and remaining elements are initialized
+  if(aggregateSize==0) {
+    // update aggregate size if it was not set yet
+    aggregateSize=initList.size();
+    getVariableIdMapping()->setNumberOfElements(initDeclVarId,aggregateSize);
+  }
+
   // otherwise the size is determined from the aggregate initializer itself (done above)
   if(aggregateSize!=0) {
     for(int i=elemIndex;i<aggregateSize;i++) {
-      AbstractValue arrayElemId=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(i));
-      AbstractValue defaultVal=AbstractValue(0); // TODO: float default values
-      SAWYER_MESG(logger[TRACE])<<"Init aggregate default value: "<<arrayElemId.toString()<<" : "<<defaultVal.toString()<<endl;
-      getExprAnalyzer()->writeToMemoryLocation(label,&newPState,arrayElemId,defaultVal);
+      AbstractValue arrayElemAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(i));
+      SAWYER_MESG(logger[TRACE])<<"Init aggregate default value: "<<arrayElemAddr.toString()<<endl;
+      getExprAnalyzer()->writeUndefToMemoryLocation(label,&newPState,arrayElemAddr);
     }
   } else {
-    getVariableIdMapping()->setNumberOfElements(initDeclVarId,initList.size());
+    // if aggregate size is 0 there is nothing to do
   }
   return newPState;
 }
@@ -1093,10 +1098,6 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
       //  return createEState(targetLabel,cs,newPState,cset);
       //}
 
-      //SgName initDeclVarName=initDeclVar->get_name();
-      //string initDeclVarNameString=initDeclVarName.getString();
-      //cout << "INIT-DECLARATION: var:"<<initDeclVarNameString<<endl;
-      //cout << "DEBUG: DECLARATION: var:"<<SgNodeHelper::nodeToString(decl)<<endl;
       ConstraintSet cset=*currentEState.constraints();
       SgInitializer* initializer=initName->get_initializer();
       if(initializer) {
@@ -1112,28 +1113,16 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
             return *estateList.begin();
           }
         }
-        //cout<<"DEBUG: initialize with "<<initializer->unparseToString()<<endl;
-        //cout<<"DEBUG: lhs type: "<<getVariableIdMapping()->getType(initDeclVarId)->unparseToString()<<endl;
         if(getVariableIdMapping()->hasClassType(initDeclVarId)) {
-          // TODO: initialization of structs not supported yet
-          if(getAbstractionMode()==3) {
-            throw CodeThorn::Exception("initialization of structs not supported: "+SgNodeHelper::sourceFilenameLineColumnToString(decl));
-          } else {
-            SAWYER_MESG(logger[WARN])<<"initialization of structs not supported yet (not added to state) "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
-          };
+          SAWYER_MESG(logger[WARN])<<"initialization of structs not supported yet (not added to state) "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
           //AbstractValue arrayAddress=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex))
           //getExprAnalyzer()->writeToMemoryLocation(label,&newPState,arrayAddress,CodeThorn::Top());
           PState newPState=*currentEState.pstate();
           return createEState(targetLabel,cs,newPState,cset);
-        }
-        if(getVariableIdMapping()->hasReferenceType(initDeclVarId)) {
-          // TODO: initialization of references not supported yet
-          if(getAbstractionMode()==3) {
-            throw CodeThorn::Exception("initialization of references not supported: "+SgNodeHelper::sourceFilenameLineColumnToString(decl));
-          } else {
+          if(getVariableIdMapping()->hasReferenceType(initDeclVarId)) {
+            // TODO: initialization of references not supported yet
             SAWYER_MESG(logger[WARN])<<"initialization of references not supported yet (not added to state) "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
-        }
-          PState newPState=*currentEState.pstate();
+          }
           return createEState(targetLabel,cs,newPState,cset);
         }
         // has aggregate initializer
@@ -1150,12 +1139,8 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
             newPState=analyzeSgAggregateInitializer(initDeclVarId, aggregateInitializer,newPState, currentEState);
             return createEState(targetLabel,cs,newPState,cset);
           } else {
-            if(getAbstractionMode()==3) {
-              throw CodeThorn::Exception("aggregate initializer: unsupported type at: "+SgNodeHelper::sourceFilenameLineColumnToString(decl));
-            } else {
             // type not supported yet
-              SAWYER_MESG(logger[WARN])<<"aggregate initializer: unsupported type at: "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<" : "<<aggregateInitializer->get_type()->unparseToString()<<endl;
-            }
+            SAWYER_MESG(logger[WARN])<<"aggregate initializer: unsupported type at: "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<" : "<<aggregateInitializer->get_type()->unparseToString()<<endl;
             // do not modify state. Value remains top.
             PState newPState=*currentEState.pstate();
             ConstraintSet cset=*currentEState.constraints();
@@ -1185,7 +1170,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
                 SAWYER_MESG(logger[TRACE])<<"Determined size of array from array variable (containing string memory region) size: "<<variableIdMapping->getNumberOfElements(initDeclVarId)<<endl;
               }
               SgType* variableType=initializer->get_type(); // for char and wchar
-              setElementSize(initDeclVarId,variableType);
+              setElementSize(initDeclVarId,variableType); // this must be a pointer, if it's not an array
               ConstraintSet cset=*currentEState.constraints();
               return createEState(targetLabel,cs,newPState,cset);
             }

@@ -147,8 +147,8 @@ namespace CodeThorn {
 
     AbstractValue readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
     void writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
+    void writeUndefToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc);
     void writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc);
-    
     //! This function turn a single result into a one-elment list with
     //! this one result.
     static list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res);

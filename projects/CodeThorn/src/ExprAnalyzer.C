@@ -1130,7 +1130,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDotOp(SgDotExp* node,
   res.estate=estate;
   // L.R : L evaluates to address, R evaluates to offset value (a struct member always evaluates to an offset)
   //SAWYER_MESG(logger[DEBUG])<<"DotOp: lhs:"<<lhsResult.result.toString(_variableIdMapping)<<" rhs: "<<rhsResult.result.toString(_variableIdMapping)<<endl;
-  cout<<"DotOp: "<<node->unparseToString()<<":"<<lhsResult.result.toString(_variableIdMapping)<<"."<<rhsResult.result.toString(_variableIdMapping)<<endl;
+  //cout<<"DotOp: "<<node->unparseToString()<<":"<<lhsResult.result.toString(_variableIdMapping)<<"."<<rhsResult.result.toString(_variableIdMapping)<<endl;
   
   if(mode==ExprAnalyzer::MODE_EMPTY_STATE) {
     // arbitrary value
@@ -2028,6 +2028,11 @@ void ExprAnalyzer::writeToMemoryLocation(Label lab, PState* pstate, AbstractValu
     recordDefinitiveOutOfBoundsAccessLocation(lab);
   }
   pstate->writeToMemoryLocation(memLoc,newValue);
+}
+
+void ExprAnalyzer::writeUndefToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc) {
+  AbstractValue undefValue=AbstractValue::createUndefined();
+  writeToMemoryLocation(lab,pstate,memLoc,undefValue);
 }
 
 void ExprAnalyzer::writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc) {

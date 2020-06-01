@@ -854,8 +854,8 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
     case REF: return (val1.getVariableId()==val2.getVariableId()&&val1.intValue==val2.intValue);
     case TOP:
     case UNDEFINED:
-      // special cases of above if-conditions
-      // TODO: enfore non-reachable here
+      // should be unreachable because of 2nd if-condition above
+      // TODO: enforce non-reachable here
       return true;
     }
   }
