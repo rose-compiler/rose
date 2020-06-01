@@ -230,6 +230,17 @@ namespace CodeThorn {
     return varDeclList;
   }
   
+  bool TypeSizeMapping::isClassOrStructDeclaration(SgNode* node) {
+    if(SgClassDefinition* classDef=isSgClassDefinition(node)) {
+      node=classDef->get_declaration();
+    }
+    if(SgClassDeclaration* classDecl=isSgClassDeclaration(node)) {
+      SgClassDeclaration::class_types classType=classDecl->get_class_type();
+      return classType==SgClassDeclaration::e_class||classType==SgClassDeclaration::e_struct;
+    }
+    return false;
+  }
+
   bool TypeSizeMapping::isUnionDeclaration(SgNode* node) {
     if(SgClassDefinition* classDef=isSgClassDefinition(node)) {
       node=classDef->get_declaration();
@@ -241,7 +252,7 @@ namespace CodeThorn {
     return false;
   }
 
-  void TypeSizeMapping::computeOffsets(SgProject* root,CodeThorn::VariableIdMappingExtended* vim) {
+  void TypeSizeMapping::computeOffsets(SgNode* root,CodeThorn::VariableIdMappingExtended* vim) {
 #if 1
     ROSE_ASSERT(root);
     ROSE_ASSERT(vim);
@@ -269,13 +280,17 @@ namespace CodeThorn {
             }
             CodeThorn::logger[TRACE]<<"struct data member decl: "<<dataMember->unparseToString()<<" : ";
             VariableId varId=vim->variableId(dataMember);
+            vim->setIsMemberVariable(varId,true);
             if(varId.isValid()) {
               SgType* varType=vim->getType(varId);
               if(varType) {
-                //if(isStruct(type) ...) initialize(variableIdMapping, dataMember);
                 // determine if size of type is already known
                 int typeSize=vim->getTypeSize(varType);
                 if(isUndefinedTypeSize(typeSize)) {
+                  if(isClassOrStructDeclaration(varDecl)) {
+                    computeOffsets(varDecl,vim);
+                    typeSize=vim->getTypeSize(varType);
+                  }
                   // different varids can be mapped to the same offset
                   // every varid is inserted exactly once.
                   if(_typeToSizeMapping.find(varType)!=_typeToSizeMapping.end()) {
@@ -343,8 +358,8 @@ namespace CodeThorn {
 #endif
   }
 
-  int TypeSizeMapping::getOffset(CodeThorn::VariableId varId) {
 #if 0
+  int TypeSizeMapping::getOffset(CodeThorn::VariableId varId) {
     ROSE_ASSERT(varId.isValid());
     auto varIdOffsetPairIter=varIdTypeSizeMap.find(varId);
     if(varIdOffsetPairIter!=varIdTypeSizeMap.end()) {
@@ -352,15 +367,8 @@ namespace CodeThorn {
     } else {
       return 0;
     }
-#endif
     return 0;
   }
-
-  bool TypeSizeMapping::isStructMember(CodeThorn::VariableId varId) {
-    // TODO: add info to VariableIdMapping::VariableIdInfo
-    // return getVariableIdInfo(varId).isStructMember()
-    return false;
-  }
-
+#endif
 
 } // end of namespace CodeThorn

@@ -135,24 +135,66 @@ bool ExprAnalyzer::checkIfVariableAndDetermineVarId(SgNode* node, VariableId& va
   }
 }
 
-AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp, EvalMode mode) {
+// macro for repeating code pattern to get correctly typed values from value expressions
+#define CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SG_VALUE_EXP_TYPE, CPP_TYPE) \
+case V_ ## SG_VALUE_EXP_TYPE: {\
+  SG_VALUE_EXP_TYPE* exp=is ## SG_VALUE_EXP_TYPE(valueExp);\
+  ROSE_ASSERT(exp);\
+  CPP_TYPE val=exp->get_value();\
+  return AbstractValue(val); }
+
+AbstractValue ExprAnalyzer::abstractValueFromSgValueExp(SgValueExp* valueExp, EvalMode mode) {
   ROSE_ASSERT(valueExp);
-  if(isSgFloatVal(valueExp)
-     ||isSgDoubleVal(valueExp)
-     ||isSgLongDoubleVal(valueExp)
-     ||isSgComplexVal(valueExp)) {
+  switch(valueExp->variantT()) {
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgFloatVal, float);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgDoubleVal, double);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgLongDoubleVal, long double);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgShortVal, short int);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgIntVal, int);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgLongIntVal, long int);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgLongLongIntVal, long long int);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgUnsignedCharVal, unsigned char);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgUnsignedShortVal, unsigned short);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgUnsignedIntVal, unsigned int);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgUnsignedLongVal, unsigned long int);
+    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgUnsignedLongLongIntVal, unsigned long long int);
+    // following are all cases that require specific handling in ROSE AST
+  case  V_SgCharVal: {
+    SgCharVal* exp=isSgCharVal(valueExp);
+    unsigned char val=(unsigned char)(signed char)exp->get_value();
+    return AbstractValue(val);
+  }
+  case V_SgWcharVal: {
+    SgWcharVal* exp=isSgWcharVal(valueExp);
+    long int val=exp->get_value();
+    return AbstractValue(val);
+  }
+  case V_SgComplexVal: {
     return AbstractValue(CodeThorn::Top());
-  } else if(SgStringVal* stringVal=isSgStringVal(valueExp)) {
+  }
+  case V_SgNullptrValExp: {
+    return AbstractValue((int)0); // null pointer value
+  }
+  case V_SgEnumVal: {
+    SgEnumVal* exp=isSgEnumVal(valueExp);
+    int val=exp->get_value();
+    return AbstractValue(val);
+  }
+  case V_SgStringVal: {
+    SgStringVal* stringVal=isSgStringVal(valueExp);
     if(mode==MODE_EMPTY_STATE) {
+      // string val addresses are only available if variable ids are available
       return AbstractValue::createTop();
     }
     // handle string literals
     std::string s=stringVal->get_value();
     VariableId stringValVarId=_variableIdMapping->getStringLiteralVariableId(stringVal);
     AbstractValue val=AbstractValue::createAddressOfVariable(stringValVarId);
-    SAWYER_MESG(logger[TRACE])<<"Found StringValue: "<<"\""<<s<<"\""<<": abstract value: "<<val.toString(_variableIdMapping)<<endl;
+    SAWYER_MESG(logger[TRACE])<<"Created abstract string literal value: "<<"\""<<s<<"\""<<": abstract value: "<<val.toString(_variableIdMapping)<<endl;
     return val;
-  } else if(SgBoolValExp* exp=isSgBoolValExp(valueExp)) {
+  }
+  case V_SgBoolValExp: {
+    SgBoolValExp* exp=isSgBoolValExp(valueExp);
     // ROSE uses an integer for a bool
     int val=exp->get_value();
     if(val==0)
@@ -163,51 +205,9 @@ AbstractValue ExprAnalyzer::constIntLatticeFromSgValueExp(SgValueExp* valueExp, 
       logger[ERROR]<<"Error: unknown bool value (not 0 or 1): SgBoolExp::get_value()=="<<val<<endl;
       exit(1);
     }
-  } else if(SgShortVal* exp=isSgShortVal(valueExp)) {
-    short int val=exp->get_value();
-    return AbstractValue((int)val);
-  } else if(SgIntVal* exp=isSgIntVal(valueExp)) {
-    int val=exp->get_value();
-    return AbstractValue(val);
-  } else if(SgLongIntVal* exp=isSgLongIntVal(valueExp)) {
-    long int val=exp->get_value();
-    return AbstractValue(val);
-  } else if(SgLongLongIntVal* exp=isSgLongLongIntVal(valueExp)) {
-    long long val=exp->get_value();
-    return AbstractValue(val);
-  } else if(SgUnsignedCharVal* exp=isSgUnsignedCharVal(valueExp)) {
-    unsigned char val=exp->get_value();
-    return AbstractValue((int)val);
-  } else if(SgUnsignedShortVal* exp=isSgUnsignedShortVal(valueExp)) {
-    unsigned short val=exp->get_value();
-    return AbstractValue((int)val);
-  } else if(SgUnsignedIntVal* exp=isSgUnsignedIntVal(valueExp)) {
-    unsigned int val=exp->get_value();
-    return AbstractValue(val);
-  } else if(SgUnsignedLongVal* exp=isSgUnsignedLongVal(valueExp)) {
-    unsigned long int val=exp->get_value();
-    return AbstractValue(val);
-  } else if(SgUnsignedLongLongIntVal* exp=isSgUnsignedLongLongIntVal(valueExp)) {
-    unsigned long long int val=exp->get_value();
-    return AbstractValue(val);
-  } else if(SgCharVal* exp=isSgCharVal(valueExp)) {
-    unsigned char val=(unsigned char)(signed char)exp->get_value();
-    return AbstractValue((int)val);
-  } else if(SgWcharVal* exp=isSgWcharVal(valueExp)) {
-    long int val=exp->get_value();
-    return AbstractValue(val);
-  } else if(isSgNullptrValExp(valueExp)) {
-    return AbstractValue((int)0);
-  } else if(SgEnumVal* exp=isSgEnumVal(valueExp)) {
-    int val=exp->get_value();
-    return AbstractValue(val);
-  } else {
-    string s;
-    if(valueExp)
-      s=valueExp->class_name();
-    else
-      s="nullptr";
-    throw CodeThorn::Exception("Error: constIntLatticeFromSgValueExp::unsupported number type in SgValueExp ("+s+")");
+  }
+  default:
+    return AbstractValue(CodeThorn::Top());
   }
 }
 
@@ -556,7 +556,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConditionalExpr(SgConditionalEx
     }
   }
   if(condResultList.size()>1) {
-    cerr<<"Error: evaluating condition of conditional operator gives more than one result. Not supported yet."<<endl;
+    logger[ERROR]<<"evaluating condition of conditional operator gives more than one result. Normalization required."<<endl;
     exit(1);
   }
   SingleEvalResultConstInt singleResult=*condResultList.begin();
@@ -921,7 +921,7 @@ ExprAnalyzer::evalArrayReferenceOp(SgPntrArrRefExp* node,
           res.result=arrayPtrPlusIndexValue;
           return listify(res);
         default:
-          cerr<<"Internal error: evalArrayReferenceOp: unsupported EvalMode."<<endl;
+          SAWYER_MESG(logger[FATAL])<<"Internal error: evalArrayReferenceOp: unsupported EvalMode."<<endl;
           exit(1);
         }
       } else {
@@ -1129,8 +1129,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDotOp(SgDotExp* node,
   SingleEvalResultConstInt res;
   res.estate=estate;
   // L.R : L evaluates to address, R evaluates to offset value (a struct member always evaluates to an offset)
-  SAWYER_MESG(logger[DEBUG])<<"DotOp: lhs:"<<lhsResult.result.toString(_variableIdMapping)<<" rhs: "<<rhsResult.result.toString(_variableIdMapping)<<endl;
-
+  //SAWYER_MESG(logger[DEBUG])<<"DotOp: lhs:"<<lhsResult.result.toString(_variableIdMapping)<<" rhs: "<<rhsResult.result.toString(_variableIdMapping)<<endl;
+  //cout<<"DotOp: "<<node->unparseToString()<<":"<<lhsResult.result.toString(_variableIdMapping)<<"."<<rhsResult.result.toString(_variableIdMapping)<<endl;
+  
   if(mode==ExprAnalyzer::MODE_EMPTY_STATE) {
     // arbitrary value
     res.result=CodeThorn::Top();
@@ -1144,7 +1145,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalDotOp(SgDotExp* node,
     AbstractValue address=AbstractValue::operatorAdd(lhsResult.result,rhsResult.result);
     // only if rhs is *not* a dot-operator, needs the value be
     // read. Otherwise this is not the end of the access path and only the address is computed.
-    if(!isSgDotExp(SgNodeHelper::getRhs(node))) {
+    if(true||!isSgDotExp(SgNodeHelper::getRhs(node))) {
       // reached end of dot sequence (a.b.<here>c)
       switch(mode) {
       case MODE_VALUE:
@@ -1414,7 +1415,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalLValueVarRefExp(SgVarRefExp* no
   res.init(estate,AbstractValue(CodeThorn::Bot()));
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
-  if(isStructMember(varId)) {
+  if(isMemberVariable(varId)) {
     ROSE_ASSERT(_variableIdMapping);
     int offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
     SAWYER_MESG(logger[TRACE])<<"DEBUG: evalLValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
@@ -1464,16 +1465,18 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalRValueVarRefExp(SgVarRefExp* no
   const PState* pstate=estate.pstate();
   VariableId varId=_variableIdMapping->variableId(node);
   ROSE_ASSERT(varId.isValid());
-  if(_variableIdMapping->hasClassType(varId)) {
-    res.result=AbstractValue::createAddressOfVariable(varId);
-    return listify(res);
-  }
   // check if var is a struct member. if yes return struct-offset.
-  if(isStructMember(varId)) {
+  //cout<<"DEBUG1: VarRefExp: "<<_variableIdMapping->variableName(varId)<<endl;
+  if(isMemberVariable(varId)) {
     int offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
     ROSE_ASSERT(_variableIdMapping);
     SAWYER_MESG(logger[TRACE])<<"DEBUG: evalRValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
     res.result=AbstractValue(offset);
+    //cout<<"DEBUG1 STRUCT MEMBER: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
+    return listify(res);
+  }
+  if(_variableIdMapping->hasClassType(varId)) {
+    res.result=AbstractValue::createAddressOfVariable(varId);
     return listify(res);
   }
   if(pstate->varExists(varId)) {
@@ -1508,7 +1511,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalValueExp(SgValueExp* node, ESta
   ROSE_ASSERT(node);
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(CodeThorn::Bot()));
-  res.result=constIntLatticeFromSgValueExp(node,mode);
+  res.result=abstractValueFromSgValueExp(node,mode);
   return listify(res);
 }
 
@@ -1654,7 +1657,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::execFunctionCallPrintf(SgFunctionCa
 }
 
 list<SingleEvalResultConstInt> ExprAnalyzer::execFunctionCallScanf(SgFunctionCallExp* funCall, EState estate) {
-  cout<<"DEBUG: ExprAnalyzer::execFunctionCallScanf"<<endl;
+  //cout<<"DEBUG: ExprAnalyzer::execFunctionCallScanf"<<endl;
   SingleEvalResultConstInt res;
   res.init(estate,AbstractValue(Top())); // default value for void function call
   ROSE_ASSERT(_variableIdMapping);
@@ -1908,12 +1911,21 @@ std::string ExprAnalyzer::analysisSelectorToString(AnalysisSelector sel) {
   }
 }
 
+std::string ExprAnalyzer::sourceLocationAndNodeToString(Label lab) {
+  SgNode* node=_analyzer->getLabeler()->getNode(lab);
+  return SgNodeHelper::sourceLocationAndNodeToString(node);
+}
+
 void ExprAnalyzer::recordDefinitiveViolatingLocation(enum AnalysisSelector analysisSelector, Label label) {
 #pragma omp critical(VIOLATIONRECORDING)
   {
-  _violatingLocations.at(analysisSelector).recordDefinitiveLocation(label);
-  if(_printDetectedViolations)
-    cout<<analysisSelectorToString(analysisSelector)<<": definitive violation at label "<<label.toString()<<endl;
+    _violatingLocations.at(analysisSelector).recordDefinitiveLocation(label);
+    if(_printDetectedViolations) {
+      cout<<analysisSelectorToString(analysisSelector)
+          <<": definitive violation at L"<<label.toString()<<":"
+          <<sourceLocationAndNodeToString(label)
+          <<endl;
+    }
   }
 }
 
@@ -1965,8 +1977,8 @@ void ExprAnalyzer::setPrintDetectedViolations(bool flag) {
   _printDetectedViolations=flag;
 }
 
-bool ExprAnalyzer::isStructMember(CodeThorn::VariableId varId) {
-  return AbstractValue::getVariableIdMapping()->isStructMember(varId);
+bool ExprAnalyzer::isMemberVariable(CodeThorn::VariableId varId) {
+  return AbstractValue::getVariableIdMapping()->isMemberVariable(varId);
 }
 
 bool ExprAnalyzer::definitiveErrorDetected() {
@@ -2016,6 +2028,11 @@ void ExprAnalyzer::writeToMemoryLocation(Label lab, PState* pstate, AbstractValu
     recordDefinitiveOutOfBoundsAccessLocation(lab);
   }
   pstate->writeToMemoryLocation(memLoc,newValue);
+}
+
+void ExprAnalyzer::writeUndefToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc) {
+  AbstractValue undefValue=AbstractValue::createUndefined();
+  writeToMemoryLocation(lab,pstate,memLoc,undefValue);
 }
 
 void ExprAnalyzer::writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc) {

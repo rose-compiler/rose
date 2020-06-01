@@ -135,7 +135,7 @@ namespace CodeThorn {
     list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate);
     bool isLValueOp(SgNode* node);
     // requires StructureAccessLookup to be initialized.
-    bool isStructMember(CodeThorn::VariableId varId);
+    bool isMemberVariable(CodeThorn::VariableId varId);
     // checks if value is a null pointer. If it is 0 it records a null pointer violation at provided label.
     // returns true if execution may continue, false if execution definitely does not continue.
     bool checkAndRecordNullPointer(AbstractValue value, Label label);
@@ -147,8 +147,8 @@ namespace CodeThorn {
 
     AbstractValue readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
     void writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
+    void writeUndefToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc);
     void writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc);
-    
     //! This function turn a single result into a one-elment list with
     //! this one result.
     static list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res);
@@ -160,7 +160,7 @@ namespace CodeThorn {
   protected:
     static void initDiagnostics();
     static Sawyer::Message::Facility logger;
-    AbstractValue constIntLatticeFromSgValueExp(SgValueExp* valueExp, EvalMode mode);
+    AbstractValue abstractValueFromSgValueExp(SgValueExp* valueExp, EvalMode mode);
     
    
     // evaluation state
@@ -321,7 +321,7 @@ namespace CodeThorn {
     // supported functions to be executed (interpreter mode)
     list<SingleEvalResultConstInt> execFunctionCallPrintf(SgFunctionCallExp* funCall, EState estate);
     list<SingleEvalResultConstInt> execFunctionCallScanf(SgFunctionCallExp* funCall, EState estate);
-
+    std::string sourceLocationAndNodeToString(Label lab);
   private:
     void printLoggerWarning(EState& estate);
     void initViolatingLocations();

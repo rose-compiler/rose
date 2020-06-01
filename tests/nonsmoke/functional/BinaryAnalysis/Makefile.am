@@ -1389,7 +1389,7 @@ testLazyInitialStates.passed: $(SPECIMEN_DIR)/i386-initialState testLazyInitialS
 		TITLE="lazy symbolic states [$@]"					\
 		DISABLED="$$(./conditionalDisable)"					\
 		USE_SUBDIR=yes								\
-		CMD="$$(pwd)/testLazyInitialStates --isa=i386 --start=0 map:0=rx::$<"	\
+		CMD="$$(pwd)/testLazyInitialStates --isa=i386 --function-at=0 map:0=rx::$<"	\
 		$(top_srcdir)/scripts/test_exit_status $@
 
 

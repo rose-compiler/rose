@@ -52,12 +52,12 @@ namespace CodeThorn {
     // returns the size of the type pointed to.
     CodeThorn::TypeSize determineTypeSizePointedTo(SgPointerType* sgType);
 
-    void computeOffsets(SgProject* project,CodeThorn::VariableIdMappingExtended* vim);
+    void computeOffsets(SgNode* root,CodeThorn::VariableIdMappingExtended* vim);
     std::list<SgVariableDeclaration*> getDataMembers(SgClassDefinition* classDef);
-    int getOffset(CodeThorn::VariableId varId);
+    //int getOffset(CodeThorn::VariableId varId);
     // returns true if the variable is a member of a struct/class/union.
-    bool isStructMember(CodeThorn::VariableId varId);
     bool isUnionDeclaration(SgNode* node);
+    bool isClassOrStructDeclaration(SgNode* node);
   protected:
     std::vector<CodeThorn::TypeSize> _mapping={1,
                                                1,2,4,
