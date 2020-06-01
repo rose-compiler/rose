@@ -45,6 +45,7 @@
 
 #include "AST_FILE_IO.h"
 #include "merge.h"
+#include "load.h"
 // Note that this is required to define the Sg_File_Info_XXX symbols (need for file I/O)
 #include "Cxx_GrammarMemoryPoolSupport.h"
 

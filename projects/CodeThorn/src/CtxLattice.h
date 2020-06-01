@@ -2,7 +2,7 @@
 #ifndef CTX_LATTICE_H
 #define CTX_LATTICE_H 1
 
-//! \author Peter Pirkelbauer
+/// \author Peter Pirkelbauer
 
 #include "sageGeneric.h"
 
@@ -26,13 +26,6 @@ namespace
     return typeid(*p).name();
   }
 
-  //! returns the sage node corresponding to lbl
-  static inline
-  SgNode* astNode(Labeler& labels, Label lbl)
-  {
-    return labels.getNode(lbl);
-  }
-
   static inline
   void dbg_rd(std::ostream& os, char sep, Lattice* lat)
   {
@@ -42,24 +35,24 @@ namespace
   }
 
 
-  //! pseudo type to indicate that an element is not in a sequence
+  /// pseudo type to indicate that an element is not in a sequence
   struct unavailable_t {};
 
-  //! \brief  traverses two ordered associative sequences in order of their elements.
-  //!         The elements in the sequences must be convertible. A merge object
-  //!         is called with sequence elements in order of their keys in [aa1, zz1[ and [aa2, zz2[.
-  //! \tparam _Iterator1 an iterator of an ordered associative container
-  //! \tparam _Iterator2 an iterator of an ordered associative container
-  //! \tparam BinaryOperator a merge object that provides three operator()
-  //!         functions. 
-  //!         - void operator()(_Iterator1::value_type, unavailable_t);
-  //!           called when an element is in sequence 1 but not in sequence 2.
-  //!         - void operator()(unavailable_t, _Iterator2::value_type);
-  //!           called when an element is in sequence 2 but not in sequence 1.
-  //!         - void operator()(_Iterator1::value_type, _Iterator2::value_type);
-  //!           called when an element is in both sequences.
-  //! \tparam Comparator compares elements in sequences.
-  //!         called using both (_Iterator1::key_type, _Iterator2::key_type)
+  /// \brief  traverses two ordered associative sequences in order of their elements.
+  ///         The elements in the sequences must be convertible. A merge object
+  ///         is called with sequence elements in order of their keys in [aa1, zz1[ and [aa2, zz2[.
+  /// \tparam _Iterator1 an iterator of an ordered associative container
+  /// \tparam _Iterator2 an iterator of an ordered associative container
+  /// \tparam BinaryOperator a merge object that provides three operator()
+  ///         functions. 
+  ///         - void operator()(_Iterator1::value_type, unavailable_t);
+  ///           called when an element is in sequence 1 but not in sequence 2.
+  ///         - void operator()(unavailable_t, _Iterator2::value_type);
+  ///           called when an element is in sequence 2 but not in sequence 1.
+  ///         - void operator()(_Iterator1::value_type, _Iterator2::value_type);
+  ///           called when an element is in both sequences.
+  /// \tparam Comparator compares elements in sequences.
+  ///         called using both (_Iterator1::key_type, _Iterator2::key_type)
   //          and (_Iterator2::key_type, _Iterator1::key_type).
   template <class _Iterator1, class _Iterator2, class BinaryOperator, class Comparator>
   BinaryOperator
@@ -163,7 +156,7 @@ namespace
     return LatticeCombiner<M>(lhsLatticemap);
   }
 
-  //! functor that determines whether an element exists in some map.
+  /// functor that determines whether an element exists in some map.
   template <class M>
   struct CtxLatticeNotIn
   {
@@ -197,7 +190,7 @@ namespace
     return CtxLatticeNotIn<M>(rhslattices);
   }
 
-  //! Deletes lattices in maps
+  /// Deletes lattices in maps
   struct LatticeDeleter
   {
     template<class Key>
@@ -207,7 +200,7 @@ namespace
     }
   };
 
-  //! deletes all Lattice* in maps within the range [aa, zz)
+  /// deletes all Lattice* in maps within the range [aa, zz)
   template <class _ForwardIterator>
   void deleteLattices(_ForwardIterator aa, _ForwardIterator zz)
   {
@@ -234,15 +227,15 @@ namespace
   };
 }
 
-//! A CtxLattice holds information organized by call contexts.
-//! Each lattice element (aka call context) has a component lattice
-//! that stores the information of some specific analysis.
+/// A CtxLattice holds information organized by call contexts.
+/// Each lattice element (aka call context) has a component lattice
+/// that stores the information of some specific analysis.
 template <class CallContext>
-struct CtxLattice : Lattice, private std::map<CallContext, Lattice*>
+struct CtxLattice : Lattice, private std::map<CallContext, Lattice*, typename CallContext::comparator>
 {
-    typedef Lattice                       base;
-    typedef CallContext                   context_t;
-    typedef std::map<context_t, Lattice*> context_map;
+    typedef Lattice                                                         base;
+    typedef CallContext                                                     context_t;
+    typedef std::map<context_t, Lattice*, typename CallContext::comparator> context_map;
 
     using context_map::value_type;
     using context_map::iterator;
@@ -313,9 +306,11 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*>
 
     void toStream(std::ostream& os, VariableIdMapping* vm) ROSE_OVERRIDE
     {
-      if (isBot()) { os << "bot"; return; }
+      if (isBot()) { os << " bot "; return; }
 
+      os << "{";
       std::for_each(begin(), end(), CtxLatticeStreamer(os, vm));
+      os << "}";
     }
 
   private:

@@ -107,6 +107,7 @@ public:
             bool check;                                 /**< If true, look for null dereferences along the paths. */
             MayOrMust mode;                             /**< Check for addrs that may or must be null. */
             bool constOnly;                             /**< If true, check only constants or sets of constants. */
+            rose_addr_t minValid;                       /**< Minnimum address that is not treated as a null dereference */
 
             NullDeref()
                 : check(false), mode(MUST), constOnly(false) {}

@@ -11397,92 +11397,6 @@ SgFunctionDeclaration::get_mangled_name() const
      printf ("In SgFunctionDeclaration::get_mangled_name() for this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
-#if 0
-#if SKIP_MANGLED_NAME_CACHING
-  // Compute a mangled name from this function's type
-     SgName type_name;
-     SgName ret_type_name;
-     const SgFunctionType* func_type = get_type();
-
-#error "DEAD CODE!"
-
-     if (func_type != NULL)
-        {
-          type_name = func_type->get_mangled();
-          const SgType* ret_type = func_type->get_return_type();
-          if (ret_type)
-               ret_type_name = ret_type->get_mangled();
-        }
-       else
-          type_name = "defaultFunctionTypeName";
- 
-  // This function's name, transformed.
-     SgName func_name = mangleFunctionName (get_name(), ret_type_name);
- 
-  // Compute the name qualification, if any.
-     const SgScopeStatement* par_scope = get_scope();
-     SgName scope_name = mangleQualifiers(par_scope);
- 
-  // Compute the final mangled name.
-     return joinMangledQualifiers (scope_name, func_name + "__" + type_name);
-#else
-  // DQ (10/6/2006): Added support for mangled name caching!
-  // SgGlobal* globalScope = TransformationSupport::getGlobalScope(this);
-  // std::map<SgNode*,std::string> & mangledNameCache = globalScope->get_mangledNameCache();
-  // Build an iterator
-  // std::map<SgNode*,std::string>::iterator i = mangledNameCache.find(this);
-
-     SgName mangledName;
-
-#error "DEAD CODE!"
-
-     std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgFunctionDeclaration*>(this));
-     if (mangledNameString.empty() == false)
-        {
-       // get the precomputed mangled name!
-          mangledName = mangledNameString.c_str();
-       // printf ("Mangled name found \n");
-        }
-       else
-        {
-       // Compute a mangled name from this function's type
-          SgName type_name;
-          SgName ret_type_name;
-          const SgFunctionType* func_type = get_type();
-          if (func_type != NULL)
-             {
-               type_name = func_type->get_mangled();
-               const SgType* ret_type = func_type->get_return_type();
-               if (ret_type)
-                    ret_type_name = ret_type->get_mangled();
-             }
-            else
-             {
-               type_name = "defaultFunctionTypeName";
-             }
- 
-       // This function's name, transformed.
-          SgName func_name = mangleFunctionName (get_name(), ret_type_name);
- 
-       // Compute the name qualification, if any.
-          const SgScopeStatement* par_scope = get_scope();
-          SgName scope_name = mangleQualifiers(par_scope);
- 
-       // Compute the final mangled name.
-          mangledName = joinMangledQualifiers (scope_name, func_name + "__" + type_name);
-
-       // Add this mangled name to the cache of mangled names
-       // mangledNameCache[this] = string(mangledName.str());
-       // mangledNameCache.insert ( pair<SgNode*,std::string>( this , string(mangledName.str()) ) );
-       // printf ("Mangled name will be added to the cache! \n");
-
-          mangledName = SageInterface::addMangledNameToCache(const_cast<SgFunctionDeclaration*>(this),mangledName);
-        }
-
-     return mangledName;
-#endif
-
-#else
   // DQ (3/12/2007): Experiment with mangled name map (caching for performance improvement)
   // SgFunctionDeclaration* function = const_cast<SgFunctionDeclaration*>(this);
   // std::map<SgNode*,std::string>::iterator i = p_globalMangledNameMap.find(function);
@@ -11585,155 +11499,7 @@ SgFunctionDeclaration::get_mangled_name() const
 
           return mangledName;
         }
-#endif
    }
-
-
-#if 0
-// Old code
-SgName
-SgFunctionDeclaration::get_mangled_name() const
-   {
-  // DQ (10/24/2003): fix for mangle names. Default value specified 
-  //                  caused set_mangled_name() to not be called properly.
-  // if(p_mangled_name.is_null())
-  //   if (p_mangled_name == "defaultName")
-  //        set_mangled_name();
-  //   return p_mangled_name;
-
-     SgName returnName;
-
-  // QY: 11/2/04 go through p_type;  if p_type == 0, return "defaultname"? (as in the old version)
-     if (get_type() != NULL)
-        {
-          SgUnparse_Info info;
-          info.set_decl_stmt( const_cast<SgFunctionDeclaration*>(this));
-
-       // DQ (4/28/2005): Need to filter out the use of template names and convert them to something 
-       // that can appear in a mangled name!
-       // DQ (4/27/2005): I have considered making this the qualified name, but decided against it.
-       // see notes in the ROSE manual appendix about mangled names and qualified names.
-       // info.set_name(get_name());
-
-          const SgTemplateInstantiationFunctionDecl       *templateFunction       = isSgTemplateInstantiationFunctionDecl(this);
-          const SgTemplateInstantiationMemberFunctionDecl *templateMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(this);
-
-       // SgName functionName = "_";  // Avoid numbers in leading character of names
-       // functionName += get_name();
-          SgName functionName = get_name().str();
-#if 0
-          if (templateMemberFunction == NULL && templateFunction == NULL)
-             {
-               printf ("This is not a template function = %s \n",functionName.str());
-             }
-#endif
-          if (templateMemberFunction != NULL)
-             {
-            // This is a template member function but we need to know if it is a member 
-            // function of a template class or a template function in a non template class.
-            // printf ("Found a templated member function name = %s \n",functionName.str());
-               if (templateMemberFunction->isTemplateFunction() == true)
-                  {
-                 // functionName = "memberfunction" + functionName;
-                    functionName = fixupTemplateNameForMangledNameSupport(functionName);
-                  }
-                 else
-                  {
-                    string f = functionName.str();
-                    if (f.find("<") != string::npos)
-                       {
-                      // printf ("Found template syntax in a non template member function! \n");
-                         functionName = fixupTemplateNameForMangledNameSupport(functionName);
-                       }
-#if 0
-                    f = functionName.str();
-                    ROSE_ASSERT (f.find("<") == string::npos);
-                    ROSE_ASSERT (f.find(">") == string::npos);
-#endif
-                  }
-#if 0
-               string f = functionName.str();
-               ROSE_ASSERT (f.find("<") == string::npos);
-               ROSE_ASSERT (f.find(">") == string::npos);
-#endif
-            }
-
-          if (templateFunction != NULL)
-             {
-            // This is a template and it has a name in template form (e.g. templateName < templateArgument >)
-            // what we need is a form which is more appropriate to name mangling.
-            // printf ("Found a templated function name = %s \n",functionName.str());
-            // functionName = "function" + functionName;
-               functionName = fixupTemplateNameForMangledNameSupport(functionName);
-
-            // string f = functionName.str();
-            // ROSE_ASSERT (f.find("<") == string::npos);
-            // ROSE_ASSERT (f.find(">") == string::npos);
-             }
-
-       // string f = functionName.str();
-       // ROSE_ASSERT (f.find("<") == string::npos);
-       // ROSE_ASSERT (f.find(">") == string::npos);
-
-       // functionName = "_" + functionName;
-
-          info.set_name(functionName);
-
-          info.set_PrintName();
-
-       // printf ("In SgFunctionDeclaration::get_mangled_name()get_type() = %s \n",get_type()->sage_class_name());
-
-          returnName = get_type()->get_mangled(info);
-        }
-       else
-        {
-          returnName = "defaultFunctionTypeName";
-        }
-
-     string mangledName = returnName.str();
-
-  // printf ("In SgFunctionDeclaration::get_mangled_name() mangledName = %s \n",mangledName.c_str());
-
-     ROSE_ASSERT (mangledName.find("<") == string::npos);
-     ROSE_ASSERT (mangledName.find(">") == string::npos);
-
-     ROSE_ASSERT(mangledName.find('`') == string::npos);
-     ROSE_ASSERT(mangledName.find('~') == string::npos);
-     ROSE_ASSERT(mangledName.find('!') == string::npos);
-     ROSE_ASSERT(mangledName.find('@') == string::npos);
-     ROSE_ASSERT(mangledName.find('#') == string::npos);
-     ROSE_ASSERT(mangledName.find('$') == string::npos);
-     ROSE_ASSERT(mangledName.find('%') == string::npos);
-     ROSE_ASSERT(mangledName.find('^') == string::npos);
-     ROSE_ASSERT(mangledName.find('&') == string::npos);
-     ROSE_ASSERT(mangledName.find('*') == string::npos);
-     ROSE_ASSERT(mangledName.find('(') == string::npos);
-     ROSE_ASSERT(mangledName.find(')') == string::npos);
-     ROSE_ASSERT(mangledName.find('-') == string::npos);
-     ROSE_ASSERT(mangledName.find('+') == string::npos);
-     ROSE_ASSERT(mangledName.find('=') == string::npos);
-     ROSE_ASSERT(mangledName.find('{') == string::npos);
-     ROSE_ASSERT(mangledName.find('}') == string::npos);
-     ROSE_ASSERT(mangledName.find('[') == string::npos);
-     ROSE_ASSERT(mangledName.find(']') == string::npos);
-     ROSE_ASSERT(mangledName.find('|') == string::npos);
-     ROSE_ASSERT(mangledName.find('\\') == string::npos);
-     ROSE_ASSERT(mangledName.find(':') == string::npos);
-     ROSE_ASSERT(mangledName.find(';') == string::npos);
-     ROSE_ASSERT(mangledName.find('\"') == string::npos);
-     ROSE_ASSERT(mangledName.find('\'') == string::npos);
-     ROSE_ASSERT(mangledName.find('?') == string::npos);
-     ROSE_ASSERT(mangledName.find('.') == string::npos);
-     ROSE_ASSERT(mangledName.find('/') == string::npos);
-     ROSE_ASSERT(mangledName.find(',') == string::npos);
-
-  // These are the most common cases that fail
-     ROSE_ASSERT(mangledName.find('<') == string::npos);
-     ROSE_ASSERT(mangledName.find('>') == string::npos);
-
-     return returnName;
-   }
-#endif
 
 // SgStatement* get_next(int&) const;
 
@@ -16993,51 +16759,7 @@ SgTypedefDeclaration::get_qualified_name_prefix_for_base_type() const
 #define DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME 0
 
 // RV (1/30/2006): Revised to follow typedef chains to their base types.
-SgName
-SgTypedefDeclaration::get_mangled_name (void) const
-   {
-#if 0
-     printf ("In SgTypedefDeclaration::get_mangled_name(): this = %p = %s \n",this,this->class_name().c_str());
-#endif
-#if 0
-  // Ask for a mangled name from the base type
-     SgType* baseType = get_base_type();
-     SgName mangledName;
-#if 0
-     if (baseType)
-        {
-          mangledName = baseType->get_mangled();
-        }
-
-  // When no name is available, use the qualified typedef name.
-  // Example: 'namespace N { typedef struct { int a; } foo_t; }'
-  // becomes the mangled form of 'N::foo_t'.
-     if (mangledName.is_null() == true)
-          mangledName = joinMangledQualifiers (mangleQualifiers(get_scope()), get_name());
-#else
-  // DQ (6/3/2006): I think this is a better implementation of name mangling for a typedef 
-  // (need to include the name and the type) but I'm not clear if we want the scope.
-     ROSE_ASSERT(baseType != NULL);
-     mangledName = joinMangledQualifiers (mangleQualifiers(get_scope()), get_name()) + baseType->get_mangled();
-
-  // DQ (1/29/2007): We need to make this more specific to this IR nodes so that a typedef of an unnamed struct does not be mangled to be the same name
-     mangledName += "__typedef_declaration";
-#endif
-
-  // printf ("In SgTypedefDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
-
-     ROSE_ASSERT (mangledName.get_length () > 0);
-     return mangledName;
-#else
-#if 0
-  // DQ (3/12/2007): Experiment with mangled name map (caching for performance improvement)
-     SgTypedefDeclaration* declaration = const_cast<SgTypedefDeclaration*>(this);
-     std::map<SgNode*,std::string>::iterator i = p_globalMangledNameMap.find(declaration);
-     if (i != p_globalMangledNameMap.end())
-        {
-          return i->second.c_str();
-        }
-#endif
+SgName SgTypedefDeclaration::get_mangled_name (void) const {
      std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgTypedefDeclaration*>(this));
      if (mangledNameString.empty() == false)
         {
@@ -17113,7 +16835,8 @@ SgTypedefDeclaration::get_mangled_name (void) const
 #if 0
           printf ("In SgTypedefDeclaration::get_mangled_name(): prefixed_name = %s \n",prefixed_name.str());
 #endif
-
+#define ADD_MANGLED_NAME_OF_BASE_TYPE 0
+#if ADD_MANGLED_NAME_OF_BASE_TYPE
        // DQ (6/30/2018): I think the call to the baseType->get_mangled() is the cause of the infinite loop in test2018_118.C.
        // mangledName = joinMangledQualifiers(mangleQualifiersString,prefixed_name) + baseType->get_mangled();
        // SgName baseTypeMangleName = baseType->get_mangled();
@@ -17144,7 +16867,9 @@ SgTypedefDeclaration::get_mangled_name (void) const
           printf ("In SgTypedefDeclaration::get_mangled_name(): baseTypeMangleName = %s \n",baseTypeMangleName.str());
 #endif
           mangledName = joinMangledQualifiers(mangleQualifiersString,prefixed_name) + baseTypeMangleName;
-
+#else
+          mangledName = joinMangledQualifiers(mangleQualifiersString,prefixed_name);
+#endif
        // DQ (1/29/2007): We need to make this more specific to this IR nodes so that a typedef of an unnamed struct does not be mangled to be the same name
           mangledName += "__typedef_declaration";
 #if DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME
@@ -17162,7 +16887,6 @@ SgTypedefDeclaration::get_mangled_name (void) const
 #endif
           return mangledName;
         }
-#endif
    }
 
 bool

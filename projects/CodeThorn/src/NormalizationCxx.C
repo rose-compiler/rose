@@ -1288,7 +1288,7 @@ namespace
     logTrace() << "Not normalizing templates.." << std::endl;
     //~ ast.setWithTemplates(false);
     for (auto i=ast.begin(); i!=ast.end(); ++i)
-    {    
+    { 
       if (Normalization::isTemplateNode(*i))
       {
         i.skipChildrenOnForward();
