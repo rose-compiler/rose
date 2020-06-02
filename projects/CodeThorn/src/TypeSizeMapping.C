@@ -107,11 +107,8 @@ namespace CodeThorn {
     case V_SgArrayType: {
       CodeThorn::logger[TRACE]<<"DEBUG: ARRAYTYPE: "<<sgType->unparseToString()<<endl;
       SgArrayType* arrayType=isSgArrayType(sgType);
-      CodeThorn::logger[TRACE]<<"DEBUG: ARRAYTYPE: p1"<<endl;
       CodeThorn::TypeSize elementTypeSize=determineElementTypeSize(arrayType);
-      CodeThorn::logger[TRACE]<<"DEBUG: ARRAYTYPE: p2"<<endl;
       CodeThorn::TypeSize numberOfElements=determineNumberOfElements(arrayType);
-      CodeThorn::logger[TRACE]<<"DEBUG: ARRAYTYPE: p3"<<endl;
       unsigned int totalSize=numberOfElements*elementTypeSize;
       if(elementTypeSize>0) {
         _typeToSizeMapping[sgType]=totalSize; // cache result

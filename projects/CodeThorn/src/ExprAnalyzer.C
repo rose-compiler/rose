@@ -148,7 +148,7 @@ AbstractValue ExprAnalyzer::abstractValueFromSgValueExp(SgValueExp* valueExp, Ev
   switch(valueExp->variantT()) {
     CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgFloatVal, float);
     CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgDoubleVal, double);
-    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgLongDoubleVal, long double);
+    //    CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgLongDoubleVal, long double);
     CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgShortVal, short int);
     CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgIntVal, int);
     CASE_ABSTRACT_VALUE_FROM_SG_VALUE_EXP(SgLongIntVal, long int);
