@@ -444,11 +444,10 @@ DisassemblerMips::makeCp2ccRegister(unsigned regnum)
     return new SgAsmDirectRegisterExpression(RegisterDescriptor(mips_regclass_cp2spr, regnum, 0, 32));
 }
 
-SgAsmRegisterReferenceExpression *
-DisassemblerMips::makeHwRegister(unsigned cc)
-{
-    ASSERT_not_implemented("[Robb Matzke 2014-01-27]");
-    return NULL;
+SgAsmRegisterReferenceExpression*
+DisassemblerMips::makeHwRegister(unsigned regnum) {
+    ASSERT_require(regnum < 32);
+    return new SgAsmDirectRegisterExpression(RegisterDescriptor(mips_regclass_hw, regnum, 0, 32));
 }
 
 SgAsmRegisterReferenceExpression *
