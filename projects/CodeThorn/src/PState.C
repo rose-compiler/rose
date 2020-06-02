@@ -338,14 +338,14 @@ AbstractValue PState::readFromMemoryLocation(AbstractValue abstractMemLoc) const
 void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
                                    AbstractValue abstractValue) {
   if(abstractValue.isBot()) {
-    //cout<<"INFO: writing bot to memory (bot->top conversion)."<<endl;
+    // writing bot to memory (bot->top conversion)
     abstractValue=AbstractValue(CodeThorn::Top());
   }
   operator[](abstractMemLoc)=abstractValue;
 }
 
 void PState::combineAtMemoryLocation(AbstractValue abstractMemLoc,
-                                   AbstractValue abstractValue) {
+                                     AbstractValue abstractValue) {
   AbstractValue currentValue=operator[](abstractMemLoc);
   AbstractValue newValue=AbstractValue::combine(currentValue,abstractValue);
   operator[](abstractMemLoc)=newValue;

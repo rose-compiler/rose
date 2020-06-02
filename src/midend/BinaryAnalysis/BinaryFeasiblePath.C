@@ -351,11 +351,11 @@ private:
         switch (fpAnalyzer_->settings().nullDeref.mode) {
             case FeasiblePath::MAY:
                 if (solver) {
-                    SymbolicExpr::Ptr assertion = SymbolicExpr::makeLt(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), 4096));
+                    SymbolicExpr::Ptr assertion = SymbolicExpr::makeLt(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), fpAnalyzer_->settings().nullDeref.minValid));
                     solver->insert(assertion);
                     retval = SmtSolver::SAT_YES == solver->check();
                 } else {
-                    retval = SymbolicExpr::makeLt(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), 4096))->mayEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 1));
+                    retval = SymbolicExpr::makeLt(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), fpAnalyzer_->settings().nullDeref.minValid))->mayEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 1));
                 }
                 break;
 
@@ -364,11 +364,11 @@ private:
                 // be able to return quickly.
                 if (!fpAnalyzer_->settings().nullDeref.constOnly ||  isConstExpr(expr)) {
                     if (solver) {
-                        SymbolicExpr::Ptr assertion = SymbolicExpr::makeGe(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), 4096));
+                        SymbolicExpr::Ptr assertion = SymbolicExpr::makeGe(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), fpAnalyzer_->settings().nullDeref.minValid));
                         solver->insert(assertion);
                         retval = SmtSolver::SAT_NO == solver->check();
                     } else {
-                        retval = SymbolicExpr::makeLt(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), 4096))->mustEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 1));
+                        retval = SymbolicExpr::makeLt(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), fpAnalyzer_->settings().nullDeref.minValid))->mustEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 1));
                     }
                 } else {
                     SAWYER_MESG(debug) <<"          isNullDeref address is not constant as required by settings\n";
@@ -778,6 +778,13 @@ FeasiblePath::commandLineSwitches(Settings &settings) {
                                      "Check for null dereferences only when a pointer is a constant or set of constants. This "
                                      "setting is ignored when the null-comparison mode is \"may\" since \"may\" implies that "
                                      "you're interested in additional cases where the pointer is not a constant expression.");
+
+    sg.insert(Switch("null-address-min")
+              .argument("n", nonNegativeIntegerParser(settings.nullDeref.minValid))
+              .doc("What is the min address that should not be teated as a null dereference. All memory reads that are less than n "
+                   " are considered a null dereference. This is to find when an offset is used on a null pointer such as accessing "
+                   "a member of a structure. The default is " + boost::lexical_cast<std::string>(settings.nullDeref.minValid) + " which is the default "
+                   "size of the first page on linux which can not be read from."));
 
     CommandLine::insertBooleanSwitch(sg, "ignore-semantic-failure", settings.ignoreSemanticFailure,
                                      "If set, then any instruction for which semantics are not implemented or for which the "

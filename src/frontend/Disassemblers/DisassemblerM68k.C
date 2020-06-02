@@ -2030,7 +2030,8 @@ struct M68k_divide: M68k {
         SgAsmExpression *dq = d->makeDataRegister(extract<12, 14>(d->instructionWord(1)), m68k_fmt_i32);
         if (extract<12, 14>(d->instructionWord(1)) == extract<0, 2>(d->instructionWord(1))) {
             // first form, 32-bit dividend, storing only the quotient
-            ASSERT_require((0==extract<10, 10>(d->instructionWord(1))));
+            if (extract<10, 10>(d->instructionWord(1)))
+                return NULL;
             M68kInstructionKind kind = extract<11, 11>(d->instructionWord(1)) ? m68k_divs : m68k_divu;
             return d->makeInstruction(kind, stringifyBinaryAnalysisM68kInstructionKind(kind, "m68k_")+".l", ea, dq);
         } else if (extract<10, 10>(d->instructionWord(1))) {

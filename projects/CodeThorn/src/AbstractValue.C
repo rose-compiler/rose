@@ -55,7 +55,7 @@ CodeThorn::VariableIdMappingExtended* AbstractValue::getVariableIdMapping() {
   return AbstractValue::_variableIdMapping;
 }
 
-AbstractValue::TypeSize AbstractValue::calculateTypeSize(CodeThorn::BuiltInType btype) {
+CodeThorn::TypeSize AbstractValue::calculateTypeSize(CodeThorn::BuiltInType btype) {
   ROSE_ASSERT(AbstractValue::_variableIdMapping);
   return AbstractValue::_variableIdMapping->getTypeSize(btype);
 }
@@ -96,35 +96,35 @@ AbstractValue::AbstractValue(Top e) {valueType=AbstractValue::TOP;intValue=0;} /
 AbstractValue::AbstractValue(Bot e) {valueType=AbstractValue::BOT;intValue=0;} // intValue=0 superfluous
 
 AbstractValue::AbstractValue(unsigned char x) {
-  initInteger(BITYPE_UCHAR,x);
+  initInteger(BITYPE_CHAR,x);
 }
 AbstractValue::AbstractValue(signed char x) {
-  initInteger(BITYPE_SCHAR,x);
+  initInteger(BITYPE_CHAR,x);
 }
 AbstractValue::AbstractValue(short x) {
-  initInteger(BITYPE_SSHORT,x);
+  initInteger(BITYPE_SHORT,x);
 }
 AbstractValue::AbstractValue(int x) {
-  initInteger(BITYPE_SINT,x);
+  initInteger(BITYPE_INT,x);
 }
 AbstractValue::AbstractValue(long int x) {
-  initInteger(BITYPE_SLONG,x);
+  initInteger(BITYPE_LONG,x);
 }
 AbstractValue::AbstractValue(long long int x) {
-  initInteger(BITYPE_SLONG_LONG,x);
+  initInteger(BITYPE_LONG_LONG,x);
 }
 
 AbstractValue::AbstractValue(unsigned short int x) {
-  initInteger(BITYPE_USHORT,x);
+  initInteger(BITYPE_SHORT,x);
 }
 AbstractValue::AbstractValue(unsigned int x) {
-  initInteger(BITYPE_UINT,x);
+  initInteger(BITYPE_INT,x);
 }
 AbstractValue::AbstractValue(unsigned long int x) {
-  initInteger(BITYPE_ULONG,x);
+  initInteger(BITYPE_LONG,x);
 }
 AbstractValue::AbstractValue(unsigned long long int x) {
-  initInteger(BITYPE_ULONG_LONG,x);
+  initInteger(BITYPE_LONG_LONG,x);
 }
 AbstractValue::AbstractValue(float x) {
   initFloat(BITYPE_FLOAT,x);
@@ -651,11 +651,11 @@ AbstractValue::ValueType AbstractValue::getValueType() const {
   return valueType;
 }
 
-AbstractValue::TypeSize AbstractValue::getTypeSize() const {
+CodeThorn::TypeSize AbstractValue::getTypeSize() const {
   return typeSize;
 }
 
-void AbstractValue::setTypeSize(AbstractValue::TypeSize typeSize) {
+void AbstractValue::setTypeSize(CodeThorn::TypeSize typeSize) {
   this->typeSize=typeSize;
 }
 
@@ -850,12 +850,12 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
     case BOT: return true;
     case INTEGER: return (val1.intValue==val2.intValue);
     case FLOAT: return (val1.floatValue==val2.floatValue);
-    case PTR: return (val1.getVariableId()==val2.getVariableId());
-    case REF: return (val1.getVariableId()==val2.getVariableId());
+    case PTR:
+    case REF: return (val1.getVariableId()==val2.getVariableId()&&val1.intValue==val2.intValue);
     case TOP:
     case UNDEFINED:
-      // special cases of above if-conditions
-      // TODO: enfore non-reachable here
+      // should be unreachable because of 2nd if-condition above
+      // TODO: enforce non-reachable here
       return true;
     }
   }

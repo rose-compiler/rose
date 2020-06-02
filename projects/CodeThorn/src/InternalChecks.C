@@ -17,7 +17,7 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
-#include "SgTypeSizeMapping.h"
+#include "TypeSizeMapping.h"
 
 #ifdef USE_SAWYER_COMMANDLINE
 #include "Sawyer/CommandLineBoost.h"
@@ -63,7 +63,7 @@ void checkLanguageRestrictor(int argc, char *argv[]) {
 }
 
 void checkLargeSets() {
-  VariableIdMapping variableIdMapping;
+  VariableIdMappingExtended variableIdMapping;
   AbstractValue i;
   set<AbstractValue> cilSet;
   cilSet.insert(AbstractValue(Bot()));

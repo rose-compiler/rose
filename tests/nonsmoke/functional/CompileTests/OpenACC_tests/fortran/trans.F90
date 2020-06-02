@@ -18,6 +18,7 @@ contains
 !$acc data present(c1,c2,c3,c4,c5,c6,c7,c8,f1,f2) create(t1,t2,t3,t4)
 
 !$acc parallel loop gang vector if(flags%f1) async(1) &
+!$acc present (/flags/, t1,t2,t3,t4)
     do i=1,N
       t1(i)=c1(i)*c2(i)
       t2(i)=c3(i)*c4(i)

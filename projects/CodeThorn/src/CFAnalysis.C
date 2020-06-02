@@ -1122,9 +1122,11 @@ namespace
     : base(false /* include in CFG */)
     {}
     
-    void handle(SgNode&)                       { /* default */ }
-    void handle(SgUsingDeclarationStatement&)  { res = true;   }
-    void handle(SgTemplateTypedefDeclaration&) { res = true;   }
+    void handle(SgNode&)                             { /* default = false */ }
+    void handle(SgUsingDeclarationStatement&)        { res = true; }
+    void handle(SgUsingDirectiveStatement&)          { res = true; }
+    void handle(SgC_PreprocessorDirectiveStatement&) { res = true; }
+    void handle(SgTypedefDeclaration&)               { res = true; /* includes subclasses */ }    
   };
 }
 

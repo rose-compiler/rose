@@ -1,6 +1,6 @@
 include_rules
 
 # FIXME: This directory has extra source files that aren't used
-run $(librose_compile) merge.C fixupTraversal.C
+run $(librose_compile) merge.C fixupTraversal.C link.C delete.C share.C load.C
 
-run $(public_header) merge.h fixupTraversal.h
+run $(public_header) merge.h fixupTraversal.h link.h delete.h share.h load.h

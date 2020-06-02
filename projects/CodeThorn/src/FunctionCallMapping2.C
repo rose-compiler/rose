@@ -159,6 +159,8 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
       
     SgNode* theNode = labeler->getNode(lbl);
     
+    //~ Goal: ROSE_ASSERT(!insideTemplatedCode(theNode)); // should not be reachable
+
     // filtering for templated code is not strictly necessary
     //   but it avoids misleading logging output 
     //   and diluted resolution numbers.

@@ -17,12 +17,11 @@ namespace CodeThorn {
     // the init function only uses the variableIds of a given estate (not its values) for initialization
     void init(const EState* estate);
     void init(const PState* pstate);
-    AbstractValueSet getHotVariables(Analyzer* analyzer, const EState* estate);
-    AbstractValueSet getHotVariables(Analyzer* analyzer, const PState* pstate);
+    //AbstractValueSet getHotVariables(Analyzer* analyzer, const EState* estate);
+    //AbstractValueSet getHotVariables(Analyzer* analyzer, const PState* pstate);
     AbstractValueSet getVariables();
     void setVariableMode(VariableMode,CodeThorn::AbstractValue);
     VariableMode getVariableMode(CodeThorn::AbstractValue);
-    void update(Analyzer* analyzer, EState* estate);
     bool isHotVariable(Analyzer* analyzer, CodeThorn::AbstractValue varId);
     std::string toString(CodeThorn::VariableIdMapping* variableIdMapping);
   private:

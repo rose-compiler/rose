@@ -86,7 +86,11 @@ SgFunctionDeclaration* SgNodeHelper::findFunctionDeclarationWithFunctionSymbol(S
 std::string SgNodeHelper::sourceFilenameToString(SgNode* node) {
   Sg_File_Info* fi=node->get_file_info();
   std::stringstream ss;
-  ss<<fi->get_filenameString();
+  if(fi) {
+    ss<<(fi->get_filenameString());
+  } else {
+    ss<<"?";
+  }
   return ss.str();
 }
 
@@ -102,12 +106,27 @@ std::string SgNodeHelper::sourceLineColumnToString(SgNode* node) {
   * \author Markus Schordan
   * \date 2019.
  */
+
+SgNodeHelper::LineColPair SgNodeHelper::lineColumnPair(SgNode* node) {
+  Sg_File_Info* fi=node->get_file_info();
+  LineColPair p;
+  if(fi) {
+    p.first=fi->get_line();
+    p.second=fi->get_col();
+    return p;
+  } else {
+    p.first=-1;
+    p.second=-1;
+    return p;
+  }
+}
+
 std::string SgNodeHelper::sourceLineColumnToString(SgNode* node, string separator) {
   std::stringstream ss;
-  Sg_File_Info* fi=node->get_file_info();
-  ss<<fi->get_line();
+  SgNodeHelper::LineColPair p=lineColumnPair(node);
+  ss<<p.first;
   ss<<separator;
-  ss<<fi->get_col();
+  ss<<p.second;
   return ss.str();
 }
 
@@ -125,6 +144,10 @@ std::string SgNodeHelper::sourceFilenameLineColumnToString(SgNode* node) {
   return ss.str();
 }
 
+std::string SgNodeHelper::sourceLocationAndNodeToString(SgNode* node) {
+  return SgNodeHelper::sourceFilenameLineColumnToString(node)+" : "+node->unparseToString();
+}
+  
 std::string SgNodeHelper::lineColumnNodeToString(SgNode* node) {
   return SgNodeHelper::sourceLineColumnToString(node)+": "+SgNodeHelper::nodeToString(node);
 }

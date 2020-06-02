@@ -1192,14 +1192,20 @@ public:
     virtual void isaName(const std::string &s) { settings_.disassembler.isaName = s; }
     /** @} */
 
+    // This is a list of addresses where functions will be created in addition to those functions discovered by examining the
+    // binary container. Use functionStartingVas instead.
+    // DEPRECATED on 5/27/20
+    const std::vector<rose_addr_t>& startingVas() const ROSE_DEPRECATED("use functionStartingVas") /*final*/ { return settings_.partitioner.functionStartingVas; }
+    std::vector<rose_addr_t>& startingVas() ROSE_DEPRECATED("use functionStartingVas") /*final*/ { return settings_.partitioner.functionStartingVas; }
+
     /** Property: Starting addresses for disassembly.
      *
      *  This is a list of addresses where functions will be created in addition to those functions discovered by examining the
      *  binary container.
      *
      * @{ */
-    const std::vector<rose_addr_t>& startingVas() const /*final*/ { return settings_.partitioner.startingVas; }
-    std::vector<rose_addr_t>& startingVas() /*final*/ { return settings_.partitioner.startingVas; }
+    const std::vector<rose_addr_t>& functionStartingVas() const /*final*/ { return settings_.partitioner.functionStartingVas; }
+    std::vector<rose_addr_t>& functionStartingVas() /*final*/ { return settings_.partitioner.functionStartingVas; }
     /** @} */
 
     /** Property: Whether to use instruction semantics.

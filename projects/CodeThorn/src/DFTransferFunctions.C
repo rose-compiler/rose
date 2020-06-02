@@ -59,6 +59,7 @@ VariableId getVariableId(CodeThorn::VariableIdMapping* vmap, SgNode* n)
     
   cerr<<"Transfer: unknown lhs of function call result assignment."<<endl;
   cerr<<n->unparseToString()<<endl;
+  cerr<<n->get_parent()->unparseToString()<<endl;
   exit(1);
   
   //~ return withoutVariable();
@@ -81,15 +82,13 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     // 1) f(x), 2) y=f(x) (but not y+=f(x))
     SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(node);
     
+    SgFunctionCallExp* funCall = SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL 
+                                       ? callinfo.callExpression()
+                                       : SgNodeHelper::Pattern::matchFunctionCall(node);
+
     //~ if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(node)) {
-    if(SgFunctionCallExp* funCall = callinfo.callExpression()) {
+    if(funCall) {
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-      std::string calltext = funCall->unparseToString(); 
-      
-      if (calltext == "\"INFO: \"+PREFIX")
-      {
-        cerr<<"InfoX: callexp: fcall found " << calltext << std::endl;
-      }
       
       transferFunctionCall(lab, funCall, arguments, element);
     } else if (SgConstructorInitializer* ctorCall = callinfo.ctorInitializer()) {
@@ -510,7 +509,7 @@ Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
   VariableIdSet usedGlobalVarIds=globalVars; //*usedVarsInFuncs; //+usedVarsInGlobalVarsInitializers;;
   //  usedGlobalVarIds.insert(usedVarsInGlobalVarsInitializers.begin(),
   //        usedVarsInGlobalVarsInitializers.end());
-  cout <<"INFO: number of global variables: "<<globalVars.size()<<endl;
+  cout <<"INFO: Number of global variables: "<<globalVars.size()<<endl;
   //  cout <<"INFO: used variables in functions: "<<usedVarsInFuncs.size()<<endl;
   //cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;
   Lattice* elem=_initialElementFactory->create();
@@ -544,9 +543,9 @@ Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
     transfer(getLabeler()->getLabel(init.second), *elem);
   }
 
-  //cout << "INIT: initial state: ";
-  //elem->toStream(cout,getVariableIdMapping());
-  //cout<<endl;
+  //~ std::cout << "INIT: initial state (after " << varinit.size() << ") vars: ";
+  //~ elem->toStream(cout,getVariableIdMapping());
+  //~ std::cout << endl;
   return elem;
 }
 
