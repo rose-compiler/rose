@@ -1124,10 +1124,11 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
           //getExprAnalyzer()->writeToMemoryLocation(label,&newPState,arrayAddress,CodeThorn::Top());
           PState newPState=*currentEState.pstate();
           return createEState(targetLabel,cs,newPState,cset);
-          if(getVariableIdMapping()->hasReferenceType(initDeclVarId)) {
-            // TODO: initialization of references not supported yet
-            SAWYER_MESG(logger[WARN])<<"initialization of references not supported yet (not added to state) "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
-          }
+        }
+        if(getVariableIdMapping()->hasReferenceType(initDeclVarId)) {
+          // TODO: initialization of references not supported yet
+          SAWYER_MESG(logger[WARN])<<"initialization of references not supported yet (not added to state) "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
+          PState newPState=*currentEState.pstate();
           return createEState(targetLabel,cs,newPState,cset);
         }
         // has aggregate initializer

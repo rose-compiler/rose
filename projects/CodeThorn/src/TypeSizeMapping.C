@@ -116,16 +116,11 @@ namespace CodeThorn {
       return totalSize;
     }
     case V_SgClassType: {
-      CodeThorn::logger[INFO]<<"DEBUG: CLASSTYPE: "<<sgType->unparseToString()<<endl;
-      typedef std::vector< std::pair< SgNode*, std::string > > DataMemberPointers;
+      CodeThorn::logger[TRACE]<<"CLASSTYPE: "<<sgType->unparseToString()<<endl;
       CodeThorn::TypeSize sum=0;
-      DataMemberPointers dataMemPtrs=isSgClassType(sgType)->returnDataMemberPointers();
-      // returnDataMemberPointers includes all declarations (methods need to be filtered)
-      for(DataMemberPointers::iterator i=dataMemPtrs.begin();i!=dataMemPtrs.end();++i) {
-        SgNode* node=(*i).first; 
-        if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
-          sum+=determineTypeSize(varDecl->get_type());
-        }
+      std::list<SgVariableDeclaration*> varDeclList=SgNodeHelper::memberVariableDeclarationsList(isSgClassType(sgType));
+      for(auto varDecl : varDeclList) {
+        sum+=determineTypeSize(varDecl->get_type());
       }
       if(sum>0) {
         _typeToSizeMapping[sgType]=sum;
@@ -155,15 +150,12 @@ namespace CodeThorn {
     ROSE_ASSERT(t);
     size_t result=0; 
     SgExpression * indexExp =  t->get_index();
-    CodeThorn::logger[TRACE]<<"determineNumberOfElements:p1"<<endl;
-    
+  
     // assume dimension default to 1 if not specified ,such as a[] 
     if((indexExp == nullptr) || isSgNullExpression(indexExp)) {
-      CodeThorn::logger[TRACE]<<"determineNumberOfElements:p2"<<endl;
       result = 0;
     } else { 
       if(AbstractValue::getVariableIdMapping()==nullptr) {
-        CodeThorn::logger[TRACE]<<"AbstractValue::getVariableIdMapping()==nullptr"<<endl;
         //Take advantage of the fact that the value expression is always SgUnsignedLongVal in AST
         SgUnsignedLongVal * valExp = isSgUnsignedLongVal(indexExp);
         SgIntVal * valExpInt = isSgIntVal(indexExp);
@@ -177,9 +169,7 @@ namespace CodeThorn {
           else 
             result = valExpInt->get_value();
         }
-        CodeThorn::logger[TRACE]<<"determined result value."<<endl;
       } else {
-        CodeThorn::logger[TRACE]<<"determineNumberOfElements:p3"<<endl;
         // variable id mapping is available in AbstractValue
         ExprAnalyzer tmpExprEvaluator;
         AbstractValue abstractSize=tmpExprEvaluator.evaluateExpressionWithEmptyState(indexExp);
@@ -191,12 +181,10 @@ namespace CodeThorn {
         }
       }
     }
-    CodeThorn::logger[TRACE]<<"determineNumberOfElements:p4"<<endl;
     // consider multi dimensional case 
     SgArrayType* arraybase = isSgArrayType(t->get_base_type());
     if (arraybase)
       result = result * determineNumberOfElements(arraybase);
-    CodeThorn::logger[TRACE]<<"determineNumberOfElements:p5"<<endl;
     return result;
   }
   
