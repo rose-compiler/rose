@@ -954,10 +954,13 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
            foreach(SgDeclarationStatement* item_decl, table_def->get_members())
               {
-                 SgVariableDeclaration* vardecl = isSgVariableDeclaration(item_decl);
-                 if (vardecl)
+                 if (isSgVariableDeclaration(item_decl))
                     {
                        unparseVarDeclStmt(item_decl, info);
+                    }
+                 else if (isSgEmptyDeclaration(item_decl))
+                    {
+                       // do nothing for a null declaration (may want to unparse ";\n")
                     }
                  else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
               }
@@ -1135,10 +1138,13 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
                  info.inc_nestingLevel();
                  foreach(SgDeclarationStatement* item_decl, table_def->get_members())
                     {
-                       SgVariableDeclaration* vardecl = isSgVariableDeclaration(item_decl);
-                       if (vardecl)
+                       if (isSgVariableDeclaration(item_decl))
                           {
                              unparseVarDeclStmt(item_decl, info);
+                          }
+                       else if (isSgEmptyDeclaration(item_decl))
+                          {
+                             // do nothing for a null declaration (may want to unparse ";\n")
                           }
                        else cerr << "WARNING UNIMPLEMENTED: Unparse of table member not a variable declaration \n";
                     }
