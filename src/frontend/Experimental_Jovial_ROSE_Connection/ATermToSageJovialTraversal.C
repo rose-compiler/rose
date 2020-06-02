@@ -680,17 +680,17 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
 
          // status item declarations have to be handled differently than other ItemTypeDescription terms
 
-         // also assume an int is sufficient for status_size for now
-         if (status_size) {
-            cerr << "WARNING UNIMPLEMENTED: ItemDeclaration - StatusItemDescription with size \n";
-            ROSE_ASSERT(false);
-         }
-
          // Begin SageTreeBuilder
          SgEnumDeclaration* enum_decl = nullptr;
          sage_tree_builder.Enter(enum_decl, name, status_list);
          setSourcePosition(enum_decl, term);
 
+         if (status_size) {
+            SgType* field_type = SageBuilder::buildIntType(*status_size);
+            enum_decl->set_field_type(field_type);
+         }
+
+         // End SageTreeBuilder
          sage_tree_builder.Leave(enum_decl);
       } else return ATfalse;
 
@@ -2935,18 +2935,15 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDeclaration(ATerm term)
 
          // status item declarations have to be handled differently than other ItemTypeDescription terms
 
-         // also assume an int is sufficient for status_size for now
-         if (status_size) {
-            cerr << "WARNING UNIMPLEMENTED: ItemTypeDeclaration - StatusItemDescription - has_size \n";
-         // ROSE_ASSERT(false);
-         // DELETE_ME
-            return ATtrue;
-         }
-
       // Begin SageTreeBuilder
          SgEnumDeclaration* enum_decl = nullptr;
          sage_tree_builder.Enter(enum_decl, name, status_list);
          setSourcePosition(enum_decl, term);
+
+         if (status_size) {
+            SgTypeInt* field_type = SageBuilder::buildIntType(*status_size);
+            enum_decl->set_field_type(field_type);
+         }
 
       // End SageTreeBuilder
          sage_tree_builder.Leave(enum_decl);
@@ -3564,57 +3561,70 @@ ATbool ATermToSageJovialTraversal::traverse_OverlayDeclaration(ATerm term)
    //   OverlayExpression ';'         -> OverlayDeclaration   {cons("OverlayDeclaration")}
 
    ATerm t_addr, t_absolute_addr, t_expr;
-   SgExpression *sg_addr = nullptr;
-   SgExpression *expr = nullptr;
+
+   SgJovialOverlayDeclaration* overlay_decl = nullptr;
 
    if (ATmatch(term, "OverlayDeclaration(<term>,<term>)", &t_addr, &t_expr)) {
-      cerr << "WARNING UNIMPLEMENTED: OverlayDeclaration\n";
-      ROSE_ASSERT(false);
+      SgExpression* address = nullptr;
+      SgExprListExp* overlay_expr = nullptr;
+
       if (ATmatch(t_addr, "AbsoluteAddress(<term>)", &t_absolute_addr)) {
          // 'POS' '(' OverlayAddress ')'    -> AbsoluteAddress      {cons("AbsoluteAddress")}
-         if (traverse_NumericFormula(t_absolute_addr, sg_addr)) {
+         if (traverse_NumericFormula(t_absolute_addr, address)) {
             // MATCHED OverlayAddress
             // CompileTimeNumericFormula       -> OverlayAddress
          } else return ATfalse;
       }
       else if (ATmatch(t_addr, "no-absolute-address")) {
-         // MATCHED no-absolute-address
+         address = SageBuilder::buildNullExpression_nfi();
       }
       else return ATfalse;
 
-      if (traverse_OverlayExpression(t_expr, expr)) {
+      if (traverse_OverlayExpression(t_expr, overlay_expr)) {
          // MATCHED OverlayExpression
       } else return ATfalse;
+      ROSE_ASSERT(overlay_expr);
 
+   // Begin SageTreeBuilder
+      sage_tree_builder.Enter(overlay_decl, address, overlay_expr);
    }
    else return ATfalse;
 
-   return ATtrue;
+   ROSE_ASSERT(overlay_decl);
 
+// End SageTreeBuilder
+   sage_tree_builder.Leave(overlay_decl);
+
+   return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_OverlayExpression(ATerm term, SgExpression* & expr)
+ATbool ATermToSageJovialTraversal::traverse_OverlayExpression(ATerm term, SgExprListExp* &overlay_expr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OverlayExpression: %s\n", ATwriteToString(term));
 #endif
-
    //   {OverlayString ':'}+            -> OverlayExpression
+
+   SgExprListExp* overlay_string;
+   overlay_expr = SageBuilder::buildExprListExp_nfi();
 
    ATermList tail = (ATermList) ATmake("<term>", term);
    while (! ATisEmpty(tail)) {
       ATerm head = ATgetFirst(tail);
       tail = ATgetNext(tail);
-      if (traverse_OverlayString(head, expr)) {
+
+      overlay_string = nullptr;
+      if (traverse_OverlayString(head, overlay_string)) {
          // MATCHED OverlayString
       } else return ATfalse;
+
+      overlay_expr->get_expressions().push_back(overlay_string);
    }
 
    return ATtrue;
-
 }
 
-ATbool ATermToSageJovialTraversal::traverse_OverlayString(ATerm term, SgExpression* & expr)
+ATbool ATermToSageJovialTraversal::traverse_OverlayString(ATerm term, SgExprListExp* &overlay_string)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OverlayString: %s\n", ATwriteToString(term));
@@ -3622,19 +3632,27 @@ ATbool ATermToSageJovialTraversal::traverse_OverlayString(ATerm term, SgExpressi
 
    //  {OverlayElement ','}+           -> OverlayString
 
+   SgExpression* overlay_element;
+   overlay_string = SageBuilder::buildExprListExp_nfi();
+
    ATermList tail = (ATermList) ATmake("<term>", term);
    while (! ATisEmpty(tail)) {
       ATerm head = ATgetFirst(tail);
       tail = ATgetNext(tail);
-      if (traverse_OverlayElement(head, expr)) {
+
+      overlay_element = nullptr;
+      if (traverse_OverlayElement(head, overlay_element)) {
          // MATCHED OverlayElement
       } else return ATfalse;
+      ROSE_ASSERT(overlay_element);
+
+      overlay_string->get_expressions().push_back(overlay_element);
    }
 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_OverlayElement(ATerm term, SgExpression* & expr)
+ATbool ATermToSageJovialTraversal::traverse_OverlayElement(ATerm term, SgExpression* &overlay_element)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_OverlayElement: %s\n", ATwriteToString(term));
@@ -3646,19 +3664,33 @@ ATbool ATermToSageJovialTraversal::traverse_OverlayElement(ATerm term, SgExpress
 
    ATerm t_expr;
    std::string name;
-   SgExpression *spacer; // *overlay_expr;
+
+   // TODO:ROSETTA - new node SgJovialOverlayElement
+   // SgJovialOverlayElement* = element;
+
+   SgExpression* spacer = nullptr;
+   SgExprListExp* overlay_expr = nullptr;
 
    if (ATmatch(term, "OverlayElement(<term>)", &t_expr)) {
-      if (traverse_OverlayExpression(t_expr, expr)) {
-         // MATCHED OverlayExpression
+      cerr << "WARNING UNIMPLEMENTED: OverElement = OverlayExpression\n";
+      ROSE_ASSERT(false);
+      if (traverse_OverlayExpression(t_expr, overlay_expr)) {
+         ROSE_ASSERT(overlay_expr);
+         overlay_element = overlay_expr;
       } else return ATfalse;
    }
    else if (traverse_Spacer(term, spacer)) {
-      // MATCHED Spacer
+      cerr << "WARNING UNIMPLEMENTED: OverElement = Spacer (partial implemented)\n";
+      ROSE_ASSERT(spacer);
+      overlay_element = spacer;
    }
    else if (traverse_Name(term, name)) {
-      // MATCHED DataName
+      cerr << "WARNING UNIMPLEMENTED: OverElement = Name (partial implemented)\n";
+      SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
+      overlay_element = var_ref;
    } else return ATfalse;
+
+   ROSE_ASSERT(overlay_element);
 
    return ATtrue;
 }
@@ -6420,7 +6452,6 @@ ATbool ATermToSageJovialTraversal::traverse_Dereference(ATerm term, SgExpression
       if (ATmatch(t_deref, "<str>", &name)) {
          // MATCHED PointerItemName
          SgVarRefExp* var_ref = SageBuilder::buildVarRefExp(name, SageBuilder::topScopeStack());
-         ROSE_ASSERT(var_ref);
 
          deref = SageBuilder::buildPointerDerefExp(var_ref);
       } else if (traverse_GeneralFormula(t_deref, formula)) {

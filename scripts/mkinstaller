@@ -23,20 +23,20 @@ $Interpreter ||= "/usr/bin/perl";
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
 $mkinstaller_ver_build = "1";
-$mkinstaller_ver_patch = "1";
-$mkinstaller_ver_name  = "2.6.1.1";
-$mkinstaller_ver_time  = " 6May2020,19:58:56z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.1.1 -  6May2020,19:58:56z";
+$mkinstaller_ver_patch = "5";
+$mkinstaller_ver_name  = "2.6.1.5";
+$mkinstaller_ver_time  = "29May2020,02:17:56z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.1.5 - 29May2020,02:17:56z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
 $perl_library_ver_major = "1";
 $perl_library_ver_minor = "6";
-$perl_library_ver_build = "17";
-$perl_library_ver_patch = "1";
-$perl_library_ver_name  = "1.6.17.1";
-$perl_library_ver_time  = "23Apr2020,04:20:40z";
-$perl_library_ver_id    = "@(#)perl_library 1.6.17.1 - 23Apr2020,04:20:40z";
+$perl_library_ver_build = "18";
+$perl_library_ver_patch = "3";
+$perl_library_ver_name  = "1.6.18.3";
+$perl_library_ver_time  = "28May2020,20:15:33z";
+$perl_library_ver_id    = "@(#)perl_library 1.6.18.3 - 28May2020,20:15:33z";
 
 #{------------------------------------------------------------------------------
 #
@@ -103,16 +103,16 @@ $foundInDir  = "";
 
 #-------------------------------------------------------------------------------
 #
-#  The DEBUG_mkinstaller (or DEBUG) enviroment variable is used to control the
+#  The DEBUG_mkinstaller (or DEBUG) environment variable is used to control the
 #  production of debugging output.
 #
 #     not set
 #
-#         Don't produce debugging ouput.
+#         Don't produce debugging output.
 #
 #     0
 #
-#         Don't produce debugging ouput.
+#         Don't produce debugging output.
 #
 #     non-zero integer
 #
@@ -244,7 +244,7 @@ if ($valueOfDebugVar ne "") {
    my $keepOpt                         = "";
    my $libDirBasename                  = "";
    my $NadjustedStuff                  = 0;
-   my $oldOSname                       = ""; # Only for backwards compatability
+   my $oldOSname                       = ""; # Only for backwards compatibility
    my $OSname                          = lc $^O;
    my $OSversion                       = "";
    my $postInstallBasename             = "";
@@ -2593,7 +2593,7 @@ if ($valueOfDebugVar ne "") {
    #  Then copy the individual files to be installed (if any) into appropriate
    #  temporary directories. Note that this process works very much like the
    #  way command-line parameters (directories to be installed) are handled
-   #  during command line processing above. This effectivly "converts" individual
+   #  during command line processing above. This effectively "converts" individual
    #  file installations to the expected directory installations.
    #
    #----------------------------------------------------------------------------
@@ -10213,7 +10213,7 @@ EOF20
          |                               echo
          |                               echo "        --enforce-check"
          |                               echo
-         |                               echo "            Enforce compatability. If the source system C and C++"
+         |                               echo "            Enforce compatibility. If the source system C and C++"
          |                               echo "            library versions don't agree then report the problem and"
          |                               echo "            quit. This is the default behavior."
          |                               echo
@@ -10225,7 +10225,7 @@ EOF20
          |                               echo
          |                               echo "        --just-check"
          |                               echo
-         |                               echo "            Don't enforce compatability. If the source system C and C++"
+         |                               echo "            Don't enforce compatibility. If the source system C and C++"
          |                               echo "            library versions don't agree then simply report the problem"
          |                               echo "            then carry-on with the installation."
 EOF21
@@ -10288,7 +10288,7 @@ EOF25
          |                               echo
          |                               echo "               -v3"
          |                               echo
-         |                               echo "            is equavalent to:"
+         |                               echo "            is equivalent to:"
          |                               echo
          |                               echo "               -v -v -v"
          |                               echo
@@ -12060,7 +12060,7 @@ EOF44
          |
          |#-------------------------------------------------------------------------------
          |#
-         |#  Check for compatability...
+         |#  Check for compatibility...
          |#
          |#-------------------------------------------------------------------------------
          |
@@ -12078,7 +12078,7 @@ EOF44
          |
          |#---------------------------------------
          |#
-         |#  Check for HW compatability...
+         |#  Check for HW compatibility...
          |#
          |#---------------------------------------
          |
@@ -12114,7 +12114,7 @@ EOF44
          |
          |#---------------------------------------
          |#
-         |#  Check for OS compatability...
+         |#  Check for OS compatibility...
          |#
          |#---------------------------------------
          |
@@ -12150,7 +12150,7 @@ EOF44
          |
          |#---------------------------------------
          |#
-         |#  Check for libc compatability...
+         |#  Check for libc compatibility...
          |#
          |#---------------------------------------
          |
@@ -12196,7 +12196,7 @@ EOF44
          |
          |#---------------------------------------
          |#
-         |#  Check for Standard C++ library compatability...
+         |#  Check for Standard C++ library compatibility...
          |#
          |#---------------------------------------
          |
@@ -12242,7 +12242,7 @@ EOF44
          |
          |#---------------------------------------
          |#
-         |#  Check for Standard C++ library ABI compatability...
+         |#  Check for Standard C++ library ABI compatibility...
          |#
          |#---------------------------------------
          |
@@ -15529,7 +15529,7 @@ EOF
                                 s/[^a-zA-Z0-9_]/_/g;
             my $programName_u = $_;
             print DBGOUT "mki_check_prog:           aka. \"$programName_u\"\n" if $debugging;
-            print DBGOUT "mki_check_prog: ...existance of \"$programName\" already known?\n" if $debugging;
+            print DBGOUT "mki_check_prog: ...existence of \"$programName\" already known?\n" if $debugging;
 
             if ( ! exists $check_prog_isSupported{$programName}) {
                $check_prog_isSupported{$programName} = 0;
@@ -18025,7 +18025,7 @@ sub convertTimeToDateTime {
 #  files, and/or symbolic-links. An array of pathnames that could not be
 #  deleted is returned.
 #
-#  Note: This function appears to be a lot more complex than neccessary. It
+#  Note: This function appears to be a lot more complex than necessary. It
 #        not only requests that given pathnames (and recursive contents) be
 #        removed, it also checks to see that it's all gone (returning any
 #        remaining pathnames). The real problem here is that NFS can get in
@@ -18797,7 +18797,7 @@ sub findHomeDirectory {
    #  ...then try HOMEDRIVE and HOMEPATH
    #     environment variables...
    #
-   #     NOTE: The existance of HOMEDRIVE
+   #     NOTE: The existence of HOMEDRIVE
    #           is optional here. If not
    #           defined we'll assume it is
    #           an empty string.
@@ -22007,13 +22007,15 @@ sub mkDirectory {
 #
 #  This subroutine deletes a single pathname (directory, file, or symbolic-link)
 #  If it exists but can't be properly deleted then it will fail with an error
-#  message.
+#  message. Returns 1 on success, 0 on failure.
 #
 #  This function uses: deletePathnames()
 #
 #  see: totebag/src/perl-lib/mustDeletePathname.psub
 #
-#  Dated: 16Oct2019 mustDeletePathname
+#  Dated: 17May2020 mustDeletePathname
+#
+#  NOTE: This function is silent if there is no problem.
 #
 #  NOTE: This function is known to be "hand included" in the following
 #        source files:
@@ -22023,8 +22025,9 @@ sub mkDirectory {
 #-------------------------------------------------------------------------------
 
 sub mustDeletePathname {
-   my $callerIs  = shift;
-   my $pathname  = shift;
+   my $callerIs  = shift;   # Something like: "tarup: "
+   my $pathname  = shift;   # The pathname to be deleted.
+   my $noisy     = shift;   # Pass 0 if silent failures.
    my $result    = 1;
    if ($pathname ne "") {
       my $exists = 0;
@@ -22039,24 +22042,22 @@ sub mustDeletePathname {
          my $Nfailures = $#failures + 1;
          if (1 <= $Nfailures) {
             $result = 0;
-            my $count;
-            my $failedOn;
-            foreach $failedOn (@failures) {
-               $count += 1;
-               print STDERR $callerIs."error: can't delete \"$failedOn\"\n";
-               if (10 <= $count) {
-                  print STDERR $callerIs."  :        :     :\n";
-                  my $lastOne = $failures[$#failures];
-                  print STDERR $callerIs."error: can't delete \"$lastOne\"\n";
-                  last;
+	    if ($noisy) {
+               my $count;
+               my $failedOn;
+               foreach $failedOn (@failures) {
+                  $count += 1;
+                  print STDERR $callerIs."error: can't delete \"$failedOn\"\n";
+                  if (10 <= $count) {
+                     print STDERR $callerIs."  :        :     :\n";
+                     my $lastOne = $failures[$#failures];
+                     print STDERR $callerIs."error: can't delete \"$lastOne\"\n";
+                     last;
+                  }
                }
-            }
-            exit 1;
+	    }
          }
       }
-   }
-   else {
-      $result = 0;
    }
    return $result;
 }
@@ -23381,7 +23382,7 @@ sub help {
    |       3) "Transport". This is the process of taking a copy of the
    |          generated installer script that was generated in phase 2 from
    |          the "source" system to the "target" system. The details of this
-   |          are not discussed here howerver such transport generally
+   |          are not discussed here however such transport generally
    |          involves scp, ftp, curl, CD, DVD, USB-drive, or a download from
    |          a web site.
    |
@@ -23754,7 +23755,7 @@ sub help {
    |            installer before all of the payload directories have been
    |            extracted and installed.
    |
-   |            Such pre-install Perl scripts are not generally supported
+   |            Such preinstall Perl scripts are not generally supported
    |            on Windows systems as Perl is not generally found on Windows
    |            systems.
    |
@@ -23829,7 +23830,7 @@ sub help {
    |
    |               -v3
    |
-   |            is equavalent to:
+   |            is equivalent to:
    |
    |               -v -v -v
    |
@@ -23858,7 +23859,7 @@ sub help {
    |            <name> in the option name is typically something like bin,
    |            include, lib, ... and like <pathname> below, may not contain
    |            any spaces, tabs, or dashes. If such an installation directory
-   |            hasen't been specified then the appropriate work will be done
+   |            hasn't been specified then the appropriate work will be done
    |            so that the installer will have such a directory containing
    |            the specified file.
    |
@@ -23934,7 +23935,7 @@ sub help {
    |           -v2 \\
    |
    |       The -v2 option indicates (enhanced) verbose output is desired.
-   |       Note that verbose output is generally benificial. Also note that
+   |       Note that verbose output is generally beneficial. Also note that
    |       the trailing backslash was the continuation mark from the above
    |       very long command above (an honest cut/paste), it is not part
    |       of this option or any of the following options and parameters.
@@ -24006,7 +24007,7 @@ sub help {
    |        INEFFECTIVE_mkinstaller
    |
    |            If this environment variable has been set then the generated
-   |            script will lack a payload and may not even be runable. Note
+   |            script will lack a payload and may not even be runnable. Note
    |            that this feature is almost never used except when debugging
    |            the script generation process.
    |
@@ -24113,7 +24114,7 @@ EOF1
    |
    |       Details of the installer construction process on UNIX:
    |
-   |          Aside from initalization and command line processing the UNIX
+   |          Aside from initialization and command line processing the UNIX
    |          implementation of mkinstaller goes through the following steps:
    |
    |          1) Determination of a suitable temp directory. Much of the work
@@ -24186,7 +24187,7 @@ EOF1
    |             determined at the start of this step (see NOTES).
    |          3) PREFIX and PREFIX_xxx values are established from command
    |             line options. If appropriate options aren't supplied to
-   |             install all directories then the installer script will propmpt
+   |             install all directories then the installer script will prompt
    |             for the necessary pathname(s). The installer script will
    |             create the directories if necessary.
    |          4) The tarball embedded in the installer script is extracted from
@@ -24202,7 +24203,7 @@ EOF1
    |             supplied and revealed are actually executed in this step. See
    |             steps (6) and (8).
    |          6) If (5) revealed a pre-install script then it will be executed
-   |             by the approptiate interpreter. Note that each of the PREFIX
+   |             by the appropriate interpreter. Note that each of the PREFIX
    |             and/or PREFIX_xxx directories will be supplied as an option to
    |             this pre-install script (such as --prefix_bin=<pathname>). Also
    |             note at this time the individual tarballs representing the
@@ -24211,7 +24212,7 @@ EOF1
    |             the appropriate PREFIX directory overlying anything already
    |             there.
    |          8) If (5) revealed a post-install script then it will be executed
-   |             by the approptiate interpreter. Note that each of the PREFIX
+   |             by the appropriate interpreter. Note that each of the PREFIX
    |             and/or PREFIX_xxx directories will be supplied as an options
    |             to this post-install script (such as --prefix_bin=<pathname>).
    |          9) Cleanup.
@@ -24227,7 +24228,7 @@ EOF1
    |
    |       Details of the installer construction process on Windows:
    |
-   |          Aside from initalization and command line processing the Windows
+   |          Aside from initialization and command line processing the Windows
    |          implementation of mkinstaller goes through the following steps:
    |
    |          1) Determination of a suitable temp directory. Much of the work
@@ -24280,7 +24281,7 @@ EOF1
    |          Note that the prefix directory will be creates as necessary
    |          however the uninstaller will only (recursively delete) the
    |          final directory component. In the above example only
-   |          E:\\opt\\banana will be (recursivly deleted, but the
+   |          E:\\opt\\banana will be (recursively deleted, but the
    |          directory E:\\opt will be left intact.
    |
    |       Note that the generated installer will pop-up a progress bar dialog
@@ -24440,7 +24441,7 @@ sub html {
    |               <li><b>Transport</b>. This is the process of taking a copy of the
    |                   generated installer script that was produced in phase 2 from
    |                   the <b>source</b> system to the <b>target</b> system. The details of this
-   |                   are not discussed here howerver such transport generally
+   |                   are not discussed here however such transport generally
    |                   involves <i>scp</i>, <i>ftp</i>, <i>curl</i>, CD, DVD, USB-drive, or a download from
    |                   a web site.
    |               </li>
@@ -24970,7 +24971,7 @@ sub html {
    |   -v3
    |</pre>
    |<p>
-   |               is equavalent to: <br>
+   |               is equivalent to: <br>
    |               <p>
    |<p>
    |<pre>
@@ -25005,7 +25006,7 @@ sub html {
    |               <i>name</i> in the option name is typically something like <b><big><code>bin</code></big></b>,
    |               <b><big><code>include</code></big></b>, <b><big><code>lib</code></big></b>, ... and like <i>pathname</i> below, may not contain
    |               any spaces, tabs, or dashes. If such an installation directory
-   |               hasen't been specified then the appropriate work will be done
+   |               hasn't been specified then the appropriate work will be done
    |               so that the installer will have such a directory containing
    |               the specified file.
    |            </blockquote>
@@ -25102,7 +25103,7 @@ sub html {
    |</pre>
    |            </blockquote>
    |            The <b><big><code>-v2</code></big></b> option indicates (enhanced) verbose output is desired.
-   |            Note that verbose output is generally benificial. Also note that
+   |            Note that verbose output is generally beneficial. Also note that
    |            the trailing backslash was the continuation mark from the above
    |            very long command above (an honest cut/paste), it is not part
    |            of this option or any of the following options and parameters.
@@ -25209,7 +25210,7 @@ sub html {
    |            <b>INEFFECTIVE_mkinstaller</b>
    |            <blockquote>
    |               If this environment variable has been set then the generated
-   |               script will lack a payload and may not even be runable. Note
+   |               script will lack a payload and may not even be runnable. Note
    |               that this feature is almost never used except when debugging
    |               the script generation process.
    |            </blockquote>
@@ -25355,7 +25356,7 @@ EOF1
    |         <blockquote>
    |            <b>Details of the installer construction process on UNIX:</b>
    |            <blockquote>
-   |               Aside from initalization and command line processing the UNIX
+   |               Aside from initialization and command line processing the UNIX
    |               implementation of <i>mkinstaller</i> goes through the following steps:
    |               <ol>
    |                  <li>Determination of a suitable temp directory. Much of the work
@@ -25443,7 +25444,7 @@ EOF1
    |                  </li>
    |                  <li><b><big><code>PREFIX</code></big></b> and <b><big><code>PREFIX_</code></big></b><i>xxx</i> values are established from command
    |                      line options. If appropriate options aren't supplied to
-   |                      install all directories then the installer script will propmpt
+   |                      install all directories then the installer script will prompt
    |                      for the necessary pathname(s). The installer script will
    |                      create the directories if necessary.
    |                  </li>
@@ -25462,18 +25463,18 @@ EOF1
    |                      steps (6) and (8).
    |                  </li>
    |                  <li>If (5) revealed a pre-install script then it will be executed
-   |                      by the approptiate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
+   |                      by the appropriate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
    |                      and/or <b><big><code>PREFIX_</code></big></b><i>xxx</i> directories will be supplied as an option to
    |                      this pre-install script (such as  <b><big><code>--prefix_bin=</code></big></b><i>pathname</i>). Also
    |                      note at this time the individual tarballs representing the
    |                      directories to install have NOT be unwrapped.
    |                  </li>
    |                  <li>Each individual tarball revealed (5) is unwrapped into the
-   |                      approperiate <b><big><code>PREFIX</code></big></b> directory overlying anything already
+   |                      appropriate <b><big><code>PREFIX</code></big></b> directory overlying anything already
    |                      there.
    |                  </li>
    |                  <li>If (5) revealed a post-install script then it will be executed
-   |                      by the approptiate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
+   |                      by the appropriate interpreter. Note that each of the <b><big><code>PREFIX</code></big></b>
    |                      directories will be supplied as an option to this post-install
    |                      script (such as <b><big><code>--prefix_bin=</code></big></b><i>pathname</i>).
    |                  </li>
@@ -25493,7 +25494,7 @@ EOF1
    |            </blockquote>
    |            <b>Details of the installer construction process on Windows:</b>
    |            <blockquote>
-   |               Aside from initalization and command line processing the Windows
+   |               Aside from initialization and command line processing the Windows
    |               implementation of <i>mkinstaller</i> goes through the following steps:
    |               <ol>
    |                  <li>Determination of a suitable temp directory. Much of the work
@@ -25556,7 +25557,7 @@ EOF1
    |               Note that the prefix directory will be creates as necessary
    |               however the uninstaller will only (recursively) delete the
    |               final directory component. In the above example only
-   |               <b><big><code>E:\\opt\\banana</code></big></b> will be (recursivly deleted, but the
+   |               <b><big><code>E:\\opt\\banana</code></big></b> will be (recursively deleted, but the
    |               directory <b><big><code>E:\\opt</code></big></b> will be left intact.
    |            </blockquote>
    |            <blockquote>
