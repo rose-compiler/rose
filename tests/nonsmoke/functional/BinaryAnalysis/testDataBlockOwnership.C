@@ -1819,7 +1819,8 @@ main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     ASSERT_always_require(argc > 1);
     std::vector<std::string> names(argv+1, argv+argc);
-    P2::Partitioner partitioner = P2::Engine().partition(names);
+    P2::Engine engine;
+    P2::Partitioner partitioner = engine.partition(names);
 
     testNoOwner();
     testNoOwnerDuplicate();
