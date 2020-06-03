@@ -93,7 +93,8 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     // Check some informational switches before we die for lack of specimen.
     if (engine.settings().disassembler.isaName == "list") {
-        Disassembler::lookup("list");
+        for (auto name: Disassembler::isaNames())
+            std::cout <<name <<"\n";
         exit(0);
     }
 
