@@ -237,6 +237,9 @@ Enter(SgFunctionParameterList* &param_list, SgBasicBlock* &param_scope)
    ROSE_ASSERT(param_scope->get_parent() == nullptr); // make sure this node is unattached in the AST
    SageInterface::setSourcePosition(param_scope);
 
+   // if unattached then symbol lookups may fail
+   param_scope->set_parent(SageBuilder::topScopeStack());
+
    if (SageInterface::is_language_case_insensitive()) {
       param_scope->setCaseInsensitive(true);
    }
