@@ -71,6 +71,7 @@ COMPOOL_TESTCODES = \
  status_type.cpl                        \
  3_0_rent_and_rec.cpl                   \
  rose-issue-2654.cpl                    \
+ rose-issue-2683.cpl                    \
  rose-issue-2687.cpl
 
 # bit_cast.cpl                           \

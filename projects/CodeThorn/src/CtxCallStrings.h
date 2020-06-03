@@ -5,26 +5,14 @@
 /// \author Peter Pirkelbauer
 
 #include <vector>
-#include <deque>
-#include <list>
+#include <iterator>
+//~ #include <deque>
+//~ #include <list>
 
 #include <rose.h>
 #include <Labeler.h>
 
 #include "CtxLattice.h"
-
-#define WITH_COW_SEQUENCE 0
-
-#if WITH_COW_SEQUENCE 
-
-// a copy on write (COW) sequence could be based off of
-//   https://gist.github.com/Manu343726/02287de75bb24f2cef00#file-cowbasic_string-hpp
-//   needs extensions to support iteration and back, erase.. 
-
-#include "cow-sequence.h"
-
-#endif
-
 
 namespace CodeThorn
 {
@@ -170,9 +158,127 @@ struct ext_sequence : _BaseT
   void pop_front() { base::erase(base::begin()); } 
 };
 
+
+extern int callstring_creation_counter;
+extern int callstring_deletion_counter;
+
+#if 0
+struct CtorDtorCounter
+{
+  CtorDtorCounter()
+  {
+    ++callstring_creation_counter;
+  }
+  
+  CtorDtorCounter(const CtorDtorCounter&)
+  {
+    ++callstring_creation_counter;
+  }
+  
+  CtorDtorCounter(CtorDtorCounter&&)
+  {
+    ++callstring_creation_counter;
+  }
+  
+  ~CtorDtorCounter()
+  {
+    ++callstring_deletion_counter;
+  }
+};
+
+#endif
+
+template <class T>
+struct SimpleString // : CtorDtorCounter
+{
+    typedef T                                     value_type;
+    typedef const T&                              const_reference;
+    typedef const T*                              const_iterator;
+    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    
+    SimpleString(size_t initsize, T val)
+    : len(CTX_CALL_STRING_MAX_LENGTH)
+    {
+      ROSE_ASSERT(initsize == size_t(len));
+      
+      std::fill_n(data, initsize, val);
+    }
+    
+    SimpleString()                                 = delete;
+    SimpleString(const SimpleString& s)            = default;
+    SimpleString& operator=(const SimpleString& s) = default;
+    ~SimpleString()                                = default;
+    
+    void pop_front()
+    {
+      for (int i = 1; i < len; ++i)
+        data[i-1] = data[i];
+        
+      --len;
+    }
+    
+    void push_back(T el)
+    {
+      ROSE_ASSERT(len == CTX_CALL_STRING_MAX_LENGTH-1);
+      
+      data[len] = el;  
+      ++len;
+    }
+    
+    void pop_back()
+    {
+      ROSE_ASSERT(len == CTX_CALL_STRING_MAX_LENGTH);
+      
+      --len;
+    }
+    
+    const T& back() const
+    {
+      return data[len-1];
+    }
+    
+    int size() const
+    {
+      return len;
+    }
+    
+    const_iterator begin() const
+    {
+      return data;
+    }
+    
+    const_iterator end() const
+    {
+      return data+len;
+    }
+    
+    const_reverse_iterator rbegin() const
+    {
+      return const_reverse_iterator(end());
+    }
+    
+    const_reverse_iterator rend() const
+    {
+      return const_reverse_iterator(begin());
+    }
+    
+    template <class U>
+    friend 
+    bool operator==(const SimpleString<U>& lhs, const SimpleString<U>& rhs)
+    {
+      return (  lhs.len == rhs.len
+             && std::equal(lhs.begin(), lhs.end(), rhs.begin())
+             );
+    }
+        
+  private:
+    int len;
+    T   data[CTX_CALL_STRING_MAX_LENGTH];
+};
+
+
 /// This class is a simple implementation of a fixed length call string
-///   Keeping the interface, we may want to replace it with a rotating
-///   buffer at some point.
+///   that is based on an exchangable underlying representation @ref _ImplT/
 /// \details
 ///   this implementation fills the call sequence with empty labels,
 ///   which simplifies some of the comparison algorithms. 
@@ -183,63 +289,197 @@ struct ext_sequence : _BaseT
 ///          object share its underlying representation to improve
 ///          memory efficiency). 
 
-
-template <class _BaseT>
-struct ContextSequence : private _BaseT
+template <class _ImplT>
+struct ContextSequence
 {
-  typedef _BaseT base;
+    typedef _ImplT impl;
   
-  ContextSequence()
-  : base(CTX_CALL_STRING_MAX_LENGTH, Label())
-  {
-    ROSE_ASSERT(base::size() == CTX_CALL_STRING_MAX_LENGTH);
-  }
+    typedef typename impl::const_reference        const_reference;
+    typedef typename impl::const_reverse_iterator const_reverse_iterator;
+    typedef typename impl::const_iterator         const_iterator;
   
-  ContextSequence(const ContextSequence&)            = default;
-  ContextSequence& operator=(const ContextSequence&) = default;
-  ContextSequence(ContextSequence&&)                 = delete;
-  ContextSequence& operator=(ContextSequence&&)      = delete;
-  
-  using base::const_reference;
-  using base::const_reverse_iterator;
-  using base::const_iterator;
-  using base::begin;
-  using base::end;
-  using base::rbegin;
-  using base::rend;
-  
-  /// adds a call label @ref lbl to the end of the sequence.
-  /// if the sequence is at its capacity, the oldest call label will be
-  /// removed.
-  void append(Label lbl)
-  {
-    ROSE_ASSERT(base::size() == CTX_CALL_STRING_MAX_LENGTH);
+    ContextSequence()
+    : data(CTX_CALL_STRING_MAX_LENGTH, Label())
+    {
+      ROSE_ASSERT(data.size() == CTX_CALL_STRING_MAX_LENGTH);
+    }
     
-    base::pop_front();
-    base::push_back(lbl);
-  }
+    ContextSequence(const ContextSequence&)            = default;
+    ContextSequence& operator=(const ContextSequence&) = default;
+    ~ContextSequence()                                 = default;
+    
+    // "inherited" member functions
+    const_iterator         begin()   const { return data.begin(); }
+    const_iterator         end()     const { return data.end(); }
+    const_reverse_iterator rbegin()  const { return data.rbegin(); }
+    const_reverse_iterator rend()    const { return data.rend(); }
+    
+    /// adds a call label @ref lbl to the end of the sequence.
+    /// if the sequence is at its capacity, the oldest call label will be
+    /// removed.
+    void append(Label lbl)
+    {
+      ROSE_ASSERT(data.size() == CTX_CALL_STRING_MAX_LENGTH);
+      
+      data.pop_front();
+      data.push_back(lbl);
+    }
+    
+    /// removes the most recent call label from the sequence
+    void remove()
+    {
+      ROSE_ASSERT(data.size() == CTX_CALL_STRING_MAX_LENGTH);
+      data.pop_back();
+    }
+    
+    /// returns the most recent call label
+    Label last() const { return data.back(); }
+    
+    /// a call string ending in Label() is considered empty
+    bool empty() const { return data.back() == Label(); }
+    
+    bool operator==(const ContextSequence& that) const
+    {
+      return this->data == that.data;
+    }
   
-  /// removes the most recent call label from the sequence
-  void remove()
-  {
-    ROSE_ASSERT(base::size() == CTX_CALL_STRING_MAX_LENGTH);
-    base::pop_back();
-  }
-  
-  /// returns the most recent call label
-  Label last() const { return base::back(); }
-  
-  /// a call string ending in Label() is considered empty
-  bool empty() const { return base::back() == Label(); }
-  
-  bool operator==(const ContextSequence& that) const
-  {
-    const base& self = *this;
+  private:
+    impl data;
 
-    return self == that;
-  }
+    ContextSequence(ContextSequence&&)            = delete;
+    ContextSequence& operator=(ContextSequence&&) = delete;
 };
 
+
+/// \note NOT SAFE IN CONCURRENT ENVIRONMENT
+template <class _ImplT>
+struct CounterCOW : _ImplT
+{
+  typedef _ImplT base;
+  
+  CounterCOW(size_t initsize, typename base::value_type val)
+  : base(initsize, val), cnt(1)
+  {}
+  
+  int cnt;
+};
+
+/// \note NOT SAFE IN CONCURRENT ENVIRONMENT
+/// This class is a simple implementation of a fixed length call string
+///   that uses copy on write to cut on unnecessary copies. On one
+///   test code (beamline), the number of call strings generated
+///   was only 2% compared to value objects (nevertheless was slower..)
+/// \details
+///   this implementation fills the call sequence with empty labels,
+///   which simplifies some of the comparison algorithms. 
+/// \note
+///    number of allocations (RD on simplified beamline)
+///       value strings: 9942160 / 9895731
+///       cow strings:    192943 /  190232
+///    ? nevertheless, value strings are faster.. ???
+
+template <class _ImplT>
+struct ContextSequenceCOW
+{    
+    typedef CounterCOW<_ImplT> impl;
+  
+    typedef typename impl::const_reference        const_reference;
+    typedef typename impl::const_reverse_iterator const_reverse_iterator;
+    typedef typename impl::const_iterator         const_iterator;
+  
+    ContextSequenceCOW()
+    : data(new impl(CTX_CALL_STRING_MAX_LENGTH, Label()))
+    {
+      ROSE_ASSERT(data->cnt > 0);
+      ROSE_ASSERT(data->size() == CTX_CALL_STRING_MAX_LENGTH);
+    }
+    
+    ContextSequenceCOW(const ContextSequenceCOW& orig)
+    : data(orig.data)
+    {
+      ROSE_ASSERT(data->cnt > 0);
+      
+      ++data->cnt;
+    }
+    
+    ContextSequenceCOW& operator=(const ContextSequenceCOW& orig) 
+    {
+      ROSE_ASSERT(data->cnt > 0 && orig.data->cnt > 0);
+      
+      ContextSequenceCOW tmp(*this); // <-- move 
+      
+      --data->cnt;
+      
+      data = orig->data;
+      ++data->cnt;
+      
+      return *this;
+    }
+    
+    ~ContextSequenceCOW()
+    {
+      ROSE_ASSERT(data->cnt > 0);
+      
+      if ((--data->cnt) == 0) delete data;
+    }
+    
+    // "inherited" member functions
+    const_iterator         begin()   const { return data->begin(); }
+    const_iterator         end()     const { return data->end(); }
+    const_reverse_iterator rbegin()  const { return data->rbegin(); }
+    const_reverse_iterator rend()    const { return data->rend(); }
+    
+    /// adds a call label @ref lbl to the end of the sequence.
+    /// if the sequence is at its capacity, the oldest call label will be
+    /// removed.
+    void append(Label lbl)
+    {
+      privatizeIfShared();
+      
+      ROSE_ASSERT(data->size() == CTX_CALL_STRING_MAX_LENGTH);
+      
+      data->pop_front();
+      data->push_back(lbl);
+    }
+    
+    /// removes the most recent call label from the sequence
+    void remove()
+    {
+      privatizeIfShared();
+      
+      ROSE_ASSERT(data->size() == CTX_CALL_STRING_MAX_LENGTH);
+      data->pop_back();
+    }
+    
+    /// returns the most recent call label
+    Label last() const { return data->back(); }
+    
+    /// a call string ending in Label() is considered empty
+    bool empty() const { return data->back() == Label(); }
+    
+    bool operator==(const ContextSequenceCOW& that) const
+    {
+      return (  this->data == that.data
+             || (*this->data) == (*that.data)
+             );
+    }
+  
+  private:
+    void privatizeIfShared()
+    {
+      if (data->cnt == 1) return;
+      ROSE_ASSERT(data->cnt > 1);
+      
+      --data->cnt;             // unlink
+      data = new impl(*data);  // copy
+      data->cnt = 1;           // set initial cnt
+    }
+  
+    impl* data;
+
+    ContextSequenceCOW(ContextSequenceCOW&&)            = delete;
+    ContextSequenceCOW& operator=(ContextSequenceCOW&&) = delete;
+};
 
 /// a context holds up to @ref CTX_CALL_STRING_MAX_LENGTH as contexts
 ///   when calls return, the contexts is mapped on to all feasible contexts
@@ -248,7 +488,8 @@ struct ContextSequence : private _BaseT
 struct FiniteCallString 
 {
     // pick your underlying sequence representation
-    typedef ext_sequence< std::vector<Label> >        sequence; // seems somewhat faster than alternatives
+    //~ typedef SimpleString<Label>                       sequence; // 0.2% (1s/475s)faster than vector (on some whole application)
+    typedef ext_sequence< std::vector<Label> >        sequence; // seems slightly faster than alternatives below
     //~ typedef cowbasic_string<Label>                    sequence; // wip
     //~ typedef ext_sequence< std::basic_string<Label> >  sequence;
     //~ typedef std::deque<Label>                         sequence;
@@ -256,6 +497,7 @@ struct FiniteCallString
     
     typedef FiniteCallStringComparator                comparator;
     typedef ContextSequence< sequence >               context_string;
+    //~ typedef ContextSequenceCOW< sequence >            context_string; // COW wrapper makes things slightly slower...
     
     // "inherited" types
     typedef context_string::const_reverse_iterator    const_reverse_iterator;

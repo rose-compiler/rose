@@ -3,8 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 F77_TESTCODES_TO_PASS = 
 F77_TESTCODES_TO_PASS += 
 
-F90_TESTCODES_TO_PASS = \
-	trans.F90
+F90_TESTCODES_TO_PASS =  \
+	trans.F90 
 TESTCODES_CURRENTLY_FAILING = 
 
 # Uncomment to use Address Sanitizer.
@@ -27,6 +27,7 @@ $(PASSING_F90_TEST_RESULTS): $(srcdir)/$(@:rose_%=%) ../../../testTranslator
 
 
 PASSING_F77_F90_TEST_RESULTS=$(PASSING_F77_TEST_RESULTS) $(PASSING_F90_TEST_RESULTS)
+test_results: $(PASSING_F77_F90_TEST_RESULTS)  
 
 PASSING_F77_F90_TEST_RESULTS_OUTPUT=$(addsuffix .output, $(PASSING_F77_F90_TEST_RESULTS))
 
@@ -54,19 +55,20 @@ ALL_TESTCODES =\
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 if ROSE_USE_SSL_SUPPORT
-	@echo "Fortran tests for ROSE OpenMP parser"
+	@echo "Fortran tests for ROSE OpenACC parser"
 	@echo "*******************************************************************************************************************"
 	@echo "****** ROSE/tests/CompilTests/OpenACC_tests/fortran: make check rule skipped (SSL support disables this rule) ******" 
 	@echo "*******************************************************************************************************************"
 else	
 conditional-check-local:
-	@echo "Fortran tests for ROSE OpenMP parser"
+	@echo "Fortran tests for ROSE OpenACC parser"
 	@$(MAKE) $(PASSING_F77_F90_TEST_RESULTS)
 	@$(MAKE) $(PASSING_F77_F90_TEST_RESULTS_OUTPUT_DIFF)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/CompilTests/OpenACC_tests/fortran: make check rule completes (terminated normally) *******" 
 	@echo "***********************************************************************************************************"
 endif	
+
 else
 conditional-check-local:
 	@echo "Fortran tests for ROSE OpenACC parser"

@@ -123,8 +123,10 @@ namespace
   /// extracts the call string from a lattice element and forwards it for comparison.
   bool cmpCalleeCallerCtx(const FiniteCallString& retctx, const std::pair<const FiniteCallString, Lattice*>& callctx)
   {
+    FiniteCallString::const_reverse_iterator callzz = callctx.first.rend();
+    
     return std::lexicographical_compare( retctx.rbegin(), retctx.rend(), 
-                                         callctx.first.rbegin(), --callctx.first.rend(),
+                                         callctx.first.rbegin(), --callzz,
                                          FiniteLabelComparator()
                                        );
   }
@@ -492,7 +494,8 @@ std::ostream& operator<<(std::ostream& os, const FiniteCallString& el)
   return prnctx(os, el);
 }
 
-
+int callstring_creation_counter = 0;
+int callstring_deletion_counter = 0;
 
 } // namespace CodeThorn
 
