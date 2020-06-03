@@ -19852,8 +19852,9 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                          //cout<<"found a function declaration to be moved ..."<<endl;
                        }
                      break;
-                     case V_SgFortranIncludeLine:
                      case V_SgAttributeSpecificationStatement:
+                     case V_SgEmptyDeclaration:
+                     case V_SgFortranIncludeLine:
                      case V_SgPragmaDeclaration:
                        break;
                     default:
