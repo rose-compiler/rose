@@ -183,6 +183,10 @@ ATbool ATermToSageJovialTraversal::traverse_NullDeclaration(ATerm term)
    // only contains declarations.
 
    // Conclusion: only append the null declaration (SgNullStatement) if scope is NOT SgFunctionParameterScope
+
+   // Conclusion2: changing to SgEmptyDeclaration may fix this (and seemed to work anyway with other changes?)
+   // Need to check function parameter lists
+   //
       if (isSgBasicBlock(SageBuilder::topScopeStack()) != sage_tree_builder.get_context().actual_function_param_scope) {
          ROSE_ASSERT(false);
          SgNullStatement* null_decl = SageBuilder::buildNullStatement();
@@ -190,7 +194,7 @@ ATbool ATermToSageJovialTraversal::traverse_NullDeclaration(ATerm term)
          SageInterface::appendStatement(null_decl, SageBuilder::topScopeStack());
       }
 #else
-      SgNullStatement* null_decl = SageBuilder::buildNullStatement();
+      SgEmptyDeclaration* null_decl = SageBuilder::buildEmptyDeclaration();
       setSourcePosition(null_decl, term);
       SageInterface::appendStatement(null_decl, SageBuilder::topScopeStack());
 #endif
