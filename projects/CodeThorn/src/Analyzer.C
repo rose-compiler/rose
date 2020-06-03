@@ -1082,16 +1082,17 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
     if(SgInitializedName* initName=isSgInitializedName(initName0)) {
       VariableId initDeclVarId=getVariableIdMapping()->variableId(initName);
       // not possible to support yet. getIntValue must succeed on declarations.
+      /*
       if(false && variableValueMonitor.isHotVariable(this,initDeclVarId)) {
         // DEAD CODE
         PState newPState=*currentEState.pstate();
-        newPState.writeTopToMemoryLocation(initDeclVarId);
+        newPState.reserveMemoryLocation(initDeclVarId);
         ConstraintSet cset=*currentEState.constraints();
         InputOutput io;
         io.recordNone();
         return createEState(targetLabel,cs,newPState,cset);
       }
-
+      */
       // deactivated 05/20/2020
       //      if(variableIdMapping->hasArrayType(initDeclVarId) && _ctOpt.explicitArrays==false) {
         // in case of a constant array the array (and its members) are not added to the state.
@@ -1113,6 +1114,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
           if(SgAssignOp* assignOp=isSgAssignOp(assignInitOperand)) {
             SAWYER_MESG(logger[TRACE])<<"assignment in initializer: "<<decl->unparseToString()<<endl;
             Edge dummyEdge(targetLabel,EDGE_FORWARD,targetLabel); // only target label is used in transferAssignOp
+            // TODO: assign does not properly reserve memory before assigning to it
             std::list<EState> estateList=transferAssignOp(assignOp, dummyEdge, &currentEState);
             ROSE_ASSERT(estateList.size()==1);
             return *estateList.begin();
@@ -1199,7 +1201,8 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
               SAWYER_MESG(logger[TRACE])<<"no results in rhs evaluation (returning top): "<<rhs->unparseToString()<<endl;
               EState estate=currentEState;
               PState newPState=*estate.pstate();
-              getExprAnalyzer()->writeToMemoryLocation(label,&newPState,lhsAbstractAddress,CodeThorn::Top());
+              // getExprAnalyzer()->writeToMemoryLocation(label,&newPState,lhsAbstractAddress,CodeThorn::Top());
+              getExprAnalyzer()->reserveMemoryLocation(label,&newPState,lhsAbstractAddress);
               ConstraintSet cset=*estate.constraints();
               return createEState(targetLabel,cs,newPState,cset);
             }
@@ -1210,7 +1213,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
 
           EState estate=evalResult.estate;
           PState newPState=*estate.pstate();
-          getExprAnalyzer()->writeToMemoryLocation(label,&newPState,lhsAbstractAddress,evalResult.value());
+          getExprAnalyzer()->initializeMemoryLocation(label,&newPState,lhsAbstractAddress,evalResult.value());
           ConstraintSet cset=*estate.constraints();
           return createEState(targetLabel,cs,newPState,cset);
         } else {
@@ -1273,7 +1276,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
           for(size_t elemIndex=0;elemIndex<length;elemIndex++) {
             AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex));
             // set default init value
-            getExprAnalyzer()->writeUndefToMemoryLocation(&newPState,newArrayElementAddr);
+            getExprAnalyzer()->reserveMemoryLocation(label,&newPState,newArrayElementAddr);
           }
 
         } else if(variableIdMapping->hasClassType(initDeclVarId)) {
@@ -1286,7 +1289,8 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
           // implicitly bot.
           AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
           SAWYER_MESG(logger[TRACE])<<"declaration of struct: "<<variableIdMapping->getVariableDeclaration(initDeclVarId)->unparseToString()<<" : "<<pointerVal.toString(getVariableIdMapping())<<endl;
-          getExprAnalyzer()->writeUndefToMemoryLocation(&newPState,pointerVal);
+          // TODO: STRUCT VARIABLE DECLARATION
+          getExprAnalyzer()->reserveMemoryLocation(label,&newPState,pointerVal);
         } else if(variableIdMapping->hasPointerType(initDeclVarId)) {
           // create pointer value and set it to top (=any value possible (uninitialized pointer variable declaration))
           AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
@@ -1296,7 +1300,7 @@ EState CodeThorn::Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* de
           // all remaining cases. It will become an error-path once
           // all cases are addressed explicitly above.
           SAWYER_MESG(logger[TRACE])<<"declaration of variable (other): "<<variableIdMapping->getVariableDeclaration(initDeclVarId)->unparseToString()<<endl;
-          getExprAnalyzer()->writeUndefToMemoryLocation(&newPState,initDeclVarId);
+          getExprAnalyzer()->reserveMemoryLocation(label,&newPState,initDeclVarId);
         }
         return createEState(targetLabel,cs,newPState,cset);
       }
@@ -2212,6 +2216,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCall(Edge edge, const ESt
       evalResultValue=evalResult.value();
     }
     // above evaluateExpression does not use constraints (par3==false). Therefore top vars remain top vars
+    getExprAnalyzer()->reserveMemoryLocation(currentLabel,&newPState,formalParameterVarId);
     getExprAnalyzer()->writeToMemoryLocation(currentLabel,&newPState,formalParameterVarId,evalResultValue);
     ++i;++j;
   }
@@ -2352,7 +2357,7 @@ std::list<EState> CodeThorn::Analyzer::transferReturnStmt(Edge edge, const EStat
       rhsResultValue=(*rhsResList.begin()).value();
     }
     PState newPState=currentPState;
-    getExprAnalyzer()->writeToMemoryLocation(lab,&newPState,returnVarId,rhsResultValue);
+    getExprAnalyzer()->initializeMemoryLocation(lab,&newPState,returnVarId,rhsResultValue);
     return elistify(createEState(edge.target(),cs,newPState,cset));
   }
 }
@@ -2428,7 +2433,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
 
     if(newPState.varExists(returnVarId)) {
       AbstractValue evalResult=getExprAnalyzer()->readFromMemoryLocation(currentEState.label(),&newPState,returnVarId);
-      getExprAnalyzer()->writeToMemoryLocation(currentEState.label(),&newPState,lhsVarId,evalResult);
+      getExprAnalyzer()->initializeMemoryLocation(currentEState.label(),&newPState,lhsVarId,evalResult);
       newPState.deleteVar(returnVarId); // remove $return from state
       return elistify(createEState(edge.target(),cs,newPState,cset));
     } else {
@@ -2467,7 +2472,7 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallReturn(Edge edge, con
 
     if(newPState.varExists(returnVarId)) {
       AbstractValue evalResult=getExprAnalyzer()->readFromMemoryLocation(currentEState.label(),&newPState,returnVarId);
-      getExprAnalyzer()->writeToMemoryLocation(currentEState.label(),&newPState,lhsVarId,evalResult);
+      getExprAnalyzer()->initializeMemoryLocation(currentEState.label(),&newPState,lhsVarId,evalResult);
       newPState.deleteVar(returnVarId); // remove $return from state
       SAWYER_MESG(logger[TRACE])<<"transferFunctionCallReturn(initialization): LHSVAR:"<<getVariableIdMapping()->variableName(lhsVarId)<<" value: "<<evalResult.toString()<<endl;
       return elistify(createEState(edge.target(),cs,newPState,cset));
@@ -2742,7 +2747,9 @@ std::list<EState> CodeThorn::Analyzer::transferFunctionCallExternal(Edge edge, c
       {
         returnVarId=variableIdMapping->createUniqueTemporaryVariableId(string("$return"));
       }
-      getExprAnalyzer()->writeToMemoryLocation(currentEState.label(),&newPState,returnVarId,evalResult2.result);
+      // added function call result value to state. The returnVarId does not correspond to a declaration, and therefore it ise
+      // treated as being initialized (and declared).
+      getExprAnalyzer()->initializeMemoryLocation(currentEState.label(),&newPState,returnVarId,evalResult2.result);
       //estate2.setLabel(edge.target());
       return elistify(createEState(edge.target(),cs,newPState,cset,evalResult2.estate.io));
     }
