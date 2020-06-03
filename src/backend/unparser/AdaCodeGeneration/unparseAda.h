@@ -21,25 +21,27 @@ class SgAsmOp;
 
 class Unparser;
 
-class Unparse_Ada : public UnparseLanguageIndependentConstructs
+struct Unparse_Ada : UnparseLanguageIndependentConstructs
    {
-     public:
+          typedef UnparseLanguageIndependentConstructs base;
+          
           Unparse_Ada(Unparser* unp, std::string fname);
-
-          virtual ~Unparse_Ada();
 
           void unparseAdaFile(SgSourceFile *file, SgUnparse_Info &info);
 
-          virtual void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info);
-          virtual void unparseLanguageSpecificExpression (SgExpression* expr, SgUnparse_Info& info);
+          void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info) ROSE_OVERRIDE;
+          void unparseLanguageSpecificExpression (SgExpression* expr, SgUnparse_Info& info) ROSE_OVERRIDE;
+          
+          bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info) ROSE_OVERRIDE;
 
-       // DQ (9/12/2017): Mark the derived class to support debugging.
-       // virtual std::string languageName() const;
-          virtual std::string languageName() const { return "Ada Unparser"; }
+          // DQ (9/12/2017): Mark the derived class to support debugging.
+          // virtual std::string languageName() const;
+          std::string languageName() const ROSE_OVERRIDE { return "Ada Unparser"; }
 
-          virtual void unparseStringVal               (SgExpression* expr, SgUnparse_Info& info);  
-
-          virtual void unparseType(SgType* type, SgUnparse_Info& info);
+          void unparseStringVal(SgExpression* expr, SgUnparse_Info& info) ROSE_OVERRIDE;  
+          //~ void unparseStatement(SgStatement* stmt, SgUnparse_Info& info) ROSE_OVERRIDE;
+          
+          void unparseType(SgType* type, SgUnparse_Info& info);
 
 #if 0
        // DQ (3/13/2004): Added to support templates

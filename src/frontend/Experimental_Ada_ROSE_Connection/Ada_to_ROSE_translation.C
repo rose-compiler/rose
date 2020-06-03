@@ -1046,7 +1046,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
                     Path_List & pathList = statementStruct.Statement_Paths;
                     ROSE_ASSERT(pathList.Length >= 1);
-                    ROSE_ASSERT(pathList.Length <= 2);
+                    //~ ROSE_ASSERT(pathList.Length <= 2);
 
                     int true_path_element_id = pathList.IDs[0];
 
@@ -1063,7 +1063,7 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct & head_nodes, SgSourc
 
                     if (pathList.Length > 1)
                        {
-                         ROSE_ASSERT(pathList.Length == 2);
+                         //~ ROSE_ASSERT(pathList.Length == 2);
                          int false_path_element_id = pathList.IDs[1];
                          printf ("false_path_element_id = %d \n",false_path_element_id);
 
@@ -5889,7 +5889,7 @@ void
                printf ("     expressionParenthesized = %d \n",expressionParenthesized);
 #if 1
                printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               //~ ROSE_ASSERT(false);
 #endif
                break;
              }

@@ -1533,6 +1533,10 @@ HEADER_STATIC_ASSERTION_DECLARATION_END
 
 
 HEADER_FUNCTION_PARAMETER_SCOPE_START
+
+// PP (06/01/20)
+SgName get_mangled_name() const $ROSE_OVERRIDE;
+
 HEADER_FUNCTION_PARAMETER_SCOPE_END
 
 
@@ -3435,8 +3439,26 @@ HEADER_TEMPLATE_INSTANTIATION_DIRECTIVE_STATEMENT_START
 
 HEADER_TEMPLATE_INSTANTIATION_DIRECTIVE_STATEMENT_END
 
+HEADER_ADA_PACKAGE_SPEC_DECL_STATEMENT_START
+SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE; 
+SgName get_mangled_name() const ROSE_OVERRIDE; 
+HEADER_ADA_PACKAGE_SPEC_DECL_STATEMENT_END
+
+HEADER_ADA_PACKAGE_BODY_DECL_STATEMENT_START
+/* TODO: SgAdaPackageBodyDecl */
+HEADER_ADA_PACKAGE_BODY_DECL_STATEMENT_END
+
+HEADER_ADA_PACKAGE_SPEC_STATEMENT_START
+/* TODO: SgAdaPackageSpec */
+HEADER_ADA_PACKAGE_SPEC_STATEMENT_END
+
+HEADER_ADA_PACKAGE_BODY_STATEMENT_START
+/* TODO: SgAdaPackageBody */
+HEADER_ADA_PACKAGE_BODY_STATEMENT_END
+
+
 HEADER_ADA_TASK_SPEC_DECL_STATEMENT_START
-/* TODO: SgAdaTaskSpec  Decl */
+/* TODO: SgAdaTaskSpec */
 HEADER_ADA_TASK_SPEC_DECL_STATEMENT_END
 
 HEADER_ADA_TASK_TYPE_DECL_STATEMENT_START
@@ -6273,6 +6295,7 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgForAllStatement:
           case V_SgCAFWithTeamStatement: //FMZ (2/18/2009)
       // PP (05/11/20) - Ada support
+          case V_SgAdaPackageBody: 
           case V_SgAdaTaskBody: 
                returnValue = false;
                break;
@@ -6284,9 +6307,11 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgTemplateInstantiationDefn:
           case V_SgNamespaceDefinitionStatement:
           case V_SgGlobal:
+          // case V_SgFunctionParameterScope: // PP (06/01/20) added for Ada support
           case V_SgModuleStatement:
           case V_SgDeclarationScope:
       // PP (05/11/20) - Ada support
+          case V_SgAdaPackageSpec: 
           case V_SgAdaTaskSpec: 
                returnValue = true;
                break;
@@ -6577,6 +6602,14 @@ SgScopeStatement::getDeclarationList ()
                break;
              }
 
+          case V_SgAdaPackageSpec:
+             {
+               SgAdaPackageSpec* pkgScope = isSgAdaPackageSpec(currentScope);
+               ROSE_ASSERT (pkgScope != NULL);
+               currentStatementList = &(pkgScope->get_declarations());
+               break;
+             }
+
           case V_SgNamespaceDefinitionStatement:
              {
                SgNamespaceDefinitionStatement* namespaceScope = isSgNamespaceDefinitionStatement(currentScope);
@@ -6644,6 +6677,22 @@ SgScopeStatement::getDeclarationList () const
                return globalScope->get_declarations();
                break;
              }
+             
+          case V_SgAdaTaskSpec:
+             {
+               const SgAdaTaskSpec* taskScope = isSgAdaTaskSpec(currentScope);
+               ROSE_ASSERT (taskScope != NULL);
+               return taskScope->get_declarations();
+               break;
+             }
+
+          case V_SgAdaPackageSpec:
+             {
+               const SgAdaPackageSpec* pkgScope = isSgAdaPackageSpec(currentScope);
+               ROSE_ASSERT (pkgScope != NULL);
+               return pkgScope->get_declarations();
+               break;
+             }   
 
           case V_SgNamespaceDefinitionStatement:
              {
@@ -11068,6 +11117,15 @@ SgFunctionParameterScope::post_construction_initialization()
    {
   // Nothing to do here, but we need this function to be defined.
    }
+   
+SgName
+SgFunctionParameterScope::get_mangled_name(void) const
+   {
+     // PP (06/01/20) - just return some name 
+     // (or should the name be composed form the parent declaration?)
+     return "__function_parameter_scope__";
+   }
+   
 
 SOURCE_FUNCTION_PARAMETER_SCOPE_END
 
@@ -19933,6 +19991,48 @@ SgMicrosoftAttributeDeclaration::hasExplicitScope() const
      return false;
    }
 SOURCE_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_END
+
+// Ada support
+// - packages
+
+SOURCE_ADA_PACKAGE_SPEC_DECL_STATEMENT_START
+void SgAdaPackageSpecDecl::post_construction_initialization() {}
+
+SgSymbol* 
+SgAdaPackageSpecDecl::get_symbol_from_symbol_table() const 
+{
+  SgScopeStatement* scope = get_scope();
+  
+  ROSE_ASSERT(scope);
+  return scope->find_symbol_from_declaration(this); 
+}
+
+SgName 
+SgAdaPackageSpecDecl::get_mangled_name() const
+{
+  std::string name = "ada$";
+  
+  name.append(get_name());
+  return name;
+}
+SOURCE_ADA_PACKAGE_SPEC_DECL_STATEMENT_END
+
+SOURCE_ADA_PACKAGE_BODY_DECL_STATEMENT_START
+// PP implement header declarations (currently empty)
+void SgAdaPackageBodyDecl::post_construction_initialization() {}
+SOURCE_ADA_PACKAGE_BODY_DECL_STATEMENT_END
+
+SOURCE_ADA_PACKAGE_SPEC_STATEMENT_START
+// PP implement header declarations (currently empty)
+void SgAdaPackageSpec::post_construction_initialization() {}
+SOURCE_ADA_PACKAGE_SPEC_STATEMENT_END
+
+SOURCE_ADA_PACKAGE_BODY_STATEMENT_START
+// PP implement header declarations (currently empty)
+void SgAdaPackageBody::post_construction_initialization() {}
+SOURCE_ADA_PACKAGE_BODY_STATEMENT_END
+
+// - tasks
 
 SOURCE_ADA_TASK_SPEC_DECL_STATEMENT_START
 // PP implement header declarations (currently empty)

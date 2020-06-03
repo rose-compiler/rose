@@ -96,6 +96,9 @@ Grammar::setUpSymbols ()
      NEW_TERMINAL_MACRO ( AliasSymbol,          "AliasSymbol",         "ALIAS_SYMBOL" );
 
      NEW_TERMINAL_MACRO ( NonrealSymbol, "NonrealSymbol", "NONREAL_SYMBOL" );
+     
+  // PP (06/03/2020) Adding Ada support   
+     NEW_TERMINAL_MACRO ( AdaPackageSymbol, "AdaPackageSymbol", "ADA_PACKAGE_SYMBOL" );
 
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
      NEW_NONTERMINAL_MACRO (Symbol,
@@ -103,7 +106,8 @@ Grammar::setUpSymbols ()
           ClassSymbol      | TemplateSymbol         | EnumSymbol             | EnumFieldSymbol    | 
           TypedefSymbol    | LabelSymbol            | DefaultSymbol          | NamespaceSymbol    |
           IntrinsicSymbol  | ModuleSymbol           | InterfaceSymbol        | CommonSymbol       | 
-          AliasSymbol      | AsmBinaryAddressSymbol | AsmBinaryDataSymbol    | JavaLabelSymbol /* | RenameSymbol*/,
+          AliasSymbol      | AsmBinaryAddressSymbol | AsmBinaryDataSymbol    | JavaLabelSymbol    | 
+          AdaPackageSymbol /* | RenameSymbol */, 
           "Symbol","SymbolTag", false);
 #else
      NEW_NONTERMINAL_MACRO (Symbol,
@@ -111,7 +115,8 @@ Grammar::setUpSymbols ()
           ClassSymbol      | TemplateSymbol         | EnumSymbol             | EnumFieldSymbol    | 
           TypedefSymbol    | LabelSymbol            | DefaultSymbol          | NamespaceSymbol    |
           IntrinsicSymbol  | ModuleSymbol           | InterfaceSymbol        | CommonSymbol       | 
-          AliasSymbol      |                                                   JavaLabelSymbol /* | RenameSymbol*/,
+          AliasSymbol      |                                                   JavaLabelSymbol    |
+          AdaPackageSymbol /* | RenameSymbol */,
           "Symbol","SymbolTag", false);
 #endif
 
@@ -187,6 +192,10 @@ Grammar::setUpSymbols ()
   // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
      NonrealSymbol.setDataPrototype ( "SgNonrealDecl*", "declaration", "= NULL",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaPackageSymbol.setDataPrototype    ( "SgDeclarationStatement*",   "declaration", "= NULL",
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
 
   // DQ (2/29/2004): Header file support code for template declaration support
   // TemplateInstantiationSymbol.setFunctionPrototype( "HEADER_TEMPLATE_INSTANTIATION_DECLARATION", "../Grammar/Symbol.code" );
@@ -414,6 +423,10 @@ Grammar::setUpSymbols ()
      NamespaceSymbol.setFunctionSource      ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
   // We need a special version of the get_symbol_basis() function
   // NamespaceSymbol.setFunctionSource      ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
+     
+  // PP (06/03/20: supporting Ada   
+     AdaPackageSymbol.setFunctionSource     ( "SOURCE_ADA_PACKAGE_SYMBOL", "../Grammar/Symbol.code" );     
+     AdaPackageSymbol.setFunctionSource     ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
 
   // DQ (12/23/2005): Removed SgName object and so we now need to build the get_name() member function
      DefaultSymbol.setFunctionSource        ( "SOURCE_SHORT_DEFAULT_GET_NAME", "../Grammar/Symbol.code" );
