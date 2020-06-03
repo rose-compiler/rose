@@ -9569,7 +9569,9 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
         explicit SgAsmDOSFileHeader(SgAsmGenericFile *f)
-            : SgAsmGenericHeader(f), p_relocs(NULL), p_rm_section(NULL) {
+            : SgAsmGenericHeader(f), p_e_last_page_size(0), p_e_total_pages(0), p_e_nrelocs(0), p_e_header_paragraphs(0),
+              p_e_minalloc(0), p_e_maxalloc(0), p_e_ss(0), p_e_sp(0), p_e_cksum(0), p_e_ip(0), p_e_cs(0), p_e_overlay(0),
+              p_e_relocs_offset(0), p_e_res1(0), p_relocs(NULL), p_rm_section(NULL) {
             ctor();
         }
         virtual SgAsmDOSFileHeader *parse() $ROSE_OVERRIDE {return parse(true);}
