@@ -85,6 +85,7 @@ ATbool traverse_CharacterItemDescription (ATerm term, SgType* & type);
 ATbool traverse_CharacterLiteral         (ATerm term, std::string &str_literal);
 
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
+ATbool    match_StatusItemDescription (ATerm term);
 ATbool traverse_StatusItemDescription (ATerm term, std::list<SgInitializedName*> &status_list, Sawyer::Optional<SgExpression*> &status_size);
 ATbool traverse_StatusConstant        (ATerm term, SgInitializedName* &init_name, SgType* &enum_type, SgExpression* init_expr);
 ATbool traverse_StatusConstant        (ATerm term, SgExpression* &expr);
