@@ -280,7 +280,7 @@ test04() {
 typedef Sawyer::Container::MappedBuffer<size_t, boost::uint8_t> T05;
 
 // Since the derived class is a template, we can't call BOOST_CLASS_EXPORT until we know the template arguments.
-BOOST_CLASS_EXPORT(T05);
+//BOOST_CLASS_EXPORT(T05); -- already defined in librose; doing it here violates ODR
 
 static void
 test05() {
@@ -308,7 +308,7 @@ test05() {
 typedef Sawyer::Container::NullBuffer<size_t, boost::uint8_t> T06;
 
 // Since the derived class is a template, we can't call BOOST_CLASS_EXPORT until we know the template arguments.
-BOOST_CLASS_EXPORT(T06);
+//BOOST_CLASS_EXPORT(T06); -- already defined in librose; doing it here violates ODR
 
 static void
 test06() {
@@ -355,7 +355,7 @@ test07() {
 typedef Sawyer::Container::AddressSegment<size_t, boost::uint8_t> T08;
 typedef Sawyer::Container::AllocatingBuffer<size_t, boost::uint8_t> T08_buffer;
 
-BOOST_CLASS_EXPORT(T08_buffer);
+//BOOST_CLASS_EXPORT(T08_buffer); -- already defined in librose; doing it here violates ODR
 
 static void
 test08() {
