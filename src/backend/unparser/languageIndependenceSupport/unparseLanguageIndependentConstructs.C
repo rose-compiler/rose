@@ -1963,7 +1963,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // if (!statementFromFile(stmt, getFileName(), info))
      if (statementFromFile(stmt, getFileName(), info) == false)
         {
-#if 0
+#if 1
           printf ("WARNING: Skipping calls to output statements that are not recorded as being in the target file: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
           printf ("   --- getFileName() = %s \n",getFileName().c_str());
 #endif
@@ -8627,6 +8627,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgImagPartOp:
                                      precedence_value = 0; break;
           case V_SgNonrealRefExp:
+                                     precedence_value = 0; break;
+
+          case V_SgRangeExp:
                                      precedence_value = 0; break;
 
           default:
