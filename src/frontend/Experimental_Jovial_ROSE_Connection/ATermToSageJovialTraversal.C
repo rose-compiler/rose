@@ -677,12 +677,11 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
       } else return ATfalse;
 
       if (traverse_ItemTypeDescription(t_type, declared_type)) {
-         // MATCHED ItemTypeDescription
+         // MATCHED ItemTypeDescription without StatusItemDescription
       }
       else if (traverse_StatusItemDescription(t_type, status_list, status_size)) {
-         // MATCHED StatusItemDescription
-
-         // status item declarations have to be handled differently than other ItemTypeDescription terms
+         // MATCHED StatusItemDescription: Note that they are handled differently
+         // than other ItemTypeDescriptions because they require different arguments
 
          // Begin SageTreeBuilder
          SgEnumDeclaration* enum_decl = nullptr;
@@ -696,7 +695,11 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
 
          // End SageTreeBuilder
          sage_tree_builder.Leave(enum_decl);
-      } else return ATfalse;
+
+         cerr << "WARNING UNIMPLEMENTED: ItemDeclaration for StatusItemDescription \n";
+         ROSE_ASSERT(false);
+      }
+      else return ATfalse;
 
       if (traverse_ItemPreset(t_preset, preset)) {
          // MATCHED ItemPreset
@@ -706,7 +709,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
 
    if (declared_type == nullptr) {
       cerr << "WARNING UNIMPLEMENTED: ItemDeclaration - type is null \n";
-      return ATtrue;
+      ROSE_ASSERT(declared_type);
    }
 
 // Begin SageTreeBuilder
@@ -733,6 +736,11 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDescription(ATerm term, SgTy
 
    type = nullptr;
 
+// StatusItemDescription is handled separately because it requires different arguments
+   if (match_StatusItemDescription(term)) {
+      return ATfalse;
+   }
+
    if (traverse_IntegerItemDescription(term, type)) {
       // MATCHED IntegerItemDescription
    }
@@ -748,10 +756,6 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDescription(ATerm term, SgTy
    else if (traverse_CharacterItemDescription(term, type)) {
       // MATCHED CharacterItemDescription
    }
-
-// traverse_StatusItemDescription call moved to callee traverse_ItemDeclaration
-// because it takes different argument types
-
    else if (traverse_PointerItemDescription(term, type)) {
       // MATCHED PointerItemDescription
    }
@@ -761,7 +765,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDescription(ATerm term, SgTy
 
       if (symbol == nullptr) {
          cerr << "WARNING UNIMPLEMENTED: ItemTypeDescription - symbol lookup failed for ItemTypeName " << name << "\n";
-         return ATtrue;
+         ROSE_ASSERT(false);
       }
       ROSE_ASSERT(symbol);
       type = symbol->get_type();
@@ -1157,6 +1161,25 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgExpress
    setSourcePosition(enum_val, term);
 
    expr = enum_val;
+
+   return ATtrue;
+}
+
+// This match function is helpful because the arguments to traverse_StatusItemDescription
+// are different than the other ItemTypeDescriptions
+//
+ATbool ATermToSageJovialTraversal::match_StatusItemDescription(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... match_StatusItemDescription: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_size, t_sublist;
+
+   if (ATmatch(term, "StatusItemDescription(<term>,<term>)", &t_size, &t_sublist)) {
+      // MATCHED StatusItemDescription
+   }
+   else return ATfalse;
 
    return ATtrue;
 }
@@ -1868,16 +1891,16 @@ traverse_OrdinaryEntrySpecifierType(ATerm term, SgType* &type, SgExpression* &pr
       } else return ATfalse;
 
       if (traverse_ItemTypeDescription(t_item_desc, type)) {
-         // Found a base type for the table (not inheritance, likely a primitive type similar to an SgArrayType)
+         // MATCHED StatusItemDescription without StatusItemDescription and found a base type
+         // for the table (not inheritance, likely a primitive type similar to an SgArrayType)
       }
       else if (traverse_StatusItemDescription(t_item_desc, status_list, status_size)) {
          // MATCHED StatusItemDescription
 
          // status item declarations have to be handled differently than other ItemTypeDescription terms
 
-         // also assume an int is sufficient for status_size for now
-
-         cerr << "WARNING UNIMPLEMENTED: OrdinaryEntrySpecifierType - StatusItemDescription\n";
+         cerr << "WARNING UNIMPLEMENTED: OrdinaryEntrySpecifierType with StatusItemDescription\n";
+         ROSE_ASSERT(false);
       }
       else return ATfalse;
 
@@ -1984,13 +2007,14 @@ ATbool ATermToSageJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATerm t
       } else return ATfalse;
 
       if (traverse_ItemTypeDescription(t_item_desc, item_type)) {
-         // MATCHED ItemTypeDescription
+         // MATCHED ItemTypeDescription without StatusItemDescription
       } else if (traverse_StatusItemDescription(t_item_desc, status_list, status_size)) {
          // MATCHED StatusItemDescription
 
          // status item declarations have to be handled differently than other ItemTypeDescription terms
 
-         // also assume an int is sufficient for status_size for now
+         cerr << "WARNING UNIMPLEMENTED: OrdinaryTableItemDeclaration with StatusItemDescription\n";
+         ROSE_ASSERT(false);
       } else return ATfalse;
 
       if (traverse_TablePreset(t_preset, preset)) {
@@ -2140,12 +2164,12 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedItemDescription(ATerm term,
    if (ATmatch(term, "SpecifiedItemDescription(<term>,<term>)", &t_item_desc, &t_loc_spec)) {
 
       if (traverse_ItemTypeDescription(t_item_desc, type)) {
-         // MATCHED ItemTypeDescription
+         // MATCHED ItemTypeDescription without StatusItemDescription
       }  else if (traverse_StatusItemDescription(t_item_desc, status_list, status_size)) {
          // MATCHED StatusItemDescription
          // status item declarations have to be handled differently than other ItemTypeDescription terms
 
-         cerr << "WARNING UNIMPLEMENTED: SpecifiedItemDescription - StatusItemDescription\n";
+         cerr << "WARNING UNIMPLEMENTED: SpecifiedItemDescription with StatusItemDescription\n";
          ROSE_ASSERT(false);
       } else return ATfalse;
 
@@ -2314,13 +2338,12 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term)
       } else return ATfalse;
 
       if (traverse_ItemTypeDescription(t_type, declared_type)) {
-         // MATCHED ItemTypeDescription
+         // MATCHED ItemTypeDescription without StatusItemDescription
       } else if (traverse_StatusItemDescription(t_type, status_list, status_size)) {
-         cerr << "WARNING UNIMPLEMENTED: StatusItemDescription \n";
-         // ROSE_ASSERT(false);
-         return ATtrue;
          // status item declarations have to be handled differently than other ItemTypeDescription terms
-         // also assume an int is sufficient for status_size for now
+
+         cerr << "WARNING UNIMPLEMENTED: ConstantItemDeclaration with StatusItemDescription \n";
+         ROSE_ASSERT(false);
       } else return ATfalse;
 
       if (traverse_ItemPreset(t_preset, preset)) {
@@ -2387,7 +2410,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, int def
          // MATCHED BlockName
       } else return ATfalse;
 
-      // TODO: function to create anaonymous name
+      // TODO: function to create anonymous name
       block_type_name = "_anon_typeof_" + block_name;
 
       type_name = block_type_name;
@@ -2917,14 +2940,9 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDeclaration(ATerm term)
       } else return ATfalse;
 
       if (traverse_ItemTypeDescription(t_type_desc, declared_type)) {
-         // MATCHED ItemTypeDescription
+         // MATCHED ItemTypeDescription without StatusItemDescription
 
-         if (declared_type == nullptr) {
-            cerr << "WARNING UNIMPLEMENTED: ItemTypeDeclaration - declared_type is nullptr \n";
-         // ROSE_ASSERT(false);
-         // DELETE_ME
-            return ATtrue;
-         }
+         ROSE_ASSERT(declared_type);
 
       // Begin SageTreeBuilder
          SgTypedefDeclaration* type_def = nullptr;
@@ -2935,9 +2953,8 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDeclaration(ATerm term)
          sage_tree_builder.Leave(type_def);
       }
       else if (traverse_StatusItemDescription(t_type_desc, status_list, status_size)) {
-         // MATCHED StatusItemDescription
-
-         // status item declarations have to be handled differently than other ItemTypeDescription terms
+         // MATCHED StatusItemDescription: must be handled differently than other ItemTypeDescriptions
+         // because they require different arguments
 
       // Begin SageTreeBuilder
          SgEnumDeclaration* enum_decl = nullptr;
@@ -4016,12 +4033,11 @@ traverse_FunctionHeading(ATerm term, std::string &name, SgType* &type, std::list
       } else return ATfalse;
 
       if (traverse_ItemTypeDescription(t_type, type)) {
-         // MATCHED ItemTypeDescription
+         // MATCHED ItemTypeDescription without StatusItemDescription
       }
       else if (traverse_StatusItemDescription(t_type, status_list, status_size)) {
-         // MATCHED StatusItemDescription
-
-         // status item declarations have to be handled differently than other ItemTypeDescription terms
+         // MATCHED StatusItemDescription: must be handled differently than other ItemTypeDescriptions
+         // because they require different arguments
          cerr << "WARNING UNIMPLEMENTED: FunctionHeading - StatusItemDescription\n";
          ROSE_ASSERT(false);
       }
