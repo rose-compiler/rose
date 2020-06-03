@@ -9790,7 +9790,8 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
         explicit SgAsmDOSExtendedHeader(SgAsmDOSFileHeader *fhdr)
-            : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+            : SgAsmGenericSection(fhdr->get_file(), fhdr), p_e_res1(0), p_e_oemid(0), p_e_oeminfo(0), p_e_res2(0),
+              p_e_res3(0), p_e_res4(0), p_e_res5(0), p_e_res6(0), p_e_lfanew(0) {
             ctor();
         }
         virtual SgAsmDOSExtendedHeader *parse() $ROSE_OVERRIDE;
