@@ -10555,7 +10555,13 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         explicit SgAsmPEFileHeader(SgAsmGenericFile *f)
-            : SgAsmGenericHeader(f), p_section_table(NULL), p_coff_symtab(NULL) {
+            : SgAsmGenericHeader(f), p_e_cpu_type(0), p_e_nsections(0), p_e_time(0), p_e_coff_symtab(0), p_e_nt_hdr_size(0),
+              p_e_coff_nsyms(0), p_e_flags(0), p_e_opt_magic(0), p_e_lmajor(0), p_e_lminor(0), p_e_code_size(0), p_e_data_size(0),
+              p_e_bss_size(0), p_e_code_rva(0), p_e_data_rva(0), p_e_section_align(0), p_e_file_align(0), p_e_os_major(0),
+              p_e_os_minor(0), p_e_user_major(0), p_e_user_minor(0), p_e_subsys_major(0), p_e_subsys_minor(0), p_e_reserved9(0),
+              p_e_image_size(0), p_e_header_size(0), p_e_file_checksum(0), p_e_subsystem(0), p_e_dll_flags(0),
+              p_e_stack_reserve_size(0), p_e_stack_commit_size(0), p_e_heap_reserve_size(0), p_e_heap_commit_size(0),
+              p_e_loader_flags(0), p_e_num_rvasize_pairs(0), p_rvasize_pairs(NULL), p_section_table(NULL), p_coff_symtab(NULL) {
             ctor();
         }
 
