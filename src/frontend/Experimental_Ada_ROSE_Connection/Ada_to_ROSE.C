@@ -258,6 +258,20 @@ namespace // local declarations
     sgnode.setOutputInCodeGeneration(); 
     return sgnode;
   }
+  
+/*
+  Sg_File_Info& mkFileInfo(const Sg_File_Info& orig)
+  {
+    return SG_DEREF(new Sg_File_Info(orig));
+  }
+  
+  void copyFileInfo(const SgLocatedNode& src, SgLocatedNode& tgt)
+  {
+    tgt.set_file_info       (&mkFileInfo(SG_DEREF(src.get_file_info())));
+    tgt.set_startOfConstruct(&mkFileInfo(SG_DEREF(src.get_startOfConstruct())));
+    tgt.set_endOfConstruct  (&mkFileInfo(SG_DEREF(src.get_endOfConstruct())));
+  }
+*/
 
   void markCompilerGenerated(SgLocatedNode& n)
   {
@@ -380,14 +394,16 @@ namespace // local declarations
   SgAdaLoopStmt&
   mkLoopStmt(SgBasicBlock& body)
   {
-    SgAdaLoopStmt&  sgnode = SG_DEREF( new SgAdaLoopStmt(&body) ); 
+    SgAdaLoopStmt&  sgnode = SG_DEREF( new SgAdaLoopStmt() ); 
+    
+    linkParentChild(sgnode, body, &SgAdaLoopStmt::set_body);
 
     //~ markCompilerGenerated(sgnode);
     return sgnode;
   }
   
   SgForStatement&
-  mkForLoopStmt(SgBasicBlock& body)
+  mkForStatement(SgBasicBlock& body)
   {
     SgStatement&    test   = SG_DEREF( sb::buildNullStatement() );
     SgExpression&   incr   = SG_DEREF( sb::buildNullExpression() );
@@ -435,6 +451,7 @@ namespace // local declarations
   {
     SgLabelStatement& sgnode = SG_DEREF( sb::buildLabelStatement(n, &stmt, &encl) );
 
+    linkParentChild(sgnode, stmt, &SgLabelStatement::set_statement);
     //~ markCompilerGenerated(sgnode);
     return sgnode;
   }
@@ -575,9 +592,9 @@ namespace // local declarations
   SgFunctionDeclaration&
   mkProcedure(std::string nm, SgScopeStatement& scope, SgType& retty, ParamCompletion complete, ProcScopeMaker scopeMaker = mkProcDecl)
   {
-    SgFunctionParameterList&  lst       = SG_DEREF(sb::buildFunctionParameterList());
-    SgFunctionDeclaration&    sgnode    = SG_DEREF(sb::buildNondefiningFunctionDeclaration(nm, &retty, &lst, &scope, nullptr));
-    SgScopeStatement&         parmScope = scopeMaker(sgnode); 
+    SgFunctionParameterList& lst       = SG_DEREF(sb::buildFunctionParameterList());
+    SgFunctionDeclaration&   sgnode    = SG_DEREF(sb::buildNondefiningFunctionDeclaration(nm, &retty, &lst, &scope, nullptr));
+    SgScopeStatement&        parmScope = scopeMaker(sgnode); 
 
     complete(lst, parmScope);
     ROSE_ASSERT(sgnode.get_type() != nullptr);     
@@ -881,14 +898,21 @@ namespace // local declarations
       SgScopeStatement& scope()  const { return *the_scope; }
       LabelManager&     labels() const { return SG_DEREF(all_labels); }
   
-      AstContext scope(SgScopeStatement& s) const
+      // no-parent-check: sets scope without parent check
+      //   e.g., when the parent node is built after the fact (e.g., if statements)
+      AstContext scope_npc(SgScopeStatement& s) const
       {
-        ROSE_ASSERT(s.get_parent());
-        
         AstContext tmp(*this);
   
         tmp.the_scope = &s;
         return tmp;
+      }
+  
+      AstContext scope(SgScopeStatement& s) const
+      {
+        ROSE_ASSERT(s.get_parent());
+        
+        return scope_npc(s);
       }
       
       AstContext labels(LabelManager& lm) const
@@ -1093,12 +1117,8 @@ namespace // local declarations
 
   struct ParmlistCreator
   {
-      ParmlistCreator(SgInitializedNamePtrList& arglist, AstContext astctx)
-      : ctx(astctx), args(arglist)
-      {}
-      
       ParmlistCreator(SgFunctionParameterList& parms, AstContext astctx)
-      : ParmlistCreator(parms.get_args(), astctx)
+      : parmlist(parms), ctx(astctx)
       {}
     
       // CallableDeclaration is either derived from function declaration, 
@@ -1110,15 +1130,19 @@ namespace // local declarations
       
       void operator()(Element_Struct& elem)
       {
-        SgVariableDeclaration&    decl  = getParm(elem, ctx);
-        SgInitializedNamePtrList& parms = decl.get_variables();
-
-        args.insert(args.end(), parms.begin(), parms.end());
+        SgVariableDeclaration&    decl = getParm(elem, ctx);
+        SgInitializedNamePtrList& args = parmlist.get_args();
+        
+        for (SgInitializedName* parm : decl.get_variables())
+        {
+          parm->set_parent(&parmlist);
+          args.push_back(parm);
+        }
       }
       
     private:
-      AstContext                ctx;
-      SgInitializedNamePtrList& args;
+      SgFunctionParameterList& parmlist;
+      AstContext               ctx;
   };
 
   struct NameCreator
@@ -1253,7 +1277,7 @@ namespace // local declarations
         SgBasicBlock& block     = mkBasicBlock();
         ElemIdRange   thenStmts = idRange(path.Sequence_Of_Statements);
 
-        traverseIDs(thenStmts, asisMap, StmtCreator(ctx.scope(block)));
+        traverseIDs(thenStmts, asisMap, StmtCreator(ctx.scope_npc(block)));
         branches.push_back(branch_type(cond, &block));
       }
 
@@ -2114,17 +2138,18 @@ namespace // local declarations
                || decl.Declaration_Kind == A_Real_Number_Declaration
                || decl.Declaration_Kind == An_Integer_Number_Declaration
                );
+               
+    //~ logWarn() << "decl.Initialization_Expression = " << decl.Initialization_Expression << std::endl;
+    if (decl.Initialization_Expression == 0) return nullptr;
 
-    Element_Struct* elem = retrieveAsOpt<Element_Struct>(asisMap, decl.Initialization_Expression);
-
-    return elem ? &getExpr(*elem, ctx) : NULL;
+    return &getExprID_opt(decl.Initialization_Expression, ctx);
   }
 
 
   SgExpression*
   cloneNonNull(SgExpression* exp)
   {
-    if (exp == NULL) return NULL;
+    if (exp == nullptr) return nullptr;
 
     return si::deepCopy(exp);
   }
@@ -2133,7 +2158,7 @@ namespace // local declarations
   constructInitializedNamePtrList( std::map<int, SgInitializedName*>& m,
                                    const NameCreator::result_container& names,
                                    SgType& dcltype,
-                                   SgExpression* initexpr = NULL
+                                   SgExpression* initexpr = nullptr
                                  )
   {
     SgInitializedNamePtrList lst;
@@ -2791,16 +2816,39 @@ namespace // local declarations
     }
   }
   
+  /// labels a statement with a block label or a sequence of labels (if needed)
+  /// @{
   SgStatement&
-  labelIfNeeded(SgStatement& stmt, Defining_Name_ID ident, AstContext ctx)
+  labelIfNeeded(SgStatement& stmt, std::string lblname, Defining_Name_ID lblid, AstContext ctx)
   {
-    ROSE_ASSERT(ident >= 0);
+    ROSE_ASSERT(lblid > 0);
     
-    if (!ident) return stmt;
+    SgNode&           parent  = SG_DEREF(stmt.get_parent());
+    SgLabelStatement& sgn     = mkLabelStmt(lblname, stmt, ctx.scope());
+    Element_Struct&   lblelem = retrieveAs<Element_Struct>(asisMap, lblid);
     
-    Element_Struct& lblelem = retrieveAs<Element_Struct>(asisMap, ident);
+    //~ copyFileInfo(stmt, sgn);
+    attachSourceLocation(sgn, lblelem);
+    sgn.set_parent(&parent);
+    ctx.labels().label(lblid, sgn);
     
-    return mkLabelStmt(getName(lblelem, ctx), stmt, ctx.scope()); 
+    ROSE_ASSERT(stmt.get_parent() == &sgn);
+    return sgn; 
+  }
+  
+  template <class SageAdaStmt>
+  SgStatement&
+  labelIfNeeded(SageAdaStmt& stmt, Defining_Name_ID lblid, AstContext ctx)
+  {
+    ROSE_ASSERT(lblid >= 0);
+    
+    if (!lblid) return stmt;
+    
+    Element_Struct& lblelem = retrieveAs<Element_Struct>(asisMap, lblid);
+    std::string     lblname = getName(lblelem, ctx);
+    
+    stmt.set_string_label(lblname);
+    return labelIfNeeded(stmt, lblname, lblid, ctx);
   }
   
   SgStatement&
@@ -2814,26 +2862,50 @@ namespace // local declarations
                                              &stmt,
                                              [&](SgStatement* labeled, name_container::value_type& el) -> SgStatement*
                                              {
-                                               SgLabelStatement& sgn = mkLabelStmt(el.first, *labeled, ctx.scope());
-                                               
-                                               ctx.labels().label(el.second, sgn);
-                                               return &sgn;
+                                               return &labelIfNeeded(SG_DEREF(labeled), el.first, el.second, ctx);
                                              } 
                                            );
         
     return SG_DEREF(sgnode);
   } 
+  
+  /// @}
 
-  void completeStmt(SgStatement& sgnode, Element_Struct& elem, AstContext ctx)
+
+  /// completes statements by setting source locations, parent node, 
+  /// adding labels (if needed)...
+  /// @{
+  void
+  completeStmt(SgStatement& sgnode, Element_Struct& elem, AstContext ctx)
   {
     ROSE_ASSERT(elem.Element_Kind == A_Statement);
+    
+    attachSourceLocation(sgnode, elem);
+    sgnode.set_parent(&ctx.scope());
     
     Statement_Struct& stmt = elem.The_Union.Statement;
     SgStatement&      sgn  = labelIfNeeded(sgnode, stmt, ctx);
     
-    attachSourceLocation(sgn, elem);
     ctx.scope().append_statement(&sgn);
   }
+  
+  template <class SageAdaStmt>
+  void
+  completeStmt(SageAdaStmt& sgnode, Element_Struct& elem, AstContext ctx, Defining_Name_ID lblid)
+  {
+    ROSE_ASSERT(elem.Element_Kind == A_Statement);
+    
+    attachSourceLocation(sgnode, elem);
+    sgnode.set_parent(&ctx.scope());
+    
+    SgStatement&      sgn0 = labelIfNeeded(sgnode, lblid, ctx);
+    Statement_Struct& stmt = elem.The_Union.Statement;
+    SgStatement&      sgn  = labelIfNeeded(sgn0, stmt, ctx);
+    
+    ctx.scope().append_statement(&sgn);
+  }
+  
+  /// @}
 
   void handleStmt(Element_Struct& elem, AstContext ctx)
   {
@@ -2847,9 +2919,7 @@ namespace // local declarations
     {
       case A_Null_Statement:                    // 5.1
         {
-          SgStatement& sgnode = mkNullStmt();
-          
-          completeStmt(sgnode, elem, ctx);
+          completeStmt(mkNullStmt(), elem, ctx);
           /* unused fields:
           */
           break;
@@ -2867,7 +2937,6 @@ namespace // local declarations
           */
           break;
         }
-
 
       case An_If_Statement:                     // 5.3
         {
@@ -2896,15 +2965,15 @@ namespace // local declarations
 
       case A_While_Loop_Statement:              // 5.5
         {
-          SgExpression& cond      = getExprID(stmt.While_Condition, ctx);
-          SgBasicBlock& block     = mkBasicBlock();
-          ElemIdRange   loopStmts = idRange(stmt.Loop_Statements);
-          SgWhileStmt&  loopNode  = mkWhileStmt(cond, block);
-          SgStatement&  sgnode    = labelIfNeeded(loopNode, stmt.Statement_Identifier, ctx);
-
+          SgExpression& cond     = getExprID(stmt.While_Condition, ctx);
+          SgBasicBlock& block    = mkBasicBlock();
+          ElemIdRange   adaStmts = idRange(stmt.Loop_Statements);
+          SgWhileStmt&  sgnode   = mkWhileStmt(cond, block);
+          
+          completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
+          
           recordNode(asisLoops, elem.ID, sgnode);
-          traverseIDs(loopStmts, asisMap, StmtCreator(ctx.scope(block)));
-          completeStmt(sgnode, elem, ctx);
+          traverseIDs(adaStmts, asisMap, StmtCreator(ctx.scope(block)));
           /* unused fields:
                 Pragma_Element_ID_List    Pragmas;
                 Element_ID                Corresponding_End_Name;
@@ -2914,15 +2983,15 @@ namespace // local declarations
 
         case A_Loop_Statement:                    // 5.5
         {
-          SgBasicBlock&  block     = mkBasicBlock();
-          ElemIdRange    loopStmts = idRange(stmt.Loop_Statements);
-          SgAdaLoopStmt& loopNode  = mkLoopStmt(block);
-          SgStatement&   sgnode    = labelIfNeeded(loopNode, stmt.Statement_Identifier, ctx);
+          SgBasicBlock&  block    = mkBasicBlock();
+          ElemIdRange    adaStmts = idRange(stmt.Loop_Statements);
+          SgAdaLoopStmt& sgnode   = mkLoopStmt(block);
+          
+          completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
           
           recordNode(asisLoops, elem.ID, sgnode);
-          traverseIDs(loopStmts, asisMap, StmtCreator(ctx.scope(block)));
+          traverseIDs(adaStmts, asisMap, StmtCreator(ctx.scope(block)));
           
-          completeStmt(sgnode, elem, ctx);
           /* unused fields:
                 Pragma_Element_ID_List    Pragmas;
                 Element_ID                Corresponding_End_Name;
@@ -2933,24 +3002,24 @@ namespace // local declarations
 
       case A_For_Loop_Statement:                // 5.5
         {
-          SgBasicBlock&       block     = mkBasicBlock();
-          SgForStatement&     loopNode  = mkForLoopStmt(block);
-          
-          Element_Struct&     forvar    = retrieveAs<Element_Struct>(asisMap, stmt.For_Loop_Parameter_Specification);
+          SgBasicBlock&       block  = mkBasicBlock();
+          SgForStatement&     sgnode = mkForStatement(block);
+          Element_Struct&     forvar = retrieveAs<Element_Struct>(asisMap, stmt.For_Loop_Parameter_Specification);
+          SgForInitStatement& forini = SG_DEREF( sb::buildForInitStatement(sgnode.getStatementList()) );
 
-          handleDeclaration(forvar, ctx.scope(loopNode));
-          ROSE_ASSERT(loopNode.getStatementList().size() <=1 /* \todo should be 0 */);
+          linkParentChild(sgnode, forini, &SgForStatement::set_for_init_stmt);
+          handleDeclaration(forvar, ctx.scope_npc(sgnode));
+          completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
+          ROSE_ASSERT(sgnode.getStatementList().size() <= 1 /* \todo should be 0 */);
           
-          SgForInitStatement& loopInit  = SG_DEREF( sb::buildForInitStatement(loopNode.getStatementList()) );
-
-          loopNode.set_for_init_stmt(&loopInit);
+          // \todo this swap is needed, otherwise the variable declaration ends 
+          //       up in the body instead of the initializer.. ???
+          std::swap(forini.get_init_stmt(), block.get_statements());
           
           ElemIdRange         loopStmts = idRange(stmt.Loop_Statements);
-          SgStatement&        sgnode    = labelIfNeeded(loopNode, stmt.Statement_Identifier, ctx);
 
           recordNode(asisLoops, elem.ID, sgnode);
           traverseIDs(loopStmts, asisMap, StmtCreator(ctx.scope(block)));
-          completeStmt(sgnode, elem, ctx);
 
           /* unused fields:
                Pragma_Element_ID_List Pragmas;
@@ -2961,16 +3030,14 @@ namespace // local declarations
 
       case A_Block_Statement:                   // 5.6
         {
-          SgBasicBlock& blockNode = mkBasicBlock();
-          ElemIdRange   blkDecls  = idRange(stmt.Block_Declarative_Items);
-          ElemIdRange   blkStmts  = idRange(stmt.Block_Statements);
+          SgBasicBlock& sgnode   = mkBasicBlock();
+          ElemIdRange   blkDecls = idRange(stmt.Block_Declarative_Items);
+          ElemIdRange   blkStmts = idRange(stmt.Block_Statements);
 
-          traverseIDs(blkDecls, asisMap, StmtCreator(ctx.scope(blockNode)));
-          traverseIDs(blkStmts, asisMap, StmtCreator(ctx.scope(blockNode)));
-
-          SgStatement&  sgnode    = labelIfNeeded(blockNode, stmt.Statement_Identifier, ctx);
+          completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
+          traverseIDs(blkDecls, asisMap, StmtCreator(ctx.scope(sgnode)));
+          traverseIDs(blkStmts, asisMap, StmtCreator(ctx.scope(sgnode)));
           
-          completeStmt(sgnode, elem, ctx);
           /* unused fields:
                 Pragma_Element_ID_List    Pragmas;
                 Element_ID                Corresponding_End_Name;
@@ -2980,8 +3047,6 @@ namespace // local declarations
           */
           break;
         }
-
-
 
       case An_Exit_Statement:                   // 5.7
         {
@@ -3047,6 +3112,9 @@ namespace // local declarations
           SgExpression&           entryref = getExprID(stmt.Accept_Entry_Direct_Name, ctx);
           SgExpression&           idx      = getExprID_opt(stmt.Accept_Entry_Index, ctx);
           SgAdaAcceptStmt&        sgnode   = mkAdaAcceptStmt(entryref, idx); 
+          
+          completeStmt(sgnode, elem, ctx);
+        
           ElemIdRange             params   = idRange(stmt.Accept_Parameters);
           AstContext              parmctx  = ctx.scope(SG_DEREF(sgnode.get_parameterScope()));
 

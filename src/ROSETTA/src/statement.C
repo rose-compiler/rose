@@ -813,6 +813,11 @@ Grammar::setUpStatements ()
      BasicBlock.setDataPrototype ( "std::string", "asm_function_body", "= \"\"",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // PP (06/04/20) - block label for ADA (in analogy to for and while labels) 
+     BasicBlock.setDataPrototype ( "std::string", "string_label", "= \"\"",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      IfStmt.setFunctionPrototype ( "HEADER_IF_STATEMENT", "../Grammar/Statement.code" );
      IfStmt.setDataPrototype ( "SgStatement*",  "conditional", "= NULL",
                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -880,7 +885,7 @@ Grammar::setUpStatements ()
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ForStatement.setDataPrototype ( "SgStatement*", "else_body",        "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-  // DQ (11/16/2007): Added support for string labels (for Fortran).
+  // DQ (11/16/2007): Added support for string labels (for Fortran and Ada (PP)).
      ForStatement.setDataPrototype ( "std::string", "string_label", "= \"\"",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -2569,11 +2574,11 @@ Grammar::setUpStatements ()
 
      AdaLoopStmt.setFunctionPrototype ( "HEADER_ADA_LOOP_STATEMENT", "../Grammar/Statement.code" );             
      AdaLoopStmt.setDataPrototype     ( "SgBasicBlock*", "body", "= NULL",
-                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-     AdaLoopStmt.setDataPrototype     ( "SgName", "label", "",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     // in analogy to for and while loops 
+     AdaLoopStmt.setDataPrototype     ( "std::string", "string_label", "= \"\"",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // Ada end
+   // Ada end
 
      AsmStmt.setFunctionPrototype  ( "HEADER_ASM_STATEMENT", "../Grammar/Statement.code" );
 

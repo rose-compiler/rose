@@ -16467,10 +16467,6 @@ SOURCE_ADA_LOOP_STATEMENT_START
 void
 SgAdaLoopStmt::post_construction_initialization()
    {
-     ROSE_ASSERT(get_body());
-#ifndef REMOVE_SET_PARENT_FUNCTION
-     get_body()->set_parent(this);
-#endif
    }
 
 bool
