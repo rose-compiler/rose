@@ -44,7 +44,8 @@ namespace
   {
     typedef std::map<int, std::string> operator_symbols_map;
 
-    static const operator_symbols_map operator_symbols 
+/*
+    static const operator_symbols_map operator_symbols; 
                 = { 
                     { V_SgAssignOp,         ":=" },
                     { V_SgOrOp,             "or else" },          
@@ -73,6 +74,39 @@ namespace
                     // SgCommaOpExp is not really in Ada, but separates discrete choices in case-when.
                     { V_SgCommaOpExp,       "|" }
                   };
+*/
+    static operator_symbols_map operator_symbols;
+
+    if (operator_symbols.size() == 0)
+    {
+      operator_symbols[V_SgAssignOp] =         ":=";
+      operator_symbols[V_SgOrOp] =             "or else";
+      operator_symbols[V_SgAndOp] =            "and then";
+      operator_symbols[V_SgBitAndOp] =         "and";
+      operator_symbols[V_SgBitOrOp] =          "or";
+      operator_symbols[V_SgBitXorOp] =         "xor";
+      operator_symbols[V_SgEqualityOp] =       "=";
+      operator_symbols[V_SgNotEqualOp] =       "!=";
+      operator_symbols[V_SgLessThanOp] =       "<";
+      operator_symbols[V_SgLessOrEqualOp] =    "<=";
+      operator_symbols[V_SgGreaterThanOp] =    ">";
+      operator_symbols[V_SgGreaterOrEqualOp] = ">=";
+      operator_symbols[V_SgAddOp] =            "+";
+      operator_symbols[V_SgSubtractOp] =       "-";
+      operator_symbols[V_SgConcatenationOp] =  "&";
+      operator_symbols[V_SgUnaryAddOp] =       "+";
+      operator_symbols[V_SgMinusOp] =          "-";
+      operator_symbols[V_SgMultiplyOp] =       "*";
+      operator_symbols[V_SgDivideOp] =         "/";
+      operator_symbols[V_SgModOp] =            "mod";
+      operator_symbols[V_SgPowerOp] =          "**";
+      operator_symbols[V_SgNotOp] =            "not";
+      // not really in Ada (when clause separator)   
+      operator_symbols[V_SgCommaOpExp] =       "|";
+      // not yet in ROSE
+      //~ operator_symbols[V_SgAbsOp] =            "abs";
+      //~ operator_symbols[V_SgRemOp] =            "rem";
+    }
 
     operator_symbols_map::const_iterator pos = operator_symbols.find(n.variantT());
     
@@ -88,6 +122,10 @@ namespace
   
   struct AdaExprUnparser
   {
+    AdaExprUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
+    : unparser(unp), info(inf), os(outp)
+    {}
+    
     void prn(const std::string& s)
     {
       unparser.curprint(s);
@@ -150,8 +188,10 @@ namespace
       SgExpressionPtrList& lst = exp->get_expressions();
       bool                 first = true;
       
-      for (SgExpression* exp : lst)
+      //~ for (SgExpression* exp : lst)
+      for (size_t i = 0; i < lst.size(); ++i)
       {
+        SgExpression* exp = lst[i];
         if (!first)
         { 
           prn(", ");

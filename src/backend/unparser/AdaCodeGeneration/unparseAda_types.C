@@ -20,6 +20,10 @@ namespace
 {
   struct AdaTypeUnparser
   {
+    AdaTypeUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
+    : unparser(unp), info(inf), os(outp)
+    {}
+    
     void prn(const std::string& s)
     {
       unparser.curprint(s);
@@ -51,6 +55,6 @@ Unparse_Ada::unparseType(SgType* type, SgUnparse_Info& info)
 {
   ASSERT_not_null(type);
   
-  sg::dispatch(AdaTypeUnparser{*this, info, std::cerr}, type);
+  sg::dispatch(AdaTypeUnparser(*this, info, std::cerr), type);
 }
 

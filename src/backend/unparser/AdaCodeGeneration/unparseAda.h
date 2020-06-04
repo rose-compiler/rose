@@ -29,6 +29,7 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
 
           void unparseAdaFile(SgSourceFile *file, SgUnparse_Info &info);
 
+          void unparseStatement(SgStatement* stmt, SgUnparse_Info& info) ROSE_OVERRIDE;
           void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info) ROSE_OVERRIDE;
           void unparseLanguageSpecificExpression (SgExpression* expr, SgUnparse_Info& info) ROSE_OVERRIDE;
           
