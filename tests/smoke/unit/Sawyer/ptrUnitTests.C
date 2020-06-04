@@ -283,7 +283,7 @@ static void arrow_null() {
 
 // Tests that we can say things like "if (ptr)"
 static void implicit_bool() {
-    ObjectStats stats; // must outlive ptr
+    ObjectStats stats;
     SharedPointer<Subclass> ptr;
     ASSERT_always_forbid(ptr);
     ASSERT_always_require(!ptr);
