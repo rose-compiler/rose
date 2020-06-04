@@ -5624,16 +5624,11 @@ ATbool ATermToSageJovialTraversal::traverse_NumericPrimary(ATerm term, SgExpress
    }
 
    else if (ATmatch(term, "NumericPrimaryParens(<term>)", &t_formula)) {
-
       if (traverse_NumericFormula(t_formula, expr)) {
          //  '(' NumericFormula ')'      -> NumericPrimary         {cons("NumericPrimary")}
-         // TODO: Add way to indicate parens?
-         // expr.set_need_paren();
-         if (!expr) {
-            cerr << "WARNING UNIMPLEMENTED: NumericPrimary - Parens - maybe because of FunctionCall\n";
-         }
       } else return ATfalse;
-
+      ROSE_ASSERT(expr);
+      expr->set_need_paren(true);
    }
 
    else if (ATmatch(term, "NumericPrimary(<term>,<term>)", &t_conversion, &t_formula)) {
@@ -6015,11 +6010,11 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
       // MATCHED BooleanLiteral
    }
    else if (ATmatch(term,"BitPrimaryParens(<term>)", &t_bit)) {
-      // TODO: Add parentheses
-      cerr << "WARNING UNIMPLEMENTED: BitPrimary - BitPrimaryParens\n";
       if (traverse_BitFormula(t_bit, expr)) {
-      // MATCHED '(' BitFormula ')'
+         // MATCHED BitFormula
       } else return ATfalse;
+      ROSE_ASSERT(expr);
+      expr->set_need_paren(true);
    }
    else if (traverse_BitLiteral(term, expr)) {
       // MATCHED BitLiteral

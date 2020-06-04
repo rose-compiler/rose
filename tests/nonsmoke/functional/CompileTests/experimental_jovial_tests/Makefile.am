@@ -10,6 +10,7 @@ JOVIAL_TESTCODES = \
  tiny.jov                               \
  int_conversion.jov                     \
  item_desc_conversion.jov               \
+ parens.jov                             \
  typename_conv.jov                      \
  1_2_2_non-nested-subroutine_a.jov      \
  1_2_2_non-nested-subroutine_b.jov      \
